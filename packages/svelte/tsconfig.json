@@ -15,6 +15,7 @@
 		"allowJs": true,
 		"checkJs": true,
 		"paths": {
+			"acorn-typescript": ["./src/compiler/phases/1-parse/ambient.d.ts"],
 			"svelte": ["./src/main/public.d.ts"],
 			"svelte/action": ["./src/action/public.d.ts"],
 			"svelte/compiler": ["./src/compiler/public.d.ts"],

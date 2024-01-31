@@ -8,7 +8,7 @@ import { error } from '../../../errors.js';
  */
 export default function read_expression(parser) {
 	try {
-		const node = parse_expression_at(parser.template, parser.index);
+		const node = parse_expression_at(parser.template, parser.ts, parser.index);
 
 		let num_parens = 0;
 

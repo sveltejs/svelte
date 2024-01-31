@@ -1,11 +1,12 @@
 <script>
-    const {log} = $props();
+    import { log } from './log.js';
+
 	let count = $state(0);
 
 	function increment() {
 		count += 1;
 	}
-	
+
 	$effect.pre(() => {
 		log.push(`Outer Effect Start (${count})`)
 

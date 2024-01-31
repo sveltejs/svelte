@@ -1,4 +1,3 @@
-import { error } from '../errors.js';
 import * as b from '../utils/builders.js';
 
 /**
@@ -7,10 +6,13 @@ import * as b from '../utils/builders.js';
  * @returns {import('estree').Identifier | null}
  */
 export function object(expression) {
+	expression = unwrap_ts_expression(expression);
+
 	while (expression.type === 'MemberExpression') {
 		expression = /** @type {import('estree').MemberExpression | import('estree').Identifier} */ (
 			expression.object
 		);
+		expression = unwrap_ts_expression(expression);
 	}
 
 	if (expression.type !== 'Identifier') {
@@ -18,19 +20,6 @@ export function object(expression) {
 	}
 
 	return expression;
-}
-
-/**
- * Returns the name of callee if the given expression is a call expression.
- * @param {import('estree').Expression | null | undefined} node
- */
-export function get_callee_name(node) {
-	if (!node) return null;
-	if (node.type !== 'CallExpression') return null;
-	if (node.callee.type !== 'Identifier' && node.callee.type !== 'MemberExpression') return null;
-
-	const id = object(node.callee);
-	return id === null ? null : id.name;
 }
 
 /**
@@ -49,7 +38,7 @@ export function is_text_attribute(attribute) {
  * @param {import('#compiler').Attribute} attribute
  * @returns {attribute is import('#compiler').Attribute & { value: [import('#compiler').ExpressionTag] }}
  */
-export function is_expression_attribute(attribute) {
+function is_expression_attribute(attribute) {
 	return (
 		attribute.value !== true &&
 		attribute.value.length === 1 &&
@@ -277,4 +266,85 @@ function _extract_paths(assignments = [], param, expression, update_expression) 
 	}
 
 	return assignments;
+}
+
+/**
+ * The Acorn TS plugin defines `foo!` as a `TSNonNullExpression` node, and
+ * `foo as Bar` as a `TSAsExpression` node. This function unwraps those.
+ *
+ * We can't just remove the typescript AST nodes in the parser stage because subsequent
+ * parsing would fail, since AST start/end nodes would point at the wrong positions.
+ *
+ * @template {import('#compiler').SvelteNode | undefined | null} T
+ * @param {T} node
+ * @returns {T}
+ */
+export function unwrap_ts_expression(node) {
+	if (!node) {
+		return node;
+	}
+
+	if (
+		// @ts-expect-error these types don't exist on the base estree types
+		node.type === 'TSNonNullExpression' ||
+		// @ts-expect-error these types don't exist on the base estree types
+		node.type === 'TSAsExpression' ||
+		// @ts-expect-error these types don't exist on the base estree types
+		node.type === 'TSSatisfiesExpression'
+	) {
+		// @ts-expect-error
+		return node.expression;
+	}
+
+	return node;
+}
+
+/**
+ * Like `path.at(x)`, but skips over `TSNonNullExpression` and `TSAsExpression` nodes and eases assertions a bit
+ * by removing the `| undefined` from the resulting type.
+ *
+ * @template {import('#compiler').SvelteNode} T
+ * @param {T[]} path
+ * @param {number} at
+ */
+export function get_parent(path, at) {
+	let node = path.at(at);
+	// @ts-expect-error
+	if (node.type === 'TSNonNullExpression' || node.type === 'TSAsExpression') {
+		return /** @type {T} */ (path.at(at < 0 ? at - 1 : at + 1));
+	}
+	return /** @type {T} */ (node);
+}
+
+/**
+ * Returns `true` if the expression is an identifier, a literal, a function expression,
+ * or a logical expression that only contains simple expressions. Used to determine whether
+ * something needs to be treated as though accessing it could have side-effects (i.e.
+ * reading signals prematurely)
+ * @param {import('estree').Expression} node
+ * @returns {boolean}
+ */
+export function is_simple_expression(node) {
+	if (
+		node.type === 'Literal' ||
+		node.type === 'Identifier' ||
+		node.type === 'ArrowFunctionExpression' ||
+		node.type === 'FunctionExpression'
+	) {
+		return true;
+	}
+
+	if (node.type === 'ConditionalExpression') {
+		return (
+			is_simple_expression(node.test) &&
+			is_simple_expression(node.consequent) &&
+			is_simple_expression(node.alternate)
+		);
+	}
+
+	if (node.type === 'BinaryExpression' || node.type === 'LogicalExpression') {
+		return is_simple_expression(node.left) && is_simple_expression(node.right);
+	}
+
+	return false;
 }

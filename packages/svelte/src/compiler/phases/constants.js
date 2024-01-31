@@ -1,51 +1,11 @@
-export const DOMBooleanAttributes = [
-	'allowfullscreen',
-	'async',
-	'autofocus',
-	'autoplay',
-	'checked',
-	'controls',
-	'default',
-	'disabled',
-	'formnovalidate',
-	'hidden',
-	'indeterminate',
-	'ismap',
-	'loop',
-	'multiple',
-	'muted',
-	'nomodule',
-	'novalidate',
-	'open',
-	'playsinline',
-	'readonly',
-	'required',
-	'reversed',
-	'seamless',
-	'selected'
-];
+import { AttributeAliases, DOMBooleanAttributes } from '../../constants.js';
 
 export const DOMProperties = [
-	'className',
+	...Object.values(AttributeAliases),
 	'value',
-	'readOnly',
-	'formNoValidate',
-	'isMap',
-	'noModule',
-	'playsInline',
 	'inert',
 	...DOMBooleanAttributes
 ];
-
-/** @type {Record<string, string>} */
-export const AttributeAliases = {
-	class: 'className',
-	formnovalidate: 'formNoValidate',
-	ismap: 'isMap',
-	nomodule: 'noModule',
-	playsinline: 'playsInline',
-	readonly: 'readOnly'
-};
 
 export const VoidElements = [
 	'area',
@@ -68,49 +28,19 @@ export const VoidElements = [
 
 export const PassiveEvents = ['wheel', 'touchstart', 'touchmove', 'touchend', 'touchcancel'];
 
-// TODO this is currently unused
-export const ElementBindings = [
-	'this',
-	'value',
-	'checked',
-	'files',
-	'group',
-	'visibilityState',
-	'fullscreenElement',
-	'innerWidth',
-	'innerHeight',
-	'outerWidth',
-	'outerHeight',
-	'scrollX',
-	'scrollY',
-	'online',
-	'devicePixelRatio',
-	'naturalWidth',
-	'naturalHeight',
-	'clientWidth',
-	'clientHeight',
-	'offsetWidth',
-	'offsetHeight',
-	'duration',
-	'buffered',
-	'played',
-	'seekable',
-	'seeking',
-	'ended',
-	'readyState',
-	'currentTime',
-	'playbackRate',
-	'paused',
-	'volume',
-	'muted',
-	'innerHTML',
-	'innerText',
-	'textContent',
-	'open',
-	'indeterminate'
-];
-
-export const Runes = ['$state', '$props', '$derived', '$effect'];
+export const Runes = /** @type {const} */ ([
+	'$state',
+	'$state.frozen',
+	'$props',
+	'$derived',
+	'$derived.call',
+	'$effect',
+	'$effect.pre',
+	'$effect.active',
+	'$effect.root',
+	'$inspect',
+	'$inspect().with'
+]);
 
 /**
  * Whitespace inside one of these elements will not result in
@@ -214,4 +144,56 @@ export const SVGElements = [
 	'use',
 	'view',
 	'vkern'
+];
+
+export const EventModifiers = [
+	'preventDefault',
+	'stopPropagation',
+	'stopImmediatePropagation',
+	'capture',
+	'once',
+	'passive',
+	'nonpassive',
+	'self',
+	'trusted'
+];
+
+export const JsKeywords = [
+	'class',
+	'break',
+	'const',
+	'let',
+	'var',
+	'continue',
+	'if',
+	'for',
+	'while',
+	'do',
+	'new',
+	'static',
+	'true',
+	'false',
+	'void',
+	'with',
+	'yield',
+	'await',
+	'typeof',
+	'throw',
+	'throws',
+	'null',
+	'delete',
+	'default',
+	'catch',
+	'debugger',
+	'case',
+	'arguments',
+	'else',
+	'extends',
+	'export',
+	'import',
+	'extends',
+	'switch',
+	'instanceof',
+	'return',
+	'this'
 ];

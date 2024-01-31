@@ -5,7 +5,7 @@
   "license": "MIT",
   "version": "0.0.1",
   "dependencies": {
-    "@types/minimist": "^1.2.2",
+    "@types/minimist": "^1.2.5",
     "minimist": "^1.2.8",
     "svelte": "workspace:^",
     "tiny-glob": "^0.2.9"

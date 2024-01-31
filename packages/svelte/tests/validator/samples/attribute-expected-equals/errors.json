@@ -1,7 +1,7 @@
 [
 	{
-		"code": "unexpected-token",
-		"message": "Expected =",
+		"code": "expected-token",
+		"message": "Expected token =",
 		"start": {
 			"line": 5,
 			"column": 9

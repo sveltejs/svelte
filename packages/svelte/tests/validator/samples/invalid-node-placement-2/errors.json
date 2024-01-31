@@ -1,0 +1,14 @@
+[
+	{
+		"code": "invalid-node-placement",
+		"message": "<div> is invalid inside <p>",
+		"start": {
+			"line": 4,
+			"column": 3
+		},
+		"end": {
+			"line": 4,
+			"column": 17
+		}
+	}
+]

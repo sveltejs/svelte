@@ -1,13 +1,13 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 17,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Text",
 				"start": 0,
 				"end": 17,
-				"type": "Text",
 				"raw": "Hello &amp; World",
 				"data": "Hello & World"
 			}

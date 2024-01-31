@@ -3,4 +3,4 @@
 </script>
 <p bind:textContent={text} contenteditable="true"></p>
 <p bind:innerHTML={text} contenteditable="true"></p>
-<p bind:innerHTML={text}></p>
+<p bind:innerHTML={text} contenteditable="true"></p>

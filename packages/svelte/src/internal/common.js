@@ -1,5 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-empty-function
-export const EMPTY_FUNC = () => {};
+export const noop = () => {};
 
 // Adapted from https://github.com/then/is-promise/blob/master/index.js
 // Distributed under MIT License https://github.com/then/is-promise/blob/master/LICENSE
@@ -10,9 +10,12 @@ export const EMPTY_FUNC = () => {};
  * @returns {value is PromiseLike<T>}
  */
 export function is_promise(value) {
-	return (
-		!!value &&
-		(typeof value === 'object' || typeof value === 'function') &&
-		typeof (/** @type {any} */ (value).then) === 'function'
-	);
+	return typeof value?.then === 'function';
+}
+
+/** @param {Array<() => void>} arr */
+export function run_all(arr) {
+	for (var i = 0; i < arr.length; i++) {
+		arr[i]();
+	}
 }

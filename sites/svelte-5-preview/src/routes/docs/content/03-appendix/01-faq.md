@@ -95,7 +95,7 @@ All other features, including stores, are still fully supported in runes mode.
 
 ### When is it coming out?
 
-When it's done. The goal is 'sometime later this year'.
+When it's done. The goal is sometime in early 2024.
 
 ### Should I prepare my code for Svelte 5?
 

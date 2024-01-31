@@ -22,8 +22,10 @@ const runes = {
 		`It looks like you're using the $${name} rune, but there is a local binding called ${name}. ` +
 		`Referencing a local variable with a $ prefix will create a store subscription. Please rename ${name} to avoid the ambiguity.`,
 	/** @param {string} name */
-	'state-rune-not-mutated': (name) =>
-		`${name} is declared with $state(...) but is never updated. Did you mean to create a function that changes its value?`
+	'non-state-reference': (name) =>
+		`${name} is updated, but is not declared with $state(...). Changing its value will not correctly trigger updates.`,
+	'derived-iife': () =>
+		`Use \`$derived.call(() => {...})\` instead of \`$derived((() => {...})());\``
 };
 
 /** @satisfies {Warnings} */
@@ -115,7 +117,7 @@ const a11y = {
 	'a11y-misplaced-scope': () => 'A11y: The scope attribute should only be used with <th> elements',
 	'a11y-positive-tabindex': () => 'A11y: avoid tabindex values above zero',
 	'a11y-click-events-have-key-events': () =>
-		'A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.',
+		'A11y: visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.',
 	'a11y-no-noninteractive-tabindex': () =>
 		'A11y: noninteractive element cannot have nonnegative tabIndex value',
 	/**
@@ -180,7 +182,7 @@ const a11y = {
 	 * @param {string} accompanied_by
 	 */
 	'a11y-mouse-events-have-key-events': (event, accompanied_by) =>
-		`A11y: on:${event} must be accompanied by on:${accompanied_by}`,
+		`A11y: '${event}' event must be accompanied by '${accompanied_by}' event`,
 	/** @param {string} name */
 	'a11y-missing-content': (name) => `A11y: <${name}> element should have child content`
 };
@@ -192,12 +194,34 @@ const state = {
 };
 
 /** @satisfies {Warnings} */
+const performance = {
+	'avoid-inline-class': () =>
+		`Avoid 'new class' — instead, declare the class at the top level scope`,
+	'avoid-nested-class': () => `Avoid declaring classes below the top level scope`
+};
+
+/** @satisfies {Warnings} */
+const components = {
+	/** @param {string} name */
+	'component-name-lowercase': (name) =>
+		`<${name}> will be treated as an HTML element unless it begins with a capital letter`
+};
+
+const legacy = {
+	'no-reactive-declaration': () =>
+		`Reactive declarations only exist at the top level of the instance script`
+};
+
+/** @satisfies {Warnings} */
 const warnings = {
 	...css,
 	...attributes,
 	...runes,
 	...a11y,
-	...state
+	...performance,
+	...state,
+	...components,
+	...legacy
 };
 
 /** @typedef {typeof warnings} AllWarnings */

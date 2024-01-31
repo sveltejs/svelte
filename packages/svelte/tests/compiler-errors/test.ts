@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import { assert, expect } from 'vitest';
 import { compile, compileModule, type CompileError } from 'svelte/compiler';
 import { suite, type BaseTest } from '../suite';
+import { read_file } from '../helpers.js';
 
 interface CompilerErrorTest extends BaseTest {
 	error: {
@@ -12,11 +13,15 @@ interface CompilerErrorTest extends BaseTest {
 }
 
 const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
+	if (!fs.existsSync(`${cwd}/main.svelte`) && !fs.existsSync(`${cwd}/main.svelte.js`)) {
+		throw new Error('Expected main.svelte or main.svelte.js');
+	}
+
 	if (fs.existsSync(`${cwd}/main.svelte`)) {
 		let caught_error = false;
 
 		try {
-			compile(fs.readFileSync(`${cwd}/main.svelte`, 'utf-8'), {
+			compile(read_file(`${cwd}/main.svelte`), {
 				generate: 'client'
 			});
 		} catch (e) {
@@ -37,11 +42,11 @@ const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 		}
 	}
 
-	if (fs.existsSync(`${cwd}/main.js`)) {
+	if (fs.existsSync(`${cwd}/main.svelte.js`)) {
 		let caught_error = false;
 
 		try {
-			compileModule(fs.readFileSync(`${cwd}/main.js`, 'utf-8'), {
+			compileModule(read_file(`${cwd}/main.svelte.js`), {
 				generate: 'client'
 			});
 		} catch (e) {
@@ -49,8 +54,12 @@ const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 
 			caught_error = true;
 
-			expect(error.code).toMatch(config.error.code);
-			expect(error.message).toMatch(config.error.message);
+			expect(error.code).toEqual(config.error.code);
+			expect(error.message).toEqual(config.error.message);
+
+			if (config.error.position) {
+				expect(error.position).toEqual(config.error.position);
+			}
 		}
 
 		if (!caught_error) {

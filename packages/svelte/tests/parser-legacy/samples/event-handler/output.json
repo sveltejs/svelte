@@ -1,13 +1,13 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 97,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Element",
 				"start": 0,
 				"end": 61,
-				"type": "Element",
 				"name": "button",
 				"attributes": [
 					{
@@ -105,25 +105,25 @@
 				],
 				"children": [
 					{
+						"type": "Text",
 						"start": 46,
 						"end": 52,
-						"type": "Text",
 						"raw": "toggle",
 						"data": "toggle"
 					}
 				]
 			},
 			{
+				"type": "Text",
 				"start": 61,
 				"end": 63,
-				"type": "Text",
 				"raw": "\n\n",
 				"data": "\n\n"
 			},
 			{
+				"type": "IfBlock",
 				"start": 63,
 				"end": 97,
-				"type": "IfBlock",
 				"expression": {
 					"type": "Identifier",
 					"start": 68,
@@ -142,16 +142,16 @@
 				},
 				"children": [
 					{
+						"type": "Element",
 						"start": 78,
 						"end": 91,
-						"type": "Element",
 						"name": "p",
 						"attributes": [],
 						"children": [
 							{
+								"type": "Text",
 								"start": 81,
 								"end": 87,
-								"type": "Text",
 								"raw": "hello!",
 								"data": "hello!"
 							}

@@ -1,29 +1,29 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 14,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Element",
 				"start": 0,
 				"end": 14,
-				"type": "Element",
 				"name": "div",
 				"attributes": [],
 				"children": [
 					{
+						"type": "Text",
 						"start": 5,
 						"end": 8,
-						"type": "Text",
 						"raw": "foo",
 						"data": "foo"
 					}
 				]
 			},
 			{
+				"type": "Text",
 				"start": 14,
 				"end": 16,
-				"type": "Text",
 				"raw": "\n\n",
 				"data": "\n\n"
 			}
@@ -39,9 +39,13 @@
 				"type": "Rule",
 				"prelude": {
 					"type": "SelectorList",
+					"start": 25,
+					"end": 28,
 					"children": [
 						{
 							"type": "Selector",
+							"start": 25,
+							"end": 28,
 							"children": [
 								{
 									"type": "TypeSelector",
@@ -49,27 +53,23 @@
 									"start": 25,
 									"end": 28
 								}
-							],
-							"start": 25,
-							"end": 28
+							]
 						}
-					],
-					"start": 25,
-					"end": 28
+					]
 				},
 				"block": {
 					"type": "Block",
+					"start": 29,
+					"end": 47,
 					"children": [
 						{
 							"type": "Declaration",
-							"property": "color",
-							"value": "red",
 							"start": 33,
-							"end": 43
+							"end": 43,
+							"property": "color",
+							"value": "red"
 						}
-					],
-					"start": 29,
-					"end": 47
+					]
 				},
 				"start": 25,
 				"end": 47

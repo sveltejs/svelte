@@ -33,7 +33,7 @@ function remove_surrounding_whitespace_nodes(nodes) {
  * Transform our nice modern AST into the monstrosity emitted by Svelte 4
  * @param {string} source
  * @param {import('#compiler').Root} ast
- * @returns {import('./types/legacy-nodes.js').LegacySvelteNode}
+ * @returns {import('./types/legacy-nodes.js').LegacyRoot}
  */
 export function convert(source, ast) {
 	const root =
@@ -41,7 +41,7 @@ export function convert(source, ast) {
 			ast
 		);
 
-	return /** @type {import('./types/legacy-nodes.js').LegacySvelteNode} */ (
+	return /** @type {import('./types/legacy-nodes.js').LegacyRoot} */ (
 		walk(root, null, {
 			_(node, { next }) {
 				// @ts-ignore
@@ -108,7 +108,7 @@ export function convert(source, ast) {
 									// @ts-ignore
 									delete node.parent;
 								}
-						  })
+							})
 						: undefined
 				};
 			},
@@ -206,6 +206,33 @@ export function convert(source, ast) {
 						(child) =>
 							/** @type {import('./types/legacy-nodes.js').LegacyElementLike} */ (visit(child))
 					)
+				};
+			},
+			// @ts-ignore
+			ConstTag(node) {
+				if (
+					/** @type {import('./types/legacy-nodes.js').LegacyConstTag} */ (node).expression !==
+					undefined
+				) {
+					return node;
+				}
+
+				const modern_node = /** @type {import('#compiler').ConstTag} */ (node);
+				const { id: left } = { ...modern_node.declaration.declarations[0] };
+				// @ts-ignore
+				delete left.typeAnnotation;
+				return {
+					type: 'ConstTag',
+					start: modern_node.start,
+					end: node.end,
+					expression: {
+						type: 'AssignmentExpression',
+						start: (modern_node.declaration.start ?? 0) + 'const '.length,
+						end: modern_node.declaration.end ?? 0,
+						operator: '=',
+						left,
+						right: modern_node.declaration.declarations[0].init
+					}
 				};
 			},
 			// @ts-ignore
@@ -329,7 +356,7 @@ export function convert(source, ast) {
 					start: node.start,
 					end: node.end,
 					expression: node.expression,
-					context: node.context,
+					parameters: node.parameters,
 					children: node.body.nodes.map((child) => visit(child))
 				};
 			},

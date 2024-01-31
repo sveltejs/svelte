@@ -1,10 +1,22 @@
 // Store the references to globals in case someone tries to monkey patch these, causing the below
 // to de-opt (this occurs often when using popular extensions).
-export const object_ref = Object;
-export const array_ref = Array;
+export var is_array = Array.isArray;
+export var array_from = Array.from;
+export var object_keys = Object.keys;
+export var object_assign = Object.assign;
+export var is_frozen = Object.isFrozen;
+export var object_freeze = Object.freeze;
+export var define_property = Object.defineProperty;
+export var get_descriptor = Object.getOwnPropertyDescriptor;
+export var get_descriptors = Object.getOwnPropertyDescriptors;
+export var object_prototype = Object.prototype;
+export var array_prototype = Array.prototype;
+export var get_prototype_of = Object.getPrototypeOf;
 
-export const is_array = array_ref.isArray;
-export const array_from = array_ref.from;
-export const define_property = object_ref.defineProperty;
-export const get_descriptor = object_ref.getOwnPropertyDescriptor;
-export const get_descriptors = object_ref.getOwnPropertyDescriptors;
+/**
+ * @param {any} thing
+ * @returns {thing is Function}
+ */
+export function is_function(thing) {
+	return typeof thing === 'function';
+}

@@ -127,6 +127,16 @@ if (typeof HTMLElement === 'function') {
 						this.$$d[name] = get_custom_element_value(name, attribute.value, this.$$p_d, 'toProp');
 					}
 				}
+				// Port over props that were set programmatically before ce was initialized
+				for (const key in this.$$p_d) {
+					// @ts-expect-error
+					if (!(key in this.$$d) && this[key] !== undefined) {
+						// @ts-expect-error
+						this.$$d[key] = this[key]; // don't transform, these were set through JavaScript
+						// @ts-expect-error
+						delete this[key]; // remove the property that shadows the getter/setter
+					}
+				}
 				this.$$c = createClassComponent({
 					component: this.$$ctor,
 					target: this.shadowRoot || this,

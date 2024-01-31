@@ -1,0 +1,14 @@
+[
+	{
+		"code": "avoid-nested-class",
+		"message": "Avoid declaring classes below the top level scope",
+		"start": {
+			"column": 2,
+			"line": 3
+		},
+		"end": {
+			"column": 3,
+			"line": 5
+		}
+	}
+]

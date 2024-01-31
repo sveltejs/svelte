@@ -1,4 +1,5 @@
 import { regex_is_valid_identifier } from '../phases/patterns.js';
+import { sanitize_template_string } from './sanitize_template_string.js';
 
 /**
  * @param {Array<import('estree').Expression | import('estree').SpreadElement | null>} elements
@@ -44,6 +45,23 @@ export function assignment(operator, left, right) {
 }
 
 /**
+ * @template T
+ * @param {T & import('estree').BaseFunction} func
+ * @returns {T & import('estree').BaseFunction}
+ */
+export function async(func) {
+	return { ...func, async: true };
+}
+
+/**
+ * @param {import('estree').Expression} argument
+ * @returns {import('estree').AwaitExpression}
+ */
+function await_builder(argument) {
+	return { type: 'AwaitExpression', argument };
+}
+
+/**
  * @param {import('estree').BinaryOperator} operator
  * @param {import('estree').Expression} left
  * @param {import('estree').Expression} right
@@ -72,7 +90,7 @@ export function labeled(name, body) {
 
 /**
  * @param {string | import('estree').Expression} callee
- * @param {...import('estree').Expression} args
+ * @param {...(import('estree').Expression | import('estree').SpreadElement)} args
  * @returns {import('estree').CallExpression}
  */
 export function call(callee, ...args) {
@@ -218,7 +236,7 @@ export function private_id(name) {
  * @param {string} local
  * @returns {import('estree').ImportNamespaceSpecifier}
  */
-export function import_namespace(local) {
+function import_namespace(local) {
 	return {
 		type: 'ImportNamespaceSpecifier',
 		local: id(local)
@@ -314,7 +332,7 @@ export function prop_def(key, value, computed = false, is_static = false) {
  * @returns {import('estree').TemplateElement}
  */
 export function quasi(cooked, tail = false) {
-	const raw = cooked.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+	const raw = sanitize_template_string(cooked);
 	return { type: 'TemplateElement', value: { raw, cooked }, tail };
 }
 
@@ -370,9 +388,19 @@ export function template(elements, expressions) {
 
 /**
  * @param {import('estree').Expression | import('estree').BlockStatement} expression
- * @returns {import('estree').ArrowFunctionExpression}
+ * @returns {import('estree').Expression}
  */
 export function thunk(expression) {
+	if (
+		expression.type === 'CallExpression' &&
+		expression.callee.type !== 'Super' &&
+		expression.callee.type !== 'MemberExpression' &&
+		expression.callee.type !== 'CallExpression' &&
+		expression.arguments.length === 0
+	) {
+		return expression.callee;
+	}
+
 	return arrow([], expression);
 }
 
@@ -563,7 +591,7 @@ export function throw_error(str) {
 }
 
 export {
-	new_builder as new,
+	await_builder as await,
 	let_builder as let,
 	const_builder as const,
 	var_builder as var,

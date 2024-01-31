@@ -37,3 +37,7 @@ sites/svelte.dev/src/lib/generated
 .changeset
 pnpm-lock.yaml
 pnpm-workspace.yaml
+
+# Temporarily ignore this file to avoid merge conflicts.
+# see: https://github.com/sveltejs/svelte/pull/9609
+documentation/docs/05-misc/03-typescript.md

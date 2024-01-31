@@ -1,13 +1,13 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 99,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "AwaitBlock",
 				"start": 0,
 				"end": 99,
-				"type": "AwaitBlock",
 				"expression": {
 					"type": "Identifier",
 					"start": 8,
@@ -32,37 +32,37 @@
 					"end": 55
 				},
 				"pending": {
+					"type": "PendingBlock",
 					"start": 19,
 					"end": 39,
-					"type": "PendingBlock",
 					"children": [
 						{
+							"type": "Text",
 							"start": 19,
 							"end": 21,
-							"type": "Text",
 							"raw": "\n\t",
 							"data": "\n\t"
 						},
 						{
+							"type": "Element",
 							"start": 21,
 							"end": 38,
-							"type": "Element",
 							"name": "p",
 							"attributes": [],
 							"children": [
 								{
+									"type": "Text",
 									"start": 24,
 									"end": 34,
-									"type": "Text",
 									"raw": "loading...",
 									"data": "loading..."
 								}
 							]
 						},
 						{
+							"type": "Text",
 							"start": 38,
 							"end": 39,
-							"type": "Text",
 							"raw": "\n",
 							"data": "\n"
 						}
@@ -70,42 +70,42 @@
 					"skip": false
 				},
 				"then": {
+					"type": "ThenBlock",
 					"start": null,
 					"end": null,
-					"type": "ThenBlock",
 					"children": [],
 					"skip": true
 				},
 				"catch": {
+					"type": "CatchBlock",
 					"start": 39,
 					"end": 91,
-					"type": "CatchBlock",
 					"children": [
 						{
+							"type": "Text",
 							"start": 56,
 							"end": 58,
-							"type": "Text",
 							"raw": "\n\t",
 							"data": "\n\t"
 						},
 						{
+							"type": "Element",
 							"start": 58,
 							"end": 90,
-							"type": "Element",
 							"name": "p",
 							"attributes": [],
 							"children": [
 								{
+									"type": "Text",
 									"start": 61,
 									"end": 68,
-									"type": "Text",
 									"raw": "oh no! ",
 									"data": "oh no! "
 								},
 								{
+									"type": "MustacheTag",
 									"start": 68,
 									"end": 86,
-									"type": "MustacheTag",
 									"expression": {
 										"type": "MemberExpression",
 										"start": 69,
@@ -159,9 +159,9 @@
 							]
 						},
 						{
+							"type": "Text",
 							"start": 90,
 							"end": 91,
-							"type": "Text",
 							"raw": "\n",
 							"data": "\n"
 						}

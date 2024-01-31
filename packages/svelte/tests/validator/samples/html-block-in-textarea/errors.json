@@ -1,7 +1,7 @@
 [
 	{
 		"code": "invalid-tag-placement",
-		"message": "{@html} tag cannot be inside <textarea>",
+		"message": "{@html ...} tag cannot be inside <textarea>",
 		"start": { "line": 2, "column": 1 },
 		"end": { "line": 2, "column": 1 }
 	}

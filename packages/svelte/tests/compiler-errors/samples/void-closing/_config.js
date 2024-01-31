@@ -3,7 +3,7 @@ import { test } from '../../test';
 export default test({
 	error: {
 		code: 'invalid-void-content',
-		message: '<input> is a void element and cannot have children, or a closing tag',
+		message: 'Void elements cannot have children or closing tags',
 		position: [23, 23]
 	}
 });

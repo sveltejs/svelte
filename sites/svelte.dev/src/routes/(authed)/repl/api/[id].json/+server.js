@@ -73,13 +73,13 @@ export async function GET({ params }) {
 	}
 
 	if (!UUID_REGEX.test(params.id)) {
-		throw error(404);
+		error(404);
 	}
 
 	const app = await gist.read(params.id);
 
 	if (!app) {
-		throw error(404, 'not found');
+		error(404, 'not found');
 	}
 
 	return json({

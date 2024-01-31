@@ -254,9 +254,9 @@ function stringify_tag_attributes(attributes) {
 }
 
 const regex_style_tags =
-	/<!--[^]*?-->|<style((?:\s+[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s])|\s+[^=>'"/]+)*\s*)(?:\/>|>([\S\s]*?)<\/style>)/g;
+	/<!--[^]*?-->|<style((?:\s+[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s]+)|\s+[^=>'"/]+)*\s*)(?:\/>|>([\S\s]*?)<\/style>)/g;
 const regex_script_tags =
-	/<!--[^]*?-->|<script((?:\s+[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s])|\s+[^=>'"/]+)*\s*)(?:\/>|>([\S\s]*?)<\/script>)/g;
+	/<!--[^]*?-->|<script((?:\s+[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s]+)|\s+[^=>'"/]+)*\s*)(?:\/>|>([\S\s]*?)<\/script>)/g;
 
 /**
  * Calculate the updates required to process all instances of the specified tag.
@@ -318,7 +318,7 @@ async function process_markup(process, source) {
 			string: processed.code,
 			map: processed.map
 				? // TODO: can we use decode_sourcemap?
-				  typeof processed.map === 'string'
+					typeof processed.map === 'string'
 					? JSON.parse(processed.map)
 					: processed.map
 				: undefined,

@@ -1,0 +1,317 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 94,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "EachBlock",
+				"start": 0,
+				"end": 94,
+				"expression": {
+					"type": "Identifier",
+					"start": 7,
+					"end": 13,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 7
+						},
+						"end": {
+							"line": 1,
+							"column": 13
+						}
+					},
+					"name": "people"
+				},
+				"body": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 39,
+							"end": 41,
+							"raw": "\n\t",
+							"data": "\n\t"
+						},
+						{
+							"type": "RegularElement",
+							"start": 41,
+							"end": 86,
+							"name": "p",
+							"attributes": [],
+							"fragment": {
+								"type": "Fragment",
+								"nodes": [
+									{
+										"type": "ExpressionTag",
+										"start": 44,
+										"end": 50,
+										"expression": {
+											"type": "Identifier",
+											"start": 45,
+											"end": 49,
+											"loc": {
+												"start": {
+													"line": 2,
+													"column": 5
+												},
+												"end": {
+													"line": 2,
+													"column": 9
+												}
+											},
+											"name": "name"
+										}
+									},
+									{
+										"type": "Text",
+										"start": 50,
+										"end": 54,
+										"raw": " is ",
+										"data": " is "
+									},
+									{
+										"type": "ExpressionTag",
+										"start": 54,
+										"end": 82,
+										"expression": {
+											"type": "ConditionalExpression",
+											"start": 55,
+											"end": 81,
+											"loc": {
+												"start": {
+													"line": 2,
+													"column": 15
+												},
+												"end": {
+													"line": 2,
+													"column": 41
+												}
+											},
+											"test": {
+												"type": "Identifier",
+												"start": 55,
+												"end": 59,
+												"loc": {
+													"start": {
+														"line": 2,
+														"column": 15
+													},
+													"end": {
+														"line": 2,
+														"column": 19
+													}
+												},
+												"name": "cool"
+											},
+											"consequent": {
+												"type": "Literal",
+												"start": 62,
+												"end": 68,
+												"loc": {
+													"start": {
+														"line": 2,
+														"column": 22
+													},
+													"end": {
+														"line": 2,
+														"column": 28
+													}
+												},
+												"value": "cool",
+												"raw": "'cool'"
+											},
+											"alternate": {
+												"type": "Literal",
+												"start": 71,
+												"end": 81,
+												"loc": {
+													"start": {
+														"line": 2,
+														"column": 31
+													},
+													"end": {
+														"line": 2,
+														"column": 41
+													}
+												},
+												"value": "not cool",
+												"raw": "'not cool'"
+											}
+										}
+									}
+								],
+								"transparent": true
+							}
+						},
+						{
+							"type": "Text",
+							"start": 86,
+							"end": 87,
+							"raw": "\n",
+							"data": "\n"
+						}
+					],
+					"transparent": false
+				},
+				"context": {
+					"type": "ObjectPattern",
+					"start": 17,
+					"end": 38,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 17
+						},
+						"end": {
+							"line": 1,
+							"column": 38
+						}
+					},
+					"properties": [
+						{
+							"type": "Property",
+							"start": 19,
+							"end": 23,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 19
+								},
+								"end": {
+									"line": 1,
+									"column": 23
+								}
+							},
+							"method": false,
+							"shorthand": true,
+							"computed": false,
+							"key": {
+								"type": "Identifier",
+								"start": 19,
+								"end": 23,
+								"loc": {
+									"start": {
+										"line": 1,
+										"column": 19
+									},
+									"end": {
+										"line": 1,
+										"column": 23
+									}
+								},
+								"name": "name"
+							},
+							"kind": "init",
+							"value": {
+								"type": "Identifier",
+								"start": 19,
+								"end": 23,
+								"loc": {
+									"start": {
+										"line": 1,
+										"column": 19
+									},
+									"end": {
+										"line": 1,
+										"column": 23
+									}
+								},
+								"name": "name"
+							}
+						},
+						{
+							"type": "Property",
+							"start": 25,
+							"end": 36,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 25
+								},
+								"end": {
+									"line": 1,
+									"column": 36
+								}
+							},
+							"method": false,
+							"shorthand": true,
+							"computed": false,
+							"key": {
+								"type": "Identifier",
+								"start": 25,
+								"end": 29,
+								"loc": {
+									"start": {
+										"line": 1,
+										"column": 25
+									},
+									"end": {
+										"line": 1,
+										"column": 29
+									}
+								},
+								"name": "cool"
+							},
+							"kind": "init",
+							"value": {
+								"type": "AssignmentPattern",
+								"start": 25,
+								"end": 36,
+								"loc": {
+									"start": {
+										"line": 1,
+										"column": 25
+									},
+									"end": {
+										"line": 1,
+										"column": 36
+									}
+								},
+								"left": {
+									"type": "Identifier",
+									"start": 25,
+									"end": 29,
+									"loc": {
+										"start": {
+											"line": 1,
+											"column": 25
+										},
+										"end": {
+											"line": 1,
+											"column": 29
+										}
+									},
+									"name": "cool"
+								},
+								"right": {
+									"type": "Literal",
+									"start": 32,
+									"end": 36,
+									"loc": {
+										"start": {
+											"line": 1,
+											"column": 32
+										},
+										"end": {
+											"line": 1,
+											"column": 36
+										}
+									},
+									"value": true,
+									"raw": "true"
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"transparent": false
+	},
+	"options": null
+}
