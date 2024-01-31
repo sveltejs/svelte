@@ -24,7 +24,7 @@ declare module 'svelte' {
 		(Props extends { children?: any }
 			? {}
 			: Slots extends { default: any }
-				? { children?: Snippet<[]> }
+				? { children?: Snippet }
 				: {});
 
 	/**
@@ -321,15 +321,7 @@ declare module 'svelte' {
 	 * If you don't need to interact with the component after mounting, use `mount` instead to save some bytes.
 	 *
 	 * */
-	export function createRoot<Props extends Record<string, any>, Exports extends Record<string, any> | undefined, Events extends Record<string, any>>(component: {
-		new (options: ComponentConstructorOptions<Props & (Props extends {
-			children?: any;
-		} ? {} : {} | {
-			children?: ((this: void) => unique symbol & {
-				_: "functions passed to {@render ...} tags must use the `Snippet` type imported from \"svelte\"";
-			}) | undefined;
-		})>): SvelteComponent<Props, Events, any>;
-	}, options: {
+	export function createRoot<Props extends Record<string, any>, Exports extends Record<string, any> | undefined, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
 		target: Node;
 		props?: Props | undefined;
 		events?: Events | undefined;
@@ -346,15 +338,7 @@ declare module 'svelte' {
 	 * If you need to interact with the component after mounting, use `createRoot` instead.
 	 *
 	 * */
-	export function mount<Props extends Record<string, any>, Exports extends Record<string, any> | undefined, Events extends Record<string, any>>(component: {
-		new (options: ComponentConstructorOptions<Props & (Props extends {
-			children?: any;
-		} ? {} : {} | {
-			children?: ((this: void) => unique symbol & {
-				_: "functions passed to {@render ...} tags must use the `Snippet` type imported from \"svelte\"";
-			}) | undefined;
-		})>): SvelteComponent<Props, Events, any>;
-	}, options: {
+	export function mount<Props extends Record<string, any>, Exports extends Record<string, any> | undefined, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
 		target: Node;
 		props?: Props | undefined;
 		events?: Events | undefined;
@@ -1734,17 +1718,7 @@ declare module 'svelte/legacy' {
 	 * @deprecated Use this only as a temporary solution to migrate your imperative component code to Svelte 5.
 	 *
 	 * */
-	export function asClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(component: SvelteComponent<Props, Events, Slots>): {
-		new (options: ComponentConstructorOptions<Props & (Props extends {
-			children?: any;
-		} ? {} : Slots extends {
-			default: any;
-		} ? {
-			children?: ((this: void) => unique symbol & {
-				_: "functions passed to {@render ...} tags must use the `Snippet` type imported from \"svelte\"";
-			}) | undefined;
-		} : {})>): SvelteComponent<Props, Events, Slots>;
-	} & Exports;
+	export function asClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(component: SvelteComponent<Props, Events, Slots>): ComponentType<SvelteComponent<Props, Events, Slots> & Exports>;
 	// This should contain all the public interfaces (not all of them are actually importable, check current Svelte for which ones are).
 
 	/**
@@ -1770,7 +1744,7 @@ declare module 'svelte/legacy' {
 		(Props extends { children?: any }
 			? {}
 			: Slots extends { default: any }
-				? { children?: Snippet<[]> }
+				? { children?: Snippet }
 				: {});
 
 	/**
@@ -1858,6 +1832,34 @@ declare module 'svelte/legacy' {
 		 */
 		$set(props: Partial<Props>): void;
 	}
+
+	/**
+	 * Convenience type to get the type of a Svelte component. Useful for example in combination with
+	 * dynamic components using `<svelte:component>`.
+	 *
+	 * Example:
+	 * ```html
+	 * <script lang="ts">
+	 * 	import type { ComponentType, SvelteComponent } from 'svelte';
+	 * 	import Component1 from './Component1.svelte';
+	 * 	import Component2 from './Component2.svelte';
+	 *
+	 * 	const component: ComponentType = someLogic() ? Component1 : Component2;
+	 * 	const componentOfCertainSubType: ComponentType<SvelteComponent<{ needsThisProp: string }>> = someLogic() ? Component1 : Component2;
+	 * </script>
+	 *
+	 * <svelte:component this={component} />
+	 * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
+	 * ```
+	 */
+	type ComponentType<Comp extends SvelteComponent = SvelteComponent> = (new (
+		options: ComponentConstructorOptions<
+			Comp extends SvelteComponent<infer Props> ? Props : Record<string, any>
+		>
+	) => Comp) & {
+		/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
+		element?: typeof HTMLElement;
+	};
 
 	const SnippetReturn: unique symbol;
 
