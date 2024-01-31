@@ -26,5 +26,15 @@ describe('motion', () => {
 			size.set(100, { duration: 0 });
 			assert.equal(get(size), 100);
 		});
+
+		it('updates correctly when initialized with a `null`-ish value', () => {
+			const size = tweened(undefined as unknown as number, { duration: 0 });
+
+			size.set(10);
+			assert.equal(get(size), 10);
+
+			size.update((v) => v + 10);
+			assert.equal(get(size), 20);
+		});
 	});
 });
