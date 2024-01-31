@@ -191,7 +191,7 @@ export function child_frag(node, is_text) {
 		const first_node = /** @type {Node[]} */ (node)[0];
 
 		// if an {expression} is empty during SSR, there might be no
-		// text node to hydrate — we must therefore create one
+		// text node to hydrate — we must therefore create one
 		if (is_text && first_node?.nodeType !== 3) {
 			const text = document.createTextNode('');
 			current_hydration_fragment.unshift(text);
