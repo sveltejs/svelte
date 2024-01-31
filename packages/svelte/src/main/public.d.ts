@@ -224,4 +224,3 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 
 export * from './main-client.js';
 import './ambient.js';
-import type { PropsWithChildren } from './private.js';
