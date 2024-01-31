@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.43
+
+### Patch Changes
+
+- fix: insert empty text nodes while hydrating, if necessary ([#9729](https://github.com/sveltejs/svelte/pull/9729))
+
+- fix: correctly update tweened store initialized with nullish value ([#10356](https://github.com/sveltejs/svelte/pull/10356))
+
 ## 5.0.0-next.42
 
 ### Patch Changes
