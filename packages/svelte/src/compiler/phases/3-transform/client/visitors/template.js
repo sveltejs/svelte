@@ -1105,7 +1105,7 @@ function create_block(parent, name, nodes, context) {
 		const name = first_is_text ? 'text' : first.type === 'RegularElement' ? first.name : 'node';
 		const node_id = b.id(context.state.scope.generate(name));
 
-		process_children(trimmed, node_id, false, {
+		process_children(trimmed, () => node_id, false, {
 			...context,
 			state
 		});
@@ -1431,7 +1431,7 @@ function serialize_event_attribute(node, context) {
  * (e.g. `{a} b {c}`) into a single update function. Along the way it creates
  * corresponding template node references these updates are applied to.
  * @param {import('#compiler').SvelteNode[]} nodes
- * @param {import('estree').Expression} expression
+ * @param {() => import('estree').Expression} expression
  * @param {boolean} is_element
  * @param {import('../types.js').ComponentContext} context
  */
@@ -1451,14 +1451,15 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 			const node = sequence[0];
 
 			if (node.type === 'Text') {
-				expression = b.call('$.sibling', expression);
+				let prev = expression;
+				expression = () => b.call('$.sibling', prev());
 				state.template.push(node.raw);
 				return;
 			}
 
 			state.template.push(' ');
 
-			const text_id = get_node_id(expression, state, 'text');
+			const text_id = get_node_id(expression(), state, 'text');
 
 			const singular = b.stmt(
 				b.call(
@@ -1496,9 +1497,9 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 				);
 			}
 
-			expression = b.call('$.sibling', text_id);
+			expression = () => b.call('$.sibling', text_id);
 		} else {
-			const text_id = get_node_id(expression, state, 'text');
+			const text_id = get_node_id(expression(), state, 'text');
 
 			state.template.push(' ');
 
@@ -1523,7 +1524,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 				state.init.push(init);
 			}
 
-			expression = b.call('$.sibling', text_id);
+			expression = () => b.call('$.sibling', text_id);
 		}
 	}
 
@@ -1553,12 +1554,12 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 					visit(node, state);
 				} else {
 					const id = get_node_id(
-						expression,
+						expression(),
 						state,
 						node.type === 'RegularElement' ? node.name : 'node'
 					);
 
-					expression = b.call('$.sibling', id);
+					expression = () => b.call('$.sibling', id);
 
 					visit(node, {
 						...state,
@@ -2039,12 +2040,13 @@ export const template_visitors = {
 
 		process_children(
 			trimmed,
-			b.call(
-				'$.child',
-				node.name === 'template'
-					? b.member(context.state.node, b.id('content'))
-					: context.state.node
-			),
+			() =>
+				b.call(
+					'$.child',
+					node.name === 'template'
+						? b.member(context.state.node, b.id('content'))
+						: context.state.node
+				),
 			true,
 			{ ...context, state }
 		);
