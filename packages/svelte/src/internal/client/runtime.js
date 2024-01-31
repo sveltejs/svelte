@@ -1,5 +1,5 @@
-import { subscribe_to_store } from '../../store/index.js';
 import { DEV } from 'esm-env';
+import { subscribe_to_store } from '../../store/utils.js';
 import { noop, run_all } from '../common.js';
 import {
 	array_prototype,

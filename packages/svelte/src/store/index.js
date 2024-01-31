@@ -501,27 +501,3 @@ export function get_store_value(store, allow_stale = false) {
 }
 
 export { get_store_value as get };
-
-/**
- * @template T
- * @param {import('./public.js').Readable<T> | import('./public.js').ExternalReadable<T> | null | undefined} store
- * @param {(value: T) => void} run
- * @param {(value: T) => void} [invalidate]
- * @returns {() => void}
- */
-export function subscribe_to_store(store, run, invalidate) {
-	if (store == null) {
-		// @ts-expect-error
-		run(undefined);
-
-		// @ts-expect-error
-		if (invalidate) invalidate(undefined);
-
-		return noop;
-	}
-
-	// @ts-expect-error `SubscriberInvalidator<T>` is not public.
-	const unsubscribe = store.subscribe([run, invalidate]);
-	const is_rxjs = typeof unsubscribe !== 'function';
-	return is_rxjs ? unsubscribe.unsubscribe : unsubscribe;
-}
