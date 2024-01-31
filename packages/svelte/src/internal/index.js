@@ -38,7 +38,6 @@ export {
 	user_root_effect,
 	inspect,
 	unwrap,
-	maybe_call,
 	freeze
 } from './client/runtime.js';
 export * from './client/each.js';
@@ -54,3 +53,4 @@ export {
 	$window as window,
 	$document as document
 } from './client/operations.js';
+export { noop } from './common.js';

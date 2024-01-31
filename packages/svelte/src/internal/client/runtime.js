@@ -1,6 +1,6 @@
 import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
-import { EMPTY_FUNC, run_all } from '../common.js';
+import { noop, run_all } from '../common.js';
 import {
 	array_prototype,
 	get_descriptor,
@@ -860,7 +860,7 @@ export function store_get(store, store_name, stores) {
 			store: null,
 			last_value: null,
 			value: mutable_source(UNINITIALIZED),
-			unsubscribe: EMPTY_FUNC
+			unsubscribe: noop
 		};
 		// TODO: can we remove this code? it was refactored out when we split up source/comptued signals
 		// push_destroy_fn(entry.value, () => {
@@ -890,7 +890,7 @@ export function store_get(store, store_name, stores) {
 function connect_store_to_signal(store, source) {
 	if (store == null) {
 		set(source, undefined);
-		return EMPTY_FUNC;
+		return noop;
 	}
 
 	/** @param {V} v */
@@ -2107,18 +2107,6 @@ if (DEV) {
 	throw_rune_error('$derived');
 	throw_rune_error('$inspect');
 	throw_rune_error('$props');
-}
-
-/**
- * @template {Function | undefined} T
- * @param {T} fn
- * @returns {ReturnType<T> | undefined}
- */
-export function maybe_call(fn) {
-	if (fn === undefined) {
-		return undefined;
-	}
-	return fn();
 }
 
 /**

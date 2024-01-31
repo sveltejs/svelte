@@ -1,6 +1,6 @@
 import * as $ from '../client/runtime.js';
 import { set_is_ssr } from '../client/runtime.js';
-import { is_promise } from '../common.js';
+import { is_promise, noop } from '../common.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import { DOMBooleanAttributes } from '../../constants.js';
 
@@ -521,10 +521,6 @@ export function bind_props(props_parent, props_now) {
 			props_parent[key] = value;
 		}
 	}
-}
-
-function noop() {
-	// noop
 }
 
 /**

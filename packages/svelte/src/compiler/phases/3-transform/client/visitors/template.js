@@ -2481,14 +2481,15 @@ export const template_visitors = {
 			if (!argument) continue;
 
 			if (argument.type === 'Identifier') {
-				args.push(argument);
+				args.push({
+					type: 'AssignmentPattern',
+					left: argument,
+					right: b.id('$.noop')
+				});
 				const binding = /** @type {import('#compiler').Binding} */ (
 					context.state.scope.get(argument.name)
 				);
-				// we can't use `b.maybe_call` because it can result in invalid javascript if
-				// this expression appears on the left side of an assignment somewhere. For example:
-				// `$.maybe_call(myArg).value = 1` is valid JavaScript, but `$.myArg?.().value = 1` is not
-				binding.expression = b.call('$.maybe_call', argument);
+				binding.expression = b.call(argument);
 				continue;
 			}
 
@@ -2505,7 +2506,7 @@ export const template_visitors = {
 						path.node,
 						b.thunk(
 							/** @type {import('estree').Expression} */ (
-								context.visit(path.expression?.(b.call('$.maybe_call', b.id(arg_alias))))
+								context.visit(path.expression?.(b.maybe_call(b.id(arg_alias))))
 							)
 						)
 					)
