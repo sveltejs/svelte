@@ -126,7 +126,6 @@ export function tweened(value, defaults = {}) {
 				fn = interpolate(/** @type {any} */ (value), new_value);
 				if (typeof duration === 'function')
 					duration = duration(/** @type {any} */ (value), new_value);
-
 				started = true;
 			}
 			if (previous_task) {
