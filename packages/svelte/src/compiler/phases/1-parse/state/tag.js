@@ -3,6 +3,7 @@ import read_expression from '../read/expression.js';
 import { error } from '../../../errors.js';
 import { create_fragment } from '../utils/create.js';
 import { walk } from 'zimmerframe';
+import { parse } from '../acorn.js';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
@@ -549,17 +550,42 @@ function special(parser) {
 	}
 
 	if (parser.eat('const')) {
-		parser.allow_whitespace();
+		// {@const a = b}
+		const start_index = parser.index - 5;
+		parser.require_whitespace();
 
-		const id = read_context(parser);
-		parser.allow_whitespace();
+		let end_index = parser.index;
+		/** @type {import('estree').VariableDeclaration | undefined} */
+		let declaration = undefined;
 
-		parser.eat('=', true);
-		parser.allow_whitespace();
+		// Can't use parse_expression_at here, so we try to parse until we find the correct range
+		const dummy_spaces = parser.template.substring(0, start_index).replace(/[^\n]/g, ' ');
+		while (true) {
+			end_index = parser.template.indexOf('}', end_index + 1);
+			if (end_index === -1) break;
+			try {
+				const node = parse(
+					dummy_spaces + parser.template.substring(start_index, end_index),
+					parser.ts
+				).body[0];
+				if (node?.type === 'VariableDeclaration') {
+					declaration = node;
+					break;
+				}
+			} catch (e) {
+				continue;
+			}
+		}
 
-		const init = read_expression(parser);
-		parser.allow_whitespace();
+		if (
+			declaration === undefined ||
+			declaration.declarations.length !== 1 ||
+			declaration.declarations[0].init === undefined
+		) {
+			error(start, 'invalid-const');
+		}
 
+		parser.index = end_index;
 		parser.eat('}', true);
 
 		parser.append(
@@ -567,11 +593,7 @@ function special(parser) {
 				type: 'ConstTag',
 				start,
 				end: parser.index,
-				declaration: {
-					type: 'VariableDeclaration',
-					kind: 'const',
-					declarations: [{ type: 'VariableDeclarator', id, init }]
-				}
+				declaration
 			})
 		);
 	}
