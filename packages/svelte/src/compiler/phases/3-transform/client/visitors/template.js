@@ -1105,7 +1105,7 @@ function create_block(parent, name, nodes, context) {
 			trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag');
 
 		if (use_space_template) {
-			// special case
+			// special case — we can use `$.space` instead of creating a unique template
 			const id = b.id(context.state.scope.generate('text'));
 
 			process_children(trimmed, () => id, false, {
@@ -1122,10 +1122,10 @@ function create_block(parent, name, nodes, context) {
 
 			process_children(trimmed, expression, false, { ...context, state });
 
-			// in many cases, we can use `$.comment` instead of creating a unique template
 			const use_comment_template = state.template.length === 1 && state.template[0] === '<!>';
 
 			if (use_comment_template) {
+				// special case — we can use `$.comment` instead of creating a unique template
 				body.push(b.var(id, b.call('$.comment', b.id('$$anchor'))));
 			} else {
 				const callee = namespace === 'svg' ? '$.svg_template' : '$.template';
