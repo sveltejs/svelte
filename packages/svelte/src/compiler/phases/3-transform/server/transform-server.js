@@ -1,11 +1,6 @@
 import { walk } from 'zimmerframe';
 import { set_scope, get_rune } from '../../scope.js';
-import {
-	extract_identifiers,
-	extract_paths,
-	is_event_attribute,
-	unwrap_ts_expression
-} from '../../../utils/ast.js';
+import { extract_identifiers, extract_paths, is_event_attribute } from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
 import is_reference from 'is-reference';
 import {
@@ -569,7 +564,7 @@ const javascript_visitors_runes = {
 		const declarations = [];
 
 		for (const declarator of node.declarations) {
-			const init = unwrap_ts_expression(declarator.init);
+			const init = declarator.init;
 			const rune = get_rune(init, state.scope);
 			if (!rune || rune === '$effect.active' || rune === '$inspect') {
 				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));

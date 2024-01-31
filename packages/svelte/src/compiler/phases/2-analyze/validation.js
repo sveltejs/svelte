@@ -1,10 +1,5 @@
 import { error } from '../../errors.js';
-import {
-	extract_identifiers,
-	get_parent,
-	is_text_attribute,
-	unwrap_ts_expression
-} from '../../utils/ast.js';
+import { extract_identifiers, get_parent, is_text_attribute } from '../../utils/ast.js';
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { disallowed_parapgraph_contents, interactive_elements } from '../1-parse/utils/html.js';
@@ -338,11 +333,11 @@ const validation = {
 	BindDirective(node, context) {
 		validate_no_const_assignment(node, node.expression, context.state.scope, true);
 
-		const assignee = unwrap_ts_expression(node.expression);
+		const assignee = node.expression;
 		let left = assignee;
 
 		while (left.type === 'MemberExpression') {
-			left = unwrap_ts_expression(/** @type {import('estree').MemberExpression} */ (left.object));
+			left = /** @type {import('estree').MemberExpression} */ (left.object);
 		}
 
 		if (left.type !== 'Identifier') {
@@ -950,7 +945,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 		next({ ...state });
 	},
 	VariableDeclarator(node, { state, path }) {
-		const init = unwrap_ts_expression(node.init);
+		const init = node.init;
 		const rune = get_rune(init, state.scope);
 
 		if (rune === null) return;
