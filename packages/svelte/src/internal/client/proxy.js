@@ -84,7 +84,7 @@ function unwrap(value, already_unwrapped = new Map()) {
 		} else {
 			/** @type {Record<string | symbol, any>} */
 			const obj = {};
-			const keys = object_keys(value);
+			const keys = Reflect.ownKeys(value);
 			const descriptors = get_descriptors(value);
 			already_unwrapped.set(value, obj);
 			for (const key of keys) {
