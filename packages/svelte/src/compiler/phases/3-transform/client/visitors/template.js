@@ -1431,19 +1431,17 @@ function serialize_event_attribute(node, context) {
  * (e.g. `{a} b {c}`) into a single update function. Along the way it creates
  * corresponding template node references these updates are applied to.
  * @param {import('#compiler').SvelteNode[]} nodes
- * @param {import('estree').Expression} parent
+ * @param {import('estree').Expression} expression
  * @param {boolean} is_element
  * @param {import('../types.js').ComponentContext} context
  */
-function process_children(nodes, parent, is_element, { visit, state }) {
+function process_children(nodes, expression, is_element, { visit, state }) {
 	const within_bound_contenteditable = state.metadata.bound_contenteditable;
 
 	/** @typedef {Array<import('#compiler').Text | import('#compiler').ExpressionTag>} Sequence */
 
 	/** @type {Sequence} */
 	let sequence = [];
-
-	let expression = parent;
 
 	/**
 	 * @param {Sequence} sequence
