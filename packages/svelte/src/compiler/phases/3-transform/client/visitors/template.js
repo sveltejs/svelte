@@ -1448,8 +1448,6 @@ function process_children(nodes, parent, { visit, state }) {
 	 * @param {Sequence} sequence
 	 */
 	function flush_sequence(sequence) {
-		const text_id = get_node_id(expression, state, 'text');
-
 		if (sequence.length === 1) {
 			const node = sequence[0];
 
@@ -1460,6 +1458,8 @@ function process_children(nodes, parent, { visit, state }) {
 			}
 
 			state.template.push(' ');
+
+			const text_id = get_node_id(expression, state, 'text');
 
 			const singular = b.stmt(
 				b.call(
@@ -1496,7 +1496,11 @@ function process_children(nodes, parent, { visit, state }) {
 					)
 				);
 			}
+
+			expression = b.call('$.sibling', text_id);
 		} else {
+			const text_id = get_node_id(expression, state, 'text');
+
 			state.template.push(' ');
 
 			const contains_call_expression = sequence.some(
@@ -1519,9 +1523,9 @@ function process_children(nodes, parent, { visit, state }) {
 			} else {
 				state.init.push(init);
 			}
-		}
 
-		expression = b.call('$.sibling', text_id);
+			expression = b.call('$.sibling', text_id);
+		}
 	}
 
 	for (let i = 0; i < nodes.length; i += 1) {
