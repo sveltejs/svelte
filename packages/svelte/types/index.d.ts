@@ -191,11 +191,20 @@ declare module 'svelte' {
 	 * ```
 	 * You can only call a snippet through the `{@render ...}` tag.
 	 */
-	export interface Snippet<T = void> {
-		(arg: T): typeof SnippetReturn & {
-			_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
-		};
-	}
+	export type Snippet<T extends unknown[] = []> =
+		// this conditional allows tuples but not arrays. Arrays would indicate a
+		// rest parameter type, which is not supported. If rest parameters are added
+		// in the future, the condition can be removed.
+		number extends T['length']
+			? never
+			: {
+					(
+						this: void,
+						...args: T
+					): typeof SnippetReturn & {
+						_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
+					};
+				};
 
 	interface DispatchOptions {
 		cancelable?: boolean;
@@ -312,13 +321,7 @@ declare module 'svelte' {
 	 * If you don't need to interact with the component after mounting, use `mount` instead to save some bytes.
 	 *
 	 * */
-	export function createRoot<Props extends Record<string, any>, Exports extends Record<string, any> | undefined, Events extends Record<string, any>>(component: {
-		new (options: ComponentConstructorOptions<Props & (Props extends {
-			children?: any;
-		} ? {} : {} | {
-			children?: Snippet<void> | undefined;
-		})>): SvelteComponent<Props, Events, any>;
-	}, options: {
+	export function createRoot<Props extends Record<string, any>, Exports extends Record<string, any> | undefined, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
 		target: Node;
 		props?: Props | undefined;
 		events?: Events | undefined;
@@ -335,13 +338,7 @@ declare module 'svelte' {
 	 * If you need to interact with the component after mounting, use `createRoot` instead.
 	 *
 	 * */
-	export function mount<Props extends Record<string, any>, Exports extends Record<string, any> | undefined, Events extends Record<string, any>>(component: {
-		new (options: ComponentConstructorOptions<Props & (Props extends {
-			children?: any;
-		} ? {} : {} | {
-			children?: Snippet<void> | undefined;
-		})>): SvelteComponent<Props, Events, any>;
-	}, options: {
+	export function mount<Props extends Record<string, any>, Exports extends Record<string, any> | undefined, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
 		target: Node;
 		props?: Props | undefined;
 		events?: Events | undefined;
@@ -479,7 +476,7 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/compiler' {
-	import type { AssignmentExpression, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, ArrayExpression, MemberExpression, ObjectExpression, Pattern, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, FunctionExpression, Node, Program } from 'estree';
+	import type { AssignmentExpression, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, ArrayExpression, MemberExpression, ObjectExpression, Pattern, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, FunctionExpression, Node, Program, SpreadElement } from 'estree';
 	import type { Location } from 'locate-character';
 	import type { SourceMap } from 'magic-string';
 	import type { Context } from 'zimmerframe';
@@ -1180,7 +1177,7 @@ declare module 'svelte/compiler' {
 	interface RenderTag extends BaseNode {
 		type: 'RenderTag';
 		expression: Identifier;
-		argument: null | Expression;
+		arguments: Array<Expression | SpreadElement>;
 	}
 
 	type Tag = ExpressionTag | HtmlTag | ConstTag | DebugTag | RenderTag;
@@ -1450,7 +1447,7 @@ declare module 'svelte/compiler' {
 	interface SnippetBlock extends BaseNode {
 		type: 'SnippetBlock';
 		expression: Identifier;
-		context: null | Pattern;
+		parameters: Pattern[];
 		body: Fragment;
 	}
 
@@ -1721,15 +1718,7 @@ declare module 'svelte/legacy' {
 	 * @deprecated Use this only as a temporary solution to migrate your imperative component code to Svelte 5.
 	 *
 	 * */
-	export function asClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(component: SvelteComponent<Props, Events, Slots>): {
-		new (options: ComponentConstructorOptions<Props & (Props extends {
-			children?: any;
-		} ? {} : Slots extends {
-			default: any;
-		} ? {
-			children?: Snippet<void> | undefined;
-		} : {})>): SvelteComponent<Props, Events, Slots>;
-	} & Exports;
+	export function asClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(component: SvelteComponent<Props, Events, Slots>): ComponentType<SvelteComponent<Props, Events, Slots> & Exports>;
 	// This should contain all the public interfaces (not all of them are actually importable, check current Svelte for which ones are).
 
 	/**
@@ -1844,6 +1833,34 @@ declare module 'svelte/legacy' {
 		$set(props: Partial<Props>): void;
 	}
 
+	/**
+	 * Convenience type to get the type of a Svelte component. Useful for example in combination with
+	 * dynamic components using `<svelte:component>`.
+	 *
+	 * Example:
+	 * ```html
+	 * <script lang="ts">
+	 * 	import type { ComponentType, SvelteComponent } from 'svelte';
+	 * 	import Component1 from './Component1.svelte';
+	 * 	import Component2 from './Component2.svelte';
+	 *
+	 * 	const component: ComponentType = someLogic() ? Component1 : Component2;
+	 * 	const componentOfCertainSubType: ComponentType<SvelteComponent<{ needsThisProp: string }>> = someLogic() ? Component1 : Component2;
+	 * </script>
+	 *
+	 * <svelte:component this={component} />
+	 * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
+	 * ```
+	 */
+	type ComponentType<Comp extends SvelteComponent = SvelteComponent> = (new (
+		options: ComponentConstructorOptions<
+			Comp extends SvelteComponent<infer Props> ? Props : Record<string, any>
+		>
+	) => Comp) & {
+		/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
+		element?: typeof HTMLElement;
+	};
+
 	const SnippetReturn: unique symbol;
 
 	/**
@@ -1853,11 +1870,20 @@ declare module 'svelte/legacy' {
 	 * ```
 	 * You can only call a snippet through the `{@render ...}` tag.
 	 */
-	interface Snippet<T = void> {
-		(arg: T): typeof SnippetReturn & {
-			_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
-		};
-	}
+	type Snippet<T extends unknown[] = []> =
+		// this conditional allows tuples but not arrays. Arrays would indicate a
+		// rest parameter type, which is not supported. If rest parameters are added
+		// in the future, the condition can be removed.
+		number extends T['length']
+			? never
+			: {
+					(
+						this: void,
+						...args: T
+					): typeof SnippetReturn & {
+						_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
+					};
+				};
 }
 
 declare module 'svelte/motion' {
@@ -2485,7 +2511,7 @@ declare namespace $derived {
 	 *
 	 * https://svelte-5-preview.vercel.app/docs/runes#$derived-call
 	 */
-	export function call<T>(fn: () => T): void;
+	export function call<T>(fn: () => T): T;
 }
 
 /**

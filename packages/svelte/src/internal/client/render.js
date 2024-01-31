@@ -2759,7 +2759,7 @@ export function spread_props(...props) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any> | undefined} Exports
  * @template {Record<string, any>} Events
- * @param {typeof import('../../main/public.js').SvelteComponent<Props, Events>} component
+ * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
  * @param {{
  * 		target: Node;
  * 		props?: Props;
@@ -2809,7 +2809,7 @@ export function createRoot(component, options) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any> | undefined} Exports
  * @template {Record<string, any>} Events
- * @param {typeof import('../../main/public.js').SvelteComponent<Props, Events>} component
+ * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
  * @param {{
  * 		target: Node;
  * 		props?: Props;
@@ -2960,16 +2960,16 @@ export function sanitize_slots(props) {
 /**
  * @param {() => Function} get_snippet
  * @param {Node} node
- * @param {() => any} args
+ * @param {(() => any)[]} args
  * @returns {void}
  */
-export function snippet_effect(get_snippet, node, args) {
+export function snippet_effect(get_snippet, node, ...args) {
 	const block = create_snippet_block();
 	render_effect(() => {
 		// Only rerender when the snippet function itself changes,
 		// not when an eagerly-read prop inside the snippet function changes
 		const snippet = get_snippet();
-		untrack(() => snippet(node, args));
+		untrack(() => snippet(node, ...args));
 		return () => {
 			if (block.d !== null) {
 				remove(block.d);

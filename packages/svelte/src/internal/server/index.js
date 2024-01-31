@@ -1,6 +1,6 @@
 import * as $ from '../client/runtime.js';
 import { set_is_ssr } from '../client/runtime.js';
-import { is_promise } from '../common.js';
+import { is_promise, noop } from '../common.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import { DOMBooleanAttributes } from '../../constants.js';
 
@@ -147,17 +147,6 @@ export function escape(value, is_attr = false) {
 	}
 
 	return escaped + str.substring(last);
-}
-
-/**
- * @template V
- * @param {V} value
- * @returns {string}
- */
-export function escape_text(value) {
-	const escaped = escape(value);
-	// If the value is empty, then ensure we put a space so that it creates a text node on the client
-	return escaped === '' ? ' ' : escaped;
 }
 
 /**
@@ -521,10 +510,6 @@ export function bind_props(props_parent, props_now) {
 			props_parent[key] = value;
 		}
 	}
-}
-
-function noop() {
-	// noop
 }
 
 /**

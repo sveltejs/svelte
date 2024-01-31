@@ -1,6 +1,6 @@
 import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
-import { EMPTY_FUNC, run_all } from '../common.js';
+import { noop, run_all } from '../common.js';
 import {
 	array_prototype,
 	get_descriptor,
@@ -327,6 +327,7 @@ function is_signal_dirty(signal) {
  */
 function execute_signal_fn(signal) {
 	const init = signal.i;
+	const flags = signal.f;
 	const previous_dependencies = current_dependencies;
 	const previous_dependencies_index = current_dependencies_index;
 	const previous_untracked_writes = current_untracked_writes;
@@ -334,7 +335,7 @@ function execute_signal_fn(signal) {
 	const previous_block = current_block;
 	const previous_component_context = current_component_context;
 	const previous_skip_consumer = current_skip_consumer;
-	const is_render_effect = (signal.f & RENDER_EFFECT) !== 0;
+	const is_render_effect = (flags & RENDER_EFFECT) !== 0;
 	const previous_untracking = current_untracking;
 	current_dependencies = /** @type {null | import('./types.js').Signal[]} */ (null);
 	current_dependencies_index = 0;
@@ -342,7 +343,7 @@ function execute_signal_fn(signal) {
 	current_consumer = signal;
 	current_block = signal.b;
 	current_component_context = signal.x;
-	current_skip_consumer = !is_flushing_effect && (signal.f & UNOWNED) !== 0;
+	current_skip_consumer = !is_flushing_effect && (flags & UNOWNED) !== 0;
 	current_untracking = false;
 
 	// Render effects are invoked when the UI is about to be updated - run beforeUpdate at that point
@@ -412,6 +413,10 @@ function execute_signal_fn(signal) {
 					if (consumers === null) {
 						dependency.c = [signal];
 					} else if (consumers[consumers.length - 1] !== signal) {
+						// TODO: should this be:
+						//
+						// } else if (!consumers.includes(signal)) {
+						//
 						consumers.push(signal);
 					}
 				}
@@ -623,8 +628,14 @@ function process_microtask() {
 export function schedule_effect(signal, sync) {
 	const flags = signal.f;
 	if (sync) {
-		execute_effect(signal);
-		set_signal_status(signal, CLEAN);
+		const previously_flushing_effect = is_flushing_effect;
+		try {
+			is_flushing_effect = true;
+			execute_effect(signal);
+			set_signal_status(signal, CLEAN);
+		} finally {
+			is_flushing_effect = previously_flushing_effect;
+		}
 	} else {
 		if (current_scheduler_mode === FLUSH_MICROTASK) {
 			if (!is_micro_task_queued) {
@@ -854,7 +865,7 @@ export function store_get(store, store_name, stores) {
 			store: null,
 			last_value: null,
 			value: mutable_source(UNINITIALIZED),
-			unsubscribe: EMPTY_FUNC
+			unsubscribe: noop
 		};
 		// TODO: can we remove this code? it was refactored out when we split up source/comptued signals
 		// push_destroy_fn(entry.value, () => {
@@ -884,7 +895,7 @@ export function store_get(store, store_name, stores) {
 function connect_store_to_signal(store, source) {
 	if (store == null) {
 		set(source, undefined);
-		return EMPTY_FUNC;
+		return noop;
 	}
 
 	/** @param {V} v */
@@ -964,7 +975,7 @@ export function get(signal) {
 		) {
 			if (current_dependencies === null) {
 				current_dependencies = [signal];
-			} else if (signal !== current_dependencies[current_dependencies.length - 1]) {
+			} else {
 				current_dependencies.push(signal);
 			}
 		}

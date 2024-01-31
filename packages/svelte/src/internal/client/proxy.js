@@ -89,10 +89,11 @@ function unwrap(value, already_unwrapped = new Map()) {
 		} else {
 			/** @type {Record<string | symbol, any>} */
 			const obj = {};
-			const keys = object_keys(value);
+			const keys = Reflect.ownKeys(value);
 			const descriptors = get_descriptors(value);
 			already_unwrapped.set(value, obj);
 			for (const key of keys) {
+				if (key === STATE_SYMBOL || (DEV && key === READONLY_SYMBOL)) continue;
 				if (descriptors[key].get) {
 					define_property(obj, key, descriptors[key]);
 				} else {
@@ -297,12 +298,6 @@ const state_proxy_handler = {
 		return Reflect.ownKeys(target);
 	}
 };
-
-/** @param {any} object */
-export function observe(object) {
-	const metadata = object[STATE_SYMBOL];
-	if (metadata) get(metadata.v);
-}
 
 if (DEV) {
 	state_proxy_handler.setPrototypeOf = () => {

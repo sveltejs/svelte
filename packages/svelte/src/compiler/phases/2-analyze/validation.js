@@ -334,7 +334,7 @@ function is_tag_valid_with_parent(tag, parent_tag) {
 /**
  * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
  */
-export const validation = {
+const validation = {
 	BindDirective(node, context) {
 		validate_no_const_assignment(node, node.expression, context.state.scope, true);
 
@@ -565,6 +565,13 @@ export const validation = {
 			...context.state,
 			parent_element: node.name
 		});
+	},
+	RenderTag(node, context) {
+		for (const arg of node.arguments) {
+			if (arg.type === 'SpreadElement') {
+				error(arg, 'invalid-render-spread-argument');
+			}
+		}
 	},
 	SvelteHead(node) {
 		const attribute = node.attributes[0];

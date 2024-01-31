@@ -68,7 +68,7 @@ export type ToggleEventHandler<T extends EventTarget> = EventHandler<ToggleEvent
 export interface DOMAttributes<T extends EventTarget> {
 	// Implicit children prop every element has
 	// Add this here so that libraries doing `$props<HTMLButtonAttributes>()` don't need a separate interface
-	children?: import('svelte').Snippet<void>;
+	children?: import('svelte').Snippet;
 
 	// Clipboard Events
 	'on:copy'?: ClipboardEventHandler<T> | undefined | null;
@@ -351,6 +351,9 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:scroll'?: UIEventHandler<T> | undefined | null;
 	onscroll?: UIEventHandler<T> | undefined | null;
 	onscrollcapture?: UIEventHandler<T> | undefined | null;
+	'on:scrollend'?: UIEventHandler<T> | undefined | null;
+	onscrollend?: UIEventHandler<T> | undefined | null;
+	onscrollendcapture?: UIEventHandler<T> | undefined | null;
 	'on:resize'?: UIEventHandler<T> | undefined | null;
 	onresize?: UIEventHandler<T> | undefined | null;
 	onresizecapture?: UIEventHandler<T> | undefined | null;

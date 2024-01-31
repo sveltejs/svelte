@@ -1099,50 +1099,58 @@ function create_block(parent, name, nodes, context) {
 		body.push(...state.init);
 	} else if (trimmed.length > 0) {
 		const id = b.id(context.state.scope.generate('fragment'));
-		const node_id = b.id(context.state.scope.generate('node'));
 
-		process_children(trimmed, node_id, {
-			...context,
-			state
-		});
+		const use_space_template =
+			trimmed.some((node) => node.type === 'ExpressionTag') &&
+			trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag');
 
-		const template = state.template[0];
+		if (use_space_template) {
+			// special case — we can use `$.space` instead of creating a unique template
+			const id = b.id(context.state.scope.generate('text'));
 
-		if (state.template.length === 1 && (template === ' ' || template === '<!>')) {
-			if (template === ' ') {
-				body.push(b.var(node_id, b.call('$.space', b.id('$$anchor'))), ...state.init);
-				close = b.stmt(b.call('$.close', b.id('$$anchor'), node_id));
-			} else {
-				body.push(
-					b.var(id, b.call('$.comment', b.id('$$anchor'))),
-					b.var(node_id, b.call('$.child_frag', id)),
-					...state.init
-				);
-				close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
-			}
+			process_children(trimmed, () => id, false, {
+				...context,
+				state
+			});
+
+			body.push(b.var(id, b.call('$.space', b.id('$$anchor'))), ...state.init);
+			close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
 		} else {
-			const callee = namespace === 'svg' ? '$.svg_template' : '$.template';
+			/** @type {(is_text: boolean) => import('estree').Expression} */
+			const expression = (is_text) =>
+				is_text ? b.call('$.child_frag', id, b.true) : b.call('$.child_frag', id);
 
-			state.hoisted.push(
-				b.var(
-					template_name,
-					b.call(callee, b.template([b.quasi(state.template.join(''), true)], []), b.true)
-				)
-			);
+			process_children(trimmed, expression, false, { ...context, state });
 
-			body.push(
-				b.var(
-					id,
-					b.call(
-						'$.open_frag',
-						b.id('$$anchor'),
-						b.literal(!state.metadata.template_needs_import_node),
-						template_name
+			const use_comment_template = state.template.length === 1 && state.template[0] === '<!>';
+
+			if (use_comment_template) {
+				// special case — we can use `$.comment` instead of creating a unique template
+				body.push(b.var(id, b.call('$.comment', b.id('$$anchor'))));
+			} else {
+				const callee = namespace === 'svg' ? '$.svg_template' : '$.template';
+
+				state.hoisted.push(
+					b.var(
+						template_name,
+						b.call(callee, b.template([b.quasi(state.template.join(''), true)], []), b.true)
 					)
-				),
-				b.var(node_id, b.call('$.child_frag', id)),
-				...state.init
-			);
+				);
+
+				body.push(
+					b.var(
+						id,
+						b.call(
+							'$.open_frag',
+							b.id('$$anchor'),
+							b.literal(!state.metadata.template_needs_import_node),
+							template_name
+						)
+					)
+				);
+			}
+
+			body.push(...state.init);
 
 			close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
 		}
@@ -1418,10 +1426,11 @@ function serialize_event_attribute(node, context) {
  * (e.g. `{a} b {c}`) into a single update function. Along the way it creates
  * corresponding template node references these updates are applied to.
  * @param {import('#compiler').SvelteNode[]} nodes
- * @param {import('estree').Expression} parent
+ * @param {(is_text: boolean) => import('estree').Expression} expression
+ * @param {boolean} is_element
  * @param {import('../types.js').ComponentContext} context
  */
-function process_children(nodes, parent, { visit, state }) {
+function process_children(nodes, expression, is_element, { visit, state }) {
 	const within_bound_contenteditable = state.metadata.bound_contenteditable;
 
 	/** @typedef {Array<import('#compiler').Text | import('#compiler').ExpressionTag>} Sequence */
@@ -1429,28 +1438,24 @@ function process_children(nodes, parent, { visit, state }) {
 	/** @type {Sequence} */
 	let sequence = [];
 
-	let expression = parent;
-
 	/**
 	 * @param {Sequence} sequence
-	 * @param {boolean} in_fragment
 	 */
-	function flush_sequence(sequence, in_fragment) {
+	function flush_sequence(sequence) {
 		if (sequence.length === 1) {
 			const node = sequence[0];
 
-			if ((in_fragment && node.type === 'ExpressionTag') || node.type === 'Text') {
-				expression = b.call('$.sibling', expression);
-			}
-
 			if (node.type === 'Text') {
+				let prev = expression;
+				expression = () => b.call('$.sibling', prev(true));
 				state.template.push(node.raw);
 				return;
 			}
 
 			state.template.push(' ');
 
-			const text_id = get_node_id(expression, state, 'text');
+			const text_id = get_node_id(expression(true), state, 'text');
+
 			const singular = b.stmt(
 				b.call(
 					'$.text_effect',
@@ -1487,43 +1492,39 @@ function process_children(nodes, parent, { visit, state }) {
 				);
 			}
 
-			return;
-		}
-
-		state.template.push(' ');
-
-		const text_id = get_node_id(expression, state, 'text');
-		const contains_call_expression = sequence.some(
-			(n) => n.type === 'ExpressionTag' && n.metadata.contains_call_expression
-		);
-		const assignment = serialize_template_literal(sequence, visit, state)[1];
-		const init = b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), assignment));
-		const singular = b.stmt(
-			b.call(
-				'$.text_effect',
-				text_id,
-				b.thunk(serialize_template_literal(sequence, visit, state)[1])
-			)
-		);
-
-		if (contains_call_expression && !within_bound_contenteditable) {
-			state.update_effects.push(singular);
-		} else if (
-			sequence.some((node) => node.type === 'ExpressionTag' && node.metadata.dynamic) &&
-			!within_bound_contenteditable
-		) {
-			state.update.push({
-				singular,
-				grouped: b.stmt(b.call('$.text', text_id, assignment))
-			});
+			expression = (is_text) =>
+				is_text ? b.call('$.sibling', text_id, b.true) : b.call('$.sibling', text_id);
 		} else {
-			state.init.push(init);
-		}
+			const text_id = get_node_id(expression(true), state, 'text');
 
-		expression = b.call('$.sibling', text_id);
+			state.template.push(' ');
+
+			const contains_call_expression = sequence.some(
+				(n) => n.type === 'ExpressionTag' && n.metadata.contains_call_expression
+			);
+			const assignment = serialize_template_literal(sequence, visit, state)[1];
+			const init = b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), assignment));
+			const singular = b.stmt(b.call('$.text_effect', text_id, b.thunk(assignment)));
+
+			if (contains_call_expression && !within_bound_contenteditable) {
+				state.update_effects.push(singular);
+			} else if (
+				sequence.some((node) => node.type === 'ExpressionTag' && node.metadata.dynamic) &&
+				!within_bound_contenteditable
+			) {
+				state.update.push({
+					singular,
+					grouped: b.stmt(b.call('$.text', text_id, assignment))
+				});
+			} else {
+				state.init.push(init);
+			}
+
+			expression = (is_text) =>
+				is_text ? b.call('$.sibling', text_id, b.true) : b.call('$.sibling', text_id);
+		}
 	}
 
-	let is_fragment = false;
 	for (let i = 0; i < nodes.length; i += 1) {
 		const node = nodes[i];
 
@@ -1531,12 +1532,7 @@ function process_children(nodes, parent, { visit, state }) {
 			sequence.push(node);
 		} else {
 			if (sequence.length > 0) {
-				flush_sequence(sequence, is_fragment);
-				// Ensure we move to the next sibling for the case where we move reference within a fragment
-				if (!is_fragment && sequence.length === 1 && sequence[0].type === 'ExpressionTag') {
-					expression = b.call('$.sibling', expression);
-					is_fragment = true;
-				}
+				flush_sequence(sequence);
 				sequence = [];
 			}
 
@@ -1550,23 +1546,18 @@ function process_children(nodes, parent, { visit, state }) {
 				// get hoisted inside clean_nodes?
 				visit(node, state);
 			} else {
-				if (
-					node.type === 'EachBlock' &&
-					nodes.length === 1 &&
-					parent.type === 'CallExpression' &&
-					parent.callee.type === 'Identifier' &&
-					parent.callee.name === '$.child'
-				) {
+				if (node.type === 'EachBlock' && nodes.length === 1 && is_element) {
 					node.metadata.is_controlled = true;
 					visit(node, state);
 				} else {
 					const id = get_node_id(
-						expression,
+						expression(false),
 						state,
 						node.type === 'RegularElement' ? node.name : 'node'
 					);
 
-					expression = b.call('$.sibling', id);
+					expression = (is_text) =>
+						is_text ? b.call('$.sibling', id, b.true) : b.call('$.sibling', id);
 
 					visit(node, {
 						...state,
@@ -1578,7 +1569,7 @@ function process_children(nodes, parent, { visit, state }) {
 	}
 
 	if (sequence.length > 0) {
-		flush_sequence(sequence, false);
+		flush_sequence(sequence);
 	}
 }
 
@@ -1776,8 +1767,8 @@ export const template_visitors = {
 
 		/** @type {import('estree').Expression[]} */
 		const args = [context.state.node];
-		if (node.argument) {
-			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.argument))));
+		for (const arg of node.arguments) {
+			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg))));
 		}
 
 		let snippet_function = /** @type {import('estree').Expression} */ (
@@ -2047,12 +2038,14 @@ export const template_visitors = {
 
 		process_children(
 			trimmed,
-			b.call(
-				'$.child',
-				node.name === 'template'
-					? b.member(context.state.node, b.id('content'))
-					: context.state.node
-			),
+			() =>
+				b.call(
+					'$.child',
+					node.name === 'template'
+						? b.member(context.state.node, b.id('content'))
+						: context.state.node
+				),
+			true,
 			{ ...context, state }
 		);
 
@@ -2472,60 +2465,66 @@ export const template_visitors = {
 	},
 	SnippetBlock(node, context) {
 		// TODO hoist where possible
+		/** @type {import('estree').Pattern[]} */
 		const args = [b.id('$$anchor')];
 
 		/** @type {import('estree').BlockStatement} */
 		let body;
 
-		if (node.context) {
-			const id = node.context.type === 'Identifier' ? node.context : b.id('$$context');
-			args.push(id);
+		/** @type {import('estree').Statement[]} */
+		const declarations = [];
 
-			/** @type {import('estree').Statement[]} */
-			const declarations = [];
+		for (let i = 0; i < node.parameters.length; i++) {
+			const argument = node.parameters[i];
 
-			// some of this is duplicated with EachBlock — TODO dedupe?
-			if (node.context.type === 'Identifier') {
+			if (!argument) continue;
+
+			if (argument.type === 'Identifier') {
+				args.push({
+					type: 'AssignmentPattern',
+					left: argument,
+					right: b.id('$.noop')
+				});
 				const binding = /** @type {import('#compiler').Binding} */ (
-					context.state.scope.get(id.name)
+					context.state.scope.get(argument.name)
 				);
-				binding.expression = b.call(id);
-			} else {
-				const paths = extract_paths(node.context);
-
-				for (const path of paths) {
-					const name = /** @type {import('estree').Identifier} */ (path.node).name;
-					const binding = /** @type {import('#compiler').Binding} */ (
-						context.state.scope.get(name)
-					);
-					declarations.push(
-						b.let(
-							path.node,
-							b.thunk(
-								/** @type {import('estree').Expression} */ (
-									context.visit(path.expression?.(b.call('$$context')))
-								)
-							)
-						)
-					);
-
-					// we need to eagerly evaluate the expression in order to hit any
-					// 'Cannot access x before initialization' errors
-					if (context.state.options.dev) {
-						declarations.push(b.stmt(b.call(name)));
-					}
-
-					binding.expression = b.call(name);
-				}
+				binding.expression = b.call(argument);
+				continue;
 			}
 
-			body = b.block([
-				...declarations,
-				.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body
-			]);
-		} else {
-			body = /** @type {import('estree').BlockStatement} */ (context.visit(node.body));
+			let arg_alias = `$$arg${i}`;
+			args.push(b.id(arg_alias));
+
+			const paths = extract_paths(argument);
+
+			for (const path of paths) {
+				const name = /** @type {import('estree').Identifier} */ (path.node).name;
+				const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(name));
+				declarations.push(
+					b.let(
+						path.node,
+						b.thunk(
+							/** @type {import('estree').Expression} */ (
+								context.visit(path.expression?.(b.maybe_call(b.id(arg_alias))))
+							)
+						)
+					)
+				);
+
+				// we need to eagerly evaluate the expression in order to hit any
+				// 'Cannot access x before initialization' errors
+				if (context.state.options.dev) {
+					declarations.push(b.stmt(b.call(name)));
+				}
+
+				binding.expression = b.call(name);
+			}
 		}
+
+		body = b.block([
+			...declarations,
+			.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body
+		]);
 
 		const path = context.path;
 		// If we're top-level, then we can create a function for the snippet so that it can be referenced
