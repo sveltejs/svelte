@@ -34,11 +34,11 @@ export const READONLY_SYMBOL = Symbol('readonly');
 export function proxy(value, immutable = true) {
 	if (typeof value === 'object' && value != null && !is_frozen(value)) {
 		if (STATE_SYMBOL in value) {
-			const proxy2 = /** @type {import('./types.js').ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
+			const metadata = /** @type {import('./types.js').ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
 			// Check that the incoming value is the same proxy that this state symbol was created for:
 			// If someone copies over the state symbol to a new object (using Reflect.ownKeys) the referenced
 			// proxy could be stale and we should not return it.
-			if (proxy2.t === value || proxy2.p === value) return proxy2.p;
+			if (metadata.t === value || metadata.p === value) return metadata.p;
 		}
 
 		const prototype = get_prototype_of(value);
@@ -332,11 +332,11 @@ if (DEV) {
 export function readonly(value) {
 	const proxy = value && value[READONLY_SYMBOL];
 	if (proxy) {
-		const state_proxy = value[STATE_SYMBOL];
+		const metadata = value[STATE_SYMBOL];
 		// Check that the incoming value is the same proxy that this readonly symbol was created for:
 		// If someone copies over the readonly symbol to a new object (using Reflect.ownKeys) the referenced
 		// proxy could be stale and we should not return it.
-		if (state_proxy.p === value) return proxy;
+		if (metadata.p === value) return proxy;
 	}
 
 	if (
