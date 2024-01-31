@@ -59,7 +59,7 @@ export interface Root extends BaseNode {
 	metadata: {
 		/** Whether the component was parsed with typescript */
 		ts: boolean;
-	}
+	};
 }
 
 export interface SvelteOptions {
