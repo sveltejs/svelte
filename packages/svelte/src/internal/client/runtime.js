@@ -1001,7 +1001,7 @@ function capture_fine_grain_derived_property() {
 /**
  * @template V
  * @param {import('./types.js').Signal<V>} signal
- * @param {boolean} [skip_derived_proxy] Skip creation of proxying when accessing properties of a derived value
+ * @param {boolean} [skip_derived_proxy] Skip creation of proxies when accessing properties of a derived value
  * @returns {V}
  */
 export function get(signal, skip_derived_proxy = false) {
