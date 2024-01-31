@@ -61,7 +61,8 @@ let current_queued_effects = [];
 
 /**
  * Tracks the current property access to a derived signal object, e.g.
- * for each property access in `a.b.c`, we'd get on the derived proxy object `a`.
+ * `a.b.c` for each property access, push a new `current_derived_proxy_property` containing
+ * metadata about that property and the derived signal it's occuring on.
  * @type {{ s: import('./types.js').ComputationSignal, p: Array<string | symbol> } | null}
  */
 let current_derived_proxy_property = null;
