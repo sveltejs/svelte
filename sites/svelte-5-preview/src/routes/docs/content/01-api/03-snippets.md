@@ -219,48 +219,45 @@ Any content inside the component tags that is _not_ a snippet declaration implic
 
 > Note that you cannot have a prop called `children` if you also have content inside the component — for this reason, you should avoid having props with that name
 
+## Typing snippets
+
+Snippets implement the `Snippet` interface imported from `'svelte'`:
+
+```diff
+-<script>
+-	let { data, children, row } = $props();
++<script lang="ts">
++	import type { Snippet } from 'svelte';
++
++	let { data, children, row } = $props<{
++		data: any[];
++		children: Snippet;
++		row: Snippet<[any]>;
++	}>();
+</script>
+```
+
+With this change, red squigglies will appear if you try and use the component without providing a `data` prop and a `row` snippet. Notice that the type argument provided to `Snippet` is a tuple, since snippets can have multiple parameters.
+
+We can tighten things up further by declaring a generic, so that `data` and `row` refer to the same type:
+
+```diff
+-<script lang="ts">
++<script lang="ts" generics="T">
+	import type { Snippet } from 'svelte';
+
+	let { data, children, row } = $props<{
+-		data: any[];
++		data: T[];
+		children: Snippet;
+-		row: Snippet<[any]>;
++		row: Snippet<[T]>;
+	}>();
+</script>
+```
+
 ## Snippets and slots
 
 In Svelte 4, content can be passed to components using [slots](https://svelte.dev/docs/special-elements#slot). Snippets are more powerful and flexible, and as such slots are deprecated in Svelte 5.
 
 They continue to work, however, and you can mix and match snippets and slots in your components.
-
-## Typing snippets
-
-You can import the `Snippet` type from `'svelte'`:
-
-```svelte
-<script lang="ts">
-	import type { Snippet } from 'svelte';
-	let { header } = $props<{ header: Snippet }>();
-</script>
-```
-
-The `Snippet` type is generic. Here's how you'd type various cases:
-
-```ts
-// @errors: 2305
-import type { Snippet } from 'svelte';
-
-type SnippetWithNoArgs = Snippet;
-type SnippetWithOneArg = Snippet<[argOne: number]>;
-type SnippetWithMultipleArgs = Snippet<
-	[argOne: number, argTwo: string]
->;
-```
-
-And here are the snippet declarations matching those cases (note: this example uses TypeScript):
-
-```svelte
-{#snippet withNoArgs()}
-	<!-- -->
-{/snippet}
-
-{#snippet withOneArg(argOne: number)}
-	<!-- -->
-{/snippet}
-
-{#snippet withMultipleArgs(argOne: number, argTwo: string)}
-	<!-- -->
-{/snippet}
-```
