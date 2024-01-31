@@ -1105,7 +1105,7 @@ function create_block(parent, name, nodes, context) {
 		const name = first_is_text ? 'text' : first.type === 'RegularElement' ? first.name : 'node';
 		const node_id = b.id(context.state.scope.generate(name));
 
-		process_children(trimmed, node_id, {
+		process_children(trimmed, node_id, false, {
 			...context,
 			state
 		});
@@ -1432,9 +1432,10 @@ function serialize_event_attribute(node, context) {
  * corresponding template node references these updates are applied to.
  * @param {import('#compiler').SvelteNode[]} nodes
  * @param {import('estree').Expression} parent
+ * @param {boolean} is_element
  * @param {import('../types.js').ComponentContext} context
  */
-function process_children(nodes, parent, { visit, state }) {
+function process_children(nodes, parent, is_element, { visit, state }) {
 	const within_bound_contenteditable = state.metadata.bound_contenteditable;
 
 	/** @typedef {Array<import('#compiler').Text | import('#compiler').ExpressionTag>} Sequence */
@@ -1549,14 +1550,7 @@ function process_children(nodes, parent, { visit, state }) {
 				// get hoisted inside clean_nodes?
 				visit(node, state);
 			} else {
-				// TODO this logic is a bit ropey
-				if (
-					node.type === 'EachBlock' &&
-					nodes.length === 1 &&
-					parent.type === 'CallExpression' &&
-					parent.callee.type === 'Identifier' &&
-					parent.callee.name === '$.child'
-				) {
+				if (node.type === 'EachBlock' && nodes.length === 1 && is_element) {
 					node.metadata.is_controlled = true;
 					visit(node, state);
 				} else {
@@ -2053,6 +2047,7 @@ export const template_visitors = {
 					? b.member(context.state.node, b.id('content'))
 					: context.state.node
 			),
+			true,
 			{ ...context, state }
 		);
 
