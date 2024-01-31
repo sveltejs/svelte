@@ -1110,41 +1110,39 @@ function create_block(parent, name, nodes, context) {
 			state
 		});
 
-		const template = state.template[0];
+		const use_space_fragment =
+			trimmed.some((node) => node.type === 'ExpressionTag') &&
+			trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag');
 
-		if (state.template.length === 1 && (template === ' ' || template === '<!>')) {
-			if (template === ' ') {
-				body.push(b.var(node_id, b.call('$.space', b.id('$$anchor'))), ...state.init);
-				close = b.stmt(b.call('$.close', b.id('$$anchor'), node_id));
-			} else {
-				body.push(
-					b.var(id, b.call('$.comment', b.id('$$anchor'))),
-					b.var(node_id, b.call('$.child_frag', id)),
-					...state.init
-				);
-				close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
-			}
+		if (use_space_fragment) {
+			// special case
+			body.push(b.var(node_id, b.call('$.space', b.id('$$anchor'))), ...state.init);
+			close = b.stmt(b.call('$.close', b.id('$$anchor'), node_id));
 		} else {
-			const callee = namespace === 'svg' ? '$.svg_template' : '$.template';
+			if (state.template.length === 1 && state.template[0] === '<!>') {
+				body.push(b.var(id, b.call('$.comment', b.id('$$anchor'))));
+			} else {
+				const callee = namespace === 'svg' ? '$.svg_template' : '$.template';
 
-			state.hoisted.push(
-				b.var(
-					template_name,
-					b.call(callee, b.template([b.quasi(state.template.join(''), true)], []), b.true)
-				)
-			);
-
-			body.push(
-				b.var(
-					id,
-					b.call(
-						'$.open_frag',
-						b.id('$$anchor'),
-						b.literal(!state.metadata.template_needs_import_node),
-						template_name
+				state.hoisted.push(
+					b.var(
+						template_name,
+						b.call(callee, b.template([b.quasi(state.template.join(''), true)], []), b.true)
 					)
-				)
-			);
+				);
+
+				body.push(
+					b.var(
+						id,
+						b.call(
+							'$.open_frag',
+							b.id('$$anchor'),
+							b.literal(!state.metadata.template_needs_import_node),
+							template_name
+						)
+					)
+				);
+			}
 
 			// if the first node is a text node, we may need to insert it during hydration,
 			// hence the `true` argument
