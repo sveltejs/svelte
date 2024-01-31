@@ -76,7 +76,7 @@ Assignments to destructured parts of a `@const` declaration are no longer allowe
 
 ### Stricter CSS `:global` selector validation
 
-Previously, a selector like `.foo :global(bar).baz` was valid. In Svelte 5, this is a validation error instead. The reason is that in this selector the resulting CSS would be equivalent to one without `:global` - in other words, `:global` is ignored in this case.
+Previously, a compound selector starting with a global modifier which has universal or type selectors (like `:global(span).foo`) was valid. In Svelte 5, this is a validation error instead. The reason is that in this selector the resulting CSS would be equivalent to one without `:global` - in other words, `:global` is ignored in this case.
 
 ### CSS hash position no longer deterministic
 
@@ -107,3 +107,11 @@ In Svelte 4, it was possible to specify event attributes on HTML elements as a s
 ```
 
 This is not recommended, and is no longer possible in Svelte 5, where properties like `onclick` replace `on:click` as the mechanism for adding [event handlers](/docs/event-handlers).
+
+### `null` and `undefined` become the empty string
+
+In Svelte 4, `null` and `undefined` were printed as the corresponding string. In 99 out of 100 cases you want this to become the empty string instead, which is also what most other frameworks out there do. Therefore, in Svelte 5, `null` and `undefined` become the empty string.
+
+### `bind:files` values can only be `null`, `undefined` or `FileList`
+
+`bind:files` is now a two-way binding. As such, when setting a value, it needs to be either falsy (`null` or `undefined`) or of type `FileList`.

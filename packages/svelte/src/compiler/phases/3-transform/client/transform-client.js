@@ -7,7 +7,7 @@ import { global_visitors } from './visitors/global.js';
 import { javascript_visitors } from './visitors/javascript.js';
 import { javascript_visitors_runes } from './visitors/javascript-runes.js';
 import { javascript_visitors_legacy } from './visitors/javascript-legacy.js';
-import { serialize_get_binding } from './utils.js';
+import { is_state_source, serialize_get_binding } from './utils.js';
 import { remove_types } from '../typescript.js';
 
 /**
@@ -201,7 +201,7 @@ export function client_component(source, analysis, options) {
 									b.call('$.validate_store', store_reference, b.literal(name.slice(1))),
 									store_get
 								])
-						  )
+							)
 						: b.thunk(store_get)
 				)
 			);
@@ -233,15 +233,16 @@ export function client_component(source, analysis, options) {
 				'$.bind_prop',
 				b.id('$$props'),
 				b.literal(alias ?? name),
-				binding?.kind === 'state' ? b.call('$.get', b.id(name)) : b.id(name)
+				binding?.kind === 'state' || binding?.kind === 'frozen_state'
+					? b.call('$.get', b.id(name))
+					: b.id(name)
 			)
 		);
 	});
 
 	const properties = analysis.exports.map(({ name, alias }) => {
 		const binding = analysis.instance.scope.get(name);
-		const is_source =
-			binding?.kind === 'state' && (!state.analysis.immutable || binding.reassigned);
+		const is_source = binding !== null && is_state_source(binding, state);
 
 		// TODO This is always a getter because the `renamed-instance-exports` test wants it that way.
 		// Should we for code size reasons make it an init in runes mode and/or non-dev mode?

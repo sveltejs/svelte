@@ -83,7 +83,6 @@ export function is_hoistable_function(node) {
  * @param {import('#compiler').Namespace} namespace
  * @param {boolean} preserve_whitespace
  * @param {boolean} preserve_comments
- * @param {boolean} preserve_noscript
  */
 export function clean_nodes(
 	parent,
@@ -91,8 +90,7 @@ export function clean_nodes(
 	path,
 	namespace = 'html',
 	preserve_whitespace,
-	preserve_comments,
-	preserve_noscript
+	preserve_comments
 ) {
 	/** @type {import('#compiler').SvelteNode[]} */
 	const hoisted = [];
@@ -102,10 +100,6 @@ export function clean_nodes(
 
 	for (const node of nodes) {
 		if (node.type === 'Comment' && !preserve_comments) {
-			continue;
-		}
-
-		if (node.type === 'RegularElement' && node.name === 'noscript' && !preserve_noscript) {
 			continue;
 		}
 
@@ -177,8 +171,9 @@ export function clean_nodes(
 			node.data = node.data.replace(regex_whitespaces_strict, ' ');
 			node.raw = node.raw.replace(regex_whitespaces_strict, ' ');
 			if (
-				(last_text === null || !regex_ends_with_whitespaces.test(last_text.data)) &&
-				(!can_remove_entirely || node.data !== ' ')
+				(last_text === null && !can_remove_entirely) ||
+				node.data !== ' ' ||
+				node.data.charCodeAt(0) === 160 // non-breaking space
 			) {
 				trimmed.push(node);
 			}
@@ -193,7 +188,7 @@ export function clean_nodes(
 }
 
 /**
- * Infers the new namespace for the children of a node.
+ * Infers the namespace for the children of a node that should be used when creating the `$.template(...)`.
  * @param {import('#compiler').Namespace} namespace
  * @param {import('#compiler').SvelteNode} parent
  * @param {import('#compiler').SvelteNode[]} nodes
@@ -203,36 +198,31 @@ export function infer_namespace(namespace, parent, nodes, path) {
 	const parent_node =
 		parent.type === 'Fragment'
 			? // Messy: We know that Fragment calls create_block directly, so we can do this here
-			  path.at(-1)
+				path.at(-1)
 			: parent;
 
-	if (
-		namespace !== 'foreign' &&
+	if (namespace !== 'foreign') {
+		if (parent_node?.type === 'RegularElement' && parent_node.name === 'foreignObject') {
+			return 'html';
+		}
+
+		if (parent_node?.type === 'RegularElement' || parent_node?.type === 'SvelteElement') {
+			return parent_node.metadata.svg ? 'svg' : 'html';
+		}
+
 		// Re-evaluate the namespace inside slot nodes that reset the namespace
-		(parent_node === undefined ||
+		if (
+			parent_node === undefined ||
 			parent_node.type === 'Root' ||
 			parent_node.type === 'Component' ||
 			parent_node.type === 'SvelteComponent' ||
 			parent_node.type === 'SvelteFragment' ||
-			parent_node.type === 'SnippetBlock')
-	) {
-		// Heuristic: Keep current namespace, unless we find a regular element,
-		// in which case we always want html, or we only find svg nodes,
-		// in which case we assume svg.
-		let only_svg = true;
-		for (const node of nodes) {
-			if (node.type === 'RegularElement') {
-				if (!node.metadata.svg) {
-					namespace = 'html';
-					only_svg = false;
-					break;
-				}
-			} else if (node.type !== 'Text' || node.data.trim() !== '') {
-				only_svg = false;
+			parent_node.type === 'SnippetBlock'
+		) {
+			const new_namespace = check_nodes_for_namespace(nodes, 'keep');
+			if (new_namespace !== 'keep' && new_namespace !== 'maybe_html') {
+				return new_namespace;
 			}
-		}
-		if (only_svg) {
-			namespace = 'svg';
 		}
 	}
 
@@ -240,36 +230,79 @@ export function infer_namespace(namespace, parent, nodes, path) {
 }
 
 /**
- * @param {import('#compiler').RegularElement} node
- * @param {import('#compiler').Namespace} namespace
- * @param {import('#compiler').SvelteNode[]} path
- * @returns {import('#compiler').Namespace}
+ * Heuristic: Keep current namespace, unless we find a regular element,
+ * in which case we always want html, or we only find svg nodes,
+ * in which case we assume svg.
+ * @param {import('#compiler').SvelteNode[]} nodes
+ * @param {import('#compiler').Namespace | 'keep' | 'maybe_html'} namespace
  */
-export function determine_element_namespace(node, namespace, path) {
-	if (namespace !== 'foreign') {
-		let parent = path.at(-1);
-		if (parent?.type === 'Fragment') {
-			parent = path.at(-2);
-		}
-
-		if (node.name === 'foreignObject') {
-			return 'html';
-		} else if (
-			namespace !== 'svg' ||
-			parent?.type === 'Component' ||
-			parent?.type === 'SvelteComponent' ||
-			parent?.type === 'SvelteFragment' ||
-			parent?.type === 'SnippetBlock'
-		) {
-			if (node.metadata.svg) {
-				return 'svg';
-			} else {
-				return 'html';
+function check_nodes_for_namespace(nodes, namespace) {
+	for (const node of nodes) {
+		if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
+			if (!node.metadata.svg) {
+				namespace = 'html';
+				break;
+			} else if (namespace === 'keep') {
+				namespace = 'svg';
 			}
+		} else if (
+			(node.type === 'Text' && node.data.trim() !== '') ||
+			node.type === 'HtmlTag' ||
+			node.type === 'RenderTag'
+		) {
+			namespace = 'maybe_html';
+		} else if (node.type === 'EachBlock') {
+			namespace = check_nodes_for_namespace(node.body.nodes, namespace);
+			if (namespace === 'html') break;
+			if (node.fallback) {
+				namespace = check_nodes_for_namespace(node.fallback.nodes, namespace);
+				if (namespace === 'html') break;
+			}
+		} else if (node.type === 'IfBlock') {
+			namespace = check_nodes_for_namespace(node.consequent.nodes, namespace);
+			if (namespace === 'html') break;
+			if (node.alternate) {
+				namespace = check_nodes_for_namespace(node.alternate.nodes, namespace);
+				if (namespace === 'html') break;
+			}
+		} else if (node.type === 'AwaitBlock') {
+			if (node.pending) {
+				namespace = check_nodes_for_namespace(node.pending.nodes, namespace);
+				if (namespace === 'html') break;
+			}
+			if (node.then) {
+				namespace = check_nodes_for_namespace(node.then.nodes, namespace);
+				if (namespace === 'html') break;
+			}
+			if (node.catch) {
+				namespace = check_nodes_for_namespace(node.catch.nodes, namespace);
+				if (namespace === 'html') break;
+			}
+		} else if (node.type === 'KeyBlock') {
+			namespace = check_nodes_for_namespace(node.fragment.nodes, namespace);
+			if (namespace === 'html') break;
 		}
 	}
 
 	return namespace;
+}
+
+/**
+ * Determines the namespace the children of this node are in.
+ * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
+ * @param {import('#compiler').Namespace} namespace
+ * @returns {import('#compiler').Namespace}
+ */
+export function determine_namespace_for_children(node, namespace) {
+	if (namespace === 'foreign') {
+		return namespace;
+	}
+
+	if (node.name === 'foreignObject') {
+		return 'html';
+	}
+
+	return node.metadata.svg ? 'svg' : 'html';
 }
 
 /**

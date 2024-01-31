@@ -10,6 +10,7 @@ import {
 	DYNAMIC_ELEMENT_BLOCK,
 	SNIPPET_BLOCK
 } from './block.js';
+import type { READONLY_SYMBOL, STATE_SYMBOL } from './proxy.js';
 import { DERIVED, EFFECT, RENDER_EFFECT, SOURCE, PRE_EFFECT, LAZY_PROPERTY } from './runtime.js';
 
 // Put all internal types in this file. Once we convert to JSDoc, we can make this a d.ts file
@@ -99,14 +100,22 @@ export type ComputationSignal<V = unknown> = {
 	/** The types that the signal represent, as a bitwise value */
 	f: SignalFlags;
 	/** init: The function that we invoke for effects and computeds */
-	i: null | (() => V) | (() => void | (() => void)) | ((b: Block) => void | (() => void));
+	i:
+		| null
+		| (() => V)
+		| (() => void | (() => void))
+		| ((b: Block, s: Signal) => void | (() => void));
 	/** references: Anything that a signal owns */
 	r: null | ComputationSignal[];
 	/** value: The latest value for this signal, doubles as the teardown for effects */
 	v: V;
+	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
+	l: number;
 };
 
 export type Signal<V = unknown> = SourceSignal<V> | ComputationSignal<V>;
+
+export type SignalDebug<V = unknown> = SourceSignalDebug & Signal<V>;
 
 export type EffectSignal = ComputationSignal<null | (() => void)>;
 
@@ -286,14 +295,7 @@ export type EachBlock = {
 
 export type EachItemBlock = {
 	/** transition */
-	a:
-		| null
-		| ((
-				block: EachItemBlock,
-				transitions: Set<Transition>,
-				index: number,
-				index_is_reactive: boolean
-		  ) => void);
+	a: null | ((block: EachItemBlock, transitions: Set<Transition>) => void);
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
@@ -386,4 +388,34 @@ export type Render = {
 export type Raf = {
 	tick: (callback: (time: DOMHighResTimeStamp) => void) => any;
 	now: () => number;
+};
+
+export interface Task {
+	abort(): void;
+	promise: Promise<void>;
+}
+
+export type TaskCallback = (now: number) => boolean | void;
+
+export type TaskEntry = { c: TaskCallback; f: () => void };
+
+export interface ProxyMetadata<T = Record<string | symbol, any>> {
+	/** A map of signals associated to the properties that are reactive */
+	s: Map<string | symbol, SourceSignal<any>>;
+	/** A version counter, used within the proxy to signal changes in places where there's no other way to signal an update */
+	v: SourceSignal<number>;
+	/** `true` if the proxified object is an array */
+	a: boolean;
+	/** Immutable: Whether to use a source or mutable source under the hood */
+	i: boolean;
+	/** The associated proxy */
+	p: ProxyStateObject<T> | ProxyReadonlyObject<T>;
+}
+
+export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
+	[STATE_SYMBOL]: ProxyMetadata;
+};
+
+export type ProxyReadonlyObject<T = Record<string | symbol, any>> = ProxyStateObject<T> & {
+	[READONLY_SYMBOL]: ProxyMetadata;
 };

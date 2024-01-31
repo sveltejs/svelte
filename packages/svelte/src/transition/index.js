@@ -12,14 +12,14 @@ function cubic_out(t) {
  * @param {number} t
  * @returns {number}
  */
-export function cubic_in_out(t) {
+function cubic_in_out(t) {
 	return t < 0.5 ? 4.0 * t * t * t : 0.5 * Math.pow(2.0 * t - 2.0, 3.0) + 1.0;
 }
 
 /** @param {number | string} value
  * @returns {[number, string]}
  */
-export function split_css_unit(value) {
+function split_css_unit(value) {
 	const split = typeof value === 'string' && value.match(/^\s*(-?[\d.]+)([^\s]*)\s*$/);
 	return split ? [parseFloat(split[1]), split[2] || 'px'] : [/** @type {number} */ (value), 'px'];
 }

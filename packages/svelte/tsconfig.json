@@ -21,6 +21,7 @@
 			"svelte/compiler": ["./src/compiler/public.d.ts"],
 			"svelte/internal": ["./src/internal/index.js"],
 			"svelte/legacy": ["./src/legacy/legacy-client.js"],
+			"svelte/motion": ["./src/motion/public.d.ts"],
 			"svelte/server": ["./src/server/index.js"],
 			"svelte/store": ["./src/store/public.d.ts"],
 			"#compiler": ["./src/compiler/types/index.d.ts"]
