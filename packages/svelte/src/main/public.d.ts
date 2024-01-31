@@ -190,11 +190,20 @@ declare const SnippetReturn: unique symbol;
  * ```
  * You can only call a snippet through the `{@render ...}` tag.
  */
-export interface Snippet<T = void> {
-	(arg: T): typeof SnippetReturn & {
-		_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
-	};
-}
+export type Snippet<T extends unknown[] = []> =
+	// this conditional allows tuples but not arrays. Arrays would indicate a
+	// rest parameter type, which is not supported. If rest parameters are added
+	// in the future, the condition can be removed.
+	number extends T['length']
+		? never
+		: {
+				(
+					this: void,
+					...args: T
+				): typeof SnippetReturn & {
+					_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
+				};
+			};
 
 interface DispatchOptions {
 	cancelable?: boolean;

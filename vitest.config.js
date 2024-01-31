@@ -37,6 +37,7 @@ export default defineConfig({
 		dir: '.',
 		reporters: ['dot'],
 		include: [
+			'packages/svelte/**/*.test.ts',
 			'packages/svelte/tests/*/test.ts',
 			'packages/svelte/tests/runtime-browser/test-ssr.ts'
 		],

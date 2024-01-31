@@ -1,13 +1,10 @@
+import { noop } from '../internal/common.js';
 import { subscribe_to_store } from './utils.js';
 
 /**
  * @type {Array<import('./private').SubscribeInvalidateTuple<any> | any>}
  */
 const subscriber_queue = [];
-
-/** @returns {void} */
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-function noop() {}
 
 /**
  * Creates a `Readable` store that allows reading by subscription.

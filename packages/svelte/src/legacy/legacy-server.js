@@ -30,7 +30,7 @@ export function asClassComponent(component) {
 			html: result.html
 		};
 	};
-	// this is present for SSR
+	// @ts-expect-error this is present for SSR
 	component_constructor.render = _render;
 
 	// @ts-ignore

@@ -837,7 +837,7 @@ function is_known_safe_call(node, context) {
  * @param {import('estree').ArrowFunctionExpression | import('estree').FunctionExpression | import('estree').FunctionDeclaration} node
  * @param {import('./types').Context} context
  */
-export const function_visitor = (node, context) => {
+const function_visitor = (node, context) => {
 	// TODO retire this in favour of a more general solution based on bindings
 	node.metadata = {
 		// module context -> already hoisted

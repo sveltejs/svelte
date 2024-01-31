@@ -57,7 +57,7 @@ export function async(func) {
  * @param {import('estree').Expression} argument
  * @returns {import('estree').AwaitExpression}
  */
-export function await_builder(argument) {
+function await_builder(argument) {
 	return { type: 'AwaitExpression', argument };
 }
 
@@ -236,7 +236,7 @@ export function private_id(name) {
  * @param {string} local
  * @returns {import('estree').ImportNamespaceSpecifier}
  */
-export function import_namespace(local) {
+function import_namespace(local) {
 	return {
 		type: 'ImportNamespaceSpecifier',
 		local: id(local)
@@ -592,7 +592,6 @@ export function throw_error(str) {
 
 export {
 	await_builder as await,
-	new_builder as new,
 	let_builder as let,
 	const_builder as const,
 	var_builder as var,
