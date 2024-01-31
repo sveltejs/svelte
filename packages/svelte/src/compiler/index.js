@@ -1,13 +1,13 @@
-import { parse as _parse } from './phases/1-parse/index.js';
-import { parse as parse_acorn } from './phases/1-parse/acorn.js';
-import { analyze_component, analyze_module } from './phases/2-analyze/index.js';
-import { transform_component, transform_module } from './phases/3-transform/index.js';
 import { getLocator } from 'locate-character';
 import { walk } from 'zimmerframe';
-import { validate_component_options, validate_module_options } from './validate-options.js';
-import { convert } from './legacy.js';
 import { CompileError } from './errors.js';
-import { strip_ts_assertions } from './phases/1-parse/strip_ts_assertions.js';
+import { convert } from './legacy.js';
+import { parse as parse_acorn } from './phases/1-parse/acorn.js';
+import { parse as _parse } from './phases/1-parse/index.js';
+import { remove_typescript_nodes } from './phases/1-parse/remove_typescript_nodes.js';
+import { analyze_component, analyze_module } from './phases/2-analyze/index.js';
+import { transform_component, transform_module } from './phases/3-transform/index.js';
+import { validate_component_options, validate_module_options } from './validate-options.js';
 export { default as preprocess } from './preprocess/index.js';
 
 /**
@@ -31,9 +31,9 @@ export function compile(source, options) {
 		if (parsed.metadata.ts) {
 			parsed = {
 				...parsed,
-				fragment: parsed.fragment && strip_ts_assertions(parsed.fragment),
-				instance: parsed.instance && strip_ts_assertions(parsed.instance),
-				module: parsed.module && strip_ts_assertions(parsed.module)
+				fragment: parsed.fragment && remove_typescript_nodes(parsed.fragment),
+				instance: parsed.instance && remove_typescript_nodes(parsed.instance),
+				module: parsed.module && remove_typescript_nodes(parsed.module)
 			};
 		}
 
