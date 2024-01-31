@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.44
+
+### Patch Changes
+
+- fix: bindings with typescript assertions ([#10329](https://github.com/sveltejs/svelte/pull/10329))
+
+- fix: only reuse state proxies that belong to the current value ([#10343](https://github.com/sveltejs/svelte/pull/10343))
+
 ## 5.0.0-next.43
 
 ### Patch Changes
