@@ -1099,7 +1099,11 @@ function create_block(parent, name, nodes, context) {
 		body.push(...state.init);
 	} else if (trimmed.length > 0) {
 		const id = b.id(context.state.scope.generate('fragment'));
-		const node_id = b.id(context.state.scope.generate('node'));
+
+		const first = trimmed[0];
+		const first_is_text = first.type === 'Text' || first.type === 'ExpressionTag';
+		const name = first_is_text ? 'text' : first.type === 'RegularElement' ? first.name : 'node';
+		const node_id = b.id(context.state.scope.generate(name));
 
 		process_children(trimmed, node_id, {
 			...context,
@@ -1139,10 +1143,19 @@ function create_block(parent, name, nodes, context) {
 						b.literal(!state.metadata.template_needs_import_node),
 						template_name
 					)
-				),
-				b.var(node_id, b.call('$.child_frag', id)),
-				...state.init
+				)
 			);
+
+			// if the first node is a text node, we may need to insert it during hydration,
+			// hence the `true` argument
+			body.push(
+				b.var(
+					node_id,
+					first_is_text ? b.call('$.child_frag', id, b.true) : b.call('$.child_frag', id)
+				)
+			);
+
+			body.push(...state.init);
 
 			close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
 		}
@@ -1513,7 +1526,6 @@ function process_children(nodes, parent, { visit, state }) {
 		expression = b.call('$.sibling', text_id);
 	}
 
-	let is_fragment = false;
 	for (let i = 0; i < nodes.length; i += 1) {
 		const node = nodes[i];
 
@@ -1535,6 +1547,7 @@ function process_children(nodes, parent, { visit, state }) {
 				// get hoisted inside clean_nodes?
 				visit(node, state);
 			} else {
+				// TODO this logic is a bit ropey
 				if (
 					node.type === 'EachBlock' &&
 					nodes.length === 1 &&

@@ -182,17 +182,29 @@ export function child(node) {
 /**
  * @template {Node | Node[]} N
  * @param {N} node
+ * @param {boolean} is_text
  * @returns {Node | null}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function child_frag(node) {
+export function child_frag(node, is_text) {
 	if (current_hydration_fragment !== null) {
 		const first_node = /** @type {Node[]} */ (node)[0];
-		if (current_hydration_fragment !== null && first_node !== null) {
+
+		// if an {expression} is empty during SSR, there might be no
+		// text node to hydrate — we must therefore create one
+		if (is_text && first_node?.nodeType !== 3) {
+			const text = document.createTextNode('');
+			current_hydration_fragment.unshift(text);
+			return text;
+		}
+
+		if (first_node !== null) {
 			return capture_fragment_from_node(first_node);
 		}
+
 		return first_node;
 	}
+
 	return first_child_get.call(/** @type {Node} */ (node));
 }
 
