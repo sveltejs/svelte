@@ -195,6 +195,9 @@ export function child_frag(node, is_text) {
 		if (is_text && first_node?.nodeType !== 3) {
 			const text = document.createTextNode('');
 			current_hydration_fragment.unshift(text);
+			if (first_node) {
+				/** @type {DocumentFragment} */ (first_node.parentNode).insertBefore(text, first_node);
+			}
 			return text;
 		}
 

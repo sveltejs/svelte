@@ -1448,6 +1448,8 @@ function process_children(nodes, parent, { visit, state }) {
 	 * @param {Sequence} sequence
 	 */
 	function flush_sequence(sequence) {
+		const text_id = get_node_id(expression, state, 'text');
+
 		if (sequence.length === 1) {
 			const node = sequence[0];
 
@@ -1459,7 +1461,6 @@ function process_children(nodes, parent, { visit, state }) {
 
 			state.template.push(' ');
 
-			const text_id = get_node_id(expression, state, 'text');
 			const singular = b.stmt(
 				b.call(
 					'$.text_effect',
@@ -1495,32 +1496,29 @@ function process_children(nodes, parent, { visit, state }) {
 					)
 				);
 			}
-
-			return;
-		}
-
-		state.template.push(' ');
-
-		const text_id = get_node_id(expression, state, 'text');
-		const contains_call_expression = sequence.some(
-			(n) => n.type === 'ExpressionTag' && n.metadata.contains_call_expression
-		);
-		const assignment = serialize_template_literal(sequence, visit, state)[1];
-		const init = b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), assignment));
-		const singular = b.stmt(b.call('$.text_effect', text_id, b.thunk(assignment)));
-
-		if (contains_call_expression && !within_bound_contenteditable) {
-			state.update_effects.push(singular);
-		} else if (
-			sequence.some((node) => node.type === 'ExpressionTag' && node.metadata.dynamic) &&
-			!within_bound_contenteditable
-		) {
-			state.update.push({
-				singular,
-				grouped: b.stmt(b.call('$.text', text_id, assignment))
-			});
 		} else {
-			state.init.push(init);
+			state.template.push(' ');
+
+			const contains_call_expression = sequence.some(
+				(n) => n.type === 'ExpressionTag' && n.metadata.contains_call_expression
+			);
+			const assignment = serialize_template_literal(sequence, visit, state)[1];
+			const init = b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), assignment));
+			const singular = b.stmt(b.call('$.text_effect', text_id, b.thunk(assignment)));
+
+			if (contains_call_expression && !within_bound_contenteditable) {
+				state.update_effects.push(singular);
+			} else if (
+				sequence.some((node) => node.type === 'ExpressionTag' && node.metadata.dynamic) &&
+				!within_bound_contenteditable
+			) {
+				state.update.push({
+					singular,
+					grouped: b.stmt(b.call('$.text', text_id, assignment))
+				});
+			} else {
+				state.init.push(init);
+			}
 		}
 
 		expression = b.call('$.sibling', text_id);
