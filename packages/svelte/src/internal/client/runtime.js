@@ -59,6 +59,8 @@ let current_queued_pre_and_render_effects = [];
 /** @type {import('./types.js').EffectSignal[]} */
 let current_queued_effects = [];
 
+// Tracks the current property access to a derived signal object, e.g.
+// `a.b.c` for each property access, we'd get on the derived proxy object `a`.
 /** @type {{ s: import('./types.js').ComputationSignal, p: Array<string | symbol> } | null} */
 let current_derived_proxy_property = null;
 
@@ -836,10 +838,10 @@ export async function tick() {
  * @returns {void}
  */
 function update_derived(signal, force_schedule) {
-	let derived_value =
-		/** @type {import('./types.js').DerivedSignalValue<V> | typeof UNINITIALIZED} */ (signal.v);
-	if (derived_value === UNINITIALIZED) {
-		signal.v = derived_value = /** @type {import('./types.js').DerivedSignalValue<V>} */ ({
+	let derived_state =
+		/** @type {import('./types.js').DerivedSignalState<V> | typeof UNINITIALIZED} */ (signal.v);
+	if (derived_state === UNINITIALIZED) {
+		signal.v = derived_state = /** @type {import('./types.js').DerivedSignalState<V>} */ ({
 			p: null,
 			v: UNINITIALIZED,
 			o: null
@@ -847,9 +849,9 @@ function update_derived(signal, force_schedule) {
 	}
 	const previous_updating_derived = updating_derived;
 	updating_derived = true;
-	if (derived_value.p !== null) {
-		derived_value.p = null;
-		derived_value.o?.clear();
+	if (derived_state.p !== null) {
+		derived_state.p = null;
+		derived_state.o?.clear();
 	}
 	destroy_references(signal);
 	const value = execute_signal_fn(signal);
@@ -858,8 +860,8 @@ function update_derived(signal, force_schedule) {
 	set_signal_status(signal, status);
 	const equals = /** @type {import('./types.js').EqualsFunctions} */ (signal.e);
 
-	if (!equals(value, derived_value.v)) {
-		derived_value.v = value;
+	if (!equals(value, derived_state.v)) {
+		derived_state.v = value;
 		mark_signal_consumers(signal, DIRTY, force_schedule);
 
 		// @ts-expect-error
@@ -961,16 +963,16 @@ export function unsubscribe_on_destroy(stores) {
 
 /**
  * If the `current_derived_proxy_property` is not `null` then that means we should look at the current
- * property on the object and see if actually need original derived object dependency. For example,
+ * property on the object and see if we actually need the original derived object dependency. For example,
  * if you had this:
  *
- * a.b.c
+ * `a.b.c`
  *
  * Under-the-hood, `a` might be a derived signal, so we'd call get() on it. Resulting in `a` being a dependency
  * for the currently active effect. The accessors to `b` and `c` would result in the `current_derived_proxy_property`
  * changing to include ['b', 'c'] in the `current_derived_proxy_property.p` paths property. We can then use that to
- * determine a new derived temporary signal that encapsulates a.b.c. This temporarly signal then becomes the dependency
- * and we no longer need to the original depdency to `a` for the current effect. Thus making
+ * determine a new derived temporary signal that encapsulates `a.b.c`. This temporarly signal then becomes the dependency
+ * and we no longer need to the original depdency to `a` for the current effect.
  */
 function capture_fine_grain_derived_property() {
 	const derived_property =
@@ -999,6 +1001,7 @@ function capture_fine_grain_derived_property() {
 /**
  * @template V
  * @param {import('./types.js').Signal<V>} signal
+ * @param {boolean} [skip_derived_proxy] Skip creation of proxying when accessing properties of a derived value
  * @returns {V}
  */
 export function get(signal, skip_derived_proxy = false) {
@@ -1011,10 +1014,10 @@ export function get(signal, skip_derived_proxy = false) {
 
 	const flags = signal.f;
 	const is_derived = (flags & DERIVED) !== 0;
-	let value = signal.v;
 	if ((flags & DESTROYED) !== 0) {
+		let value = signal.v;
 		return /** @type {V} */ (
-			is_derived ? /** @type {import('./types.js').DerivedSignalValue<V>} */ (value).v : value
+			is_derived ? /** @type {import('./types.js').DerivedSignalState<V>} */ (value).v : value
 		);
 	}
 
@@ -1071,10 +1074,8 @@ export function get(signal, skip_derived_proxy = false) {
 				update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (signal), false);
 			}
 		}
-		const derived_signal_value = /** @type {import('./types.js').DerivedSignalValue<V>} */ (
-			signal.v
-		);
-		const value = derived_signal_value.v;
+		const derived_state = /** @type {import('./types.js').DerivedSignalState<V>} */ (signal.v);
+		const value = derived_state.v;
 		// If we are working with a derived that might be an object or array, then we might also want to
 		// apply the fine-grain derived property heuristic to them. However, we only need this heuristic in some cases:
 		// - inside a user effect ($effect or $effect.pre)
@@ -1088,9 +1089,9 @@ export function get(signal, skip_derived_proxy = false) {
 			effect_active_and_not_render_effect() &&
 			should_proxy_derived_value(value)
 		) {
-			let proxy = derived_signal_value.p;
+			let proxy = derived_state.p;
 			if (proxy === null) {
-				proxy = derived_signal_value.p = create_derived_proxy(
+				proxy = derived_state.p = create_derived_proxy(
 					/** @type {import('./types.js').ComputationSignal<V>} **/ (signal),
 					value
 				);
@@ -1441,10 +1442,10 @@ function is_last_current_dependency(signal) {
 function proxify_object(signal, value, handler, path) {
 	const keys = new Set(Reflect.ownKeys(/** @type {object} */ (value)));
 	const proxy = new Proxy(value, handler);
-	const derived_value = /** @type {import('./types.js').DerivedSignalValue<V>} */ (signal.v);
-	let proxied_objects = derived_value.o;
+	const derived_state = /** @type {import('./types.js').DerivedSignalState<V>} */ (signal.v);
+	let proxied_objects = derived_state.o;
 	if (proxied_objects === null) {
-		derived_value.o = proxied_objects = new Map();
+		derived_state.o = proxied_objects = new Map();
 	}
 	proxied_objects.set(value, {
 		x: proxy,
@@ -1486,10 +1487,10 @@ function create_derived_proxy(signal, derived_value) {
 		 */
 		get(target, prop, receiver) {
 			const value = Reflect.get(target, prop, receiver);
-			const derived_value = /** @type {import('./types.js').DerivedSignalValue<V>} */ (signal.v);
-			const proxied_objects = /** @type {any} */ (derived_value.o);
+			const derived_state = /** @type {import('./types.js').DerivedSignalState<V>} */ (signal.v);
+			const proxied_objects = /** @type {any} */ (derived_state.o);
 			const proxied_object = proxied_objects.get(target);
-			if (proxied_object === undefined) {
+			if (proxied_object === undefined || prop === STATE_SYMBOL) {
 				return value;
 			}
 			const { k: keys, p: path } = proxied_object;

@@ -84,9 +84,12 @@ export type SourceSignalDebug = {
 	inspect: Set<Function>;
 };
 
-export type DerivedSignalValue<V> = {
+/** signal derived value */
+export type DerivedSignalState<V> = {
 	v: V;
+	/** proxy for signal */
 	p: null | V;
+	/** proxy properties Map */
 	o: null | Map<any, { x: any; k: Set<string | symbol>; p: Array<string | symbol> }>;
 };
 
@@ -114,7 +117,7 @@ export type ComputationSignal<V = unknown> = {
 	/** references: Anything that a signal owns */
 	r: null | ComputationSignal[];
 	/** value: The latest value for this signal, doubles as the teardown for effects */
-	v: V | DerivedSignalValue<V>;
+	v: V | DerivedSignalState<V>;
 	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
 	l: number;
 };
