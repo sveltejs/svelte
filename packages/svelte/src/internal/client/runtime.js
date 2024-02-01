@@ -1504,9 +1504,8 @@ function create_derived_proxy(signal, derived_value) {
 					new_path = [...path, prop];
 					if (current_derived_property_access !== null) {
 						capture_derived_property_access(current_derived_property_access);
-					} else {
-						current_derived_property_access = { s: signal, p: new_path, v: value };
 					}
+					current_derived_property_access = { s: signal, p: new_path, v: value };
 				}
 				if (should_proxy_derived_value(value)) {
 					const possible_proxy = proxied_objects.get(value);
