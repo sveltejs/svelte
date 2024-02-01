@@ -968,11 +968,11 @@ export function unsubscribe_on_destroy(stores) {
  *
  * `a.b.c`
  *
- * Under-the-hood, `a` might be a derived signal, so we'd call get() on it. Resulting in `a` being a dependency
- * for the currently active effect. The accessors to `b` and `c` would result in the `current_derived_property_access`
- * changing to include ['b', 'c'] in the `current_derived_property_access.p` paths property. We can then use that to
- * determine a new derived temporary signal that encapsulates `a.b.c`. This temporarly signal then becomes the dependency
- * and we no longer need to the original depdency to `a` for the current effect.
+ * Under-the-hood, `a` might be a derived signal, so we'd call `get()` on it, resulting in `a` being a dependency
+ * of the currently active effect. The accessors to `b` and `c` would result in the `current_derived_property_access`
+ * changing to include `['b', 'c']` in the `current_derived_property_access.p` array. We can then use that to
+ * create a new temporary derived that encapsulates the `a.b.c` lookup. This temporary signal then replaces
+ * `a` as the effect's dependency.
  * @param {import('./types.js').DerivedPropertyAccess} derived_property_access
  */
 function capture_derived_property_access(derived_property_access) {
@@ -1073,13 +1073,10 @@ export function get(signal, skip_derived_proxy = false) {
 		}
 		const derived_state = /** @type {import('./types.js').DerivedSignalState<V>} */ (signal.v);
 		const value = derived_state.v;
-		// If we are working with a derived that might be an object or array, then we might also want to
-		// apply the fine-grain derived property heuristic to them. However, we only need this heuristic in some cases:
-		// - inside a user effect ($effect or $effect.pre)
-		// - inside another derived ($derived)
-		// Else we don't need to bother doing this as render effects and the rest of the internal architecture applys
-		// diffing which is more optimal than creating many derived signals. However, we can't do diffing inside user
-		// effects (far too many complications with cleanup functions etc).
+
+		// If accessing a derived inside a user effect (`$effect` or `$effect.pre`) or inside another derived,
+		// we return a proxy that intercepts property accesses and allows us to re-run those computations
+		// more conservatively. We don't do this for render effects, where we're able to diff instead.
 		if (
 			!skip_derived_proxy &&
 			is_runes(signal.x) &&
@@ -1093,10 +1090,13 @@ export function get(signal, skip_derived_proxy = false) {
 					value
 				);
 			}
+
 			return proxy;
 		}
+
 		return value;
 	}
+
 	return /** @type {V} */ (signal.v);
 }
 
