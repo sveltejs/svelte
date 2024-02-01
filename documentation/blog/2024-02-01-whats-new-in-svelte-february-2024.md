@@ -17,15 +17,15 @@ So let's dive in to check out what's new and see what the rest of the community 
 - `$env/static/public` is now exposed in service workers (**2.2.0**, [Docs](https://kit.svelte.dev/docs/modules#env-static-public), [#10994](https://github.com/sveltejs/kit/pull/10994))
 - `style-src-elem` is now supported in environments with a Content Security Policy (**2.2.1**, [Docs](https://kit.svelte.dev/docs/types#private-types-cspdirectives), [#11562](https://github.com/sveltejs/kit/pull/11562))
 - The new `reroute` hook allows you to change how URLs are translated into routes (**2.3.0**, [Docs](https://kit.svelte.dev/docs/hooks#universal-hooks-reroute), [#11537](https://github.com/sveltejs/kit/pull/11537))
-- The `read` function is now available in the `$app/server` module - allowing you to read assets from filesystem (**2.4.0**, [Docs](https://kit.svelte.dev/docs/modules#app-server-read), [#11649](https://github.com/sveltejs/kit/pull/11649))
-- Adapters can now provide an `emulate` for dev and preview servers. This is useful for providing access to e.g. KV namespaces in development (**2.5.0**, [Docs](https://kit.svelte.dev/docs/writing-adapters), [#11730](https://github.com/sveltejs/kit/pull/11730))
+- The `read` function is now available in the `$app/server` module - allowing you to read assets from the filesystem (**2.4.0**, [Docs](https://kit.svelte.dev/docs/modules#app-server-read), [#11649](https://github.com/sveltejs/kit/pull/11649))
+- Adapters can now `emulate` the prod environment for dev and preview servers by implementing the corresponding functions. This is useful for providing access to e.g. KV namespaces in development (**2.5.0**, [Docs](https://kit.svelte.dev/docs/writing-adapters), [#11730](https://github.com/sveltejs/kit/pull/11730))
 
 
 ## What's new in Svelte
 
 In case you missed it, [Svelte 5 is in preview](https://svelte-5-preview.vercel.app/docs/introduction). In the meantime, Svelte 4 (`@latest`) has had one bugfix release. There's just one new feature to highlight from the Svelte 5 changelog:
 
-- `$derived` props can now be modified (**5.0.0-next.31**, [Docs](https://svelte-5-preview.vercel.app/docs/runes#derived), [#10080](https://github.com/sveltejs/svelte/pull/10080))
+- Snippets can now take multiple arguments (**5.0.0-next.42**, [Docs](https://svelte-5-preview.vercel.app/docs/snippets), [#9988](https://github.com/sveltejs/svelte/pull/9988))
 
 For all the bug fixes, chores and underlying work required to get Svelte 5 to release-ready, check out [the CHANGELOG on main](https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md).
 
