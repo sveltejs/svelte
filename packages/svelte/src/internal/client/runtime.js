@@ -1440,11 +1440,7 @@ function proxify_object(signal, value, handler, path) {
 	const keys = new Set(Reflect.ownKeys(/** @type {object} */ (value)));
 	const proxy = new Proxy(value, handler);
 	const derived_state = /** @type {import('./types.js').DerivedSignalState<V>} */ (signal.v);
-	let proxied_objects = derived_state.o;
-	if (proxied_objects === null) {
-		derived_state.o = proxied_objects = new Map();
-	}
-	proxied_objects.set(value, {
+	(derived_state.o ??= new Map()).set(value, {
 		x: proxy,
 		k: keys,
 		p: path
