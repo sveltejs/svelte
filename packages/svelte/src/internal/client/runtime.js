@@ -377,7 +377,7 @@ function execute_signal_fn(signal) {
 			res = /** @type {() => V} */ (init)();
 		}
 		if (current_derived_property_access !== null) {
-			capture_derived_property_access();
+			capture_derived_property_access(current_derived_property_access);
 		}
 		let dependencies = /** @type {import('./types.js').Signal<unknown>[]} **/ (signal.d);
 		if (current_dependencies !== null) {
@@ -976,11 +976,9 @@ export function unsubscribe_on_destroy(stores) {
  * changing to include ['b', 'c'] in the `current_derived_property_access.p` paths property. We can then use that to
  * determine a new derived temporary signal that encapsulates `a.b.c`. This temporarly signal then becomes the dependency
  * and we no longer need to the original depdency to `a` for the current effect.
+ * @param {import('./types.js').DerivedPropertyAccess} derived_property_access
  */
-function capture_derived_property_access() {
-	const derived_property_access = /** @type {import('./types.js').DerivedPropertyAccess} */ (
-		current_derived_property_access
-	);
+function capture_derived_property_access(derived_property_access) {
 	if (is_last_current_dependency(derived_property_access.s)) {
 		if (current_dependencies === null) {
 			current_dependencies_index--;
@@ -1024,7 +1022,7 @@ export function get(signal, skip_derived_proxy = false) {
 	}
 
 	if (current_derived_property_access !== null) {
-		capture_derived_property_access();
+		capture_derived_property_access(current_derived_property_access);
 	}
 
 	if (is_signals_recorded) {
@@ -1511,7 +1509,7 @@ function create_derived_proxy(signal, derived_value) {
 				if (is_primitive_or_function_or_state_object(value)) {
 					new_path = [...path, prop];
 					if (current_derived_property_access !== null) {
-						capture_derived_property_access();
+						capture_derived_property_access(current_derived_property_access);
 					} else {
 						current_derived_property_access = { s: signal, p: new_path };
 					}
