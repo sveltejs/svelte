@@ -37,3 +37,18 @@ await createBundle({
 		[`${pkg.name}/types/compiler/interfaces`]: `${dir}/src/compiler/types/legacy-interfaces.d.ts`
 	}
 });
+
+const types = fs.readFileSync(`${dir}/types/index.d.ts`, 'utf-8');
+
+const bad_links = [...types.matchAll(/\]\((\/[^)]+)\)/g)];
+if (bad_links.length > 0) {
+	console.error(
+		`The following links in JSDoc annotations should be prefixed with https://svelte.dev:`
+	);
+
+	for (const [, link] of bad_links) {
+		console.error(`- ${link}`);
+	}
+
+	process.exit(1);
+}
