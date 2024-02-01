@@ -35,6 +35,20 @@ await createBundle({
 
 // There's no way to tell in JS that a class can have arbitrary properties, so we need to add that manually
 const types = fs.readFileSync('types/index.d.ts', 'utf-8');
+
+const bad_links = [...types.matchAll(/\]\((\/[^)]+)\)/g)];
+if (bad_links.length > 0) {
+	console.error(
+		`The following links in JSDoc annotations should be prefixed with https://svelte.dev:`
+	);
+
+	for (const [, link] of bad_links) {
+		console.error(`- ${link}`);
+	}
+
+	process.exit(1);
+}
+
 fs.writeFileSync(
 	'types/index.d.ts',
 	// same line to not affect source map
