@@ -61,11 +61,11 @@ let current_queued_effects = [];
 
 /**
  * Tracks the current property access to a derived signal object, e.g.
- * `a.b.c` for each property access, push a new `current_derived_proxy_property` containing
+ * `a.b.c` for each property access, push a new `current_derived_property_access` containing
  * metadata about that property and the derived signal it's occuring on.
  * @type {import('./types.js').DerivedPropertyAccess | null}
  */
-let current_derived_proxy_property = null;
+let current_derived_property_access = null;
 
 /** @type {Array<() => void>} */
 let current_queued_tasks = [];
@@ -346,7 +346,7 @@ function execute_signal_fn(signal) {
 	const previous_skip_consumer = current_skip_consumer;
 	const is_render_effect = (flags & RENDER_EFFECT) !== 0;
 	const previous_untracking = current_untracking;
-	const previous_derived_proxy_property = current_derived_proxy_property;
+	const previous_derived_property_access = current_derived_property_access;
 	current_dependencies = /** @type {null | import('./types.js').Signal[]} */ (null);
 	current_dependencies_index = 0;
 	current_untracked_writes = null;
@@ -355,7 +355,7 @@ function execute_signal_fn(signal) {
 	current_component_context = signal.x;
 	current_skip_consumer = !is_flushing_effect && (flags & UNOWNED) !== 0;
 	current_untracking = false;
-	current_derived_proxy_property = null;
+	current_derived_property_access = null;
 
 	// Render effects are invoked when the UI is about to be updated - run beforeUpdate at that point
 	if (is_render_effect && current_component_context?.u != null) {
@@ -376,8 +376,8 @@ function execute_signal_fn(signal) {
 		} else {
 			res = /** @type {() => V} */ (init)();
 		}
-		if (current_derived_proxy_property !== null) {
-			capture_fine_grain_derived_property();
+		if (current_derived_property_access !== null) {
+			capture_derived_property_access();
 		}
 		let dependencies = /** @type {import('./types.js').Signal<unknown>[]} **/ (signal.d);
 		if (current_dependencies !== null) {
@@ -449,7 +449,7 @@ function execute_signal_fn(signal) {
 		current_component_context = previous_component_context;
 		current_skip_consumer = previous_skip_consumer;
 		current_untracking = previous_untracking;
-		current_derived_proxy_property = previous_derived_proxy_property;
+		current_derived_property_access = previous_derived_property_access;
 	}
 }
 
@@ -965,23 +965,23 @@ export function unsubscribe_on_destroy(stores) {
 }
 
 /**
- * If the `current_derived_proxy_property` is not `null` then that means we should look at the current
+ * If the `current_derived_property_access` is not `null` then that means we should look at the current
  * property on the object and see if we actually need the original derived object dependency. For example,
  * if you had this:
  *
  * `a.b.c`
  *
  * Under-the-hood, `a` might be a derived signal, so we'd call get() on it. Resulting in `a` being a dependency
- * for the currently active effect. The accessors to `b` and `c` would result in the `current_derived_proxy_property`
- * changing to include ['b', 'c'] in the `current_derived_proxy_property.p` paths property. We can then use that to
+ * for the currently active effect. The accessors to `b` and `c` would result in the `current_derived_property_access`
+ * changing to include ['b', 'c'] in the `current_derived_property_access.p` paths property. We can then use that to
  * determine a new derived temporary signal that encapsulates `a.b.c`. This temporarly signal then becomes the dependency
  * and we no longer need to the original depdency to `a` for the current effect.
  */
-function capture_fine_grain_derived_property() {
-	const derived_property = /** @type {import('./types.js').DerivedPropertyAccess} */ (
-		current_derived_proxy_property
+function capture_derived_property_access() {
+	const derived_property_access = /** @type {import('./types.js').DerivedPropertyAccess} */ (
+		current_derived_property_access
 	);
-	if (is_last_current_dependency(derived_property.s)) {
+	if (is_last_current_dependency(derived_property_access.s)) {
 		if (current_dependencies === null) {
 			current_dependencies_index--;
 		} else {
@@ -989,14 +989,14 @@ function capture_fine_grain_derived_property() {
 		}
 	}
 	const derived_prop = derived(() => {
-		let value = /** @type {any} */ (get(derived_property.s, true));
-		const property_path = derived_property.p;
+		let value = /** @type {any} */ (get(derived_property_access.s, true));
+		const property_path = derived_property_access.p;
 		for (let i = 0; i < property_path.length; i++) {
 			value = value?.[property_path[i]];
 		}
 		return value;
 	});
-	current_derived_proxy_property = null;
+	current_derived_property_access = null;
 	get(derived_prop, true);
 }
 
@@ -1023,8 +1023,8 @@ export function get(signal, skip_derived_proxy = false) {
 		);
 	}
 
-	if (current_derived_proxy_property !== null) {
-		capture_fine_grain_derived_property();
+	if (current_derived_property_access !== null) {
+		capture_derived_property_access();
 	}
 
 	if (is_signals_recorded) {
@@ -1510,10 +1510,10 @@ function create_derived_proxy(signal, derived_value) {
 				// it doesn't feel right.
 				if (is_primitive_or_function_or_state_object(value)) {
 					new_path = [...path, prop];
-					if (current_derived_proxy_property !== null) {
-						capture_fine_grain_derived_property();
+					if (current_derived_property_access !== null) {
+						capture_derived_property_access();
 					} else {
-						current_derived_proxy_property = { s: signal, p: new_path };
+						current_derived_property_access = { s: signal, p: new_path };
 					}
 				}
 				if (should_proxy_derived_value(value)) {
