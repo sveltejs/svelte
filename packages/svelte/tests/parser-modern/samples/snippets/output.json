@@ -24,27 +24,34 @@
 					"end": 42,
 					"name": "foo"
 				},
-				"context": {
-					"type": "Identifier",
-					"name": "msg",
-					"start": 43,
-					"end": 54,
-					"typeAnnotation": {
-						"type": "TSStringKeyword",
-						"start": 48,
+				"parameters": [
+					{
+						"type": "Identifier",
+						"start": 43,
 						"end": 54,
-						"loc": {
-							"start": {
-								"line": 1,
-								"column": 48
-							},
-							"end": {
-								"line": 1,
-								"column": 54
+						"name": "msg",
+						"typeAnnotation": {
+							"type": "TSTypeAnnotation",
+							"start": 46,
+							"end": 54,
+							"typeAnnotation": {
+								"type": "TSStringKeyword",
+								"start": 48,
+								"end": 54,
+								"loc": {
+									"start": {
+										"line": 3,
+										"column": 19
+									},
+									"end": {
+										"line": 3,
+										"column": 25
+									}
+								}
 							}
 						}
 					}
-				},
+				],
 				"body": {
 					"type": "Fragment",
 					"nodes": [
@@ -127,22 +134,24 @@
 					},
 					"name": "foo"
 				},
-				"argument": {
-					"type": "Identifier",
-					"start": 96,
-					"end": 99,
-					"loc": {
-						"start": {
-							"line": 7,
-							"column": 13
+				"arguments": [
+					{
+						"type": "Identifier",
+						"start": 96,
+						"end": 99,
+						"loc": {
+							"start": {
+								"line": 7,
+								"column": 13
+							},
+							"end": {
+								"line": 7,
+								"column": 16
+							}
 						},
-						"end": {
-							"line": 7,
-							"column": 16
-						}
-					},
-					"name": "msg"
-				}
+						"name": "msg"
+					}
+				]
 			}
 		],
 		"transparent": false

@@ -8,7 +8,7 @@ import {
 import { binding_properties } from '../../../bindings.js';
 import {
 	clean_nodes,
-	determine_element_namespace,
+	determine_namespace_for_children,
 	escape_html,
 	infer_namespace
 } from '../../utils.js';
@@ -33,6 +33,7 @@ import {
 } from '../../../../../constants.js';
 import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
+import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
 
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
@@ -41,11 +42,7 @@ import { javascript_visitors_runes } from './javascript-runes.js';
  */
 function get_attribute_name(element, attribute, context) {
 	let name = attribute.name;
-	if (
-		element.type === 'RegularElement' &&
-		!element.metadata.svg &&
-		context.state.metadata.namespace !== 'foreign'
-	) {
+	if (!element.metadata.svg && context.state.metadata.namespace !== 'foreign') {
 		name = name.toLowerCase();
 		if (name in AttributeAliases) {
 			name = AttributeAliases[name];
@@ -63,32 +60,48 @@ function get_attribute_name(element, attribute, context) {
  * @param {boolean} is_attributes_reactive
  */
 function serialize_style_directives(style_directives, element_id, context, is_attributes_reactive) {
-	if (style_directives.length > 0) {
-		const values = style_directives.map((directive) => {
-			let value =
-				directive.value === true
-					? serialize_get_binding({ name: directive.name, type: 'Identifier' }, context.state)
-					: serialize_attribute_value(directive.value, context)[1];
-			return b.stmt(
-				b.call(
-					'$.style',
-					element_id,
-					b.literal(directive.name),
-					value,
-					/** @type {import('estree').Expression} */ (
-						directive.modifiers.includes('important') ? b.true : undefined
-					)
-				)
-			);
-		});
+	const state = context.state;
 
-		if (
-			is_attributes_reactive ||
-			style_directives.some((directive) => directive.metadata.dynamic)
-		) {
-			context.state.update.push(...values.map((v) => ({ grouped: v })));
+	for (const directive of style_directives) {
+		let value =
+			directive.value === true
+				? serialize_get_binding({ name: directive.name, type: 'Identifier' }, context.state)
+				: serialize_attribute_value(directive.value, context)[1];
+		const grouped = b.stmt(
+			b.call(
+				'$.style',
+				element_id,
+				b.literal(directive.name),
+				value,
+				/** @type {import('estree').Expression} */ (
+					directive.modifiers.includes('important') ? b.true : undefined
+				)
+			)
+		);
+		const singular = b.stmt(
+			b.call(
+				'$.style_effect',
+				element_id,
+				b.literal(directive.name),
+				b.arrow([], value),
+				/** @type {import('estree').Expression} */ (
+					directive.modifiers.includes('important') ? b.true : undefined
+				)
+			)
+		);
+
+		const contains_call_expression =
+			Array.isArray(directive.value) &&
+			directive.value.some(
+				(v) => v.type === 'ExpressionTag' && v.metadata.contains_call_expression
+			);
+
+		if (!is_attributes_reactive && contains_call_expression) {
+			state.update_effects.push(singular);
+		} else if (is_attributes_reactive || directive.metadata.dynamic || contains_call_expression) {
+			state.update.push({ grouped, singular });
 		} else {
-			context.state.init.push(...values);
+			state.init.push(grouped);
 		}
 	}
 }
@@ -123,21 +136,21 @@ function parse_directive_name(name) {
  * @param {boolean} is_attributes_reactive
  */
 function serialize_class_directives(class_directives, element_id, context, is_attributes_reactive) {
-	if (class_directives.length > 0) {
-		const values = class_directives.map((directive) => {
-			const value = /** @type {import('estree').Expression} */ (
-				context.visit(directive.expression)
-			);
-			return b.stmt(b.call('$.class_toggle', element_id, b.literal(directive.name), value));
-		});
+	const state = context.state;
+	for (const directive of class_directives) {
+		const value = /** @type {import('estree').Expression} */ (context.visit(directive.expression));
+		const grouped = b.stmt(b.call('$.class_toggle', element_id, b.literal(directive.name), value));
+		const singular = b.stmt(
+			b.call('$.class_toggle_effect', element_id, b.literal(directive.name), b.arrow([], value))
+		);
+		const contains_call_expression = directive.expression.type === 'CallExpression';
 
-		if (
-			is_attributes_reactive ||
-			class_directives.some((directive) => directive.metadata.dynamic)
-		) {
-			context.state.update.push(...values.map((v) => ({ grouped: v })));
+		if (!is_attributes_reactive && contains_call_expression) {
+			state.update_effects.push(singular);
+		} else if (is_attributes_reactive || directive.metadata.dynamic || contains_call_expression) {
+			state.update.push({ grouped, singular });
 		} else {
-			context.state.init.push(...values);
+			state.init.push(grouped);
 		}
 	}
 }
@@ -272,7 +285,7 @@ function setup_select_synchronization(value_binding, context) {
  * 	value = $.spread_attributes(element, value, [...])
  * });
  * ```
- * Returns the id of the spread_attribute variable if spread is deemed reactive, `null` otherwise.
+ * Returns the id of the spread_attribute variable if spread isn't isolated, `null` otherwise.
  * @param {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} attributes
  * @param {import('../types.js').ComponentContext} context
  * @param {import('#compiler').RegularElement} element
@@ -280,7 +293,7 @@ function setup_select_synchronization(value_binding, context) {
  * @returns {string | null}
  */
 function serialize_element_spread_attributes(attributes, context, element, element_id) {
-	let is_reactive = false;
+	let needs_isolation = false;
 
 	/** @type {import('estree').Expression[]} */
 	const values = [];
@@ -295,16 +308,32 @@ function serialize_element_spread_attributes(attributes, context, element, eleme
 			values.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
 		}
 
-		is_reactive ||= attribute.metadata.dynamic;
+		needs_isolation ||=
+			attribute.type === 'SpreadAttribute' && attribute.metadata.contains_call_expression;
 	}
 
 	const lowercase_attributes =
 		element.metadata.svg || is_custom_element_node(element) ? b.false : b.true;
 
-	if (is_reactive) {
+	const isolated = b.stmt(
+		b.call(
+			'$.spread_attributes_effect',
+			element_id,
+			b.thunk(b.array(values)),
+			lowercase_attributes,
+			b.literal(context.state.analysis.stylesheet.id)
+		)
+	);
+
+	// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
+	if (needs_isolation) {
+		context.state.update_effects.push(isolated);
+		return null;
+	} else {
 		const id = context.state.scope.generate('spread_attributes');
-		context.state.init.push(b.let(id, undefined));
+		context.state.init.push(b.let(id));
 		context.state.update.push({
+			singular: isolated,
 			grouped: b.stmt(
 				b.assignment(
 					'=',
@@ -321,20 +350,6 @@ function serialize_element_spread_attributes(attributes, context, element, eleme
 			)
 		});
 		return id;
-	} else {
-		context.state.init.push(
-			b.stmt(
-				b.call(
-					'$.spread_attributes',
-					element_id,
-					b.literal(null),
-					b.array(values),
-					lowercase_attributes,
-					b.literal(context.state.analysis.stylesheet.id)
-				)
-			)
-		);
-		return null;
 	}
 }
 
@@ -346,7 +361,7 @@ function serialize_element_spread_attributes(attributes, context, element, eleme
  * @param {import('estree').Identifier} element_id
  * @returns {boolean}
  */
-function serialize_dynamic_element_spread_attributes(attributes, context, element_id) {
+function serialize_dynamic_element_attributes(attributes, context, element_id) {
 	if (attributes.length === 0) {
 		if (context.state.analysis.stylesheet.id) {
 			context.state.init.push(
@@ -356,6 +371,7 @@ function serialize_dynamic_element_spread_attributes(attributes, context, elemen
 		return false;
 	}
 
+	let needs_isolation = false;
 	let is_reactive = false;
 
 	/** @type {import('estree').Expression[]} */
@@ -369,13 +385,31 @@ function serialize_dynamic_element_spread_attributes(attributes, context, elemen
 			values.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
 		}
 
-		is_reactive ||= attribute.metadata.dynamic;
+		is_reactive ||=
+			attribute.metadata.dynamic ||
+			// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
+			attribute.type === 'SpreadAttribute';
+		needs_isolation ||=
+			attribute.type === 'SpreadAttribute' && attribute.metadata.contains_call_expression;
 	}
 
-	if (is_reactive) {
+	const isolated = b.stmt(
+		b.call(
+			'$.spread_dynamic_element_attributes_effect',
+			element_id,
+			b.thunk(b.array(values)),
+			b.literal(context.state.analysis.stylesheet.id)
+		)
+	);
+
+	if (needs_isolation) {
+		context.state.update_effects.push(isolated);
+		return false;
+	} else if (is_reactive) {
 		const id = context.state.scope.generate('spread_attributes');
 		context.state.init.push(b.let(id));
 		context.state.update.push({
+			singular: isolated,
 			grouped: b.stmt(
 				b.assignment(
 					'=',
@@ -617,15 +651,15 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
 					// This ensures things stay in sync with the select binding
 					// in case of updates to the option value or new values appearing
 					b.call('$.selected', node_id)
-			  ])
+				])
 			: needs_option_call
-			? b.sequence([
-					inner_assignment,
-					// This ensures a one-way street to the DOM in case it's <select {value}>
-					// and not <select bind:value>
-					b.call('$.select_option', node_id, value)
-			  ])
-			: inner_assignment
+				? b.sequence([
+						inner_assignment,
+						// This ensures a one-way street to the DOM in case it's <select {value}>
+						// and not <select bind:value>
+						b.call('$.select_option', node_id, value)
+					])
+				: inner_assignment
 	);
 
 	if (is_reactive) {
@@ -832,14 +866,10 @@ function serialize_inline_component(node, component_name, context) {
 	if (Object.keys(events).length > 0) {
 		const events_expression = b.object(
 			Object.keys(events).map((name) =>
-				b.prop(
-					'init',
-					b.id(name),
-					events[name].length > 1 ? b.array(events[name]) : events[name][0]
-				)
+				b.init(name, events[name].length > 1 ? b.array(events[name]) : events[name][0])
 			)
 		);
-		push_prop(b.prop('init', b.id('$$events'), events_expression));
+		push_prop(b.init('$$events', events_expression));
 	}
 
 	/** @type {import('estree').Statement[]} */
@@ -893,19 +923,18 @@ function serialize_inline_component(node, component_name, context) {
 
 		if (slot_name === 'default') {
 			push_prop(
-				b.prop(
-					'init',
-					b.id('children'),
+				b.init(
+					'children',
 					context.state.options.dev ? b.call('$.add_snippet_symbol', slot_fn) : slot_fn
 				)
 			);
 		} else {
-			serialized_slots.push(b.prop('init', b.key(slot_name), slot_fn));
+			serialized_slots.push(b.init(slot_name, slot_fn));
 		}
 	}
 
 	if (serialized_slots.length > 0) {
-		push_prop(b.prop('init', b.id('$$slots'), b.object(serialized_slots)));
+		push_prop(b.init('$$slots', b.object(serialized_slots)));
 	}
 
 	const props_expression =
@@ -915,7 +944,7 @@ function serialize_inline_component(node, component_name, context) {
 			: b.call(
 					'$.spread_props',
 					...props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p))
-			  );
+				);
 	/** @param {import('estree').Identifier} node_id */
 	let fn = (node_id) =>
 		b.call(
@@ -996,8 +1025,7 @@ function create_block(parent, name, nodes, context) {
 		context.path,
 		namespace,
 		context.state.preserve_whitespace,
-		context.state.options.preserveComments,
-		false
+		context.state.options.preserveComments
 	);
 
 	if (hoisted.length === 0 && trimmed.length === 0) {
@@ -1070,50 +1098,58 @@ function create_block(parent, name, nodes, context) {
 		body.push(...state.init);
 	} else if (trimmed.length > 0) {
 		const id = b.id(context.state.scope.generate('fragment'));
-		const node_id = b.id(context.state.scope.generate('node'));
 
-		process_children(trimmed, node_id, {
-			...context,
-			state
-		});
+		const use_space_template =
+			trimmed.some((node) => node.type === 'ExpressionTag') &&
+			trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag');
 
-		const template = state.template[0];
+		if (use_space_template) {
+			// special case — we can use `$.space` instead of creating a unique template
+			const id = b.id(context.state.scope.generate('text'));
 
-		if (state.template.length === 1 && (template === ' ' || template === '<!>')) {
-			if (template === ' ') {
-				body.push(b.var(node_id, b.call('$.space', b.id('$$anchor'))), ...state.init);
-				close = b.stmt(b.call('$.close', b.id('$$anchor'), node_id));
-			} else {
-				body.push(
-					b.var(id, b.call('$.comment', b.id('$$anchor'))),
-					b.var(node_id, b.call('$.child_frag', id)),
-					...state.init
-				);
-				close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
-			}
+			process_children(trimmed, () => id, false, {
+				...context,
+				state
+			});
+
+			body.push(b.var(id, b.call('$.space', b.id('$$anchor'))), ...state.init);
+			close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
 		} else {
-			const callee = namespace === 'svg' ? '$.svg_template' : '$.template';
+			/** @type {(is_text: boolean) => import('estree').Expression} */
+			const expression = (is_text) =>
+				is_text ? b.call('$.child_frag', id, b.true) : b.call('$.child_frag', id);
 
-			state.hoisted.push(
-				b.var(
-					template_name,
-					b.call(callee, b.template([b.quasi(state.template.join(''), true)], []), b.true)
-				)
-			);
+			process_children(trimmed, expression, false, { ...context, state });
 
-			body.push(
-				b.var(
-					id,
-					b.call(
-						'$.open_frag',
-						b.id('$$anchor'),
-						b.literal(!state.metadata.template_needs_import_node),
-						template_name
+			const use_comment_template = state.template.length === 1 && state.template[0] === '<!>';
+
+			if (use_comment_template) {
+				// special case — we can use `$.comment` instead of creating a unique template
+				body.push(b.var(id, b.call('$.comment', b.id('$$anchor'))));
+			} else {
+				const callee = namespace === 'svg' ? '$.svg_template' : '$.template';
+
+				state.hoisted.push(
+					b.var(
+						template_name,
+						b.call(callee, b.template([b.quasi(state.template.join(''), true)], []), b.true)
 					)
-				),
-				b.var(node_id, b.call('$.child_frag', id)),
-				...state.init
-			);
+				);
+
+				body.push(
+					b.var(
+						id,
+						b.call(
+							'$.open_frag',
+							b.id('$$anchor'),
+							b.literal(!state.metadata.template_needs_import_node),
+							template_name
+						)
+					)
+				);
+			}
+
+			body.push(...state.init);
 
 			close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
 		}
@@ -1227,6 +1263,7 @@ function serialize_event_handler(node, { state, visit }) {
 			if (
 				binding !== null &&
 				(binding.kind === 'state' ||
+					binding.kind === 'frozen_state' ||
 					binding.kind === 'legacy_reactive' ||
 					binding.kind === 'derived' ||
 					binding.kind === 'prop' ||
@@ -1271,7 +1308,7 @@ function serialize_event_handler(node, { state, visit }) {
 
 /**
  * Serializes an event handler function of the `on:` directive or an attribute starting with `on`
- * @param {Pick<import('#compiler').OnDirective, 'name' | 'modifiers' | 'expression' | 'metadata'>} node
+ * @param {{name: string; modifiers: string[]; expression: import('estree').Expression | null; delegated?: import('#compiler').DelegatedEvent | null; }} node
  * @param {import('../types.js').ComponentContext} context
  */
 function serialize_event(node, context) {
@@ -1280,9 +1317,9 @@ function serialize_event(node, context) {
 	if (node.expression) {
 		let handler = serialize_event_handler(node, context);
 		const event_name = node.name;
-		const delegated = node.metadata.delegated;
+		const delegated = node.delegated;
 
-		if (delegated !== null) {
+		if (delegated != null) {
 			let delegated_assignment;
 
 			if (!state.events.has(event_name)) {
@@ -1377,7 +1414,7 @@ function serialize_event_attribute(node, context) {
 			name: event_name,
 			expression: node.value[0].expression,
 			modifiers,
-			metadata: node.metadata
+			delegated: node.metadata.delegated
 		},
 		context
 	);
@@ -1388,10 +1425,11 @@ function serialize_event_attribute(node, context) {
  * (e.g. `{a} b {c}`) into a single update function. Along the way it creates
  * corresponding template node references these updates are applied to.
  * @param {import('#compiler').SvelteNode[]} nodes
- * @param {import('estree').Expression} parent
+ * @param {(is_text: boolean) => import('estree').Expression} expression
+ * @param {boolean} is_element
  * @param {import('../types.js').ComponentContext} context
  */
-function process_children(nodes, parent, { visit, state }) {
+function process_children(nodes, expression, is_element, { visit, state }) {
 	const within_bound_contenteditable = state.metadata.bound_contenteditable;
 
 	/** @typedef {Array<import('#compiler').Text | import('#compiler').ExpressionTag>} Sequence */
@@ -1399,28 +1437,24 @@ function process_children(nodes, parent, { visit, state }) {
 	/** @type {Sequence} */
 	let sequence = [];
 
-	let expression = parent;
-
 	/**
 	 * @param {Sequence} sequence
-	 * @param {boolean} in_fragment
 	 */
-	function flush_sequence(sequence, in_fragment) {
+	function flush_sequence(sequence) {
 		if (sequence.length === 1) {
 			const node = sequence[0];
 
-			if ((in_fragment && node.type === 'ExpressionTag') || node.type === 'Text') {
-				expression = b.call('$.sibling', expression);
-			}
-
 			if (node.type === 'Text') {
+				let prev = expression;
+				expression = () => b.call('$.sibling', prev(true));
 				state.template.push(node.raw);
 				return;
 			}
 
 			state.template.push(' ');
 
-			const text_id = get_node_id(expression, state, 'text');
+			const text_id = get_node_id(expression(true), state, 'text');
+
 			const singular = b.stmt(
 				b.call(
 					'$.text_effect',
@@ -1457,40 +1491,37 @@ function process_children(nodes, parent, { visit, state }) {
 				);
 			}
 
-			return;
-		}
-
-		state.template.push(' ');
-
-		const text_id = get_node_id(expression, state, 'text');
-		const contains_call_expression = sequence.some(
-			(n) => n.type === 'ExpressionTag' && n.metadata.contains_call_expression
-		);
-		const assignment = serialize_template_literal(sequence, visit, state)[1];
-		const init = b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), assignment));
-		const singular = b.stmt(
-			b.call(
-				'$.text_effect',
-				text_id,
-				b.thunk(serialize_template_literal(sequence, visit, state)[1])
-			)
-		);
-
-		if (contains_call_expression && !within_bound_contenteditable) {
-			state.update_effects.push(singular);
-		} else if (
-			sequence.some((node) => node.type === 'ExpressionTag' && node.metadata.dynamic) &&
-			!within_bound_contenteditable
-		) {
-			state.update.push({
-				singular,
-				grouped: b.stmt(b.call('$.text', text_id, assignment))
-			});
+			expression = (is_text) =>
+				is_text ? b.call('$.sibling', text_id, b.true) : b.call('$.sibling', text_id);
 		} else {
-			state.init.push(init);
-		}
+			const text_id = get_node_id(expression(true), state, 'text');
 
-		expression = b.call('$.sibling', text_id);
+			state.template.push(' ');
+
+			const contains_call_expression = sequence.some(
+				(n) => n.type === 'ExpressionTag' && n.metadata.contains_call_expression
+			);
+			const assignment = serialize_template_literal(sequence, visit, state)[1];
+			const init = b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), assignment));
+			const singular = b.stmt(b.call('$.text_effect', text_id, b.thunk(assignment)));
+
+			if (contains_call_expression && !within_bound_contenteditable) {
+				state.update_effects.push(singular);
+			} else if (
+				sequence.some((node) => node.type === 'ExpressionTag' && node.metadata.dynamic) &&
+				!within_bound_contenteditable
+			) {
+				state.update.push({
+					singular,
+					grouped: b.stmt(b.call('$.text', text_id, assignment))
+				});
+			} else {
+				state.init.push(init);
+			}
+
+			expression = (is_text) =>
+				is_text ? b.call('$.sibling', text_id, b.true) : b.call('$.sibling', text_id);
+		}
 	}
 
 	for (let i = 0; i < nodes.length; i += 1) {
@@ -1500,7 +1531,7 @@ function process_children(nodes, parent, { visit, state }) {
 			sequence.push(node);
 		} else {
 			if (sequence.length > 0) {
-				flush_sequence(sequence, true);
+				flush_sequence(sequence);
 				sequence = [];
 			}
 
@@ -1514,25 +1545,18 @@ function process_children(nodes, parent, { visit, state }) {
 				// get hoisted inside clean_nodes?
 				visit(node, state);
 			} else {
-				// Optimization path for each blocks. If the parent isn't a fragment and it only has
-				// a single child, then we can classify the block as being "controlled".
-				if (
-					node.type === 'EachBlock' &&
-					nodes.length === 1 &&
-					parent.type === 'CallExpression' &&
-					parent.callee.type === 'Identifier' &&
-					parent.callee.name === '$.child'
-				) {
+				if (node.type === 'EachBlock' && nodes.length === 1 && is_element) {
 					node.metadata.is_controlled = true;
 					visit(node, state);
 				} else {
 					const id = get_node_id(
-						expression,
+						expression(false),
 						state,
 						node.type === 'RegularElement' ? node.name : 'node'
 					);
 
-					expression = b.call('$.sibling', id);
+					expression = (is_text) =>
+						is_text ? b.call('$.sibling', id, b.true) : b.call('$.sibling', id);
 
 					visit(node, {
 						...state,
@@ -1544,7 +1568,7 @@ function process_children(nodes, parent, { visit, state }) {
 	}
 
 	if (sequence.length > 0) {
-		flush_sequence(sequence, false);
+		flush_sequence(sequence);
 	}
 }
 
@@ -1618,7 +1642,12 @@ function serialize_template_literal(values, visit, state) {
 		const node = values[i];
 		if (node.type === 'Text') {
 			const last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
-			last.value.raw += node.data;
+			last.value.raw += sanitize_template_string(node.data);
+		} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
+			const last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
+			if (node.expression.value != null) {
+				last.value.raw += sanitize_template_string(node.expression.value + '');
+			}
 		} else {
 			if (node.type === 'ExpressionTag' && node.metadata.contains_call_expression) {
 				contains_call_expression = true;
@@ -1737,8 +1766,8 @@ export const template_visitors = {
 
 		/** @type {import('estree').Expression[]} */
 		const args = [context.state.node];
-		if (node.argument) {
-			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.argument))));
+		for (const arg of node.arguments) {
+			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg))));
 		}
 
 		let snippet_function = /** @type {import('estree').Expression} */ (
@@ -1749,11 +1778,11 @@ export const template_visitors = {
 		}
 
 		if (is_reactive) {
-			context.state.init.push(
+			context.state.after_update.push(
 				b.stmt(b.call('$.snippet_effect', b.thunk(snippet_function), ...args))
 			);
 		} else {
-			context.state.init.push(b.stmt(b.call(snippet_function, ...args)));
+			context.state.after_update.push(b.stmt(b.call(snippet_function, ...args)));
 		}
 	},
 	AnimateDirective(node, { state, visit }) {
@@ -1803,10 +1832,15 @@ export const template_visitors = {
 		);
 	},
 	RegularElement(node, context) {
+		if (node.name === 'noscript') {
+			context.state.template.push('<!>');
+			return;
+		}
+
 		const metadata = context.state.metadata;
 		const child_metadata = {
 			...context.state.metadata,
-			namespace: determine_element_namespace(node, context.state.metadata.namespace, context.path)
+			namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
 		};
 
 		context.state.template.push(`<${node.name}`);
@@ -1994,8 +2028,7 @@ export const template_visitors = {
 			context.path,
 			child_metadata.namespace,
 			state.preserve_whitespace,
-			state.options.preserveComments,
-			false
+			state.options.preserveComments
 		);
 
 		for (const node of hoisted) {
@@ -2004,12 +2037,14 @@ export const template_visitors = {
 
 		process_children(
 			trimmed,
-			b.call(
-				'$.child',
-				node.name === 'template'
-					? b.member(context.state.node, b.id('content'))
-					: context.state.node
-			),
+			() =>
+				b.call(
+					'$.child',
+					node.name === 'template'
+						? b.member(context.state.node, b.id('content'))
+						: context.state.node
+				),
+			true,
 			{ ...context, state }
 		);
 
@@ -2032,9 +2067,6 @@ export const template_visitors = {
 		/** @type {import('estree').ExpressionStatement[]} */
 		const lets = [];
 
-		/** @type {string | null} */
-		let namespace = null;
-
 		// Create a temporary context which picks up the init/update statements.
 		// They'll then be added to the function parameter of $.element
 		const element_id = b.id(context.state.scope.generate('$$element'));
@@ -2055,9 +2087,6 @@ export const template_visitors = {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute') {
 				attributes.push(attribute);
-				if (attribute.name === 'xmlns' && is_text_attribute(attribute)) {
-					namespace = attribute.value[0].data;
-				}
 			} else if (attribute.type === 'SpreadAttribute') {
 				attributes.push(attribute);
 			} else if (attribute.type === 'ClassDirective') {
@@ -2078,7 +2107,7 @@ export const template_visitors = {
 		// Always use spread because we don't know whether the element is a custom element or not,
 		// therefore we need to do the "how to set an attribute" logic at runtime.
 		const is_attributes_reactive =
-			serialize_dynamic_element_spread_attributes(attributes, inner_context, element_id) !== null;
+			serialize_dynamic_element_attributes(attributes, inner_context, element_id) !== null;
 
 		// class/style directives must be applied last since they could override class/style attributes
 		serialize_class_directives(class_directives, element_id, inner_context, is_attributes_reactive);
@@ -2106,19 +2135,32 @@ export const template_visitors = {
 			}
 		}
 		inner.push(...inner_context.state.after_update);
-		inner.push(...create_block(node, 'dynamic_element', node.fragment.nodes, context));
+		inner.push(
+			...create_block(node, 'dynamic_element', node.fragment.nodes, {
+				...context,
+				state: {
+					...context.state,
+					metadata: {
+						...context.state.metadata,
+						namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
+					}
+				}
+			})
+		);
 		context.state.after_update.push(
 			b.stmt(
 				b.call(
 					'$.element',
 					context.state.node,
 					get_tag,
+					node.metadata.svg === true
+						? b.true
+						: node.metadata.svg === false
+							? b.false
+							: b.literal(null),
 					inner.length === 0
 						? /** @type {any} */ (undefined)
-						: b.arrow([element_id, b.id('$$anchor')], b.block(inner)),
-					namespace === 'http://www.w3.org/2000/svg'
-						? b.literal(true)
-						: /** @type {any} */ (undefined)
+						: b.arrow([element_id, b.id('$$anchor')], b.block(inner))
 				)
 			)
 		);
@@ -2137,11 +2179,10 @@ export const template_visitors = {
 		}
 
 		// The runtime needs to know what kind of each block this is in order to optimize for the
-		// immutable + key==entry case. In that case, the item doesn't need to be reactive, because
-		// the array as a whole is immutable, so if something changes, it either has to recreate the
-		// array or use nested reactivity through runes.
-		// TODO this feels a bit "hidden performance boost"-style, investigate if there's a way
-		// to make this apply in more cases
+		// key === item (we avoid extra allocations). In that case, the item doesn't need to be reactive.
+		// We can guarantee this by knowing that in order for the item of the each block to change, they
+		// would need to mutate the key/item directly in the array. Given that in runes mode we use ===
+		// equality, we can apply a fast-path (as long as the index isn't reactive).
 		let each_type = 0;
 
 		if (
@@ -2149,20 +2190,21 @@ export const template_visitors = {
 			(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index)
 		) {
 			each_type |= EACH_KEYED;
-			if (
-				node.key.type === 'Identifier' &&
-				node.context.type === 'Identifier' &&
-				node.context.name === node.key.name &&
-				context.state.options.immutable
-			) {
-				// Fast-path
-				each_item_is_reactive = false;
-			} else {
-				each_type |= EACH_ITEM_REACTIVE;
-			}
 			// If there's a destructuring, then we likely need the generated $$index
 			if (node.index || node.context.type !== 'Identifier') {
 				each_type |= EACH_INDEX_REACTIVE;
+			}
+			if (
+				context.state.analysis.runes &&
+				node.key.type === 'Identifier' &&
+				node.context.type === 'Identifier' &&
+				node.context.name === node.key.name &&
+				(each_type & EACH_INDEX_REACTIVE) === 0
+			) {
+				// Fast-path for when the key === item
+				each_item_is_reactive = false;
+			} else {
+				each_type |= EACH_ITEM_REACTIVE;
 			}
 		} else {
 			each_type |= EACH_ITEM_REACTIVE;
@@ -2236,6 +2278,12 @@ export const template_visitors = {
 		const item = b.id(each_node_meta.item_name);
 		const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(item.name));
 		binding.expression = each_item_is_reactive ? b.call('$.unwrap', item) : item;
+		if (node.index) {
+			const index_binding = /** @type {import('#compiler').Binding} */ (
+				context.state.scope.get(node.index)
+			);
+			index_binding.expression = each_item_is_reactive ? b.call('$.unwrap', index) : index;
+		}
 
 		/** @type {import('estree').Statement[]} */
 		const declarations = [];
@@ -2286,18 +2334,18 @@ export const template_visitors = {
 			? b.arrow(
 					[b.id('$$anchor')],
 					/** @type {import('estree').BlockStatement} */ (context.visit(node.fallback))
-			  )
+				)
 			: b.literal(null);
 		const key_function =
-			node.key && (each_type & 1) /* EACH_ITEM_REACTIVE */ !== 0
+			node.key && ((each_type & EACH_ITEM_REACTIVE) !== 0 || context.state.options.dev)
 				? b.arrow(
-						[node.context.type === 'Identifier' ? node.context : b.id('$$item')],
+						[node.context.type === 'Identifier' ? node.context : b.id('$$item'), index],
 						b.block(
 							declarations.concat(
 								b.return(/** @type {import('estree').Expression} */ (context.visit(node.key)))
 							)
 						)
-				  )
+					)
 				: b.literal(null);
 
 		if (node.index && each_node_meta.contains_group_binding) {
@@ -2359,7 +2407,7 @@ export const template_visitors = {
 						? b.arrow(
 								[b.id('$$anchor')],
 								/** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
-						  )
+							)
 						: b.literal(null)
 				)
 			)
@@ -2378,7 +2426,7 @@ export const template_visitors = {
 						? b.arrow(
 								[b.id('$$anchor')],
 								/** @type {import('estree').BlockStatement} */ (context.visit(node.pending))
-						  )
+							)
 						: b.literal(null),
 					node.then
 						? b.arrow(
@@ -2386,10 +2434,10 @@ export const template_visitors = {
 									? [
 											b.id('$$anchor'),
 											/** @type {import('estree').Pattern} */ (context.visit(node.value))
-									  ]
+										]
 									: [b.id('$$anchor')],
 								/** @type {import('estree').BlockStatement} */ (context.visit(node.then))
-						  )
+							)
 						: b.literal(null),
 					node.catch
 						? b.arrow(
@@ -2397,10 +2445,10 @@ export const template_visitors = {
 									? [
 											b.id('$$anchor'),
 											/** @type {import('estree').Pattern} */ (context.visit(node.error))
-									  ]
+										]
 									: [b.id('$$anchor')],
 								/** @type {import('estree').BlockStatement} */ (context.visit(node.catch))
-						  )
+							)
 						: b.literal(null)
 				)
 			)
@@ -2416,62 +2464,75 @@ export const template_visitors = {
 	},
 	SnippetBlock(node, context) {
 		// TODO hoist where possible
+		/** @type {import('estree').Pattern[]} */
 		const args = [b.id('$$anchor')];
 
 		/** @type {import('estree').BlockStatement} */
 		let body;
 
-		if (node.context) {
-			const id = node.context.type === 'Identifier' ? node.context : b.id('$$context');
-			args.push(id);
+		/** @type {import('estree').Statement[]} */
+		const declarations = [];
 
-			/** @type {import('estree').Statement[]} */
-			const declarations = [];
+		for (let i = 0; i < node.parameters.length; i++) {
+			const argument = node.parameters[i];
 
-			// some of this is duplicated with EachBlock — TODO dedupe?
-			if (node.context.type === 'Identifier') {
+			if (!argument) continue;
+
+			if (argument.type === 'Identifier') {
+				args.push({
+					type: 'AssignmentPattern',
+					left: argument,
+					right: b.id('$.noop')
+				});
 				const binding = /** @type {import('#compiler').Binding} */ (
-					context.state.scope.get(id.name)
+					context.state.scope.get(argument.name)
 				);
-				binding.expression = b.call(id);
-			} else {
-				const paths = extract_paths(node.context);
-
-				for (const path of paths) {
-					const name = /** @type {import('estree').Identifier} */ (path.node).name;
-					const binding = /** @type {import('#compiler').Binding} */ (
-						context.state.scope.get(name)
-					);
-					declarations.push(
-						b.let(
-							path.node,
-							b.thunk(
-								/** @type {import('estree').Expression} */ (
-									context.visit(path.expression?.(b.call('$$context')))
-								)
-							)
-						)
-					);
-
-					// we need to eagerly evaluate the expression in order to hit any
-					// 'Cannot access x before initialization' errors
-					if (context.state.options.dev) {
-						declarations.push(b.stmt(b.call(name)));
-					}
-
-					binding.expression = b.call(name);
-				}
+				binding.expression = b.call(argument);
+				continue;
 			}
 
-			body = b.block([
-				...declarations,
-				.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body
-			]);
-		} else {
-			body = /** @type {import('estree').BlockStatement} */ (context.visit(node.body));
+			let arg_alias = `$$arg${i}`;
+			args.push(b.id(arg_alias));
+
+			const paths = extract_paths(argument);
+
+			for (const path of paths) {
+				const name = /** @type {import('estree').Identifier} */ (path.node).name;
+				const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(name));
+				declarations.push(
+					b.let(
+						path.node,
+						b.thunk(
+							/** @type {import('estree').Expression} */ (
+								context.visit(path.expression?.(b.maybe_call(b.id(arg_alias))))
+							)
+						)
+					)
+				);
+
+				// we need to eagerly evaluate the expression in order to hit any
+				// 'Cannot access x before initialization' errors
+				if (context.state.options.dev) {
+					declarations.push(b.stmt(b.call(name)));
+				}
+
+				binding.expression = b.call(name);
+			}
 		}
 
-		context.state.init.push(b.const(node.expression, b.arrow(args, body)));
+		body = b.block([
+			...declarations,
+			.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body
+		]);
+
+		const path = context.path;
+		// If we're top-level, then we can create a function for the snippet so that it can be referenced
+		// in the props declaration (default value pattern).
+		if (path.length === 1 && path[0].type === 'Fragment') {
+			context.state.init.push(b.function_declaration(node.expression, args, body));
+		} else {
+			context.state.init.push(b.const(node.expression, b.arrow(args, body)));
+		}
 		if (context.state.options.dev) {
 			context.state.init.push(b.stmt(b.call('$.add_snippet_symbol', node.expression)));
 		}
@@ -2513,32 +2574,18 @@ export const template_visitors = {
 	},
 	BindDirective(node, context) {
 		const { state, path, visit } = context;
-
-		/** @type {import('estree').Expression[]} */
-		const properties = [];
-
-		let expression = node.expression;
-		while (expression.type === 'MemberExpression') {
-			properties.unshift(
-				expression.computed
-					? /** @type {import('estree').Expression} */ (expression.property)
-					: b.literal(/** @type {import('estree').Identifier} */ (expression.property).name)
-			);
-			expression = /** @type {import('estree').Identifier | import('estree').MemberExpression} */ (
-				expression.object
-			);
-		}
-
-		const getter = b.thunk(
-			/** @type {import('estree').Expression} */ (context.visit(node.expression))
-		);
-		const assignment = b.assignment('=', node.expression, b.id('$$value'));
+		const expression = node.expression;
+		const getter = b.thunk(/** @type {import('estree').Expression} */ (visit(expression)));
+		const assignment = b.assignment('=', expression, b.id('$$value'));
 		const setter = b.arrow(
 			[b.id('$$value')],
 			serialize_set_binding(
 				assignment,
 				context,
-				() => /** @type {import('estree').Expression} */ (context.visit(assignment))
+				() => /** @type {import('estree').Expression} */ (visit(assignment)),
+				{
+					skip_proxy_and_freeze: true
+				}
 			)
 		);
 
@@ -2649,7 +2696,7 @@ export const template_visitors = {
 						setter,
 						/** @type {import('estree').Expression} */ (
 							// if expression is not an identifier, we know it can't be a signal
-							node.expression.type === 'Identifier' ? node.expression : undefined
+							expression.type === 'Identifier' ? expression : undefined
 						)
 					);
 					break;
@@ -2698,9 +2745,7 @@ export const template_visitors = {
 							group_getter = b.thunk(
 								b.block([
 									b.stmt(serialize_attribute_value(value, context)[1]),
-									b.return(
-										/** @type {import('estree').Expression} */ (context.visit(node.expression))
-									)
+									b.return(/** @type {import('estree').Expression} */ (visit(expression)))
 								])
 							);
 						}
@@ -2807,9 +2852,9 @@ export const template_visitors = {
 								/** @type {import('estree').Expression} */ (node.expression).type ===
 									'ObjectExpression'
 									? // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
-									  b.object_pattern(node.expression.properties)
+										b.object_pattern(node.expression.properties)
 									: // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
-									  b.array_pattern(node.expression.elements),
+										b.array_pattern(node.expression.elements),
 								b.member(b.id('$$slotProps'), b.id(node.name))
 							),
 							b.return(b.object(bindings.map((binding) => b.init(binding.node.name, binding.node))))
@@ -2821,7 +2866,12 @@ export const template_visitors = {
 			const name = node.expression === null ? node.name : node.expression.name;
 			return b.const(
 				name,
-				b.call('$.derived', b.thunk(b.member(b.id('$$slotProps'), b.id(node.name))))
+				b.call(
+					// in legacy mode, sources can be mutated but they're not fine-grained.
+					// Using the safe-equal derived version ensures the slot is still updated
+					state.analysis.runes ? '$.derived' : '$.derived_safe_equal',
+					b.thunk(b.member(b.id('$$slotProps'), b.id(node.name)))
+				)
 			);
 		}
 	},
@@ -2902,14 +2952,14 @@ export const template_visitors = {
 				: b.arrow(
 						[b.id('$$anchor')],
 						b.block(create_block(node, 'fallback', node.fragment.nodes, context))
-				  );
+					);
 
 		const expression = is_default
 			? b.member(b.id('$$props'), b.id('children'))
 			: b.member(b.member(b.id('$$props'), b.id('$$slots')), name, true, true);
 
 		const slot = b.call('$.slot', context.state.node, expression, props_expression, fallback);
-		context.state.init.push(b.stmt(slot));
+		context.state.after_update.push(b.stmt(slot));
 	},
 	SvelteHead(node, context) {
 		// TODO attributes?

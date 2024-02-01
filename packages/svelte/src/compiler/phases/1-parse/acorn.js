@@ -2,7 +2,7 @@ import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import { tsPlugin } from 'acorn-typescript';
 
-const ParserWithTS = acorn.Parser.extend(tsPlugin());
+const ParserWithTS = acorn.Parser.extend(tsPlugin({ allowSatisfies: true }));
 
 /**
  * @param {string} source
@@ -53,7 +53,7 @@ export function parse_expression_at(source, typescript, index) {
  * in JS code and so that `prettier-plugin-svelte` doesn't remove all comments when formatting.
  * @param {string} source
  */
-export function get_comment_handlers(source) {
+function get_comment_handlers(source) {
 	/**
 	 * @typedef {import('estree').Comment & {
 	 *   start: number;
@@ -119,7 +119,7 @@ export function get_comment_handlers(source) {
  * @param {string} source
  * @param {import('acorn').Node} node
  */
-export function amend(source, node) {
+function amend(source, node) {
 	return walk(node, null, {
 		_(node, context) {
 			// @ts-expect-error

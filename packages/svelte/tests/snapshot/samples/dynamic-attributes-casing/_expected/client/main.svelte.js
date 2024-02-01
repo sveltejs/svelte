@@ -13,25 +13,25 @@ export default function Main($$anchor, $$props) {
 	let y = () => 'test';
 	/* Init */
 	var fragment = $.open_frag($$anchor, false, frag);
-	var node = $.child_frag(fragment);
-	var svg = $.sibling($.sibling(node));
-	var custom_element = $.sibling($.sibling(svg));
-	var div = $.sibling($.sibling(custom_element));
-	var svg_1 = $.sibling($.sibling(div));
-	var custom_element_1 = $.sibling($.sibling(svg_1));
+	var div = $.child_frag(fragment);
+	var svg = $.sibling($.sibling(div, true));
+	var custom_element = $.sibling($.sibling(svg, true));
+	var div_1 = $.sibling($.sibling(custom_element, true));
+	var svg_1 = $.sibling($.sibling(div_1, true));
+	var custom_element_1 = $.sibling($.sibling(svg_1, true));
 
 	/* Update */
-	$.attr_effect(div, "foobar", y);
+	$.attr_effect(div_1, "foobar", y);
 	$.attr_effect(svg_1, "viewBox", y);
 	$.set_custom_element_data_effect(custom_element_1, "fooBar", y);
 
-	var node_foobar;
+	var div_foobar;
 	var svg_viewBox;
 	var custom_element_fooBar;
 
 	$.render_effect(() => {
-		if (node_foobar !== (node_foobar = x)) {
-			$.attr(node, "foobar", node_foobar);
+		if (div_foobar !== (div_foobar = x)) {
+			$.attr(div, "foobar", div_foobar);
 		}
 
 		if (svg_viewBox !== (svg_viewBox = x)) {

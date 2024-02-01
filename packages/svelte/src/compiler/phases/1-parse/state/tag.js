@@ -274,9 +274,28 @@ function open(parser) {
 
 		parser.allow_whitespace();
 
-		const context = parser.match(')') ? null : read_context(parser);
+		/** @type {import('estree').Pattern[]} */
+		const parameters = [];
 
-		parser.allow_whitespace();
+		while (!parser.match(')')) {
+			let pattern = read_context(parser);
+
+			parser.allow_whitespace();
+			if (parser.eat('=')) {
+				parser.allow_whitespace();
+				pattern = {
+					type: 'AssignmentPattern',
+					left: pattern,
+					right: read_expression(parser)
+				};
+			}
+
+			parameters.push(pattern);
+
+			if (!parser.eat(',')) break;
+			parser.allow_whitespace();
+		}
+
 		parser.eat(')', true);
 
 		parser.allow_whitespace();
@@ -294,7 +313,7 @@ function open(parser) {
 					end: name_end,
 					name
 				},
-				context,
+				parameters,
 				body: create_fragment()
 			})
 		);
@@ -586,11 +605,7 @@ function special(parser) {
 		const expression = read_expression(parser);
 
 		if (expression.type !== 'CallExpression' || expression.callee.type !== 'Identifier') {
-			error(expression, 'TODO', 'expected an identifier followed by (...)');
-		}
-
-		if (expression.arguments.length > 1) {
-			error(expression.arguments[1], 'TODO', 'expected at most one argument');
+			error(expression, 'invalid-render-expression');
 		}
 
 		parser.allow_whitespace();
@@ -602,7 +617,7 @@ function special(parser) {
 				start,
 				end: parser.index,
 				expression: expression.callee,
-				argument: expression.arguments[0] ?? null
+				arguments: expression.arguments
 			})
 		);
 	}

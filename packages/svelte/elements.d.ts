@@ -53,11 +53,13 @@ export type KeyboardEventHandler<T extends EventTarget> = EventHandler<KeyboardE
 export type MouseEventHandler<T extends EventTarget> = EventHandler<MouseEvent, T>;
 export type TouchEventHandler<T extends EventTarget> = EventHandler<TouchEvent, T>;
 export type PointerEventHandler<T extends EventTarget> = EventHandler<PointerEvent, T>;
+export type GamepadEventHandler<T extends EventTarget> = EventHandler<GamepadEvent, T>;
 export type UIEventHandler<T extends EventTarget> = EventHandler<UIEvent, T>;
 export type WheelEventHandler<T extends EventTarget> = EventHandler<WheelEvent, T>;
 export type AnimationEventHandler<T extends EventTarget> = EventHandler<AnimationEvent, T>;
 export type TransitionEventHandler<T extends EventTarget> = EventHandler<TransitionEvent, T>;
 export type MessageEventHandler<T extends EventTarget> = EventHandler<MessageEvent, T>;
+export type ToggleEventHandler<T extends EventTarget> = EventHandler<ToggleEvent, T>;
 
 //
 // DOM Attributes
@@ -66,7 +68,7 @@ export type MessageEventHandler<T extends EventTarget> = EventHandler<MessageEve
 export interface DOMAttributes<T extends EventTarget> {
 	// Implicit children prop every element has
 	// Add this here so that libraries doing `$props<HTMLButtonAttributes>()` don't need a separate interface
-	children?: import('svelte').Snippet<void>;
+	children?: import('svelte').Snippet;
 
 	// Clipboard Events
 	'on:copy'?: ClipboardEventHandler<T> | undefined | null;
@@ -135,10 +137,13 @@ export interface DOMAttributes<T extends EventTarget> {
 	onerror?: EventHandler | undefined | null; // also a Media Event
 	onerrorcapture?: EventHandler | undefined | null; // also a Media Event
 
-	// Detail Events
-	'on:toggle'?: EventHandler<Event, T> | undefined | null;
-	ontoggle?: EventHandler<Event, T> | undefined | null;
-	ontogglecapture?: EventHandler<Event, T> | undefined | null;
+	// Popover Events
+	'on:beforetoggle'?: ToggleEventHandler<T> | undefined | null;
+	onbeforetoggle?: ToggleEventHandler<T> | undefined | null;
+	onbeforetogglecapture?: ToggleEventHandler<T> | undefined | null;
+	'on:toggle'?: ToggleEventHandler<T> | undefined | null;
+	ontoggle?: ToggleEventHandler<T> | undefined | null;
+	ontogglecapture?: ToggleEventHandler<T> | undefined | null;
 
 	// Keyboard Events
 	'on:keydown'?: KeyboardEventHandler<T> | undefined | null;
@@ -336,10 +341,19 @@ export interface DOMAttributes<T extends EventTarget> {
 	onlostpointercapture?: PointerEventHandler<T> | undefined | null;
 	onlostpointercapturecapture?: PointerEventHandler<T> | undefined | null;
 
+	// Gamepad Events
+	'on:gamepadconnected'?: GamepadEventHandler<T> | undefined | null;
+	ongamepadconnected?: GamepadEventHandler<T> | undefined | null;
+	'on:gamepaddisconnected'?: GamepadEventHandler<T> | undefined | null;
+	ongamepaddisconnected?: GamepadEventHandler<T> | undefined | null;
+
 	// UI Events
 	'on:scroll'?: UIEventHandler<T> | undefined | null;
 	onscroll?: UIEventHandler<T> | undefined | null;
 	onscrollcapture?: UIEventHandler<T> | undefined | null;
+	'on:scrollend'?: UIEventHandler<T> | undefined | null;
+	onscrollend?: UIEventHandler<T> | undefined | null;
+	onscrollendcapture?: UIEventHandler<T> | undefined | null;
 	'on:resize'?: UIEventHandler<T> | undefined | null;
 	onresize?: UIEventHandler<T> | undefined | null;
 	onresizecapture?: UIEventHandler<T> | undefined | null;
@@ -720,6 +734,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	title?: string | undefined | null;
 	translate?: 'yes' | 'no' | '' | undefined | null;
 	inert?: boolean | undefined | null;
+	popover?: 'auto' | 'manual' | '' | undefined | null;
 
 	// Unknown
 	radiogroup?: string | undefined | null; // <command>, <menuitem>
@@ -866,6 +881,8 @@ export interface HTMLButtonAttributes extends HTMLAttributes<HTMLButtonElement> 
 	name?: string | undefined | null;
 	type?: 'submit' | 'reset' | 'button' | undefined | null;
 	value?: string | string[] | number | undefined | null;
+	popovertarget?: string | undefined | null;
+	popovertargetaction?: 'toggle' | 'show' | 'hide' | undefined | null;
 }
 
 export interface HTMLCanvasAttributes extends HTMLAttributes<HTMLCanvasElement> {
@@ -890,6 +907,10 @@ export interface HTMLDetailsAttributes extends HTMLAttributes<HTMLDetailsElement
 	open?: boolean | undefined | null;
 
 	'bind:open'?: boolean | undefined | null;
+
+	'on:toggle'?: EventHandler<Event, HTMLDetailsElement> | undefined | null;
+	ontoggle?: EventHandler<Event, HTMLDetailsElement> | undefined | null;
+	ontogglecapture?: EventHandler<Event, HTMLDetailsElement> | undefined | null;
 }
 
 export interface HTMLDelAttributes extends HTMLAttributes<HTMLModElement> {
@@ -1621,7 +1642,15 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	'stroke-dasharray'?: string | number | undefined | null;
 	'stroke-dashoffset'?: string | number | undefined | null;
 	'stroke-linecap'?: 'butt' | 'round' | 'square' | 'inherit' | undefined | null;
-	'stroke-linejoin'?: 'miter' | 'round' | 'bevel' | 'inherit' | undefined | null;
+	'stroke-linejoin'?:
+		| 'arcs'
+		| 'miter-clip'
+		| 'miter'
+		| 'round'
+		| 'bevel'
+		| 'inherit'
+		| undefined
+		| null;
 	'stroke-miterlimit'?: string | undefined | null;
 	'stroke-opacity'?: number | string | undefined | null;
 	'stroke-width'?: number | string | undefined | null;

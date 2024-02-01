@@ -49,6 +49,7 @@ export const global_visitors = {
 			// use runtime functions for smaller output
 			if (
 				binding?.kind === 'state' ||
+				binding?.kind === 'frozen_state' ||
 				binding?.kind === 'each' ||
 				binding?.kind === 'legacy_reactive' ||
 				binding?.kind === 'prop' ||
@@ -82,8 +83,16 @@ export const global_visitors = {
 			argument.property.type === 'PrivateIdentifier' &&
 			context.state.private_state.has(argument.property.name)
 		) {
-			let fn = node.operator === '++' ? '$.increment' : '$.decrement';
-			return b.call(fn, argument);
+			let fn = '$.update';
+			if (node.prefix) fn += '_pre';
+
+			/** @type {import('estree').Expression[]} */
+			const args = [argument];
+			if (node.operator === '--') {
+				args.push(b.literal(-1));
+			}
+
+			return b.call(fn, ...args);
 		} else {
 			// turn it into an IIFEE assignment expression: i++ -> (() => { const $$value = i; i+=1; return $$value; })
 			const assignment = b.assignment(

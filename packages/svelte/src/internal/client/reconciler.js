@@ -89,6 +89,8 @@ export function reconcile_html(dom, value, svg) {
 	}
 	var clone = content.cloneNode(true);
 	frag_nodes = Array.from(clone.childNodes);
-	target.before(svg ? /** @type {Node} */ (clone.firstChild) : clone);
+	frag_nodes.forEach((node) => {
+		target.before(node);
+	});
 	return /** @type {Array<Text | Comment | Element>} */ (frag_nodes);
 }

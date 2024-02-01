@@ -23,7 +23,9 @@ const runes = {
 		`Referencing a local variable with a $ prefix will create a store subscription. Please rename ${name} to avoid the ambiguity.`,
 	/** @param {string} name */
 	'non-state-reference': (name) =>
-		`${name} is updated, but is not declared with $state(...). Changing its value will not correctly trigger updates.`
+		`${name} is updated, but is not declared with $state(...). Changing its value will not correctly trigger updates.`,
+	'derived-iife': () =>
+		`Use \`$derived.call(() => {...})\` instead of \`$derived((() => {...})());\``
 };
 
 /** @satisfies {Warnings} */

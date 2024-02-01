@@ -1,4 +1,3 @@
-import { error } from '../errors.js';
 import * as b from '../utils/builders.js';
 
 /**
@@ -36,7 +35,7 @@ export function is_text_attribute(attribute) {
  * @param {import('#compiler').Attribute} attribute
  * @returns {attribute is import('#compiler').Attribute & { value: [import('#compiler').ExpressionTag] }}
  */
-export function is_expression_attribute(attribute) {
+function is_expression_attribute(attribute) {
 	return (
 		attribute.value !== true &&
 		attribute.value.length === 1 &&
@@ -264,28 +263,6 @@ function _extract_paths(assignments = [], param, expression, update_expression) 
 	}
 
 	return assignments;
-}
-
-/**
- * The Acorn TS plugin defines `foo!` as a `TSNonNullExpression` node, and
- * `foo as Bar` as a `TSAsExpression` node. This function unwraps those.
- *
- * @template {import('#compiler').SvelteNode | undefined | null} T
- * @param {T} node
- * @returns {T}
- */
-export function unwrap_ts_expression(node) {
-	if (!node) {
-		return node;
-	}
-
-	// @ts-expect-error these types don't exist on the base estree types
-	if (node.type === 'TSNonNullExpression' || node.type === 'TSAsExpression') {
-		// @ts-expect-error
-		return node.expression;
-	}
-
-	return node;
 }
 
 /**

@@ -4,11 +4,15 @@ export default test({
 	html: `
 		<input>
 		<p>hello world</p>
+		<textarea></textarea>
+		<div contenteditable="true">world</div>
 	`,
 
 	ssrHtml: `
 		<input value="world">
 		<p>hello world</p>
+		<textarea>world</textarea>
+		<div contenteditable="true">world</div>
 	`,
 
 	async test({ assert, component, target, window }) {
@@ -34,6 +38,8 @@ export default test({
 			`
 			<input>
 			<p>hello everybody</p>
+			<textarea></textarea>
+			<div contenteditable="true">everybody</div>
 		`
 		);
 
@@ -44,6 +50,8 @@ export default test({
 			`
 			<input>
 			<p>hello goodbye</p>
+			<textarea></textarea>
+			<div contenteditable="true">goodbye</div>
 		`
 		);
 

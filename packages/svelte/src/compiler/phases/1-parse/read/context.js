@@ -98,24 +98,40 @@ export default function read_context(parser) {
  * @returns {any}
  */
 function read_type_annotation(parser) {
-	const index = parser.index;
+	const start = parser.index;
 	parser.allow_whitespace();
 
-	if (parser.eat(':')) {
-		// we need to trick Acorn into parsing the type annotation
-		const insert = '_ as ';
-		let a = parser.index - insert.length;
-		const template = ' '.repeat(a) + insert + parser.template.slice(parser.index);
-		let expression = parse_expression_at(template, parser.ts, a);
-
-		// `array as item: string, index` becomes `string, index`, which is mistaken as a sequence expression - fix that
-		if (expression.type === 'SequenceExpression') {
-			expression = expression.expressions[0];
-		}
-
-		parser.index = /** @type {number} */ (expression.end);
-		return /** @type {any} */ (expression).typeAnnotation;
-	} else {
-		parser.index = index;
+	if (!parser.eat(':')) {
+		parser.index = start;
+		return undefined;
 	}
+
+	// we need to trick Acorn into parsing the type annotation
+	const insert = '_ as ';
+	let a = parser.index - insert.length;
+	const template =
+		parser.template.slice(0, a).replace(/[^\n]/g, ' ') +
+		insert +
+		parser.template.slice(parser.index);
+	let expression = parse_expression_at(template, parser.ts, a);
+
+	// `foo: bar = baz` gets mangled — fix it
+	if (expression.type === 'AssignmentExpression') {
+		let b = expression.right.start;
+		while (template[b] !== '=') b -= 1;
+		expression = parse_expression_at(template.slice(0, b), parser.ts, a);
+	}
+
+	// `array as item: string, index` becomes `string, index`, which is mistaken as a sequence expression - fix that
+	if (expression.type === 'SequenceExpression') {
+		expression = expression.expressions[0];
+	}
+
+	parser.index = /** @type {number} */ (expression.end);
+	return {
+		type: 'TSTypeAnnotation',
+		start,
+		end: parser.index,
+		typeAnnotation: /** @type {any} */ (expression).typeAnnotation
+	};
 }
