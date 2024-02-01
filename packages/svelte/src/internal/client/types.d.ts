@@ -130,6 +130,7 @@ export type ComputationSignal<V = unknown> = {
 export type DerivedPropertyAccess = {
 	s: ComputationSignal;
 	p: Array<string | symbol>;
+	v: any;
 };
 
 export type Signal<V = unknown> = SourceSignal<V> | ComputationSignal<V>;

@@ -62,7 +62,7 @@ let current_queued_effects = [];
 /**
  * @type {import('./types.js').DerivedPropertyAccess | null}
  */
-let current_derived_property_access = null;
+export let current_derived_property_access = null;
 
 /** @type {Array<() => void>} */
 let current_queued_tasks = [];
@@ -1452,7 +1452,7 @@ function proxify_object(signal, value, handler, path) {
 /**
  * @param {any} value
  */
-function is_primitive_or_function_or_state_object(value) {
+export function is_primitive_or_function_or_state_object(value) {
 	const type = typeof value;
 	return (
 		value == null ||
@@ -1505,7 +1505,7 @@ function create_derived_proxy(signal, derived_value) {
 					if (current_derived_property_access !== null) {
 						capture_derived_property_access(current_derived_property_access);
 					} else {
-						current_derived_property_access = { s: signal, p: new_path };
+						current_derived_property_access = { s: signal, p: new_path, v: value };
 					}
 				}
 				if (should_proxy_derived_value(value)) {
@@ -1614,7 +1614,7 @@ export function effect_active() {
 /**
  * @returns {boolean}
  */
-function effect_active_and_not_render_effect() {
+export function effect_active_and_not_render_effect() {
 	return current_effect ? (current_effect.f & (MANAGED | RENDER_EFFECT)) === 0 : false;
 }
 

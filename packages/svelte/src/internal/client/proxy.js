@@ -8,7 +8,10 @@ import {
 	updating_derived,
 	UNINITIALIZED,
 	mutable_source,
-	batch_inspect
+	batch_inspect,
+	current_derived_property_access,
+	effect_active_and_not_render_effect,
+	is_primitive_or_function_or_state_object
 } from './runtime.js';
 import {
 	array_prototype,
@@ -197,6 +200,15 @@ const state_proxy_handler = {
 		}
 
 		if (s !== undefined) {
+			if (
+				current_derived_property_access !== null &&
+				current_derived_property_access.v === receiver &&
+				(effect_active_and_not_render_effect() || updating_derived) &&
+				is_primitive_or_function_or_state_object(s.v)
+			) {
+				current_derived_property_access.v = s.v;
+				current_derived_property_access.p.push(prop);
+			}
 			const value = get(s);
 			return value === UNINITIALIZED ? undefined : value;
 		}
