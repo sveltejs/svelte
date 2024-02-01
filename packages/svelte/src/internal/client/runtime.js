@@ -1080,7 +1080,7 @@ export function get(signal, skip_derived_proxy = false) {
 		if (
 			!skip_derived_proxy &&
 			is_runes(signal.x) &&
-			effect_active_and_not_render_effect() &&
+			(effect_active_and_not_render_effect() || updating_derived) &&
 			should_proxy_derived_value(value)
 		) {
 			let proxy = derived_state.p;
@@ -1411,6 +1411,7 @@ function should_proxy_derived_value(value) {
 	return (
 		(typeof value === 'object' &&
 			value !== null &&
+			!(STATE_SYMBOL in value) &&
 			(prototype = get_prototype_of(value)) === object_prototype) ||
 		prototype === array_prototype
 	);
@@ -1483,14 +1484,14 @@ function create_derived_proxy(signal, derived_value) {
 			const derived_state = /** @type {import('./types.js').DerivedSignalState<V>} */ (signal.v);
 			const proxied_objects = /** @type {any} */ (derived_state.o);
 			const proxied_object = proxied_objects.get(target);
-			if (proxied_object === undefined || prop === STATE_SYMBOL) {
+			if (proxied_object === undefined) {
 				return value;
 			}
 			const { k: keys, p: path } = proxied_object;
 
 			// Only apply the proxing when we really need it. Otherwise avoid it entirely.
 			if (
-				effect_active_and_not_render_effect() &&
+				(effect_active_and_not_render_effect() || updating_derived) &&
 				keys.has(prop) &&
 				is_last_current_dependency(signal)
 			) {
