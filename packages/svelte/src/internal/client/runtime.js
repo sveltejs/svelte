@@ -63,7 +63,7 @@ let current_queued_effects = [];
  * Tracks the current property access to a derived signal object, e.g.
  * `a.b.c` for each property access, push a new `current_derived_proxy_property` containing
  * metadata about that property and the derived signal it's occuring on.
- * @type {{ s: import('./types.js').ComputationSignal, p: Array<string | symbol> } | null}
+ * @type {import('./types.js').DerivedPropertyAccess | null}
  */
 let current_derived_proxy_property = null;
 
@@ -978,10 +978,9 @@ export function unsubscribe_on_destroy(stores) {
  * and we no longer need to the original depdency to `a` for the current effect.
  */
 function capture_fine_grain_derived_property() {
-	const derived_property =
-		/** @type {{ s: import('./types.js').ComputationSignal, p: Array<string | symbol> }} */ (
-			current_derived_proxy_property
-		);
+	const derived_property = /** @type {import('./types.js').DerivedPropertyAccess} */ (
+		current_derived_proxy_property
+	);
 	if (is_last_current_dependency(derived_property.s)) {
 		if (current_dependencies === null) {
 			current_dependencies_index--;

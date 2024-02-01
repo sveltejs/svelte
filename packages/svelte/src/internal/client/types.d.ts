@@ -122,6 +122,16 @@ export type ComputationSignal<V = unknown> = {
 	l: number;
 };
 
+/**
+ * A record of which properties of a derived were accessed inside an effect,
+ * allowing us to re-run those effects more conservatively than if we
+ * observed the derived as a whole
+ */
+export type DerivedPropertyAccess = {
+	s: ComputationSignal;
+	p: Array<string | symbol>;
+};
+
 export type Signal<V = unknown> = SourceSignal<V> | ComputationSignal<V>;
 
 export type SignalDebug<V = unknown> = SourceSignalDebug & Signal<V>;
