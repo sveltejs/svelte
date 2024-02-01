@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-feat: make $derived property accessing fine-grain reactive
+feat: make effect invalidation fine-grained when accessing properties of `$derived` state
