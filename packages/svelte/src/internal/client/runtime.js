@@ -60,9 +60,6 @@ let current_queued_pre_and_render_effects = [];
 let current_queued_effects = [];
 
 /**
- * Tracks the current property access to a derived signal object, e.g.
- * `a.b.c` for each property access, push a new `current_derived_property_access` containing
- * metadata about that property and the derived signal it's occuring on.
  * @type {import('./types.js').DerivedPropertyAccess | null}
  */
 let current_derived_property_access = null;
