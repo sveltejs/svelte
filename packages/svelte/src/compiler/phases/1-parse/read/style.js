@@ -168,7 +168,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 	while (parser.index < parser.template.length) {
 		const start = parser.index;
 
-		if (parser.eat('&')){
+		if (parser.eat('&')) {
 			children.push({
 				type: 'NestedSelector',
 				name: '&',
@@ -176,7 +176,6 @@ function read_selector(parser, inside_pseudo_class = false) {
 				end: parser.index
 			});
 		} else if (parser.eat('*')) {
-		if (parser.eat('*')) {
 			let name = '*';
 			if (parser.match('|')) {
 				// * is the namespace (which we ignore)
