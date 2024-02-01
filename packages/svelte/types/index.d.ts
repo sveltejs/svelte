@@ -229,7 +229,7 @@ declare module 'svelte' {
 	 *
 	 * If a function is returned _synchronously_ from `onMount`, it will be called when the component is unmounted.
 	 *
-	 * `onMount` does not run inside a [server-side component](/docs#run-time-server-side-component-api).
+	 * `onMount` does not run inside a [server-side component](https://svelte.dev/docs#run-time-server-side-component-api).
 	 *
 	 * https://svelte.dev/docs/svelte#onmount
 	 * */
@@ -267,7 +267,7 @@ declare module 'svelte' {
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
 	/**
-	 * Creates an event dispatcher that can be used to dispatch [component events](/docs#template-syntax-component-directives-on-eventname).
+	 * Creates an event dispatcher that can be used to dispatch [component events](https://svelte.dev/docs#template-syntax-component-directives-on-eventname).
 	 * Event dispatchers are functions that can take two arguments: `name` and `detail`.
 	 *
 	 * Component events created with `createEventDispatcher` create a
@@ -2169,7 +2169,7 @@ declare module 'svelte/transition' {
 		getTotalLength(): number;
 	}, { delay, speed, duration, easing }?: DrawParams | undefined): TransitionConfig;
 	/**
-	 * The `crossfade` function creates a pair of [transitions](/docs#template-syntax-element-directives-transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
+	 * The `crossfade` function creates a pair of [transitions](https://svelte.dev/docs#template-syntax-element-directives-transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
 	 *
 	 * https://svelte.dev/docs/svelte-transition#crossfade
 	 * */
