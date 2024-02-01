@@ -1,3 +1,4 @@
+import { walk } from 'zimmerframe';
 import * as b from '../utils/builders.js';
 
 /**
@@ -96,11 +97,36 @@ export function extract_identifiers(param, nodes = []) {
 
 /**
  * Extracts all identifiers from an expression.
+ * @param {import('estree').Expression} expr
+ * @returns {import('estree').Identifier[]}
+ */
+export function extract_all_identifiers_from_expression(expr) {
+	/** @type {import('estree').Identifier[]} */
+	let nodes = [];
+
+	walk(
+		expr,
+		{},
+		{
+			Identifier(node, { path }) {
+				const parent = path.at(-1);
+				if (parent?.type !== 'MemberExpression' || parent.property !== node || parent.computed) {
+					nodes.push(node);
+				}
+			}
+		}
+	);
+
+	return nodes;
+}
+
+/**
+ * Extracts all leaf identifiers from a destructuring expression.
  * @param {import('estree').Identifier | import('estree').ObjectExpression | import('estree').ArrayExpression} node
  * @param {import('estree').Identifier[]} [nodes]
  * @returns
  */
-export function extract_identifiers_from_expression(node, nodes = []) {
+export function extract_identifiers_from_destructuring(node, nodes = []) {
 	// TODO This isn't complete, but it should be enough for our purposes
 	switch (node.type) {
 		case 'Identifier':
@@ -110,9 +136,9 @@ export function extract_identifiers_from_expression(node, nodes = []) {
 		case 'ObjectExpression':
 			for (const prop of node.properties) {
 				if (prop.type === 'Property') {
-					extract_identifiers_from_expression(/** @type {any} */ (prop.value), nodes);
+					extract_identifiers_from_destructuring(/** @type {any} */ (prop.value), nodes);
 				} else {
-					extract_identifiers_from_expression(/** @type {any} */ (prop.argument), nodes);
+					extract_identifiers_from_destructuring(/** @type {any} */ (prop.argument), nodes);
 				}
 			}
 
@@ -120,7 +146,7 @@ export function extract_identifiers_from_expression(node, nodes = []) {
 
 		case 'ArrayExpression':
 			for (const element of node.elements) {
-				if (element) extract_identifiers_from_expression(/** @type {any} */ (element), nodes);
+				if (element) extract_identifiers_from_destructuring(/** @type {any} */ (element), nodes);
 			}
 
 			break;

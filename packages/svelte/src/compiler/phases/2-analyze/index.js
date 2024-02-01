@@ -1,9 +1,9 @@
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import { error } from '../../errors.js';
-import * as assert from '../../utils/assert.js';
 import {
 	extract_identifiers,
+	extract_all_identifiers_from_expression,
 	extract_paths,
 	is_event_attribute,
 	is_text_attribute,
@@ -1008,39 +1008,52 @@ const common_visitors = {
 
 		if (node.name !== 'group') return;
 
+		// Traverse the path upwards and find all EachBlocks who are (indirectly) contributing to bind:group,
+		// i.e. one of their declarations is referenced in the binding. This allows group bindings to work
+		// correctly when referencing a variable declared in an EachBlock by using the index of the each block
+		// entries as keys.
 		i = context.path.length;
+		const each_blocks = [];
+		const expression_ids = extract_all_identifiers_from_expression(node.expression);
+		let ids = expression_ids;
 		while (i--) {
 			const parent = context.path[i];
 			if (parent.type === 'EachBlock') {
-				parent.metadata.contains_group_binding = true;
-				for (const binding of parent.metadata.references) {
-					binding.mutated = true;
+				const references = ids.filter((id) => parent.metadata.declarations.has(id.name));
+				if (references.length > 0) {
+					parent.metadata.contains_group_binding = true;
+					for (const binding of parent.metadata.references) {
+						binding.mutated = true;
+					}
+					each_blocks.push(parent);
+					ids = ids.filter((id) => !references.includes(id));
+					ids.push(...extract_all_identifiers_from_expression(parent.expression));
 				}
 			}
 		}
 
-		const id = object(node.expression);
-
-		const binding = id === null ? null : context.state.scope.get(id.name);
-		assert.ok(binding);
-
-		let group = context.state.analysis.binding_groups.get(binding);
-		if (!group) {
-			group = {
-				name: context.state.scope.root.unique('binding_group'),
-				directives: []
-			};
-
-			context.state.analysis.binding_groups.set(binding, group);
+		// The identifiers that make up the binding expression form they key for the binding group.
+		// If the same identifiers in the same order are used in another bind:group, they will be in the same group.
+		// (there's an edge case where `bind:group={a[i]}` will be in a different group than `bind:group={a[j]}` even when i == j,
+		//  but this is a limitation of the current static analysis we do; it also never worked in Svelte 4)
+		const bindings = expression_ids.map((id) => context.state.scope.get(id.name));
+		let group_name;
+		outer: for (const [b, group] of context.state.analysis.binding_groups) {
+			if (b.length !== bindings.length) continue;
+			for (let i = 0; i < bindings.length; i++) {
+				if (bindings[i] !== b[i]) continue outer;
+			}
+			group_name = group;
 		}
 
-		group.directives.push(node);
+		if (!group_name) {
+			group_name = context.state.scope.root.unique('binding_group');
+			context.state.analysis.binding_groups.set(bindings, group_name);
+		}
 
 		node.metadata = {
-			binding_group_name: group.name,
-			parent_each_blocks: /** @type {import('#compiler').EachBlock[]} */ (
-				context.path.filter((p) => p.type === 'EachBlock')
-			)
+			binding_group_name: group_name,
+			parent_each_blocks: each_blocks
 		};
 	},
 	ArrowFunctionExpression: function_visitor,

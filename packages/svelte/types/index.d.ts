@@ -1408,6 +1408,7 @@ declare module 'svelte/compiler' {
 			array_name: Identifier | null;
 			index: Identifier;
 			item_name: string;
+			declarations: Map<string, Binding>;
 			/** List of bindings that are referenced within the expression */
 			references: Binding[];
 			/**

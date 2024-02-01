@@ -3,7 +3,7 @@ import { walk } from 'zimmerframe';
 import { is_element_node } from './nodes.js';
 import * as b from '../utils/builders.js';
 import { error } from '../errors.js';
-import { extract_identifiers, extract_identifiers_from_expression } from '../utils/ast.js';
+import { extract_identifiers, extract_identifiers_from_destructuring } from '../utils/ast.js';
 import { JsKeywords, Runes } from './constants.js';
 
 export class Scope {
@@ -306,7 +306,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			scopes.set(attribute, scope);
 
 			if (attribute.expression) {
-				for (const id of extract_identifiers_from_expression(attribute.expression)) {
+				for (const id of extract_identifiers_from_destructuring(attribute.expression)) {
 					const binding = scope.declare(id, 'derived', 'const');
 					bindings.push(binding);
 				}
@@ -548,6 +548,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				array_name: needs_array_deduplication ? state.scope.root.unique('$$array') : null,
 				index: scope.root.unique('$$index'),
 				item_name: node.context.type === 'Identifier' ? node.context.name : '$$item',
+				declarations: scope.declarations,
 				references: [...references_within]
 					.map((id) => /** @type {import('#compiler').Binding} */ (state.scope.get(id.name)))
 					.filter(Boolean),

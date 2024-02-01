@@ -2720,8 +2720,7 @@ export const template_visitors = {
 				case 'group': {
 					/** @type {import('estree').CallExpression[]} */
 					const indexes = [];
-					// we only care about the indexes above the first each block
-					for (const parent_each_block of node.metadata.parent_each_blocks.slice(0, -1)) {
+					for (const parent_each_block of node.metadata.parent_each_blocks) {
 						indexes.push(b.call('$.unwrap', parent_each_block.metadata.index));
 					}
 
