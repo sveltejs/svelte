@@ -18,12 +18,10 @@ import {
 	get_prototype_of,
 	is_array,
 	is_frozen,
-	object_keys,
 	object_prototype
 } from './utils.js';
 
 export const STATE_SYMBOL = Symbol('$state');
-export const READONLY_SYMBOL = Symbol('readonly');
 
 /**
  * @template T
@@ -93,7 +91,7 @@ function unwrap(value, already_unwrapped = new Map()) {
 			const descriptors = get_descriptors(value);
 			already_unwrapped.set(value, obj);
 			for (const key of keys) {
-				if (key === STATE_SYMBOL || (DEV && key === READONLY_SYMBOL)) continue;
+				if (key === STATE_SYMBOL) continue;
 				if (descriptors[key].get) {
 					define_property(obj, key, descriptors[key]);
 				} else {
@@ -175,9 +173,6 @@ const state_proxy_handler = {
 	},
 
 	get(target, prop, receiver) {
-		if (DEV && prop === READONLY_SYMBOL) {
-			return Reflect.get(target, READONLY_SYMBOL);
-		}
 		if (prop === STATE_SYMBOL) {
 			return Reflect.get(target, STATE_SYMBOL);
 		}
@@ -224,9 +219,6 @@ const state_proxy_handler = {
 	},
 
 	has(target, prop) {
-		if (DEV && prop === READONLY_SYMBOL) {
-			return Reflect.has(target, READONLY_SYMBOL);
-		}
 		if (prop === STATE_SYMBOL) {
 			return true;
 		}
@@ -250,10 +242,6 @@ const state_proxy_handler = {
 	},
 
 	set(target, prop, value) {
-		if (DEV && prop === READONLY_SYMBOL) {
-			target[READONLY_SYMBOL] = value;
-			return true;
-		}
 		const metadata = target[STATE_SYMBOL];
 		const s = metadata.s.get(prop);
 		if (s !== undefined) set(s, proxy(value, metadata.i));
@@ -304,69 +292,3 @@ if (DEV) {
 		throw new Error('Cannot set prototype of $state object');
 	};
 }
-
-/**
- * Expects a value that was wrapped with `proxy` and makes it readonly.
- *
- * @template {Record<string | symbol, any>} T
- * @template {import('./types.js').ProxyReadonlyObject<T> | T} U
- * @param {U} value
- * @returns {Proxy<U> | U}
- */
-export function readonly(value) {
-	const proxy = value && value[READONLY_SYMBOL];
-	if (proxy) {
-		const metadata = value[STATE_SYMBOL];
-		// Check that the incoming value is the same proxy that this readonly symbol was created for:
-		// If someone copies over the readonly symbol to a new object (using Reflect.ownKeys) the referenced
-		// proxy could be stale and we should not return it.
-		if (metadata.p === value) return proxy;
-	}
-
-	if (
-		typeof value === 'object' &&
-		value != null &&
-		!is_frozen(value) &&
-		STATE_SYMBOL in value && // TODO handle Map and Set as well
-		!(READONLY_SYMBOL in value)
-	) {
-		const proxy = new Proxy(
-			value,
-			/** @type {ProxyHandler<import('./types.js').ProxyReadonlyObject<U>>} */ (
-				readonly_proxy_handler
-			)
-		);
-		define_property(value, READONLY_SYMBOL, { value: proxy, writable: false });
-		return proxy;
-	}
-
-	return value;
-}
-
-/**
- * @param {any}	_
- * @param {string} prop
- * @returns {never}
- */
-const readonly_error = (_, prop) => {
-	throw new Error(
-		`Non-bound props cannot be mutated — to make the \`${prop}\` settable, ensure the object it is used within is bound as a prop \`bind:<prop>={...}\`. Fallback values can never be mutated.`
-	);
-};
-
-/** @type {ProxyHandler<import('./types.js').ProxyReadonlyObject>} */
-const readonly_proxy_handler = {
-	defineProperty: readonly_error,
-	deleteProperty: readonly_error,
-	set: readonly_error,
-
-	get(target, prop, receiver) {
-		const value = Reflect.get(target, prop, receiver);
-
-		if (!(prop in target)) {
-			return readonly(value);
-		}
-
-		return value;
-	}
-};

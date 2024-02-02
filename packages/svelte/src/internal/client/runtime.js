@@ -17,7 +17,7 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../constants.js';
-import { READONLY_SYMBOL, STATE_SYMBOL, proxy, readonly, unstate } from './proxy.js';
+import { STATE_SYMBOL, unstate } from './proxy.js';
 import { EACH_BLOCK, IF_BLOCK } from './block.js';
 
 export const SOURCE = 1;
@@ -1619,10 +1619,6 @@ export function prop(props, key, flags, initial) {
 		// @ts-expect-error would need a cumbersome method overload to type this
 		if ((flags & PROPS_IS_LAZY_INITIAL) !== 0) initial = initial();
 
-		if (DEV && runes) {
-			initial = readonly(proxy(/** @type {any} */ (initial)));
-		}
-
 		prop_value = /** @type {V} */ (initial);
 
 		if (setter) setter(prop_value);
@@ -2125,10 +2121,6 @@ export function freeze(value) {
 		// If the object is already proxified, then unstate the value
 		if (STATE_SYMBOL in value) {
 			return object_freeze(unstate(value));
-		}
-		// If the value is already read-only then just use that
-		if (DEV && READONLY_SYMBOL in value) {
-			return value;
 		}
 		// Otherwise freeze the object
 		object_freeze(value);
