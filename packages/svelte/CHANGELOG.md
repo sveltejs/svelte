@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.45
+
+### Patch Changes
+
+- fix: correctly determine `bind:group` members ([#10368](https://github.com/sveltejs/svelte/pull/10368))
+
+- fix: make inline doc links valid ([#10365](https://github.com/sveltejs/svelte/pull/10365))
+
 ## 5.0.0-next.44
 
 ### Patch Changes
