@@ -1036,7 +1036,7 @@ const common_visitors = {
 		// If the same identifiers in the same order are used in another bind:group, they will be in the same group.
 		// (there's an edge case where `bind:group={a[i]}` will be in a different group than `bind:group={a[j]}` even when i == j,
 		//  but this is a limitation of the current static analysis we do; it also never worked in Svelte 4)
-		const bindings = expression_ids.map((id) => context.state.scope.get(id.name));
+		const bindings = expression_ids.map((id) => context.state.scope.get(id.name) ?? id);
 		let group_name;
 		outer: for (const [b, group] of context.state.analysis.binding_groups) {
 			if (b.length !== bindings.length) continue;

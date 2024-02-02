@@ -108,11 +108,8 @@ export function extract_all_identifiers_from_expression(expr) {
 		expr,
 		{},
 		{
-			Identifier(node, { path }) {
-				const parent = path.at(-1);
-				if (parent?.type !== 'MemberExpression' || parent.property !== node || parent.computed) {
-					nodes.push(node);
-				}
+			Identifier(node) {
+				nodes.push(node);
 			}
 		}
 	);
