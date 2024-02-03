@@ -25,6 +25,8 @@ import {
 export const STATE_SYMBOL = Symbol('$state');
 export const READONLY_SYMBOL = Symbol('readonly');
 
+const allowed_proxy_types = [object_prototype, array_prototype];
+
 /**
  * @template T
  * @param {T} value
@@ -32,38 +34,57 @@ export const READONLY_SYMBOL = Symbol('readonly');
  * @returns {import('./types.js').ProxyStateObject<T> | T}
  */
 export function proxy(value, immutable = true) {
-	if (typeof value === 'object' && value != null && !is_frozen(value)) {
-		if (STATE_SYMBOL in value) {
-			const metadata = /** @type {import('./types.js').ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
-			// Check that the incoming value is the same proxy that this state symbol was created for:
-			// If someone copies over the state symbol to a new object (using Reflect.ownKeys) the referenced
-			// proxy could be stale and we should not return it.
-			if (metadata.t === value || metadata.p === value) return metadata.p;
-		}
+	const could_be_proxy = typeof value === 'object' && value != null && !is_frozen(value);
+	if (!could_be_proxy) return value;
 
-		const prototype = get_prototype_of(value);
+	const prototype = get_prototype_of(value);
+	// TODO: handle Map and Set as well
+	const is_allowed_proxy_type = allowed_proxy_types.includes(prototype);
+	if (!is_allowed_proxy_type) return value;
 
-		// TODO handle Map and Set as well
-		if (prototype === object_prototype || prototype === array_prototype) {
-			const proxy = new Proxy(
-				value,
-				/** @type {ProxyHandler<import('./types.js').ProxyStateObject<T>>} */ (state_proxy_handler)
-			);
-			define_property(value, STATE_SYMBOL, {
-				value: init(
-					/** @type {import('./types.js').ProxyStateObject<T>} */ (value),
-					/** @type {import('./types.js').ProxyStateObject<T>} */ (proxy),
-					immutable
-				),
-				writable: true,
-				enumerable: false
-			});
+	const proxy_available = get_proxy(value);
+	if (!proxy_available) return make_new_proxy(value, immutable);
 
-			return proxy;
-		}
+	return proxy_available;
+}
+
+/**
+ * @template T
+ * @param {T} value
+ * @returns {import('./types.js').ProxyStateObject<T> | undefined}
+ */
+function get_proxy(value) {
+	const has_proxy = STATE_SYMBOL in value;
+	if (has_proxy) {
+		const metadata = /** @type {import('./types.js').ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
+		// Check that the incoming value is the same proxy that this state symbol was created for:
+		// If someone copies over the state symbol to a new object (using Reflect.ownKeys) the referenced
+		// proxy could be stale and we should not return it.
+		if (metadata.t === value || metadata.p === value) return metadata.p;
 	}
+}
 
-	return value;
+/**
+ * @template T
+ * @param {T & object} value
+ * @param {boolean} [immutable]
+ * @returns {import('./types.js').ProxyStateObject<T> | T}
+ */
+function make_new_proxy(value, immutable = true) {
+	const proxy = new Proxy(
+		value,
+		/** @type {ProxyHandler<import('./types.js').ProxyStateObject<T>>} */ (state_proxy_handler)
+	);
+	define_property(value, STATE_SYMBOL, {
+		value: init(
+			/** @type {import('./types.js').ProxyStateObject<T>} */ (value),
+			/** @type {import('./types.js').ProxyStateObject<T>} */ (proxy),
+			immutable
+		),
+		writable: true,
+		enumerable: false
+	});
+	return proxy;
 }
 
 /**
