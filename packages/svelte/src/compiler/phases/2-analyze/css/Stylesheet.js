@@ -89,9 +89,9 @@ export class Rule {
 		 */
 		if (parent && parent.node.type === 'Rule') {
 			this.selectors = /** @type {Rule} **/ (parent)
-				.selectors.map((parent_selector) =>
-					node.prelude.children.map((node) => new Selector(node, stylesheet, parent_selector))
-				).flat()
+				.selectors
+				.map(parent_selector => node.prelude.children.map((node) => new Selector(node, stylesheet, parent_selector)))
+				.flat()
 		} else {
 			this.selectors = node.prelude.children.map((node) => new Selector(node, stylesheet, null));
 		}
