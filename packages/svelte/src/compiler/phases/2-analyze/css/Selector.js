@@ -851,7 +851,7 @@ const InvisibleCombinator = { type: /** @type {"Combinator"} **/ ("Combinator"),
  * Groups selectors by combinator into blocks
  *
  * If there is a parent_selector
- * - We need to find the position of the `&` selector or front if there is no `&` selector
+ * - We need to find the position(s) of the `&` selector or upshift them at the front if there is no `&` selector
  * - Then insert the parent_selector's blocks at that position
  *
  * @param {import('#compiler').Css.Selector} selector
