@@ -1,7 +1,9 @@
 <a>
     <b>
         <c>
+            <d>
 
+            </d>
         </c>
     </b>
 </a>
@@ -17,6 +19,10 @@ a {
 
     b c {
         color: blue;
+    }
+
+    b c d {
+        color: orange;
     }
 }
 

@@ -34,18 +34,15 @@ export default class Selector {
 	/** @type {boolean} */
 	used;
 
-	/** @type {boolean} */
-	nested;
-
 	/**
 	 * @param {import('#compiler').Css.Selector} node
 	 * @param {import('./Stylesheet.js').default} stylesheet
-	 * @param {boolean} nested
+	 * @param {Selector | null} parent_selector
 	 */
-	constructor(node, stylesheet, nested) {
+	constructor(node, stylesheet, parent_selector) {
 		this.node = node;
 		this.stylesheet = stylesheet;
-		this.blocks = group_selectors(node);
+		this.blocks = group_selectors(node, parent_selector);
 		// take trailing :global(...) selectors out of consideration
 		let i = this.blocks.length;
 		while (i > 0) {
@@ -56,7 +53,6 @@ export default class Selector {
 		const host_only = this.blocks.length === 1 && this.blocks[0].host;
 		const root_only = this.blocks.length === 1 && this.blocks[0].root;
 		this.used = this.local_blocks.length === 0 || host_only || root_only;
-		this.nested = nested;
 	}
 
 	/** @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node */
@@ -101,11 +97,19 @@ export default class Selector {
 				}
 			}
 			let i = block.selectors.length;
+
 			while (i--) {
 				const selector = block.selectors[i];
 
+				// We don't make any changes to the invisible selectors
+				// because they don't exist in reality in css nesting
+				// and changing them would affect the nested rules parent rule selectors
+				if(selector.invisible) {
+					continue
+				}
+
 				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
-					if (!block.root && !block.host && !block.nested) {
+					if (!block.root && !block.host) {
 						if (i === 0) code.prependRight(selector.start, attr);
 					}
 					continue;
@@ -125,7 +129,7 @@ export default class Selector {
 			if (block.should_encapsulate) {
 				encapsulate_block(
 					block,
-					index === this.blocks.length - 1 + (this.nested ? 1 : 0)
+					index === this.blocks.filter(block => !block.invisible).length - 1
 						? attr.repeat(amount_class_specificity_to_increase + 1)
 						: attr
 				);
@@ -176,7 +180,7 @@ export default class Selector {
 	validate_invalid_combinator_without_selector(analysis) {
 		for (let i = 0; i < this.blocks.length; i++) {
 			const block = this.blocks[i];
-			if (block.selectors.length === 0 && !block.nested) {
+			if (block.selectors.length === 0) {
 				error(this.node, 'invalid-css-selector');
 			}
 		}
@@ -329,12 +333,6 @@ function block_might_apply_to_node(block, node) {
 			name === 'global'
 		) {
 			return NO_MATCH;
-		}
-
-		if (block.nested) {
-			// TODO: How to handle knowing whether a nested selector was used?
-			// For now, we'll just assume it was used to prevent encapsulation with (unused)
-			return UNKNOWN_SELECTOR;
 		}
 
 		if (selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector') {
@@ -797,7 +795,7 @@ class Block {
 	/** @type {import('#compiler').Css.Combinator | null} */
 	combinator;
 
-	/** @type {import('#compiler').Css.SimpleSelector[]} */
+	/** @type {(import('#compiler').Css.SimpleSelector & { invisible?: boolean})[]} */
 	selectors;
 
 	/** @type {number} */
@@ -809,16 +807,19 @@ class Block {
 	/** @type {boolean} */
 	should_encapsulate;
 
+	/** @type {boolean} */
+	invisible
+
 	/** @param {import('#compiler').Css.Combinator | null} combinator */
 	constructor(combinator) {
 		this.combinator = combinator;
 		this.host = false;
 		this.root = false;
-		this.nested = false;
 		this.selectors = [];
 		this.start = -1;
 		this.end = -1;
 		this.should_encapsulate = false;
+		this.invisible = false
 	}
 
 	/** @param {import('#compiler').Css.SimpleSelector} selector */
@@ -844,31 +845,62 @@ class Block {
 	}
 }
 
+const InvisibleCombinator = { type: /** @type {"Combinator"} **/ ("Combinator"), name: ' ', start: -1, end: -1}
+
 /**
  * Groups selectors by combinator into blocks
+ *
+ * If there is a parent_selector
+ * - We need to find the position of the `&` selector or front if there is no `&` selector
+ * - Then insert the parent_selector's blocks at that position
+ *
  * @param {import('#compiler').Css.Selector} selector
+ * @param {Selector | null} parent_selector
  */
-function group_selectors(selector) {
+function group_selectors(selector, parent_selector) {
 	let block = new Block(null);
+
 	const blocks = [block];
 
-	for (const child of selector.children) {
-		if (child.type === 'Combinator') {
-			// If we start with a combinator, that means
-			// we're dealing with a nested selector
-			if(block.selectors.length === 0 && !block.combinator) {
-				block.nested = true;
-				block.combinator = child;
-			} else {
-				block = new Block(child);
-				blocks.push(block);
+	const real_selectors_start = parent_selector?.node.children.length || 0;
+
+	if (parent_selector) {
+		const nested_rule_indices = selector.children
+			.map((child, index) => (child.type === 'NestedSelector' ? index : -1))
+			.filter(index => index !== -1);
+
+		const parent_children = parent_selector.node.children.map(child => ({
+			...child,
+			invisible: true,
+		}));
+
+		if (nested_rule_indices.length === 0) {
+			// if the next selector is a combinator, we must not unshift a child combinator
+			const next_is_combinator = selector.children[0]?.type === 'Combinator';
+			if (!next_is_combinator) {
+				selector.children.unshift(InvisibleCombinator);
 			}
-		} else if (child.type === "NestedSelector") {
-			block.nested = true;
+			selector.children.unshift(...parent_children);
+		} else {
+			// There's an & nesting selectors somewhere
+			// so we delete it and insert invisible parent's children there
+			nested_rule_indices.forEach(nested_rule_index => selector.children.splice(nested_rule_index, 1, ...parent_children));
+		}
+	}
+
+	selector.children.forEach((child, i) => {
+		if (child.type === 'Combinator') {
+			block = new Block(child);
+			blocks.push(block);
+		} else if (child.type === 'NestedSelector') {
+			// Don't think we need to add it here
 		} else {
 			block.add(child);
 		}
-	}
+		if (real_selectors_start > i) {
+			block.invisible = true;
+		}
+	});
 
 	return blocks;
 }

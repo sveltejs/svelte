@@ -48,7 +48,7 @@ function escape_comment_close(node, code) {
 	}
 }
 
-class Rule {
+export class Rule {
 	/** @type {import('./Selector.js').default[]} */
 	selectors;
 
@@ -72,7 +72,29 @@ class Rule {
 	constructor(node, stylesheet, parent) {
 		this.node = node;
 		this.parent = parent;
-		this.selectors = node.prelude.children.map((node) => new Selector(node, stylesheet, parent?.node.type === "Rule"));
+
+		/**
+		 * We need to add selectors for each parent rule's selectors
+		 * because of CSS nesting. For example:
+		 * ```css
+		 * 	.a, .b {
+		 *		.c {
+		 * 	 		color: red;
+		 * 		}
+		 * 	}
+		 * ```
+		 * Results in the following selectors:
+		 * 	- .a .c
+		 * 	- .b .c
+		 */
+		if (parent && parent.node.type === 'Rule') {
+			this.selectors = /** @type {Rule} **/ (parent)
+				.selectors.map((parent_selector) =>
+					node.prelude.children.map((node) => new Selector(node, stylesheet, parent_selector))
+				).flat()
+		} else {
+			this.selectors = node.prelude.children.map((node) => new Selector(node, stylesheet, null));
+		}
 
 		this.nested_rules = node.block.children
 			.filter((node) => node.type === 'Rule')

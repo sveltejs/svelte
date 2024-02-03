@@ -1,16 +1,17 @@
-<div class="xyz">
-    <button>
+<b>
+    <a>
 
-    </button>
-</div>
+    </a>
+</b>
 <style>
-button {
+a {
     color: red;
 
-    .xyz & {
+    b & {
         color: yellow;
     }
 
     color: black;
 }
+
 </style>

@@ -1,7 +1,7 @@
-button.svelte-xyz {
+a.svelte-xyz {
     color: red;
 
-    .xyz.svelte-xyz & {
+    b & {
         color: yellow;
     }
 
