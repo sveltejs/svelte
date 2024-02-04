@@ -978,6 +978,7 @@ export interface HTMLImgAttributes extends HTMLAttributes<HTMLImageElement> {
 	alt?: string | undefined | null;
 	crossorigin?: 'anonymous' | 'use-credentials' | '' | undefined | null;
 	decoding?: 'async' | 'auto' | 'sync' | undefined | null;
+	fetchpriority?: 'auto' | 'high' | 'low' | undefined | null;
 	height?: number | string | undefined | null;
 	ismap?: boolean | undefined | null;
 	loading?: 'eager' | 'lazy' | undefined | null;

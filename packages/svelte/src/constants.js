@@ -49,6 +49,7 @@ export const PassiveDelegatedEvents = ['touchstart', 'touchmove', 'touchend'];
  */
 export const AttributeAliases = {
 	// no `class: 'className'` because we handle that separately
+	fetchpriority: 'fetchPriority',
 	formnovalidate: 'formNoValidate',
 	ismap: 'isMap',
 	nomodule: 'noModule',
