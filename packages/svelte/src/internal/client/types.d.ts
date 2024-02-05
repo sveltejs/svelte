@@ -31,7 +31,7 @@ export type Store<V> = {
 	set(value: V): void;
 };
 
-// For all the core internal objects, we use signal character property strings.
+// For all the core internal objects, we use single-character property strings.
 // This not only reduces code-size and parsing, but it also improves the performance
 // when the JS VM JITs the code.
 
