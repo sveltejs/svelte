@@ -1,0 +1,26 @@
+[
+	{
+		"code": "non-state-reference",
+		"message": "b is updated, but is not declared with $state(...). Changing its value will not correctly trigger updates.",
+		"start": {
+			"column": 5,
+			"line": 3
+		},
+		"end": {
+			"column": 6,
+			"line": 3
+		}
+	},
+	{
+		"code": "non-state-reference",
+		"message": "c is updated, but is not declared with $state(...). Changing its value will not correctly trigger updates.",
+		"start": {
+			"column": 5,
+			"line": 4
+		},
+		"end": {
+			"column": 6,
+			"line": 4
+		}
+	}
+]

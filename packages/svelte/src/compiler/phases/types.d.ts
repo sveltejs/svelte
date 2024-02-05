@@ -1,5 +1,4 @@
 import type {
-	BindDirective,
 	Binding,
 	Fragment,
 	RegularElement,
@@ -28,11 +27,6 @@ export interface ReactiveStatement {
 	dependencies: Set<Binding>;
 }
 
-export interface BindingGroup {
-	name: Identifier;
-	directives: BindDirective[];
-}
-
 export interface RawWarning {
 	code: string;
 	message: string;
@@ -46,6 +40,8 @@ export interface Analysis {
 	module: Js;
 	name: string; // TODO should this be filename? it's used in `compileModule` as well as `compile`
 	warnings: RawWarning[];
+	runes: boolean;
+	immutable: boolean;
 
 	// TODO figure out if we can move this to ComponentAnalysis
 	accessors: boolean;
@@ -70,7 +66,8 @@ export interface ComponentAnalysis extends Analysis {
 	/** If `true`, should append styles through JavaScript */
 	inject_styles: boolean;
 	reactive_statements: Map<LabeledStatement, ReactiveStatement>;
-	binding_groups: Map<Binding, BindingGroup>;
+	/** Identifiers that make up the `bind:group` expression -> internal group binding name */
+	binding_groups: Map<Array<Binding | null>, Identifier>;
 	slot_names: Set<string>;
 }
 

@@ -1,10 +1,12 @@
 // Handle hydration
 
-/** @type {null | Array<Text | Comment | Element>} */
+import { schedule_task } from './runtime.js';
+
+/** @type {null | Array<import('./types.js').TemplateNode>} */
 export let current_hydration_fragment = null;
 
 /**
- * @param {null | Array<Text | Comment | Element>} fragment
+ * @param {null | Array<import('./types.js').TemplateNode>} fragment
  * @returns {void}
  */
 export function set_current_hydration_fragment(fragment) {
@@ -14,10 +16,10 @@ export function set_current_hydration_fragment(fragment) {
 /**
  * Returns all nodes between the first `<!--ssr:...-->` comment tag pair encountered.
  * @param {Node | null} node
- * @returns {Array<Text | Comment | Element> | null}
+ * @returns {Array<import('./types.js').TemplateNode> | null}
  */
 export function get_hydration_fragment(node) {
-	/** @type {Array<Text | Comment | Element>} */
+	/** @type {Array<import('./types.js').TemplateNode>} */
 	const fragment = [];
 
 	/** @type {null | Node} */
@@ -68,12 +70,16 @@ export function hydrate_block_anchor(anchor_node, is_controlled) {
 			let fragment = target_node.$$fragment;
 			if (fragment === undefined) {
 				fragment = get_hydration_fragment(target_node);
-				// @ts-ignore remove to prevent memory leaks
-				target_node.$$fragment = undefined;
+			} else {
+				schedule_task(() => {
+					// @ts-expect-error clean up memory
+					target_node.$$fragment = undefined;
+				});
 			}
 			set_current_hydration_fragment(fragment);
 		} else {
-			set_current_hydration_fragment([/** @type {Element} */ (target_node.firstChild)]);
+			const first_child = /** @type {Element | null} */ (target_node.firstChild);
+			set_current_hydration_fragment(first_child === null ? [] : [first_child]);
 		}
 	}
 }

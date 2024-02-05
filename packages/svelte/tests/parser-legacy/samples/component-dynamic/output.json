@@ -1,16 +1,14 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 62,
-		"type": "Fragment",
 		"children": [
 			{
-				"start": 0,
-				"end": 62,
 				"type": "InlineComponent",
 				"name": "svelte:component",
-				"attributes": [],
-				"children": [],
+				"start": 0,
+				"end": 62,
 				"expression": {
 					"type": "ConditionalExpression",
 					"start": 25,
@@ -73,7 +71,9 @@
 						},
 						"name": "Bar"
 					}
-				}
+				},
+				"attributes": [],
+				"children": []
 			}
 		]
 	}

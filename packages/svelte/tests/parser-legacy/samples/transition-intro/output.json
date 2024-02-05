@@ -1,13 +1,13 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 45,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Element",
 				"start": 0,
 				"end": 45,
-				"type": "Element",
 				"name": "div",
 				"attributes": [
 					{
@@ -91,9 +91,9 @@
 				],
 				"children": [
 					{
+						"type": "Text",
 						"start": 31,
 						"end": 39,
-						"type": "Text",
 						"raw": "fades in",
 						"data": "fades in"
 					}

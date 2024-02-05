@@ -7,8 +7,7 @@ import { global_visitors } from './visitors/global.js';
 import { javascript_visitors } from './visitors/javascript.js';
 import { javascript_visitors_runes } from './visitors/javascript-runes.js';
 import { javascript_visitors_legacy } from './visitors/javascript-legacy.js';
-import { serialize_get_binding } from './utils.js';
-import { remove_types } from '../typescript.js';
+import { is_state_source, serialize_get_binding } from './utils.js';
 
 /**
  * This function ensures visitor sets don't accidentally clobber each other
@@ -102,7 +101,6 @@ export function client_component(source, analysis, options) {
 			state,
 			combine_visitors(
 				set_scope(analysis.module.scopes),
-				remove_types,
 				global_visitors,
 				// @ts-expect-error TODO
 				javascript_visitors,
@@ -118,21 +116,18 @@ export function client_component(source, analysis, options) {
 			instance_state,
 			combine_visitors(
 				set_scope(analysis.instance.scopes),
-				{ ...remove_types, ImportDeclaration: undefined, ExportNamedDeclaration: undefined },
 				global_visitors,
 				// @ts-expect-error TODO
 				javascript_visitors,
 				analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy,
 				{
-					ImportDeclaration(node, context) {
-						// @ts-expect-error
-						state.hoisted.push(remove_types.ImportDeclaration(node, context));
+					ImportDeclaration(node) {
+						state.hoisted.push(node);
 						return b.empty;
 					},
 					ExportNamedDeclaration(node, context) {
 						if (node.declaration) {
-							// @ts-expect-error
-							return remove_types.ExportNamedDeclaration(context.visit(node.declaration), context);
+							return context.visit(node.declaration);
 						}
 
 						return b.empty;
@@ -148,7 +143,6 @@ export function client_component(source, analysis, options) {
 			{ ...state, scope: analysis.instance.scope },
 			combine_visitors(
 				set_scope(analysis.template.scopes),
-				remove_types,
 				global_visitors,
 				// @ts-expect-error TODO
 				template_visitors
@@ -159,7 +153,7 @@ export function client_component(source, analysis, options) {
 	// Very very dirty way of making import statements reactive in legacy mode if needed
 	if (!analysis.runes) {
 		for (const [name, binding] of analysis.module.scope.declarations) {
-			if (binding.kind === 'state' && binding.declaration_kind === 'import') {
+			if (binding.kind === 'legacy_reactive_import') {
 				instance.body.unshift(
 					b.var('$$_import_' + name, b.call('$.reactive_import', b.thunk(b.id(name))))
 				);
@@ -175,7 +169,7 @@ export function client_component(source, analysis, options) {
 
 	for (const [name, binding] of analysis.instance.scope.declarations) {
 		if (binding.kind === 'legacy_reactive') {
-			legacy_reactive_declarations.push(b.const(name, b.call('$.source')));
+			legacy_reactive_declarations.push(b.const(name, b.call('$.mutable_source')));
 		}
 		if (binding.kind === 'store_sub') {
 			if (store_setup.length === 0) {
@@ -201,7 +195,7 @@ export function client_component(source, analysis, options) {
 									b.call('$.validate_store', store_reference, b.literal(name.slice(1))),
 									store_get
 								])
-						  )
+							)
 						: b.thunk(store_get)
 				)
 			);
@@ -233,18 +227,20 @@ export function client_component(source, analysis, options) {
 				'$.bind_prop',
 				b.id('$$props'),
 				b.literal(alias ?? name),
-				binding?.kind === 'state' ? b.call('$.get', b.id(name)) : b.id(name)
+				binding?.kind === 'state' || binding?.kind === 'frozen_state'
+					? b.call('$.get', b.id(name))
+					: b.id(name)
 			)
 		);
 	});
 
 	const properties = analysis.exports.map(({ name, alias }) => {
 		const binding = analysis.instance.scope.get(name);
+		const is_source = binding !== null && is_state_source(binding, state);
+
 		// TODO This is always a getter because the `renamed-instance-exports` test wants it that way.
 		// Should we for code size reasons make it an init in runes mode and/or non-dev mode?
-		return b.get(alias ?? name, [
-			b.return(binding?.kind === 'state' ? b.call('$.get', b.id(name)) : b.id(name))
-		]);
+		return b.get(alias ?? name, [b.return(is_source ? b.call('$.get', b.id(name)) : b.id(name))]);
 	});
 
 	if (analysis.accessors) {
@@ -254,21 +250,14 @@ export function client_component(source, analysis, options) {
 			const key = binding.prop_alias ?? name;
 
 			properties.push(
-				b.get(key, [b.return(b.call('$.get', b.id(name)))]),
-				b.set(key, [b.stmt(b.call('$.set_sync', b.id(name), b.id('$$value')))])
+				b.get(key, [b.return(b.call(b.id(name)))]),
+				b.set(key, [b.stmt(b.call(b.id(name), b.id('$$value'))), b.stmt(b.call('$.flushSync'))])
 			);
 		}
 	}
 
 	const component_block = b.block([
-		b.stmt(
-			b.call(
-				'$.push',
-				b.id('$$props'),
-				b.literal(analysis.runes),
-				...(options.immutable ? [b.literal(true)] : [])
-			)
-		),
+		b.stmt(b.call('$.push', b.id('$$props'), b.literal(analysis.runes))),
 		...store_setup,
 		...legacy_reactive_declarations,
 		...group_binding_declarations,

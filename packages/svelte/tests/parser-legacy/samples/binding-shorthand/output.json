@@ -1,20 +1,20 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 30,
 		"end": 48,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Text",
 				"start": 28,
 				"end": 30,
-				"type": "Text",
 				"raw": "\n\n",
 				"data": "\n\n"
 			},
 			{
+				"type": "InlineComponent",
 				"start": 30,
 				"end": 48,
-				"type": "InlineComponent",
 				"name": "Widget",
 				"attributes": [
 					{

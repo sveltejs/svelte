@@ -10,13 +10,12 @@ export default function text(parser) {
 		data += parser.template[parser.index++];
 	}
 
-	parser.append(
-		/** @type {import('#compiler').Text} */ ({
-			type: 'Text',
-			start,
-			end: parser.index,
-			raw: data,
-			data: decode_character_references(data, false)
-		})
-	);
+	/** @type {ReturnType<typeof parser.append<import('#compiler').Text>>} */
+	parser.append({
+		type: 'Text',
+		start,
+		end: parser.index,
+		raw: data,
+		data: decode_character_references(data, false)
+	});
 }

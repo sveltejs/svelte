@@ -1,13 +1,13 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 62,
 		"end": 60,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Text",
 				"start": 60,
 				"end": 62,
-				"type": "Text",
 				"raw": "\n\n",
 				"data": "\n\n"
 			}

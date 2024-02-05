@@ -1,13 +1,13 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 252,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Element",
 				"start": 0,
 				"end": 29,
-				"type": "Element",
 				"name": "div",
 				"attributes": [
 					{
@@ -30,24 +30,24 @@
 				"children": []
 			},
 			{
+				"type": "Text",
 				"start": 29,
 				"end": 30,
-				"type": "Text",
 				"raw": "\n",
 				"data": "\n"
 			},
 			{
+				"type": "Element",
 				"start": 30,
 				"end": 59,
-				"type": "Element",
 				"name": "div",
 				"attributes": [
 					{
 						"start": 35,
 						"end": 52,
 						"type": "StyleDirective",
-						"modifiers": [],
 						"name": "color",
+						"modifiers": [],
 						"value": [
 							{
 								"start": 48,
@@ -62,16 +62,16 @@
 				"children": []
 			},
 			{
+				"type": "Text",
 				"start": 59,
 				"end": 60,
-				"type": "Text",
 				"raw": "\n",
 				"data": "\n"
 			},
 			{
+				"type": "Element",
 				"start": 60,
 				"end": 87,
-				"type": "Element",
 				"name": "div",
 				"attributes": [
 					{
@@ -94,16 +94,16 @@
 				"children": []
 			},
 			{
+				"type": "Text",
 				"start": 87,
 				"end": 88,
-				"type": "Text",
 				"raw": "\n",
 				"data": "\n"
 			},
 			{
+				"type": "Element",
 				"start": 88,
 				"end": 127,
-				"type": "Element",
 				"name": "div",
 				"attributes": [
 					{
@@ -121,9 +121,9 @@
 								"data": "red"
 							},
 							{
+								"type": "MustacheTag",
 								"start": 109,
 								"end": 119,
-								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
 									"start": 110,
@@ -147,16 +147,16 @@
 				"children": []
 			},
 			{
+				"type": "Text",
 				"start": 127,
 				"end": 128,
-				"type": "Text",
 				"raw": "\n",
 				"data": "\n"
 			},
 			{
+				"type": "Element",
 				"start": 128,
 				"end": 167,
-				"type": "Element",
 				"name": "div",
 				"attributes": [
 					{
@@ -174,9 +174,9 @@
 								"data": "red"
 							},
 							{
+								"type": "MustacheTag",
 								"start": 149,
 								"end": 159,
-								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
 									"start": 150,
@@ -200,16 +200,16 @@
 				"children": []
 			},
 			{
+				"type": "Text",
 				"start": 167,
 				"end": 168,
-				"type": "Text",
 				"raw": "\n",
 				"data": "\n"
 			},
 			{
+				"type": "Element",
 				"start": 168,
 				"end": 205,
-				"type": "Element",
 				"name": "div",
 				"attributes": [
 					{
@@ -227,9 +227,9 @@
 								"data": "red"
 							},
 							{
+								"type": "MustacheTag",
 								"start": 188,
 								"end": 198,
-								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
 									"start": 189,
@@ -253,16 +253,16 @@
 				"children": []
 			},
 			{
+				"type": "Text",
 				"start": 205,
 				"end": 206,
-				"type": "Text",
 				"raw": "\n",
 				"data": "\n"
 			},
 			{
+				"type": "Element",
 				"start": 206,
 				"end": 252,
-				"type": "Element",
 				"name": "div",
 				"attributes": [
 					{
@@ -273,9 +273,9 @@
 						"modifiers": [],
 						"value": [
 							{
+								"type": "MustacheTag",
 								"start": 223,
 								"end": 245,
-								"type": "MustacheTag",
 								"expression": {
 									"type": "TemplateLiteral",
 									"start": 224,

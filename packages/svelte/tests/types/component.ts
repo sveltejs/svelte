@@ -4,7 +4,8 @@ import {
 	SvelteComponent,
 	type ComponentEvents,
 	type ComponentProps,
-	type ComponentType
+	type ComponentType,
+	mount
 } from 'svelte';
 
 // --------------------------------------------------------------------------- legacy: classes
@@ -15,11 +16,11 @@ class LegacyComponent extends SvelteComponent<
 	{ slot: { slotProps: boolean } }
 > {}
 
-// @ts-expect-error
 const legacyComponent = new LegacyComponent({
 	target: null as any as Document | Element | ShadowRoot,
 	props: {
 		prop: 'foo',
+		// @ts-expect-error
 		x: ''
 	}
 });
@@ -56,14 +57,20 @@ class NewComponent extends SvelteComponent<
 	anExport: string = '';
 }
 
-// @ts-expect-error
 new NewComponent({
-	prop: 'foo',
-	x: ''
+	target: null as any,
+	props: {
+		prop: 'foo',
+		// @ts-expect-error
+		x: ''
+	}
 });
 
 const newComponent: NewComponent = new NewComponent({
-	prop: 'foo'
+	target: null as any,
+	props: {
+		prop: 'foo'
+	}
 });
 newComponent.$$events_def.event;
 // @ts-expect-error
@@ -97,7 +104,22 @@ const newComponentEvents2: ComponentEvents<NewComponent> = {
 	event: new KeyboardEvent('click')
 };
 
-const instance = createRoot(newComponent, {
+mount(NewComponent, {
+	target: null as any as Document | Element | ShadowRoot | Text | Comment,
+	props: {
+		prop: 'foo',
+		// @ts-expect-error
+		x: ''
+	},
+	events: {
+		event: new MouseEvent('click')
+	},
+	immutable: true,
+	intro: false,
+	recover: false
+});
+
+const instance = createRoot(NewComponent, {
 	target: null as any as Document | Element | ShadowRoot | Text | Comment,
 	props: {
 		prop: 'foo',
@@ -123,11 +145,11 @@ instance.anExport === 1;
 // --------------------------------------------------------------------------- interop
 
 const AsLegacyComponent = asClassComponent(newComponent);
-// @ts-expect-error
 new AsLegacyComponent({
 	target: null as any,
 	props: {
 		prop: '',
+		// @ts-expect-error
 		x: ''
 	}
 });

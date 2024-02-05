@@ -63,6 +63,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	intro?: boolean;
 	load_compiled?: boolean;
 	error?: string;
+	runtime_error?: string;
 	warnings?: string[];
 	expect_unhandled_rejections?: boolean;
 	withoutNormalizeHtml?: boolean;
@@ -171,6 +172,11 @@ async function run_test_variant(
 		window.document.title = '';
 		window.document.head.innerHTML = styles ? `<style>${styles}</style>` : '';
 		window.document.body.innerHTML = '<main></main>';
+
+		window.addEventListener('error', (e) => {
+			unhandled_rejection = e.error;
+			e.preventDefault();
+		});
 
 		let mod = await import(`${cwd}/_output/client/main.svelte.js`);
 
@@ -299,6 +305,11 @@ async function run_test_variant(
 						compileOptions
 					});
 				}
+
+				if (config.runtime_error && !unhandled_rejection) {
+					unintended_error = true;
+					assert.fail('Expected a runtime error');
+				}
 			} finally {
 				instance.$destroy();
 				assert_html_equal(
@@ -315,7 +326,9 @@ async function run_test_variant(
 			}
 		}
 	} catch (err) {
-		if (config.error && !unintended_error) {
+		if (config.runtime_error) {
+			assert.equal((err as Error).message, config.runtime_error);
+		} else if (config.error && !unintended_error) {
 			assert.equal((err as Error).message, config.error);
 		} else {
 			throw err;

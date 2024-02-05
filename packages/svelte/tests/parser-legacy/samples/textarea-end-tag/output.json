@@ -1,13 +1,13 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 117,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Element",
 				"start": 0,
 				"end": 117,
-				"type": "Element",
 				"name": "textarea",
 				"attributes": [],
 				"children": [
@@ -19,9 +19,9 @@
 						"data": "\n\t<p>not actu </textar ally an element. "
 					},
 					{
+						"type": "MustacheTag",
 						"start": 50,
 						"end": 55,
-						"type": "MustacheTag",
 						"expression": {
 							"type": "Identifier",
 							"start": 51,

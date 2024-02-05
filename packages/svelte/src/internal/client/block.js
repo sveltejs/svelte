@@ -175,10 +175,13 @@ export function create_each_block(flags, anchor) {
  */
 export function create_each_item_block(item, index, key) {
 	return {
+		// animate transition
+		a: null,
 		// dom
 		d: null,
 		// effect
 		e: null,
+		// index
 		i: index,
 		// key
 		k: key,

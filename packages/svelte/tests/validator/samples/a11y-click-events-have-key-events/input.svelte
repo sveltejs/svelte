@@ -24,6 +24,8 @@
 <header on:click={noop} />
 <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 <footer on:click={noop} />
+<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+<footer onclick={noop} />
 
 <!-- should not warn -->
 <div class="foo" />
@@ -66,6 +68,7 @@
 <div on:click={noop} role="presentation" />
 <div on:click={noop} role="none" />
 <div on:click={noop} role={dynamicRole} />
+<div onclick={noop} role={dynamicRole} />
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <svelte:element this={Math.random() ? 'button' : 'div'} on:click={noop} />

@@ -11,8 +11,8 @@ export const GET = client_id
 					redirect_uri: `${url.origin}/auth/callback`
 				}).toString();
 
-			throw redirect(302, Location);
-	  }
+			redirect(302, Location);
+		}
 	: () =>
 			new Response(
 				`

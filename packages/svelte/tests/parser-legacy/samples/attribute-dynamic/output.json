@@ -1,19 +1,19 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 42,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Element",
 				"start": 0,
 				"end": 42,
-				"type": "Element",
 				"name": "div",
 				"attributes": [
 					{
+						"type": "Attribute",
 						"start": 5,
 						"end": 28,
-						"type": "Attribute",
 						"name": "style",
 						"value": [
 							{
@@ -24,9 +24,9 @@
 								"data": "color: "
 							},
 							{
+								"type": "MustacheTag",
 								"start": 19,
 								"end": 26,
-								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
 									"start": 20,
@@ -56,9 +56,9 @@
 				],
 				"children": [
 					{
+						"type": "MustacheTag",
 						"start": 29,
 						"end": 36,
-						"type": "MustacheTag",
 						"expression": {
 							"type": "Identifier",
 							"start": 30,

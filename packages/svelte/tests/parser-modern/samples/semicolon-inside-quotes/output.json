@@ -1,0 +1,107 @@
+{
+	"css": {
+		"type": "Style",
+		"start": 36,
+		"end": 205,
+		"attributes": [],
+		"children": [
+			{
+				"type": "Atrule",
+				"start": 45,
+				"end": 135,
+				"name": "import",
+				"prelude": "url(\"https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap\")",
+				"block": null
+			},
+			{
+				"type": "Rule",
+				"prelude": {
+					"type": "SelectorList",
+					"start": 137,
+					"end": 139,
+					"children": [
+						{
+							"type": "Selector",
+							"start": 137,
+							"end": 139,
+							"children": [
+								{
+									"type": "TypeSelector",
+									"name": "h1",
+									"start": 137,
+									"end": 139
+								}
+							]
+						}
+					]
+				},
+				"block": {
+					"type": "Block",
+					"start": 140,
+					"end": 196,
+					"children": [
+						{
+							"type": "Declaration",
+							"start": 144,
+							"end": 161,
+							"property": "font-weight",
+							"value": "bold"
+						},
+						{
+							"type": "Declaration",
+							"start": 165,
+							"end": 192,
+							"property": "background",
+							"value": "url(\"whatever\")"
+						}
+					]
+				},
+				"start": 137,
+				"end": 196
+			}
+		],
+		"content": {
+			"start": 43,
+			"end": 197,
+			"styles": "\n\t@import url(\"https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap\");\n\th1 {\n\t\tfont-weight: bold;\n\t\tbackground: url(\"whatever\");\n\t}\n"
+		}
+	},
+	"js": [],
+	"start": 0,
+	"end": 35,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "RegularElement",
+				"start": 0,
+				"end": 35,
+				"name": "h1",
+				"attributes": [],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 4,
+							"end": 30,
+							"raw": "\n\tSemicolon inside quotes\n",
+							"data": "\n\tSemicolon inside quotes\n"
+						}
+					],
+					"transparent": true
+				}
+			},
+			{
+				"type": "Text",
+				"start": 35,
+				"end": 36,
+				"raw": "\n",
+				"data": "\n"
+			}
+		],
+		"transparent": false
+	},
+	"options": null
+}

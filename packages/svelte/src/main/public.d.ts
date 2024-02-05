@@ -18,6 +18,14 @@ export interface ComponentConstructorOptions<
 	$$inline?: boolean;
 }
 
+// Utility type for ensuring backwards compatibility on a type level: If there's a default slot, add 'children' to the props if it doesn't exist there already
+type PropsWithChildren<Props, Slots> = Props &
+	(Props extends { children?: any }
+		? {}
+		: Slots extends { default: any }
+			? { children?: Snippet }
+			: {});
+
 /**
  * Can be used to create strongly typed Svelte components.
  *
@@ -52,25 +60,18 @@ export class SvelteComponent<
 	Slots extends Record<string, any> = any
 > {
 	[prop: string]: any;
-
-	/**
-	 * For type checking capabilities only.
-	 * Does not exist at runtime.
-	 * ### DO NOT USE!
-	 */
-	constructor(props: Props);
 	/**
 	 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
 	 * is a stop-gap solution. Migrate towards using `mount` or `createRoot` instead. See
 	 * https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more info.
 	 */
-	constructor(options: ComponentConstructorOptions<Props>);
+	constructor(options: ComponentConstructorOptions<PropsWithChildren<Props, Slots>>);
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
 	 * */
-	$$prop_def: Props;
+	$$prop_def: PropsWithChildren<Props, Slots>;
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
@@ -135,12 +136,8 @@ export class SvelteComponentTyped<
  * <Component on:close={handleCloseEvent} />
  * ```
  */
-export type ComponentEvents<Comp extends SvelteComponent> = Comp extends SvelteComponent<
-	any,
-	infer Events
->
-	? Events
-	: never;
+export type ComponentEvents<Comp extends SvelteComponent> =
+	Comp extends SvelteComponent<any, infer Events> ? Events : never;
 
 /**
  * Convenience type to get the props the given component expects. Example:
@@ -153,9 +150,8 @@ export type ComponentEvents<Comp extends SvelteComponent> = Comp extends SvelteC
  * </script>
  * ```
  */
-export type ComponentProps<Comp extends SvelteComponent> = Comp extends SvelteComponent<infer Props>
-	? Props
-	: never;
+export type ComponentProps<Comp extends SvelteComponent> =
+	Comp extends SvelteComponent<infer Props> ? Props : never;
 
 /**
  * Convenience type to get the type of a Svelte component. Useful for example in combination with
@@ -176,7 +172,7 @@ export type ComponentProps<Comp extends SvelteComponent> = Comp extends SvelteCo
  * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
  * ```
  */
-export type ComponentType<Comp extends SvelteComponent> = (new (
+export type ComponentType<Comp extends SvelteComponent = SvelteComponent> = (new (
 	options: ComponentConstructorOptions<
 		Comp extends SvelteComponent<infer Props> ? Props : Record<string, any>
 	>
@@ -194,11 +190,20 @@ declare const SnippetReturn: unique symbol;
  * ```
  * You can only call a snippet through the `{@render ...}` tag.
  */
-export interface Snippet<T = void> {
-	(arg: T): typeof SnippetReturn & {
-		_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
-	};
-}
+export type Snippet<T extends unknown[] = []> =
+	// this conditional allows tuples but not arrays. Arrays would indicate a
+	// rest parameter type, which is not supported. If rest parameters are added
+	// in the future, the condition can be removed.
+	number extends T['length']
+		? never
+		: {
+				(
+					this: void,
+					...args: T
+				): typeof SnippetReturn & {
+					_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
+				};
+			};
 
 interface DispatchOptions {
 	cancelable?: boolean;
@@ -212,8 +217,8 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 		...args: null extends EventMap[Type]
 			? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
 			: undefined extends EventMap[Type]
-			? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
-			: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
+				? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
+				: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
 	): boolean;
 }
 

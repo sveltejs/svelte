@@ -1,4 +1,4 @@
-import { error } from '../errors.js';
+import { walk } from 'zimmerframe';
 import * as b from '../utils/builders.js';
 
 /**
@@ -36,7 +36,7 @@ export function is_text_attribute(attribute) {
  * @param {import('#compiler').Attribute} attribute
  * @returns {attribute is import('#compiler').Attribute & { value: [import('#compiler').ExpressionTag] }}
  */
-export function is_expression_attribute(attribute) {
+function is_expression_attribute(attribute) {
 	return (
 		attribute.value !== true &&
 		attribute.value.length === 1 &&
@@ -97,11 +97,36 @@ export function extract_identifiers(param, nodes = []) {
 
 /**
  * Extracts all identifiers from an expression.
+ * @param {import('estree').Expression} expr
+ * @returns {import('estree').Identifier[]}
+ */
+export function extract_all_identifiers_from_expression(expr) {
+	/** @type {import('estree').Identifier[]} */
+	let nodes = [];
+
+	walk(
+		expr,
+		{},
+		{
+			Identifier(node, { path }) {
+				const parent = path.at(-1);
+				if (parent?.type !== 'MemberExpression' || parent.property !== node || parent.computed) {
+					nodes.push(node);
+				}
+			}
+		}
+	);
+
+	return nodes;
+}
+
+/**
+ * Extracts all leaf identifiers from a destructuring expression.
  * @param {import('estree').Identifier | import('estree').ObjectExpression | import('estree').ArrayExpression} node
  * @param {import('estree').Identifier[]} [nodes]
  * @returns
  */
-export function extract_identifiers_from_expression(node, nodes = []) {
+export function extract_identifiers_from_destructuring(node, nodes = []) {
 	// TODO This isn't complete, but it should be enough for our purposes
 	switch (node.type) {
 		case 'Identifier':
@@ -111,9 +136,9 @@ export function extract_identifiers_from_expression(node, nodes = []) {
 		case 'ObjectExpression':
 			for (const prop of node.properties) {
 				if (prop.type === 'Property') {
-					extract_identifiers_from_expression(/** @type {any} */ (prop.value), nodes);
+					extract_identifiers_from_destructuring(/** @type {any} */ (prop.value), nodes);
 				} else {
-					extract_identifiers_from_expression(/** @type {any} */ (prop.argument), nodes);
+					extract_identifiers_from_destructuring(/** @type {any} */ (prop.argument), nodes);
 				}
 			}
 
@@ -121,7 +146,7 @@ export function extract_identifiers_from_expression(node, nodes = []) {
 
 		case 'ArrayExpression':
 			for (const element of node.elements) {
-				if (element) extract_identifiers_from_expression(/** @type {any} */ (element), nodes);
+				if (element) extract_identifiers_from_destructuring(/** @type {any} */ (element), nodes);
 			}
 
 			break;
@@ -264,4 +289,54 @@ function _extract_paths(assignments = [], param, expression, update_expression) 
 	}
 
 	return assignments;
+}
+
+/**
+ * Like `path.at(x)`, but skips over `TSNonNullExpression` and `TSAsExpression` nodes and eases assertions a bit
+ * by removing the `| undefined` from the resulting type.
+ *
+ * @template {import('#compiler').SvelteNode} T
+ * @param {T[]} path
+ * @param {number} at
+ */
+export function get_parent(path, at) {
+	let node = path.at(at);
+	// @ts-expect-error
+	if (node.type === 'TSNonNullExpression' || node.type === 'TSAsExpression') {
+		return /** @type {T} */ (path.at(at < 0 ? at - 1 : at + 1));
+	}
+	return /** @type {T} */ (node);
+}
+
+/**
+ * Returns `true` if the expression is an identifier, a literal, a function expression,
+ * or a logical expression that only contains simple expressions. Used to determine whether
+ * something needs to be treated as though accessing it could have side-effects (i.e.
+ * reading signals prematurely)
+ * @param {import('estree').Expression} node
+ * @returns {boolean}
+ */
+export function is_simple_expression(node) {
+	if (
+		node.type === 'Literal' ||
+		node.type === 'Identifier' ||
+		node.type === 'ArrowFunctionExpression' ||
+		node.type === 'FunctionExpression'
+	) {
+		return true;
+	}
+
+	if (node.type === 'ConditionalExpression') {
+		return (
+			is_simple_expression(node.test) &&
+			is_simple_expression(node.consequent) &&
+			is_simple_expression(node.alternate)
+		);
+	}
+
+	if (node.type === 'BinaryExpression' || node.type === 'LogicalExpression') {
+		return is_simple_expression(node.left) && is_simple_expression(node.right);
+	}
+
+	return false;
 }

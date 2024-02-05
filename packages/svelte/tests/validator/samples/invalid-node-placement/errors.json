@@ -1,0 +1,14 @@
+[
+	{
+		"code": "invalid-node-placement",
+		"message": "<a> is invalid inside <a>",
+		"start": {
+			"line": 4,
+			"column": 6
+		},
+		"end": {
+			"line": 4,
+			"column": 34
+		}
+	}
+]

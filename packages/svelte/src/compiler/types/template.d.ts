@@ -2,7 +2,9 @@ import type { Binding } from '#compiler';
 import type {
 	ArrayExpression,
 	ArrowFunctionExpression,
-	AssignmentExpression,
+	ArrayPattern,
+	VariableDeclaration,
+	VariableDeclarator,
 	Expression,
 	FunctionDeclaration,
 	FunctionExpression,
@@ -11,7 +13,8 @@ import type {
 	Node,
 	ObjectExpression,
 	Pattern,
-	Program
+	Program,
+	SpreadElement
 } from 'estree';
 
 export interface BaseNode {
@@ -55,6 +58,10 @@ export interface Root extends BaseNode {
 	instance: Script | null;
 	/** The parsed `<script context="module">` element, if exists */
 	module: Script | null;
+	metadata: {
+		/** Whether the component was parsed with typescript */
+		ts: boolean;
+	};
 }
 
 export interface SvelteOptions {
@@ -130,7 +137,9 @@ export interface Comment extends BaseNode {
 /** A `{@const ...}` tag */
 export interface ConstTag extends BaseNode {
 	type: 'ConstTag';
-	expression: AssignmentExpression;
+	declaration: VariableDeclaration & {
+		declarations: [VariableDeclarator & { id: Pattern; init: Expression }];
+	};
 }
 
 /** A `{@debug ...}` tag */
@@ -143,7 +152,7 @@ export interface DebugTag extends BaseNode {
 export interface RenderTag extends BaseNode {
 	type: 'RenderTag';
 	expression: Identifier;
-	argument: null | Expression;
+	arguments: Array<Expression | SpreadElement>;
 }
 
 type Tag = ExpressionTag | HtmlTag | ConstTag | DebugTag | RenderTag;
@@ -199,9 +208,6 @@ export interface OnDirective extends BaseNode {
 	/** The 'y' in `on:x={y}` */
 	expression: null | Expression;
 	modifiers: string[]; // TODO specify
-	metadata: {
-		delegated: null | DelegatedEvent;
-	};
 }
 
 export type DelegatedEvent =
@@ -285,12 +291,6 @@ export interface RegularElement extends BaseElement {
 		svg: boolean;
 		/** `true` if contains a SpreadAttribute */
 		has_spread: boolean;
-		/**
-		 * `true` if events on this element can theoretically be delegated. This doesn't necessarily mean that
-		 * a specific event will be delegated, as there are other factors which affect the final outcome.
-		 * `null` only until it was determined whether this element can be delegated or not.
-		 */
-		can_delegate_events: boolean | null;
 	};
 }
 
@@ -314,6 +314,13 @@ export interface SvelteElement extends BaseElement {
 	type: 'SvelteElement';
 	name: 'svelte:element';
 	tag: Expression;
+	metadata: {
+		/**
+		 * `true`/`false` if this is definitely (not) an svg element.
+		 * `null` means we can't know statically.
+		 */
+		svg: boolean | null;
+	};
 }
 
 export interface SvelteFragment extends BaseElement {
@@ -372,8 +379,14 @@ export interface EachBlock extends BaseNode {
 		array_name: Identifier | null;
 		index: Identifier;
 		item_name: string;
+		declarations: Map<string, Binding>;
 		/** List of bindings that are referenced within the expression */
 		references: Binding[];
+		/**
+		 * Optimization path for each blocks: If the parent isn't a fragment and
+		 * it only has a single child, then we can classify the block as being "controlled".
+		 * This saves us from creating an extra comment and insertion being faster.
+		 */
 		is_controlled: boolean;
 	};
 }
@@ -410,7 +423,7 @@ export interface KeyBlock extends BaseNode {
 export interface SnippetBlock extends BaseNode {
 	type: 'SnippetBlock';
 	expression: Identifier;
-	context: null | Pattern;
+	parameters: Pattern[];
 	body: Fragment;
 }
 
@@ -431,6 +444,7 @@ export interface SpreadAttribute extends BaseNode {
 	type: 'SpreadAttribute';
 	expression: Expression;
 	metadata: {
+		contains_call_expression: boolean;
 		dynamic: boolean;
 	};
 }
@@ -471,5 +485,7 @@ declare module 'estree' {
 		start?: number;
 		/** Added by the Svelte parser */
 		end?: number;
+		/** Added by acorn-typescript */
+		typeAnnotation?: any;
 	}
 }

@@ -22,13 +22,6 @@ body:
       placeholder: I would like to see...
     validations:
       required: true
-  - type: textarea
-    id: alternatives
-    attributes:
-      label: Alternatives considered
-      description: "Please provide a clear and concise description of any alternative solutions or features you've considered."
-    validations:
-      required: true
   - type: dropdown
     id: importance
     attributes:

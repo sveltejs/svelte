@@ -1,7 +1,7 @@
 [
 	{
-		"message": "Invalid element definition",
-		"code": "invalid-element-definition",
+		"code": "invalid-svelte-element-definition",
+		"message": "Invalid element definition — must be an {expression}",
 		"start": {
 			"line": 2,
 			"column": 17
