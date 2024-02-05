@@ -1340,12 +1340,16 @@ const template_visitors = {
 			b.block(each)
 		);
 		if (node.fallback) {
+			const fallback_stmts = create_block(node, node.fallback.nodes, context);
+			fallback_stmts.unshift(
+				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--ssr:each_else-->')))
+			);
 			state.template.push(
 				t_statement(
 					b.if(
 						b.binary('!==', b.member(array_id, b.id('length')), b.literal(0)),
 						for_loop,
-						b.block(create_block(node, node.fallback.nodes, context))
+						b.block(fallback_stmts)
 					)
 				)
 			);
