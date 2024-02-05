@@ -571,7 +571,9 @@ function special(parser) {
 				declaration: {
 					type: 'VariableDeclaration',
 					kind: 'const',
-					declarations: [{ type: 'VariableDeclarator', id, init }]
+					declarations: [{ type: 'VariableDeclarator', id, init }],
+					start: id.start,
+					end: init.end
 				}
 			})
 		);
