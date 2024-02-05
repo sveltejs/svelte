@@ -3,6 +3,11 @@ import { log } from './log.js';
 import { test, ok } from '../../test';
 
 export default test({
+	// somewhat troublingly, there's no way to make beforeUpdate/afterUpdate
+	// behave as no-ops while testing SSR
+	skip_if_ssr: true,
+	skip_if_hydrate: true,
+
 	before_test: () => {
 		log.length = 0;
 	},

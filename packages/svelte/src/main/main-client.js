@@ -1,12 +1,9 @@
 import {
 	current_component_context,
-	destroy_signal,
 	get_or_init_context_map,
 	is_ssr,
-	managed_effect,
 	untrack,
 	user_effect,
-	flush_local_render_effects,
 	pre_effect,
 	get
 } from '../internal/client/runtime.js';
@@ -156,36 +153,6 @@ export function createEventDispatcher() {
 
 		return true;
 	};
-}
-
-/** @param {import('../internal/client/types.js').ComponentContext} context */
-function init_update_callbacks(context) {
-	/** @type {NonNullable<import('../internal/client/types.js').ComponentContext['u']>} */
-	const update_callbacks = {
-		b: [],
-		a: []
-	};
-
-	function observe_all() {
-		for (const signal of context.d) get(signal);
-
-		const props = get_descriptors(context.s);
-		for (const descriptor of Object.values(props)) {
-			if (descriptor.get) descriptor.get();
-		}
-	}
-
-	pre_effect(() => {
-		observe_all();
-		update_callbacks.b.forEach(run);
-	});
-
-	user_effect(() => {
-		observe_all();
-		update_callbacks.a.forEach(run);
-	});
-
-	return update_callbacks;
 }
 
 // TODO mark beforeUpdate and afterUpdate as deprecated in Svelte 6
