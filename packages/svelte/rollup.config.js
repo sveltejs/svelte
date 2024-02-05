@@ -13,5 +13,5 @@ export default defineConfig({
 		format: 'umd',
 		name: 'svelte'
 	},
-	plugins: [resolve(), commonjs()]
+	plugins: [resolve(), commonjs(), terser()]
 });
