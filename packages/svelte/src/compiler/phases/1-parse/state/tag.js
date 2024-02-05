@@ -23,18 +23,17 @@ export default function mustache(parser) {
 	parser.allow_whitespace();
 	parser.eat('}', true);
 
-	parser.append(
-		/** @type {import('#compiler').ExpressionTag} */ ({
-			type: 'ExpressionTag',
-			start,
-			end: parser.index,
-			expression,
-			metadata: {
-				contains_call_expression: false,
-				dynamic: false
-			}
-		})
-	);
+	/** @type {ReturnType<typeof parser.append<import('#compiler').ExpressionTag>>} */
+	parser.append({
+		type: 'ExpressionTag',
+		start,
+		end: parser.index,
+		expression,
+		metadata: {
+			contains_call_expression: false,
+			dynamic: false
+		}
+	});
 }
 
 /** @param {import('../index.js').Parser} parser */
@@ -44,7 +43,8 @@ function open(parser) {
 	if (parser.eat('if')) {
 		parser.require_whitespace();
 
-		const block = /** @type {typeof parser.append<import('#compiler').IfBlock>} */ (parser.append)({
+		/** @type {ReturnType<typeof parser.append<import('#compiler').IfBlock>>} */
+		const block = parser.append({
 			type: 'IfBlock',
 			elseif: false,
 			start,
@@ -164,9 +164,8 @@ function open(parser) {
 
 		parser.eat('}', true);
 
-		const block = /** @type {typeof parser.append<import('#compiler').EachBlock>} */ (
-			parser.append
-		)({
+		/** @type {ReturnType<typeof parser.append<import('#compiler').EachBlock>>} */
+		const block = parser.append({
 			type: 'EachBlock',
 			start,
 			end: -1,
@@ -189,9 +188,8 @@ function open(parser) {
 		const expression = read_expression(parser);
 		parser.allow_whitespace();
 
-		const block = /** @type {typeof parser.append<import('#compiler').AwaitBlock>} */ (
-			parser.append
-		)({
+		/** @type {ReturnType<typeof parser.append<import('#compiler').AwaitBlock>>} */
+		const block = parser.append({
 			type: 'AwaitBlock',
 			start,
 			end: -1,
@@ -244,15 +242,14 @@ function open(parser) {
 
 		parser.eat('}', true);
 
-		const block = /** @type {typeof parser.append<import('#compiler').KeyBlock>} */ (parser.append)(
-			{
-				type: 'KeyBlock',
-				start,
-				end: -1,
-				expression,
-				fragment: create_fragment()
-			}
-		);
+		/** @type {ReturnType<typeof parser.append<import('#compiler').KeyBlock>>} */
+		const block = parser.append({
+			type: 'KeyBlock',
+			start,
+			end: -1,
+			expression,
+			fragment: create_fragment()
+		});
 
 		parser.stack.push(block);
 		parser.fragments.push(block.fragment);
@@ -302,9 +299,8 @@ function open(parser) {
 		parser.allow_whitespace();
 		parser.eat('}', true);
 
-		const block = /** @type {typeof parser.append<import('#compiler').SnippetBlock>} */ (
-			parser.append
-		)({
+		/** @type {ReturnType<typeof parser.append<import('#compiler').SnippetBlock>>} */
+		const block = parser.append({
 			type: 'SnippetBlock',
 			start,
 			end: -1,
@@ -353,9 +349,8 @@ function next(parser) {
 			parser.allow_whitespace();
 			parser.eat('}', true);
 
-			const child = /** @type {typeof parser.append<import('#compiler').IfBlock>} */ (
-				parser.append
-			)({
+			/** @type {ReturnType<typeof parser.append<import('#compiler').IfBlock>>} */
+			const child = parser.append({
 				start: parser.index,
 				end: -1,
 				type: 'IfBlock',
@@ -498,14 +493,13 @@ function special(parser) {
 		parser.allow_whitespace();
 		parser.eat('}', true);
 
-		parser.append(
-			/** @type {import('#compiler').HtmlTag} */ ({
-				type: 'HtmlTag',
-				start,
-				end: parser.index,
-				expression
-			})
-		);
+		/** @type {ReturnType<typeof parser.append<import('#compiler').HtmlTag>>} */
+		parser.append({
+			type: 'HtmlTag',
+			start,
+			end: parser.index,
+			expression
+		});
 
 		return;
 	}
@@ -537,14 +531,13 @@ function special(parser) {
 			parser.eat('}', true);
 		}
 
-		parser.append(
-			/** @type {import('#compiler').DebugTag} */ ({
-				type: 'DebugTag',
-				start,
-				end: parser.index,
-				identifiers
-			})
-		);
+		/** @type {ReturnType<typeof parser.append<import('#compiler').DebugTag>>} */
+		parser.append({
+			type: 'DebugTag',
+			start,
+			end: parser.index,
+			identifiers
+		});
 
 		return;
 	}
@@ -563,20 +556,19 @@ function special(parser) {
 
 		parser.eat('}', true);
 
-		parser.append(
-			/** @type {import('#compiler').ConstTag} */ ({
-				type: 'ConstTag',
-				start,
-				end: parser.index,
-				declaration: {
-					type: 'VariableDeclaration',
-					kind: 'const',
-					declarations: [{ type: 'VariableDeclarator', id, init }],
-					start: start + 1,
-					end: parser.index - 1
-				}
-			})
-		);
+		/** @type {ReturnType<typeof parser.append<import('#compiler').ConstTag>>} */
+		parser.append({
+			type: 'ConstTag',
+			start,
+			end: parser.index,
+			declaration: {
+				type: 'VariableDeclaration',
+				kind: 'const',
+				declarations: [{ type: 'VariableDeclarator', id, init }],
+				start: start + 1,
+				end: parser.index - 1
+			}
+		});
 	}
 
 	if (parser.eat('render')) {
@@ -592,14 +584,13 @@ function special(parser) {
 		parser.allow_whitespace();
 		parser.eat('}', true);
 
-		parser.append(
-			/** @type {import('#compiler').RenderTag} */ ({
-				type: 'RenderTag',
-				start,
-				end: parser.index,
-				expression: expression.callee,
-				arguments: expression.arguments
-			})
-		);
+		/** @type {ReturnType<typeof parser.append<import('#compiler').RenderTag>>} */
+		parser.append({
+			type: 'RenderTag',
+			start,
+			end: parser.index,
+			expression: expression.callee,
+			arguments: expression.arguments
+		});
 	}
 }
