@@ -64,6 +64,10 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 
 	/** @type {null | import('./types.js').EffectSignal} */
 	let render = null;
+
+	/** Whether or not there was a "rendered fallback but want to render items" (or vice versa) hydration mismatch */
+	let mismatch = false;
+
 	block.r =
 		/** @param {import('./types.js').Transition} transition */
 		(transition) => {
@@ -144,12 +148,30 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 				: maybe_array == null
 					? []
 					: Array.from(maybe_array);
+
 			if (key_fn !== null) {
 				keys = array.map(key_fn);
 			} else if ((flags & EACH_KEYED) === 0) {
 				array.map(no_op);
 			}
+
 			const length = array.length;
+
+			if (current_hydration_fragment !== null) {
+				const is_each_else_comment =
+					/** @type {Comment} */ (current_hydration_fragment?.[0])?.data === 'ssr:each_else';
+				// Check for hydration mismatch which can happen if the server renders the each fallback
+				// but the client has items, or vice versa. If so, remove everything inside the anchor and start fresh.
+				if ((is_each_else_comment && length) || (!is_each_else_comment && !length)) {
+					remove(/** @type {import('./types.js').TemplateNode[]} */ (current_hydration_fragment));
+					set_current_hydration_fragment(null);
+					mismatch = true;
+				} else if (is_each_else_comment) {
+					// Remove the each_else comment node or else it will confuse the subsequent hydration algorithm
+					/** @type {import('./types.js').TemplateNode[]} */ (current_hydration_fragment).shift();
+				}
+			}
+
 			if (fallback_fn !== null) {
 				if (length === 0) {
 					if (block.v.length !== 0 || render === null) {
@@ -170,6 +192,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 					}
 				}
 			}
+
 			if (render !== null) {
 				execute_effect(render);
 			}
@@ -179,6 +202,11 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	);
 
 	render = render_effect(clear_each, block, true);
+
+	if (mismatch) {
+		// Set a fragment so that Svelte continues to operate in hydration mode
+		set_current_hydration_fragment([]);
+	}
 
 	push_destroy_fn(each, () => {
 		const flags = block.f;
@@ -287,55 +315,70 @@ function reconcile_indexed_array(
 		}
 	} else {
 		var item;
+		var is_hydrating = current_hydration_fragment !== null;
 		b_blocks = Array(b);
-		if (current_hydration_fragment !== null) {
-			/** @type {Node} */
-			var hydrating_node = current_hydration_fragment[0];
+		if (is_hydrating) {
+			// Hydrate block
+			var hydration_list = /** @type {import('./types.js').TemplateNode[]} */ (
+				current_hydration_fragment
+			);
+			var hydrating_node = hydration_list[0];
 			for (; index < length; index++) {
-				// Hydrate block
-				item = is_proxied_array ? lazy_property(array, index) : array[index];
 				var fragment = /** @type {Array<Text | Comment | Element>} */ (
 					get_hydration_fragment(hydrating_node)
 				);
 				set_current_hydration_fragment(fragment);
-				hydrating_node = /** @type {Node} */ (
-					/** @type {Node} */ (/** @type {Node} */ (fragment.at(-1)).nextSibling).nextSibling
-				);
+				if (!fragment) {
+					// If fragment is null, then that means that the server rendered less items than what
+					// the client code specifies -> break out and continue with client-side node creation
+					break;
+				}
+
+				item = is_proxied_array ? lazy_property(array, index) : array[index];
 				block = each_item_block(item, null, index, render_fn, flags);
 				b_blocks[index] = block;
+
+				hydrating_node = /** @type {import('./types.js').TemplateNode} */ (
+					/** @type {Node} */ (/** @type {Node} */ (fragment.at(-1)).nextSibling).nextSibling
+				);
 			}
-		} else {
-			for (; index < length; index++) {
-				if (index >= a) {
-					// Add block
-					item = is_proxied_array ? lazy_property(array, index) : array[index];
-					block = each_item_block(item, null, index, render_fn, flags);
-					b_blocks[index] = block;
-					insert_each_item_block(block, dom, is_controlled, null);
-				} else if (index >= b) {
-					// Remove block
-					block = a_blocks[index];
-					destroy_each_item_block(block, active_transitions, apply_transitions);
-				} else {
-					// Update block
-					item = array[index];
-					block = a_blocks[index];
-					b_blocks[index] = block;
-					update_each_item_block(block, item, index, flags);
-				}
+
+			remove_excess_hydration_nodes(hydration_list, hydrating_node);
+		}
+
+		for (; index < length; index++) {
+			if (index >= a) {
+				// Add block
+				item = is_proxied_array ? lazy_property(array, index) : array[index];
+				block = each_item_block(item, null, index, render_fn, flags);
+				b_blocks[index] = block;
+				insert_each_item_block(block, dom, is_controlled, null);
+			} else if (index >= b) {
+				// Remove block
+				block = a_blocks[index];
+				destroy_each_item_block(block, active_transitions, apply_transitions);
+			} else {
+				// Update block
+				item = array[index];
+				block = a_blocks[index];
+				b_blocks[index] = block;
+				update_each_item_block(block, item, index, flags);
 			}
+		}
+
+		if (is_hydrating && current_hydration_fragment === null) {
+			// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
+			set_current_hydration_fragment([]);
 		}
 	}
 
 	each_block.v = b_blocks;
 }
-// Reconcile arrays by the equality of the elements in the array. This algorithm
-// is based on Ivi's reconcilation logic:
-//
-// https://github.com/localvoid/ivi/blob/9f1bd0918f487da5b131941228604763c5d8ef56/packages/ivi/src/client/core.ts#L968
-//
 
 /**
+ * Reconcile arrays by the equality of the elements in the array. This algorithm
+ * is based on Ivi's reconcilation logic:
+ * https://github.com/localvoid/ivi/blob/9f1bd0918f487da5b131941228604763c5d8ef56/packages/ivi/src/client/core.ts#L968
  * @template V
  * @param {Array<V>} array
  * @param {import('./types.js').EachBlock} each_block
@@ -391,30 +434,43 @@ function reconcile_tracked_array(
 		var key;
 		var item;
 		var idx;
+		var is_hydrating = current_hydration_fragment !== null;
 		b_blocks = Array(b);
-		if (current_hydration_fragment !== null) {
+		if (is_hydrating) {
+			// Hydrate block
 			var fragment;
-
-			/** @type {Node} */
-			var hydrating_node = current_hydration_fragment[0];
+			var hydration_list = /** @type {import('./types.js').TemplateNode[]} */ (
+				current_hydration_fragment
+			);
+			var hydrating_node = hydration_list[0];
 			while (b > 0) {
-				// Hydrate block
-				idx = b_end - --b;
-				item = array[idx];
-				key = is_computed_key ? keys[idx] : item;
 				fragment = /** @type {Array<Text | Comment | Element>} */ (
 					get_hydration_fragment(hydrating_node)
 				);
 				set_current_hydration_fragment(fragment);
-				// Get the <!--ssr:..--> tag of the next item in the list
-				// The fragment array can be empty if each block has no content
-				hydrating_node = /** @type {Node} */ (
-					/** @type {Node} */ ((fragment.at(-1) || hydrating_node).nextSibling).nextSibling
-				);
+				if (!fragment) {
+					// If fragment is null, then that means that the server rendered less items than what
+					// the client code specifies -> break out and continue with client-side node creation
+					break;
+				}
+
+				idx = b_end - --b;
+				item = array[idx];
+				key = is_computed_key ? keys[idx] : item;
 				block = each_item_block(item, key, idx, render_fn, flags);
 				b_blocks[idx] = block;
+
+				// Get the <!--ssr:..--> tag of the next item in the list
+				// The fragment array can be empty if each block has no content
+				hydrating_node = /** @type {import('./types.js').TemplateNode} */ (
+					/** @type {Node} */ ((fragment.at(-1) || hydrating_node).nextSibling).nextSibling
+				);
 			}
-		} else if (a === 0) {
+
+			remove_excess_hydration_nodes(hydration_list, hydrating_node);
+		}
+
+		if (a === 0) {
 			// Create new blocks
 			while (b > 0) {
 				idx = b_end - --b;
@@ -546,9 +602,28 @@ function reconcile_tracked_array(
 				}
 			}
 		}
+
+		if (is_hydrating && current_hydration_fragment === null) {
+			// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
+			set_current_hydration_fragment([]);
+		}
 	}
 
 	each_block.v = b_blocks;
+}
+
+/**
+ * The server could have rendered more list items than the client specifies.
+ * In that case, we need to remove the remaining server-rendered nodes.
+ * @param {import('./types.js').TemplateNode[]} hydration_list
+ * @param {import('./types.js').TemplateNode | null} next_node
+ */
+function remove_excess_hydration_nodes(hydration_list, next_node) {
+	if (next_node === null) return;
+	var idx = hydration_list.indexOf(next_node);
+	if (idx !== -1 && hydration_list.length > idx + 1) {
+		remove(hydration_list.slice(idx));
+	}
 }
 
 /**
