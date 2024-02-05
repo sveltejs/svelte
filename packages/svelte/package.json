@@ -128,7 +128,7 @@
     "is-reference": "^3.0.2",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.5",
-    "zimmerframe": "^1.1.0"
+    "zimmerframe": "^1.1.1"
   },
   "knip": {
     "entry": [

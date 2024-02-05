@@ -1099,6 +1099,7 @@ export interface HTMLLinkAttributes extends HTMLAttributes<HTMLLinkElement> {
 	sizes?: string | undefined | null;
 	type?: string | undefined | null;
 	charset?: string | undefined | null;
+	fetchpriority?: 'auto' | 'high' | 'low' | undefined | null;
 }
 
 export interface HTMLMapAttributes extends HTMLAttributes<HTMLMapElement> {
@@ -1233,6 +1234,7 @@ export interface HTMLScriptAttributes extends HTMLAttributes<HTMLScriptElement> 
 	charset?: string | undefined | null;
 	crossorigin?: string | undefined | null;
 	defer?: boolean | undefined | null;
+	fetchpriority?: 'auto' | 'high' | 'low' | undefined | null;
 	integrity?: string | undefined | null;
 	nomodule?: boolean | undefined | null;
 	nonce?: string | undefined | null;
