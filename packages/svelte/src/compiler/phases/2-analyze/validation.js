@@ -494,6 +494,7 @@ const validation = {
 			parent === undefined ||
 			(parent.type !== 'Component' &&
 				parent.type !== 'RegularElement' &&
+				parent.type !== 'SlotElement' &&
 				parent.type !== 'SvelteElement' &&
 				parent.type !== 'SvelteComponent' &&
 				parent.type !== 'SvelteSelf' &&
@@ -609,7 +610,7 @@ const validation = {
 						error(attribute, 'invalid-slot-name', true);
 					}
 				}
-			} else if (attribute.type !== 'SpreadAttribute') {
+			} else if (attribute.type !== 'SpreadAttribute' && attribute.type !== 'LetDirective') {
 				error(attribute, 'invalid-slot-element-attribute');
 			}
 		}
