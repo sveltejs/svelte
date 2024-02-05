@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.48
+
+### Patch Changes
+
+- chore: bump zimmerframe to fix bugs introduced in previous version ([#10405](https://github.com/sveltejs/svelte/pull/10405))
+
 ## 5.0.0-next.47
 
 ### Patch Changes
