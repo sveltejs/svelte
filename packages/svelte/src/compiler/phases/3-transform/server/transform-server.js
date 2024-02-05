@@ -808,7 +808,7 @@ function serialize_inline_component(node, component_name, context) {
 	const custom_css_props = [];
 
 	/** @type {import('estree').ExpressionStatement[]} */
-	const default_lets = [];
+	const lets = [];
 
 	/** @type {Record<string, import('#compiler').TemplateNode[]>} */
 	const children = {};
@@ -826,11 +826,10 @@ function serialize_inline_component(node, component_name, context) {
 		}
 	}
 
+	let is_named_parent_slot = false;
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
-			default_lets.push(
-				/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute))
-			);
+			lets.push(/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute)));
 		} else if (attribute.type === 'SpreadAttribute') {
 			props_and_spreads.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
 		} else if (attribute.type === 'Attribute') {
@@ -838,6 +837,10 @@ function serialize_inline_component(node, component_name, context) {
 				const value = serialize_attribute_value(attribute.value, context, false, true);
 				custom_css_props.push(b.init(attribute.name, value));
 				continue;
+			}
+
+			if (attribute.name === 'slot') {
+				is_named_parent_slot = true;
 			}
 
 			const value = serialize_attribute_value(attribute.value, context, false, true);
@@ -860,6 +863,12 @@ function serialize_inline_component(node, component_name, context) {
 				])
 			);
 		}
+	}
+
+	if (is_named_parent_slot) {
+		// This component is filling a named slot in its parent component, so get the relevant
+		// attributes from the parent slot.
+		context.state.init.push(...lets);
 	}
 
 	/** @type {import('estree').Statement[]} */
@@ -907,7 +916,7 @@ function serialize_inline_component(node, component_name, context) {
 
 		const slot_fn = b.arrow(
 			[b.id('$$payload'), b.id('$$slotProps')],
-			b.block([...(slot_name === 'default' ? default_lets : []), ...body])
+			b.block([...(slot_name === 'default' && !is_named_parent_slot ? lets : []), ...body])
 		);
 
 		if (slot_name === 'default') {
