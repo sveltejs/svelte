@@ -1,9 +1,8 @@
-import read_context from '../read/context.js';
+import read_pattern from '../read/context.js';
 import read_expression from '../read/expression.js';
 import { error } from '../../../errors.js';
 import { create_fragment } from '../utils/create.js';
 import { walk } from 'zimmerframe';
-import { parse } from '../acorn.js';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
@@ -24,18 +23,17 @@ export default function mustache(parser) {
 	parser.allow_whitespace();
 	parser.eat('}', true);
 
-	parser.append(
-		/** @type {import('#compiler').ExpressionTag} */ ({
-			type: 'ExpressionTag',
-			start,
-			end: parser.index,
-			expression,
-			metadata: {
-				contains_call_expression: false,
-				dynamic: false
-			}
-		})
-	);
+	/** @type {ReturnType<typeof parser.append<import('#compiler').ExpressionTag>>} */
+	parser.append({
+		type: 'ExpressionTag',
+		start,
+		end: parser.index,
+		expression,
+		metadata: {
+			contains_call_expression: false,
+			dynamic: false
+		}
+	});
 }
 
 /** @param {import('../index.js').Parser} parser */
@@ -45,17 +43,16 @@ function open(parser) {
 	if (parser.eat('if')) {
 		parser.require_whitespace();
 
-		const block = parser.append(
-			/** @type {import('#compiler').IfBlock} */ ({
-				type: 'IfBlock',
-				elseif: false,
-				start,
-				end: -1,
-				test: read_expression(parser),
-				consequent: create_fragment(),
-				alternate: null
-			})
-		);
+		/** @type {ReturnType<typeof parser.append<import('#compiler').IfBlock>>} */
+		const block = parser.append({
+			type: 'IfBlock',
+			elseif: false,
+			start,
+			end: -1,
+			test: read_expression(parser),
+			consequent: create_fragment(),
+			alternate: null
+		});
 
 		parser.allow_whitespace();
 		parser.eat('}', true);
@@ -139,7 +136,7 @@ function open(parser) {
 		parser.eat('as', true);
 		parser.require_whitespace();
 
-		const context = read_context(parser);
+		const context = read_pattern(parser);
 
 		parser.allow_whitespace();
 
@@ -167,19 +164,18 @@ function open(parser) {
 
 		parser.eat('}', true);
 
-		const block = parser.append(
-			/** @type {Omit<import('#compiler').EachBlock, 'parent'>} */ ({
-				type: 'EachBlock',
-				start,
-				end: -1,
-				expression,
-				body: create_fragment(),
-				context,
-				index,
-				key,
-				metadata: /** @type {any} */ (null) // filled in later
-			})
-		);
+		/** @type {ReturnType<typeof parser.append<import('#compiler').EachBlock>>} */
+		const block = parser.append({
+			type: 'EachBlock',
+			start,
+			end: -1,
+			expression,
+			body: create_fragment(),
+			context,
+			index,
+			key,
+			metadata: /** @type {any} */ (null) // filled in later
+		});
 
 		parser.stack.push(block);
 		parser.fragments.push(block.body);
@@ -192,26 +188,25 @@ function open(parser) {
 		const expression = read_expression(parser);
 		parser.allow_whitespace();
 
-		const block = parser.append(
-			/** @type {import('#compiler').AwaitBlock} */ ({
-				type: 'AwaitBlock',
-				start,
-				end: -1,
-				expression,
-				value: null,
-				error: null,
-				pending: null,
-				then: null,
-				catch: null
-			})
-		);
+		/** @type {ReturnType<typeof parser.append<import('#compiler').AwaitBlock>>} */
+		const block = parser.append({
+			type: 'AwaitBlock',
+			start,
+			end: -1,
+			expression,
+			value: null,
+			error: null,
+			pending: null,
+			then: null,
+			catch: null
+		});
 
 		if (parser.eat('then')) {
 			if (parser.match_regex(regex_whitespace_with_closing_curly_brace)) {
 				parser.allow_whitespace();
 			} else {
 				parser.require_whitespace();
-				block.value = read_context(parser);
+				block.value = read_pattern(parser);
 				parser.allow_whitespace();
 			}
 
@@ -222,7 +217,7 @@ function open(parser) {
 				parser.allow_whitespace();
 			} else {
 				parser.require_whitespace();
-				block.error = read_context(parser);
+				block.error = read_pattern(parser);
 				parser.allow_whitespace();
 			}
 
@@ -247,15 +242,14 @@ function open(parser) {
 
 		parser.eat('}', true);
 
-		const block = parser.append(
-			/** @type {import('#compiler').KeyBlock} */ ({
-				type: 'KeyBlock',
-				start,
-				end: -1,
-				expression,
-				fragment: create_fragment()
-			})
-		);
+		/** @type {ReturnType<typeof parser.append<import('#compiler').KeyBlock>>} */
+		const block = parser.append({
+			type: 'KeyBlock',
+			start,
+			end: -1,
+			expression,
+			fragment: create_fragment()
+		});
 
 		parser.stack.push(block);
 		parser.fragments.push(block.fragment);
@@ -270,6 +264,10 @@ function open(parser) {
 		const name = parser.read_identifier();
 		const name_end = parser.index;
 
+		if (name === null) {
+			error(parser.index, 'expected-identifier');
+		}
+
 		parser.eat('(', true);
 
 		parser.allow_whitespace();
@@ -278,7 +276,7 @@ function open(parser) {
 		const parameters = [];
 
 		while (!parser.match(')')) {
-			let pattern = read_context(parser);
+			let pattern = read_pattern(parser);
 
 			parser.allow_whitespace();
 			if (parser.eat('=')) {
@@ -301,22 +299,20 @@ function open(parser) {
 		parser.allow_whitespace();
 		parser.eat('}', true);
 
-		const block = parser.append(
-			/** @type {Omit<import('#compiler').SnippetBlock, 'parent'>} */
-			({
-				type: 'SnippetBlock',
-				start,
-				end: -1,
-				expression: {
-					type: 'Identifier',
-					start: name_start,
-					end: name_end,
-					name
-				},
-				parameters,
-				body: create_fragment()
-			})
-		);
+		/** @type {ReturnType<typeof parser.append<import('#compiler').SnippetBlock>>} */
+		const block = parser.append({
+			type: 'SnippetBlock',
+			start,
+			end: -1,
+			expression: {
+				type: 'Identifier',
+				start: name_start,
+				end: name_end,
+				name
+			},
+			parameters,
+			body: create_fragment()
+		});
 
 		parser.stack.push(block);
 		parser.fragments.push(block.body);
@@ -353,17 +349,16 @@ function next(parser) {
 			parser.allow_whitespace();
 			parser.eat('}', true);
 
-			const child = parser.append(
-				/** @type {import('#compiler').IfBlock} */ ({
-					start: parser.index,
-					end: -1,
-					type: 'IfBlock',
-					elseif: true,
-					test: expression,
-					consequent: create_fragment(),
-					alternate: null
-				})
-			);
+			/** @type {ReturnType<typeof parser.append<import('#compiler').IfBlock>>} */
+			const child = parser.append({
+				start: parser.index,
+				end: -1,
+				type: 'IfBlock',
+				elseif: true,
+				test: expression,
+				consequent: create_fragment(),
+				alternate: null
+			});
 
 			parser.stack.push(child);
 			parser.fragments.pop();
@@ -399,7 +394,7 @@ function next(parser) {
 
 			if (!parser.eat('}')) {
 				parser.require_whitespace();
-				block.value = read_context(parser);
+				block.value = read_pattern(parser);
 				parser.allow_whitespace();
 				parser.eat('}', true);
 			}
@@ -418,7 +413,7 @@ function next(parser) {
 
 			if (!parser.eat('}')) {
 				parser.require_whitespace();
-				block.error = read_context(parser);
+				block.error = read_pattern(parser);
 				parser.allow_whitespace();
 				parser.eat('}', true);
 			}
@@ -498,14 +493,13 @@ function special(parser) {
 		parser.allow_whitespace();
 		parser.eat('}', true);
 
-		parser.append(
-			/** @type {import('#compiler').HtmlTag} */ ({
-				type: 'HtmlTag',
-				start,
-				end: parser.index,
-				expression
-			})
-		);
+		/** @type {ReturnType<typeof parser.append<import('#compiler').HtmlTag>>} */
+		parser.append({
+			type: 'HtmlTag',
+			start,
+			end: parser.index,
+			expression
+		});
 
 		return;
 	}
@@ -537,14 +531,13 @@ function special(parser) {
 			parser.eat('}', true);
 		}
 
-		parser.append(
-			/** @type {import('#compiler').DebugTag} */ ({
-				type: 'DebugTag',
-				start,
-				end: parser.index,
-				identifiers
-			})
-		);
+		/** @type {ReturnType<typeof parser.append<import('#compiler').DebugTag>>} */
+		parser.append({
+			type: 'DebugTag',
+			start,
+			end: parser.index,
+			identifiers
+		});
 
 		return;
 	}
@@ -552,7 +545,7 @@ function special(parser) {
 	if (parser.eat('const')) {
 		parser.allow_whitespace();
 
-		const id = read_context(parser);
+		const id = read_pattern(parser);
 		parser.allow_whitespace();
 
 		parser.eat('=', true);
@@ -563,20 +556,19 @@ function special(parser) {
 
 		parser.eat('}', true);
 
-		parser.append(
-			/** @type {import('#compiler').ConstTag} */ ({
-				type: 'ConstTag',
-				start,
-				end: parser.index,
-				declaration: {
-					type: 'VariableDeclaration',
-					kind: 'const',
-					declarations: [{ type: 'VariableDeclarator', id, init }],
-					start: start + 1,
-					end: parser.index - 1
-				}
-			})
-		);
+		/** @type {ReturnType<typeof parser.append<import('#compiler').ConstTag>>} */
+		parser.append({
+			type: 'ConstTag',
+			start,
+			end: parser.index,
+			declaration: {
+				type: 'VariableDeclaration',
+				kind: 'const',
+				declarations: [{ type: 'VariableDeclarator', id, init }],
+				start: start + 1,
+				end: parser.index - 1
+			}
+		});
 	}
 
 	if (parser.eat('render')) {
@@ -592,14 +584,13 @@ function special(parser) {
 		parser.allow_whitespace();
 		parser.eat('}', true);
 
-		parser.append(
-			/** @type {import('#compiler').RenderTag} */ ({
-				type: 'RenderTag',
-				start,
-				end: parser.index,
-				expression: expression.callee,
-				arguments: expression.arguments
-			})
-		);
+		/** @type {ReturnType<typeof parser.append<import('#compiler').RenderTag>>} */
+		parser.append({
+			type: 'RenderTag',
+			start,
+			end: parser.index,
+			expression: expression.callee,
+			arguments: expression.arguments
+		});
 	}
 }

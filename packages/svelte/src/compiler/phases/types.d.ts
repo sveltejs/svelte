@@ -1,5 +1,4 @@
 import type {
-	BindDirective,
 	Binding,
 	Fragment,
 	RegularElement,
