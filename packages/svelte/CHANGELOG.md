@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.46
+
+### Patch Changes
+
+- fix: allow `let:` directives on slot elements ([#10391](https://github.com/sveltejs/svelte/pull/10391))
+
+- fix: repair each block length mismatches during hydration ([#10398](https://github.com/sveltejs/svelte/pull/10398))
+
 ## 5.0.0-next.45
 
 ### Patch Changes
