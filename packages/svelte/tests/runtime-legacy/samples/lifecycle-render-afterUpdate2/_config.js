@@ -37,7 +37,7 @@ export default test({
 			target.innerHTML,
 			`
 				<button>a: 1</button>
-				<button>b: 2</button>
+				<button>b: 1</button>
 				<p>a: 1</p>
 			`
 		);

@@ -346,12 +346,6 @@ function execute_signal_fn(signal) {
 	current_skip_consumer = !is_flushing_effect && (flags & UNOWNED) !== 0;
 	current_untracking = false;
 
-	// Render effects are invoked when the UI is about to be updated - run beforeUpdate at that point
-	if (is_render_effect && current_component_context?.u != null) {
-		// update_callbacks.execute()
-		current_component_context.u.e();
-	}
-
 	try {
 		let res;
 		if (is_render_effect) {
@@ -1236,19 +1230,6 @@ export function set_signal_value(signal, value) {
 			}
 		}
 		mark_signal_consumers(signal, DIRTY, true);
-		// If we have afterUpdates locally on the component, but we're within a render effect
-		// then we will need to manually invoke the beforeUpdate/afterUpdate logic.
-		// TODO: should we put this being a is_runes check and only run it in non-runes mode?
-		if (current_effect === null && current_queued_pre_and_render_effects.length === 0) {
-			const update_callbacks = component_context?.u;
-			if (update_callbacks != null) {
-				run_all(update_callbacks.b);
-				const managed = managed_effect(() => {
-					destroy_signal(managed);
-					run_all(update_callbacks.a);
-				});
-			}
-		}
 
 		// @ts-expect-error
 		if (DEV && signal.inspect) {
@@ -1327,7 +1308,12 @@ export function derived_safe_equal(init) {
 /*#__NO_SIDE_EFFECTS__*/
 export function source(initial_value) {
 	const source = create_source_signal(SOURCE | CLEAN, initial_value);
-	source.x = current_component_context;
+
+	if (current_component_context) {
+		source.x = current_component_context;
+		current_component_context.d.push(source);
+	}
+
 	return source;
 }
 
@@ -1914,6 +1900,8 @@ export function push(props, runes = false) {
 		m: false,
 		// parent
 		p: current_component_context,
+		// signals
+		d: [],
 		// props
 		s: props,
 		// runes

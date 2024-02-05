@@ -6,9 +6,12 @@ import {
 	managed_effect,
 	untrack,
 	user_effect,
-	flush_local_render_effects
+	flush_local_render_effects,
+	pre_effect,
+	get
 } from '../internal/client/runtime.js';
-import { is_array } from '../internal/client/utils.js';
+import { get_descriptors, is_array } from '../internal/client/utils.js';
+import { run } from '../internal/common.js';
 
 /**
  * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
@@ -155,43 +158,33 @@ export function createEventDispatcher() {
 	};
 }
 
-function init_update_callbacks() {
-	let called_before = false;
-	let called_after = false;
-
+/** @param {import('../internal/client/types.js').ComponentContext} context */
+function init_update_callbacks(context) {
 	/** @type {NonNullable<import('../internal/client/types.js').ComponentContext['u']>} */
 	const update_callbacks = {
 		b: [],
-		a: [],
-		e() {
-			if (!called_before) {
-				called_before = true;
-				// TODO somehow beforeUpdate ran twice on mount in Svelte 4 if it causes a render
-				// possibly strategy to get this back if needed: analyse beforeUpdate function for assignements to state,
-				// if yes, add a call to the component to force-run beforeUpdate once.
-				untrack(() => update_callbacks.b.forEach(/** @param {any} c */ (c) => c()));
-				flush_local_render_effects();
-				// beforeUpdate can run again once if afterUpdate causes another update,
-				// but afterUpdate shouldn't be called again in that case to prevent infinite loops
-				if (!called_after) {
-					user_effect(() => {
-						called_before = false;
-						called_after = true;
-						untrack(() => update_callbacks.a.forEach(/** @param {any} c */ (c) => c()));
-						// managed_effect so that it's not cleaned up when the parent effect is cleaned up
-						const managed = managed_effect(() => {
-							destroy_signal(managed);
-							called_after = false;
-						});
-					});
-				} else {
-					user_effect(() => {
-						called_before = false;
-					});
-				}
-			}
-		}
+		a: []
 	};
+
+	function observe_all() {
+		for (const signal of context.d) get(signal);
+
+		const props = get_descriptors(context.s);
+		for (const descriptor of Object.values(props)) {
+			if (descriptor.get) descriptor.get();
+		}
+	}
+
+	pre_effect(() => {
+		observe_all();
+		update_callbacks.b.forEach(run);
+	});
+
+	user_effect(() => {
+		observe_all();
+		update_callbacks.a.forEach(run);
+	});
+
 	return update_callbacks;
 }
 
@@ -210,12 +203,31 @@ function init_update_callbacks() {
  * @returns {void}
  */
 export function beforeUpdate(fn) {
-	const component_context = current_component_context;
-	if (component_context === null) {
+	const context = current_component_context;
+
+	if (context === null) {
 		throw new Error('beforeUpdate can only be used during component initialisation.');
 	}
 
-	(component_context.u ??= init_update_callbacks()).b.push(fn);
+	context.u ??= { a: null, b: null };
+
+	if (context.u.a) {
+		context.u.a.push(fn);
+		fn();
+	} else {
+		const callbacks = (context.u.a = [fn]);
+
+		pre_effect(() => {
+			for (const signal of context.d) get(signal);
+
+			const props = get_descriptors(context.s);
+			for (const descriptor of Object.values(props)) {
+				if (descriptor.get) descriptor.get();
+			}
+
+			callbacks.forEach(run);
+		});
+	}
 }
 
 /**
@@ -231,12 +243,30 @@ export function beforeUpdate(fn) {
  * @returns {void}
  */
 export function afterUpdate(fn) {
-	const component_context = current_component_context;
-	if (component_context === null) {
+	const context = current_component_context;
+
+	if (context === null) {
 		throw new Error('afterUpdate can only be used during component initialisation.');
 	}
 
-	(component_context.u ??= init_update_callbacks()).a.push(fn);
+	context.u ??= { a: null, b: null };
+
+	if (context.u.b) {
+		context.u.b.push(fn);
+	} else {
+		const callbacks = (context.u.b = [fn]);
+
+		user_effect(() => {
+			for (const signal of context.d) get(signal);
+
+			const props = get_descriptors(context.s);
+			for (const descriptor of Object.values(props)) {
+				if (descriptor.get) descriptor.get();
+			}
+
+			callbacks.forEach(run);
+		});
+	}
 }
 
 // TODO bring implementations in here

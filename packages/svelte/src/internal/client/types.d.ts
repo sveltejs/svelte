@@ -36,6 +36,8 @@ export type Store<V> = {
 // when the JS VM JITs the code.
 
 export type ComponentContext = {
+	/** local signals */
+	d: Signal<any>[];
 	/** props */
 	s: Record<string, unknown>;
 	/** accessors */
@@ -53,11 +55,9 @@ export type ComponentContext = {
 	/** update_callbacks */
 	u: null | {
 		/** before */
-		b: Array<() => void>;
+		b: null | Array<() => void>;
 		/** after */
-		a: Array<() => void>;
-		/** execute */
-		e: () => void;
+		a: null | Array<() => void>;
 	};
 };
 
