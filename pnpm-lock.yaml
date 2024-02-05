@@ -99,8 +99,8 @@ importers:
         specifier: ^0.30.5
         version: 0.30.5
       zimmerframe:
-        specifier: ^1.1.1
-        version: 1.1.1
+        specifier: ^1.1.2
+        version: 1.1.2
     devDependencies:
       '@jridgewell/trace-mapping':
         specifier: ^0.3.22
@@ -8647,6 +8647,10 @@ packages:
 
   /zimmerframe@1.1.1:
     resolution: {integrity: sha512-3g7WlErCAuBSemgv6ubMdoO5hHC4roKYgJdZkFT2P5rtQGf3FaBtt/iUVYV+6pVRmup9spHL9dDmBlFhQAq19w==}
+    dev: false
+
+  /zimmerframe@1.1.2:
+    resolution: {integrity: sha512-rAbqEGa8ovJy4pyBxZM70hg4pE6gDgaQ0Sl9M3enG3I0d6H4XSAM3GeNGLKnsBpuijUow064sf7ww1nutC5/3w==}
     dev: false
 
   /zod-validation-error@3.0.0(zod@3.22.4):
