@@ -273,7 +273,8 @@ const attributes = {
 
 /** @satisfies {Errors} */
 const slots = {
-	'invalid-slot-element-attribute': () => `<slot> can only receive attributes, not directives`,
+	'invalid-slot-element-attribute': () =>
+		`<slot> can only receive attributes and (optionally) let directives`,
 	'invalid-slot-attribute': () => `slot attribute must be a static value`,
 	/** @param {boolean} is_default */
 	'invalid-slot-name': (is_default) =>

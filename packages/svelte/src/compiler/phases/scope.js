@@ -357,6 +357,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		SvelteFragment,
+		SlotElement: SvelteFragment,
 		SvelteElement: SvelteFragment,
 		RegularElement: SvelteFragment,
 
