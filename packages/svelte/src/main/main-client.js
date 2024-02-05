@@ -170,6 +170,9 @@ export function createEventDispatcher() {
  * @returns {void}
  */
 export function beforeUpdate(fn) {
+	// TODO this shouldn't be necessary but is, because of the tests
+	if (is_ssr) return;
+
 	const context = current_component_context;
 
 	if (context === null) {
@@ -210,6 +213,9 @@ export function beforeUpdate(fn) {
  * @returns {void}
  */
 export function afterUpdate(fn) {
+	// TODO this shouldn't be necessary but is, because of the tests
+	if (is_ssr) return;
+
 	const context = current_component_context;
 
 	if (context === null) {
