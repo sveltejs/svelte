@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-Fix let: bindings on components filling a named slot
+fix: correctly determine binding scope of `let:` directives 
