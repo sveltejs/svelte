@@ -1,5 +1,17 @@
 # svelte
 
+## 4.2.10
+
+### Patch Changes
+
+- fix: add `scrollend` event type ([#10336](https://github.com/sveltejs/svelte/pull/10336))
+
+- fix: add `fetchpriority` attribute type ([#10390](https://github.com/sveltejs/svelte/pull/10390))
+
+- fix: Add `miter-clip` and `arcs` to `stroke-linejoin` attribute ([#10377](https://github.com/sveltejs/svelte/pull/10377))
+
+- fix: make inline doc links valid ([#10366](https://github.com/sveltejs/svelte/pull/10366))
+
 ## 4.2.9
 
 ### Patch Changes
