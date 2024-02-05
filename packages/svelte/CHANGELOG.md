@@ -1,5 +1,57 @@
 # svelte
 
+## 5.0.0-next.46
+
+### Patch Changes
+
+- fix: allow `let:` directives on slot elements ([#10391](https://github.com/sveltejs/svelte/pull/10391))
+
+- fix: repair each block length mismatches during hydration ([#10398](https://github.com/sveltejs/svelte/pull/10398))
+
+## 5.0.0-next.45
+
+### Patch Changes
+
+- fix: correctly determine `bind:group` members ([#10368](https://github.com/sveltejs/svelte/pull/10368))
+
+- fix: make inline doc links valid ([#10365](https://github.com/sveltejs/svelte/pull/10365))
+
+## 5.0.0-next.44
+
+### Patch Changes
+
+- fix: bindings with typescript assertions ([#10329](https://github.com/sveltejs/svelte/pull/10329))
+
+- fix: only reuse state proxies that belong to the current value ([#10343](https://github.com/sveltejs/svelte/pull/10343))
+
+## 5.0.0-next.43
+
+### Patch Changes
+
+- fix: insert empty text nodes while hydrating, if necessary ([#9729](https://github.com/sveltejs/svelte/pull/9729))
+
+- fix: correctly update tweened store initialized with nullish value ([#10356](https://github.com/sveltejs/svelte/pull/10356))
+
+## 5.0.0-next.42
+
+### Patch Changes
+
+- breaking: snippets can now take multiple arguments, support default parameters. Because of this, the type signature has changed ([#9988](https://github.com/sveltejs/svelte/pull/9988))
+
+- Use generic `T` as the return type for `$derived.call()` ([#10349](https://github.com/sveltejs/svelte/pull/10349))
+
+- fix: replace TODO errors ([#10326](https://github.com/sveltejs/svelte/pull/10326))
+
+- fix: add proper typings for `$derived.call` ([`6145be5c695a063c70944272a42d9c63fdd71d64`](https://github.com/sveltejs/svelte/commit/6145be5c695a063c70944272a42d9c63fdd71d64))
+
+- fix: improve handling of unowned derived signals ([#10342](https://github.com/sveltejs/svelte/pull/10342))
+
+- fix: correctly reference destructured derived binding in event handler ([#10333](https://github.com/sveltejs/svelte/pull/10333))
+
+- fix: add `scrollend` event type ([#10337](https://github.com/sveltejs/svelte/pull/10337))
+
+- fix: improve unstate handling of non enumerable properties ([#10348](https://github.com/sveltejs/svelte/pull/10348))
+
 ## 5.0.0-next.41
 
 ### Patch Changes

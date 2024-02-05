@@ -2,11 +2,11 @@
 
 import { schedule_task } from './runtime.js';
 
-/** @type {null | Array<Text | Comment | Element>} */
+/** @type {null | Array<import('./types.js').TemplateNode>} */
 export let current_hydration_fragment = null;
 
 /**
- * @param {null | Array<Text | Comment | Element>} fragment
+ * @param {null | Array<import('./types.js').TemplateNode>} fragment
  * @returns {void}
  */
 export function set_current_hydration_fragment(fragment) {
@@ -16,10 +16,10 @@ export function set_current_hydration_fragment(fragment) {
 /**
  * Returns all nodes between the first `<!--ssr:...-->` comment tag pair encountered.
  * @param {Node | null} node
- * @returns {Array<Text | Comment | Element> | null}
+ * @returns {Array<import('./types.js').TemplateNode> | null}
  */
 export function get_hydration_fragment(node) {
-	/** @type {Array<Text | Comment | Element>} */
+	/** @type {Array<import('./types.js').TemplateNode>} */
 	const fragment = [];
 
 	/** @type {null | Node} */

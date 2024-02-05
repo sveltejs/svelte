@@ -410,6 +410,8 @@ export interface ProxyMetadata<T = Record<string | symbol, any>> {
 	i: boolean;
 	/** The associated proxy */
 	p: ProxyStateObject<T> | ProxyReadonlyObject<T>;
+	/** The original target this proxy was created for */
+	t: T;
 }
 
 export type ProxyStateObject<T = Record<string | symbol, any>> = T & {

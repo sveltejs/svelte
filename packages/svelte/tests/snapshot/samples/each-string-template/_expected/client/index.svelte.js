@@ -16,11 +16,11 @@ export default function Each_string_template($$anchor, $$props) {
 		1,
 		($$anchor, thing, $$index) => {
 			/* Init */
-			var node_1 = $.space($$anchor);
+			var text = $.space($$anchor);
 
 			/* Update */
-			$.text_effect(node_1, () => `${$.stringify($.unwrap(thing))}, `);
-			$.close($$anchor, node_1);
+			$.text_effect(text, () => `${$.stringify($.unwrap(thing))}, `);
+			$.close($$anchor, text);
 		},
 		null
 	);

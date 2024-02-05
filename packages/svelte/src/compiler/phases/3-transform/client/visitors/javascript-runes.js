@@ -3,7 +3,7 @@ import { is_hoistable_function, transform_inspect_rune } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
 import { get_prop_source, is_state_source, should_proxy_or_freeze } from '../utils.js';
-import { extract_paths, unwrap_ts_expression } from '../../../../utils/ast.js';
+import { extract_paths } from '../../../../utils/ast.js';
 
 /** @type {import('../types.js').ComponentVisitors} */
 export const javascript_visitors_runes = {
@@ -174,7 +174,7 @@ export const javascript_visitors_runes = {
 		const declarations = [];
 
 		for (const declarator of node.declarations) {
-			const init = unwrap_ts_expression(declarator.init);
+			const init = declarator.init;
 			const rune = get_rune(init, state.scope);
 			if (!rune || rune === '$effect.active' || rune === '$effect.root' || rune === '$inspect') {
 				if (init != null && is_hoistable_function(init)) {

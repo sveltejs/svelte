@@ -1,3 +1,4 @@
+import { walk } from 'zimmerframe';
 import * as b from '../utils/builders.js';
 
 /**
@@ -6,13 +7,10 @@ import * as b from '../utils/builders.js';
  * @returns {import('estree').Identifier | null}
  */
 export function object(expression) {
-	expression = unwrap_ts_expression(expression);
-
 	while (expression.type === 'MemberExpression') {
 		expression = /** @type {import('estree').MemberExpression | import('estree').Identifier} */ (
 			expression.object
 		);
-		expression = unwrap_ts_expression(expression);
 	}
 
 	if (expression.type !== 'Identifier') {
@@ -99,11 +97,36 @@ export function extract_identifiers(param, nodes = []) {
 
 /**
  * Extracts all identifiers from an expression.
+ * @param {import('estree').Expression} expr
+ * @returns {import('estree').Identifier[]}
+ */
+export function extract_all_identifiers_from_expression(expr) {
+	/** @type {import('estree').Identifier[]} */
+	let nodes = [];
+
+	walk(
+		expr,
+		{},
+		{
+			Identifier(node, { path }) {
+				const parent = path.at(-1);
+				if (parent?.type !== 'MemberExpression' || parent.property !== node || parent.computed) {
+					nodes.push(node);
+				}
+			}
+		}
+	);
+
+	return nodes;
+}
+
+/**
+ * Extracts all leaf identifiers from a destructuring expression.
  * @param {import('estree').Identifier | import('estree').ObjectExpression | import('estree').ArrayExpression} node
  * @param {import('estree').Identifier[]} [nodes]
  * @returns
  */
-export function extract_identifiers_from_expression(node, nodes = []) {
+export function extract_identifiers_from_destructuring(node, nodes = []) {
 	// TODO This isn't complete, but it should be enough for our purposes
 	switch (node.type) {
 		case 'Identifier':
@@ -113,9 +136,9 @@ export function extract_identifiers_from_expression(node, nodes = []) {
 		case 'ObjectExpression':
 			for (const prop of node.properties) {
 				if (prop.type === 'Property') {
-					extract_identifiers_from_expression(/** @type {any} */ (prop.value), nodes);
+					extract_identifiers_from_destructuring(/** @type {any} */ (prop.value), nodes);
 				} else {
-					extract_identifiers_from_expression(/** @type {any} */ (prop.argument), nodes);
+					extract_identifiers_from_destructuring(/** @type {any} */ (prop.argument), nodes);
 				}
 			}
 
@@ -123,7 +146,7 @@ export function extract_identifiers_from_expression(node, nodes = []) {
 
 		case 'ArrayExpression':
 			for (const element of node.elements) {
-				if (element) extract_identifiers_from_expression(/** @type {any} */ (element), nodes);
+				if (element) extract_identifiers_from_destructuring(/** @type {any} */ (element), nodes);
 			}
 
 			break;
@@ -266,37 +289,6 @@ function _extract_paths(assignments = [], param, expression, update_expression) 
 	}
 
 	return assignments;
-}
-
-/**
- * The Acorn TS plugin defines `foo!` as a `TSNonNullExpression` node, and
- * `foo as Bar` as a `TSAsExpression` node. This function unwraps those.
- *
- * We can't just remove the typescript AST nodes in the parser stage because subsequent
- * parsing would fail, since AST start/end nodes would point at the wrong positions.
- *
- * @template {import('#compiler').SvelteNode | undefined | null} T
- * @param {T} node
- * @returns {T}
- */
-export function unwrap_ts_expression(node) {
-	if (!node) {
-		return node;
-	}
-
-	if (
-		// @ts-expect-error these types don't exist on the base estree types
-		node.type === 'TSNonNullExpression' ||
-		// @ts-expect-error these types don't exist on the base estree types
-		node.type === 'TSAsExpression' ||
-		// @ts-expect-error these types don't exist on the base estree types
-		node.type === 'TSSatisfiesExpression'
-	) {
-		// @ts-expect-error
-		return node.expression;
-	}
-
-	return node;
 }
 
 /**
