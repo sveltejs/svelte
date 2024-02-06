@@ -1327,7 +1327,10 @@ function bind_signal_to_component_context(signal) {
 			signals.push(signal);
 
 			// update dummy signal
+			const previous_ignore_mutation_validation = ignore_mutation_validation;
+			ignore_mutation_validation = true;
 			set_signal_value(signals[0], signals[0].v + 1);
+			ignore_mutation_validation = previous_ignore_mutation_validation;
 		} else {
 			// if we're creating the array, insert a dummy signal whose value we can
 			// increment whenever we add new sources. This ensures that late-declared
