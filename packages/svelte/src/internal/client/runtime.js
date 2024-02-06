@@ -1927,25 +1927,26 @@ export function pop(accessors) {
 	}
 }
 
+/** @param {import('./types.js').ComponentContext} context */
+function observe_all(context) {
+	const signals = (context.d ??= []);
+	for (const signal of signals) get(signal);
+
+	const props = get_descriptors(context.s);
+	for (const descriptor of Object.values(props)) {
+		if (descriptor.get) descriptor.get();
+	}
+}
+
 export function init() {
 	const context = /** @type {import('./types.js').ComponentContext} */ (current_component_context);
 	const callbacks = context.u;
 
 	if (!callbacks) return;
 
-	function observe_all() {
-		const signals = (context.d ??= []);
-		for (const signal of signals) get(signal);
-
-		const props = get_descriptors(context.s);
-		for (const descriptor of Object.values(props)) {
-			if (descriptor.get) descriptor.get();
-		}
-	}
-
 	// beforeUpdate
 	pre_effect(() => {
-		observe_all();
+		observe_all(context);
 		callbacks.b.forEach(run);
 	});
 
@@ -1963,7 +1964,7 @@ export function init() {
 
 	// afterUpdate
 	user_effect(() => {
-		observe_all();
+		observe_all(context);
 		callbacks.a.forEach(run);
 	});
 }
