@@ -845,8 +845,9 @@ class Block {
 	}
 }
 
+/** @type {import('#compiler').Css.Combinator} */
 const InvisibleCombinator = {
-	type: /** @type {"Combinator"} **/ ('Combinator'),
+	type: 'Combinator',
 	name: ' ',
 	start: -1,
 	end: -1
