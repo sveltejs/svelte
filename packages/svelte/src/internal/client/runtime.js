@@ -1280,7 +1280,12 @@ export function derived(init) {
 		create_computation_signal(flags | CLEAN, UNINITIALIZED, current_block)
 	);
 	signal.i = init;
-	signal.x = current_component_context;
+
+	if (current_component_context) {
+		signal.x = current_component_context;
+		current_component_context.d.push(signal);
+	}
+
 	signal.e = default_equals;
 	if (current_consumer !== null) {
 		push_reference(current_consumer, signal);

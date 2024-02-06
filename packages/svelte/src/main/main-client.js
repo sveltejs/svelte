@@ -200,11 +200,7 @@ export function afterUpdate(fn) {
  * @param {import('../internal/client/types.js').ComponentContext} context
  */
 function init_update_callbacks(context) {
-	const callbacks = (context.u = {
-		a: [],
-		b: [],
-		m: []
-	});
+	const callbacks = (context.u = { a: [], b: [], m: [] });
 
 	if (is_ssr) return callbacks; // TODO this shouldn't be necessary but is, because of the tests
 
