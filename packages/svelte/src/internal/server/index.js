@@ -80,6 +80,12 @@ export function assign_payload(p1, p2) {
 }
 
 /**
+ * Array of `onDestroy` callbacks that should be called at the end of the server render function
+ * @type {Function[]}
+ */
+export let on_destroy = [];
+
+/**
  * @param {(...args: any[]) => void} component
  * @param {{ props: Record<string, any>; context?: Map<any, any> }} options
  * @returns {RenderOutput}
@@ -90,6 +96,8 @@ export function render(component, options) {
 	const root_head_anchor = create_anchor(payload.head);
 
 	set_is_ssr(true);
+	const prev_on_destroy = on_destroy;
+	on_destroy = [];
 	payload.out += root_anchor;
 
 	if (options.context) {
@@ -102,6 +110,8 @@ export function render(component, options) {
 		$.pop();
 	}
 	payload.out += root_anchor;
+	for (const cleanup of on_destroy) cleanup();
+	on_destroy = prev_on_destroy;
 	set_is_ssr(false);
 
 	return {
