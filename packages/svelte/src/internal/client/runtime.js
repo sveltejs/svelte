@@ -148,14 +148,6 @@ export function batch_inspect(target, prop, receiver) {
 }
 
 /**
- * @param {null | import('./types.js').ComponentContext} context_stack_item
- * @returns {void}
- */
-export function set_current_component_context(context_stack_item) {
-	current_component_context = context_stack_item;
-}
-
-/**
  * @param {unknown} a
  * @param {unknown} b
  * @returns {boolean}
