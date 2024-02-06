@@ -3,8 +3,7 @@ import {
 	extract_paths,
 	is_event_attribute,
 	is_text_attribute,
-	object,
-	unwrap_ts_expression
+	object
 } from '../../../../utils/ast.js';
 import { binding_properties } from '../../../bindings.js';
 import {
@@ -750,7 +749,7 @@ function serialize_inline_component(node, component_name, context) {
 	const props_and_spreads = [];
 
 	/** @type {import('estree').ExpressionStatement[]} */
-	const default_lets = [];
+	const lets = [];
 
 	/** @type {Record<string, import('#compiler').TemplateNode[]>} */
 	const children = {};
@@ -765,6 +764,12 @@ function serialize_inline_component(node, component_name, context) {
 	let bind_this = null;
 
 	/**
+	 * If this component has a slot property, it is a named slot within another component. In this case
+	 * the slot scope applies to the component itself, too, and not just its children.
+	 */
+	let slot_scope_applies_to_itself = false;
+
+	/**
 	 * @param {import('estree').Property} prop
 	 */
 	function push_prop(prop) {
@@ -776,12 +781,9 @@ function serialize_inline_component(node, component_name, context) {
 			props_and_spreads.push(props);
 		}
 	}
-
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
-			default_lets.push(
-				/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute))
-			);
+			lets.push(/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute)));
 		} else if (attribute.type === 'OnDirective') {
 			events[attribute.name] ||= [];
 			let handler = serialize_event_handler(attribute, context);
@@ -810,6 +812,10 @@ function serialize_inline_component(node, component_name, context) {
 					b.init(attribute.name, serialize_attribute_value(attribute.value, context)[1])
 				);
 				continue;
+			}
+
+			if (attribute.name === 'slot') {
+				slot_scope_applies_to_itself = true;
 			}
 
 			const [, value] = serialize_attribute_value(attribute.value, context);
@@ -862,6 +868,10 @@ function serialize_inline_component(node, component_name, context) {
 				);
 			}
 		}
+	}
+
+	if (slot_scope_applies_to_itself) {
+		context.state.init.push(...lets);
 	}
 
 	if (Object.keys(events).length > 0) {
@@ -919,7 +929,7 @@ function serialize_inline_component(node, component_name, context) {
 
 		const slot_fn = b.arrow(
 			[b.id('$$anchor'), b.id('$$slotProps')],
-			b.block([...(slot_name === 'default' ? default_lets : []), ...body])
+			b.block([...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []), ...body])
 		);
 
 		if (slot_name === 'default') {
@@ -1055,7 +1065,10 @@ function create_block(parent, name, nodes, context) {
 		after_update: [],
 		template: [],
 		metadata: {
-			template_needs_import_node: false,
+			context: {
+				template_needs_import_node: false,
+				template_contains_script_tag: false
+			},
 			namespace,
 			bound_contenteditable: context.state.metadata.bound_contenteditable
 		}
@@ -1075,10 +1088,14 @@ function create_block(parent, name, nodes, context) {
 			node: id
 		});
 
-		const callee = namespace === 'svg' ? '$.svg_template' : '$.template';
-
 		context.state.hoisted.push(
-			b.var(template_name, b.call(callee, b.template([b.quasi(state.template.join(''), true)], [])))
+			b.var(
+				template_name,
+				b.call(
+					get_template_function(namespace, state),
+					b.template([b.quasi(state.template.join(''), true)], [])
+				)
+			)
 		);
 
 		body.push(
@@ -1087,7 +1104,7 @@ function create_block(parent, name, nodes, context) {
 				b.call(
 					'$.open',
 					b.id('$$anchor'),
-					b.literal(!state.metadata.template_needs_import_node),
+					b.literal(!state.metadata.context.template_needs_import_node),
 					template_name
 				)
 			),
@@ -1099,50 +1116,60 @@ function create_block(parent, name, nodes, context) {
 		body.push(...state.init);
 	} else if (trimmed.length > 0) {
 		const id = b.id(context.state.scope.generate('fragment'));
-		const node_id = b.id(context.state.scope.generate('node'));
 
-		process_children(trimmed, node_id, {
-			...context,
-			state
-		});
+		const use_space_template =
+			trimmed.some((node) => node.type === 'ExpressionTag') &&
+			trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag');
 
-		const template = state.template[0];
+		if (use_space_template) {
+			// special case — we can use `$.space` instead of creating a unique template
+			const id = b.id(context.state.scope.generate('text'));
 
-		if (state.template.length === 1 && (template === ' ' || template === '<!>')) {
-			if (template === ' ') {
-				body.push(b.var(node_id, b.call('$.space', b.id('$$anchor'))), ...state.init);
-				close = b.stmt(b.call('$.close', b.id('$$anchor'), node_id));
-			} else {
-				body.push(
-					b.var(id, b.call('$.comment', b.id('$$anchor'))),
-					b.var(node_id, b.call('$.child_frag', id)),
-					...state.init
-				);
-				close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
-			}
+			process_children(trimmed, () => id, false, {
+				...context,
+				state
+			});
+
+			body.push(b.var(id, b.call('$.space', b.id('$$anchor'))), ...state.init);
+			close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
 		} else {
-			const callee = namespace === 'svg' ? '$.svg_template' : '$.template';
+			/** @type {(is_text: boolean) => import('estree').Expression} */
+			const expression = (is_text) =>
+				is_text ? b.call('$.child_frag', id, b.true) : b.call('$.child_frag', id);
 
-			state.hoisted.push(
-				b.var(
-					template_name,
-					b.call(callee, b.template([b.quasi(state.template.join(''), true)], []), b.true)
-				)
-			);
+			process_children(trimmed, expression, false, { ...context, state });
 
-			body.push(
-				b.var(
-					id,
-					b.call(
-						'$.open_frag',
-						b.id('$$anchor'),
-						b.literal(!state.metadata.template_needs_import_node),
-						template_name
+			const use_comment_template = state.template.length === 1 && state.template[0] === '<!>';
+
+			if (use_comment_template) {
+				// special case — we can use `$.comment` instead of creating a unique template
+				body.push(b.var(id, b.call('$.comment', b.id('$$anchor'))));
+			} else {
+				state.hoisted.push(
+					b.var(
+						template_name,
+						b.call(
+							get_template_function(namespace, state),
+							b.template([b.quasi(state.template.join(''), true)], []),
+							b.true
+						)
 					)
-				),
-				b.var(node_id, b.call('$.child_frag', id)),
-				...state.init
-			);
+				);
+
+				body.push(
+					b.var(
+						id,
+						b.call(
+							'$.open_frag',
+							b.id('$$anchor'),
+							b.literal(!state.metadata.context.template_needs_import_node),
+							template_name
+						)
+					)
+				);
+			}
+
+			body.push(...state.init);
 
 			close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
 		}
@@ -1197,6 +1224,23 @@ function create_block(parent, name, nodes, context) {
 	}
 
 	return body;
+}
+
+/**
+ *
+ * @param {import('#compiler').Namespace} namespace
+ * @param {import('../types.js').ComponentClientTransformState} state
+ * @returns
+ */
+function get_template_function(namespace, state) {
+	const contains_script_tag = state.metadata.context.template_contains_script_tag;
+	return namespace === 'svg'
+		? contains_script_tag
+			? '$.svg_template_with_script'
+			: '$.svg_template'
+		: contains_script_tag
+			? '$.template_with_script'
+			: '$.template';
 }
 
 /**
@@ -1418,10 +1462,11 @@ function serialize_event_attribute(node, context) {
  * (e.g. `{a} b {c}`) into a single update function. Along the way it creates
  * corresponding template node references these updates are applied to.
  * @param {import('#compiler').SvelteNode[]} nodes
- * @param {import('estree').Expression} parent
+ * @param {(is_text: boolean) => import('estree').Expression} expression
+ * @param {boolean} is_element
  * @param {import('../types.js').ComponentContext} context
  */
-function process_children(nodes, parent, { visit, state }) {
+function process_children(nodes, expression, is_element, { visit, state }) {
 	const within_bound_contenteditable = state.metadata.bound_contenteditable;
 
 	/** @typedef {Array<import('#compiler').Text | import('#compiler').ExpressionTag>} Sequence */
@@ -1429,28 +1474,24 @@ function process_children(nodes, parent, { visit, state }) {
 	/** @type {Sequence} */
 	let sequence = [];
 
-	let expression = parent;
-
 	/**
 	 * @param {Sequence} sequence
-	 * @param {boolean} in_fragment
 	 */
-	function flush_sequence(sequence, in_fragment) {
+	function flush_sequence(sequence) {
 		if (sequence.length === 1) {
 			const node = sequence[0];
 
-			if ((in_fragment && node.type === 'ExpressionTag') || node.type === 'Text') {
-				expression = b.call('$.sibling', expression);
-			}
-
 			if (node.type === 'Text') {
+				let prev = expression;
+				expression = () => b.call('$.sibling', prev(true));
 				state.template.push(node.raw);
 				return;
 			}
 
 			state.template.push(' ');
 
-			const text_id = get_node_id(expression, state, 'text');
+			const text_id = get_node_id(expression(true), state, 'text');
+
 			const singular = b.stmt(
 				b.call(
 					'$.text_effect',
@@ -1487,37 +1528,39 @@ function process_children(nodes, parent, { visit, state }) {
 				);
 			}
 
-			return;
-		}
-
-		state.template.push(' ');
-
-		const text_id = get_node_id(expression, state, 'text');
-		const contains_call_expression = sequence.some(
-			(n) => n.type === 'ExpressionTag' && n.metadata.contains_call_expression
-		);
-		const assignment = serialize_template_literal(sequence, visit, state)[1];
-		const init = b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), assignment));
-		const singular = b.stmt(b.call('$.text_effect', text_id, b.thunk(assignment)));
-
-		if (contains_call_expression && !within_bound_contenteditable) {
-			state.update_effects.push(singular);
-		} else if (
-			sequence.some((node) => node.type === 'ExpressionTag' && node.metadata.dynamic) &&
-			!within_bound_contenteditable
-		) {
-			state.update.push({
-				singular,
-				grouped: b.stmt(b.call('$.text', text_id, assignment))
-			});
+			expression = (is_text) =>
+				is_text ? b.call('$.sibling', text_id, b.true) : b.call('$.sibling', text_id);
 		} else {
-			state.init.push(init);
-		}
+			const text_id = get_node_id(expression(true), state, 'text');
 
-		expression = b.call('$.sibling', text_id);
+			state.template.push(' ');
+
+			const contains_call_expression = sequence.some(
+				(n) => n.type === 'ExpressionTag' && n.metadata.contains_call_expression
+			);
+			const assignment = serialize_template_literal(sequence, visit, state)[1];
+			const init = b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), assignment));
+			const singular = b.stmt(b.call('$.text_effect', text_id, b.thunk(assignment)));
+
+			if (contains_call_expression && !within_bound_contenteditable) {
+				state.update_effects.push(singular);
+			} else if (
+				sequence.some((node) => node.type === 'ExpressionTag' && node.metadata.dynamic) &&
+				!within_bound_contenteditable
+			) {
+				state.update.push({
+					singular,
+					grouped: b.stmt(b.call('$.text', text_id, assignment))
+				});
+			} else {
+				state.init.push(init);
+			}
+
+			expression = (is_text) =>
+				is_text ? b.call('$.sibling', text_id, b.true) : b.call('$.sibling', text_id);
+		}
 	}
 
-	let is_fragment = false;
 	for (let i = 0; i < nodes.length; i += 1) {
 		const node = nodes[i];
 
@@ -1525,12 +1568,7 @@ function process_children(nodes, parent, { visit, state }) {
 			sequence.push(node);
 		} else {
 			if (sequence.length > 0) {
-				flush_sequence(sequence, is_fragment);
-				// Ensure we move to the next sibling for the case where we move reference within a fragment
-				if (!is_fragment && sequence.length === 1 && sequence[0].type === 'ExpressionTag') {
-					expression = b.call('$.sibling', expression);
-					is_fragment = true;
-				}
+				flush_sequence(sequence);
 				sequence = [];
 			}
 
@@ -1544,23 +1582,18 @@ function process_children(nodes, parent, { visit, state }) {
 				// get hoisted inside clean_nodes?
 				visit(node, state);
 			} else {
-				if (
-					node.type === 'EachBlock' &&
-					nodes.length === 1 &&
-					parent.type === 'CallExpression' &&
-					parent.callee.type === 'Identifier' &&
-					parent.callee.name === '$.child'
-				) {
+				if (node.type === 'EachBlock' && nodes.length === 1 && is_element) {
 					node.metadata.is_controlled = true;
 					visit(node, state);
 				} else {
 					const id = get_node_id(
-						expression,
+						expression(false),
 						state,
 						node.type === 'RegularElement' ? node.name : 'node'
 					);
 
-					expression = b.call('$.sibling', id);
+					expression = (is_text) =>
+						is_text ? b.call('$.sibling', id, b.true) : b.call('$.sibling', id);
 
 					visit(node, {
 						...state,
@@ -1572,7 +1605,7 @@ function process_children(nodes, parent, { visit, state }) {
 	}
 
 	if (sequence.length > 0) {
-		flush_sequence(sequence, false);
+		flush_sequence(sequence);
 	}
 }
 
@@ -1840,6 +1873,9 @@ export const template_visitors = {
 			context.state.template.push('<!>');
 			return;
 		}
+		if (node.name === 'script') {
+			context.state.metadata.context.template_contains_script_tag = true;
+		}
 
 		const metadata = context.state.metadata;
 		const child_metadata = {
@@ -1878,7 +1914,7 @@ export const template_visitors = {
 			// custom element until the template is connected to the dom, which would
 			// cause problems when setting properties on the custom element.
 			// Therefore we need to use importNode instead, which doesn't have this caveat.
-			metadata.template_needs_import_node = true;
+			metadata.context.template_needs_import_node = true;
 		}
 
 		for (const attribute of node.attributes) {
@@ -2041,12 +2077,14 @@ export const template_visitors = {
 
 		process_children(
 			trimmed,
-			b.call(
-				'$.child',
-				node.name === 'template'
-					? b.member(context.state.node, b.id('content'))
-					: context.state.node
-			),
+			() =>
+				b.call(
+					'$.child',
+					node.name === 'template'
+						? b.member(context.state.node, b.id('content'))
+						: context.state.node
+				),
+			true,
 			{ ...context, state }
 		);
 
@@ -2576,7 +2614,7 @@ export const template_visitors = {
 	},
 	BindDirective(node, context) {
 		const { state, path, visit } = context;
-		const expression = unwrap_ts_expression(node.expression);
+		const expression = node.expression;
 		const getter = b.thunk(/** @type {import('estree').Expression} */ (visit(expression)));
 		const assignment = b.assignment('=', expression, b.id('$$value'));
 		const setter = b.arrow(
@@ -2722,8 +2760,7 @@ export const template_visitors = {
 				case 'group': {
 					/** @type {import('estree').CallExpression[]} */
 					const indexes = [];
-					// we only care about the indexes above the first each block
-					for (const parent_each_block of node.metadata.parent_each_blocks.slice(0, -1)) {
+					for (const parent_each_block of node.metadata.parent_each_blocks) {
 						indexes.push(b.call('$.unwrap', parent_each_block.metadata.index));
 					}
 
@@ -2919,6 +2956,9 @@ export const template_visitors = {
 		/** @type {import('estree').Expression[]} */
 		const spreads = [];
 
+		/** @type {import('estree').ExpressionStatement[]} */
+		const lets = [];
+
 		let is_default = true;
 
 		/** @type {import('estree').Expression} */
@@ -2934,15 +2974,20 @@ export const template_visitors = {
 				if (attribute.name === 'name') {
 					name = value;
 					is_default = false;
-				} else {
+				} else if (attribute.name !== 'slot') {
 					if (attribute.metadata.dynamic) {
 						props.push(b.get(attribute.name, [b.return(value)]));
 					} else {
 						props.push(b.init(attribute.name, value));
 					}
 				}
+			} else if (attribute.type === 'LetDirective') {
+				lets.push(/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute)));
 			}
 		}
+
+		// Let bindings first, they can be used on attributes
+		context.state.init.push(...lets);
 
 		const props_expression =
 			spreads.length === 0

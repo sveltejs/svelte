@@ -58,6 +58,10 @@ export interface Root extends BaseNode {
 	instance: Script | null;
 	/** The parsed `<script context="module">` element, if exists */
 	module: Script | null;
+	metadata: {
+		/** Whether the component was parsed with typescript */
+		ts: boolean;
+	};
 }
 
 export interface SvelteOptions {
@@ -375,6 +379,7 @@ export interface EachBlock extends BaseNode {
 		array_name: Identifier | null;
 		index: Identifier;
 		item_name: string;
+		declarations: Map<string, Binding>;
 		/** List of bindings that are referenced within the expression */
 		references: Binding[];
 		/**
@@ -480,5 +485,7 @@ declare module 'estree' {
 		start?: number;
 		/** Added by the Svelte parser */
 		end?: number;
+		/** Added by acorn-typescript */
+		typeAnnotation?: any;
 	}
 }

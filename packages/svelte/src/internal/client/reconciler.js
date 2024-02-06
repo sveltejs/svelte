@@ -10,6 +10,25 @@ export function create_fragment_from_html(html) {
 }
 
 /**
+ * Creating a document fragment from HTML that contains script tags will not execute
+ * the scripts. We need to replace the script tags with new ones so that they are executed.
+ * @param {string} html
+ */
+export function create_fragment_with_script_from_html(html) {
+	var content = create_fragment_from_html(html);
+	var scripts = content.querySelectorAll('script');
+	for (const script of scripts) {
+		var new_script = document.createElement('script');
+		for (var i = 0; i < script.attributes.length; i++) {
+			new_script.setAttribute(script.attributes[i].name, script.attributes[i].value);
+		}
+		new_script.textContent = script.textContent;
+		/** @type {Node} */ (script.parentNode).replaceChild(new_script, script);
+	}
+	return content;
+}
+
+/**
  * @param {Array<import('./types.js').TemplateNode> | import('./types.js').TemplateNode} current
  * @param {null | Element} parent_element
  * @param {null | Text | Element | Comment} sibling
@@ -63,14 +82,16 @@ export function remove(current) {
 }
 
 /**
+ * Creates the content for a `@html` tag from its string value,
+ * inserts it before the target anchor and returns the new nodes.
  * @template V
- * @param {Element | Text | Comment} dom
+ * @param {Element | Text | Comment} target
  * @param {V} value
  * @param {boolean} svg
  * @returns {Element | Comment | (Element | Comment | Text)[]}
  */
-export function reconcile_html(dom, value, svg) {
-	hydrate_block_anchor(dom);
+export function reconcile_html(target, value, svg) {
+	hydrate_block_anchor(target);
 	if (current_hydration_fragment !== null) {
 		return current_hydration_fragment;
 	}
@@ -78,12 +99,11 @@ export function reconcile_html(dom, value, svg) {
 	// Even if html is the empty string we need to continue to insert something or
 	// else the element ordering gets out of sync, resulting in subsequent values
 	// not getting inserted anymore.
-	var target = dom;
 	var frag_nodes;
 	if (svg) {
 		html = `<svg>${html}</svg>`;
 	}
-	var content = create_fragment_from_html(html);
+	var content = create_fragment_with_script_from_html(html);
 	if (svg) {
 		content = /** @type {DocumentFragment} */ (/** @type {unknown} */ (content.firstChild));
 	}

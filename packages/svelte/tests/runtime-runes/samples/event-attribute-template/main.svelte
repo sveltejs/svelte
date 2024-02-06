@@ -1,10 +1,6 @@
 <script>
-	import { log } from './log.js';
-
-	function send() {
-		log.push("onclick")
-	}
+	let a = $state(0);
+	let b = $state(0);
 </script>
 
-{undefined}<hr/>
-<button onclick={send}>Send Event</button>
+{undefined}<button onclick={() => a += 1}>{a}</button>{undefined}<button onclick={() => b += 1}>{b}</button>

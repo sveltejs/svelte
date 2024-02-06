@@ -1,3 +1,5 @@
+import { on_destroy } from '../internal/server/index.js';
+
 export {
 	createRoot,
 	createEventDispatcher,
@@ -6,7 +8,6 @@ export {
 	getContext,
 	hasContext,
 	mount,
-	onDestroy,
 	setContext,
 	tick,
 	untrack
@@ -14,6 +15,11 @@ export {
 
 /** @returns {void} */
 export function onMount() {}
+
+/** @param {Function} fn */
+export function onDestroy(fn) {
+	on_destroy.push(fn);
+}
 
 /** @returns {void} */
 export function beforeUpdate() {}

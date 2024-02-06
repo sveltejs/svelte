@@ -1,10 +1,5 @@
 import * as b from '../../../utils/builders.js';
-import {
-	extract_paths,
-	is_simple_expression,
-	object,
-	unwrap_ts_expression
-} from '../../../utils/ast.js';
+import { extract_paths, is_simple_expression, object } from '../../../utils/ast.js';
 import { error } from '../../../errors.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
@@ -228,7 +223,7 @@ function is_expression_async(expression) {
 export function serialize_set_binding(node, context, fallback, options) {
 	const { state, visit } = context;
 
-	const assignee = unwrap_ts_expression(node.left);
+	const assignee = node.left;
 	if (
 		assignee.type === 'ArrayPattern' ||
 		assignee.type === 'ObjectPattern' ||

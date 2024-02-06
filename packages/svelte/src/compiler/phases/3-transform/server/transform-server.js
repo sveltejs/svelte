@@ -1,11 +1,6 @@
 import { walk } from 'zimmerframe';
 import { set_scope, get_rune } from '../../scope.js';
-import {
-	extract_identifiers,
-	extract_paths,
-	is_event_attribute,
-	unwrap_ts_expression
-} from '../../../utils/ast.js';
+import { extract_identifiers, extract_paths, is_event_attribute } from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
 import is_reference from 'is-reference';
 import {
@@ -24,7 +19,6 @@ import { create_attribute, is_custom_element_node, is_element_node } from '../..
 import { error } from '../../../errors.js';
 import { binding_properties } from '../../bindings.js';
 import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patterns.js';
-import { remove_types } from '../typescript.js';
 import { DOMBooleanAttributes } from '../../../../constants.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
 
@@ -167,7 +161,7 @@ function process_children(nodes, parent, { visit, state }) {
 			}
 
 			const expression = b.call(
-				'$.escape_text',
+				'$.escape',
 				/** @type {import('estree').Expression} */ (visit(node.expression))
 			);
 			state.template.push(t_expression(expression));
@@ -570,7 +564,7 @@ const javascript_visitors_runes = {
 		const declarations = [];
 
 		for (const declarator of node.declarations) {
-			const init = unwrap_ts_expression(declarator.init);
+			const init = declarator.init;
 			const rune = get_rune(init, state.scope);
 			if (!rune || rune === '$effect.active' || rune === '$inspect') {
 				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
@@ -814,10 +808,16 @@ function serialize_inline_component(node, component_name, context) {
 	const custom_css_props = [];
 
 	/** @type {import('estree').ExpressionStatement[]} */
-	const default_lets = [];
+	const lets = [];
 
 	/** @type {Record<string, import('#compiler').TemplateNode[]>} */
 	const children = {};
+
+	/**
+	 * If this component has a slot property, it is a named slot within another component. In this case
+	 * the slot scope applies to the component itself, too, and not just its children.
+	 */
+	let slot_scope_applies_to_itself = false;
 
 	/**
 	 * @param {import('estree').Property} prop
@@ -831,12 +831,9 @@ function serialize_inline_component(node, component_name, context) {
 			props_and_spreads.push(props);
 		}
 	}
-
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
-			default_lets.push(
-				/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute))
-			);
+			lets.push(/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute)));
 		} else if (attribute.type === 'SpreadAttribute') {
 			props_and_spreads.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
 		} else if (attribute.type === 'Attribute') {
@@ -844,6 +841,10 @@ function serialize_inline_component(node, component_name, context) {
 				const value = serialize_attribute_value(attribute.value, context, false, true);
 				custom_css_props.push(b.init(attribute.name, value));
 				continue;
+			}
+
+			if (attribute.name === 'slot') {
+				slot_scope_applies_to_itself = true;
 			}
 
 			const value = serialize_attribute_value(attribute.value, context, false, true);
@@ -866,6 +867,10 @@ function serialize_inline_component(node, component_name, context) {
 				])
 			);
 		}
+	}
+
+	if (slot_scope_applies_to_itself) {
+		context.state.init.push(...lets);
 	}
 
 	/** @type {import('estree').Statement[]} */
@@ -913,7 +918,7 @@ function serialize_inline_component(node, component_name, context) {
 
 		const slot_fn = b.arrow(
 			[b.id('$$payload'), b.id('$$slotProps')],
-			b.block([...(slot_name === 'default' ? default_lets : []), ...body])
+			b.block([...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []), ...body])
 		);
 
 		if (slot_name === 'default') {
@@ -1346,12 +1351,16 @@ const template_visitors = {
 			b.block(each)
 		);
 		if (node.fallback) {
+			const fallback_stmts = create_block(node, node.fallback.nodes, context);
+			fallback_stmts.unshift(
+				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--ssr:each_else-->')))
+			);
 			state.template.push(
 				t_statement(
 					b.if(
 						b.binary('!==', b.member(array_id, b.id('length')), b.literal(0)),
 						for_loop,
-						b.block(create_block(node, node.fallback.nodes, context))
+						b.block(fallback_stmts)
 					)
 				)
 			);
@@ -1578,6 +1587,9 @@ const template_visitors = {
 		/** @type {import('estree').Expression[]} */
 		const spreads = [];
 
+		/** @type {import('estree').ExpressionStatement[]} */
+		const lets = [];
+
 		/** @type {import('estree').Expression} */
 		let expression = b.member_id('$$props.children');
 
@@ -1588,15 +1600,20 @@ const template_visitors = {
 				const value = serialize_attribute_value(attribute.value, context);
 				if (attribute.name === 'name') {
 					expression = b.member(b.member_id('$$props.$$slots'), value, true, true);
-				} else {
+				} else if (attribute.name !== 'slot') {
 					if (attribute.metadata.dynamic) {
 						props.push(b.get(attribute.name, [b.return(value)]));
 					} else {
 						props.push(b.init(attribute.name, value));
 					}
 				}
+			} else if (attribute.type === 'LetDirective') {
+				lets.push(/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute)));
 			}
 		}
+
+		// Let bindings first, they can be used on attributes
+		context.state.init.push(...lets);
 
 		const props_expression =
 			spreads.length === 0
@@ -1963,34 +1980,36 @@ export function server_component(analysis, options) {
 	};
 
 	const module = /** @type {import('estree').Program} */ (
-		walk(/** @type {import('#compiler').SvelteNode} */ (analysis.module.ast), state, {
-			...set_scope(analysis.module.scopes),
-			...global_visitors,
-			...remove_types,
-			...javascript_visitors,
-			...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy)
-		})
+		walk(
+			/** @type {import('#compiler').SvelteNode} */ (analysis.module.ast),
+			state,
+			// @ts-expect-error TODO: zimmerframe types
+			{
+				...set_scope(analysis.module.scopes),
+				...global_visitors,
+				...javascript_visitors,
+				...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy)
+			}
+		)
 	);
 
 	const instance = /** @type {import('estree').Program} */ (
 		walk(
 			/** @type {import('#compiler').SvelteNode} */ (analysis.instance.ast),
 			{ ...state, scope: analysis.instance.scope },
+			// @ts-expect-error TODO: zimmerframe types
 			{
 				...set_scope(analysis.instance.scopes),
 				...global_visitors,
-				...{ ...remove_types, ImportDeclaration: undefined, ExportNamedDeclaration: undefined },
 				...javascript_visitors,
 				...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy),
-				ImportDeclaration(node, context) {
-					// @ts-expect-error
-					state.hoisted.push(remove_types.ImportDeclaration(node, context));
+				ImportDeclaration(node) {
+					state.hoisted.push(node);
 					return b.empty;
 				},
 				ExportNamedDeclaration(node, context) {
 					if (node.declaration) {
-						// @ts-expect-error
-						return remove_types.ExportNamedDeclaration(context.visit(node.declaration), context);
+						return context.visit(node.declaration);
 					}
 
 					return b.empty;
@@ -2003,10 +2022,10 @@ export function server_component(analysis, options) {
 		walk(
 			/** @type {import('#compiler').SvelteNode} */ (analysis.template.ast),
 			{ ...state, scope: analysis.template.scope },
+			// @ts-expect-error TODO: zimmerframe types
 			{
 				...set_scope(analysis.template.scopes),
 				...global_visitors,
-				...remove_types,
 				...template_visitors
 			}
 		)

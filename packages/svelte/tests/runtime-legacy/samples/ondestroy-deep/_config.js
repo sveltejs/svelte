@@ -10,5 +10,9 @@ export default test({
 		assert.deepEqual(destroyed, ['A', 'B', 'C']);
 
 		reset();
+	},
+
+	test_ssr({ assert }) {
+		assert.deepEqual(destroyed, ['A', 'B', 'C']);
 	}
 });

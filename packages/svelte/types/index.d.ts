@@ -24,7 +24,7 @@ declare module 'svelte' {
 		(Props extends { children?: any }
 			? {}
 			: Slots extends { default: any }
-				? { children?: Snippet<[]> }
+				? { children?: Snippet }
 				: {});
 
 	/**
@@ -229,7 +229,7 @@ declare module 'svelte' {
 	 *
 	 * If a function is returned _synchronously_ from `onMount`, it will be called when the component is unmounted.
 	 *
-	 * `onMount` does not run inside a [server-side component](/docs#run-time-server-side-component-api).
+	 * `onMount` does not run inside a [server-side component](https://svelte.dev/docs#run-time-server-side-component-api).
 	 *
 	 * https://svelte.dev/docs/svelte#onmount
 	 * */
@@ -267,7 +267,7 @@ declare module 'svelte' {
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
 	/**
-	 * Creates an event dispatcher that can be used to dispatch [component events](/docs#template-syntax-component-directives-on-eventname).
+	 * Creates an event dispatcher that can be used to dispatch [component events](https://svelte.dev/docs#template-syntax-component-directives-on-eventname).
 	 * Event dispatchers are functions that can take two arguments: `name` and `detail`.
 	 *
 	 * Component events created with `createEventDispatcher` create a
@@ -321,15 +321,7 @@ declare module 'svelte' {
 	 * If you don't need to interact with the component after mounting, use `mount` instead to save some bytes.
 	 *
 	 * */
-	export function createRoot<Props extends Record<string, any>, Exports extends Record<string, any> | undefined, Events extends Record<string, any>>(component: {
-		new (options: ComponentConstructorOptions<Props & (Props extends {
-			children?: any;
-		} ? {} : {} | {
-			children?: ((this: void) => unique symbol & {
-				_: "functions passed to {@render ...} tags must use the `Snippet` type imported from \"svelte\"";
-			}) | undefined;
-		})>): SvelteComponent<Props, Events, any>;
-	}, options: {
+	export function createRoot<Props extends Record<string, any>, Exports extends Record<string, any> | undefined, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
 		target: Node;
 		props?: Props | undefined;
 		events?: Events | undefined;
@@ -346,15 +338,7 @@ declare module 'svelte' {
 	 * If you need to interact with the component after mounting, use `createRoot` instead.
 	 *
 	 * */
-	export function mount<Props extends Record<string, any>, Exports extends Record<string, any> | undefined, Events extends Record<string, any>>(component: {
-		new (options: ComponentConstructorOptions<Props & (Props extends {
-			children?: any;
-		} ? {} : {} | {
-			children?: ((this: void) => unique symbol & {
-				_: "functions passed to {@render ...} tags must use the `Snippet` type imported from \"svelte\"";
-			}) | undefined;
-		})>): SvelteComponent<Props, Events, any>;
-	}, options: {
+	export function mount<Props extends Record<string, any>, Exports extends Record<string, any> | undefined, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
 		target: Node;
 		props?: Props | undefined;
 		events?: Events | undefined;
@@ -1103,6 +1087,10 @@ declare module 'svelte/compiler' {
 		instance: Script | null;
 		/** The parsed `<script context="module">` element, if exists */
 		module: Script | null;
+		metadata: {
+			/** Whether the component was parsed with typescript */
+			ts: boolean;
+		};
 	}
 
 	interface SvelteOptions {
@@ -1420,6 +1408,7 @@ declare module 'svelte/compiler' {
 			array_name: Identifier | null;
 			index: Identifier;
 			item_name: string;
+			declarations: Map<string, Binding>;
 			/** List of bindings that are referenced within the expression */
 			references: Binding[];
 			/**
@@ -1734,17 +1723,7 @@ declare module 'svelte/legacy' {
 	 * @deprecated Use this only as a temporary solution to migrate your imperative component code to Svelte 5.
 	 *
 	 * */
-	export function asClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(component: SvelteComponent<Props, Events, Slots>): {
-		new (options: ComponentConstructorOptions<Props & (Props extends {
-			children?: any;
-		} ? {} : Slots extends {
-			default: any;
-		} ? {
-			children?: ((this: void) => unique symbol & {
-				_: "functions passed to {@render ...} tags must use the `Snippet` type imported from \"svelte\"";
-			}) | undefined;
-		} : {})>): SvelteComponent<Props, Events, Slots>;
-	} & Exports;
+	export function asClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(component: SvelteComponent<Props, Events, Slots>): ComponentType<SvelteComponent<Props, Events, Slots> & Exports>;
 	// This should contain all the public interfaces (not all of them are actually importable, check current Svelte for which ones are).
 
 	/**
@@ -1770,7 +1749,7 @@ declare module 'svelte/legacy' {
 		(Props extends { children?: any }
 			? {}
 			: Slots extends { default: any }
-				? { children?: Snippet<[]> }
+				? { children?: Snippet }
 				: {});
 
 	/**
@@ -1858,6 +1837,34 @@ declare module 'svelte/legacy' {
 		 */
 		$set(props: Partial<Props>): void;
 	}
+
+	/**
+	 * Convenience type to get the type of a Svelte component. Useful for example in combination with
+	 * dynamic components using `<svelte:component>`.
+	 *
+	 * Example:
+	 * ```html
+	 * <script lang="ts">
+	 * 	import type { ComponentType, SvelteComponent } from 'svelte';
+	 * 	import Component1 from './Component1.svelte';
+	 * 	import Component2 from './Component2.svelte';
+	 *
+	 * 	const component: ComponentType = someLogic() ? Component1 : Component2;
+	 * 	const componentOfCertainSubType: ComponentType<SvelteComponent<{ needsThisProp: string }>> = someLogic() ? Component1 : Component2;
+	 * </script>
+	 *
+	 * <svelte:component this={component} />
+	 * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
+	 * ```
+	 */
+	type ComponentType<Comp extends SvelteComponent = SvelteComponent> = (new (
+		options: ComponentConstructorOptions<
+			Comp extends SvelteComponent<infer Props> ? Props : Record<string, any>
+		>
+	) => Comp) & {
+		/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
+		element?: typeof HTMLElement;
+	};
 
 	const SnippetReturn: unique symbol;
 
@@ -2163,7 +2170,7 @@ declare module 'svelte/transition' {
 		getTotalLength(): number;
 	}, { delay, speed, duration, easing }?: DrawParams | undefined): TransitionConfig;
 	/**
-	 * The `crossfade` function creates a pair of [transitions](/docs#template-syntax-element-directives-transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
+	 * The `crossfade` function creates a pair of [transitions](https://svelte.dev/docs#template-syntax-element-directives-transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
 	 *
 	 * https://svelte.dev/docs/svelte-transition#crossfade
 	 * */
@@ -2509,7 +2516,7 @@ declare namespace $derived {
 	 *
 	 * https://svelte-5-preview.vercel.app/docs/runes#$derived-call
 	 */
-	export function call<T>(fn: () => T): void;
+	export function call<T>(fn: () => T): T;
 }
 
 /**

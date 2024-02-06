@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.0.0-next.41",
+  "version": "5.0.0-next.49",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -128,7 +128,7 @@
     "is-reference": "^3.0.2",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.5",
-    "zimmerframe": "^1.1.0"
+    "zimmerframe": "^1.1.2"
   },
   "knip": {
     "entry": [
