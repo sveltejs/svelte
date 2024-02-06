@@ -493,7 +493,7 @@ const validation = {
 		}
 	},
 	ImportDeclaration(node, context) {
-		if (context.state.analysis.runes) {
+		if (node.source.value === 'svelte' && context.state.analysis.runes) {
 			for (const specifier of node.specifiers) {
 				if (specifier.type === 'ImportSpecifier') {
 					if (
