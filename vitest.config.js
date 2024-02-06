@@ -10,12 +10,19 @@ export default defineConfig({
 		alias: [
 			{
 				find: /^svelte\/?/,
-				customResolver: (id) => {
+				customResolver: (id, importer) => {
 					// For some reason this turns up as "undefined" instead of "svelte"
 					const exported = pkg.exports[id.replace('undefined', '.')];
 					if (!exported) return;
 
-					return path.resolve('packages/svelte', exported.browser ?? exported.default);
+					// When running the server version of the Svelte files,
+					// we also want to use the server export of the Svelte package
+					return path.resolve(
+						'packages/svelte',
+						importer?.includes('_output/server')
+							? exported.default
+							: exported.browser ?? exported.default
+					);
 				}
 			}
 		]
@@ -23,12 +30,19 @@ export default defineConfig({
 	plugins: [
 		{
 			name: 'resolve-svelte',
-			resolveId(id) {
+			resolveId(id, importer) {
 				if (/^svelte\/?/.test(id)) {
 					const exported = pkg.exports[id.replace('svelte', '.')];
 					if (!exported) return;
 
-					return path.resolve('packages/svelte', exported.browser ?? exported.default);
+					// When running the server version of the Svelte files,
+					// we also want to use the server export of the Svelte package
+					return path.resolve(
+						'packages/svelte',
+						importer?.includes('_output/server')
+							? exported.default
+							: exported.browser ?? exported.default
+					);
 				}
 			}
 		}
