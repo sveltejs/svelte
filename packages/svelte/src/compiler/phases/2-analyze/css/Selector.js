@@ -872,7 +872,7 @@ function group_selectors(selector, parent_selector) {
 
 	if (parent_selector) {
 		const nested_rule_indices = selector.children
-			.map((child, index) => (child.type === 'NestedSelector' ? index : -1))
+			.map((child, index) => (child.type === 'NestingSelector' ? index : -1))
 			.filter((index) => index !== -1);
 
 		const parent_children = parent_selector.node.children.map((child) => ({
@@ -900,7 +900,7 @@ function group_selectors(selector, parent_selector) {
 		if (child.type === 'Combinator') {
 			block = new Block(child);
 			blocks.push(block);
-		} else if (child.type === 'NestedSelector') {
+		} else if (child.type === 'NestingSelector') {
 			// Don't think we need to add it here
 		} else {
 			block.add(child);

@@ -162,7 +162,7 @@ function read_selector_list(parser, inside_pseudo_class = false) {
 function read_selector(parser, inside_pseudo_class = false) {
 	const list_start = parser.index;
 
-	/** @type {Array<import('#compiler').Css.SimpleSelector | import('#compiler').Css.Combinator | import('#compiler').Css.NestingSelector>} */
+	/** @type {Array<import('#compiler').Css.SimpleSelector | import('#compiler').Css.Combinator>} */
 	const children = [];
 
 	while (parser.index < parser.template.length) {
@@ -170,7 +170,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 
 		if (parser.eat('&')) {
 			children.push({
-				type: 'NestedSelector',
+				type: 'NestingSelector',
 				name: '&',
 				start,
 				end: parser.index
