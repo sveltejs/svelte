@@ -153,7 +153,7 @@ export function default_equals(a, b) {
  * @param {V} value
  * @returns {import('./types.js').SourceSignal<V> | import('./types.js').SourceSignal<V> & import('./types.js').SourceSignalDebug}
  */
-export function create_source_signal(flags, value) {
+function create_source_signal(flags, value) {
 	if (DEV) {
 		return {
 			// consumers
