@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.49
+
+### Patch Changes
+
+- fix: properly analyze group expressions ([#10410](https://github.com/sveltejs/svelte/pull/10410))
+
+- fix: handle nested script tags ([#10416](https://github.com/sveltejs/svelte/pull/10416))
+
+- fix: only update lazy properties that have actually changed ([#10415](https://github.com/sveltejs/svelte/pull/10415))
+
+- fix: correctly determine binding scope of `let:` directives ([#10395](https://github.com/sveltejs/svelte/pull/10395))
+
+- fix: run `onDestroy` callbacks during SSR ([#10297](https://github.com/sveltejs/svelte/pull/10297))
+
 ## 5.0.0-next.48
 
 ### Patch Changes
