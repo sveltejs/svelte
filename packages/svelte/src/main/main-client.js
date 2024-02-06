@@ -217,10 +217,17 @@ function init_update_callbacks(context) {
 		}
 	}
 
+	let skip = false;
+
 	// beforeUpdate
 	pre_effect(() => {
 		observe_all();
+		if (skip) return;
 		callbacks.b.forEach(run);
+	});
+
+	pre_effect(() => {
+		skip = true;
 	});
 
 	// onMount (must run before afterUpdate)
@@ -239,6 +246,10 @@ function init_update_callbacks(context) {
 	user_effect(() => {
 		observe_all();
 		callbacks.a.forEach(run);
+	});
+
+	user_effect(() => {
+		skip = false;
 	});
 
 	return callbacks;

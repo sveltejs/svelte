@@ -90,7 +90,9 @@ Various error and warning codes have been renamed slightly.
 
 The number of valid namespaces you can pass to the compiler option `namespace` has been reduced to `html` (the default), `svg` and `foreign`.
 
-### afterUpdate changes
+### beforeUpdate/afterUpdate changes
+
+`beforeUpdate` no longer runs twice on initial render if it modifies a variable referenced in the template.
 
 `afterUpdate` callbacks in a parent component will now run after `afterUpdate` callbacks in any child components.
 

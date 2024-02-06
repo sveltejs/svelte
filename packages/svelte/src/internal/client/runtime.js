@@ -1318,25 +1318,24 @@ export function source(initial_value) {
  * @param {import('./types.js').Signal} signal
  */
 function bind_signal_to_component_context(signal) {
-	if (current_component_context) {
-		signal.x = current_component_context;
+	if (current_component_context === null) return;
 
-		const signals = current_component_context.d;
+	signal.x = current_component_context;
+	const signals = current_component_context.d;
 
-		if (signals) {
-			signals.push(signal);
+	if (signals) {
+		signals.push(signal);
 
-			// update dummy signal
-			const previous_ignore_mutation_validation = ignore_mutation_validation;
-			ignore_mutation_validation = true;
-			set_signal_value(signals[0], signals[0].v + 1);
-			ignore_mutation_validation = previous_ignore_mutation_validation;
-		} else {
-			// if we're creating the array, insert a dummy signal whose value we can
-			// increment whenever we add new sources. This ensures that late-declared
-			// signals will still cause `beforeUpdate` and `afterUpdate` etc to fire
-			current_component_context.d = [create_source_signal(SOURCE | CLEAN, 0), signal];
-		}
+		// update dummy signal
+		const previous_ignore_mutation_validation = ignore_mutation_validation;
+		ignore_mutation_validation = true;
+		set_signal_value(signals[0], signals[0].v + 1);
+		ignore_mutation_validation = previous_ignore_mutation_validation;
+	} else {
+		// if we're creating the array, insert a dummy signal whose value we can
+		// increment whenever we add new sources. This ensures that late-declared
+		// signals will still cause `beforeUpdate` and `afterUpdate` etc to fire
+		current_component_context.d = [create_source_signal(SOURCE | CLEAN, 0), signal];
 	}
 }
 
