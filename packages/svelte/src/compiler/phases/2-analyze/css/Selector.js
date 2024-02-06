@@ -77,7 +77,7 @@ export default class Selector {
 	transform(code, attr, max_amount_class_specificity_increased) {
 		const amount_class_specificity_to_increase =
 			max_amount_class_specificity_increased -
-			this.blocks.filter((block) => block.should_encapsulate).length;
+			this.blocks.filter((block) => !block.invisible && block.should_encapsulate).length;
 
 		/** @param {import('#compiler').Css.SimpleSelector} selector */
 		function remove_global_pseudo_class(selector) {
