@@ -5,34 +5,27 @@ import { configDefaults, defineConfig } from 'vitest/config';
 const pkg = JSON.parse(fs.readFileSync('packages/svelte/package.json', 'utf8'));
 
 export default defineConfig({
-	// We need both a plugin and an alias for some reason
 	resolve: {
 		alias: [
 			{
 				find: /^svelte\/?/,
-				customResolver: (id) => {
-					// For some reason this turns up as "undefined" instead of "svelte"
-					const exported = pkg.exports[id.replace('undefined', '.')];
+				customResolver: (id, importer) => {
+					// For some reason this turns up as "undefined" instead of "svelte/"
+					const exported = pkg.exports[id === 'undefined' ? '.' : id.replace('undefined', './')];
 					if (!exported) return;
 
-					return path.resolve('packages/svelte', exported.browser ?? exported.default);
+					// When running the server version of the Svelte files,
+					// we also want to use the server export of the Svelte package
+					return path.resolve(
+						'packages/svelte',
+						importer?.includes('_output/server')
+							? exported.default
+							: exported.browser ?? exported.default
+					);
 				}
 			}
 		]
 	},
-	plugins: [
-		{
-			name: 'resolve-svelte',
-			resolveId(id) {
-				if (/^svelte\/?/.test(id)) {
-					const exported = pkg.exports[id.replace('svelte', '.')];
-					if (!exported) return;
-
-					return path.resolve('packages/svelte', exported.browser ?? exported.default);
-				}
-			}
-		}
-	],
 	test: {
 		dir: '.',
 		reporters: ['dot'],
