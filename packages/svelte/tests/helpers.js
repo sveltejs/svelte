@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import glob from 'tiny-glob/sync.js';
 import { compile, compileModule } from 'svelte/compiler';
+import { fileURLToPath, URL } from 'node:url';
 
 /**
  * @param {string} file
@@ -60,6 +61,17 @@ export function compile_directory(cwd, generate, compileOptions = {}) {
 
 	fs.rmSync(output_dir, { recursive: true, force: true });
 
+	let emit = write;
+
+	if (generate === 'server') {
+		const ssr_entry = path.resolve(__dirname, '../src/main/main-server.js');
+
+		emit = (file, contents) => {
+			const relative = path.relative(path.dirname(file), ssr_entry);
+			write(file, contents.replace(/from 'svelte'/g, `from '${relative}'`));
+		};
+	}
+
 	for (const file of glob('**', { cwd, filesOnly: true })) {
 		if (file.startsWith('_')) continue;
 
@@ -70,7 +82,7 @@ export function compile_directory(cwd, generate, compileOptions = {}) {
 			const out = `${output_dir}/${file}`;
 			if (file.endsWith('.svelte.js')) {
 				const compiled = compileModule(text, opts);
-				write(out, compiled.js.code);
+				emit(out, compiled.js.code);
 			} else {
 				// for non-runes tests, just re-export from the original source file — this
 				// allows the `_config.js` module to import shared state to use in tests
@@ -82,12 +94,12 @@ export function compile_directory(cwd, generate, compileOptions = {}) {
 					result += `\nexport { default } from '${source}';`;
 				}
 
-				write(out, result);
+				emit(out, result);
 			}
 		} else if (file.endsWith('.svelte')) {
 			const compiled = compile(text, opts);
 
-			write(`${output_dir}/${file}.js`, compiled.js.code);
+			emit(`${output_dir}/${file}.js`, compiled.js.code);
 
 			if (compiled.css) {
 				write(`${output_dir}/${file}.css`, compiled.css.code);
