@@ -88,17 +88,18 @@ export class Rule {
 		 * 	- .b .c
 		 */
 		if (parent && parent.node.type === 'Rule') {
-			this.selectors = /** @type {Rule} **/ (parent)
-				.selectors
-				.map(parent_selector => node.prelude.children.map((node) => new Selector(node, stylesheet, parent_selector)))
-				.flat()
+			this.selectors = /** @type {Rule} **/ (parent).selectors
+				.map((parent_selector) =>
+					node.prelude.children.map((node) => new Selector(node, stylesheet, parent_selector))
+				)
+				.flat();
 		} else {
 			this.selectors = node.prelude.children.map((node) => new Selector(node, stylesheet, null));
 		}
 
 		this.nested_rules = node.block.children
 			.filter((node) => node.type === 'Rule')
-			.map(node => new Rule(/** @type {import('#compiler').Css.Rule}*/ (node), stylesheet, this));
+			.map((node) => new Rule(/** @type {import('#compiler').Css.Rule}*/ (node), stylesheet, this));
 		this.declarations = node.block.children
 			.filter((node) => node.type === 'Declaration')
 			.map((node) => new Declaration(/** @type {import('#compiler').Css.Declaration} */ (node)));
@@ -122,7 +123,9 @@ export class Rule {
 		// see them in devtools
 		if (this.declarations.length === 0) return dev;
 
-		return [this.selectors.some((s) => s.used), this.nested_rules.some(r => r.is_used(dev))].some(Boolean);
+		return [this.selectors.some((s) => s.used), this.nested_rules.some((r) => r.is_used(dev))].some(
+			Boolean
+		);
 	}
 
 	/**
@@ -141,7 +144,9 @@ export class Rule {
 			selector.transform(code, attr, max_amount_class_specificity_increased)
 		);
 		this.declarations.forEach((declaration) => declaration.transform(code, keyframes));
-		this.nested_rules.forEach((rule) => rule.transform(code, id, keyframes, max_amount_class_specificity_increased));
+		this.nested_rules.forEach((rule) =>
+			rule.transform(code, id, keyframes, max_amount_class_specificity_increased)
+		);
 	}
 
 	/** @param {import('../../types.js').ComponentAnalysis} analysis */
@@ -430,7 +435,7 @@ export default class Stylesheet {
 
 		const state = {
 			/** @type {Atrule | undefined} */
-			atrule: undefined,
+			atrule: undefined
 		};
 
 		walk(/** @type {import('#compiler').Css.Node} */ (ast), state, {
@@ -478,7 +483,7 @@ export default class Stylesheet {
 
 				if (rule.nested_rules.length > 0) {
 					// Skip nested rules as they are instantiated in the Rule constructor
-					return node
+					return node;
 				}
 				context.next();
 			}

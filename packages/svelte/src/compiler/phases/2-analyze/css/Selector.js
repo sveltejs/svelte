@@ -104,8 +104,8 @@ export default class Selector {
 				// We don't make any changes to the invisible selectors
 				// because they don't exist in reality in css nesting
 				// and changing them would affect the nested rules parent rule selectors
-				if(selector.invisible) {
-					continue
+				if (selector.invisible) {
+					continue;
 				}
 
 				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
@@ -129,7 +129,7 @@ export default class Selector {
 			if (block.should_encapsulate) {
 				encapsulate_block(
 					block,
-					index === this.blocks.filter(block => !block.invisible).length - 1
+					index === this.blocks.filter((block) => !block.invisible).length - 1
 						? attr.repeat(amount_class_specificity_to_increase + 1)
 						: attr
 				);
@@ -808,7 +808,7 @@ class Block {
 	should_encapsulate;
 
 	/** @type {boolean} */
-	invisible
+	invisible;
 
 	/** @param {import('#compiler').Css.Combinator | null} combinator */
 	constructor(combinator) {
@@ -819,7 +819,7 @@ class Block {
 		this.start = -1;
 		this.end = -1;
 		this.should_encapsulate = false;
-		this.invisible = false
+		this.invisible = false;
 	}
 
 	/** @param {import('#compiler').Css.SimpleSelector} selector */
@@ -845,7 +845,12 @@ class Block {
 	}
 }
 
-const InvisibleCombinator = { type: /** @type {"Combinator"} **/ ("Combinator"), name: ' ', start: -1, end: -1}
+const InvisibleCombinator = {
+	type: /** @type {"Combinator"} **/ ('Combinator'),
+	name: ' ',
+	start: -1,
+	end: -1
+};
 
 /**
  * Groups selectors by combinator into blocks
@@ -867,11 +872,11 @@ function group_selectors(selector, parent_selector) {
 	if (parent_selector) {
 		const nested_rule_indices = selector.children
 			.map((child, index) => (child.type === 'NestedSelector' ? index : -1))
-			.filter(index => index !== -1);
+			.filter((index) => index !== -1);
 
-		const parent_children = parent_selector.node.children.map(child => ({
+		const parent_children = parent_selector.node.children.map((child) => ({
 			...child,
-			invisible: true,
+			invisible: true
 		}));
 
 		if (nested_rule_indices.length === 0) {
@@ -884,7 +889,9 @@ function group_selectors(selector, parent_selector) {
 		} else {
 			// There's an & nesting selectors somewhere
 			// so we delete it and insert invisible parent's children there
-			nested_rule_indices.forEach(nested_rule_index => selector.children.splice(nested_rule_index, 1, ...parent_children));
+			nested_rule_indices.forEach((nested_rule_index) =>
+				selector.children.splice(nested_rule_index, 1, ...parent_children)
+			);
 		}
 	}
 

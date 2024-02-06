@@ -89,7 +89,7 @@ export interface Combinator extends BaseNode {
 
 export interface NestingSelector extends BaseNode {
 	type: 'NestedSelector';
-	name: "&";
+	name: '&';
 }
 
 export interface Block extends BaseNode {
