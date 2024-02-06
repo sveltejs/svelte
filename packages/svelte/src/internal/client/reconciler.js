@@ -18,12 +18,12 @@ export function create_fragment_with_script_from_html(html) {
 	var content = create_fragment_from_html(html);
 	var scripts = content.querySelectorAll('script');
 	for (const script of scripts) {
-		var newScript = document.createElement('script');
+		var new_script = document.createElement('script');
 		for (var i = 0; i < script.attributes.length; i++) {
-			newScript.setAttribute(script.attributes[i].name, script.attributes[i].value);
+			new_script.setAttribute(script.attributes[i].name, script.attributes[i].value);
 		}
-		newScript.textContent = script.textContent;
-		/** @type {Node} */ (script.parentNode).replaceChild(newScript, script);
+		new_script.textContent = script.textContent;
+		/** @type {Node} */ (script.parentNode).replaceChild(new_script, script);
 	}
 	return content;
 }
