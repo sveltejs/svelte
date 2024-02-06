@@ -786,10 +786,20 @@ export function get_first_element(block) {
  * @returns {void}
  */
 function update_each_item_block(block, item, index, type) {
+	const block_v = block.v;
 	if ((type & EACH_ITEM_REACTIVE) !== 0) {
-		set_signal_value(block.v, item);
-	} else if (is_lazy_property(block.v)) {
-		block.v.o[block.v.p] = item;
+		set_signal_value(block_v, item);
+	} else if (is_lazy_property(block_v)) {
+		// If we have lazy properties, it means that an array was used that has been
+		// proxied. Given this, we need to re-sync the old array by mutating the backing
+		// value to be the latest value to ensure the UI updates correctly. TODO: maybe
+		// we should bypass any internal mutation checks for this?
+		const o = block_v.o;
+		const p = block_v.p;
+		const prev = o[p];
+		if (prev !== item) {
+			o[p] = item;
+		}
 	}
 	const transitions = block.s;
 	const index_is_reactive = (type & EACH_INDEX_REACTIVE) !== 0;
