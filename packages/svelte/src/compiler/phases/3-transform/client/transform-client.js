@@ -84,7 +84,10 @@ export function client_component(source, analysis, options) {
 		},
 		legacy_reactive_statements: new Map(),
 		metadata: {
-			template_needs_import_node: false,
+			context: {
+				template_needs_import_node: false,
+				template_contains_script_tag: false
+			},
 			namespace: options.namespace,
 			bound_contenteditable: false
 		},
