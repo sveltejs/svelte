@@ -32,7 +32,7 @@ export function onMount(fn) {
 		throw new Error('onMount can only be used during component initialisation.');
 	}
 
-	(current_component_context.u ??= init_update_callbacks(current_component_context)).m.push(fn);
+	init_update_callbacks(current_component_context).m.push(fn);
 }
 
 /**
@@ -178,7 +178,7 @@ export function beforeUpdate(fn) {
 		throw new Error('beforeUpdate cannot be used in runes mode');
 	}
 
-	(current_component_context.u ??= init_update_callbacks(current_component_context)).b.push(fn);
+	init_update_callbacks(current_component_context).b.push(fn);
 	if (!is_ssr) fn();
 }
 
@@ -203,7 +203,7 @@ export function afterUpdate(fn) {
 		throw new Error('afterUpdate cannot be used in runes mode');
 	}
 
-	(current_component_context.u ??= init_update_callbacks(current_component_context)).a.push(fn);
+	init_update_callbacks(current_component_context).a.push(fn);
 }
 
 /**
@@ -211,6 +211,8 @@ export function afterUpdate(fn) {
  * @param {import('../internal/client/types.js').ComponentContext} context
  */
 function init_update_callbacks(context) {
+	if (context.u) return context.u;
+
 	const callbacks = (context.u = { a: [], b: [], m: [] });
 
 	if (is_ssr) return callbacks; // TODO this shouldn't be necessary but is, because of the tests
