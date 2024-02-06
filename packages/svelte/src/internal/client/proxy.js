@@ -18,7 +18,6 @@ import {
 	get_prototype_of,
 	is_array,
 	is_frozen,
-	object_keys,
 	object_prototype
 } from './utils.js';
 
@@ -33,25 +32,31 @@ export const READONLY_SYMBOL = Symbol('readonly');
  */
 export function proxy(value, immutable = true) {
 	if (typeof value === 'object' && value != null && !is_frozen(value)) {
+		// If we have an existing proxy, return it...
 		if (STATE_SYMBOL in value) {
-			return /** @type {import('./types.js').ProxyMetadata<T>} */ (value[STATE_SYMBOL]).p;
+			const metadata = /** @type {import('./types.js').ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
+			// ...unless the proxy belonged to a different object, because
+			// someone copied the state symbol using `Reflect.ownKeys(...)`
+			if (metadata.t === value || metadata.p === value) return metadata.p;
 		}
 
 		const prototype = get_prototype_of(value);
 
 		// TODO handle Map and Set as well
 		if (prototype === object_prototype || prototype === array_prototype) {
-			const proxy = new Proxy(
-				value,
-				/** @type {ProxyHandler<import('./types.js').ProxyStateObject<T>>} */ (state_proxy_handler)
-			);
+			const proxy = new Proxy(value, state_proxy_handler);
+
 			define_property(value, STATE_SYMBOL, {
-				value: init(
-					/** @type {import('./types.js').ProxyStateObject<T>} */ (value),
-					/** @type {import('./types.js').ProxyStateObject<T>} */ (proxy),
-					immutable
-				),
-				writable: false
+				value: /** @type {import('./types.js').ProxyMetadata} */ ({
+					s: new Map(),
+					v: source(0),
+					a: is_array(value),
+					i: immutable,
+					p: proxy,
+					t: value
+				}),
+				writable: true,
+				enumerable: false
 			});
 
 			return proxy;
@@ -67,12 +72,13 @@ export function proxy(value, immutable = true) {
  * @param {Map<T, Record<string | symbol, any>>} already_unwrapped
  * @returns {Record<string | symbol, any>}
  */
-function unwrap(value, already_unwrapped = new Map()) {
-	if (typeof value === 'object' && value != null && !is_frozen(value) && STATE_SYMBOL in value) {
+function unwrap(value, already_unwrapped) {
+	if (typeof value === 'object' && value != null && STATE_SYMBOL in value) {
 		const unwrapped = already_unwrapped.get(value);
 		if (unwrapped !== undefined) {
 			return unwrapped;
 		}
+
 		if (is_array(value)) {
 			/** @type {Record<string | symbol, any>} */
 			const array = [];
@@ -84,10 +90,12 @@ function unwrap(value, already_unwrapped = new Map()) {
 		} else {
 			/** @type {Record<string | symbol, any>} */
 			const obj = {};
-			const keys = object_keys(value);
+			const keys = Reflect.ownKeys(value);
 			const descriptors = get_descriptors(value);
 			already_unwrapped.set(value, obj);
+
 			for (const key of keys) {
+				if (key === STATE_SYMBOL || (DEV && key === READONLY_SYMBOL)) continue;
 				if (descriptors[key].get) {
 					define_property(obj, key, descriptors[key]);
 				} else {
@@ -96,9 +104,11 @@ function unwrap(value, already_unwrapped = new Map()) {
 					obj[key] = unwrap(property, already_unwrapped);
 				}
 			}
+
 			return obj;
 		}
 	}
+
 	return value;
 }
 
@@ -108,26 +118,12 @@ function unwrap(value, already_unwrapped = new Map()) {
  * @returns {T}
  */
 export function unstate(value) {
-	return /** @type {T} */ (unwrap(/** @type {import('./types.js').ProxyStateObject} */ (value)));
+	return /** @type {T} */ (
+		unwrap(/** @type {import('./types.js').ProxyStateObject} */ (value), new Map())
+	);
 }
 
-/**
- * @param {import('./types.js').ProxyStateObject} value
- * @param {import('./types.js').ProxyStateObject} proxy
- * @param {boolean} immutable
- * @returns {import('./types.js').ProxyMetadata}
- */
-function init(value, proxy, immutable) {
-	return {
-		s: new Map(),
-		v: source(0),
-		a: is_array(value),
-		i: immutable,
-		p: proxy
-	};
-}
-
-/** @type {ProxyHandler<import('./types.js').ProxyStateObject>} */
+/** @type {ProxyHandler<import('./types.js').ProxyStateObject<any>>} */
 const state_proxy_handler = {
 	defineProperty(target, prop, descriptor) {
 		if (descriptor.value) {
@@ -170,6 +166,10 @@ const state_proxy_handler = {
 		if (DEV && prop === READONLY_SYMBOL) {
 			return Reflect.get(target, READONLY_SYMBOL);
 		}
+		if (prop === STATE_SYMBOL) {
+			return Reflect.get(target, STATE_SYMBOL);
+		}
+
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
 
@@ -287,12 +287,6 @@ const state_proxy_handler = {
 	}
 };
 
-/** @param {any} object */
-export function observe(object) {
-	const metadata = object[STATE_SYMBOL];
-	if (metadata) get(metadata.v);
-}
-
 if (DEV) {
 	state_proxy_handler.setPrototypeOf = () => {
 		throw new Error('Cannot set prototype of $state object');
@@ -309,7 +303,13 @@ if (DEV) {
  */
 export function readonly(value) {
 	const proxy = value && value[READONLY_SYMBOL];
-	if (proxy) return proxy;
+	if (proxy) {
+		const metadata = value[STATE_SYMBOL];
+		// Check that the incoming value is the same proxy that this readonly symbol was created for:
+		// If someone copies over the readonly symbol to a new object (using Reflect.ownKeys) the referenced
+		// proxy could be stale and we should not return it.
+		if (metadata.p === value) return proxy;
+	}
 
 	if (
 		typeof value === 'object' &&

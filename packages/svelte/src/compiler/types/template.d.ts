@@ -2,6 +2,7 @@ import type { Binding } from '#compiler';
 import type {
 	ArrayExpression,
 	ArrowFunctionExpression,
+	ArrayPattern,
 	VariableDeclaration,
 	VariableDeclarator,
 	Expression,
@@ -12,7 +13,8 @@ import type {
 	Node,
 	ObjectExpression,
 	Pattern,
-	Program
+	Program,
+	SpreadElement
 } from 'estree';
 
 export interface BaseNode {
@@ -56,6 +58,10 @@ export interface Root extends BaseNode {
 	instance: Script | null;
 	/** The parsed `<script context="module">` element, if exists */
 	module: Script | null;
+	metadata: {
+		/** Whether the component was parsed with typescript */
+		ts: boolean;
+	};
 }
 
 export interface SvelteOptions {
@@ -146,7 +152,7 @@ export interface DebugTag extends BaseNode {
 export interface RenderTag extends BaseNode {
 	type: 'RenderTag';
 	expression: Identifier;
-	argument: null | Expression;
+	arguments: Array<Expression | SpreadElement>;
 }
 
 type Tag = ExpressionTag | HtmlTag | ConstTag | DebugTag | RenderTag;
@@ -308,6 +314,13 @@ export interface SvelteElement extends BaseElement {
 	type: 'SvelteElement';
 	name: 'svelte:element';
 	tag: Expression;
+	metadata: {
+		/**
+		 * `true`/`false` if this is definitely (not) an svg element.
+		 * `null` means we can't know statically.
+		 */
+		svg: boolean | null;
+	};
 }
 
 export interface SvelteFragment extends BaseElement {
@@ -366,6 +379,7 @@ export interface EachBlock extends BaseNode {
 		array_name: Identifier | null;
 		index: Identifier;
 		item_name: string;
+		declarations: Map<string, Binding>;
 		/** List of bindings that are referenced within the expression */
 		references: Binding[];
 		/**
@@ -409,7 +423,7 @@ export interface KeyBlock extends BaseNode {
 export interface SnippetBlock extends BaseNode {
 	type: 'SnippetBlock';
 	expression: Identifier;
-	context: null | Pattern;
+	parameters: Pattern[];
 	body: Fragment;
 }
 
@@ -471,5 +485,7 @@ declare module 'estree' {
 		start?: number;
 		/** Added by the Svelte parser */
 		end?: number;
+		/** Added by acorn-typescript */
+		typeAnnotation?: any;
 	}
 }

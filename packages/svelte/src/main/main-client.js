@@ -17,7 +17,7 @@ import { is_array } from '../internal/client/utils.js';
  *
  * If a function is returned _synchronously_ from `onMount`, it will be called when the component is unmounted.
  *
- * `onMount` does not run inside a [server-side component](/docs#run-time-server-side-component-api).
+ * `onMount` does not run inside a [server-side component](https://svelte.dev/docs#run-time-server-side-component-api).
  *
  * https://svelte.dev/docs/svelte#onmount
  * @template T
@@ -107,7 +107,7 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
 }
 
 /**
- * Creates an event dispatcher that can be used to dispatch [component events](/docs#template-syntax-component-directives-on-eventname).
+ * Creates an event dispatcher that can be used to dispatch [component events](https://svelte.dev/docs#template-syntax-component-directives-on-eventname).
  * Event dispatchers are functions that can take two arguments: `name` and `detail`.
  *
  * Component events created with `createEventDispatcher` create a
@@ -215,10 +215,7 @@ export function beforeUpdate(fn) {
 		throw new Error('beforeUpdate can only be used during component initialisation.');
 	}
 
-	if (component_context.u === null) {
-		component_context.u = init_update_callbacks();
-	}
-	component_context.u.b.push(fn);
+	(component_context.u ??= init_update_callbacks()).b.push(fn);
 }
 
 /**
@@ -239,10 +236,7 @@ export function afterUpdate(fn) {
 		throw new Error('afterUpdate can only be used during component initialisation.');
 	}
 
-	if (component_context.u === null) {
-		component_context.u = init_update_callbacks();
-	}
-	component_context.u.a.push(fn);
+	(component_context.u ??= init_update_callbacks()).a.push(fn);
 }
 
 // TODO bring implementations in here

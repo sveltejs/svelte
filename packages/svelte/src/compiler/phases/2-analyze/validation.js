@@ -1,10 +1,5 @@
 import { error } from '../../errors.js';
-import {
-	extract_identifiers,
-	get_parent,
-	is_text_attribute,
-	unwrap_ts_expression
-} from '../../utils/ast.js';
+import { extract_identifiers, get_parent, is_text_attribute } from '../../utils/ast.js';
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { disallowed_parapgraph_contents, interactive_elements } from '../1-parse/utils/html.js';
@@ -41,6 +36,10 @@ function validate_component(node, context) {
 			(attribute.modifiers.length > 1 || attribute.modifiers.some((m) => m !== 'once'))
 		) {
 			error(attribute, 'invalid-event-modifier');
+		}
+
+		if (attribute.type === 'Attribute' && attribute.name === 'slot') {
+			validate_slot_attribute(context, attribute);
 		}
 	}
 
@@ -334,15 +333,15 @@ function is_tag_valid_with_parent(tag, parent_tag) {
 /**
  * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
  */
-export const validation = {
+const validation = {
 	BindDirective(node, context) {
 		validate_no_const_assignment(node, node.expression, context.state.scope, true);
 
-		const assignee = unwrap_ts_expression(node.expression);
+		const assignee = node.expression;
 		let left = assignee;
 
 		while (left.type === 'MemberExpression') {
-			left = unwrap_ts_expression(/** @type {import('estree').MemberExpression} */ (left.object));
+			left = /** @type {import('estree').MemberExpression} */ (left.object);
 		}
 
 		if (left.type !== 'Identifier') {
@@ -499,6 +498,7 @@ export const validation = {
 			parent === undefined ||
 			(parent.type !== 'Component' &&
 				parent.type !== 'RegularElement' &&
+				parent.type !== 'SlotElement' &&
 				parent.type !== 'SvelteElement' &&
 				parent.type !== 'SvelteComponent' &&
 				parent.type !== 'SvelteSelf' &&
@@ -566,6 +566,13 @@ export const validation = {
 			parent_element: node.name
 		});
 	},
+	RenderTag(node, context) {
+		for (const arg of node.arguments) {
+			if (arg.type === 'SpreadElement') {
+				error(arg, 'invalid-render-spread-argument');
+			}
+		}
+	},
 	SvelteHead(node) {
 		const attribute = node.attributes[0];
 		if (attribute) {
@@ -607,7 +614,7 @@ export const validation = {
 						error(attribute, 'invalid-slot-name', true);
 					}
 				}
-			} else if (attribute.type !== 'SpreadAttribute') {
+			} else if (attribute.type !== 'SpreadAttribute' && attribute.type !== 'LetDirective') {
 				error(attribute, 'invalid-slot-element-attribute');
 			}
 		}
@@ -715,10 +722,10 @@ function validate_call_expression(node, scope, path) {
 		error(node, 'invalid-props-location');
 	}
 
-	if (rune === '$state' || rune === '$derived') {
+	if (rune === '$state' || rune === '$derived' || rune === '$derived.call') {
 		if (parent.type === 'VariableDeclarator') return;
 		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
-		error(node, rune === '$derived' ? 'invalid-derived-location' : 'invalid-state-location');
+		error(node, 'invalid-state-location', rune);
 	}
 
 	if (rune === '$effect' || rune === '$effect.pre') {
@@ -786,10 +793,10 @@ export const validation_runes_js = {
 
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
-		if (rune === '$derived' && args.length !== 1) {
-			error(node, 'invalid-rune-args-length', '$derived', [1]);
+		if ((rune === '$derived' || rune === '$derived.call') && args.length !== 1) {
+			error(node, 'invalid-rune-args-length', rune, [1]);
 		} else if (rune === '$state' && args.length > 1) {
-			error(node, 'invalid-rune-args-length', '$state', [0, 1]);
+			error(node, 'invalid-rune-args-length', rune, [0, 1]);
 		} else if (rune === '$props') {
 			error(node, 'invalid-props-location');
 		}
@@ -811,7 +818,7 @@ export const validation_runes_js = {
 				definition.value?.type === 'CallExpression'
 			) {
 				const rune = get_rune(definition.value, context.state.scope);
-				if (rune === '$derived') {
+				if (rune === '$derived' || rune === '$derived.call') {
 					private_derived_state.push(definition.key.name);
 				}
 			}
@@ -938,25 +945,23 @@ export const validation_runes = merge(validation, a11y_validators, {
 			context.type === 'Identifier' &&
 			(context.name === '$state' || context.name === '$derived')
 		) {
-			error(
-				node,
-				context.name === '$derived' ? 'invalid-derived-location' : 'invalid-state-location'
-			);
+			error(node, 'invalid-state-location', context.name);
 		}
 		next({ ...state });
 	},
-	VariableDeclarator(node, { state }) {
-		const init = unwrap_ts_expression(node.init);
+	VariableDeclarator(node, { state, path }) {
+		const init = node.init;
 		const rune = get_rune(init, state.scope);
 
 		if (rune === null) return;
 
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
-		if (rune === '$derived' && args.length !== 1) {
-			error(node, 'invalid-rune-args-length', '$derived', [1]);
+		// TODO some of this is duplicated with above, seems off
+		if ((rune === '$derived' || rune === '$derived.call') && args.length !== 1) {
+			error(node, 'invalid-rune-args-length', rune, [1]);
 		} else if (rune === '$state' && args.length > 1) {
-			error(node, 'invalid-rune-args-length', '$state', [0, 1]);
+			error(node, 'invalid-rune-args-length', rune, [0, 1]);
 		} else if (rune === '$props') {
 			if (state.has_props_rune) {
 				error(node, 'duplicate-props-rune');
@@ -989,6 +994,16 @@ export const validation_runes = merge(validation, a11y_validators, {
 						error(property, 'invalid-props-pattern');
 					}
 				}
+			}
+		}
+
+		if (rune === '$derived') {
+			const arg = args[0];
+			if (
+				arg.type === 'CallExpression' &&
+				(arg.callee.type === 'ArrowFunctionExpression' || arg.callee.type === 'FunctionExpression')
+			) {
+				warn(state.analysis.warnings, node, path, 'derived-iife');
 			}
 		}
 	},

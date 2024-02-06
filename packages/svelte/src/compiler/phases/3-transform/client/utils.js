@@ -1,10 +1,5 @@
 import * as b from '../../../utils/builders.js';
-import {
-	extract_paths,
-	is_simple_expression,
-	object,
-	unwrap_ts_expression
-} from '../../../utils/ast.js';
+import { extract_paths, is_simple_expression, object } from '../../../utils/ast.js';
 import { error } from '../../../errors.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
@@ -228,7 +223,7 @@ function is_expression_async(expression) {
 export function serialize_set_binding(node, context, fallback, options) {
 	const { state, visit } = context;
 
-	const assignee = unwrap_ts_expression(node.left);
+	const assignee = node.left;
 	if (
 		assignee.type === 'ArrayPattern' ||
 		assignee.type === 'ObjectPattern' ||
@@ -523,6 +518,16 @@ function get_hoistable_params(node, context) {
 				// We need both the subscription for getting the value and the store for updating
 				params.push(b.id(binding.node.name.slice(1)));
 				params.push(b.id(binding.node.name));
+			} else if (
+				// If it's a destructured derived binding, then we can extract the derived signal reference and use that.
+				binding.expression !== null &&
+				binding.expression.type === 'MemberExpression' &&
+				binding.expression.object.type === 'CallExpression' &&
+				binding.expression.object.callee.type === 'Identifier' &&
+				binding.expression.object.callee.name === '$.get' &&
+				binding.expression.object.arguments[0].type === 'Identifier'
+			) {
+				params.push(b.id(binding.expression.object.arguments[0].name));
 			} else if (
 				// If we are referencing a simple $$props value, then we need to reference the object property instead
 				binding.kind === 'prop' &&

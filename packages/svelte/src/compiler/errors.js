@@ -88,7 +88,12 @@ const parse = {
 	'illegal-subscription': () => `Cannot reference store value inside <script context="module">`,
 	'duplicate-style-element': () => `A component can have a single top-level <style> element`,
 	'duplicate-script-element': () =>
-		`A component can have a single top-level <script> element and/or a single top-level <script context="module"> element`
+		`A component can have a single top-level <script> element and/or a single top-level <script context="module"> element`,
+	'invalid-render-expression': () => 'expected an identifier followed by (...)',
+	'invalid-render-arguments': () => 'expected at most one argument',
+	'invalid-render-spread-argument': () => 'cannot use spread arguments in {@render ...} tags',
+	'invalid-snippet-rest-parameter': () =>
+		'snippets do not support rest parameters; use an array instead'
 };
 
 /** @satisfies {Errors} */
@@ -171,10 +176,9 @@ const runes = {
 		`$props() assignment must not contain nested properties or computed keys`,
 	'invalid-props-location': () =>
 		`$props() can only be used at the top level of components as a variable declaration initializer`,
-	'invalid-derived-location': () =>
-		`$derived() can only be used as a variable declaration initializer or a class field`,
-	'invalid-state-location': () =>
-		`$state() can only be used as a variable declaration initializer or a class field`,
+	/** @param {string} rune */
+	'invalid-state-location': (rune) =>
+		`${rune}(...) can only be used as a variable declaration initializer or a class field`,
 	'invalid-effect-location': () => `$effect() can only be used as an expression statement`,
 	/**
 	 * @param {boolean} is_binding
@@ -269,7 +273,8 @@ const attributes = {
 
 /** @satisfies {Errors} */
 const slots = {
-	'invalid-slot-element-attribute': () => `<slot> can only receive attributes, not directives`,
+	'invalid-slot-element-attribute': () =>
+		`<slot> can only receive attributes and (optionally) let directives`,
 	'invalid-slot-attribute': () => `slot attribute must be a static value`,
 	/** @param {boolean} is_default */
 	'invalid-slot-name': (is_default) =>
@@ -509,7 +514,7 @@ export class CompileError extends Error {
 }
 
 /**
- * @template {keyof typeof errors} T
+ * @template {Exclude<keyof typeof errors, 'TODO'>} T
  * @param {NodeLike | number | null} node
  * @param {T} code
  * @param  {Parameters<typeof errors[T]>} args

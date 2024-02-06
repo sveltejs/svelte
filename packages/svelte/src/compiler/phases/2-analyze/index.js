@@ -1,14 +1,13 @@
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import { error } from '../../errors.js';
-import * as assert from '../../utils/assert.js';
 import {
 	extract_identifiers,
+	extract_all_identifiers_from_expression,
 	extract_paths,
 	is_event_attribute,
 	is_text_attribute,
-	object,
-	unwrap_ts_expression
+	object
 } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
 import { ReservedKeywords, Runes, SVGElements } from '../constants.js';
@@ -20,7 +19,7 @@ import { warn } from '../../warnings.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
-import { DelegatedEvents } from '../../../constants.js';
+import { DelegatedEvents, namespace_svg } from '../../../constants.js';
 import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
 
 /**
@@ -678,7 +677,13 @@ const runes_scope_js_tweaker = {
 		const callee = node.init.callee;
 		if (callee.type !== 'Identifier' && callee.type !== 'MemberExpression') return;
 
-		if (rune !== '$state' && rune !== '$state.frozen' && rune !== '$derived') return;
+		if (
+			rune !== '$state' &&
+			rune !== '$state.frozen' &&
+			rune !== '$derived' &&
+			rune !== '$derived.call'
+		)
+			return;
 
 		for (const path of extract_paths(node.id)) {
 			// @ts-ignore this fails in CI for some insane reason
@@ -700,7 +705,7 @@ const runes_scope_tweaker = {
 		}
 	},
 	VariableDeclarator(node, { state }) {
-		const init = unwrap_ts_expression(node.init);
+		const init = node.init;
 		if (!init || init.type !== 'CallExpression') return;
 		const rune = get_rune(init, state.scope);
 		if (rune === null) return;
@@ -708,7 +713,13 @@ const runes_scope_tweaker = {
 		const callee = init.callee;
 		if (callee.type !== 'Identifier' && callee.type !== 'MemberExpression') return;
 
-		if (rune !== '$state' && rune !== '$state.frozen' && rune !== '$derived' && rune !== '$props')
+		if (
+			rune !== '$state' &&
+			rune !== '$state.frozen' &&
+			rune !== '$derived' &&
+			rune !== '$derived.call' &&
+			rune !== '$props'
+		)
 			return;
 
 		for (const path of extract_paths(node.id)) {
@@ -719,7 +730,7 @@ const runes_scope_tweaker = {
 					? 'state'
 					: rune === '$state.frozen'
 						? 'frozen_state'
-						: rune === '$derived'
+						: rune === '$derived' || rune === '$derived.call'
 							? 'derived'
 							: path.is_rest
 								? 'rest_prop'
@@ -825,7 +836,7 @@ function is_known_safe_call(node, context) {
  * @param {import('estree').ArrowFunctionExpression | import('estree').FunctionExpression | import('estree').FunctionDeclaration} node
  * @param {import('./types').Context} context
  */
-export const function_visitor = (node, context) => {
+const function_visitor = (node, context) => {
 	// TODO retire this in favour of a more general solution based on bindings
 	node.metadata = {
 		// module context -> already hoisted
@@ -997,39 +1008,52 @@ const common_visitors = {
 
 		if (node.name !== 'group') return;
 
+		// Traverse the path upwards and find all EachBlocks who are (indirectly) contributing to bind:group,
+		// i.e. one of their declarations is referenced in the binding. This allows group bindings to work
+		// correctly when referencing a variable declared in an EachBlock by using the index of the each block
+		// entries as keys.
 		i = context.path.length;
+		const each_blocks = [];
+		const [keypath, expression_ids] = extract_all_identifiers_from_expression(node.expression);
+		let ids = expression_ids;
 		while (i--) {
 			const parent = context.path[i];
 			if (parent.type === 'EachBlock') {
-				parent.metadata.contains_group_binding = true;
-				for (const binding of parent.metadata.references) {
-					binding.mutated = true;
+				const references = ids.filter((id) => parent.metadata.declarations.has(id.name));
+				if (references.length > 0) {
+					parent.metadata.contains_group_binding = true;
+					for (const binding of parent.metadata.references) {
+						binding.mutated = true;
+					}
+					each_blocks.push(parent);
+					ids = ids.filter((id) => !references.includes(id));
+					ids.push(...extract_all_identifiers_from_expression(parent.expression)[1]);
 				}
 			}
 		}
 
-		const id = object(node.expression);
-
-		const binding = id === null ? null : context.state.scope.get(id.name);
-		assert.ok(binding);
-
-		let group = context.state.analysis.binding_groups.get(binding);
-		if (!group) {
-			group = {
-				name: context.state.scope.root.unique('binding_group'),
-				directives: []
-			};
-
-			context.state.analysis.binding_groups.set(binding, group);
+		// The identifiers that make up the binding expression form they key for the binding group.
+		// If the same identifiers in the same order are used in another bind:group, they will be in the same group.
+		// (there's an edge case where `bind:group={a[i]}` will be in a different group than `bind:group={a[j]}` even when i == j,
+		//  but this is a limitation of the current static analysis we do; it also never worked in Svelte 4)
+		const bindings = expression_ids.map((id) => context.state.scope.get(id.name));
+		let group_name;
+		outer: for (const [[key, b], group] of context.state.analysis.binding_groups) {
+			if (b.length !== bindings.length || key !== keypath) continue;
+			for (let i = 0; i < bindings.length; i++) {
+				if (bindings[i] !== b[i]) continue outer;
+			}
+			group_name = group;
 		}
 
-		group.directives.push(node);
+		if (!group_name) {
+			group_name = context.state.scope.root.unique('binding_group');
+			context.state.analysis.binding_groups.set([keypath, bindings], group_name);
+		}
 
 		node.metadata = {
-			binding_group_name: group.name,
-			parent_each_blocks: /** @type {import('#compiler').EachBlock[]} */ (
-				context.path.filter((p) => p.type === 'EachBlock')
-			)
+			binding_group_name: group_name,
+			parent_each_blocks: each_blocks
 		};
 	},
 	ArrowFunctionExpression: function_visitor,
@@ -1092,8 +1116,47 @@ const common_visitors = {
 
 		context.state.analysis.elements.push(node);
 	},
-	SvelteElement(node, { state }) {
-		state.analysis.elements.push(node);
+	SvelteElement(node, context) {
+		context.state.analysis.elements.push(node);
+
+		if (
+			context.state.options.namespace !== 'foreign' &&
+			node.tag.type === 'Literal' &&
+			typeof node.tag.value === 'string' &&
+			SVGElements.includes(node.tag.value)
+		) {
+			node.metadata.svg = true;
+			return;
+		}
+
+		for (const attribute of node.attributes) {
+			if (attribute.type === 'Attribute') {
+				if (attribute.name === 'xmlns' && is_text_attribute(attribute)) {
+					node.metadata.svg = attribute.value[0].data === namespace_svg;
+					return;
+				}
+			}
+		}
+
+		for (let i = context.path.length - 1; i >= 0; i--) {
+			const ancestor = context.path[i];
+			if (
+				ancestor.type === 'Component' ||
+				ancestor.type === 'SvelteComponent' ||
+				ancestor.type === 'SvelteFragment' ||
+				ancestor.type === 'SnippetBlock'
+			) {
+				// Inside a slot or a snippet -> this resets the namespace, so we can't determine it
+				return;
+			}
+			if (ancestor.type === 'SvelteElement' || ancestor.type === 'RegularElement') {
+				node.metadata.svg =
+					ancestor.type === 'RegularElement' && ancestor.name === 'foreignObject'
+						? false
+						: ancestor.metadata.svg;
+				return;
+			}
+		}
 	}
 };
 

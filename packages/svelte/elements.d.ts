@@ -68,7 +68,7 @@ export type ToggleEventHandler<T extends EventTarget> = EventHandler<ToggleEvent
 export interface DOMAttributes<T extends EventTarget> {
 	// Implicit children prop every element has
 	// Add this here so that libraries doing `$props<HTMLButtonAttributes>()` don't need a separate interface
-	children?: import('svelte').Snippet<void>;
+	children?: import('svelte').Snippet;
 
 	// Clipboard Events
 	'on:copy'?: ClipboardEventHandler<T> | undefined | null;
@@ -351,6 +351,9 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:scroll'?: UIEventHandler<T> | undefined | null;
 	onscroll?: UIEventHandler<T> | undefined | null;
 	onscrollcapture?: UIEventHandler<T> | undefined | null;
+	'on:scrollend'?: UIEventHandler<T> | undefined | null;
+	onscrollend?: UIEventHandler<T> | undefined | null;
+	onscrollendcapture?: UIEventHandler<T> | undefined | null;
 	'on:resize'?: UIEventHandler<T> | undefined | null;
 	onresize?: UIEventHandler<T> | undefined | null;
 	onresizecapture?: UIEventHandler<T> | undefined | null;
@@ -975,6 +978,7 @@ export interface HTMLImgAttributes extends HTMLAttributes<HTMLImageElement> {
 	alt?: string | undefined | null;
 	crossorigin?: 'anonymous' | 'use-credentials' | '' | undefined | null;
 	decoding?: 'async' | 'auto' | 'sync' | undefined | null;
+	fetchpriority?: 'auto' | 'high' | 'low' | undefined | null;
 	height?: number | string | undefined | null;
 	ismap?: boolean | undefined | null;
 	loading?: 'eager' | 'lazy' | undefined | null;
@@ -1095,6 +1099,7 @@ export interface HTMLLinkAttributes extends HTMLAttributes<HTMLLinkElement> {
 	sizes?: string | undefined | null;
 	type?: string | undefined | null;
 	charset?: string | undefined | null;
+	fetchpriority?: 'auto' | 'high' | 'low' | undefined | null;
 }
 
 export interface HTMLMapAttributes extends HTMLAttributes<HTMLMapElement> {
@@ -1229,6 +1234,7 @@ export interface HTMLScriptAttributes extends HTMLAttributes<HTMLScriptElement> 
 	charset?: string | undefined | null;
 	crossorigin?: string | undefined | null;
 	defer?: boolean | undefined | null;
+	fetchpriority?: 'auto' | 'high' | 'low' | undefined | null;
 	integrity?: string | undefined | null;
 	nomodule?: boolean | undefined | null;
 	nonce?: string | undefined | null;
@@ -1639,7 +1645,15 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	'stroke-dasharray'?: string | number | undefined | null;
 	'stroke-dashoffset'?: string | number | undefined | null;
 	'stroke-linecap'?: 'butt' | 'round' | 'square' | 'inherit' | undefined | null;
-	'stroke-linejoin'?: 'miter' | 'round' | 'bevel' | 'inherit' | undefined | null;
+	'stroke-linejoin'?:
+		| 'arcs'
+		| 'miter-clip'
+		| 'miter'
+		| 'round'
+		| 'bevel'
+		| 'inherit'
+		| undefined
+		| null;
 	'stroke-miterlimit'?: string | undefined | null;
 	'stroke-opacity'?: number | string | undefined | null;
 	'stroke-width'?: number | string | undefined | null;

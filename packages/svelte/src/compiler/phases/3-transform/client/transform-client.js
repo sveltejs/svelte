@@ -8,7 +8,6 @@ import { javascript_visitors } from './visitors/javascript.js';
 import { javascript_visitors_runes } from './visitors/javascript-runes.js';
 import { javascript_visitors_legacy } from './visitors/javascript-legacy.js';
 import { is_state_source, serialize_get_binding } from './utils.js';
-import { remove_types } from '../typescript.js';
 
 /**
  * This function ensures visitor sets don't accidentally clobber each other
@@ -102,7 +101,6 @@ export function client_component(source, analysis, options) {
 			state,
 			combine_visitors(
 				set_scope(analysis.module.scopes),
-				remove_types,
 				global_visitors,
 				// @ts-expect-error TODO
 				javascript_visitors,
@@ -118,21 +116,18 @@ export function client_component(source, analysis, options) {
 			instance_state,
 			combine_visitors(
 				set_scope(analysis.instance.scopes),
-				{ ...remove_types, ImportDeclaration: undefined, ExportNamedDeclaration: undefined },
 				global_visitors,
 				// @ts-expect-error TODO
 				javascript_visitors,
 				analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy,
 				{
-					ImportDeclaration(node, context) {
-						// @ts-expect-error
-						state.hoisted.push(remove_types.ImportDeclaration(node, context));
+					ImportDeclaration(node) {
+						state.hoisted.push(node);
 						return b.empty;
 					},
 					ExportNamedDeclaration(node, context) {
 						if (node.declaration) {
-							// @ts-expect-error
-							return remove_types.ExportNamedDeclaration(context.visit(node.declaration), context);
+							return context.visit(node.declaration);
 						}
 
 						return b.empty;
@@ -148,7 +143,6 @@ export function client_component(source, analysis, options) {
 			{ ...state, scope: analysis.instance.scope },
 			combine_visitors(
 				set_scope(analysis.template.scopes),
-				remove_types,
 				global_visitors,
 				// @ts-expect-error TODO
 				template_visitors

@@ -1,5 +1,4 @@
 import type {
-	BindDirective,
 	Binding,
 	Fragment,
 	RegularElement,
@@ -26,11 +25,6 @@ export interface Template {
 export interface ReactiveStatement {
 	assignments: Set<Identifier>;
 	dependencies: Set<Binding>;
-}
-
-export interface BindingGroup {
-	name: Identifier;
-	directives: BindDirective[];
 }
 
 export interface RawWarning {
@@ -72,7 +66,8 @@ export interface ComponentAnalysis extends Analysis {
 	/** If `true`, should append styles through JavaScript */
 	inject_styles: boolean;
 	reactive_statements: Map<LabeledStatement, ReactiveStatement>;
-	binding_groups: Map<Binding, BindingGroup>;
+	/** Identifiers that make up the `bind:group` expression -> internal group binding name */
+	binding_groups: Map<[key: string, bindings: Array<Binding | null>], Identifier>;
 	slot_names: Set<string>;
 }
 

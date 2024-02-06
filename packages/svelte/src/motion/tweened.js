@@ -89,11 +89,12 @@ export function tweened(value, defaults = {}) {
 	 * @param {import('./private').TweenedOptions<T>} [opts]
 	 */
 	function set(new_value, opts) {
+		target_value = new_value;
+
 		if (value == null) {
 			store.set((value = new_value));
 			return Promise.resolve();
 		}
-		target_value = new_value;
 
 		/** @type {import('../internal/client/types').Task | null} */
 		let previous_task = task;

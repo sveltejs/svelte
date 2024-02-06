@@ -16,8 +16,6 @@ export const regex_not_newline_characters = /[^\n]/g;
 
 export const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
 
-export const regex_special_chars = /[\d+`!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~]/;
-
 export const regex_starts_with_vowel = /^[aeiou]/;
 export const regex_heading_tags = /^h[1-6]$/;
 export const regex_illegal_attribute_character = /(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/;

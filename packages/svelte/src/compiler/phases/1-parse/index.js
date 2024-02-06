@@ -67,7 +67,10 @@ export class Parser {
 			end: null,
 			type: 'Root',
 			fragment: create_fragment(),
-			options: null
+			options: null,
+			metadata: {
+				ts: this.ts
+			}
 		};
 
 		this.stack.push(this.root);

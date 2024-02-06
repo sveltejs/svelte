@@ -1,7 +1,8 @@
+import { walk } from 'zimmerframe';
 import * as b from '../../utils/builders.js';
 
-/** @type {import('zimmerframe').Visitors<any, any>} */
-export const remove_types = {
+/** @type {import('zimmerframe').Visitors<any, null>} */
+const visitors = {
 	ImportDeclaration(node) {
 		if (node.importKind === 'type') return b.empty;
 
@@ -54,3 +55,12 @@ export const remove_types = {
 		return b.empty;
 	}
 };
+
+/**
+ * @template T
+ * @param {T} ast
+ * @returns {T}
+ */
+export function remove_typescript_nodes(ast) {
+	return walk(ast, null, visitors);
+}

@@ -40,7 +40,7 @@ class Todo {
 
 > In this example, the compiler transforms `done` and `text` into `get`/`set` methods on the class prototype referencing private fields
 
-Objects and arrays [are made reactive](/#H4sIAAAAAAAAE42QwWrDMBBEf2URhUhUNEl7c21DviPOwZY3jVpZEtIqUBz9e-UUt9BTj7M784bdmZ21wciq48xsPyGr2MF7Jhl9-kXEKxrCoqNLQS2TOqqgPbWd7cgggU3TgCFCAw-RekJ-3Et4lvByEq-drbe_dlsPichZcFYZrT6amQto2pXw5FO88FUYtG90gUfYi3zvWrYL75vxL57zfA07_zfr23k1vjtt-aZ0bQTcbrDL5ZifZcAxKeS8lzDc8X0xDhJ2ItdbX1jlOZMb9VnjyCoKCfMpfwG975NFVwEAAA==):
+Objects and arrays [are made deeply reactive](/#H4sIAAAAAAAAE42QwWrDMBBEf2URhUhUNEl7c21DviPOwZY3jVpZEtIqUBz9e-UUt9BTj7M784bdmZ21wciq48xsPyGr2MF7Jhl9-kXEKxrCoqNLQS2TOqqgPbWd7cgggU3TgCFCAw-RekJ-3Et4lvByEq-drbe_dlsPichZcFYZrT6amQto2pXw5FO88FUYtG90gUfYi3zvWrYL75vxL57zfA07_zfr23k1vjtt-aZ0bQTcbrDL5ZifZcAxKeS8lzDc8X0xDhJ2ItdbX1jlOZMb9VnjyCoKCfMpfwG975NFVwEAAA==):
 
 ```svelte
 <script>
@@ -133,6 +133,29 @@ If the value of a reactive variable is being computed it should be replaced with
   $: double = count * 2;
   ```
   ...`double` will be calculated first despite the source order. In runes mode, `triple` cannot reference `double` before it has been declared.
+
+## `$derived.call`
+
+Sometimes you need to create complex derivations that don't fit inside a short expression. In these cases, you can use `$derived.call` which accepts a function as its argument.
+
+```svelte
+<script>
+	let numbers = $state([1, 2, 3]);
+	let total = $derived.call(() => {
+		let total = 0;
+		for (const n of numbers) {
+			total += n;
+		}
+		return total;
+	});
+</script>
+
+<button on:click={() => numbers.push(numbers.length + 1)}>
+	{numbers.join(' + ')} = {total}
+</button>
+```
+
+In essence, `$derived(expression)` is equivalent to `$derived.call(() => expression)`.
 
 ## `$effect`
 
