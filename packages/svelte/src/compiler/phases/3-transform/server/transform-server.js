@@ -808,10 +808,16 @@ function serialize_inline_component(node, component_name, context) {
 	const custom_css_props = [];
 
 	/** @type {import('estree').ExpressionStatement[]} */
-	const default_lets = [];
+	const lets = [];
 
 	/** @type {Record<string, import('#compiler').TemplateNode[]>} */
 	const children = {};
+
+	/**
+	 * If this component has a slot property, it is a named slot within another component. In this case
+	 * the slot scope applies to the component itself, too, and not just its children.
+	 */
+	let slot_scope_applies_to_itself = false;
 
 	/**
 	 * @param {import('estree').Property} prop
@@ -825,12 +831,9 @@ function serialize_inline_component(node, component_name, context) {
 			props_and_spreads.push(props);
 		}
 	}
-
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
-			default_lets.push(
-				/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute))
-			);
+			lets.push(/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute)));
 		} else if (attribute.type === 'SpreadAttribute') {
 			props_and_spreads.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
 		} else if (attribute.type === 'Attribute') {
@@ -838,6 +841,10 @@ function serialize_inline_component(node, component_name, context) {
 				const value = serialize_attribute_value(attribute.value, context, false, true);
 				custom_css_props.push(b.init(attribute.name, value));
 				continue;
+			}
+
+			if (attribute.name === 'slot') {
+				slot_scope_applies_to_itself = true;
 			}
 
 			const value = serialize_attribute_value(attribute.value, context, false, true);
@@ -860,6 +867,10 @@ function serialize_inline_component(node, component_name, context) {
 				])
 			);
 		}
+	}
+
+	if (slot_scope_applies_to_itself) {
+		context.state.init.push(...lets);
 	}
 
 	/** @type {import('estree').Statement[]} */
@@ -907,7 +918,7 @@ function serialize_inline_component(node, component_name, context) {
 
 		const slot_fn = b.arrow(
 			[b.id('$$payload'), b.id('$$slotProps')],
-			b.block([...(slot_name === 'default' ? default_lets : []), ...body])
+			b.block([...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []), ...body])
 		);
 
 		if (slot_name === 'default') {

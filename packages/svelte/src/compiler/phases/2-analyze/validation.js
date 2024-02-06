@@ -37,6 +37,10 @@ function validate_component(node, context) {
 		) {
 			error(attribute, 'invalid-event-modifier');
 		}
+
+		if (attribute.type === 'Attribute' && attribute.name === 'slot') {
+			validate_slot_attribute(context, attribute);
+		}
 	}
 
 	context.next({

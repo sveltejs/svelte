@@ -282,7 +282,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 * @type {import('zimmerframe').Visitor<import('#compiler').ElementLike, State, import('#compiler').SvelteNode>}
 	 */
 	const SvelteFragment = (node, { state, next }) => {
-		const scope = analyze_let_directives(node, state.scope);
+		const [scope] = analyze_let_directives(node, state.scope);
 		scopes.set(node, scope);
 		next({ scope });
 	};
@@ -293,36 +293,40 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 */
 	function analyze_let_directives(node, parent) {
 		const scope = parent.child();
+		let is_default_slot = true;
 
 		for (const attribute of node.attributes) {
-			if (attribute.type !== 'LetDirective') continue;
+			if (attribute.type === 'LetDirective') {
+				/** @type {import('#compiler').Binding[]} */
+				const bindings = [];
+				scope.declarators.set(attribute, bindings);
 
-			/** @type {import('#compiler').Binding[]} */
-			const bindings = [];
-			scope.declarators.set(attribute, bindings);
+				// attach the scope to the directive itself, as well as the
+				// contents to which it applies
+				scopes.set(attribute, scope);
 
-			// attach the scope to the directive itself, as well as the
-			// contents to which it applies
-			scopes.set(attribute, scope);
-
-			if (attribute.expression) {
-				for (const id of extract_identifiers_from_destructuring(attribute.expression)) {
+				if (attribute.expression) {
+					for (const id of extract_identifiers_from_destructuring(attribute.expression)) {
+						const binding = scope.declare(id, 'derived', 'const');
+						bindings.push(binding);
+					}
+				} else {
+					/** @type {import('estree').Identifier} */
+					const id = {
+						name: attribute.name,
+						type: 'Identifier',
+						start: attribute.start,
+						end: attribute.end
+					};
 					const binding = scope.declare(id, 'derived', 'const');
 					bindings.push(binding);
 				}
-			} else {
-				/** @type {import('estree').Identifier} */
-				const id = {
-					name: attribute.name,
-					type: 'Identifier',
-					start: attribute.start,
-					end: attribute.end
-				};
-				const binding = scope.declare(id, 'derived', 'const');
-				bindings.push(binding);
+			} else if (attribute.type === 'Attribute' && attribute.name === 'slot') {
+				is_default_slot = false;
 			}
 		}
-		return scope;
+
+		return /** @type {const} */ ([scope, is_default_slot]);
 	}
 
 	walk(ast, state, {
@@ -364,13 +368,17 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		Component(node, { state, visit, path }) {
 			state.scope.reference(b.id(node.name), path);
 
-			// let:x from the default slot is a weird one:
-			// Its scope only applies to children that are not slots themselves.
 			for (const attribute of node.attributes) {
 				visit(attribute);
 			}
 
-			const scope = analyze_let_directives(node, state.scope);
+			// let:x is super weird:
+			// - for the default slot, its scope only applies to children that are not slots themselves
+			// - for named slots, its scope applies to the component itself, too
+			const [scope, is_default_slot] = analyze_let_directives(node, state.scope);
+			if (!is_default_slot) {
+				scopes.set(node, scope);
+			}
 
 			for (const child of node.fragment.nodes) {
 				if (
