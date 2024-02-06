@@ -235,6 +235,15 @@ declare module 'svelte' {
 	 * */
 	export function onMount<T>(fn: () => NotFunction<T> | Promise<NotFunction<T>> | (() => any)): void;
 	/**
+	 * Schedules a callback to run immediately before the component is unmounted.
+	 *
+	 * Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the
+	 * only one that runs inside a server-side component.
+	 *
+	 * https://svelte.dev/docs/svelte#ondestroy
+	 * */
+	export function onDestroy(fn: () => any): void;
+	/**
 	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
 	 * Must be called during component initialisation.
 	 *
@@ -360,15 +369,6 @@ declare module 'svelte' {
 	 * https://svelte-5-preview.vercel.app/docs/functions#untrack
 	 * */
 	export function untrack<T>(fn: () => T): T;
-	/**
-	 * Schedules a callback to run immediately before the component is unmounted.
-	 *
-	 * Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the
-	 * only one that runs inside a server-side component.
-	 *
-	 * https://svelte.dev/docs/svelte#ondestroy
-	 * */
-	export function onDestroy(fn: () => any): void;
 	export function unstate<T>(value: T): T;
 }
 
