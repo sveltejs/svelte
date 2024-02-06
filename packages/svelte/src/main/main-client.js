@@ -171,7 +171,11 @@ export function createEventDispatcher() {
  */
 export function beforeUpdate(fn) {
 	if (current_component_context === null) {
-		throw new Error('beforeUpdate can only be used during component initialisation.');
+		throw new Error('beforeUpdate can only be used during component initialisation');
+	}
+
+	if (current_component_context.r) {
+		throw new Error('beforeUpdate cannot be used in runes mode');
 	}
 
 	(current_component_context.u ??= init_update_callbacks(current_component_context)).b.push(fn);
@@ -193,6 +197,10 @@ export function beforeUpdate(fn) {
 export function afterUpdate(fn) {
 	if (current_component_context === null) {
 		throw new Error('afterUpdate can only be used during component initialisation.');
+	}
+
+	if (current_component_context.r) {
+		throw new Error('afterUpdate cannot be used in runes mode');
 	}
 
 	(current_component_context.u ??= init_update_callbacks(current_component_context)).a.push(fn);
