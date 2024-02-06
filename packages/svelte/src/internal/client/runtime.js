@@ -164,8 +164,6 @@ function create_source_signal(flags, value) {
 			f: flags,
 			// value
 			v: value,
-			// context: We can remove this if we get rid of beforeUpdate/afterUpdate
-			x: null,
 			// this is for DEV only
 			inspect: new Set()
 		};
@@ -178,9 +176,7 @@ function create_source_signal(flags, value) {
 		// flags
 		f: flags,
 		// value
-		v: value,
-		// context: We can remove this if we get rid of beforeUpdate/afterUpdate
-		x: null
+		v: value
 	};
 }
 
@@ -1127,7 +1123,7 @@ export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
  * @returns {void}
  */
 function mark_signal_consumers(signal, to_status, force_schedule) {
-	const runes = is_runes(signal.x);
+	const runes = is_runes(null);
 	const consumers = signal.c;
 	if (consumers !== null) {
 		const length = consumers.length;
@@ -1169,7 +1165,7 @@ export function set_signal_value(signal, value) {
 		!current_untracking &&
 		!ignore_mutation_validation &&
 		current_consumer !== null &&
-		is_runes(signal.x) &&
+		is_runes(null) &&
 		(current_consumer.f & DERIVED) !== 0
 	) {
 		throw new Error(
@@ -1185,7 +1181,6 @@ export function set_signal_value(signal, value) {
 		(signal.f & SOURCE) !== 0 &&
 		!(/** @type {import('./types.js').EqualsFunctions} */ (signal.e)(value, signal.v))
 	) {
-		const component_context = signal.x;
 		signal.v = value;
 		// If the current signal is running for the first time, it won't have any
 		// consumers as we only allocate and assign the consumers after the signal
@@ -1196,7 +1191,7 @@ export function set_signal_value(signal, value) {
 		// $effect(() => x++)
 		//
 		if (
-			is_runes(component_context) &&
+			is_runes(null) &&
 			current_effect !== null &&
 			current_effect.c === null &&
 			(current_effect.f & CLEAN) !== 0
@@ -1301,18 +1296,14 @@ export function source(initial_value) {
  * @param {import('./types.js').Signal} signal
  */
 function bind_signal_to_component_context(signal) {
-	if (current_component_context === null) return;
+	if (current_component_context === null || !current_component_context.r) return;
 
-	signal.x = current_component_context;
+	const signals = current_component_context.d;
 
-	if (current_component_context.r) {
-		const signals = current_component_context.d;
-
-		if (signals) {
-			signals.push(signal);
-		} else {
-			current_component_context.d = [signal];
-		}
+	if (signals) {
+		signals.push(signal);
+	} else {
+		current_component_context.d = [signal];
 	}
 }
 
