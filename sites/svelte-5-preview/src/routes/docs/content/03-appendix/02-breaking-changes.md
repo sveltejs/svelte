@@ -90,6 +90,10 @@ Various error and warning codes have been renamed slightly.
 
 The number of valid namespaces you can pass to the compiler option `namespace` has been reduced to `html` (the default), `svg` and `foreign`.
 
+### afterUpdate changes
+
+`afterUpdate` callbacks in a parent component will now run after `afterUpdate` callbacks in any child components.
+
 ### `contenteditable` behavior change
 
 If you have a `contenteditable` node with a corresponding binding _and_ a reactive value inside it (example: `<div contenteditable=true bind:textContent>count is {count}</div>`), then the value inside the contenteditable will not be updated by updates to `count` because the binding takes full control over the content immediately and it should only be updated through it.
