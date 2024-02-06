@@ -1,7 +1,6 @@
 import {
 	current_component_context,
 	get_or_init_context_map,
-	is_ssr,
 	untrack,
 	user_effect,
 	pre_effect,
@@ -31,6 +30,8 @@ export function onMount(fn) {
 	if (current_component_context === null) {
 		throw new Error('onMount can only be used during component initialisation.');
 	}
+
+	console.error('onMount');
 
 	init_update_callbacks(current_component_context).m.push(fn);
 }
@@ -179,7 +180,7 @@ export function beforeUpdate(fn) {
 	}
 
 	init_update_callbacks(current_component_context).b.push(fn);
-	if (!is_ssr) fn();
+	fn();
 }
 
 /**
@@ -214,8 +215,6 @@ function init_update_callbacks(context) {
 	if (context.u) return context.u;
 
 	const callbacks = (context.u = { a: [], b: [], m: [] });
-
-	if (is_ssr) return callbacks; // TODO this shouldn't be necessary but is, because of the tests
 
 	function observe_all() {
 		const signals = (context.d ??= [create_source_signal(SOURCE | CLEAN, 0)]);

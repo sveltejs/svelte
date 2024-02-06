@@ -112,6 +112,8 @@ async function run_test(
 
 	let build_result_ssr;
 	if (hydrate) {
+		const ssr_entry = path.resolve(__dirname, '../../src/main/main-server.js');
+
 		build_result_ssr = await build({
 			entryPoints: [`${__dirname}/driver-ssr.js`],
 			write: false,
@@ -123,6 +125,12 @@ async function run_test(
 				{
 					name: 'testing-runtime-browser-ssr',
 					setup(build) {
+						build.onResolve({ filter: /./ }, (args) => {
+							if (args.path === 'svelte') {
+								return { path: ssr_entry };
+							}
+						});
+
 						build.onLoad({ filter: /\.svelte$/ }, (args) => {
 							const compiled = compile(fs.readFileSync(args.path, 'utf-8').replace(/\r/g, ''), {
 								generate: 'server',

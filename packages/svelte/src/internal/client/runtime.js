@@ -104,17 +104,8 @@ export let current_block = null;
 
 /** @type {import('./types.js').ComponentContext | null} */
 export let current_component_context = null;
-export let is_ssr = false;
 
 export let updating_derived = false;
-
-/**
- * @param {boolean} ssr
- * @returns {void}
- */
-export function set_is_ssr(ssr) {
-	is_ssr = ssr;
-}
 
 /**
  * @param {null | import('./types.js').ComponentContext} context
@@ -1892,9 +1883,7 @@ export function value_or_fallback(value, fallback) {
  * @returns {void}
  */
 export function onDestroy(fn) {
-	if (!is_ssr) {
-		user_effect(() => () => untrack(fn));
-	}
+	user_effect(() => () => untrack(fn));
 }
 
 /**
