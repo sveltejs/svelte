@@ -10,9 +10,8 @@ export default defineConfig({
 			{
 				find: /^svelte\/?/,
 				customResolver: (id, importer) => {
-					// For some reason this turns up as "undefined" instead of "svelte"
-					const exported = pkg.exports[id.replace('undefined', '.')];
-					console.log('importing', id, 'from', importer, !!exported);
+					// For some reason this turns up as "undefined" instead of "svelte/"
+					const exported = pkg.exports[id.replace('undefined', './')];
 					if (!exported) return;
 
 					// When running the server version of the Svelte files,
