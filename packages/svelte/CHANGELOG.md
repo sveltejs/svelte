@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.50
+
+### Patch Changes
+
+- fix: set `open` binding value in `<details>` ([#10413](https://github.com/sveltejs/svelte/pull/10413))
+
 ## 5.0.0-next.49
 
 ### Patch Changes
