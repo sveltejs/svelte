@@ -96,13 +96,15 @@ export function extract_identifiers(param, nodes = []) {
 }
 
 /**
- * Extracts all identifiers from an expression.
+ * Extracts all identifiers and a stringified keypath from an expression.
  * @param {import('estree').Expression} expr
- * @returns {import('estree').Identifier[]}
+ * @returns {[keypath: string, ids: import('estree').Identifier[]]}
  */
 export function extract_all_identifiers_from_expression(expr) {
 	/** @type {import('estree').Identifier[]} */
 	let nodes = [];
+	/** @type {string[]} */
+	let keypath = [];
 
 	walk(
 		expr,
@@ -113,11 +115,30 @@ export function extract_all_identifiers_from_expression(expr) {
 				if (parent?.type !== 'MemberExpression' || parent.property !== node || parent.computed) {
 					nodes.push(node);
 				}
+
+				if (parent?.type === 'MemberExpression' && parent.computed && parent.property === node) {
+					keypath.push(`[${node.name}]`);
+				} else {
+					keypath.push(node.name);
+				}
+			},
+			Literal(node, { path }) {
+				const value = typeof node.value === 'string' ? `"${node.value}"` : String(node.value);
+				const parent = path.at(-1);
+				if (parent?.type === 'MemberExpression' && parent.computed && parent.property === node) {
+					keypath.push(`[${value}]`);
+				} else {
+					keypath.push(value);
+				}
+			},
+			ThisExpression(_, { next }) {
+				keypath.push('this');
+				next();
 			}
 		}
 	);
 
-	return nodes;
+	return [keypath.join('.'), nodes];
 }
 
 /**
