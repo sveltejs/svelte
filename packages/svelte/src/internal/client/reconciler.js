@@ -19,11 +19,10 @@ export function create_fragment_with_script_from_html(html) {
 	var scripts = content.querySelectorAll('script');
 	for (const script of scripts) {
 		var newScript = document.createElement('script');
-		if (script.src) {
-			newScript.src = script.src;
-		} else {
-			newScript.textContent = script.textContent;
+		for (var i = 0; i < script.attributes.length; i++) {
+			newScript.setAttribute(script.attributes[i].name, script.attributes[i].value);
 		}
+		newScript.textContent = script.textContent;
 		/** @type {Node} */ (script.parentNode).replaceChild(newScript, script);
 	}
 	return content;
