@@ -54,10 +54,12 @@ export type ComponentContext = {
 	r: boolean;
 	/** update_callbacks */
 	u: null | {
-		/** before */
-		b: null | Array<() => void>;
-		/** after */
-		a: null | Array<() => void>;
+		/** afterUpdate callbacks */
+		a: Array<() => void>;
+		/** beforeUpdate callbacks */
+		b: Array<() => void>;
+		/** onMount callbacks */
+		m: Array<() => any>;
 	};
 };
 

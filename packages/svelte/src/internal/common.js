@@ -22,5 +22,5 @@ export function run_all(arr) {
 
 /** @param {Function} fn */
 export function run(fn) {
-	fn();
+	return fn();
 }

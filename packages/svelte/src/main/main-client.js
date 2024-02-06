@@ -25,14 +25,11 @@ import { run } from '../internal/common.js';
  * @returns {void}
  */
 export function onMount(fn) {
-	if (!is_ssr) {
-		user_effect(() => {
-			const result = untrack(fn);
-			if (typeof result === 'function') {
-				return /** @type {() => any} */ (result);
-			}
-		});
+	if (current_component_context === null) {
+		throw new Error('onMount can only be used during component initialisation.');
 	}
+
+	(current_component_context.u ??= init_update_callbacks(current_component_context)).m.push(fn);
 }
 
 /**
@@ -170,34 +167,12 @@ export function createEventDispatcher() {
  * @returns {void}
  */
 export function beforeUpdate(fn) {
-	// TODO this shouldn't be necessary but is, because of the tests
-	if (is_ssr) return;
-
-	const context = current_component_context;
-
-	if (context === null) {
+	if (current_component_context === null) {
 		throw new Error('beforeUpdate can only be used during component initialisation.');
 	}
 
-	context.u ??= { a: null, b: null };
-
-	if (context.u.a) {
-		context.u.a.push(fn);
-		fn();
-	} else {
-		const callbacks = (context.u.a = [fn]);
-
-		pre_effect(() => {
-			for (const signal of context.d) get(signal);
-
-			const props = get_descriptors(context.s);
-			for (const descriptor of Object.values(props)) {
-				if (descriptor.get) descriptor.get();
-			}
-
-			callbacks.forEach(run);
-		});
-	}
+	(current_component_context.u ??= init_update_callbacks(current_component_context)).b.push(fn);
+	if (!is_ssr) fn();
 }
 
 /**
@@ -213,33 +188,60 @@ export function beforeUpdate(fn) {
  * @returns {void}
  */
 export function afterUpdate(fn) {
-	// TODO this shouldn't be necessary but is, because of the tests
-	if (is_ssr) return;
-
-	const context = current_component_context;
-
-	if (context === null) {
+	if (current_component_context === null) {
 		throw new Error('afterUpdate can only be used during component initialisation.');
 	}
 
-	context.u ??= { a: null, b: null };
+	(current_component_context.u ??= init_update_callbacks(current_component_context)).a.push(fn);
+}
 
-	if (context.u.b) {
-		context.u.b.push(fn);
-	} else {
-		const callbacks = (context.u.b = [fn]);
+/**
+ *
+ * @param {import('../internal/client/types.js').ComponentContext} context
+ */
+function init_update_callbacks(context) {
+	const callbacks = (context.u = {
+		a: [],
+		b: [],
+		m: []
+	});
 
-		user_effect(() => {
-			for (const signal of context.d) get(signal);
+	if (is_ssr) return callbacks; // TODO this shouldn't be necessary but is, because of the tests
 
-			const props = get_descriptors(context.s);
-			for (const descriptor of Object.values(props)) {
-				if (descriptor.get) descriptor.get();
-			}
+	function observe_all() {
+		for (const signal of context.d) get(signal);
 
-			callbacks.forEach(run);
-		});
+		const props = get_descriptors(context.s);
+		for (const descriptor of Object.values(props)) {
+			if (descriptor.get) descriptor.get();
+		}
 	}
+
+	// beforeUpdate
+	pre_effect(() => {
+		observe_all();
+		callbacks.b.forEach(run);
+	});
+
+	// onMount (must run before afterUpdate)
+	user_effect(() => {
+		const fns = untrack(() => callbacks.m.map(run));
+		return () => {
+			for (const fn of fns) {
+				if (typeof fn === 'function') {
+					fn();
+				}
+			}
+		};
+	});
+
+	// afterUpdate
+	user_effect(() => {
+		observe_all();
+		callbacks.a.forEach(run);
+	});
+
+	return callbacks;
 }
 
 // TODO bring implementations in here
