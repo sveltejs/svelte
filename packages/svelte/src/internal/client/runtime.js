@@ -1304,12 +1304,15 @@ function bind_signal_to_component_context(signal) {
 	if (current_component_context === null) return;
 
 	signal.x = current_component_context;
-	const signals = current_component_context.d;
 
-	if (signals) {
-		signals.push(signal);
-	} else {
-		current_component_context.d = [signal];
+	if (current_component_context.r) {
+		const signals = current_component_context.d;
+
+		if (signals) {
+			signals.push(signal);
+		} else {
+			current_component_context.d = [signal];
+		}
 	}
 }
 
@@ -1929,8 +1932,9 @@ export function pop(accessors) {
 
 /** @param {import('./types.js').ComponentContext} context */
 function observe_all(context) {
-	const signals = (context.d ??= []);
-	for (const signal of signals) get(signal);
+	if (context.d) {
+		for (const signal of context.d) get(signal);
+	}
 
 	const props = get_descriptors(context.s);
 	for (const descriptor of Object.values(props)) {
