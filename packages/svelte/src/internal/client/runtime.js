@@ -1,6 +1,6 @@
 import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
-import { noop, run_all } from '../common.js';
+import { noop, run, run_all } from '../common.js';
 import {
 	array_prototype,
 	get_descriptor,
@@ -1308,17 +1308,8 @@ function bind_signal_to_component_context(signal) {
 
 	if (signals) {
 		signals.push(signal);
-
-		// update dummy signal
-		const previous_ignore_mutation_validation = ignore_mutation_validation;
-		ignore_mutation_validation = true;
-		set_signal_value(signals[0], signals[0].v + 1);
-		ignore_mutation_validation = previous_ignore_mutation_validation;
 	} else {
-		// if we're creating the array, insert a dummy signal whose value we can
-		// increment whenever we add new sources. This ensures that late-declared
-		// signals will still cause `beforeUpdate` and `afterUpdate` etc to fire
-		current_component_context.d = [create_source_signal(SOURCE | CLEAN, 0), signal];
+		current_component_context.d = [signal];
 	}
 }
 
@@ -1934,6 +1925,47 @@ export function pop(accessors) {
 		current_component_context = context_stack_item.p;
 		context_stack_item.m = true;
 	}
+}
+
+export function init() {
+	const context = /** @type {import('./types.js').ComponentContext} */ (current_component_context);
+	const callbacks = context.u;
+
+	if (!callbacks) return;
+
+	function observe_all() {
+		const signals = (context.d ??= []);
+		for (const signal of signals) get(signal);
+
+		const props = get_descriptors(context.s);
+		for (const descriptor of Object.values(props)) {
+			if (descriptor.get) descriptor.get();
+		}
+	}
+
+	// beforeUpdate
+	pre_effect(() => {
+		observe_all();
+		callbacks.b.forEach(run);
+	});
+
+	// onMount (must run before afterUpdate)
+	user_effect(() => {
+		const fns = untrack(() => callbacks.m.map(run));
+		return () => {
+			for (const fn of fns) {
+				if (typeof fn === 'function') {
+					fn();
+				}
+			}
+		};
+	});
+
+	// afterUpdate
+	user_effect(() => {
+		observe_all();
+		callbacks.a.forEach(run);
+	});
 }
 
 /**

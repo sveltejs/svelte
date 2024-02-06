@@ -38,7 +38,8 @@ export {
 	user_root_effect,
 	inspect,
 	unwrap,
-	freeze
+	freeze,
+	init
 } from './client/runtime.js';
 export * from './client/each.js';
 export * from './client/render.js';

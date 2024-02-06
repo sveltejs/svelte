@@ -5,6 +5,7 @@ import * as $ from "svelte/internal";
 
 export default function Each_string_template($$anchor, $$props) {
 	$.push($$props, false);
+	$.init();
 
 	/* Init */
 	var fragment = $.comment($$anchor);

@@ -2,15 +2,9 @@ import {
 	current_component_context,
 	get_or_init_context_map,
 	untrack,
-	user_effect,
-	pre_effect,
-	get,
-	create_source_signal,
-	SOURCE,
-	CLEAN
+	user_effect
 } from '../internal/client/runtime.js';
-import { get_descriptors, is_array } from '../internal/client/utils.js';
-import { run } from '../internal/common.js';
+import { is_array } from '../internal/client/utils.js';
 
 /**
  * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
@@ -31,9 +25,32 @@ export function onMount(fn) {
 		throw new Error('onMount can only be used during component initialisation.');
 	}
 
-	console.error('onMount');
+	if (current_component_context.r) {
+		user_effect(() => {
+			const cleanup = untrack(fn);
+			if (typeof cleanup === 'function') return /** @type {() => void} */ (cleanup);
+		});
+	} else {
+		init_update_callbacks(current_component_context).m.push(fn);
+	}
+}
 
-	init_update_callbacks(current_component_context).m.push(fn);
+/**
+ * Schedules a callback to run immediately before the component is unmounted.
+ *
+ * Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the
+ * only one that runs inside a server-side component.
+ *
+ * https://svelte.dev/docs/svelte#ondestroy
+ * @param {() => any} fn
+ * @returns {void}
+ */
+export function onDestroy(fn) {
+	if (current_component_context === null) {
+		throw new Error('onDestroy can only be used during component initialisation.');
+	}
+
+	onMount(() => () => untrack(fn));
 }
 
 /**
@@ -180,7 +197,6 @@ export function beforeUpdate(fn) {
 	}
 
 	init_update_callbacks(current_component_context).b.push(fn);
-	fn();
 }
 
 /**
@@ -212,66 +228,9 @@ export function afterUpdate(fn) {
  * @param {import('../internal/client/types.js').ComponentContext} context
  */
 function init_update_callbacks(context) {
-	if (context.u) return context.u;
-
-	const callbacks = (context.u = { a: [], b: [], m: [] });
-
-	function observe_all() {
-		const signals = (context.d ??= [create_source_signal(SOURCE | CLEAN, 0)]);
-		for (const signal of signals) get(signal);
-
-		const props = get_descriptors(context.s);
-		for (const descriptor of Object.values(props)) {
-			if (descriptor.get) descriptor.get();
-		}
-	}
-
-	let skip = false;
-
-	// beforeUpdate
-	pre_effect(() => {
-		observe_all();
-		if (skip) return;
-		callbacks.b.forEach(run);
-	});
-
-	pre_effect(() => {
-		skip = true;
-	});
-
-	// onMount (must run before afterUpdate)
-	user_effect(() => {
-		const fns = untrack(() => callbacks.m.map(run));
-		return () => {
-			for (const fn of fns) {
-				if (typeof fn === 'function') {
-					fn();
-				}
-			}
-		};
-	});
-
-	// afterUpdate
-	user_effect(() => {
-		observe_all();
-		callbacks.a.forEach(run);
-	});
-
-	user_effect(() => {
-		skip = false;
-	});
-
-	return callbacks;
+	return (context.u ??= { a: [], b: [], m: [] });
 }
 
 // TODO bring implementations in here
 // (except probably untrack — do we want to expose that, if there's also a rune?)
-export {
-	flushSync,
-	createRoot,
-	mount,
-	tick,
-	untrack,
-	unstate,
-	onDestroy
-} from '../internal/index.js';
+export { flushSync, createRoot, mount, tick, untrack, unstate } from '../internal/index.js';
