@@ -23,14 +23,18 @@ import {
 	PassiveDelegatedEvents,
 	DelegatedEvents,
 	AttributeAliases,
-	namespace_svg,
-	namespace_html
+	namespace_svg
 } from '../../constants.js';
-import { create_fragment_from_html, insert, reconcile_html, remove } from './reconciler.js';
+import {
+	create_fragment_from_html,
+	create_fragment_with_script_from_html,
+	insert,
+	reconcile_html,
+	remove
+} from './reconciler.js';
 import {
 	render_effect,
 	destroy_signal,
-	get,
 	is_signal,
 	push_destroy_fn,
 	execute_effect,
@@ -78,17 +82,35 @@ export function empty() {
 
 /**
  * @param {string} html
- * @param {boolean} is_fragment
+ * @param {boolean} return_fragment
  * @returns {() => Node}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function template(html, is_fragment) {
+export function template(html, return_fragment) {
 	/** @type {undefined | Node} */
 	let cached_content;
 	return () => {
 		if (cached_content === undefined) {
 			const content = create_fragment_from_html(html);
-			cached_content = is_fragment ? content : /** @type {Node} */ (child(content));
+			cached_content = return_fragment ? content : /** @type {Node} */ (child(content));
+		}
+		return cached_content;
+	};
+}
+
+/**
+ * @param {string} html
+ * @param {boolean} return_fragment
+ * @returns {() => Node}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function template_with_script(html, return_fragment) {
+	/** @type {undefined | Node} */
+	let cached_content;
+	return () => {
+		if (cached_content === undefined) {
+			const content = create_fragment_with_script_from_html(html);
+			cached_content = return_fragment ? content : /** @type {Node} */ (child(content));
 		}
 		return cached_content;
 	};
@@ -96,17 +118,35 @@ export function template(html, is_fragment) {
 
 /**
  * @param {string} svg
- * @param {boolean} is_fragment
+ * @param {boolean} return_fragment
  * @returns {() => Node}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function svg_template(svg, is_fragment) {
+export function svg_template(svg, return_fragment) {
 	/** @type {undefined | Node} */
 	let cached_content;
 	return () => {
 		if (cached_content === undefined) {
 			const content = /** @type {Node} */ (child(create_fragment_from_html(`<svg>${svg}</svg>`)));
-			cached_content = is_fragment ? content : /** @type {Node} */ (child(content));
+			cached_content = return_fragment ? content : /** @type {Node} */ (child(content));
+		}
+		return cached_content;
+	};
+}
+
+/**
+ * @param {string} svg
+ * @param {boolean} return_fragment
+ * @returns {() => Node}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function svg_template_with_script(svg, return_fragment) {
+	/** @type {undefined | Node} */
+	let cached_content;
+	return () => {
+		if (cached_content === undefined) {
+			const content = /** @type {Node} */ (child(create_fragment_from_html(`<svg>${svg}</svg>`)));
+			cached_content = return_fragment ? content : /** @type {Node} */ (child(content));
 		}
 		return cached_content;
 	};
