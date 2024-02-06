@@ -37,7 +37,7 @@ export type Store<V> = {
 
 export type ComponentContext = {
 	/** local signals */
-	d: Signal<any>[];
+	d: null | Signal<any>[];
 	/** props */
 	s: Record<string, unknown>;
 	/** accessors */

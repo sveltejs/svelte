@@ -170,7 +170,7 @@ export function default_equals(a, b) {
  * @param {V} value
  * @returns {import('./types.js').SourceSignal<V> | import('./types.js').SourceSignal<V> & import('./types.js').SourceSignalDebug}
  */
-function create_source_signal(flags, value) {
+export function create_source_signal(flags, value) {
 	if (DEV) {
 		return {
 			// consumers
@@ -1280,12 +1280,7 @@ export function derived(init) {
 		create_computation_signal(flags | CLEAN, UNINITIALIZED, current_block)
 	);
 	signal.i = init;
-
-	if (current_component_context) {
-		signal.x = current_component_context;
-		current_component_context.d.push(signal);
-	}
-
+	bind_signal_to_component_context(signal);
 	signal.e = default_equals;
 	if (current_consumer !== null) {
 		push_reference(current_consumer, signal);
@@ -1313,13 +1308,33 @@ export function derived_safe_equal(init) {
 /*#__NO_SIDE_EFFECTS__*/
 export function source(initial_value) {
 	const source = create_source_signal(SOURCE | CLEAN, initial_value);
-
-	if (current_component_context) {
-		source.x = current_component_context;
-		current_component_context.d.push(source);
-	}
-
+	bind_signal_to_component_context(source);
 	return source;
+}
+
+/**
+ * This function binds a signal to the component context, so that we can fire
+ * beforeUpdate/afterUpdate callbacks at the correct time etc
+ * @param {import('./types.js').Signal} signal
+ */
+function bind_signal_to_component_context(signal) {
+	if (current_component_context) {
+		signal.x = current_component_context;
+
+		const signals = current_component_context.d;
+
+		if (signals) {
+			signals.push(signal);
+
+			// update dummy signal
+			set_signal_value(signals[0], signals[0].v + 1);
+		} else {
+			// if we're creating the array, insert a dummy signal whose value we can
+			// increment whenever we add new sources. This ensures that late-declared
+			// signals will still cause `beforeUpdate` and `afterUpdate` etc to fire
+			current_component_context.d = [create_source_signal(SOURCE | CLEAN, 0), signal];
+		}
+	}
 }
 
 /**
@@ -1906,7 +1921,7 @@ export function push(props, runes = false) {
 		// parent
 		p: current_component_context,
 		// signals
-		d: [],
+		d: null,
 		// props
 		s: props,
 		// runes

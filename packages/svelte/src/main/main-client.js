@@ -5,7 +5,10 @@ import {
 	untrack,
 	user_effect,
 	pre_effect,
-	get
+	get,
+	create_source_signal,
+	SOURCE,
+	CLEAN
 } from '../internal/client/runtime.js';
 import { get_descriptors, is_array } from '../internal/client/utils.js';
 import { run } from '../internal/common.js';
@@ -205,7 +208,8 @@ function init_update_callbacks(context) {
 	if (is_ssr) return callbacks; // TODO this shouldn't be necessary but is, because of the tests
 
 	function observe_all() {
-		for (const signal of context.d) get(signal);
+		const signals = (context.d ??= [create_source_signal(SOURCE | CLEAN, 0)]);
+		for (const signal of signals) get(signal);
 
 		const props = get_descriptors(context.s);
 		for (const descriptor of Object.values(props)) {
