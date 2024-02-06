@@ -48,7 +48,7 @@ function escape_comment_close(node, code) {
 	}
 }
 
-export class Rule {
+class Rule {
 	/** @type {import('./Selector.js').default[]} */
 	selectors;
 
