@@ -988,7 +988,7 @@ function group_selectors(selector, parent_blocks_group) {
 	// If it isn't a nested rule, then we add an empty block group
 	if (parent_blocks_group === null) {
 		return [
-			selector_to_blocks(selector, null, false).map((block) => new BlockUse(block, true))
+			selector_to_blocks(selector, false).map((block) => new BlockUse(block, true))
 		];
 	}
 
@@ -996,6 +996,10 @@ function group_selectors(selector, parent_blocks_group) {
 	// or at the front if there is no `&` selector
 	// TODO: handle multiple `&` selectors
 	let nested_rule_index = selector.children.findIndex((child) => child.type === 'NestingSelector');
+	let is_next_combinator = selector.children[nested_rule_index + 1]?.type === 'Combinator';
+
+	console.log("selector", JSON.stringify(selector, null, 2))
+	console.log("=========")
 
 	// if there is no `&` selector, we need to add a fake combinator at the start
 	if (nested_rule_index === -1) {
@@ -1009,8 +1013,7 @@ function group_selectors(selector, parent_blocks_group) {
 	// Create the new blocks for the nested rule, visible by default
 	const blocks = selector_to_blocks(
 		selector,
-		nested_rule_index === 0 ? null : FakeCombinator,
-		false
+		true
 	);
 
 	return parent_blocks_group.map(parent_blocks => {
@@ -1023,6 +1026,8 @@ function group_selectors(selector, parent_blocks_group) {
 		// insert the parent blocks at the position of the `&` selector
 		block_uses.splice(nested_rule_index, 0, ...parent_block_uses);
 
+		console.log(JSON.stringify(block_uses.map(b => b.block), null, 2))
+
 		return block_uses;
 	})
 }
@@ -1030,13 +1035,14 @@ function group_selectors(selector, parent_blocks_group) {
 
 /**
  * @param {import('#compiler').Css.Selector} selector
- * @param {import('../../../types/css.js').Combinator | null} combinator
  * @param {boolean} allow_nesting
  */
-function selector_to_blocks(selector, combinator, allow_nesting) {
-	let block = new Block(combinator);
+function selector_to_blocks(selector, allow_nesting) {
+	const is_next_combinator = selector.children[0]?.type === 'Combinator';
+	const combinator = is_next_combinator ? selector.children.shift() : null;
+	let block = new Block(/** @type {import('#compiler').Css.Combinator | null} */ (combinator));
 	const blocks = [block];
-	selector.children.forEach((child) => {
+	selector.children.map(child => {
 		if (child.type === 'Combinator') {
 			block = new Block(child);
 			blocks.push(block);
