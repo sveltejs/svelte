@@ -28,8 +28,8 @@ export default class Selector {
 	/** @type {BlockUse[][]} */
 	block_groups;
 
-	/** @type {Block[]} */
-	local_blocks;
+	/** @type {BlockUse[][]} */
+	local_block_groups;
 
 	/** @type {boolean} */
 	used;
@@ -43,27 +43,57 @@ export default class Selector {
 		this.node = node;
 		this.stylesheet = stylesheet;
 		this.block_groups = group_selectors(node, parent_blocks);
-		// take trailing :global(...) selectors out of consideration
-		let i = this.blocks.length;
-		while (i > 0) {
-			if (!this.blocks[i - 1].global) break;
-			i -= 1;
+
+		this.used = false;
+
+		// Initialize local_block_groups
+		this.local_block_groups = [];
+
+		// Process each block group to take trailing :global(...) selectors out of consideration
+		this.block_groups.forEach(group => {
+			let i = group.length;
+			while (i > 0) {
+				if (!group[i - 1].block.global) break;
+				i -= 1;
+			}
+			// Add the processed group (with global selectors removed) to local_block_groups
+			this.local_block_groups.push(group.slice(0, i));
+		});
+
+		// Determine `used` based on the processed local_block_groups
+		let host_only = false;
+		let root_only = false;
+
+		// Check if there's exactly one group and one block within that group, and if it's host or root
+		if (this.local_block_groups.length === 1 && this.local_block_groups[0].length === 1) {
+			const single_block = this.local_block_groups[0][0].block;
+			host_only = single_block.host;
+			root_only = single_block.root;
 		}
-		this.local_blocks = this.blocks.slice(0, i);
-		const host_only = this.blocks.length === 1 && this.blocks[0].host;
-		const root_only = this.blocks.length === 1 && this.blocks[0].root;
-		this.used = this.local_blocks.length === 0 || host_only || root_only;
+
+		// Check if there are no local blocks across all groups, or if there's a host_only or root_only situation
+		const no_local_blocks = this.local_block_groups.every(group => group.length === 0);
+		this.used = no_local_blocks || host_only || root_only;
+
 	}
 
 	/** @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node */
 	apply(node) {
 		/** @type {Array<{ node: import('#compiler').RegularElement | import('#compiler').SvelteElement; block: Block }>} */
 		const to_encapsulate = [];
-		apply_selector(this.local_blocks.slice(), node, to_encapsulate);
+		this.local_block_groups.map(group => {
+			const blocks = group.map(block_use => block_use.block);
+			apply_selector(blocks, node, to_encapsulate);
+		});
+
 		if (to_encapsulate.length > 0) {
 			to_encapsulate.forEach(({ node, block }) => {
-				this.stylesheet.nodes_with_css_class.add(node);
-				block.should_encapsulate = true;
+				// This block might've been encapsulated by a previous selector
+				// so we make sure to not encapsulate it again
+				if (!block.should_encapsulate) {
+					block.should_encapsulate = true;
+					this.stylesheet.nodes_with_css_class.add(node);
+				}
 			});
 			this.used = true;
 		}
@@ -808,6 +838,9 @@ class Block {
 	should_encapsulate;
 
 	/** @type {boolean} */
+	has_been_encapsulated;
+
+	/** @type {boolean} */
 	invisible;
 
 	/** @param {import('#compiler').Css.Combinator | null} combinator */
@@ -820,6 +853,7 @@ class Block {
 		this.end = -1;
 		this.should_encapsulate = false;
 		this.invisible = false;
+		this.has_been_encapsulated = false;
 	}
 
 	/** @param {import('#compiler').Css.SimpleSelector} selector */
@@ -870,15 +904,13 @@ class BlockUse {
 	}
 }
 
+
 /**
- * Groups selectors by combinator into blocks
+ * Groups selectors and inserts parent blocks into nested rules.
  *
- * If there is a parent_selector
- * - We need to find the position(s) of the `&` selector or upshift them at the front if there is no `&` selector
- * - Then insert the parent_selector's blocks at that position
- *
- * @param {import('#compiler').Css.Selector} selector
- * @param {BlockUse[][] | null} parent_blocks_group
+ * @param {import('#compiler').Css.Selector} selector - The selector to group and analyze.
+ * @param {Array<Array<BlockUse>> | null} parent_blocks_group - The parent blocks group to insert into nested rules.
+ * @returns {Array<Array<BlockUse>>} - The grouped selectors with parent's blocks inserted if nested.
  */
 function group_selectors(selector, parent_blocks_group) {
 	// If it isn't a nested rule, then we add an empty block group
