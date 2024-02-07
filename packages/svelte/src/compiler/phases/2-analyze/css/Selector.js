@@ -149,10 +149,19 @@ export default class Selector {
 					remove_global_pseudo_class(selector);
 				}
 			}
+
 			let i = relative_selector.compound.selectors.length;
 
 			while (i--) {
 				const selector = relative_selector.compound.selectors[i];
+
+				if (!selector.visible) continue
+				if (selector.use_wrapper.used) continue;
+
+
+				console.log(selector, attr)
+
+				selector.use_wrapper.used = true;
 
 				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
 					if (!relative_selector.root && !relative_selector.host) {
@@ -170,9 +179,12 @@ export default class Selector {
 		};
 
 		for (const complex_selector of this.selector_list) {
-			const amount_class_specificity_to_increase =
-				max_amount_class_specificity_increased
-				- complex_selector.filter(selector => selector.should_encapsulate).length;
+			let amount_class_specificity_to_increase =
+				max_amount_class_specificity_increased - complex_selector
+					.filter(selector => selector.should_encapsulate)
+					// .filter(selector => !selector.contains_invisible_selectors)
+					// .filter(selector => !selector.compound.selectors[0].use_wrapper.used)
+					.length;
 
 			complex_selector.map((relative_selector, index) => {
 				if (relative_selector.global) {
@@ -183,7 +195,10 @@ export default class Selector {
 				if(relative_selector.should_encapsulate) {
 					encapsulate_block(
 						relative_selector,
-						index === complex_selector.length - 1
+						index === complex_selector
+							.filter(selector => !selector.contains_invisible_selectors)
+							// .filter(selector => selector.compound.selectors.some(selector => selector.use_wrapper.used))
+							.length - 1
 							? attr.repeat(amount_class_specificity_to_increase + 1)
 							: attr
 					);
@@ -880,22 +895,17 @@ class RelativeSelector {
 	/** @type {boolean} */
 	should_encapsulate;
 
-	/** @type {boolean} */
-	visible;
-
 	/**
 	 * @param {import('#compiler').Css.Combinator | null} combinator
 	 * @param {CompoundSelector} compound
-	 * @param {boolean} visible - Whether this complex selector is visible, used in nested rules
 	 * */
-	constructor(combinator, compound, visible) {
+	constructor(combinator, compound) {
 		this.combinator = combinator;
 		this.compound = compound;
 		this.should_encapsulate = false;
-		this.visible = visible;
 	}
 
-	/** @param {import('#compiler').Css.SimpleSelector} selector */
+	/** @param {import('#compiler').Css.SimpleSelector & { use_wrapper: { used: boolean }, visible: boolean }} selector */
 	add(selector) {
 		this.compound.add(selector);
 	}
@@ -907,6 +917,10 @@ class RelativeSelector {
 	get start() {
 		if (this.combinator) return this.combinator.start;
 		return this.compound.start;
+	}
+
+	get contains_invisible_selectors() {
+		return this.compound.selectors.some(selector => !selector.visible);
 	}
 }
 
@@ -923,7 +937,7 @@ const FakeCombinator = {
  * not encapsulated multiple times
  **/
 class CompoundSelector {
-	/** @type {Array<import('#compiler').Css.SimpleSelector>} */
+	/** @type {Array<import('#compiler').Css.SimpleSelector & { use_wrapper: { used: boolean }, visible: boolean }>} */
 	selectors;
 
 	/** @type {number} */
@@ -938,19 +952,15 @@ class CompoundSelector {
 	/** @type {boolean} */
 	root;
 
-	/** @type {boolean} */
-	has_been_encapsulated;
-
 	constructor() {
 		this.selectors = [];
 		this.start = -1;
 		this.end = -1;
 		this.host = false
 		this.root = false
-		this.has_been_encapsulated = false;
 	}
 
-	/** @param {import('#compiler').Css.SimpleSelector} selector */
+	/** @param {import('#compiler').Css.SimpleSelector & { use_wrapper: { used: boolean }, visible: boolean }} selector */
 	add(selector) {
 		if (this.selectors.length === 0) {
 			this.start = selector.start;
@@ -981,16 +991,14 @@ class CompoundSelector {
 function group_selectors(selector, parent_selector_list) {
 	// If it isn't a nested rule, then we add an empty block group
 	if (parent_selector_list === null) {
-		return [selector_to_blocks(selector.children, null)];
+		return [selector_to_blocks([...selector.children], null)];
 	}
 
 	return parent_selector_list.map(parent_complex_selector => {
 		const block_group = selector_to_blocks(
-			selector.children,
+			[...selector.children],
 			[...parent_complex_selector] // Clone the parent's blocks to avoid modifying the original array
 		);
-
-		// console.log(JSON.stringify(blocks, null, 2))
 
 		return block_group;
 	})
@@ -1002,20 +1010,57 @@ function group_selectors(selector, parent_selector_list) {
  * @param {ComplexSelector | null} parent_complex_selector - The parent blocks to insert into the nesting selector positions.
  */
 function selector_to_blocks(children, parent_complex_selector) {
-	let block = new RelativeSelector(null, new CompoundSelector, true);
+	let block = new RelativeSelector(null, new CompoundSelector);
 	const blocks = [block];
+
+	// If this is a nested rule
+	if (parent_complex_selector) {
+		let nested_selector_index = children.findIndex(child => child.type === 'NestingSelector');
+
+		if (nested_selector_index === -1) {
+			nested_selector_index = 0; // insert the parent selectors at the beginning of the children array
+		} else {
+			children.splice(nested_selector_index, 1); // remove the nesting selector, so we can insert there
+		}
+
+		let parent_selectors = []
+		for (const relative_selector of parent_complex_selector) {
+			if (relative_selector.combinator) parent_selectors.push(relative_selector.combinator);
+			parent_selectors.push(...relative_selector.compound.selectors.map(selector => ({ ...selector, visible: false })));
+		}
+
+		/**
+		 * Some cases
+		 * b { c { color: red }} -> need to insert ' ' before c, so output needs to look like b c
+		 * b { & c { color: red }} -> already has a child combinator before c, so output needs to look like b c
+		 * b { & > c { color: red }} -> next combinator is '>' so output needs to look like b > c
+		 * b { c & { color: red }} -> so we need to insert ' ' after c so output needs to look like c b
+		 */
+
+		children.unshift(FakeCombinator); // insert a fake combinator at the beginning
+
+
+		// Finally, insert the parent selectors into the children array
+		children.splice(nested_selector_index, 0, ...parent_selectors);
+	}
+
+
 	for (const child of children) {
 		if (child.type === 'Combinator') {
-			block = new RelativeSelector(child, new CompoundSelector, true);
+			block = new RelativeSelector(child, new CompoundSelector);
 			blocks.push(block);
 		} else if (child.type === 'NestingSelector') {
 			if (!parent_complex_selector) {
 				error(child, 'nesting-selector-not-allowed');
 			} else {
-				throw new Error('TODO');
+				// We've already handled these above
+				throw new Error('unexpected nesting selector');
 			}
 		} else {
-			block.add(child);
+			let new_child = /** @type {typeof child & { use_wrapper: { used: boolean }, visible: boolean}} */ (child);
+			new_child.visible = new_child.visible ?? true;
+			new_child.use_wrapper = new_child.use_wrapper ?? { used: false };
+			block.add(new_child);
 		}
 	}
 
