@@ -15,6 +15,7 @@ const NodeExist = /** @type {const} */ ({
  * @typedef {typeof NodeExist[keyof typeof NodeExist]} NodeExistsValue
  * @typedef {Array<RelativeSelector>} ComplexSelector
  * @typedef {Array<ComplexSelector>} SelectorList
+ * @typedef {import("#compiler").Css.SimpleSelector & { use_wrapper: { used: boolean }, visible: boolean }} SimpleSelectorWithData
  * */
 
 const whitelist_attribute_selector = new Map([
@@ -158,12 +159,10 @@ export default class Selector {
 				if (!selector.visible) continue
 				if (selector.use_wrapper.used) continue;
 
-
-				console.log(selector, attr)
-
 				selector.use_wrapper.used = true;
 
 				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
+					console.log("PseudoElementSelector or PseudoClassSelector", selector)
 					if (!relative_selector.root && !relative_selector.host) {
 						if (i === 0) code.prependRight(selector.start, attr);
 					}
@@ -905,7 +904,7 @@ class RelativeSelector {
 		this.should_encapsulate = false;
 	}
 
-	/** @param {import('#compiler').Css.SimpleSelector & { use_wrapper: { used: boolean }, visible: boolean }} selector */
+	/** @param {SimpleSelectorWithData} selector */
 	add(selector) {
 		this.compound.add(selector);
 	}
@@ -937,7 +936,7 @@ const FakeCombinator = {
  * not encapsulated multiple times
  **/
 class CompoundSelector {
-	/** @type {Array<import('#compiler').Css.SimpleSelector & { use_wrapper: { used: boolean }, visible: boolean }>} */
+	/** @type {Array<SimpleSelectorWithData>} */
 	selectors;
 
 	/** @type {number} */
@@ -960,7 +959,7 @@ class CompoundSelector {
 		this.root = false
 	}
 
-	/** @param {import('#compiler').Css.SimpleSelector & { use_wrapper: { used: boolean }, visible: boolean }} selector */
+	/** @param {SimpleSelectorWithData} selector */
 	add(selector) {
 		if (this.selectors.length === 0) {
 			this.start = selector.start;
@@ -1023,10 +1022,14 @@ function selector_to_blocks(children, parent_complex_selector) {
 			children.splice(nested_selector_index, 1); // remove the nesting selector, so we can insert there
 		}
 
+		// Modify the first child after the nesting selector to have a flag disabling attr
+
 		let parent_selectors = []
 		for (const relative_selector of parent_complex_selector) {
 			if (relative_selector.combinator) parent_selectors.push(relative_selector.combinator);
-			parent_selectors.push(...relative_selector.compound.selectors.map(selector => ({ ...selector, visible: false })));
+			parent_selectors.push(
+				...relative_selector.compound.selectors.map(selector => ({ ...selector, visible: false}))
+			);
 		}
 
 		/**
@@ -1037,16 +1040,24 @@ function selector_to_blocks(children, parent_complex_selector) {
 		 * b { c & { color: red }} -> so we need to insert ' ' after c so output needs to look like c b
 		 */
 
-		// if the first child is not a combinator, insert a fake combinator at the beginning
-		if (children[0].type !== 'Combinator') {
-			children.unshift(FakeCombinator); // insert a fake combinator at the beginning
+		// if the first child is a PseudoClass, mark it as invisible
+		if (children[nested_selector_index]?.type === 'PseudoClassSelector') {
+			/** @type {SimpleSelectorWithData} */ (children[nested_selector_index]).visible = false;
 		}
 
+		let first_child_combinator = children[nested_selector_index]?.type === 'Combinator'
+			? /** @type {import('#compiler').Css.Combinator} */(children[nested_selector_index])
+			: null;
+
+		if (first_child_combinator?.type !== 'Combinator') {
+			children.unshift(FakeCombinator); // insert a fake combinator at the beginning
+		}
 
 		// Finally, insert the parent selectors into the children array
 		children.splice(nested_selector_index, 0, ...parent_selectors);
 	}
 
+	console.log(children)
 
 	for (const child of children) {
 		if (child.type === 'Combinator') {
@@ -1060,8 +1071,9 @@ function selector_to_blocks(children, parent_complex_selector) {
 				throw new Error('unexpected nesting selector');
 			}
 		} else {
-			let new_child = /** @type {typeof child & { use_wrapper: { used: boolean }, visible: boolean}} */ (child);
-			new_child.visible = new_child.visible ?? true;
+			// We want to maintain a reference to the original child, so we can modify it later
+			let new_child = /** @type {SimpleSelectorWithData}} */ (child);
+			new_child.visible = new_child.visible === undefined ? true : new_child.visible;
 			new_child.use_wrapper = new_child.use_wrapper ?? { used: false };
 			block.add(new_child);
 		}
