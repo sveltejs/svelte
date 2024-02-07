@@ -897,7 +897,7 @@ export function store_set(store, value) {
  * @param {import('./types.js').StoreReferencesContainer} stores
  */
 export function unsubscribe_on_destroy(stores) {
-	onDestroy(() => {
+	on_destroy(() => {
 		let store_name;
 		for (store_name in stores) {
 			const ref = stores[store_name];
@@ -1859,15 +1859,10 @@ export function value_or_fallback(value, fallback) {
 
 /**
  * Schedules a callback to run immediately before the component is unmounted.
- *
- * Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the
- * only one that runs inside a server-side component.
- *
- * https://svelte.dev/docs/svelte#ondestroy
  * @param {() => any} fn
  * @returns {void}
  */
-export function onDestroy(fn) {
+function on_estroy(fn) {
 	user_effect(() => () => untrack(fn));
 }
 
@@ -1921,7 +1916,11 @@ export function pop(accessors) {
 	}
 }
 
-/** @param {import('./types.js').ComponentContext} context */
+/**
+ * Invoke the getter of all signals associated with a component
+ * so they can be registered to the effect this function is called in.
+ * @param {import('./types.js').ComponentContext} context
+ */
 function observe_all(context) {
 	if (context.d) {
 		for (const signal of context.d) get(signal);
@@ -1933,6 +1932,9 @@ function observe_all(context) {
 	}
 }
 
+/**
+ * Legacy-mode only: Call `onMount` callbacks and set up `beforeUpdate`/`afterUpdate` effects
+ */
 export function init() {
 	const context = /** @type {import('./types.js').ComponentContext} */ (current_component_context);
 	const callbacks = context.u;

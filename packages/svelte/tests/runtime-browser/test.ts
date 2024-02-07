@@ -125,6 +125,8 @@ async function run_test(
 				{
 					name: 'testing-runtime-browser-ssr',
 					setup(build) {
+						// When running the server version of the Svelte files,
+						// we also want to use the server export of the Svelte package
 						build.onResolve({ filter: /./ }, (args) => {
 							if (args.path === 'svelte') {
 								return { path: ssr_entry };

@@ -224,7 +224,7 @@ export function afterUpdate(fn) {
 }
 
 /**
- *
+ * Legacy-mode: Init callbacks object for onMount/beforeUpdate/afterUpdate
  * @param {import('../internal/client/types.js').ComponentContext} context
  */
 function init_update_callbacks(context) {

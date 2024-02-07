@@ -30,7 +30,6 @@ export {
 	exclude_from_object,
 	store_set,
 	unsubscribe_on_destroy,
-	onDestroy,
 	pop,
 	push,
 	reactive_import,
