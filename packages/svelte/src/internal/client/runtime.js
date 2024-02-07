@@ -1,6 +1,6 @@
 import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
-import { noop, run_all } from '../common.js';
+import { noop, run, run_all } from '../common.js';
 import {
 	array_prototype,
 	get_descriptor,
@@ -104,17 +104,8 @@ export let current_block = null;
 
 /** @type {import('./types.js').ComponentContext | null} */
 export let current_component_context = null;
-export let is_ssr = false;
 
 export let updating_derived = false;
-
-/**
- * @param {boolean} ssr
- * @returns {void}
- */
-export function set_is_ssr(ssr) {
-	is_ssr = ssr;
-}
 
 /**
  * @param {null | import('./types.js').ComponentContext} context
@@ -148,14 +139,6 @@ export function batch_inspect(target, prop, receiver) {
 }
 
 /**
- * @param {null | import('./types.js').ComponentContext} context_stack_item
- * @returns {void}
- */
-export function set_current_component_context(context_stack_item) {
-	current_component_context = context_stack_item;
-}
-
-/**
  * @param {unknown} a
  * @param {unknown} b
  * @returns {boolean}
@@ -181,8 +164,6 @@ function create_source_signal(flags, value) {
 			f: flags,
 			// value
 			v: value,
-			// context: We can remove this if we get rid of beforeUpdate/afterUpdate
-			x: null,
 			// this is for DEV only
 			inspect: new Set()
 		};
@@ -195,9 +176,7 @@ function create_source_signal(flags, value) {
 		// flags
 		f: flags,
 		// value
-		v: value,
-		// context: We can remove this if we get rid of beforeUpdate/afterUpdate
-		x: null
+		v: value
 	};
 }
 
@@ -345,12 +324,6 @@ function execute_signal_fn(signal) {
 	current_component_context = signal.x;
 	current_skip_consumer = !is_flushing_effect && (flags & UNOWNED) !== 0;
 	current_untracking = false;
-
-	// Render effects are invoked when the UI is about to be updated - run beforeUpdate at that point
-	if (is_render_effect && current_component_context?.u != null) {
-		// update_callbacks.execute()
-		current_component_context.u.e();
-	}
 
 	try {
 		let res;
@@ -924,7 +897,7 @@ export function store_set(store, value) {
  * @param {import('./types.js').StoreReferencesContainer} stores
  */
 export function unsubscribe_on_destroy(stores) {
-	onDestroy(() => {
+	on_destroy(() => {
 		let store_name;
 		for (store_name in stores) {
 			const ref = stores[store_name];
@@ -1150,7 +1123,7 @@ export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
  * @returns {void}
  */
 function mark_signal_consumers(signal, to_status, force_schedule) {
-	const runes = is_runes(signal.x);
+	const runes = is_runes(null);
 	const consumers = signal.c;
 	if (consumers !== null) {
 		const length = consumers.length;
@@ -1192,7 +1165,7 @@ export function set_signal_value(signal, value) {
 		!current_untracking &&
 		!ignore_mutation_validation &&
 		current_consumer !== null &&
-		is_runes(signal.x) &&
+		is_runes(null) &&
 		(current_consumer.f & DERIVED) !== 0
 	) {
 		throw new Error(
@@ -1208,7 +1181,6 @@ export function set_signal_value(signal, value) {
 		(signal.f & SOURCE) !== 0 &&
 		!(/** @type {import('./types.js').EqualsFunctions} */ (signal.e)(value, signal.v))
 	) {
-		const component_context = signal.x;
 		signal.v = value;
 		// If the current signal is running for the first time, it won't have any
 		// consumers as we only allocate and assign the consumers after the signal
@@ -1219,7 +1191,7 @@ export function set_signal_value(signal, value) {
 		// $effect(() => x++)
 		//
 		if (
-			is_runes(component_context) &&
+			is_runes(null) &&
 			current_effect !== null &&
 			current_effect.c === null &&
 			(current_effect.f & CLEAN) !== 0
@@ -1236,19 +1208,6 @@ export function set_signal_value(signal, value) {
 			}
 		}
 		mark_signal_consumers(signal, DIRTY, true);
-		// If we have afterUpdates locally on the component, but we're within a render effect
-		// then we will need to manually invoke the beforeUpdate/afterUpdate logic.
-		// TODO: should we put this being a is_runes check and only run it in non-runes mode?
-		if (current_effect === null && current_queued_pre_and_render_effects.length === 0) {
-			const update_callbacks = component_context?.u;
-			if (update_callbacks != null) {
-				run_all(update_callbacks.b);
-				const managed = managed_effect(() => {
-					destroy_signal(managed);
-					run_all(update_callbacks.a);
-				});
-			}
-		}
 
 		// @ts-expect-error
 		if (DEV && signal.inspect) {
@@ -1299,7 +1258,7 @@ export function derived(init) {
 		create_computation_signal(flags | CLEAN, UNINITIALIZED, current_block)
 	);
 	signal.i = init;
-	signal.x = current_component_context;
+	bind_signal_to_component_context(signal);
 	signal.e = default_equals;
 	if (current_consumer !== null) {
 		push_reference(current_consumer, signal);
@@ -1327,8 +1286,25 @@ export function derived_safe_equal(init) {
 /*#__NO_SIDE_EFFECTS__*/
 export function source(initial_value) {
 	const source = create_source_signal(SOURCE | CLEAN, initial_value);
-	source.x = current_component_context;
+	bind_signal_to_component_context(source);
 	return source;
+}
+
+/**
+ * This function binds a signal to the component context, so that we can fire
+ * beforeUpdate/afterUpdate callbacks at the correct time etc
+ * @param {import('./types.js').Signal} signal
+ */
+function bind_signal_to_component_context(signal) {
+	if (current_component_context === null || !current_component_context.r) return;
+
+	const signals = current_component_context.d;
+
+	if (signals) {
+		signals.push(signal);
+	} else {
+		current_component_context.d = [signal];
+	}
 }
 
 /**
@@ -1883,18 +1859,11 @@ export function value_or_fallback(value, fallback) {
 
 /**
  * Schedules a callback to run immediately before the component is unmounted.
- *
- * Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the
- * only one that runs inside a server-side component.
- *
- * https://svelte.dev/docs/svelte#ondestroy
  * @param {() => any} fn
  * @returns {void}
  */
-export function onDestroy(fn) {
-	if (!is_ssr) {
-		user_effect(() => () => untrack(fn));
-	}
+function on_destroy(fn) {
+	user_effect(() => () => untrack(fn));
 }
 
 /**
@@ -1914,6 +1883,8 @@ export function push(props, runes = false) {
 		m: false,
 		// parent
 		p: current_component_context,
+		// signals
+		d: null,
 		// props
 		s: props,
 		// runes
@@ -1943,6 +1914,56 @@ export function pop(accessors) {
 		current_component_context = context_stack_item.p;
 		context_stack_item.m = true;
 	}
+}
+
+/**
+ * Invoke the getter of all signals associated with a component
+ * so they can be registered to the effect this function is called in.
+ * @param {import('./types.js').ComponentContext} context
+ */
+function observe_all(context) {
+	if (context.d) {
+		for (const signal of context.d) get(signal);
+	}
+
+	const props = get_descriptors(context.s);
+	for (const descriptor of Object.values(props)) {
+		if (descriptor.get) descriptor.get();
+	}
+}
+
+/**
+ * Legacy-mode only: Call `onMount` callbacks and set up `beforeUpdate`/`afterUpdate` effects
+ */
+export function init() {
+	const context = /** @type {import('./types.js').ComponentContext} */ (current_component_context);
+	const callbacks = context.u;
+
+	if (!callbacks) return;
+
+	// beforeUpdate
+	pre_effect(() => {
+		observe_all(context);
+		callbacks.b.forEach(run);
+	});
+
+	// onMount (must run before afterUpdate)
+	user_effect(() => {
+		const fns = untrack(() => callbacks.m.map(run));
+		return () => {
+			for (const fn of fns) {
+				if (typeof fn === 'function') {
+					fn();
+				}
+			}
+		};
+	});
+
+	// afterUpdate
+	user_effect(() => {
+		observe_all(context);
+		callbacks.a.forEach(run);
+	});
 }
 
 /**

@@ -1,12 +1,8 @@
 import {
 	current_component_context,
-	destroy_signal,
 	get_or_init_context_map,
-	is_ssr,
-	managed_effect,
 	untrack,
-	user_effect,
-	flush_local_render_effects
+	user_effect
 } from '../internal/client/runtime.js';
 import { is_array } from '../internal/client/utils.js';
 
@@ -25,14 +21,36 @@ import { is_array } from '../internal/client/utils.js';
  * @returns {void}
  */
 export function onMount(fn) {
-	if (!is_ssr) {
-		user_effect(() => {
-			const result = untrack(fn);
-			if (typeof result === 'function') {
-				return /** @type {() => any} */ (result);
-			}
-		});
+	if (current_component_context === null) {
+		throw new Error('onMount can only be used during component initialisation.');
 	}
+
+	if (current_component_context.r) {
+		user_effect(() => {
+			const cleanup = untrack(fn);
+			if (typeof cleanup === 'function') return /** @type {() => void} */ (cleanup);
+		});
+	} else {
+		init_update_callbacks(current_component_context).m.push(fn);
+	}
+}
+
+/**
+ * Schedules a callback to run immediately before the component is unmounted.
+ *
+ * Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the
+ * only one that runs inside a server-side component.
+ *
+ * https://svelte.dev/docs/svelte#ondestroy
+ * @param {() => any} fn
+ * @returns {void}
+ */
+export function onDestroy(fn) {
+	if (current_component_context === null) {
+		throw new Error('onDestroy can only be used during component initialisation.');
+	}
+
+	onMount(() => () => untrack(fn));
 }
 
 /**
@@ -155,46 +173,6 @@ export function createEventDispatcher() {
 	};
 }
 
-function init_update_callbacks() {
-	let called_before = false;
-	let called_after = false;
-
-	/** @type {NonNullable<import('../internal/client/types.js').ComponentContext['u']>} */
-	const update_callbacks = {
-		b: [],
-		a: [],
-		e() {
-			if (!called_before) {
-				called_before = true;
-				// TODO somehow beforeUpdate ran twice on mount in Svelte 4 if it causes a render
-				// possibly strategy to get this back if needed: analyse beforeUpdate function for assignements to state,
-				// if yes, add a call to the component to force-run beforeUpdate once.
-				untrack(() => update_callbacks.b.forEach(/** @param {any} c */ (c) => c()));
-				flush_local_render_effects();
-				// beforeUpdate can run again once if afterUpdate causes another update,
-				// but afterUpdate shouldn't be called again in that case to prevent infinite loops
-				if (!called_after) {
-					user_effect(() => {
-						called_before = false;
-						called_after = true;
-						untrack(() => update_callbacks.a.forEach(/** @param {any} c */ (c) => c()));
-						// managed_effect so that it's not cleaned up when the parent effect is cleaned up
-						const managed = managed_effect(() => {
-							destroy_signal(managed);
-							called_after = false;
-						});
-					});
-				} else {
-					user_effect(() => {
-						called_before = false;
-					});
-				}
-			}
-		}
-	};
-	return update_callbacks;
-}
-
 // TODO mark beforeUpdate and afterUpdate as deprecated in Svelte 6
 
 /**
@@ -210,12 +188,15 @@ function init_update_callbacks() {
  * @returns {void}
  */
 export function beforeUpdate(fn) {
-	const component_context = current_component_context;
-	if (component_context === null) {
-		throw new Error('beforeUpdate can only be used during component initialisation.');
+	if (current_component_context === null) {
+		throw new Error('beforeUpdate can only be used during component initialisation');
 	}
 
-	(component_context.u ??= init_update_callbacks()).b.push(fn);
+	if (current_component_context.r) {
+		throw new Error('beforeUpdate cannot be used in runes mode');
+	}
+
+	init_update_callbacks(current_component_context).b.push(fn);
 }
 
 /**
@@ -231,22 +212,25 @@ export function beforeUpdate(fn) {
  * @returns {void}
  */
 export function afterUpdate(fn) {
-	const component_context = current_component_context;
-	if (component_context === null) {
+	if (current_component_context === null) {
 		throw new Error('afterUpdate can only be used during component initialisation.');
 	}
 
-	(component_context.u ??= init_update_callbacks()).a.push(fn);
+	if (current_component_context.r) {
+		throw new Error('afterUpdate cannot be used in runes mode');
+	}
+
+	init_update_callbacks(current_component_context).a.push(fn);
+}
+
+/**
+ * Legacy-mode: Init callbacks object for onMount/beforeUpdate/afterUpdate
+ * @param {import('../internal/client/types.js').ComponentContext} context
+ */
+function init_update_callbacks(context) {
+	return (context.u ??= { a: [], b: [], m: [] });
 }
 
 // TODO bring implementations in here
 // (except probably untrack — do we want to expose that, if there's also a rune?)
-export {
-	flushSync,
-	createRoot,
-	mount,
-	tick,
-	untrack,
-	unstate,
-	onDestroy
-} from '../internal/index.js';
+export { flushSync, createRoot, mount, tick, untrack, unstate } from '../internal/index.js';

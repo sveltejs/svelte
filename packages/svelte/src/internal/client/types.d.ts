@@ -36,6 +36,8 @@ export type Store<V> = {
 // when the JS VM JITs the code.
 
 export type ComponentContext = {
+	/** local signals (needed for beforeUpdate/afterUpdate) */
+	d: null | Signal<any>[];
 	/** props */
 	s: Record<string, unknown>;
 	/** accessors */
@@ -52,12 +54,12 @@ export type ComponentContext = {
 	r: boolean;
 	/** update_callbacks */
 	u: null | {
-		/** before */
-		b: Array<() => void>;
-		/** after */
+		/** afterUpdate callbacks */
 		a: Array<() => void>;
-		/** execute */
-		e: () => void;
+		/** beforeUpdate callbacks */
+		b: Array<() => void>;
+		/** onMount callbacks */
+		m: Array<() => any>;
 	};
 };
 
@@ -69,8 +71,6 @@ export type ComponentContext = {
 export type SourceSignal<V = unknown> = {
 	/** consumers: Signals that read from the current signal */
 	c: null | ComputationSignal[];
-	/** context: The associated component if this signal is an effect/computed */
-	x: null | ComponentContext;
 	/** equals: For value equality */
 	e: null | EqualsFunctions;
 	/** flags: The types that the signal represent, as a bitwise value */

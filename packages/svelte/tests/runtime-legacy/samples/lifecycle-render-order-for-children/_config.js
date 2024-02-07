@@ -46,10 +46,10 @@ export default test({
 			'2: render 1',
 			'3: beforeUpdate 1',
 			'3: render 1',
-			'parent: afterUpdate 1',
 			'1: afterUpdate 1',
 			'2: afterUpdate 1',
-			'3: afterUpdate 1'
+			'3: afterUpdate 1',
+			'parent: afterUpdate 1'
 		]);
 	}
 });

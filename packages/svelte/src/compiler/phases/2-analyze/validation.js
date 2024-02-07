@@ -492,6 +492,20 @@ const validation = {
 			error(node, 'invalid-const-placement');
 		}
 	},
+	ImportDeclaration(node, context) {
+		if (node.source.value === 'svelte' && context.state.analysis.runes) {
+			for (const specifier of node.specifiers) {
+				if (specifier.type === 'ImportSpecifier') {
+					if (
+						specifier.imported.name === 'beforeUpdate' ||
+						specifier.imported.name === 'afterUpdate'
+					) {
+						error(specifier, 'invalid-runes-mode-import', specifier.imported.name);
+					}
+				}
+			}
+		}
+	},
 	LetDirective(node, context) {
 		const parent = context.path.at(-1);
 		if (

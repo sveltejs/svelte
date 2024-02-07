@@ -30,7 +30,6 @@ export {
 	exclude_from_object,
 	store_set,
 	unsubscribe_on_destroy,
-	onDestroy,
 	pop,
 	push,
 	reactive_import,
@@ -38,7 +37,8 @@ export {
 	user_root_effect,
 	inspect,
 	unwrap,
-	freeze
+	freeze,
+	init
 } from './client/runtime.js';
 export * from './client/each.js';
 export * from './client/render.js';

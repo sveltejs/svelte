@@ -7,6 +7,7 @@ var frag = $.template(`<h1>hello world</h1>`);
 
 export default function Hello_world($$anchor, $$props) {
 	$.push($$props, false);
+	$.init();
 
 	/* Init */
 	var h1 = $.open($$anchor, true, frag);
