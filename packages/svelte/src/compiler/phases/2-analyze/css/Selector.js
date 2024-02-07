@@ -11,7 +11,11 @@ const NodeExist = /** @type {const} */ ({
 	Definitely: 1
 });
 
-/** @typedef {typeof NodeExist[keyof typeof NodeExist]} NodeExistsValue */
+/**
+ * @typedef {typeof NodeExist[keyof typeof NodeExist]} NodeExistsValue
+ * @typedef {Array<RelativeSelector>} ComplexSelector
+ * @typedef {Array<ComplexSelector>} SelectorList
+ * */
 
 const whitelist_attribute_selector = new Map([
 	['details', new Set(['open'])],
@@ -25,11 +29,11 @@ export default class Selector {
 	/** @type {import('./Stylesheet.js').default} */
 	stylesheet;
 
-	/** @type {BlockUse[][]} */
-	block_groups;
+	/** @type {SelectorList} */
+	selector_list;
 
-	/** @type {BlockUse[][]} */
-	local_block_groups;
+	/** @type {SelectorList} */
+	local_selector_list;
 
 	/** @type {boolean} */
 	used;
@@ -37,46 +41,44 @@ export default class Selector {
 	/**
 	 * @param {import('#compiler').Css.Selector} node
 	 * @param {import('./Stylesheet.js').default} stylesheet
-	 * @param {BlockUse[][] | null} parent_blocks
+	 * @param {ComplexSelector[] | null} parent_selector_list
 	 */
-	constructor(node, stylesheet, parent_blocks) {
+	constructor(node, stylesheet, parent_selector_list) {
 		this.node = node;
 		this.stylesheet = stylesheet;
-		this.block_groups = group_selectors(node, parent_blocks);
+		this.selector_list = group_selectors(node, parent_selector_list);
 
 		this.used = false;
 
-		// Initialize local_block_groups
-		this.local_block_groups = [];
+		// Initialize local_selector_list
+		this.local_selector_list = [];
 
 		// Process each block group to take trailing :global(...) selectors out of consideration
-		this.block_groups.forEach(group => {
-			let i = group.length;
+		this.selector_list.forEach(complex_selector => {
+			let i = complex_selector.length;
 			while (i > 0) {
-				if (!group[i - 1].block.global) break;
+				if (!complex_selector[i - 1].global) break;
 				i -= 1;
 			}
-			// Add the processed group (with global selectors removed) to local_block_groups
-			this.local_block_groups.push(group.slice(0, i));
+			// Add the processed group (with global selectors removed) to local_selector_list
+			this.local_selector_list.push(complex_selector.slice(0, i));
 		});
 
-		// Determine `used` based on the processed local_block_groups
+		// Determine `used` based on the processed local_selector_list
 		let host_only = false;
 		let root_only = false;
 
 		// Check if there's exactly one group and one block within that group, and if it's host or root
-		if (this.local_block_groups.length === 1 && this.local_block_groups[0].length === 1) {
-			const single_block = this.local_block_groups[0][0].block;
-			host_only = single_block.host;
-			root_only = single_block.root;
+		if (this.local_selector_list.length === 1 && this.local_selector_list[0].length === 1) {
+			const single_block = this.local_selector_list[0][0];
+			host_only = single_block.compound.host;
+			root_only = single_block.compound.root;
 		}
 
 		// Check if there are no local blocks across all groups, or if there's a host_only or root_only situation
-		const no_local_blocks = this.local_block_groups.every(group => group.length === 0);
+		const no_local_blocks = this.local_selector_list.every(group => group.length === 0);
 		this.used = no_local_blocks || host_only || root_only;
-
 	}
-
 	/**
 	 * Determines whether the given selector is used within the component's nodes
 	 * and marks the corresponding blocks for encapsulation if so.
@@ -100,8 +102,7 @@ export default class Selector {
 	 * ```
 	 *
 	 * In the above example, the selector `a c` is used, but `b c` is not.
-	 * However, we must not mark the `c` block as encapsulated because it's used in `a`.
-	 * Even though it's not used in `b`, it's still used in the component.
+	 * We should mark it for encapsulation as a result.
 	 *
 	 * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node - The node to apply the selector to.
 	 * @returns {void}
@@ -109,18 +110,15 @@ export default class Selector {
 	apply(node) {
 		/**
 		 * Create a map of blocks to their nodes to know whether they should be encapsulated
-		 * @type {Map<Block, Set<import('#compiler').RegularElement | import('#compiler').SvelteElement>>}
+		 * @type {Map<RelativeSelector, Set<import('#compiler').RegularElement | import('#compiler').SvelteElement>>}
 		 * */
 		const used_blocks = new Map();
 
-		this.local_block_groups.map(group => {
-			const blocks = group.map(block_use => block_use.block);
-			apply_selector(blocks, node, used_blocks);
-		});
+		this.local_selector_list.map(complex_selector => apply_selector(complex_selector.slice(), node, used_blocks));
 
 		// Iterate over used_blocks
-		for (const [block, nodes] of used_blocks) {
-			block.should_encapsulate = true;
+		for (const [relative_selector, nodes] of used_blocks) {
+			relative_selector.should_encapsulate = true;
 			for (const node of nodes) {
 				this.stylesheet.nodes_with_css_class.add(node);
 			}
@@ -134,50 +132,6 @@ export default class Selector {
 	 * @param {number} max_amount_class_specificity_increased
 	 */
 	transform(code, attr, max_amount_class_specificity_increased) {
-		/**
-		 * @param {BlockUse} block_use
-		 * @param {string} attr
-		 */
-		function encapsulate_block(block_use, attr) {
-			let block = block_use.block
-			if (block_use.visible && !block.has_been_encapsulated) {
-				// Similar encapsulation logic as before
-				// Ensure we mark the block as encapsulated to avoid re-processing
-				block.has_been_encapsulated = true;
-
-				for (const selector of block.selectors) {
-					if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-						remove_global_pseudo_class(selector);
-					}
-				}
-				let i = block.selectors.length;
-
-				while (i--) {
-					const selector = block.selectors[i];
-
-					// We don't make any changes to the invisible selectors
-					// because they don't exist in reality in css nesting
-					// and changing them would affect the nested rules parent rule selectors
-					if (selector.invisible) {
-						continue;
-					}
-
-					if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
-						if (!block.root && !block.host) {
-							if (i === 0) code.prependRight(selector.start, attr);
-						}
-						continue;
-					}
-					if (selector.type === 'TypeSelector' && selector.name === '*') {
-						code.update(selector.start, selector.end, attr);
-					} else {
-						code.appendLeft(selector.end, attr);
-					}
-					break;
-				}
-			}
-		};
-
 		/** @param {import('#compiler').Css.SimpleSelector} selector */
 		function remove_global_pseudo_class(selector) {
 			code
@@ -185,21 +139,51 @@ export default class Selector {
 				.remove(selector.end - 1, selector.end);
 		}
 
-		for (const group of this.block_groups) {
-			const amount_class_specificity_to_increase = max_amount_class_specificity_increased -
-				group.filter(block_use => block_use.visible && block_use.block.should_encapsulate).length;
+		/**
+		 * @param {RelativeSelector} relative_selector
+		 * @param {string} attr
+		 */
+		function encapsulate_block(relative_selector, attr) {
+			for (const selector of relative_selector.compound.selectors) {
+				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
+					remove_global_pseudo_class(selector);
+				}
+			}
+			let i = relative_selector.compound.selectors.length;
 
-			group.map((block_use, index) => {
-				const block = block_use.block;
-				if (block.global) {
+			while (i--) {
+				const selector = relative_selector.compound.selectors[i];
+
+				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
+					if (!relative_selector.root && !relative_selector.host) {
+						if (i === 0) code.prependRight(selector.start, attr);
+					}
+					continue;
+				}
+				if (selector.type === 'TypeSelector' && selector.name === '*') {
+					code.update(selector.start, selector.end, attr);
+				} else {
+					code.appendLeft(selector.end, attr);
+				}
+				break;
+			}
+		};
+
+		for (const complex_selector of this.selector_list) {
+			const amount_class_specificity_to_increase =
+				max_amount_class_specificity_increased
+				- complex_selector.filter(selector => selector.should_encapsulate).length;
+
+			complex_selector.map((relative_selector, index) => {
+				if (relative_selector.global) {
 					// Remove the global pseudo class from the selector
-					remove_global_pseudo_class(block.selectors[0]);
+					remove_global_pseudo_class(relative_selector.compound.selectors[0]);
 				}
 
-				if(block.should_encapsulate) {
+				if(relative_selector.should_encapsulate) {
 					encapsulate_block(
-						block_use,
-						index === group.length - 1
+						relative_selector,
+						index === complex_selector.length - 1
 							? attr.repeat(amount_class_specificity_to_increase + 1)
 							: attr
 					);
@@ -218,18 +202,18 @@ export default class Selector {
 
 
 	validate_invalid_css_global_placement() {
-		for (let group of this.block_groups) {
+		for (let complex_selector of this.selector_list) {
 			let start = 0;
-			let end = group.length;
+			let end = complex_selector.length;
 			for (; start < end; start += 1) {
-				if (!group[start].block.global) break;
+				if (!complex_selector[start].global) break;
 			}
 			for (; end > start; end -= 1) {
-				if (!group[end - 1].block.global) break;
+				if (!complex_selector[end - 1].global) break;
 			}
 			for (let i = start; i < end; i += 1) {
-				if (group[i].block.global) {
-					error(group[i].block.selectors[0], 'invalid-css-global-placement');
+				if (complex_selector[i].global) {
+					error(complex_selector[i].compound.selectors[0], 'invalid-css-global-placement');
 				}
 			}
 		}
@@ -237,14 +221,13 @@ export default class Selector {
 
 
 	validate_global_with_multiple_selectors() {
-		for (const group of this.block_groups) {
-			if (group.length === 1 && group[0].block.selectors.length === 1) {
+		for (const complex_selector of this.selector_list) {
+			if (complex_selector.length === 1 && complex_selector[0].compound.selectors.length === 1) {
 				// standalone :global() with multiple selectors is OK
 				return;
 			}
-			for (const block_use of group) {
-				const block = block_use.block;
-				for (const selector of block.selectors) {
+			for (const relative_selector of complex_selector) {
+				for (const selector of relative_selector.compound.selectors) {
 					if (
 						selector.type === 'PseudoClassSelector' &&
 						selector.name === 'global' &&
@@ -260,24 +243,22 @@ export default class Selector {
 
 	/** @param {import('../../types.js').ComponentAnalysis} analysis */
 	validate_invalid_combinator_without_selector(analysis) {
-		for (const group of this.block_groups) {
-			for (const block_use of group) {
-				const block = block_use.block;
-				if (block.combinator && block.selectors.length === 0) {
-					error(block.combinator, 'invalid-css-selector');
+		for (const complex_selector of this.selector_list) {
+			for (const relative_selector of complex_selector) {
+				if (relative_selector.compound.selectors.length === 0) {
+					error(this.node, 'invalid-css-selector');
 				}
 			}
 		}
 	}
 
 	validate_global_compound_selector() {
-		for (const group of this.block_groups) {
-			for (const block_use of group) {
-				const block = block_use.block;
-				if (block.selectors.length === 1) continue;
+		for (const group of this.selector_list) {
+			for (const relative_selector of group) {
+				if (relative_selector.compound.selectors.length === 1) continue;
 
-				for (let i = 0; i < block.selectors.length; i++) {
-					const selector = block.selectors[i];
+				for (let i = 0; i < relative_selector.compound.selectors.length; i++) {
+					const selector = relative_selector.compound.selectors[i];
 
 					if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
 						const child = selector.args?.children[0].children[0];
@@ -285,11 +266,9 @@ export default class Selector {
 							child?.type === 'TypeSelector' &&
 							!/[.:#]/.test(child.name[0]) &&
 							(i !== 0 ||
-								block.selectors
+								relative_selector.compound.selectors
 									.slice(1)
-									.some(
-										(s) => s.type !== 'PseudoElementSelector' && s.type !== 'PseudoClassSelector'
-									))
+									.some(s => s.type !== 'PseudoElementSelector' && s.type !== 'PseudoClassSelector'))
 						) {
 							error(selector, 'invalid-css-global-selector-list');
 						}
@@ -302,14 +281,14 @@ export default class Selector {
 	get_amount_class_specificity_increased() {
 		// Is this right? Should we be counting the amount of blocks that are visible?
 		// Or should we be counting the amount of selectors that are visible?
-		return this.block_groups[0].filter(block_use => block_use.block.should_encapsulate).length;
+		return this.selector_list[0].filter(selector => selector.should_encapsulate).length;
 	}
 
 }
 
 /**
- * @param {Map<Block, Set<import('#compiler').RegularElement | import('#compiler').SvelteElement>>} map
- * @param {Block} block
+ * @param {Map<RelativeSelector, Set<import('#compiler').RegularElement | import('#compiler').SvelteElement>>} map
+ * @param {RelativeSelector} block
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
  */
 function add_node(map, block, node) {
@@ -320,9 +299,9 @@ function add_node(map, block, node) {
 }
 
 /**
- * @param {Block[]} blocks
+ * @param {RelativeSelector[]} blocks
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} node
- * @param {Map<Block, Set<import('#compiler').RegularElement | import('#compiler').SvelteElement>>} to_encapsulate
+ * @param {Map<RelativeSelector, Set<import('#compiler').RegularElement | import('#compiler').SvelteElement>>} to_encapsulate
  * @returns {boolean}
  */
 function apply_selector(blocks, node, to_encapsulate) {
@@ -366,7 +345,7 @@ function apply_selector(blocks, node, to_encapsulate) {
 					return true;
 				}
 			}
-			if (blocks.every((block) => block.global)) {
+			if (blocks.every(block => block.global)) {
 				add_node(to_encapsulate, block, node);
 				return true;
 			}
@@ -411,16 +390,16 @@ function apply_selector(blocks, node, to_encapsulate) {
 const regex_backslash_and_following_character = /\\(.)/g;
 
 /**
- * @param {Block} block
+ * @param {RelativeSelector} block
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
  * @returns {NO_MATCH | POSSIBLE_MATCH | UNKNOWN_SELECTOR}
  */
 function block_might_apply_to_node(block, node) {
 	if (block.host || block.root) return NO_MATCH;
 
-	let i = block.selectors.length;
+	let i = block.compound.selectors.length;
 	while (i--) {
-		const selector = block.selectors[i];
+		const selector = block.compound.selectors[i];
 
 		if (selector.type === 'Percentage' || selector.type === 'Nth') continue;
 
@@ -430,7 +409,7 @@ function block_might_apply_to_node(block, node) {
 			return NO_MATCH;
 		}
 		if (
-			block.selectors.length === 1 &&
+			block.compound.selectors.length === 1 &&
 			selector.type === 'PseudoClassSelector' &&
 			name === 'global'
 		) {
@@ -887,17 +866,64 @@ function loop_child(children, adjacent_only) {
 	return result;
 }
 
-class Block {
-	/** @type {boolean} */
-	host;
 
-	/** @type {boolean} */
-	root;
-
+/**
+ * Not shared between different Selector instances
+ */
+class RelativeSelector {
 	/** @type {import('#compiler').Css.Combinator | null} */
 	combinator;
 
-	/** @type {(import('#compiler').Css.SimpleSelector & { invisible?: boolean})[]} */
+	/** @type {CompoundSelector} */
+	compound;
+
+	/** @type {boolean} */
+	should_encapsulate;
+
+	/** @type {boolean} */
+	visible;
+
+	/**
+	 * @param {import('#compiler').Css.Combinator | null} combinator
+	 * @param {CompoundSelector} compound
+	 * @param {boolean} visible - Whether this complex selector is visible, used in nested rules
+	 * */
+	constructor(combinator, compound, visible) {
+		this.combinator = combinator;
+		this.compound = compound;
+		this.should_encapsulate = false;
+		this.visible = visible;
+	}
+
+	/** @param {import('#compiler').Css.SimpleSelector} selector */
+	add(selector) {
+		this.compound.add(selector);
+	}
+
+	get global() { return this.compound.global }
+	get host() { return this.compound.host }
+	get root() { return this.compound.root }
+	get end() {return this.compound.end }
+	get start() {
+		if (this.combinator) return this.combinator.start;
+		return this.compound.start;
+	}
+}
+
+/** @type {import('#compiler').Css.Combinator} */
+const FakeCombinator = {
+	type: 'Combinator',
+	name: ' ',
+	start: -1,
+	end: -1
+};
+
+/**
+ * Shared between different Selector instances, so they are
+ * not encapsulated multiple times
+ **/
+class CompoundSelector {
+	/** @type {Array<import('#compiler').Css.SimpleSelector>} */
 	selectors;
 
 	/** @type {number} */
@@ -907,24 +933,20 @@ class Block {
 	end;
 
 	/** @type {boolean} */
-	should_encapsulate;
+	host;
+
+	/** @type {boolean} */
+	root;
 
 	/** @type {boolean} */
 	has_been_encapsulated;
 
-	/** @type {boolean} */
-	invisible;
-
-	/** @param {import('#compiler').Css.Combinator | null} combinator */
-	constructor(combinator) {
-		this.combinator = combinator;
-		this.host = false;
-		this.root = false;
+	constructor() {
 		this.selectors = [];
 		this.start = -1;
 		this.end = -1;
-		this.should_encapsulate = false;
-		this.invisible = false;
+		this.host = false
+		this.root = false
 		this.has_been_encapsulated = false;
 	}
 
@@ -938,124 +960,64 @@ class Block {
 		this.selectors.push(selector);
 		this.end = selector.end;
 	}
+
 	get global() {
 		return (
 			this.selectors.length >= 1 &&
 			this.selectors[0].type === 'PseudoClassSelector' &&
 			this.selectors[0].name === 'global' &&
-			this.selectors.every(
-				(selector) =>
-					selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector'
-			)
+			this.selectors.every(selector => selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector')
 		);
 	}
 }
-
-/** @type {import('#compiler').Css.Combinator} */
-const FakeCombinator = {
-	type: 'Combinator',
-	name: ' ',
-	start: -1,
-	end: -1
-};
-
-class BlockUse {
-	/** @type {Block} */
-	block;
-
-	/** @type {boolean} */
-	visible;
-
-	/**
-	 * @param {Block} block
-	 * @param {boolean} visible
-	 */
-	constructor(block, visible) {
-		this.block = block;
-		this.visible = visible;
-	}
-}
-
 
 /**
  * Groups selectors and inserts parent blocks into nested rules.
  *
  * @param {import('#compiler').Css.Selector} selector - The selector to group and analyze.
- * @param {Array<Array<BlockUse>> | null} parent_blocks_group - The parent blocks group to insert into nested rules.
- * @returns {Array<Array<BlockUse>>} - The grouped selectors with parent's blocks inserted if nested.
+ * @param {SelectorList | null} parent_selector_list - The parent blocks group to insert into nested rules.
+ * @returns {SelectorList} - The grouped selectors with parent's blocks inserted if nested.
  */
-function group_selectors(selector, parent_blocks_group) {
+function group_selectors(selector, parent_selector_list) {
 	// If it isn't a nested rule, then we add an empty block group
-	if (parent_blocks_group === null) {
-		return [
-			selector_to_blocks(selector, false).map((block) => new BlockUse(block, true))
-		];
+	if (parent_selector_list === null) {
+		return [selector_to_blocks(selector.children, null)];
 	}
 
-	// This is a nested rule, so we need to insert the parent selector's blocks at the position of the `&` selector
-	// or at the front if there is no `&` selector
-	// TODO: handle multiple `&` selectors
-	let nested_rule_index = selector.children.findIndex((child) => child.type === 'NestingSelector');
-	let is_next_combinator = selector.children[nested_rule_index + 1]?.type === 'Combinator';
+	return parent_selector_list.map(parent_complex_selector => {
+		const block_group = selector_to_blocks(
+			selector.children,
+			[...parent_complex_selector] // Clone the parent's blocks to avoid modifying the original array
+		);
 
-	console.log("selector", JSON.stringify(selector, null, 2))
-	console.log("=========")
+		// console.log(JSON.stringify(blocks, null, 2))
 
-	// if there is no `&` selector, we need to add a fake combinator at the start
-	if (nested_rule_index === -1) {
-		nested_rule_index = 0;
-	} else {
-		// if there is a `&` selector, we need to delete it
-		// and insert the parent's blocks there
-		selector.children.splice(nested_rule_index, 1);
-	}
-
-	// Create the new blocks for the nested rule, visible by default
-	const blocks = selector_to_blocks(
-		selector,
-		true
-	);
-
-	return parent_blocks_group.map(parent_blocks => {
-		// create a new block use for each parent block and set them to invisible
-		let parent_block_uses = parent_blocks.map((block_use) => new BlockUse(block_use.block, false));
-
-		// Create a new block use for each block in the nested rule, set them to visible
-		let block_uses = blocks.map((block) => new BlockUse(block, true));
-
-		// insert the parent blocks at the position of the `&` selector
-		block_uses.splice(nested_rule_index, 0, ...parent_block_uses);
-
-		console.log(JSON.stringify(block_uses.map(b => b.block), null, 2))
-
-		return block_uses;
+		return block_group;
 	})
 }
 
 
 /**
- * @param {import('#compiler').Css.Selector} selector
- * @param {boolean} allow_nesting
+ * @param {import('#compiler').Css.Selector["children"]} children
+ * @param {ComplexSelector | null} parent_complex_selector - The parent blocks to insert into the nesting selector positions.
  */
-function selector_to_blocks(selector, allow_nesting) {
-	const is_next_combinator = selector.children[0]?.type === 'Combinator';
-	const combinator = is_next_combinator ? selector.children.shift() : null;
-	let block = new Block(/** @type {import('#compiler').Css.Combinator | null} */ (combinator));
+function selector_to_blocks(children, parent_complex_selector) {
+	let block = new RelativeSelector(null, new CompoundSelector, true);
 	const blocks = [block];
-	selector.children.map(child => {
+	for (const child of children) {
 		if (child.type === 'Combinator') {
-			block = new Block(child);
+			block = new RelativeSelector(child, new CompoundSelector, true);
 			blocks.push(block);
 		} else if (child.type === 'NestingSelector') {
-			if (!allow_nesting) {
+			if (!parent_complex_selector) {
 				error(child, 'nesting-selector-not-allowed');
 			} else {
-				// We should've already removed the `&` selector
-				throw new Error("Unexpected nesting selector");
+				throw new Error('TODO');
 			}
 		} else {
 			block.add(child);
 		}
-	});
+	}
+
 	return blocks;
 }
