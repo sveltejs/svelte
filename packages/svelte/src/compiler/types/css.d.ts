@@ -77,7 +77,7 @@ export interface NestingSelector extends BaseNode {
 	name: '&';
 }
 
-export type SimpleSelector =
+export type SimpleSelector = (
 	| TypeSelector
 	| IdSelector
 	| ClassSelector
@@ -86,7 +86,13 @@ export type SimpleSelector =
 	| PseudoClassSelector
 	| Percentage
 	| Nth
-	| NestingSelector;
+	| NestingSelector
+) & {
+	// Deeply nested because we want to track whether the selector is used
+	// between clones of the AST
+	use_wrapper?: { used: boolean },
+	visible?: boolean
+};
 
 export interface Combinator extends BaseNode {
 	type: 'Combinator';

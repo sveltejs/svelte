@@ -7,7 +7,7 @@
 c {
     color: red;
 
-    b & {
+    & {
         color: yellow;
     }
 

@@ -1,17 +1,9 @@
-<b>
-    <c>
-
-    </c>
-</b>
-<style>
-c {
+c.svelte-xyz {
     color: red;
 
-    b & {
+    & {
         color: yellow;
     }
 
     color: black;
 }
-
-</style>

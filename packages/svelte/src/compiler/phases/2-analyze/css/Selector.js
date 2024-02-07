@@ -1003,61 +1003,16 @@ function group_selectors(selector, parent_selector_list) {
 	})
 }
 
-
 /**
  * @param {import('#compiler').Css.Selector["children"]} children
- * @param {ComplexSelector | null} parent_complex_selector - The parent blocks to insert into the nesting selector positions.
+ * @param {ComplexSelector | null} parent_complex_selector - The parent rule's selectors to insert/swap into the nesting selector positions.
  */
 function selector_to_blocks(children, parent_complex_selector) {
 	let block = new RelativeSelector(null, new CompoundSelector);
 	const blocks = [block];
 
 	// If this is a nested rule
-	if (parent_complex_selector) {
-		let nested_selector_index = children.findIndex(child => child.type === 'NestingSelector');
-
-		if (nested_selector_index === -1) {
-			nested_selector_index = 0; // insert the parent selectors at the beginning of the children array
-		} else {
-			children.splice(nested_selector_index, 1); // remove the nesting selector, so we can insert there
-		}
-
-		// Modify the first child after the nesting selector to have a flag disabling attr
-
-		let parent_selectors = []
-		for (const relative_selector of parent_complex_selector) {
-			if (relative_selector.combinator) parent_selectors.push(relative_selector.combinator);
-			parent_selectors.push(
-				...relative_selector.compound.selectors.map(selector => ({ ...selector, visible: false}))
-			);
-		}
-
-		/**
-		 * Some cases
-		 * b { c { color: red }} -> need to insert ' ' before c, so output needs to look like b c
-		 * b { & c { color: red }} -> already has a child combinator before c, so output needs to look like b c
-		 * b { & > c { color: red }} -> next combinator is '>' so output needs to look like b > c
-		 * b { c & { color: red }} -> so we need to insert ' ' after c so output needs to look like c b
-		 */
-
-		// if the first child is a PseudoClass, mark it as invisible
-		if (children[nested_selector_index]?.type === 'PseudoClassSelector') {
-			/** @type {SimpleSelectorWithData} */ (children[nested_selector_index]).visible = false;
-		}
-
-		let first_child_combinator = children[nested_selector_index]?.type === 'Combinator'
-			? /** @type {import('#compiler').Css.Combinator} */(children[nested_selector_index])
-			: null;
-
-		if (first_child_combinator?.type !== 'Combinator') {
-			children.unshift(FakeCombinator); // insert a fake combinator at the beginning
-		}
-
-		// Finally, insert the parent selectors into the children array
-		children.splice(nested_selector_index, 0, ...parent_selectors);
-	}
-
-	// console.log(children)
+	if (parent_complex_selector) nest_fake_parents(children, parent_complex_selector);
 
 	for (const child of children) {
 		if (child.type === 'Combinator') {
@@ -1067,17 +1022,96 @@ function selector_to_blocks(children, parent_complex_selector) {
 			if (!parent_complex_selector) {
 				error(child, 'nesting-selector-not-allowed');
 			} else {
-				// We've already handled these above
+				// We shoudld've already handled these above
 				throw new Error('unexpected nesting selector');
 			}
 		} else {
-			// We want to maintain a reference to the original child, so we can modify it later
-			let new_child = /** @type {SimpleSelectorWithData}} */ (child);
-			new_child.visible = new_child.visible === undefined ? true : new_child.visible;
-			new_child.use_wrapper = new_child.use_wrapper ?? { used: false };
-			block.add(new_child);
+			// shared reference bween all children
+			child.use_wrapper = child.use_wrapper ?? { used: false };
+
+			// Shallow copy the child to avoid modifying the original's visibility
+			block.add(/** @type SimpleSelectorWithData */ ({
+				...child,
+				visible: child.visible === undefined ? true : child.visible
+			}));
 		}
 	}
 
 	return blocks;
+}
+
+/**
+ * @param {ComplexSelector} parent_complex_selector - The parent blocks to insert into the nesting selector positions.
+ * @returns {import('#compiler').Css.Selector["children"]} - The parent selectors to insert into the nesting selector positions.
+ */
+function get_parent_selectors(parent_complex_selector) {
+	const parent_selectors = [];
+	for (const relative_selector of parent_complex_selector) {
+		if (relative_selector.combinator) {
+			parent_selectors.push(relative_selector.combinator);
+		}
+		parent_selectors.push(
+			...relative_selector.compound.selectors.map(selector => ({
+				...selector,
+				visible: false,
+			}))
+		);
+	}
+	return parent_selectors;
+}
+
+/**
+ * Nest the parent selectors into the children array so we can easily
+ * check for usage and scoping.
+ *
+ * @param {import('#compiler').Css.Selector["children"]} children
+ * @param {ComplexSelector} parent_complex_selector - The parent blocks to insert into the nesting selector positions.
+ */
+function nest_fake_parents(children, parent_complex_selector) {
+	let nested_selector_index = children.findIndex(child => child.type === 'NestingSelector');
+
+	// TODO: Handle multiple nesting selectors? eg: &&& {...}
+	if (nested_selector_index === -1) {
+		nested_selector_index = 0; // insert the parent selectors at the beginning of the children array
+	} else {
+		children.splice(nested_selector_index, 1); // remove the nesting selector, so we can insert there
+	}
+
+	// Modify the first child after the nesting selector to have a flag disabling attr
+
+	/** @type typeof children */
+	const parent_selectors = get_parent_selectors(parent_complex_selector);
+
+	/**
+	 * Some cases
+	 * b { c { color: red }} -> need to insert ' ' before c, so output needs to look like [b, " ", c]
+	 * b { & c { color: red }} -> already has a child combinator before c, so output needs to look like [b, " ", c]
+	 * b { & > c { color: red }} -> next combinator is '>' so output needs to look like [b, >, c]
+	 * b { c & { color: red }} -> so we need to insert ' ' after c so children needs to look like [c, " ",b]
+	 * b { & { color: red }} -> no combinator, so children needs to look like [b]
+	 */
+
+	if (children.length > 0) {
+		// if the first child is a PseudoClass, mark it as invisible because the & provides scoping
+		let child_after = children[nested_selector_index];
+		if (child_after?.type === 'PseudoClassSelector') {
+			child_after.visible = false;
+		}
+
+		let child_before = children[nested_selector_index - 1];
+		let last_parent_child = parent_selectors[parent_selectors.length - 1];
+
+		if(child_before?.type !== "Combinator") {
+			if (child_after?.type !== 'Combinator') {
+				children.splice(nested_selector_index, 0, FakeCombinator);
+			}
+		}
+
+		if(last_parent_child.type !== "Combinator" && !child_after) {
+			// Case: b { c & { color: red }} (we need to mark b as visible so we increase specifity)
+			last_parent_child.visible = true;
+		}
+	}
+	// Finally, insert the parent selectors into the children array
+	children.splice(nested_selector_index, 0, ...parent_selectors);
 }
