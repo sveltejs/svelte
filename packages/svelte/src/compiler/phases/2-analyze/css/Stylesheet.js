@@ -74,8 +74,8 @@ class Rule {
 		this.parent = parent;
 
 		/**
-		 * We need to add selectors for each parent rule's selectors
-		 * because of CSS nesting. For example:
+		 * If there's a parent, we need to pass that parent's block_groups into the child
+		 * selector because of CSS nesting. For example:
 		 * ```css
 		 * 	.a, .b {
 		 *		.c {
@@ -88,11 +88,8 @@ class Rule {
 		 * 	- .b .c
 		 */
 		if (parent && parent.node.type === 'Rule') {
-			this.selectors = /** @type {Rule} **/ (parent).selectors
-				.map((parent_selector) =>
-					node.prelude.children.map((node) => new Selector(node, stylesheet, parent_selector))
-				)
-				.flat();
+			let block_groups = /** @type {Rule} **/ (parent).selectors.map(selector => selector.block_groups).flat();
+			this.selectors = node.prelude.children.map(node => new Selector(node, stylesheet, block_groups));
 		} else {
 			this.selectors = node.prelude.children.map((node) => new Selector(node, stylesheet, null));
 		}

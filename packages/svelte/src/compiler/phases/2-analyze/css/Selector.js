@@ -25,8 +25,8 @@ export default class Selector {
 	/** @type {import('./Stylesheet.js').default} */
 	stylesheet;
 
-	/** @type {Block[]} */
-	blocks;
+	/** @type {BlockUse[][]} */
+	block_groups;
 
 	/** @type {Block[]} */
 	local_blocks;
@@ -37,12 +37,12 @@ export default class Selector {
 	/**
 	 * @param {import('#compiler').Css.Selector} node
 	 * @param {import('./Stylesheet.js').default} stylesheet
-	 * @param {Selector | null} parent_selector
+	 * @param {BlockUse[][] | null} parent_blocks
 	 */
-	constructor(node, stylesheet, parent_selector) {
+	constructor(node, stylesheet, parent_blocks) {
 		this.node = node;
 		this.stylesheet = stylesheet;
-		this.blocks = group_selectors(node, parent_selector);
+		this.block_groups = group_selectors(node, parent_blocks);
 		// take trailing :global(...) selectors out of consideration
 		let i = this.blocks.length;
 		while (i > 0) {
@@ -846,12 +846,29 @@ class Block {
 }
 
 /** @type {import('#compiler').Css.Combinator} */
-const InvisibleCombinator = {
+const FakeCombinator = {
 	type: 'Combinator',
 	name: ' ',
 	start: -1,
 	end: -1
 };
+
+class BlockUse {
+	/** @type {Block} */
+	block;
+
+	/** @type {boolean} */
+	visible;
+
+	/**
+	 * @param {Block} block
+	 * @param {boolean} visible
+	 */
+	constructor(block, visible) {
+		this.block = block;
+		this.visible = visible;
+	}
+}
 
 /**
  * Groups selectors by combinator into blocks
@@ -861,54 +878,74 @@ const InvisibleCombinator = {
  * - Then insert the parent_selector's blocks at that position
  *
  * @param {import('#compiler').Css.Selector} selector
- * @param {Selector | null} parent_selector
+ * @param {BlockUse[][] | null} parent_blocks_group
  */
-function group_selectors(selector, parent_selector) {
-	let block = new Block(null);
-
-	const blocks = [block];
-
-	const real_selectors_start = parent_selector?.node.children.length || 0;
-
-	if (parent_selector) {
-		const nested_rule_indices = selector.children
-			.map((child, index) => (child.type === 'NestingSelector' ? index : -1))
-			.filter((index) => index !== -1);
-
-		const parent_children = parent_selector.node.children.map((child) => ({
-			...child,
-			invisible: true
-		}));
-
-		if (nested_rule_indices.length === 0) {
-			// if the next selector is a combinator, we must not unshift a child combinator
-			const next_is_combinator = selector.children[0]?.type === 'Combinator';
-			if (!next_is_combinator) {
-				selector.children.unshift(InvisibleCombinator);
-			}
-			selector.children.unshift(...parent_children);
-		} else {
-			// There's an & nesting selectors somewhere
-			// so we delete it and insert invisible parent's children there
-			nested_rule_indices.forEach((nested_rule_index) =>
-				selector.children.splice(nested_rule_index, 1, ...parent_children)
-			);
-		}
+function group_selectors(selector, parent_blocks_group) {
+	// If it isn't a nested rule, then we add an empty block group
+	if (parent_blocks_group === null) {
+		return [
+			selector_to_blocks(selector, null, false).map((block) => new BlockUse(block, true))
+		];
 	}
 
-	selector.children.forEach((child, i) => {
+	// This is a nested rule, so we need to insert the parent selector's blocks at the position of the `&` selector
+	// or at the front if there is no `&` selector
+	// TODO: handle multiple `&` selectors
+	let nested_rule_index = selector.children.findIndex((child) => child.type === 'NestingSelector');
+
+	// if there is no `&` selector, we need to add a fake combinator at the start
+	if (nested_rule_index === -1) {
+		nested_rule_index = 0;
+	} else {
+		// if there is a `&` selector, we need to delete it
+		// and insert the parent's blocks there
+		selector.children.splice(nested_rule_index, 1);
+	}
+
+	// Create the new blocks for the nested rule, visible by default
+	const blocks = selector_to_blocks(
+		selector,
+		nested_rule_index === 0 ? null : FakeCombinator,
+		false
+	);
+
+	return parent_blocks_group.map(parent_blocks => {
+		// create a new block use for each parent block and set them to invisible
+		let parent_block_uses = parent_blocks.map((block_use) => new BlockUse(block_use.block, false));
+
+		// Create a new block use for each block in the nested rule, set them to visible
+		let block_uses = blocks.map((block) => new BlockUse(block, true));
+
+		// insert the parent blocks at the position of the `&` selector
+		block_uses.splice(nested_rule_index, 0, ...parent_block_uses);
+
+		return block_uses;
+	})
+}
+
+
+/**
+ * @param {import('#compiler').Css.Selector} selector
+ * @param {import('../../../types/css.js').Combinator | null} combinator
+ * @param {boolean} allow_nesting
+ */
+function selector_to_blocks(selector, combinator, allow_nesting) {
+	let block = new Block(combinator);
+	const blocks = [block];
+	selector.children.forEach((child) => {
 		if (child.type === 'Combinator') {
 			block = new Block(child);
 			blocks.push(block);
 		} else if (child.type === 'NestingSelector') {
-			// Don't think we need to add it here
+			if (!allow_nesting) {
+				error(child, 'nesting-selector-not-allowed');
+			} else {
+				// We should've already removed the `&` selector
+				throw new Error("Unexpected nesting selector");
+			}
 		} else {
 			block.add(child);
 		}
-		if (real_selectors_start > i) {
-			block.invisible = true;
-		}
 	});
-
 	return blocks;
 }
