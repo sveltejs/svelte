@@ -35,10 +35,11 @@ export function proxy(value, immutable = true) {
 	if (typeof value !== 'object' || value == null || is_frozen(value)) return value;
 
 	// proxy available already?
+	// If we have an existing proxy, return it...
 	if (STATE_SYMBOL in value) {
 		const metadata = /** @type {import('./types.js').ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
-		// Return the existing proxy if it belongs to the current object,
-		// otherwise, handle as a new proxy (e.g., due to copied state symbol).
+		// ...unless the proxy belonged to a different object, because
+		// someone copied the state symbol using `Reflect.ownKeys(...)`
 		if (metadata.t === value || metadata.p === value) {
 			return metadata.p;
 		}
@@ -54,14 +55,14 @@ export function proxy(value, immutable = true) {
 	// make new proxy
 	const proxy = new Proxy(value, state_proxy_handler);
 	define_property(value, STATE_SYMBOL, {
-		value: {
+		value: /** @type {import('./types.js').ProxyMetadata} */ ({
 			s: new Map(),
 			v: source(0),
 			a: is_array(value),
 			i: immutable,
 			p: proxy,
 			t: value
-		},
+		}),
 		writable: true,
 		enumerable: false
 	});
