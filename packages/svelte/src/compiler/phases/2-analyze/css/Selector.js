@@ -162,7 +162,7 @@ export default class Selector {
 				selector.use_wrapper.used = true;
 
 				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
-					console.log("PseudoElementSelector or PseudoClassSelector", selector)
+					// console.log("PseudoElementSelector or PseudoClassSelector", selector)
 					if (!relative_selector.root && !relative_selector.host) {
 						if (i === 0) code.prependRight(selector.start, attr);
 					}
@@ -1057,7 +1057,7 @@ function selector_to_blocks(children, parent_complex_selector) {
 		children.splice(nested_selector_index, 0, ...parent_selectors);
 	}
 
-	console.log(children)
+	// console.log(children)
 
 	for (const child of children) {
 		if (child.type === 'Combinator') {
