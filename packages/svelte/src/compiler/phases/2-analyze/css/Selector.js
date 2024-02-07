@@ -1037,7 +1037,10 @@ function selector_to_blocks(children, parent_complex_selector) {
 		 * b { c & { color: red }} -> so we need to insert ' ' after c so output needs to look like c b
 		 */
 
-		children.unshift(FakeCombinator); // insert a fake combinator at the beginning
+		// if the first child is not a combinator, insert a fake combinator at the beginning
+		if (children[0].type !== 'Combinator') {
+			children.unshift(FakeCombinator); // insert a fake combinator at the beginning
+		}
 
 
 		// Finally, insert the parent selectors into the children array
