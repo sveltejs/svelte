@@ -11,7 +11,7 @@ import {
 	SNIPPET_BLOCK
 } from './block.js';
 import type { READONLY_SYMBOL, STATE_SYMBOL } from './proxy.js';
-import { DERIVED, EFFECT, RENDER_EFFECT, SOURCE, PRE_EFFECT, LAZY_PROPERTY } from './runtime.js';
+import { DERIVED, EFFECT, RENDER_EFFECT, SOURCE, PRE_EFFECT } from './runtime.js';
 
 // Put all internal types in this file. Once we convert to JSDoc, we can make this a d.ts file
 
@@ -122,12 +122,6 @@ export type EffectSignal = ComputationSignal<null | (() => void)>;
 export type MaybeSignal<T = unknown> = T | Signal<T>;
 
 export type UnwrappedSignal<T> = T extends Signal<infer U> ? U : T;
-
-export type LazyProperty<O, P> = {
-	o: O;
-	p: P;
-	t: typeof LAZY_PROPERTY;
-};
 
 export type EqualsFunctions<T = any> = (a: T, v: T) => boolean;
 

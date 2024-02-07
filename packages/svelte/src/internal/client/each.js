@@ -837,9 +837,7 @@ export function destroy_each_item_block(
 
 /**
  * @template V
- * @template O
- * @template P
- * @param {V | import('./types.js').LazyProperty<O, P>} item
+ * @param {V} item
  * @param {unknown} key
  * @param {number} index
  * @param {(anchor: null, item: V, index: number | import('./types.js').Signal<number>) => void} render_fn
