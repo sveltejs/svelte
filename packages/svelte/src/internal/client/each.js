@@ -14,14 +14,11 @@ import {
 	set_current_hydration_fragment
 } from './hydration.js';
 import { clear_text_content, map_get, map_set } from './operations.js';
-import { STATE_SYMBOL } from './proxy.js';
 import { insert, remove } from './reconciler.js';
 import { empty } from './render.js';
 import {
 	destroy_signal,
 	execute_effect,
-	is_lazy_property,
-	lazy_property,
 	mutable_source,
 	push_destroy_fn,
 	render_effect,
@@ -132,7 +129,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	};
 
 	/** @param {import('./types.js').EachBlock} block */
-	const clear_each = (block) => {
+	const render_each = (block) => {
 		const flags = block.f;
 		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 		const anchor_node = block.a;
@@ -175,7 +172,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			if (fallback_fn !== null) {
 				if (length === 0) {
 					if (block.v.length !== 0 || render === null) {
-						clear_each(block);
+						render_each(block);
 						create_fallback_effect();
 						return;
 					}
@@ -201,7 +198,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		false
 	);
 
-	render = render_effect(clear_each, block, true);
+	render = render_effect(render_each, block, true);
 
 	if (mismatch) {
 		// Set a fragment so that Svelte continues to operate in hydration mode
@@ -279,13 +276,8 @@ function reconcile_indexed_array(
 	flags,
 	apply_transitions
 ) {
-	var is_proxied_array = STATE_SYMBOL in array && /** @type {any} */ (array[STATE_SYMBOL]).i;
 	var a_blocks = each_block.v;
 	var active_transitions = each_block.s;
-
-	if (is_proxied_array) {
-		flags &= ~EACH_ITEM_REACTIVE;
-	}
 
 	/** @type {number | void} */
 	var a = a_blocks.length;
@@ -334,7 +326,7 @@ function reconcile_indexed_array(
 					break;
 				}
 
-				item = is_proxied_array ? lazy_property(array, index) : array[index];
+				item = array[index];
 				block = each_item_block(item, null, index, render_fn, flags);
 				b_blocks[index] = block;
 
@@ -349,7 +341,7 @@ function reconcile_indexed_array(
 		for (; index < length; index++) {
 			if (index >= a) {
 				// Add block
-				item = is_proxied_array ? lazy_property(array, index) : array[index];
+				item = array[index];
 				block = each_item_block(item, null, index, render_fn, flags);
 				b_blocks[index] = block;
 				insert_each_item_block(block, dom, is_controlled, null);
@@ -789,17 +781,6 @@ function update_each_item_block(block, item, index, type) {
 	const block_v = block.v;
 	if ((type & EACH_ITEM_REACTIVE) !== 0) {
 		set_signal_value(block_v, item);
-	} else if (is_lazy_property(block_v)) {
-		// If we have lazy properties, it means that an array was used that has been
-		// proxied. Given this, we need to re-sync the old array by mutating the backing
-		// value to be the latest value to ensure the UI updates correctly. TODO: maybe
-		// we should bypass any internal mutation checks for this?
-		const o = block_v.o;
-		const p = block_v.p;
-		const prev = o[p];
-		if (prev !== item) {
-			o[p] = item;
-		}
 	}
 	const transitions = block.s;
 	const index_is_reactive = (type & EACH_INDEX_REACTIVE) !== 0;
@@ -856,9 +837,7 @@ export function destroy_each_item_block(
 
 /**
  * @template V
- * @template O
- * @template P
- * @param {V | import('./types.js').LazyProperty<O, P>} item
+ * @param {V} item
  * @param {unknown} key
  * @param {number} index
  * @param {(anchor: null, item: V, index: number | import('./types.js').Signal<number>) => void} render_fn
