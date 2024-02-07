@@ -1862,7 +1862,7 @@ export function value_or_fallback(value, fallback) {
  * @param {() => any} fn
  * @returns {void}
  */
-function on_estroy(fn) {
+function on_destroy(fn) {
 	user_effect(() => () => untrack(fn));
 }
 
