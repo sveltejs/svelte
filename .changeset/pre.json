@@ -9,6 +9,7 @@
     "svelte.dev": "1.0.0"
   },
   "changesets": [
+    "afraid-dogs-matter",
     "afraid-moose-matter",
     "angry-books-jam",
     "angry-plums-punch",
@@ -135,6 +136,7 @@
     "odd-needles-joke",
     "odd-schools-wait",
     "odd-shoes-cheat",
+    "odd-taxis-retire",
     "old-flies-jog",
     "old-houses-drum",
     "old-mails-sneeze",
@@ -181,6 +183,7 @@
     "shiny-baboons-play",
     "shiny-shrimps-march",
     "short-buses-camp",
+    "silver-points-approve",
     "sixty-items-crash",
     "slimy-clouds-talk",
     "slimy-laws-explode",
@@ -246,6 +249,7 @@
     "two-falcons-buy",
     "unlucky-boxes-obey",
     "unlucky-trees-lick",
+    "violet-pigs-jam",
     "wet-games-fly",
     "wicked-clouds-exercise",
     "wicked-doors-train",
