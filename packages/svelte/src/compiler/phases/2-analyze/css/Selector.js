@@ -1071,14 +1071,14 @@ function get_parent_selectors(parent_complex_selector) {
  */
 function nest_fake_parents(children, parent_complex_selector) {
 	let nested_selector_index = children.findIndex(child => child.type === 'NestingSelector');
-	let had_ampersand = false;
+	let used_ampersand = false;
 
 	// TODO: Handle multiple nesting selectors?
 	// eg: &&& {...} or .bar & .foo {...}
 	if (nested_selector_index === -1) {
 		nested_selector_index = 0; // insert the parent selectors at the beginning of the children array
 	} else {
-		had_ampersand = true;
+		used_ampersand = true;
 		children.splice(nested_selector_index, 1); // remove the nesting selector, so we can insert there
 	}
 
@@ -1108,12 +1108,12 @@ function nest_fake_parents(children, parent_complex_selector) {
 		}
 
 
-		if(child_before?.type !== "Combinator") {
-			if (child_after?.type !== 'Combinator') {
-				if(!had_ampersand) {
-					children.splice(nested_selector_index, 0, FakeCombinator);
-				}
-			}
+		if(
+			child_before?.type !== "Combinator"
+			&& child_after?.type !== "Combinator"
+			&& !used_ampersand
+		) {
+			children.splice(nested_selector_index, 0, FakeCombinator);
 		}
 	}
 	// Finally, insert the parent selectors into the children array
