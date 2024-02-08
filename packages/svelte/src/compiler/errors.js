@@ -203,7 +203,7 @@ const runes = {
 	/** @param {string} name */
 	'invalid-runes-mode-import': (name) => `${name} cannot be used in runes mode`,
 	'duplicate-props-rune': () => `Cannot use $props() more than once`,
-	'invalid-each-mutation': () => `Cannot mutate each block reference directly in runes mode`
+	'invalid-each-mutation': () => `Cannot mutate each block references directly in runes mode`
 };
 
 /** @satisfies {Errors} */
