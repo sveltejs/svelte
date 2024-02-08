@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.51
+
+### Patch Changes
+
+- fix: align `beforeUpdate`/`afterUpdate` behavior better with that in Svelte 4 ([#10408](https://github.com/sveltejs/svelte/pull/10408))
+
+- fix: disallow exporting props, derived and reassigned state from within components ([#10430](https://github.com/sveltejs/svelte/pull/10430))
+
+- fix: improve indexed each array reconcilation ([#10422](https://github.com/sveltejs/svelte/pull/10422))
+
+- fix: add compiler error for each block mutations in runes mode ([#10428](https://github.com/sveltejs/svelte/pull/10428))
+
 ## 5.0.0-next.50
 
 ### Patch Changes
