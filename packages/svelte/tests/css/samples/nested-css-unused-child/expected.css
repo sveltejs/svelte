@@ -1,0 +1,9 @@
+c.svelte-xyz {
+    color: red;
+
+    /* (unused) d {
+        color: yellow;
+    }*/
+
+    color: black;
+}

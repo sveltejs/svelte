@@ -1,0 +1,9 @@
+/* (unused) a*/ b.svelte-xyz {
+    color: red;
+
+    x.svelte-xyz {
+        color: yellow;
+    }
+
+    color: black;
+}
