@@ -6,9 +6,10 @@ import hash from '../utils/hash.js';
 // import { extract_ignores_above_position } from '../utils/extract_svelte_ignore.js';
 import { push_array } from '../utils/push_array.js';
 import { create_attribute } from '../../nodes.js';
+import { regex_whitespace } from '../../patterns.js';
 
 const regex_css_browser_prefix = /^-((webkit)|(moz)|(o)|(ms))-/;
-
+const regex_name_sequence = /^[\s,;}]$/;
 /**
  * @param {string} name
  * @returns {string}
@@ -213,20 +214,22 @@ class Declaration {
 	transform(code, keyframes) {
 		const property = this.node.property && remove_css_prefix(this.node.property.toLowerCase());
 		if (property === 'animation' || property === 'animation-name') {
-			const name = /** @type {string} */ (this.node.value)
-				.split(' ')
-				.find((name) => keyframes.has(name));
+			let index = this.node.start + this.node.property.length + 1;
+			let name = '';
 
-			if (name) {
-				const start = code.original.indexOf(
-					name,
-					code.original.indexOf(this.node.property, this.node.start)
-				);
+			while (index < code.original.length) {
+				const current = code.original[index];
 
-				const end = start + name.length;
+				if (regex_name_sequence.test(current)) {
+					if (name && keyframes.has(name))
+						code.update(index - name.length, index, /**@type {string}*/ (keyframes.get(name)));
 
-				const keyframe = /** @type {string} */ (keyframes.get(name));
-				code.update(start, end, keyframe);
+					if (current === ';' || current === '}') break;
+
+					name = '';
+				} else name += current;
+
+				index++;
 			}
 		}
 	}
