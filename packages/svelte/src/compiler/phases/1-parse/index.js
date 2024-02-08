@@ -47,7 +47,7 @@ export class Parser {
 			throw new TypeError('Template must be a string');
 		}
 
-		this.template = template.trimRight();
+		this.template = template.trimEnd();
 
 		let match_lang;
 
