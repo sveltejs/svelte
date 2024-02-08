@@ -1022,7 +1022,7 @@ function selector_to_blocks(children, parent_complex_selector) {
 			if (!parent_complex_selector) {
 				error(child, 'nesting-selector-not-allowed');
 			} else {
-				// We shoudld've already handled these above
+				// We shoudld've already handled these above (except for multiple nesting selectors, which is supposed to work?)
 				throw new Error('unexpected nesting selector');
 			}
 		} else {
