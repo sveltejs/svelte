@@ -1,0 +1,9 @@
+c.svelte-xyz {
+    color: red;
+
+    b.svelte-xyz & x.svelte-xyz {
+        color: yellow;
+    }
+
+    color: black;
+}

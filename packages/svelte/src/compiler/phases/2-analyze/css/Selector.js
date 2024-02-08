@@ -153,16 +153,18 @@ export default class Selector {
 
 			let i = relative_selector.compound.selectors.length;
 
+			let first_selector = relative_selector.compound.selectors[0];
+			if (first_selector.type === "TypeSelector" && !first_selector.visible) return
+
 			while (i--) {
 				const selector = relative_selector.compound.selectors[i];
 
-				if (!selector.visible) continue
-				if (selector.use_wrapper.used) continue;
+				if (!selector.visible) break;
+				if (selector.use_wrapper.used) break;
 
 				selector.use_wrapper.used = true;
 
 				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
-					// console.log("PseudoElementSelector or PseudoClassSelector", selector)
 					if (!relative_selector.root && !relative_selector.host) {
 						if (i === 0) code.prependRight(selector.start, attr);
 					}
@@ -181,8 +183,6 @@ export default class Selector {
 			let amount_class_specificity_to_increase =
 				max_amount_class_specificity_increased - complex_selector
 					.filter(selector => selector.should_encapsulate)
-					// .filter(selector => !selector.contains_invisible_selectors)
-					// .filter(selector => !selector.compound.selectors[0].use_wrapper.used)
 					.length;
 
 			complex_selector.map((relative_selector, index) => {
@@ -191,13 +191,15 @@ export default class Selector {
 					remove_global_pseudo_class(relative_selector.compound.selectors[0]);
 				}
 
+				let amount = complex_selector
+					// Ignore invisible selectors because they are not part of the specificity
+					.filter(selector => !selector.contains_invisible_selectors)
+					.length - 1;
+
 				if(relative_selector.should_encapsulate) {
 					encapsulate_block(
 						relative_selector,
-						index === complex_selector
-							.filter(selector => !selector.contains_invisible_selectors)
-							// .filter(selector => selector.compound.selectors.some(selector => selector.use_wrapper.used))
-							.length - 1
+						index === amount
 							? attr.repeat(amount_class_specificity_to_increase + 1)
 							: attr
 					);
@@ -1030,7 +1032,7 @@ function selector_to_blocks(children, parent_complex_selector) {
 			child.use_wrapper = child.use_wrapper ?? { used: false };
 
 			// Shallow copy the child to avoid modifying the original's visibility
-			block.add(/** @type SimpleSelectorWithData */ ({
+			block.add(/** @type {SimpleSelectorWithData} */ ({
 				...child,
 				visible: child.visible === undefined ? true : child.visible
 			}));
@@ -1069,11 +1071,14 @@ function get_parent_selectors(parent_complex_selector) {
  */
 function nest_fake_parents(children, parent_complex_selector) {
 	let nested_selector_index = children.findIndex(child => child.type === 'NestingSelector');
+	let had_ampersand = false;
 
-	// TODO: Handle multiple nesting selectors? eg: &&& {...}
+	// TODO: Handle multiple nesting selectors?
+	// eg: &&& {...} or .bar & .foo {...}
 	if (nested_selector_index === -1) {
 		nested_selector_index = 0; // insert the parent selectors at the beginning of the children array
 	} else {
+		had_ampersand = true;
 		children.splice(nested_selector_index, 1); // remove the nesting selector, so we can insert there
 	}
 
@@ -1094,22 +1099,21 @@ function nest_fake_parents(children, parent_complex_selector) {
 	if (children.length > 0) {
 		// if the first child is a PseudoClass, mark it as invisible because the & provides scoping
 		let child_after = children[nested_selector_index];
-		if (child_after?.type === 'PseudoClassSelector') {
-			child_after.visible = false;
-		}
-
-		let child_before = children[nested_selector_index - 1];
 		let last_parent_child = parent_selectors[parent_selectors.length - 1];
-
-		if(child_before?.type !== "Combinator") {
-			if (child_after?.type !== 'Combinator') {
-				children.splice(nested_selector_index, 0, FakeCombinator);
-			}
-		}
+		let child_before = children[nested_selector_index - 1];
 
 		if(last_parent_child.type !== "Combinator" && !child_after) {
 			// Case: b { c & { color: red }} (we need to mark b as visible so we increase specifity)
 			last_parent_child.visible = true;
+		}
+
+
+		if(child_before?.type !== "Combinator") {
+			if (child_after?.type !== 'Combinator') {
+				if(!had_ampersand) {
+					children.splice(nested_selector_index, 0, FakeCombinator);
+				}
+			}
 		}
 	}
 	// Finally, insert the parent selectors into the children array

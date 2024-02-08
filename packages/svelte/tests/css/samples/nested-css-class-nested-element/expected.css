@@ -1,0 +1,9 @@
+.foo.svelte-xyz {
+    color: red;
+
+    &c.svelte-xyz {
+        color: yellow;
+    }
+
+    color: black;
+}
