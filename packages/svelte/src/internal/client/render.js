@@ -212,11 +212,22 @@ const space_template = template(' ', false);
 const comment_template = template('<!>', true);
 
 /**
- * @param {null | Text | Comment | Element} anchor
+ * @param {Text | Comment | Element | null} anchor
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function space(anchor) {
-	return open(anchor, true, space_template);
+	/** @type {any} */
+	var node = open(anchor, true, space_template);
+	// if an {expression} is empty during SSR, there might be no
+	// text node to hydrate (or a anchor comment is falsely detected instead)
+	//  — we must therefore create one
+	if (current_hydration_fragment !== null && node?.nodeType !== 3) {
+		node = document.createTextNode('');
+		// @ts-ignore in this case the anchor should always be a comment,
+		// if not something more fundamental is wrong and throwing here is better to bail out early
+		anchor.parentElement.insertBefore(node, anchor.nextSibling);
+	}
+	return node;
 }
 
 /**
