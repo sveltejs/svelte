@@ -334,6 +334,9 @@ function is_tag_valid_with_parent(tag, parent_tag) {
  * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
  */
 const validation = {
+	AssignmentExpression(node, context) {
+		validate_assignment(node, node.left, context.state);
+	},
 	BindDirective(node, context) {
 		validate_no_const_assignment(node, node.expression, context.state.scope, true);
 
@@ -655,6 +658,9 @@ const validation = {
 			error(child, 'invalid-title-content');
 		}
 	},
+	UpdateExpression(node, context) {
+		validate_assignment(node, node.argument, context.state);
+	},
 	ExpressionTag(node, context) {
 		if (!node.parent) return;
 		if (context.state.parent_element) {
@@ -908,24 +914,28 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 function validate_assignment(node, argument, state) {
 	validate_no_const_assignment(node, argument, state.scope, false);
 
-	let left = /** @type {import('estree').Expression | import('estree').Super} */ (argument);
-
-	if (left.type === 'Identifier') {
-		const binding = state.scope.get(left.name);
+	if (state.analysis.runes && argument.type === 'Identifier') {
+		const binding = state.scope.get(argument.name);
 		if (binding?.kind === 'derived') {
 			error(node, 'invalid-derived-assignment');
 		}
+
+		if (binding?.kind === 'each') {
+			error(node, 'invalid-each-assignment');
+		}
 	}
+
+	let object = /** @type {import('estree').Expression | import('estree').Super} */ (argument);
 
 	/** @type {import('estree').Expression | import('estree').PrivateIdentifier | null} */
 	let property = null;
 
-	while (left.type === 'MemberExpression') {
-		property = left.property;
-		left = left.object;
+	while (object.type === 'MemberExpression') {
+		property = object.property;
+		object = object.object;
 	}
 
-	if (left.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
+	if (object.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
 		if (state.private_derived_state.includes(property.name)) {
 			error(node, 'invalid-derived-assignment');
 		}
@@ -933,14 +943,6 @@ function validate_assignment(node, argument, state) {
 }
 
 export const validation_runes = merge(validation, a11y_validators, {
-	AssignmentExpression(node, { state, path }) {
-		const parent = path.at(-1);
-		if (parent && parent.type === 'ConstTag') return;
-		validate_assignment(node, node.left, state);
-	},
-	UpdateExpression(node, { state }) {
-		validate_assignment(node, node.argument, state);
-	},
 	LabeledStatement(node, { path }) {
 		if (node.label.name !== '$' || path.at(-1)?.type !== 'Program') return;
 		error(node, 'invalid-legacy-reactive-statement');
