@@ -8,7 +8,7 @@ import { push_array } from '../utils/push_array.js';
 import { create_attribute } from '../../nodes.js';
 
 const regex_css_browser_prefix = /^-((webkit)|(moz)|(o)|(ms))-/;
-const regex_name_sequence = /^[\s,;}]$/;
+const regex_name_boundary = /^[\s,;}]$/;
 /**
  * @param {string} name
  * @returns {string}
@@ -217,16 +217,23 @@ class Declaration {
 			let name = '';
 
 			while (index < code.original.length) {
-				const current = code.original[index];
+				const character = code.original[index];
 
-				if (regex_name_sequence.test(current)) {
-					if (name && keyframes.has(name))
-						code.update(index - name.length, index, /**@type {string}*/ (keyframes.get(name)));
+				if (regex_name_boundary.test(character)) {
+					const keyframe = keyframes.get(name);
 
-					if (current === ';' || current === '}') break;
+					if (keyframe) {
+						code.update(index - name.length, index, keyframe);
+					}
+
+					if (character === ';' || character === '}') {
+						break;
+					}
 
 					name = '';
-				} else name += current;
+				} else {
+					name += character;
+				}
 
 				index++;
 			}
