@@ -189,30 +189,12 @@ function get_delegated_event(event_name, handler, context) {
 			return non_hoistable;
 		}
 
-		const is_runes = context.state.analysis.runes;
-
-		// Validate that we don't have any each bindings that are mutated.
-		if (is_runes && binding !== null && binding.kind === 'each') {
-			for (const { path } of binding.references) {
-				const last = path.at(-1);
-
-				// If the last reference node is an update or assigment expression to the binding
-				// then we know the binding was mutated directly rather than part of another node path.
-				if (
-					last != null &&
-					(last.type === 'AssignmentExpression' || last.type === 'UpdateExpression')
-				) {
-					error(last, 'invalid-each-mutation');
-				}
-			}
-		}
-
 		if (
 			binding !== null &&
 			// Bail-out if the the binding is a rest param
 			(binding.declaration_kind === 'rest_param' ||
 				// Bail-out if we reference anything from the EachBlock (for now) that mutates in non-runes mode,
-				(((!is_runes && binding.kind === 'each') ||
+				(((!context.state.analysis.runes && binding.kind === 'each') ||
 					// or any normal not reactive bindings that are mutated.
 					binding.kind === 'normal' ||
 					// or any reactive imports (those are rewritten) (can only happen in legacy mode)
