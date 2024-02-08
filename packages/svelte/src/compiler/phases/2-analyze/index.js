@@ -193,13 +193,23 @@ function get_delegated_event(event_name, handler, context) {
 			binding !== null &&
 			// Bail-out if the the binding is a rest param
 			(binding.declaration_kind === 'rest_param' ||
-				// Bail-out if we reference anything from the EachBlock (for now) that mutates in non-runes mode,
-				(((!context.state.analysis.runes && binding.kind === 'each') ||
-					// or any normal not reactive bindings that are mutated.
-					binding.kind === 'normal' ||
-					// or any reactive imports (those are rewritten) (can only happen in legacy mode)
-					binding.kind === 'legacy_reactive_import') &&
-					binding.mutated))
+				// Bail-out if we reference anything from the EachBlock (for now) that mutates.
+				(binding.kind === 'each' &&
+					// We also need to ensure that if the each binding is mutated, that the mutation occurs on
+					// the identifier itself, not some member expression that the binding is part of.
+					binding.references.some(({ path }) => {
+						const last = path.at(-1);
+
+						return (
+							last != null &&
+							(last.type === 'AssignmentExpression' || last.type === 'UpdateExpression')
+						);
+					})) ||
+				// or any normal not reactive bindings that are mutated.
+				binding.kind === 'normal' ||
+				// or any reactive imports (those are rewritten) (can only happen in legacy mode)
+				binding.kind === 'legacy_reactive_import') &&
+			binding.mutated
 		) {
 			return non_hoistable;
 		}
