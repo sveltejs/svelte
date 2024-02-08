@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: improve animation name transformation
+fix: make CSS animation declaration transformation more robust
