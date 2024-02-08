@@ -8,7 +8,7 @@ import { push_array } from '../utils/push_array.js';
 import { create_attribute } from '../../nodes.js';
 
 const regex_css_browser_prefix = /^-((webkit)|(moz)|(o)|(ms))-/;
-
+const regex_name_boundary = /^[\s,;}]$/;
 /**
  * @param {string} name
  * @returns {string}
@@ -213,20 +213,29 @@ class Declaration {
 	transform(code, keyframes) {
 		const property = this.node.property && remove_css_prefix(this.node.property.toLowerCase());
 		if (property === 'animation' || property === 'animation-name') {
-			const name = /** @type {string} */ (this.node.value)
-				.split(' ')
-				.find((name) => keyframes.has(name));
+			let index = this.node.start + this.node.property.length + 1;
+			let name = '';
 
-			if (name) {
-				const start = code.original.indexOf(
-					name,
-					code.original.indexOf(this.node.property, this.node.start)
-				);
+			while (index < code.original.length) {
+				const character = code.original[index];
 
-				const end = start + name.length;
+				if (regex_name_boundary.test(character)) {
+					const keyframe = keyframes.get(name);
 
-				const keyframe = /** @type {string} */ (keyframes.get(name));
-				code.update(start, end, keyframe);
+					if (keyframe) {
+						code.update(index - name.length, index, keyframe);
+					}
+
+					if (character === ';' || character === '}') {
+						break;
+					}
+
+					name = '';
+				} else {
+					name += character;
+				}
+
+				index++;
 			}
 		}
 	}
