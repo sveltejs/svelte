@@ -212,12 +212,12 @@ function get_delegated_event(event_name, handler, context) {
 			// Bail-out if the the binding is a rest param
 			(binding.declaration_kind === 'rest_param' ||
 				// Bail-out if we reference anything from the EachBlock (for now) that mutates in non-runes mode,
-				(!is_runes && binding.kind === 'each') ||
-				// or any normal not reactive bindings that are mutated.
-				binding.kind === 'normal' ||
-				// or any reactive imports (those are rewritten) (can only happen in legacy mode)
-				binding.kind === 'legacy_reactive_import') &&
-			binding.mutated
+				(((!is_runes && binding.kind === 'each') ||
+					// or any normal not reactive bindings that are mutated.
+					binding.kind === 'normal' ||
+					// or any reactive imports (those are rewritten) (can only happen in legacy mode)
+					binding.kind === 'legacy_reactive_import') &&
+					binding.mutated))
 		) {
 			return non_hoistable;
 		}
