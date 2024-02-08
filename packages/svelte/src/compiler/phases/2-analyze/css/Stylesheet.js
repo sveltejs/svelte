@@ -6,7 +6,6 @@ import hash from '../utils/hash.js';
 // import { extract_ignores_above_position } from '../utils/extract_svelte_ignore.js';
 import { push_array } from '../utils/push_array.js';
 import { create_attribute } from '../../nodes.js';
-import { regex_whitespace } from '../../patterns.js';
 
 const regex_css_browser_prefix = /^-((webkit)|(moz)|(o)|(ms))-/;
 const regex_name_sequence = /^[\s,;}]$/;
