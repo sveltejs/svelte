@@ -917,7 +917,7 @@ function validate_assignment(node, argument, state) {
 		}
 
 		if (binding?.kind === 'each') {
-			error(node, 'invalid-each-mutation');
+			error(node, 'invalid-each-assignment');
 		}
 	}
 

@@ -2,7 +2,7 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'invalid-each-mutation',
-		message: 'Cannot mutate each block references directly in runes mode'
+		code: 'invalid-each-assignment',
+		message: 'Cannot reassign each block argument in runes mode'
 	}
 });
