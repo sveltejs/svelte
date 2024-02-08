@@ -88,8 +88,12 @@ class Rule {
 		 * 	- .b .c
 		 */
 		if (parent && parent.node.type === 'Rule') {
-			let block_groups = /** @type {Rule} **/ (parent).selectors.map(selector => selector.selector_list).flat();
-			this.selectors = node.prelude.children.map(node => new Selector(node, stylesheet, block_groups));
+			let block_groups = /** @type {Rule} **/ (parent).selectors
+				.map((selector) => selector.selector_list)
+				.flat();
+			this.selectors = node.prelude.children.map(
+				(node) => new Selector(node, stylesheet, block_groups)
+			);
 		} else {
 			this.selectors = node.prelude.children.map((node) => new Selector(node, stylesheet, null));
 		}

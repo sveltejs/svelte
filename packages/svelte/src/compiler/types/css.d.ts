@@ -90,8 +90,8 @@ export type SimpleSelector = (
 ) & {
 	// Deeply nested because we want to track whether the selector is used
 	// between clones of the AST
-	use_wrapper?: { used: boolean },
-	visible?: boolean
+	use_wrapper?: { used: boolean };
+	visible?: boolean;
 };
 
 export interface Combinator extends BaseNode {
