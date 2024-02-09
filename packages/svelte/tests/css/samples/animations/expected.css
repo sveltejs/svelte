@@ -1,0 +1,24 @@
+
+	@keyframes svelte-xyz-a {
+		0% {
+			transform: scale(1);
+		}
+		100% {
+			transform: scale(2);
+		}
+	}
+
+	@keyframes svelte-xyz-animation {
+		0% {
+			transform: scale(1);
+		}
+		100% {
+			transform: scale(2);
+		}
+	}
+
+	h1.svelte-xyz {
+		animation: 1s linear infinite svelte-xyz-a;
+		animation: svelte-xyz-a 1s linear infinite;
+		animation: 1s linear infinite svelte-xyz-a,svelte-xyz-animation 1s linear infinite;
+	}

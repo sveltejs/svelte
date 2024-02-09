@@ -1,5 +1,69 @@
 # svelte
 
+## 5.0.0-next.52
+
+### Patch Changes
+
+- fix: use hybrid scoping strategy for consistent specificity increase ([#10443](https://github.com/sveltejs/svelte/pull/10443))
+
+- fix: throw validation error when binding to each argument in runes mode ([#10441](https://github.com/sveltejs/svelte/pull/10441))
+
+- fix: make CSS animation declaration transformation more robust ([#10432](https://github.com/sveltejs/svelte/pull/10432))
+
+- fix: handle sole empty expression tags ([#10433](https://github.com/sveltejs/svelte/pull/10433))
+
+## 5.0.0-next.51
+
+### Patch Changes
+
+- fix: align `beforeUpdate`/`afterUpdate` behavior better with that in Svelte 4 ([#10408](https://github.com/sveltejs/svelte/pull/10408))
+
+- fix: disallow exporting props, derived and reassigned state from within components ([#10430](https://github.com/sveltejs/svelte/pull/10430))
+
+- fix: improve indexed each array reconcilation ([#10422](https://github.com/sveltejs/svelte/pull/10422))
+
+- fix: add compiler error for each block mutations in runes mode ([#10428](https://github.com/sveltejs/svelte/pull/10428))
+
+## 5.0.0-next.50
+
+### Patch Changes
+
+- fix: set `open` binding value in `<details>` ([#10413](https://github.com/sveltejs/svelte/pull/10413))
+
+## 5.0.0-next.49
+
+### Patch Changes
+
+- fix: properly analyze group expressions ([#10410](https://github.com/sveltejs/svelte/pull/10410))
+
+- fix: handle nested script tags ([#10416](https://github.com/sveltejs/svelte/pull/10416))
+
+- fix: only update lazy properties that have actually changed ([#10415](https://github.com/sveltejs/svelte/pull/10415))
+
+- fix: correctly determine binding scope of `let:` directives ([#10395](https://github.com/sveltejs/svelte/pull/10395))
+
+- fix: run `onDestroy` callbacks during SSR ([#10297](https://github.com/sveltejs/svelte/pull/10297))
+
+## 5.0.0-next.48
+
+### Patch Changes
+
+- chore: bump zimmerframe to fix bugs introduced in previous version ([#10405](https://github.com/sveltejs/svelte/pull/10405))
+
+## 5.0.0-next.47
+
+### Patch Changes
+
+- chore: bump zimmerframe to resolve AST-traversal-related bugs ([`b63ab91c7b92ecec6e7e939d6d509fc3008cf048`](https://github.com/sveltejs/svelte/commit/b63ab91c7b92ecec6e7e939d6d509fc3008cf048))
+
+## 5.0.0-next.46
+
+### Patch Changes
+
+- fix: allow `let:` directives on slot elements ([#10391](https://github.com/sveltejs/svelte/pull/10391))
+
+- fix: repair each block length mismatches during hydration ([#10398](https://github.com/sveltejs/svelte/pull/10398))
+
 ## 5.0.0-next.45
 
 ### Patch Changes

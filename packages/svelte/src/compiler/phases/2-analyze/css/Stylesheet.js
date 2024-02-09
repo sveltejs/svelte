@@ -8,7 +8,7 @@ import { push_array } from '../utils/push_array.js';
 import { create_attribute } from '../../nodes.js';
 
 const regex_css_browser_prefix = /^-((webkit)|(moz)|(o)|(ms))-/;
-
+const regex_name_boundary = /^[\s,;}]$/;
 /**
  * @param {string} name
  * @returns {string}
@@ -97,17 +97,14 @@ class Rule {
 	 * @param {import('magic-string').default} code
 	 * @param {string} id
 	 * @param {Map<string, string>} keyframes
-	 * @param {number} max_amount_class_specificity_increased
 	 */
-	transform(code, id, keyframes, max_amount_class_specificity_increased) {
+	transform(code, id, keyframes) {
 		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node)) {
 			return;
 		}
 
-		const attr = `.${id}`;
-		this.selectors.forEach((selector) =>
-			selector.transform(code, attr, max_amount_class_specificity_increased)
-		);
+		const modifier = `.${id}`;
+		this.selectors.forEach((selector) => selector.transform(code, modifier));
 		this.declarations.forEach((declaration) => declaration.transform(code, keyframes));
 	}
 
@@ -123,13 +120,6 @@ class Rule {
 		this.selectors.forEach((selector) => {
 			if (!selector.used) handler(selector);
 		});
-	}
-
-	/** @returns number */
-	get_max_amount_class_specificity_increased() {
-		return Math.max(
-			...this.selectors.map((selector) => selector.get_amount_class_specificity_increased())
-		);
 	}
 
 	/**
@@ -213,20 +203,29 @@ class Declaration {
 	transform(code, keyframes) {
 		const property = this.node.property && remove_css_prefix(this.node.property.toLowerCase());
 		if (property === 'animation' || property === 'animation-name') {
-			const name = /** @type {string} */ (this.node.value)
-				.split(' ')
-				.find((name) => keyframes.has(name));
+			let index = this.node.start + this.node.property.length + 1;
+			let name = '';
 
-			if (name) {
-				const start = code.original.indexOf(
-					name,
-					code.original.indexOf(this.node.property, this.node.start)
-				);
+			while (index < code.original.length) {
+				const character = code.original[index];
 
-				const end = start + name.length;
+				if (regex_name_boundary.test(character)) {
+					const keyframe = keyframes.get(name);
 
-				const keyframe = /** @type {string} */ (keyframes.get(name));
-				code.update(start, end, keyframe);
+					if (keyframe) {
+						code.update(index - name.length, index, keyframe);
+					}
+
+					if (character === ';' || character === '}') {
+						break;
+					}
+
+					name = '';
+				} else {
+					name += character;
+				}
+
+				index++;
 			}
 		}
 	}
@@ -278,9 +277,8 @@ class Atrule {
 	 * @param {import('magic-string').default} code
 	 * @param {string} id
 	 * @param {Map<string, string>} keyframes
-	 * @param {number} max_amount_class_specificity_increased
 	 */
-	transform(code, id, keyframes, max_amount_class_specificity_increased) {
+	transform(code, id, keyframes) {
 		if (is_keyframes_node(this.node)) {
 			let start = this.node.start + this.node.name.length + 1;
 			while (code.original[start] === ' ') start += 1;
@@ -300,7 +298,7 @@ class Atrule {
 			}
 		}
 		this.children.forEach((child) => {
-			child.transform(code, id, keyframes, max_amount_class_specificity_increased);
+			child.transform(code, id, keyframes);
 		});
 	}
 
@@ -317,13 +315,6 @@ class Atrule {
 		this.children.forEach((child) => {
 			child.warn_on_unused_selector(handler);
 		});
-	}
-
-	/** @returns {number} */
-	get_max_amount_class_specificity_increased() {
-		return Math.max(
-			...this.children.map((rule) => rule.get_max_amount_class_specificity_increased())
-		);
 	}
 
 	/**
@@ -508,12 +499,8 @@ export default class Stylesheet {
 			}
 		});
 
-		const max = Math.max(
-			...this.children.map((rule) => rule.get_max_amount_class_specificity_increased())
-		);
-
 		for (const child of this.children) {
-			child.transform(code, this.id, this.keyframes, max);
+			child.transform(code, this.id, this.keyframes);
 		}
 
 		code.remove(0, this.ast.content.start);

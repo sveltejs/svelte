@@ -485,5 +485,7 @@ declare module 'estree' {
 		start?: number;
 		/** Added by the Svelte parser */
 		end?: number;
+		/** Added by acorn-typescript */
+		typeAnnotation?: any;
 	}
 }

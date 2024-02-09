@@ -99,8 +99,8 @@ importers:
         specifier: ^0.30.5
         version: 0.30.5
       zimmerframe:
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.1.2
+        version: 1.1.2
     devDependencies:
       '@jridgewell/trace-mapping':
         specifier: ^0.3.22
@@ -244,8 +244,8 @@ importers:
         specifier: ^2.1.0
         version: 2.2.0(svelte@4.2.9)
       zimmerframe:
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.1.1
+        version: 1.1.1
     devDependencies:
       '@fontsource/fira-mono':
         specifier: ^5.0.8
@@ -8645,8 +8645,12 @@ packages:
     resolution: {integrity: sha512-N+d4UJSJbt/R3wqY7Coqs5pcV0aUj2j9IaQ3rNj9bVCLld8tTGKRa2USARjnvZJWVx1NDmQev8EknoczaOQDOA==}
     dev: true
 
-  /zimmerframe@1.1.0:
-    resolution: {integrity: sha512-+AmV37r9NPUy7KcuG0Fde9AAFSD88kN5pnqvD7Pkp5WLLK0jct7hAtIDXXFDCRk3l5Mc1r2Sth3gfP2ZLE+/Qw==}
+  /zimmerframe@1.1.1:
+    resolution: {integrity: sha512-3g7WlErCAuBSemgv6ubMdoO5hHC4roKYgJdZkFT2P5rtQGf3FaBtt/iUVYV+6pVRmup9spHL9dDmBlFhQAq19w==}
+    dev: false
+
+  /zimmerframe@1.1.2:
+    resolution: {integrity: sha512-rAbqEGa8ovJy4pyBxZM70hg4pE6gDgaQ0Sl9M3enG3I0d6H4XSAM3GeNGLKnsBpuijUow064sf7ww1nutC5/3w==}
     dev: false
 
   /zod-validation-error@3.0.0(zod@3.22.4):

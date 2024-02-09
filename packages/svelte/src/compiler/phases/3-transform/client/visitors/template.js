@@ -749,7 +749,7 @@ function serialize_inline_component(node, component_name, context) {
 	const props_and_spreads = [];
 
 	/** @type {import('estree').ExpressionStatement[]} */
-	const default_lets = [];
+	const lets = [];
 
 	/** @type {Record<string, import('#compiler').TemplateNode[]>} */
 	const children = {};
@@ -764,6 +764,12 @@ function serialize_inline_component(node, component_name, context) {
 	let bind_this = null;
 
 	/**
+	 * If this component has a slot property, it is a named slot within another component. In this case
+	 * the slot scope applies to the component itself, too, and not just its children.
+	 */
+	let slot_scope_applies_to_itself = false;
+
+	/**
 	 * @param {import('estree').Property} prop
 	 */
 	function push_prop(prop) {
@@ -775,12 +781,9 @@ function serialize_inline_component(node, component_name, context) {
 			props_and_spreads.push(props);
 		}
 	}
-
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
-			default_lets.push(
-				/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute))
-			);
+			lets.push(/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute)));
 		} else if (attribute.type === 'OnDirective') {
 			events[attribute.name] ||= [];
 			let handler = serialize_event_handler(attribute, context);
@@ -809,6 +812,10 @@ function serialize_inline_component(node, component_name, context) {
 					b.init(attribute.name, serialize_attribute_value(attribute.value, context)[1])
 				);
 				continue;
+			}
+
+			if (attribute.name === 'slot') {
+				slot_scope_applies_to_itself = true;
 			}
 
 			const [, value] = serialize_attribute_value(attribute.value, context);
@@ -859,6 +866,10 @@ function serialize_inline_component(node, component_name, context) {
 				);
 			}
 		}
+	}
+
+	if (slot_scope_applies_to_itself) {
+		context.state.init.push(...lets);
 	}
 
 	if (Object.keys(events).length > 0) {
@@ -916,7 +927,7 @@ function serialize_inline_component(node, component_name, context) {
 
 		const slot_fn = b.arrow(
 			[b.id('$$anchor'), b.id('$$slotProps')],
-			b.block([...(slot_name === 'default' ? default_lets : []), ...body])
+			b.block([...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []), ...body])
 		);
 
 		if (slot_name === 'default') {
@@ -1052,7 +1063,10 @@ function create_block(parent, name, nodes, context) {
 		after_update: [],
 		template: [],
 		metadata: {
-			template_needs_import_node: false,
+			context: {
+				template_needs_import_node: false,
+				template_contains_script_tag: false
+			},
 			namespace,
 			bound_contenteditable: context.state.metadata.bound_contenteditable
 		}
@@ -1072,10 +1086,14 @@ function create_block(parent, name, nodes, context) {
 			node: id
 		});
 
-		const callee = namespace === 'svg' ? '$.svg_template' : '$.template';
-
 		context.state.hoisted.push(
-			b.var(template_name, b.call(callee, b.template([b.quasi(state.template.join(''), true)], [])))
+			b.var(
+				template_name,
+				b.call(
+					get_template_function(namespace, state),
+					b.template([b.quasi(state.template.join(''), true)], [])
+				)
+			)
 		);
 
 		body.push(
@@ -1084,7 +1102,7 @@ function create_block(parent, name, nodes, context) {
 				b.call(
 					'$.open',
 					b.id('$$anchor'),
-					b.literal(!state.metadata.template_needs_import_node),
+					b.literal(!state.metadata.context.template_needs_import_node),
 					template_name
 				)
 			),
@@ -1125,12 +1143,14 @@ function create_block(parent, name, nodes, context) {
 				// special case — we can use `$.comment` instead of creating a unique template
 				body.push(b.var(id, b.call('$.comment', b.id('$$anchor'))));
 			} else {
-				const callee = namespace === 'svg' ? '$.svg_template' : '$.template';
-
 				state.hoisted.push(
 					b.var(
 						template_name,
-						b.call(callee, b.template([b.quasi(state.template.join(''), true)], []), b.true)
+						b.call(
+							get_template_function(namespace, state),
+							b.template([b.quasi(state.template.join(''), true)], []),
+							b.true
+						)
 					)
 				);
 
@@ -1140,7 +1160,7 @@ function create_block(parent, name, nodes, context) {
 						b.call(
 							'$.open_frag',
 							b.id('$$anchor'),
-							b.literal(!state.metadata.template_needs_import_node),
+							b.literal(!state.metadata.context.template_needs_import_node),
 							template_name
 						)
 					)
@@ -1202,6 +1222,23 @@ function create_block(parent, name, nodes, context) {
 	}
 
 	return body;
+}
+
+/**
+ *
+ * @param {import('#compiler').Namespace} namespace
+ * @param {import('../types.js').ComponentClientTransformState} state
+ * @returns
+ */
+function get_template_function(namespace, state) {
+	const contains_script_tag = state.metadata.context.template_contains_script_tag;
+	return namespace === 'svg'
+		? contains_script_tag
+			? '$.svg_template_with_script'
+			: '$.svg_template'
+		: contains_script_tag
+			? '$.template_with_script'
+			: '$.template';
 }
 
 /**
@@ -1834,6 +1871,9 @@ export const template_visitors = {
 			context.state.template.push('<!>');
 			return;
 		}
+		if (node.name === 'script') {
+			context.state.metadata.context.template_contains_script_tag = true;
+		}
 
 		const metadata = context.state.metadata;
 		const child_metadata = {
@@ -1872,7 +1912,7 @@ export const template_visitors = {
 			// custom element until the template is connected to the dom, which would
 			// cause problems when setting properties on the custom element.
 			// Therefore we need to use importNode instead, which doesn't have this caveat.
-			metadata.template_needs_import_node = true;
+			metadata.context.template_needs_import_node = true;
 		}
 
 		for (const attribute of node.attributes) {
@@ -2913,6 +2953,9 @@ export const template_visitors = {
 		/** @type {import('estree').Expression[]} */
 		const spreads = [];
 
+		/** @type {import('estree').ExpressionStatement[]} */
+		const lets = [];
+
 		let is_default = true;
 
 		/** @type {import('estree').Expression} */
@@ -2928,15 +2971,20 @@ export const template_visitors = {
 				if (attribute.name === 'name') {
 					name = value;
 					is_default = false;
-				} else {
+				} else if (attribute.name !== 'slot') {
 					if (attribute.metadata.dynamic) {
 						props.push(b.get(attribute.name, [b.return(value)]));
 					} else {
 						props.push(b.init(attribute.name, value));
 					}
 				}
+			} else if (attribute.type === 'LetDirective') {
+				lets.push(/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute)));
 			}
 		}
+
+		// Let bindings first, they can be used on attributes
+		context.state.init.push(...lets);
 
 		const props_expression =
 			spreads.length === 0

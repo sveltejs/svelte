@@ -1,5 +1,5 @@
 import { error } from '../../errors.js';
-import { extract_identifiers, get_parent, is_text_attribute } from '../../utils/ast.js';
+import { extract_identifiers, get_parent, is_text_attribute, object } from '../../utils/ast.js';
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { disallowed_parapgraph_contents, interactive_elements } from '../1-parse/utils/html.js';
@@ -36,6 +36,10 @@ function validate_component(node, context) {
 			(attribute.modifiers.length > 1 || attribute.modifiers.some((m) => m !== 'once'))
 		) {
 			error(attribute, 'invalid-event-modifier');
+		}
+
+		if (attribute.type === 'Attribute' && attribute.name === 'slot') {
+			validate_slot_attribute(context, attribute);
 		}
 	}
 
@@ -330,17 +334,16 @@ function is_tag_valid_with_parent(tag, parent_tag) {
  * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
  */
 const validation = {
+	AssignmentExpression(node, context) {
+		validate_assignment(node, node.left, context.state);
+	},
 	BindDirective(node, context) {
 		validate_no_const_assignment(node, node.expression, context.state.scope, true);
 
 		const assignee = node.expression;
-		let left = assignee;
+		const left = object(assignee);
 
-		while (left.type === 'MemberExpression') {
-			left = /** @type {import('estree').MemberExpression} */ (left.object);
-		}
-
-		if (left.type !== 'Identifier') {
+		if (left === null) {
 			error(node, 'invalid-binding-expression');
 		}
 
@@ -364,6 +367,10 @@ const validation = {
 
 			if (binding.kind === 'derived') {
 				error(node.expression, 'invalid-derived-binding');
+			}
+
+			if (context.state.analysis.runes && binding.kind === 'each') {
+				error(node, 'invalid-each-assignment');
 			}
 
 			// TODO handle mutations of non-state/props in runes mode
@@ -488,12 +495,27 @@ const validation = {
 			error(node, 'invalid-const-placement');
 		}
 	},
+	ImportDeclaration(node, context) {
+		if (node.source.value === 'svelte' && context.state.analysis.runes) {
+			for (const specifier of node.specifiers) {
+				if (specifier.type === 'ImportSpecifier') {
+					if (
+						specifier.imported.name === 'beforeUpdate' ||
+						specifier.imported.name === 'afterUpdate'
+					) {
+						error(specifier, 'invalid-runes-mode-import', specifier.imported.name);
+					}
+				}
+			}
+		}
+	},
 	LetDirective(node, context) {
 		const parent = context.path.at(-1);
 		if (
 			parent === undefined ||
 			(parent.type !== 'Component' &&
 				parent.type !== 'RegularElement' &&
+				parent.type !== 'SlotElement' &&
 				parent.type !== 'SvelteElement' &&
 				parent.type !== 'SvelteComponent' &&
 				parent.type !== 'SvelteSelf' &&
@@ -609,7 +631,7 @@ const validation = {
 						error(attribute, 'invalid-slot-name', true);
 					}
 				}
-			} else if (attribute.type !== 'SpreadAttribute') {
+			} else if (attribute.type !== 'SpreadAttribute' && attribute.type !== 'LetDirective') {
 				error(attribute, 'invalid-slot-element-attribute');
 			}
 		}
@@ -635,6 +657,9 @@ const validation = {
 		if (child) {
 			error(child, 'invalid-title-content');
 		}
+	},
+	UpdateExpression(node, context) {
+		validate_assignment(node, node.argument, context.state);
 	},
 	ExpressionTag(node, context) {
 		if (!node.parent) return;
@@ -690,6 +715,10 @@ export const validation_legacy = merge(validation, a11y_validators, {
 function validate_export(node, scope, name) {
 	const binding = scope.get(name);
 	if (!binding) return;
+
+	if (binding.kind === 'prop') {
+		error(node, 'invalid-prop-export');
+	}
 
 	if (binding.kind === 'derived') {
 		error(node, 'invalid-derived-export');
@@ -885,24 +914,28 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 function validate_assignment(node, argument, state) {
 	validate_no_const_assignment(node, argument, state.scope, false);
 
-	let left = /** @type {import('estree').Expression | import('estree').Super} */ (argument);
-
-	if (left.type === 'Identifier') {
-		const binding = state.scope.get(left.name);
+	if (state.analysis.runes && argument.type === 'Identifier') {
+		const binding = state.scope.get(argument.name);
 		if (binding?.kind === 'derived') {
 			error(node, 'invalid-derived-assignment');
 		}
+
+		if (binding?.kind === 'each') {
+			error(node, 'invalid-each-assignment');
+		}
 	}
+
+	let object = /** @type {import('estree').Expression | import('estree').Super} */ (argument);
 
 	/** @type {import('estree').Expression | import('estree').PrivateIdentifier | null} */
 	let property = null;
 
-	while (left.type === 'MemberExpression') {
-		property = left.property;
-		left = left.object;
+	while (object.type === 'MemberExpression') {
+		property = object.property;
+		object = object.object;
 	}
 
-	if (left.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
+	if (object.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
 		if (state.private_derived_state.includes(property.name)) {
 			error(node, 'invalid-derived-assignment');
 		}
@@ -910,22 +943,24 @@ function validate_assignment(node, argument, state) {
 }
 
 export const validation_runes = merge(validation, a11y_validators, {
-	AssignmentExpression(node, { state, path }) {
-		const parent = path.at(-1);
-		if (parent && parent.type === 'ConstTag') return;
-		validate_assignment(node, node.left, state);
-	},
-	UpdateExpression(node, { state }) {
-		validate_assignment(node, node.argument, state);
-	},
 	LabeledStatement(node, { path }) {
 		if (node.label.name !== '$' || path.at(-1)?.type !== 'Program') return;
 		error(node, 'invalid-legacy-reactive-statement');
 	},
-	ExportNamedDeclaration(node, { state }) {
+	ExportNamedDeclaration(node, { state, next }) {
 		if (node.declaration?.type !== 'VariableDeclaration') return;
-		if (node.declaration.kind !== 'let') return;
+
+		// visit children, so bindings are correctly initialised
+		next();
+
+		for (const declarator of node.declaration.declarations) {
+			for (const id of extract_identifiers(declarator.id)) {
+				validate_export(node, state.scope, id.name);
+			}
+		}
+
 		if (state.analysis.instance.scope !== state.scope) return;
+		if (node.declaration.kind !== 'let') return;
 		error(node, 'invalid-legacy-export');
 	},
 	ExportSpecifier(node, { state }) {

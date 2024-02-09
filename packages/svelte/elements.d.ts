@@ -978,6 +978,7 @@ export interface HTMLImgAttributes extends HTMLAttributes<HTMLImageElement> {
 	alt?: string | undefined | null;
 	crossorigin?: 'anonymous' | 'use-credentials' | '' | undefined | null;
 	decoding?: 'async' | 'auto' | 'sync' | undefined | null;
+	fetchpriority?: 'auto' | 'high' | 'low' | undefined | null;
 	height?: number | string | undefined | null;
 	ismap?: boolean | undefined | null;
 	loading?: 'eager' | 'lazy' | undefined | null;
@@ -1098,6 +1099,7 @@ export interface HTMLLinkAttributes extends HTMLAttributes<HTMLLinkElement> {
 	sizes?: string | undefined | null;
 	type?: string | undefined | null;
 	charset?: string | undefined | null;
+	fetchpriority?: 'auto' | 'high' | 'low' | undefined | null;
 }
 
 export interface HTMLMapAttributes extends HTMLAttributes<HTMLMapElement> {
@@ -1232,6 +1234,7 @@ export interface HTMLScriptAttributes extends HTMLAttributes<HTMLScriptElement> 
 	charset?: string | undefined | null;
 	crossorigin?: string | undefined | null;
 	defer?: boolean | undefined | null;
+	fetchpriority?: 'auto' | 'high' | 'low' | undefined | null;
 	integrity?: string | undefined | null;
 	nomodule?: boolean | undefined | null;
 	nonce?: string | undefined | null;

@@ -13,9 +13,9 @@ import { error } from '../../../errors.js';
 
 /**
  * @param {import('../index.js').Parser} parser
- * @returns {any}
+ * @returns {import('estree').Pattern}
  */
-export default function read_context(parser) {
+export default function read_pattern(parser) {
 	const start = parser.index;
 	let i = parser.index;
 

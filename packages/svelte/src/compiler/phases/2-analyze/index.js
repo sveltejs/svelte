@@ -1014,7 +1014,7 @@ const common_visitors = {
 		// entries as keys.
 		i = context.path.length;
 		const each_blocks = [];
-		const expression_ids = extract_all_identifiers_from_expression(node.expression);
+		const [keypath, expression_ids] = extract_all_identifiers_from_expression(node.expression);
 		let ids = expression_ids;
 		while (i--) {
 			const parent = context.path[i];
@@ -1027,7 +1027,7 @@ const common_visitors = {
 					}
 					each_blocks.push(parent);
 					ids = ids.filter((id) => !references.includes(id));
-					ids.push(...extract_all_identifiers_from_expression(parent.expression));
+					ids.push(...extract_all_identifiers_from_expression(parent.expression)[1]);
 				}
 			}
 		}
@@ -1038,8 +1038,8 @@ const common_visitors = {
 		//  but this is a limitation of the current static analysis we do; it also never worked in Svelte 4)
 		const bindings = expression_ids.map((id) => context.state.scope.get(id.name));
 		let group_name;
-		outer: for (const [b, group] of context.state.analysis.binding_groups) {
-			if (b.length !== bindings.length) continue;
+		outer: for (const [[key, b], group] of context.state.analysis.binding_groups) {
+			if (b.length !== bindings.length || key !== keypath) continue;
 			for (let i = 0; i < bindings.length; i++) {
 				if (bindings[i] !== b[i]) continue outer;
 			}
@@ -1048,7 +1048,7 @@ const common_visitors = {
 
 		if (!group_name) {
 			group_name = context.state.scope.root.unique('binding_group');
-			context.state.analysis.binding_groups.set(bindings, group_name);
+			context.state.analysis.binding_groups.set([keypath, bindings], group_name);
 		}
 
 		node.metadata = {

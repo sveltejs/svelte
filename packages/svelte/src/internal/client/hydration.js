@@ -1,12 +1,13 @@
 // Handle hydration
 
+import { empty } from './operations.js';
 import { schedule_task } from './runtime.js';
 
-/** @type {null | Array<Text | Comment | Element>} */
+/** @type {null | Array<import('./types.js').TemplateNode>} */
 export let current_hydration_fragment = null;
 
 /**
- * @param {null | Array<Text | Comment | Element>} fragment
+ * @param {null | Array<import('./types.js').TemplateNode>} fragment
  * @returns {void}
  */
 export function set_current_hydration_fragment(fragment) {
@@ -16,10 +17,11 @@ export function set_current_hydration_fragment(fragment) {
 /**
  * Returns all nodes between the first `<!--ssr:...-->` comment tag pair encountered.
  * @param {Node | null} node
- * @returns {Array<Text | Comment | Element> | null}
+ * @param {boolean} [insert_text] Whether to insert an empty text node if the fragment is empty
+ * @returns {Array<import('./types.js').TemplateNode> | null}
  */
-export function get_hydration_fragment(node) {
-	/** @type {Array<Text | Comment | Element>} */
+export function get_hydration_fragment(node, insert_text = false) {
+	/** @type {Array<import('./types.js').TemplateNode>} */
 	const fragment = [];
 
 	/** @type {null | Node} */
@@ -37,6 +39,11 @@ export function get_hydration_fragment(node) {
 				if (target_depth === null) {
 					target_depth = depth;
 				} else if (depth === target_depth) {
+					if (insert_text && fragment.length === 0) {
+						const text = empty();
+						fragment.push(text);
+						/** @type {Node} */ (current_node.parentNode).insertBefore(text, current_node);
+					}
 					return fragment;
 				} else {
 					fragment.push(/** @type {Text | Comment | Element} */ (current_node));
