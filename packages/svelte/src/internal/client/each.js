@@ -13,9 +13,8 @@ import {
 	hydrate_block_anchor,
 	set_current_hydration_fragment
 } from './hydration.js';
-import { clear_text_content, map_get, map_set } from './operations.js';
+import { clear_text_content, empty, map_get, map_set } from './operations.js';
 import { insert, remove } from './reconciler.js';
-import { empty } from './render.js';
 import {
 	destroy_signal,
 	execute_effect,
