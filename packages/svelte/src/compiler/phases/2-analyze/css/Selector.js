@@ -70,9 +70,9 @@ export default class Selector {
 
 	/**
 	 * @param {import('magic-string').default} code
-	 * @param {string} attr
+	 * @param {string} modifier
 	 */
-	transform(code, attr) {
+	transform(code, modifier) {
 		/** @param {import('#compiler').Css.SimpleSelector} selector */
 		function remove_global_pseudo_class(selector) {
 			code
@@ -90,20 +90,24 @@ export default class Selector {
 					remove_global_pseudo_class(selector);
 				}
 			}
+
 			let i = block.selectors.length;
 			while (i--) {
 				const selector = block.selectors[i];
+
 				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
 					if (selector.name !== 'root' && selector.name !== 'host') {
 						if (i === 0) code.prependRight(selector.start, modifier);
 					}
 					continue;
 				}
+
 				if (selector.type === 'TypeSelector' && selector.name === '*') {
 					code.update(selector.start, selector.end, modifier);
 				} else {
 					code.appendLeft(selector.end, modifier);
 				}
+
 				break;
 			}
 		}
@@ -115,9 +119,10 @@ export default class Selector {
 			}
 
 			if (block.should_encapsulate) {
-				const modifier = first ? attr : `:where(${attr})`;
-				encapsulate_block(block, modifier);
-
+				// for the first occurrence, we use a classname selector, so that every
+				// encapsulated selector gets a +0-1-0 specificity bump. thereafter,
+				// we use a `:where` selector, which does not affect specificity
+				encapsulate_block(block, first ? modifier : `:where(${modifier})`);
 				first = false;
 			}
 		}

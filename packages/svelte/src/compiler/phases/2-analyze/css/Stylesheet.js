@@ -103,8 +103,8 @@ class Rule {
 			return;
 		}
 
-		const attr = `.${id}`;
-		this.selectors.forEach((selector) => selector.transform(code, attr));
+		const modifier = `.${id}`;
+		this.selectors.forEach((selector) => selector.transform(code, modifier));
 		this.declarations.forEach((declaration) => declaration.transform(code, keyframes));
 	}
 
