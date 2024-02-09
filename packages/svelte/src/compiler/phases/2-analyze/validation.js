@@ -1,10 +1,21 @@
 import { error } from '../../errors.js';
-import { extract_identifiers, get_parent, is_text_attribute, object } from '../../utils/ast.js';
+import {
+	extract_identifiers,
+	get_parent,
+	is_expression_attribute,
+	is_text_attribute,
+	object
+} from '../../utils/ast.js';
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { disallowed_parapgraph_contents, interactive_elements } from '../1-parse/utils/html.js';
 import { binding_properties } from '../bindings.js';
-import { ContentEditableBindings, EventModifiers, SVGElements } from '../constants.js';
+import {
+	ContentEditableBindings,
+	EventModifiers,
+	SVGElements,
+	global_events
+} from '../constants.js';
 import { is_custom_element_node } from '../nodes.js';
 import {
 	regex_illegal_attribute_character,
@@ -66,12 +77,24 @@ function validate_element(node, context) {
 			}
 
 			if (attribute.name.startsWith('on') && attribute.name.length > 2) {
-				if (
-					attribute.value === true ||
-					is_text_attribute(attribute) ||
-					attribute.value.length > 1
-				) {
+				if (!is_expression_attribute(attribute)) {
 					error(attribute, 'invalid-event-attribute-value');
+				} else {
+					const value = attribute.value[0].expression;
+					if (
+						value.type === 'Identifier' &&
+						value.name === attribute.name &&
+						!context.state.scope.get(value.name) &&
+						global_events.has(attribute.name)
+					) {
+						warn(
+							context.state.analysis.warnings,
+							attribute,
+							context.path,
+							'global-event-reference',
+							attribute.name
+						);
+					}
 				}
 			}
 

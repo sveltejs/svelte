@@ -1,0 +1,26 @@
+[
+	{
+		"code": "global-event-reference",
+		"message": "You are referencing the global property window.onkeydown. Did you forget to declare a variable with that name?",
+		"start": {
+			"column": 8,
+			"line": 11
+		},
+		"end": {
+			"column": 19,
+			"line": 11
+		}
+	},
+	{
+		"code": "global-event-reference",
+		"message": "You are referencing the global property window.onkeydown. Did you forget to declare a variable with that name?",
+		"start": {
+			"column": 8,
+			"line": 12
+		},
+		"end": {
+			"column": 29,
+			"line": 12
+		}
+	}
+]
