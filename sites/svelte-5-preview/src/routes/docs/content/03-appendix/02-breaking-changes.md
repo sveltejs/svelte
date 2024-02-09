@@ -89,6 +89,7 @@ To avoid issues caused by unpredictable specificity changes, scoped CSS selector
 In the event that you need to support ancient browsers that don't implement `:where`, you can manually alter the emitted CSS, at the cost of unpredictable specificity changes:
 
 ```js
+// @errors: 2552
 css = css.replace(/:where\((.+?)\)/, '$1');
 ```
 
