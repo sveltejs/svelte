@@ -1,7 +1,7 @@
 button.svelte-xyz {
     color: red;
 
-    + .abc.svelte-xyz {
+    + .abc:where(.svelte-xyz) {
         color: purple;
     }
 

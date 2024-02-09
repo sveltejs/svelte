@@ -4,6 +4,7 @@ import {
 	child,
 	clone_node,
 	create_element,
+	empty,
 	init_operations,
 	map_get,
 	map_set,
@@ -74,11 +75,6 @@ const all_registerd_events = new Set();
 
 /** @type {Set<(events: Array<string>) => void>} */
 const root_event_handles = new Set();
-
-/** @returns {Text} */
-export function empty() {
-	return document.createTextNode('');
-}
 
 /**
  * @param {string} html
@@ -212,11 +208,22 @@ const space_template = template(' ', false);
 const comment_template = template('<!>', true);
 
 /**
- * @param {null | Text | Comment | Element} anchor
+ * @param {Text | Comment | Element | null} anchor
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function space(anchor) {
-	return open(anchor, true, space_template);
+	/** @type {Node | null} */
+	var node = /** @type {any} */ (open(anchor, true, space_template));
+	// if an {expression} is empty during SSR, there might be no
+	// text node to hydrate (or an anchor comment is falsely detected instead)
+	//  — we must therefore create one
+	if (current_hydration_fragment !== null && node?.nodeType !== 3) {
+		node = empty();
+		// @ts-ignore in this case the anchor should always be a comment,
+		// if not something more fundamental is wrong and throwing here is better to bail out early
+		anchor.parentElement.insertBefore(node, anchor);
+	}
+	return node;
 }
 
 /**
@@ -228,6 +235,8 @@ export function comment(anchor) {
 }
 
 /**
+ * Assign the created (or in hydration mode, traversed) dom elements to the current block
+ * and insert the elements into the dom (in client mode).
  * @param {Element | Text} dom
  * @param {boolean} is_fragment
  * @param {null | Text | Comment | Element} anchor
@@ -2866,7 +2875,9 @@ export function mount(component, options) {
 	const container = options.target;
 	const block = create_root_block(options.intro || false);
 	const first_child = /** @type {ChildNode} */ (container.firstChild);
-	const hydration_fragment = get_hydration_fragment(first_child);
+	// Call with insert_text == true to prevent empty {expressions} resulting in an empty
+	// fragment array, resulting in a hydration error down the line
+	const hydration_fragment = get_hydration_fragment(first_child, true);
 	const previous_hydration_fragment = current_hydration_fragment;
 
 	/** @type {Exports} */

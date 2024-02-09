@@ -131,10 +131,9 @@ export default class Selector {
 
 	/**
 	 * @param {import('magic-string').default} code
-	 * @param {string} attr
-	 * @param {number} max_amount_class_specificity_increased
+	 * @param {string} modifier
 	 */
-	transform(code, attr, max_amount_class_specificity_increased) {
+	transform(code, modifier) {
 		/** @param {import('#compiler').Css.SimpleSelector} selector */
 		function remove_global_pseudo_class(selector) {
 			code
@@ -144,9 +143,9 @@ export default class Selector {
 
 		/**
 		 * @param {RelativeSelector} relative_selector
-		 * @param {string} attr
+		 * @param {string} modifier
 		 */
-		function encapsulate_block(relative_selector, attr) {
+		function encapsulate_block(relative_selector, modifier) {
 			for (const selector of relative_selector.compound.selectors) {
 				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
 					remove_global_pseudo_class(selector);
@@ -168,42 +167,37 @@ export default class Selector {
 
 				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
 					if (!relative_selector.root && !relative_selector.host) {
-						if (i === 0) code.prependRight(selector.start, attr);
+						if (i === 0) code.prependRight(selector.start, modifier);
 					}
 					continue;
 				}
+
 				if (selector.type === 'TypeSelector' && selector.name === '*') {
-					code.update(selector.start, selector.end, attr);
+					code.update(selector.start, selector.end, modifier);
 				} else {
-					code.appendLeft(selector.end, attr);
+					code.appendLeft(selector.end, modifier);
 				}
+
 				break;
 			}
 		}
 
+		let first = true;
 		for (const complex_selector of this.selector_list) {
-			let amount_class_specificity_to_increase =
-				max_amount_class_specificity_increased -
-				complex_selector.filter((selector) => selector.should_encapsulate).length;
-
-			complex_selector.map((relative_selector, index) => {
+			for (const relative_selector of complex_selector) {
 				if (relative_selector.global) {
 					// Remove the global pseudo class from the selector
 					remove_global_pseudo_class(relative_selector.compound.selectors[0]);
 				}
 
-				let amount =
-					complex_selector
-						// Ignore invisible selectors because they are not part of the specificity
-						.filter((selector) => !selector.contains_invisible_selectors).length - 1;
-
 				if (relative_selector.should_encapsulate) {
-					encapsulate_block(
-						relative_selector,
-						index === amount ? attr.repeat(amount_class_specificity_to_increase + 1) : attr
-					);
+					// for the first occurrence, we use a classname selector, so that every
+					// encapsulated selector gets a +0-1-0 specificity bump. thereafter,
+					// we use a `:where` selector, which does not affect specificity
+					encapsulate_block(relative_selector, first ? modifier : `:where(${modifier})`);
+					first = false;
 				}
-			});
+			}
 		}
 	}
 
@@ -291,12 +285,6 @@ export default class Selector {
 				}
 			}
 		}
-	}
-
-	get_amount_class_specificity_increased() {
-		// Is this right? Should we be counting the amount of blocks that are visible?
-		// Or should we be counting the amount of selectors that are visible?
-		return this.selector_list[0].filter((selector) => selector.should_encapsulate).length;
 	}
 }
 

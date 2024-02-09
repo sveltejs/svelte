@@ -265,6 +265,7 @@ export function client_component(source, analysis, options) {
 		...legacy_reactive_declarations,
 		...group_binding_declarations,
 		.../** @type {import('estree').Statement[]} */ (instance.body),
+		analysis.runes ? b.empty : b.stmt(b.call('$.init')),
 		.../** @type {import('estree').Statement[]} */ (template.body),
 		...static_bindings
 	]);

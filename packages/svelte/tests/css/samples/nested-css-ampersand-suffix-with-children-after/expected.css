@@ -1,7 +1,7 @@
 c.svelte-xyz {
     color: red;
 
-    b.svelte-xyz & x.svelte-xyz {
+    b:where(.svelte-xyz) & x:where(.svelte-xyz) {
         color: yellow;
     }
 

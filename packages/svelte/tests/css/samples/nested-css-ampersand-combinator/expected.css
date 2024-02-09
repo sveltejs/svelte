@@ -1,17 +1,17 @@
 button.svelte-xyz {
     color: red;
-    & > div.svelte-xyz {
+    & > div:where(.svelte-xyz) {
         color: blue;
     }
-    & .foo.svelte-xyz {
+    & .foo:where(.svelte-xyz) {
         color: yellow;
     }
     &:last-child {
         color: green;
     }
 
-    & .bar.svelte-xyz {
-        & .hello.svelte-xyz {
+    & .bar:where(.svelte-xyz) {
+        & .hello:where(.svelte-xyz) {
             color: orange;
         }
     }
