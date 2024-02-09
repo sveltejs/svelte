@@ -1,5 +1,5 @@
 import { error } from '../../errors.js';
-import { extract_identifiers, get_parent, is_text_attribute } from '../../utils/ast.js';
+import { extract_identifiers, get_parent, is_text_attribute, object } from '../../utils/ast.js';
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { disallowed_parapgraph_contents, interactive_elements } from '../1-parse/utils/html.js';
@@ -341,13 +341,9 @@ const validation = {
 		validate_no_const_assignment(node, node.expression, context.state.scope, true);
 
 		const assignee = node.expression;
-		let left = assignee;
+		const left = object(assignee);
 
-		while (left.type === 'MemberExpression') {
-			left = /** @type {import('estree').MemberExpression} */ (left.object);
-		}
-
-		if (left.type !== 'Identifier') {
+		if (left === null) {
 			error(node, 'invalid-binding-expression');
 		}
 
@@ -371,6 +367,10 @@ const validation = {
 
 			if (binding.kind === 'derived') {
 				error(node.expression, 'invalid-derived-binding');
+			}
+
+			if (context.state.analysis.runes && binding.kind === 'each') {
+				error(node, 'invalid-each-assignment');
 			}
 
 			// TODO handle mutations of non-state/props in runes mode
