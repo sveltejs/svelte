@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.52
+
+### Patch Changes
+
+- fix: use hybrid scoping strategy for consistent specificity increase ([#10443](https://github.com/sveltejs/svelte/pull/10443))
+
+- fix: throw validation error when binding to each argument in runes mode ([#10441](https://github.com/sveltejs/svelte/pull/10441))
+
+- fix: make CSS animation declaration transformation more robust ([#10432](https://github.com/sveltejs/svelte/pull/10432))
+
+- fix: handle sole empty expression tags ([#10433](https://github.com/sveltejs/svelte/pull/10433))
+
 ## 5.0.0-next.51
 
 ### Patch Changes
