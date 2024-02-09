@@ -207,7 +207,8 @@ const runes = {
 	/** @param {string} name */
 	'invalid-runes-mode-import': (name) => `${name} cannot be used in runes mode`,
 	'duplicate-props-rune': () => `Cannot use $props() more than once`,
-	'invalid-each-assignment': () => `Cannot reassign each block argument in runes mode`
+	'invalid-each-assignment': () =>
+		`Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. 'array[i] = value' instead of 'entry = value')`
 };
 
 /** @satisfies {Errors} */
