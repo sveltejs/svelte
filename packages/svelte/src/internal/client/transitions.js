@@ -10,8 +10,7 @@ import {
 	ROOT_BLOCK
 } from './block.js';
 import { destroy_each_item_block, get_first_element } from './each.js';
-import { append_child } from './operations.js';
-import { empty } from './render.js';
+import { append_child, empty } from './operations.js';
 import {
 	current_block,
 	current_effect,
