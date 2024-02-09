@@ -206,7 +206,7 @@ export function child_frag(node, is_text) {
 			return text;
 		}
 
-		if (first_node) {
+		if (first_node !== null) {
 			return capture_fragment_from_node(first_node);
 		}
 
