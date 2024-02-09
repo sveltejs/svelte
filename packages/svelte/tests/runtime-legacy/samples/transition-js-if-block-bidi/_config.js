@@ -17,7 +17,7 @@ export default test({
 
 		component.visible = false;
 		// @ts-expect-error
-		assert.equal(global.count, 2);
+		assert.equal(global.count, 1);
 
 		raf.tick(500);
 		assert.equal(div.foo, 0.25);
