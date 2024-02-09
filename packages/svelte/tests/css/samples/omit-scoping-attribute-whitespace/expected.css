@@ -1,3 +1,3 @@
-	div.svelte-xyz p.svelte-xyz {
+	div.svelte-xyz p:where(.svelte-xyz) {
 		color: red;
 	}
