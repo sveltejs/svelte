@@ -1091,7 +1091,7 @@ export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
 			if (type === IF_BLOCK) {
 				const condition_effect = block.e;
 				if (condition_effect !== null && block !== current_block) {
-					mark_subtree_inert(condition_effect, inert);
+					mark_subtree_inert(condition_effect, inert, visited_blocks);
 				}
 				const consequent_effect = block.ce;
 				if (consequent_effect !== null && block.v) {
