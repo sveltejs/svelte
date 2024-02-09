@@ -444,23 +444,13 @@ function create_transition(dom, init, direction, effect) {
 						payload.css !== undefined &&
 						/** @type {Animation} */ (animation).effect != null
 					) {
-						const transform = getComputedStyle(dom).transform;
 						const duration = payload.duration ?? 300;
 						const css_fn = payload.css;
 						const easing_fn = payload.easing || linear;
-						const current_time = animation.currentTime;
-
-						const keyframes = create_keyframes(
-							easing_fn,
-							css_fn,
-							current_time,
-							direction,
-							true
-						);
-						animation.duration = current_time;
+						const keyframes = create_keyframes(easing_fn, css_fn, duration, direction, true);
 						// @ts-ignore
 						animation.effect.setKeyframes(keyframes);
-						animation.currentTime = 0;
+						animation.currentTime = duration;
 					}
 					/** @type {Animation | TickAnimation} */ (animation).reverse();
 				} else {
