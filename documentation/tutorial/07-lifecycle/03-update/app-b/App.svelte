@@ -6,7 +6,7 @@
 	let autoscroll;
 
 	beforeUpdate(() => {
-		autoscroll = div && div.offsetHeight + div.scrollTop > div.scrollHeight - 20;
+		autoscroll = div && div.scrollTop + div.clientHeight + 100 >= div.scrollHeight;
 	});
 
 	afterUpdate(() => {
