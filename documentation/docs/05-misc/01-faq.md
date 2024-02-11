@@ -100,7 +100,7 @@ If you need hash-based routing on the client side, check out [svelte-spa-router]
 
 [Routify](https://routify.dev) is another filesystem-based router, similar to SvelteKit's router. Version 3 supports Svelte's native SSR.
 
-[Vite](https://vike.dev/svelte) is another Vite-based router, like SvelteKit's router, but is still experimental.
+[Vike](https://vike.dev/svelte) is another Vite-based router, like SvelteKit's router, but is still experimental.
 
 You can see a [community-maintained list of routers on sveltesociety.dev](https://sveltesociety.dev/components#routers).
 
