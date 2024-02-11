@@ -94,7 +94,7 @@ The official routing library is [SvelteKit](https://kit.svelte.dev/). SvelteKit 
 
 However, you can use any router library. Some framework-agnostic libraries include [navaid](https://github.com/lukeed/navaid); [universal-router](https://github.com/kriasoft/universal-router), which is isomorphic; [Hono](https://hono.dev/), which supports multiple JS runtimes; and [TanStack Router](https://github.com/TanStack/router/tree/beta-agnostic), which is typesafe and supports caching.
 
-If you prefer a declarative HTML approach, there's the isomorphic [svelte-routing](https://github.com/EmilTholin/svelte-routing) library and a fork of it called [svelte-navigator](https://github.com/mefechoel/svelte-navigator) containing some additional functionality.
+If you prefer a declarative HTML approach, the isomorphic [svelte-routing](https://github.com/EmilTholin/svelte-routing) and [svelte-pilot](https://svelte-pilot.github.io/en/link#toc) libraries are available.
 
 If you need hash-based routing on the client side, check out [svelte-spa-router](https://github.com/ItalyPaleAle/svelte-spa-router) or [abstract-state-router](https://github.com/TehShrike/abstract-state-router/).
 
