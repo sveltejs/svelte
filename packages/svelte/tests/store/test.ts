@@ -551,6 +551,22 @@ describe('derived', () => {
 			});
 		});
 	});
+
+	it('only updates once dependents are resolved', () => {
+		const a = writable(1);
+		const b = derived(a, a => a*2);
+		const c = derived([a,b], ([a,b]) => a+b);
+
+		const values: number[] = [];
+
+		const unsubscribe = c.subscribe(c => {
+			values.push(c);
+		});
+
+		a.set(2);
+		a.set(3);
+		assert.deepEqual(values, [3, 6, 9]);
+	});
 });
 
 describe('get', () => {
