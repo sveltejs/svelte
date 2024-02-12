@@ -1,0 +1,13 @@
+[title='{;}'].svelte-xyz {
+	content: "{};[]";
+	/* {} */
+	color: red;
+	foo:where(.svelte-xyz) {
+		color: red;
+		/* [] ; { } */
+		color: green;
+		/* [] { } ; */
+		color: black;
+	}
+	color: red;
+}

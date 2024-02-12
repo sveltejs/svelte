@@ -10,7 +10,6 @@ const REGEX_NTH_OF =
 	/^(even|odd|\+?(\d+|\d*n(\s*[+-]\s*\d+)?)|-\d*n(\s*\+\s*\d+))((?=\s*[,)])|\s+of\s+)/;
 const REGEX_WHITESPACE_OR_COLON = /[\s:]/;
 const REGEX_LEADING_HYPHEN_OR_DIGIT = /-?\d/;
-const REGEX_SEMICOLON_OR_OPEN_BRACE_OR_CLOSE_BRACE = /[;{}]/;
 const REGEX_VALID_IDENTIFIER_CHAR = /[a-zA-Z0-9_-]/;
 const REGEX_COMMENT_CLOSE = /\*\//;
 const REGEX_HTML_COMMENT_CLOSE = /-->/;
@@ -407,18 +406,21 @@ function read_block_item(parser) {
 	}
 
 	const start = parser.index;
-	parser.read_until(REGEX_SEMICOLON_OR_OPEN_BRACE_OR_CLOSE_BRACE);
 
-	// if we've run into a '{', it's a rule, otherwise we ran into
-	// a ';' or '}' so it's a declaration
-	if (parser.match('{')) {
-		// Rewind to the start of the rule
-		parser.index = start;
-		return read_rule(parser);
+	// Here we need to distinguish between potential declarations and potentially nested CSS rules
+	// properly ignoring syntactic tokens such as comments or strings that may contain the real
+	// syntactically valid tokens such as ; { or }
+	// For example: content: '{;}'; is a valid declaration
+	try {
+		try {
+			return read_declaration(parser)
+		} catch(e) {
+			parser.index = start
+			return read_rule(parser)
+		}
+	} catch(e) {
+		error(parser.index, 'expected-declaration-or-nested-rule')
 	}
-	// Rewind to the start of the declaration
-	parser.index = start;
-	return read_declaration(parser);
 }
 
 /**
