@@ -3,7 +3,7 @@ import { test } from '../../test';
 import { magic_string_preprocessor_result, magic_string_replace_all } from '../../helpers.js';
 
 export default test({
-	skip: true,
+	skip: true, // TODO CSS map
 	compileOptions: {
 		dev: true
 	},
@@ -23,5 +23,6 @@ export default test({
 				return magic_string_preprocessor_result(filename, src);
 			}
 		}
-	]
+	],
+	client: []
 });
