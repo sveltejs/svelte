@@ -194,6 +194,7 @@ export default class Selector {
 				let amount = complex_selector
 					// Ignore invisible selectors because they are not part of the specificity
 					.filter(selector => !selector.contains_invisible_selectors)
+					// .filter(selector => selector.should_encapsulate)
 					.length - 1;
 
 				if(relative_selector.should_encapsulate) {
