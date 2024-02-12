@@ -131,6 +131,11 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 	} else {
 		const output_client = fs.readFileSync(`${cwd}/_output/client/input.svelte.js`, 'utf-8');
 		map_client = JSON.parse(fs.readFileSync(`${cwd}/_output/client/input.svelte.js.map`, 'utf-8'));
+		assert.deepEqual(
+			map_client.sources.slice().sort(),
+			(config.js_map_sources || ['input.svelte']).sort(),
+			'js.map.sources is wrong'
+		);
 		compare('client', output_client, map_client, config.client);
 
 		const output_server = fs.readFileSync(`${cwd}/_output/server/input.svelte.js`, 'utf-8');
@@ -151,6 +156,11 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 			const output = fs.readFileSync(`${cwd}/_output/client/input.svelte.css`, 'utf-8');
 			const map = JSON.parse(
 				fs.readFileSync(`${cwd}/_output/client/input.svelte.css.map`, 'utf-8')
+			);
+			assert.deepEqual(
+				map.sources.slice().sort(),
+				(config.css_map_sources || ['input.svelte']).sort(),
+				'css.map.sources is wrong'
 			);
 			compare('css', output, map, config.css);
 		}

@@ -4,8 +4,6 @@ import { magic_string_preprocessor_result, magic_string_replace_all } from '../.
 
 export default test({
 	skip: true, // TODO move over to preprocess tests? only checks the preprocessed map. Or move over source map checks from preprocess in this folder?
-	js_map_sources: ['input.svelte'],
-
 	preprocess: {
 		markup: ({ content, filename = '' }) => {
 			const src = new MagicString(content);

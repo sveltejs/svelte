@@ -12,7 +12,6 @@ export const STYLES = '.awesome { color: orange; }\n';
 export default test({
 	skip: true,
 	css_map_sources: ['common.scss', 'styles.scss'],
-	js_map_sources: ['input.svelte'],
 	preprocess: [
 		{
 			style: () => {

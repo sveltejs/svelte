@@ -4,7 +4,6 @@ import { magic_string_preprocessor_result } from '../../helpers.js';
 
 export default test({
 	skip: true, // TODO wrong source map?
-	js_map_sources: ['input.svelte'],
 	preprocess: [
 		{
 			script: ({ content }) => {

@@ -5,7 +5,6 @@ export const EXTERNAL = 'span { --external-var: 1px; }';
 
 export default test({
 	skip: true,
-	js_map_sources: ['input.svelte'],
 	css_map_sources: ['input.svelte', 'external.css'],
 	preprocess: [
 		{

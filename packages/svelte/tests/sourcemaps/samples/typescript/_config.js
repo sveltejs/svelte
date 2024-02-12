@@ -3,7 +3,6 @@ import { test } from '../../test';
 
 export default test({
 	skip: true,
-	js_map_sources: ['input.svelte'],
 	preprocess: [
 		{
 			script: ({ content, filename }) => {
