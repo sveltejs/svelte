@@ -55,7 +55,7 @@ export default class Selector {
 		this.local_selector_list = [];
 
 		// Process each block group to take trailing :global(...) selectors out of consideration
-		this.selector_list.forEach(complex_selector => {
+		this.selector_list.forEach((complex_selector) => {
 			let i = complex_selector.length;
 			while (i > 0) {
 				if (!complex_selector[i - 1].global) break;
@@ -77,7 +77,7 @@ export default class Selector {
 		}
 
 		// Check if there are no local blocks across all groups, or if there's a host_only or root_only situation
-		const no_local_blocks = this.local_selector_list.every(group => group.length === 0);
+		const no_local_blocks = this.local_selector_list.every((group) => group.length === 0);
 		this.used = no_local_blocks || host_only || root_only;
 	}
 	/**
@@ -115,7 +115,9 @@ export default class Selector {
 		 * */
 		const used_blocks = new Map();
 
-		this.local_selector_list.map(complex_selector => apply_selector(complex_selector.slice(), node, used_blocks));
+		this.local_selector_list.map((complex_selector) =>
+			apply_selector(complex_selector.slice(), node, used_blocks)
+		);
 
 		// Iterate over used_blocks
 		for (const [relative_selector, nodes] of used_blocks) {
@@ -129,10 +131,9 @@ export default class Selector {
 
 	/**
 	 * @param {import('magic-string').default} code
-	 * @param {string} attr
-	 * @param {number} max_amount_class_specificity_increased
+	 * @param {string} modifier
 	 */
-	transform(code, attr, max_amount_class_specificity_increased) {
+	transform(code, modifier) {
 		/** @param {import('#compiler').Css.SimpleSelector} selector */
 		function remove_global_pseudo_class(selector) {
 			code
@@ -142,9 +143,9 @@ export default class Selector {
 
 		/**
 		 * @param {RelativeSelector} relative_selector
-		 * @param {string} attr
+		 * @param {string} modifier
 		 */
-		function encapsulate_block(relative_selector, attr) {
+		function encapsulate_block(relative_selector, modifier) {
 			for (const selector of relative_selector.compound.selectors) {
 				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
 					remove_global_pseudo_class(selector);
@@ -154,7 +155,7 @@ export default class Selector {
 			let i = relative_selector.compound.selectors.length;
 
 			let first_selector = relative_selector.compound.selectors[0];
-			if (first_selector.type === "TypeSelector" && !first_selector.visible) return
+			if (first_selector.type === 'TypeSelector' && !first_selector.visible) return;
 
 			while (i--) {
 				const selector = relative_selector.compound.selectors[i];
@@ -166,46 +167,37 @@ export default class Selector {
 
 				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
 					if (!relative_selector.root && !relative_selector.host) {
-						if (i === 0) code.prependRight(selector.start, attr);
+						if (i === 0) code.prependRight(selector.start, modifier);
 					}
 					continue;
 				}
+
 				if (selector.type === 'TypeSelector' && selector.name === '*') {
-					code.update(selector.start, selector.end, attr);
+					code.update(selector.start, selector.end, modifier);
 				} else {
-					code.appendLeft(selector.end, attr);
+					code.appendLeft(selector.end, modifier);
 				}
+
 				break;
 			}
-		};
+		}
 
+		let first = true;
 		for (const complex_selector of this.selector_list) {
-			let amount_class_specificity_to_increase =
-				max_amount_class_specificity_increased - complex_selector
-					.filter(selector => selector.should_encapsulate)
-					.length;
-
-			complex_selector.map((relative_selector, index) => {
+			for (const relative_selector of complex_selector) {
 				if (relative_selector.global) {
 					// Remove the global pseudo class from the selector
 					remove_global_pseudo_class(relative_selector.compound.selectors[0]);
 				}
 
-				let amount = complex_selector
-					// Ignore invisible selectors because they are not part of the specificity
-					.filter(selector => !selector.contains_invisible_selectors)
-					// .filter(selector => selector.should_encapsulate)
-					.length - 1;
-
-				if(relative_selector.should_encapsulate) {
-					encapsulate_block(
-						relative_selector,
-						index === amount
-							? attr.repeat(amount_class_specificity_to_increase + 1)
-							: attr
-					);
+				if (relative_selector.should_encapsulate) {
+					// for the first occurrence, we use a classname selector, so that every
+					// encapsulated selector gets a +0-1-0 specificity bump. thereafter,
+					// we use a `:where` selector, which does not affect specificity
+					encapsulate_block(relative_selector, first ? modifier : `:where(${modifier})`);
+					first = false;
 				}
-			});
+			}
 		}
 	}
 
@@ -216,7 +208,6 @@ export default class Selector {
 		this.validate_global_compound_selector();
 		this.validate_invalid_combinator_without_selector(analysis);
 	}
-
 
 	validate_invalid_css_global_placement() {
 		for (let complex_selector of this.selector_list) {
@@ -235,7 +226,6 @@ export default class Selector {
 			}
 		}
 	}
-
 
 	validate_global_with_multiple_selectors() {
 		for (const complex_selector of this.selector_list) {
@@ -285,7 +275,9 @@ export default class Selector {
 							(i !== 0 ||
 								relative_selector.compound.selectors
 									.slice(1)
-									.some(s => s.type !== 'PseudoElementSelector' && s.type !== 'PseudoClassSelector'))
+									.some(
+										(s) => s.type !== 'PseudoElementSelector' && s.type !== 'PseudoClassSelector'
+									))
 						) {
 							error(selector, 'invalid-css-global-selector-list');
 						}
@@ -294,13 +286,6 @@ export default class Selector {
 			}
 		}
 	}
-
-	get_amount_class_specificity_increased() {
-		// Is this right? Should we be counting the amount of blocks that are visible?
-		// Or should we be counting the amount of selectors that are visible?
-		return this.selector_list[0].filter(selector => selector.should_encapsulate).length;
-	}
-
 }
 
 /**
@@ -362,7 +347,7 @@ function apply_selector(blocks, node, to_encapsulate) {
 					return true;
 				}
 			}
-			if (blocks.every(block => block.global)) {
+			if (blocks.every((block) => block.global)) {
 				add_node(to_encapsulate, block, node);
 				return true;
 			}
@@ -883,7 +868,6 @@ function loop_child(children, adjacent_only) {
 	return result;
 }
 
-
 /**
  * Not shared between different Selector instances
  */
@@ -912,17 +896,25 @@ class RelativeSelector {
 		this.compound.add(selector);
 	}
 
-	get global() { return this.compound.global }
-	get host() { return this.compound.host }
-	get root() { return this.compound.root }
-	get end() {return this.compound.end }
+	get global() {
+		return this.compound.global;
+	}
+	get host() {
+		return this.compound.host;
+	}
+	get root() {
+		return this.compound.root;
+	}
+	get end() {
+		return this.compound.end;
+	}
 	get start() {
 		if (this.combinator) return this.combinator.start;
 		return this.compound.start;
 	}
 
 	get contains_invisible_selectors() {
-		return this.compound.selectors.some(selector => !selector.visible);
+		return this.compound.selectors.some((selector) => !selector.visible);
 	}
 }
 
@@ -958,8 +950,8 @@ class CompoundSelector {
 		this.selectors = [];
 		this.start = -1;
 		this.end = -1;
-		this.host = false
-		this.root = false
+		this.host = false;
+		this.root = false;
 	}
 
 	/** @param {SimpleSelectorWithData} selector */
@@ -978,7 +970,10 @@ class CompoundSelector {
 			this.selectors.length >= 1 &&
 			this.selectors[0].type === 'PseudoClassSelector' &&
 			this.selectors[0].name === 'global' &&
-			this.selectors.every(selector => selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector')
+			this.selectors.every(
+				(selector) =>
+					selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector'
+			)
 		);
 	}
 }
@@ -996,14 +991,14 @@ function group_selectors(selector, parent_selector_list) {
 		return [selector_to_blocks([...selector.children], null)];
 	}
 
-	return parent_selector_list.map(parent_complex_selector => {
+	return parent_selector_list.map((parent_complex_selector) => {
 		const block_group = selector_to_blocks(
 			[...selector.children],
 			[...parent_complex_selector] // Clone the parent's blocks to avoid modifying the original array
 		);
 
 		return block_group;
-	})
+	});
 }
 
 /**
@@ -1011,7 +1006,7 @@ function group_selectors(selector, parent_selector_list) {
  * @param {ComplexSelector | null} parent_complex_selector - The parent rule's selectors to insert/swap into the nesting selector positions.
  */
 function selector_to_blocks(children, parent_complex_selector) {
-	let block = new RelativeSelector(null, new CompoundSelector);
+	let block = new RelativeSelector(null, new CompoundSelector());
 	const blocks = [block];
 
 	// If this is a nested rule
@@ -1019,7 +1014,7 @@ function selector_to_blocks(children, parent_complex_selector) {
 
 	for (const child of children) {
 		if (child.type === 'Combinator') {
-			block = new RelativeSelector(child, new CompoundSelector);
+			block = new RelativeSelector(child, new CompoundSelector());
 			blocks.push(block);
 		} else if (child.type === 'NestingSelector') {
 			if (!parent_complex_selector) {
@@ -1033,10 +1028,12 @@ function selector_to_blocks(children, parent_complex_selector) {
 			child.use_wrapper = child.use_wrapper ?? { used: false };
 
 			// Shallow copy the child to avoid modifying the original's visibility
-			block.add(/** @type {SimpleSelectorWithData} */ ({
-				...child,
-				visible: child.visible === undefined ? true : child.visible
-			}));
+			block.add(
+				/** @type {SimpleSelectorWithData} */ ({
+					...child,
+					visible: child.visible === undefined ? true : child.visible
+				})
+			);
 		}
 	}
 
@@ -1054,9 +1051,9 @@ function get_parent_selectors(parent_complex_selector) {
 			parent_selectors.push(relative_selector.combinator);
 		}
 		parent_selectors.push(
-			...relative_selector.compound.selectors.map(selector => ({
+			...relative_selector.compound.selectors.map((selector) => ({
 				...selector,
-				visible: false,
+				visible: false
 			}))
 		);
 	}
@@ -1071,7 +1068,7 @@ function get_parent_selectors(parent_complex_selector) {
  * @param {ComplexSelector} parent_complex_selector - The parent blocks to insert into the nesting selector positions.
  */
 function nest_fake_parents(children, parent_complex_selector) {
-	let nested_selector_index = children.findIndex(child => child.type === 'NestingSelector');
+	let nested_selector_index = children.findIndex((child) => child.type === 'NestingSelector');
 	let used_ampersand = false;
 
 	// TODO: Handle multiple nesting selectors?
@@ -1103,16 +1100,15 @@ function nest_fake_parents(children, parent_complex_selector) {
 		let last_parent_child = parent_selectors[parent_selectors.length - 1];
 		let child_before = children[nested_selector_index - 1];
 
-		if(last_parent_child.type !== "Combinator" && !child_after) {
+		if (last_parent_child.type !== 'Combinator' && !child_after) {
 			// Case: b { c & { color: red }} (we need to mark b as visible so we increase specifity)
 			last_parent_child.visible = true;
 		}
 
-
-		if(
-			child_before?.type !== "Combinator"
-			&& child_after?.type !== "Combinator"
-			&& !used_ampersand
+		if (
+			child_before?.type !== 'Combinator' &&
+			child_after?.type !== 'Combinator' &&
+			!used_ampersand
 		) {
 			children.splice(nested_selector_index, 0, FakeCombinator);
 		}

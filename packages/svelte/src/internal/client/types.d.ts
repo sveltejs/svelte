@@ -11,7 +11,7 @@ import {
 	SNIPPET_BLOCK
 } from './block.js';
 import type { READONLY_SYMBOL, STATE_SYMBOL } from './proxy.js';
-import { DERIVED, EFFECT, RENDER_EFFECT, SOURCE, PRE_EFFECT, LAZY_PROPERTY } from './runtime.js';
+import { DERIVED, EFFECT, RENDER_EFFECT, SOURCE, PRE_EFFECT } from './runtime.js';
 
 // Put all internal types in this file. Once we convert to JSDoc, we can make this a d.ts file
 
@@ -36,6 +36,8 @@ export type Store<V> = {
 // when the JS VM JITs the code.
 
 export type ComponentContext = {
+	/** local signals (needed for beforeUpdate/afterUpdate) */
+	d: null | Signal<any>[];
 	/** props */
 	s: Record<string, unknown>;
 	/** accessors */
@@ -52,12 +54,12 @@ export type ComponentContext = {
 	r: boolean;
 	/** update_callbacks */
 	u: null | {
-		/** before */
-		b: Array<() => void>;
-		/** after */
+		/** afterUpdate callbacks */
 		a: Array<() => void>;
-		/** execute */
-		e: () => void;
+		/** beforeUpdate callbacks */
+		b: Array<() => void>;
+		/** onMount callbacks */
+		m: Array<() => any>;
 	};
 };
 
@@ -69,8 +71,6 @@ export type ComponentContext = {
 export type SourceSignal<V = unknown> = {
 	/** consumers: Signals that read from the current signal */
 	c: null | ComputationSignal[];
-	/** context: The associated component if this signal is an effect/computed */
-	x: null | ComponentContext;
 	/** equals: For value equality */
 	e: null | EqualsFunctions;
 	/** flags: The types that the signal represent, as a bitwise value */
@@ -122,12 +122,6 @@ export type EffectSignal = ComputationSignal<null | (() => void)>;
 export type MaybeSignal<T = unknown> = T | Signal<T>;
 
 export type UnwrappedSignal<T> = T extends Signal<infer U> ? U : T;
-
-export type LazyProperty<O, P> = {
-	o: O;
-	p: P;
-	t: typeof LAZY_PROPERTY;
-};
 
 export type EqualsFunctions<T = any> = (a: T, v: T) => boolean;
 

@@ -1,5 +1,4 @@
 import * as $ from '../client/runtime.js';
-import { set_is_ssr } from '../client/runtime.js';
 import { is_promise, noop } from '../common.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import { DOMBooleanAttributes } from '../../constants.js';
@@ -95,7 +94,6 @@ export function render(component, options) {
 	const root_anchor = create_anchor(payload);
 	const root_head_anchor = create_anchor(payload.head);
 
-	set_is_ssr(true);
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
 	payload.out += root_anchor;
@@ -112,7 +110,6 @@ export function render(component, options) {
 	payload.out += root_anchor;
 	for (const cleanup of on_destroy) cleanup();
 	on_destroy = prev_on_destroy;
-	set_is_ssr(false);
 
 	return {
 		head:

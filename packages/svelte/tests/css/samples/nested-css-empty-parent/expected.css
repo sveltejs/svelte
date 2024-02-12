@@ -1,5 +1,5 @@
 b.svelte-xyz {
-    x.svelte-xyz {
+    x:where(.svelte-xyz) {
         color: yellow;
     }
 }

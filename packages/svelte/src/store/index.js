@@ -1,4 +1,4 @@
-import { noop } from '../internal/common.js';
+import { noop, run } from '../internal/common.js';
 import { subscribe_to_store } from './utils.js';
 
 /**
@@ -104,11 +104,6 @@ export function writable(value, start = noop) {
 		};
 	}
 	return { set, update, subscribe };
-}
-
-/** @param {Function} fn */
-function run(fn) {
-	return fn();
 }
 
 /**

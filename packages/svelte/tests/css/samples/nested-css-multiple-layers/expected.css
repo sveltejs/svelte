@@ -1,17 +1,17 @@
 a.svelte-xyz {
     color: red;
-    b.svelte-xyz {
+    b:where(.svelte-xyz) {
         color: yellow;
-        c.svelte-xyz {
+        c:where(.svelte-xyz) {
             color: green;
         }
     }
 
-    b c.svelte-xyz {
+    b c:where(.svelte-xyz) {
         color: blue;
     }
 
-    b c d.svelte-xyz {
+    b c d:where(.svelte-xyz) {
         color: orange;
     }
 }
