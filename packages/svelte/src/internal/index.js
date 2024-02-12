@@ -7,6 +7,7 @@ export {
 	source,
 	mutable_source,
 	derived,
+	derived_safe_equal,
 	prop,
 	user_effect,
 	render_effect,
@@ -29,7 +30,6 @@ export {
 	exclude_from_object,
 	store_set,
 	unsubscribe_on_destroy,
-	onDestroy,
 	pop,
 	push,
 	reactive_import,
@@ -37,17 +37,15 @@ export {
 	user_root_effect,
 	inspect,
 	unwrap,
-	freeze
+	freeze,
+	init
 } from './client/runtime.js';
-
 export * from './client/each.js';
 export * from './client/render.js';
 export * from './client/validate.js';
 export { raf } from './client/timing.js';
-export { proxy, readonly, unstate } from './client/proxy/proxy.js';
-
+export { proxy, readonly, unstate } from './client/proxy.js';
 export { create_custom_element } from './client/custom-element.js';
-
 export {
 	child,
 	child_frag,
@@ -55,3 +53,4 @@ export {
 	$window as window,
 	$document as document
 } from './client/operations.js';
+export { noop } from './common.js';

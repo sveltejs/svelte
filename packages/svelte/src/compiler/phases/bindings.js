@@ -175,6 +175,7 @@ export const binding_properties = {
 	textContent: {},
 	open: {
 		event: 'toggle',
+		type: 'set',
 		valid_elements: ['details']
 	},
 	value: {

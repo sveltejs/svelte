@@ -275,7 +275,7 @@ export function combine_sourcemaps(filename, sourcemap_list) {
 					sourcemap_list,
 					() => null,
 					true // skip optional field `sourcesContent`
-			  )
+				)
 			: remapping(
 					// use loader interface
 					sourcemap_list[0], // last map
@@ -291,7 +291,7 @@ export function combine_sourcemaps(filename, sourcemap_list) {
 						}
 					),
 					true
-			  );
+				);
 
 	if (!map.file) delete map.file; // skip optional field `file`
 

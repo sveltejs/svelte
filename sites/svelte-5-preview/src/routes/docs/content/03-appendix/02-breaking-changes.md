@@ -76,11 +76,22 @@ Assignments to destructured parts of a `@const` declaration are no longer allowe
 
 ### Stricter CSS `:global` selector validation
 
-Previously, a selector like `.foo :global(bar).baz` was valid. In Svelte 5, this is a validation error instead. The reason is that in this selector the resulting CSS would be equivalent to one without `:global` - in other words, `:global` is ignored in this case.
+Previously, a compound selector starting with a global modifier which has universal or type selectors (like `:global(span).foo`) was valid. In Svelte 5, this is a validation error instead. The reason is that in this selector the resulting CSS would be equivalent to one without `:global` - in other words, `:global` is ignored in this case.
 
 ### CSS hash position no longer deterministic
 
 Previously Svelte would always insert the CSS hash last. This is no longer guaranteed in Svelte 5. This is only breaking if you [have very weird css selectors](https://stackoverflow.com/questions/15670631/does-the-order-of-classes-listed-on-an-item-affect-the-css).
+
+### Scoped CSS uses :where(...)
+
+To avoid issues caused by unpredictable specificity changes, scoped CSS selectors now use `:where(.svelte-xyz123)` selector modifiers alongside `.svelte-xyz123` (where `xyz123` is, as previously, a hash of the `<style>` contents). You can read more detail [here](https://github.com/sveltejs/svelte/pull/10443).
+
+In the event that you need to support ancient browsers that don't implement `:where`, you can manually alter the emitted CSS, at the cost of unpredictable specificity changes:
+
+```js
+// @errors: 2552
+css = css.replace(/:where\((.+?)\)/, '$1');
+```
 
 ### Renames of various error/warning codes
 
@@ -90,9 +101,13 @@ Various error and warning codes have been renamed slightly.
 
 The number of valid namespaces you can pass to the compiler option `namespace` has been reduced to `html` (the default), `svg` and `foreign`.
 
-### beforeUpdate change
+### beforeUpdate/afterUpdate changes
 
 `beforeUpdate` no longer runs twice on initial render if it modifies a variable referenced in the template.
+
+`afterUpdate` callbacks in a parent component will now run after `afterUpdate` callbacks in any child components.
+
+Both functions are disallowed in runes mode — use `$effect.pre(...)` and `$effect(...)` instead.
 
 ### `contenteditable` behavior change
 
@@ -111,3 +126,7 @@ This is not recommended, and is no longer possible in Svelte 5, where properties
 ### `null` and `undefined` become the empty string
 
 In Svelte 4, `null` and `undefined` were printed as the corresponding string. In 99 out of 100 cases you want this to become the empty string instead, which is also what most other frameworks out there do. Therefore, in Svelte 5, `null` and `undefined` become the empty string.
+
+### `bind:files` values can only be `null`, `undefined` or `FileList`
+
+`bind:files` is now a two-way binding. As such, when setting a value, it needs to be either falsy (`null` or `undefined`) or of type `FileList`.

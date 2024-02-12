@@ -70,14 +70,9 @@ export default class Selector {
 
 	/**
 	 * @param {import('magic-string').default} code
-	 * @param {string} attr
-	 * @param {number} max_amount_class_specificity_increased
+	 * @param {string} modifier
 	 */
-	transform(code, attr, max_amount_class_specificity_increased) {
-		const amount_class_specificity_to_increase =
-			max_amount_class_specificity_increased -
-			this.blocks.filter((block) => block.should_encapsulate).length;
-
+	transform(code, modifier) {
 		/** @param {import('#compiler').Css.SimpleSelector} selector */
 		function remove_global_pseudo_class(selector) {
 			code
@@ -87,43 +82,50 @@ export default class Selector {
 
 		/**
 		 * @param {Block} block
-		 * @param {string} attr
+		 * @param {string} modifier
 		 */
-		function encapsulate_block(block, attr) {
+		function encapsulate_block(block, modifier) {
 			for (const selector of block.selectors) {
 				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
 					remove_global_pseudo_class(selector);
 				}
 			}
+
 			let i = block.selectors.length;
 			while (i--) {
 				const selector = block.selectors[i];
+
 				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
 					if (selector.name !== 'root' && selector.name !== 'host') {
-						if (i === 0) code.prependRight(selector.start, attr);
+						if (i === 0) code.prependRight(selector.start, modifier);
 					}
 					continue;
 				}
+
 				if (selector.type === 'TypeSelector' && selector.name === '*') {
-					code.update(selector.start, selector.end, attr);
+					code.update(selector.start, selector.end, modifier);
 				} else {
-					code.appendLeft(selector.end, attr);
+					code.appendLeft(selector.end, modifier);
 				}
+
 				break;
 			}
 		}
-		this.blocks.forEach((block, index) => {
+
+		let first = true;
+		for (const block of this.blocks) {
 			if (block.global) {
 				remove_global_pseudo_class(block.selectors[0]);
 			}
-			if (block.should_encapsulate)
-				encapsulate_block(
-					block,
-					index === this.blocks.length - 1
-						? attr.repeat(amount_class_specificity_to_increase + 1)
-						: attr
-				);
-		});
+
+			if (block.should_encapsulate) {
+				// for the first occurrence, we use a classname selector, so that every
+				// encapsulated selector gets a +0-1-0 specificity bump. thereafter,
+				// we use a `:where` selector, which does not affect specificity
+				encapsulate_block(block, first ? modifier : `:where(${modifier})`);
+				first = false;
+			}
+		}
 	}
 
 	/** @param {import('../../types.js').ComponentAnalysis} analysis */
@@ -177,25 +179,28 @@ export default class Selector {
 
 	validate_global_compound_selector() {
 		for (const block of this.blocks) {
+			if (block.selectors.length === 1) continue;
+
 			for (let i = 0; i < block.selectors.length; i++) {
 				const selector = block.selectors[i];
-				if (
-					selector.type === 'PseudoClassSelector' &&
-					selector.name === 'global' &&
-					block.selectors.length !== 1 &&
-					(i === block.selectors.length - 1 ||
-						block.selectors
-							.slice(i + 1)
-							.some((s) => s.type !== 'PseudoElementSelector' && s.type !== 'PseudoClassSelector'))
-				) {
-					error(selector, 'invalid-css-global-selector-list');
+
+				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
+					const child = selector.args?.children[0].children[0];
+					if (
+						child?.type === 'TypeSelector' &&
+						!/[.:#]/.test(child.name[0]) &&
+						(i !== 0 ||
+							block.selectors
+								.slice(1)
+								.some(
+									(s) => s.type !== 'PseudoElementSelector' && s.type !== 'PseudoClassSelector'
+								))
+					) {
+						error(selector, 'invalid-css-global-selector-list');
+					}
 				}
 			}
 		}
-	}
-
-	get_amount_class_specificity_increased() {
-		return this.blocks.filter((block) => block.should_encapsulate).length;
 	}
 }
 

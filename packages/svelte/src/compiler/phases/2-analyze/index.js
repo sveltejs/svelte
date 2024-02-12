@@ -1,14 +1,13 @@
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import { error } from '../../errors.js';
-import * as assert from '../../utils/assert.js';
 import {
 	extract_identifiers,
+	extract_all_identifiers_from_expression,
 	extract_paths,
 	is_event_attribute,
 	is_text_attribute,
-	object,
-	unwrap_ts_expression
+	object
 } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
 import { ReservedKeywords, Runes, SVGElements } from '../constants.js';
@@ -20,7 +19,8 @@ import { warn } from '../../warnings.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
-import { DelegatedEvents } from '../../../constants.js';
+import { DelegatedEvents, namespace_svg } from '../../../constants.js';
+import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -59,25 +59,21 @@ function get_component_name(filename) {
 }
 
 /**
- * @param {Pick<import('#compiler').OnDirective, 'expression'| 'name' | 'modifiers'> & { type: string }} node
+ * Checks if given event attribute can be delegated/hoisted and returns the corresponding info if so
+ * @param {string} event_name
+ * @param {import('estree').Expression | null} handler
  * @param {import('./types').Context} context
  * @returns {null | import('#compiler').DelegatedEvent}
  */
-function get_delegated_event(node, context) {
-	const handler = node.expression;
-	const event_name = node.name;
-
+function get_delegated_event(event_name, handler, context) {
 	// Handle delegated event handlers. Bail-out if not a delegated event.
-	if (!handler || node.modifiers.includes('capture') || !DelegatedEvents.includes(event_name)) {
+	if (!handler || !DelegatedEvents.includes(event_name)) {
 		return null;
 	}
+
 	// If we are not working with a RegularElement, then bail-out.
 	const element = context.path.at(-1);
 	if (element?.type !== 'RegularElement') {
-		return null;
-	}
-	// If element says we can't delegate because we have multiple OnDirectives of the same type, bail-out.
-	if (!element.metadata.can_delegate_events) {
 		return null;
 	}
 
@@ -87,7 +83,7 @@ function get_delegated_event(node, context) {
 	let target_function = null;
 	let binding = null;
 
-	if (node.type === 'Attribute' && element.metadata.has_spread) {
+	if (element.metadata.has_spread) {
 		// event attribute becomes part of the dynamic spread array
 		return non_hoistable;
 	}
@@ -96,6 +92,11 @@ function get_delegated_event(node, context) {
 		target_function = handler;
 	} else if (handler.type === 'Identifier') {
 		binding = context.state.scope.get(handler.name);
+
+		if (context.state.analysis.module.scope.references.has(handler.name)) {
+			// If a binding with the same name is referenced in the module scope (even if not declared there), bail-out
+			return non_hoistable;
+		}
 
 		if (binding != null) {
 			for (const { path } of binding.references) {
@@ -123,8 +124,7 @@ function get_delegated_event(node, context) {
 				if (element && event_name) {
 					if (
 						element.type !== 'RegularElement' ||
-						!determine_element_spread_and_delegatable(element).metadata.can_delegate_events ||
-						(element.metadata.has_spread && node.type === 'Attribute') ||
+						determine_element_spread(element).metadata.has_spread ||
 						!DelegatedEvents.includes(event_name)
 					) {
 						return non_hoistable;
@@ -183,7 +183,8 @@ function get_delegated_event(node, context) {
 		) {
 			return non_hoistable;
 		}
-		// If we referebnce the index within an each block, then bail-out.
+
+		// If we reference the index within an each block, then bail-out.
 		if (binding !== null && binding.initial?.type === 'EachBlock') {
 			return non_hoistable;
 		}
@@ -204,6 +205,7 @@ function get_delegated_event(node, context) {
 		}
 		visited_references.add(reference);
 	}
+
 	return { type: 'hoistable', function: target_function };
 }
 
@@ -303,11 +305,13 @@ export function analyze_component(root, options) {
 			}
 
 			if (module.ast) {
-				// if the reference is inside context="module", error. this is a bit hacky but it works
-				for (const { node } of references) {
+				for (const { node, path } of references) {
+					// if the reference is inside context="module", error. this is a bit hacky but it works
 					if (
 						/** @type {number} */ (node.start) > /** @type {number} */ (module.ast.start) &&
-						/** @type {number} */ (node.end) < /** @type {number} */ (module.ast.end)
+						/** @type {number} */ (node.end) < /** @type {number} */ (module.ast.end) &&
+						// const state = $state(0) is valid
+						get_rune(/** @type {import('estree').Node} */ (path.at(-1)), module.scope) === null
 					) {
 						error(node, 'illegal-subscription');
 					}
@@ -673,7 +677,13 @@ const runes_scope_js_tweaker = {
 		const callee = node.init.callee;
 		if (callee.type !== 'Identifier' && callee.type !== 'MemberExpression') return;
 
-		if (rune !== '$state' && rune !== '$state.frozen' && rune !== '$derived') return;
+		if (
+			rune !== '$state' &&
+			rune !== '$state.frozen' &&
+			rune !== '$derived' &&
+			rune !== '$derived.call'
+		)
+			return;
 
 		for (const path of extract_paths(node.id)) {
 			// @ts-ignore this fails in CI for some insane reason
@@ -695,7 +705,7 @@ const runes_scope_tweaker = {
 		}
 	},
 	VariableDeclarator(node, { state }) {
-		const init = unwrap_ts_expression(node.init);
+		const init = node.init;
 		if (!init || init.type !== 'CallExpression') return;
 		const rune = get_rune(init, state.scope);
 		if (rune === null) return;
@@ -703,7 +713,13 @@ const runes_scope_tweaker = {
 		const callee = init.callee;
 		if (callee.type !== 'Identifier' && callee.type !== 'MemberExpression') return;
 
-		if (rune !== '$state' && rune !== '$state.frozen' && rune !== '$derived' && rune !== '$props')
+		if (
+			rune !== '$state' &&
+			rune !== '$state.frozen' &&
+			rune !== '$derived' &&
+			rune !== '$derived.call' &&
+			rune !== '$props'
+		)
 			return;
 
 		for (const path of extract_paths(node.id)) {
@@ -713,12 +729,12 @@ const runes_scope_tweaker = {
 				rune === '$state'
 					? 'state'
 					: rune === '$state.frozen'
-					? 'frozen_state'
-					: rune === '$derived'
-					? 'derived'
-					: path.is_rest
-					? 'rest_prop'
-					: 'prop';
+						? 'frozen_state'
+						: rune === '$derived' || rune === '$derived.call'
+							? 'derived'
+							: path.is_rest
+								? 'rest_prop'
+								: 'prop';
 		}
 
 		if (rune === '$props') {
@@ -820,7 +836,7 @@ function is_known_safe_call(node, context) {
  * @param {import('estree').ArrowFunctionExpression | import('estree').FunctionExpression | import('estree').FunctionDeclaration} node
  * @param {import('./types').Context} context
  */
-export const function_visitor = (node, context) => {
+const function_visitor = (node, context) => {
 	// TODO retire this in favour of a more general solution based on bindings
 	node.metadata = {
 		// module context -> already hoisted
@@ -858,21 +874,9 @@ const common_visitors = {
 		});
 
 		if (is_event_attribute(node)) {
-			/** @type {string[]} */
-			const modifiers = [];
 			const expression = node.value[0].expression;
 
-			let name = node.name.slice(2);
-
-			if (is_capture_event(name)) {
-				name = name.slice(0, -7);
-				modifiers.push('capture');
-			}
-
-			const delegated_event = get_delegated_event(
-				{ type: node.type, name, expression, modifiers },
-				context
-			);
+			const delegated_event = get_delegated_event(node.name.slice(2), expression, context);
 
 			if (delegated_event !== null) {
 				if (delegated_event.type === 'hoistable') {
@@ -933,7 +937,14 @@ const common_visitors = {
 
 			if (
 				node !== binding.node &&
-				(binding.kind === 'state' ||
+				// If we have $state that can be proxied or frozen and isn't re-assigned, then that means
+				// it's likely not using a primitive value and thus this warning isn't that helpful.
+				((binding.kind === 'state' &&
+					(binding.reassigned ||
+						(binding.initial?.type === 'CallExpression' &&
+							binding.initial.arguments.length === 1 &&
+							binding.initial.arguments[0].type !== 'SpreadElement' &&
+							!should_proxy_or_freeze(binding.initial.arguments[0], context.state.scope)))) ||
 					binding.kind === 'frozen_state' ||
 					binding.kind === 'derived') &&
 				context.state.function_depth === binding.scope.function_depth
@@ -997,52 +1008,53 @@ const common_visitors = {
 
 		if (node.name !== 'group') return;
 
+		// Traverse the path upwards and find all EachBlocks who are (indirectly) contributing to bind:group,
+		// i.e. one of their declarations is referenced in the binding. This allows group bindings to work
+		// correctly when referencing a variable declared in an EachBlock by using the index of the each block
+		// entries as keys.
 		i = context.path.length;
+		const each_blocks = [];
+		const [keypath, expression_ids] = extract_all_identifiers_from_expression(node.expression);
+		let ids = expression_ids;
 		while (i--) {
 			const parent = context.path[i];
 			if (parent.type === 'EachBlock') {
-				parent.metadata.contains_group_binding = true;
-				for (const binding of parent.metadata.references) {
-					binding.mutated = true;
+				const references = ids.filter((id) => parent.metadata.declarations.has(id.name));
+				if (references.length > 0) {
+					parent.metadata.contains_group_binding = true;
+					for (const binding of parent.metadata.references) {
+						binding.mutated = true;
+					}
+					each_blocks.push(parent);
+					ids = ids.filter((id) => !references.includes(id));
+					ids.push(...extract_all_identifiers_from_expression(parent.expression)[1]);
 				}
 			}
 		}
 
-		const id = object(node.expression);
-
-		const binding = id === null ? null : context.state.scope.get(id.name);
-		assert.ok(binding);
-
-		let group = context.state.analysis.binding_groups.get(binding);
-		if (!group) {
-			group = {
-				name: context.state.scope.root.unique('binding_group'),
-				directives: []
-			};
-
-			context.state.analysis.binding_groups.set(binding, group);
+		// The identifiers that make up the binding expression form they key for the binding group.
+		// If the same identifiers in the same order are used in another bind:group, they will be in the same group.
+		// (there's an edge case where `bind:group={a[i]}` will be in a different group than `bind:group={a[j]}` even when i == j,
+		//  but this is a limitation of the current static analysis we do; it also never worked in Svelte 4)
+		const bindings = expression_ids.map((id) => context.state.scope.get(id.name));
+		let group_name;
+		outer: for (const [[key, b], group] of context.state.analysis.binding_groups) {
+			if (b.length !== bindings.length || key !== keypath) continue;
+			for (let i = 0; i < bindings.length; i++) {
+				if (bindings[i] !== b[i]) continue outer;
+			}
+			group_name = group;
 		}
 
-		group.directives.push(node);
+		if (!group_name) {
+			group_name = context.state.scope.root.unique('binding_group');
+			context.state.analysis.binding_groups.set([keypath, bindings], group_name);
+		}
 
 		node.metadata = {
-			binding_group_name: group.name,
-			parent_each_blocks: /** @type {import('#compiler').EachBlock[]} */ (
-				context.path.filter((p) => p.type === 'EachBlock')
-			)
+			binding_group_name: group_name,
+			parent_each_blocks: each_blocks
 		};
-	},
-	OnDirective(node, context) {
-		node.metadata = { delegated: null };
-		context.next();
-		const delegated_event = get_delegated_event(node, context);
-
-		if (delegated_event !== null) {
-			if (delegated_event.type === 'hoistable') {
-				delegated_event.function.metadata.hoistable = true;
-			}
-			node.metadata.delegated = delegated_event;
-		}
 	},
 	ArrowFunctionExpression: function_visitor,
 	FunctionExpression: function_visitor,
@@ -1052,7 +1064,7 @@ const common_visitors = {
 			node.metadata.svg = true;
 		}
 
-		determine_element_spread_and_delegatable(node);
+		determine_element_spread(node);
 
 		// Special case: Move the children of <textarea> into a value attribute if they are dynamic
 		if (
@@ -1104,57 +1116,60 @@ const common_visitors = {
 
 		context.state.analysis.elements.push(node);
 	},
-	SvelteElement(node, { state }) {
-		state.analysis.elements.push(node);
+	SvelteElement(node, context) {
+		context.state.analysis.elements.push(node);
+
+		if (
+			context.state.options.namespace !== 'foreign' &&
+			node.tag.type === 'Literal' &&
+			typeof node.tag.value === 'string' &&
+			SVGElements.includes(node.tag.value)
+		) {
+			node.metadata.svg = true;
+			return;
+		}
+
+		for (const attribute of node.attributes) {
+			if (attribute.type === 'Attribute') {
+				if (attribute.name === 'xmlns' && is_text_attribute(attribute)) {
+					node.metadata.svg = attribute.value[0].data === namespace_svg;
+					return;
+				}
+			}
+		}
+
+		for (let i = context.path.length - 1; i >= 0; i--) {
+			const ancestor = context.path[i];
+			if (
+				ancestor.type === 'Component' ||
+				ancestor.type === 'SvelteComponent' ||
+				ancestor.type === 'SvelteFragment' ||
+				ancestor.type === 'SnippetBlock'
+			) {
+				// Inside a slot or a snippet -> this resets the namespace, so we can't determine it
+				return;
+			}
+			if (ancestor.type === 'SvelteElement' || ancestor.type === 'RegularElement') {
+				node.metadata.svg =
+					ancestor.type === 'RegularElement' && ancestor.name === 'foreignObject'
+						? false
+						: ancestor.metadata.svg;
+				return;
+			}
+		}
 	}
 };
 
 /**
- * Check if events on this element can theoretically be delegated. They can if there's no
- * possibility of an OnDirective and an event attribute on the same element, and if there's
- * no OnDirectives of the same type (the latter is a bit too strict because `on:click on:click on:keyup`
- * means that `on:keyup` can be delegated but we gloss over this edge case).
  * @param {import('#compiler').RegularElement} node
  */
-function determine_element_spread_and_delegatable(node) {
-	if (typeof node.metadata.can_delegate_events === 'boolean') {
-		return node; // did this already
-	}
-
-	let events = new Map();
+function determine_element_spread(node) {
 	let has_spread = false;
-	let has_on = false;
-	let has_action_or_bind = false;
 	for (const attribute of node.attributes) {
-		if (
-			attribute.type === 'OnDirective' ||
-			(attribute.type === 'Attribute' && is_event_attribute(attribute))
-		) {
-			let event_name = attribute.name;
-			if (attribute.type === 'Attribute') {
-				event_name = get_attribute_event_name(event_name);
-			}
-			events.set(event_name, (events.get(event_name) || 0) + 1);
-			if (!has_on && attribute.type === 'OnDirective') {
-				has_on = true;
-			}
-		} else if (!has_spread && attribute.type === 'SpreadAttribute') {
+		if (!has_spread && attribute.type === 'SpreadAttribute') {
 			has_spread = true;
-		} else if (
-			!has_action_or_bind &&
-			((attribute.type === 'BindDirective' && attribute.name !== 'this') ||
-				attribute.type === 'UseDirective')
-		) {
-			has_action_or_bind = true;
 		}
 	}
-	node.metadata.can_delegate_events =
-		// Actions/bindings need the old on:-events to fire in order
-		!has_action_or_bind &&
-		// spreading events means we don't know if there's an event attribute with the same name as an on:-event
-		!(has_spread && has_on) &&
-		// multiple on:-events/event attributes with the same name
-		![...events.values()].some((count) => count > 1);
 	node.metadata.has_spread = has_spread;
 
 	return node;

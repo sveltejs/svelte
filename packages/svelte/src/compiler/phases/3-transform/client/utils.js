@@ -1,5 +1,5 @@
 import * as b from '../../../utils/builders.js';
-import { extract_paths, is_simple_expression } from '../../../utils/ast.js';
+import { extract_paths, is_simple_expression, object } from '../../../utils/ast.js';
 import { error } from '../../../errors.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
@@ -20,11 +20,11 @@ export function get_assignment_value(node, { state, visit }) {
 		return operator === '='
 			? /** @type {import('estree').Expression} */ (visit(node.right))
 			: // turn something like x += 1 into x = x + 1
-			  b.binary(
+				b.binary(
 					/** @type {import('estree').BinaryOperator} */ (operator.slice(0, -1)),
 					serialize_get_binding(node.left, state),
 					/** @type {import('estree').Expression} */ (visit(node.right))
-			  );
+				);
 	} else if (
 		node.left.type === 'MemberExpression' &&
 		node.left.object.type === 'ThisExpression' &&
@@ -35,11 +35,11 @@ export function get_assignment_value(node, { state, visit }) {
 		return operator === '='
 			? /** @type {import('estree').Expression} */ (visit(node.right))
 			: // turn something like x += 1 into x = x + 1
-			  b.binary(
+				b.binary(
 					/** @type {import('estree').BinaryOperator} */ (operator.slice(0, -1)),
 					/** @type {import('estree').Expression} */ (visit(node.left)),
 					/** @type {import('estree').Expression} */ (visit(node.right))
-			  );
+				);
 	} else {
 		return /** @type {import('estree').Expression} */ (visit(node.right));
 	}
@@ -217,15 +217,17 @@ function is_expression_async(expression) {
  * @param {import('estree').AssignmentExpression} node
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, State>} context
  * @param {() => any} fallback
+ * @param {{skip_proxy_and_freeze?: boolean}} [options]
  * @returns {import('estree').Expression}
  */
-export function serialize_set_binding(node, context, fallback) {
+export function serialize_set_binding(node, context, fallback, options) {
 	const { state, visit } = context;
 
+	const assignee = node.left;
 	if (
-		node.left.type === 'ArrayPattern' ||
-		node.left.type === 'ObjectPattern' ||
-		node.left.type === 'RestElement'
+		assignee.type === 'ArrayPattern' ||
+		assignee.type === 'ObjectPattern' ||
+		assignee.type === 'RestElement'
 	) {
 		// Turn assignment into an IIFE, so that `$.set` calls etc don't produce invalid code
 		const tmp_id = context.state.scope.generate('tmp');
@@ -236,13 +238,13 @@ export function serialize_set_binding(node, context, fallback) {
 		/** @type {import('estree').Expression[]} */
 		const assignments = [];
 
-		const paths = extract_paths(node.left);
+		const paths = extract_paths(assignee);
 
 		for (const path of paths) {
 			const value = path.expression?.(b.id(tmp_id));
 			const assignment = b.assignment('=', path.node, value);
 			original_assignments.push(assignment);
-			assignments.push(serialize_set_binding(assignment, context, () => assignment));
+			assignments.push(serialize_set_binding(assignment, context, () => assignment, options));
 		}
 
 		if (assignments.every((assignment, i) => assignment === original_assignments[i])) {
@@ -274,21 +276,26 @@ export function serialize_set_binding(node, context, fallback) {
 		}
 	}
 
-	if (node.left.type !== 'Identifier' && node.left.type !== 'MemberExpression') {
-		error(node, 'INTERNAL', `Unexpected assignment type ${node.left.type}`);
+	if (assignee.type !== 'Identifier' && assignee.type !== 'MemberExpression') {
+		error(node, 'INTERNAL', `Unexpected assignment type ${assignee.type}`);
 	}
 
-	let left = node.left;
-
 	// Handle class private/public state assignment cases
-	while (left.type === 'MemberExpression') {
-		if (left.object.type === 'ThisExpression' && left.property.type === 'PrivateIdentifier') {
-			const private_state = context.state.private_state.get(left.property.name);
+	if (assignee.type === 'MemberExpression') {
+		if (
+			assignee.object.type === 'ThisExpression' &&
+			assignee.property.type === 'PrivateIdentifier'
+		) {
+			const private_state = context.state.private_state.get(assignee.property.name);
 			const value = get_assignment_value(node, context);
 			if (private_state !== undefined) {
 				if (state.in_constructor) {
 					// See if we should wrap value in $.proxy
-					if (context.state.analysis.runes && should_proxy_or_freeze(value)) {
+					if (
+						context.state.analysis.runes &&
+						!options?.skip_proxy_and_freeze &&
+						should_proxy_or_freeze(value, context.state.scope)
+					) {
 						const assignment = fallback();
 						if (assignment.type === 'AssignmentExpression') {
 							assignment.right =
@@ -301,8 +308,10 @@ export function serialize_set_binding(node, context, fallback) {
 				} else {
 					return b.call(
 						'$.set',
-						left,
-						context.state.analysis.runes && should_proxy_or_freeze(value)
+						assignee,
+						context.state.analysis.runes &&
+							!options?.skip_proxy_and_freeze &&
+							should_proxy_or_freeze(value, context.state.scope)
 							? private_state.kind === 'frozen_state'
 								? b.call('$.freeze', value)
 								: b.call('$.proxy', value)
@@ -311,17 +320,18 @@ export function serialize_set_binding(node, context, fallback) {
 				}
 			}
 		} else if (
-			left.object.type === 'ThisExpression' &&
-			left.property.type === 'Identifier' &&
+			assignee.object.type === 'ThisExpression' &&
+			assignee.property.type === 'Identifier' &&
 			state.in_constructor
 		) {
-			const public_state = context.state.public_state.get(left.property.name);
+			const public_state = context.state.public_state.get(assignee.property.name);
 			const value = get_assignment_value(node, context);
 			// See if we should wrap value in $.proxy
 			if (
 				context.state.analysis.runes &&
 				public_state !== undefined &&
-				should_proxy_or_freeze(value)
+				!options?.skip_proxy_and_freeze &&
+				should_proxy_or_freeze(value, context.state.scope)
 			) {
 				const assignment = fallback();
 				if (assignment.type === 'AssignmentExpression') {
@@ -333,11 +343,11 @@ export function serialize_set_binding(node, context, fallback) {
 				}
 			}
 		}
-		// @ts-expect-error
-		left = left.object;
 	}
 
-	if (left.type !== 'Identifier') {
+	const left = object(assignee);
+
+	if (left === null) {
 		return fallback();
 	}
 
@@ -387,7 +397,9 @@ export function serialize_set_binding(node, context, fallback) {
 				return b.call(
 					'$.set',
 					b.id(left_name),
-					context.state.analysis.runes && should_proxy_or_freeze(value)
+					context.state.analysis.runes &&
+						!options?.skip_proxy_and_freeze &&
+						should_proxy_or_freeze(value, context.state.scope)
 						? b.call('$.proxy', value)
 						: value
 				);
@@ -395,7 +407,9 @@ export function serialize_set_binding(node, context, fallback) {
 				return b.call(
 					'$.set',
 					b.id(left_name),
-					context.state.analysis.runes && should_proxy_or_freeze(value)
+					context.state.analysis.runes &&
+						!options?.skip_proxy_and_freeze &&
+						should_proxy_or_freeze(value, context.state.scope)
 						? b.call('$.freeze', value)
 						: value
 				);
@@ -505,6 +519,16 @@ function get_hoistable_params(node, context) {
 				params.push(b.id(binding.node.name.slice(1)));
 				params.push(b.id(binding.node.name));
 			} else if (
+				// If it's a destructured derived binding, then we can extract the derived signal reference and use that.
+				binding.expression !== null &&
+				binding.expression.type === 'MemberExpression' &&
+				binding.expression.object.type === 'CallExpression' &&
+				binding.expression.object.callee.type === 'Identifier' &&
+				binding.expression.object.callee.name === '$.get' &&
+				binding.expression.object.arguments[0].type === 'Identifier'
+			) {
+				params.push(b.id(binding.expression.object.arguments[0].name));
+			} else if (
 				// If we are referencing a simple $$props value, then we need to reference the object property instead
 				binding.kind === 'prop' &&
 				!binding.reassigned &&
@@ -610,11 +634,15 @@ export function get_prop_source(binding, state, name, initial) {
 	return b.call('$.prop', ...args);
 }
 
-/** @param {import('estree').Expression} node */
-export function should_proxy_or_freeze(node) {
+/**
+ * @param {import('estree').Expression} node
+ * @param {import("../../scope.js").Scope | null} scope
+ */
+export function should_proxy_or_freeze(node, scope) {
 	if (
 		!node ||
 		node.type === 'Literal' ||
+		node.type === 'TemplateLiteral' ||
 		node.type === 'ArrowFunctionExpression' ||
 		node.type === 'FunctionExpression' ||
 		node.type === 'UnaryExpression' ||
@@ -623,6 +651,20 @@ export function should_proxy_or_freeze(node) {
 	) {
 		return false;
 	}
-
+	if (node.type === 'Identifier' && scope !== null) {
+		const binding = scope.get(node.name);
+		// Let's see if the reference is something that can be proxied or frozen
+		if (
+			binding !== null &&
+			!binding.reassigned &&
+			binding.initial !== null &&
+			binding.initial.type !== 'FunctionDeclaration' &&
+			binding.initial.type !== 'ClassDeclaration' &&
+			binding.initial.type !== 'ImportDeclaration' &&
+			binding.initial.type !== 'EachBlock'
+		) {
+			return should_proxy_or_freeze(binding.initial, null);
+		}
+	}
 	return true;
 }

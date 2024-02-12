@@ -1,4 +1,4 @@
-import { error } from '../errors.js';
+import { walk } from 'zimmerframe';
 import * as b from '../utils/builders.js';
 
 /**
@@ -36,7 +36,7 @@ export function is_text_attribute(attribute) {
  * @param {import('#compiler').Attribute} attribute
  * @returns {attribute is import('#compiler').Attribute & { value: [import('#compiler').ExpressionTag] }}
  */
-export function is_expression_attribute(attribute) {
+function is_expression_attribute(attribute) {
 	return (
 		attribute.value !== true &&
 		attribute.value.length === 1 &&
@@ -96,12 +96,58 @@ export function extract_identifiers(param, nodes = []) {
 }
 
 /**
- * Extracts all identifiers from an expression.
+ * Extracts all identifiers and a stringified keypath from an expression.
+ * @param {import('estree').Expression} expr
+ * @returns {[keypath: string, ids: import('estree').Identifier[]]}
+ */
+export function extract_all_identifiers_from_expression(expr) {
+	/** @type {import('estree').Identifier[]} */
+	let nodes = [];
+	/** @type {string[]} */
+	let keypath = [];
+
+	walk(
+		expr,
+		{},
+		{
+			Identifier(node, { path }) {
+				const parent = path.at(-1);
+				if (parent?.type !== 'MemberExpression' || parent.property !== node || parent.computed) {
+					nodes.push(node);
+				}
+
+				if (parent?.type === 'MemberExpression' && parent.computed && parent.property === node) {
+					keypath.push(`[${node.name}]`);
+				} else {
+					keypath.push(node.name);
+				}
+			},
+			Literal(node, { path }) {
+				const value = typeof node.value === 'string' ? `"${node.value}"` : String(node.value);
+				const parent = path.at(-1);
+				if (parent?.type === 'MemberExpression' && parent.computed && parent.property === node) {
+					keypath.push(`[${value}]`);
+				} else {
+					keypath.push(value);
+				}
+			},
+			ThisExpression(_, { next }) {
+				keypath.push('this');
+				next();
+			}
+		}
+	);
+
+	return [keypath.join('.'), nodes];
+}
+
+/**
+ * Extracts all leaf identifiers from a destructuring expression.
  * @param {import('estree').Identifier | import('estree').ObjectExpression | import('estree').ArrayExpression} node
  * @param {import('estree').Identifier[]} [nodes]
  * @returns
  */
-export function extract_identifiers_from_expression(node, nodes = []) {
+export function extract_identifiers_from_destructuring(node, nodes = []) {
 	// TODO This isn't complete, but it should be enough for our purposes
 	switch (node.type) {
 		case 'Identifier':
@@ -111,9 +157,9 @@ export function extract_identifiers_from_expression(node, nodes = []) {
 		case 'ObjectExpression':
 			for (const prop of node.properties) {
 				if (prop.type === 'Property') {
-					extract_identifiers_from_expression(/** @type {any} */ (prop.value), nodes);
+					extract_identifiers_from_destructuring(/** @type {any} */ (prop.value), nodes);
 				} else {
-					extract_identifiers_from_expression(/** @type {any} */ (prop.argument), nodes);
+					extract_identifiers_from_destructuring(/** @type {any} */ (prop.argument), nodes);
 				}
 			}
 
@@ -121,7 +167,7 @@ export function extract_identifiers_from_expression(node, nodes = []) {
 
 		case 'ArrayExpression':
 			for (const element of node.elements) {
-				if (element) extract_identifiers_from_expression(/** @type {any} */ (element), nodes);
+				if (element) extract_identifiers_from_destructuring(/** @type {any} */ (element), nodes);
 			}
 
 			break;
@@ -264,28 +310,6 @@ function _extract_paths(assignments = [], param, expression, update_expression) 
 	}
 
 	return assignments;
-}
-
-/**
- * The Acorn TS plugin defines `foo!` as a `TSNonNullExpression` node, and
- * `foo as Bar` as a `TSAsExpression` node. This function unwraps those.
- *
- * @template {import('#compiler').SvelteNode | undefined | null} T
- * @param {T} node
- * @returns {T}
- */
-export function unwrap_ts_expression(node) {
-	if (!node) {
-		return node;
-	}
-
-	// @ts-expect-error these types don't exist on the base estree types
-	if (node.type === 'TSNonNullExpression' || node.type === 'TSAsExpression') {
-		// @ts-expect-error
-		return node.expression;
-	}
-
-	return node;
 }
 
 /**
