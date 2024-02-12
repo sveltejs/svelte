@@ -1,12 +1,8 @@
 <script>
-	import Component from './Component.svelte';
-
-	let state = $state();
+	let numbers = $state({ a: 1, b: 2, c: 3 });
 </script>
 
-<button onclick={() => {
-	state = {}
-}}></button>
-{#if state}
-	<Component state={state} />
-{/if}
+<button onclick={() => { numbers.b = 2; }}>set</button>
+<button onclick={() => { delete numbers.b; }}>delete</button>
+<p>{Object.keys(numbers)}</p>
+<p>{JSON.stringify(numbers)}</p>

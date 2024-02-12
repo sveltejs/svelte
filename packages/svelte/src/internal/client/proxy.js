@@ -157,7 +157,7 @@ const state_proxy_handler = {
 		}
 		if (s !== undefined) set(s, UNINITIALIZED);
 
-		if (prop in target) update(metadata.v);
+		if (boolean) update(metadata.v);
 
 		return boolean;
 	},
