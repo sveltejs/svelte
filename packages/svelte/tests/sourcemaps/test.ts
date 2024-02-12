@@ -13,7 +13,14 @@ interface SourcemapTest extends BaseTest {
 		| import('../../src/compiler/public').PreprocessorGroup[];
 	js_map_sources?: string[];
 	css_map_sources?: string[];
-	test?: (obj: { assert: any; input: any; preprocessed: any; js: any; css: any }) => void;
+	test?: (obj: {
+		assert: any;
+		input: any;
+		preprocessed: any;
+		js: any;
+		css: any;
+		map_client: any;
+	}) => void;
 	client: Array<
 		string | { idxOriginal?: number; idxGenerated?: number; str: string; strGenerated?: string }
 	> | null;
@@ -73,31 +80,37 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 					}
 				}
 
-				let generated = find_generated(str);
+				const generated_str = typeof entry === 'string' ? str : entry.strGenerated ?? str;
+				let generated = find_generated(generated_str);
 				if (typeof entry !== 'string' && entry.idxGenerated) {
 					let i = entry.idxGenerated;
 					while (i-- > 0) {
-						generated = find_generated(str, generated.character + 1);
+						generated = find_generated(generated_str, generated.character + 1);
 					}
 				}
 
 				const segments = decoded[generated.line];
 				const segment = segments.find((segment) => segment[0] === generated.column);
-				if (!segment) throw new Error(`Could not find segment for '${str}' in sourcemap`);
+				if (!segment)
+					throw new Error(
+						`Could not find segment for '${str}' in sourcemap (${generated.line}:${generated.column})`
+					);
 
-				assert.equal(segment[2], original.line, 'mapped line did not match');
-				assert.equal(segment[3], original.column, 'mapped column did not match');
+				assert.equal(segment[2], original.line, `mapped line did not match for '${str}'`);
+				assert.equal(segment[3], original.column, `mapped column did not match for '${str}'`);
 
-				const end_segment = segments.find(
-					(segment) => segment[0] === generated.column + str.length
-				);
-				if (!end_segment) throw new Error(`Could not find end segment for '${str}' in sourcemap`);
+				const generated_end = generated.column + generated_str.length;
+				const end_segment = segments.find((segment) => segment[0] === generated_end);
+				if (!end_segment)
+					throw new Error(
+						`Could not find end segment for '${str}' in sourcemap (${generated.line}:${generated_end})`
+					);
 
-				assert.equal(end_segment[2], original.line, 'mapped line end did not match');
+				assert.equal(end_segment[2], original.line, `mapped line end did not match for '${str}'`);
 				assert.equal(
 					end_segment[3],
 					original.column + str.length,
-					'mapped column end did not match'
+					`mapped column end did not match for '${str}'`
 				);
 			}
 		} catch (e) {
@@ -107,6 +120,8 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 		}
 	}
 
+	let map_client = null;
+
 	if (config.client === null) {
 		assert.equal(
 			fs.existsSync(`${cwd}/_output/client/input.svelte.js.map`),
@@ -115,9 +130,7 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 		);
 	} else {
 		const output_client = fs.readFileSync(`${cwd}/_output/client/input.svelte.js`, 'utf-8');
-		const map_client = JSON.parse(
-			fs.readFileSync(`${cwd}/_output/client/input.svelte.js.map`, 'utf-8')
-		);
+		map_client = JSON.parse(fs.readFileSync(`${cwd}/_output/client/input.svelte.js.map`, 'utf-8'));
 		compare('client', output_client, map_client, config.client);
 
 		const output_server = fs.readFileSync(`${cwd}/_output/server/input.svelte.js`, 'utf-8');
@@ -145,7 +158,7 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 
 	if (config.test) {
 		// TODO figure out for which tests we still need this
-		config.test({ assert /*, input, preprocessed: output_client, js, css*/ });
+		config.test({ assert, map_client /*, input, preprocessed: output_client, js, css*/ });
 	}
 });
 

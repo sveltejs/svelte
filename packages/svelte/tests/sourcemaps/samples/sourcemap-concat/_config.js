@@ -3,7 +3,7 @@ import { test } from '../../test';
 import { magic_string_preprocessor_result } from '../../helpers.js';
 
 export default test({
-	skip: true,
+	skip: true, // TODO wrong source map?
 	js_map_sources: ['input.svelte'],
 	preprocess: [
 		{
@@ -13,5 +13,6 @@ export default test({
 				return magic_string_preprocessor_result('input.svelte', src);
 			}
 		}
-	]
+	],
+	client: ['Target'] // TODO original test compared preprocessed version
 });

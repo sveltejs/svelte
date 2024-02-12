@@ -3,6 +3,7 @@ import { VERSION } from '../../../version.js';
 import { server_component, server_module } from './server/transform-server.js';
 import { client_component, client_module } from './client/transform-client.js';
 import { getLocator } from 'locate-character';
+import { apply_preprocessor_sourcemap, get_source_name } from '../../utils/mapped_code.js';
 
 /**
  * @param {import('../types').ComponentAnalysis} analysis
@@ -41,13 +42,33 @@ export function transform_component(analysis, source, options) {
 		];
 	}
 
+	const source_name = get_source_name(options) || 'input.svelte';
+
+	const js = print(program, { sourceMapSource: source_name });
+	if (options.sourcemap) {
+		js.map = apply_preprocessor_sourcemap(
+			source_name,
+			js.map,
+			/** @type {any} */ (options.sourcemap)
+		);
+	}
+
+	const css =
+		analysis.stylesheet.has_styles && !analysis.inject_styles
+			? analysis.stylesheet.render(source_name, source, options.dev)
+			: null;
+	if (css && options.sourcemap) {
+		css.map = apply_preprocessor_sourcemap(
+			source_name,
+			css.map,
+			/** @type {any} */ (options.sourcemap)
+		);
+	}
+
 	return {
-		js: print(program, { sourceMapSource: options.filename }), // TODO needs more logic to apply map from preprocess
-		css:
-			analysis.stylesheet.has_styles && !analysis.inject_styles
-				? analysis.stylesheet.render(options.filename ?? 'TODO', source, options.dev)
-				: null,
-		warnings: transform_warnings(source, options.filename, analysis.warnings),
+		js,
+		css,
+		warnings: transform_warnings(source, options.filename, analysis.warnings), // TODO apply preprocessor sourcemap
 		metadata: {
 			runes: analysis.runes
 		}

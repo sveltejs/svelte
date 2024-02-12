@@ -106,6 +106,9 @@ export async function compile_directory(
 			}
 
 			const compiled = compile(text, opts);
+			compiled.js.code = compiled.js.code.replace(/\(Svelte v\d+\.\d+\.\d+(-next\.\d+)?/, (match) =>
+				match.replace(/\d/g, 'x')
+			);
 
 			write(`${output_dir}/${file}.js`, compiled.js.code);
 			if (output_map) {

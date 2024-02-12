@@ -3,7 +3,7 @@ import { test } from '../../test';
 import { magic_string_preprocessor_result, magic_string_replace_all } from '../../helpers.js';
 
 export default test({
-	skip: true,
+	skip: true, // TODO css map seems wrong
 	preprocess: {
 		markup: ({ content, filename = '' }) => {
 			const src = new MagicString(content);
@@ -23,5 +23,7 @@ export default test({
 			src.prependLeft(idx, '      ');
 			return magic_string_preprocessor_result(filename, src);
 		}
-	}
+	},
+	client: [{ str: 'baritone', strGenerated: 'bar' }],
+	css: [{ str: '--bazitone', strGenerated: '--baz' }]
 });

@@ -243,6 +243,16 @@ export class MappedCode {
 	}
 }
 
+// browser vs node.js
+const b64enc =
+	typeof window !== 'undefined' && typeof btoa === 'function'
+		? /** @param {string} str */ (str) => btoa(unescape(encodeURIComponent(str)))
+		: /** @param {string} str */ (str) => Buffer.from(str).toString('base64');
+const b64dec =
+	typeof window !== 'undefined' && typeof atob === 'function'
+		? atob
+		: /** @param {any} a */ (a) => Buffer.from(a, 'base64').toString();
+
 /**
  * @param {string} filename
  * @param {Array<import('@ampproject/remapping').DecodedSourceMap | import('@ampproject/remapping').RawSourceMap>} sourcemap_list
@@ -305,18 +315,7 @@ export function apply_preprocessor_sourcemap(filename, svelte_map, preprocessor_
 		toUrl: {
 			enumerable: false,
 			value: function toUrl() {
-				let b64 = '';
-				if (typeof window !== 'undefined' && window.btoa) {
-					// btoa doesn't support multi-byte characters
-					b64 = window.btoa(unescape(encodeURIComponent(this.toString())));
-				} else if (typeof Buffer !== 'undefined') {
-					b64 = Buffer.from(this.toString(), 'utf8').toString('base64');
-				} else {
-					throw new Error(
-						'Unsupported environment: `window.btoa` or `Buffer` should be present to use toUrl.'
-					);
-				}
-				return 'data:application/json;charset=utf-8;base64,' + b64;
+				return 'data:application/json;charset=utf-8;base64,' + b64enc(this.toString());
 			}
 		}
 	});
@@ -361,7 +360,7 @@ export function parse_attached_sourcemap(processed, tag_name) {
 				// ignore attached sourcemap
 				return '';
 			}
-			processed.map = atob(map_data); // use attached sourcemap
+			processed.map = b64dec(map_data); // use attached sourcemap
 			return ''; // remove from processed.code
 		}
 		// sourceMappingURL is path or URL
@@ -376,4 +375,38 @@ export function parse_attached_sourcemap(processed, tag_name) {
 		// ignore sourcemap path
 		return ''; // remove from processed.code
 	});
+}
+
+/**
+ * @param {string} from
+ * @param {string} to
+ */
+function get_relative_path(from, to) {
+	// Don't use node's utils here to ensure the compiler is usable in a browser environment
+	const from_parts = from.split(/[/\\]/);
+	const to_parts = to.split(/[/\\]/);
+	from_parts.pop(); // get dirname
+	while (from_parts[0] === to_parts[0]) {
+		from_parts.shift();
+		to_parts.shift();
+	}
+	if (from_parts.length) {
+		let i = from_parts.length;
+		while (i--) from_parts[i] = '..';
+	}
+	return from_parts.concat(to_parts).join('/');
+}
+
+/** @param {string} filename */
+function get_basename(filename) {
+	// Don't use node's utils here to ensure the compiler is usable in a browser environment
+	return /** @type {string} */ (filename.split(/[/\\]/).pop());
+}
+
+/** @param {import('#compiler').ValidatedCompileOptions} compile_options */
+export function get_source_name(compile_options) {
+	if (!compile_options.filename) return null;
+	return compile_options.outputFilename
+		? get_relative_path(compile_options.outputFilename, compile_options.filename)
+		: get_basename(compile_options.filename);
 }
