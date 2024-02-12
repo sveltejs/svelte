@@ -1,6 +1,7 @@
 import { get_possible_values } from './gather_possible_values.js';
 import { regex_starts_with_whitespace, regex_ends_with_whitespace } from '../../patterns.js';
 import { error } from '../../../errors.js';
+import { relative } from 'node:path';
 
 const NO_MATCH = 'NO_MATCH';
 const POSSIBLE_MATCH = 'POSSIBLE_MATCH';
@@ -182,8 +183,12 @@ export default class Selector {
 			}
 		}
 
-		let first = true;
+
 		for (const complex_selector of this.selector_list) {
+			// We must wrap modifier with :where if the first selector is invisible (part of a nested rule)
+			let is_first_invisible_selector = complex_selector[0].contains_invisible_selectors
+			let contains_any_invisible_selectors = complex_selector.some(relative_selector => relative_selector.contains_invisible_selectors)
+			let first = contains_any_invisible_selectors ? is_first_invisible_selector : true
 			for (const relative_selector of complex_selector) {
 				if (relative_selector.global) {
 					// Remove the global pseudo class from the selector
@@ -1021,7 +1026,7 @@ function selector_to_blocks(children, parent_complex_selector) {
 				error(child, 'nesting-selector-not-allowed');
 			} else {
 				// We shoudld've already handled these above (except for multiple nesting selectors, which is supposed to work?)
-				throw new Error('unexpected nesting selector');
+				throw new Error('Unexpected nesting selector, multiple nesting selectors (&) are not supported yet');
 			}
 		} else {
 			// shared reference bween all children
