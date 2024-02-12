@@ -2,7 +2,6 @@ import * as ts from 'typescript';
 import { test } from '../../test';
 
 export default test({
-	skip: true,
 	preprocess: [
 		{
 			script: ({ content, filename }) => {
@@ -21,5 +20,11 @@ export default test({
 				};
 			}
 		}
+	],
+	client: ['count'],
+	preprocessed: [
+		{ str: 'let count: number = 0;', strGenerated: 'let count = 0;' },
+		{ str: 'ITimeoutDestroyer', strGenerated: null },
+		'<h1>Hello world!</h1>'
 	]
 });

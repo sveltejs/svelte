@@ -44,7 +44,7 @@ function get_processor(tag_name, search, replace) {
 }
 
 export default test({
-	skip: true, // TODO preprocessor source maps missing
+	skip: true, // TODO investigate
 	preprocess: [
 		get_processor('script', 'replace_me_script', 'done_replace_script_1'),
 		get_processor('script', 'done_replace_script_1', 'done_replace_script_2'),
@@ -55,7 +55,6 @@ export default test({
 	client: [
 		{ str: 'replace_me_script', strGenerated: 'done_replace_script_2' },
 		{ str: 'done_replace_script_2', idxGenerated: 1, idxOriginal: 1 }
-		// TODO how to do this for the CSS now that it's in a different file?
-		// { str: 'done_replace_style_2', strGenerated: 'done_replace_style_2' }
-	]
+	],
+	css: [{ str: 'done_replace_style_2', strGenerated: 'done_replace_style_2' }]
 });

@@ -5,6 +5,16 @@ import { suite, type BaseTest } from '../suite.js';
 import { compile_directory } from '../helpers.js';
 import { decode } from '@jridgewell/sourcemap-codec';
 
+type SourceMapEntry =
+	| string
+	| {
+			idxOriginal?: number;
+			idxGenerated?: number;
+			str: string;
+			strGenerated?: string | null;
+			filename?: string;
+	  };
+
 interface SourcemapTest extends BaseTest {
 	options?: { filename: string };
 	compileOptions?: Partial<import('#compiler').CompileOptions>;
@@ -16,20 +26,16 @@ interface SourcemapTest extends BaseTest {
 	test?: (obj: {
 		assert: any;
 		input: any;
-		preprocessed: any;
 		js: any;
 		css: any;
+		map_preprocessed: any;
+		code_preprocessed: string;
 		map_client: any;
 	}) => void;
-	client: Array<
-		string | { idxOriginal?: number; idxGenerated?: number; str: string; strGenerated?: string }
-	> | null;
-	server?: Array<
-		string | { idxOriginal?: number; idxGenerated?: number; str: string; strGenerated?: string }
-	>;
-	css?: Array<
-		string | { idxOriginal?: number; idxGenerated?: number; str: string; strGenerated?: string }
-	> | null;
+	client: SourceMapEntry[] | null;
+	server?: SourceMapEntry[];
+	css?: SourceMapEntry[] | null;
+	preprocessed?: SourceMapEntry[];
 }
 
 const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
@@ -45,12 +51,7 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 	const input = fs.readFileSync(`${cwd}/input.svelte`, 'utf-8');
 	const input_locator = getLocator(input);
 
-	function compare(
-		info: string,
-		output: string,
-		map: any,
-		strings: NonNullable<SourcemapTest['client']>
-	) {
+	function compare(info: string, output: string, map: any, entries: SourceMapEntry[]) {
 		const output_locator = getLocator(output);
 
 		function find_original(str: string, idx = 0) {
@@ -70,10 +71,13 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 		const decoded = decode(map.mappings);
 
 		try {
-			for (const entry of strings) {
-				const str = typeof entry === 'string' ? entry : entry.str;
+			for (let entry of entries) {
+				entry = typeof entry === 'string' ? { str: entry } : entry;
+
+				const str = entry.str;
+
 				let original = find_original(str);
-				if (typeof entry !== 'string' && entry.idxOriginal) {
+				if (entry.idxOriginal) {
 					let i = entry.idxOriginal;
 					while (i-- > 0) {
 						original = find_original(str, original.character + 1);
@@ -81,8 +85,11 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 				}
 
 				const generated_str = typeof entry === 'string' ? str : entry.strGenerated ?? str;
+				if (entry.strGenerated === null) {
+					if (!output.includes(generated_str)) continue;
+				}
 				let generated = find_generated(generated_str);
-				if (typeof entry !== 'string' && entry.idxGenerated) {
+				if (entry.idxGenerated) {
 					let i = entry.idxGenerated;
 					while (i-- > 0) {
 						generated = find_generated(generated_str, generated.character + 1);
@@ -91,13 +98,28 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 
 				const segments = decoded[generated.line];
 				const segment = segments.find((segment) => segment[0] === generated.column);
-				if (!segment)
+				if (!segment && entry.strGenerated !== null) {
 					throw new Error(
 						`Could not find segment for '${str}' in sourcemap (${generated.line}:${generated.column})`
 					);
+				} else if (segment && entry.strGenerated === null) {
+					throw new Error(
+						`Found segment for '${str}' in sourcemap (${generated.line}:${generated.column}) but should not`
+					);
+				} else if (!segment) {
+					continue;
+				}
 
 				assert.equal(segment[2], original.line, `mapped line did not match for '${str}'`);
 				assert.equal(segment[3], original.column, `mapped column did not match for '${str}'`);
+
+				if (entry.filename) {
+					assert.equal(
+						map.sources[segment[1]!],
+						entry.filename,
+						`filename did not match for '${str}'`
+					);
+				}
 
 				const generated_end = generated.column + generated_str.length;
 				const end_segment = segments.find((segment) => segment[0] === generated_end);
@@ -166,9 +188,35 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 		}
 	}
 
+	let map_preprocessed = null;
+	let code_preprocessed = '';
+	if (config.preprocessed !== undefined) {
+		if (config.preprocessed === null) {
+			assert.equal(
+				fs.existsSync(`${cwd}/_output/client/input.preprocessed.svelte.map`),
+				false,
+				'Expected no source map'
+			);
+		} else {
+			code_preprocessed = fs.readFileSync(
+				`${cwd}/_output/client/input.preprocessed.svelte`,
+				'utf-8'
+			);
+			map_preprocessed = JSON.parse(
+				fs.readFileSync(`${cwd}/_output/client/input.preprocessed.svelte.map`, 'utf-8')
+			);
+			compare('preprocessed', code_preprocessed, map_preprocessed, config.preprocessed);
+		}
+	}
+
 	if (config.test) {
 		// TODO figure out for which tests we still need this
-		config.test({ assert, map_client /*, input, preprocessed: output_client, js, css*/ });
+		config.test({
+			assert,
+			map_client,
+			map_preprocessed,
+			code_preprocessed /*, input, preprocessed: output_client, js, css*/
+		});
 	}
 });
 

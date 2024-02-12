@@ -103,6 +103,13 @@ export async function compile_directory(
 				);
 				text = preprocessed.code;
 				opts = { ...opts, sourcemap: preprocessed.map };
+				write(`${output_dir}/${file.slice(0, -7)}.preprocessed.svelte`, text);
+				if (output_map) {
+					write(
+						`${output_dir}/${file.slice(0, -7)}.preprocessed.svelte.map`,
+						JSON.stringify(preprocessed.map, null, '\t')
+					);
+				}
 			}
 
 			const compiled = compile(text, opts);

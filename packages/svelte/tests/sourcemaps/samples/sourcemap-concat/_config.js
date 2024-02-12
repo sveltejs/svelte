@@ -13,5 +13,6 @@ export default test({
 			}
 		}
 	],
-	client: ['Target'] // TODO original test compared preprocessed version
+	client: ['Target'],
+	preprocessed: ['Target']
 });

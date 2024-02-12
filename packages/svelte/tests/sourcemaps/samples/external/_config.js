@@ -21,5 +21,12 @@ export default test({
 				]);
 			}
 		}
+	],
+	client: [],
+	preprocessed: [
+		'Divs ftw!',
+		// External files, TODO generated output needs to be COMMON and STYLES
+		{ filename: 'common.scss', str: 'height: 100%;' },
+		{ filename: 'styles.scss', str: 'color: orange;' }
 	]
 });
