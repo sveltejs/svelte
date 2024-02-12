@@ -1025,7 +1025,7 @@ function selector_to_blocks(children, parent_complex_selector) {
 			if (!parent_complex_selector) {
 				error(child, 'nesting-selector-not-allowed');
 			} else {
-				// We shoudld've already handled these above
+				// We shoudld've already handled these above (except for multiple nesting selectors, which is supposed to work?)
 				throw new Error('Unexpected nesting selector');
 			}
 		} else {
@@ -1107,19 +1107,6 @@ function nest_fake_parents(children, parent_complex_selector) {
 
 	// Insert the parent selectors into the children array in reverse order (so we don't mess up the indexes)
 	for (const nested_selector_index of nested_selector_indexes.reverse()) {
-		if (used_ampersand) {
-			let child_after = children[nested_selector_index + 1];
-			let child_before = children[nested_selector_index - 1];
-
-			if (
-				child_before?.type !== 'Combinator' &&
-				child_after?.type !== 'Combinator' &&
-				!used_ampersand
-			) {
-				children.splice(nested_selector_index, 0, FakeCombinator);
-			}
-		}
-		// Finally, insert the parent selectors into the children array
 		children.splice(nested_selector_index, 1, ...parent_selectors);
 	}
 }
