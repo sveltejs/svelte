@@ -1,0 +1,12 @@
+button.svelte-xyz {
+    color: red;
+    &&& {
+        color: blue;
+    }
+}
+
+x.svelte-xyz {
+    foo:where(.svelte-xyz) & foo & {
+        color: green;
+    }
+}
