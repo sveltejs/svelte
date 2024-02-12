@@ -1575,7 +1575,9 @@ export function prop(props, key, flags, initial) {
 			// TODO consolidate all these random runtime errors
 			throw new Error(
 				'ERR_SVELTE_BINDING_FALLBACK' +
-					(DEV ? ': Cannot bind: to a property that contains a fallback value' : '')
+					(DEV
+						? `: Cannot pass undefined to bind:${key} because the property contains a fallback value. Pass a different value than undefined to ${key}.`
+						: '')
 			);
 		}
 
