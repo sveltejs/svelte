@@ -1,0 +1,11 @@
+foo.svelte-xyz, bar.svelte-xyz {
+    color: purple;
+
+    x:where(.svelte-xyz) {
+        color: red;
+
+        y:where(.svelte-xyz) {
+            color: blue;
+        }
+    }
+}
