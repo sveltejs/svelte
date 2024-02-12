@@ -25,8 +25,8 @@ const { test, run } = suite<CssTest>(async (config, cwd) => {
 	// TODO
 	// const expected_warnings = (config.warnings || []).map(normalize_warning);
 
-	compile_directory(cwd, 'client', { cssHash: () => 'svelte-xyz', ...config.compileOptions });
-	compile_directory(cwd, 'server', { cssHash: () => 'svelte-xyz', ...config.compileOptions });
+	await compile_directory(cwd, 'client', { cssHash: () => 'svelte-xyz', ...config.compileOptions });
+	await compile_directory(cwd, 'server', { cssHash: () => 'svelte-xyz', ...config.compileOptions });
 
 	const dom_css = fs.readFileSync(`${cwd}/_output/client/input.svelte.css`, 'utf-8').trim();
 	const ssr_css = fs.readFileSync(`${cwd}/_output/server/input.svelte.css`, 'utf-8').trim();
