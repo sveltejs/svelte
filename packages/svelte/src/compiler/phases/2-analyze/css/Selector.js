@@ -161,7 +161,6 @@ export default class Selector {
 			while (i--) {
 				const selector = relative_selector.compound.selectors[i];
 
-				if (!selector.visible) break;
 				if (selector.use_wrapper.used) break;
 
 				selector.use_wrapper.used = true;
