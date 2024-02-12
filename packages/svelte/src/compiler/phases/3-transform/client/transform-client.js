@@ -437,6 +437,11 @@ export function client_component(source, analysis, options) {
 		}
 	}
 
+	if (options.dev && state.options.filename) {
+		body.unshift(b.stmt(b.call(b.id('$.push_module'), b.literal(state.options.filename))));
+		body.push(b.stmt(b.call(b.id('$.pop_module'), b.literal(state.options.filename))));
+	}
+
 	return {
 		type: 'Program',
 		sourceType: 'module',

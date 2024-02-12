@@ -20,6 +20,7 @@ import {
 	is_frozen,
 	object_prototype
 } from './utils.js';
+import { get_module } from './dev.js';
 
 export const STATE_SYMBOL = Symbol('$state');
 
@@ -52,7 +53,8 @@ export function proxy(value, immutable = true) {
 					a: is_array(value),
 					i: immutable,
 					p: proxy,
-					t: value
+					t: value,
+					o: DEV ? get_module() : ''
 				}),
 				writable: true,
 				enumerable: false
@@ -248,6 +250,13 @@ const state_proxy_handler = {
 		// Set the new value before updating any signals so that any listeners get the new value
 		// @ts-ignore
 		target[prop] = value;
+
+		if (DEV) {
+			const site = get_module();
+			if (site !== metadata.o) {
+				console.error(`mutating state outside the component where it was created: ${site}`);
+			}
+		}
 
 		if (not_has) {
 			// If we have mutated an array directly, we might need to

@@ -406,6 +406,8 @@ export interface ProxyMetadata<T = Record<string | symbol, any>> {
 	p: ProxyStateObject<T>;
 	/** The original target this proxy was created for */
 	t: T;
+	/** The component that 'owns' this state, if any */
+	o: string;
 }
 
 export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
