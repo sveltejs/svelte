@@ -1647,7 +1647,7 @@ export function prop(props, key, flags, initial) {
 
 		// legacy nonsense — need to ensure the source is invalidated when necessary
 		// also needed for when handling inspect logic so we can inspect the correct source signal
-		if (is_signals_recorded || DEV && inspect_fn) {
+		if (is_signals_recorded || (DEV && inspect_fn)) {
 			// set this so that we don't reset to the parent value if `d`
 			// is invalidated because of `invalidate_inner_signals` (rather
 			// than because the parent or child value changed)
