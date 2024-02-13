@@ -52,22 +52,22 @@ class Rule {
 	/** @type {import('./Selector.js').default[]} */
 	selectors;
 
-	/** @type {Declaration[]} */
-	declarations;
-
 	/** @type {import('#compiler').Css.Rule} */
 	node;
 
-	/** @type {Atrule | Rule | undefined} */
+	/** @type {Stylesheet | Atrule | Rule} */
 	parent;
 
-	/** @type {Rule[]} */
-	nested_rules;
+	/** @type {Declaration[]} */
+	declarations = [];
+
+	/** @type {Array<Atrule | Rule>} */
+	children = [];
 
 	/**
 	 * @param {import('#compiler').Css.Rule} node
 	 * @param {Stylesheet} stylesheet
-	 * @param {Atrule | Rule | undefined} parent
+	 * @param {Stylesheet | Atrule | Rule} parent
 	 */
 	constructor(node, stylesheet, parent) {
 		this.node = node;
@@ -87,7 +87,7 @@ class Rule {
 		 * 	- .a .c
 		 * 	- .b .c
 		 */
-		if (parent && parent.node.type === 'Rule') {
+		if (parent instanceof Rule) {
 			let block_groups = /** @type {Rule} **/ (parent).selectors
 				.map((selector) => selector.selector_list)
 				.flat();
@@ -97,19 +97,12 @@ class Rule {
 		} else {
 			this.selectors = node.prelude.children.map((node) => new Selector(node, stylesheet, null));
 		}
-
-		this.nested_rules = node.block.children
-			.filter((node) => node.type === 'Rule')
-			.map((node) => new Rule(/** @type {import('#compiler').Css.Rule}*/ (node), stylesheet, this));
-		this.declarations = node.block.children
-			.filter((node) => node.type === 'Declaration')
-			.map((node) => new Declaration(/** @type {import('#compiler').Css.Declaration} */ (node)));
 	}
 
 	/** @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node */
 	apply(node) {
 		this.selectors.forEach((selector) => selector.apply(node)); // TODO move the logic in here?
-		this.nested_rules.forEach((rule) => rule.apply(node));
+		this.children.forEach((rule) => rule.apply(node));
 	}
 
 	/**
@@ -118,7 +111,7 @@ class Rule {
 	is_empty() {
 		if (this.declarations.length > 0) return false;
 
-		for (const rule of this.nested_rules) {
+		for (const rule of this.children) {
 			if (rule.is_used() && !rule.is_empty()) return false;
 		}
 
@@ -129,7 +122,7 @@ class Rule {
 	 * @returns {boolean}
 	 */
 	is_used() {
-		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node)) {
+		if (this.parent instanceof Atrule && is_keyframes_node(this.parent.node)) {
 			return true;
 		}
 
@@ -137,7 +130,7 @@ class Rule {
 			if (selector.used) return true;
 		}
 
-		for (const rule of this.nested_rules) {
+		for (const rule of this.children) {
 			if (rule.is_used()) return true;
 		}
 
@@ -150,14 +143,14 @@ class Rule {
 	 * @param {Map<string, string>} keyframes
 	 */
 	transform(code, id, keyframes) {
-		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node)) {
+		if (this.parent instanceof Atrule && is_keyframes_node(this.parent.node)) {
 			return;
 		}
 
 		const modifier = `.${id}`;
 		this.selectors.forEach((selector) => selector.transform(code, modifier));
 		this.declarations.forEach((declaration) => declaration.transform(code, keyframes));
-		this.nested_rules.forEach((rule) => rule.transform(code, id, keyframes));
+		this.children.forEach((rule) => rule.transform(code, id, keyframes));
 	}
 
 	/** @param {import('../../types.js').ComponentAnalysis} analysis */
@@ -165,7 +158,7 @@ class Rule {
 		this.selectors.forEach((selector) => {
 			selector.validate(analysis);
 		});
-		this.nested_rules.forEach((rule) => {
+		this.children.forEach((rule) => {
 			rule.validate(analysis);
 		});
 	}
@@ -175,7 +168,7 @@ class Rule {
 		this.selectors.forEach((selector) => {
 			if (!selector.used) handler(selector);
 		});
-		this.nested_rules.forEach((rule) => {
+		this.children.forEach((rule) => {
 			rule.warn_on_unused_selector(handler);
 		});
 	}
@@ -185,7 +178,7 @@ class Rule {
 	 * @param {boolean} dev
 	 */
 	prune(code, dev) {
-		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node)) {
+		if (this.parent instanceof Atrule && is_keyframes_node(this.parent.node)) {
 			return;
 		}
 
@@ -240,7 +233,7 @@ class Rule {
 			}
 		}
 
-		for (const rule of this.nested_rules) {
+		for (const rule of this.children) {
 			rule.prune(code, dev);
 		}
 	}
@@ -327,8 +320,11 @@ class Atrule {
 		}
 	}
 
-	/** @param {boolean} _dev */
-	is_used(_dev) {
+	is_empty() {
+		return true; // TODO
+	}
+
+	is_used() {
 		return true; // TODO
 	}
 
@@ -435,58 +431,32 @@ export default class Stylesheet {
 		this.has_styles = true;
 
 		const state = {
-			/** @type {Atrule | undefined} */
-			atrule: undefined
+			/** @type {Stylesheet | Atrule | Rule} */
+			current: this
 		};
 
 		walk(/** @type {import('#compiler').Css.Node} */ (ast), state, {
 			Atrule: (node, context) => {
 				const atrule = new Atrule(node);
 
-				if (context.state.atrule) {
-					context.state.atrule.children.push(atrule);
-				} else {
-					this.children.push(atrule);
-				}
-
 				if (is_keyframes_node(node)) {
 					if (!node.prelude.startsWith('-global-')) {
 						this.keyframes.set(node.prelude, `${this.id}-${node.prelude}`);
 					}
-				} else if (node.block) {
-					/** @type {Declaration[]} */
-					const declarations = [];
-
-					for (const child of node.block.children) {
-						if (child.type === 'Declaration') {
-							declarations.push(new Declaration(child));
-						}
-					}
-
-					if (declarations.length > 0) {
-						push_array(atrule.declarations, declarations);
-					}
 				}
 
-				context.next({
-					...context.state,
-					atrule
-				});
+				context.state.current.children.push(atrule);
+				context.next({ current: atrule });
+			},
+			Declaration: (node, context) => {
+				const declaration = new Declaration(node);
+				/** @type {Atrule | Rule} */ (context.state.current).declarations.push(declaration);
 			},
 			Rule: (node, context) => {
-				const rule = new Rule(node, this, context.state.atrule);
+				const rule = new Rule(node, this, context.state.current);
 
-				if (context.state.atrule) {
-					context.state.atrule.children.push(rule);
-				} else {
-					this.children.push(rule);
-				}
-
-				if (rule.nested_rules.length > 0) {
-					// Skip nested rules as they are instantiated in the Rule constructor
-					return node;
-				}
-				context.next();
+				context.state.current.children.push(rule);
+				context.next({ current: rule });
 			}
 		});
 	}
