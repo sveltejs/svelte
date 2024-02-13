@@ -44,7 +44,7 @@
 			color: green;
 
 			.c {
-				& {
+				& & {
 					color: red;
 				}
 			}

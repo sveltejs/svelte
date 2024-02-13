@@ -30,9 +30,9 @@
 			color: green;
 
 			/* (empty) .c:where(.svelte-xyz) {
-				/* (unused) & {
+				& & {
 					color: red;
-				}*\/
+				}
 			}*/
 		}
 
