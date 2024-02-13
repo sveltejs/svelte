@@ -405,10 +405,9 @@ function read_block_item(parser) {
 		return read_at_rule(parser);
 	}
 
-	const start = parser.index;
-
 	// read ahead to understand whether we're dealing with a declaration or a nested rule.
 	// this involves some duplicated work, but avoids a try-catch that would disguise errors
+	const start = parser.index;
 	read_value(parser);
 	const char = parser.template[parser.index];
 	parser.index = start;
