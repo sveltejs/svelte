@@ -1765,7 +1765,9 @@ export function component(anchor_node, component_fn, render_fn) {
 			transition.f(() => {
 				transitions.delete(transition);
 				if (transitions.size === 0) {
-					if (render.e !== null) {
+					// If the current render has changed since, then we can remove the old render
+					// effect as it's stale.
+					if (current_render !== render && render.e !== null) {
 						if (render.d !== null) {
 							remove(render.d);
 							render.d = null;
@@ -1891,7 +1893,9 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 			transition.f(() => {
 				transitions.delete(transition);
 				if (transitions.size === 0) {
-					if (render.e !== null) {
+					// If the current render has changed since, then we can remove the old render
+					// effect as it's stale.
+					if (current_render !== render && render.e !== null) {
 						if (render.d !== null) {
 							remove(render.d);
 							render.d = null;
@@ -2051,7 +2055,9 @@ export function key(anchor_node, key, render_fn) {
 			transition.f(() => {
 				transitions.delete(transition);
 				if (transitions.size === 0) {
-					if (render.e !== null) {
+					// If the current render has changed since, then we can remove the old render
+					// effect as it's stale.
+					if (current_render !== render && render.e !== null) {
 						if (render.d !== null) {
 							remove(render.d);
 							render.d = null;
