@@ -182,12 +182,13 @@ export default class Selector {
 			}
 		}
 
-
 		for (const complex_selector of this.selector_list) {
 			// We must wrap modifier with :where if the first selector is invisible (part of a nested rule)
-			let is_first_invisible_selector = complex_selector[0].contains_invisible_selectors
-			let contains_any_invisible_selectors = complex_selector.some(relative_selector => relative_selector.contains_invisible_selectors)
-			let first = contains_any_invisible_selectors ? is_first_invisible_selector : true
+			let is_first_invisible_selector = complex_selector[0].contains_invisible_selectors;
+			let contains_any_invisible_selectors = complex_selector.some(
+				(relative_selector) => relative_selector.contains_invisible_selectors
+			);
+			let first = contains_any_invisible_selectors ? is_first_invisible_selector : true;
 			for (const relative_selector of complex_selector) {
 				if (relative_selector.global) {
 					// Remove the global pseudo class from the selector
@@ -1098,7 +1099,7 @@ function nest_fake_parents(children, parent_complex_selector) {
 		if (children[0].type !== 'Combinator') {
 			children.unshift(FakeCombinator);
 		}
-		children.unshift({ type: 'NestingSelector', name: "&", start: -1, end: -1 });
+		children.unshift({ type: 'NestingSelector', name: '&', start: -1, end: -1 });
 	}
 
 	/** @type typeof children */

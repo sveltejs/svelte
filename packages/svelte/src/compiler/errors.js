@@ -94,7 +94,7 @@ const parse = {
 	'invalid-render-spread-argument': () => 'cannot use spread arguments in {@render ...} tags',
 	'invalid-snippet-rest-parameter': () =>
 		'snippets do not support rest parameters; use an array instead',
-	'expected-declaration-or-nested-rule': () => 'Expected a CSS declaration or nested rule',
+	'expected-declaration-or-nested-rule': () => 'Expected a CSS declaration or nested rule'
 };
 
 /** @satisfies {Errors} */
