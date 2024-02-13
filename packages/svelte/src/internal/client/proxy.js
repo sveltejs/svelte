@@ -181,7 +181,6 @@ const state_proxy_handler = {
 			(effect_active() || updating_derived) &&
 			(!(prop in target) || get_descriptor(target, prop)?.writable)
 		) {
-			console.log('setting current owner', metadata.o);
 			const previous_owner = current_owner;
 			if (!current_owner) set_current_owner(metadata.o);
 			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i));
@@ -190,9 +189,7 @@ const state_proxy_handler = {
 		}
 
 		if (s !== undefined) {
-			// set_current_owner(metadata.o);
 			const value = get(s);
-			// set_current_owner(null);
 			return value === UNINITIALIZED ? undefined : value;
 		}
 
