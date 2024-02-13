@@ -1013,7 +1013,7 @@ export function set(signal, value) {
 	if (DEV && 'o' in signal) {
 		const site = get_module();
 		if (site && !signal.o.has(site)) {
-			console.error(`mutating state outside the component where it was created: ${site}`);
+			throw new Error(`mutating state outside the component where it was created: ${site}`);
 		}
 	}
 
