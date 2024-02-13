@@ -1006,9 +1006,11 @@ function serialize_inline_component(node, component_name, context) {
 			);
 	}
 
-	const statements = [...snippet_declarations, ...binding_initializers];
-
-	statements.push(b.stmt(fn(context.state.node)));
+	const statements = [
+		...snippet_declarations,
+		...binding_initializers,
+		b.stmt(fn(context.state.node))
+	];
 
 	return statements.length > 1 ? b.block(statements) : statements[0];
 }
