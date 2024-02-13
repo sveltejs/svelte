@@ -407,20 +407,13 @@ function read_block_item(parser) {
 
 	const start = parser.index;
 
-	// Here we need to distinguish between potential declarations and potentially nested CSS rules
-	// properly ignoring syntactic tokens such as comments or strings that may contain the real
-	// syntactically valid tokens such as ; { or }
-	// For example: content: '{;}'; is a valid declaration
-	try {
-		try {
-			return read_declaration(parser)
-		} catch(e) {
-			parser.index = start
-			return read_rule(parser)
-		}
-	} catch(e) {
-		error(parser.index, 'expected-declaration-or-nested-rule')
-	}
+	// read ahead to understand whether we're dealing with a declaration or a nested rule.
+	// this involves some duplicated work, but avoids a try-catch that would disguise errors
+	read_value(parser);
+	const char = parser.template[parser.index];
+	parser.index = start;
+
+	return char === '{' ? read_rule(parser) : read_declaration(parser);
 }
 
 /**
