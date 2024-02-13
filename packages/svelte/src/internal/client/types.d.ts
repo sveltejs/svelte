@@ -61,6 +61,8 @@ export type ComponentContext = {
 		/** onMount callbacks */
 		m: Array<() => any>;
 	};
+	/** filename */
+	f: string;
 };
 
 // We keep two shapes rather than a single monomorphic shape to improve the memory usage.
@@ -77,6 +79,8 @@ export type SourceSignal<V = unknown> = {
 	f: SignalFlags;
 	/** value: The latest value for this signal */
 	v: V;
+	/** owners: The components that can write to this signal */
+	o: Set<string>;
 };
 
 export type SourceSignalDebug = {

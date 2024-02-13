@@ -1,5 +1,7 @@
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
+import { deep_read, set_current_owner, set_current_owner_override, untrack } from './runtime.js';
+
 /** @type {Record<string, Array<{ start: Location, end: Location, filename: string }>>} */
 const boundaries = {};
 
@@ -61,14 +63,24 @@ export function push_module(filename) {
 	}
 }
 
-/**
- * @param {string} filename
- */
-export function pop_module(filename) {
+export function pop_module() {
 	const end = get_stack()?.[1];
 
 	if (end) {
 		// @ts-expect-error
 		boundaries[end.file].at(-1).end = end;
 	}
+}
+
+/**
+ *
+ * @param {any} object
+ * @param {any} owner
+ */
+export function add_owner(object, owner) {
+	untrack(() => {
+		set_current_owner_override(owner.filename);
+		deep_read(object);
+		set_current_owner_override(null);
+	});
 }

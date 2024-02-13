@@ -8,7 +8,10 @@ import {
 	updating_derived,
 	UNINITIALIZED,
 	mutable_source,
-	batch_inspect
+	batch_inspect,
+	set_current_owner,
+	current_component_context,
+	current_owner
 } from './runtime.js';
 import {
 	array_prototype,
@@ -54,7 +57,7 @@ export function proxy(value, immutable = true) {
 					i: immutable,
 					p: proxy,
 					t: value,
-					o: DEV ? get_module() : ''
+					o: DEV && (current_owner ?? current_component_context?.f)
 				}),
 				writable: true,
 				enumerable: false
@@ -178,12 +181,18 @@ const state_proxy_handler = {
 			(effect_active() || updating_derived) &&
 			(!(prop in target) || get_descriptor(target, prop)?.writable)
 		) {
+			console.log('setting current owner', metadata.o);
+			const previous_owner = current_owner;
+			if (!current_owner) set_current_owner(metadata.o);
 			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i));
+			set_current_owner(previous_owner);
 			metadata.s.set(prop, s);
 		}
 
 		if (s !== undefined) {
+			// set_current_owner(metadata.o);
 			const value = get(s);
+			// set_current_owner(null);
 			return value === UNINITIALIZED ? undefined : value;
 		}
 
@@ -250,13 +259,6 @@ const state_proxy_handler = {
 		// Set the new value before updating any signals so that any listeners get the new value
 		// @ts-ignore
 		target[prop] = value;
-
-		if (DEV) {
-			const site = get_module();
-			if (site !== metadata.o) {
-				console.error(`mutating state outside the component where it was created: ${site}`);
-			}
-		}
 
 		if (not_has) {
 			// If we have mutated an array directly, we might need to

@@ -19,6 +19,7 @@ import {
 } from '../../constants.js';
 import { STATE_SYMBOL, unstate } from './proxy.js';
 import { EACH_BLOCK, IF_BLOCK } from './block.js';
+import { get_module } from './dev.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -105,6 +106,26 @@ export let current_block = null;
 export let current_component_context = null;
 
 export let updating_derived = false;
+
+/** @type {string | null} */
+export let current_owner = null;
+
+/**
+ * @param {string | null} owner
+ */
+export function set_current_owner(owner) {
+	current_owner = owner;
+}
+
+/** @type {string | null} */
+export let current_owner_override = null;
+
+/**
+ * @param {string | null} owner
+ */
+export function set_current_owner_override(owner) {
+	current_owner_override = owner;
+}
 
 /**
  * @param {null | import('./types.js').ComponentContext} context
@@ -913,11 +934,17 @@ export function unsubscribe_on_destroy(stores) {
  * @returns {V}
  */
 export function get(signal) {
-	// @ts-expect-error
-	if (DEV && signal.inspect && inspect_fn) {
-		/** @type {import('./types.js').SignalDebug} */ (signal).inspect.add(inspect_fn);
+	if (DEV) {
+		if (signal.o && (current_owner_override || current_owner)) {
+			signal.o.add(current_owner_override || current_owner);
+		}
+
 		// @ts-expect-error
-		inspect_captured_signals.push(signal);
+		if (signal.inspect && inspect_fn) {
+			/** @type {import('./types.js').SignalDebug} */ (signal).inspect.add(inspect_fn);
+			// @ts-expect-error
+			inspect_captured_signals.push(signal);
+		}
 	}
 
 	const flags = signal.f;
@@ -983,6 +1010,13 @@ export function get(signal) {
  * @returns {V}
  */
 export function set(signal, value) {
+	if (DEV && 'o' in signal) {
+		const site = get_module();
+		if (site && !signal.o.has(site)) {
+			console.error(`mutating state outside the component where it was created: ${site}`);
+		}
+	}
+
 	set_signal_value(signal, value);
 	return value;
 }
@@ -1295,6 +1329,13 @@ export function source(initial_value) {
  * @param {import('./types.js').Signal} signal
  */
 function bind_signal_to_component_context(signal) {
+	if (DEV) {
+		const owner = current_owner ?? current_component_context?.f;
+		if (owner) {
+			(signal.o ??= new Set()).add(owner);
+		}
+	}
+
 	if (current_component_context === null || !current_component_context.r) return;
 
 	const signals = current_component_context.d;
@@ -1858,7 +1899,6 @@ function on_destroy(fn) {
  */
 export function push(props, runes = false) {
 	current_component_context = {
-		// accessors
 		a: null,
 		// context
 		c: null,
@@ -1875,7 +1915,9 @@ export function push(props, runes = false) {
 		// runes
 		r: runes,
 		// update_callbacks
-		u: null
+		u: null,
+		// filename
+		f: (DEV && get_module()) || ''
 	};
 }
 
@@ -1956,7 +1998,7 @@ export function init() {
  * @param {Set<any>} visited
  * @returns {void}
  */
-function deep_read(value, visited = new Set()) {
+export function deep_read(value, visited = new Set()) {
 	if (typeof value === 'object' && value !== null && !visited.has(value)) {
 		visited.add(value);
 		for (let key in value) {
