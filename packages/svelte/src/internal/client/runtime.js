@@ -935,8 +935,8 @@ export function unsubscribe_on_destroy(stores) {
  */
 export function get(signal) {
 	if (DEV) {
-		if (signal.o && (current_owner_override || current_owner)) {
-			signal.o.add(current_owner_override || current_owner);
+		if (signal.o && current_owner_override) {
+			signal.o.add(current_owner_override);
 		}
 
 		// @ts-expect-error
