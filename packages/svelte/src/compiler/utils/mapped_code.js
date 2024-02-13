@@ -403,10 +403,12 @@ function get_basename(filename) {
 	return /** @type {string} */ (filename.split(/[/\\]/).pop());
 }
 
-/** @param {import('#compiler').ValidatedCompileOptions} compile_options */
-export function get_source_name(compile_options) {
-	if (!compile_options.filename) return null;
-	return compile_options.outputFilename
-		? get_relative_path(compile_options.outputFilename, compile_options.filename)
-		: get_basename(compile_options.filename);
+/**
+ * @param {string | undefined} filename
+ * @param {string | undefined} output_filename
+ * @param {string} fallback
+ */
+export function get_source_name(filename, output_filename, fallback) {
+	if (!filename) return fallback;
+	return output_filename ? get_relative_path(output_filename, filename) : get_basename(filename);
 }

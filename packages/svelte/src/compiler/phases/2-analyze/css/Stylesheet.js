@@ -348,7 +348,7 @@ export default class Stylesheet {
 	/** @type {import('#compiler').Style | null} */
 	ast;
 
-	/** @type {string} */
+	/** @type {string} Source filename (relative to the output file) */
 	filename;
 
 	/** @type {boolean} */
@@ -510,10 +510,14 @@ export default class Stylesheet {
 
 		const code = new MagicString(source);
 
+		// Generate source mappings for the style sheet nodes we have.
+		// Note that resolution is a bit more coarse than in Svelte 4 because
+		// our own CSS AST is not as detailed with regards to the node values.
 		walk(/** @type {import('#compiler').Css.Node} */ (this.ast), null, {
-			_: (node) => {
+			_: (node, { next }) => {
 				code.addSourcemapLocation(node.start);
 				code.addSourcemapLocation(node.end);
+				next();
 			}
 		});
 

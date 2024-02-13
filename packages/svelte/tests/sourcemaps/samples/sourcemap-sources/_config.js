@@ -1,5 +1,7 @@
 import MagicString, { Bundle } from 'magic-string';
+import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
 import { test } from '../../test';
+import { locate } from 'locate-character';
 
 /**
  * @param {Bundle} bundle
@@ -57,5 +59,27 @@ export default test({
 				return result(bundle, filename);
 			}
 		}
-	]
+	],
+	test({ assert, map_client, code_client }) {
+		const map = new TraceMap(map_client);
+		// sourcemap stores location only for 'answer = 42;'
+		// not for 'var answer = 42;'
+		/** @type {const} */ ([
+			['foo.js', 'answer = 42;', 4],
+			['bar.js', 'console.log(answer);', 0],
+			['foo2.js', 'answer2 = 84;', 4],
+			['bar2.js', 'console.log(answer2);', 0]
+		]).forEach(([sourcefile, content, column]) => {
+			assert.deepEqual(
+				originalPositionFor(map, locate(code_client, content)),
+				{
+					source: sourcefile,
+					name: null,
+					line: 1,
+					column
+				},
+				`failed to locate "${content}" from "${sourcefile}"`
+			);
+		});
+	}
 });

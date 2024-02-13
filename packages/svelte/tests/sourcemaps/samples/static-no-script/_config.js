@@ -1,7 +1,6 @@
 import { test } from '../../test';
 
 export default test({
-	client: [],
 	test({ assert, map_client }) {
 		assert.deepEqual(map_client.sources, ['input.svelte']);
 		// TODO do we need to set sourcesContent? We did it in Svelte 4, but why?

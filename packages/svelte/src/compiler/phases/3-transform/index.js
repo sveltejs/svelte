@@ -42,12 +42,11 @@ export function transform_component(analysis, source, options) {
 		];
 	}
 
-	const source_name = get_source_name(options) || 'input.svelte';
-
-	const js = print(program, { sourceMapSource: source_name });
+	const js_source_name = get_source_name(options.filename, options.outputFilename, 'input.svelte');
+	const js = print(program, { sourceMapSource: js_source_name });
 	if (options.sourcemap) {
 		js.map = apply_preprocessor_sourcemap(
-			source_name,
+			js_source_name,
 			js.map,
 			/** @type {any} */ (options.sourcemap)
 		);
@@ -55,11 +54,11 @@ export function transform_component(analysis, source, options) {
 
 	const css =
 		analysis.stylesheet.has_styles && !analysis.inject_styles
-			? analysis.stylesheet.render(source_name, source, options.dev)
+			? analysis.stylesheet.render(options.cssOutputFilename ?? 'output.css', source, options.dev)
 			: null;
 	if (css && options.sourcemap) {
 		css.map = apply_preprocessor_sourcemap(
-			source_name,
+			analysis.stylesheet.filename,
 			css.map,
 			/** @type {any} */ (options.sourcemap)
 		);

@@ -24,15 +24,16 @@ interface SourcemapTest extends BaseTest {
 	js_map_sources?: string[];
 	css_map_sources?: string[];
 	test?: (obj: {
-		assert: any;
+		assert: typeof assert;
 		input: any;
 		js: any;
 		css: any;
 		map_preprocessed: any;
 		code_preprocessed: string;
 		map_client: any;
+		code_client: any;
 	}) => void;
-	client: SourceMapEntry[] | null;
+	client?: SourceMapEntry[] | null;
 	server?: SourceMapEntry[];
 	css?: SourceMapEntry[] | null;
 	preprocessed?: SourceMapEntry[];
@@ -143,6 +144,7 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 	}
 
 	let map_client = null;
+	let code_client = fs.readFileSync(`${cwd}/_output/client/input.svelte.js`, 'utf-8');
 
 	if (config.client === null) {
 		assert.equal(
@@ -151,20 +153,33 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 			'Expected no source map'
 		);
 	} else {
-		const output_client = fs.readFileSync(`${cwd}/_output/client/input.svelte.js`, 'utf-8');
 		map_client = JSON.parse(fs.readFileSync(`${cwd}/_output/client/input.svelte.js.map`, 'utf-8'));
 		assert.deepEqual(
 			map_client.sources.slice().sort(),
 			(config.js_map_sources || ['input.svelte']).sort(),
 			'js.map.sources is wrong'
 		);
-		compare('client', output_client, map_client, config.client);
 
+		if (config.client) {
+			compare('client', code_client, map_client, config.client);
+		}
+	}
+
+	if (config.client || config.server) {
 		const output_server = fs.readFileSync(`${cwd}/_output/server/input.svelte.js`, 'utf-8');
 		const map_server = JSON.parse(
 			fs.readFileSync(`${cwd}/_output/server/input.svelte.js.map`, 'utf-8')
 		);
-		compare('server', output_server, map_server, config.server ?? config.client);
+
+		compare(
+			'server',
+			output_server,
+			map_server,
+			config.server ??
+				// Reuse client sourcemap test for server
+				config.client ??
+				[]
+		);
 	}
 
 	if (config.css !== undefined) {
@@ -214,6 +229,7 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 		config.test({
 			assert,
 			map_client,
+			code_client,
 			map_preprocessed,
 			code_preprocessed /*, input, preprocessed: output_client, js, css*/
 		});

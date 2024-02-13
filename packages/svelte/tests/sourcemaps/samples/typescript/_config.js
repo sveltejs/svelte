@@ -21,7 +21,7 @@ export default test({
 			}
 		}
 	],
-	client: ['count'],
+	client: ['count', 'setInterval'],
 	preprocessed: [
 		{ str: 'let count: number = 0;', strGenerated: 'let count = 0;' },
 		{ str: 'ITimeoutDestroyer', strGenerated: null },

@@ -3,7 +3,6 @@ import { test } from '../../test';
 import { magic_string_preprocessor_result, magic_string_replace_all } from '../../helpers.js';
 
 export default test({
-	skip: true, // TODO css map seems wrong
 	preprocess: {
 		markup: ({ content, filename = '' }) => {
 			const src = new MagicString(content);
@@ -25,5 +24,7 @@ export default test({
 		}
 	},
 	client: [{ str: 'baritone', strGenerated: 'bar' }],
-	css: [{ str: '--bazitone', strGenerated: '--baz' }]
+	css: [
+		{ str: 'background-color: var(--bazitone)', strGenerated: 'background-color: var(      --baz)' }
+	]
 });
