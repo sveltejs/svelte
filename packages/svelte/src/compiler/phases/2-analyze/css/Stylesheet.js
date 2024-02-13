@@ -113,20 +113,35 @@ class Rule {
 	}
 
 	/**
-	 * @param {boolean} dev
 	 * @returns {boolean}
 	 */
-	is_used(dev) {
-		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node))
+	is_empty() {
+		if (this.declarations.length > 0) return false;
+
+		for (const rule of this.nested_rules) {
+			if (rule.is_used() && !rule.is_empty()) return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * @returns {boolean}
+	 */
+	is_used() {
+		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node)) {
 			return true;
+		}
 
-		// keep empty rules in dev, because it's convenient to
-		// see them in devtools
-		if (this.declarations.length === 0) return dev;
+		for (const selector of this.selectors) {
+			if (selector.used) return true;
+		}
 
-		return [this.selectors.some((s) => s.used), this.nested_rules.some((r) => r.is_used(dev))].some(
-			Boolean
-		);
+		for (const rule of this.nested_rules) {
+			if (rule.is_used()) return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -176,13 +191,10 @@ class Rule {
 
 		// keep empty rules in dev, because it's convenient to
 		// see them in devtools
-		if (this.declarations.length === 0 && this.nested_rules.length === 0) {
-			if (!dev) {
-				code.prependRight(this.node.start, '/* (empty) ');
-				code.appendLeft(this.node.end, '*/');
-				escape_comment_close(this.node, code);
-			}
-
+		if (!dev && this.is_empty()) {
+			code.prependRight(this.node.start, '/* (empty) ');
+			code.appendLeft(this.node.end, '*/');
+			escape_comment_close(this.node, code);
 			return;
 		}
 
@@ -228,9 +240,9 @@ class Rule {
 			}
 		}
 
-		this.nested_rules.forEach((rule) => {
+		for (const rule of this.nested_rules) {
 			rule.prune(code, dev);
-		});
+		}
 	}
 }
 

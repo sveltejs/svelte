@@ -20,9 +20,9 @@
 		}
 
 		/* (empty) .d:where(.svelte-xyz) {
-			/* (unused) .unused {
+			.unused {
 				color: red;
-			}*\/
+			}
 		}*/
 
 		/* explicit & */
