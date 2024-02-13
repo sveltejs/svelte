@@ -24,8 +24,7 @@ const runes = {
 	/** @param {string} name */
 	'non-state-reference': (name) =>
 		`${name} is updated, but is not declared with $state(...). Changing its value will not correctly trigger updates.`,
-	'derived-iife': () =>
-		`Use \`$derived.call(() => {...})\` instead of \`$derived((() => {...})());\``
+	'derived-iife': () => `Use \`$derived.by(() => {...})\` instead of \`$derived((() => {...})());\``
 };
 
 /** @satisfies {Warnings} */
