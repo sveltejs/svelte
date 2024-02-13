@@ -438,16 +438,7 @@ export function client_component(source, analysis, options) {
 	}
 
 	if (options.dev && state.options.filename) {
-		body.unshift(b.stmt(b.call(b.id('$.push_module'), b.literal(state.options.filename))));
-		body.push(
-			b.stmt(
-				b.assignment(
-					'=',
-					b.member(b.id(analysis.name), b.id('filename')),
-					b.literal(state.options.filename)
-				)
-			)
-		);
+		body.unshift(b.stmt(b.call(b.id('$.push_module'), b.id(analysis.name))));
 		body.push(b.stmt(b.call(b.id('$.pop_module'))));
 	}
 

@@ -23,7 +23,7 @@ import {
 	is_frozen,
 	object_prototype
 } from './utils.js';
-import { get_module } from './dev.js';
+import { get_component } from './dev.js';
 
 export const STATE_SYMBOL = Symbol('$state');
 

@@ -19,7 +19,7 @@ import {
 } from '../../constants.js';
 import { STATE_SYMBOL, unstate } from './proxy.js';
 import { EACH_BLOCK, IF_BLOCK } from './block.js';
-import { get_module } from './dev.js';
+import { get_component } from './dev.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -117,11 +117,11 @@ export function set_current_owner(owner) {
 	current_owner = owner;
 }
 
-/** @type {string | null} */
+/** @type {Function | null} */
 export let current_owner_override = null;
 
 /**
- * @param {string | null} owner
+ * @param {Function | null} owner
  */
 export function set_current_owner_override(owner) {
 	current_owner_override = owner;
@@ -1011,9 +1011,9 @@ export function get(signal) {
  */
 export function set(signal, value) {
 	if (DEV && 'o' in signal) {
-		const site = get_module();
-		if (site && !signal.o.has(site)) {
-			throw new Error(`mutating state outside the component where it was created: ${site}`);
+		const component = get_component();
+		if (component && !signal.o.has(component)) {
+			throw new Error(`illegal mutation`); // TODO better error
 		}
 	}
 
@@ -1916,8 +1916,8 @@ export function push(props, runes = false) {
 		r: runes,
 		// update_callbacks
 		u: null,
-		// filename
-		f: (DEV && get_module()) || ''
+		// component function (TODO maybe just pass this in, in dev?)
+		f: DEV && get_component()
 	};
 }
 

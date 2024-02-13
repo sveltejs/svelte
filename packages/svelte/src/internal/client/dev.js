@@ -1,8 +1,8 @@
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
-import { deep_read, set_current_owner, set_current_owner_override, untrack } from './runtime.js';
+import { deep_read, set_current_owner_override, untrack } from './runtime.js';
 
-/** @type {Record<string, Array<{ start: Location, end: Location, filename: string }>>} */
+/** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
 const boundaries = {};
 
 const chrome_pattern = /\((.+):(\d+):(\d+)\)$/;
@@ -29,7 +29,7 @@ export function get_stack() {
 	return entries;
 }
 
-export function get_module() {
+export function get_component() {
 	const stack = get_stack();
 	if (!stack) return null;
 
@@ -38,7 +38,7 @@ export function get_module() {
 			const modules = boundaries[entry.file];
 			for (const module of modules) {
 				if (module.start.line < entry.line && module.end.line > entry.line) {
-					return module.filename;
+					return module.component;
 				}
 			}
 		}
@@ -48,9 +48,9 @@ export function get_module() {
 }
 
 /**
- * @param {string} filename The original `path/to/Blah.svelte` filename
+ * @param {Function} component
  */
-export function push_module(filename) {
+export function push_module(component) {
 	const start = get_stack()?.[1];
 
 	if (start) {
@@ -58,7 +58,7 @@ export function push_module(filename) {
 			start,
 			// @ts-expect-error
 			end: null,
-			filename
+			component
 		});
 	}
 }
@@ -79,7 +79,7 @@ export function pop_module() {
  */
 export function add_owner(object, owner) {
 	untrack(() => {
-		set_current_owner_override(owner.filename);
+		set_current_owner_override(owner);
 		deep_read(object);
 		set_current_owner_override(null);
 	});
