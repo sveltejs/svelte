@@ -34,12 +34,12 @@ export function get_component() {
 	if (!stack) return null;
 
 	for (const entry of stack) {
-		if (entry) {
-			const modules = boundaries[entry.file];
-			for (const module of modules) {
-				if (module.start.line < entry.line && module.end.line > entry.line) {
-					return module.component;
-				}
+		const modules = boundaries[entry.file];
+		if (!modules) continue;
+
+		for (const module of modules) {
+			if (module.start.line < entry.line && module.end.line > entry.line) {
+				return module.component;
 			}
 		}
 	}
