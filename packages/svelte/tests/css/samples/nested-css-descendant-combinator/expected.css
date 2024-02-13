@@ -1,9 +1,0 @@
-button.svelte-xyz {
-    color: red;
-
-    .hello:where(.svelte-xyz) {
-        color: pink;
-    }
-
-    color: black;
-}

@@ -1,9 +1,0 @@
-c.svelte-xyz {
-    color: red;
-
-    & {
-        color: yellow;
-    }
-
-    color: black;
-}

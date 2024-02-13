@@ -1,7 +1,0 @@
-div.svelte-xyz {
-    color: red;
-
-    button:where(.svelte-xyz) {
-        color: yellow;
-    }
-}

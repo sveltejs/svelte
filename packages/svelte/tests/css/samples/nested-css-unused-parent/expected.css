@@ -1,9 +1,0 @@
-/* (unused) a*/ b.svelte-xyz {
-    color: red;
-
-    x:where(.svelte-xyz) {
-        color: yellow;
-    }
-
-    color: black;
-}

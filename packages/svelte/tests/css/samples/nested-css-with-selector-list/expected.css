@@ -1,9 +1,0 @@
-a.svelte-xyz, b.svelte-xyz {
-    color: red;
-
-    x:where(.svelte-xyz) {
-        color: purple;
-    }
-
-    color: black;
-}
