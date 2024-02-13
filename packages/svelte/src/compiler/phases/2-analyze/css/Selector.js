@@ -1,7 +1,6 @@
 import { get_possible_values } from './gather_possible_values.js';
 import { regex_starts_with_whitespace, regex_ends_with_whitespace } from '../../patterns.js';
 import { error } from '../../../errors.js';
-import { relative } from 'node:path';
 
 const NO_MATCH = 'NO_MATCH';
 const POSSIBLE_MATCH = 'POSSIBLE_MATCH';
