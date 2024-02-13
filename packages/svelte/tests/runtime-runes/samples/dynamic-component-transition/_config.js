@@ -13,7 +13,6 @@ export default test({
 
 		assert.htmlEqual(target.innerHTML, `<h1>Outside</h1><button>Hide</button>`);
 
-		debugger;
 		raf.tick(100);
 
 		assert.htmlEqual(target.innerHTML, `<h1>Outside</h1>`);
