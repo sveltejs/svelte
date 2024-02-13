@@ -5,7 +5,7 @@ import { deep_read, set_current_owner_override, untrack } from './runtime.js';
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
 const boundaries = {};
 
-const chrome_pattern = /\((.+):(\d+):(\d+)\)$/;
+const chrome_pattern = /at (?:.+ \()?(.+):(\d+):(\d+)\)?$/;
 const firefox_pattern = /@(.+):(\d+):(\d+)$/;
 
 export function get_stack() {
@@ -14,7 +14,7 @@ export function get_stack() {
 
 	const entries = [];
 
-	for (const line of stack.split('\n').slice(1)) {
+	for (const line of stack.split('\n')) {
 		let match = chrome_pattern.exec(line) ?? firefox_pattern.exec(line);
 
 		if (match) {
@@ -51,7 +51,7 @@ export function get_component() {
  * @param {Function} component
  */
 export function push_module(component) {
-	const start = get_stack()?.[1];
+	const start = get_stack()?.[2];
 
 	if (start) {
 		(boundaries[start.file] ??= []).push({
@@ -64,7 +64,7 @@ export function push_module(component) {
 }
 
 export function pop_module() {
-	const end = get_stack()?.[1];
+	const end = get_stack()?.[2];
 
 	if (end) {
 		// @ts-expect-error
