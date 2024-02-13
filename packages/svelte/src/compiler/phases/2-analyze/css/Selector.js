@@ -115,9 +115,9 @@ export default class Selector {
 		 * */
 		const used_blocks = new Map();
 
-		this.local_selector_list.map((complex_selector) =>
-			apply_selector(complex_selector.slice(), node, used_blocks)
-		);
+		for (const complex_selector of this.local_selector_list) {
+			apply_selector(complex_selector.slice(), node, used_blocks);
+		}
 
 		// Iterate over used_blocks
 		for (const [relative_selector, nodes] of used_blocks) {
