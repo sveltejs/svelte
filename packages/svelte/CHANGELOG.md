@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.53
+
+### Patch Changes
+
+- fix: only throw bind error when not passing a value ([#10090](https://github.com/sveltejs/svelte/pull/10090))
+
+- fix: improve global transition handling of effect cleardown ([#10469](https://github.com/sveltejs/svelte/pull/10469))
+
+- fix: improve handling of object property deletions ([#10456](https://github.com/sveltejs/svelte/pull/10456))
+
+- fix: ensure inspect fires on prop changes ([#10468](https://github.com/sveltejs/svelte/pull/10468))
+
 ## 5.0.0-next.52
 
 ### Patch Changes
