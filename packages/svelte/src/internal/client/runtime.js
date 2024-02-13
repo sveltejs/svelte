@@ -164,7 +164,7 @@ function create_source_signal(flags, value) {
 			// value
 			v: value,
 			// this is for DEV only
-			inspect: new Set(),
+			inspect: new Set()
 		};
 	}
 	return {
