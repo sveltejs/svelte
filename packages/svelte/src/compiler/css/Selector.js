@@ -127,26 +127,9 @@ export class ComplexSelector {
 
 	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
 	validate(analysis) {
-		this.validate_global_placement();
 		this.validate_global_with_multiple_selectors();
 		this.validate_global_compound_selector();
 		this.validate_invalid_combinator_without_selector(analysis);
-	}
-
-	validate_global_placement() {
-		let start = 0;
-		let end = this.relative_selectors.length;
-		for (; start < end; start += 1) {
-			if (!this.relative_selectors[start].is_global) break;
-		}
-		for (; end > start; end -= 1) {
-			if (!this.relative_selectors[end - 1].is_global) break;
-		}
-		for (let i = start; i < end; i += 1) {
-			if (this.relative_selectors[i].is_global) {
-				error(this.relative_selectors[i].selectors[0], 'invalid-css-global-placement');
-			}
-		}
 	}
 
 	validate_global_with_multiple_selectors() {

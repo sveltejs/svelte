@@ -105,4 +105,12 @@ export interface Declaration extends BaseNode {
 }
 
 // for zimmerframe
-export type Node = Style | Rule | Atrule | Declaration;
+export type Node =
+	| Style
+	| Rule
+	| Atrule
+	| ComplexSelector
+	| RelativeSelector
+	| Combinator
+	| SimpleSelector
+	| Declaration;

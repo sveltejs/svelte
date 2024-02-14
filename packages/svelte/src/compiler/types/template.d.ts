@@ -1,8 +1,7 @@
-import type { Binding } from '#compiler';
+import type { Binding, Css } from '#compiler';
 import type {
 	ArrayExpression,
 	ArrowFunctionExpression,
-	ArrayPattern,
 	VariableDeclaration,
 	VariableDeclarator,
 	Expression,
@@ -460,7 +459,7 @@ export type TemplateNode =
 	| Comment
 	| Block;
 
-export type SvelteNode = Node | TemplateNode | Fragment;
+export type SvelteNode = Node | TemplateNode | Fragment | Css.Node;
 
 export interface Script extends BaseNode {
 	type: 'Script';

@@ -21,6 +21,7 @@ import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
 import { DelegatedEvents, namespace_svg } from '../../../constants.js';
 import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
+import { validation_css } from './validation/css.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -450,6 +451,10 @@ export function analyze_component(root, options) {
 				}
 			}
 		}
+	}
+
+	if (root.css) {
+		walk(root.css, {}, validation_css);
 	}
 
 	analysis.stylesheet.validate(analysis);
