@@ -1,4 +1,4 @@
-import type { Style } from './template';
+import type { Style } from '../types/template';
 
 export interface BaseNode {
 	start: number;
