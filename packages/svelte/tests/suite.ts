@@ -36,7 +36,7 @@ export function suite<Test extends BaseTest>(fn: (config: Test, test_dir: string
 export function suite_with_variants<Test extends BaseTest, Variants extends string, Common>(
 	variants: Variants[],
 	should_skip_variant: (variant: Variants, config: Test) => boolean | 'no-test',
-	common_setup: (config: Test, test_dir: string) => Promise<Common>,
+	common_setup: (config: Test, test_dir: string) => Promise<Common> | Common,
 	fn: (config: Test, test_dir: string, variant: Variants, common: Common) => void
 ) {
 	return {

@@ -17,10 +17,6 @@ const { test, run } = suite<SnapshotTest>(async (config, cwd) => {
 	if (process.env.UPDATE_SNAPSHOTS) {
 		fs.rmSync(`${cwd}/_expected`, { recursive: true, force: true });
 		fs.cpSync(`${cwd}/_output`, `${cwd}/_expected`, { recursive: true, force: true });
-
-		for (const file of glob(`${cwd}/_expected/**`, { filesOnly: true })) {
-			fs.writeFileSync(file, fs.readFileSync(file, 'utf-8').replace(`v${VERSION}`, 'VERSION'));
-		}
 	} else {
 		const actual = glob('**', { cwd: `${cwd}/_output`, filesOnly: true });
 		const expected = glob('**', { cwd: `${cwd}/_expected`, filesOnly: true });

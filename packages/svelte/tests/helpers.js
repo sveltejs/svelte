@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import glob from 'tiny-glob/sync.js';
-import { compile, compileModule, preprocess } from 'svelte/compiler';
+import { VERSION, compile, compileModule, preprocess } from 'svelte/compiler';
 
 /**
  * @param {string} file
@@ -119,9 +119,7 @@ export async function compile_directory(
 			}
 
 			const compiled = compile(text, opts);
-			compiled.js.code = compiled.js.code.replace(/\(Svelte v\d+\.\d+\.\d+(-next\.\d+)?/, (match) =>
-				match.replace(/\d/g, 'x')
-			);
+			compiled.js.code = compiled.js.code.replace(`v${VERSION}`, 'VERSION');
 
 			write(`${output_dir}/${file}.js`, compiled.js.code);
 			if (output_map) {
