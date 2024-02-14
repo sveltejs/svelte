@@ -1,4 +1,4 @@
-import type { StyleDirective as LegacyStyleDirective, Text } from '#compiler';
+import type { StyleDirective as LegacyStyleDirective, Text, Css } from '#compiler';
 import type {
 	ArrayExpression,
 	AssignmentExpression,
@@ -227,9 +227,17 @@ export type LegacyElementLike =
 	| LegacyTitle
 	| LegacyWindow;
 
+export interface LegacySelector extends BaseNode {
+	type: 'Selector';
+	children: Array<Css.Combinator | Css.SimpleSelector>;
+}
+
+export type LegacyCssNode = LegacySelector;
+
 export type LegacySvelteNode =
 	| LegacyConstTag
 	| LegacyElementLike
 	| LegacyAttributeLike
 	| LegacyAttributeShorthand
+	| LegacyCssNode
 	| Text;
