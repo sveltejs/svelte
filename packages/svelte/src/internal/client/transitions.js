@@ -691,7 +691,8 @@ function if_block_transition(transition) {
 		transition.f(() => {
 			const c = /** @type {Set<import('./types.js').Transition>} */ (consequent_transitions);
 			c.delete(transition);
-			if (c.size === 0) {
+			// If the block has changed to falsy and has transitions
+			if (!block.v && c.size === 0) {
 				const consequent_effect = block.ce;
 				execute_effect(/** @type {import('./types.js').EffectSignal} */ (consequent_effect));
 			}
@@ -702,7 +703,8 @@ function if_block_transition(transition) {
 		transition.f(() => {
 			const a = /** @type {Set<import('./types.js').Transition>} */ (alternate_transitions);
 			a.delete(transition);
-			if (a.size === 0) {
+			// If the block has changed to truthy and has transitions
+			if (block.v && a.size === 0) {
 				const alternate_effect = block.ae;
 				execute_effect(/** @type {import('./types.js').EffectSignal} */ (alternate_effect));
 			}
