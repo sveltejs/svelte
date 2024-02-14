@@ -99,4 +99,4 @@ export interface Declaration extends BaseNode {
 }
 
 // for zimmerframe
-export type Node = Style | Rule | Atrule;
+export type Node = Style | Rule | Atrule | Declaration;
