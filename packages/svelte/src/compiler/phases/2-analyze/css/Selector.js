@@ -1,6 +1,7 @@
 import { get_possible_values } from './gather_possible_values.js';
 import { regex_starts_with_whitespace, regex_ends_with_whitespace } from '../../patterns.js';
 import { error } from '../../../errors.js';
+import { Stylesheet } from './Stylesheet.js';
 
 const NO_MATCH = 'NO_MATCH';
 const POSSIBLE_MATCH = 'POSSIBLE_MATCH';
@@ -22,7 +23,7 @@ export default class Selector {
 	/** @type {import('#compiler').Css.Selector} */
 	node;
 
-	/** @type {import('./Stylesheet.js').default} */
+	/** @type {import('./Stylesheet.js').Stylesheet} */
 	stylesheet;
 
 	/** @type {Block[]} */
@@ -31,39 +32,28 @@ export default class Selector {
 	/** @type {Block[]} */
 	local_blocks;
 
-	/** @type {boolean} */
-	used;
+	used = false;
 
 	/**
 	 * @param {import('#compiler').Css.Selector} node
-	 * @param {import('./Stylesheet.js').default} stylesheet
+	 * @param {import('./Stylesheet.js').Stylesheet} stylesheet
 	 */
 	constructor(node, stylesheet) {
 		this.node = node;
 		this.stylesheet = stylesheet;
 		this.blocks = group_selectors(node);
 		// take trailing :global(...) selectors out of consideration
-		let i = this.blocks.length;
-		while (i > 0) {
-			if (!this.blocks[i - 1].global) break;
-			i -= 1;
-		}
-		this.local_blocks = this.blocks.slice(0, i);
-		const host_only = this.blocks.length === 1 && this.blocks[0].host;
-		const root_only = this.blocks.length === 1 && this.blocks[0].root;
-		this.used = this.local_blocks.length === 0 || host_only || root_only;
+		const i = this.blocks.findLastIndex((block) => !block.can_ignore());
+		this.local_blocks = this.blocks.slice(0, i + 1);
+
+		// if we have a `:root {...}` or `:global(...) {...}` selector, we need to mark
+		// this selector as `used` even if the component doesn't contain any nodes
+		this.used = this.local_blocks.length === 0;
 	}
 
 	/** @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node */
 	apply(node) {
-		/** @type {Array<{ node: import('#compiler').RegularElement | import('#compiler').SvelteElement; block: Block }>} */
-		const to_encapsulate = [];
-		apply_selector(this.local_blocks.slice(), node, to_encapsulate);
-		if (to_encapsulate.length > 0) {
-			to_encapsulate.forEach(({ node, block }) => {
-				this.stylesheet.nodes_with_css_class.add(node);
-				block.should_encapsulate = true;
-			});
+		if (apply_selector(this.local_blocks.slice(), node, this.stylesheet)) {
 			this.used = true;
 		}
 	}
@@ -130,6 +120,13 @@ export default class Selector {
 
 	/** @param {import('../../types.js').ComponentAnalysis} analysis */
 	validate(analysis) {
+		this.validate_global_placement();
+		this.validate_global_with_multiple_selectors();
+		this.validate_global_compound_selector();
+		this.validate_invalid_combinator_without_selector(analysis);
+	}
+
+	validate_global_placement() {
 		let start = 0;
 		let end = this.blocks.length;
 		for (; start < end; start += 1) {
@@ -143,9 +140,6 @@ export default class Selector {
 				error(this.blocks[i].selectors[0], 'invalid-css-global-placement');
 			}
 		}
-		this.validate_global_with_multiple_selectors();
-		this.validate_global_compound_selector();
-		this.validate_invalid_combinator_without_selector(analysis);
 	}
 
 	validate_global_with_multiple_selectors() {
@@ -207,10 +201,10 @@ export default class Selector {
 /**
  * @param {Block[]} blocks
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} node
- * @param {Array<{ node: import('#compiler').RegularElement | import('#compiler').SvelteElement; block: Block }>} to_encapsulate
+ * @param {Stylesheet} stylesheet
  * @returns {boolean}
  */
-function apply_selector(blocks, node, to_encapsulate) {
+function apply_selector(blocks, node, stylesheet) {
 	const block = blocks.pop();
 	if (!block) return false;
 	if (!node) {
@@ -224,9 +218,20 @@ function apply_selector(blocks, node, to_encapsulate) {
 		return false;
 	}
 
-	if (applies === UNKNOWN_SELECTOR) {
-		to_encapsulate.push({ node, block });
+	/**
+	 * Mark both the compound selector and the node it selects as encapsulated,
+	 * for transformation in a later step
+	 * @param {Block} block
+	 * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
+	 */
+	function mark(block, node) {
+		block.should_encapsulate = true;
+		stylesheet.nodes_with_css_class.add(node);
 		return true;
+	}
+
+	if (applies === UNKNOWN_SELECTOR) {
+		return mark(block, node);
 	}
 
 	if (block.combinator) {
@@ -236,31 +241,29 @@ function apply_selector(blocks, node, to_encapsulate) {
 					continue;
 				}
 				if (ancestor_block.host) {
-					to_encapsulate.push({ node, block });
-					return true;
+					return mark(block, node);
 				}
 				/** @type {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} */
 				let parent = node;
+				let matched = false;
 				while ((parent = get_element_parent(parent))) {
 					if (block_might_apply_to_node(ancestor_block, parent) !== NO_MATCH) {
-						to_encapsulate.push({ node: parent, block: ancestor_block });
+						mark(ancestor_block, parent);
+						matched = true;
 					}
 				}
-				if (to_encapsulate.length) {
-					to_encapsulate.push({ node, block });
-					return true;
+				if (matched) {
+					return mark(block, node);
 				}
 			}
 			if (blocks.every((block) => block.global)) {
-				to_encapsulate.push({ node, block });
-				return true;
+				return mark(block, node);
 			}
 			return false;
 		} else if (block.combinator.name === '>') {
 			const has_global_parent = blocks.every((block) => block.global);
-			if (has_global_parent || apply_selector(blocks, get_element_parent(node), to_encapsulate)) {
-				to_encapsulate.push({ node, block });
-				return true;
+			if (has_global_parent || apply_selector(blocks, get_element_parent(node), stylesheet)) {
+				return mark(block, node);
 			}
 			return false;
 		} else if (block.combinator.name === '+' || block.combinator.name === '~') {
@@ -274,23 +277,22 @@ function apply_selector(blocks, node, to_encapsulate) {
 				if (siblings.size === 0 && get_element_parent(node) !== null) {
 					return false;
 				}
-				to_encapsulate.push({ node, block });
-				return true;
+				return mark(block, node);
 			}
 			for (const possible_sibling of siblings.keys()) {
-				if (apply_selector(blocks.slice(), possible_sibling, to_encapsulate)) {
-					to_encapsulate.push({ node, block });
+				if (apply_selector(blocks.slice(), possible_sibling, stylesheet)) {
+					mark(block, node);
 					has_match = true;
 				}
 			}
 			return has_match;
 		}
+
 		// TODO other combinators
-		to_encapsulate.push({ node, block });
-		return true;
+		return mark(block, node);
 	}
-	to_encapsulate.push({ node, block });
-	return true;
+
+	return mark(block, node);
 }
 
 const regex_backslash_and_following_character = /\\(.)/g;
@@ -815,6 +817,11 @@ class Block {
 		this.selectors.push(selector);
 		this.end = selector.end;
 	}
+
+	can_ignore() {
+		return this.global || this.host || this.root;
+	}
+
 	get global() {
 		return (
 			this.selectors.length >= 1 &&

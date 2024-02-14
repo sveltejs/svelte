@@ -47,7 +47,7 @@ export class Parser {
 			throw new TypeError('Template must be a string');
 		}
 
-		this.template = template.trimRight();
+		this.template = template.trimEnd();
 
 		let match_lang;
 
@@ -147,9 +147,9 @@ export class Parser {
 
 	/**
 	 * @param {string} str
-	 * @param {boolean} [required]
+	 * @param {boolean} required
 	 */
-	eat(str, required) {
+	eat(str, required = false) {
 		if (this.match(str)) {
 			this.index += str.length;
 			return true;
