@@ -152,13 +152,13 @@ export default class Selector {
 
 	/** @param {import('../../types.js').ComponentAnalysis} analysis */
 	validate(analysis) {
-		this.validate_invalid_css_global_placement();
+		this.validate_global_placement();
 		this.validate_global_with_multiple_selectors();
 		this.validate_global_compound_selector();
 		this.validate_invalid_combinator_without_selector(analysis);
 	}
 
-	validate_invalid_css_global_placement() {
+	validate_global_placement() {
 		for (let complex_selector of this.selector_list) {
 			let start = 0;
 			let end = complex_selector.length;
