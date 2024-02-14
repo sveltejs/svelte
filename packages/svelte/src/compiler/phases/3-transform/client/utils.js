@@ -427,7 +427,7 @@ export function serialize_set_binding(node, context, fallback, options) {
 				 * @returns {import("estree").Expression}
 				 */
 				function visit_node(node) {
-					if (node.type === 'MemberExpression' && !node.computed) {
+					if (node.type === 'MemberExpression') {
 						return {
 							...node,
 							object: visit_node(/** @type {import("estree").Expression} */ (node.object)),
