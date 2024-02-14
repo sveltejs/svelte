@@ -113,7 +113,7 @@ export class ComplexSelector {
 
 		let first = true;
 		for (const relative_selector of this.relative_selectors) {
-			if (relative_selector.global) {
+			if (relative_selector.is_global) {
 				remove_global_pseudo_class(relative_selector.selectors[0]);
 			}
 
@@ -139,13 +139,13 @@ export class ComplexSelector {
 		let start = 0;
 		let end = this.relative_selectors.length;
 		for (; start < end; start += 1) {
-			if (!this.relative_selectors[start].global) break;
+			if (!this.relative_selectors[start].is_global) break;
 		}
 		for (; end > start; end -= 1) {
-			if (!this.relative_selectors[end - 1].global) break;
+			if (!this.relative_selectors[end - 1].is_global) break;
 		}
 		for (let i = start; i < end; i += 1) {
-			if (this.relative_selectors[i].global) {
+			if (this.relative_selectors[i].is_global) {
 				error(this.relative_selectors[i].selectors[0], 'invalid-css-global-placement');
 			}
 		}
@@ -218,8 +218,8 @@ function apply_selector(relative_selectors, node, stylesheet) {
 	if (!relative_selector) return false;
 	if (!node) {
 		return (
-			(relative_selector.global &&
-				relative_selectors.every((relative_selector) => relative_selector.global)) ||
+			(relative_selector.is_global &&
+				relative_selectors.every((relative_selector) => relative_selector.is_global)) ||
 			(relative_selector.is_host && relative_selectors.length === 0)
 		);
 	}
@@ -251,7 +251,7 @@ function apply_selector(relative_selectors, node, stylesheet) {
 			relative_selector.combinator.name === ' '
 		) {
 			for (const ancestor_block of relative_selectors) {
-				if (ancestor_block.global) {
+				if (ancestor_block.is_global) {
 					continue;
 				}
 				if (ancestor_block.is_host) {
@@ -270,13 +270,13 @@ function apply_selector(relative_selectors, node, stylesheet) {
 					return mark(relative_selector, node);
 				}
 			}
-			if (relative_selectors.every((relative_selector) => relative_selector.global)) {
+			if (relative_selectors.every((relative_selector) => relative_selector.is_global)) {
 				return mark(relative_selector, node);
 			}
 			return false;
 		} else if (relative_selector.combinator.name === '>') {
 			const has_global_parent = relative_selectors.every(
-				(relative_selector) => relative_selector.global
+				(relative_selector) => relative_selector.is_global
 			);
 			if (
 				has_global_parent ||
@@ -297,7 +297,9 @@ function apply_selector(relative_selectors, node, stylesheet) {
 			// NOTE: if we have :global(), we couldn't figure out what is selected within `:global` due to the
 			// css-tree limitation that does not parse the inner selector of :global
 			// so unless we are sure there will be no sibling to match, we will consider it as matched
-			const has_global = relative_selectors.some((relative_selector) => relative_selector.global);
+			const has_global = relative_selectors.some(
+				(relative_selector) => relative_selector.is_global
+			);
 			if (has_global) {
 				if (siblings.size === 0 && get_element_parent(node) !== null) {
 					return false;
@@ -845,10 +847,10 @@ class RelativeSelector {
 	}
 
 	can_ignore() {
-		return this.global || this.is_host || this.is_root;
+		return this.is_global || this.is_host || this.is_root;
 	}
 
-	get global() {
+	get is_global() {
 		return (
 			this.selectors.length >= 1 &&
 			this.selectors[0].type === 'PseudoClassSelector' &&
