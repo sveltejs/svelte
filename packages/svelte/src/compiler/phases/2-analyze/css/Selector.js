@@ -42,13 +42,13 @@ export default class Selector {
 	/**
 	 * @param {import('#compiler').Css.Selector} node
 	 * @param {Stylesheet} stylesheet
-	 * @param {Rule} parent
+	 * @param {Rule} rule
 	 */
-	constructor(node, stylesheet, parent) {
+	constructor(node, stylesheet, rule) {
 		this.node = node;
 		this.stylesheet = stylesheet;
 
-		this.selector_list = group_selectors(node, parent);
+		this.selector_list = group_selectors(node, rule);
 
 		this.local_selector_list = this.selector_list.map((complex_selector) => {
 			const i = complex_selector.findLastIndex((block) => !block.can_ignore());
