@@ -418,15 +418,34 @@ export function serialize_set_binding(node, context, fallback, options) {
 			}
 		} else {
 			if (is_store) {
+				let left = /** @type {import('estree').Pattern} */ (visit(node.left));
+
+				// If we are assigning to a store property, we need to ensure we don't
+				// capture the read for the store as part of the member expression to
+				// keep consistency with how store $ shorthand reads work in Svelte 4.
+				if (
+					node.left.type === 'MemberExpression' &&
+					left.type === 'MemberExpression' &&
+					node.left.object.type === 'Identifier' &&
+					!node.left.computed
+				) {
+					const binding = state.scope.get(node.left.object.name);
+					if (binding !== null && binding.kind === 'store_sub') {
+						left = b.member(
+							b.call(
+								'$.untrack',
+								b.thunk(/** @type {import('estree').Expression} */ (left.object))
+							),
+							left.property
+						);
+					}
+				}
+
 				return b.call(
 					'$.mutate_store',
 					serialize_get_binding(b.id(left_name), state),
-					b.assignment(
-						node.operator,
-						/** @type {import('estree').Pattern} */ (visit(node.left)),
-						value
-					),
-					b.call('$' + left_name)
+					b.assignment(node.operator, left, value),
+					b.call('$.untrack', b.id('$' + left_name))
 				);
 			} else if (!state.analysis.runes) {
 				if (binding.kind === 'prop') {
