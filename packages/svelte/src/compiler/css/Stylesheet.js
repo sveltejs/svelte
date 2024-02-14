@@ -1,11 +1,10 @@
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
-import Selector from './Selector.js';
-import hash from '../utils/hash.js';
+import { ComplexSelector } from './Selector.js';
+import { hash } from './utils.js';
 // import compiler_warnings from '../compiler_warnings.js';
 // import { extract_ignores_above_position } from '../utils/extract_svelte_ignore.js';
-import { push_array } from '../utils/push_array.js';
-import { create_attribute } from '../../nodes.js';
+import { create_attribute } from '../phases/nodes.js'; // TODO move this
 
 const regex_css_browser_prefix = /^-((webkit)|(moz)|(o)|(ms))-/;
 const regex_name_boundary = /^[\s,;}]$/;
@@ -49,7 +48,7 @@ function escape_comment_close(node, code) {
 }
 
 export class Rule {
-	/** @type {import('./Selector.js').default[]} */
+	/** @type {ComplexSelector[]} */
 	selectors;
 
 	/** @type {import('#compiler').Css.Rule} */
@@ -73,7 +72,9 @@ export class Rule {
 		this.node = node;
 		this.parent = parent;
 
-		this.selectors = node.prelude.children.map((node) => new Selector(node, stylesheet, this));
+		this.selectors = node.prelude.children.map(
+			(node) => new ComplexSelector(node, stylesheet, this)
+		);
 	}
 
 	/** @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node */
@@ -126,7 +127,7 @@ export class Rule {
 		this.children.forEach((rule) => rule.transform(code, id, keyframes));
 	}
 
-	/** @param {import('../../types.js').ComponentAnalysis} analysis */
+	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
 	validate(analysis) {
 		this.selectors.forEach((selector) => {
 			selector.validate(analysis);
@@ -136,7 +137,7 @@ export class Rule {
 		});
 	}
 
-	/** @param {(selector: import('./Selector.js').default) => void} handler */
+	/** @param {(selector: ComplexSelector) => void} handler */
 	warn_on_unused_selector(handler) {
 		this.selectors.forEach((selector) => {
 			if (!selector.used) handler(selector);
@@ -330,14 +331,14 @@ class Atrule {
 		});
 	}
 
-	/** @param {import('../../types.js').ComponentAnalysis} analysis */
+	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
 	validate(analysis) {
 		this.children.forEach((child) => {
 			child.validate(analysis);
 		});
 	}
 
-	/** @param {(selector: import('./Selector.js').default) => void} handler */
+	/** @param {(selector: ComplexSelector) => void} handler */
 	warn_on_unused_selector(handler) {
 		if (this.node.name !== 'media') return;
 		this.children.forEach((child) => {
@@ -529,14 +530,14 @@ export class Stylesheet {
 		};
 	}
 
-	/** @param {import('../../types.js').ComponentAnalysis} analysis */
+	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
 	validate(analysis) {
 		this.children.forEach((child) => {
 			child.validate(analysis);
 		});
 	}
 
-	/** @param {import('../../types.js').ComponentAnalysis} analysis */
+	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
 	warn_on_unused_selectors(analysis) {
 		// const ignores = !this.ast
 		// 	? []

@@ -1,6 +1,6 @@
-import { get_possible_values } from './gather_possible_values.js';
-import { regex_starts_with_whitespace, regex_ends_with_whitespace } from '../../patterns.js';
-import { error } from '../../../errors.js';
+import { get_possible_values } from './utils.js';
+import { regex_starts_with_whitespace, regex_ends_with_whitespace } from '../phases/patterns.js';
+import { error } from '../errors.js';
 import { Stylesheet, Rule } from './Stylesheet.js';
 
 const NO_MATCH = 'NO_MATCH';
@@ -14,8 +14,6 @@ const NodeExist = /** @type {const} */ ({
 
 /**
  * @typedef {typeof NodeExist[keyof typeof NodeExist]} NodeExistsValue
- * @typedef {Array<RelativeSelector>} ComplexSelector
- * @typedef {Array<ComplexSelector>} SelectorList
  * @typedef {import("#compiler").Css.SimpleSelector & { use_wrapper: { used: boolean }, visible: boolean }} SimpleSelectorWithData
  * */
 
@@ -24,23 +22,23 @@ const whitelist_attribute_selector = new Map([
 	['dialog', new Set(['open'])]
 ]);
 
-export default class Selector {
-	/** @type {import('#compiler').Css.Selector} */
+export class ComplexSelector {
+	/** @type {import('#compiler').Css.ComplexSelector} */
 	node;
 
 	/** @type {Stylesheet} */
 	stylesheet;
 
-	/** @type {SelectorList} */
+	/** @type {RelativeSelector[][]} */
 	selector_list;
 
-	/** @type {SelectorList} */
+	/** @type {RelativeSelector[][]} */
 	local_selector_list;
 
 	used = false;
 
 	/**
-	 * @param {import('#compiler').Css.Selector} node
+	 * @param {import('#compiler').Css.ComplexSelector} node
 	 * @param {Stylesheet} stylesheet
 	 * @param {Rule} rule
 	 */
@@ -150,7 +148,7 @@ export default class Selector {
 		}
 	}
 
-	/** @param {import('../../types.js').ComponentAnalysis} analysis */
+	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
 	validate(analysis) {
 		this.validate_global_placement();
 		this.validate_global_with_multiple_selectors();
@@ -197,7 +195,7 @@ export default class Selector {
 		}
 	}
 
-	/** @param {import('../../types.js').ComponentAnalysis} analysis */
+	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
 	validate_invalid_combinator_without_selector(analysis) {
 		for (const complex_selector of this.selector_list) {
 			for (const relative_selector of complex_selector) {
@@ -238,20 +236,22 @@ export default class Selector {
 }
 
 /**
- * @param {RelativeSelector[]} blocks
+ * @param {RelativeSelector[]} relative_selectors
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} node
  * @param {Stylesheet} stylesheet
  * @returns {boolean}
  */
-function apply_selector(blocks, node, stylesheet) {
-	const block = blocks.pop();
-	if (!block) return false;
+function apply_selector(relative_selectors, node, stylesheet) {
+	const relative_selector = relative_selectors.pop();
+	if (!relative_selector) return false;
 	if (!node) {
 		return (
-			(block.global && blocks.every((block) => block.global)) || (block.host && blocks.length === 0)
+			(relative_selector.global &&
+				relative_selectors.every((relative_selector) => relative_selector.global)) ||
+			(relative_selector.host && relative_selectors.length === 0)
 		);
 	}
-	const applies = block_might_apply_to_node(block, node);
+	const applies = block_might_apply_to_node(relative_selector, node);
 
 	if (applies === NO_MATCH) {
 		return false;
@@ -260,28 +260,31 @@ function apply_selector(blocks, node, stylesheet) {
 	/**
 	 * Mark both the compound selector and the node it selects as encapsulated,
 	 * for transformation in a later step
-	 * @param {RelativeSelector} block
+	 * @param {RelativeSelector} relative_selector
 	 * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
 	 */
-	function mark(block, node) {
-		block.should_encapsulate = true;
+	function mark(relative_selector, node) {
+		relative_selector.should_encapsulate = true;
 		stylesheet.nodes_with_css_class.add(node);
 		return true;
 	}
 
 	if (applies === UNKNOWN_SELECTOR) {
-		return mark(block, node);
+		return mark(relative_selector, node);
 	}
 
-	if (block.combinator) {
-		if (block.combinator.type === 'Combinator' && block.combinator.name === ' ') {
-			for (const ancestor_block of blocks) {
+	if (relative_selector.combinator) {
+		if (
+			relative_selector.combinator.type === 'Combinator' &&
+			relative_selector.combinator.name === ' '
+		) {
+			for (const ancestor_block of relative_selectors) {
 				if (ancestor_block.global) {
 					continue;
 				}
 
 				if (ancestor_block.host) {
-					return mark(block, node);
+					return mark(relative_selector, node);
 				}
 
 				/** @type {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} */
@@ -294,40 +297,51 @@ function apply_selector(blocks, node, stylesheet) {
 					}
 				}
 				if (matched) {
-					return mark(block, node);
+					return mark(relative_selector, node);
 				}
 			}
 
-			if (blocks.every((block) => block.global)) {
-				return mark(block, node);
+			if (relative_selectors.every((relative_selector) => relative_selector.global)) {
+				return mark(relative_selector, node);
 			}
 
 			return false;
-		} else if (block.combinator.name === '>') {
-			const has_global_parent = blocks.every((block) => block.global);
-			if (has_global_parent || apply_selector(blocks, get_element_parent(node), stylesheet)) {
-				return mark(block, node);
+		} else if (relative_selector.combinator.name === '>') {
+			const has_global_parent = relative_selectors.every(
+				(relative_selector) => relative_selector.global
+			);
+			if (
+				has_global_parent ||
+				apply_selector(relative_selectors, get_element_parent(node), stylesheet)
+			) {
+				return mark(relative_selector, node);
 			}
 
 			return false;
-		} else if (block.combinator.name === '+' || block.combinator.name === '~') {
-			const siblings = get_possible_element_siblings(node, block.combinator.name === '+');
+		} else if (
+			relative_selector.combinator.name === '+' ||
+			relative_selector.combinator.name === '~'
+		) {
+			const siblings = get_possible_element_siblings(
+				node,
+				relative_selector.combinator.name === '+'
+			);
 			let has_match = false;
 
 			// NOTE: if we have :global(), we couldn't figure out what is selected within `:global` due to the
 			// css-tree limitation that does not parse the inner selector of :global
 			// so unless we are sure there will be no sibling to match, we will consider it as matched
-			const has_global = blocks.some((block) => block.global);
+			const has_global = relative_selectors.some((relative_selector) => relative_selector.global);
 			if (has_global) {
 				if (siblings.size === 0 && get_element_parent(node) !== null) {
 					return false;
 				}
-				return mark(block, node);
+				return mark(relative_selector, node);
 			}
 
 			for (const possible_sibling of siblings.keys()) {
-				if (apply_selector(blocks.slice(), possible_sibling, stylesheet)) {
-					mark(block, node);
+				if (apply_selector(relative_selectors.slice(), possible_sibling, stylesheet)) {
+					mark(relative_selector, node);
 					has_match = true;
 				}
 			}
@@ -336,25 +350,25 @@ function apply_selector(blocks, node, stylesheet) {
 		}
 
 		// TODO other combinators
-		return mark(block, node);
+		return mark(relative_selector, node);
 	}
 
-	return mark(block, node);
+	return mark(relative_selector, node);
 }
 
 const regex_backslash_and_following_character = /\\(.)/g;
 
 /**
- * @param {RelativeSelector} block
+ * @param {RelativeSelector} relative_selector
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
  * @returns {NO_MATCH | POSSIBLE_MATCH | UNKNOWN_SELECTOR}
  */
-function block_might_apply_to_node(block, node) {
-	if (block.host || block.root) return NO_MATCH;
+function block_might_apply_to_node(relative_selector, node) {
+	if (relative_selector.host || relative_selector.root) return NO_MATCH;
 
-	let i = block.compound.selectors.length;
+	let i = relative_selector.compound.selectors.length;
 	while (i--) {
-		const selector = block.compound.selectors[i];
+		const selector = relative_selector.compound.selectors[i];
 
 		if (selector.type === 'Percentage' || selector.type === 'Nth') continue;
 
@@ -364,7 +378,7 @@ function block_might_apply_to_node(block, node) {
 			return NO_MATCH;
 		}
 		if (
-			block.compound.selectors.length === 1 &&
+			relative_selector.compound.selectors.length === 1 &&
 			selector.type === 'PseudoClassSelector' &&
 			name === 'global'
 		) {
@@ -683,22 +697,22 @@ function get_possible_element_siblings(node, adjacent_only) {
 }
 
 /**
- * @param {import('#compiler').EachBlock | import('#compiler').IfBlock | import('#compiler').AwaitBlock} block
+ * @param {import('#compiler').EachBlock | import('#compiler').IfBlock | import('#compiler').AwaitBlock} relative_selector
  * @param {boolean} adjacent_only
  * @returns {Map<import('#compiler').RegularElement, NodeExistsValue>}
  */
-function get_possible_last_child(block, adjacent_only) {
+function get_possible_last_child(relative_selector, adjacent_only) {
 	/** @typedef {Map<import('#compiler').RegularElement, NodeExistsValue>} NodeMap */
 
 	/** @type {NodeMap} */
 	const result = new Map();
-	if (block.type === 'EachBlock') {
+	if (relative_selector.type === 'EachBlock') {
 		/** @type {NodeMap} */
-		const each_result = loop_child(block.body.nodes, adjacent_only);
+		const each_result = loop_child(relative_selector.body.nodes, adjacent_only);
 
 		/** @type {NodeMap} */
-		const else_result = block.fallback
-			? loop_child(block.fallback.nodes, adjacent_only)
+		const else_result = relative_selector.fallback
+			? loop_child(relative_selector.fallback.nodes, adjacent_only)
 			: new Map();
 		const not_exhaustive = !has_definite_elements(else_result);
 		if (not_exhaustive) {
@@ -707,13 +721,13 @@ function get_possible_last_child(block, adjacent_only) {
 		}
 		add_to_map(each_result, result);
 		add_to_map(else_result, result);
-	} else if (block.type === 'IfBlock') {
+	} else if (relative_selector.type === 'IfBlock') {
 		/** @type {NodeMap} */
-		const if_result = loop_child(block.consequent.nodes, adjacent_only);
+		const if_result = loop_child(relative_selector.consequent.nodes, adjacent_only);
 
 		/** @type {NodeMap} */
-		const else_result = block.alternate
-			? loop_child(block.alternate.nodes, adjacent_only)
+		const else_result = relative_selector.alternate
+			? loop_child(relative_selector.alternate.nodes, adjacent_only)
 			: new Map();
 		const not_exhaustive = !has_definite_elements(if_result) || !has_definite_elements(else_result);
 		if (not_exhaustive) {
@@ -722,17 +736,21 @@ function get_possible_last_child(block, adjacent_only) {
 		}
 		add_to_map(if_result, result);
 		add_to_map(else_result, result);
-	} else if (block.type === 'AwaitBlock') {
+	} else if (relative_selector.type === 'AwaitBlock') {
 		/** @type {NodeMap} */
-		const pending_result = block.pending
-			? loop_child(block.pending.nodes, adjacent_only)
+		const pending_result = relative_selector.pending
+			? loop_child(relative_selector.pending.nodes, adjacent_only)
 			: new Map();
 
 		/** @type {NodeMap} */
-		const then_result = block.then ? loop_child(block.then.nodes, adjacent_only) : new Map();
+		const then_result = relative_selector.then
+			? loop_child(relative_selector.then.nodes, adjacent_only)
+			: new Map();
 
 		/** @type {NodeMap} */
-		const catch_result = block.catch ? loop_child(block.catch.nodes, adjacent_only) : new Map();
+		const catch_result = relative_selector.catch
+			? loop_child(relative_selector.catch.nodes, adjacent_only)
+			: new Map();
 		const not_exhaustive =
 			!has_definite_elements(pending_result) ||
 			!has_definite_elements(then_result) ||
@@ -933,9 +951,9 @@ class CompoundSelector {
 /**
  * Groups selectors and inserts parent blocks into nested rules.
  *
- * @param {import('#compiler').Css.Selector} selector - The selector to group and analyze.
+ * @param {import('#compiler').Css.ComplexSelector} selector - The selector to group and analyze.
  * @param {Rule} rule
- * @returns {SelectorList} - The grouped selectors with parent's blocks inserted if nested.
+ * @returns {RelativeSelector[][]} - The grouped selectors with parent's blocks inserted if nested.
  */
 function group_selectors(selector, rule) {
 	// TODO this logic isn't quite right, as it doesn't properly account for atrules
@@ -945,12 +963,10 @@ function group_selectors(selector, rule) {
 			.flat();
 
 		return parent_selector_list.map((parent_complex_selector) => {
-			const block_group = selector_to_blocks(
+			return selector_to_blocks(
 				[...selector.children],
 				[...parent_complex_selector] // Clone the parent's blocks to avoid modifying the original array
 			);
-
-			return block_group;
 		});
 	}
 
@@ -958,8 +974,8 @@ function group_selectors(selector, rule) {
 }
 
 /**
- * @param {import('#compiler').Css.Selector["children"]} children
- * @param {ComplexSelector | null} parent_complex_selector - The parent rule's selectors to insert/swap into the nesting selector positions.
+ * @param {import('#compiler').Css.ComplexSelector["children"]} children
+ * @param {RelativeSelector[] | null} parent_complex_selector - The parent rule's selectors to insert/swap into the nesting selector positions.
  */
 function selector_to_blocks(children, parent_complex_selector) {
 	let block = new RelativeSelector(null, new CompoundSelector());
@@ -997,8 +1013,8 @@ function selector_to_blocks(children, parent_complex_selector) {
 }
 
 /**
- * @param {ComplexSelector} parent_complex_selector - The parent blocks to insert into the nesting selector positions.
- * @returns {import('#compiler').Css.Selector["children"]} - The parent selectors to insert into the nesting selector positions.
+ * @param {RelativeSelector[]} parent_complex_selector - The parent blocks to insert into the nesting selector positions.
+ * @returns {import('#compiler').Css.ComplexSelector["children"]} - The parent selectors to insert into the nesting selector positions.
  */
 function get_parent_selectors(parent_complex_selector) {
 	const parent_selectors = [];
@@ -1027,8 +1043,8 @@ function get_parent_selectors(parent_complex_selector) {
  * b { c & { color: red }} -> so we need to insert ' ' after c so children needs to look like [c, " ",b]
  * .x { & { color: red }} -> no combinator, so children needs to look like .x.x
  *
- * @param {import('#compiler').Css.Selector["children"]} children
- * @param {ComplexSelector} parent_complex_selector - The parent blocks to insert into the nesting selector positions.
+ * @param {import('#compiler').Css.ComplexSelector["children"]} children
+ * @param {RelativeSelector[]} parent_complex_selector - The parent blocks to insert into the nesting selector positions.
  */
 function nest_fake_parents(children, parent_complex_selector) {
 	const nested_selector_indexes = children.reduce((indexes, child, index) => {
