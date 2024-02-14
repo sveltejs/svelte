@@ -59,25 +59,15 @@ export default class Selector {
 		this.selector_list = group_selectors(node, parent_selector_list);
 
 		this.local_selector_list = this.selector_list.map((complex_selector) => {
-			const i = complex_selector.findLastIndex((block) => !block.global);
+			const i = complex_selector.findLastIndex((block) => !block.can_ignore());
 			return complex_selector.slice(0, i + 1);
 		});
 
-		// Determine `used` based on the processed local_selector_list
-		let host_only = false;
-		let root_only = false;
-
-		// Check if there's exactly one group and one block within that group, and if it's host or root
-		if (this.local_selector_list.length === 1 && this.local_selector_list[0].length === 1) {
-			const single_block = this.local_selector_list[0][0];
-			host_only = single_block.compound.host;
-			root_only = single_block.compound.root;
-		}
-
-		// Check if there are no local blocks across all groups, or if there's a host_only or root_only situation
-		const no_local_blocks = this.local_selector_list.every((group) => group.length === 0);
-		this.used = no_local_blocks || host_only || root_only;
+		// if we have a `:root {...}` or `:global(...) {...}` selector, we need to mark
+		// this selector as `used` even if the component doesn't contain any nodes
+		this.used = this.local_selector_list.some((blocks) => blocks.length === 0);
 	}
+
 	/**
 	 * Determines whether the given selector is used within the component's nodes
 	 * and marks the corresponding blocks for encapsulation if so.
@@ -108,7 +98,9 @@ export default class Selector {
 	 */
 	apply(node) {
 		for (const complex_selector of this.local_selector_list) {
-			if (apply_selector(complex_selector.slice(), node, this.stylesheet)) {
+			if (complex_selector.length === 0) {
+				this.used = true;
+			} else if (apply_selector(complex_selector.slice(), node, this.stylesheet)) {
 				this.used = true;
 			}
 		}
@@ -890,21 +882,20 @@ class RelativeSelector {
 		this.compound.add(selector);
 	}
 
+	can_ignore() {
+		return this.compound.global || this.compound.host || this.compound.root;
+	}
+
 	get global() {
 		return this.compound.global;
 	}
+
 	get host() {
 		return this.compound.host;
 	}
+
 	get root() {
 		return this.compound.root;
-	}
-	get end() {
-		return this.compound.end;
-	}
-	get start() {
-		if (this.combinator) return this.combinator.start;
-		return this.compound.start;
 	}
 
 	get contains_invisible_selectors() {
