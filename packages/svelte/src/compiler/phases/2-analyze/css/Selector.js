@@ -37,8 +37,7 @@ export default class Selector {
 	/** @type {SelectorList} */
 	local_selector_list;
 
-	/** @type {boolean} */
-	used;
+	used = false;
 
 	/**
 	 * @param {import('#compiler').Css.Selector} node
@@ -46,6 +45,9 @@ export default class Selector {
 	 * @param {Rule} parent
 	 */
 	constructor(node, stylesheet, parent) {
+		this.node = node;
+		this.stylesheet = stylesheet;
+
 		let parent_selector_list = null;
 
 		if (parent.parent instanceof Rule) {
@@ -54,24 +56,11 @@ export default class Selector {
 				.flat();
 		}
 
-		this.node = node;
-		this.stylesheet = stylesheet;
 		this.selector_list = group_selectors(node, parent_selector_list);
 
-		this.used = false;
-
-		// Initialize local_selector_list
-		this.local_selector_list = [];
-
-		// Process each block group to take trailing :global(...) selectors out of consideration
-		this.selector_list.forEach((complex_selector) => {
-			let i = complex_selector.length;
-			while (i > 0) {
-				if (!complex_selector[i - 1].global) break;
-				i -= 1;
-			}
-			// Add the processed group (with global selectors removed) to local_selector_list
-			this.local_selector_list.push(complex_selector.slice(0, i));
+		this.local_selector_list = this.selector_list.map((complex_selector) => {
+			const i = complex_selector.findLastIndex((block) => !block.global);
+			return complex_selector.slice(0, i + 1);
 		});
 
 		// Determine `used` based on the processed local_selector_list
