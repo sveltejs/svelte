@@ -54,6 +54,11 @@
 			color: green;
 		}
 
+		/* silly but valid */
+		&& {
+			color: rebeccapurple;
+		}
+
 		.container & {
 			color: green;
 		}
