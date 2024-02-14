@@ -98,9 +98,7 @@ export default class Selector {
 	 */
 	apply(node) {
 		for (const complex_selector of this.local_selector_list) {
-			if (complex_selector.length === 0) {
-				this.used = true;
-			} else if (apply_selector(complex_selector.slice(), node, this.stylesheet)) {
+			if (apply_selector(complex_selector.slice(), node, this.stylesheet)) {
 				this.used = true;
 			}
 		}
