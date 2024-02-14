@@ -2501,11 +2501,11 @@ declare function $derived<T>(expression: T): T;
 declare namespace $derived {
 	/**
 	 * Sometimes you need to create complex derivations that don't fit inside a short expression.
-	 * In these cases, you can use `$derived.call` which accepts a function as its argument.
+	 * In these cases, you can use `$derived.by` which accepts a function as its argument.
 	 *
 	 * Example:
 	 * ```ts
-	 * let total = $derived.call(() => {
+	 * let total = $derived.by(() => {
 	 *   let result = 0;
 	 *	 for (const n of numbers) {
 	 *	   result += n;
@@ -2514,9 +2514,9 @@ declare namespace $derived {
 	 * });
 	 * ```
 	 *
-	 * https://svelte-5-preview.vercel.app/docs/runes#$derived-call
+	 * https://svelte-5-preview.vercel.app/docs/runes#$derived-by
 	 */
-	export function call<T>(fn: () => T): T;
+	export function by<T>(fn: () => T): T;
 }
 
 /**

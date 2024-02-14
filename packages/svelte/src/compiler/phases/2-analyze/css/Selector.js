@@ -293,7 +293,6 @@ function apply_selector(blocks, node, stylesheet) {
 						matched = true;
 					}
 				}
-
 				if (matched) {
 					return mark(block, node);
 				}

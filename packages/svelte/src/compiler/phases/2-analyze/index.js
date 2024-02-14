@@ -681,7 +681,7 @@ const runes_scope_js_tweaker = {
 			rune !== '$state' &&
 			rune !== '$state.frozen' &&
 			rune !== '$derived' &&
-			rune !== '$derived.call'
+			rune !== '$derived.by'
 		)
 			return;
 
@@ -717,7 +717,7 @@ const runes_scope_tweaker = {
 			rune !== '$state' &&
 			rune !== '$state.frozen' &&
 			rune !== '$derived' &&
-			rune !== '$derived.call' &&
+			rune !== '$derived.by' &&
 			rune !== '$props'
 		)
 			return;
@@ -730,7 +730,7 @@ const runes_scope_tweaker = {
 					? 'state'
 					: rune === '$state.frozen'
 						? 'frozen_state'
-						: rune === '$derived' || rune === '$derived.call'
+						: rune === '$derived' || rune === '$derived.by'
 							? 'derived'
 							: path.is_rest
 								? 'rest_prop'

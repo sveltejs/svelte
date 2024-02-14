@@ -147,7 +147,7 @@ export class Parser {
 
 	/**
 	 * @param {string} str
-	 * @param {boolean} [required]
+	 * @param {boolean} required
 	 */
 	eat(str, required = false) {
 		if (this.match(str)) {

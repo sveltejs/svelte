@@ -82,9 +82,7 @@ export class Rule {
 		this.children.forEach((rule) => rule.apply(node));
 	}
 
-	/**
-	 * @returns {boolean}
-	 */
+	/** @returns {boolean} */
 	is_empty() {
 		if (this.declarations.length > 0) return false;
 
@@ -95,9 +93,7 @@ export class Rule {
 		return true;
 	}
 
-	/**
-	 * @returns {boolean}
-	 */
+	/** @returns {boolean} */
 	is_used() {
 		if (this.parent instanceof Atrule && is_keyframes_node(this.parent.node)) {
 			return true;
@@ -298,7 +294,7 @@ class Atrule {
 	}
 
 	is_empty() {
-		return true; // TODO
+		return false; // TODO
 	}
 
 	is_used() {

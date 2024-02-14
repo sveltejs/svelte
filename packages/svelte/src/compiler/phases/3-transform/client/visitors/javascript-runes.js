@@ -33,7 +33,7 @@ export const javascript_visitors_runes = {
 						rune === '$state' ||
 						rune === '$state.frozen' ||
 						rune === '$derived' ||
-						rune === '$derived.call'
+						rune === '$derived.by'
 					) {
 						/** @type {import('../types.js').StateField} */
 						const field = {
@@ -42,7 +42,7 @@ export const javascript_visitors_runes = {
 									? 'state'
 									: rune === '$state.frozen'
 										? 'frozen_state'
-										: rune === '$derived.call'
+										: rune === '$derived.by'
 											? 'derived_call'
 											: 'derived',
 							// @ts-expect-error this is set in the next pass
@@ -289,12 +289,12 @@ export const javascript_visitors_runes = {
 				continue;
 			}
 
-			if (rune === '$derived' || rune === '$derived.call') {
+			if (rune === '$derived' || rune === '$derived.by') {
 				if (declarator.id.type === 'Identifier') {
 					declarations.push(
 						b.declarator(
 							declarator.id,
-							b.call('$.derived', rune === '$derived.call' ? value : b.thunk(value))
+							b.call('$.derived', rune === '$derived.by' ? value : b.thunk(value))
 						)
 					);
 				} else {
@@ -307,7 +307,7 @@ export const javascript_visitors_runes = {
 								'$.derived',
 								b.thunk(
 									b.block([
-										b.let(declarator.id, rune === '$derived.call' ? b.call(value) : value),
+										b.let(declarator.id, rune === '$derived.by' ? b.call(value) : value),
 										b.return(b.array(bindings.map((binding) => binding.node)))
 									])
 								)
