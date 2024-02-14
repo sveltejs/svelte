@@ -225,6 +225,10 @@ function read_selector(parser, inside_pseudo_class = false) {
 			};
 
 			parser.allow_whitespace();
+
+			if (parser.match(',') || (inside_pseudo_class ? parser.match(')') : parser.match('{'))) {
+				error(parser.index, 'invalid-css-selector');
+			}
 		}
 
 		start = parser.index;
@@ -357,11 +361,8 @@ function read_selector(parser, inside_pseudo_class = false) {
 		parser.allow_whitespace();
 
 		if (parser.match(',') || (inside_pseudo_class ? parser.match(')') : parser.match('{'))) {
+			// rewind, so we know whether to continue building the selector list
 			parser.index = index;
-
-			if (relative_selector.selectors.length === 0) {
-				error(index, 'invalid-css-selector');
-			}
 
 			// flush
 			relative_selector.end = index;
