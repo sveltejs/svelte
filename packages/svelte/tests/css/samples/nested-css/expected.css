@@ -29,11 +29,11 @@
 		& .b:where(.svelte-xyz) {
 			color: green;
 
-			.c:where(.svelte-xyz) {
+			/* (empty) .c:where(.svelte-xyz) {
 				& & {
 					color: red;
 				}
-			}
+			}*/
 		}
 
 		& & {
