@@ -118,23 +118,10 @@ export default class Selector {
 	 * @returns {void}
 	 */
 	apply(node) {
-		/**
-		 * Create a map of blocks to their nodes to know whether they should be encapsulated
-		 * @type {Map<RelativeSelector, Set<import('#compiler').RegularElement | import('#compiler').SvelteElement>>}
-		 * */
-		const used_blocks = new Map();
-
 		for (const complex_selector of this.local_selector_list) {
-			apply_selector(complex_selector.slice(), node, used_blocks);
-		}
-
-		// Iterate over used_blocks
-		for (const [relative_selector, nodes] of used_blocks) {
-			relative_selector.should_encapsulate = true;
-			for (const node of nodes) {
-				this.stylesheet.nodes_with_css_class.add(node);
+			if (apply_selector(complex_selector.slice(), node, this.stylesheet)) {
+				this.used = true;
 			}
-			this.used = true;
 		}
 	}
 
@@ -302,24 +289,12 @@ export default class Selector {
 }
 
 /**
- * @param {Map<RelativeSelector, Set<import('#compiler').RegularElement | import('#compiler').SvelteElement>>} map
- * @param {RelativeSelector} block
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
- */
-function add_node(map, block, node) {
-	if (!map.has(block)) {
-		map.set(block, new Set());
-	}
-	map.get(block)?.add(node);
-}
-
-/**
  * @param {RelativeSelector[]} blocks
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} node
- * @param {Map<RelativeSelector, Set<import('#compiler').RegularElement | import('#compiler').SvelteElement>>} to_encapsulate
+ * @param {Stylesheet} stylesheet
  * @returns {boolean}
  */
-function apply_selector(blocks, node, to_encapsulate) {
+function apply_selector(blocks, node, stylesheet) {
 	const block = blocks.pop();
 	if (!block) return false;
 	if (!node) {
@@ -333,9 +308,20 @@ function apply_selector(blocks, node, to_encapsulate) {
 		return false;
 	}
 
-	if (applies === UNKNOWN_SELECTOR) {
-		add_node(to_encapsulate, block, node);
+	/**
+	 * Mark both the compound selector and the node it selects as encapsulated,
+	 * for transformation in a later step
+	 * @param {RelativeSelector} block
+	 * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
+	 */
+	function mark(block, node) {
+		block.should_encapsulate = true;
+		stylesheet.nodes_with_css_class.add(node);
 		return true;
+	}
+
+	if (applies === UNKNOWN_SELECTOR) {
+		return mark(block, node);
 	}
 
 	if (block.combinator) {
@@ -344,37 +330,42 @@ function apply_selector(blocks, node, to_encapsulate) {
 				if (ancestor_block.global) {
 					continue;
 				}
+
 				if (ancestor_block.host) {
-					add_node(to_encapsulate, block, node);
-					return true;
+					return mark(block, node);
 				}
+
 				/** @type {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} */
 				let parent = node;
+				let matched = false;
 				while ((parent = get_element_parent(parent))) {
 					if (block_might_apply_to_node(ancestor_block, parent) !== NO_MATCH) {
-						add_node(to_encapsulate, ancestor_block, parent);
+						mark(ancestor_block, parent);
+						matched = true;
 					}
 				}
-				if (to_encapsulate.size) {
-					add_node(to_encapsulate, block, node);
-					return true;
+
+				if (matched) {
+					return mark(block, node);
 				}
 			}
+
 			if (blocks.every((block) => block.global)) {
-				add_node(to_encapsulate, block, node);
-				return true;
+				return mark(block, node);
 			}
+
 			return false;
 		} else if (block.combinator.name === '>') {
 			const has_global_parent = blocks.every((block) => block.global);
-			if (has_global_parent || apply_selector(blocks, get_element_parent(node), to_encapsulate)) {
-				add_node(to_encapsulate, block, node);
-				return true;
+			if (has_global_parent || apply_selector(blocks, get_element_parent(node), stylesheet)) {
+				return mark(block, node);
 			}
+
 			return false;
 		} else if (block.combinator.name === '+' || block.combinator.name === '~') {
 			const siblings = get_possible_element_siblings(node, block.combinator.name === '+');
 			let has_match = false;
+
 			// NOTE: if we have :global(), we couldn't figure out what is selected within `:global` due to the
 			// css-tree limitation that does not parse the inner selector of :global
 			// so unless we are sure there will be no sibling to match, we will consider it as matched
@@ -383,23 +374,24 @@ function apply_selector(blocks, node, to_encapsulate) {
 				if (siblings.size === 0 && get_element_parent(node) !== null) {
 					return false;
 				}
-				add_node(to_encapsulate, block, node);
-				return true;
+				return mark(block, node);
 			}
+
 			for (const possible_sibling of siblings.keys()) {
-				if (apply_selector(blocks.slice(), possible_sibling, to_encapsulate)) {
-					add_node(to_encapsulate, block, node);
+				if (apply_selector(blocks.slice(), possible_sibling, stylesheet)) {
+					mark(block, node);
 					has_match = true;
 				}
 			}
+
 			return has_match;
 		}
+
 		// TODO other combinators
-		add_node(to_encapsulate, block, node);
-		return true;
+		return mark(block, node);
 	}
-	add_node(to_encapsulate, block, node);
-	return true;
+
+	return mark(block, node);
 }
 
 const regex_backslash_and_following_character = /\\(.)/g;
