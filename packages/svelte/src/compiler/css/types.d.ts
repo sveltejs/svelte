@@ -24,7 +24,7 @@ export interface SelectorList extends BaseNode {
 }
 
 export interface ComplexSelector extends BaseNode {
-	type: 'Selector';
+	type: 'ComplexSelector';
 	children: Array<SimpleSelector | Combinator>;
 }
 

@@ -333,7 +333,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 			parser.index = index;
 
 			return {
-				type: 'Selector',
+				type: 'ComplexSelector',
 				start: list_start,
 				end: index,
 				children
