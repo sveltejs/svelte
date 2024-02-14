@@ -19,7 +19,7 @@ const whitelist_attribute_selector = new Map([
 	['dialog', new Set(['open'])]
 ]);
 
-export default class Selector {
+export class ComplexSelector {
 	/** @type {import('#compiler').Css.Selector} */
 	node;
 

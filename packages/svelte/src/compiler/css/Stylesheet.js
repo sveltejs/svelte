@@ -1,6 +1,6 @@
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
-import Selector from './Selector.js';
+import { ComplexSelector } from './Selector.js';
 import { hash } from './utils.js';
 // import compiler_warnings from '../compiler_warnings.js';
 // import { extract_ignores_above_position } from '../utils/extract_svelte_ignore.js';
@@ -48,7 +48,7 @@ function escape_comment_close(node, code) {
 }
 
 class Rule {
-	/** @type {import('./Selector.js').default[]} */
+	/** @type {ComplexSelector[]} */
 	selectors;
 
 	/** @type {import('#compiler').Css.Rule} */
@@ -68,7 +68,7 @@ class Rule {
 	constructor(node, stylesheet, parent) {
 		this.node = node;
 		this.parent = parent;
-		this.selectors = node.prelude.children.map((node) => new Selector(node, stylesheet));
+		this.selectors = node.prelude.children.map((node) => new ComplexSelector(node, stylesheet));
 
 		this.declarations = /** @type {import('#compiler').Css.Declaration[]} */ (
 			node.block.children
@@ -122,7 +122,7 @@ class Rule {
 		});
 	}
 
-	/** @param {(selector: import('./Selector.js').default) => void} handler */
+	/** @param {(selector: ComplexSelector) => void} handler */
 	warn_on_unused_selector(handler) {
 		this.selectors.forEach((selector) => {
 			if (!selector.used) handler(selector);
@@ -316,7 +316,7 @@ class Atrule {
 		});
 	}
 
-	/** @param {(selector: import('./Selector.js').default) => void} handler */
+	/** @param {(selector: ComplexSelector) => void} handler */
 	warn_on_unused_selector(handler) {
 		if (this.node.name !== 'media') return;
 		this.children.forEach((child) => {
