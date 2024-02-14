@@ -69,30 +69,8 @@ export default class Selector {
 	}
 
 	/**
-	 * Determines whether the given selector is used within the component's nodes
-	 * and marks the corresponding blocks for encapsulation if so.
-	 *
-	 * In CSS nesting, the selector might be used in one nested rule, but not in another
-	 * e.g:
-	 * ```css
-	 * a, b {
-	 *  c {
-	 *   color: red;
-	 * }
-	 * ```
-	 *
-	 * ```svelte
-	 * <a>
-	 * 	<c>...</c>
-	 * </a>
-	 * <b>
-	 *  No 'c' here
-	 * </b>
-	 * ```
-	 *
-	 * In the above example, the selector `a c` is used, but `b c` is not.
-	 * We should mark it for encapsulation as a result.
-	 *
+	 * Determines whether the given selector potentially applies to `node` —
+	 * if so, marks both the selector and the node as encapsulated
 	 * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node - The node to apply the selector to.
 	 * @returns {void}
 	 */
