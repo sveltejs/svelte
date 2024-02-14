@@ -206,12 +206,14 @@ function read_selector(parser, inside_pseudo_class = false) {
 
 		if (combinator) {
 			if (relative_selector.selectors.length === 0) {
-				error(start, 'TODO', 'expected a selector');
+				if (!inside_pseudo_class) {
+					error(start, 'invalid-css-selector');
+				}
+			} else {
+				// flush previous relative selector...
+				relative_selector.end = start;
+				children.push(relative_selector);
 			}
-
-			// flush previous relative selector...
-			relative_selector.end = start;
-			children.push(relative_selector);
 
 			// ...and start a new one
 			relative_selector = {
@@ -358,7 +360,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 			parser.index = index;
 
 			if (relative_selector.selectors.length === 0) {
-				error(index, 'TODO', 'expected a selector');
+				error(index, 'invalid-css-selector');
 			}
 
 			// flush
