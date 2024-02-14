@@ -48,15 +48,7 @@ export default class Selector {
 		this.node = node;
 		this.stylesheet = stylesheet;
 
-		let parent_selector_list = null;
-
-		if (parent.parent instanceof Rule) {
-			parent_selector_list = parent.parent.selectors
-				.map((selector) => selector.selector_list)
-				.flat();
-		}
-
-		this.selector_list = group_selectors(node, parent_selector_list);
+		this.selector_list = group_selectors(node, parent);
 
 		this.local_selector_list = this.selector_list.map((complex_selector) => {
 			const i = complex_selector.findLastIndex((block) => !block.can_ignore());
@@ -943,23 +935,27 @@ class CompoundSelector {
  * Groups selectors and inserts parent blocks into nested rules.
  *
  * @param {import('#compiler').Css.Selector} selector - The selector to group and analyze.
- * @param {SelectorList | null} parent_selector_list - The parent blocks group to insert into nested rules.
+ * @param {Rule} rule
  * @returns {SelectorList} - The grouped selectors with parent's blocks inserted if nested.
  */
-function group_selectors(selector, parent_selector_list) {
-	// If it isn't a nested rule, then we add an empty block group
-	if (parent_selector_list === null) {
-		return [selector_to_blocks([...selector.children], null)];
+function group_selectors(selector, rule) {
+	// TODO this logic isn't quite right, as it doesn't properly account for atrules
+	if (rule.parent instanceof Rule) {
+		const parent_selector_list = rule.parent.selectors
+			.map((selector) => selector.selector_list)
+			.flat();
+
+		return parent_selector_list.map((parent_complex_selector) => {
+			const block_group = selector_to_blocks(
+				[...selector.children],
+				[...parent_complex_selector] // Clone the parent's blocks to avoid modifying the original array
+			);
+
+			return block_group;
+		});
 	}
 
-	return parent_selector_list.map((parent_complex_selector) => {
-		const block_group = selector_to_blocks(
-			[...selector.children],
-			[...parent_complex_selector] // Clone the parent's blocks to avoid modifying the original array
-		);
-
-		return block_group;
-	});
+	return [selector_to_blocks([...selector.children], null)];
 }
 
 /**
