@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.54
+
+### Patch Changes
+
+- breaking: replace `$derived.call` with `$derived.by` ([#10445](https://github.com/sveltejs/svelte/pull/10445))
+
+- fix: improve global transition outro handling ([#10474](https://github.com/sveltejs/svelte/pull/10474))
+
 ## 5.0.0-next.53
 
 ### Patch Changes
