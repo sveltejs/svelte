@@ -220,7 +220,7 @@ function apply_selector(relative_selectors, node, stylesheet) {
 		return (
 			(relative_selector.global &&
 				relative_selectors.every((relative_selector) => relative_selector.global)) ||
-			(relative_selector.host && relative_selectors.length === 0)
+			(relative_selector.is_host && relative_selectors.length === 0)
 		);
 	}
 	const applies = block_might_apply_to_node(relative_selector, node);
@@ -254,7 +254,7 @@ function apply_selector(relative_selectors, node, stylesheet) {
 				if (ancestor_block.global) {
 					continue;
 				}
-				if (ancestor_block.host) {
+				if (ancestor_block.is_host) {
 					return mark(relative_selector, node);
 				}
 				/** @type {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} */
@@ -328,7 +328,7 @@ const regex_backslash_and_following_character = /\\(.)/g;
  * @returns {NO_MATCH | POSSIBLE_MATCH | UNKNOWN_SELECTOR}
  */
 function block_might_apply_to_node(relative_selector, node) {
-	if (relative_selector.host || relative_selector.root) return NO_MATCH;
+	if (relative_selector.is_host || relative_selector.is_root) return NO_MATCH;
 
 	let i = relative_selector.selectors.length;
 	while (i--) {
@@ -815,51 +815,37 @@ function loop_child(children, adjacent_only) {
  * Combined, they are a complex selector.
  */
 class RelativeSelector {
-	/** @type {boolean} */
-	host;
-
-	/** @type {boolean} */
-	root;
-
 	/** @type {import('#compiler').Css.Combinator | null} */
 	combinator;
 
 	/** @type {import('#compiler').Css.SimpleSelector[]} */
-	selectors;
+	selectors = [];
 
-	/** @type {number} */
-	start;
-
-	/** @type {number} */
-	end;
-
-	/** @type {boolean} */
-	should_encapsulate;
+	is_host = false;
+	is_root = false;
+	should_encapsulate = false;
+	start = -1;
+	end = -1;
 
 	/** @param {import('#compiler').Css.Combinator | null} combinator */
 	constructor(combinator) {
 		this.combinator = combinator;
-		this.host = false;
-		this.root = false;
-		this.selectors = [];
-		this.start = -1;
-		this.end = -1;
-		this.should_encapsulate = false;
 	}
 
 	/** @param {import('#compiler').Css.SimpleSelector} selector */
 	add(selector) {
 		if (this.selectors.length === 0) {
 			this.start = selector.start;
-			this.host = selector.type === 'PseudoClassSelector' && selector.name === 'host';
+			this.is_host = selector.type === 'PseudoClassSelector' && selector.name === 'host';
 		}
-		this.root = this.root || (selector.type === 'PseudoClassSelector' && selector.name === 'root');
+		this.is_root =
+			this.is_root || (selector.type === 'PseudoClassSelector' && selector.name === 'root');
 		this.selectors.push(selector);
 		this.end = selector.end;
 	}
 
 	can_ignore() {
-		return this.global || this.host || this.root;
+		return this.global || this.is_host || this.is_root;
 	}
 
 	get global() {
