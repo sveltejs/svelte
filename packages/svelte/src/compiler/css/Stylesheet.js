@@ -115,13 +115,6 @@ class Rule {
 		this.declarations.forEach((declaration) => declaration.transform(code, keyframes));
 	}
 
-	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
-	validate(analysis) {
-		this.selectors.forEach((selector) => {
-			selector.validate(analysis);
-		});
-	}
-
 	/** @param {(selector: ComplexSelector) => void} handler */
 	warn_on_unused_selector(handler) {
 		this.selectors.forEach((selector) => {
@@ -306,13 +299,6 @@ class Atrule {
 		}
 		this.children.forEach((child) => {
 			child.transform(code, id, keyframes);
-		});
-	}
-
-	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
-	validate(analysis) {
-		this.children.forEach((child) => {
-			child.validate(analysis);
 		});
 	}
 
@@ -508,13 +494,6 @@ export class Stylesheet {
 				file
 			})
 		};
-	}
-
-	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
-	validate(analysis) {
-		this.children.forEach((child) => {
-			child.validate(analysis);
-		});
 	}
 
 	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */

@@ -124,68 +124,6 @@ export class ComplexSelector {
 			}
 		}
 	}
-
-	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
-	validate(analysis) {
-		this.validate_global_with_multiple_selectors();
-		this.validate_global_compound_selector();
-		this.validate_invalid_combinator_without_selector(analysis);
-	}
-
-	validate_global_with_multiple_selectors() {
-		if (this.relative_selectors.length === 1 && this.relative_selectors[0].selectors.length === 1) {
-			// standalone :global() with multiple selectors is OK
-			return;
-		}
-		for (const relative_selector of this.relative_selectors) {
-			for (const selector of relative_selector.selectors) {
-				if (
-					selector.type === 'PseudoClassSelector' &&
-					selector.name === 'global' &&
-					selector.args !== null &&
-					selector.args.children.length > 1
-				) {
-					error(selector, 'invalid-css-global-selector');
-				}
-			}
-		}
-	}
-
-	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
-	validate_invalid_combinator_without_selector(analysis) {
-		for (let i = 0; i < this.relative_selectors.length; i++) {
-			const relative_selector = this.relative_selectors[i];
-			if (relative_selector.selectors.length === 0) {
-				error(this.node, 'invalid-css-selector');
-			}
-		}
-	}
-
-	validate_global_compound_selector() {
-		for (const relative_selector of this.relative_selectors) {
-			if (relative_selector.selectors.length === 1) continue;
-
-			for (let i = 0; i < relative_selector.selectors.length; i++) {
-				const selector = relative_selector.selectors[i];
-
-				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-					const child = selector.args?.children[0].children[0];
-					if (
-						child?.selectors[0].type === 'TypeSelector' &&
-						!/[.:#]/.test(child.selectors[0].name[0]) &&
-						(i !== 0 ||
-							relative_selector.selectors
-								.slice(1)
-								.some(
-									(s) => s.type !== 'PseudoElementSelector' && s.type !== 'PseudoClassSelector'
-								))
-					) {
-						error(selector, 'invalid-css-global-selector-list');
-					}
-				}
-			}
-		}
-	}
 }
 
 /**

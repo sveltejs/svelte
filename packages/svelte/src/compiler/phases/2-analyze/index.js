@@ -457,8 +457,6 @@ export function analyze_component(root, options) {
 		walk(root.css, {}, validation_css);
 	}
 
-	analysis.stylesheet.validate(analysis);
-
 	for (const element of analysis.elements) {
 		analysis.stylesheet.apply(element);
 	}

@@ -32,5 +32,45 @@ export const validation_css = {
 				}
 			}
 		}
+
+		// ensure `:global(...)`contains a single selector
+		// (standalone :global() with multiple selectors is OK)
+		if (node.children.length > 1 || node.children[0].selectors.length > 1) {
+			for (const relative_selector of node.children) {
+				for (const selector of relative_selector.selectors) {
+					if (
+						selector.type === 'PseudoClassSelector' &&
+						selector.name === 'global' &&
+						selector.args !== null &&
+						selector.args.children.length > 1
+					) {
+						error(selector, 'invalid-css-global-selector');
+					}
+				}
+			}
+		}
+
+		// ensure `:global(...)` is not part of a larger compound selector
+		for (const relative_selector of node.children) {
+			for (let i = 0; i < relative_selector.selectors.length; i++) {
+				const selector = relative_selector.selectors[i];
+
+				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
+					const child = selector.args?.children[0].children[0];
+					if (
+						child?.selectors[0].type === 'TypeSelector' &&
+						!/[.:#]/.test(child.selectors[0].name[0]) &&
+						(i !== 0 ||
+							relative_selector.selectors
+								.slice(1)
+								.some(
+									(s) => s.type !== 'PseudoElementSelector' && s.type !== 'PseudoClassSelector'
+								))
+					) {
+						error(selector, 'invalid-css-global-selector-list');
+					}
+				}
+			}
+		}
 	}
 };
