@@ -48,7 +48,7 @@ function escape_comment_close(node, code) {
 	}
 }
 
-class Rule {
+export class Rule {
 	/** @type {import('./Selector.js').default[]} */
 	selectors;
 
@@ -73,30 +73,7 @@ class Rule {
 		this.node = node;
 		this.parent = parent;
 
-		/**
-		 * If there's a parent, we need to pass that parent's block_groups into the child
-		 * selector because of CSS nesting. For example:
-		 * ```css
-		 * 	.a, .b {
-		 *		.c {
-		 * 	 		color: red;
-		 * 		}
-		 * 	}
-		 * ```
-		 * Results in the following selectors:
-		 * 	- .a .c
-		 * 	- .b .c
-		 */
-		if (parent instanceof Rule) {
-			let block_groups = /** @type {Rule} **/ (parent).selectors
-				.map((selector) => selector.selector_list)
-				.flat();
-			this.selectors = node.prelude.children.map(
-				(node) => new Selector(node, stylesheet, block_groups)
-			);
-		} else {
-			this.selectors = node.prelude.children.map((node) => new Selector(node, stylesheet, null));
-		}
+		this.selectors = node.prelude.children.map((node) => new Selector(node, stylesheet, this));
 	}
 
 	/** @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node */
@@ -381,7 +358,7 @@ class Atrule {
 	}
 }
 
-export default class Stylesheet {
+export class Stylesheet {
 	/** @type {import('#compiler').Style | null} */
 	ast;
 

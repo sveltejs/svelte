@@ -1,6 +1,7 @@
 import { get_possible_values } from './gather_possible_values.js';
 import { regex_starts_with_whitespace, regex_ends_with_whitespace } from '../../patterns.js';
 import { error } from '../../../errors.js';
+import { Stylesheet, Rule } from './Stylesheet.js';
 
 const NO_MATCH = 'NO_MATCH';
 const POSSIBLE_MATCH = 'POSSIBLE_MATCH';
@@ -27,7 +28,7 @@ export default class Selector {
 	/** @type {import('#compiler').Css.Selector} */
 	node;
 
-	/** @type {import('./Stylesheet.js').default} */
+	/** @type {Stylesheet} */
 	stylesheet;
 
 	/** @type {SelectorList} */
@@ -41,10 +42,18 @@ export default class Selector {
 
 	/**
 	 * @param {import('#compiler').Css.Selector} node
-	 * @param {import('./Stylesheet.js').default} stylesheet
-	 * @param {ComplexSelector[] | null} parent_selector_list
+	 * @param {Stylesheet} stylesheet
+	 * @param {Rule} parent
 	 */
-	constructor(node, stylesheet, parent_selector_list) {
+	constructor(node, stylesheet, parent) {
+		let parent_selector_list = null;
+
+		if (parent.parent instanceof Rule) {
+			parent_selector_list = parent.parent.selectors
+				.map((selector) => selector.selector_list)
+				.flat();
+		}
+
 		this.node = node;
 		this.stylesheet = stylesheet;
 		this.selector_list = group_selectors(node, parent_selector_list);
