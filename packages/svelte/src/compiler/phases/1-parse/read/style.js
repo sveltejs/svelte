@@ -149,7 +149,7 @@ function read_rule(parser) {
  * @returns {import('#compiler').Css.SelectorList}
  */
 function read_selector_list(parser, inside_pseudo_class = false) {
-	/** @type {import('#compiler').Css.Selector[]} */
+	/** @type {import('#compiler').Css.ComplexSelector[]} */
 	const children = [];
 
 	allow_comment_or_whitespace(parser);
@@ -182,7 +182,7 @@ function read_selector_list(parser, inside_pseudo_class = false) {
 /**
  * @param {import('../index.js').Parser} parser
  * @param {boolean} [inside_pseudo_class]
- * @returns {import('#compiler').Css.Selector}
+ * @returns {import('#compiler').Css.ComplexSelector}
  */
 function read_selector(parser, inside_pseudo_class = false) {
 	const list_start = parser.index;

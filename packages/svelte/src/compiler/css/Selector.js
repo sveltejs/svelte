@@ -20,7 +20,7 @@ const whitelist_attribute_selector = new Map([
 ]);
 
 export class ComplexSelector {
-	/** @type {import('#compiler').Css.Selector} */
+	/** @type {import('#compiler').Css.ComplexSelector} */
 	node;
 
 	/** @type {import('./Stylesheet.js').Stylesheet} */
@@ -35,7 +35,7 @@ export class ComplexSelector {
 	used = false;
 
 	/**
-	 * @param {import('#compiler').Css.Selector} node
+	 * @param {import('#compiler').Css.ComplexSelector} node
 	 * @param {import('./Stylesheet.js').Stylesheet} stylesheet
 	 */
 	constructor(node, stylesheet) {
@@ -835,7 +835,7 @@ class Block {
 	}
 }
 
-/** @param {import('#compiler').Css.Selector} selector */
+/** @param {import('#compiler').Css.ComplexSelector} selector */
 function group_selectors(selector) {
 	let block = new Block(null);
 	const blocks = [block];
