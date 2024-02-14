@@ -188,8 +188,8 @@ export class ComplexSelector {
 				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
 					const child = selector.args?.children[0].children[0];
 					if (
-						child?.type === 'TypeSelector' &&
-						!/[.:#]/.test(child.name[0]) &&
+						child?.selectors[0].type === 'TypeSelector' &&
+						!/[.:#]/.test(child.selectors[0].name[0]) &&
 						(i !== 0 ||
 							relative_selector.selectors
 								.slice(1)
@@ -861,18 +861,13 @@ class RelativeSelector {
 	}
 }
 
-/** @param {import('#compiler').Css.ComplexSelector} selector */
-function group_selectors(selector) {
-	let relative_selector = new RelativeSelector(null);
-	const relative_selectors = [relative_selector];
-
-	selector.children.forEach((child) => {
-		if (child.type === 'Combinator') {
-			relative_selector = new RelativeSelector(child);
-			relative_selectors.push(relative_selector);
-		} else {
-			relative_selector.add(child);
+/** @param {import('#compiler').Css.ComplexSelector} complex_selector */
+function group_selectors(complex_selector) {
+	return complex_selector.children.map((node) => {
+		const relative_selector = new RelativeSelector(node.combinator);
+		for (const selector of node.selectors) {
+			relative_selector.add(selector);
 		}
+		return relative_selector;
 	});
-	return relative_selectors;
 }

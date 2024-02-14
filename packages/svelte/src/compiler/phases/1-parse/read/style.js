@@ -187,42 +187,76 @@ function read_selector_list(parser, inside_pseudo_class = false) {
 function read_selector(parser, inside_pseudo_class = false) {
 	const list_start = parser.index;
 
-	/** @type {Array<import('#compiler').Css.SimpleSelector | import('#compiler').Css.Combinator>} */
+	/** @type {import('#compiler').Css.RelativeSelector[]} */
 	const children = [];
 
+	/** @type {import('#compiler').Css.RelativeSelector} */
+	let relative_selector = {
+		type: 'RelativeSelector',
+		combinator: null,
+		selectors: [],
+		start: parser.index,
+		end: -1
+	};
+
 	while (parser.index < parser.template.length) {
-		const start = parser.index;
+		let start = parser.index;
+
+		const combinator = read_combinator(parser);
+
+		if (combinator) {
+			if (relative_selector.selectors.length === 0) {
+				error(start, 'TODO', 'expected a selector');
+			}
+
+			// flush previous relative selector...
+			relative_selector.end = start;
+			children.push(relative_selector);
+
+			// ...and start a new one
+			relative_selector = {
+				type: 'RelativeSelector',
+				combinator,
+				selectors: [],
+				start,
+				end: -1
+			};
+
+			parser.allow_whitespace();
+		}
+
+		start = parser.index;
 
 		if (parser.eat('*')) {
 			let name = '*';
-			if (parser.match('|')) {
+
+			if (parser.eat('|')) {
 				// * is the namespace (which we ignore)
-				parser.index++;
 				name = read_identifier(parser);
 			}
 
-			children.push({
+			relative_selector.selectors.push({
 				type: 'TypeSelector',
 				name,
 				start,
 				end: parser.index
 			});
 		} else if (parser.eat('#')) {
-			children.push({
+			relative_selector.selectors.push({
 				type: 'IdSelector',
 				name: read_identifier(parser),
 				start,
 				end: parser.index
 			});
 		} else if (parser.eat('.')) {
-			children.push({
+			relative_selector.selectors.push({
 				type: 'ClassSelector',
 				name: read_identifier(parser),
 				start,
 				end: parser.index
 			});
 		} else if (parser.eat('::')) {
-			children.push({
+			relative_selector.selectors.push({
 				type: 'PseudoElementSelector',
 				name: read_identifier(parser),
 				start,
@@ -247,7 +281,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 				error(parser.index, 'invalid-css-global-selector');
 			}
 
-			children.push({
+			relative_selector.selectors.push({
 				type: 'PseudoClassSelector',
 				name,
 				args,
@@ -276,7 +310,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 			parser.allow_whitespace();
 			parser.eat(']', true);
 
-			children.push({
+			relative_selector.selectors.push({
 				type: 'AttributeSelector',
 				start,
 				end: parser.index,
@@ -288,24 +322,14 @@ function read_selector(parser, inside_pseudo_class = false) {
 		} else if (inside_pseudo_class && parser.match_regex(REGEX_NTH_OF)) {
 			// nth of matcher must come before combinator matcher to prevent collision else the '+' in '+2n-1' would be parsed as a combinator
 
-			children.push({
+			relative_selector.selectors.push({
 				type: 'Nth',
 				value: /**@type {string} */ (parser.read(REGEX_NTH_OF)),
 				start,
 				end: parser.index
 			});
-		} else if (parser.match_regex(REGEX_COMBINATOR_WHITESPACE)) {
-			parser.allow_whitespace();
-			const start = parser.index;
-			children.push({
-				type: 'Combinator',
-				name: /** @type {string} */ (parser.read(REGEX_COMBINATOR)),
-				start,
-				end: parser.index
-			});
-			parser.allow_whitespace();
 		} else if (parser.match_regex(REGEX_PERCENTAGE)) {
-			children.push({
+			relative_selector.selectors.push({
 				type: 'Percentage',
 				value: /** @type {string} */ (parser.read(REGEX_PERCENTAGE)),
 				start,
@@ -313,12 +337,13 @@ function read_selector(parser, inside_pseudo_class = false) {
 			});
 		} else {
 			let name = read_identifier(parser);
-			if (parser.match('|')) {
+
+			if (parser.eat('|')) {
 				// we ignore the namespace when trying to find matching element classes
-				parser.index++;
 				name = read_identifier(parser);
 			}
-			children.push({
+
+			relative_selector.selectors.push({
 				type: 'TypeSelector',
 				name,
 				start,
@@ -332,6 +357,14 @@ function read_selector(parser, inside_pseudo_class = false) {
 		if (parser.match(',') || (inside_pseudo_class ? parser.match(')') : parser.match('{'))) {
 			parser.index = index;
 
+			if (relative_selector.selectors.length === 0) {
+				error(index, 'TODO', 'expected a selector');
+			}
+
+			// flush
+			relative_selector.end = index;
+			children.push(relative_selector);
+
 			return {
 				type: 'ComplexSelector',
 				start: list_start,
@@ -340,17 +373,45 @@ function read_selector(parser, inside_pseudo_class = false) {
 			};
 		}
 
-		if (parser.index !== index && !parser.match_regex(REGEX_COMBINATOR)) {
-			children.push({
-				type: 'Combinator',
-				name: ' ',
-				start: index,
-				end: parser.index
-			});
-		}
+		parser.index = index;
 	}
 
 	error(parser.template.length, 'unexpected-eof');
+}
+
+/**
+ * @param {import('../index.js').Parser} parser
+ * @returns {import('#compiler').Css.Combinator | null}
+ */
+function read_combinator(parser) {
+	const start = parser.index;
+	parser.allow_whitespace();
+
+	const index = parser.index;
+	const name = parser.read(REGEX_COMBINATOR);
+
+	if (name) {
+		const end = parser.index;
+		parser.allow_whitespace();
+
+		return {
+			type: 'Combinator',
+			name,
+			start: index,
+			end
+		};
+	}
+
+	if (parser.index !== start) {
+		return {
+			type: 'Combinator',
+			name: ' ',
+			start,
+			end: parser.index
+		};
+	}
+
+	return null;
 }
 
 /**

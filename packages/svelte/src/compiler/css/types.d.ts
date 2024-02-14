@@ -25,7 +25,13 @@ export interface SelectorList extends BaseNode {
 
 export interface ComplexSelector extends BaseNode {
 	type: 'ComplexSelector';
-	children: Array<SimpleSelector | Combinator>;
+	children: RelativeSelector[];
+}
+
+export interface RelativeSelector extends BaseNode {
+	type: 'RelativeSelector';
+	combinator: null | Combinator;
+	selectors: SimpleSelector[];
 }
 
 export interface TypeSelector extends BaseNode {
