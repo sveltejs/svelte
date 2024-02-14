@@ -10,5 +10,5 @@ export default test({
 			return magic_string_preprocessor_result(filename, src);
 		}
 	},
-	css: [{ str: '--baritone: red', strGenerated: '--bar: red' }]
+	css: [{ str: '--baritone: red', strGenerated: '--bar: red' }, '--baz: blue']
 });

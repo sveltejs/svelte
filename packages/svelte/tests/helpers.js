@@ -72,7 +72,13 @@ export async function compile_directory(
 		if (file.startsWith('_')) continue;
 
 		let text = fs.readFileSync(`${cwd}/${file}`, 'utf-8');
-		let opts = { filename: path.join(cwd, file), ...compileOptions, generate };
+		let opts = {
+			filename: path.join(cwd, file),
+			outputFilename: `${output_dir}/${file}${file.endsWith('.js') ? '' : '.js'}`,
+			cssOutputFilename: `${output_dir}/${file}.css`,
+			...compileOptions,
+			generate
+		};
 
 		if (file.endsWith('.js')) {
 			const out = `${output_dir}/${file}`;
@@ -98,7 +104,7 @@ export async function compile_directory(
 					text,
 					preprocessor.preprocess,
 					preprocessor.options || {
-						filename: 'input.svelte'
+						filename: opts.filename
 					}
 				);
 				text = preprocessed.code;

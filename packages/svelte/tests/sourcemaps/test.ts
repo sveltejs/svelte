@@ -156,7 +156,7 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 		map_client = JSON.parse(fs.readFileSync(`${cwd}/_output/client/input.svelte.js.map`, 'utf-8'));
 		assert.deepEqual(
 			map_client.sources.slice().sort(),
-			(config.js_map_sources || ['input.svelte']).sort(),
+			(config.js_map_sources || ['../../input.svelte']).sort(),
 			'js.map.sources is wrong'
 		);
 
@@ -196,7 +196,7 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 			);
 			assert.deepEqual(
 				map.sources.slice().sort(),
-				(config.css_map_sources || ['input.svelte']).sort(),
+				(config.css_map_sources || ['../../input.svelte']).sort(),
 				'css.map.sources is wrong'
 			);
 			compare('css', output, map, config.css);

@@ -254,7 +254,7 @@ const b64dec =
 		: /** @param {any} a */ (a) => Buffer.from(a, 'base64').toString();
 
 /**
- * @param {string} filename
+ * @param {string} filename Basename of the input file
  * @param {Array<import('@ampproject/remapping').DecodedSourceMap | import('@ampproject/remapping').RawSourceMap>} sourcemap_list
  */
 export function combine_sourcemaps(filename, sourcemap_list) {
@@ -273,6 +273,10 @@ export function combine_sourcemaps(filename, sourcemap_list) {
 					// use loader interface
 					sourcemap_list[0], // last map
 					(sourcefile) => {
+						// TODO the equality check assumes that the preprocessor map has the input file as a relative path in sources,
+						// e.g. when the input file is `src/foo/bar.svelte`, then sources is expected to contain just `bar.svelte`.
+						// Therefore filename also needs to be the basename of the path. This feels brittle, investigate how we can
+						// harden this (without breaking other tooling that assumes this behavior).
 						if (sourcefile === filename && sourcemap_list[map_idx]) {
 							return sourcemap_list[map_idx++]; // idx 1, 2, ...
 							// bundle file = branch node
@@ -381,7 +385,7 @@ export function parse_attached_sourcemap(processed, tag_name) {
  * @param {string} from
  * @param {string} to
  */
-function get_relative_path(from, to) {
+export function get_relative_path(from, to) {
 	// Don't use node's utils here to ensure the compiler is usable in a browser environment
 	const from_parts = from.split(/[/\\]/);
 	const to_parts = to.split(/[/\\]/);
@@ -397,9 +401,11 @@ function get_relative_path(from, to) {
 	return from_parts.concat(to_parts).join('/');
 }
 
-/** @param {string} filename */
-function get_basename(filename) {
-	// Don't use node's utils here to ensure the compiler is usable in a browser environment
+/**
+ * Like node's `basename`, but doesn't use it to ensure the compiler is usable in a browser environment
+ * @param {string} filename
+ */
+export function get_basename(filename) {
 	return /** @type {string} */ (filename.split(/[/\\]/).pop());
 }
 

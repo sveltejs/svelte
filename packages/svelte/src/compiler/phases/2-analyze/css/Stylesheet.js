@@ -2,8 +2,6 @@ import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
 import Selector from './Selector.js';
 import hash from '../utils/hash.js';
-// import compiler_warnings from '../compiler_warnings.js';
-// import { extract_ignores_above_position } from '../utils/extract_svelte_ignore.js';
 import { push_array } from '../utils/push_array.js';
 import { create_attribute } from '../../nodes.js';
 
@@ -348,7 +346,7 @@ export default class Stylesheet {
 	/** @type {import('#compiler').Style | null} */
 	ast;
 
-	/** @type {string} Source filename (relative to the output file) */
+	/** @type {string} Path of Svelte file the CSS is in */
 	filename;
 
 	/** @type {boolean} */
@@ -500,11 +498,11 @@ export default class Stylesheet {
 	}
 
 	/**
-	 * @param {string} file
+	 * @param {string | undefined} css_output_filename
 	 * @param {string} source
 	 * @param {boolean} dev
 	 */
-	render(file, source, dev) {
+	render(css_output_filename, source, dev) {
 		// TODO neaten this up
 		if (!this.ast) throw new Error('Unexpected error');
 
@@ -541,8 +539,9 @@ export default class Stylesheet {
 			code: code.toString(),
 			map: code.generateMap({
 				includeContent: true,
+				// generateMap takes care of calculating source relative to file
 				source: this.filename,
-				file
+				file: css_output_filename || this.filename
 			})
 		};
 	}

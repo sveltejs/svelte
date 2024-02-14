@@ -21,7 +21,6 @@ import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
 import { DelegatedEvents, namespace_svg } from '../../../constants.js';
 import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
-import { get_source_name } from '../../utils/mapped_code.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -344,7 +343,7 @@ export function analyze_component(root, options) {
 		stylesheet: new Stylesheet({
 			ast: root.css,
 			// TODO are any of these necessary or can we just pass in the whole `analysis` object later?
-			filename: get_source_name(options.filename, options.cssOutputFilename, 'output.css'),
+			filename: options.filename || 'input.svelte',
 			component_name,
 			get_css_hash: options.cssHash
 		}),

@@ -3,7 +3,12 @@ import { VERSION } from '../../../version.js';
 import { server_component, server_module } from './server/transform-server.js';
 import { client_component, client_module } from './client/transform-client.js';
 import { getLocator } from 'locate-character';
-import { apply_preprocessor_sourcemap, get_source_name } from '../../utils/mapped_code.js';
+import {
+	apply_preprocessor_sourcemap,
+	get_basename,
+	get_relative_path,
+	get_source_name
+} from '../../utils/mapped_code.js';
 
 /**
  * @param {import('../types').ComponentAnalysis} analysis
@@ -44,24 +49,14 @@ export function transform_component(analysis, source, options) {
 
 	const js_source_name = get_source_name(options.filename, options.outputFilename, 'input.svelte');
 	const js = print(program, { sourceMapSource: js_source_name });
-	if (options.sourcemap) {
-		js.map = apply_preprocessor_sourcemap(
-			js_source_name,
-			js.map,
-			/** @type {any} */ (options.sourcemap)
-		);
-	}
+	merge_with_preprocessor_map(js, options, js_source_name);
 
 	const css =
 		analysis.stylesheet.has_styles && !analysis.inject_styles
-			? analysis.stylesheet.render(options.cssOutputFilename ?? 'output.css', source, options.dev)
+			? analysis.stylesheet.render(options.cssOutputFilename, source, options.dev)
 			: null;
-	if (css && options.sourcemap) {
-		css.map = apply_preprocessor_sourcemap(
-			analysis.stylesheet.filename,
-			css.map,
-			/** @type {any} */ (options.sourcemap)
-		);
+	if (css) {
+		merge_with_preprocessor_map(css, options, css.map.sources[0]);
 	}
 
 	return {
@@ -72,6 +67,33 @@ export function transform_component(analysis, source, options) {
 			runes: analysis.runes
 		}
 	};
+}
+
+/**
+ * @param {{ code: string, map: import('magic-string').SourceMap}} result
+ * @param {import('#compiler').ValidatedCompileOptions} options
+ * @param {string} source_name
+ */
+function merge_with_preprocessor_map(result, options, source_name) {
+	if (options.sourcemap) {
+		const file_basename = get_basename(options.filename || 'input.svelte');
+		// The preprocessor map is expected to contain `sources: [basename_of_filename]`, but our own
+		// map may contain a different file name. Patch our map beforehand to align sources so merging
+		// with the preprocessor map works correctly.
+		result.map.sources = [file_basename];
+		result.map = apply_preprocessor_sourcemap(
+			file_basename,
+			result.map,
+			/** @type {any} */ (options.sourcemap)
+		);
+		// After applying the preprocessor map, we need to do the inverse and make the sources
+		// relative to the input file again in case the output code is in a different directory.
+		if (file_basename !== source_name) {
+			result.map.sources = result.map.sources.map(
+				/** @param {string} source */ (source) => get_relative_path(source_name, source)
+			);
+		}
+	}
 }
 
 /**
