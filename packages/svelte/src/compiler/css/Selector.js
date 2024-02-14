@@ -50,9 +50,7 @@ export class ComplexSelector {
 		this.relative_selectors = group_selectors(node);
 
 		// take trailing :global(...) selectors out of consideration
-		const i = this.relative_selectors.findLastIndex(
-			(relative_selector) => !relative_selector.can_ignore()
-		);
+		const i = this.relative_selectors.findLastIndex((s) => !s.can_ignore());
 		this.local_relative_selectors = this.relative_selectors.slice(0, i + 1);
 
 		// if we have a `:root {...}` or `:global(...) {...}` selector, we need to mark
