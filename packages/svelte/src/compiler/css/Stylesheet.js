@@ -1,11 +1,10 @@
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
 import Selector from './Selector.js';
-import hash from '../utils/hash.js';
+import { hash } from './utils.js';
 // import compiler_warnings from '../compiler_warnings.js';
 // import { extract_ignores_above_position } from '../utils/extract_svelte_ignore.js';
-import { push_array } from '../utils/push_array.js';
-import { create_attribute } from '../../nodes.js';
+import { create_attribute } from '../phases/nodes.js'; // TODO move this
 
 const regex_css_browser_prefix = /^-((webkit)|(moz)|(o)|(ms))-/;
 const regex_name_boundary = /^[\s,;}]$/;
@@ -116,7 +115,7 @@ class Rule {
 		this.declarations.forEach((declaration) => declaration.transform(code, keyframes));
 	}
 
-	/** @param {import('../../types.js').ComponentAnalysis} analysis */
+	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
 	validate(analysis) {
 		this.selectors.forEach((selector) => {
 			selector.validate(analysis);
@@ -310,7 +309,7 @@ class Atrule {
 		});
 	}
 
-	/** @param {import('../../types.js').ComponentAnalysis} analysis */
+	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
 	validate(analysis) {
 		this.children.forEach((child) => {
 			child.validate(analysis);
@@ -511,14 +510,14 @@ export class Stylesheet {
 		};
 	}
 
-	/** @param {import('../../types.js').ComponentAnalysis} analysis */
+	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
 	validate(analysis) {
 		this.children.forEach((child) => {
 			child.validate(analysis);
 		});
 	}
 
-	/** @param {import('../../types.js').ComponentAnalysis} analysis */
+	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
 	warn_on_unused_selectors(analysis) {
 		// const ignores = !this.ast
 		// 	? []

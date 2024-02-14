@@ -1,6 +1,6 @@
-import { get_possible_values } from './gather_possible_values.js';
-import { regex_starts_with_whitespace, regex_ends_with_whitespace } from '../../patterns.js';
-import { error } from '../../../errors.js';
+import { get_possible_values } from './utils.js';
+import { regex_starts_with_whitespace, regex_ends_with_whitespace } from '../phases/patterns.js';
+import { error } from '../errors.js';
 import { Stylesheet } from './Stylesheet.js';
 
 const NO_MATCH = 'NO_MATCH';
@@ -118,7 +118,7 @@ export default class Selector {
 		}
 	}
 
-	/** @param {import('../../types.js').ComponentAnalysis} analysis */
+	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
 	validate(analysis) {
 		this.validate_global_placement();
 		this.validate_global_with_multiple_selectors();
@@ -161,7 +161,7 @@ export default class Selector {
 		}
 	}
 
-	/** @param {import('../../types.js').ComponentAnalysis} analysis */
+	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
 	validate_invalid_combinator_without_selector(analysis) {
 		for (let i = 0; i < this.blocks.length; i++) {
 			const block = this.blocks[i];
