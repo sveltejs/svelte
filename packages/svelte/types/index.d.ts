@@ -964,11 +964,19 @@ declare module 'svelte/compiler' {
 		| LegacyTitle
 		| LegacyWindow;
 
+	interface LegacySelector extends BaseNode_1 {
+		type: 'Selector';
+		children: Array<Css.Combinator | Css.SimpleSelector>;
+	}
+
+	type LegacyCssNode = LegacySelector;
+
 	type LegacySvelteNode =
 		| LegacyConstTag
 		| LegacyElementLike
 		| LegacyAttributeLike
 		| LegacyAttributeShorthand
+		| LegacyCssNode
 		| Text;
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
@@ -1489,7 +1497,7 @@ declare module 'svelte/compiler' {
 		| Comment
 		| Block;
 
-	type SvelteNode = Node | TemplateNode | Fragment;
+	type SvelteNode = Node | TemplateNode | Fragment | Css.Node;
 
 	interface Script extends BaseNode {
 		type: 'Script';
