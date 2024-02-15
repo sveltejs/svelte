@@ -1,33 +1,34 @@
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
-import { is_keyframes_node } from '../../css.js';
+import { is_keyframes_node, regex_css_name_boundary, remove_css_prefix } from '../../css.js';
 
-/** @typedef {{ code: MagicString, dev: boolean, id: string, selector: string }} State */
+/** @typedef {{ code: MagicString, dev: boolean, hash: string, selector: string, keyframes: string[] }} State */
 
 /**
  *
  * @param {string} source
- * @param {import('#compiler').Css.StyleSheet} stylesheet
+ * @param {import('../../types.js').ComponentAnalysis} analysis
  * @param {string} file
  * @param {boolean} dev
  */
-export function render_stylesheet(source, stylesheet, file, dev) {
+export function render_stylesheet(source, analysis, file, dev) {
 	const code = new MagicString(source);
-
-	const id = 'svelte-xyz'; // TODO
 
 	/** @type {State} */
 	const state = {
 		code,
 		dev,
-		id,
-		selector: `.${id}`
+		hash: analysis.css.hash,
+		selector: `.${analysis.css.hash}`,
+		keyframes: analysis.css.keyframes
 	};
 
-	walk(/** @type {import('#compiler').Css.Node} */ (stylesheet), state, visitors);
+	const ast = /** @type {import('#compiler').Css.StyleSheet} */ (analysis.css.ast);
 
-	code.remove(0, stylesheet.content.start);
-	code.remove(/** @type {number} */ (stylesheet.content.end), source.length);
+	walk(/** @type {import('#compiler').Css.Node} */ (ast), state, visitors);
+
+	code.remove(0, ast.content.start);
+	code.remove(/** @type {number} */ (ast.content.end), source.length);
 
 	return {
 		code: code.toString(),
@@ -56,13 +57,40 @@ const visitors = {
 			if (node.prelude.startsWith('-global-')) {
 				state.code.remove(start, start + 8);
 			} else {
-				state.code.prependRight(start, `${state.id}-`);
+				state.code.prependRight(start, `${state.hash}-`);
 			}
 
 			return; // don't transform anything within
 		}
 
 		next();
+	},
+	Declaration(node, { state, next }) {
+		const property = node.property && remove_css_prefix(node.property.toLowerCase());
+		if (property === 'animation' || property === 'animation-name') {
+			let index = node.start + node.property.length + 1;
+			let name = '';
+
+			while (index < state.code.original.length) {
+				const character = state.code.original[index];
+
+				if (regex_css_name_boundary.test(character)) {
+					if (state.keyframes.includes(name)) {
+						state.code.prependRight(index - name.length, `${state.hash}-`);
+					}
+
+					if (character === ';' || character === '}') {
+						break;
+					}
+
+					name = '';
+				} else {
+					name += character;
+				}
+
+				index++;
+			}
+		}
 	},
 	Rule(node, { state, next }) {
 		// keep empty rules in dev, because it's convenient to

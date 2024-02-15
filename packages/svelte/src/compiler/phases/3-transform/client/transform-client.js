@@ -271,10 +271,8 @@ export function client_component(source, analysis, options) {
 		...static_bindings
 	]);
 
-	const css_ast = analysis.css.ast;
-
 	const append_styles =
-		analysis.inject_styles && css_ast
+		analysis.inject_styles && analysis.css.ast
 			? () =>
 					component_block.body.push(
 						b.stmt(
@@ -283,7 +281,7 @@ export function client_component(source, analysis, options) {
 								b.id('$$anchor'),
 								b.literal(analysis.css.hash),
 								b.literal(
-									render_stylesheet(source, css_ast, options.filename ?? 'TODO', options.dev).code
+									render_stylesheet(source, analysis, options.filename ?? 'TODO', options.dev).code
 								)
 							)
 						)

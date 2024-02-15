@@ -1,9 +1,11 @@
 const regex_css_browser_prefix = /^-((webkit)|(moz)|(o)|(ms))-/;
+export const regex_css_name_boundary = /^[\s,;}]$/;
+
 /**
  * @param {string} name
  * @returns {string}
  */
-function remove_css_prefix(name) {
+export function remove_css_prefix(name) {
 	return name.replace(regex_css_browser_prefix, '');
 }
 

@@ -44,7 +44,7 @@ export function transform_component(analysis, source, options) {
 
 	const css =
 		analysis.css.ast && !analysis.inject_styles
-			? render_stylesheet(source, analysis.css.ast, options.filename ?? 'TODO', options.dev)
+			? render_stylesheet(source, analysis, options.filename ?? 'TODO', options.dev)
 			: null;
 
 	return {
