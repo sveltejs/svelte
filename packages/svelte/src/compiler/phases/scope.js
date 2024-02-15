@@ -289,17 +289,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {import('zimmerframe').Visitor<import('#compiler').Directive, State, import('#compiler').SvelteNode>}
-	 */
-	const SvelteDirective = (node, context) => {
-		const name = node.name;
-
-		if (name[0] === '$') {
-			context.state.scope.reference(b.id(name), context.path);
-		}
-	};
-
-	/**
 	 * @param {import('#compiler').ElementLike} node
 	 * @param {Scope} parent
 	 */
@@ -340,6 +329,18 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		return /** @type {const} */ ([scope, is_default_slot]);
 	}
+
+	/**
+	 * Reference store in transion:, use:, animate: directives
+	 * @type {import('zimmerframe').Visitor<import('#compiler').Directive, State, import('#compiler').SvelteNode>}
+	 */
+	const SvelteDirective = (node, context) => {
+		const name = node.name;
+
+		if (name[0] === '$') {
+			context.state.scope.reference(b.id(name), context.path);
+		}
+	};
 
 	walk(ast, state, {
 		// references

@@ -372,7 +372,7 @@ function store_sub_exist(bindings) {
 			for (const reference of binding.references) {
 				const node = reference.path.at(-1);
 
-				// make sure it is not a sub in a directive e.g. use:$store as it is unneeded
+				// hacky way to ensure the sub is not in a directive e.g. use:$store as it is unneeded
 				if (node?.type !== 'RegularElement') {
 					return true;
 				}
