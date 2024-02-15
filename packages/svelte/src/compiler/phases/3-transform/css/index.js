@@ -171,7 +171,7 @@ const visitors = {
 				remove_global_pseudo_class(relative_selector.selectors[0]);
 			}
 
-			if (relative_selector.metadata.should_encapsulate) {
+			if (relative_selector.metadata.scoped) {
 				// for the first occurrence, we use a classname selector, so that every
 				// encapsulated selector gets a +0-1-0 specificity bump. thereafter,
 				// we use a `:where` selector, which does not affect specificity

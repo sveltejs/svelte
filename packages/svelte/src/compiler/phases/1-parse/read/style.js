@@ -205,7 +205,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 				is_global: false,
 				is_host: false,
 				is_root: false,
-				should_encapsulate: false
+				scoped: false
 			}
 		};
 	}

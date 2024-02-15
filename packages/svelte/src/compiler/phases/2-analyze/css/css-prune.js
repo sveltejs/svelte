@@ -59,21 +59,19 @@ const visitors = {
 
 /**
  * @param {import('#compiler').Css.RelativeSelector[]} relative_selectors
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} node
+ * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} element
  * @param {import('#compiler').Css.StyleSheet} stylesheet
  * @returns {boolean}
  */
-function apply_selector(relative_selectors, node, stylesheet) {
+function apply_selector(relative_selectors, element, stylesheet) {
+	if (!element) {
+		return relative_selectors.every(({ metadata }) => metadata.is_global || metadata.is_host);
+	}
+
 	const relative_selector = relative_selectors.pop();
 	if (!relative_selector) return false;
-	if (!node) {
-		return (
-			(relative_selector.metadata.is_global &&
-				relative_selectors.every((relative_selector) => relative_selector.metadata.is_global)) ||
-			(relative_selector.metadata.is_host && relative_selectors.length === 0)
-		);
-	}
-	const applies = block_might_apply_to_node(relative_selector, node);
+
+	const applies = block_might_apply_to_node(relative_selector, element);
 
 	if (applies === NO_MATCH) {
 		return false;
@@ -86,13 +84,13 @@ function apply_selector(relative_selectors, node, stylesheet) {
 	 * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
 	 */
 	function mark(relative_selector, element) {
-		relative_selector.metadata.should_encapsulate = true;
+		relative_selector.metadata.scoped = true;
 		element.metadata.scoped = true;
 		return true;
 	}
 
 	if (applies === UNKNOWN_SELECTOR) {
-		return mark(relative_selector, node);
+		return mark(relative_selector, element);
 	}
 
 	if (relative_selector.combinator) {
@@ -104,11 +102,13 @@ function apply_selector(relative_selectors, node, stylesheet) {
 				if (ancestor_block.metadata.is_global) {
 					continue;
 				}
+
 				if (ancestor_block.metadata.is_host) {
-					return mark(relative_selector, node);
+					return mark(relative_selector, element);
 				}
+
 				/** @type {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} */
-				let parent = node;
+				let parent = element;
 				let matched = false;
 				while ((parent = get_element_parent(parent))) {
 					if (block_might_apply_to_node(ancestor_block, parent) !== NO_MATCH) {
@@ -116,33 +116,40 @@ function apply_selector(relative_selectors, node, stylesheet) {
 						matched = true;
 					}
 				}
+
 				if (matched) {
-					return mark(relative_selector, node);
+					return mark(relative_selector, element);
 				}
 			}
+
 			if (relative_selectors.every((relative_selector) => relative_selector.metadata.is_global)) {
-				return mark(relative_selector, node);
+				return mark(relative_selector, element);
 			}
+
 			return false;
-		} else if (relative_selector.combinator.name === '>') {
+		}
+
+		if (relative_selector.combinator.name === '>') {
 			const has_global_parent = relative_selectors.every(
 				(relative_selector) => relative_selector.metadata.is_global
 			);
+
 			if (
 				has_global_parent ||
-				apply_selector(relative_selectors, get_element_parent(node), stylesheet)
+				apply_selector(relative_selectors, get_element_parent(element), stylesheet)
 			) {
-				return mark(relative_selector, node);
+				return mark(relative_selector, element);
 			}
+
 			return false;
-		} else if (
-			relative_selector.combinator.name === '+' ||
-			relative_selector.combinator.name === '~'
-		) {
+		}
+
+		if (relative_selector.combinator.name === '+' || relative_selector.combinator.name === '~') {
 			const siblings = get_possible_element_siblings(
-				node,
+				element,
 				relative_selector.combinator.name === '+'
 			);
+
 			let has_match = false;
 			// NOTE: if we have :global(), we couldn't figure out what is selected within `:global` due to the
 			// css-tree limitation that does not parse the inner selector of :global
@@ -150,26 +157,29 @@ function apply_selector(relative_selectors, node, stylesheet) {
 			const has_global = relative_selectors.some(
 				(relative_selector) => relative_selector.metadata.is_global
 			);
+
 			if (has_global) {
-				if (siblings.size === 0 && get_element_parent(node) !== null) {
+				if (siblings.size === 0 && get_element_parent(element) !== null) {
 					return false;
 				}
-				return mark(relative_selector, node);
+				return mark(relative_selector, element);
 			}
+
 			for (const possible_sibling of siblings.keys()) {
 				if (apply_selector(relative_selectors.slice(), possible_sibling, stylesheet)) {
-					mark(relative_selector, node);
+					mark(relative_selector, element);
 					has_match = true;
 				}
 			}
+
 			return has_match;
 		}
 
 		// TODO other combinators
-		return mark(relative_selector, node);
+		return mark(relative_selector, element);
 	}
 
-	return mark(relative_selector, node);
+	return mark(relative_selector, element);
 }
 
 const regex_backslash_and_following_character = /\\(.)/g;

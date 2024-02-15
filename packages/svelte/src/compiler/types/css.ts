@@ -48,7 +48,7 @@ export interface RelativeSelector extends BaseNode {
 		is_global: boolean;
 		is_host: boolean;
 		is_root: boolean;
-		should_encapsulate: boolean;
+		scoped: boolean;
 	};
 }
 
