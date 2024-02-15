@@ -8,7 +8,6 @@ import type {
 	SvelteOptions
 } from '#compiler';
 import type { Identifier, LabeledStatement, Program } from 'estree';
-import { Stylesheet } from '../css/Stylesheet.js';
 import type { Scope, ScopeRoot } from './scope.js';
 
 export interface Js {

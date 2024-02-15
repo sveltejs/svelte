@@ -15,7 +15,7 @@ import type {
 	Program,
 	SpreadElement
 } from 'estree';
-import type { Atrule, Rule } from '../css/types';
+import type { Atrule, Rule } from './css';
 
 export interface BaseNode {
 	type: string;
