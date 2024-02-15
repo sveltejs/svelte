@@ -150,19 +150,18 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 					// If the string is the last segment and it's the end of the line,
 					// it's okay if there's no end segment (source maps save space by omitting it in that case)
 					if (
-						segments.indexOf(segment) !== segments.length - 1 ||
-						!/[\r\n]/.test(output[generated.character])
+						segments.at(-1)![0] < generated_end ||
+						!/[\r\n]/.test(output[generated.character + generated_str.length])
 					) {
-						console.log(
-							segments.indexOf(segment) !== segments.length - 1,
-							segments.length,
-							segments.indexOf(segment)
-						);
+						console.log(segments.at(-1)![0] < generated_end, segments.at(-1)![0], generated_end);
 						console.log(
 							/[\r\n]/.test(output[generated.character]),
-							output[generated.character] +
+							output[generated.character + generated_str.length] +
 								'::' +
-								output.slice(generated.character - 10, generated.character + 10)
+								output.slice(
+									generated.character + generated_str.length - 10,
+									generated.character + generated_str.length + 10
+								)
 						);
 						throw new Error(
 							`Could not find end segment for '${str}' in sourcemap (${generated.line}:${generated_end})`
