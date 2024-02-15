@@ -461,9 +461,11 @@ export function analyze_component(root, options) {
 		walk(root.css, {}, validation_css);
 
 		// mark nodes as scoped/unused/empty etc
-		outer: for (const element of analysis.elements) {
+		for (const element of analysis.elements) {
 			prune(root.css, element);
+		}
 
+		outer: for (const element of analysis.elements) {
 			if (element.metadata.scoped) {
 				// Dynamic elements in dom mode always use spread for attributes and therefore shouldn't have a class attribute added to them
 				// TODO this happens during the analysis phase, which shouldn't know anything about client vs server
