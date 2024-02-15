@@ -1,7 +1,8 @@
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
+import { hash } from './utils.js';
 
-/** @typedef {{ code: MagicString, dev: boolean }} State */
+/** @typedef {{ code: MagicString, dev: boolean, id: string, selector: string }} State */
 
 /**
  *
@@ -9,14 +10,24 @@ import { walk } from 'zimmerframe';
  * @param {import('#compiler').Css.StyleSheet} stylesheet
  * @param {string} file
  * @param {boolean} dev
+ * @param {import('#compiler').CssHashGetter} get_css_hash
  */
-export function render_stylesheet(source, stylesheet, file, dev) {
+export function render_stylesheet(source, stylesheet, file, dev, get_css_hash) {
 	const code = new MagicString(source);
+
+	const id = get_css_hash({
+		filename: file,
+		name: 'TODO',
+		css: stylesheet.content.styles,
+		hash
+	});
 
 	/** @type {State} */
 	const state = {
 		code,
-		dev
+		dev,
+		id,
+		selector: `.${id}`
 	};
 
 	walk(/** @type {import('#compiler').Css.Node} */ (stylesheet), state, visitors);
@@ -94,6 +105,59 @@ const visitors = {
 		}
 
 		next();
+	},
+	RelativeSelector(node, context) {
+		/** @param {import('#compiler').Css.SimpleSelector} selector */
+		function remove_global_pseudo_class(selector) {
+			context.state.code
+				.remove(selector.start, selector.start + ':global('.length)
+				.remove(selector.end - 1, selector.end);
+		}
+
+		if (node.metadata.is_global) {
+			remove_global_pseudo_class(node.selectors[0]);
+		}
+
+		if (node.metadata.should_encapsulate) {
+			// TODO
+			let first = true;
+
+			// for the first occurrence, we use a classname selector, so that every
+			// encapsulated selector gets a +0-1-0 specificity bump. thereafter,
+			// we use a `:where` selector, which does not affect specificity
+			let modifier = context.state.selector;
+			if (!first) modifier = `:where(${modifier})`;
+
+			// TODO err... can this happen?
+			for (const selector of node.selectors) {
+				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
+					remove_global_pseudo_class(selector);
+				}
+			}
+
+			let i = node.selectors.length;
+			while (i--) {
+				const selector = node.selectors[i];
+
+				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
+					if (selector.name !== 'root' && selector.name !== 'host') {
+						if (i === 0) context.state.code.prependRight(selector.start, modifier);
+					}
+					continue;
+				}
+
+				if (selector.type === 'TypeSelector' && selector.name === '*') {
+					context.state.code.update(selector.start, selector.end, modifier);
+				} else {
+					context.state.code.appendLeft(selector.end, modifier);
+				}
+
+				break;
+			}
+			first = false;
+		}
+
+		context.next();
 	}
 };
 
