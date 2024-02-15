@@ -126,9 +126,7 @@ const visitors = {
 			return;
 		}
 
-		const used = node.prelude.children.filter((s) => s.metadata.used);
-
-		if (used.length === 0) {
+		if (!node.prelude.children.some((s) => s.metadata.used)) {
 			state.code.prependRight(node.start, '/* (unused) ');
 			state.code.appendLeft(node.end, '*/');
 			escape_comment_close(node, state.code);
@@ -139,45 +137,38 @@ const visitors = {
 		next();
 	},
 	SelectorList(node, { state, next, path }) {
-		const used = node.children.filter((s) => s.metadata.used);
+		let pruning = false;
+		let last = node.children[0].start;
 
-		if (used.length < node.children.length) {
-			let pruning = false;
-			let last = node.children[0].start;
+		for (let i = 0; i < node.children.length; i += 1) {
+			const selector = node.children[i];
 
-			for (let i = 0; i < node.children.length; i += 1) {
-				const selector = node.children[i];
+			if (selector.metadata.used === pruning) {
+				if (pruning) {
+					let i = selector.start;
+					while (state.code.original[i] !== ',') i--;
 
-				if (selector.metadata.used === pruning) {
-					if (pruning) {
-						let i = selector.start;
-						while (state.code.original[i] !== ',') i--;
-
-						state.code.overwrite(i, i + 1, '*/');
+					state.code.overwrite(i, i + 1, '*/');
+				} else {
+					if (i === 0) {
+						state.code.prependRight(selector.start, '/* (unused) ');
 					} else {
-						if (i === 0) {
-							state.code.prependRight(selector.start, '/* (unused) ');
-						} else {
-							state.code.overwrite(last, selector.start, ' /* (unused) ');
-						}
+						state.code.overwrite(last, selector.start, ' /* (unused) ');
 					}
-
-					pruning = !pruning;
 				}
 
-				last = selector.end;
+				pruning = !pruning;
 			}
 
-			if (pruning) {
-				state.code.appendLeft(last, '*/');
-			}
+			last = selector.end;
 		}
 
-		const parent = /** @type {import('#compiler').Css.Node} */ (path.at(-1));
-		next({
-			...state,
-			specificity: parent.type === 'Rule' ? { bumped: false } : state.specificity
-		});
+		if (pruning) {
+			state.code.appendLeft(last, '*/');
+		}
+
+		const specificity = path.at(-1)?.type === 'Rule' ? { bumped: false } : state.specificity;
+		next({ ...state, specificity });
 	},
 	ComplexSelector(node, context) {
 		/** @param {import('#compiler').Css.SimpleSelector} selector */
