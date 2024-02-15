@@ -153,6 +153,17 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 						segments.indexOf(segment) !== segments.length - 1 ||
 						!/[\r\n]/.test(output[generated.character])
 					) {
+						console.log(
+							segments.indexOf(segment) !== segments.length - 1,
+							segments.length,
+							segments.indexOf(segment)
+						);
+						console.log(
+							/[\r\n]/.test(output[generated.character]),
+							output[generated.character] +
+								'::' +
+								output.slice(generated.character - 10, generated.character + 10)
+						);
 						throw new Error(
 							`Could not find end segment for '${str}' in sourcemap (${generated.line}:${generated_end})`
 						);
