@@ -74,8 +74,6 @@ export async function compile_directory(
 		let text = fs.readFileSync(`${cwd}/${file}`, 'utf-8');
 		let opts = {
 			filename: path.join(cwd, file),
-			outputFilename: `${output_dir}/${file}${file.endsWith('.js') ? '' : '.js'}`,
-			cssOutputFilename: `${output_dir}/${file}.css`,
 			...compileOptions,
 			generate
 		};
@@ -118,7 +116,11 @@ export async function compile_directory(
 				}
 			}
 
-			const compiled = compile(text, opts);
+			const compiled = compile(text, {
+				outputFilename: `${output_dir}/${file}${file.endsWith('.js') ? '' : '.js'}`,
+				cssOutputFilename: `${output_dir}/${file}.css`,
+				...opts
+			});
 			compiled.js.code = compiled.js.code.replace(`v${VERSION}`, 'VERSION');
 
 			write(`${output_dir}/${file}.js`, compiled.js.code);
