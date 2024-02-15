@@ -3,7 +3,7 @@ import { assert } from 'vitest';
 import { getLocator, locate } from 'locate-character';
 import { suite, type BaseTest } from '../suite.js';
 import { compile_directory } from '../helpers.js';
-import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
+import { LEAST_UPPER_BOUND, TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
 
 type SourceMapEntry =
 	| string
@@ -145,6 +145,7 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 				// Same for end of string
 				const generated_end = generated.column + generated_str.length;
 				const result_end = originalPositionFor(map, {
+					bias: LEAST_UPPER_BOUND,
 					line: generated.line,
 					column: generated_end
 				});
