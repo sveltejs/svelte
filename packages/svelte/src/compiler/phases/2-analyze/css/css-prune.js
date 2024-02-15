@@ -208,6 +208,7 @@ function relative_selector_might_apply_to_node(relative_selector, node, styleshe
 		if (selector.type === 'PseudoClassSelector' && (name === 'host' || name === 'root')) {
 			return NO_MATCH;
 		}
+
 		if (
 			relative_selector.selectors.length === 1 &&
 			selector.type === 'PseudoClassSelector' &&
@@ -216,7 +217,25 @@ function relative_selector_might_apply_to_node(relative_selector, node, styleshe
 			return NO_MATCH;
 		}
 
-		if (selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector') {
+		if (selector.type === 'PseudoClassSelector') {
+			if ((name === 'is' || name === 'where') && selector.args) {
+				let matched = false;
+
+				for (const complex_selector of selector.args.children) {
+					if (apply_selector(truncate(complex_selector), node, stylesheet)) {
+						matched = true;
+					}
+				}
+
+				if (!matched) {
+					return NO_MATCH;
+				}
+			}
+
+			continue;
+		}
+
+		if (selector.type === 'PseudoElementSelector') {
 			continue;
 		}
 
