@@ -3,7 +3,6 @@ import { test } from '../../test';
 import { magic_string_preprocessor_result } from '../../helpers.js';
 
 export default test({
-	skip: true, // TODO wrong source map?
 	preprocess: [
 		{
 			script: ({ content }) => {
@@ -13,6 +12,6 @@ export default test({
 			}
 		}
 	],
-	client: ['Target'],
-	preprocessed: ['Target']
+	client: ["'Target'"],
+	preprocessed: ["'Target'"]
 });

@@ -4,6 +4,7 @@ import Selector from './Selector.js';
 import hash from '../utils/hash.js';
 import { push_array } from '../utils/push_array.js';
 import { create_attribute } from '../../nodes.js';
+import { merge_with_preprocessor_map } from '../../../utils/mapped_code.js';
 
 const regex_css_browser_prefix = /^-((webkit)|(moz)|(o)|(ms))-/;
 const regex_name_boundary = /^[\s,;}]$/;
@@ -498,11 +499,10 @@ export default class Stylesheet {
 	}
 
 	/**
-	 * @param {string | undefined} css_output_filename
 	 * @param {string} source
-	 * @param {boolean} dev
+	 * @param {import('#compiler').ValidatedCompileOptions} options
 	 */
-	render(css_output_filename, source, dev) {
+	render(source, options) {
 		// TODO neaten this up
 		if (!this.ast) throw new Error('Unexpected error');
 
@@ -530,21 +530,27 @@ export default class Stylesheet {
 		code.remove(0, this.ast.content.start);
 
 		for (const child of this.children) {
-			child.prune(code, dev);
+			child.prune(code, options.dev);
 		}
 
 		code.remove(/** @type {number} */ (this.ast.content.end), source.length);
 
-		return {
+		const css = {
 			code: code.toString(),
 			map: code.generateMap({
 				// include source content; makes it easier/more robust looking up the source map code
 				includeContent: true,
 				// generateMap takes care of calculating source relative to file
 				source: this.filename,
-				file: css_output_filename || this.filename
+				file: options.cssOutputFilename || this.filename
 			})
 		};
+		merge_with_preprocessor_map(css, options, css.map.sources[0]);
+		if (options.dev && css.code) {
+			css.code += `\n/*# sourceMappingURL=${css.map.toUrl()} */`;
+		}
+
+		return css;
 	}
 
 	/** @param {import('../../types.js').ComponentAnalysis} analysis */

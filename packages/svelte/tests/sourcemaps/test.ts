@@ -16,7 +16,7 @@ type SourceMapEntry =
 			str: string;
 			/** The generated string to find. You can omit this if it's the same as the original string */
 			strGenerated?: string | null;
-			/** If the original code lives in a different file, pass the filename. You also need to set `files` in the config in this case */
+			/** If the original code lives in a different file, pass its source code here */
 			code?: string;
 	  };
 
@@ -32,16 +32,14 @@ interface SourcemapTest extends BaseTest {
 	css_map_sources?: string[];
 	test?: (obj: {
 		assert: typeof assert;
-		input: any;
-		js: any;
-		css: any;
+		input: string;
 		map_preprocessed: any;
 		code_preprocessed: string;
+		map_css: any;
+		code_css: string;
 		map_client: any;
-		code_client: any;
+		code_client: string;
 	}) => void;
-	/** filename -> content; needed when `filename` property is used */
-	files?: Record<string, string>;
 	/** Mappings to check in generated client code */
 	client?: SourceMapEntry[] | null;
 	/** Mappings to check in generated server code. If left out, will use the client code checks */
@@ -206,6 +204,8 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 		);
 	}
 
+	let map_css = null;
+	let code_css = '';
 	if (config.css !== undefined) {
 		if (config.css === null) {
 			assert.equal(
@@ -214,16 +214,14 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 				'Expected no source map'
 			);
 		} else {
-			const output = fs.readFileSync(`${cwd}/_output/client/input.svelte.css`, 'utf-8');
-			const map = JSON.parse(
-				fs.readFileSync(`${cwd}/_output/client/input.svelte.css.map`, 'utf-8')
-			);
+			code_css = fs.readFileSync(`${cwd}/_output/client/input.svelte.css`, 'utf-8');
+			map_css = JSON.parse(fs.readFileSync(`${cwd}/_output/client/input.svelte.css.map`, 'utf-8'));
 			assert.deepEqual(
-				map.sources.slice().sort(),
+				map_css.sources.slice().sort(),
 				(config.css_map_sources || ['../../input.svelte']).sort(),
 				'css.map.sources is wrong'
 			);
-			compare('css', output, map, config.css);
+			compare('css', code_css, map_css, config.css);
 		}
 	}
 
@@ -252,10 +250,13 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 		// TODO figure out for which tests we still need this
 		config.test({
 			assert,
+			input,
 			map_client,
 			code_client,
 			map_preprocessed,
-			code_preprocessed /*, input, preprocessed: output_client, js, css*/
+			code_preprocessed,
+			code_css,
+			map_css
 		});
 	}
 });

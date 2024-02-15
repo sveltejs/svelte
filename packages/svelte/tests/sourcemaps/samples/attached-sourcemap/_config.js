@@ -1,3 +1,4 @@
+import * as path from 'node:path';
 import MagicString from 'magic-string';
 import { test } from '../../test';
 
@@ -13,7 +14,7 @@ let comment_multi = true;
  */
 function get_processor(tag_name, search, replace) {
 	/** @type {import('../../../../src/compiler/public').Preprocessor} */
-	const preprocessor = ({ content, filename }) => {
+	const preprocessor = ({ content, filename = '' }) => {
 		let code = content.slice();
 		const ms = new MagicString(code);
 
@@ -25,7 +26,7 @@ function get_processor(tag_name, search, replace) {
 		const indent = Array.from({ length: indent_size }).join(' ');
 		ms.prependLeft(idx, '\n' + indent);
 
-		const map_opts = { source: filename, hires: true, includeContent: false };
+		const map_opts = { source: path.basename(filename), hires: true, includeContent: false };
 		const map = ms.generateMap(map_opts);
 		const attach_line =
 			tag_name == 'style' || comment_multi
@@ -44,7 +45,6 @@ function get_processor(tag_name, search, replace) {
 }
 
 export default test({
-	skip: true, // TODO investigate
 	preprocess: [
 		get_processor('script', 'replace_me_script', 'done_replace_script_1'),
 		get_processor('script', 'done_replace_script_1', 'done_replace_script_2'),
@@ -54,7 +54,19 @@ export default test({
 	],
 	client: [
 		{ str: 'replace_me_script', strGenerated: 'done_replace_script_2' },
-		{ str: 'done_replace_script_2', idxGenerated: 1, idxOriginal: 1 }
+		{ str: 'done_replace_script_2', idxGenerated: 1 }
 	],
-	css: [{ str: 'done_replace_style_2', strGenerated: 'done_replace_style_2' }]
+	css: [{ str: '.replace_me_style', strGenerated: '.done_replace_style_2.svelte-o6vre' }],
+	test({ assert, code_preprocessed, code_css }) {
+		assert.equal(
+			code_preprocessed.includes('\n/*# sourceMappingURL=data:application/json;base64,'),
+			false,
+			'magic-comment attachments were NOT removed'
+		);
+		assert.equal(
+			code_css.includes('\n/*# sourceMappingURL=data:application/json;base64,'),
+			false,
+			'magic-comment attachments were NOT removed'
+		);
+	}
 });
