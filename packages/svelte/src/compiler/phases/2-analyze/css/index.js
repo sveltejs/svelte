@@ -20,8 +20,8 @@ const NodeExist = /** @type {const} */ ({
 });
 
 const whitelist_attribute_selector = new Map([
-	['details', new Set(['open'])],
-	['dialog', new Set(['open'])]
+	['details', ['open']],
+	['dialog', ['open']]
 ]);
 
 /**
@@ -225,7 +225,7 @@ function block_might_apply_to_node(relative_selector, node) {
 		if (selector.type === 'AttributeSelector') {
 			const whitelisted = whitelist_attribute_selector.get(node.name.toLowerCase());
 			if (
-				!whitelisted?.has(selector.name.toLowerCase()) &&
+				!whitelisted?.includes(selector.name.toLowerCase()) &&
 				!attribute_matches(
 					node,
 					selector.name,
