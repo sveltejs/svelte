@@ -294,7 +294,9 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	const SvelteDirective = (node, context) => {
 		const name = node.name;
 
-		if (name[0] === '$') context.state.scope.reference(b.id(name), context.path);
+		if (name[0] === '$') {
+			context.state.scope.reference(b.id(name), context.path);
+		}
 	};
 
 	/**

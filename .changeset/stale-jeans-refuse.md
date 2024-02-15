@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: allow stores in `transition`,`animation`,`use` directives
+fix: subscribe to stores in `transition`,`animation`,`use` directives
