@@ -57,20 +57,8 @@ const visitors = {
 		}
 	},
 	RelativeSelector(node, context) {
-		node.metadata.is_global =
-			node.selectors.length >= 1 &&
-			node.selectors[0].type === 'PseudoClassSelector' &&
-			node.selectors[0].name === 'global' &&
-			node.selectors.every(
-				(selector) =>
-					selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector'
-			);
-
-		if (node.selectors.length === 1) {
-			const first = node.selectors[0];
-			node.metadata.is_host = first.type === 'PseudoClassSelector' && first.name === 'host';
-			node.metadata.is_root = first.type === 'PseudoClassSelector' && first.name === 'root';
-		}
+		// for now, don't visit children (i.e. inside `:foo(...)`)
+		// this will likely change when we implement `:is(...)` etc
 	}
 };
 
