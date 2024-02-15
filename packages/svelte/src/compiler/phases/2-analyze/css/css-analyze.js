@@ -1,5 +1,13 @@
 import { error } from '../../../errors.js';
 import { is_keyframes_node } from '../../css.js';
+import { merge } from '../../visitors.js';
+
+/**
+ * @typedef {import('zimmerframe').Visitors<
+ *   import('#compiler').Css.Node,
+ *   NonNullable<import('../../types.js').ComponentAnalysis['css']>
+ * >} Visitors
+ */
 
 /** @param {import('#compiler').Css.RelativeSelector} relative_selector */
 function is_global(relative_selector) {
@@ -15,14 +23,8 @@ function is_global(relative_selector) {
 	);
 }
 
-// TODO rename, this isn't just validation any more
-/**
- * @type {import('zimmerframe').Visitors<
- *   import('#compiler').Css.Node,
- *   NonNullable<import('../../types.js').ComponentAnalysis['css']>
- * >}
- */
-export const validation_css = {
+/** @type {Visitors} */
+const analysis = {
 	Atrule(node, context) {
 		if (is_keyframes_node(node)) {
 			if (!node.prelude.startsWith('-global-')) {
@@ -30,6 +32,38 @@ export const validation_css = {
 			}
 		}
 	},
+	ComplexSelector(node, context) {
+		context.next(); // analyse relevant selectors first
+
+		node.metadata.used = node.children.every(
+			({ metadata }) => metadata.is_global || metadata.is_host || metadata.is_root
+		);
+	},
+	RelativeSelector(node, context) {
+		node.metadata.is_global =
+			node.selectors.length >= 1 &&
+			node.selectors[0].type === 'PseudoClassSelector' &&
+			node.selectors[0].name === 'global' &&
+			node.selectors.every(
+				(selector) =>
+					selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector'
+			);
+
+		if (node.selectors.length === 1) {
+			const first = node.selectors[0];
+			node.metadata.is_host = first.type === 'PseudoClassSelector' && first.name === 'host';
+		}
+
+		node.metadata.is_root = !!node.selectors.find(
+			(child) => child.type === 'PseudoClassSelector' && child.name === 'root'
+		);
+
+		context.next();
+	}
+};
+
+/** @type {Visitors} */
+const validation = {
 	ComplexSelector(node, context) {
 		// ensure `:global(...)` is not used in the middle of a selector
 		{
@@ -86,3 +120,5 @@ export const validation_css = {
 		}
 	}
 };
+
+export const css_visitors = merge(analysis, validation);

@@ -213,34 +213,6 @@ function read_selector(parser, inside_pseudo_class = false) {
 	/** @type {import('#compiler').Css.RelativeSelector} */
 	let relative_selector = create_selector(null, parser.index);
 
-	/**
-	 *
-	 * @param {import('#compiler').Css.RelativeSelector} node
-	 * @param {number} end
-	 */
-	const flush = (node, end) => {
-		node.metadata.is_global =
-			node.selectors.length >= 1 &&
-			node.selectors[0].type === 'PseudoClassSelector' &&
-			node.selectors[0].name === 'global' &&
-			node.selectors.every(
-				(selector) =>
-					selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector'
-			);
-
-		if (node.selectors.length === 1) {
-			const first = node.selectors[0];
-			node.metadata.is_host = first.type === 'PseudoClassSelector' && first.name === 'host';
-		}
-
-		node.metadata.is_root = !!node.selectors.find(
-			(child) => child.type === 'PseudoClassSelector' && child.name === 'root'
-		);
-
-		relative_selector.end = end;
-		children.push(relative_selector);
-	};
-
 	while (parser.index < parser.template.length) {
 		let start = parser.index;
 
@@ -252,7 +224,8 @@ function read_selector(parser, inside_pseudo_class = false) {
 					error(start, 'invalid-css-selector');
 				}
 			} else {
-				flush(relative_selector, start);
+				relative_selector.end = start;
+				children.push(relative_selector);
 			}
 
 			// ...and start a new one
@@ -398,7 +371,8 @@ function read_selector(parser, inside_pseudo_class = false) {
 			// rewind, so we know whether to continue building the selector list
 			parser.index = index;
 
-			flush(relative_selector, index);
+			relative_selector.end = index;
+			children.push(relative_selector);
 
 			return {
 				type: 'ComplexSelector',
@@ -406,9 +380,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 				end: index,
 				children,
 				metadata: {
-					used: children.every(
-						({ metadata }) => metadata.is_global || metadata.is_host || metadata.is_root
-					)
+					used: false
 				}
 			};
 		}
