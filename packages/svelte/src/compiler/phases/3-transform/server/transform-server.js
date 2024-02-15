@@ -345,11 +345,11 @@ function get_assignment_value(node, { state, visit }) {
 		return operator === '='
 			? /** @type {import('estree').Expression} */ (visit(node.right))
 			: // turn something like x += 1 into x = x + 1
-				b.binary(
+			  b.binary(
 					/** @type {import('estree').BinaryOperator} */ (operator.slice(0, -1)),
 					serialize_get_binding(node.left, state),
 					/** @type {import('estree').Expression} */ (visit(node.right))
-				);
+			  );
 	} else {
 		return /** @type {import('estree').Expression} */ (visit(node.right));
 	}
@@ -360,6 +360,25 @@ function get_assignment_value(node, { state, visit }) {
  */
 function is_store_name(name) {
 	return name[0] === '$' && /[A-Za-z_]/.test(name[1]);
+}
+
+/**
+ *
+ * @param {Iterable<import('#compiler').Binding>} bindings
+ */
+function is_store_exists(bindings) {
+	for (const binding of bindings) {
+		if (binding.kind === 'store_sub') {
+			for (const reference of binding.references) {
+				const node = reference.path.at(-1);
+
+				// make sure it is not a sub in a directive e.g. use:$store as it is unneeded
+				if (node?.type !== 'RegularElement') {
+					return true;
+				}
+			}
+		}
+	}
 }
 
 /**
@@ -782,7 +801,7 @@ function serialize_element_spread_attributes(
 						b.id('join')
 					),
 					b.literal(' ')
-				)
+			  )
 			: b.literal('');
 		args.push(
 			b.object([
@@ -946,7 +965,7 @@ function serialize_inline_component(node, component_name, context) {
 			: b.call(
 					'$.spread_props',
 					b.array(props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p)))
-				);
+			  );
 
 	/** @type {import('estree').Statement} */
 	let statement = b.stmt(
@@ -955,7 +974,7 @@ function serialize_inline_component(node, component_name, context) {
 				? b.call(
 						'$.validate_component',
 						typeof component_name === 'string' ? b.id(component_name) : component_name
-					)
+				  )
 				: component_name,
 			b.id('$$payload'),
 			props_expression
@@ -1047,7 +1066,7 @@ const javascript_visitors_legacy = {
 							'$.value_or_fallback',
 							prop,
 							/** @type {import('estree').Expression} */ (visit(declarator.init))
-						)
+					  )
 					: prop;
 
 				declarations.push(b.declarator(declarator.id, init));
@@ -1185,7 +1204,7 @@ const template_visitors = {
 							template: [],
 							init: []
 						}
-					}
+				  }
 				: { ...context, state };
 
 		const { hoisted, trimmed } = clean_nodes(
@@ -1513,9 +1532,9 @@ const template_visitors = {
 							b.let(
 								node.expression.type === 'ObjectExpression'
 									? // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
-										b.object_pattern(node.expression.properties)
+									  b.object_pattern(node.expression.properties)
 									: // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
-										b.array_pattern(node.expression.elements),
+									  b.array_pattern(node.expression.elements),
 								b.member(b.id('$$slotProps'), b.id(node.name))
 							),
 							b.return(b.object(bindings.map((binding) => b.init(binding.node.name, binding.node))))
@@ -1749,12 +1768,12 @@ function serialize_element_attributes(node, context) {
 								? b.call(
 										b.member(attribute.expression, b.id('includes')),
 										serialize_attribute_value(value_attribute.value, context)
-									)
+								  )
 								: b.binary(
 										'===',
 										attribute.expression,
 										serialize_attribute_value(value_attribute.value, context)
-									),
+								  ),
 							metadata: {
 								contains_call_expression: false,
 								dynamic: false
@@ -2089,15 +2108,10 @@ export function server_component(analysis, options) {
 		];
 	}
 
-	if (
-		[...analysis.instance.scope.declarations.values()].some(
-			(binding) => binding.kind === 'store_sub'
-		)
-	) {
+	if (is_store_exists(analysis.instance.scope.declarations.values())) {
 		instance.body.unshift(b.const('$$store_subs', b.object([])));
 		template.body.push(b.stmt(b.call('$.unsubscribe_stores', b.id('$$store_subs'))));
 	}
-
 	// Propagate values of bound props upwards if they're undefined in the parent and have a value.
 	// Don't do this as part of the props retrieval because people could eagerly mutate the prop in the instance script.
 	/** @type {import('estree').Property[]} */

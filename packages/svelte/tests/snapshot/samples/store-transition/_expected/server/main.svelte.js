@@ -6,10 +6,8 @@ import { writable } from 'svelte/store';
 export default function Main($$payload, $$props) {
 	$.push(false);
 
-	const $$store_subs = {};
 	const animate = writable();
 
 	$$payload.out += `<div>Hello!</div> <div>Hello!</div>`;
-	$.unsubscribe_stores($$store_subs);
 	$.pop();
 }
