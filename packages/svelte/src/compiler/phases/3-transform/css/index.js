@@ -106,7 +106,7 @@ const visitors = {
 
 		next();
 	},
-	RelativeSelector(node, context) {
+	ComplexSelector(node, context) {
 		/** @param {import('#compiler').Css.SimpleSelector} selector */
 		function remove_global_pseudo_class(selector) {
 			context.state.code
@@ -114,47 +114,53 @@ const visitors = {
 				.remove(selector.end - 1, selector.end);
 		}
 
-		if (node.metadata.is_global) {
-			remove_global_pseudo_class(node.selectors[0]);
-		}
+		let first = true;
 
-		if (node.metadata.should_encapsulate) {
-			// TODO
-			let first = true;
-
-			// for the first occurrence, we use a classname selector, so that every
-			// encapsulated selector gets a +0-1-0 specificity bump. thereafter,
-			// we use a `:where` selector, which does not affect specificity
-			let modifier = context.state.selector;
-			if (!first) modifier = `:where(${modifier})`;
-
-			// TODO err... can this happen?
-			for (const selector of node.selectors) {
-				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-					remove_global_pseudo_class(selector);
-				}
+		for (const relative_selector of node.children) {
+			if (relative_selector.metadata.is_global) {
+				remove_global_pseudo_class(relative_selector.selectors[0]);
 			}
 
-			let i = node.selectors.length;
-			while (i--) {
-				const selector = node.selectors[i];
+			if (relative_selector.metadata.should_encapsulate) {
+				// for the first occurrence, we use a classname selector, so that every
+				// encapsulated selector gets a +0-1-0 specificity bump. thereafter,
+				// we use a `:where` selector, which does not affect specificity
+				let modifier = context.state.selector;
+				if (!first) modifier = `:where(${modifier})`;
 
-				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
-					if (selector.name !== 'root' && selector.name !== 'host') {
-						if (i === 0) context.state.code.prependRight(selector.start, modifier);
+				first = false;
+
+				// TODO err... can this happen?
+				for (const selector of relative_selector.selectors) {
+					if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
+						remove_global_pseudo_class(selector);
 					}
-					continue;
 				}
 
-				if (selector.type === 'TypeSelector' && selector.name === '*') {
-					context.state.code.update(selector.start, selector.end, modifier);
-				} else {
-					context.state.code.appendLeft(selector.end, modifier);
-				}
+				let i = relative_selector.selectors.length;
+				while (i--) {
+					const selector = relative_selector.selectors[i];
 
-				break;
+					if (
+						selector.type === 'PseudoElementSelector' ||
+						selector.type === 'PseudoClassSelector'
+					) {
+						if (selector.name !== 'root' && selector.name !== 'host') {
+							if (i === 0) context.state.code.prependRight(selector.start, modifier);
+						}
+						continue;
+					}
+
+					if (selector.type === 'TypeSelector' && selector.name === '*') {
+						context.state.code.update(selector.start, selector.end, modifier);
+					} else {
+						context.state.code.appendLeft(selector.end, modifier);
+					}
+
+					break;
+				}
+				first = false;
 			}
-			first = false;
 		}
 
 		context.next();
