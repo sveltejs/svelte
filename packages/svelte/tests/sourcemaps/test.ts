@@ -151,7 +151,7 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 					// it's okay if there's no end segment (source maps save space by omitting it in that case)
 					if (
 						segments.indexOf(segment) !== segments.length - 1 ||
-						/[\r\n]/.test(output[generated.character])
+						!/[\r\n]/.test(output[generated.character])
 					) {
 						throw new Error(
 							`Could not find end segment for '${str}' in sourcemap (${generated.line}:${generated_end})`
