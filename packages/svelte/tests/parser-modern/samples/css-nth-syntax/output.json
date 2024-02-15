@@ -945,17 +945,12 @@
 														"children": [
 															{
 																"type": "RelativeSelector",
-																"combinator": {
-																	"type": "Combinator",
-																	"name": "+",
-																	"start": 707,
-																	"end": 708
-																},
+																"combinator": null,
 																"selectors": [
 																	{
 																		"type": "Nth",
-																		"value": "12",
-																		"start": 708,
+																		"value": "+12",
+																		"start": 707,
 																		"end": 710
 																	}
 																],
@@ -1031,17 +1026,12 @@
 														"children": [
 															{
 																"type": "RelativeSelector",
-																"combinator": {
-																	"type": "Combinator",
-																	"name": "+",
-																	"start": 761,
-																	"end": 762
-																},
+																"combinator": null,
 																"selectors": [
 																	{
 																		"type": "Nth",
-																		"value": "3n",
-																		"start": 762,
+																		"value": "+3n",
+																		"start": 761,
 																		"end": 764
 																	}
 																],

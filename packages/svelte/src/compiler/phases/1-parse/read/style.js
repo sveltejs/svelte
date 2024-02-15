@@ -216,30 +216,6 @@ function read_selector(parser, inside_pseudo_class = false) {
 	while (parser.index < parser.template.length) {
 		let start = parser.index;
 
-		const combinator = read_combinator(parser);
-
-		if (combinator) {
-			if (relative_selector.selectors.length === 0) {
-				if (!inside_pseudo_class) {
-					error(start, 'invalid-css-selector');
-				}
-			} else {
-				relative_selector.end = start;
-				children.push(relative_selector);
-			}
-
-			// ...and start a new one
-			relative_selector = create_selector(combinator, start);
-
-			parser.allow_whitespace();
-
-			if (parser.match(',') || (inside_pseudo_class ? parser.match(')') : parser.match('{'))) {
-				error(parser.index, 'invalid-css-selector');
-			}
-		}
-
-		start = parser.index;
-
 		if (parser.eat('*')) {
 			let name = '*';
 
@@ -348,7 +324,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 				start,
 				end: parser.index
 			});
-		} else {
+		} else if (!parser.match_regex(REGEX_COMBINATOR)) {
 			let name = read_identifier(parser);
 
 			if (parser.eat('|')) {
@@ -386,6 +362,27 @@ function read_selector(parser, inside_pseudo_class = false) {
 		}
 
 		parser.index = index;
+		const combinator = read_combinator(parser);
+
+		if (combinator) {
+			if (relative_selector.selectors.length === 0) {
+				if (!inside_pseudo_class) {
+					error(start, 'invalid-css-selector');
+				}
+			} else {
+				relative_selector.end = index;
+				children.push(relative_selector);
+			}
+
+			// ...and start a new one
+			relative_selector = create_selector(combinator, combinator.start);
+
+			parser.allow_whitespace();
+
+			if (parser.match(',') || (inside_pseudo_class ? parser.match(')') : parser.match('{'))) {
+				error(parser.index, 'invalid-css-selector');
+			}
+		}
 	}
 
 	error(parser.template.length, 'unexpected-eof');
