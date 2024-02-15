@@ -315,16 +315,17 @@ export const javascript_visitors_runes = {
 						)
 					);
 					for (let i = 0; i < bindings.length; i++) {
+						const binding = bindings[i];
 						declarations.push(
 							b.declarator(
-								b.id(id + '_' + i),
+								binding.node,
 								b.call(
 									'$.derived',
 									b.thunk(b.member(b.call('$.get', b.id(id)), b.literal(i), true))
 								)
 							)
 						);
-						bindings[i].expression = b.call('$.get', b.id(id + '_' + i));
+						binding.expression = b.call('$.get', binding.node);
 					}
 				}
 				continue;
