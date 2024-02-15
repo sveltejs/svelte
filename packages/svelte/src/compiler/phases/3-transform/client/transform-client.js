@@ -280,9 +280,7 @@ export function client_component(source, analysis, options) {
 								'$.append_styles',
 								b.id('$$anchor'),
 								b.literal(analysis.css.hash),
-								b.literal(
-									render_stylesheet(source, analysis, options.filename ?? 'TODO', options.dev).code
-								)
+								b.literal(render_stylesheet(source, analysis, options).code)
 							)
 						)
 					)

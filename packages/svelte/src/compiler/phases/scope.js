@@ -556,7 +556,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				contains_group_binding: false,
 				array_name: needs_array_deduplication ? state.scope.root.unique('$$array') : null,
 				index: scope.root.unique('$$index'),
-				item_name: node.context.type === 'Identifier' ? node.context.name : '$$item',
+				item: node.context.type === 'Identifier' ? node.context : b.id('$$item'),
 				declarations: scope.declarations,
 				references: [...references_within]
 					.map((id) => /** @type {import('#compiler').Binding} */ (state.scope.get(id.name)))

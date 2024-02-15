@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import * as fs from 'node:fs';
-import { assert, expect } from 'vitest';
+import { assert } from 'vitest';
 import { compile_directory, should_update_expected } from '../helpers.js';
 import { assert_html_equal } from '../html_equal.js';
 import { suite, assert_ok } from '../suite.js';
@@ -46,8 +46,8 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 	}
 
 	if (!config.load_compiled) {
-		compile_directory(cwd, 'client', { accessors: true, ...config.compileOptions });
-		compile_directory(cwd, 'server', config.compileOptions);
+		await compile_directory(cwd, 'client', { accessors: true, ...config.compileOptions });
+		await compile_directory(cwd, 'server', config.compileOptions);
 	}
 
 	const target = window.document.body;

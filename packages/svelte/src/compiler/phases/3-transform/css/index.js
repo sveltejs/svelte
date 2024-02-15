@@ -1,6 +1,7 @@
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
 import { is_keyframes_node, regex_css_name_boundary, remove_css_prefix } from '../../css.js';
+import { merge_with_preprocessor_map } from '../../../utils/mapped_code.js';
 
 /** @typedef {{ code: MagicString, dev: boolean, hash: string, selector: string, keyframes: string[] }} State */
 
@@ -8,16 +9,15 @@ import { is_keyframes_node, regex_css_name_boundary, remove_css_prefix } from '.
  *
  * @param {string} source
  * @param {import('../../types.js').ComponentAnalysis} analysis
- * @param {string} file
- * @param {boolean} dev
+ * @param {import('#compiler').ValidatedCompileOptions} options
  */
-export function render_stylesheet(source, analysis, file, dev) {
+export function render_stylesheet(source, analysis, options) {
 	const code = new MagicString(source);
 
 	/** @type {State} */
 	const state = {
 		code,
-		dev,
+		dev: options.dev,
 		hash: analysis.css.hash,
 		selector: `.${analysis.css.hash}`,
 		keyframes: analysis.css.keyframes
@@ -30,14 +30,24 @@ export function render_stylesheet(source, analysis, file, dev) {
 	code.remove(0, ast.content.start);
 	code.remove(/** @type {number} */ (ast.content.end), source.length);
 
-	return {
+	const css = {
 		code: code.toString(),
 		map: code.generateMap({
+			// include source content; makes it easier/more robust looking up the source map code
 			includeContent: true,
-			source: file,
-			file
+			// generateMap takes care of calculating source relative to file
+			source: options.filename,
+			file: options.cssOutputFilename || options.filename
 		})
 	};
+
+	merge_with_preprocessor_map(css, options, css.map.sources[0]);
+
+	if (options.dev && options.css === 'injected' && css.code) {
+		css.code += `\n/*# sourceMappingURL=${css.map.toUrl()} */`;
+	}
+
+	return css;
 }
 
 /** @type {import('zimmerframe').Visitors<import('#compiler').Css.Node, State>} */

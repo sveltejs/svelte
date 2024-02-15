@@ -17,6 +17,7 @@ import { is_custom_element_node, is_element_node } from '../../../nodes.js';
 import * as b from '../../../../utils/builders.js';
 import { error } from '../../../../errors.js';
 import {
+	with_loc,
 	function_visitor,
 	get_assignment_value,
 	serialize_get_binding,
@@ -2315,14 +2316,20 @@ export const template_visitors = {
 			each_node_meta.contains_group_binding || !node.index
 				? each_node_meta.index
 				: b.id(node.index);
-		const item = b.id(each_node_meta.item_name);
+		const item = each_node_meta.item;
 		const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(item.name));
-		binding.expression = each_item_is_reactive ? b.call('$.unwrap', item) : item;
+		binding.expression = (id) => {
+			const item_with_loc = with_loc(item, id);
+			return each_item_is_reactive ? b.call('$.unwrap', item_with_loc) : item_with_loc;
+		};
 		if (node.index) {
 			const index_binding = /** @type {import('#compiler').Binding} */ (
 				context.state.scope.get(node.index)
 			);
-			index_binding.expression = each_item_is_reactive ? b.call('$.unwrap', index) : index;
+			index_binding.expression = (id) => {
+				const index_with_loc = with_loc(index, id);
+				return each_item_is_reactive ? b.call('$.unwrap', index_with_loc) : index_with_loc;
+			};
 		}
 
 		/** @type {import('estree').Statement[]} */
@@ -2337,7 +2344,7 @@ export const template_visitors = {
 				)
 			);
 		} else {
-			const unwrapped = binding.expression;
+			const unwrapped = binding.expression(binding.node);
 			const paths = extract_paths(node.context);
 
 			for (const path of paths) {

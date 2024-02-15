@@ -3,27 +3,21 @@ import {
 	MappedCode,
 	parse_attached_sourcemap,
 	sourcemap_add_offset,
-	combine_sourcemaps
+	combine_sourcemaps,
+	get_basename
 } from '../utils/mapped_code.js';
 import { decode_map } from './decode_sourcemap.js';
 import { replace_in_code, slice_source } from './replace_in_code.js';
 
-const regex_filepath_separator = /[/\\]/;
-
-/**
- * @param {string} filename
- */
-function get_file_basename(filename) {
-	return /** @type {string} */ (filename.split(regex_filepath_separator).pop());
-}
-
 /**
  * Represents intermediate states of the preprocessing.
+ * Implements the Source interface.
  */
 class PreprocessResult {
 	/** @type {string} */
 	source;
-	/** @type {string | undefined} */
+
+	/** @type {string | undefined} The filename passed as-is to preprocess */
 	filename;
 
 	// sourcemap_list is sorted in reverse order from last map (index 0) to first map (index -1)
@@ -43,7 +37,7 @@ class PreprocessResult {
 	dependencies = [];
 
 	/**
-	 * @type {string | null  }
+	 * @type {string | null} last part of the filename, as used for `sources` in sourcemaps
 	 */
 	file_basename = /** @type {any} */ (undefined);
 
@@ -61,7 +55,7 @@ class PreprocessResult {
 		this.filename = filename;
 		this.update_source({ string: source });
 		// preprocess source must be relative to itself or equal null
-		this.file_basename = filename == null ? null : get_file_basename(filename);
+		this.file_basename = filename == null ? null : get_basename(filename);
 	}
 
 	/**

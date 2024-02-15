@@ -1,12 +1,24 @@
-// @ts-nocheck TODO
-
 import * as fs from 'node:fs';
-import * as path from 'node:path';
-import * as svelte from 'svelte/compiler';
 import { assert } from 'vitest';
-import { getLocator } from 'locate-character';
-import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
+import { getLocator, locate } from 'locate-character';
 import { suite, type BaseTest } from '../suite.js';
+import { compile_directory } from '../helpers.js';
+import { decode } from '@jridgewell/sourcemap-codec';
+
+type SourceMapEntry =
+	| string
+	| {
+			/** If not the first occurence, but the nth should be found */
+			idxOriginal?: number;
+			/** If not the first occurence, but the nth should be found */
+			idxGenerated?: number;
+			/** The original string to find */
+			str: string;
+			/** The generated string to find. You can omit this if it's the same as the original string */
+			strGenerated?: string | null;
+			/** If the original code lives in a different file, pass its source code here */
+			code?: string;
+	  };
 
 interface SourcemapTest extends BaseTest {
 	options?: { filename: string };
@@ -14,109 +26,259 @@ interface SourcemapTest extends BaseTest {
 	preprocess?:
 		| import('../../src/compiler/public').PreprocessorGroup
 		| import('../../src/compiler/public').PreprocessorGroup[];
+	/** The expected `sources` array in the source map */
 	js_map_sources?: string[];
+	/** The expected `sources` array in the source map */
 	css_map_sources?: string[];
+	test?: (obj: {
+		assert: typeof assert;
+		input: string;
+		map_preprocessed: any;
+		code_preprocessed: string;
+		map_css: any;
+		code_css: string;
+		map_client: any;
+		code_client: string;
+	}) => void;
+	/** Mappings to check in generated client code */
+	client?: SourceMapEntry[] | null;
+	/** Mappings to check in generated server code. If left out, will use the client code checks */
+	server?: SourceMapEntry[];
+	/** Mappings to check in generated css code */
+	css?: SourceMapEntry[] | null;
+	/** Mappings to check in preprocessed Svelte code */
+	preprocessed?: SourceMapEntry[];
 }
 
 const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
-	const { test } = await import(`${cwd}/test.js`);
-
-	const input_file = path.resolve(`${cwd}/input.svelte`);
-	const output_name = '_actual';
-	const output_base = path.resolve(`${cwd}/${output_name}`);
-
-	const input_code = fs.readFileSync(input_file, 'utf-8');
-	const input = {
-		code: input_code,
-		locate: getLocator(input_code),
-		locate_1: getLocator(input_code, { offsetLine: 1 })
-	};
-	const preprocessed = await svelte.preprocess(
-		input.code,
-		config.preprocess || {},
-		config.options || {
-			filename: 'input.svelte'
-		}
-	);
-	let { js, css } = svelte.compile(preprocessed.code, {
-		filename: 'input.svelte',
-		// filenames for sourcemaps
-		sourcemap: preprocessed.map,
-		outputFilename: `${output_name}.js`,
-		cssOutputFilename: `${output_name}.css`,
-		...(config.compile_options || {})
+	await compile_directory(cwd, 'client', config.compileOptions, true, {
+		preprocess: config.preprocess,
+		options: config.options
 	});
-	if (css === null) {
-		css = { code: '', map: /** @type {any} */ null };
+	await compile_directory(cwd, 'server', config.compileOptions, true, {
+		preprocess: config.preprocess,
+		options: config.options
+	});
+
+	const input = fs.readFileSync(`${cwd}/input.svelte`, 'utf-8');
+
+	function compare(info: string, output: string, map: any, entries: SourceMapEntry[]) {
+		const output_locator = getLocator(output);
+
+		/** Find line/column of string in original code */
+		function find_original(entry: SourceMapEntry, idx = 0) {
+			let str;
+			let source;
+			if (typeof entry === 'string') {
+				str = entry;
+				source = input;
+			} else if (entry.code) {
+				str = entry.str;
+				source = entry.code;
+			} else {
+				str = entry.str;
+				source = input;
+			}
+
+			const original = locate(source, source.indexOf(str, idx));
+			if (!original)
+				throw new Error(`Could not find '${str}'${idx > 0 ? ` after index ${idx}` : ''} in input`);
+			return original;
+		}
+
+		/** Find line/column of string in generated code */
+		function find_generated(str: string, idx = 0) {
+			const generated = output_locator(output.indexOf(str, idx));
+			if (!generated)
+				throw new Error(`Could not find '${str}'${idx > 0 ? ` after index ${idx}` : ''} in output`);
+			return generated;
+		}
+
+		const decoded = decode(map.mappings);
+
+		try {
+			for (let entry of entries) {
+				entry = typeof entry === 'string' ? { str: entry } : entry;
+
+				const str = entry.str;
+
+				// Find generated line/column
+				const generated_str = entry.strGenerated ?? str;
+				if (entry.strGenerated === null) {
+					if (!output.includes(generated_str)) continue;
+				}
+				let generated = find_generated(generated_str);
+				if (entry.idxGenerated) {
+					let i = entry.idxGenerated;
+					while (i-- > 0) {
+						generated = find_generated(generated_str, generated.character + 1);
+					}
+				}
+
+				// Find segment in source map pointing from generated to original
+				const segments = decoded[generated.line];
+				const segment = segments.find((segment) => segment[0] === generated.column);
+				if (!segment && entry.strGenerated !== null) {
+					throw new Error(
+						`Could not find segment for '${str}' in sourcemap (${generated.line}:${generated.column})`
+					);
+				} else if (segment && entry.strGenerated === null) {
+					throw new Error(
+						`Found segment for '${str}' in sourcemap (${generated.line}:${generated.column}) but should not`
+					);
+				} else if (!segment) {
+					continue;
+				}
+
+				// Find original line/column
+				let original = find_original(entry);
+				if (entry.idxOriginal) {
+					let i = entry.idxOriginal;
+					while (i-- > 0) {
+						original = find_original(entry, original.character + 1);
+					}
+				}
+
+				// Check that segment points to expected original
+				assert.equal(segment[2], original.line, `mapped line did not match for '${str}'`);
+				assert.equal(segment[3], original.column, `mapped column did not match for '${str}'`);
+
+				// Same for end of string
+				const generated_end = generated.column + generated_str.length;
+				const end_segment = segments.find((segment) => segment[0] === generated_end);
+				if (!end_segment) {
+					// If the string is the last segment and it's the end of the line,
+					// it's okay if there's no end segment (source maps save space by omitting it in that case)
+					if (
+						segments.at(-1)![0] > generated_end ||
+						!/[\r\n]/.test(output[generated.character + generated_str.length])
+					) {
+						console.log(segments.at(-1)![0] < generated_end, segments.at(-1)![0], generated_end);
+						console.log(
+							/[\r\n]/.test(output[generated.character + generated_str.length]),
+							output[generated.character + generated_str.length] +
+								'::' +
+								output.slice(
+									generated.character + generated_str.length - 10,
+									generated.character + generated_str.length + 10
+								)
+						);
+						throw new Error(
+							`Could not find end segment for '${str}' in sourcemap (${generated.line}:${generated_end})`
+						);
+					} else {
+						continue;
+					}
+				}
+
+				assert.equal(end_segment[2], original.line, `mapped line end did not match for '${str}'`);
+				assert.equal(
+					end_segment[3],
+					original.column + str.length,
+					`mapped column end did not match for '${str}'`
+				);
+			}
+		} catch (e) {
+			console.log(`Source map ${info}:\n`);
+			console.log(decoded);
+			throw e;
+		}
 	}
 
-	js.code = js.code.replace(/\(Svelte v\d+\.\d+\.\d+(-next\.\d+)?/, (match) =>
-		match.replace(/\d/g, 'x')
-	);
+	let map_client = null;
+	let code_client = fs.readFileSync(`${cwd}/_output/client/input.svelte.js`, 'utf-8');
 
-	fs.writeFileSync(`${output_base}.svelte`, preprocessed.code);
-	if (preprocessed.map) {
-		fs.writeFileSync(
-			`${output_base}.svelte.map`,
-			// TODO encode mappings for output - svelte.preprocess returns decoded mappings
-			JSON.stringify(preprocessed.map, null, 2)
+	if (config.client === null) {
+		assert.equal(
+			fs.existsSync(`${cwd}/_output/client/input.svelte.js.map`),
+			false,
+			'Expected no source map'
 		);
-	}
-	fs.writeFileSync(`${output_base}.js`, `${js.code}\n//# sourceMappingURL=${output_name}.js.map`);
-	fs.writeFileSync(`${output_base}.js.map`, JSON.stringify(js.map, null, 2));
-	if (css.code) {
-		fs.writeFileSync(
-			`${output_base}.css`,
-			`${css.code}\n/*# sourceMappingURL=${output_name}.css.map */`
-		);
-		fs.writeFileSync(`${output_base}.css.map`, JSON.stringify(css.map, null, '  '));
-	}
-
-	if (js.map) {
+	} else {
+		map_client = JSON.parse(fs.readFileSync(`${cwd}/_output/client/input.svelte.js.map`, 'utf-8'));
 		assert.deepEqual(
-			js.map.sources.slice().sort(),
-			(config.js_map_sources || ['input.svelte']).sort(),
+			map_client.sources.slice().sort(),
+			(config.js_map_sources || ['../../input.svelte']).sort(),
 			'js.map.sources is wrong'
 		);
+
+		if (config.client) {
+			compare('client', code_client, map_client, config.client);
+		}
 	}
-	if (css.map) {
-		assert.deepEqual(
-			css.map.sources.slice().sort(),
-			(config.css_map_sources || ['input.svelte']).sort(),
-			'css.map.sources is wrong'
+
+	if (config.client || config.server) {
+		const output_server = fs.readFileSync(`${cwd}/_output/server/input.svelte.js`, 'utf-8');
+		const map_server = JSON.parse(
+			fs.readFileSync(`${cwd}/_output/server/input.svelte.js.map`, 'utf-8')
+		);
+
+		compare(
+			'server',
+			output_server,
+			map_server,
+			config.server ??
+				// Reuse client sourcemap test for server
+				config.client ??
+				[]
 		);
 	}
 
-	// use locate_1 with mapConsumer:
-	// lines are one-based, columns are zero-based
-
-	preprocessed.mapConsumer = preprocessed.map && new TraceMap(preprocessed.map);
-	preprocessed.locate = getLocator(preprocessed.code);
-	preprocessed.locate_1 = getLocator(preprocessed.code, { offsetLine: 1 });
-
-	if (js.map) {
-		const map = new TraceMap(js.map);
-		js.mapConsumer = {
-			originalPositionFor(loc) {
-				return originalPositionFor(map, loc);
-			}
-		};
+	let map_css = null;
+	let code_css = '';
+	if (config.css !== undefined) {
+		if (config.css === null) {
+			assert.equal(
+				fs.existsSync(`${cwd}/_output/client/input.svelte.css.map`),
+				false,
+				'Expected no source map'
+			);
+		} else {
+			code_css = fs.readFileSync(`${cwd}/_output/client/input.svelte.css`, 'utf-8');
+			map_css = JSON.parse(fs.readFileSync(`${cwd}/_output/client/input.svelte.css.map`, 'utf-8'));
+			assert.deepEqual(
+				map_css.sources.slice().sort(),
+				(config.css_map_sources || ['../../input.svelte']).sort(),
+				'css.map.sources is wrong'
+			);
+			compare('css', code_css, map_css, config.css);
+		}
 	}
-	js.locate = getLocator(js.code);
-	js.locate_1 = getLocator(js.code, { offsetLine: 1 });
 
-	if (css.map) {
-		const map = new TraceMap(css.map);
-		css.mapConsumer = {
-			originalPositionFor(loc) {
-				return originalPositionFor(map, loc);
-			}
-		};
+	let map_preprocessed = null;
+	let code_preprocessed = '';
+	if (config.preprocessed !== undefined) {
+		if (config.preprocessed === null) {
+			assert.equal(
+				fs.existsSync(`${cwd}/_output/client/input.preprocessed.svelte.map`),
+				false,
+				'Expected no source map'
+			);
+		} else {
+			code_preprocessed = fs.readFileSync(
+				`${cwd}/_output/client/input.preprocessed.svelte`,
+				'utf-8'
+			);
+			map_preprocessed = JSON.parse(
+				fs.readFileSync(`${cwd}/_output/client/input.preprocessed.svelte.map`, 'utf-8')
+			);
+			compare('preprocessed', code_preprocessed, map_preprocessed, config.preprocessed);
+		}
 	}
-	css.locate = getLocator(css.code || '');
-	css.locate_1 = getLocator(css.code || '', { offsetLine: 1 });
 
-	await test({ assert, input, preprocessed, js, css });
+	if (config.test) {
+		// TODO figure out for which tests we still need this
+		config.test({
+			assert,
+			input,
+			map_client,
+			code_client,
+			map_preprocessed,
+			code_preprocessed,
+			code_css,
+			map_css
+		});
+	}
 });
 
 export { test };

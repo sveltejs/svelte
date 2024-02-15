@@ -75,7 +75,7 @@ export function serialize_get_binding(node, state) {
 	}
 
 	if (binding.expression) {
-		return binding.expression;
+		return typeof binding.expression === 'function' ? binding.expression(node) : binding.expression;
 	}
 
 	if (binding.kind === 'prop') {
@@ -550,6 +550,7 @@ function get_hoistable_params(node, context) {
 			} else if (
 				// If it's a destructured derived binding, then we can extract the derived signal reference and use that.
 				binding.expression !== null &&
+				typeof binding.expression !== 'function' &&
 				binding.expression.type === 'MemberExpression' &&
 				binding.expression.object.type === 'CallExpression' &&
 				binding.expression.object.callee.type === 'Identifier' &&
@@ -696,4 +697,18 @@ export function should_proxy_or_freeze(node, scope) {
 		}
 	}
 	return true;
+}
+
+/**
+ * Port over the location information from the source to the target identifier.
+ * but keep the target as-is (i.e. a new id is created).
+ * This ensures esrap can generate accurate source maps.
+ * @param {import('estree').Identifier} target
+ * @param {import('estree').Identifier} source
+ */
+export function with_loc(target, source) {
+	if (source.loc) {
+		return { ...target, loc: source.loc };
+	}
+	return target;
 }
