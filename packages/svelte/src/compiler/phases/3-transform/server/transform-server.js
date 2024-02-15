@@ -366,7 +366,7 @@ function is_store_name(name) {
  *
  * @param {Iterable<import('#compiler').Binding>} bindings
  */
-function is_store_exists(bindings) {
+function store_sub_exist(bindings) {
 	for (const binding of bindings) {
 		if (binding.kind === 'store_sub') {
 			for (const reference of binding.references) {
@@ -2108,7 +2108,7 @@ export function server_component(analysis, options) {
 		];
 	}
 
-	if (is_store_exists(analysis.instance.scope.declarations.values())) {
+	if (store_sub_exist(analysis.instance.scope.declarations.values())) {
 		instance.body.unshift(b.const('$$store_subs', b.object([])));
 		template.body.push(b.stmt(b.call('$.unsubscribe_stores', b.id('$$store_subs'))));
 	}
