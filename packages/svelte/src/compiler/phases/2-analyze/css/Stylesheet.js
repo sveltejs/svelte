@@ -538,6 +538,7 @@ export default class Stylesheet {
 		return {
 			code: code.toString(),
 			map: code.generateMap({
+				// include source content; makes it easier/more robust looking up the source map code
 				includeContent: true,
 				// generateMap takes care of calculating source relative to file
 				source: this.filename,

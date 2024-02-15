@@ -378,7 +378,7 @@ export interface EachBlock extends BaseNode {
 		/** Set if something in the array expression is shadowed within the each block */
 		array_name: Identifier | null;
 		index: Identifier;
-		item_name: string;
+		item: Identifier;
 		declarations: Map<string, Binding>;
 		/** List of bindings that are referenced within the expression */
 		references: Binding[];

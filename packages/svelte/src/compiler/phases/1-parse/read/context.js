@@ -28,6 +28,7 @@ export default function read_pattern(parser) {
 			type: 'Identifier',
 			name,
 			start,
+			loc: parser.get_location(start, parser.index),
 			end: parser.index,
 			typeAnnotation: annotation
 		};

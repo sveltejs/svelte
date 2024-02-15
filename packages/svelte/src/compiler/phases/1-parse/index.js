@@ -133,6 +133,27 @@ export class Parser {
 		}
 	}
 
+	/**
+	 * offset -> line/column
+	 * @param {number} start
+	 * @param {number} end
+	 */
+	get_location(start, end) {
+		// this can probably be cached/optimized
+		const lines_start = this.template.slice(0, start).split('\n');
+		const lines_end = this.template.slice(0, end).split('\n');
+		return {
+			start: {
+				line: lines_start.length,
+				column: lines_start.at(-1)?.length || 0
+			},
+			end: {
+				line: lines_end.length,
+				column: lines_end.at(-1)?.length || 0
+			}
+		};
+	}
+
 	current() {
 		return this.stack[this.stack.length - 1];
 	}
@@ -297,7 +318,6 @@ export class Parser {
  */
 export function parse(template) {
 	const parser = new Parser(template);
-
 	return parser.root;
 }
 
