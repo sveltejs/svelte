@@ -196,7 +196,13 @@ function read_selector(parser, inside_pseudo_class = false) {
 		combinator: null,
 		selectors: [],
 		start: parser.index,
-		end: -1
+		end: -1,
+		metadata: {
+			is_global: false,
+			is_host: false,
+			is_root: false,
+			should_encapsulate: false
+		}
 	};
 
 	while (parser.index < parser.template.length) {
@@ -221,7 +227,13 @@ function read_selector(parser, inside_pseudo_class = false) {
 				combinator,
 				selectors: [],
 				start,
-				end: -1
+				end: -1,
+				metadata: {
+					is_global: false,
+					is_host: false,
+					is_root: false,
+					should_encapsulate: false
+				}
 			};
 
 			parser.allow_whitespace();
@@ -372,7 +384,10 @@ function read_selector(parser, inside_pseudo_class = false) {
 				type: 'ComplexSelector',
 				start: list_start,
 				end: index,
-				children
+				children,
+				metadata: {
+					used: false
+				}
 			};
 		}
 

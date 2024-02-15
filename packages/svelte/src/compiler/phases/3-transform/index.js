@@ -3,6 +3,7 @@ import { VERSION } from '../../../version.js';
 import { server_component, server_module } from './server/transform-server.js';
 import { client_component, client_module } from './client/transform-client.js';
 import { getLocator } from 'locate-character';
+import { render_stylesheet } from './css/index.js';
 
 /**
  * @param {import('../types').ComponentAnalysis} analysis
@@ -41,12 +42,18 @@ export function transform_component(analysis, source, options) {
 		];
 	}
 
+	const css =
+		analysis.stylesheet.ast && !analysis.inject_styles
+			? render_stylesheet(source, analysis.stylesheet.ast, options.filename ?? 'TODO', options.dev)
+			: null;
+
 	return {
 		js: print(program, { sourceMapSource: options.filename }), // TODO needs more logic to apply map from preprocess
-		css:
-			analysis.stylesheet.has_styles && !analysis.inject_styles
-				? analysis.stylesheet.render(options.filename ?? 'TODO', source, options.dev)
-				: null,
+		css,
+		// css:
+		// 	analysis.stylesheet.has_styles && !analysis.inject_styles
+		// 		? analysis.stylesheet.render(options.filename ?? 'TODO', source, options.dev)
+		// 		: null,
 		warnings: transform_warnings(source, options.filename, analysis.warnings),
 		metadata: {
 			runes: analysis.runes

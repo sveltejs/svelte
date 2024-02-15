@@ -26,12 +26,21 @@ export interface SelectorList extends BaseNode {
 export interface ComplexSelector extends BaseNode {
 	type: 'ComplexSelector';
 	children: RelativeSelector[];
+	metadata: {
+		used: boolean;
+	};
 }
 
 export interface RelativeSelector extends BaseNode {
 	type: 'RelativeSelector';
 	combinator: null | Combinator;
 	selectors: SimpleSelector[];
+	metadata: {
+		is_global: boolean;
+		is_host: boolean;
+		is_root: boolean;
+		should_encapsulate: boolean;
+	};
 }
 
 export interface TypeSelector extends BaseNode {

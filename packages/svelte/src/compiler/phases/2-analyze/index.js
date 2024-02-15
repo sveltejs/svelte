@@ -22,6 +22,7 @@ import { create_attribute, is_element_node } from '../nodes.js';
 import { DelegatedEvents, namespace_svg } from '../../../constants.js';
 import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
 import { validation_css } from './validation/css.js';
+import { prune } from './css/index.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -454,14 +455,14 @@ export function analyze_component(root, options) {
 	}
 
 	if (root.css) {
+		// validate
 		walk(root.css, {}, validation_css);
-	}
 
-	for (const element of analysis.elements) {
-		analysis.stylesheet.apply(element);
+		// mark nodes as scoped/unused/empty etc
+		for (const element of analysis.elements) {
+			prune(root.css, element);
+		}
 	}
-
-	analysis.stylesheet.reify(options.generate === 'client');
 
 	// TODO
 	// analysis.stylesheet.warn_on_unused_selectors(analysis);

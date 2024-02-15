@@ -15,6 +15,7 @@ import type {
 	Program,
 	SpreadElement
 } from 'estree';
+import type { Atrule, Rule } from '../css/types';
 
 export interface BaseNode {
 	type: string;
@@ -290,6 +291,7 @@ export interface RegularElement extends BaseElement {
 		svg: boolean;
 		/** `true` if contains a SpreadAttribute */
 		has_spread: boolean;
+		scoped: boolean;
 	};
 }
 
@@ -319,6 +321,7 @@ export interface SvelteElement extends BaseElement {
 		 * `null` means we can't know statically.
 		 */
 		svg: boolean | null;
+		scoped: boolean;
 	};
 }
 
@@ -470,7 +473,7 @@ export interface Script extends BaseNode {
 export interface Style extends BaseNode {
 	type: 'Style';
 	attributes: any[]; // TODO
-	children: any[]; // TODO add CSS node types
+	children: Array<Atrule | Rule>;
 	content: {
 		start: number;
 		end: number;
