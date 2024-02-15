@@ -315,7 +315,16 @@ export const javascript_visitors_runes = {
 						)
 					);
 					for (let i = 0; i < bindings.length; i++) {
-						bindings[i].expression = b.member(b.call('$.get', b.id(id)), b.literal(i), true);
+						declarations.push(
+							b.declarator(
+								b.id(id + '_' + i),
+								b.call(
+									'$.derived',
+									b.thunk(b.member(b.call('$.get', b.id(id)), b.literal(i), true))
+								)
+							)
+						);
+						bindings[i].expression = b.call('$.get', b.id(id + '_' + i));
 					}
 				}
 				continue;
