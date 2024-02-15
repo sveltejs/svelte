@@ -513,7 +513,7 @@ export class Stylesheet {
 			})
 		};
 		merge_with_preprocessor_map(css, options, css.map.sources[0]);
-		if (options.dev && css.code) {
+		if (options.dev && options.css === 'injected' && css.code) {
 			css.code += `\n/*# sourceMappingURL=${css.map.toUrl()} */`;
 		}
 
