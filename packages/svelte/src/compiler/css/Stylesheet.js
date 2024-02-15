@@ -320,7 +320,7 @@ class Atrule {
 }
 
 export class Stylesheet {
-	/** @type {import('#compiler').Style | null} */
+	/** @type {import('#compiler').Css.StyleSheet | null} */
 	ast;
 
 	/** @type {string} */
@@ -343,7 +343,7 @@ export class Stylesheet {
 
 	/**
 	 * @param {{
-	 * 		ast: import('#compiler').Style | null;
+	 * 		ast: import('#compiler').Css.StyleSheet | null;
 	 * 		filename: string;
 	 * 		component_name: string;
 	 * 		get_css_hash: import('#compiler').CssHashGetter;

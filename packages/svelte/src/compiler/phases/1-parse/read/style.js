@@ -18,7 +18,7 @@ const REGEX_HTML_COMMENT_CLOSE = /-->/;
  * @param {import('../index.js').Parser} parser
  * @param {number} start
  * @param {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute | import('#compiler').Directive>} attributes
- * @returns {import('#compiler').Style}
+ * @returns {import('#compiler').Css.StyleSheet}
  */
 export default function read_style(parser, start, attributes) {
 	const content_start = parser.index;
@@ -28,7 +28,7 @@ export default function read_style(parser, start, attributes) {
 	parser.read(/^<\/style\s*>/);
 
 	return {
-		type: 'Style',
+		type: 'StyleSheet',
 		start,
 		end: parser.index,
 		attributes,
@@ -37,8 +37,7 @@ export default function read_style(parser, start, attributes) {
 			start: content_start,
 			end: content_end,
 			styles: parser.template.slice(content_start, content_end)
-		},
-		parent: null
+		}
 	};
 }
 

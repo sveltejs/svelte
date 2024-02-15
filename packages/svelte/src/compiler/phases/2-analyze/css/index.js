@@ -4,7 +4,7 @@ import { regex_ends_with_whitespace, regex_starts_with_whitespace } from '../../
 
 /**
  * @typedef {{
- *   stylesheet: import('#compiler').Style;
+ *   stylesheet: import('#compiler').Css.StyleSheet;
  *   element: import('#compiler').RegularElement | import('#compiler').SvelteElement;
  * }} State
  */
@@ -26,7 +26,7 @@ const whitelist_attribute_selector = new Map([
 
 /**
  *
- * @param {import('#compiler').Style} stylesheet
+ * @param {import('#compiler').Css.StyleSheet} stylesheet
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
  */
 export function prune(stylesheet, element) {
@@ -66,7 +66,7 @@ const visitors = {
 /**
  * @param {import('#compiler').Css.RelativeSelector[]} relative_selectors
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} node
- * @param {import('#compiler').Style} stylesheet
+ * @param {import('#compiler').Css.StyleSheet} stylesheet
  * @returns {boolean}
  */
 function apply_selector(relative_selectors, node, stylesheet) {

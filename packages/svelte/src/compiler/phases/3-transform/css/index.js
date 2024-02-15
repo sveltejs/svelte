@@ -6,7 +6,7 @@ import { walk } from 'zimmerframe';
 /**
  *
  * @param {string} source
- * @param {import('#compiler').Style} stylesheet
+ * @param {import('#compiler').Css.StyleSheet} stylesheet
  * @param {string} file
  * @param {boolean} dev
  */

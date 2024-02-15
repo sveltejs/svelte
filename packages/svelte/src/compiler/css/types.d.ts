@@ -1,8 +1,17 @@
-import type { Style } from '../types/template';
-
 export interface BaseNode {
 	start: number;
 	end: number;
+}
+
+export interface StyleSheet extends BaseNode {
+	type: 'StyleSheet';
+	attributes: any[]; // TODO
+	children: Array<Atrule | Rule>;
+	content: {
+		start: number;
+		end: number;
+		styles: string;
+	};
 }
 
 export interface Atrule extends BaseNode {
@@ -115,7 +124,7 @@ export interface Declaration extends BaseNode {
 
 // for zimmerframe
 export type Node =
-	| Style
+	| StyleSheet
 	| Rule
 	| Atrule
 	| ComplexSelector

@@ -53,7 +53,7 @@ export interface Root extends BaseNode {
 	options: SvelteOptions | null;
 	fragment: Fragment;
 	/** The parsed `<style>` element, if exists */
-	css: Style | null;
+	css: Css.StyleSheet | null;
 	/** The parsed `<script>` element, if exists */
 	instance: Script | null;
 	/** The parsed `<script context="module">` element, if exists */
@@ -468,17 +468,6 @@ export interface Script extends BaseNode {
 	type: 'Script';
 	context: string;
 	content: Program;
-}
-
-export interface Style extends BaseNode {
-	type: 'Style';
-	attributes: any[]; // TODO
-	children: Array<Atrule | Rule>;
-	content: {
-		start: number;
-		end: number;
-		styles: string;
-	};
 }
 
 declare module 'estree' {
