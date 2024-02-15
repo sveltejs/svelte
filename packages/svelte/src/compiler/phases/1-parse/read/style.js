@@ -231,8 +231,11 @@ function read_selector(parser, inside_pseudo_class = false) {
 		if (node.selectors.length === 1) {
 			const first = node.selectors[0];
 			node.metadata.is_host = first.type === 'PseudoClassSelector' && first.name === 'host';
-			node.metadata.is_root = first.type === 'PseudoClassSelector' && first.name === 'root';
 		}
+
+		node.metadata.is_root = !!node.selectors.find(
+			(child) => child.type === 'PseudoClassSelector' && child.name === 'root'
+		);
 
 		relative_selector.end = end;
 		children.push(relative_selector);
