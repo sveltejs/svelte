@@ -375,7 +375,6 @@ function store_sub_exist(bindings) {
 				// make sure it is not a sub in a directive e.g. use:$store as it is unneeded
 				if (node?.type !== 'RegularElement') {
 					return true;
-					s;
 				}
 			}
 		}
