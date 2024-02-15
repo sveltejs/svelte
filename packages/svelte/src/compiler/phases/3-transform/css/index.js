@@ -55,12 +55,12 @@ const visitors = {
 	Rule(node, { state, next }) {
 		// keep empty rules in dev, because it's convenient to
 		// see them in devtools
-		// if (!state.dev && this.is_empty()) {
-		// 	state.code.prependRight(node.start, '/* (empty) ');
-		// 	state.code.appendLeft(node.end, '*/');
-		// 	escape_comment_close(node, state.code);
-		// 	return;
-		// }
+		if (!state.dev && is_empty(node)) {
+			state.code.prependRight(node.start, '/* (empty) ');
+			state.code.appendLeft(node.end, '*/');
+			escape_comment_close(node, state.code);
+			return;
+		}
 
 		const used = node.prelude.children.filter((s) => s.metadata.used);
 
@@ -166,6 +166,12 @@ const visitors = {
 		context.next();
 	}
 };
+
+/** @param {import('#compiler').Css.Rule} rule */
+function is_empty(rule) {
+	if (rule.block.children.length > 0) return false;
+	return true;
+}
 
 /**
  *

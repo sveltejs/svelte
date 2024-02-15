@@ -41,8 +41,19 @@ const visitors = {
 	ComplexSelector(node, context) {
 		context.next();
 
-		if (apply_selector(node.children.slice(), context.state.element, context.state.stylesheet)) {
+		const i = node.children.findLastIndex((child) => {
+			return !child.metadata.is_global && !child.metadata.is_host && !child.metadata.is_root;
+		});
+
+		if (i === -1) {
+			// always keep global-only selectors (we include `:root` and `:host`)
 			node.metadata.used = true;
+		} else {
+			const relative_selectors = node.children.slice(0, i + 1);
+
+			if (apply_selector(relative_selectors, context.state.element, context.state.stylesheet)) {
+				node.metadata.used = true;
+			}
 		}
 	},
 	RelativeSelector(node, context) {
