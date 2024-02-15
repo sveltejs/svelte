@@ -72,7 +72,7 @@ function apply_selector(relative_selectors, element, stylesheet) {
 	const relative_selector = relative_selectors.pop();
 	if (!relative_selector) return false;
 
-	const applies = relative_selector_might_apply_to_node(relative_selector, element);
+	const applies = relative_selector_might_apply_to_node(relative_selector, element, stylesheet);
 
 	if (applies === NO_MATCH) {
 		return false;
@@ -112,7 +112,10 @@ function apply_selector(relative_selectors, element, stylesheet) {
 				let parent = element;
 				let matched = false;
 				while ((parent = get_element_parent(parent))) {
-					if (relative_selector_might_apply_to_node(ancestor_selector, parent) !== NO_MATCH) {
+					if (
+						relative_selector_might_apply_to_node(ancestor_selector, parent, stylesheet) !==
+						NO_MATCH
+					) {
 						mark(ancestor_selector, parent);
 						matched = true;
 					}
@@ -188,9 +191,10 @@ const regex_backslash_and_following_character = /\\(.)/g;
 /**
  * @param {import('#compiler').Css.RelativeSelector} relative_selector
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
+ * @param {import('#compiler').Css.StyleSheet} stylesheet
  * @returns {NO_MATCH | POSSIBLE_MATCH | UNKNOWN_SELECTOR}
  */
-function relative_selector_might_apply_to_node(relative_selector, node) {
+function relative_selector_might_apply_to_node(relative_selector, node, stylesheet) {
 	if (relative_selector.metadata.is_host || relative_selector.metadata.is_root) return NO_MATCH;
 
 	let i = relative_selector.selectors.length;
