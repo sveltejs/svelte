@@ -127,6 +127,7 @@ export type Node =
 	| StyleSheet
 	| Rule
 	| Atrule
+	| SelectorList
 	| ComplexSelector
 	| RelativeSelector
 	| Combinator
