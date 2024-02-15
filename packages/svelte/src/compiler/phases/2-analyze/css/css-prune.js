@@ -8,16 +8,14 @@ import { regex_ends_with_whitespace, regex_starts_with_whitespace } from '../../
  *   element: import('#compiler').RegularElement | import('#compiler').SvelteElement;
  * }} State
  */
-/** @typedef {typeof NodeExist[keyof typeof NodeExist]} NodeExistsValue */
+/** @typedef {NODE_PROBABLY_EXISTS | NODE_DEFINITELY_EXISTS} NodeExistsValue */
 
 const NO_MATCH = 'NO_MATCH';
 const POSSIBLE_MATCH = 'POSSIBLE_MATCH';
 const UNKNOWN_SELECTOR = 'UNKNOWN_SELECTOR';
 
-const NodeExist = /** @type {const} */ ({
-	Probably: 0,
-	Definitely: 1
-});
+const NODE_PROBABLY_EXISTS = 0;
+const NODE_DEFINITELY_EXISTS = 1;
 
 const whitelist_attribute_selector = new Map([
 	['details', ['open']],
@@ -481,7 +479,7 @@ function get_possible_element_siblings(node, adjacent_only) {
 					(attr) => attr.type === 'Attribute' && attr.name.toLowerCase() === 'slot'
 				)
 			) {
-				result.set(prev, NodeExist.Definitely);
+				result.set(prev, NODE_DEFINITELY_EXISTS);
 			}
 			if (adjacent_only) {
 				break;
@@ -600,7 +598,7 @@ function get_possible_last_child(relative_selector, adjacent_only) {
 function has_definite_elements(result) {
 	if (result.size === 0) return false;
 	for (const exist of result.values()) {
-		if (exist === NodeExist.Definitely) {
+		if (exist === NODE_DEFINITELY_EXISTS) {
 			return true;
 		}
 	}
@@ -632,7 +630,7 @@ function higher_existence(exist1, exist2) {
 /** @param {Map<import('#compiler').RegularElement, NodeExistsValue>} result */
 function mark_as_probably(result) {
 	for (const key of result.keys()) {
-		result.set(key, NodeExist.Probably);
+		result.set(key, NODE_PROBABLY_EXISTS);
 	}
 }
 
@@ -646,7 +644,7 @@ function loop_child(children, adjacent_only) {
 	for (let i = children.length - 1; i >= 0; i--) {
 		const child = children[i];
 		if (child.type === 'RegularElement') {
-			result.set(child, NodeExist.Definitely);
+			result.set(child, NODE_DEFINITELY_EXISTS);
 			if (adjacent_only) {
 				break;
 			}
