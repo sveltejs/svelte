@@ -128,6 +128,7 @@ export type Node =
 	| Rule
 	| Atrule
 	| SelectorList
+	| Block
 	| ComplexSelector
 	| RelativeSelector
 	| Combinator
