@@ -363,7 +363,7 @@ function serialize_element_spread_attributes(attributes, context, element, eleme
  */
 function serialize_dynamic_element_attributes(attributes, context, element_id) {
 	if (attributes.length === 0) {
-		if (context.state.analysis.css) {
+		if (context.state.analysis.css.hash) {
 			context.state.init.push(
 				b.stmt(b.call('$.class_name', element_id, b.literal(context.state.analysis.css.hash)))
 			);
