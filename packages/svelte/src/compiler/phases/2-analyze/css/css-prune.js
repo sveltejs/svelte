@@ -36,13 +36,7 @@ const visitors = {
 	ComplexSelector(node, context) {
 		context.next();
 
-		const i = node.children.findLastIndex((child) => {
-			return !child.metadata.is_global && !child.metadata.is_host && !child.metadata.is_root;
-		});
-
-		const relative_selectors = node.children.slice(0, i + 1);
-
-		if (apply_selector(relative_selectors, context.state.element, context.state.stylesheet)) {
+		if (apply_selector(truncate(node), context.state.element, context.state.stylesheet)) {
 			node.metadata.used = true;
 		}
 	},
@@ -51,6 +45,18 @@ const visitors = {
 		// this will likely change when we implement `:is(...)` etc
 	}
 };
+
+/**
+ * Discard trailing `:global(...)` selectors, these are unused for scoping purposes
+ * @param {import('#compiler').Css.ComplexSelector} node
+ */
+function truncate(node) {
+	const i = node.children.findLastIndex(({ metadata }) => {
+		return !metadata.is_global && !metadata.is_host && !metadata.is_root;
+	});
+
+	return node.children.slice(0, i + 1);
+}
 
 /**
  * @param {import('#compiler').Css.RelativeSelector[]} relative_selectors
