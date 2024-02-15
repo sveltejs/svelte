@@ -1,6 +1,6 @@
 {
 	"css": {
-		"type": "Style",
+		"type": "StyleSheet",
 		"start": 36,
 		"end": 205,
 		"attributes": [],

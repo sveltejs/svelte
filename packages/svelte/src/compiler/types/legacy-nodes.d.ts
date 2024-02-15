@@ -227,12 +227,23 @@ export type LegacyElementLike =
 	| LegacyTitle
 	| LegacyWindow;
 
+export interface LegacyStyle extends BaseNode {
+	type: 'Style';
+	attributes: any[];
+	content: {
+		start: number;
+		end: number;
+		styles: string;
+	};
+	children: any[];
+}
+
 export interface LegacySelector extends BaseNode {
 	type: 'Selector';
 	children: Array<Css.Combinator | Css.SimpleSelector>;
 }
 
-export type LegacyCssNode = LegacySelector;
+export type LegacyCssNode = LegacyStyle | LegacySelector;
 
 export type LegacySvelteNode =
 	| LegacyConstTag
