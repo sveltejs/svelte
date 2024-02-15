@@ -672,10 +672,6 @@ declare module 'svelte/compiler' {
 		 * @default null
 		 */
 		cssOutputFilename?: string;
-
-		// Other Svelte 4 compiler options:
-		// enableSourcemap?: EnableSourcemap; // TODO bring back? https://github.com/sveltejs/svelte/pull/6835
-		// legacy?: boolean; // TODO compiler error noting the new purpose?
 	}
 
 	interface ModuleCompileOptions {
@@ -754,8 +750,11 @@ declare module 'svelte/compiler' {
 		legacy_dependencies: Binding[];
 		/** Legacy props: the `class` in `{ export klass as class}` */
 		prop_alias: string | null;
-		/** If this is set, all references should use this expression instead of the identifier name */
-		expression: Expression | null;
+		/**
+		 * If this is set, all references should use this expression instead of the identifier name.
+		 * If a function is given, it will be called with the identifier at that location and should return the new expression.
+		 */
+		expression: Expression | ((id: Identifier) => Expression) | null;
 		/** If this is set, all mutations should use this expression */
 		mutation: ((assignment: AssignmentExpression, context: Context<any, any>) => Expression) | null;
 	}
@@ -1407,7 +1406,7 @@ declare module 'svelte/compiler' {
 			/** Set if something in the array expression is shadowed within the each block */
 			array_name: Identifier | null;
 			index: Identifier;
-			item_name: string;
+			item: Identifier;
 			declarations: Map<string, Binding>;
 			/** List of bindings that are referenced within the expression */
 			references: Binding[];
@@ -2403,10 +2402,6 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * @default null
 		 */
 		cssOutputFilename?: string;
-
-		// Other Svelte 4 compiler options:
-		// enableSourcemap?: EnableSourcemap; // TODO bring back? https://github.com/sveltejs/svelte/pull/6835
-		// legacy?: boolean; // TODO compiler error noting the new purpose?
 	}
 
 	interface ModuleCompileOptions {
