@@ -122,12 +122,17 @@ const visitors = {
 			return;
 		}
 
-		if (used.length < node.prelude.children.length) {
-			let pruning = false;
-			let last = node.prelude.children[0].start;
+		next();
+	},
+	SelectorList(node, { state, next }) {
+		const used = node.children.filter((s) => s.metadata.used);
 
-			for (let i = 0; i < node.prelude.children.length; i += 1) {
-				const selector = node.prelude.children[i];
+		if (used.length < node.children.length) {
+			let pruning = false;
+			let last = node.children[0].start;
+
+			for (let i = 0; i < node.children.length; i += 1) {
+				const selector = node.children[i];
 
 				if (selector.metadata.used === pruning) {
 					if (pruning) {
@@ -172,6 +177,17 @@ const visitors = {
 			}
 
 			if (relative_selector.metadata.scoped) {
+				if (relative_selector.selectors.length === 1) {
+					// skip standalone :is/:where
+					const selector = relative_selector.selectors[0];
+					if (
+						selector.type === 'PseudoClassSelector' &&
+						(selector.name === 'is' || selector.name === 'where')
+					) {
+						continue;
+					}
+				}
+
 				// for the first occurrence, we use a classname selector, so that every
 				// encapsulated selector gets a +0-1-0 specificity bump. thereafter,
 				// we use a `:where` selector, which does not affect specificity
@@ -214,6 +230,11 @@ const visitors = {
 		}
 
 		context.next();
+	},
+	PseudoClassSelector(node, context) {
+		if (node.name === 'is' || node.name === 'where') {
+			context.next();
+		}
 	}
 };
 

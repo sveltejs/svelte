@@ -78,18 +78,6 @@ function apply_selector(relative_selectors, element, stylesheet) {
 		return false;
 	}
 
-	/**
-	 * Mark both the compound selector and the node it selects as encapsulated,
-	 * for transformation in a later step
-	 * @param {import('#compiler').Css.RelativeSelector} relative_selector
-	 * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
-	 */
-	function mark(relative_selector, element) {
-		relative_selector.metadata.scoped = true;
-		element.metadata.scoped = true;
-		return true;
-	}
-
 	if (applies === UNKNOWN_SELECTOR) {
 		return mark(relative_selector, element);
 	}
@@ -184,6 +172,18 @@ function apply_selector(relative_selectors, element, stylesheet) {
 	}
 
 	return mark(relative_selector, element);
+}
+
+/**
+ * Mark both the compound selector and the node it selects as encapsulated,
+ * for transformation in a later step
+ * @param {import('#compiler').Css.RelativeSelector} relative_selector
+ * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
+ */
+function mark(relative_selector, element) {
+	relative_selector.metadata.scoped = true;
+	element.metadata.scoped = true;
+	return true;
 }
 
 const regex_backslash_and_following_character = /\\(.)/g;
