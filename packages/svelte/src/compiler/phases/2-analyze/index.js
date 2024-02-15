@@ -454,13 +454,59 @@ export function analyze_component(root, options) {
 		}
 	}
 
+	const id = 'svelte-xyz'; // TODO
+
 	if (root.css) {
 		// validate
 		walk(root.css, {}, validation_css);
 
 		// mark nodes as scoped/unused/empty etc
-		for (const element of analysis.elements) {
+		outer: for (const element of analysis.elements) {
 			prune(root.css, element);
+
+			if (element.metadata.scoped) {
+				// Dynamic elements in dom mode always use spread for attributes and therefore shouldn't have a class attribute added to them
+				// TODO this happens during the analysis phase, which shouldn't know anything about client vs server
+				if (element.type === 'SvelteElement' && options.generate === 'client') continue;
+
+				/** @type {import('#compiler').Attribute | undefined} */
+				let class_attribute = undefined;
+
+				for (const attribute of element.attributes) {
+					if (attribute.type === 'SpreadAttribute') {
+						// The spread method appends the hash to the end of the class attribute on its own
+						continue outer;
+					}
+
+					if (attribute.type !== 'Attribute') continue;
+					if (attribute.name.toLowerCase() !== 'class') continue;
+
+					class_attribute = attribute;
+				}
+
+				if (class_attribute && class_attribute.value !== true) {
+					const chunks = class_attribute.value;
+
+					if (chunks.length === 1 && chunks[0].type === 'Text') {
+						chunks[0].data += ` ${id}`;
+					} else {
+						chunks.push({
+							type: 'Text',
+							data: ` ${id}`,
+							raw: ` ${id}`,
+							start: -1,
+							end: -1,
+							parent: null
+						});
+					}
+				} else {
+					element.attributes.push(
+						create_attribute('class', -1, -1, [
+							{ type: 'Text', data: id, raw: id, parent: null, start: -1, end: -1 }
+						])
+					);
+				}
+			}
 		}
 	}
 
