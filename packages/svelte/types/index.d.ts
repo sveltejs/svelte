@@ -963,12 +963,23 @@ declare module 'svelte/compiler' {
 		| LegacyTitle
 		| LegacyWindow;
 
+	interface LegacyStyle extends BaseNode_1 {
+		type: 'Style';
+		attributes: any[];
+		content: {
+			start: number;
+			end: number;
+			styles: string;
+		};
+		children: any[];
+	}
+
 	interface LegacySelector extends BaseNode_1 {
 		type: 'Selector';
 		children: Array<Css.Combinator | Css.SimpleSelector>;
 	}
 
-	type LegacyCssNode = LegacySelector;
+	type LegacyCssNode = LegacyStyle | LegacySelector;
 
 	type LegacySvelteNode =
 		| LegacyConstTag
@@ -1089,7 +1100,7 @@ declare module 'svelte/compiler' {
 		options: SvelteOptions | null;
 		fragment: Fragment;
 		/** The parsed `<style>` element, if exists */
-		css: Style | null;
+		css: Css.StyleSheet | null;
 		/** The parsed `<script>` element, if exists */
 		instance: Script | null;
 		/** The parsed `<script context="module">` element, if exists */
@@ -1327,6 +1338,7 @@ declare module 'svelte/compiler' {
 			svg: boolean;
 			/** `true` if contains a SpreadAttribute */
 			has_spread: boolean;
+			scoped: boolean;
 		};
 	}
 
@@ -1356,6 +1368,7 @@ declare module 'svelte/compiler' {
 			 * `null` means we can't know statically.
 			 */
 			svg: boolean | null;
+			scoped: boolean;
 		};
 	}
 
@@ -1502,17 +1515,6 @@ declare module 'svelte/compiler' {
 		type: 'Script';
 		context: string;
 		content: Program;
-	}
-
-	interface Style extends BaseNode {
-		type: 'Style';
-		attributes: any[]; // TODO
-		children: any[]; // TODO add CSS node types
-		content: {
-			start: number;
-			end: number;
-			styles: string;
-		};
 	}
 	/**
 	 * The result of a preprocessor run. If the preprocessor does not return a result, it is assumed that the code is unchanged.
