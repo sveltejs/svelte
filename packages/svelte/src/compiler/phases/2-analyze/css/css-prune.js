@@ -223,6 +223,7 @@ function relative_selector_might_apply_to_node(relative_selector, node, styleshe
 
 				for (const complex_selector of selector.args.children) {
 					if (apply_selector(truncate(complex_selector), node, stylesheet)) {
+						complex_selector.metadata.used = true;
 						matched = true;
 					}
 				}
