@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import glob from 'tiny-glob/sync.js';
-import { compile, compileModule } from 'svelte/compiler';
+import { VERSION, compile, compileModule, preprocess } from 'svelte/compiler';
 
 /**
  * @param {string} file
@@ -54,8 +54,16 @@ export function create_deferred() {
  * @param {string} cwd
  * @param {'client' | 'server'} generate
  * @param {Partial<import('#compiler').CompileOptions>} compileOptions
+ * @param {boolean} [output_map]
+ * @param {any} [preprocessor]
  */
-export function compile_directory(cwd, generate, compileOptions = {}) {
+export async function compile_directory(
+	cwd,
+	generate,
+	compileOptions = {},
+	output_map = false,
+	preprocessor
+) {
 	const output_dir = `${cwd}/_output/${generate}`;
 
 	fs.rmSync(output_dir, { recursive: true, force: true });
@@ -63,8 +71,12 @@ export function compile_directory(cwd, generate, compileOptions = {}) {
 	for (const file of glob('**', { cwd, filesOnly: true })) {
 		if (file.startsWith('_')) continue;
 
-		const text = fs.readFileSync(`${cwd}/${file}`, 'utf-8');
-		const opts = { filename: path.join(cwd, file), ...compileOptions, generate };
+		let text = fs.readFileSync(`${cwd}/${file}`, 'utf-8');
+		let opts = {
+			filename: path.join(cwd, file),
+			...compileOptions,
+			generate
+		};
 
 		if (file.endsWith('.js')) {
 			const out = `${output_dir}/${file}`;
@@ -85,12 +97,42 @@ export function compile_directory(cwd, generate, compileOptions = {}) {
 				write(out, result);
 			}
 		} else if (file.endsWith('.svelte')) {
-			const compiled = compile(text, opts);
+			if (preprocessor?.preprocess) {
+				const preprocessed = await preprocess(
+					text,
+					preprocessor.preprocess,
+					preprocessor.options || {
+						filename: opts.filename
+					}
+				);
+				text = preprocessed.code;
+				opts = { ...opts, sourcemap: preprocessed.map };
+				write(`${output_dir}/${file.slice(0, -7)}.preprocessed.svelte`, text);
+				if (output_map) {
+					write(
+						`${output_dir}/${file.slice(0, -7)}.preprocessed.svelte.map`,
+						JSON.stringify(preprocessed.map, null, '\t')
+					);
+				}
+			}
+
+			const compiled = compile(text, {
+				outputFilename: `${output_dir}/${file}${file.endsWith('.js') ? '' : '.js'}`,
+				cssOutputFilename: `${output_dir}/${file}.css`,
+				...opts
+			});
+			compiled.js.code = compiled.js.code.replace(`v${VERSION}`, 'VERSION');
 
 			write(`${output_dir}/${file}.js`, compiled.js.code);
+			if (output_map) {
+				write(`${output_dir}/${file}.js.map`, JSON.stringify(compiled.js.map, null, '\t'));
+			}
 
 			if (compiled.css) {
 				write(`${output_dir}/${file}.css`, compiled.css.code);
+				if (output_map) {
+					write(`${output_dir}/${file}.css.map`, JSON.stringify(compiled.css.map, null, '\t'));
+				}
 			}
 		}
 	}

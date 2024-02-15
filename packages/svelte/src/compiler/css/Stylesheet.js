@@ -2,9 +2,8 @@ import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
 import { ComplexSelector } from './Selector.js';
 import { hash } from './utils.js';
-// import compiler_warnings from '../compiler_warnings.js';
-// import { extract_ignores_above_position } from '../utils/extract_svelte_ignore.js';
 import { create_attribute } from '../phases/nodes.js'; // TODO move this
+import { merge_with_preprocessor_map } from '../utils/mapped_code.js';
 
 const regex_css_browser_prefix = /^-((webkit)|(moz)|(o)|(ms))-/;
 const regex_name_boundary = /^[\s,;}]$/;
@@ -337,7 +336,7 @@ export class Stylesheet {
 	/** @type {import('#compiler').Style | null} */
 	ast;
 
-	/** @type {string} */
+	/** @type {string} Path of Svelte file the CSS is in */
 	filename;
 
 	/** @type {boolean} */
@@ -471,20 +470,23 @@ export class Stylesheet {
 	}
 
 	/**
-	 * @param {string} file
 	 * @param {string} source
-	 * @param {boolean} dev
+	 * @param {import('#compiler').ValidatedCompileOptions} options
 	 */
-	render(file, source, dev) {
+	render(source, options) {
 		// TODO neaten this up
 		if (!this.ast) throw new Error('Unexpected error');
 
 		const code = new MagicString(source);
 
+		// Generate source mappings for the style sheet nodes we have.
+		// Note that resolution is a bit more coarse than in Svelte 4 because
+		// our own CSS AST is not as detailed with regards to the node values.
 		walk(/** @type {import('#compiler').Css.Node} */ (this.ast), null, {
-			_: (node) => {
+			_: (node, { next }) => {
 				code.addSourcemapLocation(node.start);
 				code.addSourcemapLocation(node.end);
+				next();
 			}
 		});
 
@@ -495,19 +497,27 @@ export class Stylesheet {
 		code.remove(0, this.ast.content.start);
 
 		for (const child of this.children) {
-			child.prune(code, dev);
+			child.prune(code, options.dev);
 		}
 
 		code.remove(/** @type {number} */ (this.ast.content.end), source.length);
 
-		return {
+		const css = {
 			code: code.toString(),
 			map: code.generateMap({
+				// include source content; makes it easier/more robust looking up the source map code
 				includeContent: true,
+				// generateMap takes care of calculating source relative to file
 				source: this.filename,
-				file
+				file: options.cssOutputFilename || this.filename
 			})
 		};
+		merge_with_preprocessor_map(css, options, css.map.sources[0]);
+		if (options.dev && options.css === 'injected' && css.code) {
+			css.code += `\n/*# sourceMappingURL=${css.map.toUrl()} */`;
+		}
+
+		return css;
 	}
 
 	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */

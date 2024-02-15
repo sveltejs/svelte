@@ -329,7 +329,7 @@ function serialize_get_binding(node, state) {
 	}
 
 	if (binding.expression) {
-		return binding.expression;
+		return typeof binding.expression === 'function' ? binding.expression(node) : binding.expression;
 	}
 
 	return node;
@@ -1311,7 +1311,7 @@ const template_visitors = {
 
 		const each_node_meta = node.metadata;
 		const collection = /** @type {import('estree').Expression} */ (context.visit(node.expression));
-		const item = b.id(each_node_meta.item_name);
+		const item = each_node_meta.item;
 		const index =
 			each_node_meta.contains_group_binding || !node.index
 				? each_node_meta.index

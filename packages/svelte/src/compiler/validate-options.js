@@ -87,7 +87,6 @@ export const validate_component_options =
 
 			namespace: list(['html', 'svg', 'foreign']),
 
-			// TODO this is a sourcemap option, would be good to put under a sourcemap namespace
 			outputFilename: string(undefined),
 
 			preserveComments: boolean(false),
@@ -96,16 +95,15 @@ export const validate_component_options =
 
 			runes: boolean(undefined),
 
-			sourcemap: validator(undefined, (input, keypath) => {
-				// TODO
+			sourcemap: validator(undefined, (input) => {
+				// Source maps can take on a variety of values, including string, JSON, map objects from magic-string and source-map,
+				// so there's no good way to check type validity here
 				return input;
 			}),
 
-			enableSourcemap: validator(undefined, (input, keypath) => {
-				// TODO decide if we want to keep this
-				return input;
-			}),
-
+			enableSourcemap: warn_removed(
+				'The enableSourcemap option has been removed. Source maps are always generated now, and tooling can choose to ignore them.'
+			),
 			hydratable: warn_removed(
 				'The hydratable option has been removed. Svelte components are always hydratable now.'
 			),

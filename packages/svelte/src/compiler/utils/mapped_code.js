@@ -243,8 +243,18 @@ export class MappedCode {
 	}
 }
 
+// browser vs node.js
+const b64enc =
+	typeof window !== 'undefined' && typeof btoa === 'function'
+		? /** @param {string} str */ (str) => btoa(unescape(encodeURIComponent(str)))
+		: /** @param {string} str */ (str) => Buffer.from(str).toString('base64');
+const b64dec =
+	typeof window !== 'undefined' && typeof atob === 'function'
+		? atob
+		: /** @param {any} a */ (a) => Buffer.from(a, 'base64').toString();
+
 /**
- * @param {string} filename
+ * @param {string} filename Basename of the input file
  * @param {Array<import('@ampproject/remapping').DecodedSourceMap | import('@ampproject/remapping').RawSourceMap>} sourcemap_list
  */
 export function combine_sourcemaps(filename, sourcemap_list) {
@@ -263,6 +273,10 @@ export function combine_sourcemaps(filename, sourcemap_list) {
 					// use loader interface
 					sourcemap_list[0], // last map
 					(sourcefile) => {
+						// TODO the equality check assumes that the preprocessor map has the input file as a relative path in sources,
+						// e.g. when the input file is `src/foo/bar.svelte`, then sources is expected to contain just `bar.svelte`.
+						// Therefore filename also needs to be the basename of the path. This feels brittle, investigate how we can
+						// harden this (without breaking other tooling that assumes this behavior).
 						if (sourcefile === filename && sourcemap_list[map_idx]) {
 							return sourcemap_list[map_idx++]; // idx 1, 2, ...
 							// bundle file = branch node
@@ -286,7 +300,7 @@ export function combine_sourcemaps(filename, sourcemap_list) {
  * @param {string | import('@ampproject/remapping').DecodedSourceMap | import('@ampproject/remapping').RawSourceMap} preprocessor_map_input
  * @returns {import('magic-string').SourceMap}
  */
-export function apply_preprocessor_sourcemap(filename, svelte_map, preprocessor_map_input) {
+function apply_preprocessor_sourcemap(filename, svelte_map, preprocessor_map_input) {
 	if (!svelte_map || !preprocessor_map_input) return svelte_map;
 	const preprocessor_map =
 		typeof preprocessor_map_input === 'string'
@@ -305,18 +319,7 @@ export function apply_preprocessor_sourcemap(filename, svelte_map, preprocessor_
 		toUrl: {
 			enumerable: false,
 			value: function toUrl() {
-				let b64 = '';
-				if (typeof window !== 'undefined' && window.btoa) {
-					// btoa doesn't support multi-byte characters
-					b64 = window.btoa(unescape(encodeURIComponent(this.toString())));
-				} else if (typeof Buffer !== 'undefined') {
-					b64 = Buffer.from(this.toString(), 'utf8').toString('base64');
-				} else {
-					throw new Error(
-						'Unsupported environment: `window.btoa` or `Buffer` should be present to use toUrl.'
-					);
-				}
-				return 'data:application/json;charset=utf-8;base64,' + b64;
+				return 'data:application/json;charset=utf-8;base64,' + b64enc(this.toString());
 			}
 		}
 	});
@@ -361,7 +364,7 @@ export function parse_attached_sourcemap(processed, tag_name) {
 				// ignore attached sourcemap
 				return '';
 			}
-			processed.map = atob(map_data); // use attached sourcemap
+			processed.map = b64dec(map_data); // use attached sourcemap
 			return ''; // remove from processed.code
 		}
 		// sourceMappingURL is path or URL
@@ -376,4 +379,69 @@ export function parse_attached_sourcemap(processed, tag_name) {
 		// ignore sourcemap path
 		return ''; // remove from processed.code
 	});
+}
+
+/**
+ * @param {{ code: string, map: import('magic-string').SourceMap}} result
+ * @param {import('#compiler').ValidatedCompileOptions} options
+ * @param {string} source_name
+ */
+export function merge_with_preprocessor_map(result, options, source_name) {
+	if (options.sourcemap) {
+		const file_basename = get_basename(options.filename || 'input.svelte');
+		// The preprocessor map is expected to contain `sources: [basename_of_filename]`, but our own
+		// map may contain a different file name. Patch our map beforehand to align sources so merging
+		// with the preprocessor map works correctly.
+		result.map.sources = [file_basename];
+		result.map = apply_preprocessor_sourcemap(
+			file_basename,
+			result.map,
+			/** @type {any} */ (options.sourcemap)
+		);
+		// After applying the preprocessor map, we need to do the inverse and make the sources
+		// relative to the input file again in case the output code is in a different directory.
+		if (file_basename !== source_name) {
+			result.map.sources = result.map.sources.map(
+				/** @param {string} source */ (source) => get_relative_path(source_name, source)
+			);
+		}
+	}
+}
+
+/**
+ * @param {string} from
+ * @param {string} to
+ */
+export function get_relative_path(from, to) {
+	// Don't use node's utils here to ensure the compiler is usable in a browser environment
+	const from_parts = from.split(/[/\\]/);
+	const to_parts = to.split(/[/\\]/);
+	from_parts.pop(); // get dirname
+	while (from_parts[0] === to_parts[0]) {
+		from_parts.shift();
+		to_parts.shift();
+	}
+	if (from_parts.length) {
+		let i = from_parts.length;
+		while (i--) from_parts[i] = '..';
+	}
+	return from_parts.concat(to_parts).join('/');
+}
+
+/**
+ * Like node's `basename`, but doesn't use it to ensure the compiler is usable in a browser environment
+ * @param {string} filename
+ */
+export function get_basename(filename) {
+	return /** @type {string} */ (filename.split(/[/\\]/).pop());
+}
+
+/**
+ * @param {string | undefined} filename
+ * @param {string | undefined} output_filename
+ * @param {string} fallback
+ */
+export function get_source_name(filename, output_filename, fallback) {
+	if (!filename) return fallback;
+	return output_filename ? get_relative_path(output_filename, filename) : get_basename(filename);
 }

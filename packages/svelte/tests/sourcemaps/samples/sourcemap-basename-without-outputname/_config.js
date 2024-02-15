@@ -8,7 +8,6 @@ export const css_file_basename = 'input.css';
 const input_css = ' h1 {color: blue;}';
 
 export default test({
-	skip: true,
 	preprocess: [
 		{
 			style: ({ content, filename }) => {
@@ -30,7 +29,7 @@ export default test({
 	},
 	compileOptions: {
 		filename: component_filepath,
-		// ../../index.ts initializes output filenames, reset to undefined for this test
+		// compile_directory initializes output filenames, reset to undefined for this test
 		outputFilename: undefined,
 		cssOutputFilename: undefined
 	}

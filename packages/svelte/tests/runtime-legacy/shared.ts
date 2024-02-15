@@ -122,7 +122,7 @@ export function runtime_suite(runes: boolean) {
 	);
 }
 
-function common_setup(cwd: string, runes: boolean | undefined, config: RuntimeTest) {
+async function common_setup(cwd: string, runes: boolean | undefined, config: RuntimeTest) {
 	const compileOptions: CompileOptions = {
 		generate: 'client',
 		...config.compileOptions,
@@ -134,8 +134,8 @@ function common_setup(cwd: string, runes: boolean | undefined, config: RuntimeTe
 	// load_compiled can be used for debugging a test. It means the compiler will not run on the input
 	// so you can manipulate the output manually to see what fixes it, adding console.logs etc.
 	if (!config.load_compiled) {
-		compile_directory(cwd, 'client', compileOptions);
-		compile_directory(cwd, 'server', compileOptions);
+		await compile_directory(cwd, 'client', compileOptions);
+		await compile_directory(cwd, 'server', compileOptions);
 	}
 
 	return compileOptions;

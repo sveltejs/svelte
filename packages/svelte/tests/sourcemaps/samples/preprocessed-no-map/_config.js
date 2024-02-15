@@ -1,8 +1,6 @@
 import { test } from '../../test';
 
 export default test({
-	skip: true,
-	css_map_sources: ['input.svelte'],
 	preprocess: [
 		{
 			style: ({ content }) => {
@@ -14,5 +12,18 @@ export default test({
 				return { code: content };
 			}
 		}
+	],
+	client: [],
+	preprocessed: [
+		// markup (start)
+		'<script>',
+		// script content (preprocessed without map, content not changed)
+		'console.log(name);',
+		// markup (middle)
+		'<div>{name}</div>',
+		// style content (preprocessed without map, content changed)
+		{ str: 'font-weight: bold;', strGenerated: null },
+		// markup (end)
+		'</style>'
 	]
 });

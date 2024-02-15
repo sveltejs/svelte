@@ -343,7 +343,7 @@ export function analyze_component(root, options) {
 		stylesheet: new Stylesheet({
 			ast: root.css,
 			// TODO are any of these necessary or can we just pass in the whole `analysis` object later?
-			filename: options.filename ?? '<unknown>',
+			filename: options.filename || 'input.svelte',
 			component_name,
 			get_css_hash: options.cssHash
 		}),

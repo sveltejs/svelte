@@ -279,7 +279,7 @@ export function client_component(source, analysis, options) {
 								'$.append_styles',
 								b.id('$$anchor'),
 								b.literal(analysis.stylesheet.id),
-								b.literal(analysis.stylesheet.render(analysis.name, source, options.dev).code)
+								b.literal(analysis.stylesheet.render(source, options).code)
 							)
 						)
 					)
