@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.55
+
+### Patch Changes
+
+- feat: derive destructured derived objects values ([#10488](https://github.com/sveltejs/svelte/pull/10488))
+
+- fix: prevent infinite loop when writing to store using shorthand ([#10477](https://github.com/sveltejs/svelte/pull/10477))
+
+- fix: add proper source map support ([#10459](https://github.com/sveltejs/svelte/pull/10459))
+
 ## 5.0.0-next.54
 
 ### Patch Changes
