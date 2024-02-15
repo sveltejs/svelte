@@ -1,6 +1,6 @@
 {
 	"css": {
-		"type": "Style",
+		"type": "StyleSheet",
 		"start": 0,
 		"end": 386,
 		"attributes": [],
@@ -13,15 +13,23 @@
 					"end": 86,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 60,
 							"end": 86,
 							"children": [
 								{
-									"type": "PseudoElementSelector",
-									"name": "view-transition-old",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "PseudoElementSelector",
+											"name": "view-transition-old",
+											"start": 60,
+											"end": 81
+										}
+									],
 									"start": 60,
-									"end": 81
+									"end": 86
 								}
 							]
 						}
@@ -52,33 +60,49 @@
 					"end": 146,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 111,
 							"end": 146,
 							"children": [
 								{
-									"type": "PseudoClassSelector",
-									"name": "global",
-									"args": {
-										"type": "SelectorList",
-										"start": 119,
-										"end": 145,
-										"children": [
-											{
-												"type": "Selector",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "PseudoClassSelector",
+											"name": "global",
+											"args": {
+												"type": "SelectorList",
 												"start": 119,
 												"end": 145,
 												"children": [
 													{
-														"type": "PseudoElementSelector",
-														"name": "view-transition-old",
+														"type": "ComplexSelector",
 														"start": 119,
-														"end": 140
+														"end": 145,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "PseudoElementSelector",
+																		"name": "view-transition-old",
+																		"start": 119,
+																		"end": 140
+																	}
+																],
+																"start": 119,
+																"end": 145
+															}
+														]
 													}
 												]
-											}
-										]
-									},
+											},
+											"start": 111,
+											"end": 146
+										}
+									],
 									"start": 111,
 									"end": 146
 								}
@@ -111,15 +135,23 @@
 					"end": 199,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 171,
 							"end": 199,
 							"children": [
 								{
-									"type": "PseudoElementSelector",
-									"name": "highlight",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "PseudoElementSelector",
+											"name": "highlight",
+											"start": 171,
+											"end": 182
+										}
+									],
 									"start": 171,
-									"end": 182
+									"end": 199
 								}
 							]
 						}
@@ -150,21 +182,29 @@
 					"end": 245,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 220,
 							"end": 245,
 							"children": [
 								{
-									"type": "TypeSelector",
-									"name": "custom-element",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "TypeSelector",
+											"name": "custom-element",
+											"start": 220,
+											"end": 234
+										},
+										{
+											"type": "PseudoElementSelector",
+											"name": "part",
+											"start": 234,
+											"end": 240
+										}
+									],
 									"start": 220,
-									"end": 234
-								},
-								{
-									"type": "PseudoElementSelector",
-									"name": "part",
-									"start": 234,
-									"end": 240
+									"end": 245
 								}
 							]
 						}
@@ -195,15 +235,23 @@
 					"end": 285,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 266,
 							"end": 285,
 							"children": [
 								{
-									"type": "PseudoElementSelector",
-									"name": "slotted",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "PseudoElementSelector",
+											"name": "slotted",
+											"start": 266,
+											"end": 275
+										}
+									],
 									"start": 266,
-									"end": 275
+									"end": 285
 								}
 							]
 						}
@@ -234,58 +282,89 @@
 					"end": 359,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 306,
 							"end": 359,
 							"children": [
 								{
-									"type": "PseudoClassSelector",
-									"name": "is",
-									"args": {
-										"type": "SelectorList",
-										"start": 324,
-										"end": 355,
-										"children": [
-											{
-												"type": "Selector",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "PseudoClassSelector",
+											"name": "is",
+											"args": {
+												"type": "SelectorList",
 												"start": 324,
-												"end": 330,
-												"children": [
-													{
-														"type": "TypeSelector",
-														"name": "button",
-														"start": 324,
-														"end": 330
-													}
-												]
-											},
-											{
-												"type": "Selector",
-												"start": 349,
 												"end": 355,
 												"children": [
 													{
-														"type": "TypeSelector",
-														"name": "h1",
+														"type": "ComplexSelector",
+														"start": 324,
+														"end": 330,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "TypeSelector",
+																		"name": "button",
+																		"start": 324,
+																		"end": 330
+																	}
+																],
+																"start": 324,
+																"end": 330
+															}
+														]
+													},
+													{
+														"type": "ComplexSelector",
 														"start": 349,
-														"end": 351
-													},
-													{
-														"type": "Combinator",
-														"name": "+",
-														"start": 352,
-														"end": 353
-													},
-													{
-														"type": "TypeSelector",
-														"name": "p",
-														"start": 354,
-														"end": 355
+														"end": 355,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "TypeSelector",
+																		"name": "h1",
+																		"start": 349,
+																		"end": 351
+																	}
+																],
+																"start": 349,
+																"end": 351
+															},
+															{
+																"type": "RelativeSelector",
+																"combinator": {
+																	"type": "Combinator",
+																	"name": "+",
+																	"start": 352,
+																	"end": 353
+																},
+																"selectors": [
+																	{
+																		"type": "TypeSelector",
+																		"name": "p",
+																		"start": 354,
+																		"end": 355
+																	}
+																],
+																"start": 352,
+																"end": 355
+															}
+														]
 													}
 												]
-											}
-										]
-									},
+											},
+											"start": 306,
+											"end": 359
+										}
+									],
 									"start": 306,
 									"end": 359
 								}

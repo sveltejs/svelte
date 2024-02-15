@@ -1,6 +1,6 @@
 {
 	"css": {
-		"type": "Style",
+		"type": "StyleSheet",
 		"start": 36,
 		"end": 205,
 		"attributes": [],
@@ -21,13 +21,21 @@
 					"end": 139,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 137,
 							"end": 139,
 							"children": [
 								{
-									"type": "TypeSelector",
-									"name": "h1",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "TypeSelector",
+											"name": "h1",
+											"start": 137,
+											"end": 139
+										}
+									],
 									"start": 137,
 									"end": 139
 								}

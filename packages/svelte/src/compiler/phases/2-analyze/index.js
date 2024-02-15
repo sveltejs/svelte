@@ -13,7 +13,6 @@ import * as b from '../../utils/builders.js';
 import { ReservedKeywords, Runes, SVGElements } from '../constants.js';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import { merge } from '../visitors.js';
-import { Stylesheet } from '../../css/Stylesheet.js';
 import { validation_legacy, validation_runes, validation_runes_js } from './validation.js';
 import { warn } from '../../warnings.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
@@ -21,6 +20,9 @@ import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
 import { DelegatedEvents, namespace_svg } from '../../../constants.js';
 import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
+import { css_visitors } from './css/css-analyze.js';
+import { prune } from './css/css-prune.js';
+import { hash } from './utils.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -340,13 +342,6 @@ export function analyze_component(root, options) {
 		instance,
 		template,
 		elements: [],
-		stylesheet: new Stylesheet({
-			ast: root.css,
-			// TODO are any of these necessary or can we just pass in the whole `analysis` object later?
-			filename: options.filename || 'input.svelte',
-			component_name,
-			get_css_hash: options.cssHash
-		}),
 		runes,
 		immutable: runes || options.immutable,
 		exports: [],
@@ -360,7 +355,19 @@ export function analyze_component(root, options) {
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
 		slot_names: new Set(),
-		warnings
+		warnings,
+		css: {
+			ast: root.css,
+			hash: root.css
+				? options.cssHash({
+						css: root.css.content.styles,
+						filename: options.filename ?? '<unknown>',
+						name: component_name,
+						hash
+					})
+				: '',
+			keyframes: []
+		}
 	};
 
 	if (analysis.runes) {
@@ -452,13 +459,68 @@ export function analyze_component(root, options) {
 		}
 	}
 
-	analysis.stylesheet.validate(analysis);
+	if (analysis.css.ast) {
+		// validate
+		walk(analysis.css.ast, analysis.css, css_visitors);
 
-	for (const element of analysis.elements) {
-		analysis.stylesheet.apply(element);
+		// mark nodes as scoped/unused/empty etc
+		for (const element of analysis.elements) {
+			prune(analysis.css.ast, element);
+		}
+
+		outer: for (const element of analysis.elements) {
+			if (element.metadata.scoped) {
+				// Dynamic elements in dom mode always use spread for attributes and therefore shouldn't have a class attribute added to them
+				// TODO this happens during the analysis phase, which shouldn't know anything about client vs server
+				if (element.type === 'SvelteElement' && options.generate === 'client') continue;
+
+				/** @type {import('#compiler').Attribute | undefined} */
+				let class_attribute = undefined;
+
+				for (const attribute of element.attributes) {
+					if (attribute.type === 'SpreadAttribute') {
+						// The spread method appends the hash to the end of the class attribute on its own
+						continue outer;
+					}
+
+					if (attribute.type !== 'Attribute') continue;
+					if (attribute.name.toLowerCase() !== 'class') continue;
+
+					class_attribute = attribute;
+				}
+
+				if (class_attribute && class_attribute.value !== true) {
+					const chunks = class_attribute.value;
+
+					if (chunks.length === 1 && chunks[0].type === 'Text') {
+						chunks[0].data += ` ${analysis.css.hash}`;
+					} else {
+						chunks.push({
+							type: 'Text',
+							data: ` ${analysis.css.hash}`,
+							raw: ` ${analysis.css.hash}`,
+							start: -1,
+							end: -1,
+							parent: null
+						});
+					}
+				} else {
+					element.attributes.push(
+						create_attribute('class', -1, -1, [
+							{
+								type: 'Text',
+								data: analysis.css.hash,
+								raw: analysis.css.hash,
+								parent: null,
+								start: -1,
+								end: -1
+							}
+						])
+					);
+				}
+			}
+		}
 	}
-
-	analysis.stylesheet.reify(options.generate === 'client');
 
 	// TODO
 	// analysis.stylesheet.warn_on_unused_selectors(analysis);

@@ -3,6 +3,7 @@ import { VERSION } from '../../../version.js';
 import { server_component, server_module } from './server/transform-server.js';
 import { client_component, client_module } from './client/transform-client.js';
 import { getLocator } from 'locate-character';
+import { render_stylesheet } from './css/index.js';
 import { merge_with_preprocessor_map, get_source_name } from '../../utils/mapped_code.js';
 
 /**
@@ -51,8 +52,8 @@ export function transform_component(analysis, source, options) {
 	merge_with_preprocessor_map(js, options, js_source_name);
 
 	const css =
-		analysis.stylesheet.has_styles && !analysis.inject_styles
-			? analysis.stylesheet.render(source, options)
+		analysis.css.ast && !analysis.inject_styles
+			? render_stylesheet(source, analysis, options)
 			: null;
 
 	return {

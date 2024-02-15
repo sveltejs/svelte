@@ -1,7 +1,14 @@
+import { walk } from 'zimmerframe';
 import { get_possible_values } from './utils.js';
-import { regex_starts_with_whitespace, regex_ends_with_whitespace } from '../phases/patterns.js';
-import { error } from '../errors.js';
-import { Stylesheet } from './Stylesheet.js';
+import { regex_ends_with_whitespace, regex_starts_with_whitespace } from '../../patterns.js';
+
+/**
+ * @typedef {{
+ *   stylesheet: import('#compiler').Css.StyleSheet;
+ *   element: import('#compiler').RegularElement | import('#compiler').SvelteElement;
+ * }} State
+ */
+/** @typedef {typeof NodeExist[keyof typeof NodeExist]} NodeExistsValue */
 
 const NO_MATCH = 'NO_MATCH';
 const POSSIBLE_MATCH = 'POSSIBLE_MATCH';
@@ -12,216 +19,59 @@ const NodeExist = /** @type {const} */ ({
 	Definitely: 1
 });
 
-/** @typedef {typeof NodeExist[keyof typeof NodeExist]} NodeExistsValue */
-
 const whitelist_attribute_selector = new Map([
-	['details', new Set(['open'])],
-	['dialog', new Set(['open'])]
+	['details', ['open']],
+	['dialog', ['open']]
 ]);
 
-export class ComplexSelector {
-	/** @type {import('#compiler').Css.ComplexSelector} */
-	node;
+/**
+ *
+ * @param {import('#compiler').Css.StyleSheet} stylesheet
+ * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
+ */
+export function prune(stylesheet, element) {
+	/** @type {State} */
+	const state = { stylesheet, element };
 
-	/** @type {import('./Stylesheet.js').Stylesheet} */
-	stylesheet;
-
-	/** @type {RelativeSelector[]} */
-	relative_selectors;
-
-	/**
-	 * The `relative_selectors`, minus any trailing global selectors
-	 * (which includes `:root` and `:host`) since we ignore these
-	 * when determining if a selector is used.
-	 * @type {RelativeSelector[]}
-	 */
-	local_relative_selectors;
-
-	used = false;
-
-	/**
-	 * @param {import('#compiler').Css.ComplexSelector} node
-	 * @param {import('./Stylesheet.js').Stylesheet} stylesheet
-	 */
-	constructor(node, stylesheet) {
-		this.node = node;
-		this.stylesheet = stylesheet;
-
-		this.relative_selectors = group_selectors(node);
-
-		// take trailing :global(...) selectors out of consideration
-		const i = this.relative_selectors.findLastIndex((s) => !s.can_ignore());
-		this.local_relative_selectors = this.relative_selectors.slice(0, i + 1);
-
-		// if we have a `:root {...}` or `:global(...) {...}` selector, we need to mark
-		// this selector as `used` even if the component doesn't contain any nodes
-		this.used = this.local_relative_selectors.length === 0;
-	}
-
-	/** @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node */
-	apply(node) {
-		if (apply_selector(this.local_relative_selectors.slice(), node, this.stylesheet)) {
-			this.used = true;
-		}
-	}
-
-	/**
-	 * @param {import('magic-string').default} code
-	 * @param {string} modifier
-	 */
-	transform(code, modifier) {
-		/** @param {import('#compiler').Css.SimpleSelector} selector */
-		function remove_global_pseudo_class(selector) {
-			code
-				.remove(selector.start, selector.start + ':global('.length)
-				.remove(selector.end - 1, selector.end);
-		}
-
-		/**
-		 * @param {RelativeSelector} relative_selector
-		 * @param {string} modifier
-		 */
-		function encapsulate_block(relative_selector, modifier) {
-			for (const selector of relative_selector.selectors) {
-				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-					remove_global_pseudo_class(selector);
-				}
-			}
-
-			let i = relative_selector.selectors.length;
-			while (i--) {
-				const selector = relative_selector.selectors[i];
-
-				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
-					if (selector.name !== 'root' && selector.name !== 'host') {
-						if (i === 0) code.prependRight(selector.start, modifier);
-					}
-					continue;
-				}
-
-				if (selector.type === 'TypeSelector' && selector.name === '*') {
-					code.update(selector.start, selector.end, modifier);
-				} else {
-					code.appendLeft(selector.end, modifier);
-				}
-
-				break;
-			}
-		}
-
-		let first = true;
-		for (const relative_selector of this.relative_selectors) {
-			if (relative_selector.is_global) {
-				remove_global_pseudo_class(relative_selector.selectors[0]);
-			}
-
-			if (relative_selector.should_encapsulate) {
-				// for the first occurrence, we use a classname selector, so that every
-				// encapsulated selector gets a +0-1-0 specificity bump. thereafter,
-				// we use a `:where` selector, which does not affect specificity
-				encapsulate_block(relative_selector, first ? modifier : `:where(${modifier})`);
-				first = false;
-			}
-		}
-	}
-
-	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
-	validate(analysis) {
-		this.validate_global_placement();
-		this.validate_global_with_multiple_selectors();
-		this.validate_global_compound_selector();
-		this.validate_invalid_combinator_without_selector(analysis);
-	}
-
-	validate_global_placement() {
-		let start = 0;
-		let end = this.relative_selectors.length;
-		for (; start < end; start += 1) {
-			if (!this.relative_selectors[start].is_global) break;
-		}
-		for (; end > start; end -= 1) {
-			if (!this.relative_selectors[end - 1].is_global) break;
-		}
-		for (let i = start; i < end; i += 1) {
-			if (this.relative_selectors[i].is_global) {
-				error(this.relative_selectors[i].selectors[0], 'invalid-css-global-placement');
-			}
-		}
-	}
-
-	validate_global_with_multiple_selectors() {
-		if (this.relative_selectors.length === 1 && this.relative_selectors[0].selectors.length === 1) {
-			// standalone :global() with multiple selectors is OK
-			return;
-		}
-		for (const relative_selector of this.relative_selectors) {
-			for (const selector of relative_selector.selectors) {
-				if (
-					selector.type === 'PseudoClassSelector' &&
-					selector.name === 'global' &&
-					selector.args !== null &&
-					selector.args.children.length > 1
-				) {
-					error(selector, 'invalid-css-global-selector');
-				}
-			}
-		}
-	}
-
-	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
-	validate_invalid_combinator_without_selector(analysis) {
-		for (let i = 0; i < this.relative_selectors.length; i++) {
-			const relative_selector = this.relative_selectors[i];
-			if (relative_selector.selectors.length === 0) {
-				error(this.node, 'invalid-css-selector');
-			}
-		}
-	}
-
-	validate_global_compound_selector() {
-		for (const relative_selector of this.relative_selectors) {
-			if (relative_selector.selectors.length === 1) continue;
-
-			for (let i = 0; i < relative_selector.selectors.length; i++) {
-				const selector = relative_selector.selectors[i];
-
-				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-					const child = selector.args?.children[0].children[0];
-					if (
-						child?.type === 'TypeSelector' &&
-						!/[.:#]/.test(child.name[0]) &&
-						(i !== 0 ||
-							relative_selector.selectors
-								.slice(1)
-								.some(
-									(s) => s.type !== 'PseudoElementSelector' && s.type !== 'PseudoClassSelector'
-								))
-					) {
-						error(selector, 'invalid-css-global-selector-list');
-					}
-				}
-			}
-		}
-	}
+	walk(stylesheet, state, visitors);
 }
 
+/** @type {import('zimmerframe').Visitors<import('#compiler').Css.Node, State>} */
+const visitors = {
+	ComplexSelector(node, context) {
+		context.next();
+
+		const i = node.children.findLastIndex((child) => {
+			return !child.metadata.is_global && !child.metadata.is_host && !child.metadata.is_root;
+		});
+
+		const relative_selectors = node.children.slice(0, i + 1);
+
+		if (apply_selector(relative_selectors, context.state.element, context.state.stylesheet)) {
+			node.metadata.used = true;
+		}
+	},
+	RelativeSelector(node, context) {
+		// for now, don't visit children (i.e. inside `:foo(...)`)
+		// this will likely change when we implement `:is(...)` etc
+	}
+};
+
 /**
- * @param {RelativeSelector[]} relative_selectors
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} node
- * @param {Stylesheet} stylesheet
+ * @param {import('#compiler').Css.RelativeSelector[]} relative_selectors
+ * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} element
+ * @param {import('#compiler').Css.StyleSheet} stylesheet
  * @returns {boolean}
  */
-function apply_selector(relative_selectors, node, stylesheet) {
+function apply_selector(relative_selectors, element, stylesheet) {
+	if (!element) {
+		return relative_selectors.every(({ metadata }) => metadata.is_global || metadata.is_host);
+	}
+
 	const relative_selector = relative_selectors.pop();
 	if (!relative_selector) return false;
-	if (!node) {
-		return (
-			(relative_selector.is_global &&
-				relative_selectors.every((relative_selector) => relative_selector.is_global)) ||
-			(relative_selector.is_host && relative_selectors.length === 0)
-		);
-	}
-	const applies = block_might_apply_to_node(relative_selector, node);
+
+	const applies = relative_selector_might_apply_to_node(relative_selector, element);
 
 	if (applies === NO_MATCH) {
 		return false;
@@ -230,17 +80,17 @@ function apply_selector(relative_selectors, node, stylesheet) {
 	/**
 	 * Mark both the compound selector and the node it selects as encapsulated,
 	 * for transformation in a later step
-	 * @param {RelativeSelector} relative_selector
-	 * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
+	 * @param {import('#compiler').Css.RelativeSelector} relative_selector
+	 * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
 	 */
-	function mark(relative_selector, node) {
-		relative_selector.should_encapsulate = true;
-		stylesheet.nodes_with_css_class.add(node);
+	function mark(relative_selector, element) {
+		relative_selector.metadata.scoped = true;
+		element.metadata.scoped = true;
 		return true;
 	}
 
 	if (applies === UNKNOWN_SELECTOR) {
-		return mark(relative_selector, node);
+		return mark(relative_selector, element);
 	}
 
 	if (relative_selector.combinator) {
@@ -248,87 +98,99 @@ function apply_selector(relative_selectors, node, stylesheet) {
 			relative_selector.combinator.type === 'Combinator' &&
 			relative_selector.combinator.name === ' '
 		) {
-			for (const ancestor_block of relative_selectors) {
-				if (ancestor_block.is_global) {
+			for (const ancestor_selector of relative_selectors) {
+				if (ancestor_selector.metadata.is_global) {
 					continue;
 				}
-				if (ancestor_block.is_host) {
-					return mark(relative_selector, node);
+
+				if (ancestor_selector.metadata.is_host) {
+					return mark(relative_selector, element);
 				}
+
 				/** @type {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} */
-				let parent = node;
+				let parent = element;
 				let matched = false;
 				while ((parent = get_element_parent(parent))) {
-					if (block_might_apply_to_node(ancestor_block, parent) !== NO_MATCH) {
-						mark(ancestor_block, parent);
+					if (relative_selector_might_apply_to_node(ancestor_selector, parent) !== NO_MATCH) {
+						mark(ancestor_selector, parent);
 						matched = true;
 					}
 				}
+
 				if (matched) {
-					return mark(relative_selector, node);
+					return mark(relative_selector, element);
 				}
 			}
-			if (relative_selectors.every((relative_selector) => relative_selector.is_global)) {
-				return mark(relative_selector, node);
+
+			if (relative_selectors.every((relative_selector) => relative_selector.metadata.is_global)) {
+				return mark(relative_selector, element);
 			}
+
 			return false;
-		} else if (relative_selector.combinator.name === '>') {
+		}
+
+		if (relative_selector.combinator.name === '>') {
 			const has_global_parent = relative_selectors.every(
-				(relative_selector) => relative_selector.is_global
+				(relative_selector) => relative_selector.metadata.is_global
 			);
+
 			if (
 				has_global_parent ||
-				apply_selector(relative_selectors, get_element_parent(node), stylesheet)
+				apply_selector(relative_selectors, get_element_parent(element), stylesheet)
 			) {
-				return mark(relative_selector, node);
+				return mark(relative_selector, element);
 			}
+
 			return false;
-		} else if (
-			relative_selector.combinator.name === '+' ||
-			relative_selector.combinator.name === '~'
-		) {
+		}
+
+		if (relative_selector.combinator.name === '+' || relative_selector.combinator.name === '~') {
 			const siblings = get_possible_element_siblings(
-				node,
+				element,
 				relative_selector.combinator.name === '+'
 			);
+
 			let has_match = false;
 			// NOTE: if we have :global(), we couldn't figure out what is selected within `:global` due to the
 			// css-tree limitation that does not parse the inner selector of :global
 			// so unless we are sure there will be no sibling to match, we will consider it as matched
 			const has_global = relative_selectors.some(
-				(relative_selector) => relative_selector.is_global
+				(relative_selector) => relative_selector.metadata.is_global
 			);
+
 			if (has_global) {
-				if (siblings.size === 0 && get_element_parent(node) !== null) {
+				if (siblings.size === 0 && get_element_parent(element) !== null) {
 					return false;
 				}
-				return mark(relative_selector, node);
+				return mark(relative_selector, element);
 			}
+
 			for (const possible_sibling of siblings.keys()) {
 				if (apply_selector(relative_selectors.slice(), possible_sibling, stylesheet)) {
-					mark(relative_selector, node);
+					mark(relative_selector, element);
 					has_match = true;
 				}
 			}
+
 			return has_match;
 		}
 
 		// TODO other combinators
-		return mark(relative_selector, node);
+		return mark(relative_selector, element);
 	}
 
-	return mark(relative_selector, node);
+	return mark(relative_selector, element);
 }
 
 const regex_backslash_and_following_character = /\\(.)/g;
 
 /**
- * @param {RelativeSelector} relative_selector
+ * @param {import('#compiler').Css.RelativeSelector} relative_selector
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
  * @returns {NO_MATCH | POSSIBLE_MATCH | UNKNOWN_SELECTOR}
  */
-function block_might_apply_to_node(relative_selector, node) {
-	if (relative_selector.is_host || relative_selector.is_root) return NO_MATCH;
+function relative_selector_might_apply_to_node(relative_selector, node) {
+	if (relative_selector.metadata.is_host || relative_selector.metadata.is_root) return NO_MATCH;
 
 	let i = relative_selector.selectors.length;
 	while (i--) {
@@ -356,7 +218,7 @@ function block_might_apply_to_node(relative_selector, node) {
 		if (selector.type === 'AttributeSelector') {
 			const whitelisted = whitelist_attribute_selector.get(node.name.toLowerCase());
 			if (
-				!whitelisted?.has(selector.name.toLowerCase()) &&
+				!whitelisted?.includes(selector.name.toLowerCase()) &&
 				!attribute_matches(
 					node,
 					selector.name,
@@ -801,78 +663,4 @@ function loop_child(children, adjacent_only) {
 		}
 	}
 	return result;
-}
-
-/**
- * Represents a compound selector (aka an array of simple selectors) plus
- * a preceding combinator (if not the first in the list). Given this...
- *
- * ```css
- * .a + .b.c {...}
- * ```
- *
- * ...both `.a` and `+ .b.c` are relative selectors.
- * Combined, they are a complex selector.
- */
-class RelativeSelector {
-	/** @type {import('#compiler').Css.Combinator | null} */
-	combinator;
-
-	/** @type {import('#compiler').Css.SimpleSelector[]} */
-	selectors = [];
-
-	is_host = false;
-	is_root = false;
-	should_encapsulate = false;
-	start = -1;
-	end = -1;
-
-	/** @param {import('#compiler').Css.Combinator | null} combinator */
-	constructor(combinator) {
-		this.combinator = combinator;
-	}
-
-	/** @param {import('#compiler').Css.SimpleSelector} selector */
-	add(selector) {
-		if (this.selectors.length === 0) {
-			this.start = selector.start;
-			this.is_host = selector.type === 'PseudoClassSelector' && selector.name === 'host';
-		}
-		this.is_root =
-			this.is_root || (selector.type === 'PseudoClassSelector' && selector.name === 'root');
-		this.selectors.push(selector);
-		this.end = selector.end;
-	}
-
-	can_ignore() {
-		return this.is_global || this.is_host || this.is_root;
-	}
-
-	get is_global() {
-		return (
-			this.selectors.length >= 1 &&
-			this.selectors[0].type === 'PseudoClassSelector' &&
-			this.selectors[0].name === 'global' &&
-			this.selectors.every(
-				(selector) =>
-					selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector'
-			)
-		);
-	}
-}
-
-/** @param {import('#compiler').Css.ComplexSelector} selector */
-function group_selectors(selector) {
-	let relative_selector = new RelativeSelector(null);
-	const relative_selectors = [relative_selector];
-
-	selector.children.forEach((child) => {
-		if (child.type === 'Combinator') {
-			relative_selector = new RelativeSelector(child);
-			relative_selectors.push(relative_selector);
-		} else {
-			relative_selector.add(child);
-		}
-	});
-	return relative_selectors;
 }

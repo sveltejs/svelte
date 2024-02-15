@@ -1,8 +1,17 @@
-import type { Style } from '../types/template';
-
 export interface BaseNode {
 	start: number;
 	end: number;
+}
+
+export interface StyleSheet extends BaseNode {
+	type: 'StyleSheet';
+	attributes: any[]; // TODO
+	children: Array<Atrule | Rule>;
+	content: {
+		start: number;
+		end: number;
+		styles: string;
+	};
 }
 
 export interface Atrule extends BaseNode {
@@ -24,8 +33,23 @@ export interface SelectorList extends BaseNode {
 }
 
 export interface ComplexSelector extends BaseNode {
-	type: 'Selector';
-	children: Array<SimpleSelector | Combinator>;
+	type: 'ComplexSelector';
+	children: RelativeSelector[];
+	metadata: {
+		used: boolean;
+	};
+}
+
+export interface RelativeSelector extends BaseNode {
+	type: 'RelativeSelector';
+	combinator: null | Combinator;
+	selectors: SimpleSelector[];
+	metadata: {
+		is_global: boolean;
+		is_host: boolean;
+		is_root: boolean;
+		scoped: boolean;
+	};
 }
 
 export interface TypeSelector extends BaseNode {
@@ -99,4 +123,12 @@ export interface Declaration extends BaseNode {
 }
 
 // for zimmerframe
-export type Node = Style | Rule | Atrule | Declaration;
+export type Node =
+	| StyleSheet
+	| Rule
+	| Atrule
+	| ComplexSelector
+	| RelativeSelector
+	| Combinator
+	| SimpleSelector
+	| Declaration;

@@ -102,14 +102,7 @@ export function convert(source, ast) {
 					},
 					instance,
 					module,
-					css: ast.css
-						? walk(ast.css, null, {
-								_(node) {
-									// @ts-ignore
-									delete node.parent;
-								}
-							})
-						: undefined
+					css: ast.css ? visit(ast.css) : undefined
 				};
 			},
 			AnimateDirective(node) {
@@ -191,6 +184,24 @@ export function convert(source, ast) {
 			},
 			ClassDirective(node) {
 				return { ...node, type: 'Class' };
+			},
+			ComplexSelector(node, { visit }) {
+				const children = [];
+
+				for (const child of node.children) {
+					if (child.combinator) {
+						children.push(child.combinator);
+					}
+
+					children.push(...child.selectors);
+				}
+
+				return {
+					type: 'Selector',
+					start: node.start,
+					end: node.end,
+					children
+				};
 			},
 			Component(node, { visit }) {
 				return {
@@ -388,6 +399,13 @@ export function convert(source, ast) {
 			},
 			SpreadAttribute(node) {
 				return { ...node, type: 'Spread' };
+			},
+			StyleSheet(node, context) {
+				return {
+					...node,
+					...context.next(),
+					type: 'Style'
+				};
 			},
 			SvelteBody(node, { visit }) {
 				return {
