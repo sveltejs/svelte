@@ -325,7 +325,6 @@ export const javascript_visitors_runes = {
 								)
 							)
 						);
-						binding.expression = b.call('$.get', binding.node);
 					}
 				}
 				continue;
