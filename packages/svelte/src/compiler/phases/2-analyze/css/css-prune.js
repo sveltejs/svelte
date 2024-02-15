@@ -71,7 +71,7 @@ function apply_selector(relative_selectors, element, stylesheet) {
 	const relative_selector = relative_selectors.pop();
 	if (!relative_selector) return false;
 
-	const applies = block_might_apply_to_node(relative_selector, element);
+	const applies = relative_selector_might_apply_to_node(relative_selector, element);
 
 	if (applies === NO_MATCH) {
 		return false;
@@ -98,12 +98,12 @@ function apply_selector(relative_selectors, element, stylesheet) {
 			relative_selector.combinator.type === 'Combinator' &&
 			relative_selector.combinator.name === ' '
 		) {
-			for (const ancestor_block of relative_selectors) {
-				if (ancestor_block.metadata.is_global) {
+			for (const ancestor_selector of relative_selectors) {
+				if (ancestor_selector.metadata.is_global) {
 					continue;
 				}
 
-				if (ancestor_block.metadata.is_host) {
+				if (ancestor_selector.metadata.is_host) {
 					return mark(relative_selector, element);
 				}
 
@@ -111,8 +111,8 @@ function apply_selector(relative_selectors, element, stylesheet) {
 				let parent = element;
 				let matched = false;
 				while ((parent = get_element_parent(parent))) {
-					if (block_might_apply_to_node(ancestor_block, parent) !== NO_MATCH) {
-						mark(ancestor_block, parent);
+					if (relative_selector_might_apply_to_node(ancestor_selector, parent) !== NO_MATCH) {
+						mark(ancestor_selector, parent);
 						matched = true;
 					}
 				}
@@ -189,7 +189,7 @@ const regex_backslash_and_following_character = /\\(.)/g;
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
  * @returns {NO_MATCH | POSSIBLE_MATCH | UNKNOWN_SELECTOR}
  */
-function block_might_apply_to_node(relative_selector, node) {
+function relative_selector_might_apply_to_node(relative_selector, node) {
 	if (relative_selector.metadata.is_host || relative_selector.metadata.is_root) return NO_MATCH;
 
 	let i = relative_selector.selectors.length;
