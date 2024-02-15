@@ -19,7 +19,11 @@ export type Updater<T> = (value: T) => T;
  * subscriber unsubscribes.
  */
 export type StartStopNotifier<T> = (
-	set: (value: T) => void,
+	set: ((value: T) => void) & {
+		set: (value: T) => void,
+		update: (fn: Updater<T>) => void,
+		invalidate: () => void
+	},
 	update: (fn: Updater<T>) => void
 ) => void | (() => void);
 
