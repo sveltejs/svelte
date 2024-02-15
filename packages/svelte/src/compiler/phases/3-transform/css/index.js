@@ -3,7 +3,18 @@ import { walk } from 'zimmerframe';
 import { is_keyframes_node, regex_css_name_boundary, remove_css_prefix } from '../../css.js';
 import { merge_with_preprocessor_map } from '../../../utils/mapped_code.js';
 
-/** @typedef {{ code: MagicString, dev: boolean, hash: string, selector: string, keyframes: string[] }} State */
+/**
+ * @typedef {{
+ *   code: MagicString;
+ *   dev: boolean;
+ *   hash: string;
+ *   selector: string;
+ *   keyframes: string[];
+ *   specificity: {
+ *     bumped: boolean
+ *   }
+ * }} State
+ */
 
 /**
  *
@@ -20,7 +31,10 @@ export function render_stylesheet(source, analysis, options) {
 		dev: options.dev,
 		hash: analysis.css.hash,
 		selector: `.${analysis.css.hash}`,
-		keyframes: analysis.css.keyframes
+		keyframes: analysis.css.keyframes,
+		specificity: {
+			bumped: false
+		}
 	};
 
 	const ast = /** @type {import('#compiler').Css.StyleSheet} */ (analysis.css.ast);
@@ -124,7 +138,7 @@ const visitors = {
 
 		next();
 	},
-	SelectorList(node, { state, next }) {
+	SelectorList(node, { state, next, path }) {
 		const used = node.children.filter((s) => s.metadata.used);
 
 		if (used.length < node.children.length) {
@@ -159,7 +173,11 @@ const visitors = {
 			}
 		}
 
-		next();
+		const parent = /** @type {import('#compiler').Css.Node} */ (path.at(-1));
+		next({
+			...state,
+			specificity: parent.type === 'Rule' ? { bumped: false } : state.specificity
+		});
 	},
 	ComplexSelector(node, context) {
 		/** @param {import('#compiler').Css.SimpleSelector} selector */
@@ -168,8 +186,6 @@ const visitors = {
 				.remove(selector.start, selector.start + ':global('.length)
 				.remove(selector.end - 1, selector.end);
 		}
-
-		let first = true;
 
 		for (const relative_selector of node.children) {
 			if (relative_selector.metadata.is_global) {
@@ -192,9 +208,9 @@ const visitors = {
 				// encapsulated selector gets a +0-1-0 specificity bump. thereafter,
 				// we use a `:where` selector, which does not affect specificity
 				let modifier = context.state.selector;
-				if (!first) modifier = `:where(${modifier})`;
+				if (context.state.specificity.bumped) modifier = `:where(${modifier})`;
 
-				first = false;
+				context.state.specificity.bumped = true;
 
 				// TODO err... can this happen?
 				for (const selector of relative_selector.selectors) {
@@ -225,7 +241,6 @@ const visitors = {
 
 					break;
 				}
-				first = false;
 			}
 		}
 

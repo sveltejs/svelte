@@ -1,4 +1,4 @@
 
-	x.svelte-xyz :is(y:where(.svelte-xyz), /* (unused) z */) {
+	x.svelte-xyz :is(y:where(.svelte-xyz) /* (unused) z*/) {
 		color: purple;
 	}
