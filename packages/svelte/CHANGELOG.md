@@ -1,5 +1,11 @@
 # svelte
 
+## 4.2.11
+
+### Patch Changes
+
+- fix: check that component wasn't instantiated in `connectedCallback` ([#10466](https://github.com/sveltejs/svelte/pull/10466))
+
 ## 4.2.10
 
 ### Patch Changes
