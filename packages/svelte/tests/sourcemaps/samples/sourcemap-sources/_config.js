@@ -1,8 +1,6 @@
 import MagicString, { Bundle } from 'magic-string';
 import * as path from 'node:path';
-import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
 import { test } from '../../test';
-import { locate } from 'locate-character';
 
 /**
  * @param {Bundle} bundle
@@ -34,8 +32,12 @@ function result(bundle, filename) {
 	};
 }
 
+const FOO = 'var answer = 42; // foo.js\n';
+const BAR = 'console.log(answer); // bar.js\n';
+const FOO2 = 'var answer2 = 84; // foo2.js\n';
+const BAR2 = 'console.log(answer2); // bar2.js\n';
+
 export default test({
-	skip: true,
 	js_map_sources: [
 		'../../input.svelte',
 		'../../foo.js',
@@ -49,8 +51,8 @@ export default test({
 				const bundle = new Bundle();
 
 				add(bundle, path.basename(filename), content);
-				add(bundle, 'foo.js', 'var answer = 42; // foo.js\n');
-				add(bundle, 'bar.js', 'console.log(answer); // bar.js\n');
+				add(bundle, 'foo.js', FOO);
+				add(bundle, 'bar.js', BAR);
 
 				return result(bundle, path.basename(filename));
 			}
@@ -60,33 +62,31 @@ export default test({
 				const bundle = new Bundle();
 
 				add(bundle, path.basename(filename), content);
-				add(bundle, 'foo2.js', 'var answer2 = 84; // foo2.js\n');
-				add(bundle, 'bar2.js', 'console.log(answer2); // bar2.js\n');
+				add(bundle, 'foo2.js', FOO2);
+				add(bundle, 'bar2.js', BAR2);
 
 				return result(bundle, path.basename(filename));
 			}
 		}
 	],
-	test({ assert, map_client, code_client }) {
-		const map = new TraceMap(map_client);
-		// sourcemap stores location only for 'answer = 42;'
-		// not for 'var answer = 42;'
-		/** @type {const} */ ([
-			['foo.js', 'answer = 42;', 4],
-			['bar.js', 'console.log(answer);', 0],
-			['foo2.js', 'answer2 = 84;', 4],
-			['bar2.js', 'console.log(answer2);', 0]
-		]).forEach(([sourcefile, content, column]) => {
-			assert.deepEqual(
-				originalPositionFor(map, locate(code_client, content)),
-				{
-					source: sourcefile,
-					name: null,
-					line: 1,
-					column
-				},
-				`failed to locate "${content}" from "${sourcefile}"`
-			);
-		});
-	}
+	client: [
+		{
+			code: FOO,
+			str: 'answer'
+		},
+		{
+			code: BAR,
+			str: 'answer',
+			idxGenerated: 1
+		},
+		{
+			code: FOO2,
+			str: 'answer2'
+		},
+		{
+			code: BAR2,
+			str: 'answer2',
+			idxGenerated: 1
+		}
+	]
 });

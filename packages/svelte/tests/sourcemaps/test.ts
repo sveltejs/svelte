@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import { assert } from 'vitest';
-import { getLocator } from 'locate-character';
+import { getLocator, locate } from 'locate-character';
 import { suite, type BaseTest } from '../suite.js';
 import { compile_directory } from '../helpers.js';
 import { decode } from '@jridgewell/sourcemap-codec';
@@ -8,11 +8,16 @@ import { decode } from '@jridgewell/sourcemap-codec';
 type SourceMapEntry =
 	| string
 	| {
+			/** If not the first occurence, but the nth should be found */
 			idxOriginal?: number;
+			/** If not the first occurence, but the nth should be found */
 			idxGenerated?: number;
+			/** The original string to find */
 			str: string;
+			/** The generated string to find. You can omit this if it's the same as the original string */
 			strGenerated?: string | null;
-			filename?: string;
+			/** If the original code lives in a different file, pass the filename. You also need to set `files` in the config in this case */
+			code?: string;
 	  };
 
 interface SourcemapTest extends BaseTest {
@@ -21,7 +26,9 @@ interface SourcemapTest extends BaseTest {
 	preprocess?:
 		| import('../../src/compiler/public').PreprocessorGroup
 		| import('../../src/compiler/public').PreprocessorGroup[];
+	/** The expected `sources` array in the source map */
 	js_map_sources?: string[];
+	/** The expected `sources` array in the source map */
 	css_map_sources?: string[];
 	test?: (obj: {
 		assert: typeof assert;
@@ -33,9 +40,15 @@ interface SourcemapTest extends BaseTest {
 		map_client: any;
 		code_client: any;
 	}) => void;
+	/** filename -> content; needed when `filename` property is used */
+	files?: Record<string, string>;
+	/** Mappings to check in generated client code */
 	client?: SourceMapEntry[] | null;
+	/** Mappings to check in generated server code. If left out, will use the client code checks */
 	server?: SourceMapEntry[];
+	/** Mappings to check in generated css code */
 	css?: SourceMapEntry[] | null;
+	/** Mappings to check in preprocessed Svelte code */
 	preprocessed?: SourceMapEntry[];
 }
 
@@ -50,18 +63,32 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 	});
 
 	const input = fs.readFileSync(`${cwd}/input.svelte`, 'utf-8');
-	const input_locator = getLocator(input);
 
 	function compare(info: string, output: string, map: any, entries: SourceMapEntry[]) {
 		const output_locator = getLocator(output);
 
-		function find_original(str: string, idx = 0) {
-			const original = input_locator(input.indexOf(str, idx));
+		/** Find line/column of string in original code */
+		function find_original(entry: SourceMapEntry, idx = 0) {
+			let str;
+			let source;
+			if (typeof entry === 'string') {
+				str = entry;
+				source = input;
+			} else if (entry.code) {
+				str = entry.str;
+				source = entry.code;
+			} else {
+				str = entry.str;
+				source = input;
+			}
+
+			const original = locate(source, source.indexOf(str, idx));
 			if (!original)
 				throw new Error(`Could not find '${str}'${idx > 0 ? ` after index ${idx}` : ''} in input`);
 			return original;
 		}
 
+		/** Find line/column of string in generated code */
 		function find_generated(str: string, idx = 0) {
 			const generated = output_locator(output.indexOf(str, idx));
 			if (!generated)
@@ -77,15 +104,8 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 
 				const str = entry.str;
 
-				let original = find_original(str);
-				if (entry.idxOriginal) {
-					let i = entry.idxOriginal;
-					while (i-- > 0) {
-						original = find_original(str, original.character + 1);
-					}
-				}
-
-				const generated_str = typeof entry === 'string' ? str : entry.strGenerated ?? str;
+				// Find generated line/column
+				const generated_str = entry.strGenerated ?? str;
 				if (entry.strGenerated === null) {
 					if (!output.includes(generated_str)) continue;
 				}
@@ -97,6 +117,7 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 					}
 				}
 
+				// Find segment in source map pointing from generated to original
 				const segments = decoded[generated.line];
 				const segment = segments.find((segment) => segment[0] === generated.column);
 				if (!segment && entry.strGenerated !== null) {
@@ -111,17 +132,20 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 					continue;
 				}
 
+				// Find original line/column
+				let original = find_original(entry);
+				if (entry.idxOriginal) {
+					let i = entry.idxOriginal;
+					while (i-- > 0) {
+						original = find_original(entry, original.character + 1);
+					}
+				}
+
+				// Check that segment points to expected original
 				assert.equal(segment[2], original.line, `mapped line did not match for '${str}'`);
 				assert.equal(segment[3], original.column, `mapped column did not match for '${str}'`);
 
-				if (entry.filename) {
-					assert.equal(
-						map.sources[segment[1]!],
-						entry.filename,
-						`filename did not match for '${str}'`
-					);
-				}
-
+				// Same for end of string
 				const generated_end = generated.column + generated_str.length;
 				const end_segment = segments.find((segment) => segment[0] === generated_end);
 				if (!end_segment)
