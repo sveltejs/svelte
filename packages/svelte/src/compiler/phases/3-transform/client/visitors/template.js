@@ -321,7 +321,7 @@ function serialize_element_spread_attributes(attributes, context, element, eleme
 			element_id,
 			b.thunk(b.array(values)),
 			lowercase_attributes,
-			b.literal(context.state.analysis.stylesheet.id)
+			b.literal(context.state.analysis.css.hash)
 		)
 	);
 
@@ -344,7 +344,7 @@ function serialize_element_spread_attributes(attributes, context, element, eleme
 						b.id(id),
 						b.array(values),
 						lowercase_attributes,
-						b.literal(context.state.analysis.stylesheet.id)
+						b.literal(context.state.analysis.css.hash)
 					)
 				)
 			)
@@ -363,9 +363,9 @@ function serialize_element_spread_attributes(attributes, context, element, eleme
  */
 function serialize_dynamic_element_attributes(attributes, context, element_id) {
 	if (attributes.length === 0) {
-		if (context.state.analysis.stylesheet.id) {
+		if (context.state.analysis.css) {
 			context.state.init.push(
-				b.stmt(b.call('$.class_name', element_id, b.literal(context.state.analysis.stylesheet.id)))
+				b.stmt(b.call('$.class_name', element_id, b.literal(context.state.analysis.css.hash)))
 			);
 		}
 		return false;
@@ -398,7 +398,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 			'$.spread_dynamic_element_attributes_effect',
 			element_id,
 			b.thunk(b.array(values)),
-			b.literal(context.state.analysis.stylesheet.id)
+			b.literal(context.state.analysis.css.hash)
 		)
 	);
 
@@ -419,7 +419,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 						element_id,
 						b.id(id),
 						b.array(values),
-						b.literal(context.state.analysis.stylesheet.id)
+						b.literal(context.state.analysis.css.hash)
 					)
 				)
 			)
@@ -433,7 +433,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 					element_id,
 					b.literal(null),
 					b.array(values),
-					b.literal(context.state.analysis.stylesheet.id)
+					b.literal(context.state.analysis.css.hash)
 				)
 			)
 		);

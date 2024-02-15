@@ -43,14 +43,8 @@ export function transform_component(analysis, source, options) {
 	}
 
 	const css =
-		analysis.stylesheet.ast && !analysis.inject_styles
-			? render_stylesheet(
-					source,
-					analysis.stylesheet.ast,
-					options.filename ?? 'TODO',
-					options.dev,
-					options.cssHash
-				)
+		analysis.css.ast && !analysis.inject_styles
+			? render_stylesheet(source, analysis.css.ast, options.filename ?? 'TODO', options.dev)
 			: null;
 
 	return {

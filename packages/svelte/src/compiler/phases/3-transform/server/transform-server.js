@@ -760,7 +760,7 @@ function serialize_element_spread_attributes(
 		b.array(values),
 		lowercase_attributes,
 		is_svg,
-		b.literal(context.state.analysis.stylesheet.id)
+		b.literal(context.state.analysis.css.hash)
 	];
 
 	if (style_directives.length > 0 || class_directives.length > 0) {

@@ -1,6 +1,6 @@
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
-import { hash } from './utils.js';
+import { is_keyframes_node } from '../../css.js';
 
 /** @typedef {{ code: MagicString, dev: boolean, id: string, selector: string }} State */
 
@@ -10,17 +10,11 @@ import { hash } from './utils.js';
  * @param {import('#compiler').Css.StyleSheet} stylesheet
  * @param {string} file
  * @param {boolean} dev
- * @param {import('#compiler').CssHashGetter} get_css_hash
  */
-export function render_stylesheet(source, stylesheet, file, dev, get_css_hash) {
+export function render_stylesheet(source, stylesheet, file, dev) {
 	const code = new MagicString(source);
 
-	const id = get_css_hash({
-		filename: file,
-		name: 'TODO',
-		css: stylesheet.content.styles,
-		hash
-	});
+	const id = 'svelte-xyz'; // TODO
 
 	/** @type {State} */
 	const state = {
@@ -51,6 +45,24 @@ const visitors = {
 		context.state.code.addSourcemapLocation(node.start);
 		context.state.code.addSourcemapLocation(node.end);
 		context.next();
+	},
+	Atrule(node, { state, next }) {
+		if (is_keyframes_node(node)) {
+			let start = node.start + node.name.length + 1;
+			while (state.code.original[start] === ' ') start += 1;
+			let end = start;
+			while (state.code.original[end] !== '{' && state.code.original[end] !== ' ') end += 1;
+
+			if (node.prelude.startsWith('-global-')) {
+				state.code.remove(start, start + 8);
+			} else {
+				state.code.prependRight(start, `${state.id}-`);
+			}
+
+			return; // don't transform anything within
+		}
+
+		next();
 	},
 	Rule(node, { state, next }) {
 		// keep empty rules in dev, because it's convenient to

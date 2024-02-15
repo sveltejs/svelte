@@ -13,7 +13,6 @@ import * as b from '../../utils/builders.js';
 import { ReservedKeywords, Runes, SVGElements } from '../constants.js';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import { merge } from '../visitors.js';
-import { Stylesheet } from '../../css/Stylesheet.js';
 import { validation_legacy, validation_runes, validation_runes_js } from './validation.js';
 import { warn } from '../../warnings.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
@@ -23,6 +22,7 @@ import { DelegatedEvents, namespace_svg } from '../../../constants.js';
 import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
 import { validation_css } from './validation/css.js';
 import { prune } from './css/index.js';
+import { hash } from './utils.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -342,13 +342,6 @@ export function analyze_component(root, options) {
 		instance,
 		template,
 		elements: [],
-		stylesheet: new Stylesheet({
-			ast: root.css,
-			// TODO are any of these necessary or can we just pass in the whole `analysis` object later?
-			filename: options.filename ?? '<unknown>',
-			component_name,
-			get_css_hash: options.cssHash
-		}),
 		runes,
 		immutable: runes || options.immutable,
 		exports: [],
@@ -362,7 +355,19 @@ export function analyze_component(root, options) {
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
 		slot_names: new Set(),
-		warnings
+		warnings,
+		css: {
+			ast: root.css,
+			hash: root.css
+				? options.cssHash({
+						css: root.css.content.styles,
+						filename: options.filename ?? '<unknown>',
+						name: component_name,
+						hash
+					})
+				: '',
+			keyframes: []
+		}
 	};
 
 	if (analysis.runes) {
@@ -454,15 +459,13 @@ export function analyze_component(root, options) {
 		}
 	}
 
-	const id = 'svelte-xyz'; // TODO
-
-	if (root.css) {
+	if (analysis.css.ast) {
 		// validate
-		walk(root.css, {}, validation_css);
+		walk(analysis.css.ast, analysis.css, validation_css);
 
 		// mark nodes as scoped/unused/empty etc
 		for (const element of analysis.elements) {
-			prune(root.css, element);
+			prune(analysis.css.ast, element);
 		}
 
 		outer: for (const element of analysis.elements) {
@@ -490,12 +493,12 @@ export function analyze_component(root, options) {
 					const chunks = class_attribute.value;
 
 					if (chunks.length === 1 && chunks[0].type === 'Text') {
-						chunks[0].data += ` ${id}`;
+						chunks[0].data += ` ${analysis.css.hash}`;
 					} else {
 						chunks.push({
 							type: 'Text',
-							data: ` ${id}`,
-							raw: ` ${id}`,
+							data: ` ${analysis.css.hash}`,
+							raw: ` ${analysis.css.hash}`,
 							start: -1,
 							end: -1,
 							parent: null
@@ -504,7 +507,14 @@ export function analyze_component(root, options) {
 				} else {
 					element.attributes.push(
 						create_attribute('class', -1, -1, [
-							{ type: 'Text', data: id, raw: id, parent: null, start: -1, end: -1 }
+							{
+								type: 'Text',
+								data: analysis.css.hash,
+								raw: analysis.css.hash,
+								parent: null,
+								start: -1,
+								end: -1
+							}
 						])
 					);
 				}

@@ -1,4 +1,5 @@
 import { error } from '../../../errors.js';
+import { is_keyframes_node } from '../../css.js';
 
 /** @param {import('#compiler').Css.RelativeSelector} relative_selector */
 function is_global(relative_selector) {
@@ -14,10 +15,21 @@ function is_global(relative_selector) {
 	);
 }
 
+// TODO rename, this isn't just validation any more
 /**
- * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, {}>}
+ * @type {import('zimmerframe').Visitors<
+ *   import('#compiler').Css.Node,
+ *   NonNullable<import('../../types.js').ComponentAnalysis['css']>
+ * >}
  */
 export const validation_css = {
+	Atrule(node, context) {
+		if (is_keyframes_node(node)) {
+			if (!node.prelude.startsWith('-global-')) {
+				context.state.keyframes.push(node.prelude);
+			}
+		}
+	},
 	ComplexSelector(node, context) {
 		// ensure `:global(...)` is not used in the middle of a selector
 		{

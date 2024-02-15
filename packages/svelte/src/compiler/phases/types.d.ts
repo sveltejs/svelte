@@ -1,5 +1,6 @@
 import type {
 	Binding,
+	Css,
 	Fragment,
 	RegularElement,
 	SvelteElement,
@@ -51,7 +52,6 @@ export interface ComponentAnalysis extends Analysis {
 	root: ScopeRoot;
 	instance: Js;
 	template: Template;
-	stylesheet: Stylesheet;
 	elements: Array<RegularElement | SvelteElement>;
 	runes: boolean;
 	exports: Array<{ name: string; alias: string | null }>;
@@ -69,6 +69,11 @@ export interface ComponentAnalysis extends Analysis {
 	/** Identifiers that make up the `bind:group` expression -> internal group binding name */
 	binding_groups: Map<[key: string, bindings: Array<Binding | null>], Identifier>;
 	slot_names: Set<string>;
+	css: {
+		ast: Css.StyleSheet | null;
+		hash: string;
+		keyframes: string[];
+	};
 }
 
 declare module 'estree' {
