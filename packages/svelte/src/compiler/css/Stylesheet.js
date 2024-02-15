@@ -1,10 +1,9 @@
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
-import Selector from './Selector.js';
-import hash from '../utils/hash.js';
-import { push_array } from '../utils/push_array.js';
-import { create_attribute } from '../../nodes.js';
-import { merge_with_preprocessor_map } from '../../../utils/mapped_code.js';
+import { ComplexSelector } from './Selector.js';
+import { hash } from './utils.js';
+import { create_attribute } from '../phases/nodes.js'; // TODO move this
+import { merge_with_preprocessor_map } from '../utils/mapped_code.js';
 
 const regex_css_browser_prefix = /^-((webkit)|(moz)|(o)|(ms))-/;
 const regex_name_boundary = /^[\s,;}]$/;
@@ -48,27 +47,27 @@ function escape_comment_close(node, code) {
 }
 
 class Rule {
-	/** @type {import('./Selector.js').default[]} */
+	/** @type {ComplexSelector[]} */
 	selectors;
-
-	/** @type {Declaration[]} */
-	declarations;
 
 	/** @type {import('#compiler').Css.Rule} */
 	node;
 
-	/** @type {Atrule | undefined} */
+	/** @type {Stylesheet | Atrule} */
 	parent;
+
+	/** @type {Declaration[]} */
+	declarations;
 
 	/**
 	 * @param {import('#compiler').Css.Rule} node
 	 * @param {any} stylesheet
-	 * @param {Atrule | undefined} parent
+	 * @param {Stylesheet | Atrule} parent
 	 */
 	constructor(node, stylesheet, parent) {
 		this.node = node;
 		this.parent = parent;
-		this.selectors = node.prelude.children.map((node) => new Selector(node, stylesheet));
+		this.selectors = node.prelude.children.map((node) => new ComplexSelector(node, stylesheet));
 
 		this.declarations = /** @type {import('#compiler').Css.Declaration[]} */ (
 			node.block.children
@@ -80,55 +79,53 @@ class Rule {
 		this.selectors.forEach((selector) => selector.apply(node)); // TODO move the logic in here?
 	}
 
-	/** @param {boolean} dev */
-	is_used(dev) {
-		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node))
+	/** @returns {boolean} */
+	is_empty() {
+		if (this.declarations.length > 0) return false;
+
+		return true;
+	}
+
+	/** @returns {boolean} */
+	is_used() {
+		if (this.parent instanceof Atrule && is_keyframes_node(this.parent.node)) {
 			return true;
+		}
 
-		// keep empty rules in dev, because it's convenient to
-		// see them in devtools
-		if (this.declarations.length === 0) return dev;
+		for (const selector of this.selectors) {
+			if (selector.used) return true;
+		}
 
-		return this.selectors.some((s) => s.used);
+		return false;
 	}
 
 	/**
 	 * @param {import('magic-string').default} code
 	 * @param {string} id
 	 * @param {Map<string, string>} keyframes
-	 * @param {number} max_amount_class_specificity_increased
 	 */
-	transform(code, id, keyframes, max_amount_class_specificity_increased) {
-		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node)) {
+	transform(code, id, keyframes) {
+		if (this.parent instanceof Atrule && is_keyframes_node(this.parent.node)) {
 			return;
 		}
 
-		const attr = `.${id}`;
-		this.selectors.forEach((selector) =>
-			selector.transform(code, attr, max_amount_class_specificity_increased)
-		);
+		const modifier = `.${id}`;
+		this.selectors.forEach((selector) => selector.transform(code, modifier));
 		this.declarations.forEach((declaration) => declaration.transform(code, keyframes));
 	}
 
-	/** @param {import('../../types.js').ComponentAnalysis} analysis */
+	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
 	validate(analysis) {
 		this.selectors.forEach((selector) => {
 			selector.validate(analysis);
 		});
 	}
 
-	/** @param {(selector: import('./Selector.js').default) => void} handler */
+	/** @param {(selector: ComplexSelector) => void} handler */
 	warn_on_unused_selector(handler) {
 		this.selectors.forEach((selector) => {
 			if (!selector.used) handler(selector);
 		});
-	}
-
-	/** @returns number */
-	get_max_amount_class_specificity_increased() {
-		return Math.max(
-			...this.selectors.map((selector) => selector.get_amount_class_specificity_increased())
-		);
 	}
 
 	/**
@@ -136,19 +133,16 @@ class Rule {
 	 * @param {boolean} dev
 	 */
 	prune(code, dev) {
-		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node)) {
+		if (this.parent instanceof Atrule && is_keyframes_node(this.parent.node)) {
 			return;
 		}
 
 		// keep empty rules in dev, because it's convenient to
 		// see them in devtools
-		if (this.declarations.length === 0) {
-			if (!dev) {
-				code.prependRight(this.node.start, '/* (empty) ');
-				code.appendLeft(this.node.end, '*/');
-				escape_comment_close(this.node, code);
-			}
-
+		if (!dev && this.is_empty()) {
+			code.prependRight(this.node.start, '/* (empty) ');
+			code.appendLeft(this.node.end, '*/');
+			escape_comment_close(this.node, code);
 			return;
 		}
 
@@ -277,8 +271,11 @@ class Atrule {
 		}
 	}
 
-	/** @param {boolean} _dev */
-	is_used(_dev) {
+	is_empty() {
+		return false; // TODO
+	}
+
+	is_used() {
 		return true; // TODO
 	}
 
@@ -286,9 +283,8 @@ class Atrule {
 	 * @param {import('magic-string').default} code
 	 * @param {string} id
 	 * @param {Map<string, string>} keyframes
-	 * @param {number} max_amount_class_specificity_increased
 	 */
-	transform(code, id, keyframes, max_amount_class_specificity_increased) {
+	transform(code, id, keyframes) {
 		if (is_keyframes_node(this.node)) {
 			let start = this.node.start + this.node.name.length + 1;
 			while (code.original[start] === ' ') start += 1;
@@ -308,30 +304,23 @@ class Atrule {
 			}
 		}
 		this.children.forEach((child) => {
-			child.transform(code, id, keyframes, max_amount_class_specificity_increased);
+			child.transform(code, id, keyframes);
 		});
 	}
 
-	/** @param {import('../../types.js').ComponentAnalysis} analysis */
+	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
 	validate(analysis) {
 		this.children.forEach((child) => {
 			child.validate(analysis);
 		});
 	}
 
-	/** @param {(selector: import('./Selector.js').default) => void} handler */
+	/** @param {(selector: ComplexSelector) => void} handler */
 	warn_on_unused_selector(handler) {
 		if (this.node.name !== 'media') return;
 		this.children.forEach((child) => {
 			child.warn_on_unused_selector(handler);
 		});
-	}
-
-	/** @returns {number} */
-	get_max_amount_class_specificity_increased() {
-		return Math.max(
-			...this.children.map((rule) => rule.get_max_amount_class_specificity_increased())
-		);
 	}
 
 	/**
@@ -343,7 +332,7 @@ class Atrule {
 	}
 }
 
-export default class Stylesheet {
+export class Stylesheet {
 	/** @type {import('#compiler').Style | null} */
 	ast;
 
@@ -392,53 +381,35 @@ export default class Stylesheet {
 		this.has_styles = true;
 
 		const state = {
-			/** @type {Atrule | undefined} */
-			atrule: undefined
+			/** @type {Stylesheet | Atrule | Rule} */
+			current: this
 		};
 
 		walk(/** @type {import('#compiler').Css.Node} */ (ast), state, {
 			Atrule: (node, context) => {
 				const atrule = new Atrule(node);
 
-				if (context.state.atrule) {
-					context.state.atrule.children.push(atrule);
-				} else {
-					this.children.push(atrule);
-				}
-
 				if (is_keyframes_node(node)) {
 					if (!node.prelude.startsWith('-global-')) {
 						this.keyframes.set(node.prelude, `${this.id}-${node.prelude}`);
 					}
-				} else if (node.block) {
-					/** @type {Declaration[]} */
-					const declarations = [];
-
-					for (const child of node.block.children) {
-						if (child.type === 'Declaration') {
-							declarations.push(new Declaration(child));
-						}
-					}
-
-					if (declarations.length > 0) {
-						push_array(atrule.declarations, declarations);
-					}
 				}
 
-				context.next({
-					...context.state,
-					atrule
-				});
+				// @ts-expect-error temporary, until nesting is implemented
+				context.state.current.children.push(atrule);
+				context.next({ current: atrule });
+			},
+			Declaration: (node, context) => {
+				const declaration = new Declaration(node);
+				/** @type {Atrule | Rule} */ (context.state.current).declarations.push(declaration);
 			},
 			Rule: (node, context) => {
-				const rule = new Rule(node, this, context.state.atrule);
-				if (context.state.atrule) {
-					context.state.atrule.children.push(rule);
-				} else {
-					this.children.push(rule);
-				}
+				// @ts-expect-error temporary, until nesting is implemented
+				const rule = new Rule(node, this, context.state.current);
 
-				context.next();
+				// @ts-expect-error temporary, until nesting is implemented
+				context.state.current.children.push(rule);
+				context.next({ current: rule });
 			}
 		});
 	}
@@ -519,12 +490,8 @@ export default class Stylesheet {
 			}
 		});
 
-		const max = Math.max(
-			...this.children.map((rule) => rule.get_max_amount_class_specificity_increased())
-		);
-
 		for (const child of this.children) {
-			child.transform(code, this.id, this.keyframes, max);
+			child.transform(code, this.id, this.keyframes);
 		}
 
 		code.remove(0, this.ast.content.start);
@@ -553,14 +520,14 @@ export default class Stylesheet {
 		return css;
 	}
 
-	/** @param {import('../../types.js').ComponentAnalysis} analysis */
+	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
 	validate(analysis) {
 		this.children.forEach((child) => {
 			child.validate(analysis);
 		});
 	}
 
-	/** @param {import('../../types.js').ComponentAnalysis} analysis */
+	/** @param {import('../phases/types.js').ComponentAnalysis} analysis */
 	warn_on_unused_selectors(analysis) {
 		// const ignores = !this.ast
 		// 	? []

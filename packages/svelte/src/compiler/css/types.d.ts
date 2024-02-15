@@ -1,4 +1,4 @@
-import type { Style } from './template';
+import type { Style } from '../types/template';
 
 export interface BaseNode {
 	start: number;
@@ -20,10 +20,10 @@ export interface Rule extends BaseNode {
 
 export interface SelectorList extends BaseNode {
 	type: 'SelectorList';
-	children: Selector[];
+	children: ComplexSelector[];
 }
 
-export interface Selector extends BaseNode {
+export interface ComplexSelector extends BaseNode {
 	type: 'Selector';
 	children: Array<SimpleSelector | Combinator>;
 }
@@ -99,4 +99,4 @@ export interface Declaration extends BaseNode {
 }
 
 // for zimmerframe
-export type Node = Style | Rule | Atrule;
+export type Node = Style | Rule | Atrule | Declaration;

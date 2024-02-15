@@ -1091,7 +1091,7 @@ export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
 			if (type === IF_BLOCK) {
 				const condition_effect = block.e;
 				if (condition_effect !== null && block !== current_block) {
-					mark_subtree_inert(condition_effect, inert);
+					mark_subtree_inert(condition_effect, inert, visited_blocks);
 				}
 				const consequent_effect = block.ce;
 				if (consequent_effect !== null && block.v) {
@@ -1567,16 +1567,20 @@ export function is_store(val) {
 export function prop(props, key, flags, initial) {
 	var immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
 	var runes = (flags & PROPS_IS_RUNES) !== 0;
-
-	var setter = get_descriptor(props, key)?.set;
-	if (DEV && setter && runes && initial !== undefined) {
-		// TODO consolidate all these random runtime errors
-		throw new Error('Cannot use fallback values with bind:');
-	}
-
 	var prop_value = /** @type {V} */ (props[key]);
+	var setter = get_descriptor(props, key)?.set;
 
 	if (prop_value === undefined && initial !== undefined) {
+		if (setter && runes) {
+			// TODO consolidate all these random runtime errors
+			throw new Error(
+				'ERR_SVELTE_BINDING_FALLBACK' +
+					(DEV
+						? `: Cannot pass undefined to bind:${key} because the property contains a fallback value. Pass a different value than undefined to ${key}.`
+						: '')
+			);
+		}
+
 		// @ts-expect-error would need a cumbersome method overload to type this
 		if ((flags & PROPS_IS_LAZY_INITIAL) !== 0) initial = initial();
 
@@ -1642,7 +1646,8 @@ export function prop(props, key, flags, initial) {
 		var current = get(current_value);
 
 		// legacy nonsense — need to ensure the source is invalidated when necessary
-		if (is_signals_recorded) {
+		// also needed for when handling inspect logic so we can inspect the correct source signal
+		if (is_signals_recorded || (DEV && inspect_fn)) {
 			// set this so that we don't reset to the parent value if `d`
 			// is invalidated because of `invalidate_inner_signals` (rather
 			// than because the parent or child value changed)

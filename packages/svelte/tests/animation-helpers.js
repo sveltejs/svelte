@@ -70,7 +70,11 @@ class Animation {
 
 	_update() {
 		if (this.#reversed) {
-			this.currentTime = this.#timeline_offset + (this.#timeline_offset - raf.time);
+			if (this.#timeline_offset === 0) {
+				this.currentTime = this.#duration - raf.time;
+			} else {
+				this.currentTime = this.#timeline_offset + (this.#timeline_offset - raf.time);
+			}
 		} else {
 			this.currentTime = raf.time - this.#timeline_offset;
 		}
@@ -130,6 +134,9 @@ class Animation {
 	}
 
 	reverse() {
+		if (this.#paused && !raf.animations.has(this)) {
+			raf.animations.add(this);
+		}
 		this.#timeline_offset = this.currentTime;
 		this.#reversed = !this.#reversed;
 		this.playState = 'running';

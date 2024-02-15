@@ -548,7 +548,7 @@ const javascript_visitors_runes = {
 							: /** @type {import('estree').Expression} */ (visit(node.value.arguments[0]))
 				};
 			}
-			if (rune === '$derived.call') {
+			if (rune === '$derived.by') {
 				return {
 					...node,
 					value:
@@ -582,7 +582,7 @@ const javascript_visitors_runes = {
 					? b.id('undefined')
 					: /** @type {import('estree').Expression} */ (visit(args[0]));
 
-			if (rune === '$derived.call') {
+			if (rune === '$derived.by') {
 				declarations.push(
 					b.declarator(
 						/** @type {import('estree').Pattern} */ (visit(declarator.id)),

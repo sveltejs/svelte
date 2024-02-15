@@ -746,7 +746,7 @@ function validate_call_expression(node, scope, path) {
 		error(node, 'invalid-props-location');
 	}
 
-	if (rune === '$state' || rune === '$derived' || rune === '$derived.call') {
+	if (rune === '$state' || rune === '$derived' || rune === '$derived.by') {
 		if (parent.type === 'VariableDeclarator') return;
 		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
 		error(node, 'invalid-state-location', rune);
@@ -817,7 +817,7 @@ export const validation_runes_js = {
 
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
-		if ((rune === '$derived' || rune === '$derived.call') && args.length !== 1) {
+		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
 			error(node, 'invalid-rune-args-length', rune, [1]);
 		} else if (rune === '$state' && args.length > 1) {
 			error(node, 'invalid-rune-args-length', rune, [0, 1]);
@@ -842,7 +842,7 @@ export const validation_runes_js = {
 				definition.value?.type === 'CallExpression'
 			) {
 				const rune = get_rune(definition.value, context.state.scope);
-				if (rune === '$derived' || rune === '$derived.call') {
+				if (rune === '$derived' || rune === '$derived.by') {
 					private_derived_state.push(definition.key.name);
 				}
 			}
@@ -988,7 +988,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
 		// TODO some of this is duplicated with above, seems off
-		if ((rune === '$derived' || rune === '$derived.call') && args.length !== 1) {
+		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
 			error(node, 'invalid-rune-args-length', rune, [1]);
 		} else if (rune === '$state' && args.length > 1) {
 			error(node, 'invalid-rune-args-length', rune, [0, 1]);

@@ -1,18 +1,18 @@
-	div.svelte-xyz.svelte-xyz.svelte-xyz {
+	div.svelte-xyz {
 		color: red;
 	}
-	h2.svelte-xyz > p.svelte-xyz.svelte-xyz {
+	h2.svelte-xyz > p:where(.svelte-xyz) {
 		color: red;
 	}
-	h2.svelte-xyz span.svelte-xyz.svelte-xyz {
+	h2.svelte-xyz span:where(.svelte-xyz) {
 		color: red;
 	}
-	h2.svelte-xyz > span.svelte-xyz > b.svelte-xyz {
+	h2.svelte-xyz > span:where(.svelte-xyz) > b:where(.svelte-xyz) {
 		color: red;
 	}
-	h2.svelte-xyz span b.svelte-xyz.svelte-xyz {
+	h2.svelte-xyz span b:where(.svelte-xyz) {
 		color: red;
 	}
-	h2.svelte-xyz b.svelte-xyz.svelte-xyz {
+	h2.svelte-xyz b:where(.svelte-xyz) {
 		color: red;
 	}
