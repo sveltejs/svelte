@@ -3,7 +3,7 @@ import { assert } from 'vitest';
 import { getLocator, locate } from 'locate-character';
 import { suite, type BaseTest } from '../suite.js';
 import { compile_directory } from '../helpers.js';
-import { decode } from '@jridgewell/sourcemap-codec';
+import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
 
 type SourceMapEntry =
 	| string
@@ -63,7 +63,7 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 	const input = fs.readFileSync(`${cwd}/input.svelte`, 'utf-8');
 
 	function compare(info: string, output: string, map: any, entries: SourceMapEntry[]) {
-		const output_locator = getLocator(output);
+		const output_locator = getLocator(output, { offsetLine: 1 });
 
 		/** Find line/column of string in original code */
 		function find_original(entry: SourceMapEntry, idx = 0) {
@@ -80,7 +80,7 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 				source = input;
 			}
 
-			const original = locate(source, source.indexOf(str, idx));
+			const original = locate(source, source.indexOf(str, idx), { offsetLine: 1 });
 			if (!original)
 				throw new Error(`Could not find '${str}'${idx > 0 ? ` after index ${idx}` : ''} in input`);
 			return original;
@@ -94,7 +94,7 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 			return generated;
 		}
 
-		const decoded = decode(map.mappings);
+		map = new TraceMap(map);
 
 		try {
 			for (let entry of entries) {
@@ -116,17 +116,16 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 				}
 
 				// Find segment in source map pointing from generated to original
-				const segments = decoded[generated.line];
-				const segment = segments.find((segment) => segment[0] === generated.column);
-				if (!segment && entry.strGenerated !== null) {
+				const result = originalPositionFor(map, generated);
+				if (result.line === null && entry.strGenerated !== null) {
 					throw new Error(
 						`Could not find segment for '${str}' in sourcemap (${generated.line}:${generated.column})`
 					);
-				} else if (segment && entry.strGenerated === null) {
+				} else if (result.line !== null && entry.strGenerated === null) {
 					throw new Error(
 						`Found segment for '${str}' in sourcemap (${generated.line}:${generated.column}) but should not`
 					);
-				} else if (!segment) {
+				} else if (result.line === null) {
 					continue;
 				}
 
@@ -140,27 +139,30 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 				}
 
 				// Check that segment points to expected original
-				assert.equal(segment[2], original.line, `mapped line did not match for '${str}'`);
-				assert.equal(segment[3], original.column, `mapped column did not match for '${str}'`);
+				assert.equal(result.line, original.line, `mapped line did not match for '${str}'`);
+				assert.equal(result.column, original.column, `mapped column did not match for '${str}'`);
 
 				// Same for end of string
 				const generated_end = generated.column + generated_str.length;
-				const end_segment = segments.find((segment) => segment[0] === generated_end);
-				if (!end_segment)
+				const result_end = originalPositionFor(map, {
+					line: generated.line,
+					column: generated_end
+				});
+				if (result_end.line === null)
 					throw new Error(
 						`Could not find end segment for '${str}' in sourcemap (${generated.line}:${generated_end})`
 					);
 
-				assert.equal(end_segment[2], original.line, `mapped line end did not match for '${str}'`);
+				assert.equal(result_end.line, original.line, `mapped line end did not match for '${str}'`);
 				assert.equal(
-					end_segment[3],
+					result_end.column,
 					original.column + str.length,
 					`mapped column end did not match for '${str}'`
 				);
 			}
 		} catch (e) {
 			console.log(`Source map ${info}:\n`);
-			console.log(decoded);
+			console.log(map._decoded);
 			throw e;
 		}
 	}
