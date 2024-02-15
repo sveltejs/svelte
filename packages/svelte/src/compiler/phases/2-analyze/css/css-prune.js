@@ -28,10 +28,7 @@ const whitelist_attribute_selector = new Map([
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
  */
 export function prune(stylesheet, element) {
-	/** @type {State} */
-	const state = { stylesheet, element };
-
-	walk(stylesheet, state, visitors);
+	walk(stylesheet, { stylesheet, element }, visitors);
 }
 
 /** @type {import('zimmerframe').Visitors<import('#compiler').Css.Node, State>} */
