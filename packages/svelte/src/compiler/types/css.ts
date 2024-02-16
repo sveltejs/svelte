@@ -1,5 +1,3 @@
-import type { RegularElement, SvelteElement } from './template';
-
 export interface BaseNode {
 	start: number;
 	end: number;

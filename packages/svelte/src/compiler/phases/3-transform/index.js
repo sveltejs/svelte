@@ -5,7 +5,6 @@ import { client_component, client_module } from './client/transform-client.js';
 import { getLocator } from 'locate-character';
 import { render_stylesheet } from './css/index.js';
 import { merge_with_preprocessor_map, get_source_name } from '../../utils/mapped_code.js';
-import { create_attribute } from '../nodes.js';
 
 /**
  * @param {import('../types').ComponentAnalysis} analysis
