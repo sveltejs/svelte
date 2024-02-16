@@ -112,7 +112,10 @@ function read_rule(parser) {
 		prelude: read_selector_list(parser),
 		block: read_block(parser),
 		start,
-		end: parser.index
+		end: parser.index,
+		metadata: {
+			parent_rule: null
+		}
 	};
 }
 

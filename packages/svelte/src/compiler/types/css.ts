@@ -25,6 +25,9 @@ export interface Rule extends BaseNode {
 	type: 'Rule';
 	prelude: SelectorList;
 	block: Block;
+	metadata: {
+		parent_rule: null | Rule;
+	};
 }
 
 export interface SelectorList extends BaseNode {
