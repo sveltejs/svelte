@@ -79,7 +79,7 @@ const app = hydrate(App, {
 Only available on the server and when compiling with the `server` option. Takes a component and returns an object with `html` and `head` properties on it, which you can use to populate the HTML when server-rendering your app:
 
 ```js
-// @errors: 2724 2305
+// @errors: 2724 2305 2307
 import { render } from 'svelte/server';
 import App from './App.svelte';
 
