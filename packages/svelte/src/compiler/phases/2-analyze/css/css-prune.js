@@ -149,6 +149,14 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 			relative_selector.combinator.type === 'Combinator' &&
 			relative_selector.combinator.name === ' '
 		) {
+			if (
+				relative_selectors.every(
+					({ metadata }) => metadata.is_global || metadata.is_host || metadata.is_root
+				)
+			) {
+				return true;
+			}
+
 			/** @type {import('#compiler').TemplateNode | null} */
 			let parent = element;
 			let crossed_component_boundary = false;
