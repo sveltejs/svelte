@@ -172,30 +172,20 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 			case '~': {
 				const siblings = get_possible_element_siblings(element, name === '+');
 
-				let has_match = false;
-				// NOTE: if we have :global(), we couldn't figure out what is selected within `:global` due to the
-				// css-tree limitation that does not parse the inner selector of :global
-				// so unless we are sure there will be no sibling to match, we will consider it as matched
-				const has_global = parent_selectors.some(
-					(relative_selector) => relative_selector.metadata.is_global
-				);
-
-				if (has_global) {
-					if (siblings.size === 0 && get_element_parent(element) !== null) {
-						return false;
-					}
-					mark(relative_selector, element);
-					return true;
-				}
+				let sibling_matched = false;
 
 				for (const possible_sibling of siblings.keys()) {
 					if (apply_selector(parent_selectors, rule, possible_sibling, stylesheet)) {
 						mark(relative_selector, element);
-						has_match = true;
+						sibling_matched = true;
 					}
 				}
 
-				return has_match;
+				return (
+					sibling_matched ||
+					(get_element_parent(element) === null &&
+						parent_selectors.every((selector) => is_global(selector, rule)))
+				);
 			}
 
 			default:
