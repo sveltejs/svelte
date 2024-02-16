@@ -71,4 +71,10 @@
 			color: red;
 		}
 	}
+
+	:global(blah) {
+		.a {
+			color: green;
+		}
+	}
 </style>
