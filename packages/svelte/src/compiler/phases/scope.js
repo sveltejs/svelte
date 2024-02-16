@@ -185,6 +185,7 @@ export class Scope {
 	reference(node, path) {
 		path = [...path]; // ensure that mutations to path afterwards don't affect this reference
 		let references = this.references.get(node.name);
+
 		if (!references) this.references.set(node.name, (references = []));
 
 		references.push({ node, path });
@@ -328,6 +329,18 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		return /** @type {const} */ ([scope, is_default_slot]);
 	}
+
+	/**
+	 * Reference store in transion:, use:, animate: directives
+	 * @type {import('zimmerframe').Visitor<import('#compiler').Directive, State, import('#compiler').SvelteNode>}
+	 */
+	const SvelteDirective = (node, context) => {
+		const name = node.name;
+
+		if (name[0] === '$') {
+			context.state.scope.reference(b.id(name), context.path);
+		}
+	};
 
 	walk(ast, state, {
 		// references
@@ -625,7 +638,11 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				)
 			]);
 			context.next();
-		}
+		},
+
+		TransitionDirective: SvelteDirective,
+		AnimateDirective: SvelteDirective,
+		UseDirective: SvelteDirective
 
 		// TODO others
 	});
