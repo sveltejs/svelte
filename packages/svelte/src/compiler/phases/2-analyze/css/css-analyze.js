@@ -73,6 +73,12 @@ const analysis_visitors = {
 			...context.state,
 			rule: node
 		});
+
+		node.metadata.has_local_selectors = node.prelude.children.some((selector) => {
+			return selector.children.some(
+				({ metadata }) => !metadata.is_global && !metadata.is_host && !metadata.is_root
+			);
+		});
 	}
 };
 

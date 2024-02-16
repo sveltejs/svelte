@@ -172,10 +172,20 @@ const visitors = {
 
 		// if this selector list belongs to a rule, require a specificity bump for the
 		// first scoped selector but only if we're at the top level
-		// TODO this isn't quite right, it would break with `:global(x) {...}`
-		const parent = path.at(-1);
+		let parent = path.at(-1);
 		if (parent?.type === 'Rule') {
-			specificity = { bumped: !!parent.metadata.parent_rule };
+			specificity = { bumped: false };
+
+			/** @type {import('#compiler').Css.Rule | null} */
+			let rule = parent.metadata.parent_rule;
+
+			while (rule) {
+				if (rule.metadata.has_local_selectors) {
+					specificity = { bumped: true };
+					break;
+				}
+				rule = rule.metadata.parent_rule;
+			}
 		}
 
 		next({ ...state, specificity });

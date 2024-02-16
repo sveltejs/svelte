@@ -27,6 +27,7 @@ export interface Rule extends BaseNode {
 	block: Block;
 	metadata: {
 		parent_rule: null | Rule;
+		has_local_selectors: boolean;
 	};
 }
 
