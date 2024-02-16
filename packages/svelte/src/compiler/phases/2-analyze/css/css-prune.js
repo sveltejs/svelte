@@ -262,8 +262,6 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 function mark(relative_selector, element) {
 	relative_selector.metadata.scoped = true;
 	relative_selector.metadata.selected.add(element);
-	// element.metadata.scoped = true;
-	return true;
 }
 
 const regex_backslash_and_following_character = /\\(.)/g;
