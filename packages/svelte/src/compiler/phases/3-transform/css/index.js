@@ -201,6 +201,7 @@ const visitors = {
 		for (const relative_selector of node.children) {
 			if (relative_selector.metadata.is_global) {
 				remove_global_pseudo_class(relative_selector.selectors[0]);
+				continue;
 			}
 
 			if (relative_selector.metadata.scoped) {

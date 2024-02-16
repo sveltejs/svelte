@@ -113,15 +113,11 @@ function truncate(node) {
 /**
  * @param {import('#compiler').Css.RelativeSelector[]} relative_selectors
  * @param {import('#compiler').Css.Rule} rule
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} element
+ * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
  * @param {import('#compiler').Css.StyleSheet} stylesheet
  * @returns {boolean}
  */
 function apply_selector(relative_selectors, rule, element, stylesheet) {
-	if (!element) {
-		return relative_selectors.every(({ metadata }) => metadata.is_global || metadata.is_host);
-	}
-
 	const parent_selectors = relative_selectors.slice();
 	const relative_selector = parent_selectors.pop();
 
@@ -139,69 +135,47 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 	}
 
 	if (relative_selector.combinator) {
-		switch (relative_selector.combinator.name) {
-			case ' ': {
-				if (
-					parent_selectors.every(
-						({ metadata }) => metadata.is_global || metadata.is_host || metadata.is_root
-					)
-				) {
-					return true;
-				}
+		const name = relative_selector.combinator.name;
 
-				/** @type {import('#compiler').TemplateNode | null} */
-				let parent = element;
+		switch (name) {
+			case ' ':
+			case '>': {
+				let parent = /** @type {import('#compiler').TemplateNode | null} */ (element.parent);
+
+				let parent_found = false;
+				let parent_matched = false;
 				let crossed_component_boundary = false;
-				let matched = false;
 
-				while ((parent = /** @type {import('#compiler').TemplateNode | null} */ (parent.parent))) {
+				while (parent) {
 					if (parent.type === 'Component' || parent.type === 'SvelteComponent') {
 						crossed_component_boundary = true;
-
-						// ensure that any _other_ elements that use this selector end up getting scoped
-						// e.g. if you have `<x><y><z>` and `<x><Y><z>`, we need to make sure that the
-						// `y` selector gets scoped, otherwise it might falsely apply to `<Y>`
-						parent_selectors[parent_selectors.length - 1].metadata.scoped = true;
 					}
 
 					if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
+						parent_found = true;
+
 						if (apply_selector(parent_selectors, rule, parent, stylesheet)) {
-							if (crossed_component_boundary) {
+							if (name === ' ' || crossed_component_boundary) {
 								mark(parent_selectors[parent_selectors.length - 1], parent);
 							} else {
-								mark(parent_selectors[parent_selectors.length - 1], parent);
-								// relative_selector.metadata.selected.add(element);
+								parent_selectors[parent_selectors.length - 1].metadata.selected.add(parent);
 							}
 
-							matched = true;
+							parent_matched = true;
 						}
+
+						if (name === '>') return parent_matched;
 					}
+
+					parent = /** @type {import('#compiler').TemplateNode | null} */ (parent.parent);
 				}
 
-				return matched;
-			}
-
-			case '>': {
-				const has_global_parent = parent_selectors.every(
-					(relative_selector) => relative_selector.metadata.is_global
-				);
-
-				if (
-					has_global_parent ||
-					apply_selector(parent_selectors, rule, get_element_parent(element), stylesheet)
-				) {
-					return true;
-				}
-
-				return false;
+				return parent_matched || parent_selectors.every(is_global);
 			}
 
 			case '+':
 			case '~': {
-				const siblings = get_possible_element_siblings(
-					element,
-					relative_selector.combinator.name === '+'
-				);
+				const siblings = get_possible_element_siblings(element, name === '+');
 
 				let has_match = false;
 				// NOTE: if we have :global(), we couldn't figure out what is selected within `:global` due to the
@@ -259,6 +233,17 @@ function mark(relative_selector, element) {
 	relative_selector.metadata.selected.add(element);
 }
 
+/** @param {import('#compiler').Css.RelativeSelector} selector */
+function is_global(selector) {
+	if (selector.metadata.is_global || selector.metadata.is_host || selector.metadata.is_root) {
+		return true;
+	}
+
+	// TODO :is(...), :where(...)
+
+	return false;
+}
+
 const regex_backslash_and_following_character = /\\(.)/g;
 
 /**
@@ -283,7 +268,9 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				}
 
 				if (name === 'global' && relative_selector.selectors.length === 1) {
-					return false;
+					const args = /** @type {import('#compiler').Css.SelectorList} */ (selector.args);
+					const complex_selector = args.children[0];
+					return apply_selector(complex_selector.children, rule, element, stylesheet);
 				}
 
 				if ((name === 'is' || name === 'where') && selector.args) {
