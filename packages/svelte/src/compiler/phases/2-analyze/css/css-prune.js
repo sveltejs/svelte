@@ -170,7 +170,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 					parent = /** @type {import('#compiler').TemplateNode | null} */ (parent.parent);
 				}
 
-				return parent_matched || parent_selectors.every(is_global);
+				return parent_matched || parent_selectors.every((selector) => is_global(selector, rule));
 			}
 
 			case '+':
@@ -233,13 +233,38 @@ function mark(relative_selector, element) {
 	relative_selector.metadata.selected.add(element);
 }
 
-/** @param {import('#compiler').Css.RelativeSelector} selector */
-function is_global(selector) {
+/**
+ * @param {import('#compiler').Css.RelativeSelector} selector
+ * @param {import('#compiler').Css.Rule} rule
+ */
+function is_global(selector, rule) {
 	if (selector.metadata.is_global || selector.metadata.is_host || selector.metadata.is_root) {
 		return true;
 	}
 
-	// TODO :is(...), :where(...)
+	if (selector.selectors.every((s) => s.type === 'NestingSelector')) {
+		const parent_rule = /** @type {import('#compiler').Css.Rule} */ (rule.metadata.parent_rule);
+		for (const complex_selector of parent_rule.prelude.children) {
+			for (const relative_selector of complex_selector.children) {
+				if (is_global(relative_selector, parent_rule)) {
+					return true; // we only need one for it to be considered a match
+				}
+			}
+		}
+	}
+
+	if (selector.selectors.length === 1) {
+		const s = selector.selectors[0];
+		if (s.type === 'PseudoClassSelector' && (s.name === 'is' || s.name === 'where') && s.args) {
+			for (const complex_selector of s.args.children) {
+				for (const relative_selector of complex_selector.children) {
+					if (is_global(relative_selector, rule)) {
+						return true; // we only need one for it to be considered a match
+					}
+				}
+			}
+		}
+	}
 
 	return false;
 }
