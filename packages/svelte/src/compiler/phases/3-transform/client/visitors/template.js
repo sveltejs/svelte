@@ -2383,17 +2383,16 @@ export const template_visitors = {
 					/** @type {import('estree').BlockStatement} */ (context.visit(node.fallback))
 				)
 			: b.literal(null);
-		const key_function =
-			node.key && ((each_type & EACH_ITEM_REACTIVE) !== 0 || context.state.options.dev)
-				? b.arrow(
-						[node.context.type === 'Identifier' ? node.context : b.id('$$item'), index],
-						b.block(
-							declarations.concat(
-								b.return(/** @type {import('estree').Expression} */ (context.visit(node.key)))
-							)
+		const key_function = node.key
+			? b.arrow(
+					[node.context.type === 'Identifier' ? node.context : b.id('$$item'), index],
+					b.block(
+						declarations.concat(
+							b.return(/** @type {import('estree').Expression} */ (context.visit(node.key)))
 						)
 					)
-				: b.literal(null);
+				)
+			: b.literal(null);
 
 		if (node.index && each_node_meta.contains_group_binding) {
 			// We needed to create a unique identifier for the index above, but we want to use the
