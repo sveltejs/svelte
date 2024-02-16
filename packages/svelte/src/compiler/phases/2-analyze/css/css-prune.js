@@ -269,11 +269,11 @@ const regex_backslash_and_following_character = /\\(.)/g;
 /**
  * @param {import('#compiler').Css.RelativeSelector} relative_selector
  * @param {import('#compiler').Css.Rule} rule
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
+ * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
  * @param {import('#compiler').Css.StyleSheet} stylesheet
  * @returns {NO_MATCH | POSSIBLE_MATCH | UNKNOWN_SELECTOR}
  */
-function relative_selector_might_apply_to_node(relative_selector, rule, node, stylesheet) {
+function relative_selector_might_apply_to_node(relative_selector, rule, element, stylesheet) {
 	if (relative_selector.metadata.is_host || relative_selector.metadata.is_root) return NO_MATCH;
 
 	let i = relative_selector.selectors.length;
@@ -298,7 +298,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, node, st
 					let matched = false;
 
 					for (const complex_selector of selector.args.children) {
-						if (apply_selector(truncate(complex_selector), rule, node, stylesheet)) {
+						if (apply_selector(truncate(complex_selector), rule, element, stylesheet)) {
 							complex_selector.metadata.used = true;
 							matched = true;
 						}
@@ -317,11 +317,11 @@ function relative_selector_might_apply_to_node(relative_selector, rule, node, st
 			}
 
 			case 'AttributeSelector': {
-				const whitelisted = whitelist_attribute_selector.get(node.name.toLowerCase());
+				const whitelisted = whitelist_attribute_selector.get(element.name.toLowerCase());
 				if (
 					!whitelisted?.includes(selector.name.toLowerCase()) &&
 					!attribute_matches(
-						node,
+						element,
 						selector.name,
 						selector.value && unquote(selector.value),
 						selector.matcher,
@@ -335,8 +335,8 @@ function relative_selector_might_apply_to_node(relative_selector, rule, node, st
 
 			case 'ClassSelector': {
 				if (
-					!attribute_matches(node, 'class', name, '~=', false) &&
-					!node.attributes.some(
+					!attribute_matches(element, 'class', name, '~=', false) &&
+					!element.attributes.some(
 						(attribute) => attribute.type === 'ClassDirective' && attribute.name === name
 					)
 				) {
@@ -347,7 +347,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, node, st
 			}
 
 			case 'IdSelector': {
-				if (!attribute_matches(node, 'id', name, '=', false)) {
+				if (!attribute_matches(element, 'id', name, '=', false)) {
 					return NO_MATCH;
 				}
 
@@ -356,9 +356,9 @@ function relative_selector_might_apply_to_node(relative_selector, rule, node, st
 
 			case 'TypeSelector': {
 				if (
-					node.name.toLowerCase() !== name.toLowerCase() &&
+					element.name.toLowerCase() !== name.toLowerCase() &&
 					name !== '*' &&
-					node.type !== 'SvelteElement'
+					element.type !== 'SvelteElement'
 				) {
 					return NO_MATCH;
 				}
@@ -372,7 +372,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, node, st
 				const parent = /** @type {import('#compiler').Css.Rule} */ (rule.metadata.parent_rule);
 
 				for (const complex_selector of parent.prelude.children) {
-					if (apply_selector(truncate(complex_selector), parent, node, stylesheet)) {
+					if (apply_selector(truncate(complex_selector), parent, element, stylesheet)) {
 						complex_selector.metadata.used = true;
 						matched = true;
 					}

@@ -267,6 +267,8 @@ const visitors = {
 				element.metadata.scoped = true;
 			}
 		}
+
+		context.next();
 	},
 	PseudoClassSelector(node, context) {
 		if (node.name === 'is' || node.name === 'where') {
