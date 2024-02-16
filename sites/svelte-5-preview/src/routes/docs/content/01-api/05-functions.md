@@ -49,7 +49,7 @@ This is handy when you want to pass some state to an external library or API tha
 Instantiates a component and mounts it to the given target:
 
 ```js
-// @errors: 2724
+// @errors: 2724 2305
 import { mount } from 'svelte';
 import App from './App.svelte';
 
@@ -64,7 +64,7 @@ const app = mount(App, {
 Like `mount`, but will pick up any HTML rendered by Svelte's SSR output (from the `render` function) inside the target and makes it interactive:
 
 ```js
-// @errors: 2724
+// @errors: 2724 2305
 import { hydrate } from 'svelte';
 import App from './App.svelte';
 
@@ -79,7 +79,7 @@ const app = hydrate(App, {
 Only available on the server and when compiling with the `server` option. Takes a component and returns an object with `html` and `head` properties on it, which you can use to populate the HTML when server-rendering your app:
 
 ```js
-// @errors: 2724
+// @errors: 2724 2305
 import { render } from 'svelte/server';
 import App from './App.svelte';
 
