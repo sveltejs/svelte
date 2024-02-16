@@ -27,8 +27,7 @@ async function bundle_code(entry) {
 		throw new Error('errr what');
 	}
 
-	const code = output[0].code.trim();
-	return code;
+	return output[0].code.trim();
 }
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
