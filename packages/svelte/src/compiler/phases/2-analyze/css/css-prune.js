@@ -65,12 +65,9 @@ export function prune(stylesheet, element) {
 /** @type {import('zimmerframe').Visitors<import('#compiler').Css.Node, State>} */
 const visitors = {
 	ComplexSelector(node, context) {
-		context.next();
-
 		const selectors = truncate(node);
 
-		const rule = context.path.at(-2);
-		if (rule?.type === 'Rule' && rule.metadata.parent_rule) {
+		if (node.metadata.rule?.metadata.parent_rule) {
 			const has_explicit_nesting_selector = selectors.some((selector) =>
 				selector.selectors.some((s) => s.type === 'NestingSelector')
 			);
@@ -95,10 +92,6 @@ const visitors = {
 		) {
 			node.metadata.used = true;
 		}
-	},
-	RelativeSelector(node, context) {
-		// for now, don't visit children (i.e. inside `:foo(...)`)
-		// this will likely change when we implement `:is(...)` etc
 	}
 };
 
