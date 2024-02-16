@@ -126,7 +126,7 @@ const visitors = {
 			return;
 		}
 
-		if (!node.prelude.children.some((s) => s.metadata.used)) {
+		if (!is_used(node)) {
 			state.code.prependRight(node.start, '/* (unused) ');
 			state.code.appendLeft(node.end, '*/');
 			escape_comment_close(node, state.code);
@@ -203,10 +203,10 @@ const visitors = {
 					) {
 						continue;
 					}
+				}
 
-					if (selector.type === 'NestingSelector') {
-						continue;
-					}
+				if (relative_selector.selectors.every((s) => s.type === 'NestingSelector')) {
+					continue;
 				}
 
 				// for the first occurrence, we use a classname selector, so that every
@@ -260,8 +260,38 @@ const visitors = {
 
 /** @param {import('#compiler').Css.Rule} rule */
 function is_empty(rule) {
-	if (rule.block.children.length > 0) return false;
+	for (const child of rule.block.children) {
+		if (child.type === 'Declaration') {
+			return false;
+		}
+
+		if (child.type === 'Rule') {
+			if (is_used(child) && !is_empty(child)) return false;
+		}
+
+		if (child.type === 'Atrule') {
+			return false; // TODO
+		}
+	}
+
 	return true;
+}
+
+/** @param {import('#compiler').Css.Rule} rule */
+function is_used(rule) {
+	for (const selector of rule.prelude.children) {
+		if (selector.metadata.used) return true;
+	}
+
+	for (const child of rule.block.children) {
+		if (child.type === 'Rule' && is_used(child)) return true;
+
+		if (child.type === 'Atrule') {
+			return true; // TODO
+		}
+	}
+
+	return false;
 }
 
 /**
