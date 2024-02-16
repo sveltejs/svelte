@@ -56,7 +56,6 @@ export interface RelativeSelector extends BaseNode {
 		is_host: boolean;
 		is_root: boolean;
 		scoped: boolean;
-		selected: Set<RegularElement | SvelteElement>;
 	};
 }
 

@@ -45,8 +45,7 @@ const nesting_selector = {
 		is_global: false,
 		is_host: false,
 		is_root: false,
-		scoped: false,
-		selected: new Set()
+		scoped: false
 	}
 };
 
@@ -158,7 +157,8 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 							if (name === ' ' || crossed_component_boundary) {
 								mark(parent_selectors[parent_selectors.length - 1], parent);
 							} else {
-								parent_selectors[parent_selectors.length - 1].metadata.selected.add(parent);
+								parent.metadata.scoped = true;
+								// parent_selectors[parent_selectors.length - 1].metadata.selected.add(parent);
 							}
 
 							parent_matched = true;
@@ -230,7 +230,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
  */
 function mark(relative_selector, element) {
 	relative_selector.metadata.scoped = true;
-	relative_selector.metadata.selected.add(element);
+	element.metadata.scoped = true;
 }
 
 /**
