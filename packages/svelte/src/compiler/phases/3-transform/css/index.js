@@ -261,6 +261,11 @@ const visitors = {
 
 		context.next();
 	},
+	RelativeSelector(node, context) {
+		for (const element of node.metadata.selected) {
+			element.metadata.scoped = true;
+		}
+	},
 	PseudoClassSelector(node, context) {
 		if (node.name === 'is' || node.name === 'where') {
 			context.next();

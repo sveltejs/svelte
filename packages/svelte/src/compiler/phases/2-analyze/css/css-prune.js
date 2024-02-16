@@ -49,7 +49,8 @@ const nesting_selector = {
 		is_global: false,
 		is_host: false,
 		is_root: false,
-		scoped: false
+		scoped: false,
+		selected: new Set()
 	}
 };
 
@@ -66,6 +67,7 @@ export function prune(stylesheet, element) {
 const visitors = {
 	ComplexSelector(node, context) {
 		const selectors = truncate(node);
+		const inner = selectors[selectors.length - 1];
 
 		if (node.metadata.rule?.metadata.parent_rule) {
 			const has_explicit_nesting_selector = selectors.some((selector) =>
@@ -90,6 +92,7 @@ const visitors = {
 				context.state.stylesheet
 			)
 		) {
+			mark(inner, context.state.element);
 			node.metadata.used = true;
 		}
 
@@ -138,7 +141,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 	}
 
 	if (applies === UNKNOWN_SELECTOR) {
-		return mark(relative_selector, element);
+		return true;
 	}
 
 	if (relative_selector.combinator) {
@@ -146,12 +149,30 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 			relative_selector.combinator.type === 'Combinator' &&
 			relative_selector.combinator.name === ' '
 		) {
-			/** @type {typeof element | null} */
+			/** @type {import('#compiler').TemplateNode | null} */
 			let parent = element;
+			let crossed_component_boundary = false;
 
-			while ((parent = get_element_parent(parent))) {
-				if (apply_selector(relative_selectors.slice(), rule, parent, stylesheet)) {
-					return mark(relative_selector, element);
+			while ((parent = /** @type {import('#compiler').TemplateNode | null} */ (parent.parent))) {
+				if (parent.type === 'Component' || parent.type === 'SvelteComponent') {
+					crossed_component_boundary = true;
+
+					// ensure that any _other_ elements that use this selector end up getting scoped
+					// e.g. if you have `<x><y><z>` and `<x><Y><z>`, we need to make sure that the
+					// `y` selector gets scoped
+					relative_selectors[relative_selectors.length - 1].metadata.scoped = true;
+				}
+
+				if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
+					if (apply_selector(relative_selectors.slice(), rule, parent, stylesheet)) {
+						if (crossed_component_boundary) {
+							mark(relative_selectors[relative_selectors.length - 1], parent);
+						} else {
+							relative_selector.metadata.selected.add(element);
+						}
+
+						return true;
+					}
 				}
 			}
 
@@ -167,7 +188,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 				has_global_parent ||
 				apply_selector(relative_selectors, rule, get_element_parent(element), stylesheet)
 			) {
-				return mark(relative_selector, element);
+				return true;
 			}
 
 			return false;
@@ -191,7 +212,8 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 				if (siblings.size === 0 && get_element_parent(element) !== null) {
 					return false;
 				}
-				return mark(relative_selector, element);
+				mark(relative_selector, element);
+				return true;
 			}
 
 			for (const possible_sibling of siblings.keys()) {
@@ -205,10 +227,20 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 		}
 
 		// TODO other combinators
-		return mark(relative_selector, element);
+		return true;
 	}
 
-	return mark(relative_selector, element);
+	// if this is the left-most non-global selector, mark it — we want
+	// `x y z {...}` to become `x.blah y z.blah {...}`
+	if (
+		!relative_selectors.some(
+			({ metadata }) => metadata.is_global || metadata.is_host || metadata.is_root
+		)
+	) {
+		mark(relative_selector, element);
+	}
+
+	return true;
 }
 
 /**
@@ -219,7 +251,8 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
  */
 function mark(relative_selector, element) {
 	relative_selector.metadata.scoped = true;
-	element.metadata.scoped = true;
+	relative_selector.metadata.selected.add(element);
+	// element.metadata.scoped = true;
 	return true;
 }
 

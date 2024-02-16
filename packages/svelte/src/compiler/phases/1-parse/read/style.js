@@ -114,7 +114,8 @@ function read_rule(parser) {
 		start,
 		end: parser.index,
 		metadata: {
-			parent_rule: null
+			parent_rule: null,
+			has_local_selectors: false
 		}
 	};
 }
@@ -182,7 +183,8 @@ function read_selector(parser, inside_pseudo_class = false) {
 				is_global: false,
 				is_host: false,
 				is_root: false,
-				scoped: false
+				scoped: false,
+				selected: new Set()
 			}
 		};
 	}
