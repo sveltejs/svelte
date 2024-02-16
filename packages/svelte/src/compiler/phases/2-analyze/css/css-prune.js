@@ -216,6 +216,10 @@ function mark(relative_selector, element) {
 }
 
 /**
+ * Returns `true` if the relative selector is global, meaning
+ * it's a `:global(...)` or `:host` or `:root` selector, or
+ * is an `:is(...)` or `:where(...)` selector that contains
+ * a global selector
  * @param {import('#compiler').Css.RelativeSelector} selector
  * @param {import('#compiler').Css.Rule} rule
  */
@@ -225,35 +229,30 @@ function is_global(selector, rule) {
 	}
 
 	for (const s of selector.selectors) {
+		/** @type {import('#compiler').Css.SelectorList | null} */
+		let selector_list = null;
+		let owner = rule;
+
 		if (s.type === 'PseudoClassSelector') {
 			if ((s.name === 'is' || s.name === 'where') && s.args) {
-				const has_global_selectors = s.args.children.some((complex_selector) => {
-					return complex_selector.children.every((relative_selector) =>
-						is_global(relative_selector, rule)
-					);
-				});
-
-				if (has_global_selectors) {
-					continue;
-				}
+				selector_list = s.args;
 			}
 		}
 
 		if (s.type === 'NestingSelector') {
-			const parent_rule = /** @type {import('#compiler').Css.Rule} */ (rule.metadata.parent_rule);
-
-			const has_global_selectors = parent_rule.prelude.children.some((complex_selector) => {
-				return complex_selector.children.every((relative_selector) =>
-					is_global(relative_selector, parent_rule)
-				);
-			});
-
-			if (has_global_selectors) {
-				continue;
-			}
+			owner = /** @type {import('#compiler').Css.Rule} */ (rule.metadata.parent_rule);
+			selector_list = owner.prelude;
 		}
 
-		return false;
+		const has_global_selectors = selector_list?.children.some((complex_selector) => {
+			return complex_selector.children.every((relative_selector) =>
+				is_global(relative_selector, owner)
+			);
+		});
+
+		if (!has_global_selectors) {
+			return false;
+		}
 	}
 
 	return true;
