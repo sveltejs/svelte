@@ -17,7 +17,9 @@ async function bundle_code(entry) {
 			})
 		],
 		onwarn: (warning, handle) => {
-			// if (warning.code !== 'EMPTY_BUNDLE') handle(warning);
+			if (warning.code !== 'EMPTY_BUNDLE' && warning.code !== 'CIRCULAR_DEPENDENCY') {
+				handle(warning);
+			}
 		}
 	});
 
