@@ -92,6 +92,10 @@ const visitors = {
 		) {
 			node.metadata.used = true;
 		}
+
+		// note: we don't call context.next() here, we only recurse into
+		// selectors that don't belong to rules (i.e. inside `:is(...)` etc)
+		// when we encounter them below
 	}
 };
 
