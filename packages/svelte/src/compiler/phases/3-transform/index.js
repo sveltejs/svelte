@@ -25,64 +25,6 @@ export function transform_component(analysis, source, options) {
 		};
 	}
 
-	const css =
-		analysis.css.ast && !analysis.inject_styles
-			? render_stylesheet(source, analysis, options)
-			: null;
-
-	outer: for (const element of analysis.elements) {
-		if (element.metadata.scoped) {
-			// Dynamic elements in dom mode always use spread for attributes and therefore shouldn't have a class attribute added to them
-			// TODO this happens during the analysis phase, which shouldn't know anything about client vs server
-			if (element.type === 'SvelteElement' && options.generate === 'client') continue;
-
-			/** @type {import('#compiler').Attribute | undefined} */
-			let class_attribute = undefined;
-
-			for (const attribute of element.attributes) {
-				if (attribute.type === 'SpreadAttribute') {
-					// The spread method appends the hash to the end of the class attribute on its own
-					continue outer;
-				}
-
-				if (attribute.type !== 'Attribute') continue;
-				if (attribute.name.toLowerCase() !== 'class') continue;
-
-				class_attribute = attribute;
-			}
-
-			if (class_attribute && class_attribute.value !== true) {
-				const chunks = class_attribute.value;
-
-				if (chunks.length === 1 && chunks[0].type === 'Text') {
-					chunks[0].data += ` ${analysis.css.hash}`;
-				} else {
-					chunks.push({
-						type: 'Text',
-						data: ` ${analysis.css.hash}`,
-						raw: ` ${analysis.css.hash}`,
-						start: -1,
-						end: -1,
-						parent: null
-					});
-				}
-			} else {
-				element.attributes.push(
-					create_attribute('class', -1, -1, [
-						{
-							type: 'Text',
-							data: analysis.css.hash,
-							raw: analysis.css.hash,
-							parent: null,
-							start: -1,
-							end: -1
-						}
-					])
-				);
-			}
-		}
-	}
-
 	const program =
 		options.generate === 'server'
 			? server_component(analysis, options)
@@ -109,6 +51,11 @@ export function transform_component(analysis, source, options) {
 		sourceMapSource: js_source_name
 	});
 	merge_with_preprocessor_map(js, options, js_source_name);
+
+	const css =
+		analysis.css.ast && !analysis.inject_styles
+			? render_stylesheet(source, analysis, options)
+			: null;
 
 	return {
 		js,
