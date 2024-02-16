@@ -237,31 +237,39 @@ function is_global(selector, rule) {
 		return true;
 	}
 
-	if (selector.selectors.every((s) => s.type === 'NestingSelector')) {
-		const parent_rule = /** @type {import('#compiler').Css.Rule} */ (rule.metadata.parent_rule);
-		for (const complex_selector of parent_rule.prelude.children) {
-			for (const relative_selector of complex_selector.children) {
-				if (is_global(relative_selector, parent_rule)) {
-					return true; // we only need one for it to be considered a match
+	for (const s of selector.selectors) {
+		if (s.type === 'PseudoClassSelector') {
+			if ((s.name === 'is' || s.name === 'where') && s.args) {
+				const has_global_selectors = s.args.children.some((complex_selector) => {
+					return complex_selector.children.every((relative_selector) =>
+						is_global(relative_selector, rule)
+					);
+				});
+
+				if (has_global_selectors) {
+					continue;
 				}
 			}
 		}
-	}
 
-	if (selector.selectors.length === 1) {
-		const s = selector.selectors[0];
-		if (s.type === 'PseudoClassSelector' && (s.name === 'is' || s.name === 'where') && s.args) {
-			for (const complex_selector of s.args.children) {
-				for (const relative_selector of complex_selector.children) {
-					if (is_global(relative_selector, rule)) {
-						return true; // we only need one for it to be considered a match
-					}
-				}
+		if (s.type === 'NestingSelector') {
+			const parent_rule = /** @type {import('#compiler').Css.Rule} */ (rule.metadata.parent_rule);
+
+			const has_global_selectors = parent_rule.prelude.children.some((complex_selector) => {
+				return complex_selector.children.every((relative_selector) =>
+					is_global(relative_selector, parent_rule)
+				);
+			});
+
+			if (has_global_selectors) {
+				continue;
 			}
 		}
+
+		return false;
 	}
 
-	return false;
+	return true;
 }
 
 const regex_backslash_and_following_character = /\\(.)/g;
