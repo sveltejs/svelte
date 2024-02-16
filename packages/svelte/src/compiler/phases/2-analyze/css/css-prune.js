@@ -11,10 +11,6 @@ import { error } from '../../../errors.js';
  */
 /** @typedef {NODE_PROBABLY_EXISTS | NODE_DEFINITELY_EXISTS} NodeExistsValue */
 
-const NO_MATCH = 'NO_MATCH';
-const POSSIBLE_MATCH = 'POSSIBLE_MATCH';
-const UNKNOWN_SELECTOR = 'UNKNOWN_SELECTOR';
-
 const NODE_PROBABLY_EXISTS = 0;
 const NODE_DEFINITELY_EXISTS = 1;
 
@@ -131,19 +127,15 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 
 	if (!relative_selector) return false;
 
-	const applies = relative_selector_might_apply_to_node(
+	const possible_match = relative_selector_might_apply_to_node(
 		relative_selector,
 		rule,
 		element,
 		stylesheet
 	);
 
-	if (applies === NO_MATCH) {
+	if (!possible_match) {
 		return false;
-	}
-
-	if (applies === UNKNOWN_SELECTOR) {
-		return true;
 	}
 
 	if (relative_selector.combinator) {
@@ -269,15 +261,15 @@ function mark(relative_selector, element) {
 const regex_backslash_and_following_character = /\\(.)/g;
 
 /**
+ * Ensure that `element` satisfies each simple selector in `relative_selector`
+ *
  * @param {import('#compiler').Css.RelativeSelector} relative_selector
  * @param {import('#compiler').Css.Rule} rule
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
  * @param {import('#compiler').Css.StyleSheet} stylesheet
- * @returns {NO_MATCH | POSSIBLE_MATCH | UNKNOWN_SELECTOR}
+ * @returns {boolean}
  */
 function relative_selector_might_apply_to_node(relative_selector, rule, element, stylesheet) {
-	if (relative_selector.metadata.is_host || relative_selector.metadata.is_root) return NO_MATCH;
-
 	for (const selector of relative_selector.selectors) {
 		if (selector.type === 'Percentage' || selector.type === 'Nth') continue;
 
@@ -286,11 +278,11 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 		switch (selector.type) {
 			case 'PseudoClassSelector': {
 				if (name === 'host' || name === 'root') {
-					return NO_MATCH;
+					return false;
 				}
 
 				if (name === 'global' && relative_selector.selectors.length === 1) {
-					return NO_MATCH;
+					return false;
 				}
 
 				if ((name === 'is' || name === 'where') && selector.args) {
@@ -304,7 +296,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 					}
 
 					if (!matched) {
-						return NO_MATCH;
+						return false;
 					}
 				}
 
@@ -327,7 +319,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 						selector.flags?.includes('i') ?? false
 					)
 				) {
-					return NO_MATCH;
+					return false;
 				}
 				break;
 			}
@@ -339,7 +331,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 						(attribute) => attribute.type === 'ClassDirective' && attribute.name === name
 					)
 				) {
-					return NO_MATCH;
+					return false;
 				}
 
 				break;
@@ -347,7 +339,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 
 			case 'IdSelector': {
 				if (!attribute_matches(element, 'id', name, '=', false)) {
-					return NO_MATCH;
+					return false;
 				}
 
 				break;
@@ -359,7 +351,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 					name !== '*' &&
 					element.type !== 'SvelteElement'
 				) {
-					return NO_MATCH;
+					return false;
 				}
 
 				break;
@@ -378,18 +370,16 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				}
 
 				if (!matched) {
-					return NO_MATCH;
+					return false;
 				}
 
 				break;
 			}
-
-			default:
-				return UNKNOWN_SELECTOR;
 		}
 	}
 
-	return POSSIBLE_MATCH;
+	// possible match
+	return true;
 }
 
 /**
