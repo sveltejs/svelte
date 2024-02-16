@@ -126,7 +126,9 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 		return relative_selectors.every(({ metadata }) => metadata.is_global || metadata.is_host);
 	}
 
-	const relative_selector = relative_selectors.pop();
+	const parent_selectors = relative_selectors.slice();
+	const relative_selector = parent_selectors.pop();
+
 	if (!relative_selector) return false;
 
 	const applies = relative_selector_might_apply_to_node(
@@ -150,7 +152,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 			relative_selector.combinator.name === ' '
 		) {
 			if (
-				relative_selectors.every(
+				parent_selectors.every(
 					({ metadata }) => metadata.is_global || metadata.is_host || metadata.is_root
 				)
 			) {
@@ -169,15 +171,15 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 					// ensure that any _other_ elements that use this selector end up getting scoped
 					// e.g. if you have `<x><y><z>` and `<x><Y><z>`, we need to make sure that the
 					// `y` selector gets scoped, otherwise it might falsely apply to `<Y>`
-					relative_selectors[relative_selectors.length - 1].metadata.scoped = true;
+					parent_selectors[parent_selectors.length - 1].metadata.scoped = true;
 				}
 
 				if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
-					if (apply_selector(relative_selectors.slice(), rule, parent, stylesheet)) {
+					if (apply_selector(parent_selectors, rule, parent, stylesheet)) {
 						if (crossed_component_boundary) {
-							mark(relative_selectors[relative_selectors.length - 1], parent);
+							mark(parent_selectors[parent_selectors.length - 1], parent);
 						} else {
-							mark(relative_selectors[relative_selectors.length - 1], parent);
+							mark(parent_selectors[parent_selectors.length - 1], parent);
 							// relative_selector.metadata.selected.add(element);
 						}
 
@@ -190,13 +192,13 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 		}
 
 		if (relative_selector.combinator.name === '>') {
-			const has_global_parent = relative_selectors.every(
+			const has_global_parent = parent_selectors.every(
 				(relative_selector) => relative_selector.metadata.is_global
 			);
 
 			if (
 				has_global_parent ||
-				apply_selector(relative_selectors, rule, get_element_parent(element), stylesheet)
+				apply_selector(parent_selectors, rule, get_element_parent(element), stylesheet)
 			) {
 				return true;
 			}
@@ -214,7 +216,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 			// NOTE: if we have :global(), we couldn't figure out what is selected within `:global` due to the
 			// css-tree limitation that does not parse the inner selector of :global
 			// so unless we are sure there will be no sibling to match, we will consider it as matched
-			const has_global = relative_selectors.some(
+			const has_global = parent_selectors.some(
 				(relative_selector) => relative_selector.metadata.is_global
 			);
 
@@ -227,7 +229,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 			}
 
 			for (const possible_sibling of siblings.keys()) {
-				if (apply_selector(relative_selectors.slice(), rule, possible_sibling, stylesheet)) {
+				if (apply_selector(parent_selectors, rule, possible_sibling, stylesheet)) {
 					mark(relative_selector, element);
 					has_match = true;
 				}
@@ -243,7 +245,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 	// if this is the left-most non-global selector, mark it — we want
 	// `x y z {...}` to become `x.blah y z.blah {...}`
 	if (
-		!relative_selectors.some(
+		!parent_selectors.some(
 			({ metadata }) => metadata.is_global || metadata.is_host || metadata.is_root
 		)
 	) {
