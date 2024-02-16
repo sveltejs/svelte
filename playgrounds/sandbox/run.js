@@ -30,6 +30,7 @@ const svelte_modules = glob('**/*.svelte', { cwd: `${cwd}/input` });
 const js_modules = glob('**/*.js', { cwd: `${cwd}/input` });
 
 for (const generate of ['client', 'server']) {
+	console.error(`\n--- generating ${generate} ---\n`);
 	for (const file of svelte_modules) {
 		const input = `${cwd}/input/${file}`;
 		const source = fs.readFileSync(input, 'utf-8');

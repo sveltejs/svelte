@@ -160,6 +160,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 			/** @type {import('#compiler').TemplateNode | null} */
 			let parent = element;
 			let crossed_component_boundary = false;
+			let matched = false;
 
 			while ((parent = /** @type {import('#compiler').TemplateNode | null} */ (parent.parent))) {
 				if (parent.type === 'Component' || parent.type === 'SvelteComponent') {
@@ -167,7 +168,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 
 					// ensure that any _other_ elements that use this selector end up getting scoped
 					// e.g. if you have `<x><y><z>` and `<x><Y><z>`, we need to make sure that the
-					// `y` selector gets scoped
+					// `y` selector gets scoped, otherwise it might falsely apply to `<Y>`
 					relative_selectors[relative_selectors.length - 1].metadata.scoped = true;
 				}
 
@@ -176,15 +177,16 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 						if (crossed_component_boundary) {
 							mark(relative_selectors[relative_selectors.length - 1], parent);
 						} else {
-							relative_selector.metadata.selected.add(element);
+							mark(relative_selectors[relative_selectors.length - 1], parent);
+							// relative_selector.metadata.selected.add(element);
 						}
 
-						return true;
+						matched = true;
 					}
 				}
 			}
 
-			return false;
+			return matched;
 		}
 
 		if (relative_selector.combinator.name === '>') {
