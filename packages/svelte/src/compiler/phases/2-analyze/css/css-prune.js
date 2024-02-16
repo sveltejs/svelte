@@ -146,36 +146,13 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 			relative_selector.combinator.type === 'Combinator' &&
 			relative_selector.combinator.name === ' '
 		) {
-			// TODO this is incorrect, it will match `.this-matches .this-does-not .this-does {...}`
-			for (const ancestor_selector of relative_selectors) {
-				if (ancestor_selector.metadata.is_global) {
-					continue;
-				}
+			/** @type {typeof element | null} */
+			let parent = element;
 
-				if (ancestor_selector.metadata.is_host) {
+			while ((parent = get_element_parent(parent))) {
+				if (apply_selector(relative_selectors.slice(), rule, parent, stylesheet)) {
 					return mark(relative_selector, element);
 				}
-
-				/** @type {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} */
-				let parent = element;
-				let matched = false;
-				while ((parent = get_element_parent(parent))) {
-					if (
-						relative_selector_might_apply_to_node(ancestor_selector, rule, parent, stylesheet) !==
-						NO_MATCH
-					) {
-						mark(ancestor_selector, parent);
-						matched = true;
-					}
-				}
-
-				if (matched) {
-					return mark(relative_selector, element);
-				}
-			}
-
-			if (relative_selectors.every((relative_selector) => relative_selector.metadata.is_global)) {
-				return mark(relative_selector, element);
 			}
 
 			return false;
