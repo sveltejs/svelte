@@ -139,99 +139,100 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 	}
 
 	if (relative_selector.combinator) {
-		if (
-			relative_selector.combinator.type === 'Combinator' &&
-			relative_selector.combinator.name === ' '
-		) {
-			if (
-				parent_selectors.every(
-					({ metadata }) => metadata.is_global || metadata.is_host || metadata.is_root
-				)
-			) {
-				return true;
-			}
-
-			/** @type {import('#compiler').TemplateNode | null} */
-			let parent = element;
-			let crossed_component_boundary = false;
-			let matched = false;
-
-			while ((parent = /** @type {import('#compiler').TemplateNode | null} */ (parent.parent))) {
-				if (parent.type === 'Component' || parent.type === 'SvelteComponent') {
-					crossed_component_boundary = true;
-
-					// ensure that any _other_ elements that use this selector end up getting scoped
-					// e.g. if you have `<x><y><z>` and `<x><Y><z>`, we need to make sure that the
-					// `y` selector gets scoped, otherwise it might falsely apply to `<Y>`
-					parent_selectors[parent_selectors.length - 1].metadata.scoped = true;
+		switch (relative_selector.combinator.name) {
+			case ' ': {
+				if (
+					parent_selectors.every(
+						({ metadata }) => metadata.is_global || metadata.is_host || metadata.is_root
+					)
+				) {
+					return true;
 				}
 
-				if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
-					if (apply_selector(parent_selectors, rule, parent, stylesheet)) {
-						if (crossed_component_boundary) {
-							mark(parent_selectors[parent_selectors.length - 1], parent);
-						} else {
-							mark(parent_selectors[parent_selectors.length - 1], parent);
-							// relative_selector.metadata.selected.add(element);
-						}
+				/** @type {import('#compiler').TemplateNode | null} */
+				let parent = element;
+				let crossed_component_boundary = false;
+				let matched = false;
 
-						matched = true;
+				while ((parent = /** @type {import('#compiler').TemplateNode | null} */ (parent.parent))) {
+					if (parent.type === 'Component' || parent.type === 'SvelteComponent') {
+						crossed_component_boundary = true;
+
+						// ensure that any _other_ elements that use this selector end up getting scoped
+						// e.g. if you have `<x><y><z>` and `<x><Y><z>`, we need to make sure that the
+						// `y` selector gets scoped, otherwise it might falsely apply to `<Y>`
+						parent_selectors[parent_selectors.length - 1].metadata.scoped = true;
+					}
+
+					if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
+						if (apply_selector(parent_selectors, rule, parent, stylesheet)) {
+							if (crossed_component_boundary) {
+								mark(parent_selectors[parent_selectors.length - 1], parent);
+							} else {
+								mark(parent_selectors[parent_selectors.length - 1], parent);
+								// relative_selector.metadata.selected.add(element);
+							}
+
+							matched = true;
+						}
 					}
 				}
+
+				return matched;
 			}
 
-			return matched;
-		}
+			case '>': {
+				const has_global_parent = parent_selectors.every(
+					(relative_selector) => relative_selector.metadata.is_global
+				);
 
-		if (relative_selector.combinator.name === '>') {
-			const has_global_parent = parent_selectors.every(
-				(relative_selector) => relative_selector.metadata.is_global
-			);
-
-			if (
-				has_global_parent ||
-				apply_selector(parent_selectors, rule, get_element_parent(element), stylesheet)
-			) {
-				return true;
-			}
-
-			return false;
-		}
-
-		if (relative_selector.combinator.name === '+' || relative_selector.combinator.name === '~') {
-			const siblings = get_possible_element_siblings(
-				element,
-				relative_selector.combinator.name === '+'
-			);
-
-			let has_match = false;
-			// NOTE: if we have :global(), we couldn't figure out what is selected within `:global` due to the
-			// css-tree limitation that does not parse the inner selector of :global
-			// so unless we are sure there will be no sibling to match, we will consider it as matched
-			const has_global = parent_selectors.some(
-				(relative_selector) => relative_selector.metadata.is_global
-			);
-
-			if (has_global) {
-				if (siblings.size === 0 && get_element_parent(element) !== null) {
-					return false;
+				if (
+					has_global_parent ||
+					apply_selector(parent_selectors, rule, get_element_parent(element), stylesheet)
+				) {
+					return true;
 				}
-				mark(relative_selector, element);
-				return true;
+
+				return false;
 			}
 
-			for (const possible_sibling of siblings.keys()) {
-				if (apply_selector(parent_selectors, rule, possible_sibling, stylesheet)) {
+			case '+':
+			case '~': {
+				const siblings = get_possible_element_siblings(
+					element,
+					relative_selector.combinator.name === '+'
+				);
+
+				let has_match = false;
+				// NOTE: if we have :global(), we couldn't figure out what is selected within `:global` due to the
+				// css-tree limitation that does not parse the inner selector of :global
+				// so unless we are sure there will be no sibling to match, we will consider it as matched
+				const has_global = parent_selectors.some(
+					(relative_selector) => relative_selector.metadata.is_global
+				);
+
+				if (has_global) {
+					if (siblings.size === 0 && get_element_parent(element) !== null) {
+						return false;
+					}
 					mark(relative_selector, element);
-					has_match = true;
+					return true;
 				}
+
+				for (const possible_sibling of siblings.keys()) {
+					if (apply_selector(parent_selectors, rule, possible_sibling, stylesheet)) {
+						mark(relative_selector, element);
+						has_match = true;
+					}
+				}
+
+				return has_match;
 			}
 
-			return has_match;
+			default:
+				// TODO other combinators
+				return true;
 		}
-
-		// TODO other combinators
-		return true;
 	}
 
 	// if this is the left-most non-global selector, mark it — we want
