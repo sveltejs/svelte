@@ -146,6 +146,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 			relative_selector.combinator.type === 'Combinator' &&
 			relative_selector.combinator.name === ' '
 		) {
+			// TODO this is incorrect, it will match `.this-matches .this-does-not .this-does {...}`
 			for (const ancestor_selector of relative_selectors) {
 				if (ancestor_selector.metadata.is_global) {
 					continue;
