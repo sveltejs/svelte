@@ -114,7 +114,8 @@ function read_rule(parser) {
 		start,
 		end: parser.index,
 		metadata: {
-			parent_rule: null
+			parent_rule: null,
+			has_local_selectors: false
 		}
 	};
 }

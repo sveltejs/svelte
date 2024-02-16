@@ -7,10 +7,10 @@
 	h2.svelte-xyz span:where(.svelte-xyz) {
 		color: red;
 	}
-	h2.svelte-xyz > span:where(.svelte-xyz) > b:where(.svelte-xyz) {
+	h2.svelte-xyz > span > b:where(.svelte-xyz) {
 		color: red;
 	}
-	h2.svelte-xyz span b:where(.svelte-xyz) {
+	h2.svelte-xyz span:where(.svelte-xyz) b:where(.svelte-xyz) {
 		color: red;
 	}
 	h2.svelte-xyz b:where(.svelte-xyz) {
