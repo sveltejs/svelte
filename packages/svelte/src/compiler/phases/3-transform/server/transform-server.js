@@ -363,25 +363,6 @@ function is_store_name(name) {
 }
 
 /**
- *
- * @param {Iterable<import('#compiler').Binding>} bindings
- */
-function store_sub_exist(bindings) {
-	for (const binding of bindings) {
-		if (binding.kind === 'store_sub') {
-			for (const reference of binding.references) {
-				const node = reference.path.at(-1);
-
-				// hacky way to ensure the sub is not in a directive e.g. use:$store as it is unneeded
-				if (node?.type !== 'RegularElement') {
-					return true;
-				}
-			}
-		}
-	}
-}
-
-/**
  * @param {import('estree').AssignmentExpression} node
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types').ServerTransformState>} context
  * @param {() => any} fallback
@@ -2108,7 +2089,11 @@ export function server_component(analysis, options) {
 		];
 	}
 
-	if (store_sub_exist(analysis.instance.scope.declarations.values())) {
+	if (
+		[...analysis.instance.scope.declarations.values()].some(
+			(binding) => binding.kind === 'store_sub'
+		)
+	) {
 		instance.body.unshift(b.const('$$store_subs', b.object([])));
 		template.body.push(b.stmt(b.call('$.unsubscribe_stores', b.id('$$store_subs'))));
 	}
