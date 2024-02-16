@@ -278,10 +278,7 @@ const regex_backslash_and_following_character = /\\(.)/g;
 function relative_selector_might_apply_to_node(relative_selector, rule, element, stylesheet) {
 	if (relative_selector.metadata.is_host || relative_selector.metadata.is_root) return NO_MATCH;
 
-	let i = relative_selector.selectors.length;
-	while (i--) {
-		const selector = relative_selector.selectors[i];
-
+	for (const selector of relative_selector.selectors) {
 		if (selector.type === 'Percentage' || selector.type === 'Nth') continue;
 
 		const name = selector.name.replace(regex_backslash_and_following_character, '$1');
