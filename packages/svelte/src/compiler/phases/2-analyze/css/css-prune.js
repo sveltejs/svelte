@@ -205,57 +205,53 @@ function relative_selector_might_apply_to_node(relative_selector, node, styleshe
 
 		const name = selector.name.replace(regex_backslash_and_following_character, '$1');
 
-		if (selector.type === 'PseudoClassSelector' && (name === 'host' || name === 'root')) {
-			return NO_MATCH;
-		}
+		switch (selector.type) {
+			case 'PseudoClassSelector':
+				if (name === 'host' || name === 'root') {
+					return NO_MATCH;
+				}
 
-		if (
-			relative_selector.selectors.length === 1 &&
-			selector.type === 'PseudoClassSelector' &&
-			name === 'global'
-		) {
-			return NO_MATCH;
-		}
+				if (name === 'global' && relative_selector.selectors.length === 1) {
+					return NO_MATCH;
+				}
 
-		if (selector.type === 'PseudoClassSelector') {
-			if ((name === 'is' || name === 'where') && selector.args) {
-				let matched = false;
+				if ((name === 'is' || name === 'where') && selector.args) {
+					let matched = false;
 
-				for (const complex_selector of selector.args.children) {
-					if (apply_selector(truncate(complex_selector), node, stylesheet)) {
-						complex_selector.metadata.used = true;
-						matched = true;
+					for (const complex_selector of selector.args.children) {
+						if (apply_selector(truncate(complex_selector), node, stylesheet)) {
+							complex_selector.metadata.used = true;
+							matched = true;
+						}
+					}
+
+					if (!matched) {
+						return NO_MATCH;
 					}
 				}
 
-				if (!matched) {
+				break;
+
+			case 'PseudoElementSelector':
+				break;
+
+			case 'AttributeSelector':
+				const whitelisted = whitelist_attribute_selector.get(node.name.toLowerCase());
+				if (
+					!whitelisted?.includes(selector.name.toLowerCase()) &&
+					!attribute_matches(
+						node,
+						selector.name,
+						selector.value && unquote(selector.value),
+						selector.matcher,
+						selector.flags?.includes('i') ?? false
+					)
+				) {
 					return NO_MATCH;
 				}
-			}
+				break;
 
-			continue;
-		}
-
-		if (selector.type === 'PseudoElementSelector') {
-			continue;
-		}
-
-		if (selector.type === 'AttributeSelector') {
-			const whitelisted = whitelist_attribute_selector.get(node.name.toLowerCase());
-			if (
-				!whitelisted?.includes(selector.name.toLowerCase()) &&
-				!attribute_matches(
-					node,
-					selector.name,
-					selector.value && unquote(selector.value),
-					selector.matcher,
-					selector.flags?.includes('i') ?? false
-				)
-			) {
-				return NO_MATCH;
-			}
-		} else {
-			if (selector.type === 'ClassSelector') {
+			case 'ClassSelector':
 				if (
 					!attribute_matches(node, 'class', name, '~=', false) &&
 					!node.attributes.some(
@@ -264,9 +260,17 @@ function relative_selector_might_apply_to_node(relative_selector, node, styleshe
 				) {
 					return NO_MATCH;
 				}
-			} else if (selector.type === 'IdSelector') {
-				if (!attribute_matches(node, 'id', name, '=', false)) return NO_MATCH;
-			} else if (selector.type === 'TypeSelector') {
+
+				break;
+
+			case 'IdSelector':
+				if (!attribute_matches(node, 'id', name, '=', false)) {
+					return NO_MATCH;
+				}
+
+				break;
+
+			case 'TypeSelector':
 				if (
 					node.name.toLowerCase() !== name.toLowerCase() &&
 					name !== '*' &&
@@ -274,9 +278,11 @@ function relative_selector_might_apply_to_node(relative_selector, node, styleshe
 				) {
 					return NO_MATCH;
 				}
-			} else {
+
+				break;
+
+			default:
 				return UNKNOWN_SELECTOR;
-			}
 		}
 	}
 
