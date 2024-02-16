@@ -74,7 +74,11 @@ export let current_effect = null;
 /** @type {null | import('./types.js').Signal[]} */
 let current_dependencies = null;
 let current_dependencies_index = 0;
-/** @type {null | import('./types.js').Signal[]} */
+/**
+ * Tracks writes that the effect it's executed in doesn't listen to yet,
+ * so that the dependency can be added to the effect later on if it then reads it
+ * @type {null | import('./types.js').Signal[]}
+ */
 let current_untracked_writes = null;
 /** @type {null | import('./types.js').SignalDebug} */
 let last_inspected_signal = null;
