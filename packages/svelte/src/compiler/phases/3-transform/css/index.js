@@ -126,7 +126,7 @@ const visitors = {
 			return;
 		}
 
-		if (!node.prelude.children.some((s) => s.metadata.used)) {
+		if (!is_used(node)) {
 			state.code.prependRight(node.start, '/* (unused) ');
 			state.code.appendLeft(node.end, '*/');
 			escape_comment_close(node, state.code);
@@ -167,7 +167,27 @@ const visitors = {
 			state.code.appendLeft(last, '*/');
 		}
 
-		const specificity = path.at(-1)?.type === 'Rule' ? { bumped: false } : state.specificity;
+		// if we're in a `:is(...)` or whatever, keep existing specificity bump state
+		let specificity = state.specificity;
+
+		// if this selector list belongs to a rule, require a specificity bump for the
+		// first scoped selector but only if we're at the top level
+		let parent = path.at(-1);
+		if (parent?.type === 'Rule') {
+			specificity = { bumped: false };
+
+			/** @type {import('#compiler').Css.Rule | null} */
+			let rule = parent.metadata.parent_rule;
+
+			while (rule) {
+				if (rule.metadata.has_local_selectors) {
+					specificity = { bumped: true };
+					break;
+				}
+				rule = rule.metadata.parent_rule;
+			}
+		}
+
 		next({ ...state, specificity });
 	},
 	ComplexSelector(node, context) {
@@ -181,11 +201,12 @@ const visitors = {
 		for (const relative_selector of node.children) {
 			if (relative_selector.metadata.is_global) {
 				remove_global_pseudo_class(relative_selector.selectors[0]);
+				continue;
 			}
 
 			if (relative_selector.metadata.scoped) {
 				if (relative_selector.selectors.length === 1) {
-					// skip standalone :is/:where
+					// skip standalone :is/:where/& selectors
 					const selector = relative_selector.selectors[0];
 					if (
 						selector.type === 'PseudoClassSelector' &&
@@ -193,6 +214,10 @@ const visitors = {
 					) {
 						continue;
 					}
+				}
+
+				if (relative_selector.selectors.every((s) => s.type === 'NestingSelector')) {
+					continue;
 				}
 
 				// for the first occurrence, we use a classname selector, so that every
@@ -246,8 +271,38 @@ const visitors = {
 
 /** @param {import('#compiler').Css.Rule} rule */
 function is_empty(rule) {
-	if (rule.block.children.length > 0) return false;
+	for (const child of rule.block.children) {
+		if (child.type === 'Declaration') {
+			return false;
+		}
+
+		if (child.type === 'Rule') {
+			if (is_used(child) && !is_empty(child)) return false;
+		}
+
+		if (child.type === 'Atrule') {
+			return false; // TODO
+		}
+	}
+
 	return true;
+}
+
+/** @param {import('#compiler').Css.Rule} rule */
+function is_used(rule) {
+	for (const selector of rule.prelude.children) {
+		if (selector.metadata.used) return true;
+	}
+
+	for (const child of rule.block.children) {
+		if (child.type === 'Rule' && is_used(child)) return true;
+
+		if (child.type === 'Atrule') {
+			return true; // TODO
+		}
+	}
+
+	return false;
 }
 
 /**

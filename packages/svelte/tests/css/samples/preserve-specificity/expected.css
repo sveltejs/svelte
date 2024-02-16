@@ -1,4 +1,4 @@
-  a.svelte-xyz b c span:where(.svelte-xyz) {
+  a.svelte-xyz b:where(.svelte-xyz) c:where(.svelte-xyz) span:where(.svelte-xyz) {
     color: red;
     font-size: 2em;
     font-family: 'Comic Sans MS';
