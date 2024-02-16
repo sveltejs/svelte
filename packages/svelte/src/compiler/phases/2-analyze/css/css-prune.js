@@ -269,7 +269,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, node, st
 		const name = selector.name.replace(regex_backslash_and_following_character, '$1');
 
 		switch (selector.type) {
-			case 'PseudoClassSelector':
+			case 'PseudoClassSelector': {
 				if (name === 'host' || name === 'root') {
 					return NO_MATCH;
 				}
@@ -294,11 +294,13 @@ function relative_selector_might_apply_to_node(relative_selector, rule, node, st
 				}
 
 				break;
+			}
 
-			case 'PseudoElementSelector':
+			case 'PseudoElementSelector': {
 				break;
+			}
 
-			case 'AttributeSelector':
+			case 'AttributeSelector': {
 				const whitelisted = whitelist_attribute_selector.get(node.name.toLowerCase());
 				if (
 					!whitelisted?.includes(selector.name.toLowerCase()) &&
@@ -313,8 +315,9 @@ function relative_selector_might_apply_to_node(relative_selector, rule, node, st
 					return NO_MATCH;
 				}
 				break;
+			}
 
-			case 'ClassSelector':
+			case 'ClassSelector': {
 				if (
 					!attribute_matches(node, 'class', name, '~=', false) &&
 					!node.attributes.some(
@@ -325,15 +328,17 @@ function relative_selector_might_apply_to_node(relative_selector, rule, node, st
 				}
 
 				break;
+			}
 
-			case 'IdSelector':
+			case 'IdSelector': {
 				if (!attribute_matches(node, 'id', name, '=', false)) {
 					return NO_MATCH;
 				}
 
 				break;
+			}
 
-			case 'TypeSelector':
+			case 'TypeSelector': {
 				if (
 					node.name.toLowerCase() !== name.toLowerCase() &&
 					name !== '*' &&
@@ -343,8 +348,9 @@ function relative_selector_might_apply_to_node(relative_selector, rule, node, st
 				}
 
 				break;
+			}
 
-			case 'NestingSelector':
+			case 'NestingSelector': {
 				let matched = false;
 
 				const parent = rule.metadata.parent_rule;
@@ -362,6 +368,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, node, st
 				}
 
 				break;
+			}
 
 			default:
 				return UNKNOWN_SELECTOR;
