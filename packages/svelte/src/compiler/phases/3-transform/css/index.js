@@ -167,7 +167,17 @@ const visitors = {
 			state.code.appendLeft(last, '*/');
 		}
 
-		const specificity = path.at(-1)?.type === 'Rule' ? { bumped: false } : state.specificity;
+		// if we're in a `:is(...)` or whatever, keep existing specificity bump state
+		let specificity = state.specificity;
+
+		// if this selector list belongs to a rule, require a specificity bump for the
+		// first scoped selector but only if we're at the top level
+		// TODO this isn't quite right, it would break with `:global(x) {...}`
+		const parent = path.at(-1);
+		if (parent?.type === 'Rule') {
+			specificity = { bumped: !!parent.metadata.parent_rule };
+		}
+
 		next({ ...state, specificity });
 	},
 	ComplexSelector(node, context) {

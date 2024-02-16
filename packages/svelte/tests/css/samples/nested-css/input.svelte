@@ -56,7 +56,7 @@
 
 		/* silly but valid */
 		&& {
-			color: rebeccapurple;
+			color: green;
 		}
 
 		.container & {

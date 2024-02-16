@@ -13,13 +13,13 @@
 			/* (unused) .unused {
 				color: red;
 
-				.c:where(.svelte-xyz) {
+				.c {
 					color: red;
 				}
 			}*/
 		}
 
-		/* (empty) .d:where(.svelte-xyz) {
+		/* (empty) .d {
 			.unused {
 				color: red;
 			}
@@ -29,7 +29,7 @@
 		& .b:where(.svelte-xyz) {
 			color: green;
 
-			/* (empty) .c:where(.svelte-xyz) {
+			/* (empty) .c {
 				& & {
 					color: red;
 				}
@@ -42,7 +42,7 @@
 
 		/* silly but valid */
 		&& {
-			color: rebeccapurple;
+			color: green;
 		}
 
 		.container:where(.svelte-xyz) & {
