@@ -3,25 +3,37 @@
 import { empty } from './operations.js';
 import { schedule_task } from './runtime.js';
 
-/** @type {null | Array<import('./types.js').TemplateNode>} */
-export let current_hydration_fragment = null;
+/**
+ * Use this variable to guard everything related to hydration code so it can be treeshaken out
+ * if the user doesn't use the `hydrate` method and these code paths are therefore not needed.
+ */
+export let hydrating = false;
 
 /**
- * @param {null | Array<import('./types.js').TemplateNode>} fragment
+ * Array of nodes to traverse for hydration. This will be null if we're not hydrating, but for
+ * the sake of simplicity we're not going to use `null` checks everywhere and instead rely on
+ * the `hydrating` flag to tell whether or not we're in hydration mode at which point this is set.
+ * @type {import('./types.js').TemplateNode[]}
+ */
+export let current_hydration_fragment = /** @type {any} */ (null);
+
+/**
+ * @param {null | import('./types.js').TemplateNode[]} fragment
  * @returns {void}
  */
 export function set_current_hydration_fragment(fragment) {
-	current_hydration_fragment = fragment;
+	hydrating = fragment !== null;
+	current_hydration_fragment = /** @type {import('./types.js').TemplateNode[]} */ (fragment);
 }
 
 /**
  * Returns all nodes between the first `<!--ssr:...-->` comment tag pair encountered.
  * @param {Node | null} node
  * @param {boolean} [insert_text] Whether to insert an empty text node if the fragment is empty
- * @returns {Array<import('./types.js').TemplateNode> | null}
+ * @returns {import('./types.js').TemplateNode[] | null}
  */
 export function get_hydration_fragment(node, insert_text = false) {
-	/** @type {Array<import('./types.js').TemplateNode>} */
+	/** @type {import('./types.js').TemplateNode[]} */
 	const fragment = [];
 
 	/** @type {null | Node} */
@@ -66,9 +78,10 @@ export function get_hydration_fragment(node, insert_text = false) {
  * @returns {void}
  */
 export function hydrate_block_anchor(anchor_node, is_controlled) {
-	/** @type {Node} */
-	let target_node = anchor_node;
-	if (current_hydration_fragment !== null) {
+	if (hydrating) {
+		/** @type {Node} */
+		let target_node = anchor_node;
+
 		if (is_controlled) {
 			target_node = /** @type {Node} */ (target_node.firstChild);
 		}

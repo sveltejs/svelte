@@ -54,6 +54,7 @@ import {
 	current_hydration_fragment,
 	get_hydration_fragment,
 	hydrate_block_anchor,
+	hydrating,
 	set_current_hydration_fragment
 } from './hydration.js';
 import {
@@ -166,7 +167,7 @@ export function svg_replace(node) {
  * @returns {Element | DocumentFragment | Node[]}
  */
 function open_template(is_fragment, use_clone_node, anchor, template_element_fn) {
-	if (current_hydration_fragment !== null) {
+	if (hydrating) {
 		if (anchor !== null) {
 			hydrate_block_anchor(anchor, false);
 		}
@@ -217,7 +218,7 @@ export function space(anchor) {
 	// if an {expression} is empty during SSR, there might be no
 	// text node to hydrate (or an anchor comment is falsely detected instead)
 	//  — we must therefore create one
-	if (current_hydration_fragment !== null && node?.nodeType !== 3) {
+	if (hydrating && node?.nodeType !== 3) {
 		node = empty();
 		// @ts-ignore in this case the anchor should always be a comment,
 		// if not something more fundamental is wrong and throwing here is better to bail out early
@@ -251,10 +252,8 @@ function close_template(dom, is_fragment, anchor) {
 			? dom
 			: /** @type {import('./types.js').TemplateNode[]} */ (Array.from(dom.childNodes))
 		: dom;
-	if (anchor !== null) {
-		if (current_hydration_fragment === null) {
-			insert(current, null, anchor);
-		}
+	if (!hydrating && anchor !== null) {
+		insert(current, null, anchor);
 	}
 	block.d = current;
 }
@@ -415,14 +414,13 @@ export function class_name(dom, value) {
 	// @ts-expect-error need to add __className to patched prototype
 	const prev_class_name = dom.__className;
 	const next_class_name = to_class(value);
-	const is_hydrating = current_hydration_fragment !== null;
-	if (is_hydrating && dom.className === next_class_name) {
+	if (hydrating && dom.className === next_class_name) {
 		// In case of hydration don't reset the class as it's already correct.
 		// @ts-expect-error need to add __className to patched prototype
 		dom.__className = next_class_name;
 	} else if (
 		prev_class_name !== next_class_name ||
-		(is_hydrating && dom.className !== next_class_name)
+		(hydrating && dom.className !== next_class_name)
 	) {
 		if (next_class_name === '') {
 			dom.removeAttribute('class');
@@ -452,7 +450,7 @@ export function text(dom, value) {
 	// @ts-expect-error need to add __value to patched prototype
 	const prev_node_value = dom.__nodeValue;
 	const next_node_value = stringify(value);
-	if (current_hydration_fragment !== null && dom.nodeValue === next_node_value) {
+	if (hydrating && dom.nodeValue === next_node_value) {
 		// In case of hydration don't reset the nodeValue as it's already correct.
 		// @ts-expect-error need to add __nodeValue to patched prototype
 		dom.__nodeValue = next_node_value;
@@ -739,7 +737,7 @@ export function bind_playback_rate(media, get_value, update) {
  * @param {(paused: boolean) => void} update
  */
 export function bind_paused(media, get_value, update) {
-	let mounted = current_hydration_fragment !== null;
+	let mounted = hydrating;
 	let paused = get_value();
 	const callback = () => {
 		if (paused !== media.paused) {
@@ -1452,7 +1450,8 @@ export function slot(anchor_node, slot_fn, slot_props, fallback_fn) {
 function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	const block = create_if_block();
 	hydrate_block_anchor(anchor_node);
-	const previous_hydration_fragment = current_hydration_fragment;
+	/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
+	let mismatch = false;
 
 	/** @type {null | import('./types.js').TemplateNode | Array<import('./types.js').TemplateNode>} */
 	let consequent_dom = null;
@@ -1495,7 +1494,7 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 							trigger_transitions(alternate_transitions, 'in');
 						}
 					}
-				} else if (current_hydration_fragment !== null) {
+				} else if (hydrating) {
 					const comment_text = /** @type {Comment} */ (current_hydration_fragment?.[0])?.data;
 					if (
 						!comment_text ||
@@ -1506,6 +1505,7 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 						// This could happen using when `{#if browser} .. {/if}` in SvelteKit.
 						remove(current_hydration_fragment);
 						set_current_hydration_fragment(null);
+						mismatch = true;
 					} else {
 						// Remove the ssr:if comment node or else it will confuse the subsequent hydration algorithm
 						current_hydration_fragment.shift();
@@ -1530,9 +1530,9 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 			}
 			if (result && current_branch_effect !== consequent_effect) {
 				consequent_fn(anchor_node);
-				if (current_branch_effect === null) {
-					// Restore previous fragment so that Svelte continues to operate in hydration mode
-					set_current_hydration_fragment(previous_hydration_fragment);
+				if (mismatch && current_branch_effect === null) {
+					// Set fragment so that Svelte continues to operate in hydration mode
+					set_current_hydration_fragment([]);
 				}
 				current_branch_effect = consequent_effect;
 				consequent_dom = block.d;
@@ -1558,9 +1558,9 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 				if (alternate_fn !== null) {
 					alternate_fn(anchor_node);
 				}
-				if (current_branch_effect === null) {
-					// Restore previous fragment so that Svelte continues to operate in hydration mode
-					set_current_hydration_fragment(previous_hydration_fragment);
+				if (mismatch && current_branch_effect === null) {
+					// Set fragment so that Svelte continues to operate in hydration mode
+					set_current_hydration_fragment([]);
 				}
 				current_branch_effect = alternate_effect;
 				alternate_dom = block.d;
@@ -1593,10 +1593,15 @@ export function head(render_fn) {
 	const block = create_head_block();
 	// The head function may be called after the first hydration pass and ssr comment nodes may still be present,
 	// therefore we need to skip that when we detect that we're not in hydration mode.
-	const hydration_fragment =
-		current_hydration_fragment !== null ? get_hydration_fragment(document.head.firstChild) : null;
-	const previous_hydration_fragment = current_hydration_fragment;
-	set_current_hydration_fragment(hydration_fragment);
+	let hydration_fragment = null;
+	let previous_hydration_fragment = null;
+	let is_hydrating = hydrating;
+	if (is_hydrating) {
+		hydration_fragment = get_hydration_fragment(document.head.firstChild);
+		previous_hydration_fragment = current_hydration_fragment;
+		set_current_hydration_fragment(hydration_fragment);
+	}
+
 	try {
 		const head_effect = render_effect(
 			() => {
@@ -1606,7 +1611,7 @@ export function head(render_fn) {
 					block.d = null;
 				}
 				let anchor = null;
-				if (current_hydration_fragment === null) {
+				if (!hydrating) {
 					anchor = empty();
 					document.head.appendChild(anchor);
 				}
@@ -1623,7 +1628,9 @@ export function head(render_fn) {
 		});
 		block.e = head_effect;
 	} finally {
-		set_current_hydration_fragment(previous_hydration_fragment);
+		if (is_hydrating) {
+			set_current_hydration_fragment(previous_hydration_fragment);
+		}
 	}
 }
 
@@ -1688,7 +1695,7 @@ export function element(anchor_node, tag_fn, is_svg, render_fn) {
 						? null
 						: anchor_node.parentElement?.namespaceURI ?? null;
 			const next_element = tag
-				? current_hydration_fragment !== null
+				? hydrating
 					? /** @type {Element} */ (current_hydration_fragment[0])
 					: ns
 						? document.createElementNS(ns, tag)
@@ -1701,7 +1708,7 @@ export function element(anchor_node, tag_fn, is_svg, render_fn) {
 			element = next_element;
 			if (element !== null && render_fn !== undefined) {
 				let anchor;
-				if (current_hydration_fragment !== null) {
+				if (hydrating) {
 					// Use the existing ssr comment as the anchor so that the inner open and close
 					// methods can pick up the existing nodes correctly
 					anchor = /** @type {Comment} */ (element.firstChild);
@@ -2158,7 +2165,7 @@ export function cssProps(anchor, is_html, props, component) {
 
 	/** @type {Text | Comment} */
 	let component_anchor;
-	if (current_hydration_fragment !== null) {
+	if (hydrating) {
 		// Hydration: css props element is surrounded by a ssr comment ...
 		tag = /** @type {HTMLElement | SVGElement} */ (current_hydration_fragment[0]);
 		// ... and the child(ren) of the css props element is also surround by a ssr comment
@@ -2324,7 +2331,7 @@ export function action(dom, action, value_fn) {
  * @returns {void}
  */
 export function remove_input_attr_defaults(dom) {
-	if (current_hydration_fragment !== null) {
+	if (hydrating) {
 		attr(dom, 'value', null);
 		attr(dom, 'checked', null);
 	}
@@ -2336,7 +2343,7 @@ export function remove_input_attr_defaults(dom) {
  * @returns {void}
  */
 export function remove_textarea_child(dom) {
-	if (current_hydration_fragment !== null && dom.firstChild !== null) {
+	if (hydrating && dom.firstChild !== null) {
 		dom.textContent = '';
 	}
 }
@@ -2366,7 +2373,7 @@ export function attr(dom, attribute, value) {
 	}
 
 	if (
-		current_hydration_fragment === null ||
+		!hydrating ||
 		(dom.getAttribute(attribute) !== value &&
 			// If we reset those, they would result in another network request, which we want to avoid.
 			// We assume they are the same between client and server as checking if they are equal is expensive
@@ -2429,7 +2436,7 @@ export function srcset_url_equal(element, srcset) {
  * @param {string | null} value
  */
 function check_src_in_dev_hydration(dom, attribute, value) {
-	if (!current_hydration_fragment) return;
+	if (!hydrating) return;
 	if (attribute !== 'src' && attribute !== 'href' && attribute !== 'srcset') return;
 
 	if (attribute === 'srcset' && srcset_url_equal(dom, value)) return;
@@ -2642,7 +2649,7 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 					check_src_in_dev_hydration(dom, name, value);
 				}
 				if (
-					current_hydration_fragment === null ||
+					!hydrating ||
 					//  @ts-ignore see attr method for an explanation of src/srcset
 					(dom[name] !== value && name !== 'src' && name !== 'href' && name !== 'srcset')
 				) {
@@ -2828,7 +2835,7 @@ export function spread_props(...props) {
 export function createRoot(component, options) {
 	const props = proxy(/** @type {any} */ (options.props) || {}, false);
 
-	let [accessors, $destroy] = mount(component, { ...options, props });
+	let [accessors, $destroy] = hydrate(component, { ...options, props });
 
 	const result =
 		/** @type {Exports & { $destroy: () => void; $set: (props: Partial<Props>) => void; }} */ ({
@@ -2871,71 +2878,58 @@ export function createRoot(component, options) {
  * 		events?: Events;
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
- * 		recover?: false;
  * 	}} options
  * @returns {[Exports, () => void]}
  */
 export function mount(component, options) {
 	init_operations();
+	const anchor = empty();
+	options.target.appendChild(anchor);
+	return _mount(component, { ...options, anchor });
+}
+
+/**
+ * @template {Record<string, any>} Props
+ * @template {Record<string, any> | undefined} Exports
+ * @template {Record<string, any>} Events
+ * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
+ * @param {{
+ * 		target: Node;
+ * 		anchor: null | Text;
+ * 		props?: Props;
+ * 		events?: Events;
+ *  	context?: Map<any, any>;
+ * 		intro?: boolean;
+ * 		recover?: false;
+ * 	}} options
+ * @returns {[Exports, () => void]}
+ */
+function _mount(component, options) {
 	const registered_events = new Set();
 	const container = options.target;
 	const block = create_root_block(options.intro || false);
-	const first_child = /** @type {ChildNode} */ (container.firstChild);
-	// Call with insert_text == true to prevent empty {expressions} resulting in an empty
-	// fragment array, resulting in a hydration error down the line
-	const hydration_fragment = get_hydration_fragment(first_child, true);
-	const previous_hydration_fragment = current_hydration_fragment;
 
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously
 	let accessors = undefined;
 
-	try {
-		/** @type {null | Text} */
-		let anchor = null;
-		if (hydration_fragment === null) {
-			anchor = empty();
-			container.appendChild(anchor);
-		}
-		set_current_hydration_fragment(hydration_fragment);
-		const effect = render_effect(
-			() => {
-				if (options.context) {
-					push({});
-					/** @type {import('../client/types.js').ComponentContext} */ (
-						current_component_context
-					).c = options.context;
-				}
-				// @ts-expect-error the public typings are not what the actual function looks like
-				accessors = component(anchor, options.props || {});
-				if (options.context) {
-					pop();
-				}
-			},
-			block,
-			true
-		);
-		block.e = effect;
-	} catch (error) {
-		if (options.recover !== false && hydration_fragment !== null) {
-			// eslint-disable-next-line no-console
-			console.error(
-				'ERR_SVELTE_HYDRATION_MISMATCH' +
-					(DEV
-						? ': Hydration failed because the initial UI does not match what was rendered on the server.'
-						: ''),
-				error
-			);
-			remove(hydration_fragment);
-			first_child.remove();
-			hydration_fragment.at(-1)?.nextSibling?.remove();
-			return mount(component, options);
-		} else {
-			throw error;
-		}
-	} finally {
-		set_current_hydration_fragment(previous_hydration_fragment);
-	}
+	const effect = render_effect(
+		() => {
+			if (options.context) {
+				push({});
+				/** @type {import('../client/types.js').ComponentContext} */ (current_component_context).c =
+					options.context;
+			}
+			// @ts-expect-error the public typings are not what the actual function looks like
+			accessors = component(options.anchor, options.props || {});
+			if (options.context) {
+				pop();
+			}
+		},
+		block,
+		true
+	);
+	block.e = effect;
 	const bound_event_listener = handle_event_propagation.bind(null, container);
 	const bound_document_event_listener = handle_event_propagation.bind(null, document);
 
@@ -2985,12 +2979,69 @@ export function mount(component, options) {
 			if (dom !== null) {
 				remove(dom);
 			}
-			if (hydration_fragment !== null) {
-				remove(hydration_fragment);
-			}
 			destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
 		}
 	];
+}
+
+/**
+ * Hydrates the given component to the given target and returns the accessors of the component and a function to destroy it.
+ *
+ * If you need to interact with the component after hydrating, use `createRoot` instead.
+ *
+ * @template {Record<string, any>} Props
+ * @template {Record<string, any> | undefined} Exports
+ * @template {Record<string, any>} Events
+ * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
+ * @param {{
+ * 		target: Node;
+ * 		props?: Props;
+ * 		events?: Events;
+ *  	context?: Map<any, any>;
+ * 		intro?: boolean;
+ * 		recover?: false;
+ * 	}} options
+ * @returns {[Exports, () => void]}
+ */
+export function hydrate(component, options) {
+	init_operations();
+	const container = options.target;
+	const first_child = /** @type {ChildNode} */ (container.firstChild);
+	// Call with insert_text == true to prevent empty {expressions} resulting in an empty
+	// fragment array, resulting in a hydration error down the line
+	const hydration_fragment = get_hydration_fragment(first_child, true);
+	const previous_hydration_fragment = current_hydration_fragment;
+
+	try {
+		/** @type {null | Text} */
+		let anchor = null;
+		if (hydration_fragment === null) {
+			anchor = empty();
+			container.appendChild(anchor);
+		}
+		set_current_hydration_fragment(hydration_fragment);
+		return _mount(component, { ...options, anchor });
+	} catch (error) {
+		if (options.recover !== false && hydration_fragment !== null) {
+			// eslint-disable-next-line no-console
+			console.error(
+				'ERR_SVELTE_HYDRATION_MISMATCH' +
+					(DEV
+						? ': Hydration failed because the initial UI does not match what was rendered on the server.'
+						: ''),
+				error
+			);
+			remove(hydration_fragment);
+			first_child.remove();
+			hydration_fragment.at(-1)?.nextSibling?.remove();
+			set_current_hydration_fragment(null);
+			return mount(component, options);
+		} else {
+			throw error;
+		}
+	} finally {
+		set_current_hydration_fragment(previous_hydration_fragment);
+	}
 }
 
 /**
