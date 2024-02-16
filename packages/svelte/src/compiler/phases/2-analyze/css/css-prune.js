@@ -196,11 +196,8 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 
 	// if this is the left-most non-global selector, mark it — we want
 	// `x y z {...}` to become `x.blah y z.blah {...}`
-	if (
-		!parent_selectors.some(
-			({ metadata }) => metadata.is_global || metadata.is_host || metadata.is_root
-		)
-	) {
+	const parent = parent_selectors[parent_selectors.length - 1];
+	if (!parent || is_global(parent, rule)) {
 		mark(relative_selector, element);
 	}
 
