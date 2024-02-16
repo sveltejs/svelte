@@ -340,6 +340,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 				end: index,
 				children,
 				metadata: {
+					rule: null,
 					used: false
 				}
 			};

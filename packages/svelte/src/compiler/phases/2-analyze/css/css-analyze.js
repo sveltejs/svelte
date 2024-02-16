@@ -39,6 +39,8 @@ const analysis_visitors = {
 	ComplexSelector(node, context) {
 		context.next(); // analyse relevant selectors first
 
+		node.metadata.rule = context.state.rule;
+
 		node.metadata.used = node.children.every(
 			({ metadata }) => metadata.is_global || metadata.is_host || metadata.is_root
 		);

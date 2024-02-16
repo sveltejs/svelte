@@ -1,6 +1,7 @@
 import { walk } from 'zimmerframe';
 import { get_possible_values } from './utils.js';
 import { regex_ends_with_whitespace, regex_starts_with_whitespace } from '../../patterns.js';
+import { error } from '../../../errors.js';
 
 /**
  * @typedef {{
@@ -22,6 +23,36 @@ const whitelist_attribute_selector = new Map([
 	['dialog', ['open']]
 ]);
 
+/** @type {import('#compiler').Css.Combinator} */
+const descendant_combinator = {
+	type: 'Combinator',
+	name: ' ',
+	start: -1,
+	end: -1
+};
+
+/** @type {import('#compiler').Css.RelativeSelector} */
+const nesting_selector = {
+	type: 'RelativeSelector',
+	start: -1,
+	end: -1,
+	combinator: null,
+	selectors: [
+		{
+			type: 'NestingSelector',
+			name: '&',
+			start: -1,
+			end: -1
+		}
+	],
+	metadata: {
+		is_global: false,
+		is_host: false,
+		is_root: false,
+		scoped: false
+	}
+};
+
 /**
  *
  * @param {import('#compiler').Css.StyleSheet} stylesheet
@@ -36,7 +67,32 @@ const visitors = {
 	ComplexSelector(node, context) {
 		context.next();
 
-		if (apply_selector(truncate(node), context.state.element, context.state.stylesheet)) {
+		const selectors = truncate(node);
+
+		const rule = context.path.at(-2);
+		if (rule?.type === 'Rule' && rule.metadata.parent_rule) {
+			const has_explicit_nesting_selector = selectors.some((selector) =>
+				selector.selectors.some((s) => s.type === 'NestingSelector')
+			);
+
+			if (!has_explicit_nesting_selector) {
+				selectors[0] = {
+					...selectors[0],
+					combinator: descendant_combinator
+				};
+
+				selectors.unshift(nesting_selector);
+			}
+		}
+
+		if (
+			apply_selector(
+				selectors,
+				/** @type {import('#compiler').Css.Rule} */ (node.metadata.rule),
+				context.state.element,
+				context.state.stylesheet
+			)
+		) {
 			node.metadata.used = true;
 		}
 	},
@@ -60,11 +116,12 @@ function truncate(node) {
 
 /**
  * @param {import('#compiler').Css.RelativeSelector[]} relative_selectors
+ * @param {import('#compiler').Css.Rule} rule
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} element
  * @param {import('#compiler').Css.StyleSheet} stylesheet
  * @returns {boolean}
  */
-function apply_selector(relative_selectors, element, stylesheet) {
+function apply_selector(relative_selectors, rule, element, stylesheet) {
 	if (!element) {
 		return relative_selectors.every(({ metadata }) => metadata.is_global || metadata.is_host);
 	}
@@ -72,7 +129,12 @@ function apply_selector(relative_selectors, element, stylesheet) {
 	const relative_selector = relative_selectors.pop();
 	if (!relative_selector) return false;
 
-	const applies = relative_selector_might_apply_to_node(relative_selector, element, stylesheet);
+	const applies = relative_selector_might_apply_to_node(
+		relative_selector,
+		rule,
+		element,
+		stylesheet
+	);
 
 	if (applies === NO_MATCH) {
 		return false;
@@ -101,7 +163,7 @@ function apply_selector(relative_selectors, element, stylesheet) {
 				let matched = false;
 				while ((parent = get_element_parent(parent))) {
 					if (
-						relative_selector_might_apply_to_node(ancestor_selector, parent, stylesheet) !==
+						relative_selector_might_apply_to_node(ancestor_selector, rule, parent, stylesheet) !==
 						NO_MATCH
 					) {
 						mark(ancestor_selector, parent);
@@ -128,7 +190,7 @@ function apply_selector(relative_selectors, element, stylesheet) {
 
 			if (
 				has_global_parent ||
-				apply_selector(relative_selectors, get_element_parent(element), stylesheet)
+				apply_selector(relative_selectors, rule, get_element_parent(element), stylesheet)
 			) {
 				return mark(relative_selector, element);
 			}
@@ -158,7 +220,7 @@ function apply_selector(relative_selectors, element, stylesheet) {
 			}
 
 			for (const possible_sibling of siblings.keys()) {
-				if (apply_selector(relative_selectors.slice(), possible_sibling, stylesheet)) {
+				if (apply_selector(relative_selectors.slice(), rule, possible_sibling, stylesheet)) {
 					mark(relative_selector, element);
 					has_match = true;
 				}
@@ -190,11 +252,12 @@ const regex_backslash_and_following_character = /\\(.)/g;
 
 /**
  * @param {import('#compiler').Css.RelativeSelector} relative_selector
+ * @param {import('#compiler').Css.Rule} rule
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
  * @param {import('#compiler').Css.StyleSheet} stylesheet
  * @returns {NO_MATCH | POSSIBLE_MATCH | UNKNOWN_SELECTOR}
  */
-function relative_selector_might_apply_to_node(relative_selector, node, stylesheet) {
+function relative_selector_might_apply_to_node(relative_selector, rule, node, stylesheet) {
 	if (relative_selector.metadata.is_host || relative_selector.metadata.is_root) return NO_MATCH;
 
 	let i = relative_selector.selectors.length;
@@ -219,7 +282,7 @@ function relative_selector_might_apply_to_node(relative_selector, node, styleshe
 					let matched = false;
 
 					for (const complex_selector of selector.args.children) {
-						if (apply_selector(truncate(complex_selector), node, stylesheet)) {
+						if (apply_selector(truncate(complex_selector), rule, node, stylesheet)) {
 							complex_selector.metadata.used = true;
 							matched = true;
 						}
@@ -276,6 +339,25 @@ function relative_selector_might_apply_to_node(relative_selector, node, styleshe
 					name !== '*' &&
 					node.type !== 'SvelteElement'
 				) {
+					return NO_MATCH;
+				}
+
+				break;
+
+			case 'NestingSelector':
+				let matched = false;
+
+				const parent = rule.metadata.parent_rule;
+				if (!parent) error(selector, 'TODO', 'invalid nesting selector'); // TODO error sooner
+
+				for (const complex_selector of parent.prelude.children) {
+					if (apply_selector(truncate(complex_selector), parent, node, stylesheet)) {
+						complex_selector.metadata.used = true;
+						matched = true;
+					}
+				}
+
+				if (!matched) {
 					return NO_MATCH;
 				}
 

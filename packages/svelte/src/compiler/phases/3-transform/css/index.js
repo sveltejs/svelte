@@ -195,12 +195,16 @@ const visitors = {
 
 			if (relative_selector.metadata.scoped) {
 				if (relative_selector.selectors.length === 1) {
-					// skip standalone :is/:where
+					// skip standalone :is/:where/& selectors
 					const selector = relative_selector.selectors[0];
 					if (
 						selector.type === 'PseudoClassSelector' &&
 						(selector.name === 'is' || selector.name === 'where')
 					) {
+						continue;
+					}
+
+					if (selector.type === 'NestingSelector') {
 						continue;
 					}
 				}

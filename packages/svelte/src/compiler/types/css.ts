@@ -39,6 +39,7 @@ export interface ComplexSelector extends BaseNode {
 	type: 'ComplexSelector';
 	children: RelativeSelector[];
 	metadata: {
+		rule: null | Rule;
 		used: boolean;
 	};
 }
