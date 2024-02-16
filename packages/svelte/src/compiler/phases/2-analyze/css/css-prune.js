@@ -141,7 +141,6 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 			case '>': {
 				let parent = /** @type {import('#compiler').TemplateNode | null} */ (element.parent);
 
-				let parent_found = false;
 				let parent_matched = false;
 				let crossed_component_boundary = false;
 
@@ -151,14 +150,10 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 					}
 
 					if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
-						parent_found = true;
-
 						if (apply_selector(parent_selectors, rule, parent, stylesheet)) {
+							// TODO the `name === ' '` causes false positives, but removing it causes false negatives...
 							if (name === ' ' || crossed_component_boundary) {
 								mark(parent_selectors[parent_selectors.length - 1], parent);
-							} else {
-								parent.metadata.scoped = true;
-								// parent_selectors[parent_selectors.length - 1].metadata.selected.add(parent);
 							}
 
 							parent_matched = true;
