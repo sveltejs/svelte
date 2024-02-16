@@ -107,7 +107,8 @@ const css = {
 	'invalid-css-global-selector-list': () =>
 		`:global(...) must not contain type or universal selectors when used in a compound selector`,
 	'invalid-css-selector': () => `Invalid selector`,
-	'invalid-css-identifier': () => 'Expected a valid CSS identifier'
+	'invalid-css-identifier': () => 'Expected a valid CSS identifier',
+	'invalid-nesting-selector': () => `Nesting selectors can only be used inside a rule`
 };
 
 /** @satisfies {Errors} */

@@ -132,6 +132,12 @@ const validation_visitors = {
 				}
 			}
 		}
+	},
+	NestingSelector(node, context) {
+		const rule = /** @type {import('#compiler').Css.Rule} */ (context.state.rule);
+		if (!rule.metadata.parent_rule) {
+			error(node, 'invalid-nesting-selector');
+		}
 	}
 };
 

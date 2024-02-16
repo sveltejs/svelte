@@ -353,8 +353,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, node, st
 			case 'NestingSelector': {
 				let matched = false;
 
-				const parent = rule.metadata.parent_rule;
-				if (!parent) error(selector, 'TODO', 'invalid nesting selector'); // TODO error sooner
+				const parent = /** @type {import('#compiler').Css.Rule} */ (rule.metadata.parent_rule);
 
 				for (const complex_selector of parent.prelude.children) {
 					if (apply_selector(truncate(complex_selector), parent, node, stylesheet)) {
