@@ -36,7 +36,7 @@ export function is_text_attribute(attribute) {
  * @param {import('#compiler').Attribute} attribute
  * @returns {attribute is import('#compiler').Attribute & { value: [import('#compiler').ExpressionTag] }}
  */
-function is_expression_attribute(attribute) {
+export function is_expression_attribute(attribute) {
 	return (
 		attribute.value !== true &&
 		attribute.value.length === 1 &&
