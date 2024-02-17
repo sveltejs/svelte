@@ -322,7 +322,7 @@ function serialize_get_binding(node, state) {
 		const store_id = b.id(node.name.slice(1));
 		return b.call(
 			'$.store_get',
-			b.id('$$store_subs'),
+			b.assignment('??=', b.id('$$store_subs'), b.object([])),
 			b.literal(node.name),
 			serialize_get_binding(store_id, state)
 		);
@@ -460,7 +460,7 @@ function serialize_set_binding(node, context, fallback) {
 	} else if (is_store) {
 		return b.call(
 			'$.mutate_store',
-			b.id('$$store_subs'),
+			b.assignment('??=', b.id('$$store_subs'), b.object([])),
 			b.literal(left.name),
 			b.id(left_name),
 			b.assignment(node.operator, /** @type {import('estree').Pattern} */ (visit(node.left)), value)
@@ -506,7 +506,11 @@ const global_visitors = {
 			if (node.prefix) fn += '_pre';
 
 			/** @type {import('estree').Expression[]} */
-			const args = [b.id('$$store_subs'), b.literal(argument.name), b.id(argument.name.slice(1))];
+			const args = [
+				b.assignment('??=', b.id('$$store_subs'), b.object([])),
+				b.literal(argument.name),
+				b.id(argument.name.slice(1))
+			];
 			if (node.operator === '--') {
 				args.push(b.literal(-1));
 			}
@@ -2094,8 +2098,10 @@ export function server_component(analysis, options) {
 			(binding) => binding.kind === 'store_sub'
 		)
 	) {
-		instance.body.unshift(b.const('$$store_subs', b.object([])));
-		template.body.push(b.stmt(b.call('$.unsubscribe_stores', b.id('$$store_subs'))));
+		instance.body.unshift(b.var('$$store_subs'));
+		template.body.push(
+			b.if(b.id('$$store_subs'), b.stmt(b.call('$.unsubscribe_stores', b.id('$$store_subs'))))
+		);
 	}
 	// Propagate values of bound props upwards if they're undefined in the parent and have a value.
 	// Don't do this as part of the props retrieval because people could eagerly mutate the prop in the instance script.
