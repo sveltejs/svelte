@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.56
+
+### Patch Changes
+
+- feat: add hydrate method, make hydration treeshakeable ([#10497](https://github.com/sveltejs/svelte/pull/10497))
+
+- fix: makes keyed each blocks consistent between dev and prod ([#10500](https://github.com/sveltejs/svelte/pull/10500))
+
+- fix: subscribe to stores in `transition`,`animation`,`use` directives ([#10481](https://github.com/sveltejs/svelte/pull/10481))
+
 ## 5.0.0-next.55
 
 ### Patch Changes
