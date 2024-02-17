@@ -321,7 +321,7 @@ function serialize_get_binding(node, state) {
 	if (binding.kind === 'store_sub') {
 		const store_id = b.id(node.name.slice(1));
 		return b.call(
-			state.options.dev ? '$.store_get_dev' : '$.store_get',
+			'$.store_get',
 			b.id('$$store_subs'),
 			b.literal(node.name),
 			serialize_get_binding(store_id, state)
