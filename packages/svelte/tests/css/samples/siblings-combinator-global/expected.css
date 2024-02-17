@@ -5,5 +5,5 @@
   input + p.svelte-xyz { color: red; }
   input ~ p.svelte-xyz { color: red; }
 
-  /* (unused) input + span { color: red; }*/
-  /* (unused) input ~ span { color: red; }*/
+  /* (unused) :global(input) + span { color: red; }*/
+  /* (unused) :global(input) ~ span { color: red; }*/

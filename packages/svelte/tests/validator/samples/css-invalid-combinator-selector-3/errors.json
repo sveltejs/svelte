@@ -2,7 +2,13 @@
 	{
 		"code": "invalid-css-selector",
 		"message": "Invalid selector",
-		"start": { "line": 5, "column": 2 },
-		"end": { "line": 5, "column": 8 }
+		"start": {
+			"line": 5,
+			"column": 2
+		},
+		"end": {
+			"line": 5,
+			"column": 2
+		}
 	}
 ]

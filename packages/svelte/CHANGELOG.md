@@ -1,5 +1,57 @@
 # svelte
 
+## 5.0.0-next.56
+
+### Patch Changes
+
+- feat: add hydrate method, make hydration treeshakeable ([#10497](https://github.com/sveltejs/svelte/pull/10497))
+
+- fix: makes keyed each blocks consistent between dev and prod ([#10500](https://github.com/sveltejs/svelte/pull/10500))
+
+- fix: subscribe to stores in `transition`,`animation`,`use` directives ([#10481](https://github.com/sveltejs/svelte/pull/10481))
+
+## 5.0.0-next.55
+
+### Patch Changes
+
+- feat: derive destructured derived objects values ([#10488](https://github.com/sveltejs/svelte/pull/10488))
+
+- fix: prevent infinite loop when writing to store using shorthand ([#10477](https://github.com/sveltejs/svelte/pull/10477))
+
+- fix: add proper source map support ([#10459](https://github.com/sveltejs/svelte/pull/10459))
+
+## 5.0.0-next.54
+
+### Patch Changes
+
+- breaking: replace `$derived.call` with `$derived.by` ([#10445](https://github.com/sveltejs/svelte/pull/10445))
+
+- fix: improve global transition outro handling ([#10474](https://github.com/sveltejs/svelte/pull/10474))
+
+## 5.0.0-next.53
+
+### Patch Changes
+
+- fix: only throw bind error when not passing a value ([#10090](https://github.com/sveltejs/svelte/pull/10090))
+
+- fix: improve global transition handling of effect cleardown ([#10469](https://github.com/sveltejs/svelte/pull/10469))
+
+- fix: improve handling of object property deletions ([#10456](https://github.com/sveltejs/svelte/pull/10456))
+
+- fix: ensure inspect fires on prop changes ([#10468](https://github.com/sveltejs/svelte/pull/10468))
+
+## 5.0.0-next.52
+
+### Patch Changes
+
+- fix: use hybrid scoping strategy for consistent specificity increase ([#10443](https://github.com/sveltejs/svelte/pull/10443))
+
+- fix: throw validation error when binding to each argument in runes mode ([#10441](https://github.com/sveltejs/svelte/pull/10441))
+
+- fix: make CSS animation declaration transformation more robust ([#10432](https://github.com/sveltejs/svelte/pull/10432))
+
+- fix: handle sole empty expression tags ([#10433](https://github.com/sveltejs/svelte/pull/10433))
+
 ## 5.0.0-next.51
 
 ### Patch Changes

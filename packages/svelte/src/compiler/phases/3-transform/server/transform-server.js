@@ -329,7 +329,7 @@ function serialize_get_binding(node, state) {
 	}
 
 	if (binding.expression) {
-		return binding.expression;
+		return typeof binding.expression === 'function' ? binding.expression(node) : binding.expression;
 	}
 
 	return node;
@@ -548,7 +548,7 @@ const javascript_visitors_runes = {
 							: /** @type {import('estree').Expression} */ (visit(node.value.arguments[0]))
 				};
 			}
-			if (rune === '$derived.call') {
+			if (rune === '$derived.by') {
 				return {
 					...node,
 					value:
@@ -582,7 +582,7 @@ const javascript_visitors_runes = {
 					? b.id('undefined')
 					: /** @type {import('estree').Expression} */ (visit(args[0]));
 
-			if (rune === '$derived.call') {
+			if (rune === '$derived.by') {
 				declarations.push(
 					b.declarator(
 						/** @type {import('estree').Pattern} */ (visit(declarator.id)),
@@ -760,7 +760,7 @@ function serialize_element_spread_attributes(
 		b.array(values),
 		lowercase_attributes,
 		is_svg,
-		b.literal(context.state.analysis.stylesheet.id)
+		b.literal(context.state.analysis.css.hash)
 	];
 
 	if (style_directives.length > 0 || class_directives.length > 0) {
@@ -1311,7 +1311,7 @@ const template_visitors = {
 
 		const each_node_meta = node.metadata;
 		const collection = /** @type {import('estree').Expression} */ (context.visit(node.expression));
-		const item = b.id(each_node_meta.item_name);
+		const item = each_node_meta.item;
 		const index =
 			each_node_meta.contains_group_binding || !node.index
 				? each_node_meta.index
@@ -2097,7 +2097,6 @@ export function server_component(analysis, options) {
 		instance.body.unshift(b.const('$$store_subs', b.object([])));
 		template.body.push(b.stmt(b.call('$.unsubscribe_stores', b.id('$$store_subs'))));
 	}
-
 	// Propagate values of bound props upwards if they're undefined in the parent and have a value.
 	// Don't do this as part of the props retrieval because people could eagerly mutate the prop in the instance script.
 	/** @type {import('estree').Property[]} */

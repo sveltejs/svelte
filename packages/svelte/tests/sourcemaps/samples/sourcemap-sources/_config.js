@@ -1,4 +1,5 @@
 import MagicString, { Bundle } from 'magic-string';
+import * as path from 'node:path';
 import { test } from '../../test';
 
 /**
@@ -31,31 +32,61 @@ function result(bundle, filename) {
 	};
 }
 
+const FOO = 'var answer = 42; // foo.js\n';
+const BAR = 'console.log(answer); // bar.js\n';
+const FOO2 = 'var answer2 = 84; // foo2.js\n';
+const BAR2 = 'console.log(answer2); // bar2.js\n';
+
 export default test({
-	skip: true,
-	js_map_sources: ['input.svelte', 'foo.js', 'bar.js', 'foo2.js', 'bar2.js'],
+	js_map_sources: [
+		'../../input.svelte',
+		'../../foo.js',
+		'../../bar.js',
+		'../../foo2.js',
+		'../../bar2.js'
+	],
 	preprocess: [
 		{
 			script: ({ content, filename = '' }) => {
 				const bundle = new Bundle();
 
-				add(bundle, filename, content);
-				add(bundle, 'foo.js', 'var answer = 42; // foo.js\n');
-				add(bundle, 'bar.js', 'console.log(answer); // bar.js\n');
+				add(bundle, path.basename(filename), content);
+				add(bundle, 'foo.js', FOO);
+				add(bundle, 'bar.js', BAR);
 
-				return result(bundle, filename);
+				return result(bundle, path.basename(filename));
 			}
 		},
 		{
 			script: ({ content, filename = '' }) => {
 				const bundle = new Bundle();
 
-				add(bundle, filename, content);
-				add(bundle, 'foo2.js', 'var answer2 = 84; // foo2.js\n');
-				add(bundle, 'bar2.js', 'console.log(answer2); // bar2.js\n');
+				add(bundle, path.basename(filename), content);
+				add(bundle, 'foo2.js', FOO2);
+				add(bundle, 'bar2.js', BAR2);
 
-				return result(bundle, filename);
+				return result(bundle, path.basename(filename));
 			}
+		}
+	],
+	client: [
+		{
+			code: FOO,
+			str: 'answer'
+		},
+		{
+			code: BAR,
+			str: 'answer',
+			idxGenerated: 1
+		},
+		{
+			code: FOO2,
+			str: 'answer2'
+		},
+		{
+			code: BAR2,
+			str: 'answer2',
+			idxGenerated: 1
 		}
 	]
 });

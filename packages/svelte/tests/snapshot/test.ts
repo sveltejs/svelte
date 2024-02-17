@@ -10,17 +10,13 @@ interface SnapshotTest extends BaseTest {
 }
 
 const { test, run } = suite<SnapshotTest>(async (config, cwd) => {
-	compile_directory(cwd, 'client', config.compileOptions);
-	compile_directory(cwd, 'server', config.compileOptions);
+	await compile_directory(cwd, 'client', config.compileOptions);
+	await compile_directory(cwd, 'server', config.compileOptions);
 
 	// run `UPDATE_SNAPSHOTS=true pnpm test snapshot` to update snapshot tests
 	if (process.env.UPDATE_SNAPSHOTS) {
 		fs.rmSync(`${cwd}/_expected`, { recursive: true, force: true });
 		fs.cpSync(`${cwd}/_output`, `${cwd}/_expected`, { recursive: true, force: true });
-
-		for (const file of glob(`${cwd}/_expected/**`, { filesOnly: true })) {
-			fs.writeFileSync(file, fs.readFileSync(file, 'utf-8').replace(`v${VERSION}`, 'VERSION'));
-		}
 	} else {
 		const actual = glob('**', { cwd: `${cwd}/_output`, filesOnly: true });
 		const expected = glob('**', { cwd: `${cwd}/_expected`, filesOnly: true });

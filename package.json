@@ -30,7 +30,7 @@
     "@sveltejs/eslint-config": "^6.0.4",
     "@svitejs/changesets-changelog-github-compact": "^1.1.0",
     "@types/node": "^20.11.5",
-    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@vitest/coverage-v8": "^1.2.1",
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",

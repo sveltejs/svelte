@@ -15,9 +15,7 @@ span {
 `;
 
 export default test({
-	skip: true,
 	css_map_sources: [external_relative_filename],
-	js_map_sources: ['input.svelte'],
 	preprocess: [
 		{
 			style: ({ content, filename = '' }) => {
@@ -31,5 +29,20 @@ export default test({
 	],
 	options: {
 		filename: component_filepath
+	},
+	client: [],
+	preprocessed: ['Hello world'],
+	test({ assert, code_preprocessed, map_preprocessed }) {
+		assert.include(
+			code_preprocessed,
+			`/* Filename from preprocess: ${component_filepath} */`,
+			'Preprocessor should receive same value for filename as passed to preprocess function'
+		);
+
+		assert.deepEqual(
+			map_preprocessed.sources.slice().sort(),
+			[external_relative_filename, component_file_basename].sort(),
+			'Preprocessed map should contain sources relative to filepath'
+		);
 	}
 });

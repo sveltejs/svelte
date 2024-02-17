@@ -8,6 +8,7 @@ export {
 	getContext,
 	hasContext,
 	mount,
+	hydrate,
 	setContext,
 	tick,
 	untrack

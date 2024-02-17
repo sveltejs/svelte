@@ -1,5 +1,5 @@
 import { append_child } from './operations.js';
-import { current_hydration_fragment, hydrate_block_anchor } from './hydration.js';
+import { current_hydration_fragment, hydrate_block_anchor, hydrating } from './hydration.js';
 import { is_array } from './utils.js';
 
 /** @param {string} html */
@@ -92,7 +92,7 @@ export function remove(current) {
  */
 export function reconcile_html(target, value, svg) {
 	hydrate_block_anchor(target);
-	if (current_hydration_fragment !== null) {
+	if (hydrating) {
 		return current_hydration_fragment;
 	}
 	var html = value + '';

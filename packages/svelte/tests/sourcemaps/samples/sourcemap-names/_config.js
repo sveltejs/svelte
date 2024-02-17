@@ -3,7 +3,6 @@ import { test } from '../../test';
 import { magic_string_preprocessor_result, magic_string_replace_all } from '../../helpers.js';
 
 export default test({
-	skip: true,
 	preprocess: [
 		{
 			markup: ({ content, filename = '' }) => {
@@ -31,5 +30,23 @@ export default test({
 				return magic_string_preprocessor_result(filename, src);
 			}
 		}
-	]
+	],
+	client: [
+		{ str: 'baritone', strGenerated: 'bar' },
+		{ str: 'old_name_1', strGenerated: 'new_name_1' },
+		{ str: 'old_name_2', strGenerated: 'new_name_2' }
+	],
+	preprocessed: [
+		{ str: 'baritone', strGenerated: 'bar' },
+		{ str: 'old_name_1', strGenerated: 'new_name_1' },
+		{ str: 'old_name_2', strGenerated: 'new_name_2' },
+		{ str: '--bazitone', strGenerated: '--baz' }
+	],
+	css: [{ str: 'background-color: var(--bazitone)', strGenerated: 'background-color: var(--baz)' }],
+	test({ assert, map_preprocessed }) {
+		assert.deepEqual(
+			map_preprocessed.names.sort(),
+			['baritone', '--bazitone', 'old_name_1', 'old_name_2'].sort()
+		);
+	}
 });

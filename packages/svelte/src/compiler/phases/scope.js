@@ -185,6 +185,7 @@ export class Scope {
 	reference(node, path) {
 		path = [...path]; // ensure that mutations to path afterwards don't affect this reference
 		let references = this.references.get(node.name);
+
 		if (!references) this.references.set(node.name, (references = []));
 
 		references.push({ node, path });
@@ -328,6 +329,13 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		return /** @type {const} */ ([scope, is_default_slot]);
 	}
+
+	/**
+	 * @type {import('zimmerframe').Visitor<import('#compiler').Directive, State, import('#compiler').SvelteNode>}
+	 */
+	const SvelteDirective = (node, context) => {
+		context.state.scope.reference(b.id(node.name), context.path);
+	};
 
 	walk(ast, state, {
 		// references
@@ -556,7 +564,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				contains_group_binding: false,
 				array_name: needs_array_deduplication ? state.scope.root.unique('$$array') : null,
 				index: scope.root.unique('$$index'),
-				item_name: node.context.type === 'Identifier' ? node.context.name : '$$item',
+				item: node.context.type === 'Identifier' ? node.context : b.id('$$item'),
 				declarations: scope.declarations,
 				references: [...references_within]
 					.map((id) => /** @type {import('#compiler').Binding} */ (state.scope.get(id.name)))
@@ -625,7 +633,11 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				)
 			]);
 			context.next();
-		}
+		},
+
+		TransitionDirective: SvelteDirective,
+		AnimateDirective: SvelteDirective,
+		UseDirective: SvelteDirective
 
 		// TODO others
 	});
@@ -717,6 +729,8 @@ export function get_rune(node, scope) {
 	if (n.type !== 'Identifier') return null;
 
 	joined = n.name + joined;
+
+	if (joined === '$derived.call') error(node, 'invalid-derived-call');
 	if (!Runes.includes(/** @type {any} */ (joined))) return null;
 
 	const binding = scope.get(n.name);

@@ -61,6 +61,7 @@ Svelte now use Mutation Observers instead of IFrames to measure dimensions for `
 - The `false`/`true` (already deprecated previously) and the `"none"` values were removed as valid values from the `css` option
 - The `legacy` option was repurposed
 - The `hydratable` option has been removed. Svelte components are always hydratable now
+- The `enableSourcemap` option has been removed. Source maps are always generated now, tooling can choose to ignore it
 - The `tag` option was removed. Use `<svelte:options customElement="tag-name" />` inside the component instead
 - The `loopGuardTimeout`, `format`, `sveltePath`, `errorMode` and `varsReport` options were removed
 
@@ -81,6 +82,17 @@ Previously, a compound selector starting with a global modifier which has univer
 ### CSS hash position no longer deterministic
 
 Previously Svelte would always insert the CSS hash last. This is no longer guaranteed in Svelte 5. This is only breaking if you [have very weird css selectors](https://stackoverflow.com/questions/15670631/does-the-order-of-classes-listed-on-an-item-affect-the-css).
+
+### Scoped CSS uses :where(...)
+
+To avoid issues caused by unpredictable specificity changes, scoped CSS selectors now use `:where(.svelte-xyz123)` selector modifiers alongside `.svelte-xyz123` (where `xyz123` is, as previously, a hash of the `<style>` contents). You can read more detail [here](https://github.com/sveltejs/svelte/pull/10443).
+
+In the event that you need to support ancient browsers that don't implement `:where`, you can manually alter the emitted CSS, at the cost of unpredictable specificity changes:
+
+```js
+// @errors: 2552
+css = css.replace(/:where\((.+?)\)/, '$1');
+```
 
 ### Renames of various error/warning codes
 

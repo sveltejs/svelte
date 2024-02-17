@@ -43,3 +43,47 @@ To remove reactivity from objects and arrays created with `$state`, use `unstate
 This is handy when you want to pass some state to an external library or API that doesn't expect a reactive object – such as `structuredClone`.
 
 > Note that `unstate` will return a new object from the input when removing reactivity. If the object passed isn't reactive, it will be returned as is.
+
+## `mount`
+
+Instantiates a component and mounts it to the given target:
+
+```js
+// @errors: 2724 2305
+import { mount } from 'svelte';
+import App from './App.svelte';
+
+const app = mount(App, {
+	target: document.querySelector('#app'),
+	props: { some: 'property' }
+});
+```
+
+## `hydrate`
+
+Like `mount`, but will pick up any HTML rendered by Svelte's SSR output (from the `render` function) inside the target and make it interactive:
+
+```js
+// @errors: 2724 2305
+import { hydrate } from 'svelte';
+import App from './App.svelte';
+
+const app = hydrate(App, {
+	target: document.querySelector('#app'),
+	props: { some: 'property' }
+});
+```
+
+## `render`
+
+Only available on the server and when compiling with the `server` option. Takes a component and returns an object with `html` and `head` properties on it, which you can use to populate the HTML when server-rendering your app:
+
+```js
+// @errors: 2724 2305 2307
+import { render } from 'svelte/server';
+import App from './App.svelte';
+
+const result = render(App, {
+	props: { some: 'property' }
+});
+```

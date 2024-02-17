@@ -1,5 +1,5 @@
 import { test } from '../../test';
 
 export default test({
-	skip: true
+	css: [{ str: '.foo', strGenerated: '.foo.svelte-sg04hs' }]
 });
