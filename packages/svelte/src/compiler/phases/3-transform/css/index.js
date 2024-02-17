@@ -3,7 +3,18 @@ import { walk } from 'zimmerframe';
 import { is_keyframes_node, regex_css_name_boundary, remove_css_prefix } from '../../css.js';
 import { merge_with_preprocessor_map } from '../../../utils/mapped_code.js';
 
-/** @typedef {{ code: MagicString, dev: boolean, hash: string, selector: string, keyframes: string[] }} State */
+/**
+ * @typedef {{
+ *   code: MagicString;
+ *   dev: boolean;
+ *   hash: string;
+ *   selector: string;
+ *   keyframes: string[];
+ *   specificity: {
+ *     bumped: boolean
+ *   }
+ * }} State
+ */
 
 /**
  *
@@ -20,7 +31,10 @@ export function render_stylesheet(source, analysis, options) {
 		dev: options.dev,
 		hash: analysis.css.hash,
 		selector: `.${analysis.css.hash}`,
-		keyframes: analysis.css.keyframes
+		keyframes: analysis.css.keyframes,
+		specificity: {
+			bumped: false
+		}
 	};
 
 	const ast = /** @type {import('#compiler').Css.StyleSheet} */ (analysis.css.ast);
@@ -112,9 +126,7 @@ const visitors = {
 			return;
 		}
 
-		const used = node.prelude.children.filter((s) => s.metadata.used);
-
-		if (used.length === 0) {
+		if (!is_used(node)) {
 			state.code.prependRight(node.start, '/* (unused) ');
 			state.code.appendLeft(node.end, '*/');
 			escape_comment_close(node, state.code);
@@ -122,39 +134,61 @@ const visitors = {
 			return;
 		}
 
-		if (used.length < node.prelude.children.length) {
-			let pruning = false;
-			let last = node.prelude.children[0].start;
+		next();
+	},
+	SelectorList(node, { state, next, path }) {
+		let pruning = false;
+		let last = node.children[0].start;
 
-			for (let i = 0; i < node.prelude.children.length; i += 1) {
-				const selector = node.prelude.children[i];
+		for (let i = 0; i < node.children.length; i += 1) {
+			const selector = node.children[i];
 
-				if (selector.metadata.used === pruning) {
-					if (pruning) {
-						let i = selector.start;
-						while (state.code.original[i] !== ',') i--;
+			if (selector.metadata.used === pruning) {
+				if (pruning) {
+					let i = selector.start;
+					while (state.code.original[i] !== ',') i--;
 
-						state.code.overwrite(i, i + 1, '*/');
+					state.code.overwrite(i, i + 1, '*/');
+				} else {
+					if (i === 0) {
+						state.code.prependRight(selector.start, '/* (unused) ');
 					} else {
-						if (i === 0) {
-							state.code.prependRight(selector.start, '/* (unused) ');
-						} else {
-							state.code.overwrite(last, selector.start, ' /* (unused) ');
-						}
+						state.code.overwrite(last, selector.start, ' /* (unused) ');
 					}
-
-					pruning = !pruning;
 				}
 
-				last = selector.end;
+				pruning = !pruning;
 			}
 
-			if (pruning) {
-				state.code.appendLeft(last, '*/');
+			last = selector.end;
+		}
+
+		if (pruning) {
+			state.code.appendLeft(last, '*/');
+		}
+
+		// if we're in a `:is(...)` or whatever, keep existing specificity bump state
+		let specificity = state.specificity;
+
+		// if this selector list belongs to a rule, require a specificity bump for the
+		// first scoped selector but only if we're at the top level
+		let parent = path.at(-1);
+		if (parent?.type === 'Rule') {
+			specificity = { bumped: false };
+
+			/** @type {import('#compiler').Css.Rule | null} */
+			let rule = parent.metadata.parent_rule;
+
+			while (rule) {
+				if (rule.metadata.has_local_selectors) {
+					specificity = { bumped: true };
+					break;
+				}
+				rule = rule.metadata.parent_rule;
 			}
 		}
 
-		next();
+		next({ ...state, specificity });
 	},
 	ComplexSelector(node, context) {
 		/** @param {import('#compiler').Css.SimpleSelector} selector */
@@ -164,21 +198,35 @@ const visitors = {
 				.remove(selector.end - 1, selector.end);
 		}
 
-		let first = true;
-
 		for (const relative_selector of node.children) {
 			if (relative_selector.metadata.is_global) {
 				remove_global_pseudo_class(relative_selector.selectors[0]);
+				continue;
 			}
 
 			if (relative_selector.metadata.scoped) {
+				if (relative_selector.selectors.length === 1) {
+					// skip standalone :is/:where/& selectors
+					const selector = relative_selector.selectors[0];
+					if (
+						selector.type === 'PseudoClassSelector' &&
+						(selector.name === 'is' || selector.name === 'where')
+					) {
+						continue;
+					}
+				}
+
+				if (relative_selector.selectors.every((s) => s.type === 'NestingSelector')) {
+					continue;
+				}
+
 				// for the first occurrence, we use a classname selector, so that every
 				// encapsulated selector gets a +0-1-0 specificity bump. thereafter,
 				// we use a `:where` selector, which does not affect specificity
 				let modifier = context.state.selector;
-				if (!first) modifier = `:where(${modifier})`;
+				if (context.state.specificity.bumped) modifier = `:where(${modifier})`;
 
-				first = false;
+				context.state.specificity.bumped = true;
 
 				// TODO err... can this happen?
 				for (const selector of relative_selector.selectors) {
@@ -209,18 +257,52 @@ const visitors = {
 
 					break;
 				}
-				first = false;
 			}
 		}
 
 		context.next();
+	},
+	PseudoClassSelector(node, context) {
+		if (node.name === 'is' || node.name === 'where') {
+			context.next();
+		}
 	}
 };
 
 /** @param {import('#compiler').Css.Rule} rule */
 function is_empty(rule) {
-	if (rule.block.children.length > 0) return false;
+	for (const child of rule.block.children) {
+		if (child.type === 'Declaration') {
+			return false;
+		}
+
+		if (child.type === 'Rule') {
+			if (is_used(child) && !is_empty(child)) return false;
+		}
+
+		if (child.type === 'Atrule') {
+			return false; // TODO
+		}
+	}
+
 	return true;
+}
+
+/** @param {import('#compiler').Css.Rule} rule */
+function is_used(rule) {
+	for (const selector of rule.prelude.children) {
+		if (selector.metadata.used) return true;
+	}
+
+	for (const child of rule.block.children) {
+		if (child.type === 'Rule' && is_used(child)) return true;
+
+		if (child.type === 'Atrule') {
+			return true; // TODO
+		}
+	}
+
+	return false;
 }
 
 /**

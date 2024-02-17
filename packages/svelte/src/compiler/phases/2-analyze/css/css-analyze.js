@@ -1,3 +1,4 @@
+import { walk } from 'zimmerframe';
 import { error } from '../../../errors.js';
 import { is_keyframes_node } from '../../css.js';
 import { merge } from '../../visitors.js';
@@ -5,7 +6,10 @@ import { merge } from '../../visitors.js';
 /**
  * @typedef {import('zimmerframe').Visitors<
  *   import('#compiler').Css.Node,
- *   NonNullable<import('../../types.js').ComponentAnalysis['css']>
+ *   {
+ *     keyframes: string[];
+ *     rule: import('#compiler').Css.Rule | null;
+ *   }
  * >} Visitors
  */
 
@@ -24,7 +28,7 @@ function is_global(relative_selector) {
 }
 
 /** @type {Visitors} */
-const analysis = {
+const analysis_visitors = {
 	Atrule(node, context) {
 		if (is_keyframes_node(node)) {
 			if (!node.prelude.startsWith('-global-')) {
@@ -34,6 +38,8 @@ const analysis = {
 	},
 	ComplexSelector(node, context) {
 		context.next(); // analyse relevant selectors first
+
+		node.metadata.rule = context.state.rule;
 
 		node.metadata.used = node.children.every(
 			({ metadata }) => metadata.is_global || metadata.is_host || metadata.is_root
@@ -59,11 +65,25 @@ const analysis = {
 		);
 
 		context.next();
+	},
+	Rule(node, context) {
+		node.metadata.parent_rule = context.state.rule;
+
+		context.next({
+			...context.state,
+			rule: node
+		});
+
+		node.metadata.has_local_selectors = node.prelude.children.some((selector) => {
+			return selector.children.some(
+				({ metadata }) => !metadata.is_global && !metadata.is_host && !metadata.is_root
+			);
+		});
 	}
 };
 
 /** @type {Visitors} */
-const validation = {
+const validation_visitors = {
 	ComplexSelector(node, context) {
 		// ensure `:global(...)` is not used in the middle of a selector
 		{
@@ -118,7 +138,21 @@ const validation = {
 				}
 			}
 		}
+	},
+	NestingSelector(node, context) {
+		const rule = /** @type {import('#compiler').Css.Rule} */ (context.state.rule);
+		if (!rule.metadata.parent_rule) {
+			error(node, 'invalid-nesting-selector');
+		}
 	}
 };
 
-export const css_visitors = merge(analysis, validation);
+const css_visitors = merge(analysis_visitors, validation_visitors);
+
+/**
+ * @param {import('#compiler').Css.StyleSheet} stylesheet
+ * @param {import('../../types.js').ComponentAnalysis} analysis
+ */
+export function analyze_css(stylesheet, analysis) {
+	walk(stylesheet, { keyframes: analysis.css.keyframes, rule: null }, css_visitors);
+}

@@ -20,7 +20,7 @@ import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
 import { DelegatedEvents, namespace_svg } from '../../../constants.js';
 import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
-import { css_visitors } from './css/css-analyze.js';
+import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
 import { hash } from './utils.js';
 
@@ -460,8 +460,7 @@ export function analyze_component(root, options) {
 	}
 
 	if (analysis.css.ast) {
-		// validate
-		walk(analysis.css.ast, analysis.css, css_visitors);
+		analyze_css(analysis.css.ast, analysis);
 
 		// mark nodes as scoped/unused/empty etc
 		for (const element of analysis.elements) {
