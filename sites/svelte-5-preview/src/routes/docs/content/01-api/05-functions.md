@@ -61,7 +61,7 @@ const app = mount(App, {
 
 ## `hydrate`
 
-Like `mount`, but will pick up any HTML rendered by Svelte's SSR output (from the `render` function) inside the target and makes it interactive:
+Like `mount`, but will pick up any HTML rendered by Svelte's SSR output (from the `render` function) inside the target and make it interactive:
 
 ```js
 // @errors: 2724 2305
