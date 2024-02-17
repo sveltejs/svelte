@@ -1,5 +1,485 @@
 # svelte
 
+## 5.0.0-next.56
+
+### Patch Changes
+
+- feat: add hydrate method, make hydration treeshakeable ([#10497](https://github.com/sveltejs/svelte/pull/10497))
+
+- fix: makes keyed each blocks consistent between dev and prod ([#10500](https://github.com/sveltejs/svelte/pull/10500))
+
+- fix: subscribe to stores in `transition`,`animation`,`use` directives ([#10481](https://github.com/sveltejs/svelte/pull/10481))
+
+## 5.0.0-next.55
+
+### Patch Changes
+
+- feat: derive destructured derived objects values ([#10488](https://github.com/sveltejs/svelte/pull/10488))
+
+- fix: prevent infinite loop when writing to store using shorthand ([#10477](https://github.com/sveltejs/svelte/pull/10477))
+
+- fix: add proper source map support ([#10459](https://github.com/sveltejs/svelte/pull/10459))
+
+## 5.0.0-next.54
+
+### Patch Changes
+
+- breaking: replace `$derived.call` with `$derived.by` ([#10445](https://github.com/sveltejs/svelte/pull/10445))
+
+- fix: improve global transition outro handling ([#10474](https://github.com/sveltejs/svelte/pull/10474))
+
+## 5.0.0-next.53
+
+### Patch Changes
+
+- fix: only throw bind error when not passing a value ([#10090](https://github.com/sveltejs/svelte/pull/10090))
+
+- fix: improve global transition handling of effect cleardown ([#10469](https://github.com/sveltejs/svelte/pull/10469))
+
+- fix: improve handling of object property deletions ([#10456](https://github.com/sveltejs/svelte/pull/10456))
+
+- fix: ensure inspect fires on prop changes ([#10468](https://github.com/sveltejs/svelte/pull/10468))
+
+## 5.0.0-next.52
+
+### Patch Changes
+
+- fix: use hybrid scoping strategy for consistent specificity increase ([#10443](https://github.com/sveltejs/svelte/pull/10443))
+
+- fix: throw validation error when binding to each argument in runes mode ([#10441](https://github.com/sveltejs/svelte/pull/10441))
+
+- fix: make CSS animation declaration transformation more robust ([#10432](https://github.com/sveltejs/svelte/pull/10432))
+
+- fix: handle sole empty expression tags ([#10433](https://github.com/sveltejs/svelte/pull/10433))
+
+## 5.0.0-next.51
+
+### Patch Changes
+
+- fix: align `beforeUpdate`/`afterUpdate` behavior better with that in Svelte 4 ([#10408](https://github.com/sveltejs/svelte/pull/10408))
+
+- fix: disallow exporting props, derived and reassigned state from within components ([#10430](https://github.com/sveltejs/svelte/pull/10430))
+
+- fix: improve indexed each array reconcilation ([#10422](https://github.com/sveltejs/svelte/pull/10422))
+
+- fix: add compiler error for each block mutations in runes mode ([#10428](https://github.com/sveltejs/svelte/pull/10428))
+
+## 5.0.0-next.50
+
+### Patch Changes
+
+- fix: set `open` binding value in `<details>` ([#10413](https://github.com/sveltejs/svelte/pull/10413))
+
+## 5.0.0-next.49
+
+### Patch Changes
+
+- fix: properly analyze group expressions ([#10410](https://github.com/sveltejs/svelte/pull/10410))
+
+- fix: handle nested script tags ([#10416](https://github.com/sveltejs/svelte/pull/10416))
+
+- fix: only update lazy properties that have actually changed ([#10415](https://github.com/sveltejs/svelte/pull/10415))
+
+- fix: correctly determine binding scope of `let:` directives ([#10395](https://github.com/sveltejs/svelte/pull/10395))
+
+- fix: run `onDestroy` callbacks during SSR ([#10297](https://github.com/sveltejs/svelte/pull/10297))
+
+## 5.0.0-next.48
+
+### Patch Changes
+
+- chore: bump zimmerframe to fix bugs introduced in previous version ([#10405](https://github.com/sveltejs/svelte/pull/10405))
+
+## 5.0.0-next.47
+
+### Patch Changes
+
+- chore: bump zimmerframe to resolve AST-traversal-related bugs ([`b63ab91c7b92ecec6e7e939d6d509fc3008cf048`](https://github.com/sveltejs/svelte/commit/b63ab91c7b92ecec6e7e939d6d509fc3008cf048))
+
+## 5.0.0-next.46
+
+### Patch Changes
+
+- fix: allow `let:` directives on slot elements ([#10391](https://github.com/sveltejs/svelte/pull/10391))
+
+- fix: repair each block length mismatches during hydration ([#10398](https://github.com/sveltejs/svelte/pull/10398))
+
+## 5.0.0-next.45
+
+### Patch Changes
+
+- fix: correctly determine `bind:group` members ([#10368](https://github.com/sveltejs/svelte/pull/10368))
+
+- fix: make inline doc links valid ([#10365](https://github.com/sveltejs/svelte/pull/10365))
+
+## 5.0.0-next.44
+
+### Patch Changes
+
+- fix: bindings with typescript assertions ([#10329](https://github.com/sveltejs/svelte/pull/10329))
+
+- fix: only reuse state proxies that belong to the current value ([#10343](https://github.com/sveltejs/svelte/pull/10343))
+
+## 5.0.0-next.43
+
+### Patch Changes
+
+- fix: insert empty text nodes while hydrating, if necessary ([#9729](https://github.com/sveltejs/svelte/pull/9729))
+
+- fix: correctly update tweened store initialized with nullish value ([#10356](https://github.com/sveltejs/svelte/pull/10356))
+
+## 5.0.0-next.42
+
+### Patch Changes
+
+- breaking: snippets can now take multiple arguments, support default parameters. Because of this, the type signature has changed ([#9988](https://github.com/sveltejs/svelte/pull/9988))
+
+- Use generic `T` as the return type for `$derived.call()` ([#10349](https://github.com/sveltejs/svelte/pull/10349))
+
+- fix: replace TODO errors ([#10326](https://github.com/sveltejs/svelte/pull/10326))
+
+- fix: add proper typings for `$derived.call` ([`6145be5c695a063c70944272a42d9c63fdd71d64`](https://github.com/sveltejs/svelte/commit/6145be5c695a063c70944272a42d9c63fdd71d64))
+
+- fix: improve handling of unowned derived signals ([#10342](https://github.com/sveltejs/svelte/pull/10342))
+
+- fix: correctly reference destructured derived binding in event handler ([#10333](https://github.com/sveltejs/svelte/pull/10333))
+
+- fix: add `scrollend` event type ([#10337](https://github.com/sveltejs/svelte/pull/10337))
+
+- fix: improve unstate handling of non enumerable properties ([#10348](https://github.com/sveltejs/svelte/pull/10348))
+
+## 5.0.0-next.41
+
+### Patch Changes
+
+- fix: handle event delegation correctly when having sibling event listeners ([#10307](https://github.com/sveltejs/svelte/pull/10307))
+
+- chore: add $derived.call rune ([#10240](https://github.com/sveltejs/svelte/pull/10240))
+
+## 5.0.0-next.40
+
+### Patch Changes
+
+- chore: cleanup derived destruction ([#10303](https://github.com/sveltejs/svelte/pull/10303))
+
+- fix: correctly parse at-rules containing special characters in strings ([#10221](https://github.com/sveltejs/svelte/pull/10221))
+
+- fix: Add missing `miter-clip` and `arcs` values to `stroke-linejoin` attribute ([#10141](https://github.com/sveltejs/svelte/pull/10141))
+
+## 5.0.0-next.39
+
+### Patch Changes
+
+- fix: handle deep assignments to `$state()` class properties correctly ([#10289](https://github.com/sveltejs/svelte/pull/10289))
+
+- fix: prevent false positive store error in module script ([#10291](https://github.com/sveltejs/svelte/pull/10291))
+
+- fix: allow type selector in `:global()` when it's at a start of a compound selector ([#10287](https://github.com/sveltejs/svelte/pull/10287))
+
+## 5.0.0-next.38
+
+### Patch Changes
+
+- chore: improve should_proxy_or_freeze logic internally ([#10249](https://github.com/sveltejs/svelte/pull/10249))
+
+- fix: add back `derived` type overload ([`776ac3c1762da5f8147c457a997a417cfae67e4c`](https://github.com/sveltejs/svelte/commit/776ac3c1762da5f8147c457a997a417cfae67e4c))
+
+- fix: more robust url equality check at dev time ([`14d7b26897cbfa129847c446b0ecf9557d77ef7c`](https://github.com/sveltejs/svelte/commit/14d7b26897cbfa129847c446b0ecf9557d77ef7c))
+
+- fix: correct increment/decrement code generation ([`2861ad66e054d2b14f382aaada4512e3e5d56db8`](https://github.com/sveltejs/svelte/commit/2861ad66e054d2b14f382aaada4512e3e5d56db8))
+
+- fix: sanitize component event names ([#10235](https://github.com/sveltejs/svelte/pull/10235))
+
+- fix: don't hoist function when already referenced in module scope ([`1538264bd5ed431d3048d54efe9c83c4db7fb42a`](https://github.com/sveltejs/svelte/commit/1538264bd5ed431d3048d54efe9c83c4db7fb42a))
+
+- fix: try-catch deep read during `$inspect` ([#10270](https://github.com/sveltejs/svelte/pull/10270))
+
+- fix: allow ts casts in bindings ([#10181](https://github.com/sveltejs/svelte/pull/10181))
+
+- fix: allow `:global(..)` in compound selectors ([#10266](https://github.com/sveltejs/svelte/pull/10266))
+
+- fix: hydrate controlled each blocks correctly ([#10259](https://github.com/sveltejs/svelte/pull/10259))
+
+- chore: improve $state static reference warning heuristics ([#10275](https://github.com/sveltejs/svelte/pull/10275))
+
+- fix: correctly cleanup unowned derived dependency memory ([#10280](https://github.com/sveltejs/svelte/pull/10280))
+
+- fix: ensure proxy is updated before notifying listeners ([#10267](https://github.com/sveltejs/svelte/pull/10267))
+
+## 5.0.0-next.37
+
+### Patch Changes
+
+- fix: skip certain slot validations for custom elements ([#10207](https://github.com/sveltejs/svelte/pull/10207))
+
+- fix: add compiler error for invalid `<p>` contents ([#10201](https://github.com/sveltejs/svelte/pull/10201))
+
+- fix: correctly apply event.currentTarget ([#10216](https://github.com/sveltejs/svelte/pull/10216))
+
+- fix: ensure derived signals properly capture consumers ([#10213](https://github.com/sveltejs/svelte/pull/10213))
+
+## 5.0.0-next.36
+
+### Patch Changes
+
+- fix: transform textarea and contenteditable binding expressions ([#10187](https://github.com/sveltejs/svelte/pull/10187))
+
+- fix: improve transition outro easing ([#10190](https://github.com/sveltejs/svelte/pull/10190))
+
+- fix: ensure unstate() only deeply applies to plain objects and arrays ([#10191](https://github.com/sveltejs/svelte/pull/10191))
+
+- fix: improve invalid nested interactive element error ([#10199](https://github.com/sveltejs/svelte/pull/10199))
+
+- fix: react to mutated slot props in legacy mode ([#10197](https://github.com/sveltejs/svelte/pull/10197))
+
+## 5.0.0-next.35
+
+### Patch Changes
+
+- fix: improve nested effect heuristics ([#10171](https://github.com/sveltejs/svelte/pull/10171))
+
+- fix: simplify event delegation logic, only delegate event attributes ([#10169](https://github.com/sveltejs/svelte/pull/10169))
+
+- fix: prevent transition action overfiring ([#10163](https://github.com/sveltejs/svelte/pull/10163))
+
+- fix: improve event handling compatibility with delegation ([#10168](https://github.com/sveltejs/svelte/pull/10168))
+
+- fix: ensure topological order for render effects ([#10175](https://github.com/sveltejs/svelte/pull/10175))
+
+## 5.0.0-next.34
+
+### Patch Changes
+
+- fix: make `@types/estree` a dependency ([#10150](https://github.com/sveltejs/svelte/pull/10150))
+
+- fix: improve intro transitions on dynamic mount ([#10162](https://github.com/sveltejs/svelte/pull/10162))
+
+- fix: improve code generation ([#10156](https://github.com/sveltejs/svelte/pull/10156))
+
+- fix: adjust `$inspect.with` type ([`c7cb90c91`](https://github.com/sveltejs/svelte/commit/c7cb90c91cd3553ad59126267c9bfddecbb290b4))
+
+- fix: improve how transitions are handled on mount ([#10157](https://github.com/sveltejs/svelte/pull/10157))
+
+- fix: adjust `parse` return type ([`a271878ab`](https://github.com/sveltejs/svelte/commit/a271878abe7018923839401129b18082eb2c811a))
+
+## 5.0.0-next.33
+
+### Patch Changes
+
+- fix: improve ssr template code generation ([#10151](https://github.com/sveltejs/svelte/pull/10151))
+
+- fix: improve template literal expression output generation ([#10147](https://github.com/sveltejs/svelte/pull/10147))
+
+## 5.0.0-next.32
+
+### Patch Changes
+
+- fix: improve outro behavior with transitions ([#10139](https://github.com/sveltejs/svelte/pull/10139))
+
+- chore: remove internal functions from `svelte/transition` exports ([#10132](https://github.com/sveltejs/svelte/pull/10132))
+
+- fix: further animation transition improvements ([#10138](https://github.com/sveltejs/svelte/pull/10138))
+
+- fix: improve animation transition heuristics ([#10119](https://github.com/sveltejs/svelte/pull/10119))
+
+## 5.0.0-next.31
+
+### Patch Changes
+
+- fix: infer `svg` namespace correctly ([#10027](https://github.com/sveltejs/svelte/pull/10027))
+
+- fix: keep intermediate number value representations ([`d171a39b0`](https://github.com/sveltejs/svelte/commit/d171a39b0ad97e2a05de1f38bc76a3d345e2b3d5))
+
+- feat: allow modifiying derived props ([#10080](https://github.com/sveltejs/svelte/pull/10080))
+
+- fix: improve signal consumer tracking behavior ([#10121](https://github.com/sveltejs/svelte/pull/10121))
+
+- fix: support async/await in destructuring assignments ([#9962](https://github.com/sveltejs/svelte/pull/9962))
+
+- fix: take into account member expressions when determining legacy reactive dependencies ([#10128](https://github.com/sveltejs/svelte/pull/10128))
+
+- fix: make `ComponentType` generic optional ([`14dbc1be1`](https://github.com/sveltejs/svelte/commit/14dbc1be1720ff69e6f3c407e43c9c0765b0c140))
+
+- fix: silence false positive state warning ([`dda4ad510`](https://github.com/sveltejs/svelte/commit/dda4ad510f1907a114a16227c3412eb00bd21738))
+
+- fix: ensure nested blocks are inert during outro transitions ([#10126](https://github.com/sveltejs/svelte/pull/10126))
+
+- fix: improve ssr template literal generation ([#10127](https://github.com/sveltejs/svelte/pull/10127))
+
+## 5.0.0-next.30
+
+### Patch Changes
+
+- fix: allow transition undefined payload ([#10117](https://github.com/sveltejs/svelte/pull/10117))
+
+- fix: apply key animations on proxied arrays ([#10113](https://github.com/sveltejs/svelte/pull/10113))
+
+- fix: improve internal signal dependency checking logic ([#10111](https://github.com/sveltejs/svelte/pull/10111))
+
+- fix: correctly call exported state ([#10114](https://github.com/sveltejs/svelte/pull/10114))
+
+- fix: take into account setters when spreading and binding ([#10091](https://github.com/sveltejs/svelte/pull/10091))
+
+- fix: transform `{@render ...}` expression ([#10116](https://github.com/sveltejs/svelte/pull/10116))
+
+## 5.0.0-next.29
+
+### Patch Changes
+
+- fix: improve text node output ([#10081](https://github.com/sveltejs/svelte/pull/10081))
+
+- fix: improve style parser whitespace handling ([#10077](https://github.com/sveltejs/svelte/pull/10077))
+
+- fix: allow input elements within button elements ([#10083](https://github.com/sveltejs/svelte/pull/10083))
+
+- fix: support TypeScript's `satisfies` operator ([#10068](https://github.com/sveltejs/svelte/pull/10068))
+
+- fix: provide `unstate` in server environment ([`877ff1ee7`](https://github.com/sveltejs/svelte/commit/877ff1ee7d637e2248145d975748e1012a977396))
+
+- fix: improve key block reactivity detection ([#10092](https://github.com/sveltejs/svelte/pull/10092))
+
+- fix: always treat spread attributes as reactive and separate them if needed ([#10071](https://github.com/sveltejs/svelte/pull/10071))
+
+## 5.0.0-next.28
+
+### Patch Changes
+
+- fix: deeply unstate objects passed to inspect ([#10056](https://github.com/sveltejs/svelte/pull/10056))
+
+- fix: handle delegated events of elements moved outside the container ([#10060](https://github.com/sveltejs/svelte/pull/10060))
+
+- fix: improve script `lang` attribute detection ([#10046](https://github.com/sveltejs/svelte/pull/10046))
+
+- fix: improve pseudo class parsing ([#10055](https://github.com/sveltejs/svelte/pull/10055))
+
+- fix: add types for popover attributes and events ([#10041](https://github.com/sveltejs/svelte/pull/10041))
+
+- fix: skip generating $.proxy() calls for unary and binary expressions ([#9979](https://github.com/sveltejs/svelte/pull/9979))
+
+- fix: allow pseudo classes after `:global(..)` ([#10055](https://github.com/sveltejs/svelte/pull/10055))
+
+- fix: bail-out event handler referencing each index ([#10063](https://github.com/sveltejs/svelte/pull/10063))
+
+- fix: parse `:nth-of-type(xn+y)` correctly ([#9970](https://github.com/sveltejs/svelte/pull/9970))
+
+- fix: ensure if block is executed in correct order ([#10053](https://github.com/sveltejs/svelte/pull/10053))
+
+## 5.0.0-next.27
+
+### Patch Changes
+
+- fix: evaluate transition parameters when the transition runs ([#9836](https://github.com/sveltejs/svelte/pull/9836))
+
+- feat: add `$state.frozen` rune ([#9851](https://github.com/sveltejs/svelte/pull/9851))
+
+- fix: correctly transform prop fallback values that use other props ([#9985](https://github.com/sveltejs/svelte/pull/9985))
+
+- fix: escape template literal characters in text sequences ([#9973](https://github.com/sveltejs/svelte/pull/9973))
+
+- fix: inject comment in place of `<noscript>` in client output ([#9953](https://github.com/sveltejs/svelte/pull/9953))
+
+## 5.0.0-next.26
+
+### Patch Changes
+
+- fix: better handle array property deletion reactivity ([#9921](https://github.com/sveltejs/svelte/pull/9921))
+
+- fix: improve event delegation handler hoisting ([#9929](https://github.com/sveltejs/svelte/pull/9929))
+
+## 5.0.0-next.25
+
+### Patch Changes
+
+- fix: improve whitespace handling ([#9912](https://github.com/sveltejs/svelte/pull/9912))
+
+- fix: improve each block fallback handling ([#9914](https://github.com/sveltejs/svelte/pull/9914))
+
+- fix: cleanup each block animations on destroy ([#9917](https://github.com/sveltejs/svelte/pull/9917))
+
+## 5.0.0-next.24
+
+### Patch Changes
+
+- fix: improve props aliasing ([#9900](https://github.com/sveltejs/svelte/pull/9900))
+
+- feat: add support for `{@const}` inside snippet block ([#9904](https://github.com/sveltejs/svelte/pull/9904))
+
+- fix: improve attribute directive reactivity detection ([#9907](https://github.com/sveltejs/svelte/pull/9907))
+
+- fix: improve $inspect batching ([#9902](https://github.com/sveltejs/svelte/pull/9902))
+
+- chore: improve readonly prop messaging ([#9901](https://github.com/sveltejs/svelte/pull/9901))
+
+- fix: better support for top-level snippet declarations ([#9898](https://github.com/sveltejs/svelte/pull/9898))
+
+## 5.0.0-next.23
+
+### Patch Changes
+
+- feat: add `gamepadconnected` and `gamepaddisconnected` events ([#9861](https://github.com/sveltejs/svelte/pull/9861))
+
+- fix: improve unstate type definition ([#9895](https://github.com/sveltejs/svelte/pull/9895))
+
+- fix: correctly reflect readonly proxy marker ([#9893](https://github.com/sveltejs/svelte/pull/9893))
+
+- chore: improve each block fast-path heuristic ([#9855](https://github.com/sveltejs/svelte/pull/9855))
+
+- fix: improve html tag svg behaviour ([#9894](https://github.com/sveltejs/svelte/pull/9894))
+
+- fix: ensure class constructor values are proxied ([#9888](https://github.com/sveltejs/svelte/pull/9888))
+
+- fix: improve each block index handling ([#9889](https://github.com/sveltejs/svelte/pull/9889))
+
+## 5.0.0-next.22
+
+### Patch Changes
+
+- fix: handle event hoisting props referencing ([#9846](https://github.com/sveltejs/svelte/pull/9846))
+
+- fix: support dynamic transition functions ([#9844](https://github.com/sveltejs/svelte/pull/9844))
+
+- fix: ensure action function returns object ([#9848](https://github.com/sveltejs/svelte/pull/9848))
+
+## 5.0.0-next.21
+
+### Patch Changes
+
+- chore: refactor props handling ([#9826](https://github.com/sveltejs/svelte/pull/9826))
+
+- fix: improve each key animations ([#9842](https://github.com/sveltejs/svelte/pull/9842))
+
+- chore: avoid creating thunk for call expressions when appropriate ([#9841](https://github.com/sveltejs/svelte/pull/9841))
+
+- fix: improve signal consumer removal logic ([#9837](https://github.com/sveltejs/svelte/pull/9837))
+
+- fix: ensure computed props are wrapped in derived ([#9835](https://github.com/sveltejs/svelte/pull/9835))
+
+- fix: better handle unowned derived signals ([#9832](https://github.com/sveltejs/svelte/pull/9832))
+
+- fix: improve each block with animate ([#9839](https://github.com/sveltejs/svelte/pull/9839))
+
+- breaking: change `$inspect` API ([#9838](https://github.com/sveltejs/svelte/pull/9838))
+
+## 5.0.0-next.20
+
+### Patch Changes
+
+- fix: better readonly checks for proxies ([#9808](https://github.com/sveltejs/svelte/pull/9808))
+
+- fix: prevent infinite loops stemming from invalidation method ([#9811](https://github.com/sveltejs/svelte/pull/9811))
+
+- fix: improve non state referenced warning ([#9809](https://github.com/sveltejs/svelte/pull/9809))
+
+- fix: reuse existing proxy when object has multiple references ([#9821](https://github.com/sveltejs/svelte/pull/9821))
+
+- fix: improve consistency issues around binding invalidation ([#9810](https://github.com/sveltejs/svelte/pull/9810))
+
+- fix: tweak css nth regex ([#9806](https://github.com/sveltejs/svelte/pull/9806))
+
+- fix: adjust children snippet default type ([`dcdd64548`](https://github.com/sveltejs/svelte/commit/dcdd645480ab412eb563632e70801f4d61c1d787))
+
+- fix: correctly apply scope on component children ([#9824](https://github.com/sveltejs/svelte/pull/9824))
+
 ## 5.0.0-next.19
 
 ### Patch Changes
@@ -30,7 +510,7 @@
 
 ### Patch Changes
 
-- feat: proxied staet ([#9739](https://github.com/sveltejs/svelte/pull/9739))
+- feat: proxied state ([#9739](https://github.com/sveltejs/svelte/pull/9739))
 
 - chore: more validation errors ([#9723](https://github.com/sveltejs/svelte/pull/9723))
 

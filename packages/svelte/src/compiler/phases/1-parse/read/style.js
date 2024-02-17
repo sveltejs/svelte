@@ -6,9 +6,9 @@ const REGEX_ATTRIBUTE_FLAGS = /^[a-zA-Z]+/; // only `i` and `s` are valid today,
 const REGEX_COMBINATOR_WHITESPACE = /^\s*(\+|~|>|\|\|)\s*/;
 const REGEX_COMBINATOR = /^(\+|~|>|\|\|)/;
 const REGEX_PERCENTAGE = /^\d+(\.\d+)?%/;
-const REGEX_NTH_OF = /^\s*(even|odd|(-?[0-9]?n?(\s*\+\s*[0-9]+)?))(\s*(?=[,)])|\s+of\s+)/;
+const REGEX_NTH_OF =
+	/^(even|odd|\+?(\d+|\d*n(\s*[+-]\s*\d+)?)|-\d*n(\s*\+\s*\d+))((?=\s*[,)])|\s+of\s+)/;
 const REGEX_WHITESPACE_OR_COLON = /[\s:]/;
-const REGEX_BRACE_OR_SEMICOLON = /[{;]/;
 const REGEX_LEADING_HYPHEN_OR_DIGIT = /-?\d/;
 const REGEX_VALID_IDENTIFIER_CHAR = /[a-zA-Z0-9_-]/;
 const REGEX_COMMENT_CLOSE = /\*\//;
@@ -18,7 +18,7 @@ const REGEX_HTML_COMMENT_CLOSE = /-->/;
  * @param {import('../index.js').Parser} parser
  * @param {number} start
  * @param {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute | import('#compiler').Directive>} attributes
- * @returns {import('#compiler').Style}
+ * @returns {import('#compiler').Css.StyleSheet}
  */
 export default function read_style(parser, start, attributes) {
 	const content_start = parser.index;
@@ -28,7 +28,7 @@ export default function read_style(parser, start, attributes) {
 	parser.read(/^<\/style\s*>/);
 
 	return {
-		type: 'Style',
+		type: 'StyleSheet',
 		start,
 		end: parser.index,
 		attributes,
@@ -37,8 +37,7 @@ export default function read_style(parser, start, attributes) {
 			start: content_start,
 			end: content_end,
 			styles: parser.template.slice(content_start, content_end)
-		},
-		parent: null
+		}
 	};
 }
 
@@ -78,7 +77,7 @@ function read_at_rule(parser) {
 
 	const name = read_identifier(parser);
 
-	const prelude = parser.read_until(REGEX_BRACE_OR_SEMICOLON).trim();
+	const prelude = read_value(parser);
 
 	/** @type {import('#compiler').Css.Block | null} */
 	let block = null;
@@ -149,8 +148,10 @@ function read_rule(parser) {
  * @returns {import('#compiler').Css.SelectorList}
  */
 function read_selector_list(parser, inside_pseudo_class = false) {
-	/** @type {import('#compiler').Css.Selector[]} */
+	/** @type {import('#compiler').Css.ComplexSelector[]} */
 	const children = [];
+
+	allow_comment_or_whitespace(parser);
 
 	const start = parser.index;
 
@@ -180,52 +181,82 @@ function read_selector_list(parser, inside_pseudo_class = false) {
 /**
  * @param {import('../index.js').Parser} parser
  * @param {boolean} [inside_pseudo_class]
- * @returns {import('#compiler').Css.Selector}
+ * @returns {import('#compiler').Css.ComplexSelector}
  */
 function read_selector(parser, inside_pseudo_class = false) {
 	const list_start = parser.index;
 
-	/** @type {Array<import('#compiler').Css.SimpleSelector | import('#compiler').Css.Combinator>} */
+	/** @type {import('#compiler').Css.RelativeSelector[]} */
 	const children = [];
 
+	/**
+	 * @param {import('#compiler').Css.Combinator | null} combinator
+	 * @param {number} start
+	 * @returns {import('#compiler').Css.RelativeSelector}
+	 */
+	function create_selector(combinator, start) {
+		return {
+			type: 'RelativeSelector',
+			combinator,
+			selectors: [],
+			start,
+			end: -1,
+			metadata: {
+				is_global: false,
+				is_host: false,
+				is_root: false,
+				scoped: false
+			}
+		};
+	}
+
+	/** @type {import('#compiler').Css.RelativeSelector} */
+	let relative_selector = create_selector(null, parser.index);
+
 	while (parser.index < parser.template.length) {
-		const start = parser.index;
+		let start = parser.index;
 
 		if (parser.eat('*')) {
 			let name = '*';
-			if (parser.match('|')) {
+
+			if (parser.eat('|')) {
 				// * is the namespace (which we ignore)
-				parser.index++;
 				name = read_identifier(parser);
 			}
 
-			children.push({
+			relative_selector.selectors.push({
 				type: 'TypeSelector',
 				name,
 				start,
 				end: parser.index
 			});
 		} else if (parser.eat('#')) {
-			children.push({
+			relative_selector.selectors.push({
 				type: 'IdSelector',
 				name: read_identifier(parser),
 				start,
 				end: parser.index
 			});
 		} else if (parser.eat('.')) {
-			children.push({
+			relative_selector.selectors.push({
 				type: 'ClassSelector',
 				name: read_identifier(parser),
 				start,
 				end: parser.index
 			});
 		} else if (parser.eat('::')) {
-			children.push({
+			relative_selector.selectors.push({
 				type: 'PseudoElementSelector',
 				name: read_identifier(parser),
 				start,
 				end: parser.index
 			});
+			// We read the inner selectors of a pseudo element to ensure it parses correctly,
+			// but we don't do anything with the result.
+			if (parser.eat('(')) {
+				read_selector_list(parser, true);
+				parser.eat(')', true);
+			}
 		} else if (parser.eat(':')) {
 			const name = read_identifier(parser);
 
@@ -239,7 +270,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 				error(parser.index, 'invalid-css-global-selector');
 			}
 
-			children.push({
+			relative_selector.selectors.push({
 				type: 'PseudoClassSelector',
 				name,
 				args,
@@ -268,7 +299,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 			parser.allow_whitespace();
 			parser.eat(']', true);
 
-			children.push({
+			relative_selector.selectors.push({
 				type: 'AttributeSelector',
 				start,
 				end: parser.index,
@@ -277,38 +308,31 @@ function read_selector(parser, inside_pseudo_class = false) {
 				value,
 				flags
 			});
-		} else if (parser.match_regex(REGEX_COMBINATOR_WHITESPACE)) {
-			parser.allow_whitespace();
-			const start = parser.index;
-			children.push({
-				type: 'Combinator',
-				name: /** @type {string} */ (parser.read(REGEX_COMBINATOR)),
+		} else if (inside_pseudo_class && parser.match_regex(REGEX_NTH_OF)) {
+			// nth of matcher must come before combinator matcher to prevent collision else the '+' in '+2n-1' would be parsed as a combinator
+
+			relative_selector.selectors.push({
+				type: 'Nth',
+				value: /**@type {string} */ (parser.read(REGEX_NTH_OF)),
 				start,
 				end: parser.index
 			});
-			parser.allow_whitespace();
 		} else if (parser.match_regex(REGEX_PERCENTAGE)) {
-			children.push({
+			relative_selector.selectors.push({
 				type: 'Percentage',
 				value: /** @type {string} */ (parser.read(REGEX_PERCENTAGE)),
 				start,
 				end: parser.index
 			});
-		} else if (inside_pseudo_class && parser.match_regex(REGEX_NTH_OF)) {
-			children.push({
-				type: 'Nth',
-				value: /** @type {string} */ (parser.read(REGEX_NTH_OF)),
-				start,
-				end: parser.index
-			});
-		} else {
+		} else if (!parser.match_regex(REGEX_COMBINATOR)) {
 			let name = read_identifier(parser);
-			if (parser.match('|')) {
+
+			if (parser.eat('|')) {
 				// we ignore the namespace when trying to find matching element classes
-				parser.index++;
 				name = read_identifier(parser);
 			}
-			children.push({
+
+			relative_selector.selectors.push({
 				type: 'TypeSelector',
 				name,
 				start,
@@ -320,27 +344,83 @@ function read_selector(parser, inside_pseudo_class = false) {
 		parser.allow_whitespace();
 
 		if (parser.match(',') || (inside_pseudo_class ? parser.match(')') : parser.match('{'))) {
+			// rewind, so we know whether to continue building the selector list
 			parser.index = index;
 
+			relative_selector.end = index;
+			children.push(relative_selector);
+
 			return {
-				type: 'Selector',
+				type: 'ComplexSelector',
 				start: list_start,
 				end: index,
-				children
+				children,
+				metadata: {
+					used: false
+				}
 			};
 		}
 
-		if (parser.index !== index && !parser.match_regex(REGEX_COMBINATOR)) {
-			children.push({
-				type: 'Combinator',
-				name: ' ',
-				start: index,
-				end: parser.index
-			});
+		parser.index = index;
+		const combinator = read_combinator(parser);
+
+		if (combinator) {
+			if (relative_selector.selectors.length === 0) {
+				if (!inside_pseudo_class) {
+					error(start, 'invalid-css-selector');
+				}
+			} else {
+				relative_selector.end = index;
+				children.push(relative_selector);
+			}
+
+			// ...and start a new one
+			relative_selector = create_selector(combinator, combinator.start);
+
+			parser.allow_whitespace();
+
+			if (parser.match(',') || (inside_pseudo_class ? parser.match(')') : parser.match('{'))) {
+				error(parser.index, 'invalid-css-selector');
+			}
 		}
 	}
 
 	error(parser.template.length, 'unexpected-eof');
+}
+
+/**
+ * @param {import('../index.js').Parser} parser
+ * @returns {import('#compiler').Css.Combinator | null}
+ */
+function read_combinator(parser) {
+	const start = parser.index;
+	parser.allow_whitespace();
+
+	const index = parser.index;
+	const name = parser.read(REGEX_COMBINATOR);
+
+	if (name) {
+		const end = parser.index;
+		parser.allow_whitespace();
+
+		return {
+			type: 'Combinator',
+			name,
+			start: index,
+			end
+		};
+	}
+
+	if (parser.index !== start) {
+		return {
+			type: 'Combinator',
+			name: ' ',
+			start,
+			end: parser.index
+		};
+	}
+
+	return null;
 }
 
 /**
@@ -387,7 +467,7 @@ function read_declaration(parser) {
 	parser.eat(':');
 	parser.allow_whitespace();
 
-	const value = read_declaration_value(parser);
+	const value = read_value(parser);
 
 	const end = parser.index;
 
@@ -408,7 +488,7 @@ function read_declaration(parser) {
  * @param {import('../index.js').Parser} parser
  * @returns {string}
  */
-function read_declaration_value(parser) {
+function read_value(parser) {
 	let value = '';
 	let escaped = false;
 	let in_url = false;
@@ -432,7 +512,7 @@ function read_declaration_value(parser) {
 			quote_mark = char;
 		} else if (char === '(' && value.slice(-3) === 'url') {
 			in_url = true;
-		} else if ((char === ';' || char === '}') && !in_url && !quote_mark) {
+		} else if ((char === ';' || char === '{' || char === '}') && !in_url && !quote_mark) {
 			return value.trim();
 		}
 

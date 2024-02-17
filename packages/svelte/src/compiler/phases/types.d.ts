@@ -1,6 +1,6 @@
 import type {
-	BindDirective,
 	Binding,
+	Css,
 	Fragment,
 	RegularElement,
 	SvelteElement,
@@ -8,7 +8,6 @@ import type {
 	SvelteOptions
 } from '#compiler';
 import type { Identifier, LabeledStatement, Program } from 'estree';
-import type Stylesheet from './2-analyze/css/Stylesheet.js';
 import type { Scope, ScopeRoot } from './scope.js';
 
 export interface Js {
@@ -26,11 +25,6 @@ export interface Template {
 export interface ReactiveStatement {
 	assignments: Set<Identifier>;
 	dependencies: Set<Binding>;
-}
-
-export interface BindingGroup {
-	name: Identifier;
-	directives: BindDirective[];
 }
 
 export interface RawWarning {
@@ -57,7 +51,6 @@ export interface ComponentAnalysis extends Analysis {
 	root: ScopeRoot;
 	instance: Js;
 	template: Template;
-	stylesheet: Stylesheet;
 	elements: Array<RegularElement | SvelteElement>;
 	runes: boolean;
 	exports: Array<{ name: string; alias: string | null }>;
@@ -72,8 +65,14 @@ export interface ComponentAnalysis extends Analysis {
 	/** If `true`, should append styles through JavaScript */
 	inject_styles: boolean;
 	reactive_statements: Map<LabeledStatement, ReactiveStatement>;
-	binding_groups: Map<Binding, BindingGroup>;
+	/** Identifiers that make up the `bind:group` expression -> internal group binding name */
+	binding_groups: Map<[key: string, bindings: Array<Binding | null>], Identifier>;
 	slot_names: Set<string>;
+	css: {
+		ast: Css.StyleSheet | null;
+		hash: string;
+		keyframes: string[];
+	};
 }
 
 declare module 'estree' {

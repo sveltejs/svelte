@@ -1,4 +1,4 @@
-import type { StyleDirective as LegacyStyleDirective, Text } from '#compiler';
+import type { StyleDirective as LegacyStyleDirective, Text, Css } from '#compiler';
 import type {
 	ArrayExpression,
 	AssignmentExpression,
@@ -19,6 +19,13 @@ interface BaseElement extends BaseNode {
 	name: string;
 	attributes: Array<LegacyAttributeLike>;
 	children: Array<LegacyElementLike>;
+}
+
+export interface LegacyRoot extends BaseNode {
+	html: LegacySvelteNode;
+	css?: any;
+	instance?: any;
+	module?: any;
 }
 
 export interface LegacyAction extends BaseNode {
@@ -220,9 +227,28 @@ export type LegacyElementLike =
 	| LegacyTitle
 	| LegacyWindow;
 
+export interface LegacyStyle extends BaseNode {
+	type: 'Style';
+	attributes: any[];
+	content: {
+		start: number;
+		end: number;
+		styles: string;
+	};
+	children: any[];
+}
+
+export interface LegacySelector extends BaseNode {
+	type: 'Selector';
+	children: Array<Css.Combinator | Css.SimpleSelector>;
+}
+
+export type LegacyCssNode = LegacyStyle | LegacySelector;
+
 export type LegacySvelteNode =
 	| LegacyConstTag
 	| LegacyElementLike
 	| LegacyAttributeLike
 	| LegacyAttributeShorthand
+	| LegacyCssNode
 	| Text;

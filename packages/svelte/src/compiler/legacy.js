@@ -33,7 +33,7 @@ function remove_surrounding_whitespace_nodes(nodes) {
  * Transform our nice modern AST into the monstrosity emitted by Svelte 4
  * @param {string} source
  * @param {import('#compiler').Root} ast
- * @returns {import('./types/legacy-nodes.js').LegacySvelteNode}
+ * @returns {import('./types/legacy-nodes.js').LegacyRoot}
  */
 export function convert(source, ast) {
 	const root =
@@ -41,7 +41,7 @@ export function convert(source, ast) {
 			ast
 		);
 
-	return /** @type {import('./types/legacy-nodes.js').LegacySvelteNode} */ (
+	return /** @type {import('./types/legacy-nodes.js').LegacyRoot} */ (
 		walk(root, null, {
 			_(node, { next }) {
 				// @ts-ignore
@@ -102,14 +102,7 @@ export function convert(source, ast) {
 					},
 					instance,
 					module,
-					css: ast.css
-						? walk(ast.css, null, {
-								_(node) {
-									// @ts-ignore
-									delete node.parent;
-								}
-						  })
-						: undefined
+					css: ast.css ? visit(ast.css) : undefined
 				};
 			},
 			AnimateDirective(node) {
@@ -191,6 +184,24 @@ export function convert(source, ast) {
 			},
 			ClassDirective(node) {
 				return { ...node, type: 'Class' };
+			},
+			ComplexSelector(node, { visit }) {
+				const children = [];
+
+				for (const child of node.children) {
+					if (child.combinator) {
+						children.push(child.combinator);
+					}
+
+					children.push(...child.selectors);
+				}
+
+				return {
+					type: 'Selector',
+					start: node.start,
+					end: node.end,
+					children
+				};
 			},
 			Component(node, { visit }) {
 				return {
@@ -356,7 +367,7 @@ export function convert(source, ast) {
 					start: node.start,
 					end: node.end,
 					expression: node.expression,
-					context: node.context,
+					parameters: node.parameters,
 					children: node.body.nodes.map((child) => visit(child))
 				};
 			},
@@ -388,6 +399,13 @@ export function convert(source, ast) {
 			},
 			SpreadAttribute(node) {
 				return { ...node, type: 'Spread' };
+			},
+			StyleSheet(node, context) {
+				return {
+					...node,
+					...context.next(),
+					type: 'Style'
+				};
 			},
 			SvelteBody(node, { visit }) {
 				return {

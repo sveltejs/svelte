@@ -11,21 +11,17 @@ import {
 	current_hydration_fragment,
 	get_hydration_fragment,
 	hydrate_block_anchor,
+	hydrating,
 	set_current_hydration_fragment
 } from './hydration.js';
-import { clear_text_content, map_get, map_set } from './operations.js';
-import { STATE_SYMBOL } from './proxy/proxy.js';
+import { clear_text_content, empty, map_get, map_set } from './operations.js';
 import { insert, remove } from './reconciler.js';
-import { empty } from './render.js';
 import {
 	destroy_signal,
 	execute_effect,
-	is_lazy_property,
-	lazy_property,
 	mutable_source,
 	push_destroy_fn,
 	render_effect,
-	schedule_task,
 	set_signal_value,
 	source
 } from './runtime.js';
@@ -65,6 +61,13 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 
 	/** @type {null | import('./types.js').EffectSignal} */
 	let render = null;
+
+	/**
+	 * Whether or not there was a "rendered fallback but want to render items" (or vice versa) hydration mismatch.
+	 * Needs to be a `let` or else it isn't treeshaken out
+	 */
+	let mismatch = false;
+
 	block.r =
 		/** @param {import('./types.js').Transition} transition */
 		(transition) => {
@@ -105,8 +108,17 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 				let anchor = block.a;
 				const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
 				if (is_controlled) {
-					anchor = empty();
-					block.a.appendChild(anchor);
+					// If the each block is controlled, then the anchor node will be the surrounding
+					// element in which the each block is rendered, which requires certain handling
+					// depending on whether we're in hydration mode or not
+					if (!hydrating) {
+						// Create a new anchor on the fly because there's none due to the optimization
+						anchor = empty();
+						block.a.appendChild(anchor);
+					} else {
+						// In case of hydration the anchor will be the first child of the surrounding element
+						anchor = /** @type {Comment} */ (anchor.firstChild);
+					}
 				}
 				/** @type {(anchor: Node) => void} */ (fallback_fn)(anchor);
 				fallback.d = block.d;
@@ -119,6 +131,14 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		current_fallback = fallback;
 	};
 
+	/** @param {import('./types.js').EachBlock} block */
+	const render_each = (block) => {
+		const flags = block.f;
+		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
+		const anchor_node = block.a;
+		reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, true, keys);
+	};
+
 	const each = render_effect(
 		() => {
 			/** @type {V[]} */
@@ -126,18 +146,38 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			array = is_array(maybe_array)
 				? maybe_array
 				: maybe_array == null
-				? []
-				: Array.from(maybe_array);
+					? []
+					: Array.from(maybe_array);
+
 			if (key_fn !== null) {
 				keys = array.map(key_fn);
 			} else if ((flags & EACH_KEYED) === 0) {
 				array.map(no_op);
 			}
+
 			const length = array.length;
+
+			if (hydrating) {
+				const is_each_else_comment =
+					/** @type {Comment} */ (current_hydration_fragment?.[0])?.data === 'ssr:each_else';
+				// Check for hydration mismatch which can happen if the server renders the each fallback
+				// but the client has items, or vice versa. If so, remove everything inside the anchor and start fresh.
+				if ((is_each_else_comment && length) || (!is_each_else_comment && !length)) {
+					remove(current_hydration_fragment);
+					set_current_hydration_fragment(null);
+					mismatch = true;
+				} else if (is_each_else_comment) {
+					// Remove the each_else comment node or else it will confuse the subsequent hydration algorithm
+					/** @type {import('./types.js').TemplateNode[]} */ (current_hydration_fragment).shift();
+				}
+			}
+
 			if (fallback_fn !== null) {
 				if (length === 0) {
 					if (block.v.length !== 0 || render === null) {
+						render_each(block);
 						create_fallback_effect();
+						return;
 					}
 				} else if (block.v.length === 0 && current_fallback !== null) {
 					const fallback = current_fallback;
@@ -152,6 +192,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 					}
 				}
 			}
+
 			if (render !== null) {
 				execute_effect(render);
 			}
@@ -160,17 +201,12 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		false
 	);
 
-	render = render_effect(
-		/** @param {import('./types.js').EachBlock} block */
-		(block) => {
-			const flags = block.f;
-			const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-			const anchor_node = block.a;
-			reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, true, keys);
-		},
-		block,
-		true
-	);
+	render = render_effect(render_each, block, true);
+
+	if (mismatch) {
+		// Set a fragment so that Svelte continues to operate in hydration mode
+		set_current_hydration_fragment([]);
+	}
 
 	push_destroy_fn(each, () => {
 		const flags = block.f;
@@ -243,13 +279,8 @@ function reconcile_indexed_array(
 	flags,
 	apply_transitions
 ) {
-	var is_proxied_array = STATE_SYMBOL in array && /** @type {any} */ (array[STATE_SYMBOL]).i;
 	var a_blocks = each_block.v;
 	var active_transitions = each_block.s;
-
-	if (is_proxied_array) {
-		flags &= ~EACH_ITEM_REACTIVE;
-	}
 
 	/** @type {number | void} */
 	var a = a_blocks.length;
@@ -279,55 +310,70 @@ function reconcile_indexed_array(
 		}
 	} else {
 		var item;
+		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
+		let mismatch = false;
 		b_blocks = Array(b);
-		if (current_hydration_fragment !== null) {
-			/** @type {Node} */
-			var hydrating_node = current_hydration_fragment[0];
+		if (hydrating) {
+			// Hydrate block
+			var hydration_list = /** @type {import('./types.js').TemplateNode[]} */ (
+				current_hydration_fragment
+			);
+			var hydrating_node = hydration_list[0];
 			for (; index < length; index++) {
-				// Hydrate block
-				item = is_proxied_array ? lazy_property(array, index) : array[index];
-				var fragment = /** @type {Array<Text | Comment | Element>} */ (
-					get_hydration_fragment(hydrating_node)
-				);
+				var fragment = get_hydration_fragment(hydrating_node);
 				set_current_hydration_fragment(fragment);
-				hydrating_node = /** @type {Node} */ (
-					/** @type {Node} */ (/** @type {Node} */ (fragment.at(-1)).nextSibling).nextSibling
-				);
+				if (!fragment) {
+					// If fragment is null, then that means that the server rendered less items than what
+					// the client code specifies -> break out and continue with client-side node creation
+					mismatch = true;
+					break;
+				}
+
+				item = array[index];
 				block = each_item_block(item, null, index, render_fn, flags);
 				b_blocks[index] = block;
+
+				hydrating_node = /** @type {import('./types.js').TemplateNode} */ (
+					/** @type {Node} */ (/** @type {Node} */ (fragment.at(-1)).nextSibling).nextSibling
+				);
 			}
-		} else {
-			for (; index < length; index++) {
-				if (index >= a) {
-					// Add block
-					item = is_proxied_array ? lazy_property(array, index) : array[index];
-					block = each_item_block(item, null, index, render_fn, flags);
-					b_blocks[index] = block;
-					insert_each_item_block(block, dom, is_controlled, null);
-				} else if (index >= b) {
-					// Remove block
-					block = a_blocks[index];
-					destroy_each_item_block(block, active_transitions, apply_transitions);
-				} else {
-					// Update block
-					item = array[index];
-					block = a_blocks[index];
-					b_blocks[index] = block;
-					update_each_item_block(block, item, index, flags);
-				}
+
+			remove_excess_hydration_nodes(hydration_list, hydrating_node);
+		}
+
+		for (; index < length; index++) {
+			if (index >= a) {
+				// Add block
+				item = array[index];
+				block = each_item_block(item, null, index, render_fn, flags);
+				b_blocks[index] = block;
+				insert_each_item_block(block, dom, is_controlled, null);
+			} else if (index >= b) {
+				// Remove block
+				block = a_blocks[index];
+				destroy_each_item_block(block, active_transitions, apply_transitions);
+			} else {
+				// Update block
+				item = array[index];
+				block = a_blocks[index];
+				b_blocks[index] = block;
+				update_each_item_block(block, item, index, flags);
 			}
+		}
+
+		if (mismatch) {
+			// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
+			set_current_hydration_fragment([]);
 		}
 	}
 
 	each_block.v = b_blocks;
 }
-// Reconcile arrays by the equality of the elements in the array. This algorithm
-// is based on Ivi's reconcilation logic:
-//
-// https://github.com/localvoid/ivi/blob/9f1bd0918f487da5b131941228604763c5d8ef56/packages/ivi/src/client/core.ts#L968
-//
 
 /**
+ * Reconcile arrays by the equality of the elements in the array. This algorithm
+ * is based on Ivi's reconcilation logic:
+ * https://github.com/localvoid/ivi/blob/9f1bd0918f487da5b131941228604763c5d8ef56/packages/ivi/src/client/core.ts#L968
  * @template V
  * @param {Array<V>} array
  * @param {import('./types.js').EachBlock} each_block
@@ -351,12 +397,7 @@ function reconcile_tracked_array(
 ) {
 	var a_blocks = each_block.v;
 	const is_computed_key = keys !== null;
-	var is_proxied_array = STATE_SYMBOL in array && /** @type {any} */ (array[STATE_SYMBOL]).i;
 	var active_transitions = each_block.s;
-
-	if (is_proxied_array) {
-		flags &= ~EACH_ITEM_REACTIVE;
-	}
 
 	/** @type {number | void} */
 	var a = a_blocks.length;
@@ -388,30 +429,43 @@ function reconcile_tracked_array(
 		var key;
 		var item;
 		var idx;
+		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
+		let mismatch = false;
 		b_blocks = Array(b);
-		if (current_hydration_fragment !== null) {
+		if (hydrating) {
+			// Hydrate block
 			var fragment;
-
-			/** @type {Node} */
-			var hydrating_node = current_hydration_fragment[0];
+			var hydration_list = /** @type {import('./types.js').TemplateNode[]} */ (
+				current_hydration_fragment
+			);
+			var hydrating_node = hydration_list[0];
 			while (b > 0) {
-				// Hydrate block
+				fragment = get_hydration_fragment(hydrating_node);
+				set_current_hydration_fragment(fragment);
+				if (!fragment) {
+					// If fragment is null, then that means that the server rendered less items than what
+					// the client code specifies -> break out and continue with client-side node creation
+					mismatch = true;
+					break;
+				}
+
 				idx = b_end - --b;
 				item = array[idx];
 				key = is_computed_key ? keys[idx] : item;
-				fragment = /** @type {Array<Text | Comment | Element>} */ (
-					get_hydration_fragment(hydrating_node)
-				);
-				set_current_hydration_fragment(fragment);
-				// Get the <!--ssr:..--> tag of the next item in the list
-				// The fragment array can be empty if each block has no content
-				hydrating_node = /** @type {Node} */ (
-					/** @type {Node} */ ((fragment.at(-1) || hydrating_node).nextSibling).nextSibling
-				);
 				block = each_item_block(item, key, idx, render_fn, flags);
 				b_blocks[idx] = block;
+
+				// Get the <!--ssr:..--> tag of the next item in the list
+				// The fragment array can be empty if each block has no content
+				hydrating_node = /** @type {import('./types.js').TemplateNode} */ (
+					/** @type {Node} */ ((fragment.at(-1) || hydrating_node).nextSibling).nextSibling
+				);
 			}
-		} else if (a === 0) {
+
+			remove_excess_hydration_nodes(hydration_list, hydrating_node);
+		}
+
+		if (a === 0) {
 			// Create new blocks
 			while (b > 0) {
 				idx = b_end - --b;
@@ -422,7 +476,9 @@ function reconcile_tracked_array(
 				insert_each_item_block(block, dom, is_controlled, null);
 			}
 		} else {
-			var should_update_block = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
+			var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
+			var should_update_block =
+				(flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0 || is_animated;
 			var start = 0;
 
 			/** @type {null | Text | Element | Comment} */
@@ -489,6 +545,17 @@ function reconcile_tracked_array(
 					key = is_computed_key ? keys[a] : item;
 					map_set(item_index, key, a);
 				}
+				// If keys are animated, we need to do updates before actual moves
+				if (is_animated) {
+					for (b = start; b <= a_end; ++b) {
+						a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
+						if (a !== undefined) {
+							item = array[a];
+							block = a_blocks[b];
+							update_each_item_block(block, item, a, flags);
+						}
+					}
+				}
 				for (b = start; b <= a_end; ++b) {
 					a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
 					block = a_blocks[b];
@@ -504,22 +571,9 @@ function reconcile_tracked_array(
 				if (pos === MOVED_BLOCK) {
 					mark_lis(sources);
 				}
-				// If keys are animated, we need to do updates before actual moves
-				var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
-				var should_create;
-				if (is_animated) {
-					var i = b_length;
-					while (i-- > 0) {
-						b_end = i + start;
-						a = sources[i];
-						if (pos === MOVED_BLOCK && a !== LIS_BLOCK) {
-							block = b_blocks[b_end];
-							update_each_item_block(block, item, b_end, flags);
-						}
-					}
-				}
 				var last_block;
 				var last_sibling;
+				var should_create;
 				while (b_length-- > 0) {
 					b_end = b_length + start;
 					a = sources[b_length];
@@ -543,9 +597,28 @@ function reconcile_tracked_array(
 				}
 			}
 		}
+
+		if (mismatch) {
+			// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
+			set_current_hydration_fragment([]);
+		}
 	}
 
 	each_block.v = b_blocks;
+}
+
+/**
+ * The server could have rendered more list items than the client specifies.
+ * In that case, we need to remove the remaining server-rendered nodes.
+ * @param {import('./types.js').TemplateNode[]} hydration_list
+ * @param {import('./types.js').TemplateNode | null} next_node
+ */
+function remove_excess_hydration_nodes(hydration_list, next_node) {
+	if (next_node === null) return;
+	var idx = hydration_list.indexOf(next_node);
+	if (idx !== -1 && hydration_list.length > idx + 1) {
+		remove(hydration_list.slice(idx));
+	}
 }
 
 /**
@@ -685,7 +758,7 @@ function destroy_active_transition_blocks(active_transitions) {
  * @param {import('./types.js').Block} block
  * @returns {Text | Element | Comment}
  */
-function get_first_element(block) {
+export function get_first_element(block) {
 	const current = block.d;
 
 	if (is_array(current)) {
@@ -708,27 +781,16 @@ function get_first_element(block) {
  * @returns {void}
  */
 function update_each_item_block(block, item, index, type) {
+	const block_v = block.v;
 	if ((type & EACH_ITEM_REACTIVE) !== 0) {
-		set_signal_value(block.v, item);
-	} else if (is_lazy_property(block.v)) {
-		block.v.o[block.v.p] = item;
+		set_signal_value(block_v, item);
 	}
 	const transitions = block.s;
 	const index_is_reactive = (type & EACH_INDEX_REACTIVE) !== 0;
 	// Handle each item animations
-	if (transitions !== null && (type & EACH_KEYED) !== 0) {
-		let prev_index = block.i;
-		if (index_is_reactive) {
-			prev_index = /** @type {import('./types.js').Signal<number>} */ (prev_index).v;
-		}
-		const items = block.p.v;
-		if (prev_index !== index && /** @type {number} */ (index) < items.length) {
-			const from_dom = /** @type {Element} */ (get_first_element(block));
-			const from = from_dom.getBoundingClientRect();
-			schedule_task(() => {
-				trigger_transitions(transitions, 'key', from);
-			});
-		}
+	const each_animation = block.a;
+	if (transitions !== null && (type & EACH_KEYED) !== 0 && each_animation !== null) {
+		each_animation(block, transitions);
 	}
 	if (index_is_reactive) {
 		set_signal_value(/** @type {import('./types.js').Signal<number>} */ (block.i), index);
@@ -753,24 +815,32 @@ export function destroy_each_item_block(
 	const transitions = block.s;
 
 	if (apply_transitions && transitions !== null) {
-		trigger_transitions(transitions, 'out');
-		if (transition_block !== null) {
-			transition_block.push(block);
+		// We might have pending key transitions, if so remove them first
+		for (let other of transitions) {
+			if (other.r === 'key') {
+				transitions.delete(other);
+			}
 		}
-	} else {
-		const dom = block.d;
-		if (!controlled && dom !== null) {
-			remove(dom);
+		if (transitions.size === 0) {
+			block.s = null;
+		} else {
+			trigger_transitions(transitions, 'out');
+			if (transition_block !== null) {
+				transition_block.push(block);
+			}
+			return;
 		}
-		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
 	}
+	const dom = block.d;
+	if (!controlled && dom !== null) {
+		remove(dom);
+	}
+	destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
 }
 
 /**
  * @template V
- * @template O
- * @template P
- * @param {V | import('./types.js').LazyProperty<O, P>} item
+ * @param {V} item
  * @param {unknown} key
  * @param {number} index
  * @param {(anchor: null, item: V, index: number | import('./types.js').Signal<number>) => void} render_fn
@@ -783,8 +853,8 @@ function each_item_block(item, key, index, render_fn, flags) {
 	const item_value = each_item_not_reactive
 		? item
 		: (flags & EACH_IS_IMMUTABLE) === 0
-		? mutable_source(item)
-		: source(item);
+			? mutable_source(item)
+			: source(item);
 
 	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
 	const block = create_each_item_block(item_value, index_value, key);

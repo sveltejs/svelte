@@ -9,23 +9,25 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 	let count = $.source(0);
 
 	function onmouseup() {
-		$.set(count, $.proxy($.get(count) + 2));
+		$.set(count, $.get(count) + 2);
 	}
 
+	const plusOne = (num) => num + 1;
 	/* Init */
 	var fragment = $.comment($$anchor);
 	var node = $.child_frag(fragment);
 
 	Button(node, {
-		onmousedown: () => $.set(count, $.proxy($.get(count) + 1)),
+		onmousedown: () => $.set(count, $.get(count) + 1),
 		onmouseup,
+		onmouseenter: () => $.set(count, $.proxy(plusOne($.get(count)))),
 		children: ($$anchor, $$slotProps) => {
 			/* Init */
-			var node_1 = $.space($$anchor);
+			var text = $.space($$anchor);
 
 			/* Update */
-			$.text_effect(node_1, () => `clicks: ${$.stringify($.get(count))}`);
-			$.close($$anchor, node_1);
+			$.text_effect(text, () => `clicks: ${$.stringify($.get(count))}`);
+			$.close($$anchor, text);
 		}
 	});
 

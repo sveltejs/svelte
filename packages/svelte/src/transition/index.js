@@ -12,14 +12,14 @@ function cubic_out(t) {
  * @param {number} t
  * @returns {number}
  */
-export function cubic_in_out(t) {
+function cubic_in_out(t) {
 	return t < 0.5 ? 4.0 * t * t * t : 0.5 * Math.pow(2.0 * t - 2.0, 3.0) + 1.0;
 }
 
 /** @param {number | string} value
  * @returns {[number, string]}
  */
-export function split_css_unit(value) {
+function split_css_unit(value) {
 	const split = typeof value === 'string' && value.match(/^\s*(-?[\d.]+)([^\s]*)\s*$/);
 	return split ? [parseFloat(split[1]), split[2] || 'px'] : [/** @type {number} */ (value), 'px'];
 }
@@ -215,7 +215,7 @@ function assign(tar, src) {
 }
 
 /**
- * The `crossfade` function creates a pair of [transitions](/docs#template-syntax-element-directives-transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
+ * The `crossfade` function creates a pair of [transitions](https://svelte.dev/docs#template-syntax-element-directives-transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
  *
  * https://svelte.dev/docs/svelte-transition#crossfade
  * @param {import('./public').CrossfadeParams & {

@@ -17,7 +17,7 @@ export async function run_ssr_test(
 	test_dir: string
 ) {
 	try {
-		compile_directory(test_dir, 'server', {
+		await compile_directory(test_dir, 'server', {
 			...config.compileOptions,
 			runes: test_dir.includes('runtime-runes')
 		});

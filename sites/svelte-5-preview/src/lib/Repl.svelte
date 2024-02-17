@@ -298,7 +298,7 @@
 
 					status = message;
 				}
-		  })
+			})
 		: null;
 
 	/**

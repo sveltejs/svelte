@@ -11,7 +11,7 @@ import type { SourceMap } from 'magic-string';
 import type { Context } from 'zimmerframe';
 import type { Scope } from '../phases/scope.js';
 import * as Css from './css.js';
-import type { Namespace, SvelteNode } from './template.js';
+import type { EachBlock, Namespace, SvelteNode } from './template.js';
 
 /** The return value of `compile` from `svelte/compiler` */
 export interface CompileResult {
@@ -142,7 +142,7 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	runes?: boolean | undefined;
 	/**
-	 *  If `true`, exposes the Svelte major version on the global `window` object in the browser.
+	 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `window.__svelte.v`.
 	 *
 	 * @default true
 	 */
@@ -178,10 +178,6 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * @default null
 	 */
 	cssOutputFilename?: string;
-
-	// Other Svelte 4 compiler options:
-	// enableSourcemap?: EnableSourcemap; // TODO bring back? https://github.com/sveltejs/svelte/pull/6835
-	// legacy?: boolean; // TODO compiler error noting the new purpose?
 }
 
 export interface ModuleCompileOptions {
@@ -258,6 +254,7 @@ export interface Binding {
 		| 'prop'
 		| 'rest_prop'
 		| 'state'
+		| 'frozen_state'
 		| 'derived'
 		| 'each'
 		| 'store_sub'
@@ -268,7 +265,13 @@ export interface Binding {
 	 * What the value was initialized with.
 	 * For destructured props such as `let { foo = 'bar' } = $props()` this is `'bar'` and not `$props()`
 	 */
-	initial: null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration;
+	initial:
+		| null
+		| Expression
+		| FunctionDeclaration
+		| ClassDeclaration
+		| ImportDeclaration
+		| EachBlock;
 	is_called: boolean;
 	references: { node: Identifier; path: SvelteNode[] }[];
 	mutated: boolean;
@@ -278,8 +281,11 @@ export interface Binding {
 	legacy_dependencies: Binding[];
 	/** Legacy props: the `class` in `{ export klass as class}` */
 	prop_alias: string | null;
-	/** If this is set, all references should use this expression instead of the identifier name */
-	expression: Expression | null;
+	/**
+	 * If this is set, all references should use this expression instead of the identifier name.
+	 * If a function is given, it will be called with the identifier at that location and should return the new expression.
+	 */
+	expression: Expression | ((id: Identifier) => Expression) | null;
 	/** If this is set, all mutations should use this expression */
 	mutation: ((assignment: AssignmentExpression, context: Context<any, any>) => Expression) | null;
 }

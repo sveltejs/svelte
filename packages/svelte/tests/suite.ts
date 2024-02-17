@@ -17,7 +17,7 @@ const filter = process.env.FILTER
 			process.env.FILTER.startsWith('/')
 				? process.env.FILTER.slice(1, -1).replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
 				: `^${process.env.FILTER.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}$`
-	  )
+		)
 	: /./;
 
 export function suite<Test extends BaseTest>(fn: (config: Test, test_dir: string) => void) {
@@ -36,7 +36,7 @@ export function suite<Test extends BaseTest>(fn: (config: Test, test_dir: string
 export function suite_with_variants<Test extends BaseTest, Variants extends string, Common>(
 	variants: Variants[],
 	should_skip_variant: (variant: Variants, config: Test) => boolean | 'no-test',
-	common_setup: (config: Test, test_dir: string) => Common,
+	common_setup: (config: Test, test_dir: string) => Promise<Common> | Common,
 	fn: (config: Test, test_dir: string, variant: Variants, common: Common) => void
 ) {
 	return {
@@ -54,10 +54,10 @@ export function suite_with_variants<Test extends BaseTest, Variants extends stri
 					const solo = config.solo;
 					let it_fn = skip ? it.skip : solo ? it.only : it;
 
-					it_fn(`${dir} (${variant})`, () => {
+					it_fn(`${dir} (${variant})`, async () => {
 						if (!called_common) {
 							called_common = true;
-							common = common_setup(config, `${cwd}/${samples_dir}/${dir}`);
+							common = await common_setup(config, `${cwd}/${samples_dir}/${dir}`);
 						}
 						return fn(config, `${cwd}/${samples_dir}/${dir}`, variant, common);
 					});

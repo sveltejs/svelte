@@ -4,6 +4,7 @@ import {
 	child,
 	clone_node,
 	create_element,
+	empty,
 	init_operations,
 	map_get,
 	map_set,
@@ -19,12 +20,22 @@ import {
 	create_dynamic_component_block,
 	create_snippet_block
 } from './block.js';
-import { PassiveDelegatedEvents, DelegatedEvents, AttributeAliases } from '../../constants.js';
-import { create_fragment_from_html, insert, reconcile_html, remove } from './reconciler.js';
+import {
+	PassiveDelegatedEvents,
+	DelegatedEvents,
+	AttributeAliases,
+	namespace_svg
+} from '../../constants.js';
+import {
+	create_fragment_from_html,
+	create_fragment_with_script_from_html,
+	insert,
+	reconcile_html,
+	remove
+} from './reconciler.js';
 import {
 	render_effect,
 	destroy_signal,
-	get,
 	is_signal,
 	push_destroy_fn,
 	execute_effect,
@@ -43,6 +54,7 @@ import {
 	current_hydration_fragment,
 	get_hydration_fragment,
 	hydrate_block_anchor,
+	hydrating,
 	set_current_hydration_fragment
 } from './hydration.js';
 import {
@@ -57,7 +69,7 @@ import {
 } from './utils.js';
 import { is_promise } from '../common.js';
 import { bind_transition, trigger_transitions } from './transitions.js';
-import { proxy } from './proxy/proxy.js';
+import { proxy } from './proxy.js';
 
 /** @type {Set<string>} */
 const all_registerd_events = new Set();
@@ -65,24 +77,37 @@ const all_registerd_events = new Set();
 /** @type {Set<(events: Array<string>) => void>} */
 const root_event_handles = new Set();
 
-/** @returns {Text} */
-export function empty() {
-	return document.createTextNode('');
-}
-
 /**
  * @param {string} html
- * @param {boolean} is_fragment
+ * @param {boolean} return_fragment
  * @returns {() => Node}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function template(html, is_fragment) {
+export function template(html, return_fragment) {
 	/** @type {undefined | Node} */
 	let cached_content;
 	return () => {
 		if (cached_content === undefined) {
 			const content = create_fragment_from_html(html);
-			cached_content = is_fragment ? content : /** @type {Node} */ (child(content));
+			cached_content = return_fragment ? content : /** @type {Node} */ (child(content));
+		}
+		return cached_content;
+	};
+}
+
+/**
+ * @param {string} html
+ * @param {boolean} return_fragment
+ * @returns {() => Node}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function template_with_script(html, return_fragment) {
+	/** @type {undefined | Node} */
+	let cached_content;
+	return () => {
+		if (cached_content === undefined) {
+			const content = create_fragment_with_script_from_html(html);
+			cached_content = return_fragment ? content : /** @type {Node} */ (child(content));
 		}
 		return cached_content;
 	};
@@ -90,17 +115,35 @@ export function template(html, is_fragment) {
 
 /**
  * @param {string} svg
- * @param {boolean} is_fragment
+ * @param {boolean} return_fragment
  * @returns {() => Node}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function svg_template(svg, is_fragment) {
+export function svg_template(svg, return_fragment) {
 	/** @type {undefined | Node} */
 	let cached_content;
 	return () => {
 		if (cached_content === undefined) {
 			const content = /** @type {Node} */ (child(create_fragment_from_html(`<svg>${svg}</svg>`)));
-			cached_content = is_fragment ? content : /** @type {Node} */ (child(content));
+			cached_content = return_fragment ? content : /** @type {Node} */ (child(content));
+		}
+		return cached_content;
+	};
+}
+
+/**
+ * @param {string} svg
+ * @param {boolean} return_fragment
+ * @returns {() => Node}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function svg_template_with_script(svg, return_fragment) {
+	/** @type {undefined | Node} */
+	let cached_content;
+	return () => {
+		if (cached_content === undefined) {
+			const content = /** @type {Node} */ (child(create_fragment_from_html(`<svg>${svg}</svg>`)));
+			cached_content = return_fragment ? content : /** @type {Node} */ (child(content));
 		}
 		return cached_content;
 	};
@@ -124,7 +167,7 @@ export function svg_replace(node) {
  * @returns {Element | DocumentFragment | Node[]}
  */
 function open_template(is_fragment, use_clone_node, anchor, template_element_fn) {
-	if (current_hydration_fragment !== null) {
+	if (hydrating) {
 		if (anchor !== null) {
 			hydrate_block_anchor(anchor, false);
 		}
@@ -166,11 +209,22 @@ const space_template = template(' ', false);
 const comment_template = template('<!>', true);
 
 /**
- * @param {null | Text | Comment | Element} anchor
+ * @param {Text | Comment | Element | null} anchor
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function space(anchor) {
-	return open(anchor, true, space_template);
+	/** @type {Node | null} */
+	var node = /** @type {any} */ (open(anchor, true, space_template));
+	// if an {expression} is empty during SSR, there might be no
+	// text node to hydrate (or an anchor comment is falsely detected instead)
+	//  — we must therefore create one
+	if (hydrating && node?.nodeType !== 3) {
+		node = empty();
+		// @ts-ignore in this case the anchor should always be a comment,
+		// if not something more fundamental is wrong and throwing here is better to bail out early
+		anchor.parentElement.insertBefore(node, anchor);
+	}
+	return node;
 }
 
 /**
@@ -182,6 +236,8 @@ export function comment(anchor) {
 }
 
 /**
+ * Assign the created (or in hydration mode, traversed) dom elements to the current block
+ * and insert the elements into the dom (in client mode).
  * @param {Element | Text} dom
  * @param {boolean} is_fragment
  * @param {null | Text | Comment | Element} anchor
@@ -196,10 +252,8 @@ function close_template(dom, is_fragment, anchor) {
 			? dom
 			: /** @type {import('./types.js').TemplateNode[]} */ (Array.from(dom.childNodes))
 		: dom;
-	if (anchor !== null) {
-		if (current_hydration_fragment === null) {
-			insert(current, null, anchor);
-		}
+	if (!hydrating && anchor !== null) {
+		insert(current, null, anchor);
 	}
 	block.d = current;
 }
@@ -319,7 +373,15 @@ export function event(event_name, dom, handler, capture, passive) {
 		capture,
 		passive
 	};
-	const target_handler = handler;
+	/**
+	 * @this {EventTarget}
+	 */
+	function target_handler(/** @type {Event} */ event) {
+		handle_event_propagation(dom, event);
+		if (!event.cancelBubble) {
+			return handler.call(this, event);
+		}
+	}
 	dom.addEventListener(event_name, target_handler, options);
 	// @ts-ignore
 	if (dom === document.body || dom === window || dom === document) {
@@ -352,14 +414,13 @@ export function class_name(dom, value) {
 	// @ts-expect-error need to add __className to patched prototype
 	const prev_class_name = dom.__className;
 	const next_class_name = to_class(value);
-	const is_hydrating = current_hydration_fragment !== null;
-	if (is_hydrating && dom.className === next_class_name) {
+	if (hydrating && dom.className === next_class_name) {
 		// In case of hydration don't reset the class as it's already correct.
 		// @ts-expect-error need to add __className to patched prototype
 		dom.__className = next_class_name;
 	} else if (
 		prev_class_name !== next_class_name ||
-		(is_hydrating && dom.className !== next_class_name)
+		(hydrating && dom.className !== next_class_name)
 	) {
 		if (next_class_name === '') {
 			dom.removeAttribute('class');
@@ -389,7 +450,7 @@ export function text(dom, value) {
 	// @ts-expect-error need to add __value to patched prototype
 	const prev_node_value = dom.__nodeValue;
 	const next_node_value = stringify(value);
-	if (current_hydration_fragment !== null && dom.nodeValue === next_node_value) {
+	if (hydrating && dom.nodeValue === next_node_value) {
 		// In case of hydration don't reset the nodeValue as it's already correct.
 		// @ts-expect-error need to add __nodeValue to patched prototype
 		dom.__nodeValue = next_node_value;
@@ -444,6 +505,20 @@ export function class_toggle(dom, class_name, value) {
 		dom.classList.remove(class_name);
 	}
 }
+
+/**
+ * @param {Element} dom
+ * @param {string} class_name
+ * @param {() => boolean} value
+ * @returns {void}
+ */
+export function class_toggle_effect(dom, class_name, value) {
+	render_effect(() => {
+		const string = value();
+		class_toggle(dom, class_name, string);
+	});
+}
+
 /**
  * Selects the correct option(s) (depending on whether this is a multiple select)
  * @template V
@@ -662,7 +737,7 @@ export function bind_playback_rate(media, get_value, update) {
  * @param {(paused: boolean) => void} update
  */
 export function bind_paused(media, get_value, update) {
-	let mounted = current_hydration_fragment !== null;
+	let mounted = hydrating;
 	let paused = get_value();
 	const callback = () => {
 		if (paused !== media.paused) {
@@ -859,8 +934,8 @@ export function bind_resize_observer(dom, type, update) {
 		type === 'contentRect' || type === 'contentBoxSize'
 			? resize_observer_content_box
 			: type === 'borderBoxSize'
-			? resize_observer_border_box
-			: resize_observer_device_pixel_content_box;
+				? resize_observer_border_box
+				: resize_observer_device_pixel_content_box;
 	const unsub = observer.observe(dom, /** @param {any} entry */ (entry) => update(entry[type]));
 	render_effect(() => unsub);
 }
@@ -912,30 +987,48 @@ export function selected(dom) {
 }
 
 /**
- * @param {Element} dom
+ * @param {HTMLInputElement} dom
  * @param {() => unknown} get_value
  * @param {(value: unknown) => void} update
  * @returns {void}
  */
 export function bind_value(dom, get_value, update) {
 	dom.addEventListener('input', () => {
-		// @ts-ignore
+		/** @type {any} */
 		let value = dom.value;
-		// @ts-ignore
-		const type = dom.type;
-		if (type === 'number' || type === 'range') {
-			value = value === '' ? null : +value;
+		if (is_numberlike_input(dom)) {
+			value = to_number(value);
 		}
 		update(value);
 	});
+
 	render_effect(() => {
 		const value = get_value();
-		const coerced_value = value == null ? null : value + '';
-		// @ts-ignore
-		dom.value = coerced_value;
 		// @ts-ignore
 		dom.__value = value;
+
+		if (is_numberlike_input(dom) && value === to_number(dom.value)) {
+			// handles 0 vs 00 case (see https://github.com/sveltejs/svelte/issues/9959)
+			return;
+		}
+
+		dom.value = stringify(value);
 	});
+}
+
+/**
+ * @param {HTMLInputElement} dom
+ */
+function is_numberlike_input(dom) {
+	const type = dom.type;
+	return type === 'number' || type === 'range';
+}
+
+/**
+ * @param {string} value
+ */
+function to_number(value) {
+	return value === '' ? null : +value;
 }
 
 /**
@@ -1239,11 +1332,11 @@ export function delegate(events) {
 }
 
 /**
- * @param {Node} root_element
+ * @param {Node} handler_element
  * @param {Event} event
  * @returns {void}
  */
-function handle_event_propagation(root_element, event) {
+function handle_event_propagation(handler_element, event) {
 	const event_name = event.type;
 	const path = event.composedPath?.() || [];
 	let current_target = /** @type {null | Element} */ (path[0] || event.target);
@@ -1258,18 +1351,37 @@ function handle_event_propagation(root_element, event) {
 	// We check __root to skip all nodes below it in case this is a
 	// parent of the __root node, which indicates that there's nested
 	// mounted apps. In this case we don't want to trigger events multiple times.
-	// We're deliberately not skipping if the index is the same or higher, because
-	// someone could create an event programmatically and emit it multiple times,
-	// in which case we want to handle the whole propagation chain properly each time.
 	let path_idx = 0;
 	// @ts-expect-error is added below
 	const handled_at = event.__root;
 	if (handled_at) {
 		const at_idx = path.indexOf(handled_at);
-		if (at_idx < path.indexOf(root_element)) {
-			path_idx = at_idx;
+		if (at_idx !== -1 && handler_element === document) {
+			// This is the fallback document listener but the event was already handled
+			// -> ignore, but set handle_at to document so that we're resetting the event
+			// chain in case someone manually dispatches the same event object again.
+			// @ts-expect-error
+			event.__root = document;
+			return;
+		}
+		// We're deliberately not skipping if the index is higher, because
+		// someone could create an event programmatically and emit it multiple times,
+		// in which case we want to handle the whole propagation chain properly each time.
+		// (this will only be a false negative if the event is dispatched multiple times and
+		// the fallback document listener isn't reached in between, but that's super rare)
+		const handler_idx = path.indexOf(handler_element);
+		if (handler_idx === -1) {
+			// handle_idx can theoretically be -1 (happened in some JSDOM testing scenarios with an event listener on the window object)
+			// so guard against that, too, and assume that everything was handled at this point.
+			return;
+		}
+		if (at_idx <= handler_idx) {
+			// +1 because at_idx is the element which was already handled, and there can only be one delegated event per element.
+			// Avoids on:click and onclick on the same event resulting in onclick being fired twice.
+			path_idx = at_idx + 1;
 		}
 	}
+
 	current_target = /** @type {Element} */ (path[path_idx] || event.target);
 	// Proxy currentTarget to correct target
 	define_property(event, 'currentTarget', {
@@ -1295,14 +1407,20 @@ function handle_event_propagation(root_element, event) {
 				delegated.call(current_target, event);
 			}
 		}
-		if (event.cancelBubble || parent_element === root_element) {
+		if (
+			event.cancelBubble ||
+			parent_element === handler_element ||
+			current_target === handler_element
+		) {
 			break;
 		}
 		current_target = parent_element;
 	}
 
 	// @ts-expect-error is used above
-	event.__root = root_element;
+	event.__root = handler_element;
+	// @ts-expect-error is used above
+	current_target = handler_element;
 }
 
 /**
@@ -1332,14 +1450,18 @@ export function slot(anchor_node, slot_fn, slot_props, fallback_fn) {
 function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	const block = create_if_block();
 	hydrate_block_anchor(anchor_node);
-	const previous_hydration_fragment = current_hydration_fragment;
+	/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
+	let mismatch = false;
 
 	/** @type {null | import('./types.js').TemplateNode | Array<import('./types.js').TemplateNode>} */
 	let consequent_dom = null;
 	/** @type {null | import('./types.js').TemplateNode | Array<import('./types.js').TemplateNode>} */
 	let alternate_dom = null;
 	let has_mounted = false;
-	let has_mounted_branch = false;
+	/**
+	 * @type {import("./types.js").EffectSignal | null}
+	 */
+	let current_branch_effect = null;
 
 	const if_effect = render_effect(
 		() => {
@@ -1372,7 +1494,7 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 							trigger_transitions(alternate_transitions, 'in');
 						}
 					}
-				} else if (current_hydration_fragment !== null) {
+				} else if (hydrating) {
 					const comment_text = /** @type {Comment} */ (current_hydration_fragment?.[0])?.data;
 					if (
 						!comment_text ||
@@ -1383,6 +1505,7 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 						// This could happen using when `{#if browser} .. {/if}` in SvelteKit.
 						remove(current_hydration_fragment);
 						set_current_hydration_fragment(null);
+						mismatch = true;
 					} else {
 						// Remove the ssr:if comment node or else it will confuse the subsequent hydration algorithm
 						current_hydration_fragment.shift();
@@ -1396,20 +1519,24 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	);
 	// Managed effect
 	const consequent_effect = render_effect(
-		() => {
-			if (consequent_dom !== null) {
+		(
+			/** @type {any} */ _,
+			/** @type {import("./types.js").EffectSignal | null} */ consequent_effect
+		) => {
+			const result = block.v;
+			if (!result && consequent_dom !== null) {
 				remove(consequent_dom);
 				consequent_dom = null;
 			}
-			if (block.v) {
+			if (result && current_branch_effect !== consequent_effect) {
 				consequent_fn(anchor_node);
-				if (!has_mounted_branch) {
-					// Restore previous fragment so that Svelte continues to operate in hydration mode
-					set_current_hydration_fragment(previous_hydration_fragment);
-					has_mounted_branch = true;
+				if (mismatch && current_branch_effect === null) {
+					// Set fragment so that Svelte continues to operate in hydration mode
+					set_current_hydration_fragment([]);
 				}
+				current_branch_effect = consequent_effect;
+				consequent_dom = block.d;
 			}
-			consequent_dom = block.d;
 			block.d = null;
 		},
 		block,
@@ -1418,22 +1545,26 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	block.ce = consequent_effect;
 	// Managed effect
 	const alternate_effect = render_effect(
-		() => {
-			if (alternate_dom !== null) {
+		(
+			/** @type {any} */ _,
+			/** @type {import("./types.js").EffectSignal | null} */ alternate_effect
+		) => {
+			const result = block.v;
+			if (result && alternate_dom !== null) {
 				remove(alternate_dom);
 				alternate_dom = null;
 			}
-			if (!block.v) {
+			if (!result && current_branch_effect !== alternate_effect) {
 				if (alternate_fn !== null) {
 					alternate_fn(anchor_node);
 				}
-				if (!has_mounted_branch) {
-					// Restore previous fragment so that Svelte continues to operate in hydration mode
-					set_current_hydration_fragment(previous_hydration_fragment);
-					has_mounted_branch = true;
+				if (mismatch && current_branch_effect === null) {
+					// Set fragment so that Svelte continues to operate in hydration mode
+					set_current_hydration_fragment([]);
 				}
+				current_branch_effect = alternate_effect;
+				alternate_dom = block.d;
 			}
-			alternate_dom = block.d;
 			block.d = null;
 		},
 		block,
@@ -1462,10 +1593,15 @@ export function head(render_fn) {
 	const block = create_head_block();
 	// The head function may be called after the first hydration pass and ssr comment nodes may still be present,
 	// therefore we need to skip that when we detect that we're not in hydration mode.
-	const hydration_fragment =
-		current_hydration_fragment !== null ? get_hydration_fragment(document.head.firstChild) : null;
-	const previous_hydration_fragment = current_hydration_fragment;
-	set_current_hydration_fragment(hydration_fragment);
+	let hydration_fragment = null;
+	let previous_hydration_fragment = null;
+	let is_hydrating = hydrating;
+	if (is_hydrating) {
+		hydration_fragment = get_hydration_fragment(document.head.firstChild);
+		previous_hydration_fragment = current_hydration_fragment;
+		set_current_hydration_fragment(hydration_fragment);
+	}
+
 	try {
 		const head_effect = render_effect(
 			() => {
@@ -1475,7 +1611,7 @@ export function head(render_fn) {
 					block.d = null;
 				}
 				let anchor = null;
-				if (current_hydration_fragment === null) {
+				if (!hydrating) {
 					anchor = empty();
 					document.head.appendChild(anchor);
 				}
@@ -1492,7 +1628,9 @@ export function head(render_fn) {
 		});
 		block.e = head_effect;
 	} finally {
-		set_current_hydration_fragment(previous_hydration_fragment);
+		if (is_hydrating) {
+			set_current_hydration_fragment(previous_hydration_fragment);
+		}
 	}
 }
 
@@ -1519,11 +1657,11 @@ function swap_block_dom(block, from, to) {
 /**
  * @param {Comment} anchor_node
  * @param {() => string} tag_fn
+ * @param {boolean | null} is_svg `null` == not statically known
  * @param {undefined | ((element: Element, anchor: Node) => void)} render_fn
- * @param {any} is_svg
  * @returns {void}
  */
-export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
+export function element(anchor_node, tag_fn, is_svg, render_fn) {
 	const block = create_dynamic_element_block();
 	hydrate_block_anchor(anchor_node);
 	let has_mounted = false;
@@ -1531,7 +1669,7 @@ export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
 	/** @type {string} */
 	let tag;
 
-	/** @type {null | HTMLElement | SVGElement} */
+	/** @type {null | Element} */
 	let element = null;
 	const element_effect = render_effect(
 		() => {
@@ -1547,12 +1685,21 @@ export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
 	// Managed effect
 	const render_effect_signal = render_effect(
 		() => {
+			// We try our best infering the namespace in case it's not possible to determine statically,
+			// but on the first render on the client (without hydration) the parent will be undefined,
+			// since the anchor is not attached to its parent / the dom yet.
+			const ns =
+				is_svg || tag === 'svg'
+					? namespace_svg
+					: is_svg === false || anchor_node.parentElement?.tagName === 'foreignObject'
+						? null
+						: anchor_node.parentElement?.namespaceURI ?? null;
 			const next_element = tag
-				? current_hydration_fragment !== null
-					? /** @type {HTMLElement | SVGElement} */ (current_hydration_fragment[0])
-					: is_svg
-					? document.createElementNS('http://www.w3.org/2000/svg', tag)
-					: document.createElement(tag)
+				? hydrating
+					? /** @type {Element} */ (current_hydration_fragment[0])
+					: ns
+						? document.createElementNS(ns, tag)
+						: document.createElement(tag)
 				: null;
 			const prev_element = element;
 			if (prev_element !== null) {
@@ -1561,7 +1708,7 @@ export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
 			element = next_element;
 			if (element !== null && render_fn !== undefined) {
 				let anchor;
-				if (current_hydration_fragment !== null) {
+				if (hydrating) {
 					// Use the existing ssr comment as the anchor so that the inner open and close
 					// methods can pick up the existing nodes correctly
 					anchor = /** @type {Comment} */ (element.firstChild);
@@ -1625,7 +1772,9 @@ export function component(anchor_node, component_fn, render_fn) {
 			transition.f(() => {
 				transitions.delete(transition);
 				if (transitions.size === 0) {
-					if (render.e !== null) {
+					// If the current render has changed since, then we can remove the old render
+					// effect as it's stale.
+					if (current_render !== render && render.e !== null) {
 						if (render.d !== null) {
 							remove(render.d);
 							render.d = null;
@@ -1751,7 +1900,9 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 			transition.f(() => {
 				transitions.delete(transition);
 				if (transitions.size === 0) {
-					if (render.e !== null) {
+					// If the current render has changed since, then we can remove the old render
+					// effect as it's stale.
+					if (current_render !== render && render.e !== null) {
 						if (render.d !== null) {
 							remove(render.d);
 							render.d = null;
@@ -1911,7 +2062,9 @@ export function key(anchor_node, key, render_fn) {
 			transition.f(() => {
 				transitions.delete(transition);
 				if (transitions.size === 0) {
-					if (render.e !== null) {
+					// If the current render has changed since, then we can remove the old render
+					// effect as it's stale.
+					if (current_render !== render && render.e !== null) {
 						if (render.d !== null) {
 							remove(render.d);
 							render.d = null;
@@ -2012,7 +2165,7 @@ export function cssProps(anchor, is_html, props, component) {
 
 	/** @type {Text | Comment} */
 	let component_anchor;
-	if (current_hydration_fragment !== null) {
+	if (hydrating) {
 		// Hydration: css props element is surrounded by a ssr comment ...
 		tag = /** @type {HTMLElement | SVGElement} */ (current_hydration_fragment[0]);
 		// ... and the child(ren) of the css props element is also surround by a ssr comment
@@ -2022,7 +2175,7 @@ export function cssProps(anchor, is_html, props, component) {
 			tag = document.createElement('div');
 			tag.style.display = 'contents';
 		} else {
-			tag = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+			tag = document.createElementNS(namespace_svg, 'g');
 		}
 		insert(tag, null, anchor);
 		component_anchor = empty();
@@ -2086,49 +2239,49 @@ export function html(dom, get_value, svg) {
 /**
  * @template P
  * @param {HTMLElement} dom
- * @param {import('./types.js').TransitionFn<P | undefined>} transition_fn
+ * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
  * @param {(() => P) | null} props
  * @param {any} global
  * @returns {void}
  */
-export function transition(dom, transition_fn, props, global = false) {
-	bind_transition(dom, transition_fn, props, 'both', global);
+export function transition(dom, get_transition_fn, props, global = false) {
+	bind_transition(dom, get_transition_fn, props, 'both', global);
 }
 
 /**
  * @template P
  * @param {HTMLElement} dom
- * @param {import('./types.js').TransitionFn<P | undefined>} transition_fn
+ * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
  * @param {(() => P) | null} props
  * @returns {void}
  */
-export function animate(dom, transition_fn, props) {
-	bind_transition(dom, transition_fn, props, 'key', false);
+export function animate(dom, get_transition_fn, props) {
+	bind_transition(dom, get_transition_fn, props, 'key', false);
 }
 
 /**
  * @template P
  * @param {HTMLElement} dom
- * @param {import('./types.js').TransitionFn<P | undefined>} transition_fn
+ * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
  * @param {(() => P) | null} props
  * @param {any} global
  * @returns {void}
  */
-function in_fn(dom, transition_fn, props, global = false) {
-	bind_transition(dom, transition_fn, props, 'in', global);
+function in_fn(dom, get_transition_fn, props, global = false) {
+	bind_transition(dom, get_transition_fn, props, 'in', global);
 }
 export { in_fn as in };
 
 /**
  * @template P
  * @param {HTMLElement} dom
- * @param {import('./types.js').TransitionFn<P | undefined>} transition_fn
+ * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
  * @param {(() => P) | null} props
  * @param {any} global
  * @returns {void}
  */
-export function out(dom, transition_fn, props, global = false) {
-	bind_transition(dom, transition_fn, props, 'out', global);
+export function out(dom, get_transition_fn, props, global = false) {
+	bind_transition(dom, get_transition_fn, props, 'out', global);
 }
 
 /**
@@ -2148,7 +2301,7 @@ export function action(dom, action, value_fn) {
 			const value = value_fn();
 			untrack(() => {
 				if (payload === undefined) {
-					payload = action(dom, value);
+					payload = action(dom, value) || {};
 				} else {
 					const update = payload.update;
 					if (typeof update === 'function') {
@@ -2178,7 +2331,7 @@ export function action(dom, action, value_fn) {
  * @returns {void}
  */
 export function remove_input_attr_defaults(dom) {
-	if (current_hydration_fragment !== null) {
+	if (hydrating) {
 		attr(dom, 'value', null);
 		attr(dom, 'checked', null);
 	}
@@ -2190,7 +2343,7 @@ export function remove_input_attr_defaults(dom) {
  * @returns {void}
  */
 export function remove_textarea_child(dom) {
-	if (current_hydration_fragment !== null && dom.firstChild !== null) {
+	if (hydrating && dom.firstChild !== null) {
 		dom.textContent = '';
 	}
 }
@@ -2220,7 +2373,7 @@ export function attr(dom, attribute, value) {
 	}
 
 	if (
-		current_hydration_fragment === null ||
+		!hydrating ||
 		(dom.getAttribute(attribute) !== value &&
 			// If we reset those, they would result in another network request, which we want to avoid.
 			// We assume they are the same between client and server as checking if they are equal is expensive
@@ -2238,9 +2391,6 @@ export function attr(dom, attribute, value) {
 	}
 }
 
-/** @type {HTMLAnchorElement | undefined} */
-let src_url_equal_anchor;
-
 /**
  * @param {string} element_src
  * @param {string} url
@@ -2248,12 +2398,7 @@ let src_url_equal_anchor;
  */
 function src_url_equal(element_src, url) {
 	if (element_src === url) return true;
-	if (!src_url_equal_anchor) {
-		src_url_equal_anchor = document.createElement('a');
-	}
-	// This is actually faster than doing URL(..).href
-	src_url_equal_anchor.href = url;
-	return element_src === src_url_equal_anchor.href;
+	return new URL(element_src, document.baseURI).href === new URL(url, document.baseURI).href;
 }
 
 /** @param {string} srcset */
@@ -2291,7 +2436,7 @@ export function srcset_url_equal(element, srcset) {
  * @param {string | null} value
  */
 function check_src_in_dev_hydration(dom, attribute, value) {
-	if (!current_hydration_fragment) return;
+	if (!hydrating) return;
 	if (attribute !== 'src' && attribute !== 'href' && attribute !== 'srcset') return;
 
 	if (attribute === 'srcset' && srcset_url_equal(dom, value)) return;
@@ -2359,11 +2504,29 @@ export function set_custom_element_data(node, prop, value) {
  * @param {boolean} [important]
  */
 export function style(dom, key, value, important) {
+	const style = dom.style;
+	const prev_value = style.getPropertyValue(key);
 	if (value == null) {
-		dom.style.removeProperty(key);
-	} else {
-		dom.style.setProperty(key, value, important ? 'important' : '');
+		if (prev_value !== '') {
+			style.removeProperty(key);
+		}
+	} else if (prev_value !== value) {
+		style.setProperty(key, value, important ? 'important' : '');
 	}
+}
+
+/**
+ * @param {HTMLElement} dom
+ * @param {string} key
+ * @param {() => string} value
+ * @param {boolean} [important]
+ * @returns {void}
+ */
+export function style_effect(dom, key, value, important) {
+	render_effect(() => {
+		const string = value();
+		style(dom, key, string, important);
+	});
 }
 
 /**
@@ -2393,9 +2556,25 @@ function get_setters(element) {
 }
 
 /**
+ * Like `spread_attributes` but self-contained
+ * @param {Element & ElementCSSInlineStyle} dom
+ * @param {() => Record<string, unknown>[]} attrs
+ * @param {boolean} lowercase_attributes
+ * @param {string} css_hash
+ */
+export function spread_attributes_effect(dom, attrs, lowercase_attributes, css_hash) {
+	/** @type {Record<string, any> | undefined} */
+	let current = undefined;
+
+	render_effect(() => {
+		current = spread_attributes(dom, current, attrs(), lowercase_attributes, css_hash);
+	});
+}
+
+/**
  * Spreads attributes onto a DOM element, taking into account the currently set attributes
  * @param {Element & ElementCSSInlineStyle} dom
- * @param {Record<string, unknown> | null} prev
+ * @param {Record<string, unknown> | undefined} prev
  * @param {Record<string, unknown>[]} attrs
  * @param {boolean} lowercase_attributes
  * @param {string} css_hash
@@ -2470,7 +2649,7 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 					check_src_in_dev_hydration(dom, name, value);
 				}
 				if (
-					current_hydration_fragment === null ||
+					!hydrating ||
 					//  @ts-ignore see attr method for an explanation of src/srcset
 					(dom[name] !== value && name !== 'src' && name !== 'href' && name !== 'srcset')
 				) {
@@ -2492,18 +2671,30 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 
 /**
  * @param {Element} node
- * @param {Record<string, unknown> | null} prev
+ * @param {() => Record<string, unknown>[]} attrs
+ * @param {string} css_hash
+ */
+export function spread_dynamic_element_attributes_effect(node, attrs, css_hash) {
+	/** @type {Record<string, any> | undefined} */
+	let current = undefined;
+
+	render_effect(() => {
+		current = spread_dynamic_element_attributes(node, current, attrs(), css_hash);
+	});
+}
+
+/**
+ * @param {Element} node
+ * @param {Record<string, unknown> | undefined} prev
  * @param {Record<string, unknown>[]} attrs
  * @param {string} css_hash
  */
 export function spread_dynamic_element_attributes(node, prev, attrs, css_hash) {
 	if (node.tagName.includes('-')) {
 		const next = object_assign({}, ...attrs);
-		if (prev !== null) {
-			for (const key in prev) {
-				if (!(key in next)) {
-					next[key] = null;
-				}
+		for (const key in prev) {
+			if (!(key in next)) {
+				next[key] = null;
 			}
 		}
 		for (const key in next) {
@@ -2515,7 +2706,7 @@ export function spread_dynamic_element_attributes(node, prev, attrs, css_hash) {
 			/** @type {Element & ElementCSSInlineStyle} */ (node),
 			prev,
 			attrs,
-			node.namespaceURI !== 'http://www.w3.org/2000/svg',
+			node.namespaceURI !== namespace_svg,
 			css_hash
 		);
 	}
@@ -2582,8 +2773,13 @@ const spread_props_handler = {
 			if (typeof p === 'object' && p !== null && key in p) return p[key];
 		}
 	},
-	getOwnPropertyDescriptor() {
-		return { enumerable: true, configurable: true };
+	getOwnPropertyDescriptor(target, key) {
+		let i = target.props.length;
+		while (i--) {
+			let p = target.props[i];
+			if (is_function(p)) p = p();
+			if (typeof p === 'object' && p !== null && key in p) return get_descriptor(p, key);
+		}
 	},
 	has(target, key) {
 		for (let p of target.props) {
@@ -2625,7 +2821,7 @@ export function spread_props(...props) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any> | undefined} Exports
  * @template {Record<string, any>} Events
- * @param {typeof import('../../main/public.js').SvelteComponent<Props, Events>} component
+ * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
  * @param {{
  * 		target: Node;
  * 		props?: Props;
@@ -2639,7 +2835,7 @@ export function spread_props(...props) {
 export function createRoot(component, options) {
 	const props = proxy(/** @type {any} */ (options.props) || {}, false);
 
-	let [accessors, $destroy] = mount(component, { ...options, props });
+	let [accessors, $destroy] = hydrate(component, { ...options, props });
 
 	const result =
 		/** @type {Exports & { $destroy: () => void; $set: (props: Partial<Props>) => void; }} */ ({
@@ -2658,7 +2854,7 @@ export function createRoot(component, options) {
 			/** @param {any} value */
 			set(value) {
 				// @ts-expect-error TS doesn't know key exists on accessor
-				accessors[key] = value;
+				flushSync(() => (accessors[key] = value));
 			},
 			enumerable: true
 		});
@@ -2675,9 +2871,31 @@ export function createRoot(component, options) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any> | undefined} Exports
  * @template {Record<string, any>} Events
- * @param {typeof import('../../main/public.js').SvelteComponent<Props, Events>} component
+ * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
  * @param {{
  * 		target: Node;
+ * 		props?: Props;
+ * 		events?: Events;
+ *  	context?: Map<any, any>;
+ * 		intro?: boolean;
+ * 	}} options
+ * @returns {[Exports, () => void]}
+ */
+export function mount(component, options) {
+	init_operations();
+	const anchor = empty();
+	options.target.appendChild(anchor);
+	return _mount(component, { ...options, anchor });
+}
+
+/**
+ * @template {Record<string, any>} Props
+ * @template {Record<string, any> | undefined} Exports
+ * @template {Record<string, any>} Events
+ * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
+ * @param {{
+ * 		target: Node;
+ * 		anchor: null | Text;
  * 		props?: Props;
  * 		events?: Events;
  *  	context?: Map<any, any>;
@@ -2686,66 +2904,34 @@ export function createRoot(component, options) {
  * 	}} options
  * @returns {[Exports, () => void]}
  */
-export function mount(component, options) {
-	init_operations();
+function _mount(component, options) {
 	const registered_events = new Set();
 	const container = options.target;
 	const block = create_root_block(options.intro || false);
-	const first_child = /** @type {ChildNode} */ (container.firstChild);
-	const hydration_fragment = get_hydration_fragment(first_child);
-	const previous_hydration_fragment = current_hydration_fragment;
 
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously
 	let accessors = undefined;
 
-	try {
-		/** @type {null | Text} */
-		let anchor = null;
-		if (hydration_fragment === null) {
-			anchor = empty();
-			container.appendChild(anchor);
-		}
-		set_current_hydration_fragment(hydration_fragment);
-		const effect = render_effect(
-			() => {
-				if (options.context) {
-					push({});
-					/** @type {import('../client/types.js').ComponentContext} */ (
-						current_component_context
-					).c = options.context;
-				}
-				// @ts-expect-error the public typings are not what the actual function looks like
-				accessors = component(anchor, options.props || {}, options.events || {});
-				if (options.context) {
-					pop();
-				}
-			},
-			block,
-			true
-		);
-		block.e = effect;
-	} catch (error) {
-		if (options.recover !== false && hydration_fragment !== null) {
-			// eslint-disable-next-line no-console
-			console.error(
-				'ERR_SVELTE_HYDRATION_MISMATCH' +
-					(DEV
-						? ': Hydration failed because the initial UI does not match what was rendered on the server.'
-						: ''),
-				error
-			);
-			remove(hydration_fragment);
-			first_child.remove();
-			hydration_fragment.at(-1)?.nextSibling?.remove();
-			return mount(component, options);
-		} else {
-			throw error;
-		}
-	} finally {
-		set_current_hydration_fragment(previous_hydration_fragment);
-	}
+	const effect = render_effect(
+		() => {
+			if (options.context) {
+				push({});
+				/** @type {import('../client/types.js').ComponentContext} */ (current_component_context).c =
+					options.context;
+			}
+			// @ts-expect-error the public typings are not what the actual function looks like
+			accessors = component(options.anchor, options.props || {});
+			if (options.context) {
+				pop();
+			}
+		},
+		block,
+		true
+	);
+	block.e = effect;
 	const bound_event_listener = handle_event_propagation.bind(null, container);
+	const bound_document_event_listener = handle_event_propagation.bind(null, document);
 
 	/** @param {Array<string>} events */
 	const event_handle = (events) => {
@@ -2753,13 +2939,27 @@ export function mount(component, options) {
 			const event_name = events[i];
 			if (!registered_events.has(event_name)) {
 				registered_events.add(event_name);
+				// Add the event listener to both the container and the document.
+				// The container listener ensures we catch events from within in case
+				// the outer content stops propagation of the event.
 				container.addEventListener(
 					event_name,
 					bound_event_listener,
 					PassiveDelegatedEvents.includes(event_name)
 						? {
 								passive: true
-						  }
+							}
+						: undefined
+				);
+				// The document listener ensures we catch events that originate from elements that were
+				// manually moved outside of the container (e.g. via manual portals).
+				document.addEventListener(
+					event_name,
+					bound_document_event_listener,
+					PassiveDelegatedEvents.includes(event_name)
+						? {
+								passive: true
+							}
 						: undefined
 				);
 			}
@@ -2779,12 +2979,69 @@ export function mount(component, options) {
 			if (dom !== null) {
 				remove(dom);
 			}
-			if (hydration_fragment !== null) {
-				remove(hydration_fragment);
-			}
 			destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
 		}
 	];
+}
+
+/**
+ * Hydrates the given component to the given target and returns the accessors of the component and a function to destroy it.
+ *
+ * If you need to interact with the component after hydrating, use `createRoot` instead.
+ *
+ * @template {Record<string, any>} Props
+ * @template {Record<string, any> | undefined} Exports
+ * @template {Record<string, any>} Events
+ * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
+ * @param {{
+ * 		target: Node;
+ * 		props?: Props;
+ * 		events?: Events;
+ *  	context?: Map<any, any>;
+ * 		intro?: boolean;
+ * 		recover?: false;
+ * 	}} options
+ * @returns {[Exports, () => void]}
+ */
+export function hydrate(component, options) {
+	init_operations();
+	const container = options.target;
+	const first_child = /** @type {ChildNode} */ (container.firstChild);
+	// Call with insert_text == true to prevent empty {expressions} resulting in an empty
+	// fragment array, resulting in a hydration error down the line
+	const hydration_fragment = get_hydration_fragment(first_child, true);
+	const previous_hydration_fragment = current_hydration_fragment;
+
+	try {
+		/** @type {null | Text} */
+		let anchor = null;
+		if (hydration_fragment === null) {
+			anchor = empty();
+			container.appendChild(anchor);
+		}
+		set_current_hydration_fragment(hydration_fragment);
+		return _mount(component, { ...options, anchor });
+	} catch (error) {
+		if (options.recover !== false && hydration_fragment !== null) {
+			// eslint-disable-next-line no-console
+			console.error(
+				'ERR_SVELTE_HYDRATION_MISMATCH' +
+					(DEV
+						? ': Hydration failed because the initial UI does not match what was rendered on the server.'
+						: ''),
+				error
+			);
+			remove(hydration_fragment);
+			first_child.remove();
+			hydration_fragment.at(-1)?.nextSibling?.remove();
+			set_current_hydration_fragment(null);
+			return mount(component, options);
+		} else {
+			throw error;
+		}
+	} finally {
+		set_current_hydration_fragment(previous_hydration_fragment);
+	}
 }
 
 /**
@@ -2811,16 +3068,16 @@ export function sanitize_slots(props) {
 /**
  * @param {() => Function} get_snippet
  * @param {Node} node
- * @param {() => any} args
+ * @param {(() => any)[]} args
  * @returns {void}
  */
-export function snippet_effect(get_snippet, node, args) {
+export function snippet_effect(get_snippet, node, ...args) {
 	const block = create_snippet_block();
 	render_effect(() => {
 		// Only rerender when the snippet function itself changes,
 		// not when an eagerly-read prop inside the snippet function changes
 		const snippet = get_snippet();
-		untrack(() => snippet(node, args));
+		untrack(() => snippet(node, ...args));
 		return () => {
 			if (block.d !== null) {
 				remove(block.d);

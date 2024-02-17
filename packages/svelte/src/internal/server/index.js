@@ -1,8 +1,8 @@
 import * as $ from '../client/runtime.js';
-import { set_is_ssr } from '../client/runtime.js';
-import { is_promise } from '../common.js';
+import { is_promise, noop } from '../common.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import { DOMBooleanAttributes } from '../../constants.js';
+import { DEV } from 'esm-env';
 
 export * from '../client/validate.js';
 
@@ -80,6 +80,12 @@ export function assign_payload(p1, p2) {
 }
 
 /**
+ * Array of `onDestroy` callbacks that should be called at the end of the server render function
+ * @type {Function[]}
+ */
+export let on_destroy = [];
+
+/**
  * @param {(...args: any[]) => void} component
  * @param {{ props: Record<string, any>; context?: Map<any, any> }} options
  * @returns {RenderOutput}
@@ -89,7 +95,8 @@ export function render(component, options) {
 	const root_anchor = create_anchor(payload);
 	const root_head_anchor = create_anchor(payload.head);
 
-	set_is_ssr(true);
+	const prev_on_destroy = on_destroy;
+	on_destroy = [];
 	payload.out += root_anchor;
 
 	if (options.context) {
@@ -102,7 +109,8 @@ export function render(component, options) {
 		$.pop();
 	}
 	payload.out += root_anchor;
-	set_is_ssr(false);
+	for (const cleanup of on_destroy) cleanup();
+	on_destroy = prev_on_destroy;
 
 	return {
 		head:
@@ -147,17 +155,6 @@ export function escape(value, is_attr = false) {
 	}
 
 	return escaped + str.substring(last);
-}
-
-/**
- * @template V
- * @param {V} value
- * @returns {string}
- */
-export function escape_text(value) {
-	const escaped = escape(value);
-	// If the value is empty, then ensure we put a space so that it creates a text node on the client
-	return escaped === '' ? ' ' : escaped;
 }
 
 /**
@@ -344,6 +341,10 @@ export function merge_styles(style_attribute, style_directive) {
  * @returns {V}
  */
 export function store_get(store_values, store_name, store) {
+	if (DEV) {
+		validate_store(store, store_name.slice(1));
+	}
+
 	// it could be that someone eagerly updates the store in the instance script, so
 	// we should only reuse the store value in the template
 	if (store_name in store_values && store_values[store_name][0] === store) {
@@ -358,18 +359,6 @@ export function store_get(store_values, store_name, store) {
 	);
 	store_values[store_name][1] = unsub;
 	return store_values[store_name][2];
-}
-
-/**
- * @template V
- * @param {Record<string, [any, any, any]>} store_values
- * @param {string} store_name
- * @param {import('../client/types.js').Store<V> | null | undefined} store
- * @returns {V}
- */
-export function store_get_dev(store_values, store_name, store) {
-	validate_store(store, store_name.slice(1));
-	return store_get(store_values, store_name, store);
 }
 
 /**
@@ -405,6 +394,32 @@ export function store_set(store, value) {
 export function mutate_store(store_values, store_name, store, expression) {
 	store_set(store, store_get(store_values, store_name, store));
 	return expression;
+}
+
+/**
+ * @param {Record<string, [any, any, any]>} store_values
+ * @param {string} store_name
+ * @param {import('../client/types.js').Store<number>} store
+ * @param {1 | -1} [d]
+ * @returns {number}
+ */
+export function update_store(store_values, store_name, store, d = 1) {
+	let store_value = store_get(store_values, store_name, store);
+	store.set(store_value + d);
+	return store_value;
+}
+
+/**
+ * @param {Record<string, [any, any, any]>} store_values
+ * @param {string} store_name
+ * @param {import('../client/types.js').Store<number>} store
+ * @param {1 | -1} [d]
+ * @returns {number}
+ */
+export function update_store_pre(store_values, store_name, store, d = 1) {
+	const value = store_get(store_values, store_name, store) + d;
+	store.set(value);
+	return value;
 }
 
 /** @param {Record<string, [any, any, any]>} store_values */
@@ -497,10 +512,6 @@ export function bind_props(props_parent, props_now) {
 	}
 }
 
-function noop() {
-	// noop
-}
-
 /**
  * @template V
  * @param {Promise<V>} promise
@@ -551,4 +562,13 @@ export function loop_guard(timeout) {
 			throw new Error('Infinite loop detected');
 		}
 	};
+}
+
+/**
+ * @param {any[]} args
+ * @param {Function} [inspect]
+ */
+// eslint-disable-next-line no-console
+export function inspect(args, inspect = console.log) {
+	inspect('init', ...args);
 }

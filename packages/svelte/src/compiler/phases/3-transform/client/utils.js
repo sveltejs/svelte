@@ -1,10 +1,11 @@
 import * as b from '../../../utils/builders.js';
-import { extract_paths, is_simple_expression } from '../../../utils/ast.js';
+import { extract_paths, is_simple_expression, object } from '../../../utils/ast.js';
 import { error } from '../../../errors.js';
 import {
-	PROPS_CALL_DEFAULT_VALUE,
+	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,
-	PROPS_IS_RUNES
+	PROPS_IS_RUNES,
+	PROPS_IS_UPDATED
 } from '../../../../constants.js';
 
 /**
@@ -19,11 +20,11 @@ export function get_assignment_value(node, { state, visit }) {
 		return operator === '='
 			? /** @type {import('estree').Expression} */ (visit(node.right))
 			: // turn something like x += 1 into x = x + 1
-			  b.binary(
+				b.binary(
 					/** @type {import('estree').BinaryOperator} */ (operator.slice(0, -1)),
 					serialize_get_binding(node.left, state),
 					/** @type {import('estree').Expression} */ (visit(node.right))
-			  );
+				);
 	} else if (
 		node.left.type === 'MemberExpression' &&
 		node.left.object.type === 'ThisExpression' &&
@@ -34,14 +35,26 @@ export function get_assignment_value(node, { state, visit }) {
 		return operator === '='
 			? /** @type {import('estree').Expression} */ (visit(node.right))
 			: // turn something like x += 1 into x = x + 1
-			  b.binary(
+				b.binary(
 					/** @type {import('estree').BinaryOperator} */ (operator.slice(0, -1)),
 					/** @type {import('estree').Expression} */ (visit(node.left)),
 					/** @type {import('estree').Expression} */ (visit(node.right))
-			  );
+				);
 	} else {
 		return /** @type {import('estree').Expression} */ (visit(node.right));
 	}
+}
+
+/**
+ * @param {import('#compiler').Binding} binding
+ * @param {import('./types').ClientTransformState} state
+ * @returns {boolean}
+ */
+export function is_state_source(binding, state) {
+	return (
+		(binding.kind === 'state' || binding.kind === 'frozen_state') &&
+		(!state.analysis.immutable || binding.reassigned || state.analysis.accessors)
+	);
 }
 
 /**
@@ -62,7 +75,7 @@ export function serialize_get_binding(node, state) {
 	}
 
 	if (binding.expression) {
-		return binding.expression;
+		return typeof binding.expression === 'function' ? binding.expression(node) : binding.expression;
 	}
 
 	if (binding.kind === 'prop') {
@@ -73,12 +86,18 @@ export function serialize_get_binding(node, state) {
 		}
 
 		if (
-			!state.analysis.accessors &&
-			!(state.analysis.immutable ? binding.reassigned : binding.mutated) &&
-			!binding.initial
+			state.analysis.accessors ||
+			(state.analysis.immutable ? binding.reassigned : binding.mutated) ||
+			binding.initial
 		) {
-			return b.member(b.id('$$props'), node);
+			return b.call(node);
 		}
+
+		if (binding.prop_alias) {
+			const key = b.key(binding.prop_alias);
+			return b.member(b.id('$$props'), key, key.type === 'Literal');
+		}
+		return b.member(b.id('$$props'), node);
 	}
 
 	if (binding.kind === 'legacy_reactive_import') {
@@ -86,10 +105,8 @@ export function serialize_get_binding(node, state) {
 	}
 
 	if (
-		(binding.kind === 'state' &&
-			(!state.analysis.immutable || state.analysis.accessors || binding.reassigned)) ||
+		is_state_source(binding, state) ||
 		binding.kind === 'derived' ||
-		binding.kind === 'prop' ||
 		binding.kind === 'legacy_reactive'
 	) {
 		return b.call('$.get', node);
@@ -99,19 +116,118 @@ export function serialize_get_binding(node, state) {
 }
 
 /**
+ * @param {import('estree').Expression | import('estree').Pattern} expression
+ * @returns {boolean}
+ */
+function is_expression_async(expression) {
+	switch (expression.type) {
+		case 'AwaitExpression': {
+			return true;
+		}
+		case 'ArrayPattern': {
+			return expression.elements.some((element) => element && is_expression_async(element));
+		}
+		case 'ArrayExpression': {
+			return expression.elements.some((element) => {
+				if (!element) {
+					return false;
+				} else if (element.type === 'SpreadElement') {
+					return is_expression_async(element.argument);
+				} else {
+					return is_expression_async(element);
+				}
+			});
+		}
+		case 'AssignmentPattern':
+		case 'AssignmentExpression':
+		case 'BinaryExpression':
+		case 'LogicalExpression': {
+			return is_expression_async(expression.left) || is_expression_async(expression.right);
+		}
+		case 'CallExpression':
+		case 'NewExpression': {
+			return (
+				(expression.callee.type !== 'Super' && is_expression_async(expression.callee)) ||
+				expression.arguments.some((element) => {
+					if (element.type === 'SpreadElement') {
+						return is_expression_async(element.argument);
+					} else {
+						return is_expression_async(element);
+					}
+				})
+			);
+		}
+		case 'ChainExpression': {
+			return is_expression_async(expression.expression);
+		}
+		case 'ConditionalExpression': {
+			return (
+				is_expression_async(expression.test) ||
+				is_expression_async(expression.alternate) ||
+				is_expression_async(expression.consequent)
+			);
+		}
+		case 'ImportExpression': {
+			return is_expression_async(expression.source);
+		}
+		case 'MemberExpression': {
+			return (
+				(expression.object.type !== 'Super' && is_expression_async(expression.object)) ||
+				(expression.property.type !== 'PrivateIdentifier' &&
+					is_expression_async(expression.property))
+			);
+		}
+		case 'ObjectPattern':
+		case 'ObjectExpression': {
+			return expression.properties.some((property) => {
+				if (property.type === 'SpreadElement') {
+					return is_expression_async(property.argument);
+				} else if (property.type === 'Property') {
+					return (
+						(property.key.type !== 'PrivateIdentifier' && is_expression_async(property.key)) ||
+						is_expression_async(property.value)
+					);
+				}
+			});
+		}
+		case 'RestElement': {
+			return is_expression_async(expression.argument);
+		}
+		case 'SequenceExpression':
+		case 'TemplateLiteral': {
+			return expression.expressions.some((subexpression) => is_expression_async(subexpression));
+		}
+		case 'TaggedTemplateExpression': {
+			return is_expression_async(expression.tag) || is_expression_async(expression.quasi);
+		}
+		case 'UnaryExpression':
+		case 'UpdateExpression': {
+			return is_expression_async(expression.argument);
+		}
+		case 'YieldExpression': {
+			return expression.argument ? is_expression_async(expression.argument) : false;
+		}
+		default:
+			return false;
+	}
+}
+
+/**
  * @template {import('./types').ClientTransformState} State
  * @param {import('estree').AssignmentExpression} node
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, State>} context
  * @param {() => any} fallback
+ * @param {{skip_proxy_and_freeze?: boolean}} [options]
  * @returns {import('estree').Expression}
  */
-export function serialize_set_binding(node, context, fallback) {
+export function serialize_set_binding(node, context, fallback, options) {
 	const { state, visit } = context;
 
+	const assignee = node.left;
 	if (
-		node.left.type === 'ArrayPattern' ||
-		node.left.type === 'ObjectPattern' ||
-		node.left.type === 'RestElement'
+		assignee.type === 'ArrayPattern' ||
+		assignee.type === 'ObjectPattern' ||
+		assignee.type === 'RestElement'
 	) {
 		// Turn assignment into an IIFE, so that `$.set` calls etc don't produce invalid code
 		const tmp_id = context.state.scope.generate('tmp');
@@ -122,13 +238,13 @@ export function serialize_set_binding(node, context, fallback) {
 		/** @type {import('estree').Expression[]} */
 		const assignments = [];
 
-		const paths = extract_paths(node.left);
+		const paths = extract_paths(assignee);
 
 		for (const path of paths) {
 			const value = path.expression?.(b.id(tmp_id));
 			const assignment = b.assignment('=', path.node, value);
 			original_assignments.push(assignment);
-			assignments.push(serialize_set_binding(assignment, context, () => assignment));
+			assignments.push(serialize_set_binding(assignment, context, () => assignment, options));
 		}
 
 		if (assignments.every((assignment, i) => assignment === original_assignments[i])) {
@@ -136,41 +252,102 @@ export function serialize_set_binding(node, context, fallback) {
 			return fallback();
 		}
 
-		return b.call(
-			b.thunk(
-				b.block([
-					b.const(tmp_id, /** @type {import('estree').Expression} */ (visit(node.right))),
-					b.stmt(b.sequence(assignments)),
-					// return because it could be used in a nested expression where the value is needed.
-					// example: { foo: ({ bar } = { bar: 1 })}
-					b.return(b.id(tmp_id))
-				])
-			)
+		const rhs_expression = /** @type {import('estree').Expression} */ (visit(node.right));
+
+		const iife_is_async =
+			is_expression_async(rhs_expression) ||
+			assignments.some((assignment) => is_expression_async(assignment));
+
+		const iife = b.arrow(
+			[],
+			b.block([
+				b.const(tmp_id, rhs_expression),
+				b.stmt(b.sequence(assignments)),
+				// return because it could be used in a nested expression where the value is needed.
+				// example: { foo: ({ bar } = { bar: 1 })}
+				b.return(b.id(tmp_id))
+			])
 		);
+
+		if (iife_is_async) {
+			return b.await(b.call(b.async(iife)));
+		} else {
+			return b.call(iife);
+		}
 	}
 
-	if (node.left.type !== 'Identifier' && node.left.type !== 'MemberExpression') {
-		error(node, 'INTERNAL', `Unexpected assignment type ${node.left.type}`);
+	if (assignee.type !== 'Identifier' && assignee.type !== 'MemberExpression') {
+		error(node, 'INTERNAL', `Unexpected assignment type ${assignee.type}`);
 	}
 
-	let left = node.left;
-
-	while (left.type === 'MemberExpression') {
-		if (left.object.type === 'ThisExpression' && left.property.type === 'PrivateIdentifier') {
-			if (context.state.private_state.has(left.property.name) && !state.in_constructor) {
-				const value = get_assignment_value(node, context);
-				return b.call(
-					'$.set',
-					left,
-					context.state.analysis.runes && should_proxy(value) ? b.call('$.proxy', value) : value
-				);
+	// Handle class private/public state assignment cases
+	if (assignee.type === 'MemberExpression') {
+		if (
+			assignee.object.type === 'ThisExpression' &&
+			assignee.property.type === 'PrivateIdentifier'
+		) {
+			const private_state = context.state.private_state.get(assignee.property.name);
+			const value = get_assignment_value(node, context);
+			if (private_state !== undefined) {
+				if (state.in_constructor) {
+					// See if we should wrap value in $.proxy
+					if (
+						context.state.analysis.runes &&
+						!options?.skip_proxy_and_freeze &&
+						should_proxy_or_freeze(value, context.state.scope)
+					) {
+						const assignment = fallback();
+						if (assignment.type === 'AssignmentExpression') {
+							assignment.right =
+								private_state.kind === 'frozen_state'
+									? b.call('$.freeze', value)
+									: b.call('$.proxy', value);
+							return assignment;
+						}
+					}
+				} else {
+					return b.call(
+						'$.set',
+						assignee,
+						context.state.analysis.runes &&
+							!options?.skip_proxy_and_freeze &&
+							should_proxy_or_freeze(value, context.state.scope)
+							? private_state.kind === 'frozen_state'
+								? b.call('$.freeze', value)
+								: b.call('$.proxy', value)
+							: value
+					);
+				}
+			}
+		} else if (
+			assignee.object.type === 'ThisExpression' &&
+			assignee.property.type === 'Identifier' &&
+			state.in_constructor
+		) {
+			const public_state = context.state.public_state.get(assignee.property.name);
+			const value = get_assignment_value(node, context);
+			// See if we should wrap value in $.proxy
+			if (
+				context.state.analysis.runes &&
+				public_state !== undefined &&
+				!options?.skip_proxy_and_freeze &&
+				should_proxy_or_freeze(value, context.state.scope)
+			) {
+				const assignment = fallback();
+				if (assignment.type === 'AssignmentExpression') {
+					assignment.right =
+						public_state.kind === 'frozen_state'
+							? b.call('$.freeze', value)
+							: b.call('$.proxy', value);
+					return assignment;
+				}
 			}
 		}
-		// @ts-expect-error
-		left = left.object;
 	}
 
-	if (left.type !== 'Identifier') {
+	const left = object(assignee);
+
+	if (left === null) {
 		return fallback();
 	}
 
@@ -198,6 +375,7 @@ export function serialize_set_binding(node, context, fallback) {
 
 	if (
 		binding.kind !== 'state' &&
+		binding.kind !== 'frozen_state' &&
 		binding.kind !== 'prop' &&
 		binding.kind !== 'each' &&
 		binding.kind !== 'legacy_reactive' &&
@@ -208,39 +386,99 @@ export function serialize_set_binding(node, context, fallback) {
 	}
 
 	const value = get_assignment_value(node, context);
+
 	const serialize = () => {
 		if (left === node.left) {
-			if (is_store) {
+			if (binding.kind === 'prop') {
+				return b.call(left, value);
+			} else if (is_store) {
 				return b.call('$.store_set', serialize_get_binding(b.id(left_name), state), value);
-			} else {
+			} else if (binding.kind === 'state') {
 				return b.call(
 					'$.set',
 					b.id(left_name),
-					context.state.analysis.runes && should_proxy(value) ? b.call('$.proxy', value) : value
+					context.state.analysis.runes &&
+						!options?.skip_proxy_and_freeze &&
+						should_proxy_or_freeze(value, context.state.scope)
+						? b.call('$.proxy', value)
+						: value
 				);
+			} else if (binding.kind === 'frozen_state') {
+				return b.call(
+					'$.set',
+					b.id(left_name),
+					context.state.analysis.runes &&
+						!options?.skip_proxy_and_freeze &&
+						should_proxy_or_freeze(value, context.state.scope)
+						? b.call('$.freeze', value)
+						: value
+				);
+			} else {
+				return b.call('$.set', b.id(left_name), value);
 			}
 		} else {
 			if (is_store) {
+				// If we are assigning to a store property, we need to ensure we don't
+				// capture the read for the store as part of the member expression to
+				// keep consistency with how store $ shorthand reads work in Svelte 4.
+				/**
+				 *
+				 * @param {import("estree").Expression | import("estree").Pattern} node
+				 * @returns {import("estree").Expression}
+				 */
+				function visit_node(node) {
+					if (node.type === 'MemberExpression') {
+						return {
+							...node,
+							object: visit_node(/** @type {import("estree").Expression} */ (node.object)),
+							property: /** @type {import("estree").Expression} */ (visit(node.property))
+						};
+					}
+					if (node.type === 'Identifier') {
+						const binding = state.scope.get(node.name);
+
+						if (binding !== null && binding.kind === 'store_sub') {
+							return b.call(
+								'$.untrack',
+								b.thunk(/** @type {import('estree').Expression} */ (visit(node)))
+							);
+						}
+					}
+					return /** @type {import("estree").Expression} */ (visit(node));
+				}
+
 				return b.call(
 					'$.mutate_store',
 					serialize_get_binding(b.id(left_name), state),
 					b.assignment(
 						node.operator,
-						/** @type {import('estree').Pattern} */ (visit(node.left)),
+						/** @type {import("estree").Pattern}} */ (visit_node(node.left)),
 						value
 					),
-					b.call('$' + left_name)
+					b.call('$.untrack', b.id('$' + left_name))
 				);
 			} else if (!state.analysis.runes) {
-				return b.call(
-					'$.mutate',
-					b.id(left_name),
-					b.assignment(
-						node.operator,
-						/** @type {import('estree').Pattern} */ (visit(node.left)),
-						value
-					)
-				);
+				if (binding.kind === 'prop') {
+					return b.call(
+						left,
+						b.assignment(
+							node.operator,
+							/** @type {import('estree').Pattern} */ (visit(node.left)),
+							value
+						),
+						b.literal(true)
+					);
+				} else {
+					return b.call(
+						'$.mutate',
+						b.id(left_name),
+						b.assignment(
+							node.operator,
+							/** @type {import('estree').Pattern} */ (visit(node.left)),
+							value
+						)
+					);
+				}
 			} else {
 				return b.assignment(
 					node.operator,
@@ -299,6 +537,7 @@ function get_hoistable_params(node, context) {
 
 	/** @type {import('estree').Pattern[]} */
 	const params = [];
+	let added_props = false;
 
 	for (const [reference] of scope.references) {
 		const binding = scope.get(reference);
@@ -308,6 +547,29 @@ function get_hoistable_params(node, context) {
 				// We need both the subscription for getting the value and the store for updating
 				params.push(b.id(binding.node.name.slice(1)));
 				params.push(b.id(binding.node.name));
+			} else if (
+				// If it's a destructured derived binding, then we can extract the derived signal reference and use that.
+				binding.expression !== null &&
+				typeof binding.expression !== 'function' &&
+				binding.expression.type === 'MemberExpression' &&
+				binding.expression.object.type === 'CallExpression' &&
+				binding.expression.object.callee.type === 'Identifier' &&
+				binding.expression.object.callee.name === '$.get' &&
+				binding.expression.object.arguments[0].type === 'Identifier'
+			) {
+				params.push(b.id(binding.expression.object.arguments[0].name));
+			} else if (
+				// If we are referencing a simple $$props value, then we need to reference the object property instead
+				binding.kind === 'prop' &&
+				!binding.reassigned &&
+				binding.initial === null &&
+				!context.state.analysis.accessors
+			) {
+				// Handle $$props.something use-cases
+				if (!added_props) {
+					added_props = true;
+					params.push(b.id('$$props'));
+				}
 			} else {
 				// create a copy to remove start/end tags which would mess up source maps
 				params.push(b.id(binding.node.name));
@@ -345,12 +607,13 @@ export function serialize_hoistable_params(node, context) {
 }
 
 /**
+ * @param {import('#compiler').Binding} binding
  * @param {import('./types').ComponentClientTransformState} state
  * @param {string} name
  * @param {import('estree').Expression | null} [initial]
  * @returns
  */
-export function get_prop_source(state, name, initial) {
+export function get_prop_source(binding, state, name, initial) {
 	/** @type {import('estree').Expression[]} */
 	const args = [b.id('$$props'), b.literal(name)];
 
@@ -362,6 +625,13 @@ export function get_prop_source(state, name, initial) {
 
 	if (state.analysis.runes) {
 		flags |= PROPS_IS_RUNES;
+	}
+
+	if (
+		state.analysis.accessors ||
+		(state.analysis.immutable ? binding.reassigned : binding.mutated)
+	) {
+		flags |= PROPS_IS_UPDATED;
 	}
 
 	/** @type {import('estree').Expression | undefined} */
@@ -382,7 +652,7 @@ export function get_prop_source(state, name, initial) {
 				arg = b.thunk(initial);
 			}
 
-			flags |= PROPS_CALL_DEFAULT_VALUE;
+			flags |= PROPS_IS_LAZY_INITIAL;
 		}
 	}
 
@@ -391,47 +661,54 @@ export function get_prop_source(state, name, initial) {
 		if (arg) args.push(arg);
 	}
 
-	return b.call('$.prop_source', ...args);
+	return b.call('$.prop', ...args);
 }
 
 /**
- * Creates the output for a state declaration.
- * @param {import('estree').VariableDeclarator} declarator
- * @param {import('../../scope').Scope} scope
- * @param {import('estree').Expression} value
+ * @param {import('estree').Expression} node
+ * @param {import("../../scope.js").Scope | null} scope
  */
-export function create_state_declarators(declarator, scope, value) {
-	// in the simple `let count = $state(0)` case, we rewrite `$state` as `$.source`
-	if (declarator.id.type === 'Identifier') {
-		return [b.declarator(declarator.id, b.call('$.mutable_source', value))];
-	}
-
-	const tmp = scope.generate('tmp');
-	const paths = extract_paths(declarator.id);
-	return [
-		b.declarator(b.id(tmp), value), // TODO inject declarator for opts, so we can use it below
-		...paths.map((path) => {
-			const value = path.expression?.(b.id(tmp));
-			const binding = scope.get(/** @type {import('estree').Identifier} */ (path.node).name);
-			return b.declarator(
-				path.node,
-				binding?.kind === 'state' ? b.call('$.mutable_source', value) : value
-			);
-		})
-	];
-}
-
-/** @param {import('estree').Expression} node */
-export function should_proxy(node) {
+export function should_proxy_or_freeze(node, scope) {
 	if (
 		!node ||
 		node.type === 'Literal' ||
+		node.type === 'TemplateLiteral' ||
 		node.type === 'ArrowFunctionExpression' ||
 		node.type === 'FunctionExpression' ||
+		node.type === 'UnaryExpression' ||
+		node.type === 'BinaryExpression' ||
 		(node.type === 'Identifier' && node.name === 'undefined')
 	) {
 		return false;
 	}
-
+	if (node.type === 'Identifier' && scope !== null) {
+		const binding = scope.get(node.name);
+		// Let's see if the reference is something that can be proxied or frozen
+		if (
+			binding !== null &&
+			!binding.reassigned &&
+			binding.initial !== null &&
+			binding.initial.type !== 'FunctionDeclaration' &&
+			binding.initial.type !== 'ClassDeclaration' &&
+			binding.initial.type !== 'ImportDeclaration' &&
+			binding.initial.type !== 'EachBlock'
+		) {
+			return should_proxy_or_freeze(binding.initial, null);
+		}
+	}
 	return true;
+}
+
+/**
+ * Port over the location information from the source to the target identifier.
+ * but keep the target as-is (i.e. a new id is created).
+ * This ensures esrap can generate accurate source maps.
+ * @param {import('estree').Identifier} target
+ * @param {import('estree').Identifier} source
+ */
+export function with_loc(target, source) {
+	if (source.loc) {
+		return { ...target, loc: source.loc };
+	}
+	return target;
 }

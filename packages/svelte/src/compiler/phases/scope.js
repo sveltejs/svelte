@@ -3,7 +3,7 @@ import { walk } from 'zimmerframe';
 import { is_element_node } from './nodes.js';
 import * as b from '../utils/builders.js';
 import { error } from '../errors.js';
-import { extract_identifiers, extract_identifiers_from_expression } from '../utils/ast.js';
+import { extract_identifiers, extract_identifiers_from_destructuring } from '../utils/ast.js';
 import { JsKeywords, Runes } from './constants.js';
 
 export class Scope {
@@ -65,7 +65,7 @@ export class Scope {
 	 * @param {import('estree').Identifier} node
 	 * @param {import('#compiler').Binding['kind']} kind
 	 * @param {import('#compiler').DeclarationKind} declaration_kind
-	 * @param {null | import('estree').Expression | import('estree').FunctionDeclaration | import('estree').ClassDeclaration | import('estree').ImportDeclaration} initial
+	 * @param {null | import('estree').Expression | import('estree').FunctionDeclaration | import('estree').ClassDeclaration | import('estree').ImportDeclaration | import('../types/template.js').EachBlock} initial
 	 * @returns {import('#compiler').Binding}
 	 */
 	declare(node, kind, declaration_kind, initial = null) {
@@ -185,6 +185,7 @@ export class Scope {
 	reference(node, path) {
 		path = [...path]; // ensure that mutations to path afterwards don't affect this reference
 		let references = this.references.get(node.name);
+
 		if (!references) this.references.set(node.name, (references = []));
 
 		references.push({ node, path });
@@ -282,7 +283,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 * @type {import('zimmerframe').Visitor<import('#compiler').ElementLike, State, import('#compiler').SvelteNode>}
 	 */
 	const SvelteFragment = (node, { state, next }) => {
-		const scope = analyze_let_directives(node, state.scope);
+		const [scope] = analyze_let_directives(node, state.scope);
 		scopes.set(node, scope);
 		next({ scope });
 	};
@@ -293,37 +294,48 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 */
 	function analyze_let_directives(node, parent) {
 		const scope = parent.child();
+		let is_default_slot = true;
 
 		for (const attribute of node.attributes) {
-			if (attribute.type !== 'LetDirective') continue;
+			if (attribute.type === 'LetDirective') {
+				/** @type {import('#compiler').Binding[]} */
+				const bindings = [];
+				scope.declarators.set(attribute, bindings);
 
-			/** @type {import('#compiler').Binding[]} */
-			const bindings = [];
-			scope.declarators.set(attribute, bindings);
+				// attach the scope to the directive itself, as well as the
+				// contents to which it applies
+				scopes.set(attribute, scope);
 
-			// attach the scope to the directive itself, as well as the
-			// contents to which it applies
-			scopes.set(attribute, scope);
-
-			if (attribute.expression) {
-				for (const id of extract_identifiers_from_expression(attribute.expression)) {
+				if (attribute.expression) {
+					for (const id of extract_identifiers_from_destructuring(attribute.expression)) {
+						const binding = scope.declare(id, 'derived', 'const');
+						bindings.push(binding);
+					}
+				} else {
+					/** @type {import('estree').Identifier} */
+					const id = {
+						name: attribute.name,
+						type: 'Identifier',
+						start: attribute.start,
+						end: attribute.end
+					};
 					const binding = scope.declare(id, 'derived', 'const');
 					bindings.push(binding);
 				}
-			} else {
-				/** @type {import('estree').Identifier} */
-				const id = {
-					name: attribute.name,
-					type: 'Identifier',
-					start: attribute.start,
-					end: attribute.end
-				};
-				const binding = scope.declare(id, 'derived', 'const');
-				bindings.push(binding);
+			} else if (attribute.type === 'Attribute' && attribute.name === 'slot') {
+				is_default_slot = false;
 			}
 		}
-		return scope;
+
+		return /** @type {const} */ ([scope, is_default_slot]);
 	}
+
+	/**
+	 * @type {import('zimmerframe').Visitor<import('#compiler').Directive, State, import('#compiler').SvelteNode>}
+	 */
+	const SvelteDirective = (node, context) => {
+		context.state.scope.reference(b.id(node.name), context.path);
+	};
 
 	walk(ast, state, {
 		// references
@@ -357,19 +369,24 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		SvelteFragment,
+		SlotElement: SvelteFragment,
 		SvelteElement: SvelteFragment,
 		RegularElement: SvelteFragment,
 
 		Component(node, { state, visit, path }) {
 			state.scope.reference(b.id(node.name), path);
 
-			// let:x from the default slot is a weird one:
-			// Its scope only applies to children that are not slots themselves.
 			for (const attribute of node.attributes) {
 				visit(attribute);
 			}
 
-			const scope = analyze_let_directives(node, state.scope);
+			// let:x is super weird:
+			// - for the default slot, its scope only applies to children that are not slots themselves
+			// - for named slots, its scope applies to the component itself, too
+			const [scope, is_default_slot] = analyze_let_directives(node, state.scope);
+			if (!is_default_slot) {
+				scopes.set(node, scope);
+			}
 
 			for (const child of node.fragment.nodes) {
 				if (
@@ -523,7 +540,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				const is_keyed =
 					node.key &&
 					(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index);
-				scope.declare(b.id(node.index), is_keyed ? 'derived' : 'normal', 'const');
+				scope.declare(b.id(node.index), is_keyed ? 'derived' : 'normal', 'const', node);
 			}
 			if (node.key) visit(node.key, { scope });
 
@@ -547,7 +564,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				contains_group_binding: false,
 				array_name: needs_array_deduplication ? state.scope.root.unique('$$array') : null,
 				index: scope.root.unique('$$index'),
-				item_name: node.context.type === 'Identifier' ? node.context.name : '$$item',
+				item: node.context.type === 'Identifier' ? node.context : b.id('$$item'),
+				declarations: scope.declarations,
 				references: [...references_within]
 					.map((id) => /** @type {import('#compiler').Binding} */ (state.scope.get(id.name)))
 					.filter(Boolean),
@@ -592,8 +610,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			const child_scope = state.scope.child();
 			scopes.set(node, child_scope);
 
-			if (node.context) {
-				for (const id of extract_identifiers(node.context)) {
+			for (const param of node.parameters) {
+				for (const id of extract_identifiers(param)) {
 					child_scope.declare(id, 'each', 'let');
 				}
 			}
@@ -615,7 +633,11 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				)
 			]);
 			context.next();
-		}
+		},
+
+		TransitionDirective: SvelteDirective,
+		AnimateDirective: SvelteDirective,
+		UseDirective: SvelteDirective
 
 		// TODO others
 	});
@@ -680,7 +702,7 @@ export function set_scope(scopes) {
 
 /**
  * Returns the name of the rune if the given expression is a `CallExpression` using a rune.
- * @param {import('estree').Node | null | undefined} node
+ * @param {import('estree').Node | import('../types/template.js').EachBlock | null | undefined} node
  * @param {Scope} scope
  * @returns {Runes[number] | null}
  */
@@ -699,13 +721,20 @@ export function get_rune(node, scope) {
 		n = n.object;
 	}
 
+	if (n.type === 'CallExpression' && n.callee.type === 'Identifier') {
+		joined = '()' + joined;
+		n = n.callee;
+	}
+
 	if (n.type !== 'Identifier') return null;
 
 	joined = n.name + joined;
+
+	if (joined === '$derived.call') error(node, 'invalid-derived-call');
 	if (!Runes.includes(/** @type {any} */ (joined))) return null;
 
 	const binding = scope.get(n.name);
 	if (binding !== null) return null; // rune name, but references a variable or store
 
-	return /** @type {Runes[number] | null} */ (joined);
+	return /** @type {typeof Runes[number] | null} */ (joined);
 }

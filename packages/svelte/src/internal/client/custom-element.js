@@ -89,7 +89,7 @@ if (typeof HTMLElement === 'function') {
 			if (!this.$$c) {
 				// We wait one tick to let possible child slot elements be created/mounted
 				await Promise.resolve();
-				if (!this.$$cn) {
+				if (!this.$$cn || this.$$c) {
 					return;
 				}
 				/** @param {string} name */

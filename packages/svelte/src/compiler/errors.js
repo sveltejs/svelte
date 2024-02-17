@@ -78,7 +78,7 @@ const parse = {
 	 * @param {string} reason
 	 */
 	'invalid-closing-tag-after-autoclose': (name, reason) =>
-		`</${name}> attempted to close element that was already automatically closed by <${reason}>`,
+		`</${name}> attempted to close element that was already automatically closed by <${reason}> (cannot nest <${reason}> inside <${name}>)`,
 	'invalid-dollar-binding': () =>
 		`The $ name is reserved, and cannot be used for variables and imports`,
 	'invalid-dollar-prefix': () =>
@@ -88,7 +88,12 @@ const parse = {
 	'illegal-subscription': () => `Cannot reference store value inside <script context="module">`,
 	'duplicate-style-element': () => `A component can have a single top-level <style> element`,
 	'duplicate-script-element': () =>
-		`A component can have a single top-level <script> element and/or a single top-level <script context="module"> element`
+		`A component can have a single top-level <script> element and/or a single top-level <script context="module"> element`,
+	'invalid-render-expression': () => 'expected an identifier followed by (...)',
+	'invalid-render-arguments': () => 'expected at most one argument',
+	'invalid-render-spread-argument': () => 'cannot use spread arguments in {@render ...} tags',
+	'invalid-snippet-rest-parameter': () =>
+		'snippets do not support rest parameters; use an array instead'
 };
 
 /** @satisfies {Errors} */
@@ -100,7 +105,7 @@ const css = {
 		`:global(...) can be at the start or end of a selector sequence, but not in the middle`,
 	'invalid-css-global-selector': () => `:global(...) must contain exactly one selector`,
 	'invalid-css-global-selector-list': () =>
-		`:global(...) cannot be used to modify a selector, or be modified by another selector`,
+		`:global(...) must not contain type or universal selectors when used in a compound selector`,
 	'invalid-css-selector': () => `Invalid selector`,
 	'invalid-css-identifier': () => 'Expected a valid CSS identifier'
 };
@@ -164,17 +169,20 @@ const runes = {
 	'invalid-legacy-export': () => `Cannot use \`export let\` in runes mode — use $props instead`,
 	/** @param {string} rune */
 	'invalid-rune-usage': (rune) => `Cannot use ${rune} rune in non-runes mode`,
-	'invalid-state-export': () => `Cannot export state if it is reassigned`,
-	'invalid-derived-export': () => `Cannot export derived state`,
+	'invalid-state-export': () =>
+		`Cannot export state if it is reassigned. Either export a function returning the state value or only mutate the state value's properties`,
+	'invalid-derived-export': () =>
+		`Cannot export derived state. To expose the current derived value, export a function returning its value`,
+	'invalid-prop-export': () =>
+		`Cannot export properties. To expose the current value of a property, export a function returning its value`,
 	'invalid-props-id': () => `$props() can only be used with an object destructuring pattern`,
 	'invalid-props-pattern': () =>
 		`$props() assignment must not contain nested properties or computed keys`,
 	'invalid-props-location': () =>
 		`$props() can only be used at the top level of components as a variable declaration initializer`,
-	'invalid-derived-location': () =>
-		`$derived() can only be used as a variable declaration initializer or a class field`,
-	'invalid-state-location': () =>
-		`$state() can only be used as a variable declaration initializer or a class field`,
+	/** @param {string} rune */
+	'invalid-state-location': (rune) =>
+		`${rune}(...) can only be used as a variable declaration initializer or a class field`,
 	'invalid-effect-location': () => `$effect() can only be used as an expression statement`,
 	/**
 	 * @param {boolean} is_binding
@@ -190,13 +198,18 @@ const runes = {
 	'invalid-derived-binding': () => `Invalid binding to derived state`,
 	/**
 	 * @param {string} rune
-	 * @param {number[]} args
+	 * @param {Array<number | string>} args
 	 */
 	'invalid-rune-args-length': (rune, args) =>
 		`${rune} can only be called with ${list(args, 'or')} ${
 			args.length === 1 && args[0] === 1 ? 'argument' : 'arguments'
 		}`,
-	'duplicate-props-rune': () => `Cannot use $props() more than once`
+	/** @param {string} name */
+	'invalid-runes-mode-import': (name) => `${name} cannot be used in runes mode`,
+	'duplicate-props-rune': () => `Cannot use $props() more than once`,
+	'invalid-each-assignment': () =>
+		`Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. 'array[i] = value' instead of 'entry = value')`,
+	'invalid-derived-call': () => `$derived.call(...) has been replaced with $derived.by(...)`
 };
 
 /** @satisfies {Errors} */
@@ -234,8 +247,8 @@ const attributes = {
 		type === 'no-each'
 			? `An element that uses the animate directive must be the immediate child of a keyed each block`
 			: type === 'each-key'
-			? `An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?`
-			: `An element that uses the animate directive must be the sole child of a keyed each block`,
+				? `An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?`
+				: `An element that uses the animate directive must be the sole child of a keyed each block`,
 	'duplicate-animation': () => `An element can only have one 'animate' directive`,
 	/** @param {string[] | undefined} [modifiers] */
 	'invalid-event-modifier': (modifiers) =>
@@ -262,14 +275,15 @@ const attributes = {
 			? `An element can only have one '${directive1}' directive`
 			: `An element cannot have both ${describe(directive1)} directive and ${describe(
 					directive2
-			  )} directive`;
+				)} directive`;
 	},
 	'invalid-let-directive-placement': () => 'let directive at invalid position'
 };
 
 /** @satisfies {Errors} */
 const slots = {
-	'invalid-slot-element-attribute': () => `<slot> can only receive attributes, not directives`,
+	'invalid-slot-element-attribute': () =>
+		`<slot> can only receive attributes and (optionally) let directives`,
 	'invalid-slot-attribute': () => `slot attribute must be a static value`,
 	/** @param {boolean} is_default */
 	'invalid-slot-name': (is_default) =>
@@ -333,7 +347,7 @@ const compiler_options = {
 /** @satisfies {Errors} */
 const const_tag = {
 	'invalid-const-placement': () =>
-		`{@const} must be the immediate child of {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>`
+		`{@const} must be the immediate child of {#snippet}, {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>`
 };
 
 /** @satisfies {Errors} */
@@ -435,10 +449,6 @@ const errors = {
 	// 	code: 'illegal-declaration',
 	// 	message: 'The $ prefix is reserved, and cannot be used for variable and import names'
 	// },
-	// illegal_subscription: {
-	// 	code: 'illegal-subscription',
-	// 	message: 'Cannot reference store value inside <script context="module">'
-	// },
 	// illegal_global: /** @param {string} name */ (name) => ({
 	// 	code: 'illegal-global',
 	// 	message: `${name} is an illegal variable name`
@@ -447,19 +457,6 @@ const errors = {
 	// 	code: 'illegal-variable-declaration',
 	// 	message: 'Cannot declare same variable name which is imported inside <script context="module">'
 	// },
-	// css_invalid_global_selector: {
-	// 	code: 'css-invalid-global-selector',
-	// 	message: ':global(...) must contain a single selector'
-	// },
-	// css_invalid_global_selector_position: {
-	// 	code: 'css-invalid-global-selector-position',
-	// 	message:
-	// 		':global(...) not at the start of a selector sequence should not contain type or universal selectors'
-	// },
-	// css_invalid_selector: /** @param {string} selector */ (selector) => ({
-	// 	code: 'css-invalid-selector',
-	// 	message: `Invalid selector "${selector}"`
-	// }),
 	// invalid_directive_value: {
 	// 	code: 'invalid-directive-value',
 	// 	message:
@@ -526,7 +523,7 @@ export class CompileError extends Error {
 }
 
 /**
- * @template {keyof typeof errors} T
+ * @template {Exclude<keyof typeof errors, 'TODO'>} T
  * @param {NodeLike | number | null} node
  * @param {T} code
  * @param  {Parameters<typeof errors[T]>} args

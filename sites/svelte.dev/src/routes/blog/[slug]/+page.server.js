@@ -6,7 +6,7 @@ export const prerender = true;
 export async function load({ params }) {
 	const post = await get_processed_blog_post(await get_blog_data(), params.slug);
 
-	if (!post) throw error(404);
+	if (!post) error(404);
 
 	// forgive me — terrible hack necessary to get diffs looking sensible
 	// on the `runes` blog post

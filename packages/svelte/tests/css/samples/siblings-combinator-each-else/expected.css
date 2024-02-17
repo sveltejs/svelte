@@ -1,7 +1,7 @@
-	.a.svelte-xyz + .b.svelte-xyz { color: green; }
-	.a.svelte-xyz + .c.svelte-xyz { color: green; }
-	.b.svelte-xyz + .d.svelte-xyz { color: green; }
-	.c.svelte-xyz + .d.svelte-xyz { color: green; }
+	.a.svelte-xyz + .b:where(.svelte-xyz) { color: green; }
+	.a.svelte-xyz + .c:where(.svelte-xyz) { color: green; }
+	.b.svelte-xyz + .d:where(.svelte-xyz) { color: green; }
+	.c.svelte-xyz + .d:where(.svelte-xyz) { color: green; }
 
 	/* no match */
 	/* (unused) .a + .d { color: green; }*/
