@@ -69,7 +69,7 @@ import {
 } from './utils.js';
 import { is_promise } from '../common.js';
 import { bind_transition, trigger_transitions } from './transitions.js';
-import { proxy } from './proxy.js';
+import { STATE_SYMBOL, proxy } from './proxy.js';
 
 /** @type {Set<string>} */
 const all_registerd_events = new Set();
@@ -1296,15 +1296,28 @@ export function bind_prop(props, prop, value) {
 }
 
 /**
+ * @param {unknown} value
+ */
+function is_state_object(value) {
+	return value != null && typeof value === 'object' && STATE_SYMBOL in value;
+}
+
+/**
  * @param {Element} element_or_component
  * @param {(value: unknown) => void} update
  * @param {import('./types.js').MaybeSignal} binding
  * @returns {void}
  */
 export function bind_this(element_or_component, update, binding) {
-	untrack(() => {
-		update(element_or_component);
-		render_effect(() => () => {
+	render_effect(() => {
+		// If we are reading from a proxied state binding, then we don't need to untrack
+		// the update function as it will be fine-grain.
+		if (is_state_object(binding) || (is_signal(binding) && is_state_object(binding.v))) {
+			update(element_or_component);
+		} else {
+			untrack(() => update(element_or_component));
+		}
+		return () => {
 			// Defer to the next tick so that all updates can be reconciled first.
 			// This solves the case where one variable is shared across multiple this-bindings.
 			render_effect(() => {
@@ -1314,7 +1327,7 @@ export function bind_this(element_or_component, update, binding) {
 					}
 				});
 			});
-		});
+		};
 	});
 }
 
