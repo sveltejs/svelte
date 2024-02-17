@@ -353,6 +353,19 @@ declare module 'svelte' {
 		events?: Events | undefined;
 		context?: Map<any, any> | undefined;
 		intro?: boolean | undefined;
+	}): [Exports, () => void];
+	/**
+	 * Hydrates the given component to the given target and returns the accessors of the component and a function to destroy it.
+	 *
+	 * If you need to interact with the component after hydrating, use `createRoot` instead.
+	 *
+	 * */
+	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any> | undefined, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
+		target: Node;
+		props?: Props | undefined;
+		events?: Events | undefined;
+		context?: Map<any, any> | undefined;
+		intro?: boolean | undefined;
 		recover?: false | undefined;
 	}): [Exports, () => void];
 	/**
