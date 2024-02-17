@@ -2,6 +2,7 @@ import * as $ from '../client/runtime.js';
 import { is_promise, noop } from '../common.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import { DOMBooleanAttributes } from '../../constants.js';
+import { DEV } from 'esm-env';
 
 export * from '../client/validate.js';
 
@@ -340,6 +341,10 @@ export function merge_styles(style_attribute, style_directive) {
  * @returns {V}
  */
 export function store_get(store_values, store_name, store) {
+	if (DEV) {
+		validate_store(store, store_name.slice(1));
+	}
+
 	// it could be that someone eagerly updates the store in the instance script, so
 	// we should only reuse the store value in the template
 	if (store_name in store_values && store_values[store_name][0] === store) {
@@ -354,18 +359,6 @@ export function store_get(store_values, store_name, store) {
 	);
 	store_values[store_name][1] = unsub;
 	return store_values[store_name][2];
-}
-
-/**
- * @template V
- * @param {Record<string, [any, any, any]>} store_values
- * @param {string} store_name
- * @param {import('../client/types.js').Store<V> | null | undefined} store
- * @returns {V}
- */
-export function store_get_dev(store_values, store_name, store) {
-	validate_store(store, store_name.slice(1));
-	return store_get(store_values, store_name, store);
 }
 
 /**
