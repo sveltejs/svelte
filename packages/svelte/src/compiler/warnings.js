@@ -12,7 +12,10 @@ const css = {
 
 /** @satisfies {Warnings} */
 const attributes = {
-	'avoid-is': () => 'The "is" attribute is not supported cross-browser and should be avoided'
+	'avoid-is': () => 'The "is" attribute is not supported cross-browser and should be avoided',
+	/** @param {string} name */
+	'global-event-reference': (name) =>
+		`You are referencing globalThis.${name}. Did you forget to declare a variable with that name?`
 };
 
 /** @satisfies {Warnings} */
