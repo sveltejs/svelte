@@ -972,7 +972,11 @@ function serialize_inline_component(node, component_name, context) {
 		const assignment = b.assignment('=', bind_this, b.id('$$value'));
 		const bind_this_id = /** @type {import('estree').Expression} */ (
 			// if expression is not an identifier, we know it can't be a signal
-			bind_this.type === 'Identifier' ? bind_this : undefined
+			bind_this.type === 'Identifier'
+				? bind_this
+				: bind_this.type === 'MemberExpression' && bind_this.object.type === 'Identifier'
+					? bind_this.object
+					: undefined
 		);
 		fn = (node_id) =>
 			b.call(
@@ -2742,7 +2746,11 @@ export const template_visitors = {
 						setter,
 						/** @type {import('estree').Expression} */ (
 							// if expression is not an identifier, we know it can't be a signal
-							expression.type === 'Identifier' ? expression : undefined
+							expression.type === 'Identifier'
+								? expression
+								: expression.type === 'MemberExpression' && expression.object.type === 'Identifier'
+									? expression.object
+									: undefined
 						)
 					);
 					break;
