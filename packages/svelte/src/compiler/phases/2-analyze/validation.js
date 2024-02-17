@@ -74,21 +74,21 @@ function validate_element(node, context) {
 			if (attribute.name.startsWith('on') && attribute.name.length > 2) {
 				if (!is_expression_attribute(attribute)) {
 					error(attribute, 'invalid-event-attribute-value');
-				} else {
-					const value = attribute.value[0].expression;
-					if (
-						value.type === 'Identifier' &&
-						value.name === attribute.name &&
-						!context.state.scope.get(value.name)
-					) {
-						warn(
-							context.state.analysis.warnings,
-							attribute,
-							context.path,
-							'global-event-reference',
-							attribute.name
-						);
-					}
+				}
+
+				const value = attribute.value[0].expression;
+				if (
+					value.type === 'Identifier' &&
+					value.name === attribute.name &&
+					!context.state.scope.get(value.name)
+				) {
+					warn(
+						context.state.analysis.warnings,
+						attribute,
+						context.path,
+						'global-event-reference',
+						attribute.name
+					);
 				}
 			}
 
