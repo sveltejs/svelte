@@ -76,12 +76,13 @@ async function for_each_dir<Test extends BaseTest>(
 	let created_test = false;
 
 	for (const dir of fs.readdirSync(`${cwd}/${samples_dir}`)) {
-		if (dir[0] === '.') continue;
+		if (dir[0] === '.' || !filter.test(dir)) continue;
+
+		// skip directories that don't have any files without _ prefix — these
+		// are leftover from a different branch, and will cause annoying errors
+		if (!fs.readdirSync(`${cwd}/${samples_dir}/${dir}`).some((file) => file[0] !== '_')) continue;
 
 		const file = `${cwd}/${samples_dir}/${dir}/_config.js`;
-		if (!filter.test(dir)) {
-			continue;
-		}
 
 		created_test = true;
 		const config = (fs.existsSync(file) ? (await import(file)).default : {}) as Test;
