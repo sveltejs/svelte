@@ -966,9 +966,6 @@ export const validation_runes = merge(validation, a11y_validators, {
 		if (state.analysis.instance.scope !== state.scope) return;
 		error(node, 'invalid-legacy-export');
 	},
-	ExportSpecifier(node, { state }) {
-		validate_export(node, state.scope, node.local.name);
-	},
 	CallExpression(node, { state, path }) {
 		validate_call_expression(node, state.scope, path);
 	},
