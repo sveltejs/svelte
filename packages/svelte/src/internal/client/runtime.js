@@ -749,9 +749,22 @@ export function flush_local_pre_effects(context) {
  * @returns {void}
  */
 export function flushSync(fn) {
+	flush_sync(fn);
+}
+
+/**
+ * Internal version of `flushSync` with the option to not flush previous effects.
+ * Returns the result of the passed function, if given.
+ * @param {() => any} [fn]
+ * @param {boolean} [flush_previous]
+ * @returns {any}
+ */
+export function flush_sync(fn, flush_previous = true) {
 	const previous_scheduler_mode = current_scheduler_mode;
 	const previous_queued_pre_and_render_effects = current_queued_pre_and_render_effects;
 	const previous_queued_effects = current_queued_effects;
+	let result;
+
 	try {
 		infinite_loop_guard();
 		/** @type {import('./types.js').EffectSignal[]} */
@@ -762,10 +775,12 @@ export function flushSync(fn) {
 		current_scheduler_mode = FLUSH_SYNC;
 		current_queued_pre_and_render_effects = pre_and_render_effects;
 		current_queued_effects = effects;
-		flush_queued_effects(previous_queued_pre_and_render_effects);
-		flush_queued_effects(previous_queued_effects);
+		if (flush_previous) {
+			flush_queued_effects(previous_queued_pre_and_render_effects);
+			flush_queued_effects(previous_queued_effects);
+		}
 		if (fn !== undefined) {
-			fn();
+			result = fn();
 		}
 		if (current_queued_pre_and_render_effects.length > 0 || effects.length > 0) {
 			flushSync();
@@ -782,6 +797,8 @@ export function flushSync(fn) {
 		current_queued_pre_and_render_effects = previous_queued_pre_and_render_effects;
 		current_queued_effects = previous_queued_effects;
 	}
+
+	return result;
 }
 
 /**

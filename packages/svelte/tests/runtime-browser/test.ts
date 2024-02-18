@@ -67,6 +67,10 @@ async function run_test(
 	const build_result = await build({
 		entryPoints: [`${__dirname}/driver.js`],
 		write: false,
+		define: {
+			__HYDRATE__: String(hydrate),
+			__CE_TEST__: String(test_dir.includes('custom-elements-samples'))
+		},
 		alias: {
 			__MAIN_DOT_SVELTE__: path.resolve(test_dir, 'main.svelte'),
 			__CONFIG__: path.resolve(test_dir, '_config.js'),

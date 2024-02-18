@@ -1,5 +1,6 @@
 <script>
-import { onMount, onDestroy, tick, createRoot } from 'svelte';
+import { onMount, onDestroy, tick } from 'svelte';
+import { createClassComponent } from 'svelte/legacy'
 
 export let component;
 
@@ -14,7 +15,8 @@ function mountComponent(doc) {
   if (content) content.$destroy();
   if (doc && component) {
     const { component, ...props } = $$props;
-    content = createRoot(component, { target: doc.body, props });
+    // When this test is migrated to runes, use mount/unmount and $state for updating props instead
+    content = createClassComponent({ component, target: doc.body, props });
   }
 }
 

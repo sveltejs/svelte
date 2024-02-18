@@ -84,6 +84,7 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 		const component = createClassComponent({
 			component: (await import(`${cwd}/_output/client/main.svelte.js`)).default,
 			target,
+			hydrate: true,
 			props: config.props
 		});
 

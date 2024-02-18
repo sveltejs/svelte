@@ -235,10 +235,11 @@ function init_update_callbacks(context) {
 // (except probably untrack — do we want to expose that, if there's also a rune?)
 export {
 	flushSync,
-	createRoot,
 	mount,
 	hydrate,
 	tick,
+	unmount,
 	untrack,
-	unstate
+	unstate,
+	createRoot
 } from '../internal/index.js';

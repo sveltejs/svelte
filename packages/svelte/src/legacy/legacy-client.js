@@ -14,6 +14,7 @@ import * as $ from '../internal/index.js';
  * @param {import('../main/public.js').ComponentConstructorOptions<Props> & {
  * 	component: import('../main/public.js').SvelteComponent<Props, Events, Slots>;
  * 	immutable?: boolean;
+ * 	hydrate?: boolean;
  * 	recover?: false;
  * }} options
  * @returns {import('../main/public.js').SvelteComponent<Props, Events, Slots> & Exports}
@@ -53,28 +54,28 @@ class Svelte4Component {
 	/** @type {any} */
 	#events = {};
 
-	/** @type {ReturnType<typeof $.createRoot>} */
+	/** @type {Record<string, any>} */
 	#instance;
 
 	/**
 	 * @param {import('../main/public.js').ComponentConstructorOptions & {
 	 *  component: any;
 	 * 	immutable?: boolean;
+	 * 	hydrate?: boolean;
 	 * 	recover?: false;
 	 * }} options
 	 */
 	constructor(options) {
-		this.#instance = $.createRoot(options.component, {
+		const props = $.proxy({ ...(options.props || {}), $$events: this.#events }, false);
+		this.#instance = (options.hydrate ? $.hydrate : $.mount)(options.component, {
 			target: options.target,
-			props: { ...options.props, $$events: this.#events },
+			props,
 			context: options.context,
 			intro: options.intro,
 			recover: options.recover
 		});
 
 		for (const key of Object.keys(this.#instance)) {
-			if (key === '$set' || key === '$destroy') continue;
-
 			define_property(this, key, {
 				get() {
 					return this.#instance[key];
@@ -86,6 +87,13 @@ class Svelte4Component {
 				enumerable: true
 			});
 		}
+
+		this.#instance.$set = /** @param {Record<string, any>} next */ (next) => {
+			Object.assign(props, next);
+		};
+		this.#instance.$destroy = () => {
+			$.unmount(this.#instance);
+		};
 	}
 
 	/** @param {Record<string, any>} props */
