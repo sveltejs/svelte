@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.58
+
+### Patch Changes
+
+- breaking: remove `createRoot`, adjust `mount`/`hydrate` APIs, introduce `unmount` ([#10516](https://github.com/sveltejs/svelte/pull/10516))
+
 ## 5.0.0-next.57
 
 ### Patch Changes
