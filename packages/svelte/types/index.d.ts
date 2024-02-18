@@ -324,50 +324,36 @@ declare module 'svelte' {
 	 */
 	type NotFunction<T> = T extends Function ? never : T;
 	/**
-	 * Mounts the given component to the given target and returns a handle to the component's public accessors
-	 * as well as a `$set` and `$destroy` method to update the props of the component or destroy it.
-	 *
-	 * If you don't need to interact with the component after mounting, use `mount` instead to save some bytes.
+	 * @deprecated Use `mount` or `hydrate` instead
+	 */
+	export function createRoot(): void;
+	/**
+	 * Mounts a component to the given target and returns the exports and potentially the accessors (if compiled with `accessors: true`) of the component
 	 *
 	 * */
-	export function createRoot<Props extends Record<string, any>, Exports extends Record<string, any> | undefined, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
+	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
+		target: Node;
+		props?: Props | undefined;
+		events?: Events | undefined;
+		context?: Map<any, any> | undefined;
+		intro?: boolean | undefined;
+	}): Exports;
+	/**
+	 * Hydrates a component on the given target and returns the exports and potentially the accessors (if compiled with `accessors: true`) of the component
+	 *
+	 * */
+	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
 		target: Node;
 		props?: Props | undefined;
 		events?: Events | undefined;
 		context?: Map<any, any> | undefined;
 		intro?: boolean | undefined;
 		recover?: false | undefined;
-	}): Exports & {
-		$destroy: () => void;
-		$set: (props: Partial<Props>) => void;
-	};
+	}): Exports;
 	/**
-	 * Mounts the given component to the given target and returns the accessors of the component and a function to destroy it.
-	 *
-	 * If you need to interact with the component after mounting, use `createRoot` instead.
-	 *
+	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
 	 * */
-	export function mount<Props extends Record<string, any>, Exports extends Record<string, any> | undefined, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
-		target: Node;
-		props?: Props | undefined;
-		events?: Events | undefined;
-		context?: Map<any, any> | undefined;
-		intro?: boolean | undefined;
-	}): [Exports, () => void];
-	/**
-	 * Hydrates the given component to the given target and returns the accessors of the component and a function to destroy it.
-	 *
-	 * If you need to interact with the component after hydrating, use `createRoot` instead.
-	 *
-	 * */
-	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any> | undefined, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
-		target: Node;
-		props?: Props | undefined;
-		events?: Events | undefined;
-		context?: Map<any, any> | undefined;
-		intro?: boolean | undefined;
-		recover?: false | undefined;
-	}): [Exports, () => void];
+	export function unmount(component: Record<string, any>): void;
 	/**
 	 * Synchronously flushes any pending state changes and those that result from it.
 	 * */
@@ -1737,6 +1723,7 @@ declare module 'svelte/legacy' {
 	export function createClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(options: ComponentConstructorOptions<Props> & {
 		component: SvelteComponent<Props, Events, Slots>;
 		immutable?: boolean | undefined;
+		hydrate?: boolean | undefined;
 		recover?: false | undefined;
 	}): SvelteComponent<Props, Events, Slots> & Exports;
 	/**

@@ -1,7 +1,6 @@
 import { on_destroy } from '../internal/server/index.js';
 
 export {
-	createRoot,
 	createEventDispatcher,
 	flushSync,
 	getAllContexts,
@@ -11,7 +10,9 @@ export {
 	hydrate,
 	setContext,
 	tick,
-	untrack
+	unmount,
+	untrack,
+	createRoot
 } from './main-client.js';
 
 /** @returns {void} */

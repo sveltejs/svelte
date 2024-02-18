@@ -43,6 +43,7 @@ import {
 	untrack,
 	effect,
 	flushSync,
+	flush_sync,
 	safe_not_equal,
 	current_block,
 	managed_effect,
@@ -64,12 +65,11 @@ import {
 	get_descriptors,
 	is_array,
 	is_function,
-	object_assign,
-	object_keys
+	object_assign
 } from './utils.js';
 import { is_promise } from '../common.js';
 import { bind_transition, trigger_transitions } from './transitions.js';
-import { STATE_SYMBOL, proxy } from './proxy.js';
+import { STATE_SYMBOL } from './proxy.js';
 
 /** @type {Set<string>} */
 const all_registerd_events = new Set();
@@ -2825,14 +2825,45 @@ export function spread_props(...props) {
 	return new Proxy({ props }, spread_props_handler);
 }
 
+// TODO 5.0 remove this
 /**
- * Mounts the given component to the given target and returns a handle to the component's public accessors
- * as well as a `$set` and `$destroy` method to update the props of the component or destroy it.
- *
- * If you don't need to interact with the component after mounting, use `mount` instead to save some bytes.
+ * @deprecated Use `mount` or `hydrate` instead
+ */
+export function createRoot() {
+	throw new Error(
+		'`createRoot` has been removed. Use `mount` or `hydrate` instead. See the updated docs for more info: https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes'
+	);
+}
+
+/**
+ * Mounts a component to the given target and returns the exports and potentially the accessors (if compiled with `accessors: true`) of the component
  *
  * @template {Record<string, any>} Props
- * @template {Record<string, any> | undefined} Exports
+ * @template {Record<string, any>} Exports
+ * @template {Record<string, any>} Events
+ * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
+ * @param {{
+ * 		target: Node;
+ * 		props?: Props;
+ * 		events?: Events;
+ *  	context?: Map<any, any>;
+ * 		intro?: boolean;
+ * 	}} options
+ * @returns {Exports}
+ */
+export function mount(component, options) {
+	init_operations();
+	const anchor = empty();
+	options.target.appendChild(anchor);
+	// Don't flush previous effects to ensure order of outer effects stays consistent
+	return flush_sync(() => _mount(component, { ...options, anchor }), false);
+}
+
+/**
+ * Hydrates a component on the given target and returns the exports and potentially the accessors (if compiled with `accessors: true`) of the component
+ *
+ * @template {Record<string, any>} Props
+ * @template {Record<string, any>} Exports
  * @template {Record<string, any>} Events
  * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
  * @param {{
@@ -2843,67 +2874,63 @@ export function spread_props(...props) {
  * 		intro?: boolean;
  * 		recover?: false;
  * 	}} options
- * @returns {Exports & { $destroy: () => void; $set: (props: Partial<Props>) => void; }}
+ * @returns {Exports}
  */
-export function createRoot(component, options) {
-	const props = proxy(/** @type {any} */ (options.props) || {}, false);
+export function hydrate(component, options) {
+	init_operations();
+	const container = options.target;
+	const first_child = /** @type {ChildNode} */ (container.firstChild);
+	// Call with insert_text == true to prevent empty {expressions} resulting in an empty
+	// fragment array, resulting in a hydration error down the line
+	const hydration_fragment = get_hydration_fragment(first_child, true);
+	const previous_hydration_fragment = current_hydration_fragment;
+	set_current_hydration_fragment(hydration_fragment);
 
-	let [accessors, $destroy] = hydrate(component, { ...options, props });
-
-	const result =
-		/** @type {Exports & { $destroy: () => void; $set: (props: Partial<Props>) => void; }} */ ({
-			$set: (next) => {
-				object_assign(props, next);
-			},
-			$destroy
-		});
-
-	for (const key of object_keys(accessors || {})) {
-		define_property(result, key, {
-			get() {
-				// @ts-expect-error TS doesn't know key exists on accessor
-				return accessors[key];
-			},
-			/** @param {any} value */
-			set(value) {
-				// @ts-expect-error TS doesn't know key exists on accessor
-				flushSync(() => (accessors[key] = value));
-			},
-			enumerable: true
-		});
+	/** @type {null | Text} */
+	let anchor = null;
+	if (hydration_fragment === null) {
+		anchor = empty();
+		container.appendChild(anchor);
 	}
 
-	return result;
+	let finished_hydrating = false;
+
+	try {
+		// Don't flush previous effects to ensure order of outer effects stays consistent
+		return flush_sync(() => {
+			const instance = _mount(component, { ...options, anchor });
+			// flush_sync will run this callback and then synchronously run any pending effects,
+			// which don't belong to the hydration phase anymore - therefore reset it here
+			set_current_hydration_fragment(null);
+			finished_hydrating = true;
+			return instance;
+		}, false);
+	} catch (error) {
+		if (!finished_hydrating && options.recover !== false && hydration_fragment !== null) {
+			// eslint-disable-next-line no-console
+			console.error(
+				'ERR_SVELTE_HYDRATION_MISMATCH' +
+					(DEV
+						? ': Hydration failed because the initial UI does not match what was rendered on the server.'
+						: ''),
+				error
+			);
+			remove(hydration_fragment);
+			first_child.remove();
+			hydration_fragment.at(-1)?.nextSibling?.remove();
+			set_current_hydration_fragment(null);
+			return mount(component, options);
+		} else {
+			throw error;
+		}
+	} finally {
+		set_current_hydration_fragment(previous_hydration_fragment);
+	}
 }
 
 /**
- * Mounts the given component to the given target and returns the accessors of the component and a function to destroy it.
- *
- * If you need to interact with the component after mounting, use `createRoot` instead.
- *
  * @template {Record<string, any>} Props
- * @template {Record<string, any> | undefined} Exports
- * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
- * @param {{
- * 		target: Node;
- * 		props?: Props;
- * 		events?: Events;
- *  	context?: Map<any, any>;
- * 		intro?: boolean;
- * 	}} options
- * @returns {[Exports, () => void]}
- */
-export function mount(component, options) {
-	init_operations();
-	const anchor = empty();
-	options.target.appendChild(anchor);
-	return _mount(component, { ...options, anchor });
-}
-
-/**
- * @template {Record<string, any>} Props
- * @template {Record<string, any> | undefined} Exports
+ * @template {Record<string, any>} Exports
  * @template {Record<string, any>} Events
  * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
  * @param {{
@@ -2915,7 +2942,7 @@ export function mount(component, options) {
  * 		intro?: boolean;
  * 		recover?: false;
  * 	}} options
- * @returns {[Exports, () => void]}
+ * @returns {Exports}
  */
 function _mount(component, options) {
 	const registered_events = new Set();
@@ -2934,7 +2961,7 @@ function _mount(component, options) {
 					options.context;
 			}
 			// @ts-expect-error the public typings are not what the actual function looks like
-			accessors = component(options.anchor, options.props || {});
+			accessors = component(options.anchor, options.props || {}) || {};
 			if (options.context) {
 				pop();
 			}
@@ -2981,80 +3008,38 @@ function _mount(component, options) {
 	event_handle(array_from(all_registerd_events));
 	root_event_handles.add(event_handle);
 
-	return [
-		accessors,
-		() => {
-			for (const event_name of registered_events) {
-				container.removeEventListener(event_name, bound_event_listener);
-			}
-			root_event_handles.delete(event_handle);
-			const dom = block.d;
-			if (dom !== null) {
-				remove(dom);
-			}
-			destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
+	mounted_components.set(accessors, () => {
+		for (const event_name of registered_events) {
+			container.removeEventListener(event_name, bound_event_listener);
 		}
-	];
+		root_event_handles.delete(event_handle);
+		const dom = block.d;
+		if (dom !== null) {
+			remove(dom);
+		}
+		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
+	});
+
+	return accessors;
 }
 
 /**
- * Hydrates the given component to the given target and returns the accessors of the component and a function to destroy it.
- *
- * If you need to interact with the component after hydrating, use `createRoot` instead.
- *
- * @template {Record<string, any>} Props
- * @template {Record<string, any> | undefined} Exports
- * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
- * @param {{
- * 		target: Node;
- * 		props?: Props;
- * 		events?: Events;
- *  	context?: Map<any, any>;
- * 		intro?: boolean;
- * 		recover?: false;
- * 	}} options
- * @returns {[Exports, () => void]}
+ * References of the accessors of all components that were `mount`ed or `hydrate`d.
+ * Uses a `WeakMap` to avoid memory leaks.
  */
-export function hydrate(component, options) {
-	init_operations();
-	const container = options.target;
-	const first_child = /** @type {ChildNode} */ (container.firstChild);
-	// Call with insert_text == true to prevent empty {expressions} resulting in an empty
-	// fragment array, resulting in a hydration error down the line
-	const hydration_fragment = get_hydration_fragment(first_child, true);
-	const previous_hydration_fragment = current_hydration_fragment;
+let mounted_components = new WeakMap();
 
-	try {
-		/** @type {null | Text} */
-		let anchor = null;
-		if (hydration_fragment === null) {
-			anchor = empty();
-			container.appendChild(anchor);
-		}
-		set_current_hydration_fragment(hydration_fragment);
-		return _mount(component, { ...options, anchor });
-	} catch (error) {
-		if (options.recover !== false && hydration_fragment !== null) {
-			// eslint-disable-next-line no-console
-			console.error(
-				'ERR_SVELTE_HYDRATION_MISMATCH' +
-					(DEV
-						? ': Hydration failed because the initial UI does not match what was rendered on the server.'
-						: ''),
-				error
-			);
-			remove(hydration_fragment);
-			first_child.remove();
-			hydration_fragment.at(-1)?.nextSibling?.remove();
-			set_current_hydration_fragment(null);
-			return mount(component, options);
-		} else {
-			throw error;
-		}
-	} finally {
-		set_current_hydration_fragment(previous_hydration_fragment);
+/**
+ * Unmounts a component that was previously mounted using `mount` or `hydrate`.
+ * @param {Record<string, any>} component
+ */
+export function unmount(component) {
+	const destroy = mounted_components.get(component);
+	if (DEV && !destroy) {
+		// eslint-disable-next-line no-console
+		console.warn('Tried to unmount a component that was not mounted.');
 	}
+	destroy?.();
 }
 
 /**
