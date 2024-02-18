@@ -82,8 +82,6 @@ async function for_each_dir<Test extends BaseTest>(
 	for (const dir of fs.readdirSync(`${cwd}/${samples_dir}`)) {
 		if (dir[0] === '.' || !filter.test(dir)) continue;
 
-		// skip directories that don't have any files without _ prefix — these
-		// are leftover from a different branch, and will cause annoying errors
 		if (fs.readdirSync(`${cwd}/${samples_dir}/${dir}`).every((file) => ignored.includes(file))) {
 			continue;
 		}
