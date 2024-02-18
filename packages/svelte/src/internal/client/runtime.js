@@ -1907,7 +1907,7 @@ export function push(props, runes = false) {
 
 /**
  * @template {Record<string, any>} T
- * @param {T} component
+ * @param {T} [component]
  * @returns {T | void}
  */
 export function pop(component) {
