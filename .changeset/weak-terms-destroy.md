@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: visit child nodes in directives
+fix: visit expression node in directives

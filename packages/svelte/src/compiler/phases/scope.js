@@ -331,11 +331,14 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	}
 
 	/**
-	 * @type {import('zimmerframe').Visitor<import('#compiler').Directive, State, import('#compiler').SvelteNode>}
+	 * @type {import('zimmerframe').Visitor<import('#compiler').UseDirective, State, import('#compiler').SvelteNode>}
 	 */
-	const SvelteDirective = (node, { state, path, next }) => {
+	const SvelteDirective = (node, { state, path, visit }) => {
 		state.scope.reference(b.id(node.name), path);
-		next(state);
+
+		if (node.expression) {
+			visit(node.expression);
+		}
 	};
 
 	walk(ast, state, {
