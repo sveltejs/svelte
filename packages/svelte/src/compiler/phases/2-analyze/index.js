@@ -1060,7 +1060,9 @@ const common_visitors = {
 				parent.type === 'SvelteComponent' ||
 				parent.type === 'SvelteSelf'
 			) {
-				context.state.analysis.uses_component_bindings = true;
+				if (node.name !== 'this') {
+					context.state.analysis.uses_component_bindings = true;
+				}
 				break;
 			} else if (is_element_node(parent)) {
 				break;

@@ -853,7 +853,7 @@ function serialize_inline_component(node, component_name, context) {
 
 			const value = serialize_attribute_value(attribute.value, context, false, true);
 			push_prop(b.prop('init', b.key(attribute.name), value));
-		} else if (attribute.type === 'BindDirective') {
+		} else if (attribute.type === 'BindDirective' && attribute.name !== 'this') {
 			// TODO this needs to turn the whole thing into a while loop because the binding could be mutated eagerly in the child
 			push_prop(
 				b.get(attribute.name, [
