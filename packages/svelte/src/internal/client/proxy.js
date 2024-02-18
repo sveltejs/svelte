@@ -54,12 +54,16 @@ export function proxy(value, immutable = true) {
 					a: is_array(value),
 					i: immutable,
 					p: proxy,
-					t: value,
-					o: DEV && current_owner
+					t: value
 				}),
 				writable: true,
 				enumerable: false
 			});
+
+			if (DEV) {
+				// @ts-expect-error
+				value[STATE_SYMBOL].o = current_owner;
+			}
 
 			return proxy;
 		}
