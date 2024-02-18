@@ -1907,10 +1907,10 @@ export function push(props, runes = false) {
 
 /**
  * @template {Record<string, any>} T
- * @param {T} [component]
- * @returns {T | void}
+ * @param {T} component
+ * @returns {T}
  */
-export function pop(component) {
+export function pop(component = /** @type {T} */ ({})) {
 	const context_stack_item = current_component_context;
 	if (context_stack_item !== null) {
 		if (component !== undefined) {
