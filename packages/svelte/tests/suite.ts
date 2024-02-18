@@ -67,6 +67,10 @@ export function suite_with_variants<Test extends BaseTest, Variants extends stri
 	};
 }
 
+// If a directory only contains these children, it's a sign that it's leftover
+// from a different branch, and we can skip the test
+const ignored = ['_output', '_actual.json'];
+
 async function for_each_dir<Test extends BaseTest>(
 	cwd: string,
 	samples_dir = 'samples',
@@ -80,7 +84,9 @@ async function for_each_dir<Test extends BaseTest>(
 
 		// skip directories that don't have any files without _ prefix — these
 		// are leftover from a different branch, and will cause annoying errors
-		if (!fs.readdirSync(`${cwd}/${samples_dir}/${dir}`).some((file) => file[0] !== '_')) continue;
+		if (fs.readdirSync(`${cwd}/${samples_dir}/${dir}`).every((file) => ignored.includes(file))) {
+			continue;
+		}
 
 		const file = `${cwd}/${samples_dir}/${dir}/_config.js`;
 
