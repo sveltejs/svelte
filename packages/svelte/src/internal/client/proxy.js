@@ -57,8 +57,7 @@ export function proxy(value, immutable = true) {
 					i: immutable,
 					p: proxy,
 					t: value,
-					// @ts-expect-error
-					o: DEV && (current_owner ?? current_component_context?.function)
+					o: DEV && current_owner
 				}),
 				writable: true,
 				enumerable: false
@@ -183,7 +182,7 @@ const state_proxy_handler = {
 			(!(prop in target) || get_descriptor(target, prop)?.writable)
 		) {
 			const previous_owner = current_owner;
-			if (!current_owner) set_current_owner(metadata.o);
+			set_current_owner(metadata.o);
 			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i));
 			set_current_owner(previous_owner);
 			metadata.s.set(prop, s);

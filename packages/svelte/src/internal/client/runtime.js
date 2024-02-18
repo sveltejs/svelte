@@ -111,11 +111,11 @@ export let current_component_context = null;
 
 export let updating_derived = false;
 
-/** @type {string | null} */
+/** @type {Function | null} */
 export let current_owner = null;
 
 /**
- * @param {string | null} owner
+ * @param {Function | null} owner
  */
 export function set_current_owner(owner) {
 	current_owner = owner;
@@ -1041,7 +1041,7 @@ export function set(signal, value) {
 		const component = get_component();
 
 		// @ts-expect-error
-		if (component && !signal.owners.has(component)) {
+		if (component && signal.owners.size > 0 && !signal.owners.has(component)) {
 			// eslint-disable-next-line no-console
 			console.warn(
 				'Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use callback instead.'
@@ -1366,11 +1366,9 @@ export function source(initial_value) {
 function bind_signal_to_component_context(signal) {
 	if (DEV) {
 		// @ts-expect-error
-		const owner = current_owner ?? current_component_context?.function;
-
-		if (owner) {
+		if (current_owner && signal.owners) {
 			// @ts-expect-error
-			(signal.owners ??= new Set()).add(owner);
+			signal.owners.add(current_owner);
 		}
 	}
 
@@ -1961,7 +1959,7 @@ export function push(props, runes = false, fn) {
 	if (DEV) {
 		// component function
 		// @ts-expect-error
-		current_component_context.function = fn;
+		current_owner = current_component_context.function = fn;
 	}
 }
 
@@ -1983,6 +1981,10 @@ export function pop(accessors) {
 			}
 		}
 		current_component_context = context_stack_item.p;
+		if (DEV) {
+			// @ts-expect-error
+			current_owner = current_component_context?.function;
+		}
 		context_stack_item.m = true;
 	}
 }
