@@ -1,6 +1,6 @@
 {
 	"css": {
-		"type": "Style",
+		"type": "StyleSheet",
 		"start": 0,
 		"end": 806,
 		"attributes": [],
@@ -13,40 +13,56 @@
 					"end": 80,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 60,
 							"end": 80,
 							"children": [
 								{
-									"type": "TypeSelector",
-									"name": "h1",
-									"start": 60,
-									"end": 62
-								},
-								{
-									"type": "PseudoClassSelector",
-									"name": "nth-of-type",
-									"args": {
-										"type": "SelectorList",
-										"start": 75,
-										"end": 79,
-										"children": [
-											{
-												"type": "Selector",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "TypeSelector",
+											"name": "h1",
+											"start": 60,
+											"end": 62
+										},
+										{
+											"type": "PseudoClassSelector",
+											"name": "nth-of-type",
+											"args": {
+												"type": "SelectorList",
 												"start": 75,
 												"end": 79,
 												"children": [
 													{
-														"type": "Nth",
-														"value": "2n+1",
+														"type": "ComplexSelector",
 														"start": 75,
-														"end": 79
+														"end": 79,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "Nth",
+																		"value": "2n+1",
+																		"start": 75,
+																		"end": 79
+																	}
+																],
+																"start": 75,
+																"end": 79
+															}
+														]
 													}
 												]
-											}
-										]
-									},
-									"start": 62,
+											},
+											"start": 62,
+											"end": 80
+										}
+									],
+									"start": 60,
 									"end": 80
 								}
 							]
@@ -78,52 +94,68 @@
 					"end": 153,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 117,
 							"end": 153,
 							"children": [
 								{
-									"type": "TypeSelector",
-									"name": "h1",
-									"start": 117,
-									"end": 119
-								},
-								{
-									"type": "PseudoClassSelector",
-									"name": "nth-child",
-									"args": {
-										"type": "SelectorList",
-										"start": 130,
-										"end": 152,
-										"children": [
-											{
-												"type": "Selector",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "TypeSelector",
+											"name": "h1",
+											"start": 117,
+											"end": 119
+										},
+										{
+											"type": "PseudoClassSelector",
+											"name": "nth-child",
+											"args": {
+												"type": "SelectorList",
 												"start": 130,
 												"end": 152,
 												"children": [
 													{
-														"type": "Nth",
-														"value": "-n + 3 of ",
+														"type": "ComplexSelector",
 														"start": 130,
-														"end": 140
-													},
-													{
-														"type": "TypeSelector",
-														"name": "li",
-														"start": 140,
-														"end": 142
-													},
-													{
-														"type": "ClassSelector",
-														"name": "important",
-														"start": 142,
-														"end": 152
+														"end": 152,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "Nth",
+																		"value": "-n + 3 of ",
+																		"start": 130,
+																		"end": 140
+																	},
+																	{
+																		"type": "TypeSelector",
+																		"name": "li",
+																		"start": 140,
+																		"end": 142
+																	},
+																	{
+																		"type": "ClassSelector",
+																		"name": "important",
+																		"start": 142,
+																		"end": 152
+																	}
+																],
+																"start": 130,
+																"end": 152
+															}
+														]
 													}
 												]
-											}
-										]
-									},
-									"start": 119,
+											},
+											"start": 119,
+											"end": 153
+										}
+									],
+									"start": 117,
 									"end": 153
 								}
 							]
@@ -155,40 +187,56 @@
 					"end": 206,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 191,
 							"end": 206,
 							"children": [
 								{
-									"type": "TypeSelector",
-									"name": "h1",
-									"start": 191,
-									"end": 193
-								},
-								{
-									"type": "PseudoClassSelector",
-									"name": "nth-child",
-									"args": {
-										"type": "SelectorList",
-										"start": 204,
-										"end": 205,
-										"children": [
-											{
-												"type": "Selector",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "TypeSelector",
+											"name": "h1",
+											"start": 191,
+											"end": 193
+										},
+										{
+											"type": "PseudoClassSelector",
+											"name": "nth-child",
+											"args": {
+												"type": "SelectorList",
 												"start": 204,
 												"end": 205,
 												"children": [
 													{
-														"type": "Nth",
-														"value": "1",
+														"type": "ComplexSelector",
 														"start": 204,
-														"end": 205
+														"end": 205,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "Nth",
+																		"value": "1",
+																		"start": 204,
+																		"end": 205
+																	}
+																],
+																"start": 204,
+																"end": 205
+															}
+														]
 													}
 												]
-											}
-										]
-									},
-									"start": 193,
+											},
+											"start": 193,
+											"end": 206
+										}
+									],
+									"start": 191,
 									"end": 206
 								}
 							]
@@ -220,40 +268,56 @@
 					"end": 259,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 244,
 							"end": 259,
 							"children": [
 								{
-									"type": "TypeSelector",
-									"name": "h1",
-									"start": 244,
-									"end": 246
-								},
-								{
-									"type": "PseudoClassSelector",
-									"name": "nth-child",
-									"args": {
-										"type": "SelectorList",
-										"start": 257,
-										"end": 258,
-										"children": [
-											{
-												"type": "Selector",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "TypeSelector",
+											"name": "h1",
+											"start": 244,
+											"end": 246
+										},
+										{
+											"type": "PseudoClassSelector",
+											"name": "nth-child",
+											"args": {
+												"type": "SelectorList",
 												"start": 257,
 												"end": 258,
 												"children": [
 													{
-														"type": "TypeSelector",
-														"name": "p",
+														"type": "ComplexSelector",
 														"start": 257,
-														"end": 258
+														"end": 258,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "TypeSelector",
+																		"name": "p",
+																		"start": 257,
+																		"end": 258
+																	}
+																],
+																"start": 257,
+																"end": 258
+															}
+														]
 													}
 												]
-											}
-										]
-									},
-									"start": 246,
+											},
+											"start": 246,
+											"end": 259
+										}
+									],
+									"start": 244,
 									"end": 259
 								}
 							]
@@ -285,40 +349,56 @@
 					"end": 314,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 297,
 							"end": 314,
 							"children": [
 								{
-									"type": "TypeSelector",
-									"name": "h1",
-									"start": 297,
-									"end": 299
-								},
-								{
-									"type": "PseudoClassSelector",
-									"name": "nth-child",
-									"args": {
-										"type": "SelectorList",
-										"start": 310,
-										"end": 313,
-										"children": [
-											{
-												"type": "Selector",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "TypeSelector",
+											"name": "h1",
+											"start": 297,
+											"end": 299
+										},
+										{
+											"type": "PseudoClassSelector",
+											"name": "nth-child",
+											"args": {
+												"type": "SelectorList",
 												"start": 310,
 												"end": 313,
 												"children": [
 													{
-														"type": "Nth",
-														"value": "n+7",
+														"type": "ComplexSelector",
 														"start": 310,
-														"end": 313
+														"end": 313,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "Nth",
+																		"value": "n+7",
+																		"start": 310,
+																		"end": 313
+																	}
+																],
+																"start": 310,
+																"end": 313
+															}
+														]
 													}
 												]
-											}
-										]
-									},
-									"start": 299,
+											},
+											"start": 299,
+											"end": 314
+										}
+									],
+									"start": 297,
 									"end": 314
 								}
 							]
@@ -350,40 +430,56 @@
 					"end": 370,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 352,
 							"end": 370,
 							"children": [
 								{
-									"type": "TypeSelector",
-									"name": "h1",
-									"start": 352,
-									"end": 354
-								},
-								{
-									"type": "PseudoClassSelector",
-									"name": "nth-child",
-									"args": {
-										"type": "SelectorList",
-										"start": 365,
-										"end": 369,
-										"children": [
-											{
-												"type": "Selector",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "TypeSelector",
+											"name": "h1",
+											"start": 352,
+											"end": 354
+										},
+										{
+											"type": "PseudoClassSelector",
+											"name": "nth-child",
+											"args": {
+												"type": "SelectorList",
 												"start": 365,
 												"end": 369,
 												"children": [
 													{
-														"type": "Nth",
-														"value": "even",
+														"type": "ComplexSelector",
 														"start": 365,
-														"end": 369
+														"end": 369,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "Nth",
+																		"value": "even",
+																		"start": 365,
+																		"end": 369
+																	}
+																],
+																"start": 365,
+																"end": 369
+															}
+														]
 													}
 												]
-											}
-										]
-									},
-									"start": 354,
+											},
+											"start": 354,
+											"end": 370
+										}
+									],
+									"start": 352,
 									"end": 370
 								}
 							]
@@ -415,40 +511,56 @@
 					"end": 425,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 408,
 							"end": 425,
 							"children": [
 								{
-									"type": "TypeSelector",
-									"name": "h1",
-									"start": 408,
-									"end": 410
-								},
-								{
-									"type": "PseudoClassSelector",
-									"name": "nth-child",
-									"args": {
-										"type": "SelectorList",
-										"start": 421,
-										"end": 424,
-										"children": [
-											{
-												"type": "Selector",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "TypeSelector",
+											"name": "h1",
+											"start": 408,
+											"end": 410
+										},
+										{
+											"type": "PseudoClassSelector",
+											"name": "nth-child",
+											"args": {
+												"type": "SelectorList",
 												"start": 421,
 												"end": 424,
 												"children": [
 													{
-														"type": "Nth",
-														"value": "odd",
+														"type": "ComplexSelector",
 														"start": 421,
-														"end": 424
+														"end": 424,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "Nth",
+																		"value": "odd",
+																		"start": 421,
+																		"end": 424
+																	}
+																],
+																"start": 421,
+																"end": 424
+															}
+														]
 													}
 												]
-											}
-										]
-									},
-									"start": 410,
+											},
+											"start": 410,
+											"end": 425
+										}
+									],
+									"start": 408,
 									"end": 425
 								}
 							]
@@ -480,40 +592,56 @@
 					"end": 492,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 463,
 							"end": 492,
 							"children": [
 								{
-									"type": "TypeSelector",
-									"name": "h1",
-									"start": 463,
-									"end": 465
-								},
-								{
-									"type": "PseudoClassSelector",
-									"name": "nth-child",
-									"args": {
-										"type": "SelectorList",
-										"start": 485,
-										"end": 486,
-										"children": [
-											{
-												"type": "Selector",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "TypeSelector",
+											"name": "h1",
+											"start": 463,
+											"end": 465
+										},
+										{
+											"type": "PseudoClassSelector",
+											"name": "nth-child",
+											"args": {
+												"type": "SelectorList",
 												"start": 485,
 												"end": 486,
 												"children": [
 													{
-														"type": "Nth",
-														"value": "n",
+														"type": "ComplexSelector",
 														"start": 485,
-														"end": 486
+														"end": 486,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "Nth",
+																		"value": "n",
+																		"start": 485,
+																		"end": 486
+																	}
+																],
+																"start": 485,
+																"end": 486
+															}
+														]
 													}
 												]
-											}
-										]
-									},
-									"start": 465,
+											},
+											"start": 465,
+											"end": 492
+										}
+									],
+									"start": 463,
 									"end": 492
 								}
 							]
@@ -545,40 +673,56 @@
 					"end": 544,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 530,
 							"end": 544,
 							"children": [
 								{
-									"type": "TypeSelector",
-									"name": "h1",
-									"start": 530,
-									"end": 532
-								},
-								{
-									"type": "PseudoClassSelector",
-									"name": "global",
-									"args": {
-										"type": "SelectorList",
-										"start": 540,
-										"end": 543,
-										"children": [
-											{
-												"type": "Selector",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "TypeSelector",
+											"name": "h1",
+											"start": 530,
+											"end": 532
+										},
+										{
+											"type": "PseudoClassSelector",
+											"name": "global",
+											"args": {
+												"type": "SelectorList",
 												"start": 540,
 												"end": 543,
 												"children": [
 													{
-														"type": "TypeSelector",
-														"name": "nav",
+														"type": "ComplexSelector",
 														"start": 540,
-														"end": 543
+														"end": 543,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "TypeSelector",
+																		"name": "nav",
+																		"start": 540,
+																		"end": 543
+																	}
+																],
+																"start": 540,
+																"end": 543
+															}
+														]
 													}
 												]
-											}
-										]
-									},
-									"start": 532,
+											},
+											"start": 532,
+											"end": 544
+										}
+									],
+									"start": 530,
 									"end": 544
 								}
 							]
@@ -610,40 +754,56 @@
 					"end": 601,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 580,
 							"end": 601,
 							"children": [
 								{
-									"type": "TypeSelector",
-									"name": "h1",
-									"start": 580,
-									"end": 582
-								},
-								{
-									"type": "PseudoClassSelector",
-									"name": "nth-of-type",
-									"args": {
-										"type": "SelectorList",
-										"start": 595,
-										"end": 600,
-										"children": [
-											{
-												"type": "Selector",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "TypeSelector",
+											"name": "h1",
+											"start": 580,
+											"end": 582
+										},
+										{
+											"type": "PseudoClassSelector",
+											"name": "nth-of-type",
+											"args": {
+												"type": "SelectorList",
 												"start": 595,
 												"end": 600,
 												"children": [
 													{
-														"type": "Nth",
-														"value": "10n+1",
+														"type": "ComplexSelector",
 														"start": 595,
-														"end": 600
+														"end": 600,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "Nth",
+																		"value": "10n+1",
+																		"start": 595,
+																		"end": 600
+																	}
+																],
+																"start": 595,
+																"end": 600
+															}
+														]
 													}
 												]
-											}
-										]
-									},
-									"start": 582,
+											},
+											"start": 582,
+											"end": 601
+										}
+									],
+									"start": 580,
 									"end": 601
 								}
 							]
@@ -675,40 +835,56 @@
 					"end": 657,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 636,
 							"end": 657,
 							"children": [
 								{
-									"type": "TypeSelector",
-									"name": "h1",
-									"start": 636,
-									"end": 638
-								},
-								{
-									"type": "PseudoClassSelector",
-									"name": "nth-of-type",
-									"args": {
-										"type": "SelectorList",
-										"start": 651,
-										"end": 656,
-										"children": [
-											{
-												"type": "Selector",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "TypeSelector",
+											"name": "h1",
+											"start": 636,
+											"end": 638
+										},
+										{
+											"type": "PseudoClassSelector",
+											"name": "nth-of-type",
+											"args": {
+												"type": "SelectorList",
 												"start": 651,
 												"end": 656,
 												"children": [
 													{
-														"type": "Nth",
-														"value": "-2n+3",
+														"type": "ComplexSelector",
 														"start": 651,
-														"end": 656
+														"end": 656,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "Nth",
+																		"value": "-2n+3",
+																		"start": 651,
+																		"end": 656
+																	}
+																],
+																"start": 651,
+																"end": 656
+															}
+														]
 													}
 												]
-											}
-										]
-									},
-									"start": 638,
+											},
+											"start": 638,
+											"end": 657
+										}
+									],
+									"start": 636,
 									"end": 657
 								}
 							]
@@ -740,40 +916,56 @@
 					"end": 711,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 692,
 							"end": 711,
 							"children": [
 								{
-									"type": "TypeSelector",
-									"name": "h1",
-									"start": 692,
-									"end": 694
-								},
-								{
-									"type": "PseudoClassSelector",
-									"name": "nth-of-type",
-									"args": {
-										"type": "SelectorList",
-										"start": 707,
-										"end": 710,
-										"children": [
-											{
-												"type": "Selector",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "TypeSelector",
+											"name": "h1",
+											"start": 692,
+											"end": 694
+										},
+										{
+											"type": "PseudoClassSelector",
+											"name": "nth-of-type",
+											"args": {
+												"type": "SelectorList",
 												"start": 707,
 												"end": 710,
 												"children": [
 													{
-														"type": "Nth",
-														"value": "+12",
+														"type": "ComplexSelector",
 														"start": 707,
-														"end": 710
+														"end": 710,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "Nth",
+																		"value": "+12",
+																		"start": 707,
+																		"end": 710
+																	}
+																],
+																"start": 707,
+																"end": 710
+															}
+														]
 													}
 												]
-											}
-										]
-									},
-									"start": 694,
+											},
+											"start": 694,
+											"end": 711
+										}
+									],
+									"start": 692,
 									"end": 711
 								}
 							]
@@ -805,40 +997,56 @@
 					"end": 765,
 					"children": [
 						{
-							"type": "Selector",
+							"type": "ComplexSelector",
 							"start": 746,
 							"end": 765,
 							"children": [
 								{
-									"type": "TypeSelector",
-									"name": "h1",
-									"start": 746,
-									"end": 748
-								},
-								{
-									"type": "PseudoClassSelector",
-									"name": "nth-of-type",
-									"args": {
-										"type": "SelectorList",
-										"start": 761,
-										"end": 764,
-										"children": [
-											{
-												"type": "Selector",
+									"type": "RelativeSelector",
+									"combinator": null,
+									"selectors": [
+										{
+											"type": "TypeSelector",
+											"name": "h1",
+											"start": 746,
+											"end": 748
+										},
+										{
+											"type": "PseudoClassSelector",
+											"name": "nth-of-type",
+											"args": {
+												"type": "SelectorList",
 												"start": 761,
 												"end": 764,
 												"children": [
 													{
-														"type": "Nth",
-														"value": "+3n",
+														"type": "ComplexSelector",
 														"start": 761,
-														"end": 764
+														"end": 764,
+														"children": [
+															{
+																"type": "RelativeSelector",
+																"combinator": null,
+																"selectors": [
+																	{
+																		"type": "Nth",
+																		"value": "+3n",
+																		"start": 761,
+																		"end": 764
+																	}
+																],
+																"start": 761,
+																"end": 764
+															}
+														]
 													}
 												]
-											}
-										]
-									},
-									"start": 748,
+											},
+											"start": 748,
+											"end": 765
+										}
+									],
+									"start": 746,
 									"end": 765
 								}
 							]

@@ -75,7 +75,7 @@ export function serialize_get_binding(node, state) {
 	}
 
 	if (binding.expression) {
-		return binding.expression;
+		return typeof binding.expression === 'function' ? binding.expression(node) : binding.expression;
 	}
 
 	if (binding.kind === 'prop') {
@@ -418,15 +418,44 @@ export function serialize_set_binding(node, context, fallback, options) {
 			}
 		} else {
 			if (is_store) {
+				// If we are assigning to a store property, we need to ensure we don't
+				// capture the read for the store as part of the member expression to
+				// keep consistency with how store $ shorthand reads work in Svelte 4.
+				/**
+				 *
+				 * @param {import("estree").Expression | import("estree").Pattern} node
+				 * @returns {import("estree").Expression}
+				 */
+				function visit_node(node) {
+					if (node.type === 'MemberExpression') {
+						return {
+							...node,
+							object: visit_node(/** @type {import("estree").Expression} */ (node.object)),
+							property: /** @type {import("estree").Expression} */ (visit(node.property))
+						};
+					}
+					if (node.type === 'Identifier') {
+						const binding = state.scope.get(node.name);
+
+						if (binding !== null && binding.kind === 'store_sub') {
+							return b.call(
+								'$.untrack',
+								b.thunk(/** @type {import('estree').Expression} */ (visit(node)))
+							);
+						}
+					}
+					return /** @type {import("estree").Expression} */ (visit(node));
+				}
+
 				return b.call(
 					'$.mutate_store',
 					serialize_get_binding(b.id(left_name), state),
 					b.assignment(
 						node.operator,
-						/** @type {import('estree').Pattern} */ (visit(node.left)),
+						/** @type {import("estree").Pattern}} */ (visit_node(node.left)),
 						value
 					),
-					b.call('$' + left_name)
+					b.call('$.untrack', b.id('$' + left_name))
 				);
 			} else if (!state.analysis.runes) {
 				if (binding.kind === 'prop') {
@@ -521,6 +550,7 @@ function get_hoistable_params(node, context) {
 			} else if (
 				// If it's a destructured derived binding, then we can extract the derived signal reference and use that.
 				binding.expression !== null &&
+				typeof binding.expression !== 'function' &&
 				binding.expression.type === 'MemberExpression' &&
 				binding.expression.object.type === 'CallExpression' &&
 				binding.expression.object.callee.type === 'Identifier' &&
@@ -667,4 +697,18 @@ export function should_proxy_or_freeze(node, scope) {
 		}
 	}
 	return true;
+}
+
+/**
+ * Port over the location information from the source to the target identifier.
+ * but keep the target as-is (i.e. a new id is created).
+ * This ensures esrap can generate accurate source maps.
+ * @param {import('estree').Identifier} target
+ * @param {import('estree').Identifier} source
+ */
+export function with_loc(target, source) {
+	if (source.loc) {
+		return { ...target, loc: source.loc };
+	}
+	return target;
 }

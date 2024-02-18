@@ -12,7 +12,10 @@ const css = {
 
 /** @satisfies {Warnings} */
 const attributes = {
-	'avoid-is': () => 'The "is" attribute is not supported cross-browser and should be avoided'
+	'avoid-is': () => 'The "is" attribute is not supported cross-browser and should be avoided',
+	/** @param {string} name */
+	'global-event-reference': (name) =>
+		`You are referencing globalThis.${name}. Did you forget to declare a variable with that name?`
 };
 
 /** @satisfies {Warnings} */
@@ -24,8 +27,7 @@ const runes = {
 	/** @param {string} name */
 	'non-state-reference': (name) =>
 		`${name} is updated, but is not declared with $state(...). Changing its value will not correctly trigger updates.`,
-	'derived-iife': () =>
-		`Use \`$derived.call(() => {...})\` instead of \`$derived((() => {...})());\``
+	'derived-iife': () => `Use \`$derived.by(() => {...})\` instead of \`$derived((() => {...})());\``
 };
 
 /** @satisfies {Warnings} */

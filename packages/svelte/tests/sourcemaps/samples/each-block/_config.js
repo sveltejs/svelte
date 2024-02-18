@@ -1,5 +1,5 @@
 import { test } from '../../test';
 
 export default test({
-	skip: true
+	client: ['foo', 'bar', { str: 'bar', idxGenerated: 1, idxOriginal: 1 }]
 });

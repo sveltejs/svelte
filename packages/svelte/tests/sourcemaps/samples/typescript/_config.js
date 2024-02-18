@@ -2,8 +2,6 @@ import * as ts from 'typescript';
 import { test } from '../../test';
 
 export default test({
-	skip: true,
-	js_map_sources: ['input.svelte'],
 	preprocess: [
 		{
 			script: ({ content, filename }) => {
@@ -22,5 +20,11 @@ export default test({
 				};
 			}
 		}
+	],
+	client: ['count', 'setInterval'],
+	preprocessed: [
+		{ str: 'let count: number = 0;', strGenerated: 'let count = 0;' },
+		{ str: 'ITimeoutDestroyer', strGenerated: null },
+		'<h1>Hello world!</h1>'
 	]
 });

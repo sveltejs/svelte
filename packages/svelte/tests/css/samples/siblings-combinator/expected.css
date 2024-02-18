@@ -16,7 +16,7 @@
 	span.svelte-xyz + b:where(.svelte-xyz) {
 		color: green;
 	}
-	div.svelte-xyz span:where(.svelte-xyz) + b:where(.svelte-xyz) {
+	div.svelte-xyz span + b:where(.svelte-xyz) {
 		color: green;
 	}
 	.a.svelte-xyz + article:where(.svelte-xyz) {

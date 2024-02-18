@@ -1,5 +1,69 @@
 # svelte
 
+## 5.0.0-next.58
+
+### Patch Changes
+
+- breaking: remove `createRoot`, adjust `mount`/`hydrate` APIs, introduce `unmount` ([#10516](https://github.com/sveltejs/svelte/pull/10516))
+
+## 5.0.0-next.57
+
+### Patch Changes
+
+- fix: correctly scope CSS selectors with descendant combinators ([#10490](https://github.com/sveltejs/svelte/pull/10490))
+
+- feat: implement support for `:is(...)` and `:where(...)` ([#10490](https://github.com/sveltejs/svelte/pull/10490))
+
+- chore: treeshake unused store subscriptions in SSR mode ([#10506](https://github.com/sveltejs/svelte/pull/10506))
+
+- fix: warn against accidental global event referenced ([#10442](https://github.com/sveltejs/svelte/pull/10442))
+
+- fix: improve bind:this support for each blocks ([#10510](https://github.com/sveltejs/svelte/pull/10510))
+
+- feat: implement nested CSS support ([#10490](https://github.com/sveltejs/svelte/pull/10490))
+
+- breaking: encapsulate/remove selectors inside `:is(...)` and `:where(...)` ([#10490](https://github.com/sveltejs/svelte/pull/10490))
+
+## 5.0.0-next.56
+
+### Patch Changes
+
+- feat: add hydrate method, make hydration treeshakeable ([#10497](https://github.com/sveltejs/svelte/pull/10497))
+
+- fix: makes keyed each blocks consistent between dev and prod ([#10500](https://github.com/sveltejs/svelte/pull/10500))
+
+- fix: subscribe to stores in `transition`,`animation`,`use` directives ([#10481](https://github.com/sveltejs/svelte/pull/10481))
+
+## 5.0.0-next.55
+
+### Patch Changes
+
+- feat: derive destructured derived objects values ([#10488](https://github.com/sveltejs/svelte/pull/10488))
+
+- fix: prevent infinite loop when writing to store using shorthand ([#10477](https://github.com/sveltejs/svelte/pull/10477))
+
+- fix: add proper source map support ([#10459](https://github.com/sveltejs/svelte/pull/10459))
+
+## 5.0.0-next.54
+
+### Patch Changes
+
+- breaking: replace `$derived.call` with `$derived.by` ([#10445](https://github.com/sveltejs/svelte/pull/10445))
+
+- fix: improve global transition outro handling ([#10474](https://github.com/sveltejs/svelte/pull/10474))
+
+## 5.0.0-next.53
+
+### Patch Changes
+
+- fix: only throw bind error when not passing a value ([#10090](https://github.com/sveltejs/svelte/pull/10090))
+
+- fix: improve global transition handling of effect cleardown ([#10469](https://github.com/sveltejs/svelte/pull/10469))
+
+- fix: improve handling of object property deletions ([#10456](https://github.com/sveltejs/svelte/pull/10456))
+
+- fix: ensure inspect fires on prop changes ([#10468](https://github.com/sveltejs/svelte/pull/10468))
+
 ## 5.0.0-next.52
 
 ### Patch Changes

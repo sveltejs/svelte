@@ -1,4 +1,4 @@
-	.match.svelte-xyz > :where(.svelte-xyz) + :where(.svelte-xyz) {
+	.match.svelte-xyz > * + :where(.svelte-xyz) {
 		margin-left: 4px;
 	}
 	/* (unused) .not-match > * + * {

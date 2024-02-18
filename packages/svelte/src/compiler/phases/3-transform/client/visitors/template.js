@@ -17,6 +17,7 @@ import { is_custom_element_node, is_element_node } from '../../../nodes.js';
 import * as b from '../../../../utils/builders.js';
 import { error } from '../../../../errors.js';
 import {
+	with_loc,
 	function_visitor,
 	get_assignment_value,
 	serialize_get_binding,
@@ -321,7 +322,7 @@ function serialize_element_spread_attributes(attributes, context, element, eleme
 			element_id,
 			b.thunk(b.array(values)),
 			lowercase_attributes,
-			b.literal(context.state.analysis.stylesheet.id)
+			b.literal(context.state.analysis.css.hash)
 		)
 	);
 
@@ -344,7 +345,7 @@ function serialize_element_spread_attributes(attributes, context, element, eleme
 						b.id(id),
 						b.array(values),
 						lowercase_attributes,
-						b.literal(context.state.analysis.stylesheet.id)
+						b.literal(context.state.analysis.css.hash)
 					)
 				)
 			)
@@ -363,9 +364,9 @@ function serialize_element_spread_attributes(attributes, context, element, eleme
  */
 function serialize_dynamic_element_attributes(attributes, context, element_id) {
 	if (attributes.length === 0) {
-		if (context.state.analysis.stylesheet.id) {
+		if (context.state.analysis.css.hash) {
 			context.state.init.push(
-				b.stmt(b.call('$.class_name', element_id, b.literal(context.state.analysis.stylesheet.id)))
+				b.stmt(b.call('$.class_name', element_id, b.literal(context.state.analysis.css.hash)))
 			);
 		}
 		return false;
@@ -398,7 +399,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 			'$.spread_dynamic_element_attributes_effect',
 			element_id,
 			b.thunk(b.array(values)),
-			b.literal(context.state.analysis.stylesheet.id)
+			b.literal(context.state.analysis.css.hash)
 		)
 	);
 
@@ -419,7 +420,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 						element_id,
 						b.id(id),
 						b.array(values),
-						b.literal(context.state.analysis.stylesheet.id)
+						b.literal(context.state.analysis.css.hash)
 					)
 				)
 			)
@@ -433,7 +434,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 					element_id,
 					b.literal(null),
 					b.array(values),
-					b.literal(context.state.analysis.stylesheet.id)
+					b.literal(context.state.analysis.css.hash)
 				)
 			)
 		);
@@ -978,7 +979,11 @@ function serialize_inline_component(node, component_name, context) {
 		const assignment = b.assignment('=', bind_this, b.id('$$value'));
 		const bind_this_id = /** @type {import('estree').Expression} */ (
 			// if expression is not an identifier, we know it can't be a signal
-			bind_this.type === 'Identifier' ? bind_this : undefined
+			bind_this.type === 'Identifier'
+				? bind_this
+				: bind_this.type === 'MemberExpression' && bind_this.object.type === 'Identifier'
+					? bind_this.object
+					: undefined
 		);
 		fn = (node_id) =>
 			b.call(
@@ -2321,14 +2326,20 @@ export const template_visitors = {
 			each_node_meta.contains_group_binding || !node.index
 				? each_node_meta.index
 				: b.id(node.index);
-		const item = b.id(each_node_meta.item_name);
+		const item = each_node_meta.item;
 		const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(item.name));
-		binding.expression = each_item_is_reactive ? b.call('$.unwrap', item) : item;
+		binding.expression = (id) => {
+			const item_with_loc = with_loc(item, id);
+			return each_item_is_reactive ? b.call('$.unwrap', item_with_loc) : item_with_loc;
+		};
 		if (node.index) {
 			const index_binding = /** @type {import('#compiler').Binding} */ (
 				context.state.scope.get(node.index)
 			);
-			index_binding.expression = each_item_is_reactive ? b.call('$.unwrap', index) : index;
+			index_binding.expression = (id) => {
+				const index_with_loc = with_loc(index, id);
+				return each_item_is_reactive ? b.call('$.unwrap', index_with_loc) : index_with_loc;
+			};
 		}
 
 		/** @type {import('estree').Statement[]} */
@@ -2343,7 +2354,7 @@ export const template_visitors = {
 				)
 			);
 		} else {
-			const unwrapped = binding.expression;
+			const unwrapped = binding.expression(binding.node);
 			const paths = extract_paths(node.context);
 
 			for (const path of paths) {
@@ -2741,7 +2752,11 @@ export const template_visitors = {
 						setter,
 						/** @type {import('estree').Expression} */ (
 							// if expression is not an identifier, we know it can't be a signal
-							expression.type === 'Identifier' ? expression : undefined
+							expression.type === 'Identifier'
+								? expression
+								: expression.type === 'MemberExpression' && expression.object.type === 'Identifier'
+									? expression.object
+									: undefined
 						)
 					);
 					break;

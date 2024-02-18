@@ -134,14 +134,14 @@ If the value of a reactive variable is being computed it should be replaced with
   ```
   ...`double` will be calculated first despite the source order. In runes mode, `triple` cannot reference `double` before it has been declared.
 
-## `$derived.call`
+## `$derived.by`
 
-Sometimes you need to create complex derivations that don't fit inside a short expression. In these cases, you can use `$derived.call` which accepts a function as its argument.
+Sometimes you need to create complex derivations that don't fit inside a short expression. In these cases, you can use `$derived.by` which accepts a function as its argument.
 
 ```svelte
 <script>
 	let numbers = $state([1, 2, 3]);
-	let total = $derived.call(() => {
+	let total = $derived.by(() => {
 		let total = 0;
 		for (const n of numbers) {
 			total += n;
@@ -155,7 +155,7 @@ Sometimes you need to create complex derivations that don't fit inside a short e
 </button>
 ```
 
-In essence, `$derived(expression)` is equivalent to `$derived.call(() => expression)`.
+In essence, `$derived(expression)` is equivalent to `$derived.by(() => expression)`.
 
 ## `$effect`
 

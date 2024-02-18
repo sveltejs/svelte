@@ -1,5 +1,11 @@
 import { error } from '../../errors.js';
-import { extract_identifiers, get_parent, is_text_attribute, object } from '../../utils/ast.js';
+import {
+	extract_identifiers,
+	get_parent,
+	is_expression_attribute,
+	is_text_attribute,
+	object
+} from '../../utils/ast.js';
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { disallowed_parapgraph_contents, interactive_elements } from '../1-parse/utils/html.js';
@@ -66,12 +72,23 @@ function validate_element(node, context) {
 			}
 
 			if (attribute.name.startsWith('on') && attribute.name.length > 2) {
-				if (
-					attribute.value === true ||
-					is_text_attribute(attribute) ||
-					attribute.value.length > 1
-				) {
+				if (!is_expression_attribute(attribute)) {
 					error(attribute, 'invalid-event-attribute-value');
+				}
+
+				const value = attribute.value[0].expression;
+				if (
+					value.type === 'Identifier' &&
+					value.name === attribute.name &&
+					!context.state.scope.get(value.name)
+				) {
+					warn(
+						context.state.analysis.warnings,
+						attribute,
+						context.path,
+						'global-event-reference',
+						attribute.name
+					);
 				}
 			}
 
@@ -746,7 +763,7 @@ function validate_call_expression(node, scope, path) {
 		error(node, 'invalid-props-location');
 	}
 
-	if (rune === '$state' || rune === '$derived' || rune === '$derived.call') {
+	if (rune === '$state' || rune === '$derived' || rune === '$derived.by') {
 		if (parent.type === 'VariableDeclarator') return;
 		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
 		error(node, 'invalid-state-location', rune);
@@ -817,7 +834,7 @@ export const validation_runes_js = {
 
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
-		if ((rune === '$derived' || rune === '$derived.call') && args.length !== 1) {
+		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
 			error(node, 'invalid-rune-args-length', rune, [1]);
 		} else if (rune === '$state' && args.length > 1) {
 			error(node, 'invalid-rune-args-length', rune, [0, 1]);
@@ -842,7 +859,7 @@ export const validation_runes_js = {
 				definition.value?.type === 'CallExpression'
 			) {
 				const rune = get_rune(definition.value, context.state.scope);
-				if (rune === '$derived' || rune === '$derived.call') {
+				if (rune === '$derived' || rune === '$derived.by') {
 					private_derived_state.push(definition.key.name);
 				}
 			}
@@ -988,7 +1005,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
 		// TODO some of this is duplicated with above, seems off
-		if ((rune === '$derived' || rune === '$derived.call') && args.length !== 1) {
+		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
 			error(node, 'invalid-rune-args-length', rune, [1]);
 		} else if (rune === '$state' && args.length > 1) {
 			error(node, 'invalid-rune-args-length', rune, [0, 1]);

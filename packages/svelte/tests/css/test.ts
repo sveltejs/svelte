@@ -4,7 +4,7 @@ import * as fs from 'node:fs';
 import { assert } from 'vitest';
 import { compile_directory, try_read_file } from '../helpers.js';
 import { assert_html_equal } from '../html_equal.js';
-import { createRoot } from 'svelte';
+import { mount, unmount } from 'svelte';
 import { suite, type BaseTest } from '../suite.js';
 import type { CompileOptions, Warning } from '#compiler';
 
@@ -25,8 +25,8 @@ const { test, run } = suite<CssTest>(async (config, cwd) => {
 	// TODO
 	// const expected_warnings = (config.warnings || []).map(normalize_warning);
 
-	compile_directory(cwd, 'client', { cssHash: () => 'svelte-xyz', ...config.compileOptions });
-	compile_directory(cwd, 'server', { cssHash: () => 'svelte-xyz', ...config.compileOptions });
+	await compile_directory(cwd, 'client', { cssHash: () => 'svelte-xyz', ...config.compileOptions });
+	await compile_directory(cwd, 'server', { cssHash: () => 'svelte-xyz', ...config.compileOptions });
 
 	const dom_css = fs.readFileSync(`${cwd}/_output/client/input.svelte.css`, 'utf-8').trim();
 	const ssr_css = fs.readFileSync(`${cwd}/_output/server/input.svelte.css`, 'utf-8').trim();
@@ -55,7 +55,7 @@ const { test, run } = suite<CssTest>(async (config, cwd) => {
 	if (expected.html !== null) {
 		const target = window.document.createElement('main');
 
-		const { $destroy } = createRoot(ClientComponent, { props: config.props ?? {}, target });
+		const component = mount(ClientComponent, { props: config.props ?? {}, target });
 
 		const html = target.innerHTML;
 
@@ -63,7 +63,7 @@ const { test, run } = suite<CssTest>(async (config, cwd) => {
 
 		assert_html_equal(html, expected.html);
 
-		$destroy();
+		unmount(component);
 		window.document.head.innerHTML = ''; // remove added styles
 
 		// TODO enable SSR tests

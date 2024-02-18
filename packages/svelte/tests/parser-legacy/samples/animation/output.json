@@ -39,6 +39,18 @@
 					"type": "Identifier",
 					"name": "thing",
 					"start": 17,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 17,
+							"character": 17
+						},
+						"end": {
+							"line": 1,
+							"column": 22,
+							"character": 22
+						}
+					},
 					"end": 22
 				},
 				"expression": {

@@ -1,4 +1,4 @@
-import { current_hydration_fragment, get_hydration_fragment } from './hydration.js';
+import { current_hydration_fragment, get_hydration_fragment, hydrating } from './hydration.js';
 import { get_descriptor } from './utils.js';
 
 // We cache the Node and Element prototype methods, so that we can avoid doing
@@ -171,7 +171,7 @@ export function empty() {
 /*#__NO_SIDE_EFFECTS__*/
 export function child(node) {
 	const child = first_child_get.call(node);
-	if (current_hydration_fragment !== null) {
+	if (hydrating) {
 		// Child can be null if we have an element with a single child, like `<p>{text}</p>`, where `text` is empty
 		if (child === null) {
 			const text = empty();
@@ -192,7 +192,7 @@ export function child(node) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function child_frag(node, is_text) {
-	if (current_hydration_fragment !== null) {
+	if (hydrating) {
 		const first_node = /** @type {Node[]} */ (node)[0];
 
 		// if an {expression} is empty during SSR, there might be no
@@ -225,7 +225,7 @@ export function child_frag(node, is_text) {
 /*#__NO_SIDE_EFFECTS__*/
 export function sibling(node, is_text = false) {
 	const next_sibling = next_sibling_get.call(node);
-	if (current_hydration_fragment !== null) {
+	if (hydrating) {
 		// if a sibling {expression} is empty during SSR, there might be no
 		// text node to hydrate — we must therefore create one
 		if (is_text && next_sibling?.nodeType !== 3) {
@@ -276,6 +276,7 @@ export function create_element(name) {
 }
 
 /**
+ * Expects to only be called in hydration mode
  * @param {Node} node
  * @returns {Node}
  */
@@ -283,7 +284,7 @@ function capture_fragment_from_node(node) {
 	if (
 		node.nodeType === 8 &&
 		/** @type {Comment} */ (node).data.startsWith('ssr:') &&
-		/** @type {Array<Element | Text | Comment>} */ (current_hydration_fragment).at(-1) !== node
+		current_hydration_fragment.at(-1) !== node
 	) {
 		const fragment = /** @type {Array<Element | Text | Comment>} */ (get_hydration_fragment(node));
 		const last_child = fragment.at(-1) || node;

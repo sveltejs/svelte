@@ -11,6 +11,7 @@ import {
 	current_hydration_fragment,
 	get_hydration_fragment,
 	hydrate_block_anchor,
+	hydrating,
 	set_current_hydration_fragment
 } from './hydration.js';
 import { clear_text_content, empty, map_get, map_set } from './operations.js';
@@ -61,7 +62,10 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	/** @type {null | import('./types.js').EffectSignal} */
 	let render = null;
 
-	/** Whether or not there was a "rendered fallback but want to render items" (or vice versa) hydration mismatch */
+	/**
+	 * Whether or not there was a "rendered fallback but want to render items" (or vice versa) hydration mismatch.
+	 * Needs to be a `let` or else it isn't treeshaken out
+	 */
 	let mismatch = false;
 
 	block.r =
@@ -107,7 +111,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 					// If the each block is controlled, then the anchor node will be the surrounding
 					// element in which the each block is rendered, which requires certain handling
 					// depending on whether we're in hydration mode or not
-					if (current_hydration_fragment === null) {
+					if (!hydrating) {
 						// Create a new anchor on the fly because there's none due to the optimization
 						anchor = empty();
 						block.a.appendChild(anchor);
@@ -153,13 +157,13 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 
 			const length = array.length;
 
-			if (current_hydration_fragment !== null) {
+			if (hydrating) {
 				const is_each_else_comment =
 					/** @type {Comment} */ (current_hydration_fragment?.[0])?.data === 'ssr:each_else';
 				// Check for hydration mismatch which can happen if the server renders the each fallback
 				// but the client has items, or vice versa. If so, remove everything inside the anchor and start fresh.
 				if ((is_each_else_comment && length) || (!is_each_else_comment && !length)) {
-					remove(/** @type {import('./types.js').TemplateNode[]} */ (current_hydration_fragment));
+					remove(current_hydration_fragment);
 					set_current_hydration_fragment(null);
 					mismatch = true;
 				} else if (is_each_else_comment) {
@@ -306,22 +310,22 @@ function reconcile_indexed_array(
 		}
 	} else {
 		var item;
-		var is_hydrating = current_hydration_fragment !== null;
+		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
+		let mismatch = false;
 		b_blocks = Array(b);
-		if (is_hydrating) {
+		if (hydrating) {
 			// Hydrate block
 			var hydration_list = /** @type {import('./types.js').TemplateNode[]} */ (
 				current_hydration_fragment
 			);
 			var hydrating_node = hydration_list[0];
 			for (; index < length; index++) {
-				var fragment = /** @type {Array<Text | Comment | Element>} */ (
-					get_hydration_fragment(hydrating_node)
-				);
+				var fragment = get_hydration_fragment(hydrating_node);
 				set_current_hydration_fragment(fragment);
 				if (!fragment) {
 					// If fragment is null, then that means that the server rendered less items than what
 					// the client code specifies -> break out and continue with client-side node creation
+					mismatch = true;
 					break;
 				}
 
@@ -357,7 +361,7 @@ function reconcile_indexed_array(
 			}
 		}
 
-		if (is_hydrating && current_hydration_fragment === null) {
+		if (mismatch) {
 			// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
 			set_current_hydration_fragment([]);
 		}
@@ -425,9 +429,10 @@ function reconcile_tracked_array(
 		var key;
 		var item;
 		var idx;
-		var is_hydrating = current_hydration_fragment !== null;
+		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
+		let mismatch = false;
 		b_blocks = Array(b);
-		if (is_hydrating) {
+		if (hydrating) {
 			// Hydrate block
 			var fragment;
 			var hydration_list = /** @type {import('./types.js').TemplateNode[]} */ (
@@ -435,13 +440,12 @@ function reconcile_tracked_array(
 			);
 			var hydrating_node = hydration_list[0];
 			while (b > 0) {
-				fragment = /** @type {Array<Text | Comment | Element>} */ (
-					get_hydration_fragment(hydrating_node)
-				);
+				fragment = get_hydration_fragment(hydrating_node);
 				set_current_hydration_fragment(fragment);
 				if (!fragment) {
 					// If fragment is null, then that means that the server rendered less items than what
 					// the client code specifies -> break out and continue with client-side node creation
+					mismatch = true;
 					break;
 				}
 
@@ -594,7 +598,7 @@ function reconcile_tracked_array(
 			}
 		}
 
-		if (is_hydrating && current_hydration_fragment === null) {
+		if (mismatch) {
 			// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
 			set_current_hydration_fragment([]);
 		}

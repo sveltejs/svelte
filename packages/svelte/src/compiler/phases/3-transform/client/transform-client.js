@@ -8,6 +8,7 @@ import { javascript_visitors } from './visitors/javascript.js';
 import { javascript_visitors_runes } from './visitors/javascript-runes.js';
 import { javascript_visitors_legacy } from './visitors/javascript-legacy.js';
 import { is_state_source, serialize_get_binding } from './utils.js';
+import { render_stylesheet } from '../css/index.js';
 
 /**
  * This function ensures visitor sets don't accidentally clobber each other
@@ -271,15 +272,15 @@ export function client_component(source, analysis, options) {
 	]);
 
 	const append_styles =
-		analysis.inject_styles && analysis.stylesheet.has_styles
+		analysis.inject_styles && analysis.css.ast
 			? () =>
 					component_block.body.push(
 						b.stmt(
 							b.call(
 								'$.append_styles',
 								b.id('$$anchor'),
-								b.literal(analysis.stylesheet.id),
-								b.literal(analysis.stylesheet.render(analysis.name, source, options.dev).code)
+								b.literal(analysis.css.hash),
+								b.literal(render_stylesheet(source, analysis, options).code)
 							)
 						)
 					)

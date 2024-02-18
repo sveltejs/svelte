@@ -1,0 +1,65 @@
+
+	.a.svelte-xyz {
+		color: green;
+
+		/* implicit & */
+		.b:where(.svelte-xyz) /* (unused) .unused*/ {
+			color: green;
+
+			.c:where(.svelte-xyz) {
+				color: green;
+			}
+
+			/* (unused) .unused {
+				color: red;
+
+				.c {
+					color: red;
+				}
+			}*/
+		}
+
+		/* (empty) .d {
+			.unused {
+				color: red;
+			}
+		}*/
+
+		/* explicit & */
+		& .b:where(.svelte-xyz) {
+			color: green;
+
+			/* (empty) .c {
+				& & {
+					color: red;
+				}
+			}*/
+		}
+
+		& & {
+			color: green;
+		}
+
+		/* silly but valid */
+		&& {
+			color: green;
+		}
+
+		.container:where(.svelte-xyz) & {
+			color: green;
+		}
+
+		/* (unused) &.b {
+			color: red;
+		}*/
+
+		/* (unused) .unused {
+			color: red;
+		}*/
+	}
+
+	blah {
+		.a.svelte-xyz {
+			color: green;
+		}
+	}

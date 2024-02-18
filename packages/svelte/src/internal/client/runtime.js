@@ -75,7 +75,11 @@ export let current_effect = null;
 /** @type {null | import('./types.js').Signal[]} */
 let current_dependencies = null;
 let current_dependencies_index = 0;
-/** @type {null | import('./types.js').Signal[]} */
+/**
+ * Tracks writes that the effect it's executed in doesn't listen to yet,
+ * so that the dependency can be added to the effect later on if it then reads it
+ * @type {null | import('./types.js').Signal[]}
+ */
 let current_untracked_writes = null;
 /** @type {null | import('./types.js').SignalDebug} */
 let last_inspected_signal = null;
@@ -766,9 +770,22 @@ export function flush_local_pre_effects(context) {
  * @returns {void}
  */
 export function flushSync(fn) {
+	flush_sync(fn);
+}
+
+/**
+ * Internal version of `flushSync` with the option to not flush previous effects.
+ * Returns the result of the passed function, if given.
+ * @param {() => any} [fn]
+ * @param {boolean} [flush_previous]
+ * @returns {any}
+ */
+export function flush_sync(fn, flush_previous = true) {
 	const previous_scheduler_mode = current_scheduler_mode;
 	const previous_queued_pre_and_render_effects = current_queued_pre_and_render_effects;
 	const previous_queued_effects = current_queued_effects;
+	let result;
+
 	try {
 		infinite_loop_guard();
 		/** @type {import('./types.js').EffectSignal[]} */
@@ -779,10 +796,12 @@ export function flushSync(fn) {
 		current_scheduler_mode = FLUSH_SYNC;
 		current_queued_pre_and_render_effects = pre_and_render_effects;
 		current_queued_effects = effects;
-		flush_queued_effects(previous_queued_pre_and_render_effects);
-		flush_queued_effects(previous_queued_effects);
+		if (flush_previous) {
+			flush_queued_effects(previous_queued_pre_and_render_effects);
+			flush_queued_effects(previous_queued_effects);
+		}
 		if (fn !== undefined) {
-			fn();
+			result = fn();
 		}
 		if (current_queued_pre_and_render_effects.length > 0 || effects.length > 0) {
 			flushSync();
@@ -799,6 +818,8 @@ export function flushSync(fn) {
 		current_queued_pre_and_render_effects = previous_queued_pre_and_render_effects;
 		current_queued_effects = previous_queued_effects;
 	}
+
+	return result;
 }
 
 /**
@@ -1683,7 +1704,8 @@ export function prop(props, key, flags, initial) {
 		var current = get(current_value);
 
 		// legacy nonsense — need to ensure the source is invalidated when necessary
-		if (is_signals_recorded) {
+		// also needed for when handling inspect logic so we can inspect the correct source signal
+		if (is_signals_recorded || (DEV && inspect_fn)) {
 			// set this so that we don't reset to the parent value if `d`
 			// is invalidated because of `invalidate_inner_signals` (rather
 			// than because the parent or child value changed)

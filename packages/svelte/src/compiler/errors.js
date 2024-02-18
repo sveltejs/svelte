@@ -107,7 +107,8 @@ const css = {
 	'invalid-css-global-selector-list': () =>
 		`:global(...) must not contain type or universal selectors when used in a compound selector`,
 	'invalid-css-selector': () => `Invalid selector`,
-	'invalid-css-identifier': () => 'Expected a valid CSS identifier'
+	'invalid-css-identifier': () => 'Expected a valid CSS identifier',
+	'invalid-nesting-selector': () => `Nesting selectors can only be used inside a rule`
 };
 
 /** @satisfies {Errors} */
@@ -208,7 +209,8 @@ const runes = {
 	'invalid-runes-mode-import': (name) => `${name} cannot be used in runes mode`,
 	'duplicate-props-rune': () => `Cannot use $props() more than once`,
 	'invalid-each-assignment': () =>
-		`Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. 'array[i] = value' instead of 'entry = value')`
+		`Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. 'array[i] = value' instead of 'entry = value')`,
+	'invalid-derived-call': () => `$derived.call(...) has been replaced with $derived.by(...)`
 };
 
 /** @satisfies {Errors} */

@@ -324,37 +324,36 @@ declare module 'svelte' {
 	 */
 	type NotFunction<T> = T extends Function ? never : T;
 	/**
-	 * Mounts the given component to the given target and returns a handle to the component's public accessors
-	 * as well as a `$set` and `$destroy` method to update the props of the component or destroy it.
-	 *
-	 * If you don't need to interact with the component after mounting, use `mount` instead to save some bytes.
-	 *
-	 * */
-	export function createRoot<Props extends Record<string, any>, Exports extends Record<string, any> | undefined, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
-		target: Node;
-		props?: Props | undefined;
-		events?: Events | undefined;
-		context?: Map<any, any> | undefined;
-		intro?: boolean | undefined;
-		recover?: false | undefined;
-	}): Exports & {
-		$destroy: () => void;
-		$set: (props: Partial<Props>) => void;
-	};
+	 * @deprecated Use `mount` or `hydrate` instead
+	 */
+	export function createRoot(): void;
 	/**
-	 * Mounts the given component to the given target and returns the accessors of the component and a function to destroy it.
-	 *
-	 * If you need to interact with the component after mounting, use `createRoot` instead.
+	 * Mounts a component to the given target and returns the exports and potentially the accessors (if compiled with `accessors: true`) of the component
 	 *
 	 * */
-	export function mount<Props extends Record<string, any>, Exports extends Record<string, any> | undefined, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
+	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
+		target: Node;
+		props?: Props | undefined;
+		events?: Events | undefined;
+		context?: Map<any, any> | undefined;
+		intro?: boolean | undefined;
+	}): Exports;
+	/**
+	 * Hydrates a component on the given target and returns the exports and potentially the accessors (if compiled with `accessors: true`) of the component
+	 *
+	 * */
+	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
 		target: Node;
 		props?: Props | undefined;
 		events?: Events | undefined;
 		context?: Map<any, any> | undefined;
 		intro?: boolean | undefined;
 		recover?: false | undefined;
-	}): [Exports, () => void];
+	}): Exports;
+	/**
+	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
+	 * */
+	export function unmount(component: Record<string, any>): void;
 	/**
 	 * Synchronously flushes any pending state changes and those that result from it.
 	 * */
@@ -672,10 +671,6 @@ declare module 'svelte/compiler' {
 		 * @default null
 		 */
 		cssOutputFilename?: string;
-
-		// Other Svelte 4 compiler options:
-		// enableSourcemap?: EnableSourcemap; // TODO bring back? https://github.com/sveltejs/svelte/pull/6835
-		// legacy?: boolean; // TODO compiler error noting the new purpose?
 	}
 
 	interface ModuleCompileOptions {
@@ -754,8 +749,11 @@ declare module 'svelte/compiler' {
 		legacy_dependencies: Binding[];
 		/** Legacy props: the `class` in `{ export klass as class}` */
 		prop_alias: string | null;
-		/** If this is set, all references should use this expression instead of the identifier name */
-		expression: Expression | null;
+		/**
+		 * If this is set, all references should use this expression instead of the identifier name.
+		 * If a function is given, it will be called with the identifier at that location and should return the new expression.
+		 */
+		expression: Expression | ((id: Identifier) => Expression) | null;
 		/** If this is set, all mutations should use this expression */
 		mutation: ((assignment: AssignmentExpression, context: Context<any, any>) => Expression) | null;
 	}
@@ -964,11 +962,30 @@ declare module 'svelte/compiler' {
 		| LegacyTitle
 		| LegacyWindow;
 
+	interface LegacyStyle extends BaseNode_1 {
+		type: 'Style';
+		attributes: any[];
+		content: {
+			start: number;
+			end: number;
+			styles: string;
+		};
+		children: any[];
+	}
+
+	interface LegacySelector extends BaseNode_1 {
+		type: 'Selector';
+		children: Array<Css.Combinator | Css.SimpleSelector>;
+	}
+
+	type LegacyCssNode = LegacyStyle | LegacySelector;
+
 	type LegacySvelteNode =
 		| LegacyConstTag
 		| LegacyElementLike
 		| LegacyAttributeLike
 		| LegacyAttributeShorthand
+		| LegacyCssNode
 		| Text;
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
@@ -1082,7 +1099,7 @@ declare module 'svelte/compiler' {
 		options: SvelteOptions | null;
 		fragment: Fragment;
 		/** The parsed `<style>` element, if exists */
-		css: Style | null;
+		css: Css.StyleSheet | null;
 		/** The parsed `<script>` element, if exists */
 		instance: Script | null;
 		/** The parsed `<script context="module">` element, if exists */
@@ -1320,6 +1337,7 @@ declare module 'svelte/compiler' {
 			svg: boolean;
 			/** `true` if contains a SpreadAttribute */
 			has_spread: boolean;
+			scoped: boolean;
 		};
 	}
 
@@ -1349,6 +1367,7 @@ declare module 'svelte/compiler' {
 			 * `null` means we can't know statically.
 			 */
 			svg: boolean | null;
+			scoped: boolean;
 		};
 	}
 
@@ -1407,7 +1426,7 @@ declare module 'svelte/compiler' {
 			/** Set if something in the array expression is shadowed within the each block */
 			array_name: Identifier | null;
 			index: Identifier;
-			item_name: string;
+			item: Identifier;
 			declarations: Map<string, Binding>;
 			/** List of bindings that are referenced within the expression */
 			references: Binding[];
@@ -1489,23 +1508,12 @@ declare module 'svelte/compiler' {
 		| Comment
 		| Block;
 
-	type SvelteNode = Node | TemplateNode | Fragment;
+	type SvelteNode = Node | TemplateNode | Fragment | Css.Node;
 
 	interface Script extends BaseNode {
 		type: 'Script';
 		context: string;
 		content: Program;
-	}
-
-	interface Style extends BaseNode {
-		type: 'Style';
-		attributes: any[]; // TODO
-		children: any[]; // TODO add CSS node types
-		content: {
-			start: number;
-			end: number;
-			styles: string;
-		};
 	}
 	/**
 	 * The result of a preprocessor run. If the preprocessor does not return a result, it is assumed that the code is unchanged.
@@ -1715,6 +1723,7 @@ declare module 'svelte/legacy' {
 	export function createClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(options: ComponentConstructorOptions<Props> & {
 		component: SvelteComponent<Props, Events, Slots>;
 		immutable?: boolean | undefined;
+		hydrate?: boolean | undefined;
 		recover?: false | undefined;
 	}): SvelteComponent<Props, Events, Slots> & Exports;
 	/**
@@ -2403,10 +2412,6 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * @default null
 		 */
 		cssOutputFilename?: string;
-
-		// Other Svelte 4 compiler options:
-		// enableSourcemap?: EnableSourcemap; // TODO bring back? https://github.com/sveltejs/svelte/pull/6835
-		// legacy?: boolean; // TODO compiler error noting the new purpose?
 	}
 
 	interface ModuleCompileOptions {
@@ -2501,11 +2506,11 @@ declare function $derived<T>(expression: T): T;
 declare namespace $derived {
 	/**
 	 * Sometimes you need to create complex derivations that don't fit inside a short expression.
-	 * In these cases, you can use `$derived.call` which accepts a function as its argument.
+	 * In these cases, you can use `$derived.by` which accepts a function as its argument.
 	 *
 	 * Example:
 	 * ```ts
-	 * let total = $derived.call(() => {
+	 * let total = $derived.by(() => {
 	 *   let result = 0;
 	 *	 for (const n of numbers) {
 	 *	   result += n;
@@ -2514,9 +2519,9 @@ declare namespace $derived {
 	 * });
 	 * ```
 	 *
-	 * https://svelte-5-preview.vercel.app/docs/runes#$derived-call
+	 * https://svelte-5-preview.vercel.app/docs/runes#$derived-by
 	 */
-	export function call<T>(fn: () => T): T;
+	export function by<T>(fn: () => T): T;
 }
 
 /**
