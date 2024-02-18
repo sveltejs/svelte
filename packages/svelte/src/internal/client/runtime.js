@@ -1039,9 +1039,12 @@ export function set(signal, value) {
 
 		// @ts-expect-error
 		if (component && !signal.owners.has(component)) {
+			// eslint-disable-next-line no-console
 			console.warn(
 				'Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use callback instead.'
 			);
+
+			// eslint-disable-next-line no-console
 			console.trace();
 		}
 	}
