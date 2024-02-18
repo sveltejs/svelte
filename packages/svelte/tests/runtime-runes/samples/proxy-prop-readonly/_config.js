@@ -1,5 +1,14 @@
 import { test } from '../../test';
 
+/** @type {typeof console.warn} */
+let warn;
+
+/** @type {typeof console.trace} */
+let trace;
+
+/** @type {any[]} */
+let warnings = [];
+
 export default test({
 	html: `<button>clicks: 0</button>`,
 
@@ -7,13 +16,32 @@ export default test({
 		dev: true
 	},
 
+	before_test: () => {
+		warn = console.warn;
+		trace = console.trace;
+
+		console.warn = (...args) => {
+			warnings.push(...args);
+		};
+
+		console.trace = () => {};
+	},
+
+	after_test: () => {
+		console.warn = warn;
+		console.trace = trace;
+
+		warnings = [];
+	},
+
 	async test({ assert, target }) {
 		const btn = target.querySelector('button');
 		await btn?.click();
 
-		assert.htmlEqual(target.innerHTML, `<button>clicks: 0</button>`);
-	},
+		assert.htmlEqual(target.innerHTML, `<button>clicks: 1</button>`);
 
-	runtime_error:
-		'Non-bound props cannot be mutated — to make the `count` settable, ensure the object it is used within is bound as a prop `bind:<prop>={...}`. Fallback values can never be mutated.'
+		assert.deepEqual(warnings, [
+			'Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use callback instead.'
+		]);
+	}
 });

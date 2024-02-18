@@ -1034,7 +1034,10 @@ export function set(signal, value) {
 	if (DEV && 'o' in signal) {
 		const component = get_component();
 		if (component && !signal.o.has(component)) {
-			throw new Error(`illegal mutation`); // TODO better error
+			console.warn(
+				'Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use callback instead.'
+			);
+			console.trace();
 		}
 	}
 
