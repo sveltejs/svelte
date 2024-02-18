@@ -335,6 +335,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 */
 	const SvelteDirective = (node, context) => {
 		context.state.scope.reference(b.id(node.name), context.path);
+
+		context.next(context.state);
 	};
 
 	walk(ast, state, {
