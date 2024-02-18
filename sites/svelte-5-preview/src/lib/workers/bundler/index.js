@@ -485,7 +485,7 @@ async function bundle({ uid, files }) {
 	lookup.set('./__entry.js', {
 		name: '__entry',
 		source: `
-			export { mount } from 'svelte';
+			export { mount, unmount } from 'svelte';
 			export {default as App} from './App.svelte';
 		`,
 		type: 'js',
