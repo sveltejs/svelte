@@ -40,6 +40,7 @@ export {
 	freeze,
 	init
 } from './client/runtime.js';
+export { default as if } from './client/dom/blocks/if.js';
 export * from './client/each.js';
 export * from './client/render.js';
 export * from './client/validate.js';

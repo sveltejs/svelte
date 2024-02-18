@@ -32,32 +32,6 @@ export function create_root_block(intro) {
 	};
 }
 
-/** @returns {import('./types.js').IfBlock} */
-export function create_if_block() {
-	return {
-		// alternate transitions
-		a: null,
-		// alternate effect
-		ae: null,
-		// consequent transitions
-		c: null,
-		// consequent effect
-		ce: null,
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('./types.js').Block} */ (current_block),
-		// transition
-		r: null,
-		// type
-		t: IF_BLOCK,
-		// value
-		v: false
-	};
-}
-
 /** @returns {import('./types.js').KeyBlock} */
 export function create_key_block() {
 	return {
