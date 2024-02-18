@@ -857,14 +857,16 @@ function serialize_inline_component(node, component_name, context) {
 					context.visit(attribute.expression)
 				);
 
-				binding_initializers.push(
-					b.stmt(
-						b.call(
-							b.id('$.pre_effect'),
-							b.thunk(b.call(b.id('$.add_owner'), expression, b.id(component_name)))
+				if (context.state.options.dev) {
+					binding_initializers.push(
+						b.stmt(
+							b.call(
+								b.id('$.pre_effect'),
+								b.thunk(b.call(b.id('$.add_owner'), expression, b.id(component_name)))
+							)
 						)
-					)
-				);
+					);
+				}
 
 				push_prop(b.get(attribute.name, [b.return(expression)]));
 
