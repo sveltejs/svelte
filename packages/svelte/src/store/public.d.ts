@@ -31,6 +31,7 @@ export interface Readable<T> {
 	 * @param invalidate cleanup callback
 	 */
 	subscribe(this: void, run: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
+	readonly value: T;
 }
 
 /** Writable interface for both updating and subscribing. */

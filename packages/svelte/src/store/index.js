@@ -16,8 +16,13 @@ const subscriber_queue = [];
  * @returns {import('./public').Readable<T>}
  */
 export function readable(value, start) {
+	const store = writable(value, start)
+
 	return {
-		subscribe: writable(value, start).subscribe
+		subscribe: store.subscribe,
+		get value() {
+			return store.value
+		}
 	};
 }
 
@@ -30,7 +35,7 @@ export function safe_not_equal(a, b) {
 	// eslint-disable-next-line eqeqeq
 	return a != a
 		? // eslint-disable-next-line eqeqeq
-			b == b
+		b == b
 		: a !== b || (a && typeof a === 'object') || typeof a === 'function';
 }
 
@@ -79,7 +84,7 @@ export function writable(value, start = noop) {
 	 * @returns {void}
 	 */
 	function update(fn) {
-		set(fn(/** @type {T} */ (value)));
+		set(value = fn(/** @type {T} */(value)));
 	}
 
 	/**
@@ -94,7 +99,7 @@ export function writable(value, start = noop) {
 		if (subscribers.size === 1) {
 			stop = start(set, update) || noop;
 		}
-		run(/** @type {T} */ (value));
+		run(/** @type {T} */(value));
 		return () => {
 			subscribers.delete(subscriber);
 			if (subscribers.size === 0 && stop) {
@@ -103,7 +108,14 @@ export function writable(value, start = noop) {
 			}
 		};
 	}
-	return { set, update, subscribe };
+	return {
+		set,
+		update,
+		subscribe,
+		get value() {
+			return /** @type {T} */ (/** @type {unknown} */ value)
+		}
+	};
 }
 
 /**
@@ -213,7 +225,10 @@ export function derived(stores, fn, initial_value) {
 export function readonly(store) {
 	return {
 		// @ts-expect-error TODO i suspect the bind is unnecessary
-		subscribe: store.subscribe.bind(store)
+		subscribe: store.subscribe.bind(store),
+		get value() {
+			return store.value
+		}
 	};
 }
 
