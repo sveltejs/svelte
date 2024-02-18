@@ -260,8 +260,11 @@ export function client_component(source, analysis, options) {
 		}
 	}
 
+	const push_args = [b.id('$$props'), b.literal(analysis.runes)];
+	if (options.dev) push_args.push(b.id(analysis.name));
+
 	const component_block = b.block([
-		b.stmt(b.call('$.push', b.id('$$props'), b.literal(analysis.runes))),
+		b.stmt(b.call('$.push', ...push_args)),
 		...store_setup,
 		...legacy_reactive_declarations,
 		...group_binding_declarations,

@@ -1934,9 +1934,10 @@ function on_destroy(fn) {
 /**
  * @param {Record<string, unknown>} props
  * @param {any} runes
+ * @param {Function} [fn]
  * @returns {void}
  */
-export function push(props, runes = false) {
+export function push(props, runes = false, fn) {
 	current_component_context = {
 		a: null,
 		// context
@@ -1958,9 +1959,9 @@ export function push(props, runes = false) {
 	};
 
 	if (DEV) {
-		// component function (TODO maybe just pass this in, in dev?)
+		// component function
 		// @ts-expect-error
-		current_component_context.function = get_component();
+		current_component_context.function = fn;
 	}
 }
 
