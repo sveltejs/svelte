@@ -794,7 +794,6 @@ export function flush_sync(fn, flush_previous = true) {
 		flush_count = 0;
 	} finally {
 		current_scheduler_mode = previous_scheduler_mode;
-		// TODO is this correct to reset the previous queues? They're flushed if flush_previous is true so should we set it to empty in that case instead?
 		current_queued_pre_and_render_effects = previous_queued_pre_and_render_effects;
 		current_queued_effects = previous_queued_effects;
 	}
