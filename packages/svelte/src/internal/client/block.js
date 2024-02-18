@@ -32,22 +32,6 @@ export function create_root_block(intro) {
 	};
 }
 
-/** @returns {import('./types.js').KeyBlock} */
-export function create_key_block() {
-	return {
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('./types.js').Block} */ (current_block),
-		// transition
-		r: null,
-		// type
-		t: KEY_BLOCK
-	};
-}
-
 /** @returns {import('./types.js').HeadBlock} */
 export function create_head_block() {
 	return {
@@ -93,24 +77,6 @@ export function create_dynamic_component_block() {
 		r: null,
 		// type
 		t: DYNAMIC_COMPONENT_BLOCK
-	};
-}
-
-/** @returns {import('./types.js').AwaitBlock} */
-export function create_await_block() {
-	return {
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('./types.js').Block} */ (current_block),
-		// pending
-		n: true,
-		// transition
-		r: null,
-		// type
-		t: AWAIT_BLOCK
 	};
 }
 

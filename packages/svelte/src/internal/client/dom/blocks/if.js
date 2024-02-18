@@ -48,7 +48,7 @@ function create_if_block() {
  * @param {null | ((anchor: Node) => void)} alternate_fn
  * @returns {void}
  */
-export default function (anchor_node, condition_fn, consequent_fn, alternate_fn) {
+export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	const block = create_if_block();
 	hydrate_block_anchor(anchor_node);
 	/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
