@@ -1034,7 +1034,7 @@ export function get(signal) {
  * @returns {V}
  */
 export function set(signal, value) {
-	if (DEV && 'o' in signal) {
+	if (DEV && 'owners' in signal) {
 		const component = get_component();
 
 		// @ts-expect-error
