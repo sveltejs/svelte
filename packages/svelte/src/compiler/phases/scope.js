@@ -331,7 +331,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	}
 
 	/**
-	 * typedef {}
 	 * @type {import('zimmerframe').Visitor<import('#compiler').UseOrTransitionOrAnimate, State, import('#compiler').SvelteNode>}
 	 */
 	const SvelteDirective = (node, { state, path, visit }) => {
