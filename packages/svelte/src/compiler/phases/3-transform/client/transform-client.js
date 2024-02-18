@@ -287,12 +287,8 @@ export function client_component(source, analysis, options) {
 			: () => {};
 
 	if (properties.length > 0) {
-		component_block.body.push(
-			b.var('$$accessors', b.object(properties)),
-			b.stmt(b.call('$.pop', b.id('$$accessors')))
-		);
 		append_styles();
-		component_block.body.push(b.return(b.id('$$accessors')));
+		component_block.body.push(b.return(b.call('$.pop', b.object(properties))));
 	} else {
 		component_block.body.push(b.stmt(b.call('$.pop')));
 		append_styles();

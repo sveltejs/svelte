@@ -1906,14 +1906,15 @@ export function push(props, runes = false) {
 }
 
 /**
- * @param {Record<string, any>} [accessors]
- * @returns {void}
+ * @template {Record<string, any>} T
+ * @param {T} component
+ * @returns {T | void}
  */
-export function pop(accessors) {
+export function pop(component) {
 	const context_stack_item = current_component_context;
 	if (context_stack_item !== null) {
-		if (accessors !== undefined) {
-			context_stack_item.a = accessors;
+		if (component !== undefined) {
+			context_stack_item.a = component;
 		}
 		const effects = context_stack_item.e;
 		if (effects !== null) {
@@ -1925,6 +1926,7 @@ export function pop(accessors) {
 		current_component_context = context_stack_item.p;
 		context_stack_item.m = true;
 	}
+	return component;
 }
 
 /**
