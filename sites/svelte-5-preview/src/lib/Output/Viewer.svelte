@@ -131,9 +131,9 @@
 
 					const __repl_exports = ${$bundle.client?.code};
 					{
-						const { mount, App } = __repl_exports;
-						const [, destroy] = mount(App, { target: document.body });
-						window.__unmount_previous = destroy;
+						const { mount, unmount, App } = __repl_exports;
+						const component = mount(App, { target: document.body });
+						window.__unmount_previous = () => unmount(component);
 					}
 					//# sourceURL=playground:output
 				`);
