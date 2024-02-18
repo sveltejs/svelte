@@ -189,7 +189,8 @@ function create_source_signal(flags, value) {
 			// value
 			v: value,
 			// this is for DEV only
-			inspect: new Set()
+			inspect: new Set(),
+			owners: new Set()
 		};
 	}
 	return {
@@ -956,8 +957,10 @@ export function unsubscribe_on_destroy(stores) {
  */
 export function get(signal) {
 	if (DEV) {
-		if (signal.o && current_owner_override) {
-			signal.o.add(current_owner_override);
+		// @ts-expect-error
+		if (signal.owners && current_owner_override) {
+			// @ts-expect-error
+			signal.owners.add(current_owner_override);
 		}
 
 		// @ts-expect-error
@@ -1033,7 +1036,9 @@ export function get(signal) {
 export function set(signal, value) {
 	if (DEV && 'o' in signal) {
 		const component = get_component();
-		if (component && !signal.o.has(component)) {
+
+		// @ts-expect-error
+		if (component && !signal.owners.has(component)) {
 			console.warn(
 				'Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use callback instead.'
 			);
@@ -1354,9 +1359,12 @@ export function source(initial_value) {
  */
 function bind_signal_to_component_context(signal) {
 	if (DEV) {
-		const owner = current_owner ?? current_component_context?.f;
+		// @ts-expect-error
+		const owner = current_owner ?? current_component_context?.function;
+
 		if (owner) {
-			(signal.o ??= new Set()).add(owner);
+			// @ts-expect-error
+			(signal.owners ??= new Set()).add(owner);
 		}
 	}
 
@@ -1940,10 +1948,14 @@ export function push(props, runes = false) {
 		// runes
 		r: runes,
 		// update_callbacks
-		u: null,
-		// component function (TODO maybe just pass this in, in dev?)
-		f: DEV && get_component()
+		u: null
 	};
+
+	if (DEV) {
+		// component function (TODO maybe just pass this in, in dev?)
+		// @ts-expect-error
+		current_component_context.function = get_component();
+	}
 }
 
 /**

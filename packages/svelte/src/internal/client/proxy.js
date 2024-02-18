@@ -57,7 +57,8 @@ export function proxy(value, immutable = true) {
 					i: immutable,
 					p: proxy,
 					t: value,
-					o: DEV && (current_owner ?? current_component_context?.f)
+					// @ts-expect-error
+					o: DEV && (current_owner ?? current_component_context?.function)
 				}),
 				writable: true,
 				enumerable: false
