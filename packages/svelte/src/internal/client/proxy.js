@@ -10,7 +10,6 @@ import {
 	mutable_source,
 	batch_inspect,
 	set_current_owner,
-	current_component_context,
 	current_owner
 } from './runtime.js';
 import {
@@ -23,7 +22,6 @@ import {
 	is_frozen,
 	object_prototype
 } from './utils.js';
-import { get_component } from './dev.js';
 
 export const STATE_SYMBOL = Symbol('$state');
 
@@ -182,9 +180,9 @@ const state_proxy_handler = {
 			(!(prop in target) || get_descriptor(target, prop)?.writable)
 		) {
 			const previous_owner = current_owner;
-			set_current_owner(metadata.o);
+			if (DEV) set_current_owner(metadata.o);
 			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i));
-			set_current_owner(previous_owner);
+			if (DEV) set_current_owner(previous_owner);
 			metadata.s.set(prop, s);
 		}
 
