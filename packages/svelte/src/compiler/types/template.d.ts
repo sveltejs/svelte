@@ -254,15 +254,15 @@ interface UseDirective extends BaseNode {
 	expression: null | Expression;
 }
 
-export type UseOrTransitionOrAnimate = UseDirective | TransitionDirective | AnimateDirective;
-
 export type Directive =
-	| UseOrTransitionOrAnimate
+	| AnimateDirective
 	| BindDirective
 	| ClassDirective
 	| LetDirective
 	| OnDirective
-	| StyleDirective;
+	| StyleDirective
+	| TransitionDirective
+	| UseDirective;
 
 interface BaseElement extends BaseNode {
 	name: string;

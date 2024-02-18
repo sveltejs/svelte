@@ -1300,15 +1300,15 @@ declare module 'svelte/compiler' {
 		expression: null | Expression;
 	}
 
-	type UseOrTransitionOrAnimate = UseDirective | TransitionDirective | AnimateDirective;
-
 	type Directive =
-		| UseOrTransitionOrAnimate
+		| AnimateDirective
 		| BindDirective
 		| ClassDirective
 		| LetDirective
 		| OnDirective
-		| StyleDirective;
+		| StyleDirective
+		| TransitionDirective
+		| UseDirective;
 
 	interface BaseElement extends BaseNode {
 		name: string;
