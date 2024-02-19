@@ -2,21 +2,23 @@ import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
 	EACH_IS_CONTROLLED,
-	EACH_IS_IMMUTABLE,
+	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED
-} from '../../constants.js';
-import { create_each_block, create_each_item_block } from './block.js';
+} from '../../../../constants.js';
+import { noop } from '../../../common.js';
+import { EACH_BLOCK, EACH_ITEM_BLOCK } from '../../block.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,
 	hydrate_block_anchor,
 	hydrating,
 	set_current_hydration_fragment
-} from './hydration.js';
-import { clear_text_content, empty, map_get, map_set } from './operations.js';
-import { insert, remove } from './reconciler.js';
+} from '../../hydration.js';
+import { clear_text_content, empty, map_get, map_set } from '../../operations.js';
+import { insert, remove } from '../../reconciler.js';
 import {
+	current_block,
 	destroy_signal,
 	execute_effect,
 	mutable_source,
@@ -24,15 +26,71 @@ import {
 	render_effect,
 	set_signal_value,
 	source
-} from './runtime.js';
-import { trigger_transitions } from './transitions.js';
-import { is_array } from './utils.js';
+} from '../../runtime.js';
+import { trigger_transitions } from '../../transitions.js';
+import { is_array } from '../../utils.js';
 
 const NEW_BLOCK = -1;
 const MOVED_BLOCK = 99999999;
 const LIS_BLOCK = -2;
 
-function no_op() {}
+/**
+ * @param {number} flags
+ * @param {Element | Comment} anchor
+ * @returns {import('../../types.js').EachBlock}
+ */
+export function create_each_block(flags, anchor) {
+	return {
+		// anchor
+		a: anchor,
+		// dom
+		d: null,
+		// flags
+		f: flags,
+		// items
+		v: [],
+		// effect
+		e: null,
+		p: /** @type {import('../../types.js').Block} */ (current_block),
+		// transition
+		r: null,
+		// transitions
+		s: [],
+		// type
+		t: EACH_BLOCK
+	};
+}
+
+/**
+ * @param {any | import('../../types.js').Signal<any>} item
+ * @param {number | import('../../types.js').Signal<number>} index
+ * @param {null | unknown} key
+ * @returns {import('../../types.js').EachItemBlock}
+ */
+export function create_each_item_block(item, index, key) {
+	return {
+		// animate transition
+		a: null,
+		// dom
+		d: null,
+		// effect
+		e: null,
+		// index
+		i: index,
+		// key
+		k: key,
+		// item
+		v: item,
+		// parent
+		p: /** @type {import('../../types.js').EachBlock} */ (current_block),
+		// transition
+		r: null,
+		// transitions
+		s: null,
+		// type
+		t: EACH_ITEM_BLOCK
+	};
+}
 
 /**
  * @template V
@@ -40,7 +98,7 @@ function no_op() {}
  * @param {() => V[]} collection
  * @param {number} flags
  * @param {null | ((item: V) => string)} key_fn
- * @param {(anchor: null, item: V, index: import('./types.js').MaybeSignal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
  * @returns {void}
@@ -49,7 +107,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 	const block = create_each_block(flags, anchor_node);
 
-	/** @type {null | import('./types.js').Render} */
+	/** @type {null | import('../../types.js').Render} */
 	let current_fallback = null;
 	hydrate_block_anchor(anchor_node, is_controlled);
 
@@ -59,7 +117,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	/** @type {Array<string> | null} */
 	let keys = null;
 
-	/** @type {null | import('./types.js').EffectSignal} */
+	/** @type {null | import('../../types.js').EffectSignal} */
 	let render = null;
 
 	/**
@@ -69,9 +127,9 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	let mismatch = false;
 
 	block.r =
-		/** @param {import('./types.js').Transition} transition */
+		/** @param {import('../../types.js').Transition} transition */
 		(transition) => {
-			const fallback = /** @type {import('./types.js').Render} */ (current_fallback);
+			const fallback = /** @type {import('../../types.js').Render} */ (current_fallback);
 			const transitions = fallback.s;
 			transitions.add(transition);
 			transition.f(() => {
@@ -90,7 +148,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		};
 
 	const create_fallback_effect = () => {
-		/** @type {import('./types.js').Render} */
+		/** @type {import('../../types.js').Render} */
 		const fallback = {
 			d: null,
 			e: null,
@@ -131,7 +189,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		current_fallback = fallback;
 	};
 
-	/** @param {import('./types.js').EachBlock} block */
+	/** @param {import('../../types.js').EachBlock} block */
 	const render_each = (block) => {
 		const flags = block.f;
 		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
@@ -152,7 +210,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			if (key_fn !== null) {
 				keys = array.map(key_fn);
 			} else if ((flags & EACH_KEYED) === 0) {
-				array.map(no_op);
+				array.map(noop);
 			}
 
 			const length = array.length;
@@ -168,7 +226,9 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 					mismatch = true;
 				} else if (is_each_else_comment) {
 					// Remove the each_else comment node or else it will confuse the subsequent hydration algorithm
-					/** @type {import('./types.js').TemplateNode[]} */ (current_hydration_fragment).shift();
+					/** @type {import('../../types.js').TemplateNode[]} */ (
+						current_hydration_fragment
+					).shift();
 				}
 			}
 
@@ -226,7 +286,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		}
 		// Clear the array
 		reconcile_fn([], block, anchor_node, is_controlled, render_fn, flags, false, keys);
-		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (render));
+		destroy_signal(/** @type {import('../../types.js').EffectSignal} */ (render));
 	});
 
 	block.e = each;
@@ -238,7 +298,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
  * @param {() => V[]} collection
  * @param {number} flags
  * @param {null | ((item: V) => string)} key_fn
- * @param {(anchor: null, item: V, index: import('./types.js').MaybeSignal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
@@ -251,7 +311,7 @@ export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fa
  * @param {Element | Comment} anchor_node
  * @param {() => V[]} collection
  * @param {number} flags
- * @param {(anchor: null, item: V, index: import('./types.js').MaybeSignal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
@@ -262,10 +322,10 @@ export function each_indexed(anchor_node, collection, flags, render_fn, fallback
 /**
  * @template V
  * @param {Array<V>} array
- * @param {import('./types.js').EachBlock} each_block
+ * @param {import('../../types.js').EachBlock} each_block
  * @param {Element | Comment | Text} dom
  * @param {boolean} is_controlled
- * @param {(anchor: null, item: V, index: number | import('./types.js').Signal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: number | import('../../types.js').Signal<number>) => void} render_fn
  * @param {number} flags
  * @param {boolean} apply_transitions
  * @returns {void}
@@ -290,7 +350,7 @@ function reconcile_indexed_array(
 	var length = Math.max(a, b);
 	var index = 0;
 
-	/** @type {Array<import('./types.js').EachItemBlock>} */
+	/** @type {Array<import('../../types.js').EachItemBlock>} */
 	var b_blocks;
 	var block;
 
@@ -315,7 +375,7 @@ function reconcile_indexed_array(
 		b_blocks = Array(b);
 		if (hydrating) {
 			// Hydrate block
-			var hydration_list = /** @type {import('./types.js').TemplateNode[]} */ (
+			var hydration_list = /** @type {import('../../types.js').TemplateNode[]} */ (
 				current_hydration_fragment
 			);
 			var hydrating_node = hydration_list[0];
@@ -333,7 +393,7 @@ function reconcile_indexed_array(
 				block = each_item_block(item, null, index, render_fn, flags);
 				b_blocks[index] = block;
 
-				hydrating_node = /** @type {import('./types.js').TemplateNode} */ (
+				hydrating_node = /** @type {import('../../types.js').TemplateNode} */ (
 					/** @type {Node} */ (/** @type {Node} */ (fragment.at(-1)).nextSibling).nextSibling
 				);
 			}
@@ -376,10 +436,10 @@ function reconcile_indexed_array(
  * https://github.com/localvoid/ivi/blob/9f1bd0918f487da5b131941228604763c5d8ef56/packages/ivi/src/client/core.ts#L968
  * @template V
  * @param {Array<V>} array
- * @param {import('./types.js').EachBlock} each_block
+ * @param {import('../../types.js').EachBlock} each_block
  * @param {Element | Comment | Text} dom
  * @param {boolean} is_controlled
- * @param {(anchor: null, item: V, index: number | import('./types.js').Signal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: number | import('../../types.js').Signal<number>) => void} render_fn
  * @param {number} flags
  * @param {boolean} apply_transitions
  * @param {Array<string> | null} keys
@@ -405,7 +465,7 @@ function reconcile_tracked_array(
 	/** @type {number} */
 	var b = array.length;
 
-	/** @type {Array<import('./types.js').EachItemBlock>} */
+	/** @type {Array<import('../../types.js').EachItemBlock>} */
 	var b_blocks;
 	var block;
 
@@ -435,7 +495,7 @@ function reconcile_tracked_array(
 		if (hydrating) {
 			// Hydrate block
 			var fragment;
-			var hydration_list = /** @type {import('./types.js').TemplateNode[]} */ (
+			var hydration_list = /** @type {import('../../types.js').TemplateNode[]} */ (
 				current_hydration_fragment
 			);
 			var hydrating_node = hydration_list[0];
@@ -457,7 +517,7 @@ function reconcile_tracked_array(
 
 				// Get the <!--ssr:..--> tag of the next item in the list
 				// The fragment array can be empty if each block has no content
-				hydrating_node = /** @type {import('./types.js').TemplateNode} */ (
+				hydrating_node = /** @type {import('../../types.js').TemplateNode} */ (
 					/** @type {Node} */ ((fragment.at(-1) || hydrating_node).nextSibling).nextSibling
 				);
 			}
@@ -610,8 +670,8 @@ function reconcile_tracked_array(
 /**
  * The server could have rendered more list items than the client specifies.
  * In that case, we need to remove the remaining server-rendered nodes.
- * @param {import('./types.js').TemplateNode[]} hydration_list
- * @param {import('./types.js').TemplateNode | null} next_node
+ * @param {import('../../types.js').TemplateNode[]} hydration_list
+ * @param {import('../../types.js').TemplateNode | null} next_node
  */
 function remove_excess_hydration_nodes(hydration_list, next_node) {
 	if (next_node === null) return;
@@ -695,14 +755,14 @@ function mark_lis(a) {
 }
 
 /**
- * @param {import('./types.js').Block} block
+ * @param {import('../../types.js').Block} block
  * @param {Element | Comment | Text} dom
  * @param {boolean} is_controlled
  * @param {null | Text | Element | Comment} sibling
  * @returns {Text | Element | Comment}
  */
 function insert_each_item_block(block, dom, is_controlled, sibling) {
-	var current = /** @type {import('./types.js').TemplateNode} */ (block.d);
+	var current = /** @type {import('../../types.js').TemplateNode} */ (block.d);
 
 	if (sibling === null) {
 		if (is_controlled) {
@@ -716,7 +776,7 @@ function insert_each_item_block(block, dom, is_controlled, sibling) {
 }
 
 /**
- * @param {import('./types.js').Block} block
+ * @param {import('../../types.js').Block} block
  * @returns {Text | Element | Comment}
  */
 function get_first_child(block) {
@@ -730,7 +790,7 @@ function get_first_child(block) {
 }
 
 /**
- * @param {Array<import('./types.js').EachItemBlock>} active_transitions
+ * @param {Array<import('../../types.js').EachItemBlock>} active_transitions
  * @returns {void}
  */
 function destroy_active_transition_blocks(active_transitions) {
@@ -755,7 +815,7 @@ function destroy_active_transition_blocks(active_transitions) {
 }
 
 /**
- * @param {import('./types.js').Block} block
+ * @param {import('../../types.js').Block} block
  * @returns {Text | Element | Comment}
  */
 export function get_first_element(block) {
@@ -774,7 +834,7 @@ export function get_first_element(block) {
 }
 
 /**
- * @param {import('./types.js').EachItemBlock} block
+ * @param {import('../../types.js').EachItemBlock} block
  * @param {any} item
  * @param {number} index
  * @param {number} type
@@ -793,15 +853,15 @@ function update_each_item_block(block, item, index, type) {
 		each_animation(block, transitions);
 	}
 	if (index_is_reactive) {
-		set_signal_value(/** @type {import('./types.js').Signal<number>} */ (block.i), index);
+		set_signal_value(/** @type {import('../../types.js').Signal<number>} */ (block.i), index);
 	} else {
 		block.i = index;
 	}
 }
 
 /**
- * @param {import('./types.js').EachItemBlock} block
- * @param {null | Array<import('./types.js').Block>} transition_block
+ * @param {import('../../types.js').EachItemBlock} block
+ * @param {null | Array<import('../../types.js').Block>} transition_block
  * @param {boolean} apply_transitions
  * @param {any} controlled
  * @returns {void}
@@ -835,7 +895,7 @@ export function destroy_each_item_block(
 	if (!controlled && dom !== null) {
 		remove(dom);
 	}
-	destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
+	destroy_signal(/** @type {import('../../types.js').EffectSignal} */ (block.e));
 }
 
 /**
@@ -843,24 +903,24 @@ export function destroy_each_item_block(
  * @param {V} item
  * @param {unknown} key
  * @param {number} index
- * @param {(anchor: null, item: V, index: number | import('./types.js').Signal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: number | import('../../types.js').Signal<number>) => void} render_fn
  * @param {number} flags
- * @returns {import('./types.js').EachItemBlock}
+ * @returns {import('../../types.js').EachItemBlock}
  */
 function each_item_block(item, key, index, render_fn, flags) {
 	const each_item_not_reactive = (flags & EACH_ITEM_REACTIVE) === 0;
 
 	const item_value = each_item_not_reactive
 		? item
-		: (flags & EACH_IS_IMMUTABLE) === 0
-			? mutable_source(item)
-			: source(item);
+		: (flags & EACH_IS_STRICT_EQUALS) !== 0
+			? source(item)
+			: mutable_source(item);
 
 	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
 	const block = create_each_item_block(item_value, index_value, key);
 
 	const effect = render_effect(
-		/** @param {import('./types.js').EachItemBlock} block */
+		/** @param {import('../../types.js').EachItemBlock} block */
 		(block) => {
 			render_fn(null, block.v, block.i);
 		},

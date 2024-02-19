@@ -28,7 +28,7 @@ import {
 	DOMBooleanAttributes,
 	EACH_INDEX_REACTIVE,
 	EACH_IS_CONTROLLED,
-	EACH_IS_IMMUTABLE,
+	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED
 } from '../../../../../constants.js';
@@ -2259,8 +2259,8 @@ export const template_visitors = {
 			each_type |= EACH_IS_CONTROLLED;
 		}
 
-		if (context.state.analysis.immutable) {
-			each_type |= EACH_IS_IMMUTABLE;
+		if (context.state.analysis.runes) {
+			each_type |= EACH_IS_STRICT_EQUALS;
 		}
 
 		// Find the parent each blocks which contain the arrays to invalidate
