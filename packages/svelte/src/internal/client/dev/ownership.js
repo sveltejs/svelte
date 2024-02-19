@@ -103,9 +103,19 @@ export function check_ownership(signal) {
 
 	// @ts-expect-error
 	if (component && signal.owners.size > 0 && !signal.owners.has(component)) {
+		// @ts-expect-error
+		let owner = [...signal.owners][0];
+
+		let message =
+			// @ts-expect-error
+			owner.filename !== component.filename
+				? // @ts-expect-error
+					`${component.filename} mutated a value owned by ${owner.filename}. This is strongly discouraged`
+				: 'Mutating a value outside the component that created it is strongly discouraged';
+
 		// eslint-disable-next-line no-console
 		console.warn(
-			'Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use callback instead.'
+			`${message}. Consider passing values to child components with \`bind:\`, or use a callback instead.`
 		);
 
 		// eslint-disable-next-line no-console

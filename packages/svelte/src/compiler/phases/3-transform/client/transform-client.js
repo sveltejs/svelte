@@ -346,6 +346,18 @@ export function client_component(source, analysis, options) {
 		)
 	];
 
+	if (options.filename) {
+		body.push(
+			b.stmt(
+				b.assignment(
+					'=',
+					b.member(b.id(analysis.name), b.id('filename')),
+					b.literal(options.filename)
+				)
+			)
+		);
+	}
+
 	if (options.discloseVersion) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}
