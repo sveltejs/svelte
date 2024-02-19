@@ -41,7 +41,7 @@ export default test({
 		assert.htmlEqual(target.innerHTML, `<button>clicks: 1</button>`);
 
 		assert.deepEqual(warnings, [
-			'Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use callback instead.'
+			'Counter.svelte mutated a value owned by main.svelte. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead.'
 		]);
 	}
 });

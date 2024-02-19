@@ -3,7 +3,7 @@
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal";
 
-export default function Bind_this($$anchor, $$props) {
+export default function Index($$anchor, $$props) {
 	$.push($$props, false);
 	$.init();
 

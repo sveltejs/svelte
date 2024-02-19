@@ -5,7 +5,7 @@ import * as $ from "svelte/internal";
 
 var frag = $.template(`<h1>hello world</h1>`);
 
-export default function Hello_world($$anchor, $$props) {
+export default function Index($$anchor, $$props) {
 	$.push($$props, false);
 	$.init();
 

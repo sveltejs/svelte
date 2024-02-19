@@ -42,7 +42,7 @@ export default test({
 
 		const css_map_json = Buffer.from(css_map_base64, 'base64').toString();
 		const map = new TraceMap(css_map_json);
-		const sourcefile = '../../input.svelte';
+		const sourcefile = 'input.svelte';
 		const locate = getLocator(
 			css.replace(/\\r/g, '\r').replace(/\\n/g, '\n').replace(/\\t/g, '\t'),
 			{ offsetLine: 1 }
