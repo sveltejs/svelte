@@ -49,7 +49,8 @@ import {
 	managed_effect,
 	push,
 	current_component_context,
-	pop
+	pop,
+	deep_read
 } from './runtime.js';
 import {
 	current_hydration_fragment,
@@ -2312,16 +2313,24 @@ export function action(dom, action, value_fn) {
 	effect(() => {
 		if (value_fn) {
 			const value = value_fn();
+			let needs_deep_read = false;
 			untrack(() => {
 				if (payload === undefined) {
 					payload = action(dom, value) || {};
 				} else {
 					const update = payload.update;
 					if (typeof update === 'function') {
+						needs_deep_read = true;
 						update(value);
 					}
 				}
 			});
+			// Action's update method is coarse-grained, i.e. when anything in the passed value changes, update.
+			// This works in legacy mode because of mutable_source being updated as a whole, but when using $state
+			// together with actions and mutation, it wouldn't notice the change without a deep read.
+			if (needs_deep_read) {
+				deep_read(value);
+			}
 		} else {
 			untrack(() => (payload = action(dom)));
 		}
@@ -3048,8 +3057,16 @@ export function unmount(component) {
  */
 export function access_props(props) {
 	for (const prop in props) {
-		// eslint-disable-next-line no-unused-expressions
-		props[prop];
+		deep_read(props[prop]);
+	}
+}
+
+/**
+ * @param {any[]} values
+ */
+export function deep_read_all(...values) {
+	for (const value of values) {
+		deep_read(value);
 	}
 }
 

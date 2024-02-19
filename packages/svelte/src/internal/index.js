@@ -38,7 +38,8 @@ export {
 	inspect,
 	unwrap,
 	freeze,
-	init
+	init,
+	deep_read
 } from './client/runtime.js';
 export * from './client/each.js';
 export * from './client/render.js';

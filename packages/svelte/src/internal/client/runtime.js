@@ -1985,11 +1985,13 @@ export function init() {
 }
 
 /**
+ * Deeply traverse an object and read all its properties
+ * so that they're all reactive in case this is `$state`
  * @param {any} value
  * @param {Set<any>} visited
  * @returns {void}
  */
-function deep_read(value, visited = new Set()) {
+export function deep_read(value, visited = new Set()) {
 	if (typeof value === 'object' && value !== null && !visited.has(value)) {
 		visited.add(value);
 		for (let key in value) {

@@ -167,8 +167,10 @@ export const javascript_visitors_legacy = {
 			const name = binding.node.name;
 			let serialized = serialize_get_binding(b.id(name), state);
 
-			if (name === '$$props' || name === '$$restProps') {
-				serialized = b.call('$.access_props', serialized);
+			// If the binding is a prop, we need to deep read it because it could be fine-grained $state
+			// from a runes-component, where mutations don't trigger an update on the prop as a whole.
+			if (name === '$$props' || name === '$$restProps' || binding.kind === 'prop') {
+				serialized = b.call('$.deep_read', serialized);
 			}
 
 			sequence.push(serialized);
