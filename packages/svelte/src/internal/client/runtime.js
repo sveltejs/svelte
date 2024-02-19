@@ -1907,10 +1907,10 @@ export function push(props, runes = false) {
 
 /**
  * @template {Record<string, any>} T
- * @param {T} component
+ * @param {T} [component]
  * @returns {T}
  */
-export function pop(component = /** @type {T} */ ({})) {
+export function pop(component) {
 	const context_stack_item = current_component_context;
 	if (context_stack_item !== null) {
 		if (component !== undefined) {
@@ -1926,7 +1926,9 @@ export function pop(component = /** @type {T} */ ({})) {
 		current_component_context = context_stack_item.p;
 		context_stack_item.m = true;
 	}
-	return component;
+	// Micro-optimization: Don't set .a above to the empty object
+	// so it can be garbage-collected when the return here is unused
+	return component || /** @type {T} */ ({});
 }
 
 /**
