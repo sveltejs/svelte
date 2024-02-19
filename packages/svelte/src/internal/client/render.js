@@ -12,9 +12,6 @@ import {
 } from './operations.js';
 import {
 	create_root_block,
-	create_if_block,
-	create_key_block,
-	create_await_block,
 	create_dynamic_element_block,
 	create_head_block,
 	create_dynamic_component_block,
@@ -39,12 +36,9 @@ import {
 	is_signal,
 	push_destroy_fn,
 	execute_effect,
-	UNINITIALIZED,
 	untrack,
 	effect,
-	flushSync,
 	flush_sync,
-	safe_not_equal,
 	current_block,
 	managed_effect,
 	push,
@@ -212,7 +206,7 @@ const comment_template = template('<!>', true);
  * @param {Text | Comment | Element | null} anchor
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function space(anchor) {
+export function space_frag(anchor) {
 	/** @type {Node | null} */
 	var node = /** @type {any} */ (open(anchor, true, space_template));
 	// if an {expression} is empty during SSR, there might be no
@@ -222,9 +216,25 @@ export function space(anchor) {
 		node = empty();
 		// @ts-ignore in this case the anchor should always be a comment,
 		// if not something more fundamental is wrong and throwing here is better to bail out early
-		anchor.parentElement.insertBefore(node, anchor);
+		anchor.before(node);
 	}
 	return node;
+}
+
+/**
+ * @param {Text | Comment | Element} anchor
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function space(anchor) {
+	// if an {expression} is empty during SSR, there might be no
+	// text node to hydrate (or an anchor comment is falsely detected instead)
+	//  — we must therefore create one
+	if (hydrating && anchor.nodeType !== 3) {
+		const node = empty();
+		anchor.before(node);
+		return node;
+	}
+	return anchor;
 }
 
 /**
@@ -1454,151 +1464,6 @@ export function slot(anchor_node, slot_fn, slot_props, fallback_fn) {
 }
 
 /**
- * @param {Comment} anchor_node
- * @param {() => boolean} condition_fn
- * @param {(anchor: Node) => void} consequent_fn
- * @param {null | ((anchor: Node) => void)} alternate_fn
- * @returns {void}
- */
-function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
-	const block = create_if_block();
-	hydrate_block_anchor(anchor_node);
-	/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-	let mismatch = false;
-
-	/** @type {null | import('./types.js').TemplateNode | Array<import('./types.js').TemplateNode>} */
-	let consequent_dom = null;
-	/** @type {null | import('./types.js').TemplateNode | Array<import('./types.js').TemplateNode>} */
-	let alternate_dom = null;
-	let has_mounted = false;
-	/**
-	 * @type {import("./types.js").EffectSignal | null}
-	 */
-	let current_branch_effect = null;
-
-	const if_effect = render_effect(
-		() => {
-			const result = !!condition_fn();
-			if (block.v !== result || !has_mounted) {
-				block.v = result;
-				if (has_mounted) {
-					const consequent_transitions = block.c;
-					const alternate_transitions = block.a;
-					if (result) {
-						if (alternate_transitions === null || alternate_transitions.size === 0) {
-							execute_effect(alternate_effect);
-						} else {
-							trigger_transitions(alternate_transitions, 'out');
-						}
-						if (consequent_transitions === null || consequent_transitions.size === 0) {
-							execute_effect(consequent_effect);
-						} else {
-							trigger_transitions(consequent_transitions, 'in');
-						}
-					} else {
-						if (consequent_transitions === null || consequent_transitions.size === 0) {
-							execute_effect(consequent_effect);
-						} else {
-							trigger_transitions(consequent_transitions, 'out');
-						}
-						if (alternate_transitions === null || alternate_transitions.size === 0) {
-							execute_effect(alternate_effect);
-						} else {
-							trigger_transitions(alternate_transitions, 'in');
-						}
-					}
-				} else if (hydrating) {
-					const comment_text = /** @type {Comment} */ (current_hydration_fragment?.[0])?.data;
-					if (
-						!comment_text ||
-						(comment_text === 'ssr:if:true' && !result) ||
-						(comment_text === 'ssr:if:false' && result)
-					) {
-						// Hydration mismatch: remove everything inside the anchor and start fresh.
-						// This could happen using when `{#if browser} .. {/if}` in SvelteKit.
-						remove(current_hydration_fragment);
-						set_current_hydration_fragment(null);
-						mismatch = true;
-					} else {
-						// Remove the ssr:if comment node or else it will confuse the subsequent hydration algorithm
-						current_hydration_fragment.shift();
-					}
-				}
-				has_mounted = true;
-			}
-		},
-		block,
-		false
-	);
-	// Managed effect
-	const consequent_effect = render_effect(
-		(
-			/** @type {any} */ _,
-			/** @type {import("./types.js").EffectSignal | null} */ consequent_effect
-		) => {
-			const result = block.v;
-			if (!result && consequent_dom !== null) {
-				remove(consequent_dom);
-				consequent_dom = null;
-			}
-			if (result && current_branch_effect !== consequent_effect) {
-				consequent_fn(anchor_node);
-				if (mismatch && current_branch_effect === null) {
-					// Set fragment so that Svelte continues to operate in hydration mode
-					set_current_hydration_fragment([]);
-				}
-				current_branch_effect = consequent_effect;
-				consequent_dom = block.d;
-			}
-			block.d = null;
-		},
-		block,
-		true
-	);
-	block.ce = consequent_effect;
-	// Managed effect
-	const alternate_effect = render_effect(
-		(
-			/** @type {any} */ _,
-			/** @type {import("./types.js").EffectSignal | null} */ alternate_effect
-		) => {
-			const result = block.v;
-			if (result && alternate_dom !== null) {
-				remove(alternate_dom);
-				alternate_dom = null;
-			}
-			if (!result && current_branch_effect !== alternate_effect) {
-				if (alternate_fn !== null) {
-					alternate_fn(anchor_node);
-				}
-				if (mismatch && current_branch_effect === null) {
-					// Set fragment so that Svelte continues to operate in hydration mode
-					set_current_hydration_fragment([]);
-				}
-				current_branch_effect = alternate_effect;
-				alternate_dom = block.d;
-			}
-			block.d = null;
-		},
-		block,
-		true
-	);
-	block.ae = alternate_effect;
-	push_destroy_fn(if_effect, () => {
-		if (consequent_dom !== null) {
-			remove(consequent_dom);
-		}
-		if (alternate_dom !== null) {
-			remove(alternate_dom);
-		}
-		destroy_signal(consequent_effect);
-		destroy_signal(alternate_effect);
-	});
-	block.e = if_effect;
-}
-export { if_block as if };
-
-/**
  * @param {(anchor: Node | null) => void} render_fn
  * @returns {void}
  */
@@ -1874,293 +1739,6 @@ export function component(anchor_node, component_fn, render_fn) {
 		}
 	});
 	block.e = component_effect;
-}
-
-/**
- * @template V
- * @param {Comment} anchor_node
- * @param {(() => Promise<V>)} input
- * @param {null | ((anchor: Node) => void)} pending_fn
- * @param {null | ((anchor: Node, value: V) => void)} then_fn
- * @param {null | ((anchor: Node, error: unknown) => void)} catch_fn
- * @returns {void}
- */
-function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
-	const block = create_await_block();
-
-	/** @type {null | import('./types.js').Render} */
-	let current_render = null;
-	hydrate_block_anchor(anchor_node);
-
-	/** @type {{}} */
-	let latest_token;
-
-	/** @type {typeof UNINITIALIZED | V} */
-	let resolved_value = UNINITIALIZED;
-
-	/** @type {unknown} */
-	let error = UNINITIALIZED;
-	let pending = false;
-	block.r =
-		/**
-		 * @param {import('./types.js').Transition} transition
-		 * @returns {void}
-		 */
-		(transition) => {
-			const render = /** @type {import('./types.js').Render} */ (current_render);
-			const transitions = render.s;
-			transitions.add(transition);
-			transition.f(() => {
-				transitions.delete(transition);
-				if (transitions.size === 0) {
-					// If the current render has changed since, then we can remove the old render
-					// effect as it's stale.
-					if (current_render !== render && render.e !== null) {
-						if (render.d !== null) {
-							remove(render.d);
-							render.d = null;
-						}
-						destroy_signal(render.e);
-						render.e = null;
-					}
-				}
-			});
-		};
-	const create_render_effect = () => {
-		/** @type {import('./types.js').Render} */
-		const render = {
-			d: null,
-			e: null,
-			s: new Set(),
-			p: current_render
-		};
-		const effect = render_effect(
-			() => {
-				if (error === UNINITIALIZED) {
-					if (resolved_value === UNINITIALIZED) {
-						// pending = true
-						block.n = true;
-						if (pending_fn !== null) {
-							pending_fn(anchor_node);
-						}
-					} else if (then_fn !== null) {
-						// pending = false
-						block.n = false;
-						then_fn(anchor_node, resolved_value);
-					}
-				} else if (catch_fn !== null) {
-					// pending = false
-					block.n = false;
-					catch_fn(anchor_node, error);
-				}
-				render.d = block.d;
-				block.d = null;
-			},
-			block,
-			true,
-			true
-		);
-		render.e = effect;
-		current_render = render;
-	};
-	const render = () => {
-		const render = current_render;
-		if (render === null) {
-			create_render_effect();
-			return;
-		}
-		const transitions = render.s;
-		if (transitions.size === 0) {
-			if (render.d !== null) {
-				remove(render.d);
-				render.d = null;
-			}
-			if (render.e) {
-				execute_effect(render.e);
-			} else {
-				create_render_effect();
-			}
-		} else {
-			create_render_effect();
-			trigger_transitions(transitions, 'out');
-		}
-	};
-	const await_effect = render_effect(
-		() => {
-			const token = {};
-			latest_token = token;
-			const promise = input();
-			if (is_promise(promise)) {
-				promise.then(
-					/** @param {V} v */
-					(v) => {
-						if (latest_token === token) {
-							// Ensure UI is in sync before resolving value.
-							flushSync();
-							resolved_value = v;
-							pending = false;
-							render();
-						}
-					},
-					/** @param {unknown} _error */
-					(_error) => {
-						error = _error;
-						pending = false;
-						render();
-					}
-				);
-				if (resolved_value !== UNINITIALIZED || error !== UNINITIALIZED) {
-					error = UNINITIALIZED;
-					resolved_value = UNINITIALIZED;
-				}
-				if (!pending) {
-					pending = true;
-					render();
-				}
-			} else {
-				error = UNINITIALIZED;
-				resolved_value = promise;
-				pending = false;
-				render();
-			}
-		},
-		block,
-		false
-	);
-	push_destroy_fn(await_effect, () => {
-		let render = current_render;
-		latest_token = {};
-		while (render !== null) {
-			const dom = render.d;
-			if (dom !== null) {
-				remove(dom);
-			}
-			const effect = render.e;
-			if (effect !== null) {
-				destroy_signal(effect);
-			}
-			render = render.p;
-		}
-	});
-	block.e = await_effect;
-}
-export { await_block as await };
-
-/**
- * @template V
- * @param {Comment} anchor_node
- * @param {() => V} key
- * @param {(anchor: Node) => void} render_fn
- * @returns {void}
- */
-export function key(anchor_node, key, render_fn) {
-	const block = create_key_block();
-
-	/** @type {null | import('./types.js').Render} */
-	let current_render = null;
-	hydrate_block_anchor(anchor_node);
-
-	/** @type {V | typeof UNINITIALIZED} */
-	let key_value = UNINITIALIZED;
-	let mounted = false;
-	block.r =
-		/**
-		 * @param {import('./types.js').Transition} transition
-		 * @returns {void}
-		 */
-		(transition) => {
-			const render = /** @type {import('./types.js').Render} */ (current_render);
-			const transitions = render.s;
-			transitions.add(transition);
-			transition.f(() => {
-				transitions.delete(transition);
-				if (transitions.size === 0) {
-					// If the current render has changed since, then we can remove the old render
-					// effect as it's stale.
-					if (current_render !== render && render.e !== null) {
-						if (render.d !== null) {
-							remove(render.d);
-							render.d = null;
-						}
-						destroy_signal(render.e);
-						render.e = null;
-					}
-				}
-			});
-		};
-	const create_render_effect = () => {
-		/** @type {import('./types.js').Render} */
-		const render = {
-			d: null,
-			e: null,
-			s: new Set(),
-			p: current_render
-		};
-		const effect = render_effect(
-			() => {
-				render_fn(anchor_node);
-				render.d = block.d;
-				block.d = null;
-			},
-			block,
-			true,
-			true
-		);
-		render.e = effect;
-		current_render = render;
-	};
-	const render = () => {
-		const render = current_render;
-		if (render === null) {
-			create_render_effect();
-			return;
-		}
-		const transitions = render.s;
-		if (transitions.size === 0) {
-			if (render.d !== null) {
-				remove(render.d);
-				render.d = null;
-			}
-			if (render.e) {
-				execute_effect(render.e);
-			} else {
-				create_render_effect();
-			}
-		} else {
-			trigger_transitions(transitions, 'out');
-			create_render_effect();
-		}
-	};
-	const key_effect = render_effect(
-		() => {
-			const prev_key_value = key_value;
-			key_value = key();
-			if (mounted && safe_not_equal(prev_key_value, key_value)) {
-				render();
-			}
-		},
-		block,
-		false
-	);
-	// To ensure topological ordering of the key effect to the render effect,
-	// we trigger the effect after.
-	render();
-	mounted = true;
-	push_destroy_fn(key_effect, () => {
-		let render = current_render;
-		while (render !== null) {
-			const dom = render.d;
-			if (dom !== null) {
-				remove(dom);
-			}
-			const effect = render.e;
-			if (effect !== null) {
-				destroy_signal(effect);
-			}
-			render = render.p;
-		}
-	});
-	block.e = key_effect;
 }
 
 /**
@@ -2836,7 +2414,7 @@ export function createRoot() {
 }
 
 /**
- * Mounts a component to the given target and returns the exports and potentially the accessors (if compiled with `accessors: true`) of the component
+ * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
@@ -2860,7 +2438,7 @@ export function mount(component, options) {
 }
 
 /**
- * Hydrates a component on the given target and returns the exports and potentially the accessors (if compiled with `accessors: true`) of the component
+ * Hydrates a component on the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
@@ -2932,7 +2510,7 @@ export function hydrate(component, options) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
  * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
+ * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} Component
  * @param {{
  * 		target: Node;
  * 		anchor: null | Text;
@@ -2944,14 +2522,14 @@ export function hydrate(component, options) {
  * 	}} options
  * @returns {Exports}
  */
-function _mount(component, options) {
+function _mount(Component, options) {
 	const registered_events = new Set();
 	const container = options.target;
 	const block = create_root_block(options.intro || false);
 
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously
-	let accessors = undefined;
+	let component = undefined;
 
 	const effect = render_effect(
 		() => {
@@ -2961,7 +2539,7 @@ function _mount(component, options) {
 					options.context;
 			}
 			// @ts-expect-error the public typings are not what the actual function looks like
-			accessors = component(options.anchor, options.props || {}) || {};
+			component = Component(options.anchor, options.props || {}) || {};
 			if (options.context) {
 				pop();
 			}
@@ -3008,7 +2586,7 @@ function _mount(component, options) {
 	event_handle(array_from(all_registerd_events));
 	root_event_handles.add(event_handle);
 
-	mounted_components.set(accessors, () => {
+	mounted_components.set(component, () => {
 		for (const event_name of registered_events) {
 			container.removeEventListener(event_name, bound_event_listener);
 		}
@@ -3020,11 +2598,11 @@ function _mount(component, options) {
 		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
 	});
 
-	return accessors;
+	return component;
 }
 
 /**
- * References of the accessors of all components that were `mount`ed or `hydrate`d.
+ * References of the components that were mounted or hydrated.
  * Uses a `WeakMap` to avoid memory leaks.
  */
 let mounted_components = new WeakMap();
@@ -3034,12 +2612,12 @@ let mounted_components = new WeakMap();
  * @param {Record<string, any>} component
  */
 export function unmount(component) {
-	const destroy = mounted_components.get(component);
-	if (DEV && !destroy) {
+	const fn = mounted_components.get(component);
+	if (DEV && !fn) {
 		// eslint-disable-next-line no-console
 		console.warn('Tried to unmount a component that was not mounted.');
 	}
-	destroy?.();
+	fn?.();
 }
 
 /**

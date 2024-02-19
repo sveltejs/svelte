@@ -32,48 +32,6 @@ export function create_root_block(intro) {
 	};
 }
 
-/** @returns {import('./types.js').IfBlock} */
-export function create_if_block() {
-	return {
-		// alternate transitions
-		a: null,
-		// alternate effect
-		ae: null,
-		// consequent transitions
-		c: null,
-		// consequent effect
-		ce: null,
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('./types.js').Block} */ (current_block),
-		// transition
-		r: null,
-		// type
-		t: IF_BLOCK,
-		// value
-		v: false
-	};
-}
-
-/** @returns {import('./types.js').KeyBlock} */
-export function create_key_block() {
-	return {
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('./types.js').Block} */ (current_block),
-		// transition
-		r: null,
-		// type
-		t: KEY_BLOCK
-	};
-}
-
 /** @returns {import('./types.js').HeadBlock} */
 export function create_head_block() {
 	return {
@@ -119,82 +77,6 @@ export function create_dynamic_component_block() {
 		r: null,
 		// type
 		t: DYNAMIC_COMPONENT_BLOCK
-	};
-}
-
-/** @returns {import('./types.js').AwaitBlock} */
-export function create_await_block() {
-	return {
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('./types.js').Block} */ (current_block),
-		// pending
-		n: true,
-		// transition
-		r: null,
-		// type
-		t: AWAIT_BLOCK
-	};
-}
-
-/**
- * @param {number} flags
- * @param {Element | Comment} anchor
- * @returns {import('./types.js').EachBlock}
- */
-export function create_each_block(flags, anchor) {
-	return {
-		// anchor
-		a: anchor,
-		// dom
-		d: null,
-		// flags
-		f: flags,
-		// items
-		v: [],
-		// effect
-		e: null,
-		p: /** @type {import('./types.js').Block} */ (current_block),
-		// transition
-		r: null,
-		// transitions
-		s: [],
-		// type
-		t: EACH_BLOCK
-	};
-}
-
-/**
- * @param {any | import('./types.js').Signal<any>} item
- * @param {number | import('./types.js').Signal<number>} index
- * @param {null | unknown} key
- * @returns {import('./types.js').EachItemBlock}
- */
-export function create_each_item_block(item, index, key) {
-	return {
-		// animate transition
-		a: null,
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// index
-		i: index,
-		// key
-		k: key,
-		// item
-		v: item,
-		// parent
-		p: /** @type {import('./types.js').EachBlock} */ (current_block),
-		// transition
-		r: null,
-		// transitions
-		s: null,
-		// type
-		t: EACH_ITEM_BLOCK
 	};
 }
 

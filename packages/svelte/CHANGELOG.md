@@ -1,5 +1,21 @@
 # svelte
 
+## 5.0.0-next.60
+
+### Patch Changes
+
+- fix: improve effect over-fire on store subscription init ([#10535](https://github.com/sveltejs/svelte/pull/10535))
+
+- fix: use init properties when exporting non-state values in prod ([#10521](https://github.com/sveltejs/svelte/pull/10521))
+
+## 5.0.0-next.59
+
+### Patch Changes
+
+- chore: improve code generation for `bind:this` in SSR mode ([#10524](https://github.com/sveltejs/svelte/pull/10524))
+
+- fix: visit expression node in directives ([#10527](https://github.com/sveltejs/svelte/pull/10527))
+
 ## 5.0.0-next.58
 
 ### Patch Changes

@@ -1258,8 +1258,11 @@ export function set_signal_value(signal, value) {
 		//
 		// $effect(() => x++)
 		//
+		// We additionally want to skip this logic for when ignore_mutation_validation is
+		// true, as stores write to source signal on initialization.
 		if (
 			is_runes(null) &&
+			!ignore_mutation_validation &&
 			current_effect !== null &&
 			current_effect.c === null &&
 			(current_effect.f & CLEAN) !== 0
@@ -1937,7 +1940,8 @@ function on_destroy(fn) {
  */
 export function push(props, runes = false, fn) {
 	current_component_context = {
-		a: null,
+		// exports (and props, if `accessors: true`)
+		x: null,
 		// context
 		c: null,
 		// effects
@@ -1964,14 +1968,15 @@ export function push(props, runes = false, fn) {
 }
 
 /**
- * @param {Record<string, any>} [accessors]
- * @returns {void}
+ * @template {Record<string, any>} T
+ * @param {T} [component]
+ * @returns {T}
  */
-export function pop(accessors) {
+export function pop(component) {
 	const context_stack_item = current_component_context;
 	if (context_stack_item !== null) {
-		if (accessors !== undefined) {
-			context_stack_item.a = accessors;
+		if (component !== undefined) {
+			context_stack_item.x = component;
 		}
 		const effects = context_stack_item.e;
 		if (effects !== null) {
@@ -1987,6 +1992,9 @@ export function pop(accessors) {
 		}
 		context_stack_item.m = true;
 	}
+	// Micro-optimization: Don't set .a above to the empty object
+	// so it can be garbage-collected when the return here is unused
+	return component || /** @type {T} */ ({});
 }
 
 /**

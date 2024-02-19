@@ -40,8 +40,8 @@ export type ComponentContext = {
 	d: null | Signal<any>[];
 	/** props */
 	s: Record<string, unknown>;
-	/** accessors */
-	a: Record<string, any> | null;
+	/** exports (and props, if `accessors: true`) */
+	x: Record<string, any> | null;
 	/** effects */
 	e: null | Array<EffectSignal>;
 	/** mounted */
