@@ -40,7 +40,10 @@ export {
 	freeze,
 	init
 } from './client/runtime.js';
-export * from './client/each.js';
+export { await_block as await } from './client/dom/blocks/await.js';
+export { if_block as if } from './client/dom/blocks/if.js';
+export { key_block as key } from './client/dom/blocks/key.js';
+export * from './client/dom/blocks/each.js';
 export * from './client/render.js';
 export * from './client/validate.js';
 export { raf } from './client/timing.js';

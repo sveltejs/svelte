@@ -9,7 +9,7 @@ import {
 	KEY_BLOCK,
 	ROOT_BLOCK
 } from './block.js';
-import { destroy_each_item_block, get_first_element } from './each.js';
+import { destroy_each_item_block, get_first_element } from './dom/blocks/each.js';
 import { append_child, empty } from './operations.js';
 import {
 	current_block,
