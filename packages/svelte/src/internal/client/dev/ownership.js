@@ -50,7 +50,7 @@ export function get_component() {
 /**
  * @param {Function} component
  */
-export function push_module(component) {
+export function mark_module_start(component) {
 	const start = get_stack()?.[2];
 
 	if (start) {
@@ -63,7 +63,7 @@ export function push_module(component) {
 	}
 }
 
-export function pop_module() {
+export function mark_module_end() {
 	const end = get_stack()?.[2];
 
 	if (end) {

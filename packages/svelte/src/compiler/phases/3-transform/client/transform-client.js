@@ -439,8 +439,8 @@ export function client_component(source, analysis, options) {
 	}
 
 	if (options.dev && state.options.filename) {
-		body.unshift(b.stmt(b.call(b.id('$.push_module'), b.id(analysis.name))));
-		body.push(b.stmt(b.call(b.id('$.pop_module'))));
+		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'), b.id(analysis.name))));
+		body.push(b.stmt(b.call(b.id('$.mark_module_end'))));
 	}
 
 	return {
