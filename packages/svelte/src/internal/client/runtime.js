@@ -113,7 +113,7 @@ export let updating_derived = false;
 
 /**
  * Used to assign ownership to signals in dev mode
- * — see `./dev/ownership.js` for more details
+ * — see `./dev/ownership.js` for more details
  * @type {Function | null}
  */
 export let current_owner = null;
