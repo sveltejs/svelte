@@ -346,7 +346,7 @@ export function client_component(source, analysis, options) {
 		)
 	];
 
-	if (options.filename) {
+	if (options.dev && options.filename) {
 		body.push(
 			b.stmt(
 				b.assignment(
