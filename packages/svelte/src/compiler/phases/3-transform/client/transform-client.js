@@ -347,6 +347,7 @@ export function client_component(source, analysis, options) {
 	];
 
 	if (options.dev && options.filename) {
+		// add `App.filename = 'App.svelte'` so that we can print useful messages later
 		body.push(
 			b.stmt(
 				b.assignment(
