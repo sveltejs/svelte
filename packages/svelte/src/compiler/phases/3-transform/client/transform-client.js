@@ -242,9 +242,11 @@ export function client_component(source, analysis, options) {
 		const binding = analysis.instance.scope.get(name);
 		const is_source = binding !== null && is_state_source(binding, state);
 
-		// TODO This is always a getter because the `renamed-instance-exports` test wants it that way.
-		// Should we for code size reasons make it an init in runes mode and/or non-dev mode?
-		return b.get(alias ?? name, [b.return(is_source ? b.call('$.get', b.id(name)) : b.id(name))]);
+		if (is_source || options.dev) {
+			return b.get(alias ?? name, [b.return(is_source ? b.call('$.get', b.id(name)) : b.id(name))]);
+		}
+
+		return b.init(alias ?? name, b.id(name));
 	});
 
 	if (analysis.accessors) {
