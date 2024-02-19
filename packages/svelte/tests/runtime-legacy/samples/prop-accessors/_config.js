@@ -1,7 +1,12 @@
 import { test } from '../../test';
 
 export default test({
+	compileOptions: {
+		dev: true
+	},
+
 	accessors: false,
+
 	test({ assert, component }) {
 		assert.equal(component.foo1, 42);
 		assert.equal(component.foo2(), 42);

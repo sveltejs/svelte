@@ -164,7 +164,7 @@ export function createEventDispatcher() {
 			// in a server (non-DOM) environment?
 			const event = create_custom_event(/** @type {string} */ (type), detail, options);
 			for (const fn of callbacks) {
-				fn.call(component_context.a, event);
+				fn.call(component_context.x, event);
 			}
 			return !event.defaultPrevented;
 		}
