@@ -1884,8 +1884,8 @@ function on_destroy(fn) {
  */
 export function push(props, runes = false) {
 	current_component_context = {
-		// accessors
-		a: null,
+		// exports (and props, if `accessors: true`)
+		x: null,
 		// context
 		c: null,
 		// effects
@@ -1914,7 +1914,7 @@ export function pop(component) {
 	const context_stack_item = current_component_context;
 	if (context_stack_item !== null) {
 		if (component !== undefined) {
-			context_stack_item.a = component;
+			context_stack_item.x = component;
 		}
 		const effects = context_stack_item.e;
 		if (effects !== null) {

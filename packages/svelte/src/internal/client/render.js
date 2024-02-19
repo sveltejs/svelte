@@ -2836,7 +2836,7 @@ export function createRoot() {
 }
 
 /**
- * Mounts a component to the given target and returns the exports and potentially the accessors (if compiled with `accessors: true`) of the component
+ * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
@@ -2860,7 +2860,7 @@ export function mount(component, options) {
 }
 
 /**
- * Hydrates a component on the given target and returns the exports and potentially the accessors (if compiled with `accessors: true`) of the component
+ * Hydrates a component on the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
@@ -2932,7 +2932,7 @@ export function hydrate(component, options) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
  * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
+ * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} Component
  * @param {{
  * 		target: Node;
  * 		anchor: null | Text;
@@ -2944,14 +2944,14 @@ export function hydrate(component, options) {
  * 	}} options
  * @returns {Exports}
  */
-function _mount(component, options) {
+function _mount(Component, options) {
 	const registered_events = new Set();
 	const container = options.target;
 	const block = create_root_block(options.intro || false);
 
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously
-	let accessors = undefined;
+	let component = undefined;
 
 	const effect = render_effect(
 		() => {
@@ -2961,7 +2961,7 @@ function _mount(component, options) {
 					options.context;
 			}
 			// @ts-expect-error the public typings are not what the actual function looks like
-			accessors = component(options.anchor, options.props || {}) || {};
+			component = Component(options.anchor, options.props || {}) || {};
 			if (options.context) {
 				pop();
 			}
@@ -3008,7 +3008,7 @@ function _mount(component, options) {
 	event_handle(array_from(all_registerd_events));
 	root_event_handles.add(event_handle);
 
-	mounted_components.set(accessors, () => {
+	mounted_components.set(component, () => {
 		for (const event_name of registered_events) {
 			container.removeEventListener(event_name, bound_event_listener);
 		}
@@ -3020,11 +3020,11 @@ function _mount(component, options) {
 		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
 	});
 
-	return accessors;
+	return component;
 }
 
 /**
- * References of the accessors of all components that were `mount`ed or `hydrate`d.
+ * References of the components that were mounted or hydrated.
  * Uses a `WeakMap` to avoid memory leaks.
  */
 let mounted_components = new WeakMap();
@@ -3034,12 +3034,12 @@ let mounted_components = new WeakMap();
  * @param {Record<string, any>} component
  */
 export function unmount(component) {
-	const destroy = mounted_components.get(component);
-	if (DEV && !destroy) {
+	const fn = mounted_components.get(component);
+	if (DEV && !fn) {
 		// eslint-disable-next-line no-console
 		console.warn('Tried to unmount a component that was not mounted.');
 	}
-	destroy?.();
+	fn?.();
 }
 
 /**
