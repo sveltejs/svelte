@@ -29,6 +29,10 @@ export function get_stack() {
 	return entries;
 }
 
+/**
+ * Determines which `.svelte` component is responsible for a given state change
+ * @returns {Function | null}
+ */
 export function get_component() {
 	const stack = get_stack();
 	if (!stack) return null;
@@ -48,6 +52,9 @@ export function get_component() {
 }
 
 /**
+ * Together with `mark_module_end`, this function establishes the boundaries of a `.svelte` file,
+ * such that subsequent calls to `get_component` can tell us which component is responsible
+ * for a given state change
  * @param {Function} component
  */
 export function mark_module_start(component) {
