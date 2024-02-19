@@ -2,7 +2,7 @@ import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
 	EACH_IS_CONTROLLED,
-	EACH_IS_IMMUTABLE,
+	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED
 } from '../../constants.js';
@@ -852,9 +852,9 @@ function each_item_block(item, key, index, render_fn, flags) {
 
 	const item_value = each_item_not_reactive
 		? item
-		: (flags & EACH_IS_IMMUTABLE) === 0
-			? mutable_source(item)
-			: source(item);
+		: (flags & EACH_IS_STRICT_EQUALS) !== 0
+			? source(item)
+			: mutable_source(item);
 
 	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
 	const block = create_each_item_block(item_value, index_value, key);

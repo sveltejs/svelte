@@ -5,7 +5,7 @@ export const EACH_KEYED = 1 << 2;
 /** See EachBlock interface metadata.is_controlled for an explanation what this is */
 export const EACH_IS_CONTROLLED = 1 << 3;
 export const EACH_IS_ANIMATED = 1 << 4;
-export const EACH_IS_IMMUTABLE = 1 << 6;
+export const EACH_IS_STRICT_EQUALS = 1 << 6;
 
 export const PROPS_IS_IMMUTABLE = 1;
 export const PROPS_IS_RUNES = 1 << 1;
