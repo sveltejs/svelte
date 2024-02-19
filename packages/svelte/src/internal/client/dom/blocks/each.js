@@ -6,7 +6,7 @@ import {
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED
 } from '../../../../constants.js';
-import { create_each_block, create_each_item_block } from '../../block.js';
+import { EACH_BLOCK, EACH_ITEM_BLOCK } from '../../block.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,
@@ -17,6 +17,7 @@ import {
 import { clear_text_content, empty, map_get, map_set } from '../../operations.js';
 import { insert, remove } from '../../reconciler.js';
 import {
+	current_block,
 	destroy_signal,
 	execute_effect,
 	mutable_source,
@@ -33,6 +34,64 @@ const MOVED_BLOCK = 99999999;
 const LIS_BLOCK = -2;
 
 function no_op() {}
+
+/**
+ * @param {number} flags
+ * @param {Element | Comment} anchor
+ * @returns {import('../../types.js').EachBlock}
+ */
+export function create_each_block(flags, anchor) {
+	return {
+		// anchor
+		a: anchor,
+		// dom
+		d: null,
+		// flags
+		f: flags,
+		// items
+		v: [],
+		// effect
+		e: null,
+		p: /** @type {import('../../types.js').Block} */ (current_block),
+		// transition
+		r: null,
+		// transitions
+		s: [],
+		// type
+		t: EACH_BLOCK
+	};
+}
+
+/**
+ * @param {any | import('../../types.js').Signal<any>} item
+ * @param {number | import('../../types.js').Signal<number>} index
+ * @param {null | unknown} key
+ * @returns {import('../../types.js').EachItemBlock}
+ */
+export function create_each_item_block(item, index, key) {
+	return {
+		// animate transition
+		a: null,
+		// dom
+		d: null,
+		// effect
+		e: null,
+		// index
+		i: index,
+		// key
+		k: key,
+		// item
+		v: item,
+		// parent
+		p: /** @type {import('../../types.js').EachBlock} */ (current_block),
+		// transition
+		r: null,
+		// transitions
+		s: null,
+		// type
+		t: EACH_ITEM_BLOCK
+	};
+}
 
 /**
  * @template V

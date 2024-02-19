@@ -80,64 +80,6 @@ export function create_dynamic_component_block() {
 	};
 }
 
-/**
- * @param {number} flags
- * @param {Element | Comment} anchor
- * @returns {import('./types.js').EachBlock}
- */
-export function create_each_block(flags, anchor) {
-	return {
-		// anchor
-		a: anchor,
-		// dom
-		d: null,
-		// flags
-		f: flags,
-		// items
-		v: [],
-		// effect
-		e: null,
-		p: /** @type {import('./types.js').Block} */ (current_block),
-		// transition
-		r: null,
-		// transitions
-		s: [],
-		// type
-		t: EACH_BLOCK
-	};
-}
-
-/**
- * @param {any | import('./types.js').Signal<any>} item
- * @param {number | import('./types.js').Signal<number>} index
- * @param {null | unknown} key
- * @returns {import('./types.js').EachItemBlock}
- */
-export function create_each_item_block(item, index, key) {
-	return {
-		// animate transition
-		a: null,
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// index
-		i: index,
-		// key
-		k: key,
-		// item
-		v: item,
-		// parent
-		p: /** @type {import('./types.js').EachBlock} */ (current_block),
-		// transition
-		r: null,
-		// transitions
-		s: null,
-		// type
-		t: EACH_ITEM_BLOCK
-	};
-}
-
 /** @returns {import('./types.js').SnippetBlock} */
 export function create_snippet_block() {
 	return {
