@@ -19,7 +19,7 @@ import {
 } from '../../constants.js';
 import { STATE_SYMBOL, unstate } from './proxy.js';
 import { EACH_BLOCK, IF_BLOCK } from './block.js';
-import { get_component } from './dev/ownership.js';
+import { check_ownership, get_component } from './dev/ownership.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -111,7 +111,11 @@ export let current_component_context = null;
 
 export let updating_derived = false;
 
-/** @type {Function | null} */
+/**
+ * Used to assign ownership to signals in dev mode
+ * — see `./dev/ownership.js` for more details
+ * @type {Function | null}
+ */
 export let current_owner = null;
 
 /**
@@ -1037,19 +1041,8 @@ export function get(signal) {
  * @returns {V}
  */
 export function set(signal, value) {
-	if (DEV && 'owners' in signal) {
-		const component = get_component();
-
-		// @ts-expect-error
-		if (component && signal.owners.size > 0 && !signal.owners.has(component)) {
-			// eslint-disable-next-line no-console
-			console.warn(
-				'Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use callback instead.'
-			);
-
-			// eslint-disable-next-line no-console
-			console.trace();
-		}
+	if (DEV) {
+		check_ownership(signal);
 	}
 
 	set_signal_value(signal, value);

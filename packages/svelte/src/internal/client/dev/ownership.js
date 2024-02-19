@@ -91,3 +91,24 @@ export function add_owner(object, owner) {
 		set_current_owner_override(null);
 	});
 }
+
+/**
+ * @param {import('../types.js').Signal} signal
+ */
+export function check_ownership(signal) {
+	// @ts-expect-error
+	if (!signal.owners) return;
+
+	const component = get_component();
+
+	// @ts-expect-error
+	if (component && signal.owners.size > 0 && !signal.owners.has(component)) {
+		// eslint-disable-next-line no-console
+		console.warn(
+			'Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use callback instead.'
+		);
+
+		// eslint-disable-next-line no-console
+		console.trace();
+	}
+}
