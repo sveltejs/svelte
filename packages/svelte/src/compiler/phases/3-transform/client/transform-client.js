@@ -225,15 +225,12 @@ export function client_component(source, analysis, options) {
 
 	// Bind static exports to props so that people can access them with bind:x
 	const static_bindings = analysis.exports.map(({ name, alias }) => {
-		const binding = analysis.instance.scope.get(name);
 		return b.stmt(
 			b.call(
 				'$.bind_prop',
 				b.id('$$props'),
 				b.literal(alias ?? name),
-				binding?.kind === 'state' || binding?.kind === 'frozen_state'
-					? b.call('$.get', b.id(name))
-					: b.id(name)
+				serialize_get_binding(b.id(name), instance_state)
 			)
 		);
 	});
