@@ -1,6 +1,10 @@
 import { test } from '../../test';
 
 export default test({
+	compileOptions: {
+		dev: true
+	},
+
 	test({ assert, component }) {
 		assert.equal(component.bar1, 42);
 		assert.equal(component.bar2, 42);
