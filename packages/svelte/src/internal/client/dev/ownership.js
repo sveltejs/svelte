@@ -1,6 +1,6 @@
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
-import { deep_read, set_current_owner_override, untrack } from './runtime.js';
+import { deep_read, set_current_owner_override, untrack } from '../runtime.js';
 
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
 const boundaries = {};

@@ -19,7 +19,7 @@ import {
 } from '../../constants.js';
 import { STATE_SYMBOL, unstate } from './proxy.js';
 import { EACH_BLOCK, IF_BLOCK } from './block.js';
-import { get_component } from './dev.js';
+import { get_component } from './dev/ownership.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
