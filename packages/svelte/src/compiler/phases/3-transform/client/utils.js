@@ -52,10 +52,7 @@ export function get_assignment_value(node, { state, visit }) {
  */
 export function is_state_source(binding, state) {
 	return (
-		(binding.kind === 'state' ||
-			binding.kind === 'frozen_state' ||
-			binding.kind === 'derived' ||
-			binding.kind === 'prop') &&
+		(binding.kind === 'state' || binding.kind === 'frozen_state') &&
 		(!state.analysis.immutable || binding.reassigned || state.analysis.accessors)
 	);
 }

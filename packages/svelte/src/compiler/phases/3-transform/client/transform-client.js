@@ -239,14 +239,13 @@ export function client_component(source, analysis, options) {
 	});
 
 	const properties = analysis.exports.map(({ name, alias }) => {
-		const binding = analysis.instance.scope.get(name);
-		const is_source = binding !== null && is_state_source(binding, state);
+		const expression = serialize_get_binding(b.id(name), instance_state);
 
-		if (is_source || options.dev) {
-			return b.get(alias ?? name, [b.return(is_source ? b.call('$.get', b.id(name)) : b.id(name))]);
+		if (expression.type === 'Identifier' && !options.dev) {
+			return b.init(alias ?? name, expression);
 		}
 
-		return b.init(alias ?? name, b.id(name));
+		return b.get(alias ?? name, [b.return(expression)]);
 	});
 
 	if (analysis.accessors) {
