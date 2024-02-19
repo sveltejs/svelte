@@ -1,5 +1,11 @@
 <script>
-    let foo = $state();
+	let text = $state('');
+
+	function update_text() {
+			text = 'updated';
+	}
 </script>
 
-<button on:click={() => foo = 'foo'}>{foo}</button>
+<button type="button" on:click={update_text}>Update Text</button>
+
+<div>{text}</div>
