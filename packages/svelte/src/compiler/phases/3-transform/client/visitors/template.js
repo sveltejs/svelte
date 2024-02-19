@@ -1127,7 +1127,7 @@ function create_block(parent, name, nodes, context) {
 			trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag');
 
 		if (use_space_template) {
-			// special case — we can use `$.space` instead of creating a unique template
+			// special case — we can use `$.space_frag` instead of creating a unique template
 			const id = b.id(context.state.scope.generate('text'));
 
 			process_children(trimmed, () => id, false, {
@@ -1135,7 +1135,7 @@ function create_block(parent, name, nodes, context) {
 				state
 			});
 
-			body.push(b.var(id, b.call('$.space', b.id('$$anchor'))), ...state.init);
+			body.push(b.var(id, b.call('$.space_frag', b.id('$$anchor'))), ...state.init);
 			close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
 		} else {
 			/** @type {(is_text: boolean) => import('estree').Expression} */
@@ -1495,7 +1495,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 
 			state.template.push(' ');
 
-			const text_id = get_node_id(expression(true), state, 'text');
+			const text_id = get_node_id(b.call('$.space', expression(true)), state, 'text');
 
 			const singular = b.stmt(
 				b.call(
