@@ -6,6 +6,7 @@ import {
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED
 } from '../../../../constants.js';
+import { noop } from '../../../common.js';
 import { EACH_BLOCK, EACH_ITEM_BLOCK } from '../../block.js';
 import {
 	current_hydration_fragment,
@@ -32,8 +33,6 @@ import { is_array } from '../../utils.js';
 const NEW_BLOCK = -1;
 const MOVED_BLOCK = 99999999;
 const LIS_BLOCK = -2;
-
-function no_op() {}
 
 /**
  * @param {number} flags
@@ -211,7 +210,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			if (key_fn !== null) {
 				keys = array.map(key_fn);
 			} else if ((flags & EACH_KEYED) === 0) {
-				array.map(no_op);
+				array.map(noop);
 			}
 
 			const length = array.length;
