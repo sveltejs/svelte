@@ -2,7 +2,6 @@
 	let items = [{id:1,value: "test"}]
 	const update = () => {
 		const clone = items.slice();
-		const entry = {id: clone[0], value: clone[0]};
 		clone[0].value += " !!!";
 		items = clone;
 	}
