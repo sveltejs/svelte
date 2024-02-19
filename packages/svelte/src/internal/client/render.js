@@ -230,7 +230,7 @@ export function space(anchor) {
 	// text node to hydrate (or an anchor comment is falsely detected instead)
 	//  — we must therefore create one
 	if (hydrating && anchor.nodeType !== 3) {
-		const node = empty()
+		const node = empty();
 		anchor.before(node);
 		return node;
 	}
