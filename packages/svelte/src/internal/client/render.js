@@ -206,7 +206,7 @@ const comment_template = template('<!>', true);
  * @param {Text | Comment | Element | null} anchor
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function space(anchor) {
+export function space_frag(anchor) {
 	/** @type {Node | null} */
 	var node = /** @type {any} */ (open(anchor, true, space_template));
 	// if an {expression} is empty during SSR, there might be no
@@ -216,9 +216,25 @@ export function space(anchor) {
 		node = empty();
 		// @ts-ignore in this case the anchor should always be a comment,
 		// if not something more fundamental is wrong and throwing here is better to bail out early
-		anchor.parentElement.insertBefore(node, anchor);
+		anchor.before(node);
 	}
 	return node;
+}
+
+/**
+ * @param {Text | Comment | Element} anchor
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function space(anchor) {
+	// if an {expression} is empty during SSR, there might be no
+	// text node to hydrate (or an anchor comment is falsely detected instead)
+	//  — we must therefore create one
+	if (hydrating && anchor.nodeType !== 3) {
+		const node = empty();
+		anchor.before(node);
+		return node;
+	}
+	return anchor;
 }
 
 /**
