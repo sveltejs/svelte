@@ -32,10 +32,11 @@ function t_string(value) {
 
 /**
  * @param {import('estree').Expression} value
+ * @param {boolean} [needs_escaping]
  * @returns {import('./types').TemplateExpression}
  */
-function t_expression(value) {
-	return { type: 'expression', value };
+function t_expression(value, needs_escaping = false) {
+	return { type: 'expression', value, needs_escaping };
 }
 
 /**
@@ -94,7 +95,8 @@ function serialize_template(template, out = b.id('out')) {
 			} else if (template_item.type === 'expression') {
 				const value = template_item.value;
 				if (value.type === 'TemplateLiteral') {
-					last.value.raw += sanitize_template_string(value.quasis[0].value.raw);
+					const raw = value.quasis[0].value.raw;
+					last.value.raw += template_item.needs_escaping ? sanitize_template_string(raw) : raw;
 					quasis.push(...value.quasis.slice(1));
 					expressions.push(...value.expressions);
 					continue;
@@ -198,7 +200,7 @@ function process_children(nodes, parent, { visit, state }) {
 			}
 		}
 
-		state.template.push(t_expression(b.template(quasis, expressions)));
+		state.template.push(t_expression(b.template(quasis, expressions), true));
 	}
 
 	for (let i = 0; i < nodes.length; i += 1) {
