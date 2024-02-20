@@ -2337,14 +2337,7 @@ const rest_props_handler = {
 		return key in target.props;
 	},
 	ownKeys(target) {
-		/** @type {Array<string | symbol>} */
-		const keys = [];
-
-		for (let key in target.props) {
-			if (!target.exclude.includes(key)) keys.push(key);
-		}
-
-		return keys;
+		return Reflect.ownKeys(target.props).filter((key) => !target.exclude.includes(key));
 	}
 };
 
