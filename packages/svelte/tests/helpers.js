@@ -81,8 +81,12 @@ export async function compile_directory(
 		if (file.endsWith('.js')) {
 			const out = `${output_dir}/${file}`;
 			if (file.endsWith('.svelte.js')) {
-				const compiled = compileModule(text, opts);
-				write(out, compiled.js.code);
+				const compiled = compileModule(text, {
+					filename: opts.filename,
+					generate: opts.generate,
+					dev: opts.dev
+				});
+				write(out, compiled.js.code.replace(`v${VERSION}`, 'VERSION'));
 			} else {
 				// for non-runes tests, just re-export from the original source file — this
 				// allows the `_config.js` module to import shared state to use in tests

@@ -8,7 +8,8 @@ import {
 	updating_derived,
 	UNINITIALIZED,
 	mutable_source,
-	batch_inspect
+	batch_inspect,
+	current_component_context
 } from './runtime.js';
 import {
 	array_prototype,
@@ -20,24 +21,38 @@ import {
 	is_frozen,
 	object_prototype
 } from './utils.js';
+import { add_owner, check_ownership, strip_owner } from './dev/ownership.js';
 
 export const STATE_SYMBOL = Symbol('$state');
-export const READONLY_SYMBOL = Symbol('readonly');
 
 /**
  * @template T
  * @param {T} value
  * @param {boolean} [immutable]
+ * @param {Function[]} [owners]
  * @returns {import('./types.js').ProxyStateObject<T> | T}
  */
-export function proxy(value, immutable = true) {
+export function proxy(value, immutable = true, owners) {
 	if (typeof value === 'object' && value != null && !is_frozen(value)) {
 		// If we have an existing proxy, return it...
 		if (STATE_SYMBOL in value) {
 			const metadata = /** @type {import('./types.js').ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
 			// ...unless the proxy belonged to a different object, because
 			// someone copied the state symbol using `Reflect.ownKeys(...)`
-			if (metadata.t === value || metadata.p === value) return metadata.p;
+			if (metadata.t === value || metadata.p === value) {
+				if (DEV) {
+					// update ownership
+					if (owners) {
+						for (const owner of owners) {
+							add_owner(value, owner);
+						}
+					} else {
+						strip_owner(value);
+					}
+				}
+
+				return metadata.p;
+			}
 		}
 
 		const prototype = get_prototype_of(value);
@@ -58,6 +73,19 @@ export function proxy(value, immutable = true) {
 				writable: true,
 				enumerable: false
 			});
+
+			if (DEV) {
+				// set ownership — either of the parent proxy's owners (if provided) or,
+				// when calling `$.proxy(...)`, to the current component if such there be
+				// @ts-expect-error
+				value[STATE_SYMBOL].o =
+					owners === undefined
+						? current_component_context
+							? // @ts-expect-error
+								new Set([current_component_context.function])
+							: null
+						: new Set(owners);
+			}
 
 			return proxy;
 		}
@@ -95,7 +123,7 @@ function unwrap(value, already_unwrapped) {
 			already_unwrapped.set(value, obj);
 
 			for (const key of keys) {
-				if (key === STATE_SYMBOL || (DEV && key === READONLY_SYMBOL)) continue;
+				if (key === STATE_SYMBOL) continue;
 				if (descriptors[key].get) {
 					define_property(obj, key, descriptors[key]);
 				} else {
@@ -130,7 +158,7 @@ const state_proxy_handler = {
 			const metadata = target[STATE_SYMBOL];
 
 			const s = metadata.s.get(prop);
-			if (s !== undefined) set(s, proxy(descriptor.value, metadata.i));
+			if (s !== undefined) set(s, proxy(descriptor.value, metadata.i, metadata.o));
 		}
 
 		return Reflect.defineProperty(target, prop, descriptor);
@@ -163,9 +191,6 @@ const state_proxy_handler = {
 	},
 
 	get(target, prop, receiver) {
-		if (DEV && prop === READONLY_SYMBOL) {
-			return Reflect.get(target, READONLY_SYMBOL);
-		}
 		if (prop === STATE_SYMBOL) {
 			return Reflect.get(target, STATE_SYMBOL);
 		}
@@ -180,7 +205,7 @@ const state_proxy_handler = {
 			(effect_active() || updating_derived) &&
 			(!(prop in target) || get_descriptor(target, prop)?.writable)
 		) {
-			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i));
+			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i, metadata.o));
 			metadata.s.set(prop, s);
 		}
 
@@ -212,9 +237,6 @@ const state_proxy_handler = {
 	},
 
 	has(target, prop) {
-		if (DEV && prop === READONLY_SYMBOL) {
-			return Reflect.has(target, READONLY_SYMBOL);
-		}
 		if (prop === STATE_SYMBOL) {
 			return true;
 		}
@@ -225,7 +247,7 @@ const state_proxy_handler = {
 		if (s !== undefined || (effect_active() && (!has || get_descriptor(target, prop)?.writable))) {
 			if (s === undefined) {
 				s = (metadata.i ? source : mutable_source)(
-					has ? proxy(target[prop], metadata.i) : UNINITIALIZED
+					has ? proxy(target[prop], metadata.i, metadata.o) : UNINITIALIZED
 				);
 				metadata.s.set(prop, s);
 			}
@@ -238,15 +260,15 @@ const state_proxy_handler = {
 	},
 
 	set(target, prop, value) {
-		if (DEV && prop === READONLY_SYMBOL) {
-			target[READONLY_SYMBOL] = value;
-			return true;
-		}
 		const metadata = target[STATE_SYMBOL];
 		const s = metadata.s.get(prop);
-		if (s !== undefined) set(s, proxy(value, metadata.i));
+		if (s !== undefined) set(s, proxy(value, metadata.i, metadata.o));
 		const is_array = metadata.a;
 		const not_has = !(prop in target);
+
+		if (DEV && metadata.o) {
+			check_ownership(metadata.o);
+		}
 
 		// variable.length = value -> clear all signals with index >= value
 		if (is_array && prop === 'length') {
@@ -292,69 +314,3 @@ if (DEV) {
 		throw new Error('Cannot set prototype of $state object');
 	};
 }
-
-/**
- * Expects a value that was wrapped with `proxy` and makes it readonly.
- *
- * @template {Record<string | symbol, any>} T
- * @template {import('./types.js').ProxyReadonlyObject<T> | T} U
- * @param {U} value
- * @returns {Proxy<U> | U}
- */
-export function readonly(value) {
-	const proxy = value && value[READONLY_SYMBOL];
-	if (proxy) {
-		const metadata = value[STATE_SYMBOL];
-		// Check that the incoming value is the same proxy that this readonly symbol was created for:
-		// If someone copies over the readonly symbol to a new object (using Reflect.ownKeys) the referenced
-		// proxy could be stale and we should not return it.
-		if (metadata.p === value) return proxy;
-	}
-
-	if (
-		typeof value === 'object' &&
-		value != null &&
-		!is_frozen(value) &&
-		STATE_SYMBOL in value && // TODO handle Map and Set as well
-		!(READONLY_SYMBOL in value)
-	) {
-		const proxy = new Proxy(
-			value,
-			/** @type {ProxyHandler<import('./types.js').ProxyReadonlyObject<U>>} */ (
-				readonly_proxy_handler
-			)
-		);
-		define_property(value, READONLY_SYMBOL, { value: proxy, writable: false });
-		return proxy;
-	}
-
-	return value;
-}
-
-/**
- * @param {any}	_
- * @param {string} prop
- * @returns {never}
- */
-const readonly_error = (_, prop) => {
-	throw new Error(
-		`Non-bound props cannot be mutated — to make the \`${prop}\` settable, ensure the object it is used within is bound as a prop \`bind:<prop>={...}\`. Fallback values can never be mutated.`
-	);
-};
-
-/** @type {ProxyHandler<import('./types.js').ProxyReadonlyObject>} */
-const readonly_proxy_handler = {
-	defineProperty: readonly_error,
-	deleteProperty: readonly_error,
-	set: readonly_error,
-
-	get(target, prop, receiver) {
-		const value = Reflect.get(target, prop, receiver);
-
-		if (!(prop in target)) {
-			return readonly(value);
-		}
-
-		return value;
-	}
-};

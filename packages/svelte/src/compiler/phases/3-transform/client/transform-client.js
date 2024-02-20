@@ -258,8 +258,11 @@ export function client_component(source, analysis, options) {
 		}
 	}
 
+	const push_args = [b.id('$$props'), b.literal(analysis.runes)];
+	if (options.dev) push_args.push(b.id(analysis.name));
+
 	const component_block = b.block([
-		b.stmt(b.call('$.push', b.id('$$props'), b.literal(analysis.runes))),
+		b.stmt(b.call('$.push', ...push_args)),
 		...store_setup,
 		...legacy_reactive_declarations,
 		...group_binding_declarations,
@@ -338,6 +341,27 @@ export function client_component(source, analysis, options) {
 			)
 		)
 	];
+
+	if (options.dev) {
+		if (options.filename) {
+			let filename = options.filename;
+			if (/(\/|\w:)/.test(options.filename)) {
+				// filename is absolute — truncate it
+				const parts = filename.split(/[/\\]/);
+				filename = parts.length > 3 ? ['...', ...parts.slice(-3)].join('/') : filename;
+			}
+
+			// add `App.filename = 'App.svelte'` so that we can print useful messages later
+			body.push(
+				b.stmt(
+					b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.literal(filename))
+				)
+			);
+		}
+
+		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'), b.id(analysis.name))));
+		body.push(b.stmt(b.call(b.id('$.mark_module_end'))));
+	}
 
 	if (options.discloseVersion) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));

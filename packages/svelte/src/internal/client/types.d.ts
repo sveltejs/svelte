@@ -10,7 +10,7 @@ import {
 	DYNAMIC_ELEMENT_BLOCK,
 	SNIPPET_BLOCK
 } from './block.js';
-import type { READONLY_SYMBOL, STATE_SYMBOL } from './proxy.js';
+import type { STATE_SYMBOL } from './proxy.js';
 import { DERIVED, EFFECT, RENDER_EFFECT, SOURCE, PRE_EFFECT } from './runtime.js';
 
 // Put all internal types in this file. Once we convert to JSDoc, we can make this a d.ts file
@@ -407,15 +407,13 @@ export interface ProxyMetadata<T = Record<string | symbol, any>> {
 	/** Immutable: Whether to use a source or mutable source under the hood */
 	i: boolean;
 	/** The associated proxy */
-	p: ProxyStateObject<T> | ProxyReadonlyObject<T>;
+	p: ProxyStateObject<T>;
 	/** The original target this proxy was created for */
 	t: T;
+	/** Dev-only — the components that 'own' this state, if any */
+	o: null | Set<Function>;
 }
 
 export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
 	[STATE_SYMBOL]: ProxyMetadata;
-};
-
-export type ProxyReadonlyObject<T = Record<string | symbol, any>> = ProxyStateObject<T> & {
-	[READONLY_SYMBOL]: ProxyMetadata;
 };

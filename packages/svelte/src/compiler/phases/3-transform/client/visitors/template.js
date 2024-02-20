@@ -764,6 +764,8 @@ function serialize_inline_component(node, component_name, context) {
 	/** @type {import('estree').Identifier | import('estree').MemberExpression | null} */
 	let bind_this = null;
 
+	const binding_initializers = [];
+
 	/**
 	 * If this component has a slot property, it is a named slot within another component. In this case
 	 * the slot scope applies to the component itself, too, and not just its children.
@@ -843,8 +845,6 @@ function serialize_inline_component(node, component_name, context) {
 					arg = b.call('$.get', id);
 				}
 
-				if (context.state.options.dev) arg = b.call('$.readonly', arg);
-
 				push_prop(b.get(attribute.name, [b.return(arg)]));
 			} else {
 				push_prop(b.init(attribute.name, value));
@@ -853,13 +853,22 @@ function serialize_inline_component(node, component_name, context) {
 			if (attribute.name === 'this') {
 				bind_this = attribute.expression;
 			} else {
-				push_prop(
-					b.get(attribute.name, [
-						b.return(
-							/** @type {import('estree').Expression} */ (context.visit(attribute.expression))
-						)
-					])
+				const expression = /** @type {import('estree').Expression} */ (
+					context.visit(attribute.expression)
 				);
+
+				if (context.state.options.dev) {
+					binding_initializers.push(
+						b.stmt(
+							b.call(
+								b.id('$.pre_effect'),
+								b.thunk(b.call(b.id('$.add_owner'), expression, b.id(component_name)))
+							)
+						)
+					);
+				}
+
+				push_prop(b.get(attribute.name, [b.return(expression)]));
 
 				const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
 				push_prop(
@@ -1004,14 +1013,13 @@ function serialize_inline_component(node, component_name, context) {
 			);
 	}
 
-	/** @type {import('estree').Statement} */
-	let statement = b.stmt(fn(context.state.node));
+	const statements = [
+		...snippet_declarations,
+		...binding_initializers,
+		b.stmt(fn(context.state.node))
+	];
 
-	if (snippet_declarations.length > 0) {
-		statement = b.block([...snippet_declarations, statement]);
-	}
-
-	return statement;
+	return statements.length > 1 ? b.block(statements) : statements[0];
 }
 
 /**
