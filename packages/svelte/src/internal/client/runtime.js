@@ -1308,7 +1308,6 @@ export function derived(init) {
 		create_computation_signal(flags | CLEAN, UNINITIALIZED, current_block)
 	);
 	signal.i = init;
-	bind_signal_to_component_context(signal);
 	signal.e = default_equals;
 	if (current_consumer !== null) {
 		push_reference(current_consumer, signal);
@@ -1335,26 +1334,7 @@ export function derived_safe_equal(init) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function source(initial_value) {
-	const source = create_source_signal(SOURCE | CLEAN, initial_value);
-	bind_signal_to_component_context(source);
-	return source;
-}
-
-/**
- * This function binds a signal to the component context, so that we can fire
- * beforeUpdate/afterUpdate callbacks at the correct time etc
- * @param {import('./types.js').Signal} signal
- */
-function bind_signal_to_component_context(signal) {
-	if (current_component_context === null || !current_component_context.r) return;
-
-	const signals = current_component_context.d;
-
-	if (signals) {
-		signals.push(signal);
-	} else {
-		current_component_context.d = [signal];
-	}
+	return create_source_signal(SOURCE | CLEAN, initial_value);
 }
 
 /**
@@ -1366,6 +1346,13 @@ function bind_signal_to_component_context(signal) {
 export function mutable_source(initial_value) {
 	const s = source(initial_value);
 	s.e = safe_equal;
+
+	// bind the signal to the component context, in case we need to
+	// track updates to trigger beforeUpdate/afterUpdate callbacks
+	if (current_component_context) {
+		(current_component_context.d ??= []).push(s);
+	}
+
 	return s;
 }
 
@@ -1974,10 +1961,7 @@ function observe_all(context) {
 		for (const signal of context.d) get(signal);
 	}
 
-	const props = get_descriptors(context.s);
-	for (const descriptor of Object.values(props)) {
-		if (descriptor.get) descriptor.get();
-	}
+	deep_read(context.s);
 }
 
 /**
