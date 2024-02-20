@@ -227,7 +227,7 @@ describe('signals', () => {
 			// Ensure we're not leaking dependencies
 			assert.deepEqual(
 				nested.slice(0, -2).map((s) => s.d),
-				[null, null, null, null]
+				[null, null]
 			);
 		};
 	});
@@ -281,6 +281,28 @@ describe('signals', () => {
 		return () => {
 			$.flushSync();
 			assert.deepEqual(log, [[], []]);
+		};
+	});
+
+	let some_state = $.source({});
+	let some_deps = $.derived(() => {
+		return [$.get(some_state)];
+	});
+
+	test('two effects with an unowned derived that has some depedencies', () => {
+		const log: Array<Array<any>> = [];
+
+		$.render_effect(() => {
+			log.push($.get(some_deps));
+		});
+
+		$.render_effect(() => {
+			log.push($.get(some_deps));
+		});
+
+		return () => {
+			$.flushSync();
+			assert.deepEqual(log, [[{}], [{}]]);
 		};
 	});
 

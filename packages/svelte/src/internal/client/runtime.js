@@ -167,6 +167,8 @@ function create_source_signal(flags, value) {
 			f: flags,
 			// value
 			v: value,
+			// write version
+			w: 0,
 			// this is for DEV only
 			inspect: new Set()
 		};
@@ -179,7 +181,9 @@ function create_source_signal(flags, value) {
 		// flags
 		f: flags,
 		// value
-		v: value
+		v: value,
+		// write version
+		w: 0
 	};
 }
 
@@ -211,6 +215,8 @@ function create_computation_signal(flags, value, block) {
 			r: null,
 			// value
 			v: value,
+			// write version
+			w: 0,
 			// context: We can remove this if we get rid of beforeUpdate/afterUpdate
 			x: null,
 			// destroy
@@ -239,6 +245,8 @@ function create_computation_signal(flags, value, block) {
 		r: null,
 		// value
 		v: value,
+		// write version
+		w: 0,
 		// context: We can remove this if we get rid of beforeUpdate/afterUpdate
 		x: null,
 		// destroy
@@ -295,6 +303,17 @@ function is_signal_dirty(signal) {
 					} else {
 						return true;
 					}
+				}
+				// If we're workig with an unowned derived signal, then we need to check
+				// if our dependency write version is higher. If is is then we can assume
+				// that state has changed to a newer version and thus this unowned signal
+				// is also dirty.
+				const is_unowned = (flags & UNOWNED) !== 0;
+				const write_version = signal.w;
+				const dep_write_version = dependency.w;
+				if (is_unowned && dep_write_version > write_version) {
+					signal.w = dep_write_version;
+					return true;
 				}
 			}
 		}
@@ -825,7 +844,9 @@ function update_derived(signal, force_schedule) {
 	const value = execute_signal_fn(signal);
 	updating_derived = previous_updating_derived;
 	const status =
-		(current_skip_consumer || (signal.f & UNOWNED) !== 0) && signal.d !== null ? DIRTY : CLEAN;
+		(current_skip_consumer || (signal.f & UNOWNED) !== 0) && signal.d !== null
+			? MAYBE_DIRTY
+			: CLEAN;
 	set_signal_status(signal, status);
 	const equals = /** @type {import('./types.js').EqualsFunctions} */ (signal.e);
 	if (!equals(value, signal.v)) {
@@ -1153,18 +1174,18 @@ function mark_signal_consumers(signal, to_status, force_schedule) {
 			const consumer = consumers[i];
 			const flags = consumer.f;
 			const unowned = (flags & UNOWNED) !== 0;
-			const dirty = (flags & DIRTY) !== 0;
 			// We skip any effects that are already dirty (but not unowned). Additionally, we also
 			// skip if the consumer is the same as the current effect (except if we're not in runes or we
 			// are in force schedule mode).
-			if ((dirty && !unowned) || ((!force_schedule || !runes) && consumer === current_effect)) {
+			if ((!force_schedule || !runes) && consumer === current_effect) {
 				continue;
 			}
 			set_signal_status(consumer, to_status);
 			// If the signal is not clean, then skip over it – with the exception of unowned signals that
-			// are already dirty. Unowned signals might be dirty because they are not captured as part of an
+			// are already maybe dirty. Unowned signals might be dirty because they are not captured as part of an
 			// effect.
-			if ((flags & CLEAN) !== 0 || (dirty && unowned)) {
+			const maybe_dirty = (flags & MAYBE_DIRTY) !== 0;
+			if ((flags & CLEAN) !== 0 || (maybe_dirty && unowned)) {
 				if ((consumer.f & IS_EFFECT) !== 0) {
 					schedule_effect(/** @type {import('./types.js').EffectSignal} */ (consumer), false);
 				} else {
@@ -1203,6 +1224,8 @@ export function set_signal_value(signal, value) {
 		!(/** @type {import('./types.js').EqualsFunctions} */ (signal.e)(value, signal.v))
 	) {
 		signal.v = value;
+		// Increment write version so that unowned signals can properly track dirtyness
+		signal.w++;
 		// If the current signal is running for the first time, it won't have any
 		// consumers as we only allocate and assign the consumers after the signal
 		// has fully executed. So in the case of ensuring it registers the consumer

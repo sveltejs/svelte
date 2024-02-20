@@ -77,6 +77,8 @@ export type SourceSignal<V = unknown> = {
 	f: SignalFlags;
 	/** value: The latest value for this signal */
 	v: V;
+	// write version
+	w: number;
 };
 
 export type SourceSignalDebug = {
@@ -111,6 +113,8 @@ export type ComputationSignal<V = unknown> = {
 	v: V;
 	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
 	l: number;
+	/** write version: used for unowned signals to track if their depdendencies are dirty or not **/
+	w: number;
 };
 
 export type Signal<V = unknown> = SourceSignal<V> | ComputationSignal<V>;
