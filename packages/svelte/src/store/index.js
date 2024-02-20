@@ -65,6 +65,20 @@ export function writable(value, start = noop) {
 		}
 	}
 
+	function revalidate() {
+		if (!invalidated)
+			return;
+
+		invalidated = false;
+
+		if (stop) {
+			// immediately signal each subscriber as revalidated
+			for (const subscriber of subscribers) {
+				subscriber[2]();
+			}
+		}
+	}
+
 	/**
 	 * @param {T} new_value
 	 * @returns {void}
@@ -89,6 +103,8 @@ export function writable(value, start = noop) {
 				}
 			}
 		}
+		else
+			revalidate();
 	}
 
 
@@ -101,7 +117,8 @@ export function writable(value, start = noop) {
 		{
 			set,
 			update,
-			invalidate
+			invalidate,
+			revalidate
 		}
 	)
 
@@ -116,11 +133,12 @@ export function writable(value, start = noop) {
 	/**
 	 * @param {import('./public').Subscriber<T>} run
 	 * @param {import('./private').Invalidator<T>} [invalidate]
+	 * @param {import('./private').Revalidator<T>} [revalidate]
 	 * @returns {import('./public').Unsubscriber}
 	 */
-	function subscribe(run, invalidate = noop) {
+	function subscribe(run, invalidate = noop, revalidate = noop) {
 		/** @type {import('./private').SubscribeInvalidateTuple<T>} */
-		const subscriber = [run, invalidate];
+		const subscriber = [run, invalidate, revalidate];
 		subscribers.add(subscriber);
 		if (subscribers.size === 1) {
 			stop = start(complex_set, update) || noop;
@@ -188,16 +206,18 @@ export function derived(stores, fn, initial_value) {
 	}
 	const auto = fn.length < 2;
 	return readable(initial_value, (set, update) => {
-		const invalidate = set.invalidate;
+		const { invalidate, revalidate } = set;
 		let started = false;
 		/** @type {T[]} */
 		const values = [];
 		let pending = 0;
+		let changed = stores_array.length === 0;
 		let cleanup = noop;
 		const sync = () => {
-			if (pending) {
+			if (!changed || pending) {
 				return;
 			}
+			changed = false;
 			cleanup();
 			const result = fn(single ? values[0] : values, set, update);
 			if (auto) {
@@ -211,6 +231,7 @@ export function derived(stores, fn, initial_value) {
 				store,
 				(value) => {
 					values[i] = value;
+					changed = true;
 					pending &= ~(1 << i);
 					if (started) {
 						sync();
@@ -219,6 +240,16 @@ export function derived(stores, fn, initial_value) {
 				() => {
 					pending |= 1 << i;
 					invalidate();
+				},
+				() => {
+					pending &= ~(1 << i);
+					if (!changed && !pending) {
+						revalidate();
+					}
+					else
+					if (started) {
+						sync();
+					}
 				}
 			)
 		);

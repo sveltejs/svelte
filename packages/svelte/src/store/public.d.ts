@@ -1,4 +1,4 @@
-import type { Invalidator } from './private.js';
+import type { Invalidator, Revalidator } from './private.js';
 
 /** Callback to inform of a value updates. */
 export type Subscriber<T> = (value: T) => void;
@@ -22,7 +22,8 @@ export type StartStopNotifier<T> = (
 	set: ((value: T) => void) & {
 		set: (value: T) => void,
 		update: (fn: Updater<T>) => void,
-		invalidate: () => void
+		invalidate: () => void,
+		revalidate: () => void
 	},
 	update: (fn: Updater<T>) => void
 ) => void | (() => void);
@@ -32,9 +33,10 @@ export interface Readable<T> {
 	/**
 	 * Subscribe on value changes.
 	 * @param run subscription callback
-	 * @param invalidate cleanup callback
+	 * @param invalidate cleanup callback - run when inputs are in an indeterminate state
+	 * @param revalidate cleanup callback - run when inputs have been resolved to their previous values
 	 */
-	subscribe(this: void, run: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
+	subscribe(this: void, run: Subscriber<T>, invalidate?: Invalidator<T>, revalidate?: Revalidator<T>): Unsubscriber;
 }
 
 /** Writable interface for both updating and subscribing. */
