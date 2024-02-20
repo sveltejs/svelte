@@ -19,7 +19,6 @@ import {
 } from '../../constants.js';
 import { STATE_SYMBOL, unstate } from './proxy.js';
 import { EACH_BLOCK, IF_BLOCK } from './block.js';
-import { add_owner_to_signal, check_ownership, set_owners } from './dev/ownership.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -183,8 +182,7 @@ function create_source_signal(flags, value) {
 			// value
 			v: value,
 			// this is for DEV only
-			inspect: new Set(),
-			owners: new Set()
+			inspect: new Set()
 		};
 	}
 	return {
@@ -953,8 +951,6 @@ export function get(signal) {
 	if (DEV) {
 		const debuggable = /** @type {import('./types.js').SignalDebug} */ (signal);
 
-		add_owner_to_signal(debuggable);
-
 		// @ts-expect-error
 		if (signal.inspect && inspect_fn) {
 			debuggable.inspect.add(inspect_fn);
@@ -1026,10 +1022,6 @@ export function get(signal) {
  * @returns {V}
  */
 export function set(signal, value) {
-	if (DEV) {
-		check_ownership(/** @type {import('./types.js').SignalDebug} */ (signal));
-	}
-
 	set_signal_value(signal, value);
 	return value;
 }
@@ -1345,10 +1337,6 @@ export function source(initial_value) {
  * @param {import('./types.js').Signal} signal
  */
 function bind_signal_to_component_context(signal) {
-	if (DEV) {
-		set_owners(/** @type {import('./types.js').SignalDebug} */ (signal));
-	}
-
 	if (current_component_context === null || !current_component_context.r) return;
 
 	const signals = current_component_context.d;

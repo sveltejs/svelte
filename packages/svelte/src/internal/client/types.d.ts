@@ -83,7 +83,7 @@ export type SourceSignalDebug = {
 	/** This is DEV only */
 	inspect: Set<Function>;
 	/** This is DEV only */
-	owners: Set<Function>;
+	proxy?: ProxyStateObject;
 };
 
 export type ComputationSignal<V = unknown> = {
@@ -408,8 +408,8 @@ export interface ProxyMetadata<T = Record<string | symbol, any>> {
 	p: ProxyStateObject<T>;
 	/** The original target this proxy was created for */
 	t: T;
-	/** The component that 'owns' this state, if any */
-	o: string;
+	/** Dev-only — the components that 'own' this state, if any */
+	owners: null | Set<Function>;
 }
 
 export type ProxyStateObject<T = Record<string | symbol, any>> = T & {

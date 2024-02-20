@@ -1,5 +1,6 @@
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
+import { STATE_SYMBOL } from '../proxy.js';
 import { current_component_context, current_owners, deep_read, untrack } from '../runtime.js';
 
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
@@ -83,58 +84,44 @@ export function mark_module_end() {
 let new_owner = null;
 
 /**
- * @param {import('../types.js').SignalDebug} signal
- */
-export function set_owners(signal) {
-	if (current_owners && signal.owners) {
-		for (const owner of current_owners) {
-			signal.owners.add(owner);
-		}
-	}
-}
-
-/**
  *
  * @param {any} object
  * @param {any} owner
  */
 export function add_owner(object, owner) {
 	untrack(() => {
-		new_owner = owner;
-		deep_read(object);
-		new_owner = null;
+		add_owner_to_object(object, owner);
 	});
 }
 
 /**
- * @param {import('../types.js').SignalDebug} signal
+ * @param {any} object
+ * @param {Function} owner
  */
-export function add_owner_to_signal(signal) {
-	if (
-		new_owner &&
-		// @ts-expect-error
-		signal.owners?.has(current_component_context.function)
-	) {
-		signal.owners.add(new_owner);
+function add_owner_to_object(object, owner) {
+	if (object?.[STATE_SYMBOL]?.owners && !object[STATE_SYMBOL].owners.has(owner)) {
+		object[STATE_SYMBOL].owners.add(owner);
+
+		for (const key in object) {
+			add_owner_to_object(object[key], owner);
+		}
 	}
 }
 
 /**
- * @param {import('../types.js').SignalDebug} signal
+ * @param {Set<Function>} owners
  */
-export function check_ownership(signal) {
-	if (!signal.owners) return;
-
+export function check_ownership(owners) {
 	const component = get_component();
 
-	if (component && signal.owners.size > 0 && !signal.owners.has(component)) {
-		let owner = [...signal.owners][0];
+	if (component && !owners.has(component)) {
+		let original = [...owners][0];
 
 		let message =
 			// @ts-expect-error
-			owner.filename !== component.filename
+			original.filename !== component.filename
 				? // @ts-expect-error
-					`${component.filename} mutated a value owned by ${owner.filename}. This is strongly discouraged`
+					`${component.filename} mutated a value owned by ${original.filename}. This is strongly discouraged`
 				: 'Mutating a value outside the component that created it is strongly discouraged';
 
 		// eslint-disable-next-line no-console
