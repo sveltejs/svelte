@@ -1,5 +1,27 @@
 # svelte
 
+## 5.0.0-next.61
+
+### Patch Changes
+
+- fix: improve each block item equality for immutable mode ([#10537](https://github.com/sveltejs/svelte/pull/10537))
+
+- fix: improve handling of unowned derived signals ([#10565](https://github.com/sveltejs/svelte/pull/10565))
+
+- fix: better handling of empty text node hydration ([#10545](https://github.com/sveltejs/svelte/pull/10545))
+
+- fix: ensure update methods of actions and reactive statements work with fine-grained `$state` ([#10543](https://github.com/sveltejs/svelte/pull/10543))
+
+- fix: don't execute scripts inside `@html` when instantiated on the client ([#10556](https://github.com/sveltejs/svelte/pull/10556))
+
+- fix: only escape characters in SSR template ([#10555](https://github.com/sveltejs/svelte/pull/10555))
+
+- fix: wire up `events` in `mount` correctly and fix its types ([#10553](https://github.com/sveltejs/svelte/pull/10553))
+
+- fix: better handling of derived signals that have no dependencies ([#10558](https://github.com/sveltejs/svelte/pull/10558))
+
+- fix: improve state store mutation compiler output ([#10561](https://github.com/sveltejs/svelte/pull/10561))
+
 ## 5.0.0-next.60
 
 ### Patch Changes
