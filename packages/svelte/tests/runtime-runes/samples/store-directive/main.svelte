@@ -1,11 +1,14 @@
 <script>
 	import { writable } from 'svelte/store';
 
-	let action = writable((node, text) => {
+	let store = writable({action: (node, text) => {
 		node.textContent = text;
-	});
+		return {
+			destroy() {}
+		}
+	}});
 
-	let text = writable('mounted')
+	let text = writable('mounted');
 </script>
 
-<div use:$action={$text}>hello</div>
+<div use:$store.action={$text}>hello</div>
