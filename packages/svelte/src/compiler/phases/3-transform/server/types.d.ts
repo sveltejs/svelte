@@ -12,6 +12,7 @@ import type { ComponentAnalysis } from '../../types.js';
 export type TemplateExpression = {
 	type: 'expression';
 	value: Expression;
+	needs_escaping: boolean;
 };
 
 export type TemplateString = {
