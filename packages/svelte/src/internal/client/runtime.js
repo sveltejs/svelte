@@ -934,15 +934,11 @@ export function unsubscribe_on_destroy(stores) {
  * @returns {V}
  */
 export function get(signal) {
-	if (DEV) {
-		const debuggable = /** @type {import('./types.js').SignalDebug} */ (signal);
-
+	// @ts-expect-error
+	if (DEV && signal.inspect && inspect_fn) {
+		/** @type {import('./types.js').SignalDebug} */ (signal).inspect.add(inspect_fn);
 		// @ts-expect-error
-		if (signal.inspect && inspect_fn) {
-			debuggable.inspect.add(inspect_fn);
-			// @ts-expect-error
-			inspect_captured_signals.push(signal);
-		}
+		inspect_captured_signals.push(signal);
 	}
 
 	const flags = signal.f;
@@ -1996,7 +1992,7 @@ export function init() {
  * @param {Set<any>} visited
  * @returns {void}
  */
-export function deep_read(value, visited = new Set()) {
+function deep_read(value, visited = new Set()) {
 	if (typeof value === 'object' && value !== null && !visited.has(value)) {
 		visited.add(value);
 		for (let key in value) {

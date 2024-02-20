@@ -75,6 +75,8 @@ export function proxy(value, immutable = true, owners) {
 			});
 
 			if (DEV) {
+				// set ownership — either of the parent proxy's owners (if provided) or,
+				// when calling `$.proxy(...)`, to the current component if such there be
 				// @ts-expect-error
 				value[STATE_SYMBOL].o =
 					owners === undefined
@@ -260,9 +262,7 @@ const state_proxy_handler = {
 	set(target, prop, value) {
 		const metadata = target[STATE_SYMBOL];
 		const s = metadata.s.get(prop);
-		if (s !== undefined) {
-			set(s, proxy(value, metadata.i, metadata.o));
-		}
+		if (s !== undefined) set(s, proxy(value, metadata.i, metadata.o));
 		const is_array = metadata.a;
 		const not_has = !(prop in target);
 
