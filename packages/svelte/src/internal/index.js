@@ -4,14 +4,11 @@ export {
 	set,
 	set_sync,
 	invalidate_inner_signals,
-	source,
-	mutable_source,
 	derived,
 	derived_safe_equal,
 	prop,
 	flushSync,
 	bubble_event,
-	safe_equal,
 	tick,
 	untrack,
 	update,
@@ -41,6 +38,8 @@ export { if_block as if } from './client/dom/blocks/if.js';
 export { key_block as key } from './client/dom/blocks/key.js';
 export * from './client/dom/blocks/each.js';
 export * from './client/reactivity/effects.js';
+export * from './client/reactivity/sources.js';
+export * from './client/reactivity/equality.js';
 export * from './client/render.js';
 export * from './client/validate.js';
 export { raf } from './client/timing.js';

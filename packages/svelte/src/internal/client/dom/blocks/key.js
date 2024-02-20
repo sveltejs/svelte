@@ -6,11 +6,11 @@ import {
 	current_block,
 	destroy_signal,
 	execute_effect,
-	push_destroy_fn,
-	safe_not_equal
+	push_destroy_fn
 } from '../../runtime.js';
 import { render_effect } from '../../reactivity/effects.js';
 import { trigger_transitions } from '../../transitions.js';
+import { safe_not_equal } from '../../reactivity/equality.js';
 
 /** @returns {import('../../types.js').KeyBlock} */
 function create_key_block() {

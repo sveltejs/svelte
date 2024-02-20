@@ -20,6 +20,8 @@ import {
 import { STATE_SYMBOL, unstate } from './proxy.js';
 import { EACH_BLOCK, IF_BLOCK } from './block.js';
 import { pre_effect, user_effect } from './reactivity/effects.js';
+import { mutable_source, source } from './reactivity/sources.js';
+import { default_equals, safe_equal, safe_not_equal } from './reactivity/equality.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -142,52 +144,6 @@ export function batch_inspect(target, prop, receiver) {
 				last_inspected_signal = null;
 			}
 		}
-	};
-}
-
-/**
- * @param {unknown} a
- * @param {unknown} b
- * @returns {boolean}
- */
-export function default_equals(a, b) {
-	return a === b;
-}
-
-/**
- * @template V
- * @param {import('./types.js').SignalFlags} flags
- * @param {V} value
- * @returns {import('./types.js').SourceSignal<V> | import('./types.js').SourceSignal<V> & import('./types.js').SourceSignalDebug}
- */
-function create_source_signal(flags, value) {
-	if (DEV) {
-		return {
-			// consumers
-			c: null,
-			// equals
-			e: default_equals,
-			// flags
-			f: flags,
-			// value
-			v: value,
-			// write version
-			w: 0,
-			// this is for DEV only
-			inspect: new Set()
-		};
-	}
-	return {
-		// consumers
-		c: null,
-		// equals
-		e: default_equals,
-		// flags
-		f: flags,
-		// value
-		v: value,
-		// write version
-		w: 0
 	};
 }
 
@@ -1329,35 +1285,6 @@ export function derived_safe_equal(init) {
 }
 
 /**
- * @template V
- * @param {V} initial_value
- * @returns {import('./types.js').SourceSignal<V>}
- */
-/*#__NO_SIDE_EFFECTS__*/
-export function source(initial_value) {
-	return create_source_signal(SOURCE | CLEAN, initial_value);
-}
-
-/**
- * @template V
- * @param {V} initial_value
- * @returns {import('./types.js').SourceSignal<V>}
- */
-/*#__NO_SIDE_EFFECTS__*/
-export function mutable_source(initial_value) {
-	const s = source(initial_value);
-	s.e = safe_equal;
-
-	// bind the signal to the component context, in case we need to
-	// track updates to trigger beforeUpdate/afterUpdate callbacks
-	if (current_component_context) {
-		(current_component_context.d ??= []).push(s);
-	}
-
-	return s;
-}
-
-/**
  * Use `untrack` to prevent something from being treated as an `$effect`/`$derived` dependency.
  *
  * https://svelte-5-preview.vercel.app/docs/functions#untrack
@@ -1540,28 +1467,6 @@ export function prop(props, key, flags, initial) {
 
 		return current;
 	};
-}
-
-/**
- * @param {unknown} a
- * @param {unknown} b
- * @returns {boolean}
- */
-export function safe_not_equal(a, b) {
-	// eslint-disable-next-line eqeqeq
-	return a != a
-		? // eslint-disable-next-line eqeqeq
-			b == b
-		: a !== b || (a !== null && typeof a === 'object') || typeof a === 'function';
-}
-
-/**
- * @param {unknown} a
- * @param {unknown} b
- * @returns {boolean}
- */
-export function safe_equal(a, b) {
-	return !safe_not_equal(a, b);
 }
 
 /** @returns {Map<unknown, unknown>} */

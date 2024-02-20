@@ -3,10 +3,8 @@ import {
 	get,
 	set,
 	update,
-	source,
 	updating_derived,
 	UNINITIALIZED,
-	mutable_source,
 	batch_inspect,
 	current_component_context
 } from './runtime.js';
@@ -22,6 +20,7 @@ import {
 	object_prototype
 } from './utils.js';
 import { add_owner, check_ownership, strip_owner } from './dev/ownership.js';
+import { mutable_source, source } from './reactivity/sources.js';
 
 export const STATE_SYMBOL = Symbol('$state');
 
