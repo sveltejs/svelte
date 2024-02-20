@@ -2317,10 +2317,10 @@ export function action(dom, action, value_fn) {
 			untrack(() => {
 				if (payload === undefined) {
 					payload = action(dom, value) || {};
+					needs_deep_read = !!payload?.update;
 				} else {
 					const update = payload.update;
 					if (typeof update === 'function') {
-						needs_deep_read = true;
 						update(value);
 					}
 				}
