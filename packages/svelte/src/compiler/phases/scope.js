@@ -334,7 +334,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 * @type {import('zimmerframe').Visitor<import('#compiler').AnimateDirective | import('#compiler').TransitionDirective | import('#compiler').UseDirective, State, import('#compiler').SvelteNode>}
 	 */
 	const SvelteDirective = (node, { state, path, visit }) => {
-		state.scope.reference(b.id(node.name), path);
+		state.scope.reference(b.id(node.name.split('.')[0]), path);
 
 		if (node.expression) {
 			visit(node.expression);
