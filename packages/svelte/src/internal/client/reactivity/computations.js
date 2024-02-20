@@ -9,17 +9,96 @@ import {
 	RENDER_EFFECT,
 	UNINITIALIZED,
 	UNOWNED,
-	create_computation_signal,
 	current_block,
 	current_component_context,
 	current_consumer,
 	current_effect,
 	destroy_signal,
 	flush_local_render_effects,
-	push_reference,
 	schedule_effect
 } from '../runtime.js';
 import { default_equals, safe_equal } from './equality.js';
+
+/**
+ * @template V
+ * @param {import('../types.js').SignalFlags} flags
+ * @param {V} value
+ * @param {import('../types.js').Block | null} block
+ * @returns {import('../types.js').ComputationSignal<V> | import('../types.js').ComputationSignal<V> & import('../types.js').SourceSignalDebug}
+ */
+function create_computation_signal(flags, value, block) {
+	if (DEV) {
+		return {
+			// block
+			b: block,
+			// consumers
+			c: null,
+			// destroy
+			d: null,
+			// equals
+			e: null,
+			// flags
+			f: flags,
+			// init
+			i: null,
+			// level
+			l: 0,
+			// references
+			r: null,
+			// value
+			v: value,
+			// write version
+			w: 0,
+			// context: We can remove this if we get rid of beforeUpdate/afterUpdate
+			x: null,
+			// destroy
+			y: null,
+			// this is for DEV only
+			inspect: new Set()
+		};
+	}
+
+	return {
+		// block
+		b: block,
+		// consumers
+		c: null,
+		// destroy
+		d: null,
+		// equals
+		e: null,
+		// flags
+		f: flags,
+		// level
+		l: 0,
+		// init
+		i: null,
+		// references
+		r: null,
+		// value
+		v: value,
+		// write version
+		w: 0,
+		// context: We can remove this if we get rid of beforeUpdate/afterUpdate
+		x: null,
+		// destroy
+		y: null
+	};
+}
+
+/**
+ * @param {import('../types.js').ComputationSignal} target_signal
+ * @param {import('../types.js').ComputationSignal} ref_signal
+ * @returns {void}
+ */
+export function push_reference(target_signal, ref_signal) {
+	const references = target_signal.r;
+	if (references === null) {
+		target_signal.r = [ref_signal];
+	} else {
+		references.push(ref_signal);
+	}
+}
 
 /**
  * @param {import('../types.js').EffectType} type

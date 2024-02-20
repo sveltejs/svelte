@@ -149,87 +149,6 @@ export function batch_inspect(target, prop, receiver) {
 
 /**
  * @template V
- * @param {import('./types.js').SignalFlags} flags
- * @param {V} value
- * @param {import('./types.js').Block | null} block
- * @returns {import('./types.js').ComputationSignal<V> | import('./types.js').ComputationSignal<V> & import('./types.js').SourceSignalDebug}
- */
-export function create_computation_signal(flags, value, block) {
-	if (DEV) {
-		return {
-			// block
-			b: block,
-			// consumers
-			c: null,
-			// destroy
-			d: null,
-			// equals
-			e: null,
-			// flags
-			f: flags,
-			// init
-			i: null,
-			// level
-			l: 0,
-			// references
-			r: null,
-			// value
-			v: value,
-			// write version
-			w: 0,
-			// context: We can remove this if we get rid of beforeUpdate/afterUpdate
-			x: null,
-			// destroy
-			y: null,
-			// this is for DEV only
-			inspect: new Set()
-		};
-	}
-
-	return {
-		// block
-		b: block,
-		// consumers
-		c: null,
-		// destroy
-		d: null,
-		// equals
-		e: null,
-		// flags
-		f: flags,
-		// level
-		l: 0,
-		// init
-		i: null,
-		// references
-		r: null,
-		// value
-		v: value,
-		// write version
-		w: 0,
-		// context: We can remove this if we get rid of beforeUpdate/afterUpdate
-		x: null,
-		// destroy
-		y: null
-	};
-}
-
-/**
- * @param {import('./types.js').ComputationSignal} target_signal
- * @param {import('./types.js').ComputationSignal} ref_signal
- * @returns {void}
- */
-export function push_reference(target_signal, ref_signal) {
-	const references = target_signal.r;
-	if (references === null) {
-		target_signal.r = [ref_signal];
-	} else {
-		references.push(ref_signal);
-	}
-}
-
-/**
- * @template V
  * @param {import('./types.js').Signal<V>} signal
  * @returns {boolean}
  */
@@ -1294,7 +1213,7 @@ const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
  * @param {number} status
  * @returns {void}
  */
-export function set_signal_status(signal, status) {
+function set_signal_status(signal, status) {
 	signal.f = (signal.f & STATUS_MASK) | status;
 }
 
