@@ -1,4 +1,5 @@
 import * as assert from 'node:assert';
+import * as path from 'node:path';
 import { getLocator } from 'locate-character';
 import MagicString, { Bundle } from 'magic-string';
 
@@ -111,7 +112,7 @@ export function magic_string_preprocessor_result(filename, src) {
 	return {
 		code: src.toString(),
 		map: src.generateMap({
-			source: filename,
+			source: path.basename(filename), // preprocessors are expected to return `sources: [file_basename]`
 			hires: true,
 			includeContent: false
 		})

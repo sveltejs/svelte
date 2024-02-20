@@ -1,7 +1,8 @@
 	div.svelte-xyz {
 		@apply --funky-div;
+		color: red;
 	}
 
-	/* (empty) div.svelte-xyz {
+	/* (empty) div {
 
 	}*/

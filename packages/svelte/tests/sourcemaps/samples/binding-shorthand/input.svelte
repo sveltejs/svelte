@@ -1,7 +1,6 @@
 <script>
-	import Widget from 'wherever';
-
 	export let potato;
 </script>
 
+{potato}
 <Widget bind:potato/>

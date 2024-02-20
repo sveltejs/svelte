@@ -6,23 +6,71 @@ While Svelte 5 is a complete rewrite, we have done our best to ensure that most 
 
 ## Components are no longer classes
 
-In Svelte 3 and 4, components are classes. In Svelte 5 they are functions and should be instantiated differently. If you need to manually instantiate components, you should use `mount` or `createRoot` (imported from `svelte`) instead. If you see this error using SvelteKit, try updating to the latest version of SvelteKit first, which adds support for Svelte 5. If you're using Svelte without SvelteKit, you'll likely have a `main.js` file (or similar) which you need to adjust:
+In Svelte 3 and 4, components are classes. In Svelte 5 they are functions and should be instantiated differently. If you need to manually instantiate components, you should use `mount` or `hydrate` (imported from `svelte`) instead. If you see this error using SvelteKit, try updating to the latest version of SvelteKit first, which adds support for Svelte 5. If you're using Svelte without SvelteKit, you'll likely have a `main.js` file (or similar) which you need to adjust:
 
 ```diff
-+ import { createRoot } from 'svelte';
++ import { mount } from 'svelte';
 import App from './App.svelte'
 
 - const app = new App({ target: document.getElementById("app") });
-+ const app = createRoot(App, { target: document.getElementById("app") });
++ const app = mount(App, { target: document.getElementById("app") });
 
 export default app;
 ```
 
-`createRoot` returns an object with a `$set` and `$destroy` method on it. It does not come with an `$on` method you may know from the class component API. Instead, pass them via the `events` property on the options argument. If you don't need to interact with the component instance after creating it, you can use `mount` instead, which saves some bytes.
+`mount` and `hydrate` have the exact same API. The difference is that `hydrate` will pick up the Svelte's server-rendered HTML inside its target and hydrate it. Both return an object with the exports of the component and potentially property accessors (if compiled with `accesors: true`). They do not come with the `$on`, `$set` and `$destroy` methods you may know from the class component API. These are its replacements:
+
+For `$on`, instead of listening to events, pass them via the `events` property on the options argument.
+
+```diff
++ import { mount } from 'svelte';
+import App from './App.svelte'
+
+- const app = new App({ target: document.getElementById("app") });
+- app.$on('event', callback);
++ const app = mount(App, { target: document.getElementById("app"), events: { event: callback } });
+```
 
 > Note that using `events` is discouraged — instead, [use callbacks](https://svelte-5-preview.vercel.app/docs/event-handlers)
 
-As a stop-gap-solution, you can also use `createClassComponent` or `asClassComponent` (imported from `svelte/legacy`) instead to keep the same API after instantiating. If this component is not under your control, you can use the `legacy.componentApi` compiler option for auto-applied backwards compatibility (note that this adds a bit of overhead to each component).
+For `$set`, use `$state` instead to create a reactive property object and manipulate it. If you're doing this inside a `.js` or `.ts` file, adjust the ending to include `.svelte`, i.e. `.svelte.js` or `.svelte.ts`.
+
+```diff
++ import { mount } from 'svelte';
+import App from './App.svelte'
+
+- const app = new App({ target: document.getElementById("app"), props: { foo: 'bar' } });
+- app.$set('event', { foo: 'baz' });
++ const props = $state({ foo: 'bar' });
++ const app = mount(App, { target: document.getElementById("app"), props });
++ props.foo = 'baz';
+```
+
+For `$destroy`, use `unmount` instead.
+
+```diff
++ import { mount, unmount } from 'svelte';
+import App from './App.svelte'
+
+- const app = new App({ target: document.getElementById("app"), props: { foo: 'bar' } });
+- app.$destroy();
++ const app = mount(App, { target: document.getElementById("app") });
++ unmount(app);
+```
+
+As a stop-gap-solution, you can also use `createClassComponent` or `asClassComponent` (imported from `svelte/legacy`) instead to keep the same API known from Svelte 4 after instantiating.
+
+```diff
++ import { createClassComponent } from 'svelte/legacy';
+import App from './App.svelte'
+
+- const app = new App({ target: document.getElementById("app") });
++ const app = createClassComponent({ component: App, target: document.getElementById("app") });
+
+export default app;
+```
+
+If this component is not under your control, you can use the `legacy.componentApi` compiler option for auto-applied backwards compatibility (note that this adds a bit of overhead to each component).
 
 ### Server API changes
 
@@ -61,6 +109,7 @@ Svelte now use Mutation Observers instead of IFrames to measure dimensions for `
 - The `false`/`true` (already deprecated previously) and the `"none"` values were removed as valid values from the `css` option
 - The `legacy` option was repurposed
 - The `hydratable` option has been removed. Svelte components are always hydratable now
+- The `enableSourcemap` option has been removed. Source maps are always generated now, tooling can choose to ignore it
 - The `tag` option was removed. Use `<svelte:options customElement="tag-name" />` inside the component instead
 - The `loopGuardTimeout`, `format`, `sveltePath`, `errorMode` and `varsReport` options were removed
 
@@ -76,11 +125,22 @@ Assignments to destructured parts of a `@const` declaration are no longer allowe
 
 ### Stricter CSS `:global` selector validation
 
-Previously, a selector like `.foo :global(bar).baz` was valid. In Svelte 5, this is a validation error instead. The reason is that in this selector the resulting CSS would be equivalent to one without `:global` - in other words, `:global` is ignored in this case.
+Previously, a compound selector starting with a global modifier which has universal or type selectors (like `:global(span).foo`) was valid. In Svelte 5, this is a validation error instead. The reason is that in this selector the resulting CSS would be equivalent to one without `:global` - in other words, `:global` is ignored in this case.
 
 ### CSS hash position no longer deterministic
 
 Previously Svelte would always insert the CSS hash last. This is no longer guaranteed in Svelte 5. This is only breaking if you [have very weird css selectors](https://stackoverflow.com/questions/15670631/does-the-order-of-classes-listed-on-an-item-affect-the-css).
+
+### Scoped CSS uses :where(...)
+
+To avoid issues caused by unpredictable specificity changes, scoped CSS selectors now use `:where(.svelte-xyz123)` selector modifiers alongside `.svelte-xyz123` (where `xyz123` is, as previously, a hash of the `<style>` contents). You can read more detail [here](https://github.com/sveltejs/svelte/pull/10443).
+
+In the event that you need to support ancient browsers that don't implement `:where`, you can manually alter the emitted CSS, at the cost of unpredictable specificity changes:
+
+```js
+// @errors: 2552
+css = css.replace(/:where\((.+?)\)/, '$1');
+```
 
 ### Renames of various error/warning codes
 
@@ -90,9 +150,13 @@ Various error and warning codes have been renamed slightly.
 
 The number of valid namespaces you can pass to the compiler option `namespace` has been reduced to `html` (the default), `svg` and `foreign`.
 
-### beforeUpdate change
+### beforeUpdate/afterUpdate changes
 
 `beforeUpdate` no longer runs twice on initial render if it modifies a variable referenced in the template.
+
+`afterUpdate` callbacks in a parent component will now run after `afterUpdate` callbacks in any child components.
+
+Both functions are disallowed in runes mode — use `$effect.pre(...)` and `$effect(...)` instead.
 
 ### `contenteditable` behavior change
 
@@ -111,3 +175,7 @@ This is not recommended, and is no longer possible in Svelte 5, where properties
 ### `null` and `undefined` become the empty string
 
 In Svelte 4, `null` and `undefined` were printed as the corresponding string. In 99 out of 100 cases you want this to become the empty string instead, which is also what most other frameworks out there do. Therefore, in Svelte 5, `null` and `undefined` become the empty string.
+
+### `bind:files` values can only be `null`, `undefined` or `FileList`
+
+`bind:files` is now a two-way binding. As such, when setting a value, it needs to be either falsy (`null` or `undefined`) or of type `FileList`.

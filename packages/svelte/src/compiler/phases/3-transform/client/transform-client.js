@@ -7,8 +7,8 @@ import { global_visitors } from './visitors/global.js';
 import { javascript_visitors } from './visitors/javascript.js';
 import { javascript_visitors_runes } from './visitors/javascript-runes.js';
 import { javascript_visitors_legacy } from './visitors/javascript-legacy.js';
-import { serialize_get_binding } from './utils.js';
-import { remove_types } from '../typescript.js';
+import { is_state_source, serialize_get_binding } from './utils.js';
+import { render_stylesheet } from '../css/index.js';
 
 /**
  * This function ensures visitor sets don't accidentally clobber each other
@@ -85,7 +85,10 @@ export function client_component(source, analysis, options) {
 		},
 		legacy_reactive_statements: new Map(),
 		metadata: {
-			template_needs_import_node: false,
+			context: {
+				template_needs_import_node: false,
+				template_contains_script_tag: false
+			},
 			namespace: options.namespace,
 			bound_contenteditable: false
 		},
@@ -102,7 +105,6 @@ export function client_component(source, analysis, options) {
 			state,
 			combine_visitors(
 				set_scope(analysis.module.scopes),
-				remove_types,
 				global_visitors,
 				// @ts-expect-error TODO
 				javascript_visitors,
@@ -118,21 +120,18 @@ export function client_component(source, analysis, options) {
 			instance_state,
 			combine_visitors(
 				set_scope(analysis.instance.scopes),
-				{ ...remove_types, ImportDeclaration: undefined, ExportNamedDeclaration: undefined },
 				global_visitors,
 				// @ts-expect-error TODO
 				javascript_visitors,
 				analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy,
 				{
-					ImportDeclaration(node, context) {
-						// @ts-expect-error
-						state.hoisted.push(remove_types.ImportDeclaration(node, context));
+					ImportDeclaration(node) {
+						state.hoisted.push(node);
 						return b.empty;
 					},
 					ExportNamedDeclaration(node, context) {
 						if (node.declaration) {
-							// @ts-expect-error
-							return remove_types.ExportNamedDeclaration(context.visit(node.declaration), context);
+							return context.visit(node.declaration);
 						}
 
 						return b.empty;
@@ -148,7 +147,6 @@ export function client_component(source, analysis, options) {
 			{ ...state, scope: analysis.instance.scope },
 			combine_visitors(
 				set_scope(analysis.template.scopes),
-				remove_types,
 				global_visitors,
 				// @ts-expect-error TODO
 				template_visitors
@@ -201,7 +199,7 @@ export function client_component(source, analysis, options) {
 									b.call('$.validate_store', store_reference, b.literal(name.slice(1))),
 									store_get
 								])
-						  )
+							)
 						: b.thunk(store_get)
 				)
 			);
@@ -227,28 +225,24 @@ export function client_component(source, analysis, options) {
 
 	// Bind static exports to props so that people can access them with bind:x
 	const static_bindings = analysis.exports.map(({ name, alias }) => {
-		const binding = analysis.instance.scope.get(name);
 		return b.stmt(
 			b.call(
 				'$.bind_prop',
 				b.id('$$props'),
 				b.literal(alias ?? name),
-				binding?.kind === 'state' || binding?.kind === 'frozen_state'
-					? b.call('$.get', b.id(name))
-					: b.id(name)
+				serialize_get_binding(b.id(name), instance_state)
 			)
 		);
 	});
 
 	const properties = analysis.exports.map(({ name, alias }) => {
-		const binding = analysis.instance.scope.get(name);
-		const is_source =
-			(binding?.kind === 'state' || binding?.kind === 'frozen_state') &&
-			(!state.analysis.immutable || binding.reassigned);
+		const expression = serialize_get_binding(b.id(name), instance_state);
 
-		// TODO This is always a getter because the `renamed-instance-exports` test wants it that way.
-		// Should we for code size reasons make it an init in runes mode and/or non-dev mode?
-		return b.get(alias ?? name, [b.return(is_source ? b.call('$.get', b.id(name)) : b.id(name))]);
+		if (expression.type === 'Identifier' && !options.dev) {
+			return b.init(alias ?? name, expression);
+		}
+
+		return b.get(alias ?? name, [b.return(expression)]);
 	});
 
 	if (analysis.accessors) {
@@ -264,42 +258,41 @@ export function client_component(source, analysis, options) {
 		}
 	}
 
+	const push_args = [b.id('$$props'), b.literal(analysis.runes)];
+	if (options.dev) push_args.push(b.id(analysis.name));
+
 	const component_block = b.block([
-		b.stmt(b.call('$.push', b.id('$$props'), b.literal(analysis.runes))),
+		b.stmt(b.call('$.push', ...push_args)),
 		...store_setup,
 		...legacy_reactive_declarations,
 		...group_binding_declarations,
 		.../** @type {import('estree').Statement[]} */ (instance.body),
+		analysis.runes ? b.empty : b.stmt(b.call('$.init')),
 		.../** @type {import('estree').Statement[]} */ (template.body),
 		...static_bindings
 	]);
 
 	const append_styles =
-		analysis.inject_styles && analysis.stylesheet.has_styles
+		analysis.inject_styles && analysis.css.ast
 			? () =>
 					component_block.body.push(
 						b.stmt(
 							b.call(
 								'$.append_styles',
 								b.id('$$anchor'),
-								b.literal(analysis.stylesheet.id),
-								b.literal(analysis.stylesheet.render(analysis.name, source, options.dev).code)
+								b.literal(analysis.css.hash),
+								b.literal(render_stylesheet(source, analysis, options).code)
 							)
 						)
 					)
 			: () => {};
 
-	if (properties.length > 0) {
-		component_block.body.push(
-			b.var('$$accessors', b.object(properties)),
-			b.stmt(b.call('$.pop', b.id('$$accessors')))
-		);
-		append_styles();
-		component_block.body.push(b.return(b.id('$$accessors')));
-	} else {
-		component_block.body.push(b.stmt(b.call('$.pop')));
-		append_styles();
-	}
+	append_styles();
+	component_block.body.push(
+		properties.length > 0
+			? b.return(b.call('$.pop', b.object(properties)))
+			: b.stmt(b.call('$.pop'))
+	);
 
 	if (analysis.uses_rest_props) {
 		/** @type {string[]} */
@@ -363,6 +356,27 @@ export function client_component(source, analysis, options) {
 		);
 	} else {
 		body.push(b.export_default(b.id(analysis.name)));
+	}
+
+	if (options.dev) {
+		if (options.filename) {
+			let filename = options.filename;
+			if (/(\/|\w:)/.test(options.filename)) {
+				// filename is absolute — truncate it
+				const parts = filename.split(/[/\\]/);
+				filename = parts.length > 3 ? ['...', ...parts.slice(-3)].join('/') : filename;
+			}
+
+			// add `App.filename = 'App.svelte'` so that we can print useful messages later
+			body.push(
+				b.stmt(
+					b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.literal(filename))
+				)
+			);
+		}
+
+		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'), b.id(analysis.name))));
+		body.push(b.stmt(b.call(b.id('$.mark_module_end'))));
 	}
 
 	if (options.discloseVersion) {

@@ -23,11 +23,11 @@ function Function_prop_no_getter($$anchor, $$props) {
 		onmouseenter: () => $.set(count, $.proxy(plusOne($.get(count)))),
 		children: ($$anchor, $$slotProps) => {
 			/* Init */
-			var node_1 = $.space($$anchor);
+			var text = $.space_frag($$anchor);
 
 			/* Update */
-			$.text_effect(node_1, () => `clicks: ${$.stringify($.get(count))}`);
-			$.close($$anchor, node_1);
+			$.text_effect(text, () => `clicks: ${$.stringify($.get(count))}`);
+			$.close($$anchor, text);
 		}
 	});
 

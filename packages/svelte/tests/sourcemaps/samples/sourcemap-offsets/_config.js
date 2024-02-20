@@ -1,20 +1,19 @@
 import { test } from '../../test';
 import { magic_string_bundle } from '../../helpers.js';
 
-export const EXTERNAL = 'span { --external-var: 1px; }';
+const EXTERNAL = 'span { --external-var: 1px; }';
 
 export default test({
-	skip: true,
-	js_map_sources: ['input.svelte'],
 	css_map_sources: ['input.svelte', 'external.css'],
 	preprocess: [
 		{
-			style: ({ content, filename = '' }) => {
+			style: ({ content }) => {
 				return magic_string_bundle([
 					{ code: EXTERNAL, filename: 'external.css' },
-					{ code: content, filename }
+					{ code: content, filename: 'input.svelte' }
 				]);
 			}
 		}
-	]
+	],
+	preprocessed: [{ str: '--component-var: 2px' }, { code: EXTERNAL, str: '--external-var: 1px' }]
 });

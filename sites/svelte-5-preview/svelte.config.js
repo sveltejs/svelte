@@ -15,6 +15,6 @@ export default {
 	},
 
 	vitePlugin: {
-		inspector: true
+		inspector: false
 	}
 };

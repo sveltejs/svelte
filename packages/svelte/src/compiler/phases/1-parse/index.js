@@ -7,6 +7,7 @@ import full_char_code_at from './utils/full_char_code_at.js';
 import { error } from '../../errors.js';
 import { create_fragment } from './utils/create.js';
 import read_options from './read/options.js';
+import { getLocator } from 'locate-character';
 
 const regex_position_indicator = / \(\d+:\d+\)$/;
 
@@ -41,13 +42,16 @@ export class Parser {
 	/** @type {LastAutoClosedTag | undefined} */
 	last_auto_closed_tag;
 
+	locate;
+
 	/** @param {string} template */
 	constructor(template) {
 		if (typeof template !== 'string') {
 			throw new TypeError('Template must be a string');
 		}
 
-		this.template = template.trimRight();
+		this.template = template.trimEnd();
+		this.locate = getLocator(this.template, { offsetLine: 1 });
 
 		let match_lang;
 
@@ -67,7 +71,10 @@ export class Parser {
 			end: null,
 			type: 'Root',
 			fragment: create_fragment(),
-			options: null
+			options: null,
+			metadata: {
+				ts: this.ts
+			}
 		};
 
 		this.stack.push(this.root);
@@ -130,6 +137,18 @@ export class Parser {
 		}
 	}
 
+	/**
+	 * offset -> line/column
+	 * @param {number} start
+	 * @param {number} end
+	 */
+	get_location(start, end) {
+		return {
+			start: /** @type {import('locate-character').Location_1} */ (this.locate(start)),
+			end: /** @type {import('locate-character').Location_1} */ (this.locate(end))
+		};
+	}
+
 	current() {
 		return this.stack[this.stack.length - 1];
 	}
@@ -144,9 +163,9 @@ export class Parser {
 
 	/**
 	 * @param {string} str
-	 * @param {boolean} [required]
+	 * @param {boolean} required
 	 */
-	eat(str, required) {
+	eat(str, required = false) {
 		if (this.match(str)) {
 			this.index += str.length;
 			return true;
@@ -294,7 +313,6 @@ export class Parser {
  */
 export function parse(template) {
 	const parser = new Parser(template);
-
 	return parser.root;
 }
 

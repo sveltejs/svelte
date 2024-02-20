@@ -18,7 +18,7 @@ interface SSRTest extends BaseTest {
 }
 
 const { test, run } = suite<SSRTest>(async (config, test_dir) => {
-	compile_directory(test_dir, 'server', config.compileOptions);
+	await compile_directory(test_dir, 'server', config.compileOptions);
 
 	const Component = (await import(`${test_dir}/_output/server/main.svelte.js`)).default;
 	const expected_html = try_read_file(`${test_dir}/_expected.html`);

@@ -1,5 +1,5 @@
-	.d.svelte-xyz ~ .e.svelte-xyz { color: green; }
-	.a.svelte-xyz ~ .g.svelte-xyz { color: green; }
+	.d.svelte-xyz ~ .e:where(.svelte-xyz) { color: green; }
+	.a.svelte-xyz ~ .g:where(.svelte-xyz) { color: green; }
 
 	/* no match */
 	/* (unused) .a ~ .b { color: green; }*/

@@ -1,5 +1,6 @@
 import { test } from '../../test';
 
 export default test({
-	skip: true
+	client: ['foo.bar.baz'],
+	server: ['foo.bar.baz']
 });

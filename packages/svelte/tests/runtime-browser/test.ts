@@ -67,6 +67,10 @@ async function run_test(
 	const build_result = await build({
 		entryPoints: [`${__dirname}/driver.js`],
 		write: false,
+		define: {
+			__HYDRATE__: String(hydrate),
+			__CE_TEST__: String(test_dir.includes('custom-elements-samples'))
+		},
 		alias: {
 			__MAIN_DOT_SVELTE__: path.resolve(test_dir, 'main.svelte'),
 			__CONFIG__: path.resolve(test_dir, '_config.js'),
@@ -112,6 +116,8 @@ async function run_test(
 
 	let build_result_ssr;
 	if (hydrate) {
+		const ssr_entry = path.resolve(__dirname, '../../src/main/main-server.js');
+
 		build_result_ssr = await build({
 			entryPoints: [`${__dirname}/driver-ssr.js`],
 			write: false,
@@ -123,6 +129,14 @@ async function run_test(
 				{
 					name: 'testing-runtime-browser-ssr',
 					setup(build) {
+						// When running the server version of the Svelte files,
+						// we also want to use the server export of the Svelte package
+						build.onResolve({ filter: /./ }, (args) => {
+							if (args.path === 'svelte') {
+								return { path: ssr_entry };
+							}
+						});
+
 						build.onLoad({ filter: /\.svelte$/ }, (args) => {
 							const compiled = compile(fs.readFileSync(args.path, 'utf-8').replace(/\r/g, ''), {
 								generate: 'server',

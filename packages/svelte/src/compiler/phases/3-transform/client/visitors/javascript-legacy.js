@@ -1,7 +1,33 @@
 import { is_hoistable_function } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import { extract_paths } from '../../../../utils/ast.js';
-import { create_state_declarators, get_prop_source, serialize_get_binding } from '../utils.js';
+import { get_prop_source, serialize_get_binding } from '../utils.js';
+
+/**
+ * Creates the output for a state declaration.
+ * @param {import('estree').VariableDeclarator} declarator
+ * @param {import('../../../scope.js').Scope} scope
+ * @param {import('estree').Expression} value
+ */
+function create_state_declarators(declarator, scope, value) {
+	if (declarator.id.type === 'Identifier') {
+		return [b.declarator(declarator.id, b.call('$.mutable_source', value))];
+	}
+
+	const tmp = scope.generate('tmp');
+	const paths = extract_paths(declarator.id);
+	return [
+		b.declarator(b.id(tmp), value),
+		...paths.map((path) => {
+			const value = path.expression?.(b.id(tmp));
+			const binding = scope.get(/** @type {import('estree').Identifier} */ (path.node).name);
+			return b.declarator(
+				path.node,
+				binding?.kind === 'state' ? b.call('$.mutable_source', value) : value
+			);
+		})
+	];
+}
 
 /** @type {import('../types.js').ComponentVisitors} */
 export const javascript_visitors_legacy = {
@@ -141,8 +167,10 @@ export const javascript_visitors_legacy = {
 			const name = binding.node.name;
 			let serialized = serialize_get_binding(b.id(name), state);
 
-			if (name === '$$props' || name === '$$restProps') {
-				serialized = b.call('$.access_props', serialized);
+			// If the binding is a prop, we need to deep read it because it could be fine-grained $state
+			// from a runes-component, where mutations don't trigger an update on the prop as a whole.
+			if (name === '$$props' || name === '$$restProps' || binding.kind === 'prop') {
+				serialized = b.call('$.deep_read', serialized);
 			}
 
 			sequence.push(serialized);

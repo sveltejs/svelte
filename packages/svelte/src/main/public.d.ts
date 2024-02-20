@@ -23,8 +23,8 @@ type PropsWithChildren<Props, Slots> = Props &
 	(Props extends { children?: any }
 		? {}
 		: Slots extends { default: any }
-		? { children?: Snippet }
-		: {});
+			? { children?: Snippet }
+			: {});
 
 /**
  * Can be used to create strongly typed Svelte components.
@@ -136,12 +136,8 @@ export class SvelteComponentTyped<
  * <Component on:close={handleCloseEvent} />
  * ```
  */
-export type ComponentEvents<Comp extends SvelteComponent> = Comp extends SvelteComponent<
-	any,
-	infer Events
->
-	? Events
-	: never;
+export type ComponentEvents<Comp extends SvelteComponent> =
+	Comp extends SvelteComponent<any, infer Events> ? Events : never;
 
 /**
  * Convenience type to get the props the given component expects. Example:
@@ -154,9 +150,8 @@ export type ComponentEvents<Comp extends SvelteComponent> = Comp extends SvelteC
  * </script>
  * ```
  */
-export type ComponentProps<Comp extends SvelteComponent> = Comp extends SvelteComponent<infer Props>
-	? Props
-	: never;
+export type ComponentProps<Comp extends SvelteComponent> =
+	Comp extends SvelteComponent<infer Props> ? Props : never;
 
 /**
  * Convenience type to get the type of a Svelte component. Useful for example in combination with
@@ -177,7 +172,7 @@ export type ComponentProps<Comp extends SvelteComponent> = Comp extends SvelteCo
  * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
  * ```
  */
-export type ComponentType<Comp extends SvelteComponent> = (new (
+export type ComponentType<Comp extends SvelteComponent = SvelteComponent> = (new (
 	options: ComponentConstructorOptions<
 		Comp extends SvelteComponent<infer Props> ? Props : Record<string, any>
 	>
@@ -195,11 +190,20 @@ declare const SnippetReturn: unique symbol;
  * ```
  * You can only call a snippet through the `{@render ...}` tag.
  */
-export interface Snippet<T = void> {
-	(arg: T): typeof SnippetReturn & {
-		_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
-	};
-}
+export type Snippet<T extends unknown[] = []> =
+	// this conditional allows tuples but not arrays. Arrays would indicate a
+	// rest parameter type, which is not supported. If rest parameters are added
+	// in the future, the condition can be removed.
+	number extends T['length']
+		? never
+		: {
+				(
+					this: void,
+					...args: T
+				): typeof SnippetReturn & {
+					_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
+				};
+			};
 
 interface DispatchOptions {
 	cancelable?: boolean;
@@ -213,8 +217,8 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 		...args: null extends EventMap[Type]
 			? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
 			: undefined extends EventMap[Type]
-			? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
-			: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
+				? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
+				: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
 	): boolean;
 }
 

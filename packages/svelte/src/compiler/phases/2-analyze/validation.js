@@ -2,11 +2,13 @@ import { error } from '../../errors.js';
 import {
 	extract_identifiers,
 	get_parent,
+	is_expression_attribute,
 	is_text_attribute,
-	unwrap_ts_expression
+	object
 } from '../../utils/ast.js';
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
+import { disallowed_parapgraph_contents, interactive_elements } from '../1-parse/utils/html.js';
 import { binding_properties } from '../bindings.js';
 import { ContentEditableBindings, EventModifiers, SVGElements } from '../constants.js';
 import { is_custom_element_node } from '../nodes.js';
@@ -41,6 +43,10 @@ function validate_component(node, context) {
 		) {
 			error(attribute, 'invalid-event-modifier');
 		}
+
+		if (attribute.type === 'Attribute' && attribute.name === 'slot') {
+			validate_slot_attribute(context, attribute);
+		}
 	}
 
 	context.next({
@@ -66,12 +72,23 @@ function validate_element(node, context) {
 			}
 
 			if (attribute.name.startsWith('on') && attribute.name.length > 2) {
-				if (
-					attribute.value === true ||
-					is_text_attribute(attribute) ||
-					attribute.value.length > 1
-				) {
+				if (!is_expression_attribute(attribute)) {
 					error(attribute, 'invalid-event-attribute-value');
+				}
+
+				const value = attribute.value[0].expression;
+				if (
+					value.type === 'Identifier' &&
+					value.name === attribute.name &&
+					!context.state.scope.get(value.name)
+				) {
+					warn(
+						context.state.analysis.warnings,
+						attribute,
+						context.path,
+						'global-event-reference',
+						attribute.name
+					);
 				}
 			}
 
@@ -171,31 +188,37 @@ function validate_slot_attribute(context, attribute) {
 			error(attribute, 'invalid-slot-attribute');
 		}
 
-		if (owner.type === 'Component' || owner.type === 'SvelteComponent') {
+		if (
+			owner.type === 'Component' ||
+			owner.type === 'SvelteComponent' ||
+			owner.type === 'SvelteSelf'
+		) {
 			if (owner !== context.path.at(-2)) {
 				error(attribute, 'invalid-slot-placement');
 			}
-		}
 
-		const name = attribute.value[0].data;
-		if (context.state.component_slots.has(name)) {
-			error(attribute, 'duplicate-slot-name', name, owner.name);
-		}
-		context.state.component_slots.add(name);
+			const name = attribute.value[0].data;
 
-		if (name === 'default') {
-			for (const node of owner.fragment.nodes) {
-				if (node.type === 'Text' && regex_only_whitespaces.test(node.data)) {
-					continue;
-				}
+			if (context.state.component_slots.has(name)) {
+				error(attribute, 'duplicate-slot-name', name, owner.name);
+			}
 
-				if (node.type === 'RegularElement' || node.type === 'SvelteFragment') {
-					if (node.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')) {
+			context.state.component_slots.add(name);
+
+			if (name === 'default') {
+				for (const node of owner.fragment.nodes) {
+					if (node.type === 'Text' && regex_only_whitespaces.test(node.data)) {
 						continue;
 					}
-				}
 
-				error(node, 'invalid-default-slot-content');
+					if (node.type === 'RegularElement' || node.type === 'SvelteFragment') {
+						if (node.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')) {
+							continue;
+						}
+					}
+
+					error(node, 'invalid-default-slot-content');
+				}
 			}
 		}
 	} else {
@@ -327,21 +350,22 @@ function is_tag_valid_with_parent(tag, parent_tag) {
 /**
  * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
  */
-export const validation = {
+const validation = {
+	AssignmentExpression(node, context) {
+		validate_assignment(node, node.left, context.state);
+	},
 	BindDirective(node, context) {
 		validate_no_const_assignment(node, node.expression, context.state.scope, true);
 
-		let left = node.expression;
-		while (left.type === 'MemberExpression') {
-			left = /** @type {import('estree').MemberExpression} */ (left.object);
-		}
+		const assignee = node.expression;
+		const left = object(assignee);
 
-		if (left.type !== 'Identifier') {
+		if (left === null) {
 			error(node, 'invalid-binding-expression');
 		}
 
 		if (
-			node.expression.type === 'Identifier' &&
+			assignee.type === 'Identifier' &&
 			node.name !== 'this' // bind:this also works for regular variables
 		) {
 			const binding = context.state.scope.get(left.name);
@@ -360,6 +384,10 @@ export const validation = {
 
 			if (binding.kind === 'derived') {
 				error(node.expression, 'invalid-derived-binding');
+			}
+
+			if (context.state.analysis.runes && binding.kind === 'each') {
+				error(node, 'invalid-each-assignment');
 			}
 
 			// TODO handle mutations of non-state/props in runes mode
@@ -484,12 +512,27 @@ export const validation = {
 			error(node, 'invalid-const-placement');
 		}
 	},
+	ImportDeclaration(node, context) {
+		if (node.source.value === 'svelte' && context.state.analysis.runes) {
+			for (const specifier of node.specifiers) {
+				if (specifier.type === 'ImportSpecifier') {
+					if (
+						specifier.imported.name === 'beforeUpdate' ||
+						specifier.imported.name === 'afterUpdate'
+					) {
+						error(specifier, 'invalid-runes-mode-import', specifier.imported.name);
+					}
+				}
+			}
+		}
+	},
 	LetDirective(node, context) {
 		const parent = context.path.at(-1);
 		if (
 			parent === undefined ||
 			(parent.type !== 'Component' &&
 				parent.type !== 'RegularElement' &&
+				parent.type !== 'SlotElement' &&
 				parent.type !== 'SvelteElement' &&
 				parent.type !== 'SvelteComponent' &&
 				parent.type !== 'SvelteSelf' &&
@@ -530,10 +573,39 @@ export const validation = {
 			}
 		}
 
+		if (interactive_elements.has(node.name)) {
+			const path = context.path;
+			for (let parent of path) {
+				if (
+					parent.type === 'RegularElement' &&
+					parent.name === node.name &&
+					interactive_elements.has(parent.name)
+				) {
+					error(node, 'invalid-node-placement', `<${node.name}>`, parent.name);
+				}
+			}
+		}
+
+		if (disallowed_parapgraph_contents.includes(node.name)) {
+			const path = context.path;
+			for (let parent of path) {
+				if (parent.type === 'RegularElement' && parent.name === 'p') {
+					error(node, 'invalid-node-placement', `<${node.name}>`, parent.name);
+				}
+			}
+		}
+
 		context.next({
 			...context.state,
 			parent_element: node.name
 		});
+	},
+	RenderTag(node, context) {
+		for (const arg of node.arguments) {
+			if (arg.type === 'SpreadElement') {
+				error(arg, 'invalid-render-spread-argument');
+			}
+		}
 	},
 	SvelteHead(node) {
 		const attribute = node.attributes[0];
@@ -576,7 +648,7 @@ export const validation = {
 						error(attribute, 'invalid-slot-name', true);
 					}
 				}
-			} else if (attribute.type !== 'SpreadAttribute') {
+			} else if (attribute.type !== 'SpreadAttribute' && attribute.type !== 'LetDirective') {
 				error(attribute, 'invalid-slot-element-attribute');
 			}
 		}
@@ -602,6 +674,9 @@ export const validation = {
 		if (child) {
 			error(child, 'invalid-title-content');
 		}
+	},
+	UpdateExpression(node, context) {
+		validate_assignment(node, node.argument, context.state);
 	},
 	ExpressionTag(node, context) {
 		if (!node.parent) return;
@@ -684,10 +759,10 @@ function validate_call_expression(node, scope, path) {
 		error(node, 'invalid-props-location');
 	}
 
-	if (rune === '$state' || rune === '$derived') {
+	if (rune === '$state' || rune === '$derived' || rune === '$derived.by') {
 		if (parent.type === 'VariableDeclarator') return;
 		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
-		error(node, rune === '$derived' ? 'invalid-derived-location' : 'invalid-state-location');
+		error(node, 'invalid-state-location', rune);
 	}
 
 	if (rune === '$effect' || rune === '$effect.pre') {
@@ -755,10 +830,10 @@ export const validation_runes_js = {
 
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
-		if (rune === '$derived' && args.length !== 1) {
-			error(node, 'invalid-rune-args-length', '$derived', [1]);
+		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
+			error(node, 'invalid-rune-args-length', rune, [1]);
 		} else if (rune === '$state' && args.length > 1) {
-			error(node, 'invalid-rune-args-length', '$state', [0, 1]);
+			error(node, 'invalid-rune-args-length', rune, [0, 1]);
 		} else if (rune === '$props') {
 			error(node, 'invalid-props-location');
 		}
@@ -780,7 +855,7 @@ export const validation_runes_js = {
 				definition.value?.type === 'CallExpression'
 			) {
 				const rune = get_rune(definition.value, context.state.scope);
-				if (rune === '$derived') {
+				if (rune === '$derived' || rune === '$derived.by') {
 					private_derived_state.push(definition.key.name);
 				}
 			}
@@ -852,24 +927,28 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 function validate_assignment(node, argument, state) {
 	validate_no_const_assignment(node, argument, state.scope, false);
 
-	let left = /** @type {import('estree').Expression | import('estree').Super} */ (argument);
+	if (state.analysis.runes && argument.type === 'Identifier') {
+		const binding = state.scope.get(argument.name);
+		if (binding?.kind === 'derived') {
+			error(node, 'invalid-derived-assignment');
+		}
+
+		if (binding?.kind === 'each') {
+			error(node, 'invalid-each-assignment');
+		}
+	}
+
+	let object = /** @type {import('estree').Expression | import('estree').Super} */ (argument);
 
 	/** @type {import('estree').Expression | import('estree').PrivateIdentifier | null} */
 	let property = null;
 
-	while (left.type === 'MemberExpression') {
-		property = left.property;
-		left = left.object;
+	while (object.type === 'MemberExpression') {
+		property = object.property;
+		object = object.object;
 	}
 
-	if (left.type === 'Identifier') {
-		const binding = state.scope.get(left.name);
-		if (binding?.kind === 'derived') {
-			error(node, 'invalid-derived-assignment');
-		}
-	}
-
-	if (left.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
+	if (object.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
 		if (state.private_derived_state.includes(property.name)) {
 			error(node, 'invalid-derived-assignment');
 		}
@@ -877,14 +956,6 @@ function validate_assignment(node, argument, state) {
 }
 
 export const validation_runes = merge(validation, a11y_validators, {
-	AssignmentExpression(node, { state, path }) {
-		const parent = path.at(-1);
-		if (parent && parent.type === 'ConstTag') return;
-		validate_assignment(node, node.left, state);
-	},
-	UpdateExpression(node, { state }) {
-		validate_assignment(node, node.argument, state);
-	},
 	LabeledStatement(node, { path }) {
 		if (node.label.name !== '$' || path.at(-1)?.type !== 'Program') return;
 		error(node, 'invalid-legacy-reactive-statement');
@@ -895,9 +966,6 @@ export const validation_runes = merge(validation, a11y_validators, {
 		if (state.analysis.instance.scope !== state.scope) return;
 		error(node, 'invalid-legacy-export');
 	},
-	ExportSpecifier(node, { state }) {
-		validate_export(node, state.scope, node.local.name);
-	},
 	CallExpression(node, { state, path }) {
 		validate_call_expression(node, state.scope, path);
 	},
@@ -907,25 +975,23 @@ export const validation_runes = merge(validation, a11y_validators, {
 			context.type === 'Identifier' &&
 			(context.name === '$state' || context.name === '$derived')
 		) {
-			error(
-				node,
-				context.name === '$derived' ? 'invalid-derived-location' : 'invalid-state-location'
-			);
+			error(node, 'invalid-state-location', context.name);
 		}
 		next({ ...state });
 	},
-	VariableDeclarator(node, { state }) {
-		const init = unwrap_ts_expression(node.init);
+	VariableDeclarator(node, { state, path }) {
+		const init = node.init;
 		const rune = get_rune(init, state.scope);
 
 		if (rune === null) return;
 
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
-		if (rune === '$derived' && args.length !== 1) {
-			error(node, 'invalid-rune-args-length', '$derived', [1]);
+		// TODO some of this is duplicated with above, seems off
+		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
+			error(node, 'invalid-rune-args-length', rune, [1]);
 		} else if (rune === '$state' && args.length > 1) {
-			error(node, 'invalid-rune-args-length', '$state', [0, 1]);
+			error(node, 'invalid-rune-args-length', rune, [0, 1]);
 		} else if (rune === '$props') {
 			if (state.has_props_rune) {
 				error(node, 'duplicate-props-rune');
@@ -958,6 +1024,16 @@ export const validation_runes = merge(validation, a11y_validators, {
 						error(property, 'invalid-props-pattern');
 					}
 				}
+			}
+		}
+
+		if (rune === '$derived') {
+			const arg = args[0];
+			if (
+				arg.type === 'CallExpression' &&
+				(arg.callee.type === 'ArrowFunctionExpression' || arg.callee.type === 'FunctionExpression')
+			) {
+				warn(state.analysis.warnings, node, path, 'derived-iife');
 			}
 		}
 	},

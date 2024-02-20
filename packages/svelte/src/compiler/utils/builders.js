@@ -45,6 +45,23 @@ export function assignment(operator, left, right) {
 }
 
 /**
+ * @template T
+ * @param {T & import('estree').BaseFunction} func
+ * @returns {T & import('estree').BaseFunction}
+ */
+export function async(func) {
+	return { ...func, async: true };
+}
+
+/**
+ * @param {import('estree').Expression} argument
+ * @returns {import('estree').AwaitExpression}
+ */
+function await_builder(argument) {
+	return { type: 'AwaitExpression', argument };
+}
+
+/**
  * @param {import('estree').BinaryOperator} operator
  * @param {import('estree').Expression} left
  * @param {import('estree').Expression} right
@@ -219,7 +236,7 @@ export function private_id(name) {
  * @param {string} local
  * @returns {import('estree').ImportNamespaceSpecifier}
  */
-export function import_namespace(local) {
+function import_namespace(local) {
 	return {
 		type: 'ImportNamespaceSpecifier',
 		local: id(local)
@@ -378,6 +395,7 @@ export function thunk(expression) {
 		expression.type === 'CallExpression' &&
 		expression.callee.type !== 'Super' &&
 		expression.callee.type !== 'MemberExpression' &&
+		expression.callee.type !== 'CallExpression' &&
 		expression.arguments.length === 0
 	) {
 		return expression.callee;
@@ -587,7 +605,7 @@ export function throw_error(str) {
 }
 
 export {
-	new_builder as new,
+	await_builder as await,
 	let_builder as let,
 	const_builder as const,
 	var_builder as var,

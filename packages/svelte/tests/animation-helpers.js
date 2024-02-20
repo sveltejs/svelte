@@ -53,17 +53,28 @@ class Animation {
 		this.onfinish = () => {};
 		this.pending = true;
 		this.currentTime = 0;
+		this.playState = 'running';
+		this.effect = {
+			setKeyframes: (/** @type {Keyframe[]} */ keyframes) => {
+				this.#keyframes = keyframes;
+			}
+		};
 	}
 
 	play() {
 		this.#paused = false;
 		raf.animations.add(this);
+		this.playState = 'running';
 		this._update();
 	}
 
 	_update() {
 		if (this.#reversed) {
-			this.currentTime = this.#timeline_offset + (this.#timeline_offset - raf.time);
+			if (this.#timeline_offset === 0) {
+				this.currentTime = this.#duration - raf.time;
+			} else {
+				this.currentTime = this.#timeline_offset + (this.#timeline_offset - raf.time);
+			}
 		} else {
 			this.currentTime = raf.time - this.#timeline_offset;
 		}
@@ -107,6 +118,7 @@ class Animation {
 		if (this.#reversed) {
 			raf.animations.delete(this);
 		}
+		this.playState = 'idle';
 	}
 
 	cancel() {
@@ -118,11 +130,16 @@ class Animation {
 
 	pause() {
 		this.#paused = true;
+		this.playState = 'paused';
 	}
 
 	reverse() {
+		if (this.#paused && !raf.animations.has(this)) {
+			raf.animations.add(this);
+		}
 		this.#timeline_offset = this.currentTime;
 		this.#reversed = !this.#reversed;
+		this.playState = 'running';
 	}
 }
 

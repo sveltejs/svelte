@@ -142,7 +142,7 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	runes?: boolean | undefined;
 	/**
-	 *  If `true`, exposes the Svelte major version on the global `window` object in the browser.
+	 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `window.__svelte.v`.
 	 *
 	 * @default true
 	 */
@@ -292,8 +292,11 @@ export interface Binding {
 	legacy_dependencies: Binding[];
 	/** Legacy props: the `class` in `{ export klass as class}` */
 	prop_alias: string | null;
-	/** If this is set, all references should use this expression instead of the identifier name */
-	expression: Expression | null;
+	/**
+	 * If this is set, all references should use this expression instead of the identifier name.
+	 * If a function is given, it will be called with the identifier at that location and should return the new expression.
+	 */
+	expression: Expression | ((id: Identifier) => Expression) | null;
 	/** If this is set, all mutations should use this expression */
 	mutation: ((assignment: AssignmentExpression, context: Context<any, any>) => Expression) | null;
 }

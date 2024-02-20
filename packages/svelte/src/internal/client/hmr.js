@@ -1,8 +1,8 @@
-import { key } from './render.js';
+import { key_block } from './dom/blocks/key.js';
 import { source, set, get, push, pop, user_effect } from './runtime.js';
 import { current_hydration_fragment } from './hydration.js';
 import { child_frag } from './operations.js';
-import { STATE_SYMBOL, proxy } from './proxy/proxy.js';
+import { STATE_SYMBOL, proxy } from './proxy.js';
 
 /**
  * @typedef {Record<string | symbol, any> | undefined} ComponentReturn
@@ -61,13 +61,13 @@ function get_hydration_root() {
 			const [before, after] = ssr0;
 			current_hydration_fragment.unshift(before);
 			current_hydration_fragment.push(after);
-			return child_frag(current_hydration_fragment);
+			return child_frag(current_hydration_fragment, false);
 		}
 	}
 }
 
 function create_accessors_proxy() {
-	const accessors_proxy = proxy(/** @type {import('./proxy/proxy.js').StateObject} */ ({}));
+	const accessors_proxy = proxy(/** @type {import('./types.js').ProxyStateObject} */ ({}));
 	/** @type {Set<string>} */
 	const accessors_keys = new Set();
 
@@ -85,7 +85,7 @@ function create_accessors_proxy() {
 				// current -> proxy
 				user_effect(() => {
 					accessors_proxy[key] = new_accessors[key];
-				})
+				});
 
 				// proxy -> current
 				const descriptor = Object.getOwnPropertyDescriptor(new_accessors, key);
@@ -145,7 +145,7 @@ function create_proxy_component(new_component) {
 			$$anchor = get_hydration_root() || $$anchor;
 		}
 
-		key(
+		key_block(
 			$$anchor,
 			() => get(component_signal),
 			($$anchor) => {

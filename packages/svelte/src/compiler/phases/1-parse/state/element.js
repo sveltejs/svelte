@@ -65,6 +65,7 @@ export default function tag(parser) {
 		const data = parser.read_until(regex_closing_comment);
 		parser.eat('-->', true);
 
+		/** @type {ReturnType<typeof parser.append<import('#compiler').Comment>>} */
 		parser.append({
 			type: 'Comment',
 			start,
@@ -108,12 +109,12 @@ export default function tag(parser) {
 	const type = meta_tags.has(name)
 		? meta_tags.get(name)
 		: regex_capital_letter.test(name[0]) || name === 'svelte:self' || name === 'svelte:component'
-		? 'Component'
-		: name === 'title' && parent_is_head(parser.stack)
-		? 'TitleElement'
-		: name === 'slot'
-		? 'SlotElement'
-		: 'RegularElement';
+			? 'Component'
+			: name === 'title' && parent_is_head(parser.stack)
+				? 'TitleElement'
+				: name === 'slot'
+					? 'SlotElement'
+					: 'RegularElement';
 
 	/** @type {import('#compiler').ElementLike} */
 	// @ts-expect-error TODO can't figure out this error
@@ -128,11 +129,10 @@ export default function tag(parser) {
 					fragment: create_fragment(true),
 					metadata: {
 						svg: false,
-						has_spread: false,
-						can_delegate_events: null
+						has_spread: false
 					},
 					parent: null
-			  }
+				}
 			: {
 					type: /** @type {import('#compiler').ElementLike['type']} */ (type),
 					start,
@@ -140,8 +140,11 @@ export default function tag(parser) {
 					name,
 					attributes: [],
 					fragment: create_fragment(true),
-					parent: null
-			  };
+					parent: null,
+					metadata: {
+						svg: false
+					}
+				};
 
 	parser.allow_whitespace();
 
