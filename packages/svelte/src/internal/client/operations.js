@@ -14,22 +14,16 @@ var element_prototype;
 var text_prototype;
 
 /** @type {Map<any, any>} */
-var map_prototype;
+var map_prototype = Map.prototype;
+var map_set_method = map_prototype.set;
+var map_get_method = map_prototype.get;
+var map_delete_method = map_prototype.delete;
 
 /** @type {typeof Node.prototype.appendChild} */
 var append_child_method;
 
 /** @type {typeof Node.prototype.cloneNode} */
 var clone_node_method;
-
-/** @type {typeof Map.prototype.set} */
-var map_set_method;
-
-/** @type {typeof Map.prototype.get} */
-var map_get_method;
-
-/** @type {typeof Map.prototype.delete} */
-var map_delete_method;
 
 /** @type {(this: Node) => ChildNode | null} */
 var first_child_get;
@@ -65,13 +59,9 @@ export function init_operations() {
 	node_prototype = Node.prototype;
 	element_prototype = Element.prototype;
 	text_prototype = Text.prototype;
-	map_prototype = Map.prototype;
 
 	append_child_method = node_prototype.appendChild;
 	clone_node_method = node_prototype.cloneNode;
-	map_set_method = map_prototype.set;
-	map_get_method = map_prototype.get;
-	map_delete_method = map_prototype.delete;
 
 	$window = window;
 	$document = document;
