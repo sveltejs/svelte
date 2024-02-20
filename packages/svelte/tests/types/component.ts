@@ -112,7 +112,7 @@ mount(NewComponent, {
 		x: ''
 	},
 	events: {
-		event: new MouseEvent('click')
+		event: (e) => e.offsetX
 	},
 	immutable: true,
 	intro: false,
@@ -127,7 +127,9 @@ hydrate(NewComponent, {
 		x: ''
 	},
 	events: {
-		event: new MouseEvent('click')
+		event: (e) =>
+			// @ts-expect-error
+			e.doesNotExist
 	},
 	immutable: true,
 	intro: false,

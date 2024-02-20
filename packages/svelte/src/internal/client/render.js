@@ -2432,7 +2432,7 @@ export function createRoot() {
  * @param {{
  * 		target: Node;
  * 		props?: Props;
- * 		events?: Events;
+ * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 	}} options
@@ -2456,7 +2456,7 @@ export function mount(component, options) {
  * @param {{
  * 		target: Node;
  * 		props?: Props;
- * 		events?: Events;
+ * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: false;
@@ -2524,7 +2524,7 @@ export function hydrate(component, options) {
  * 		target: Node;
  * 		anchor: null | Text;
  * 		props?: Props;
- * 		events?: Events;
+ * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: false;
@@ -2547,8 +2547,16 @@ function _mount(Component, options) {
 				/** @type {import('../client/types.js').ComponentContext} */ (current_component_context).c =
 					options.context;
 			}
-			// @ts-expect-error the public typings are not what the actual function looks like
-			component = Component(options.anchor, options.props || {}) || {};
+			if (!options.props) {
+				options.props = /** @type {Props} */ ({});
+			}
+			if (options.events) {
+				// We can't spread the object or else we'd lose the state proxy stuff, if it is one
+				/** @type {any} */ (options.props).$$events = options.events;
+			}
+			component =
+				// @ts-expect-error the public typings are not what the actual function looks like
+				Component(options.anchor, options.props) || {};
 			if (options.context) {
 				pop();
 			}
