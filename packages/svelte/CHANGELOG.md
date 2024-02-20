@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.64
+
+### Patch Changes
+
+- fix: inherit ownerlessness when creating child proxies ([#10577](https://github.com/sveltejs/svelte/pull/10577))
+
 ## 5.0.0-next.63
 
 ### Patch Changes
