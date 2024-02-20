@@ -3052,25 +3052,6 @@ export function unmount(component) {
 }
 
 /**
- * @param {Record<string, unknown>} props
- * @returns {void}
- */
-export function access_props(props) {
-	for (const prop in props) {
-		deep_read(props[prop]);
-	}
-}
-
-/**
- * @param {any[]} values
- */
-export function deep_read_all(...values) {
-	for (const value of values) {
-		deep_read(value);
-	}
-}
-
-/**
  * @param {Record<string, any>} props
  * @returns {Record<string, any>}
  */
