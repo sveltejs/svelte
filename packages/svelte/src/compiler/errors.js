@@ -170,8 +170,10 @@ const runes = {
 	'invalid-legacy-export': () => `Cannot use \`export let\` in runes mode — use $props instead`,
 	/** @param {string} rune */
 	'invalid-rune-usage': (rune) => `Cannot use ${rune} rune in non-runes mode`,
-	'invalid-state-export': () => `Cannot export state from a module if it is reassigned`,
-	'invalid-derived-export': () => `Cannot export derived state from a module`,
+	'invalid-state-export': () =>
+		`Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties`,
+	'invalid-derived-export': () =>
+		`Cannot export derived state from a module. To expose the current derived value, export a function returning its value`,
 	'invalid-props-id': () => `$props() can only be used with an object destructuring pattern`,
 	'invalid-props-pattern': () =>
 		`$props() assignment must not contain nested properties or computed keys`,
