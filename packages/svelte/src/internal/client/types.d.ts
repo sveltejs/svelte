@@ -78,7 +78,7 @@ export type SourceSignal<V = unknown> = {
 	/** value: The latest value for this signal */
 	v: V;
 	// write version
-	w: number,
+	w: number;
 };
 
 export type SourceSignalDebug = {
