@@ -824,7 +824,8 @@ function update_derived(signal, force_schedule) {
 	destroy_references(signal);
 	const value = execute_signal_fn(signal);
 	updating_derived = previous_updating_derived;
-	const status = current_skip_consumer || (signal.f & UNOWNED) !== 0 ? DIRTY : CLEAN;
+	const status =
+		(current_skip_consumer || (signal.f & UNOWNED) !== 0) && signal.d !== null ? DIRTY : CLEAN;
 	set_signal_status(signal, status);
 	const equals = /** @type {import('./types.js').EqualsFunctions} */ (signal.e);
 	if (!equals(value, signal.v)) {
