@@ -1350,13 +1350,7 @@ export function mutable_source(initial_value) {
 	// bind the signal to the component context, in case we need to
 	// track updates to trigger beforeUpdate/afterUpdate callbacks
 	if (current_component_context) {
-		const signals = current_component_context.d;
-
-		if (signals) {
-			signals.push(s);
-		} else {
-			current_component_context.d = [s];
-		}
+		(current_component_context.d ?? []).push(s);
 	}
 
 	return s;
