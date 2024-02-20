@@ -9,8 +9,6 @@ import {
 	UNINITIALIZED,
 	mutable_source,
 	batch_inspect,
-	set_current_owners,
-	current_owners,
 	current_component_context
 } from './runtime.js';
 import {
@@ -65,7 +63,7 @@ export function proxy(value, immutable = true, owners) {
 
 			if (DEV) {
 				// @ts-expect-error
-				value[STATE_SYMBOL].owners =
+				value[STATE_SYMBOL].o =
 					owners === undefined
 						? current_component_context
 							? // @ts-expect-error
@@ -145,7 +143,7 @@ const state_proxy_handler = {
 			const metadata = target[STATE_SYMBOL];
 
 			const s = metadata.s.get(prop);
-			if (s !== undefined) set(s, proxy(descriptor.value, metadata.i, metadata.owners));
+			if (s !== undefined) set(s, proxy(descriptor.value, metadata.i, metadata.o));
 		}
 
 		return Reflect.defineProperty(target, prop, descriptor);
@@ -192,10 +190,7 @@ const state_proxy_handler = {
 			(effect_active() || updating_derived) &&
 			(!(prop in target) || get_descriptor(target, prop)?.writable)
 		) {
-			const previous_owners = current_owners;
-			if (DEV) set_current_owners(metadata.owner);
-			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i, metadata.owners));
-			if (DEV) set_current_owners(previous_owners);
+			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i, metadata.o));
 			metadata.s.set(prop, s);
 		}
 
@@ -237,7 +232,7 @@ const state_proxy_handler = {
 		if (s !== undefined || (effect_active() && (!has || get_descriptor(target, prop)?.writable))) {
 			if (s === undefined) {
 				s = (metadata.i ? source : mutable_source)(
-					has ? proxy(target[prop], metadata.i, metadata.owners) : UNINITIALIZED
+					has ? proxy(target[prop], metadata.i, metadata.o) : UNINITIALIZED
 				);
 				metadata.s.set(prop, s);
 			}
@@ -253,15 +248,15 @@ const state_proxy_handler = {
 		const metadata = target[STATE_SYMBOL];
 		const s = metadata.s.get(prop);
 		if (s !== undefined) {
-			set(s, proxy(value, metadata.i, metadata.owners));
+			set(s, proxy(value, metadata.i, metadata.o));
 		} else if (DEV) {
 			// TODO transfer ownership, in case it differs
 		}
 		const is_array = metadata.a;
 		const not_has = !(prop in target);
 
-		if (DEV && metadata.owners) {
-			check_ownership(metadata.owners);
+		if (DEV && metadata.o) {
+			check_ownership(metadata.o);
 		}
 
 		// variable.length = value -> clear all signals with index >= value

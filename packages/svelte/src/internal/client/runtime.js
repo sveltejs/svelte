@@ -111,20 +111,6 @@ export let current_component_context = null;
 export let updating_derived = false;
 
 /**
- * Used to assign ownership to signals in dev mode
- * — see `./dev/ownership.js` for more details
- * @type {Function[] | null}
- */
-export let current_owners = null;
-
-/**
- * @param {Function[] | null} owners
- */
-export function set_current_owners(owners) {
-	current_owners = owners;
-}
-
-/**
  * @param {null | import('./types.js').ComponentContext} context
  * @returns {boolean}
  */
@@ -1925,7 +1911,7 @@ export function push(props, runes = false, fn) {
 	if (DEV) {
 		// component function
 		// @ts-expect-error
-		current_owners = [(current_component_context.function = fn)];
+		current_component_context.function = fn;
 	}
 }
 
@@ -1948,10 +1934,6 @@ export function pop(component) {
 			}
 		}
 		current_component_context = context_stack_item.p;
-		if (DEV) {
-			// @ts-expect-error
-			current_owners = current_component_context ? [current_component_context.function] : null;
-		}
 		context_stack_item.m = true;
 	}
 	// Micro-optimization: Don't set .a above to the empty object

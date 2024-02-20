@@ -1,7 +1,7 @@
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
 import { STATE_SYMBOL } from '../proxy.js';
-import { current_component_context, current_owners, deep_read, untrack } from '../runtime.js';
+import { untrack } from '../runtime.js';
 
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
 const boundaries = {};
@@ -80,9 +80,6 @@ export function mark_module_end() {
 	}
 }
 
-/** @type {Function | null} */
-let new_owner = null;
-
 /**
  *
  * @param {any} object
@@ -99,8 +96,8 @@ export function add_owner(object, owner) {
  * @param {Function} owner
  */
 function add_owner_to_object(object, owner) {
-	if (object?.[STATE_SYMBOL]?.owners && !object[STATE_SYMBOL].owners.has(owner)) {
-		object[STATE_SYMBOL].owners.add(owner);
+	if (object?.[STATE_SYMBOL]?.o && !object[STATE_SYMBOL].o.has(owner)) {
+		object[STATE_SYMBOL].o.add(owner);
 
 		for (const key in object) {
 			add_owner_to_object(object[key], owner);
