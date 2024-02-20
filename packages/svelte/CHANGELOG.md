@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.63
+
+### Patch Changes
+
+- fix: handle member expressions in directives ([#10576](https://github.com/sveltejs/svelte/pull/10576))
+
+- fix: remove memory leak ([#10570](https://github.com/sveltejs/svelte/pull/10570))
+
+- fix: call beforeUpdate/afterUpdate callbacks when props are mutated ([#10570](https://github.com/sveltejs/svelte/pull/10570))
+
+- fix: improve props spreading logic ([#10574](https://github.com/sveltejs/svelte/pull/10574))
+
 ## 5.0.0-next.62
 
 ### Patch Changes
