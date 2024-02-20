@@ -263,6 +263,27 @@ describe('signals', () => {
 		};
 	});
 
+	let no_deps = $.derived(() => {
+		return [];
+	});
+
+	test('two effects with an unowned derived that has no depedencies', () => {
+		const log: Array<Array<any>> = [];
+
+		$.render_effect(() => {
+			log.push($.get(no_deps));
+		});
+
+		$.render_effect(() => {
+			log.push($.get(no_deps));
+		});
+
+		return () => {
+			$.flushSync();
+			assert.deepEqual(log, [[], []]);
+		};
+	});
+
 	test('schedules rerun when writing to signal before reading it', (runes) => {
 		if (!runes) return () => {};
 
