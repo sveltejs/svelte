@@ -117,8 +117,8 @@ export async function compile_directory(
 			}
 
 			const compiled = compile(text, {
-				outputFilename: `${file}${file.endsWith('.js') ? '' : '.js'}`,
-				cssOutputFilename: `${file}.css`,
+				outputFilename: `_output/${generate}/${file}${file.endsWith('.js') ? '' : '.js'}`,
+				cssOutputFilename: `_output/${generate}/${file}.css`,
 				...opts
 			});
 			compiled.js.code = compiled.js.code.replace(`v${VERSION}`, 'VERSION');

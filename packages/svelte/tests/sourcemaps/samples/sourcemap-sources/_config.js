@@ -38,7 +38,13 @@ const FOO2 = 'var answer2 = 84; // foo2.js\n';
 const BAR2 = 'console.log(answer2); // bar2.js\n';
 
 export default test({
-	js_map_sources: ['input.svelte', 'foo.js', 'bar.js', 'foo2.js', 'bar2.js'],
+	js_map_sources: [
+		'../../input.svelte',
+		'../../foo.js',
+		'../../bar.js',
+		'../../foo2.js',
+		'../../bar2.js'
+	],
 	preprocess: [
 		{
 			script: ({ content, filename = '' }) => {
