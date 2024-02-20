@@ -8,7 +8,7 @@ import {
 	batch_inspect,
 	current_component_context
 } from './runtime.js';
-import { effect_active } from './reactivity/effects.js';
+import { effect_active } from './reactivity/computations.js';
 import {
 	array_prototype,
 	define_property,

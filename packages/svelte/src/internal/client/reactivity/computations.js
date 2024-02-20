@@ -1,19 +1,25 @@
 import { DEV } from 'esm-env';
 import {
+	CLEAN,
+	DERIVED,
 	DIRTY,
 	EFFECT,
 	MANAGED,
 	PRE_EFFECT,
 	RENDER_EFFECT,
+	UNINITIALIZED,
+	UNOWNED,
 	create_computation_signal,
 	current_block,
 	current_component_context,
+	current_consumer,
 	current_effect,
 	destroy_signal,
 	flush_local_render_effects,
 	push_reference,
 	schedule_effect
 } from '../runtime.js';
+import { default_equals, safe_equal } from './equality.js';
 
 /**
  * @param {import('../types.js').EffectType} type
@@ -177,4 +183,36 @@ export function render_effect(init, block = current_block, managed = false, sync
 export function managed_render_effect(init, block = current_block, sync = true) {
 	const flags = RENDER_EFFECT | MANAGED;
 	return internal_create_effect(flags, /** @type {any} */ (init), sync, block, true);
+}
+
+/**
+ * @template V
+ * @param {() => V} init
+ * @returns {import('../types.js').ComputationSignal<V>}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function derived(init) {
+	const is_unowned = current_effect === null;
+	const flags = is_unowned ? DERIVED | UNOWNED : DERIVED;
+	const signal = /** @type {import('../types.js').ComputationSignal<V>} */ (
+		create_computation_signal(flags | CLEAN, UNINITIALIZED, current_block)
+	);
+	signal.i = init;
+	signal.e = default_equals;
+	if (current_consumer !== null) {
+		push_reference(current_consumer, signal);
+	}
+	return signal;
+}
+
+/**
+ * @template V
+ * @param {() => V} init
+ * @returns {import('../types.js').ComputationSignal<V>}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function derived_safe_equal(init) {
+	const signal = derived(init);
+	signal.e = safe_equal;
+	return signal;
 }

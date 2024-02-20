@@ -24,7 +24,7 @@ import {
 	push_destroy_fn,
 	set_signal_value
 } from '../../runtime.js';
-import { render_effect } from '../../reactivity/effects.js';
+import { render_effect } from '../../reactivity/computations.js';
 import { source, mutable_source } from '../../reactivity/sources.js';
 import { trigger_transitions } from '../../transitions.js';
 import { is_array } from '../../utils.js';

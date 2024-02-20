@@ -19,9 +19,9 @@ import {
 } from '../../constants.js';
 import { STATE_SYMBOL, unstate } from './proxy.js';
 import { EACH_BLOCK, IF_BLOCK } from './block.js';
-import { pre_effect, user_effect } from './reactivity/effects.js';
+import { derived, pre_effect, user_effect } from './reactivity/computations.js';
 import { mutable_source, source } from './reactivity/sources.js';
-import { default_equals, safe_equal, safe_not_equal } from './reactivity/equality.js';
+import { safe_equal, safe_not_equal } from './reactivity/equality.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -29,7 +29,7 @@ export const EFFECT = 1 << 2;
 export const PRE_EFFECT = 1 << 3;
 export const RENDER_EFFECT = 1 << 4;
 export const MANAGED = 1 << 6;
-const UNOWNED = 1 << 7;
+export const UNOWNED = 1 << 7;
 export const CLEAN = 1 << 8;
 export const DIRTY = 1 << 9;
 export const MAYBE_DIRTY = 1 << 10;
@@ -69,7 +69,7 @@ let flush_count = 0;
 // Handle signal reactivity tree dependencies and consumer
 
 /** @type {null | import('./types.js').ComputationSignal} */
-let current_consumer = null;
+export let current_consumer = null;
 
 /** @type {null | import('./types.js').EffectSignal} */
 export let current_effect = null;
@@ -1250,38 +1250,6 @@ export function destroy_signal(signal) {
 	if (teardown !== null && (flags & IS_EFFECT) !== 0) {
 		teardown();
 	}
-}
-
-/**
- * @template V
- * @param {() => V} init
- * @returns {import('./types.js').ComputationSignal<V>}
- */
-/*#__NO_SIDE_EFFECTS__*/
-export function derived(init) {
-	const is_unowned = current_effect === null;
-	const flags = is_unowned ? DERIVED | UNOWNED : DERIVED;
-	const signal = /** @type {import('./types.js').ComputationSignal<V>} */ (
-		create_computation_signal(flags | CLEAN, UNINITIALIZED, current_block)
-	);
-	signal.i = init;
-	signal.e = default_equals;
-	if (current_consumer !== null) {
-		push_reference(current_consumer, signal);
-	}
-	return signal;
-}
-
-/**
- * @template V
- * @param {() => V} init
- * @returns {import('./types.js').ComputationSignal<V>}
- */
-/*#__NO_SIDE_EFFECTS__*/
-export function derived_safe_equal(init) {
-	const signal = derived(init);
-	signal.e = safe_equal;
-	return signal;
 }
 
 /**

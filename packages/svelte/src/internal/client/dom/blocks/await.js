@@ -10,7 +10,7 @@ import {
 	flushSync,
 	push_destroy_fn
 } from '../../runtime.js';
-import { render_effect } from '../../reactivity/effects.js';
+import { render_effect } from '../../reactivity/computations.js';
 import { trigger_transitions } from '../../transitions.js';
 
 /** @returns {import('../../types.js').AwaitBlock} */

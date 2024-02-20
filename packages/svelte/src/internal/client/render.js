@@ -43,7 +43,7 @@ import {
 	pop,
 	deep_read
 } from './runtime.js';
-import { render_effect, effect, managed_effect } from './reactivity/effects.js';
+import { render_effect, effect, managed_effect } from './reactivity/computations.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,
