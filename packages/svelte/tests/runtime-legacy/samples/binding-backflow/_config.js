@@ -34,7 +34,7 @@ export default test({
 
 		p = parents['reactive_mutate'];
 		assert.deepEqual(p.value, { foo: 'kid' });
-		assert.equal(p.updates.length, 1);
+		assert.equal(p.updates.length, 2);
 
 		p = parents['init_update'];
 		assert.deepEqual(p.value, { foo: 'kid' });
@@ -42,6 +42,6 @@ export default test({
 
 		p = parents['init_mutate'];
 		assert.deepEqual(p.value, { foo: 'kid' });
-		assert.equal(p.updates.length, 1);
+		assert.equal(p.updates.length, 2);
 	}
 });

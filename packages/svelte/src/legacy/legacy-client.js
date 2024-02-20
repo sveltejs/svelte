@@ -66,6 +66,9 @@ class Svelte4Component {
 	 * }} options
 	 */
 	constructor(options) {
+		// Using proxy state here isn't completely mirroring the Svelte 4 behavior, because mutations to a property
+		// cause fine-grained updates to only the places where that property is used, and not the entire property.
+		// Reactive statements and actions (the things where this matters) are handling this properly regardless, so it should be fine in practise.
 		const props = $.proxy({ ...(options.props || {}), $$events: this.#events }, false);
 		this.#instance = (options.hydrate ? $.hydrate : $.mount)(options.component, {
 			target: options.target,

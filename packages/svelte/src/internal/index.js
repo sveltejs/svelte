@@ -38,7 +38,8 @@ export {
 	inspect,
 	unwrap,
 	freeze,
-	init
+	init,
+	deep_read
 } from './client/runtime.js';
 export { await_block as await } from './client/dom/blocks/await.js';
 export { if_block as if } from './client/dom/blocks/if.js';
