@@ -106,6 +106,28 @@ function add_owner_to_object(object, owner) {
 }
 
 /**
+ * @param {any} object
+ */
+export function strip_owner(object) {
+	untrack(() => {
+		strip_owner_from_object(object);
+	});
+}
+
+/**
+ * @param {any} object
+ */
+function strip_owner_from_object(object) {
+	if (object?.[STATE_SYMBOL]?.o) {
+		object[STATE_SYMBOL].o = null;
+
+		for (const key in object) {
+			strip_owner(object[key]);
+		}
+	}
+}
+
+/**
  * @param {Set<Function>} owners
  */
 export function check_ownership(owners) {

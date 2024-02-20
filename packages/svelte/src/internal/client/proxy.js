@@ -21,7 +21,7 @@ import {
 	is_frozen,
 	object_prototype
 } from './utils.js';
-import { check_ownership } from './dev/ownership.js';
+import { add_owner, check_ownership, strip_owner } from './dev/ownership.js';
 
 export const STATE_SYMBOL = Symbol('$state');
 
@@ -39,7 +39,20 @@ export function proxy(value, immutable = true, owners) {
 			const metadata = /** @type {import('./types.js').ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
 			// ...unless the proxy belonged to a different object, because
 			// someone copied the state symbol using `Reflect.ownKeys(...)`
-			if (metadata.t === value || metadata.p === value) return metadata.p;
+			if (metadata.t === value || metadata.p === value) {
+				if (DEV) {
+					// update ownership
+					if (owners) {
+						for (const owner of owners) {
+							add_owner(value, owner);
+						}
+					} else {
+						strip_owner(value);
+					}
+				}
+
+				return metadata.p;
+			}
 		}
 
 		const prototype = get_prototype_of(value);
@@ -249,8 +262,6 @@ const state_proxy_handler = {
 		const s = metadata.s.get(prop);
 		if (s !== undefined) {
 			set(s, proxy(value, metadata.i, metadata.o));
-		} else if (DEV) {
-			// TODO transfer ownership, in case it differs
 		}
 		const is_array = metadata.a;
 		const not_has = !(prop in target);
