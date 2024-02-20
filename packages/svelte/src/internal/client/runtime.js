@@ -19,7 +19,7 @@ import {
 } from '../../constants.js';
 import { STATE_SYMBOL, unstate } from './proxy.js';
 import { EACH_BLOCK, IF_BLOCK } from './block.js';
-import { add_owner_to_signal, check_ownership, get_component, set_owner } from './dev/ownership.js';
+import { add_owner_to_signal, check_ownership, set_owners } from './dev/ownership.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -114,15 +114,15 @@ export let updating_derived = false;
 /**
  * Used to assign ownership to signals in dev mode
  * — see `./dev/ownership.js` for more details
- * @type {Function | null}
+ * @type {Function[] | null}
  */
-export let current_owner = null;
+export let current_owners = null;
 
 /**
- * @param {Function | null} owner
+ * @param {Function[] | null} owners
  */
-export function set_current_owner(owner) {
-	current_owner = owner;
+export function set_current_owners(owners) {
+	current_owners = owners;
 }
 
 /**
@@ -1344,7 +1344,7 @@ export function source(initial_value) {
  */
 function bind_signal_to_component_context(signal) {
 	if (DEV) {
-		set_owner(signal);
+		set_owners(signal);
 	}
 
 	if (current_component_context === null || !current_component_context.r) return;
@@ -1935,7 +1935,7 @@ export function push(props, runes = false, fn) {
 	if (DEV) {
 		// component function
 		// @ts-expect-error
-		current_owner = current_component_context.function = fn;
+		current_owners = [(current_component_context.function = fn)];
 	}
 }
 
@@ -1960,7 +1960,7 @@ export function pop(component) {
 		current_component_context = context_stack_item.p;
 		if (DEV) {
 			// @ts-expect-error
-			current_owner = current_component_context?.function;
+			current_owners = current_component_context ? [current_component_context.function] : null;
 		}
 		context_stack_item.m = true;
 	}

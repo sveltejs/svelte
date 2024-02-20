@@ -1,6 +1,6 @@
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
-import { current_component_context, current_owner, deep_read, untrack } from '../runtime.js';
+import { current_component_context, current_owners, deep_read, untrack } from '../runtime.js';
 
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
 const boundaries = {};
@@ -85,11 +85,13 @@ let new_owner = null;
 /**
  * @param {import('../types.js').Signal} signal
  */
-export function set_owner(signal) {
+export function set_owners(signal) {
 	// @ts-expect-error
-	if (current_owner && signal.owners) {
-		// @ts-expect-error
-		signal.owners.add(current_owner);
+	if (current_owners && signal.owners) {
+		for (const owner of current_owners) {
+			// @ts-expect-error
+			signal.owners.add(owner);
+		}
 	}
 }
 

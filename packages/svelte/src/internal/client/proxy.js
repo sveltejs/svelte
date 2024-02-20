@@ -9,8 +9,8 @@ import {
 	UNINITIALIZED,
 	mutable_source,
 	batch_inspect,
-	set_current_owner,
-	current_owner
+	set_current_owners,
+	current_owners
 } from './runtime.js';
 import {
 	array_prototype,
@@ -62,7 +62,7 @@ export function proxy(value, immutable = true) {
 
 			if (DEV) {
 				// @ts-expect-error
-				value[STATE_SYMBOL].owner = current_owner;
+				value[STATE_SYMBOL].owner = new Set(current_owners);
 			}
 
 			return proxy;
@@ -183,10 +183,10 @@ const state_proxy_handler = {
 			(effect_active() || updating_derived) &&
 			(!(prop in target) || get_descriptor(target, prop)?.writable)
 		) {
-			const previous_owner = current_owner;
-			if (DEV) set_current_owner(metadata.owner);
+			const previous_owners = current_owners;
+			if (DEV) set_current_owners(metadata.owner);
 			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i));
-			if (DEV) set_current_owner(previous_owner);
+			if (DEV) set_current_owners(previous_owners);
 			metadata.s.set(prop, s);
 		}
 
