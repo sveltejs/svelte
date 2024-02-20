@@ -4,4 +4,4 @@
 </script>
 
 <Sub bind:this={sub} />
-<button on:click={() => sub.increment()}>{sub?.count1.value} / {sub?.count2.value}</button>
+<button on:click={() => sub.increment()}>{sub?.count} / {sub?.doubled}</button>

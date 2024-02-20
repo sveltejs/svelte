@@ -7,6 +7,6 @@ export default test({
 
 		btn?.click();
 		await Promise.resolve();
-		assert.htmlEqual(target.innerHTML, '0 1 <button>0 / 1</button>');
+		assert.htmlEqual(target.innerHTML, '1 2 <button>1 / 2</button>');
 	}
 });

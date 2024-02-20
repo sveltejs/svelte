@@ -733,10 +733,6 @@ function validate_export(node, scope, name) {
 	const binding = scope.get(name);
 	if (!binding) return;
 
-	if (binding.kind === 'prop') {
-		error(node, 'invalid-prop-export');
-	}
-
 	if (binding.kind === 'derived') {
 		error(node, 'invalid-derived-export');
 	}
@@ -964,24 +960,11 @@ export const validation_runes = merge(validation, a11y_validators, {
 		if (node.label.name !== '$' || path.at(-1)?.type !== 'Program') return;
 		error(node, 'invalid-legacy-reactive-statement');
 	},
-	ExportNamedDeclaration(node, { state, next }) {
+	ExportNamedDeclaration(node, { state }) {
 		if (node.declaration?.type !== 'VariableDeclaration') return;
-
-		// visit children, so bindings are correctly initialised
-		next();
-
-		for (const declarator of node.declaration.declarations) {
-			for (const id of extract_identifiers(declarator.id)) {
-				validate_export(node, state.scope, id.name);
-			}
-		}
-
-		if (state.analysis.instance.scope !== state.scope) return;
 		if (node.declaration.kind !== 'let') return;
+		if (state.analysis.instance.scope !== state.scope) return;
 		error(node, 'invalid-legacy-export');
-	},
-	ExportSpecifier(node, { state }) {
-		validate_export(node, state.scope, node.local.name);
 	},
 	CallExpression(node, { state, path }) {
 		validate_call_expression(node, state.scope, path);
