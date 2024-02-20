@@ -2,7 +2,7 @@
 // Note: compiler output will change before 5.0 is released!
 import * as $ from "svelte/internal/server";
 
-export default function Index($$payload, $$props) {
+export default function State_proxy_literal($$payload, $$props) {
 	$.push(true);
 
 	let str = '';

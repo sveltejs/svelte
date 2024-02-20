@@ -12,7 +12,7 @@ function reset(_, str, tpl) {
 
 var frag = $.template(`<input> <input> <button>reset</button>`, true);
 
-export default function Index($$anchor, $$props) {
+export default function State_proxy_literal($$anchor, $$props) {
 	$.push($$props, true);
 
 	let str = $.source('');

@@ -73,7 +73,7 @@ export async function compile_directory(
 
 		let text = fs.readFileSync(`${cwd}/${file}`, 'utf-8');
 		let opts = {
-			filename: file,
+			filename: path.join(cwd, file),
 			...compileOptions,
 			generate
 		};
@@ -86,7 +86,7 @@ export async function compile_directory(
 					generate: opts.generate,
 					dev: opts.dev
 				});
-				write(out, compiled.js.code);
+				write(out, compiled.js.code.replace(`v${VERSION}`, 'VERSION'));
 			} else {
 				// for non-runes tests, just re-export from the original source file — this
 				// allows the `_config.js` module to import shared state to use in tests
@@ -121,8 +121,8 @@ export async function compile_directory(
 			}
 
 			const compiled = compile(text, {
-				outputFilename: `_output/${generate}/${file}${file.endsWith('.js') ? '' : '.js'}`,
-				cssOutputFilename: `_output/${generate}/${file}.css`,
+				outputFilename: `${output_dir}/${file}${file.endsWith('.js') ? '' : '.js'}`,
+				cssOutputFilename: `${output_dir}/${file}.css`,
 				...opts
 			});
 			compiled.js.code = compiled.js.code.replace(`v${VERSION}`, 'VERSION');

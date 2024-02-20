@@ -3,7 +3,7 @@
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal";
 
-export default function Index($$anchor, $$props) {
+export default function Function_prop_no_getter($$anchor, $$props) {
 	$.push($$props, true);
 
 	let count = $.source(0);

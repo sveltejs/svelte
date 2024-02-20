@@ -348,14 +348,17 @@ export function client_component(source, analysis, options) {
 
 	if (options.dev) {
 		if (options.filename) {
+			let filename = options.filename;
+			if (/(\/|\w:)/.test(options.filename)) {
+				// filename is absolute — truncate it
+				const parts = filename.split(/[/\\]/);
+				filename = parts.length > 3 ? ['...', ...parts.slice(-3)].join('/') : filename;
+			}
+
 			// add `App.filename = 'App.svelte'` so that we can print useful messages later
 			body.push(
 				b.stmt(
-					b.assignment(
-						'=',
-						b.member(b.id(analysis.name), b.id('filename')),
-						b.literal(options.filename)
-					)
+					b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.literal(filename))
 				)
 			);
 		}
