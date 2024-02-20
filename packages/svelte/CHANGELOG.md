@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.62
+
+### Patch Changes
+
+- feat: allow state/derived/props to be explicitly exported from components ([#10523](https://github.com/sveltejs/svelte/pull/10523))
+
+- fix: replace proxy-based readonly validation with stack-trace-based ownership tracking ([#10464](https://github.com/sveltejs/svelte/pull/10464))
+
+- fix: correct context applied to batch_inspect ([#10569](https://github.com/sveltejs/svelte/pull/10569))
+
 ## 5.0.0-next.61
 
 ### Patch Changes
