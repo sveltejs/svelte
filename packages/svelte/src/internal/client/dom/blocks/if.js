@@ -6,13 +6,8 @@ import {
 	set_current_hydration_fragment
 } from '../../hydration.js';
 import { remove } from '../../reconciler.js';
-import {
-	current_block,
-	destroy_signal,
-	execute_effect,
-	push_destroy_fn,
-	render_effect
-} from '../../runtime.js';
+import { current_block, destroy_signal, execute_effect, push_destroy_fn } from '../../runtime.js';
+import { render_effect } from '../../reactivity/effects.js';
 import { trigger_transitions } from '../../transitions.js';
 
 /** @returns {import('../../types.js').IfBlock} */

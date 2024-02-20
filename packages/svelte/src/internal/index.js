@@ -9,10 +9,6 @@ export {
 	derived,
 	derived_safe_equal,
 	prop,
-	user_effect,
-	render_effect,
-	pre_effect,
-	invalidate_effect,
 	flushSync,
 	bubble_event,
 	safe_equal,
@@ -33,8 +29,6 @@ export {
 	pop,
 	push,
 	reactive_import,
-	effect_active,
-	user_root_effect,
 	inspect,
 	unwrap,
 	freeze,
@@ -46,6 +40,7 @@ export { await_block as await } from './client/dom/blocks/await.js';
 export { if_block as if } from './client/dom/blocks/if.js';
 export { key_block as key } from './client/dom/blocks/key.js';
 export * from './client/dom/blocks/each.js';
+export * from './client/reactivity/effects.js';
 export * from './client/render.js';
 export * from './client/validate.js';
 export { raf } from './client/timing.js';

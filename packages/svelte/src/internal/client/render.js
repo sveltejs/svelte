@@ -31,21 +31,19 @@ import {
 	remove
 } from './reconciler.js';
 import {
-	render_effect,
 	destroy_signal,
 	is_signal,
 	push_destroy_fn,
 	execute_effect,
 	untrack,
-	effect,
 	flush_sync,
 	current_block,
-	managed_effect,
 	push,
 	current_component_context,
 	pop,
 	deep_read
 } from './runtime.js';
+import { render_effect, effect, managed_effect } from './reactivity/effects.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,

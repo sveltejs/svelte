@@ -1,10 +1,10 @@
 import {
 	current_component_context,
 	get_or_init_context_map,
-	untrack,
-	user_effect
+	untrack
 } from '../internal/client/runtime.js';
 import { is_array } from '../internal/client/utils.js';
+import { user_effect } from '../internal/index.js';
 
 /**
  * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.

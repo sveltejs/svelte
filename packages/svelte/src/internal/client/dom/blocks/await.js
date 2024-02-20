@@ -8,9 +8,9 @@ import {
 	destroy_signal,
 	execute_effect,
 	flushSync,
-	push_destroy_fn,
-	render_effect
+	push_destroy_fn
 } from '../../runtime.js';
+import { render_effect } from '../../reactivity/effects.js';
 import { trigger_transitions } from '../../transitions.js';
 
 /** @returns {import('../../types.js').AwaitBlock} */

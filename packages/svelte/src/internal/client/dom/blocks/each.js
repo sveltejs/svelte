@@ -23,10 +23,10 @@ import {
 	execute_effect,
 	mutable_source,
 	push_destroy_fn,
-	render_effect,
 	set_signal_value,
 	source
 } from '../../runtime.js';
+import { render_effect } from '../../reactivity/effects.js';
 import { trigger_transitions } from '../../transitions.js';
 import { is_array } from '../../utils.js';
 

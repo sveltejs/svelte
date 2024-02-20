@@ -1,6 +1,5 @@
 import { DEV } from 'esm-env';
 import {
-	effect_active,
 	get,
 	set,
 	update,
@@ -11,6 +10,7 @@ import {
 	batch_inspect,
 	current_component_context
 } from './runtime.js';
+import { effect_active } from './reactivity/effects.js';
 import {
 	array_prototype,
 	define_property,
