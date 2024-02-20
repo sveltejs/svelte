@@ -431,7 +431,7 @@ export function serialize_set_binding(node, context, fallback, options) {
 						return {
 							...node,
 							object: visit_node(/** @type {import("estree").Expression} */ (node.object)),
-							property: /** @type {import("estree").Expression} */ (visit(node.property))
+							property: /** @type {import("estree").MemberExpression} */ (visit(node)).property
 						};
 					}
 					if (node.type === 'Identifier') {
