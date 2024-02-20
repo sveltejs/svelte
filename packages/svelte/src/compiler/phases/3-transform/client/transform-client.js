@@ -346,17 +346,22 @@ export function client_component(source, analysis, options) {
 		)
 	];
 
-	if (options.dev && options.filename) {
-		// add `App.filename = 'App.svelte'` so that we can print useful messages later
-		body.push(
-			b.stmt(
-				b.assignment(
-					'=',
-					b.member(b.id(analysis.name), b.id('filename')),
-					b.literal(options.filename)
+	if (options.dev) {
+		if (options.filename) {
+			// add `App.filename = 'App.svelte'` so that we can print useful messages later
+			body.push(
+				b.stmt(
+					b.assignment(
+						'=',
+						b.member(b.id(analysis.name), b.id('filename')),
+						b.literal(options.filename)
+					)
 				)
-			)
-		);
+			);
+		}
+
+		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'), b.id(analysis.name))));
+		body.push(b.stmt(b.call(b.id('$.mark_module_end'))));
 	}
 
 	if (options.discloseVersion) {
@@ -449,11 +454,6 @@ export function client_component(source, analysis, options) {
 		} else {
 			body.push(b.stmt(create_ce));
 		}
-	}
-
-	if (options.dev && state.options.filename) {
-		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'), b.id(analysis.name))));
-		body.push(b.stmt(b.call(b.id('$.mark_module_end'))));
 	}
 
 	return {
