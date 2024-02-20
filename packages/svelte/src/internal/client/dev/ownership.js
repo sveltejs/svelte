@@ -83,13 +83,11 @@ export function mark_module_end() {
 let new_owner = null;
 
 /**
- * @param {import('../types.js').Signal} signal
+ * @param {import('../types.js').SignalDebug} signal
  */
 export function set_owners(signal) {
-	// @ts-expect-error
 	if (current_owners && signal.owners) {
 		for (const owner of current_owners) {
-			// @ts-expect-error
 			signal.owners.add(owner);
 		}
 	}
@@ -109,7 +107,7 @@ export function add_owner(object, owner) {
 }
 
 /**
- * @param {import('../types.js').Signal} signal
+ * @param {import('../types.js').SignalDebug} signal
  */
 export function add_owner_to_signal(signal) {
 	if (
@@ -117,23 +115,19 @@ export function add_owner_to_signal(signal) {
 		// @ts-expect-error
 		signal.owners?.has(current_component_context.function)
 	) {
-		// @ts-expect-error
 		signal.owners.add(new_owner);
 	}
 }
 
 /**
- * @param {import('../types.js').Signal} signal
+ * @param {import('../types.js').SignalDebug} signal
  */
 export function check_ownership(signal) {
-	// @ts-expect-error
 	if (!signal.owners) return;
 
 	const component = get_component();
 
-	// @ts-expect-error
 	if (component && signal.owners.size > 0 && !signal.owners.has(component)) {
-		// @ts-expect-error
 		let owner = [...signal.owners][0];
 
 		let message =

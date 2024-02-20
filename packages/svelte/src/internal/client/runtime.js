@@ -951,11 +951,13 @@ export function unsubscribe_on_destroy(stores) {
  */
 export function get(signal) {
 	if (DEV) {
-		add_owner_to_signal(signal);
+		const debuggable = /** @type {import('./types.js').SignalDebug} */ (signal);
+
+		add_owner_to_signal(debuggable);
 
 		// @ts-expect-error
 		if (signal.inspect && inspect_fn) {
-			/** @type {import('./types.js').SignalDebug} */ (signal).inspect.add(inspect_fn);
+			debuggable.inspect.add(inspect_fn);
 			// @ts-expect-error
 			inspect_captured_signals.push(signal);
 		}
@@ -1025,7 +1027,7 @@ export function get(signal) {
  */
 export function set(signal, value) {
 	if (DEV) {
-		check_ownership(signal);
+		check_ownership(/** @type {import('./types.js').SignalDebug} */ (signal));
 	}
 
 	set_signal_value(signal, value);
@@ -1344,7 +1346,7 @@ export function source(initial_value) {
  */
 function bind_signal_to_component_context(signal) {
 	if (DEV) {
-		set_owners(signal);
+		set_owners(/** @type {import('./types.js').SignalDebug} */ (signal));
 	}
 
 	if (current_component_context === null || !current_component_context.r) return;
