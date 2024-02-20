@@ -11,6 +11,6 @@
     }
 </script>
 
-<button onclick={() => foo = {...foo, count: foo.count + 1 }}>reassign</button>
 <button onclick={() => foo.count++}>mutate</button>
+<button onclick={() => foo = {...foo, count: foo.count + 1 }}>reassign</button>
 <div use:action={foo}>{count}</div>
