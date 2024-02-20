@@ -19,7 +19,7 @@ import {
 } from '../../constants.js';
 import { STATE_SYMBOL, unstate } from './proxy.js';
 import { EACH_BLOCK, IF_BLOCK } from './block.js';
-import { check_ownership, get_component } from './dev/ownership.js';
+import { add_owner_to_signal, check_ownership, get_component, set_owner } from './dev/ownership.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -123,16 +123,6 @@ export let current_owner = null;
  */
 export function set_current_owner(owner) {
 	current_owner = owner;
-}
-
-/** @type {Function | null} */
-export let current_owner_override = null;
-
-/**
- * @param {Function | null} owner
- */
-export function set_current_owner_override(owner) {
-	current_owner_override = owner;
 }
 
 /**
@@ -961,14 +951,7 @@ export function unsubscribe_on_destroy(stores) {
  */
 export function get(signal) {
 	if (DEV) {
-		if (
-			current_owner_override &&
-			// @ts-expect-error
-			signal.owners?.has(current_component_context.function)
-		) {
-			// @ts-expect-error
-			signal.owners.add(current_owner_override);
-		}
+		add_owner_to_signal(signal);
 
 		// @ts-expect-error
 		if (signal.inspect && inspect_fn) {
@@ -1361,11 +1344,7 @@ export function source(initial_value) {
  */
 function bind_signal_to_component_context(signal) {
 	if (DEV) {
-		// @ts-expect-error
-		if (current_owner && signal.owners) {
-			// @ts-expect-error
-			signal.owners.add(current_owner);
-		}
+		set_owner(signal);
 	}
 
 	if (current_component_context === null || !current_component_context.r) return;

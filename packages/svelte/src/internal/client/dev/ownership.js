@@ -1,6 +1,6 @@
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
-import { deep_read, set_current_owner_override, untrack } from '../runtime.js';
+import { current_component_context, current_owner, deep_read, untrack } from '../runtime.js';
 
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
 const boundaries = {};
@@ -79,6 +79,20 @@ export function mark_module_end() {
 	}
 }
 
+/** @type {Function | null} */
+let new_owner = null;
+
+/**
+ * @param {import('../types.js').Signal} signal
+ */
+export function set_owner(signal) {
+	// @ts-expect-error
+	if (current_owner && signal.owners) {
+		// @ts-expect-error
+		signal.owners.add(current_owner);
+	}
+}
+
 /**
  *
  * @param {any} object
@@ -86,10 +100,24 @@ export function mark_module_end() {
  */
 export function add_owner(object, owner) {
 	untrack(() => {
-		set_current_owner_override(owner);
+		new_owner = owner;
 		deep_read(object);
-		set_current_owner_override(null);
+		new_owner = null;
 	});
+}
+
+/**
+ * @param {import('../types.js').Signal} signal
+ */
+export function add_owner_to_signal(signal) {
+	if (
+		new_owner &&
+		// @ts-expect-error
+		signal.owners?.has(current_component_context.function)
+	) {
+		// @ts-expect-error
+		signal.owners.add(new_owner);
+	}
 }
 
 /**
