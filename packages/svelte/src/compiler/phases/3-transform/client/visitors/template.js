@@ -2081,7 +2081,7 @@ export const template_visitors = {
 			node.fragment.nodes,
 			context.path,
 			child_metadata.namespace,
-			state.preserve_whitespace,
+			node.name === 'script' || state.preserve_whitespace,
 			state.options.preserveComments
 		);
 
