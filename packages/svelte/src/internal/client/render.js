@@ -76,9 +76,9 @@ import {
 } from './utils.js';
 import { run } from '../common.js';
 import { bind_transition, trigger_transitions } from './transitions.js';
-import { STATE_SYMBOL } from './proxy.js';
 import { mutable_source } from './reactivity/sources.js';
 import { safe_equal, safe_not_equal } from './reactivity/equality.js';
+import { STATE_SYMBOL } from './constants.js';
 
 /** @type {Set<string>} */
 const all_registerd_events = new Set();

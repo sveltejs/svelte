@@ -1,14 +1,5 @@
 import { DEV } from 'esm-env';
 import {
-	CLEAN,
-	DERIVED,
-	DIRTY,
-	EFFECT,
-	MANAGED,
-	PRE_EFFECT,
-	RENDER_EFFECT,
-	UNINITIALIZED,
-	UNOWNED,
 	current_block,
 	current_component_context,
 	current_consumer,
@@ -18,6 +9,17 @@ import {
 	schedule_effect
 } from '../runtime.js';
 import { default_equals, safe_equal } from './equality.js';
+import {
+	DIRTY,
+	MANAGED,
+	RENDER_EFFECT,
+	EFFECT,
+	PRE_EFFECT,
+	DERIVED,
+	UNOWNED,
+	CLEAN,
+	UNINITIALIZED
+} from '../constants.js';
 
 /**
  * @template V

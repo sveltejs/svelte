@@ -9,30 +9,32 @@ import {
 	object_freeze,
 	object_prototype
 } from './utils.js';
-import { STATE_SYMBOL, unstate } from './proxy.js';
-import { EACH_BLOCK, IF_BLOCK } from './block.js';
+import { unstate } from './proxy.js';
 import { pre_effect } from './reactivity/computations.js';
 import { source } from './reactivity/sources.js';
-
-export const SOURCE = 1;
-export const DERIVED = 1 << 1;
-export const EFFECT = 1 << 2;
-export const PRE_EFFECT = 1 << 3;
-export const RENDER_EFFECT = 1 << 4;
-export const MANAGED = 1 << 6;
-export const UNOWNED = 1 << 7;
-export const CLEAN = 1 << 8;
-export const DIRTY = 1 << 9;
-export const MAYBE_DIRTY = 1 << 10;
-export const INERT = 1 << 11;
-export const DESTROYED = 1 << 12;
+import {
+	EACH_BLOCK,
+	IF_BLOCK,
+	EFFECT,
+	PRE_EFFECT,
+	RENDER_EFFECT,
+	DIRTY,
+	UNINITIALIZED,
+	MAYBE_DIRTY,
+	CLEAN,
+	DERIVED,
+	UNOWNED,
+	DESTROYED,
+	INERT,
+	MANAGED,
+	SOURCE,
+	STATE_SYMBOL
+} from './constants.js';
 
 const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT;
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
-
-export const UNINITIALIZED = Symbol();
 
 // Used for controlling the flush of effects.
 let current_scheduler_mode = FLUSH_MICROTASK;
