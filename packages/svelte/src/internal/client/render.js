@@ -41,7 +41,8 @@ import {
 	push,
 	current_component_context,
 	pop,
-	deep_read
+	deep_read,
+	current_effect
 } from './runtime.js';
 import { render_effect, effect, managed_effect } from './reactivity/computations.js';
 import {
@@ -254,6 +255,7 @@ export function comment(anchor) {
  */
 function close_template(dom, is_fragment, anchor) {
 	const block = /** @type {import('./types.js').Block} */ (current_block);
+	const effect = current_effect;
 
 	/** @type {import('./types.js').TemplateNode | Array<import('./types.js').TemplateNode>} */
 	const current = is_fragment
@@ -265,6 +267,7 @@ function close_template(dom, is_fragment, anchor) {
 		insert(current, null, anchor);
 	}
 	block.d = current;
+	effect.dom = current;
 }
 
 /**

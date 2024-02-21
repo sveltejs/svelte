@@ -18,6 +18,7 @@ import {
 	schedule_effect
 } from '../runtime.js';
 import { default_equals, safe_equal } from './equality.js';
+import { remove } from '../reconciler.js';
 
 /**
  * @template V
@@ -253,4 +254,21 @@ export function derived_safe_equal(fn) {
 	const signal = derived(fn);
 	signal.e = safe_equal;
 	return signal;
+}
+
+/**
+ * @param {import('../types.js').ComputationSignal} effect
+ * @param {() => void} done
+ */
+export function pause_effect(effect, done) {
+	// TODO pause children
+	remove(effect.dom);
+	done(); // TODO defer until transitions have completed
+}
+
+/**
+ * @param {import('../types.js').ComputationSignal} signal
+ */
+export function resume_effect(signal) {
+	// TODO
 }
