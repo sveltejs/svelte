@@ -10,12 +10,7 @@ import {
 	map_set,
 	set_class_name
 } from './operations.js';
-import {
-	create_root_block,
-	create_dynamic_element_block,
-	create_head_block,
-	create_snippet_block
-} from './block.js';
+import { create_dynamic_element_block, create_head_block, create_snippet_block } from './block.js';
 import {
 	PassiveDelegatedEvents,
 	DelegatedEvents,

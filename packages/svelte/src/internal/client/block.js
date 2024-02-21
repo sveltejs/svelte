@@ -7,27 +7,6 @@ import {
 } from './constants.js';
 import { current_block } from './runtime.js';
 
-/**
- * @param {boolean} intro
- * @returns {import('./types.js').RootBlock}
- */
-export function create_root_block(intro) {
-	return {
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// intro
-		i: intro,
-		// parent
-		p: null,
-		// transition
-		r: null,
-		// type
-		t: ROOT_BLOCK
-	};
-}
-
 /** @returns {import('./types.js').HeadBlock} */
 export function create_head_block() {
 	return {
