@@ -66,15 +66,15 @@ export function push_reference(target_signal, ref_signal) {
 
 /**
  * @param {import('../types.js').EffectType} type
- * @param {(() => void | (() => void)) | ((b: import('../types.js').Block) => void | (() => void))} init
+ * @param {(() => void | (() => void)) | ((b: import('../types.js').Block) => void | (() => void))} fn
  * @param {boolean} sync
  * @param {null | import('../types.js').Block} block
  * @param {boolean} schedule
  * @returns {import('../types.js').EffectSignal}
  */
-function internal_create_effect(type, init, sync, block, schedule) {
+function internal_create_effect(type, fn, sync, block, schedule) {
 	const signal = create_computation_signal(type | DIRTY, null, block);
-	signal.i = init;
+	signal.i = fn;
 	signal.x = current_component_context;
 	if (current_effect !== null) {
 		signal.l = current_effect.l + 1;
@@ -96,77 +96,84 @@ export function effect_active() {
 }
 
 /**
- * @param {() => void | (() => void)} init
+ * Internal representation of `$effect(...)`
+ * @param {() => void | (() => void)} fn
  * @returns {import('../types.js').EffectSignal}
  */
-export function user_effect(init) {
+export function user_effect(fn) {
 	if (current_effect === null) {
 		throw new Error(
 			'ERR_SVELTE_ORPHAN_EFFECT' +
 				(DEV ? ': The Svelte $effect rune can only be used during component initialisation.' : '')
 		);
 	}
+
 	const apply_component_effect_heuristics =
 		current_effect.f & RENDER_EFFECT &&
 		current_component_context !== null &&
 		!current_component_context.m;
+
 	const effect = internal_create_effect(
 		EFFECT,
-		init,
+		fn,
 		false,
 		current_block,
 		!apply_component_effect_heuristics
 	);
+
 	if (apply_component_effect_heuristics) {
 		const context = /** @type {import('../types.js').ComponentContext} */ (
 			current_component_context
 		);
 		(context.e ??= []).push(effect);
 	}
+
 	return effect;
 }
 
 /**
- * @param {() => void | (() => void)} init
+ * Internal representation of `$effect.root(...)`
+ * @param {() => void | (() => void)} fn
  * @returns {() => void}
  */
-export function user_root_effect(init) {
-	const effect = managed_render_effect(init);
+export function user_root_effect(fn) {
+	const effect = managed_render_effect(fn);
 	return () => {
 		destroy_signal(effect);
 	};
 }
 
 /**
- * @param {() => void | (() => void)} init
+ * @param {() => void | (() => void)} fn
  * @returns {import('../types.js').EffectSignal}
  */
-export function effect(init) {
-	return internal_create_effect(EFFECT, init, false, current_block, true);
+export function effect(fn) {
+	return internal_create_effect(EFFECT, fn, false, current_block, true);
 }
 
 /**
- * @param {() => void | (() => void)} init
+ * @param {() => void | (() => void)} fn
  * @returns {import('../types.js').EffectSignal}
  */
-export function managed_effect(init) {
-	return internal_create_effect(EFFECT | MANAGED, init, false, current_block, true);
+export function managed_effect(fn) {
+	return internal_create_effect(EFFECT | MANAGED, fn, false, current_block, true);
 }
 
 /**
- * @param {() => void | (() => void)} init
+ * @param {() => void | (() => void)} fn
  * @param {boolean} sync
  * @returns {import('../types.js').EffectSignal}
  */
-export function managed_pre_effect(init, sync) {
-	return internal_create_effect(PRE_EFFECT | MANAGED, init, sync, current_block, true);
+export function managed_pre_effect(fn, sync) {
+	return internal_create_effect(PRE_EFFECT | MANAGED, fn, sync, current_block, true);
 }
 
 /**
- * @param {() => void | (() => void)} init
+ * Internal representation of `$effect.pre(...)`
+ * @param {() => void | (() => void)} fn
  * @returns {import('../types.js').EffectSignal}
  */
-export function pre_effect(init) {
+export function pre_effect(fn) {
 	if (current_effect === null) {
 		throw new Error(
 			'ERR_SVELTE_ORPHAN_EFFECT' +
@@ -179,7 +186,7 @@ export function pre_effect(init) {
 	return internal_create_effect(
 		PRE_EFFECT,
 		() => {
-			const val = init();
+			const val = fn();
 			flush_local_render_effects();
 			return val;
 		},
@@ -193,54 +200,54 @@ export function pre_effect(init) {
  * This effect is used to ensure binding are kept in sync. We use a pre effect to ensure we run before the
  * bindings which are in later effects. However, we don't use a pre_effect directly as we don't want to flush anything.
  *
- * @param {() => void | (() => void)} init
+ * @param {() => void | (() => void)} fn
  * @returns {import('../types.js').EffectSignal}
  */
-export function invalidate_effect(init) {
-	return internal_create_effect(PRE_EFFECT, init, true, current_block, true);
+export function invalidate_effect(fn) {
+	return internal_create_effect(PRE_EFFECT, fn, true, current_block, true);
 }
 
 /**
  * @template {import('../types.js').Block} B
- * @param {(block: B) => void | (() => void)} init
+ * @param {(block: B) => void | (() => void)} fn
  * @param {any} block
  * @param {any} managed
  * @param {any} sync
  * @returns {import('../types.js').EffectSignal}
  */
-export function render_effect(init, block = current_block, managed = false, sync = true) {
+export function render_effect(fn, block = current_block, managed = false, sync = true) {
 	let flags = RENDER_EFFECT;
 	if (managed) {
 		flags |= MANAGED;
 	}
-	return internal_create_effect(flags, /** @type {any} */ (init), sync, block, true);
+	return internal_create_effect(flags, /** @type {any} */ (fn), sync, block, true);
 }
 
 /**
  * @template {import('../types.js').Block} B
- * @param {(block: B) => void | (() => void)} init
+ * @param {(block: B) => void | (() => void)} fn
  * @param {any} block
  * @param {any} sync
  * @returns {import('../types.js').EffectSignal}
  */
-export function managed_render_effect(init, block = current_block, sync = true) {
+export function managed_render_effect(fn, block = current_block, sync = true) {
 	const flags = RENDER_EFFECT | MANAGED;
-	return internal_create_effect(flags, /** @type {any} */ (init), sync, block, true);
+	return internal_create_effect(flags, /** @type {any} */ (fn), sync, block, true);
 }
 
 /**
  * @template V
- * @param {() => V} init
+ * @param {() => V} fn
  * @returns {import('../types.js').ComputationSignal<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function derived(init) {
+export function derived(fn) {
 	const is_unowned = current_effect === null;
 	const flags = is_unowned ? DERIVED | UNOWNED : DERIVED;
 	const signal = /** @type {import('../types.js').ComputationSignal<V>} */ (
 		create_computation_signal(flags | CLEAN, UNINITIALIZED, current_block)
 	);
-	signal.i = init;
+	signal.i = fn;
 	signal.e = default_equals;
 	if (current_consumer !== null) {
 		push_reference(current_consumer, signal);
@@ -250,12 +257,12 @@ export function derived(init) {
 
 /**
  * @template V
- * @param {() => V} init
+ * @param {() => V} fn
  * @returns {import('../types.js').ComputationSignal<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function derived_safe_equal(init) {
-	const signal = derived(init);
+export function derived_safe_equal(fn) {
+	const signal = derived(fn);
 	signal.e = safe_equal;
 	return signal;
 }
