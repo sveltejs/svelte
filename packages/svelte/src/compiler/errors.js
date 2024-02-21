@@ -371,10 +371,6 @@ const errors = {
 	// 	message:
 	// 		"'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings"
 	// },
-	// dynamic_contenteditable_attribute: {
-	// 	code: 'dynamic-contenteditable-attribute',
-	// 	message: "'contenteditable' attribute cannot be dynamic if element uses two-way binding"
-	// },
 	// textarea_duplicate_value: {
 	// 	code: 'textarea-duplicate-value',
 	// 	message:

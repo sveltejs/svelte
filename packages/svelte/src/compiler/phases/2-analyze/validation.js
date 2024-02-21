@@ -475,7 +475,7 @@ const validation = {
 					);
 					if (!contenteditable) {
 						error(node, 'missing-contenteditable-attribute');
-					} else if (!is_text_attribute(contenteditable)) {
+					} else if (!is_text_attribute(contenteditable) && contenteditable.value !== true) {
 						error(contenteditable, 'dynamic-contenteditable-attribute');
 					}
 				}
