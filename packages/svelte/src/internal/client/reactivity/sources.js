@@ -1,12 +1,7 @@
-/**
- * @template V
- * @param {V} initial_value
- * @returns {import('../types.js').SourceSignal<V>}
- */
-
 import { DEV } from 'esm-env';
-import { CLEAN, SOURCE, current_component_context } from '../runtime.js';
+import { current_component_context } from '../runtime.js';
 import { default_equals, safe_equal } from './equality.js';
+import { CLEAN, SOURCE } from '../constants.js';
 
 /**
  * @template V

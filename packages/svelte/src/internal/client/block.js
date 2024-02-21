@@ -1,15 +1,11 @@
+import {
+	ROOT_BLOCK,
+	HEAD_BLOCK,
+	DYNAMIC_ELEMENT_BLOCK,
+	DYNAMIC_COMPONENT_BLOCK,
+	SNIPPET_BLOCK
+} from './constants.js';
 import { current_block } from './runtime.js';
-
-export const ROOT_BLOCK = 0;
-export const IF_BLOCK = 1;
-export const EACH_BLOCK = 2;
-export const EACH_ITEM_BLOCK = 3;
-export const AWAIT_BLOCK = 4;
-export const KEY_BLOCK = 5;
-export const HEAD_BLOCK = 6;
-export const DYNAMIC_COMPONENT_BLOCK = 7;
-export const DYNAMIC_ELEMENT_BLOCK = 8;
-export const SNIPPET_BLOCK = 9;
 
 /**
  * @param {boolean} intro

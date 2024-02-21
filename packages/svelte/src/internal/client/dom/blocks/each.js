@@ -7,7 +7,6 @@ import {
 	EACH_KEYED
 } from '../../../../constants.js';
 import { noop } from '../../../common.js';
-import { EACH_BLOCK, EACH_ITEM_BLOCK } from '../../block.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,
@@ -28,6 +27,7 @@ import { render_effect } from '../../reactivity/computations.js';
 import { source, mutable_source } from '../../reactivity/sources.js';
 import { trigger_transitions } from '../../transitions.js';
 import { is_array } from '../../utils.js';
+import { EACH_BLOCK, EACH_ITEM_BLOCK } from '../../constants.js';
 
 const NEW_BLOCK = -1;
 const MOVED_BLOCK = 99999999;

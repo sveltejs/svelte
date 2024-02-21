@@ -4,7 +4,6 @@ import {
 	set,
 	update,
 	updating_derived,
-	UNINITIALIZED,
 	batch_inspect,
 	current_component_context
 } from './runtime.js';
@@ -21,8 +20,7 @@ import {
 } from './utils.js';
 import { add_owner, check_ownership, strip_owner } from './dev/ownership.js';
 import { mutable_source, source } from './reactivity/sources.js';
-
-export const STATE_SYMBOL = Symbol('$state');
+import { STATE_SYMBOL, UNINITIALIZED } from './constants.js';
 
 /**
  * @template T

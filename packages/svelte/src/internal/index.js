@@ -1,33 +1,23 @@
 export {
-	store_get,
 	get,
 	set,
 	set_sync,
 	invalidate_inner_signals,
-	prop,
 	flushSync,
-	bubble_event,
 	tick,
 	untrack,
 	update,
 	update_prop,
-	update_store,
 	update_pre,
 	update_pre_prop,
-	update_pre_store,
 	mutate,
-	mutate_store,
 	value_or_fallback,
 	exclude_from_object,
-	store_set,
-	unsubscribe_on_destroy,
 	pop,
 	push,
-	reactive_import,
 	inspect,
 	unwrap,
 	freeze,
-	init,
 	deep_read
 } from './client/runtime.js';
 export * from './client/dev/ownership.js';
@@ -38,6 +28,7 @@ export * from './client/dom/blocks/each.js';
 export * from './client/reactivity/computations.js';
 export * from './client/reactivity/sources.js';
 export * from './client/reactivity/equality.js';
+export * from './client/reactivity/store.js';
 export * from './client/render.js';
 export * from './client/validate.js';
 export { raf } from './client/timing.js';

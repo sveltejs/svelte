@@ -1,4 +1,4 @@
-import { IF_BLOCK } from '../../block.js';
+import { IF_BLOCK } from '../../constants.js';
 import {
 	current_hydration_fragment,
 	hydrate_block_anchor,
