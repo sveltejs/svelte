@@ -1,6 +1,5 @@
 import { DEV } from 'esm-env';
-import { subscribe_to_store } from '../../store/utils.js';
-import { noop, run, run_all } from '../common.js';
+import { run, run_all } from '../common.js';
 import {
 	array_prototype,
 	get_descriptor,
@@ -89,6 +88,10 @@ let last_inspected_signal = null;
 export let current_untracking = false;
 /** Exists to opt out of the mutation validation for stores which may be set for the first time during a derivation */
 let ignore_mutation_validation = false;
+/** @param {boolean} value */
+export function set_ignore_mutation_validation(value) {
+	ignore_mutation_validation = value;
+}
 
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the consumer.
@@ -740,96 +743,6 @@ function update_derived(signal, force_schedule) {
 }
 
 /**
- * Gets the current value of a store. If the store isn't subscribed to yet, it will create a proxy
- * signal that will be updated when the store is. The store references container is needed to
- * track reassignments to stores and to track the correct component context.
- * @template V
- * @param {import('./types.js').Store<V> | null | undefined} store
- * @param {string} store_name
- * @param {import('./types.js').StoreReferencesContainer} stores
- * @returns {V}
- */
-export function store_get(store, store_name, stores) {
-	/** @type {import('./types.js').StoreReferencesContainer[''] | undefined} */
-	let entry = stores[store_name];
-	const is_new = entry === undefined;
-
-	if (is_new) {
-		entry = {
-			store: null,
-			last_value: null,
-			value: mutable_source(UNINITIALIZED),
-			unsubscribe: noop
-		};
-		// TODO: can we remove this code? it was refactored out when we split up source/comptued signals
-		// push_destroy_fn(entry.value, () => {
-		// 	/** @type {import('./types.js').StoreReferencesContainer['']} */ (entry).last_value =
-		// 		/** @type {import('./types.js').StoreReferencesContainer['']} */ (entry).value.value;
-		// });
-		stores[store_name] = entry;
-	}
-
-	if (is_new || entry.store !== store) {
-		entry.unsubscribe();
-		entry.store = store ?? null;
-		entry.unsubscribe = connect_store_to_signal(store, entry.value);
-	}
-
-	const value = get(entry.value);
-	// This could happen if the store was cleaned up because the component was destroyed and there's a leak on the user side.
-	// In that case we don't want to fail with a cryptic Symbol error, but rather return the last value we got.
-	return value === UNINITIALIZED ? entry.last_value : value;
-}
-
-/**
- * @template V
- * @param {import('./types.js').Store<V> | null | undefined} store
- * @param {import('./types.js').SourceSignal<V>} source
- */
-function connect_store_to_signal(store, source) {
-	if (store == null) {
-		set(source, undefined);
-		return noop;
-	}
-
-	/** @param {V} v */
-	const run = (v) => {
-		ignore_mutation_validation = true;
-		set(source, v);
-		ignore_mutation_validation = false;
-	};
-	return subscribe_to_store(store, run);
-}
-
-/**
- * Sets the new value of a store and returns that value.
- * @template V
- * @param {import('./types.js').Store<V>} store
- * @param {V} value
- * @returns {V}
- */
-export function store_set(store, value) {
-	store.set(value);
-	return value;
-}
-
-/**
- * Unsubscribes from all auto-subscribed stores on destroy
- * @param {import('./types.js').StoreReferencesContainer} stores
- */
-export function unsubscribe_on_destroy(stores) {
-	on_destroy(() => {
-		let store_name;
-		for (store_name in stores) {
-			const ref = stores[store_name];
-			ref.unsubscribe();
-			// TODO: can we remove this code? it was refactored out when we split up source/comptued signals
-			// destroy_signal(ref.value);
-		}
-	});
-}
-
-/**
  * @template V
  * @param {import('./types.js').Signal<V>} signal
  * @returns {V}
@@ -958,18 +871,6 @@ export function mutate(source, value) {
 		untrack(() => get(source))
 	);
 	return value;
-}
-
-/**
- * Updates a store with a new value.
- * @param {import('./types.js').Store<V>} store  the store to update
- * @param {any} expression  the expression that mutates the store
- * @param {V} new_value  the new store value
- * @template V
- */
-export function mutate_store(store, expression, new_value) {
-	store.set(new_value);
-	return expression;
 }
 
 /**
@@ -1231,19 +1132,6 @@ export function is_signal(val) {
 }
 
 /**
- * @template V
- * @param {unknown} val
- * @returns {val is import('./types.js').Store<V>}
- */
-export function is_store(val) {
-	return (
-		typeof val === 'object' &&
-		val !== null &&
-		typeof (/** @type {import('./types.js').Store<V>} */ (val).subscribe) === 'function'
-	);
-}
-
-/**
  * This function is responsible for synchronizing a possibly bound prop with the inner component state.
  * It is used whenever the compiler sees that the component writes to the prop, or when it has a default prop_value.
  * @template V
@@ -1424,17 +1312,6 @@ export function update_prop(fn, d = 1) {
 }
 
 /**
- * @param {import('./types.js').Store<number>} store
- * @param {number} store_value
- * @param {1 | -1} [d]
- * @returns {number}
- */
-export function update_store(store, store_value, d = 1) {
-	store.set(store_value + d);
-	return store_value;
-}
-
-/**
  * @param {import('./types.js').Signal<number>} signal
  * @param {1 | -1} [d]
  * @returns {number}
@@ -1453,18 +1330,6 @@ export function update_pre(signal, d = 1) {
 export function update_pre_prop(fn, d = 1) {
 	const value = fn() + d;
 	fn(value);
-	return value;
-}
-
-/**
- * @param {import('./types.js').Store<number>} store
- * @param {number} store_value
- * @param {1 | -1} [d]
- * @returns {number}
- */
-export function update_pre_store(store, store_value, d = 1) {
-	const value = store_value + d;
-	store.set(value);
 	return value;
 }
 
@@ -1508,15 +1373,6 @@ export function exclude_from_object(obj, keys) {
  */
 export function value_or_fallback(value, fallback) {
 	return value === undefined ? fallback : value;
-}
-
-/**
- * Schedules a callback to run immediately before the component is unmounted.
- * @param {() => any} fn
- * @returns {void}
- */
-function on_destroy(fn) {
-	user_effect(() => () => untrack(fn));
 }
 
 /**
