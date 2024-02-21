@@ -1,6 +1,6 @@
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
-import { STATE_SYMBOL } from '../proxy.js';
+import { STATE_SYMBOL } from '../constants.js';
 import { untrack } from '../runtime.js';
 
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */

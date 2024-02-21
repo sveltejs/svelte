@@ -1,9 +1,7 @@
 import { DEV } from 'esm-env';
-import { subscribe_to_store } from '../../store/utils.js';
-import { noop, run, run_all } from '../common.js';
+import { run_all } from '../common.js';
 import {
 	array_prototype,
-	get_descriptor,
 	get_descriptors,
 	get_prototype_of,
 	is_array,
@@ -11,44 +9,45 @@ import {
 	object_freeze,
 	object_prototype
 } from './utils.js';
+import { unstate } from './proxy.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../constants.js';
-import { STATE_SYMBOL, unstate } from './proxy.js';
-import { EACH_BLOCK, IF_BLOCK } from './block.js';
-import { derived, pre_effect, user_effect } from './reactivity/computations.js';
-import { mutable_source, source } from './reactivity/sources.js';
+import { derived, pre_effect } from './reactivity/computations.js';
+import { mutable_source } from './reactivity/sources.js';
 import { safe_equal, safe_not_equal } from './reactivity/equality.js';
-
-export const SOURCE = 1;
-export const DERIVED = 1 << 1;
-export const EFFECT = 1 << 2;
-export const PRE_EFFECT = 1 << 3;
-export const RENDER_EFFECT = 1 << 4;
-export const MANAGED = 1 << 6;
-export const UNOWNED = 1 << 7;
-export const CLEAN = 1 << 8;
-export const DIRTY = 1 << 9;
-export const MAYBE_DIRTY = 1 << 10;
-export const INERT = 1 << 11;
-export const DESTROYED = 1 << 12;
+import {
+	EACH_BLOCK,
+	IF_BLOCK,
+	EFFECT,
+	PRE_EFFECT,
+	RENDER_EFFECT,
+	DIRTY,
+	UNINITIALIZED,
+	MAYBE_DIRTY,
+	CLEAN,
+	DERIVED,
+	UNOWNED,
+	DESTROYED,
+	INERT,
+	MANAGED,
+	SOURCE,
+	STATE_SYMBOL
+} from './constants.js';
+import { flush_tasks } from './dom/task.js';
 
 const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT;
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
 
-export const UNINITIALIZED = Symbol();
-
 // Used for controlling the flush of effects.
 let current_scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
-let is_task_queued = false;
-let is_raf_queued = false;
 let is_flushing_effect = false;
 // Used for $inspect
 export let is_batching_effect = false;
@@ -61,10 +60,6 @@ let current_queued_pre_and_render_effects = [];
 /** @type {import('./types.js').EffectSignal[]} */
 let current_queued_effects = [];
 
-/** @type {Array<() => void>} */
-let current_queued_tasks = [];
-/** @type {Array<() => void>} */
-let current_raf_tasks = [];
 let flush_count = 0;
 // Handle signal reactivity tree dependencies and consumer
 
@@ -89,16 +84,20 @@ let last_inspected_signal = null;
 export let current_untracking = false;
 /** Exists to opt out of the mutation validation for stores which may be set for the first time during a derivation */
 let ignore_mutation_validation = false;
+/** @param {boolean} value */
+export function set_ignore_mutation_validation(value) {
+	ignore_mutation_validation = value;
+}
 
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the consumer.
 let current_skip_consumer = false;
 // Handle collecting all signals which are read during a specific time frame
-let is_signals_recorded = false;
+export let is_signals_recorded = false;
 let captured_signals = new Set();
 
 /** @type {Function | null} */
-let inspect_fn = null;
+export let inspect_fn = null;
 
 /** @type {Array<import('./types.js').SignalDebug>} */
 let inspect_captured_signals = [];
@@ -570,44 +569,6 @@ export function schedule_effect(signal, sync) {
 	}
 }
 
-function process_task() {
-	is_task_queued = false;
-	const tasks = current_queued_tasks.slice();
-	current_queued_tasks = [];
-	run_all(tasks);
-}
-
-function process_raf_task() {
-	is_raf_queued = false;
-	const tasks = current_raf_tasks.slice();
-	current_raf_tasks = [];
-	run_all(tasks);
-}
-
-/**
- * @param {() => void} fn
- * @returns {void}
- */
-export function schedule_task(fn) {
-	if (!is_task_queued) {
-		is_task_queued = true;
-		setTimeout(process_task, 0);
-	}
-	current_queued_tasks.push(fn);
-}
-
-/**
- * @param {() => void} fn
- * @returns {void}
- */
-export function schedule_raf_task(fn) {
-	if (!is_raf_queued) {
-		is_raf_queued = true;
-		requestAnimationFrame(process_raf_task);
-	}
-	current_raf_tasks.push(fn);
-}
-
 /**
  * @returns {void}
  */
@@ -683,12 +644,7 @@ export function flush_sync(fn, flush_previous = true) {
 		if (current_queued_pre_and_render_effects.length > 0 || effects.length > 0) {
 			flushSync();
 		}
-		if (is_raf_queued) {
-			process_raf_task();
-		}
-		if (is_task_queued) {
-			process_task();
-		}
+		flush_tasks();
 		flush_count = 0;
 	} finally {
 		current_scheduler_mode = previous_scheduler_mode;
@@ -737,96 +693,6 @@ function update_derived(signal, force_schedule) {
 			for (const fn of /** @type {import('./types.js').SignalDebug} */ (signal).inspect) fn();
 		}
 	}
-}
-
-/**
- * Gets the current value of a store. If the store isn't subscribed to yet, it will create a proxy
- * signal that will be updated when the store is. The store references container is needed to
- * track reassignments to stores and to track the correct component context.
- * @template V
- * @param {import('./types.js').Store<V> | null | undefined} store
- * @param {string} store_name
- * @param {import('./types.js').StoreReferencesContainer} stores
- * @returns {V}
- */
-export function store_get(store, store_name, stores) {
-	/** @type {import('./types.js').StoreReferencesContainer[''] | undefined} */
-	let entry = stores[store_name];
-	const is_new = entry === undefined;
-
-	if (is_new) {
-		entry = {
-			store: null,
-			last_value: null,
-			value: mutable_source(UNINITIALIZED),
-			unsubscribe: noop
-		};
-		// TODO: can we remove this code? it was refactored out when we split up source/comptued signals
-		// push_destroy_fn(entry.value, () => {
-		// 	/** @type {import('./types.js').StoreReferencesContainer['']} */ (entry).last_value =
-		// 		/** @type {import('./types.js').StoreReferencesContainer['']} */ (entry).value.value;
-		// });
-		stores[store_name] = entry;
-	}
-
-	if (is_new || entry.store !== store) {
-		entry.unsubscribe();
-		entry.store = store ?? null;
-		entry.unsubscribe = connect_store_to_signal(store, entry.value);
-	}
-
-	const value = get(entry.value);
-	// This could happen if the store was cleaned up because the component was destroyed and there's a leak on the user side.
-	// In that case we don't want to fail with a cryptic Symbol error, but rather return the last value we got.
-	return value === UNINITIALIZED ? entry.last_value : value;
-}
-
-/**
- * @template V
- * @param {import('./types.js').Store<V> | null | undefined} store
- * @param {import('./types.js').SourceSignal<V>} source
- */
-function connect_store_to_signal(store, source) {
-	if (store == null) {
-		set(source, undefined);
-		return noop;
-	}
-
-	/** @param {V} v */
-	const run = (v) => {
-		ignore_mutation_validation = true;
-		set(source, v);
-		ignore_mutation_validation = false;
-	};
-	return subscribe_to_store(store, run);
-}
-
-/**
- * Sets the new value of a store and returns that value.
- * @template V
- * @param {import('./types.js').Store<V>} store
- * @param {V} value
- * @returns {V}
- */
-export function store_set(store, value) {
-	store.set(value);
-	return value;
-}
-
-/**
- * Unsubscribes from all auto-subscribed stores on destroy
- * @param {import('./types.js').StoreReferencesContainer} stores
- */
-export function unsubscribe_on_destroy(stores) {
-	on_destroy(() => {
-		let store_name;
-		for (store_name in stores) {
-			const ref = stores[store_name];
-			ref.unsubscribe();
-			// TODO: can we remove this code? it was refactored out when we split up source/comptued signals
-			// destroy_signal(ref.value);
-		}
-	});
 }
 
 /**
@@ -958,18 +824,6 @@ export function mutate(source, value) {
 		untrack(() => get(source))
 	);
 	return value;
-}
-
-/**
- * Updates a store with a new value.
- * @param {import('./types.js').Store<V>} store  the store to update
- * @param {any} expression  the expression that mutates the store
- * @param {V} new_value  the new store value
- * @template V
- */
-export function mutate_store(store, expression, new_value) {
-	store.set(new_value);
-	return expression;
 }
 
 /**
@@ -1230,132 +1084,6 @@ export function is_signal(val) {
 	);
 }
 
-/**
- * @template V
- * @param {unknown} val
- * @returns {val is import('./types.js').Store<V>}
- */
-export function is_store(val) {
-	return (
-		typeof val === 'object' &&
-		val !== null &&
-		typeof (/** @type {import('./types.js').Store<V>} */ (val).subscribe) === 'function'
-	);
-}
-
-/**
- * This function is responsible for synchronizing a possibly bound prop with the inner component state.
- * It is used whenever the compiler sees that the component writes to the prop, or when it has a default prop_value.
- * @template V
- * @param {Record<string, unknown>} props
- * @param {string} key
- * @param {number} flags
- * @param {V | (() => V)} [initial]
- * @returns {(() => V | ((arg: V) => V) | ((arg: V, mutation: boolean) => V))}
- */
-export function prop(props, key, flags, initial) {
-	var immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
-	var runes = (flags & PROPS_IS_RUNES) !== 0;
-	var prop_value = /** @type {V} */ (props[key]);
-	var setter = get_descriptor(props, key)?.set;
-
-	if (prop_value === undefined && initial !== undefined) {
-		if (setter && runes) {
-			// TODO consolidate all these random runtime errors
-			throw new Error(
-				'ERR_SVELTE_BINDING_FALLBACK' +
-					(DEV
-						? `: Cannot pass undefined to bind:${key} because the property contains a fallback value. Pass a different value than undefined to ${key}.`
-						: '')
-			);
-		}
-
-		// @ts-expect-error would need a cumbersome method overload to type this
-		if ((flags & PROPS_IS_LAZY_INITIAL) !== 0) initial = initial();
-
-		prop_value = /** @type {V} */ (initial);
-
-		if (setter) setter(prop_value);
-	}
-
-	var getter = () => {
-		var value = /** @type {V} */ (props[key]);
-		if (value !== undefined) initial = undefined;
-		return value === undefined ? /** @type {V} */ (initial) : value;
-	};
-
-	// easy mode — prop is never written to
-	if ((flags & PROPS_IS_UPDATED) === 0) {
-		return getter;
-	}
-
-	// intermediate mode — prop is written to, but the parent component had
-	// `bind:foo` which means we can just call `$$props.foo = value` directly
-	if (setter) {
-		return function (/** @type {V} */ value) {
-			if (arguments.length === 1) {
-				/** @type {Function} */ (setter)(value);
-				return value;
-			} else {
-				return getter();
-			}
-		};
-	}
-
-	// hard mode. this is where it gets ugly — the value in the child should
-	// synchronize with the parent, but it should also be possible to temporarily
-	// set the value to something else locally.
-	var from_child = false;
-	var was_from_child = false;
-
-	// The derived returns the current value. The underlying mutable
-	// source is written to from various places to persist this value.
-	var inner_current_value = mutable_source(prop_value);
-	var current_value = derived(() => {
-		var parent_value = getter();
-		var child_value = get(inner_current_value);
-
-		if (from_child) {
-			from_child = false;
-			was_from_child = true;
-			return child_value;
-		}
-
-		was_from_child = false;
-		return (inner_current_value.v = parent_value);
-	});
-
-	if (!immutable) current_value.e = safe_equal;
-
-	return function (/** @type {V} */ value, mutation = false) {
-		var current = get(current_value);
-
-		// legacy nonsense — need to ensure the source is invalidated when necessary
-		// also needed for when handling inspect logic so we can inspect the correct source signal
-		if (is_signals_recorded || (DEV && inspect_fn)) {
-			// set this so that we don't reset to the parent value if `d`
-			// is invalidated because of `invalidate_inner_signals` (rather
-			// than because the parent or child value changed)
-			from_child = was_from_child;
-			// invoke getters so that signals are picked up by `invalidate_inner_signals`
-			getter();
-			get(inner_current_value);
-		}
-
-		if (arguments.length > 0) {
-			if (mutation || (immutable ? value !== current : safe_not_equal(value, current))) {
-				from_child = true;
-				set(inner_current_value, mutation ? current : value);
-				get(current_value); // force a synchronisation immediately
-			}
-
-			return value;
-		}
-
-		return current;
-	};
-}
-
 /** @returns {Map<unknown, unknown>} */
 export function get_or_init_context_map() {
 	const component_context = current_component_context;
@@ -1385,23 +1113,6 @@ function get_parent_context(component_context) {
 }
 
 /**
- * @this {any}
- * @param {Record<string, unknown>} $$props
- * @param {Event} event
- * @returns {void}
- */
-export function bubble_event($$props, event) {
-	var events = /** @type {Record<string, Function[] | Function>} */ ($$props.$$events)?.[
-		event.type
-	];
-	var callbacks = is_array(events) ? events.slice() : events == null ? [] : [events];
-	for (var fn of callbacks) {
-		// Preserve "this" context
-		fn.call(this, event);
-	}
-}
-
-/**
  * @param {import('./types.js').Signal<number>} signal
  * @param {1 | -1} [d]
  * @returns {number}
@@ -1421,17 +1132,6 @@ export function update_prop(fn, d = 1) {
 	const value = fn();
 	fn(value + d);
 	return value;
-}
-
-/**
- * @param {import('./types.js').Store<number>} store
- * @param {number} store_value
- * @param {1 | -1} [d]
- * @returns {number}
- */
-export function update_store(store, store_value, d = 1) {
-	store.set(store_value + d);
-	return store_value;
 }
 
 /**
@@ -1457,36 +1157,6 @@ export function update_pre_prop(fn, d = 1) {
 }
 
 /**
- * @param {import('./types.js').Store<number>} store
- * @param {number} store_value
- * @param {1 | -1} [d]
- * @returns {number}
- */
-export function update_pre_store(store, store_value, d = 1) {
-	const value = store_value + d;
-	store.set(value);
-	return value;
-}
-
-/**
- * Under some circumstances, imports may be reactive in legacy mode. In that case,
- * they should be using `reactive_import` as part of the transformation
- * @param {() => any} fn
- */
-export function reactive_import(fn) {
-	const s = source(0);
-	return function () {
-		if (arguments.length === 1) {
-			set(s, get(s) + 1);
-			return arguments[0];
-		} else {
-			get(s);
-			return fn();
-		}
-	};
-}
-
-/**
  * @param {Record<string, unknown>} obj
  * @param {string[]} keys
  * @returns {Record<string, unknown>}
@@ -1508,15 +1178,6 @@ export function exclude_from_object(obj, keys) {
  */
 export function value_or_fallback(value, fallback) {
 	return value === undefined ? fallback : value;
-}
-
-/**
- * Schedules a callback to run immediately before the component is unmounted.
- * @param {() => any} fn
- * @returns {void}
- */
-function on_destroy(fn) {
-	user_effect(() => () => untrack(fn));
 }
 
 /**
@@ -1578,53 +1239,6 @@ export function pop(component) {
 	// Micro-optimization: Don't set .a above to the empty object
 	// so it can be garbage-collected when the return here is unused
 	return component || /** @type {T} */ ({});
-}
-
-/**
- * Invoke the getter of all signals associated with a component
- * so they can be registered to the effect this function is called in.
- * @param {import('./types.js').ComponentContext} context
- */
-function observe_all(context) {
-	if (context.d) {
-		for (const signal of context.d) get(signal);
-	}
-
-	deep_read(context.s);
-}
-
-/**
- * Legacy-mode only: Call `onMount` callbacks and set up `beforeUpdate`/`afterUpdate` effects
- */
-export function init() {
-	const context = /** @type {import('./types.js').ComponentContext} */ (current_component_context);
-	const callbacks = context.u;
-
-	if (!callbacks) return;
-
-	// beforeUpdate
-	pre_effect(() => {
-		observe_all(context);
-		callbacks.b.forEach(run);
-	});
-
-	// onMount (must run before afterUpdate)
-	user_effect(() => {
-		const fns = untrack(() => callbacks.m.map(run));
-		return () => {
-			for (const fn of fns) {
-				if (typeof fn === 'function') {
-					fn();
-				}
-			}
-		};
-	});
-
-	// afterUpdate
-	user_effect(() => {
-		observe_all(context);
-		callbacks.a.forEach(run);
-	});
 }
 
 /**

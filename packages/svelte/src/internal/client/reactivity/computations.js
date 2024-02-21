@@ -1,5 +1,6 @@
 import { DEV } from 'esm-env';
 import {
+<<<<<<< HEAD
 	CLEAN,
 	DERIVED,
 	DIRTY,
@@ -9,6 +10,8 @@ import {
 	RENDER_EFFECT,
 	UNINITIALIZED,
 	UNOWNED,
+=======
+>>>>>>> main
 	current_block,
 	current_component_context,
 	current_consumer,
@@ -18,7 +21,21 @@ import {
 	schedule_effect
 } from '../runtime.js';
 import { default_equals, safe_equal } from './equality.js';
+<<<<<<< HEAD
 import { remove } from '../reconciler.js';
+=======
+import {
+	DIRTY,
+	MANAGED,
+	RENDER_EFFECT,
+	EFFECT,
+	PRE_EFFECT,
+	DERIVED,
+	UNOWNED,
+	CLEAN,
+	UNINITIALIZED
+} from '../constants.js';
+>>>>>>> main
 
 /**
  * @template V
