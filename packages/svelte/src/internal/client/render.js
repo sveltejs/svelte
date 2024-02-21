@@ -24,7 +24,8 @@ import {
 	namespace_svg,
 	PROPS_IS_IMMUTABLE,
 	PROPS_IS_RUNES,
-	PROPS_IS_UPDATED
+	PROPS_IS_UPDATED,
+	PROPS_IS_LAZY_INITIAL
 } from '../../constants.js';
 import {
 	create_fragment_from_html,
