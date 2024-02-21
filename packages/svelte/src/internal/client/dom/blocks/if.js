@@ -29,10 +29,8 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 	/** @type {boolean | null} */
 	let condition = null;
 
-	let mounted = false;
-
 	render_effect(() => {
-		if (condition === (condition = condition_fn())) return;
+		if (condition === (condition = !!condition_fn())) return;
 
 		if (hydrating) {
 			const comment_text = /** @type {Comment} */ (current_hydration_fragment?.[0])?.data;
@@ -56,7 +54,7 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 			if (consequent_effect) {
 				resume_effect(consequent_effect);
 			} else {
-				consequent_effect = render_effect(() => consequent_fn(anchor_node));
+				consequent_effect = render_effect(() => consequent_fn(anchor_node), {}, true);
 			}
 
 			if (alternate_effect) {
@@ -68,7 +66,7 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 			if (alternate_effect) {
 				resume_effect(alternate_effect);
 			} else {
-				alternate_effect = alternate_fn && render_effect(() => alternate_fn(anchor_node));
+				alternate_effect = alternate_fn && render_effect(() => alternate_fn(anchor_node), {}, true);
 			}
 
 			if (consequent_effect) {
@@ -78,6 +76,4 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 			}
 		}
 	});
-
-	mounted = true;
 }

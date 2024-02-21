@@ -19,8 +19,10 @@ import {
 	DERIVED,
 	UNOWNED,
 	CLEAN,
-	UNINITIALIZED
+	UNINITIALIZED,
+	INERT
 } from '../constants.js';
+import { noop } from '../../common.js';
 
 /**
  * @template V
@@ -263,8 +265,20 @@ export function derived_safe_equal(fn) {
  * @param {() => void} done
  */
 export function pause_effect(effect, done) {
-	// TODO pause children
-	remove(effect.dom);
+	if (effect.r) {
+		for (const child of effect.r) {
+			pause_effect(child, noop);
+		}
+	}
+
+	effect.f |= INERT;
+
+	// TODO distinguish between 'block effects' (?) which own their own DOM
+	// and other render effects
+	if (effect.dom) {
+		remove(effect.dom);
+	}
+
 	done(); // TODO defer until transitions have completed
 }
 
