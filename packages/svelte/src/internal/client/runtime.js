@@ -10,15 +10,7 @@ import {
 	object_prototype
 } from './utils.js';
 import { unstate } from './proxy.js';
-import {
-	PROPS_IS_LAZY_INITIAL,
-	PROPS_IS_IMMUTABLE,
-	PROPS_IS_RUNES,
-	PROPS_IS_UPDATED
-} from '../../constants.js';
-import { derived, pre_effect } from './reactivity/computations.js';
-import { mutable_source } from './reactivity/sources.js';
-import { safe_equal, safe_not_equal } from './reactivity/equality.js';
+import { pre_effect } from './reactivity/computations.js';
 import {
 	EACH_BLOCK,
 	IF_BLOCK,
