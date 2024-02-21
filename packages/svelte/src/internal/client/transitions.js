@@ -18,6 +18,7 @@ import {
 	managed_pre_effect,
 	user_effect
 } from './reactivity/computations.js';
+import { run_transitions } from './render.js';
 import {
 	current_block,
 	current_effect,
@@ -530,7 +531,8 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 
 			current_options ??= get_fn()(element, get_params?.(), { direction });
 
-			if (!current_options) {
+			if (!current_options?.duration) {
+				current_options = null;
 				callback?.();
 				return;
 			}
@@ -563,6 +565,7 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 					.catch(noop);
 			} else {
 				// TODO timer
+				current_options = null;
 			}
 		}
 	};
@@ -571,9 +574,11 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 	if (direction === 'in' || direction === 'both') {
 		(effect.in ??= []).push(transition);
 
-		user_effect(() => {
-			transition.to(1);
-		});
+		if (run_transitions) {
+			user_effect(() => {
+				untrack(() => transition.to(1));
+			});
+		}
 	}
 
 	if (direction === 'out' || direction === 'both') {
