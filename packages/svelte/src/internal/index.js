@@ -3,13 +3,7 @@ export {
 	set,
 	set_sync,
 	invalidate_inner_signals,
-<<<<<<< HEAD
-	prop,
 	flushSync,
-	bubble_event,
-=======
-	flushSync,
->>>>>>> main
 	tick,
 	untrack,
 	update,
@@ -21,10 +15,6 @@ export {
 	exclude_from_object,
 	pop,
 	push,
-<<<<<<< HEAD
-	reactive_import,
-=======
->>>>>>> main
 	inspect,
 	unwrap,
 	freeze,
@@ -38,10 +28,7 @@ export * from './client/dom/blocks/each.js';
 export * from './client/reactivity/computations.js';
 export * from './client/reactivity/sources.js';
 export * from './client/reactivity/equality.js';
-<<<<<<< HEAD
-=======
 export * from './client/reactivity/store.js';
->>>>>>> main
 export * from './client/render.js';
 export * from './client/validate.js';
 export { raf } from './client/timing.js';
