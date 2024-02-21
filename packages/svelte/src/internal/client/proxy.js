@@ -1,16 +1,13 @@
 import { DEV } from 'esm-env';
 import {
-	effect_active,
 	get,
 	set,
 	update,
-	source,
 	updating_derived,
-	UNINITIALIZED,
-	mutable_source,
 	batch_inspect,
 	current_component_context
 } from './runtime.js';
+import { effect_active } from './reactivity/computations.js';
 import {
 	array_prototype,
 	define_property,
@@ -22,8 +19,8 @@ import {
 	object_prototype
 } from './utils.js';
 import { add_owner, check_ownership, strip_owner } from './dev/ownership.js';
-
-export const STATE_SYMBOL = Symbol('$state');
+import { mutable_source, source } from './reactivity/sources.js';
+import { STATE_SYMBOL, UNINITIALIZED } from './constants.js';
 
 /**
  * @template T

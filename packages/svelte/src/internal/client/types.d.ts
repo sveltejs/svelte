@@ -1,4 +1,9 @@
 import {
+	DERIVED,
+	EFFECT,
+	RENDER_EFFECT,
+	SOURCE,
+	PRE_EFFECT,
 	ROOT_BLOCK,
 	EACH_BLOCK,
 	EACH_ITEM_BLOCK,
@@ -8,10 +13,9 @@ import {
 	HEAD_BLOCK,
 	DYNAMIC_COMPONENT_BLOCK,
 	DYNAMIC_ELEMENT_BLOCK,
-	SNIPPET_BLOCK
-} from './block.js';
-import type { STATE_SYMBOL } from './proxy.js';
-import { DERIVED, EFFECT, RENDER_EFFECT, SOURCE, PRE_EFFECT } from './runtime.js';
+	SNIPPET_BLOCK,
+	STATE_SYMBOL
+} from './constants.js';
 
 // Put all internal types in this file. Once we convert to JSDoc, we can make this a d.ts file
 

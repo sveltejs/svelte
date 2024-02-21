@@ -1,5 +1,6 @@
 import { createClassComponent } from '../../legacy/legacy-client.js';
-import { render_effect, destroy_signal } from './runtime.js';
+import { destroy_signal } from './runtime.js';
+import { render_effect } from './reactivity/computations.js';
 import { open, close } from './render.js';
 import { define_property } from './utils.js';
 

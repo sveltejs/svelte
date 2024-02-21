@@ -1,4 +1,4 @@
-import { IF_BLOCK } from '../../block.js';
+import { IF_BLOCK } from '../../constants.js';
 import {
 	current_hydration_fragment,
 	hydrate_block_anchor,
@@ -6,13 +6,8 @@ import {
 	set_current_hydration_fragment
 } from '../../hydration.js';
 import { remove } from '../../reconciler.js';
-import {
-	current_block,
-	destroy_signal,
-	execute_effect,
-	push_destroy_fn,
-	render_effect
-} from '../../runtime.js';
+import { current_block, destroy_signal, execute_effect, push_destroy_fn } from '../../runtime.js';
+import { render_effect } from '../../reactivity/computations.js';
 import { trigger_transitions } from '../../transitions.js';
 
 /** @returns {import('../../types.js').IfBlock} */

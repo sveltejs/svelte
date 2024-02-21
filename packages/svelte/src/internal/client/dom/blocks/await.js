@@ -1,17 +1,16 @@
 import { is_promise } from '../../../common.js';
-import { AWAIT_BLOCK } from '../../block.js';
 import { hydrate_block_anchor } from '../../hydration.js';
 import { remove } from '../../reconciler.js';
 import {
-	UNINITIALIZED,
 	current_block,
 	destroy_signal,
 	execute_effect,
 	flushSync,
-	push_destroy_fn,
-	render_effect
+	push_destroy_fn
 } from '../../runtime.js';
+import { render_effect } from '../../reactivity/computations.js';
 import { trigger_transitions } from '../../transitions.js';
+import { AWAIT_BLOCK, UNINITIALIZED } from '../../constants.js';
 
 /** @returns {import('../../types.js').AwaitBlock} */
 export function create_await_block() {

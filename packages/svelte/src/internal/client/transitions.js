@@ -8,19 +8,17 @@ import {
 	IF_BLOCK,
 	KEY_BLOCK,
 	ROOT_BLOCK
-} from './block.js';
+} from './constants.js';
 import { destroy_each_item_block, get_first_element } from './dom/blocks/each.js';
+import { schedule_raf_task } from './dom/task.js';
 import { append_child, empty } from './operations.js';
+import { effect, managed_effect, managed_pre_effect } from './reactivity/computations.js';
 import {
 	current_block,
 	current_effect,
 	destroy_signal,
-	effect,
 	execute_effect,
-	managed_effect,
-	managed_pre_effect,
 	mark_subtree_inert,
-	schedule_raf_task,
 	untrack
 } from './runtime.js';
 import { raf } from './timing.js';

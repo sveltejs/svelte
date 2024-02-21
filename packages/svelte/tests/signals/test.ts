@@ -1,5 +1,12 @@
 import { describe, assert, it } from 'vitest';
 import * as $ from '../../src/internal/client/runtime';
+import {
+	derived,
+	effect,
+	render_effect,
+	user_effect
+} from '../../src/internal/client/reactivity/computations';
+import { source } from '../../src/internal/client/reactivity/sources';
 import type { ComputationSignal } from '../../src/internal/client/types';
 
 /**
@@ -13,7 +20,7 @@ function run_test(runes: boolean, fn: (runes: boolean) => () => void) {
 		$.push({}, runes);
 		// Create a render context so that effect validations etc don't fail
 		let execute: any;
-		const signal = $.render_effect(
+		const signal = render_effect(
 			() => {
 				execute = fn(runes);
 			},
@@ -36,9 +43,9 @@ describe('signals', () => {
 	test('effect with state and derived in it', () => {
 		const log: string[] = [];
 
-		let count = $.source(0);
-		let double = $.derived(() => $.get(count) * 2);
-		$.effect(() => {
+		let count = source(0);
+		let double = derived(() => $.get(count) * 2);
+		effect(() => {
 			log.push(`${$.get(count)}:${$.get(double)}`);
 		});
 
@@ -53,13 +60,13 @@ describe('signals', () => {
 	test('multiple effects with state and derived in it#1', () => {
 		const log: string[] = [];
 
-		let count = $.source(0);
-		let double = $.derived(() => $.get(count) * 2);
+		let count = source(0);
+		let double = derived(() => $.get(count) * 2);
 
-		$.effect(() => {
+		effect(() => {
 			log.push(`A:${$.get(count)}:${$.get(double)}`);
 		});
-		$.effect(() => {
+		effect(() => {
 			log.push(`B:${$.get(double)}`);
 		});
 
@@ -74,13 +81,13 @@ describe('signals', () => {
 	test('multiple effects with state and derived in it#2', () => {
 		const log: string[] = [];
 
-		let count = $.source(0);
-		let double = $.derived(() => $.get(count) * 2);
+		let count = source(0);
+		let double = derived(() => $.get(count) * 2);
 
-		$.effect(() => {
+		effect(() => {
 			log.push(`A:${$.get(double)}`);
 		});
-		$.effect(() => {
+		effect(() => {
 			log.push(`B:${$.get(count)}:${$.get(double)}`);
 		});
 
@@ -95,10 +102,10 @@ describe('signals', () => {
 	test('derived from state', () => {
 		const log: number[] = [];
 
-		let count = $.source(0);
-		let double = $.derived(() => $.get(count) * 2);
+		let count = source(0);
+		let double = derived(() => $.get(count) * 2);
 
-		$.effect(() => {
+		effect(() => {
 			log.push($.get(double));
 		});
 
@@ -113,11 +120,11 @@ describe('signals', () => {
 	test('derived from derived', () => {
 		const log: number[] = [];
 
-		let count = $.source(0);
-		let double = $.derived(() => $.get(count) * 2);
-		let quadruple = $.derived(() => $.get(double) * 2);
+		let count = source(0);
+		let double = derived(() => $.get(count) * 2);
+		let quadruple = derived(() => $.get(double) * 2);
 
-		$.effect(() => {
+		effect(() => {
 			log.push($.get(quadruple));
 		});
 
@@ -136,20 +143,20 @@ describe('signals', () => {
 		const fib = (n: number): number => (n < 2 ? 1 : fib(n - 1) + fib(n - 2));
 		const hard = (n: number, l: string) => n + fib(16);
 
-		const A = $.source(0);
-		const B = $.source(0);
-		const C = $.derived(() => ($.get(A) % 2) + ($.get(B) % 2));
-		const D = $.derived(() => numbers.map((i) => i + ($.get(A) % 2) - ($.get(B) % 2)));
-		const E = $.derived(() => hard($.get(C) + $.get(A) + $.get(D)[0]!, 'E'));
-		const F = $.derived(() => hard($.get(D)[0]! && $.get(B), 'F'));
-		const G = $.derived(() => $.get(C) + ($.get(C) || $.get(E) % 2) + $.get(D)[0]! + $.get(F));
-		$.effect(() => {
+		const A = source(0);
+		const B = source(0);
+		const C = derived(() => ($.get(A) % 2) + ($.get(B) % 2));
+		const D = derived(() => numbers.map((i) => i + ($.get(A) % 2) - ($.get(B) % 2)));
+		const E = derived(() => hard($.get(C) + $.get(A) + $.get(D)[0]!, 'E'));
+		const F = derived(() => hard($.get(D)[0]! && $.get(B), 'F'));
+		const G = derived(() => $.get(C) + ($.get(C) || $.get(E) % 2) + $.get(D)[0]! + $.get(F));
+		effect(() => {
 			res.push(hard($.get(G), 'H'));
 		});
-		$.effect(() => {
+		effect(() => {
 			res.push($.get(G));
 		});
-		$.effect(() => {
+		effect(() => {
 			res.push(hard($.get(F), 'J'));
 		});
 
@@ -176,13 +183,13 @@ describe('signals', () => {
 	test('effects correctly handle unowned derived values that do not change', () => {
 		const log: number[] = [];
 
-		let count = $.source(0);
+		let count = source(0);
 		const read = () => {
-			const x = $.derived(() => ({ count: $.get(count) }));
+			const x = derived(() => ({ count: $.get(count) }));
 			return $.get(x);
 		};
-		const derivedCount = $.derived(() => read().count);
-		$.user_effect(() => {
+		const derivedCount = derived(() => read().count);
+		user_effect(() => {
 			log.push($.get(derivedCount));
 		});
 
@@ -204,11 +211,11 @@ describe('signals', () => {
 		return () => {
 			const nested: ComputationSignal<string>[] = [];
 
-			const a = $.source(0);
-			const b = $.source(0);
-			const c = $.derived(() => {
-				const a_2 = $.derived(() => $.get(a) + '!');
-				const b_2 = $.derived(() => $.get(b) + '?');
+			const a = source(0);
+			const b = source(0);
+			const c = derived(() => {
+				const a_2 = derived(() => $.get(a) + '!');
+				const b_2 = derived(() => $.get(b) + '?');
 				nested.push(a_2, b_2);
 
 				return { a: $.get(a_2), b: $.get(b_2) };
@@ -233,8 +240,8 @@ describe('signals', () => {
 	});
 
 	// outside of test function so that they are unowned signals
-	let count = $.source(0);
-	let calc = $.derived(() => {
+	let count = source(0);
+	let calc = derived(() => {
 		if ($.get(count) >= 2) {
 			return 'limit';
 		}
@@ -244,7 +251,7 @@ describe('signals', () => {
 	test('effect with derived using unowned derived every time', () => {
 		const log: Array<number | string> = [];
 
-		const effect = $.user_effect(() => {
+		const effect = user_effect(() => {
 			log.push($.get(calc));
 		});
 
@@ -263,18 +270,18 @@ describe('signals', () => {
 		};
 	});
 
-	let no_deps = $.derived(() => {
+	let no_deps = derived(() => {
 		return [];
 	});
 
 	test('two effects with an unowned derived that has no depedencies', () => {
 		const log: Array<Array<any>> = [];
 
-		$.render_effect(() => {
+		render_effect(() => {
 			log.push($.get(no_deps));
 		});
 
-		$.render_effect(() => {
+		render_effect(() => {
 			log.push($.get(no_deps));
 		});
 
@@ -284,19 +291,19 @@ describe('signals', () => {
 		};
 	});
 
-	let some_state = $.source({});
-	let some_deps = $.derived(() => {
+	let some_state = source({});
+	let some_deps = derived(() => {
 		return [$.get(some_state)];
 	});
 
 	test('two effects with an unowned derived that has some depedencies', () => {
 		const log: Array<Array<any>> = [];
 
-		$.render_effect(() => {
+		render_effect(() => {
 			log.push($.get(some_deps));
 		});
 
-		$.render_effect(() => {
+		render_effect(() => {
 			log.push($.get(some_deps));
 		});
 
@@ -309,8 +316,8 @@ describe('signals', () => {
 	test('schedules rerun when writing to signal before reading it', (runes) => {
 		if (!runes) return () => {};
 
-		const value = $.source({ count: 0 });
-		$.user_effect(() => {
+		const value = source({ count: 0 });
+		user_effect(() => {
 			$.set(value, { count: 0 });
 			$.get(value);
 		});

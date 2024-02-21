@@ -1,16 +1,10 @@
-import { KEY_BLOCK } from '../../block.js';
+import { UNINITIALIZED, KEY_BLOCK } from '../../constants.js';
 import { hydrate_block_anchor } from '../../hydration.js';
 import { remove } from '../../reconciler.js';
-import {
-	UNINITIALIZED,
-	current_block,
-	destroy_signal,
-	execute_effect,
-	push_destroy_fn,
-	render_effect,
-	safe_not_equal
-} from '../../runtime.js';
+import { current_block, destroy_signal, execute_effect, push_destroy_fn } from '../../runtime.js';
+import { render_effect } from '../../reactivity/computations.js';
 import { trigger_transitions } from '../../transitions.js';
+import { safe_not_equal } from '../../reactivity/equality.js';
 
 /** @returns {import('../../types.js').KeyBlock} */
 function create_key_block() {
