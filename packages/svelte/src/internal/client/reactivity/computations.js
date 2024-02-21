@@ -334,4 +334,8 @@ export function resume_effect(effect) {
 	}
 
 	effect.f ^= INERT;
+
+	for (const transition of effect.in) {
+		transition.to(1);
+	}
 }

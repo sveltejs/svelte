@@ -1,5 +1,5 @@
 import { EACH_IS_ANIMATED, EACH_IS_CONTROLLED } from '../../constants.js';
-import { run_all } from '../common.js';
+import { noop, run_all } from '../common.js';
 import {
 	AWAIT_BLOCK,
 	DYNAMIC_COMPONENT_BLOCK,
@@ -12,7 +12,12 @@ import {
 import { destroy_each_item_block, get_first_element } from './dom/blocks/each.js';
 import { schedule_raf_task } from './dom/task.js';
 import { append_child, empty } from './operations.js';
-import { effect, managed_effect, managed_pre_effect } from './reactivity/computations.js';
+import {
+	effect,
+	managed_effect,
+	managed_pre_effect,
+	user_effect
+} from './reactivity/computations.js';
 import {
 	current_block,
 	current_effect,
@@ -513,37 +518,49 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 	/** @type {TODO} */
 	let current_options;
 
+	let current_delta = 0;
+
 	const transition = {
 		global,
 		to(target, callback) {
-			if (current_animation) {
-				// TODO get `p` from current_animation?
+			if (current_animation && current_options) {
+				p = current_delta * (current_animation.currentTime / current_options.duration);
 				current_animation.cancel();
 			}
 
 			current_options ??= get_fn()(element, get_params?.(), { direction });
+
+			if (!current_options) {
+				callback?.();
+				return;
+			}
 
 			if (current_options.css) {
 				// WAAPI
 				const keyframes = [];
 				const n = current_options.duration / (1000 / 60);
 
+				current_delta = target - p;
+
 				for (let i = 0; i <= n; i += 1) {
-					const t = current_options.easing(p + ((target - p) * i) / n);
+					const t = current_options.easing(p + (current_delta * i) / n);
 					const css = current_options.css(t);
 					keyframes.push(css_to_keyframe(css));
 				}
 
 				current_animation = element.animate(keyframes, {
-					duration: current_options.duration,
-					easing: 'linear'
+					duration: current_options.duration * Math.abs(current_delta),
+					easing: 'linear',
+					fill: 'forwards'
 				});
 
-				current_animation.finished.then(() => {
-					console.log('done');
-					current_animation = null;
-					callback();
-				});
+				current_animation.finished
+					.then(() => {
+						p = target;
+						current_animation = current_options = null;
+						callback?.();
+					})
+					.catch(noop);
 			} else {
 				// TODO timer
 			}
@@ -553,6 +570,10 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 	// TODO don't pass strings around like this, it's silly
 	if (direction === 'in' || direction === 'both') {
 		(effect.in ??= []).push(transition);
+
+		user_effect(() => {
+			transition.to(1);
+		});
 	}
 
 	if (direction === 'out' || direction === 'both') {
