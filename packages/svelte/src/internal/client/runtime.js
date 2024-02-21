@@ -1359,6 +1359,11 @@ export function inspect(get_value, inspect = console.log) {
  * @returns {import('./types.js').UnwrappedSignal<V>}
  */
 export function unwrap(value) {
+	// temporary!
+	if (typeof value === 'function') {
+		return value();
+	}
+
 	if (is_signal(value)) {
 		// @ts-ignore
 		return get(value);

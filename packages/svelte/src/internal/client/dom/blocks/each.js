@@ -18,16 +18,18 @@ import { clear_text_content, empty, map_get, map_set } from '../../operations.js
 import { insert, remove } from '../../reconciler.js';
 import {
 	current_block,
+	current_effect,
 	destroy_signal,
 	execute_effect,
 	push_destroy_fn,
 	set_signal_value
 } from '../../runtime.js';
-import { render_effect } from '../../reactivity/computations.js';
+import { pause_effect, render_effect, resume_effect } from '../../reactivity/computations.js';
 import { source, mutable_source } from '../../reactivity/sources.js';
 import { trigger_transitions } from '../../transitions.js';
 import { is_array } from '../../utils.js';
 import { EACH_BLOCK, EACH_ITEM_BLOCK } from '../../constants.js';
+import { unstate } from '../../proxy.js';
 
 const NEW_BLOCK = -1;
 const MOVED_BLOCK = 99999999;
@@ -99,210 +101,10 @@ export function create_each_item_block(item, index, key) {
  * @param {null | ((item: V) => string)} key_fn
  * @param {(anchor: null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
- * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
- * @returns {void}
- */
-function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_fn) {
-	const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-	const block = create_each_block(flags, anchor_node);
-
-	/** @type {null | import('../../types.js').Render} */
-	let current_fallback = null;
-	hydrate_block_anchor(anchor_node, is_controlled);
-
-	/** @type {V[]} */
-	let array;
-
-	/** @type {Array<string> | null} */
-	let keys = null;
-
-	/** @type {null | import('../../types.js').EffectSignal} */
-	let render = null;
-
-	/**
-	 * Whether or not there was a "rendered fallback but want to render items" (or vice versa) hydration mismatch.
-	 * Needs to be a `let` or else it isn't treeshaken out
-	 */
-	let mismatch = false;
-
-	block.r =
-		/** @param {import('../../types.js').Transition} transition */
-		(transition) => {
-			const fallback = /** @type {import('../../types.js').Render} */ (current_fallback);
-			const transitions = fallback.s;
-			transitions.add(transition);
-			transition.f(() => {
-				transitions.delete(transition);
-				if (transitions.size === 0) {
-					if (fallback.e !== null) {
-						if (fallback.d !== null) {
-							remove(fallback.d);
-							fallback.d = null;
-						}
-						destroy_signal(fallback.e);
-						fallback.e = null;
-					}
-				}
-			});
-		};
-
-	const create_fallback_effect = () => {
-		/** @type {import('../../types.js').Render} */
-		const fallback = {
-			d: null,
-			e: null,
-			s: new Set(),
-			p: current_fallback
-		};
-		// Managed effect
-		const effect = render_effect(
-			() => {
-				const dom = block.d;
-				if (dom !== null) {
-					remove(dom);
-					block.d = null;
-				}
-				let anchor = block.a;
-				const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
-				if (is_controlled) {
-					// If the each block is controlled, then the anchor node will be the surrounding
-					// element in which the each block is rendered, which requires certain handling
-					// depending on whether we're in hydration mode or not
-					if (!hydrating) {
-						// Create a new anchor on the fly because there's none due to the optimization
-						anchor = empty();
-						block.a.appendChild(anchor);
-					} else {
-						// In case of hydration the anchor will be the first child of the surrounding element
-						anchor = /** @type {Comment} */ (anchor.firstChild);
-					}
-				}
-				/** @type {(anchor: Node) => void} */ (fallback_fn)(anchor);
-				fallback.d = block.d;
-				block.d = null;
-			},
-			block,
-			true
-		);
-		fallback.e = effect;
-		current_fallback = fallback;
-	};
-
-	/** @param {import('../../types.js').EachBlock} block */
-	const render_each = (block) => {
-		const flags = block.f;
-		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-		const anchor_node = block.a;
-		reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, true, keys);
-	};
-
-	const each = render_effect(
-		() => {
-			/** @type {V[]} */
-			const maybe_array = collection();
-			array = is_array(maybe_array)
-				? maybe_array
-				: maybe_array == null
-					? []
-					: Array.from(maybe_array);
-
-			if (key_fn !== null) {
-				keys = array.map(key_fn);
-			} else if ((flags & EACH_KEYED) === 0) {
-				array.map(noop);
-			}
-
-			const length = array.length;
-
-			if (hydrating) {
-				const is_each_else_comment =
-					/** @type {Comment} */ (current_hydration_fragment?.[0])?.data === 'ssr:each_else';
-				// Check for hydration mismatch which can happen if the server renders the each fallback
-				// but the client has items, or vice versa. If so, remove everything inside the anchor and start fresh.
-				if ((is_each_else_comment && length) || (!is_each_else_comment && !length)) {
-					remove(current_hydration_fragment);
-					set_current_hydration_fragment(null);
-					mismatch = true;
-				} else if (is_each_else_comment) {
-					// Remove the each_else comment node or else it will confuse the subsequent hydration algorithm
-					/** @type {import('../../types.js').TemplateNode[]} */ (
-						current_hydration_fragment
-					).shift();
-				}
-			}
-
-			if (fallback_fn !== null) {
-				if (length === 0) {
-					if (block.v.length !== 0 || render === null) {
-						render_each(block);
-						create_fallback_effect();
-						return;
-					}
-				} else if (block.v.length === 0 && current_fallback !== null) {
-					const fallback = current_fallback;
-					const transitions = fallback.s;
-					if (transitions.size === 0) {
-						if (fallback.d !== null) {
-							remove(fallback.d);
-							fallback.d = null;
-						}
-					} else {
-						trigger_transitions(transitions, 'out');
-					}
-				}
-			}
-
-			if (render !== null) {
-				execute_effect(render);
-			}
-		},
-		block,
-		false
-	);
-
-	render = render_effect(render_each, block, true);
-
-	if (mismatch) {
-		// Set a fragment so that Svelte continues to operate in hydration mode
-		set_current_hydration_fragment([]);
-	}
-
-	push_destroy_fn(each, () => {
-		const flags = block.f;
-		const anchor_node = block.a;
-		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-		let fallback = current_fallback;
-		while (fallback !== null) {
-			const dom = fallback.d;
-			if (dom !== null) {
-				remove(dom);
-			}
-			const effect = fallback.e;
-			if (effect !== null) {
-				destroy_signal(effect);
-			}
-			fallback = fallback.p;
-		}
-		// Clear the array
-		reconcile_fn([], block, anchor_node, is_controlled, render_fn, flags, false, keys);
-		destroy_signal(/** @type {import('../../types.js').EffectSignal} */ (render));
-	});
-
-	block.e = each;
-}
-
-/**
- * @template V
- * @param {Element | Comment} anchor_node
- * @param {() => V[]} collection
- * @param {number} flags
- * @param {null | ((item: V) => string)} key_fn
- * @param {(anchor: null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
- * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
 export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fallback_fn) {
-	each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_tracked_array);
+	throw new Error('TODO each_keyed');
 }
 
 /**
@@ -315,7 +117,89 @@ export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fa
  * @returns {void}
  */
 export function each_indexed(anchor_node, collection, flags, render_fn, fallback_fn) {
-	each(anchor_node, collection, flags, null, render_fn, fallback_fn, reconcile_indexed_array);
+	const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
+
+	if (is_controlled) {
+		if (hydrating) {
+			hydrate_block_anchor(anchor_node, is_controlled);
+			anchor_node = /** @type {Comment} */ (anchor_node.firstChild);
+		} else {
+			anchor_node.appendChild((anchor_node = empty()));
+		}
+	}
+
+	/**
+	 * Whether or not there was a "rendered fallback but want to render items" (or vice versa) hydration mismatch.
+	 * Needs to be a `let` or else it isn't treeshaken out
+	 */
+	let mismatch = false;
+
+	let length = 0;
+
+	/** @type {Array<import('../../types.js').ComputationSignal | null>} */
+	let effects = [];
+
+	/** @type {import('../../types.js').ComputationSignal | null} */
+	let alternate;
+
+	function truncate() {
+		let i = effects.length;
+		while (i--) {
+			if (effects[i]) {
+				effects.length = i + 1;
+				break;
+			}
+		}
+	}
+
+	render_effect(() => {
+		const new_items = collection();
+
+		let nl = new_items ? new_items.length : 0;
+
+		for (let i = length; i < nl; i += 1) {
+			if (effects[i]) {
+				resume_effect(effects[i]);
+			} else {
+				effects[i] = render_effect(
+					() =>
+						render_fn(
+							anchor_node,
+							() => {
+								return collection()[i];
+							},
+							i
+						),
+					{},
+					true
+				);
+			}
+		}
+
+		for (let i = nl; i < length; i += 1) {
+			const item = effects[i];
+			if (item) {
+				pause_effect(item, () => {
+					effects[i] = null;
+					truncate();
+				});
+			}
+		}
+
+		if (nl === 0) {
+			if (alternate) {
+				resume_effect(alternate);
+			} else if (fallback_fn) {
+				alternate = render_effect(() => fallback_fn(anchor_node), {}, true);
+			}
+		} else if (alternate) {
+			pause_effect(alternate, () => {
+				alternate = null;
+			});
+		}
+
+		length = nl;
+	});
 }
 
 /**
