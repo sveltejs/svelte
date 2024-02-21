@@ -37,6 +37,7 @@ class Animation {
 	#reversed;
 	#target;
 	#paused;
+	#finished;
 
 	/**
 	 * @param {HTMLElement} target
@@ -59,6 +60,10 @@ class Animation {
 				this.#keyframes = keyframes;
 			}
 		};
+
+		this.finished = new Promise((fulfil) => {
+			this.#finished = fulfil;
+		});
 	}
 
 	play() {
@@ -78,8 +83,13 @@ class Animation {
 		} else {
 			this.currentTime = raf.time - this.#timeline_offset;
 		}
+
 		const target_frame = this.currentTime / this.#duration;
 		this._applyKeyFrame(target_frame);
+
+		if (this.currentTime >= this.#duration) {
+			this.#finished();
+		}
 	}
 
 	/**

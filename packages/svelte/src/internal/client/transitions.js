@@ -495,133 +495,68 @@ function is_transition_block(block) {
 
 /**
  * @template P
- * @param {HTMLElement} dom
- * @param {() => import('./types.js').TransitionFn<P | undefined> | import('./types.js').AnimateFn<P | undefined>} get_transition_fn
- * @param {(() => P) | null} props_fn
- * @param {'in' | 'out' | 'both' | 'key'} direction
+ * @param {HTMLElement} element
+ * @param {() => import('./types.js').TransitionFn<P | undefined>} get_fn
+ * @param {(() => P) | null} get_params
+ * @param {'in' | 'out' | 'both'} direction
  * @param {boolean} global
  * @returns {void}
  */
-export function bind_transition(dom, get_transition_fn, props_fn, direction, global) {
-	const transition_effect = /** @type {import('./types.js').EffectSignal} */ (current_effect);
-	const block = current_block;
-	const is_keyed_transition = direction === 'key';
+export function bind_transition(element, get_fn, get_params, direction, global) {
+	const effect = /** @type {import('./types.js').EffectSignal} */ (current_effect);
 
-	let can_show_intro_on_mount = true;
-	let can_apply_lazy_transitions = false;
+	let p = direction === 'out' ? 1 : 0;
 
-	if (is_keyed_transition) {
-		// @ts-ignore
-		dom.__animate = true;
-	}
-	/** @type {import('./types.js').Block | null} */
-	let transition_block = block;
-	main: while (transition_block !== null) {
-		if (is_transition_block(transition_block)) {
-			if (transition_block.t === EACH_ITEM_BLOCK) {
-				// Lazily apply the each block transition
-				transition_block.r = each_item_transition;
-				transition_block.a = each_item_animate;
-				transition_block = transition_block.p;
-			} else if (transition_block.t === AWAIT_BLOCK && transition_block.n /* pending */) {
-				can_show_intro_on_mount = true;
-			} else if (transition_block.t === IF_BLOCK) {
-				transition_block.r = if_block_transition;
-				if (can_show_intro_on_mount) {
-					/** @type {import('./types.js').Block | null} */
-					let if_block = transition_block;
-					while (if_block.t === IF_BLOCK) {
-						// If we have an if block parent that is currently falsy then
-						// we can show the intro on mount as long as that block is mounted
-						if (if_block.e !== null && !if_block.v) {
-							can_show_intro_on_mount = true;
-							break main;
-						}
-						if_block = if_block.p;
-					}
+	/** @type {Animation | null} */
+	let current_animation;
+
+	/** @type {TODO} */
+	let current_options;
+
+	const transition = {
+		global,
+		to(target, callback) {
+			if (current_animation) {
+				// TODO get `p` from current_animation?
+				current_animation.cancel();
+			}
+
+			current_options ??= get_fn()(element, get_params?.(), { direction });
+
+			if (current_options.css) {
+				// WAAPI
+				const keyframes = [];
+				const n = current_options.duration / (1000 / 60);
+
+				for (let i = 0; i <= n; i += 1) {
+					const t = current_options.easing(p + ((target - p) * i) / n);
+					const css = current_options.css(t);
+					keyframes.push(css_to_keyframe(css));
 				}
+
+				current_animation = element.animate(keyframes, {
+					duration: current_options.duration,
+					easing: 'linear'
+				});
+
+				current_animation.finished.then(() => {
+					console.log('done');
+					current_animation = null;
+					callback();
+				});
+			} else {
+				// TODO timer
 			}
-			if (!can_apply_lazy_transitions && can_show_intro_on_mount) {
-				can_show_intro_on_mount = transition_block.e !== null;
-			}
-			if (can_show_intro_on_mount || !global) {
-				can_apply_lazy_transitions = true;
-			}
-		} else if (transition_block.t === ROOT_BLOCK && !can_apply_lazy_transitions) {
-			can_show_intro_on_mount = transition_block.e !== null || transition_block.i;
 		}
-		transition_block = transition_block.p;
+	};
+
+	// TODO don't pass strings around like this, it's silly
+	if (direction === 'in' || direction === 'both') {
+		(effect.in ??= []).push(transition);
 	}
 
-	/** @type {import('./types.js').Transition} */
-	let transition;
-
-	effect(() => {
-		let already_mounted = false;
-		if (transition !== undefined) {
-			already_mounted = true;
-			// Destroy any existing transitions first
-			transition.x();
-		}
-		const transition_fn = get_transition_fn();
-		/** @param {DOMRect} [from] */
-		const init = (from) =>
-			untrack(() => {
-				const props = props_fn === null ? {} : props_fn();
-				return is_keyed_transition
-					? /** @type {import('./types.js').AnimateFn<any>} */ (transition_fn)(
-							dom,
-							{ from: /** @type {DOMRect} */ (from), to: dom.getBoundingClientRect() },
-							props,
-							{}
-						)
-					: /** @type {import('./types.js').TransitionFn<any>} */ (transition_fn)(dom, props, {
-							direction
-						});
-			});
-
-		transition = create_transition(dom, init, direction, transition_effect);
-		const is_intro = direction === 'in';
-		const show_intro = can_show_intro_on_mount && (is_intro || direction === 'both');
-
-		if (show_intro && !already_mounted) {
-			transition.p = transition.i();
-		}
-
-		const effect = managed_pre_effect(() => {
-			destroy_signal(effect);
-			dom.inert = false;
-
-			if (show_intro && !already_mounted) {
-				transition.in();
-			}
-
-			/** @type {import('./types.js').Block | null} */
-			let transition_block = block;
-			while (!is_intro && transition_block !== null) {
-				const parent = transition_block.p;
-				if (is_transition_block(transition_block)) {
-					if (transition_block.r !== null) {
-						transition_block.r(transition);
-					}
-					if (
-						parent === null ||
-						(!global && (transition_block.t !== IF_BLOCK || parent.t !== IF_BLOCK || parent.v))
-					) {
-						break;
-					}
-				}
-				transition_block = parent;
-			}
-		}, false);
-	});
-
-	if (direction === 'key') {
-		effect(() => {
-			return () => {
-				transition.x();
-			};
-		});
+	if (direction === 'out' || direction === 'both') {
+		(effect.out ??= []).push(transition);
 	}
 }
 

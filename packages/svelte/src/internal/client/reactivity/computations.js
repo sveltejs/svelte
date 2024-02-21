@@ -265,26 +265,73 @@ export function derived_safe_equal(fn) {
  * @param {() => void} done
  */
 export function pause_effect(effect, done) {
-	if (effect.r) {
-		for (const child of effect.r) {
-			pause_effect(child, noop);
-		}
-	}
+	const transitions = [];
 
+	pause_children(effect, transitions);
+
+	let remaining = transitions.length;
+
+	if (remaining > 0) {
+		const check = () => {
+			if (!--remaining) {
+				destroy_effect(effect);
+				done();
+			}
+		};
+
+		for (const transition of transitions) {
+			transition.to(0, check);
+		}
+	} else {
+		destroy_effect(effect);
+		done();
+	}
+}
+
+/**
+ * @param {import('../types.js').ComputationSignal} effect
+ * @param {TODO[]} transitions
+ */
+function pause_children(effect, transitions) {
 	effect.f |= INERT;
 
+	if (effect.out) {
+		transitions.push(...effect.out); // TODO differentiate between global and local
+	}
+
+	if (effect.r) {
+		for (const child of effect.r) {
+			pause_children(child, transitions);
+		}
+	}
+}
+
+/**
+ * @param {import('../types.js').ComputationSignal} effect
+ */
+function destroy_effect(effect) {
 	// TODO distinguish between 'block effects' (?) which own their own DOM
 	// and other render effects
 	if (effect.dom) {
 		remove(effect.dom);
 	}
 
-	done(); // TODO defer until transitions have completed
+	if (effect.r) {
+		for (const child of effect.r) {
+			destroy_effect(child);
+		}
+	}
 }
 
 /**
- * @param {import('../types.js').ComputationSignal} signal
+ * @param {import('../types.js').ComputationSignal} effect
  */
-export function resume_effect(signal) {
-	// TODO
+export function resume_effect(effect) {
+	if (effect.r) {
+		for (const child of effect.r) {
+			resume_effect(child);
+		}
+	}
+
+	effect.f ^= INERT;
 }
