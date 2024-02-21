@@ -11,7 +11,6 @@ import {
 } from './utils.js';
 import { unstate } from './proxy.js';
 import { pre_effect } from './reactivity/computations.js';
-import { source } from './reactivity/sources.js';
 import {
 	EACH_BLOCK,
 	IF_BLOCK,
@@ -1212,24 +1211,6 @@ export function update_pre_prop(fn, d = 1) {
 	const value = fn() + d;
 	fn(value);
 	return value;
-}
-
-/**
- * Under some circumstances, imports may be reactive in legacy mode. In that case,
- * they should be using `reactive_import` as part of the transformation
- * @param {() => any} fn
- */
-export function reactive_import(fn) {
-	const s = source(0);
-	return function () {
-		if (arguments.length === 1) {
-			set(s, get(s) + 1);
-			return arguments[0];
-		} else {
-			get(s);
-			return fn();
-		}
-	};
 }
 
 /**

@@ -76,7 +76,7 @@ import {
 } from './utils.js';
 import { run } from '../common.js';
 import { bind_transition, trigger_transitions } from './transitions.js';
-import { mutable_source } from './reactivity/sources.js';
+import { mutable_source, source } from './reactivity/sources.js';
 import { safe_equal, safe_not_equal } from './reactivity/equality.js';
 import { STATE_SYMBOL } from './constants.js';
 
@@ -2864,4 +2864,22 @@ function observe_all(context) {
 	}
 
 	deep_read(context.s);
+}
+
+/**
+ * Under some circumstances, imports may be reactive in legacy mode. In that case,
+ * they should be using `reactive_import` as part of the transformation
+ * @param {() => any} fn
+ */
+export function reactive_import(fn) {
+	const s = source(0);
+	return function () {
+		if (arguments.length === 1) {
+			set(s, get(s) + 1);
+			return arguments[0];
+		} else {
+			get(s);
+			return fn();
+		}
+	};
 }

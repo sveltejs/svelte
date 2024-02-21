@@ -16,7 +16,6 @@ export {
 	exclude_from_object,
 	pop,
 	push,
-	reactive_import,
 	inspect,
 	unwrap,
 	freeze,
