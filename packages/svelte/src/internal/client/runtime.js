@@ -138,14 +138,13 @@ export function batch_inspect(target, prop, receiver) {
 		} finally {
 			is_batching_effect = previously_batching_effect;
 			if (last_inspected_signal !== null && !is_inspecting_signal) {
-				const prev_inspecting_signal = is_inspecting_signal;
 				is_inspecting_signal = true;
 				try {
 					for (const fn of last_inspected_signal.inspect) {
 						fn();
 					}
 				} finally {
-					is_inspecting_signal = prev_inspecting_signal;
+					is_inspecting_signal = false;
 				}
 				last_inspected_signal = null;
 			}
