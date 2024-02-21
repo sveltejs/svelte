@@ -6,6 +6,7 @@ import {
 } from '../../hydration.js';
 import { remove } from '../../reconciler.js';
 import { pause_effect, render_effect, resume_effect } from '../../reactivity/computations.js';
+import { current_effect } from '../../runtime.js';
 
 /**
  * @param {Comment} anchor_node

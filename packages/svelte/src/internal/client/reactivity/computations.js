@@ -83,9 +83,7 @@ function internal_create_effect(type, fn, sync, block, schedule) {
 	signal.x = current_component_context;
 	if (current_effect !== null) {
 		signal.l = current_effect.l + 1;
-		if ((type & MANAGED) === 0) {
-			push_reference(current_effect, signal);
-		}
+		push_reference(current_effect, signal);
 	}
 	if (schedule) {
 		schedule_effect(signal, sync);
@@ -309,7 +307,7 @@ function pause_children(effect, transitions) {
 /**
  * @param {import('../types.js').ComputationSignal} effect
  */
-function destroy_effect(effect) {
+export function destroy_effect(effect) {
 	// TODO distinguish between 'block effects' (?) which own their own DOM
 	// and other render effects
 	if (effect.dom) {

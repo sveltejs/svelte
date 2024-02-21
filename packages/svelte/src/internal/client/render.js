@@ -58,7 +58,8 @@ import {
 	derived,
 	pre_effect,
 	user_effect,
-	pause_effect
+	pause_effect,
+	destroy_effect
 } from './reactivity/computations.js';
 import {
 	current_hydration_fragment,
@@ -2460,7 +2461,6 @@ export function hydrate(component, options) {
 function _mount(Component, options) {
 	const registered_events = new Set();
 	const container = options.target;
-	const block = create_root_block(options.intro || false);
 
 	run_transitions = options.intro ?? false;
 
@@ -2489,10 +2489,10 @@ function _mount(Component, options) {
 				pop();
 			}
 		},
-		block,
+		{},
 		true
 	);
-	block.e = effect;
+
 	const bound_event_listener = handle_event_propagation.bind(null, container);
 	const bound_document_event_listener = handle_event_propagation.bind(null, document);
 
@@ -2530,6 +2530,7 @@ function _mount(Component, options) {
 			}
 		}
 	};
+
 	event_handle(array_from(all_registerd_events));
 	root_event_handles.add(event_handle);
 
@@ -2537,12 +2538,10 @@ function _mount(Component, options) {
 		for (const event_name of registered_events) {
 			container.removeEventListener(event_name, bound_event_listener);
 		}
+
 		root_event_handles.delete(event_handle);
-		const dom = block.d;
-		if (dom !== null) {
-			remove(dom);
-		}
-		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
+
+		destroy_effect(effect);
 	});
 
 	return component;
