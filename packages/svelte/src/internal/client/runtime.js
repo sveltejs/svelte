@@ -43,6 +43,7 @@ let is_micro_task_queued = false;
 let is_flushing_effect = false;
 // Used for $inspect
 export let is_batching_effect = false;
+let is_inspecting_signal = false;
 
 // Handle effect queues
 
@@ -130,8 +131,15 @@ export function batch_inspect(target, prop, receiver) {
 			return Reflect.apply(value, this, arguments);
 		} finally {
 			is_batching_effect = previously_batching_effect;
-			if (last_inspected_signal !== null) {
-				for (const fn of last_inspected_signal.inspect) fn();
+			if (last_inspected_signal !== null && !is_inspecting_signal) {
+				is_inspecting_signal = true;
+				try {
+					for (const fn of last_inspected_signal.inspect) {
+						fn();
+					}
+				} finally {
+					is_inspecting_signal = false;
+				}
 				last_inspected_signal = null;
 			}
 		}
