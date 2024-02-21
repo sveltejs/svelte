@@ -58,7 +58,8 @@ import {
 	managed_effect,
 	derived,
 	pre_effect,
-	user_effect
+	user_effect,
+	pause_effect
 } from './reactivity/computations.js';
 import {
 	current_hydration_fragment,
@@ -1651,115 +1652,28 @@ export function element(anchor_node, tag_fn, is_svg, render_fn) {
  * @returns {void}
  */
 export function component(anchor_node, component_fn, render_fn) {
-	const block = create_dynamic_component_block();
-
-	/** @type {null | import('./types.js').Render} */
-	let current_render = null;
 	hydrate_block_anchor(anchor_node);
 
-	/** @type {null | ((props: P) => void)} */
-	let component = null;
-	block.r =
-		/**
-		 * @param {import('./types.js').Transition} transition
-		 * @returns {void}
-		 */
-		(transition) => {
-			const render = /** @type {import('./types.js').Render} */ (current_render);
-			const transitions = render.s;
-			transitions.add(transition);
-			transition.f(() => {
-				transitions.delete(transition);
-				if (transitions.size === 0) {
-					// If the current render has changed since, then we can remove the old render
-					// effect as it's stale.
-					if (current_render !== render && render.e !== null) {
-						if (render.d !== null) {
-							remove(render.d);
-							render.d = null;
-						}
-						destroy_signal(render.e);
-						render.e = null;
-					}
-				}
+	/** @type {TODO} */
+	let Component = null;
+
+	/** @type {import('./types.js').ComputationSignal | null} */
+	let effect = null;
+
+	render_effect(() => {
+		if (Component === (Component = component_fn() ?? null)) return;
+
+		if (effect) {
+			const e = effect;
+			pause_effect(effect, () => {
+				if (e === effect) effect = null;
 			});
-		};
-	const create_render_effect = () => {
-		/** @type {import('./types.js').Render} */
-		const render = {
-			d: null,
-			e: null,
-			s: new Set(),
-			p: current_render
-		};
-		// Managed effect
-		const effect = render_effect(
-			() => {
-				const current = block.d;
-				if (current !== null) {
-					remove(current);
-					block.d = null;
-				}
-				if (component) {
-					render_fn(component);
-				}
-				render.d = block.d;
-				block.d = null;
-			},
-			block,
-			true
-		);
-		render.e = effect;
-		current_render = render;
-	};
-	const render = () => {
-		const render = current_render;
-		if (render === null) {
-			create_render_effect();
-			return;
 		}
-		const transitions = render.s;
-		if (transitions.size === 0) {
-			if (render.d !== null) {
-				remove(render.d);
-				render.d = null;
-			}
-			if (render.e) {
-				execute_effect(render.e);
-			} else {
-				create_render_effect();
-			}
-		} else {
-			create_render_effect();
-			trigger_transitions(transitions, 'out');
-		}
-	};
-	const component_effect = render_effect(
-		() => {
-			const next_component = component_fn();
-			if (component !== next_component) {
-				component = next_component;
-				render();
-			}
-		},
-		block,
-		false
-	);
-	push_destroy_fn(component_effect, () => {
-		let render = current_render;
-		while (render !== null) {
-			const dom = render.d;
-			if (dom !== null) {
-				remove(dom);
-			}
-			const effect = render.e;
-			if (effect !== null) {
-				destroy_signal(effect);
-			}
-			render = render.p;
+
+		if (Component) {
+			effect = render_effect(() => render_fn(Component), {}, true);
 		}
 	});
-	block.e = component_effect;
 }
 
 /**

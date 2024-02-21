@@ -546,7 +546,7 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 
 				for (let i = 0; i <= n; i += 1) {
 					const t = current_options.easing(p + (current_delta * i) / n);
-					const css = current_options.css(t);
+					const css = current_options.css(t, 1 - t);
 					keyframes.push(css_to_keyframe(css));
 				}
 
@@ -578,6 +578,8 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 			user_effect(() => {
 				untrack(() => transition.to(1));
 			});
+		} else {
+			p = 1;
 		}
 	}
 
