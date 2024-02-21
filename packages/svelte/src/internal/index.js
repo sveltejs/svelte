@@ -4,7 +4,6 @@ export {
 	set_sync,
 	invalidate_inner_signals,
 	flushSync,
-	bubble_event,
 	tick,
 	untrack,
 	update,

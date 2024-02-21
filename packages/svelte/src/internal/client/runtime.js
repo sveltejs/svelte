@@ -29,6 +29,7 @@ import {
 	SOURCE,
 	STATE_SYMBOL
 } from './constants.js';
+import { flush_tasks } from './dom/task.js';
 
 const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT;
 
@@ -39,8 +40,6 @@ const FLUSH_SYNC = 1;
 let current_scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
-let is_task_queued = false;
-let is_raf_queued = false;
 let is_flushing_effect = false;
 // Used for $inspect
 export let is_batching_effect = false;
@@ -53,10 +52,6 @@ let current_queued_pre_and_render_effects = [];
 /** @type {import('./types.js').EffectSignal[]} */
 let current_queued_effects = [];
 
-/** @type {Array<() => void>} */
-let current_queued_tasks = [];
-/** @type {Array<() => void>} */
-let current_raf_tasks = [];
 let flush_count = 0;
 // Handle signal reactivity tree dependencies and consumer
 
@@ -566,44 +561,6 @@ export function schedule_effect(signal, sync) {
 	}
 }
 
-function process_task() {
-	is_task_queued = false;
-	const tasks = current_queued_tasks.slice();
-	current_queued_tasks = [];
-	run_all(tasks);
-}
-
-function process_raf_task() {
-	is_raf_queued = false;
-	const tasks = current_raf_tasks.slice();
-	current_raf_tasks = [];
-	run_all(tasks);
-}
-
-/**
- * @param {() => void} fn
- * @returns {void}
- */
-export function schedule_task(fn) {
-	if (!is_task_queued) {
-		is_task_queued = true;
-		setTimeout(process_task, 0);
-	}
-	current_queued_tasks.push(fn);
-}
-
-/**
- * @param {() => void} fn
- * @returns {void}
- */
-export function schedule_raf_task(fn) {
-	if (!is_raf_queued) {
-		is_raf_queued = true;
-		requestAnimationFrame(process_raf_task);
-	}
-	current_raf_tasks.push(fn);
-}
-
 /**
  * @returns {void}
  */
@@ -679,12 +636,7 @@ export function flush_sync(fn, flush_previous = true) {
 		if (current_queued_pre_and_render_effects.length > 0 || effects.length > 0) {
 			flushSync();
 		}
-		if (is_raf_queued) {
-			process_raf_task();
-		}
-		if (is_task_queued) {
-			process_task();
-		}
+		flush_tasks();
 		flush_count = 0;
 	} finally {
 		current_scheduler_mode = previous_scheduler_mode;
@@ -1150,23 +1102,6 @@ function get_parent_context(component_context) {
 		parent = parent.p;
 	}
 	return null;
-}
-
-/**
- * @this {any}
- * @param {Record<string, unknown>} $$props
- * @param {Event} event
- * @returns {void}
- */
-export function bubble_event($$props, event) {
-	var events = /** @type {Record<string, Function[] | Function>} */ ($$props.$$events)?.[
-		event.type
-	];
-	var callbacks = is_array(events) ? events.slice() : events == null ? [] : [events];
-	for (var fn of callbacks) {
-		// Preserve "this" context
-		fn.call(this, event);
-	}
 }
 
 /**

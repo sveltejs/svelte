@@ -2883,3 +2883,20 @@ export function reactive_import(fn) {
 		}
 	};
 }
+
+/**
+ * @this {any}
+ * @param {Record<string, unknown>} $$props
+ * @param {Event} event
+ * @returns {void}
+ */
+export function bubble_event($$props, event) {
+	var events = /** @type {Record<string, Function[] | Function>} */ ($$props.$$events)?.[
+		event.type
+	];
+	var callbacks = is_array(events) ? events.slice() : events == null ? [] : [events];
+	for (var fn of callbacks) {
+		// Preserve "this" context
+		fn.call(this, event);
+	}
+}
