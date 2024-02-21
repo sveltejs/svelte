@@ -14,7 +14,6 @@ import {
 	create_root_block,
 	create_dynamic_element_block,
 	create_head_block,
-	create_dynamic_component_block,
 	create_snippet_block
 } from './block.js';
 import {
