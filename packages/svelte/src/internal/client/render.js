@@ -10,7 +10,7 @@ import {
 	map_set,
 	set_class_name
 } from './operations.js';
-import { create_dynamic_element_block, create_head_block, create_snippet_block } from './block.js';
+import { create_dynamic_element_block, create_snippet_block } from './block.js';
 import {
 	PassiveDelegatedEvents,
 	DelegatedEvents,
@@ -1481,49 +1481,34 @@ export function slot(anchor_node, slot_fn, slot_props, fallback_fn) {
 }
 
 /**
- * @param {(anchor: Node | null) => void} render_fn
+ * @param {(anchor: Node | null) => void} fn
  * @returns {void}
  */
-export function head(render_fn) {
-	const block = create_head_block();
+export function head(fn) {
 	// The head function may be called after the first hydration pass and ssr comment nodes may still be present,
 	// therefore we need to skip that when we detect that we're not in hydration mode.
 	let hydration_fragment = null;
 	let previous_hydration_fragment = null;
-	let is_hydrating = hydrating;
-	if (is_hydrating) {
+
+	if (hydrating) {
 		hydration_fragment = get_hydration_fragment(document.head.firstChild);
 		previous_hydration_fragment = current_hydration_fragment;
 		set_current_hydration_fragment(hydration_fragment);
 	}
 
 	try {
-		const head_effect = render_effect(
-			() => {
-				const current = block.d;
-				if (current !== null) {
-					remove(current);
-					block.d = null;
-				}
-				let anchor = null;
-				if (!hydrating) {
-					anchor = empty();
-					document.head.appendChild(anchor);
-				}
-				render_fn(anchor);
-			},
-			block,
-			false
-		);
-		push_destroy_fn(head_effect, () => {
-			const current = block.d;
-			if (current !== null) {
-				remove(current);
+		render_effect(() => {
+			let anchor = null;
+
+			if (!hydrating) {
+				anchor = empty();
+				document.head.appendChild(anchor);
 			}
+
+			fn(anchor);
 		});
-		block.e = head_effect;
 	} finally {
-		if (is_hydrating) {
+		if (hydrating) {
 			set_current_hydration_fragment(previous_hydration_fragment);
 		}
 	}

@@ -7,22 +7,6 @@ import {
 } from './constants.js';
 import { current_block } from './runtime.js';
 
-/** @returns {import('./types.js').HeadBlock} */
-export function create_head_block() {
-	return {
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('./types.js').Block} */ (current_block),
-		// transition
-		r: null,
-		// type
-		t: HEAD_BLOCK
-	};
-}
-
 /** @returns {import('./types.js').DynamicElementBlock} */
 export function create_dynamic_element_block() {
 	return {
