@@ -3,11 +3,11 @@
 		"code": "dynamic-contenteditable-attribute",
 		"message": "'contenteditable' attribute cannot be dynamic if element uses two-way binding",
 		"start": {
-			"line": 6,
+			"line": 11,
 			"column": 8
 		},
 		"end": {
-			"line": 6,
+			"line": 11,
 			"column": 32
 		}
 	}
