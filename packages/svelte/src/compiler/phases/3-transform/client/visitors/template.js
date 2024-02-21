@@ -1314,7 +1314,6 @@ function serialize_event_handler(node, { state, visit }) {
 				binding !== null &&
 				(binding.kind === 'state' ||
 					binding.kind === 'frozen_state' ||
-					binding.kind === 'legacy_reactive_import' ||
 					binding.declaration_kind === 'import' ||
 					binding.kind === 'legacy_reactive' ||
 					binding.kind === 'derived' ||
