@@ -137,7 +137,7 @@ export function user_effect(fn) {
  * @returns {() => void}
  */
 export function user_root_effect(fn) {
-	const effect = managed_render_effect(fn);
+	const effect = render_effect(fn, current_block, true);
 	return () => {
 		destroy_signal(effect);
 	};
@@ -220,18 +220,6 @@ export function render_effect(fn, block = current_block, managed = false, sync =
 	if (managed) {
 		flags |= MANAGED;
 	}
-	return internal_create_effect(flags, /** @type {any} */ (fn), sync, block, true);
-}
-
-/**
- * @template {import('../types.js').Block} B
- * @param {(block: B) => void | (() => void)} fn
- * @param {any} block
- * @param {any} sync
- * @returns {import('../types.js').EffectSignal}
- */
-export function managed_render_effect(fn, block = current_block, sync = true) {
-	const flags = RENDER_EFFECT | MANAGED;
 	return internal_create_effect(flags, /** @type {any} */ (fn), sync, block, true);
 }
 
