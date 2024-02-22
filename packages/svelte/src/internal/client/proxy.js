@@ -270,6 +270,7 @@ const state_proxy_handler = {
 		// the heuristics of effects will be different vs if we had read the proxied
 		// object property before writing to that property.
 		if (s === undefined && effect_active()) {
+			// the read creates a signal
 			untrack(() => receiver[prop]);
 			s = metadata.s.get(prop);
 		}
