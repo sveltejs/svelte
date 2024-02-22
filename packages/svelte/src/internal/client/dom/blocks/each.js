@@ -6,7 +6,6 @@ import {
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED
 } from '../../../../constants.js';
-import { noop } from '../../../common.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,
@@ -14,16 +13,9 @@ import {
 	hydrating,
 	set_current_hydration_fragment
 } from '../../hydration.js';
-import { clear_text_content, empty, map_get, map_set } from '../../operations.js';
+import { empty, map_get, map_set } from '../../operations.js';
 import { insert, remove } from '../../reconciler.js';
-import {
-	current_block,
-	current_effect,
-	destroy_signal,
-	execute_effect,
-	push_destroy_fn,
-	set_signal_value
-} from '../../runtime.js';
+import { current_block, destroy_signal, set_signal_value } from '../../runtime.js';
 import {
 	destroy_effect,
 	pause_effect,
@@ -33,39 +25,11 @@ import {
 import { source, mutable_source } from '../../reactivity/sources.js';
 import { trigger_transitions } from '../../transitions.js';
 import { is_array } from '../../utils.js';
-import { BRANCH_EFFECT, EACH_BLOCK, EACH_ITEM_BLOCK } from '../../constants.js';
-import { unstate } from '../../proxy.js';
+import { BRANCH_EFFECT, EACH_ITEM_BLOCK } from '../../constants.js';
 
 const NEW_BLOCK = -1;
 const MOVED_BLOCK = 99999999;
 const LIS_BLOCK = -2;
-
-/**
- * @param {number} flags
- * @param {Element | Comment} anchor
- * @returns {import('../../types.js').EachBlock}
- */
-export function create_each_block(flags, anchor) {
-	return {
-		// anchor
-		a: anchor,
-		// dom
-		d: null,
-		// flags
-		f: flags,
-		// items
-		v: [],
-		// effect
-		e: null,
-		p: /** @type {import('../../types.js').Block} */ (current_block),
-		// transition
-		r: null,
-		// transitions
-		s: [],
-		// type
-		t: EACH_BLOCK
-	};
-}
 
 /**
  * @param {any | import('../../types.js').Signal<any>} item
