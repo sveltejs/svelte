@@ -435,7 +435,10 @@ const validation = {
 						parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'type')
 					);
 					if (type && !is_text_attribute(type)) {
-						error(type, 'invalid-type-attribute');
+						if (node.name !== 'value' || type.value === true) {
+							error(type, 'invalid-type-attribute');
+						}
+						return; // bind:value can handle dynamic `type` attributes
 					}
 
 					if (node.name === 'checked' && type?.value[0].data !== 'checkbox') {
