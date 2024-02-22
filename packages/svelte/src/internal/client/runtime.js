@@ -63,6 +63,11 @@ export let current_consumer = null;
 /** @type {null | import('./types.js').EffectSignal} */
 export let current_effect = null;
 
+/** @param {null | import('./types.js').EffectSignal} effect */
+export function set_current_effect(effect) {
+	current_effect = effect;
+}
+
 /** @type {null | import('./types.js').Signal[]} */
 let current_dependencies = null;
 let current_dependencies_index = 0;
