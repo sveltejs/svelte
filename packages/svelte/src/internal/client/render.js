@@ -12,9 +12,6 @@ import {
 } from './operations.js';
 import {
 	create_root_block,
-	create_if_block,
-	create_key_block,
-	create_await_block,
 	create_dynamic_element_block,
 	create_head_block,
 	create_dynamic_component_block,
@@ -24,7 +21,11 @@ import {
 	PassiveDelegatedEvents,
 	DelegatedEvents,
 	AttributeAliases,
-	namespace_svg
+	namespace_svg,
+	PROPS_IS_IMMUTABLE,
+	PROPS_IS_RUNES,
+	PROPS_IS_UPDATED,
+	PROPS_IS_LAZY_INITIAL
 } from '../../constants.js';
 import {
 	create_fragment_from_html,
@@ -34,22 +35,29 @@ import {
 	remove
 } from './reconciler.js';
 import {
-	render_effect,
 	destroy_signal,
-	is_signal,
 	push_destroy_fn,
 	execute_effect,
-	UNINITIALIZED,
 	untrack,
-	effect,
-	flushSync,
-	safe_not_equal,
+	flush_sync,
 	current_block,
-	managed_effect,
 	push,
+	pop,
 	current_component_context,
-	pop
+	deep_read,
+	get,
+	set,
+	is_signals_recorded,
+	inspect_fn
 } from './runtime.js';
+import {
+	render_effect,
+	effect,
+	managed_effect,
+	derived,
+	pre_effect,
+	user_effect
+} from './reactivity/computations.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,
@@ -64,12 +72,12 @@ import {
 	get_descriptors,
 	is_array,
 	is_function,
-	object_assign,
-	object_keys
+	object_assign
 } from './utils.js';
-import { is_promise } from '../common.js';
+import { run } from '../common.js';
 import { bind_transition, trigger_transitions } from './transitions.js';
-import { proxy } from './proxy.js';
+import { mutable_source, source } from './reactivity/sources.js';
+import { safe_equal, safe_not_equal } from './reactivity/equality.js';
 
 /** @type {Set<string>} */
 const all_registerd_events = new Set();
@@ -212,7 +220,7 @@ const comment_template = template('<!>', true);
  * @param {Text | Comment | Element | null} anchor
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function space(anchor) {
+export function space_frag(anchor) {
 	/** @type {Node | null} */
 	var node = /** @type {any} */ (open(anchor, true, space_template));
 	// if an {expression} is empty during SSR, there might be no
@@ -222,9 +230,25 @@ export function space(anchor) {
 		node = empty();
 		// @ts-ignore in this case the anchor should always be a comment,
 		// if not something more fundamental is wrong and throwing here is better to bail out early
-		anchor.parentElement.insertBefore(node, anchor);
+		anchor.before(node);
 	}
 	return node;
+}
+
+/**
+ * @param {Text | Comment | Element} anchor
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function space(anchor) {
+	// if an {expression} is empty during SSR, there might be no
+	// text node to hydrate (or an anchor comment is falsely detected instead)
+	//  — we must therefore create one
+	if (hydrating && anchor.nodeType !== 3) {
+		const node = empty();
+		anchor.before(node);
+		return node;
+	}
+	return anchor;
 }
 
 /**
@@ -1297,23 +1321,45 @@ export function bind_prop(props, prop, value) {
 
 /**
  * @param {Element} element_or_component
- * @param {(value: unknown) => void} update
- * @param {import('./types.js').MaybeSignal} binding
+ * @param {(value: unknown, ...parts: unknown[]) => void} update
+ * @param {(...parts: unknown[]) => unknown} get_value
+ * @param {() => unknown[]} [get_parts] Set if the this binding is used inside an each block,
+ * 										returns all the parts of the each block context that are used in the expression
  * @returns {void}
  */
-export function bind_this(element_or_component, update, binding) {
-	untrack(() => {
-		update(element_or_component);
-		render_effect(() => () => {
-			// Defer to the next tick so that all updates can be reconciled first.
-			// This solves the case where one variable is shared across multiple this-bindings.
-			render_effect(() => {
-				untrack(() => {
-					if (!is_signal(binding) || binding.v === element_or_component) {
-						update(null);
-					}
-				});
-			});
+export function bind_this(element_or_component, update, get_value, get_parts) {
+	/** @type {unknown[]} */
+	let old_parts;
+	/** @type {unknown[]} */
+	let parts;
+
+	const e = effect(() => {
+		old_parts = parts;
+		// We only track changes to the parts, not the value itself to avoid unnecessary reruns.
+		parts = get_parts?.() || [];
+
+		untrack(() => {
+			if (element_or_component !== get_value(...parts)) {
+				update(element_or_component, ...parts);
+				// If this is an effect rerun (cause: each block context changes), then nullfiy the binding at
+				// the previous position if it isn't already taken over by a different effect.
+				if (old_parts && get_value(...old_parts) === element_or_component) {
+					update(null, ...old_parts);
+				}
+			}
+		});
+	});
+
+	// Add effect teardown (likely causes: if block became false, each item removed, component unmounted).
+	// In these cases we need to nullify the binding only if we detect that the value is still the same.
+	// If not, that means that another effect has now taken over the binding.
+	push_destroy_fn(e, () => {
+		// Defer to the next tick so that all updates can be reconciled first.
+		// This solves the case where one variable is shared across multiple this-bindings.
+		effect(() => {
+			if (get_value(...parts) === element_or_component) {
+				update(null, ...parts);
+			}
 		});
 	});
 }
@@ -1439,151 +1485,6 @@ export function slot(anchor_node, slot_fn, slot_props, fallback_fn) {
 		slot_fn(anchor_node, slot_props);
 	}
 }
-
-/**
- * @param {Comment} anchor_node
- * @param {() => boolean} condition_fn
- * @param {(anchor: Node) => void} consequent_fn
- * @param {null | ((anchor: Node) => void)} alternate_fn
- * @returns {void}
- */
-function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
-	const block = create_if_block();
-	hydrate_block_anchor(anchor_node);
-	/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-	let mismatch = false;
-
-	/** @type {null | import('./types.js').TemplateNode | Array<import('./types.js').TemplateNode>} */
-	let consequent_dom = null;
-	/** @type {null | import('./types.js').TemplateNode | Array<import('./types.js').TemplateNode>} */
-	let alternate_dom = null;
-	let has_mounted = false;
-	/**
-	 * @type {import("./types.js").EffectSignal | null}
-	 */
-	let current_branch_effect = null;
-
-	const if_effect = render_effect(
-		() => {
-			const result = !!condition_fn();
-			if (block.v !== result || !has_mounted) {
-				block.v = result;
-				if (has_mounted) {
-					const consequent_transitions = block.c;
-					const alternate_transitions = block.a;
-					if (result) {
-						if (alternate_transitions === null || alternate_transitions.size === 0) {
-							execute_effect(alternate_effect);
-						} else {
-							trigger_transitions(alternate_transitions, 'out');
-						}
-						if (consequent_transitions === null || consequent_transitions.size === 0) {
-							execute_effect(consequent_effect);
-						} else {
-							trigger_transitions(consequent_transitions, 'in');
-						}
-					} else {
-						if (consequent_transitions === null || consequent_transitions.size === 0) {
-							execute_effect(consequent_effect);
-						} else {
-							trigger_transitions(consequent_transitions, 'out');
-						}
-						if (alternate_transitions === null || alternate_transitions.size === 0) {
-							execute_effect(alternate_effect);
-						} else {
-							trigger_transitions(alternate_transitions, 'in');
-						}
-					}
-				} else if (hydrating) {
-					const comment_text = /** @type {Comment} */ (current_hydration_fragment?.[0])?.data;
-					if (
-						!comment_text ||
-						(comment_text === 'ssr:if:true' && !result) ||
-						(comment_text === 'ssr:if:false' && result)
-					) {
-						// Hydration mismatch: remove everything inside the anchor and start fresh.
-						// This could happen using when `{#if browser} .. {/if}` in SvelteKit.
-						remove(current_hydration_fragment);
-						set_current_hydration_fragment(null);
-						mismatch = true;
-					} else {
-						// Remove the ssr:if comment node or else it will confuse the subsequent hydration algorithm
-						current_hydration_fragment.shift();
-					}
-				}
-				has_mounted = true;
-			}
-		},
-		block,
-		false
-	);
-	// Managed effect
-	const consequent_effect = render_effect(
-		(
-			/** @type {any} */ _,
-			/** @type {import("./types.js").EffectSignal | null} */ consequent_effect
-		) => {
-			const result = block.v;
-			if (!result && consequent_dom !== null) {
-				remove(consequent_dom);
-				consequent_dom = null;
-			}
-			if (result && current_branch_effect !== consequent_effect) {
-				consequent_fn(anchor_node);
-				if (mismatch && current_branch_effect === null) {
-					// Set fragment so that Svelte continues to operate in hydration mode
-					set_current_hydration_fragment([]);
-				}
-				current_branch_effect = consequent_effect;
-				consequent_dom = block.d;
-			}
-			block.d = null;
-		},
-		block,
-		true
-	);
-	block.ce = consequent_effect;
-	// Managed effect
-	const alternate_effect = render_effect(
-		(
-			/** @type {any} */ _,
-			/** @type {import("./types.js").EffectSignal | null} */ alternate_effect
-		) => {
-			const result = block.v;
-			if (result && alternate_dom !== null) {
-				remove(alternate_dom);
-				alternate_dom = null;
-			}
-			if (!result && current_branch_effect !== alternate_effect) {
-				if (alternate_fn !== null) {
-					alternate_fn(anchor_node);
-				}
-				if (mismatch && current_branch_effect === null) {
-					// Set fragment so that Svelte continues to operate in hydration mode
-					set_current_hydration_fragment([]);
-				}
-				current_branch_effect = alternate_effect;
-				alternate_dom = block.d;
-			}
-			block.d = null;
-		},
-		block,
-		true
-	);
-	block.ae = alternate_effect;
-	push_destroy_fn(if_effect, () => {
-		if (consequent_dom !== null) {
-			remove(consequent_dom);
-		}
-		if (alternate_dom !== null) {
-			remove(alternate_dom);
-		}
-		destroy_signal(consequent_effect);
-		destroy_signal(alternate_effect);
-	});
-	block.e = if_effect;
-}
-export { if_block as if };
 
 /**
  * @param {(anchor: Node | null) => void} render_fn
@@ -1864,293 +1765,6 @@ export function component(anchor_node, component_fn, render_fn) {
 }
 
 /**
- * @template V
- * @param {Comment} anchor_node
- * @param {(() => Promise<V>)} input
- * @param {null | ((anchor: Node) => void)} pending_fn
- * @param {null | ((anchor: Node, value: V) => void)} then_fn
- * @param {null | ((anchor: Node, error: unknown) => void)} catch_fn
- * @returns {void}
- */
-function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
-	const block = create_await_block();
-
-	/** @type {null | import('./types.js').Render} */
-	let current_render = null;
-	hydrate_block_anchor(anchor_node);
-
-	/** @type {{}} */
-	let latest_token;
-
-	/** @type {typeof UNINITIALIZED | V} */
-	let resolved_value = UNINITIALIZED;
-
-	/** @type {unknown} */
-	let error = UNINITIALIZED;
-	let pending = false;
-	block.r =
-		/**
-		 * @param {import('./types.js').Transition} transition
-		 * @returns {void}
-		 */
-		(transition) => {
-			const render = /** @type {import('./types.js').Render} */ (current_render);
-			const transitions = render.s;
-			transitions.add(transition);
-			transition.f(() => {
-				transitions.delete(transition);
-				if (transitions.size === 0) {
-					// If the current render has changed since, then we can remove the old render
-					// effect as it's stale.
-					if (current_render !== render && render.e !== null) {
-						if (render.d !== null) {
-							remove(render.d);
-							render.d = null;
-						}
-						destroy_signal(render.e);
-						render.e = null;
-					}
-				}
-			});
-		};
-	const create_render_effect = () => {
-		/** @type {import('./types.js').Render} */
-		const render = {
-			d: null,
-			e: null,
-			s: new Set(),
-			p: current_render
-		};
-		const effect = render_effect(
-			() => {
-				if (error === UNINITIALIZED) {
-					if (resolved_value === UNINITIALIZED) {
-						// pending = true
-						block.n = true;
-						if (pending_fn !== null) {
-							pending_fn(anchor_node);
-						}
-					} else if (then_fn !== null) {
-						// pending = false
-						block.n = false;
-						then_fn(anchor_node, resolved_value);
-					}
-				} else if (catch_fn !== null) {
-					// pending = false
-					block.n = false;
-					catch_fn(anchor_node, error);
-				}
-				render.d = block.d;
-				block.d = null;
-			},
-			block,
-			true,
-			true
-		);
-		render.e = effect;
-		current_render = render;
-	};
-	const render = () => {
-		const render = current_render;
-		if (render === null) {
-			create_render_effect();
-			return;
-		}
-		const transitions = render.s;
-		if (transitions.size === 0) {
-			if (render.d !== null) {
-				remove(render.d);
-				render.d = null;
-			}
-			if (render.e) {
-				execute_effect(render.e);
-			} else {
-				create_render_effect();
-			}
-		} else {
-			create_render_effect();
-			trigger_transitions(transitions, 'out');
-		}
-	};
-	const await_effect = render_effect(
-		() => {
-			const token = {};
-			latest_token = token;
-			const promise = input();
-			if (is_promise(promise)) {
-				promise.then(
-					/** @param {V} v */
-					(v) => {
-						if (latest_token === token) {
-							// Ensure UI is in sync before resolving value.
-							flushSync();
-							resolved_value = v;
-							pending = false;
-							render();
-						}
-					},
-					/** @param {unknown} _error */
-					(_error) => {
-						error = _error;
-						pending = false;
-						render();
-					}
-				);
-				if (resolved_value !== UNINITIALIZED || error !== UNINITIALIZED) {
-					error = UNINITIALIZED;
-					resolved_value = UNINITIALIZED;
-				}
-				if (!pending) {
-					pending = true;
-					render();
-				}
-			} else {
-				error = UNINITIALIZED;
-				resolved_value = promise;
-				pending = false;
-				render();
-			}
-		},
-		block,
-		false
-	);
-	push_destroy_fn(await_effect, () => {
-		let render = current_render;
-		latest_token = {};
-		while (render !== null) {
-			const dom = render.d;
-			if (dom !== null) {
-				remove(dom);
-			}
-			const effect = render.e;
-			if (effect !== null) {
-				destroy_signal(effect);
-			}
-			render = render.p;
-		}
-	});
-	block.e = await_effect;
-}
-export { await_block as await };
-
-/**
- * @template V
- * @param {Comment} anchor_node
- * @param {() => V} key
- * @param {(anchor: Node) => void} render_fn
- * @returns {void}
- */
-export function key(anchor_node, key, render_fn) {
-	const block = create_key_block();
-
-	/** @type {null | import('./types.js').Render} */
-	let current_render = null;
-	hydrate_block_anchor(anchor_node);
-
-	/** @type {V | typeof UNINITIALIZED} */
-	let key_value = UNINITIALIZED;
-	let mounted = false;
-	block.r =
-		/**
-		 * @param {import('./types.js').Transition} transition
-		 * @returns {void}
-		 */
-		(transition) => {
-			const render = /** @type {import('./types.js').Render} */ (current_render);
-			const transitions = render.s;
-			transitions.add(transition);
-			transition.f(() => {
-				transitions.delete(transition);
-				if (transitions.size === 0) {
-					// If the current render has changed since, then we can remove the old render
-					// effect as it's stale.
-					if (current_render !== render && render.e !== null) {
-						if (render.d !== null) {
-							remove(render.d);
-							render.d = null;
-						}
-						destroy_signal(render.e);
-						render.e = null;
-					}
-				}
-			});
-		};
-	const create_render_effect = () => {
-		/** @type {import('./types.js').Render} */
-		const render = {
-			d: null,
-			e: null,
-			s: new Set(),
-			p: current_render
-		};
-		const effect = render_effect(
-			() => {
-				render_fn(anchor_node);
-				render.d = block.d;
-				block.d = null;
-			},
-			block,
-			true,
-			true
-		);
-		render.e = effect;
-		current_render = render;
-	};
-	const render = () => {
-		const render = current_render;
-		if (render === null) {
-			create_render_effect();
-			return;
-		}
-		const transitions = render.s;
-		if (transitions.size === 0) {
-			if (render.d !== null) {
-				remove(render.d);
-				render.d = null;
-			}
-			if (render.e) {
-				execute_effect(render.e);
-			} else {
-				create_render_effect();
-			}
-		} else {
-			trigger_transitions(transitions, 'out');
-			create_render_effect();
-		}
-	};
-	const key_effect = render_effect(
-		() => {
-			const prev_key_value = key_value;
-			key_value = key();
-			if (mounted && safe_not_equal(prev_key_value, key_value)) {
-				render();
-			}
-		},
-		block,
-		false
-	);
-	// To ensure topological ordering of the key effect to the render effect,
-	// we trigger the effect after.
-	render();
-	mounted = true;
-	push_destroy_fn(key_effect, () => {
-		let render = current_render;
-		while (render !== null) {
-			const dom = render.d;
-			if (dom !== null) {
-				remove(dom);
-			}
-			const effect = render.e;
-			if (effect !== null) {
-				destroy_signal(effect);
-			}
-			render = render.p;
-		}
-	});
-	block.e = key_effect;
-}
-
-/**
  * @param {Element | Text | Comment} anchor
  * @param {boolean} is_html
  * @param {() => Record<string, string>} props
@@ -2299,9 +1913,11 @@ export function action(dom, action, value_fn) {
 	effect(() => {
 		if (value_fn) {
 			const value = value_fn();
+			let needs_deep_read = false;
 			untrack(() => {
 				if (payload === undefined) {
 					payload = action(dom, value) || {};
+					needs_deep_read = !!payload?.update;
 				} else {
 					const update = payload.update;
 					if (typeof update === 'function') {
@@ -2309,6 +1925,12 @@ export function action(dom, action, value_fn) {
 					}
 				}
 			});
+			// Action's update method is coarse-grained, i.e. when anything in the passed value changes, update.
+			// This works in legacy mode because of mutable_source being updated as a whole, but when using $state
+			// together with actions and mutation, it wouldn't notice the change without a deep read.
+			if (needs_deep_read) {
+				deep_read(value);
+			}
 		} else {
 			untrack(() => (payload = action(dom)));
 		}
@@ -2737,14 +2359,7 @@ const rest_props_handler = {
 		return key in target.props;
 	},
 	ownKeys(target) {
-		/** @type {Array<string | symbol>} */
-		const keys = [];
-
-		for (let key in target.props) {
-			if (!target.exclude.includes(key)) keys.push(key);
-		}
-
-		return keys;
+		return Reflect.ownKeys(target.props).filter((key) => !target.exclude.includes(key));
 	}
 };
 
@@ -2812,106 +2427,133 @@ export function spread_props(...props) {
 	return new Proxy({ props }, spread_props_handler);
 }
 
+// TODO 5.0 remove this
 /**
- * Mounts the given component to the given target and returns a handle to the component's public accessors
- * as well as a `$set` and `$destroy` method to update the props of the component or destroy it.
- *
- * If you don't need to interact with the component after mounting, use `mount` instead to save some bytes.
- *
- * @template {Record<string, any>} Props
- * @template {Record<string, any> | undefined} Exports
- * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
- * @param {{
- * 		target: Node;
- * 		props?: Props;
- * 		events?: Events;
- *  	context?: Map<any, any>;
- * 		intro?: boolean;
- * 		recover?: false;
- * 	}} options
- * @returns {Exports & { $destroy: () => void; $set: (props: Partial<Props>) => void; }}
+ * @deprecated Use `mount` or `hydrate` instead
  */
-export function createRoot(component, options) {
-	const props = proxy(/** @type {any} */ (options.props) || {}, false);
-
-	let [accessors, $destroy] = hydrate(component, { ...options, props });
-
-	const result =
-		/** @type {Exports & { $destroy: () => void; $set: (props: Partial<Props>) => void; }} */ ({
-			$set: (next) => {
-				object_assign(props, next);
-			},
-			$destroy
-		});
-
-	for (const key of object_keys(accessors || {})) {
-		define_property(result, key, {
-			get() {
-				// @ts-expect-error TS doesn't know key exists on accessor
-				return accessors[key];
-			},
-			/** @param {any} value */
-			set(value) {
-				// @ts-expect-error TS doesn't know key exists on accessor
-				flushSync(() => (accessors[key] = value));
-			},
-			enumerable: true
-		});
-	}
-
-	return result;
+export function createRoot() {
+	throw new Error(
+		'`createRoot` has been removed. Use `mount` or `hydrate` instead. See the updated docs for more info: https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes'
+	);
 }
 
 /**
- * Mounts the given component to the given target and returns the accessors of the component and a function to destroy it.
- *
- * If you need to interact with the component after mounting, use `createRoot` instead.
+ * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
  *
  * @template {Record<string, any>} Props
- * @template {Record<string, any> | undefined} Exports
+ * @template {Record<string, any>} Exports
  * @template {Record<string, any>} Events
  * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
  * @param {{
  * 		target: Node;
  * 		props?: Props;
- * 		events?: Events;
+ * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 	}} options
- * @returns {[Exports, () => void]}
+ * @returns {Exports}
  */
 export function mount(component, options) {
 	init_operations();
 	const anchor = empty();
 	options.target.appendChild(anchor);
-	return _mount(component, { ...options, anchor });
+	// Don't flush previous effects to ensure order of outer effects stays consistent
+	return flush_sync(() => _mount(component, { ...options, anchor }), false);
 }
 
 /**
+ * Hydrates a component on the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
+ *
  * @template {Record<string, any>} Props
- * @template {Record<string, any> | undefined} Exports
+ * @template {Record<string, any>} Exports
  * @template {Record<string, any>} Events
  * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
  * @param {{
  * 		target: Node;
- * 		anchor: null | Text;
  * 		props?: Props;
- * 		events?: Events;
+ * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: false;
  * 	}} options
- * @returns {[Exports, () => void]}
+ * @returns {Exports}
  */
-function _mount(component, options) {
+export function hydrate(component, options) {
+	init_operations();
+	const container = options.target;
+	const first_child = /** @type {ChildNode} */ (container.firstChild);
+	// Call with insert_text == true to prevent empty {expressions} resulting in an empty
+	// fragment array, resulting in a hydration error down the line
+	const hydration_fragment = get_hydration_fragment(first_child, true);
+	const previous_hydration_fragment = current_hydration_fragment;
+	set_current_hydration_fragment(hydration_fragment);
+
+	/** @type {null | Text} */
+	let anchor = null;
+	if (hydration_fragment === null) {
+		anchor = empty();
+		container.appendChild(anchor);
+	}
+
+	let finished_hydrating = false;
+
+	try {
+		// Don't flush previous effects to ensure order of outer effects stays consistent
+		return flush_sync(() => {
+			const instance = _mount(component, { ...options, anchor });
+			// flush_sync will run this callback and then synchronously run any pending effects,
+			// which don't belong to the hydration phase anymore - therefore reset it here
+			set_current_hydration_fragment(null);
+			finished_hydrating = true;
+			return instance;
+		}, false);
+	} catch (error) {
+		if (!finished_hydrating && options.recover !== false && hydration_fragment !== null) {
+			// eslint-disable-next-line no-console
+			console.error(
+				'ERR_SVELTE_HYDRATION_MISMATCH' +
+					(DEV
+						? ': Hydration failed because the initial UI does not match what was rendered on the server.'
+						: ''),
+				error
+			);
+			remove(hydration_fragment);
+			first_child.remove();
+			hydration_fragment.at(-1)?.nextSibling?.remove();
+			set_current_hydration_fragment(null);
+			return mount(component, options);
+		} else {
+			throw error;
+		}
+	} finally {
+		set_current_hydration_fragment(previous_hydration_fragment);
+	}
+}
+
+/**
+ * @template {Record<string, any>} Props
+ * @template {Record<string, any>} Exports
+ * @template {Record<string, any>} Events
+ * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} Component
+ * @param {{
+ * 		target: Node;
+ * 		anchor: null | Text;
+ * 		props?: Props;
+ * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
+ *  	context?: Map<any, any>;
+ * 		intro?: boolean;
+ * 		recover?: false;
+ * 	}} options
+ * @returns {Exports}
+ */
+function _mount(Component, options) {
 	const registered_events = new Set();
 	const container = options.target;
 	const block = create_root_block(options.intro || false);
 
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously
-	let accessors = undefined;
+	let component = undefined;
 
 	const effect = render_effect(
 		() => {
@@ -2920,8 +2562,16 @@ function _mount(component, options) {
 				/** @type {import('../client/types.js').ComponentContext} */ (current_component_context).c =
 					options.context;
 			}
-			// @ts-expect-error the public typings are not what the actual function looks like
-			accessors = component(options.anchor, options.props || {});
+			if (!options.props) {
+				options.props = /** @type {Props} */ ({});
+			}
+			if (options.events) {
+				// We can't spread the object or else we'd lose the state proxy stuff, if it is one
+				/** @type {any} */ (options.props).$$events = options.events;
+			}
+			component =
+				// @ts-expect-error the public typings are not what the actual function looks like
+				Component(options.anchor, options.props) || {};
 			if (options.context) {
 				pop();
 			}
@@ -2968,91 +2618,38 @@ function _mount(component, options) {
 	event_handle(array_from(all_registerd_events));
 	root_event_handles.add(event_handle);
 
-	return [
-		accessors,
-		() => {
-			for (const event_name of registered_events) {
-				container.removeEventListener(event_name, bound_event_listener);
-			}
-			root_event_handles.delete(event_handle);
-			const dom = block.d;
-			if (dom !== null) {
-				remove(dom);
-			}
-			destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
+	mounted_components.set(component, () => {
+		for (const event_name of registered_events) {
+			container.removeEventListener(event_name, bound_event_listener);
 		}
-	];
+		root_event_handles.delete(event_handle);
+		const dom = block.d;
+		if (dom !== null) {
+			remove(dom);
+		}
+		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
+	});
+
+	return component;
 }
 
 /**
- * Hydrates the given component to the given target and returns the accessors of the component and a function to destroy it.
- *
- * If you need to interact with the component after hydrating, use `createRoot` instead.
- *
- * @template {Record<string, any>} Props
- * @template {Record<string, any> | undefined} Exports
- * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
- * @param {{
- * 		target: Node;
- * 		props?: Props;
- * 		events?: Events;
- *  	context?: Map<any, any>;
- * 		intro?: boolean;
- * 		recover?: false;
- * 	}} options
- * @returns {[Exports, () => void]}
+ * References of the components that were mounted or hydrated.
+ * Uses a `WeakMap` to avoid memory leaks.
  */
-export function hydrate(component, options) {
-	init_operations();
-	const container = options.target;
-	const first_child = /** @type {ChildNode} */ (container.firstChild);
-	// Call with insert_text == true to prevent empty {expressions} resulting in an empty
-	// fragment array, resulting in a hydration error down the line
-	const hydration_fragment = get_hydration_fragment(first_child, true);
-	const previous_hydration_fragment = current_hydration_fragment;
-
-	try {
-		/** @type {null | Text} */
-		let anchor = null;
-		if (hydration_fragment === null) {
-			anchor = empty();
-			container.appendChild(anchor);
-		}
-		set_current_hydration_fragment(hydration_fragment);
-		return _mount(component, { ...options, anchor });
-	} catch (error) {
-		if (options.recover !== false && hydration_fragment !== null) {
-			// eslint-disable-next-line no-console
-			console.error(
-				'ERR_SVELTE_HYDRATION_MISMATCH' +
-					(DEV
-						? ': Hydration failed because the initial UI does not match what was rendered on the server.'
-						: ''),
-				error
-			);
-			remove(hydration_fragment);
-			first_child.remove();
-			hydration_fragment.at(-1)?.nextSibling?.remove();
-			set_current_hydration_fragment(null);
-			return mount(component, options);
-		} else {
-			throw error;
-		}
-	} finally {
-		set_current_hydration_fragment(previous_hydration_fragment);
-	}
-}
+let mounted_components = new WeakMap();
 
 /**
- * @param {Record<string, unknown>} props
- * @returns {void}
+ * Unmounts a component that was previously mounted using `mount` or `hydrate`.
+ * @param {Record<string, any>} component
  */
-export function access_props(props) {
-	for (const prop in props) {
-		// eslint-disable-next-line no-unused-expressions
-		props[prop];
+export function unmount(component) {
+	const fn = mounted_components.get(component);
+	if (DEV && !fn) {
+		// eslint-disable-next-line no-console
+		console.warn('Tried to unmount a component that was not mounted.');
 	}
+	fn?.();
 }
 
 /**
@@ -3115,4 +2712,199 @@ function get_root_for_style(node) {
 		return /** @type {ShadowRoot} */ (root);
 	}
 	return /** @type {Document} */ (node.ownerDocument);
+}
+
+/**
+ * This function is responsible for synchronizing a possibly bound prop with the inner component state.
+ * It is used whenever the compiler sees that the component writes to the prop, or when it has a default prop_value.
+ * @template V
+ * @param {Record<string, unknown>} props
+ * @param {string} key
+ * @param {number} flags
+ * @param {V | (() => V)} [initial]
+ * @returns {(() => V | ((arg: V) => V) | ((arg: V, mutation: boolean) => V))}
+ */
+export function prop(props, key, flags, initial) {
+	var immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
+	var runes = (flags & PROPS_IS_RUNES) !== 0;
+	var prop_value = /** @type {V} */ (props[key]);
+	var setter = get_descriptor(props, key)?.set;
+
+	if (prop_value === undefined && initial !== undefined) {
+		if (setter && runes) {
+			// TODO consolidate all these random runtime errors
+			throw new Error(
+				'ERR_SVELTE_BINDING_FALLBACK' +
+					(DEV
+						? `: Cannot pass undefined to bind:${key} because the property contains a fallback value. Pass a different value than undefined to ${key}.`
+						: '')
+			);
+		}
+
+		// @ts-expect-error would need a cumbersome method overload to type this
+		if ((flags & PROPS_IS_LAZY_INITIAL) !== 0) initial = initial();
+
+		prop_value = /** @type {V} */ (initial);
+
+		if (setter) setter(prop_value);
+	}
+
+	var getter = () => {
+		var value = /** @type {V} */ (props[key]);
+		if (value !== undefined) initial = undefined;
+		return value === undefined ? /** @type {V} */ (initial) : value;
+	};
+
+	// easy mode — prop is never written to
+	if ((flags & PROPS_IS_UPDATED) === 0) {
+		return getter;
+	}
+
+	// intermediate mode — prop is written to, but the parent component had
+	// `bind:foo` which means we can just call `$$props.foo = value` directly
+	if (setter) {
+		return function (/** @type {V} */ value) {
+			if (arguments.length === 1) {
+				/** @type {Function} */ (setter)(value);
+				return value;
+			} else {
+				return getter();
+			}
+		};
+	}
+
+	// hard mode. this is where it gets ugly — the value in the child should
+	// synchronize with the parent, but it should also be possible to temporarily
+	// set the value to something else locally.
+	var from_child = false;
+	var was_from_child = false;
+
+	// The derived returns the current value. The underlying mutable
+	// source is written to from various places to persist this value.
+	var inner_current_value = mutable_source(prop_value);
+	var current_value = derived(() => {
+		var parent_value = getter();
+		var child_value = get(inner_current_value);
+
+		if (from_child) {
+			from_child = false;
+			was_from_child = true;
+			return child_value;
+		}
+
+		was_from_child = false;
+		return (inner_current_value.v = parent_value);
+	});
+
+	if (!immutable) current_value.e = safe_equal;
+
+	return function (/** @type {V} */ value, mutation = false) {
+		var current = get(current_value);
+
+		// legacy nonsense — need to ensure the source is invalidated when necessary
+		// also needed for when handling inspect logic so we can inspect the correct source signal
+		if (is_signals_recorded || (DEV && inspect_fn)) {
+			// set this so that we don't reset to the parent value if `d`
+			// is invalidated because of `invalidate_inner_signals` (rather
+			// than because the parent or child value changed)
+			from_child = was_from_child;
+			// invoke getters so that signals are picked up by `invalidate_inner_signals`
+			getter();
+			get(inner_current_value);
+		}
+
+		if (arguments.length > 0) {
+			if (mutation || (immutable ? value !== current : safe_not_equal(value, current))) {
+				from_child = true;
+				set(inner_current_value, mutation ? current : value);
+				get(current_value); // force a synchronisation immediately
+			}
+
+			return value;
+		}
+
+		return current;
+	};
+}
+
+/**
+ * Legacy-mode only: Call `onMount` callbacks and set up `beforeUpdate`/`afterUpdate` effects
+ */
+export function init() {
+	const context = /** @type {import('./types.js').ComponentContext} */ (current_component_context);
+	const callbacks = context.u;
+
+	if (!callbacks) return;
+
+	// beforeUpdate
+	pre_effect(() => {
+		observe_all(context);
+		callbacks.b.forEach(run);
+	});
+
+	// onMount (must run before afterUpdate)
+	user_effect(() => {
+		const fns = untrack(() => callbacks.m.map(run));
+		return () => {
+			for (const fn of fns) {
+				if (typeof fn === 'function') {
+					fn();
+				}
+			}
+		};
+	});
+
+	// afterUpdate
+	user_effect(() => {
+		observe_all(context);
+		callbacks.a.forEach(run);
+	});
+}
+
+/**
+ * Invoke the getter of all signals associated with a component
+ * so they can be registered to the effect this function is called in.
+ * @param {import('./types.js').ComponentContext} context
+ */
+function observe_all(context) {
+	if (context.d) {
+		for (const signal of context.d) get(signal);
+	}
+
+	deep_read(context.s);
+}
+
+/**
+ * Under some circumstances, imports may be reactive in legacy mode. In that case,
+ * they should be using `reactive_import` as part of the transformation
+ * @param {() => any} fn
+ */
+export function reactive_import(fn) {
+	const s = source(0);
+	return function () {
+		if (arguments.length === 1) {
+			set(s, get(s) + 1);
+			return arguments[0];
+		} else {
+			get(s);
+			return fn();
+		}
+	};
+}
+
+/**
+ * @this {any}
+ * @param {Record<string, unknown>} $$props
+ * @param {Event} event
+ * @returns {void}
+ */
+export function bubble_event($$props, event) {
+	var events = /** @type {Record<string, Function[] | Function>} */ ($$props.$$events)?.[
+		event.type
+	];
+	var callbacks = is_array(events) ? events.slice() : events == null ? [] : [events];
+	for (var fn of callbacks) {
+		// Preserve "this" context
+		fn.call(this, event);
+	}
 }

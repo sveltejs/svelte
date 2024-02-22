@@ -1,5 +1,6 @@
 import { createClassComponent } from '../../legacy/legacy-client.js';
-import { render_effect, destroy_signal } from './runtime.js';
+import { destroy_signal } from './runtime.js';
+import { render_effect } from './reactivity/computations.js';
 import { open, close } from './render.js';
 import { define_property } from './utils.js';
 
@@ -276,7 +277,7 @@ function get_custom_elements_slots(element) {
  * @param {any} Component  A Svelte component function
  * @param {Record<string, CustomElementPropDefinition>} props_definition  The props to observe
  * @param {string[]} slots  The slots to create
- * @param {string[]} accessors  Other accessors besides the ones for props the component has
+ * @param {string[]} exports  Explicitly exported values, other than props
  * @param {boolean} use_shadow_dom  Whether to use shadow DOM
  * @param {(ce: new () => HTMLElement) => new () => HTMLElement} [extend]
  */
@@ -284,7 +285,7 @@ export function create_custom_element(
 	Component,
 	props_definition,
 	slots,
-	accessors,
+	exports,
 	use_shadow_dom,
 	extend
 ) {
@@ -311,10 +312,10 @@ export function create_custom_element(
 			}
 		});
 	});
-	accessors.forEach((accessor) => {
-		define_property(Class.prototype, accessor, {
+	exports.forEach((property) => {
+		define_property(Class.prototype, property, {
 			get() {
-				return this.$$c?.[accessor];
+				return this.$$c?.[property];
 			}
 		});
 	});

@@ -32,10 +32,11 @@ function t_string(value) {
 
 /**
  * @param {import('estree').Expression} value
+ * @param {boolean} [needs_escaping]
  * @returns {import('./types').TemplateExpression}
  */
-function t_expression(value) {
-	return { type: 'expression', value };
+function t_expression(value, needs_escaping = false) {
+	return { type: 'expression', value, needs_escaping };
 }
 
 /**
@@ -94,7 +95,8 @@ function serialize_template(template, out = b.id('out')) {
 			} else if (template_item.type === 'expression') {
 				const value = template_item.value;
 				if (value.type === 'TemplateLiteral') {
-					last.value.raw += sanitize_template_string(value.quasis[0].value.raw);
+					const raw = value.quasis[0].value.raw;
+					last.value.raw += template_item.needs_escaping ? sanitize_template_string(raw) : raw;
 					quasis.push(...value.quasis.slice(1));
 					expressions.push(...value.expressions);
 					continue;
@@ -198,7 +200,7 @@ function process_children(nodes, parent, { visit, state }) {
 			}
 		}
 
-		state.template.push(t_expression(b.template(quasis, expressions)));
+		state.template.push(t_expression(b.template(quasis, expressions), true));
 	}
 
 	for (let i = 0; i < nodes.length; i += 1) {
@@ -322,7 +324,7 @@ function serialize_get_binding(node, state) {
 		const store_id = b.id(node.name.slice(1));
 		return b.call(
 			'$.store_get',
-			b.id('$$store_subs'),
+			b.assignment('??=', b.id('$$store_subs'), b.object([])),
 			b.literal(node.name),
 			serialize_get_binding(store_id, state)
 		);
@@ -460,7 +462,7 @@ function serialize_set_binding(node, context, fallback) {
 	} else if (is_store) {
 		return b.call(
 			'$.mutate_store',
-			b.id('$$store_subs'),
+			b.assignment('??=', b.id('$$store_subs'), b.object([])),
 			b.literal(left.name),
 			b.id(left_name),
 			b.assignment(node.operator, /** @type {import('estree').Pattern} */ (visit(node.left)), value)
@@ -506,7 +508,11 @@ const global_visitors = {
 			if (node.prefix) fn += '_pre';
 
 			/** @type {import('estree').Expression[]} */
-			const args = [b.id('$$store_subs'), b.literal(argument.name), b.id(argument.name.slice(1))];
+			const args = [
+				b.assignment('??=', b.id('$$store_subs'), b.object([])),
+				b.literal(argument.name),
+				b.id(argument.name.slice(1))
+			];
 			if (node.operator === '--') {
 				args.push(b.literal(-1));
 			}
@@ -849,7 +855,7 @@ function serialize_inline_component(node, component_name, context) {
 
 			const value = serialize_attribute_value(attribute.value, context, false, true);
 			push_prop(b.prop('init', b.key(attribute.name), value));
-		} else if (attribute.type === 'BindDirective') {
+		} else if (attribute.type === 'BindDirective' && attribute.name !== 'this') {
 			// TODO this needs to turn the whole thing into a while loop because the binding could be mutated eagerly in the child
 			push_prop(
 				b.get(attribute.name, [
@@ -2094,8 +2100,10 @@ export function server_component(analysis, options) {
 			(binding) => binding.kind === 'store_sub'
 		)
 	) {
-		instance.body.unshift(b.const('$$store_subs', b.object([])));
-		template.body.push(b.stmt(b.call('$.unsubscribe_stores', b.id('$$store_subs'))));
+		instance.body.unshift(b.var('$$store_subs'));
+		template.body.push(
+			b.if(b.id('$$store_subs'), b.stmt(b.call('$.unsubscribe_stores', b.id('$$store_subs'))))
+		);
 	}
 	// Propagate values of bound props upwards if they're undefined in the parent and have a value.
 	// Don't do this as part of the props retrieval because people could eagerly mutate the prop in the instance script.

@@ -1,5 +1,107 @@
 # svelte
 
+## 5.0.0-next.65
+
+### Patch Changes
+
+- fix: improve $inspect handling of derived objects ([#10584](https://github.com/sveltejs/svelte/pull/10584))
+
+- fix: permit whitespace within template scripts ([#10591](https://github.com/sveltejs/svelte/pull/10591))
+
+- fix: allow boolean `contenteditable` attribute ([#10590](https://github.com/sveltejs/svelte/pull/10590))
+
+- fix: improve import event handler support ([#10592](https://github.com/sveltejs/svelte/pull/10592))
+
+## 5.0.0-next.64
+
+### Patch Changes
+
+- fix: inherit ownerlessness when creating child proxies ([#10577](https://github.com/sveltejs/svelte/pull/10577))
+
+## 5.0.0-next.63
+
+### Patch Changes
+
+- fix: handle member expressions in directives ([#10576](https://github.com/sveltejs/svelte/pull/10576))
+
+- fix: remove memory leak ([#10570](https://github.com/sveltejs/svelte/pull/10570))
+
+- fix: call beforeUpdate/afterUpdate callbacks when props are mutated ([#10570](https://github.com/sveltejs/svelte/pull/10570))
+
+- fix: improve props spreading logic ([#10574](https://github.com/sveltejs/svelte/pull/10574))
+
+## 5.0.0-next.62
+
+### Patch Changes
+
+- feat: allow state/derived/props to be explicitly exported from components ([#10523](https://github.com/sveltejs/svelte/pull/10523))
+
+- fix: replace proxy-based readonly validation with stack-trace-based ownership tracking ([#10464](https://github.com/sveltejs/svelte/pull/10464))
+
+- fix: correct context applied to batch_inspect ([#10569](https://github.com/sveltejs/svelte/pull/10569))
+
+## 5.0.0-next.61
+
+### Patch Changes
+
+- fix: improve each block item equality for immutable mode ([#10537](https://github.com/sveltejs/svelte/pull/10537))
+
+- fix: improve handling of unowned derived signals ([#10565](https://github.com/sveltejs/svelte/pull/10565))
+
+- fix: better handling of empty text node hydration ([#10545](https://github.com/sveltejs/svelte/pull/10545))
+
+- fix: ensure update methods of actions and reactive statements work with fine-grained `$state` ([#10543](https://github.com/sveltejs/svelte/pull/10543))
+
+- fix: don't execute scripts inside `@html` when instantiated on the client ([#10556](https://github.com/sveltejs/svelte/pull/10556))
+
+- fix: only escape characters in SSR template ([#10555](https://github.com/sveltejs/svelte/pull/10555))
+
+- fix: wire up `events` in `mount` correctly and fix its types ([#10553](https://github.com/sveltejs/svelte/pull/10553))
+
+- fix: better handling of derived signals that have no dependencies ([#10558](https://github.com/sveltejs/svelte/pull/10558))
+
+- fix: improve state store mutation compiler output ([#10561](https://github.com/sveltejs/svelte/pull/10561))
+
+## 5.0.0-next.60
+
+### Patch Changes
+
+- fix: improve effect over-fire on store subscription init ([#10535](https://github.com/sveltejs/svelte/pull/10535))
+
+- fix: use init properties when exporting non-state values in prod ([#10521](https://github.com/sveltejs/svelte/pull/10521))
+
+## 5.0.0-next.59
+
+### Patch Changes
+
+- chore: improve code generation for `bind:this` in SSR mode ([#10524](https://github.com/sveltejs/svelte/pull/10524))
+
+- fix: visit expression node in directives ([#10527](https://github.com/sveltejs/svelte/pull/10527))
+
+## 5.0.0-next.58
+
+### Patch Changes
+
+- breaking: remove `createRoot`, adjust `mount`/`hydrate` APIs, introduce `unmount` ([#10516](https://github.com/sveltejs/svelte/pull/10516))
+
+## 5.0.0-next.57
+
+### Patch Changes
+
+- fix: correctly scope CSS selectors with descendant combinators ([#10490](https://github.com/sveltejs/svelte/pull/10490))
+
+- feat: implement support for `:is(...)` and `:where(...)` ([#10490](https://github.com/sveltejs/svelte/pull/10490))
+
+- chore: treeshake unused store subscriptions in SSR mode ([#10506](https://github.com/sveltejs/svelte/pull/10506))
+
+- fix: warn against accidental global event referenced ([#10442](https://github.com/sveltejs/svelte/pull/10442))
+
+- fix: improve bind:this support for each blocks ([#10510](https://github.com/sveltejs/svelte/pull/10510))
+
+- feat: implement nested CSS support ([#10490](https://github.com/sveltejs/svelte/pull/10490))
+
+- breaking: encapsulate/remove selectors inside `:is(...)` and `:where(...)` ([#10490](https://github.com/sveltejs/svelte/pull/10490))
+
 ## 5.0.0-next.56
 
 ### Patch Changes

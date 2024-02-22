@@ -1,4 +1,9 @@
 import {
+	DERIVED,
+	EFFECT,
+	RENDER_EFFECT,
+	SOURCE,
+	PRE_EFFECT,
 	ROOT_BLOCK,
 	EACH_BLOCK,
 	EACH_ITEM_BLOCK,
@@ -8,10 +13,9 @@ import {
 	HEAD_BLOCK,
 	DYNAMIC_COMPONENT_BLOCK,
 	DYNAMIC_ELEMENT_BLOCK,
-	SNIPPET_BLOCK
-} from './block.js';
-import type { READONLY_SYMBOL, STATE_SYMBOL } from './proxy.js';
-import { DERIVED, EFFECT, RENDER_EFFECT, SOURCE, PRE_EFFECT } from './runtime.js';
+	SNIPPET_BLOCK,
+	STATE_SYMBOL
+} from './constants.js';
 
 // Put all internal types in this file. Once we convert to JSDoc, we can make this a d.ts file
 
@@ -40,8 +44,8 @@ export type ComponentContext = {
 	d: null | Signal<any>[];
 	/** props */
 	s: Record<string, unknown>;
-	/** accessors */
-	a: Record<string, any> | null;
+	/** exports (and props, if `accessors: true`) */
+	x: Record<string, any> | null;
 	/** effects */
 	e: null | Array<EffectSignal>;
 	/** mounted */
@@ -77,6 +81,8 @@ export type SourceSignal<V = unknown> = {
 	f: SignalFlags;
 	/** value: The latest value for this signal */
 	v: V;
+	// write version
+	w: number;
 };
 
 export type SourceSignalDebug = {
@@ -111,6 +117,8 @@ export type ComputationSignal<V = unknown> = {
 	v: V;
 	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
 	l: number;
+	/** write version: used for unowned signals to track if their depdendencies are dirty or not **/
+	w: number;
 };
 
 export type Signal<V = unknown> = SourceSignal<V> | ComputationSignal<V>;
@@ -403,15 +411,13 @@ export interface ProxyMetadata<T = Record<string | symbol, any>> {
 	/** Immutable: Whether to use a source or mutable source under the hood */
 	i: boolean;
 	/** The associated proxy */
-	p: ProxyStateObject<T> | ProxyReadonlyObject<T>;
+	p: ProxyStateObject<T>;
 	/** The original target this proxy was created for */
 	t: T;
+	/** Dev-only — the components that 'own' this state, if any */
+	o: null | Set<Function>;
 }
 
 export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
 	[STATE_SYMBOL]: ProxyMetadata;
-};
-
-export type ProxyReadonlyObject<T = Record<string | symbol, any>> = ProxyStateObject<T> & {
-	[READONLY_SYMBOL]: ProxyMetadata;
 };

@@ -1,10 +1,10 @@
 import {
 	current_component_context,
 	get_or_init_context_map,
-	untrack,
-	user_effect
+	untrack
 } from '../internal/client/runtime.js';
 import { is_array } from '../internal/client/utils.js';
+import { user_effect } from '../internal/index.js';
 
 /**
  * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
@@ -164,7 +164,7 @@ export function createEventDispatcher() {
 			// in a server (non-DOM) environment?
 			const event = create_custom_event(/** @type {string} */ (type), detail, options);
 			for (const fn of callbacks) {
-				fn.call(component_context.a, event);
+				fn.call(component_context.x, event);
 			}
 			return !event.defaultPrevented;
 		}
@@ -235,10 +235,11 @@ function init_update_callbacks(context) {
 // (except probably untrack — do we want to expose that, if there's also a rune?)
 export {
 	flushSync,
-	createRoot,
 	mount,
 	hydrate,
 	tick,
+	unmount,
 	untrack,
-	unstate
+	unstate,
+	createRoot
 } from '../internal/index.js';

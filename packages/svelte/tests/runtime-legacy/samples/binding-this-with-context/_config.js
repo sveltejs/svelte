@@ -46,10 +46,8 @@ export default test({
 		component.items = ['foo', 'baz'];
 		assert.equal(component.divs.length, 3, 'the divs array is still 3 long');
 		assert.equal(component.divs[2], null, 'the last div is unregistered');
-		// Different from Svelte 3
-		assert.equal(component.ps[1], null, 'the second p is unregistered');
-		// Different from Svelte 3
-		assert.equal(component.spans['-baz2'], null, 'the baz span is unregistered');
+		assert.equal(component.ps[2], null, 'the last p is unregistered');
+		assert.equal(component.spans['-bar1'], null, 'the bar span is unregistered');
 		assert.equal(component.hrs.bar, null, 'the bar hr is unregistered');
 
 		divs = target.querySelectorAll('div');
@@ -58,22 +56,17 @@ export default test({
 			assert.equal(e, divs[i], `div ${i} is still correct`);
 		});
 
-		// TODO: unsure if need these two tests to pass, as the logic between Svelte 3
-		// and Svelte 5 is different for these cases.
+		spans = target.querySelectorAll('span');
+		// @ts-ignore
+		component.items.forEach((e, i) => {
+			assert.equal(component.spans[`-${e}${i}`], spans[i], `span -${e}${i} is still correct`);
+		});
 
-		// elems = target.querySelectorAll('span');
-		// component.items.forEach((e, i) => {
-		//   assert.equal(
-		//     component.spans[`-${e}${i}`],
-		//     elems[i],
-		//     `span -${e}${i} is still correct`,
-		//   );
-		// });
-
-		// elems = target.querySelectorAll('p');
-		// component.ps.forEach((e, i) => {
-		//   assert.equal(e, elems[i], `p ${i} is still correct`);
-		// });
+		ps = target.querySelectorAll('p');
+		// @ts-ignore
+		component.ps.forEach((e, i) => {
+			assert.equal(e, ps[i], `p ${i} is still correct`);
+		});
 
 		hrs = target.querySelectorAll('hr');
 		// @ts-ignore

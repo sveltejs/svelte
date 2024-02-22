@@ -25,6 +25,10 @@ export interface Rule extends BaseNode {
 	type: 'Rule';
 	prelude: SelectorList;
 	block: Block;
+	metadata: {
+		parent_rule: null | Rule;
+		has_local_selectors: boolean;
+	};
 }
 
 export interface SelectorList extends BaseNode {
@@ -36,6 +40,7 @@ export interface ComplexSelector extends BaseNode {
 	type: 'ComplexSelector';
 	children: RelativeSelector[];
 	metadata: {
+		rule: null | Rule;
 		used: boolean;
 	};
 }
@@ -91,6 +96,11 @@ export interface Percentage extends BaseNode {
 	value: string;
 }
 
+export interface NestingSelector extends BaseNode {
+	type: 'NestingSelector';
+	name: '&';
+}
+
 export interface Nth extends BaseNode {
 	type: 'Nth';
 	value: string;
@@ -104,7 +114,8 @@ export type SimpleSelector =
 	| PseudoElementSelector
 	| PseudoClassSelector
 	| Percentage
-	| Nth;
+	| Nth
+	| NestingSelector;
 
 export interface Combinator extends BaseNode {
 	type: 'Combinator';
@@ -127,6 +138,8 @@ export type Node =
 	| StyleSheet
 	| Rule
 	| Atrule
+	| SelectorList
+	| Block
 	| ComplexSelector
 	| RelativeSelector
 	| Combinator

@@ -1,6 +1,6 @@
 	div.svelte-xyz ~ article:where(.svelte-xyz) { color: green; }
 	span.svelte-xyz ~ b:where(.svelte-xyz) { color: green; }
-	div.svelte-xyz span:where(.svelte-xyz) ~ b:where(.svelte-xyz) { color: green; }
+	div.svelte-xyz span ~ b:where(.svelte-xyz) { color: green; }
 	.a.svelte-xyz ~ article:where(.svelte-xyz) { color: green; }
 	div.svelte-xyz ~ .b:where(.svelte-xyz) { color: green; }
 	.a.svelte-xyz ~ .c:where(.svelte-xyz) { color: green; }

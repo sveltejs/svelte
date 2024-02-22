@@ -103,7 +103,9 @@ export function reconcile_html(target, value, svg) {
 	if (svg) {
 		html = `<svg>${html}</svg>`;
 	}
-	var content = create_fragment_with_script_from_html(html);
+	// Don't use create_fragment_with_script_from_html here because that would mean script tags are executed.
+	// @html is basically `.innerHTML = ...` and that doesn't execute scripts either due to security reasons.
+	var content = create_fragment_from_html(html);
 	if (svg) {
 		content = /** @type {DocumentFragment} */ (/** @type {unknown} */ (content.firstChild));
 	}

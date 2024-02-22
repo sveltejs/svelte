@@ -6,23 +6,71 @@ While Svelte 5 is a complete rewrite, we have done our best to ensure that most 
 
 ## Components are no longer classes
 
-In Svelte 3 and 4, components are classes. In Svelte 5 they are functions and should be instantiated differently. If you need to manually instantiate components, you should use `mount` or `createRoot` (imported from `svelte`) instead. If you see this error using SvelteKit, try updating to the latest version of SvelteKit first, which adds support for Svelte 5. If you're using Svelte without SvelteKit, you'll likely have a `main.js` file (or similar) which you need to adjust:
+In Svelte 3 and 4, components are classes. In Svelte 5 they are functions and should be instantiated differently. If you need to manually instantiate components, you should use `mount` or `hydrate` (imported from `svelte`) instead. If you see this error using SvelteKit, try updating to the latest version of SvelteKit first, which adds support for Svelte 5. If you're using Svelte without SvelteKit, you'll likely have a `main.js` file (or similar) which you need to adjust:
 
 ```diff
-+ import { createRoot } from 'svelte';
++ import { mount } from 'svelte';
 import App from './App.svelte'
 
 - const app = new App({ target: document.getElementById("app") });
-+ const app = createRoot(App, { target: document.getElementById("app") });
++ const app = mount(App, { target: document.getElementById("app") });
 
 export default app;
 ```
 
-`createRoot` returns an object with a `$set` and `$destroy` method on it. It does not come with an `$on` method you may know from the class component API. Instead, pass them via the `events` property on the options argument. If you don't need to interact with the component instance after creating it, you can use `mount` instead, which saves some bytes.
+`mount` and `hydrate` have the exact same API. The difference is that `hydrate` will pick up the Svelte's server-rendered HTML inside its target and hydrate it. Both return an object with the exports of the component and potentially property accessors (if compiled with `accesors: true`). They do not come with the `$on`, `$set` and `$destroy` methods you may know from the class component API. These are its replacements:
+
+For `$on`, instead of listening to events, pass them via the `events` property on the options argument.
+
+```diff
++ import { mount } from 'svelte';
+import App from './App.svelte'
+
+- const app = new App({ target: document.getElementById("app") });
+- app.$on('event', callback);
++ const app = mount(App, { target: document.getElementById("app"), events: { event: callback } });
+```
 
 > Note that using `events` is discouraged — instead, [use callbacks](https://svelte-5-preview.vercel.app/docs/event-handlers)
 
-As a stop-gap-solution, you can also use `createClassComponent` or `asClassComponent` (imported from `svelte/legacy`) instead to keep the same API after instantiating. If this component is not under your control, you can use the `legacy.componentApi` compiler option for auto-applied backwards compatibility (note that this adds a bit of overhead to each component).
+For `$set`, use `$state` instead to create a reactive property object and manipulate it. If you're doing this inside a `.js` or `.ts` file, adjust the ending to include `.svelte`, i.e. `.svelte.js` or `.svelte.ts`.
+
+```diff
++ import { mount } from 'svelte';
+import App from './App.svelte'
+
+- const app = new App({ target: document.getElementById("app"), props: { foo: 'bar' } });
+- app.$set('event', { foo: 'baz' });
++ const props = $state({ foo: 'bar' });
++ const app = mount(App, { target: document.getElementById("app"), props });
++ props.foo = 'baz';
+```
+
+For `$destroy`, use `unmount` instead.
+
+```diff
++ import { mount, unmount } from 'svelte';
+import App from './App.svelte'
+
+- const app = new App({ target: document.getElementById("app"), props: { foo: 'bar' } });
+- app.$destroy();
++ const app = mount(App, { target: document.getElementById("app") });
++ unmount(app);
+```
+
+As a stop-gap-solution, you can also use `createClassComponent` or `asClassComponent` (imported from `svelte/legacy`) instead to keep the same API known from Svelte 4 after instantiating.
+
+```diff
++ import { createClassComponent } from 'svelte/legacy';
+import App from './App.svelte'
+
+- const app = new App({ target: document.getElementById("app") });
++ const app = createClassComponent({ component: App, target: document.getElementById("app") });
+
+export default app;
+```
+
+If this component is not under your control, you can use the `legacy.componentApi` compiler option for auto-applied backwards compatibility (note that this adds a bit of overhead to each component).
 
 ### Server API changes
 

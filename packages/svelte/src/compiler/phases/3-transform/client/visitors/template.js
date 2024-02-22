@@ -28,13 +28,14 @@ import {
 	DOMBooleanAttributes,
 	EACH_INDEX_REACTIVE,
 	EACH_IS_CONTROLLED,
-	EACH_IS_IMMUTABLE,
+	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED
 } from '../../../../../constants.js';
 import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
+import { walk } from 'zimmerframe';
 
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
@@ -764,6 +765,8 @@ function serialize_inline_component(node, component_name, context) {
 	/** @type {import('estree').Identifier | import('estree').MemberExpression | null} */
 	let bind_this = null;
 
+	const binding_initializers = [];
+
 	/**
 	 * If this component has a slot property, it is a named slot within another component. In this case
 	 * the slot scope applies to the component itself, too, and not just its children.
@@ -843,8 +846,6 @@ function serialize_inline_component(node, component_name, context) {
 					arg = b.call('$.get', id);
 				}
 
-				if (context.state.options.dev) arg = b.call('$.readonly', arg);
-
 				push_prop(b.get(attribute.name, [b.return(arg)]));
 			} else {
 				push_prop(b.init(attribute.name, value));
@@ -853,13 +854,22 @@ function serialize_inline_component(node, component_name, context) {
 			if (attribute.name === 'this') {
 				bind_this = attribute.expression;
 			} else {
-				push_prop(
-					b.get(attribute.name, [
-						b.return(
-							/** @type {import('estree').Expression} */ (context.visit(attribute.expression))
-						)
-					])
+				const expression = /** @type {import('estree').Expression} */ (
+					context.visit(attribute.expression)
 				);
+
+				if (context.state.options.dev) {
+					binding_initializers.push(
+						b.stmt(
+							b.call(
+								b.id('$.pre_effect'),
+								b.thunk(b.call(b.id('$.add_owner'), expression, b.id(component_name)))
+							)
+						)
+					);
+				}
+
+				push_prop(b.get(attribute.name, [b.return(expression)]));
 
 				const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
 				push_prop(
@@ -969,20 +979,11 @@ function serialize_inline_component(node, component_name, context) {
 
 	if (bind_this !== null) {
 		const prev = fn;
-		const assignment = b.assignment('=', bind_this, b.id('$$value'));
-		const bind_this_id = /** @type {import('estree').Expression} */ (
-			// if expression is not an identifier, we know it can't be a signal
-			bind_this.type === 'Identifier' ? bind_this : undefined
-		);
 		fn = (node_id) =>
-			b.call(
-				'$.bind_this',
-				prev(node_id),
-				b.arrow(
-					[b.id('$$value')],
-					serialize_set_binding(assignment, context, () => context.visit(assignment))
-				),
-				bind_this_id
+			serialize_bind_this(
+				/** @type {import('estree').Identifier | import('estree').MemberExpression} */ (bind_this),
+				context,
+				prev(node_id)
 			);
 	}
 
@@ -1000,14 +1001,73 @@ function serialize_inline_component(node, component_name, context) {
 			);
 	}
 
-	/** @type {import('estree').Statement} */
-	let statement = b.stmt(fn(context.state.node));
+	const statements = [
+		...snippet_declarations,
+		...binding_initializers,
+		b.stmt(fn(context.state.node))
+	];
 
-	if (snippet_declarations.length > 0) {
-		statement = b.block([...snippet_declarations, statement]);
+	return statements.length > 1 ? b.block(statements) : statements[0];
+}
+
+/**
+ * Serializes `bind:this` for components and elements.
+ * @param {import('estree').Identifier | import('estree').MemberExpression} bind_this
+ * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('../types.js').ComponentClientTransformState>} context
+ * @param {import('estree').Expression} node
+ * @returns
+ */
+function serialize_bind_this(bind_this, context, node) {
+	let i = 0;
+	/** @type {Map<import('#compiler').Binding, [arg_idx: number, transformed: import('estree').Expression, expression: import('#compiler').Binding['expression']]>} */
+	const each_ids = new Map();
+	// Transform each reference to an each block context variable into a $$value_<i> variable
+	// by temporarily changing the `expression` of the corresponding binding.
+	// These $$value_<i> variables will be filled in by the bind_this runtime function through its last argument.
+	// Note that we only do this for each context variables, the consequence is that the value might be stale in
+	// some scenarios where the value is a member expression with changing computed parts or using a combination of multiple
+	// variables, but that was the same case in Svelte 4, too. Once legacy mode is gone completely, we can revisit this.
+	walk(
+		bind_this,
+		{},
+		{
+			Identifier(node) {
+				const binding = context.state.scope.get(node.name);
+				if (!binding || each_ids.has(binding)) return;
+
+				const associated_node = Array.from(context.state.scopes.entries()).find(
+					([_, scope]) => scope === binding?.scope
+				)?.[0];
+				if (associated_node?.type === 'EachBlock') {
+					each_ids.set(binding, [
+						i,
+						/** @type {import('estree').Expression} */ (context.visit(node)),
+						binding.expression
+					]);
+					binding.expression = b.id('$$value_' + i);
+					i++;
+				}
+			}
+		}
+	);
+
+	const bind_this_id = /** @type {import('estree').Expression} */ (context.visit(bind_this));
+	const ids = Array.from(each_ids.values()).map((id) => b.id('$$value_' + id[0]));
+	const assignment = b.assignment('=', bind_this, b.id('$$value'));
+	const update = serialize_set_binding(assignment, context, () => context.visit(assignment));
+
+	for (const [binding, [, , expression]] of each_ids) {
+		// reset expressions to what they were before
+		binding.expression = expression;
 	}
 
-	return statement;
+	/** @type {import('estree').Expression[]} */
+	const args = [node, b.arrow([b.id('$$value'), ...ids], update), b.arrow([...ids], bind_this_id)];
+	if (each_ids.size) {
+		args.push(b.thunk(b.array(Array.from(each_ids.values()).map((id) => id[1]))));
+	}
+
+	return b.call('$.bind_this', ...args);
 }
 
 /**
@@ -1123,7 +1183,7 @@ function create_block(parent, name, nodes, context) {
 			trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag');
 
 		if (use_space_template) {
-			// special case — we can use `$.space` instead of creating a unique template
+			// special case — we can use `$.space_frag` instead of creating a unique template
 			const id = b.id(context.state.scope.generate('text'));
 
 			process_children(trimmed, () => id, false, {
@@ -1131,7 +1191,7 @@ function create_block(parent, name, nodes, context) {
 				state
 			});
 
-			body.push(b.var(id, b.call('$.space', b.id('$$anchor'))), ...state.init);
+			body.push(b.var(id, b.call('$.space_frag', b.id('$$anchor'))), ...state.init);
 			close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
 		} else {
 			/** @type {(is_text: boolean) => import('estree').Expression} */
@@ -1302,6 +1362,7 @@ function serialize_event_handler(node, { state, visit }) {
 				binding !== null &&
 				(binding.kind === 'state' ||
 					binding.kind === 'frozen_state' ||
+					binding.declaration_kind === 'import' ||
 					binding.kind === 'legacy_reactive' ||
 					binding.kind === 'derived' ||
 					binding.kind === 'prop' ||
@@ -1491,7 +1552,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 
 			state.template.push(' ');
 
-			const text_id = get_node_id(expression(true), state, 'text');
+			const text_id = get_node_id(b.call('$.space', expression(true)), state, 'text');
 
 			const singular = b.stmt(
 				b.call(
@@ -2068,7 +2129,7 @@ export const template_visitors = {
 			node.fragment.nodes,
 			context.path,
 			child_metadata.namespace,
-			state.preserve_whitespace,
+			node.name === 'script' || state.preserve_whitespace,
 			state.options.preserveComments
 		);
 
@@ -2255,8 +2316,8 @@ export const template_visitors = {
 			each_type |= EACH_IS_CONTROLLED;
 		}
 
-		if (context.state.analysis.immutable) {
-			each_type |= EACH_IS_IMMUTABLE;
+		if (context.state.analysis.runes) {
+			each_type |= EACH_IS_STRICT_EQUALS;
 		}
 
 		// Find the parent each blocks which contain the arrays to invalidate
@@ -2736,15 +2797,7 @@ export const template_visitors = {
 				}
 
 				case 'this':
-					call_expr = b.call(
-						`$.bind_this`,
-						state.node,
-						setter,
-						/** @type {import('estree').Expression} */ (
-							// if expression is not an identifier, we know it can't be a signal
-							expression.type === 'Identifier' ? expression : undefined
-						)
-					);
+					call_expr = serialize_bind_this(node.expression, context, state.node);
 					break;
 				case 'textContent':
 				case 'innerHTML':

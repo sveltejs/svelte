@@ -1,5 +1,4 @@
-import { EACH_INDEX_REACTIVE } from '../../constants.js';
-import { source, untrack } from './runtime.js';
+import { untrack } from './runtime.js';
 import { is_array } from './utils.js';
 
 /** regex of all html void element names */

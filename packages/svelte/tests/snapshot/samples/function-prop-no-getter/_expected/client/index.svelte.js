@@ -23,7 +23,7 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 		onmouseenter: () => $.set(count, $.proxy(plusOne($.get(count)))),
 		children: ($$anchor, $$slotProps) => {
 			/* Init */
-			var text = $.space($$anchor);
+			var text = $.space_frag($$anchor);
 
 			/* Update */
 			$.text_effect(text, () => `clicks: ${$.stringify($.get(count))}`);

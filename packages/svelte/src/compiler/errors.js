@@ -107,7 +107,8 @@ const css = {
 	'invalid-css-global-selector-list': () =>
 		`:global(...) must not contain type or universal selectors when used in a compound selector`,
 	'invalid-css-selector': () => `Invalid selector`,
-	'invalid-css-identifier': () => 'Expected a valid CSS identifier'
+	'invalid-css-identifier': () => 'Expected a valid CSS identifier',
+	'invalid-nesting-selector': () => `Nesting selectors can only be used inside a rule`
 };
 
 /** @satisfies {Errors} */
@@ -170,11 +171,9 @@ const runes = {
 	/** @param {string} rune */
 	'invalid-rune-usage': (rune) => `Cannot use ${rune} rune in non-runes mode`,
 	'invalid-state-export': () =>
-		`Cannot export state if it is reassigned. Either export a function returning the state value or only mutate the state value's properties`,
+		`Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties`,
 	'invalid-derived-export': () =>
-		`Cannot export derived state. To expose the current derived value, export a function returning its value`,
-	'invalid-prop-export': () =>
-		`Cannot export properties. To expose the current value of a property, export a function returning its value`,
+		`Cannot export derived state from a module. To expose the current derived value, export a function returning its value`,
 	'invalid-props-id': () => `$props() can only be used with an object destructuring pattern`,
 	'invalid-props-pattern': () =>
 		`$props() assignment must not contain nested properties or computed keys`,
@@ -371,10 +370,6 @@ const errors = {
 	// 	code: 'missing-contenteditable-attribute',
 	// 	message:
 	// 		"'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings"
-	// },
-	// dynamic_contenteditable_attribute: {
-	// 	code: 'dynamic-contenteditable-attribute',
-	// 	message: "'contenteditable' attribute cannot be dynamic if element uses two-way binding"
 	// },
 	// textarea_duplicate_value: {
 	// 	code: 'textarea-duplicate-value',

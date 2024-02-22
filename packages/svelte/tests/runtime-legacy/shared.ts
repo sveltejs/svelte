@@ -258,7 +258,8 @@ async function run_test_variant(
 				target,
 				immutable: config.immutable,
 				intro: config.intro,
-				recover: false
+				recover: false,
+				hydrate: variant === 'hydrate'
 			});
 
 			// eslint-disable-next-line no-console

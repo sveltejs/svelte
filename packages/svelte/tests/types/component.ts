@@ -1,11 +1,11 @@
 import { asClassComponent, createClassComponent } from 'svelte/legacy';
 import {
-	createRoot,
 	SvelteComponent,
 	type ComponentEvents,
 	type ComponentProps,
 	type ComponentType,
-	mount
+	mount,
+	hydrate
 } from 'svelte';
 
 // --------------------------------------------------------------------------- legacy: classes
@@ -112,14 +112,14 @@ mount(NewComponent, {
 		x: ''
 	},
 	events: {
-		event: new MouseEvent('click')
+		event: (e) => e.offsetX
 	},
 	immutable: true,
 	intro: false,
 	recover: false
 });
 
-const instance = createRoot(NewComponent, {
+hydrate(NewComponent, {
 	target: null as any as Document | Element | ShadowRoot | Text | Comment,
 	props: {
 		prop: 'foo',
@@ -127,20 +127,14 @@ const instance = createRoot(NewComponent, {
 		x: ''
 	},
 	events: {
-		event: new MouseEvent('click')
+		event: (e) =>
+			// @ts-expect-error
+			e.doesNotExist
 	},
 	immutable: true,
 	intro: false,
 	recover: false
 });
-instance.$set({
-	prop: 'foo',
-	// @ts-expect-error
-	x: ''
-});
-instance.$set({});
-instance.$destroy();
-instance.anExport === 1;
 
 // --------------------------------------------------------------------------- interop
 
@@ -175,5 +169,6 @@ asLegacyComponent.$$prop_def.x = '';
 asLegacyComponent.anExport;
 const x: typeof asLegacyComponent = createClassComponent({
 	target: null as any,
+	hydrate: true,
 	component: newComponent
 });
