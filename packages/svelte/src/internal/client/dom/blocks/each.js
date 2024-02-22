@@ -552,31 +552,6 @@ function get_first_child(block) {
 }
 
 /**
- * @param {Array<import('../../types.js').EachItemBlock>} active_transitions
- * @returns {void}
- */
-function destroy_active_transition_blocks(active_transitions) {
-	var length = active_transitions.length;
-
-	if (length > 0) {
-		var i = 0;
-		var block;
-		var transition;
-
-		for (; i < length; i++) {
-			block = active_transitions[i];
-			transition = block.r;
-			if (transition !== null) {
-				block.r = null;
-				destroy_each_item_block(block, null, false);
-			}
-		}
-
-		active_transitions.length = 0;
-	}
-}
-
-/**
  * @param {import('../../types.js').Block} block
  * @returns {Text | Element | Comment}
  */
