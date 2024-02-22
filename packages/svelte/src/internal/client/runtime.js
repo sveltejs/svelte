@@ -1332,7 +1332,7 @@ export function inspect(get_value, inspect = console.log) {
 
 	pre_effect(() => {
 		const fn = () => {
-			const value = get_value().map((v) => deep_unstate(v));
+			const value = untrack(() => get_value().map((v) => deep_unstate(v)));
 			if (value.length === 2 && typeof value[1] === 'function' && !warned_inspect_changed) {
 				// eslint-disable-next-line no-console
 				console.warn(

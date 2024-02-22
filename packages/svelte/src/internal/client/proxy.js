@@ -2,12 +2,11 @@ import { DEV } from 'esm-env';
 import {
 	get,
 	set,
-	update,
 	updating_derived,
 	batch_inspect,
 	current_component_context,
-	set_ignore_mutation_validation,
-	untrack
+	untrack,
+	set_signal_value
 } from './runtime.js';
 import { effect_active } from './reactivity/computations.js';
 import {
@@ -150,6 +149,15 @@ export function unstate(value) {
 	);
 }
 
+/**
+ * @param {import('./types.js').Signal<number>} signal
+ * @param {1 | -1} [d]
+ */
+function update_version(signal, d = 1) {
+	const value = untrack(() => get(signal));
+	set_signal_value(signal, value + d);
+}
+
 /** @type {ProxyHandler<import('./types.js').ProxyStateObject<any>>} */
 const state_proxy_handler = {
 	defineProperty(target, prop, descriptor) {
@@ -185,9 +193,7 @@ const state_proxy_handler = {
 		if (s !== undefined) set(s, UNINITIALIZED);
 
 		if (boolean) {
-			set_ignore_mutation_validation(true);
-			update(metadata.v);
-			set_ignore_mutation_validation(false);
+			update_version(metadata.v);
 		}
 
 		return boolean;
@@ -308,9 +314,7 @@ const state_proxy_handler = {
 					set(ls, length);
 				}
 			}
-			set_ignore_mutation_validation(true);
-			update(metadata.v);
-			set_ignore_mutation_validation(false);
+			update_version(metadata.v);
 		}
 
 		return true;
