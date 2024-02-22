@@ -65,34 +65,54 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 					if (then_fn) {
 						if (then_effect) {
 							resume_effect(then_effect);
-						} else if (pending_fn) {
+						} else if (then_fn) {
 							set_current_effect(branch);
 							then_effect = render_effect(() => then_fn(anchor_node, value), {}, true);
 							set_current_effect(null);
 						}
 					}
 				})
-				.catch((error) => {
-					if (promise !== input) return;
+				.catch(() => {});
 
-					if (pending_effect) {
-						pause_effect(pending_effect, () => {
-							pending_effect = null;
-						});
-					}
+			promise.catch((error) => {
+				if (promise !== input) return;
 
-					if (catch_fn) {
-						if (catch_effect) {
-							resume_effect(catch_effect);
-						} else if (pending_fn) {
-							set_current_effect(branch);
-							catch_effect = render_effect(() => catch_fn(anchor_node, error), {}, true);
-							set_current_effect(null);
-						}
+				if (pending_effect) {
+					pause_effect(pending_effect, () => {
+						pending_effect = null;
+					});
+				}
+
+				if (catch_fn) {
+					if (catch_effect) {
+						resume_effect(catch_effect);
+					} else if (catch_fn) {
+						set_current_effect(branch);
+						catch_effect = render_effect(() => catch_fn(anchor_node, error), {}, true);
+						set_current_effect(null);
 					}
-				});
+				}
+			});
 		} else {
-			// TODO handle non-promises
+			if (pending_effect) {
+				pause_effect(pending_effect, () => {
+					pending_effect = null;
+				});
+			}
+
+			if (then_effect) {
+				resume_effect(then_effect);
+			} else if (then_fn) {
+				// TODO we need to pass a function in rather than a value, because
+				// this will never update
+				then_effect = render_effect(() => then_fn(anchor_node, input), {}, true);
+			}
+
+			if (catch_effect) {
+				pause_effect(catch_effect, () => {
+					catch_effect = null;
+				});
+			}
 		}
 	});
 
