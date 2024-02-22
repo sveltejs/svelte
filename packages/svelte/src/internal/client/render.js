@@ -970,11 +970,11 @@ export function bind_resize_observer(dom, type, update) {
  * @param {(size: number) => void} update
  */
 export function bind_element_size(dom, type, update) {
-	// We need to wait a few ticks to be sure that the element has been inserted and rendered
-	// The alternative would be a mutation observer on the document but that's way to expensive
-	requestAnimationFrame(() => requestAnimationFrame(() => update(dom[type])));
 	const unsub = resize_observer_border_box.observe(dom, () => update(dom[type]));
-	render_effect(() => unsub);
+	effect(() => {
+		untrack(() => update(dom[type]));
+		return unsub;
+	});
 }
 
 /**
