@@ -312,6 +312,8 @@ function pause_children(effect, transitions) {
  * @param {import('../types.js').ComputationSignal} effect
  */
 export function destroy_effect(effect) {
+	// TODO call cleanup functions (but not sure when exactly?)
+
 	// TODO distinguish between 'block effects' (?) which own their own DOM
 	// and other render effects
 	if (effect.dom) {
