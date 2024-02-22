@@ -1013,6 +1013,7 @@ export function set_signal_value(signal, value) {
  * @returns {void}
  */
 export function destroy_signal(signal) {
+	return;
 	const teardown = /** @type {null | (() => void)} */ (signal.v);
 	const destroy = signal.y;
 	const flags = signal.f;

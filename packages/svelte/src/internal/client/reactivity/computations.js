@@ -4,7 +4,6 @@ import {
 	current_component_context,
 	current_consumer,
 	current_effect,
-	destroy_signal,
 	flush_local_render_effects,
 	schedule_effect
 } from '../runtime.js';
@@ -21,9 +20,9 @@ import {
 	CLEAN,
 	UNINITIALIZED,
 	INERT,
-	ROOT_EFFECT
+	ROOT_EFFECT,
+	DESTROYED
 } from '../constants.js';
-import { noop } from '../../common.js';
 
 /**
  * @template V
@@ -84,9 +83,7 @@ function internal_create_effect(type, fn, sync, block, schedule) {
 	signal.x = current_component_context;
 	if (current_effect !== null) {
 		signal.l = current_effect.l + 1;
-		if ((signal.f & ROOT_EFFECT) === 0) {
-			push_reference(current_effect, signal);
-		}
+		push_reference(current_effect, signal);
 	}
 	if (schedule) {
 		schedule_effect(signal, sync);
@@ -145,7 +142,7 @@ export function user_effect(fn) {
 export function user_root_effect(fn) {
 	const effect = internal_create_effect(RENDER_EFFECT | ROOT_EFFECT, fn, true, current_block, true);
 	return () => {
-		destroy_signal(effect);
+		destroy_effect(effect);
 	};
 }
 
@@ -309,10 +306,15 @@ function pause_children(effect, transitions) {
 }
 
 /**
- * @param {import('../types.js').BlockEffect} effect
+ * @param {import('../types.js').BlockEffect} effect TODO this isn't just block effects, it's deriveds etc too
  */
 export function destroy_effect(effect) {
-	// TODO call cleanup functions (but not sure when exactly?)
+	if ((effect.f & DESTROYED) !== 0) return;
+	effect.f |= DESTROYED;
+
+	if ((effect.f & DERIVED) === 0 && typeof effect.v === 'function') {
+		effect.v();
+	}
 
 	// TODO detach from parent effect
 
