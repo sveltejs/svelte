@@ -277,14 +277,13 @@ export default class InlineComponentWrapper extends Wrapper {
 						// statements will become switch_props function body
 						// rewrite last statement, add props update logic
 						statements[statements.length - 1] = b`
+							for (let #i = 0; #i < ${levels}.length; #i += 1) {
+								${props} = @assign(${props}, ${levels}[#i]);
+							}
 							if (#dirty !== undefined && ${condition}) {
-								${props} = @get_spread_update(${levels}, [
+								${props} = @assign(${props}, @get_spread_update(${levels}, [
 									${changes}
-								]);
-							} else {
-								for (let #i = 0; #i < ${levels}.length; #i += 1) {
-									${props} = @assign(${props}, ${levels}[#i]);
-								}
+								]));
 							}
 						`;
 					}
