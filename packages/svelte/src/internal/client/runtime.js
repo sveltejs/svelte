@@ -976,7 +976,8 @@ export function set_signal_value(signal, value) {
 			!ignore_mutation_validation &&
 			current_effect !== null &&
 			current_effect.c === null &&
-			(current_effect.f & CLEAN) !== 0
+			(current_effect.f & CLEAN) !== 0 &&
+			(current_effect.f & MANAGED) === 0
 		) {
 			if (current_dependencies !== null && current_dependencies.includes(signal)) {
 				set_signal_status(current_effect, DIRTY);
