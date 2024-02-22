@@ -119,9 +119,10 @@ export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fa
 export function each_indexed(anchor_node, collection, flags, render_fn, fallback_fn) {
 	const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
+	hydrate_block_anchor(anchor_node, is_controlled);
+
 	if (is_controlled) {
 		if (hydrating) {
-			hydrate_block_anchor(anchor_node, is_controlled);
 			anchor_node = /** @type {Comment} */ (anchor_node.firstChild);
 		} else {
 			anchor_node.appendChild((anchor_node = empty()));
@@ -157,14 +158,30 @@ export function each_indexed(anchor_node, collection, flags, render_fn, fallback
 
 		let nl = new_items ? new_items.length : 0;
 
+		let hydrating_node = hydrating ? current_hydration_fragment[0] : null;
+
 		for (let i = length; i < nl; i += 1) {
 			if (effects[i]) {
 				resume_effect(effects[i]);
 			} else {
+				if (hydrating && !mismatch) {
+					let fragment = get_hydration_fragment(hydrating_node);
+					set_current_hydration_fragment(fragment);
+
+					if (!fragment) {
+						// If fragment is null, then that means that the server rendered less items than what
+						// the client code specifies -> break out and continue with client-side node creation
+						mismatch = true;
+						break;
+					}
+
+					hydrating_node = fragment.at(-1).nextSibling?.nextSibling;
+				}
+
 				effects[i] = render_effect(
 					() =>
 						render_fn(
-							anchor_node,
+							hydrating ? null : anchor_node,
 							() => {
 								return collection()[i];
 							},
