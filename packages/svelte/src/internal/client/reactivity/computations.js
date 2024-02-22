@@ -291,7 +291,7 @@ export function pause_effect(effect, done) {
 }
 
 /**
- * @param {import('../types.js').ComputationSignal} effect
+ * @param {import('../types.js').BlockEffect} effect
  * @param {import('../types.js').TransitionObject[]} transitions
  */
 function pause_children(effect, transitions) {
@@ -309,7 +309,7 @@ function pause_children(effect, transitions) {
 }
 
 /**
- * @param {import('../types.js').ComputationSignal} effect
+ * @param {import('../types.js').BlockEffect} effect
  */
 export function destroy_effect(effect) {
 	// TODO call cleanup functions (but not sure when exactly?)
@@ -328,7 +328,7 @@ export function destroy_effect(effect) {
 }
 
 /**
- * @param {import('../types.js').ComputationSignal} effect
+ * @param {import('../types.js').BlockEffect} effect
  */
 export function resume_effect(effect) {
 	if (effect.r) {
@@ -339,7 +339,9 @@ export function resume_effect(effect) {
 
 	effect.f ^= INERT;
 
-	for (const transition of effect.in) {
-		transition.to(1);
+	if (effect.in) {
+		for (const transition of effect.in) {
+			transition.to(1);
+		}
 	}
 }

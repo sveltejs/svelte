@@ -121,6 +121,12 @@ export type ComputationSignal<V = unknown> = {
 	w: number;
 };
 
+export type BlockEffect<V = unknown> = ComputationSignal<V> & {
+	in?: TransitionObject[];
+	out?: TransitionObject[];
+	dom?: TemplateNode | Array<TemplateNode>;
+};
+
 export type Signal<V = unknown> = SourceSignal<V> | ComputationSignal<V>;
 
 export type SignalDebug<V = unknown> = SourceSignalDebug & Signal<V>;

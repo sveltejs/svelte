@@ -34,7 +34,11 @@ class Animation {
 	#keyframes;
 	#duration;
 	#target;
+
+	/** @type {() => void} */
 	#finished;
+
+	/** @type {() => void} */
 	#cancelled;
 
 	/**
@@ -48,12 +52,17 @@ class Animation {
 		this.#duration = options.duration || 0;
 		this.currentTime = 0;
 
+		this.#finished = () => {};
+		this.#cancelled = () => {};
+
 		// Promise-like semantics, but call callbacks immediately on raf.tick
 		this.finished = {
+			/** @param {() => void} callback */
 			then: (callback) => {
 				this.#finished = callback;
 
 				return {
+					/** @param {() => void} callback */
 					catch: (callback) => {
 						this.#cancelled = callback;
 					}

@@ -354,7 +354,7 @@ export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fa
  * @param {Element | Comment} anchor_node
  * @param {() => V[]} collection
  * @param {number} flags
- * @param {(anchor: Element | Comment | null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
+ * @param {(anchor: Element | Comment | null, item: V | (() => V), index: import('../../types.js').MaybeSignal<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */

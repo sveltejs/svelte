@@ -268,7 +268,8 @@ export function comment(anchor) {
  */
 function close_template(dom, is_fragment, anchor) {
 	const block = /** @type {import('./types.js').Block} */ (current_block);
-	const effect = current_effect;
+
+	const effect = /** @type {import('./types.js').BlockEffect} */ (current_effect);
 
 	/** @type {import('./types.js').TemplateNode | Array<import('./types.js').TemplateNode>} */
 	const current = is_fragment
@@ -1632,16 +1633,17 @@ export function element(anchor_node, tag_fn, is_svg, render_fn) {
 }
 
 /**
- * @template P
+ * @template {Record<string, any>} P
+ * @template {(node: Node, props: P) => void} C
  * @param {Comment} anchor_node
- * @param {() => (props: P) => void} component_fn
- * @param {(component: (props: P) => void) => void} render_fn
+ * @param {() => C} component_fn
+ * @param {(component: C) => void} render_fn
  * @returns {void}
  */
 export function component(anchor_node, component_fn, render_fn) {
 	hydrate_block_anchor(anchor_node);
 
-	/** @type {TODO} */
+	/** @type {C | null} */
 	let Component = null;
 
 	/** @type {import('./types.js').ComputationSignal | null} */
@@ -1658,7 +1660,7 @@ export function component(anchor_node, component_fn, render_fn) {
 		}
 
 		if (Component) {
-			effect = render_effect(() => render_fn(Component), {}, true);
+			effect = render_effect(() => render_fn(/** @type {C} */ (Component)), {}, true);
 		}
 	});
 }
@@ -1769,7 +1771,7 @@ export function transition(dom, get_transition_fn, props, global = false) {
  * @returns {void}
  */
 export function animate(dom, get_transition_fn, props) {
-	bind_transition(dom, get_transition_fn, props, 'key', false);
+	throw new Error('TODO animate');
 }
 
 /**

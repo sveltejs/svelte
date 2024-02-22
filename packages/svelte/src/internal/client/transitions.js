@@ -509,7 +509,7 @@ function is_transition_block(block) {
  * @returns {void}
  */
 export function bind_transition(element, get_fn, get_params, direction, global) {
-	const effect = /** @type {import('./types.js').EffectSignal} */ (current_effect);
+	const effect = /** @type {import('./types.js').BlockEffect} */ (current_effect);
 
 	let p = direction === 'out' ? 1 : 0;
 
