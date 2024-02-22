@@ -1018,6 +1018,12 @@ export function selected(dom) {
  */
 export function bind_value(dom, get_value, update) {
 	dom.addEventListener('input', () => {
+		if (DEV && dom.type === 'checkbox') {
+			throw new Error(
+				'Using bind:value together with a checkbox input is not allowed. Use bind:checked instead'
+			);
+		}
+
 		/** @type {any} */
 		let value = dom.value;
 		if (is_numberlike_input(dom)) {
@@ -1027,6 +1033,12 @@ export function bind_value(dom, get_value, update) {
 	});
 
 	render_effect(() => {
+		if (DEV && dom.type === 'checkbox') {
+			throw new Error(
+				'Using bind:value together with a checkbox input is not allowed. Use bind:checked instead'
+			);
+		}
+
 		const value = get_value();
 		// @ts-ignore
 		dom.__value = value;
