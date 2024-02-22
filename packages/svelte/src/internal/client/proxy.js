@@ -6,7 +6,8 @@ import {
 	updating_derived,
 	batch_inspect,
 	current_component_context,
-	set_ignore_mutation_validation
+	set_ignore_mutation_validation,
+	untrack
 } from './runtime.js';
 import { effect_active } from './reactivity/computations.js';
 import {
@@ -261,10 +262,21 @@ const state_proxy_handler = {
 		return has;
 	},
 
-	set(target, prop, value) {
+	set(target, prop, value, receiver) {
 		const metadata = target[STATE_SYMBOL];
-		const s = metadata.s.get(prop);
-		if (s !== undefined) set(s, proxy(value, metadata.i, metadata.o));
+		let s = metadata.s.get(prop);
+		// If we haven't yet created a source for this property, we need to ensure
+		// we do so otherwise if we read it later, then the write won't be tracked and
+		// the heuristics of effects will be different vs if we had read the proxied
+		// object property before writing to that property.
+		if (s === undefined && effect_active()) {
+			// the read creates a signal
+			untrack(() => receiver[prop]);
+			s = metadata.s.get(prop);
+		}
+		if (s !== undefined) {
+			set(s, proxy(value, metadata.i, metadata.o));
+		}
 		const is_array = metadata.a;
 		const not_has = !(prop in target);
 
