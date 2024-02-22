@@ -1,6 +1,8 @@
 export default {
 	html: `
 		<p>value(1) = 1</p>
+		<p>foo=bar</p>
+		<p>typeof cb=function</p>
 		<button>Toggle Component</button>
 	`,
 
@@ -11,6 +13,8 @@ export default {
 			target.innerHTML,
 			`
 				<p>value(2) = 2</p>
+				<p>foo=bar</p>
+				<p>typeof cb=function</p>
 				<button>Toggle Component</button>
 			`
 		);
@@ -19,6 +23,8 @@ export default {
 			target.innerHTML,
 			`
 				<p>value(1) = 1</p>
+				<p>foo=bar</p>
+				<p>typeof cb=function</p>
 				<button>Toggle Component</button>
 			`
 		);
