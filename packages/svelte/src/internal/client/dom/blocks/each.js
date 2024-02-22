@@ -346,7 +346,7 @@ export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fa
 		}
 
 		a_blocks = b_blocks;
-	});
+	}).f |= BRANCH_EFFECT; // TODO create a primitive for this;
 }
 
 /**
