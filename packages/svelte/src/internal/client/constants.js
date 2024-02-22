@@ -11,6 +11,7 @@ export const MAYBE_DIRTY = 1 << 10;
 export const INERT = 1 << 11;
 export const DESTROYED = 1 << 12;
 export const ROOT_EFFECT = 1 << 13;
+export const BRANCH_EFFECT = 1 << 14;
 
 export const ROOT_BLOCK = 0;
 export const IF_BLOCK = 1;

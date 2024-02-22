@@ -27,7 +27,8 @@ import {
 	INERT,
 	MANAGED,
 	SOURCE,
-	STATE_SYMBOL
+	STATE_SYMBOL,
+	BRANCH_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 
@@ -404,7 +405,12 @@ export function execute_effect(signal) {
 	current_effect = signal;
 
 	try {
-		destroy_references(signal);
+		if ((signal.f & BRANCH_EFFECT) === 0) {
+			// branch effects (i.e. {#if ...} blocks) need to keep their references
+			// TODO their children should detach themselves from signal.r when destroyed
+			destroy_references(signal);
+		}
+
 		if (teardown !== null) {
 			teardown();
 		}

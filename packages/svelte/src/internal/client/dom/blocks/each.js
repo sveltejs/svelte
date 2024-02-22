@@ -33,7 +33,7 @@ import {
 import { source, mutable_source } from '../../reactivity/sources.js';
 import { trigger_transitions } from '../../transitions.js';
 import { is_array } from '../../utils.js';
-import { EACH_BLOCK, EACH_ITEM_BLOCK } from '../../constants.js';
+import { BRANCH_EFFECT, EACH_BLOCK, EACH_ITEM_BLOCK } from '../../constants.js';
 import { unstate } from '../../proxy.js';
 
 const NEW_BLOCK = -1;
@@ -462,7 +462,7 @@ export function each_indexed(anchor_node, collection, flags, render_fn, fallback
 		}
 
 		length = nl;
-	});
+	}).f |= BRANCH_EFFECT; // TODO create a primitive for this
 }
 
 /**
