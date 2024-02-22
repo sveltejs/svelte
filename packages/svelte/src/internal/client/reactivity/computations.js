@@ -266,6 +266,7 @@ export function derived_safe_equal(fn) {
  * @param {() => void} done
  */
 export function pause_effect(effect, done) {
+	/** @type {import('../types.js').TransitionObject[]} */
 	const transitions = [];
 
 	pause_children(effect, transitions);
@@ -291,7 +292,7 @@ export function pause_effect(effect, done) {
 
 /**
  * @param {import('../types.js').ComputationSignal} effect
- * @param {TODO[]} transitions
+ * @param {import('../types.js').TransitionObject[]} transitions
  */
 function pause_children(effect, transitions) {
 	effect.f |= INERT;

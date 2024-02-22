@@ -516,16 +516,19 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 	/** @type {Animation | null} */
 	let current_animation;
 
-	/** @type {TODO} */
+	/** @type {import('./types.js').TransitionPayload | null} */
 	let current_options;
 
 	let current_delta = 0;
 
+	/** @type {import('./types.js').TransitionObject} */
 	const transition = {
 		global,
 		to(target, callback) {
 			if (current_animation && current_options) {
-				p = current_delta * (current_animation.currentTime / current_options.duration);
+				const time = /** @type {number} */ (current_animation.currentTime);
+				const duration = /** @type {number} */ (current_options.duration);
+				p = (current_delta * time) / duration;
 				current_animation.cancel();
 			}
 
@@ -545,7 +548,7 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 				current_delta = target - p;
 
 				for (let i = 0; i <= n; i += 1) {
-					const t = current_options.easing(p + (current_delta * i) / n);
+					const t = (current_options.easing ?? linear)(p + (current_delta * i) / n);
 					const css = current_options.css(t, 1 - t);
 					keyframes.push(css_to_keyframe(css));
 				}

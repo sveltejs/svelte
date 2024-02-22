@@ -421,3 +421,10 @@ export interface ProxyMetadata<T = Record<string | symbol, any>> {
 export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
 	[STATE_SYMBOL]: ProxyMetadata;
 };
+
+// TODO remove the other transition types once we're
+// happy we don't need them, and rename this
+export interface TransitionObject {
+	global: boolean;
+	to(target: number, callback?: () => void): void;
+}
