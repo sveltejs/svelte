@@ -5,7 +5,8 @@ import {
 	update,
 	updating_derived,
 	batch_inspect,
-	current_component_context
+	current_component_context,
+	set_ignore_mutation_validation
 } from './runtime.js';
 import { effect_active } from './reactivity/computations.js';
 import {
@@ -182,7 +183,11 @@ const state_proxy_handler = {
 		}
 		if (s !== undefined) set(s, UNINITIALIZED);
 
-		if (boolean) update(metadata.v);
+		if (boolean) {
+			set_ignore_mutation_validation(true);
+			update(metadata.v);
+			set_ignore_mutation_validation(false);
+		}
 
 		return boolean;
 	},
@@ -291,8 +296,9 @@ const state_proxy_handler = {
 					set(ls, length);
 				}
 			}
-
+			set_ignore_mutation_validation(true);
 			update(metadata.v);
+			set_ignore_mutation_validation(false);
 		}
 
 		return true;
