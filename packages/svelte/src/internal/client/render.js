@@ -1402,12 +1402,13 @@ function handle_event_propagation(handler_element, event) {
 	const handled_at = event.__root;
 	if (handled_at) {
 		const at_idx = path.indexOf(handled_at);
-		if (at_idx !== -1 && handler_element === document) {
-			// This is the fallback document listener but the event was already handled
-			// -> ignore, but set handle_at to document so that we're resetting the event
+		// @ts-ignore
+		if (at_idx !== -1 && (handler_element === document || handler_element === window)) {
+			// This is the fallback document/window listener but the event was already handled
+			// -> ignore, but set handle_at to document/window so that we're resetting the event
 			// chain in case someone manually dispatches the same event object again.
 			// @ts-expect-error
-			event.__root = document;
+			event.__root = handler_element;
 			return;
 		}
 		// We're deliberately not skipping if the index is higher, because
