@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.65
+
+### Patch Changes
+
+- fix: improve $inspect handling of derived objects ([#10584](https://github.com/sveltejs/svelte/pull/10584))
+
+- fix: permit whitespace within template scripts ([#10591](https://github.com/sveltejs/svelte/pull/10591))
+
+- fix: allow boolean `contenteditable` attribute ([#10590](https://github.com/sveltejs/svelte/pull/10590))
+
+- fix: improve import event handler support ([#10592](https://github.com/sveltejs/svelte/pull/10592))
+
 ## 5.0.0-next.64
 
 ### Patch Changes

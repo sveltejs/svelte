@@ -30,7 +30,6 @@ import {
 } from './reconciler.js';
 import {
 	destroy_signal,
-	is_signal,
 	push_destroy_fn,
 	execute_effect,
 	untrack,
@@ -76,7 +75,6 @@ import { run } from '../common.js';
 import { bind_transition, trigger_transitions } from './transitions.js';
 import { mutable_source, source } from './reactivity/sources.js';
 import { safe_equal, safe_not_equal } from './reactivity/equality.js';
-import { STATE_SYMBOL } from './constants.js';
 
 /** @type {Set<string>} */
 const all_registerd_events = new Set();
@@ -973,11 +971,11 @@ export function bind_resize_observer(dom, type, update) {
  * @param {(size: number) => void} update
  */
 export function bind_element_size(dom, type, update) {
-	// We need to wait a few ticks to be sure that the element has been inserted and rendered
-	// The alternative would be a mutation observer on the document but that's way to expensive
-	requestAnimationFrame(() => requestAnimationFrame(() => update(dom[type])));
 	const unsub = resize_observer_border_box.observe(dom, () => update(dom[type]));
-	render_effect(() => unsub);
+	effect(() => {
+		untrack(() => update(dom[type]));
+		return unsub;
+	});
 }
 
 /**
@@ -1323,38 +1321,47 @@ export function bind_prop(props, prop, value) {
 }
 
 /**
- * @param {unknown} value
- */
-function is_state_object(value) {
-	return value != null && typeof value === 'object' && STATE_SYMBOL in value;
-}
-
-/**
  * @param {Element} element_or_component
- * @param {(value: unknown) => void} update
- * @param {import('./types.js').MaybeSignal} binding
+ * @param {(value: unknown, ...parts: unknown[]) => void} update
+ * @param {(...parts: unknown[]) => unknown} get_value
+ * @param {() => unknown[]} [get_parts] Set if the this binding is used inside an each block,
+ * 										returns all the parts of the each block context that are used in the expression
  * @returns {void}
  */
-export function bind_this(element_or_component, update, binding) {
-	render_effect(() => {
-		// If we are reading from a proxied state binding, then we don't need to untrack
-		// the update function as it will be fine-grain.
-		if (is_state_object(binding) || (is_signal(binding) && is_state_object(binding.v))) {
-			update(element_or_component);
-		} else {
-			untrack(() => update(element_or_component));
-		}
-		return () => {
-			// Defer to the next tick so that all updates can be reconciled first.
-			// This solves the case where one variable is shared across multiple this-bindings.
-			render_effect(() => {
-				untrack(() => {
-					if (!is_signal(binding) || binding.v === element_or_component) {
-						update(null);
-					}
-				});
-			});
-		};
+export function bind_this(element_or_component, update, get_value, get_parts) {
+	/** @type {unknown[]} */
+	let old_parts;
+	/** @type {unknown[]} */
+	let parts;
+
+	const e = effect(() => {
+		old_parts = parts;
+		// We only track changes to the parts, not the value itself to avoid unnecessary reruns.
+		parts = get_parts?.() || [];
+
+		untrack(() => {
+			if (element_or_component !== get_value(...parts)) {
+				update(element_or_component, ...parts);
+				// If this is an effect rerun (cause: each block context changes), then nullfiy the binding at
+				// the previous position if it isn't already taken over by a different effect.
+				if (old_parts && get_value(...old_parts) === element_or_component) {
+					update(null, ...old_parts);
+				}
+			}
+		});
+	});
+
+	// Add effect teardown (likely causes: if block became false, each item removed, component unmounted).
+	// In these cases we need to nullify the binding only if we detect that the value is still the same.
+	// If not, that means that another effect has now taken over the binding.
+	push_destroy_fn(e, () => {
+		// Defer to the next tick so that all updates can be reconciled first.
+		// This solves the case where one variable is shared across multiple this-bindings.
+		effect(() => {
+			if (get_value(...parts) === element_or_component) {
+				update(null, ...parts);
+			}
+		});
 	});
 }
 
