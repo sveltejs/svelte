@@ -1793,7 +1793,8 @@ export const template_visitors = {
 				b.const(
 					declaration.id,
 					b.call(
-						'$.derived',
+						// In runes mode, we want things to be fine-grained - but not in legacy mode
+						state.options.runes ? '$.derived' : '$.derived_safe_equal',
 						b.thunk(/** @type {import('estree').Expression} */ (visit(declaration.init)))
 					)
 				)
@@ -1822,7 +1823,10 @@ export const template_visitors = {
 				])
 			);
 
-			state.init.push(b.const(tmp, b.call('$.derived', fn)));
+			state.init.push(
+				// In runes mode, we want things to be fine-grained - but not in legacy mode
+				b.const(tmp, b.call(state.options.runes ? '$.derived' : '$.derived_safe_equal', fn))
+			);
 
 			for (const node of identifiers) {
 				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(node.name));
