@@ -1,3 +1,4 @@
+import { tick } from 'svelte';
 import { test } from '../../test';
 import { create_deferred } from '../../../helpers.js';
 
@@ -22,7 +23,8 @@ export default test({
 		deferred.resolve(42);
 
 		return deferred.promise
-			.then(() => {
+			.then(async () => {
+				await tick();
 				assert.htmlEqual(target.innerHTML, '<button>click me</button>');
 
 				const { button } = component;

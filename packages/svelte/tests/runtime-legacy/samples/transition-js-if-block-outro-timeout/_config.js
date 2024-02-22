@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -15,7 +16,8 @@ export default test({
 		assert.equal(window.getComputedStyle(div).opacity, '0');
 
 		raf.tick(600);
-		assert.equal(component.div, undefined);
 		assert.equal(target.querySelector('div'), undefined);
+		flushSync();
+		assert.equal(component.div, undefined);
 	}
 });
