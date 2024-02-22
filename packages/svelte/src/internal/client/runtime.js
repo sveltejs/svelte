@@ -744,6 +744,7 @@ export function get(signal) {
 			current_untracked_writes !== null &&
 			current_effect !== null &&
 			(current_effect.f & CLEAN) !== 0 &&
+			(current_effect.f & MANAGED) === 0 &&
 			current_untracked_writes.includes(signal)
 		) {
 			set_signal_status(current_effect, DIRTY);

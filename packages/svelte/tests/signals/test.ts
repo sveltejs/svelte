@@ -8,6 +8,7 @@ import {
 } from '../../src/internal/client/reactivity/computations';
 import { source } from '../../src/internal/client/reactivity/sources';
 import type { ComputationSignal } from '../../src/internal/client/types';
+import { proxy } from '../../src/internal/client/proxy';
 
 /**
  * @param runes runes mode
@@ -320,6 +321,27 @@ describe('signals', () => {
 		user_effect(() => {
 			$.set(value, { count: 0 });
 			$.get(value);
+		});
+
+		return () => {
+			let errored = false;
+			try {
+				$.flushSync();
+			} catch (e: any) {
+				assert.include(e.message, 'ERR_SVELTE_TOO_MANY_UPDATES');
+				errored = true;
+			}
+			assert.equal(errored, true);
+		};
+	});
+
+	test('schedules rerun when writing to signal before reading it', (runes) => {
+		if (!runes) return () => {};
+
+		const value = proxy({ arr: [] });
+		user_effect(() => {
+			value.arr = [];
+			value.arr;
 		});
 
 		return () => {
