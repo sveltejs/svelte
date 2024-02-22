@@ -24,7 +24,12 @@ import {
 	push_destroy_fn,
 	set_signal_value
 } from '../../runtime.js';
-import { pause_effect, render_effect, resume_effect } from '../../reactivity/computations.js';
+import {
+	destroy_effect,
+	pause_effect,
+	render_effect,
+	resume_effect
+} from '../../reactivity/computations.js';
 import { source, mutable_source } from '../../reactivity/sources.js';
 import { trigger_transitions } from '../../transitions.js';
 import { is_array } from '../../utils.js';
@@ -94,17 +99,253 @@ export function create_each_item_block(item, index, key) {
 }
 
 /**
+ * Reconcile arrays by the equality of the elements in the array. This algorithm
+ * is based on Ivi's reconcilation logic:
+ * https://github.com/localvoid/ivi/blob/9f1bd0918f487da5b131941228604763c5d8ef56/packages/ivi/src/client/core.ts#L968
  * @template V
  * @param {Element | Comment} anchor_node
  * @param {() => V[]} collection
  * @param {number} flags
- * @param {null | ((item: V) => string)} key_fn
+ * @param { ((item: V) => string)} key_fn
  * @param {(anchor: null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
 export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fallback_fn) {
-	throw new Error('TODO each_keyed');
+	const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
+
+	hydrate_block_anchor(anchor_node, is_controlled);
+
+	if (is_controlled) {
+		if (hydrating) {
+			anchor_node = /** @type {Comment} */ (anchor_node.firstChild);
+		} else {
+			anchor_node.appendChild((anchor_node = empty()));
+		}
+	}
+
+	/** @type {import('../../types.js').EachItemBlock[]} */
+	var a_blocks = [];
+
+	render_effect(() => {
+		/** @type {V[]} */
+		const maybe_array = collection();
+		var array = is_array(maybe_array)
+			? maybe_array
+			: maybe_array == null
+				? []
+				: Array.from(maybe_array);
+
+		const is_computed_key = true;
+
+		/** @type {number | void} */
+		var a = a_blocks.length;
+
+		/** @type {number} */
+		var b = array.length;
+
+		/** @type {Array<import('../../types.js').EachItemBlock>} */
+		var b_blocks;
+
+		var a_end = a - 1;
+		var b_end = b - 1;
+		var key;
+		var item;
+		var idx;
+
+		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
+		let mismatch = false;
+
+		b_blocks = Array(b);
+
+		var keys = array.map(key_fn);
+		var block;
+
+		if (hydrating) {
+			// Hydrate block
+			var fragment;
+			var hydration_list = /** @type {import('../../types.js').TemplateNode[]} */ (
+				current_hydration_fragment
+			);
+			var hydrating_node = hydration_list[0];
+			while (b > 0) {
+				fragment = get_hydration_fragment(hydrating_node);
+				set_current_hydration_fragment(fragment);
+				if (!fragment) {
+					// If fragment is null, then that means that the server rendered less items than what
+					// the client code specifies -> break out and continue with client-side node creation
+					mismatch = true;
+					break;
+				}
+
+				idx = b_end - --b;
+				item = array[idx];
+				key = is_computed_key ? keys[idx] : item;
+				block = each_item_block(item, key, idx, render_fn, flags);
+				b_blocks[idx] = block;
+
+				// Get the <!--ssr:..--> tag of the next item in the list
+				// The fragment array can be empty if each block has no content
+				hydrating_node = /** @type {import('../../types.js').TemplateNode} */ (
+					/** @type {Node} */ ((fragment.at(-1) || hydrating_node).nextSibling).nextSibling
+				);
+			}
+
+			remove_excess_hydration_nodes(hydration_list, hydrating_node);
+		}
+
+		if (a === 0) {
+			// Create new blocks
+			while (b > 0) {
+				idx = b_end - --b;
+				item = array[idx];
+				key = is_computed_key ? keys[idx] : item;
+				block = each_item_block(item, key, idx, render_fn, flags);
+				b_blocks[idx] = block;
+				insert_each_item_block(block, anchor_node, is_controlled, null);
+			}
+		} else {
+			var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
+			var should_update_block =
+				(flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0 || is_animated;
+			var start = 0;
+
+			/** @type {null | Text | Element | Comment} */
+			var sibling = null;
+			item = array[b_end];
+			key = is_computed_key ? keys[b_end] : item;
+
+			// Step 1
+			outer: while (true) {
+				// From the end
+				while (a_blocks[a_end].k === key) {
+					block = a_blocks[a_end--];
+					item = array[b_end];
+					if (should_update_block) {
+						update_each_item_block(block, item, b_end, flags);
+					}
+					sibling = get_first_child(block);
+					b_blocks[b_end] = block;
+					if (start > --b_end || start > a_end) {
+						break outer;
+					}
+					key = is_computed_key ? keys[b_end] : item;
+				}
+				item = array[start];
+				key = is_computed_key ? keys[start] : item;
+				// At the start
+				while (start <= a_end && start <= b_end && a_blocks[start].k === key) {
+					item = array[start];
+					block = a_blocks[start];
+					if (should_update_block) {
+						update_each_item_block(block, item, start, flags);
+					}
+					b_blocks[start] = block;
+					++start;
+					key = is_computed_key ? keys[start] : array[start];
+				}
+				break;
+			}
+
+			// Step 2
+			if (start > a_end) {
+				while (b_end >= start) {
+					item = array[b_end];
+					key = is_computed_key ? keys[b_end] : item;
+					block = each_item_block(item, key, b_end, render_fn, flags);
+					b_blocks[b_end--] = block;
+					sibling = insert_each_item_block(block, anchor_node, is_controlled, sibling);
+				}
+			} else if (start > b_end) {
+				b = start;
+				do {
+					if ((block = a_blocks[b++]) !== null) {
+						// destroy_each_item_block(block, [], false);
+						destroy_effect(block.e);
+					}
+				} while (b <= a_end);
+			} else {
+				// Step 3
+				var pos = 0;
+				var b_length = b_end - start + 1;
+				var sources = new Int32Array(b_length);
+				var item_index = new Map();
+				for (b = 0; b < b_length; ++b) {
+					a = b + start;
+					sources[b] = NEW_BLOCK;
+					item = array[a];
+					key = is_computed_key ? keys[a] : item;
+					map_set(item_index, key, a);
+				}
+
+				// If keys are animated, we need to do updates before actual moves
+				if (is_animated) {
+					for (b = start; b <= a_end; ++b) {
+						a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
+						if (a !== undefined) {
+							item = array[a];
+							block = a_blocks[b];
+							update_each_item_block(block, item, a, flags);
+						}
+					}
+				}
+
+				for (b = start; b <= a_end; ++b) {
+					a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
+					block = a_blocks[b];
+					if (a !== undefined) {
+						pos = pos < a ? a : MOVED_BLOCK;
+						sources[a - start] = b;
+						b_blocks[a] = block;
+					} else if (block !== null) {
+						// destroy_each_item_block(block, [], false);
+						destroy_effect(block.e);
+					}
+				}
+
+				// Step 4
+				if (pos === MOVED_BLOCK) {
+					mark_lis(sources);
+				}
+
+				var last_block;
+				var last_sibling;
+				var should_create;
+
+				while (b_length-- > 0) {
+					b_end = b_length + start;
+					a = sources[b_length];
+					should_create = a === -1;
+					item = array[b_end];
+
+					if (should_create) {
+						key = is_computed_key ? keys[b_end] : item;
+						block = each_item_block(item, key, b_end, render_fn, flags);
+					} else {
+						block = b_blocks[b_end];
+						if (!is_animated && should_update_block) {
+							update_each_item_block(block, item, b_end, flags);
+						}
+					}
+
+					if (should_create || (pos === MOVED_BLOCK && a !== LIS_BLOCK)) {
+						last_sibling = last_block === undefined ? sibling : get_first_child(last_block);
+						sibling = insert_each_item_block(block, anchor_node, is_controlled, last_sibling);
+					}
+
+					b_blocks[b_end] = block;
+					last_block = block;
+				}
+			}
+
+			if (mismatch) {
+				// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
+				set_current_hydration_fragment([]);
+			}
+		}
+
+		a_blocks = b_blocks;
+	});
 }
 
 /**
@@ -217,243 +458,6 @@ export function each_indexed(anchor_node, collection, flags, render_fn, fallback
 
 		length = nl;
 	});
-}
-
-/**
- * Reconcile arrays by the equality of the elements in the array. This algorithm
- * is based on Ivi's reconcilation logic:
- * https://github.com/localvoid/ivi/blob/9f1bd0918f487da5b131941228604763c5d8ef56/packages/ivi/src/client/core.ts#L968
- * @template V
- * @param {Array<V>} array
- * @param {import('../../types.js').EachBlock} each_block
- * @param {Element | Comment | Text} dom
- * @param {boolean} is_controlled
- * @param {(anchor: null, item: V, index: number | import('../../types.js').Signal<number>) => void} render_fn
- * @param {number} flags
- * @param {boolean} apply_transitions
- * @param {Array<string> | null} keys
- * @returns {void}
- */
-function reconcile_tracked_array(
-	array,
-	each_block,
-	dom,
-	is_controlled,
-	render_fn,
-	flags,
-	apply_transitions,
-	keys
-) {
-	var a_blocks = each_block.v;
-	const is_computed_key = keys !== null;
-	var active_transitions = each_block.s;
-
-	/** @type {number | void} */
-	var a = a_blocks.length;
-
-	/** @type {number} */
-	var b = array.length;
-
-	/** @type {Array<import('../../types.js').EachItemBlock>} */
-	var b_blocks;
-	var block;
-
-	if (active_transitions.length !== 0) {
-		destroy_active_transition_blocks(active_transitions);
-	}
-
-	if (b === 0) {
-		b_blocks = [];
-		// Remove old blocks
-		if (is_controlled && a !== 0) {
-			clear_text_content(dom);
-		}
-		while (a > 0) {
-			block = a_blocks[--a];
-			destroy_each_item_block(block, active_transitions, apply_transitions, is_controlled);
-		}
-	} else {
-		var a_end = a - 1;
-		var b_end = b - 1;
-		var key;
-		var item;
-		var idx;
-		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-		let mismatch = false;
-		b_blocks = Array(b);
-		if (hydrating) {
-			// Hydrate block
-			var fragment;
-			var hydration_list = /** @type {import('../../types.js').TemplateNode[]} */ (
-				current_hydration_fragment
-			);
-			var hydrating_node = hydration_list[0];
-			while (b > 0) {
-				fragment = get_hydration_fragment(hydrating_node);
-				set_current_hydration_fragment(fragment);
-				if (!fragment) {
-					// If fragment is null, then that means that the server rendered less items than what
-					// the client code specifies -> break out and continue with client-side node creation
-					mismatch = true;
-					break;
-				}
-
-				idx = b_end - --b;
-				item = array[idx];
-				key = is_computed_key ? keys[idx] : item;
-				block = each_item_block(item, key, idx, render_fn, flags);
-				b_blocks[idx] = block;
-
-				// Get the <!--ssr:..--> tag of the next item in the list
-				// The fragment array can be empty if each block has no content
-				hydrating_node = /** @type {import('../../types.js').TemplateNode} */ (
-					/** @type {Node} */ ((fragment.at(-1) || hydrating_node).nextSibling).nextSibling
-				);
-			}
-
-			remove_excess_hydration_nodes(hydration_list, hydrating_node);
-		}
-
-		if (a === 0) {
-			// Create new blocks
-			while (b > 0) {
-				idx = b_end - --b;
-				item = array[idx];
-				key = is_computed_key ? keys[idx] : item;
-				block = each_item_block(item, key, idx, render_fn, flags);
-				b_blocks[idx] = block;
-				insert_each_item_block(block, dom, is_controlled, null);
-			}
-		} else {
-			var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
-			var should_update_block =
-				(flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0 || is_animated;
-			var start = 0;
-
-			/** @type {null | Text | Element | Comment} */
-			var sibling = null;
-			item = array[b_end];
-			key = is_computed_key ? keys[b_end] : item;
-			// Step 1
-			outer: while (true) {
-				// From the end
-				while (a_blocks[a_end].k === key) {
-					block = a_blocks[a_end--];
-					item = array[b_end];
-					if (should_update_block) {
-						update_each_item_block(block, item, b_end, flags);
-					}
-					sibling = get_first_child(block);
-					b_blocks[b_end] = block;
-					if (start > --b_end || start > a_end) {
-						break outer;
-					}
-					key = is_computed_key ? keys[b_end] : item;
-				}
-				item = array[start];
-				key = is_computed_key ? keys[start] : item;
-				// At the start
-				while (start <= a_end && start <= b_end && a_blocks[start].k === key) {
-					item = array[start];
-					block = a_blocks[start];
-					if (should_update_block) {
-						update_each_item_block(block, item, start, flags);
-					}
-					b_blocks[start] = block;
-					++start;
-					key = is_computed_key ? keys[start] : array[start];
-				}
-				break;
-			}
-			// Step 2
-			if (start > a_end) {
-				while (b_end >= start) {
-					item = array[b_end];
-					key = is_computed_key ? keys[b_end] : item;
-					block = each_item_block(item, key, b_end, render_fn, flags);
-					b_blocks[b_end--] = block;
-					sibling = insert_each_item_block(block, dom, is_controlled, sibling);
-				}
-			} else if (start > b_end) {
-				b = start;
-				do {
-					if ((block = a_blocks[b++]) !== null) {
-						destroy_each_item_block(block, active_transitions, apply_transitions);
-					}
-				} while (b <= a_end);
-			} else {
-				// Step 3
-				var pos = 0;
-				var b_length = b_end - start + 1;
-				var sources = new Int32Array(b_length);
-				var item_index = new Map();
-				for (b = 0; b < b_length; ++b) {
-					a = b + start;
-					sources[b] = NEW_BLOCK;
-					item = array[a];
-					key = is_computed_key ? keys[a] : item;
-					map_set(item_index, key, a);
-				}
-				// If keys are animated, we need to do updates before actual moves
-				if (is_animated) {
-					for (b = start; b <= a_end; ++b) {
-						a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
-						if (a !== undefined) {
-							item = array[a];
-							block = a_blocks[b];
-							update_each_item_block(block, item, a, flags);
-						}
-					}
-				}
-				for (b = start; b <= a_end; ++b) {
-					a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
-					block = a_blocks[b];
-					if (a !== undefined) {
-						pos = pos < a ? a : MOVED_BLOCK;
-						sources[a - start] = b;
-						b_blocks[a] = block;
-					} else if (block !== null) {
-						destroy_each_item_block(block, active_transitions, apply_transitions);
-					}
-				}
-				// Step 4
-				if (pos === MOVED_BLOCK) {
-					mark_lis(sources);
-				}
-				var last_block;
-				var last_sibling;
-				var should_create;
-				while (b_length-- > 0) {
-					b_end = b_length + start;
-					a = sources[b_length];
-					should_create = a === -1;
-					item = array[b_end];
-					if (should_create) {
-						key = is_computed_key ? keys[b_end] : item;
-						block = each_item_block(item, key, b_end, render_fn, flags);
-					} else {
-						block = b_blocks[b_end];
-						if (!is_animated && should_update_block) {
-							update_each_item_block(block, item, b_end, flags);
-						}
-					}
-					if (should_create || (pos === MOVED_BLOCK && a !== LIS_BLOCK)) {
-						last_sibling = last_block === undefined ? sibling : get_first_child(last_block);
-						sibling = insert_each_item_block(block, dom, is_controlled, last_sibling);
-					}
-					b_blocks[b_end] = block;
-					last_block = block;
-				}
-			}
-		}
-
-		if (mismatch) {
-			// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
-			set_current_hydration_fragment([]);
-		}
-	}
-
-	each_block.v = b_blocks;
 }
 
 /**
