@@ -13,12 +13,9 @@ export const DESTROYED = 1 << 12;
 export const ROOT_EFFECT = 1 << 13;
 export const BRANCH_EFFECT = 1 << 14;
 
-export const ROOT_BLOCK = 0;
 export const IF_BLOCK = 1;
 export const EACH_BLOCK = 2;
 export const EACH_ITEM_BLOCK = 3;
-export const AWAIT_BLOCK = 4;
-export const KEY_BLOCK = 5;
 export const HEAD_BLOCK = 6;
 export const DYNAMIC_COMPONENT_BLOCK = 7;
 export const DYNAMIC_ELEMENT_BLOCK = 8;

@@ -4,12 +4,9 @@ import {
 	RENDER_EFFECT,
 	SOURCE,
 	PRE_EFFECT,
-	ROOT_BLOCK,
 	EACH_BLOCK,
 	EACH_ITEM_BLOCK,
 	IF_BLOCK,
-	AWAIT_BLOCK,
-	KEY_BLOCK,
 	HEAD_BLOCK,
 	DYNAMIC_COMPONENT_BLOCK,
 	DYNAMIC_ELEMENT_BLOCK,
@@ -140,12 +137,9 @@ export type UnwrappedSignal<T> = T extends Signal<infer U> ? U : T;
 export type EqualsFunctions<T = any> = (a: T, v: T) => boolean;
 
 export type BlockType =
-	| typeof ROOT_BLOCK
 	| typeof EACH_BLOCK
 	| typeof EACH_ITEM_BLOCK
 	| typeof IF_BLOCK
-	| typeof AWAIT_BLOCK
-	| typeof KEY_BLOCK
 	| typeof SNIPPET_BLOCK
 	| typeof HEAD_BLOCK
 	| typeof DYNAMIC_COMPONENT_BLOCK
@@ -175,21 +169,6 @@ export type Transition = {
 	d: HTMLElement;
 };
 
-export type RootBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | ComputationSignal;
-	/** intro */
-	i: boolean;
-	/** parent */
-	p: null;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof ROOT_BLOCK;
-};
-
 export type IfBlock = {
 	/** value */
 	v: boolean;
@@ -211,19 +190,6 @@ export type IfBlock = {
 	ae: null | EffectSignal;
 	/** type */
 	t: typeof IF_BLOCK;
-};
-
-export type KeyBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | EffectSignal;
-	/** parent */
-	p: Block;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof KEY_BLOCK;
 };
 
 export type HeadBlock = {
@@ -263,21 +229,6 @@ export type DynamicComponentBlock = {
 	r: null | ((transition: Transition) => void);
 	/** type */
 	t: typeof DYNAMIC_COMPONENT_BLOCK;
-};
-
-export type AwaitBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | ComputationSignal;
-	/** parent */
-	p: Block;
-	/** pending */
-	n: boolean;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof AWAIT_BLOCK;
 };
 
 export type EachBlock = {
@@ -338,13 +289,10 @@ export type SnippetBlock = {
 };
 
 export type Block =
-	| RootBlock
 	| IfBlock
-	| AwaitBlock
 	| DynamicElementBlock
 	| DynamicComponentBlock
 	| HeadBlock
-	| KeyBlock
 	| EachBlock
 	| EachItemBlock
 	| SnippetBlock;

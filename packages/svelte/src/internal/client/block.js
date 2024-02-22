@@ -1,10 +1,4 @@
-import {
-	ROOT_BLOCK,
-	HEAD_BLOCK,
-	DYNAMIC_ELEMENT_BLOCK,
-	DYNAMIC_COMPONENT_BLOCK,
-	SNIPPET_BLOCK
-} from './constants.js';
+import { DYNAMIC_ELEMENT_BLOCK, SNIPPET_BLOCK } from './constants.js';
 import { current_block } from './runtime.js';
 
 /** @returns {import('./types.js').DynamicElementBlock} */
