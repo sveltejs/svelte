@@ -20,7 +20,8 @@ import {
 	UNOWNED,
 	CLEAN,
 	UNINITIALIZED,
-	INERT
+	INERT,
+	ROOT_EFFECT
 } from '../constants.js';
 import { noop } from '../../common.js';
 
@@ -83,7 +84,9 @@ function internal_create_effect(type, fn, sync, block, schedule) {
 	signal.x = current_component_context;
 	if (current_effect !== null) {
 		signal.l = current_effect.l + 1;
-		push_reference(current_effect, signal);
+		if ((signal.f & ROOT_EFFECT) === 0) {
+			push_reference(current_effect, signal);
+		}
 	}
 	if (schedule) {
 		schedule_effect(signal, sync);
@@ -140,7 +143,7 @@ export function user_effect(fn) {
  * @returns {() => void}
  */
 export function user_root_effect(fn) {
-	const effect = render_effect(fn, current_block, true);
+	const effect = internal_create_effect(RENDER_EFFECT | ROOT_EFFECT, fn, true, current_block, true);
 	return () => {
 		destroy_signal(effect);
 	};
