@@ -34,12 +34,11 @@ class Animation {
 	#keyframes;
 	#duration;
 	#target;
+	#offset = 0;
+	#finished = () => {};
+	#cancelled = () => {};
 
-	/** @type {() => void} */
-	#finished;
-
-	/** @type {() => void} */
-	#cancelled;
+	currentTime = 0;
 
 	/**
 	 * @param {HTMLElement} target
@@ -50,10 +49,7 @@ class Animation {
 		this.#target = target;
 		this.#keyframes = keyframes;
 		this.#duration = options.duration || 0;
-		this.currentTime = 0;
-
-		this.#finished = () => {};
-		this.#cancelled = () => {};
+		this.#offset = raf.time;
 
 		// Promise-like semantics, but call callbacks immediately on raf.tick
 		this.finished = {
@@ -80,7 +76,7 @@ class Animation {
 	}
 
 	_update() {
-		this.currentTime = raf.time;
+		this.currentTime = raf.time - this.#offset;
 
 		const target_frame = this.currentTime / this.#duration;
 		this._applyKeyFrame(target_frame);
