@@ -301,7 +301,7 @@ export type EachItemBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | ComputationSignal;
+	e: ComputationSignal;
 	/** item */
 	v: any | Signal<any>;
 	/** index */

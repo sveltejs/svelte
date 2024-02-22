@@ -80,6 +80,7 @@ export function create_each_item_block(item, index, key) {
 		// dom
 		d: null,
 		// effect
+		// @ts-expect-error
 		e: null,
 		// index
 		i: index,
@@ -353,7 +354,7 @@ export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fa
  * @param {Element | Comment} anchor_node
  * @param {() => V[]} collection
  * @param {number} flags
- * @param {(anchor: null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
+ * @param {(anchor: Element | Comment | null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
@@ -402,8 +403,9 @@ export function each_indexed(anchor_node, collection, flags, render_fn, fallback
 		let hydrating_node = hydrating ? current_hydration_fragment[0] : null;
 
 		for (let i = length; i < nl; i += 1) {
-			if (effects[i]) {
-				resume_effect(effects[i]);
+			const effect = effects[i];
+			if (effect) {
+				resume_effect(effect);
 			} else {
 				if (hydrating && !mismatch) {
 					let fragment = get_hydration_fragment(hydrating_node);
@@ -416,7 +418,10 @@ export function each_indexed(anchor_node, collection, flags, render_fn, fallback
 						break;
 					}
 
-					hydrating_node = fragment.at(-1).nextSibling?.nextSibling;
+					// TODO helperise this
+					hydrating_node = /** @type {Comment} */ (
+						/** @type {Node} */ (fragment.at(-1)).nextSibling?.nextSibling
+					);
 				}
 
 				effects[i] = render_effect(
