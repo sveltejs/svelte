@@ -492,7 +492,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 	let grouped_value = value;
 
 	if (name === 'autofocus') {
-		state.init.push(b.stmt(b.call('$.auto_focus', node_id, value)));
+		state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
 		return false;
 	}
 

@@ -492,7 +492,7 @@ export function text(dom, value) {
  * @param {boolean} value
  * @returns {void}
  */
-export function auto_focus(element, value) {
+export function autofocus(element, value) {
 	if (value) {
 		element.autofocus = true;
 
@@ -2008,7 +2008,7 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 		} else if (key === 'style') {
 			dom.style.cssText = value + '';
 		} else if (key === 'autofocus') {
-			auto_focus(/** @type {HTMLElement} */ (dom), Boolean(value));
+			autofocus(/** @type {HTMLElement} */ (dom), Boolean(value));
 		} else if (key === '__value' || key === 'value') {
 			// @ts-ignore
 			dom.value = dom[key] = dom.__value = value;
