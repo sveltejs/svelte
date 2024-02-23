@@ -340,7 +340,7 @@ export function destroy_effect(effect) {
  */
 export function resume_effect(effect) {
 	if ((effect.f & DERIVED) === 0 && (effect.f & MANAGED) === 0) {
-		execute_effect(effect);
+		execute_effect(/** @type {import('../types.js').EffectSignal} */ (effect));
 	}
 
 	if (effect.r) {
