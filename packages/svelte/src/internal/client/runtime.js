@@ -100,11 +100,7 @@ export let inspect_fn = null;
 /** @type {Array<import('./types.js').SignalDebug>} */
 let inspect_captured_signals = [];
 
-// Handle rendering tree blocks and anchors
-/** @type {null | import('./types.js').Block} */
-export let current_block = null;
 // Handling runtime component context
-
 /** @type {import('./types.js').ComponentContext | null} */
 export let current_component_context = null;
 
@@ -221,7 +217,6 @@ function execute_signal_fn(signal) {
 	const previous_dependencies_index = current_dependencies_index;
 	const previous_untracked_writes = current_untracked_writes;
 	const previous_consumer = current_consumer;
-	const previous_block = current_block;
 	const previous_component_context = current_component_context;
 	const previous_skip_consumer = current_skip_consumer;
 	const is_render_effect = (flags & RENDER_EFFECT) !== 0;
@@ -230,7 +225,6 @@ function execute_signal_fn(signal) {
 	current_dependencies_index = 0;
 	current_untracked_writes = null;
 	current_consumer = signal;
-	current_block = signal.b;
 	current_component_context = signal.x;
 	current_skip_consumer = !is_flushing_effect && (flags & UNOWNED) !== 0;
 	current_untracking = false;
@@ -238,13 +232,10 @@ function execute_signal_fn(signal) {
 	try {
 		let res;
 		if (is_render_effect) {
-			res =
-				/** @type {(block: import('./types.js').Block, signal: import('./types.js').Signal) => V} */ (
-					init
-				)(
-					/** @type {import('./types.js').Block} */ (signal.b),
-					/** @type {import('./types.js').Signal} */ (signal)
-				);
+			res = /** @type {(block: null, signal: import('./types.js').Signal) => V} */ (init)(
+				null,
+				/** @type {import('./types.js').Signal} */ (signal)
+			);
 		} else {
 			res = /** @type {() => V} */ (init)();
 		}
@@ -314,7 +305,6 @@ function execute_signal_fn(signal) {
 		current_dependencies_index = previous_dependencies_index;
 		current_untracked_writes = previous_untracked_writes;
 		current_consumer = previous_consumer;
-		current_block = previous_block;
 		current_component_context = previous_component_context;
 		current_skip_consumer = previous_skip_consumer;
 		current_untracking = previous_untracking;
@@ -518,7 +508,7 @@ export function schedule_effect(signal, sync) {
 			// so we can make them inert to avoid having to find them in the
 			// queue and remove them.
 			if ((flags & MANAGED) === 0) {
-				mark_subtree_children_inert(signal, true);
+				// mark_subtree_children_inert(signal, true);
 			}
 		} else {
 			// We need to ensure we insert the signal in the right topological order. In other words,
@@ -822,70 +812,6 @@ export function mutate(source, value) {
 		untrack(() => get(source))
 	);
 	return value;
-}
-
-/**
- * @param {import('./types.js').ComputationSignal} signal
- * @param {boolean} inert
- * @param {Set<import('./types.js').Block>} [visited_blocks]
- * @returns {void}
- */
-function mark_subtree_children_inert(signal, inert, visited_blocks) {
-	const references = signal.r;
-	if (references !== null) {
-		let i;
-		for (i = 0; i < references.length; i++) {
-			const reference = references[i];
-			if ((reference.f & IS_EFFECT) !== 0) {
-				mark_subtree_inert(reference, inert, visited_blocks);
-			}
-		}
-	}
-}
-
-/**
- * @param {import('./types.js').ComputationSignal} signal
- * @param {boolean} inert
- * @param {Set<import('./types.js').Block>} [visited_blocks]
- * @returns {void}
- */
-export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
-	const flags = signal.f;
-	const is_already_inert = (flags & INERT) !== 0;
-	if (is_already_inert !== inert) {
-		signal.f ^= INERT;
-		if (!inert && (flags & IS_EFFECT) !== 0 && (flags & CLEAN) === 0) {
-			schedule_effect(/** @type {import('./types.js').EffectSignal} */ (signal), false);
-		}
-		// Nested if block effects
-		const block = signal.b;
-		if (block !== null && !visited_blocks.has(block)) {
-			visited_blocks.add(block);
-			const type = block.t;
-			if (type === IF_BLOCK) {
-				const condition_effect = block.e;
-				if (condition_effect !== null && block !== current_block) {
-					mark_subtree_inert(condition_effect, inert, visited_blocks);
-				}
-				const consequent_effect = block.ce;
-				if (consequent_effect !== null && block.v) {
-					mark_subtree_inert(consequent_effect, inert, visited_blocks);
-				}
-				const alternate_effect = block.ae;
-				if (alternate_effect !== null && !block.v) {
-					mark_subtree_inert(alternate_effect, inert, visited_blocks);
-				}
-			} else if (type === EACH_BLOCK) {
-				const items = block.v;
-				for (let { e: each_item_effect } of items) {
-					if (each_item_effect !== null) {
-						mark_subtree_inert(each_item_effect, inert, visited_blocks);
-					}
-				}
-			}
-		}
-	}
-	mark_subtree_children_inert(signal, inert, visited_blocks);
 }
 
 /**

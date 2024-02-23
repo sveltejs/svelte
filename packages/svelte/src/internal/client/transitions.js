@@ -1,11 +1,8 @@
-import { noop, run_all } from '../common.js';
-import { destroy_each_item_block, get_first_element } from './dom/blocks/each.js';
-import { schedule_raf_task } from './dom/task.js';
+import { noop } from '../common.js';
 import { loop } from './loop.js';
-import { append_child, empty } from './operations.js';
-import { managed_effect, managed_pre_effect, user_effect } from './reactivity/computations.js';
+import { user_effect } from './reactivity/computations.js';
 import { run_transitions } from './render.js';
-import { current_effect, destroy_signal, mark_subtree_inert, untrack } from './runtime.js';
+import { current_effect, untrack } from './runtime.js';
 import { raf } from './timing.js';
 
 const active_tick_animations = new Set();
@@ -374,55 +371,5 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 
 	if (direction === 'out' || direction === 'both') {
 		(effect.out ??= []).push(transition);
-	}
-}
-
-/**
- * @param {Set<import('./types.js').Transition>} transitions
- * @param {'in' | 'out' | 'key'} target_direction
- * @param {DOMRect} [from]
- * @returns {void}
- */
-export function trigger_transitions(transitions, target_direction, from) {
-	/** @type {Array<() => void>} */
-	const outros = [];
-	for (const transition of transitions) {
-		const direction = transition.r;
-		const effect = transition.e;
-		if (target_direction === 'in') {
-			if (direction === 'in' || direction === 'both') {
-				transition.in();
-			} else {
-				transition.c();
-			}
-			transition.d.inert = false;
-			mark_subtree_inert(effect, false);
-		} else if (target_direction === 'key') {
-			if (direction === 'key') {
-				if (!transition.p) {
-					transition.p = transition.i(/** @type {DOMRect} */ (from));
-				}
-				transition.in();
-			}
-		} else {
-			if (direction === 'out' || direction === 'both') {
-				if (!transition.p) {
-					transition.p = transition.i();
-				}
-				outros.push(transition.o);
-			}
-			transition.d.inert = true;
-			mark_subtree_inert(effect, true);
-		}
-	}
-	if (outros.length > 0) {
-		// Defer the outros to a microtask
-		const e = managed_pre_effect(() => {
-			destroy_signal(e);
-			const e2 = managed_effect(() => {
-				destroy_signal(e2);
-				run_all(outros);
-			});
-		}, false);
 	}
 }

@@ -49,7 +49,6 @@ import {
 	derived,
 	pre_effect,
 	user_effect,
-	pause_effect,
 	destroy_effect
 } from './reactivity/computations.js';
 import {
@@ -69,7 +68,7 @@ import {
 	object_assign
 } from './utils.js';
 import { run } from '../common.js';
-import { bind_transition, trigger_transitions } from './transitions.js';
+import { bind_transition } from './transitions.js';
 import { mutable_source, source } from './reactivity/sources.js';
 import { safe_equal, safe_not_equal } from './reactivity/equality.js';
 

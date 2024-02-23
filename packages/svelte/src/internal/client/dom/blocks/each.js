@@ -23,7 +23,6 @@ import {
 	resume_effect
 } from '../../reactivity/computations.js';
 import { source, mutable_source } from '../../reactivity/sources.js';
-import { trigger_transitions } from '../../transitions.js';
 import { is_array } from '../../utils.js';
 import { BRANCH_EFFECT, EACH_ITEM_BLOCK } from '../../constants.js';
 
@@ -621,7 +620,7 @@ export function destroy_each_item_block(
 		if (transitions.size === 0) {
 			block.s = null;
 		} else {
-			trigger_transitions(transitions, 'out');
+			// trigger_transitions(transitions, 'out');
 			if (transition_block !== null) {
 				transition_block.push(block);
 			}
