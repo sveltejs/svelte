@@ -1011,6 +1011,26 @@ export function selected(dom) {
 }
 
 /**
+ *
+ * @param {HTMLInputElement | HTMLSelectElement} element
+ * @param {(value: unknown) => void} update
+ */
+function listen_to_form_reset(element, update) {
+	// Inside effect to ensure the element is connected to the DOM
+	effect(() => {
+		const form = element.form;
+		if (form) {
+			const handler = () => {
+				// TODO defaultValue handling needs more thought
+				update(element.defaultValue || '');
+			};
+			form.addEventListener('reset', handler);
+			return () => form.removeEventListener('reset', handler);
+		}
+	});
+}
+
+/**
  * @param {HTMLInputElement} dom
  * @param {() => unknown} get_value
  * @param {(value: unknown) => void} update
@@ -1056,6 +1076,8 @@ export function bind_value(dom, get_value, update) {
 
 		dom.value = stringify(value);
 	});
+
+	listen_to_form_reset(dom, update);
 }
 
 /**
@@ -1109,6 +1131,8 @@ export function bind_select_value(dom, get_value, update) {
 		dom.__value = value;
 		mounting = false;
 	});
+
+	listen_to_form_reset(dom, update);
 }
 
 /**
@@ -1210,6 +1234,8 @@ export function bind_group(group, group_index, dom, get_value, update) {
 			}
 		};
 	});
+
+	listen_to_form_reset(dom, update);
 }
 
 /**
@@ -1231,6 +1257,8 @@ export function bind_checked(dom, get_value, update) {
 		const value = get_value();
 		dom.checked = Boolean(value);
 	});
+
+	listen_to_form_reset(dom, update);
 }
 
 /**
