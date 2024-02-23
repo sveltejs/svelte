@@ -87,6 +87,13 @@ export function proxy(value, immutable = true, owners) {
 
 			return proxy;
 		}
+		if (DEV && prototype === Date.prototype) {
+			// eslint-disable-next-line no-console
+			console.warn(
+				`Date objects used within the $state() rune will not be reactive. Consider using Svelte's reactive version of the Date object from 'svelte/reactivity':` +
+					`\n\nimport { Date } from 'svelte/reactivity';\n\nconst date = new Date();`
+			);
+		}
 	}
 
 	return value;
