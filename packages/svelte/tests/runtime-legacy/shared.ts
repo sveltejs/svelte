@@ -312,6 +312,8 @@ async function run_test_variant(
 					assert.fail('Expected a runtime error');
 				}
 			} finally {
+				raf.tick(Infinity);
+
 				instance.$destroy();
 				assert_html_equal(
 					target.innerHTML,
