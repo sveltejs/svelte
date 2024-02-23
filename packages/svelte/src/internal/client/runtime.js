@@ -521,7 +521,7 @@ export function schedule_effect(signal, sync) {
 
 			if (!should_append) {
 				const target_level = signal.l;
-				const target_block = signal.b;
+				// const target_block = signal.b;
 				const is_pre_effect = (flags & PRE_EFFECT) !== 0;
 				let target_signal;
 				let is_target_pre_effect;
@@ -533,9 +533,9 @@ export function schedule_effect(signal, sync) {
 							should_append = true;
 						} else {
 							is_target_pre_effect = (target_signal.f & PRE_EFFECT) !== 0;
-							if (target_signal.b !== target_block || (is_target_pre_effect && !is_pre_effect)) {
-								i++;
-							}
+							// if (target_signal.b !== target_block || (is_target_pre_effect && !is_pre_effect)) {
+							// 	i++;
+							// }
 							current_queued_pre_and_render_effects.splice(i, 0, signal);
 						}
 						break;
