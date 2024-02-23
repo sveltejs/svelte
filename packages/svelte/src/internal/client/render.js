@@ -1929,12 +1929,12 @@ export function out(dom, get_transition_fn, props, global = false) {
 export function action(dom, action, value_fn) {
 	/** @type {undefined | import('./types.js').ActionPayload<P>} */
 	let payload = undefined;
+	let needs_deep_read = false;
 	// Action could come from a prop, therefore could be a signal, therefore untrack
 	// TODO we could take advantage of this and enable https://github.com/sveltejs/svelte/issues/6942
 	effect(() => {
 		if (value_fn) {
 			const value = value_fn();
-			let needs_deep_read = false;
 			untrack(() => {
 				if (payload === undefined) {
 					payload = action(dom, value) || {};
