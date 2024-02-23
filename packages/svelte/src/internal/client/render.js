@@ -1048,6 +1048,12 @@ export function bind_value(dom, get_value, update) {
 			return;
 		}
 
+		if (dom.type === 'date' && !value && !dom.value) {
+			// Handles the case where a temporarily invalid date is set (while typing, for example with a leading 0 for the day)
+			// and prevents this state from clearing the other parts of the date input (see https://github.com/sveltejs/svelte/issues/7897)
+			return;
+		}
+
 		dom.value = stringify(value);
 	});
 }
