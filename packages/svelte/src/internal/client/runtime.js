@@ -1252,7 +1252,13 @@ export function pop(component) {
  * @returns {void}
  */
 export function deep_read(value, visited = new Set()) {
-	if (typeof value === 'object' && value !== null && !visited.has(value)) {
+	if (
+		typeof value === 'object' &&
+		value !== null &&
+		// We don't want to traverse DOM elements
+		!(value instanceof EventTarget) &&
+		!visited.has(value)
+	) {
 		visited.add(value);
 		for (let key in value) {
 			try {
