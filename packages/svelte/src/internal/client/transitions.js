@@ -1,6 +1,7 @@
 import { noop, run_all } from '../common.js';
 import { destroy_each_item_block, get_first_element } from './dom/blocks/each.js';
 import { schedule_raf_task } from './dom/task.js';
+import { loop } from './loop.js';
 import { append_child, empty } from './operations.js';
 import { managed_effect, managed_pre_effect, user_effect } from './reactivity/computations.js';
 import { run_transitions } from './render.js';
@@ -257,6 +258,9 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 	/** @type {Animation | null} */
 	let current_animation;
 
+	/** @type {import('./types.js').Task | null} */
+	let current_task;
+
 	/** @type {import('./types.js').TransitionPayload | null} */
 	let current_options;
 
@@ -266,6 +270,11 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 	const transition = {
 		global,
 		to(target, callback) {
+			if (current_task) {
+				current_task.abort();
+				current_task = null;
+			}
+
 			if (current_animation && current_options) {
 				const time = /** @type {number} */ (current_animation.currentTime);
 				const duration = /** @type {number} */ (current_options.duration);
@@ -281,22 +290,26 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 				return;
 			}
 
-			if (current_options.css) {
+			const { duration, css, tick, easing = linear } = current_options;
+
+			const n = current_options.duration / (1000 / 60);
+			current_delta = target - p;
+
+			const adjusted_duration = duration * Math.abs(current_delta);
+
+			if (css) {
 				// WAAPI
 				const keyframes = [];
-				const n = current_options.duration / (1000 / 60);
-
-				current_delta = target - p;
 
 				for (let i = 0; i <= n; i += 1) {
-					const eased = (current_options.easing ?? linear)(i / n);
+					const eased = easing(i / n);
 					const t = p + current_delta * eased;
-					const css = current_options.css(t, 1 - t);
-					keyframes.push(css_to_keyframe(css));
+					const styles = css(t, 1 - t);
+					keyframes.push(css_to_keyframe(styles));
 				}
 
 				current_animation = element.animate(keyframes, {
-					duration: current_options.duration * Math.abs(current_delta),
+					duration: adjusted_duration,
 					easing: 'linear',
 					fill: 'forwards'
 				});
@@ -308,8 +321,33 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 						callback?.();
 					})
 					.catch(noop);
-			} else {
-				// TODO timer
+			} else if (tick) {
+				// Timer
+				let running = true;
+				const start_time = raf.now() + 0; // TODO account for delay
+				const start_p = p;
+				const end_time = start_time + adjusted_duration;
+
+				tick(p, 1 - p);
+
+				current_task = loop((now) => {
+					if (running) {
+						if (now >= end_time) {
+							p = target;
+							tick(target, 1 - target);
+							// dispatch(node, true, 'end'); TODO
+							current_task = null;
+							callback?.();
+							return (running = false);
+						}
+						if (now >= start_time) {
+							p = start_p + current_delta * easing((now - start_time) / adjusted_duration);
+							tick(p, 1 - p);
+						}
+					}
+					return running;
+				});
+
 				current_options = null;
 			}
 		}

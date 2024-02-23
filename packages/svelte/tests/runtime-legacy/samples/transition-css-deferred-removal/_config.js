@@ -13,9 +13,6 @@ export default test({
 
 		raf.tick(150);
 
-		assert.deepEqual(
-			[outer.style.cssText, inner.style.cssText],
-			['opacity: 0.24999000000000002;', '']
-		);
+		assert.deepEqual([outer.style.cssText, inner.style.cssText], ['opacity: 0.25;', '']);
 	}
 });
