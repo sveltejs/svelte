@@ -23,6 +23,7 @@ export {
 export * from './client/dev/ownership.js';
 export { await_block as await } from './client/dom/blocks/await.js';
 export { if_block as if } from './client/dom/blocks/if.js';
+export { html } from './client/dom/blocks/html.js';
 export { key_block as key } from './client/dom/blocks/key.js';
 export { snippet_effect } from './client/dom/blocks/render-tag.js';
 export { component } from './client/dom/blocks/svelte-component.js';
