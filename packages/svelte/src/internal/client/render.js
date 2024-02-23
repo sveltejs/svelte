@@ -2540,7 +2540,7 @@ export function hydrate(component, options) {
 			);
 			remove(hydration_fragment);
 			first_child.remove();
-			hydration_fragment.at(-1)?.nextSibling?.remove();
+			hydration_fragment[hydration_fragment.length - 1]?.nextSibling?.remove();
 			set_current_hydration_fragment(null);
 			return mount(component, options);
 		} else {
