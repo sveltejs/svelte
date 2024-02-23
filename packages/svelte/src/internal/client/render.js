@@ -1405,7 +1405,7 @@ function handle_event_propagation(handler_element, event) {
 		const at_idx = path.indexOf(handled_at);
 		if (
 			at_idx !== -1 &&
-			(handler_element === owner_document || handler_element === /** @type {any} */ (window))
+			(handler_element === document || handler_element === /** @type {any} */ (window))
 		) {
 			// This is the fallback document listener or a window listener, but the event was already handled
 			// -> ignore, but set handle_at to document/window so that we're resetting the event
