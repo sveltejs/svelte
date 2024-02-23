@@ -991,7 +991,7 @@ function serialize_inline_component(node, component_name, context) {
 		const prev = fn;
 		fn = (node_id) =>
 			b.call(
-				'$.cssProps',
+				'$.css_props',
 				node_id,
 				// TODO would be great to do this at runtime instead. Svelte 4 also can't handle cases today
 				// where it's not statically determinable whether the component is used in a svg or html context

@@ -22,6 +22,7 @@ export {
 } from './client/runtime.js';
 export * from './client/dev/ownership.js';
 export { await_block as await } from './client/dom/blocks/await.js';
+export { css_props } from './client/dom/blocks/css-props.js';
 export { if_block as if } from './client/dom/blocks/if.js';
 export { html } from './client/dom/blocks/html.js';
 export { key_block as key } from './client/dom/blocks/key.js';
