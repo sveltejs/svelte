@@ -358,7 +358,12 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 	if (direction === 'in' || direction === 'both') {
 		(effect.in ??= []).push(transition);
 
-		if (run_transitions) {
+		// if this is a local transition, we only want to run it if the parent (block) effect's
+		// parent (branch) effect is where the state change happened. we can determine that by
+		// looking at whether the branch effect is currently initializing
+		const should_run = run_transitions && (global || effect.parent.ran);
+
+		if (should_run) {
 			user_effect(() => {
 				untrack(() => transition.to(1));
 			});

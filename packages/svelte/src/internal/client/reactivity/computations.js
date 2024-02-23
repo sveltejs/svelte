@@ -45,7 +45,8 @@ function create_computation_signal(flags, value, block) {
 		v: value,
 		w: 0,
 		x: null,
-		y: null
+		y: null,
+		parent: current_effect
 	};
 
 	if (DEV) {
@@ -264,16 +265,10 @@ export function derived_safe_equal(fn) {
  * @param {() => void} done
  */
 export function pause_effect(effect, done) {
-	if ((effect.f & INERT) !== 0) return;
-
-	if ((effect.f & DERIVED) === 0 && typeof effect.v === 'function') {
-		effect.v();
-	}
-
 	/** @type {import('../types.js').TransitionObject[]} */
 	const transitions = [];
 
-	pause_children(effect, transitions);
+	pause_children(effect, transitions, true);
 
 	let remaining = transitions.length;
 
@@ -297,17 +292,27 @@ export function pause_effect(effect, done) {
 /**
  * @param {import('../types.js').BlockEffect} effect
  * @param {import('../types.js').TransitionObject[]} transitions
+ * @param {boolean} local
  */
-function pause_children(effect, transitions) {
+function pause_children(effect, transitions, local) {
+	if ((effect.f & INERT) !== 0) return;
 	effect.f |= INERT;
 
+	if ((effect.f & DERIVED) === 0 && typeof effect.v === 'function') {
+		effect.v();
+	}
+
 	if (effect.out) {
-		transitions.push(...effect.out); // TODO differentiate between global and local
+		for (const transition of effect.out) {
+			if (transition.global || local) {
+				transitions.push(transition);
+			}
+		}
 	}
 
 	if (effect.r) {
 		for (const child of effect.r) {
-			pause_children(child, transitions);
+			pause_children(child, transitions, false);
 		}
 	}
 }
@@ -339,13 +344,21 @@ export function destroy_effect(effect) {
  * @param {import('../types.js').BlockEffect} effect
  */
 export function resume_effect(effect) {
+	resume_children(effect, true);
+}
+
+/**
+ * @param {import('../types.js').BlockEffect} effect
+ * @param {boolean} local
+ */
+function resume_children(effect, local) {
 	if ((effect.f & DERIVED) === 0 && (effect.f & MANAGED) === 0) {
 		execute_effect(/** @type {import('../types.js').EffectSignal} */ (effect));
 	}
 
 	if (effect.r) {
 		for (const child of effect.r) {
-			resume_effect(child);
+			resume_children(child, false);
 		}
 	}
 
@@ -353,7 +366,9 @@ export function resume_effect(effect) {
 
 	if (effect.in) {
 		for (const transition of effect.in) {
-			transition.to(1);
+			if (transition.global || local) {
+				transition.to(1);
+			}
 		}
 	}
 }

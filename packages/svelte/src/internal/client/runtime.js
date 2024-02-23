@@ -579,6 +579,9 @@ export function schedule_effect(signal, sync) {
 			}
 		}
 	}
+
+	// temporary, we need to neaten up the types
+	signal.ran = true;
 }
 
 /**

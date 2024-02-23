@@ -6,8 +6,7 @@ import {
 } from '../../hydration.js';
 import { remove } from '../../reconciler.js';
 import { pause_effect, render_effect, resume_effect } from '../../reactivity/computations.js';
-import { current_effect } from '../../runtime.js';
-import { BRANCH_EFFECT, RENDER_EFFECT } from '../../constants.js';
+import { BRANCH_EFFECT } from '../../constants.js';
 
 /**
  * @param {Comment} anchor_node

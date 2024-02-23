@@ -116,12 +116,14 @@ export type ComputationSignal<V = unknown> = {
 	l: number;
 	/** write version: used for unowned signals to track if their depdendencies are dirty or not **/
 	w: number;
+	parent: Signal | null;
 };
 
 export type BlockEffect<V = unknown> = ComputationSignal<V> & {
 	in?: TransitionObject[];
 	out?: TransitionObject[];
 	dom?: TemplateNode | Array<TemplateNode>;
+	ran?: boolean;
 };
 
 export type Signal<V = unknown> = SourceSignal<V> | ComputationSignal<V>;
