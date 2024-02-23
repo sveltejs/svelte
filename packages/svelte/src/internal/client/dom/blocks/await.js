@@ -43,7 +43,7 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 			if (pending_effect) {
 				resume_effect(pending_effect);
 			} else if (pending_fn) {
-				pending_effect = render_effect(() => pending_fn(anchor_node), {}, true);
+				pending_effect = render_effect(() => pending_fn(anchor_node), true);
 			}
 
 			if (then_effect) {
@@ -74,7 +74,7 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 						} else if (then_fn) {
 							set_current_effect(branch);
 							set_current_component_context(component_context);
-							then_effect = render_effect(() => then_fn(anchor_node, value), {}, true);
+							then_effect = render_effect(() => then_fn(anchor_node, value), true);
 							set_current_component_context(null);
 							set_current_effect(null);
 						}
@@ -97,7 +97,7 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 					} else if (catch_fn) {
 						set_current_effect(branch);
 						set_current_component_context(component_context);
-						catch_effect = render_effect(() => catch_fn(anchor_node, error), {}, true);
+						catch_effect = render_effect(() => catch_fn(anchor_node, error), true);
 						set_current_component_context(null);
 						set_current_effect(null);
 					}
@@ -115,7 +115,7 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 			} else if (then_fn) {
 				// TODO we need to pass a function in rather than a value, because
 				// this will never update
-				then_effect = render_effect(() => then_fn(anchor_node, input), {}, true);
+				then_effect = render_effect(() => then_fn(anchor_node, input), true);
 			}
 
 			if (catch_effect) {

@@ -29,7 +29,7 @@ export function component(anchor_node, component_fn, render_fn) {
 		}
 
 		if (Component) {
-			effect = render_effect(() => render_fn(/** @type {C} */ (Component)), {}, true);
+			effect = render_effect(() => render_fn(/** @type {C} */ (Component)), true);
 		}
 	});
 }

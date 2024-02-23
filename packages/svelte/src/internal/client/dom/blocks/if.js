@@ -55,7 +55,7 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 			if (consequent_effect) {
 				resume_effect(consequent_effect);
 			} else {
-				consequent_effect = render_effect(() => consequent_fn(anchor_node), {}, true);
+				consequent_effect = render_effect(() => consequent_fn(anchor_node), true);
 			}
 
 			if (alternate_effect) {
@@ -67,7 +67,7 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 			if (alternate_effect) {
 				resume_effect(alternate_effect);
 			} else {
-				alternate_effect = alternate_fn && render_effect(() => alternate_fn(anchor_node), {}, true);
+				alternate_effect = alternate_fn && render_effect(() => alternate_fn(anchor_node), true);
 			}
 
 			if (consequent_effect) {

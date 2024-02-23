@@ -2303,30 +2303,26 @@ function _mount(Component, options) {
 	// @ts-expect-error will be defined because the render effect runs synchronously
 	let component = undefined;
 
-	const effect = render_effect(
-		() => {
-			if (options.context) {
-				push({});
-				/** @type {import('../client/types.js').ComponentContext} */ (current_component_context).c =
-					options.context;
-			}
-			if (!options.props) {
-				options.props = /** @type {Props} */ ({});
-			}
-			if (options.events) {
-				// We can't spread the object or else we'd lose the state proxy stuff, if it is one
-				/** @type {any} */ (options.props).$$events = options.events;
-			}
-			component =
-				// @ts-expect-error the public typings are not what the actual function looks like
-				Component(options.anchor, options.props) || {};
-			if (options.context) {
-				pop();
-			}
-		},
-		{},
-		true
-	);
+	const effect = render_effect(() => {
+		if (options.context) {
+			push({});
+			/** @type {import('../client/types.js').ComponentContext} */ (current_component_context).c =
+				options.context;
+		}
+		if (!options.props) {
+			options.props = /** @type {Props} */ ({});
+		}
+		if (options.events) {
+			// We can't spread the object or else we'd lose the state proxy stuff, if it is one
+			/** @type {any} */ (options.props).$$events = options.events;
+		}
+		component =
+			// @ts-expect-error the public typings are not what the actual function looks like
+			Component(options.anchor, options.props) || {};
+		if (options.context) {
+			pop();
+		}
+	}, true);
 
 	const bound_event_listener = handle_event_propagation.bind(null, container);
 	const bound_document_event_listener = handle_event_propagation.bind(null, document);

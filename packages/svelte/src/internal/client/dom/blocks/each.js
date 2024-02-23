@@ -396,7 +396,6 @@ export function each_indexed(anchor_node, collection, flags, render_fn, fallback
 							},
 							i
 						),
-					{},
 					true
 				);
 			}
@@ -416,7 +415,7 @@ export function each_indexed(anchor_node, collection, flags, render_fn, fallback
 			if (alternate) {
 				resume_effect(alternate);
 			} else if (fallback_fn) {
-				alternate = render_effect(() => fallback_fn(anchor_node), {}, true);
+				alternate = render_effect(() => fallback_fn(anchor_node), true);
 			}
 		} else if (alternate) {
 			pause_effect(alternate, () => {
@@ -616,13 +615,9 @@ function each_item_block(item, key, index, render_fn, flags) {
 	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
 	const block = create_each_item_block(item_value, index_value, key);
 
-	const effect = render_effect(
-		() => {
-			render_fn(null, block.v, block.i);
-		},
-		block,
-		true
-	);
+	const effect = render_effect(() => {
+		render_fn(null, block.v, block.i);
+	}, true);
 
 	block.e = effect;
 	return block;

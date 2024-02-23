@@ -72,11 +72,10 @@ export function push_reference(target_signal, ref_signal) {
  * @param {import('../types.js').EffectType} type
  * @param {(() => void | (() => void))} fn
  * @param {boolean} sync
- * @param {null} block
  * @param {boolean} schedule
  * @returns {import('../types.js').EffectSignal}
  */
-function internal_create_effect(type, fn, sync, block, schedule) {
+function internal_create_effect(type, fn, sync, schedule) {
 	const signal = create_computation_signal(type | DIRTY, null);
 	signal.i = fn;
 	signal.x = current_component_context;
@@ -115,13 +114,7 @@ export function user_effect(fn) {
 		current_component_context !== null &&
 		!current_component_context.m;
 
-	const effect = internal_create_effect(
-		EFFECT,
-		fn,
-		false,
-		null,
-		!apply_component_effect_heuristics
-	);
+	const effect = internal_create_effect(EFFECT, fn, false, !apply_component_effect_heuristics);
 
 	if (apply_component_effect_heuristics) {
 		const context = /** @type {import('../types.js').ComponentContext} */ (
@@ -139,7 +132,7 @@ export function user_effect(fn) {
  * @returns {() => void}
  */
 export function user_root_effect(fn) {
-	const effect = internal_create_effect(RENDER_EFFECT | ROOT_EFFECT, fn, true, null, true);
+	const effect = internal_create_effect(RENDER_EFFECT | ROOT_EFFECT, fn, true, true);
 	return () => {
 		destroy_effect(effect);
 	};
@@ -150,7 +143,7 @@ export function user_root_effect(fn) {
  * @returns {import('../types.js').EffectSignal}
  */
 export function effect(fn) {
-	return internal_create_effect(EFFECT, fn, false, null, true);
+	return internal_create_effect(EFFECT, fn, false, true);
 }
 
 /**
@@ -158,7 +151,7 @@ export function effect(fn) {
  * @returns {import('../types.js').EffectSignal}
  */
 export function managed_effect(fn) {
-	return internal_create_effect(EFFECT | MANAGED, fn, false, null, true);
+	return internal_create_effect(EFFECT | MANAGED, fn, false, true);
 }
 
 /**
@@ -167,7 +160,7 @@ export function managed_effect(fn) {
  * @returns {import('../types.js').EffectSignal}
  */
 export function managed_pre_effect(fn, sync) {
-	return internal_create_effect(PRE_EFFECT | MANAGED, fn, sync, null, true);
+	return internal_create_effect(PRE_EFFECT | MANAGED, fn, sync, true);
 }
 
 /**
@@ -193,7 +186,6 @@ export function pre_effect(fn) {
 			return val;
 		},
 		sync,
-		null,
 		true
 	);
 }
@@ -206,22 +198,21 @@ export function pre_effect(fn) {
  * @returns {import('../types.js').EffectSignal}
  */
 export function invalidate_effect(fn) {
-	return internal_create_effect(PRE_EFFECT, fn, true, null, true);
+	return internal_create_effect(PRE_EFFECT, fn, true, true);
 }
 
 /**
  * @param {() => void | (() => void)} fn
- * @param {null} block
- * @param {any} managed
- * @param {any} sync
+ * @param {boolean} managed
+ * @param {boolean} sync
  * @returns {import('../types.js').EffectSignal}
  */
-export function render_effect(fn, block = null, managed = false, sync = true) {
+export function render_effect(fn, managed = false, sync = true) {
 	let flags = RENDER_EFFECT;
 	if (managed) {
 		flags |= MANAGED;
 	}
-	return internal_create_effect(flags, /** @type {any} */ (fn), sync, null, true);
+	return internal_create_effect(flags, /** @type {any} */ (fn), sync, true);
 }
 
 /**
@@ -234,7 +225,7 @@ export function derived(fn) {
 	const is_unowned = current_effect === null;
 	const flags = is_unowned ? DERIVED | UNOWNED : DERIVED;
 	const signal = /** @type {import('../types.js').ComputationSignal<V>} */ (
-		create_computation_signal(flags | CLEAN, UNINITIALIZED, null)
+		create_computation_signal(flags | CLEAN, UNINITIALIZED)
 	);
 	signal.i = fn;
 	signal.e = default_equals;

@@ -71,7 +71,7 @@ export function element(anchor_node, get_tag, is_svg, render_fn) {
 						destroy_effect(block);
 					}
 
-					block = render_effect(() => render_fn(next_element, anchor_node), {}, true); // TODO disable transitions
+					block = render_effect(() => render_fn(next_element, anchor_node), true); // TODO disable transitions
 				}
 			} else if (block) {
 				const old_element = element;
@@ -103,7 +103,7 @@ export function element(anchor_node, get_tag, is_svg, render_fn) {
 				if (block) {
 					resume_effect(block);
 				} else {
-					block = render_effect(() => render_fn(next_element, anchor), {}, true);
+					block = render_effect(() => render_fn(next_element, anchor), true);
 				}
 			}
 		}

@@ -27,6 +27,6 @@ export function key_block(anchor_node, get_key, render_fn) {
 			pause_effect(e, noop);
 		}
 
-		effect = render_effect(() => render_fn(anchor_node), {}, true);
+		effect = render_effect(() => render_fn(anchor_node), true);
 	}).f |= BRANCH_EFFECT;
 }

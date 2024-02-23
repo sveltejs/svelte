@@ -22,6 +22,6 @@ export function snippet_effect(get_snippet, node, ...args) {
 			destroy_effect(effect);
 		}
 
-		effect = render_effect(() => untrack(() => snippet(node, ...args)), {}, true);
+		effect = render_effect(() => untrack(() => snippet(node, ...args)), true);
 	});
 }
