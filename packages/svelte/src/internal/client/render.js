@@ -1026,7 +1026,6 @@ export function bind_value(dom, get_value, update) {
 
 		/** @type {any} */
 		let value = dom.value;
-		console.log('get value', value);
 		if (is_numberlike_input(dom)) {
 			value = to_number(value);
 		}
@@ -1043,7 +1042,6 @@ export function bind_value(dom, get_value, update) {
 		const value = get_value();
 		// @ts-ignore
 		dom.__value = value;
-		console.log('set value', value);
 
 		if (is_numberlike_input(dom) && value === to_number(dom.value)) {
 			// handles 0 vs 00 case (see https://github.com/sveltejs/svelte/issues/9959)
