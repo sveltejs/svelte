@@ -524,7 +524,7 @@ function mark_lis(a) {
  * @returns {Text | Element | Comment}
  */
 function insert_each_item_block(block, dom, is_controlled, sibling) {
-	var current = /** @type {import('../../types.js').TemplateNode} */ (block.d);
+	var current = /** @type {import('../../types.js').TemplateNode} */ (block.e.dom);
 
 	if (sibling === null) {
 		if (is_controlled) {
@@ -542,7 +542,7 @@ function insert_each_item_block(block, dom, is_controlled, sibling) {
  * @returns {Text | Element | Comment}
  */
 function get_first_child(block) {
-	var current = block.d;
+	var current = block.e.dom;
 
 	if (is_array(current)) {
 		return /** @type {Text | Element | Comment} */ (current[0]);
@@ -556,7 +556,7 @@ function get_first_child(block) {
  * @returns {Text | Element | Comment}
  */
 export function get_first_element(block) {
-	const current = block.d;
+	const current = block.e.dom;
 
 	if (is_array(current)) {
 		for (let i = 0; i < current.length; i++) {
@@ -628,7 +628,7 @@ export function destroy_each_item_block(
 			return;
 		}
 	}
-	const dom = block.d;
+	const dom = block.e.dom;
 	if (!controlled && dom !== null) {
 		remove(dom);
 	}
@@ -657,8 +657,7 @@ function each_item_block(item, key, index, render_fn, flags) {
 	const block = create_each_item_block(item_value, index_value, key);
 
 	const effect = render_effect(
-		/** @param {import('../../types.js').EachItemBlock} block */
-		(block) => {
+		() => {
 			render_fn(null, block.v, block.i);
 		},
 		block,

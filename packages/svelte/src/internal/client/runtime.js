@@ -1,5 +1,4 @@
 import { DEV } from 'esm-env';
-import { run_all } from '../common.js';
 import {
 	array_prototype,
 	get_descriptors,

@@ -10,7 +10,6 @@ import {
 	map_set,
 	set_class_name
 } from './operations.js';
-import { create_dynamic_element_block, create_snippet_block } from './block.js';
 import {
 	PassiveDelegatedEvents,
 	DelegatedEvents,
@@ -31,10 +30,8 @@ import {
 import {
 	destroy_signal,
 	push_destroy_fn,
-	execute_effect,
 	untrack,
 	flush_sync,
-	current_block,
 	push,
 	pop,
 	current_component_context,
@@ -267,8 +264,6 @@ export function comment(anchor) {
  * @returns {void}
  */
 function close_template(dom, is_fragment, anchor) {
-	const block = /** @type {import('./types.js').Block} */ (current_block);
-
 	const effect = /** @type {import('./types.js').BlockEffect} */ (current_effect);
 
 	/** @type {import('./types.js').TemplateNode | Array<import('./types.js').TemplateNode>} */
@@ -280,7 +275,7 @@ function close_template(dom, is_fragment, anchor) {
 	if (!hydrating && anchor !== null) {
 		insert(current, null, anchor);
 	}
-	block.d = current;
+
 	effect.dom = current;
 }
 
