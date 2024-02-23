@@ -180,7 +180,6 @@ function get_delegated_event(event_name, handler, context) {
 
 		// If we are referencing a binding that is shadowed in another scope then bail out.
 		if (local_binding !== null && binding !== null && local_binding.node !== binding.node) {
-			debugger;
 			return non_hoistable;
 		}
 
