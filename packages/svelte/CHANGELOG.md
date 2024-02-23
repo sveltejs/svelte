@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.68
+
+### Patch Changes
+
+- fix: improve deep_read performance ([#10624](https://github.com/sveltejs/svelte/pull/10624))
+
 ## 5.0.0-next.67
 
 ### Patch Changes
