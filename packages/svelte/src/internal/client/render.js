@@ -488,24 +488,19 @@ export function text(dom, value) {
 }
 
 /**
- * @param {HTMLElement} dom
+ * @param {HTMLElement} element
  * @param {boolean} value
  * @returns {void}
  */
-export function auto_focus(dom, value) {
+export function auto_focus(element, value) {
 	if (value) {
-		const body = document.body;
-		dom.autofocus = true;
-		render_effect(
-			() => {
-				if (document.activeElement === body) {
-					dom.focus();
-				}
-			},
-			current_block,
-			true,
-			false
-		);
+		element.autofocus = true;
+
+		user_effect(() => {
+			if (document.activeElement === document.body) {
+				element.focus();
+			}
+		});
 	}
 }
 
