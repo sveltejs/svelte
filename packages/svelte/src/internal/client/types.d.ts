@@ -1,18 +1,4 @@
-import {
-	DERIVED,
-	EFFECT,
-	RENDER_EFFECT,
-	SOURCE,
-	PRE_EFFECT,
-	EACH_BLOCK,
-	EACH_ITEM_BLOCK,
-	IF_BLOCK,
-	HEAD_BLOCK,
-	DYNAMIC_COMPONENT_BLOCK,
-	DYNAMIC_ELEMENT_BLOCK,
-	SNIPPET_BLOCK,
-	STATE_SYMBOL
-} from './constants.js';
+import { DERIVED, EFFECT, RENDER_EFFECT, SOURCE, PRE_EFFECT, STATE_SYMBOL } from './constants.js';
 
 // Put all internal types in this file. Once we convert to JSDoc, we can make this a d.ts file
 
@@ -136,15 +122,6 @@ export type UnwrappedSignal<T> = T extends Signal<infer U> ? U : T;
 
 export type EqualsFunctions<T = any> = (a: T, v: T) => boolean;
 
-export type BlockType =
-	| typeof EACH_BLOCK
-	| typeof EACH_ITEM_BLOCK
-	| typeof IF_BLOCK
-	| typeof SNIPPET_BLOCK
-	| typeof HEAD_BLOCK
-	| typeof DYNAMIC_COMPONENT_BLOCK
-	| typeof DYNAMIC_ELEMENT_BLOCK;
-
 export type TemplateNode = Text | Element | Comment;
 
 export type Transition = {
@@ -170,10 +147,6 @@ export type Transition = {
 };
 
 export type EachItemBlock = {
-	/** transition */
-	a: null | ((block: EachItemBlock, transitions: Set<Transition>) => void);
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
 	e: ComputationSignal;
 	/** item */
@@ -182,14 +155,6 @@ export type EachItemBlock = {
 	i: number | Signal<number>;
 	/** key */
 	k: unknown;
-	/** parent */
-	p: null;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** transitions */
-	s: null | Set<Transition>;
-	/** type */
-	t: typeof EACH_ITEM_BLOCK;
 };
 
 export type Block = EachItemBlock;

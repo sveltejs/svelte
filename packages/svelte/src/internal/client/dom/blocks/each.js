@@ -15,7 +15,7 @@ import {
 } from '../../hydration.js';
 import { empty, map_get, map_set } from '../../operations.js';
 import { insert, remove } from '../../reconciler.js';
-import { destroy_signal, set_signal_value } from '../../runtime.js';
+import { set_signal_value } from '../../runtime.js';
 import {
 	destroy_effect,
 	pause_effect,
@@ -24,43 +24,11 @@ import {
 } from '../../reactivity/computations.js';
 import { source, mutable_source } from '../../reactivity/sources.js';
 import { is_array } from '../../utils.js';
-import { BRANCH_EFFECT, EACH_ITEM_BLOCK } from '../../constants.js';
+import { BRANCH_EFFECT } from '../../constants.js';
 
 const NEW_BLOCK = -1;
 const MOVED_BLOCK = 99999999;
 const LIS_BLOCK = -2;
-
-/**
- * @param {any | import('../../types.js').Signal<any>} item
- * @param {number | import('../../types.js').Signal<number>} index
- * @param {null | unknown} key
- * @returns {import('../../types.js').EachItemBlock}
- */
-export function create_each_item_block(item, index, key) {
-	return {
-		// animate transition
-		a: null,
-		// dom
-		d: null,
-		// effect
-		// @ts-expect-error
-		e: null,
-		// index
-		i: index,
-		// key
-		k: key,
-		// item
-		v: item,
-		// parent
-		p: null,
-		// transition
-		r: null,
-		// transitions
-		s: null,
-		// type
-		t: EACH_ITEM_BLOCK
-	};
-}
 
 /**
  * Reconcile arrays by the equality of the elements in the array. This algorithm
@@ -580,12 +548,14 @@ function update_each_item_block(block, item, index, type) {
 	if ((type & EACH_ITEM_REACTIVE) !== 0) {
 		set_signal_value(block_v, item);
 	}
-	const transitions = block.s;
+	// const transitions = block.s;
+	const transitions = null;
 	const index_is_reactive = (type & EACH_INDEX_REACTIVE) !== 0;
 	// Handle each item animations
-	const each_animation = block.a;
+	// const each_animation = block.a;
+	const each_animation = null;
 	if (transitions !== null && (type & EACH_KEYED) !== 0 && each_animation !== null) {
-		each_animation(block, transitions);
+		// each_animation(block, transitions);
 	}
 	if (index_is_reactive) {
 		set_signal_value(/** @type {import('../../types.js').Signal<number>} */ (block.i), index);
@@ -613,12 +583,19 @@ function each_item_block(item, key, index, render_fn, flags) {
 			: mutable_source(item);
 
 	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
-	const block = create_each_item_block(item_value, index_value, key);
 
-	const effect = render_effect(() => {
+	/** @type {import('../../types.js').EachItemBlock} */
+	const block = {
+		// @ts-expect-error
+		e: null,
+		i: index_value,
+		k: key,
+		v: item_value
+	};
+
+	block.e = render_effect(() => {
 		render_fn(null, block.v, block.i);
 	}, true);
 
-	block.e = effect;
 	return block;
 }

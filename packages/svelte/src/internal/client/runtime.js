@@ -11,8 +11,6 @@ import {
 import { unstate } from './proxy.js';
 import { pre_effect } from './reactivity/computations.js';
 import {
-	EACH_BLOCK,
-	IF_BLOCK,
 	EFFECT,
 	PRE_EFFECT,
 	RENDER_EFFECT,
