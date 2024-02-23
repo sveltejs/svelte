@@ -176,6 +176,12 @@ function get_delegated_event(event_name, handler, context) {
 			return non_hoistable;
 		}
 		const binding = scope.get(reference);
+		const local_binding = context.state.scope.get(reference);
+
+		// If we are referencing a binding that is shadowed in another scope then bail out.
+		if (local_binding !== null && binding !== null && local_binding.node !== binding.node) {
+			return non_hoistable;
+		}
 
 		// If we have multiple references to the same store using $ prefix, bail out.
 		if (
