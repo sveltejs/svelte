@@ -62,6 +62,10 @@
       "types": "./types/index.d.ts",
       "default": "./src/motion/index.js"
     },
+    "./reactivity": {
+      "types": "./types/index.d.ts",
+      "default": "./src/reactivity/index.js"
+    },
     "./server": {
       "types": "./types/index.d.ts",
       "default": "./src/server/index.js"
