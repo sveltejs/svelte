@@ -171,89 +171,6 @@ export type Transition = {
 	d: HTMLElement;
 };
 
-export type IfBlock = {
-	/** value */
-	v: boolean;
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | EffectSignal;
-	/** parent */
-	p: Block;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** consequent transitions */
-	c: null | Set<Transition>;
-	/** alternate transitions */
-	a: null | Set<Transition>;
-	/** effect */
-	ce: null | EffectSignal;
-	/** effect */
-	ae: null | EffectSignal;
-	/** type */
-	t: typeof IF_BLOCK;
-};
-
-export type HeadBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | ComputationSignal;
-	/** parent */
-	p: Block;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof HEAD_BLOCK;
-};
-
-export type DynamicElementBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | ComputationSignal;
-	/** parent */
-	p: Block;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof DYNAMIC_ELEMENT_BLOCK;
-};
-
-export type DynamicComponentBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | ComputationSignal;
-	/** parent */
-	p: Block;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof DYNAMIC_COMPONENT_BLOCK;
-};
-
-export type EachBlock = {
-	/** anchor */
-	a: Element | Comment;
-	/** flags */
-	f: number;
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** items */
-	v: EachItemBlock[];
-	/** effewct */
-	e: null | ComputationSignal;
-	/** parent */
-	p: Block;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** transitions */
-	s: Array<EachItemBlock>;
-	/** type */
-	t: typeof EACH_BLOCK;
-};
-
 export type EachItemBlock = {
 	/** transition */
 	a: null | ((block: EachItemBlock, transitions: Set<Transition>) => void);
@@ -268,7 +185,7 @@ export type EachItemBlock = {
 	/** key */
 	k: unknown;
 	/** parent */
-	p: EachBlock;
+	p: null;
 	/** transition */
 	r: null | ((transition: Transition) => void);
 	/** transitions */
@@ -277,27 +194,7 @@ export type EachItemBlock = {
 	t: typeof EACH_ITEM_BLOCK;
 };
 
-export type SnippetBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** parent */
-	p: Block;
-	/** effect */
-	e: null | ComputationSignal;
-	/** transition */
-	r: null;
-	/** type */
-	t: typeof SNIPPET_BLOCK;
-};
-
-export type Block =
-	| IfBlock
-	| DynamicElementBlock
-	| DynamicComponentBlock
-	| HeadBlock
-	| EachBlock
-	| EachItemBlock
-	| SnippetBlock;
+export type Block = EachItemBlock;
 
 export type TransitionFn<P> = (
 	element: Element,

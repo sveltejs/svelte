@@ -15,7 +15,7 @@ import {
 } from '../../hydration.js';
 import { empty, map_get, map_set } from '../../operations.js';
 import { insert, remove } from '../../reconciler.js';
-import { current_block, destroy_signal, set_signal_value } from '../../runtime.js';
+import { destroy_signal, set_signal_value } from '../../runtime.js';
 import {
 	destroy_effect,
 	pause_effect,
@@ -53,7 +53,7 @@ export function create_each_item_block(item, index, key) {
 		// item
 		v: item,
 		// parent
-		p: /** @type {import('../../types.js').EachBlock} */ (current_block),
+		p: null,
 		// transition
 		r: null,
 		// transitions
