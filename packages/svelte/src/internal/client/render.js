@@ -1026,6 +1026,7 @@ export function bind_value(dom, get_value, update) {
 
 		/** @type {any} */
 		let value = dom.value;
+		console.log('get value', value);
 		if (is_numberlike_input(dom)) {
 			value = to_number(value);
 		}
@@ -1042,9 +1043,16 @@ export function bind_value(dom, get_value, update) {
 		const value = get_value();
 		// @ts-ignore
 		dom.__value = value;
+		console.log('set value', value);
 
 		if (is_numberlike_input(dom) && value === to_number(dom.value)) {
 			// handles 0 vs 00 case (see https://github.com/sveltejs/svelte/issues/9959)
+			return;
+		}
+
+		if (dom.type === 'date' && !value && !dom.value) {
+			// Handles the case where a temporarily invalid date is set (while typing, for example with a leading 0 for the day)
+			// and prevents this state from clearing the other parts of the date input (see https://github.com/sveltejs/svelte/issues/7897)
 			return;
 		}
 
