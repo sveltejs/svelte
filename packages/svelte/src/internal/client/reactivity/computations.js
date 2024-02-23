@@ -28,12 +28,10 @@ import {
  * @template V
  * @param {import('../types.js').SignalFlags} flags
  * @param {V} value
- * @param {import('../types.js').Block | null} block
  */
-function create_computation_signal(flags, value, block) {
+function create_computation_signal(flags, value) {
 	/** @type {import('../types.js').ComputationSignal<V>} */
 	const signal = {
-		b: block,
 		c: null,
 		d: null,
 		e: null,
@@ -72,14 +70,14 @@ export function push_reference(target_signal, ref_signal) {
 
 /**
  * @param {import('../types.js').EffectType} type
- * @param {(() => void | (() => void)) | ((b: import('../types.js').Block) => void | (() => void))} fn
+ * @param {(() => void | (() => void))} fn
  * @param {boolean} sync
- * @param {null | import('../types.js').Block} block
+ * @param {null} block
  * @param {boolean} schedule
  * @returns {import('../types.js').EffectSignal}
  */
 function internal_create_effect(type, fn, sync, block, schedule) {
-	const signal = create_computation_signal(type | DIRTY, null, block);
+	const signal = create_computation_signal(type | DIRTY, null);
 	signal.i = fn;
 	signal.x = current_component_context;
 	if (current_effect !== null) {
@@ -212,9 +210,8 @@ export function invalidate_effect(fn) {
 }
 
 /**
- * @template {import('../types.js').Block} B
- * @param {(block: B) => void | (() => void)} fn
- * @param {any} block
+ * @param {() => void | (() => void)} fn
+ * @param {null} block
  * @param {any} managed
  * @param {any} sync
  * @returns {import('../types.js').EffectSignal}
@@ -224,7 +221,7 @@ export function render_effect(fn, block = null, managed = false, sync = true) {
 	if (managed) {
 		flags |= MANAGED;
 	}
-	return internal_create_effect(flags, /** @type {any} */ (fn), sync, block, true);
+	return internal_create_effect(flags, /** @type {any} */ (fn), sync, null, true);
 }
 
 /**

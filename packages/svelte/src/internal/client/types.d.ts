@@ -88,8 +88,6 @@ export type SourceSignalDebug = {
 };
 
 export type ComputationSignal<V = unknown> = {
-	/** block: The block associated with this effect/computed */
-	b: null | Block;
 	/** consumers: Signals that read from the current signal */
 	c: null | ComputationSignal[];
 	/** context: The associated component if this signal is an effect/computed */

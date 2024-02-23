@@ -516,7 +516,7 @@ function mark_lis(a) {
 }
 
 /**
- * @param {import('../../types.js').Block} block
+ * @param {import('../../types.js').EachItemBlock} block
  * @param {Element | Comment | Text} dom
  * @param {boolean} is_controlled
  * @param {null | Text | Element | Comment} sibling
@@ -537,7 +537,7 @@ function insert_each_item_block(block, dom, is_controlled, sibling) {
 }
 
 /**
- * @param {import('../../types.js').Block} block
+ * @param {import('../../types.js').EachItemBlock} block
  * @returns {Text | Element | Comment}
  */
 function get_first_child(block) {
@@ -551,7 +551,7 @@ function get_first_child(block) {
 }
 
 /**
- * @param {import('../../types.js').Block} block
+ * @param {import('../../types.js').EachItemBlock} block
  * @returns {Text | Element | Comment}
  */
 export function get_first_element(block) {
@@ -593,45 +593,6 @@ function update_each_item_block(block, item, index, type) {
 	} else {
 		block.i = index;
 	}
-}
-
-/**
- * @param {import('../../types.js').EachItemBlock} block
- * @param {null | Array<import('../../types.js').Block>} transition_block
- * @param {boolean} apply_transitions
- * @param {any} controlled
- * @returns {void}
- */
-export function destroy_each_item_block(
-	block,
-	transition_block,
-	apply_transitions,
-	controlled = false
-) {
-	const transitions = block.s;
-
-	if (apply_transitions && transitions !== null) {
-		// We might have pending key transitions, if so remove them first
-		for (let other of transitions) {
-			if (other.r === 'key') {
-				transitions.delete(other);
-			}
-		}
-		if (transitions.size === 0) {
-			block.s = null;
-		} else {
-			// trigger_transitions(transitions, 'out');
-			if (transition_block !== null) {
-				transition_block.push(block);
-			}
-			return;
-		}
-	}
-	const dom = block.e.dom;
-	if (!controlled && dom !== null) {
-		remove(dom);
-	}
-	destroy_signal(/** @type {import('../../types.js').EffectSignal} */ (block.e));
 }
 
 /**
