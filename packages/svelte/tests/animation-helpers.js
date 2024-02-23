@@ -73,6 +73,7 @@ class Animation {
 		}
 
 		this.#cancelled();
+		raf.animations.delete(this);
 	}
 
 	_update() {

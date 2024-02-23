@@ -269,7 +269,7 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 			if (current_animation && current_options) {
 				const time = /** @type {number} */ (current_animation.currentTime);
 				const duration = /** @type {number} */ (current_options.duration);
-				p = (current_delta * time) / duration;
+				p = (Math.abs(current_delta) * time) / duration;
 				current_animation.cancel();
 			}
 
@@ -289,7 +289,8 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 				current_delta = target - p;
 
 				for (let i = 0; i <= n; i += 1) {
-					const t = (current_options.easing ?? linear)(p + (current_delta * i) / n);
+					const eased = (current_options.easing ?? linear)(i / n);
+					const t = p + current_delta * eased;
 					const css = current_options.css(t, 1 - t);
 					keyframes.push(css_to_keyframe(css));
 				}
