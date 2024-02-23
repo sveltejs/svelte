@@ -290,7 +290,7 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 				return;
 			}
 
-			const { duration, css, tick, easing = linear } = current_options;
+			const { delay = 0, duration, css, tick, easing = linear } = current_options;
 
 			const n = current_options.duration / (1000 / 60);
 			current_delta = target - p;
@@ -309,6 +309,7 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 				}
 
 				current_animation = element.animate(keyframes, {
+					delay,
 					duration: adjusted_duration,
 					easing: 'linear',
 					fill: 'forwards'
@@ -324,7 +325,7 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 			} else if (tick) {
 				// Timer
 				let running = true;
-				const start_time = raf.now() + 0; // TODO account for delay
+				const start_time = raf.now() + delay;
 				const start_p = p;
 				const end_time = start_time + adjusted_duration;
 
