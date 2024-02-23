@@ -1383,6 +1383,7 @@ export function delegate(events) {
  * @returns {void}
  */
 function handle_event_propagation(handler_element, event) {
+	const owner_document = handler_element.ownerDocument;
 	const event_name = event.type;
 	const path = event.composedPath?.() || [];
 	let current_target = /** @type {null | Element} */ (path[0] || event.target);
@@ -1402,9 +1403,11 @@ function handle_event_propagation(handler_element, event) {
 	const handled_at = event.__root;
 	if (handled_at) {
 		const at_idx = path.indexOf(handled_at);
-		// @ts-ignore
-		if (at_idx !== -1 && (handler_element === document || handler_element === window)) {
-			// This is the fallback document/window listener but the event was already handled
+		if (
+			at_idx !== -1 &&
+			(handler_element === owner_document || handler_element === /** @type {any} */ (window))
+		) {
+			// This is the fallback document listener or a window listener, but the event was already handled
 			// -> ignore, but set handle_at to document/window so that we're resetting the event
 			// chain in case someone manually dispatches the same event object again.
 			// @ts-expect-error
@@ -1434,8 +1437,7 @@ function handle_event_propagation(handler_element, event) {
 	define_property(event, 'currentTarget', {
 		configurable: true,
 		get() {
-			// TODO: ensure correct document?
-			return current_target || document;
+			return current_target || owner_document;
 		}
 	});
 

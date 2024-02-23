@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: trigger again when window listener already handled
+fix: prevent window listeners from triggering events twice
