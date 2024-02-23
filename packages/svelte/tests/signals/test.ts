@@ -7,7 +7,7 @@ import {
 	user_effect
 } from '../../src/internal/client/reactivity/computations';
 import { source } from '../../src/internal/client/reactivity/sources';
-import type { ComputationSignal } from '../../src/internal/client/types';
+import type { Computation } from '../../src/internal/client/types';
 
 /**
  * @param runes runes mode
@@ -208,7 +208,7 @@ describe('signals', () => {
 
 	test('correctly cleanup onowned nested derived values', () => {
 		return () => {
-			const nested: ComputationSignal<string>[] = [];
+			const nested: Computation<string>[] = [];
 
 			const a = source(0);
 			const b = source(0);

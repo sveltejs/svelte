@@ -54,7 +54,7 @@ let current_queued_effects = [];
 let flush_count = 0;
 // Handle signal reactivity tree dependencies and consumer
 
-/** @type {null | import('./types.js').ComputationSignal} */
+/** @type {null | import('./types.js').Computation} */
 export let current_consumer = null;
 
 /** @type {null | import('./types.js').EffectSignal} */
@@ -161,7 +161,7 @@ function is_signal_dirty(signal) {
 		return true;
 	}
 	if ((flags & MAYBE_DIRTY) !== 0) {
-		const dependencies = /** @type {import('./types.js').ComputationSignal<V>} **/ (signal).d;
+		const dependencies = /** @type {import('./types.js').Computation<V>} **/ (signal).d;
 		if (dependencies !== null) {
 			const length = dependencies.length;
 			let i;
@@ -174,10 +174,7 @@ function is_signal_dirty(signal) {
 				// The flags can be marked as dirty from the above is_signal_dirty call.
 				if ((dependency.f & DIRTY) !== 0) {
 					if ((dependency.f & DERIVED) !== 0) {
-						update_derived(
-							/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency),
-							true
-						);
+						update_derived(/** @type {import('./types.js').Computation<V>} **/ (dependency), true);
 						// Might have been mutated from above get.
 						if ((signal.f & DIRTY) !== 0) {
 							return true;
@@ -205,7 +202,7 @@ function is_signal_dirty(signal) {
 
 /**
  * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Computation<V>} signal
  * @returns {V}
  */
 function execute_signal_fn(signal) {
@@ -311,7 +308,7 @@ function execute_signal_fn(signal) {
 
 /**
  * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Computation<V>} signal
  * @param {import('./types.js').Signal<V>} dependency
  * @returns {void}
  */
@@ -334,13 +331,13 @@ function remove_consumer(signal, dependency) {
 	if (consumers_length === 0 && (dependency.f & UNOWNED) !== 0) {
 		// If the signal is unowned then we need to make sure to change it to dirty.
 		set_signal_status(dependency, DIRTY);
-		remove_consumers(/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency), 0);
+		remove_consumers(/** @type {import('./types.js').Computation<V>} **/ (dependency), 0);
 	}
 }
 
 /**
  * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Computation<V>} signal
  * @param {number} start_index
  * @returns {void}
  */
@@ -361,7 +358,7 @@ function remove_consumers(signal, start_index) {
 
 /**
  * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Computation<V>} signal
  * @returns {void}
  */
 function destroy_references(signal) {
@@ -654,7 +651,7 @@ export async function tick() {
 
 /**
  * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Computation<V>} signal
  * @param {boolean} force_schedule
  * @returns {void}
  */
@@ -741,10 +738,10 @@ export function get(signal) {
 			// we want to avoid tracking indirect dependencies
 			const previous_inspect_fn = inspect_fn;
 			inspect_fn = null;
-			update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (signal), false);
+			update_derived(/** @type {import('./types.js').Computation<V>} **/ (signal), false);
 			inspect_fn = previous_inspect_fn;
 		} else {
-			update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (signal), false);
+			update_derived(/** @type {import('./types.js').Computation<V>} **/ (signal), false);
 		}
 	}
 	return signal.v;
@@ -924,7 +921,7 @@ export function set_signal_value(signal, value) {
 
 /**
  * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Computation<V>} signal
  * @returns {void}
  */
 export function destroy_signal(signal) {
@@ -968,7 +965,7 @@ export function untrack(fn) {
 
 /**
  * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Computation<V>} signal
  * @param {() => void} destroy_fn
  * @returns {void}
  */

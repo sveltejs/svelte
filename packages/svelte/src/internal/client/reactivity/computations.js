@@ -30,7 +30,7 @@ import {
  * @param {V} value
  */
 function create_computation_signal(flags, value) {
-	/** @type {import('../types.js').ComputationSignal<V>} */
+	/** @type {import('../types.js').Computation<V>} */
 	const signal = {
 		c: null,
 		d: null,
@@ -55,8 +55,8 @@ function create_computation_signal(flags, value) {
 }
 
 /**
- * @param {import('../types.js').ComputationSignal} target_signal
- * @param {import('../types.js').ComputationSignal} ref_signal
+ * @param {import('../types.js').Computation} target_signal
+ * @param {import('../types.js').Computation} ref_signal
  * @returns {void}
  */
 export function push_reference(target_signal, ref_signal) {
@@ -218,13 +218,13 @@ export function render_effect(fn, managed = false, sync = true) {
 /**
  * @template V
  * @param {() => V} fn
- * @returns {import('../types.js').ComputationSignal<V>}
+ * @returns {import('../types.js').Computation<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
 	const is_unowned = current_effect === null;
 	const flags = is_unowned ? DERIVED | UNOWNED : DERIVED;
-	const signal = /** @type {import('../types.js').ComputationSignal<V>} */ (
+	const signal = /** @type {import('../types.js').Computation<V>} */ (
 		create_computation_signal(flags | CLEAN, UNINITIALIZED)
 	);
 	signal.i = fn;
@@ -238,7 +238,7 @@ export function derived(fn) {
 /**
  * @template V
  * @param {() => V} fn
- * @returns {import('../types.js').ComputationSignal<V>}
+ * @returns {import('../types.js').Computation<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function derived_safe_equal(fn) {
@@ -248,7 +248,7 @@ export function derived_safe_equal(fn) {
 }
 
 /**
- * @param {import('../types.js').ComputationSignal} effect
+ * @param {import('../types.js').Computation} effect
  * @param {() => void} done
  */
 export function pause_effect(effect, done) {

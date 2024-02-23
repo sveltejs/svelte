@@ -55,9 +55,9 @@ export type ComponentContext = {
 // (effects and derived signals). Thus we can improve the memory profile at the slight cost
 // of some runtime performance.
 
-export type SourceSignal<V = unknown> = {
+export type Source<V = unknown> = {
 	/** consumers: Signals that read from the current signal */
-	c: null | ComputationSignal[];
+	c: null | Computation[];
 	/** equals: For value equality */
 	e: null | EqualsFunctions;
 	/** flags: The types that the signal represent, as a bitwise value */
@@ -68,14 +68,14 @@ export type SourceSignal<V = unknown> = {
 	w: number;
 };
 
-export type SourceSignalDebug = {
+export type SourceDebug = {
 	/** This is DEV only */
 	inspect: Set<Function>;
 };
 
-export type ComputationSignal<V = unknown> = {
+export type Computation<V = unknown> = {
 	/** consumers: Signals that read from the current signal */
-	c: null | ComputationSignal[];
+	c: null | Computation[];
 	/** context: The associated component if this signal is an effect/computed */
 	x: null | ComponentContext;
 	/** dependencies: Signals that this signal reads from */
@@ -93,7 +93,7 @@ export type ComputationSignal<V = unknown> = {
 		| (() => void | (() => void))
 		| ((b: Block, s: Signal) => void | (() => void));
 	/** references: Anything that a signal owns */
-	r: null | ComputationSignal[];
+	r: null | Computation[];
 	/** value: The latest value for this signal, doubles as the teardown for effects */
 	v: V;
 	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
@@ -103,18 +103,18 @@ export type ComputationSignal<V = unknown> = {
 	parent: Signal | null;
 };
 
-export type BlockEffect<V = unknown> = ComputationSignal<V> & {
+export type BlockEffect<V = unknown> = Computation<V> & {
 	in?: TransitionObject[];
 	out?: TransitionObject[];
 	dom?: TemplateNode | Array<TemplateNode>;
 	ran?: boolean;
 };
 
-export type Signal<V = unknown> = SourceSignal<V> | ComputationSignal<V>;
+export type Signal<V = unknown> = Source<V> | Computation<V>;
 
-export type SignalDebug<V = unknown> = SourceSignalDebug & Signal<V>;
+export type SignalDebug<V = unknown> = SourceDebug & Signal<V>;
 
-export type EffectSignal = ComputationSignal<null | (() => void)>;
+export type EffectSignal = Computation<null | (() => void)>;
 
 export type MaybeSignal<T = unknown> = T | Signal<T>;
 
@@ -148,7 +148,7 @@ export type Transition = {
 
 export type EachItemBlock = {
 	/** effect */
-	e: ComputationSignal;
+	e: Computation;
 	/** item */
 	v: any | Signal<any>;
 	/** index */
@@ -219,9 +219,9 @@ export type TaskEntry = { c: TaskCallback; f: () => void };
 
 export interface ProxyMetadata<T = Record<string | symbol, any>> {
 	/** A map of signals associated to the properties that are reactive */
-	s: Map<string | symbol, SourceSignal<any>>;
+	s: Map<string | symbol, Source<any>>;
 	/** A version counter, used within the proxy to signal changes in places where there's no other way to signal an update */
-	v: SourceSignal<number>;
+	v: Source<number>;
 	/** `true` if the proxified object is an array */
 	a: boolean;
 	/** Immutable: Whether to use a source or mutable source under the hood */

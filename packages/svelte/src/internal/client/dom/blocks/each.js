@@ -310,10 +310,10 @@ export function each_indexed(anchor_node, collection, flags, render_fn, fallback
 
 	let length = 0;
 
-	/** @type {Array<import('../../types.js').ComputationSignal | null>} */
+	/** @type {Array<import('../../types.js').Computation | null>} */
 	let effects = [];
 
-	/** @type {import('../../types.js').ComputationSignal | null} */
+	/** @type {import('../../types.js').Computation | null} */
 	let alternate;
 
 	function truncate() {
