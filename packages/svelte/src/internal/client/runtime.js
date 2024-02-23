@@ -388,20 +388,6 @@ function destroy_references(signal) {
 }
 
 /**
- * @param {import('./types.js').Block} block
- * @param {unknown} error
- * @returns {void}
- */
-function report_error(block, error) {
-	/** @type {import('./types.js').Block | null} */
-	let current_block = block;
-
-	if (current_block !== null) {
-		throw error;
-	}
-}
-
-/**
  * @param {import('./types.js').EffectSignal} signal
  * @returns {void}
  */
@@ -426,13 +412,6 @@ export function execute_effect(signal) {
 		const possible_teardown = execute_signal_fn(signal);
 		if (typeof possible_teardown === 'function') {
 			signal.v = possible_teardown;
-		}
-	} catch (error) {
-		const block = signal.b;
-		if (block !== null) {
-			report_error(block, error);
-		} else {
-			throw error;
 		}
 	} finally {
 		current_effect = previous_effect;
