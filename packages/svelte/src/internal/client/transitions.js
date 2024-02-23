@@ -328,7 +328,7 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 				const start_p = p;
 				const end_time = start_time + adjusted_duration;
 
-				tick(p, 1 - p);
+				tick(p, 1 - p); // TODO put in nested effect, to avoid interleaved reads/writes?
 
 				current_task = loop((now) => {
 					if (running) {
