@@ -1,6 +1,10 @@
 import { is_promise } from '../../../common.js';
 import { hydrate_block_anchor } from '../../hydration.js';
-import { set_current_effect } from '../../runtime.js';
+import {
+	current_component_context,
+	set_current_component_context,
+	set_current_effect
+} from '../../runtime.js';
 import { pause_effect, render_effect, resume_effect } from '../../reactivity/computations.js';
 import { BRANCH_EFFECT } from '../../constants.js';
 
@@ -14,6 +18,8 @@ import { BRANCH_EFFECT } from '../../constants.js';
  * @returns {void}
  */
 export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_fn) {
+	const component_context = current_component_context;
+
 	hydrate_block_anchor(anchor_node);
 
 	/** @type {any} */
@@ -67,7 +73,9 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 							resume_effect(then_effect);
 						} else if (then_fn) {
 							set_current_effect(branch);
+							set_current_component_context(component_context);
 							then_effect = render_effect(() => then_fn(anchor_node, value), {}, true);
+							set_current_component_context(null);
 							set_current_effect(null);
 						}
 					}
@@ -88,7 +96,9 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 						resume_effect(catch_effect);
 					} else if (catch_fn) {
 						set_current_effect(branch);
+						set_current_component_context(component_context);
 						catch_effect = render_effect(() => catch_fn(anchor_node, error), {}, true);
+						set_current_component_context(null);
 						set_current_effect(null);
 					}
 				}

@@ -109,6 +109,11 @@ export let current_block = null;
 /** @type {import('./types.js').ComponentContext | null} */
 export let current_component_context = null;
 
+/** @param {import('./types.js').ComponentContext | null} context */
+export function set_current_component_context(context) {
+	current_component_context = context;
+}
+
 export let updating_derived = false;
 
 /**
