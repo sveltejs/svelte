@@ -726,6 +726,7 @@ export function get(signal) {
 			current_untracked_writes !== null &&
 			current_effect !== null &&
 			(current_effect.f & CLEAN) !== 0 &&
+			(current_effect.f & MANAGED) === 0 &&
 			current_untracked_writes.includes(signal)
 		) {
 			set_signal_status(current_effect, DIRTY);
@@ -893,7 +894,8 @@ export function set_signal_value(signal, value) {
 			!ignore_mutation_validation &&
 			current_effect !== null &&
 			current_effect.c === null &&
-			(current_effect.f & CLEAN) !== 0
+			(current_effect.f & CLEAN) !== 0 &&
+			(current_effect.f & MANAGED) === 0
 		) {
 			if (current_dependencies !== null && current_dependencies.includes(signal)) {
 				set_signal_status(current_effect, DIRTY);
@@ -1169,7 +1171,13 @@ export function pop(component) {
  * @returns {void}
  */
 export function deep_read(value, visited = new Set()) {
-	if (typeof value === 'object' && value !== null && !visited.has(value)) {
+	if (
+		typeof value === 'object' &&
+		value !== null &&
+		// We don't want to traverse DOM elements
+		!(value instanceof EventTarget) &&
+		!visited.has(value)
+	) {
 		visited.add(value);
 		for (let key in value) {
 			try {
@@ -1249,7 +1257,7 @@ export function inspect(get_value, inspect = console.log) {
 
 	pre_effect(() => {
 		const fn = () => {
-			const value = get_value().map((v) => deep_unstate(v));
+			const value = untrack(() => get_value().map((v) => deep_unstate(v)));
 			if (value.length === 2 && typeof value[1] === 'function' && !warned_inspect_changed) {
 				// eslint-disable-next-line no-console
 				console.warn(

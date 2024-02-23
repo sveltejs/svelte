@@ -2,10 +2,11 @@ import { DEV } from 'esm-env';
 import {
 	get,
 	set,
-	update,
 	updating_derived,
 	batch_inspect,
-	current_component_context
+	current_component_context,
+	untrack,
+	set_signal_value
 } from './runtime.js';
 import { effect_active } from './reactivity/computations.js';
 import {
@@ -148,6 +149,15 @@ export function unstate(value) {
 	);
 }
 
+/**
+ * @param {import('./types.js').Signal<number>} signal
+ * @param {1 | -1} [d]
+ */
+function update_version(signal, d = 1) {
+	const value = untrack(() => get(signal));
+	set_signal_value(signal, value + d);
+}
+
 /** @type {ProxyHandler<import('./types.js').ProxyStateObject<any>>} */
 const state_proxy_handler = {
 	defineProperty(target, prop, descriptor) {
@@ -182,7 +192,9 @@ const state_proxy_handler = {
 		}
 		if (s !== undefined) set(s, UNINITIALIZED);
 
-		if (boolean) update(metadata.v);
+		if (boolean) {
+			update_version(metadata.v);
+		}
 
 		return boolean;
 	},
@@ -256,10 +268,21 @@ const state_proxy_handler = {
 		return has;
 	},
 
-	set(target, prop, value) {
+	set(target, prop, value, receiver) {
 		const metadata = target[STATE_SYMBOL];
-		const s = metadata.s.get(prop);
-		if (s !== undefined) set(s, proxy(value, metadata.i, metadata.o));
+		let s = metadata.s.get(prop);
+		// If we haven't yet created a source for this property, we need to ensure
+		// we do so otherwise if we read it later, then the write won't be tracked and
+		// the heuristics of effects will be different vs if we had read the proxied
+		// object property before writing to that property.
+		if (s === undefined && effect_active()) {
+			// the read creates a signal
+			untrack(() => receiver[prop]);
+			s = metadata.s.get(prop);
+		}
+		if (s !== undefined) {
+			set(s, proxy(value, metadata.i, metadata.o));
+		}
 		const is_array = metadata.a;
 		const not_has = !(prop in target);
 
@@ -291,8 +314,7 @@ const state_proxy_handler = {
 					set(ls, length);
 				}
 			}
-
-			update(metadata.v);
+			update_version(metadata.v);
 		}
 
 		return true;
