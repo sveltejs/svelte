@@ -24,6 +24,7 @@ export * from './client/dev/ownership.js';
 export { await_block as await } from './client/dom/blocks/await.js';
 export { if_block as if } from './client/dom/blocks/if.js';
 export { key_block as key } from './client/dom/blocks/key.js';
+export { element } from './client/dom/blocks/svelte-element.js';
 export * from './client/dom/blocks/each.js';
 export * from './client/reactivity/computations.js';
 export * from './client/reactivity/sources.js';
