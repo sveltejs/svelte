@@ -4,6 +4,7 @@ import {
 	current_component_context,
 	current_consumer,
 	current_effect,
+	execute_effect,
 	flush_local_render_effects,
 	schedule_effect
 } from '../runtime.js';
@@ -263,6 +264,12 @@ export function derived_safe_equal(fn) {
  * @param {() => void} done
  */
 export function pause_effect(effect, done) {
+	if ((effect.f & INERT) !== 0) return;
+
+	if ((effect.f & DERIVED) === 0 && typeof effect.v === 'function') {
+		effect.v();
+	}
+
 	/** @type {import('../types.js').TransitionObject[]} */
 	const transitions = [];
 
@@ -312,10 +319,6 @@ export function destroy_effect(effect) {
 	if ((effect.f & DESTROYED) !== 0) return;
 	effect.f |= DESTROYED;
 
-	if ((effect.f & DERIVED) === 0 && typeof effect.v === 'function') {
-		effect.v();
-	}
-
 	// TODO detach from parent effect
 
 	// TODO distinguish between 'block effects' (?) which own their own DOM
@@ -336,6 +339,10 @@ export function destroy_effect(effect) {
  * @param {import('../types.js').BlockEffect} effect
  */
 export function resume_effect(effect) {
+	if ((effect.f & DERIVED) === 0 && (effect.f & MANAGED) === 0) {
+		execute_effect(effect);
+	}
+
 	if (effect.r) {
 		for (const child of effect.r) {
 			resume_effect(child);
