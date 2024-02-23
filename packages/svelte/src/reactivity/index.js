@@ -1,6 +1,7 @@
 import { source } from '../internal/client/reactivity/sources';
 import { get, set } from '../internal/client/runtime';
 
+/** @type {Array<keyof Date>} */
 const read = [
 	'getDate',
 	'getDay',
@@ -20,18 +21,20 @@ const read = [
 	'getUTCMinutes',
 	'getUTCMonth',
 	'getUTCSeconds',
+	// @ts-expect-error this is deprecated
 	'getYear',
 	'toDateString',
 	'toISOString',
 	'toJSON',
 	'toLocaleDateString',
-	'toLocalString',
-	'toLocalTimeString',
+	'toLocaleString',
+	'toLocaleTimeString',
 	'toString',
 	'toTimeString',
 	'toUTCString'
 ];
 
+/** @type {Array<keyof Date>} */
 const write = [
 	'setDate',
 	'setFullYear',
@@ -48,6 +51,7 @@ const write = [
 	'setUTCMinutes',
 	'setUTCMonth',
 	'setUTCSeconds',
+	// @ts-expect-error this is deprecated
 	'setYear'
 ];
 
@@ -61,6 +65,7 @@ class ReactiveDate extends Date {
 			ReactiveDate.#inited = true;
 			const proto = ReactiveDate.prototype;
 			const date_proto = Date.prototype;
+
 			for (const method of read) {
 				// @ts-ignore
 				proto[method] = function () {
@@ -69,6 +74,7 @@ class ReactiveDate extends Date {
 					return date_proto[method].call(this);
 				};
 			}
+
 			for (const method of write) {
 				// @ts-ignore
 				proto[method] = function (/** @type {any} */ ...args) {
