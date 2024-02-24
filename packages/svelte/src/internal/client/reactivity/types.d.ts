@@ -1,4 +1,14 @@
-import type { Computation, EqualsFunctions, SignalFlags } from '../types';
+import type { DERIVED, EFFECT, PRE_EFFECT, RENDER_EFFECT, SOURCE } from '../constants';
+import type { Computation, EqualsFunctions } from '../types';
+
+export type SignalFlags =
+	| typeof SOURCE
+	| typeof DERIVED
+	| typeof EFFECT
+	| typeof PRE_EFFECT
+	| typeof RENDER_EFFECT;
+
+export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFECT;
 
 export type Source<V = unknown> = {
 	/** consumers: Signals that read from the current signal */

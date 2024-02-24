@@ -34,7 +34,7 @@ export function mutable_source(initial_value) {
 
 /**
  * @template V
- * @param {import('../types.js').SignalFlags} flags
+ * @param {import('./types.js').SignalFlags} flags
  * @param {V} value
  * @returns {import('./types.js').Source<V> | import('./types.js').Source<V> & import('./types.js').SourceDebug}
  */

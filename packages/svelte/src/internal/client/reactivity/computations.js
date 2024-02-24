@@ -26,7 +26,7 @@ import {
 
 /**
  * @template V
- * @param {import('../types.js').SignalFlags} flags
+ * @param {import('./types.js').SignalFlags} flags
  * @param {V} value
  */
 function create_computation_signal(flags, value) {
@@ -69,7 +69,7 @@ export function push_reference(target_signal, ref_signal) {
 }
 
 /**
- * @param {import('../types.js').EffectType} type
+ * @param {import('./types.js').EffectType} type
  * @param {(() => void | (() => void))} fn
  * @param {boolean} sync
  * @param {boolean} schedule

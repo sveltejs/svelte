@@ -1,15 +1,5 @@
-import { DERIVED, EFFECT, RENDER_EFFECT, SOURCE, PRE_EFFECT, STATE_SYMBOL } from './constants.js';
-import type { Source, SourceDebug } from './reactivity/types.js';
-
-// Put all internal types in this file. Once we convert to JSDoc, we can make this a d.ts file
-
-export type SignalFlags =
-	| typeof SOURCE
-	| typeof DERIVED
-	| typeof EFFECT
-	| typeof PRE_EFFECT
-	| typeof RENDER_EFFECT;
-export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFECT;
+import { STATE_SYMBOL } from './constants.js';
+import type { SignalFlags, Source, SourceDebug } from './reactivity/types.js';
 
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
