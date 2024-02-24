@@ -66,7 +66,7 @@ export interface Effect {
 	/** The types that the signal represent, as a bitwise value */
 	f: SignalFlags;
 	/** init: The function that we invoke for effects and computeds */
-	i: null | (() => void | (() => void)) | ((b: null, s: Signal) => void | (() => void));
+	i: null | (() => void | (() => void));
 	/** references: Anything that a signal owns */
 	r: null | Reaction[];
 	/** teardown */

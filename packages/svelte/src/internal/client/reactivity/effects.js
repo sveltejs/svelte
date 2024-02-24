@@ -27,7 +27,7 @@ import { push_reference } from './utils.js';
  * @param {boolean} schedule
  * @returns {import('#client').Effect}
  */
-function internal_create_effect(type, fn, sync, schedule) {
+function create_effect(type, fn, sync, schedule) {
 	/** @type {import('#client').Effect} */
 	const signal = {
 		c: null,
@@ -66,6 +66,7 @@ function internal_create_effect(type, fn, sync, schedule) {
 }
 
 /**
+ * Internal representation of `$effect.active()`
  * @returns {boolean}
  */
 export function effect_active() {
@@ -90,7 +91,7 @@ export function user_effect(fn) {
 		current_component_context !== null &&
 		!current_component_context.m;
 
-	const effect = internal_create_effect(EFFECT, fn, false, !apply_component_effect_heuristics);
+	const effect = create_effect(EFFECT, fn, false, !apply_component_effect_heuristics);
 
 	if (apply_component_effect_heuristics) {
 		const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
@@ -106,7 +107,7 @@ export function user_effect(fn) {
  * @returns {() => void}
  */
 export function user_root_effect(fn) {
-	const effect = internal_create_effect(RENDER_EFFECT | ROOT_EFFECT, fn, true, true);
+	const effect = create_effect(RENDER_EFFECT | ROOT_EFFECT, fn, true, true);
 	return () => {
 		destroy_effect(effect);
 	};
@@ -117,7 +118,7 @@ export function user_root_effect(fn) {
  * @returns {import('#client').Effect}
  */
 export function effect(fn) {
-	return internal_create_effect(EFFECT, fn, false, true);
+	return create_effect(EFFECT, fn, false, true);
 }
 
 /**
@@ -125,7 +126,7 @@ export function effect(fn) {
  * @returns {import('#client').Effect}
  */
 export function managed_effect(fn) {
-	return internal_create_effect(EFFECT | MANAGED, fn, false, true);
+	return create_effect(EFFECT | MANAGED, fn, false, true);
 }
 
 /**
@@ -134,7 +135,7 @@ export function managed_effect(fn) {
  * @returns {import('#client').Effect}
  */
 export function managed_pre_effect(fn, sync) {
-	return internal_create_effect(PRE_EFFECT | MANAGED, fn, sync, true);
+	return create_effect(PRE_EFFECT | MANAGED, fn, sync, true);
 }
 
 /**
@@ -152,7 +153,7 @@ export function pre_effect(fn) {
 		);
 	}
 	const sync = current_effect !== null && (current_effect.f & RENDER_EFFECT) !== 0;
-	return internal_create_effect(
+	return create_effect(
 		PRE_EFFECT,
 		() => {
 			const val = fn();
@@ -172,7 +173,7 @@ export function pre_effect(fn) {
  * @returns {import('#client').Effect}
  */
 export function invalidate_effect(fn) {
-	return internal_create_effect(PRE_EFFECT, fn, true, true);
+	return create_effect(PRE_EFFECT, fn, true, true);
 }
 
 /**
@@ -186,7 +187,7 @@ export function render_effect(fn, managed = false, sync = true) {
 	if (managed) {
 		flags |= MANAGED;
 	}
-	return internal_create_effect(flags, /** @type {any} */ (fn), sync, true);
+	return create_effect(flags, /** @type {any} */ (fn), sync, true);
 }
 
 /**
