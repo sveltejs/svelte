@@ -1,7 +1,7 @@
 import type { DERIVED, EFFECT, PRE_EFFECT, RENDER_EFFECT, SOURCE } from '../constants';
 import type { ComponentContext, EqualsFunctions, TemplateNode, Transition } from '../types';
 
-export type SignalFlags =
+type SignalFlags =
 	| typeof SOURCE
 	| typeof DERIVED
 	| typeof EFFECT
