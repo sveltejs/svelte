@@ -1,7 +1,7 @@
 import { DEV } from 'esm-env';
 import { CLEAN, DERIVED, UNINITIALIZED, UNOWNED } from '../constants.js';
 import { current_consumer, current_effect } from '../runtime.js';
-import { push_reference } from './computations.js';
+import { push_reference } from './utils.js';
 import { default_equals, safe_equal } from './equality.js';
 
 /**
