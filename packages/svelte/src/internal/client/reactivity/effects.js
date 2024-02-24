@@ -31,7 +31,7 @@ function create_effect(type, fn, sync, schedule) {
 		d: null,
 		f: type | DIRTY,
 		l: 0,
-		i: fn,
+		fn: fn,
 		r: null,
 		v: null,
 		ctx: current_component_context,

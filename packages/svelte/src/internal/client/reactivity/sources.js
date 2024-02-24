@@ -12,15 +12,10 @@ import { CLEAN, SOURCE } from '../constants.js';
 export function source(value) {
 	/** @type {import('#client').Source<V>} */
 	const source = {
-		// consumers
-		c: null,
-		// equals
-		e: default_equals,
-		// flags
 		f: SOURCE | CLEAN,
-		// value
 		v: value,
-		// write version
+		eq: default_equals,
+		consumers: null,
 		w: 0
 	};
 
@@ -39,7 +34,7 @@ export function source(value) {
 /*#__NO_SIDE_EFFECTS__*/
 export function mutable_source(initial_value) {
 	const s = source(initial_value);
-	s.e = safe_equal;
+	s.eq = safe_equal;
 
 	// bind the signal to the component context, in case we need to
 	// track updates to trigger beforeUpdate/afterUpdate callbacks

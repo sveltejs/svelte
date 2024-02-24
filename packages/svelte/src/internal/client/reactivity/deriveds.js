@@ -15,11 +15,11 @@ export function derived(fn) {
 
 	/** @type {import('#client').Derived<V>} */
 	const signal = {
-		c: null,
+		consumers: null,
 		d: null,
-		e: default_equals,
+		eq: default_equals,
 		f: flags,
-		i: fn,
+		fn: fn,
 		r: null,
 		// @ts-expect-error
 		v: UNINITIALIZED,
@@ -51,6 +51,6 @@ export function derived(fn) {
 /*#__NO_SIDE_EFFECTS__*/
 export function derived_safe_equal(fn) {
 	const signal = derived(fn);
-	signal.e = safe_equal;
+	signal.eq = safe_equal;
 	return signal;
 }

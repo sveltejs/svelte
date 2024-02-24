@@ -67,8 +67,8 @@ import {
 import { run } from '../common.js';
 import { bind_transition } from './transitions.js';
 import { mutable_source, source } from './reactivity/sources.js';
-import { safe_equal, safe_not_equal } from './reactivity/equality.js';
-import { derived } from './reactivity/deriveds.js';
+import { safe_not_equal } from './reactivity/equality.js';
+import { derived, derived_safe_equal } from './reactivity/deriveds.js';
 
 /** @type {Set<string>} */
 const all_registered_events = new Set();
@@ -2448,7 +2448,7 @@ export function prop(props, key, flags, initial) {
 	// The derived returns the current value. The underlying mutable
 	// source is written to from various places to persist this value.
 	var inner_current_value = mutable_source(prop_value);
-	var current_value = derived(() => {
+	var current_value = (immutable ? derived : derived_safe_equal)(() => {
 		var parent_value = getter();
 		var child_value = get(inner_current_value);
 
@@ -2461,8 +2461,6 @@ export function prop(props, key, flags, initial) {
 		was_from_child = false;
 		return (inner_current_value.v = parent_value);
 	});
-
-	if (!immutable) current_value.e = safe_equal;
 
 	return function (/** @type {V} */ value, mutation = false) {
 		var current = get(current_value);

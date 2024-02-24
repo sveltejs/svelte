@@ -12,9 +12,9 @@ export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFEC
 
 export interface Source<V = unknown> {
 	/** consumers: Signals that read from the current signal */
-	c: null | Reaction[];
+	consumers: null | Reaction[];
 	/** equals: For value equality */
-	e: EqualsFunctions;
+	eq: EqualsFunctions;
 	/** flags: The types that the signal represent, as a bitwise value */
 	f: SignalFlags;
 	/** value: The latest value for this signal */
@@ -27,23 +27,13 @@ export interface SourceDebug<V = unknown> extends Source<V> {
 	inspect: Set<Function>;
 }
 
-export interface Derived<V = unknown> {
-	/** consumers: Signals that read from the current signal */
-	c: null | Reaction[];
+export interface Derived<V = unknown> extends Source<V> {
 	/** dependencies: Signals that this signal reads from */
 	d: null | ValueSignal[];
-	/** equals: For value equality */
-	e: EqualsFunctions;
-	/** The types that the signal represent, as a bitwise value */
-	f: SignalFlags;
 	/** init: The function that we invoke for effects and computeds */
-	i: () => V;
+	fn: () => V;
 	/** references: Anything that a signal owns */
 	r: null | Reaction[];
-	/** value: The latest value for this signal */
-	v: V;
-	/** write version: used for unowned signals to track if their depdendencies are dirty or not **/
-	w: number;
 }
 
 export interface DerivedDebug<V = unknown> extends Derived<V> {
@@ -60,7 +50,7 @@ export interface Effect {
 	/** The types that the signal represent, as a bitwise value */
 	f: SignalFlags;
 	/** init: The function that we invoke for effects and computeds */
-	i: null | (() => void | (() => void));
+	fn: null | (() => void | (() => void));
 	/** deriveds belonging to this effect */
 	r: null | Derived[];
 	/** teardown */

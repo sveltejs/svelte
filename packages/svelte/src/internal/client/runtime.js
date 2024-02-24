@@ -212,8 +212,8 @@ function is_signal_dirty(signal) {
  * @param {import('#client').Reaction} signal
  * @returns {V}
  */
-function execute_signal_fn(signal) {
-	const init = signal.i;
+function execute_reaction(signal) {
+	const init = signal.fn;
 	const flags = signal.f;
 	const previous_dependencies = current_dependencies;
 	const previous_dependencies_index = current_dependencies_index;
@@ -273,10 +273,10 @@ function execute_signal_fn(signal) {
 			if (!current_skip_consumer) {
 				for (i = current_dependencies_index; i < dependencies.length; i++) {
 					const dependency = dependencies[i];
-					const consumers = dependency.c;
+					const consumers = dependency.consumers;
 
 					if (consumers === null) {
-						dependency.c = [signal];
+						dependency.consumers = [signal];
 					} else if (consumers[consumers.length - 1] !== signal) {
 						// TODO: should this be:
 						//
@@ -308,14 +308,14 @@ function execute_signal_fn(signal) {
  * @returns {void}
  */
 function remove_consumer(signal, dependency) {
-	const consumers = dependency.c;
+	const consumers = dependency.consumers;
 	let consumers_length = 0;
 	if (consumers !== null) {
 		consumers_length = consumers.length - 1;
 		const index = consumers.indexOf(signal);
 		if (index !== -1) {
 			if (consumers_length === 0) {
-				dependency.c = null;
+				dependency.consumers = null;
 			} else {
 				// Swap with last element and then remove.
 				consumers[index] = consumers[consumers_length];
@@ -394,7 +394,7 @@ export function execute_effect(effect) {
 
 		current_component_context = component_context;
 
-		const possible_teardown = execute_signal_fn(effect);
+		const possible_teardown = execute_reaction(effect);
 
 		if (typeof possible_teardown === 'function') {
 			effect.v = possible_teardown;
@@ -660,15 +660,17 @@ export async function tick() {
 function update_derived(signal, force_schedule) {
 	const previous_updating_derived = updating_derived;
 	updating_derived = true;
-	const value = execute_signal_fn(signal);
+	const value = execute_reaction(signal);
 	updating_derived = previous_updating_derived;
+
 	const status =
 		(current_skip_consumer || (signal.f & UNOWNED) !== 0) && signal.d !== null
 			? MAYBE_DIRTY
 			: CLEAN;
+
 	set_signal_status(signal, status);
-	const equals = /** @type {import('#client').EqualsFunctions} */ (signal.e);
-	if (!equals(value, signal.v)) {
+
+	if (!signal.eq(value, signal.v)) {
 		signal.v = value;
 		mark_signal_consumers(signal, DIRTY, force_schedule);
 
@@ -772,13 +774,13 @@ export function set(signal, value) {
 					: '')
 		);
 	}
-	if (
-		(signal.f & SOURCE) !== 0 &&
-		!(/** @type {import('#client').EqualsFunctions} */ (signal.e)(value, signal.v))
-	) {
+
+	if (!signal.eq(value, signal.v)) {
 		signal.v = value;
+
 		// Increment write version so that unowned signals can properly track dirtyness
 		signal.w++;
+
 		// If the current signal is running for the first time, it won't have any
 		// consumers as we only allocate and assign the consumers after the signal
 		// has fully executed. So in the case of ensuring it registers the consumer
@@ -807,6 +809,7 @@ export function set(signal, value) {
 				}
 			}
 		}
+
 		mark_signal_consumers(signal, DIRTY, true);
 
 		// @ts-expect-error
@@ -881,7 +884,7 @@ export function mutate(source, value) {
  */
 function mark_signal_consumers(signal, to_status, force_schedule) {
 	const runes = is_runes(null);
-	const consumers = signal.c;
+	const consumers = signal.consumers;
 
 	if (consumers !== null) {
 		const length = consumers.length;
