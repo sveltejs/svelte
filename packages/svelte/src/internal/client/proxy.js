@@ -5,8 +5,7 @@ import {
 	updating_derived,
 	batch_inspect,
 	current_component_context,
-	untrack,
-	set_signal_value
+	untrack
 } from './runtime.js';
 import { effect_active } from './reactivity/effects.js';
 import {
@@ -150,12 +149,12 @@ export function unstate(value) {
 }
 
 /**
- * @param {import('./types.js').ValueSignal<number>} signal
+ * @param {import('./types.js').Source<number>} signal
  * @param {1 | -1} [d]
  */
 function update_version(signal, d = 1) {
 	const value = untrack(() => get(signal));
-	set_signal_value(signal, value + d);
+	set(signal, value + d);
 }
 
 /** @type {ProxyHandler<import('./types.js').ProxyStateObject<any>>} */

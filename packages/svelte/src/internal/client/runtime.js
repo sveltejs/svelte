@@ -225,15 +225,7 @@ function execute_signal_fn(signal) {
 	current_untracking = false;
 
 	try {
-		let res;
-		if (is_render_effect) {
-			res = /** @type {(block: null, signal: import('#client').Signal) => V} */ (init)(
-				null,
-				/** @type {import('#client').Signal} */ (signal)
-			);
-		} else {
-			res = /** @type {() => V} */ (init)();
-		}
+		const res = /** @type {() => V} */ (init)();
 		let dependencies = /** @type {import('#client').ValueSignal<unknown>[]} **/ (signal.d);
 		if (current_dependencies !== null) {
 			let i;
@@ -269,7 +261,7 @@ function execute_signal_fn(signal) {
 					dependencies[current_dependencies_index + i] = current_dependencies[i];
 				}
 			} else {
-				signal.d = /** @type {import('#client').Signal<V>[]} **/ (
+				signal.d = /** @type {import('#client').ValueSignal<V>[]} **/ (
 					dependencies = current_dependencies
 				);
 			}
@@ -747,112 +739,11 @@ export function get(signal) {
 
 /**
  * @template V
- * @param {import('#client').Signal<V>} signal
+ * @param {import('#client').Source<V>} signal
  * @param {V} value
  * @returns {V}
  */
 export function set(signal, value) {
-	set_signal_value(signal, value);
-	return value;
-}
-
-/**
- * @template V
- * @param {import('#client').Signal<V>} signal
- * @param {V} value
- * @returns {void}
- */
-export function set_sync(signal, value) {
-	flushSync(() => set(signal, value));
-}
-
-/**
- * Invokes a function and captures all signals that are read during the invocation,
- * then invalidates them.
- * @param {() => any} fn
- */
-export function invalidate_inner_signals(fn) {
-	var previous_is_signals_recorded = is_signals_recorded;
-	var previous_captured_signals = captured_signals;
-	is_signals_recorded = true;
-	captured_signals = new Set();
-	var captured = captured_signals;
-	var signal;
-	try {
-		untrack(fn);
-	} finally {
-		is_signals_recorded = previous_is_signals_recorded;
-		if (is_signals_recorded) {
-			for (signal of captured_signals) {
-				previous_captured_signals.add(signal);
-			}
-		}
-		captured_signals = previous_captured_signals;
-	}
-	for (signal of captured) {
-		mutate(signal, null /* doesnt matter */);
-	}
-}
-
-/**
- * @template V
- * @param {import('#client').Signal<V>} source
- * @param {V} value
- */
-export function mutate(source, value) {
-	set_signal_value(
-		source,
-		untrack(() => get(source))
-	);
-	return value;
-}
-
-/**
- * @template V
- * @param {import('#client').Signal<V>} signal
- * @param {number} to_status
- * @param {boolean} force_schedule
- * @returns {void}
- */
-function mark_signal_consumers(signal, to_status, force_schedule) {
-	const runes = is_runes(null);
-	const consumers = signal.c;
-	if (consumers !== null) {
-		const length = consumers.length;
-		let i;
-		for (i = 0; i < length; i++) {
-			const consumer = consumers[i];
-			const flags = consumer.f;
-			const unowned = (flags & UNOWNED) !== 0;
-			// We skip any effects that are already dirty (but not unowned). Additionally, we also
-			// skip if the consumer is the same as the current effect (except if we're not in runes or we
-			// are in force schedule mode).
-			if ((!force_schedule || !runes) && consumer === current_effect) {
-				continue;
-			}
-			set_signal_status(consumer, to_status);
-			// If the signal is not clean, then skip over it – with the exception of unowned signals that
-			// are already maybe dirty. Unowned signals might be dirty because they are not captured as part of an
-			// effect.
-			const maybe_dirty = (flags & MAYBE_DIRTY) !== 0;
-			if ((flags & CLEAN) !== 0 || (maybe_dirty && unowned)) {
-				if ((consumer.f & IS_EFFECT) !== 0) {
-					schedule_effect(/** @type {import('#client').Effect} */ (consumer), false);
-				} else {
-					mark_signal_consumers(consumer, MAYBE_DIRTY, force_schedule);
-				}
-			}
-		}
-	}
-}
-
-/**
- * @template V
- * @param {import('#client').Signal<V>} signal
- * @param {V} value
- * @returns {void}
- */
-export function set_signal_value(signal, value) {
 	if (
 		!current_untracking &&
 		!ignore_mutation_validation &&
@@ -916,10 +807,101 @@ export function set_signal_value(signal, value) {
 			}
 		}
 	}
+
+	return value;
 }
 
 /**
  * @template V
+ * @param {import('#client').Source<V>} signal
+ * @param {V} value
+ * @returns {void}
+ */
+export function set_sync(signal, value) {
+	flushSync(() => set(signal, value));
+}
+
+/**
+ * Invokes a function and captures all signals that are read during the invocation,
+ * then invalidates them.
+ * @param {() => any} fn
+ */
+export function invalidate_inner_signals(fn) {
+	var previous_is_signals_recorded = is_signals_recorded;
+	var previous_captured_signals = captured_signals;
+	is_signals_recorded = true;
+	captured_signals = new Set();
+	var captured = captured_signals;
+	var signal;
+	try {
+		untrack(fn);
+	} finally {
+		is_signals_recorded = previous_is_signals_recorded;
+		if (is_signals_recorded) {
+			for (signal of captured_signals) {
+				previous_captured_signals.add(signal);
+			}
+		}
+		captured_signals = previous_captured_signals;
+	}
+	for (signal of captured) {
+		mutate(signal, null /* doesnt matter */);
+	}
+}
+
+/**
+ * @template V
+ * @param {import('#client').Source<V>} source
+ * @param {V} value
+ */
+export function mutate(source, value) {
+	set(
+		source,
+		untrack(() => get(source))
+	);
+	return value;
+}
+
+/**
+ * @template V
+ * @param {import('#client').Signal<V>} signal
+ * @param {number} to_status
+ * @param {boolean} force_schedule
+ * @returns {void}
+ */
+function mark_signal_consumers(signal, to_status, force_schedule) {
+	const runes = is_runes(null);
+	const consumers = signal.c;
+	if (consumers !== null) {
+		const length = consumers.length;
+		let i;
+		for (i = 0; i < length; i++) {
+			const consumer = consumers[i];
+			const flags = consumer.f;
+			const unowned = (flags & UNOWNED) !== 0;
+			// We skip any effects that are already dirty (but not unowned). Additionally, we also
+			// skip if the consumer is the same as the current effect (except if we're not in runes or we
+			// are in force schedule mode).
+			if ((!force_schedule || !runes) && consumer === current_effect) {
+				continue;
+			}
+			set_signal_status(consumer, to_status);
+			// If the signal is not clean, then skip over it – with the exception of unowned signals that
+			// are already maybe dirty. Unowned signals might be dirty because they are not captured as part of an
+			// effect.
+			const maybe_dirty = (flags & MAYBE_DIRTY) !== 0;
+			if ((flags & CLEAN) !== 0 || (maybe_dirty && unowned)) {
+				if ((consumer.f & IS_EFFECT) !== 0) {
+					schedule_effect(/** @type {import('#client').Effect} */ (consumer), false);
+				} else {
+					mark_signal_consumers(consumer, MAYBE_DIRTY, force_schedule);
+				}
+			}
+		}
+	}
+}
+
+/**
  * @param {import('#client').Reaction} signal
  * @returns {void}
  */
@@ -1021,7 +1003,7 @@ function get_parent_context(component_context) {
  */
 export function update(signal, d = 1) {
 	const value = get(signal);
-	set_signal_value(signal, value + d);
+	set(signal, value + d);
 	return value;
 }
 
@@ -1043,7 +1025,7 @@ export function update_prop(fn, d = 1) {
  */
 export function update_pre(signal, d = 1) {
 	const value = get(signal) + d;
-	set_signal_value(signal, value);
+	set(signal, value);
 	return value;
 }
 

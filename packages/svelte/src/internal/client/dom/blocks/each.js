@@ -15,7 +15,7 @@ import {
 } from '../../hydration.js';
 import { empty, map_get, map_set } from '../../operations.js';
 import { insert, remove } from '../../reconciler.js';
-import { set_signal_value } from '../../runtime.js';
+import { set } from '../../runtime.js';
 import {
 	destroy_effect,
 	pause_effect,
@@ -551,7 +551,7 @@ export function get_first_element(block) {
 function update_each_item_block(block, item, index, type) {
 	const block_v = block.v;
 	if ((type & EACH_ITEM_REACTIVE) !== 0) {
-		set_signal_value(block_v, item);
+		set(block_v, item);
 	}
 	// const transitions = block.s;
 	const transitions = null;
@@ -563,7 +563,7 @@ function update_each_item_block(block, item, index, type) {
 		// each_animation(block, transitions);
 	}
 	if (index_is_reactive) {
-		set_signal_value(/** @type {import('#client').Source<number>} */ (block.i), index);
+		set(/** @type {import('#client').Source<number>} */ (block.i), index);
 	} else {
 		block.i = index;
 	}
