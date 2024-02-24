@@ -20,7 +20,7 @@ import {
 	untrack
 } from '../runtime.js';
 import { default_equals, safe_equal } from './equality.js';
-import { CLEAN, DERIVED, DIRTY, MANAGED, SOURCE } from '../constants.js';
+import { CLEAN, DERIVED, DIRTY, MANAGED } from '../constants.js';
 
 /**
  * @template V
@@ -31,7 +31,7 @@ import { CLEAN, DERIVED, DIRTY, MANAGED, SOURCE } from '../constants.js';
 export function source(value) {
 	/** @type {import('#client').Source<V>} */
 	const source = {
-		f: SOURCE | CLEAN,
+		f: CLEAN,
 		v: value,
 		eq: default_equals,
 		consumers: null,
@@ -158,5 +158,27 @@ export function mutate(source, value) {
 		source,
 		untrack(() => get(source))
 	);
+	return value;
+}
+
+/**
+ * @param {import('#client').ValueSignal<number>} signal
+ * @param {1 | -1} [d]
+ * @returns {number}
+ */
+export function update(signal, d = 1) {
+	const value = get(signal);
+	set(signal, value + d);
+	return value;
+}
+
+/**
+ * @param {import('#client').ValueSignal<number>} signal
+ * @param {1 | -1} [d]
+ * @returns {number}
+ */
+export function update_pre(signal, d = 1) {
+	const value = get(signal) + d;
+	set(signal, value);
 	return value;
 }

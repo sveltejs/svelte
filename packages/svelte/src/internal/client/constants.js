@@ -1,4 +1,3 @@
-export const SOURCE = 1;
 export const DERIVED = 1 << 1;
 export const EFFECT = 1 << 2;
 export const PRE_EFFECT = 1 << 3;

@@ -1,12 +1,5 @@
-import type { DERIVED, EFFECT, PRE_EFFECT, RENDER_EFFECT, SOURCE } from '../constants';
+import type { DERIVED, EFFECT, PRE_EFFECT, RENDER_EFFECT } from '../constants';
 import type { ComponentContext, EqualsFunctions, TemplateNode, Transition } from '../types';
-
-type SignalFlags =
-	| typeof SOURCE
-	| typeof DERIVED
-	| typeof EFFECT
-	| typeof PRE_EFFECT
-	| typeof RENDER_EFFECT;
 
 export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFECT;
 
@@ -16,7 +9,7 @@ export interface Source<V = unknown> {
 	/** equals: For value equality */
 	eq: EqualsFunctions;
 	/** flags: The types that the signal represent, as a bitwise value */
-	f: SignalFlags;
+	f: number;
 	/** value: The latest value for this signal */
 	v: V;
 	// write version
@@ -46,7 +39,7 @@ export interface Effect {
 	/** destroy: Thing(s) that need destroying */
 	y: null | (() => void);
 	/** The types that the signal represent, as a bitwise value */
-	f: SignalFlags;
+	f: number;
 	/** init: The function that we invoke for effects and computeds */
 	fn: null | (() => void | (() => void));
 	/** deriveds belonging to this effect */

@@ -4,10 +4,6 @@ export {
 	flushSync,
 	tick,
 	untrack,
-	update,
-	update_prop,
-	update_pre,
-	update_pre_prop,
 	value_or_fallback,
 	exclude_from_object,
 	pop,
@@ -29,8 +25,9 @@ export { element } from './client/dom/blocks/svelte-element.js';
 export * from './client/dom/blocks/each.js';
 export * from './client/reactivity/effects.js';
 export * from './client/reactivity/deriveds.js';
-export * from './client/reactivity/sources.js';
 export * from './client/reactivity/equality.js';
+export * from './client/reactivity/props.js';
+export * from './client/reactivity/sources.js';
 export * from './client/reactivity/store.js';
 export * from './client/render.js';
 export * from './client/validate.js';

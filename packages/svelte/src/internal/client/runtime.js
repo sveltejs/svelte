@@ -3,7 +3,6 @@ import {
 	array_prototype,
 	get_descriptors,
 	get_prototype_of,
-	is_array,
 	is_frozen,
 	object_freeze,
 	object_prototype
@@ -23,12 +22,11 @@ import {
 	DESTROYED,
 	INERT,
 	MANAGED,
-	SOURCE,
 	STATE_SYMBOL,
 	BRANCH_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
-import { mutate, set } from './reactivity/sources.js';
+import { mutate } from './reactivity/sources.js';
 
 const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT;
 
@@ -934,50 +932,6 @@ function get_parent_context(component_context) {
 		parent = parent.p;
 	}
 	return null;
-}
-
-/**
- * @param {import('#client').ValueSignal<number>} signal
- * @param {1 | -1} [d]
- * @returns {number}
- */
-export function update(signal, d = 1) {
-	const value = get(signal);
-	set(signal, value + d);
-	return value;
-}
-
-/**
- * @param {((value?: number) => number)} fn
- * @param {1 | -1} [d]
- * @returns {number}
- */
-export function update_prop(fn, d = 1) {
-	const value = fn();
-	fn(value + d);
-	return value;
-}
-
-/**
- * @param {import('#client').ValueSignal<number>} signal
- * @param {1 | -1} [d]
- * @returns {number}
- */
-export function update_pre(signal, d = 1) {
-	const value = get(signal) + d;
-	set(signal, value);
-	return value;
-}
-
-/**
- * @param {((value?: number) => number)} fn
- * @param {1 | -1} [d]
- * @returns {number}
- */
-export function update_pre_prop(fn, d = 1) {
-	const value = fn() + d;
-	fn(value);
-	return value;
 }
 
 /**
