@@ -28,7 +28,6 @@ import {
 } from './reconciler.js';
 import {
 	destroy_signal,
-	push_destroy_fn,
 	untrack,
 	flush_sync,
 	push,
@@ -1361,7 +1360,8 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 	// Add effect teardown (likely causes: if block became false, each item removed, component unmounted).
 	// In these cases we need to nullify the binding only if we detect that the value is still the same.
 	// If not, that means that another effect has now taken over the binding.
-	push_destroy_fn(e, () => {
+	// TODO this is the only place we use this mechanism, see if we can get rid of it
+	e.y = () => {
 		// Defer to the next tick so that all updates can be reconciled first.
 		// This solves the case where one variable is shared across multiple this-bindings.
 		effect(() => {
@@ -1369,7 +1369,7 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 				update(null, ...parts);
 			}
 		});
-	});
+	};
 }
 
 /**

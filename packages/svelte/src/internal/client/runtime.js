@@ -965,23 +965,6 @@ export function untrack(fn) {
 	}
 }
 
-/**
- * @template V
- * @param {import('#client').Effect} signal
- * @param {() => void} destroy_fn
- * @returns {void}
- */
-export function push_destroy_fn(signal, destroy_fn) {
-	let destroy = signal.y;
-	if (destroy === null) {
-		signal.y = destroy_fn;
-	} else if (is_array(destroy)) {
-		destroy.push(destroy_fn);
-	} else {
-		signal.y = [destroy, destroy_fn];
-	}
-}
-
 const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
 /**
  * @template V
