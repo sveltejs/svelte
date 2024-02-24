@@ -1,6 +1,6 @@
 import { UNINITIALIZED, BRANCH_EFFECT } from '../../constants.js';
 import { hydrate_block_anchor } from '../../hydration.js';
-import { pause_effect, render_effect } from '../../reactivity/computations.js';
+import { pause_effect, render_effect } from '../../reactivity/effects.js';
 import { noop } from '../../../common.js';
 
 /**

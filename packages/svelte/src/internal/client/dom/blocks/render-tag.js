@@ -1,5 +1,5 @@
 import { noop } from '../../../common.js';
-import { destroy_effect, pause_effect, render_effect } from '../../reactivity/computations.js';
+import { destroy_effect, pause_effect, render_effect } from '../../reactivity/effects.js';
 import { untrack } from '../../runtime.js';
 
 /**

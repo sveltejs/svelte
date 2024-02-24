@@ -35,20 +35,16 @@ export interface Derived<V = unknown> {
 	x: null | ComponentContext;
 	/** dependencies: Signals that this signal reads from */
 	d: null | Signal<V>[];
-	/** destroy: Thing(s) that need destroying */
-	y: null | (() => void) | Array<() => void>;
 	/** equals: For value equality */
 	e: null | EqualsFunctions;
 	/** The types that the signal represent, as a bitwise value */
 	f: SignalFlags;
 	/** init: The function that we invoke for effects and computeds */
-	i: null | (() => V) | (() => void | (() => void)) | ((b: null, s: Signal) => void | (() => void));
+	i: () => V;
 	/** references: Anything that a signal owns */
 	r: null | Reaction[];
-	/** value: The latest value for this signal, doubles as the teardown for effects */
+	/** value: The latest value for this signal */
 	v: V;
-	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
-	l: number;
 	/** write version: used for unowned signals to track if their depdendencies are dirty or not **/
 	w: number;
 }
@@ -70,25 +66,21 @@ export interface Effect {
 	i: null | (() => void | (() => void)) | ((b: null, s: Signal) => void | (() => void));
 	/** references: Anything that a signal owns */
 	r: null | Reaction[];
-	/** value: The latest value for this signal, doubles as the teardown for effects */
-	v: () => void;
+	/** teardown */
+	v: null | (() => void);
 	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
 	l: number;
 	/** write version: used for unowned signals to track if their depdendencies are dirty or not **/
 	w: number;
-
 	/** in transitions */
 	in: null | Transition[];
-
 	/** out transitions */
 	out: null | Transition[];
-
 	/** DOM nodes belonging to this effect */
 	dom: null | TemplateNode | Array<TemplateNode>;
-
 	/** Whether the effect ran or not */
 	ran: boolean;
-
+	/** The parent effect */
 	parent: null | Effect;
 }
 

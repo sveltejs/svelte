@@ -5,7 +5,7 @@ import {
 	set_current_component_context,
 	set_current_effect
 } from '../../runtime.js';
-import { pause_effect, render_effect, resume_effect } from '../../reactivity/computations.js';
+import { pause_effect, render_effect, resume_effect } from '../../reactivity/effects.js';
 import { BRANCH_EFFECT } from '../../constants.js';
 
 /**

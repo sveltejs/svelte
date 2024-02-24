@@ -1,6 +1,6 @@
 import { noop } from '../common.js';
 import { loop } from './loop.js';
-import { user_effect } from './reactivity/computations.js';
+import { user_effect } from './reactivity/effects.js';
 import { run_transitions } from './render.js';
 import { current_effect, untrack } from './runtime.js';
 import { raf } from './timing.js';

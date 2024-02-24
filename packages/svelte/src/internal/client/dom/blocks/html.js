@@ -1,4 +1,4 @@
-import { render_effect } from '../../reactivity/computations.js';
+import { render_effect } from '../../reactivity/effects.js';
 import { reconcile_html, remove } from '../../reconciler.js';
 
 /**

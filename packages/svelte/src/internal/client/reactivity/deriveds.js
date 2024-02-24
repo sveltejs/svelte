@@ -20,14 +20,12 @@ export function derived(fn) {
 		d: null,
 		e: default_equals,
 		f: flags | CLEAN,
-		l: 0,
 		i: fn,
 		r: null,
 		// @ts-expect-error
 		v: UNINITIALIZED,
 		w: 0,
 		x: null,
-		y: null,
 		parent: current_effect
 	};
 

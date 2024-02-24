@@ -48,7 +48,7 @@ import {
 	pre_effect,
 	user_effect,
 	destroy_effect
-} from './reactivity/computations.js';
+} from './reactivity/effects.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,

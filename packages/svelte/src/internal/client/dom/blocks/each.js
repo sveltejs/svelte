@@ -21,7 +21,7 @@ import {
 	pause_effect,
 	render_effect,
 	resume_effect
-} from '../../reactivity/computations.js';
+} from '../../reactivity/effects.js';
 import { source, mutable_source } from '../../reactivity/sources.js';
 import { is_array } from '../../utils.js';
 import { BRANCH_EFFECT } from '../../constants.js';

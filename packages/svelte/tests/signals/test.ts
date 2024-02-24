@@ -1,10 +1,6 @@
 import { describe, assert, it } from 'vitest';
 import * as $ from '../../src/internal/client/runtime';
-import {
-	effect,
-	render_effect,
-	user_effect
-} from '../../src/internal/client/reactivity/computations';
+import { effect, render_effect, user_effect } from '../../src/internal/client/reactivity/effects';
 import { source } from '../../src/internal/client/reactivity/sources';
 import type { Derived } from '../../src/internal/client/reactivity/types';
 import { proxy } from '../../src/internal/client/proxy';

@@ -8,7 +8,7 @@ import {
 	pause_effect,
 	render_effect,
 	resume_effect
-} from '../../reactivity/computations.js';
+} from '../../reactivity/effects.js';
 
 /**
  * @param {Comment} anchor_node

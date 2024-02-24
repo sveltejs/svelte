@@ -30,7 +30,7 @@ export { snippet_effect } from './client/dom/blocks/render-tag.js';
 export { component } from './client/dom/blocks/svelte-component.js';
 export { element } from './client/dom/blocks/svelte-element.js';
 export * from './client/dom/blocks/each.js';
-export * from './client/reactivity/computations.js';
+export * from './client/reactivity/effects.js';
 export * from './client/reactivity/deriveds.js';
 export * from './client/reactivity/sources.js';
 export * from './client/reactivity/equality.js';

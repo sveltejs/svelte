@@ -8,7 +8,7 @@ import {
 	untrack,
 	set_signal_value
 } from './runtime.js';
-import { effect_active } from './reactivity/computations.js';
+import { effect_active } from './reactivity/effects.js';
 import {
 	array_prototype,
 	define_property,
