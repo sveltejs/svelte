@@ -666,30 +666,30 @@ export async function tick() {
 }
 
 /**
- * @param {import('#client').Derived} signal
+ * @param {import('#client').Derived} derived
  * @param {boolean} force_schedule
  * @returns {void}
  */
-function update_derived(signal, force_schedule) {
+function update_derived(derived, force_schedule) {
 	const previous_updating_derived = updating_derived;
 	updating_derived = true;
-	const value = execute_reaction(signal);
+	const value = execute_reaction(derived);
 	updating_derived = previous_updating_derived;
 
 	const status =
-		(current_skip_reaction || (signal.f & UNOWNED) !== 0) && signal.deps !== null
+		(current_skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null
 			? MAYBE_DIRTY
 			: CLEAN;
 
-	set_signal_status(signal, status);
+	set_signal_status(derived, status);
 
-	if (!signal.eq(value, signal.v)) {
-		signal.v = value;
-		mark_signal_consumers(signal, DIRTY, force_schedule);
+	if (!derived.eq(value, derived.v)) {
+		derived.v = value;
+		mark_signal_reactions(derived, DIRTY, force_schedule);
 
 		// @ts-expect-error
-		if (DEV && signal.inspect && force_schedule) {
-			for (const fn of /** @type {import('#client').ValueDebug} */ (signal).inspect) fn();
+		if (DEV && derived.inspect && force_schedule) {
+			for (const fn of /** @type {import('#client').ValueDebug} */ (derived).inspect) fn();
 		}
 	}
 }
@@ -798,7 +798,7 @@ export function invalidate_inner_signals(fn) {
  * @param {boolean} force_schedule
  * @returns {void}
  */
-export function mark_signal_consumers(signal, to_status, force_schedule) {
+export function mark_signal_reactions(signal, to_status, force_schedule) {
 	const runes = is_runes(null);
 	const reactions = signal.reactions;
 
@@ -829,7 +829,7 @@ export function mark_signal_consumers(signal, to_status, force_schedule) {
 				if ((flags & IS_EFFECT) !== 0) {
 					schedule_effect(/** @type {import('#client').Effect} */ (reaction), false);
 				} else {
-					mark_signal_consumers(
+					mark_signal_reactions(
 						/** @type {import('#client').Value} */ (reaction),
 						MAYBE_DIRTY,
 						force_schedule

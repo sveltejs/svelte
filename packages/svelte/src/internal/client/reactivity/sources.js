@@ -11,7 +11,7 @@ import {
 	ignore_mutation_validation,
 	is_batching_effect,
 	is_runes,
-	mark_signal_consumers,
+	mark_signal_reactions,
 	schedule_effect,
 	set_current_untracked_writes,
 	set_last_inspected_signal,
@@ -122,7 +122,7 @@ export function set(signal, value) {
 			}
 		}
 
-		mark_signal_consumers(signal, DIRTY, true);
+		mark_signal_reactions(signal, DIRTY, true);
 
 		// @ts-expect-error
 		if (DEV && signal.inspect) {
