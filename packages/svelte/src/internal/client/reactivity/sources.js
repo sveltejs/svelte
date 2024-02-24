@@ -11,7 +11,6 @@ import {
 	ignore_mutation_validation,
 	is_batching_effect,
 	is_runes,
-	last_inspected_signal,
 	mark_signal_consumers,
 	schedule_effect,
 	set_current_untracked_writes,
