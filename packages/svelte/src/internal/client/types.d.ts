@@ -1,4 +1,5 @@
 import { DERIVED, EFFECT, RENDER_EFFECT, SOURCE, PRE_EFFECT, STATE_SYMBOL } from './constants.js';
+import type { Source, SourceDebug } from './reactivity/types.js';
 
 // Put all internal types in this file. Once we convert to JSDoc, we can make this a d.ts file
 
@@ -54,24 +55,6 @@ export type ComponentContext = {
 // Source signals don't need the same shape as they simply don't do as much as computations
 // (effects and derived signals). Thus we can improve the memory profile at the slight cost
 // of some runtime performance.
-
-export type Source<V = unknown> = {
-	/** consumers: Signals that read from the current signal */
-	c: null | Computation[];
-	/** equals: For value equality */
-	e: null | EqualsFunctions;
-	/** flags: The types that the signal represent, as a bitwise value */
-	f: SignalFlags;
-	/** value: The latest value for this signal */
-	v: V;
-	// write version
-	w: number;
-};
-
-export type SourceDebug = {
-	/** This is DEV only */
-	inspect: Set<Function>;
-};
 
 export type Computation<V = unknown> = {
 	/** consumers: Signals that read from the current signal */
