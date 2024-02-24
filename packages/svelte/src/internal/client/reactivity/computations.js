@@ -20,40 +20,6 @@ import {
 } from '../constants.js';
 
 /**
- * @template V
- * @param {import('./types.js').SignalFlags} flags
- * @param {V} value
- */
-function create_computation_signal(flags, value) {
-	/** @type {import('#client').Effect} */
-	const signal = {
-		c: null,
-		d: null,
-		e: null,
-		f: flags,
-		l: 0,
-		i: null,
-		r: null,
-		v: value,
-		w: 0,
-		x: null,
-		y: null,
-		in: null,
-		out: null,
-		dom: null,
-		ran: false,
-		parent: current_effect
-	};
-
-	if (DEV) {
-		// @ts-expect-error
-		signal.inspect = new Set();
-	}
-
-	return signal;
-}
-
-/**
  * @param {import('#client').Reaction} target_signal
  * @param {import('#client').Reaction} ref_signal
  * @returns {void}
@@ -75,16 +41,40 @@ export function push_reference(target_signal, ref_signal) {
  * @returns {import('#client').Effect}
  */
 function internal_create_effect(type, fn, sync, schedule) {
-	const signal = create_computation_signal(type | DIRTY, null);
-	signal.i = fn;
-	signal.x = current_component_context;
+	/** @type {import('#client').Effect} */
+	const signal = {
+		c: null,
+		d: null,
+		e: null,
+		f: type | DIRTY,
+		l: 0,
+		i: fn,
+		r: null,
+		v: null,
+		w: 0,
+		x: current_component_context,
+		y: null,
+		in: null,
+		out: null,
+		dom: null,
+		ran: false,
+		parent: current_effect
+	};
+
+	if (DEV) {
+		// @ts-expect-error
+		signal.inspect = new Set();
+	}
+
 	if (current_effect !== null) {
 		signal.l = current_effect.l + 1;
 		push_reference(current_effect, signal);
 	}
+
 	if (schedule) {
 		schedule_effect(signal, sync);
 	}
+
 	return signal;
 }
 
