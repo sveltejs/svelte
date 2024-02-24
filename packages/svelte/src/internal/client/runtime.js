@@ -51,10 +51,10 @@ let current_queued_pre_and_render_effects = [];
 let current_queued_effects = [];
 
 let flush_count = 0;
-// Handle signal reactivity tree dependencies and consumer
 
+// Handle signal reactivity tree dependencies and reactions
 /** @type {null | import('#client').Reaction} */
-export let current_consumer = null;
+export let current_reaction = null;
 
 /** @type {null | import('#client').Effect} */
 export let current_effect = null;
@@ -64,7 +64,7 @@ export function set_current_effect(effect) {
 	current_effect = effect;
 }
 
-/** @type {null | import('#client').ValueSignal[]} */
+/** @type {null | import('#client').Value[]} */
 export let current_dependencies = null;
 let current_dependencies_index = 0;
 
@@ -98,8 +98,9 @@ export function set_ignore_mutation_validation(value) {
 }
 
 // If we are working with a get() chain that has no active container,
-// to prevent memory leaks, we skip adding the consumer.
-let current_skip_consumer = false;
+// to prevent memory leaks, we skip adding the reaction
+let current_skip_reaction = false;
+
 // Handle collecting all signals which are read during a specific time frame
 export let is_signals_recorded = false;
 let captured_signals = new Set();
@@ -164,7 +165,7 @@ export function batch_inspect(target, prop, receiver) {
 
 /**
  * @template V
- * @param {import('#client').ValueSignal<V> | import('#client').Effect} signal
+ * @param {import('#client').Value<V> | import('#client').Effect} signal
  * @returns {boolean}
  */
 function is_signal_dirty(signal) {
@@ -225,24 +226,22 @@ function is_signal_dirty(signal) {
  * @returns {V}
  */
 function execute_reaction(signal) {
-	const init = signal.fn;
-	const flags = signal.f;
 	const previous_dependencies = current_dependencies;
 	const previous_dependencies_index = current_dependencies_index;
 	const previous_untracked_writes = current_untracked_writes;
-	const previous_consumer = current_consumer;
-	const previous_skip_consumer = current_skip_consumer;
+	const previous_reaction = current_reaction;
+	const previous_skip_reaction = current_skip_reaction;
 	const previous_untracking = current_untracking;
-	current_dependencies = /** @type {null | import('#client').ValueSignal[]} */ (null);
+	current_dependencies = /** @type {null | import('#client').Value[]} */ (null);
 	current_dependencies_index = 0;
 	current_untracked_writes = null;
-	current_consumer = signal;
-	current_skip_consumer = !is_flushing_effect && (flags & UNOWNED) !== 0;
+	current_reaction = signal;
+	current_skip_reaction = !is_flushing_effect && (signal.f & UNOWNED) !== 0;
 	current_untracking = false;
 
 	try {
-		const res = /** @type {() => V} */ (init)();
-		let dependencies = /** @type {import('#client').ValueSignal<unknown>[]} **/ (signal.deps);
+		const res = /** @type {() => V} */ (signal.fn)();
+		let dependencies = /** @type {import('#client').Value<unknown>[]} **/ (signal.deps);
 		if (current_dependencies !== null) {
 			let i;
 			if (dependencies !== null) {
@@ -266,7 +265,7 @@ function execute_reaction(signal) {
 							? !full_current_dependencies_set.has(dependency)
 							: !full_current_dependencies.includes(dependency)
 					) {
-						remove_consumer(signal, dependency);
+						remove_reaction(signal, dependency);
 					}
 				}
 			}
@@ -277,29 +276,29 @@ function execute_reaction(signal) {
 					dependencies[current_dependencies_index + i] = current_dependencies[i];
 				}
 			} else {
-				signal.deps = /** @type {import('#client').ValueSignal<V>[]} **/ (
+				signal.deps = /** @type {import('#client').Value<V>[]} **/ (
 					dependencies = current_dependencies
 				);
 			}
 
-			if (!current_skip_consumer) {
+			if (!current_skip_reaction) {
 				for (i = current_dependencies_index; i < dependencies.length; i++) {
 					const dependency = dependencies[i];
-					const consumers = dependency.consumers;
+					const reactions = dependency.reactions;
 
-					if (consumers === null) {
-						dependency.consumers = [signal];
-					} else if (consumers[consumers.length - 1] !== signal) {
+					if (reactions === null) {
+						dependency.reactions = [signal];
+					} else if (reactions[reactions.length - 1] !== signal) {
 						// TODO: should this be:
 						//
-						// } else if (!consumers.includes(signal)) {
+						// } else if (!reactions.includes(signal)) {
 						//
-						consumers.push(signal);
+						reactions.push(signal);
 					}
 				}
 			}
 		} else if (dependencies !== null && current_dependencies_index < dependencies.length) {
-			remove_consumers(signal, current_dependencies_index);
+			remove_reactions(signal, current_dependencies_index);
 			dependencies.length = current_dependencies_index;
 		}
 		return res;
@@ -307,56 +306,59 @@ function execute_reaction(signal) {
 		current_dependencies = previous_dependencies;
 		current_dependencies_index = previous_dependencies_index;
 		current_untracked_writes = previous_untracked_writes;
-		current_consumer = previous_consumer;
-		current_skip_consumer = previous_skip_consumer;
+		current_reaction = previous_reaction;
+		current_skip_reaction = previous_skip_reaction;
 		current_untracking = previous_untracking;
 	}
 }
 
 /**
  * @template V
- * @param {import('#client').Reaction} signal
- * @param {import('#client').ValueSignal<V>} dependency
+ * @param {import('#client').Reaction} reaction
+ * @param {import('#client').Value<V>} dependency
  * @returns {void}
  */
-function remove_consumer(signal, dependency) {
-	const consumers = dependency.consumers;
-	let consumers_length = 0;
-	if (consumers !== null) {
-		consumers_length = consumers.length - 1;
-		const index = consumers.indexOf(signal);
+function remove_reaction(reaction, dependency) {
+	const reactions = dependency.reactions;
+	let reactions_length = 0;
+	if (reactions !== null) {
+		reactions_length = reactions.length - 1;
+		const index = reactions.indexOf(reaction);
 		if (index !== -1) {
-			if (consumers_length === 0) {
-				dependency.consumers = null;
+			if (reactions_length === 0) {
+				dependency.reactions = null;
 			} else {
 				// Swap with last element and then remove.
-				consumers[index] = consumers[consumers_length];
-				consumers.pop();
+				reactions[index] = reactions[reactions_length];
+				reactions.pop();
 			}
 		}
 	}
-	if (consumers_length === 0 && (dependency.f & UNOWNED) !== 0) {
+	if (reactions_length === 0 && (dependency.f & UNOWNED) !== 0) {
 		// If the signal is unowned then we need to make sure to change it to dirty.
 		set_signal_status(dependency, DIRTY);
-		remove_consumers(/** @type {import('#client').Derived<V>} **/ (dependency), 0);
+		remove_reactions(/** @type {import('#client').Derived<V>} **/ (dependency), 0);
 	}
 }
 
 /**
- * @param {import('#client').Reaction} signal
+ * @param {import('#client').Reaction} reaction
  * @param {number} start_index
  * @returns {void}
  */
-function remove_consumers(signal, start_index) {
-	const dependencies = signal.deps;
+function remove_reactions(reaction, start_index) {
+	const dependencies = reaction.deps;
+
 	if (dependencies !== null) {
 		const active_dependencies = start_index === 0 ? null : dependencies.slice(0, start_index);
 		let i;
+
 		for (i = start_index; i < dependencies.length; i++) {
 			const dependency = dependencies[i];
-			// Avoid removing a consumer if we know that it is active (start_index will not be 0)
+
+			// Avoid removing a reaction if we know that it is active (start_index will not be 0)
 			if (active_dependencies === null || !active_dependencies.includes(dependency)) {
-				remove_consumer(signal, dependency);
+				remove_reaction(reaction, dependency);
 			}
 		}
 	}
@@ -664,7 +666,6 @@ export async function tick() {
 }
 
 /**
- * @template V
  * @param {import('#client').Derived} signal
  * @param {boolean} force_schedule
  * @returns {void}
@@ -676,7 +677,7 @@ function update_derived(signal, force_schedule) {
 	updating_derived = previous_updating_derived;
 
 	const status =
-		(current_skip_consumer || (signal.f & UNOWNED) !== 0) && signal.deps !== null
+		(current_skip_reaction || (signal.f & UNOWNED) !== 0) && signal.deps !== null
 			? MAYBE_DIRTY
 			: CLEAN;
 
@@ -688,14 +689,14 @@ function update_derived(signal, force_schedule) {
 
 		// @ts-expect-error
 		if (DEV && signal.inspect && force_schedule) {
-			for (const fn of /** @type {import('#client').ValueSignalDebug} */ (signal).inspect) fn();
+			for (const fn of /** @type {import('#client').ValueDebug} */ (signal).inspect) fn();
 		}
 	}
 }
 
 /**
  * @template V
- * @param {import('#client').ValueSignal<V>} signal
+ * @param {import('#client').Value<V>} signal
  * @returns {V}
  */
 export function get(signal) {
@@ -715,10 +716,10 @@ export function get(signal) {
 		captured_signals.add(signal);
 	}
 
-	// Register the dependency on the current consumer signal.
-	if (current_consumer !== null && (current_consumer.f & MANAGED) === 0 && !current_untracking) {
-		const unowned = (current_consumer.f & UNOWNED) !== 0;
-		const dependencies = current_consumer.deps;
+	// Register the dependency on the current reaction signal
+	if (current_reaction !== null && (current_reaction.f & MANAGED) === 0 && !current_untracking) {
+		const unowned = (current_reaction.f & UNOWNED) !== 0;
+		const dependencies = current_reaction.deps;
 		if (
 			current_dependencies === null &&
 			dependencies !== null &&
@@ -792,44 +793,44 @@ export function invalidate_inner_signals(fn) {
 }
 
 /**
- * @param {import('#client').ValueSignal} signal
+ * @param {import('#client').Value} signal
  * @param {number} to_status
  * @param {boolean} force_schedule
  * @returns {void}
  */
 export function mark_signal_consumers(signal, to_status, force_schedule) {
 	const runes = is_runes(null);
-	const consumers = signal.consumers;
+	const reactions = signal.reactions;
 
-	if (consumers !== null) {
-		const length = consumers.length;
+	if (reactions !== null) {
+		const length = reactions.length;
 		let i;
 
 		for (i = 0; i < length; i++) {
-			const consumer = consumers[i];
-			const flags = consumer.f;
-			const unowned = (flags & UNOWNED) !== 0;
+			const reaction = reactions[i];
+			const flags = reaction.f;
 
 			// We skip any effects that are already dirty (but not unowned). Additionally, we also
-			// skip if the consumer is the same as the current effect (except if we're not in runes or we
+			// skip if the reaction is the same as the current effect (except if we're not in runes or we
 			// are in force schedule mode).
-			if ((!force_schedule || !runes) && consumer === current_effect) {
+			if ((!force_schedule || !runes) && reaction === current_effect) {
 				continue;
 			}
 
-			set_signal_status(consumer, to_status);
+			set_signal_status(reaction, to_status);
 
 			// If the signal is not clean, then skip over it – with the exception of unowned signals that
 			// are already maybe dirty. Unowned signals might be dirty because they are not captured as part of an
 			// effect.
 			const maybe_dirty = (flags & MAYBE_DIRTY) !== 0;
+			const unowned = (flags & UNOWNED) !== 0;
 
 			if ((flags & CLEAN) !== 0 || (maybe_dirty && unowned)) {
-				if ((consumer.f & IS_EFFECT) !== 0) {
-					schedule_effect(/** @type {import('#client').Effect} */ (consumer), false);
+				if ((flags & IS_EFFECT) !== 0) {
+					schedule_effect(/** @type {import('#client').Effect} */ (reaction), false);
 				} else {
 					mark_signal_consumers(
-						/** @type {import('#client').ValueSignal} */ (consumer),
+						/** @type {import('#client').Value} */ (reaction),
 						MAYBE_DIRTY,
 						force_schedule
 					);
@@ -895,14 +896,14 @@ export function set_signal_status(signal, status) {
 
 /**
  * @template V
- * @param {V | import('#client').ValueSignal<V>} val
- * @returns {val is import('#client').ValueSignal<V>}
+ * @param {V | import('#client').Value<V>} val
+ * @returns {val is import('#client').Value<V>}
  */
 export function is_signal(val) {
 	return (
 		typeof val === 'object' &&
 		val !== null &&
-		typeof (/** @type {import('#client').ValueSignal<V>} */ (val).f) === 'number'
+		typeof (/** @type {import('#client').Value<V>} */ (val).f) === 'number'
 	);
 }
 
@@ -1147,7 +1148,7 @@ export function inspect(get_value, inspect = console.log) {
 
 /**
  * @template V
- * @param {import('#client').ValueSignal<V> | (() => V)} value
+ * @param {import('#client').Value<V> | (() => V)} value
  * @returns {V}
  */
 export function unwrap(value) {

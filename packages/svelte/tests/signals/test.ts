@@ -193,13 +193,13 @@ describe('signals', () => {
 		return () => {
 			$.flushSync(() => set(count, 1));
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.consumers?.length, 1);
+			assert.deepEqual(count.reactions?.length, 1);
 			$.flushSync(() => set(count, 2));
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.consumers?.length, 1);
+			assert.deepEqual(count.reactions?.length, 1);
 			$.flushSync(() => set(count, 3));
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.consumers?.length, 1);
+			assert.deepEqual(count.reactions?.length, 1);
 			assert.deepEqual(log, [0, 1, 2, 3]);
 		};
 	});
@@ -259,11 +259,11 @@ describe('signals', () => {
 			$.flushSync(() => set(count, 4));
 			$.flushSync(() => set(count, 0));
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.consumers?.length, 1);
+			assert.deepEqual(count.reactions?.length, 1);
 			assert.deepEqual(log, [0, 2, 'limit', 0]);
 			$.destroy_signal(effect);
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.consumers, null);
+			assert.deepEqual(count.reactions, null);
 		};
 	});
 

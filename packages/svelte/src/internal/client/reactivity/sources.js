@@ -1,7 +1,7 @@
 import { DEV } from 'esm-env';
 import {
 	current_component_context,
-	current_consumer,
+	current_reaction,
 	current_dependencies,
 	current_effect,
 	current_untracked_writes,
@@ -34,7 +34,7 @@ export function source(value) {
 		f: CLEAN,
 		v: value,
 		eq: default_equals,
-		consumers: null,
+		reactions: null,
 		w: 0
 	};
 
@@ -74,9 +74,9 @@ export function set(signal, value) {
 	if (
 		!current_untracking &&
 		!ignore_mutation_validation &&
-		current_consumer !== null &&
+		current_reaction !== null &&
 		is_runes(null) &&
-		(current_consumer.f & DERIVED) !== 0
+		(current_reaction.f & DERIVED) !== 0
 	) {
 		throw new Error(
 			'ERR_SVELTE_UNSAFE_MUTATION' +
@@ -95,8 +95,8 @@ export function set(signal, value) {
 		signal.w++;
 
 		// If the current signal is running for the first time, it won't have any
-		// consumers as we only allocate and assign the consumers after the signal
-		// has fully executed. So in the case of ensuring it registers the consumer
+		// reactions as we only allocate and assign the reactions after the signal
+		// has fully executed. So in the case of ensuring it registers the reaction
 		// properly for itself, we need to ensure the current effect actually gets
 		// scheduled. i.e:
 		//
@@ -162,7 +162,7 @@ export function mutate(source, value) {
 }
 
 /**
- * @param {import('#client').ValueSignal<number>} signal
+ * @param {import('#client').Value<number>} signal
  * @param {1 | -1} [d]
  * @returns {number}
  */
@@ -173,7 +173,7 @@ export function update(signal, d = 1) {
 }
 
 /**
- * @param {import('#client').ValueSignal<number>} signal
+ * @param {import('#client').Value<number>} signal
  * @param {1 | -1} [d]
  * @returns {number}
  */

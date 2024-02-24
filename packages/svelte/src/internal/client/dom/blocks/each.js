@@ -31,7 +31,7 @@ const LIS_BLOCK = -2;
 
 /**
  * @template T
- * @typedef {T | import('#client').ValueSignal<T>} MaybeSignal
+ * @typedef {T | import('#client').Value<T>} MaybeSignal
  */
 
 /**

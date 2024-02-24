@@ -4,13 +4,13 @@ import type { ComponentContext, EqualsFunctions, TemplateNode, Transition } from
 export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFECT;
 
 export interface Source<V = unknown> {
-	/** consumers: Signals that read from the current signal */
-	consumers: null | Reaction[];
-	/** equals: For value equality */
+	/** Signals that read from this signal */
+	reactions: null | Reaction[];
+	/** Equality function */
 	eq: EqualsFunctions;
-	/** flags: The types that the signal represent, as a bitwise value */
+	/** Flags bitmask */
 	f: number;
-	/** value: The latest value for this signal */
+	/** The latest value for this signal */
 	v: V;
 	// write version
 	w: number;
@@ -22,7 +22,7 @@ export interface SourceDebug<V = unknown> extends Source<V> {
 
 export interface Derived<V = unknown> extends Source<V> {
 	/** dependencies: Signals that this signal reads from */
-	deps: null | ValueSignal[];
+	deps: null | Value[];
 	/** init: The function that we invoke for effects and computeds */
 	fn: () => V;
 }
@@ -35,7 +35,7 @@ export interface Effect {
 	/** context: The associated component if this signal is an effect/computed */
 	ctx: null | ComponentContext;
 	/** dependencies: Signals that this signal reads from */
-	deps: null | ValueSignal[];
+	deps: null | Value[];
 	/** destroy: Thing(s) that need destroying */
 	y: null | (() => void);
 	/** The types that the signal represent, as a bitwise value */
@@ -62,8 +62,8 @@ export interface Effect {
 
 export type Reaction = Derived | Effect;
 
-export type ValueSignal<V = unknown> = Source<V> | Derived<V>;
+export type Value<V = unknown> = Source<V> | Derived<V>;
 
-export type ValueSignalDebug<V = unknown> = SourceDebug<V> | DerivedDebug<V>;
+export type ValueDebug<V = unknown> = SourceDebug<V> | DerivedDebug<V>;
 
 export type Signal = Source | Derived | Effect;

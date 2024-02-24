@@ -1,6 +1,6 @@
 import { DEV } from 'esm-env';
 import { CLEAN, DERIVED, UNINITIALIZED, UNOWNED } from '../constants.js';
-import { current_consumer, current_effect } from '../runtime.js';
+import { current_reaction, current_effect } from '../runtime.js';
 import { default_equals, safe_equal } from './equality.js';
 
 /**
@@ -15,7 +15,7 @@ export function derived(fn) {
 
 	/** @type {import('#client').Derived<V>} */
 	const signal = {
-		consumers: null,
+		reactions: null,
 		deps: null,
 		eq: default_equals,
 		f: flags,
@@ -31,8 +31,8 @@ export function derived(fn) {
 		signal.inspect = new Set();
 	}
 
-	if (current_consumer !== null) {
-		const effect = /** @type {import('#client').Effect} */ (current_consumer);
+	if (current_reaction !== null) {
+		const effect = /** @type {import('#client').Effect} */ (current_reaction);
 		if (effect.r === null) {
 			effect.r = [signal];
 		} else {
