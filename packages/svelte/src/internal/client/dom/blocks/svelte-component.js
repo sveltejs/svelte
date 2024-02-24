@@ -15,7 +15,7 @@ export function component(anchor_node, component_fn, render_fn) {
 	/** @type {C | null} */
 	let Component = null;
 
-	/** @type {import('#client').Computation | null} */
+	/** @type {import('#client').Effect | null} */
 	let effect = null;
 
 	render_effect(() => {

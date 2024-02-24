@@ -1,5 +1,5 @@
 import { STATE_SYMBOL } from './constants.js';
-import type { Computation, EffectSignal, Signal, Source } from './reactivity/types.js';
+import type { Reaction, Effect, Signal, Source } from './reactivity/types.js';
 
 export * from './reactivity/types.js';
 
@@ -23,7 +23,7 @@ export type ComponentContext = {
 	/** exports (and props, if `accessors: true`) */
 	x: Record<string, any> | null;
 	/** effects */
-	e: null | Array<EffectSignal>;
+	e: null | Effect[];
 	/** mounted */
 	m: boolean;
 	/** parent */
@@ -49,7 +49,7 @@ export type TemplateNode = Text | Element | Comment;
 
 export type EachItemBlock = {
 	/** effect */
-	e: Computation;
+	e: Effect;
 	/** item */
 	v: any | Signal<any>;
 	/** index */

@@ -315,10 +315,10 @@ export function each_indexed(anchor_node, collection, flags, render_fn, fallback
 
 	let length = 0;
 
-	/** @type {Array<import('#client').Computation | null>} */
+	/** @type {Array<import('#client').Effect | null>} */
 	let effects = [];
 
-	/** @type {import('#client').Computation | null} */
+	/** @type {import('#client').Effect | null} */
 	let alternate;
 
 	function truncate() {

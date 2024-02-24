@@ -23,13 +23,13 @@ export function element(anchor_node, get_tag, is_svg, render_fn) {
 	/** @type {string} */
 	let tag;
 
-	/** @type {import('#client').BlockEffect | null} */
+	/** @type {import('#client').Effect | null} */
 	let block;
 
 	/** @type {Element | null} */
-	let element;
+	let element = null;
 
-	/** @type {import('#client').EffectSignal} */
+	/** @type {import('#client').Effect} */
 	let branch;
 
 	branch = render_effect(() => {

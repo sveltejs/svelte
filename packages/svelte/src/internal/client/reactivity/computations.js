@@ -1,13 +1,11 @@
 import { DEV } from 'esm-env';
 import {
 	current_component_context,
-	current_consumer,
 	current_effect,
 	execute_effect,
 	flush_local_render_effects,
 	schedule_effect
 } from '../runtime.js';
-import { default_equals, safe_equal } from './equality.js';
 import { remove } from '../reconciler.js';
 import {
 	DIRTY,
@@ -16,9 +14,6 @@ import {
 	EFFECT,
 	PRE_EFFECT,
 	DERIVED,
-	UNOWNED,
-	CLEAN,
-	UNINITIALIZED,
 	INERT,
 	ROOT_EFFECT,
 	DESTROYED
@@ -30,7 +25,7 @@ import {
  * @param {V} value
  */
 function create_computation_signal(flags, value) {
-	/** @type {import('#client').Computation<V>} */
+	/** @type {import('#client').Effect} */
 	const signal = {
 		c: null,
 		d: null,
@@ -43,6 +38,10 @@ function create_computation_signal(flags, value) {
 		w: 0,
 		x: null,
 		y: null,
+		in: null,
+		out: null,
+		dom: null,
+		ran: false,
 		parent: current_effect
 	};
 
@@ -55,8 +54,8 @@ function create_computation_signal(flags, value) {
 }
 
 /**
- * @param {import('#client').Computation} target_signal
- * @param {import('#client').Computation} ref_signal
+ * @param {import('#client').Reaction} target_signal
+ * @param {import('#client').Reaction} ref_signal
  * @returns {void}
  */
 export function push_reference(target_signal, ref_signal) {
@@ -73,7 +72,7 @@ export function push_reference(target_signal, ref_signal) {
  * @param {(() => void | (() => void))} fn
  * @param {boolean} sync
  * @param {boolean} schedule
- * @returns {import('#client').EffectSignal}
+ * @returns {import('#client').Effect}
  */
 function internal_create_effect(type, fn, sync, schedule) {
 	const signal = create_computation_signal(type | DIRTY, null);
@@ -99,7 +98,7 @@ export function effect_active() {
 /**
  * Internal representation of `$effect(...)`
  * @param {() => void | (() => void)} fn
- * @returns {import('#client').EffectSignal}
+ * @returns {import('#client').Effect}
  */
 export function user_effect(fn) {
 	if (current_effect === null) {
@@ -138,7 +137,7 @@ export function user_root_effect(fn) {
 
 /**
  * @param {() => void | (() => void)} fn
- * @returns {import('#client').EffectSignal}
+ * @returns {import('#client').Effect}
  */
 export function effect(fn) {
 	return internal_create_effect(EFFECT, fn, false, true);
@@ -146,7 +145,7 @@ export function effect(fn) {
 
 /**
  * @param {() => void | (() => void)} fn
- * @returns {import('#client').EffectSignal}
+ * @returns {import('#client').Effect}
  */
 export function managed_effect(fn) {
 	return internal_create_effect(EFFECT | MANAGED, fn, false, true);
@@ -155,7 +154,7 @@ export function managed_effect(fn) {
 /**
  * @param {() => void | (() => void)} fn
  * @param {boolean} sync
- * @returns {import('#client').EffectSignal}
+ * @returns {import('#client').Effect}
  */
 export function managed_pre_effect(fn, sync) {
 	return internal_create_effect(PRE_EFFECT | MANAGED, fn, sync, true);
@@ -164,7 +163,7 @@ export function managed_pre_effect(fn, sync) {
 /**
  * Internal representation of `$effect.pre(...)`
  * @param {() => void | (() => void)} fn
- * @returns {import('#client').EffectSignal}
+ * @returns {import('#client').Effect}
  */
 export function pre_effect(fn) {
 	if (current_effect === null) {
@@ -193,7 +192,7 @@ export function pre_effect(fn) {
  * bindings which are in later effects. However, we don't use a pre_effect directly as we don't want to flush anything.
  *
  * @param {() => void | (() => void)} fn
- * @returns {import('#client').EffectSignal}
+ * @returns {import('#client').Effect}
  */
 export function invalidate_effect(fn) {
 	return internal_create_effect(PRE_EFFECT, fn, true, true);
@@ -203,7 +202,7 @@ export function invalidate_effect(fn) {
  * @param {() => void | (() => void)} fn
  * @param {boolean} managed
  * @param {boolean} sync
- * @returns {import('#client').EffectSignal}
+ * @returns {import('#client').Effect}
  */
 export function render_effect(fn, managed = false, sync = true) {
 	let flags = RENDER_EFFECT;
@@ -214,39 +213,7 @@ export function render_effect(fn, managed = false, sync = true) {
 }
 
 /**
- * @template V
- * @param {() => V} fn
- * @returns {import('#client').Computation<V>}
- */
-/*#__NO_SIDE_EFFECTS__*/
-export function derived(fn) {
-	const is_unowned = current_effect === null;
-	const flags = is_unowned ? DERIVED | UNOWNED : DERIVED;
-	const signal = /** @type {import('#client').Computation<V>} */ (
-		create_computation_signal(flags | CLEAN, UNINITIALIZED)
-	);
-	signal.i = fn;
-	signal.e = default_equals;
-	if (current_consumer !== null) {
-		push_reference(current_consumer, signal);
-	}
-	return signal;
-}
-
-/**
- * @template V
- * @param {() => V} fn
- * @returns {import('#client').Computation<V>}
- */
-/*#__NO_SIDE_EFFECTS__*/
-export function derived_safe_equal(fn) {
-	const signal = derived(fn);
-	signal.e = safe_equal;
-	return signal;
-}
-
-/**
- * @param {import('#client').Computation} effect
+ * @param {import('#client').Effect} effect
  * @param {() => void} done
  */
 export function pause_effect(effect, done) {
@@ -275,7 +242,7 @@ export function pause_effect(effect, done) {
 }
 
 /**
- * @param {import('#client').BlockEffect} effect
+ * @param {import('#client').Effect} effect
  * @param {import('#client').Transition[]} transitions
  * @param {boolean} local
  */
@@ -297,13 +264,13 @@ function pause_children(effect, transitions, local) {
 
 	if (effect.r) {
 		for (const child of effect.r) {
-			pause_children(child, transitions, false);
+			pause_children(child, transitions, false); // TODO separate child effects from child deriveds
 		}
 	}
 }
 
 /**
- * @param {import('#client').BlockEffect} effect TODO this isn't just block effects, it's deriveds etc too
+ * @param {import('#client').Effect} effect TODO this isn't just block effects, it's deriveds etc too
  */
 export function destroy_effect(effect) {
 	if ((effect.f & DESTROYED) !== 0) return;
@@ -326,19 +293,19 @@ export function destroy_effect(effect) {
 }
 
 /**
- * @param {import('#client').BlockEffect} effect
+ * @param {import('#client').Effect} effect
  */
 export function resume_effect(effect) {
 	resume_children(effect, true);
 }
 
 /**
- * @param {import('#client').BlockEffect} effect
+ * @param {import('#client').Effect} effect
  * @param {boolean} local
  */
 function resume_children(effect, local) {
 	if ((effect.f & DERIVED) === 0 && (effect.f & MANAGED) === 0) {
-		execute_effect(/** @type {import('#client').EffectSignal} */ (effect));
+		execute_effect(/** @type {import('#client').Effect} */ (effect));
 	}
 
 	if (effect.r) {

@@ -16,7 +16,7 @@ export function key_block(anchor_node, get_key, render_fn) {
 	/** @type {V | typeof UNINITIALIZED} */
 	let key = UNINITIALIZED;
 
-	/** @type {import('#client').EffectSignal | null} */
+	/** @type {import('#client').Effect | null} */
 	let effect;
 
 	render_effect(() => {

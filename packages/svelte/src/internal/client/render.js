@@ -45,7 +45,6 @@ import {
 	render_effect,
 	effect,
 	managed_effect,
-	derived,
 	pre_effect,
 	user_effect,
 	destroy_effect
@@ -70,6 +69,7 @@ import { run } from '../common.js';
 import { bind_transition } from './transitions.js';
 import { mutable_source, source } from './reactivity/sources.js';
 import { safe_equal, safe_not_equal } from './reactivity/equality.js';
+import { derived } from './reactivity/deriveds.js';
 
 /** @type {Set<string>} */
 const all_registered_events = new Set();
@@ -262,13 +262,13 @@ export function comment(anchor) {
  * @returns {void}
  */
 function close_template(dom, is_fragment, anchor) {
-	const effect = /** @type {import('./types.js').BlockEffect} */ (current_effect);
+	const effect = /** @type {import('#client').Effect} */ (current_effect);
 
-	/** @type {import('./types.js').TemplateNode | Array<import('./types.js').TemplateNode>} */
+	/** @type {import('#client').TemplateNode | Array<import('#client').TemplateNode>} */
 	const current = is_fragment
 		? is_array(dom)
 			? dom
-			: /** @type {import('./types.js').TemplateNode[]} */ (Array.from(dom.childNodes))
+			: /** @type {import('#client').TemplateNode[]} */ (Array.from(dom.childNodes))
 		: dom;
 	if (!hydrating && anchor !== null) {
 		insert(current, null, anchor);
@@ -718,7 +718,7 @@ export function bind_playback_rate(media, get_value, update) {
 	// Needs to happen after the element is inserted into the dom, else playback will be set back to 1 by the browser.
 	// For hydration we could do it immediately but the additional code is not worth the lost microtask.
 
-	/** @type {import('./types.js').Computation | undefined} */
+	/** @type {import('#client').Reaction | undefined} */
 	let render;
 	let destroyed = false;
 	const effect = managed_effect(() => {
@@ -1542,7 +1542,7 @@ export function stringify(value) {
 /**
  * @template P
  * @param {HTMLElement} dom
- * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
+ * @param {() => import('#client').TransitionFn<P | undefined>} get_transition_fn
  * @param {(() => P) | null} props
  * @param {any} global
  * @returns {void}
@@ -1554,7 +1554,7 @@ export function transition(dom, get_transition_fn, props, global = false) {
 /**
  * @template P
  * @param {HTMLElement} dom
- * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
+ * @param {() => import('#client').TransitionFn<P | undefined>} get_transition_fn
  * @param {(() => P) | null} props
  * @returns {void}
  */
@@ -1565,7 +1565,7 @@ export function animate(dom, get_transition_fn, props) {
 /**
  * @template P
  * @param {HTMLElement} dom
- * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
+ * @param {() => import('#client').TransitionFn<P | undefined>} get_transition_fn
  * @param {(() => P) | null} props
  * @param {any} global
  * @returns {void}
@@ -1578,7 +1578,7 @@ export { in_fn as in };
 /**
  * @template P
  * @param {HTMLElement} dom
- * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
+ * @param {() => import('#client').TransitionFn<P | undefined>} get_transition_fn
  * @param {(() => P) | null} props
  * @param {any} global
  * @returns {void}
@@ -1590,12 +1590,12 @@ export function out(dom, get_transition_fn, props, global = false) {
 /**
  * @template P
  * @param {Element} dom
- * @param {(dom: Element, value?: P) => import('./types.js').ActionPayload<P>} action
+ * @param {(dom: Element, value?: P) => import('#client').ActionPayload<P>} action
  * @param {() => P} [value_fn]
  * @returns {void}
  */
 export function action(dom, action, value_fn) {
-	/** @type {undefined | import('./types.js').ActionPayload<P>} */
+	/** @type {undefined | import('#client').ActionPayload<P>} */
 	let payload = undefined;
 	let needs_deep_read = false;
 	// Action could come from a prop, therefore could be a signal, therefore untrack
@@ -2053,7 +2053,7 @@ const rest_props_handler = {
 };
 
 /**
- * @param {import('./types.js').Signal<Record<string, unknown>> | Record<string, unknown>} props
+ * @param {import('#client').Source<Record<string, unknown>> | Record<string, unknown>} props
  * @param {string[]} rest
  * @returns {Record<string, unknown>}
  */
@@ -2497,7 +2497,7 @@ export function prop(props, key, flags, initial) {
  * Legacy-mode only: Call `onMount` callbacks and set up `beforeUpdate`/`afterUpdate` effects
  */
 export function init() {
-	const context = /** @type {import('./types.js').ComponentContext} */ (current_component_context);
+	const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
 	const callbacks = context.u;
 
 	if (!callbacks) return;
@@ -2530,7 +2530,7 @@ export function init() {
 /**
  * Invoke the getter of all signals associated with a component
  * so they can be registered to the effect this function is called in.
- * @param {import('./types.js').ComponentContext} context
+ * @param {import('#client').ComponentContext} context
  */
 function observe_all(context) {
 	if (context.d) {

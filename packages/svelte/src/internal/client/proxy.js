@@ -150,7 +150,7 @@ export function unstate(value) {
 }
 
 /**
- * @param {import('./types.js').Signal<number>} signal
+ * @param {import('./types.js').ValueSignal<number>} signal
  * @param {1 | -1} [d]
  */
 function update_version(signal, d = 1) {

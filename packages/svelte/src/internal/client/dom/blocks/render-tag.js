@@ -9,7 +9,7 @@ import { untrack } from '../../runtime.js';
  * @returns {void}
  */
 export function snippet_effect(get_snippet, node, ...args) {
-	/** @type {import('#client').EffectSignal | null} */
+	/** @type {import('#client').Effect | null} */
 	let effect;
 
 	render_effect(() => {
