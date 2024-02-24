@@ -336,7 +336,6 @@ function remove_consumer(signal, dependency) {
 }
 
 /**
- * @template V
  * @param {import('#client').Reaction} signal
  * @param {number} start_index
  * @returns {void}
@@ -357,7 +356,6 @@ function remove_consumers(signal, start_index) {
 }
 
 /**
- * @template V
  * @param {import('#client').Reaction} signal
  * @returns {void}
  */
