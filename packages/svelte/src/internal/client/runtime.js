@@ -423,7 +423,18 @@ export function execute_effect(effect) {
 		(effect.f & PRE_EFFECT) !== 0 &&
 		current_queued_pre_and_render_effects.length > 0
 	) {
-		flush_local_pre_effects(component_context);
+		const effects = [];
+
+		for (let i = 0; i < current_queued_pre_and_render_effects.length; i++) {
+			const effect = current_queued_pre_and_render_effects[i];
+			if ((effect.f & PRE_EFFECT) !== 0 && effect.ctx === component_context) {
+				effects.push(effect);
+				current_queued_pre_and_render_effects.splice(i, 1);
+				i--;
+			}
+		}
+
+		flush_queued_effects(effects);
 	}
 }
 
@@ -576,23 +587,6 @@ export function flush_local_render_effects() {
 	for (let i = 0; i < current_queued_pre_and_render_effects.length; i++) {
 		const effect = current_queued_pre_and_render_effects[i];
 		if ((effect.f & RENDER_EFFECT) !== 0 && effect.ctx === current_component_context) {
-			effects.push(effect);
-			current_queued_pre_and_render_effects.splice(i, 1);
-			i--;
-		}
-	}
-	flush_queued_effects(effects);
-}
-
-/**
- * @param {null | import('#client').ComponentContext} context
- * @returns {void}
- */
-export function flush_local_pre_effects(context) {
-	const effects = [];
-	for (let i = 0; i < current_queued_pre_and_render_effects.length; i++) {
-		const effect = current_queued_pre_and_render_effects[i];
-		if ((effect.f & PRE_EFFECT) !== 0 && effect.ctx === context) {
 			effects.push(effect);
 			current_queued_pre_and_render_effects.splice(i, 1);
 			i--;
