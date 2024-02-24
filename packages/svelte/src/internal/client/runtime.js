@@ -65,16 +65,16 @@ export function set_current_effect(effect) {
 	current_effect = effect;
 }
 
-/** @type {null | import('#client').Signal[]} */
+/** @type {null | import('#client').ValueSignal[]} */
 let current_dependencies = null;
 let current_dependencies_index = 0;
 /**
  * Tracks writes that the effect it's executed in doesn't listen to yet,
  * so that the dependency can be added to the effect later on if it then reads it
- * @type {null | import('#client').Signal[]}
+ * @type {null | import('#client').Source[]}
  */
 let current_untracked_writes = null;
-/** @type {null | import('#client').SignalDebug} */
+/** @type {null | import('#client').SourceDebug} */
 let last_inspected_signal = null;
 /** If `true`, `get`ting the signal should not register it as a dependency */
 export let current_untracking = false;
@@ -95,7 +95,7 @@ let captured_signals = new Set();
 /** @type {Function | null} */
 export let inspect_fn = null;
 
-/** @type {Array<import('#client').SignalDebug>} */
+/** @type {Array<import('#client').SourceDebug>} */
 let inspect_captured_signals = [];
 
 // Handling runtime component context
@@ -673,7 +673,7 @@ function update_derived(signal, force_schedule) {
 
 		// @ts-expect-error
 		if (DEV && signal.inspect && force_schedule) {
-			for (const fn of /** @type {import('#client').SignalDebug} */ (signal).inspect) fn();
+			for (const fn of /** @type {import('#client').ValueSignalDebug} */ (signal).inspect) fn();
 		}
 	}
 }
@@ -686,7 +686,7 @@ function update_derived(signal, force_schedule) {
 export function get(signal) {
 	// @ts-expect-error
 	if (DEV && signal.inspect && inspect_fn) {
-		/** @type {import('#client').SignalDebug} */ (signal).inspect.add(inspect_fn);
+		/** @type {import('#client').SourceDebug} */ (signal).inspect.add(inspect_fn);
 		// @ts-expect-error
 		inspect_captured_signals.push(signal);
 	}
@@ -913,9 +913,9 @@ export function set_signal_value(signal, value) {
 		// @ts-expect-error
 		if (DEV && signal.inspect) {
 			if (is_batching_effect) {
-				last_inspected_signal = /** @type {import('#client').SignalDebug} */ (signal);
+				last_inspected_signal = /** @type {import('#client').SourceDebug} */ (signal);
 			} else {
-				for (const fn of /** @type {import('#client').SignalDebug} */ (signal).inspect) fn();
+				for (const fn of /** @type {import('#client').SourceDebug} */ (signal).inspect) fn();
 			}
 		}
 	}

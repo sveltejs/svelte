@@ -17,7 +17,7 @@ export type Store<V> = {
 
 export type ComponentContext = {
 	/** local signals (needed for beforeUpdate/afterUpdate) */
-	d: null | Signal<any>[];
+	d: null | Source[];
 	/** props */
 	s: Record<string, unknown>;
 	/** exports (and props, if `accessors: true`) */
@@ -51,9 +51,9 @@ export type EachItemBlock = {
 	/** effect */
 	e: Effect;
 	/** item */
-	v: any | Signal<any>;
+	v: any | Source<any>;
 	/** index */
-	i: number | Signal<number>;
+	i: number | Source<number>;
 	/** key */
 	k: unknown;
 };

@@ -2053,7 +2053,7 @@ const rest_props_handler = {
 };
 
 /**
- * @param {import('#client').Source<Record<string, unknown>> | Record<string, unknown>} props
+ * @param {Record<string, unknown>} props
  * @param {string[]} rest
  * @returns {Record<string, unknown>}
  */

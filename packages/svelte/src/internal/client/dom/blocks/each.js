@@ -32,7 +32,7 @@ const LIS_BLOCK = -2;
 
 /**
  * @template T
- * @typedef {T | import('#client').Signal<T>} MaybeSignal
+ * @typedef {T | import('#client').ValueSignal<T>} MaybeSignal
  */
 
 /**
@@ -563,7 +563,7 @@ function update_each_item_block(block, item, index, type) {
 		// each_animation(block, transitions);
 	}
 	if (index_is_reactive) {
-		set_signal_value(/** @type {import('#client').Signal<number>} */ (block.i), index);
+		set_signal_value(/** @type {import('#client').Source<number>} */ (block.i), index);
 	} else {
 		block.i = index;
 	}
@@ -574,7 +574,7 @@ function update_each_item_block(block, item, index, type) {
  * @param {V} item
  * @param {unknown} key
  * @param {number} index
- * @param {(anchor: null, item: V, index: number | import('#client').Signal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: number | import('#client').Source<number>) => void} render_fn
  * @param {number} flags
  * @returns {import('#client').EachItemBlock}
  */
