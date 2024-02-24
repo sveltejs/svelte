@@ -1,4 +1,4 @@
-import type { DERIVED, EFFECT, PRE_EFFECT, RENDER_EFFECT } from '../constants';
+import type { EFFECT, PRE_EFFECT, RENDER_EFFECT } from '../constants';
 import type { ComponentContext, EqualsFunctions, TemplateNode, Transition } from '../types';
 
 export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFECT;
