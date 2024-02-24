@@ -1,5 +1,5 @@
-import { source } from '../internal/client/reactivity/sources.js';
-import { get, set } from '../internal/client/runtime.js';
+import { source, set } from '../internal/client/reactivity/sources.js';
+import { get } from '../internal/client/runtime.js';
 
 /** @type {Array<keyof Date>} */
 const read = [

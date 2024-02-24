@@ -35,7 +35,6 @@ import {
 	current_component_context,
 	deep_read,
 	get,
-	set,
 	is_signals_recorded,
 	inspect_fn,
 	current_effect
@@ -66,7 +65,7 @@ import {
 } from './utils.js';
 import { run } from '../common.js';
 import { bind_transition } from './transitions.js';
-import { mutable_source, source } from './reactivity/sources.js';
+import { mutable_source, source, set } from './reactivity/sources.js';
 import { safe_not_equal } from './reactivity/equality.js';
 import { derived, derived_safe_equal } from './reactivity/deriveds.js';
 

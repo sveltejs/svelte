@@ -15,14 +15,13 @@ import {
 } from '../../hydration.js';
 import { empty, map_get, map_set } from '../../operations.js';
 import { insert, remove } from '../../reconciler.js';
-import { set } from '../../runtime.js';
 import {
 	destroy_effect,
 	pause_effect,
 	render_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
-import { source, mutable_source } from '../../reactivity/sources.js';
+import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array } from '../../utils.js';
 import { BRANCH_EFFECT } from '../../constants.js';
 

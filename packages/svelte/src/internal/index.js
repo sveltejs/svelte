@@ -1,7 +1,5 @@
 export {
 	get,
-	set,
-	set_sync,
 	invalidate_inner_signals,
 	flushSync,
 	tick,
@@ -10,7 +8,6 @@ export {
 	update_prop,
 	update_pre,
 	update_pre_prop,
-	mutate,
 	value_or_fallback,
 	exclude_from_object,
 	pop,
