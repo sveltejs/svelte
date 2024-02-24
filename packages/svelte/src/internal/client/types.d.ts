@@ -1,5 +1,5 @@
 import { STATE_SYMBOL } from './constants.js';
-import type { Reaction, Effect, Signal, Source } from './reactivity/types.js';
+import type { Effect, Source } from './reactivity/types.js';
 
 export * from './reactivity/types.js';
 
@@ -85,7 +85,7 @@ export type StoreReferencesContainer = Record<
 		store: Store<any> | null;
 		last_value: any;
 		unsubscribe: Function;
-		value: Signal<any>;
+		value: Source<any>;
 	}
 >;
 

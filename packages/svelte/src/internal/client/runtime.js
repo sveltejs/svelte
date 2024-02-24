@@ -152,7 +152,7 @@ export function batch_inspect(target, prop, receiver) {
 
 /**
  * @template V
- * @param {import('#client').Signal<V>} signal
+ * @param {import('#client').ValueSignal<V>} signal
  * @returns {boolean}
  */
 function is_signal_dirty(signal) {
@@ -216,7 +216,7 @@ function execute_signal_fn(signal) {
 	const previous_skip_consumer = current_skip_consumer;
 	const is_render_effect = (flags & RENDER_EFFECT) !== 0;
 	const previous_untracking = current_untracking;
-	current_dependencies = /** @type {null | import('#client').Signal[]} */ (null);
+	current_dependencies = /** @type {null | import('#client').ValueSignal[]} */ (null);
 	current_dependencies_index = 0;
 	current_untracked_writes = null;
 	current_consumer = signal;
@@ -234,7 +234,7 @@ function execute_signal_fn(signal) {
 		} else {
 			res = /** @type {() => V} */ (init)();
 		}
-		let dependencies = /** @type {import('#client').Signal<unknown>[]} **/ (signal.d);
+		let dependencies = /** @type {import('#client').ValueSignal<unknown>[]} **/ (signal.d);
 		if (current_dependencies !== null) {
 			let i;
 			if (dependencies !== null) {
@@ -309,7 +309,7 @@ function execute_signal_fn(signal) {
 /**
  * @template V
  * @param {import('#client').Reaction} signal
- * @param {import('#client').Signal<V>} dependency
+ * @param {import('#client').ValueSignal<V>} dependency
  * @returns {void}
  */
 function remove_consumer(signal, dependency) {
@@ -975,14 +975,14 @@ function set_signal_status(signal, status) {
 
 /**
  * @template V
- * @param {V | import('#client').Signal<V>} val
- * @returns {val is import('#client').Signal<V>}
+ * @param {V | import('#client').ValueSignal<V>} val
+ * @returns {val is import('#client').ValueSignal<V>}
  */
 export function is_signal(val) {
 	return (
 		typeof val === 'object' &&
 		val !== null &&
-		typeof (/** @type {import('#client').Signal<V>} */ (val).f) === 'number'
+		typeof (/** @type {import('#client').ValueSignal<V>} */ (val).f) === 'number'
 	);
 }
 
@@ -1271,7 +1271,7 @@ export function inspect(get_value, inspect = console.log) {
 
 /**
  * @template V
- * @param {import('#client').Signal<V> | (() => V)} value
+ * @param {import('#client').ValueSignal<V> | (() => V)} value
  * @returns {V}
  */
 export function unwrap(value) {
