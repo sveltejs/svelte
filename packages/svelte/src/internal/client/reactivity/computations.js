@@ -30,7 +30,7 @@ import {
  * @param {V} value
  */
 function create_computation_signal(flags, value) {
-	/** @type {import('../types.js').Computation<V>} */
+	/** @type {import('#client').Computation<V>} */
 	const signal = {
 		c: null,
 		d: null,
@@ -55,8 +55,8 @@ function create_computation_signal(flags, value) {
 }
 
 /**
- * @param {import('../types.js').Computation} target_signal
- * @param {import('../types.js').Computation} ref_signal
+ * @param {import('#client').Computation} target_signal
+ * @param {import('#client').Computation} ref_signal
  * @returns {void}
  */
 export function push_reference(target_signal, ref_signal) {
@@ -73,7 +73,7 @@ export function push_reference(target_signal, ref_signal) {
  * @param {(() => void | (() => void))} fn
  * @param {boolean} sync
  * @param {boolean} schedule
- * @returns {import('../types.js').EffectSignal}
+ * @returns {import('#client').EffectSignal}
  */
 function internal_create_effect(type, fn, sync, schedule) {
 	const signal = create_computation_signal(type | DIRTY, null);
@@ -99,7 +99,7 @@ export function effect_active() {
 /**
  * Internal representation of `$effect(...)`
  * @param {() => void | (() => void)} fn
- * @returns {import('../types.js').EffectSignal}
+ * @returns {import('#client').EffectSignal}
  */
 export function user_effect(fn) {
 	if (current_effect === null) {
@@ -117,9 +117,7 @@ export function user_effect(fn) {
 	const effect = internal_create_effect(EFFECT, fn, false, !apply_component_effect_heuristics);
 
 	if (apply_component_effect_heuristics) {
-		const context = /** @type {import('../types.js').ComponentContext} */ (
-			current_component_context
-		);
+		const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
 		(context.e ??= []).push(effect);
 	}
 
@@ -140,7 +138,7 @@ export function user_root_effect(fn) {
 
 /**
  * @param {() => void | (() => void)} fn
- * @returns {import('../types.js').EffectSignal}
+ * @returns {import('#client').EffectSignal}
  */
 export function effect(fn) {
 	return internal_create_effect(EFFECT, fn, false, true);
@@ -148,7 +146,7 @@ export function effect(fn) {
 
 /**
  * @param {() => void | (() => void)} fn
- * @returns {import('../types.js').EffectSignal}
+ * @returns {import('#client').EffectSignal}
  */
 export function managed_effect(fn) {
 	return internal_create_effect(EFFECT | MANAGED, fn, false, true);
@@ -157,7 +155,7 @@ export function managed_effect(fn) {
 /**
  * @param {() => void | (() => void)} fn
  * @param {boolean} sync
- * @returns {import('../types.js').EffectSignal}
+ * @returns {import('#client').EffectSignal}
  */
 export function managed_pre_effect(fn, sync) {
 	return internal_create_effect(PRE_EFFECT | MANAGED, fn, sync, true);
@@ -166,7 +164,7 @@ export function managed_pre_effect(fn, sync) {
 /**
  * Internal representation of `$effect.pre(...)`
  * @param {() => void | (() => void)} fn
- * @returns {import('../types.js').EffectSignal}
+ * @returns {import('#client').EffectSignal}
  */
 export function pre_effect(fn) {
 	if (current_effect === null) {
@@ -195,7 +193,7 @@ export function pre_effect(fn) {
  * bindings which are in later effects. However, we don't use a pre_effect directly as we don't want to flush anything.
  *
  * @param {() => void | (() => void)} fn
- * @returns {import('../types.js').EffectSignal}
+ * @returns {import('#client').EffectSignal}
  */
 export function invalidate_effect(fn) {
 	return internal_create_effect(PRE_EFFECT, fn, true, true);
@@ -205,7 +203,7 @@ export function invalidate_effect(fn) {
  * @param {() => void | (() => void)} fn
  * @param {boolean} managed
  * @param {boolean} sync
- * @returns {import('../types.js').EffectSignal}
+ * @returns {import('#client').EffectSignal}
  */
 export function render_effect(fn, managed = false, sync = true) {
 	let flags = RENDER_EFFECT;
@@ -218,13 +216,13 @@ export function render_effect(fn, managed = false, sync = true) {
 /**
  * @template V
  * @param {() => V} fn
- * @returns {import('../types.js').Computation<V>}
+ * @returns {import('#client').Computation<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
 	const is_unowned = current_effect === null;
 	const flags = is_unowned ? DERIVED | UNOWNED : DERIVED;
-	const signal = /** @type {import('../types.js').Computation<V>} */ (
+	const signal = /** @type {import('#client').Computation<V>} */ (
 		create_computation_signal(flags | CLEAN, UNINITIALIZED)
 	);
 	signal.i = fn;
@@ -238,7 +236,7 @@ export function derived(fn) {
 /**
  * @template V
  * @param {() => V} fn
- * @returns {import('../types.js').Computation<V>}
+ * @returns {import('#client').Computation<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function derived_safe_equal(fn) {
@@ -248,11 +246,11 @@ export function derived_safe_equal(fn) {
 }
 
 /**
- * @param {import('../types.js').Computation} effect
+ * @param {import('#client').Computation} effect
  * @param {() => void} done
  */
 export function pause_effect(effect, done) {
-	/** @type {import('../types.js').TransitionObject[]} */
+	/** @type {import('#client').Transition[]} */
 	const transitions = [];
 
 	pause_children(effect, transitions, true);
@@ -277,8 +275,8 @@ export function pause_effect(effect, done) {
 }
 
 /**
- * @param {import('../types.js').BlockEffect} effect
- * @param {import('../types.js').TransitionObject[]} transitions
+ * @param {import('#client').BlockEffect} effect
+ * @param {import('#client').Transition[]} transitions
  * @param {boolean} local
  */
 function pause_children(effect, transitions, local) {
@@ -305,7 +303,7 @@ function pause_children(effect, transitions, local) {
 }
 
 /**
- * @param {import('../types.js').BlockEffect} effect TODO this isn't just block effects, it's deriveds etc too
+ * @param {import('#client').BlockEffect} effect TODO this isn't just block effects, it's deriveds etc too
  */
 export function destroy_effect(effect) {
 	if ((effect.f & DESTROYED) !== 0) return;
@@ -328,19 +326,19 @@ export function destroy_effect(effect) {
 }
 
 /**
- * @param {import('../types.js').BlockEffect} effect
+ * @param {import('#client').BlockEffect} effect
  */
 export function resume_effect(effect) {
 	resume_children(effect, true);
 }
 
 /**
- * @param {import('../types.js').BlockEffect} effect
+ * @param {import('#client').BlockEffect} effect
  * @param {boolean} local
  */
 function resume_children(effect, local) {
 	if ((effect.f & DERIVED) === 0 && (effect.f & MANAGED) === 0) {
-		execute_effect(/** @type {import('../types.js').EffectSignal} */ (effect));
+		execute_effect(/** @type {import('#client').EffectSignal} */ (effect));
 	}
 
 	if (effect.r) {

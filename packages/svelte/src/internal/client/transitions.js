@@ -263,7 +263,7 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 
 	let current_delta = 0;
 
-	/** @type {import('./types.js').TransitionObject} */
+	/** @type {import('./types.js').Transition} */
 	const transition = {
 		global,
 		to(target, callback) {

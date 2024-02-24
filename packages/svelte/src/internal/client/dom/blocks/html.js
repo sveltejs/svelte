@@ -11,7 +11,7 @@ export function html(anchor_node, get_value, svg) {
 	/** @type {string} */
 	let value;
 
-	/** @type {import('../../types.js').TemplateNode | import('../../types.js').TemplateNode[]} */
+	/** @type {import('#client').TemplateNode | import('#client').TemplateNode[]} */
 	let dom;
 
 	render_effect(() => {

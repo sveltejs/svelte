@@ -1,5 +1,7 @@
 import { STATE_SYMBOL } from './constants.js';
-import type { SignalFlags, Source, SourceDebug } from './reactivity/types.js';
+import type { Computation, EffectSignal, Signal, Source } from './reactivity/types.js';
+
+export * from './reactivity/types.js';
 
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
@@ -41,79 +43,9 @@ export type ComponentContext = {
 	};
 };
 
-// We keep two shapes rather than a single monomorphic shape to improve the memory usage.
-// Source signals don't need the same shape as they simply don't do as much as computations
-// (effects and derived signals). Thus we can improve the memory profile at the slight cost
-// of some runtime performance.
-
-export type Computation<V = unknown> = {
-	/** consumers: Signals that read from the current signal */
-	c: null | Computation[];
-	/** context: The associated component if this signal is an effect/computed */
-	x: null | ComponentContext;
-	/** dependencies: Signals that this signal reads from */
-	d: null | Signal<V>[];
-	/** destroy: Thing(s) that need destroying */
-	y: null | (() => void) | Array<() => void>;
-	/** equals: For value equality */
-	e: null | EqualsFunctions;
-	/** The types that the signal represent, as a bitwise value */
-	f: SignalFlags;
-	/** init: The function that we invoke for effects and computeds */
-	i: null | (() => V) | (() => void | (() => void)) | ((b: null, s: Signal) => void | (() => void));
-	/** references: Anything that a signal owns */
-	r: null | Computation[];
-	/** value: The latest value for this signal, doubles as the teardown for effects */
-	v: V;
-	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
-	l: number;
-	/** write version: used for unowned signals to track if their depdendencies are dirty or not **/
-	w: number;
-	parent: Signal | null;
-};
-
-export type BlockEffect<V = unknown> = Computation<V> & {
-	in?: TransitionObject[];
-	out?: TransitionObject[];
-	dom?: TemplateNode | Array<TemplateNode>;
-	ran?: boolean;
-};
-
-export type Signal<V = unknown> = Source<V> | Computation<V>;
-
-export type SignalDebug<V = unknown> = SourceDebug & Signal<V>;
-
-export type EffectSignal = Computation<null | (() => void)>;
-
-export type MaybeSignal<T = unknown> = T | Signal<T>;
-
-export type UnwrappedSignal<T> = T extends Signal<infer U> ? U : T;
-
 export type EqualsFunctions<T = any> = (a: T, v: T) => boolean;
 
 export type TemplateNode = Text | Element | Comment;
-
-export type Transition = {
-	/** effect */
-	e: EffectSignal;
-	/** payload */
-	p: null | TransitionPayload;
-	/** init */
-	i: (from?: DOMRect) => TransitionPayload;
-	/** finished */
-	f: (fn: () => void) => void;
-	in: () => void;
-	/** out */
-	o: () => void;
-	/** cancel */
-	c: () => void;
-	/** cleanup */
-	x: () => void;
-	/** direction */
-	r: 'in' | 'out' | 'both' | 'key';
-	/** dom */
-	d: HTMLElement;
-};
 
 export type EachItemBlock = {
 	/** effect */
@@ -159,17 +91,6 @@ export type StoreReferencesContainer = Record<
 
 export type ActionPayload<P> = { destroy?: () => void; update?: (value: P) => void };
 
-export type Render = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | EffectSignal;
-	/** transitions */
-	s: Set<Transition>;
-	/** prev */
-	p: Render | null;
-};
-
 export type Raf = {
 	tick: (callback: (time: DOMHighResTimeStamp) => void) => any;
 	now: () => number;
@@ -207,7 +128,7 @@ export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
 
 // TODO remove the other transition types once we're
 // happy we don't need them, and rename this
-export interface TransitionObject {
+export interface Transition {
 	global: boolean;
 	to(target: number, callback?: () => void): void;
 }

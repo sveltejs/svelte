@@ -25,13 +25,13 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 	/** @type {any} */
 	let input;
 
-	/** @type {import('../../types.js').EffectSignal | null} */
+	/** @type {import('../../reactivity/types.js').EffectSignal | null} */
 	let pending_effect;
 
-	/** @type {import('../../types.js').EffectSignal | null} */
+	/** @type {import('../../reactivity/types.js').EffectSignal | null} */
 	let then_effect;
 
-	/** @type {import('../../types.js').EffectSignal | null} */
+	/** @type {import('../../reactivity/types.js').EffectSignal | null} */
 	let catch_effect;
 
 	const branch = render_effect(() => {

@@ -31,6 +31,11 @@ const MOVED_BLOCK = 99999999;
 const LIS_BLOCK = -2;
 
 /**
+ * @template T
+ * @typedef {T | import('#client').Signal<T>} MaybeSignal
+ */
+
+/**
  * Reconcile arrays by the equality of the elements in the array. This algorithm
  * is based on Ivi's reconcilation logic:
  * https://github.com/localvoid/ivi/blob/9f1bd0918f487da5b131941228604763c5d8ef56/packages/ivi/src/client/core.ts#L968
@@ -39,7 +44,7 @@ const LIS_BLOCK = -2;
  * @param {() => V[]} collection
  * @param {number} flags
  * @param { ((item: V) => string)} key_fn
- * @param {(anchor: null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: MaybeSignal<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
@@ -56,7 +61,7 @@ export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fa
 		}
 	}
 
-	/** @type {import('../../types.js').EachItemBlock[]} */
+	/** @type {import('#client').EachItemBlock[]} */
 	var a_blocks = [];
 
 	render_effect(() => {
@@ -76,7 +81,7 @@ export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fa
 		/** @type {number} */
 		var b = array.length;
 
-		/** @type {Array<import('../../types.js').EachItemBlock>} */
+		/** @type {Array<import('#client').EachItemBlock>} */
 		var b_blocks;
 
 		var a_end = a - 1;
@@ -96,7 +101,7 @@ export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fa
 		if (hydrating) {
 			// Hydrate block
 			var fragment;
-			var hydration_list = /** @type {import('../../types.js').TemplateNode[]} */ (
+			var hydration_list = /** @type {import('#client').TemplateNode[]} */ (
 				current_hydration_fragment
 			);
 			var hydrating_node = hydration_list[0];
@@ -118,7 +123,7 @@ export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fa
 
 				// Get the <!--ssr:..--> tag of the next item in the list
 				// The fragment array can be empty if each block has no content
-				hydrating_node = /** @type {import('../../types.js').TemplateNode} */ (
+				hydrating_node = /** @type {import('#client').TemplateNode} */ (
 					/** @type {Node} */ ((fragment.at(-1) || hydrating_node).nextSibling).nextSibling
 				);
 			}
@@ -285,7 +290,7 @@ export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fa
  * @param {Element | Comment} anchor_node
  * @param {() => V[]} collection
  * @param {number} flags
- * @param {(anchor: Element | Comment | null, item: V | (() => V), index: import('../../types.js').MaybeSignal<number>) => void} render_fn
+ * @param {(anchor: Element | Comment | null, item: V | (() => V), index: MaybeSignal<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
@@ -310,10 +315,10 @@ export function each_indexed(anchor_node, collection, flags, render_fn, fallback
 
 	let length = 0;
 
-	/** @type {Array<import('../../types.js').Computation | null>} */
+	/** @type {Array<import('#client').Computation | null>} */
 	let effects = [];
 
-	/** @type {import('../../types.js').Computation | null} */
+	/** @type {import('#client').Computation | null} */
 	let alternate;
 
 	function truncate() {
@@ -398,8 +403,8 @@ export function each_indexed(anchor_node, collection, flags, render_fn, fallback
 /**
  * The server could have rendered more list items than the client specifies.
  * In that case, we need to remove the remaining server-rendered nodes.
- * @param {import('../../types.js').TemplateNode[]} hydration_list
- * @param {import('../../types.js').TemplateNode | null} next_node
+ * @param {import('#client').TemplateNode[]} hydration_list
+ * @param {import('#client').TemplateNode | null} next_node
  */
 function remove_excess_hydration_nodes(hydration_list, next_node) {
 	if (next_node === null) return;
@@ -483,14 +488,14 @@ function mark_lis(a) {
 }
 
 /**
- * @param {import('../../types.js').EachItemBlock} block
+ * @param {import('#client').EachItemBlock} block
  * @param {Element | Comment | Text} dom
  * @param {boolean} is_controlled
  * @param {null | Text | Element | Comment} sibling
  * @returns {Text | Element | Comment}
  */
 function insert_each_item_block(block, dom, is_controlled, sibling) {
-	var current = /** @type {import('../../types.js').TemplateNode} */ (block.e.dom);
+	var current = /** @type {import('#client').TemplateNode} */ (block.e.dom);
 
 	if (sibling === null) {
 		if (is_controlled) {
@@ -504,7 +509,7 @@ function insert_each_item_block(block, dom, is_controlled, sibling) {
 }
 
 /**
- * @param {import('../../types.js').EachItemBlock} block
+ * @param {import('#client').EachItemBlock} block
  * @returns {Text | Element | Comment}
  */
 function get_first_child(block) {
@@ -518,7 +523,7 @@ function get_first_child(block) {
 }
 
 /**
- * @param {import('../../types.js').EachItemBlock} block
+ * @param {import('#client').EachItemBlock} block
  * @returns {Text | Element | Comment}
  */
 export function get_first_element(block) {
@@ -537,7 +542,7 @@ export function get_first_element(block) {
 }
 
 /**
- * @param {import('../../types.js').EachItemBlock} block
+ * @param {import('#client').EachItemBlock} block
  * @param {any} item
  * @param {number} index
  * @param {number} type
@@ -558,7 +563,7 @@ function update_each_item_block(block, item, index, type) {
 		// each_animation(block, transitions);
 	}
 	if (index_is_reactive) {
-		set_signal_value(/** @type {import('../../types.js').Signal<number>} */ (block.i), index);
+		set_signal_value(/** @type {import('#client').Signal<number>} */ (block.i), index);
 	} else {
 		block.i = index;
 	}
@@ -569,9 +574,9 @@ function update_each_item_block(block, item, index, type) {
  * @param {V} item
  * @param {unknown} key
  * @param {number} index
- * @param {(anchor: null, item: V, index: number | import('../../types.js').Signal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: number | import('#client').Signal<number>) => void} render_fn
  * @param {number} flags
- * @returns {import('../../types.js').EachItemBlock}
+ * @returns {import('#client').EachItemBlock}
  */
 function each_item_block(item, key, index, render_fn, flags) {
 	const each_item_not_reactive = (flags & EACH_ITEM_REACTIVE) === 0;
@@ -584,7 +589,7 @@ function each_item_block(item, key, index, render_fn, flags) {
 
 	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
 
-	/** @type {import('../../types.js').EachItemBlock} */
+	/** @type {import('#client').EachItemBlock} */
 	const block = {
 		// @ts-expect-error
 		e: null,

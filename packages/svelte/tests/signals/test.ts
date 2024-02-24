@@ -7,7 +7,7 @@ import {
 	user_effect
 } from '../../src/internal/client/reactivity/computations';
 import { source } from '../../src/internal/client/reactivity/sources';
-import type { Computation } from '../../src/internal/client/types';
+import type { Computation } from '../../src/internal/client/reactivity/types';
 import { proxy } from '../../src/internal/client/proxy';
 
 /**

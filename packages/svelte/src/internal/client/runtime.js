@@ -1291,8 +1291,8 @@ export function inspect(get_value, inspect = console.log) {
 
 /**
  * @template V
- * @param {V} value
- * @returns {import('./types.js').UnwrappedSignal<V>}
+ * @param {import('#client').Signal<V> | (() => V)} value
+ * @returns {V}
  */
 export function unwrap(value) {
 	// temporary!

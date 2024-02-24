@@ -21,10 +21,10 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 	/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 	let mismatch = false;
 
-	/** @type {import('../../types.js').EffectSignal | null} */
+	/** @type {import('#client').EffectSignal | null} */
 	let consequent_effect;
 
-	/** @type {import('../../types.js').EffectSignal | null} */
+	/** @type {import('#client').EffectSignal | null} */
 	let alternate_effect;
 
 	/** @type {boolean | null} */
