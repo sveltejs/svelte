@@ -18,7 +18,6 @@ import {
 	ROOT_EFFECT,
 	DESTROYED
 } from '../constants.js';
-import { push_reference } from './utils.js';
 
 /**
  * @param {import('./types.js').EffectType} type
@@ -45,7 +44,8 @@ function create_effect(type, fn, sync, schedule) {
 		out: null,
 		dom: null,
 		ran: false,
-		parent: current_effect
+		parent: current_effect,
+		children: null
 	};
 
 	if (DEV) {
@@ -55,7 +55,12 @@ function create_effect(type, fn, sync, schedule) {
 
 	if (current_effect !== null) {
 		signal.l = current_effect.l + 1;
-		push_reference(current_effect, signal);
+
+		if (current_effect.children === null) {
+			current_effect.children = [signal];
+		} else {
+			current_effect.children.push(signal);
+		}
 	}
 
 	if (schedule) {
@@ -240,8 +245,8 @@ function pause_children(effect, transitions, local) {
 		}
 	}
 
-	if (effect.r) {
-		for (const child of effect.r) {
+	if (effect.children) {
+		for (const child of effect.children) {
 			pause_children(child, transitions, false); // TODO separate child effects from child deriveds
 		}
 	}
@@ -263,8 +268,8 @@ export function destroy_effect(effect) {
 		remove(effect.dom);
 	}
 
-	if (effect.r) {
-		for (const child of effect.r) {
+	if (effect.children) {
+		for (const child of effect.children) {
 			destroy_effect(child);
 		}
 	}
@@ -286,8 +291,8 @@ function resume_children(effect, local) {
 		execute_effect(/** @type {import('#client').Effect} */ (effect));
 	}
 
-	if (effect.r) {
-		for (const child of effect.r) {
+	if (effect.children) {
+		for (const child of effect.children) {
 			resume_children(child, false);
 		}
 	}

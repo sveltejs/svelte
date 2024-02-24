@@ -356,16 +356,16 @@ function remove_consumers(signal, start_index) {
 }
 
 /**
- * @param {import('#client').Reaction} signal
+ * @param {import('#client').Effect} effect
  * @returns {void}
  */
-function destroy_references(signal) {
-	const references = signal.r;
-	signal.r = null;
-	if (references !== null) {
+function destroy_references(effect) {
+	const deriveds = effect.r;
+	effect.r = null;
+	if (deriveds !== null) {
 		let i;
-		for (i = 0; i < references.length; i++) {
-			destroy_signal(references[i]);
+		for (i = 0; i < deriveds.length; i++) {
+			destroy_signal(deriveds[i]);
 		}
 	}
 }
@@ -656,7 +656,6 @@ export async function tick() {
 function update_derived(signal, force_schedule) {
 	const previous_updating_derived = updating_derived;
 	updating_derived = true;
-	destroy_references(signal);
 	const value = execute_signal_fn(signal);
 	updating_derived = previous_updating_derived;
 	const status =

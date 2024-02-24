@@ -67,8 +67,8 @@ export interface Effect {
 	f: SignalFlags;
 	/** init: The function that we invoke for effects and computeds */
 	i: null | (() => void | (() => void));
-	/** references: Anything that a signal owns */
-	r: null | Reaction[];
+	/** deriveds belonging to this effect */
+	r: null | Derived[];
 	/** teardown */
 	v: null | (() => void);
 	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
@@ -83,8 +83,8 @@ export interface Effect {
 	dom: null | TemplateNode | Array<TemplateNode>;
 	/** Whether the effect ran or not */
 	ran: boolean;
-	/** The parent effect */
 	parent: null | Effect;
+	children: null | Effect[];
 }
 
 export type Reaction = Derived | Effect;

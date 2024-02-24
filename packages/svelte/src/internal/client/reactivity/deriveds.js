@@ -1,7 +1,6 @@
 import { DEV } from 'esm-env';
 import { CLEAN, DERIVED, UNINITIALIZED, UNOWNED } from '../constants.js';
 import { current_consumer, current_effect } from '../runtime.js';
-import { push_reference } from './utils.js';
 import { default_equals, safe_equal } from './equality.js';
 
 /**
@@ -11,15 +10,15 @@ import { default_equals, safe_equal } from './equality.js';
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
-	const is_unowned = current_effect === null;
-	const flags = is_unowned ? DERIVED | UNOWNED : DERIVED;
+	let flags = DERIVED | CLEAN;
+	if (current_effect === null) flags |= UNOWNED;
 
 	/** @type {import('#client').Derived<V>} */
 	const signal = {
 		c: null,
 		d: null,
 		e: default_equals,
-		f: flags | CLEAN,
+		f: flags,
 		i: fn,
 		r: null,
 		// @ts-expect-error
@@ -35,7 +34,11 @@ export function derived(fn) {
 	}
 
 	if (current_consumer !== null) {
-		push_reference(current_consumer, signal);
+		if (current_consumer.r === null) {
+			current_consumer.r = [signal];
+		} else {
+			current_consumer.r.push(signal);
+		}
 	}
 
 	return signal;
