@@ -13,7 +13,6 @@ import {
 	RENDER_EFFECT,
 	EFFECT,
 	PRE_EFFECT,
-	DERIVED,
 	INERT,
 	ROOT_EFFECT,
 	DESTROYED
@@ -29,16 +28,13 @@ import {
 function create_effect(type, fn, sync, schedule) {
 	/** @type {import('#client').Effect} */
 	const signal = {
-		c: null,
 		d: null,
-		e: null,
 		f: type | DIRTY,
 		l: 0,
 		i: fn,
 		r: null,
 		v: null,
-		w: 0,
-		x: current_component_context,
+		ctx: current_component_context,
 		y: null,
 		in: null,
 		out: null,
@@ -189,10 +185,9 @@ export function invalidate_effect(fn) {
  */
 export function render_effect(fn, managed = false, sync = true) {
 	let flags = RENDER_EFFECT;
-	if (managed) {
-		flags |= MANAGED;
-	}
-	return create_effect(flags, /** @type {any} */ (fn), sync, true);
+	if (managed) flags |= MANAGED;
+
+	return create_effect(flags, fn, sync, true);
 }
 
 /**
@@ -233,7 +228,7 @@ function pause_children(effect, transitions, local) {
 	if ((effect.f & INERT) !== 0) return;
 	effect.f |= INERT;
 
-	if ((effect.f & DERIVED) === 0 && typeof effect.v === 'function') {
+	if (typeof effect.v === 'function') {
 		effect.v();
 	}
 
@@ -287,8 +282,8 @@ export function resume_effect(effect) {
  * @param {boolean} local
  */
 function resume_children(effect, local) {
-	if ((effect.f & DERIVED) === 0 && (effect.f & MANAGED) === 0) {
-		execute_effect(/** @type {import('#client').Effect} */ (effect));
+	if ((effect.f & MANAGED) === 0) {
+		execute_effect(effect);
 	}
 
 	if (effect.children) {

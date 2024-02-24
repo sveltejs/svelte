@@ -14,7 +14,7 @@ export interface Source<V = unknown> {
 	/** consumers: Signals that read from the current signal */
 	c: null | Reaction[];
 	/** equals: For value equality */
-	e: null | EqualsFunctions;
+	e: EqualsFunctions;
 	/** flags: The types that the signal represent, as a bitwise value */
 	f: SignalFlags;
 	/** value: The latest value for this signal */
@@ -30,12 +30,10 @@ export interface SourceDebug<V = unknown> extends Source<V> {
 export interface Derived<V = unknown> {
 	/** consumers: Signals that read from the current signal */
 	c: null | Reaction[];
-	/** context: The associated component if this signal is an effect/computed */
-	x: null | ComponentContext;
 	/** dependencies: Signals that this signal reads from */
 	d: null | ValueSignal[];
 	/** equals: For value equality */
-	e: null | EqualsFunctions;
+	e: EqualsFunctions;
 	/** The types that the signal represent, as a bitwise value */
 	f: SignalFlags;
 	/** init: The function that we invoke for effects and computeds */
@@ -53,16 +51,12 @@ export interface DerivedDebug<V = unknown> extends Derived<V> {
 }
 
 export interface Effect {
-	/** consumers: Signals that read from the current signal */
-	c: null | Reaction[];
 	/** context: The associated component if this signal is an effect/computed */
-	x: null | ComponentContext;
+	ctx: null | ComponentContext;
 	/** dependencies: Signals that this signal reads from */
 	d: null | ValueSignal[];
 	/** destroy: Thing(s) that need destroying */
-	y: null | (() => void) | Array<() => void>;
-	/** equals: For value equality */
-	e: null | EqualsFunctions;
+	y: null | (() => void);
 	/** The types that the signal represent, as a bitwise value */
 	f: SignalFlags;
 	/** init: The function that we invoke for effects and computeds */
@@ -73,8 +67,6 @@ export interface Effect {
 	v: null | (() => void);
 	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
 	l: number;
-	/** write version: used for unowned signals to track if their depdendencies are dirty or not **/
-	w: number;
 	/** in transitions */
 	in: null | Transition[];
 	/** out transitions */
@@ -93,4 +85,4 @@ export type ValueSignal<V = unknown> = Source<V> | Derived<V>;
 
 export type ValueSignalDebug<V = unknown> = SourceDebug<V> | DerivedDebug<V>;
 
-export type Signal<V = unknown> = Source<V> | Reaction;
+export type Signal = Source | Derived | Effect;

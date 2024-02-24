@@ -152,29 +152,34 @@ export function batch_inspect(target, prop, receiver) {
 
 /**
  * @template V
- * @param {import('#client').ValueSignal<V>} signal
+ * @param {import('#client').ValueSignal<V> | import('#client').Effect} signal
  * @returns {boolean}
  */
 function is_signal_dirty(signal) {
 	const flags = signal.f;
+
 	if ((flags & DIRTY) !== 0 || signal.v === UNINITIALIZED) {
 		return true;
 	}
+
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		const dependencies = /** @type {import('#client').Reaction} **/ (signal).d;
+
 		if (dependencies !== null) {
 			const length = dependencies.length;
 			let i;
+
 			for (i = 0; i < length; i++) {
 				const dependency = dependencies[i];
 				if ((dependency.f & MAYBE_DIRTY) !== 0 && !is_signal_dirty(dependency)) {
 					set_signal_status(dependency, CLEAN);
 					continue;
 				}
+
 				// The flags can be marked as dirty from the above is_signal_dirty call.
 				if ((dependency.f & DIRTY) !== 0) {
 					if ((dependency.f & DERIVED) !== 0) {
-						update_derived(/** @type {import('#client').Reaction} **/ (dependency), true);
+						update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
 						// Might have been mutated from above get.
 						if ((signal.f & DIRTY) !== 0) {
 							return true;
@@ -183,15 +188,17 @@ function is_signal_dirty(signal) {
 						return true;
 					}
 				}
+
 				// If we're workig with an unowned derived signal, then we need to check
 				// if our dependency write version is higher. If is is then we can assume
 				// that state has changed to a newer version and thus this unowned signal
 				// is also dirty.
 				const is_unowned = (flags & UNOWNED) !== 0;
-				const write_version = signal.w;
+				const write_version = /** @type {import('#client').Derived} */ (signal).w;
 				const dep_write_version = dependency.w;
+
 				if (is_unowned && dep_write_version > write_version) {
-					signal.w = dep_write_version;
+					/** @type {import('#client').Derived} */ (signal).w = dep_write_version;
 					return true;
 				}
 			}
@@ -212,15 +219,12 @@ function execute_signal_fn(signal) {
 	const previous_dependencies_index = current_dependencies_index;
 	const previous_untracked_writes = current_untracked_writes;
 	const previous_consumer = current_consumer;
-	const previous_component_context = current_component_context;
 	const previous_skip_consumer = current_skip_consumer;
-	const is_render_effect = (flags & RENDER_EFFECT) !== 0;
 	const previous_untracking = current_untracking;
 	current_dependencies = /** @type {null | import('#client').ValueSignal[]} */ (null);
 	current_dependencies_index = 0;
 	current_untracked_writes = null;
 	current_consumer = signal;
-	current_component_context = signal.x;
 	current_skip_consumer = !is_flushing_effect && (flags & UNOWNED) !== 0;
 	current_untracking = false;
 
@@ -292,7 +296,6 @@ function execute_signal_fn(signal) {
 		current_dependencies_index = previous_dependencies_index;
 		current_untracked_writes = previous_untracked_writes;
 		current_consumer = previous_consumer;
-		current_component_context = previous_component_context;
 		current_skip_consumer = previous_skip_consumer;
 		current_untracking = previous_untracking;
 	}
@@ -363,38 +366,47 @@ function destroy_references(effect) {
 }
 
 /**
- * @param {import('#client').Effect} signal
+ * @param {import('#client').Effect} effect
  * @returns {void}
  */
-export function execute_effect(signal) {
-	if ((signal.f & DESTROYED) !== 0) {
+export function execute_effect(effect) {
+	if ((effect.f & DESTROYED) !== 0) {
 		return;
 	}
-	const teardown = signal.v;
+
+	const teardown = effect.v;
+	const previous_component_context = current_component_context;
 	const previous_effect = current_effect;
-	current_effect = signal;
+	current_effect = effect;
+
+	const component_context = effect.ctx;
 
 	try {
-		if ((signal.f & BRANCH_EFFECT) === 0) {
+		if ((effect.f & BRANCH_EFFECT) === 0) {
 			// branch effects (i.e. {#if ...} blocks) need to keep their references
 			// TODO their children should detach themselves from signal.r when destroyed
-			destroy_references(signal);
+			destroy_references(effect);
 		}
 
 		if (teardown !== null) {
 			teardown();
 		}
-		const possible_teardown = execute_signal_fn(signal);
+
+		current_component_context = component_context;
+
+		const possible_teardown = execute_signal_fn(effect);
+
 		if (typeof possible_teardown === 'function') {
-			signal.v = possible_teardown;
+			effect.v = possible_teardown;
 		}
 	} finally {
+		current_component_context = previous_component_context;
 		current_effect = previous_effect;
 	}
-	const component_context = signal.x;
+
 	if (
 		is_runes(component_context) && // Don't rerun pre effects more than once to accomodate for "$: only runs once" behavior
-		(signal.f & PRE_EFFECT) !== 0 &&
+		(effect.f & PRE_EFFECT) !== 0 &&
 		current_queued_pre_and_render_effects.length > 0
 	) {
 		flush_local_pre_effects(component_context);
@@ -549,7 +561,7 @@ export function flush_local_render_effects() {
 	const effects = [];
 	for (let i = 0; i < current_queued_pre_and_render_effects.length; i++) {
 		const effect = current_queued_pre_and_render_effects[i];
-		if ((effect.f & RENDER_EFFECT) !== 0 && effect.x === current_component_context) {
+		if ((effect.f & RENDER_EFFECT) !== 0 && effect.ctx === current_component_context) {
 			effects.push(effect);
 			current_queued_pre_and_render_effects.splice(i, 1);
 			i--;
@@ -566,7 +578,7 @@ export function flush_local_pre_effects(context) {
 	const effects = [];
 	for (let i = 0; i < current_queued_pre_and_render_effects.length; i++) {
 		const effect = current_queued_pre_and_render_effects[i];
-		if ((effect.f & PRE_EFFECT) !== 0 && effect.x === context) {
+		if ((effect.f & PRE_EFFECT) !== 0 && effect.ctx === context) {
 			effects.push(effect);
 			current_queued_pre_and_render_effects.splice(i, 1);
 			i--;
@@ -641,7 +653,7 @@ export async function tick() {
 
 /**
  * @template V
- * @param {import('#client').Reaction} signal
+ * @param {import('#client').Derived} signal
  * @param {boolean} force_schedule
  * @returns {void}
  */
@@ -728,10 +740,10 @@ export function get(signal) {
 			// we want to avoid tracking indirect dependencies
 			const previous_inspect_fn = inspect_fn;
 			inspect_fn = null;
-			update_derived(/** @type {import('#client').Reaction} **/ (signal), false);
+			update_derived(/** @type {import('#client').Derived} **/ (signal), false);
 			inspect_fn = previous_inspect_fn;
 		} else {
-			update_derived(/** @type {import('#client').Reaction} **/ (signal), false);
+			update_derived(/** @type {import('#client').Derived} **/ (signal), false);
 		}
 	}
 	return signal.v;
@@ -781,7 +793,6 @@ export function set(signal, value) {
 			is_runes(null) &&
 			!ignore_mutation_validation &&
 			current_effect !== null &&
-			current_effect.c === null &&
 			(current_effect.f & CLEAN) !== 0 &&
 			(current_effect.f & MANAGED) === 0
 		) {
@@ -863,8 +874,7 @@ export function mutate(source, value) {
 }
 
 /**
- * @template V
- * @param {import('#client').Signal<V>} signal
+ * @param {import('#client').ValueSignal} signal
  * @param {number} to_status
  * @param {boolean} force_schedule
  * @returns {void}
@@ -872,29 +882,39 @@ export function mutate(source, value) {
 function mark_signal_consumers(signal, to_status, force_schedule) {
 	const runes = is_runes(null);
 	const consumers = signal.c;
+
 	if (consumers !== null) {
 		const length = consumers.length;
 		let i;
+
 		for (i = 0; i < length; i++) {
 			const consumer = consumers[i];
 			const flags = consumer.f;
 			const unowned = (flags & UNOWNED) !== 0;
+
 			// We skip any effects that are already dirty (but not unowned). Additionally, we also
 			// skip if the consumer is the same as the current effect (except if we're not in runes or we
 			// are in force schedule mode).
 			if ((!force_schedule || !runes) && consumer === current_effect) {
 				continue;
 			}
+
 			set_signal_status(consumer, to_status);
+
 			// If the signal is not clean, then skip over it – with the exception of unowned signals that
 			// are already maybe dirty. Unowned signals might be dirty because they are not captured as part of an
 			// effect.
 			const maybe_dirty = (flags & MAYBE_DIRTY) !== 0;
+
 			if ((flags & CLEAN) !== 0 || (maybe_dirty && unowned)) {
 				if ((consumer.f & IS_EFFECT) !== 0) {
 					schedule_effect(/** @type {import('#client').Effect} */ (consumer), false);
 				} else {
-					mark_signal_consumers(consumer, MAYBE_DIRTY, force_schedule);
+					mark_signal_consumers(
+						/** @type {import('#client').ValueSignal} */ (consumer),
+						MAYBE_DIRTY,
+						force_schedule
+					);
 				}
 			}
 		}
@@ -945,9 +965,9 @@ export function untrack(fn) {
 }
 
 const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
+
 /**
- * @template V
- * @param {import('#client').Signal<V>} signal
+ * @param {import('#client').Signal} signal
  * @param {number} status
  * @returns {void}
  */

@@ -24,7 +24,6 @@ export function derived(fn) {
 		// @ts-expect-error
 		v: UNINITIALIZED,
 		w: 0,
-		x: null,
 		parent: current_effect
 	};
 
