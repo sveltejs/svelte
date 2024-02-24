@@ -29,11 +29,9 @@ export interface SourceDebug<V = unknown> extends Source<V> {
 
 export interface Derived<V = unknown> extends Source<V> {
 	/** dependencies: Signals that this signal reads from */
-	d: null | ValueSignal[];
+	deps: null | ValueSignal[];
 	/** init: The function that we invoke for effects and computeds */
 	fn: () => V;
-	/** references: Anything that a signal owns */
-	r: null | Reaction[];
 }
 
 export interface DerivedDebug<V = unknown> extends Derived<V> {
@@ -44,7 +42,7 @@ export interface Effect {
 	/** context: The associated component if this signal is an effect/computed */
 	ctx: null | ComponentContext;
 	/** dependencies: Signals that this signal reads from */
-	d: null | ValueSignal[];
+	deps: null | ValueSignal[];
 	/** destroy: Thing(s) that need destroying */
 	y: null | (() => void);
 	/** The types that the signal represent, as a bitwise value */

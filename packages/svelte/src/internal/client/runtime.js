@@ -163,7 +163,7 @@ function is_signal_dirty(signal) {
 	}
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
-		const dependencies = /** @type {import('#client').Reaction} **/ (signal).d;
+		const dependencies = /** @type {import('#client').Reaction} **/ (signal).deps;
 
 		if (dependencies !== null) {
 			const length = dependencies.length;
@@ -230,7 +230,7 @@ function execute_reaction(signal) {
 
 	try {
 		const res = /** @type {() => V} */ (init)();
-		let dependencies = /** @type {import('#client').ValueSignal<unknown>[]} **/ (signal.d);
+		let dependencies = /** @type {import('#client').ValueSignal<unknown>[]} **/ (signal.deps);
 		if (current_dependencies !== null) {
 			let i;
 			if (dependencies !== null) {
@@ -265,7 +265,7 @@ function execute_reaction(signal) {
 					dependencies[current_dependencies_index + i] = current_dependencies[i];
 				}
 			} else {
-				signal.d = /** @type {import('#client').ValueSignal<V>[]} **/ (
+				signal.deps = /** @type {import('#client').ValueSignal<V>[]} **/ (
 					dependencies = current_dependencies
 				);
 			}
@@ -336,7 +336,7 @@ function remove_consumer(signal, dependency) {
  * @returns {void}
  */
 function remove_consumers(signal, start_index) {
-	const dependencies = signal.d;
+	const dependencies = signal.deps;
 	if (dependencies !== null) {
 		const active_dependencies = start_index === 0 ? null : dependencies.slice(0, start_index);
 		let i;
@@ -664,7 +664,7 @@ function update_derived(signal, force_schedule) {
 	updating_derived = previous_updating_derived;
 
 	const status =
-		(current_skip_consumer || (signal.f & UNOWNED) !== 0) && signal.d !== null
+		(current_skip_consumer || (signal.f & UNOWNED) !== 0) && signal.deps !== null
 			? MAYBE_DIRTY
 			: CLEAN;
 
@@ -706,7 +706,7 @@ export function get(signal) {
 	// Register the dependency on the current consumer signal.
 	if (current_consumer !== null && (current_consumer.f & MANAGED) === 0 && !current_untracking) {
 		const unowned = (current_consumer.f & UNOWNED) !== 0;
-		const dependencies = current_consumer.d;
+		const dependencies = current_consumer.deps;
 		if (
 			current_dependencies === null &&
 			dependencies !== null &&

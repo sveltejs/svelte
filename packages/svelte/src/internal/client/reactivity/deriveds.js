@@ -16,11 +16,10 @@ export function derived(fn) {
 	/** @type {import('#client').Derived<V>} */
 	const signal = {
 		consumers: null,
-		d: null,
+		deps: null,
 		eq: default_equals,
 		f: flags,
 		fn: fn,
-		r: null,
 		// @ts-expect-error
 		v: UNINITIALIZED,
 		w: 0,
@@ -33,10 +32,11 @@ export function derived(fn) {
 	}
 
 	if (current_consumer !== null) {
-		if (current_consumer.r === null) {
-			current_consumer.r = [signal];
+		const effect = /** @type {import('#client').Effect} */ (current_consumer);
+		if (effect.r === null) {
+			effect.r = [signal];
 		} else {
-			current_consumer.r.push(signal);
+			effect.r.push(signal);
 		}
 	}
 

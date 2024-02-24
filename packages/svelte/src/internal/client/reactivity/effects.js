@@ -28,7 +28,7 @@ import {
 function create_effect(type, fn, sync, schedule) {
 	/** @type {import('#client').Effect} */
 	const signal = {
-		d: null,
+		deps: null,
 		f: type | DIRTY,
 		l: 0,
 		fn: fn,
