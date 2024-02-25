@@ -5,6 +5,7 @@ import {
 	regex_whitespaces_strict
 } from '../patterns.js';
 import * as b from '../../utils/builders.js';
+import { walk } from 'zimmerframe';
 
 /**
  * @param {string} s
@@ -230,6 +231,12 @@ export function infer_namespace(namespace, parent, nodes, path) {
 }
 
 /**
+ * @param {import('#compiler').SvelteNode} node}
+ * @param {{next: () => void}} context
+ */
+const SvelteBlock = (node, { next }) => next();
+
+/**
  * Heuristic: Keep current namespace, unless we find a regular element,
  * in which case we always want html, or we only find svg nodes,
  * in which case we assume svg.
@@ -237,47 +244,40 @@ export function infer_namespace(namespace, parent, nodes, path) {
  * @param {import('#compiler').Namespace | 'keep' | 'maybe_html'} namespace
  */
 function check_nodes_for_namespace(nodes, namespace) {
-	for (const node of nodes) {
-		if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
-			if (!node.metadata.svg) {
-				namespace = 'html';
-				break;
-			} else if (namespace === 'keep') {
-				namespace = 'svg';
-			}
-		} else if ((node.type === 'Text' && node.data.trim() !== '') || node.type === 'HtmlTag') {
-			namespace = 'maybe_html';
-		} else if (node.type === 'EachBlock') {
-			namespace = check_nodes_for_namespace(node.body.nodes, namespace);
-			if (namespace === 'html') break;
-			if (node.fallback) {
-				namespace = check_nodes_for_namespace(node.fallback.nodes, namespace);
-				if (namespace === 'html') break;
-			}
-		} else if (node.type === 'IfBlock') {
-			namespace = check_nodes_for_namespace(node.consequent.nodes, namespace);
-			if (namespace === 'html') break;
-			if (node.alternate) {
-				namespace = check_nodes_for_namespace(node.alternate.nodes, namespace);
-				if (namespace === 'html') break;
-			}
-		} else if (node.type === 'AwaitBlock') {
-			if (node.pending) {
-				namespace = check_nodes_for_namespace(node.pending.nodes, namespace);
-				if (namespace === 'html') break;
-			}
-			if (node.then) {
-				namespace = check_nodes_for_namespace(node.then.nodes, namespace);
-				if (namespace === 'html') break;
-			}
-			if (node.catch) {
-				namespace = check_nodes_for_namespace(node.catch.nodes, namespace);
-				if (namespace === 'html') break;
-			}
-		} else if (node.type === 'KeyBlock') {
-			namespace = check_nodes_for_namespace(node.fragment.nodes, namespace);
-			if (namespace === 'html') break;
+	/**
+	 * @param {import('#compiler').SvelteElement | import('#compiler').RegularElement} node}
+	 * @param {{stop: () => void}} context
+	 */
+	const SvelteElement = (node, { stop }) => {
+		if (!node.metadata.svg) {
+			namespace = 'html';
+			stop();
+		} else if (namespace === 'keep') {
+			namespace = 'svg';
 		}
+	};
+
+	for (const node of nodes) {
+		walk(
+			node,
+			{},
+			{
+				RegularElement: SvelteElement,
+				SvelteElement: SvelteElement,
+				Text(node) {
+					if (node.data.trim() !== '') namespace = 'maybe_html';
+				},
+				HtmlTag() {
+					namespace = 'maybe_html';
+				},
+				EachBlock: SvelteBlock,
+				IfBlock: SvelteBlock,
+				AwaitBlock: SvelteBlock,
+				KeyBlock: SvelteBlock
+			}
+		);
+
+		if (namespace === 'html') break;
 	}
 
 	return namespace;
