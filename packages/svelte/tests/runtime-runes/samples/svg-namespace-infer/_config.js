@@ -7,7 +7,7 @@ export default test({
 		<text x="0" y="26">true</text>
 		<text x="0" y="42">0</text>
 		<text x="10" y="42">1</text>
-		<text x="20" y="42">2</text>
+		<text x="20" y="42">test</text>
 	</svg>
 `,
 	test({ assert, target }) {

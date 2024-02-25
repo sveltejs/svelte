@@ -245,11 +245,7 @@ function check_nodes_for_namespace(nodes, namespace) {
 			} else if (namespace === 'keep') {
 				namespace = 'svg';
 			}
-		} else if (
-			(node.type === 'Text' && node.data.trim() !== '') ||
-			node.type === 'HtmlTag' ||
-			node.type === 'RenderTag'
-		) {
+		} else if ((node.type === 'Text' && node.data.trim() !== '') || node.type === 'HtmlTag') {
 			namespace = 'maybe_html';
 		} else if (node.type === 'EachBlock') {
 			namespace = check_nodes_for_namespace(node.body.nodes, namespace);
