@@ -231,12 +231,6 @@ export function infer_namespace(namespace, parent, nodes, path) {
 }
 
 /**
- * @param {import('#compiler').SvelteNode} node}
- * @param {{next: () => void}} context
- */
-const SvelteBlock = (node, { next }) => next();
-
-/**
  * Heuristic: Keep current namespace, unless we find a regular element,
  * in which case we always want html, or we only find svg nodes,
  * in which case we assume svg.
@@ -245,10 +239,16 @@ const SvelteBlock = (node, { next }) => next();
  */
 function check_nodes_for_namespace(nodes, namespace) {
 	/**
+	 * @param {import('#compiler').SvelteNode} node}
+	 * @param {{next: () => void}} context
+	 */
+	const SvelteBlock = (node, { next }) => next();
+
+	/**
 	 * @param {import('#compiler').SvelteElement | import('#compiler').RegularElement} node}
 	 * @param {{stop: () => void}} context
 	 */
-	const SvelteElement = (node, { stop }) => {
+	const RegularElement = (node, { stop }) => {
 		if (!node.metadata.svg) {
 			namespace = 'html';
 			stop();
@@ -262,22 +262,24 @@ function check_nodes_for_namespace(nodes, namespace) {
 			node,
 			{},
 			{
-				RegularElement: SvelteElement,
-				SvelteElement: SvelteElement,
-				Text(node) {
-					if (node.data.trim() !== '') namespace = 'maybe_html';
-				},
-				HtmlTag() {
-					namespace = 'maybe_html';
-				},
 				EachBlock: SvelteBlock,
 				IfBlock: SvelteBlock,
 				AwaitBlock: SvelteBlock,
-				KeyBlock: SvelteBlock
+				KeyBlock: SvelteBlock,
+				SvelteElement: RegularElement,
+				RegularElement,
+				Text(node) {
+					if (node.data.trim() !== '') {
+						namespace = 'maybe_html';
+					}
+				},
+				HtmlTag() {
+					namespace = 'maybe_html';
+				}
 			}
 		);
 
-		if (namespace === 'html') break;
+		if (namespace === 'html') return namespace;
 	}
 
 	return namespace;
