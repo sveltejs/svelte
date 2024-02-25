@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: treat snippets like components when inferring namespace
+fix: treat snippets like child components when inferring namespace
