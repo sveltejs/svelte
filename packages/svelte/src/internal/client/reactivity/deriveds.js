@@ -1,6 +1,6 @@
 import { DEV } from 'esm-env';
-import { CLEAN, DERIVED, UNINITIALIZED, UNOWNED } from '../constants.js';
-import { current_reaction, current_effect } from '../runtime.js';
+import { CLEAN, DERIVED, DESTROYED, UNINITIALIZED, UNOWNED } from '../constants.js';
+import { current_reaction, current_effect, set_signal_status } from '../runtime.js';
 import { default_equals, safe_equal } from './equality.js';
 
 /**
@@ -53,4 +53,10 @@ export function derived_safe_equal(fn) {
 	const signal = derived(fn);
 	signal.eq = safe_equal;
 	return signal;
+}
+
+/** @param {import('#client').Derived} derived */
+export function destroy_derived(derived) {
+	// TODO what needs to happen here, if anything?
+	set_signal_status(derived, DESTROYED);
 }

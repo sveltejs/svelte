@@ -8,7 +8,7 @@ import {
 	object_prototype
 } from './utils.js';
 import { unstate } from './proxy.js';
-import { pre_effect } from './reactivity/effects.js';
+import { destroy_effect_children, pre_effect } from './reactivity/effects.js';
 import {
 	EFFECT,
 	PRE_EFFECT,
@@ -379,6 +379,9 @@ function destroy_references(effect) {
 	}
 }
 
+/** @param {import('#client').Derived} effect */
+function destroy_effect(effect) {}
+
 /**
  * @param {import('#client').Effect} effect
  * @returns {void}
@@ -399,7 +402,7 @@ export function execute_effect(effect) {
 		if ((effect.f & BRANCH_EFFECT) === 0) {
 			// branch effects (i.e. {#if ...} blocks) need to keep their references
 			// TODO their children should detach themselves from signal.r when destroyed
-			destroy_references(effect);
+			destroy_effect_children(effect);
 		}
 
 		if (teardown !== null) {

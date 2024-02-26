@@ -17,6 +17,7 @@ import {
 	ROOT_EFFECT,
 	DESTROYED
 } from '../constants.js';
+import { destroy_derived } from './deriveds.js';
 
 /**
  * @param {import('./types.js').EffectType} type
@@ -248,7 +249,7 @@ function pause_children(effect, transitions, local) {
 }
 
 /**
- * @param {import('#client').Effect} effect TODO this isn't just block effects, it's deriveds etc too
+ * @param {import('#client').Effect} effect
  */
 export function destroy_effect(effect) {
 	if ((effect.f & DESTROYED) !== 0) return;
@@ -261,6 +262,21 @@ export function destroy_effect(effect) {
 	if (effect.dom) {
 		// TODO skip already-detached DOM
 		remove(effect.dom);
+	}
+
+	effect.v?.();
+
+	destroy_effect_children(effect);
+}
+
+/**
+ * @param {import('#client').Effect} effect
+ */
+export function destroy_effect_children(effect) {
+	if (effect.r) {
+		for (const derived of effect.r) {
+			destroy_derived(derived);
+		}
 	}
 
 	if (effect.children) {
