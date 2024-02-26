@@ -12,7 +12,7 @@ export interface Source<V = unknown> {
 	f: number;
 	/** The latest value for this signal */
 	v: V;
-	// write version
+	// Write version
 	w: number;
 }
 
@@ -21,9 +21,9 @@ export interface SourceDebug<V = unknown> extends Source<V> {
 }
 
 export interface Derived<V = unknown> extends Source<V> {
-	/** dependencies: Signals that this signal reads from */
+	/** Signals that this signal reads from */
 	deps: null | Value[];
-	/** init: The function that we invoke for effects and computeds */
+	/** The derived function */
 	fn: () => V;
 }
 
@@ -32,31 +32,33 @@ export interface DerivedDebug<V = unknown> extends Derived<V> {
 }
 
 export interface Effect {
-	/** context: The associated component if this signal is an effect/computed */
+	/** The component to which this effect belongs, if any */
 	ctx: null | ComponentContext;
-	/** dependencies: Signals that this signal reads from */
+	/** Signals that this signal reads from */
 	deps: null | Value[];
-	/** destroy: Thing(s) that need destroying */
+	/** Thing(s) that need destroying */
 	y: null | (() => void);
-	/** The types that the signal represent, as a bitwise value */
+	/** Flags bitmask */
 	f: number;
-	/** init: The function that we invoke for effects and computeds */
+	/** The effect function */
 	fn: null | (() => void | (() => void));
-	/** deriveds belonging to this effect */
+	/** Deriveds belonging to this effect */
 	r: null | Derived[];
-	/** teardown */
+	/** Teardown function */
 	v: null | (() => void);
-	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
+	/** The depth from the root signal, used for ordering render/pre-effects topologically **/
 	l: number;
-	/** in transitions */
+	/** In transitions */
 	in: null | Transition[];
-	/** out transitions */
+	/** Out transitions */
 	out: null | Transition[];
 	/** DOM nodes belonging to this effect */
 	dom: null | TemplateNode | Array<TemplateNode>;
 	/** Whether the effect ran or not */
 	ran: boolean;
+	/** The parent effect */
 	parent: null | Effect;
+	/** Child effects */
 	children: null | Effect[];
 }
 
