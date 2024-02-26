@@ -393,7 +393,8 @@ function reconcile_indexed_array(
 				b_blocks[index] = block;
 
 				hydrating_node = /** @type {import('../../types.js').TemplateNode} */ (
-					/** @type {Node} */ (/** @type {Node} */ (fragment.at(-1)).nextSibling).nextSibling
+					/** @type {Node} */ (/** @type {Node} */ (fragment[fragment.length - 1]).nextSibling)
+						.nextSibling
 				);
 			}
 
@@ -517,7 +518,8 @@ function reconcile_tracked_array(
 				// Get the <!--ssr:..--> tag of the next item in the list
 				// The fragment array can be empty if each block has no content
 				hydrating_node = /** @type {import('../../types.js').TemplateNode} */ (
-					/** @type {Node} */ ((fragment.at(-1) || hydrating_node).nextSibling).nextSibling
+					/** @type {Node} */ ((fragment[fragment.length - 1] || hydrating_node).nextSibling)
+						.nextSibling
 				);
 			}
 
