@@ -997,26 +997,37 @@ const common_visitors = {
 		const binding = context.state.scope.get(node.name);
 
 		// if no binding, means some global variable
-		if (binding && binding.kind !== 'normal') {
-			if (context.state.expression) {
-				context.state.expression.metadata.dynamic = true;
-			}
+		if (binding) {
+			if (binding.kind === 'normal') {
+				const initial = binding.initial;
 
-			if (
-				node !== binding.node &&
-				// If we have $state that can be proxied or frozen and isn't re-assigned, then that means
-				// it's likely not using a primitive value and thus this warning isn't that helpful.
-				((binding.kind === 'state' &&
-					(binding.reassigned ||
-						(binding.initial?.type === 'CallExpression' &&
-							binding.initial.arguments.length === 1 &&
-							binding.initial.arguments[0].type !== 'SpreadElement' &&
-							!should_proxy_or_freeze(binding.initial.arguments[0], context.state.scope)))) ||
-					binding.kind === 'frozen_state' ||
-					binding.kind === 'derived') &&
-				context.state.function_depth === binding.scope.function_depth
-			) {
-				warn(context.state.analysis.warnings, node, context.path, 'static-state-reference');
+				if (initial?.type === 'NewExpression' && !binding.reassigned && context.state.expression) {
+					// If the identifier comes from a new expression, then the object might have a custom
+					// toString() and thus be reactive. So let's treat the expression as dynamic, unless the
+					// binding has been re-assigned.
+					context.state.expression.metadata.dynamic = true;
+				}
+			} else {
+				if (context.state.expression) {
+					context.state.expression.metadata.dynamic = true;
+				}
+
+				if (
+					node !== binding.node &&
+					// If we have $state that can be proxied or frozen and isn't re-assigned, then that means
+					// it's likely not using a primitive value and thus this warning isn't that helpful.
+					((binding.kind === 'state' &&
+						(binding.reassigned ||
+							(binding.initial?.type === 'CallExpression' &&
+								binding.initial.arguments.length === 1 &&
+								binding.initial.arguments[0].type !== 'SpreadElement' &&
+								!should_proxy_or_freeze(binding.initial.arguments[0], context.state.scope)))) ||
+						binding.kind === 'frozen_state' ||
+						binding.kind === 'derived') &&
+					context.state.function_depth === binding.scope.function_depth
+				) {
+					warn(context.state.analysis.warnings, node, context.path, 'static-state-reference');
+				}
 			}
 		}
 	},
