@@ -274,10 +274,10 @@ function capture_fragment_from_node(node) {
 	if (
 		node.nodeType === 8 &&
 		/** @type {Comment} */ (node).data.startsWith('ssr:') &&
-		current_hydration_fragment.at(-1) !== node
+		current_hydration_fragment[current_hydration_fragment.length - 1] !== node
 	) {
 		const fragment = /** @type {Array<Element | Text | Comment>} */ (get_hydration_fragment(node));
-		const last_child = fragment.at(-1) || node;
+		const last_child = fragment[fragment.length - 1] || node;
 		const target = /** @type {Node} */ (last_child.nextSibling);
 		// @ts-ignore
 		target.$$fragment = fragment;
