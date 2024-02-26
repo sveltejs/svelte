@@ -1274,36 +1274,32 @@ const template_visitors = {
 		context.state.init.push(el_anchor);
 		context.state.template.push(t_expression(anchor_id));
 
-		const [inner_anchor, inner_id] = serialize_anchor(context.state);
-		inner_context.state.init.push(inner_anchor);
-		inner_context.state.template.push(t_string('<'), t_expression(tag));
-		serialize_element_attributes(node, inner_context);
-		inner_context.state.template.push(t_string('>'));
-
-		const before = serialize_template(inner_context.state.template);
 		const main = create_block(node, node.fragment.nodes, {
 			...context,
 			state: { ...context.state, metadata }
 		});
-		const after = serialize_template([
-			t_expression(inner_id),
-			t_string('</'),
-			t_expression(tag),
-			t_string('>')
-		]);
+
+		serialize_element_attributes(node, inner_context);
 
 		context.state.template.push(
 			t_statement(
 				b.if(
 					tag,
-					b.block([
-						...inner_context.state.init,
-						...before,
-						b.if(
-							b.unary('!', b.call('$.VoidElements.has', tag)),
-							b.block([...serialize_template([t_expression(inner_id)]), ...main, ...after])
+
+					b.stmt(
+						b.call(
+							'$.element',
+							b.id('$$payload'),
+							tag,
+							b.thunk(
+								b.block([
+									...inner_context.state.init,
+									...serialize_template(inner_context.state.template)
+								])
+							),
+							b.thunk(b.block(main))
 						)
-					])
+					)
 				)
 			),
 			t_expression(anchor_id)

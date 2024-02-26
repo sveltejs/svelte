@@ -609,6 +609,22 @@ const validation = {
 				error(arg, 'invalid-render-spread-argument');
 			}
 		}
+		const is_inside_textarea = context.path.find((n) => {
+			return (
+				n.type === 'SvelteElement' &&
+				n.name === 'svelte:element' &&
+				n.tag.type === 'Literal' &&
+				n.tag.value === 'textarea'
+			);
+		});
+		if (is_inside_textarea) {
+			error(
+				node,
+				'invalid-tag-placement',
+				'inside <textarea> or <svelte:element this="textarea">',
+				node.expression.name
+			);
+		}
 	},
 	SvelteHead(node) {
 		const attribute = node.attributes[0];

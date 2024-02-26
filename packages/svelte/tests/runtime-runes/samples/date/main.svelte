@@ -1,12 +1,12 @@
 <script>
 	import { Date } from 'svelte/reactivity';
 
-	let date = new Date('2024/02/23 15:00:00');
+	let date = new Date('2024-02-23T15:00:00Z');
 </script>
 
-<div>getSeconds: {date.getSeconds()}</div>
-<div>getMinutes: {date.getMinutes()}</div>
-<div>getHours: {date.getHours()}</div>
+<div>getSeconds: {date.getUTCSeconds()}</div>
+<div>getMinutes: {date.getUTCMinutes()}</div>
+<div>getHours: {date.getUTCHours()}</div>
 <div>getTime: {date.getTime()}</div>
 <div>toDateString: {date.toDateString()}</div>
 
