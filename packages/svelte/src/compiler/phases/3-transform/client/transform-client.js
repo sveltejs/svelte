@@ -245,11 +245,7 @@ export function client_component(source, analysis, options) {
 		return b.get(alias ?? name, [b.return(expression)]);
 	});
 
-	if (
-		analysis.accessors ||
-		// because $set method needs accessors
-		options.legacy.componentApi
-	) {
+	if (analysis.accessors) {
 		for (const [name, binding] of analysis.instance.scope.declarations) {
 			if (binding.kind !== 'prop' || name.startsWith('$$')) continue;
 
