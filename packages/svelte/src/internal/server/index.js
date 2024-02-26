@@ -80,6 +80,31 @@ export function assign_payload(p1, p2) {
 }
 
 /**
+ * @param {Payload} payload
+ * @param {string} tag
+ * @param {() => void} attributes_fn
+ * @param {() => void} children_fn
+ * @returns {void}
+ */
+export function element(payload, tag, attributes_fn, children_fn) {
+	payload.out += `<${tag} `;
+	attributes_fn();
+	payload.out += `>`;
+
+	if (!VoidElements.has(tag)) {
+		const anchor = tag !== 'textarea' ? create_anchor(payload) : null;
+		if (anchor !== null) {
+			payload.out += anchor;
+		}
+		children_fn();
+		if (anchor !== null) {
+			payload.out += anchor;
+		}
+		payload.out += `</${tag}>`;
+	}
+}
+
+/**
  * Array of `onDestroy` callbacks that should be called at the end of the server render function
  * @type {Function[]}
  */
