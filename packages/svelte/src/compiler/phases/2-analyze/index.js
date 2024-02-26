@@ -357,7 +357,11 @@ export function analyze_component(root, options) {
 		uses_component_bindings: false,
 		custom_element: options.customElement,
 		inject_styles: options.css === 'injected' || !!options.customElement,
-		accessors: options.customElement ? true : !!options.accessors,
+		accessors: options.customElement
+			? true
+			: !!options.accessors ||
+				// because $set method needs accessors
+				!!options.legacy?.componentApi,
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
 		slot_names: new Set(),
