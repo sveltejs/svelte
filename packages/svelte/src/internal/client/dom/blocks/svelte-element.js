@@ -35,6 +35,14 @@ export function element(anchor_node, get_tag, is_svg, render_fn) {
 	branch = render_effect(() => {
 		if (tag === (tag = get_tag())) return;
 
+		if (element && tag === element.nodeName.toLowerCase()) {
+			// aborted outro transition
+			if (block) {
+				resume_effect(block);
+				return;
+			}
+		}
+
 		// We try our best infering the namespace in case it's not possible to determine statically,
 		// but on the first render on the client (without hydration) the parent will be undefined,
 		// since the anchor is not attached to its parent / the dom yet.
@@ -55,34 +63,13 @@ export function element(anchor_node, get_tag, is_svg, render_fn) {
 
 		// TODO handle hydration mismatch
 
-		if (element) {
-			if (next_element) {
-				// while (element.firstChild) {
-				// 	next_element.appendChild(element.firstChild);
-				// }
+		if (element && next_element) {
+			element.replaceWith(next_element);
+			next_element.appendChild(anchor_node);
 
-				element.replaceWith(next_element);
-
-				next_element.appendChild(anchor_node);
-
-				if (render_fn) {
-					if (block) {
-						pause_effect(block, noop); // TODO we don't actually want to pause it, we want to just destroy it immediately
-						destroy_effect(block);
-					}
-
-					block = render_effect(() => render_fn(next_element, anchor_node), true); // TODO disable transitions
-				}
-			} else if (block) {
-				const old_element = element;
-				pause_effect(block, () => {
-					block = null;
-					if (old_element === element) {
-						old_element.remove();
-					}
-				});
-			} else {
-				element.remove();
+			if (render_fn && block) {
+				destroy_effect(block);
+				block = render_effect(() => render_fn(next_element, anchor_node), true); // TODO disable transitions
 			}
 		} else if (next_element) {
 			anchor_node.parentNode?.insertBefore(next_element, anchor_node);
@@ -106,9 +93,22 @@ export function element(anchor_node, get_tag, is_svg, render_fn) {
 					block = render_effect(() => render_fn(next_element, anchor), true);
 				}
 			}
+
+			element = next_element;
+		} else if (element) {
+			if (block) {
+				const old_element = element;
+				pause_effect(block, () => {
+					block = null;
+					element = null;
+					old_element.remove();
+				});
+			} else {
+				element.remove();
+				element = null;
+			}
 		}
 
-		element = next_element;
 		if (branch) branch.dom = element;
 	});
 
