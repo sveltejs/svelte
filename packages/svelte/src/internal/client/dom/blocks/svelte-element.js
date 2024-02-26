@@ -71,6 +71,8 @@ export function element(anchor_node, get_tag, is_svg, render_fn) {
 				destroy_effect(block);
 				block = render_effect(() => render_fn(next_element, anchor_node), true); // TODO disable transitions
 			}
+
+			element = next_element;
 		} else if (next_element) {
 			anchor_node.parentNode?.insertBefore(next_element, anchor_node);
 
