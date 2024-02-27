@@ -44,11 +44,11 @@ import {
 	push,
 	pop,
 	current_component_context,
-	deep_read,
 	get,
 	set,
 	is_signals_recorded,
-	inspect_fn
+	inspect_fn,
+	deep_read_state
 } from './runtime.js';
 import {
 	render_effect,
@@ -1950,7 +1950,7 @@ export function action(dom, action, value_fn) {
 			// This works in legacy mode because of mutable_source being updated as a whole, but when using $state
 			// together with actions and mutation, it wouldn't notice the change without a deep read.
 			if (needs_deep_read) {
-				deep_read(value);
+				deep_read_state(value);
 			}
 		} else {
 			untrack(() => (payload = action(dom)));
@@ -2858,10 +2858,12 @@ export function init() {
 	if (!callbacks) return;
 
 	// beforeUpdate
-	pre_effect(() => {
-		observe_all(context);
-		callbacks.b.forEach(run);
-	});
+	if (callbacks.b.length) {
+		pre_effect(() => {
+			observe_all(context);
+			callbacks.b.forEach(run);
+		});
+	}
 
 	// onMount (must run before afterUpdate)
 	user_effect(() => {
@@ -2876,10 +2878,12 @@ export function init() {
 	});
 
 	// afterUpdate
-	user_effect(() => {
-		observe_all(context);
-		callbacks.a.forEach(run);
-	});
+	if (callbacks.a.length) {
+		user_effect(() => {
+			observe_all(context);
+			callbacks.a.forEach(run);
+		});
+	}
 }
 
 /**
@@ -2892,7 +2896,7 @@ function observe_all(context) {
 		for (const signal of context.d) get(signal);
 	}
 
-	deep_read(context.s);
+	deep_read_state(context.s);
 }
 
 /**
