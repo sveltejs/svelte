@@ -604,11 +604,16 @@ const validation = {
 		});
 	},
 	RenderTag(node, context) {
-		for (const arg of node.arguments) {
+		const raw_args =
+			node.expression.type === 'CallExpression'
+				? node.expression.arguments
+				: node.expression.expression.arguments;
+		for (const arg of raw_args) {
 			if (arg.type === 'SpreadElement') {
 				error(arg, 'invalid-render-spread-argument');
 			}
 		}
+
 		const is_inside_textarea = context.path.find((n) => {
 			return (
 				n.type === 'SvelteElement' &&
@@ -622,7 +627,7 @@ const validation = {
 				node,
 				'invalid-tag-placement',
 				'inside <textarea> or <svelte:element this="textarea">',
-				node.expression.name
+				'render'
 			);
 		}
 	},

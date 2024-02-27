@@ -1141,17 +1141,34 @@ const template_visitors = {
 		state.init.push(anchor);
 		state.template.push(t_expression(anchor_id));
 
-		const expression = /** @type {import('estree').Expression} */ (context.visit(node.expression));
+		const callee =
+			node.expression.type === 'CallExpression'
+				? node.expression.callee
+				: node.expression.expression.callee;
+		const raw_args =
+			node.expression.type === 'CallExpression'
+				? node.expression.arguments
+				: node.expression.expression.arguments;
+
+		const expression = /** @type {import('estree').Expression} */ (context.visit(callee));
 		const snippet_function = state.options.dev
 			? b.call('$.validate_snippet', expression)
 			: expression;
 
-		const snippet_args = node.arguments.map((arg) => {
+		const snippet_args = raw_args.map((arg) => {
 			return /** @type {import('estree').Expression} */ (context.visit(arg));
 		});
 
 		state.template.push(
-			t_statement(b.stmt(b.call(snippet_function, b.id('$$payload'), ...snippet_args)))
+			t_statement(
+				b.stmt(
+					(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
+						snippet_function,
+						b.id('$$payload'),
+						...snippet_args
+					)
+				)
+			)
 		);
 
 		state.template.push(t_expression(anchor_id));
