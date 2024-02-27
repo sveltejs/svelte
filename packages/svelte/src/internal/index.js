@@ -18,7 +18,8 @@ export {
 	inspect,
 	unwrap,
 	freeze,
-	deep_read
+	deep_read,
+	deep_read_state
 } from './client/runtime.js';
 export * from './client/dev/ownership.js';
 export { await_block as await } from './client/dom/blocks/await.js';
