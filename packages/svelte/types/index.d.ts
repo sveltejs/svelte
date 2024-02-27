@@ -1724,7 +1724,7 @@ declare module 'svelte/legacy' {
 		component: SvelteComponent<Props, Events, Slots>;
 		immutable?: boolean | undefined;
 		hydrate?: boolean | undefined;
-		recover?: false | undefined;
+		recover?: boolean | undefined;
 	}): SvelteComponent<Props, Events, Slots> & Exports;
 	/**
 	 * Takes the component function and returns a Svelte 4 compatible component constructor.
