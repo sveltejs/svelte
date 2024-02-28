@@ -1,5 +1,25 @@
 # svelte
 
+## 5.0.0-next.69
+
+### Patch Changes
+
+- perf: bail early when traversing non-state ([#10654](https://github.com/sveltejs/svelte/pull/10654))
+
+- feat: improve ssr html mismatch validation ([#10658](https://github.com/sveltejs/svelte/pull/10658))
+
+- fix: improve ssr output of dynamic textarea elements ([#10638](https://github.com/sveltejs/svelte/pull/10638))
+
+- fix: improve ssr code generation for class property $derived ([#10661](https://github.com/sveltejs/svelte/pull/10661))
+
+- fix: warn when `$props` rune not called ([#10655](https://github.com/sveltejs/svelte/pull/10655))
+
+- fix: improve derived rune destructuring support ([#10665](https://github.com/sveltejs/svelte/pull/10665))
+
+- feat: allow arbitrary call expressions and optional chaining for snippets ([#10656](https://github.com/sveltejs/svelte/pull/10656))
+
+- fix: add `$set` and `$on` methods in legacy compat mode ([#10642](https://github.com/sveltejs/svelte/pull/10642))
+
 ## 5.0.0-next.68
 
 ### Patch Changes
