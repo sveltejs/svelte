@@ -72,8 +72,6 @@ export const validate_component_options =
 
 			discloseVersion: boolean(true),
 
-			recover: boolean(false),
-
 			immutable: deprecate(
 				'The immutable option has been deprecated. It has no effect in runes mode.',
 				boolean(false)
