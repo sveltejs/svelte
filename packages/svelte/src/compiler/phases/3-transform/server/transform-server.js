@@ -546,37 +546,94 @@ const javascript_visitors = {
 
 /** @type {import('./types').Visitors} */
 const javascript_visitors_runes = {
+	ClassBody(node, { state, visit, next }) {
+		if (!state.analysis.runes) {
+			next();
+		}
+		/** @type {import('estree').PropertyDefinition[]} */
+		const deriveds = [];
+		/** @type {import('estree').MethodDefinition | null} */
+		let constructor = null;
+		// Get the constructor
+		for (const definition of node.body) {
+			if (definition.type === 'MethodDefinition' && definition.kind === 'constructor') {
+				constructor = /** @type {import('estree').MethodDefinition} */ (visit(definition));
+			}
+		}
+		// Move $derived() runes to the end of the body if there is a constructor
+		if (constructor !== null) {
+			const body = [];
+			for (const definition of node.body) {
+				if (
+					definition.type === 'PropertyDefinition' &&
+					(definition.key.type === 'Identifier' || definition.key.type === 'PrivateIdentifier')
+				) {
+					const is_private = definition.key.type === 'PrivateIdentifier';
+
+					if (definition.value?.type === 'CallExpression') {
+						const rune = get_rune(definition.value, state.scope);
+
+						if (rune === '$derived') {
+							deriveds.push(/** @type {import('estree').PropertyDefinition} */ (visit(definition)));
+							if (is_private) {
+								// Keep the private #name initializer if private, but remove initial value
+								body.push({
+									...definition,
+									value: null
+								});
+							}
+							continue;
+						}
+					}
+				}
+				if (definition.type !== 'MethodDefinition' || definition.kind !== 'constructor') {
+					body.push(
+						/** @type {import('estree').PropertyDefinition | import('estree').MethodDefinition | import('estree').StaticBlock} */ (
+							visit(definition)
+						)
+					);
+				}
+			}
+			if (deriveds.length > 0) {
+				body.push({
+					...constructor,
+					value: {
+						...constructor.value,
+						body: b.block([
+							...constructor.value.body.body,
+							...deriveds.map((d) => {
+								return b.stmt(
+									b.assignment(
+										'=',
+										b.member(b.this, d.key),
+										/** @type {import('estree').Expression} */ (d.value)
+									)
+								);
+							})
+						])
+					}
+				});
+			} else {
+				body.push(constructor);
+			}
+			return {
+				...node,
+				body
+			};
+		}
+		next();
+	},
 	PropertyDefinition(node, { state, next, visit }) {
 		if (node.value != null && node.value.type === 'CallExpression') {
 			const rune = get_rune(node.value, state.scope);
 
-			if (rune === '$state' || rune === '$state.frozen') {
+			if (rune === '$state' || rune === '$state.frozen' || rune === '$derived') {
 				return {
 					...node,
 					value:
 						node.value.arguments.length === 0
 							? null
 							: /** @type {import('estree').Expression} */ (visit(node.value.arguments[0]))
-				};
-			}
-			if (rune === '$derived') {
-				return {
-					type: 'MethodDefinition',
-					kind: 'get',
-					key: node.key,
-					computed: false,
-					static: false,
-					value: b.function(
-						null,
-						[],
-						b.block([
-							b.return(
-								node.value.arguments.length === 0
-									? null
-									: /** @type {import('estree').Expression} */ (visit(node.value.arguments[0]))
-							)
-						])
-					)
 				};
 			}
 			if (rune === '$derived.by') {
