@@ -1,6 +1,6 @@
 <script>
 	import Child from './child.svelte';
-	let snippet = $state(0);
+	let snippet = $state('foo');
 	let show = $state(false);
 </script>
 
@@ -12,6 +12,6 @@
 	<p>bar</p>
 {/snippet}
 
-<Child snippets={[foo, bar]} {snippet} optional={show ? foo : undefined} />
+<Child snippets={{foo, bar}} {snippet} optional={show ? foo : undefined} />
 
-<button on:click={() => { snippet = 1; show = true; }}>toggle</button>
+<button on:click={() => { snippet = 'bar'; show = true; }}>toggle</button>
