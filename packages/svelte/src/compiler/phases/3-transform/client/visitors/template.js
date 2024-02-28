@@ -3,7 +3,8 @@ import {
 	extract_paths,
 	is_event_attribute,
 	is_text_attribute,
-	object
+	object,
+	unwrap_optional
 } from '../../../../utils/ast.js';
 import { binding_properties } from '../../../bindings.js';
 import {
@@ -1864,14 +1865,8 @@ export const template_visitors = {
 	},
 	RenderTag(node, context) {
 		context.state.template.push('<!>');
-		const callee =
-			node.expression.type === 'CallExpression'
-				? node.expression.callee
-				: node.expression.expression.callee;
-		const raw_args =
-			node.expression.type === 'CallExpression'
-				? node.expression.arguments
-				: node.expression.expression.arguments;
+		const callee = unwrap_optional(node.expression).callee;
+		const raw_args = unwrap_optional(node.expression).arguments;
 		const is_reactive =
 			callee.type !== 'Identifier' || context.state.scope.get(callee.name)?.kind !== 'normal';
 

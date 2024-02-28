@@ -1,6 +1,11 @@
 import { walk } from 'zimmerframe';
 import { set_scope, get_rune } from '../../scope.js';
-import { extract_identifiers, extract_paths, is_event_attribute } from '../../../utils/ast.js';
+import {
+	extract_identifiers,
+	extract_paths,
+	is_event_attribute,
+	unwrap_optional
+} from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
 import is_reference from 'is-reference';
 import {
@@ -1141,14 +1146,8 @@ const template_visitors = {
 		state.init.push(anchor);
 		state.template.push(t_expression(anchor_id));
 
-		const callee =
-			node.expression.type === 'CallExpression'
-				? node.expression.callee
-				: node.expression.expression.callee;
-		const raw_args =
-			node.expression.type === 'CallExpression'
-				? node.expression.arguments
-				: node.expression.expression.arguments;
+		const callee = unwrap_optional(node.expression).callee;
+		const raw_args = unwrap_optional(node.expression).arguments;
 
 		const expression = /** @type {import('estree').Expression} */ (context.visit(callee));
 		const snippet_function = state.options.dev
