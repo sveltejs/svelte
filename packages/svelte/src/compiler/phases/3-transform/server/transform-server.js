@@ -545,13 +545,33 @@ const javascript_visitors_runes = {
 		if (node.value != null && node.value.type === 'CallExpression') {
 			const rune = get_rune(node.value, state.scope);
 
-			if (rune === '$state' || rune === '$state.frozen' || rune === '$derived') {
+			if (rune === '$state' || rune === '$state.frozen') {
 				return {
 					...node,
 					value:
 						node.value.arguments.length === 0
 							? null
 							: /** @type {import('estree').Expression} */ (visit(node.value.arguments[0]))
+				};
+			}
+			if (rune === '$derived') {
+				return {
+					type: 'MethodDefinition',
+					kind: 'get',
+					key: node.key,
+					computed: false,
+					static: false,
+					value: b.function(
+						null,
+						[],
+						b.block([
+							b.return(
+								node.value.arguments.length === 0
+									? null
+									: /** @type {import('estree').Expression} */ (visit(node.value.arguments[0]))
+							)
+						])
+					)
 				};
 			}
 			if (rune === '$derived.by') {
