@@ -1,6 +1,11 @@
 import { walk } from 'zimmerframe';
 import { set_scope, get_rune } from '../../scope.js';
-import { extract_identifiers, extract_paths, is_event_attribute } from '../../../utils/ast.js';
+import {
+	extract_identifiers,
+	extract_paths,
+	is_event_attribute,
+	unwrap_optional
+} from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
 import is_reference from 'is-reference';
 import {
@@ -1161,17 +1166,28 @@ const template_visitors = {
 		state.init.push(anchor);
 		state.template.push(t_expression(anchor_id));
 
-		const expression = /** @type {import('estree').Expression} */ (context.visit(node.expression));
+		const callee = unwrap_optional(node.expression).callee;
+		const raw_args = unwrap_optional(node.expression).arguments;
+
+		const expression = /** @type {import('estree').Expression} */ (context.visit(callee));
 		const snippet_function = state.options.dev
 			? b.call('$.validate_snippet', expression)
 			: expression;
 
-		const snippet_args = node.arguments.map((arg) => {
+		const snippet_args = raw_args.map((arg) => {
 			return /** @type {import('estree').Expression} */ (context.visit(arg));
 		});
 
 		state.template.push(
-			t_statement(b.stmt(b.call(snippet_function, b.id('$$payload'), ...snippet_args)))
+			t_statement(
+				b.stmt(
+					(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
+						snippet_function,
+						b.id('$$payload'),
+						...snippet_args
+					)
+				)
+			)
 		);
 
 		state.template.push(t_expression(anchor_id));

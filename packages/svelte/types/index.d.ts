@@ -475,7 +475,7 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/compiler' {
-	import type { AssignmentExpression, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, ArrayExpression, MemberExpression, ObjectExpression, Pattern, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, FunctionExpression, Node, Program, SpreadElement } from 'estree';
+	import type { AssignmentExpression, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, ArrayExpression, MemberExpression, ObjectExpression, Pattern, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, FunctionExpression, Node, Program, ChainExpression, SimpleCallExpression } from 'estree';
 	import type { Location } from 'locate-character';
 	import type { SourceMap } from 'magic-string';
 	import type { Context } from 'zimmerframe';
@@ -1197,8 +1197,7 @@ declare module 'svelte/compiler' {
 	/** A `{@render foo(...)} tag */
 	interface RenderTag extends BaseNode {
 		type: 'RenderTag';
-		expression: Identifier;
-		arguments: Array<Expression | SpreadElement>;
+		expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
 	}
 
 	type Tag = ExpressionTag | HtmlTag | ConstTag | DebugTag | RenderTag;
