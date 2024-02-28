@@ -27,10 +27,15 @@ export default test({
 		log.length = 0;
 	},
 
-	async test({ assert, target }) {
-		assert.htmlEqual(target.innerHTML, `<p></p><h1>foo</h1><p></p>`);
-		if (log.length > 0) {
-			assert.deepEqual(log, ['Svelte SSR validation error:\n\n']);
+	async test({ assert, target, variant }) {
+		await assert.htmlEqual(target.innerHTML, `<p></p><h1>foo</h1><p></p>`);
+		if (variant === 'hydrate') {
+			assert.equal(
+				log[0],
+				`Svelte SSR validation error:\n\n<h1> is invalid inside <p>\n\n` +
+					'Ensure your components render valid HTML as the browser will try to repair invalid HTML, ' +
+					'which may result in content being shifted around and will likely result in a hydration mismatch.'
+			);
 		}
 	}
 });
