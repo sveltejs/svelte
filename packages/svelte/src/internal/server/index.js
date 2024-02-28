@@ -1,10 +1,22 @@
 import * as $ from '../client/runtime.js';
 import { is_promise, noop } from '../common.js';
 import { subscribe_to_store } from '../../store/utils.js';
-import { DOMBooleanAttributes } from '../../constants.js';
+import {
+	DOMBooleanAttributes,
+	disallowed_parapgraph_contents,
+	interactive_elements,
+	is_tag_valid_with_parent
+} from '../../constants.js';
 import { DEV } from 'esm-env';
 
 export * from '../client/validate.js';
+
+/**
+ * @typedef {{
+ * 	tag: string;
+ * 	parent: null | Element;
+ * }} Element
+ */
 
 /**
  * @typedef {{
@@ -51,6 +63,11 @@ export const VoidElements = new Set([
 	'wbr'
 ]);
 
+/**
+ * @type {Element | null}
+ */
+let current_element = null;
+
 /** @returns {Payload} */
 function create_payload() {
 	return { out: '', head: { title: '', out: '', anchor: 0 }, anchor: 0 };
@@ -77,6 +94,58 @@ export function assign_payload(p1, p2) {
 	p1.out = p2.out;
 	p1.head = p2.head;
 	p1.anchor = p2.anchor;
+}
+
+/**
+ * @param {Payload} payload
+ * @param {string} message
+ */
+function error_on_client(payload, message) {
+	message =
+		`Svelte SSR validation error:\n\n${message}\n\n` +
+		'Ensure your components render valid HTML as the browser will try to repair invalid HTML, ' +
+		'which may result in content being shifted around and will likely result in a hydration mismatch.';
+	// eslint-disable-next-line no-console
+	console.error(message);
+	payload.head.out += `<script>console.error(${message})</script>`;
+}
+
+/**
+ * @param {string} tag
+ * @param {Payload} payload
+ */
+export function push_element(tag, payload) {
+	if (current_element !== null && !is_tag_valid_with_parent(tag, current_element.tag)) {
+		error_on_client(payload, `<${tag}> is invalid inside <${current_element.tag}>`);
+	}
+	if (interactive_elements.has(tag)) {
+		let element = current_element;
+		while (element !== null) {
+			if (interactive_elements.has(element.tag)) {
+				error_on_client(payload, `<${tag}> is invalid inside <${element.tag}>`);
+			}
+			element = element.parent;
+		}
+	}
+	if (disallowed_parapgraph_contents.includes(tag)) {
+		let element = current_element;
+		while (element !== null) {
+			if (element.tag === 'p') {
+				error_on_client(payload, `<${tag}> is invalid inside <p>`);
+			}
+			element = element.parent;
+		}
+	}
+	current_element = {
+		tag,
+		parent: current_element
+	};
+}
+
+export function pop_element() {
+	if (current_element !== null) {
+		current_element = current_element.parent;
+	}
 }
 
 /**

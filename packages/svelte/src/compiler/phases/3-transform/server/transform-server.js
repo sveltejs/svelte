@@ -1207,6 +1207,12 @@ const template_visitors = {
 			inner_context.visit(node, state);
 		}
 
+		if (context.state.options.dev) {
+			context.state.template.push(
+				t_statement(b.stmt(b.call('$.push_element', b.literal(node.name), b.id('$$payload'))))
+			);
+		}
+
 		process_children(trimmed, node, inner_context);
 
 		if (body_expression !== null) {
@@ -1238,6 +1244,9 @@ const template_visitors = {
 
 		if (!VoidElements.includes(node.name) && metadata.namespace !== 'foreign') {
 			context.state.template.push(t_string(`</${node.name}>`));
+		}
+		if (context.state.options.dev) {
+			context.state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));
 		}
 	},
 	SvelteElement(node, context) {
@@ -1281,6 +1290,12 @@ const template_visitors = {
 
 		serialize_element_attributes(node, inner_context);
 
+		if (context.state.options.dev) {
+			context.state.template.push(
+				t_statement(b.stmt(b.call('$.push_element', tag, b.id('$$payload'))))
+			);
+		}
+
 		context.state.template.push(
 			t_statement(
 				b.if(
@@ -1304,6 +1319,9 @@ const template_visitors = {
 			),
 			t_expression(anchor_id)
 		);
+		if (context.state.options.dev) {
+			context.state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));
+		}
 	},
 	EachBlock(node, context) {
 		const state = context.state;

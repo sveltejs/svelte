@@ -15,7 +15,7 @@ import * as $ from '../internal/index.js';
  * 	component: import('../main/public.js').SvelteComponent<Props, Events, Slots>;
  * 	immutable?: boolean;
  * 	hydrate?: boolean;
- * 	recover?: false;
+ * 	recover?: boolean;
  * }} options
  * @returns {import('../main/public.js').SvelteComponent<Props, Events, Slots> & Exports}
  */
