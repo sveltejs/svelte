@@ -559,6 +559,8 @@ const javascript_visitors_runes = {
 					type: 'MethodDefinition',
 					kind: 'get',
 					key: node.key,
+					computed: false,
+					static: false,
 					value: b.function(
 						null,
 						[],
