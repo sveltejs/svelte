@@ -276,7 +276,7 @@ function open(parser) {
 		const parameters = [];
 
 		while (!parser.match(')')) {
-			let pattern = read_pattern(parser);
+			let pattern = read_pattern(parser, true);
 
 			parser.allow_whitespace();
 			if (parser.eat('=')) {
