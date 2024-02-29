@@ -256,10 +256,22 @@ function check_nodes_for_namespace(nodes, namespace) {
 			node,
 			{},
 			{
-				EachBlock: SvelteBlock,
-				IfBlock: SvelteBlock,
-				AwaitBlock: SvelteBlock,
-				KeyBlock: SvelteBlock,
+				_(node, { next }) {
+					if (
+						node.type === 'EachBlock' ||
+						node.type === 'IfBlock' ||
+						node.type === 'AwaitBlock' ||
+						node.type === 'Fragment' ||
+						node.type === 'KeyBlock' ||
+						node.type === 'RegularElement' ||
+						node.type === 'SvelteElement' ||
+						node.type === 'Text' ||
+						node.type === 'HtmlTag' ||
+						node.type === 'RenderTag'
+					) {
+						next();
+					}
+				},
 				SvelteElement: RegularElement,
 				RegularElement,
 				Text(node) {
