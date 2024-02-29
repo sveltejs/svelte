@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: treat snippets like child components when inferring namespace
+fix: improve namespace inference when having `{@render}` and `{@html}` tags
