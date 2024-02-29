@@ -8,6 +8,8 @@
   <text x={idx * 10} y={42}>{idx}</text>
 {/each}
 
+{@html '<text x="0" y="40">html</text>'}
+
 {@render test("test")}
 
 {#snippet test(text)}

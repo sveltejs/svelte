@@ -278,9 +278,6 @@ function check_nodes_for_namespace(nodes, namespace) {
 					if (node.data.trim() !== '') {
 						namespace = 'maybe_html';
 					}
-				},
-				HtmlTag() {
-					namespace = 'maybe_html';
 				}
 			}
 		);
