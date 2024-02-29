@@ -14,13 +14,22 @@ Lots to showcase too... so let's dive in!
 
 As you may already have heard, [Svelte 5 is in preview](https://svelte-5-preview.vercel.app/docs/introduction). In the meantime, Svelte 4 (`@latest`) has had [one bugfix](https://github.com/sveltejs/svelte/blob/svelte-4/packages/svelte/CHANGELOG.md). The Svelte 5 changelog has quite a few updates, though:
 
-- breaking: `$derived.call` is now `$derived.by` (**5.0.0-next.54**, [Docs](https://svelte-5-preview.vercel.app/docs/runes#derived-by), [#10445](https://github.com/sveltejs/svelte/pull/10445))
+- breaking: `$derived.call` is now `$derived.by` (**5.0.0-next.54**, [Docs](https://svelte-5-preview.vercel.app/docs/runes#$derived-by), [#10445](https://github.com/sveltejs/svelte/pull/10445))
 - Destructuring derived object properties will now keep fine-grain reactivity (**5.0.0-next.55**, [Docs](https://svelte-5-preview.vercel.app/docs/runes#derived), [#10488](https://github.com/sveltejs/svelte/pull/10488))
 - The new `hydrate` method makes hydration-related code treeshakeable (**5.0.0-next.56**, [Docs](https://svelte-5-preview.vercel.app/docs/functions#hydrate), [#10497](https://github.com/sveltejs/svelte/pull/10497))
 - Nested CSS is now supported, along with better support for `:is(...)` and `:where(...)` (**5.0.0-next.57**, [#10490](https://github.com/sveltejs/svelte/pull/10490))
 - breaking: The client-side API has been simplified by removing `createRoot`, adjusting the `mount`/`hydrate` APIs and introducing `unmount` (**5.0.0-next.58**, [Issue#9827](https://github.com/sveltejs/svelte/issues/9827), [#10516](https://github.com/sveltejs/svelte/pull/10497))
 
 For all the bug fixes, chores and underlying work required to get Svelte 5 to release-ready, check out [the CHANGELOG on main](https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md).
+
+
+## What's new in SvelteKit
+
+Mostly bug fixes, this month. Most notably is a fix to prevent stale values after navigation (**2.5.1**, [#11870](https://github.com/sveltejs/kit/pull/11870)).
+
+Adapters can also now use an `emulate` function to provide different experiences between dev and preview (**2.5.0**, [Docs](https://kit.svelte.dev/docs/writing-adapters), [#11730](https://github.com/sveltejs/kit/pull/11730))
+
+For all the changes in kit, check out the [CHANGELOG](https://github.com/sveltejs/kit/blob/main/packages/kit/CHANGELOG.md).
 
 
 ---
@@ -56,6 +65,7 @@ _To Read/Watch_
 
 **Libraries, Tools & Components**
 
+- [PaneForge](https://github.com/svecosystem/paneforge) provides components that make it easy to create resizable panes in your Svelte apps
 - [Svelte UX](https://svelte-ux.techniq.dev/) and [LayerChart](https://www.layerchart.com/) now include theme support via semantic and state classes
 - [Huly Platform](https://github.com/hcengineering/platform) is a robust framework designed to accelerate the development of business applications, such as CRM systems
 - [svelte-marquee](https://github.com/selemondev/svelte-marquee) is a beautiful marquee component for Svelte
@@ -65,6 +75,7 @@ _To Read/Watch_
 - [Sugar.css](https://sugar-css.com/) is a semantic, accessible, lightweight CSS framework
 - [apple-svelte](https://github.com/Carza-104/apple-svelte) is a component library for Svelte based on Apple's Human Interface design language
 - [SvelteKit SSE](https://github.com/tncrazvan/sveltekit-sse) provides an easy way to produce and consume server sent events.
+- [Formsnap](https://github.com/huntabyte/formsnap), an accessible wrapper for sveltekit-superforms, got a major rewrite and has improved [its docs](https://formsnap.dev)
 
 
 That's it for this month! Feel free to let us know if we missed anything on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.gg/svelte).
