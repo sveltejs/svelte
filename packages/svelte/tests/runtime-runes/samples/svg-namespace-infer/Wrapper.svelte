@@ -10,7 +10,7 @@
 
 {@html '<text x="0" y="40">html</text>'}
 
-{@render test("test")}
+{@render test("snippet")}
 
 {#snippet test(text)}
 <text x={20} y={42}>{text}</text>
