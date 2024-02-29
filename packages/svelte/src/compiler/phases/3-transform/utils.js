@@ -239,12 +239,6 @@ export function infer_namespace(namespace, parent, nodes, path) {
  */
 function check_nodes_for_namespace(nodes, namespace) {
 	/**
-	 * @param {import('#compiler').SvelteNode} node}
-	 * @param {{next: () => void}} context
-	 */
-	const SvelteBlock = (node, { next }) => next();
-
-	/**
 	 * @param {import('#compiler').SvelteElement | import('#compiler').RegularElement} node}
 	 * @param {{stop: () => void}} context
 	 */
