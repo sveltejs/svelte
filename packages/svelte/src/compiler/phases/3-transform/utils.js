@@ -265,9 +265,7 @@ function check_nodes_for_namespace(nodes, namespace) {
 						node.type === 'KeyBlock' ||
 						node.type === 'RegularElement' ||
 						node.type === 'SvelteElement' ||
-						node.type === 'Text' ||
-						node.type === 'HtmlTag' ||
-						node.type === 'RenderTag'
+						node.type === 'Text'
 					) {
 						next();
 					}
