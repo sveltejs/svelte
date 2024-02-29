@@ -34,7 +34,7 @@ export function get_stack() {
  * Determines which `.svelte` component is responsible for a given state change
  * @returns {Function | null}
  */
-export function get_component() {
+function get_component() {
 	const stack = get_stack();
 	if (!stack) return null;
 
