@@ -116,7 +116,7 @@ If the name matches the value, you can use a shorthand.
 -->
 ```
 
-Numeric input values are coerced; even though `input.value` is a string as far as the DOM is concerned, Svelte will treat it as a number. If the input is empty or invalid (in the case of `type="number"`), the value is `undefined`.
+Numeric input values are coerced; even though `input.value` is a string as far as the DOM is concerned, Svelte will treat it as a number. If the input is empty or invalid (in the case of `type="number"`), the value is `null`.
 
 ```svelte
 <input type="number" bind:value={num} />
