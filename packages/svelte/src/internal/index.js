@@ -19,7 +19,11 @@ export {
 	unwrap,
 	freeze,
 	deep_read,
-	deep_read_state
+	deep_read_state,
+	getAllContexts,
+	getContext,
+	setContext,
+	hasContext
 } from './client/runtime.js';
 export * from './client/dev/ownership.js';
 export { await_block as await } from './client/dom/blocks/await.js';
