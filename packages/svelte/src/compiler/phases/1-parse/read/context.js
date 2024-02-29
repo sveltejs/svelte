@@ -13,16 +13,17 @@ import { error } from '../../../errors.js';
 
 /**
  * @param {import('../index.js').Parser} parser
+ * @param {boolean} [optional_allowed]
  * @returns {import('estree').Pattern}
  */
-export default function read_pattern(parser) {
+export default function read_pattern(parser, optional_allowed = false) {
 	const start = parser.index;
 	let i = parser.index;
 
 	const code = full_char_code_at(parser.template, i);
 	if (isIdentifierStart(code, true)) {
 		const name = /** @type {string} */ (parser.read_identifier());
-		const annotation = read_type_annotation(parser);
+		const annotation = read_type_annotation(parser, optional_allowed);
 
 		return {
 			type: 'Identifier',
@@ -83,7 +84,7 @@ export default function read_pattern(parser) {
 			parse_expression_at(`${space_with_newline}(${pattern_string} = 1)`, parser.ts, start - 1)
 		).left;
 
-		expression.typeAnnotation = read_type_annotation(parser);
+		expression.typeAnnotation = read_type_annotation(parser, optional_allowed);
 		if (expression.typeAnnotation) {
 			expression.end = expression.typeAnnotation.end;
 		}
@@ -96,11 +97,18 @@ export default function read_pattern(parser) {
 
 /**
  * @param {import('../index.js').Parser} parser
+ * @param {boolean} [optional_allowed]
  * @returns {any}
  */
-function read_type_annotation(parser) {
+function read_type_annotation(parser, optional_allowed = false) {
 	const start = parser.index;
 	parser.allow_whitespace();
+
+	if (optional_allowed && parser.eat('?')) {
+		// Acorn-TS puts the optional info as a property on the surrounding node.
+		// We spare the work here because it doesn't matter for us anywhere else.
+		parser.allow_whitespace();
+	}
 
 	if (!parser.eat(':')) {
 		parser.index = start;

@@ -17,7 +17,7 @@
 
 {#snippet counter(c)}
 	{#if c}
-  	<button on:click={() => (c.value += 1)}>{c.value}</button>
+  		<button on:click={() => (c.value += 1)}>{c.value}</button>
 	{:else}
 		<p>fallback</p>
 	{/if}
@@ -25,4 +25,3 @@
 
 {@render counter()}
 {@render counter(count)}
-

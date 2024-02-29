@@ -1,6 +1,11 @@
 import { walk } from 'zimmerframe';
 import { set_scope, get_rune } from '../../scope.js';
-import { extract_identifiers, extract_paths, is_event_attribute } from '../../../utils/ast.js';
+import {
+	extract_identifiers,
+	extract_paths,
+	is_event_attribute,
+	unwrap_optional
+} from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
 import is_reference from 'is-reference';
 import {
@@ -541,6 +546,83 @@ const javascript_visitors = {
 
 /** @type {import('./types').Visitors} */
 const javascript_visitors_runes = {
+	ClassBody(node, { state, visit, next }) {
+		if (!state.analysis.runes) {
+			next();
+		}
+		/** @type {import('estree').PropertyDefinition[]} */
+		const deriveds = [];
+		/** @type {import('estree').MethodDefinition | null} */
+		let constructor = null;
+		// Get the constructor
+		for (const definition of node.body) {
+			if (definition.type === 'MethodDefinition' && definition.kind === 'constructor') {
+				constructor = /** @type {import('estree').MethodDefinition} */ (visit(definition));
+			}
+		}
+		// Move $derived() runes to the end of the body if there is a constructor
+		if (constructor !== null) {
+			const body = [];
+			for (const definition of node.body) {
+				if (
+					definition.type === 'PropertyDefinition' &&
+					(definition.key.type === 'Identifier' || definition.key.type === 'PrivateIdentifier')
+				) {
+					const is_private = definition.key.type === 'PrivateIdentifier';
+
+					if (definition.value?.type === 'CallExpression') {
+						const rune = get_rune(definition.value, state.scope);
+
+						if (rune === '$derived') {
+							deriveds.push(/** @type {import('estree').PropertyDefinition} */ (visit(definition)));
+							if (is_private) {
+								// Keep the private #name initializer if private, but remove initial value
+								body.push({
+									...definition,
+									value: null
+								});
+							}
+							continue;
+						}
+					}
+				}
+				if (definition.type !== 'MethodDefinition' || definition.kind !== 'constructor') {
+					body.push(
+						/** @type {import('estree').PropertyDefinition | import('estree').MethodDefinition | import('estree').StaticBlock} */ (
+							visit(definition)
+						)
+					);
+				}
+			}
+			if (deriveds.length > 0) {
+				body.push({
+					...constructor,
+					value: {
+						...constructor.value,
+						body: b.block([
+							...constructor.value.body.body,
+							...deriveds.map((d) => {
+								return b.stmt(
+									b.assignment(
+										'=',
+										b.member(b.this, d.key),
+										/** @type {import('estree').Expression} */ (d.value)
+									)
+								);
+							})
+						])
+					}
+				});
+			} else {
+				body.push(constructor);
+			}
+			return {
+				...node,
+				body
+			};
+		}
+		next();
+	},
 	PropertyDefinition(node, { state, next, visit }) {
 		if (node.value != null && node.value.type === 'CallExpression') {
 			const rune = get_rune(node.value, state.scope);
@@ -1141,17 +1223,28 @@ const template_visitors = {
 		state.init.push(anchor);
 		state.template.push(t_expression(anchor_id));
 
-		const expression = /** @type {import('estree').Expression} */ (context.visit(node.expression));
+		const callee = unwrap_optional(node.expression).callee;
+		const raw_args = unwrap_optional(node.expression).arguments;
+
+		const expression = /** @type {import('estree').Expression} */ (context.visit(callee));
 		const snippet_function = state.options.dev
 			? b.call('$.validate_snippet', expression)
 			: expression;
 
-		const snippet_args = node.arguments.map((arg) => {
+		const snippet_args = raw_args.map((arg) => {
 			return /** @type {import('estree').Expression} */ (context.visit(arg));
 		});
 
 		state.template.push(
-			t_statement(b.stmt(b.call(snippet_function, b.id('$$payload'), ...snippet_args)))
+			t_statement(
+				b.stmt(
+					(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
+						snippet_function,
+						b.id('$$payload'),
+						...snippet_args
+					)
+				)
+			)
 		);
 
 		state.template.push(t_expression(anchor_id));
@@ -1207,6 +1300,12 @@ const template_visitors = {
 			inner_context.visit(node, state);
 		}
 
+		if (context.state.options.dev) {
+			context.state.template.push(
+				t_statement(b.stmt(b.call('$.push_element', b.literal(node.name), b.id('$$payload'))))
+			);
+		}
+
 		process_children(trimmed, node, inner_context);
 
 		if (body_expression !== null) {
@@ -1238,6 +1337,9 @@ const template_visitors = {
 
 		if (!VoidElements.includes(node.name) && metadata.namespace !== 'foreign') {
 			context.state.template.push(t_string(`</${node.name}>`));
+		}
+		if (context.state.options.dev) {
+			context.state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));
 		}
 	},
 	SvelteElement(node, context) {
@@ -1281,6 +1383,12 @@ const template_visitors = {
 
 		serialize_element_attributes(node, inner_context);
 
+		if (context.state.options.dev) {
+			context.state.template.push(
+				t_statement(b.stmt(b.call('$.push_element', tag, b.id('$$payload'))))
+			);
+		}
+
 		context.state.template.push(
 			t_statement(
 				b.if(
@@ -1304,6 +1412,9 @@ const template_visitors = {
 			),
 			t_expression(anchor_id)
 		);
+		if (context.state.options.dev) {
+			context.state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));
+		}
 	},
 	EachBlock(node, context) {
 		const state = context.state;

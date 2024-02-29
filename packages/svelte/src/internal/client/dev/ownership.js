@@ -75,8 +75,8 @@ export function mark_module_end() {
 	const end = get_stack()?.[2];
 
 	if (end) {
-		// @ts-expect-error
-		boundaries[end.file].at(-1).end = end;
+		const boundaries_file = boundaries[end.file];
+		boundaries_file[boundaries_file.length - 1].end = end;
 	}
 }
 

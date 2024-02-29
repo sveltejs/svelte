@@ -33,11 +33,11 @@ import {
 	push,
 	pop,
 	current_component_context,
-	deep_read,
 	get,
 	is_signals_recorded,
 	inspect_fn,
-	current_effect
+	current_effect,
+	deep_read_state
 } from './runtime.js';
 import {
 	render_effect,
@@ -1617,7 +1617,7 @@ export function action(dom, action, value_fn) {
 			// This works in legacy mode because of mutable_source being updated as a whole, but when using $state
 			// together with actions and mutation, it wouldn't notice the change without a deep read.
 			if (needs_deep_read) {
-				deep_read(value);
+				deep_read_state(value);
 			}
 		} else {
 			untrack(() => (payload = action(dom)));
@@ -2500,10 +2500,12 @@ export function init() {
 	if (!callbacks) return;
 
 	// beforeUpdate
-	pre_effect(() => {
-		observe_all(context);
-		callbacks.b.forEach(run);
-	});
+	if (callbacks.b.length) {
+		pre_effect(() => {
+			observe_all(context);
+			callbacks.b.forEach(run);
+		});
+	}
 
 	// onMount (must run before afterUpdate)
 	user_effect(() => {
@@ -2518,10 +2520,12 @@ export function init() {
 	});
 
 	// afterUpdate
-	user_effect(() => {
-		observe_all(context);
-		callbacks.a.forEach(run);
-	});
+	if (callbacks.a.length) {
+		user_effect(() => {
+			observe_all(context);
+			callbacks.a.forEach(run);
+		});
+	}
 }
 
 /**
@@ -2534,7 +2538,7 @@ function observe_all(context) {
 		for (const signal of context.d) get(signal);
 	}
 
-	deep_read(context.s);
+	deep_read_state(context.s);
 }
 
 /**
@@ -2569,5 +2573,32 @@ export function bubble_event($$props, event) {
 	for (var fn of callbacks) {
 		// Preserve "this" context
 		fn.call(this, event);
+	}
+}
+
+/**
+ * Used to simulate `$on` on a component instance when `legacy.componentApi` is `true`
+ * @param {Record<string, any>} $$props
+ * @param {string} event_name
+ * @param {Function} event_callback
+ */
+export function add_legacy_event_listener($$props, event_name, event_callback) {
+	$$props.$$events ||= {};
+	$$props.$$events[event_name] ||= [];
+	$$props.$$events[event_name].push(event_callback);
+}
+
+/**
+ * Used to simulate `$set` on a component instance when `legacy.componentApi` is `true`.
+ * Needs component accessors so that it can call the setter of the prop. Therefore doesn't
+ * work for updating props in `$$props` or `$$restProps`.
+ * @this {Record<string, any>}
+ * @param {Record<string, any>} $$new_props
+ */
+export function update_legacy_props($$new_props) {
+	for (const key in $$new_props) {
+		if (key in this) {
+			this[key] = $$new_props[key];
+		}
 	}
 }

@@ -1,14 +1,19 @@
+import {
+	disallowed_parapgraph_contents,
+	interactive_elements,
+	is_tag_valid_with_parent
+} from '../../../constants.js';
 import { error } from '../../errors.js';
 import {
 	extract_identifiers,
 	get_parent,
 	is_expression_attribute,
 	is_text_attribute,
-	object
+	object,
+	unwrap_optional
 } from '../../utils/ast.js';
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
-import { disallowed_parapgraph_contents, interactive_elements } from '../1-parse/utils/html.js';
 import { binding_properties } from '../bindings.js';
 import { ContentEditableBindings, EventModifiers, SVGElements } from '../constants.js';
 import { is_custom_element_node } from '../nodes.js';
@@ -224,127 +229,6 @@ function validate_slot_attribute(context, attribute) {
 	} else {
 		error(attribute, 'invalid-slot-placement');
 	}
-}
-
-// https://html.spec.whatwg.org/multipage/syntax.html#generate-implied-end-tags
-const implied_end_tags = ['dd', 'dt', 'li', 'option', 'optgroup', 'p', 'rp', 'rt'];
-
-/**
- * @param {string} tag
- * @param {string} parent_tag
- * @returns {boolean}
- */
-function is_tag_valid_with_parent(tag, parent_tag) {
-	// First, let's check if we're in an unusual parsing mode...
-	switch (parent_tag) {
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inselect
-		case 'select':
-			return tag === 'option' || tag === 'optgroup' || tag === '#text';
-		case 'optgroup':
-			return tag === 'option' || tag === '#text';
-		// Strictly speaking, seeing an <option> doesn't mean we're in a <select>
-		// but
-		case 'option':
-			return tag === '#text';
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intd
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-incaption
-		// No special behavior since these rules fall back to "in body" mode for
-		// all except special table nodes which cause bad parsing behavior anyway.
-
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intr
-		case 'tr':
-			return (
-				tag === 'th' || tag === 'td' || tag === 'style' || tag === 'script' || tag === 'template'
-			);
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intbody
-		case 'tbody':
-		case 'thead':
-		case 'tfoot':
-			return tag === 'tr' || tag === 'style' || tag === 'script' || tag === 'template';
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-incolgroup
-		case 'colgroup':
-			return tag === 'col' || tag === 'template';
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intable
-		case 'table':
-			return (
-				tag === 'caption' ||
-				tag === 'colgroup' ||
-				tag === 'tbody' ||
-				tag === 'tfoot' ||
-				tag === 'thead' ||
-				tag === 'style' ||
-				tag === 'script' ||
-				tag === 'template'
-			);
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inhead
-		case 'head':
-			return (
-				tag === 'base' ||
-				tag === 'basefont' ||
-				tag === 'bgsound' ||
-				tag === 'link' ||
-				tag === 'meta' ||
-				tag === 'title' ||
-				tag === 'noscript' ||
-				tag === 'noframes' ||
-				tag === 'style' ||
-				tag === 'script' ||
-				tag === 'template'
-			);
-		// https://html.spec.whatwg.org/multipage/semantics.html#the-html-element
-		case 'html':
-			return tag === 'head' || tag === 'body' || tag === 'frameset';
-		case 'frameset':
-			return tag === 'frame';
-		case '#document':
-			return tag === 'html';
-	}
-
-	// Probably in the "in body" parsing mode, so we outlaw only tag combos
-	// where the parsing rules cause implicit opens or closes to be added.
-	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inbody
-	switch (tag) {
-		case 'h1':
-		case 'h2':
-		case 'h3':
-		case 'h4':
-		case 'h5':
-		case 'h6':
-			return (
-				parent_tag !== 'h1' &&
-				parent_tag !== 'h2' &&
-				parent_tag !== 'h3' &&
-				parent_tag !== 'h4' &&
-				parent_tag !== 'h5' &&
-				parent_tag !== 'h6'
-			);
-
-		case 'rp':
-		case 'rt':
-			return implied_end_tags.indexOf(parent_tag) === -1;
-
-		case 'body':
-		case 'caption':
-		case 'col':
-		case 'colgroup':
-		case 'frameset':
-		case 'frame':
-		case 'head':
-		case 'html':
-		case 'tbody':
-		case 'td':
-		case 'tfoot':
-		case 'th':
-		case 'thead':
-		case 'tr':
-			// These tags are only valid with a few parents that have special child
-			// parsing rules -- if we're down here, then none of those matched and
-			// so we allow it only if we don't know what the parent is, as all other
-			// cases are invalid.
-			return parent_tag == null;
-	}
-
-	return true;
 }
 
 /**
@@ -604,11 +488,22 @@ const validation = {
 		});
 	},
 	RenderTag(node, context) {
-		for (const arg of node.arguments) {
+		const raw_args = unwrap_optional(node.expression).arguments;
+		for (const arg of raw_args) {
 			if (arg.type === 'SpreadElement') {
 				error(arg, 'invalid-render-spread-argument');
 			}
 		}
+
+		const callee = unwrap_optional(node.expression).callee;
+		if (
+			callee.type === 'MemberExpression' &&
+			callee.property.type === 'Identifier' &&
+			['bind', 'apply', 'call'].includes(callee.property.name)
+		) {
+			error(node, 'invalid-render-call');
+		}
+
 		const is_inside_textarea = context.path.find((n) => {
 			return (
 				n.type === 'SvelteElement' &&
@@ -622,7 +517,7 @@ const validation = {
 				node,
 				'invalid-tag-placement',
 				'inside <textarea> or <svelte:element this="textarea">',
-				node.expression.name
+				'render'
 			);
 		}
 	},
@@ -1002,7 +897,12 @@ export const validation_runes = merge(validation, a11y_validators, {
 		const init = node.init;
 		const rune = get_rune(init, state.scope);
 
-		if (rune === null) return;
+		if (rune === null) {
+			if (init?.type === 'Identifier' && init.name === '$props' && !state.scope.get('props')) {
+				warn(state.analysis.warnings, node, path, 'invalid-props-declaration');
+			}
+			return;
+		}
 
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 

@@ -67,6 +67,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	warnings?: string[];
 	expect_unhandled_rejections?: boolean;
 	withoutNormalizeHtml?: boolean;
+	recover?: boolean;
 }
 
 let unhandled_rejection: Error | null = null;
@@ -258,7 +259,7 @@ async function run_test_variant(
 				target,
 				immutable: config.immutable,
 				intro: config.intro,
-				recover: false,
+				recover: config.recover === undefined ? false : config.recover,
 				hydrate: variant === 'hydrate'
 			});
 

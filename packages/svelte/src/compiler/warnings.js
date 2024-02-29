@@ -27,7 +27,10 @@ const runes = {
 	/** @param {string} name */
 	'non-state-reference': (name) =>
 		`${name} is updated, but is not declared with $state(...). Changing its value will not correctly trigger updates.`,
-	'derived-iife': () => `Use \`$derived.by(() => {...})\` instead of \`$derived((() => {...})());\``
+	'derived-iife': () =>
+		`Use \`$derived.by(() => {...})\` instead of \`$derived((() => {...})());\``,
+	'invalid-props-declaration': () =>
+		`Component properties are declared using $props() in runes mode. Did you forget to call the function?`
 };
 
 /** @satisfies {Warnings} */
