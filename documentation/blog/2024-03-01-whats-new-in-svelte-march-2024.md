@@ -27,9 +27,9 @@ For all the bug fixes, chores and underlying work required to get Svelte 5 to re
 
 Mostly bug fixes, this month. Most notably is a fix to prevent stale values after navigation (**2.5.1**, [#11870](https://github.com/sveltejs/kit/pull/11870)).
 
-Adapters can also now use an `emulate` function to provide different experiences between dev and preview (**2.5.0**, [Docs](https://kit.svelte.dev/docs/writing-adapters), [#11730](https://github.com/sveltejs/kit/pull/11730))
+Adapters can also now use an `emulate` function to provide dev and preview functionality (**2.5.0**, [Docs](https://kit.svelte.dev/docs/writing-adapters), [#11730](https://github.com/sveltejs/kit/pull/11730)). This will allow for an improved experience developing for Cloudflare in the near future ([11732](https://github.com/sveltejs/kit/pull/11732)).
 
-For all the changes in kit, check out the [CHANGELOG](https://github.com/sveltejs/kit/blob/main/packages/kit/CHANGELOG.md).
+For all the changes in SvelteKit, check out the [CHANGELOG](https://github.com/sveltejs/kit/blob/main/packages/kit/CHANGELOG.md).
 
 
 ---
