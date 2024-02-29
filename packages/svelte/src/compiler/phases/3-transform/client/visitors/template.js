@@ -2668,7 +2668,7 @@ export const template_visitors = {
 		const params = [b.id('$$node')];
 
 		if (node.expression) {
-			params.push(b.id('$$props'));
+			params.push(b.id('$$action_arg'));
 		}
 
 		/** @type {import('estree').Expression[]} */
