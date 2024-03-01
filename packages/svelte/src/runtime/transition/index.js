@@ -11,7 +11,14 @@ import { assign, split_css_unit, is_function } from '../internal/index.js';
  */
 export function blur(
 	node,
-	{ delay = 0, duration = 400, easing = cubicInOut, amount = 5, opacity = 0 } = {}
+	{
+		delay = 0,
+		duration = 400,
+		easing = cubicInOut,
+		condition = undefined,
+		amount = 5,
+		opacity = 0
+	} = {}
 ) {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
@@ -22,7 +29,8 @@ export function blur(
 		delay,
 		duration,
 		easing,
-		css: (_t, u) => `opacity: ${target_opacity - od * u}; filter: ${f} blur(${u * value}${unit});`
+		css: (_t, u) => `opacity: ${target_opacity - od * u}; filter: ${f} blur(${u * value}${unit});`,
+		condition
 	};
 }
 
@@ -34,13 +42,17 @@ export function blur(
  * @param {import('./public').FadeParams} [params]
  * @returns {import('./public').TransitionConfig}
  */
-export function fade(node, { delay = 0, duration = 400, easing = linear } = {}) {
+export function fade(
+	node,
+	{ delay = 0, duration = 400, easing = linear, condition = undefined } = {}
+) {
 	const o = +getComputedStyle(node).opacity;
 	return {
 		delay,
 		duration,
 		easing,
-		css: (t) => `opacity: ${t * o}`
+		css: (t) => `opacity: ${t * o}`,
+		condition
 	};
 }
 
@@ -54,7 +66,15 @@ export function fade(node, { delay = 0, duration = 400, easing = linear } = {}) 
  */
 export function fly(
 	node,
-	{ delay = 0, duration = 400, easing = cubicOut, x = 0, y = 0, opacity = 0 } = {}
+	{
+		delay = 0,
+		duration = 400,
+		easing = cubicOut,
+		condition = undefined,
+		x = 0,
+		y = 0,
+		opacity = 0
+	} = {}
 ) {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
@@ -68,7 +88,8 @@ export function fly(
 		easing,
 		css: (t, u) => `
 			transform: ${transform} translate(${(1 - t) * xValue}${xUnit}, ${(1 - t) * yValue}${yUnit});
-			opacity: ${target_opacity - od * u}`
+			opacity: ${target_opacity - od * u}`,
+		condition
 	};
 }
 
@@ -80,7 +101,10 @@ export function fly(
  * @param {import('./public').SlideParams} [params]
  * @returns {import('./public').TransitionConfig}
  */
-export function slide(node, { delay = 0, duration = 400, easing = cubicOut, axis = 'y' } = {}) {
+export function slide(
+	node,
+	{ delay = 0, duration = 400, easing = cubicOut, condition = undefined, axis = 'y' } = {}
+) {
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
 	const primary_property = axis === 'y' ? 'height' : 'width';
@@ -112,7 +136,8 @@ export function slide(node, { delay = 0, duration = 400, easing = cubicOut, axis
 			`margin-${secondary_properties[0]}: ${t * margin_start_value}px;` +
 			`margin-${secondary_properties[1]}: ${t * margin_end_value}px;` +
 			`border-${secondary_properties[0]}-width: ${t * border_width_start_value}px;` +
-			`border-${secondary_properties[1]}-width: ${t * border_width_end_value}px;`
+			`border-${secondary_properties[1]}-width: ${t * border_width_end_value}px;`,
+		condition
 	};
 }
 
@@ -126,7 +151,14 @@ export function slide(node, { delay = 0, duration = 400, easing = cubicOut, axis
  */
 export function scale(
 	node,
-	{ delay = 0, duration = 400, easing = cubicOut, start = 0, opacity = 0 } = {}
+	{
+		delay = 0,
+		duration = 400,
+		easing = cubicOut,
+		condition = undefined,
+		start = 0,
+		opacity = 0
+	} = {}
 ) {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
@@ -140,7 +172,8 @@ export function scale(
 		css: (_t, u) => `
 			transform: ${transform} scale(${1 - sd * u});
 			opacity: ${target_opacity - od * u}
-		`
+		`,
+		condition
 	};
 }
 
@@ -152,7 +185,10 @@ export function scale(
  * @param {import('./public').DrawParams} [params]
  * @returns {import('./public').TransitionConfig}
  */
-export function draw(node, { delay = 0, speed, duration, easing = cubicInOut } = {}) {
+export function draw(
+	node,
+	{ delay = 0, speed, duration, easing = cubicInOut, condition = undefined } = {}
+) {
 	let len = node.getTotalLength();
 	const style = getComputedStyle(node);
 	if (style.strokeLinecap !== 'butt') {
@@ -174,7 +210,8 @@ export function draw(node, { delay = 0, speed, duration, easing = cubicInOut } =
 		css: (_, u) => `
 			stroke-dasharray: ${len};
 			stroke-dashoffset: ${u * len};
-		`
+		`,
+		condition
 	};
 }
 
@@ -202,7 +239,8 @@ export function crossfade({ fallback, ...defaults }) {
 		const {
 			delay = 0,
 			duration = (d) => Math.sqrt(d) * 30,
-			easing = cubicOut
+			easing = cubicOut,
+			condition = undefined
 		} = assign(assign({}, defaults), params);
 		const from = from_node.getBoundingClientRect();
 		const to = node.getBoundingClientRect();
@@ -224,7 +262,8 @@ export function crossfade({ fallback, ...defaults }) {
 				transform: ${transform} translate(${u * dx}px,${u * dy}px) scale(${t + (1 - t) * dw}, ${
 				t + (1 - t) * dh
 			});
-			`
+			`,
+			condition
 		};
 	}
 

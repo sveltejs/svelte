@@ -163,9 +163,11 @@ export function create_in_transition(node, fn, params) {
 			delete_rule(node);
 			if (is_function(config)) {
 				config = config(options);
-				wait().then(go);
+				wait().then(() => {
+					if (!config.condition || config.condition()) go();
+				});
 			} else {
-				go();
+				if (!config.condition || config.condition()) go();
 			}
 		},
 		invalidate() {
@@ -244,10 +246,19 @@ export function create_out_transition(node, fn, params) {
 		wait().then(() => {
 			// @ts-ignore
 			config = config(options);
-			go();
+
+			if (!config.condition || config.condition()) {
+				go();
+			} else {
+				if (!--group.r) run_all(group.c);
+			}
 		});
 	} else {
-		go();
+		if (!config.condition || config.condition()) {
+			go();
+		} else {
+			if (!--group.r) run_all(group.c);
+		}
 	}
 
 	return {
@@ -417,10 +428,21 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 					const opts = { direction: b ? 'in' : 'out' };
 					// @ts-ignore
 					config = config(opts);
-					go(b);
+
+					if (!config.condition || config.condition()) {
+						go(b);
+					} else {
+						t = b;
+						if (!b && !outros.r) run_all(outros.c);
+					}
 				});
 			} else {
-				go(b);
+				if (!config.condition || config.condition()) {
+					go(b);
+				} else {
+					t = b;
+					if (!b && !outros.r) run_all(outros.c);
+				}
 			}
 		},
 		end() {
