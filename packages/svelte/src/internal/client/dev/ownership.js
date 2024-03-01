@@ -34,13 +34,24 @@ export function get_stack() {
  * Determines which `.svelte` component is responsible for a given state change
  * @returns {Function | null}
  */
-export function get_component() {
-	const stack = get_stack();
+function get_component() {
+	// first 4 lines are svelte internals; adjust this number if we change the internal call stack
+	const stack = get_stack()?.slice(4);
 	if (!stack) return null;
 
-	for (const entry of stack) {
+	for (let i = 0; i < stack.length; i++) {
+		const entry = stack[i];
 		const modules = boundaries[entry.file];
-		if (!modules) continue;
+		if (!modules) {
+			// If the first entry is not a component, that means the modification very likely happened
+			// within a .svelte.js file, possibly triggered by a component. Since these files are not part
+			// of the bondaries/component context heuristic, we need to bail in this case, else we would
+			// have false positives when the .svelte.ts file provides a state creator function, encapsulating
+			// the state and its mutations, and is being called from a component other than the one who
+			// called the state creator function.
+			if (i === 0) return null;
+			continue;
+		}
 
 		for (const module of modules) {
 			if (module.start.line < entry.line && module.end.line > entry.line) {

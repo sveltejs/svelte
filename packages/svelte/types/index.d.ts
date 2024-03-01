@@ -244,38 +244,6 @@ declare module 'svelte' {
 	 * */
 	export function onDestroy(fn: () => any): void;
 	/**
-	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
-	 * Must be called during component initialisation.
-	 *
-	 * https://svelte.dev/docs/svelte#getcontext
-	 * */
-	export function getContext<T>(key: any): T;
-	/**
-	 * Associates an arbitrary `context` object with the current component and the specified `key`
-	 * and returns that object. The context is then available to children of the component
-	 * (including slotted content) with `getContext`.
-	 *
-	 * Like lifecycle functions, this must be called during component initialisation.
-	 *
-	 * https://svelte.dev/docs/svelte#setcontext
-	 * */
-	export function setContext<T>(key: any, context: T): T;
-	/**
-	 * Checks whether a given `key` has been set in the context of a parent component.
-	 * Must be called during component initialisation.
-	 *
-	 * https://svelte.dev/docs/svelte#hascontext
-	 * */
-	export function hasContext(key: any): boolean;
-	/**
-	 * Retrieves the whole context map that belongs to the closest parent component.
-	 * Must be called during component initialisation. Useful, for example, if you
-	 * programmatically create a component and want to pass the existing context to it.
-	 *
-	 * https://svelte.dev/docs/svelte#getallcontexts
-	 * */
-	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
-	/**
 	 * Creates an event dispatcher that can be used to dispatch [component events](https://svelte.dev/docs#template-syntax-component-directives-on-eventname).
 	 * Event dispatchers are functions that can take two arguments: `name` and `detail`.
 	 *
@@ -368,6 +336,38 @@ declare module 'svelte' {
 	 * https://svelte-5-preview.vercel.app/docs/functions#untrack
 	 * */
 	export function untrack<T>(fn: () => T): T;
+	/**
+	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
+	 * Must be called during component initialisation.
+	 *
+	 * https://svelte.dev/docs/svelte#getcontext
+	 * */
+	export function getContext<T>(key: any): T;
+	/**
+	 * Associates an arbitrary `context` object with the current component and the specified `key`
+	 * and returns that object. The context is then available to children of the component
+	 * (including slotted content) with `getContext`.
+	 *
+	 * Like lifecycle functions, this must be called during component initialisation.
+	 *
+	 * https://svelte.dev/docs/svelte#setcontext
+	 * */
+	export function setContext<T>(key: any, context: T): T;
+	/**
+	 * Checks whether a given `key` has been set in the context of a parent component.
+	 * Must be called during component initialisation.
+	 *
+	 * https://svelte.dev/docs/svelte#hascontext
+	 * */
+	export function hasContext(key: any): boolean;
+	/**
+	 * Retrieves the whole context map that belongs to the closest parent component.
+	 * Must be called during component initialisation. Useful, for example, if you
+	 * programmatically create a component and want to pass the existing context to it.
+	 *
+	 * https://svelte.dev/docs/svelte#getallcontexts
+	 * */
+	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
 	export function unstate<T>(value: T): T;
 }
 
