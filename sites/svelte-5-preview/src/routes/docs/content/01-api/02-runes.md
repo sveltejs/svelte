@@ -203,7 +203,7 @@ To run side-effects like logging or analytics whenever some specific values chan
 <p>{count} doubled is {doubled}</p>
 ```
 
-An effect only reruns when the object it reads changes, not what a property inside it changes. If you want to react to _any_ change inside an object for inspection purposes at dev time, you may want to use [`inspect`](#inspect).
+An effect only reruns when the object it reads changes, not when a property inside it changes. If you want to react to _any_ change inside an object for inspection purposes at dev time, you may want to use [`inspect`](#inspect).
 
 ```svelte
 <script>
