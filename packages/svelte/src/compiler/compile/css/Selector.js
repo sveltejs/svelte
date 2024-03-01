@@ -291,14 +291,17 @@ function apply_selector(blocks, node, to_encapsulate) {
 			}
 			return false;
 		} else if (block.combinator.name === '+' || block.combinator.name === '~') {
-			const siblings = get_possible_element_siblings(node, block.combinator.name === '+');
+			const [siblings, has_slot_sibling] = get_possible_element_siblings(
+				node,
+				block.combinator.name === '+'
+			);
 			let has_match = false;
 			// NOTE: if we have :global(), we couldn't figure out what is selected within `:global` due to the
 			// css-tree limitation that does not parse the inner selector of :global
 			// so unless we are sure there will be no sibling to match, we will consider it as matched
 			const has_global = blocks.some((block) => block.global);
 			if (has_global) {
-				if (siblings.size === 0 && get_element_parent(node) !== null) {
+				if (siblings.size === 0 && get_element_parent(node) !== null && !has_slot_sibling) {
 					return false;
 				}
 				to_encapsulate.push({ node, block });
@@ -542,13 +545,15 @@ function get_element_parent(node) {
  * <h1>Heading 1</h1>
  * <h2>Heading 2</h2>
  * @param {import('../nodes/interfaces.js').INode} node
- * @returns {import('../nodes/interfaces.js').INode}
+ * @returns {[import('../nodes/interfaces.js').INode, boolean]}
  */
 function find_previous_sibling(node) {
 	/** @type {import('../nodes/interfaces.js').INode} */
 	let current_node = node;
+	let has_slot_sibling = false;
 	do {
 		if (current_node.type === 'Slot') {
+			has_slot_sibling = true;
 			const slot_children = current_node.children;
 			if (slot_children.length > 0) {
 				current_node = slot_children.slice(-1)[0]; // go to its last child first
@@ -560,13 +565,13 @@ function find_previous_sibling(node) {
 		}
 		current_node = current_node.prev;
 	} while (current_node && current_node.type === 'Slot');
-	return current_node;
+	return [current_node, has_slot_sibling];
 }
 
 /**
  * @param {import('../nodes/interfaces.js').INode} node
  * @param {boolean} adjacent_only
- * @returns {Map<import('../nodes/Element.js').default, NodeExistsValue>}
+ * @returns {[Map<import('../nodes/Element.js').default, NodeExistsValue>, boolean]}
  */
 function get_possible_element_siblings(node, adjacent_only) {
 	/** @type {Map<import('../nodes/Element.js').default, NodeExistsValue>} */
@@ -574,7 +579,10 @@ function get_possible_element_siblings(node, adjacent_only) {
 
 	/** @type {import('../nodes/interfaces.js').INode} */
 	let prev = node;
-	while ((prev = find_previous_sibling(prev))) {
+	let has_slot_sibling = false;
+	let slot_sibling_found = false;
+	while (([prev, slot_sibling_found] = find_previous_sibling(prev)) && prev) {
+		has_slot_sibling = has_slot_sibling || slot_sibling_found;
 		if (prev.type === 'Element') {
 			if (
 				!prev.attributes.find(
@@ -590,7 +598,7 @@ function get_possible_element_siblings(node, adjacent_only) {
 			const possible_last_child = get_possible_last_child(prev, adjacent_only);
 			add_to_map(possible_last_child, result);
 			if (adjacent_only && has_definite_elements(possible_last_child)) {
-				return result;
+				return [result, has_slot_sibling];
 			}
 		}
 	}
@@ -605,7 +613,11 @@ function get_possible_element_siblings(node, adjacent_only) {
 				parent.type === 'ElseBlock' ||
 				parent.type === 'AwaitBlock')
 		) {
-			const possible_siblings = get_possible_element_siblings(parent, adjacent_only);
+			const [possible_siblings, slot_sibling_found] = get_possible_element_siblings(
+				parent,
+				adjacent_only
+			);
+			has_slot_sibling = has_slot_sibling || slot_sibling_found;
 			add_to_map(possible_siblings, result);
 			if (parent.type === 'EachBlock') {
 				// first child of each block can select the last child of each block as previous sibling
@@ -623,7 +635,7 @@ function get_possible_element_siblings(node, adjacent_only) {
 			}
 		}
 	}
-	return result;
+	return [result, has_slot_sibling];
 }
 
 /**
