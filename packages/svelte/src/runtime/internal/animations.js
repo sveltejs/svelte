@@ -31,11 +31,14 @@ export function create_animation(node, from, fn, params) {
 	} = fn(node, { from, to }, params);
 	let running = true;
 	let started = false;
-	let name;
+	let animation_name;
+	/** @type {import("./private.js").AnimationInformation | undefined} */
+	let css_animation_info = undefined;
 	/** @returns {void} */
 	function start() {
 		if (css) {
-			name = create_rule(node, 0, 1, duration, delay, easing, css);
+			css_animation_info = create_rule(node, 0, 1, duration, delay, easing, css);
+			animation_name = css_animation_info.name;
 		}
 		if (!delay) {
 			started = true;
@@ -43,14 +46,16 @@ export function create_animation(node, from, fn, params) {
 	}
 	/** @returns {void} */
 	function stop() {
-		if (css) delete_rule(node, name);
+		if (css) delete_rule(node, animation_name);
 		running = false;
 	}
 	loop((now) => {
 		if (!started && now >= start_time) {
 			started = true;
 		}
-		if (started && now >= end) {
+		const css_animation_state = css_animation_info?.animation?.playState;
+		const is_css_animation_finished = !css_animation_state || css_animation_state === 'finished';
+		if (started && now >= end && is_css_animation_finished) {
 			tick(1, 0);
 			stop();
 		}
