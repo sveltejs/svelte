@@ -107,7 +107,7 @@ function error_on_client(payload, message) {
 		'which may result in content being shifted around and will likely result in a hydration mismatch.';
 	// eslint-disable-next-line no-console
 	console.error(message);
-	payload.head.out += `<script>console.error(${message})</script>`;
+	payload.head.out += `<script>console.error(\`${message}\`)</script>`;
 }
 
 /**
