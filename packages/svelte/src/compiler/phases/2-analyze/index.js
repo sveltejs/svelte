@@ -460,6 +460,25 @@ export function analyze_component(root, options) {
 						) {
 							continue inner;
 						}
+						// bind:this doesn't need to be a state reference if it will never change
+						if (
+							type === 'BindDirective' &&
+							/** @type {import('#compiler').BindDirective} */ (path[i]).name === 'this'
+						) {
+							for (let j = i - 1; j >= 0; j -= 1) {
+								const type = path[j].type;
+								if (
+									type === 'IfBlock' ||
+									type === 'EachBlock' ||
+									type === 'AwaitBlock' ||
+									type === 'KeyBlock'
+								) {
+									warn(warnings, binding.node, [], 'non-state-reference', name);
+									continue outer;
+								}
+							}
+							continue inner;
+						}
 					}
 
 					warn(warnings, binding.node, [], 'non-state-reference', name);

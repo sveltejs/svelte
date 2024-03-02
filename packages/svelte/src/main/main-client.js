@@ -1,8 +1,4 @@
-import {
-	current_component_context,
-	get_or_init_context_map,
-	untrack
-} from '../internal/client/runtime.js';
+import { current_component_context, untrack } from '../internal/client/runtime.js';
 import { is_array } from '../internal/client/utils.js';
 import { user_effect } from '../internal/index.js';
 
@@ -51,66 +47,6 @@ export function onDestroy(fn) {
 	}
 
 	onMount(() => () => untrack(fn));
-}
-
-/**
- * Retrieves the context that belongs to the closest parent component with the specified `key`.
- * Must be called during component initialisation.
- *
- * https://svelte.dev/docs/svelte#getcontext
- * @template T
- * @param {any} key
- * @returns {T}
- */
-export function getContext(key) {
-	const context_map = get_or_init_context_map();
-	return /** @type {T} */ (context_map.get(key));
-}
-
-/**
- * Associates an arbitrary `context` object with the current component and the specified `key`
- * and returns that object. The context is then available to children of the component
- * (including slotted content) with `getContext`.
- *
- * Like lifecycle functions, this must be called during component initialisation.
- *
- * https://svelte.dev/docs/svelte#setcontext
- * @template T
- * @param {any} key
- * @param {T} context
- * @returns {T}
- */
-export function setContext(key, context) {
-	const context_map = get_or_init_context_map();
-	context_map.set(key, context);
-	return context;
-}
-
-/**
- * Checks whether a given `key` has been set in the context of a parent component.
- * Must be called during component initialisation.
- *
- * https://svelte.dev/docs/svelte#hascontext
- * @param {any} key
- * @returns {boolean}
- */
-export function hasContext(key) {
-	const context_map = get_or_init_context_map();
-	return context_map.has(key);
-}
-
-/**
- * Retrieves the whole context map that belongs to the closest parent component.
- * Must be called during component initialisation. Useful, for example, if you
- * programmatically create a component and want to pass the existing context to it.
- *
- * https://svelte.dev/docs/svelte#getallcontexts
- * @template {Map<any, any>} [T=Map<any, any>]
- * @returns {T}
- */
-export function getAllContexts() {
-	const context_map = get_or_init_context_map();
-	return /** @type {T} */ (context_map);
 }
 
 /**
@@ -241,5 +177,9 @@ export {
 	unmount,
 	untrack,
 	unstate,
-	createRoot
+	createRoot,
+	hasContext,
+	getContext,
+	getAllContexts,
+	setContext
 } from '../internal/index.js';

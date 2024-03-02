@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.70
+
+### Patch Changes
+
+- fix: better ownership mutation validation ([#10673](https://github.com/sveltejs/svelte/pull/10673))
+
+- fix: handle TypeScript's optional parameter syntax in snippets ([#10671](https://github.com/sveltejs/svelte/pull/10671))
+
+- fix: deduplicate generated props and action arg names ([#10669](https://github.com/sveltejs/svelte/pull/10669))
+
 ## 5.0.0-next.69
 
 ### Patch Changes
