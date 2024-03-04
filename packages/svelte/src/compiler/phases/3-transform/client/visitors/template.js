@@ -493,7 +493,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 	let grouped_value = value;
 
 	if (name === 'autofocus') {
-		state.init.push(b.stmt(b.call('$.auto_focus', node_id, value)));
+		state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
 		return false;
 	}
 
@@ -992,7 +992,7 @@ function serialize_inline_component(node, component_name, context) {
 		const prev = fn;
 		fn = (node_id) =>
 			b.call(
-				'$.cssProps',
+				'$.css_props',
 				node_id,
 				// TODO would be great to do this at runtime instead. Svelte 4 also can't handle cases today
 				// where it's not statically determinable whether the component is used in a svg or html context
