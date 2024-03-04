@@ -490,7 +490,7 @@ export function text(dom, value) {
  * @param {boolean} value
  * @returns {void}
  */
-export function auto_focus(dom, value) {
+export function autofocus(dom, value) {
 	if (value) {
 		const body = document.body;
 		dom.autofocus = true;
@@ -1792,7 +1792,7 @@ export function component(anchor_node, component_fn, render_fn) {
  * @param {(anchor: Element | Text | Comment) => any} component
  * @returns {void}
  */
-export function cssProps(anchor, is_html, props, component) {
+export function css_props(anchor, is_html, props, component) {
 	hydrate_block_anchor(anchor);
 
 	/** @type {HTMLElement | SVGElement} */
@@ -2276,7 +2276,7 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 		} else if (key === 'style') {
 			dom.style.cssText = value + '';
 		} else if (key === 'autofocus') {
-			auto_focus(/** @type {HTMLElement} */ (dom), Boolean(value));
+			autofocus(/** @type {HTMLElement} */ (dom), Boolean(value));
 		} else if (key === '__value' || key === 'value') {
 			// @ts-ignore
 			dom.value = dom[key] = dom.__value = value;
