@@ -265,7 +265,7 @@ You can return a function from `$effect`, which will run immediately before the 
 <p>{count} doubled is {doubled}</p>
 ```
 
-> Use `$effect` with caution - most of the time, you're better off using a different pattern. Most importantly, writing to `$state` within an `$effect` is almost always an anti-pattern, and when not careful could result in the `$effect` rerunning over and over again. Below are some use cases and what to use instead.
+> `$effect` was designed for managing side effects such as logging or connecting to external systems like third party libraries that have an imperative API. If you're managing state or dataflow, you should use it with caution – most of the time, you're better off using a different pattern. Below are some use cases and what to use instead.
 
 If you update `$state` inside an `$effect`, you most likely want to use `$derived` instead.
 
