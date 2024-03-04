@@ -2,9 +2,9 @@ export const regex_whitespace = /\s/;
 export const regex_whitespaces = /\s+/;
 export const regex_starts_with_newline = /^\r?\n/;
 export const regex_starts_with_whitespace = /^\s/;
-export const regex_starts_with_whitespaces = /^[ \t\r\n]*/;
+export const regex_starts_with_whitespaces = /^[ \t\r\n]+/;
 export const regex_ends_with_whitespace = /\s$/;
-export const regex_ends_with_whitespaces = /[ \t\r\n]*$/;
+export const regex_ends_with_whitespaces = /[ \t\r\n]+$/;
 /** Not \S because that also removes explicit whitespace defined through things like `&nbsp;` */
 export const regex_not_whitespace = /[^ \t\r\n]/;
 /** Not \s+ because that also includes explicit whitespace defined through things like `&nbsp;` */

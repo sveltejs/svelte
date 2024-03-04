@@ -20,7 +20,10 @@ function get_html(ssr) {
   </span>
   E
   F
-</pre> <div id="div">A B <span>C D</span> E F</div> <div id="div-with-pre"><pre>    A
+</pre> <div id="div">A
+  B <span>C
+    D</span> E
+  F</div> <div id="div-with-pre"><pre>    A
     B
     <span>
       C

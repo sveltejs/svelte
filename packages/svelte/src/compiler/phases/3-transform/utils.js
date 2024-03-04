@@ -162,24 +162,36 @@ export function clean_nodes(
 	/** @type {import('#compiler').SvelteNode[]} */
 	const trimmed = [];
 
-	/** @type {import('#compiler').Text | null} */
-	let last_text = null;
+	// Replace any whitespace between a text and non-text node with a single spaceand keep whitespace
+	// as-is within text nodes, or between text nodes and expression tags (because in the end they count
+	// as one text). This way whitespace is mostly preserved when using CSS with `white-space: pre-line`
+	// and default slot content going into a pre tag (which we can't see).
+	for (let i = 0; i < regular.length; i++) {
+		const prev = regular[i - 1];
+		const node = regular[i];
+		const next = regular[i + 1];
 
-	// Replace any inbetween whitespace with a single space
-	for (const node of regular) {
 		if (node.type === 'Text') {
-			node.data = node.data.replace(regex_whitespaces_strict, ' ');
-			node.raw = node.raw.replace(regex_whitespaces_strict, ' ');
-			if (
-				(last_text === null && !can_remove_entirely) ||
-				node.data !== ' ' ||
-				node.data.charCodeAt(0) === 160 // non-breaking space
-			) {
+			if (prev?.type !== 'ExpressionTag') {
+				const prev_is_text_ending_with_whitespace =
+					prev?.type === 'Text' && regex_ends_with_whitespaces.test(prev.data);
+				node.data = node.data.replace(
+					regex_starts_with_whitespaces,
+					prev_is_text_ending_with_whitespace ? '' : ' '
+				);
+				node.raw = node.raw.replace(
+					regex_starts_with_whitespaces,
+					prev_is_text_ending_with_whitespace ? '' : ' '
+				);
+			}
+			if (next?.type !== 'ExpressionTag') {
+				node.data = node.data.replace(regex_ends_with_whitespaces, ' ');
+				node.raw = node.raw.replace(regex_ends_with_whitespaces, ' ');
+			}
+			if (node.data && (node.data !== ' ' || !can_remove_entirely)) {
 				trimmed.push(node);
 			}
-			last_text = node;
 		} else {
-			last_text = null;
 			trimmed.push(node);
 		}
 	}
