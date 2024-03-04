@@ -161,24 +161,14 @@ In essence, `$derived(expression)` is equivalent to `$derived.by(() => expressio
 
 To run side-effects like logging or analytics whenever some specific values change, or when a component is mounted to the DOM, we can use the `$effect` rune:
 
-```diff
+```svelte
 <script>
 	let count = $state(0);
 	let doubled = $derived(count * 2);
 
-+	$effect(() => {
-+		// runs when the component is mounted, and again
-+		// whenever `count` or `doubled` change,
-+		// after the DOM has been updated
-+		console.log({ count, doubled });
-+
-+		return () => {
-+			// if a callback is provided, it will run
-+			// a) immediately before the effect re-runs
-+			// b) when the component is destroyed
-+			console.log('cleanup');
-+		};
-+	});
+	$effect(() => {
+		console.log({ count, doubled });
+	});
 </script>
 
 <button on:click={() => count++}>
@@ -187,6 +177,180 @@ To run side-effects like logging or analytics whenever some specific values chan
 
 <p>{count} doubled is {doubled}</p>
 ```
+
+`$effect` will automatically subscribe to any `$state` or `$derived` values it reads _synchronously_ and reruns whenever their values change — that means, values after an `await` or inside a `setTimeout` will _not_ be tracked. `$effect` will run after the DOM has been updated.
+
+```svelte
+<script>
+	let count = $state(0);
+	let doubled = $derived(count * 2);
+
+	$effect(() => {
+		// runs after the DOM has been updated
+		// when the component is mounted
+		// and whenever `count` changes,
+		// but not when `doubled` changes,
+		console.log(count);
+
+		setTimeout(() => console.log(doubled));
+	});
+</script>
+
+<button on:click={() => count++}>
+	{doubled}
+</button>
+
+<p>{count} doubled is {doubled}</p>
+```
+
+An effect only reruns when the object it reads changes, not when a property inside it changes. If you want to react to _any_ change inside an object for inspection purposes at dev time, you may want to use [`inspect`](#inspect).
+
+```svelte
+<script>
+	let object = $state({ count: 0 });
+	let derived_object = $derived({
+		doubled: object.count * 2
+	});
+
+	$effect(() => {
+		// never reruns, because object does not change,
+		// only its property changes
+		object;
+		console.log('object');
+	});
+
+	$effect(() => {
+		// reruns, because object.count changes
+		object.count;
+		console.log('object.count');
+	});
+
+	$effect(() => {
+		// reruns, because $derived produces a new object on each rerun
+		derived_object;
+		console.log('derived_object');
+	});
+</script>
+
+<button on:click={() => object.count++}>
+	{doubled}
+</button>
+
+<p>{count} doubled is {doubled}</p>
+```
+
+You can return a function from `$effect`, which will run immediately before the effect re-runs, and before it is destroyed.
+
+```svelte
+<script>
+	let count = $state(0);
+	let doubled = $derived(count * 2);
+
+	$effect(() => {
+		console.log({ count, doubled });
+
+		return () => {
+			// if a callback is provided, it will run
+			// a) immediately before the effect re-runs
+			// b) when the component is destroyed
+			console.log('cleanup');
+		};
+	});
+</script>
+
+<button on:click={() => count++}>
+	{doubled}
+</button>
+
+<p>{count} doubled is {doubled}</p>
+```
+
+> `$effect` was designed for managing side effects such as logging or connecting to external systems like third party libraries that have an imperative API. If you're managing state or dataflow, you should use it with caution – most of the time, you're better off using a different pattern. Below are some use cases and what to use instead.
+
+If you update `$state` inside an `$effect`, you most likely want to use `$derived` instead.
+
+```svelte
+<script>
+	let count = $state(0);
+	// Don't do this:
+	let doubled = $state();
+	$effect(() => {
+		doubled = count * 2;
+	});
+	// Do this instead:
+	let doubled = $derived(count * 2);
+</script>
+```
+
+This also applies to more complex calculations that require more than a simple expression and write to more than one variable. In these cases, you can use `$derived.by`.
+
+```svelte
+<script>
+	// Don't do this:
+	let result_1 = $state();
+	let result_2 = $state();
+	$effect(() => {
+		// ... some lengthy code resulting in
+		result_1 = someValue;
+		result_2 = someOtherValue;
+	});
+	// Do this instead:
+	let { result_1, result_2 } = $derived.by(() => {
+		// ... some lengthy code resulting in
+		return {
+			result_1: someValue,
+			result_2: someOtherValue
+		};
+	});
+</script>
+```
+
+When reacting to a state change and writing to a different state as a result, think about if it's possible to model the code through event handling instead.
+
+```svelte
+<!-- Don't do this -->
+<script>
+	let value = $state();
+	let value_uppercase = $state();
+	$effect(() => {
+		value_uppercase = value.toUpperCase();
+	});
+</script>
+
+<Text bind:value />
+
+<!-- Do this instead: -->
+<script>
+	let value = $state();
+	let value_uppercase = $state();
+	function onValueChange(new_text) {
+		value = new_text;
+		value_uppercase = new_text.toUpperCase();
+	}
+</script>
+
+<Text {value} {onValueChange}>
+```
+
+If you want to have something update from above but also modify it from below (i.e. you want some kind of "writable `$derived`"), and events aren't an option, you can also use an object with getters and setters.
+
+```svelte
+<script>
+	let { value } = $props();
+	let proxy = {
+		get value() {
+			return value.toUpperCase();
+		},
+		set value(val) {
+			value = val.toLowerCase();
+		}
+	};
+</script>
+
+<input bind:value={proxy.value} />
+```
+
+If you absolutely have to update `$state` within an effect and run into an infinite loop because you read and write to the same `$state`, use [untrack](functions#untrack).
 
 ### What this replaces
 
@@ -235,6 +399,8 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 	{/each}
 </div>
 ```
+
+Apart from the timing, `$effect.pre` works exactly like [`$effect`](#effect) — refer to its documentation for more info.
 
 ### What this replaces
 
