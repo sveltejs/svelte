@@ -2384,7 +2384,7 @@ const rest_props_handler = {
 };
 
 /**
- * @param {import('./types.js').Signal<Record<string, unknown>> | Record<string, unknown>} props
+ * @param {Record<string, unknown>} props
  * @param {string[]} rest
  * @returns {Record<string, unknown>}
  */

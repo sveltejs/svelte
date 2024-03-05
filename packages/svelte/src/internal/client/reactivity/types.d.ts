@@ -9,7 +9,7 @@ export type SignalFlags =
 	| typeof RENDER_EFFECT;
 export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFECT;
 
-export type Source<V = unknown> = {
+export interface Source<V = unknown> {
 	/** consumers: Signals that read from the current signal */
 	c: null | ComputationSignal[];
 	/** equals: For value equality */
@@ -20,7 +20,7 @@ export type Source<V = unknown> = {
 	v: V;
 	// write version
 	w: number;
-};
+}
 
 export type SourceSignalDebug = {
 	/** This is DEV only */
