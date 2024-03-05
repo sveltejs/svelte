@@ -28,7 +28,24 @@ import { CLEAN, DERIVED, DIRTY, MANAGED, SOURCE } from '../constants.js';
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function source(initial_value) {
-	return create_source_signal(SOURCE | CLEAN, initial_value);
+	const signal = {
+		// consumers
+		c: null,
+		// equals
+		e: default_equals,
+		// flags
+		f: SOURCE | CLEAN,
+		// value
+		v: initial_value,
+		// write version
+		w: 0
+	};
+
+	if (DEV) {
+		/** @type {import('#client').SourceDebug} */ (signal).inspect = new Set();
+	}
+
+	return signal;
 }
 
 /**
@@ -48,43 +65,6 @@ export function mutable_source(initial_value) {
 	}
 
 	return s;
-}
-
-/**
- * @template V
- * @param {import('../types.js').SignalFlags} flags
- * @param {V} value
- * @returns {import('../types.js').Source<V> | import('../types.js').SourceDebug<V>}
- */
-function create_source_signal(flags, value) {
-	if (DEV) {
-		return {
-			// consumers
-			c: null,
-			// equals
-			e: default_equals,
-			// flags
-			f: flags,
-			// value
-			v: value,
-			// write version
-			w: 0,
-			// this is for DEV only
-			inspect: new Set()
-		};
-	}
-	return {
-		// consumers
-		c: null,
-		// equals
-		e: default_equals,
-		// flags
-		f: flags,
-		// value
-		v: value,
-		// write version
-		w: 0
-	};
 }
 
 /**
