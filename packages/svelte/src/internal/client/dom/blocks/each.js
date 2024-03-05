@@ -55,8 +55,8 @@ export function create_each_block(flags, anchor) {
 }
 
 /**
- * @param {any | import('../../types.js').Signal<any>} item
- * @param {number | import('../../types.js').Signal<number>} index
+ * @param {any | import('../../types.js').Value<any>} item
+ * @param {number | import('../../types.js').Value<number>} index
  * @param {null | unknown} key
  * @returns {import('../../types.js').EachItemBlock}
  */
@@ -110,7 +110,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	/** @type {Array<string> | null} */
 	let keys = null;
 
-	/** @type {null | import('../../types.js').EffectSignal} */
+	/** @type {null | import('../../types.js').Effect} */
 	let render = null;
 
 	/**
@@ -279,7 +279,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		}
 		// Clear the array
 		reconcile_fn([], block, anchor_node, is_controlled, render_fn, flags, false, keys);
-		destroy_signal(/** @type {import('../../types.js').EffectSignal} */ (render));
+		destroy_signal(/** @type {import('../../types.js').Effect} */ (render));
 	});
 
 	block.e = each;
@@ -318,7 +318,7 @@ export function each_indexed(anchor_node, collection, flags, render_fn, fallback
  * @param {import('../../types.js').EachBlock} each_block
  * @param {Element | Comment | Text} dom
  * @param {boolean} is_controlled
- * @param {(anchor: null, item: V, index: number | import('../../types.js').Signal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: number | import('../../types.js').Source<number>) => void} render_fn
  * @param {number} flags
  * @param {boolean} apply_transitions
  * @returns {void}
@@ -433,7 +433,7 @@ function reconcile_indexed_array(
  * @param {import('../../types.js').EachBlock} each_block
  * @param {Element | Comment | Text} dom
  * @param {boolean} is_controlled
- * @param {(anchor: null, item: V, index: number | import('../../types.js').Signal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: number | import('../../types.js').Source<number>) => void} render_fn
  * @param {number} flags
  * @param {boolean} apply_transitions
  * @param {Array<string> | null} keys
@@ -848,7 +848,7 @@ function update_each_item_block(block, item, index, type) {
 		each_animation(block, transitions);
 	}
 	if (index_is_reactive) {
-		set(/** @type {import('../../types.js').Signal<number>} */ (block.i), index);
+		set(/** @type {import('../../types.js').Value<number>} */ (block.i), index);
 	} else {
 		block.i = index;
 	}
@@ -890,7 +890,7 @@ export function destroy_each_item_block(
 	if (!controlled && dom !== null) {
 		remove(dom);
 	}
-	destroy_signal(/** @type {import('../../types.js').EffectSignal} */ (block.e));
+	destroy_signal(/** @type {import('../../types.js').Effect} */ (block.e));
 }
 
 /**
@@ -898,7 +898,7 @@ export function destroy_each_item_block(
  * @param {V} item
  * @param {unknown} key
  * @param {number} index
- * @param {(anchor: null, item: V, index: number | import('../../types.js').Signal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: number | import('../../types.js').Value<number>) => void} render_fn
  * @param {number} flags
  * @returns {import('../../types.js').EachItemBlock}
  */

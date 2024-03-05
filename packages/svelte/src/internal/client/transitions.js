@@ -295,7 +295,7 @@ const linear = (t) => t;
  * @param {HTMLElement} dom
  * @param {() => import('./types.js').TransitionPayload} init
  * @param {'in' | 'out' | 'both' | 'key'} direction
- * @param {import('./types.js').EffectSignal} effect
+ * @param {import('./types.js').Effect} effect
  * @returns {import('./types.js').Transition}
  */
 function create_transition(dom, init, direction, effect) {
@@ -503,7 +503,7 @@ function is_transition_block(block) {
  * @returns {void}
  */
 export function bind_transition(dom, get_transition_fn, props_fn, direction, global) {
-	const transition_effect = /** @type {import('./types.js').EffectSignal} */ (current_effect);
+	const transition_effect = /** @type {import('./types.js').Effect} */ (current_effect);
 	const block = current_block;
 	const is_keyed_transition = direction === 'key';
 
@@ -692,7 +692,7 @@ function if_block_transition(transition) {
 			// If the block has changed to falsy and has transitions
 			if (!block.v && c.size === 0) {
 				const consequent_effect = block.ce;
-				execute_effect(/** @type {import('./types.js').EffectSignal} */ (consequent_effect));
+				execute_effect(/** @type {import('./types.js').Effect} */ (consequent_effect));
 			}
 		});
 	} else {
@@ -704,7 +704,7 @@ function if_block_transition(transition) {
 			// If the block has changed to truthy and has transitions
 			if (block.v && a.size === 0) {
 				const alternate_effect = block.ae;
-				execute_effect(/** @type {import('./types.js').EffectSignal} */ (alternate_effect));
+				execute_effect(/** @type {import('./types.js').Effect} */ (alternate_effect));
 			}
 		});
 	}

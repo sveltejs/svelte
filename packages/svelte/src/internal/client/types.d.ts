@@ -11,7 +11,7 @@ import {
 	SNIPPET_BLOCK,
 	STATE_SYMBOL
 } from './constants.js';
-import type { ComputationSignal, EffectSignal, Signal, SourceSignal } from './reactivity/types.js';
+import type { Reaction, Effect, Signal, Source, Value } from './reactivity/types.js';
 
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
@@ -33,7 +33,7 @@ export type ComponentContext = {
 	/** exports (and props, if `accessors: true`) */
 	x: Record<string, any> | null;
 	/** effects */
-	e: null | Array<EffectSignal>;
+	e: null | Array<Effect>;
 	/** mounted */
 	m: boolean;
 	/** parent */
@@ -71,7 +71,7 @@ export type TemplateNode = Text | Element | Comment;
 
 export type Transition = {
 	/** effect */
-	e: EffectSignal;
+	e: Effect;
 	/** payload */
 	p: null | TransitionPayload;
 	/** init */
@@ -95,7 +95,7 @@ export type RootBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | ComputationSignal;
+	e: null | Reaction;
 	/** intro */
 	i: boolean;
 	/** parent */
@@ -112,7 +112,7 @@ export type IfBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | EffectSignal;
+	e: null | Effect;
 	/** parent */
 	p: Block;
 	/** transition */
@@ -122,9 +122,9 @@ export type IfBlock = {
 	/** alternate transitions */
 	a: null | Set<Transition>;
 	/** effect */
-	ce: null | EffectSignal;
+	ce: null | Effect;
 	/** effect */
-	ae: null | EffectSignal;
+	ae: null | Effect;
 	/** type */
 	t: typeof IF_BLOCK;
 };
@@ -133,7 +133,7 @@ export type KeyBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | EffectSignal;
+	e: null | Effect;
 	/** parent */
 	p: Block;
 	/** transition */
@@ -146,7 +146,7 @@ export type HeadBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | ComputationSignal;
+	e: null | Reaction;
 	/** parent */
 	p: Block;
 	/** transition */
@@ -159,7 +159,7 @@ export type DynamicElementBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | ComputationSignal;
+	e: null | Reaction;
 	/** parent */
 	p: Block;
 	/** transition */
@@ -172,7 +172,7 @@ export type DynamicComponentBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | ComputationSignal;
+	e: null | Reaction;
 	/** parent */
 	p: Block;
 	/** transition */
@@ -185,7 +185,7 @@ export type AwaitBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | ComputationSignal;
+	e: null | Reaction;
 	/** parent */
 	p: Block;
 	/** pending */
@@ -206,7 +206,7 @@ export type EachBlock = {
 	/** items */
 	v: EachItemBlock[];
 	/** effewct */
-	e: null | ComputationSignal;
+	e: null | Reaction;
 	/** parent */
 	p: Block;
 	/** transition */
@@ -223,11 +223,11 @@ export type EachItemBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | ComputationSignal;
+	e: null | Reaction;
 	/** item */
-	v: any | Signal<any>;
+	v: any | Value<any>;
 	/** index */
-	i: number | Signal<number>;
+	i: number | Value<number>;
 	/** key */
 	k: unknown;
 	/** parent */
@@ -246,7 +246,7 @@ export type SnippetBlock = {
 	/** parent */
 	p: Block;
 	/** effect */
-	e: null | ComputationSignal;
+	e: null | Reaction;
 	/** transition */
 	r: null;
 	/** type */
@@ -292,7 +292,7 @@ export type StoreReferencesContainer = Record<
 		store: Store<any> | null;
 		last_value: any;
 		unsubscribe: Function;
-		value: Signal<any>;
+		value: Value<any>;
 	}
 >;
 
@@ -302,7 +302,7 @@ export type Render = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | EffectSignal;
+	e: null | Effect;
 	/** transitions */
 	s: Set<Transition>;
 	/** prev */
@@ -325,9 +325,9 @@ export type TaskEntry = { c: TaskCallback; f: () => void };
 
 export interface ProxyMetadata<T = Record<string | symbol, any>> {
 	/** A map of signals associated to the properties that are reactive */
-	s: Map<string | symbol, SourceSignal<any>>;
+	s: Map<string | symbol, Source<any>>;
 	/** A version counter, used within the proxy to signal changes in places where there's no other way to signal an update */
-	v: SourceSignal<number>;
+	v: Source<number>;
 	/** `true` if the proxified object is an array */
 	a: boolean;
 	/** Immutable: Whether to use a source or mutable source under the hood */

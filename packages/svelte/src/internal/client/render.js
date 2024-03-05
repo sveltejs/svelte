@@ -727,7 +727,7 @@ export function bind_playback_rate(media, get_value, update) {
 	// Needs to happen after the element is inserted into the dom, else playback will be set back to 1 by the browser.
 	// For hydration we could do it immediately but the additional code is not worth the lost microtask.
 
-	/** @type {import('./types.js').ComputationSignal | undefined} */
+	/** @type {import('./types.js').Reaction | undefined} */
 	let render;
 	let destroyed = false;
 	const effect = managed_effect(() => {
@@ -2384,7 +2384,7 @@ const rest_props_handler = {
 };
 
 /**
- * @param {import('./types.js').Signal<Record<string, unknown>> | Record<string, unknown>} props
+ * @param {Record<string, unknown>} props
  * @param {string[]} rest
  * @returns {Record<string, unknown>}
  */
@@ -2647,7 +2647,7 @@ function _mount(Component, options) {
 		if (dom !== null) {
 			remove(dom);
 		}
-		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
+		destroy_signal(/** @type {import('./types.js').Effect} */ (block.e));
 	});
 
 	return component;

@@ -3,7 +3,7 @@ import * as $ from '../../src/internal/client/runtime';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
 import { effect, render_effect, user_effect } from '../../src/internal/client/reactivity/effects';
 import { source, set } from '../../src/internal/client/reactivity/sources';
-import type { ComputationSignal } from '../../src/internal/client/types';
+import type { Derived } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 
 /**
@@ -206,7 +206,7 @@ describe('signals', () => {
 
 	test('correctly cleanup onowned nested derived values', () => {
 		return () => {
-			const nested: ComputationSignal<string>[] = [];
+			const nested: Derived<string>[] = [];
 
 			const a = source(0);
 			const b = source(0);

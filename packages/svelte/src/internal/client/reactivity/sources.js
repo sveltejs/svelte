@@ -24,17 +24,30 @@ import { CLEAN, DERIVED, DIRTY, MANAGED, SOURCE } from '../constants.js';
 /**
  * @template V
  * @param {V} initial_value
- * @returns {import('../types.js').SourceSignal<V>}
+ * @returns {import('../types.js').Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function source(initial_value) {
-	return create_source_signal(SOURCE | CLEAN, initial_value);
+	/** @type {import('#client').Source<V>} */
+	const signal = {
+		c: null,
+		e: default_equals,
+		f: SOURCE | CLEAN,
+		v: initial_value,
+		w: 0
+	};
+
+	if (DEV) {
+		/** @type {import('#client').SourceDebug} */ (signal).inspect = new Set();
+	}
+
+	return signal;
 }
 
 /**
  * @template V
  * @param {V} initial_value
- * @returns {import('../types.js').SourceSignal<V>}
+ * @returns {import('../types.js').Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function mutable_source(initial_value) {
@@ -52,44 +65,7 @@ export function mutable_source(initial_value) {
 
 /**
  * @template V
- * @param {import('../types.js').SignalFlags} flags
- * @param {V} value
- * @returns {import('../types.js').SourceSignal<V> | import('../types.js').SourceSignal<V> & import('../types.js').SourceSignalDebug}
- */
-function create_source_signal(flags, value) {
-	if (DEV) {
-		return {
-			// consumers
-			c: null,
-			// equals
-			e: default_equals,
-			// flags
-			f: flags,
-			// value
-			v: value,
-			// write version
-			w: 0,
-			// this is for DEV only
-			inspect: new Set()
-		};
-	}
-	return {
-		// consumers
-		c: null,
-		// equals
-		e: default_equals,
-		// flags
-		f: flags,
-		// value
-		v: value,
-		// write version
-		w: 0
-	};
-}
-
-/**
- * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('./types.js').Source<V>} signal
  * @param {V} value
  * @returns {void}
  */
@@ -99,7 +75,7 @@ export function set_sync(signal, value) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} source
+ * @param {import('./types.js').Value<V>} source
  * @param {V} value
  */
 export function mutate(source, value) {
@@ -112,7 +88,7 @@ export function mutate(source, value) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('./types.js').Source<V>} signal
  * @param {V} value
  * @returns {V}
  */
@@ -174,9 +150,9 @@ export function set(signal, value) {
 		// @ts-expect-error
 		if (DEV && signal.inspect) {
 			if (is_batching_effect) {
-				set_last_inspected_signal(/** @type {import('./types.js').SignalDebug} */ (signal));
+				set_last_inspected_signal(/** @type {import('./types.js').ValueDebug} */ (signal));
 			} else {
-				for (const fn of /** @type {import('./types.js').SignalDebug} */ (signal).inspect) fn();
+				for (const fn of /** @type {import('./types.js').ValueDebug} */ (signal).inspect) fn();
 			}
 		}
 	}
