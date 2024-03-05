@@ -18,7 +18,7 @@ import {
 	object_prototype
 } from './utils.js';
 import { add_owner, check_ownership, strip_owner } from './dev/ownership.js';
-import { mutable_source, source, set, set_signal_value } from './reactivity/sources.js';
+import { mutable_source, source, set } from './reactivity/sources.js';
 import { STATE_SYMBOL, UNINITIALIZED } from './constants.js';
 
 /**
@@ -153,7 +153,7 @@ export function unstate(value) {
  */
 function update_version(signal, d = 1) {
 	const value = untrack(() => get(signal));
-	set_signal_value(signal, value + d);
+	set(signal, value + d);
 }
 
 /** @type {ProxyHandler<import('./types.js').ProxyStateObject<any>>} */

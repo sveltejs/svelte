@@ -91,17 +91,6 @@ function create_source_signal(flags, value) {
  * @template V
  * @param {import('./types.js').Signal<V>} signal
  * @param {V} value
- * @returns {V}
- */
-export function set(signal, value) {
-	set_signal_value(signal, value);
-	return value;
-}
-
-/**
- * @template V
- * @param {import('./types.js').Signal<V>} signal
- * @param {V} value
  * @returns {void}
  */
 export function set_sync(signal, value) {
@@ -114,7 +103,7 @@ export function set_sync(signal, value) {
  * @param {V} value
  */
 export function mutate(source, value) {
-	set_signal_value(
+	set(
 		source,
 		untrack(() => get(source))
 	);
@@ -125,9 +114,9 @@ export function mutate(source, value) {
  * @template V
  * @param {import('./types.js').Signal<V>} signal
  * @param {V} value
- * @returns {void}
+ * @returns {V}
  */
-export function set_signal_value(signal, value) {
+export function set(signal, value) {
 	if (
 		!current_untracking &&
 		!ignore_mutation_validation &&
@@ -191,4 +180,6 @@ export function set_signal_value(signal, value) {
 			}
 		}
 	}
+
+	return value;
 }

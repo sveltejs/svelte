@@ -26,12 +26,11 @@ import {
 	DESTROYED,
 	INERT,
 	MANAGED,
-	SOURCE,
 	STATE_SYMBOL
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
-import { mutate, set_signal_value } from './reactivity/sources.js';
+import { mutate, set } from './reactivity/sources.js';
 
 const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT;
 
@@ -1111,7 +1110,7 @@ function get_parent_context(component_context) {
  */
 export function update(signal, d = 1) {
 	const value = get(signal);
-	set_signal_value(signal, value + d);
+	set(signal, value + d);
 	return value;
 }
 
@@ -1122,7 +1121,7 @@ export function update(signal, d = 1) {
  */
 export function update_pre(signal, d = 1) {
 	const value = get(signal) + d;
-	set_signal_value(signal, value);
+	set(signal, value);
 	return value;
 }
 
