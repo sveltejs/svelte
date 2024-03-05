@@ -50,14 +50,14 @@ import {
 	inspect_fn,
 	deep_read_state
 } from './runtime.js';
+import { derived } from './reactivity/deriveds.js';
 import {
 	render_effect,
 	effect,
 	managed_effect,
-	derived,
 	pre_effect,
 	user_effect
-} from './reactivity/computations.js';
+} from './reactivity/effects.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,

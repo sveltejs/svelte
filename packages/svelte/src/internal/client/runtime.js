@@ -10,7 +10,7 @@ import {
 	object_prototype
 } from './utils.js';
 import { unstate } from './proxy.js';
-import { pre_effect } from './reactivity/computations.js';
+import { pre_effect } from './reactivity/effects.js';
 import {
 	EACH_BLOCK,
 	IF_BLOCK,
