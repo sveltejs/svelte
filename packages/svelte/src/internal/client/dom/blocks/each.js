@@ -20,8 +20,8 @@ import { current_block, destroy_signal, execute_effect, push_destroy_fn } from '
 import { render_effect } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { trigger_transitions } from '../../transitions.js';
-import { is_array } from '../../utils.js';
-import { EACH_BLOCK, EACH_ITEM_BLOCK } from '../../constants.js';
+import { is_array, is_frozen } from '../../utils.js';
+import { EACH_BLOCK, EACH_ITEM_BLOCK, STATE_SYMBOL } from '../../constants.js';
 
 const NEW_BLOCK = -1;
 const MOVED_BLOCK = 99999999;
@@ -449,6 +449,10 @@ function reconcile_tracked_array(
 	apply_transitions,
 	keys
 ) {
+	// If we are working with an array that isn't proxied or frozen, then remove strict equality.
+	if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
+		flags ^= EACH_IS_STRICT_EQUALS;
+	}
 	var a_blocks = each_block.v;
 	const is_computed_key = keys !== null;
 	var active_transitions = each_block.s;
