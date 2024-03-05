@@ -11,9 +11,11 @@ import { default_equals, safe_equal } from './equality.js';
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
-	const is_unowned = current_effect === null;
-	const flags = is_unowned ? DERIVED | UNOWNED : DERIVED;
-	const signal = /** @type {import('../types.js').Derived<V>} */ ({
+	let flags = DERIVED | CLEAN;
+	if (current_effect === null) flags |= UNOWNED;
+
+	/** @type {import('#client').Derived<V>} */
+	const signal = {
 		b: current_block,
 		c: null,
 		d: null,
@@ -21,15 +23,15 @@ export function derived(fn) {
 		f: flags | CLEAN,
 		i: fn,
 		r: null,
+		// @ts-expect-error
 		v: UNINITIALIZED,
 		w: 0,
 		x: null,
 		y: null
-	});
+	};
 
 	if (DEV) {
-		// @ts-expect-error
-		signal.inspect = new Set();
+		/** @type {import('#client').DerivedDebug} */ (signal).inspect = new Set();
 	}
 
 	if (current_consumer !== null) {
@@ -42,7 +44,7 @@ export function derived(fn) {
 /**
  * @template V
  * @param {() => V} fn
- * @returns {import('../types.js').Derived<V>}
+ * @returns {import('#client').Derived<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function derived_safe_equal(fn) {
