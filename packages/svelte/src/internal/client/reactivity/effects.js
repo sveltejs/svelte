@@ -2,24 +2,12 @@ import { DEV } from 'esm-env';
 import {
 	current_block,
 	current_component_context,
-	current_consumer,
 	current_effect,
 	destroy_signal,
 	flush_local_render_effects,
 	schedule_effect
 } from '../runtime.js';
-import { default_equals, safe_equal } from './equality.js';
-import {
-	DIRTY,
-	MANAGED,
-	RENDER_EFFECT,
-	EFFECT,
-	PRE_EFFECT,
-	DERIVED,
-	UNOWNED,
-	CLEAN,
-	UNINITIALIZED
-} from '../constants.js';
+import { DIRTY, MANAGED, RENDER_EFFECT, EFFECT, PRE_EFFECT } from '../constants.js';
 
 /**
  * @template V
