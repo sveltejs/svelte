@@ -458,6 +458,10 @@ function reconcile_tracked_array(
 	// are treated as reactive, so they get wrapped in a signal.
 	if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
 		flags ^= EACH_IS_STRICT_EQUALS;
+		// Additionally as we're in an keyed each block, we'll need ensure the itens are all wrapped in signals.
+		if ((flags & EACH_ITEM_REACTIVE) === 0) {
+			flags ^= EACH_ITEM_REACTIVE;
+		}
 	}
 	var a_blocks = each_block.v;
 	const is_computed_key = keys !== null;

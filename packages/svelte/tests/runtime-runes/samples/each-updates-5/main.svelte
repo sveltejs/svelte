@@ -10,6 +10,12 @@
 	}
 </script>
 
+{#each $store as item (item)}
+	{item.value}
+{/each}
+{#each $storeDeeper.items as item (item)}
+	{item.value}
+{/each}
 {#each $store as item}
 	{item.value}
 {/each}
