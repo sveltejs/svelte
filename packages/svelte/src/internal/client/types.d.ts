@@ -11,7 +11,7 @@ import {
 	SNIPPET_BLOCK,
 	STATE_SYMBOL
 } from './constants.js';
-import type { ComputationSignal, EffectSignal, Signal, SourceSignal } from './reactivity/types.js';
+import type { ComputationSignal, EffectSignal, Signal, Source } from './reactivity/types.js';
 
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
@@ -325,9 +325,9 @@ export type TaskEntry = { c: TaskCallback; f: () => void };
 
 export interface ProxyMetadata<T = Record<string | symbol, any>> {
 	/** A map of signals associated to the properties that are reactive */
-	s: Map<string | symbol, SourceSignal<any>>;
+	s: Map<string | symbol, Source<any>>;
 	/** A version counter, used within the proxy to signal changes in places where there's no other way to signal an update */
-	v: SourceSignal<number>;
+	v: Source<number>;
 	/** `true` if the proxified object is an array */
 	a: boolean;
 	/** Immutable: Whether to use a source or mutable source under the hood */

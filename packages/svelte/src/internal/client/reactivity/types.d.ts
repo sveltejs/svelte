@@ -9,12 +9,7 @@ export type SignalFlags =
 	| typeof RENDER_EFFECT;
 export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFECT;
 
-// We keep two shapes rather than a single monomorphic shape to improve the memory usage.
-// Source signals don't need the same shape as they simply don't do as much as computations
-// (effects and derived signals). Thus we can improve the memory profile at the slight cost
-// of some runtime performance.
-
-export type SourceSignal<V = unknown> = {
+export type Source<V = unknown> = {
 	/** consumers: Signals that read from the current signal */
 	c: null | ComputationSignal[];
 	/** equals: For value equality */
@@ -63,7 +58,7 @@ export type ComputationSignal<V = unknown> = {
 	w: number;
 };
 
-export type Signal<V = unknown> = SourceSignal<V> | ComputationSignal<V>;
+export type Signal<V = unknown> = Source<V> | ComputationSignal<V>;
 
 export type SignalDebug<V = unknown> = SourceSignalDebug & Signal<V>;
 

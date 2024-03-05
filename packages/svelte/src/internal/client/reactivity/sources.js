@@ -24,7 +24,7 @@ import { CLEAN, DERIVED, DIRTY, MANAGED, SOURCE } from '../constants.js';
 /**
  * @template V
  * @param {V} initial_value
- * @returns {import('../types.js').SourceSignal<V>}
+ * @returns {import('../types.js').Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function source(initial_value) {
@@ -34,7 +34,7 @@ export function source(initial_value) {
 /**
  * @template V
  * @param {V} initial_value
- * @returns {import('../types.js').SourceSignal<V>}
+ * @returns {import('../types.js').Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function mutable_source(initial_value) {
@@ -54,7 +54,7 @@ export function mutable_source(initial_value) {
  * @template V
  * @param {import('../types.js').SignalFlags} flags
  * @param {V} value
- * @returns {import('../types.js').SourceSignal<V> | import('../types.js').SourceSignal<V> & import('../types.js').SourceSignalDebug}
+ * @returns {import('../types.js').Source<V> | import('../types.js').Source<V> & import('../types.js').SourceSignalDebug}
  */
 function create_source_signal(flags, value) {
 	if (DEV) {
