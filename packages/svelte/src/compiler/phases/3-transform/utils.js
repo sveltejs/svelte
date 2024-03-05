@@ -5,6 +5,7 @@ import {
 	regex_whitespaces_strict
 } from '../patterns.js';
 import * as b from '../../utils/builders.js';
+import { walk } from 'zimmerframe';
 
 /**
  * @param {string} s
@@ -162,24 +163,36 @@ export function clean_nodes(
 	/** @type {import('#compiler').SvelteNode[]} */
 	const trimmed = [];
 
-	/** @type {import('#compiler').Text | null} */
-	let last_text = null;
+	// Replace any whitespace between a text and non-text node with a single spaceand keep whitespace
+	// as-is within text nodes, or between text nodes and expression tags (because in the end they count
+	// as one text). This way whitespace is mostly preserved when using CSS with `white-space: pre-line`
+	// and default slot content going into a pre tag (which we can't see).
+	for (let i = 0; i < regular.length; i++) {
+		const prev = regular[i - 1];
+		const node = regular[i];
+		const next = regular[i + 1];
 
-	// Replace any inbetween whitespace with a single space
-	for (const node of regular) {
 		if (node.type === 'Text') {
-			node.data = node.data.replace(regex_whitespaces_strict, ' ');
-			node.raw = node.raw.replace(regex_whitespaces_strict, ' ');
-			if (
-				(last_text === null && !can_remove_entirely) ||
-				node.data !== ' ' ||
-				node.data.charCodeAt(0) === 160 // non-breaking space
-			) {
+			if (prev?.type !== 'ExpressionTag') {
+				const prev_is_text_ending_with_whitespace =
+					prev?.type === 'Text' && regex_ends_with_whitespaces.test(prev.data);
+				node.data = node.data.replace(
+					regex_starts_with_whitespaces,
+					prev_is_text_ending_with_whitespace ? '' : ' '
+				);
+				node.raw = node.raw.replace(
+					regex_starts_with_whitespaces,
+					prev_is_text_ending_with_whitespace ? '' : ' '
+				);
+			}
+			if (next?.type !== 'ExpressionTag') {
+				node.data = node.data.replace(regex_ends_with_whitespaces, ' ');
+				node.raw = node.raw.replace(regex_ends_with_whitespaces, ' ');
+			}
+			if (node.data && (node.data !== ' ' || !can_remove_entirely)) {
 				trimmed.push(node);
 			}
-			last_text = node;
 		} else {
-			last_text = null;
 			trimmed.push(node);
 		}
 	}
@@ -237,51 +250,49 @@ export function infer_namespace(namespace, parent, nodes, path) {
  * @param {import('#compiler').Namespace | 'keep' | 'maybe_html'} namespace
  */
 function check_nodes_for_namespace(nodes, namespace) {
-	for (const node of nodes) {
-		if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
-			if (!node.metadata.svg) {
-				namespace = 'html';
-				break;
-			} else if (namespace === 'keep') {
-				namespace = 'svg';
-			}
-		} else if (
-			(node.type === 'Text' && node.data.trim() !== '') ||
-			node.type === 'HtmlTag' ||
-			node.type === 'RenderTag'
-		) {
-			namespace = 'maybe_html';
-		} else if (node.type === 'EachBlock') {
-			namespace = check_nodes_for_namespace(node.body.nodes, namespace);
-			if (namespace === 'html') break;
-			if (node.fallback) {
-				namespace = check_nodes_for_namespace(node.fallback.nodes, namespace);
-				if (namespace === 'html') break;
-			}
-		} else if (node.type === 'IfBlock') {
-			namespace = check_nodes_for_namespace(node.consequent.nodes, namespace);
-			if (namespace === 'html') break;
-			if (node.alternate) {
-				namespace = check_nodes_for_namespace(node.alternate.nodes, namespace);
-				if (namespace === 'html') break;
-			}
-		} else if (node.type === 'AwaitBlock') {
-			if (node.pending) {
-				namespace = check_nodes_for_namespace(node.pending.nodes, namespace);
-				if (namespace === 'html') break;
-			}
-			if (node.then) {
-				namespace = check_nodes_for_namespace(node.then.nodes, namespace);
-				if (namespace === 'html') break;
-			}
-			if (node.catch) {
-				namespace = check_nodes_for_namespace(node.catch.nodes, namespace);
-				if (namespace === 'html') break;
-			}
-		} else if (node.type === 'KeyBlock') {
-			namespace = check_nodes_for_namespace(node.fragment.nodes, namespace);
-			if (namespace === 'html') break;
+	/**
+	 * @param {import('#compiler').SvelteElement | import('#compiler').RegularElement} node}
+	 * @param {{stop: () => void}} context
+	 */
+	const RegularElement = (node, { stop }) => {
+		if (!node.metadata.svg) {
+			namespace = 'html';
+			stop();
+		} else if (namespace === 'keep') {
+			namespace = 'svg';
 		}
+	};
+
+	for (const node of nodes) {
+		walk(
+			node,
+			{},
+			{
+				_(node, { next }) {
+					if (
+						node.type === 'EachBlock' ||
+						node.type === 'IfBlock' ||
+						node.type === 'AwaitBlock' ||
+						node.type === 'Fragment' ||
+						node.type === 'KeyBlock' ||
+						node.type === 'RegularElement' ||
+						node.type === 'SvelteElement' ||
+						node.type === 'Text'
+					) {
+						next();
+					}
+				},
+				SvelteElement: RegularElement,
+				RegularElement,
+				Text(node) {
+					if (node.data.trim() !== '') {
+						namespace = 'maybe_html';
+					}
+				}
+			}
+		);
+
+		if (namespace === 'html') return namespace;
 	}
 
 	return namespace;

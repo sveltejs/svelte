@@ -123,7 +123,8 @@ export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fa
 				// Get the <!--ssr:..--> tag of the next item in the list
 				// The fragment array can be empty if each block has no content
 				hydrating_node = /** @type {import('#client').TemplateNode} */ (
-					/** @type {Node} */ ((fragment[fragment.length - 1] || hydrating_node).nextSibling).nextSibling
+					/** @type {Node} */ ((fragment[fragment.length - 1] || hydrating_node).nextSibling)
+						.nextSibling
 				);
 			}
 

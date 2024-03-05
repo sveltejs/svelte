@@ -26,8 +26,8 @@ import {
 	BRANCH_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
-import { mutate } from './reactivity/sources.js';
 import { add_owner } from './dev/ownership.js';
+import { mutate } from './reactivity/sources.js';
 
 const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT;
 
