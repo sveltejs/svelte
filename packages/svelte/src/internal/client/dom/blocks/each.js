@@ -18,7 +18,7 @@ import { clear_text_content, empty, map_get, map_set } from '../../operations.js
 import { insert, remove } from '../../reconciler.js';
 import { current_block, destroy_signal, execute_effect, push_destroy_fn } from '../../runtime.js';
 import { render_effect } from '../../reactivity/effects.js';
-import { source, mutable_source, set_signal_value } from '../../reactivity/sources.js';
+import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { trigger_transitions } from '../../transitions.js';
 import { is_array } from '../../utils.js';
 import { EACH_BLOCK, EACH_ITEM_BLOCK } from '../../constants.js';
@@ -838,7 +838,7 @@ export function get_first_element(block) {
 function update_each_item_block(block, item, index, type) {
 	const block_v = block.v;
 	if ((type & EACH_ITEM_REACTIVE) !== 0) {
-		set_signal_value(block_v, item);
+		set(block_v, item);
 	}
 	const transitions = block.s;
 	const index_is_reactive = (type & EACH_INDEX_REACTIVE) !== 0;
@@ -848,7 +848,7 @@ function update_each_item_block(block, item, index, type) {
 		each_animation(block, transitions);
 	}
 	if (index_is_reactive) {
-		set_signal_value(/** @type {import('../../types.js').Signal<number>} */ (block.i), index);
+		set(/** @type {import('../../types.js').Signal<number>} */ (block.i), index);
 	} else {
 		block.i = index;
 	}
