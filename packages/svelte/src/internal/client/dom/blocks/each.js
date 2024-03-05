@@ -16,15 +16,9 @@ import {
 } from '../../hydration.js';
 import { clear_text_content, empty, map_get, map_set } from '../../operations.js';
 import { insert, remove } from '../../reconciler.js';
-import {
-	current_block,
-	destroy_signal,
-	execute_effect,
-	push_destroy_fn,
-	set_signal_value
-} from '../../runtime.js';
-import { render_effect } from '../../reactivity/computations.js';
-import { source, mutable_source } from '../../reactivity/sources.js';
+import { current_block, destroy_signal, execute_effect, push_destroy_fn } from '../../runtime.js';
+import { render_effect } from '../../reactivity/effects.js';
+import { source, mutable_source, set_signal_value } from '../../reactivity/sources.js';
 import { trigger_transitions } from '../../transitions.js';
 import { is_array } from '../../utils.js';
 import { EACH_BLOCK, EACH_ITEM_BLOCK } from '../../constants.js';

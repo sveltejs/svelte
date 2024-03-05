@@ -10,7 +10,7 @@ import {
 	object_prototype
 } from './utils.js';
 import { unstate } from './proxy.js';
-import { pre_effect } from './reactivity/computations.js';
+import { pre_effect } from './reactivity/effects.js';
 import {
 	EACH_BLOCK,
 	IF_BLOCK,
@@ -31,6 +31,7 @@ import {
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
+import { mutate, set_signal_value } from './reactivity/sources.js';
 
 const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT;
 
@@ -64,20 +65,32 @@ export let current_consumer = null;
 export let current_effect = null;
 
 /** @type {null | import('./types.js').Signal[]} */
-let current_dependencies = null;
+export let current_dependencies = null;
 let current_dependencies_index = 0;
 /**
  * Tracks writes that the effect it's executed in doesn't listen to yet,
  * so that the dependency can be added to the effect later on if it then reads it
  * @type {null | import('./types.js').Signal[]}
  */
-let current_untracked_writes = null;
+export let current_untracked_writes = null;
+
+/** @param {null | import('./types.js').Signal[]} value */
+export function set_current_untracked_writes(value) {
+	current_untracked_writes = value;
+}
+
 /** @type {null | import('./types.js').SignalDebug} */
-let last_inspected_signal = null;
+export let last_inspected_signal = null;
+
+/** @param {null | import('./types.js').SignalDebug} signal */
+export function set_last_inspected_signal(signal) {
+	last_inspected_signal = signal;
+}
+
 /** If `true`, `get`ting the signal should not register it as a dependency */
 export let current_untracking = false;
 /** Exists to opt out of the mutation validation for stores which may be set for the first time during a derivation */
-let ignore_mutation_validation = false;
+export let ignore_mutation_validation = false;
 /** @param {boolean} value */
 export function set_ignore_mutation_validation(value) {
 	ignore_mutation_validation = value;
@@ -110,7 +123,7 @@ export let updating_derived = false;
  * @param {null | import('./types.js').ComponentContext} context
  * @returns {boolean}
  */
-function is_runes(context) {
+export function is_runes(context) {
 	const component_context = context || current_component_context;
 	return component_context !== null && component_context.r;
 }
@@ -768,27 +781,6 @@ export function get(signal) {
 }
 
 /**
- * @template V
- * @param {import('./types.js').Signal<V>} signal
- * @param {V} value
- * @returns {V}
- */
-export function set(signal, value) {
-	set_signal_value(signal, value);
-	return value;
-}
-
-/**
- * @template V
- * @param {import('./types.js').Signal<V>} signal
- * @param {V} value
- * @returns {void}
- */
-export function set_sync(signal, value) {
-	flushSync(() => set(signal, value));
-}
-
-/**
  * Invokes a function and captures all signals that are read during the invocation,
  * then invalidates them.
  * @param {() => any} fn
@@ -814,19 +806,6 @@ export function invalidate_inner_signals(fn) {
 	for (signal of captured) {
 		mutate(signal, null /* doesnt matter */);
 	}
-}
-
-/**
- * @template V
- * @param {import('./types.js').Signal<V>} source
- * @param {V} value
- */
-export function mutate(source, value) {
-	set_signal_value(
-		source,
-		untrack(() => get(source))
-	);
-	return value;
 }
 
 /**
@@ -900,7 +879,7 @@ export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
  * @param {boolean} force_schedule
  * @returns {void}
  */
-function mark_signal_consumers(signal, to_status, force_schedule) {
+export function mark_signal_consumers(signal, to_status, force_schedule) {
 	const runes = is_runes(null);
 	const consumers = signal.c;
 	if (consumers !== null) {
@@ -927,78 +906,6 @@ function mark_signal_consumers(signal, to_status, force_schedule) {
 				} else {
 					mark_signal_consumers(consumer, MAYBE_DIRTY, force_schedule);
 				}
-			}
-		}
-	}
-}
-
-/**
- * @template V
- * @param {import('./types.js').Signal<V>} signal
- * @param {V} value
- * @returns {void}
- */
-export function set_signal_value(signal, value) {
-	if (
-		!current_untracking &&
-		!ignore_mutation_validation &&
-		current_consumer !== null &&
-		is_runes(null) &&
-		(current_consumer.f & DERIVED) !== 0
-	) {
-		throw new Error(
-			'ERR_SVELTE_UNSAFE_MUTATION' +
-				(DEV
-					? ": Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. " +
-						'This can lead to unexpected errors and possibly cause infinite loops.\n\nIf this mutation is not meant ' +
-						'to be reactive do not use the "$state" rune for that declaration.'
-					: '')
-		);
-	}
-	if (
-		(signal.f & SOURCE) !== 0 &&
-		!(/** @type {import('./types.js').EqualsFunctions} */ (signal.e)(value, signal.v))
-	) {
-		signal.v = value;
-		// Increment write version so that unowned signals can properly track dirtyness
-		signal.w++;
-		// If the current signal is running for the first time, it won't have any
-		// consumers as we only allocate and assign the consumers after the signal
-		// has fully executed. So in the case of ensuring it registers the consumer
-		// properly for itself, we need to ensure the current effect actually gets
-		// scheduled. i.e:
-		//
-		// $effect(() => x++)
-		//
-		// We additionally want to skip this logic for when ignore_mutation_validation is
-		// true, as stores write to source signal on initialization.
-		if (
-			is_runes(null) &&
-			!ignore_mutation_validation &&
-			current_effect !== null &&
-			current_effect.c === null &&
-			(current_effect.f & CLEAN) !== 0 &&
-			(current_effect.f & MANAGED) === 0
-		) {
-			if (current_dependencies !== null && current_dependencies.includes(signal)) {
-				set_signal_status(current_effect, DIRTY);
-				schedule_effect(current_effect, false);
-			} else {
-				if (current_untracked_writes === null) {
-					current_untracked_writes = [signal];
-				} else {
-					current_untracked_writes.push(signal);
-				}
-			}
-		}
-		mark_signal_consumers(signal, DIRTY, true);
-
-		// @ts-expect-error
-		if (DEV && signal.inspect) {
-			if (is_batching_effect) {
-				last_inspected_signal = /** @type {import('./types.js').SignalDebug} */ (signal);
-			} else {
-				for (const fn of /** @type {import('./types.js').SignalDebug} */ (signal).inspect) fn();
 			}
 		}
 	}
@@ -1071,7 +978,7 @@ const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
  * @param {number} status
  * @returns {void}
  */
-function set_signal_status(signal, status) {
+export function set_signal_status(signal, status) {
 	signal.f = (signal.f & STATUS_MASK) | status;
 }
 
@@ -1209,17 +1116,6 @@ export function update(signal, d = 1) {
 }
 
 /**
- * @param {((value?: number) => number)} fn
- * @param {1 | -1} [d]
- * @returns {number}
- */
-export function update_prop(fn, d = 1) {
-	const value = fn();
-	fn(value + d);
-	return value;
-}
-
-/**
  * @param {import('./types.js').Signal<number>} signal
  * @param {1 | -1} [d]
  * @returns {number}
@@ -1227,17 +1123,6 @@ export function update_prop(fn, d = 1) {
 export function update_pre(signal, d = 1) {
 	const value = get(signal) + d;
 	set_signal_value(signal, value);
-	return value;
-}
-
-/**
- * @param {((value?: number) => number)} fn
- * @param {1 | -1} [d]
- * @returns {number}
- */
-export function update_pre_prop(fn, d = 1) {
-	const value = fn() + d;
-	fn(value);
 	return value;
 }
 

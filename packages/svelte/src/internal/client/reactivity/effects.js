@@ -27,7 +27,7 @@ import {
  * @param {V} value
  * @param {import('../types.js').Block | null} block
  */
-function create_computation_signal(flags, value, block) {
+export function create_computation_signal(flags, value, block) {
 	/** @type {import('../types.js').ComputationSignal<V>} */
 	const signal = {
 		b: block,
@@ -223,36 +223,4 @@ export function render_effect(fn, block = current_block, managed = false, sync =
 		flags |= MANAGED;
 	}
 	return internal_create_effect(flags, /** @type {any} */ (fn), sync, block, true);
-}
-
-/**
- * @template V
- * @param {() => V} fn
- * @returns {import('../types.js').ComputationSignal<V>}
- */
-/*#__NO_SIDE_EFFECTS__*/
-export function derived(fn) {
-	const is_unowned = current_effect === null;
-	const flags = is_unowned ? DERIVED | UNOWNED : DERIVED;
-	const signal = /** @type {import('../types.js').ComputationSignal<V>} */ (
-		create_computation_signal(flags | CLEAN, UNINITIALIZED, current_block)
-	);
-	signal.i = fn;
-	signal.e = default_equals;
-	if (current_consumer !== null) {
-		push_reference(current_consumer, signal);
-	}
-	return signal;
-}
-
-/**
- * @template V
- * @param {() => V} fn
- * @returns {import('../types.js').ComputationSignal<V>}
- */
-/*#__NO_SIDE_EFFECTS__*/
-export function derived_safe_equal(fn) {
-	const signal = derived(fn);
-	signal.e = safe_equal;
-	return signal;
 }

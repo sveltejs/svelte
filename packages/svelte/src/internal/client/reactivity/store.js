@@ -1,9 +1,9 @@
 import { subscribe_to_store } from '../../../store/utils.js';
 import { noop } from '../../common.js';
 import { UNINITIALIZED } from '../constants.js';
-import { get, set, set_ignore_mutation_validation, untrack } from '../runtime.js';
-import { user_effect } from './computations.js';
-import { mutable_source } from './sources.js';
+import { get, set_ignore_mutation_validation, untrack } from '../runtime.js';
+import { user_effect } from './effects.js';
+import { mutable_source, set } from './sources.js';
 
 /**
  * Gets the current value of a store. If the store isn't subscribed to yet, it will create a proxy

@@ -8,7 +8,7 @@ import {
 	flushSync,
 	push_destroy_fn
 } from '../../runtime.js';
-import { render_effect } from '../../reactivity/computations.js';
+import { render_effect } from '../../reactivity/effects.js';
 import { trigger_transitions } from '../../transitions.js';
 import { AWAIT_BLOCK, UNINITIALIZED } from '../../constants.js';
 

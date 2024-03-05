@@ -1,12 +1,8 @@
 import { describe, assert, it } from 'vitest';
 import * as $ from '../../src/internal/client/runtime';
-import {
-	derived,
-	effect,
-	render_effect,
-	user_effect
-} from '../../src/internal/client/reactivity/computations';
-import { source } from '../../src/internal/client/reactivity/sources';
+import { derived } from '../../src/internal/client/reactivity/deriveds';
+import { effect, render_effect, user_effect } from '../../src/internal/client/reactivity/effects';
+import { source, set } from '../../src/internal/client/reactivity/sources';
 import type { ComputationSignal } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 
@@ -51,8 +47,8 @@ describe('signals', () => {
 		});
 
 		return () => {
-			$.flushSync(() => $.set(count, 1));
-			$.flushSync(() => $.set(count, 2));
+			$.flushSync(() => set(count, 1));
+			$.flushSync(() => set(count, 2));
 
 			assert.deepEqual(log, ['0:0', '1:2', '2:4']);
 		};
@@ -72,8 +68,8 @@ describe('signals', () => {
 		});
 
 		return () => {
-			$.flushSync(() => $.set(count, 1));
-			$.flushSync(() => $.set(count, 2));
+			$.flushSync(() => set(count, 1));
+			$.flushSync(() => set(count, 2));
 
 			assert.deepEqual(log, ['A:0:0', 'B:0', 'A:1:2', 'B:2', 'A:2:4', 'B:4']);
 		};
@@ -93,8 +89,8 @@ describe('signals', () => {
 		});
 
 		return () => {
-			$.flushSync(() => $.set(count, 1));
-			$.flushSync(() => $.set(count, 2));
+			$.flushSync(() => set(count, 1));
+			$.flushSync(() => set(count, 2));
 
 			assert.deepEqual(log, ['A:0', 'B:0:0', 'A:2', 'B:1:2', 'A:4', 'B:2:4']);
 		};
@@ -111,8 +107,8 @@ describe('signals', () => {
 		});
 
 		return () => {
-			$.flushSync(() => $.set(count, 1));
-			$.flushSync(() => $.set(count, 2));
+			$.flushSync(() => set(count, 1));
+			$.flushSync(() => set(count, 2));
 
 			assert.deepEqual(log, [0, 2, 4]);
 		};
@@ -130,8 +126,8 @@ describe('signals', () => {
 		});
 
 		return () => {
-			$.flushSync(() => $.set(count, 1));
-			$.flushSync(() => $.set(count, 2));
+			$.flushSync(() => set(count, 1));
+			$.flushSync(() => set(count, 2));
 
 			assert.deepEqual(log, [0, 4, 8]);
 		};
@@ -167,12 +163,12 @@ describe('signals', () => {
 			let i = 2;
 			while (--i) {
 				res.length = 0;
-				$.set(B, 1);
-				$.set(A, 1 + i * 2);
+				set(B, 1);
+				set(A, 1 + i * 2);
 				$.flushSync();
 
-				$.set(A, 2 + i * 2);
-				$.set(B, 2);
+				set(A, 2 + i * 2);
+				set(B, 2);
 				$.flushSync();
 
 				assert.equal(res.length, 4);
@@ -195,13 +191,13 @@ describe('signals', () => {
 		});
 
 		return () => {
-			$.flushSync(() => $.set(count, 1));
+			$.flushSync(() => set(count, 1));
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.c?.length, 1);
-			$.flushSync(() => $.set(count, 2));
+			$.flushSync(() => set(count, 2));
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.c?.length, 1);
-			$.flushSync(() => $.set(count, 3));
+			$.flushSync(() => set(count, 3));
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.c?.length, 1);
 			assert.deepEqual(log, [0, 1, 2, 3]);
@@ -224,11 +220,11 @@ describe('signals', () => {
 
 			$.get(c);
 
-			$.flushSync(() => $.set(a, 1));
+			$.flushSync(() => set(a, 1));
 
 			$.get(c);
 
-			$.flushSync(() => $.set(b, 1));
+			$.flushSync(() => set(b, 1));
 
 			$.get(c);
 
@@ -257,11 +253,11 @@ describe('signals', () => {
 		});
 
 		return () => {
-			$.flushSync(() => $.set(count, 1));
-			$.flushSync(() => $.set(count, 2));
-			$.flushSync(() => $.set(count, 3));
-			$.flushSync(() => $.set(count, 4));
-			$.flushSync(() => $.set(count, 0));
+			$.flushSync(() => set(count, 1));
+			$.flushSync(() => set(count, 2));
+			$.flushSync(() => set(count, 3));
+			$.flushSync(() => set(count, 4));
+			$.flushSync(() => set(count, 0));
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.c?.length, 1);
 			assert.deepEqual(log, [0, 2, 'limit', 0]);
@@ -319,7 +315,7 @@ describe('signals', () => {
 
 		const value = source({ count: 0 });
 		user_effect(() => {
-			$.set(value, { count: 0 });
+			set(value, { count: 0 });
 			$.get(value);
 		});
 

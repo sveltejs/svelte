@@ -45,19 +45,18 @@ import {
 	pop,
 	current_component_context,
 	get,
-	set,
 	is_signals_recorded,
 	inspect_fn,
 	deep_read_state
 } from './runtime.js';
+import { derived } from './reactivity/deriveds.js';
 import {
 	render_effect,
 	effect,
 	managed_effect,
-	derived,
 	pre_effect,
 	user_effect
-} from './reactivity/computations.js';
+} from './reactivity/effects.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,
@@ -76,7 +75,7 @@ import {
 } from './utils.js';
 import { run } from '../common.js';
 import { bind_transition, trigger_transitions } from './transitions.js';
-import { mutable_source, source } from './reactivity/sources.js';
+import { mutable_source, source, set } from './reactivity/sources.js';
 import { safe_equal, safe_not_equal } from './reactivity/equality.js';
 
 /** @type {Set<string>} */
