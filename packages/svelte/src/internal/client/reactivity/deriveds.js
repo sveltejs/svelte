@@ -19,7 +19,6 @@ export function derived(fn) {
 		d: null,
 		e: default_equals,
 		f: flags | CLEAN,
-		l: 0,
 		i: fn,
 		r: null,
 		v: UNINITIALIZED,
@@ -36,6 +35,7 @@ export function derived(fn) {
 	if (current_consumer !== null) {
 		push_reference(current_consumer, signal);
 	}
+
 	return signal;
 }
 

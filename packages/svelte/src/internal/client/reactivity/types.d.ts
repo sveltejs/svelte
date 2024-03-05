@@ -42,8 +42,6 @@ export interface Derived<V = unknown> extends Source<V> {
 	x: null | ComponentContext;
 	/** destroy: Thing(s) that need destroying */
 	y: null | (() => void) | Array<() => void>;
-	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
-	l: number;
 }
 
 export interface DerivedDebug<V = unknown> extends Derived<V> {
