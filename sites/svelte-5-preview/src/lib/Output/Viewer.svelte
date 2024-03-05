@@ -131,7 +131,13 @@
 
 					const __repl_exports = ${$bundle.client?.code};
 					{
-						const { mount, unmount, App } = __repl_exports;
+						const { mount, unmount, App, untrack } = __repl_exports;
+
+						const console_log = console.log
+
+						console.log = function (...v) {
+							return untrack(() => console_log.apply(this, v));
+						}
 						const component = mount(App, { target: document.body });
 						window.__unmount_previous = () => unmount(component);
 					}
