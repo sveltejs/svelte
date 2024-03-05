@@ -2435,7 +2435,7 @@ export const template_visitors = {
 				);
 
 				// we need to eagerly evaluate the expression in order to hit any
-				// 'Cannot access x before initialization' errors
+				// 'Cannot access x before initialisation' errors
 				if (context.state.options.dev) {
 					declarations.push(b.stmt(b.call(name)));
 				}
@@ -2630,7 +2630,7 @@ export const template_visitors = {
 				);
 
 				// we need to eagerly evaluate the expression in order to hit any
-				// 'Cannot access x before initialization' errors
+				// 'Cannot access x before initialisation' errors
 				if (context.state.options.dev) {
 					declarations.push(b.stmt(b.call(name)));
 				}

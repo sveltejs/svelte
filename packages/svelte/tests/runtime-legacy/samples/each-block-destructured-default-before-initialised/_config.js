@@ -5,5 +5,5 @@ export default test({
 		dev: true
 	},
 
-	error: "Cannot access 'c' before initialization"
+	error: "Cannot access 'c' before initialisation"
 });
