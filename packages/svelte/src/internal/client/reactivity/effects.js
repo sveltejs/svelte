@@ -10,8 +10,8 @@ import {
 import { DIRTY, MANAGED, RENDER_EFFECT, EFFECT, PRE_EFFECT } from '../constants.js';
 
 /**
- * @param {import('../types.js').Reaction} target_signal
- * @param {import('../types.js').Reaction} ref_signal
+ * @param {import('#client').Reaction} target_signal
+ * @param {import('#client').Reaction} ref_signal
  * @returns {void}
  */
 export function push_reference(target_signal, ref_signal) {
@@ -24,14 +24,14 @@ export function push_reference(target_signal, ref_signal) {
 }
 
 /**
- * @param {import('../types.js').EffectType} type
- * @param {(() => void | (() => void)) | ((b: import('../types.js').Block) => void | (() => void))} fn
+ * @param {import('./types.js').EffectType} type
+ * @param {(() => void | (() => void)) | ((b: import('#client').Block) => void | (() => void))} fn
  * @param {boolean} sync
- * @param {null | import('../types.js').Block} block
+ * @param {null | import('#client').Block} block
  * @param {boolean} schedule
- * @returns {import('../types.js').Effect}
+ * @returns {import('#client').Effect}
  */
-function internal_create_effect(type, fn, sync, block, schedule) {
+function create_effect(type, fn, sync, block, schedule) {
 	/** @type {import('#client').Effect} */
 	const signal = {
 		b: block,
@@ -54,13 +54,16 @@ function internal_create_effect(type, fn, sync, block, schedule) {
 			push_reference(current_effect, signal);
 		}
 	}
+
 	if (schedule) {
 		schedule_effect(signal, sync);
 	}
+
 	return signal;
 }
 
 /**
+ * Internal representation of `$effect.active()`
  * @returns {boolean}
  */
 export function effect_active() {
@@ -70,7 +73,7 @@ export function effect_active() {
 /**
  * Internal representation of `$effect(...)`
  * @param {() => void | (() => void)} fn
- * @returns {import('../types.js').Effect}
+ * @returns {import('#client').Effect}
  */
 export function user_effect(fn) {
 	if (current_effect === null) {
@@ -85,7 +88,7 @@ export function user_effect(fn) {
 		current_component_context !== null &&
 		!current_component_context.m;
 
-	const effect = internal_create_effect(
+	const effect = create_effect(
 		EFFECT,
 		fn,
 		false,
@@ -94,9 +97,7 @@ export function user_effect(fn) {
 	);
 
 	if (apply_component_effect_heuristics) {
-		const context = /** @type {import('../types.js').ComponentContext} */ (
-			current_component_context
-		);
+		const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
 		(context.e ??= []).push(effect);
 	}
 
@@ -117,33 +118,33 @@ export function user_root_effect(fn) {
 
 /**
  * @param {() => void | (() => void)} fn
- * @returns {import('../types.js').Effect}
+ * @returns {import('#client').Effect}
  */
 export function effect(fn) {
-	return internal_create_effect(EFFECT, fn, false, current_block, true);
+	return create_effect(EFFECT, fn, false, current_block, true);
 }
 
 /**
  * @param {() => void | (() => void)} fn
- * @returns {import('../types.js').Effect}
+ * @returns {import('#client').Effect}
  */
 export function managed_effect(fn) {
-	return internal_create_effect(EFFECT | MANAGED, fn, false, current_block, true);
+	return create_effect(EFFECT | MANAGED, fn, false, current_block, true);
 }
 
 /**
  * @param {() => void | (() => void)} fn
  * @param {boolean} sync
- * @returns {import('../types.js').Effect}
+ * @returns {import('#client').Effect}
  */
 export function managed_pre_effect(fn, sync) {
-	return internal_create_effect(PRE_EFFECT | MANAGED, fn, sync, current_block, true);
+	return create_effect(PRE_EFFECT | MANAGED, fn, sync, current_block, true);
 }
 
 /**
  * Internal representation of `$effect.pre(...)`
  * @param {() => void | (() => void)} fn
- * @returns {import('../types.js').Effect}
+ * @returns {import('#client').Effect}
  */
 export function pre_effect(fn) {
 	if (current_effect === null) {
@@ -155,7 +156,7 @@ export function pre_effect(fn) {
 		);
 	}
 	const sync = current_effect !== null && (current_effect.f & RENDER_EFFECT) !== 0;
-	return internal_create_effect(
+	return create_effect(
 		PRE_EFFECT,
 		() => {
 			const val = fn();
@@ -173,24 +174,24 @@ export function pre_effect(fn) {
  * bindings which are in later effects. However, we don't use a pre_effect directly as we don't want to flush anything.
  *
  * @param {() => void | (() => void)} fn
- * @returns {import('../types.js').Effect}
+ * @returns {import('#client').Effect}
  */
 export function invalidate_effect(fn) {
-	return internal_create_effect(PRE_EFFECT, fn, true, current_block, true);
+	return create_effect(PRE_EFFECT, fn, true, current_block, true);
 }
 
 /**
- * @template {import('../types.js').Block} B
+ * @template {import('#client').Block} B
  * @param {(block: B) => void | (() => void)} fn
  * @param {any} block
  * @param {any} managed
  * @param {any} sync
- * @returns {import('../types.js').Effect}
+ * @returns {import('#client').Effect}
  */
 export function render_effect(fn, block = current_block, managed = false, sync = true) {
 	let flags = RENDER_EFFECT;
 	if (managed) {
 		flags |= MANAGED;
 	}
-	return internal_create_effect(flags, /** @type {any} */ (fn), sync, block, true);
+	return create_effect(flags, /** @type {any} */ (fn), sync, block, true);
 }
