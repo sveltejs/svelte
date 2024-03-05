@@ -1,5 +1,5 @@
 <script>
-  export let array;
+  export let array = [1];
 </script>
 
 {#each array as a}

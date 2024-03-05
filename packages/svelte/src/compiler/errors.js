@@ -461,10 +461,6 @@ const errors = {
 	// 	message:
 	// 		'Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)'
 	// },
-	// cyclical_const_tags: /** @param {string[]} cycle */ (cycle) => ({
-	// 	code: 'cyclical-const-tags',
-	// 	message: `Cyclical dependency detected: ${cycle.join(' → ')}`
-	// }),
 	// invalid_var_declaration: {
 	// 	code: 'invalid_var_declaration',
 	// 	message: '"var" scope should not extend outside the reactive block'
