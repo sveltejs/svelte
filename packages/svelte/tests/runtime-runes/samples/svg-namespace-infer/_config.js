@@ -7,7 +7,8 @@ export default test({
 		<text x="0" y="26">true</text>
 		<text x="0" y="42">0</text>
 		<text x="10" y="42">1</text>
-		<text x="20" y="42">2</text>
+		<text x="0" y="40">html</text>
+		<text x="20" y="42">snippet</text>
 	</svg>
 `,
 	test({ assert, target }) {
@@ -18,7 +19,7 @@ export default test({
 
 		const text_elements = target.querySelectorAll('text');
 
-		assert.equal(text_elements.length, 5);
+		assert.equal(text_elements.length, 6);
 
 		for (const { namespaceURI } of text_elements)
 			assert.equal(namespaceURI, 'http://www.w3.org/2000/svg');
