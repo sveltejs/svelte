@@ -63,17 +63,17 @@ export let current_consumer = null;
 /** @type {null | import('./types.js').Effect} */
 export let current_effect = null;
 
-/** @type {null | import('./types.js').Signal[]} */
+/** @type {null | import('./types.js').Value[]} */
 export let current_dependencies = null;
 let current_dependencies_index = 0;
 /**
  * Tracks writes that the effect it's executed in doesn't listen to yet,
  * so that the dependency can be added to the effect later on if it then reads it
- * @type {null | import('./types.js').Signal[]}
+ * @type {null | import('./types.js').Source[]}
  */
 export let current_untracked_writes = null;
 
-/** @param {null | import('./types.js').Signal[]} value */
+/** @param {null | import('./types.js').Source[]} value */
 export function set_current_untracked_writes(value) {
 	current_untracked_writes = value;
 }
@@ -225,7 +225,7 @@ function execute_signal_fn(signal) {
 	const previous_skip_consumer = current_skip_consumer;
 	const is_render_effect = (flags & RENDER_EFFECT) !== 0;
 	const previous_untracking = current_untracking;
-	current_dependencies = /** @type {null | import('./types.js').Signal[]} */ (null);
+	current_dependencies = /** @type {null | import('./types.js').Value[]} */ (null);
 	current_dependencies_index = 0;
 	current_untracked_writes = null;
 	current_consumer = signal;
@@ -247,7 +247,7 @@ function execute_signal_fn(signal) {
 		} else {
 			res = /** @type {() => V} */ (init)();
 		}
-		let dependencies = /** @type {import('./types.js').Signal<unknown>[]} **/ (signal.d);
+		let dependencies = /** @type {import('./types.js').Value<unknown>[]} **/ (signal.d);
 		if (current_dependencies !== null) {
 			let i;
 			if (dependencies !== null) {
@@ -323,7 +323,7 @@ function execute_signal_fn(signal) {
 /**
  * @template V
  * @param {import('./types.js').Reaction} signal
- * @param {import('./types.js').Signal<V>} dependency
+ * @param {import('./types.js').Value<V>} dependency
  * @returns {void}
  */
 function remove_consumer(signal, dependency) {

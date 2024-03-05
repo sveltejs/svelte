@@ -69,7 +69,7 @@ export function mutable_source(initial_value) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('./types.js').Source<V>} signal
  * @param {V} value
  * @returns {void}
  */
@@ -92,7 +92,7 @@ export function mutate(source, value) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('./types.js').Source<V>} signal
  * @param {V} value
  * @returns {V}
  */

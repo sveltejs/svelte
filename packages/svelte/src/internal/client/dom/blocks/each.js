@@ -55,8 +55,8 @@ export function create_each_block(flags, anchor) {
 }
 
 /**
- * @param {any | import('../../types.js').Signal<any>} item
- * @param {number | import('../../types.js').Signal<number>} index
+ * @param {any | import('../../types.js').Value<any>} item
+ * @param {number | import('../../types.js').Value<number>} index
  * @param {null | unknown} key
  * @returns {import('../../types.js').EachItemBlock}
  */

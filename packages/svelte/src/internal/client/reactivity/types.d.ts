@@ -28,7 +28,7 @@ export interface SourceDebug<V = unknown> extends Source<V> {
 
 export interface Derived<V = unknown> extends Source<V> {
 	/** dependencies: Signals that this signal reads from */
-	d: null | Signal<V>[];
+	d: null | Value[];
 	/** The derived function */
 	i: () => V;
 
@@ -56,7 +56,7 @@ export type Effect = {
 	/** context: The associated component if this signal is an effect/computed */
 	x: null | ComponentContext;
 	/** dependencies: Signals that this signal reads from */
-	d: null | Signal[];
+	d: null | Value[];
 	/** destroy: Thing(s) that need destroying */
 	// TODO simplify this, it is only used in one place
 	y: null | (() => void) | Array<() => void>;
