@@ -1,12 +1,10 @@
 import { DEV } from 'esm-env';
 import {
 	get,
-	set,
 	updating_derived,
 	batch_inspect,
 	current_component_context,
-	untrack,
-	set_signal_value
+	untrack
 } from './runtime.js';
 import { effect_active } from './reactivity/effects.js';
 import {
@@ -20,7 +18,7 @@ import {
 	object_prototype
 } from './utils.js';
 import { add_owner, check_ownership, strip_owner } from './dev/ownership.js';
-import { mutable_source, source } from './reactivity/sources.js';
+import { mutable_source, source, set, set_signal_value } from './reactivity/sources.js';
 import { STATE_SYMBOL, UNINITIALIZED } from './constants.js';
 
 /**
