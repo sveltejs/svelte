@@ -11,7 +11,7 @@ import {
 	SNIPPET_BLOCK,
 	STATE_SYMBOL
 } from './constants.js';
-import type { Reaction, Effect, Signal, Source } from './reactivity/types.js';
+import type { Reaction, Effect, Signal, Source, Value } from './reactivity/types.js';
 
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
@@ -225,9 +225,9 @@ export type EachItemBlock = {
 	/** effect */
 	e: null | Reaction;
 	/** item */
-	v: any | Signal<any>;
+	v: any | Value<any>;
 	/** index */
-	i: number | Signal<number>;
+	i: number | Value<number>;
 	/** key */
 	k: unknown;
 	/** parent */
@@ -292,7 +292,7 @@ export type StoreReferencesContainer = Record<
 		store: Store<any> | null;
 		last_value: any;
 		unsubscribe: Function;
-		value: Signal<any>;
+		value: Value<any>;
 	}
 >;
 

@@ -282,7 +282,7 @@ function execute_signal_fn(signal) {
 					dependencies[current_dependencies_index + i] = current_dependencies[i];
 				}
 			} else {
-				signal.d = /** @type {import('./types.js').Signal<V>[]} **/ (
+				signal.d = /** @type {import('./types.js').Value<V>[]} **/ (
 					dependencies = current_dependencies
 				);
 			}
