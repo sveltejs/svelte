@@ -7,9 +7,7 @@ export {
 	tick,
 	untrack,
 	update,
-	update_prop,
 	update_pre,
-	update_pre_prop,
 	mutate,
 	value_or_fallback,
 	exclude_from_object,
@@ -33,6 +31,7 @@ export * from './client/dom/blocks/each.js';
 export * from './client/reactivity/computations.js';
 export * from './client/reactivity/sources.js';
 export * from './client/reactivity/equality.js';
+export * from './client/reactivity/props.js';
 export * from './client/reactivity/store.js';
 export * from './client/render.js';
 export * from './client/validate.js';

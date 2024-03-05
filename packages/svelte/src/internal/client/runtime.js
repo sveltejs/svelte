@@ -1209,17 +1209,6 @@ export function update(signal, d = 1) {
 }
 
 /**
- * @param {((value?: number) => number)} fn
- * @param {1 | -1} [d]
- * @returns {number}
- */
-export function update_prop(fn, d = 1) {
-	const value = fn();
-	fn(value + d);
-	return value;
-}
-
-/**
  * @param {import('./types.js').Signal<number>} signal
  * @param {1 | -1} [d]
  * @returns {number}
@@ -1227,17 +1216,6 @@ export function update_prop(fn, d = 1) {
 export function update_pre(signal, d = 1) {
 	const value = get(signal) + d;
 	set_signal_value(signal, value);
-	return value;
-}
-
-/**
- * @param {((value?: number) => number)} fn
- * @param {1 | -1} [d]
- * @returns {number}
- */
-export function update_pre_prop(fn, d = 1) {
-	const value = fn() + d;
-	fn(value);
 	return value;
 }
 
