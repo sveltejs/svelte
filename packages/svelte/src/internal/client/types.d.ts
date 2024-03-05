@@ -27,13 +27,13 @@ export type Store<V> = {
 
 export type ComponentContext = {
 	/** local signals (needed for beforeUpdate/afterUpdate) */
-	d: null | Signal<any>[];
+	d: null | Source[];
 	/** props */
 	s: Record<string, unknown>;
 	/** exports (and props, if `accessors: true`) */
 	x: Record<string, any> | null;
 	/** effects */
-	e: null | Array<Effect>;
+	e: null | Effect[];
 	/** mounted */
 	m: boolean;
 	/** parent */
@@ -223,11 +223,11 @@ export type EachItemBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | Reaction;
+	e: null | Effect;
 	/** item */
-	v: any | Value<any>;
+	v: any | Source<any>;
 	/** index */
-	i: number | Value<number>;
+	i: number | Source<number>;
 	/** key */
 	k: unknown;
 	/** parent */
@@ -292,7 +292,7 @@ export type StoreReferencesContainer = Record<
 		store: Store<any> | null;
 		last_value: any;
 		unsubscribe: Function;
-		value: Value<any>;
+		value: Source<any>;
 	}
 >;
 
