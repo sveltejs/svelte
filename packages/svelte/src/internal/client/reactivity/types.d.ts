@@ -22,12 +22,35 @@ export interface Source<V = unknown> {
 	w: number;
 }
 
-export type SourceSignalDebug = {
-	/** This is DEV only */
+export interface SourceDebug<V = unknown> extends Source<V> {
 	inspect: Set<Function>;
-};
+}
 
-export type ComputationSignal<V = unknown> = {
+export interface Derived<V = unknown> extends Source<V> {
+	/** dependencies: Signals that this signal reads from */
+	d: null | Signal<V>[];
+	/** The derived function */
+	i: () => V;
+
+	// TODO get rid of these
+
+	/** references: Anything that a signal owns */
+	r: null | ComputationSignal[];
+	/** block: The block associated with this effect/computed */
+	b: null | Block;
+	/** context: The associated component if this signal is an effect/computed */
+	x: null | ComponentContext;
+	/** destroy: Thing(s) that need destroying */
+	y: null | (() => void) | Array<() => void>;
+	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
+	l: number;
+}
+
+export interface DerivedDebug<V = unknown> extends Derived<V> {
+	inspect: Set<Function>;
+}
+
+export type Effect = {
 	/** block: The block associated with this effect/computed */
 	b: null | Block;
 	/** consumers: Signals that read from the current signal */
@@ -35,35 +58,35 @@ export type ComputationSignal<V = unknown> = {
 	/** context: The associated component if this signal is an effect/computed */
 	x: null | ComponentContext;
 	/** dependencies: Signals that this signal reads from */
-	d: null | Signal<V>[];
+	d: null | Signal[];
 	/** destroy: Thing(s) that need destroying */
+	// TODO simplify this, it is only used in one place
 	y: null | (() => void) | Array<() => void>;
 	/** equals: For value equality */
 	e: null | EqualsFunctions;
 	/** The types that the signal represent, as a bitwise value */
 	f: SignalFlags;
 	/** init: The function that we invoke for effects and computeds */
-	i:
-		| null
-		| (() => V)
-		| (() => void | (() => void))
-		| ((b: Block, s: Signal) => void | (() => void));
+	i: null | (() => void | (() => void)) | ((b: Block, s: Signal) => void | (() => void));
 	/** references: Anything that a signal owns */
 	r: null | ComputationSignal[];
 	/** value: The latest value for this signal, doubles as the teardown for effects */
-	v: V;
+	v: null | Function;
 	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
 	l: number;
 	/** write version: used for unowned signals to track if their depdendencies are dirty or not **/
 	w: number;
 };
 
+// TODO rename this to Reaction
+export type ComputationSignal<V = unknown> = Derived<V> | Effect;
+
 export type Signal<V = unknown> = Source<V> | ComputationSignal<V>;
-
-export type SignalDebug<V = unknown> = SourceSignalDebug & Signal<V>;
-
-export type EffectSignal = ComputationSignal<null | (() => void)>;
 
 export type MaybeSignal<T = unknown> = T | Signal<T>;
 
 export type UnwrappedSignal<T> = T extends Signal<infer U> ? U : T;
+
+export type Value<V = unknown> = Source<V> | Derived<V>;
+
+export type ValueDebug<V = unknown> = SourceDebug<V> | DerivedDebug<V>;

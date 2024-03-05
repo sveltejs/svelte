@@ -2647,7 +2647,7 @@ function _mount(Component, options) {
 		if (dom !== null) {
 			remove(dom);
 		}
-		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
+		destroy_signal(/** @type {import('./types.js').Effect} */ (block.e));
 	});
 
 	return component;

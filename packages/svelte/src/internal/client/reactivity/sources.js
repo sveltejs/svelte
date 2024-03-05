@@ -54,7 +54,7 @@ export function mutable_source(initial_value) {
  * @template V
  * @param {import('../types.js').SignalFlags} flags
  * @param {V} value
- * @returns {import('../types.js').Source<V> | import('../types.js').Source<V> & import('../types.js').SourceSignalDebug}
+ * @returns {import('../types.js').Source<V> | import('../types.js').SourceDebug<V>}
  */
 function create_source_signal(flags, value) {
 	if (DEV) {
@@ -99,7 +99,7 @@ export function set_sync(signal, value) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} source
+ * @param {import('./types.js').Value<V>} source
  * @param {V} value
  */
 export function mutate(source, value) {
@@ -174,9 +174,9 @@ export function set(signal, value) {
 		// @ts-expect-error
 		if (DEV && signal.inspect) {
 			if (is_batching_effect) {
-				set_last_inspected_signal(/** @type {import('./types.js').SignalDebug} */ (signal));
+				set_last_inspected_signal(/** @type {import('./types.js').ValueDebug} */ (signal));
 			} else {
-				for (const fn of /** @type {import('./types.js').SignalDebug} */ (signal).inspect) fn();
+				for (const fn of /** @type {import('./types.js').ValueDebug} */ (signal).inspect) fn();
 			}
 		}
 	}

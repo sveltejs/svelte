@@ -110,7 +110,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	/** @type {Array<string> | null} */
 	let keys = null;
 
-	/** @type {null | import('../../types.js').EffectSignal} */
+	/** @type {null | import('../../types.js').Effect} */
 	let render = null;
 
 	/**
@@ -279,7 +279,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		}
 		// Clear the array
 		reconcile_fn([], block, anchor_node, is_controlled, render_fn, flags, false, keys);
-		destroy_signal(/** @type {import('../../types.js').EffectSignal} */ (render));
+		destroy_signal(/** @type {import('../../types.js').Effect} */ (render));
 	});
 
 	block.e = each;
@@ -890,7 +890,7 @@ export function destroy_each_item_block(
 	if (!controlled && dom !== null) {
 		remove(dom);
 	}
-	destroy_signal(/** @type {import('../../types.js').EffectSignal} */ (block.e));
+	destroy_signal(/** @type {import('../../types.js').Effect} */ (block.e));
 }
 
 /**

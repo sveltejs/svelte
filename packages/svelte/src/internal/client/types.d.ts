@@ -11,7 +11,7 @@ import {
 	SNIPPET_BLOCK,
 	STATE_SYMBOL
 } from './constants.js';
-import type { ComputationSignal, EffectSignal, Signal, Source } from './reactivity/types.js';
+import type { ComputationSignal, Effect, Signal, Source } from './reactivity/types.js';
 
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
@@ -33,7 +33,7 @@ export type ComponentContext = {
 	/** exports (and props, if `accessors: true`) */
 	x: Record<string, any> | null;
 	/** effects */
-	e: null | Array<EffectSignal>;
+	e: null | Array<Effect>;
 	/** mounted */
 	m: boolean;
 	/** parent */
@@ -71,7 +71,7 @@ export type TemplateNode = Text | Element | Comment;
 
 export type Transition = {
 	/** effect */
-	e: EffectSignal;
+	e: Effect;
 	/** payload */
 	p: null | TransitionPayload;
 	/** init */
@@ -112,7 +112,7 @@ export type IfBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | EffectSignal;
+	e: null | Effect;
 	/** parent */
 	p: Block;
 	/** transition */
@@ -122,9 +122,9 @@ export type IfBlock = {
 	/** alternate transitions */
 	a: null | Set<Transition>;
 	/** effect */
-	ce: null | EffectSignal;
+	ce: null | Effect;
 	/** effect */
-	ae: null | EffectSignal;
+	ae: null | Effect;
 	/** type */
 	t: typeof IF_BLOCK;
 };
@@ -133,7 +133,7 @@ export type KeyBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | EffectSignal;
+	e: null | Effect;
 	/** parent */
 	p: Block;
 	/** transition */
@@ -302,7 +302,7 @@ export type Render = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | EffectSignal;
+	e: null | Effect;
 	/** transitions */
 	s: Set<Transition>;
 	/** prev */

@@ -48,10 +48,10 @@ let is_inspecting_signal = false;
 
 // Handle effect queues
 
-/** @type {import('./types.js').EffectSignal[]} */
+/** @type {import('./types.js').Effect[]} */
 let current_queued_pre_and_render_effects = [];
 
-/** @type {import('./types.js').EffectSignal[]} */
+/** @type {import('./types.js').Effect[]} */
 let current_queued_effects = [];
 
 let flush_count = 0;
@@ -60,7 +60,7 @@ let flush_count = 0;
 /** @type {null | import('./types.js').ComputationSignal} */
 export let current_consumer = null;
 
-/** @type {null | import('./types.js').EffectSignal} */
+/** @type {null | import('./types.js').Effect} */
 export let current_effect = null;
 
 /** @type {null | import('./types.js').Signal[]} */
@@ -78,10 +78,10 @@ export function set_current_untracked_writes(value) {
 	current_untracked_writes = value;
 }
 
-/** @type {null | import('./types.js').SignalDebug} */
+/** @type {null | import('./types.js').ValueDebug} */
 export let last_inspected_signal = null;
 
-/** @param {null | import('./types.js').SignalDebug} signal */
+/** @param {null | import('./types.js').ValueDebug} signal */
 export function set_last_inspected_signal(signal) {
 	last_inspected_signal = signal;
 }
@@ -105,7 +105,7 @@ let captured_signals = new Set();
 /** @type {Function | null} */
 export let inspect_fn = null;
 
-/** @type {Array<import('./types.js').SignalDebug>} */
+/** @type {Array<import('./types.js').ValueDebug>} */
 let inspect_captured_signals = [];
 
 // Handle rendering tree blocks and anchors
@@ -160,8 +160,7 @@ export function batch_inspect(target, prop, receiver) {
 }
 
 /**
- * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('./types.js').Signal} signal
  * @returns {boolean}
  */
 function is_signal_dirty(signal) {
@@ -170,7 +169,7 @@ function is_signal_dirty(signal) {
 		return true;
 	}
 	if ((flags & MAYBE_DIRTY) !== 0) {
-		const dependencies = /** @type {import('./types.js').ComputationSignal<V>} **/ (signal).d;
+		const dependencies = /** @type {import('./types.js').ComputationSignal} **/ (signal).d;
 		if (dependencies !== null) {
 			const length = dependencies.length;
 			let i;
@@ -184,7 +183,7 @@ function is_signal_dirty(signal) {
 				if ((dependency.f & DIRTY) !== 0) {
 					if ((dependency.f & DERIVED) !== 0) {
 						update_derived(
-							/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency),
+							/** @type {import('./types.js').ComputationSignal} **/ (dependency),
 							true
 						);
 						// Might have been mutated from above get.
@@ -405,7 +404,7 @@ function report_error(block, error) {
 }
 
 /**
- * @param {import('./types.js').EffectSignal} signal
+ * @param {import('./types.js').Effect} signal
  * @returns {void}
  */
 export function execute_effect(signal) {
@@ -460,7 +459,7 @@ function infinite_loop_guard() {
 }
 
 /**
- * @param {Array<import('./types.js').EffectSignal>} effects
+ * @param {Array<import('./types.js').Effect>} effects
  * @returns {void}
  */
 function flush_queued_effects(effects) {
@@ -508,7 +507,7 @@ function process_microtask() {
 }
 
 /**
- * @param {import('./types.js').EffectSignal} signal
+ * @param {import('./types.js').Effect} signal
  * @param {boolean} sync
  * @returns {void}
  */
@@ -640,10 +639,10 @@ export function flush_sync(fn, flush_previous = true) {
 
 	try {
 		infinite_loop_guard();
-		/** @type {import('./types.js').EffectSignal[]} */
+		/** @type {import('./types.js').Effect[]} */
 		const pre_and_render_effects = [];
 
-		/** @type {import('./types.js').EffectSignal[]} */
+		/** @type {import('./types.js').Effect[]} */
 		const effects = [];
 		current_scheduler_mode = FLUSH_SYNC;
 		current_queued_pre_and_render_effects = pre_and_render_effects;
@@ -704,20 +703,20 @@ function update_derived(signal, force_schedule) {
 
 		// @ts-expect-error
 		if (DEV && signal.inspect && force_schedule) {
-			for (const fn of /** @type {import('./types.js').SignalDebug} */ (signal).inspect) fn();
+			for (const fn of /** @type {import('./types.js').ValueDebug} */ (signal).inspect) fn();
 		}
 	}
 }
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('./types.js').Value<V>} signal
  * @returns {V}
  */
 export function get(signal) {
 	// @ts-expect-error
 	if (DEV && signal.inspect && inspect_fn) {
-		/** @type {import('./types.js').SignalDebug} */ (signal).inspect.add(inspect_fn);
+		/** @type {import('./types.js').ValueDebug} */ (signal).inspect.add(inspect_fn);
 		// @ts-expect-error
 		inspect_captured_signals.push(signal);
 	}
@@ -838,7 +837,7 @@ export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
 	if (is_already_inert !== inert) {
 		signal.f ^= INERT;
 		if (!inert && (flags & IS_EFFECT) !== 0 && (flags & CLEAN) === 0) {
-			schedule_effect(/** @type {import('./types.js').EffectSignal} */ (signal), false);
+			schedule_effect(/** @type {import('./types.js').Effect} */ (signal), false);
 		}
 		// Nested if block effects
 		const block = signal.b;
@@ -901,7 +900,7 @@ export function mark_signal_consumers(signal, to_status, force_schedule) {
 			const maybe_dirty = (flags & MAYBE_DIRTY) !== 0;
 			if ((flags & CLEAN) !== 0 || (maybe_dirty && unowned)) {
 				if ((consumer.f & IS_EFFECT) !== 0) {
-					schedule_effect(/** @type {import('./types.js').EffectSignal} */ (consumer), false);
+					schedule_effect(/** @type {import('./types.js').Effect} */ (consumer), false);
 				} else {
 					mark_signal_consumers(consumer, MAYBE_DIRTY, force_schedule);
 				}
@@ -1104,7 +1103,7 @@ function get_parent_context(component_context) {
 }
 
 /**
- * @param {import('./types.js').Signal<number>} signal
+ * @param {import('./types.js').Value<number>} signal
  * @param {1 | -1} [d]
  * @returns {number}
  */
@@ -1115,7 +1114,7 @@ export function update(signal, d = 1) {
 }
 
 /**
- * @param {import('./types.js').Signal<number>} signal
+ * @param {import('./types.js').Value<number>} signal
  * @param {1 | -1} [d]
  * @returns {number}
  */

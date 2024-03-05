@@ -55,7 +55,7 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 	let alternate_dom = null;
 	let has_mounted = false;
 	/**
-	 * @type {import('../../types.js').EffectSignal | null}
+	 * @type {import('../../types.js').Effect | null}
 	 */
 	let current_branch_effect = null;
 
@@ -117,7 +117,7 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 	const consequent_effect = render_effect(
 		(
 			/** @type {any} */ _,
-			/** @type {import('../../types.js').EffectSignal | null} */ consequent_effect
+			/** @type {import('../../types.js').Effect | null} */ consequent_effect
 		) => {
 			const result = block.v;
 			if (!result && consequent_dom !== null) {
@@ -143,7 +143,7 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 	const alternate_effect = render_effect(
 		(
 			/** @type {any} */ _,
-			/** @type {import('../../types.js').EffectSignal | null} */ alternate_effect
+			/** @type {import('../../types.js').Effect | null} */ alternate_effect
 		) => {
 			const result = block.v;
 			if (result && alternate_dom !== null) {
