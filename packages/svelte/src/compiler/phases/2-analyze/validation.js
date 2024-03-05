@@ -622,6 +622,8 @@ const validation = {
 
 export const validation_legacy = merge(validation, a11y_validators, {
 	VariableDeclarator(node, { state }) {
+		ensure_no_module_import_conflict(node, state);
+
 		if (node.init?.type !== 'CallExpression') return;
 
 		const callee = node.init.callee;
@@ -728,6 +730,22 @@ function validate_call_expression(node, scope, path) {
 	if (rune === '$inspect().with') {
 		if (node.arguments.length !== 1) {
 			error(node, 'invalid-rune-args-length', rune, [1]);
+		}
+	}
+}
+
+/**
+ * @param {import('estree').VariableDeclarator} node
+ * @param {import('./types.js').AnalysisState} state
+ */
+function ensure_no_module_import_conflict(node, state) {
+	const ids = extract_identifiers(node.id);
+	for (const id of ids) {
+		if (
+			state.scope === state.analysis.instance.scope &&
+			state.analysis.module.scope.get(id.name)?.declaration_kind === 'import'
+		) {
+			error(node.id, 'illegal-variable-declaration');
 		}
 	}
 }
@@ -912,6 +930,8 @@ export const validation_runes = merge(validation, a11y_validators, {
 		next({ ...state });
 	},
 	VariableDeclarator(node, { state, path }) {
+		ensure_no_module_import_conflict(node, state);
+
 		const init = node.init;
 		const rune = get_rune(init, state.scope);
 

@@ -330,7 +330,9 @@ const variables = {
 		`${name} is an illegal variable name. To reference a global variable called ${name}, use globalThis.${name}`,
 	/** @param {string} name */
 	'duplicate-declaration': (name) => `'${name}' has already been declared`,
-	'default-export': () => `A component cannot have a default export`
+	'default-export': () => `A component cannot have a default export`,
+	'illegal-variable-declaration': () =>
+		'Cannot declare same variable name which is imported inside <script context="module">'
 };
 
 /** @satisfies {Errors} */
@@ -452,10 +454,6 @@ const errors = {
 	// 	code: 'illegal-global',
 	// 	message: `${name} is an illegal variable name`
 	// }),
-	// illegal_variable_declaration: {
-	// 	code: 'illegal-variable-declaration',
-	// 	message: 'Cannot declare same variable name which is imported inside <script context="module">'
-	// },
 	// invalid_directive_value: {
 	// 	code: 'invalid-directive-value',
 	// 	message:
