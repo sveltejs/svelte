@@ -2,7 +2,7 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	html: `1\n1\n<button>+</button>`,
+	html: `1\n1\n1\n1\n<button>+</button>`,
 
 	async test({ assert, target }) {
 		/**
@@ -16,6 +16,6 @@ export default test({
 			btn1.click();
 		});
 
-		assert.htmlEqual(target.innerHTML, `2\n2\n<button>+</button>`);
+		assert.htmlEqual(target.innerHTML, `2\n2\n2\n2\n<button>+</button>`);
 	}
 });
