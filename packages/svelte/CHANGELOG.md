@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.71
+
+### Patch Changes
+
+- fix: improve namespace inference when having `{@render}` and `{@html}` tags ([#10631](https://github.com/sveltejs/svelte/pull/10631))
+
+- fix: don't collapse whitespace within text nodes ([#10691](https://github.com/sveltejs/svelte/pull/10691))
+
 ## 5.0.0-next.70
 
 ### Patch Changes
