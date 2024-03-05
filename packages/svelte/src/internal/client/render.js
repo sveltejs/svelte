@@ -727,7 +727,7 @@ export function bind_playback_rate(media, get_value, update) {
 	// Needs to happen after the element is inserted into the dom, else playback will be set back to 1 by the browser.
 	// For hydration we could do it immediately but the additional code is not worth the lost microtask.
 
-	/** @type {import('./types.js').ComputationSignal | undefined} */
+	/** @type {import('./types.js').Reaction | undefined} */
 	let render;
 	let destroyed = false;
 	const effect = managed_effect(() => {

@@ -57,7 +57,7 @@ let current_queued_effects = [];
 let flush_count = 0;
 // Handle signal reactivity tree dependencies and consumer
 
-/** @type {null | import('./types.js').ComputationSignal} */
+/** @type {null | import('./types.js').Reaction} */
 export let current_consumer = null;
 
 /** @type {null | import('./types.js').Effect} */
@@ -169,7 +169,7 @@ function is_signal_dirty(signal) {
 		return true;
 	}
 	if ((flags & MAYBE_DIRTY) !== 0) {
-		const dependencies = /** @type {import('./types.js').ComputationSignal} **/ (signal).d;
+		const dependencies = /** @type {import('./types.js').Reaction} **/ (signal).d;
 		if (dependencies !== null) {
 			const length = dependencies.length;
 			let i;
@@ -182,10 +182,7 @@ function is_signal_dirty(signal) {
 				// The flags can be marked as dirty from the above is_signal_dirty call.
 				if ((dependency.f & DIRTY) !== 0) {
 					if ((dependency.f & DERIVED) !== 0) {
-						update_derived(
-							/** @type {import('./types.js').ComputationSignal} **/ (dependency),
-							true
-						);
+						update_derived(/** @type {import('./types.js').Derived} **/ (dependency), true);
 						// Might have been mutated from above get.
 						if ((signal.f & DIRTY) !== 0) {
 							return true;
@@ -213,7 +210,7 @@ function is_signal_dirty(signal) {
 
 /**
  * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Reaction} signal
  * @returns {V}
  */
 function execute_signal_fn(signal) {
@@ -325,7 +322,7 @@ function execute_signal_fn(signal) {
 
 /**
  * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Reaction} signal
  * @param {import('./types.js').Signal<V>} dependency
  * @returns {void}
  */
@@ -348,13 +345,12 @@ function remove_consumer(signal, dependency) {
 	if (consumers_length === 0 && (dependency.f & UNOWNED) !== 0) {
 		// If the signal is unowned then we need to make sure to change it to dirty.
 		set_signal_status(dependency, DIRTY);
-		remove_consumers(/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency), 0);
+		remove_consumers(/** @type {import('./types.js').Reaction} **/ (dependency), 0);
 	}
 }
 
 /**
- * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Reaction} signal
  * @param {number} start_index
  * @returns {void}
  */
@@ -374,8 +370,7 @@ function remove_consumers(signal, start_index) {
 }
 
 /**
- * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Reaction} signal
  * @returns {void}
  */
 function destroy_references(signal) {
@@ -680,8 +675,7 @@ export async function tick() {
 }
 
 /**
- * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Derived} signal
  * @param {boolean} force_schedule
  * @returns {void}
  */
@@ -769,10 +763,10 @@ export function get(signal) {
 			// we want to avoid tracking indirect dependencies
 			const previous_inspect_fn = inspect_fn;
 			inspect_fn = null;
-			update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (signal), false);
+			update_derived(/** @type {import('./types.js').Derived} **/ (signal), false);
 			inspect_fn = previous_inspect_fn;
 		} else {
-			update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (signal), false);
+			update_derived(/** @type {import('./types.js').Derived} **/ (signal), false);
 		}
 	}
 	return signal.v;
@@ -807,7 +801,7 @@ export function invalidate_inner_signals(fn) {
 }
 
 /**
- * @param {import('./types.js').ComputationSignal} signal
+ * @param {import('./types.js').Reaction} signal
  * @param {boolean} inert
  * @param {Set<import('./types.js').Block>} [visited_blocks]
  * @returns {void}
@@ -826,7 +820,7 @@ function mark_subtree_children_inert(signal, inert, visited_blocks) {
 }
 
 /**
- * @param {import('./types.js').ComputationSignal} signal
+ * @param {import('./types.js').Reaction} signal
  * @param {boolean} inert
  * @param {Set<import('./types.js').Block>} [visited_blocks]
  * @returns {void}
@@ -910,8 +904,7 @@ export function mark_signal_consumers(signal, to_status, force_schedule) {
 }
 
 /**
- * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Reaction} signal
  * @returns {void}
  */
 export function destroy_signal(signal) {
@@ -953,8 +946,7 @@ export function untrack(fn) {
 }
 
 /**
- * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Reaction} signal
  * @param {() => void} destroy_fn
  * @returns {void}
  */

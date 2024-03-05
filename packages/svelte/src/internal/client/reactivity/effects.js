@@ -10,8 +10,8 @@ import {
 import { DIRTY, MANAGED, RENDER_EFFECT, EFFECT, PRE_EFFECT } from '../constants.js';
 
 /**
- * @param {import('../types.js').ComputationSignal} target_signal
- * @param {import('../types.js').ComputationSignal} ref_signal
+ * @param {import('../types.js').Reaction} target_signal
+ * @param {import('../types.js').Reaction} ref_signal
  * @returns {void}
  */
 export function push_reference(target_signal, ref_signal) {

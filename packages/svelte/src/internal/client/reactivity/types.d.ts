@@ -11,7 +11,7 @@ export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFEC
 
 export interface Source<V = unknown> {
 	/** consumers: Signals that read from the current signal */
-	c: null | ComputationSignal[];
+	c: null | Reaction[];
 	/** equals: For value equality */
 	e: null | EqualsFunctions;
 	/** flags: The types that the signal represent, as a bitwise value */
@@ -35,7 +35,7 @@ export interface Derived<V = unknown> extends Source<V> {
 	// TODO get rid of these
 
 	/** references: Anything that a signal owns */
-	r: null | ComputationSignal[];
+	r: null | Reaction[];
 	/** block: The block associated with this effect/computed */
 	b: null | Block;
 	/** context: The associated component if this signal is an effect/computed */
@@ -54,7 +54,7 @@ export type Effect = {
 	/** block: The block associated with this effect/computed */
 	b: null | Block;
 	/** consumers: Signals that read from the current signal */
-	c: null | ComputationSignal[];
+	c: null | Reaction[];
 	/** context: The associated component if this signal is an effect/computed */
 	x: null | ComponentContext;
 	/** dependencies: Signals that this signal reads from */
@@ -69,7 +69,7 @@ export type Effect = {
 	/** init: The function that we invoke for effects and computeds */
 	i: null | (() => void | (() => void)) | ((b: Block, s: Signal) => void | (() => void));
 	/** references: Anything that a signal owns */
-	r: null | ComputationSignal[];
+	r: null | Reaction[];
 	/** value: The latest value for this signal, doubles as the teardown for effects */
 	v: null | Function;
 	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
@@ -78,10 +78,9 @@ export type Effect = {
 	w: number;
 };
 
-// TODO rename this to Reaction
-export type ComputationSignal<V = unknown> = Derived<V> | Effect;
+export type Reaction = Derived | Effect;
 
-export type Signal<V = unknown> = Source<V> | ComputationSignal<V>;
+export type Signal<V = unknown> = Source<V> | Reaction;
 
 export type MaybeSignal<T = unknown> = T | Signal<T>;
 

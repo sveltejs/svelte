@@ -11,7 +11,7 @@ import {
 	SNIPPET_BLOCK,
 	STATE_SYMBOL
 } from './constants.js';
-import type { ComputationSignal, Effect, Signal, Source } from './reactivity/types.js';
+import type { Reaction, Effect, Signal, Source } from './reactivity/types.js';
 
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
@@ -95,7 +95,7 @@ export type RootBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | ComputationSignal;
+	e: null | Reaction;
 	/** intro */
 	i: boolean;
 	/** parent */
@@ -146,7 +146,7 @@ export type HeadBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | ComputationSignal;
+	e: null | Reaction;
 	/** parent */
 	p: Block;
 	/** transition */
@@ -159,7 +159,7 @@ export type DynamicElementBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | ComputationSignal;
+	e: null | Reaction;
 	/** parent */
 	p: Block;
 	/** transition */
@@ -172,7 +172,7 @@ export type DynamicComponentBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | ComputationSignal;
+	e: null | Reaction;
 	/** parent */
 	p: Block;
 	/** transition */
@@ -185,7 +185,7 @@ export type AwaitBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | ComputationSignal;
+	e: null | Reaction;
 	/** parent */
 	p: Block;
 	/** pending */
@@ -206,7 +206,7 @@ export type EachBlock = {
 	/** items */
 	v: EachItemBlock[];
 	/** effewct */
-	e: null | ComputationSignal;
+	e: null | Reaction;
 	/** parent */
 	p: Block;
 	/** transition */
@@ -223,7 +223,7 @@ export type EachItemBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | ComputationSignal;
+	e: null | Reaction;
 	/** item */
 	v: any | Signal<any>;
 	/** index */
@@ -246,7 +246,7 @@ export type SnippetBlock = {
 	/** parent */
 	p: Block;
 	/** effect */
-	e: null | ComputationSignal;
+	e: null | Reaction;
 	/** transition */
 	r: null;
 	/** type */
