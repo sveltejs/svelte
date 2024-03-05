@@ -28,16 +28,12 @@ import { CLEAN, DERIVED, DIRTY, MANAGED, SOURCE } from '../constants.js';
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function source(initial_value) {
+	/** @type {import('#client').Source<V>} */
 	const signal = {
-		// consumers
 		c: null,
-		// equals
 		e: default_equals,
-		// flags
 		f: SOURCE | CLEAN,
-		// value
 		v: initial_value,
-		// write version
 		w: 0
 	};
 
