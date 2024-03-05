@@ -332,6 +332,11 @@ function reconcile_indexed_array(
 	flags,
 	apply_transitions
 ) {
+	// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
+	// are treated as reactive, so they get wrapped in a signal.
+	if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
+		flags ^= EACH_IS_STRICT_EQUALS;
+	}
 	var a_blocks = each_block.v;
 	var active_transitions = each_block.s;
 
@@ -449,7 +454,8 @@ function reconcile_tracked_array(
 	apply_transitions,
 	keys
 ) {
-	// If we are working with an array that isn't proxied or frozen, then remove strict equality.
+	// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
+	// are treated as reactive, so they get wrapped in a signal.
 	if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
 		flags ^= EACH_IS_STRICT_EQUALS;
 	}
