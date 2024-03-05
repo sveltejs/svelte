@@ -49,8 +49,12 @@ function validate_component(node, context) {
 			error(attribute, 'invalid-event-modifier');
 		}
 
-		if (attribute.type === 'Attribute' && attribute.name === 'slot') {
-			validate_slot_attribute(context, attribute);
+		if (attribute.type === 'Attribute') {
+			validate_attribute_name(attribute, context);
+
+			if (attribute.name === 'slot') {
+				validate_slot_attribute(context, attribute);
+			}
 		}
 	}
 
@@ -75,6 +79,8 @@ function validate_element(node, context) {
 			if (regex_illegal_attribute_character.test(attribute.name)) {
 				error(attribute, 'invalid-attribute-name', attribute.name);
 			}
+
+			validate_attribute_name(attribute, context);
 
 			if (attribute.name.startsWith('on') && attribute.name.length > 2) {
 				if (!is_expression_attribute(attribute)) {
@@ -163,6 +169,21 @@ function validate_element(node, context) {
 				}
 			}
 		}
+	}
+}
+
+/**
+ * @param {import('#compiler').Attribute} attribute
+ * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
+ */
+function validate_attribute_name(attribute, context) {
+	if (
+		attribute.name.includes(':') &&
+		!attribute.name.startsWith('xmlns:') &&
+		!attribute.name.startsWith('xlink:') &&
+		!attribute.name.startsWith('xml:')
+	) {
+		warn(context.state.analysis.warnings, attribute, context.path, 'illegal-attribute-character');
 	}
 }
 
