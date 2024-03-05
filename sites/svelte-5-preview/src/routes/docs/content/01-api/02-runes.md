@@ -465,12 +465,12 @@ To get all properties, use rest syntax:
 let { a, b, c, ...everythingElse } = $props();
 ```
 
-If you're using TypeScript, you can use type arguments:
+If you're using TypeScript, you can declare the prop types:
 
 ```ts
 type MyProps = any;
 // ---cut---
-let { a, b, c, ...everythingElse } = $props<MyProps>();
+let { a, b, c, ...everythingElse }: MyProps = $props();
 ```
 
 Props cannot be mutated, unless the parent component uses `bind:`. During development, attempts to mutate props will result in an error.

@@ -229,11 +229,11 @@ Snippets implement the `Snippet` interface imported from `'svelte'`:
 +<script lang="ts">
 +	import type { Snippet } from 'svelte';
 +
-+	let { data, children, row } = $props<{
++	let { data, children, row }: {
 +		data: any[];
 +		children: Snippet;
 +		row: Snippet<[any]>;
-+	}>();
++	} = $props();
 </script>
 ```
 
@@ -246,13 +246,13 @@ We can tighten things up further by declaring a generic, so that `data` and `row
 +<script lang="ts" generics="T">
 	import type { Snippet } from 'svelte';
 
-	let { data, children, row } = $props<{
+	let { data, children, row }: {
 -		data: any[];
 +		data: T[];
 		children: Snippet;
 -		row: Snippet<[any]>;
 +		row: Snippet<[T]>;
-	}>();
+	} = $props();
 </script>
 ```
 
