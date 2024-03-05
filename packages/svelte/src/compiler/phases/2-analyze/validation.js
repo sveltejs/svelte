@@ -521,6 +521,24 @@ const validation = {
 			);
 		}
 	},
+	SnippetBlock(node, { path }) {
+		if (node.expression.name !== 'children') return;
+		const parent = path.at(-2);
+		if (!parent) return;
+		if (
+			parent.type === 'Component' ||
+			parent.type === 'SvelteComponent' ||
+			parent.type === 'SvelteSelf'
+		) {
+			if (
+				parent.fragment.nodes.some(
+					(node) => node.type !== 'SnippetBlock' && (node.type !== 'Text' || node.data.trim())
+				)
+			) {
+				error(node, 'conflicting-children-snippet');
+			}
+		}
+	},
 	SvelteHead(node) {
 		const attribute = node.attributes[0];
 		if (attribute) {

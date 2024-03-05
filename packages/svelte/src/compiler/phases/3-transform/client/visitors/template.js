@@ -2393,7 +2393,7 @@ export const template_visitors = {
 		const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(item.name));
 		binding.expression = (id) => {
 			const item_with_loc = with_loc(item, id);
-			return each_item_is_reactive ? b.call('$.unwrap', item_with_loc) : item_with_loc;
+			return b.call('$.unwrap', item_with_loc);
 		};
 		if (node.index) {
 			const index_binding = /** @type {import('#compiler').Binding} */ (
@@ -2401,7 +2401,7 @@ export const template_visitors = {
 			);
 			index_binding.expression = (id) => {
 				const index_with_loc = with_loc(index, id);
-				return each_item_is_reactive ? b.call('$.unwrap', index_with_loc) : index_with_loc;
+				return b.call('$.unwrap', index_with_loc);
 			};
 		}
 

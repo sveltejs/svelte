@@ -1,8 +1,7 @@
 import {
 	regex_ends_with_whitespaces,
 	regex_not_whitespace,
-	regex_starts_with_whitespaces,
-	regex_whitespaces_strict
+	regex_starts_with_whitespaces
 } from '../patterns.js';
 import * as b from '../../utils/builders.js';
 import { walk } from 'zimmerframe';
