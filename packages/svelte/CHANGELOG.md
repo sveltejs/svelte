@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.72
+
+### Patch Changes
+
+- fix: adjust keyed each block equality handling ([#10699](https://github.com/sveltejs/svelte/pull/10699))
+
+- fix: improve indexed each equality ([#10702](https://github.com/sveltejs/svelte/pull/10702))
+
+- fix: prevent snippet children conflict ([#10700](https://github.com/sveltejs/svelte/pull/10700))
+
 ## 5.0.0-next.71
 
 ### Patch Changes
