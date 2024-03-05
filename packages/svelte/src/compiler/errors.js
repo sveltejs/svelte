@@ -296,7 +296,9 @@ const slots = {
 	/** @param {string} name @param {string} component */
 	'duplicate-slot-name': (name, component) => `Duplicate slot name '${name}' in <${component}>`,
 	'invalid-default-slot-content': () =>
-		`Found default slot content alongside an explicit slot="default"`
+		`Found default slot content alongside an explicit slot="default"`,
+	'conflicting-children-snippet': () =>
+		`Cannot use explicit children snippet at the same time as implicit children content. Remove either the non-whitespace content or the children snippet block`
 };
 
 /** @satisfies {Errors} */
