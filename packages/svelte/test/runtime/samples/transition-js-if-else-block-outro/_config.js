@@ -6,11 +6,11 @@ export default {
 
 		raf.tick(25);
 		assert.equal(component.yes.foo, undefined);
-		assert.equal(component.no.foo, 0.75);
+		assert.equal(component.no, null);
 
 		raf.tick(75);
 		assert.equal(component.yes.foo, undefined);
-		assert.equal(component.no.foo, 0.25);
+		assert.equal(component.no, null);
 
 		raf.tick(100);
 	}
