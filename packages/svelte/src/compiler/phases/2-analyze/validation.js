@@ -571,6 +571,11 @@ const validation = {
 			}
 		}
 	},
+	StyleDirective(node) {
+		if (node.modifiers.length > 1 || node.modifiers[0] !== 'important') {
+			error(node, 'invalid-style-directive-modifier');
+		}
+	},
 	SvelteHead(node) {
 		const attribute = node.attributes[0];
 		if (attribute) {

@@ -278,7 +278,9 @@ const attributes = {
 					directive2
 				)} directive`;
 	},
-	'invalid-let-directive-placement': () => 'let directive at invalid position'
+	'invalid-let-directive-placement': () => 'let directive at invalid position',
+	'invalid-style-directive-modifier': () =>
+		`Invalid 'style:' modifier. Valid modifiers are: 'important'`
 };
 
 /** @satisfies {Errors} */
@@ -459,10 +461,6 @@ const errors = {
 	// 	message:
 	// 		'Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)'
 	// },
-	// invalid_style_directive_modifier: /** @param {string} valid */ (valid) => ({
-	// 	code: 'invalid-style-directive-modifier',
-	// 	message: `Valid modifiers for style directives are: ${valid}`
-	// })
 };
 
 // interface is duplicated between here (used internally) and ./interfaces.js
