@@ -442,6 +442,17 @@ export function analyze_component(root, options) {
 			);
 		}
 
+		for (const [name, binding] of instance.scope.declarations) {
+			if (binding.kind === 'prop' && binding.node.name !== '$$props') {
+				const references = binding.references.filter(
+					(r) => r.node !== binding.node && r.path.at(-1)?.type !== 'ExportSpecifier'
+				);
+				if (!references.length && !instance.scope.declarations.has(`$${name}`)) {
+					warn(warnings, binding.node, [], 'unused-export-let', name);
+				}
+			}
+		}
+
 		analysis.reactive_statements = order_reactive_statements(analysis.reactive_statements);
 	}
 
@@ -721,7 +732,8 @@ const legacy_scope_tweaker = {
 				if (
 					binding.kind === 'state' ||
 					binding.kind === 'frozen_state' ||
-					(binding.kind === 'normal' && binding.declaration_kind === 'let')
+					(binding.kind === 'normal' &&
+						(binding.declaration_kind === 'let' || binding.declaration_kind === 'var'))
 				) {
 					binding.kind = 'prop';
 					if (specifier.exported.name !== specifier.local.name) {

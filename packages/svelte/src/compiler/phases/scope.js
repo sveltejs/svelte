@@ -558,6 +558,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			if (node.context.type !== 'Identifier') {
 				scope.declare(b.id('$$item'), 'derived', 'synthetic');
 			}
+			// Visit to pick up references from default initializers
+			visit(node.context, { scope });
 
 			if (node.index) {
 				const is_keyed =

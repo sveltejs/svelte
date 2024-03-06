@@ -221,7 +221,10 @@ const legacy = {
 	'no-reactive-declaration': () =>
 		`Reactive declarations only exist at the top level of the instance script`,
 	'module-script-reactive-declaration': () =>
-		'All dependencies of the reactive declaration are declared in a module script and will not be reactive'
+		'All dependencies of the reactive declaration are declared in a module script and will not be reactive',
+	/** @param {string} name */
+	'unused-export-let': (name) =>
+		`Component has unused export property '${name}'. If it is for external reference only, please consider using \`export const ${name}\``
 };
 
 /** @satisfies {Warnings} */
