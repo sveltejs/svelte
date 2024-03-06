@@ -20,7 +20,7 @@ export function derived(fn) {
 		c: null,
 		d: null,
 		e: default_equals,
-		f: flags | CLEAN,
+		f: flags,
 		i: fn,
 		r: null,
 		// @ts-expect-error
