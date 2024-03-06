@@ -671,6 +671,16 @@ declare module 'svelte/compiler' {
 		 * @default null
 		 */
 		cssOutputFilename?: string;
+		/**
+		 * If `true`, compiles components with hot reloading support.
+		 *
+		 * @default false
+		 */
+		hmr?: boolean;
+
+		// Other Svelte 4 compiler options:
+		// enableSourcemap?: EnableSourcemap; // TODO bring back? https://github.com/sveltejs/svelte/pull/6835
+		// legacy?: boolean; // TODO compiler error noting the new purpose?
 	}
 
 	interface ModuleCompileOptions {
@@ -2420,6 +2430,16 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * @default null
 		 */
 		cssOutputFilename?: string;
+		/**
+		 * If `true`, compiles components with hot reloading support.
+		 *
+		 * @default false
+		 */
+		hmr?: boolean;
+
+		// Other Svelte 4 compiler options:
+		// enableSourcemap?: EnableSourcemap; // TODO bring back? https://github.com/sveltejs/svelte/pull/6835
+		// legacy?: boolean; // TODO compiler error noting the new purpose?
 	}
 
 	interface ModuleCompileOptions {

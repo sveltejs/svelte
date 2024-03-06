@@ -101,6 +101,8 @@ export const validate_component_options =
 				return input;
 			}),
 
+			hmr: boolean(false),
+
 			enableSourcemap: warn_removed(
 				'The enableSourcemap option has been removed. Source maps are always generated now, and tooling can choose to ignore them.'
 			),

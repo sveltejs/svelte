@@ -5,7 +5,7 @@ import * as $ from "svelte/internal";
 
 var frag = $.template(`<div></div> <svg></svg> <custom-element></custom-element> <div></div> <svg></svg> <custom-element></custom-element>`, true);
 
-export default function Main($$anchor, $$props) {
+function Main($$anchor, $$props) {
 	$.push($$props, true);
 
 	// needs to be a snapshot test because jsdom does auto-correct the attribute casing
@@ -46,3 +46,5 @@ export default function Main($$anchor, $$props) {
 	$.close_frag($$anchor, fragment);
 	$.pop();
 }
+
+export default Main;

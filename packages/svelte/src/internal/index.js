@@ -43,4 +43,6 @@ export {
 	$window as window,
 	$document as document
 } from './client/operations.js';
+
+export { hmr } from './client/hmr.js';
 export { noop } from './common.js';
