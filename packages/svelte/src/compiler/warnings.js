@@ -219,7 +219,9 @@ const components = {
 
 const legacy = {
 	'no-reactive-declaration': () =>
-		`Reactive declarations only exist at the top level of the instance script`
+		`Reactive declarations only exist at the top level of the instance script`,
+	'module-script-reactive-declaration': () =>
+		'All dependencies of the reactive declaration are declared in a module script and will not be reactive'
 };
 
 /** @satisfies {Warnings} */
@@ -239,7 +241,7 @@ const warnings = {
 /**
  * @template {keyof AllWarnings} T
  * @param {import('./phases/types').RawWarning[]} array the array to push the warning to, if not ignored
- * @param {{ start?: number, end?: number, parent?: import('#compiler').SvelteNode | null, leadingComments?: import('estree').Comment[] } | null} node the node related to the warning
+ * @param {{ start?: number, end?: number, type?: string, parent?: import('#compiler').SvelteNode | null, leadingComments?: import('estree').Comment[] } | null} node the node related to the warning
  * @param {import('#compiler').SvelteNode[]} path the path to the node, so that we can traverse upwards to find svelte-ignore comments
  * @param {T} code the warning code
  * @param  {Parameters<AllWarnings[T]>} args the arguments to pass to the warning function
@@ -253,6 +255,13 @@ export function warn(array, node, path, code, ...args) {
 	// at which point this might become inefficient.
 	/** @type {string[]} */
 	const ignores = [];
+
+	if (node) {
+		// comments inside JavaScript (estree)
+		if ('leadingComments' in node) {
+			ignores.push(...extract_svelte_ignore_from_comments(node));
+		}
+	}
 
 	for (let i = path.length - 1; i >= 0; i--) {
 		const current = path[i];
