@@ -298,11 +298,22 @@ const validation = {
 			// TODO handle mutations of non-state/props in runes mode
 		}
 
+		const binding = context.state.scope.get(left.name);
+
 		if (node.name === 'group') {
-			const binding = context.state.scope.get(left.name);
 			if (!binding) {
 				error(node, 'INTERNAL', 'Cannot find declaration for bind:group');
 			}
+		}
+
+		if (binding?.kind === 'each' && binding.metadata?.inside_rest) {
+			warn(
+				context.state.analysis.warnings,
+				binding.node,
+				context.path,
+				'invalid-rest-eachblock-binding',
+				binding.node.name
+			);
 		}
 
 		const parent = context.path.at(-1);

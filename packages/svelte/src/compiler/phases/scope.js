@@ -112,7 +112,8 @@ export class Scope {
 			prop_alias: null,
 			expression: null,
 			mutation: null,
-			reassigned: false
+			reassigned: false,
+			metadata: null
 		};
 		this.declarations.set(node.name, binding);
 		this.root.conflicts.add(node.name);
@@ -534,7 +535,25 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 			// declarations
 			for (const id of extract_identifiers(node.context)) {
-				scope.declare(id, 'each', 'const');
+				const binding = scope.declare(id, 'each', 'const');
+
+				let inside_rest = false;
+				let is_rest_id = false;
+				walk(node.context, null, {
+					Identifier(node) {
+						if (inside_rest && node === id) {
+							is_rest_id = true;
+						}
+					},
+					RestElement(_, { next }) {
+						const prev = inside_rest;
+						inside_rest = true;
+						next();
+						inside_rest = prev;
+					}
+				});
+
+				binding.metadata = { inside_rest: is_rest_id };
 			}
 			if (node.context.type !== 'Identifier') {
 				scope.declare(b.id('$$item'), 'derived', 'synthetic');
