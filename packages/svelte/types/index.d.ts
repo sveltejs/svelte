@@ -756,6 +756,11 @@ declare module 'svelte/compiler' {
 		expression: Expression | ((id: Identifier) => Expression) | null;
 		/** If this is set, all mutations should use this expression */
 		mutation: ((assignment: AssignmentExpression, context: Context<any, any>) => Expression) | null;
+		/** Additional metadata, varies per binding type */
+		metadata: {
+			/** `true` if is (inside) a rest parameter */
+			inside_rest?: boolean;
+		} | null;
 	}
 	interface BaseNode_1 {
 		type: string;
@@ -1020,6 +1025,10 @@ declare module 'svelte/compiler' {
 		constructor(root: ScopeRoot, parent: Scope | null, porous: boolean);
 		
 		root: ScopeRoot;
+		/**
+		 * The immediate parent scope
+		 * */
+		parent: Scope | null;
 		/**
 		 * A map of every identifier declared by this scope, and all the
 		 * identifiers that reference it

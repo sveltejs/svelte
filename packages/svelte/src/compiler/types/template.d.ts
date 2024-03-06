@@ -13,12 +13,9 @@ import type {
 	ObjectExpression,
 	Pattern,
 	Program,
-	SpreadElement,
-	CallExpression,
 	ChainExpression,
 	SimpleCallExpression
 } from 'estree';
-import type { Atrule, Rule } from './css';
 
 export interface BaseNode {
 	type: string;

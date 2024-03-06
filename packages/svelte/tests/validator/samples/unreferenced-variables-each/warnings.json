@@ -1,7 +1,7 @@
 [
 	{
 		"code": "unused-export-let",
-		"message": "Component_1 has unused export property 'default_value_5'. If it is for external reference only, please consider using `export const default_value_5`",
+		"message": "Component has unused export property 'default_value_5'. If it is for external reference only, please consider using `export const default_value_5`",
 		"start": {
 			"column": 12,
 			"line": 8
@@ -13,7 +13,7 @@
 	},
 	{
 		"code": "unused-export-let",
-		"message": "Component_1 has unused export property 'default_value_6'. If it is for external reference only, please consider using `export const default_value_6`",
+		"message": "Component has unused export property 'default_value_6'. If it is for external reference only, please consider using `export const default_value_6`",
 		"start": {
 			"column": 12,
 			"line": 9

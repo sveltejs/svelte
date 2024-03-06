@@ -3,8 +3,6 @@
 </script>
 
 <script>
-	// svelte-ignore unused-export-let
-	export let unused;
 	// svelte-ignore module-script-reactive-declaration
 	$: reactive = foo;
 </script>

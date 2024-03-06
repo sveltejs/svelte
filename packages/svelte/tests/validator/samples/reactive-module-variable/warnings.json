@@ -1,9 +1,9 @@
 [
 	{
 		"code": "module-script-reactive-declaration",
-		"message": "\"foo\" is declared in a module script and will not be reactive",
+		"message": "All dependencies of the reactive declaration are declared in a module script and will not be reactive",
 		"start": {
-			"column": 4,
+			"column": 1,
 			"line": 5
 		},
 		"end": {

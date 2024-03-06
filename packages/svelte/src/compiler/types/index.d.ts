@@ -288,6 +288,11 @@ export interface Binding {
 	expression: Expression | ((id: Identifier) => Expression) | null;
 	/** If this is set, all mutations should use this expression */
 	mutation: ((assignment: AssignmentExpression, context: Context<any, any>) => Expression) | null;
+	/** Additional metadata, varies per binding type */
+	metadata: {
+		/** `true` if is (inside) a rest parameter */
+		inside_rest?: boolean;
+	} | null;
 }
 
 export * from './template.js';

@@ -15,7 +15,15 @@ const attributes = {
 	'avoid-is': () => 'The "is" attribute is not supported cross-browser and should be avoided',
 	/** @param {string} name */
 	'global-event-reference': (name) =>
-		`You are referencing globalThis.${name}. Did you forget to declare a variable with that name?`
+		`You are referencing globalThis.${name}. Did you forget to declare a variable with that name?`,
+	'illegal-attribute-character': () =>
+		"Attributes should not contain ':' characters to prevent ambiguity with Svelte directives",
+	/**
+	 * @param {string} wrong
+	 * @param {string} right
+	 */
+	'invalid-html-attribute': (wrong, right) =>
+		`'${wrong}' is not a valid HTML attribute. Did you mean '${right}'?`
 };
 
 /** @satisfies {Warnings} */
@@ -195,7 +203,10 @@ const a11y = {
 /** @satisfies {Warnings} */
 const state = {
 	'static-state-reference': () =>
-		`State referenced in its own scope will never update. Did you mean to reference it inside a closure?`
+		`State referenced in its own scope will never update. Did you mean to reference it inside a closure?`,
+	/** @param {string} name */
+	'invalid-rest-eachblock-binding': (name) =>
+		`The rest operator (...) will create a new object and binding '${name}' with the original object will not work`
 };
 
 /** @satisfies {Warnings} */
@@ -214,7 +225,16 @@ const components = {
 
 const legacy = {
 	'no-reactive-declaration': () =>
-		`Reactive declarations only exist at the top level of the instance script`
+		`Reactive declarations only exist at the top level of the instance script`,
+	'module-script-reactive-declaration': () =>
+		'All dependencies of the reactive declaration are declared in a module script and will not be reactive',
+	/** @param {string} name */
+	'unused-export-let': (name) =>
+		`Component has unused export property '${name}'. If it is for external reference only, please consider using \`export const ${name}\``
+};
+
+const block = {
+	'empty-block': () => 'Empty block'
 };
 
 /** @satisfies {Warnings} */
@@ -226,7 +246,8 @@ const warnings = {
 	...performance,
 	...state,
 	...components,
-	...legacy
+	...legacy,
+	...block
 };
 
 /** @typedef {typeof warnings} AllWarnings */
@@ -234,7 +255,7 @@ const warnings = {
 /**
  * @template {keyof AllWarnings} T
  * @param {import('./phases/types').RawWarning[]} array the array to push the warning to, if not ignored
- * @param {{ start?: number, end?: number, parent?: import('#compiler').SvelteNode | null, leadingComments?: import('estree').Comment[] } | null} node the node related to the warning
+ * @param {{ start?: number, end?: number, type?: string, parent?: import('#compiler').SvelteNode | null, leadingComments?: import('estree').Comment[] } | null} node the node related to the warning
  * @param {import('#compiler').SvelteNode[]} path the path to the node, so that we can traverse upwards to find svelte-ignore comments
  * @param {T} code the warning code
  * @param  {Parameters<AllWarnings[T]>} args the arguments to pass to the warning function
@@ -248,6 +269,13 @@ export function warn(array, node, path, code, ...args) {
 	// at which point this might become inefficient.
 	/** @type {string[]} */
 	const ignores = [];
+
+	if (node) {
+		// comments inside JavaScript (estree)
+		if ('leadingComments' in node) {
+			ignores.push(...extract_svelte_ignore_from_comments(node));
+		}
+	}
 
 	for (let i = path.length - 1; i >= 0; i--) {
 		const current = path[i];

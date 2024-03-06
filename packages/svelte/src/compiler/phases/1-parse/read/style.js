@@ -476,6 +476,10 @@ function read_declaration(parser) {
 
 	const value = read_value(parser);
 
+	if (!value && !property.startsWith('--')) {
+		error(parser.index, 'invalid-css-declaration');
+	}
+
 	const end = parser.index;
 
 	if (!parser.match('}')) {

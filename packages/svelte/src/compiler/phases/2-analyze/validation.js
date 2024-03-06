@@ -49,8 +49,12 @@ function validate_component(node, context) {
 			error(attribute, 'invalid-event-modifier');
 		}
 
-		if (attribute.type === 'Attribute' && attribute.name === 'slot') {
-			validate_slot_attribute(context, attribute);
+		if (attribute.type === 'Attribute') {
+			validate_attribute_name(attribute, context);
+
+			if (attribute.name === 'slot') {
+				validate_slot_attribute(context, attribute);
+			}
 		}
 	}
 
@@ -60,6 +64,11 @@ function validate_component(node, context) {
 		component_slots: new Set()
 	});
 }
+
+const react_attributes = new Map([
+	['className', 'class'],
+	['htmlFor', 'for']
+]);
 
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
@@ -105,6 +114,20 @@ function validate_element(node, context) {
 			if (attribute.name === 'is' && context.state.options.namespace !== 'foreign') {
 				warn(context.state.analysis.warnings, attribute, context.path, 'avoid-is');
 			}
+
+			const correct_name = react_attributes.get(attribute.name);
+			if (correct_name) {
+				warn(
+					context.state.analysis.warnings,
+					attribute,
+					context.path,
+					'invalid-html-attribute',
+					attribute.name,
+					correct_name
+				);
+			}
+
+			validate_attribute_name(attribute, context);
 		} else if (attribute.type === 'AnimateDirective') {
 			const parent = context.path.at(-2);
 			if (parent?.type !== 'EachBlock') {
@@ -163,6 +186,21 @@ function validate_element(node, context) {
 				}
 			}
 		}
+	}
+}
+
+/**
+ * @param {import('#compiler').Attribute} attribute
+ * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
+ */
+function validate_attribute_name(attribute, context) {
+	if (
+		attribute.name.includes(':') &&
+		!attribute.name.startsWith('xmlns:') &&
+		!attribute.name.startsWith('xlink:') &&
+		!attribute.name.startsWith('xml:')
+	) {
+		warn(context.state.analysis.warnings, attribute, context.path, 'illegal-attribute-character');
 	}
 }
 
@@ -232,6 +270,19 @@ function validate_slot_attribute(context, attribute) {
 }
 
 /**
+ * @param {import('#compiler').Fragment | null | undefined} node
+ * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
+ */
+function validate_block_not_empty(node, context) {
+	if (!node) return;
+	// Assumption: If the block has zero elements, someone's in the middle of typing it out,
+	// so don't warn in that case because it would be distracting.
+	if (node.nodes.length === 1 && node.nodes[0].type === 'Text' && !node.nodes[0].raw.trim()) {
+		warn(context.state.analysis.warnings, node.nodes[0], context.path, 'empty-block');
+	}
+}
+
+/**
  * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
  */
 const validation = {
@@ -277,11 +328,22 @@ const validation = {
 			// TODO handle mutations of non-state/props in runes mode
 		}
 
+		const binding = context.state.scope.get(left.name);
+
 		if (node.name === 'group') {
-			const binding = context.state.scope.get(left.name);
 			if (!binding) {
 				error(node, 'INTERNAL', 'Cannot find declaration for bind:group');
 			}
+		}
+
+		if (binding?.kind === 'each' && binding.metadata?.inside_rest) {
+			warn(
+				context.state.analysis.warnings,
+				binding.node,
+				context.path,
+				'invalid-rest-eachblock-binding',
+				binding.node.name
+			);
 		}
 
 		const parent = context.path.at(-1);
@@ -521,8 +583,28 @@ const validation = {
 			);
 		}
 	},
-	SnippetBlock(node, { path }) {
+	IfBlock(node, context) {
+		validate_block_not_empty(node.consequent, context);
+		validate_block_not_empty(node.alternate, context);
+	},
+	EachBlock(node, context) {
+		validate_block_not_empty(node.body, context);
+		validate_block_not_empty(node.fallback, context);
+	},
+	AwaitBlock(node, context) {
+		validate_block_not_empty(node.pending, context);
+		validate_block_not_empty(node.then, context);
+		validate_block_not_empty(node.catch, context);
+	},
+	KeyBlock(node, context) {
+		validate_block_not_empty(node.fragment, context);
+	},
+	SnippetBlock(node, context) {
+		validate_block_not_empty(node.body, context);
+
 		if (node.expression.name !== 'children') return;
+
+		const { path } = context;
 		const parent = path.at(-2);
 		if (!parent) return;
 		if (
@@ -537,6 +619,11 @@ const validation = {
 			) {
 				error(node, 'conflicting-children-snippet');
 			}
+		}
+	},
+	StyleDirective(node) {
+		if (node.modifiers.length > 1 || (node.modifiers.length && node.modifiers[0] !== 'important')) {
+			error(node, 'invalid-style-directive-modifier');
 		}
 	},
 	SvelteHead(node) {
@@ -622,6 +709,8 @@ const validation = {
 
 export const validation_legacy = merge(validation, a11y_validators, {
 	VariableDeclarator(node, { state }) {
+		ensure_no_module_import_conflict(node, state);
+
 		if (node.init?.type !== 'CallExpression') return;
 
 		const callee = node.init.callee;
@@ -728,6 +817,22 @@ function validate_call_expression(node, scope, path) {
 	if (rune === '$inspect().with') {
 		if (node.arguments.length !== 1) {
 			error(node, 'invalid-rune-args-length', rune, [1]);
+		}
+	}
+}
+
+/**
+ * @param {import('estree').VariableDeclarator} node
+ * @param {import('./types.js').AnalysisState} state
+ */
+function ensure_no_module_import_conflict(node, state) {
+	const ids = extract_identifiers(node.id);
+	for (const id of ids) {
+		if (
+			state.scope === state.analysis.instance.scope &&
+			state.analysis.module.scope.get(id.name)?.declaration_kind === 'import'
+		) {
+			error(node.id, 'illegal-variable-declaration');
 		}
 	}
 }
@@ -912,6 +1017,8 @@ export const validation_runes = merge(validation, a11y_validators, {
 		next({ ...state });
 	},
 	VariableDeclarator(node, { state, path }) {
+		ensure_no_module_import_conflict(node, state);
+
 		const init = node.init;
 		const rune = get_rune(init, state.scope);
 

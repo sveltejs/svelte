@@ -1800,6 +1800,12 @@ export const template_visitors = {
 					)
 				)
 			);
+
+			// we need to eagerly evaluate the expression in order to hit any
+			// 'Cannot access x before initialization' errors
+			if (state.options.dev) {
+				state.init.push(b.stmt(b.call('$.get', declaration.id)));
+			}
 		} else {
 			const identifiers = extract_identifiers(declaration.id);
 			const tmp = b.id(state.scope.generate('computed_const'));
@@ -1828,6 +1834,12 @@ export const template_visitors = {
 				// In runes mode, we want things to be fine-grained - but not in legacy mode
 				b.const(tmp, b.call(state.options.runes ? '$.derived' : '$.derived_safe_equal', fn))
 			);
+
+			// we need to eagerly evaluate the expression in order to hit any
+			// 'Cannot access x before initialization' errors
+			if (state.options.dev) {
+				state.init.push(b.stmt(b.call('$.get', tmp)));
+			}
 
 			for (const node of identifiers) {
 				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(node.name));
