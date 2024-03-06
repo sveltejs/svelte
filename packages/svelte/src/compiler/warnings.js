@@ -233,6 +233,10 @@ const legacy = {
 		`Component has unused export property '${name}'. If it is for external reference only, please consider using \`export const ${name}\``
 };
 
+const block = {
+	'empty-block': () => 'Empty block'
+};
+
 /** @satisfies {Warnings} */
 const warnings = {
 	...css,
@@ -242,7 +246,8 @@ const warnings = {
 	...performance,
 	...state,
 	...components,
-	...legacy
+	...legacy,
+	...block
 };
 
 /** @typedef {typeof warnings} AllWarnings */

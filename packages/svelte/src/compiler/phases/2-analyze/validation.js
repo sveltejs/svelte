@@ -270,6 +270,19 @@ function validate_slot_attribute(context, attribute) {
 }
 
 /**
+ * @param {import('#compiler').Fragment | null | undefined} node
+ * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
+ */
+function validate_block_not_empty(node, context) {
+	if (!node) return;
+	// Assumption: If the block has zero elements, someone's in the middle of typing it out,
+	// so don't warn in that case because it would be distracting.
+	if (node.nodes.length === 1 && node.nodes[0].type === 'Text' && !node.nodes[0].raw.trim()) {
+		warn(context.state.analysis.warnings, node.nodes[0], context.path, 'empty-block');
+	}
+}
+
+/**
  * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
  */
 const validation = {
@@ -570,8 +583,28 @@ const validation = {
 			);
 		}
 	},
-	SnippetBlock(node, { path }) {
+	IfBlock(node, context) {
+		validate_block_not_empty(node.consequent, context);
+		validate_block_not_empty(node.alternate, context);
+	},
+	EachBlock(node, context) {
+		validate_block_not_empty(node.body, context);
+		validate_block_not_empty(node.fallback, context);
+	},
+	AwaitBlock(node, context) {
+		validate_block_not_empty(node.pending, context);
+		validate_block_not_empty(node.then, context);
+		validate_block_not_empty(node.catch, context);
+	},
+	KeyBlock(node, context) {
+		validate_block_not_empty(node.fragment, context);
+	},
+	SnippetBlock(node, context) {
+		validate_block_not_empty(node.body, context);
+
 		if (node.expression.name !== 'children') return;
+
+		const { path } = context;
 		const parent = path.at(-2);
 		if (!parent) return;
 		if (
