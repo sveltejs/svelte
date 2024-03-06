@@ -442,11 +442,6 @@ const errors = {
 	// 		message
 	// 	};
 	// },
-	// contextual_store: {
-	// 	code: 'contextual-store',
-	// 	message:
-	// 		'Stores must be declared at the top level of the component (this may change in a future version of Svelte)'
-	// },
 	// default_export: {
 	// 	code: 'default-export',
 	// 	message: 'A component cannot have a default export'

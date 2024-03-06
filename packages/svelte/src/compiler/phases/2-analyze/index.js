@@ -300,21 +300,28 @@ export function analyze_component(root, options) {
 					declaration.initial.source.value === 'svelte/store'
 				))
 		) {
+			let is_nested_store_subscription = false;
+			for (const reference of references) {
+				for (let i = reference.path.length - 1; i >= 0; i--) {
+					const scope =
+						scopes.get(reference.path[i]) ||
+						module.scopes.get(reference.path[i]) ||
+						instance.scopes.get(reference.path[i]);
+					if (scope) {
+						const owner = scope?.owner(store_name);
+						is_nested_store_subscription =
+							!!owner && owner !== module.scope && owner !== instance.scope;
+						break;
+					}
+				}
+			}
+			if (is_nested_store_subscription) {
+				error(references[0].node, 'illegal-store-subscription');
+			}
+
 			if (options.runes !== false) {
 				if (declaration === null && /[a-z]/.test(store_name[0])) {
-					let is_nested_store_subscription = false;
-					for (let i = references[0].path.length - 1; i >= 0; i--) {
-						const scope = scopes.get(references[0].path[i]);
-						if (scope && scope !== module.scope && scope.declarations.has(store_name)) {
-							is_nested_store_subscription = true;
-							break;
-						}
-					}
-					if (is_nested_store_subscription) {
-						error(references[0].node, 'illegal-store-subscription');
-					} else {
-						error(references[0].node, 'illegal-global', name);
-					}
+					error(references[0].node, 'illegal-global', name);
 				} else if (declaration !== null && Runes.includes(/** @type {any} */ (name))) {
 					for (const { node, path } of references) {
 						if (path.at(-1)?.type === 'CallExpression') {
