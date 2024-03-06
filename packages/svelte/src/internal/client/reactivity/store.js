@@ -10,13 +10,13 @@ import { mutable_source, set } from './sources.js';
  * signal that will be updated when the store is. The store references container is needed to
  * track reassignments to stores and to track the correct component context.
  * @template V
- * @param {import('../types.js').Store<V> | null | undefined} store
+ * @param {import('#client').Store<V> | null | undefined} store
  * @param {string} store_name
- * @param {import('../types.js').StoreReferencesContainer} stores
+ * @param {import('#client').StoreReferencesContainer} stores
  * @returns {V}
  */
 export function store_get(store, store_name, stores) {
-	/** @type {import('../types.js').StoreReferencesContainer[''] | undefined} */
+	/** @type {import('#client').StoreReferencesContainer[''] | undefined} */
 	let entry = stores[store_name];
 	const is_new = entry === undefined;
 
@@ -29,8 +29,8 @@ export function store_get(store, store_name, stores) {
 		};
 		// TODO: can we remove this code? it was refactored out when we split up source/comptued signals
 		// push_destroy_fn(entry.value, () => {
-		// 	/** @type {import('../types.js').StoreReferencesContainer['']} */ (entry).last_value =
-		// 		/** @type {import('../types.js').StoreReferencesContainer['']} */ (entry).value.value;
+		// 	/** @type {import('#client').StoreReferencesContainer['']} */ (entry).last_value =
+		// 		/** @type {import('#client').StoreReferencesContainer['']} */ (entry).value.value;
 		// });
 		stores[store_name] = entry;
 	}
@@ -49,8 +49,8 @@ export function store_get(store, store_name, stores) {
 
 /**
  * @template V
- * @param {import('../types.js').Store<V> | null | undefined} store
- * @param {import('../types.js').Source<V>} source
+ * @param {import('#client').Store<V> | null | undefined} store
+ * @param {import('#client').Source<V>} source
  */
 function connect_store_to_signal(store, source) {
 	if (store == null) {
@@ -70,7 +70,7 @@ function connect_store_to_signal(store, source) {
 /**
  * Sets the new value of a store and returns that value.
  * @template V
- * @param {import('../types.js').Store<V>} store
+ * @param {import('#client').Store<V>} store
  * @param {V} value
  * @returns {V}
  */
@@ -81,7 +81,7 @@ export function store_set(store, value) {
 
 /**
  * Unsubscribes from all auto-subscribed stores on destroy
- * @param {import('../types.js').StoreReferencesContainer} stores
+ * @param {import('#client').StoreReferencesContainer} stores
  */
 export function unsubscribe_on_destroy(stores) {
 	on_destroy(() => {
@@ -97,7 +97,7 @@ export function unsubscribe_on_destroy(stores) {
 
 /**
  * Updates a store with a new value.
- * @param {import('../types.js').Store<V>} store  the store to update
+ * @param {import('#client').Store<V>} store  the store to update
  * @param {any} expression  the expression that mutates the store
  * @param {V} new_value  the new store value
  * @template V
@@ -110,18 +110,18 @@ export function mutate_store(store, expression, new_value) {
 /**
  * @template V
  * @param {unknown} val
- * @returns {val is import('../types.js').Store<V>}
+ * @returns {val is import('#client').Store<V>}
  */
 export function is_store(val) {
 	return (
 		typeof val === 'object' &&
 		val !== null &&
-		typeof (/** @type {import('../types.js').Store<V>} */ (val).subscribe) === 'function'
+		typeof (/** @type {import('#client').Store<V>} */ (val).subscribe) === 'function'
 	);
 }
 
 /**
- * @param {import('../types.js').Store<number>} store
+ * @param {import('#client').Store<number>} store
  * @param {number} store_value
  * @param {1 | -1} [d]
  * @returns {number}
@@ -132,7 +132,7 @@ export function update_store(store, store_value, d = 1) {
 }
 
 /**
- * @param {import('../types.js').Store<number>} store
+ * @param {import('#client').Store<number>} store
  * @param {number} store_value
  * @param {1 | -1} [d]
  * @returns {number}

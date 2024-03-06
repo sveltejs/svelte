@@ -78,8 +78,6 @@ export type Effect = {
 
 export type Reaction = Derived | Effect;
 
-export type Signal<V = unknown> = Source<V> | Reaction;
-
 export type MaybeSignal<T = unknown> = T | Source<T>;
 
 export type UnwrappedSignal<T> = T extends Value<infer U> ? U : T;
@@ -87,3 +85,5 @@ export type UnwrappedSignal<T> = T extends Value<infer U> ? U : T;
 export type Value<V = unknown> = Source<V> | Derived<V>;
 
 export type ValueDebug<V = unknown> = SourceDebug<V> | DerivedDebug<V>;
+
+export type Signal = Source | Derived | Effect;
