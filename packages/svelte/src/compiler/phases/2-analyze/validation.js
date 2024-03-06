@@ -65,6 +65,11 @@ function validate_component(node, context) {
 	});
 }
 
+const react_attributes = new Map([
+	['className', 'class'],
+	['htmlFor', 'for']
+]);
+
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
@@ -79,8 +84,6 @@ function validate_element(node, context) {
 			if (regex_illegal_attribute_character.test(attribute.name)) {
 				error(attribute, 'invalid-attribute-name', attribute.name);
 			}
-
-			validate_attribute_name(attribute, context);
 
 			if (attribute.name.startsWith('on') && attribute.name.length > 2) {
 				if (!is_expression_attribute(attribute)) {
@@ -111,6 +114,20 @@ function validate_element(node, context) {
 			if (attribute.name === 'is' && context.state.options.namespace !== 'foreign') {
 				warn(context.state.analysis.warnings, attribute, context.path, 'avoid-is');
 			}
+
+			const correct_name = react_attributes.get(attribute.name);
+			if (correct_name) {
+				warn(
+					context.state.analysis.warnings,
+					attribute,
+					context.path,
+					'invalid-html-attribute',
+					attribute.name,
+					correct_name
+				);
+			}
+
+			validate_attribute_name(attribute, context);
 		} else if (attribute.type === 'AnimateDirective') {
 			const parent = context.path.at(-2);
 			if (parent?.type !== 'EachBlock') {

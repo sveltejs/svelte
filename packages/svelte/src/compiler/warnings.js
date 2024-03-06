@@ -17,7 +17,13 @@ const attributes = {
 	'global-event-reference': (name) =>
 		`You are referencing globalThis.${name}. Did you forget to declare a variable with that name?`,
 	'illegal-attribute-character': () =>
-		"Attributes should not contain ':' characters to prevent ambiguity with Svelte directives"
+		"Attributes should not contain ':' characters to prevent ambiguity with Svelte directives",
+	/**
+	 * @param {string} wrong
+	 * @param {string} right
+	 */
+	'invalid-html-attribute': (wrong, right) =>
+		`'${wrong}' is not a valid HTML attribute. Did you mean '${right}'?`
 };
 
 /** @satisfies {Warnings} */
