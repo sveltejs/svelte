@@ -335,7 +335,9 @@ const variables = {
 	'duplicate-declaration': (name) => `'${name}' has already been declared`,
 	'default-export': () => `A component cannot have a default export`,
 	'illegal-variable-declaration': () =>
-		'Cannot declare same variable name which is imported inside <script context="module">'
+		'Cannot declare same variable name which is imported inside <script context="module">',
+	'illegal-store-subscription': () =>
+		'Cannot subscribe to stores that are not declared at the top level of the component'
 };
 
 /** @satisfies {Errors} */
@@ -453,10 +455,6 @@ const errors = {
 	// 	code: 'illegal-declaration',
 	// 	message: 'The $ prefix is reserved, and cannot be used for variable and import names'
 	// },
-	// illegal_global: /** @param {string} name */ (name) => ({
-	// 	code: 'illegal-global',
-	// 	message: `${name} is an illegal variable name`
-	// }),
 	// invalid_directive_value: {
 	// 	code: 'invalid-directive-value',
 	// 	message:
