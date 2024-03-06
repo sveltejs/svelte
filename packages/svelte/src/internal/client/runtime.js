@@ -865,8 +865,7 @@ export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
 }
 
 /**
- * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('./types.js').Signal} signal
  * @param {number} to_status
  * @param {boolean} force_schedule
  * @returns {void}
@@ -962,9 +961,9 @@ export function push_destroy_fn(signal, destroy_fn) {
 }
 
 const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
+
 /**
- * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('./types.js').Signal} signal
  * @param {number} status
  * @returns {void}
  */
@@ -974,14 +973,14 @@ export function set_signal_status(signal, status) {
 
 /**
  * @template V
- * @param {V | import('./types.js').Signal<V>} val
- * @returns {val is import('./types.js').Signal<V>}
+ * @param {V | import('./types.js').Value<V>} val
+ * @returns {val is import('./types.js').Value<V>}
  */
 export function is_signal(val) {
 	return (
 		typeof val === 'object' &&
 		val !== null &&
-		typeof (/** @type {import('./types.js').Signal<V>} */ (val).f) === 'number'
+		typeof (/** @type {import('./types.js').Value<V>} */ (val).f) === 'number'
 	);
 }
 
