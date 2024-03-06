@@ -1,14 +1,14 @@
 [
 	{
-		"code": "invalid-declaration",
+		"code": "invalid-css-declaration",
 		"message": "Declaration cannot be empty",
 		"start": {
-			"line": 11,
-			"column": 0
+			"line": 5,
+			"column": 8
 		},
 		"end": {
-			"line": 11,
-			"column": 0
+			"line": 5,
+			"column": 8
 		}
 	}
 ]
