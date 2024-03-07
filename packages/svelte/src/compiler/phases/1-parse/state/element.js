@@ -51,6 +51,23 @@ function parent_is_head(stack) {
 	return false;
 }
 
+/** @param {import('#compiler').TemplateNode[]} stack */
+function parent_is_shadowroot_template(stack) {
+	// https://developer.chrome.com/docs/css-ui/declarative-shadow-dom#building_a_declarative_shadow_root
+	let i = stack.length;
+	while (i--) {
+		if (
+			stack[i].type === 'RegularElement' &&
+			/** @type {import('#compiler').RegularElement} */ (stack[i]).attributes.some(
+				(a) => a.type === 'Attribute' && a.name === 'shadowrootmode'
+			)
+		) {
+			return true;
+		}
+	}
+	return false;
+}
+
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
 const regex_closing_comment = /-->/;
 const regex_capital_letter = /[A-Z]/;
@@ -112,7 +129,8 @@ export default function tag(parser) {
 			? 'Component'
 			: name === 'title' && parent_is_head(parser.stack)
 				? 'TitleElement'
-				: name === 'slot'
+				: // TODO Svelte 6/7: once slots are removed in favor of snippets, always keep slot as a regular element
+					name === 'slot' && !parent_is_shadowroot_template(parser.stack)
 					? 'SlotElement'
 					: 'RegularElement';
 
