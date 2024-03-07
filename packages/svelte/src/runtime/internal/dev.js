@@ -292,9 +292,9 @@ export function construct_svelte_component_dev(component, props) {
  * </script>
  * <MyComponent foo={'bar'} />
  * ```
- * @template {Record<string, any>} [Props=any]
- * @template {Record<string, any>} [Events=any]
- * @template {Record<string, any>} [Slots=any]
+ * @template {Record<string, any> | never} [Props=Record<string, any>]
+ * @template {Record<string, any>} [Events=Record<string, any>]
+ * @template {Record<string, any>} [Slots=Record<string, any>]
  * @extends {SvelteComponent<Props, Events>}
  */
 export class SvelteComponentDev extends SvelteComponent {
@@ -346,9 +346,9 @@ export class SvelteComponentDev extends SvelteComponent {
 	$inject_state() {}
 }
 /**
- * @template {Record<string, any>} [Props=any]
- * @template {Record<string, any>} [Events=any]
- * @template {Record<string, any>} [Slots=any]
+ * @template {Record<string, any> | never} [Props=Record<string, any>]
+ * @template {Record<string, any>} [Events=Record<string, any>]
+ * @template {Record<string, any>} [Slots=Record<string, any>]
  * @deprecated Use `SvelteComponent` instead. See PR for more information: https://github.com/sveltejs/svelte/pull/8512
  * @extends {SvelteComponentDev<Props, Events, Slots>}
  */
