@@ -1,0 +1,160 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 125,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "RegularElement",
+				"start": 0,
+				"end": 66,
+				"name": "template",
+				"attributes": [
+					{
+						"type": "Attribute",
+						"start": 10,
+						"end": 31,
+						"name": "shadowrootmode",
+						"value": [
+							{
+								"start": 26,
+								"end": 30,
+								"type": "Text",
+								"raw": "open",
+								"data": "open"
+							}
+						]
+					}
+				],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 32,
+							"end": 34,
+							"raw": "\n\t",
+							"data": "\n\t"
+						},
+						{
+							"type": "RegularElement",
+							"start": 34,
+							"end": 54,
+							"name": "p",
+							"attributes": [],
+							"fragment": {
+								"type": "Fragment",
+								"nodes": [
+									{
+										"type": "RegularElement",
+										"start": 37,
+										"end": 50,
+										"name": "slot",
+										"attributes": [],
+										"fragment": {
+											"type": "Fragment",
+											"nodes": [],
+											"transparent": true
+										}
+									}
+								],
+								"transparent": true
+							}
+						},
+						{
+							"type": "Text",
+							"start": 54,
+							"end": 55,
+							"raw": "\n",
+							"data": "\n"
+						}
+					],
+					"transparent": true
+				}
+			},
+			{
+				"type": "Text",
+				"start": 66,
+				"end": 67,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "RegularElement",
+				"start": 67,
+				"end": 111,
+				"name": "template",
+				"attributes": [],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 77,
+							"end": 79,
+							"raw": "\n\t",
+							"data": "\n\t"
+						},
+						{
+							"type": "RegularElement",
+							"start": 79,
+							"end": 99,
+							"name": "p",
+							"attributes": [],
+							"fragment": {
+								"type": "Fragment",
+								"nodes": [
+									{
+										"type": "SlotElement",
+										"start": 82,
+										"end": 95,
+										"name": "slot",
+										"attributes": [],
+										"fragment": {
+											"type": "Fragment",
+											"nodes": [],
+											"transparent": true
+										}
+									}
+								],
+								"transparent": true
+							}
+						},
+						{
+							"type": "Text",
+							"start": 99,
+							"end": 100,
+							"raw": "\n",
+							"data": "\n"
+						}
+					],
+					"transparent": true
+				}
+			},
+			{
+				"type": "Text",
+				"start": 111,
+				"end": 112,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "SlotElement",
+				"start": 112,
+				"end": 125,
+				"name": "slot",
+				"attributes": [],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": [],
+					"transparent": true
+				}
+			}
+		],
+		"transparent": false
+	},
+	"options": null
+}
