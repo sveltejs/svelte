@@ -8,7 +8,7 @@
 <div>getMinutes: {date.getUTCMinutes()}</div>
 <div>getHours: {date.getUTCHours()}</div>
 <div>getTime: {date.getTime()}</div>
-<div>toDateString: {date.toDateString()}</div>
+<div>toUTCString: {date.toUTCString()}</div>
 
 <button onclick={() => {
 	date.setSeconds(date.getSeconds() + 1);
