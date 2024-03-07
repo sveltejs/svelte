@@ -374,8 +374,8 @@ export function analyze_component(root, options) {
 		uses_rest_props: false,
 		uses_slots: false,
 		uses_component_bindings: false,
-		custom_element: options.customElement,
-		inject_styles: options.css === 'injected' || !!options.customElement,
+		custom_element: options.customElementOptions ?? options.customElement,
+		inject_styles: options.css === 'injected' || options.customElement,
 		accessors: options.customElement
 			? true
 			: !!options.accessors ||
@@ -398,6 +398,10 @@ export function analyze_component(root, options) {
 			keyframes: []
 		}
 	};
+
+	if (!options.customElement && root.options?.customElement) {
+		warn(analysis.warnings, root.options, [], 'missing-custom-element-compile-option');
+	}
 
 	if (analysis.runes) {
 		const props_refs = module.scope.references.get('$$props');
