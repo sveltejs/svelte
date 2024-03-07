@@ -237,6 +237,11 @@ const block = {
 	'empty-block': () => 'Empty block'
 };
 
+const options = {
+	'missing-custom-element-compile-option': () =>
+		"The 'customElement' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?"
+};
+
 /** @satisfies {Warnings} */
 const warnings = {
 	...css,
@@ -247,7 +252,8 @@ const warnings = {
 	...state,
 	...components,
 	...legacy,
-	...block
+	...block,
+	...options
 };
 
 /** @typedef {typeof warnings} AllWarnings */

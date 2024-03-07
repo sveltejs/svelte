@@ -11,7 +11,7 @@ import type { SourceMap } from 'magic-string';
 import type { Context } from 'zimmerframe';
 import type { Scope } from '../phases/scope.js';
 import * as Css from './css.js';
-import type { EachBlock, Namespace, SvelteNode } from './template.js';
+import type { EachBlock, Namespace, SvelteNode, SvelteOptions } from './template.js';
 
 /** The return value of `compile` from `svelte/compiler` */
 export interface CompileResult {
@@ -224,6 +224,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		sourcemap: CompileOptions['sourcemap'];
 		legacy: Required<Required<CompileOptions>['legacy']>;
 		runes: CompileOptions['runes'];
+		customElementOptions: SvelteOptions['customElement'];
 	};
 
 export type DeclarationKind =

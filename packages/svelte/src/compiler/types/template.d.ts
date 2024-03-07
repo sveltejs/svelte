@@ -65,7 +65,7 @@ export interface Root extends BaseNode {
 }
 
 export interface SvelteOptions {
-	// start/end info (needed for Prettier, when someone wants to keep the options where they are)
+	// start/end info (needed for warnings and for our Prettier plugin)
 	start: number;
 	end: number;
 	// options
