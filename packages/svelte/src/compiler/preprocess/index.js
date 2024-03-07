@@ -318,9 +318,8 @@ async function process_markup(process, source) {
 				: undefined,
 			dependencies: processed.dependencies
 		};
-	} else {
-		return {};
 	}
+	return {};
 }
 
 /**
