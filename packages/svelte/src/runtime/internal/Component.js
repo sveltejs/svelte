@@ -21,10 +21,14 @@ import { transition_in } from './transitions.js';
 
 /** @returns {void} */
 export function bind(component, name, callback) {
-	const index = component.$$.props[name];
-	if (index !== undefined) {
-		component.$$.bound[index] = callback;
-		callback(component.$$.ctx[index]);
+	const i = component.$$.props[name];
+	if (i !== undefined) {
+		let dirty = false;
+		// special dirty flag for bind
+		if (component.$$.bound[i] === null) dirty = true;
+		component.$$.bound[i] = callback;
+		// first binding call, if child value is not yet dirty, skip to prevent unnecessary backflow
+		callback(component.$$.ctx[i], /** skip_binding */ !dirty);
 	}
 }
 
@@ -134,9 +138,13 @@ export function init(
 	$$.ctx = instance
 		? instance(component, options.props || {}, (i, ret, ...rest) => {
 				const value = rest.length ? rest[0] : ret;
+				// `$$.bound[i] = null` as a special dirty flag to prevent unnecessary backflow, consumed in bind()
+				// only set at init phase during `instance()` call, and 1st `$$.update()` call before `ready`
+				if (!$$.ctx) $$.bound[i] = null;
 				if ($$.ctx && not_equal($$.ctx[i], ($$.ctx[i] = value))) {
 					if (!$$.skip_bound && $$.bound[i]) $$.bound[i](value);
 					if (ready) make_dirty(component, i);
+					else $$.bound[i] = null;
 				}
 				return ret;
 		  })
