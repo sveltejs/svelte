@@ -50,7 +50,7 @@ export function store_get(store, store_name, stores) {
 /**
  * @template V
  * @param {import('#client').Store<V> | null | undefined} store
- * @param {import('./types.js').Source<V>} source
+ * @param {import('#client').Source<V>} source
  */
 function connect_store_to_signal(store, source) {
 	if (store == null) {

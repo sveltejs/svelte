@@ -24,7 +24,7 @@ import { CLEAN, DERIVED, DIRTY, MANAGED } from '../constants.js';
 /**
  * @template V
  * @param {V} value
- * @returns {import('./types.js').Source<V>}
+ * @returns {import('#client').Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function source(value) {
@@ -47,7 +47,7 @@ export function source(value) {
 /**
  * @template V
  * @param {V} initial_value
- * @returns {import('./types.js').Source<V>}
+ * @returns {import('#client').Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function mutable_source(initial_value) {
@@ -127,9 +127,9 @@ export function set(signal, value) {
 		// @ts-expect-error
 		if (DEV && signal.inspect) {
 			if (is_batching_effect) {
-				set_last_inspected_signal(/** @type {import('#client').SourceDebug} */ (signal));
+				set_last_inspected_signal(/** @type {import('#client').ValueDebug} */ (signal));
 			} else {
-				for (const fn of /** @type {import('#client').SourceDebug} */ (signal).inspect) fn();
+				for (const fn of /** @type {import('#client').ValueDebug} */ (signal).inspect) fn();
 			}
 		}
 	}

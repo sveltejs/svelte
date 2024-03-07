@@ -27,8 +27,7 @@ export function derived(fn) {
 	};
 
 	if (DEV) {
-		// @ts-expect-error
-		signal.inspect = new Set();
+		/** @type {import('#client').DerivedDebug} */ (signal).inspect = new Set();
 	}
 
 	if (current_reaction !== null) {
