@@ -1345,7 +1345,7 @@ export function bind_prop(props, prop, value) {
 function is_bound_this(bound_value, element_or_component) {
 	// Find the original target if the value is proxied.
 	const proxy_target = bound_value && bound_value[STATE_SYMBOL]?.t;
-	return bound_value === element_or_component || (proxy_target === element_or_component);
+	return bound_value === element_or_component || proxy_target === element_or_component;
 }
 
 /**
