@@ -8,7 +8,7 @@ const files = import.meta.glob('../../../../../../packages/svelte/src/**/*.js', 
 });
 
 // service worker requests files under this path to load the compiler and runtime
-export function GET({ params }) {
+export async function GET({ params }) {
 	let url = '';
 	if (params.path === 'compiler.cjs') {
 		url = compiler_cjs;
@@ -19,5 +19,13 @@ export function GET({ params }) {
 		url = files[path];
 	}
 
-	return read(url);
+	const response = read(url);
+	return new Response(response.body, {
+		status: response.status,
+		statusText: response.statusText,
+		headers: {
+			...response.headers,
+			'Cache-Control': 'public, max-age=10' // 10 seconds so that redeploys are picked up quickly
+		}
+	});
 }
