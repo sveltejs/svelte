@@ -48,6 +48,27 @@ export function store_get(store, store_name, stores) {
 }
 
 /**
+ * Unsubscribe from a store if it's not the same as the one in the store references container.
+ * We need this in addition to `store_get` because someone could unsubscribe from a store but
+ * then never subscribe to the new one (if any), causing the subscription to stay open wrongfully.
+ * @param {import('#client').Store<any> | null | undefined} store
+ * @param {string} store_name
+ * @param {import('#client').StoreReferencesContainer} stores
+ */
+export function store_unsub(store, store_name, stores) {
+	/** @type {import('#client').StoreReferencesContainer[''] | undefined} */
+	let entry = stores[store_name];
+
+	if (entry && entry.store !== store) {
+		// Don't reset store yet, so that store_get above can resubscribe to new store if necessary
+		entry.unsubscribe();
+		entry.unsubscribe = noop;
+	}
+
+	return store;
+}
+
+/**
  * @template V
  * @param {import('#client').Store<V> | null | undefined} store
  * @param {import('#client').Source<V>} source

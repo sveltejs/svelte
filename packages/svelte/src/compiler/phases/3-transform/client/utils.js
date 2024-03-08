@@ -393,28 +393,37 @@ export function serialize_set_binding(node, context, fallback, options) {
 				return b.call(left, value);
 			} else if (is_store) {
 				return b.call('$.store_set', serialize_get_binding(b.id(left_name), state), value);
-			} else if (binding.kind === 'state') {
-				return b.call(
-					'$.set',
-					b.id(left_name),
-					context.state.analysis.runes &&
-						!options?.skip_proxy_and_freeze &&
-						should_proxy_or_freeze(value, context.state.scope)
-						? b.call('$.proxy', value)
-						: value
-				);
-			} else if (binding.kind === 'frozen_state') {
-				return b.call(
-					'$.set',
-					b.id(left_name),
-					context.state.analysis.runes &&
-						!options?.skip_proxy_and_freeze &&
-						should_proxy_or_freeze(value, context.state.scope)
-						? b.call('$.freeze', value)
-						: value
-				);
 			} else {
-				return b.call('$.set', b.id(left_name), value);
+				let call;
+				if (binding.kind === 'state') {
+					call = b.call(
+						'$.set',
+						b.id(left_name),
+						context.state.analysis.runes &&
+							!options?.skip_proxy_and_freeze &&
+							should_proxy_or_freeze(value, context.state.scope)
+							? b.call('$.proxy', value)
+							: value
+					);
+				} else if (binding.kind === 'frozen_state') {
+					call = b.call(
+						'$.set',
+						b.id(left_name),
+						context.state.analysis.runes &&
+							!options?.skip_proxy_and_freeze &&
+							should_proxy_or_freeze(value, context.state.scope)
+							? b.call('$.freeze', value)
+							: value
+					);
+				} else {
+					call = b.call('$.set', b.id(left_name), value);
+				}
+
+				if (state.scope.get(`$${left.name}`)?.kind === 'store_sub') {
+					return b.call('$.store_unsub', call, b.literal(`$${left.name}`), b.id('$$subscriptions'));
+				} else {
+					return call;
+				}
 			}
 		} else {
 			if (is_store) {
