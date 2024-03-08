@@ -1365,7 +1365,7 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 	const e = effect(() => {
 		old_parts = parts;
 		// We only track changes to the parts, not the value itself to avoid unnecessary reruns.
-		parts = get_parts?.() || (element_or_component ? [element_or_component] : []);
+		parts = get_parts?.() || [];
 
 		untrack(() => {
 			if (element_or_component !== get_value(...parts)) {
