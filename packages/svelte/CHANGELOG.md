@@ -1,5 +1,23 @@
 # svelte
 
+## 5.0.0-next.73
+
+### Patch Changes
+
+- fix: improve bind:this support around proxyied state ([#10732](https://github.com/sveltejs/svelte/pull/10732))
+
+- fix: bump specificity on all members of a selector list ([#10730](https://github.com/sveltejs/svelte/pull/10730))
+
+- breaking: preserve slots inside templates with a shadowrootmode attribute ([#10721](https://github.com/sveltejs/svelte/pull/10721))
+
+- chore: custom elements validation ([#10720](https://github.com/sveltejs/svelte/pull/10720))
+
+- fix: ensure performance.now() and requestAnimationFrame() are polyfilled in ssr ([#10715](https://github.com/sveltejs/svelte/pull/10715))
+
+- fix: eagerly unsubscribe when store is changed ([#10727](https://github.com/sveltejs/svelte/pull/10727))
+
+- fix: error when exporting reassigned state from module context ([#10728](https://github.com/sveltejs/svelte/pull/10728))
+
 ## 5.0.0-next.72
 
 ### Patch Changes
