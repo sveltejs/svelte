@@ -321,7 +321,7 @@ To apply styles to a selector globally, use the `:global(...)` modifier.
 
 If you want to make @keyframes that are accessible globally, you need to prepend your keyframe names with `-global-`.
 
-The `-global-` part will be removed when compiled, and the keyframe then be referenced using just `my-animation-name` elsewhere in your code.
+The `-global-` part will be removed when compiled, and the keyframe will then be referenced using just `my-animation-name` elsewhere in your code.
 
 ```svelte
 <style>
@@ -333,9 +333,9 @@ The `-global-` part will be removed when compiled, and the keyframe then be refe
 
 There should only be 1 top-level `<style>` tag per component.
 
-However, it is possible to have `<style>` tag nested inside other elements or logic blocks.
+However, it is possible to have a `<style>` tag nested inside other elements or logic blocks.
 
-In that case, the `<style>` tag will be inserted as-is into the DOM, no scoping or processing will be done on the `<style>` tag.
+In that case, the `<style>` tag will be inserted as-is into the DOM; no scoping or processing will be done on the `<style>` tag.
 
 ```svelte
 <div>
