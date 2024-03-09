@@ -30,7 +30,7 @@ import {
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
-import { mutate, set } from './reactivity/sources.js';
+import { mutate, set, source } from './reactivity/sources.js';
 
 const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT;
 
@@ -430,11 +430,7 @@ export function execute_effect(signal) {
 		current_effect = previous_effect;
 	}
 	const component_context = signal.x;
-	if (
-		is_runes(component_context) && // Don't rerun pre effects more than once to accomodate for "$: only runs once" behavior
-		(signal.f & PRE_EFFECT) !== 0 &&
-		current_queued_pre_and_render_effects.length > 0
-	) {
+	if ((signal.f & PRE_EFFECT) !== 0 && current_queued_pre_and_render_effects.length > 0) {
 		flush_local_pre_effects(component_context);
 	}
 }
@@ -1163,6 +1159,9 @@ export function push(props, runes = false, fn) {
 		s: props,
 		// runes
 		r: runes,
+		// legacy $:
+		l1: [],
+		l2: source(false),
 		// update_callbacks
 		u: null
 	};

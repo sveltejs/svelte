@@ -42,6 +42,10 @@ export type ComponentContext = {
 	c: null | Map<unknown, unknown>;
 	/** runes */
 	r: boolean;
+	/** legacy mode: if `$:` statements are allowed to run (ensures they only run once per render) */
+	l1: any[];
+	/** legacy mode: if `$:` statements are allowed to run (ensures they only run once per render) */
+	l2: Source<boolean>;
 	/** update_callbacks */
 	u: null | {
 		/** afterUpdate callbacks */
