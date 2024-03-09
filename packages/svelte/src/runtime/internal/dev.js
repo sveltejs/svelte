@@ -331,9 +331,12 @@ export class SvelteComponentDev extends SvelteComponent {
 		super();
 	}
 
-	/** @returns {void} */
-	$destroy() {
-		super.$destroy();
+	/**
+	 * @param {import('./private.js').ComponentDestroyOptions} [options]
+	 * @returns {void}
+	 */
+	$destroy(options) {
+		super.$destroy(options);
 		this.$destroy = () => {
 			console.warn('Component was already destroyed'); // eslint-disable-line no-console
 		};
