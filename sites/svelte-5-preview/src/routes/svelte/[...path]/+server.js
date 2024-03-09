@@ -25,7 +25,7 @@ export async function GET({ params }) {
 		statusText: response.statusText,
 		headers: {
 			...response.headers,
-			'Cache-Control': 'public, max-age=10' // 10 seconds so that redeploys are picked up quickly
+			'Cache-Control': 'public, max-age=30' // 30 seconds so that redeploys are picked up quickly
 		}
 	});
 }
