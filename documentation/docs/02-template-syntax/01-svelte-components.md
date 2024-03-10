@@ -212,7 +212,7 @@ If a statement consists entirely of an assignment to an undeclared variable, Sve
 
 A _store_ is an object that allows reactive access to a value via a simple _store contract_. The [`svelte/store` module](/docs/svelte-store) contains minimal store implementations which fulfil this contract.
 
-Any time you have a reference to a store, you can access its value inside a component by prefixing it with the `$` character. This causes Svelte to declare the prefixed variable, subscribe to the store at component initialization and unsubscribe when appropriate.
+Any time you have a reference to a store, you can access its value inside a component by prefixing it with the `$` character. This causes Svelte to declare the prefixed variable, subscribe to the store at component initialisation and unsubscribe when appropriate.
 
 Assignments to `$`-prefixed variables require that the variable be a writable store, and will result in a call to the store's `.set` method.
 
@@ -321,7 +321,7 @@ To apply styles to a selector globally, use the `:global(...)` modifier.
 
 If you want to make @keyframes that are accessible globally, you need to prepend your keyframe names with `-global-`.
 
-The `-global-` part will be removed when compiled, and the keyframe then be referenced using just `my-animation-name` elsewhere in your code.
+The `-global-` part will be removed when compiled, and the keyframe will then be referenced using just `my-animation-name` elsewhere in your code.
 
 ```svelte
 <style>
@@ -333,9 +333,9 @@ The `-global-` part will be removed when compiled, and the keyframe then be refe
 
 There should only be 1 top-level `<style>` tag per component.
 
-However, it is possible to have `<style>` tag nested inside other elements or logic blocks.
+However, it is possible to have a `<style>` tag nested inside other elements or logic blocks.
 
-In that case, the `<style>` tag will be inserted as-is into the DOM, no scoping or processing will be done on the `<style>` tag.
+In that case, the `<style>` tag will be inserted as-is into the DOM; no scoping or processing will be done on the `<style>` tag.
 
 ```svelte
 <div>

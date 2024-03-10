@@ -68,6 +68,7 @@ import { bind_transition } from './transitions.js';
 import { mutable_source, source, set } from './reactivity/sources.js';
 import { safe_not_equal } from './reactivity/equality.js';
 import { derived, derived_safe_equal } from './reactivity/deriveds.js';
+import { STATE_SYMBOL } from './constants.js';
 
 /** @type {Set<string>} */
 const all_registered_events = new Set();
@@ -1326,6 +1327,17 @@ export function bind_prop(props, prop, value) {
 }
 
 /**
+ * @param {any} bound_value
+ * @param {Element} element_or_component
+ * @returns {boolean}
+ */
+function is_bound_this(bound_value, element_or_component) {
+	// Find the original target if the value is proxied.
+	const proxy_target = bound_value && bound_value[STATE_SYMBOL]?.t;
+	return bound_value === element_or_component || proxy_target === element_or_component;
+}
+
+/**
  * @param {Element} element_or_component
  * @param {(value: unknown, ...parts: unknown[]) => void} update
  * @param {(...parts: unknown[]) => unknown} get_value
@@ -1349,7 +1361,7 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 				update(element_or_component, ...parts);
 				// If this is an effect rerun (cause: each block context changes), then nullfiy the binding at
 				// the previous position if it isn't already taken over by a different effect.
-				if (old_parts && get_value(...old_parts) === element_or_component) {
+				if (old_parts && is_bound_this(get_value(...old_parts), element_or_component)) {
 					update(null, ...old_parts);
 				}
 			}
@@ -1364,7 +1376,7 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 		// Defer to the next tick so that all updates can be reconciled first.
 		// This solves the case where one variable is shared across multiple this-bindings.
 		effect(() => {
-			if (get_value(...parts) === element_or_component) {
+			if (parts && is_bound_this(get_value(...parts), element_or_component)) {
 				update(null, ...parts);
 			}
 		});

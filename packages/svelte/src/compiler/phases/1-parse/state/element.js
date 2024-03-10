@@ -51,6 +51,23 @@ function parent_is_head(stack) {
 	return false;
 }
 
+/** @param {import('#compiler').TemplateNode[]} stack */
+function parent_is_shadowroot_template(stack) {
+	// https://developer.chrome.com/docs/css-ui/declarative-shadow-dom#building_a_declarative_shadow_root
+	let i = stack.length;
+	while (i--) {
+		if (
+			stack[i].type === 'RegularElement' &&
+			/** @type {import('#compiler').RegularElement} */ (stack[i]).attributes.some(
+				(a) => a.type === 'Attribute' && a.name === 'shadowrootmode'
+			)
+		) {
+			return true;
+		}
+	}
+	return false;
+}
+
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
 const regex_closing_comment = /-->/;
 const regex_capital_letter = /[A-Z]/;
@@ -112,7 +129,8 @@ export default function tag(parser) {
 			? 'Component'
 			: name === 'title' && parent_is_head(parser.stack)
 				? 'TitleElement'
-				: name === 'slot'
+				: // TODO Svelte 6/7: once slots are removed in favor of snippets, always keep slot as a regular element
+					name === 'slot' && !parent_is_shadowroot_template(parser.stack)
 					? 'SlotElement'
 					: 'RegularElement';
 
@@ -268,22 +286,41 @@ export default function tag(parser) {
 		if (name === 'script') {
 			const content = read_script(parser, start, element.attributes);
 
-			if (content) {
-				if (content.context === 'module') {
-					if (current.module) error(start, 'duplicate-script-element');
-					current.module = content;
-				} else {
-					if (current.instance) error(start, 'duplicate-script-element');
-					current.instance = content;
+			/** @type {import('#compiler').Comment | null} */
+			let prev_comment = null;
+			for (let i = current.fragment.nodes.length - 1; i >= 0; i--) {
+				const node = current.fragment.nodes[i];
+
+				if (i === current.fragment.nodes.length - 1 && node.end !== start) {
+					break;
 				}
+
+				if (node.type === 'Comment') {
+					prev_comment = node;
+					break;
+				} else if (node.type !== 'Text' || node.data.trim()) {
+					break;
+				}
+			}
+			if (prev_comment) {
+				// We take advantage of the fact that the root will never have leadingComments set,
+				// and set the previous comment to it so that the warning mechanism can later
+				// inspect the root and see if there was a html comment before it silencing specific warnings.
+				content.content.leadingComments = [{ type: 'Line', value: prev_comment.data }];
+			}
+
+			if (content.context === 'module') {
+				if (current.module) error(start, 'duplicate-script-element');
+				current.module = content;
+			} else {
+				if (current.instance) error(start, 'duplicate-script-element');
+				current.instance = content;
 			}
 		} else {
 			const content = read_style(parser, start, element.attributes);
 
-			if (content) {
-				if (current.css) error(start, 'duplicate-style-element');
-				current.css = content;
-			}
+			if (current.css) error(start, 'duplicate-style-element');
+			current.css = content;
 		}
 		return;
 	}

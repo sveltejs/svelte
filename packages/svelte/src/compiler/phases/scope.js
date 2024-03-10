@@ -14,7 +14,7 @@ export class Scope {
 	 * The immediate parent scope
 	 * @type {Scope | null}
 	 */
-	#parent;
+	parent;
 
 	/**
 	 * Whether or not `var` declarations are contained by this scope
@@ -56,7 +56,7 @@ export class Scope {
 	 */
 	constructor(root, parent, porous) {
 		this.root = root;
-		this.#parent = parent;
+		this.parent = parent;
 		this.#porous = porous;
 		this.function_depth = parent ? parent.function_depth + (porous ? 0 : 1) : 0;
 	}
@@ -83,13 +83,13 @@ export class Scope {
 			error(node, 'invalid-dollar-prefix');
 		}
 
-		if (this.#parent) {
+		if (this.parent) {
 			if (declaration_kind === 'var' && this.#porous) {
-				return this.#parent.declare(node, kind, declaration_kind);
+				return this.parent.declare(node, kind, declaration_kind);
 			}
 
 			if (declaration_kind === 'import') {
-				return this.#parent.declare(node, kind, declaration_kind, initial);
+				return this.parent.declare(node, kind, declaration_kind, initial);
 			}
 		}
 
@@ -112,7 +112,8 @@ export class Scope {
 			prop_alias: null,
 			expression: null,
 			mutation: null,
-			reassigned: false
+			reassigned: false,
+			metadata: null
 		};
 		this.declarations.set(node.name, binding);
 		this.root.conflicts.add(node.name);
@@ -129,7 +130,7 @@ export class Scope {
 	 */
 	generate(preferred_name) {
 		if (this.#porous) {
-			return /** @type {Scope} */ (this.#parent).generate(preferred_name);
+			return /** @type {Scope} */ (this.parent).generate(preferred_name);
 		}
 
 		preferred_name = preferred_name.replace(/[^a-zA-Z0-9_$]/g, '_').replace(/^[0-9]/, '_');
@@ -155,7 +156,7 @@ export class Scope {
 	 * @returns {import('#compiler').Binding | null}
 	 */
 	get(name) {
-		return this.declarations.get(name) ?? this.#parent?.get(name) ?? null;
+		return this.declarations.get(name) ?? this.parent?.get(name) ?? null;
 	}
 
 	/**
@@ -175,7 +176,7 @@ export class Scope {
 	 * @returns {Scope | null}
 	 */
 	owner(name) {
-		return this.declarations.has(name) ? this : this.#parent && this.#parent.owner(name);
+		return this.declarations.has(name) ? this : this.parent && this.parent.owner(name);
 	}
 
 	/**
@@ -193,8 +194,8 @@ export class Scope {
 		const binding = this.declarations.get(node.name);
 		if (binding) {
 			binding.references.push({ node, path });
-		} else if (this.#parent) {
-			this.#parent.reference(node, path);
+		} else if (this.parent) {
+			this.parent.reference(node, path);
 		} else {
 			// no binding was found, and this is the top level scope,
 			// which means this is a global
@@ -534,11 +535,31 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 			// declarations
 			for (const id of extract_identifiers(node.context)) {
-				scope.declare(id, 'each', 'const');
+				const binding = scope.declare(id, 'each', 'const');
+
+				let inside_rest = false;
+				let is_rest_id = false;
+				walk(node.context, null, {
+					Identifier(node) {
+						if (inside_rest && node === id) {
+							is_rest_id = true;
+						}
+					},
+					RestElement(_, { next }) {
+						const prev = inside_rest;
+						inside_rest = true;
+						next();
+						inside_rest = prev;
+					}
+				});
+
+				binding.metadata = { inside_rest: is_rest_id };
 			}
 			if (node.context.type !== 'Identifier') {
 				scope.declare(b.id('$$item'), 'derived', 'synthetic');
 			}
+			// Visit to pick up references from default initializers
+			visit(node.context, { scope });
 
 			if (node.index) {
 				const is_keyed =

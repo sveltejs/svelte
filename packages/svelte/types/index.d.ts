@@ -756,6 +756,11 @@ declare module 'svelte/compiler' {
 		expression: Expression | ((id: Identifier) => Expression) | null;
 		/** If this is set, all mutations should use this expression */
 		mutation: ((assignment: AssignmentExpression, context: Context<any, any>) => Expression) | null;
+		/** Additional metadata, varies per binding type */
+		metadata: {
+			/** `true` if is (inside) a rest parameter */
+			inside_rest?: boolean;
+		} | null;
 	}
 	interface BaseNode_1 {
 		type: string;
@@ -1021,6 +1026,10 @@ declare module 'svelte/compiler' {
 		
 		root: ScopeRoot;
 		/**
+		 * The immediate parent scope
+		 * */
+		parent: Scope | null;
+		/**
 		 * A map of every identifier declared by this scope, and all the
 		 * identifiers that reference it
 		 * */
@@ -1111,7 +1120,7 @@ declare module 'svelte/compiler' {
 	}
 
 	interface SvelteOptions {
-		// start/end info (needed for Prettier, when someone wants to keep the options where they are)
+		// start/end info (needed for warnings and for our Prettier plugin)
 		start: number;
 		end: number;
 		// options

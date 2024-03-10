@@ -27,7 +27,7 @@ import {
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
-import { mutate } from './reactivity/sources.js';
+import { mutate, source } from './reactivity/sources.js';
 
 const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT;
 
@@ -422,11 +422,7 @@ export function execute_effect(effect) {
 		current_effect = previous_effect;
 	}
 
-	if (
-		is_runes(component_context) && // Don't rerun pre effects more than once to accomodate for "$: only runs once" behavior
-		(effect.f & PRE_EFFECT) !== 0 &&
-		current_queued_pre_and_render_effects.length > 0
-	) {
+	if ((effect.f & PRE_EFFECT) !== 0 && current_queued_pre_and_render_effects.length > 0) {
 		const effects = [];
 
 		for (let i = 0; i < current_queued_pre_and_render_effects.length; i++) {
@@ -1062,6 +1058,9 @@ export function push(props, runes = false, fn) {
 		s: props,
 		// runes
 		r: runes,
+		// legacy $:
+		l1: [],
+		l2: source(false),
 		// update_callbacks
 		u: null
 	};

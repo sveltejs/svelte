@@ -270,14 +270,18 @@ You can return a function from `$effect`, which will run immediately before the 
 If you update `$state` inside an `$effect`, you most likely want to use `$derived` instead.
 
 ```svelte
+<!-- Don't do this -->
 <script>
 	let count = $state(0);
-	// Don't do this:
 	let doubled = $state();
 	$effect(() => {
 		doubled = count * 2;
 	});
-	// Do this instead:
+</script>
+
+<!-- Do this instead: -->
+<script>
+	let count = $state(0);
 	let doubled = $derived(count * 2);
 </script>
 ```
@@ -285,8 +289,8 @@ If you update `$state` inside an `$effect`, you most likely want to use `$derive
 This also applies to more complex calculations that require more than a simple expression and write to more than one variable. In these cases, you can use `$derived.by`.
 
 ```svelte
+<!-- Don't do this -->
 <script>
-	// Don't do this:
 	let result_1 = $state();
 	let result_2 = $state();
 	$effect(() => {
@@ -294,7 +298,10 @@ This also applies to more complex calculations that require more than a simple e
 		result_1 = someValue;
 		result_2 = someOtherValue;
 	});
-	// Do this instead:
+</script>
+
+<!-- Do this instead: -->
+<script>
 	let { result_1, result_2 } = $derived.by(() => {
 		// ... some lengthy code resulting in
 		return {
@@ -305,7 +312,7 @@ This also applies to more complex calculations that require more than a simple e
 </script>
 ```
 
-When reacting to a state change and writing to a different state as a result, think about if it's possible to model the code through event handling instead.
+When reacting to a state change and writing to a different state as a result, think about if it's possible to use callback props instead.
 
 ```svelte
 <!-- Don't do this -->
@@ -337,7 +344,7 @@ If you want to have something update from above but also modify it from below (i
 ```svelte
 <script>
 	let { value } = $props();
-	let proxy = {
+	let facade = {
 		get value() {
 			return value.toUpperCase();
 		},
@@ -347,7 +354,7 @@ If you want to have something update from above but also modify it from below (i
 	};
 </script>
 
-<input bind:value={proxy.value} />
+<input bind:value={facade.value} />
 ```
 
 If you absolutely have to update `$state` within an effect and run into an infinite loop because you read and write to the same `$state`, use [untrack](functions#untrack).

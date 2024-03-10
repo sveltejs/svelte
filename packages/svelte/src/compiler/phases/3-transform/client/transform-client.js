@@ -214,6 +214,10 @@ export function client_component(source, analysis, options) {
 		instance.body.push(statement[1]);
 	}
 
+	if (analysis.reactive_statements.size > 0) {
+		instance.body.push(b.stmt(b.call('$.legacy_pre_effect_reset')));
+	}
+
 	/**
 	 * Used to store the group nodes
 	 * @type {import('estree').VariableDeclaration[]}

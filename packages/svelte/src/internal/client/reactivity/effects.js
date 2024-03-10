@@ -4,7 +4,10 @@ import {
 	current_effect,
 	execute_effect,
 	flush_local_render_effects,
-	schedule_effect
+	get,
+	is_runes,
+	schedule_effect,
+	untrack
 } from '../runtime.js';
 import { remove } from '../reconciler.js';
 import {
@@ -18,6 +21,7 @@ import {
 	DESTROYED
 } from '../constants.js';
 import { destroy_derived } from './deriveds.js';
+import { set } from './sources.js';
 
 /**
  * @param {import('./types.js').EffectType} type
@@ -155,6 +159,7 @@ export function pre_effect(fn) {
 		);
 	}
 	const sync = current_effect !== null && (current_effect.f & RENDER_EFFECT) !== 0;
+	const runes = is_runes(current_component_context);
 	return create_effect(
 		PRE_EFFECT,
 		() => {
@@ -165,6 +170,46 @@ export function pre_effect(fn) {
 		sync,
 		true
 	);
+}
+
+/**
+ * Internal representation of `$: ..`
+ * @param {() => any} deps
+ * @param {() => void | (() => void)} fn
+ * @returns {import('#client').Effect}
+ */
+export function legacy_pre_effect(deps, fn) {
+	const component_context = /** @type {import('#client').ComponentContext} */ (
+		current_component_context
+	);
+	const token = {};
+	return create_effect(
+		PRE_EFFECT,
+		() => {
+			deps();
+			if (component_context.l1.includes(token)) {
+				return;
+			}
+			component_context.l1.push(token);
+			set(component_context.l2, true);
+			return untrack(fn);
+		},
+		true,
+		true
+	);
+}
+
+export function legacy_pre_effect_reset() {
+	const component_context = /** @type {import('#client').ComponentContext} */ (
+		current_component_context
+	);
+	return render_effect(() => {
+		const x = get(component_context.l2);
+		if (x) {
+			component_context.l1.length = 0;
+			component_context.l2.v = false; // set directly to avoid rerunning this effect
+		}
+	});
 }
 
 /**
