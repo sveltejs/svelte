@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.74
+
+### Patch Changes
+
+- fix: prevent reactive statement reruns when they have indirect cyclic dependencies ([#10736](https://github.com/sveltejs/svelte/pull/10736))
+
 ## 5.0.0-next.73
 
 ### Patch Changes
