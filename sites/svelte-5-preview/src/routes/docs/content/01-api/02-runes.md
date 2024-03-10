@@ -239,30 +239,38 @@ An effect only reruns when the object it reads changes, not when a property insi
 <p>{count} doubled is {doubled}</p>
 ```
 
-You can return a function from `$effect`, which will run immediately before the effect re-runs, and before it is destroyed.
+You can return a function from `$effect`, which will run immediately before the effect re-runs, and before it is destroyed ([demo](/#H4sIAAAAAAAAE11SwY6jMAz9FQvNoWg7S7vSXhioNMe5721ZaUJiSrRJQInpDEL8-zpQOu2ewPZ79nt2pqTRBkOS_54SJywmefLa98k-obGPQbigIeQ4dIOXMVME6XVPp8pVZJBAdoMjKOEpkCDcHdKXrWK1MTqg7JwKX4Dj4bBiGPWETYOSdrsUyhNMMVVRlsGvVgf4YDrUCB6lR2Yq-GjR4QU9vGtH6C_CvINshTtjWKk8KhBsRZ4ZkN6u0eOQiI26v5VwfFlT8_5B8aaxIo80eAf_8VmmbkCAFMbUQv4Fltz77qIVqj1oWvX7wd0RRAraWlSa7ZiRzTWdR6AWYV0Ee31mRrij1OliewHJzvadQ5bNsxQG8t2I6mbIoPA3t9sS0s3d8p1jWGRfJ3RFezxNyy7mIuP_JWdEjWa5cKFdPxDE11BWiY-7rhKotVM5Nx-wnO53NoMVn4z7wTdmWLa0uJ1j94i1IY1abrNcEWg0uD6smNx2rXTojRhzaAx-Xu0Io8_uWRPakIPEOOJaOYs-h8P3n2hXx4vfpTG_Ytsp3WhUSU5-wPnP_A84rp0ZAAMAAA==)).
 
 ```svelte
 <script>
 	let count = $state(0);
-	let doubled = $derived(count * 2);
+	let milliseconds = $state(1000);
 
 	$effect(() => {
-		console.log({ count, doubled });
+		// This will be recreated whenever `interval` changes
+		const interval = setInterval(() => {
+			count += 1;
+		}, milliseconds);
 
 		return () => {
 			// if a callback is provided, it will run
 			// a) immediately before the effect re-runs
 			// b) when the component is destroyed
-			console.log('cleanup');
+			clearInterval(interval);
 		};
 	});
 </script>
 
-<button on:click={() => count++}>
-	{doubled}
-</button>
+<h1>{count}</h1>
 
-<p>{count} doubled is {doubled}</p>
+<label>
+	<input
+		type="range"
+		bind:value={milliseconds}
+		max="2000"
+	/>
+	interval ({milliseconds}ms)
+</label>
 ```
 
 > `$effect` was designed for managing side effects such as logging or connecting to external systems like third party libraries that have an imperative API. If you're managing state or dataflow, you should use it with caution – most of the time, you're better off using a different pattern. Below are some use cases and what to use instead.
