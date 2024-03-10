@@ -247,7 +247,7 @@ You can return a function from `$effect`, which will run immediately before the 
 	let milliseconds = $state(1000);
 
 	$effect(() => {
-		// This will be recreated whenever `interval` changes
+		// This will be recreated whenever `milliseconds` changes
 		const interval = setInterval(() => {
 			count += 1;
 		}, milliseconds);
@@ -262,15 +262,6 @@ You can return a function from `$effect`, which will run immediately before the 
 </script>
 
 <h1>{count}</h1>
-
-<label>
-	<input
-		type="range"
-		bind:value={milliseconds}
-		max="2000"
-	/>
-	interval ({milliseconds}ms)
-</label>
 ```
 
 > `$effect` was designed for managing side effects such as logging or connecting to external systems like third party libraries that have an imperative API. If you're managing state or dataflow, you should use it with caution – most of the time, you're better off using a different pattern. Below are some use cases and what to use instead.
