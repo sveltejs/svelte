@@ -132,7 +132,7 @@ class FuzzySet {
 
 	/** @param {string[]} arr */
 	constructor(arr) {
-		// initialization
+		// initialisation
 		for (let i = GRAM_SIZE_LOWER; i < GRAM_SIZE_UPPER + 1; ++i) {
 			this.items[i] = [];
 		}

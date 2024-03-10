@@ -742,7 +742,7 @@
 
 - fix: allow `bind:this` with dynamic type on inputs ([#9713](https://github.com/sveltejs/svelte/pull/9713))
 
-- fix: port over props that were set prior to initialization ([#9704](https://github.com/sveltejs/svelte/pull/9704))
+- fix: port over props that were set prior to initialisation ([#9704](https://github.com/sveltejs/svelte/pull/9704))
 
 - feat: $inspect rune ([#9705](https://github.com/sveltejs/svelte/pull/9705))
 

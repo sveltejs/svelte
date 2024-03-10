@@ -125,7 +125,7 @@ export function set(signal, value) {
 		// $effect(() => x++)
 		//
 		// We additionally want to skip this logic for when ignore_mutation_validation is
-		// true, as stores write to source signal on initialization.
+		// true, as stores write to source signal on initialisation.
 		if (
 			is_runes(null) &&
 			!ignore_mutation_validation &&
