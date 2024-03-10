@@ -312,51 +312,6 @@ This also applies to more complex calculations that require more than a simple e
 </script>
 ```
 
-When reacting to a state change and writing to a different state as a result, think about if it's possible to use callback props instead.
-
-```svelte
-<!-- Don't do this -->
-<script>
-	let value = $state();
-	let value_uppercase = $state();
-	$effect(() => {
-		value_uppercase = value.toUpperCase();
-	});
-</script>
-
-<Text bind:value />
-
-<!-- Do this instead: -->
-<script>
-	let value = $state();
-	let value_uppercase = $state();
-	function onValueChange(new_text) {
-		value = new_text;
-		value_uppercase = new_text.toUpperCase();
-	}
-</script>
-
-<Text {value} {onValueChange}>
-```
-
-If you want to have something update from above but also modify it from below (i.e. you want some kind of "writable `$derived`"), and events aren't an option, you can also use an object with getters and setters.
-
-```svelte
-<script>
-	let { value } = $props();
-	let facade = {
-		get value() {
-			return value.toUpperCase();
-		},
-		set value(val) {
-			value = val.toLowerCase();
-		}
-	};
-</script>
-
-<input bind:value={facade.value} />
-```
-
 If you absolutely have to update `$state` within an effect and run into an infinite loop because you read and write to the same `$state`, use [untrack](functions#untrack).
 
 ### What this replaces
