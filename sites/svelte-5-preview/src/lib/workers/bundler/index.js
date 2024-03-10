@@ -48,8 +48,7 @@ self.addEventListener(
 				const { version } = await fetch(`${svelte_url}/package.json`).then((r) => r.json());
 				console.log(`Using Svelte compiler version ${version}`);
 
-				// unpkg doesn't set the correct MIME type for .cjs files
-				// https://github.com/mjackson/unpkg/issues/355
+				// .cjs files have an unhelpful MIME type
 				const compiler = await fetch(`${svelte_url}/compiler.cjs`).then((r) => r.text());
 				(0, eval)(compiler + '\n//# sourceURL=compiler.cjs@' + version);
 
@@ -308,7 +307,7 @@ async function get_bundle(uid, mode, cache, local_files_lookup) {
 					return await follow_redirects(url, uid);
 				}
 			} else {
-				// fetch from unpkg
+				// fetch from jsdelivr
 				self.postMessage({ type: 'status', uid, message: `resolving ${importee}` });
 
 				const match = /^((?:@[^/]+\/)?[^/]+)(\/.+)?$/.exec(importee);
@@ -343,7 +342,7 @@ async function get_bundle(uid, mode, cache, local_files_lookup) {
 							pkg_url_base
 						};
 					} catch (_e) {
-						throw new Error(`Error fetching "${pkg_name}" from unpkg. Does the package exist?`);
+						throw new Error(`Error fetching "${pkg_name}" from jsdelivr. Does the package exist?`);
 					}
 				};
 
