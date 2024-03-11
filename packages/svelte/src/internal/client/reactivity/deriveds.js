@@ -70,6 +70,7 @@ export function derived_safe_equal(fn) {
 export function destroy_derived(signal) {
 	destroy_references(signal);
 	remove_consumers(signal, 0);
+	// @ts-expect-error `signal.i` cannot be `null` while the signal is alive
 	signal.i = signal.r = signal.x = signal.b = signal.d = signal.c = null;
 	set_signal_status(signal, DESTROYED);
 }
