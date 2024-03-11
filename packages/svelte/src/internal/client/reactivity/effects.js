@@ -46,7 +46,7 @@ function create_effect(type, fn, sync, block, schedule) {
 		deps: null,
 		f: type | DIRTY,
 		l: 0,
-		fn: fn,
+		fn,
 		r: null,
 		v: null,
 		w: 0,

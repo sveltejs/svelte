@@ -28,7 +28,7 @@ export function derived(fn) {
 		deps: null,
 		eq: default_equals,
 		f: flags,
-		fn: fn,
+		fn,
 		r: null,
 		// @ts-expect-error
 		v: UNINITIALIZED,
