@@ -254,7 +254,6 @@ export function render_effect(fn, block = current_block, managed = false, sync =
 export function destroy_effect(signal) {
 	const teardown = /** @type {null | (() => void)} */ (signal.v);
 	const destroy = signal.y;
-	const flags = signal.f;
 	destroy_references(signal);
 	remove_consumers(signal, 0);
 	signal.i = signal.r = signal.y = signal.x = signal.b = signal.d = signal.c = null;
@@ -266,7 +265,7 @@ export function destroy_effect(signal) {
 			destroy();
 		}
 	}
-	if (teardown !== null && (flags & IS_EFFECT) !== 0) {
+	if (teardown !== null) {
 		teardown();
 	}
 }
