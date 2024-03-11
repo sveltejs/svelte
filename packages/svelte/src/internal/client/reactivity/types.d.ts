@@ -40,7 +40,7 @@ export type Effect = {
 	/** block: The block associated with this effect/computed */
 	b: null | Block;
 	/** context: The associated component if this signal is an effect/computed */
-	x: null | ComponentContext;
+	ctx: null | ComponentContext;
 	/** dependencies: Signals that this signal reads from */
 	deps: null | Value[];
 	/** destroy: Thing(s) that need destroying */

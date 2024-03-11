@@ -411,8 +411,10 @@ export function execute_effect(signal) {
 	const previous_component_context = current_component_context;
 	const previous_block = current_block;
 
+	const component_context = signal.ctx;
+
 	current_effect = signal;
-	current_component_context = signal.x;
+	current_component_context = component_context;
 	current_block = signal.b;
 
 	try {
@@ -436,7 +438,7 @@ export function execute_effect(signal) {
 		current_component_context = previous_component_context;
 		current_block = previous_block;
 	}
-	const component_context = signal.x;
+
 	if ((signal.f & PRE_EFFECT) !== 0 && current_queued_pre_and_render_effects.length > 0) {
 		flush_local_pre_effects(component_context);
 	}
@@ -587,7 +589,7 @@ export function flush_local_render_effects() {
 	const effects = [];
 	for (let i = 0; i < current_queued_pre_and_render_effects.length; i++) {
 		const effect = current_queued_pre_and_render_effects[i];
-		if ((effect.f & RENDER_EFFECT) !== 0 && effect.x === current_component_context) {
+		if ((effect.f & RENDER_EFFECT) !== 0 && effect.ctx === current_component_context) {
 			effects.push(effect);
 			current_queued_pre_and_render_effects.splice(i, 1);
 			i--;
@@ -604,7 +606,7 @@ export function flush_local_pre_effects(context) {
 	const effects = [];
 	for (let i = 0; i < current_queued_pre_and_render_effects.length; i++) {
 		const effect = current_queued_pre_and_render_effects[i];
-		if ((effect.f & PRE_EFFECT) !== 0 && effect.x === context) {
+		if ((effect.f & PRE_EFFECT) !== 0 && effect.ctx === context) {
 			effects.push(effect);
 			current_queued_pre_and_render_effects.splice(i, 1);
 			i--;
