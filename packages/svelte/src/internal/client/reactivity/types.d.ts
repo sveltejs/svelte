@@ -3,71 +3,62 @@ import type { EFFECT, PRE_EFFECT, RENDER_EFFECT } from '../constants';
 
 export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFECT;
 
-export interface Source<V = unknown> {
+export interface Signal {
+	/** Flags bitmask */
+	f: number;
+}
+
+export interface Value<V = unknown> extends Signal {
 	/** Signals that read from this signal */
 	reactions: null | Reaction[];
 	/** Equality function */
 	eq: Equals;
-	/** Flags bitmask */
-	f: number;
 	/** The latest value for this signal */
 	v: V;
 	/** Write version */
 	w: number;
 }
 
-export interface SourceDebug<V = unknown> extends Source<V> {
-	inspect: Set<Function>;
-}
-
-export interface Derived<V = unknown> extends Source<V> {
+export interface Reaction extends Signal {
+	/** The reaction function */
+	fn: null | Function;
 	/** Signals that this signal reads from */
 	deps: null | Value[];
-	/** The derived function */
-	fn: () => V;
 	/** Effects created inside this signal */
 	effects: null | Effect[];
 	/** Deriveds created inside this signal */
 	deriveds: null | Derived[];
 }
 
-export interface DerivedDebug<V = unknown> extends Derived<V> {
-	inspect: Set<Function>;
+export interface Derived<V = unknown> extends Value<V>, Reaction {
+	fn: () => V;
 }
 
-export type Effect = {
+export interface Effect extends Reaction {
 	/** block: The block associated with this effect/computed */
 	block: null | Block;
 	/** context: The associated component if this signal is an effect/computed */
 	ctx: null | ComponentContext;
-	/** dependencies: Signals that this signal reads from */
-	deps: null | Value[];
 	/** destroy: Thing(s) that need destroying */
 	y: null | (() => void);
-	/** Flags bitmask */
-	f: number;
 	/** init: The function that we invoke for effects and computeds */
 	fn: null | (() => void | (() => void)) | ((b: Block, s: Signal) => void | (() => void));
-	/** Effects created inside this signal */
-	effects: null | Effect[];
-	/** Deriveds created inside this signal */
-	deriveds: null | Derived[];
 	/** value: The latest value for this signal, doubles as the teardown for effects */
 	v: null | Function;
 	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
 	l: number;
 	/** write version: used for unowned signals to track if their depdendencies are dirty or not **/
 	w: number;
-};
+}
 
-export type Reaction = Derived | Effect;
+export interface ValueDebug<V = unknown> extends Value<V> {
+	inspect: Set<Function>;
+}
+
+export interface DerivedDebug<V = unknown> extends Derived<V>, ValueDebug<V> {}
+
+export type Source<V = unknown> = Value<V>;
 
 export type MaybeSignal<T = unknown> = T | Source<T>;
 
 export type UnwrappedSignal<T> = T extends Value<infer U> ? U : T;
-
-export type Value<V = unknown> = Source<V> | Derived<V>;
-
-export type ValueDebug<V = unknown> = SourceDebug<V> | DerivedDebug<V>;
-
-export type Signal = Source | Derived | Effect;

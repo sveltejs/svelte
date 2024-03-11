@@ -164,7 +164,7 @@ export function batch_inspect(target, prop, receiver) {
  */
 function is_signal_dirty(signal) {
 	const flags = signal.f;
-	if ((flags & DIRTY) !== 0 || signal.v === UNINITIALIZED) {
+	if ((flags & DIRTY) !== 0) {
 		return true;
 	}
 	if ((flags & MAYBE_DIRTY) !== 0) {
@@ -198,10 +198,10 @@ function is_signal_dirty(signal) {
 				// that state has changed to a newer version and thus this unowned signal
 				// is also dirty.
 				const is_unowned = (flags & UNOWNED) !== 0;
-				const write_version = signal.w;
+				const write_version = /** @type {import('#client').Derived} */ (signal).w;
 				const dep_write_version = dependency.w;
 				if (is_unowned && dep_write_version > write_version) {
-					signal.w = dep_write_version;
+					/** @type {import('#client').Derived} */ (signal).w = dep_write_version;
 					return true;
 				}
 			}
@@ -708,7 +708,7 @@ function update_derived(signal, force_schedule) {
 
 		// @ts-expect-error
 		if (DEV && signal.inspect && force_schedule) {
-			for (const fn of /** @type {import('./types.js').ValueDebug} */ (signal).inspect) fn();
+			for (const fn of /** @type {import('./types.js').DerivedDebug} */ (signal).inspect) fn();
 		}
 	}
 }
@@ -914,7 +914,7 @@ export function mark_reactions(signal, to_status, force_schedule) {
 					schedule_effect(/** @type {import('#client').Effect} */ (reaction), false);
 				} else {
 					mark_reactions(
-						/** @type {import('#client').Value} */ (reaction),
+						/** @type {import('#client').Derived} */ (reaction),
 						MAYBE_DIRTY,
 						force_schedule
 					);

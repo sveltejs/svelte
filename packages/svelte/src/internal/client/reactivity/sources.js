@@ -38,7 +38,7 @@ export function source(value) {
 	};
 
 	if (DEV) {
-		/** @type {import('#client').SourceDebug<V>} */ (source).inspect = new Set();
+		/** @type {import('#client').ValueDebug<V>} */ (source).inspect = new Set();
 	}
 
 	return source;
