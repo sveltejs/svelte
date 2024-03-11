@@ -2387,7 +2387,8 @@ export function server_module(analysis, options) {
 		// this is an anomaly — it can only be used in components, but it needs
 		// to be present for `javascript_visitors` and so is included in module
 		// transform state as well as component transform state
-		legacy_reactive_statements: new Map()
+		legacy_reactive_statements: new Map(),
+		private_derived: new Map()
 	};
 
 	const module = /** @type {import('estree').Program} */ (
