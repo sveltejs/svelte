@@ -31,7 +31,7 @@ export function source(value) {
 	/** @type {import('#client').Source<V>} */
 	const source = {
 		reactions: null,
-		e: default_equals,
+		eq: default_equals,
 		f: SOURCE | CLEAN,
 		v: value,
 		w: 0
@@ -52,7 +52,7 @@ export function source(value) {
 /*#__NO_SIDE_EFFECTS__*/
 export function mutable_source(initial_value) {
 	const s = source(initial_value);
-	s.e = safe_equal;
+	s.eq = safe_equal;
 
 	// bind the signal to the component context, in case we need to
 	// track updates to trigger beforeUpdate/afterUpdate callbacks
@@ -111,7 +111,7 @@ export function set(signal, value) {
 	}
 	if (
 		(signal.f & SOURCE) !== 0 &&
-		!(/** @type {import('#client').EqualsFunctions} */ (signal.e)(value, signal.v))
+		!(/** @type {import('#client').EqualsFunctions} */ (signal.eq)(value, signal.v))
 	) {
 		signal.v = value;
 		// Increment write version so that unowned signals can properly track dirtyness

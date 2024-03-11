@@ -26,7 +26,7 @@ export function derived(fn) {
 		b: current_block,
 		reactions: null,
 		d: null,
-		e: default_equals,
+		eq: default_equals,
 		f: flags,
 		i: fn,
 		r: null,
@@ -56,7 +56,7 @@ export function derived(fn) {
 /*#__NO_SIDE_EFFECTS__*/
 export function derived_safe_equal(fn) {
 	const signal = derived(fn);
-	signal.e = safe_equal;
+	signal.eq = safe_equal;
 	return signal;
 }
 

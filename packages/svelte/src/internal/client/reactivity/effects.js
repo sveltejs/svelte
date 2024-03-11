@@ -44,7 +44,6 @@ function create_effect(type, fn, sync, block, schedule) {
 	const signal = {
 		b: block,
 		d: null,
-		e: null,
 		f: type | DIRTY,
 		l: 0,
 		i: fn,

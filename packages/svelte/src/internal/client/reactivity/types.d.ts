@@ -12,8 +12,8 @@ export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFEC
 export interface Source<V = unknown> {
 	/** Signals that read from this signal */
 	reactions: null | Reaction[];
-	/** equals: For value equality */
-	e: null | EqualsFunctions;
+	/** Equality function */
+	eq: EqualsFunctions;
 	/** flags: The types that the signal represent, as a bitwise value */
 	f: SignalFlags;
 	/** value: The latest value for this signal */
@@ -55,8 +55,6 @@ export type Effect = {
 	d: null | Value[];
 	/** destroy: Thing(s) that need destroying */
 	y: null | (() => void);
-	/** equals: For value equality */
-	e: null | EqualsFunctions;
 	/** The types that the signal represent, as a bitwise value */
 	f: SignalFlags;
 	/** init: The function that we invoke for effects and computeds */

@@ -693,7 +693,7 @@ function update_derived(signal, force_schedule) {
 			? MAYBE_DIRTY
 			: CLEAN;
 	set_signal_status(signal, status);
-	const equals = /** @type {import('./types.js').EqualsFunctions} */ (signal.e);
+	const equals = /** @type {import('./types.js').EqualsFunctions} */ (signal.eq);
 	if (!equals(value, signal.v)) {
 		signal.v = value;
 		mark_reactions(signal, DIRTY, force_schedule);
