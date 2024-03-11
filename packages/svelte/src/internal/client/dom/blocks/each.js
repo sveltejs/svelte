@@ -261,7 +261,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		set_current_hydration_fragment([]);
 	}
 
-	each.y = () => {
+	each.ondestroy = () => {
 		const flags = block.f;
 		const anchor_node = block.a;
 		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;

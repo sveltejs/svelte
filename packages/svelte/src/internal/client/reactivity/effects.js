@@ -39,7 +39,7 @@ function create_effect(type, fn, sync, block, schedule) {
 		teardown: null,
 		w: 0,
 		ctx: current_component_context,
-		y: null
+		ondestroy: null
 	};
 
 	if (current_effect !== null) {
@@ -245,10 +245,10 @@ export function render_effect(fn, block = current_block, managed = false, sync =
  */
 export function destroy_effect(signal) {
 	const teardown = signal.teardown;
-	const destroy = signal.y;
+	const destroy = signal.ondestroy;
 	destroy_references(signal);
 	remove_reactions(signal, 0);
-	signal.fn = signal.effects = signal.y = signal.ctx = signal.block = signal.deps = null;
+	signal.fn = signal.effects = signal.ondestroy = signal.ctx = signal.block = signal.deps = null;
 	set_signal_status(signal, DESTROYED);
 	if (destroy !== null) {
 		if (is_array(destroy)) {

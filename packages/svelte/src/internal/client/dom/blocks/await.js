@@ -175,7 +175,7 @@ export function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 		block,
 		false
 	);
-	await_effect.y = () => {
+	await_effect.ondestroy = () => {
 		let render = current_render;
 		latest_token = {};
 		while (render !== null) {

@@ -40,7 +40,7 @@ export interface Effect extends Reaction {
 	/** context: The associated component if this signal is an effect/computed */
 	ctx: null | ComponentContext;
 	/** destroy: Thing(s) that need destroying */
-	y: null | (() => void);
+	ondestroy: null | (() => void);
 	/** init: The function that we invoke for effects and computeds */
 	fn: null | (() => void | (() => void)) | ((b: Block, s: Signal) => void | (() => void));
 	/** value: The latest value for this signal, doubles as the teardown for effects */

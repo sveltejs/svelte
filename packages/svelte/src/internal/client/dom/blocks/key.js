@@ -122,7 +122,7 @@ export function key_block(anchor_node, key, render_fn) {
 	// we trigger the effect after.
 	render();
 	mounted = true;
-	key_effect.y = () => {
+	key_effect.ondestroy = () => {
 		let render = current_render;
 		while (render !== null) {
 			const dom = render.d;

@@ -167,7 +167,7 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 		true
 	);
 	block.ae = alternate_effect;
-	if_effect.y = () => {
+	if_effect.ondestroy = () => {
 		if (consequent_dom !== null) {
 			remove(consequent_dom);
 		}

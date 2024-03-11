@@ -1381,7 +1381,7 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 	// Add effect teardown (likely causes: if block became false, each item removed, component unmounted).
 	// In these cases we need to nullify the binding only if we detect that the value is still the same.
 	// If not, that means that another effect has now taken over the binding.
-	e.y = () => {
+	e.ondestroy = () => {
 		// Defer to the next tick so that all updates can be reconciled first.
 		// This solves the case where one variable is shared across multiple this-bindings.
 		effect(() => {
@@ -1552,7 +1552,7 @@ export function head(render_fn) {
 			block,
 			false
 		);
-		head_effect.y = () => {
+		head_effect.ondestroy = () => {
 			const current = block.d;
 			if (current !== null) {
 				remove(current);
@@ -1665,7 +1665,7 @@ export function element(anchor_node, tag_fn, is_svg, render_fn) {
 		block,
 		true
 	);
-	element_effect.y = () => {
+	element_effect.ondestroy = () => {
 		if (element !== null) {
 			remove(element);
 			block.d = null;
@@ -1778,7 +1778,7 @@ export function component(anchor_node, component_fn, render_fn) {
 		block,
 		false
 	);
-	component_effect.y = () => {
+	component_effect.ondestroy = () => {
 		let render = current_render;
 		while (render !== null) {
 			const dom = render.d;
@@ -1842,7 +1842,7 @@ export function css_props(anchor, is_html, props, component) {
 		}
 		current_props = next_props;
 	});
-	effect.y = () => {
+	effect.ondestroy = () => {
 		remove(tag);
 	};
 }
@@ -1874,7 +1874,7 @@ export function html(dom, get_value, svg) {
 			html_dom = reconcile_html(dom, value, svg);
 		}
 	});
-	effect.y = () => {
+	effect.ondestroy = () => {
 		if (html_dom) {
 			remove(html_dom);
 		}
