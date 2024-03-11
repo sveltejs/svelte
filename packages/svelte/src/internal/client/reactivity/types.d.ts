@@ -1,12 +1,6 @@
 import type { Block, ComponentContext, EqualsFunctions } from '#client';
 import type { DERIVED, EFFECT, PRE_EFFECT, RENDER_EFFECT, SOURCE } from '../constants';
 
-export type SignalFlags =
-	| typeof SOURCE
-	| typeof DERIVED
-	| typeof EFFECT
-	| typeof PRE_EFFECT
-	| typeof RENDER_EFFECT;
 export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFECT;
 
 export interface Source<V = unknown> {
@@ -14,8 +8,8 @@ export interface Source<V = unknown> {
 	reactions: null | Reaction[];
 	/** Equality function */
 	eq: EqualsFunctions;
-	/** flags: The types that the signal represent, as a bitwise value */
-	f: SignalFlags;
+	/** Flags bitmask */
+	f: number;
 	/** value: The latest value for this signal */
 	v: V;
 	// write version
@@ -55,8 +49,8 @@ export type Effect = {
 	d: null | Value[];
 	/** destroy: Thing(s) that need destroying */
 	y: null | (() => void);
-	/** The types that the signal represent, as a bitwise value */
-	f: SignalFlags;
+	/** Flags bitmask */
+	f: number;
 	/** init: The function that we invoke for effects and computeds */
 	i: null | (() => void | (() => void)) | ((b: Block, s: Signal) => void | (() => void));
 	/** references: Anything that a signal owns */
