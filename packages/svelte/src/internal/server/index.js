@@ -8,6 +8,7 @@ import {
 	is_tag_valid_with_parent
 } from '../../constants.js';
 import { DEV } from 'esm-env';
+import { UNINITIALIZED } from '../client/constants.js';
 
 export * from '../client/validate.js';
 
@@ -665,4 +666,18 @@ export function loop_guard(timeout) {
 // eslint-disable-next-line no-console
 export function inspect(args, inspect = console.log) {
 	inspect('init', ...args);
+}
+
+/**
+ * @template V
+ * @param {() => V} get_value
+ */
+export function once(get_value) {
+	let value = /** @type {V} */ (UNINITIALIZED);
+	return () => {
+		if (value === UNINITIALIZED) {
+			value = get_value();
+		}
+		return value;
+	};
 }
