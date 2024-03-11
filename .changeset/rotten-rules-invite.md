@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: improve derived output for ssr
+fix: use getters for derived class state fields, with memoisation
