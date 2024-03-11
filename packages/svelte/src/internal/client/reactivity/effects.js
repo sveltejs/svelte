@@ -4,7 +4,7 @@ import {
 	current_component_context,
 	current_effect,
 	current_reaction,
-	destroy_references,
+	destroy_children,
 	flush_local_render_effects,
 	get,
 	is_runes,
@@ -245,7 +245,7 @@ export function render_effect(fn, block = current_block, managed = false, sync =
 export function destroy_effect(signal) {
 	const teardown = signal.teardown;
 	const destroy = signal.ondestroy;
-	destroy_references(signal);
+	destroy_children(signal);
 	remove_reactions(signal, 0);
 	signal.fn = signal.effects = signal.ondestroy = signal.ctx = signal.block = signal.deps = null;
 	set_signal_status(signal, DESTROYED);

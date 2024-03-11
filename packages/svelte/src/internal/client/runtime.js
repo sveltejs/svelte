@@ -372,7 +372,7 @@ export function remove_reactions(signal, start_index) {
  * @param {import('./types.js').Reaction} signal
  * @returns {void}
  */
-export function destroy_references(signal) {
+export function destroy_children(signal) {
 	if (signal.effects) {
 		for (var i = 0; i < signal.effects.length; i += 1) {
 			destroy_effect(signal.effects[i]);
@@ -422,7 +422,7 @@ export function execute_effect(signal) {
 	current_block = signal.block;
 
 	try {
-		destroy_references(signal);
+		destroy_children(signal);
 		if (teardown !== null) {
 			teardown();
 		}
@@ -694,7 +694,7 @@ export async function tick() {
 function update_derived(signal, force_schedule) {
 	const previous_updating_derived = updating_derived;
 	updating_derived = true;
-	destroy_references(signal);
+	destroy_children(signal);
 	const value = execute_reaction_fn(signal);
 	updating_derived = previous_updating_derived;
 	const status =

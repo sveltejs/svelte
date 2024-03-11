@@ -3,7 +3,7 @@ import { CLEAN, DERIVED, DESTROYED, UNINITIALIZED, UNOWNED } from '../constants.
 import {
 	current_reaction,
 	current_effect,
-	destroy_references,
+	destroy_children,
 	remove_reactions,
 	set_signal_status
 } from '../runtime.js';
@@ -64,7 +64,7 @@ export function derived_safe_equal(fn) {
  * @returns {void}
  */
 export function destroy_derived(signal) {
-	destroy_references(signal);
+	destroy_children(signal);
 	remove_reactions(signal, 0);
 
 	signal.effects =
