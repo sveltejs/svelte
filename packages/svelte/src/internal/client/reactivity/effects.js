@@ -248,7 +248,7 @@ export function render_effect(fn, block = current_block, managed = false, sync =
 }
 
 /**
- * @param {import('./types.js').Effect} signal
+ * @param {import('#client').Effect} signal
  * @returns {void}
  */
 export function destroy_effect(signal) {

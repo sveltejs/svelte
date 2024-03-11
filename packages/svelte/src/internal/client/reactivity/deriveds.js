@@ -64,7 +64,7 @@ export function derived_safe_equal(fn) {
 }
 
 /**
- * @param {import('./types.js').Derived} signal
+ * @param {import('#client').Derived} signal
  * @returns {void}
  */
 export function destroy_derived(signal) {
