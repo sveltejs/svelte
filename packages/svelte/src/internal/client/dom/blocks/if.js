@@ -6,7 +6,7 @@ import {
 	set_current_hydration_fragment
 } from '../../hydration.js';
 import { remove } from '../../reconciler.js';
-import { current_block, execute_effect, push_destroy_fn } from '../../runtime.js';
+import { current_block, execute_effect } from '../../runtime.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';
 import { trigger_transitions } from '../../transitions.js';
 
@@ -167,7 +167,7 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 		true
 	);
 	block.ae = alternate_effect;
-	push_destroy_fn(if_effect, () => {
+	if_effect.y = () => {
 		if (consequent_dom !== null) {
 			remove(consequent_dom);
 		}
@@ -176,6 +176,6 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 		}
 		destroy_effect(consequent_effect);
 		destroy_effect(alternate_effect);
-	});
+	};
 	block.e = if_effect;
 }

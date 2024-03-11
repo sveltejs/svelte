@@ -35,7 +35,6 @@ import {
 	remove
 } from './reconciler.js';
 import {
-	push_destroy_fn,
 	execute_effect,
 	untrack,
 	flush_sync,
@@ -1382,7 +1381,7 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 	// Add effect teardown (likely causes: if block became false, each item removed, component unmounted).
 	// In these cases we need to nullify the binding only if we detect that the value is still the same.
 	// If not, that means that another effect has now taken over the binding.
-	push_destroy_fn(e, () => {
+	e.y = () => {
 		// Defer to the next tick so that all updates can be reconciled first.
 		// This solves the case where one variable is shared across multiple this-bindings.
 		effect(() => {
@@ -1390,7 +1389,7 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 				update(null, ...parts);
 			}
 		});
-	});
+	};
 }
 
 /**
@@ -1553,12 +1552,12 @@ export function head(render_fn) {
 			block,
 			false
 		);
-		push_destroy_fn(head_effect, () => {
+		head_effect.y = () => {
 			const current = block.d;
 			if (current !== null) {
 				remove(current);
 			}
-		});
+		};
 		block.e = head_effect;
 	} finally {
 		if (is_hydrating) {
@@ -1666,14 +1665,14 @@ export function element(anchor_node, tag_fn, is_svg, render_fn) {
 		block,
 		true
 	);
-	push_destroy_fn(element_effect, () => {
+	element_effect.y = () => {
 		if (element !== null) {
 			remove(element);
 			block.d = null;
 			element = null;
 		}
 		destroy_effect(render_effect_signal);
-	});
+	};
 	block.e = element_effect;
 }
 
@@ -1779,7 +1778,7 @@ export function component(anchor_node, component_fn, render_fn) {
 		block,
 		false
 	);
-	push_destroy_fn(component_effect, () => {
+	component_effect.y = () => {
 		let render = current_render;
 		while (render !== null) {
 			const dom = render.d;
@@ -1792,7 +1791,7 @@ export function component(anchor_node, component_fn, render_fn) {
 			}
 			render = render.p;
 		}
-	});
+	};
 	block.e = component_effect;
 }
 
@@ -1843,9 +1842,9 @@ export function css_props(anchor, is_html, props, component) {
 		}
 		current_props = next_props;
 	});
-	push_destroy_fn(effect, () => {
+	effect.y = () => {
 		remove(tag);
-	});
+	};
 }
 
 /**
@@ -1875,11 +1874,11 @@ export function html(dom, get_value, svg) {
 			html_dom = reconcile_html(dom, value, svg);
 		}
 	});
-	push_destroy_fn(effect, () => {
+	effect.y = () => {
 		if (html_dom) {
 			remove(html_dom);
 		}
-	});
+	};
 }
 
 /**

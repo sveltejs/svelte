@@ -1,7 +1,7 @@
 import { UNINITIALIZED, KEY_BLOCK } from '../../constants.js';
 import { hydrate_block_anchor } from '../../hydration.js';
 import { remove } from '../../reconciler.js';
-import { current_block, execute_effect, push_destroy_fn } from '../../runtime.js';
+import { current_block, execute_effect } from '../../runtime.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';
 import { trigger_transitions } from '../../transitions.js';
 import { safe_not_equal } from '../../reactivity/equality.js';
@@ -122,7 +122,7 @@ export function key_block(anchor_node, key, render_fn) {
 	// we trigger the effect after.
 	render();
 	mounted = true;
-	push_destroy_fn(key_effect, () => {
+	key_effect.y = () => {
 		let render = current_render;
 		while (render !== null) {
 			const dom = render.d;
@@ -135,6 +135,6 @@ export function key_block(anchor_node, key, render_fn) {
 			}
 			render = render.p;
 		}
-	});
+	};
 	block.e = key_effect;
 }

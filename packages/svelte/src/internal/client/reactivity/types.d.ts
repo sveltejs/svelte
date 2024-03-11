@@ -54,8 +54,7 @@ export type Effect = {
 	/** dependencies: Signals that this signal reads from */
 	d: null | Value[];
 	/** destroy: Thing(s) that need destroying */
-	// TODO simplify this, it is only used in one place
-	y: null | (() => void) | Array<() => void>;
+	y: null | (() => void);
 	/** equals: For value equality */
 	e: null | EqualsFunctions;
 	/** The types that the signal represent, as a bitwise value */

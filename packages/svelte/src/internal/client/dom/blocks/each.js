@@ -16,7 +16,7 @@ import {
 } from '../../hydration.js';
 import { clear_text_content, empty, map_get, map_set } from '../../operations.js';
 import { insert, remove } from '../../reconciler.js';
-import { current_block, execute_effect, push_destroy_fn } from '../../runtime.js';
+import { current_block, execute_effect } from '../../runtime.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { trigger_transitions } from '../../transitions.js';
@@ -261,7 +261,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		set_current_hydration_fragment([]);
 	}
 
-	push_destroy_fn(each, () => {
+	each.y = () => {
 		const flags = block.f;
 		const anchor_node = block.a;
 		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
@@ -280,7 +280,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		// Clear the array
 		reconcile_fn([], block, anchor_node, is_controlled, render_fn, flags, false, keys);
 		destroy_effect(/** @type {import('#client').Effect} */ (render));
-	});
+	};
 
 	block.e = each;
 }
