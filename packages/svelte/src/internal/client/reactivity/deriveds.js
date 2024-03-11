@@ -1,7 +1,6 @@
 import { DEV } from 'esm-env';
 import { CLEAN, DERIVED, DESTROYED, UNINITIALIZED, UNOWNED } from '../constants.js';
 import {
-	current_block,
 	current_reaction,
 	current_effect,
 	destroy_references,
