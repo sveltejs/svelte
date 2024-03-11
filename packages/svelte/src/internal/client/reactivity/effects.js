@@ -7,7 +7,7 @@ import {
 	flush_local_render_effects,
 	get,
 	is_runes,
-	remove_consumers,
+	remove_reactions,
 	schedule_effect,
 	set_signal_status,
 	untrack
@@ -253,7 +253,7 @@ export function destroy_effect(signal) {
 	const teardown = /** @type {null | (() => void)} */ (signal.v);
 	const destroy = signal.y;
 	destroy_references(signal);
-	remove_consumers(signal, 0);
+	remove_reactions(signal, 0);
 	signal.i = signal.r = signal.y = signal.x = signal.b = signal.d = null;
 	set_signal_status(signal, DESTROYED);
 	if (destroy !== null) {

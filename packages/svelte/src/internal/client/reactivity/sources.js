@@ -1,7 +1,7 @@
 import { DEV } from 'esm-env';
 import {
 	current_component_context,
-	current_consumer,
+	current_reaction,
 	current_dependencies,
 	current_effect,
 	current_untracked_writes,
@@ -11,7 +11,7 @@ import {
 	ignore_mutation_validation,
 	is_batching_effect,
 	is_runes,
-	mark_signal_consumers,
+	mark_reactions,
 	schedule_effect,
 	set_current_untracked_writes,
 	set_last_inspected_signal,
@@ -96,9 +96,9 @@ export function set(signal, value) {
 	if (
 		!current_untracking &&
 		!ignore_mutation_validation &&
-		current_consumer !== null &&
+		current_reaction !== null &&
 		is_runes(null) &&
-		(current_consumer.f & DERIVED) !== 0
+		(current_reaction.f & DERIVED) !== 0
 	) {
 		throw new Error(
 			'ERR_SVELTE_UNSAFE_MUTATION' +
@@ -117,8 +117,8 @@ export function set(signal, value) {
 		// Increment write version so that unowned signals can properly track dirtyness
 		signal.w++;
 		// If the current signal is running for the first time, it won't have any
-		// consumers as we only allocate and assign the consumers after the signal
-		// has fully executed. So in the case of ensuring it registers the consumer
+		// reactions as we only allocate and assign the reactions after the signal
+		// has fully executed. So in the case of ensuring it registers the reaction
 		// properly for itself, we need to ensure the current effect actually gets
 		// scheduled. i.e:
 		//
@@ -144,7 +144,7 @@ export function set(signal, value) {
 				}
 			}
 		}
-		mark_signal_consumers(signal, DIRTY, true);
+		mark_reactions(signal, DIRTY, true);
 
 		// @ts-expect-error
 		if (DEV && signal.inspect) {

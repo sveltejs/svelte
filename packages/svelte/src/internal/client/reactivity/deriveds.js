@@ -2,10 +2,10 @@ import { DEV } from 'esm-env';
 import { CLEAN, DERIVED, DESTROYED, UNINITIALIZED, UNOWNED } from '../constants.js';
 import {
 	current_block,
-	current_consumer,
+	current_reaction,
 	current_effect,
 	destroy_references,
-	remove_consumers,
+	remove_reactions,
 	set_signal_status
 } from '../runtime.js';
 import { push_reference } from './effects.js';
@@ -41,8 +41,8 @@ export function derived(fn) {
 		/** @type {import('#client').DerivedDebug} */ (signal).inspect = new Set();
 	}
 
-	if (current_consumer !== null) {
-		push_reference(current_consumer, signal);
+	if (current_reaction !== null) {
+		push_reference(current_reaction, signal);
 	}
 
 	return signal;
@@ -66,7 +66,7 @@ export function derived_safe_equal(fn) {
  */
 export function destroy_derived(signal) {
 	destroy_references(signal);
-	remove_consumers(signal, 0);
+	remove_reactions(signal, 0);
 	// @ts-expect-error `signal.i` cannot be `null` while the signal is alive
 	signal.i = signal.r = signal.x = signal.b = signal.d = signal.reactions = null;
 	set_signal_status(signal, DESTROYED);

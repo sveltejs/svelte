@@ -56,10 +56,10 @@ let current_queued_pre_and_render_effects = [];
 let current_queued_effects = [];
 
 let flush_count = 0;
-// Handle signal reactivity tree dependencies and consumer
+// Handle signal reactivity tree dependencies and reactions
 
 /** @type {null | import('./types.js').Reaction} */
-export let current_consumer = null;
+export let current_reaction = null;
 
 /** @type {null | import('./types.js').Effect} */
 export let current_effect = null;
@@ -97,8 +97,8 @@ export function set_ignore_mutation_validation(value) {
 }
 
 // If we are working with a get() chain that has no active container,
-// to prevent memory leaks, we skip adding the consumer.
-let current_skip_consumer = false;
+// to prevent memory leaks, we skip adding the reaction.
+let current_skip_reaction = false;
 // Handle collecting all signals which are read during a specific time frame
 export let is_signals_recorded = false;
 let captured_signals = new Set();
@@ -220,19 +220,19 @@ function execute_signal_fn(signal) {
 	const previous_dependencies = current_dependencies;
 	const previous_dependencies_index = current_dependencies_index;
 	const previous_untracked_writes = current_untracked_writes;
-	const previous_consumer = current_consumer;
+	const previous_reaction = current_reaction;
 	const previous_block = current_block;
 	const previous_component_context = current_component_context;
-	const previous_skip_consumer = current_skip_consumer;
+	const previous_skip_reaction = current_skip_reaction;
 	const is_render_effect = (flags & RENDER_EFFECT) !== 0;
 	const previous_untracking = current_untracking;
 	current_dependencies = /** @type {null | import('./types.js').Value[]} */ (null);
 	current_dependencies_index = 0;
 	current_untracked_writes = null;
-	current_consumer = signal;
+	current_reaction = signal;
 	current_block = signal.b;
 	current_component_context = signal.x;
-	current_skip_consumer = !is_flushing_effect && (flags & UNOWNED) !== 0;
+	current_skip_reaction = !is_flushing_effect && (flags & UNOWNED) !== 0;
 	current_untracking = false;
 
 	try {
@@ -272,7 +272,7 @@ function execute_signal_fn(signal) {
 							? !full_current_dependencies_set.has(dependency)
 							: !full_current_dependencies.includes(dependency)
 					) {
-						remove_consumer(signal, dependency);
+						remove_reaction(signal, dependency);
 					}
 				}
 			}
@@ -288,24 +288,24 @@ function execute_signal_fn(signal) {
 				);
 			}
 
-			if (!current_skip_consumer) {
+			if (!current_skip_reaction) {
 				for (i = current_dependencies_index; i < dependencies.length; i++) {
 					const dependency = dependencies[i];
-					const consumers = dependency.reactions;
+					const reactions = dependency.reactions;
 
-					if (consumers === null) {
+					if (reactions === null) {
 						dependency.reactions = [signal];
-					} else if (consumers[consumers.length - 1] !== signal) {
+					} else if (reactions[reactions.length - 1] !== signal) {
 						// TODO: should this be:
 						//
-						// } else if (!consumers.includes(signal)) {
+						// } else if (!reactions.includes(signal)) {
 						//
-						consumers.push(signal);
+						reactions.push(signal);
 					}
 				}
 			}
 		} else if (dependencies !== null && current_dependencies_index < dependencies.length) {
-			remove_consumers(signal, current_dependencies_index);
+			remove_reactions(signal, current_dependencies_index);
 			dependencies.length = current_dependencies_index;
 		}
 		return res;
@@ -313,10 +313,10 @@ function execute_signal_fn(signal) {
 		current_dependencies = previous_dependencies;
 		current_dependencies_index = previous_dependencies_index;
 		current_untracked_writes = previous_untracked_writes;
-		current_consumer = previous_consumer;
+		current_reaction = previous_reaction;
 		current_block = previous_block;
 		current_component_context = previous_component_context;
-		current_skip_consumer = previous_skip_consumer;
+		current_skip_reaction = previous_skip_reaction;
 		current_untracking = previous_untracking;
 	}
 }
@@ -327,26 +327,26 @@ function execute_signal_fn(signal) {
  * @param {import('./types.js').Value<V>} dependency
  * @returns {void}
  */
-function remove_consumer(signal, dependency) {
-	const consumers = dependency.reactions;
-	let consumers_length = 0;
-	if (consumers !== null) {
-		consumers_length = consumers.length - 1;
-		const index = consumers.indexOf(signal);
+function remove_reaction(signal, dependency) {
+	const reactions = dependency.reactions;
+	let reactions_length = 0;
+	if (reactions !== null) {
+		reactions_length = reactions.length - 1;
+		const index = reactions.indexOf(signal);
 		if (index !== -1) {
-			if (consumers_length === 0) {
+			if (reactions_length === 0) {
 				dependency.reactions = null;
 			} else {
 				// Swap with last element and then remove.
-				consumers[index] = consumers[consumers_length];
-				consumers.pop();
+				reactions[index] = reactions[reactions_length];
+				reactions.pop();
 			}
 		}
 	}
-	if (consumers_length === 0 && (dependency.f & UNOWNED) !== 0) {
+	if (reactions_length === 0 && (dependency.f & UNOWNED) !== 0) {
 		// If the signal is unowned then we need to make sure to change it to dirty.
 		set_signal_status(dependency, DIRTY);
-		remove_consumers(/** @type {import('./types.js').Reaction} **/ (dependency), 0);
+		remove_reactions(/** @type {import('./types.js').Reaction} **/ (dependency), 0);
 	}
 }
 
@@ -355,16 +355,16 @@ function remove_consumer(signal, dependency) {
  * @param {number} start_index
  * @returns {void}
  */
-export function remove_consumers(signal, start_index) {
+export function remove_reactions(signal, start_index) {
 	const dependencies = signal.d;
 	if (dependencies !== null) {
 		const active_dependencies = start_index === 0 ? null : dependencies.slice(0, start_index);
 		let i;
 		for (i = start_index; i < dependencies.length; i++) {
 			const dependency = dependencies[i];
-			// Avoid removing a consumer if we know that it is active (start_index will not be 0)
+			// Avoid removing a reaction if we know that it is active (start_index will not be 0)
 			if (active_dependencies === null || !active_dependencies.includes(dependency)) {
-				remove_consumer(signal, dependency);
+				remove_reaction(signal, dependency);
 			}
 		}
 	}
@@ -689,14 +689,14 @@ function update_derived(signal, force_schedule) {
 	const value = execute_signal_fn(signal);
 	updating_derived = previous_updating_derived;
 	const status =
-		(current_skip_consumer || (signal.f & UNOWNED) !== 0) && signal.d !== null
+		(current_skip_reaction || (signal.f & UNOWNED) !== 0) && signal.d !== null
 			? MAYBE_DIRTY
 			: CLEAN;
 	set_signal_status(signal, status);
 	const equals = /** @type {import('./types.js').EqualsFunctions} */ (signal.e);
 	if (!equals(value, signal.v)) {
 		signal.v = value;
-		mark_signal_consumers(signal, DIRTY, force_schedule);
+		mark_reactions(signal, DIRTY, force_schedule);
 
 		// @ts-expect-error
 		if (DEV && signal.inspect && force_schedule) {
@@ -727,10 +727,10 @@ export function get(signal) {
 		captured_signals.add(signal);
 	}
 
-	// Register the dependency on the current consumer signal.
-	if (current_consumer !== null && (current_consumer.f & MANAGED) === 0 && !current_untracking) {
-		const unowned = (current_consumer.f & UNOWNED) !== 0;
-		const dependencies = current_consumer.d;
+	// Register the dependency on the current reaction signal.
+	if (current_reaction !== null && (current_reaction.f & MANAGED) === 0 && !current_untracking) {
+		const unowned = (current_reaction.f & UNOWNED) !== 0;
+		const dependencies = current_reaction.d;
 		if (
 			current_dependencies === null &&
 			dependencies !== null &&
@@ -873,33 +873,33 @@ export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
  * @param {boolean} force_schedule
  * @returns {void}
  */
-export function mark_signal_consumers(signal, to_status, force_schedule) {
+export function mark_reactions(signal, to_status, force_schedule) {
 	const runes = is_runes(null);
-	const consumers = signal.reactions;
-	if (consumers !== null) {
-		const length = consumers.length;
+	const reactions = signal.reactions;
+	if (reactions !== null) {
+		const length = reactions.length;
 		let i;
 		for (i = 0; i < length; i++) {
-			const consumer = consumers[i];
-			const flags = consumer.f;
+			const reaction = reactions[i];
+			const flags = reaction.f;
 			const unowned = (flags & UNOWNED) !== 0;
 			// We skip any effects that are already dirty (but not unowned). Additionally, we also
-			// skip if the consumer is the same as the current effect (except if we're not in runes or we
+			// skip if the reaction is the same as the current effect (except if we're not in runes or we
 			// are in force schedule mode).
-			if ((!force_schedule || !runes) && consumer === current_effect) {
+			if ((!force_schedule || !runes) && reaction === current_effect) {
 				continue;
 			}
-			set_signal_status(consumer, to_status);
+			set_signal_status(reaction, to_status);
 			// If the signal is not clean, then skip over it – with the exception of unowned signals that
 			// are already maybe dirty. Unowned signals might be dirty because they are not captured as part of an
 			// effect.
 			const maybe_dirty = (flags & MAYBE_DIRTY) !== 0;
 			if ((flags & CLEAN) !== 0 || (maybe_dirty && unowned)) {
-				if ((consumer.f & IS_EFFECT) !== 0) {
-					schedule_effect(/** @type {import('#client').Effect} */ (consumer), false);
+				if ((reaction.f & IS_EFFECT) !== 0) {
+					schedule_effect(/** @type {import('#client').Effect} */ (reaction), false);
 				} else {
-					mark_signal_consumers(
-						/** @type {import('#client').Value} */ (consumer),
+					mark_reactions(
+						/** @type {import('#client').Value} */ (reaction),
 						MAYBE_DIRTY,
 						force_schedule
 					);
