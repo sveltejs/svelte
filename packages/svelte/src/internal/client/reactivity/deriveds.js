@@ -66,6 +66,7 @@ export function derived_safe_equal(fn) {
 export function destroy_derived(signal) {
 	destroy_children(signal);
 	remove_reactions(signal, 0);
+	set_signal_status(signal, DESTROYED);
 
 	signal.effects =
 		signal.deps =
@@ -73,6 +74,4 @@ export function destroy_derived(signal) {
 		// @ts-expect-error `signal.fn` cannot be `null` while the signal is alive
 		signal.fn =
 			null;
-
-	set_signal_status(signal, DESTROYED);
 }

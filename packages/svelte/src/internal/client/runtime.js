@@ -821,18 +821,11 @@ export function invalidate_inner_signals(fn) {
  * @returns {void}
  */
 function mark_subtree_children_inert(signal, inert, visited_blocks) {
-	const references = signal.effects;
-	if (references !== null) {
-		let i;
-		for (i = 0; i < references.length; i++) {
-			const reference = references[i];
-			if ((reference.f & IS_EFFECT) !== 0) {
-				mark_subtree_inert(
-					/** @type {import('#client').Effect} */ (reference),
-					inert,
-					visited_blocks
-				);
-			}
+	const effects = signal.effects;
+	if (effects !== null) {
+		for (var i = 0; i < effects.length; i++) {
+			const effect = effects[i];
+			mark_subtree_inert(effect, inert, visited_blocks);
 		}
 	}
 }
@@ -848,7 +841,7 @@ export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
 	const is_already_inert = (flags & INERT) !== 0;
 	if (is_already_inert !== inert) {
 		signal.f ^= INERT;
-		if (!inert && (flags & IS_EFFECT) !== 0 && (flags & CLEAN) === 0) {
+		if (!inert && (flags & CLEAN) === 0) {
 			schedule_effect(signal, false);
 		}
 		// Nested if block effects

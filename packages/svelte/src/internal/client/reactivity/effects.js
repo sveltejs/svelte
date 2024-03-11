@@ -15,8 +15,6 @@ import {
 } from '../runtime.js';
 import { DIRTY, MANAGED, RENDER_EFFECT, EFFECT, PRE_EFFECT, DESTROYED } from '../constants.js';
 import { set } from './sources.js';
-import { is_array } from '../utils.js';
-import { run_all } from '../../common.js';
 
 /**
  * @param {import('./types.js').EffectType} type
@@ -243,20 +241,11 @@ export function render_effect(fn, block = current_block, managed = false, sync =
  * @returns {void}
  */
 export function destroy_effect(signal) {
-	const teardown = signal.teardown;
-	const destroy = signal.ondestroy;
 	destroy_children(signal);
 	remove_reactions(signal, 0);
-	signal.fn = signal.effects = signal.ondestroy = signal.ctx = signal.block = signal.deps = null;
 	set_signal_status(signal, DESTROYED);
-	if (destroy !== null) {
-		if (is_array(destroy)) {
-			run_all(destroy);
-		} else {
-			destroy();
-		}
-	}
-	if (teardown !== null) {
-		teardown();
-	}
+
+	signal.teardown?.();
+	signal.ondestroy?.();
+	signal.fn = signal.effects = signal.ondestroy = signal.ctx = signal.block = signal.deps = null;
 }
