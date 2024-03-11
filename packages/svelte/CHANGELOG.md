@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.75
+
+### Patch Changes
+
+- fix: use getters for derived class state fields, with memoisation ([#10757](https://github.com/sveltejs/svelte/pull/10757))
+
 ## 5.0.0-next.74
 
 ### Patch Changes
