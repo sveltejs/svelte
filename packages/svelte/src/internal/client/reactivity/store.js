@@ -129,19 +129,6 @@ export function mutate_store(store, expression, new_value) {
 }
 
 /**
- * @template V
- * @param {unknown} val
- * @returns {val is import('#client').Store<V>}
- */
-export function is_store(val) {
-	return (
-		typeof val === 'object' &&
-		val !== null &&
-		typeof (/** @type {import('#client').Store<V>} */ (val).subscribe) === 'function'
-	);
-}
-
-/**
  * @param {import('#client').Store<number>} store
  * @param {number} store_value
  * @param {1 | -1} [d]
