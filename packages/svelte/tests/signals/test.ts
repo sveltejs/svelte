@@ -235,7 +235,7 @@ describe('signals', () => {
 
 			// Ensure we're not leaking dependencies
 			assert.deepEqual(
-				nested.slice(0, -2).map((s) => s.d),
+				nested.slice(0, -2).map((s) => s.deps),
 				[null, null]
 			);
 		};

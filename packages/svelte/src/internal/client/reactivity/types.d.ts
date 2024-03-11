@@ -21,8 +21,8 @@ export interface SourceDebug<V = unknown> extends Source<V> {
 }
 
 export interface Derived<V = unknown> extends Source<V> {
-	/** dependencies: Signals that this signal reads from */
-	d: null | Value[];
+	/** Signals that this signal reads from */
+	deps: null | Value[];
 	/** The derived function */
 	fn: () => V;
 
@@ -46,7 +46,7 @@ export type Effect = {
 	/** context: The associated component if this signal is an effect/computed */
 	x: null | ComponentContext;
 	/** dependencies: Signals that this signal reads from */
-	d: null | Value[];
+	deps: null | Value[];
 	/** destroy: Thing(s) that need destroying */
 	y: null | (() => void);
 	/** Flags bitmask */

@@ -170,7 +170,7 @@ function is_signal_dirty(signal) {
 		return true;
 	}
 	if ((flags & MAYBE_DIRTY) !== 0) {
-		const dependencies = /** @type {import('./types.js').Reaction} **/ (signal).d;
+		const dependencies = /** @type {import('./types.js').Reaction} **/ (signal).deps;
 		if (dependencies !== null) {
 			const length = dependencies.length;
 			let i;
@@ -248,7 +248,7 @@ function execute_signal_fn(signal) {
 		} else {
 			res = /** @type {() => V} */ (fn)();
 		}
-		let dependencies = /** @type {import('./types.js').Value<unknown>[]} **/ (signal.d);
+		let dependencies = /** @type {import('./types.js').Value<unknown>[]} **/ (signal.deps);
 		if (current_dependencies !== null) {
 			let i;
 			if (dependencies !== null) {
@@ -283,7 +283,7 @@ function execute_signal_fn(signal) {
 					dependencies[current_dependencies_index + i] = current_dependencies[i];
 				}
 			} else {
-				signal.d = /** @type {import('./types.js').Value<V>[]} **/ (
+				signal.deps = /** @type {import('./types.js').Value<V>[]} **/ (
 					dependencies = current_dependencies
 				);
 			}
@@ -356,7 +356,7 @@ function remove_reaction(signal, dependency) {
  * @returns {void}
  */
 export function remove_reactions(signal, start_index) {
-	const dependencies = signal.d;
+	const dependencies = signal.deps;
 	if (dependencies !== null) {
 		const active_dependencies = start_index === 0 ? null : dependencies.slice(0, start_index);
 		let i;
@@ -689,7 +689,7 @@ function update_derived(signal, force_schedule) {
 	const value = execute_signal_fn(signal);
 	updating_derived = previous_updating_derived;
 	const status =
-		(current_skip_reaction || (signal.f & UNOWNED) !== 0) && signal.d !== null
+		(current_skip_reaction || (signal.f & UNOWNED) !== 0) && signal.deps !== null
 			? MAYBE_DIRTY
 			: CLEAN;
 	set_signal_status(signal, status);
@@ -730,7 +730,7 @@ export function get(signal) {
 	// Register the dependency on the current reaction signal.
 	if (current_reaction !== null && (current_reaction.f & MANAGED) === 0 && !current_untracking) {
 		const unowned = (current_reaction.f & UNOWNED) !== 0;
-		const dependencies = current_reaction.d;
+		const dependencies = current_reaction.deps;
 		if (
 			current_dependencies === null &&
 			dependencies !== null &&
