@@ -804,9 +804,9 @@ export function invalidate_inner_signals(fn) {
 }
 
 /**
- * @param {import('./types.js').Reaction} signal
+ * @param {import('#client').Effect} signal
  * @param {boolean} inert
- * @param {Set<import('./types.js').Block>} [visited_blocks]
+ * @param {Set<import('#client').Block>} [visited_blocks]
  * @returns {void}
  */
 function mark_subtree_children_inert(signal, inert, visited_blocks) {
@@ -816,16 +816,20 @@ function mark_subtree_children_inert(signal, inert, visited_blocks) {
 		for (i = 0; i < references.length; i++) {
 			const reference = references[i];
 			if ((reference.f & IS_EFFECT) !== 0) {
-				mark_subtree_inert(reference, inert, visited_blocks);
+				mark_subtree_inert(
+					/** @type {import('#client').Effect} */ (reference),
+					inert,
+					visited_blocks
+				);
 			}
 		}
 	}
 }
 
 /**
- * @param {import('./types.js').Reaction} signal
+ * @param {import('#client').Effect} signal
  * @param {boolean} inert
- * @param {Set<import('./types.js').Block>} [visited_blocks]
+ * @param {Set<import('#client').Block>} [visited_blocks]
  * @returns {void}
  */
 export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
@@ -834,7 +838,7 @@ export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
 	if (is_already_inert !== inert) {
 		signal.f ^= INERT;
 		if (!inert && (flags & IS_EFFECT) !== 0 && (flags & CLEAN) === 0) {
-			schedule_effect(/** @type {import('./types.js').Effect} */ (signal), false);
+			schedule_effect(signal, false);
 		}
 		// Nested if block effects
 		const block = signal.b;
