@@ -356,4 +356,26 @@ describe('signals', () => {
 			assert.equal(errored, true);
 		};
 	});
+
+	test('effect teardown is removed on re-run', () => {
+		const count = source(0);
+		let first = true;
+		let teardown = 0;
+
+		user_effect(() => {
+			$.get(count);
+			if (first) {
+				first = false;
+				return () => {
+					teardown += 1;
+				};
+			}
+		});
+
+		return () => {
+			$.flushSync(() => set(count, 1));
+			$.flushSync(() => set(count, 2));
+			assert.equal(teardown, 1);
+		};
+	});
 });
