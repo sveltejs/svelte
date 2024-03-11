@@ -109,7 +109,7 @@ export function set(signal, value) {
 					: '')
 		);
 	}
-	if ((signal.f & SOURCE) !== 0 && !signal.equals(value)) {
+	if (!signal.equals(value)) {
 		signal.v = value;
 		// Increment write version so that unowned signals can properly track dirtyness
 		signal.w++;
