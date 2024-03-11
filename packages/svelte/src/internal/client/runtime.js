@@ -215,7 +215,7 @@ function is_signal_dirty(signal) {
  * @returns {V}
  */
 function execute_signal_fn(signal) {
-	const init = signal.i;
+	const fn = signal.fn;
 	const flags = signal.f;
 	const previous_dependencies = current_dependencies;
 	const previous_dependencies_index = current_dependencies_index;
@@ -240,13 +240,13 @@ function execute_signal_fn(signal) {
 		if (is_render_effect) {
 			res =
 				/** @type {(block: import('./types.js').Block, signal: import('./types.js').Signal) => V} */ (
-					init
+					fn
 				)(
 					/** @type {import('./types.js').Block} */ (signal.b),
 					/** @type {import('./types.js').Signal} */ (signal)
 				);
 		} else {
-			res = /** @type {() => V} */ (init)();
+			res = /** @type {() => V} */ (fn)();
 		}
 		let dependencies = /** @type {import('./types.js').Value<unknown>[]} **/ (signal.d);
 		if (current_dependencies !== null) {

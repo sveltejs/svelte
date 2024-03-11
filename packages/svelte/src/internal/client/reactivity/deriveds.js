@@ -28,7 +28,7 @@ export function derived(fn) {
 		d: null,
 		eq: default_equals,
 		f: flags,
-		i: fn,
+		fn: fn,
 		r: null,
 		// @ts-expect-error
 		v: UNINITIALIZED,
@@ -68,6 +68,6 @@ export function destroy_derived(signal) {
 	destroy_references(signal);
 	remove_reactions(signal, 0);
 	// @ts-expect-error `signal.i` cannot be `null` while the signal is alive
-	signal.i = signal.r = signal.x = signal.b = signal.d = signal.reactions = null;
+	signal.fn = signal.r = signal.x = signal.b = signal.d = signal.reactions = null;
 	set_signal_status(signal, DESTROYED);
 }

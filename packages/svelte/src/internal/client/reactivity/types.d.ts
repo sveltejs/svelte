@@ -24,7 +24,7 @@ export interface Derived<V = unknown> extends Source<V> {
 	/** dependencies: Signals that this signal reads from */
 	d: null | Value[];
 	/** The derived function */
-	i: () => V;
+	fn: () => V;
 
 	// TODO get rid of these
 
@@ -52,7 +52,7 @@ export type Effect = {
 	/** Flags bitmask */
 	f: number;
 	/** init: The function that we invoke for effects and computeds */
-	i: null | (() => void | (() => void)) | ((b: Block, s: Signal) => void | (() => void));
+	fn: null | (() => void | (() => void)) | ((b: Block, s: Signal) => void | (() => void));
 	/** references: Anything that a signal owns */
 	r: null | Reaction[];
 	/** value: The latest value for this signal, doubles as the teardown for effects */
