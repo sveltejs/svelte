@@ -381,7 +381,7 @@ export function destroy_children(signal) {
 	}
 
 	if (signal.deriveds) {
-		for (var i = 0; i < signal.deriveds.length; i += 1) {
+		for (i = 0; i < signal.deriveds.length; i += 1) {
 			destroy_derived(signal.deriveds[i]);
 		}
 		signal.deriveds = null;
