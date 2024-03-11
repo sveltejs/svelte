@@ -67,6 +67,6 @@ export function destroy_derived(signal) {
 	destroy_references(signal);
 	remove_reactions(signal, 0);
 	// @ts-expect-error `signal.i` cannot be `null` while the signal is alive
-	signal.fn = signal.effects = signal.x = signal.b = signal.deps = signal.reactions = null;
+	signal.fn = signal.effects = signal.deps = signal.reactions = null;
 	set_signal_status(signal, DESTROYED);
 }
