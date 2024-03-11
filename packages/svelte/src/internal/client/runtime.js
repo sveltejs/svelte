@@ -291,10 +291,10 @@ function execute_signal_fn(signal) {
 			if (!current_skip_consumer) {
 				for (i = current_dependencies_index; i < dependencies.length; i++) {
 					const dependency = dependencies[i];
-					const consumers = dependency.c;
+					const consumers = dependency.reactions;
 
 					if (consumers === null) {
-						dependency.c = [signal];
+						dependency.reactions = [signal];
 					} else if (consumers[consumers.length - 1] !== signal) {
 						// TODO: should this be:
 						//
@@ -328,14 +328,14 @@ function execute_signal_fn(signal) {
  * @returns {void}
  */
 function remove_consumer(signal, dependency) {
-	const consumers = dependency.c;
+	const consumers = dependency.reactions;
 	let consumers_length = 0;
 	if (consumers !== null) {
 		consumers_length = consumers.length - 1;
 		const index = consumers.indexOf(signal);
 		if (index !== -1) {
 			if (consumers_length === 0) {
-				dependency.c = null;
+				dependency.reactions = null;
 			} else {
 				// Swap with last element and then remove.
 				consumers[index] = consumers[consumers_length];
@@ -868,14 +868,14 @@ export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
 }
 
 /**
- * @param {import('./types.js').Signal} signal
+ * @param {import('#client').Value} signal
  * @param {number} to_status
  * @param {boolean} force_schedule
  * @returns {void}
  */
 export function mark_signal_consumers(signal, to_status, force_schedule) {
 	const runes = is_runes(null);
-	const consumers = signal.c;
+	const consumers = signal.reactions;
 	if (consumers !== null) {
 		const length = consumers.length;
 		let i;
@@ -896,9 +896,13 @@ export function mark_signal_consumers(signal, to_status, force_schedule) {
 			const maybe_dirty = (flags & MAYBE_DIRTY) !== 0;
 			if ((flags & CLEAN) !== 0 || (maybe_dirty && unowned)) {
 				if ((consumer.f & IS_EFFECT) !== 0) {
-					schedule_effect(/** @type {import('./types.js').Effect} */ (consumer), false);
+					schedule_effect(/** @type {import('#client').Effect} */ (consumer), false);
 				} else {
-					mark_signal_consumers(consumer, MAYBE_DIRTY, force_schedule);
+					mark_signal_consumers(
+						/** @type {import('#client').Value} */ (consumer),
+						MAYBE_DIRTY,
+						force_schedule
+					);
 				}
 			}
 		}

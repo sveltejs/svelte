@@ -30,7 +30,7 @@ import { CLEAN, DERIVED, DIRTY, MANAGED, SOURCE } from '../constants.js';
 export function source(value) {
 	/** @type {import('#client').Source<V>} */
 	const source = {
-		c: null,
+		reactions: null,
 		e: default_equals,
 		f: SOURCE | CLEAN,
 		v: value,
@@ -130,7 +130,6 @@ export function set(signal, value) {
 			is_runes(null) &&
 			!ignore_mutation_validation &&
 			current_effect !== null &&
-			current_effect.c === null &&
 			(current_effect.f & CLEAN) !== 0 &&
 			(current_effect.f & MANAGED) === 0
 		) {

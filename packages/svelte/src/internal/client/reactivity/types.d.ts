@@ -10,8 +10,8 @@ export type SignalFlags =
 export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFECT;
 
 export interface Source<V = unknown> {
-	/** consumers: Signals that read from the current signal */
-	c: null | Reaction[];
+	/** Signals that read from this signal */
+	reactions: null | Reaction[];
 	/** equals: For value equality */
 	e: null | EqualsFunctions;
 	/** flags: The types that the signal represent, as a bitwise value */
@@ -49,8 +49,6 @@ export interface DerivedDebug<V = unknown> extends Derived<V> {
 export type Effect = {
 	/** block: The block associated with this effect/computed */
 	b: null | Block;
-	/** consumers: Signals that read from the current signal */
-	c: null | Reaction[];
 	/** context: The associated component if this signal is an effect/computed */
 	x: null | ComponentContext;
 	/** dependencies: Signals that this signal reads from */

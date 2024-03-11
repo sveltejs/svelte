@@ -14,7 +14,7 @@ import { default_equals, safe_equal } from './equality.js';
 /**
  * @template V
  * @param {() => V} fn
- * @returns {import('../types.js').Derived<V>}
+ * @returns {import('#client').Derived<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
@@ -24,7 +24,7 @@ export function derived(fn) {
 	/** @type {import('#client').Derived<V>} */
 	const signal = {
 		b: current_block,
-		c: null,
+		reactions: null,
 		d: null,
 		e: default_equals,
 		f: flags,
@@ -68,6 +68,6 @@ export function destroy_derived(signal) {
 	destroy_references(signal);
 	remove_consumers(signal, 0);
 	// @ts-expect-error `signal.i` cannot be `null` while the signal is alive
-	signal.i = signal.r = signal.x = signal.b = signal.d = signal.c = null;
+	signal.i = signal.r = signal.x = signal.b = signal.d = signal.reactions = null;
 	set_signal_status(signal, DESTROYED);
 }

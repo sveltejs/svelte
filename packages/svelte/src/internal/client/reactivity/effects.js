@@ -43,7 +43,6 @@ function create_effect(type, fn, sync, block, schedule) {
 	/** @type {import('#client').Effect} */
 	const signal = {
 		b: block,
-		c: null,
 		d: null,
 		e: null,
 		f: type | DIRTY,
@@ -255,7 +254,7 @@ export function destroy_effect(signal) {
 	const destroy = signal.y;
 	destroy_references(signal);
 	remove_consumers(signal, 0);
-	signal.i = signal.r = signal.y = signal.x = signal.b = signal.d = signal.c = null;
+	signal.i = signal.r = signal.y = signal.x = signal.b = signal.d = null;
 	set_signal_status(signal, DESTROYED);
 	if (destroy !== null) {
 		if (is_array(destroy)) {
