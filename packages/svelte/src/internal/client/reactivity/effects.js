@@ -42,7 +42,7 @@ export function push_reference(target_signal, ref_signal) {
 function create_effect(type, fn, sync, block, schedule) {
 	/** @type {import('#client').Effect} */
 	const signal = {
-		b: block,
+		block,
 		deps: null,
 		f: type | DIRTY,
 		l: 0,
@@ -253,7 +253,7 @@ export function destroy_effect(signal) {
 	const destroy = signal.y;
 	destroy_references(signal);
 	remove_reactions(signal, 0);
-	signal.fn = signal.r = signal.y = signal.ctx = signal.b = signal.deps = null;
+	signal.fn = signal.r = signal.y = signal.ctx = signal.block = signal.deps = null;
 	set_signal_status(signal, DESTROYED);
 	if (destroy !== null) {
 		if (is_array(destroy)) {

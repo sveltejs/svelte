@@ -237,7 +237,9 @@ function execute_signal_fn(signal) {
 			res = /** @type {(block: import('#client').Block, signal: import('#client').Signal) => V} */ (
 				fn
 			)(
-				/** @type {import('#client').Block} */ (/** @type {import('#client').Effect} */ (signal).b),
+				/** @type {import('#client').Block} */ (
+					/** @type {import('#client').Effect} */ (signal).block
+				),
 				/** @type {import('#client').Signal} */ (signal)
 			);
 		} else {
@@ -415,7 +417,7 @@ export function execute_effect(signal) {
 
 	current_effect = signal;
 	current_component_context = component_context;
-	current_block = signal.b;
+	current_block = signal.block;
 
 	try {
 		destroy_references(signal);
@@ -427,7 +429,7 @@ export function execute_effect(signal) {
 			signal.v = possible_teardown;
 		}
 	} catch (error) {
-		const block = signal.b;
+		const block = signal.block;
 		if (block !== null) {
 			report_error(block, error);
 		} else {
@@ -549,7 +551,7 @@ export function schedule_effect(signal, sync) {
 
 			if (!should_append) {
 				const target_level = signal.l;
-				const target_block = signal.b;
+				const target_block = signal.block;
 				const is_pre_effect = (flags & PRE_EFFECT) !== 0;
 				let target_signal;
 				let is_target_pre_effect;
@@ -561,7 +563,10 @@ export function schedule_effect(signal, sync) {
 							should_append = true;
 						} else {
 							is_target_pre_effect = (target_signal.f & PRE_EFFECT) !== 0;
-							if (target_signal.b !== target_block || (is_target_pre_effect && !is_pre_effect)) {
+							if (
+								target_signal.block !== target_block ||
+								(is_target_pre_effect && !is_pre_effect)
+							) {
 								i++;
 							}
 							current_queued_pre_and_render_effects.splice(i, 0, signal);
@@ -842,7 +847,7 @@ export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
 			schedule_effect(signal, false);
 		}
 		// Nested if block effects
-		const block = signal.b;
+		const block = signal.block;
 		if (block !== null && !visited_blocks.has(block)) {
 			visited_blocks.add(block);
 			const type = block.t;
