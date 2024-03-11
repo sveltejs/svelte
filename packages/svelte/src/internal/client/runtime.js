@@ -161,7 +161,7 @@ export function batch_inspect(target, prop, receiver) {
 }
 
 /**
- * @param {import('./types.js').Signal} signal
+ * @param {import('./types.js').Reaction} signal
  * @returns {boolean}
  */
 function is_signal_dirty(signal) {
@@ -170,13 +170,16 @@ function is_signal_dirty(signal) {
 		return true;
 	}
 	if ((flags & MAYBE_DIRTY) !== 0) {
-		const dependencies = /** @type {import('./types.js').Reaction} **/ (signal).deps;
+		const dependencies = signal.deps;
 		if (dependencies !== null) {
 			const length = dependencies.length;
 			let i;
 			for (i = 0; i < length; i++) {
 				const dependency = dependencies[i];
-				if ((dependency.f & MAYBE_DIRTY) !== 0 && !is_signal_dirty(dependency)) {
+				if (
+					(dependency.f & MAYBE_DIRTY) !== 0 &&
+					!is_signal_dirty(/** @type {import('#client').Derived} */ (dependency))
+				) {
 					set_signal_status(dependency, CLEAN);
 					continue;
 				}
@@ -214,16 +217,18 @@ function is_signal_dirty(signal) {
  * @param {import('./types.js').Reaction} signal
  * @returns {V}
  */
-function execute_signal_fn(signal) {
+function execute_reaction_fn(signal) {
 	const fn = signal.fn;
 	const flags = signal.f;
+	const is_render_effect = (flags & RENDER_EFFECT) !== 0;
+
 	const previous_dependencies = current_dependencies;
 	const previous_dependencies_index = current_dependencies_index;
 	const previous_untracked_writes = current_untracked_writes;
 	const previous_reaction = current_reaction;
 	const previous_skip_reaction = current_skip_reaction;
-	const is_render_effect = (flags & RENDER_EFFECT) !== 0;
 	const previous_untracking = current_untracking;
+
 	current_dependencies = /** @type {null | import('./types.js').Value[]} */ (null);
 	current_dependencies_index = 0;
 	current_untracked_writes = null;
@@ -341,7 +346,7 @@ function remove_reaction(signal, dependency) {
 	if (reactions_length === 0 && (dependency.f & UNOWNED) !== 0) {
 		// If the signal is unowned then we need to make sure to change it to dirty.
 		set_signal_status(dependency, DIRTY);
-		remove_reactions(/** @type {import('./types.js').Reaction} **/ (dependency), 0);
+		remove_reactions(/** @type {import('./types.js').Derived} **/ (dependency), 0);
 	}
 }
 
@@ -424,7 +429,7 @@ export function execute_effect(signal) {
 		if (teardown !== null) {
 			teardown();
 		}
-		const possible_teardown = execute_signal_fn(signal);
+		const possible_teardown = execute_reaction_fn(signal);
 		if (typeof possible_teardown === 'function') {
 			signal.v = possible_teardown;
 		}
@@ -693,7 +698,7 @@ function update_derived(signal, force_schedule) {
 	const previous_updating_derived = updating_derived;
 	updating_derived = true;
 	destroy_references(signal);
-	const value = execute_signal_fn(signal);
+	const value = execute_reaction_fn(signal);
 	updating_derived = previous_updating_derived;
 	const status =
 		(current_skip_reaction || (signal.f & UNOWNED) !== 0) && signal.deps !== null
@@ -767,7 +772,10 @@ export function get(signal) {
 		}
 	}
 
-	if ((flags & DERIVED) !== 0 && is_signal_dirty(signal)) {
+	if (
+		(flags & DERIVED) !== 0 &&
+		is_signal_dirty(/** @type {import('#client').Derived} */ (signal))
+	) {
 		if (DEV) {
 			// we want to avoid tracking indirect dependencies
 			const previous_inspect_fn = inspect_fn;

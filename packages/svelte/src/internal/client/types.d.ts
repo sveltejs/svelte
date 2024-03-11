@@ -11,7 +11,7 @@ import {
 	SNIPPET_BLOCK,
 	STATE_SYMBOL
 } from './constants.js';
-import type { Reaction, Effect, Signal, Source, Value } from './reactivity/types.js';
+import type { Effect, Source, Value } from './reactivity/types.js';
 
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
@@ -99,7 +99,7 @@ export type RootBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | Reaction;
+	e: null | Effect;
 	/** intro */
 	i: boolean;
 	/** parent */
@@ -150,7 +150,7 @@ export type HeadBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | Reaction;
+	e: null | Effect;
 	/** parent */
 	p: Block;
 	/** transition */
@@ -163,7 +163,7 @@ export type DynamicElementBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | Reaction;
+	e: null | Effect;
 	/** parent */
 	p: Block;
 	/** transition */
@@ -176,7 +176,7 @@ export type DynamicComponentBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | Reaction;
+	e: null | Effect;
 	/** parent */
 	p: Block;
 	/** transition */
@@ -189,7 +189,7 @@ export type AwaitBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | Reaction;
+	e: null | Effect;
 	/** parent */
 	p: Block;
 	/** pending */
@@ -210,7 +210,7 @@ export type EachBlock = {
 	/** items */
 	v: EachItemBlock[];
 	/** effewct */
-	e: null | Reaction;
+	e: null | Effect;
 	/** parent */
 	p: Block;
 	/** transition */
@@ -250,7 +250,7 @@ export type SnippetBlock = {
 	/** parent */
 	p: Block;
 	/** effect */
-	e: null | Reaction;
+	e: null | Effect;
 	/** transition */
 	r: null;
 	/** type */
