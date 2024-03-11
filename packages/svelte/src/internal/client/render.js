@@ -75,7 +75,7 @@ import {
 import { run } from '../common.js';
 import { bind_transition, trigger_transitions } from './transitions.js';
 import { mutable_source, source, set } from './reactivity/sources.js';
-import { safe_equal, safe_not_equal } from './reactivity/equality.js';
+import { safe_equals, safe_not_equal } from './reactivity/equality.js';
 import { STATE_SYMBOL } from './constants.js';
 
 /** @type {Set<string>} */
@@ -2829,7 +2829,7 @@ export function prop(props, key, flags, initial) {
 		return (inner_current_value.v = parent_value);
 	});
 
-	if (!immutable) current_value.eq = safe_equal;
+	if (!immutable) current_value.eq = safe_equals;
 
 	return function (/** @type {V} */ value, mutation = false) {
 		var current = get(current_value);

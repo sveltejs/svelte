@@ -693,7 +693,7 @@ function update_derived(signal, force_schedule) {
 			? MAYBE_DIRTY
 			: CLEAN;
 	set_signal_status(signal, status);
-	if (!signal.eq(value, signal.v)) {
+	if (!signal.eq(value)) {
 		signal.v = value;
 		mark_reactions(signal, DIRTY, force_schedule);
 

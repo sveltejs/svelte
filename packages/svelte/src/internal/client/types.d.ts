@@ -57,7 +57,7 @@ export type ComponentContext = {
 	};
 };
 
-export type EqualsFunctions<T = any> = (a: T, v: T) => boolean;
+export type Equals = (this: Value, value: unknown) => boolean;
 
 export type BlockType =
 	| typeof ROOT_BLOCK

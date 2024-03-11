@@ -9,7 +9,7 @@ import {
 	set_signal_status
 } from '../runtime.js';
 import { push_reference } from './effects.js';
-import { default_equals, safe_equal } from './equality.js';
+import { default_equals, safe_equals } from './equality.js';
 
 /**
  * @template V
@@ -56,7 +56,7 @@ export function derived(fn) {
 /*#__NO_SIDE_EFFECTS__*/
 export function derived_safe_equal(fn) {
 	const signal = derived(fn);
-	signal.eq = safe_equal;
+	signal.eq = safe_equals;
 	return signal;
 }
 
