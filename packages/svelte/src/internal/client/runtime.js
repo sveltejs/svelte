@@ -222,7 +222,6 @@ function execute_signal_fn(signal) {
 	const previous_untracked_writes = current_untracked_writes;
 	const previous_reaction = current_reaction;
 	const previous_block = current_block;
-	const previous_component_context = current_component_context;
 	const previous_skip_reaction = current_skip_reaction;
 	const is_render_effect = (flags & RENDER_EFFECT) !== 0;
 	const previous_untracking = current_untracking;
@@ -231,7 +230,6 @@ function execute_signal_fn(signal) {
 	current_untracked_writes = null;
 	current_reaction = signal;
 	current_block = signal.b;
-	current_component_context = signal.x;
 	current_skip_reaction = !is_flushing_effect && (flags & UNOWNED) !== 0;
 	current_untracking = false;
 
@@ -315,7 +313,6 @@ function execute_signal_fn(signal) {
 		current_untracked_writes = previous_untracked_writes;
 		current_reaction = previous_reaction;
 		current_block = previous_block;
-		current_component_context = previous_component_context;
 		current_skip_reaction = previous_skip_reaction;
 		current_untracking = previous_untracking;
 	}
@@ -415,7 +412,10 @@ export function execute_effect(signal) {
 	}
 	const teardown = signal.v;
 	const previous_effect = current_effect;
+	const previous_component_context = current_component_context;
 	current_effect = signal;
+
+	current_component_context = signal.x;
 
 	try {
 		destroy_references(signal);
@@ -435,6 +435,7 @@ export function execute_effect(signal) {
 		}
 	} finally {
 		current_effect = previous_effect;
+		current_component_context = previous_component_context;
 	}
 	const component_context = signal.x;
 	if ((signal.f & PRE_EFFECT) !== 0 && current_queued_pre_and_render_effects.length > 0) {

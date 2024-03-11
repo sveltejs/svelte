@@ -32,8 +32,6 @@ export interface Derived<V = unknown> extends Source<V> {
 	r: null | Reaction[];
 	/** block: The block associated with this effect/computed */
 	b: null | Block;
-	/** context: The associated component if this signal is an effect/computed */
-	x: null | ComponentContext;
 }
 
 export interface DerivedDebug<V = unknown> extends Derived<V> {
