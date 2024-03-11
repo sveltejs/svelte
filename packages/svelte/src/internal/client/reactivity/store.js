@@ -110,8 +110,6 @@ export function unsubscribe_on_destroy(stores) {
 		for (store_name in stores) {
 			const ref = stores[store_name];
 			ref.unsubscribe();
-			// TODO: can we remove this code? it was refactored out when we split up source/comptued signals
-			// destroy_signal(ref.value);
 		}
 	});
 }
