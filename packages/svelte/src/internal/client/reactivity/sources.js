@@ -109,10 +109,7 @@ export function set(signal, value) {
 					: '')
 		);
 	}
-	if (
-		(signal.f & SOURCE) !== 0 &&
-		!(/** @type {import('#client').EqualsFunctions} */ (signal.eq)(value, signal.v))
-	) {
+	if ((signal.f & SOURCE) !== 0 && !signal.eq(value, signal.v)) {
 		signal.v = value;
 		// Increment write version so that unowned signals can properly track dirtyness
 		signal.w++;
