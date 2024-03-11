@@ -1,5 +1,5 @@
 import type { Block, ComponentContext, EqualsFunctions } from '#client';
-import type { DERIVED, EFFECT, PRE_EFFECT, RENDER_EFFECT, SOURCE } from '../constants';
+import type { EFFECT, PRE_EFFECT, RENDER_EFFECT } from '../constants';
 
 export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFECT;
 
@@ -10,9 +10,9 @@ export interface Source<V = unknown> {
 	eq: EqualsFunctions;
 	/** Flags bitmask */
 	f: number;
-	/** value: The latest value for this signal */
+	/** The latest value for this signal */
 	v: V;
-	// write version
+	/** Write version */
 	w: number;
 }
 
