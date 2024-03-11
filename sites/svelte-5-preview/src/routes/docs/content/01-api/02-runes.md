@@ -239,30 +239,32 @@ An effect only reruns when the object it reads changes, not when a property insi
 <p>{count} doubled is {doubled}</p>
 ```
 
-You can return a function from `$effect`, which will run immediately before the effect re-runs, and before it is destroyed.
+You can return a function from `$effect`, which will run immediately before the effect re-runs, and before it is destroyed ([demo](/#H4sIAAAAAAAAE42SzW6DMBCEX2Vl5RDaVCQ9JoDUY--9lUox9lKsGBvZC1GEePcaKPnpqSe86_m0M2t6ViqNnu0_e2Z4jWzP3pqGbRhdmrHwHWrCUHvbOjF2Ei-caijLTU4aCYRtDUEKK0-ccL2NDstNrbRWHoU10t8Eu-121gTVCssSBa3XEaQZ9GMrpziGj0p5OAccCgSHwmEgJZwrNNihg6MyhK7j-gii4uYb_YyGUZ5guQwzPdL7b_U4ZNSOvp9T2B3m1rB5cLx4zMkhtc7AHz7YVCVwEFzrgosTBMuNs52SKDegaPbvWnMH8AhUXaNUIY6-hHCldQhUIcyLCFlfAuHvkCKaYk8iYevGGgy2wyyJnpy9oLwG0sjdNe2yhGhJN32HsUzi2xOapNpl_bSLIYnDeeoVLZE1YI3QSpzSfo7-8J5PKbwOmdf2jC6JZyD7HxpPaMk93aHhF6utVKVCyfbkWhy-hh9Z3o_2nQIAAA==)).
 
 ```svelte
 <script>
 	let count = $state(0);
-	let doubled = $derived(count * 2);
+	let milliseconds = $state(1000);
 
 	$effect(() => {
-		console.log({ count, doubled });
+		// This will be recreated whenever `milliseconds` changes
+		const interval = setInterval(() => {
+			count += 1;
+		}, milliseconds);
 
 		return () => {
 			// if a callback is provided, it will run
 			// a) immediately before the effect re-runs
 			// b) when the component is destroyed
-			console.log('cleanup');
+			clearInterval(interval);
 		};
 	});
 </script>
 
-<button on:click={() => count++}>
-	{doubled}
-</button>
+<h1>{count}</h1>
 
-<p>{count} doubled is {doubled}</p>
+<button onclick={() => (milliseconds *= 2)}>slower</button>
+<button onclick={() => (milliseconds /= 2)}>faster</button>
 ```
 
 > `$effect` was designed for managing side effects such as logging or connecting to external systems like third party libraries that have an imperative API. If you're managing state or dataflow, you should use it with caution – most of the time, you're better off using a different pattern. Below are some use cases and what to use instead.
