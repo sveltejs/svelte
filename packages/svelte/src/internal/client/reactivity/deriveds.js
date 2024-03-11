@@ -31,8 +31,7 @@ export function derived(fn) {
 		r: null,
 		// @ts-expect-error
 		v: UNINITIALIZED,
-		w: 0,
-		y: null
+		w: 0
 	};
 
 	if (DEV) {
