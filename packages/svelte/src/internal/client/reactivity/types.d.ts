@@ -30,8 +30,6 @@ export interface Derived<V = unknown> extends Source<V> {
 
 	/** references: Anything that a signal owns */
 	r: null | Reaction[];
-	/** block: The block associated with this effect/computed */
-	b: null | Block;
 }
 
 export interface DerivedDebug<V = unknown> extends Derived<V> {
