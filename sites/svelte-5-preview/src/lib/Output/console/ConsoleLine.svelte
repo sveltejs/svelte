@@ -25,9 +25,16 @@
 	{/if}
 
 	{#if log.level === 'trace' || log.level === 'assert'}
-		<button class="arrow" class:expand={!log.collapsed} on:click={toggle_group_collapse}>
+		<span
+			class="arrow"
+			role="button"
+			tabindex="0"
+			class:expand={!log.collapsed}
+			on:keyup={toggle_group_collapse}
+			on:click={toggle_group_collapse}
+		>
 			▶
-		</button>
+		</span>
 	{/if}
 
 	{#if log.level === 'assert'}
