@@ -1,5 +1,5 @@
 import { DEV } from 'esm-env';
-import { CLEAN, DERIVED, DESTROYED, UNINITIALIZED, UNOWNED } from '../constants.js';
+import { DERIVED, DESTROYED, DIRTY, UNOWNED } from '../constants.js';
 import {
 	current_reaction,
 	current_effect,
@@ -16,7 +16,7 @@ import { default_equals, safe_equals } from './equality.js';
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
-	let flags = DERIVED | CLEAN;
+	let flags = DERIVED | DIRTY;
 	if (current_effect === null) flags |= UNOWNED;
 
 	/** @type {import('#client').Derived<V>} */
@@ -28,7 +28,7 @@ export function derived(fn) {
 		fn,
 		effects: null,
 		deriveds: null,
-		v: /** @type {V} */ (UNINITIALIZED),
+		v: /** @type {V} */ (null),
 		w: 0
 	};
 
