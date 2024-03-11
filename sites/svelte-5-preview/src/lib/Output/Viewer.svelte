@@ -134,7 +134,6 @@
 						const { mount, unmount, App, untrack } = __repl_exports;
 
 						const console_methods = ['log', 'error', 'trace', 'assert', 'warn', 'table', 'group'];
-						const original = {};
 
 						// The REPL hooks up to the console to provide a virtual console. However, the implementation
 						// needs to stringify the console to pass over a MessageChannel, which means that the object
