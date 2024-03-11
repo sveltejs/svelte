@@ -133,10 +133,18 @@
 					{
 						const { mount, unmount, App, untrack } = __repl_exports;
 
-						const console_log = console.log
+						const console_methods = ['log', 'error', 'trace', 'assert', 'warn', 'table', 'group'];
 
-						console.log = function (...v) {
-							return untrack(() => console_log.apply(this, v));
+						// The REPL hooks up to the console to provide a virtual console. However, the implementation
+						// needs to stringify the console to pass over a MessageChannel, which means that the object
+						// can get deeply read and tracked by accident when using the console. We can avoid this by
+						// ensuring we untrack the main console methods.
+
+						for (const method of console_methods) {
+							const original = console[method];
+							console[method] = function (...v) {
+								return untrack(() => original.apply(this, v));
+							}
 						}
 						const component = mount(App, { target: document.body });
 						window.__unmount_previous = () => unmount(component);
