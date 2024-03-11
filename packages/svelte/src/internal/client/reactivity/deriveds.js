@@ -1,8 +1,18 @@
 import { DEV } from 'esm-env';
-import { CLEAN, DERIVED, UNINITIALIZED, UNOWNED } from '../constants.js';
-import { current_block, current_consumer, current_effect } from '../runtime.js';
+import { CLEAN, DERIVED, DESTROYED, UNINITIALIZED, UNOWNED } from '../constants.js';
+import {
+	IS_EFFECT,
+	current_block,
+	current_consumer,
+	current_effect,
+	destroy_references,
+	remove_consumers,
+	set_signal_status
+} from '../runtime.js';
 import { push_reference } from './effects.js';
 import { default_equals, safe_equal } from './equality.js';
+import { is_array } from '../utils.js';
+import { run_all } from '../../common.js';
 
 /**
  * @template V
@@ -51,4 +61,28 @@ export function derived_safe_equal(fn) {
 	const signal = derived(fn);
 	signal.e = safe_equal;
 	return signal;
+}
+
+/**
+ * @param {import('./types.js').Derived} signal
+ * @returns {void}
+ */
+export function destroy_derived(signal) {
+	const teardown = /** @type {null | (() => void)} */ (signal.v);
+	const destroy = signal.y;
+	const flags = signal.f;
+	destroy_references(signal);
+	remove_consumers(signal, 0);
+	signal.i = signal.r = signal.y = signal.x = signal.b = signal.d = signal.c = null;
+	set_signal_status(signal, DESTROYED);
+	if (destroy !== null) {
+		if (is_array(destroy)) {
+			run_all(destroy);
+		} else {
+			destroy();
+		}
+	}
+	if (teardown !== null && (flags & IS_EFFECT) !== 0) {
+		teardown();
+	}
 }

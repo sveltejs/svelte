@@ -10,7 +10,7 @@ import {
 	object_prototype
 } from './utils.js';
 import { unstate } from './proxy.js';
-import { pre_effect } from './reactivity/effects.js';
+import { destroy_effect, pre_effect } from './reactivity/effects.js';
 import {
 	EACH_BLOCK,
 	IF_BLOCK,
@@ -31,8 +31,9 @@ import {
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { mutate, set, source } from './reactivity/sources.js';
+import { destroy_derived } from './reactivity/deriveds.js';
 
-const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT;
+export const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT;
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -354,7 +355,7 @@ function remove_consumer(signal, dependency) {
  * @param {number} start_index
  * @returns {void}
  */
-function remove_consumers(signal, start_index) {
+export function remove_consumers(signal, start_index) {
 	const dependencies = signal.d;
 	if (dependencies !== null) {
 		const active_dependencies = start_index === 0 ? null : dependencies.slice(0, start_index);
@@ -373,13 +374,19 @@ function remove_consumers(signal, start_index) {
  * @param {import('./types.js').Reaction} signal
  * @returns {void}
  */
-function destroy_references(signal) {
+export function destroy_references(signal) {
 	const references = signal.r;
 	signal.r = null;
 	if (references !== null) {
 		let i;
 		for (i = 0; i < references.length; i++) {
-			destroy_signal(references[i]);
+			var reference = references[i];
+			if ((reference.f & DERIVED) !== 0) {
+				// TODO make signal.r only contain deriveds or effects
+				destroy_derived(/** @type {import('#client').Derived} */ (reference));
+			} else {
+				destroy_effect(/** @type {import('#client').Effect} */ (reference));
+			}
 		}
 	}
 }
@@ -895,30 +902,6 @@ export function mark_signal_consumers(signal, to_status, force_schedule) {
 				}
 			}
 		}
-	}
-}
-
-/**
- * @param {import('./types.js').Reaction} signal
- * @returns {void}
- */
-export function destroy_signal(signal) {
-	const teardown = /** @type {null | (() => void)} */ (signal.v);
-	const destroy = signal.y;
-	const flags = signal.f;
-	destroy_references(signal);
-	remove_consumers(signal, 0);
-	signal.i = signal.r = signal.y = signal.x = signal.b = signal.d = signal.c = null;
-	set_signal_status(signal, DESTROYED);
-	if (destroy !== null) {
-		if (is_array(destroy)) {
-			run_all(destroy);
-		} else {
-			destroy();
-		}
-	}
-	if (teardown !== null && (flags & IS_EFFECT) !== 0) {
-		teardown();
 	}
 }
 

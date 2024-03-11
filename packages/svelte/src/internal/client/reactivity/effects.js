@@ -1,17 +1,22 @@
 import { DEV } from 'esm-env';
 import {
+	IS_EFFECT,
 	current_block,
 	current_component_context,
 	current_effect,
-	destroy_signal,
+	destroy_references,
 	flush_local_render_effects,
 	get,
 	is_runes,
+	remove_consumers,
 	schedule_effect,
+	set_signal_status,
 	untrack
 } from '../runtime.js';
-import { DIRTY, MANAGED, RENDER_EFFECT, EFFECT, PRE_EFFECT } from '../constants.js';
+import { DIRTY, MANAGED, RENDER_EFFECT, EFFECT, PRE_EFFECT, DESTROYED } from '../constants.js';
 import { set } from './sources.js';
+import { is_array } from '../utils.js';
+import { run_all } from '../../common.js';
 
 /**
  * @param {import('#client').Reaction} target_signal
@@ -116,7 +121,7 @@ export function user_effect(fn) {
 export function user_root_effect(fn) {
 	const effect = render_effect(fn, current_block, true);
 	return () => {
-		destroy_signal(effect);
+		destroy_effect(effect);
 	};
 }
 
@@ -240,4 +245,28 @@ export function render_effect(fn, block = current_block, managed = false, sync =
 		flags |= MANAGED;
 	}
 	return create_effect(flags, /** @type {any} */ (fn), sync, block, true);
+}
+
+/**
+ * @param {import('./types.js').Effect} signal
+ * @returns {void}
+ */
+export function destroy_effect(signal) {
+	const teardown = /** @type {null | (() => void)} */ (signal.v);
+	const destroy = signal.y;
+	const flags = signal.f;
+	destroy_references(signal);
+	remove_consumers(signal, 0);
+	signal.i = signal.r = signal.y = signal.x = signal.b = signal.d = signal.c = null;
+	set_signal_status(signal, DESTROYED);
+	if (destroy !== null) {
+		if (is_array(destroy)) {
+			run_all(destroy);
+		} else {
+			destroy();
+		}
+	}
+	if (teardown !== null && (flags & IS_EFFECT) !== 0) {
+		teardown();
+	}
 }

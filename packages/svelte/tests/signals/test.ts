@@ -1,6 +1,11 @@
 import { describe, assert, it } from 'vitest';
 import * as $ from '../../src/internal/client/runtime';
-import { effect, render_effect, user_effect } from '../../src/internal/client/reactivity/effects';
+import {
+	destroy_effect,
+	effect,
+	render_effect,
+	user_effect
+} from '../../src/internal/client/reactivity/effects';
 import { source, set } from '../../src/internal/client/reactivity/sources';
 import type { Derived } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
@@ -27,7 +32,7 @@ function run_test(runes: boolean, fn: (runes: boolean) => () => void) {
 		);
 		$.pop();
 		execute();
-		$.destroy_signal(signal);
+		destroy_effect(signal);
 	};
 }
 
@@ -261,7 +266,7 @@ describe('signals', () => {
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.c?.length, 1);
 			assert.deepEqual(log, [0, 2, 'limit', 0]);
-			$.destroy_signal(effect);
+			destroy_effect(effect);
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.c, null);
 		};

@@ -35,7 +35,6 @@ import {
 	remove
 } from './reconciler.js';
 import {
-	destroy_signal,
 	push_destroy_fn,
 	execute_effect,
 	untrack,
@@ -55,7 +54,8 @@ import {
 	effect,
 	managed_effect,
 	pre_effect,
-	user_effect
+	user_effect,
+	destroy_effect
 } from './reactivity/effects.js';
 import {
 	current_hydration_fragment,
@@ -728,11 +728,11 @@ export function bind_playback_rate(media, get_value, update) {
 	// Needs to happen after the element is inserted into the dom, else playback will be set back to 1 by the browser.
 	// For hydration we could do it immediately but the additional code is not worth the lost microtask.
 
-	/** @type {import('./types.js').Reaction | undefined} */
+	/** @type {import('./types.js').Effect | undefined} */
 	let render;
 	let destroyed = false;
 	const effect = managed_effect(() => {
-		destroy_signal(effect);
+		destroy_effect(effect);
 		if (destroyed) return;
 		if (get_value() == null) {
 			callback();
@@ -750,7 +750,7 @@ export function bind_playback_rate(media, get_value, update) {
 	render_effect(() => () => {
 		destroyed = true;
 		if (render) {
-			destroy_signal(render);
+			destroy_effect(render);
 		}
 	});
 }
@@ -1672,7 +1672,7 @@ export function element(anchor_node, tag_fn, is_svg, render_fn) {
 			block.d = null;
 			element = null;
 		}
-		destroy_signal(render_effect_signal);
+		destroy_effect(render_effect_signal);
 	});
 	block.e = element_effect;
 }
@@ -1712,7 +1712,7 @@ export function component(anchor_node, component_fn, render_fn) {
 							remove(render.d);
 							render.d = null;
 						}
-						destroy_signal(render.e);
+						destroy_effect(render.e);
 						render.e = null;
 					}
 				}
@@ -1788,7 +1788,7 @@ export function component(anchor_node, component_fn, render_fn) {
 			}
 			const effect = render.e;
 			if (effect !== null) {
-				destroy_signal(effect);
+				destroy_effect(effect);
 			}
 			render = render.p;
 		}
@@ -2659,7 +2659,7 @@ function _mount(Component, options) {
 		if (dom !== null) {
 			remove(dom);
 		}
-		destroy_signal(/** @type {import('./types.js').Effect} */ (block.e));
+		destroy_effect(/** @type {import('./types.js').Effect} */ (block.e));
 	});
 
 	return component;

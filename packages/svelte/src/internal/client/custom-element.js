@@ -1,6 +1,5 @@
 import { createClassComponent } from '../../legacy/legacy-client.js';
-import { destroy_signal } from './runtime.js';
-import { render_effect } from './reactivity/effects.js';
+import { destroy_effect, render_effect } from './reactivity/effects.js';
 import { open, close } from './render.js';
 import { define_property } from './utils.js';
 
@@ -199,7 +198,7 @@ if (typeof HTMLElement === 'function') {
 			Promise.resolve().then(() => {
 				if (!this.$$cn) {
 					this.$$c.$destroy();
-					destroy_signal(this.$$me);
+					destroy_effect(this.$$me);
 					this.$$c = undefined;
 				}
 			});
