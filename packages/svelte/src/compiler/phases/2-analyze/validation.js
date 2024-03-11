@@ -1,5 +1,5 @@
 import {
-	disallowed_parapgraph_contents,
+	disallowed_paragraph_contents,
 	interactive_elements,
 	is_tag_valid_with_parent
 } from '../../../constants.js';
@@ -535,7 +535,7 @@ const validation = {
 			}
 		}
 
-		if (disallowed_parapgraph_contents.includes(node.name)) {
+		if (disallowed_paragraph_contents.includes(node.name)) {
 			const path = context.path;
 			for (let parent of path) {
 				if (parent.type === 'RegularElement' && parent.name === 'p') {

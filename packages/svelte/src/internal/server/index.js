@@ -3,7 +3,7 @@ import { is_promise, noop } from '../common.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
 	DOMBooleanAttributes,
-	disallowed_parapgraph_contents,
+	disallowed_paragraph_contents,
 	interactive_elements,
 	is_tag_valid_with_parent
 } from '../../constants.js';
@@ -127,7 +127,7 @@ export function push_element(tag, payload) {
 			element = element.parent;
 		}
 	}
-	if (disallowed_parapgraph_contents.includes(tag)) {
+	if (disallowed_paragraph_contents.includes(tag)) {
 		let element = current_element;
 		while (element !== null) {
 			if (element.tag === 'p') {

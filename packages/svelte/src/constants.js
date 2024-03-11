@@ -99,7 +99,7 @@ export const interactive_elements = new Set([
 	'textarea'
 ]);
 
-export const disallowed_parapgraph_contents = [
+export const disallowed_paragraph_contents = [
 	'address',
 	'article',
 	'aside',
