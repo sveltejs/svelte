@@ -265,6 +265,8 @@ You can return a function from `$effect`, which will run immediately before the 
 <p>{count} doubled is {doubled}</p>
 ```
 
+### When not to use `$effect`
+
 In general, `$effect` is best considered something of an escape hatch — useful for things like analytics and direct DOM manipulation — rather than a tool you should use frequently. In particular, avoid using it to synchronise state. Instead of this...
 
 ```svelte
