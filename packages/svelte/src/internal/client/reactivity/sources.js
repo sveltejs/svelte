@@ -143,8 +143,7 @@ export function set(signal, value) {
 		}
 		mark_reactions(signal, DIRTY, true);
 
-		// @ts-expect-error
-		if (DEV && signal.inspect) {
+		if (DEV) {
 			if (is_batching_effect) {
 				set_last_inspected_signal(/** @type {import('#client').ValueDebug} */ (signal));
 			} else {
