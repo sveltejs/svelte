@@ -7,6 +7,16 @@ const files = import.meta.glob('../../../../../../packages/svelte/src/**/*.js', 
 	as: 'url'
 });
 
+const prefix = '../../../../../../packages/svelte/';
+
+export const prerender = true;
+
+export function entries() {
+	const entries = Object.keys(files).map((path) => ({ path: path.replace(prefix, '') }));
+	entries.push({ path: 'compiler.cjs' }, { path: 'package.json' });
+	return entries;
+}
+
 // service worker requests files under this path to load the compiler and runtime
 export async function GET({ params }) {
 	let url = '';
@@ -15,17 +25,8 @@ export async function GET({ params }) {
 	} else if (params.path === 'package.json') {
 		url = package_json;
 	} else {
-		const path = '../../../../../../packages/svelte/' + params.path;
-		url = files[path];
+		url = files[prefix + params.path];
 	}
 
-	const response = read(url);
-	return new Response(response.body, {
-		status: response.status,
-		statusText: response.statusText,
-		headers: {
-			...response.headers,
-			'Cache-Control': 'public, max-age=30' // 30 seconds so that redeploys are picked up quickly
-		}
-	});
+	return read(url);
 }
