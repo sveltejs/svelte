@@ -18,7 +18,7 @@ import {
 	set_signal_status,
 	untrack
 } from '../runtime.js';
-import { default_equals, safe_equals } from './equality.js';
+import { equals, safe_equals } from './equality.js';
 import { CLEAN, DERIVED, DIRTY, MANAGED, SOURCE } from '../constants.js';
 
 /**
@@ -31,7 +31,7 @@ export function source(value) {
 	/** @type {import('#client').Source<V>} */
 	const source = {
 		reactions: null,
-		eq: default_equals,
+		equals: equals,
 		f: SOURCE | CLEAN,
 		v: value,
 		w: 0
@@ -52,7 +52,7 @@ export function source(value) {
 /*#__NO_SIDE_EFFECTS__*/
 export function mutable_source(initial_value) {
 	const s = source(initial_value);
-	s.eq = safe_equals;
+	s.equals = safe_equals;
 
 	// bind the signal to the component context, in case we need to
 	// track updates to trigger beforeUpdate/afterUpdate callbacks
@@ -109,7 +109,7 @@ export function set(signal, value) {
 					: '')
 		);
 	}
-	if ((signal.f & SOURCE) !== 0 && !signal.eq(value)) {
+	if ((signal.f & SOURCE) !== 0 && !signal.equals(value)) {
 		signal.v = value;
 		// Increment write version so that unowned signals can properly track dirtyness
 		signal.w++;

@@ -12,7 +12,7 @@ export interface Value<V = unknown> extends Signal {
 	/** Signals that read from this signal */
 	reactions: null | Reaction[];
 	/** Equality function */
-	eq: Equals;
+	equals: Equals;
 	/** The latest value for this signal */
 	v: V;
 	/** Write version */

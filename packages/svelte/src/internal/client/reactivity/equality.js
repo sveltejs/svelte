@@ -1,5 +1,5 @@
 /** @type {import('#client').Equals} */
-export function default_equals(value) {
+export function equals(value) {
 	return value === this.v;
 }
 

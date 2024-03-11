@@ -2829,7 +2829,7 @@ export function prop(props, key, flags, initial) {
 		return (inner_current_value.v = parent_value);
 	});
 
-	if (!immutable) current_value.eq = safe_equals;
+	if (!immutable) current_value.equals = safe_equals;
 
 	return function (/** @type {V} */ value, mutation = false) {
 		var current = get(current_value);

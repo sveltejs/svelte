@@ -7,7 +7,7 @@ import {
 	remove_reactions,
 	set_signal_status
 } from '../runtime.js';
-import { default_equals, safe_equals } from './equality.js';
+import { equals, safe_equals } from './equality.js';
 
 /**
  * @template V
@@ -23,7 +23,7 @@ export function derived(fn) {
 	const signal = {
 		reactions: null,
 		deps: null,
-		eq: default_equals,
+		equals,
 		f: flags,
 		fn,
 		effects: null,
@@ -55,7 +55,7 @@ export function derived(fn) {
 /*#__NO_SIDE_EFFECTS__*/
 export function derived_safe_equal(fn) {
 	const signal = derived(fn);
-	signal.eq = safe_equals;
+	signal.equals = safe_equals;
 	return signal;
 }
 
