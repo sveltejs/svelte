@@ -33,7 +33,7 @@ import { add_owner } from './dev/ownership.js';
 import { mutate, set, source } from './reactivity/sources.js';
 import { destroy_derived } from './reactivity/deriveds.js';
 
-export const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT;
+const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT;
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;

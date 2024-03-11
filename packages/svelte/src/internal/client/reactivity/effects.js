@@ -1,6 +1,5 @@
 import { DEV } from 'esm-env';
 import {
-	IS_EFFECT,
 	current_block,
 	current_component_context,
 	current_effect,
