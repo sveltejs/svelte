@@ -239,7 +239,7 @@ An effect only reruns when the object it reads changes, not when a property insi
 <p>{count} doubled is {doubled}</p>
 ```
 
-You can return a function from `$effect`, which will run immediately before the effect re-runs, and before it is destroyed ([demo](/#H4sIAAAAAAAAE11SwY6jMAz9FQvNoWg7S7vSXhioNMe5721ZaUJiSrRJQInpDEL8-zpQOu2ewPZ79nt2pqTRBkOS_54SJywmefLa98k-obGPQbigIeQ4dIOXMVME6XVPp8pVZJBAdoMjKOEpkCDcHdKXrWK1MTqg7JwKX4Dj4bBiGPWETYOSdrsUyhNMMVVRlsGvVgf4YDrUCB6lR2Yq-GjR4QU9vGtH6C_CvINshTtjWKk8KhBsRZ4ZkN6u0eOQiI26v5VwfFlT8_5B8aaxIo80eAf_8VmmbkCAFMbUQv4Fltz77qIVqj1oWvX7wd0RRAraWlSa7ZiRzTWdR6AWYV0Ee31mRrij1OliewHJzvadQ5bNsxQG8t2I6mbIoPA3t9sS0s3d8p1jWGRfJ3RFezxNyy7mIuP_JWdEjWa5cKFdPxDE11BWiY-7rhKotVM5Nx-wnO53NoMVn4z7wTdmWLa0uJ1j94i1IY1abrNcEWg0uD6smNx2rXTojRhzaAx-Xu0Io8_uWRPakIPEOOJaOYs-h8P3n2hXx4vfpTG_Ytsp3WhUSU5-wPnP_A84rp0ZAAMAAA==)).
+You can return a function from `$effect`, which will run immediately before the effect re-runs, and before it is destroyed ([demo](/#H4sIAAAAAAAAE42SzW6DMBCEX2Vl5RDaVCQ9JoDUY--9lUox9lKsGBvZC1GEePcaKPnpqSe86_m0M2t6ViqNnu0_e2Z4jWzP3pqGbRhdmrHwHWrCUHvbOjF2Ei-caijLTU4aCYRtDUEKK0-ccL2NDstNrbRWHoU10t8Eu-121gTVCssSBa3XEaQZ9GMrpziGj0p5OAccCgSHwmEgJZwrNNihg6MyhK7j-gii4uYb_YyGUZ5guQwzPdL7b_U4ZNSOvp9T2B3m1rB5cLx4zMkhtc7AHz7YVCVwEFzrgosTBMuNs52SKDegaPbvWnMH8AhUXaNUIY6-hHCldQhUIcyLCFlfAuHvkCKaYk8iYevGGgy2wyyJnpy9oLwG0sjdNe2yhGhJN32HsUzi2xOapNpl_bSLIYnDeeoVLZE1YI3QSpzSfo7-8J5PKbwOmdf2jC6JZyD7HxpPaMk93aHhF6utVKVCyfbkWhy-hh9Z3o_2nQIAAA==)).
 
 ```svelte
 <script>
@@ -262,6 +262,9 @@ You can return a function from `$effect`, which will run immediately before the 
 </script>
 
 <h1>{count}</h1>
+
+<button onclick={() => (milliseconds *= 2)}>slower</button>
+<button onclick={() => (milliseconds /= 2)}>faster</button>
 ```
 
 > `$effect` was designed for managing side effects such as logging or connecting to external systems like third party libraries that have an imperative API. If you're managing state or dataflow, you should use it with caution – most of the time, you're better off using a different pattern. Below are some use cases and what to use instead.
