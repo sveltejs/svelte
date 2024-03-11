@@ -36,7 +36,7 @@ function create_effect(type, fn, sync, block, schedule) {
 		fn,
 		effects: null,
 		deriveds: null,
-		v: null,
+		teardown: null,
 		w: 0,
 		ctx: current_component_context,
 		y: null
@@ -244,7 +244,7 @@ export function render_effect(fn, block = current_block, managed = false, sync =
  * @returns {void}
  */
 export function destroy_effect(signal) {
-	const teardown = /** @type {null | (() => void)} */ (signal.v);
+	const teardown = signal.teardown;
 	const destroy = signal.y;
 	destroy_references(signal);
 	remove_reactions(signal, 0);

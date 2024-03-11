@@ -44,7 +44,7 @@ export interface Effect extends Reaction {
 	/** init: The function that we invoke for effects and computeds */
 	fn: null | (() => void | (() => void)) | ((b: Block, s: Signal) => void | (() => void));
 	/** value: The latest value for this signal, doubles as the teardown for effects */
-	v: null | Function;
+	teardown: null | (() => void);
 	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
 	l: number;
 	/** write version: used for unowned signals to track if their depdendencies are dirty or not **/

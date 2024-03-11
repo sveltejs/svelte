@@ -410,7 +410,7 @@ export function execute_effect(signal) {
 	if ((signal.f & DESTROYED) !== 0) {
 		return;
 	}
-	const teardown = signal.v;
+	const teardown = signal.teardown;
 	const previous_effect = current_effect;
 	const previous_component_context = current_component_context;
 	const previous_block = current_block;
@@ -428,7 +428,7 @@ export function execute_effect(signal) {
 		}
 		const possible_teardown = execute_reaction_fn(signal);
 		if (typeof possible_teardown === 'function') {
-			signal.v = possible_teardown;
+			signal.teardown = possible_teardown;
 		}
 	} catch (error) {
 		const block = signal.block;
