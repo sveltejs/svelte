@@ -23,7 +23,6 @@ export function derived(fn) {
 
 	/** @type {import('#client').Derived<V>} */
 	const signal = {
-		b: current_block,
 		reactions: null,
 		deps: null,
 		eq: default_equals,
@@ -33,7 +32,6 @@ export function derived(fn) {
 		// @ts-expect-error
 		v: UNINITIALIZED,
 		w: 0,
-		x: null,
 		y: null
 	};
 
