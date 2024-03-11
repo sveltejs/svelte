@@ -267,52 +267,32 @@ You can return a function from `$effect`, which will run immediately before the 
 <button onclick={() => (milliseconds /= 2)}>faster</button>
 ```
 
-> `$effect` was designed for managing side effects such as logging or connecting to external systems like third party libraries that have an imperative API. If you're managing state or dataflow, you should use it with caution – most of the time, you're better off using a different pattern. Below are some use cases and what to use instead.
+### When not to use `$effect`
 
-If you update `$state` inside an `$effect`, you most likely want to use `$derived` instead.
+In general, `$effect` is best considered something of an escape hatch — useful for things like analytics and direct DOM manipulation — rather than a tool you should use frequently. In particular, avoid using it to synchronise state. Instead of this...
 
 ```svelte
-<!-- Don't do this -->
 <script>
 	let count = $state(0);
 	let doubled = $state();
+
+	// don't do this!
 	$effect(() => {
 		doubled = count * 2;
 	});
 </script>
+```
 
-<!-- Do this instead: -->
+...do this:
+
+```svelte
 <script>
 	let count = $state(0);
 	let doubled = $derived(count * 2);
 </script>
 ```
 
-This also applies to more complex calculations that require more than a simple expression and write to more than one variable. In these cases, you can use `$derived.by`.
-
-```svelte
-<!-- Don't do this -->
-<script>
-	let result_1 = $state();
-	let result_2 = $state();
-	$effect(() => {
-		// ... some lengthy code resulting in
-		result_1 = someValue;
-		result_2 = someOtherValue;
-	});
-</script>
-
-<!-- Do this instead: -->
-<script>
-	let { result_1, result_2 } = $derived.by(() => {
-		// ... some lengthy code resulting in
-		return {
-			result_1: someValue,
-			result_2: someOtherValue
-		};
-	});
-</script>
-```
+> For things that are more complicated than a simple expression like `count * 2`, you can also use [`$derived.by`](#$derived-by).
 
 When reacting to a state change and writing to a different state as a result, think about if it's possible to use callback props instead.
 
