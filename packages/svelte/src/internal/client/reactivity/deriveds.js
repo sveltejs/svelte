@@ -69,19 +69,11 @@ export function derived_safe_equal(fn) {
  */
 export function destroy_derived(signal) {
 	const teardown = /** @type {null | (() => void)} */ (signal.v);
-	const destroy = signal.y;
 	const flags = signal.f;
 	destroy_references(signal);
 	remove_consumers(signal, 0);
-	signal.i = signal.r = signal.y = signal.x = signal.b = signal.d = signal.c = null;
+	signal.i = signal.r = signal.x = signal.b = signal.d = signal.c = null;
 	set_signal_status(signal, DESTROYED);
-	if (destroy !== null) {
-		if (is_array(destroy)) {
-			run_all(destroy);
-		} else {
-			destroy();
-		}
-	}
 	if (teardown !== null && (flags & IS_EFFECT) !== 0) {
 		teardown();
 	}

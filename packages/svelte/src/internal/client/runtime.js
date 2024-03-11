@@ -924,7 +924,7 @@ export function untrack(fn) {
 }
 
 /**
- * @param {import('./types.js').Reaction} signal
+ * @param {import('./types.js').Effect} signal
  * @param {() => void} destroy_fn
  * @returns {void}
  */

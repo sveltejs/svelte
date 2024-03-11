@@ -40,8 +40,6 @@ export interface Derived<V = unknown> extends Source<V> {
 	b: null | Block;
 	/** context: The associated component if this signal is an effect/computed */
 	x: null | ComponentContext;
-	/** destroy: Thing(s) that need destroying */
-	y: null | (() => void) | Array<() => void>;
 }
 
 export interface DerivedDebug<V = unknown> extends Derived<V> {
