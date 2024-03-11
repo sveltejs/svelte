@@ -3,6 +3,7 @@ import {
 	current_block,
 	current_component_context,
 	current_effect,
+	current_reaction,
 	destroy_references,
 	flush_local_render_effects,
 	get,
@@ -16,20 +17,6 @@ import { DIRTY, MANAGED, RENDER_EFFECT, EFFECT, PRE_EFFECT, DESTROYED } from '..
 import { set } from './sources.js';
 import { is_array } from '../utils.js';
 import { run_all } from '../../common.js';
-
-/**
- * @param {import('#client').Reaction} target_signal
- * @param {import('#client').Reaction} ref_signal
- * @returns {void}
- */
-export function push_reference(target_signal, ref_signal) {
-	const references = target_signal.r;
-	if (references === null) {
-		target_signal.r = [ref_signal];
-	} else {
-		references.push(ref_signal);
-	}
-}
 
 /**
  * @param {import('./types.js').EffectType} type
@@ -47,7 +34,8 @@ function create_effect(type, fn, sync, block, schedule) {
 		f: type | DIRTY,
 		l: 0,
 		fn,
-		r: null,
+		effects: null,
+		deriveds: null,
 		v: null,
 		w: 0,
 		ctx: current_component_context,
@@ -56,8 +44,15 @@ function create_effect(type, fn, sync, block, schedule) {
 
 	if (current_effect !== null) {
 		signal.l = current_effect.l + 1;
-		if ((type & MANAGED) === 0) {
-			push_reference(current_effect, signal);
+	}
+
+	if ((type & MANAGED) === 0) {
+		if (current_reaction !== null) {
+			if (current_reaction.effects === null) {
+				current_reaction.effects = [signal];
+			} else {
+				current_reaction.effects.push(signal);
+			}
 		}
 	}
 
@@ -253,7 +248,7 @@ export function destroy_effect(signal) {
 	const destroy = signal.y;
 	destroy_references(signal);
 	remove_reactions(signal, 0);
-	signal.fn = signal.r = signal.y = signal.ctx = signal.block = signal.deps = null;
+	signal.fn = signal.effects = signal.y = signal.ctx = signal.block = signal.deps = null;
 	set_signal_status(signal, DESTROYED);
 	if (destroy !== null) {
 		if (is_array(destroy)) {

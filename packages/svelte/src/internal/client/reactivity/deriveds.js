@@ -7,7 +7,6 @@ import {
 	remove_reactions,
 	set_signal_status
 } from '../runtime.js';
-import { push_reference } from './effects.js';
 import { default_equals, safe_equals } from './equality.js';
 
 /**
@@ -27,9 +26,9 @@ export function derived(fn) {
 		eq: default_equals,
 		f: flags,
 		fn,
-		r: null,
-		// @ts-expect-error
-		v: UNINITIALIZED,
+		effects: null,
+		deriveds: null,
+		v: /** @type {V} */ (UNINITIALIZED),
 		w: 0
 	};
 
@@ -38,7 +37,11 @@ export function derived(fn) {
 	}
 
 	if (current_reaction !== null) {
-		push_reference(current_reaction, signal);
+		if (current_reaction.deriveds === null) {
+			current_reaction.deriveds = [signal];
+		} else {
+			current_reaction.deriveds.push(signal);
+		}
 	}
 
 	return signal;
@@ -64,6 +67,6 @@ export function destroy_derived(signal) {
 	destroy_references(signal);
 	remove_reactions(signal, 0);
 	// @ts-expect-error `signal.i` cannot be `null` while the signal is alive
-	signal.fn = signal.r = signal.x = signal.b = signal.deps = signal.reactions = null;
+	signal.fn = signal.effects = signal.x = signal.b = signal.deps = signal.reactions = null;
 	set_signal_status(signal, DESTROYED);
 }

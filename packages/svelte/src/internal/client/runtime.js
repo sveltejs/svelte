@@ -373,19 +373,18 @@ export function remove_reactions(signal, start_index) {
  * @returns {void}
  */
 export function destroy_references(signal) {
-	const references = signal.r;
-	signal.r = null;
-	if (references !== null) {
-		let i;
-		for (i = 0; i < references.length; i++) {
-			var reference = references[i];
-			if ((reference.f & DERIVED) !== 0) {
-				// TODO make signal.r only contain deriveds or effects
-				destroy_derived(/** @type {import('#client').Derived} */ (reference));
-			} else {
-				destroy_effect(/** @type {import('#client').Effect} */ (reference));
-			}
+	if (signal.effects) {
+		for (var i = 0; i < signal.effects.length; i += 1) {
+			destroy_effect(signal.effects[i]);
 		}
+		signal.effects = null;
+	}
+
+	if (signal.deriveds) {
+		for (var i = 0; i < signal.deriveds.length; i += 1) {
+			destroy_derived(signal.deriveds[i]);
+		}
+		signal.deriveds = null;
 	}
 }
 
@@ -822,7 +821,7 @@ export function invalidate_inner_signals(fn) {
  * @returns {void}
  */
 function mark_subtree_children_inert(signal, inert, visited_blocks) {
-	const references = signal.r;
+	const references = signal.effects;
 	if (references !== null) {
 		let i;
 		for (i = 0; i < references.length; i++) {

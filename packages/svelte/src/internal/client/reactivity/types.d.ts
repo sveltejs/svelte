@@ -25,11 +25,10 @@ export interface Derived<V = unknown> extends Source<V> {
 	deps: null | Value[];
 	/** The derived function */
 	fn: () => V;
-
-	// TODO get rid of these
-
-	/** references: Anything that a signal owns */
-	r: null | Reaction[];
+	/** Effects created inside this signal */
+	effects: null | Effect[];
+	/** Deriveds created inside this signal */
+	deriveds: null | Derived[];
 }
 
 export interface DerivedDebug<V = unknown> extends Derived<V> {
@@ -49,8 +48,10 @@ export type Effect = {
 	f: number;
 	/** init: The function that we invoke for effects and computeds */
 	fn: null | (() => void | (() => void)) | ((b: Block, s: Signal) => void | (() => void));
-	/** references: Anything that a signal owns */
-	r: null | Reaction[];
+	/** Effects created inside this signal */
+	effects: null | Effect[];
+	/** Deriveds created inside this signal */
+	deriveds: null | Derived[];
 	/** value: The latest value for this signal, doubles as the teardown for effects */
 	v: null | Function;
 	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
