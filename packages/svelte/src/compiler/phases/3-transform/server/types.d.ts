@@ -35,6 +35,7 @@ export interface Anchor {
 export interface ServerTransformState extends TransformState {
 	/** The $: calls, which will be ordered in the end */
 	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
+	readonly private_derived: Map<string, StateField>;
 }
 
 export interface ComponentServerTransformState extends ServerTransformState {
