@@ -1,7 +1,6 @@
 import { DEV } from 'esm-env';
 import { CLEAN, DERIVED, DESTROYED, UNINITIALIZED, UNOWNED } from '../constants.js';
 import {
-	IS_EFFECT,
 	current_block,
 	current_consumer,
 	current_effect,
@@ -11,8 +10,6 @@ import {
 } from '../runtime.js';
 import { push_reference } from './effects.js';
 import { default_equals, safe_equal } from './equality.js';
-import { is_array } from '../utils.js';
-import { run_all } from '../../common.js';
 
 /**
  * @template V
