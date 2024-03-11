@@ -35,20 +35,18 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 }
 
 export interface Effect extends Reaction {
-	/** block: The block associated with this effect/computed */
+	/** The block associated with this effect */
 	block: null | Block;
-	/** context: The associated component if this signal is an effect/computed */
+	/** The associated component context */
 	ctx: null | ComponentContext;
-	/** destroy: Thing(s) that need destroying */
+	/** Stuff to do when the effect is destroyed */
 	ondestroy: null | (() => void);
-	/** init: The function that we invoke for effects and computeds */
+	/** The effect function */
 	fn: null | (() => void | (() => void)) | ((b: Block, s: Signal) => void | (() => void));
-	/** value: The latest value for this signal, doubles as the teardown for effects */
+	/** The teardown function returned from the effect function */
 	teardown: null | (() => void);
-	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
+	/** The depth from the root signal, used for ordering render/pre-effects topologically **/
 	l: number;
-	/** write version: used for unowned signals to track if their depdendencies are dirty or not **/
-	w: number;
 }
 
 export interface ValueDebug<V = unknown> extends Value<V> {

@@ -37,7 +37,6 @@ function create_effect(type, fn, sync, block, schedule) {
 		effects: null,
 		deriveds: null,
 		teardown: null,
-		w: 0,
 		ctx: current_component_context,
 		ondestroy: null
 	};
