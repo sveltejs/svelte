@@ -137,22 +137,19 @@ export class ReactiveSet extends Set {
 
 	values() {
 		get(this.#version);
-		let next_index = 0;
-		/** @type {T[]} */
-		let values = [];
 
-		for (const [value, source] of this.#sources) {
-			if (source.v) {
-				values.push(value);
-			}
-		}
+		const iterator = this.#sources.entries();
 
 		return make_iterable(
 			/** @type {IterableIterator<T>} */ ({
 				next() {
-					return next_index < values.length
-						? { value: values[next_index++], done: false }
-						: { done: true };
+					for (var [value, source] of iterator) {
+						if (source.v) {
+							return { value, done: false };
+						}
+					}
+
+					return { done: true };
 				}
 			})
 		);
