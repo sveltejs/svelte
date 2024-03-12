@@ -19,7 +19,7 @@ import {
 	untrack
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
-import { CLEAN, DERIVED, DIRTY, MANAGED, SOURCE } from '../constants.js';
+import { CLEAN, DERIVED, DIRTY, MANAGED } from '../constants.js';
 
 /**
  * @template V
@@ -30,9 +30,9 @@ import { CLEAN, DERIVED, DIRTY, MANAGED, SOURCE } from '../constants.js';
 export function source(value) {
 	/** @type {import('#client').Source<V>} */
 	const source = {
+		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
 		reactions: null,
 		equals: equals,
-		f: SOURCE | CLEAN,
 		v: value,
 		w: 0
 	};
