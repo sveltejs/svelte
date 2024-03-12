@@ -19,7 +19,7 @@ import { insert, remove } from '../../reconciler.js';
 import { current_block, execute_effect } from '../../runtime.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
-import { trigger_transitions } from '../../transitions.js';
+import { trigger_transitions } from '../elements/transitions.js';
 import { is_array, is_frozen } from '../../utils.js';
 import { EACH_BLOCK, EACH_ITEM_BLOCK, STATE_SYMBOL } from '../../constants.js';
 

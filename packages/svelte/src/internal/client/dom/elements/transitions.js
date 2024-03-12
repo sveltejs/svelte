@@ -1,5 +1,5 @@
-import { EACH_IS_ANIMATED, EACH_IS_CONTROLLED } from '../../constants.js';
-import { run_all } from '../common.js';
+import { EACH_IS_ANIMATED, EACH_IS_CONTROLLED } from '../../../../constants.js';
+import { run_all } from '../../../common.js';
 import {
 	AWAIT_BLOCK,
 	DYNAMIC_COMPONENT_BLOCK,
@@ -8,24 +8,24 @@ import {
 	IF_BLOCK,
 	KEY_BLOCK,
 	ROOT_BLOCK
-} from './constants.js';
-import { destroy_each_item_block, get_first_element } from './dom/blocks/each.js';
-import { schedule_raf_task } from './dom/task.js';
-import { append_child, empty } from './operations.js';
+} from '../../constants.js';
+import { destroy_each_item_block, get_first_element } from '../blocks/each.js';
+import { schedule_raf_task } from '../task.js';
+import { append_child, empty } from '../../operations.js';
 import {
 	destroy_effect,
 	effect,
 	managed_effect,
 	managed_pre_effect
-} from './reactivity/effects.js';
+} from '../../reactivity/effects.js';
 import {
 	current_block,
 	current_effect,
 	execute_effect,
 	mark_subtree_inert,
 	untrack
-} from './runtime.js';
-import { raf } from './timing.js';
+} from '../../runtime.js';
+import { raf } from '../../timing.js';
 
 const active_tick_animations = new Set();
 const DELAY_NEXT_TICK = Number.MIN_SAFE_INTEGER;
@@ -297,10 +297,10 @@ const linear = (t) => t;
 
 /**
  * @param {HTMLElement} dom
- * @param {() => import('./types.js').TransitionPayload} init
+ * @param {() => import('../../types.js').TransitionPayload} init
  * @param {'in' | 'out' | 'both' | 'key'} direction
- * @param {import('./types.js').Effect} effect
- * @returns {import('./types.js').Transition}
+ * @param {import('../../types.js').Effect} effect
+ * @returns {import('../../types.js').Transition}
  */
 function create_transition(dom, init, direction, effect) {
 	let curr_direction = 'in';
@@ -313,7 +313,7 @@ function create_transition(dom, init, direction, effect) {
 	let cancelled = false;
 
 	const create_animation = () => {
-		let payload = /** @type {import('./types.js').TransitionPayload} */ (transition.p);
+		let payload = /** @type {import('../../types.js').TransitionPayload} */ (transition.p);
 		if (typeof payload === 'function') {
 			// @ts-ignore
 			payload = payload({ direction: curr_direction });
@@ -354,7 +354,7 @@ function create_transition(dom, init, direction, effect) {
 		};
 	};
 
-	/** @type {import('./types.js').Transition} */
+	/** @type {import('../../types.js').Transition} */
 	const transition = {
 		e: effect,
 		i: init,
@@ -482,7 +482,7 @@ function create_transition(dom, init, direction, effect) {
 }
 
 /**
- * @param {import('./types.js').Block} block
+ * @param {import('../../types.js').Block} block
  * @returns {boolean}
  */
 function is_transition_block(block) {
@@ -500,14 +500,14 @@ function is_transition_block(block) {
 /**
  * @template P
  * @param {HTMLElement} dom
- * @param {() => import('./types.js').TransitionFn<P | undefined> | import('./types.js').AnimateFn<P | undefined>} get_transition_fn
+ * @param {() => import('../../types.js').TransitionFn<P | undefined> | import('../../types.js').AnimateFn<P | undefined>} get_transition_fn
  * @param {(() => P) | null} props_fn
  * @param {'in' | 'out' | 'both' | 'key'} direction
  * @param {boolean} global
  * @returns {void}
  */
 export function bind_transition(dom, get_transition_fn, props_fn, direction, global) {
-	const transition_effect = /** @type {import('./types.js').Effect} */ (current_effect);
+	const transition_effect = /** @type {import('../../types.js').Effect} */ (current_effect);
 	const block = current_block;
 	const is_keyed_transition = direction === 'key';
 
@@ -518,7 +518,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 		// @ts-ignore
 		dom.__animate = true;
 	}
-	/** @type {import('./types.js').Block | null} */
+	/** @type {import('../../types.js').Block | null} */
 	let transition_block = block;
 	main: while (transition_block !== null) {
 		if (is_transition_block(transition_block)) {
@@ -532,7 +532,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 			} else if (transition_block.t === IF_BLOCK) {
 				transition_block.r = if_block_transition;
 				if (can_show_intro_on_mount) {
-					/** @type {import('./types.js').Block | null} */
+					/** @type {import('../../types.js').Block | null} */
 					let if_block = transition_block;
 					while (if_block.t === IF_BLOCK) {
 						// If we have an if block parent that is currently falsy then
@@ -557,7 +557,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 		transition_block = transition_block.p;
 	}
 
-	/** @type {import('./types.js').Transition} */
+	/** @type {import('../../types.js').Transition} */
 	let transition;
 
 	effect(() => {
@@ -573,13 +573,13 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 			untrack(() => {
 				const props = props_fn === null ? {} : props_fn();
 				return is_keyed_transition
-					? /** @type {import('./types.js').AnimateFn<any>} */ (transition_fn)(
+					? /** @type {import('../../types.js').AnimateFn<any>} */ (transition_fn)(
 							dom,
 							{ from: /** @type {DOMRect} */ (from), to: dom.getBoundingClientRect() },
 							props,
 							{}
 						)
-					: /** @type {import('./types.js').TransitionFn<any>} */ (transition_fn)(dom, props, {
+					: /** @type {import('../../types.js').TransitionFn<any>} */ (transition_fn)(dom, props, {
 							direction
 						});
 			});
@@ -600,7 +600,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 				transition.in();
 			}
 
-			/** @type {import('./types.js').Block | null} */
+			/** @type {import('../../types.js').Block | null} */
 			let transition_block = block;
 			while (!is_intro && transition_block !== null) {
 				const parent = transition_block.p;
@@ -630,7 +630,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 }
 
 /**
- * @param {Set<import('./types.js').Transition>} transitions
+ * @param {Set<import('../../types.js').Transition>} transitions
  * @param {'in' | 'out' | 'key'} target_direction
  * @param {DOMRect} [from]
  * @returns {void}
@@ -680,8 +680,8 @@ export function trigger_transitions(transitions, target_direction, from) {
 }
 
 /**
- * @this {import('./types.js').IfBlock}
- * @param {import('./types.js').Transition} transition
+ * @this {import('../../types.js').IfBlock}
+ * @param {import('../../types.js').Transition} transition
  * @returns {void}
  */
 function if_block_transition(transition) {
@@ -691,32 +691,32 @@ function if_block_transition(transition) {
 		const consequent_transitions = (block.c ??= new Set());
 		consequent_transitions.add(transition);
 		transition.f(() => {
-			const c = /** @type {Set<import('./types.js').Transition>} */ (consequent_transitions);
+			const c = /** @type {Set<import('../../types.js').Transition>} */ (consequent_transitions);
 			c.delete(transition);
 			// If the block has changed to falsy and has transitions
 			if (!block.v && c.size === 0) {
 				const consequent_effect = block.ce;
-				execute_effect(/** @type {import('./types.js').Effect} */ (consequent_effect));
+				execute_effect(/** @type {import('../../types.js').Effect} */ (consequent_effect));
 			}
 		});
 	} else {
 		const alternate_transitions = (block.a ??= new Set());
 		alternate_transitions.add(transition);
 		transition.f(() => {
-			const a = /** @type {Set<import('./types.js').Transition>} */ (alternate_transitions);
+			const a = /** @type {Set<import('../../types.js').Transition>} */ (alternate_transitions);
 			a.delete(transition);
 			// If the block has changed to truthy and has transitions
 			if (block.v && a.size === 0) {
 				const alternate_effect = block.ae;
-				execute_effect(/** @type {import('./types.js').Effect} */ (alternate_effect));
+				execute_effect(/** @type {import('../../types.js').Effect} */ (alternate_effect));
 			}
 		});
 	}
 }
 
 /**
- * @this {import('./types.js').EachItemBlock}
- * @param {import('./types.js').Transition} transition
+ * @this {import('../../types.js').EachItemBlock}
+ * @param {import('../../types.js').Transition} transition
  * @returns {void}
  */
 function each_item_transition(transition) {
@@ -754,8 +754,8 @@ function each_item_transition(transition) {
 
 /**
  *
- * @param {import('./types.js').EachItemBlock} block
- * @param {Set<import('./types.js').Transition>} transitions
+ * @param {import('../../types.js').EachItemBlock} block
+ * @param {Set<import('../../types.js').Transition>} transitions
  */
 function each_item_animate(block, transitions) {
 	const from_dom = /** @type {Element} */ (get_first_element(block));

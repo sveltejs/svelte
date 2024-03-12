@@ -19,7 +19,7 @@ import {
 	set_current_hydration_fragment
 } from './hydration.js';
 import { array_from } from './utils.js';
-import { bind_transition } from './transitions.js';
+import { bind_transition } from './dom/elements/transitions.js';
 import { ROOT_BLOCK } from './constants.js';
 import { handle_event_propagation } from './dom/elements/events.js';
 
