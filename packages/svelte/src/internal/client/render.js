@@ -10,7 +10,6 @@ import {
 	map_set,
 	set_class_name
 } from './operations.js';
-import { create_root_block, create_snippet_block } from './block.js';
 import {
 	PassiveDelegatedEvents,
 	DelegatedEvents,
@@ -69,7 +68,7 @@ import { run } from '../common.js';
 import { bind_transition } from './transitions.js';
 import { mutable_source, source, set } from './reactivity/sources.js';
 import { safe_equals, safe_not_equal } from './reactivity/equality.js';
-import { STATE_SYMBOL } from './constants.js';
+import { ROOT_BLOCK, STATE_SYMBOL } from './constants.js';
 
 /** @type {Set<string>} */
 const all_registered_events = new Set();
@@ -2295,7 +2294,22 @@ export function hydrate(component, options) {
 function _mount(Component, options) {
 	const registered_events = new Set();
 	const container = options.target;
-	const block = create_root_block(options.intro || false);
+
+	/** @type {import('#client').RootBlock} */
+	const block = {
+		// dom
+		d: null,
+		// effect
+		e: null,
+		// intro
+		i: options.intro || false,
+		// parent
+		p: null,
+		// transition
+		r: null,
+		// type
+		t: ROOT_BLOCK
+	};
 
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously
@@ -2406,29 +2420,6 @@ export function sanitize_slots(props) {
 	const sanitized = { ...props.$$slots };
 	if (props.children) sanitized.default = props.children;
 	return sanitized;
-}
-
-/**
- * @param {() => Function | null | undefined} get_snippet
- * @param {Node} node
- * @param {(() => any)[]} args
- * @returns {void}
- */
-export function snippet_effect(get_snippet, node, ...args) {
-	const block = create_snippet_block();
-	render_effect(() => {
-		// Only rerender when the snippet function itself changes,
-		// not when an eagerly-read prop inside the snippet function changes
-		const snippet = get_snippet();
-		if (snippet) {
-			untrack(() => snippet(node, ...args));
-		}
-		return () => {
-			if (block.d !== null) {
-				remove(block.d);
-			}
-		};
-	}, block);
 }
 
 /**

@@ -1895,7 +1895,7 @@ export const template_visitors = {
 
 		if (is_reactive) {
 			context.state.after_update.push(
-				b.stmt(b.call('$.snippet_effect', b.thunk(snippet_function), ...args))
+				b.stmt(b.call('$.snippet', b.thunk(snippet_function), ...args))
 			);
 		} else {
 			context.state.after_update.push(
