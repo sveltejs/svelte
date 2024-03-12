@@ -67,7 +67,7 @@ import {
 	object_assign
 } from './utils.js';
 import { run } from '../common.js';
-import { bind_transition, trigger_transitions } from './transitions.js';
+import { bind_transition } from './transitions.js';
 import { mutable_source, source, set } from './reactivity/sources.js';
 import { safe_equals, safe_not_equal } from './reactivity/equality.js';
 import { STATE_SYMBOL } from './constants.js';
