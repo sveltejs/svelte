@@ -72,7 +72,7 @@ import { safe_equals, safe_not_equal } from './reactivity/equality.js';
 import { STATE_SYMBOL } from './constants.js';
 
 /** @type {Set<string>} */
-const all_registerd_events = new Set();
+const all_registered_events = new Set();
 
 /** @type {Set<(events: Array<string>) => void>} */
 const root_event_handles = new Set();
@@ -1391,7 +1391,7 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
  */
 export function delegate(events) {
 	for (let i = 0; i < events.length; i++) {
-		all_registerd_events.add(events[i]);
+		all_registered_events.add(events[i]);
 	}
 	for (const fn of root_event_handles) {
 		fn(events);
@@ -2361,7 +2361,7 @@ function _mount(Component, options) {
 			}
 		}
 	};
-	event_handle(array_from(all_registerd_events));
+	event_handle(array_from(all_registered_events));
 	root_event_handles.add(event_handle);
 
 	mounted_components.set(component, () => {
