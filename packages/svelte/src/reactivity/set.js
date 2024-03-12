@@ -160,17 +160,16 @@ export class ReactiveSet extends Set {
 	}
 
 	entries() {
-		const values = Array.from(this.values());
-		let next_index = 0;
+		const iterator = this.values();
 
 		return make_iterable(
-			/** @type {any} */ ({
+			/** @type {IterableIterator<[T, T]>} */ ({
 				next() {
-					const index = next_index;
-					next_index += 1;
-					return index < values.length
-						? { value: [values[index], values[index]], done: false }
-						: { done: true };
+					for (const value of iterator) {
+						return { value: [value, value], done: false };
+					}
+
+					return { done: true };
 				}
 			})
 		);
