@@ -60,22 +60,6 @@ export function create_dynamic_element_block() {
 	};
 }
 
-/** @returns {import('./types.js').DynamicComponentBlock} */
-export function create_dynamic_component_block() {
-	return {
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('./types.js').Block} */ (current_block),
-		// transition
-		r: null,
-		// type
-		t: DYNAMIC_COMPONENT_BLOCK
-	};
-}
-
 /** @returns {import('./types.js').SnippetBlock} */
 export function create_snippet_block() {
 	return {
