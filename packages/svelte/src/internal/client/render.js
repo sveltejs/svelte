@@ -11,13 +11,6 @@ import {
 	set_class_name
 } from './operations.js';
 import {
-	create_root_block,
-	create_dynamic_element_block,
-	create_head_block,
-	create_dynamic_component_block,
-	create_snippet_block
-} from './block.js';
-import {
 	PassiveDelegatedEvents,
 	DelegatedEvents,
 	AttributeAliases,
@@ -31,11 +24,9 @@ import {
 	create_fragment_from_html,
 	create_fragment_with_script_from_html,
 	insert,
-	reconcile_html,
 	remove
 } from './reconciler.js';
 import {
-	execute_effect,
 	untrack,
 	flush_sync,
 	current_block,
@@ -73,13 +64,13 @@ import {
 	object_assign
 } from './utils.js';
 import { run } from '../common.js';
-import { bind_transition, trigger_transitions } from './transitions.js';
+import { bind_transition } from './transitions.js';
 import { mutable_source, source, set } from './reactivity/sources.js';
 import { safe_equals, safe_not_equal } from './reactivity/equality.js';
-import { STATE_SYMBOL } from './constants.js';
+import { ROOT_BLOCK, STATE_SYMBOL } from './constants.js';
 
 /** @type {Set<string>} */
-const all_registerd_events = new Set();
+const all_registered_events = new Set();
 
 /** @type {Set<(events: Array<string>) => void>} */
 const root_event_handles = new Set();
@@ -1398,7 +1389,7 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
  */
 export function delegate(events) {
 	for (let i = 0; i < events.length; i++) {
-		all_registerd_events.add(events[i]);
+		all_registered_events.add(events[i]);
 	}
 	for (const fn of root_event_handles) {
 		fn(events);
@@ -1518,367 +1509,11 @@ export function slot(anchor_node, slot_fn, slot_props, fallback_fn) {
 }
 
 /**
- * @param {(anchor: Node | null) => void} render_fn
- * @returns {void}
- */
-export function head(render_fn) {
-	const block = create_head_block();
-	// The head function may be called after the first hydration pass and ssr comment nodes may still be present,
-	// therefore we need to skip that when we detect that we're not in hydration mode.
-	let hydration_fragment = null;
-	let previous_hydration_fragment = null;
-	let is_hydrating = hydrating;
-	if (is_hydrating) {
-		hydration_fragment = get_hydration_fragment(document.head.firstChild);
-		previous_hydration_fragment = current_hydration_fragment;
-		set_current_hydration_fragment(hydration_fragment);
-	}
-
-	try {
-		const head_effect = render_effect(
-			() => {
-				const current = block.d;
-				if (current !== null) {
-					remove(current);
-					block.d = null;
-				}
-				let anchor = null;
-				if (!hydrating) {
-					anchor = empty();
-					document.head.appendChild(anchor);
-				}
-				render_fn(anchor);
-			},
-			block,
-			false
-		);
-		head_effect.ondestroy = () => {
-			const current = block.d;
-			if (current !== null) {
-				remove(current);
-			}
-		};
-		block.e = head_effect;
-	} finally {
-		if (is_hydrating) {
-			set_current_hydration_fragment(previous_hydration_fragment);
-		}
-	}
-}
-
-/**
- * @param {import('./types.js').Block} block
- * @param {Element} from
- * @param {Element} to
- * @returns {void}
- */
-function swap_block_dom(block, from, to) {
-	const dom = block.d;
-	if (is_array(dom)) {
-		for (let i = 0; i < dom.length; i++) {
-			if (dom[i] === from) {
-				dom[i] = to;
-				break;
-			}
-		}
-	} else if (dom === from) {
-		block.d = to;
-	}
-}
-
-/**
- * @param {Comment} anchor_node
- * @param {() => string} tag_fn
- * @param {boolean | null} is_svg `null` == not statically known
- * @param {undefined | ((element: Element, anchor: Node) => void)} render_fn
- * @returns {void}
- */
-export function element(anchor_node, tag_fn, is_svg, render_fn) {
-	const block = create_dynamic_element_block();
-	hydrate_block_anchor(anchor_node);
-	let has_mounted = false;
-
-	/** @type {string} */
-	let tag;
-
-	/** @type {null | Element} */
-	let element = null;
-	const element_effect = render_effect(
-		() => {
-			tag = tag_fn();
-			if (has_mounted) {
-				execute_effect(render_effect_signal);
-			}
-			has_mounted = true;
-		},
-		block,
-		false
-	);
-	// Managed effect
-	const render_effect_signal = render_effect(
-		() => {
-			// We try our best infering the namespace in case it's not possible to determine statically,
-			// but on the first render on the client (without hydration) the parent will be undefined,
-			// since the anchor is not attached to its parent / the dom yet.
-			const ns =
-				is_svg || tag === 'svg'
-					? namespace_svg
-					: is_svg === false || anchor_node.parentElement?.tagName === 'foreignObject'
-						? null
-						: anchor_node.parentElement?.namespaceURI ?? null;
-			const next_element = tag
-				? hydrating
-					? /** @type {Element} */ (current_hydration_fragment[0])
-					: ns
-						? document.createElementNS(ns, tag)
-						: document.createElement(tag)
-				: null;
-			const prev_element = element;
-			if (prev_element !== null) {
-				block.d = null;
-			}
-			element = next_element;
-			if (element !== null && render_fn !== undefined) {
-				let anchor;
-				if (hydrating) {
-					// Use the existing ssr comment as the anchor so that the inner open and close
-					// methods can pick up the existing nodes correctly
-					anchor = /** @type {Comment} */ (element.firstChild);
-				} else {
-					anchor = empty();
-					element.appendChild(anchor);
-				}
-				render_fn(element, anchor);
-			}
-			const has_prev_element = prev_element !== null;
-			if (has_prev_element) {
-				remove(prev_element);
-			}
-			if (element !== null) {
-				insert(element, null, anchor_node);
-				if (has_prev_element) {
-					const parent_block = block.p;
-					swap_block_dom(parent_block, prev_element, element);
-				}
-			}
-		},
-		block,
-		true
-	);
-	element_effect.ondestroy = () => {
-		if (element !== null) {
-			remove(element);
-			block.d = null;
-			element = null;
-		}
-		destroy_effect(render_effect_signal);
-	};
-	block.e = element_effect;
-}
-
-/**
- * @template P
- * @param {Comment} anchor_node
- * @param {() => (props: P) => void} component_fn
- * @param {(component: (props: P) => void) => void} render_fn
- * @returns {void}
- */
-export function component(anchor_node, component_fn, render_fn) {
-	const block = create_dynamic_component_block();
-
-	/** @type {null | import('./types.js').Render} */
-	let current_render = null;
-	hydrate_block_anchor(anchor_node);
-
-	/** @type {null | ((props: P) => void)} */
-	let component = null;
-	block.r =
-		/**
-		 * @param {import('./types.js').Transition} transition
-		 * @returns {void}
-		 */
-		(transition) => {
-			const render = /** @type {import('./types.js').Render} */ (current_render);
-			const transitions = render.s;
-			transitions.add(transition);
-			transition.f(() => {
-				transitions.delete(transition);
-				if (transitions.size === 0) {
-					// If the current render has changed since, then we can remove the old render
-					// effect as it's stale.
-					if (current_render !== render && render.e !== null) {
-						if (render.d !== null) {
-							remove(render.d);
-							render.d = null;
-						}
-						destroy_effect(render.e);
-						render.e = null;
-					}
-				}
-			});
-		};
-	const create_render_effect = () => {
-		/** @type {import('./types.js').Render} */
-		const render = {
-			d: null,
-			e: null,
-			s: new Set(),
-			p: current_render
-		};
-		// Managed effect
-		const effect = render_effect(
-			() => {
-				const current = block.d;
-				if (current !== null) {
-					remove(current);
-					block.d = null;
-				}
-				if (component) {
-					render_fn(component);
-				}
-				render.d = block.d;
-				block.d = null;
-			},
-			block,
-			true
-		);
-		render.e = effect;
-		current_render = render;
-	};
-	const render = () => {
-		const render = current_render;
-		if (render === null) {
-			create_render_effect();
-			return;
-		}
-		const transitions = render.s;
-		if (transitions.size === 0) {
-			if (render.d !== null) {
-				remove(render.d);
-				render.d = null;
-			}
-			if (render.e) {
-				execute_effect(render.e);
-			} else {
-				create_render_effect();
-			}
-		} else {
-			create_render_effect();
-			trigger_transitions(transitions, 'out');
-		}
-	};
-	const component_effect = render_effect(
-		() => {
-			const next_component = component_fn();
-			if (component !== next_component) {
-				component = next_component;
-				render();
-			}
-		},
-		block,
-		false
-	);
-	component_effect.ondestroy = () => {
-		let render = current_render;
-		while (render !== null) {
-			const dom = render.d;
-			if (dom !== null) {
-				remove(dom);
-			}
-			const effect = render.e;
-			if (effect !== null) {
-				destroy_effect(effect);
-			}
-			render = render.p;
-		}
-	};
-	block.e = component_effect;
-}
-
-/**
- * @param {Element | Text | Comment} anchor
- * @param {boolean} is_html
- * @param {() => Record<string, string>} props
- * @param {(anchor: Element | Text | Comment) => any} component
- * @returns {void}
- */
-export function css_props(anchor, is_html, props, component) {
-	hydrate_block_anchor(anchor);
-
-	/** @type {HTMLElement | SVGElement} */
-	let tag;
-
-	/** @type {Text | Comment} */
-	let component_anchor;
-	if (hydrating) {
-		// Hydration: css props element is surrounded by a ssr comment ...
-		tag = /** @type {HTMLElement | SVGElement} */ (current_hydration_fragment[0]);
-		// ... and the child(ren) of the css props element is also surround by a ssr comment
-		component_anchor = /** @type {Comment} */ (tag.firstChild);
-	} else {
-		if (is_html) {
-			tag = document.createElement('div');
-			tag.style.display = 'contents';
-		} else {
-			tag = document.createElementNS(namespace_svg, 'g');
-		}
-		insert(tag, null, anchor);
-		component_anchor = empty();
-		tag.appendChild(component_anchor);
-	}
-	component(component_anchor);
-
-	/** @type {Record<string, string>} */
-	let current_props = {};
-	const effect = render_effect(() => {
-		const next_props = props();
-		for (const key in current_props) {
-			if (!(key in next_props)) {
-				tag.style.removeProperty(key);
-			}
-		}
-		for (const key in next_props) {
-			tag.style.setProperty(key, next_props[key]);
-		}
-		current_props = next_props;
-	});
-	effect.ondestroy = () => {
-		remove(tag);
-	};
-}
-
-/**
  * @param {unknown} value
  * @returns {string}
  */
 export function stringify(value) {
 	return typeof value === 'string' ? value : value == null ? '' : value + '';
-}
-
-/**
- * @param {Element | Text | Comment} dom
- * @param {() => string} get_value
- * @param {boolean} svg
- * @returns {void}
- */
-export function html(dom, get_value, svg) {
-	/** @type {import('./types.js').TemplateNode | import('./types.js').TemplateNode[]} */
-	let html_dom;
-	/** @type {string} */
-	let value;
-	const effect = render_effect(() => {
-		if (value !== (value = get_value())) {
-			if (html_dom) {
-				remove(html_dom);
-			}
-			html_dom = reconcile_html(dom, value, svg);
-		}
-	});
-	effect.ondestroy = () => {
-		if (html_dom) {
-			remove(html_dom);
-		}
-	};
 }
 
 /**
@@ -2580,7 +2215,22 @@ export function hydrate(component, options) {
 function _mount(Component, options) {
 	const registered_events = new Set();
 	const container = options.target;
-	const block = create_root_block(options.intro || false);
+
+	/** @type {import('#client').RootBlock} */
+	const block = {
+		// dom
+		d: null,
+		// effect
+		e: null,
+		// intro
+		i: options.intro || false,
+		// parent
+		p: null,
+		// transition
+		r: null,
+		// type
+		t: ROOT_BLOCK
+	};
 
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously
@@ -2646,7 +2296,7 @@ function _mount(Component, options) {
 			}
 		}
 	};
-	event_handle(array_from(all_registerd_events));
+	event_handle(array_from(all_registered_events));
 	root_event_handles.add(event_handle);
 
 	mounted_components.set(component, () => {
@@ -2691,29 +2341,6 @@ export function sanitize_slots(props) {
 	const sanitized = { ...props.$$slots };
 	if (props.children) sanitized.default = props.children;
 	return sanitized;
-}
-
-/**
- * @param {() => Function | null | undefined} get_snippet
- * @param {Node} node
- * @param {(() => any)[]} args
- * @returns {void}
- */
-export function snippet_effect(get_snippet, node, ...args) {
-	const block = create_snippet_block();
-	render_effect(() => {
-		// Only rerender when the snippet function itself changes,
-		// not when an eagerly-read prop inside the snippet function changes
-		const snippet = get_snippet();
-		if (snippet) {
-			untrack(() => snippet(node, ...args));
-		}
-		return () => {
-			if (block.d !== null) {
-				remove(block.d);
-			}
-		};
-	}, block);
 }
 
 /**
