@@ -1,5 +1,5 @@
-import { effect, render_effect } from '../../reactivity/effects.js';
-import { untrack } from '../../runtime.js';
+import { effect, render_effect } from '../../../reactivity/effects.js';
+import { untrack } from '../../../runtime.js';
 
 /**
  * Resize observer singleton.

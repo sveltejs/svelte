@@ -1,4 +1,4 @@
-import { render_effect } from '../../reactivity/effects.js';
+import { render_effect } from '../../../reactivity/effects.js';
 
 /**
  * @param {'innerHTML' | 'textContent' | 'innerText'} property

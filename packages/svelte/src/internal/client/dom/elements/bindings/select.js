@@ -1,4 +1,4 @@
-import { effect } from '../../reactivity/effects.js';
+import { effect } from '../../../reactivity/effects.js';
 
 /**
  * Selects the correct option(s) (depending on whether this is a multiple select)
