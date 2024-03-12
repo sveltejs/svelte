@@ -152,18 +152,18 @@ export function batch_inspect(target, prop, receiver) {
 /**
  * Determines whether a derived or effect is dirty.
  * If it is MAYBE_DIRTY, will set the status to CLEAN
- * @param {import('./types.js').Reaction} signal
+ * @param {import('./types.js').Reaction} reaction
  * @returns {boolean}
  */
-function check_dirtiness(signal) {
-	var flags = signal.f;
+function check_dirtiness(reaction) {
+	var flags = reaction.f;
 
 	if ((flags & DIRTY) !== 0) {
 		return true;
 	}
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
-		var dependencies = signal.deps;
+		var dependencies = reaction.deps;
 
 		if (dependencies !== null) {
 			var length = dependencies.length;
@@ -175,7 +175,7 @@ function check_dirtiness(signal) {
 					update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
 
 					// `signal` might now be dirty, as a result of calling `update_derived`
-					if ((signal.f & DIRTY) !== 0) {
+					if ((reaction.f & DIRTY) !== 0) {
 						return true;
 					}
 				}
@@ -187,14 +187,14 @@ function check_dirtiness(signal) {
 				var is_unowned = (flags & UNOWNED) !== 0;
 				var version = dependency.version;
 
-				if (is_unowned && version > /** @type {import('#client').Derived} */ (signal).version) {
-					/** @type {import('#client').Derived} */ (signal).version = version;
+				if (is_unowned && version > /** @type {import('#client').Derived} */ (reaction).version) {
+					/** @type {import('#client').Derived} */ (reaction).version = version;
 					return true;
 				}
 			}
 		}
 
-		set_signal_status(signal, CLEAN);
+		set_signal_status(reaction, CLEAN);
 	}
 
 	return false;
