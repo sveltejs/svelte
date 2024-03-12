@@ -189,8 +189,8 @@ function is_signal_dirty(signal) {
 						return true;
 					}
 				}
-				// If we're workig with an unowned derived signal, then we need to check
-				// if our dependency write version is higher. If is is then we can assume
+				// If we're working with an unowned derived signal, then we need to check
+				// if our dependency write version is higher. If it is then we can assume
 				// that state has changed to a newer version and thus this unowned signal
 				// is also dirty.
 				const is_unowned = (flags & UNOWNED) !== 0;
