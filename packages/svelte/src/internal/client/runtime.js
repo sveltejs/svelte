@@ -1269,8 +1269,8 @@ export function inspect(get_value, inspect = console.log) {
 
 /**
  * @template V
- * @param {V} value
- * @returns {import('./types.js').UnwrappedSignal<V>}
+ * @param {V | import('#client').Value<V>} value
+ * @returns {V}
  */
 export function unwrap(value) {
 	if (is_signal(value)) {

@@ -59,5 +59,3 @@ export interface DerivedDebug<V = unknown> extends Derived<V>, ValueDebug<V> {}
 export type Source<V = unknown> = Value<V>;
 
 export type MaybeSignal<T = unknown> = T | Source<T>;
-
-export type UnwrappedSignal<T> = T extends Value<infer U> ? U : T;
