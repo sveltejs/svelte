@@ -1,5 +1,10 @@
 import { DEV } from 'esm-env';
-import { PROPS_IS_IMMUTABLE, PROPS_IS_RUNES, PROPS_IS_UPDATED } from '../../../constants.js';
+import {
+	PROPS_IS_IMMUTABLE,
+	PROPS_IS_LAZY_INITIAL,
+	PROPS_IS_RUNES,
+	PROPS_IS_UPDATED
+} from '../../../constants.js';
 import { get_descriptor, is_function } from '../utils.js';
 import { mutable_source, set } from './sources.js';
 import { derived } from './deriveds.js';
