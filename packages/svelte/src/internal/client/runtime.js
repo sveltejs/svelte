@@ -172,7 +172,6 @@ function is_signal_dirty(signal) {
 					(dependency.f & MAYBE_DIRTY) !== 0 &&
 					!is_signal_dirty(/** @type {import('#client').Derived} */ (dependency))
 				) {
-					set_signal_status(dependency, CLEAN);
 					continue;
 				}
 
@@ -199,6 +198,8 @@ function is_signal_dirty(signal) {
 				}
 			}
 		}
+
+		set_signal_status(signal, CLEAN);
 	}
 
 	return false;
