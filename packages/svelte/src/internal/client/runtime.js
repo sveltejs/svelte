@@ -117,13 +117,9 @@ export let current_component_context = null;
 
 export let updating_derived = false;
 
-/**
- * @param {null | import('./types.js').ComponentContext} context
- * @returns {boolean}
- */
-export function is_runes(context) {
-	const component_context = context || current_component_context;
-	return component_context !== null && component_context.r;
+/** @returns {boolean} */
+export function is_runes() {
+	return current_component_context !== null && current_component_context.r;
 }
 
 /**
@@ -878,7 +874,7 @@ export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
  * @returns {void}
  */
 export function mark_reactions(signal, to_status, force_schedule) {
-	const runes = is_runes(null);
+	const runes = is_runes();
 	const reactions = signal.reactions;
 	if (reactions !== null) {
 		const length = reactions.length;

@@ -97,7 +97,7 @@ export function set(signal, value) {
 		!current_untracking &&
 		!ignore_mutation_validation &&
 		current_reaction !== null &&
-		is_runes(null) &&
+		is_runes() &&
 		(current_reaction.f & DERIVED) !== 0
 	) {
 		throw new Error(
@@ -124,7 +124,7 @@ export function set(signal, value) {
 		// We additionally want to skip this logic for when ignore_mutation_validation is
 		// true, as stores write to source signal on initialisation.
 		if (
-			is_runes(null) &&
+			is_runes() &&
 			!ignore_mutation_validation &&
 			current_effect !== null &&
 			(current_effect.f & CLEAN) !== 0 &&
