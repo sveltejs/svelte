@@ -43,16 +43,6 @@ const all_registered_events = new Set();
 const root_event_handles = new Set();
 
 /**
- * @param {Element} node
- * @returns {Element}
- */
-export function svg_replace(node) {
-	const first_child = /** @type {Element} */ (node.firstChild);
-	node.replaceWith(first_child);
-	return first_child;
-}
-
-/**
  * @param {string} event_name
  * @param {Element} dom
  * @param {EventListener} handler
