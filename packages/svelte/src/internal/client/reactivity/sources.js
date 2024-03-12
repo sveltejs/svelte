@@ -34,7 +34,7 @@ export function source(value) {
 		reactions: null,
 		equals: equals,
 		v: value,
-		w: 0
+		version: 0
 	};
 
 	if (DEV) {
@@ -109,10 +109,13 @@ export function set(signal, value) {
 					: '')
 		);
 	}
+
 	if (!signal.equals(value)) {
 		signal.v = value;
-		// Increment write version so that unowned signals can properly track dirtyness
-		signal.w++;
+
+		// Increment write version so that unowned signals can properly track dirtiness
+		signal.version++;
+
 		// If the current signal is running for the first time, it won't have any
 		// reactions as we only allocate and assign the reactions after the signal
 		// has fully executed. So in the case of ensuring it registers the reaction
@@ -141,6 +144,7 @@ export function set(signal, value) {
 				}
 			}
 		}
+
 		mark_reactions(signal, DIRTY, true);
 
 		if (DEV) {

@@ -185,11 +185,10 @@ function check_dirtiness(signal) {
 				// that state has changed to a newer version and thus this unowned signal
 				// is also dirty.
 				var is_unowned = (flags & UNOWNED) !== 0;
-				var write_version = /** @type {import('#client').Derived} */ (signal).w;
-				var dep_write_version = dependency.w;
+				var version = dependency.version;
 
-				if (is_unowned && dep_write_version > write_version) {
-					/** @type {import('#client').Derived} */ (signal).w = dep_write_version;
+				if (is_unowned && version > /** @type {import('#client').Derived} */ (signal).version) {
+					/** @type {import('#client').Derived} */ (signal).version = version;
 					return true;
 				}
 			}

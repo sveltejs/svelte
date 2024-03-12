@@ -16,7 +16,7 @@ export interface Value<V = unknown> extends Signal {
 	/** The latest value for this signal */
 	v: V;
 	/** Write version */
-	w: number;
+	version: number;
 }
 
 export interface Reaction extends Signal {

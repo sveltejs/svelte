@@ -34,7 +34,7 @@ export function derived(fn) {
 		effects: null,
 		deriveds: null,
 		v: /** @type {V} */ (null),
-		w: 0
+		version: 0
 	};
 
 	if (DEV) {
