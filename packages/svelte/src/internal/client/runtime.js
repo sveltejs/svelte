@@ -519,16 +519,19 @@ export function schedule_effect(signal, sync) {
 				const target_block = signal.block;
 				const is_pre_effect = (flags & PRE_EFFECT) !== 0;
 				let target_signal;
+				let target_signal_level;
 				let is_target_pre_effect;
 				let i = length;
 				while (true) {
 					target_signal = current_queued_pre_and_render_effects[--i];
-					if (target_signal.l <= target_level) {
+					target_signal_level = target_signal.l;
+					if (target_signal_level <= target_level) {
 						if (i + 1 === length) {
 							should_append = true;
 						} else {
 							is_target_pre_effect = (target_signal.f & PRE_EFFECT) !== 0;
 							if (
+								target_signal_level < target_level ||
 								target_signal.block !== target_block ||
 								(is_target_pre_effect && !is_pre_effect)
 							) {
