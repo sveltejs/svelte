@@ -34,6 +34,54 @@ const DELAY_NEXT_TICK = Number.MIN_SAFE_INTEGER;
 let active_tick_ref = undefined;
 
 /**
+ * @template P
+ * @param {HTMLElement} dom
+ * @param {() => import('#client').TransitionFn<P | undefined>} get_transition_fn
+ * @param {(() => P) | null} props
+ * @param {any} global
+ * @returns {void}
+ */
+export function transition(dom, get_transition_fn, props, global = false) {
+	bind_transition(dom, get_transition_fn, props, 'both', global);
+}
+
+/**
+ * @template P
+ * @param {HTMLElement} dom
+ * @param {() => import('#client').TransitionFn<P | undefined>} get_transition_fn
+ * @param {(() => P) | null} props
+ * @returns {void}
+ */
+export function animate(dom, get_transition_fn, props) {
+	bind_transition(dom, get_transition_fn, props, 'key', false);
+}
+
+/**
+ * @template P
+ * @param {HTMLElement} dom
+ * @param {() => import('#client').TransitionFn<P | undefined>} get_transition_fn
+ * @param {(() => P) | null} props
+ * @param {any} global
+ * @returns {void}
+ */
+function in_fn(dom, get_transition_fn, props, global = false) {
+	bind_transition(dom, get_transition_fn, props, 'in', global);
+}
+export { in_fn as in };
+
+/**
+ * @template P
+ * @param {HTMLElement} dom
+ * @param {() => import('#client').TransitionFn<P | undefined>} get_transition_fn
+ * @param {(() => P) | null} props
+ * @param {any} global
+ * @returns {void}
+ */
+export function out(dom, get_transition_fn, props, global = false) {
+	bind_transition(dom, get_transition_fn, props, 'out', global);
+}
+
+/**
  * @template T
  * @param {string} type
  * @param {T} [detail]
@@ -506,7 +554,7 @@ function is_transition_block(block) {
  * @param {boolean} global
  * @returns {void}
  */
-export function bind_transition(dom, get_transition_fn, props_fn, direction, global) {
+function bind_transition(dom, get_transition_fn, props_fn, direction, global) {
 	const transition_effect = /** @type {import('../../types.js').Effect} */ (current_effect);
 	const block = current_block;
 	const is_keyed_transition = direction === 'key';

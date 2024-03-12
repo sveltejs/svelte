@@ -2,15 +2,8 @@ import { DEV } from 'esm-env';
 import { append_child, create_element, empty, init_operations } from './dom/operations.js';
 import { PassiveDelegatedEvents } from '../../constants.js';
 import { remove } from './dom/reconciler.js';
-import {
-	untrack,
-	flush_sync,
-	push,
-	pop,
-	current_component_context,
-	deep_read_state
-} from './runtime.js';
-import { render_effect, effect, destroy_effect } from './reactivity/effects.js';
+import { flush_sync, push, pop, current_component_context } from './runtime.js';
+import { render_effect, destroy_effect } from './reactivity/effects.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,
@@ -19,7 +12,6 @@ import {
 	set_current_hydration_fragment
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
-import { bind_transition } from './dom/elements/transitions.js';
 import { ROOT_BLOCK } from './constants.js';
 import { handle_event_propagation } from './dom/elements/events.js';
 
@@ -81,54 +73,6 @@ export function slot(anchor_node, slot_fn, slot_props, fallback_fn) {
  */
 export function stringify(value) {
 	return typeof value === 'string' ? value : value == null ? '' : value + '';
-}
-
-/**
- * @template P
- * @param {HTMLElement} dom
- * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
- * @param {(() => P) | null} props
- * @param {any} global
- * @returns {void}
- */
-export function transition(dom, get_transition_fn, props, global = false) {
-	bind_transition(dom, get_transition_fn, props, 'both', global);
-}
-
-/**
- * @template P
- * @param {HTMLElement} dom
- * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
- * @param {(() => P) | null} props
- * @returns {void}
- */
-export function animate(dom, get_transition_fn, props) {
-	bind_transition(dom, get_transition_fn, props, 'key', false);
-}
-
-/**
- * @template P
- * @param {HTMLElement} dom
- * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
- * @param {(() => P) | null} props
- * @param {any} global
- * @returns {void}
- */
-function in_fn(dom, get_transition_fn, props, global = false) {
-	bind_transition(dom, get_transition_fn, props, 'in', global);
-}
-export { in_fn as in };
-
-/**
- * @template P
- * @param {HTMLElement} dom
- * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
- * @param {(() => P) | null} props
- * @param {any} global
- * @returns {void}
- */
-export function out(dom, get_transition_fn, props, global = false) {
-	bind_transition(dom, get_transition_fn, props, 'out', global);
 }
 
 // TODO 5.0 remove this
