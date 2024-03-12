@@ -44,22 +44,6 @@ export function create_head_block() {
 	};
 }
 
-/** @returns {import('./types.js').DynamicElementBlock} */
-export function create_dynamic_element_block() {
-	return {
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('./types.js').Block} */ (current_block),
-		// transition
-		r: null,
-		// type
-		t: DYNAMIC_ELEMENT_BLOCK
-	};
-}
-
 /** @returns {import('./types.js').SnippetBlock} */
 export function create_snippet_block() {
 	return {
