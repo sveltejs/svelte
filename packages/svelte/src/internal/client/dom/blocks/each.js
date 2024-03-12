@@ -91,7 +91,7 @@ export function create_each_item_block(item, index, key) {
  * @param {() => V[]} collection
  * @param {number} flags
  * @param {null | ((item: V) => string)} key_fn
- * @param {(anchor: null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
  * @returns {void}
@@ -291,7 +291,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
  * @param {() => V[]} collection
  * @param {number} flags
  * @param {null | ((item: V) => string)} key_fn
- * @param {(anchor: null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
@@ -304,7 +304,7 @@ export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fa
  * @param {Element | Comment} anchor_node
  * @param {() => V[]} collection
  * @param {number} flags
- * @param {(anchor: null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
