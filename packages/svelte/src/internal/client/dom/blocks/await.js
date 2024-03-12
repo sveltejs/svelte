@@ -1,14 +1,8 @@
 import { is_promise } from '../../../common.js';
 import { hydrate_block_anchor } from '../../hydration.js';
 import { remove } from '../../reconciler.js';
-import {
-	current_block,
-	destroy_signal,
-	execute_effect,
-	flushSync,
-	push_destroy_fn
-} from '../../runtime.js';
-import { render_effect } from '../../reactivity/effects.js';
+import { current_block, execute_effect, flushSync } from '../../runtime.js';
+import { destroy_effect, render_effect } from '../../reactivity/effects.js';
 import { trigger_transitions } from '../../transitions.js';
 import { AWAIT_BLOCK, UNINITIALIZED } from '../../constants.js';
 
@@ -74,7 +68,7 @@ export function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 							remove(render.d);
 							render.d = null;
 						}
-						destroy_signal(render.e);
+						destroy_effect(render.e);
 						render.e = null;
 					}
 				}
@@ -181,7 +175,7 @@ export function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 		block,
 		false
 	);
-	push_destroy_fn(await_effect, () => {
+	await_effect.ondestroy = () => {
 		let render = current_render;
 		latest_token = {};
 		while (render !== null) {
@@ -191,10 +185,10 @@ export function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 			}
 			const effect = render.e;
 			if (effect !== null) {
-				destroy_signal(effect);
+				destroy_effect(effect);
 			}
 			render = render.p;
 		}
-	});
+	};
 	block.e = await_effect;
 }

@@ -35,8 +35,6 @@ import {
 	remove
 } from './reconciler.js';
 import {
-	destroy_signal,
-	push_destroy_fn,
 	execute_effect,
 	untrack,
 	flush_sync,
@@ -55,7 +53,8 @@ import {
 	effect,
 	managed_effect,
 	pre_effect,
-	user_effect
+	user_effect,
+	destroy_effect
 } from './reactivity/effects.js';
 import {
 	current_hydration_fragment,
@@ -76,7 +75,7 @@ import {
 import { run } from '../common.js';
 import { bind_transition, trigger_transitions } from './transitions.js';
 import { mutable_source, source, set } from './reactivity/sources.js';
-import { safe_equal, safe_not_equal } from './reactivity/equality.js';
+import { safe_equals, safe_not_equal } from './reactivity/equality.js';
 import { STATE_SYMBOL } from './constants.js';
 
 /** @type {Set<string>} */
@@ -728,11 +727,11 @@ export function bind_playback_rate(media, get_value, update) {
 	// Needs to happen after the element is inserted into the dom, else playback will be set back to 1 by the browser.
 	// For hydration we could do it immediately but the additional code is not worth the lost microtask.
 
-	/** @type {import('./types.js').Reaction | undefined} */
+	/** @type {import('./types.js').Effect | undefined} */
 	let render;
 	let destroyed = false;
 	const effect = managed_effect(() => {
-		destroy_signal(effect);
+		destroy_effect(effect);
 		if (destroyed) return;
 		if (get_value() == null) {
 			callback();
@@ -750,7 +749,7 @@ export function bind_playback_rate(media, get_value, update) {
 	render_effect(() => () => {
 		destroyed = true;
 		if (render) {
-			destroy_signal(render);
+			destroy_effect(render);
 		}
 	});
 }
@@ -1382,7 +1381,7 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 	// Add effect teardown (likely causes: if block became false, each item removed, component unmounted).
 	// In these cases we need to nullify the binding only if we detect that the value is still the same.
 	// If not, that means that another effect has now taken over the binding.
-	push_destroy_fn(e, () => {
+	e.ondestroy = () => {
 		// Defer to the next tick so that all updates can be reconciled first.
 		// This solves the case where one variable is shared across multiple this-bindings.
 		effect(() => {
@@ -1390,7 +1389,7 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 				update(null, ...parts);
 			}
 		});
-	});
+	};
 }
 
 /**
@@ -1553,12 +1552,12 @@ export function head(render_fn) {
 			block,
 			false
 		);
-		push_destroy_fn(head_effect, () => {
+		head_effect.ondestroy = () => {
 			const current = block.d;
 			if (current !== null) {
 				remove(current);
 			}
-		});
+		};
 		block.e = head_effect;
 	} finally {
 		if (is_hydrating) {
@@ -1666,14 +1665,14 @@ export function element(anchor_node, tag_fn, is_svg, render_fn) {
 		block,
 		true
 	);
-	push_destroy_fn(element_effect, () => {
+	element_effect.ondestroy = () => {
 		if (element !== null) {
 			remove(element);
 			block.d = null;
 			element = null;
 		}
-		destroy_signal(render_effect_signal);
-	});
+		destroy_effect(render_effect_signal);
+	};
 	block.e = element_effect;
 }
 
@@ -1712,7 +1711,7 @@ export function component(anchor_node, component_fn, render_fn) {
 							remove(render.d);
 							render.d = null;
 						}
-						destroy_signal(render.e);
+						destroy_effect(render.e);
 						render.e = null;
 					}
 				}
@@ -1779,7 +1778,7 @@ export function component(anchor_node, component_fn, render_fn) {
 		block,
 		false
 	);
-	push_destroy_fn(component_effect, () => {
+	component_effect.ondestroy = () => {
 		let render = current_render;
 		while (render !== null) {
 			const dom = render.d;
@@ -1788,11 +1787,11 @@ export function component(anchor_node, component_fn, render_fn) {
 			}
 			const effect = render.e;
 			if (effect !== null) {
-				destroy_signal(effect);
+				destroy_effect(effect);
 			}
 			render = render.p;
 		}
-	});
+	};
 	block.e = component_effect;
 }
 
@@ -1843,9 +1842,9 @@ export function css_props(anchor, is_html, props, component) {
 		}
 		current_props = next_props;
 	});
-	push_destroy_fn(effect, () => {
+	effect.ondestroy = () => {
 		remove(tag);
-	});
+	};
 }
 
 /**
@@ -1875,11 +1874,11 @@ export function html(dom, get_value, svg) {
 			html_dom = reconcile_html(dom, value, svg);
 		}
 	});
-	push_destroy_fn(effect, () => {
+	effect.ondestroy = () => {
 		if (html_dom) {
 			remove(html_dom);
 		}
-	});
+	};
 }
 
 /**
@@ -2659,7 +2658,7 @@ function _mount(Component, options) {
 		if (dom !== null) {
 			remove(dom);
 		}
-		destroy_signal(/** @type {import('./types.js').Effect} */ (block.e));
+		destroy_effect(/** @type {import('./types.js').Effect} */ (block.e));
 	});
 
 	return component;
@@ -2830,7 +2829,7 @@ export function prop(props, key, flags, initial) {
 		return (inner_current_value.v = parent_value);
 	});
 
-	if (!immutable) current_value.e = safe_equal;
+	if (!immutable) current_value.equals = safe_equals;
 
 	return function (/** @type {V} */ value, mutation = false) {
 		var current = get(current_value);

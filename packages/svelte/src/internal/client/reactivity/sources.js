@@ -1,7 +1,7 @@
 import { DEV } from 'esm-env';
 import {
 	current_component_context,
-	current_consumer,
+	current_reaction,
 	current_dependencies,
 	current_effect,
 	current_untracked_writes,
@@ -11,15 +11,15 @@ import {
 	ignore_mutation_validation,
 	is_batching_effect,
 	is_runes,
-	mark_signal_consumers,
+	mark_reactions,
 	schedule_effect,
 	set_current_untracked_writes,
 	set_last_inspected_signal,
 	set_signal_status,
 	untrack
 } from '../runtime.js';
-import { default_equals, safe_equal } from './equality.js';
-import { CLEAN, DERIVED, DIRTY, MANAGED, SOURCE } from '../constants.js';
+import { equals, safe_equals } from './equality.js';
+import { CLEAN, DERIVED, DIRTY, MANAGED } from '../constants.js';
 
 /**
  * @template V
@@ -30,15 +30,15 @@ import { CLEAN, DERIVED, DIRTY, MANAGED, SOURCE } from '../constants.js';
 export function source(value) {
 	/** @type {import('#client').Source<V>} */
 	const source = {
-		c: null,
-		e: default_equals,
-		f: SOURCE | CLEAN,
+		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
+		reactions: null,
+		equals: equals,
 		v: value,
-		w: 0
+		version: 0
 	};
 
 	if (DEV) {
-		/** @type {import('#client').SourceDebug<V>} */ (source).inspect = new Set();
+		/** @type {import('#client').ValueDebug<V>} */ (source).inspect = new Set();
 	}
 
 	return source;
@@ -52,7 +52,7 @@ export function source(value) {
 /*#__NO_SIDE_EFFECTS__*/
 export function mutable_source(initial_value) {
 	const s = source(initial_value);
-	s.e = safe_equal;
+	s.equals = safe_equals;
 
 	// bind the signal to the component context, in case we need to
 	// track updates to trigger beforeUpdate/afterUpdate callbacks
@@ -96,9 +96,9 @@ export function set(signal, value) {
 	if (
 		!current_untracking &&
 		!ignore_mutation_validation &&
-		current_consumer !== null &&
-		is_runes(null) &&
-		(current_consumer.f & DERIVED) !== 0
+		current_reaction !== null &&
+		is_runes() &&
+		(current_reaction.f & DERIVED) !== 0
 	) {
 		throw new Error(
 			'ERR_SVELTE_UNSAFE_MUTATION' +
@@ -109,16 +109,16 @@ export function set(signal, value) {
 					: '')
 		);
 	}
-	if (
-		(signal.f & SOURCE) !== 0 &&
-		!(/** @type {import('#client').EqualsFunctions} */ (signal.e)(value, signal.v))
-	) {
+
+	if (!signal.equals(value)) {
 		signal.v = value;
-		// Increment write version so that unowned signals can properly track dirtyness
-		signal.w++;
+
+		// Increment write version so that unowned signals can properly track dirtiness
+		signal.version++;
+
 		// If the current signal is running for the first time, it won't have any
-		// consumers as we only allocate and assign the consumers after the signal
-		// has fully executed. So in the case of ensuring it registers the consumer
+		// reactions as we only allocate and assign the reactions after the signal
+		// has fully executed. So in the case of ensuring it registers the reaction
 		// properly for itself, we need to ensure the current effect actually gets
 		// scheduled. i.e:
 		//
@@ -127,10 +127,9 @@ export function set(signal, value) {
 		// We additionally want to skip this logic for when ignore_mutation_validation is
 		// true, as stores write to source signal on initialisation.
 		if (
-			is_runes(null) &&
+			is_runes() &&
 			!ignore_mutation_validation &&
 			current_effect !== null &&
-			current_effect.c === null &&
 			(current_effect.f & CLEAN) !== 0 &&
 			(current_effect.f & MANAGED) === 0
 		) {
@@ -145,10 +144,10 @@ export function set(signal, value) {
 				}
 			}
 		}
-		mark_signal_consumers(signal, DIRTY, true);
 
-		// @ts-expect-error
-		if (DEV && signal.inspect) {
+		mark_reactions(signal, DIRTY, true);
+
+		if (DEV) {
 			if (is_batching_effect) {
 				set_last_inspected_signal(/** @type {import('#client').ValueDebug} */ (signal));
 			} else {

@@ -27,11 +27,6 @@ export function store_get(store, store_name, stores) {
 			value: mutable_source(UNINITIALIZED),
 			unsubscribe: noop
 		};
-		// TODO: can we remove this code? it was refactored out when we split up source/comptued signals
-		// push_destroy_fn(entry.value, () => {
-		// 	/** @type {import('#client').StoreReferencesContainer['']} */ (entry).last_value =
-		// 		/** @type {import('#client').StoreReferencesContainer['']} */ (entry).value.value;
-		// });
 		stores[store_name] = entry;
 	}
 
@@ -110,8 +105,6 @@ export function unsubscribe_on_destroy(stores) {
 		for (store_name in stores) {
 			const ref = stores[store_name];
 			ref.unsubscribe();
-			// TODO: can we remove this code? it was refactored out when we split up source/comptued signals
-			// destroy_signal(ref.value);
 		}
 	});
 }

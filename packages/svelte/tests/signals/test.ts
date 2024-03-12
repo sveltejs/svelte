@@ -1,6 +1,11 @@
 import { describe, assert, it } from 'vitest';
 import * as $ from '../../src/internal/client/runtime';
-import { effect, render_effect, user_effect } from '../../src/internal/client/reactivity/effects';
+import {
+	destroy_effect,
+	effect,
+	render_effect,
+	user_effect
+} from '../../src/internal/client/reactivity/effects';
 import { source, set } from '../../src/internal/client/reactivity/sources';
 import type { Derived } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
@@ -27,7 +32,7 @@ function run_test(runes: boolean, fn: (runes: boolean) => () => void) {
 		);
 		$.pop();
 		execute();
-		$.destroy_signal(signal);
+		destroy_effect(signal);
 	};
 }
 
@@ -193,13 +198,13 @@ describe('signals', () => {
 		return () => {
 			$.flushSync(() => set(count, 1));
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.c?.length, 1);
+			assert.deepEqual(count.reactions?.length, 1);
 			$.flushSync(() => set(count, 2));
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.c?.length, 1);
+			assert.deepEqual(count.reactions?.length, 1);
 			$.flushSync(() => set(count, 3));
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.c?.length, 1);
+			assert.deepEqual(count.reactions?.length, 1);
 			assert.deepEqual(log, [0, 1, 2, 3]);
 		};
 	});
@@ -230,7 +235,7 @@ describe('signals', () => {
 
 			// Ensure we're not leaking dependencies
 			assert.deepEqual(
-				nested.slice(0, -2).map((s) => s.d),
+				nested.slice(0, -2).map((s) => s.deps),
 				[null, null]
 			);
 		};
@@ -259,11 +264,11 @@ describe('signals', () => {
 			$.flushSync(() => set(count, 4));
 			$.flushSync(() => set(count, 0));
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.c?.length, 1);
+			assert.deepEqual(count.reactions?.length, 1);
 			assert.deepEqual(log, [0, 2, 'limit', 0]);
-			$.destroy_signal(effect);
+			destroy_effect(effect);
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.c, null);
+			assert.deepEqual(count.reactions, null);
 		};
 	});
 
@@ -349,6 +354,28 @@ describe('signals', () => {
 				errored = true;
 			}
 			assert.equal(errored, true);
+		};
+	});
+
+	test('effect teardown is removed on re-run', () => {
+		const count = source(0);
+		let first = true;
+		let teardown = 0;
+
+		user_effect(() => {
+			$.get(count);
+			if (first) {
+				first = false;
+				return () => {
+					teardown += 1;
+				};
+			}
+		});
+
+		return () => {
+			$.flushSync(() => set(count, 1));
+			$.flushSync(() => set(count, 2));
+			assert.equal(teardown, 1);
 		};
 	});
 });

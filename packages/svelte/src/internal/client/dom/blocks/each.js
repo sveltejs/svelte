@@ -16,8 +16,8 @@ import {
 } from '../../hydration.js';
 import { clear_text_content, empty, map_get, map_set } from '../../operations.js';
 import { insert, remove } from '../../reconciler.js';
-import { current_block, destroy_signal, execute_effect, push_destroy_fn } from '../../runtime.js';
-import { render_effect } from '../../reactivity/effects.js';
+import { current_block, execute_effect } from '../../runtime.js';
+import { destroy_effect, render_effect } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { trigger_transitions } from '../../transitions.js';
 import { is_array, is_frozen } from '../../utils.js';
@@ -91,7 +91,7 @@ export function create_each_item_block(item, index, key) {
  * @param {() => V[]} collection
  * @param {number} flags
  * @param {null | ((item: V) => string)} key_fn
- * @param {(anchor: null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
  * @returns {void}
@@ -133,7 +133,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 							remove(fallback.d);
 							fallback.d = null;
 						}
-						destroy_signal(fallback.e);
+						destroy_effect(fallback.e);
 						fallback.e = null;
 					}
 				}
@@ -261,7 +261,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		set_current_hydration_fragment([]);
 	}
 
-	push_destroy_fn(each, () => {
+	each.ondestroy = () => {
 		const flags = block.f;
 		const anchor_node = block.a;
 		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
@@ -273,14 +273,14 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			}
 			const effect = fallback.e;
 			if (effect !== null) {
-				destroy_signal(effect);
+				destroy_effect(effect);
 			}
 			fallback = fallback.p;
 		}
 		// Clear the array
 		reconcile_fn([], block, anchor_node, is_controlled, render_fn, flags, false, keys);
-		destroy_signal(/** @type {import('../../types.js').Effect} */ (render));
-	});
+		destroy_effect(/** @type {import('#client').Effect} */ (render));
+	};
 
 	block.e = each;
 }
@@ -291,7 +291,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
  * @param {() => V[]} collection
  * @param {number} flags
  * @param {null | ((item: V) => string)} key_fn
- * @param {(anchor: null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
@@ -304,7 +304,7 @@ export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fa
  * @param {Element | Comment} anchor_node
  * @param {() => V[]} collection
  * @param {number} flags
- * @param {(anchor: null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
@@ -904,7 +904,7 @@ export function destroy_each_item_block(
 	if (!controlled && dom !== null) {
 		remove(dom);
 	}
-	destroy_signal(/** @type {import('../../types.js').Effect} */ (block.e));
+	destroy_effect(/** @type {import('#client').Effect} */ (block.e));
 }
 
 /**

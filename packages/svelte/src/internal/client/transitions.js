@@ -12,11 +12,15 @@ import {
 import { destroy_each_item_block, get_first_element } from './dom/blocks/each.js';
 import { schedule_raf_task } from './dom/task.js';
 import { append_child, empty } from './operations.js';
-import { effect, managed_effect, managed_pre_effect } from './reactivity/effects.js';
+import {
+	destroy_effect,
+	effect,
+	managed_effect,
+	managed_pre_effect
+} from './reactivity/effects.js';
 import {
 	current_block,
 	current_effect,
-	destroy_signal,
 	execute_effect,
 	mark_subtree_inert,
 	untrack
@@ -589,7 +593,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 		}
 
 		const effect = managed_pre_effect(() => {
-			destroy_signal(effect);
+			destroy_effect(effect);
 			dom.inert = false;
 
 			if (show_intro && !already_mounted) {
@@ -613,7 +617,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 				}
 				transition_block = parent;
 			}
-		}, false);
+		});
 	});
 
 	if (direction === 'key') {
@@ -666,12 +670,12 @@ export function trigger_transitions(transitions, target_direction, from) {
 	if (outros.length > 0) {
 		// Defer the outros to a microtask
 		const e = managed_pre_effect(() => {
-			destroy_signal(e);
+			destroy_effect(e);
 			const e2 = managed_effect(() => {
-				destroy_signal(e2);
+				destroy_effect(e2);
 				run_all(outros);
 			});
-		}, false);
+		});
 	}
 }
 
