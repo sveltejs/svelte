@@ -47,16 +47,16 @@ export function bind_value(input, get_value, update) {
 }
 
 /**
- * @param {Array<HTMLInputElement>} group
+ * @param {Array<HTMLInputElement>} inputs
  * @param {null | [number]} group_index
  * @param {HTMLInputElement} input
  * @param {() => unknown} get_value
  * @param {(value: unknown) => void} update
  * @returns {void}
  */
-export function bind_group(group, group_index, input, get_value, update) {
+export function bind_group(inputs, group_index, input, get_value, update) {
 	var is_checkbox = input.getAttribute('type') === 'checkbox';
-	var binding_group = group;
+	var binding_group = inputs;
 
 	if (group_index !== null) {
 		for (var index of group_index) {
