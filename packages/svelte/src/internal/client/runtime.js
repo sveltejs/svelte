@@ -30,8 +30,6 @@ import { add_owner } from './dev/ownership.js';
 import { mutate, set, source } from './reactivity/sources.js';
 import { destroy_derived } from './reactivity/deriveds.js';
 
-const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT;
-
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
 
@@ -852,36 +850,40 @@ export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
  * @returns {void}
  */
 export function mark_reactions(signal, to_status, force_schedule) {
-	const runes = is_runes();
-	const reactions = signal.reactions;
-	if (reactions !== null) {
-		const length = reactions.length;
-		let i;
-		for (i = 0; i < length; i++) {
-			const reaction = reactions[i];
-			const flags = reaction.f;
-			const unowned = (flags & UNOWNED) !== 0;
-			// We skip any effects that are already dirty (but not unowned). Additionally, we also
-			// skip if the reaction is the same as the current effect (except if we're not in runes or we
-			// are in force schedule mode).
-			if ((!force_schedule || !runes) && reaction === current_effect) {
-				continue;
-			}
-			set_signal_status(reaction, to_status);
-			// If the signal is not clean, then skip over it – with the exception of unowned signals that
-			// are already maybe dirty. Unowned signals might be dirty because they are not captured as part of an
-			// effect.
-			const maybe_dirty = (flags & MAYBE_DIRTY) !== 0;
-			if ((flags & CLEAN) !== 0 || (maybe_dirty && unowned)) {
-				if ((reaction.f & IS_EFFECT) !== 0) {
-					schedule_effect(/** @type {import('#client').Effect} */ (reaction), false);
-				} else {
-					mark_reactions(
-						/** @type {import('#client').Derived} */ (reaction),
-						MAYBE_DIRTY,
-						force_schedule
-					);
-				}
+	var reactions = signal.reactions;
+	if (reactions === null) return;
+
+	var runes = is_runes();
+	var length = reactions.length;
+
+	for (var i = 0; i < length; i++) {
+		var reaction = reactions[i];
+
+		// We skip any effects that are already dirty (but not unowned). Additionally, we also
+		// skip if the reaction is the same as the current effect (except if we're not in runes or we
+		// are in force schedule mode).
+		if ((!force_schedule || !runes) && reaction === current_effect) {
+			continue;
+		}
+
+		var flags = reaction.f;
+		set_signal_status(reaction, to_status);
+
+		// If the signal is not clean, then skip over it – with the exception of unowned signals that
+		// are already maybe dirty. Unowned signals might be dirty because they are not captured as part of an
+		// effect.
+		var maybe_dirty = (flags & MAYBE_DIRTY) !== 0;
+		var unowned = (flags & UNOWNED) !== 0;
+
+		if ((flags & CLEAN) !== 0 || (maybe_dirty && unowned)) {
+			if ((reaction.f & DERIVED) !== 0) {
+				mark_reactions(
+					/** @type {import('#client').Derived} */ (reaction),
+					MAYBE_DIRTY,
+					force_schedule
+				);
+			} else {
+				schedule_effect(/** @type {import('#client').Effect} */ (reaction), false);
 			}
 		}
 	}
