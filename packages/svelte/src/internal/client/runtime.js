@@ -150,10 +150,12 @@ export function batch_inspect(target, prop, receiver) {
 }
 
 /**
+ * Determines whether a derived or effect is dirty.
+ * If it is MAYBE_DIRTY, will set the status to CLEAN
  * @param {import('./types.js').Reaction} signal
  * @returns {boolean}
  */
-function is_signal_dirty(signal) {
+function check_dirtiness(signal) {
 	var flags = signal.f;
 
 	if ((flags & DIRTY) !== 0) {
@@ -169,7 +171,7 @@ function is_signal_dirty(signal) {
 			for (var i = 0; i < length; i++) {
 				var dependency = dependencies[i];
 
-				if (is_signal_dirty(/** @type {import('#client').Derived} */ (dependency))) {
+				if (check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
 					update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
 
 					// `signal` might now be dirty, as a result of calling `update_derived`
@@ -443,7 +445,7 @@ function flush_queued_effects(effects) {
 			var signal = effects[i];
 
 			if ((signal.f & (DESTROYED | INERT)) === 0) {
-				if (is_signal_dirty(signal)) {
+				if (check_dirtiness(signal)) {
 					set_signal_status(signal, CLEAN);
 					execute_effect(signal);
 				}
@@ -706,7 +708,7 @@ export function get(signal) {
 
 	if (
 		(flags & DERIVED) !== 0 &&
-		is_signal_dirty(/** @type {import('#client').Derived} */ (signal))
+		check_dirtiness(/** @type {import('#client').Derived} */ (signal))
 	) {
 		if (DEV) {
 			// we want to avoid tracking indirect dependencies
