@@ -27,6 +27,7 @@ export { key_block as key } from './client/dom/blocks/key.js';
 export * from './client/dom/blocks/each.js';
 export * from './client/dom/blocks/svelte-component.js';
 export * from './client/dom/blocks/svelte-element.js';
+export * from './client/dom/blocks/svelte-head.js';
 export * from './client/reactivity/deriveds.js';
 export * from './client/reactivity/effects.js';
 export * from './client/reactivity/sources.js';

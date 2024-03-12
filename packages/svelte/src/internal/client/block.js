@@ -28,22 +28,6 @@ export function create_root_block(intro) {
 	};
 }
 
-/** @returns {import('./types.js').HeadBlock} */
-export function create_head_block() {
-	return {
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('./types.js').Block} */ (current_block),
-		// transition
-		r: null,
-		// type
-		t: HEAD_BLOCK
-	};
-}
-
 /** @returns {import('./types.js').SnippetBlock} */
 export function create_snippet_block() {
 	return {
