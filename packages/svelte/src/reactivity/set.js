@@ -35,6 +35,7 @@ function get_self() {
 export class ReactiveSet extends Set {
 	static #inited = false;
 
+	/** @type {Map<T, import('#client').Source<boolean>>} */
 	#sources = new Map();
 	#version = source(0);
 	#size = source(0);
