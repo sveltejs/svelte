@@ -385,20 +385,6 @@ export function destroy_children(signal) {
 }
 
 /**
- * @param {import('./types.js').Block} block
- * @param {unknown} error
- * @returns {void}
- */
-function report_error(block, error) {
-	/** @type {import('./types.js').Block | null} */
-	let current_block = block;
-
-	if (current_block !== null) {
-		throw error;
-	}
-}
-
-/**
  * @param {import('./types.js').Effect} signal
  * @returns {void}
  */
@@ -422,13 +408,6 @@ export function execute_effect(signal) {
 		signal.teardown?.();
 		const teardown = execute_reaction_fn(signal);
 		signal.teardown = typeof teardown === 'function' ? teardown : null;
-	} catch (error) {
-		const block = signal.block;
-		if (block !== null) {
-			report_error(block, error);
-		} else {
-			throw error;
-		}
 	} finally {
 		current_effect = previous_effect;
 		current_component_context = previous_component_context;
