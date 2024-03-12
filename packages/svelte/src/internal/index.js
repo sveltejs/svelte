@@ -21,6 +21,7 @@ export {
 	hasContext
 } from './client/runtime.js';
 export * from './client/dev/ownership.js';
+export * from './client/dom/bindings.js';
 export { await_block as await } from './client/dom/blocks/await.js';
 export { if_block as if } from './client/dom/blocks/if.js';
 export { key_block as key } from './client/dom/blocks/key.js';
