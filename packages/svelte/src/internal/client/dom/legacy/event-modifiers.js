@@ -4,7 +4,7 @@
  */
 export function trusted(fn) {
 	return function (...args) {
-		const event = /** @type {Event} */ (args[0]);
+		var event = /** @type {Event} */ (args[0]);
 		if (event.isTrusted) {
 			// @ts-ignore
 			fn.apply(this, args);
@@ -18,7 +18,7 @@ export function trusted(fn) {
  */
 export function self(fn) {
 	return function (...args) {
-		const event = /** @type {Event} */ (args[0]);
+		var event = /** @type {Event} */ (args[0]);
 		// @ts-ignore
 		if (event.target === this) {
 			// @ts-ignore
@@ -33,7 +33,7 @@ export function self(fn) {
  */
 export function stopPropagation(fn) {
 	return function (...args) {
-		const event = /** @type {Event} */ (args[0]);
+		var event = /** @type {Event} */ (args[0]);
 		event.stopPropagation();
 		// @ts-ignore
 		return fn.apply(this, args);
@@ -45,12 +45,12 @@ export function stopPropagation(fn) {
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
 export function once(fn) {
-	let ran = false;
+	var ran = false;
+
 	return function (...args) {
-		if (ran) {
-			return;
-		}
+		if (ran) return;
 		ran = true;
+
 		// @ts-ignore
 		return fn.apply(this, args);
 	};
@@ -62,7 +62,7 @@ export function once(fn) {
  */
 export function stopImmediatePropagation(fn) {
 	return function (...args) {
-		const event = /** @type {Event} */ (args[0]);
+		var event = /** @type {Event} */ (args[0]);
 		event.stopImmediatePropagation();
 		// @ts-ignore
 		return fn.apply(this, args);
@@ -75,7 +75,7 @@ export function stopImmediatePropagation(fn) {
  */
 export function preventDefault(fn) {
 	return function (...args) {
-		const event = /** @type {Event} */ (args[0]);
+		var event = /** @type {Event} */ (args[0]);
 		event.preventDefault();
 		// @ts-ignore
 		return fn.apply(this, args);
