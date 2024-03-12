@@ -79,56 +79,59 @@ export class ReactiveSet extends Set {
 		set(this.#version, this.#version.v + 1);
 	}
 
-	/**
-	 * @param {T} value
-	 */
+	/** @param {T} value */
 	has(value) {
 		let possible_source = this.#sources.get(value);
+
 		if (possible_source === undefined) {
 			get(this.#version);
 			return false;
 		}
+
 		return get(possible_source);
 	}
 
-	/**
-	 * @param {T} value
-	 */
+	/** @param {T} value */
 	add(value) {
 		const sources = this.#sources;
-		let possible_source = sources.get(value);
-		if (possible_source === undefined) {
-			possible_source = source(true);
-			sources.set(value, possible_source);
-			this.#increment_version();
-			super.add(value);
+
+		if (!sources.has(value)) {
+			sources.set(value, source(true));
 			set(this.#size, sources.size);
+			this.#increment_version();
 		}
-		return this;
+
+		return super.add(value);
 	}
 
-	/**
-	 * @param {T} value
-	 */
+	/** @param {T} value */
 	delete(value) {
 		const sources = this.#sources;
-		let possible_source = sources.get(value);
-		if (possible_source !== undefined) {
+
+		let source = sources.get(value);
+		if (source !== undefined) {
 			sources.delete(value);
-			this.#increment_version();
 			set(this.#size, sources.size);
+			set(source, false);
+			this.#increment_version();
 		}
+
 		return super.delete(value);
 	}
 
 	clear() {
 		const sources = this.#sources;
-		super.clear();
-		sources.clear();
-		if (this.#size.v !== sources.size) {
-			this.#increment_version();
+
+		if (sources.size !== 0) {
 			set(this.#size, 0);
+			for (const source of sources.values()) {
+				set(source, false);
+			}
+			this.#increment_version();
 		}
+
+		sources.clear();
+		super.clear();
 	}
 
 	keys() {
