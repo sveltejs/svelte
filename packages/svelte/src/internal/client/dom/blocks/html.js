@@ -1,5 +1,5 @@
 import { render_effect } from '../../reactivity/effects.js';
-import { reconcile_html, remove } from '../../reconciler.js';
+import { reconcile_html, remove } from '../reconciler.js';
 
 /**
  * @param {Element | Text | Comment} dom

@@ -4,7 +4,7 @@ import {
 	create_fragment_from_html,
 	create_fragment_with_script_from_html,
 	insert
-} from '../reconciler.js';
+} from './reconciler.js';
 import { current_block } from '../runtime.js';
 import { is_array } from '../utils.js';
 

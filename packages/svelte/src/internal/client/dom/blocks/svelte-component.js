@@ -1,7 +1,7 @@
 import { DYNAMIC_COMPONENT_BLOCK } from '../../constants.js';
 import { hydrate_block_anchor } from '../hydration.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';
-import { remove } from '../../reconciler.js';
+import { remove } from '../reconciler.js';
 import { current_block, execute_effect } from '../../runtime.js';
 import { trigger_transitions } from '../elements/transitions.js';
 

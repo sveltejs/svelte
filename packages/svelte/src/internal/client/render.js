@@ -1,7 +1,7 @@
 import { DEV } from 'esm-env';
 import { append_child, create_element, empty, init_operations } from './dom/operations.js';
 import { PassiveDelegatedEvents } from '../../constants.js';
-import { remove } from './reconciler.js';
+import { remove } from './dom/reconciler.js';
 import {
 	untrack,
 	flush_sync,

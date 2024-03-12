@@ -5,7 +5,7 @@ import {
 	hydrating,
 	set_current_hydration_fragment
 } from '../hydration.js';
-import { remove } from '../../reconciler.js';
+import { remove } from '../reconciler.js';
 import { current_block, execute_effect } from '../../runtime.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';
 import { trigger_transitions } from '../elements/transitions.js';

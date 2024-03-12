@@ -3,7 +3,7 @@ import { DYNAMIC_ELEMENT_BLOCK } from '../../constants.js';
 import { current_hydration_fragment, hydrate_block_anchor, hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';
-import { insert, remove } from '../../reconciler.js';
+import { insert, remove } from '../reconciler.js';
 import { current_block, execute_effect } from '../../runtime.js';
 import { is_array } from '../../utils.js';
 
