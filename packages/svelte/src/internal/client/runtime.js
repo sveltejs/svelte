@@ -154,17 +154,20 @@ export function batch_inspect(target, prop, receiver) {
  * @returns {boolean}
  */
 function is_signal_dirty(signal) {
-	const flags = signal.f;
+	var flags = signal.f;
+
 	if ((flags & DIRTY) !== 0) {
 		return true;
 	}
+
 	if ((flags & MAYBE_DIRTY) !== 0) {
-		const dependencies = signal.deps;
+		var dependencies = signal.deps;
+
 		if (dependencies !== null) {
-			const length = dependencies.length;
-			let i;
-			for (i = 0; i < length; i++) {
-				const dependency = dependencies[i];
+			var length = dependencies.length;
+
+			for (var i = 0; i < length; i++) {
+				var dependency = dependencies[i];
 				if (
 					(dependency.f & MAYBE_DIRTY) !== 0 &&
 					!is_signal_dirty(/** @type {import('#client').Derived} */ (dependency))
@@ -172,25 +175,24 @@ function is_signal_dirty(signal) {
 					set_signal_status(dependency, CLEAN);
 					continue;
 				}
+
 				// The flags can be marked as dirty from the above is_signal_dirty call.
 				if ((dependency.f & DIRTY) !== 0) {
-					if ((dependency.f & DERIVED) !== 0) {
-						update_derived(/** @type {import('./types.js').Derived} **/ (dependency), true);
-						// Might have been mutated from above get.
-						if ((signal.f & DIRTY) !== 0) {
-							return true;
-						}
-					} else {
+					update_derived(/** @type {import('./types.js').Derived} **/ (dependency), true);
+					// Might have been mutated from above get.
+					if ((signal.f & DIRTY) !== 0) {
 						return true;
 					}
 				}
+
 				// If we're working with an unowned derived signal, then we need to check
 				// if our dependency write version is higher. If it is then we can assume
 				// that state has changed to a newer version and thus this unowned signal
 				// is also dirty.
-				const is_unowned = (flags & UNOWNED) !== 0;
-				const write_version = /** @type {import('#client').Derived} */ (signal).w;
-				const dep_write_version = dependency.w;
+				var is_unowned = (flags & UNOWNED) !== 0;
+				var write_version = /** @type {import('#client').Derived} */ (signal).w;
+				var dep_write_version = dependency.w;
+
 				if (is_unowned && dep_write_version > write_version) {
 					/** @type {import('#client').Derived} */ (signal).w = dep_write_version;
 					return true;
@@ -198,6 +200,7 @@ function is_signal_dirty(signal) {
 			}
 		}
 	}
+
 	return false;
 }
 
