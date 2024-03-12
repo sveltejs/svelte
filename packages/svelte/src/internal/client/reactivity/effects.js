@@ -7,7 +7,6 @@ import {
 	destroy_children,
 	flush_local_render_effects,
 	get,
-	is_runes,
 	remove_reactions,
 	schedule_effect,
 	set_signal_status,
@@ -153,8 +152,9 @@ export function pre_effect(fn) {
 					: '')
 		);
 	}
+
 	const sync = current_effect !== null && (current_effect.f & RENDER_EFFECT) !== 0;
-	const runes = is_runes(current_component_context);
+
 	return create_effect(
 		PRE_EFFECT,
 		() => {
