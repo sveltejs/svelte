@@ -29,7 +29,6 @@ import {
 	remove
 } from './reconciler.js';
 import {
-	execute_effect,
 	untrack,
 	flush_sync,
 	current_block,
