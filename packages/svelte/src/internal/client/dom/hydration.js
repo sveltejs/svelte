@@ -1,6 +1,6 @@
 // Handle hydration
 
-import { schedule_task } from './dom/task.js';
+import { schedule_task } from './task.js';
 import { empty } from './operations.js';
 
 /**
@@ -13,27 +13,27 @@ export let hydrating = false;
  * Array of nodes to traverse for hydration. This will be null if we're not hydrating, but for
  * the sake of simplicity we're not going to use `null` checks everywhere and instead rely on
  * the `hydrating` flag to tell whether or not we're in hydration mode at which point this is set.
- * @type {import('./types.js').TemplateNode[]}
+ * @type {import('../types.js').TemplateNode[]}
  */
 export let current_hydration_fragment = /** @type {any} */ (null);
 
 /**
- * @param {null | import('./types.js').TemplateNode[]} fragment
+ * @param {null | import('../types.js').TemplateNode[]} fragment
  * @returns {void}
  */
 export function set_current_hydration_fragment(fragment) {
 	hydrating = fragment !== null;
-	current_hydration_fragment = /** @type {import('./types.js').TemplateNode[]} */ (fragment);
+	current_hydration_fragment = /** @type {import('../types.js').TemplateNode[]} */ (fragment);
 }
 
 /**
  * Returns all nodes between the first `<!--ssr:...-->` comment tag pair encountered.
  * @param {Node | null} node
  * @param {boolean} [insert_text] Whether to insert an empty text node if the fragment is empty
- * @returns {import('./types.js').TemplateNode[] | null}
+ * @returns {import('../types.js').TemplateNode[] | null}
  */
 export function get_hydration_fragment(node, insert_text = false) {
-	/** @type {import('./types.js').TemplateNode[]} */
+	/** @type {import('../types.js').TemplateNode[]} */
 	const fragment = [];
 
 	/** @type {null | Node} */

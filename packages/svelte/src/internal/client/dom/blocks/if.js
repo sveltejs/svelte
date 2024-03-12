@@ -4,11 +4,11 @@ import {
 	hydrate_block_anchor,
 	hydrating,
 	set_current_hydration_fragment
-} from '../../hydration.js';
-import { remove } from '../../reconciler.js';
+} from '../hydration.js';
+import { remove } from '../reconciler.js';
 import { current_block, execute_effect } from '../../runtime.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';
-import { trigger_transitions } from '../../transitions.js';
+import { trigger_transitions } from '../elements/transitions.js';
 
 /** @returns {import('../../types.js').IfBlock} */
 function create_if_block() {

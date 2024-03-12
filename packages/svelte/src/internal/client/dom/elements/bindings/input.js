@@ -1,6 +1,6 @@
 import { DEV } from 'esm-env';
-import { render_effect } from '../../reactivity/effects.js';
-import { stringify } from '../../render.js';
+import { render_effect } from '../../../reactivity/effects.js';
+import { stringify } from '../../../render.js';
 
 /**
  * @param {HTMLInputElement} input

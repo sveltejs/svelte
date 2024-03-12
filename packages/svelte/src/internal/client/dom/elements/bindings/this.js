@@ -1,6 +1,6 @@
-import { STATE_SYMBOL } from '../../constants.js';
-import { effect } from '../../reactivity/effects.js';
-import { untrack } from '../../runtime.js';
+import { STATE_SYMBOL } from '../../../constants.js';
+import { effect } from '../../../reactivity/effects.js';
+import { untrack } from '../../../runtime.js';
 
 /**
  * @param {any} bound_value

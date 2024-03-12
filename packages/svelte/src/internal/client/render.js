@@ -1,25 +1,17 @@
 import { DEV } from 'esm-env';
-import { append_child, create_element, empty, init_operations } from './operations.js';
+import { append_child, create_element, empty, init_operations } from './dom/operations.js';
 import { PassiveDelegatedEvents } from '../../constants.js';
-import { remove } from './reconciler.js';
-import {
-	untrack,
-	flush_sync,
-	push,
-	pop,
-	current_component_context,
-	deep_read_state
-} from './runtime.js';
-import { render_effect, effect, destroy_effect } from './reactivity/effects.js';
+import { remove } from './dom/reconciler.js';
+import { flush_sync, push, pop, current_component_context } from './runtime.js';
+import { render_effect, destroy_effect } from './reactivity/effects.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,
 	hydrate_block_anchor,
 	hydrating,
 	set_current_hydration_fragment
-} from './hydration.js';
+} from './dom/hydration.js';
 import { array_from } from './utils.js';
-import { bind_transition } from './transitions.js';
 import { ROOT_BLOCK } from './constants.js';
 import { handle_event_propagation } from './dom/elements/events.js';
 
@@ -81,103 +73,6 @@ export function slot(anchor_node, slot_fn, slot_props, fallback_fn) {
  */
 export function stringify(value) {
 	return typeof value === 'string' ? value : value == null ? '' : value + '';
-}
-
-/**
- * @template P
- * @param {HTMLElement} dom
- * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
- * @param {(() => P) | null} props
- * @param {any} global
- * @returns {void}
- */
-export function transition(dom, get_transition_fn, props, global = false) {
-	bind_transition(dom, get_transition_fn, props, 'both', global);
-}
-
-/**
- * @template P
- * @param {HTMLElement} dom
- * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
- * @param {(() => P) | null} props
- * @returns {void}
- */
-export function animate(dom, get_transition_fn, props) {
-	bind_transition(dom, get_transition_fn, props, 'key', false);
-}
-
-/**
- * @template P
- * @param {HTMLElement} dom
- * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
- * @param {(() => P) | null} props
- * @param {any} global
- * @returns {void}
- */
-function in_fn(dom, get_transition_fn, props, global = false) {
-	bind_transition(dom, get_transition_fn, props, 'in', global);
-}
-export { in_fn as in };
-
-/**
- * @template P
- * @param {HTMLElement} dom
- * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
- * @param {(() => P) | null} props
- * @param {any} global
- * @returns {void}
- */
-export function out(dom, get_transition_fn, props, global = false) {
-	bind_transition(dom, get_transition_fn, props, 'out', global);
-}
-
-/**
- * @template P
- * @param {Element} dom
- * @param {(dom: Element, value?: P) => import('./types.js').ActionPayload<P>} action
- * @param {() => P} [value_fn]
- * @returns {void}
- */
-export function action(dom, action, value_fn) {
-	/** @type {undefined | import('./types.js').ActionPayload<P>} */
-	let payload = undefined;
-	let needs_deep_read = false;
-	// Action could come from a prop, therefore could be a signal, therefore untrack
-	// TODO we could take advantage of this and enable https://github.com/sveltejs/svelte/issues/6942
-	effect(() => {
-		if (value_fn) {
-			const value = value_fn();
-			untrack(() => {
-				if (payload === undefined) {
-					payload = action(dom, value) || {};
-					needs_deep_read = !!payload?.update;
-				} else {
-					const update = payload.update;
-					if (typeof update === 'function') {
-						update(value);
-					}
-				}
-			});
-			// Action's update method is coarse-grained, i.e. when anything in the passed value changes, update.
-			// This works in legacy mode because of mutable_source being updated as a whole, but when using $state
-			// together with actions and mutation, it wouldn't notice the change without a deep read.
-			if (needs_deep_read) {
-				deep_read_state(value);
-			}
-		} else {
-			untrack(() => (payload = action(dom)));
-		}
-	});
-	effect(() => {
-		if (payload !== undefined) {
-			const destroy = payload.destroy;
-			if (typeof destroy === 'function') {
-				return () => {
-					destroy();
-				};
-			}
-		}
-	});
 }
 
 // TODO 5.0 remove this

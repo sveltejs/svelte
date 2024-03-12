@@ -13,6 +13,44 @@ export var object_prototype = Object.prototype;
 export var array_prototype = Array.prototype;
 export var get_prototype_of = Object.getPrototypeOf;
 
+/** @type {Map<any, any>} */
+var map_prototype = Map.prototype;
+var map_set_method = map_prototype.set;
+var map_get_method = map_prototype.get;
+var map_delete_method = map_prototype.delete;
+
+/**
+ * @template K
+ * @template V
+ * @param {Map<K, V>} map
+ * @param {K} key
+ * @param {V} value
+ */
+export function map_set(map, key, value) {
+	map_set_method.call(map, key, value);
+}
+
+/**
+ * @template K
+ * @template V
+ * @param {Map<K, V>} map
+ * @param {K} key
+ */
+export function map_delete(map, key) {
+	map_delete_method.call(map, key);
+}
+
+/**
+ * @template K
+ * @template V
+ * @param {Map<K, V>} map
+ * @param {K} key
+ * @return {V}
+ */
+export function map_get(map, key) {
+	return map_get_method.call(map, key);
+}
+
 /**
  * @param {any} thing
  * @returns {thing is Function}

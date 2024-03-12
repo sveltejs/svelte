@@ -1,5 +1,5 @@
 import { hydrating } from '../../hydration.js';
-import { destroy_effect, managed_effect, render_effect } from '../../reactivity/effects.js';
+import { destroy_effect, managed_effect, render_effect } from '../../../reactivity/effects.js';
 import { listen } from './shared.js';
 
 /** @param {TimeRanges} ranges */

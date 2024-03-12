@@ -1,6 +1,6 @@
 import { SNIPPET_BLOCK } from '../../constants.js';
 import { render_effect } from '../../reactivity/effects.js';
-import { remove } from '../../reconciler.js';
+import { remove } from '../reconciler.js';
 import { current_block, untrack } from '../../runtime.js';
 
 /**

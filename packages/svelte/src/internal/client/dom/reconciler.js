@@ -1,6 +1,6 @@
 import { append_child } from './operations.js';
 import { current_hydration_fragment, hydrate_block_anchor, hydrating } from './hydration.js';
-import { is_array } from './utils.js';
+import { is_array } from '../utils.js';
 
 /** @param {string} html */
 export function create_fragment_from_html(html) {
@@ -29,7 +29,7 @@ export function create_fragment_with_script_from_html(html) {
 }
 
 /**
- * @param {Array<import('./types.js').TemplateNode> | import('./types.js').TemplateNode} current
+ * @param {Array<import('../types.js').TemplateNode> | import('../types.js').TemplateNode} current
  * @param {null | Element} parent_element
  * @param {null | Text | Element | Comment} sibling
  * @returns {Text | Element | Comment}
@@ -58,7 +58,7 @@ export function insert(current, parent_element, sibling) {
 }
 
 /**
- * @param {Array<import('./types.js').TemplateNode> | import('./types.js').TemplateNode} current
+ * @param {Array<import('../types.js').TemplateNode> | import('../types.js').TemplateNode} current
  * @returns {Element | Comment | Text}
  */
 export function remove(current) {

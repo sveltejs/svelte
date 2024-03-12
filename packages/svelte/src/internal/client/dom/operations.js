@@ -1,5 +1,5 @@
 import { current_hydration_fragment, get_hydration_fragment, hydrating } from './hydration.js';
-import { get_descriptor } from './utils.js';
+import { get_descriptor } from '../utils.js';
 
 // We cache the Node and Element prototype methods, so that we can avoid doing
 // expensive prototype chain lookups.
@@ -12,12 +12,6 @@ var element_prototype;
 
 /** @type {Text} */
 var text_prototype;
-
-/** @type {Map<any, any>} */
-var map_prototype = Map.prototype;
-var map_set_method = map_prototype.set;
-var map_get_method = map_prototype.get;
-var map_delete_method = map_prototype.delete;
 
 /** @type {typeof Node.prototype.appendChild} */
 var append_child_method;
@@ -103,38 +97,6 @@ export function init_operations() {
  */
 export function append_child(element, child) {
 	append_child_method.call(element, child);
-}
-
-/**
- * @template K
- * @template V
- * @param {Map<K, V>} map
- * @param {K} key
- * @param {V} value
- */
-export function map_set(map, key, value) {
-	map_set_method.call(map, key, value);
-}
-
-/**
- * @template K
- * @template V
- * @param {Map<K, V>} map
- * @param {K} key
- */
-export function map_delete(map, key) {
-	map_delete_method.call(map, key);
-}
-
-/**
- * @template K
- * @template V
- * @param {Map<K, V>} map
- * @param {K} key
- * @return {V}
- */
-export function map_get(map, key) {
-	return map_get_method.call(map, key);
 }
 
 /**

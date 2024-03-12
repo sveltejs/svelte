@@ -1,4 +1,4 @@
-import { render_effect } from '../../reactivity/effects.js';
+import { render_effect } from '../../../reactivity/effects.js';
 
 /**
  * Fires the handler once immediately (unless corresponding arg is set to `false`),

@@ -1,4 +1,4 @@
-import { hydrating } from '../../hydration.js';
+import { hydrating } from '../hydration.js';
 import { render_effect } from '../../reactivity/effects.js';
 import { current_block } from '../../runtime.js';
 

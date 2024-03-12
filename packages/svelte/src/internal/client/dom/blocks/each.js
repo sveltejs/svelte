@@ -13,14 +13,14 @@ import {
 	hydrate_block_anchor,
 	hydrating,
 	set_current_hydration_fragment
-} from '../../hydration.js';
-import { clear_text_content, empty, map_get, map_set } from '../../operations.js';
-import { insert, remove } from '../../reconciler.js';
+} from '../hydration.js';
+import { clear_text_content, empty } from '../operations.js';
+import { insert, remove } from '../reconciler.js';
 import { current_block, execute_effect } from '../../runtime.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
-import { trigger_transitions } from '../../transitions.js';
-import { is_array, is_frozen } from '../../utils.js';
+import { trigger_transitions } from '../elements/transitions.js';
+import { is_array, is_frozen, map_get, map_set } from '../../utils.js';
 import { EACH_BLOCK, EACH_ITEM_BLOCK, STATE_SYMBOL } from '../../constants.js';
 
 const NEW_BLOCK = -1;

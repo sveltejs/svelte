@@ -1,5 +1,5 @@
-import { render_effect } from '../../reactivity/effects.js';
-import { get_descriptor } from '../../utils.js';
+import { render_effect } from '../../../reactivity/effects.js';
+import { get_descriptor } from '../../../utils.js';
 
 /**
  * Makes an `export`ed (non-prop) variable available on the `$$props` object

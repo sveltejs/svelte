@@ -1,5 +1,5 @@
-import { hydrating } from '../../hydration.js';
-import { set_class_name } from '../../operations.js';
+import { hydrating } from '../hydration.js';
+import { set_class_name } from '../operations.js';
 import { render_effect } from '../../reactivity/effects.js';
 
 /**
