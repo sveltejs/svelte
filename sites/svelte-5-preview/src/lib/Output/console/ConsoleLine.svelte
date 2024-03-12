@@ -21,8 +21,11 @@
 	{/if}
 
 	{#if log.level === 'trace' || log.level === 'assert' || log.level === 'group'}
-		<button class="arrow" class:expand={!log.collapsed} on:click={toggle_group_collapse}>
-			▶
+		<button on:click={toggle_group_collapse}>
+			<span class="arrow" class:expand={!log.collapsed}> ▶️ </span>
+			{#if log.level === 'group'}
+				<span class="title">{log.label}</span>
+			{/if}
 		</button>
 	{/if}
 
@@ -34,8 +37,6 @@
 		<span class="info">Console was cleared</span>
 	{:else if log.level === 'unclonable'}
 		<span class="info error">Message could not be cloned. Open devtools to see it</span>
-	{:else if log.level === 'group'}
-		<span class="title">{log.label}</span>
 	{:else if log.level.startsWith('system')}
 		{#each log.args ?? [] as arg}
 			{arg}
