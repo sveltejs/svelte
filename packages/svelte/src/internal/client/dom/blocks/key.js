@@ -1,5 +1,5 @@
 import { UNINITIALIZED, KEY_BLOCK } from '../../constants.js';
-import { hydrate_block_anchor } from '../../hydration.js';
+import { hydrate_block_anchor } from '../hydration.js';
 import { remove } from '../../reconciler.js';
 import { current_block, execute_effect } from '../../runtime.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';

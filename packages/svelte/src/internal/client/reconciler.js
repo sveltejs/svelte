@@ -1,5 +1,5 @@
 import { append_child } from './dom/operations.js';
-import { current_hydration_fragment, hydrate_block_anchor, hydrating } from './hydration.js';
+import { current_hydration_fragment, hydrate_block_anchor, hydrating } from './dom/hydration.js';
 import { is_array } from './utils.js';
 
 /** @param {string} html */

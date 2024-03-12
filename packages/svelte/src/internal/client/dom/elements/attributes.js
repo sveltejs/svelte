@@ -1,5 +1,5 @@
 import { DEV } from 'esm-env';
-import { hydrating } from '../../hydration.js';
+import { hydrating } from '../hydration.js';
 import { render_effect } from '../../reactivity/effects.js';
 import { get_descriptors, object_assign } from '../../utils.js';
 import { map_get, map_set } from '../operations.js';

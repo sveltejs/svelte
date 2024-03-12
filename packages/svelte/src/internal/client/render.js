@@ -17,7 +17,7 @@ import {
 	hydrate_block_anchor,
 	hydrating,
 	set_current_hydration_fragment
-} from './hydration.js';
+} from './dom/hydration.js';
 import { array_from } from './utils.js';
 import { bind_transition } from './dom/elements/transitions.js';
 import { ROOT_BLOCK } from './constants.js';

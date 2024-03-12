@@ -1,5 +1,5 @@
 import { namespace_svg } from '../../../../constants.js';
-import { current_hydration_fragment, hydrate_block_anchor, hydrating } from '../../hydration.js';
+import { current_hydration_fragment, hydrate_block_anchor, hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import { render_effect } from '../../reactivity/effects.js';
 import { insert, remove } from '../../reconciler.js';

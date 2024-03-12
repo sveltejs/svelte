@@ -1,5 +1,5 @@
 import { is_promise } from '../../../common.js';
-import { hydrate_block_anchor } from '../../hydration.js';
+import { hydrate_block_anchor } from '../hydration.js';
 import { remove } from '../../reconciler.js';
 import { current_block, execute_effect, flushSync } from '../../runtime.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';

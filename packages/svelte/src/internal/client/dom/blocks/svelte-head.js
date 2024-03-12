@@ -4,7 +4,7 @@ import {
 	get_hydration_fragment,
 	hydrating,
 	set_current_hydration_fragment
-} from '../../hydration.js';
+} from '../hydration.js';
 import { empty } from '../operations.js';
 import { render_effect } from '../../reactivity/effects.js';
 import { remove } from '../../reconciler.js';
