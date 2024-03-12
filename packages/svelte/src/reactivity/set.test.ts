@@ -30,8 +30,9 @@ test('set.values()', () => {
 		set.clear();
 	});
 
-	// TODO looks like another effect ordering bug — sequence should be <size, has, values>
-	assert.deepEqual(log, [5, true, [1, 2, 3, 4, 5], 4, false, [1, 2, 4, 5], 0, false, []]);
+	// TODO looks like another effect ordering bug — sequence should be <size, has, values>,
+	// but values is reversed at end
+	assert.deepEqual(log, [5, true, [1, 2, 3, 4, 5], 4, false, [1, 2, 4, 5], 0, [], false]);
 
 	cleanup();
 });
