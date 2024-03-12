@@ -1518,32 +1518,6 @@ export function stringify(value) {
 }
 
 /**
- * @param {Element | Text | Comment} dom
- * @param {() => string} get_value
- * @param {boolean} svg
- * @returns {void}
- */
-export function html(dom, get_value, svg) {
-	/** @type {import('./types.js').TemplateNode | import('./types.js').TemplateNode[]} */
-	let html_dom;
-	/** @type {string} */
-	let value;
-	const effect = render_effect(() => {
-		if (value !== (value = get_value())) {
-			if (html_dom) {
-				remove(html_dom);
-			}
-			html_dom = reconcile_html(dom, value, svg);
-		}
-	});
-	effect.ondestroy = () => {
-		if (html_dom) {
-			remove(html_dom);
-		}
-	};
-}
-
-/**
  * @template P
  * @param {HTMLElement} dom
  * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn

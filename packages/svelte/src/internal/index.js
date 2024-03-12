@@ -26,6 +26,7 @@ export { if_block as if } from './client/dom/blocks/if.js';
 export { key_block as key } from './client/dom/blocks/key.js';
 export * from './client/dom/blocks/css-props.js';
 export * from './client/dom/blocks/each.js';
+export * from './client/dom/blocks/html.js';
 export * from './client/dom/blocks/snippet.js';
 export * from './client/dom/blocks/svelte-component.js';
 export * from './client/dom/blocks/svelte-element.js';
