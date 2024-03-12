@@ -431,29 +431,29 @@ function infinite_loop_guard() {
  * @returns {void}
  */
 function flush_queued_effects(effects) {
-	const length = effects.length;
-	if (length > 0) {
-		infinite_loop_guard();
-		const previously_flushing_effect = is_flushing_effect;
-		is_flushing_effect = true;
-		try {
-			let i;
-			for (i = 0; i < length; i++) {
-				const signal = effects[i];
-				const flags = signal.f;
-				if ((flags & (DESTROYED | INERT)) === 0) {
-					if (is_signal_dirty(signal)) {
-						set_signal_status(signal, CLEAN);
-						execute_effect(signal);
-					}
+	var length = effects.length;
+	if (length === 0) return;
+
+	infinite_loop_guard();
+	var previously_flushing_effect = is_flushing_effect;
+	is_flushing_effect = true;
+
+	try {
+		for (var i = 0; i < length; i++) {
+			var signal = effects[i];
+
+			if ((signal.f & (DESTROYED | INERT)) === 0) {
+				if (is_signal_dirty(signal)) {
+					set_signal_status(signal, CLEAN);
+					execute_effect(signal);
 				}
 			}
-		} finally {
-			is_flushing_effect = previously_flushing_effect;
 		}
-
-		effects.length = 0;
+	} finally {
+		is_flushing_effect = previously_flushing_effect;
 	}
+
+	effects.length = 0;
 }
 
 function process_microtask() {
