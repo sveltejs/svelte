@@ -22,16 +22,9 @@ import {
 	push,
 	pop,
 	current_component_context,
-	get,
 	deep_read_state
 } from './runtime.js';
-import {
-	render_effect,
-	effect,
-	pre_effect,
-	user_effect,
-	destroy_effect
-} from './reactivity/effects.js';
+import { render_effect, effect, destroy_effect } from './reactivity/effects.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,
@@ -40,9 +33,7 @@ import {
 	set_current_hydration_fragment
 } from './hydration.js';
 import { array_from, define_property, get_descriptors, is_array, object_assign } from './utils.js';
-import { run } from '../common.js';
 import { bind_transition } from './transitions.js';
-import { source, set } from './reactivity/sources.js';
 import { ROOT_BLOCK } from './constants.js';
 
 /** @type {Set<string>} */
@@ -50,90 +41,6 @@ const all_registered_events = new Set();
 
 /** @type {Set<(events: Array<string>) => void>} */
 const root_event_handles = new Set();
-
-/**
- * @param {(event: Event, ...args: Array<unknown>) => void} fn
- * @returns {(event: Event, ...args: unknown[]) => void}
- */
-export function trusted(fn) {
-	return function (...args) {
-		const event = /** @type {Event} */ (args[0]);
-		if (event.isTrusted) {
-			// @ts-ignore
-			fn.apply(this, args);
-		}
-	};
-}
-
-/**
- * @param {(event: Event, ...args: Array<unknown>) => void} fn
- * @returns {(event: Event, ...args: unknown[]) => void}
- */
-export function self(fn) {
-	return function (...args) {
-		const event = /** @type {Event} */ (args[0]);
-		// @ts-ignore
-		if (event.target === this) {
-			// @ts-ignore
-			fn.apply(this, args);
-		}
-	};
-}
-
-/**
- * @param {(event: Event, ...args: Array<unknown>) => void} fn
- * @returns {(event: Event, ...args: unknown[]) => void}
- */
-export function stopPropagation(fn) {
-	return function (...args) {
-		const event = /** @type {Event} */ (args[0]);
-		event.stopPropagation();
-		// @ts-ignore
-		return fn.apply(this, args);
-	};
-}
-
-/**
- * @param {(event: Event, ...args: Array<unknown>) => void} fn
- * @returns {(event: Event, ...args: unknown[]) => void}
- */
-export function once(fn) {
-	let ran = false;
-	return function (...args) {
-		if (ran) {
-			return;
-		}
-		ran = true;
-		// @ts-ignore
-		return fn.apply(this, args);
-	};
-}
-
-/**
- * @param {(event: Event, ...args: Array<unknown>) => void} fn
- * @returns {(event: Event, ...args: unknown[]) => void}
- */
-export function stopImmediatePropagation(fn) {
-	return function (...args) {
-		const event = /** @type {Event} */ (args[0]);
-		event.stopImmediatePropagation();
-		// @ts-ignore
-		return fn.apply(this, args);
-	};
-}
-
-/**
- * @param {(event: Event, ...args: Array<unknown>) => void} fn
- * @returns {(event: Event, ...args: unknown[]) => void}
- */
-export function preventDefault(fn) {
-	return function (...args) {
-		const event = /** @type {Event} */ (args[0]);
-		event.preventDefault();
-		// @ts-ignore
-		return fn.apply(this, args);
-	};
-}
 
 /**
  * @param {string} event_name
@@ -1190,117 +1097,4 @@ function get_root_for_style(node) {
 		return /** @type {ShadowRoot} */ (root);
 	}
 	return /** @type {Document} */ (node.ownerDocument);
-}
-
-/**
- * Legacy-mode only: Call `onMount` callbacks and set up `beforeUpdate`/`afterUpdate` effects
- */
-export function init() {
-	const context = /** @type {import('./types.js').ComponentContext} */ (current_component_context);
-	const callbacks = context.u;
-
-	if (!callbacks) return;
-
-	// beforeUpdate
-	if (callbacks.b.length) {
-		pre_effect(() => {
-			observe_all(context);
-			callbacks.b.forEach(run);
-		});
-	}
-
-	// onMount (must run before afterUpdate)
-	user_effect(() => {
-		const fns = untrack(() => callbacks.m.map(run));
-		return () => {
-			for (const fn of fns) {
-				if (typeof fn === 'function') {
-					fn();
-				}
-			}
-		};
-	});
-
-	// afterUpdate
-	if (callbacks.a.length) {
-		user_effect(() => {
-			observe_all(context);
-			callbacks.a.forEach(run);
-		});
-	}
-}
-
-/**
- * Invoke the getter of all signals associated with a component
- * so they can be registered to the effect this function is called in.
- * @param {import('./types.js').ComponentContext} context
- */
-function observe_all(context) {
-	if (context.d) {
-		for (const signal of context.d) get(signal);
-	}
-
-	deep_read_state(context.s);
-}
-
-/**
- * Under some circumstances, imports may be reactive in legacy mode. In that case,
- * they should be using `reactive_import` as part of the transformation
- * @param {() => any} fn
- */
-export function reactive_import(fn) {
-	const s = source(0);
-	return function () {
-		if (arguments.length === 1) {
-			set(s, get(s) + 1);
-			return arguments[0];
-		} else {
-			get(s);
-			return fn();
-		}
-	};
-}
-
-/**
- * @this {any}
- * @param {Record<string, unknown>} $$props
- * @param {Event} event
- * @returns {void}
- */
-export function bubble_event($$props, event) {
-	var events = /** @type {Record<string, Function[] | Function>} */ ($$props.$$events)?.[
-		event.type
-	];
-	var callbacks = is_array(events) ? events.slice() : events == null ? [] : [events];
-	for (var fn of callbacks) {
-		// Preserve "this" context
-		fn.call(this, event);
-	}
-}
-
-/**
- * Used to simulate `$on` on a component instance when `legacy.componentApi` is `true`
- * @param {Record<string, any>} $$props
- * @param {string} event_name
- * @param {Function} event_callback
- */
-export function add_legacy_event_listener($$props, event_name, event_callback) {
-	$$props.$$events ||= {};
-	$$props.$$events[event_name] ||= [];
-	$$props.$$events[event_name].push(event_callback);
-}
-
-/**
- * Used to simulate `$set` on a component instance when `legacy.componentApi` is `true`.
- * Needs component accessors so that it can call the setter of the prop. Therefore doesn't
- * work for updating props in `$$props` or `$$restProps`.
- * @this {Record<string, any>}
- * @param {Record<string, any>} $$new_props
- */
-export function update_legacy_props($$new_props) {
-	for (const key in $$new_props) {
-		if (key in this) {
-			this[key] = $$new_props[key];
-		}
-	}
 }
