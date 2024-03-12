@@ -24,7 +24,6 @@ import {
 	create_fragment_from_html,
 	create_fragment_with_script_from_html,
 	insert,
-	reconcile_html,
 	remove
 } from './reconciler.js';
 import {
