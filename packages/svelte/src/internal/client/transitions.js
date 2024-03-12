@@ -617,7 +617,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 				}
 				transition_block = parent;
 			}
-		}, false);
+		});
 	});
 
 	if (direction === 'key') {
@@ -675,7 +675,7 @@ export function trigger_transitions(transitions, target_direction, from) {
 				destroy_effect(e2);
 				run_all(outros);
 			});
-		}, false);
+		});
 	}
 }
 

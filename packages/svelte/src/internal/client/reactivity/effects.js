@@ -131,11 +131,10 @@ export function managed_effect(fn) {
 
 /**
  * @param {() => void | (() => void)} fn
- * @param {boolean} sync
  * @returns {import('#client').Effect}
  */
-export function managed_pre_effect(fn, sync) {
-	return create_effect(PRE_EFFECT | MANAGED, fn, sync, current_block, true);
+export function managed_pre_effect(fn) {
+	return create_effect(PRE_EFFECT | MANAGED, fn, false, current_block, true);
 }
 
 /**
