@@ -20,10 +20,10 @@ import { set } from './sources.js';
  * @param {(() => void | (() => void)) | ((b: import('#client').Block) => void | (() => void))} fn
  * @param {boolean} sync
  * @param {null | import('#client').Block} block
- * @param {boolean} schedule
+ * @param {boolean} init
  * @returns {import('#client').Effect}
  */
-function create_effect(type, fn, sync, block, schedule) {
+function create_effect(type, fn, sync, block = current_block, init = true) {
 	/** @type {import('#client').Effect} */
 	const signal = {
 		block,
@@ -52,7 +52,7 @@ function create_effect(type, fn, sync, block, schedule) {
 		}
 	}
 
-	if (schedule) {
+	if (init) {
 		schedule_effect(signal, sync);
 	}
 
@@ -80,20 +80,17 @@ export function user_effect(fn) {
 		);
 	}
 
-	const apply_component_effect_heuristics =
+	// Non-nested `$effect(...)` in a component should be deferred
+	// until the component is mounted
+	const defer =
 		current_effect.f & RENDER_EFFECT &&
+		// TODO do we actually need this? removing them changes nothing
 		current_component_context !== null &&
 		!current_component_context.m;
 
-	const effect = create_effect(
-		EFFECT,
-		fn,
-		false,
-		current_block,
-		!apply_component_effect_heuristics
-	);
+	const effect = create_effect(EFFECT, fn, false, current_block, !defer);
 
-	if (apply_component_effect_heuristics) {
+	if (defer) {
 		const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
 		(context.e ??= []).push(effect);
 	}
@@ -118,7 +115,7 @@ export function user_root_effect(fn) {
  * @returns {import('#client').Effect}
  */
 export function effect(fn) {
-	return create_effect(EFFECT, fn, false, current_block, true);
+	return create_effect(EFFECT, fn, false);
 }
 
 /**
@@ -126,7 +123,7 @@ export function effect(fn) {
  * @returns {import('#client').Effect}
  */
 export function managed_effect(fn) {
-	return create_effect(EFFECT | MANAGED, fn, false, current_block, true);
+	return create_effect(EFFECT | MANAGED, fn, false);
 }
 
 /**
@@ -134,7 +131,7 @@ export function managed_effect(fn) {
  * @returns {import('#client').Effect}
  */
 export function managed_pre_effect(fn) {
-	return create_effect(PRE_EFFECT | MANAGED, fn, false, current_block, true);
+	return create_effect(PRE_EFFECT | MANAGED, fn, false);
 }
 
 /**
@@ -161,9 +158,7 @@ export function pre_effect(fn) {
 			flush_local_render_effects();
 			return val;
 		},
-		sync,
-		current_block,
-		true
+		sync
 	);
 }
 
@@ -189,8 +184,6 @@ export function legacy_pre_effect(deps, fn) {
 			set(component_context.l2, true);
 			return untrack(fn);
 		},
-		true,
-		current_block,
 		true
 	);
 }
@@ -216,7 +209,7 @@ export function legacy_pre_effect_reset() {
  * @returns {import('#client').Effect}
  */
 export function invalidate_effect(fn) {
-	return create_effect(PRE_EFFECT, fn, true, current_block, true);
+	return create_effect(PRE_EFFECT, fn, true);
 }
 
 /**
@@ -232,7 +225,7 @@ export function render_effect(fn, block = current_block, managed = false, sync =
 	if (managed) {
 		flags |= MANAGED;
 	}
-	return create_effect(flags, /** @type {any} */ (fn), sync, block, true);
+	return create_effect(flags, /** @type {any} */ (fn), sync, block);
 }
 
 /**
