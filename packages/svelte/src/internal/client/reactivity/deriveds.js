@@ -1,13 +1,18 @@
 import { DEV } from 'esm-env';
-import { DERIVED, DESTROYED, DIRTY, UNOWNED } from '../constants.js';
+import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../constants.js';
 import {
 	current_reaction,
 	current_effect,
 	destroy_children,
 	remove_reactions,
-	set_signal_status
+	set_signal_status,
+	mark_reactions,
+	current_skip_reaction,
+	execute_reaction_fn
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
+
+export let updating_derived = false;
 
 /**
  * @template V
@@ -57,6 +62,35 @@ export function derived_safe_equal(fn) {
 	const signal = derived(fn);
 	signal.equals = safe_equals;
 	return signal;
+}
+
+/**
+ * @param {import('#client').Derived} derived
+ * @param {boolean} force_schedule
+ * @returns {void}
+ */
+export function update_derived(derived, force_schedule) {
+	var previous_updating_derived = updating_derived;
+	updating_derived = true;
+	destroy_children(derived);
+	var value = execute_reaction_fn(derived);
+	updating_derived = previous_updating_derived;
+
+	var status =
+		(current_skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null
+			? MAYBE_DIRTY
+			: CLEAN;
+
+	set_signal_status(derived, status);
+
+	if (!derived.equals(value)) {
+		derived.v = value;
+		mark_reactions(derived, DIRTY, force_schedule);
+
+		if (DEV && force_schedule) {
+			for (var fn of /** @type {import('#client').DerivedDebug} */ (derived).inspect) fn();
+		}
+	}
 }
 
 /**

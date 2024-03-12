@@ -28,7 +28,7 @@ import {
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { mutate, set, source } from './reactivity/sources.js';
-import { destroy_derived } from './reactivity/deriveds.js';
+import { destroy_derived, update_derived } from './reactivity/deriveds.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -93,7 +93,7 @@ export function set_ignore_mutation_validation(value) {
 
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the reaction.
-let current_skip_reaction = false;
+export let current_skip_reaction = false;
 // Handle collecting all signals which are read during a specific time frame
 export let is_signals_recorded = false;
 let captured_signals = new Set();
@@ -111,8 +111,6 @@ export let current_block = null;
 
 /** @type {import('./types.js').ComponentContext | null} */
 export let current_component_context = null;
-
-export let updating_derived = false;
 
 /** @returns {boolean} */
 export function is_runes() {
@@ -208,7 +206,7 @@ function is_signal_dirty(signal) {
  * @param {import('./types.js').Reaction} signal
  * @returns {V}
  */
-function execute_reaction_fn(signal) {
+export function execute_reaction_fn(signal) {
 	const fn = signal.fn;
 	const flags = signal.f;
 	const is_render_effect = (flags & RENDER_EFFECT) !== 0;
@@ -652,33 +650,6 @@ export async function tick() {
 	// By calling flushSync we guarantee that any pending state changes are applied after one tick.
 	// TODO look into whether we can make flushing subsequent updates synchronously in the future.
 	flushSync();
-}
-
-/**
- * @param {import('#client').Derived} derived
- * @param {boolean} force_schedule
- * @returns {void}
- */
-function update_derived(derived, force_schedule) {
-	const previous_updating_derived = updating_derived;
-	updating_derived = true;
-	destroy_children(derived);
-	const value = execute_reaction_fn(derived);
-	updating_derived = previous_updating_derived;
-	const status =
-		(current_skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null
-			? MAYBE_DIRTY
-			: CLEAN;
-	set_signal_status(derived, status);
-	if (!derived.equals(value)) {
-		derived.v = value;
-		mark_reactions(derived, DIRTY, force_schedule);
-
-		// @ts-expect-error
-		if (DEV && derived.inspect && force_schedule) {
-			for (const fn of /** @type {import('#client').DerivedDebug} */ (derived).inspect) fn();
-		}
-	}
 }
 
 /**
