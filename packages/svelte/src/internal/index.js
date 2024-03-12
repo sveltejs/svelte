@@ -59,7 +59,7 @@ export * from './client/render.js';
 export * from './client/validate.js';
 export { raf } from './client/timing.js';
 export { proxy, unstate } from './client/proxy.js';
-export { create_custom_element } from './client/custom-element.js';
+export { create_custom_element } from './client/dom/elements/custom-element.js';
 export {
 	child,
 	child_frag,
