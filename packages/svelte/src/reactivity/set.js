@@ -45,15 +45,16 @@ export class ReactiveSet extends Set {
 	 */
 	constructor(value) {
 		super();
-		if (DEV) {
-			// If the value is invalid then the native exception will fire here
-			new Set(value);
-		}
+
+		// If the value is invalid then the native exception will fire here
+		if (DEV) new Set(value);
+
 		if (value) {
 			for (const element of value) {
 				this.add(element);
 			}
 		}
+
 		this.#init();
 	}
 
