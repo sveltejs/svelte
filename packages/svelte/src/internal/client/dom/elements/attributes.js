@@ -148,7 +148,7 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 	var setters = map_get(setters_cache, dom.nodeName);
 	if (!setters) map_set(setters_cache, dom.nodeName, (setters = get_setters(dom)));
 
-	for (var key in next) {
+	for (key in next) {
 		var value = next[key];
 		if (value === prev?.[key]) continue;
 
@@ -256,7 +256,7 @@ export function spread_dynamic_element_attributes(node, prev, attrs, css_hash) {
 			}
 		}
 
-		for (var key in next) {
+		for (key in next) {
 			set_custom_element_data(node, key, next[key]);
 		}
 
