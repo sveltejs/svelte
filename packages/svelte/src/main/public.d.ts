@@ -186,7 +186,7 @@ declare const SnippetReturn: unique symbol;
 /**
  * The type of a `#snippet` block. You can use it to (for example) express that your component expects a snippet of a certain type:
  * ```ts
- * let { banner } = $props<{ banner: Snippet<{ text: string }> }>();
+ * let { banner }: { banner: Snippet<{ text: string }> } = $props();
  * ```
  * You can only call a snippet through the `{@render ...}` tag.
  */

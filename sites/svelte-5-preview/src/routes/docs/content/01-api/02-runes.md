@@ -454,13 +454,22 @@ To get all properties, use rest syntax:
 let { a, b, c, ...everythingElse } = $props();
 ```
 
-If you're using TypeScript, you can use type arguments:
+If you're using TypeScript, you can declare the prop types:
 
 ```ts
 type MyProps = any;
 // ---cut---
-let { a, b, c, ...everythingElse } = $props<MyProps>();
+let { a, b, c, ...everythingElse }: MyProps = $props();
 ```
+
+> In an earlier preview, `$props()` took a type argument. This caused bugs, since in a case like this...
+>
+> ```ts
+> // @errors: 2558
+> let { x = 42 } = $props<{ x: string }>();
+> ```
+>
+> ...TypeScript [widens the type](https://www.typescriptlang.org/play?#code/CYUwxgNghgTiAEAzArgOzAFwJYHtXwBIAHGHIgZwB4AVeAXnilQE8A+ACgEoAueagbgBQgiCAzwA3vAAe9eABYATPAC+c4qQqUp03uQwwsqAOaqOnIfCsB6a-AB6AfiA) of `x` to be `string | number`, instead of erroring.
 
 Props cannot be mutated, unless the parent component uses `bind:`. During development, attempts to mutate props will result in an error.
 
