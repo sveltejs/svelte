@@ -657,28 +657,28 @@ export async function tick() {
 }
 
 /**
- * @param {import('./types.js').Derived} signal
+ * @param {import('#client').Derived} derived
  * @param {boolean} force_schedule
  * @returns {void}
  */
-function update_derived(signal, force_schedule) {
+function update_derived(derived, force_schedule) {
 	const previous_updating_derived = updating_derived;
 	updating_derived = true;
-	destroy_children(signal);
-	const value = execute_reaction_fn(signal);
+	destroy_children(derived);
+	const value = execute_reaction_fn(derived);
 	updating_derived = previous_updating_derived;
 	const status =
-		(current_skip_reaction || (signal.f & UNOWNED) !== 0) && signal.deps !== null
+		(current_skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null
 			? MAYBE_DIRTY
 			: CLEAN;
-	set_signal_status(signal, status);
-	if (!signal.equals(value)) {
-		signal.v = value;
-		mark_reactions(signal, DIRTY, force_schedule);
+	set_signal_status(derived, status);
+	if (!derived.equals(value)) {
+		derived.v = value;
+		mark_reactions(derived, DIRTY, force_schedule);
 
 		// @ts-expect-error
-		if (DEV && signal.inspect && force_schedule) {
-			for (const fn of /** @type {import('./types.js').DerivedDebug} */ (signal).inspect) fn();
+		if (DEV && derived.inspect && force_schedule) {
+			for (const fn of /** @type {import('#client').DerivedDebug} */ (derived).inspect) fn();
 		}
 	}
 }
