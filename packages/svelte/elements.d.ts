@@ -67,7 +67,7 @@ export type ToggleEventHandler<T extends EventTarget> = EventHandler<ToggleEvent
 
 export interface DOMAttributes<T extends EventTarget> {
 	// Implicit children prop every element has
-	// Add this here so that libraries doing `$props<HTMLButtonAttributes>()` don't need a separate interface
+	// Add this here so that libraries doing `let { ...props }: HTMLButtonAttributes = $props()` don't need a separate interface
 	children?: import('svelte').Snippet;
 
 	// Clipboard Events

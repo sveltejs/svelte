@@ -187,7 +187,7 @@ declare module 'svelte' {
 	/**
 	 * The type of a `#snippet` block. You can use it to (for example) express that your component expects a snippet of a certain type:
 	 * ```ts
-	 * let { banner } = $props<{ banner: Snippet<{ text: string }> }>();
+	 * let { banner }: { banner: Snippet<{ text: string }> } = $props();
 	 * ```
 	 * You can only call a snippet through the `{@render ...}` tag.
 	 */
@@ -1888,7 +1888,7 @@ declare module 'svelte/legacy' {
 	/**
 	 * The type of a `#snippet` block. You can use it to (for example) express that your component expects a snippet of a certain type:
 	 * ```ts
-	 * let { banner } = $props<{ banner: Snippet<{ text: string }> }>();
+	 * let { banner }: { banner: Snippet<{ text: string }> } = $props();
 	 * ```
 	 * You can only call a snippet through the `{@render ...}` tag.
 	 */
@@ -2624,12 +2624,12 @@ declare namespace $effect {
  * Declares the props that a component accepts. Example:
  *
  * ```ts
- * let { optionalProp = 42, requiredProp } = $props<{ optionalProp?: number; requiredProps: string}>();
+ * let { optionalProp = 42, requiredProp }: { optionalProp?: number; requiredProps: string } = $props();
  * ```
  *
  * https://svelte-5-preview.vercel.app/docs/runes#$props
  */
-declare function $props<T>(): T;
+declare function $props(): any;
 
 /**
  * Inspects one or more values whenever they, or the properties they contain, change. Example:
