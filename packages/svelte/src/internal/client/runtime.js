@@ -168,17 +168,11 @@ function is_signal_dirty(signal) {
 
 			for (var i = 0; i < length; i++) {
 				var dependency = dependencies[i];
-				if (
-					(dependency.f & MAYBE_DIRTY) !== 0 &&
-					!is_signal_dirty(/** @type {import('#client').Derived} */ (dependency))
-				) {
-					continue;
-				}
 
-				// The flags can be marked as dirty from the above is_signal_dirty call.
-				if ((dependency.f & DIRTY) !== 0) {
-					update_derived(/** @type {import('./types.js').Derived} **/ (dependency), true);
-					// Might have been mutated from above get.
+				if (is_signal_dirty(/** @type {import('#client').Derived} */ (dependency))) {
+					update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
+
+					// `signal` might now be dirty, as a result of calling `update_derived`
 					if ((signal.f & DIRTY) !== 0) {
 						return true;
 					}
