@@ -40,6 +40,7 @@ export * from './client/dom/blocks/snippet.js';
 export * from './client/dom/blocks/svelte-component.js';
 export * from './client/dom/blocks/svelte-element.js';
 export * from './client/dom/blocks/svelte-head.js';
+export * from './client/dom/legacy/event-modifiers.js';
 export * from './client/dom/template.js';
 export * from './client/reactivity/deriveds.js';
 export * from './client/reactivity/effects.js';
