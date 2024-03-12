@@ -131,55 +131,6 @@ export function out(dom, get_transition_fn, props, global = false) {
 	bind_transition(dom, get_transition_fn, props, 'out', global);
 }
 
-/**
- * @template P
- * @param {Element} dom
- * @param {(dom: Element, value?: P) => import('./types.js').ActionPayload<P>} action
- * @param {() => P} [value_fn]
- * @returns {void}
- */
-export function action(dom, action, value_fn) {
-	/** @type {undefined | import('./types.js').ActionPayload<P>} */
-	let payload = undefined;
-	let needs_deep_read = false;
-	// Action could come from a prop, therefore could be a signal, therefore untrack
-	// TODO we could take advantage of this and enable https://github.com/sveltejs/svelte/issues/6942
-	effect(() => {
-		if (value_fn) {
-			const value = value_fn();
-			untrack(() => {
-				if (payload === undefined) {
-					payload = action(dom, value) || {};
-					needs_deep_read = !!payload?.update;
-				} else {
-					const update = payload.update;
-					if (typeof update === 'function') {
-						update(value);
-					}
-				}
-			});
-			// Action's update method is coarse-grained, i.e. when anything in the passed value changes, update.
-			// This works in legacy mode because of mutable_source being updated as a whole, but when using $state
-			// together with actions and mutation, it wouldn't notice the change without a deep read.
-			if (needs_deep_read) {
-				deep_read_state(value);
-			}
-		} else {
-			untrack(() => (payload = action(dom)));
-		}
-	});
-	effect(() => {
-		if (payload !== undefined) {
-			const destroy = payload.destroy;
-			if (typeof destroy === 'function') {
-				return () => {
-					destroy();
-				};
-			}
-		}
-	});
-}
-
 // TODO 5.0 remove this
 /**
  * @deprecated Use `mount` or `hydrate` instead
