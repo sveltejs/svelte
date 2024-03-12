@@ -14,7 +14,7 @@ import {
 	hydrating,
 	set_current_hydration_fragment
 } from '../../hydration.js';
-import { clear_text_content, empty, map_get, map_set } from '../../operations.js';
+import { clear_text_content, empty, map_get, map_set } from '../operations.js';
 import { insert, remove } from '../../reconciler.js';
 import { current_block, execute_effect } from '../../runtime.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';

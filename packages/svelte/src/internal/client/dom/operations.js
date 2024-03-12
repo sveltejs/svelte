@@ -1,5 +1,5 @@
-import { current_hydration_fragment, get_hydration_fragment, hydrating } from './hydration.js';
-import { get_descriptor } from './utils.js';
+import { current_hydration_fragment, get_hydration_fragment, hydrating } from '../hydration.js';
+import { get_descriptor } from '../utils.js';
 
 // We cache the Node and Element prototype methods, so that we can avoid doing
 // expensive prototype chain lookups.

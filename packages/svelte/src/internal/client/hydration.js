@@ -1,7 +1,7 @@
 // Handle hydration
 
 import { schedule_task } from './dom/task.js';
-import { empty } from './operations.js';
+import { empty } from './dom/operations.js';
 
 /**
  * Use this variable to guard everything related to hydration code so it can be treeshaken out

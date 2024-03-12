@@ -1,5 +1,5 @@
 import { current_hydration_fragment, hydrate_block_anchor, hydrating } from '../hydration.js';
-import { child, clone_node, empty } from '../operations.js';
+import { child, clone_node, empty } from './operations.js';
 import {
 	create_fragment_from_html,
 	create_fragment_with_script_from_html,

@@ -11,7 +11,7 @@ import {
 } from '../../constants.js';
 import { destroy_each_item_block, get_first_element } from '../blocks/each.js';
 import { schedule_raf_task } from '../task.js';
-import { append_child, empty } from '../../operations.js';
+import { append_child, empty } from '../operations.js';
 import {
 	destroy_effect,
 	effect,

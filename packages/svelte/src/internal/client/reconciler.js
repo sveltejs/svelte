@@ -1,4 +1,4 @@
-import { append_child } from './operations.js';
+import { append_child } from './dom/operations.js';
 import { current_hydration_fragment, hydrate_block_anchor, hydrating } from './hydration.js';
 import { is_array } from './utils.js';
 
