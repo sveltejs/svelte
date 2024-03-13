@@ -22,6 +22,9 @@ export function init() {
 		pre_effect(() => {
 			observe_all(context);
 			callbacks.b.forEach(run);
+			// beforeUpdate might change state that affects rendering, ensure the render effects following from it
+			// are batched up with the current run. Avoids for example child components rerunning when they're
+			// now hidden because beforeUpdate did set an if block to false.
 			flush_local_render_effects();
 		});
 	}
