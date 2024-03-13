@@ -15,26 +15,18 @@
 	<ConsoleTable data={log.args[0]} columns={log.args[1]} />
 {/if}
 
-<button
-	class="log console-{log.level}"
-	style="padding-left: {level * 15}px"
-	on:click={log.level === 'group' ? toggle_group_collapse : undefined}
->
+<span class="log console-{log.level}" style="padding-left: {level * 15}px">
 	{#if log.count && log.count > 1}
 		<span class="count">{log.count}x</span>
 	{/if}
 
-	{#if log.level === 'trace' || log.level === 'assert'}
-		<span
-			class="arrow"
-			role="button"
-			tabindex="0"
-			class:expand={!log.collapsed}
-			on:keyup={toggle_group_collapse}
-			on:click={toggle_group_collapse}
-		>
-			▶
-		</span>
+	{#if log.level === 'trace' || log.level === 'assert' || log.level === 'group'}
+		<button on:click={toggle_group_collapse}>
+			<span class="arrow" class:expand={!log.collapsed}> ▶️ </span>
+			{#if log.level === 'group'}
+				<span class="title">{log.label}</span>
+			{/if}
+		</button>
 	{/if}
 
 	{#if log.level === 'assert'}
@@ -45,9 +37,6 @@
 		<span class="info">Console was cleared</span>
 	{:else if log.level === 'unclonable'}
 		<span class="info error">Message could not be cloned. Open devtools to see it</span>
-	{:else if log.level === 'group'}
-		<div class="arrow" class:expand={!log.collapsed}>▶</div>
-		<span class="title">{log.label}</span>
 	{:else if log.level.startsWith('system')}
 		{#each log.args ?? [] as arg}
 			{arg}
@@ -62,7 +51,7 @@
 	{#each new Array(level - 1) as _, idx}
 		<div class="outline" style="left: {idx * 15 + 15}px" />
 	{/each}
-</button>
+</span>
 
 {#if log.level === 'group' && !log.collapsed}
 	{#each log.logs ?? [] as childLog}
