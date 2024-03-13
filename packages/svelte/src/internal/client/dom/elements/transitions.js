@@ -1,10 +1,6 @@
-import { EACH_IS_ANIMATED, EACH_IS_CONTROLLED } from '../../../../constants.js';
 import { noop } from '../../../common.js';
-import { destroy_each_item_block, get_first_element } from '../blocks/each.js';
-import { schedule_raf_task } from '../task.js';
-import { append_child, empty } from '../operations.js';
 import { user_effect } from '../../reactivity/effects.js';
-import { current_effect, execute_effect, untrack } from '../../runtime.js';
+import { current_effect, untrack } from '../../runtime.js';
 import { raf } from '../../timing.js';
 import { loop } from '../../loop.js';
 import { run_transitions } from '../../render.js';
