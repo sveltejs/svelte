@@ -14,6 +14,7 @@ export const raf = {
 			raf.ticks.add(f);
 		};
 		svelte_raf.now = () => raf.time;
+		svelte_raf.tasks.clear();
 	}
 };
 

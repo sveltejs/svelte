@@ -308,6 +308,7 @@ export type Render = {
 export type Raf = {
 	tick: (callback: (time: DOMHighResTimeStamp) => void) => any;
 	now: () => number;
+	tasks: Set<any>;
 };
 
 export interface Task {
