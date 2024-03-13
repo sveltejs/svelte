@@ -29,12 +29,12 @@ function get_self() {
 	return this;
 }
 
+let inited = false;
+
 /**
  * @template T
  */
 export class ReactiveSet extends Set {
-	static #inited = false;
-
 	/** @type {Map<T, import('#client').Source<boolean>>} */
 	#sources = new Map();
 	#version = source(0);
@@ -55,24 +55,23 @@ export class ReactiveSet extends Set {
 			}
 		}
 
-		this.#init();
+		if (!inited) this.#init();
 	}
 
 	// We init as part of the first instance so that we can treeshake this class
 	#init() {
-		if (!ReactiveSet.#inited) {
-			ReactiveSet.#inited = true;
-			const proto = ReactiveSet.prototype;
-			const set_proto = Set.prototype;
+		inited = true;
 
-			for (const method of read) {
+		const proto = ReactiveSet.prototype;
+		const set_proto = Set.prototype;
+
+		for (const method of read) {
+			// @ts-ignore
+			proto[method] = function (...v) {
+				get(this.#version);
 				// @ts-ignore
-				proto[method] = function (...v) {
-					get(this.#version);
-					// @ts-ignore
-					return set_proto[method].apply(this, v);
-				};
-			}
+				return set_proto[method].apply(this, v);
+			};
 		}
 	}
 
