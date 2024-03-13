@@ -10,8 +10,6 @@ import {
 import { unstate } from './proxy.js';
 import { destroy_effect, pre_effect } from './reactivity/effects.js';
 import {
-	EACH_BLOCK,
-	IF_BLOCK,
 	EFFECT,
 	PRE_EFFECT,
 	RENDER_EFFECT,
@@ -359,7 +357,10 @@ export function remove_reactions(signal, start_index) {
 export function destroy_children(signal) {
 	if (signal.effects) {
 		for (var i = 0; i < signal.effects.length; i += 1) {
-			destroy_effect(signal.effects[i]);
+			var effect = signal.effects[i];
+			if ((effect.f & MANAGED) === 0) {
+				destroy_effect(effect);
+			}
 		}
 		signal.effects = null;
 	}
@@ -750,15 +751,14 @@ export function invalidate_inner_signals(fn) {
 /**
  * @param {import('#client').Effect} signal
  * @param {boolean} inert
- * @param {Set<import('#client').Block>} [visited_blocks]
  * @returns {void}
  */
-function mark_subtree_children_inert(signal, inert, visited_blocks) {
+function mark_subtree_children_inert(signal, inert) {
 	const effects = signal.effects;
+
 	if (effects !== null) {
 		for (var i = 0; i < effects.length; i++) {
-			const effect = effects[i];
-			mark_subtree_inert(effect, inert, visited_blocks);
+			mark_subtree_inert(effects[i], inert);
 		}
 	}
 }
@@ -766,46 +766,20 @@ function mark_subtree_children_inert(signal, inert, visited_blocks) {
 /**
  * @param {import('#client').Effect} signal
  * @param {boolean} inert
- * @param {Set<import('#client').Block>} [visited_blocks]
  * @returns {void}
  */
-export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
+export function mark_subtree_inert(signal, inert) {
 	const flags = signal.f;
 	const is_already_inert = (flags & INERT) !== 0;
+
 	if (is_already_inert !== inert) {
 		signal.f ^= INERT;
 		if (!inert && (flags & CLEAN) === 0) {
 			schedule_effect(signal, false);
 		}
-		// Nested if block effects
-		const block = signal.block;
-		if (block !== null && !visited_blocks.has(block)) {
-			visited_blocks.add(block);
-			const type = block.t;
-			if (type === IF_BLOCK) {
-				const condition_effect = block.e;
-				if (condition_effect !== null && block !== current_block) {
-					mark_subtree_inert(condition_effect, inert, visited_blocks);
-				}
-				const consequent_effect = block.ce;
-				if (consequent_effect !== null && block.v) {
-					mark_subtree_inert(consequent_effect, inert, visited_blocks);
-				}
-				const alternate_effect = block.ae;
-				if (alternate_effect !== null && !block.v) {
-					mark_subtree_inert(alternate_effect, inert, visited_blocks);
-				}
-			} else if (type === EACH_BLOCK) {
-				const items = block.v;
-				for (let { e: each_item_effect } of items) {
-					if (each_item_effect !== null) {
-						mark_subtree_inert(each_item_effect, inert, visited_blocks);
-					}
-				}
-			}
-		}
 	}
-	mark_subtree_children_inert(signal, inert, visited_blocks);
+
+	mark_subtree_children_inert(signal, inert);
 }
 
 /**
