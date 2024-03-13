@@ -1,7 +1,8 @@
 export const DERIVED = 1 << 1;
 export const EFFECT = 1 << 2;
-export const PRE_EFFECT = 1 << 3;
-export const RENDER_EFFECT = 1 << 4;
+export const USER_EFFECT = 1 << 3;
+export const PRE_EFFECT = 1 << 4;
+export const RENDER_EFFECT = 1 << 5;
 export const MANAGED = 1 << 6;
 export const UNOWNED = 1 << 7;
 export const CLEAN = 1 << 8;

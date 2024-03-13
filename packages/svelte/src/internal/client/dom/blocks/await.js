@@ -1,7 +1,7 @@
 import { is_promise } from '../../../common.js';
 import { hydrate_block_anchor } from '../hydration.js';
 import { remove } from '../reconciler.js';
-import { current_block, execute_effect, flushSync } from '../../runtime.js';
+import { current_block, current_effect, execute_effect, flushSync } from '../../runtime.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';
 import { trigger_transitions } from '../elements/transitions.js';
 import { AWAIT_BLOCK, UNINITIALIZED } from '../../constants.js';
@@ -124,6 +124,14 @@ export function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 				render.d = null;
 			}
 			if (render.e) {
+				if (current_effect !== null) {
+					const e = current_effect.effects;
+					if (e === null) {
+						current_effect.effects = [render.e];
+					} else {
+						e.push(render.e);
+					}
+				}
 				execute_effect(render.e);
 			} else {
 				create_render_effect();

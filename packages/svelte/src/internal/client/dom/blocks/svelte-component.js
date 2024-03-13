@@ -2,7 +2,7 @@ import { DYNAMIC_COMPONENT_BLOCK } from '../../constants.js';
 import { hydrate_block_anchor } from '../hydration.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
-import { current_block, execute_effect } from '../../runtime.js';
+import { current_block, current_effect, execute_effect } from '../../runtime.js';
 import { trigger_transitions } from '../elements/transitions.js';
 
 /**
@@ -106,6 +106,14 @@ export function component(anchor_node, component_fn, render_fn) {
 				render.d = null;
 			}
 			if (render.e) {
+				if (current_effect !== null) {
+					const e = current_effect.effects;
+					if (e === null) {
+						current_effect.effects = [render.e];
+					} else {
+						e.push(render.e);
+					}
+				}
 				execute_effect(render.e);
 			} else {
 				create_render_effect();

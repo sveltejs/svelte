@@ -11,7 +11,7 @@ import {
 	set_signal_status,
 	untrack
 } from '../runtime.js';
-import { DIRTY, MANAGED, RENDER_EFFECT, EFFECT, PRE_EFFECT, DESTROYED } from '../constants.js';
+import { DIRTY, MANAGED, RENDER_EFFECT, EFFECT, PRE_EFFECT, DESTROYED, USER_EFFECT } from '../constants.js';
 import { set } from './sources.js';
 
 /**
@@ -19,27 +19,22 @@ import { set } from './sources.js';
  * @param {(() => void | (() => void)) | ((b: import('#client').Block) => void | (() => void))} fn
  * @param {boolean} sync
  * @param {null | import('#client').Block} block
- * @param {boolean} init
  * @returns {import('#client').Effect}
  */
-function create_effect(type, fn, sync, block = current_block, init = true) {
+function create_effect(type, fn, sync, block = current_block) {
 	/** @type {import('#client').Effect} */
 	const signal = {
 		block,
 		deps: null,
 		f: type | DIRTY,
-		l: 0,
 		fn,
 		effects: null,
 		deriveds: null,
 		teardown: null,
 		ctx: current_component_context,
-		ondestroy: null
+		ondestroy: null,
+		root: current_effect?.root || current_effect,
 	};
-
-	if (current_effect !== null) {
-		signal.l = current_effect.l + 1;
-	}
 
 	if (current_reaction !== null) {
 		if (current_reaction.effects === null) {
@@ -49,9 +44,7 @@ function create_effect(type, fn, sync, block = current_block, init = true) {
 		}
 	}
 
-	if (init) {
-		schedule_effect(signal, sync);
-	}
+	schedule_effect(signal, sync);
 
 	return signal;
 }
@@ -77,22 +70,8 @@ export function user_effect(fn) {
 		);
 	}
 
-	// Non-nested `$effect(...)` in a component should be deferred
-	// until the component is mounted
-	const defer =
-		current_effect.f & RENDER_EFFECT &&
-		// TODO do we actually need this? removing them changes nothing
-		current_component_context !== null &&
-		!current_component_context.m;
 
-	const effect = create_effect(EFFECT, fn, false, current_block, !defer);
-
-	if (defer) {
-		const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
-		(context.e ??= []).push(effect);
-	}
-
-	return effect;
+	return create_effect(EFFECT | USER_EFFECT, fn, false, current_block);
 }
 
 /**

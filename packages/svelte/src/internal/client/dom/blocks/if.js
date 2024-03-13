@@ -82,6 +82,7 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 
 				if (result) {
 					if (alternate_transitions === null || alternate_transitions.size === 0) {
+						debugger
 						execute_effect(alternate_effect);
 					} else {
 						trigger_transitions(alternate_transitions, 'out');

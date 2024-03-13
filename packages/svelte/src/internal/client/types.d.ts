@@ -32,8 +32,6 @@ export type ComponentContext = {
 	s: Record<string, unknown>;
 	/** exports (and props, if `accessors: true`) */
 	x: Record<string, any> | null;
-	/** effects */
-	e: null | Effect[];
 	/** mounted */
 	m: boolean;
 	/** parent */

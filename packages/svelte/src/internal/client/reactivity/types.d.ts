@@ -46,8 +46,8 @@ export interface Effect extends Reaction {
 	fn: null | (() => void | (() => void)) | ((b: Block, s: Signal) => void | (() => void));
 	/** The teardown function returned from the effect function */
 	teardown: null | (() => void);
-	/** The depth from the root signal, used for ordering render/pre-effects topologically **/
-	l: number;
+	/** The root effect */
+	root: null | Effect;
 }
 
 export interface ValueDebug<V = unknown> extends Value<V> {

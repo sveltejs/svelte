@@ -21,7 +21,11 @@ import {
 	DESTROYED,
 	INERT,
 	MANAGED,
-	STATE_SYMBOL
+	STATE_SYMBOL,
+	USER_EFFECT,
+	EACH_BLOCK,
+	IF_BLOCK,
+	DYNAMIC_COMPONENT_BLOCK
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -404,7 +408,7 @@ export function execute_effect(signal) {
 	}
 
 	if ((signal.f & PRE_EFFECT) !== 0 && current_queued_pre_and_render_effects.length > 0) {
-		flush_local_pre_effects(component_context);
+		flush_local_pre_effects(signal);
 	}
 }
 
@@ -423,10 +427,71 @@ function infinite_loop_guard() {
 }
 
 /**
- * @param {Array<import('./types.js').Effect>} effects
+ * @param {import('./types.js').Effect} effect
+ * @param {boolean} render_phase
+ * @param {import('./types.js').Effect[]} all_effects
  * @returns {void}
  */
-function flush_queued_effects(effects) {
+function deeply_collect_effects(effect, render_phase, all_effects) {
+	const effects = effect.effects;
+	if (effects !== null) {
+		const render = [];
+		const user = [];
+		for (let i = 0; i < effects.length; i++) {
+			const child = effects[i];
+			const flags = child.f;
+
+			if ((flags & PRE_EFFECT) !== 0) {
+				if (render_phase) {
+					all_effects.push(child);
+				}
+				deeply_collect_effects(child, render_phase, all_effects);
+			} else if ((flags & RENDER_EFFECT) !== 0) {
+				render.push(child);
+			} else if ((flags & USER_EFFECT) !== 0) {
+				user.push(child);
+			} else if (!render_phase) {
+				all_effects.push(child);
+			}
+		}
+		if (render.length > 0) {
+			if (render_phase) {
+				all_effects.push(...render);
+			}
+			for (let i = 0; i < render.length; i++) {
+				deeply_collect_effects(render[i], render_phase, all_effects);
+			}
+		}
+		if (user.length > 0) {
+			if (!render_phase) {
+				all_effects.push(...user);
+			}
+			for (let i = 0; i < user.length; i++) {
+				deeply_collect_effects(user[i], render_phase, all_effects);
+			}
+		}
+	} else {
+		const block = effect.block;
+		if (block !== null) {
+			if (block.t === EACH_BLOCK) {
+				const items = block.v;
+				for (let i = 0; i < items.length; i++) {
+					const e = items[i].e;
+					if (e !== null) {
+						deeply_collect_effects(e, render_phase, all_effects);
+					}
+				}
+			}
+		}
+	}
+}
+
+/**
+ * @param {Array<import('./types.js').Effect>} effects
+ * @param {boolean} render_phase
+ * @returns {void}
+ */
+function flush_queued_effects(effects, render_phase) {
 	var length = effects.length;
 	if (length === 0) return;
 
@@ -437,9 +502,17 @@ function flush_queued_effects(effects) {
 	try {
 		for (var i = 0; i < length; i++) {
 			var signal = effects[i];
+			var flags = signal.f;
 
-			if ((signal.f & (DESTROYED | INERT)) === 0) {
-				if (check_dirtiness(signal)) {
+			if ((flags & (DESTROYED | INERT)) === 0) {
+				if (signal.root === null && (flags & MANAGED) !== 0) {
+					/**
+					 * @type {import("./types.js").Effect[]}
+					 */
+					const all_effects = [];
+					deeply_collect_effects(signal, render_phase, all_effects);
+					flush_queued_effects(all_effects, render_phase);
+				} else if (check_dirtiness(signal)) {
 					set_signal_status(signal, CLEAN);
 					execute_effect(signal);
 				}
@@ -461,8 +534,8 @@ function process_microtask() {
 	const previous_queued_effects = current_queued_effects;
 	current_queued_pre_and_render_effects = [];
 	current_queued_effects = [];
-	flush_queued_effects(previous_queued_pre_and_render_effects);
-	flush_queued_effects(previous_queued_effects);
+	flush_queued_effects(previous_queued_pre_and_render_effects, true);
+	flush_queued_effects(previous_queued_effects, false);
 	if (!is_micro_task_queued) {
 		flush_count = 0;
 	}
@@ -491,60 +564,15 @@ export function schedule_effect(signal, sync) {
 				queueMicrotask(process_microtask);
 			}
 		}
+		const root = signal.root || signal;
+
 		if ((flags & EFFECT) !== 0) {
-			current_queued_effects.push(signal);
-			// Prevent any nested user effects from potentially triggering
-			// before this effect is scheduled. We know they will be destroyed
-			// so we can make them inert to avoid having to find them in the
-			// queue and remove them.
-			if ((flags & MANAGED) === 0) {
-				mark_subtree_children_inert(signal, true);
+			if (!current_queued_effects.includes(root)) {
+				current_queued_effects.push(root);
 			}
 		} else {
-			// We need to ensure we insert the signal in the right topological order. In other words,
-			// we need to evaluate where to insert the signal based off its level and whether or not it's
-			// a pre-effect and within the same block. By checking the signals in the queue in reverse order
-			// we can find the right place quickly. TODO: maybe opt to use a linked list rather than an array
-			// for these operations.
-			const length = current_queued_pre_and_render_effects.length;
-			let should_append = length === 0;
-
-			if (!should_append) {
-				const target_level = signal.l;
-				const target_block = signal.block;
-				const is_pre_effect = (flags & PRE_EFFECT) !== 0;
-				let target_signal;
-				let target_signal_level;
-				let is_target_pre_effect;
-				let i = length;
-				while (true) {
-					target_signal = current_queued_pre_and_render_effects[--i];
-					target_signal_level = target_signal.l;
-					if (target_signal_level <= target_level) {
-						if (i + 1 === length) {
-							should_append = true;
-						} else {
-							is_target_pre_effect = (target_signal.f & PRE_EFFECT) !== 0;
-							if (
-								target_signal_level < target_level ||
-								target_signal.block !== target_block ||
-								(is_target_pre_effect && !is_pre_effect)
-							) {
-								i++;
-							}
-							current_queued_pre_and_render_effects.splice(i, 0, signal);
-						}
-						break;
-					}
-					if (i === 0) {
-						current_queued_pre_and_render_effects.unshift(signal);
-						break;
-					}
-				}
-			}
-
-			if (should_append) {
-				current_queued_pre_and_render_effects.push(signal);
+			if (!current_queued_pre_and_render_effects.includes(root)) {
+				current_queued_pre_and_render_effects.push(root);
 			}
 		}
 	}
@@ -563,24 +591,20 @@ export function flush_local_render_effects() {
 			i--;
 		}
 	}
-	flush_queued_effects(effects);
+	flush_queued_effects(effects, true);
 }
 
 /**
- * @param {null | import('./types.js').ComponentContext} context
+ * @param {import('./types.js').Effect} effect
  * @returns {void}
  */
-export function flush_local_pre_effects(context) {
-	const effects = [];
-	for (let i = 0; i < current_queued_pre_and_render_effects.length; i++) {
-		const effect = current_queued_pre_and_render_effects[i];
-		if ((effect.f & PRE_EFFECT) !== 0 && effect.ctx === context) {
-			effects.push(effect);
-			current_queued_pre_and_render_effects.splice(i, 1);
-			i--;
-		}
-	}
-	flush_queued_effects(effects);
+export function flush_local_pre_effects(effect) {
+	/**
+	 * @type {import("./types.js").Effect[]}
+	 */
+	const all_effects = [];
+	deeply_collect_effects(effect, true, all_effects);
+	flush_queued_effects(all_effects, true);
 }
 
 /**
@@ -616,8 +640,8 @@ export function flush_sync(fn, flush_previous = true) {
 		current_queued_pre_and_render_effects = pre_and_render_effects;
 		current_queued_effects = effects;
 		if (flush_previous) {
-			flush_queued_effects(previous_queued_pre_and_render_effects);
-			flush_queued_effects(previous_queued_effects);
+			flush_queued_effects(previous_queued_pre_and_render_effects, true);
+			flush_queued_effects(previous_queued_effects, false);
 		}
 		if (fn !== undefined) {
 			result = fn();
@@ -1037,8 +1061,6 @@ export function push(props, runes = false, fn) {
 		x: null,
 		// context
 		c: null,
-		// effects
-		e: null,
 		// mounted
 		m: false,
 		// parent
@@ -1073,13 +1095,6 @@ export function pop(component) {
 	if (context_stack_item !== null) {
 		if (component !== undefined) {
 			context_stack_item.x = component;
-		}
-		const effects = context_stack_item.e;
-		if (effects !== null) {
-			context_stack_item.e = null;
-			for (let i = 0; i < effects.length; i++) {
-				schedule_effect(effects[i], false);
-			}
 		}
 		current_component_context = context_stack_item.p;
 		context_stack_item.m = true;
