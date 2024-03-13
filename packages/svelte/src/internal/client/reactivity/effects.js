@@ -5,7 +5,6 @@ import {
 	current_effect,
 	current_reaction,
 	destroy_children,
-	flush_local_render_effects,
 	get,
 	remove_reactions,
 	schedule_effect,
@@ -42,13 +41,11 @@ function create_effect(type, fn, sync, block = current_block, init = true) {
 		signal.l = current_effect.l + 1;
 	}
 
-	if ((type & MANAGED) === 0) {
-		if (current_reaction !== null) {
-			if (current_reaction.effects === null) {
-				current_reaction.effects = [signal];
-			} else {
-				current_reaction.effects.push(signal);
-			}
+	if (current_reaction !== null) {
+		if (current_reaction.effects === null) {
+			current_reaction.effects = [signal];
+		} else {
+			current_reaction.effects.push(signal);
 		}
 	}
 
