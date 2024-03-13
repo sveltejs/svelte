@@ -35,8 +35,8 @@ var inited = false;
  * @template T
  */
 export class ReactiveSet extends Set {
-	/** @type {Map<T, import('#client').Source<boolean>>} */
-	#sources = new Map();
+	/** @type {Set<T>} */
+	#entries = new Set();
 	#version = source(0);
 	#size = source(0);
 
@@ -81,25 +81,17 @@ export class ReactiveSet extends Set {
 
 	/** @param {T} value */
 	has(value) {
-		var source = this.#sources.get(value);
-		// We should always track the version in case
-		// the Set ever gets this value in the future.
 		get(this.#version);
-
-		if (source === undefined) {
-			return false;
-		}
-
-		return get(source);
+		return this.#entries.has(value);
 	}
 
 	/** @param {T} value */
 	add(value) {
-		var sources = this.#sources;
+		var entries = this.#entries;
 
-		if (!sources.has(value)) {
-			sources.set(value, source(true));
-			set(this.#size, sources.size);
+		if (!entries.has(value)) {
+			entries.add(value);
+			set(this.#size, entries.size);
 			this.#increment_version();
 		}
 
@@ -108,13 +100,11 @@ export class ReactiveSet extends Set {
 
 	/** @param {T} value */
 	delete(value) {
-		var sources = this.#sources;
-		var source = sources.get(value);
+		var entries = this.#entries;
 
-		if (source !== undefined) {
-			sources.delete(value);
-			set(this.#size, sources.size);
-			set(source, false);
+		if (entries.has(value)) {
+			entries.delete(value);
+			set(this.#size, entries.size);
 			this.#increment_version();
 		}
 
@@ -122,18 +112,14 @@ export class ReactiveSet extends Set {
 	}
 
 	clear() {
-		var sources = this.#sources;
+		var entries = this.#entries;
 
-		if (sources.size !== 0) {
+		if (entries.size !== 0) {
 			set(this.#size, 0);
-			for (var source of sources.values()) {
-				set(source, false);
-			}
 			this.#increment_version();
+			entries.clear();
+			super.clear();
 		}
-
-		sources.clear();
-		super.clear();
 	}
 
 	keys() {
@@ -143,7 +129,7 @@ export class ReactiveSet extends Set {
 	values() {
 		get(this.#version);
 
-		var iterator = this.#sources.keys();
+		var iterator = this.#entries.keys();
 
 		return make_iterable(
 			/** @type {IterableIterator<T>} */ ({

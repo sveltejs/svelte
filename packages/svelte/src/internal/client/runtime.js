@@ -497,6 +497,7 @@ export function schedule_effect(signal, sync) {
 			}
 		}
 		if ((flags & EFFECT) !== 0) {
+			debugger
 			current_queued_effects.push(signal);
 			// Prevent any nested user effects from potentially triggering
 			// before this effect is scheduled. We know they will be destroyed
