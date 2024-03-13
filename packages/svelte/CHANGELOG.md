@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.78
+
+### Patch Changes
+
+- fix: invalidate store when mutated inside each block ([#10785](https://github.com/sveltejs/svelte/pull/10785))
+
+- fix: make `set.has(...)` granular for existing properties' ([#10793](https://github.com/sveltejs/svelte/pull/10793))
+
 ## 5.0.0-next.77
 
 ### Patch Changes
