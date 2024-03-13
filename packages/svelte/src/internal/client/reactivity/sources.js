@@ -8,7 +8,6 @@ import {
 	current_untracking,
 	flushSync,
 	get,
-	ignore_mutation_validation,
 	is_batching_effect,
 	is_runes,
 	mark_reactions,
@@ -19,7 +18,7 @@ import {
 	untrack
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
-import { CLEAN, DERIVED, DIRTY, MANAGED } from '../constants.js';
+import { CLEAN, DERIVED, DIRTY, MANAGED, UNINITIALIZED } from '../constants.js';
 
 /**
  * @template V
@@ -93,9 +92,11 @@ export function mutate(source, value) {
  * @returns {V}
  */
 export function set(signal, value) {
+	var initialized = signal.v !== UNINITIALIZED;
+
 	if (
 		!current_untracking &&
-		!ignore_mutation_validation &&
+		initialized &&
 		current_reaction !== null &&
 		is_runes() &&
 		(current_reaction.f & DERIVED) !== 0
@@ -124,11 +125,10 @@ export function set(signal, value) {
 		//
 		// $effect(() => x++)
 		//
-		// We additionally want to skip this logic for when ignore_mutation_validation is
-		// true, as stores write to source signal on initialisation.
+		// We additionally want to skip this logic when initialising store sources
 		if (
 			is_runes() &&
-			!ignore_mutation_validation &&
+			initialized &&
 			current_effect !== null &&
 			(current_effect.f & CLEAN) !== 0 &&
 			(current_effect.f & MANAGED) === 0

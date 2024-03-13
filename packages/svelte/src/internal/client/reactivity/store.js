@@ -1,7 +1,7 @@
 import { subscribe_to_store } from '../../../store/utils.js';
 import { noop } from '../../common.js';
 import { UNINITIALIZED } from '../constants.js';
-import { get, set_ignore_mutation_validation, untrack } from '../runtime.js';
+import { get, untrack } from '../runtime.js';
 import { user_effect } from './effects.js';
 import { mutable_source, set } from './sources.js';
 
@@ -74,13 +74,7 @@ function connect_store_to_signal(store, source) {
 		return noop;
 	}
 
-	/** @param {V} v */
-	const run = (v) => {
-		set_ignore_mutation_validation(true);
-		set(source, v);
-		set_ignore_mutation_validation(false);
-	};
-	return subscribe_to_store(store, run);
+	return subscribe_to_store(store, (v) => set(source, v));
 }
 
 /**
