@@ -84,12 +84,6 @@ export function set_last_inspected_signal(signal) {
 
 /** If `true`, `get`ting the signal should not register it as a dependency */
 export let current_untracking = false;
-/** Exists to opt out of the mutation validation for stores which may be set for the first time during a derivation */
-export let ignore_mutation_validation = false;
-/** @param {boolean} value */
-export function set_ignore_mutation_validation(value) {
-	ignore_mutation_validation = value;
-}
 
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the reaction.
