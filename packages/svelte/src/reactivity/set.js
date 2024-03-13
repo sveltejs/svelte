@@ -2,7 +2,7 @@ import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 
-const read = [
+var read = [
 	'difference',
 	'forEach',
 	'intersection',
@@ -29,7 +29,7 @@ function get_self() {
 	return this;
 }
 
-let inited = false;
+var inited = false;
 
 /**
  * @template T
@@ -50,7 +50,7 @@ export class ReactiveSet extends Set {
 		if (DEV) new Set(value);
 
 		if (value) {
-			for (const element of value) {
+			for (var element of value) {
 				this.add(element);
 			}
 		}
@@ -62,10 +62,10 @@ export class ReactiveSet extends Set {
 	#init() {
 		inited = true;
 
-		const proto = ReactiveSet.prototype;
-		const set_proto = Set.prototype;
+		var proto = ReactiveSet.prototype;
+		var set_proto = Set.prototype;
 
-		for (const method of read) {
+		for (var method of read) {
 			// @ts-ignore
 			proto[method] = function (...v) {
 				get(this.#version);
@@ -81,19 +81,19 @@ export class ReactiveSet extends Set {
 
 	/** @param {T} value */
 	has(value) {
-		let possible_source = this.#sources.get(value);
+		var source = this.#sources.get(value);
 
-		if (possible_source === undefined) {
+		if (source === undefined) {
 			get(this.#version);
 			return false;
 		}
 
-		return get(possible_source);
+		return get(source);
 	}
 
 	/** @param {T} value */
 	add(value) {
-		const sources = this.#sources;
+		var sources = this.#sources;
 
 		if (!sources.has(value)) {
 			sources.set(value, source(true));
@@ -106,9 +106,9 @@ export class ReactiveSet extends Set {
 
 	/** @param {T} value */
 	delete(value) {
-		const sources = this.#sources;
+		var sources = this.#sources;
+		var source = sources.get(value);
 
-		let source = sources.get(value);
 		if (source !== undefined) {
 			sources.delete(value);
 			set(this.#size, sources.size);
@@ -120,11 +120,11 @@ export class ReactiveSet extends Set {
 	}
 
 	clear() {
-		const sources = this.#sources;
+		var sources = this.#sources;
 
 		if (sources.size !== 0) {
 			set(this.#size, 0);
-			for (const source of sources.values()) {
+			for (var source of sources.values()) {
 				set(source, false);
 			}
 			this.#increment_version();
@@ -141,15 +141,13 @@ export class ReactiveSet extends Set {
 	values() {
 		get(this.#version);
 
-		const iterator = this.#sources.entries();
+		var iterator = this.#sources.keys();
 
 		return make_iterable(
 			/** @type {IterableIterator<T>} */ ({
 				next() {
-					for (var [value, source] of iterator) {
-						if (source.v) {
-							return { value, done: false };
-						}
+					for (var value of iterator) {
+						return { value, done: false };
 					}
 
 					return { done: true };
@@ -159,12 +157,12 @@ export class ReactiveSet extends Set {
 	}
 
 	entries() {
-		const iterator = this.values();
+		var iterator = this.values();
 
 		return make_iterable(
 			/** @type {IterableIterator<[T, T]>} */ ({
 				next() {
-					for (const value of iterator) {
+					for (var value of iterator) {
 						return { value: [value, value], done: false };
 					}
 
