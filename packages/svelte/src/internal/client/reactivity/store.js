@@ -90,6 +90,17 @@ export function store_set(store, value) {
 }
 
 /**
+ * @param {import('#client').StoreReferencesContainer} stores
+ * @param {string} store_name
+ */
+export function invalidate_store(stores, store_name) {
+	const store = stores[store_name];
+	if (store.store) {
+		store_set(store.store, store.value.v);
+	}
+}
+
+/**
  * Unsubscribes from all auto-subscribed stores on destroy
  * @param {import('#client').StoreReferencesContainer} stores
  */

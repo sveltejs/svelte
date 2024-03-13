@@ -2344,8 +2344,20 @@ export const template_visitors = {
 			each_type |= EACH_IS_STRICT_EQUALS;
 		}
 
-		// Find the parent each blocks which contain the arrays to invalidate
-		// TODO decide how much of this we want to keep for runes mode. For now we're bailing out below
+		// If the array is a store expression, we need to invalidate it when the array is changed.
+		// This doesn't catch all cases, but all the ones that Svelte 4 catches, too.
+		let store_to_invalidate = '';
+		if (node.expression.type === 'Identifier' || node.expression.type === 'MemberExpression') {
+			const id = object(node.expression);
+			if (id) {
+				const binding = context.state.scope.get(id.name);
+				if (binding?.kind === 'store_sub') {
+					store_to_invalidate = id.name;
+				}
+			}
+		}
+
+		// Legacy mode: find the parent each blocks which contain the arrays to invalidate
 		const indirect_dependencies = collect_parent_each_blocks(context).flatMap((block) => {
 			const array = /** @type {import('estree').Expression} */ (context.visit(block.expression));
 			const transitive_dependencies = serialize_transitive_dependencies(
@@ -2382,15 +2394,24 @@ export const template_visitors = {
 					'$.invalidate_inner_signals',
 					b.thunk(b.sequence(indirect_dependencies))
 				);
+				const invalidate_store = store_to_invalidate
+					? b.call('$.invalidate_store', b.id('$$subscriptions'), b.literal(store_to_invalidate))
+					: undefined;
+
+				const sequence = [];
+				if (!context.state.analysis.runes) sequence.push(invalidate);
+				if (invalidate_store) sequence.push(invalidate_store);
 
 				if (left === assignment.left) {
 					const assign = b.assignment('=', expression_for_id, value);
-					return context.state.analysis.runes ? assign : b.sequence([assign, invalidate]);
+					sequence.unshift(assign);
+					return b.sequence(sequence);
 				} else {
 					const original_left = /** @type {import('estree').MemberExpression} */ (assignment.left);
 					const left = context.visit(original_left);
 					const assign = b.assignment(assignment.operator, left, value);
-					return context.state.analysis.runes ? assign : b.sequence([assign, invalidate]);
+					sequence.unshift(assign);
+					return b.sequence(sequence);
 				}
 			};
 		};
