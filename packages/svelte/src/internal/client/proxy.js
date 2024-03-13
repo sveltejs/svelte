@@ -147,8 +147,7 @@ export function unstate(value) {
  * @param {1 | -1} [d]
  */
 function update_version(signal, d = 1) {
-	const value = untrack(() => get(signal));
-	set(signal, value + d);
+	set(signal, signal.v + d);
 }
 
 /** @type {ProxyHandler<import('./types.js').ProxyStateObject<any>>} */
