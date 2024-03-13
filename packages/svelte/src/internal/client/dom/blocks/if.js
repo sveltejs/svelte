@@ -45,15 +45,20 @@ function create_if_block() {
  */
 export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	const block = create_if_block();
+
 	hydrate_block_anchor(anchor_node);
+
 	/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 	let mismatch = false;
 
 	/** @type {null | import('#client').TemplateNode | Array<import('#client').TemplateNode>} */
 	let consequent_dom = null;
+
 	/** @type {null | import('#client').TemplateNode | Array<import('#client').TemplateNode>} */
 	let alternate_dom = null;
+
 	let has_mounted = false;
+
 	/**
 	 * @type {import('#client').Effect | null}
 	 */
@@ -131,10 +136,12 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 	consequent_effect = render_effect(
 		(/** @type {any} */ _, /** @type {import('#client').Effect | null} */ consequent_effect) => {
 			const result = block.v;
+
 			if (!result && consequent_dom !== null) {
 				remove(consequent_dom);
 				consequent_dom = null;
 			}
+
 			if (result && current_branch_effect !== consequent_effect) {
 				consequent_fn(anchor_node);
 				if (mismatch && current_branch_effect === null) {
@@ -144,6 +151,7 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 				current_branch_effect = consequent_effect;
 				consequent_dom = block.d;
 			}
+
 			block.d = null;
 		},
 		block,
@@ -155,18 +163,22 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 	alternate_effect = render_effect(
 		(/** @type {any} */ _, /** @type {import('#client').Effect | null} */ alternate_effect) => {
 			const result = block.v;
+
 			if (result && alternate_dom !== null) {
 				remove(alternate_dom);
 				alternate_dom = null;
 			}
+
 			if (!result && current_branch_effect !== alternate_effect) {
 				if (alternate_fn !== null) {
 					alternate_fn(anchor_node);
 				}
+
 				if (mismatch && current_branch_effect === null) {
 					// Set fragment so that Svelte continues to operate in hydration mode
 					set_current_hydration_fragment([]);
 				}
+
 				current_branch_effect = alternate_effect;
 				alternate_dom = block.d;
 			}
@@ -181,9 +193,11 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 		if (consequent_dom !== null) {
 			remove(consequent_dom);
 		}
+
 		if (alternate_dom !== null) {
 			remove(alternate_dom);
 		}
+
 		destroy_effect(consequent_effect);
 		destroy_effect(alternate_effect);
 	};
