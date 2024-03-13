@@ -470,12 +470,14 @@ export function serialize_set_binding(node, context, fallback, options) {
 				if (binding.kind === 'prop') {
 					return b.call(
 						left,
-						b.assignment(
-							node.operator,
-							/** @type {import('estree').Pattern} */ (visit(node.left)),
-							value
-						),
-						b.literal(true)
+						b.sequence([
+							b.assignment(
+								node.operator,
+								/** @type {import('estree').Pattern} */ (visit(node.left)),
+								value
+							),
+							b.call(left)
+						])
 					);
 				} else {
 					return b.call(

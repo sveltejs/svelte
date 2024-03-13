@@ -175,12 +175,9 @@ export function prop(props, key, flags, initial) {
 	// intermediate mode — prop is written to, but the parent component had
 	// `bind:foo` which means we can just call `$$props.foo = value` directly
 	if (setter) {
-		return function (/** @type {V} */ value, mutation = false) {
+		return function (/** @type {V} */ value) {
 			if (arguments.length === 1) {
 				/** @type {Function} */ (setter)(value);
-				return value;
-			} else if (mutation) {
-				/** @type {Function} */ (setter)(getter());
 				return value;
 			} else {
 				return getter();
@@ -213,7 +210,7 @@ export function prop(props, key, flags, initial) {
 
 	if (!immutable) current_value.equals = safe_equals;
 
-	return function (/** @type {V} */ value, mutation = false) {
+	return function (/** @type {V} */ value) {
 		var current = get(current_value);
 
 		// legacy nonsense — need to ensure the source is invalidated when necessary
@@ -229,9 +226,9 @@ export function prop(props, key, flags, initial) {
 		}
 
 		if (arguments.length > 0) {
-			if (mutation || (immutable ? value !== current : safe_not_equal(value, current))) {
+			if (!current_value.equals(value)) {
 				from_child = true;
-				set(inner_current_value, mutation ? current : value);
+				set(inner_current_value, value);
 				get(current_value); // force a synchronisation immediately
 			}
 
