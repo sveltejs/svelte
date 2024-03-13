@@ -11,7 +11,6 @@ import { unstate } from './proxy.js';
 import { destroy_effect, pre_effect } from './reactivity/effects.js';
 import {
 	EACH_BLOCK,
-	IF_BLOCK,
 	EFFECT,
 	PRE_EFFECT,
 	RENDER_EFFECT,
@@ -759,15 +758,14 @@ export function invalidate_inner_signals(fn) {
 /**
  * @param {import('#client').Effect} signal
  * @param {boolean} inert
- * @param {Set<import('#client').Block>} [visited_blocks]
  * @returns {void}
  */
-function mark_subtree_children_inert(signal, inert, visited_blocks) {
+function mark_subtree_children_inert(signal, inert) {
 	const effects = signal.effects;
 	if (effects !== null) {
 		for (var i = 0; i < effects.length; i++) {
 			const effect = effects[i];
-			mark_subtree_inert(effect, inert, visited_blocks);
+			mark_subtree_inert(effect, inert);
 		}
 	}
 }
@@ -775,10 +773,9 @@ function mark_subtree_children_inert(signal, inert, visited_blocks) {
 /**
  * @param {import('#client').Effect} signal
  * @param {boolean} inert
- * @param {Set<import('#client').Block>} [visited_blocks]
  * @returns {void}
  */
-export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
+export function mark_subtree_inert(signal, inert) {
 	const flags = signal.f;
 	const is_already_inert = (flags & INERT) !== 0;
 	if (is_already_inert !== inert) {
@@ -786,21 +783,8 @@ export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
 		if (!inert && (flags & CLEAN) === 0) {
 			schedule_effect(signal, false);
 		}
-
-		const block = signal.block;
-		if (block !== null && !visited_blocks.has(block)) {
-			visited_blocks.add(block);
-			if (block.t === EACH_BLOCK) {
-				const items = block.v;
-				for (let { e: each_item_effect } of items) {
-					if (each_item_effect !== null) {
-						mark_subtree_inert(each_item_effect, inert, visited_blocks);
-					}
-				}
-			}
-		}
 	}
-	mark_subtree_children_inert(signal, inert, visited_blocks);
+	mark_subtree_children_inert(signal, inert);
 }
 
 /**
