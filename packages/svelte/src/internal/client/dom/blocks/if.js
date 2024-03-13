@@ -82,6 +82,7 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 						} else {
 							trigger_transitions(alternate_transitions, 'out');
 						}
+
 						if (consequent_transitions === null || consequent_transitions.size === 0) {
 							execute_effect(consequent_effect);
 						} else {
@@ -93,6 +94,7 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 						} else {
 							trigger_transitions(consequent_transitions, 'out');
 						}
+
 						if (alternate_transitions === null || alternate_transitions.size === 0) {
 							execute_effect(alternate_effect);
 						} else {
