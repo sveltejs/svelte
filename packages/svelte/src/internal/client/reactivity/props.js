@@ -210,7 +210,7 @@ export function prop(props, key, flags, initial) {
 
 	if (!immutable) current_value.equals = safe_equals;
 
-	return function (/** @type {V} */ value, mutation = false) {
+	return function (/** @type {V} */ value) {
 		var current = get(current_value);
 
 		// legacy nonsense — need to ensure the source is invalidated when necessary
@@ -226,9 +226,9 @@ export function prop(props, key, flags, initial) {
 		}
 
 		if (arguments.length > 0) {
-			if (mutation || (immutable ? value !== current : safe_not_equal(value, current))) {
+			if (!current_value.equals(value)) {
 				from_child = true;
-				set(inner_current_value, mutation ? current : value);
+				set(inner_current_value, value);
 				get(current_value); // force a synchronisation immediately
 			}
 
