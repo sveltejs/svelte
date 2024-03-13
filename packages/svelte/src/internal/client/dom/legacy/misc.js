@@ -1,6 +1,7 @@
 import { set, source } from '../../reactivity/sources.js';
 import { get } from '../../runtime.js';
 import { is_array } from '../../utils.js';
+import { isSnippet } from '../blocks/snippet.js';
 
 /**
  * Under some circumstances, imports may be reactive in legacy mode. In that case,
@@ -64,5 +65,19 @@ export function update_legacy_props($$new_props) {
 		if (key in this) {
 			this[key] = $$new_props[key];
 		}
+	}
+}
+
+/**
+ * @param {Record<string, any>} $$props
+ */
+export function default_slot($$props) {
+	var children = $$props.$$slots?.default;
+	if (children) {
+		return children;
+	}
+	children = $$props.children;
+	if (isSnippet(children)) {
+		return children;
 	}
 }

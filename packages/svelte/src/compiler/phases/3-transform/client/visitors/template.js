@@ -775,6 +775,13 @@ function serialize_inline_component(node, component_name, context) {
 	let slot_scope_applies_to_itself = false;
 
 	/**
+	 * Components may have a children prop and also have child nodes. In this case, we assume
+	 * that the child component isn't using render tags yet and pass the slot as $$slots.default.
+	 * We're not doing it for spread attributes, as this would result in too many false positives.
+	 */
+	let has_children_prop = false;
+
+	/**
 	 * @param {import('estree').Property} prop
 	 */
 	function push_prop(prop) {
@@ -821,6 +828,10 @@ function serialize_inline_component(node, component_name, context) {
 
 			if (attribute.name === 'slot') {
 				slot_scope_applies_to_itself = true;
+			}
+
+			if (attribute.name === 'children') {
+				has_children_prop = true;
 			}
 
 			const [, value] = serialize_attribute_value(attribute.value, context);
@@ -944,13 +955,8 @@ function serialize_inline_component(node, component_name, context) {
 			b.block([...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []), ...body])
 		);
 
-		if (slot_name === 'default') {
-			push_prop(
-				b.init(
-					'children',
-					context.state.options.dev ? b.call('$.add_snippet_symbol', slot_fn) : slot_fn
-				)
-			);
+		if (slot_name === 'default' && !has_children_prop) {
+			push_prop(b.init('children', b.call('$.add_snippet_symbol', slot_fn)));
 		} else {
 			serialized_slots.push(b.init(slot_name, slot_fn));
 		}
@@ -2685,9 +2691,7 @@ export const template_visitors = {
 		} else {
 			context.state.init.push(b.const(node.expression, b.arrow(args, body)));
 		}
-		if (context.state.options.dev) {
-			context.state.init.push(b.stmt(b.call('$.add_snippet_symbol', node.expression)));
-		}
+		context.state.init.push(b.stmt(b.call('$.add_snippet_symbol', node.expression)));
 	},
 	FunctionExpression: function_visitor,
 	ArrowFunctionExpression: function_visitor,
@@ -3106,7 +3110,7 @@ export const template_visitors = {
 					);
 
 		const expression = is_default
-			? b.member(b.id('$$props'), b.id('children'))
+			? b.call('$.default_slot', b.id('$$props'))
 			: b.member(b.member(b.id('$$props'), b.id('$$slots')), name, true, true);
 
 		const slot = b.call('$.slot', context.state.node, expression, props_expression, fallback);

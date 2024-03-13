@@ -12,7 +12,8 @@ export {
 	tick,
 	unmount,
 	untrack,
-	createRoot
+	createRoot,
+	isSnippet
 } from './main-client.js';
 
 /** @returns {void} */

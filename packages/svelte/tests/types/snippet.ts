@@ -1,4 +1,4 @@
-import type { Snippet } from 'svelte';
+import { type Snippet, isSnippet } from 'svelte';
 
 const return_type: ReturnType<Snippet> = null as any;
 
@@ -38,3 +38,8 @@ const h: Snippet<[{ a: true }]> = (a) => {
 const i: Snippet = () => {
 	return return_type;
 };
+
+let j = null as any;
+if (isSnippet(j)) {
+	let x: Snippet = j;
+}
