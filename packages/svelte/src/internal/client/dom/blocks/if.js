@@ -1,4 +1,4 @@
-import { IF_BLOCK, UNINITIALIZED } from '../../constants.js';
+import { IF_BLOCK, IS_ELSEIF, UNINITIALIZED } from '../../constants.js';
 import {
 	current_hydration_fragment,
 	hydrate_block_anchor,
@@ -37,9 +37,10 @@ function create_if_block() {
  * @param {() => boolean} condition_fn
  * @param {(anchor: Node) => void} consequent_fn
  * @param {null | ((anchor: Node) => void)} alternate_fn
+ * @param {boolean} [elseif]
  * @returns {void}
  */
-export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
+export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn, elseif = false) {
 	const block = create_if_block();
 
 	hydrate_block_anchor(anchor_node);
@@ -152,6 +153,8 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 			}
 		}
 	}, block);
+
+	if_effect.f |= IS_ELSEIF;
 
 	mismatch = false; // TODO not sure if we actually need this — belt and braces
 

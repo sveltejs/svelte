@@ -20,7 +20,8 @@ import {
 	EFFECT,
 	PRE_EFFECT,
 	DESTROYED,
-	INERT
+	INERT,
+	IS_ELSEIF
 } from '../constants.js';
 import { set } from './sources.js';
 import { noop } from '../../common.js';
@@ -300,7 +301,8 @@ function pause_children(effect, transitions, local) {
 
 	if (effect.effects) {
 		for (const child of effect.effects) {
-			pause_children(child, transitions, false);
+			var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & MANAGED) !== 0;
+			pause_children(child, transitions, transparent ? local : false);
 		}
 	}
 }
@@ -323,7 +325,8 @@ function resume_children(effect, local) {
 
 	if (effect.effects) {
 		for (const child of effect.effects) {
-			resume_children(child, false);
+			var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & MANAGED) !== 0;
+			resume_children(child, transparent ? local : false);
 		}
 	}
 

@@ -9,6 +9,7 @@ export const DIRTY = 1 << 9;
 export const MAYBE_DIRTY = 1 << 10;
 export const INERT = 1 << 11;
 export const DESTROYED = 1 << 12;
+export const IS_ELSEIF = 1 << 13;
 
 export const ROOT_BLOCK = 0;
 export const IF_BLOCK = 1;

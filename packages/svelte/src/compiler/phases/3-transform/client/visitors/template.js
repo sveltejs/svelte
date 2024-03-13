@@ -2548,22 +2548,24 @@ export const template_visitors = {
 			context.visit(node.consequent)
 		);
 
-		context.state.after_update.push(
-			b.stmt(
-				b.call(
-					'$.if',
-					context.state.node,
-					b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.test))),
-					b.arrow([b.id('$$anchor')], consequent),
-					node.alternate
-						? b.arrow(
-								[b.id('$$anchor')],
-								/** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
-							)
-						: b.literal(null)
-				)
-			)
-		);
+		const args = [
+			context.state.node,
+			b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.test))),
+			b.arrow([b.id('$$anchor')], consequent),
+			node.alternate
+				? b.arrow(
+						[b.id('$$anchor')],
+						/** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
+					)
+				: b.literal(null)
+		];
+
+		if (node.elseif) {
+			// the additional effect layer shouldn't affect local transitions
+			args.push(b.literal(true));
+		}
+
+		context.state.after_update.push(b.stmt(b.call('$.if', ...args)));
 	},
 	AwaitBlock(node, context) {
 		context.state.template.push('<!>');
