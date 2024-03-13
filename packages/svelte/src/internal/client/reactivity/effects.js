@@ -230,5 +230,12 @@ export function destroy_effect(signal) {
 
 	signal.teardown?.();
 	signal.ondestroy?.();
-	signal.fn = signal.effects = signal.ondestroy = signal.ctx = signal.block = signal.deps = null;
+	signal.fn =
+		signal.effects =
+		signal.teardown =
+		signal.ondestroy =
+		signal.ctx =
+		signal.block =
+		signal.deps =
+			null;
 }
