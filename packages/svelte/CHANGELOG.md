@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.77
+
+### Patch Changes
+
+- fix: adjust render effect ordering ([#10783](https://github.com/sveltejs/svelte/pull/10783))
+
+- fix: handle component binding mutation ([#10786](https://github.com/sveltejs/svelte/pull/10786))
+
 ## 5.0.0-next.76
 
 ### Patch Changes
