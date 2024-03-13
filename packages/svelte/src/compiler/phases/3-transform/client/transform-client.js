@@ -257,7 +257,13 @@ export function client_component(source, analysis, options) {
 
 			properties.push(
 				b.get(key, [b.return(b.call(b.id(name)))]),
-				b.set(key, [b.stmt(b.call(b.id(name), b.id('$$value'))), b.stmt(b.call('$.flushSync'))])
+				b.set(
+					key,
+					[b.stmt(b.call(b.id(name), b.id('$$value'))), b.stmt(b.call('$.flushSync'))],
+					analysis.runes && binding.initial
+						? /** @type {import('estree').Expression} */ (binding.initial)
+						: undefined
+				)
 			);
 		}
 	}

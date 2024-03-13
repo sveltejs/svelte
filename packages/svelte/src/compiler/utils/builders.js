@@ -355,10 +355,23 @@ export function sequence(expressions) {
 /**
  * @param {string} name
  * @param {import('estree').Statement[]} body
+ * @param {import('estree').Expression | null} [fallback]
  * @returns {import('estree').Property}
  */
-export function set(name, body) {
-	return prop('set', key(name), function_builder(null, [id('$$value')], block(body)));
+export function set(name, body, fallback) {
+	return prop(
+		'set',
+		key(name),
+		function_builder(
+			null,
+			[
+				fallback
+					? { type: 'AssignmentPattern', left: id('$$value'), right: fallback }
+					: id('$$value')
+			],
+			block(body)
+		)
+	);
 }
 
 /**
