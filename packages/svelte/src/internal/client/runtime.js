@@ -762,10 +762,10 @@ export function invalidate_inner_signals(fn) {
  */
 function mark_subtree_children_inert(signal, inert) {
 	const effects = signal.effects;
+
 	if (effects !== null) {
 		for (var i = 0; i < effects.length; i++) {
-			const effect = effects[i];
-			mark_subtree_inert(effect, inert);
+			mark_subtree_inert(effects[i], inert);
 		}
 	}
 }
@@ -778,12 +778,14 @@ function mark_subtree_children_inert(signal, inert) {
 export function mark_subtree_inert(signal, inert) {
 	const flags = signal.f;
 	const is_already_inert = (flags & INERT) !== 0;
+
 	if (is_already_inert !== inert) {
 		signal.f ^= INERT;
 		if (!inert && (flags & CLEAN) === 0) {
 			schedule_effect(signal, false);
 		}
 	}
+
 	mark_subtree_children_inert(signal, inert);
 }
 
