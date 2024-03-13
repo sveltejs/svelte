@@ -786,25 +786,11 @@ export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
 		if (!inert && (flags & CLEAN) === 0) {
 			schedule_effect(signal, false);
 		}
-		// Nested if block effects
+
 		const block = signal.block;
 		if (block !== null && !visited_blocks.has(block)) {
 			visited_blocks.add(block);
-			const type = block.t;
-			if (type === IF_BLOCK) {
-				const condition_effect = block.e;
-				if (condition_effect !== null && block !== current_block) {
-					mark_subtree_inert(condition_effect, inert, visited_blocks);
-				}
-				const consequent_effect = block.ce;
-				if (consequent_effect !== null && block.v) {
-					mark_subtree_inert(consequent_effect, inert, visited_blocks);
-				}
-				const alternate_effect = block.ae;
-				if (alternate_effect !== null && !block.v) {
-					mark_subtree_inert(alternate_effect, inert, visited_blocks);
-				}
-			} else if (type === EACH_BLOCK) {
+			if (block.t === EACH_BLOCK) {
 				const items = block.v;
 				for (let { e: each_item_effect } of items) {
 					if (each_item_effect !== null) {

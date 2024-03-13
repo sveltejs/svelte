@@ -127,67 +127,69 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 
 				has_mounted = true;
 			}
+
+			// create these here so they have the correct parent/child relationship
+			consequent_effect ??= render_effect(
+				(
+					/** @type {any} */ _,
+					/** @type {import('#client').Effect | null} */ consequent_effect
+				) => {
+					const result = block.v;
+
+					if (!result && consequent_dom !== null) {
+						remove(consequent_dom);
+						consequent_dom = null;
+					}
+
+					if (result && current_branch_effect !== consequent_effect) {
+						consequent_fn(anchor_node);
+						if (mismatch && current_branch_effect === null) {
+							// Set fragment so that Svelte continues to operate in hydration mode
+							set_current_hydration_fragment([]);
+						}
+						current_branch_effect = consequent_effect;
+						consequent_dom = block.d;
+					}
+
+					block.d = null;
+				},
+				block,
+				true
+			);
+			block.ce = consequent_effect;
+
+			alternate_effect ??= render_effect(
+				(/** @type {any} */ _, /** @type {import('#client').Effect | null} */ alternate_effect) => {
+					const result = block.v;
+
+					if (result && alternate_dom !== null) {
+						remove(alternate_dom);
+						alternate_dom = null;
+					}
+
+					if (!result && current_branch_effect !== alternate_effect) {
+						if (alternate_fn !== null) {
+							alternate_fn(anchor_node);
+						}
+
+						if (mismatch && current_branch_effect === null) {
+							// Set fragment so that Svelte continues to operate in hydration mode
+							set_current_hydration_fragment([]);
+						}
+
+						current_branch_effect = alternate_effect;
+						alternate_dom = block.d;
+					}
+					block.d = null;
+				},
+				block,
+				true
+			);
+			block.ae = alternate_effect;
 		},
 		block,
 		false
 	);
-
-	// Managed effect
-	consequent_effect = render_effect(
-		(/** @type {any} */ _, /** @type {import('#client').Effect | null} */ consequent_effect) => {
-			const result = block.v;
-
-			if (!result && consequent_dom !== null) {
-				remove(consequent_dom);
-				consequent_dom = null;
-			}
-
-			if (result && current_branch_effect !== consequent_effect) {
-				consequent_fn(anchor_node);
-				if (mismatch && current_branch_effect === null) {
-					// Set fragment so that Svelte continues to operate in hydration mode
-					set_current_hydration_fragment([]);
-				}
-				current_branch_effect = consequent_effect;
-				consequent_dom = block.d;
-			}
-
-			block.d = null;
-		},
-		block,
-		true
-	);
-	block.ce = consequent_effect;
-
-	// Managed effect
-	alternate_effect = render_effect(
-		(/** @type {any} */ _, /** @type {import('#client').Effect | null} */ alternate_effect) => {
-			const result = block.v;
-
-			if (result && alternate_dom !== null) {
-				remove(alternate_dom);
-				alternate_dom = null;
-			}
-
-			if (!result && current_branch_effect !== alternate_effect) {
-				if (alternate_fn !== null) {
-					alternate_fn(anchor_node);
-				}
-
-				if (mismatch && current_branch_effect === null) {
-					// Set fragment so that Svelte continues to operate in hydration mode
-					set_current_hydration_fragment([]);
-				}
-
-				current_branch_effect = alternate_effect;
-				alternate_dom = block.d;
-			}
-			block.d = null;
-		},
-		block,
-		true
-	);
-	block.ae = alternate_effect;
 
 	if_effect.ondestroy = () => {
 		if (consequent_dom !== null) {
