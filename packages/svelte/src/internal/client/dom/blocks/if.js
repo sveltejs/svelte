@@ -1,4 +1,4 @@
-import { IF_BLOCK } from '../../constants.js';
+import { IF_BLOCK, UNINITIALIZED } from '../../constants.js';
 import {
 	current_hydration_fragment,
 	hydrate_block_anchor,
@@ -53,131 +53,107 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 	/** @type {null | import('#client').TemplateNode | Array<import('#client').TemplateNode>} */
 	let alternate_dom = null;
 
-	let has_mounted = false;
-
-	/**
-	 * @type {import('#client').Effect | null}
-	 */
-	let current_branch_effect = null;
+	/** @type {import('#client').Effect | null} */
+	let consequent_effect = null;
 
 	/** @type {import('#client').Effect | null} */
-	let consequent_effect;
+	let alternate_effect = null;
 
-	/** @type {import('#client').Effect | null} */
-	let alternate_effect;
-
-	function create_consequent_effect() {
-		return render_effect(
-			() => {
-				consequent_fn(anchor_node);
-				if (mismatch && current_branch_effect === null) {
-					set_current_hydration_fragment([]);
-				}
-
-				consequent_dom = block.d;
-
-				return () => {
-					// TODO make this unnecessary by linking the dom to the effect,
-					// and removing automatically on teardown
-					if (consequent_dom !== null) {
-						remove(consequent_dom);
-						consequent_dom = null;
-					}
-				};
-			},
-			block,
-			true
-		);
-	}
-
-	function create_alternate_effect() {
-		return render_effect(
-			() => {
-				/** @type {((anchor: Node) => void)} */ (alternate_fn)(anchor_node);
-				if (mismatch && current_branch_effect === null) {
-					set_current_hydration_fragment([]);
-				}
-
-				alternate_dom = block.d;
-
-				return () => {
-					// TODO make this unnecessary by linking the dom to the effect,
-					// and removing automatically on teardown
-					if (alternate_dom !== null) {
-						remove(alternate_dom);
-						alternate_dom = null;
-					}
-				};
-			},
-			block,
-			true
-		);
-	}
+	/** @type {boolean | null} */
+	let condition = null;
 
 	const if_effect = render_effect(() => {
-		const result = !!condition_fn();
+		if (condition === (condition = !!condition_fn())) return;
 
-		if (block.v !== result || !has_mounted) {
-			block.v = result;
+		if (hydrating) {
+			const comment_text = /** @type {Comment} */ (current_hydration_fragment?.[0])?.data;
 
-			if (has_mounted) {
-				if (result) {
-					if (consequent_effect) {
-						resume_effect(consequent_effect);
-					} else {
-						consequent_effect = create_consequent_effect();
-					}
-
-					if (alternate_effect) {
-						pause_effect(alternate_effect, () => {
-							alternate_effect = null;
-							if (alternate_dom) remove(alternate_dom);
-						});
-					}
-				} else {
-					if (alternate_effect) {
-						resume_effect(alternate_effect);
-					} else if (alternate_fn) {
-						alternate_effect = create_alternate_effect();
-					}
-
-					if (consequent_effect) {
-						pause_effect(consequent_effect, () => {
-							consequent_effect = null;
-							if (consequent_dom) remove(consequent_dom);
-						});
-					}
-				}
+			if (
+				!comment_text ||
+				(comment_text === 'ssr:if:true' && !condition) ||
+				(comment_text === 'ssr:if:false' && condition)
+			) {
+				// Hydration mismatch: remove everything inside the anchor and start fresh.
+				// This could happen using when `{#if browser} .. {/if}` in SvelteKit.
+				remove(current_hydration_fragment);
+				set_current_hydration_fragment(null);
+				mismatch = true;
 			} else {
-				if (hydrating) {
-					const comment_text = /** @type {Comment} */ (current_hydration_fragment?.[0])?.data;
+				// Remove the ssr:if comment node or else it will confuse the subsequent hydration algorithm
+				current_hydration_fragment.shift();
+			}
+		}
 
-					if (
-						!comment_text ||
-						(comment_text === 'ssr:if:true' && !result) ||
-						(comment_text === 'ssr:if:false' && result)
-					) {
-						// Hydration mismatch: remove everything inside the anchor and start fresh.
-						// This could happen using when `{#if browser} .. {/if}` in SvelteKit.
-						remove(current_hydration_fragment);
-						set_current_hydration_fragment(null);
-						mismatch = true;
-					} else {
-						// Remove the ssr:if comment node or else it will confuse the subsequent hydration algorithm
-						current_hydration_fragment.shift();
-					}
-				}
+		if (condition) {
+			if (consequent_effect) {
+				resume_effect(consequent_effect);
+			} else {
+				consequent_effect = render_effect(
+					() => {
+						consequent_fn(anchor_node);
+						consequent_dom = block.d;
 
-				if (result) {
-					consequent_effect ??= create_consequent_effect();
-				} else if (alternate_fn) {
-					alternate_effect ??= create_alternate_effect();
-				}
+						if (mismatch) {
+							set_current_hydration_fragment([]);
+						}
+
+						return () => {
+							// TODO make this unnecessary by linking the dom to the effect,
+							// and removing automatically on teardown
+							if (consequent_dom !== null) {
+								remove(consequent_dom);
+								consequent_dom = null;
+							}
+						};
+					},
+					block,
+					true
+				);
 			}
 
-			has_mounted = true;
+			if (alternate_effect) {
+				pause_effect(alternate_effect, () => {
+					alternate_effect = null;
+					if (alternate_dom) remove(alternate_dom);
+				});
+			}
+		} else {
+			if (alternate_effect) {
+				resume_effect(alternate_effect);
+			} else if (alternate_fn) {
+				alternate_effect = render_effect(
+					() => {
+						alternate_fn(anchor_node);
+						alternate_dom = block.d;
+
+						if (mismatch) {
+							set_current_hydration_fragment([]);
+						}
+
+						return () => {
+							// TODO make this unnecessary by linking the dom to the effect,
+							// and removing automatically on teardown
+							if (alternate_dom !== null) {
+								remove(alternate_dom);
+								alternate_dom = null;
+							}
+						};
+					},
+					block,
+					true
+				);
+			}
+
+			if (consequent_effect) {
+				pause_effect(consequent_effect, () => {
+					consequent_effect = null;
+					if (consequent_dom) remove(consequent_dom);
+				});
+			}
 		}
 	}, block);
+
+	mismatch = false; // TODO not sure if we actually need this — belt and braces
 
 	if_effect.ondestroy = () => {
 		// TODO make this unnecessary by linking the dom to the effect,
