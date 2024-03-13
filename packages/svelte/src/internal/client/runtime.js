@@ -10,7 +10,6 @@ import {
 import { unstate } from './proxy.js';
 import { destroy_effect, pre_effect } from './reactivity/effects.js';
 import {
-	EACH_BLOCK,
 	EFFECT,
 	PRE_EFFECT,
 	RENDER_EFFECT,
