@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -11,7 +12,10 @@ export default test({
 
 		const buttons = target.querySelectorAll('button');
 
-		await buttons[0].dispatchEvent(event);
+		flushSync(() => {
+			buttons[0].dispatchEvent(event);
+		});
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -20,7 +24,10 @@ export default test({
 		`
 		);
 
-		await buttons[1].dispatchEvent(event);
+		flushSync(() => {
+			buttons[1].dispatchEvent(event);
+		});
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -30,7 +37,10 @@ export default test({
 		);
 
 		// reactive update, reset to 2
-		await buttons[0].dispatchEvent(event);
+		flushSync(() => {
+			buttons[0].dispatchEvent(event);
+		});
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -40,7 +50,10 @@ export default test({
 		);
 
 		// bound to main, reset to 2
-		await buttons[1].dispatchEvent(event);
+		flushSync(() => {
+			buttons[1].dispatchEvent(event);
+		});
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`

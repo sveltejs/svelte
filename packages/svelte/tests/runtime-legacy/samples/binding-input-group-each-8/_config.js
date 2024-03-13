@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 // https://github.com/sveltejs/svelte/issues/7884
@@ -27,11 +28,22 @@ export default test({
 		const event = new window.Event('change');
 
 		inputs[0].checked = true;
-		await inputs[0].dispatchEvent(event);
+
+		flushSync(() => {
+			inputs[0].dispatchEvent(event);
+		});
+
 		inputs[2].checked = true;
-		await inputs[2].dispatchEvent(event);
+
+		flushSync(() => {
+			inputs[2].dispatchEvent(event);
+		});
+
 		inputs[3].checked = true;
-		await inputs[3].dispatchEvent(event);
+
+		flushSync(() => {
+			inputs[3].dispatchEvent(event);
+		});
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -53,7 +65,8 @@ export default test({
 		);
 
 		await component.update();
-		await Promise.resolve();
+
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

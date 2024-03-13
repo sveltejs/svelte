@@ -8,7 +8,14 @@ import {
 	object_prototype
 } from './utils.js';
 import { unstate } from './proxy.js';
-import { destroy_effect, pre_effect } from './reactivity/effects.js';
+import {
+	current_effect_sibling_count,
+	current_pre_effect_sibling_count,
+	current_render_effect_sibling_count,
+	destroy_effect,
+	pre_effect,
+	set_sibling_count
+} from './reactivity/effects.js';
 import {
 	EACH_BLOCK,
 	IF_BLOCK,
@@ -384,12 +391,19 @@ export function execute_effect(signal) {
 	const previous_effect = current_effect;
 	const previous_component_context = current_component_context;
 	const previous_block = current_block;
+	const previous_pre_effect_sibling_count = current_pre_effect_sibling_count;
+	const previous_render_effect_sibling_count = current_render_effect_sibling_count;
+	const previous_effect_sibling_count = current_effect_sibling_count;
 
 	const component_context = signal.ctx;
 
 	current_effect = signal;
 	current_component_context = component_context;
 	current_block = signal.block;
+	// 32 for pre
+	// 128 for render
+	// 96 for effect
+	set_sibling_count(0, 32, 160);
 
 	try {
 		destroy_children(signal);
@@ -400,6 +414,11 @@ export function execute_effect(signal) {
 		current_effect = previous_effect;
 		current_component_context = previous_component_context;
 		current_block = previous_block;
+		set_sibling_count(
+			previous_pre_effect_sibling_count,
+			previous_render_effect_sibling_count,
+			previous_effect_sibling_count
+		);
 	}
 
 	if ((signal.f & PRE_EFFECT) !== 0 && current_queued_pre_and_render_effects.length > 0) {
@@ -510,20 +529,26 @@ export function schedule_effect(signal, sync) {
 
 			if (!should_append) {
 				const target_level = signal.l;
+				const target_group_level = target_level - (target_level % 256);
 				const target_block = signal.block;
 				const is_pre_effect = (flags & PRE_EFFECT) !== 0;
 				let target_signal;
 				let target_signal_level;
+				let target_signal_group_level;
 				let is_target_pre_effect;
 				let i = length;
 				while (true) {
 					target_signal = current_queued_pre_and_render_effects[--i];
 					target_signal_level = target_signal.l;
+					target_signal_group_level = target_signal_level - (target_signal_level % 256);
+					if (target_group_level === target_signal_group_level && target_signal.block !== target_block) {
+						current_queued_pre_and_render_effects.splice(i + 1, 0, signal);
+						break;
+					}
 					if (target_signal_level <= target_level) {
 						if (i + 1 === length) {
 							should_append = true;
 						} else {
-							is_target_pre_effect = (target_signal.f & PRE_EFFECT) !== 0;
 							if (
 								target_signal_level < target_level ||
 								target_signal.block !== target_block ||

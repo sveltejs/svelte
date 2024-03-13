@@ -5,7 +5,6 @@ import {
 	current_effect,
 	current_reaction,
 	destroy_children,
-	flush_local_render_effects,
 	get,
 	remove_reactions,
 	schedule_effect,
@@ -15,15 +14,31 @@ import {
 import { DIRTY, MANAGED, RENDER_EFFECT, EFFECT, PRE_EFFECT, DESTROYED } from '../constants.js';
 import { set } from './sources.js';
 
+export let current_pre_effect_sibling_count = 0;
+export let current_render_effect_sibling_count = 0;
+export let current_effect_sibling_count = 0;
+
+/**
+ * @param {number} pre
+ * @param {number} render
+ * @param {number} effect
+ */
+export function set_sibling_count(pre, render, effect) {
+	current_pre_effect_sibling_count = pre;
+	current_render_effect_sibling_count = render;
+	current_effect_sibling_count = effect;
+}
+
 /**
  * @param {import('./types.js').EffectType} type
  * @param {(() => void | (() => void)) | ((b: import('#client').Block) => void | (() => void))} fn
  * @param {boolean} sync
+ * @param {number} sibling_count
  * @param {null | import('#client').Block} block
  * @param {boolean} init
  * @returns {import('#client').Effect}
  */
-function create_effect(type, fn, sync, block = current_block, init = true) {
+function create_effect(type, fn, sync, sibling_count, block = current_block, init = true) {
 	/** @type {import('#client').Effect} */
 	const signal = {
 		block,
@@ -39,7 +54,11 @@ function create_effect(type, fn, sync, block = current_block, init = true) {
 	};
 
 	if (current_effect !== null) {
-		signal.l = current_effect.l + 1;
+		// 256 per effect level
+		const level = current_effect.l;
+		const mod = level % 256;
+		const next_level = (level - mod) + 256 + sibling_count;
+		signal.l = next_level;
 	}
 
 	if ((type & MANAGED) === 0) {
@@ -88,7 +107,7 @@ export function user_effect(fn) {
 		current_component_context !== null &&
 		!current_component_context.m;
 
-	const effect = create_effect(EFFECT, fn, false, current_block, !defer);
+	const effect = create_effect(EFFECT, fn, false, current_effect_sibling_count++, current_block, !defer);
 
 	if (defer) {
 		const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
@@ -115,7 +134,7 @@ export function user_root_effect(fn) {
  * @returns {import('#client').Effect}
  */
 export function effect(fn) {
-	return create_effect(EFFECT, fn, false);
+	return create_effect(EFFECT, fn, false, current_effect_sibling_count++);
 }
 
 /**
@@ -123,7 +142,7 @@ export function effect(fn) {
  * @returns {import('#client').Effect}
  */
 export function managed_effect(fn) {
-	return create_effect(EFFECT | MANAGED, fn, false);
+	return create_effect(EFFECT | MANAGED, fn, false, current_effect_sibling_count++);
 }
 
 /**
@@ -131,7 +150,7 @@ export function managed_effect(fn) {
  * @returns {import('#client').Effect}
  */
 export function managed_pre_effect(fn) {
-	return create_effect(PRE_EFFECT | MANAGED, fn, false);
+	return create_effect(PRE_EFFECT | MANAGED, fn, false, current_pre_effect_sibling_count++);
 }
 
 /**
@@ -150,7 +169,7 @@ export function pre_effect(fn) {
 	}
 	const sync = current_effect !== null && (current_effect.f & RENDER_EFFECT) !== 0;
 
-	return create_effect(PRE_EFFECT, fn, sync);
+	return create_effect(PRE_EFFECT, fn, sync, current_pre_effect_sibling_count++);
 }
 
 /**
@@ -175,7 +194,8 @@ export function legacy_pre_effect(deps, fn) {
 			set(component_context.l2, true);
 			return untrack(fn);
 		},
-		true
+		true,
+		current_pre_effect_sibling_count++
 	);
 }
 
@@ -200,7 +220,7 @@ export function legacy_pre_effect_reset() {
  * @returns {import('#client').Effect}
  */
 export function invalidate_effect(fn) {
-	return create_effect(PRE_EFFECT, fn, true);
+	return create_effect(PRE_EFFECT, fn, true, current_pre_effect_sibling_count++);
 }
 
 /**
@@ -216,7 +236,7 @@ export function render_effect(fn, block = current_block, managed = false, sync =
 	if (managed) {
 		flags |= MANAGED;
 	}
-	return create_effect(flags, /** @type {any} */ (fn), sync, block);
+	return create_effect(flags, /** @type {any} */ (fn), sync, current_render_effect_sibling_count++, block);
 }
 
 /**

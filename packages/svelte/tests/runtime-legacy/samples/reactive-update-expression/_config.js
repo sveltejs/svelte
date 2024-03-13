@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -13,7 +14,9 @@ export default test({
 
 		assert.equal(component.x, 1);
 
-		await button.dispatchEvent(click);
+		flushSync(() => {
+			button.dispatchEvent(click);
+		});
 
 		assert.equal(component.x, 3);
 		assert.htmlEqual(
@@ -24,7 +27,9 @@ export default test({
 		`
 		);
 
-		await button.dispatchEvent(click);
+		flushSync(() => {
+			button.dispatchEvent(click);
+		});
 
 		assert.equal(component.x, 5);
 		assert.htmlEqual(
