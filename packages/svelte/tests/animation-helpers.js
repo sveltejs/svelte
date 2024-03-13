@@ -30,6 +30,7 @@ function tick(time) {
 	}
 }
 
+// TODO tidy this up
 class Animation {
 	#keyframes;
 	#duration;
@@ -37,6 +38,12 @@ class Animation {
 	#reversed;
 	#target;
 	#paused;
+
+	#offset = 0;
+	#finished = () => {};
+	#cancelled = () => {};
+
+	currentTime = 0;
 
 	/**
 	 * @param {HTMLElement} target
@@ -47,6 +54,7 @@ class Animation {
 		this.#target = target;
 		this.#keyframes = keyframes;
 		this.#duration = options.duration || 0;
+
 		this.#timeline_offset = 0;
 		this.#reversed = false;
 		this.#paused = false;
@@ -57,6 +65,23 @@ class Animation {
 		this.effect = {
 			setKeyframes: (/** @type {Keyframe[]} */ keyframes) => {
 				this.#keyframes = keyframes;
+			}
+		};
+
+		this.#offset = raf.time;
+
+		// Promise-like semantics, but call callbacks immediately on raf.tick
+		this.finished = {
+			/** @param {() => void} callback */
+			then: (callback) => {
+				this.#finished = callback;
+
+				return {
+					/** @param {() => void} callback */
+					catch: (callback) => {
+						this.#cancelled = callback;
+					}
+				};
 			}
 		};
 	}
@@ -80,6 +105,11 @@ class Animation {
 		}
 		const target_frame = this.currentTime / this.#duration;
 		this._applyKeyFrame(target_frame);
+
+		if (this.currentTime >= this.#duration) {
+			this.#finished();
+			raf.animations.delete(this);
+		}
 	}
 
 	/**
@@ -126,6 +156,9 @@ class Animation {
 		if (this.currentTime > 0 && this.currentTime < this.#duration) {
 			this._applyKeyFrame(this.#reversed ? this.#keyframes.length - 1 : 0);
 		}
+
+		this.#cancelled();
+		raf.animations.delete(this);
 	}
 
 	pause() {
@@ -150,6 +183,7 @@ class Animation {
  */
 HTMLElement.prototype.animate = function (keyframes, options) {
 	const animation = new Animation(this, keyframes, options);
+	raf.animations.add(animation);
 	// @ts-ignore
 	return animation;
 };

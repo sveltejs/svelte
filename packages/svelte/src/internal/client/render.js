@@ -21,6 +21,8 @@ export const all_registered_events = new Set();
 /** @type {Set<(events: Array<string>) => void>} */
 export const root_event_handles = new Set();
 
+export let run_transitions = true;
+
 /**
  * @param {Element} dom
  * @param {() => string} value
@@ -198,6 +200,8 @@ function _mount(Component, options) {
 	const registered_events = new Set();
 	const container = options.target;
 
+	run_transitions = options.intro ?? false;
+
 	/** @type {import('#client').RootBlock} */
 	const block = {
 		// dom
@@ -245,6 +249,8 @@ function _mount(Component, options) {
 	block.e = effect;
 	const bound_event_listener = handle_event_propagation.bind(null, container);
 	const bound_document_event_listener = handle_event_propagation.bind(null, document);
+
+	run_transitions = true;
 
 	/** @param {Array<string>} events */
 	const event_handle = (events) => {

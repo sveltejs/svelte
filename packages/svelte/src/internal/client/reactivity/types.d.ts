@@ -36,6 +36,7 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 }
 
 export interface Effect extends Reaction {
+	parent: Effect | null;
 	/** The block associated with this effect */
 	block: null | Block;
 	/** The associated component context */
@@ -48,6 +49,11 @@ export interface Effect extends Reaction {
 	teardown: null | (() => void);
 	/** The depth from the root signal, used for ordering render/pre-effects topologically **/
 	l: number;
+
+	// transitions TODO
+	in: null | any[];
+	out: null | any[];
+	ran: boolean; // TODO fold this into the bitmask
 }
 
 export interface ValueDebug<V = unknown> extends Value<V> {

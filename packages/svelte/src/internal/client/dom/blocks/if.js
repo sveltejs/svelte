@@ -6,9 +6,13 @@ import {
 	set_current_hydration_fragment
 } from '../hydration.js';
 import { remove } from '../reconciler.js';
-import { current_block, execute_effect } from '../../runtime.js';
-import { destroy_effect, render_effect } from '../../reactivity/effects.js';
-import { trigger_transitions } from '../elements/transitions.js';
+import { current_block } from '../../runtime.js';
+import {
+	destroy_effect,
+	pause_effect,
+	render_effect,
+	resume_effect
+} from '../../reactivity/effects.js';
 
 /** @returns {import('#client').IfBlock} */
 function create_if_block() {
@@ -64,11 +68,59 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 	 */
 	let current_branch_effect = null;
 
-	/** @type {import('#client').Effect} */
+	/** @type {import('#client').Effect | null} */
 	let consequent_effect;
 
-	/** @type {import('#client').Effect} */
+	/** @type {import('#client').Effect | null} */
 	let alternate_effect;
+
+	function create_consequent_effect() {
+		return render_effect(
+			() => {
+				consequent_fn(anchor_node);
+				if (mismatch && current_branch_effect === null) {
+					set_current_hydration_fragment([]);
+				}
+
+				consequent_dom = block.d;
+
+				return () => {
+					// TODO make this unnecessary by linking the dom to the effect,
+					// and removing automatically on teardown
+					if (consequent_dom !== null) {
+						remove(consequent_dom);
+						consequent_dom = null;
+					}
+				};
+			},
+			block,
+			true
+		);
+	}
+
+	function create_alternate_effect() {
+		return render_effect(
+			() => {
+				/** @type {((anchor: Node) => void)} */ (alternate_fn)(anchor_node);
+				if (mismatch && current_branch_effect === null) {
+					set_current_hydration_fragment([]);
+				}
+
+				alternate_dom = block.d;
+
+				return () => {
+					// TODO make this unnecessary by linking the dom to the effect,
+					// and removing automatically on teardown
+					if (alternate_dom !== null) {
+						remove(alternate_dom);
+						alternate_dom = null;
+					}
+				};
+			},
+			block,
+			true
+		);
+	}
 
 	const if_effect = render_effect(() => {
 		const result = !!condition_fn();
@@ -77,114 +129,67 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 			block.v = result;
 
 			if (has_mounted) {
-				const consequent_transitions = block.c;
-				const alternate_transitions = block.a;
-
 				if (result) {
-					if (alternate_transitions === null || alternate_transitions.size === 0) {
-						execute_effect(alternate_effect);
+					if (consequent_effect) {
+						resume_effect(consequent_effect);
 					} else {
-						trigger_transitions(alternate_transitions, 'out');
+						consequent_effect = create_consequent_effect();
 					}
 
-					if (consequent_transitions === null || consequent_transitions.size === 0) {
-						execute_effect(consequent_effect);
-					} else {
-						trigger_transitions(consequent_transitions, 'in');
+					if (alternate_effect) {
+						pause_effect(alternate_effect, () => {
+							alternate_effect = null;
+							if (alternate_dom) remove(alternate_dom);
+						});
 					}
 				} else {
-					if (consequent_transitions === null || consequent_transitions.size === 0) {
-						execute_effect(consequent_effect);
-					} else {
-						trigger_transitions(consequent_transitions, 'out');
+					if (alternate_effect) {
+						resume_effect(alternate_effect);
+					} else if (alternate_fn) {
+						alternate_effect = create_alternate_effect();
 					}
 
-					if (alternate_transitions === null || alternate_transitions.size === 0) {
-						execute_effect(alternate_effect);
-					} else {
-						trigger_transitions(alternate_transitions, 'in');
+					if (consequent_effect) {
+						pause_effect(consequent_effect, () => {
+							consequent_effect = null;
+							if (consequent_dom) remove(consequent_dom);
+						});
 					}
 				}
-			} else if (hydrating) {
-				const comment_text = /** @type {Comment} */ (current_hydration_fragment?.[0])?.data;
+			} else {
+				if (hydrating) {
+					const comment_text = /** @type {Comment} */ (current_hydration_fragment?.[0])?.data;
 
-				if (
-					!comment_text ||
-					(comment_text === 'ssr:if:true' && !result) ||
-					(comment_text === 'ssr:if:false' && result)
-				) {
-					// Hydration mismatch: remove everything inside the anchor and start fresh.
-					// This could happen using when `{#if browser} .. {/if}` in SvelteKit.
-					remove(current_hydration_fragment);
-					set_current_hydration_fragment(null);
-					mismatch = true;
-				} else {
-					// Remove the ssr:if comment node or else it will confuse the subsequent hydration algorithm
-					current_hydration_fragment.shift();
+					if (
+						!comment_text ||
+						(comment_text === 'ssr:if:true' && !result) ||
+						(comment_text === 'ssr:if:false' && result)
+					) {
+						// Hydration mismatch: remove everything inside the anchor and start fresh.
+						// This could happen using when `{#if browser} .. {/if}` in SvelteKit.
+						remove(current_hydration_fragment);
+						set_current_hydration_fragment(null);
+						mismatch = true;
+					} else {
+						// Remove the ssr:if comment node or else it will confuse the subsequent hydration algorithm
+						current_hydration_fragment.shift();
+					}
+				}
+
+				if (result) {
+					consequent_effect ??= create_consequent_effect();
+				} else if (alternate_fn) {
+					alternate_effect ??= create_alternate_effect();
 				}
 			}
 
 			has_mounted = true;
 		}
-
-		// create these here so they have the correct parent/child relationship
-		consequent_effect ??= render_effect(
-			(/** @type {any} */ _, /** @type {import('#client').Effect | null} */ consequent_effect) => {
-				const result = block.v;
-
-				if (!result && consequent_dom !== null) {
-					remove(consequent_dom);
-					consequent_dom = null;
-				}
-
-				if (result && current_branch_effect !== consequent_effect) {
-					consequent_fn(anchor_node);
-					if (mismatch && current_branch_effect === null) {
-						// Set fragment so that Svelte continues to operate in hydration mode
-						set_current_hydration_fragment([]);
-					}
-					current_branch_effect = consequent_effect;
-					consequent_dom = block.d;
-				}
-
-				block.d = null;
-			},
-			block,
-			true
-		);
-		block.ce = consequent_effect;
-
-		alternate_effect ??= render_effect(
-			(/** @type {any} */ _, /** @type {import('#client').Effect | null} */ alternate_effect) => {
-				const result = block.v;
-
-				if (result && alternate_dom !== null) {
-					remove(alternate_dom);
-					alternate_dom = null;
-				}
-
-				if (!result && current_branch_effect !== alternate_effect) {
-					if (alternate_fn !== null) {
-						alternate_fn(anchor_node);
-					}
-
-					if (mismatch && current_branch_effect === null) {
-						// Set fragment so that Svelte continues to operate in hydration mode
-						set_current_hydration_fragment([]);
-					}
-
-					current_branch_effect = alternate_effect;
-					alternate_dom = block.d;
-				}
-				block.d = null;
-			},
-			block,
-			true
-		);
-		block.ae = alternate_effect;
 	}, block);
 
 	if_effect.ondestroy = () => {
+		// TODO make this unnecessary by linking the dom to the effect,
+		// and removing automatically on teardown
 		if (consequent_dom !== null) {
 			remove(consequent_dom);
 		}
@@ -193,8 +198,12 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn)
 			remove(alternate_dom);
 		}
 
-		destroy_effect(consequent_effect);
-		destroy_effect(alternate_effect);
+		if (consequent_effect) {
+			destroy_effect(consequent_effect);
+		}
+		if (alternate_effect) {
+			destroy_effect(alternate_effect);
+		}
 	};
 
 	block.e = if_effect;

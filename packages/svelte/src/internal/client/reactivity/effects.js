@@ -1,18 +1,29 @@
 import { DEV } from 'esm-env';
 import {
+	check_dirtiness,
 	current_block,
 	current_component_context,
 	current_effect,
 	current_reaction,
 	destroy_children,
+	execute_effect,
 	get,
 	remove_reactions,
 	schedule_effect,
 	set_signal_status,
 	untrack
 } from '../runtime.js';
-import { DIRTY, MANAGED, RENDER_EFFECT, EFFECT, PRE_EFFECT, DESTROYED } from '../constants.js';
+import {
+	DIRTY,
+	MANAGED,
+	RENDER_EFFECT,
+	EFFECT,
+	PRE_EFFECT,
+	DESTROYED,
+	INERT
+} from '../constants.js';
 import { set } from './sources.js';
+import { noop } from '../../common.js';
 
 /**
  * @param {import('./types.js').EffectType} type
@@ -25,6 +36,7 @@ import { set } from './sources.js';
 function create_effect(type, fn, sync, block = current_block, init = true) {
 	/** @type {import('#client').Effect} */
 	const signal = {
+		parent: current_effect,
 		block,
 		deps: null,
 		f: type | DIRTY,
@@ -34,7 +46,10 @@ function create_effect(type, fn, sync, block = current_block, init = true) {
 		deriveds: null,
 		teardown: null,
 		ctx: current_component_context,
-		ondestroy: null
+		ondestroy: null,
+		in: null,
+		out: null,
+		ran: false
 	};
 
 	if (current_effect !== null) {
@@ -235,4 +250,90 @@ export function destroy_effect(signal) {
 		signal.block =
 		signal.deps =
 			null;
+}
+
+/**
+ * @param {import('#client').Effect} effect
+ * @param {() => void} callback
+ */
+export function pause_effect(effect, callback = noop) {
+	/** @type {import('#client').Transition2[]} */
+	const transitions = [];
+
+	pause_children(effect, transitions, true);
+
+	let remaining = transitions.length;
+
+	if (remaining > 0) {
+		const check = () => {
+			if (!--remaining) {
+				destroy_effect(effect);
+				callback();
+			}
+		};
+
+		for (const transition of transitions) {
+			transition.to(0, check);
+		}
+	} else {
+		destroy_effect(effect);
+		callback();
+	}
+}
+
+/**
+ * @param {import('#client').Effect} effect
+ * @param {import('#client').Transition2[]} transitions
+ * @param {boolean} local
+ */
+function pause_children(effect, transitions, local) {
+	if ((effect.f & INERT) !== 0) return;
+	effect.f |= INERT;
+
+	if (effect.out) {
+		for (const transition of effect.out) {
+			if (transition.global || local) {
+				transitions.push(transition);
+			}
+		}
+	}
+
+	if (effect.effects) {
+		for (const child of effect.effects) {
+			pause_children(child, transitions, false);
+		}
+	}
+}
+
+/**
+ * @param {import('#client').Effect} effect
+ */
+export function resume_effect(effect) {
+	resume_children(effect, true);
+}
+
+/**
+ * @param {import('#client').Effect} effect
+ * @param {boolean} local
+ */
+function resume_children(effect, local) {
+	if (check_dirtiness(effect)) {
+		execute_effect(effect);
+	}
+
+	if (effect.effects) {
+		for (const child of effect.effects) {
+			resume_children(child, false);
+		}
+	}
+
+	effect.f ^= INERT;
+
+	if (effect.in) {
+		for (const transition of effect.in) {
+			if (transition.global || local) {
+				transition.to(1);
+			}
+		}
+	}
 }

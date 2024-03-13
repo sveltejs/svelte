@@ -147,7 +147,7 @@ export function batch_inspect(target, prop, receiver) {
  * @param {import('./types.js').Reaction} reaction
  * @returns {boolean}
  */
-function check_dirtiness(reaction) {
+export function check_dirtiness(reaction) {
 	var flags = reaction.f;
 
 	if ((flags & DIRTY) !== 0) {
@@ -548,6 +548,8 @@ export function schedule_effect(signal, sync) {
 			}
 		}
 	}
+
+	signal.ran = true;
 }
 
 /**
