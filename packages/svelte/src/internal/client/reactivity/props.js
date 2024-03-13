@@ -175,9 +175,12 @@ export function prop(props, key, flags, initial) {
 	// intermediate mode — prop is written to, but the parent component had
 	// `bind:foo` which means we can just call `$$props.foo = value` directly
 	if (setter) {
-		return function (/** @type {V} */ value) {
+		return function (/** @type {V} */ value, mutation = false) {
 			if (arguments.length === 1) {
 				/** @type {Function} */ (setter)(value);
+				return value;
+			} else if (mutation) {
+				/** @type {Function} */ (setter)(getter());
 				return value;
 			} else {
 				return getter();
