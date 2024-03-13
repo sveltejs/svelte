@@ -148,18 +148,9 @@ export function pre_effect(fn) {
 					: '')
 		);
 	}
-
 	const sync = current_effect !== null && (current_effect.f & RENDER_EFFECT) !== 0;
 
-	return create_effect(
-		PRE_EFFECT,
-		() => {
-			const val = fn();
-			flush_local_render_effects();
-			return val;
-		},
-		sync
-	);
+	return create_effect(PRE_EFFECT, fn, sync);
 }
 
 /**
