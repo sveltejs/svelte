@@ -5,13 +5,11 @@
 	const nested = {
 		get fallback_value() {
 			log.push('nested.fallback_value');
-			log = log;
 			return fallback_value;
 		}
 	}
 	const fallback_fn = () => {
 		log.push('fallback_fn');
-			log = log;
 		return fallback_value;
 	}
 

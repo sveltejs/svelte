@@ -1,6 +1,6 @@
 import { test } from '../../test';
 
-// Tests that default values only fire lazily when the prop is undefined, and only initially
+// Tests that default values only fire lazily when the prop is undefined, and every time
 export default test({
 	props: {
 		p0: 0,
@@ -10,14 +10,20 @@ export default test({
 	},
 	html: `<p>props: 0 0 0 0 1 1 1 1</p><p>log: nested.fallback_value,fallback_fn`,
 	async test({ assert, target, component }) {
-		component.p0 = undefined;
-		component.p1 = undefined;
-		component.p2 = undefined;
-		component.p3 = undefined;
-		component.p4 = undefined;
-		component.p5 = undefined;
-		component.p6 = undefined;
-		component.p7 = undefined;
-		assert.htmlEqual(target.innerHTML, `<p>props: </p><p>log: nested.fallback_value,fallback_fn`);
+		// using component.p0 etc would set it to undefined, because the setter forgoes the default value
+		await component.$set({
+			p0: undefined,
+			p1: undefined,
+			p2: undefined,
+			p3: undefined,
+			p4: undefined,
+			p5: undefined,
+			p6: undefined,
+			p7: undefined
+		});
+		assert.htmlEqual(
+			target.innerHTML,
+			`<p>props: 1 1 1 1 1 1 1 1</p><p>log: nested.fallback_value,fallback_fn,nested.fallback_value,fallback_fn`
+		);
 	}
 });
