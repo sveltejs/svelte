@@ -121,14 +121,6 @@ export type IfBlock = {
 	p: Block;
 	/** transition */
 	r: null | ((transition: Transition) => void);
-	/** consequent transitions */
-	c: null | Set<Transition>;
-	/** alternate transitions */
-	a: null | Set<Transition>;
-	/** effect */
-	ce: null | Effect;
-	/** effect */
-	ae: null | Effect;
 	/** type */
 	t: typeof IF_BLOCK;
 };

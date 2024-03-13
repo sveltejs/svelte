@@ -17,14 +17,6 @@ import {
 /** @returns {import('#client').IfBlock} */
 function create_if_block() {
 	return {
-		// alternate transitions
-		a: null,
-		// alternate effect
-		ae: null,
-		// consequent transitions
-		c: null,
-		// consequent effect
-		ce: null,
 		// dom
 		d: null,
 		// effect
