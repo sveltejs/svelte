@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.76
+
+### Patch Changes
+
+- feat: add reactive Set class to svelte/reactivity ([#10781](https://github.com/sveltejs/svelte/pull/10781))
+
+- breaking: make `$props()` rune non-generic ([#10694](https://github.com/sveltejs/svelte/pull/10694))
+
+- fix: improve internal render effect sequencing ([#10769](https://github.com/sveltejs/svelte/pull/10769))
+
 ## 5.0.0-next.75
 
 ### Patch Changes
