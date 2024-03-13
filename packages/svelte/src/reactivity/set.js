@@ -82,9 +82,9 @@ export class ReactiveSet extends Set {
 	/** @param {T} value */
 	has(value) {
 		var source = this.#sources.get(value);
+		get(this.#version);
 
 		if (source === undefined) {
-			get(this.#version);
 			return false;
 		}
 

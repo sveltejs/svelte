@@ -1,6 +1,12 @@
 import { run } from '../../../common.js';
 import { pre_effect, user_effect } from '../../reactivity/effects.js';
-import { current_component_context, deep_read_state, flush_local_render_effects, get, untrack } from '../../runtime.js';
+import {
+	current_component_context,
+	deep_read_state,
+	flush_local_render_effects,
+	get,
+	untrack
+} from '../../runtime.js';
 
 /**
  * Legacy-mode only: Call `onMount` callbacks and set up `beforeUpdate`/`afterUpdate` effects
