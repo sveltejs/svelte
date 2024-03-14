@@ -1,4 +1,4 @@
-import { type Snippet } from 'svelte';
+import type { Snippet } from 'svelte';
 
 const return_type: ReturnType<Snippet> = null as any;
 

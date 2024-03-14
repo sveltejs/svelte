@@ -12,7 +12,7 @@ import * as $ from '../internal/index.js';
  * @template {Record<string, any>} Slots
  *
  * @param {import('../main/public.js').ComponentConstructorOptions<Props> & {
- * 	component: typeof import('../main/public.js').SvelteComponent<Props, Events, Slots>;
+ * 	component: import('../main/public.js').SvelteComponent<Props, Events, Slots>;
  * 	immutable?: boolean;
  * 	hydrate?: boolean;
  * 	recover?: boolean;

@@ -1729,17 +1729,7 @@ declare module 'svelte/legacy' {
 	 *
 	 * */
 	export function createClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(options: ComponentConstructorOptions<Props> & {
-		component: {
-			new (options: ComponentConstructorOptions<Props & (Props extends {
-				children?: any;
-			} ? {} : Slots extends {
-				default: any;
-			} ? {
-				children?: ((this: void) => unique symbol & {
-					_: "functions passed to {@render ...} tags must use the `Snippet` type imported from \"svelte\"";
-				}) | undefined;
-			} : {})>): SvelteComponent<Props, Events, Slots>;
-		};
+		component: SvelteComponent<Props, Events, Slots>;
 		immutable?: boolean | undefined;
 		hydrate?: boolean | undefined;
 		recover?: boolean | undefined;
