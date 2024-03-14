@@ -123,3 +123,29 @@ test('map.has(...)', () => {
 
 	cleanup();
 });
+
+test('map handling of undefined values', () => {
+	const map = new ReactiveMap();
+
+	const log: any = [];
+
+	const cleanup = user_root_effect(() => {
+		map.set(1, undefined);
+
+		pre_effect(() => {
+			log.push(map.get(1));
+		});
+
+		flushSync(() => {
+			map.delete(1);
+		});
+
+		flushSync(() => {
+			map.set(1, 1);
+		});
+	});
+
+	assert.deepEqual(log, [undefined, undefined, 1]);
+
+	cleanup();
+});
