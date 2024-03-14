@@ -94,16 +94,13 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			s: new Set(),
 			p: current_fallback
 		};
+
 		// Managed effect
 		const effect = render_effect(
 			() => {
-				const dom = block.d;
-				if (dom !== null) {
-					remove(dom);
-					block.d = null;
-				}
 				let anchor = block.a;
 				const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
+
 				if (is_controlled) {
 					// If the each block is controlled, then the anchor node will be the surrounding
 					// element in which the each block is rendered, which requires certain handling
@@ -117,13 +114,21 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 						anchor = /** @type {Comment} */ (anchor.firstChild);
 					}
 				}
+
 				/** @type {(anchor: Node) => void} */ (fallback_fn)(anchor);
-				fallback.d = block.d;
-				block.d = null;
+				var dom = block.d; // TODO would be nice if this was just returned from the managed effect function...
+
+				return () => {
+					if (dom !== null) {
+						remove(dom);
+						dom = null;
+					}
+				};
 			},
 			block,
 			true
 		);
+
 		fallback.e = effect;
 		current_fallback = fallback;
 		return effect;
@@ -345,16 +350,14 @@ function reconcile_indexed_array(array, each_block, dom, is_controlled, render_f
 			let remaining = a - b;
 
 			const clear = () => {
-				if (is_controlled) {
-					clear_text_content(dom);
-				} else {
-					for (let i = b; i < a; i += 1) {
-						let block = a_blocks[i];
-						if (block.d) remove(block.d);
-					}
+				// TODO optimization for controlled case — just do `clear_text_content(dom)`
 
-					each_block.v = each_block.v.slice(0, b);
+				for (let i = b; i < a; i += 1) {
+					let block = a_blocks[i];
+					if (block.d) remove(block.d);
 				}
+
+				each_block.v = each_block.v.slice(0, b);
 			};
 
 			const check = () => {
@@ -833,8 +836,6 @@ function each_item_block(item, key, index, render_fn, flags) {
 			? source(item)
 			: mutable_source(item);
 
-	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
-
 	/** @type {import('#client').EachItemBlock} */
 	const block = {
 		// animate transition
@@ -845,7 +846,7 @@ function each_item_block(item, key, index, render_fn, flags) {
 		// @ts-expect-error
 		e: null,
 		// index
-		i: index_value,
+		i: (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index),
 		// key
 		k: key,
 		// item
@@ -860,7 +861,7 @@ function each_item_block(item, key, index, render_fn, flags) {
 		t: EACH_ITEM_BLOCK
 	};
 
-	const effect = render_effect(
+	block.e = render_effect(
 		/** @param {import('#client').EachItemBlock} block */
 		(block) => {
 			render_fn(null, block.v, block.i);
@@ -869,6 +870,5 @@ function each_item_block(item, key, index, render_fn, flags) {
 		true
 	);
 
-	block.e = effect;
 	return block;
 }
