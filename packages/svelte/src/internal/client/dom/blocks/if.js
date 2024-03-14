@@ -154,7 +154,9 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn,
 		}
 	}, block);
 
-	if_effect.f |= IS_ELSEIF;
+	if (elseif) {
+		if_effect.f |= IS_ELSEIF;
+	}
 
 	mismatch = false; // TODO not sure if we actually need this — belt and braces
 
