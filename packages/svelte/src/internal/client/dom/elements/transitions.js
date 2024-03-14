@@ -174,7 +174,7 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 
 			if (!current_options?.duration) {
 				current_options = null;
-				callback?.();
+				callback();
 				return;
 			}
 
@@ -207,7 +207,7 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 					.then(() => {
 						p = target;
 						current_animation = current_options = null;
-						callback?.();
+						callback();
 					})
 					.catch(noop);
 			} else if (tick) {
@@ -238,6 +238,8 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 				});
 
 				current_options = null;
+			} else {
+				setTimeout(callback, duration);
 			}
 		}
 	};
