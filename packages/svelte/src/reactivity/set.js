@@ -1,6 +1,7 @@
 import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
+import { map } from './utils.js';
 
 var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
 var set_like_methods = ['difference', 'intersection', 'symmetricDifference', 'union'];
@@ -141,10 +142,8 @@ export class ReactiveSet extends Set {
 		return this.keys();
 	}
 
-	*entries() {
-		for (var key of this.keys()) {
-			yield /** @type {[T, T]} */ ([key, key]);
-		}
+	entries() {
+		return map(this.keys(), (key) => /** @type {[T, T]} */ ([key, key]));
 	}
 
 	[Symbol.iterator]() {

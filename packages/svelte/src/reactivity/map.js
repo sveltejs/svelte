@@ -2,6 +2,7 @@ import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { UNINITIALIZED } from '../internal/client/constants.js';
+import { map } from './utils.js';
 
 /**
  * @template K
@@ -133,20 +134,17 @@ export class ReactiveMap extends Map {
 		return this.#sources.keys();
 	}
 
-	*values() {
+	values() {
 		get(this.#version);
-
-		for (var source of this.#sources.values()) {
-			yield get(source);
-		}
+		return map(this.#sources.values(), get);
 	}
 
-	*entries() {
+	entries() {
 		get(this.#version);
-
-		for (var [key, source] of this.#sources.entries()) {
-			yield /** @type {[K, V]} */ ([key, get(source)]);
-		}
+		return map(
+			this.#sources.entries(),
+			([key, source]) => /** @type {[K, V]} */ ([key, get(source)])
+		);
 	}
 
 	[Symbol.iterator]() {
