@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.79
+
+### Patch Changes
+
+- feat: add reactive Map class to svelte/reactivity ([#10803](https://github.com/sveltejs/svelte/pull/10803))
+
 ## 5.0.0-next.78
 
 ### Patch Changes
