@@ -17,18 +17,12 @@ export class ReactiveSet extends Set {
 	#size = source(0);
 
 	/**
-	 * @param {T[] | null} [value]
+	 * @param {Iterable<T> | null | undefined} [value]
 	 */
 	constructor(value) {
 		super(value);
 
 		if (value) {
-			// Support set-like objects that have a keys() method
-			if (!Array.isArray(value)) {
-				// @ts-ignore
-				value = Array.from(value.keys());
-			}
-
 			for (var element of value) {
 				this.#sources.set(element, source(true));
 			}
