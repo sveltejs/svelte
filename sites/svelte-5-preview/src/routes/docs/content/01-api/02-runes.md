@@ -95,7 +95,7 @@ This can improve performance with large arrays and objects that you weren't plan
 
 ### Reactive Map, Set and Date
 
-Svelte provides reactive wrappers for the native `Map`, `Set` and `Date` objects. These can be found imported from `svelte/reactivity` and used just like their native equivalents.
+Svelte provides reactive `Map`, `Set` and `Date` classes. These can be imported from `svelte/reactivity` and used just like their native counterparts.
 
 ```svelte
 <script>
