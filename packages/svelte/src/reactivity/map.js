@@ -2,7 +2,6 @@ import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { UNINITIALIZED } from '../internal/client/constants.js';
-import { make_iterable } from './utils.js';
 
 /**
  * @template K
@@ -126,53 +125,23 @@ export class ReactiveMap extends Map {
 
 	keys() {
 		get(this.#version);
-		var iterator = this.#sources.keys();
-
-		return make_iterable(
-			/** @type {IterableIterator<K>} */ ({
-				next() {
-					for (var value of iterator) {
-						return { value, done: false };
-					}
-
-					return { done: true };
-				}
-			})
-		);
+		return this.#sources.keys();
 	}
 
-	values() {
+	*values() {
 		get(this.#version);
-		var iterator = this.#sources.values();
 
-		return make_iterable(
-			/** @type {IterableIterator<V>} */ ({
-				next() {
-					for (var source of iterator) {
-						return { value: get(source), done: false };
-					}
-
-					return { done: true };
-				}
-			})
-		);
+		for (var source of this.#sources.values()) {
+			yield get(source);
+		}
 	}
 
-	entries() {
+	*entries() {
 		get(this.#version);
-		var iterator = this.#sources.entries();
 
-		return make_iterable(
-			/** @type {IterableIterator<[K, V]>} */ ({
-				next() {
-					for (var [key, source] of iterator) {
-						return { value: [key, get(source)], done: false };
-					}
-
-					return { done: true };
-				}
-			})
-		);
+		for (var [key, source] of this.#sources.entries()) {
+			yield /** @type {[K, V]} */ ([key, get(source)]);
+		}
 	}
 
 	[Symbol.iterator]() {

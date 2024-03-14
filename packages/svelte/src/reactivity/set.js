@@ -1,7 +1,6 @@
 import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
-import { make_iterable } from './utils.js';
 
 var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
 var set_like_methods = ['difference', 'intersection', 'symmetricDifference', 'union'];
@@ -134,45 +133,22 @@ export class ReactiveSet extends Set {
 	}
 
 	keys() {
-		return this.values();
+		get(this.#version);
+		return this.#sources.keys();
 	}
 
 	values() {
-		get(this.#version);
-
-		var iterator = this.#sources.keys();
-
-		return make_iterable(
-			/** @type {IterableIterator<T>} */ ({
-				next() {
-					for (var value of iterator) {
-						return { value, done: false };
-					}
-
-					return { done: true };
-				}
-			})
-		);
+		return this.keys();
 	}
 
-	entries() {
-		var iterator = this.values();
-
-		return make_iterable(
-			/** @type {IterableIterator<[T, T]>} */ ({
-				next() {
-					for (var value of iterator) {
-						return { value: [value, value], done: false };
-					}
-
-					return { done: true };
-				}
-			})
-		);
+	*entries() {
+		for (var key of this.keys()) {
+			yield /** @type {[T, T]} */ ([key, key]);
+		}
 	}
 
 	[Symbol.iterator]() {
-		return this.values();
+		return this.keys();
 	}
 
 	get size() {
