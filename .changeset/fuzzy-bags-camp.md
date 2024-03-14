@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-feat: adds reactive Map class to svelte/reactivity
+feat: add reactive Map class to svelte/reactivity
