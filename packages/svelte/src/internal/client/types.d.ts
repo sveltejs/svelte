@@ -219,7 +219,7 @@ export type EachItemBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | Effect;
+	e: Effect;
 	/** item */
 	v: any | Source<any>;
 	/** index */
