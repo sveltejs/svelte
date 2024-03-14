@@ -40,7 +40,7 @@ export class ReactiveSet extends Set {
 		var proto = ReactiveSet.prototype;
 		var set_proto = Set.prototype;
 
-		/** @type {string | number} */
+		/** @type {string} */
 		var method;
 
 		for (method of read_methods) {
@@ -56,10 +56,10 @@ export class ReactiveSet extends Set {
 			// @ts-ignore
 			proto[method] = function (...v) {
 				get(this.#version);
+
 				// @ts-ignore
-				var val = set_proto[method].apply(this, v);
-				// Return a reactive set if the return value is a Set
-				return new ReactiveSet(/** @type {T[]} */ (val));
+				var set = /** @type {Set<T>} */ (set_proto[method].apply(this, v));
+				return new ReactiveSet(set);
 			};
 		}
 	}
