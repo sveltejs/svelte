@@ -334,12 +334,12 @@ function reconcile_indexed_array(
 
 	var item;
 
-	/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-	let mismatch = false;
-
 	b_blocks = Array(b);
 
 	if (hydrating) {
+		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
+		let mismatch = false;
+
 		// Hydrate block
 		var hydration_list = /** @type {import('../../types.js').TemplateNode[]} */ (
 			current_hydration_fragment
@@ -366,59 +366,59 @@ function reconcile_indexed_array(
 		}
 
 		remove_excess_hydration_nodes(hydration_list, hydrating_node);
-	}
 
-	// update items
-	for (var i = 0; i < min; i += 1) {
-		item = array[i];
-		block = a_blocks[i];
-		b_blocks[i] = block;
-		update_each_item_block(block, item, i, flags);
-		resume_effect(block.e);
-	}
-
-	if (b > a) {
-		// add items
-		for (; i < b; i += 1) {
+		if (mismatch) {
+			// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
+			set_current_hydration_fragment([]);
+		}
+	} else {
+		// update items
+		for (var i = 0; i < min; i += 1) {
 			item = array[i];
-			block = each_item_block(item, null, i, render_fn, flags);
+			block = a_blocks[i];
 			b_blocks[i] = block;
-			insert_each_item_block(block, dom, is_controlled, null);
+			update_each_item_block(block, item, i, flags);
+			resume_effect(block.e);
 		}
 
-		each_block.v = b_blocks;
-	} else if (a > b) {
-		// remove items
-		let remaining = a - b;
+		if (b > a) {
+			// add items
+			for (; i < b; i += 1) {
+				item = array[i];
+				block = each_item_block(item, null, i, render_fn, flags);
+				b_blocks[i] = block;
+				insert_each_item_block(block, dom, is_controlled, null);
+			}
 
-		const clear = () => {
-			if (is_controlled) {
-				clear_text_content(dom);
-			} else {
-				for (let i = b; i < a; i += 1) {
-					let block = a_blocks[i];
-					if (block.d) remove(block.d);
+			each_block.v = b_blocks;
+		} else if (a > b) {
+			// remove items
+			let remaining = a - b;
+
+			const clear = () => {
+				if (is_controlled) {
+					clear_text_content(dom);
+				} else {
+					for (let i = b; i < a; i += 1) {
+						let block = a_blocks[i];
+						if (block.d) remove(block.d);
+					}
+
+					each_block.v = each_block.v.slice(0, b);
 				}
+			};
 
-				each_block.v = each_block.v.slice(0, b);
+			const check = () => {
+				if (--remaining === 0) {
+					clear();
+				}
+			};
+
+			for (; i < a; i += 1) {
+				block = a_blocks[index];
+				if (block.e) pause_effect(block.e, check);
 			}
-		};
-
-		const check = () => {
-			if (--remaining === 0) {
-				clear();
-			}
-		};
-
-		for (; i < a; i += 1) {
-			block = a_blocks[index];
-			if (block.e) pause_effect(block.e, check);
 		}
-	}
-
-	if (mismatch) {
-		// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
-		set_current_hydration_fragment([]);
 	}
 
 	each_block.v = b_blocks;
@@ -809,34 +809,29 @@ export function get_first_element(block) {
 }
 
 /**
- * @param {import('../../types.js').EachItemBlock} block
+ * @param {import('#client').EachItemBlock} block
  * @param {any} item
  * @param {number} index
  * @param {number} type
  * @returns {void}
  */
 function update_each_item_block(block, item, index, type) {
-	const block_v = block.v;
 	if ((type & EACH_ITEM_REACTIVE) !== 0) {
-		set(block_v, item);
+		set(block.v, item);
 	}
-	const transitions = block.s;
-	const index_is_reactive = (type & EACH_INDEX_REACTIVE) !== 0;
-	// Handle each item animations
-	const each_animation = block.a;
-	if (transitions !== null && (type & EACH_KEYED) !== 0 && each_animation !== null) {
-		each_animation(block, transitions);
-	}
-	if (index_is_reactive) {
-		set(/** @type {import('../../types.js').Value<number>} */ (block.i), index);
+
+	if ((type & EACH_INDEX_REACTIVE) !== 0) {
+		set(/** @type {import('#client').Value<number>} */ (block.i), index);
 	} else {
 		block.i = index;
 	}
+
+	// TODO animations
 }
 
 /**
- * @param {import('../../types.js').EachItemBlock} block
- * @param {null | Array<import('../../types.js').Block>} transition_block
+ * @param {import('#client').EachItemBlock} block
+ * @param {null | Array<import('#client').Block>} transition_block
  * @param {boolean} apply_transitions
  * @param {any} controlled
  * @returns {void}

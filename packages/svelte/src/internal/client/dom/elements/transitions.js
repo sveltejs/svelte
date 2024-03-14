@@ -162,7 +162,6 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 	const transition = {
 		global,
 		to(target, callback = noop) {
-			console.log('to', { p, target, text: element.textContent });
 			if (current_task) {
 				current_task.abort();
 				current_task = null;
