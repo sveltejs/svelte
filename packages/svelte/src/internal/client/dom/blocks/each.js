@@ -345,7 +345,7 @@ function reconcile_indexed_array(
 
 	/** @type {number} */
 	var b = array.length;
-	var length = Math.max(a, b);
+	var max = Math.max(a, b);
 	var index = 0;
 
 	/** @type {Array<import('../../types.js').EachItemBlock>} */
@@ -358,7 +358,7 @@ function reconcile_indexed_array(
 		if (is_controlled && a !== 0) {
 			clear_text_content(dom);
 		}
-		while (index < length) {
+		while (index < a) {
 			block = a_blocks[index++];
 			destroy_each_item_block(block, active_transitions, apply_transitions, is_controlled);
 		}
@@ -373,7 +373,7 @@ function reconcile_indexed_array(
 				current_hydration_fragment
 			);
 			var hydrating_node = hydration_list[0];
-			for (; index < length; index++) {
+			for (; index < max; index++) {
 				var fragment = get_hydration_fragment(hydrating_node);
 				set_current_hydration_fragment(fragment);
 				if (!fragment) {
@@ -396,7 +396,7 @@ function reconcile_indexed_array(
 			remove_excess_hydration_nodes(hydration_list, hydrating_node);
 		}
 
-		for (; index < length; index++) {
+		for (; index < max; index++) {
 			if (index >= a) {
 				// Add block
 				item = array[index];
