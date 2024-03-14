@@ -34,9 +34,9 @@ export class ReactiveMap extends Map {
 
 	/** @param {K} key */
 	has(key) {
-		var source = this.#sources.get(key);
+		var s = this.#sources.get(key);
 
-		if (source === undefined) {
+		if (s === undefined) {
 			// We should always track the version in case
 			// the Set ever gets this value in the future.
 			get(this.#version);
@@ -44,7 +44,7 @@ export class ReactiveMap extends Map {
 			return false;
 		}
 
-		get(source);
+		get(s);
 		return true;
 	}
 
@@ -60,9 +60,9 @@ export class ReactiveMap extends Map {
 
 	/** @param {K} key */
 	get(key) {
-		var source = this.#sources.get(key);
+		var s = this.#sources.get(key);
 
-		if (source === undefined) {
+		if (s === undefined) {
 			// We should always track the version in case
 			// the Set ever gets this value in the future.
 			get(this.#version);
@@ -70,7 +70,7 @@ export class ReactiveMap extends Map {
 			return undefined;
 		}
 
-		return get(source);
+		return get(s);
 	}
 
 	/**
@@ -79,14 +79,14 @@ export class ReactiveMap extends Map {
 	 */
 	set(key, value) {
 		var sources = this.#sources;
-		var source_value = sources.get(key);
+		var s = sources.get(key);
 
-		if (source_value === undefined) {
+		if (s === undefined) {
 			sources.set(key, source(value));
 			set(this.#size, sources.size);
 			this.#increment_version();
 		} else {
-			set(source_value, value);
+			set(s, value);
 		}
 
 		return super.set(key, value);
@@ -95,12 +95,12 @@ export class ReactiveMap extends Map {
 	/** @param {K} key */
 	delete(key) {
 		var sources = this.#sources;
-		var source = sources.get(key);
+		var s = sources.get(key);
 
-		if (source !== undefined) {
+		if (s !== undefined) {
 			sources.delete(key);
 			set(this.#size, sources.size);
-			set(source, /** @type {V} */ (UNINITIALIZED));
+			set(s, /** @type {V} */ (UNINITIALIZED));
 			this.#increment_version();
 		}
 
@@ -112,8 +112,8 @@ export class ReactiveMap extends Map {
 
 		if (sources.size !== 0) {
 			set(this.#size, 0);
-			for (var source of sources.values()) {
-				set(source, /** @type {V} */ (UNINITIALIZED));
+			for (var s of sources.values()) {
+				set(s, /** @type {V} */ (UNINITIALIZED));
 			}
 			this.#increment_version();
 		}

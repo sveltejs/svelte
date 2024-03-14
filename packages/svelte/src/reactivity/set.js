@@ -39,9 +39,8 @@ export class ReactiveSet extends Set {
 
 		var proto = ReactiveSet.prototype;
 		var set_proto = Set.prototype;
-		/**
-		 * @type {string | number}
-		 */
+
+		/** @type {string | number} */
 		var method;
 
 		for (method of read_methods) {
@@ -71,9 +70,9 @@ export class ReactiveSet extends Set {
 
 	/** @param {T} value */
 	has(value) {
-		var source = this.#sources.get(value);
+		var s = this.#sources.get(value);
 
-		if (source === undefined) {
+		if (s === undefined) {
 			// We should always track the version in case
 			// the Set ever gets this value in the future.
 			get(this.#version);
@@ -81,7 +80,7 @@ export class ReactiveSet extends Set {
 			return false;
 		}
 
-		return get(source);
+		return get(s);
 	}
 
 	/** @param {T} value */
@@ -100,12 +99,12 @@ export class ReactiveSet extends Set {
 	/** @param {T} value */
 	delete(value) {
 		var sources = this.#sources;
-		var source = sources.get(value);
+		var s = sources.get(value);
 
-		if (source !== undefined) {
+		if (s !== undefined) {
 			sources.delete(value);
 			set(this.#size, sources.size);
-			set(source, false);
+			set(s, false);
 			this.#increment_version();
 		}
 
@@ -117,8 +116,8 @@ export class ReactiveSet extends Set {
 
 		if (sources.size !== 0) {
 			set(this.#size, 0);
-			for (var source of sources.values()) {
-				set(source, false);
+			for (var s of sources.values()) {
+				set(s, false);
 			}
 			this.#increment_version();
 		}
