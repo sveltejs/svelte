@@ -1,6 +1,7 @@
 import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
+import { make_iterable } from './utils.js';
 
 var read = [
 	'difference',
@@ -12,22 +13,6 @@ var read = [
 	'symmetricDifference',
 	'union'
 ];
-
-/**
- * @template T
- * @param {IterableIterator<T>} iterator
- */
-function make_iterable(iterator) {
-	iterator[Symbol.iterator] = get_self;
-	return iterator;
-}
-
-/**
- * @this {any}
- */
-function get_self() {
-	return this;
-}
 
 var inited = false;
 
