@@ -157,7 +157,7 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 	/** @type {import('#client').Transition2} */
 	const transition = {
 		global,
-		to(target, callback) {
+		to(target, callback = noop) {
 			if (current_task) {
 				current_task.abort();
 				current_task = null;
