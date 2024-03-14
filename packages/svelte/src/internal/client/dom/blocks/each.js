@@ -16,7 +16,7 @@ import {
 } from '../hydration.js';
 import { clear_text_content, empty } from '../operations.js';
 import { insert, remove } from '../reconciler.js';
-import { current_block, execute_effect } from '../../runtime.js';
+import { current_block } from '../../runtime.js';
 import {
 	destroy_effect,
 	pause_effect,
@@ -74,9 +74,6 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 
 	/** @type {Array<string> | null} */
 	let keys = null;
-
-	/** @type {null | import('#client').Effect} */
-	let render = null;
 
 	/**
 	 * Whether or not there was a "rendered fallback but want to render items" (or vice versa) hydration mismatch.
@@ -170,23 +167,11 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 				}
 			}
 
-			if (render !== null) {
-				execute_effect(render);
-			}
+			const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
+			reconcile_fn(array, block, block.a, is_controlled, render_fn, block.f, true, keys);
 		},
 		block,
 		false
-	);
-
-	render = render_effect(
-		() => {
-			const flags = block.f;
-			const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-			const anchor_node = block.a;
-			reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, true, keys);
-		},
-		block,
-		true
 	);
 
 	if (mismatch) {
@@ -198,9 +183,9 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		const flags = block.f;
 		const anchor_node = block.a;
 		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-		if (fallback) destroy_effect(fallback);
+
 		reconcile_fn([], block, anchor_node, is_controlled, render_fn, flags, false, keys);
-		destroy_effect(/** @type {import('#client').Effect} */ (render));
+		if (fallback) destroy_effect(fallback);
 	};
 
 	block.e = each;
