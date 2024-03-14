@@ -15,7 +15,7 @@ export class ReactiveMap extends Map {
 	#size = source(0);
 
 	/**
-	 * @param {Iterable<readonly [K, V]> | null | undefined} value
+	 * @param {Iterable<readonly [K, V]> | null | undefined} [value]
 	 */
 	constructor(value) {
 		super();

@@ -26,7 +26,7 @@ export class ReactiveSet extends Set {
 	#size = source(0);
 
 	/**
-	 * @param {Iterable<T> | null | undefined} value
+	 * @param {Iterable<T> | null | undefined} [value]
 	 */
 	constructor(value) {
 		super();
