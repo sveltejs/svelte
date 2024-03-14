@@ -23,9 +23,14 @@ export class ReactiveMap extends Map {
 		if (DEV) new Map(value);
 
 		if (value) {
+			var sources = this.#sources;
+
 			for (var [key, v] of value) {
-				this.set(key, v);
+				sources.set(key, source(v));
+				super.set(key, v);
 			}
+
+			this.#size.v = sources.size;
 		}
 	}
 
