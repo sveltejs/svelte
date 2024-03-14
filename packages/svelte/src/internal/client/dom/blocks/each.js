@@ -96,6 +96,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 					// depending on whether we're in hydration mode or not
 					if (!hydrating) {
 						// Create a new anchor on the fly because there's none due to the optimization
+						// TODO this will happen every time the fallback renders...
 						anchor = empty();
 						block.a.appendChild(anchor);
 					} else {
