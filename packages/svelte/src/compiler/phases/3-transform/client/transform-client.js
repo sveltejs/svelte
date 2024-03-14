@@ -251,7 +251,8 @@ export function client_component(source, analysis, options) {
 
 	if (analysis.accessors) {
 		for (const [name, binding] of analysis.instance.scope.declarations) {
-			if (binding.kind !== 'prop' || name.startsWith('$$')) continue;
+			if ((binding.kind !== 'prop' && binding.kind !== 'bindable_prop') || name.startsWith('$$'))
+				continue;
 
 			const key = binding.prop_alias ?? name;
 
@@ -356,7 +357,7 @@ export function client_component(source, analysis, options) {
 		/** @type {string[]} */
 		const named_props = analysis.exports.map(({ name, alias }) => alias ?? name);
 		for (const [name, binding] of analysis.instance.scope.declarations) {
-			if (binding.kind === 'prop') named_props.push(binding.prop_alias ?? name);
+			if (binding.kind === 'bindable_prop') named_props.push(binding.prop_alias ?? name);
 		}
 
 		component_block.body.unshift(
@@ -464,7 +465,8 @@ export function client_component(source, analysis, options) {
 		const props_str = [];
 
 		for (const [name, binding] of analysis.instance.scope.declarations) {
-			if (binding.kind !== 'prop' || name.startsWith('$$')) continue;
+			if ((binding.kind !== 'prop' && binding.kind !== 'bindable_prop') || name.startsWith('$$'))
+				continue;
 
 			const key = binding.prop_alias ?? name;
 			const prop_def = typeof ce === 'boolean' ? {} : ce.props?.[key] || {};

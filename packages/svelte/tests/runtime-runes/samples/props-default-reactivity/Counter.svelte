@@ -1,6 +1,6 @@
 <script>
 	/** @type {{ object?: { count: number }}} */
-	let { object = { count: 0 } } = $props();
+	let { object = { count: 0 } } = $props.bindable();
 </script>
 
 <button onclick={() => object.count += 1}>

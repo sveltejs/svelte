@@ -446,6 +446,7 @@ function serialize_set_binding(node, context, fallback) {
 		binding.kind !== 'state' &&
 		binding.kind !== 'frozen_state' &&
 		binding.kind !== 'prop' &&
+		binding.kind !== 'bindable_prop' &&
 		binding.kind !== 'each' &&
 		binding.kind !== 'legacy_reactive' &&
 		!is_store
@@ -1131,7 +1132,7 @@ const javascript_visitors_legacy = {
 				state.scope.get_bindings(declarator)
 			);
 			const has_state = bindings.some((binding) => binding.kind === 'state');
-			const has_props = bindings.some((binding) => binding.kind === 'prop');
+			const has_props = bindings.some((binding) => binding.kind === 'bindable_prop');
 
 			if (!has_state && !has_props) {
 				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
@@ -2258,7 +2259,7 @@ export function server_component(analysis, options) {
 	/** @type {import('estree').Property[]} */
 	const props = [];
 	for (const [name, binding] of analysis.instance.scope.declarations) {
-		if (binding.kind === 'prop' && !name.startsWith('$$')) {
+		if (binding.kind === 'bindable_prop' && !name.startsWith('$$')) {
 			props.push(b.init(binding.prop_alias ?? name, b.id(name)));
 		}
 	}
@@ -2280,7 +2281,7 @@ export function server_component(analysis, options) {
 		/** @type {string[]} */
 		const named_props = analysis.exports.map(({ name, alias }) => alias ?? name);
 		for (const [name, binding] of analysis.instance.scope.declarations) {
-			if (binding.kind === 'prop') named_props.push(binding.prop_alias ?? name);
+			if (binding.kind === 'bindable_prop') named_props.push(binding.prop_alias ?? name);
 		}
 
 		component_block.body.unshift(

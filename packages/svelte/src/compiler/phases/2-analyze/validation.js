@@ -299,17 +299,19 @@ const validation = {
 			error(node, 'invalid-binding-expression');
 		}
 
+		const binding = context.state.scope.get(left.name);
+
 		if (
 			assignee.type === 'Identifier' &&
 			node.name !== 'this' // bind:this also works for regular variables
 		) {
-			const binding = context.state.scope.get(left.name);
 			// reassignment
 			if (
 				!binding ||
 				(binding.kind !== 'state' &&
 					binding.kind !== 'frozen_state' &&
 					binding.kind !== 'prop' &&
+					binding.kind !== 'bindable_prop' &&
 					binding.kind !== 'each' &&
 					binding.kind !== 'store_sub' &&
 					!binding.mutated)
@@ -328,7 +330,9 @@ const validation = {
 			// TODO handle mutations of non-state/props in runes mode
 		}
 
-		const binding = context.state.scope.get(left.name);
+		if (assignee.type === 'MemberExpression' && binding?.kind === 'prop') {
+			error(node, 'invalid-props-mutation');
+		}
 
 		if (node.name === 'group') {
 			if (!binding) {
@@ -969,7 +973,9 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 function validate_assignment(node, argument, state) {
 	validate_no_const_assignment(node, argument, state.scope, false);
 
-	if (state.analysis.runes && argument.type === 'Identifier') {
+	if (!state.analysis.runes) return;
+
+	if (argument.type === 'Identifier') {
 		const binding = state.scope.get(argument.name);
 		if (binding?.kind === 'derived') {
 			error(node, 'invalid-derived-assignment');
@@ -978,19 +984,24 @@ function validate_assignment(node, argument, state) {
 		if (binding?.kind === 'each') {
 			error(node, 'invalid-each-assignment');
 		}
+	} else if (argument.type === 'MemberExpression') {
+		const id = object(argument);
+		if (id && state.scope.get(id.name)?.kind === 'prop') {
+			error(node, 'invalid-props-mutation');
+		}
 	}
 
-	let object = /** @type {import('estree').Expression | import('estree').Super} */ (argument);
+	let obj = /** @type {import('estree').Expression | import('estree').Super} */ (argument);
 
 	/** @type {import('estree').Expression | import('estree').PrivateIdentifier | null} */
 	let property = null;
 
-	while (object.type === 'MemberExpression') {
-		property = object.property;
-		object = object.object;
+	while (obj.type === 'MemberExpression') {
+		property = obj.property;
+		obj = obj.object;
 	}
 
-	if (object.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
+	if (obj.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
 		if (state.private_derived_state.includes(property.name)) {
 			error(node, 'invalid-derived-assignment');
 		}

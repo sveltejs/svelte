@@ -78,7 +78,7 @@ export function serialize_get_binding(node, state) {
 		return typeof binding.expression === 'function' ? binding.expression(node) : binding.expression;
 	}
 
-	if (binding.kind === 'prop') {
+	if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
 		if (binding.node.name === '$$props') {
 			// Special case for $$props which only exists in the old world
 			// TODO this probably shouldn't have a 'prop' binding kind
@@ -377,6 +377,7 @@ export function serialize_set_binding(node, context, fallback, options) {
 		binding.kind !== 'state' &&
 		binding.kind !== 'frozen_state' &&
 		binding.kind !== 'prop' &&
+		binding.kind !== 'bindable_prop' &&
 		binding.kind !== 'each' &&
 		binding.kind !== 'legacy_reactive' &&
 		!is_store
@@ -389,7 +390,7 @@ export function serialize_set_binding(node, context, fallback, options) {
 
 	const serialize = () => {
 		if (left === node.left) {
-			if (binding.kind === 'prop') {
+			if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
 				return b.call(left, value);
 			} else if (is_store) {
 				return b.call('$.store_set', serialize_get_binding(b.id(left_name), state), value);
@@ -467,7 +468,7 @@ export function serialize_set_binding(node, context, fallback, options) {
 					b.call('$.untrack', b.id('$' + left_name))
 				);
 			} else if (!state.analysis.runes) {
-				if (binding.kind === 'prop') {
+				if (binding.kind === 'bindable_prop') {
 					return b.call(
 						left,
 						b.sequence([
@@ -571,7 +572,7 @@ function get_hoistable_params(node, context) {
 				params.push(b.id(binding.expression.object.arguments[0].name));
 			} else if (
 				// If we are referencing a simple $$props value, then we need to reference the object property instead
-				binding.kind === 'prop' &&
+				(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
 				!binding.reassigned &&
 				binding.initial === null &&
 				!context.state.analysis.accessors

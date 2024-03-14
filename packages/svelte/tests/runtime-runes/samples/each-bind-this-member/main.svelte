@@ -1,5 +1,5 @@
 <script>
-	let { items = [{ src: 'https://ds' }] } = $props();
+	let { items = [{ src: 'https://ds' }] } = $props.bindable();
 </script>
 
 {#each items as item, i}

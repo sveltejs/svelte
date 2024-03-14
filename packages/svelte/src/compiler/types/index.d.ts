@@ -241,7 +241,8 @@ export interface Binding {
 	node: Identifier;
 	/**
 	 * - `normal`: A variable that is not in any way special
-	 * - `prop`: A normal prop (possibly mutated)
+	 * - `prop`: A normal prop (possibly reassigned)
+	 * - `bindable_prop`: A prop one can `bind:` to (possibly reassigned or mutated)
 	 * - `rest_prop`: A rest prop
 	 * - `state`: A state variable
 	 * - `derived`: A derived variable
@@ -253,6 +254,7 @@ export interface Binding {
 	kind:
 		| 'normal'
 		| 'prop'
+		| 'bindable_prop'
 		| 'rest_prop'
 		| 'state'
 		| 'frozen_state'

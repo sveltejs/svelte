@@ -436,7 +436,7 @@ export function analyze_component(root, options) {
 			);
 		}
 	} else {
-		instance.scope.declare(b.id('$$props'), 'prop', 'synthetic');
+		instance.scope.declare(b.id('$$props'), 'bindable_prop', 'synthetic');
 		instance.scope.declare(b.id('$$restProps'), 'rest_prop', 'synthetic');
 
 		for (const { ast, scope, scopes } of [module, instance, template]) {
@@ -466,7 +466,10 @@ export function analyze_component(root, options) {
 		}
 
 		for (const [name, binding] of instance.scope.declarations) {
-			if (binding.kind === 'prop' && binding.node.name !== '$$props') {
+			if (
+				(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
+				binding.node.name !== '$$props'
+			) {
 				const references = binding.references.filter(
 					(r) => r.node !== binding.node && r.path.at(-1)?.type !== 'ExportSpecifier'
 				);
@@ -758,7 +761,7 @@ const legacy_scope_tweaker = {
 					(binding.kind === 'normal' &&
 						(binding.declaration_kind === 'let' || binding.declaration_kind === 'var'))
 				) {
-					binding.kind = 'prop';
+					binding.kind = 'bindable_prop';
 					if (specifier.exported.name !== specifier.local.name) {
 						binding.prop_alias = specifier.exported.name;
 					}
@@ -796,7 +799,7 @@ const legacy_scope_tweaker = {
 			for (const declarator of node.declaration.declarations) {
 				for (const id of extract_identifiers(declarator.id)) {
 					const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
-					binding.kind = 'prop';
+					binding.kind = 'bindable_prop';
 				}
 			}
 		}
@@ -871,7 +874,9 @@ const runes_scope_tweaker = {
 							? 'derived'
 							: path.is_rest
 								? 'rest_prop'
-								: 'prop';
+								: rune === '$props.bindable'
+									? 'bindable_prop'
+									: 'prop';
 		}
 
 		if (rune === '$props' || rune === '$props.bindable') {
