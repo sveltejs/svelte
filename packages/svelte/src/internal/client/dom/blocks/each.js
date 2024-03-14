@@ -33,14 +33,23 @@ const MOVED_BLOCK = 99999999;
 const LIS_BLOCK = -2;
 
 /**
+ * @template V
+ * @param {Element | Comment} anchor_node
+ * @param {() => V[]} collection
  * @param {number} flags
- * @param {Element | Comment} anchor
- * @returns {import('#client').EachBlock}
+ * @param {null | ((item: V) => string)} key_fn
+ * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
+ * @param {null | ((anchor: Node) => void)} fallback_fn
+ * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
+ * @returns {void}
  */
-export function create_each_block(flags, anchor) {
-	return {
+function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_fn) {
+	const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
+
+	/** @type {import('#client').EachBlock} */
+	const block = {
 		// anchor
-		a: anchor,
+		a: anchor_node,
 		// dom
 		d: null,
 		// flags
@@ -57,54 +66,6 @@ export function create_each_block(flags, anchor) {
 		// type
 		t: EACH_BLOCK
 	};
-}
-
-/**
- * @param {any | import('#client').Value<any>} item
- * @param {number | import('#client').Value<number>} index
- * @param {null | unknown} key
- * @returns {import('#client').EachItemBlock}
- */
-export function create_each_item_block(item, index, key) {
-	return {
-		// animate transition
-		a: null,
-		// dom
-		d: null,
-		// effect
-		// @ts-expect-error
-		e: null,
-		// index
-		i: index,
-		// key
-		k: key,
-		// item
-		v: item,
-		// parent
-		p: /** @type {import('#client').EachBlock} */ (current_block),
-		// transition
-		r: null,
-		// transitions
-		s: null,
-		// type
-		t: EACH_ITEM_BLOCK
-	};
-}
-
-/**
- * @template V
- * @param {Element | Comment} anchor_node
- * @param {() => V[]} collection
- * @param {number} flags
- * @param {null | ((item: V) => string)} key_fn
- * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
- * @param {null | ((anchor: Node) => void)} fallback_fn
- * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
- * @returns {void}
- */
-function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_fn) {
-	const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-	const block = create_each_block(flags, anchor_node);
 
 	/** @type {null | import('#client').Render} */
 	let current_fallback = null;
@@ -873,7 +834,31 @@ function each_item_block(item, key, index, render_fn, flags) {
 			: mutable_source(item);
 
 	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
-	const block = create_each_item_block(item_value, index_value, key);
+
+	/** @type {import('#client').EachItemBlock} */
+	const block = {
+		// animate transition
+		a: null,
+		// dom
+		d: null,
+		// effect
+		// @ts-expect-error
+		e: null,
+		// index
+		i: index_value,
+		// key
+		k: key,
+		// item
+		v: item_value,
+		// parent
+		p: /** @type {import('#client').EachBlock} */ (current_block),
+		// transition
+		r: null,
+		// transitions
+		s: null,
+		// type
+		t: EACH_ITEM_BLOCK
+	};
 
 	const effect = render_effect(
 		/** @param {import('#client').EachItemBlock} block */
