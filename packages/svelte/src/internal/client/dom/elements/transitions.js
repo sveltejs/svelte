@@ -155,9 +155,14 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 	let current_delta = 0;
 
 	/** @type {import('#client').Transition2} */
+	// TODO this needs to be `in()` and `out()` rather than `to()`, and both
+	// need to be idempotent (because of `{#if ...}{#if ...}`). `out()` should
+	// return a promise (callbacks would be more performant but we don't
+	// care about that yet)
 	const transition = {
 		global,
 		to(target, callback = noop) {
+			console.log('to', { p, target, text: element.textContent });
 			if (current_task) {
 				current_task.abort();
 				current_task = null;
@@ -210,20 +215,20 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 						callback();
 					})
 					.catch(noop);
-			} else if (tick) {
+			} else {
 				// Timer
 				let running = true;
 				const start_time = raf.now() + delay;
 				const start_p = p;
 				const end_time = start_time + adjusted_duration;
 
-				tick(p, 1 - p); // TODO put in nested effect, to avoid interleaved reads/writes?
+				tick?.(p, 1 - p); // TODO put in nested effect, to avoid interleaved reads/writes?
 
 				current_task = loop((now) => {
 					if (running) {
 						if (now >= end_time) {
 							p = target;
-							tick(target, 1 - target);
+							tick?.(target, 1 - target);
 							// dispatch(node, true, 'end'); TODO
 							current_task = null;
 							callback?.();
@@ -231,15 +236,13 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 						}
 						if (now >= start_time) {
 							p = start_p + current_delta * easing((now - start_time) / adjusted_duration);
-							tick(p, 1 - p);
+							tick?.(p, 1 - p);
 						}
 					}
 					return running;
 				});
 
 				current_options = null;
-			} else {
-				setTimeout(callback, duration);
 			}
 		}
 	};

@@ -17,7 +17,12 @@ import {
 import { clear_text_content, empty } from '../operations.js';
 import { insert, remove } from '../reconciler.js';
 import { current_block, execute_effect } from '../../runtime.js';
-import { destroy_effect, pause_effect, render_effect } from '../../reactivity/effects.js';
+import {
+	destroy_effect,
+	pause_effect,
+	render_effect,
+	resume_effect
+} from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { trigger_transitions } from '../elements/transitions.js';
 import { is_array, is_frozen, map_get, map_set } from '../../utils.js';
@@ -119,27 +124,6 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	 */
 	let mismatch = false;
 
-	block.r =
-		/** @param {import('../../types.js').Transition} transition */
-		(transition) => {
-			const fallback = /** @type {import('../../types.js').Render} */ (current_fallback);
-			const transitions = fallback.s;
-			transitions.add(transition);
-			transition.f(() => {
-				transitions.delete(transition);
-				if (transitions.size === 0) {
-					if (fallback.e !== null) {
-						if (fallback.d !== null) {
-							remove(fallback.d);
-							fallback.d = null;
-						}
-						destroy_effect(fallback.e);
-						fallback.e = null;
-					}
-				}
-			});
-		};
-
 	const create_fallback_effect = () => {
 		/** @type {import('../../types.js').Render} */
 		const fallback = {
@@ -180,6 +164,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		);
 		fallback.e = effect;
 		current_fallback = fallback;
+		return effect;
 	};
 
 	/** @param {import('../../types.js').EachBlock} block */
@@ -189,6 +174,9 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		const anchor_node = block.a;
 		reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, true, keys);
 	};
+
+	/** @type {import('#client').Effect | null} */
+	let fallback;
 
 	const each = render_effect(
 		() => {
@@ -227,22 +215,15 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 
 			if (fallback_fn !== null) {
 				if (length === 0) {
-					if (block.v.length !== 0 || render === null) {
-						render_each(block);
-						create_fallback_effect();
-						return;
-					}
-				} else if (block.v.length === 0 && current_fallback !== null) {
-					const fallback = current_fallback;
-					const transitions = fallback.s;
-					if (transitions.size === 0) {
-						if (fallback.d !== null) {
-							remove(fallback.d);
-							fallback.d = null;
-						}
+					if (fallback) {
+						resume_effect(fallback);
 					} else {
-						trigger_transitions(transitions, 'out');
+						fallback = create_fallback_effect();
 					}
+				} else if (fallback !== null) {
+					pause_effect(fallback, () => {
+						fallback = null;
+					});
 				}
 			}
 
@@ -338,12 +319,12 @@ function reconcile_indexed_array(
 		flags ^= EACH_IS_STRICT_EQUALS;
 	}
 	var a_blocks = each_block.v;
-	var active_transitions = each_block.s;
 
 	var a = a_blocks.length;
 
 	/** @type {number} */
 	var b = array.length;
+	var min = Math.min(a, b);
 	var max = Math.max(a, b);
 	var index = 0;
 
@@ -351,21 +332,75 @@ function reconcile_indexed_array(
 	var b_blocks;
 	var block;
 
-	if (b === 0) {
-		b_blocks = [];
+	var item;
 
-		let remaining = a;
+	/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
+	let mismatch = false;
+
+	b_blocks = Array(b);
+
+	if (hydrating) {
+		// Hydrate block
+		var hydration_list = /** @type {import('../../types.js').TemplateNode[]} */ (
+			current_hydration_fragment
+		);
+		var hydrating_node = hydration_list[0];
+		for (; index < max; index++) {
+			var fragment = get_hydration_fragment(hydrating_node);
+			set_current_hydration_fragment(fragment);
+			if (!fragment) {
+				// If fragment is null, then that means that the server rendered less items than what
+				// the client code specifies -> break out and continue with client-side node creation
+				mismatch = true;
+				break;
+			}
+
+			item = array[index];
+			block = each_item_block(item, null, index, render_fn, flags);
+			b_blocks[index] = block;
+
+			hydrating_node = /** @type {import('../../types.js').TemplateNode} */ (
+				/** @type {Node} */ (/** @type {Node} */ (fragment[fragment.length - 1]).nextSibling)
+					.nextSibling
+			);
+		}
+
+		remove_excess_hydration_nodes(hydration_list, hydrating_node);
+	}
+
+	// update items
+	for (var i = 0; i < min; i += 1) {
+		item = array[i];
+		block = a_blocks[i];
+		b_blocks[i] = block;
+		update_each_item_block(block, item, i, flags);
+		resume_effect(block.e);
+	}
+
+	if (b > a) {
+		// add items
+		for (; i < b; i += 1) {
+			item = array[i];
+			block = each_item_block(item, null, i, render_fn, flags);
+			b_blocks[i] = block;
+			insert_each_item_block(block, dom, is_controlled, null);
+		}
+
+		each_block.v = b_blocks;
+	} else if (a > b) {
+		// remove items
+		let remaining = a - b;
 
 		const clear = () => {
 			if (is_controlled) {
 				clear_text_content(dom);
 			} else {
-				for (let i = 0; i < a; i += 1) {
+				for (let i = b; i < a; i += 1) {
 					let block = a_blocks[i];
 					if (block.d) remove(block.d);
 				}
 
-				each_block.v = [];
+				each_block.v = each_block.v.slice(0, b);
 			}
 		};
 
@@ -375,68 +410,15 @@ function reconcile_indexed_array(
 			}
 		};
 
-		for (let i = 0; i < a; i += 1) {
-			block = a_blocks[i];
+		for (; i < a; i += 1) {
+			block = a_blocks[index];
 			if (block.e) pause_effect(block.e, check);
 		}
-	} else {
-		var item;
-		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-		let mismatch = false;
-		b_blocks = Array(b);
-		if (hydrating) {
-			// Hydrate block
-			var hydration_list = /** @type {import('../../types.js').TemplateNode[]} */ (
-				current_hydration_fragment
-			);
-			var hydrating_node = hydration_list[0];
-			for (; index < max; index++) {
-				var fragment = get_hydration_fragment(hydrating_node);
-				set_current_hydration_fragment(fragment);
-				if (!fragment) {
-					// If fragment is null, then that means that the server rendered less items than what
-					// the client code specifies -> break out and continue with client-side node creation
-					mismatch = true;
-					break;
-				}
+	}
 
-				item = array[index];
-				block = each_item_block(item, null, index, render_fn, flags);
-				b_blocks[index] = block;
-
-				hydrating_node = /** @type {import('../../types.js').TemplateNode} */ (
-					/** @type {Node} */ (/** @type {Node} */ (fragment[fragment.length - 1]).nextSibling)
-						.nextSibling
-				);
-			}
-
-			remove_excess_hydration_nodes(hydration_list, hydrating_node);
-		}
-
-		for (; index < max; index++) {
-			if (index >= a) {
-				// Add block
-				item = array[index];
-				block = each_item_block(item, null, index, render_fn, flags);
-				b_blocks[index] = block;
-				insert_each_item_block(block, dom, is_controlled, null);
-			} else if (index >= b) {
-				// Remove block
-				block = a_blocks[index];
-				destroy_each_item_block(block, active_transitions, apply_transitions);
-			} else {
-				// Update block
-				item = array[index];
-				block = a_blocks[index];
-				b_blocks[index] = block;
-				update_each_item_block(block, item, index, flags);
-			}
-		}
-
-		if (mismatch) {
-			// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
-			set_current_hydration_fragment([]);
-		}
+	if (mismatch) {
+		// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
+		set_current_hydration_fragment([]);
 	}
 
 	each_block.v = b_blocks;
