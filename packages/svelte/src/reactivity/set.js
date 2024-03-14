@@ -3,16 +3,8 @@ import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { make_iterable } from './utils.js';
 
-var methods = [
-	'difference',
-	'forEach',
-	'intersection',
-	'isDisjointFrom',
-	'isSubsetOf',
-	'isSupersetOf',
-	'symmetricDifference',
-	'union'
-];
+var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
+var set_like_methods = ['difference', 'intersection', 'symmetricDifference', 'union'];
 
 var inited = false;
 
@@ -26,7 +18,7 @@ export class ReactiveSet extends Set {
 	#size = source(0);
 
 	/**
-	 * @param {Iterable<T> | null | undefined} [value]
+	 * @param {T[] | null} [value]
 	 */
 	constructor(value) {
 		super();
@@ -35,8 +27,8 @@ export class ReactiveSet extends Set {
 		if (DEV) new Set(value);
 
 		if (value) {
-			for (var element of value) {
-				this.add(element);
+			for (var element of value.keys()) {
+				this.add(/** @type {T} */ (element));
 			}
 		}
 
@@ -49,18 +41,28 @@ export class ReactiveSet extends Set {
 
 		var proto = ReactiveSet.prototype;
 		var set_proto = Set.prototype;
+		/**
+		 * @type {string | number}
+		 */
+		var method;
 
-		for (var method of methods) {
+		for (method of read_methods) {
+			// @ts-ignore
+			proto[method] = function (...v) {
+				get(this.#version);
+				// @ts-ignore
+				return set_proto[method].apply(this, v);
+			};
+		}
+
+		for (method of set_like_methods) {
 			// @ts-ignore
 			proto[method] = function (...v) {
 				get(this.#version);
 				// @ts-ignore
 				var val = set_proto[method].apply(this, v);
 				// Return a reactive set if the return value is a Set
-				if (val instanceof Set) {
-					return new ReactiveSet(val);
-				}
-				return val;
+				return new ReactiveSet(/** @type {T[]} */ (val));
 			};
 		}
 	}
