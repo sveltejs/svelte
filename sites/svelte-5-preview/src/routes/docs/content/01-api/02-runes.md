@@ -99,14 +99,14 @@ Svelte provides reactive wrappers for the native `Map`, `Set` and `Date` objects
 
 ```svelte
 <script>
-  import { Map } from 'svelte/reactivity';
+	import { Map } from 'svelte/reactivity';
 
-  const map = new Map();
-  map.set('message', 'hello');
+	const map = new Map();
+	map.set('message', 'hello');
 
-  function update_message() {
-    map.set('message', 'goodbye');
-  }
+	function update_message() {
+		map.set('message', 'goodbye');
+	}
 </script>
 
 <p>{map.get('message')}</p>
