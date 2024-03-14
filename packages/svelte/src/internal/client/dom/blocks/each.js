@@ -67,8 +67,6 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		t: EACH_BLOCK
 	};
 
-	/** @type {null | import('#client').Render} */
-	let current_fallback = null;
 	hydrate_block_anchor(anchor_node, is_controlled);
 
 	/** @type {V[]} */
@@ -87,16 +85,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	let mismatch = false;
 
 	const create_fallback_effect = () => {
-		/** @type {import('#client').Render} */
-		const fallback = {
-			d: null,
-			e: null,
-			s: new Set(),
-			p: current_fallback
-		};
-
-		// Managed effect
-		const effect = render_effect(
+		return render_effect(
 			() => {
 				let anchor = block.a;
 				const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
@@ -128,10 +117,6 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			block,
 			true
 		);
-
-		fallback.e = effect;
-		current_fallback = fallback;
-		return effect;
 	};
 
 	/** @param {import('#client').EachBlock} block */
@@ -211,19 +196,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		const flags = block.f;
 		const anchor_node = block.a;
 		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-		let fallback = current_fallback;
-		while (fallback !== null) {
-			const dom = fallback.d;
-			if (dom !== null) {
-				remove(dom);
-			}
-			const effect = fallback.e;
-			if (effect !== null) {
-				destroy_effect(effect);
-			}
-			fallback = fallback.p;
-		}
-		// Clear the array
+		if (fallback) destroy_effect(fallback);
 		reconcile_fn([], block, anchor_node, is_controlled, render_fn, flags, false, keys);
 		destroy_effect(/** @type {import('#client').Effect} */ (render));
 	};
