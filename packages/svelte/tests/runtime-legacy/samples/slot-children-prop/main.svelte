@@ -5,3 +5,5 @@
 <A children="foo">
 	bar
 </A>
+
+<A children="foo" />
