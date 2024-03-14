@@ -775,12 +775,17 @@ function validate_call_expression(node, scope, path) {
 
 	const parent = /** @type {import('#compiler').SvelteNode} */ (get_parent(path, -1));
 
-	if (rune === '$props') {
+	if (rune === '$props' || rune === '$props.bindable') {
 		if (parent.type === 'VariableDeclarator') return;
 		error(node, 'invalid-props-location');
 	}
 
-	if (rune === '$state' || rune === '$derived' || rune === '$derived.by') {
+	if (
+		rune === '$state' ||
+		rune === '$state.frozen' ||
+		rune === '$derived' ||
+		rune === '$derived.by'
+	) {
 		if (parent.type === 'VariableDeclarator') return;
 		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
 		error(node, 'invalid-state-location', rune);
@@ -871,7 +876,7 @@ export const validation_runes_js = {
 			error(node, 'invalid-rune-args-length', rune, [1]);
 		} else if (rune === '$state' && args.length > 1) {
 			error(node, 'invalid-rune-args-length', rune, [0, 1]);
-		} else if (rune === '$props') {
+		} else if (rune === '$props' || rune === '$props.bindable') {
 			error(node, 'invalid-props-location');
 		}
 	},
@@ -1054,15 +1059,18 @@ export const validation_runes = merge(validation, a11y_validators, {
 			error(node, 'invalid-rune-args-length', rune, [1]);
 		} else if (rune === '$state' && args.length > 1) {
 			error(node, 'invalid-rune-args-length', rune, [0, 1]);
-		} else if (rune === '$props') {
-			if (state.has_props_rune) {
+		} else if (rune === '$props' || rune === '$props.bindable') {
+			if (
+				(rune === '$props' && state.has_props_rune[0]) ||
+				(rune === '$props.bindable' && state.has_props_rune[1])
+			) {
 				error(node, 'duplicate-props-rune');
 			}
 
-			state.has_props_rune = true;
+			state.has_props_rune[rune === '$props' ? 0 : 1] = true;
 
 			if (args.length > 0) {
-				error(node, 'invalid-rune-args-length', '$props', [0]);
+				error(node, 'invalid-rune-args-length', rune, [0]);
 			}
 
 			if (node.id.type !== 'ObjectPattern') {

@@ -192,7 +192,7 @@ export const javascript_visitors_runes = {
 				continue;
 			}
 
-			if (rune === '$props') {
+			if (rune === '$props' || rune === '$props.bindable') {
 				assert.equal(declarator.id.type, 'ObjectPattern');
 
 				/** @type {string[]} */

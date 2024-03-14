@@ -1253,22 +1253,33 @@ export function unwrap(value) {
 }
 
 if (DEV) {
-	/** @param {string} rune */
-	function throw_rune_error(rune) {
+	/**
+	 * @param {string} rune
+	 * @param {string[]} [variants]
+	 */
+	function throw_rune_error(rune, variants = []) {
 		if (!(rune in globalThis)) {
+			// TODO if people start adjusting the "this can contain runes" config through v-p-s more, adjust this message
 			// @ts-ignore
 			globalThis[rune] = () => {
-				// TODO if people start adjusting the "this can contain runes" config through v-p-s more, adjust this message
-				throw new Error(`${rune} is only available inside .svelte and .svelte.js/ts files`);
+				throw new Error(`${rune}() is only available inside .svelte and .svelte.js/ts files`);
 			};
+			for (const variant of variants) {
+				// @ts-ignore
+				globalThis[rune][variant] = () => {
+					throw new Error(
+						`${rune}.${variant}() is only available inside .svelte and .svelte.js/ts files`
+					);
+				};
+			}
 		}
 	}
 
-	throw_rune_error('$state');
-	throw_rune_error('$effect');
-	throw_rune_error('$derived');
+	throw_rune_error('$state', ['frozen']);
+	throw_rune_error('$effect', ['pre', 'root', 'active']);
+	throw_rune_error('$derived', ['by']);
 	throw_rune_error('$inspect');
-	throw_rune_error('$props');
+	throw_rune_error('$props', ['bindable']);
 }
 
 /**

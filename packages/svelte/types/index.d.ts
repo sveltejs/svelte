@@ -2462,9 +2462,24 @@ declare namespace $effect {
  * let { optionalProp = 42, requiredProp }: { optionalProp?: number; requiredProps: string } = $props();
  * ```
  *
+ * Props declared with `$props()` cannot be used with `bind:`, use `$props.bindable()` for these instead.
+ *
  * https://svelte-5-preview.vercel.app/docs/runes#$props
  */
 declare function $props(): any;
+
+declare namespace $props {
+	/**
+	 * Declares the props that a component accepts and which consumers can `bind:` to. Example:
+	 *
+	 * ```ts
+	 * let { optionalProp, requiredProp }: { optionalProp?: number; requiredProps: string } = $props.bindable();
+	 * ```
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$props
+	 */
+	function bindable(): any;
+}
 
 /**
  * Inspects one or more values whenever they, or the properties they contain, change. Example:

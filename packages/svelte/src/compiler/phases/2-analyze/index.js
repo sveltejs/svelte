@@ -422,7 +422,7 @@ export function analyze_component(root, options) {
 				options,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
 				parent_element: null,
-				has_props_rune: false,
+				has_props_rune: [false, false],
 				component_slots: new Set(),
 				expression: null,
 				private_derived_state: [],
@@ -446,7 +446,7 @@ export function analyze_component(root, options) {
 				analysis,
 				options,
 				parent_element: null,
-				has_props_rune: false,
+				has_props_rune: [false, false],
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
 				instance_scope: instance.scope,
 				reactive_statement: null,
@@ -854,7 +854,8 @@ const runes_scope_tweaker = {
 			rune !== '$state.frozen' &&
 			rune !== '$derived' &&
 			rune !== '$derived.by' &&
-			rune !== '$props'
+			rune !== '$props' &&
+			rune !== '$props.bindable'
 		)
 			return;
 
@@ -873,7 +874,7 @@ const runes_scope_tweaker = {
 								: 'prop';
 		}
 
-		if (rune === '$props') {
+		if (rune === '$props' || rune === '$props.bindable') {
 			for (const property of /** @type {import('estree').ObjectPattern} */ (node.id).properties) {
 				if (property.type !== 'Property') continue;
 

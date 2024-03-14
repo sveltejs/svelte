@@ -689,7 +689,7 @@ const javascript_visitors_runes = {
 				continue;
 			}
 
-			if (rune === '$props') {
+			if (rune === '$props' || rune === '$props.bindable') {
 				declarations.push(b.declarator(declarator.id, b.id('$$props')));
 				continue;
 			}

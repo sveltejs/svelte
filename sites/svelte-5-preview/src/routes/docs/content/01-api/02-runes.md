@@ -471,13 +471,17 @@ let { a, b, c, ...everythingElse }: MyProps = $props();
 >
 > ...TypeScript [widens the type](https://www.typescriptlang.org/play?#code/CYUwxgNghgTiAEAzArgOzAFwJYHtXwBIAHGHIgZwB4AVeAXnilQE8A+ACgEoAueagbgBQgiCAzwA3vAAe9eABYATPAC+c4qQqUp03uQwwsqAOaqOnIfCsB6a-AB6AfiA) of `x` to be `string | number`, instead of erroring.
 
-Props cannot be mutated, unless the parent component uses `bind:`. During development, attempts to mutate props will result in an error.
+Props declared with `$props()` cannot be mutated, and you cannot `bind:` to them in the parent. To declare props as bindable, use [`$props.bindable()`](#propsbindable).
 
 ### What this replaces
 
 `$props` replaces the `export let` and `export { x as y }` syntax for declaring props. It also replaces `$$props` and `$$restProps`, and the little-known `interface $$Props {...}` construct.
 
 Note that you can still use `export const` and `export function` to expose things to users of your component (if they're using `bind:this`, for example).
+
+### `$props.bindable()`
+
+To declare props as bindable, use `$props.bindable()`. Besides using them as regular props, the parent can then also `bind:` to these props. Works exactly like `$props()`. During development, attempts to mutate these props will result in a warning, unless the parent did `bind:` them.
 
 ## `$inspect`
 
