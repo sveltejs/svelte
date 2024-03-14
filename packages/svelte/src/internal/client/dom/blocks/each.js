@@ -17,7 +17,7 @@ import {
 import { clear_text_content, empty } from '../operations.js';
 import { insert, remove } from '../reconciler.js';
 import { current_block, execute_effect } from '../../runtime.js';
-import { destroy_effect, render_effect } from '../../reactivity/effects.js';
+import { destroy_effect, pause_effect, render_effect } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { trigger_transitions } from '../elements/transitions.js';
 import { is_array, is_frozen, map_get, map_set } from '../../utils.js';
@@ -340,7 +340,6 @@ function reconcile_indexed_array(
 	var a_blocks = each_block.v;
 	var active_transitions = each_block.s;
 
-	/** @type {number | void} */
 	var a = a_blocks.length;
 
 	/** @type {number} */
@@ -354,13 +353,31 @@ function reconcile_indexed_array(
 
 	if (b === 0) {
 		b_blocks = [];
-		// Remove old blocks
-		if (is_controlled && a !== 0) {
-			clear_text_content(dom);
-		}
-		while (index < a) {
-			block = a_blocks[index++];
-			destroy_each_item_block(block, active_transitions, apply_transitions, is_controlled);
+
+		let remaining = a;
+
+		const clear = () => {
+			if (is_controlled) {
+				clear_text_content(dom);
+			} else {
+				for (let i = 0; i < a; i += 1) {
+					let block = a_blocks[i];
+					if (block.d) remove(block.d);
+				}
+
+				each_block.v = [];
+			}
+		};
+
+		const check = () => {
+			if (--remaining === 0) {
+				clear();
+			}
+		};
+
+		for (let i = 0; i < a; i += 1) {
+			block = a_blocks[i];
+			if (block.e) pause_effect(block.e, check);
 		}
 	} else {
 		var item;
