@@ -3,7 +3,7 @@ import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { make_iterable } from './utils.js';
 
-var read = [
+var methods = [
 	'difference',
 	'forEach',
 	'intersection',
@@ -50,12 +50,17 @@ export class ReactiveSet extends Set {
 		var proto = ReactiveSet.prototype;
 		var set_proto = Set.prototype;
 
-		for (var method of read) {
+		for (var method of methods) {
 			// @ts-ignore
 			proto[method] = function (...v) {
 				get(this.#version);
 				// @ts-ignore
-				return set_proto[method].apply(this, v);
+				var val = set_proto[method].apply(this, v);
+				// Return a reactive set if the return value is a Set
+				if (val instanceof Set) {
+					return new ReactiveSet(val);
+				}
+				return val;
 			};
 		}
 	}
