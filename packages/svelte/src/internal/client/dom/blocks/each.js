@@ -177,7 +177,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	};
 
 	/** @type {import('#client').Effect | null} */
-	let fallback;
+	let fallback = null;
 
 	const each = render_effect(
 		() => {
@@ -308,23 +308,18 @@ function reconcile_indexed_array(array, each_block, dom, is_controlled, render_f
 	if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
 		flags ^= EACH_IS_STRICT_EQUALS;
 	}
+
 	var a_blocks = each_block.v;
 
 	var a = a_blocks.length;
-
-	/** @type {number} */
 	var b = array.length;
 	var min = Math.min(a, b);
-	var max = Math.max(a, b);
-	var index = 0;
 
-	/** @type {Array<import('#client').EachItemBlock>} */
-	var b_blocks;
+	/** @type {typeof a_blocks} */
+	var b_blocks = Array(b);
+
 	var block;
-
 	var item;
-
-	b_blocks = Array(b);
 
 	if (hydrating) {
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
@@ -335,7 +330,8 @@ function reconcile_indexed_array(array, each_block, dom, is_controlled, render_f
 			current_hydration_fragment
 		);
 		var hydrating_node = hydration_list[0];
-		for (; index < max; index++) {
+
+		for (var i = 0; i < b; i++) {
 			var fragment = get_hydration_fragment(hydrating_node);
 			set_current_hydration_fragment(fragment);
 			if (!fragment) {
@@ -345,9 +341,9 @@ function reconcile_indexed_array(array, each_block, dom, is_controlled, render_f
 				break;
 			}
 
-			item = array[index];
-			block = each_item_block(item, null, index, render_fn, flags);
-			b_blocks[index] = block;
+			item = array[i];
+			block = each_item_block(item, null, i, render_fn, flags);
+			b_blocks[i] = block;
 
 			hydrating_node = /** @type {import('#client').TemplateNode} */ (
 				/** @type {Node} */ (/** @type {Node} */ (fragment[fragment.length - 1]).nextSibling)
@@ -407,7 +403,7 @@ function reconcile_indexed_array(array, each_block, dom, is_controlled, render_f
 			};
 
 			for (; i < a; i += 1) {
-				block = a_blocks[index];
+				block = a_blocks[i];
 				if (block.e) pause_effect(block.e, check);
 			}
 		}
