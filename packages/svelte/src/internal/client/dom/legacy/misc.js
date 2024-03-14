@@ -1,7 +1,7 @@
 import { set, source } from '../../reactivity/sources.js';
 import { get } from '../../runtime.js';
 import { is_array } from '../../utils.js';
-import { isSnippet } from '../blocks/snippet.js';
+import { is_snippet } from '../blocks/snippet.js';
 
 /**
  * Under some circumstances, imports may be reactive in legacy mode. In that case,
@@ -77,7 +77,7 @@ export function default_slot($$props) {
 		return children;
 	}
 	children = $$props.children;
-	if (isSnippet(children)) {
+	if (is_snippet(children)) {
 		return children;
 	}
 }

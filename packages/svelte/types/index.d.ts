@@ -292,12 +292,6 @@ declare module 'svelte' {
 	 */
 	type NotFunction<T> = T extends Function ? never : T;
 	/**
-	 * Returns true if given parameter is a snippet.
-	 * */
-	export function isSnippet(maybeSnippet: any): maybeSnippet is (this: void) => unique symbol & {
-		_: "functions passed to {@render ...} tags must use the `Snippet` type imported from \"svelte\"";
-	};
-	/**
 	 * @deprecated Use `mount` or `hydrate` instead
 	 */
 	export function createRoot(): void;

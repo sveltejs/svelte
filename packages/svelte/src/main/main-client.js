@@ -181,6 +181,5 @@ export {
 	hasContext,
 	getContext,
 	getAllContexts,
-	setContext,
-	isSnippet
+	setContext
 } from '../internal/index.js';

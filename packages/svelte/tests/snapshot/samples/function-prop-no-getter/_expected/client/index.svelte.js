@@ -21,14 +21,14 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 		onmousedown: () => $.set(count, $.get(count) + 1),
 		onmouseup,
 		onmouseenter: () => $.set(count, $.proxy(plusOne($.get(count)))),
-		children: ($$anchor, $$slotProps) => {
+		children: $.add_snippet_symbol(($$anchor, $$slotProps) => {
 			/* Init */
 			var text = $.space_frag($$anchor);
 
 			/* Update */
 			$.text_effect(text, () => `clicks: ${$.stringify($.get(count))}`);
 			$.close($$anchor, text);
-		}
+		})
 	});
 
 	$.close_frag($$anchor, fragment);

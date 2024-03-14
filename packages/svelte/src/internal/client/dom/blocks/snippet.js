@@ -54,6 +54,6 @@ export function add_snippet_symbol(fn) {
  * @param {any} maybeSnippet
  * @returns {maybeSnippet is import('svelte').Snippet}
  */
-export function isSnippet(maybeSnippet) {
+export function is_snippet(maybeSnippet) {
 	return /** @type {any} */ (maybeSnippet)?.[snippet_symbol] === true;
 }
