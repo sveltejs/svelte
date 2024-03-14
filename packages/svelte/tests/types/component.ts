@@ -170,5 +170,5 @@ asLegacyComponent.anExport;
 const x: typeof asLegacyComponent = createClassComponent({
 	target: null as any,
 	hydrate: true,
-	component: newComponent
+	component: NewComponent
 });
