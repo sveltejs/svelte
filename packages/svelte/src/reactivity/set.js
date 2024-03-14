@@ -27,7 +27,13 @@ export class ReactiveSet extends Set {
 		if (DEV) new Set(value);
 
 		if (value) {
-			for (var element of value.keys()) {
+			// Support set-like objects that have a keys() method
+			if (!Array.isArray(value)) {
+				// @ts-ignore
+				value = Array.from(value.keys());
+			}
+
+			for (var element of value) {
 				this.add(/** @type {T} */ (element));
 			}
 		}
