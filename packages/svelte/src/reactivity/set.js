@@ -1,4 +1,3 @@
-import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { make_iterable } from './utils.js';
@@ -21,10 +20,7 @@ export class ReactiveSet extends Set {
 	 * @param {T[] | null} [value]
 	 */
 	constructor(value) {
-		super();
-
-		// If the value is invalid then the native exception will fire here
-		if (DEV) new Set(value);
+		super(value);
 
 		if (value) {
 			// Support set-like objects that have a keys() method
@@ -34,8 +30,10 @@ export class ReactiveSet extends Set {
 			}
 
 			for (var element of value) {
-				this.add(/** @type {T} */ (element));
+				this.#sources.set(element, source(true));
 			}
+
+			this.#size.v = this.#sources.size;
 		}
 
 		if (!inited) this.#init();

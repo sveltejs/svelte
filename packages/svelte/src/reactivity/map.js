@@ -1,4 +1,3 @@
-import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { UNINITIALIZED } from '../internal/client/constants.js';
@@ -18,15 +17,14 @@ export class ReactiveMap extends Map {
 	 * @param {Iterable<readonly [K, V]> | null | undefined} [value]
 	 */
 	constructor(value) {
-		super();
-
-		// If the value is invalid then the native exception will fire here
-		if (DEV) new Map(value);
+		super(value);
 
 		if (value) {
 			for (var [key, v] of value) {
-				this.set(key, v);
+				this.#sources.set(key, source(v));
 			}
+
+			this.#size.v = this.#sources.size;
 		}
 	}
 
@@ -78,7 +76,7 @@ export class ReactiveMap extends Map {
 	/**
 	 * @param {K} key
 	 * @param {V} value
-	 * */
+	 */
 	set(key, value) {
 		var sources = this.#sources;
 		var source_value = sources.get(key);
