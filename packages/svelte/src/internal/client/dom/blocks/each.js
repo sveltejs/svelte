@@ -119,14 +119,6 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		);
 	};
 
-	/** @param {import('#client').EachBlock} block */
-	const render_each = (block) => {
-		const flags = block.f;
-		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-		const anchor_node = block.a;
-		reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, true, keys);
-	};
-
 	/** @type {import('#client').Effect | null} */
 	let fallback = null;
 
@@ -185,7 +177,16 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		false
 	);
 
-	render = render_effect(render_each, block, true);
+	render = render_effect(
+		() => {
+			const flags = block.f;
+			const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
+			const anchor_node = block.a;
+			reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, true, keys);
+		},
+		block,
+		true
+	);
 
 	if (mismatch) {
 		// Set a fragment so that Svelte continues to operate in hydration mode
