@@ -68,16 +68,16 @@ export class ReactiveDate extends Date {
 
 			for (const method of read) {
 				// @ts-ignore
-				proto[method] = function () {
+				proto[method] = function (...args) {
 					get(this.#raw_time);
 					// @ts-ignore
-					return date_proto[method].call(this);
+					return date_proto[method].apply(this, args);
 				};
 			}
 
 			for (const method of write) {
 				// @ts-ignore
-				proto[method] = function (/** @type {any} */ ...args) {
+				proto[method] = function (...args) {
 					// @ts-ignore
 					const v = date_proto[method].apply(this, args);
 					const time = date_proto.getTime.call(this);
