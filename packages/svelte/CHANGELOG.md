@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.80
+
+### Patch Changes
+
+- fix: add types for svelte/reactivity ([#10817](https://github.com/sveltejs/svelte/pull/10817))
+
+- fix: ensure arguments are supported on all reactive Date methods ([#10813](https://github.com/sveltejs/svelte/pull/10813))
+
 ## 5.0.0-next.79
 
 ### Patch Changes
