@@ -181,10 +181,9 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 
 	each.ondestroy = () => {
 		const flags = block.f;
-		const anchor_node = block.a;
 		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
-		reconcile_fn([], block, anchor_node, is_controlled, render_fn, flags, false, keys);
+		reconcile_fn([], block, block.a, is_controlled, render_fn, flags, false, keys);
 		if (fallback) destroy_effect(fallback);
 	};
 
