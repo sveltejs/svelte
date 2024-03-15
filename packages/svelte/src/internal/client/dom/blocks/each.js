@@ -183,7 +183,13 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		const flags = block.f;
 		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
-		reconcile_fn([], block, block.a, is_controlled, render_fn, flags, false, keys);
+		for (const b of block.v) {
+			if (b.d !== null) {
+				remove(b.d);
+			}
+		}
+
+		// reconcile_fn([], block, block.a, is_controlled, render_fn, flags, false, keys);
 		if (fallback) destroy_effect(fallback);
 	};
 
