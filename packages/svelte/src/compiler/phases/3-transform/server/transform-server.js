@@ -2218,7 +2218,8 @@ export function server_component(analysis, options) {
 		});
 	}
 
-	// If the component binds to a child, we need to put the template in a loop and repeat until bindings are stable
+	// If the component binds to a child, we need to put the template in a loop and repeat until legacy bindings are stable.
+	// We can remove this once the legacy syntax is gone.
 	if (analysis.uses_component_bindings) {
 		template.body = [
 			b.let('$$settled', b.true),
@@ -2267,6 +2268,8 @@ export function server_component(analysis, options) {
 		props.push(b.init(alias ?? name, b.id(name)));
 	}
 	if (props.length > 0) {
+		// This has no effect in runes mode other than throwing an error when someone passes
+		// undefined to a binding that has a default value.
 		template.body.push(b.stmt(b.call('$.bind_props', b.id('$$props'), b.object(props))));
 	}
 
