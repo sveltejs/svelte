@@ -1,5 +1,5 @@
 <script>
-	let { readonly, readonlyWithDefault = 1, binding } = $props();
+	let { readonly, readonlyWithDefault = 1, binding } = $props.bindable();
 </script>
 
 <p>

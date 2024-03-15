@@ -1,5 +1,5 @@
 <script>
-    let { bar } = $props();
+    let { bar } = $props.bindable();
 </script>
 
 <button on:click={() => bar--}>{bar}</button>
