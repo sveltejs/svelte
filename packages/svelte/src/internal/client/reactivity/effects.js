@@ -289,7 +289,7 @@ export function pause_effect(effect, callback = noop) {
  */
 function pause_children(effect, transitions, local) {
 	if ((effect.f & INERT) !== 0) return;
-	effect.f |= INERT;
+	effect.f ^= INERT;
 
 	if (effect.out) {
 		for (const transition of effect.out) {
@@ -319,6 +319,9 @@ export function resume_effect(effect) {
  * @param {boolean} local
  */
 function resume_children(effect, local) {
+	if ((effect.f & INERT) === 0) return;
+	effect.f ^= INERT;
+
 	if (check_dirtiness(effect)) {
 		execute_effect(effect);
 	}
@@ -329,8 +332,6 @@ function resume_children(effect, local) {
 			resume_children(child, transparent ? local : false);
 		}
 	}
-
-	effect.f ^= INERT;
 
 	if (effect.in) {
 		for (const transition of effect.in) {
