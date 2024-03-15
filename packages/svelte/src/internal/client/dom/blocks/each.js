@@ -139,15 +139,15 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			const length = array.length;
 
 			if (hydrating) {
-				const is_each_else_comment =
+				var is_else =
 					/** @type {Comment} */ (current_hydration_fragment?.[0])?.data === 'ssr:each_else';
-				// Check for hydration mismatch which can happen if the server renders the each fallback
-				// but the client has items, or vice versa. If so, remove everything inside the anchor and start fresh.
-				if ((is_each_else_comment && length) || (!is_each_else_comment && !length)) {
+
+				if (is_else !== (length === 0)) {
+					// hydration mismatch — remove the server-rendered DOM and start over
 					remove(current_hydration_fragment);
 					set_current_hydration_fragment(null);
 					mismatch = true;
-				} else if (is_each_else_comment) {
+				} else if (is_else) {
 					// Remove the each_else comment node or else it will confuse the subsequent hydration algorithm
 					/** @type {import('#client').TemplateNode[]} */ (current_hydration_fragment).shift();
 				}
