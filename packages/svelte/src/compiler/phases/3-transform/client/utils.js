@@ -5,7 +5,8 @@ import {
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,
 	PROPS_IS_RUNES,
-	PROPS_IS_UPDATED
+	PROPS_IS_UPDATED,
+	PROPS_IS_BINDABLE
 } from '../../../../constants.js';
 
 /**
@@ -637,6 +638,10 @@ export function get_prop_source(binding, state, name, initial) {
 
 	if (state.analysis.runes) {
 		flags |= PROPS_IS_RUNES;
+	}
+
+	if (binding.kind === 'bindable_prop') {
+		flags |= PROPS_IS_BINDABLE;
 	}
 
 	if (
