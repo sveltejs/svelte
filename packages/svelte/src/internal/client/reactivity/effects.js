@@ -48,8 +48,7 @@ function create_effect(type, fn, sync, block = current_block, init = true) {
 		teardown: null,
 		ctx: current_component_context,
 		ondestroy: null,
-		in: null,
-		out: null,
+		transitions: null,
 		ran: false
 	};
 
@@ -274,7 +273,7 @@ export function pause_effect(effect, callback = noop) {
 		};
 
 		for (const transition of transitions) {
-			transition.to(0, check);
+			transition.out(check);
 		}
 	} else {
 		destroy_effect(effect);
@@ -291,8 +290,8 @@ function pause_children(effect, transitions, local) {
 	if ((effect.f & INERT) !== 0) return;
 	effect.f ^= INERT;
 
-	if (effect.out) {
-		for (const transition of effect.out) {
+	if (effect.transitions) {
+		for (const transition of effect.transitions) {
 			if (transition.global || local) {
 				transitions.push(transition);
 			}
@@ -333,10 +332,10 @@ function resume_children(effect, local) {
 		}
 	}
 
-	if (effect.in) {
-		for (const transition of effect.in) {
+	if (effect.transitions) {
+		for (const transition of effect.transitions) {
 			if (transition.global || local) {
-				transition.to(1);
+				transition.in();
 			}
 		}
 	}

@@ -329,7 +329,8 @@ export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
 // happy we don't need them, and rename this
 export interface Transition2 {
 	global: boolean;
-	to(target: number, callback?: () => void): void;
+	in: () => void;
+	out: (callback?: () => void) => void;
 }
 
 export * from './reactivity/types';

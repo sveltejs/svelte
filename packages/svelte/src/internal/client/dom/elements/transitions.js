@@ -1,9 +1,10 @@
-import { noop } from '../../../common.js';
+import { noop, run } from '../../../common.js';
 import { user_effect } from '../../reactivity/effects.js';
 import { current_effect, untrack } from '../../runtime.js';
 import { raf } from '../../timing.js';
 import { loop } from '../../loop.js';
 import { run_transitions } from '../../render.js';
+import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../constants.js';
 
 const active_tick_animations = new Set();
 const DELAY_NEXT_TICK = Number.MIN_SAFE_INTEGER;
@@ -129,6 +130,7 @@ export function trigger_transitions(transitions, target_direction, from) {
 	// noop, until we excise it from the codebase
 }
 
+// TODO make transition mode (`in:`, `out:`, `transition:` and `|global`) a bitmask
 /**
  * @template P
  * @param {HTMLElement} element
@@ -143,6 +145,9 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 
 	let p = direction === 'out' ? 1 : 0;
 
+	/** @type {0 | TRANSITION_IN | TRANSITION_OUT} */
+	let current_direction = 0;
+
 	/** @type {Animation | null} */
 	let current_animation;
 
@@ -154,6 +159,98 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 
 	let current_delta = 0;
 
+	/** @type {Array<() => void>} */
+	let callbacks = [];
+
+	/** @param {number} target */
+	function go(target) {
+		// TODO if this is an `in:` transition and we just called `out()`, do nothing (let it play until the block is destroyed, probably immediately)
+		// TODO if this is an `out:` transition and we just called `in()`, abort everything and reset to 1 immediately
+		// TODO add a `transition.abort()` method to cancel an outro transition immediately when an effect is destroyed before the transition finishes running — don't want tickers etc to continue
+
+		if (current_task) {
+			current_task.abort();
+			current_task = null;
+		}
+
+		if (current_animation && current_options) {
+			const time = /** @type {number} */ (current_animation.currentTime);
+			const duration = /** @type {number} */ (current_options.duration);
+			p = (Math.abs(current_delta) * time) / duration;
+			current_animation.cancel();
+		}
+
+		current_options ??= get_fn()(element, get_params?.(), { direction });
+
+		if (!current_options?.duration) {
+			current_options = null;
+			callbacks.forEach(run);
+			return;
+		}
+
+		const { delay = 0, duration, css, tick, easing = linear } = current_options;
+
+		const n = current_options.duration / (1000 / 60);
+		current_delta = target - p;
+
+		const adjusted_duration = duration * Math.abs(current_delta);
+
+		if (css) {
+			// WAAPI
+			const keyframes = [];
+
+			for (let i = 0; i <= n; i += 1) {
+				const eased = easing(i / n);
+				const t = p + current_delta * eased;
+				const styles = css(t, 1 - t);
+				keyframes.push(css_to_keyframe(styles));
+			}
+
+			current_animation = element.animate(keyframes, {
+				delay,
+				duration: adjusted_duration,
+				easing: 'linear',
+				fill: 'forwards'
+			});
+
+			current_animation.finished
+				.then(() => {
+					p = target;
+					current_animation = current_options = null;
+					callbacks.forEach(run);
+				})
+				.catch(noop);
+		} else {
+			// Timer
+			let running = true;
+			const start_time = raf.now() + delay;
+			const start_p = p;
+			const end_time = start_time + adjusted_duration;
+
+			tick?.(p, 1 - p); // TODO put in nested effect, to avoid interleaved reads/writes?
+
+			current_task = loop((now) => {
+				if (running) {
+					if (now >= end_time) {
+						p = target;
+						tick?.(target, 1 - target);
+						// dispatch(node, true, 'end'); TODO
+						current_task = null;
+						callbacks.forEach(run);
+						return (running = false);
+					}
+					if (now >= start_time) {
+						p = start_p + current_delta * easing((now - start_time) / adjusted_duration);
+						tick?.(p, 1 - p);
+					}
+				}
+				return running;
+			});
+
+			current_options = null;
+		}
+	}
+
 	/** @type {import('#client').Transition2} */
 	// TODO this needs to be `in()` and `out()` rather than `to()`, and both
 	// need to be idempotent (because of `{#if ...}{#if ...}`). `out()` should
@@ -161,95 +258,26 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 	// care about that yet)
 	const transition = {
 		global,
-		to(target, callback = noop) {
-			if (current_task) {
-				current_task.abort();
-				current_task = null;
-			}
+		in() {
+			if (current_direction === TRANSITION_IN) return;
 
-			if (current_animation && current_options) {
-				const time = /** @type {number} */ (current_animation.currentTime);
-				const duration = /** @type {number} */ (current_options.duration);
-				p = (Math.abs(current_delta) * time) / duration;
-				current_animation.cancel();
-			}
+			current_direction = TRANSITION_IN;
+			callbacks = [];
+			go(1);
+		},
+		out(callback) {
+			if (callback) callbacks.push(callback);
+			if (current_direction === TRANSITION_OUT) return;
 
-			current_options ??= get_fn()(element, get_params?.(), { direction });
-
-			if (!current_options?.duration) {
-				current_options = null;
-				callback();
-				return;
-			}
-
-			const { delay = 0, duration, css, tick, easing = linear } = current_options;
-
-			const n = current_options.duration / (1000 / 60);
-			current_delta = target - p;
-
-			const adjusted_duration = duration * Math.abs(current_delta);
-
-			if (css) {
-				// WAAPI
-				const keyframes = [];
-
-				for (let i = 0; i <= n; i += 1) {
-					const eased = easing(i / n);
-					const t = p + current_delta * eased;
-					const styles = css(t, 1 - t);
-					keyframes.push(css_to_keyframe(styles));
-				}
-
-				current_animation = element.animate(keyframes, {
-					delay,
-					duration: adjusted_duration,
-					easing: 'linear',
-					fill: 'forwards'
-				});
-
-				current_animation.finished
-					.then(() => {
-						p = target;
-						current_animation = current_options = null;
-						callback();
-					})
-					.catch(noop);
-			} else {
-				// Timer
-				let running = true;
-				const start_time = raf.now() + delay;
-				const start_p = p;
-				const end_time = start_time + adjusted_duration;
-
-				tick?.(p, 1 - p); // TODO put in nested effect, to avoid interleaved reads/writes?
-
-				current_task = loop((now) => {
-					if (running) {
-						if (now >= end_time) {
-							p = target;
-							tick?.(target, 1 - target);
-							// dispatch(node, true, 'end'); TODO
-							current_task = null;
-							callback?.();
-							return (running = false);
-						}
-						if (now >= start_time) {
-							p = start_p + current_delta * easing((now - start_time) / adjusted_duration);
-							tick?.(p, 1 - p);
-						}
-					}
-					return running;
-				});
-
-				current_options = null;
-			}
+			current_direction = TRANSITION_OUT;
+			go(0);
 		}
 	};
 
+	(effect.transitions ??= []).push(transition);
+
 	// TODO don't pass strings around like this, it's silly
 	if (direction === 'in' || direction === 'both') {
-		(effect.in ??= []).push(transition);
-
 		// if this is a local transition, we only want to run it if the parent (block) effect's
 		// parent (branch) effect is where the state change happened. we can determine that by
 		// looking at whether the branch effect is currently initializing
@@ -258,14 +286,10 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 
 		if (should_run) {
 			user_effect(() => {
-				untrack(() => transition.to(1));
+				untrack(() => transition.in());
 			});
 		} else {
 			p = 1;
 		}
-	}
-
-	if (direction === 'out' || direction === 'both') {
-		(effect.out ??= []).push(transition);
 	}
 }

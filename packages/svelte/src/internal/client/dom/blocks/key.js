@@ -38,6 +38,8 @@ export function key_block(anchor_node, get_key, render_fn) {
 				effect = render_effect(
 					() => {
 						render_fn(anchor_node);
+
+						// @ts-expect-error TODO this should be unnecessary
 						const dom = block.d;
 
 						return () => {

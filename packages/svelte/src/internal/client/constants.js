@@ -21,5 +21,9 @@ export const DYNAMIC_COMPONENT_BLOCK = 7;
 export const DYNAMIC_ELEMENT_BLOCK = 8;
 export const SNIPPET_BLOCK = 9;
 
+export const TRANSITION_IN = 1 << 1;
+export const TRANSITION_OUT = 1 << 2;
+export const TRANSITION_GLOBAL = 1 << 3;
+
 export const UNINITIALIZED = Symbol();
 export const STATE_SYMBOL = Symbol('$state');
