@@ -4,7 +4,6 @@ import {
 	EACH_ITEM_BLOCK,
 	IF_BLOCK,
 	AWAIT_BLOCK,
-	KEY_BLOCK,
 	HEAD_BLOCK,
 	DYNAMIC_COMPONENT_BLOCK,
 	DYNAMIC_ELEMENT_BLOCK,
@@ -65,7 +64,6 @@ export type BlockType =
 	| typeof EACH_ITEM_BLOCK
 	| typeof IF_BLOCK
 	| typeof AWAIT_BLOCK
-	| typeof KEY_BLOCK
 	| typeof SNIPPET_BLOCK
 	| typeof HEAD_BLOCK
 	| typeof DYNAMIC_COMPONENT_BLOCK
@@ -123,19 +121,6 @@ export type IfBlock = {
 	r: null | ((transition: Transition) => void);
 	/** type */
 	t: typeof IF_BLOCK;
-};
-
-export type KeyBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | Effect;
-	/** parent */
-	p: Block;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof KEY_BLOCK;
 };
 
 export type HeadBlock = {
@@ -256,7 +241,6 @@ export type Block =
 	| DynamicElementBlock
 	| DynamicComponentBlock
 	| HeadBlock
-	| KeyBlock
 	| EachBlock
 	| EachItemBlock
 	| SnippetBlock;

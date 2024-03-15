@@ -16,7 +16,6 @@ export const IF_BLOCK = 1;
 export const EACH_BLOCK = 2;
 export const EACH_ITEM_BLOCK = 3;
 export const AWAIT_BLOCK = 4;
-export const KEY_BLOCK = 5;
 export const HEAD_BLOCK = 6;
 export const DYNAMIC_COMPONENT_BLOCK = 7;
 export const DYNAMIC_ELEMENT_BLOCK = 8;
