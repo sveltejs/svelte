@@ -1808,7 +1808,6 @@ declare module 'svelte/motion' {
 
 declare module 'svelte/reactivity' {
 	export class Date extends Date {
-		static "__#5@#inited": boolean;
 		
 		constructor(...values: any[]);
 		#private;

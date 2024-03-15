@@ -55,14 +55,15 @@ const write = [
 	'setYear'
 ];
 
+var inited = false;
+
 export class ReactiveDate extends Date {
 	#raw_time = source(super.getTime());
-	static #inited = false;
 
 	// We init as part of the first instance so that we can treeshake this class
 	#init() {
-		if (!ReactiveDate.#inited) {
-			ReactiveDate.#inited = true;
+		if (!inited) {
+			inited = true;
 			const proto = ReactiveDate.prototype;
 			const date_proto = Date.prototype;
 
