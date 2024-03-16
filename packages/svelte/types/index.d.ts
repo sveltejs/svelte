@@ -1812,38 +1812,18 @@ declare module 'svelte/reactivity' {
 		constructor(...values: any[]);
 		#private;
 	}
-	export class Set<T> extends Set<any> {
+	export class Set<T> extends Set<T> {
 		
 		constructor(value?: Iterable<T> | null | undefined);
 		
-		has(value: T): boolean;
-		
 		add(value: T): this;
-		
-		delete(value: T): boolean;
-		keys(): IterableIterator<T>;
-		values(): IterableIterator<T>;
-		entries(): IterableIterator<[T, T]>;
-		[Symbol.iterator](): IterableIterator<T>;
 		#private;
 	}
-	export class Map<K, V> extends Map<any, any> {
+	export class Map<K, V> extends Map<K, V> {
 		
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
 		
-		has(key: K): boolean;
-		
-		forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void, this_arg?: any): void;
-		
-		get(key: K): V | undefined;
-		
 		set(key: K, value: V): this;
-		
-		delete(key: K): boolean;
-		keys(): IterableIterator<K>;
-		values(): IterableIterator<V>;
-		entries(): IterableIterator<[K, V]>;
-		[Symbol.iterator](): IterableIterator<[K, V]>;
 		#private;
 	}
 }
