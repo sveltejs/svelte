@@ -232,23 +232,30 @@ export function render_effect(fn, block = current_block, managed = false, sync =
 }
 
 /**
- * @param {import('#client').Effect} signal
+ * @param {import('#client').Effect} effect
  * @returns {void}
  */
-export function destroy_effect(signal) {
-	destroy_children(signal);
-	remove_reactions(signal, 0);
-	set_signal_status(signal, DESTROYED);
+export function destroy_effect(effect) {
+	destroy_children(effect);
+	remove_reactions(effect, 0);
+	set_signal_status(effect, DESTROYED);
 
-	signal.teardown?.();
-	signal.ondestroy?.();
-	signal.fn =
-		signal.effects =
-		signal.teardown =
-		signal.ondestroy =
-		signal.ctx =
-		signal.block =
-		signal.deps =
+	if (effect.transitions) {
+		for (const transition of effect.transitions) {
+			transition.stop();
+		}
+	}
+
+	effect.teardown?.();
+	effect.ondestroy?.();
+
+	effect.fn =
+		effect.effects =
+		effect.teardown =
+		effect.ondestroy =
+		effect.ctx =
+		effect.block =
+		effect.deps =
 			null;
 }
 

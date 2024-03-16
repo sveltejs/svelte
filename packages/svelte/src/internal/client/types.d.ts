@@ -331,6 +331,7 @@ export interface Transition2 {
 	global: boolean;
 	in: () => void;
 	out: (callback?: () => void) => void;
+	stop: () => void;
 }
 
 export * from './reactivity/types';

@@ -163,22 +163,12 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 	let callbacks = [];
 
 	/** @param {number} target */
-	function go(target) {
+	function start(target) {
 		// TODO if this is an `in:` transition and we just called `out()`, do nothing (let it play until the block is destroyed, probably immediately)
 		// TODO if this is an `out:` transition and we just called `in()`, abort everything and reset to 1 immediately
 		// TODO add a `transition.abort()` method to cancel an outro transition immediately when an effect is destroyed before the transition finishes running — don't want tickers etc to continue
 
-		if (current_task) {
-			current_task.abort();
-			current_task = null;
-		}
-
-		if (current_animation && current_options) {
-			const time = /** @type {number} */ (current_animation.currentTime);
-			const duration = /** @type {number} */ (current_options.duration);
-			p = (Math.abs(current_delta) * time) / duration;
-			current_animation.cancel();
-		}
+		stop();
 
 		current_options ??= get_fn()(element, get_params?.(), { direction });
 
@@ -251,6 +241,21 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 		}
 	}
 
+	function stop() {
+		if (current_task) {
+			current_task.abort();
+			current_task = null;
+		}
+
+		if (current_animation && current_options) {
+			const time = /** @type {number} */ (current_animation.currentTime);
+			const duration = /** @type {number} */ (current_options.duration);
+			p = (Math.abs(current_delta) * time) / duration;
+			current_animation.cancel();
+			current_animation = null;
+		}
+	}
+
 	/** @type {import('#client').Transition2} */
 	// TODO this needs to be `in()` and `out()` rather than `to()`, and both
 	// need to be idempotent (because of `{#if ...}{#if ...}`). `out()` should
@@ -259,19 +264,35 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 	const transition = {
 		global,
 		in() {
-			if (current_direction === TRANSITION_IN) return;
-
-			current_direction = TRANSITION_IN;
 			callbacks = [];
-			go(1);
+
+			if (direction === 'in' || direction === 'both') {
+				if (current_direction !== TRANSITION_IN) {
+					current_direction = TRANSITION_IN;
+					start(1);
+				}
+			} else {
+				current_direction = 0;
+				stop();
+			}
 		},
 		out(callback) {
-			if (callback) callbacks.push(callback);
-			if (current_direction === TRANSITION_OUT) return;
+			if (direction === 'out' || direction === 'both') {
+				if (callback) {
+					callbacks.push(callback);
+				}
 
-			current_direction = TRANSITION_OUT;
-			go(0);
-		}
+				if (current_direction !== TRANSITION_OUT) {
+					current_direction = TRANSITION_OUT;
+					start(0);
+				}
+			} else {
+				if (callback) {
+					callback();
+				}
+			}
+		},
+		stop
 	};
 
 	(effect.transitions ??= []).push(transition);
