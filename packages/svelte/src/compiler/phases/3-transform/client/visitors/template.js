@@ -37,6 +37,11 @@ import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
 import { walk } from 'zimmerframe';
+import {
+	TRANSITION_GLOBAL,
+	TRANSITION_IN,
+	TRANSITION_OUT
+} from '../../../../../internal/client/constants.js';
 
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
@@ -1934,25 +1939,21 @@ export const template_visitors = {
 		error(node, 'INTERNAL', 'Node should have been handled elsewhere');
 	},
 	TransitionDirective(node, { state, visit }) {
-		const type = node.intro && node.outro ? '$.transition' : node.intro ? '$.in' : '$.out';
-		const expression =
-			node.expression === null
-				? b.literal(null)
-				: b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression)));
+		let flags = node.modifiers.includes('global') ? TRANSITION_GLOBAL : 0;
+		if (node.intro) flags |= TRANSITION_IN;
+		if (node.outro) flags |= TRANSITION_OUT;
 
-		state.init.push(
-			b.stmt(
-				b.call(
-					type,
-					state.node,
-					b.thunk(
-						/** @type {import('estree').Expression} */ (visit(parse_directive_name(node.name)))
-					),
-					expression,
-					node.modifiers.includes('global') ? b.true : b.false
-				)
-			)
-		);
+		const args = [
+			b.literal(flags),
+			state.node,
+			b.thunk(/** @type {import('estree').Expression} */ (visit(parse_directive_name(node.name))))
+		];
+
+		if (node.expression) {
+			args.push(b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression))));
+		}
+
+		state.init.push(b.stmt(b.call('$.transition', ...args)));
 	},
 	RegularElement(node, context) {
 		if (node.name === 'noscript') {

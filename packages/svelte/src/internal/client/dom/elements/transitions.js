@@ -17,48 +17,11 @@ let active_tick_ref = undefined;
  * @param {HTMLElement} dom
  * @param {() => import('#client').TransitionFn<P | undefined>} get_transition_fn
  * @param {(() => P) | null} props
- * @param {any} global
- * @returns {void}
- */
-export function transition(dom, get_transition_fn, props, global = false) {
-	bind_transition(dom, get_transition_fn, props, 'both', global);
-}
-
-/**
- * @template P
- * @param {HTMLElement} dom
- * @param {() => import('#client').TransitionFn<P | undefined>} get_transition_fn
- * @param {(() => P) | null} props
  * @returns {void}
  */
 export function animate(dom, get_transition_fn, props) {
 	// TODO
 	// bind_transition(dom, get_transition_fn, props, 'key', false);
-}
-
-/**
- * @template P
- * @param {HTMLElement} dom
- * @param {() => import('#client').TransitionFn<P | undefined>} get_transition_fn
- * @param {(() => P) | null} props
- * @param {any} global
- * @returns {void}
- */
-function in_fn(dom, get_transition_fn, props, global = false) {
-	bind_transition(dom, get_transition_fn, props, 'in', global);
-}
-export { in_fn as in };
-
-/**
- * @template P
- * @param {HTMLElement} dom
- * @param {() => import('#client').TransitionFn<P | undefined>} get_transition_fn
- * @param {(() => P) | null} props
- * @param {any} global
- * @returns {void}
- */
-export function out(dom, get_transition_fn, props, global = false) {
-	bind_transition(dom, get_transition_fn, props, 'out', global);
 }
 
 /**
@@ -133,17 +96,21 @@ export function trigger_transitions(transitions, target_direction, from) {
 // TODO make transition mode (`in:`, `out:`, `transition:` and `|global`) a bitmask
 /**
  * @template P
+ * @param {number} flags
  * @param {HTMLElement} element
  * @param {() => import('#client').TransitionFn<P | undefined>} get_fn
  * @param {(() => P) | null} get_params
- * @param {'in' | 'out' | 'both'} direction
- * @param {boolean} global
  * @returns {void}
  */
-export function bind_transition(element, get_fn, get_params, direction, global) {
+export function transition(flags, element, get_fn, get_params) {
 	const effect = /** @type {import('#client').Effect} */ (current_effect);
 
-	let p = direction === 'out' ? 1 : 0;
+	const intro = (flags & TRANSITION_IN) !== 0;
+	const outro = (flags & TRANSITION_OUT) !== 0;
+	const direction = intro && outro ? 'both' : intro ? 'in' : 'out';
+	const global = (flags & TRANSITION_GLOBAL) !== 0;
+
+	let p = 0;
 
 	/** @type {0 | TRANSITION_IN | TRANSITION_OUT} */
 	let current_direction = 0;
@@ -266,7 +233,7 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 		in() {
 			callbacks = [];
 
-			if (direction === 'in' || direction === 'both') {
+			if (intro) {
 				if (current_direction !== TRANSITION_IN) {
 					current_direction = TRANSITION_IN;
 					start(1);
@@ -277,7 +244,7 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 			}
 		},
 		out(callback) {
-			if (direction === 'out' || direction === 'both') {
+			if (outro) {
 				if (callback) {
 					callbacks.push(callback);
 				}
@@ -297,20 +264,18 @@ export function bind_transition(element, get_fn, get_params, direction, global) 
 
 	(effect.transitions ??= []).push(transition);
 
-	// TODO don't pass strings around like this, it's silly
-	if (direction === 'in' || direction === 'both') {
-		// if this is a local transition, we only want to run it if the parent (block) effect's
-		// parent (branch) effect is where the state change happened. we can determine that by
-		// looking at whether the branch effect is currently initializing
-		const should_run =
-			run_transitions && (global || /** @type {import('#client').Effect} */ (effect.parent).ran);
-
-		if (should_run) {
-			user_effect(() => {
-				untrack(() => transition.in());
-			});
-		} else {
-			p = 1;
-		}
+	// if this is a local transition, we only want to run it if the parent (block) effect's
+	// parent (branch) effect is where the state change happened. we can determine that by
+	// looking at whether the branch effect is currently initializing
+	if (
+		intro &&
+		run_transitions &&
+		(global || /** @type {import('#client').Effect} */ (effect.parent).ran)
+	) {
+		user_effect(() => {
+			untrack(() => transition.in());
+		});
+	} else {
+		p = 1;
 	}
 }
