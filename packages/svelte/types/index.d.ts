@@ -187,7 +187,7 @@ declare module 'svelte' {
 	/**
 	 * The type of a `#snippet` block. You can use it to (for example) express that your component expects a snippet of a certain type:
 	 * ```ts
-	 * let { banner } = $props<{ banner: Snippet<{ text: string }> }>();
+	 * let { banner }: { banner: Snippet<{ text: string }> } = $props();
 	 * ```
 	 * You can only call a snippet through the `{@render ...}` tag.
 	 */
@@ -243,38 +243,6 @@ declare module 'svelte' {
 	 * https://svelte.dev/docs/svelte#ondestroy
 	 * */
 	export function onDestroy(fn: () => any): void;
-	/**
-	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
-	 * Must be called during component initialisation.
-	 *
-	 * https://svelte.dev/docs/svelte#getcontext
-	 * */
-	export function getContext<T>(key: any): T;
-	/**
-	 * Associates an arbitrary `context` object with the current component and the specified `key`
-	 * and returns that object. The context is then available to children of the component
-	 * (including slotted content) with `getContext`.
-	 *
-	 * Like lifecycle functions, this must be called during component initialisation.
-	 *
-	 * https://svelte.dev/docs/svelte#setcontext
-	 * */
-	export function setContext<T>(key: any, context: T): T;
-	/**
-	 * Checks whether a given `key` has been set in the context of a parent component.
-	 * Must be called during component initialisation.
-	 *
-	 * https://svelte.dev/docs/svelte#hascontext
-	 * */
-	export function hasContext(key: any): boolean;
-	/**
-	 * Retrieves the whole context map that belongs to the closest parent component.
-	 * Must be called during component initialisation. Useful, for example, if you
-	 * programmatically create a component and want to pass the existing context to it.
-	 *
-	 * https://svelte.dev/docs/svelte#getallcontexts
-	 * */
-	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
 	/**
 	 * Creates an event dispatcher that can be used to dispatch [component events](https://svelte.dev/docs#template-syntax-component-directives-on-eventname).
 	 * Event dispatchers are functions that can take two arguments: `name` and `detail`.
@@ -368,6 +336,38 @@ declare module 'svelte' {
 	 * https://svelte-5-preview.vercel.app/docs/functions#untrack
 	 * */
 	export function untrack<T>(fn: () => T): T;
+	/**
+	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
+	 * Must be called during component initialisation.
+	 *
+	 * https://svelte.dev/docs/svelte#getcontext
+	 * */
+	export function getContext<T>(key: any): T;
+	/**
+	 * Associates an arbitrary `context` object with the current component and the specified `key`
+	 * and returns that object. The context is then available to children of the component
+	 * (including slotted content) with `getContext`.
+	 *
+	 * Like lifecycle functions, this must be called during component initialisation.
+	 *
+	 * https://svelte.dev/docs/svelte#setcontext
+	 * */
+	export function setContext<T>(key: any, context: T): T;
+	/**
+	 * Checks whether a given `key` has been set in the context of a parent component.
+	 * Must be called during component initialisation.
+	 *
+	 * https://svelte.dev/docs/svelte#hascontext
+	 * */
+	export function hasContext(key: any): boolean;
+	/**
+	 * Retrieves the whole context map that belongs to the closest parent component.
+	 * Must be called during component initialisation. Useful, for example, if you
+	 * programmatically create a component and want to pass the existing context to it.
+	 *
+	 * https://svelte.dev/docs/svelte#getallcontexts
+	 * */
+	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
 	export function unstate<T>(value: T): T;
 }
 
@@ -475,7 +475,7 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/compiler' {
-	import type { AssignmentExpression, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, ArrayExpression, MemberExpression, ObjectExpression, Pattern, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, FunctionExpression, Node, Program, SpreadElement } from 'estree';
+	import type { AssignmentExpression, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, ArrayExpression, MemberExpression, ObjectExpression, Pattern, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, FunctionExpression, Node, Program, ChainExpression, SimpleCallExpression } from 'estree';
 	import type { Location } from 'locate-character';
 	import type { SourceMap } from 'magic-string';
 	import type { Context } from 'zimmerframe';
@@ -756,6 +756,11 @@ declare module 'svelte/compiler' {
 		expression: Expression | ((id: Identifier) => Expression) | null;
 		/** If this is set, all mutations should use this expression */
 		mutation: ((assignment: AssignmentExpression, context: Context<any, any>) => Expression) | null;
+		/** Additional metadata, varies per binding type */
+		metadata: {
+			/** `true` if is (inside) a rest parameter */
+			inside_rest?: boolean;
+		} | null;
 	}
 	interface BaseNode_1 {
 		type: string;
@@ -1021,6 +1026,10 @@ declare module 'svelte/compiler' {
 		
 		root: ScopeRoot;
 		/**
+		 * The immediate parent scope
+		 * */
+		parent: Scope | null;
+		/**
 		 * A map of every identifier declared by this scope, and all the
 		 * identifiers that reference it
 		 * */
@@ -1111,7 +1120,7 @@ declare module 'svelte/compiler' {
 	}
 
 	interface SvelteOptions {
-		// start/end info (needed for Prettier, when someone wants to keep the options where they are)
+		// start/end info (needed for warnings and for our Prettier plugin)
 		start: number;
 		end: number;
 		// options
@@ -1197,8 +1206,7 @@ declare module 'svelte/compiler' {
 	/** A `{@render foo(...)} tag */
 	interface RenderTag extends BaseNode {
 		type: 'RenderTag';
-		expression: Identifier;
-		arguments: Array<Expression | SpreadElement>;
+		expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
 	}
 
 	type Tag = ExpressionTag | HtmlTag | ConstTag | DebugTag | RenderTag;
@@ -1720,184 +1728,19 @@ declare module 'svelte/legacy' {
 	 * @deprecated Use this only as a temporary solution to migrate your imperative component code to Svelte 5.
 	 *
 	 * */
-	export function createClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(options: ComponentConstructorOptions<Props> & {
-		component: SvelteComponent<Props, Events, Slots>;
+	export function createClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(options: import("svelte").ComponentConstructorOptions<Props> & {
+		component: import("svelte").ComponentType<import("svelte").SvelteComponent<Props, Events, Slots>>;
 		immutable?: boolean | undefined;
 		hydrate?: boolean | undefined;
-		recover?: false | undefined;
-	}): SvelteComponent<Props, Events, Slots> & Exports;
+		recover?: boolean | undefined;
+	}): import("svelte").SvelteComponent<Props, Events, Slots> & Exports;
 	/**
 	 * Takes the component function and returns a Svelte 4 compatible component constructor.
 	 *
 	 * @deprecated Use this only as a temporary solution to migrate your imperative component code to Svelte 5.
 	 *
 	 * */
-	export function asClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(component: SvelteComponent<Props, Events, Slots>): ComponentType<SvelteComponent<Props, Events, Slots> & Exports>;
-	// This should contain all the public interfaces (not all of them are actually importable, check current Svelte for which ones are).
-
-	/**
-	 * @deprecated Svelte components were classes in Svelte 4. In Svelte 5, thy are not anymore.
-	 * Use `mount` or `createRoot` instead to instantiate components.
-	 * See [breaking changes](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes)
-	 * for more info.
-	 */
-	interface ComponentConstructorOptions<
-		Props extends Record<string, any> = Record<string, any>
-	> {
-		target: Element | Document | ShadowRoot;
-		anchor?: Element;
-		props?: Props;
-		context?: Map<any, any>;
-		hydrate?: boolean;
-		intro?: boolean;
-		$$inline?: boolean;
-	}
-
-	// Utility type for ensuring backwards compatibility on a type level: If there's a default slot, add 'children' to the props if it doesn't exist there already
-	type PropsWithChildren<Props, Slots> = Props &
-		(Props extends { children?: any }
-			? {}
-			: Slots extends { default: any }
-				? { children?: Snippet }
-				: {});
-
-	/**
-	 * Can be used to create strongly typed Svelte components.
-	 *
-	 * #### Example:
-	 *
-	 * You have component library on npm called `component-library`, from which
-	 * you export a component called `MyComponent`. For Svelte+TypeScript users,
-	 * you want to provide typings. Therefore you create a `index.d.ts`:
-	 * ```ts
-	 * import { SvelteComponent } from "svelte";
-	 * export class MyComponent extends SvelteComponent<{foo: string}> {}
-	 * ```
-	 * Typing this makes it possible for IDEs like VS Code with the Svelte extension
-	 * to provide intellisense and to use the component like this in a Svelte file
-	 * with TypeScript:
-	 * ```svelte
-	 * <script lang="ts">
-	 * 	import { MyComponent } from "component-library";
-	 * </script>
-	 * <MyComponent foo={'bar'} />
-	 * ```
-	 *
-	 * This was the base class for Svelte components in Svelte 4. Svelte 5+ components
-	 * are completely different under the hood. You should only use this type for typing,
-	 * not actually instantiate components with `new` - use `mount` or `createRoot` instead.
-	 * See [breaking changes](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes)
-	 * for more info.
-	 */
-	class SvelteComponent<
-		Props extends Record<string, any> = any,
-		Events extends Record<string, any> = any,
-		Slots extends Record<string, any> = any
-	> {
-		[prop: string]: any;
-		/**
-		 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
-		 * is a stop-gap solution. Migrate towards using `mount` or `createRoot` instead. See
-		 * https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more info.
-		 */
-		constructor(options: ComponentConstructorOptions<PropsWithChildren<Props, Slots>>);
-		/**
-		 * For type checking capabilities only.
-		 * Does not exist at runtime.
-		 * ### DO NOT USE!
-		 * */
-		$$prop_def: PropsWithChildren<Props, Slots>;
-		/**
-		 * For type checking capabilities only.
-		 * Does not exist at runtime.
-		 * ### DO NOT USE!
-		 *
-		 * */
-		$$events_def: Events;
-		/**
-		 * For type checking capabilities only.
-		 * Does not exist at runtime.
-		 * ### DO NOT USE!
-		 *
-		 * */
-		$$slot_def: Slots;
-
-		/**
-		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
-		 * for more info.
-		 */
-		$destroy(): void;
-
-		/**
-		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
-		 * for more info.
-		 */
-		$on<K extends Extract<keyof Events, string>>(
-			type: K,
-			callback: (e: Events[K]) => void
-		): () => void;
-
-		/**
-		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
-		 * for more info.
-		 */
-		$set(props: Partial<Props>): void;
-	}
-
-	/**
-	 * Convenience type to get the type of a Svelte component. Useful for example in combination with
-	 * dynamic components using `<svelte:component>`.
-	 *
-	 * Example:
-	 * ```html
-	 * <script lang="ts">
-	 * 	import type { ComponentType, SvelteComponent } from 'svelte';
-	 * 	import Component1 from './Component1.svelte';
-	 * 	import Component2 from './Component2.svelte';
-	 *
-	 * 	const component: ComponentType = someLogic() ? Component1 : Component2;
-	 * 	const componentOfCertainSubType: ComponentType<SvelteComponent<{ needsThisProp: string }>> = someLogic() ? Component1 : Component2;
-	 * </script>
-	 *
-	 * <svelte:component this={component} />
-	 * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
-	 * ```
-	 */
-	type ComponentType<Comp extends SvelteComponent = SvelteComponent> = (new (
-		options: ComponentConstructorOptions<
-			Comp extends SvelteComponent<infer Props> ? Props : Record<string, any>
-		>
-	) => Comp) & {
-		/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
-		element?: typeof HTMLElement;
-	};
-
-	const SnippetReturn: unique symbol;
-
-	/**
-	 * The type of a `#snippet` block. You can use it to (for example) express that your component expects a snippet of a certain type:
-	 * ```ts
-	 * let { banner } = $props<{ banner: Snippet<{ text: string }> }>();
-	 * ```
-	 * You can only call a snippet through the `{@render ...}` tag.
-	 */
-	type Snippet<T extends unknown[] = []> =
-		// this conditional allows tuples but not arrays. Arrays would indicate a
-		// rest parameter type, which is not supported. If rest parameters are added
-		// in the future, the condition can be removed.
-		number extends T['length']
-			? never
-			: {
-					(
-						this: void,
-						...args: T
-					): typeof SnippetReturn & {
-						_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
-					};
-				};
+	export function asClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(component: import("svelte").SvelteComponent<Props, Events, Slots>): import("svelte").ComponentType<import("svelte").SvelteComponent<Props, Events, Slots> & Exports>;
 }
 
 declare module 'svelte/motion' {
@@ -2616,12 +2459,12 @@ declare namespace $effect {
  * Declares the props that a component accepts. Example:
  *
  * ```ts
- * let { optionalProp = 42, requiredProp } = $props<{ optionalProp?: number; requiredProps: string}>();
+ * let { optionalProp = 42, requiredProp }: { optionalProp?: number; requiredProps: string } = $props();
  * ```
  *
  * https://svelte-5-preview.vercel.app/docs/runes#$props
  */
-declare function $props<T>(): T;
+declare function $props(): any;
 
 /**
  * Inspects one or more values whenever they, or the properties they contain, change. Example:

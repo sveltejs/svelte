@@ -191,6 +191,8 @@ const visitors = {
 		next({ ...state, specificity });
 	},
 	ComplexSelector(node, context) {
+		const before_bumped = context.state.specificity.bumped;
+
 		/** @param {import('#compiler').Css.SimpleSelector} selector */
 		function remove_global_pseudo_class(selector) {
 			context.state.code
@@ -261,6 +263,8 @@ const visitors = {
 		}
 
 		context.next();
+
+		context.state.specificity.bumped = before_bumped;
 	},
 	PseudoClassSelector(node, context) {
 		if (node.name === 'is' || node.name === 'where') {

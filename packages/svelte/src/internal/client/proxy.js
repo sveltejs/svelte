@@ -1,14 +1,6 @@
 import { DEV } from 'esm-env';
-import {
-	get,
-	set,
-	updating_derived,
-	batch_inspect,
-	current_component_context,
-	untrack,
-	set_signal_value
-} from './runtime.js';
-import { effect_active } from './reactivity/computations.js';
+import { get, batch_inspect, current_component_context, untrack } from './runtime.js';
+import { effect_active } from './reactivity/effects.js';
 import {
 	array_prototype,
 	define_property,
@@ -20,14 +12,15 @@ import {
 	object_prototype
 } from './utils.js';
 import { add_owner, check_ownership, strip_owner } from './dev/ownership.js';
-import { mutable_source, source } from './reactivity/sources.js';
+import { mutable_source, source, set } from './reactivity/sources.js';
 import { STATE_SYMBOL, UNINITIALIZED } from './constants.js';
+import { updating_derived } from './reactivity/deriveds.js';
 
 /**
  * @template T
  * @param {T} value
  * @param {boolean} [immutable]
- * @param {Function[]} [owners]
+ * @param {Set<Function> | null} [owners]
  * @returns {import('./types.js').ProxyStateObject<T> | T}
  */
 export function proxy(value, immutable = true, owners) {
@@ -150,18 +143,18 @@ export function unstate(value) {
 }
 
 /**
- * @param {import('./types.js').Signal<number>} signal
+ * @param {import('./types.js').Source<number>} signal
  * @param {1 | -1} [d]
  */
 function update_version(signal, d = 1) {
-	const value = untrack(() => get(signal));
-	set_signal_value(signal, value + d);
+	set(signal, signal.v + d);
 }
 
 /** @type {ProxyHandler<import('./types.js').ProxyStateObject<any>>} */
 const state_proxy_handler = {
 	defineProperty(target, prop, descriptor) {
 		if (descriptor.value) {
+			/** @type {import('./types.js').ProxyMetadata} */
 			const metadata = target[STATE_SYMBOL];
 
 			const s = metadata.s.get(prop);
@@ -172,6 +165,7 @@ const state_proxy_handler = {
 	},
 
 	deleteProperty(target, prop) {
+		/** @type {import('./types.js').ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 		const s = metadata.s.get(prop);
 		const is_array = metadata.a;
@@ -204,6 +198,7 @@ const state_proxy_handler = {
 			return Reflect.get(target, STATE_SYMBOL);
 		}
 
+		/** @type {import('./types.js').ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
 
@@ -234,6 +229,7 @@ const state_proxy_handler = {
 	getOwnPropertyDescriptor(target, prop) {
 		const descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
 		if (descriptor && 'value' in descriptor) {
+			/** @type {import('./types.js').ProxyMetadata} */
 			const metadata = target[STATE_SYMBOL];
 			const s = metadata.s.get(prop);
 
@@ -249,6 +245,7 @@ const state_proxy_handler = {
 		if (prop === STATE_SYMBOL) {
 			return true;
 		}
+		/** @type {import('./types.js').ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 		const has = Reflect.has(target, prop);
 
@@ -269,6 +266,7 @@ const state_proxy_handler = {
 	},
 
 	set(target, prop, value, receiver) {
+		/** @type {import('./types.js').ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
 		// If we haven't yet created a source for this property, we need to ensure
@@ -286,8 +284,18 @@ const state_proxy_handler = {
 		const is_array = metadata.a;
 		const not_has = !(prop in target);
 
-		if (DEV && metadata.o) {
-			check_ownership(metadata.o);
+		if (DEV) {
+			// First check ownership of the object that is assigned to.
+			// Then, if the new object has owners, widen them with the ones from the current object.
+			// If it doesn't have owners that means it's ownerless, and so the assigned object should be, too.
+			if (metadata.o) {
+				check_ownership(metadata.o);
+				for (const owner in metadata.o) {
+					add_owner(value, owner);
+				}
+			} else {
+				strip_owner(value);
+			}
 		}
 
 		// variable.length = value -> clear all signals with index >= value
@@ -321,6 +329,7 @@ const state_proxy_handler = {
 	},
 
 	ownKeys(target) {
+		/** @type {import('./types.js').ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 
 		get(metadata.v);

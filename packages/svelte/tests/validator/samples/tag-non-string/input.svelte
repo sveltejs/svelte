@@ -1,1 +1,1 @@
-<svelte:options tag={42}/>
+<svelte:options customElement={42}/>

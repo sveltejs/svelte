@@ -1,0 +1,6 @@
+	div.svelte-xyz {
+		color: red;
+	}
+	div.svelte-xyz span:where(.svelte-xyz), div.svelte-xyz div:where(.svelte-xyz) {
+		color: blue;
+	}

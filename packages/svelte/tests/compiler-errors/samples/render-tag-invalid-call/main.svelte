@@ -1,0 +1,1 @@
+{@render snippet.apply(null, [1, 2, 3])}

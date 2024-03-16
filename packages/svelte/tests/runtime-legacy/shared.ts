@@ -66,7 +66,8 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	runtime_error?: string;
 	warnings?: string[];
 	expect_unhandled_rejections?: boolean;
-	withoutNormalizeHtml?: boolean;
+	withoutNormalizeHtml?: boolean | 'only-strip-comments';
+	recover?: boolean;
 }
 
 let unhandled_rejection: Error | null = null;
@@ -212,13 +213,15 @@ async function run_test_variant(
 		if (variant === 'ssr') {
 			if (config.ssrHtml) {
 				assert_html_equal_with_options(target.innerHTML, config.ssrHtml, {
-					preserveComments: config.compileOptions?.preserveComments,
-					withoutNormalizeHtml: config.withoutNormalizeHtml
+					preserveComments:
+						config.withoutNormalizeHtml === 'only-strip-comments' ? false : undefined,
+					withoutNormalizeHtml: !!config.withoutNormalizeHtml
 				});
 			} else if (config.html) {
 				assert_html_equal_with_options(target.innerHTML, config.html, {
-					preserveComments: config.compileOptions?.preserveComments,
-					withoutNormalizeHtml: config.withoutNormalizeHtml
+					preserveComments:
+						config.withoutNormalizeHtml === 'only-strip-comments' ? false : undefined,
+					withoutNormalizeHtml: !!config.withoutNormalizeHtml
 				});
 			}
 
@@ -258,7 +261,7 @@ async function run_test_variant(
 				target,
 				immutable: config.immutable,
 				intro: config.intro,
-				recover: false,
+				recover: config.recover === undefined ? false : config.recover,
 				hydrate: variant === 'hydrate'
 			});
 
@@ -282,7 +285,9 @@ async function run_test_variant(
 			if (config.html) {
 				$.flushSync();
 				assert_html_equal_with_options(target.innerHTML, config.html, {
-					withoutNormalizeHtml: config.withoutNormalizeHtml
+					preserveComments:
+						config.withoutNormalizeHtml === 'only-strip-comments' ? false : undefined,
+					withoutNormalizeHtml: !!config.withoutNormalizeHtml
 				});
 			}
 

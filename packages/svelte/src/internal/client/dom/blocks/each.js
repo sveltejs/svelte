@@ -13,21 +13,15 @@ import {
 	hydrate_block_anchor,
 	hydrating,
 	set_current_hydration_fragment
-} from '../../hydration.js';
-import { clear_text_content, empty, map_get, map_set } from '../../operations.js';
-import { insert, remove } from '../../reconciler.js';
-import {
-	current_block,
-	destroy_signal,
-	execute_effect,
-	push_destroy_fn,
-	set_signal_value
-} from '../../runtime.js';
-import { render_effect } from '../../reactivity/computations.js';
-import { source, mutable_source } from '../../reactivity/sources.js';
-import { trigger_transitions } from '../../transitions.js';
-import { is_array } from '../../utils.js';
-import { EACH_BLOCK, EACH_ITEM_BLOCK } from '../../constants.js';
+} from '../hydration.js';
+import { clear_text_content, empty } from '../operations.js';
+import { insert, remove } from '../reconciler.js';
+import { current_block, execute_effect } from '../../runtime.js';
+import { destroy_effect, render_effect } from '../../reactivity/effects.js';
+import { source, mutable_source, set } from '../../reactivity/sources.js';
+import { trigger_transitions } from '../elements/transitions.js';
+import { is_array, is_frozen, map_get, map_set } from '../../utils.js';
+import { EACH_BLOCK, EACH_ITEM_BLOCK, STATE_SYMBOL } from '../../constants.js';
 
 const NEW_BLOCK = -1;
 const MOVED_BLOCK = 99999999;
@@ -61,8 +55,8 @@ export function create_each_block(flags, anchor) {
 }
 
 /**
- * @param {any | import('../../types.js').Signal<any>} item
- * @param {number | import('../../types.js').Signal<number>} index
+ * @param {any | import('../../types.js').Value<any>} item
+ * @param {number | import('../../types.js').Value<number>} index
  * @param {null | unknown} key
  * @returns {import('../../types.js').EachItemBlock}
  */
@@ -97,7 +91,7 @@ export function create_each_item_block(item, index, key) {
  * @param {() => V[]} collection
  * @param {number} flags
  * @param {null | ((item: V) => string)} key_fn
- * @param {(anchor: null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
  * @returns {void}
@@ -116,7 +110,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	/** @type {Array<string> | null} */
 	let keys = null;
 
-	/** @type {null | import('../../types.js').EffectSignal} */
+	/** @type {null | import('../../types.js').Effect} */
 	let render = null;
 
 	/**
@@ -139,7 +133,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 							remove(fallback.d);
 							fallback.d = null;
 						}
-						destroy_signal(fallback.e);
+						destroy_effect(fallback.e);
 						fallback.e = null;
 					}
 				}
@@ -267,7 +261,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		set_current_hydration_fragment([]);
 	}
 
-	push_destroy_fn(each, () => {
+	each.ondestroy = () => {
 		const flags = block.f;
 		const anchor_node = block.a;
 		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
@@ -279,14 +273,14 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			}
 			const effect = fallback.e;
 			if (effect !== null) {
-				destroy_signal(effect);
+				destroy_effect(effect);
 			}
 			fallback = fallback.p;
 		}
 		// Clear the array
 		reconcile_fn([], block, anchor_node, is_controlled, render_fn, flags, false, keys);
-		destroy_signal(/** @type {import('../../types.js').EffectSignal} */ (render));
-	});
+		destroy_effect(/** @type {import('#client').Effect} */ (render));
+	};
 
 	block.e = each;
 }
@@ -297,7 +291,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
  * @param {() => V[]} collection
  * @param {number} flags
  * @param {null | ((item: V) => string)} key_fn
- * @param {(anchor: null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
@@ -310,7 +304,7 @@ export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fa
  * @param {Element | Comment} anchor_node
  * @param {() => V[]} collection
  * @param {number} flags
- * @param {(anchor: null, item: V, index: import('../../types.js').MaybeSignal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
@@ -324,7 +318,7 @@ export function each_indexed(anchor_node, collection, flags, render_fn, fallback
  * @param {import('../../types.js').EachBlock} each_block
  * @param {Element | Comment | Text} dom
  * @param {boolean} is_controlled
- * @param {(anchor: null, item: V, index: number | import('../../types.js').Signal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: number | import('../../types.js').Source<number>) => void} render_fn
  * @param {number} flags
  * @param {boolean} apply_transitions
  * @returns {void}
@@ -338,6 +332,11 @@ function reconcile_indexed_array(
 	flags,
 	apply_transitions
 ) {
+	// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
+	// are treated as reactive, so they get wrapped in a signal.
+	if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
+		flags ^= EACH_IS_STRICT_EQUALS;
+	}
 	var a_blocks = each_block.v;
 	var active_transitions = each_block.s;
 
@@ -393,7 +392,8 @@ function reconcile_indexed_array(
 				b_blocks[index] = block;
 
 				hydrating_node = /** @type {import('../../types.js').TemplateNode} */ (
-					/** @type {Node} */ (/** @type {Node} */ (fragment.at(-1)).nextSibling).nextSibling
+					/** @type {Node} */ (/** @type {Node} */ (fragment[fragment.length - 1]).nextSibling)
+						.nextSibling
 				);
 			}
 
@@ -438,7 +438,7 @@ function reconcile_indexed_array(
  * @param {import('../../types.js').EachBlock} each_block
  * @param {Element | Comment | Text} dom
  * @param {boolean} is_controlled
- * @param {(anchor: null, item: V, index: number | import('../../types.js').Signal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: number | import('../../types.js').Source<number>) => void} render_fn
  * @param {number} flags
  * @param {boolean} apply_transitions
  * @param {Array<string> | null} keys
@@ -454,6 +454,15 @@ function reconcile_tracked_array(
 	apply_transitions,
 	keys
 ) {
+	// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
+	// are treated as reactive, so they get wrapped in a signal.
+	if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
+		flags ^= EACH_IS_STRICT_EQUALS;
+		// Additionally as we're in an keyed each block, we'll need ensure the itens are all wrapped in signals.
+		if ((flags & EACH_ITEM_REACTIVE) === 0) {
+			flags ^= EACH_ITEM_REACTIVE;
+		}
+	}
 	var a_blocks = each_block.v;
 	const is_computed_key = keys !== null;
 	var active_transitions = each_block.s;
@@ -517,7 +526,8 @@ function reconcile_tracked_array(
 				// Get the <!--ssr:..--> tag of the next item in the list
 				// The fragment array can be empty if each block has no content
 				hydrating_node = /** @type {import('../../types.js').TemplateNode} */ (
-					/** @type {Node} */ ((fragment.at(-1) || hydrating_node).nextSibling).nextSibling
+					/** @type {Node} */ ((fragment[fragment.length - 1] || hydrating_node).nextSibling)
+						.nextSibling
 				);
 			}
 
@@ -842,7 +852,7 @@ export function get_first_element(block) {
 function update_each_item_block(block, item, index, type) {
 	const block_v = block.v;
 	if ((type & EACH_ITEM_REACTIVE) !== 0) {
-		set_signal_value(block_v, item);
+		set(block_v, item);
 	}
 	const transitions = block.s;
 	const index_is_reactive = (type & EACH_INDEX_REACTIVE) !== 0;
@@ -852,7 +862,7 @@ function update_each_item_block(block, item, index, type) {
 		each_animation(block, transitions);
 	}
 	if (index_is_reactive) {
-		set_signal_value(/** @type {import('../../types.js').Signal<number>} */ (block.i), index);
+		set(/** @type {import('../../types.js').Value<number>} */ (block.i), index);
 	} else {
 		block.i = index;
 	}
@@ -894,7 +904,7 @@ export function destroy_each_item_block(
 	if (!controlled && dom !== null) {
 		remove(dom);
 	}
-	destroy_signal(/** @type {import('../../types.js').EffectSignal} */ (block.e));
+	destroy_effect(/** @type {import('#client').Effect} */ (block.e));
 }
 
 /**
@@ -902,7 +912,7 @@ export function destroy_each_item_block(
  * @param {V} item
  * @param {unknown} key
  * @param {number} index
- * @param {(anchor: null, item: V, index: number | import('../../types.js').Signal<number>) => void} render_fn
+ * @param {(anchor: null, item: V, index: number | import('../../types.js').Value<number>) => void} render_fn
  * @param {number} flags
  * @returns {import('../../types.js').EachItemBlock}
  */

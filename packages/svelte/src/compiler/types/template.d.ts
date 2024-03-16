@@ -13,9 +13,9 @@ import type {
 	ObjectExpression,
 	Pattern,
 	Program,
-	SpreadElement
+	ChainExpression,
+	SimpleCallExpression
 } from 'estree';
-import type { Atrule, Rule } from './css';
 
 export interface BaseNode {
 	type: string;
@@ -65,7 +65,7 @@ export interface Root extends BaseNode {
 }
 
 export interface SvelteOptions {
-	// start/end info (needed for Prettier, when someone wants to keep the options where they are)
+	// start/end info (needed for warnings and for our Prettier plugin)
 	start: number;
 	end: number;
 	// options
@@ -151,8 +151,7 @@ export interface DebugTag extends BaseNode {
 /** A `{@render foo(...)} tag */
 export interface RenderTag extends BaseNode {
 	type: 'RenderTag';
-	expression: Identifier;
-	arguments: Array<Expression | SpreadElement>;
+	expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
 }
 
 type Tag = ExpressionTag | HtmlTag | ConstTag | DebugTag | RenderTag;

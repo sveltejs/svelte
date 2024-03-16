@@ -89,8 +89,10 @@ const parse = {
 	'duplicate-style-element': () => `A component can have a single top-level <style> element`,
 	'duplicate-script-element': () =>
 		`A component can have a single top-level <script> element and/or a single top-level <script context="module"> element`,
-	'invalid-render-expression': () => 'expected an identifier followed by (...)',
+	'invalid-render-expression': () => '{@render ...} tags can only contain call expressions',
 	'invalid-render-arguments': () => 'expected at most one argument',
+	'invalid-render-call': () =>
+		'Calling a snippet function using apply, bind or call is not allowed',
 	'invalid-render-spread-argument': () => 'cannot use spread arguments in {@render ...} tags',
 	'invalid-snippet-rest-parameter': () =>
 		'snippets do not support rest parameters; use an array instead'
@@ -108,7 +110,8 @@ const css = {
 		`:global(...) must not contain type or universal selectors when used in a compound selector`,
 	'invalid-css-selector': () => `Invalid selector`,
 	'invalid-css-identifier': () => 'Expected a valid CSS identifier',
-	'invalid-nesting-selector': () => `Nesting selectors can only be used inside a rule`
+	'invalid-nesting-selector': () => `Nesting selectors can only be used inside a rule`,
+	'invalid-css-declaration': () => 'Declaration cannot be empty'
 };
 
 /** @satisfies {Errors} */
@@ -276,7 +279,9 @@ const attributes = {
 					directive2
 				)} directive`;
 	},
-	'invalid-let-directive-placement': () => 'let directive at invalid position'
+	'invalid-let-directive-placement': () => 'let directive at invalid position',
+	'invalid-style-directive-modifier': () =>
+		`Invalid 'style:' modifier. Valid modifiers are: 'important'`
 };
 
 /** @satisfies {Errors} */
@@ -294,7 +299,9 @@ const slots = {
 	/** @param {string} name @param {string} component */
 	'duplicate-slot-name': (name, component) => `Duplicate slot name '${name}' in <${component}>`,
 	'invalid-default-slot-content': () =>
-		`Found default slot content alongside an explicit slot="default"`
+		`Found default slot content alongside an explicit slot="default"`,
+	'conflicting-children-snippet': () =>
+		`Cannot use explicit children snippet at the same time as implicit children content. Remove either the non-whitespace content or the children snippet block`
 };
 
 /** @satisfies {Errors} */
@@ -326,7 +333,11 @@ const variables = {
 		`${name} is an illegal variable name. To reference a global variable called ${name}, use globalThis.${name}`,
 	/** @param {string} name */
 	'duplicate-declaration': (name) => `'${name}' has already been declared`,
-	'default-export': () => `A component cannot have a default export`
+	'default-export': () => `A component cannot have a default export`,
+	'illegal-variable-declaration': () =>
+		'Cannot declare same variable name which is imported inside <script context="module">',
+	'illegal-store-subscription': () =>
+		'Cannot subscribe to stores that are not declared at the top level of the component'
 };
 
 /** @satisfies {Errors} */
@@ -431,11 +442,6 @@ const errors = {
 	// 		message
 	// 	};
 	// },
-	// contextual_store: {
-	// 	code: 'contextual-store',
-	// 	message:
-	// 		'Stores must be declared at the top level of the component (this may change in a future version of Svelte)'
-	// },
 	// default_export: {
 	// 	code: 'default-export',
 	// 	message: 'A component cannot have a default export'
@@ -444,31 +450,11 @@ const errors = {
 	// 	code: 'illegal-declaration',
 	// 	message: 'The $ prefix is reserved, and cannot be used for variable and import names'
 	// },
-	// illegal_global: /** @param {string} name */ (name) => ({
-	// 	code: 'illegal-global',
-	// 	message: `${name} is an illegal variable name`
-	// }),
-	// illegal_variable_declaration: {
-	// 	code: 'illegal-variable-declaration',
-	// 	message: 'Cannot declare same variable name which is imported inside <script context="module">'
-	// },
 	// invalid_directive_value: {
 	// 	code: 'invalid-directive-value',
 	// 	message:
 	// 		'Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)'
 	// },
-	// cyclical_const_tags: /** @param {string[]} cycle */ (cycle) => ({
-	// 	code: 'cyclical-const-tags',
-	// 	message: `Cyclical dependency detected: ${cycle.join(' → ')}`
-	// }),
-	// invalid_var_declaration: {
-	// 	code: 'invalid_var_declaration',
-	// 	message: '"var" scope should not extend outside the reactive block'
-	// },
-	// invalid_style_directive_modifier: /** @param {string} valid */ (valid) => ({
-	// 	code: 'invalid-style-directive-modifier',
-	// 	message: `Valid modifiers for style directives are: ${valid}`
-	// })
 };
 
 // interface is duplicated between here (used internally) and ./interfaces.js

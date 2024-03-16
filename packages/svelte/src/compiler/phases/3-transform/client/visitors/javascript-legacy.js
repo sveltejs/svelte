@@ -157,7 +157,6 @@ export const javascript_visitors_legacy = {
 		}
 
 		const body = serialized_body.body;
-		const new_body = [];
 
 		/** @type {import('estree').Expression[]} */
 		const sequence = [];
@@ -170,24 +169,22 @@ export const javascript_visitors_legacy = {
 			// If the binding is a prop, we need to deep read it because it could be fine-grained $state
 			// from a runes-component, where mutations don't trigger an update on the prop as a whole.
 			if (name === '$$props' || name === '$$restProps' || binding.kind === 'prop') {
-				serialized = b.call('$.deep_read', serialized);
+				serialized = b.call('$.deep_read_state', serialized);
 			}
 
 			sequence.push(serialized);
 		}
 
-		if (sequence.length > 0) {
-			new_body.push(b.stmt(b.sequence(sequence)));
-		}
-
-		new_body.push(b.stmt(b.call('$.untrack', b.thunk(b.block(body)))));
-
-		serialized_body.body = new_body;
-
 		// these statements will be topologically ordered later
 		state.legacy_reactive_statements.set(
 			node,
-			b.stmt(b.call('$.pre_effect', b.thunk(serialized_body)))
+			b.stmt(
+				b.call(
+					'$.legacy_pre_effect',
+					sequence.length > 0 ? b.thunk(b.sequence(sequence)) : b.thunk(b.block([])),
+					b.thunk(b.block(body))
+				)
+			)
 		);
 
 		return b.empty;

@@ -23,10 +23,14 @@ export function compile(source, options) {
 		const validated = validate_component_options(options, '');
 		let parsed = _parse(source);
 
-		const combined_options = /** @type {import('#compiler').ValidatedCompileOptions} */ ({
+		const { customElement: customElementOptions, ...parsed_options } = parsed.options || {};
+
+		/** @type {import('#compiler').ValidatedCompileOptions} */
+		const combined_options = {
 			...validated,
-			...parsed.options
-		});
+			...parsed_options,
+			customElementOptions
+		};
 
 		if (parsed.metadata.ts) {
 			parsed = {

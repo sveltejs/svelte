@@ -299,15 +299,22 @@ export const javascript_visitors_runes = {
 					);
 				} else {
 					const bindings = state.scope.get_bindings(declarator);
-					const id = state.scope.generate('derived_value');
+					const object_id = state.scope.generate('derived_object');
+					const values_id = state.scope.generate('derived_values');
 					declarations.push(
 						b.declarator(
-							b.id(id),
+							b.id(object_id),
+							b.call('$.derived', b.thunk(rune === '$derived.by' ? b.call(value) : value))
+						)
+					);
+					declarations.push(
+						b.declarator(
+							b.id(values_id),
 							b.call(
 								'$.derived',
 								b.thunk(
 									b.block([
-										b.let(declarator.id, rune === '$derived.by' ? b.call(value) : value),
+										b.let(declarator.id, b.call('$.get', b.id(object_id))),
 										b.return(b.array(bindings.map((binding) => binding.node)))
 									])
 								)
@@ -321,7 +328,7 @@ export const javascript_visitors_runes = {
 								binding.node,
 								b.call(
 									'$.derived',
-									b.thunk(b.member(b.call('$.get', b.id(id)), b.literal(i), true))
+									b.thunk(b.member(b.call('$.get', b.id(values_id)), b.literal(i), true))
 								)
 							)
 						);

@@ -3,7 +3,8 @@ import {
 	extract_paths,
 	is_event_attribute,
 	is_text_attribute,
-	object
+	object,
+	unwrap_optional
 } from '../../../../utils/ast.js';
 import { binding_properties } from '../../../bindings.js';
 import {
@@ -492,7 +493,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 	let grouped_value = value;
 
 	if (name === 'autofocus') {
-		state.init.push(b.stmt(b.call('$.auto_focus', node_id, value)));
+		state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
 		return false;
 	}
 
@@ -991,7 +992,7 @@ function serialize_inline_component(node, component_name, context) {
 		const prev = fn;
 		fn = (node_id) =>
 			b.call(
-				'$.cssProps',
+				'$.css_props',
 				node_id,
 				// TODO would be great to do this at runtime instead. Svelte 4 also can't handle cases today
 				// where it's not statically determinable whether the component is used in a svg or html context
@@ -1799,6 +1800,12 @@ export const template_visitors = {
 					)
 				)
 			);
+
+			// we need to eagerly evaluate the expression in order to hit any
+			// 'Cannot access x before initialization' errors
+			if (state.options.dev) {
+				state.init.push(b.stmt(b.call('$.get', declaration.id)));
+			}
 		} else {
 			const identifiers = extract_identifiers(declaration.id);
 			const tmp = b.id(state.scope.generate('computed_const'));
@@ -1827,6 +1834,12 @@ export const template_visitors = {
 				// In runes mode, we want things to be fine-grained - but not in legacy mode
 				b.const(tmp, b.call(state.options.runes ? '$.derived' : '$.derived_safe_equal', fn))
 			);
+
+			// we need to eagerly evaluate the expression in order to hit any
+			// 'Cannot access x before initialization' errors
+			if (state.options.dev) {
+				state.init.push(b.stmt(b.call('$.get', tmp)));
+			}
 
 			for (const node of identifiers) {
 				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(node.name));
@@ -1864,28 +1877,35 @@ export const template_visitors = {
 	},
 	RenderTag(node, context) {
 		context.state.template.push('<!>');
-		const binding = context.state.scope.get(node.expression.name);
-		const is_reactive = binding?.kind !== 'normal' || node.expression.type !== 'Identifier';
+		const callee = unwrap_optional(node.expression).callee;
+		const raw_args = unwrap_optional(node.expression).arguments;
+		const is_reactive =
+			callee.type !== 'Identifier' || context.state.scope.get(callee.name)?.kind !== 'normal';
 
 		/** @type {import('estree').Expression[]} */
 		const args = [context.state.node];
-		for (const arg of node.arguments) {
+		for (const arg of raw_args) {
 			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg))));
 		}
 
-		let snippet_function = /** @type {import('estree').Expression} */ (
-			context.visit(node.expression)
-		);
+		let snippet_function = /** @type {import('estree').Expression} */ (context.visit(callee));
 		if (context.state.options.dev) {
 			snippet_function = b.call('$.validate_snippet', snippet_function);
 		}
 
 		if (is_reactive) {
 			context.state.after_update.push(
-				b.stmt(b.call('$.snippet_effect', b.thunk(snippet_function), ...args))
+				b.stmt(b.call('$.snippet', b.thunk(snippet_function), ...args))
 			);
 		} else {
-			context.state.after_update.push(b.stmt(b.call(snippet_function, ...args)));
+			context.state.after_update.push(
+				b.stmt(
+					(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
+						snippet_function,
+						...args
+					)
+				)
+			);
 		}
 	},
 	AnimateDirective(node, { state, visit }) {
@@ -2324,8 +2344,20 @@ export const template_visitors = {
 			each_type |= EACH_IS_STRICT_EQUALS;
 		}
 
-		// Find the parent each blocks which contain the arrays to invalidate
-		// TODO decide how much of this we want to keep for runes mode. For now we're bailing out below
+		// If the array is a store expression, we need to invalidate it when the array is changed.
+		// This doesn't catch all cases, but all the ones that Svelte 4 catches, too.
+		let store_to_invalidate = '';
+		if (node.expression.type === 'Identifier' || node.expression.type === 'MemberExpression') {
+			const id = object(node.expression);
+			if (id) {
+				const binding = context.state.scope.get(id.name);
+				if (binding?.kind === 'store_sub') {
+					store_to_invalidate = id.name;
+				}
+			}
+		}
+
+		// Legacy mode: find the parent each blocks which contain the arrays to invalidate
 		const indirect_dependencies = collect_parent_each_blocks(context).flatMap((block) => {
 			const array = /** @type {import('estree').Expression} */ (context.visit(block.expression));
 			const transitive_dependencies = serialize_transitive_dependencies(
@@ -2362,15 +2394,24 @@ export const template_visitors = {
 					'$.invalidate_inner_signals',
 					b.thunk(b.sequence(indirect_dependencies))
 				);
+				const invalidate_store = store_to_invalidate
+					? b.call('$.invalidate_store', b.id('$$subscriptions'), b.literal(store_to_invalidate))
+					: undefined;
+
+				const sequence = [];
+				if (!context.state.analysis.runes) sequence.push(invalidate);
+				if (invalidate_store) sequence.push(invalidate_store);
 
 				if (left === assignment.left) {
 					const assign = b.assignment('=', expression_for_id, value);
-					return context.state.analysis.runes ? assign : b.sequence([assign, invalidate]);
+					sequence.unshift(assign);
+					return b.sequence(sequence);
 				} else {
 					const original_left = /** @type {import('estree').MemberExpression} */ (assignment.left);
 					const left = context.visit(original_left);
 					const assign = b.assignment(assignment.operator, left, value);
-					return context.state.analysis.runes ? assign : b.sequence([assign, invalidate]);
+					sequence.unshift(assign);
+					return b.sequence(sequence);
 				}
 			};
 		};
@@ -2385,7 +2426,7 @@ export const template_visitors = {
 		const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(item.name));
 		binding.expression = (id) => {
 			const item_with_loc = with_loc(item, id);
-			return each_item_is_reactive ? b.call('$.unwrap', item_with_loc) : item_with_loc;
+			return b.call('$.unwrap', item_with_loc);
 		};
 		if (node.index) {
 			const index_binding = /** @type {import('#compiler').Binding} */ (
@@ -2393,7 +2434,7 @@ export const template_visitors = {
 			);
 			index_binding.expression = (id) => {
 				const index_with_loc = with_loc(index, id);
-				return each_item_is_reactive ? b.call('$.unwrap', index_with_loc) : index_with_loc;
+				return b.call('$.unwrap', index_with_loc);
 			};
 		}
 
@@ -2660,7 +2701,7 @@ export const template_visitors = {
 		const params = [b.id('$$node')];
 
 		if (node.expression) {
-			params.push(b.id('$$props'));
+			params.push(b.id('$$action_arg'));
 		}
 
 		/** @type {import('estree').Expression[]} */

@@ -1,24 +1,19 @@
 import { DEV } from 'esm-env';
-import { run_all } from '../common.js';
 import {
 	array_prototype,
 	get_descriptors,
 	get_prototype_of,
-	is_array,
 	is_frozen,
 	object_freeze,
 	object_prototype
 } from './utils.js';
 import { unstate } from './proxy.js';
-import { pre_effect } from './reactivity/computations.js';
+import { destroy_effect, pre_effect } from './reactivity/effects.js';
 import {
-	EACH_BLOCK,
-	IF_BLOCK,
 	EFFECT,
 	PRE_EFFECT,
 	RENDER_EFFECT,
 	DIRTY,
-	UNINITIALIZED,
 	MAYBE_DIRTY,
 	CLEAN,
 	DERIVED,
@@ -26,12 +21,12 @@ import {
 	DESTROYED,
 	INERT,
 	MANAGED,
-	SOURCE,
 	STATE_SYMBOL
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
-
-const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT;
+import { add_owner } from './dev/ownership.js';
+import { mutate, set, source } from './reactivity/sources.js';
+import { destroy_derived, update_derived } from './reactivity/deriveds.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -47,44 +42,50 @@ let is_inspecting_signal = false;
 
 // Handle effect queues
 
-/** @type {import('./types.js').EffectSignal[]} */
+/** @type {import('./types.js').Effect[]} */
 let current_queued_pre_and_render_effects = [];
 
-/** @type {import('./types.js').EffectSignal[]} */
+/** @type {import('./types.js').Effect[]} */
 let current_queued_effects = [];
 
 let flush_count = 0;
-// Handle signal reactivity tree dependencies and consumer
+// Handle signal reactivity tree dependencies and reactions
 
-/** @type {null | import('./types.js').ComputationSignal} */
-export let current_consumer = null;
+/** @type {null | import('./types.js').Reaction} */
+export let current_reaction = null;
 
-/** @type {null | import('./types.js').EffectSignal} */
+/** @type {null | import('./types.js').Effect} */
 export let current_effect = null;
 
-/** @type {null | import('./types.js').Signal[]} */
-let current_dependencies = null;
+/** @type {null | import('./types.js').Value[]} */
+export let current_dependencies = null;
 let current_dependencies_index = 0;
 /**
  * Tracks writes that the effect it's executed in doesn't listen to yet,
  * so that the dependency can be added to the effect later on if it then reads it
- * @type {null | import('./types.js').Signal[]}
+ * @type {null | import('./types.js').Source[]}
  */
-let current_untracked_writes = null;
-/** @type {null | import('./types.js').SignalDebug} */
-let last_inspected_signal = null;
-/** If `true`, `get`ting the signal should not register it as a dependency */
-export let current_untracking = false;
-/** Exists to opt out of the mutation validation for stores which may be set for the first time during a derivation */
-let ignore_mutation_validation = false;
-/** @param {boolean} value */
-export function set_ignore_mutation_validation(value) {
-	ignore_mutation_validation = value;
+export let current_untracked_writes = null;
+
+/** @param {null | import('./types.js').Source[]} value */
+export function set_current_untracked_writes(value) {
+	current_untracked_writes = value;
 }
 
+/** @type {null | import('./types.js').ValueDebug} */
+export let last_inspected_signal = null;
+
+/** @param {null | import('./types.js').ValueDebug} signal */
+export function set_last_inspected_signal(signal) {
+	last_inspected_signal = signal;
+}
+
+/** If `true`, `get`ting the signal should not register it as a dependency */
+export let current_untracking = false;
+
 // If we are working with a get() chain that has no active container,
-// to prevent memory leaks, we skip adding the consumer.
-let current_skip_consumer = false;
+// to prevent memory leaks, we skip adding the reaction.
+export let current_skip_reaction = false;
 // Handle collecting all signals which are read during a specific time frame
 export let is_signals_recorded = false;
 let captured_signals = new Set();
@@ -92,7 +93,7 @@ let captured_signals = new Set();
 /** @type {Function | null} */
 export let inspect_fn = null;
 
-/** @type {Array<import('./types.js').SignalDebug>} */
+/** @type {Array<import('./types.js').ValueDebug>} */
 let inspect_captured_signals = [];
 
 // Handle rendering tree blocks and anchors
@@ -103,15 +104,9 @@ export let current_block = null;
 /** @type {import('./types.js').ComponentContext | null} */
 export let current_component_context = null;
 
-export let updating_derived = false;
-
-/**
- * @param {null | import('./types.js').ComponentContext} context
- * @returns {boolean}
- */
-function is_runes(context) {
-	const component_context = context || current_component_context;
-	return component_context !== null && component_context.r;
+/** @returns {boolean} */
+export function is_runes() {
+	return current_component_context !== null && current_component_context.r;
 }
 
 /**
@@ -147,98 +142,95 @@ export function batch_inspect(target, prop, receiver) {
 }
 
 /**
- * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * Determines whether a derived or effect is dirty.
+ * If it is MAYBE_DIRTY, will set the status to CLEAN
+ * @param {import('./types.js').Reaction} reaction
  * @returns {boolean}
  */
-function is_signal_dirty(signal) {
-	const flags = signal.f;
-	if ((flags & DIRTY) !== 0 || signal.v === UNINITIALIZED) {
+function check_dirtiness(reaction) {
+	var flags = reaction.f;
+
+	if ((flags & DIRTY) !== 0) {
 		return true;
 	}
+
 	if ((flags & MAYBE_DIRTY) !== 0) {
-		const dependencies = /** @type {import('./types.js').ComputationSignal<V>} **/ (signal).d;
+		var dependencies = reaction.deps;
+
 		if (dependencies !== null) {
-			const length = dependencies.length;
-			let i;
-			for (i = 0; i < length; i++) {
-				const dependency = dependencies[i];
-				if ((dependency.f & MAYBE_DIRTY) !== 0 && !is_signal_dirty(dependency)) {
-					set_signal_status(dependency, CLEAN);
-					continue;
-				}
-				// The flags can be marked as dirty from the above is_signal_dirty call.
-				if ((dependency.f & DIRTY) !== 0) {
-					if ((dependency.f & DERIVED) !== 0) {
-						update_derived(
-							/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency),
-							true
-						);
-						// Might have been mutated from above get.
-						if ((signal.f & DIRTY) !== 0) {
-							return true;
-						}
-					} else {
+			var length = dependencies.length;
+
+			for (var i = 0; i < length; i++) {
+				var dependency = dependencies[i];
+
+				if (check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
+					update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
+
+					// `signal` might now be dirty, as a result of calling `update_derived`
+					if ((reaction.f & DIRTY) !== 0) {
 						return true;
 					}
 				}
-				// If we're workig with an unowned derived signal, then we need to check
-				// if our dependency write version is higher. If is is then we can assume
+
+				// If we're working with an unowned derived signal, then we need to check
+				// if our dependency write version is higher. If it is then we can assume
 				// that state has changed to a newer version and thus this unowned signal
 				// is also dirty.
-				const is_unowned = (flags & UNOWNED) !== 0;
-				const write_version = signal.w;
-				const dep_write_version = dependency.w;
-				if (is_unowned && dep_write_version > write_version) {
-					signal.w = dep_write_version;
+				var is_unowned = (flags & UNOWNED) !== 0;
+				var version = dependency.version;
+
+				if (is_unowned && version > /** @type {import('#client').Derived} */ (reaction).version) {
+					/** @type {import('#client').Derived} */ (reaction).version = version;
 					return true;
 				}
 			}
 		}
+
+		set_signal_status(reaction, CLEAN);
 	}
+
 	return false;
 }
 
 /**
  * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Reaction} signal
  * @returns {V}
  */
-function execute_signal_fn(signal) {
-	const init = signal.i;
+export function execute_reaction_fn(signal) {
+	const fn = signal.fn;
 	const flags = signal.f;
+	const is_render_effect = (flags & RENDER_EFFECT) !== 0;
+
 	const previous_dependencies = current_dependencies;
 	const previous_dependencies_index = current_dependencies_index;
 	const previous_untracked_writes = current_untracked_writes;
-	const previous_consumer = current_consumer;
-	const previous_block = current_block;
-	const previous_component_context = current_component_context;
-	const previous_skip_consumer = current_skip_consumer;
-	const is_render_effect = (flags & RENDER_EFFECT) !== 0;
+	const previous_reaction = current_reaction;
+	const previous_skip_reaction = current_skip_reaction;
 	const previous_untracking = current_untracking;
-	current_dependencies = /** @type {null | import('./types.js').Signal[]} */ (null);
+
+	current_dependencies = /** @type {null | import('./types.js').Value[]} */ (null);
 	current_dependencies_index = 0;
 	current_untracked_writes = null;
-	current_consumer = signal;
-	current_block = signal.b;
-	current_component_context = signal.x;
-	current_skip_consumer = !is_flushing_effect && (flags & UNOWNED) !== 0;
+	current_reaction = signal;
+	current_skip_reaction = !is_flushing_effect && (flags & UNOWNED) !== 0;
 	current_untracking = false;
 
 	try {
 		let res;
 		if (is_render_effect) {
-			res =
-				/** @type {(block: import('./types.js').Block, signal: import('./types.js').Signal) => V} */ (
-					init
-				)(
-					/** @type {import('./types.js').Block} */ (signal.b),
-					/** @type {import('./types.js').Signal} */ (signal)
-				);
+			res = /** @type {(block: import('#client').Block, signal: import('#client').Signal) => V} */ (
+				fn
+			)(
+				/** @type {import('#client').Block} */ (
+					/** @type {import('#client').Effect} */ (signal).block
+				),
+				/** @type {import('#client').Signal} */ (signal)
+			);
 		} else {
-			res = /** @type {() => V} */ (init)();
+			res = /** @type {() => V} */ (fn)();
 		}
-		let dependencies = /** @type {import('./types.js').Signal<unknown>[]} **/ (signal.d);
+		let dependencies = /** @type {import('./types.js').Value<unknown>[]} **/ (signal.deps);
 		if (current_dependencies !== null) {
 			let i;
 			if (dependencies !== null) {
@@ -262,7 +254,7 @@ function execute_signal_fn(signal) {
 							? !full_current_dependencies_set.has(dependency)
 							: !full_current_dependencies.includes(dependency)
 					) {
-						remove_consumer(signal, dependency);
+						remove_reaction(signal, dependency);
 					}
 				}
 			}
@@ -273,29 +265,29 @@ function execute_signal_fn(signal) {
 					dependencies[current_dependencies_index + i] = current_dependencies[i];
 				}
 			} else {
-				signal.d = /** @type {import('./types.js').Signal<V>[]} **/ (
+				signal.deps = /** @type {import('./types.js').Value<V>[]} **/ (
 					dependencies = current_dependencies
 				);
 			}
 
-			if (!current_skip_consumer) {
+			if (!current_skip_reaction) {
 				for (i = current_dependencies_index; i < dependencies.length; i++) {
 					const dependency = dependencies[i];
-					const consumers = dependency.c;
+					const reactions = dependency.reactions;
 
-					if (consumers === null) {
-						dependency.c = [signal];
-					} else if (consumers[consumers.length - 1] !== signal) {
+					if (reactions === null) {
+						dependency.reactions = [signal];
+					} else if (reactions[reactions.length - 1] !== signal) {
 						// TODO: should this be:
 						//
-						// } else if (!consumers.includes(signal)) {
+						// } else if (!reactions.includes(signal)) {
 						//
-						consumers.push(signal);
+						reactions.push(signal);
 					}
 				}
 			}
 		} else if (dependencies !== null && current_dependencies_index < dependencies.length) {
-			remove_consumers(signal, current_dependencies_index);
+			remove_reactions(signal, current_dependencies_index);
 			dependencies.length = current_dependencies_index;
 		}
 		return res;
@@ -303,131 +295,115 @@ function execute_signal_fn(signal) {
 		current_dependencies = previous_dependencies;
 		current_dependencies_index = previous_dependencies_index;
 		current_untracked_writes = previous_untracked_writes;
-		current_consumer = previous_consumer;
-		current_block = previous_block;
-		current_component_context = previous_component_context;
-		current_skip_consumer = previous_skip_consumer;
+		current_reaction = previous_reaction;
+		current_skip_reaction = previous_skip_reaction;
 		current_untracking = previous_untracking;
 	}
 }
 
 /**
  * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
- * @param {import('./types.js').Signal<V>} dependency
+ * @param {import('./types.js').Reaction} signal
+ * @param {import('./types.js').Value<V>} dependency
  * @returns {void}
  */
-function remove_consumer(signal, dependency) {
-	const consumers = dependency.c;
-	let consumers_length = 0;
-	if (consumers !== null) {
-		consumers_length = consumers.length - 1;
-		const index = consumers.indexOf(signal);
+function remove_reaction(signal, dependency) {
+	const reactions = dependency.reactions;
+	let reactions_length = 0;
+	if (reactions !== null) {
+		reactions_length = reactions.length - 1;
+		const index = reactions.indexOf(signal);
 		if (index !== -1) {
-			if (consumers_length === 0) {
-				dependency.c = null;
+			if (reactions_length === 0) {
+				dependency.reactions = null;
 			} else {
 				// Swap with last element and then remove.
-				consumers[index] = consumers[consumers_length];
-				consumers.pop();
+				reactions[index] = reactions[reactions_length];
+				reactions.pop();
 			}
 		}
 	}
-	if (consumers_length === 0 && (dependency.f & UNOWNED) !== 0) {
+	if (reactions_length === 0 && (dependency.f & UNOWNED) !== 0) {
 		// If the signal is unowned then we need to make sure to change it to dirty.
 		set_signal_status(dependency, DIRTY);
-		remove_consumers(/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency), 0);
+		remove_reactions(/** @type {import('./types.js').Derived} **/ (dependency), 0);
 	}
 }
 
 /**
- * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Reaction} signal
  * @param {number} start_index
  * @returns {void}
  */
-function remove_consumers(signal, start_index) {
-	const dependencies = signal.d;
+export function remove_reactions(signal, start_index) {
+	const dependencies = signal.deps;
 	if (dependencies !== null) {
 		const active_dependencies = start_index === 0 ? null : dependencies.slice(0, start_index);
 		let i;
 		for (i = start_index; i < dependencies.length; i++) {
 			const dependency = dependencies[i];
-			// Avoid removing a consumer if we know that it is active (start_index will not be 0)
+			// Avoid removing a reaction if we know that it is active (start_index will not be 0)
 			if (active_dependencies === null || !active_dependencies.includes(dependency)) {
-				remove_consumer(signal, dependency);
+				remove_reaction(signal, dependency);
 			}
 		}
 	}
 }
 
 /**
- * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Reaction} signal
  * @returns {void}
  */
-function destroy_references(signal) {
-	const references = signal.r;
-	signal.r = null;
-	if (references !== null) {
-		let i;
-		for (i = 0; i < references.length; i++) {
-			destroy_signal(references[i]);
+export function destroy_children(signal) {
+	if (signal.effects) {
+		for (var i = 0; i < signal.effects.length; i += 1) {
+			var effect = signal.effects[i];
+			if ((effect.f & MANAGED) === 0) {
+				destroy_effect(effect);
+			}
 		}
+		signal.effects = null;
+	}
+
+	if (signal.deriveds) {
+		for (i = 0; i < signal.deriveds.length; i += 1) {
+			destroy_derived(signal.deriveds[i]);
+		}
+		signal.deriveds = null;
 	}
 }
 
 /**
- * @param {import('./types.js').Block} block
- * @param {unknown} error
- * @returns {void}
- */
-function report_error(block, error) {
-	/** @type {import('./types.js').Block | null} */
-	let current_block = block;
-
-	if (current_block !== null) {
-		throw error;
-	}
-}
-
-/**
- * @param {import('./types.js').EffectSignal} signal
+ * @param {import('./types.js').Effect} signal
  * @returns {void}
  */
 export function execute_effect(signal) {
 	if ((signal.f & DESTROYED) !== 0) {
 		return;
 	}
-	const teardown = signal.v;
+
 	const previous_effect = current_effect;
+	const previous_component_context = current_component_context;
+	const previous_block = current_block;
+
+	const component_context = signal.ctx;
+
 	current_effect = signal;
+	current_component_context = component_context;
+	current_block = signal.block;
 
 	try {
-		destroy_references(signal);
-		if (teardown !== null) {
-			teardown();
-		}
-		const possible_teardown = execute_signal_fn(signal);
-		if (typeof possible_teardown === 'function') {
-			signal.v = possible_teardown;
-		}
-	} catch (error) {
-		const block = signal.b;
-		if (block !== null) {
-			report_error(block, error);
-		} else {
-			throw error;
-		}
+		destroy_children(signal);
+		signal.teardown?.();
+		const teardown = execute_reaction_fn(signal);
+		signal.teardown = typeof teardown === 'function' ? teardown : null;
 	} finally {
 		current_effect = previous_effect;
+		current_component_context = previous_component_context;
+		current_block = previous_block;
 	}
-	const component_context = signal.x;
-	if (
-		is_runes(component_context) && // Don't rerun pre effects more than once to accomodate for "$: only runs once" behavior
-		(signal.f & PRE_EFFECT) !== 0 &&
-		current_queued_pre_and_render_effects.length > 0
-	) {
+
+	if ((signal.f & PRE_EFFECT) !== 0 && current_queued_pre_and_render_effects.length > 0) {
 		flush_local_pre_effects(component_context);
 	}
 }
@@ -447,35 +423,33 @@ function infinite_loop_guard() {
 }
 
 /**
- * @param {Array<import('./types.js').EffectSignal>} effects
+ * @param {Array<import('./types.js').Effect>} effects
  * @returns {void}
  */
 function flush_queued_effects(effects) {
-	const length = effects.length;
-	if (length > 0) {
-		infinite_loop_guard();
-		const previously_flushing_effect = is_flushing_effect;
-		is_flushing_effect = true;
-		try {
-			let i;
-			for (i = 0; i < length; i++) {
-				const signal = effects[i];
-				const flags = signal.f;
-				if ((flags & (DESTROYED | INERT)) === 0) {
-					if (is_signal_dirty(signal)) {
-						set_signal_status(signal, CLEAN);
-						execute_effect(signal);
-					} else if ((flags & MAYBE_DIRTY) !== 0) {
-						set_signal_status(signal, CLEAN);
-					}
+	var length = effects.length;
+	if (length === 0) return;
+
+	infinite_loop_guard();
+	var previously_flushing_effect = is_flushing_effect;
+	is_flushing_effect = true;
+
+	try {
+		for (var i = 0; i < length; i++) {
+			var signal = effects[i];
+
+			if ((signal.f & (DESTROYED | INERT)) === 0) {
+				if (check_dirtiness(signal)) {
+					set_signal_status(signal, CLEAN);
+					execute_effect(signal);
 				}
 			}
-		} finally {
-			is_flushing_effect = previously_flushing_effect;
 		}
-
-		effects.length = 0;
+	} finally {
+		is_flushing_effect = previously_flushing_effect;
 	}
+
+	effects.length = 0;
 }
 
 function process_microtask() {
@@ -495,7 +469,7 @@ function process_microtask() {
 }
 
 /**
- * @param {import('./types.js').EffectSignal} signal
+ * @param {import('./types.js').Effect} signal
  * @param {boolean} sync
  * @returns {void}
  */
@@ -537,19 +511,25 @@ export function schedule_effect(signal, sync) {
 
 			if (!should_append) {
 				const target_level = signal.l;
-				const target_block = signal.b;
+				const target_block = signal.block;
 				const is_pre_effect = (flags & PRE_EFFECT) !== 0;
 				let target_signal;
+				let target_signal_level;
 				let is_target_pre_effect;
 				let i = length;
 				while (true) {
 					target_signal = current_queued_pre_and_render_effects[--i];
-					if (target_signal.l <= target_level) {
+					target_signal_level = target_signal.l;
+					if (target_signal_level <= target_level) {
 						if (i + 1 === length) {
 							should_append = true;
 						} else {
 							is_target_pre_effect = (target_signal.f & PRE_EFFECT) !== 0;
-							if (target_signal.b !== target_block || (is_target_pre_effect && !is_pre_effect)) {
+							if (
+								target_signal_level < target_level ||
+								target_signal.block !== target_block ||
+								(is_target_pre_effect && !is_pre_effect)
+							) {
 								i++;
 							}
 							current_queued_pre_and_render_effects.splice(i, 0, signal);
@@ -577,7 +557,7 @@ export function flush_local_render_effects() {
 	const effects = [];
 	for (let i = 0; i < current_queued_pre_and_render_effects.length; i++) {
 		const effect = current_queued_pre_and_render_effects[i];
-		if ((effect.f & RENDER_EFFECT) !== 0 && effect.x === current_component_context) {
+		if ((effect.f & RENDER_EFFECT) !== 0 && effect.ctx === current_component_context) {
 			effects.push(effect);
 			current_queued_pre_and_render_effects.splice(i, 1);
 			i--;
@@ -594,7 +574,7 @@ export function flush_local_pre_effects(context) {
 	const effects = [];
 	for (let i = 0; i < current_queued_pre_and_render_effects.length; i++) {
 		const effect = current_queued_pre_and_render_effects[i];
-		if ((effect.f & PRE_EFFECT) !== 0 && effect.x === context) {
+		if ((effect.f & PRE_EFFECT) !== 0 && effect.ctx === context) {
 			effects.push(effect);
 			current_queued_pre_and_render_effects.splice(i, 1);
 			i--;
@@ -627,10 +607,10 @@ export function flush_sync(fn, flush_previous = true) {
 
 	try {
 		infinite_loop_guard();
-		/** @type {import('./types.js').EffectSignal[]} */
+		/** @type {import('./types.js').Effect[]} */
 		const pre_and_render_effects = [];
 
-		/** @type {import('./types.js').EffectSignal[]} */
+		/** @type {import('./types.js').Effect[]} */
 		const effects = [];
 		current_scheduler_mode = FLUSH_SYNC;
 		current_queued_pre_and_render_effects = pre_and_render_effects;
@@ -669,42 +649,13 @@ export async function tick() {
 
 /**
  * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
- * @param {boolean} force_schedule
- * @returns {void}
- */
-function update_derived(signal, force_schedule) {
-	const previous_updating_derived = updating_derived;
-	updating_derived = true;
-	destroy_references(signal);
-	const value = execute_signal_fn(signal);
-	updating_derived = previous_updating_derived;
-	const status =
-		(current_skip_consumer || (signal.f & UNOWNED) !== 0) && signal.d !== null
-			? MAYBE_DIRTY
-			: CLEAN;
-	set_signal_status(signal, status);
-	const equals = /** @type {import('./types.js').EqualsFunctions} */ (signal.e);
-	if (!equals(value, signal.v)) {
-		signal.v = value;
-		mark_signal_consumers(signal, DIRTY, force_schedule);
-
-		// @ts-expect-error
-		if (DEV && signal.inspect && force_schedule) {
-			for (const fn of /** @type {import('./types.js').SignalDebug} */ (signal).inspect) fn();
-		}
-	}
-}
-
-/**
- * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('./types.js').Value<V>} signal
  * @returns {V}
  */
 export function get(signal) {
 	// @ts-expect-error
 	if (DEV && signal.inspect && inspect_fn) {
-		/** @type {import('./types.js').SignalDebug} */ (signal).inspect.add(inspect_fn);
+		/** @type {import('./types.js').ValueDebug} */ (signal).inspect.add(inspect_fn);
 		// @ts-expect-error
 		inspect_captured_signals.push(signal);
 	}
@@ -718,10 +669,10 @@ export function get(signal) {
 		captured_signals.add(signal);
 	}
 
-	// Register the dependency on the current consumer signal.
-	if (current_consumer !== null && (current_consumer.f & MANAGED) === 0 && !current_untracking) {
-		const unowned = (current_consumer.f & UNOWNED) !== 0;
-		const dependencies = current_consumer.d;
+	// Register the dependency on the current reaction signal.
+	if (current_reaction !== null && (current_reaction.f & MANAGED) === 0 && !current_untracking) {
+		const unowned = (current_reaction.f & UNOWNED) !== 0;
+		const dependencies = current_reaction.deps;
 		if (
 			current_dependencies === null &&
 			dependencies !== null &&
@@ -752,39 +703,21 @@ export function get(signal) {
 		}
 	}
 
-	if ((flags & DERIVED) !== 0 && is_signal_dirty(signal)) {
+	if (
+		(flags & DERIVED) !== 0 &&
+		check_dirtiness(/** @type {import('#client').Derived} */ (signal))
+	) {
 		if (DEV) {
 			// we want to avoid tracking indirect dependencies
 			const previous_inspect_fn = inspect_fn;
 			inspect_fn = null;
-			update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (signal), false);
+			update_derived(/** @type {import('./types.js').Derived} **/ (signal), false);
 			inspect_fn = previous_inspect_fn;
 		} else {
-			update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (signal), false);
+			update_derived(/** @type {import('./types.js').Derived} **/ (signal), false);
 		}
 	}
 	return signal.v;
-}
-
-/**
- * @template V
- * @param {import('./types.js').Signal<V>} signal
- * @param {V} value
- * @returns {V}
- */
-export function set(signal, value) {
-	set_signal_value(signal, value);
-	return value;
-}
-
-/**
- * @template V
- * @param {import('./types.js').Signal<V>} signal
- * @param {V} value
- * @returns {void}
- */
-export function set_sync(signal, value) {
-	flushSync(() => set(signal, value));
 }
 
 /**
@@ -816,215 +749,82 @@ export function invalidate_inner_signals(fn) {
 }
 
 /**
- * @template V
- * @param {import('./types.js').Signal<V>} source
- * @param {V} value
- */
-export function mutate(source, value) {
-	set_signal_value(
-		source,
-		untrack(() => get(source))
-	);
-	return value;
-}
-
-/**
- * @param {import('./types.js').ComputationSignal} signal
+ * @param {import('#client').Effect} signal
  * @param {boolean} inert
- * @param {Set<import('./types.js').Block>} [visited_blocks]
  * @returns {void}
  */
-function mark_subtree_children_inert(signal, inert, visited_blocks) {
-	const references = signal.r;
-	if (references !== null) {
-		let i;
-		for (i = 0; i < references.length; i++) {
-			const reference = references[i];
-			if ((reference.f & IS_EFFECT) !== 0) {
-				mark_subtree_inert(reference, inert, visited_blocks);
-			}
+function mark_subtree_children_inert(signal, inert) {
+	const effects = signal.effects;
+
+	if (effects !== null) {
+		for (var i = 0; i < effects.length; i++) {
+			mark_subtree_inert(effects[i], inert);
 		}
 	}
 }
 
 /**
- * @param {import('./types.js').ComputationSignal} signal
+ * @param {import('#client').Effect} signal
  * @param {boolean} inert
- * @param {Set<import('./types.js').Block>} [visited_blocks]
  * @returns {void}
  */
-export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
+export function mark_subtree_inert(signal, inert) {
 	const flags = signal.f;
 	const is_already_inert = (flags & INERT) !== 0;
+
 	if (is_already_inert !== inert) {
 		signal.f ^= INERT;
-		if (!inert && (flags & IS_EFFECT) !== 0 && (flags & CLEAN) === 0) {
-			schedule_effect(/** @type {import('./types.js').EffectSignal} */ (signal), false);
-		}
-		// Nested if block effects
-		const block = signal.b;
-		if (block !== null && !visited_blocks.has(block)) {
-			visited_blocks.add(block);
-			const type = block.t;
-			if (type === IF_BLOCK) {
-				const condition_effect = block.e;
-				if (condition_effect !== null && block !== current_block) {
-					mark_subtree_inert(condition_effect, inert, visited_blocks);
-				}
-				const consequent_effect = block.ce;
-				if (consequent_effect !== null && block.v) {
-					mark_subtree_inert(consequent_effect, inert, visited_blocks);
-				}
-				const alternate_effect = block.ae;
-				if (alternate_effect !== null && !block.v) {
-					mark_subtree_inert(alternate_effect, inert, visited_blocks);
-				}
-			} else if (type === EACH_BLOCK) {
-				const items = block.v;
-				for (let { e: each_item_effect } of items) {
-					if (each_item_effect !== null) {
-						mark_subtree_inert(each_item_effect, inert, visited_blocks);
-					}
-				}
-			}
+		if (!inert && (flags & CLEAN) === 0) {
+			schedule_effect(signal, false);
 		}
 	}
-	mark_subtree_children_inert(signal, inert, visited_blocks);
+
+	mark_subtree_children_inert(signal, inert);
 }
 
 /**
- * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('#client').Value} signal
  * @param {number} to_status
  * @param {boolean} force_schedule
  * @returns {void}
  */
-function mark_signal_consumers(signal, to_status, force_schedule) {
-	const runes = is_runes(null);
-	const consumers = signal.c;
-	if (consumers !== null) {
-		const length = consumers.length;
-		let i;
-		for (i = 0; i < length; i++) {
-			const consumer = consumers[i];
-			const flags = consumer.f;
-			const unowned = (flags & UNOWNED) !== 0;
-			// We skip any effects that are already dirty (but not unowned). Additionally, we also
-			// skip if the consumer is the same as the current effect (except if we're not in runes or we
-			// are in force schedule mode).
-			if ((!force_schedule || !runes) && consumer === current_effect) {
-				continue;
-			}
-			set_signal_status(consumer, to_status);
-			// If the signal is not clean, then skip over it – with the exception of unowned signals that
-			// are already maybe dirty. Unowned signals might be dirty because they are not captured as part of an
-			// effect.
-			const maybe_dirty = (flags & MAYBE_DIRTY) !== 0;
-			if ((flags & CLEAN) !== 0 || (maybe_dirty && unowned)) {
-				if ((consumer.f & IS_EFFECT) !== 0) {
-					schedule_effect(/** @type {import('./types.js').EffectSignal} */ (consumer), false);
-				} else {
-					mark_signal_consumers(consumer, MAYBE_DIRTY, force_schedule);
-				}
-			}
-		}
-	}
-}
+export function mark_reactions(signal, to_status, force_schedule) {
+	var reactions = signal.reactions;
+	if (reactions === null) return;
 
-/**
- * @template V
- * @param {import('./types.js').Signal<V>} signal
- * @param {V} value
- * @returns {void}
- */
-export function set_signal_value(signal, value) {
-	if (
-		!current_untracking &&
-		!ignore_mutation_validation &&
-		current_consumer !== null &&
-		is_runes(null) &&
-		(current_consumer.f & DERIVED) !== 0
-	) {
-		throw new Error(
-			'ERR_SVELTE_UNSAFE_MUTATION' +
-				(DEV
-					? ": Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. " +
-						'This can lead to unexpected errors and possibly cause infinite loops.\n\nIf this mutation is not meant ' +
-						'to be reactive do not use the "$state" rune for that declaration.'
-					: '')
-		);
-	}
-	if (
-		(signal.f & SOURCE) !== 0 &&
-		!(/** @type {import('./types.js').EqualsFunctions} */ (signal.e)(value, signal.v))
-	) {
-		signal.v = value;
-		// Increment write version so that unowned signals can properly track dirtyness
-		signal.w++;
-		// If the current signal is running for the first time, it won't have any
-		// consumers as we only allocate and assign the consumers after the signal
-		// has fully executed. So in the case of ensuring it registers the consumer
-		// properly for itself, we need to ensure the current effect actually gets
-		// scheduled. i.e:
-		//
-		// $effect(() => x++)
-		//
-		// We additionally want to skip this logic for when ignore_mutation_validation is
-		// true, as stores write to source signal on initialization.
-		if (
-			is_runes(null) &&
-			!ignore_mutation_validation &&
-			current_effect !== null &&
-			current_effect.c === null &&
-			(current_effect.f & CLEAN) !== 0 &&
-			(current_effect.f & MANAGED) === 0
-		) {
-			if (current_dependencies !== null && current_dependencies.includes(signal)) {
-				set_signal_status(current_effect, DIRTY);
-				schedule_effect(current_effect, false);
+	var runes = is_runes();
+	var length = reactions.length;
+
+	for (var i = 0; i < length; i++) {
+		var reaction = reactions[i];
+
+		// We skip any effects that are already dirty (but not unowned). Additionally, we also
+		// skip if the reaction is the same as the current effect (except if we're not in runes or we
+		// are in force schedule mode).
+		if ((!force_schedule || !runes) && reaction === current_effect) {
+			continue;
+		}
+
+		var flags = reaction.f;
+		set_signal_status(reaction, to_status);
+
+		// If the signal is not clean, then skip over it – with the exception of unowned signals that
+		// are already maybe dirty. Unowned signals might be dirty because they are not captured as part of an
+		// effect.
+		var maybe_dirty = (flags & MAYBE_DIRTY) !== 0;
+		var unowned = (flags & UNOWNED) !== 0;
+
+		if ((flags & CLEAN) !== 0 || (maybe_dirty && unowned)) {
+			if ((reaction.f & DERIVED) !== 0) {
+				mark_reactions(
+					/** @type {import('#client').Derived} */ (reaction),
+					MAYBE_DIRTY,
+					force_schedule
+				);
 			} else {
-				if (current_untracked_writes === null) {
-					current_untracked_writes = [signal];
-				} else {
-					current_untracked_writes.push(signal);
-				}
+				schedule_effect(/** @type {import('#client').Effect} */ (reaction), false);
 			}
 		}
-		mark_signal_consumers(signal, DIRTY, true);
-
-		// @ts-expect-error
-		if (DEV && signal.inspect) {
-			if (is_batching_effect) {
-				last_inspected_signal = /** @type {import('./types.js').SignalDebug} */ (signal);
-			} else {
-				for (const fn of /** @type {import('./types.js').SignalDebug} */ (signal).inspect) fn();
-			}
-		}
-	}
-}
-
-/**
- * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
- * @returns {void}
- */
-export function destroy_signal(signal) {
-	const teardown = /** @type {null | (() => void)} */ (signal.v);
-	const destroy = signal.y;
-	const flags = signal.f;
-	destroy_references(signal);
-	remove_consumers(signal, 0);
-	signal.i = signal.r = signal.y = signal.x = signal.b = signal.d = signal.c = null;
-	set_signal_status(signal, DESTROYED);
-	if (destroy !== null) {
-		if (is_array(destroy)) {
-			run_all(destroy);
-		} else {
-			destroy();
-		}
-	}
-	if (teardown !== null && (flags & IS_EFFECT) !== 0) {
-		teardown();
 	}
 }
 
@@ -1046,49 +846,113 @@ export function untrack(fn) {
 	}
 }
 
-/**
- * @template V
- * @param {import('./types.js').ComputationSignal<V>} signal
- * @param {() => void} destroy_fn
- * @returns {void}
- */
-export function push_destroy_fn(signal, destroy_fn) {
-	let destroy = signal.y;
-	if (destroy === null) {
-		signal.y = destroy_fn;
-	} else if (is_array(destroy)) {
-		destroy.push(destroy_fn);
-	} else {
-		signal.y = [destroy, destroy_fn];
-	}
-}
-
 const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
+
 /**
- * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('./types.js').Signal} signal
  * @param {number} status
  * @returns {void}
  */
-function set_signal_status(signal, status) {
+export function set_signal_status(signal, status) {
 	signal.f = (signal.f & STATUS_MASK) | status;
 }
 
 /**
  * @template V
- * @param {V | import('./types.js').Signal<V>} val
- * @returns {val is import('./types.js').Signal<V>}
+ * @param {V | import('./types.js').Value<V>} val
+ * @returns {val is import('./types.js').Value<V>}
  */
 export function is_signal(val) {
 	return (
 		typeof val === 'object' &&
 		val !== null &&
-		typeof (/** @type {import('./types.js').Signal<V>} */ (val).f) === 'number'
+		typeof (/** @type {import('./types.js').Value<V>} */ (val).f) === 'number'
 	);
 }
 
+/**
+ * Retrieves the context that belongs to the closest parent component with the specified `key`.
+ * Must be called during component initialisation.
+ *
+ * https://svelte.dev/docs/svelte#getcontext
+ * @template T
+ * @param {any} key
+ * @returns {T}
+ */
+export function getContext(key) {
+	const context_map = get_or_init_context_map();
+	const result = /** @type {T} */ (context_map.get(key));
+
+	if (DEV) {
+		// @ts-expect-error
+		const fn = current_component_context?.function;
+		if (fn) {
+			add_owner(result, fn);
+		}
+	}
+
+	return result;
+}
+
+/**
+ * Associates an arbitrary `context` object with the current component and the specified `key`
+ * and returns that object. The context is then available to children of the component
+ * (including slotted content) with `getContext`.
+ *
+ * Like lifecycle functions, this must be called during component initialisation.
+ *
+ * https://svelte.dev/docs/svelte#setcontext
+ * @template T
+ * @param {any} key
+ * @param {T} context
+ * @returns {T}
+ */
+export function setContext(key, context) {
+	const context_map = get_or_init_context_map();
+	context_map.set(key, context);
+	return context;
+}
+
+/**
+ * Checks whether a given `key` has been set in the context of a parent component.
+ * Must be called during component initialisation.
+ *
+ * https://svelte.dev/docs/svelte#hascontext
+ * @param {any} key
+ * @returns {boolean}
+ */
+export function hasContext(key) {
+	const context_map = get_or_init_context_map();
+	return context_map.has(key);
+}
+
+/**
+ * Retrieves the whole context map that belongs to the closest parent component.
+ * Must be called during component initialisation. Useful, for example, if you
+ * programmatically create a component and want to pass the existing context to it.
+ *
+ * https://svelte.dev/docs/svelte#getallcontexts
+ * @template {Map<any, any>} [T=Map<any, any>]
+ * @returns {T}
+ */
+export function getAllContexts() {
+	const context_map = get_or_init_context_map();
+
+	if (DEV) {
+		// @ts-expect-error
+		const fn = current_component_context?.function;
+		if (fn) {
+			for (const value of context_map.values()) {
+				add_owner(value, fn);
+			}
+		}
+	}
+
+	return /** @type {T} */ (context_map);
+}
+
 /** @returns {Map<unknown, unknown>} */
-export function get_or_init_context_map() {
+function get_or_init_context_map() {
 	const component_context = current_component_context;
 	if (component_context === null) {
 		throw new Error(
@@ -1116,46 +980,24 @@ function get_parent_context(component_context) {
 }
 
 /**
- * @param {import('./types.js').Signal<number>} signal
+ * @param {import('./types.js').Value<number>} signal
  * @param {1 | -1} [d]
  * @returns {number}
  */
 export function update(signal, d = 1) {
 	const value = get(signal);
-	set_signal_value(signal, value + d);
+	set(signal, value + d);
 	return value;
 }
 
 /**
- * @param {((value?: number) => number)} fn
- * @param {1 | -1} [d]
- * @returns {number}
- */
-export function update_prop(fn, d = 1) {
-	const value = fn();
-	fn(value + d);
-	return value;
-}
-
-/**
- * @param {import('./types.js').Signal<number>} signal
+ * @param {import('./types.js').Value<number>} signal
  * @param {1 | -1} [d]
  * @returns {number}
  */
 export function update_pre(signal, d = 1) {
 	const value = get(signal) + d;
-	set_signal_value(signal, value);
-	return value;
-}
-
-/**
- * @param {((value?: number) => number)} fn
- * @param {1 | -1} [d]
- * @returns {number}
- */
-export function update_pre_prop(fn, d = 1) {
-	const value = fn() + d;
-	fn(value);
+	set(signal, value);
 	return value;
 }
 
@@ -1207,6 +1049,9 @@ export function push(props, runes = false, fn) {
 		s: props,
 		// runes
 		r: runes,
+		// legacy $:
+		l1: [],
+		l2: source(false),
 		// update_callbacks
 		u: null
 	};
@@ -1245,6 +1090,29 @@ export function pop(component) {
 }
 
 /**
+ * Possibly traverse an object and read all its properties so that they're all reactive in case this is `$state`.
+ * Does only check first level of an object for performance reasons (heuristic should be good for 99% of all cases).
+ * @param {any} value
+ * @returns {void}
+ */
+export function deep_read_state(value) {
+	if (typeof value !== 'object' || !value || value instanceof EventTarget) {
+		return;
+	}
+
+	if (STATE_SYMBOL in value) {
+		deep_read(value);
+	} else if (!Array.isArray(value)) {
+		for (let key in value) {
+			const prop = value[key];
+			if (typeof prop === 'object' && prop && STATE_SYMBOL in prop) {
+				deep_read(prop);
+			}
+		}
+	}
+}
+
+/**
  * Deeply traverse an object and read all its properties
  * so that they're all reactive in case this is `$state`
  * @param {any} value
@@ -1252,7 +1120,13 @@ export function pop(component) {
  * @returns {void}
  */
 export function deep_read(value, visited = new Set()) {
-	if (typeof value === 'object' && value !== null && !visited.has(value)) {
+	if (
+		typeof value === 'object' &&
+		value !== null &&
+		// We don't want to traverse DOM elements
+		!(value instanceof EventTarget) &&
+		!visited.has(value)
+	) {
 		visited.add(value);
 		for (let key in value) {
 			try {
@@ -1366,8 +1240,8 @@ export function inspect(get_value, inspect = console.log) {
 
 /**
  * @template V
- * @param {V} value
- * @returns {import('./types.js').UnwrappedSignal<V>}
+ * @param {V | import('#client').Value<V>} value
+ * @returns {V}
  */
 export function unwrap(value) {
 	if (is_signal(value)) {

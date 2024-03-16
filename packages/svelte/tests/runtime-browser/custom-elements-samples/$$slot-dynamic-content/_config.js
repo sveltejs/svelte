@@ -1,11 +1,10 @@
 import { test } from '../../assert';
+import { mount } from 'svelte';
 const tick = () => Promise.resolve();
 
 export default test({
-	skip: true, // TODO: decide if we want to keep the customElement={null} behavior (warning about not having set the tag when in ce mode, and disabling that this way)
-
-	async test({ assert, target, component: Component }) {
-		const component = new Component({ target, props: { name: 'slot' } });
+	async test({ assert, target, componentCtor: Component }) {
+		const component = mount(Component, { target, props: { name: 'slot' } });
 		await tick();
 		await tick();
 

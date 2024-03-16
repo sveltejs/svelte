@@ -1,14 +1,15 @@
 import { describe, assert, it } from 'vitest';
 import * as $ from '../../src/internal/client/runtime';
 import {
-	derived,
+	destroy_effect,
 	effect,
 	render_effect,
 	user_effect
-} from '../../src/internal/client/reactivity/computations';
-import { source } from '../../src/internal/client/reactivity/sources';
-import type { ComputationSignal } from '../../src/internal/client/types';
+} from '../../src/internal/client/reactivity/effects';
+import { source, set } from '../../src/internal/client/reactivity/sources';
+import type { Derived } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
+import { derived } from '../../src/internal/client/reactivity/deriveds';
 
 /**
  * @param runes runes mode
@@ -31,7 +32,7 @@ function run_test(runes: boolean, fn: (runes: boolean) => () => void) {
 		);
 		$.pop();
 		execute();
-		$.destroy_signal(signal);
+		destroy_effect(signal);
 	};
 }
 
@@ -51,8 +52,8 @@ describe('signals', () => {
 		});
 
 		return () => {
-			$.flushSync(() => $.set(count, 1));
-			$.flushSync(() => $.set(count, 2));
+			$.flushSync(() => set(count, 1));
+			$.flushSync(() => set(count, 2));
 
 			assert.deepEqual(log, ['0:0', '1:2', '2:4']);
 		};
@@ -72,8 +73,8 @@ describe('signals', () => {
 		});
 
 		return () => {
-			$.flushSync(() => $.set(count, 1));
-			$.flushSync(() => $.set(count, 2));
+			$.flushSync(() => set(count, 1));
+			$.flushSync(() => set(count, 2));
 
 			assert.deepEqual(log, ['A:0:0', 'B:0', 'A:1:2', 'B:2', 'A:2:4', 'B:4']);
 		};
@@ -93,8 +94,8 @@ describe('signals', () => {
 		});
 
 		return () => {
-			$.flushSync(() => $.set(count, 1));
-			$.flushSync(() => $.set(count, 2));
+			$.flushSync(() => set(count, 1));
+			$.flushSync(() => set(count, 2));
 
 			assert.deepEqual(log, ['A:0', 'B:0:0', 'A:2', 'B:1:2', 'A:4', 'B:2:4']);
 		};
@@ -111,8 +112,8 @@ describe('signals', () => {
 		});
 
 		return () => {
-			$.flushSync(() => $.set(count, 1));
-			$.flushSync(() => $.set(count, 2));
+			$.flushSync(() => set(count, 1));
+			$.flushSync(() => set(count, 2));
 
 			assert.deepEqual(log, [0, 2, 4]);
 		};
@@ -130,8 +131,8 @@ describe('signals', () => {
 		});
 
 		return () => {
-			$.flushSync(() => $.set(count, 1));
-			$.flushSync(() => $.set(count, 2));
+			$.flushSync(() => set(count, 1));
+			$.flushSync(() => set(count, 2));
 
 			assert.deepEqual(log, [0, 4, 8]);
 		};
@@ -167,12 +168,12 @@ describe('signals', () => {
 			let i = 2;
 			while (--i) {
 				res.length = 0;
-				$.set(B, 1);
-				$.set(A, 1 + i * 2);
+				set(B, 1);
+				set(A, 1 + i * 2);
 				$.flushSync();
 
-				$.set(A, 2 + i * 2);
-				$.set(B, 2);
+				set(A, 2 + i * 2);
+				set(B, 2);
 				$.flushSync();
 
 				assert.equal(res.length, 4);
@@ -195,22 +196,22 @@ describe('signals', () => {
 		});
 
 		return () => {
-			$.flushSync(() => $.set(count, 1));
+			$.flushSync(() => set(count, 1));
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.c?.length, 1);
-			$.flushSync(() => $.set(count, 2));
+			assert.deepEqual(count.reactions?.length, 1);
+			$.flushSync(() => set(count, 2));
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.c?.length, 1);
-			$.flushSync(() => $.set(count, 3));
+			assert.deepEqual(count.reactions?.length, 1);
+			$.flushSync(() => set(count, 3));
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.c?.length, 1);
+			assert.deepEqual(count.reactions?.length, 1);
 			assert.deepEqual(log, [0, 1, 2, 3]);
 		};
 	});
 
 	test('correctly cleanup onowned nested derived values', () => {
 		return () => {
-			const nested: ComputationSignal<string>[] = [];
+			const nested: Derived<string>[] = [];
 
 			const a = source(0);
 			const b = source(0);
@@ -224,17 +225,17 @@ describe('signals', () => {
 
 			$.get(c);
 
-			$.flushSync(() => $.set(a, 1));
+			$.flushSync(() => set(a, 1));
 
 			$.get(c);
 
-			$.flushSync(() => $.set(b, 1));
+			$.flushSync(() => set(b, 1));
 
 			$.get(c);
 
 			// Ensure we're not leaking dependencies
 			assert.deepEqual(
-				nested.slice(0, -2).map((s) => s.d),
+				nested.slice(0, -2).map((s) => s.deps),
 				[null, null]
 			);
 		};
@@ -257,17 +258,17 @@ describe('signals', () => {
 		});
 
 		return () => {
-			$.flushSync(() => $.set(count, 1));
-			$.flushSync(() => $.set(count, 2));
-			$.flushSync(() => $.set(count, 3));
-			$.flushSync(() => $.set(count, 4));
-			$.flushSync(() => $.set(count, 0));
+			$.flushSync(() => set(count, 1));
+			$.flushSync(() => set(count, 2));
+			$.flushSync(() => set(count, 3));
+			$.flushSync(() => set(count, 4));
+			$.flushSync(() => set(count, 0));
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.c?.length, 1);
+			assert.deepEqual(count.reactions?.length, 1);
 			assert.deepEqual(log, [0, 2, 'limit', 0]);
-			$.destroy_signal(effect);
+			destroy_effect(effect);
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.c, null);
+			assert.deepEqual(count.reactions, null);
 		};
 	});
 
@@ -319,7 +320,7 @@ describe('signals', () => {
 
 		const value = source({ count: 0 });
 		user_effect(() => {
-			$.set(value, { count: 0 });
+			set(value, { count: 0 });
 			$.get(value);
 		});
 
@@ -353,6 +354,28 @@ describe('signals', () => {
 				errored = true;
 			}
 			assert.equal(errored, true);
+		};
+	});
+
+	test('effect teardown is removed on re-run', () => {
+		const count = source(0);
+		let first = true;
+		let teardown = 0;
+
+		user_effect(() => {
+			$.get(count);
+			if (first) {
+				first = false;
+				return () => {
+					teardown += 1;
+				};
+			}
+		});
+
+		return () => {
+			$.flushSync(() => set(count, 1));
+			$.flushSync(() => set(count, 2));
+			assert.equal(teardown, 1);
 		};
 	});
 });

@@ -131,9 +131,9 @@
 				"start": 83,
 				"end": 101,
 				"expression": {
-					"type": "Identifier",
+					"type": "CallExpression",
 					"start": 92,
-					"end": 95,
+					"end": 100,
 					"loc": {
 						"start": {
 							"line": 7,
@@ -141,29 +141,45 @@
 						},
 						"end": {
 							"line": 7,
-							"column": 12
+							"column": 17
 						}
 					},
-					"name": "foo"
-				},
-				"arguments": [
-					{
+					"callee": {
 						"type": "Identifier",
-						"start": 96,
-						"end": 99,
+						"start": 92,
+						"end": 95,
 						"loc": {
 							"start": {
 								"line": 7,
-								"column": 13
+								"column": 9
 							},
 							"end": {
 								"line": 7,
-								"column": 16
+								"column": 12
 							}
 						},
-						"name": "msg"
-					}
-				]
+						"name": "foo"
+					},
+					"arguments": [
+						{
+							"type": "Identifier",
+							"start": 96,
+							"end": 99,
+							"loc": {
+								"start": {
+									"line": 7,
+									"column": 13
+								},
+								"end": {
+									"line": 7,
+									"column": 16
+								}
+							},
+							"name": "msg"
+						}
+					],
+					"optional": false
+				}
 			}
 		],
 		"transparent": false

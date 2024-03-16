@@ -2,12 +2,18 @@
 
 {#if true}
   <text x="0" y="26">true</text>
-{:else}
-  <text x="0" y="26">false</text>
 {/if}
 
-{#each  Array(3).fill(0) as item, idx}
+{#each Array(2).fill(0) as item, idx}
   <text x={idx * 10} y={42}>{idx}</text>
 {/each}
 
-<!-- comment should not set infer html namespace -->
+{@html '<text x="0" y="40">html</text>'}
+
+{@render test("snippet")}
+
+{#snippet test(text)}
+<text x={20} y={42}>{text}</text>
+{/snippet}
+
+<!-- comment should not infer html namespace -->

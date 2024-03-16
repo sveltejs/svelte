@@ -44,6 +44,7 @@
 					"column": 0
 				}
 			},
+			"leadingComments": [{ "type": "Line", "value": "should not error out" }],
 			"body": [
 				{
 					"type": "VariableDeclaration",

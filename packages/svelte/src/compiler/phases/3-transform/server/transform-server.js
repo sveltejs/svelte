@@ -1,6 +1,11 @@
 import { walk } from 'zimmerframe';
 import { set_scope, get_rune } from '../../scope.js';
-import { extract_identifiers, extract_paths, is_event_attribute } from '../../../utils/ast.js';
+import {
+	extract_identifiers,
+	extract_paths,
+	is_event_attribute,
+	unwrap_optional
+} from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
 import is_reference from 'is-reference';
 import {
@@ -541,6 +546,113 @@ const javascript_visitors = {
 
 /** @type {import('./types').Visitors} */
 const javascript_visitors_runes = {
+	ClassBody(node, { state, visit }) {
+		/** @type {Map<string, import('../../3-transform/client/types.js').StateField>} */
+		const public_derived = new Map();
+
+		/** @type {Map<string, import('../../3-transform/client/types.js').StateField>} */
+		const private_derived = new Map();
+
+		/** @type {string[]} */
+		const private_ids = [];
+
+		for (const definition of node.body) {
+			if (
+				definition.type === 'PropertyDefinition' &&
+				(definition.key.type === 'Identifier' || definition.key.type === 'PrivateIdentifier')
+			) {
+				const { type, name } = definition.key;
+
+				const is_private = type === 'PrivateIdentifier';
+				if (is_private) private_ids.push(name);
+
+				if (definition.value?.type === 'CallExpression') {
+					const rune = get_rune(definition.value, state.scope);
+					if (rune === '$derived' || rune === '$derived.by') {
+						/** @type {import('../../3-transform/client/types.js').StateField} */
+						const field = {
+							kind: rune === '$derived.by' ? 'derived_call' : 'derived',
+							// @ts-expect-error this is set in the next pass
+							id: is_private ? definition.key : null
+						};
+
+						if (is_private) {
+							private_derived.set(name, field);
+						} else {
+							public_derived.set(name, field);
+						}
+					}
+				}
+			}
+		}
+
+		// each `foo = $derived()` needs a backing `#foo` field
+		for (const [name, field] of public_derived) {
+			let deconflicted = name;
+			while (private_ids.includes(deconflicted)) {
+				deconflicted = '_' + deconflicted;
+			}
+
+			private_ids.push(deconflicted);
+			field.id = b.private_id(deconflicted);
+		}
+
+		/** @type {Array<import('estree').MethodDefinition | import('estree').PropertyDefinition>} */
+		const body = [];
+
+		const child_state = { ...state, private_derived };
+
+		// Replace parts of the class body
+		for (const definition of node.body) {
+			if (
+				definition.type === 'PropertyDefinition' &&
+				(definition.key.type === 'Identifier' || definition.key.type === 'PrivateIdentifier')
+			) {
+				const name = definition.key.name;
+
+				const is_private = definition.key.type === 'PrivateIdentifier';
+				const field = (is_private ? private_derived : public_derived).get(name);
+
+				if (definition.value?.type === 'CallExpression' && field !== undefined) {
+					const init = /** @type {import('estree').Expression} **/ (
+						visit(definition.value.arguments[0], child_state)
+					);
+					const value =
+						field.kind === 'derived_call'
+							? b.call('$.once', init)
+							: b.call('$.once', b.thunk(init));
+
+					if (is_private) {
+						body.push(b.prop_def(field.id, value));
+					} else {
+						// #foo;
+						const member = b.member(b.this, field.id);
+						body.push(b.prop_def(field.id, value));
+
+						// get foo() { return this.#foo; }
+						body.push(b.method('get', definition.key, [], [b.return(b.call(member))]));
+
+						if ((field.kind === 'derived' || field.kind === 'derived_call') && state.options.dev) {
+							body.push(
+								b.method(
+									'set',
+									definition.key,
+									[b.id('_')],
+									[b.throw_error(`Cannot update a derived property ('${name}')`)]
+								)
+							);
+						}
+					}
+
+					continue;
+				}
+			}
+
+			body.push(/** @type {import('estree').MethodDefinition} **/ (visit(definition, child_state)));
+		}
+
+		return { ...node, body };
+	},
 	PropertyDefinition(node, { state, next, visit }) {
 		if (node.value != null && node.value.type === 'CallExpression') {
 			const rune = get_rune(node.value, state.scope);
@@ -646,6 +758,16 @@ const javascript_visitors_runes = {
 
 		if (rune === '$inspect' || rune === '$inspect().with') {
 			return transform_inspect_rune(node, context);
+		}
+
+		context.next();
+	},
+	MemberExpression(node, context) {
+		if (node.object.type === 'ThisExpression' && node.property.type === 'PrivateIdentifier') {
+			const field = context.state.private_derived.get(node.property.name);
+			if (field) {
+				return b.call(node);
+			}
 		}
 
 		context.next();
@@ -1141,17 +1263,28 @@ const template_visitors = {
 		state.init.push(anchor);
 		state.template.push(t_expression(anchor_id));
 
-		const expression = /** @type {import('estree').Expression} */ (context.visit(node.expression));
+		const callee = unwrap_optional(node.expression).callee;
+		const raw_args = unwrap_optional(node.expression).arguments;
+
+		const expression = /** @type {import('estree').Expression} */ (context.visit(callee));
 		const snippet_function = state.options.dev
 			? b.call('$.validate_snippet', expression)
 			: expression;
 
-		const snippet_args = node.arguments.map((arg) => {
+		const snippet_args = raw_args.map((arg) => {
 			return /** @type {import('estree').Expression} */ (context.visit(arg));
 		});
 
 		state.template.push(
-			t_statement(b.stmt(b.call(snippet_function, b.id('$$payload'), ...snippet_args)))
+			t_statement(
+				b.stmt(
+					(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
+						snippet_function,
+						b.id('$$payload'),
+						...snippet_args
+					)
+				)
+			)
 		);
 
 		state.template.push(t_expression(anchor_id));
@@ -1207,6 +1340,12 @@ const template_visitors = {
 			inner_context.visit(node, state);
 		}
 
+		if (context.state.options.dev) {
+			context.state.template.push(
+				t_statement(b.stmt(b.call('$.push_element', b.literal(node.name), b.id('$$payload'))))
+			);
+		}
+
 		process_children(trimmed, node, inner_context);
 
 		if (body_expression !== null) {
@@ -1238,6 +1377,9 @@ const template_visitors = {
 
 		if (!VoidElements.includes(node.name) && metadata.namespace !== 'foreign') {
 			context.state.template.push(t_string(`</${node.name}>`));
+		}
+		if (context.state.options.dev) {
+			context.state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));
 		}
 	},
 	SvelteElement(node, context) {
@@ -1274,40 +1416,45 @@ const template_visitors = {
 		context.state.init.push(el_anchor);
 		context.state.template.push(t_expression(anchor_id));
 
-		const [inner_anchor, inner_id] = serialize_anchor(context.state);
-		inner_context.state.init.push(inner_anchor);
-		inner_context.state.template.push(t_string('<'), t_expression(tag));
-		serialize_element_attributes(node, inner_context);
-		inner_context.state.template.push(t_string('>'));
-
-		const before = serialize_template(inner_context.state.template);
 		const main = create_block(node, node.fragment.nodes, {
 			...context,
 			state: { ...context.state, metadata }
 		});
-		const after = serialize_template([
-			t_expression(inner_id),
-			t_string('</'),
-			t_expression(tag),
-			t_string('>')
-		]);
+
+		serialize_element_attributes(node, inner_context);
+
+		if (context.state.options.dev) {
+			context.state.template.push(
+				t_statement(b.stmt(b.call('$.push_element', tag, b.id('$$payload'))))
+			);
+		}
 
 		context.state.template.push(
 			t_statement(
 				b.if(
 					tag,
-					b.block([
-						...inner_context.state.init,
-						...before,
-						b.if(
-							b.unary('!', b.call('$.VoidElements.has', tag)),
-							b.block([...serialize_template([t_expression(inner_id)]), ...main, ...after])
+
+					b.stmt(
+						b.call(
+							'$.element',
+							b.id('$$payload'),
+							tag,
+							b.thunk(
+								b.block([
+									...inner_context.state.init,
+									...serialize_template(inner_context.state.template)
+								])
+							),
+							b.thunk(b.block(main))
 						)
-					])
+					)
 				)
 			),
 			t_expression(anchor_id)
 		);
+		if (context.state.options.dev) {
+			context.state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));
+		}
 	},
 	EachBlock(node, context) {
 		const state = context.state;
@@ -1982,7 +2129,8 @@ export function server_component(analysis, options) {
 		metadata: {
 			namespace: options.namespace
 		},
-		preserve_whitespace: options.preserveWhitespace
+		preserve_whitespace: options.preserveWhitespace,
+		private_derived: new Map()
 	};
 
 	const module = /** @type {import('estree').Program} */ (
@@ -2239,7 +2387,8 @@ export function server_module(analysis, options) {
 		// this is an anomaly — it can only be used in components, but it needs
 		// to be present for `javascript_visitors` and so is included in module
 		// transform state as well as component transform state
-		legacy_reactive_statements: new Map()
+		legacy_reactive_statements: new Map(),
+		private_derived: new Map()
 	};
 
 	const module = /** @type {import('estree').Program} */ (

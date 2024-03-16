@@ -176,6 +176,12 @@ function get_delegated_event(event_name, handler, context) {
 			return non_hoistable;
 		}
 		const binding = scope.get(reference);
+		const local_binding = context.state.scope.get(reference);
+
+		// If we are referencing a binding that is shadowed in another scope then bail out.
+		if (local_binding !== null && binding !== null && local_binding.node !== binding.node) {
+			return non_hoistable;
+		}
 
 		// If we have multiple references to the same store using $ prefix, bail out.
 		if (
@@ -294,6 +300,25 @@ export function analyze_component(root, options) {
 					declaration.initial.source.value === 'svelte/store'
 				))
 		) {
+			let is_nested_store_subscription = false;
+			for (const reference of references) {
+				for (let i = reference.path.length - 1; i >= 0; i--) {
+					const scope =
+						scopes.get(reference.path[i]) ||
+						module.scopes.get(reference.path[i]) ||
+						instance.scopes.get(reference.path[i]);
+					if (scope) {
+						const owner = scope?.owner(store_name);
+						is_nested_store_subscription =
+							!!owner && owner !== module.scope && owner !== instance.scope;
+						break;
+					}
+				}
+			}
+			if (is_nested_store_subscription) {
+				error(references[0].node, 'illegal-store-subscription');
+			}
+
 			if (options.runes !== false) {
 				if (declaration === null && /[a-z]/.test(store_name[0])) {
 					error(references[0].node, 'illegal-global', name);
@@ -349,9 +374,13 @@ export function analyze_component(root, options) {
 		uses_rest_props: false,
 		uses_slots: false,
 		uses_component_bindings: false,
-		custom_element: options.customElement,
-		inject_styles: options.css === 'injected' || !!options.customElement,
-		accessors: options.customElement ? true : !!options.accessors,
+		custom_element: options.customElementOptions ?? options.customElement,
+		inject_styles: options.css === 'injected' || options.customElement,
+		accessors: options.customElement
+			? true
+			: !!options.accessors ||
+				// because $set method needs accessors
+				!!options.legacy?.componentApi,
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
 		slot_names: new Set(),
@@ -369,6 +398,10 @@ export function analyze_component(root, options) {
 			keyframes: []
 		}
 	};
+
+	if (!options.customElement && root.options?.customElement) {
+		warn(analysis.warnings, root.options, [], 'missing-custom-element-compile-option');
+	}
 
 	if (analysis.runes) {
 		const props_refs = module.scope.references.get('$$props');
@@ -432,6 +465,17 @@ export function analyze_component(root, options) {
 			);
 		}
 
+		for (const [name, binding] of instance.scope.declarations) {
+			if (binding.kind === 'prop' && binding.node.name !== '$$props') {
+				const references = binding.references.filter(
+					(r) => r.node !== binding.node && r.path.at(-1)?.type !== 'ExportSpecifier'
+				);
+				if (!references.length && !instance.scope.declarations.has(`$${name}`)) {
+					warn(warnings, binding.node, [], 'unused-export-let', name);
+				}
+			}
+		}
+
 		analysis.reactive_statements = order_reactive_statements(analysis.reactive_statements);
 	}
 
@@ -448,6 +492,25 @@ export function analyze_component(root, options) {
 							type === 'FunctionExpression' ||
 							type === 'ArrowFunctionExpression'
 						) {
+							continue inner;
+						}
+						// bind:this doesn't need to be a state reference if it will never change
+						if (
+							type === 'BindDirective' &&
+							/** @type {import('#compiler').BindDirective} */ (path[i]).name === 'this'
+						) {
+							for (let j = i - 1; j >= 0; j -= 1) {
+								const type = path[j].type;
+								if (
+									type === 'IfBlock' ||
+									type === 'EachBlock' ||
+									type === 'AwaitBlock' ||
+									type === 'KeyBlock'
+								) {
+									warn(warnings, binding.node, [], 'non-state-reference', name);
+									continue outer;
+								}
+							}
 							continue inner;
 						}
 					}
@@ -560,6 +623,17 @@ const legacy_scope_tweaker = {
 		}
 
 		state.reactive_statements.set(node, reactive_statement);
+
+		// Ideally this would be in the validation file, but that isn't possible because this visitor
+		// calls "next" before setting the reactive statements.
+		if (
+			reactive_statement.dependencies.size &&
+			[...reactive_statement.dependencies].every(
+				(d) => d.scope === state.analysis.module.scope && d.declaration_kind !== 'const'
+			)
+		) {
+			warn(state.analysis.warnings, node, path, 'module-script-reactive-declaration');
+		}
 
 		if (
 			node.body.type === 'ExpressionStatement' &&
@@ -681,7 +755,8 @@ const legacy_scope_tweaker = {
 				if (
 					binding.kind === 'state' ||
 					binding.kind === 'frozen_state' ||
-					(binding.kind === 'normal' && binding.declaration_kind === 'let')
+					(binding.kind === 'normal' &&
+						(binding.declaration_kind === 'let' || binding.declaration_kind === 'var'))
 				) {
 					binding.kind = 'prop';
 					if (specifier.exported.name !== specifier.local.name) {

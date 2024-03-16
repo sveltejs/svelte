@@ -54,6 +54,11 @@ export default function read_options(node) {
 					component_options.customElement = ce;
 					break;
 				} else if (value[0].expression.type !== 'ObjectExpression') {
+					// Before Svelte 4 it was necessary to explicitly set customElement to null or else you'd get a warning.
+					// This is no longer necessary, but for backwards compat just skip in this case now.
+					if (value[0].expression.type === 'Literal' && value[0].expression.value === null) {
+						break;
+					}
 					error(attribute, 'invalid-svelte-option-customElement');
 				}
 

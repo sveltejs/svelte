@@ -172,12 +172,12 @@ declare namespace $effect {
  * Declares the props that a component accepts. Example:
  *
  * ```ts
- * let { optionalProp = 42, requiredProp } = $props<{ optionalProp?: number; requiredProps: string}>();
+ * let { optionalProp = 42, requiredProp }: { optionalProp?: number; requiredProps: string } = $props();
  * ```
  *
  * https://svelte-5-preview.vercel.app/docs/runes#$props
  */
-declare function $props<T>(): T;
+declare function $props(): any;
 
 /**
  * Inspects one or more values whenever they, or the properties they contain, change. Example:

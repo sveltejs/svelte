@@ -1,14 +1,19 @@
+import {
+	disallowed_paragraph_contents,
+	interactive_elements,
+	is_tag_valid_with_parent
+} from '../../../constants.js';
 import { error } from '../../errors.js';
 import {
 	extract_identifiers,
 	get_parent,
 	is_expression_attribute,
 	is_text_attribute,
-	object
+	object,
+	unwrap_optional
 } from '../../utils/ast.js';
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
-import { disallowed_parapgraph_contents, interactive_elements } from '../1-parse/utils/html.js';
 import { binding_properties } from '../bindings.js';
 import { ContentEditableBindings, EventModifiers, SVGElements } from '../constants.js';
 import { is_custom_element_node } from '../nodes.js';
@@ -44,8 +49,12 @@ function validate_component(node, context) {
 			error(attribute, 'invalid-event-modifier');
 		}
 
-		if (attribute.type === 'Attribute' && attribute.name === 'slot') {
-			validate_slot_attribute(context, attribute);
+		if (attribute.type === 'Attribute') {
+			validate_attribute_name(attribute, context);
+
+			if (attribute.name === 'slot') {
+				validate_slot_attribute(context, attribute);
+			}
 		}
 	}
 
@@ -55,6 +64,11 @@ function validate_component(node, context) {
 		component_slots: new Set()
 	});
 }
+
+const react_attributes = new Map([
+	['className', 'class'],
+	['htmlFor', 'for']
+]);
 
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
@@ -100,6 +114,20 @@ function validate_element(node, context) {
 			if (attribute.name === 'is' && context.state.options.namespace !== 'foreign') {
 				warn(context.state.analysis.warnings, attribute, context.path, 'avoid-is');
 			}
+
+			const correct_name = react_attributes.get(attribute.name);
+			if (correct_name) {
+				warn(
+					context.state.analysis.warnings,
+					attribute,
+					context.path,
+					'invalid-html-attribute',
+					attribute.name,
+					correct_name
+				);
+			}
+
+			validate_attribute_name(attribute, context);
 		} else if (attribute.type === 'AnimateDirective') {
 			const parent = context.path.at(-2);
 			if (parent?.type !== 'EachBlock') {
@@ -158,6 +186,21 @@ function validate_element(node, context) {
 				}
 			}
 		}
+	}
+}
+
+/**
+ * @param {import('#compiler').Attribute} attribute
+ * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
+ */
+function validate_attribute_name(attribute, context) {
+	if (
+		attribute.name.includes(':') &&
+		!attribute.name.startsWith('xmlns:') &&
+		!attribute.name.startsWith('xlink:') &&
+		!attribute.name.startsWith('xml:')
+	) {
+		warn(context.state.analysis.warnings, attribute, context.path, 'illegal-attribute-character');
 	}
 }
 
@@ -226,125 +269,17 @@ function validate_slot_attribute(context, attribute) {
 	}
 }
 
-// https://html.spec.whatwg.org/multipage/syntax.html#generate-implied-end-tags
-const implied_end_tags = ['dd', 'dt', 'li', 'option', 'optgroup', 'p', 'rp', 'rt'];
-
 /**
- * @param {string} tag
- * @param {string} parent_tag
- * @returns {boolean}
+ * @param {import('#compiler').Fragment | null | undefined} node
+ * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
  */
-function is_tag_valid_with_parent(tag, parent_tag) {
-	// First, let's check if we're in an unusual parsing mode...
-	switch (parent_tag) {
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inselect
-		case 'select':
-			return tag === 'option' || tag === 'optgroup' || tag === '#text';
-		case 'optgroup':
-			return tag === 'option' || tag === '#text';
-		// Strictly speaking, seeing an <option> doesn't mean we're in a <select>
-		// but
-		case 'option':
-			return tag === '#text';
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intd
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-incaption
-		// No special behavior since these rules fall back to "in body" mode for
-		// all except special table nodes which cause bad parsing behavior anyway.
-
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intr
-		case 'tr':
-			return (
-				tag === 'th' || tag === 'td' || tag === 'style' || tag === 'script' || tag === 'template'
-			);
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intbody
-		case 'tbody':
-		case 'thead':
-		case 'tfoot':
-			return tag === 'tr' || tag === 'style' || tag === 'script' || tag === 'template';
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-incolgroup
-		case 'colgroup':
-			return tag === 'col' || tag === 'template';
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intable
-		case 'table':
-			return (
-				tag === 'caption' ||
-				tag === 'colgroup' ||
-				tag === 'tbody' ||
-				tag === 'tfoot' ||
-				tag === 'thead' ||
-				tag === 'style' ||
-				tag === 'script' ||
-				tag === 'template'
-			);
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inhead
-		case 'head':
-			return (
-				tag === 'base' ||
-				tag === 'basefont' ||
-				tag === 'bgsound' ||
-				tag === 'link' ||
-				tag === 'meta' ||
-				tag === 'title' ||
-				tag === 'noscript' ||
-				tag === 'noframes' ||
-				tag === 'style' ||
-				tag === 'script' ||
-				tag === 'template'
-			);
-		// https://html.spec.whatwg.org/multipage/semantics.html#the-html-element
-		case 'html':
-			return tag === 'head' || tag === 'body' || tag === 'frameset';
-		case 'frameset':
-			return tag === 'frame';
-		case '#document':
-			return tag === 'html';
+function validate_block_not_empty(node, context) {
+	if (!node) return;
+	// Assumption: If the block has zero elements, someone's in the middle of typing it out,
+	// so don't warn in that case because it would be distracting.
+	if (node.nodes.length === 1 && node.nodes[0].type === 'Text' && !node.nodes[0].raw.trim()) {
+		warn(context.state.analysis.warnings, node.nodes[0], context.path, 'empty-block');
 	}
-
-	// Probably in the "in body" parsing mode, so we outlaw only tag combos
-	// where the parsing rules cause implicit opens or closes to be added.
-	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inbody
-	switch (tag) {
-		case 'h1':
-		case 'h2':
-		case 'h3':
-		case 'h4':
-		case 'h5':
-		case 'h6':
-			return (
-				parent_tag !== 'h1' &&
-				parent_tag !== 'h2' &&
-				parent_tag !== 'h3' &&
-				parent_tag !== 'h4' &&
-				parent_tag !== 'h5' &&
-				parent_tag !== 'h6'
-			);
-
-		case 'rp':
-		case 'rt':
-			return implied_end_tags.indexOf(parent_tag) === -1;
-
-		case 'body':
-		case 'caption':
-		case 'col':
-		case 'colgroup':
-		case 'frameset':
-		case 'frame':
-		case 'head':
-		case 'html':
-		case 'tbody':
-		case 'td':
-		case 'tfoot':
-		case 'th':
-		case 'thead':
-		case 'tr':
-			// These tags are only valid with a few parents that have special child
-			// parsing rules -- if we're down here, then none of those matched and
-			// so we allow it only if we don't know what the parent is, as all other
-			// cases are invalid.
-			return parent_tag == null;
-	}
-
-	return true;
 }
 
 /**
@@ -393,11 +328,22 @@ const validation = {
 			// TODO handle mutations of non-state/props in runes mode
 		}
 
+		const binding = context.state.scope.get(left.name);
+
 		if (node.name === 'group') {
-			const binding = context.state.scope.get(left.name);
 			if (!binding) {
 				error(node, 'INTERNAL', 'Cannot find declaration for bind:group');
 			}
+		}
+
+		if (binding?.kind === 'each' && binding.metadata?.inside_rest) {
+			warn(
+				context.state.analysis.warnings,
+				binding.node,
+				context.path,
+				'invalid-rest-eachblock-binding',
+				binding.node.name
+			);
 		}
 
 		const parent = context.path.at(-1);
@@ -589,7 +535,7 @@ const validation = {
 			}
 		}
 
-		if (disallowed_parapgraph_contents.includes(node.name)) {
+		if (disallowed_paragraph_contents.includes(node.name)) {
 			const path = context.path;
 			for (let parent of path) {
 				if (parent.type === 'RegularElement' && parent.name === 'p') {
@@ -604,10 +550,80 @@ const validation = {
 		});
 	},
 	RenderTag(node, context) {
-		for (const arg of node.arguments) {
+		const raw_args = unwrap_optional(node.expression).arguments;
+		for (const arg of raw_args) {
 			if (arg.type === 'SpreadElement') {
 				error(arg, 'invalid-render-spread-argument');
 			}
+		}
+
+		const callee = unwrap_optional(node.expression).callee;
+		if (
+			callee.type === 'MemberExpression' &&
+			callee.property.type === 'Identifier' &&
+			['bind', 'apply', 'call'].includes(callee.property.name)
+		) {
+			error(node, 'invalid-render-call');
+		}
+
+		const is_inside_textarea = context.path.find((n) => {
+			return (
+				n.type === 'SvelteElement' &&
+				n.name === 'svelte:element' &&
+				n.tag.type === 'Literal' &&
+				n.tag.value === 'textarea'
+			);
+		});
+		if (is_inside_textarea) {
+			error(
+				node,
+				'invalid-tag-placement',
+				'inside <textarea> or <svelte:element this="textarea">',
+				'render'
+			);
+		}
+	},
+	IfBlock(node, context) {
+		validate_block_not_empty(node.consequent, context);
+		validate_block_not_empty(node.alternate, context);
+	},
+	EachBlock(node, context) {
+		validate_block_not_empty(node.body, context);
+		validate_block_not_empty(node.fallback, context);
+	},
+	AwaitBlock(node, context) {
+		validate_block_not_empty(node.pending, context);
+		validate_block_not_empty(node.then, context);
+		validate_block_not_empty(node.catch, context);
+	},
+	KeyBlock(node, context) {
+		validate_block_not_empty(node.fragment, context);
+	},
+	SnippetBlock(node, context) {
+		validate_block_not_empty(node.body, context);
+
+		if (node.expression.name !== 'children') return;
+
+		const { path } = context;
+		const parent = path.at(-2);
+		if (!parent) return;
+		if (
+			parent.type === 'Component' ||
+			parent.type === 'SvelteComponent' ||
+			parent.type === 'SvelteSelf'
+		) {
+			if (
+				parent.fragment.nodes.some(
+					(node) => node.type !== 'SnippetBlock' && (node.type !== 'Text' || node.data.trim())
+				)
+			) {
+				error(node, 'conflicting-children-snippet');
+			}
+		}
+	},
+	StyleDirective(node) {
+		if (node.modifiers.length > 1 || (node.modifiers.length && node.modifiers[0] !== 'important')) {
+			error(node, 'invalid-style-directive-modifier');
 		}
 	},
 	SvelteHead(node) {
@@ -693,6 +709,8 @@ const validation = {
 
 export const validation_legacy = merge(validation, a11y_validators, {
 	VariableDeclarator(node, { state }) {
+		ensure_no_module_import_conflict(node, state);
+
 		if (node.init?.type !== 'CallExpression') return;
 
 		const callee = node.init.callee;
@@ -799,6 +817,22 @@ function validate_call_expression(node, scope, path) {
 	if (rune === '$inspect().with') {
 		if (node.arguments.length !== 1) {
 			error(node, 'invalid-rune-args-length', rune, [1]);
+		}
+	}
+}
+
+/**
+ * @param {import('estree').VariableDeclarator} node
+ * @param {import('./types.js').AnalysisState} state
+ */
+function ensure_no_module_import_conflict(node, state) {
+	const ids = extract_identifiers(node.id);
+	for (const id of ids) {
+		if (
+			state.scope === state.analysis.instance.scope &&
+			state.analysis.module.scope.get(id.name)?.declaration_kind === 'import'
+		) {
+			error(node.id, 'illegal-variable-declaration');
 		}
 	}
 }
@@ -963,11 +997,29 @@ export const validation_runes = merge(validation, a11y_validators, {
 		if (node.label.name !== '$' || path.at(-1)?.type !== 'Program') return;
 		error(node, 'invalid-legacy-reactive-statement');
 	},
-	ExportNamedDeclaration(node, { state }) {
-		if (node.declaration?.type !== 'VariableDeclaration') return;
-		if (node.declaration.kind !== 'let') return;
-		if (state.analysis.instance.scope !== state.scope) return;
-		error(node, 'invalid-legacy-export');
+	ExportNamedDeclaration(node, { state, next }) {
+		if (state.ast_type === 'module') {
+			if (node.declaration?.type !== 'VariableDeclaration') return;
+
+			// visit children, so bindings are correctly initialised
+			next();
+
+			for (const declarator of node.declaration.declarations) {
+				for (const id of extract_identifiers(declarator.id)) {
+					validate_export(node, state.scope, id.name);
+				}
+			}
+		} else {
+			if (node.declaration?.type !== 'VariableDeclaration') return;
+			if (node.declaration.kind !== 'let') return;
+			if (state.analysis.instance.scope !== state.scope) return;
+			error(node, 'invalid-legacy-export');
+		}
+	},
+	ExportSpecifier(node, { state }) {
+		if (state.ast_type === 'module') {
+			validate_export(node, state.scope, node.local.name);
+		}
 	},
 	CallExpression(node, { state, path }) {
 		validate_call_expression(node, state.scope, path);
@@ -983,10 +1035,17 @@ export const validation_runes = merge(validation, a11y_validators, {
 		next({ ...state });
 	},
 	VariableDeclarator(node, { state, path }) {
+		ensure_no_module_import_conflict(node, state);
+
 		const init = node.init;
 		const rune = get_rune(init, state.scope);
 
-		if (rune === null) return;
+		if (rune === null) {
+			if (init?.type === 'Identifier' && init.name === '$props' && !state.scope.get('props')) {
+				warn(state.analysis.warnings, node, path, 'invalid-props-declaration');
+			}
+			return;
+		}
 
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 

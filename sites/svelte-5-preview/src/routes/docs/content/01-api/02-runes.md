@@ -161,24 +161,14 @@ In essence, `$derived(expression)` is equivalent to `$derived.by(() => expressio
 
 To run side-effects like logging or analytics whenever some specific values change, or when a component is mounted to the DOM, we can use the `$effect` rune:
 
-```diff
+```svelte
 <script>
 	let count = $state(0);
 	let doubled = $derived(count * 2);
 
-+	$effect(() => {
-+		// runs when the component is mounted, and again
-+		// whenever `count` or `doubled` change,
-+		// after the DOM has been updated
-+		console.log({ count, doubled });
-+
-+		return () => {
-+			// if a callback is provided, it will run
-+			// a) immediately before the effect re-runs
-+			// b) when the component is destroyed
-+			console.log('cleanup');
-+		};
-+	});
+	$effect(() => {
+		console.log({ count, doubled });
+	});
 </script>
 
 <button on:click={() => count++}>
@@ -187,6 +177,169 @@ To run side-effects like logging or analytics whenever some specific values chan
 
 <p>{count} doubled is {doubled}</p>
 ```
+
+`$effect` will automatically subscribe to any `$state` or `$derived` values it reads _synchronously_ and reruns whenever their values change — that means, values after an `await` or inside a `setTimeout` will _not_ be tracked. `$effect` will run after the DOM has been updated.
+
+```svelte
+<script>
+	let count = $state(0);
+	let doubled = $derived(count * 2);
+
+	$effect(() => {
+		// runs after the DOM has been updated
+		// when the component is mounted
+		// and whenever `count` changes,
+		// but not when `doubled` changes,
+		console.log(count);
+
+		setTimeout(() => console.log(doubled));
+	});
+</script>
+
+<button on:click={() => count++}>
+	{doubled}
+</button>
+
+<p>{count} doubled is {doubled}</p>
+```
+
+An effect only reruns when the object it reads changes, not when a property inside it changes. If you want to react to _any_ change inside an object for inspection purposes at dev time, you may want to use [`inspect`](#inspect).
+
+```svelte
+<script>
+	let object = $state({ count: 0 });
+	let derived_object = $derived({
+		doubled: object.count * 2
+	});
+
+	$effect(() => {
+		// never reruns, because object does not change,
+		// only its property changes
+		object;
+		console.log('object');
+	});
+
+	$effect(() => {
+		// reruns, because object.count changes
+		object.count;
+		console.log('object.count');
+	});
+
+	$effect(() => {
+		// reruns, because $derived produces a new object on each rerun
+		derived_object;
+		console.log('derived_object');
+	});
+</script>
+
+<button on:click={() => object.count++}>
+	{doubled}
+</button>
+
+<p>{count} doubled is {doubled}</p>
+```
+
+You can return a function from `$effect`, which will run immediately before the effect re-runs, and before it is destroyed ([demo](/#H4sIAAAAAAAAE42SzW6DMBCEX2Vl5RDaVCQ9JoDUY--9lUox9lKsGBvZC1GEePcaKPnpqSe86_m0M2t6ViqNnu0_e2Z4jWzP3pqGbRhdmrHwHWrCUHvbOjF2Ei-caijLTU4aCYRtDUEKK0-ccL2NDstNrbRWHoU10t8Eu-121gTVCssSBa3XEaQZ9GMrpziGj0p5OAccCgSHwmEgJZwrNNihg6MyhK7j-gii4uYb_YyGUZ5guQwzPdL7b_U4ZNSOvp9T2B3m1rB5cLx4zMkhtc7AHz7YVCVwEFzrgosTBMuNs52SKDegaPbvWnMH8AhUXaNUIY6-hHCldQhUIcyLCFlfAuHvkCKaYk8iYevGGgy2wyyJnpy9oLwG0sjdNe2yhGhJN32HsUzi2xOapNpl_bSLIYnDeeoVLZE1YI3QSpzSfo7-8J5PKbwOmdf2jC6JZyD7HxpPaMk93aHhF6utVKVCyfbkWhy-hh9Z3o_2nQIAAA==)).
+
+```svelte
+<script>
+	let count = $state(0);
+	let milliseconds = $state(1000);
+
+	$effect(() => {
+		// This will be recreated whenever `milliseconds` changes
+		const interval = setInterval(() => {
+			count += 1;
+		}, milliseconds);
+
+		return () => {
+			// if a callback is provided, it will run
+			// a) immediately before the effect re-runs
+			// b) when the component is destroyed
+			clearInterval(interval);
+		};
+	});
+</script>
+
+<h1>{count}</h1>
+
+<button onclick={() => (milliseconds *= 2)}>slower</button>
+<button onclick={() => (milliseconds /= 2)}>faster</button>
+```
+
+### When not to use `$effect`
+
+In general, `$effect` is best considered something of an escape hatch — useful for things like analytics and direct DOM manipulation — rather than a tool you should use frequently. In particular, avoid using it to synchronise state. Instead of this...
+
+```svelte
+<script>
+	let count = $state(0);
+	let doubled = $state();
+
+	// don't do this!
+	$effect(() => {
+		doubled = count * 2;
+	});
+</script>
+```
+
+...do this:
+
+```svelte
+<script>
+	let count = $state(0);
+	let doubled = $derived(count * 2);
+</script>
+```
+
+> For things that are more complicated than a simple expression like `count * 2`, you can also use [`$derived.by`](#$derived-by).
+
+When reacting to a state change and writing to a different state as a result, think about if it's possible to use callback props instead.
+
+```svelte
+<!-- Don't do this -->
+<script>
+	let value = $state();
+	let value_uppercase = $state();
+	$effect(() => {
+		value_uppercase = value.toUpperCase();
+	});
+</script>
+
+<Text bind:value />
+
+<!-- Do this instead: -->
+<script>
+	let value = $state();
+	let value_uppercase = $state();
+	function onValueChange(new_text) {
+		value = new_text;
+		value_uppercase = new_text.toUpperCase();
+	}
+</script>
+
+<Text {value} {onValueChange}>
+```
+
+If you want to have something update from above but also modify it from below (i.e. you want some kind of "writable `$derived`"), and events aren't an option, you can also use an object with getters and setters.
+
+```svelte
+<script>
+	let { value } = $props();
+	let facade = {
+		get value() {
+			return value.toUpperCase();
+		},
+		set value(val) {
+			value = val.toLowerCase();
+		}
+	};
+</script>
+
+<input bind:value={facade.value} />
+```
+
+If you absolutely have to update `$state` within an effect and run into an infinite loop because you read and write to the same `$state`, use [untrack](functions#untrack).
 
 ### What this replaces
 
@@ -235,6 +388,8 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 	{/each}
 </div>
 ```
+
+Apart from the timing, `$effect.pre` works exactly like [`$effect`](#effect) — refer to its documentation for more info.
 
 ### What this replaces
 
@@ -299,13 +454,22 @@ To get all properties, use rest syntax:
 let { a, b, c, ...everythingElse } = $props();
 ```
 
-If you're using TypeScript, you can use type arguments:
+If you're using TypeScript, you can declare the prop types:
 
 ```ts
 type MyProps = any;
 // ---cut---
-let { a, b, c, ...everythingElse } = $props<MyProps>();
+let { a, b, c, ...everythingElse }: MyProps = $props();
 ```
+
+> In an earlier preview, `$props()` took a type argument. This caused bugs, since in a case like this...
+>
+> ```ts
+> // @errors: 2558
+> let { x = 42 } = $props<{ x: string }>();
+> ```
+>
+> ...TypeScript [widens the type](https://www.typescriptlang.org/play?#code/CYUwxgNghgTiAEAzArgOzAFwJYHtXwBIAHGHIgZwB4AVeAXnilQE8A+ACgEoAueagbgBQgiCAzwA3vAAe9eABYATPAC+c4qQqUp03uQwwsqAOaqOnIfCsB6a-AB6AfiA) of `x` to be `string | number`, instead of erroring.
 
 Props cannot be mutated, unless the parent component uses `bind:`. During development, attempts to mutate props will result in an error.
 
