@@ -175,3 +175,17 @@ function is_numberlike_input(input) {
 function to_number(value) {
 	return value === '' ? null : +value;
 }
+
+/**
+ * @param {HTMLInputElement} input
+ * @param {() => FileList | null} get_value
+ * @param {(value: FileList | null) => void} update
+ */
+export function bind_files(input, get_value, update) {
+	listen_to_event_and_reset_event(input, 'change', () => {
+		update(input.files);
+	});
+	render_effect(() => {
+		input.files = get_value();
+	});
+}
