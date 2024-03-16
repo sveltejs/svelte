@@ -1,4 +1,3 @@
-import { DYNAMIC_COMPONENT_BLOCK } from '../../constants.js';
 import { hydrate_block_anchor } from '../hydration.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
@@ -20,11 +19,7 @@ export function component(anchor_node, component_fn, render_fn) {
 		// effect
 		e: null,
 		// parent
-		p: /** @type {import('#client').Block} */ (current_block),
-		// transition
-		r: null,
-		// type
-		t: DYNAMIC_COMPONENT_BLOCK
+		p: /** @type {import('#client').Block} */ (current_block)
 	};
 
 	/** @type {null | import('#client').Render} */
@@ -33,32 +28,6 @@ export function component(anchor_node, component_fn, render_fn) {
 
 	/** @type {null | ((props: P) => void)} */
 	let component = null;
-
-	block.r =
-		/**
-		 * @param {import('#client').Transition} transition
-		 * @returns {void}
-		 */
-		(transition) => {
-			const render = /** @type {import('#client').Render} */ (current_render);
-			const transitions = render.s;
-			transitions.add(transition);
-			transition.f(() => {
-				transitions.delete(transition);
-				if (transitions.size === 0) {
-					// If the current render has changed since, then we can remove the old render
-					// effect as it's stale.
-					if (current_render !== render && render.e !== null) {
-						if (render.d !== null) {
-							remove(render.d);
-							render.d = null;
-						}
-						destroy_effect(render.e);
-						render.e = null;
-					}
-				}
-			});
-		};
 
 	const create_render_effect = () => {
 		/** @type {import('#client').Render} */

@@ -1,4 +1,4 @@
-import { IF_BLOCK, IS_ELSEIF, UNINITIALIZED } from '../../constants.js';
+import { IS_ELSEIF } from '../../constants.js';
 import {
 	current_hydration_fragment,
 	hydrate_block_anchor,
@@ -23,10 +23,6 @@ function create_if_block() {
 		e: null,
 		// parent
 		p: /** @type {import('#client').Block} */ (current_block),
-		// transition
-		r: null,
-		// type
-		t: IF_BLOCK,
 		// value
 		v: false
 	};

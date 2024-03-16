@@ -4,7 +4,7 @@ import { remove } from '../reconciler.js';
 import { current_block, execute_effect, flushSync } from '../../runtime.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';
 import { trigger_transitions } from '../elements/transitions.js';
-import { AWAIT_BLOCK, UNINITIALIZED } from '../../constants.js';
+import { UNINITIALIZED } from '../../constants.js';
 
 /** @returns {import('../../types.js').AwaitBlock} */
 export function create_await_block() {
@@ -16,11 +16,7 @@ export function create_await_block() {
 		// parent
 		p: /** @type {import('../../types.js').Block} */ (current_block),
 		// pending
-		n: true,
-		// transition
-		r: null,
-		// type
-		t: AWAIT_BLOCK
+		n: true
 	};
 }
 
@@ -49,31 +45,7 @@ export function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 	/** @type {unknown} */
 	let error = UNINITIALIZED;
 	let pending = false;
-	block.r =
-		/**
-		 * @param {import('../../types.js').Transition} transition
-		 * @returns {void}
-		 */
-		(transition) => {
-			const render = /** @type {import('../../types.js').Render} */ (current_render);
-			const transitions = render.s;
-			transitions.add(transition);
-			transition.f(() => {
-				transitions.delete(transition);
-				if (transitions.size === 0) {
-					// If the current render has changed since, then we can remove the old render
-					// effect as it's stale.
-					if (current_render !== render && render.e !== null) {
-						if (render.d !== null) {
-							remove(render.d);
-							render.d = null;
-						}
-						destroy_effect(render.e);
-						render.e = null;
-					}
-				}
-			});
-		};
+
 	const create_render_effect = () => {
 		/** @type {import('../../types.js').Render} */
 		const render = {

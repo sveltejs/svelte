@@ -1,15 +1,4 @@
-import {
-	ROOT_BLOCK,
-	EACH_BLOCK,
-	EACH_ITEM_BLOCK,
-	IF_BLOCK,
-	AWAIT_BLOCK,
-	HEAD_BLOCK,
-	DYNAMIC_COMPONENT_BLOCK,
-	DYNAMIC_ELEMENT_BLOCK,
-	SNIPPET_BLOCK,
-	STATE_SYMBOL
-} from './constants.js';
+import { STATE_SYMBOL } from './constants.js';
 import type { Effect, Source, Value } from './reactivity/types.js';
 
 type EventCallback = (event: Event) => boolean;
@@ -58,17 +47,6 @@ export type ComponentContext = {
 
 export type Equals = (this: Value, value: unknown) => boolean;
 
-export type BlockType =
-	| typeof ROOT_BLOCK
-	| typeof EACH_BLOCK
-	| typeof EACH_ITEM_BLOCK
-	| typeof IF_BLOCK
-	| typeof AWAIT_BLOCK
-	| typeof SNIPPET_BLOCK
-	| typeof HEAD_BLOCK
-	| typeof DYNAMIC_COMPONENT_BLOCK
-	| typeof DYNAMIC_ELEMENT_BLOCK;
-
 export type TemplateNode = Text | Element | Comment;
 
 export type Transition = {
@@ -102,10 +80,6 @@ export type RootBlock = {
 	i: boolean;
 	/** parent */
 	p: null;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof ROOT_BLOCK;
 };
 
 export type IfBlock = {
@@ -117,10 +91,6 @@ export type IfBlock = {
 	e: null | Effect;
 	/** parent */
 	p: Block;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof IF_BLOCK;
 };
 
 export type HeadBlock = {
@@ -130,10 +100,6 @@ export type HeadBlock = {
 	e: null | Effect;
 	/** parent */
 	p: Block;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof HEAD_BLOCK;
 };
 
 export type DynamicElementBlock = {
@@ -143,10 +109,6 @@ export type DynamicElementBlock = {
 	e: null | Effect;
 	/** parent */
 	p: Block;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof DYNAMIC_ELEMENT_BLOCK;
 };
 
 export type DynamicComponentBlock = {
@@ -156,10 +118,6 @@ export type DynamicComponentBlock = {
 	e: null | Effect;
 	/** parent */
 	p: Block;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof DYNAMIC_COMPONENT_BLOCK;
 };
 
 export type AwaitBlock = {
@@ -171,10 +129,6 @@ export type AwaitBlock = {
 	p: Block;
 	/** pending */
 	n: boolean;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof AWAIT_BLOCK;
 };
 
 export type EachBlock = {
@@ -190,12 +144,6 @@ export type EachBlock = {
 	e: null | Effect;
 	/** parent */
 	p: Block;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** transitions */
-	s: Array<EachItemBlock>;
-	/** type */
-	t: typeof EACH_BLOCK;
 };
 
 export type EachItemBlock = {
@@ -213,12 +161,6 @@ export type EachItemBlock = {
 	k: unknown;
 	/** parent */
 	p: EachBlock;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** transitions */
-	s: null | Set<Transition>;
-	/** type */
-	t: typeof EACH_ITEM_BLOCK;
 };
 
 export type SnippetBlock = {
@@ -228,10 +170,6 @@ export type SnippetBlock = {
 	p: Block;
 	/** effect */
 	e: null | Effect;
-	/** transition */
-	r: null;
-	/** type */
-	t: typeof SNIPPET_BLOCK;
 };
 
 export type Block =

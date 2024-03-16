@@ -12,7 +12,6 @@ import {
 	set_current_hydration_fragment
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
-import { ROOT_BLOCK } from './constants.js';
 import { handle_event_propagation } from './dom/elements/events.js';
 
 /** @type {Set<string>} */
@@ -211,11 +210,7 @@ function _mount(Component, options) {
 		// intro
 		i: options.intro || false,
 		// parent
-		p: null,
-		// transition
-		r: null,
-		// type
-		t: ROOT_BLOCK
+		p: null
 	};
 
 	/** @type {Exports} */

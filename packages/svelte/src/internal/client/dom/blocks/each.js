@@ -26,7 +26,7 @@ import {
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { trigger_transitions } from '../elements/transitions.js';
 import { is_array, is_frozen, map_get, map_set } from '../../utils.js';
-import { EACH_BLOCK, EACH_ITEM_BLOCK, STATE_SYMBOL } from '../../constants.js';
+import { STATE_SYMBOL } from '../../constants.js';
 
 const NEW_BLOCK = -1;
 const MOVED_BLOCK = 99999999;
@@ -58,13 +58,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		v: [],
 		// effect
 		e: null,
-		p: /** @type {import('#client').Block} */ (current_block),
-		// transition
-		r: null,
-		// transitions
-		s: [],
-		// type
-		t: EACH_BLOCK
+		p: /** @type {import('#client').Block} */ (current_block)
 	};
 
 	hydrate_block_anchor(anchor_node, is_controlled);
@@ -759,7 +753,7 @@ export function destroy_each_item_block(
 ) {
 	const transitions = block.s;
 
-	if (apply_transitions && transitions !== null) {
+	if (apply_transitions && transitions != null) {
 		// We might have pending key transitions, if so remove them first
 		for (let other of transitions) {
 			if (other.r === 'key') {
@@ -817,13 +811,7 @@ function each_item_block(item, key, index, render_fn, flags) {
 		// item
 		v: item_value,
 		// parent
-		p: /** @type {import('#client').EachBlock} */ (current_block),
-		// transition
-		r: null,
-		// transitions
-		s: null,
-		// type
-		t: EACH_ITEM_BLOCK
+		p: /** @type {import('#client').EachBlock} */ (current_block)
 	};
 
 	block.e = render_effect(

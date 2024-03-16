@@ -1,5 +1,4 @@
 import { namespace_svg } from '../../../../constants.js';
-import { DYNAMIC_ELEMENT_BLOCK } from '../../constants.js';
 import { current_hydration_fragment, hydrate_block_anchor, hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';
@@ -42,11 +41,7 @@ export function element(anchor_node, tag_fn, is_svg, render_fn) {
 		// effect
 		e: null,
 		// parent
-		p: /** @type {import('#client').Block} */ (current_block),
-		// transition
-		r: null,
-		// type
-		t: DYNAMIC_ELEMENT_BLOCK
+		p: /** @type {import('#client').Block} */ (current_block)
 	};
 
 	hydrate_block_anchor(anchor_node);

@@ -11,16 +11,6 @@ export const INERT = 1 << 11;
 export const DESTROYED = 1 << 12;
 export const IS_ELSEIF = 1 << 13;
 
-export const ROOT_BLOCK = 0;
-export const IF_BLOCK = 1;
-export const EACH_BLOCK = 2;
-export const EACH_ITEM_BLOCK = 3;
-export const AWAIT_BLOCK = 4;
-export const HEAD_BLOCK = 6;
-export const DYNAMIC_COMPONENT_BLOCK = 7;
-export const DYNAMIC_ELEMENT_BLOCK = 8;
-export const SNIPPET_BLOCK = 9;
-
 export const TRANSITION_IN = 1 << 1;
 export const TRANSITION_OUT = 1 << 2;
 export const TRANSITION_GLOBAL = 1 << 3;
