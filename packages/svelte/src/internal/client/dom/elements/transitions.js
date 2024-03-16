@@ -107,8 +107,9 @@ export function transition(flags, element, get_fn, get_params) {
 
 	const intro = (flags & TRANSITION_IN) !== 0;
 	const outro = (flags & TRANSITION_OUT) !== 0;
-	const direction = intro && outro ? 'both' : intro ? 'in' : 'out';
 	const global = (flags & TRANSITION_GLOBAL) !== 0;
+
+	const direction = intro && outro ? 'both' : intro ? 'in' : 'out';
 
 	let p = 0;
 
@@ -136,6 +137,8 @@ export function transition(flags, element, get_fn, get_params) {
 		// TODO add a `transition.abort()` method to cancel an outro transition immediately when an effect is destroyed before the transition finishes running — don't want tickers etc to continue
 
 		stop();
+
+		dispatch_event(element, target === 1 ? 'introstart' : 'outrostart');
 
 		current_options ??= get_fn()(element, get_params?.(), { direction });
 
@@ -175,6 +178,7 @@ export function transition(flags, element, get_fn, get_params) {
 					p = target;
 					current_animation = current_options = null;
 					callbacks.forEach(run);
+					dispatch_event(element, target === 1 ? 'introend' : 'outroend');
 				})
 				.catch(noop);
 		} else {
@@ -194,6 +198,7 @@ export function transition(flags, element, get_fn, get_params) {
 						// dispatch(node, true, 'end'); TODO
 						current_task = null;
 						callbacks.forEach(run);
+						dispatch_event(element, target === 1 ? 'introend' : 'outroend');
 						return (running = false);
 					}
 					if (now >= start_time) {
