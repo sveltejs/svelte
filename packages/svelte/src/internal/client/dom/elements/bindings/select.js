@@ -1,4 +1,5 @@
 import { effect } from '../../../reactivity/effects.js';
+import { listen_to_event_and_reset_event } from './shared.js';
 
 /**
  * Selects the correct option(s) (depending on whether this is a multiple select)
@@ -58,7 +59,7 @@ export function selected(option) {
 export function bind_select_value(select, get_value, update) {
 	var mounting = true;
 
-	select.addEventListener('change', () => {
+	listen_to_event_and_reset_event(select, 'change', () => {
 		/** @type {unknown} */
 		var value;
 

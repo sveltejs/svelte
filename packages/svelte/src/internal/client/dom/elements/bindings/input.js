@@ -1,6 +1,7 @@
 import { DEV } from 'esm-env';
 import { render_effect } from '../../../reactivity/effects.js';
 import { stringify } from '../../../render.js';
+import { listen_to_event_and_reset_event } from './shared.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -9,7 +10,7 @@ import { stringify } from '../../../render.js';
  * @returns {void}
  */
 export function bind_value(input, get_value, update) {
-	input.addEventListener('input', () => {
+	listen_to_event_and_reset_event(input, 'input', () => {
 		if (DEV && input.type === 'checkbox') {
 			throw new Error(
 				'Using bind:value together with a checkbox input is not allowed. Use bind:checked instead'
@@ -72,7 +73,7 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 
 	binding_group.push(input);
 
-	input.addEventListener('change', () => {
+	listen_to_event_and_reset_event(input, 'change', () => {
 		// @ts-ignore
 		var value = input.__value;
 
@@ -114,7 +115,7 @@ export function bind_group(inputs, group_index, input, get_value, update) {
  * @returns {void}
  */
 export function bind_checked(input, get_value, update) {
-	input.addEventListener('change', () => {
+	listen_to_event_and_reset_event(input, 'change', () => {
 		var value = input.checked;
 		update(value);
 	});
