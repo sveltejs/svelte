@@ -34,11 +34,23 @@ let listening_to_form_reset = false;
  * @param {HTMLElement} element
  * @param {string} event
  * @param {() => void} handler
+ * @param {() => void} [on_reset]
  */
-export function listen_to_event_and_reset_event(element, event, handler) {
+export function listen_to_event_and_reset_event(element, event, handler, on_reset = handler) {
 	element.addEventListener(event, handler);
 	// @ts-expect-error
-	element.__on_reset = handler;
+	const prev = element.__on_r;
+	if (prev) {
+		// special case for checkbox that can have multiple binds (group & checked)
+		// @ts-expect-error
+		element.__on_r = () => {
+			prev();
+			on_reset();
+		};
+	} else {
+		// @ts-expect-error
+		element.__on_r = on_reset;
+	}
 
 	if (!listening_to_form_reset) {
 		listening_to_form_reset = true;
@@ -47,7 +59,7 @@ export function listen_to_event_and_reset_event(element, event, handler) {
 				if (!evt.defaultPrevented) {
 					for (const e of /**@type {HTMLFormElement} */ (evt.target).elements) {
 						// @ts-expect-error
-						e.__on_reset?.();
+						e.__on_r?.();
 					}
 				}
 			});

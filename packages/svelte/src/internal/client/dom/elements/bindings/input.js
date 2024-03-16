@@ -73,16 +73,22 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 
 	binding_group.push(input);
 
-	listen_to_event_and_reset_event(input, 'change', () => {
-		// @ts-ignore
-		var value = input.__value;
+	listen_to_event_and_reset_event(
+		input,
+		'change',
+		() => {
+			// @ts-ignore
+			var value = input.__value;
 
-		if (is_checkbox) {
-			value = get_binding_group_value(binding_group, value, input.checked);
-		}
+			if (is_checkbox) {
+				value = get_binding_group_value(binding_group, value, input.checked);
+			}
 
-		update(value);
-	});
+			update(value);
+		},
+		// TODO better default value handling
+		() => update(is_checkbox ? [] : null)
+	);
 
 	render_effect(() => {
 		var value = get_value();
