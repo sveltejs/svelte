@@ -179,6 +179,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 
 		for (const b of block.v) {
 			if (b.d !== null) {
+				destroy_effect(b.e);
 				remove(b.d);
 			}
 		}
