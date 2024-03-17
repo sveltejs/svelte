@@ -1,96 +1,65 @@
 import { hydrate_block_anchor } from '../hydration.js';
-import { destroy_effect, render_effect } from '../../reactivity/effects.js';
+import { pause_effect, render_effect } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
-import { current_block, execute_effect } from '../../runtime.js';
-import { trigger_transitions } from '../elements/transitions.js';
+
+// TODO this is very similar to `key`, can we deduplicate?
 
 /**
  * @template P
+ * @template {(props: P) => void} C
  * @param {Comment} anchor_node
- * @param {() => (props: P) => void} component_fn
- * @param {(component: (props: P) => void) => void} render_fn
+ * @param {() => C} get_component
+ * @param {(component: C) => void} render_fn
  * @returns {void}
  */
-export function component(anchor_node, component_fn, render_fn) {
-	/** @type {import('#client').DynamicComponentBlock} */
-	const block = {
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('#client').Block} */ (current_block)
-	};
+export function component(anchor_node, get_component, render_fn) {
+	const block = {};
 
-	/** @type {null | import('#client').Render} */
-	let current_render = null;
 	hydrate_block_anchor(anchor_node);
 
-	/** @type {null | ((props: P) => void)} */
-	let component = null;
+	/** @type {C} */
+	let component;
 
-	const create_render_effect = () => {
-		/** @type {import('#client').Render} */
-		const render = {
-			d: null,
-			e: null,
-			s: new Set(),
-			p: current_render
-		};
+	/** @type {import('#client').Effect} */
+	let effect;
 
-		// Managed effect
-		render.e = render_effect(
-			() => {
-				const current = block.d;
-				if (current !== null) {
-					remove(current);
-					block.d = null;
-				}
-				if (component) {
-					render_fn(component);
-				}
-				render.d = block.d;
-				block.d = null;
-			},
-			block,
-			true
-		);
-
-		current_render = render;
-	};
-
-	const render = () => {
-		const render = current_render;
-
-		if (render === null) {
-			create_render_effect();
-			return;
-		}
-
-		const transitions = render.s;
-
-		if (transitions.size === 0) {
-			if (render.d !== null) {
-				remove(render.d);
-				render.d = null;
-			}
-			if (render.e) {
-				execute_effect(render.e);
-			} else {
-				create_render_effect();
-			}
-		} else {
-			create_render_effect();
-			trigger_transitions(transitions, 'out');
-		}
-	};
+	/** @type {Set<import('#client').Effect>} */
+	let effects = new Set();
 
 	const component_effect = render_effect(
 		() => {
-			const next_component = component_fn();
-			if (component !== next_component) {
-				component = next_component;
-				render();
+			if (component === (component = get_component())) return;
+
+			if (effect) {
+				var e = effect;
+				pause_effect(e, () => {
+					effects.delete(e);
+				});
+			}
+
+			if (component) {
+				effect = render_effect(
+					() => {
+						render_fn(component);
+
+						// @ts-expect-error TODO this should be unnecessary
+						const dom = block.d;
+
+						return () => {
+							if (dom !== null) {
+								remove(dom);
+							}
+						};
+					},
+					block,
+					true,
+					true
+				);
+
+				// @ts-expect-error TODO tidy up
+				effect.d = block.d;
+
+				effects.add(effect);
 			}
 		},
 		block,
@@ -98,19 +67,9 @@ export function component(anchor_node, component_fn, render_fn) {
 	);
 
 	component_effect.ondestroy = () => {
-		let render = current_render;
-		while (render !== null) {
-			const dom = render.d;
-			if (dom !== null) {
-				remove(dom);
-			}
-			const effect = render.e;
-			if (effect !== null) {
-				destroy_effect(effect);
-			}
-			render = render.p;
+		for (const e of effects) {
+			// @ts-expect-error TODO tidy up. ondestroy should be totally unnecessary
+			if (e.d) remove(e.d);
 		}
 	};
-
-	block.e = component_effect;
 }
