@@ -195,7 +195,6 @@ export function transition(flags, element, get_fn, get_params) {
 					if (now >= end_time) {
 						p = target;
 						tick?.(target, 1 - target);
-						// dispatch(node, true, 'end'); TODO
 						current_task = current_options = null;
 						callbacks.forEach(run);
 						dispatch_event(element, target === 1 ? 'introend' : 'outroend');
