@@ -188,7 +188,7 @@ export function transition(flags, element, get_fn, get_params) {
 			const start_p = p;
 			const end_time = start_time + adjusted_duration;
 
-			tick?.(p, 1 - p); // TODO put in nested effect, to avoid interleaved reads/writes?
+			// tick?.(p, 1 - p); // TODO put in nested effect, to avoid interleaved reads/writes?
 
 			current_task = loop((now) => {
 				if (running) {
@@ -196,7 +196,7 @@ export function transition(flags, element, get_fn, get_params) {
 						p = target;
 						tick?.(target, 1 - target);
 						// dispatch(node, true, 'end'); TODO
-						current_task = null;
+						current_task = current_options = null;
 						callbacks.forEach(run);
 						dispatch_event(element, target === 1 ? 'introend' : 'outroend');
 						return (running = false);
@@ -208,8 +208,6 @@ export function transition(flags, element, get_fn, get_params) {
 				}
 				return running;
 			});
-
-			current_options = null;
 		}
 	}
 
@@ -244,6 +242,7 @@ export function transition(flags, element, get_fn, get_params) {
 					start(1);
 				}
 			} else {
+				current_options?.tick?.(1, 0);
 				current_direction = 0;
 				stop();
 			}
