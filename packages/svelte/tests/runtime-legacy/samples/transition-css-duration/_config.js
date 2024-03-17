@@ -6,14 +6,12 @@ export default test({
 		const div = target.querySelector('div');
 		ok(div);
 
-		raf.tick(25);
-
-		assert.equal(div.style.opacity, '0.16666');
+		raf.tick(50);
+		assert.equal(div.style.opacity, '0.5');
 
 		component.visible = false;
 
-		raf.tick(40);
-
-		assert.ok(div.style.opacity === '0');
+		raf.tick(75);
+		assert.equal(div.style.opacity, '0.25');
 	}
 });
