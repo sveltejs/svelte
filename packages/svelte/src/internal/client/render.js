@@ -22,6 +22,11 @@ export const root_event_handles = new Set();
 
 export let run_transitions = true;
 
+/** @param {boolean} value */
+export function set_run_transitions(value) {
+	run_transitions = value;
+}
+
 /**
  * @param {Element} dom
  * @param {() => string} value

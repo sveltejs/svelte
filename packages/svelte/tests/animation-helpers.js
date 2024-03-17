@@ -36,7 +36,7 @@ class Animation {
 	#keyframes;
 	#duration;
 
-	#timeline_offset = 0; // TODO should this be `raf.time`?
+	#offset = raf.time;
 
 	#finished = () => {};
 	#cancelled = () => {};
@@ -70,7 +70,7 @@ class Animation {
 	}
 
 	_update() {
-		this.currentTime = raf.time - this.#timeline_offset;
+		this.currentTime = raf.time - this.#offset;
 		const target_frame = this.currentTime / this.#duration;
 		this.#apply_keyframe(target_frame);
 
