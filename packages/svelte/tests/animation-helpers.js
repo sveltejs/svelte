@@ -31,12 +31,12 @@ function tick(time) {
 	}
 }
 
-// TODO tidy this up
 class Animation {
+	#target;
 	#keyframes;
 	#duration;
-	#timeline_offset;
-	#target;
+
+	#timeline_offset = 0; // TODO should this be `raf.time`?
 
 	#finished = () => {};
 	#cancelled = () => {};
@@ -46,23 +46,12 @@ class Animation {
 	/**
 	 * @param {HTMLElement} target
 	 * @param {Keyframe[]} keyframes
-	 * @param {{duration?: number}} options
+	 * @param {{ duration: number }} options // TODO add delay
 	 */
-	constructor(target, keyframes, options = {}) {
+	constructor(target, keyframes, { duration }) {
 		this.#target = target;
 		this.#keyframes = keyframes;
-		this.#duration = options.duration || 0;
-
-		this.#timeline_offset = 0;
-		this.onfinish = () => {};
-		this.pending = true;
-		this.currentTime = 0;
-		this.playState = 'running';
-		this.effect = {
-			setKeyframes: (/** @type {Keyframe[]} */ keyframes) => {
-				this.#keyframes = keyframes;
-			}
-		};
+		this.#duration = duration;
 
 		// Promise-like semantics, but call callbacks immediately on raf.tick
 		this.finished = {
@@ -80,17 +69,10 @@ class Animation {
 		};
 	}
 
-	play() {
-		raf.animations.add(this);
-		this.playState = 'running';
-		this._update();
-	}
-
 	_update() {
-		console.log('_update', raf.time);
 		this.currentTime = raf.time - this.#timeline_offset;
 		const target_frame = this.currentTime / this.#duration;
-		this._applyKeyFrame(target_frame);
+		this.#apply_keyframe(target_frame);
 
 		if (this.currentTime >= this.#duration) {
 			this.#finished();
@@ -101,7 +83,7 @@ class Animation {
 	/**
 	 * @param {number} target_frame
 	 */
-	_applyKeyFrame(target_frame) {
+	#apply_keyframe(target_frame) {
 		const keyframes = this.#keyframes;
 		const keyframes_size = keyframes.length - 1;
 		const frame = keyframes[Math.min(keyframes_size, Math.floor(keyframes.length * target_frame))];
@@ -112,7 +94,7 @@ class Animation {
 		}
 
 		if (this.currentTime >= this.#duration) {
-			this.finish();
+			this.currentTime = this.#duration;
 			for (let prop in frame) {
 				// @ts-ignore
 				this.#target.style[prop] = null;
@@ -120,29 +102,19 @@ class Animation {
 		}
 	}
 
-	finish() {
-		this.onfinish();
-		this.currentTime = this.#duration;
-		this.playState = 'idle';
-	}
-
 	cancel() {
 		if (this.currentTime > 0 && this.currentTime < this.#duration) {
-			this._applyKeyFrame(0);
+			this.#apply_keyframe(0);
 		}
 
 		this.#cancelled();
 		raf.animations.delete(this);
 	}
-
-	pause() {
-		this.playState = 'paused';
-	}
 }
 
 /**
  * @param {Keyframe[]} keyframes
- * @param {{duration?: number}} options
+ * @param {{duration: number}} options
  * @returns {globalThis.Animation}
  */
 HTMLElement.prototype.animate = function (keyframes, options) {
