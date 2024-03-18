@@ -282,7 +282,7 @@ export interface Binding {
 	scope: Scope;
 	/** For `legacy_reactive`: its reactive dependencies */
 	legacy_dependencies: Binding[];
-	/** Legacy props: the `class` in `{ export klass as class}` */
+	/** Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props() */
 	prop_alias: string | null;
 	/**
 	 * If this is set, all references should use this expression instead of the identifier name.

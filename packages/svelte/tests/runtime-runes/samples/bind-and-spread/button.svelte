@@ -1,5 +1,5 @@
 <script>
-	let { ...properties } = $props();
+	let { value: _, ...properties } = $props();
 	let { value } = $props.bindable();
 </script>
 

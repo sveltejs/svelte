@@ -640,7 +640,16 @@ export function get_prop_source(binding, state, name, initial) {
 		flags |= PROPS_IS_RUNES;
 	}
 
-	if (binding.kind === 'bindable_prop') {
+	if (
+		binding.kind === 'bindable_prop' ||
+		// Make sure that
+		// let { foo: _, ...rest } = $props();
+		// let { foo } = $props.bindable();
+		// marks both `foo` and `_` as bindable to prevent false-positive runtime validation errors
+		[...state.scope.declarations.values()].some(
+			(d) => d.kind === 'bindable_prop' && d.prop_alias === name
+		)
+	) {
 		flags |= PROPS_IS_BINDABLE;
 	}
 
