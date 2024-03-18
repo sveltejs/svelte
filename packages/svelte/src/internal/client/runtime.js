@@ -54,6 +54,11 @@ let flush_count = 0;
 /** @type {null | import('./types.js').Reaction} */
 export let current_reaction = null;
 
+/** @param {null | import('./types.js').Reaction} reaction */
+export function set_current_reaction(reaction) {
+	current_reaction = reaction;
+}
+
 /** @type {null | import('./types.js').Effect} */
 export let current_effect = null;
 

@@ -6,9 +6,15 @@ import {
 	current_component_context,
 	flushSync,
 	set_current_component_context,
-	set_current_effect
+	set_current_effect,
+	set_current_reaction
 } from '../../runtime.js';
-import { pause_effect, render_effect, resume_effect } from '../../reactivity/effects.js';
+import {
+	destroy_effect,
+	pause_effect,
+	render_effect,
+	resume_effect
+} from '../../reactivity/effects.js';
 
 /** @returns {import('../../types.js').AwaitBlock} */
 export function create_await_block() {
@@ -115,6 +121,7 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 							resume_effect(then_effect);
 						} else if (then_fn) {
 							set_current_effect(branch);
+							set_current_reaction(branch); // TODO do we need both?
 							set_current_component_context(component_context);
 							then_effect = render_effect(
 								() => then_fn(anchor_node, value),
@@ -122,6 +129,7 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 								true
 							);
 							set_current_component_context(null);
+							set_current_reaction(null);
 							set_current_effect(null);
 						}
 					}
@@ -168,11 +176,19 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 				});
 			}
 
+			// TODO it should really be this, but the `input` will never update
+			// if (then_effect) {
+			// 	resume_effect(then_effect);
+			// } else if (then_fn) {
+			// 	then_effect = render_effect(() => then_fn(anchor_node, input), (then_block = {}), true);
+			// }
+
 			if (then_effect) {
-				resume_effect(then_effect);
-			} else if (then_fn) {
-				// TODO we need to pass a function in rather than a value, because
-				// this will never update
+				destroy_effect(then_effect);
+				if (then_block?.d) remove(then_block.d);
+			}
+
+			if (then_fn) {
 				then_effect = render_effect(() => then_fn(anchor_node, input), (then_block = {}), true);
 			}
 
