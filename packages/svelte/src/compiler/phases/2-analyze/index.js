@@ -422,7 +422,6 @@ export function analyze_component(root, options) {
 				options,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
 				parent_element: null,
-				all_prop_names: new Set(),
 				has_props_rune: [false, false],
 				component_slots: new Set(),
 				expression: null,
@@ -447,7 +446,6 @@ export function analyze_component(root, options) {
 				analysis,
 				options,
 				parent_element: null,
-				all_prop_names: new Set(),
 				has_props_rune: [false, false],
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
 				instance_scope: instance.scope,
@@ -522,16 +520,6 @@ export function analyze_component(root, options) {
 
 					warn(warnings, binding.node, [], 'non-state-reference', name);
 					continue outer;
-				}
-			}
-		}
-	}
-
-	if (analysis.runes) {
-		const props = new Set();
-		for (const [name, binding] of instance.scope.declarations) {
-			if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
-				if (props.has(binding)) {
 				}
 			}
 		}
