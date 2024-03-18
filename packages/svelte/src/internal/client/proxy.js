@@ -48,7 +48,6 @@ export function proxy(value, immutable = true, owners) {
 
 		const prototype = get_prototype_of(value);
 
-		// TODO handle Map and Set as well
 		if (prototype === object_prototype || prototype === array_prototype) {
 			const proxy = new Proxy(value, state_proxy_handler);
 
