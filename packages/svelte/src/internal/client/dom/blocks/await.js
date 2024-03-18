@@ -4,6 +4,7 @@ import { remove } from '../reconciler.js';
 import {
 	current_block,
 	current_component_context,
+	flushSync,
 	set_current_component_context,
 	set_current_effect
 } from '../../runtime.js';
@@ -96,6 +97,8 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 			promise
 				.then((value) => {
 					if (promise !== input) return;
+
+					flushSync(); // TODO this feels weird but is apparently necessary
 
 					if (pending_effect) {
 						pause_effect(pending_effect, () => {

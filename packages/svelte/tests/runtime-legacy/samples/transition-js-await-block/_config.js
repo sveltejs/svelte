@@ -31,7 +31,6 @@ export default test({
 		fulfil(42);
 
 		return promise.then(() => {
-			flushSync();
 			raf.tick(80);
 			const ps = /** @type {NodeListOf<HTMLParagraphElement & { foo: number }>} */ (
 				target.querySelectorAll('p')
