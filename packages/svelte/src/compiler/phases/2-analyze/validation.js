@@ -330,10 +330,6 @@ const validation = {
 			// TODO handle mutations of non-state/props in runes mode
 		}
 
-		if (assignee.type === 'MemberExpression' && binding?.kind === 'prop') {
-			error(node, 'invalid-props-mutation');
-		}
-
 		if (node.name === 'group') {
 			if (!binding) {
 				error(node, 'INTERNAL', 'Cannot find declaration for bind:group');
@@ -983,11 +979,6 @@ function validate_assignment(node, argument, state) {
 
 		if (binding?.kind === 'each') {
 			error(node, 'invalid-each-assignment');
-		}
-	} else if (argument.type === 'MemberExpression') {
-		const id = object(argument);
-		if (id && state.scope.get(id.name)?.kind === 'prop') {
-			error(node, 'invalid-props-mutation');
 		}
 	}
 
