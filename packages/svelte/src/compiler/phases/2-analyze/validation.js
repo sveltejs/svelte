@@ -1092,7 +1092,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 					const value =
 						property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
 
-					if (value.type !== 'Identifier' || property.key.type !== 'Identifier') {
+					if (value.type !== 'Identifier') {
 						error(property, 'invalid-props-pattern');
 					}
 				} else if (rune === '$props.bindable') {
