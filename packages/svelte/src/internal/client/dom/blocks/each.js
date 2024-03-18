@@ -123,11 +123,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 					? []
 					: Array.from(maybe_array);
 
-			if (key_fn !== null) {
-				keys = array.map(key_fn);
-			} else if ((block.f & EACH_KEYED) === 0) {
-				array.map(noop); // TODO what is this? either add an explanation, or remove it
-			}
+			const keys = key_fn === null ? array : array.map(key_fn);
 
 			const length = array.length;
 
@@ -352,12 +348,11 @@ function reconcile_indexed_array(array, each_block, dom, is_controlled, render_f
  * @param {boolean} is_controlled
  * @param {(anchor: null, item: V, index: number | import('#client').Source<number>) => void} render_fn
  * @param {number} flags
- * @param {Array<string> | null} keys
+ * @param {any[]} keys
  * @returns {void}
  */
 function reconcile_tracked_array(array, each_block, dom, is_controlled, render_fn, flags, keys) {
 	var a_blocks = each_block.v;
-	const is_computed_key = keys !== null;
 
 	/** @type {number | void} */
 	var a = a_blocks.length;
@@ -392,9 +387,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			// Create new blocks
 			while (b > 0) {
 				idx = b_end - --b;
-				item = array[idx];
-				key = is_computed_key ? keys[idx] : item;
-				block = each_item_block(item, key, idx, render_fn, flags);
+				block = each_item_block(array[idx], keys[idx], idx, render_fn, flags);
 				b_blocks[idx] = block;
 				insert_each_item_block(block, dom, is_controlled, null);
 			}
@@ -407,7 +400,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			/** @type {null | Text | Element | Comment} */
 			var sibling = null;
 			item = array[b_end];
-			key = is_computed_key ? keys[b_end] : item;
+			key = keys[b_end];
 			// Step 1
 			outer: while (true) {
 				// From the end
@@ -422,10 +415,10 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 					if (start > --b_end || start > a_end) {
 						break outer;
 					}
-					key = is_computed_key ? keys[b_end] : item;
+					key = keys[b_end];
 				}
 				item = array[start];
-				key = is_computed_key ? keys[start] : item;
+				key = keys[start];
 				// At the start
 				while (start <= a_end && start <= b_end && a_blocks[start].k === key) {
 					item = array[start];
@@ -435,16 +428,14 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 					}
 					b_blocks[start] = block;
 					++start;
-					key = is_computed_key ? keys[start] : array[start];
+					key = keys[start];
 				}
 				break;
 			}
 			// Step 2
 			if (start > a_end) {
 				while (b_end >= start) {
-					item = array[b_end];
-					key = is_computed_key ? keys[b_end] : item;
-					block = each_item_block(item, key, b_end, render_fn, flags);
+					block = each_item_block(array[b_end], keys[b_end], b_end, render_fn, flags);
 					b_blocks[b_end--] = block;
 					sibling = insert_each_item_block(block, dom, is_controlled, sibling);
 				}
@@ -465,8 +456,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 					a = b + start;
 					sources[b] = NEW_BLOCK;
 					item = array[a];
-					key = is_computed_key ? keys[a] : item;
-					map_set(item_index, key, a);
+					map_set(item_index, keys[a], a);
 				}
 				// If keys are animated, we need to do updates before actual moves
 				if (is_animated) {
@@ -503,8 +493,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 					should_create = a === -1;
 					item = array[b_end];
 					if (should_create) {
-						key = is_computed_key ? keys[b_end] : item;
-						block = each_item_block(item, key, b_end, render_fn, flags);
+						block = each_item_block(item, keys[b_end], b_end, render_fn, flags);
 					} else {
 						block = b_blocks[b_end];
 						if (!is_animated && should_update_block) {
