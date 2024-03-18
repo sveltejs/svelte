@@ -57,6 +57,11 @@ export let current_reaction = null;
 /** @type {null | import('./types.js').Effect} */
 export let current_effect = null;
 
+/** @param {null | import('./types.js').Effect} effect */
+export function set_current_effect(effect) {
+	current_effect = effect;
+}
+
 /** @type {null | import('./types.js').Value[]} */
 export let current_dependencies = null;
 let current_dependencies_index = 0;
@@ -103,6 +108,11 @@ export let current_block = null;
 
 /** @type {import('./types.js').ComponentContext | null} */
 export let current_component_context = null;
+
+/** @param {import('./types.js').ComponentContext | null} context */
+export function set_current_component_context(context) {
+	current_component_context = context;
+}
 
 /** @returns {boolean} */
 export function is_runes() {
