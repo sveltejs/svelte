@@ -1,3 +1,4 @@
+import { flushSync } from '../../../../src/main/main-client.js';
 import { ok, test } from '../../test';
 
 /** @type {(value: any) => void} */
@@ -30,14 +31,15 @@ export default test({
 		fulfil(42);
 
 		return promise.then(() => {
+			flushSync();
 			raf.tick(80);
 			const ps = /** @type {NodeListOf<HTMLParagraphElement & { foo: number }>} */ (
 				target.querySelectorAll('p')
 			);
 			assert.equal(ps[0].className, 'pending');
 			assert.equal(ps[1].className, 'then');
-			assert.equal(ps[0].foo, 0.8);
-			assert.equal(ps[1].foo, undefined);
+			assert.equal(ps[0].foo, 0.2);
+			assert.equal(ps[1].foo, 0.3);
 			raf.tick(100);
 		});
 	}
