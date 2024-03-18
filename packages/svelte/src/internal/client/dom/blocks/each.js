@@ -125,8 +125,8 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 
 			if (key_fn !== null) {
 				keys = array.map(key_fn);
-			} else if ((flags & EACH_KEYED) === 0) {
-				array.map(noop);
+			} else if ((block.f & EACH_KEYED) === 0) {
+				array.map(noop); // TODO what is this? either add an explanation, or remove it
 			}
 
 			const length = array.length;
@@ -161,7 +161,61 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			}
 
 			const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
-			reconcile_fn(array, block, block.a, is_controlled, render_fn, block.f, keys);
+
+			// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
+			// are treated as reactive, so they get wrapped in a signal.
+			var flags = block.f;
+			if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
+				flags ^= EACH_IS_STRICT_EQUALS;
+
+				// Additionally if we're in an keyed each block, we'll need ensure the items are all wrapped in signals.
+				if ((flags & EACH_KEYED) !== 0 && (flags & EACH_ITEM_REACTIVE) === 0) {
+					flags ^= EACH_ITEM_REACTIVE;
+				}
+			}
+
+			if (hydrating) {
+				/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
+				let mismatch = false;
+
+				var b_blocks = [];
+
+				// Hydrate block
+				var hydration_list = /** @type {import('#client').TemplateNode[]} */ (
+					current_hydration_fragment
+				);
+				var hydrating_node = hydration_list[0];
+
+				for (var i = 0; i < length; i++) {
+					var fragment = get_hydration_fragment(hydrating_node);
+					set_current_hydration_fragment(fragment);
+					if (!fragment) {
+						// If fragment is null, then that means that the server rendered less items than what
+						// the client code specifies -> break out and continue with client-side node creation
+						mismatch = true;
+						break;
+					}
+
+					b_blocks[i] = each_item_block(array[i], keys?.[i], i, render_fn, flags);
+
+					hydrating_node = /** @type {import('#client').TemplateNode} */ (
+						/** @type {Node} */ (
+							/** @type {Node} */ (fragment[fragment.length - 1] || hydrating_node).nextSibling
+						).nextSibling
+					);
+				}
+
+				remove_excess_hydration_nodes(hydration_list, hydrating_node);
+
+				if (mismatch) {
+					// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
+					set_current_hydration_fragment([]);
+				}
+
+				block.v = b_blocks;
+			} else {
+				reconcile_fn(array, block, block.a, is_controlled, render_fn, flags, keys);
+			}
 		},
 		block,
 		false
@@ -228,12 +282,6 @@ export function each_indexed(anchor_node, collection, flags, render_fn, fallback
  * @returns {void}
  */
 function reconcile_indexed_array(array, each_block, dom, is_controlled, render_fn, flags) {
-	// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
-	// are treated as reactive, so they get wrapped in a signal.
-	if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
-		flags ^= EACH_IS_STRICT_EQUALS;
-	}
-
 	var a_blocks = each_block.v;
 
 	var a = a_blocks.length;
@@ -246,89 +294,49 @@ function reconcile_indexed_array(array, each_block, dom, is_controlled, render_f
 	var block;
 	var item;
 
-	if (hydrating) {
-		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-		let mismatch = false;
+	// update items
+	for (var i = 0; i < min; i += 1) {
+		item = array[i];
+		block = a_blocks[i];
+		b_blocks[i] = block;
+		update_each_item_block(block, item, i, flags);
+		resume_effect(block.e);
+	}
 
-		// Hydrate block
-		var hydration_list = /** @type {import('#client').TemplateNode[]} */ (
-			current_hydration_fragment
-		);
-		var hydrating_node = hydration_list[0];
-
-		for (var i = 0; i < b; i++) {
-			var fragment = get_hydration_fragment(hydrating_node);
-			set_current_hydration_fragment(fragment);
-			if (!fragment) {
-				// If fragment is null, then that means that the server rendered less items than what
-				// the client code specifies -> break out and continue with client-side node creation
-				mismatch = true;
-				break;
-			}
-
+	if (b > a) {
+		// add items
+		for (; i < b; i += 1) {
 			item = array[i];
 			block = each_item_block(item, null, i, render_fn, flags);
 			b_blocks[i] = block;
-
-			hydrating_node = /** @type {import('#client').TemplateNode} */ (
-				/** @type {Node} */ (/** @type {Node} */ (fragment[fragment.length - 1]).nextSibling)
-					.nextSibling
-			);
-		}
-
-		remove_excess_hydration_nodes(hydration_list, hydrating_node);
-
-		if (mismatch) {
-			// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
-			set_current_hydration_fragment([]);
+			insert_each_item_block(block, dom, is_controlled, null);
 		}
 
 		each_block.v = b_blocks;
-	} else {
-		// update items
-		for (var i = 0; i < min; i += 1) {
-			item = array[i];
+	} else if (a > b) {
+		// remove items
+		let remaining = a - b;
+
+		const clear = () => {
+			// TODO optimization for controlled case — just do `clear_text_content(dom)`
+
+			for (let i = b; i < a; i += 1) {
+				let block = a_blocks[i];
+				if (block.d) remove(block.d);
+			}
+
+			each_block.v = each_block.v.slice(0, b);
+		};
+
+		const check = () => {
+			if (--remaining === 0) {
+				clear();
+			}
+		};
+
+		for (; i < a; i += 1) {
 			block = a_blocks[i];
-			b_blocks[i] = block;
-			update_each_item_block(block, item, i, flags);
-			resume_effect(block.e);
-		}
-
-		if (b > a) {
-			// add items
-			for (; i < b; i += 1) {
-				item = array[i];
-				block = each_item_block(item, null, i, render_fn, flags);
-				b_blocks[i] = block;
-				insert_each_item_block(block, dom, is_controlled, null);
-			}
-
-			each_block.v = b_blocks;
-		} else if (a > b) {
-			// remove items
-			let remaining = a - b;
-
-			const clear = () => {
-				// TODO optimization for controlled case — just do `clear_text_content(dom)`
-
-				for (let i = b; i < a; i += 1) {
-					let block = a_blocks[i];
-					if (block.d) remove(block.d);
-				}
-
-				each_block.v = each_block.v.slice(0, b);
-			};
-
-			const check = () => {
-				if (--remaining === 0) {
-					clear();
-				}
-			};
-
-			for (; i < a; i += 1) {
-				block = a_blocks[i];
-				if (block.e) pause_effect(block.e, check);
-			}
+			if (block.e) pause_effect(block.e, check);
 		}
 	}
 }
@@ -348,15 +356,6 @@ function reconcile_indexed_array(array, each_block, dom, is_controlled, render_f
  * @returns {void}
  */
 function reconcile_tracked_array(array, each_block, dom, is_controlled, render_fn, flags, keys) {
-	// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
-	// are treated as reactive, so they get wrapped in a signal.
-	if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
-		flags ^= EACH_IS_STRICT_EQUALS;
-		// Additionally as we're in an keyed each block, we'll need ensure the itens are all wrapped in signals.
-		if ((flags & EACH_ITEM_REACTIVE) === 0) {
-			flags ^= EACH_ITEM_REACTIVE;
-		}
-	}
 	var a_blocks = each_block.v;
 	const is_computed_key = keys !== null;
 
@@ -386,42 +385,8 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		var key;
 		var item;
 		var idx;
-		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-		let mismatch = false;
+
 		b_blocks = Array(b);
-		if (hydrating) {
-			// Hydrate block
-			var fragment;
-			var hydration_list = /** @type {import('#client').TemplateNode[]} */ (
-				current_hydration_fragment
-			);
-			var hydrating_node = hydration_list[0];
-			while (b > 0) {
-				fragment = get_hydration_fragment(hydrating_node);
-				set_current_hydration_fragment(fragment);
-				if (!fragment) {
-					// If fragment is null, then that means that the server rendered less items than what
-					// the client code specifies -> break out and continue with client-side node creation
-					mismatch = true;
-					break;
-				}
-
-				idx = b_end - --b;
-				item = array[idx];
-				key = is_computed_key ? keys[idx] : item;
-				block = each_item_block(item, key, idx, render_fn, flags);
-				b_blocks[idx] = block;
-
-				// Get the <!--ssr:..--> tag of the next item in the list
-				// The fragment array can be empty if each block has no content
-				hydrating_node = /** @type {import('#client').TemplateNode} */ (
-					/** @type {Node} */ ((fragment[fragment.length - 1] || hydrating_node).nextSibling)
-						.nextSibling
-				);
-			}
-
-			remove_excess_hydration_nodes(hydration_list, hydrating_node);
-		}
 
 		if (a === 0) {
 			// Create new blocks
@@ -554,11 +519,6 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 					last_block = block;
 				}
 			}
-		}
-
-		if (mismatch) {
-			// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
-			set_current_hydration_fragment([]);
 		}
 	}
 
