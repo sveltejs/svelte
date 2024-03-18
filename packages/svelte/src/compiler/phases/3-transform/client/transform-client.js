@@ -255,6 +255,15 @@ export function client_component(source, analysis, options) {
 				continue;
 
 			const key = binding.prop_alias ?? name;
+			if (
+				binding.kind === 'prop' &&
+				[...analysis.instance.scope.declarations].some(
+					([name, d]) => d.kind === 'bindable_prop' && (d.prop_alias ?? name) === key
+				)
+			) {
+				// bindable prop takes precedence
+				continue;
+			}
 
 			properties.push(
 				b.get(key, [b.return(b.call(b.id(name)))]),
