@@ -49,28 +49,6 @@ export type Equals = (this: Value, value: unknown) => boolean;
 
 export type TemplateNode = Text | Element | Comment;
 
-export type Transition = {
-	/** effect */
-	e: Effect;
-	/** payload */
-	p: null | TransitionPayload;
-	/** init */
-	i: (from?: DOMRect) => TransitionPayload;
-	/** finished */
-	f: (fn: () => void) => void;
-	in: () => void;
-	/** out */
-	o: () => void;
-	/** cancel */
-	c: () => void;
-	/** cleanup */
-	x: () => void;
-	/** direction */
-	r: 'in' | 'out' | 'both' | 'key';
-	/** dom */
-	d: HTMLElement;
-};
-
 export type RootBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
@@ -148,7 +126,7 @@ export type EachBlock = {
 
 export type EachItemBlock = {
 	/** transition */
-	a: null | ((block: EachItemBlock, transitions: Set<Transition>) => void);
+	a: null | ((block: EachItemBlock) => void);
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
@@ -182,6 +160,13 @@ export type Block =
 	| EachBlock
 	| EachItemBlock
 	| SnippetBlock;
+
+export interface Transition {
+	global: boolean;
+	in: () => void;
+	out: (callback?: () => void) => void;
+	stop: () => void;
+}
 
 export type TransitionFn<P> = (
 	element: Element,
@@ -221,8 +206,6 @@ export type Render = {
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
 	e: null | Effect;
-	/** transitions */
-	s: Set<Transition>;
 	/** prev */
 	p: Render | null;
 };
@@ -262,14 +245,5 @@ export interface ProxyMetadata<T = Record<string | symbol, any>> {
 export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
 	[STATE_SYMBOL]: ProxyMetadata;
 };
-
-// TODO remove the other transition types once we're
-// happy we don't need them, and rename this
-export interface Transition2 {
-	global: boolean;
-	in: () => void;
-	out: (callback?: () => void) => void;
-	stop: () => void;
-}
 
 export * from './reactivity/types';

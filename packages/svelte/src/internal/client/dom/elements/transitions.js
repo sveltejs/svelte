@@ -83,16 +83,6 @@ function css_to_keyframe(css) {
 /** @param {number} t */
 const linear = (t) => t;
 
-/**
- * @param {Set<import('../../types.js').Transition>} transitions
- * @param {'in' | 'out' | 'key'} target_direction
- * @param {DOMRect} [from]
- * @returns {void}
- */
-export function trigger_transitions(transitions, target_direction, from) {
-	// noop, until we excise it from the codebase
-}
-
 // TODO make transition mode (`in:`, `out:`, `transition:` and `|global`) a bitmask
 /**
  * @template P
@@ -225,7 +215,7 @@ export function transition(flags, element, get_fn, get_params) {
 		}
 	}
 
-	/** @type {import('#client').Transition2} */
+	/** @type {import('#client').Transition} */
 	// TODO this needs to be `in()` and `out()` rather than `to()`, and both
 	// need to be idempotent (because of `{#if ...}{#if ...}`). `out()` should
 	// return a promise (callbacks would be more performant but we don't

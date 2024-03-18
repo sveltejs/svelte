@@ -24,7 +24,6 @@ import {
 	resume_effect
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
-import { trigger_transitions } from '../elements/transitions.js';
 import { is_array, is_frozen, map_get, map_set } from '../../utils.js';
 import { STATE_SYMBOL } from '../../constants.js';
 
@@ -162,7 +161,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			}
 
 			const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
-			reconcile_fn(array, block, block.a, is_controlled, render_fn, block.f, true, keys);
+			reconcile_fn(array, block, block.a, is_controlled, render_fn, block.f, keys);
 		},
 		block,
 		false
@@ -345,20 +344,10 @@ function reconcile_indexed_array(array, each_block, dom, is_controlled, render_f
  * @param {boolean} is_controlled
  * @param {(anchor: null, item: V, index: number | import('#client').Source<number>) => void} render_fn
  * @param {number} flags
- * @param {boolean} apply_transitions
  * @param {Array<string> | null} keys
  * @returns {void}
  */
-function reconcile_tracked_array(
-	array,
-	each_block,
-	dom,
-	is_controlled,
-	render_fn,
-	flags,
-	apply_transitions,
-	keys
-) {
+function reconcile_tracked_array(array, each_block, dom, is_controlled, render_fn, flags, keys) {
 	// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
 	// are treated as reactive, so they get wrapped in a signal.
 	if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
@@ -370,7 +359,6 @@ function reconcile_tracked_array(
 	}
 	var a_blocks = each_block.v;
 	const is_computed_key = keys !== null;
-	var active_transitions = each_block.s;
 
 	/** @type {number | void} */
 	var a = a_blocks.length;
@@ -390,7 +378,7 @@ function reconcile_tracked_array(
 		}
 		while (a > 0) {
 			block = a_blocks[--a];
-			destroy_each_item_block(block, active_transitions, apply_transitions, is_controlled);
+			destroy_each_item_block(block, is_controlled);
 		}
 	} else {
 		var a_end = a - 1;
@@ -499,7 +487,7 @@ function reconcile_tracked_array(
 				b = start;
 				do {
 					if ((block = a_blocks[b++]) !== null) {
-						destroy_each_item_block(block, active_transitions, apply_transitions);
+						destroy_each_item_block(block);
 					}
 				} while (b <= a_end);
 			} else {
@@ -534,7 +522,7 @@ function reconcile_tracked_array(
 						sources[a - start] = b;
 						b_blocks[a] = block;
 					} else if (block !== null) {
-						destroy_each_item_block(block, active_transitions, apply_transitions);
+						destroy_each_item_block(block);
 					}
 				}
 				// Step 4
@@ -741,36 +729,10 @@ function update_each_item_block(block, item, index, type) {
 
 /**
  * @param {import('#client').EachItemBlock} block
- * @param {null | Array<import('#client').Block>} transition_block
- * @param {boolean} apply_transitions
  * @param {any} controlled
  * @returns {void}
  */
-export function destroy_each_item_block(
-	block,
-	transition_block,
-	apply_transitions,
-	controlled = false
-) {
-	const transitions = block.s;
-
-	if (apply_transitions && transitions != null) {
-		// We might have pending key transitions, if so remove them first
-		for (let other of transitions) {
-			if (other.r === 'key') {
-				transitions.delete(other);
-			}
-		}
-		if (transitions.size === 0) {
-			block.s = null;
-		} else {
-			trigger_transitions(transitions, 'out');
-			if (transition_block !== null) {
-				transition_block.push(block);
-			}
-			return;
-		}
-	}
+export function destroy_each_item_block(block, controlled = false) {
 	const dom = block.d;
 	if (!controlled && dom !== null) {
 		remove(dom);
