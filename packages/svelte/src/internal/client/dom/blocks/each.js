@@ -345,10 +345,10 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 	// Step 3 — update
 	if (start === a) {
 		// add only
-		while (--b >= start) {
-			block = create_block(array[b], keys[b], b, render_fn, flags);
-			b_blocks[b] = block;
-			anchor = insert_block(block, anchor);
+		while (start < b) {
+			block = create_block(array[start], keys[start], start, render_fn, flags);
+			b_blocks[start++] = block;
+			insert_block(block, anchor);
 		}
 	} else if (start === b) {
 		// TODO reinstate optimization for controlled blocks
