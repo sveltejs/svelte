@@ -26,8 +26,8 @@ import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen, map_get, map_set } from '../../utils.js';
 import { STATE_SYMBOL } from '../../constants.js';
 
-const NEW_BLOCK = -1;
-const LIS_BLOCK = -2;
+var NEW_BLOCK = -1;
+var LIS_BLOCK = -2;
 
 /**
  * @template V
@@ -42,7 +42,7 @@ const LIS_BLOCK = -2;
  */
 function each(anchor, collection, flags, key_fn, render_fn, fallback_fn, reconcile_fn) {
 	/** @type {import('#client').EachBlock} */
-	const block = {
+	var block = {
 		// dom
 		d: null,
 		// flags
@@ -54,20 +54,20 @@ function each(anchor, collection, flags, key_fn, render_fn, fallback_fn, reconci
 		p: /** @type {import('#client').Block} */ (current_block)
 	};
 
-	const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
+	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 	hydrate_block_anchor(is_controlled ? /** @type {Node} */ (anchor.firstChild) : anchor);
 
 	if (is_controlled) {
-		const parent_node = /** @type {Element} */ (anchor);
+		var parent_node = /** @type {Element} */ (anchor);
 		parent_node.append((anchor = empty()));
 	}
 
 	/** @type {import('#client').Effect | null} */
-	let fallback = null;
+	var fallback = null;
 
-	const each = render_effect(
+	var each = render_effect(
 		() => {
-			const maybe_array = collection();
+			var maybe_array = collection();
 
 			var array = is_array(maybe_array)
 				? maybe_array
@@ -75,9 +75,9 @@ function each(anchor, collection, flags, key_fn, render_fn, fallback_fn, reconci
 					? []
 					: Array.from(maybe_array);
 
-			const keys = key_fn === null ? array : array.map(key_fn);
+			var keys = key_fn === null ? array : array.map(key_fn);
 
-			const length = array.length;
+			var length = array.length;
 
 			// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
 			// are treated as reactive, so they get wrapped in a signal.
@@ -185,7 +185,7 @@ function each(anchor, collection, flags, key_fn, render_fn, fallback_fn, reconci
 	);
 
 	each.ondestroy = () => {
-		for (const b of block.v) {
+		for (var b of block.v) {
 			if (b.d !== null) {
 				destroy_effect(b.e);
 				remove(b.d);
@@ -268,20 +268,20 @@ function reconcile_indexed_array(array, each_block, anchor, render_fn, flags) {
 		each_block.v = b_blocks;
 	} else if (a > b) {
 		// remove items
-		let remaining = a - b;
+		var remaining = a - b;
 
-		const clear = () => {
+		var clear = () => {
 			// TODO optimization for controlled case — just do `clear_text_content(dom)`
 
-			for (let i = b; i < a; i += 1) {
-				let block = a_blocks[i];
+			for (var i = b; i < a; i += 1) {
+				var block = a_blocks[i];
 				if (block.d) remove(block.d);
 			}
 
 			each_block.v = each_block.v.slice(0, b);
 		};
 
-		const check = () => {
+		var check = () => {
 			if (--remaining === 0) {
 				clear();
 			}
@@ -553,12 +553,11 @@ function update_block(block, item, index, type) {
 
 /**
  * @param {import('#client').EachItemBlock} block
- * @param {any} controlled
  * @returns {void}
  */
-function destroy_block(block, controlled = false) {
-	const dom = block.d;
-	if (!controlled && dom !== null) {
+function destroy_block(block) {
+	var dom = block.d;
+	if (dom !== null) {
 		remove(dom);
 	}
 	destroy_effect(/** @type {import('#client').Effect} */ (block.e));
@@ -574,16 +573,16 @@ function destroy_block(block, controlled = false) {
  * @returns {import('#client').EachItemBlock}
  */
 function create_block(item, key, index, render_fn, flags) {
-	const each_item_not_reactive = (flags & EACH_ITEM_REACTIVE) === 0;
+	var each_item_not_reactive = (flags & EACH_ITEM_REACTIVE) === 0;
 
-	const item_value = each_item_not_reactive
+	var item_value = each_item_not_reactive
 		? item
 		: (flags & EACH_IS_STRICT_EQUALS) !== 0
 			? source(item)
 			: mutable_source(item);
 
 	/** @type {import('#client').EachItemBlock} */
-	const block = {
+	var block = {
 		// dom
 		d: null,
 		// effect
