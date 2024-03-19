@@ -192,7 +192,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 						break;
 					}
 
-					b_blocks[i] = each_item_block(array[i], keys?.[i], i, render_fn, flags);
+					b_blocks[i] = create_each_item_block(array[i], keys?.[i], i, render_fn, flags);
 
 					hydrating_node = /** @type {import('#client').TemplateNode} */ (
 						/** @type {Node} */ (
@@ -304,7 +304,7 @@ function reconcile_indexed_array(array, each_block, dom, is_controlled, render_f
 		// add items
 		for (; i < b; i += 1) {
 			item = array[i];
-			block = each_item_block(item, null, i, render_fn, flags);
+			block = create_each_item_block(item, null, i, render_fn, flags);
 			b_blocks[i] = block;
 			insert_each_item_block(block, dom, is_controlled, null);
 		}
@@ -365,7 +365,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	if (a === 0 || b === 0) {
 		if (a === 0) {
 			for (var i = 0; i < b; i += 1) {
-				var block = each_item_block(array[i], keys[i], i, render_fn, flags);
+				var block = create_each_item_block(array[i], keys[i], i, render_fn, flags);
 				b_blocks[i] = block;
 				insert_each_item_block(block, dom, is_controlled, null);
 			}
@@ -423,7 +423,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	// Step 3
 	if (start > a_end) {
 		while (b_end >= start) {
-			block = each_item_block(array[b_end], keys[b_end], b_end, render_fn, flags);
+			block = create_each_item_block(array[b_end], keys[b_end], b_end, render_fn, flags);
 			b_blocks[b_end--] = block;
 			sibling = insert_each_item_block(block, dom, is_controlled, sibling);
 		}
@@ -482,7 +482,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			should_create = a === -1;
 
 			if (should_create) {
-				block = each_item_block(array[b_end], keys[b_end], b_end, render_fn, flags);
+				block = create_each_item_block(array[b_end], keys[b_end], b_end, render_fn, flags);
 			} else {
 				block = b_blocks[b_end];
 				if (!is_animated && should_update_block) {
@@ -687,7 +687,7 @@ export function destroy_each_item_block(block, controlled = false) {
  * @param {number} flags
  * @returns {import('#client').EachItemBlock}
  */
-function each_item_block(item, key, index, render_fn, flags) {
+function create_each_item_block(item, key, index, render_fn, flags) {
 	const each_item_not_reactive = (flags & EACH_ITEM_REACTIVE) === 0;
 
 	const item_value = each_item_not_reactive
