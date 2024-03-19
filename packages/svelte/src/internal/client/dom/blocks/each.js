@@ -439,28 +439,28 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		var sources = new Int32Array(b_length);
 		var item_index = new Map();
 		for (b = 0; b < b_length; ++b) {
-			a = b + start;
+			i = b + start;
 			sources[b] = NEW_BLOCK;
-			map_set(item_index, keys[a], a);
+			map_set(item_index, keys[i], i);
 		}
 
 		// If keys are animated, we need to do updates before actual moves
 		if (is_animated) {
 			for (b = start; b <= a_end - 1; b += 1) {
-				a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
-				if (a !== undefined) {
-					update_each_item_block(a_blocks[b], array[a], a, flags);
+				i = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
+				if (i !== undefined) {
+					update_each_item_block(a_blocks[b], array[i], i, flags);
 				}
 			}
 		}
 
 		for (b = start; b < a_end; b += 1) {
-			a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
+			i = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
 			block = a_blocks[b];
-			if (a !== undefined) {
-				pos = pos < a ? a : MOVED_BLOCK;
-				sources[a - start] = b;
-				b_blocks[a] = block;
+			if (i !== undefined) {
+				pos = pos < i ? i : MOVED_BLOCK;
+				sources[i - start] = b;
+				b_blocks[i] = block;
 			} else if (block !== null) {
 				destroy_each_item_block(block);
 			}
@@ -477,8 +477,8 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 
 		while (b_length-- > 0) {
 			const i = b_length + start;
-			a = sources[b_length];
-			should_create = a === -1;
+			const mode = sources[b_length];
+			should_create = mode === NEW_BLOCK;
 
 			if (should_create) {
 				block = create_each_item_block(array[i], keys[i], i, render_fn, flags);
@@ -489,7 +489,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 				}
 			}
 
-			if (should_create || (pos === MOVED_BLOCK && a !== LIS_BLOCK)) {
+			if (should_create || (pos === MOVED_BLOCK && mode !== LIS_BLOCK)) {
 				last_sibling = last_block === undefined ? sibling : get_first_child(last_block);
 				sibling = insert_each_item_block(block, dom, is_controlled, last_sibling);
 			}
