@@ -389,7 +389,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	/** @type {null | Text | Element | Comment} */
 	var sibling = null;
 
-	// Step 1 — trim from the end
+	// Step 1 — trim common suffix
 	while (a > 0 && b > 0 && a_blocks[a - 1].k === keys[b - 1]) {
 		block = b_blocks[--b] = a_blocks[--a];
 		sibling = get_first_child(block);
@@ -399,7 +399,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		}
 	}
 
-	// Step 2 — trim from the start
+	// Step 2 — trim common prefix
 	while (start < a && start < b && a_blocks[start].k === keys[start]) {
 		block = b_blocks[start] = a_blocks[start];
 
@@ -411,17 +411,17 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	}
 
 	// Step 3
-	if (start >= a) {
+	if (start === a) {
+		// add only
 		while (--b >= start) {
 			block = create_block(array[b], keys[b], b, render_fn, flags);
 			b_blocks[b] = block;
 			sibling = insert_block(block, dom, is_controlled, sibling);
 		}
-	} else if (start >= b) {
+	} else if (start === b) {
+		// remove only
 		while (start < a) {
-			if ((block = a_blocks[start++]) !== null) {
-				destroy_block(block);
-			}
+			destroy_block(a_blocks[start++]);
 		}
 	} else {
 		// Step 4
