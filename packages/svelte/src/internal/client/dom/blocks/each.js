@@ -426,8 +426,8 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			b_blocks[b_end] = block;
 			sibling = insert_each_item_block(block, dom, is_controlled, sibling);
 		}
-	} else if (start > b_end - 1) {
-		while (start <= a_end - 1) {
+	} else if (start >= b_end) {
+		while (start < a_end) {
 			if ((block = a_blocks[start++]) !== null) {
 				destroy_each_item_block(block);
 			}
@@ -435,7 +435,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	} else {
 		// Step 4
 		var pos = 0;
-		var b_length = b_end - 1 - start + 1;
+		var b_length = b_end - start;
 		var sources = new Int32Array(b_length);
 		var item_index = new Map();
 		for (b = 0; b < b_length; ++b) {
@@ -446,7 +446,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 
 		// If keys are animated, we need to do updates before actual moves
 		if (is_animated) {
-			for (b = start; b <= a_end - 1; ++b) {
+			for (b = start; b <= a_end - 1; b += 1) {
 				a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
 				if (a !== undefined) {
 					update_each_item_block(a_blocks[b], array[a], a, flags);
@@ -454,7 +454,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			}
 		}
 
-		for (b = start; b <= a_end - 1; ++b) {
+		for (b = start; b < a_end; b += 1) {
 			a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
 			block = a_blocks[b];
 			if (a !== undefined) {
