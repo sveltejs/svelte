@@ -391,28 +391,22 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 
 	// Step 1 — trim from the end
 	while (a > 0 && b > 0 && a_blocks[a - 1].k === keys[b - 1]) {
-		a -= 1;
-		b -= 1;
-
-		block = a_blocks[a];
+		block = b_blocks[--b] = a_blocks[--a];
+		sibling = get_first_child(block);
 
 		if (should_update) {
 			update_block(block, array[b], b, flags);
 		}
-
-		sibling = get_first_child(block);
-		b_blocks[b] = block;
 	}
 
 	// Step 2 — trim from the start
 	while (start < a && start < b && a_blocks[start].k === keys[start]) {
-		block = a_blocks[start];
+		block = b_blocks[start] = a_blocks[start];
 
 		if (should_update) {
 			update_block(block, array[start], start, flags);
 		}
 
-		b_blocks[start] = block;
 		start += 1;
 	}
 
