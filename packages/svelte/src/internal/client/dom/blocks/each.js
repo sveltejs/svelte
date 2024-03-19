@@ -31,7 +31,7 @@ const LIS_BLOCK = -2;
 
 /**
  * @template V
- * @param {Element | Comment} anchor_node
+ * @param {Element | Comment} anchor The next sibling node, or the parent node if this is a 'controlled' block
  * @param {() => V[]} collection
  * @param {number} flags
  * @param {null | ((item: V) => string)} key_fn
@@ -40,7 +40,7 @@ const LIS_BLOCK = -2;
  * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
  * @returns {void}
  */
-function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_fn) {
+function each(anchor, collection, flags, key_fn, render_fn, fallback_fn, reconcile_fn) {
 	/** @type {import('#client').EachBlock} */
 	const block = {
 		// dom
@@ -55,7 +55,12 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	};
 
 	const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-	hydrate_block_anchor(is_controlled ? /** @type {Node} */ (anchor_node.firstChild) : anchor_node);
+	hydrate_block_anchor(is_controlled ? /** @type {Node} */ (anchor.firstChild) : anchor);
+
+	if (is_controlled) {
+		const parent_node = /** @type {Element} */ (anchor);
+		parent_node.append((anchor = empty()));
+	}
 
 	/** @type {import('#client').Effect | null} */
 	let fallback = null;
@@ -73,8 +78,6 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			const keys = key_fn === null ? array : array.map(key_fn);
 
 			const length = array.length;
-
-			const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
 
 			// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
 			// are treated as reactive, so they get wrapped in a signal.
@@ -141,7 +144,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			}
 
 			if (!hydrating) {
-				reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, keys);
+				reconcile_fn(array, block, anchor, render_fn, flags, keys);
 			}
 
 			if (fallback_fn !== null) {
@@ -151,23 +154,6 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 					} else {
 						fallback = render_effect(
 							() => {
-								let anchor = anchor_node;
-
-								if (is_controlled) {
-									// If the each block is controlled, then the anchor node will be the surrounding
-									// element in which the each block is rendered, which requires certain handling
-									// depending on whether we're in hydration mode or not
-									if (!hydrating) {
-										// Create a new anchor on the fly because there's none due to the optimization
-										// TODO this will happen every time the fallback renders...
-										anchor = empty();
-										anchor_node.appendChild(anchor);
-									} else {
-										// In case of hydration the anchor will be the first child of the surrounding element
-										anchor = /** @type {Comment} */ (anchor.firstChild);
-									}
-								}
-
 								fallback_fn(anchor);
 								var dom = block.d; // TODO would be nice if this was just returned from the managed effect function...
 
@@ -243,13 +229,12 @@ export function each_indexed(anchor_node, collection, flags, render_fn, fallback
  * @template V
  * @param {Array<V>} array
  * @param {import('#client').EachBlock} each_block
- * @param {Element | Comment | Text} dom
- * @param {boolean} is_controlled
+ * @param {Element | Comment | Text} anchor
  * @param {(anchor: null, item: V, index: number | import('#client').Source<number>) => void} render_fn
  * @param {number} flags
  * @returns {void}
  */
-function reconcile_indexed_array(array, each_block, dom, is_controlled, render_fn, flags) {
+function reconcile_indexed_array(array, each_block, anchor, render_fn, flags) {
 	var a_blocks = each_block.v;
 
 	var a = a_blocks.length;
@@ -277,7 +262,7 @@ function reconcile_indexed_array(array, each_block, dom, is_controlled, render_f
 			item = array[i];
 			block = create_block(item, null, i, render_fn, flags);
 			b_blocks[i] = block;
-			insert_block(block, dom, is_controlled, null);
+			insert_block(block, anchor);
 		}
 
 		each_block.v = b_blocks;
@@ -316,14 +301,13 @@ function reconcile_indexed_array(array, each_block, dom, is_controlled, render_f
  * @template V
  * @param {Array<V>} array
  * @param {import('#client').EachBlock} each_block
- * @param {Element | Comment | Text} dom
- * @param {boolean} is_controlled
+ * @param {Element | Comment | Text} anchor
  * @param {(anchor: null, item: V, index: number | import('#client').Source<number>) => void} render_fn
  * @param {number} flags
  * @param {any[]} keys
  * @returns {void}
  */
-function reconcile_tracked_array(array, each_block, dom, is_controlled, render_fn, flags, keys) {
+function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, keys) {
 	var a_blocks = each_block.v;
 
 	var a = a_blocks.length;
@@ -337,13 +321,10 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	var start = 0;
 	var block;
 
-	/** @type {null | Text | Element | Comment} */
-	var sibling = null;
-
 	// Step 1 — trim common suffix
 	while (a > 0 && b > 0 && a_blocks[a - 1].k === keys[b - 1]) {
 		block = b_blocks[--b] = a_blocks[--a];
-		sibling = get_first_child(block);
+		anchor = get_first_child(block);
 
 		if (should_update) {
 			update_block(block, array[b], b, flags);
@@ -367,7 +348,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		while (--b >= start) {
 			block = create_block(array[b], keys[b], b, render_fn, flags);
 			b_blocks[b] = block;
-			sibling = insert_block(block, dom, is_controlled, sibling);
+			anchor = insert_block(block, anchor);
 		}
 	} else if (start === b) {
 		// TODO reinstate optimization for controlled blocks
@@ -427,8 +408,8 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			}
 
 			if (insert || (moved && index !== LIS_BLOCK)) {
-				last_sibling = last_block === undefined ? sibling : get_first_child(last_block);
-				sibling = insert_block(block, dom, is_controlled, last_sibling);
+				last_sibling = last_block === undefined ? anchor : get_first_child(last_block);
+				anchor = insert_block(block, last_sibling);
 			}
 
 			last_block = b_blocks[b] = block;
@@ -527,23 +508,12 @@ function mark_lis(a) {
 
 /**
  * @param {import('#client').Block} block
- * @param {Element | Comment | Text} dom
- * @param {boolean} is_controlled
- * @param {null | Text | Element | Comment} sibling
+ * @param {Text | Element | Comment} sibling
  * @returns {Text | Element | Comment}
  */
-function insert_block(block, dom, is_controlled, sibling) {
+function insert_block(block, sibling) {
 	var current = /** @type {import('#client').TemplateNode} */ (block.d);
-
-	if (sibling === null) {
-		if (is_controlled) {
-			return insert(current, /** @type {Element} */ (dom), null);
-		} else {
-			return insert(current, /** @type {Element} */ (dom.parentNode), dom);
-		}
-	}
-
-	return insert(current, null, sibling);
+	return insert(current, sibling);
 }
 
 /**

@@ -30,30 +30,21 @@ export function create_fragment_with_script_from_html(html) {
 
 /**
  * @param {Array<import('../types.js').TemplateNode> | import('../types.js').TemplateNode} current
- * @param {null | Element} parent_element
- * @param {null | Text | Element | Comment} sibling
+ * @param {Text | Element | Comment} sibling
  * @returns {Text | Element | Comment}
  */
-export function insert(current, parent_element, sibling) {
+export function insert(current, sibling) {
+	if (!current) return sibling;
+
 	if (is_array(current)) {
-		var i = 0;
-		var node;
-		for (; i < current.length; i++) {
-			node = current[i];
-			if (sibling === null) {
-				append_child(/** @type {Element} */ (parent_element), /** @type {Node} */ (node));
-			} else {
-				sibling.before(/** @type {Node} */ (node));
-			}
+		for (var i = 0; i < current.length; i++) {
+			sibling.before(/** @type {Node} */ (current[i]));
 		}
+
 		return current[0];
-	} else {
-		if (sibling === null) {
-			append_child(/** @type {Element} */ (parent_element), /** @type {Node} */ (current));
-		} else {
-			sibling.before(/** @type {Node} */ (current));
-		}
 	}
+
+	sibling.before(/** @type {Node} */ (current));
 	return /** @type {Text | Element | Comment} */ (current);
 }
 

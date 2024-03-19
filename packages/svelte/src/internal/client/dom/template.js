@@ -190,7 +190,7 @@ function close_template(dom, is_fragment, anchor) {
 			: /** @type {import('#client').TemplateNode[]} */ (Array.from(dom.childNodes))
 		: dom;
 	if (!hydrating && anchor !== null) {
-		insert(current, null, anchor);
+		insert(current, anchor);
 	}
 	block.d = current;
 }
