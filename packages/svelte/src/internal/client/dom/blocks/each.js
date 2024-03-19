@@ -463,13 +463,12 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 
 		var last_block;
 		var last_sibling;
-		var should_create;
 
 		while (b-- > start) {
-			var mode = sources[b - start];
-			should_create = mode === NEW_BLOCK;
+			index = sources[b - start];
+			var insert = index === NEW_BLOCK;
 
-			if (should_create) {
+			if (insert) {
 				block = create_block(array[b], keys[b], b, render_fn, flags);
 			} else {
 				block = b_blocks[b];
@@ -478,7 +477,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 				}
 			}
 
-			if (should_create || (moved && mode !== LIS_BLOCK)) {
+			if (insert || (moved && index !== LIS_BLOCK)) {
 				last_sibling = last_block === undefined ? sibling : get_first_child(last_block);
 				sibling = insert_block(block, dom, is_controlled, last_sibling);
 			}
