@@ -388,6 +388,8 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			sibling = insert_block(block, dom, is_controlled, sibling);
 		}
 	} else if (start === b) {
+		// TODO reinstate optimization for controlled blocks
+
 		// remove only
 		while (start < a) {
 			destroy_block(a_blocks[start++]);
