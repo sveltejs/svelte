@@ -43,6 +43,11 @@ const LIS_BLOCK = -2;
 function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_fn) {
 	const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
+	// If we're in an keyed each block, ensure the items are all wrapped in sources
+	if ((flags & EACH_KEYED) !== 0) {
+		flags |= EACH_ITEM_REACTIVE;
+	}
+
 	/** @type {import('#client').EachBlock} */
 	const block = {
 		// dom
@@ -58,59 +63,14 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 
 	hydrate_block_anchor(anchor_node, is_controlled);
 
-	/** @type {V[]} */
-	let array;
-
-	/**
-	 * Whether or not there was a "rendered fallback but want to render items" (or vice versa) hydration mismatch.
-	 * Needs to be a `let` or else it isn't treeshaken out
-	 */
-	let mismatch = false;
-
-	const create_fallback_effect = () => {
-		return render_effect(
-			() => {
-				let anchor = anchor_node;
-				const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
-
-				if (is_controlled) {
-					// If the each block is controlled, then the anchor node will be the surrounding
-					// element in which the each block is rendered, which requires certain handling
-					// depending on whether we're in hydration mode or not
-					if (!hydrating) {
-						// Create a new anchor on the fly because there's none due to the optimization
-						// TODO this will happen every time the fallback renders...
-						anchor = empty();
-						anchor_node.appendChild(anchor);
-					} else {
-						// In case of hydration the anchor will be the first child of the surrounding element
-						anchor = /** @type {Comment} */ (anchor.firstChild);
-					}
-				}
-
-				/** @type {(anchor: Node) => void} */ (fallback_fn)(anchor);
-				var dom = block.d; // TODO would be nice if this was just returned from the managed effect function...
-
-				return () => {
-					if (dom !== null) {
-						remove(dom);
-						dom = null;
-					}
-				};
-			},
-			block,
-			true
-		);
-	};
-
 	/** @type {import('#client').Effect | null} */
 	let fallback = null;
 
 	const each = render_effect(
 		() => {
-			/** @type {V[]} */
 			const maybe_array = collection();
-			array = is_array(maybe_array)
+
+			var array = is_array(maybe_array)
 				? maybe_array
 				: maybe_array == null
 					? []
@@ -119,6 +79,18 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			const keys = key_fn === null ? array : array.map(key_fn);
 
 			const length = array.length;
+
+			const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
+
+			// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
+			// are treated as reactive, so they get wrapped in a signal.
+			var flags = block.f;
+			if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
+				flags ^= EACH_IS_STRICT_EQUALS;
+			}
+
+			/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
+			let mismatch = false;
 
 			if (hydrating) {
 				var is_else =
@@ -135,38 +107,8 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 				}
 			}
 
-			if (fallback_fn !== null) {
-				if (length === 0) {
-					if (fallback) {
-						resume_effect(fallback);
-					} else {
-						fallback = create_fallback_effect();
-					}
-				} else if (fallback !== null) {
-					pause_effect(fallback, () => {
-						fallback = null;
-					});
-				}
-			}
-
-			const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
-
-			// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
-			// are treated as reactive, so they get wrapped in a signal.
-			var flags = block.f;
-			if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
-				flags ^= EACH_IS_STRICT_EQUALS;
-
-				// Additionally if we're in an keyed each block, we'll need ensure the items are all wrapped in signals.
-				if ((flags & EACH_KEYED) !== 0 && (flags & EACH_ITEM_REACTIVE) === 0) {
-					flags ^= EACH_ITEM_REACTIVE;
-				}
-			}
-
+			// this is separate to the previous block because `hydrating` might change
 			if (hydrating) {
-				/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-				let mismatch = false;
-
 				var b_blocks = [];
 
 				// Hydrate block
@@ -197,24 +139,66 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 				remove_excess_hydration_nodes(hydration_list, hydrating_node);
 
 				block.v = b_blocks;
+			}
 
-				if (mismatch) {
-					// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
-					reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, keys);
-					set_current_hydration_fragment([]);
-				}
-			} else {
+			if (!hydrating) {
 				reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, keys);
+			}
+
+			if (fallback_fn !== null) {
+				if (length === 0) {
+					if (fallback) {
+						resume_effect(fallback);
+					} else {
+						fallback = render_effect(
+							() => {
+								let anchor = anchor_node;
+								const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
+
+								if (is_controlled) {
+									// If the each block is controlled, then the anchor node will be the surrounding
+									// element in which the each block is rendered, which requires certain handling
+									// depending on whether we're in hydration mode or not
+									if (!hydrating) {
+										// Create a new anchor on the fly because there's none due to the optimization
+										// TODO this will happen every time the fallback renders...
+										anchor = empty();
+										anchor_node.appendChild(anchor);
+									} else {
+										// In case of hydration the anchor will be the first child of the surrounding element
+										anchor = /** @type {Comment} */ (anchor.firstChild);
+									}
+								}
+
+								/** @type {(anchor: Node) => void} */ (fallback_fn)(anchor);
+								var dom = block.d; // TODO would be nice if this was just returned from the managed effect function...
+
+								return () => {
+									if (dom !== null) {
+										remove(dom);
+										dom = null;
+									}
+								};
+							},
+							block,
+							true
+						);
+					}
+				} else if (fallback !== null) {
+					pause_effect(fallback, () => {
+						fallback = null;
+					});
+				}
+			}
+
+			if (mismatch) {
+				// Set a fragment so that Svelte continues to operate in hydration mode
+				set_current_hydration_fragment([]);
 			}
 		},
 		block,
 		false
 	);
-
-	if (mismatch) {
-		// Set a fragment so that Svelte continues to operate in hydration mode
-		set_current_hydration_fragment([]);
-	}
 
 	each.ondestroy = () => {
 		for (const b of block.v) {
