@@ -27,7 +27,6 @@ import { is_array, is_frozen, map_get, map_set } from '../../utils.js';
 import { STATE_SYMBOL } from '../../constants.js';
 
 const NEW_BLOCK = -1;
-const MOVED_BLOCK = 99999999;
 const LIS_BLOCK = -2;
 
 /**
@@ -424,20 +423,20 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			destroy_block(a_blocks[start++]);
 		}
 	} else {
-		// Step 4
+		// reconcile
 		var moved = false;
 		var sources = new Int32Array(b - start);
-		var item_index = new Map();
+		var indexes = new Map();
 
 		for (i = start; i < b; i += 1) {
 			sources[i - start] = NEW_BLOCK;
-			map_set(item_index, keys[i], i);
+			map_set(indexes, keys[i], i);
 		}
 
 		// If keys are animated, we need to do updates before actual moves
 		if (is_animated) {
 			for (i = start; i < a; i += 1) {
-				var index = map_get(item_index, /** @type {V} */ (a_blocks[i].k));
+				var index = map_get(indexes, /** @type {V} */ (a_blocks[i].k));
 				if (index !== undefined) {
 					update_block(a_blocks[i], array[index], index, flags);
 				}
@@ -445,14 +444,15 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		}
 
 		for (i = start; i < a; i += 1) {
-			var index = map_get(item_index, /** @type {V} */ (a_blocks[i].k));
+			var index = map_get(indexes, /** @type {V} */ (a_blocks[i].k));
 			block = a_blocks[i];
-			if (index !== undefined) {
+
+			if (index === undefined) {
+				destroy_block(block);
+			} else {
 				moved = true;
 				sources[index - start] = i;
 				b_blocks[index] = block;
-			} else if (block !== null) {
-				destroy_block(block);
 			}
 		}
 
