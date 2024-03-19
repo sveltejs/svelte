@@ -407,6 +407,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		var sources = new Int32Array(b - start);
 		var indexes = new Map();
 		var i;
+		var index;
 
 		for (i = start; i < b; i += 1) {
 			sources[i - start] = NEW_BLOCK;
@@ -414,8 +415,8 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		}
 
 		for (i = start; i < a; i += 1) {
-			var index = map_get(indexes, a_blocks[i].k);
 			block = a_blocks[i];
+			index = map_get(indexes, block.k);
 
 			if (index === undefined) {
 				destroy_block(block);
@@ -426,7 +427,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 
 				if (is_animated) {
 					// If keys are animated, we need to do updates before actual moves
-					update_block(a_blocks[i], array[index], index, flags);
+					update_block(block, array[index], index, flags);
 				}
 			}
 		}
