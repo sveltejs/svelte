@@ -406,12 +406,11 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	// Step 1
 	outer: {
 		// From the end
-		while (a_blocks[a_end].k === key) {
+		while (a_blocks[a_end].k === keys[b_end]) {
 			block = a_blocks[a_end--];
-			item = array[b_end];
 
 			if (should_update_block) {
-				update_each_item_block(block, item, b_end, flags);
+				update_each_item_block(block, array[b_end], b_end, flags);
 			}
 
 			sibling = get_first_child(block);
@@ -420,23 +419,16 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			if (start > --b_end || start > a_end) {
 				break outer;
 			}
-
-			key = keys[b_end];
 		}
 
-		item = array[start];
-		key = keys[start];
-
 		// At the start
-		while (start <= a_end && start <= b_end && a_blocks[start].k === key) {
-			item = array[start];
+		while (start <= a_end && start <= b_end && a_blocks[start].k === keys[start]) {
 			block = a_blocks[start];
 			if (should_update_block) {
-				update_each_item_block(block, item, start, flags);
+				update_each_item_block(block, array[start], start, flags);
 			}
 			b_blocks[start] = block;
 			++start;
-			key = keys[start];
 		}
 	}
 
