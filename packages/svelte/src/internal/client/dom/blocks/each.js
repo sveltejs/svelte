@@ -153,7 +153,6 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 						fallback = render_effect(
 							() => {
 								let anchor = anchor_node;
-								const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
 
 								if (is_controlled) {
 									// If the each block is controlled, then the anchor node will be the surrounding
@@ -170,7 +169,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 									}
 								}
 
-								/** @type {(anchor: Node) => void} */ (fallback_fn)(anchor);
+								fallback_fn(anchor);
 								var dom = block.d; // TODO would be nice if this was just returned from the managed effect function...
 
 								return () => {
