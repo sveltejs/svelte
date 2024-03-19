@@ -200,7 +200,7 @@ function each(anchor, collection, flags, key_fn, render_fn, fallback_fn, reconci
 
 /**
  * @template V
- * @param {Element | Comment} anchor_node
+ * @param {Element | Comment} anchor
  * @param {() => V[]} collection
  * @param {number} flags
  * @param {null | ((item: V) => string)} key_fn
@@ -208,21 +208,21 @@ function each(anchor, collection, flags, key_fn, render_fn, fallback_fn, reconci
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
-export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fallback_fn) {
-	each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_tracked_array);
+export function each_keyed(anchor, collection, flags, key_fn, render_fn, fallback_fn) {
+	each(anchor, collection, flags, key_fn, render_fn, fallback_fn, reconcile_tracked_array);
 }
 
 /**
  * @template V
- * @param {Element | Comment} anchor_node
+ * @param {Element | Comment} anchor
  * @param {() => V[]} collection
  * @param {number} flags
  * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
-export function each_indexed(anchor_node, collection, flags, render_fn, fallback_fn) {
-	each(anchor_node, collection, flags, null, render_fn, fallback_fn, reconcile_indexed_array);
+export function each_indexed(anchor, collection, flags, render_fn, fallback_fn) {
+	each(anchor, collection, flags, null, render_fn, fallback_fn, reconcile_indexed_array);
 }
 
 /**
