@@ -625,25 +625,6 @@ function get_first_child(block) {
 }
 
 /**
- * @param {import('#client').Block} block
- * @returns {Text | Element | Comment}
- */
-export function get_first_element(block) {
-	const current = block.d;
-
-	if (is_array(current)) {
-		for (let i = 0; i < current.length; i++) {
-			const node = current[i];
-			if (node.nodeType !== 8) {
-				return node;
-			}
-		}
-	}
-
-	return /** @type {Text | Element | Comment} */ (current);
-}
-
-/**
  * @param {import('#client').EachItemBlock} block
  * @param {any} item
  * @param {number} index
@@ -669,7 +650,7 @@ function update_each_item_block(block, item, index, type) {
  * @param {any} controlled
  * @returns {void}
  */
-export function destroy_each_item_block(block, controlled = false) {
+function destroy_each_item_block(block, controlled = false) {
 	const dom = block.d;
 	if (!controlled && dom !== null) {
 		remove(dom);
