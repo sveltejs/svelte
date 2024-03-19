@@ -43,11 +43,6 @@ const LIS_BLOCK = -2;
 function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_fn) {
 	const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
-	// If we're in an keyed each block, ensure the items are all wrapped in sources
-	if ((flags & EACH_KEYED) !== 0) {
-		flags |= EACH_ITEM_REACTIVE;
-	}
-
 	/** @type {import('#client').EachBlock} */
 	const block = {
 		// dom
@@ -87,6 +82,11 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			var flags = block.f;
 			if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
 				flags ^= EACH_IS_STRICT_EQUALS;
+
+				// Additionally if we're in an keyed each block, we'll need ensure the items are all wrapped in signals.
+				if ((flags & EACH_KEYED) !== 0 && (flags & EACH_ITEM_REACTIVE) === 0) {
+					flags ^= EACH_ITEM_REACTIVE;
+				}
 			}
 
 			/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
