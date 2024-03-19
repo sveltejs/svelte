@@ -359,27 +359,8 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	/** @type {Array<import('#client').EachItemBlock>} */
 	var b_blocks = Array(b);
 
-	// fast path - only adding or deleting, no reconciliation required
-	if (a === 0 || b === 0) {
-		if (a === 0) {
-			for (var i = 0; i < b; i += 1) {
-				var block = create_block(array[i], keys[i], i, render_fn, flags);
-				b_blocks[i] = block;
-				insert_block(block, dom, is_controlled, null);
-			}
-		} else if (b === 0) {
-			if (is_controlled) {
-				clear_text_content(dom);
-			}
-
-			while (a > 0) {
-				destroy_block(a_blocks[--a], is_controlled);
-			}
-		}
-
-		each_block.v = b_blocks;
-		return;
-	}
+	var block;
+	var i;
 
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 	var should_update = is_animated || (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
