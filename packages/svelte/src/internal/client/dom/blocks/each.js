@@ -433,8 +433,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	} else {
 		// Step 4
 		var moved = false;
-		var b_length = b - start;
-		var sources = new Int32Array(b_length);
+		var sources = new Int32Array(b - start);
 		var item_index = new Map();
 
 		for (i = start; i < b; i += 1) {
@@ -473,17 +472,16 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		var last_sibling;
 		var should_create;
 
-		while (b_length-- > 0) {
-			const i = b_length + start;
-			const mode = sources[b_length];
+		while (b-- > start) {
+			const mode = sources[b - start];
 			should_create = mode === NEW_BLOCK;
 
 			if (should_create) {
-				block = create_each_item_block(array[i], keys[i], i, render_fn, flags);
+				block = create_each_item_block(array[b], keys[b], b, render_fn, flags);
 			} else {
-				block = b_blocks[i];
+				block = b_blocks[b];
 				if (!is_animated && should_update_block) {
-					update_each_item_block(block, array[i], i, flags);
+					update_each_item_block(block, array[b], b, flags);
 				}
 			}
 
@@ -492,7 +490,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 				sibling = insert_each_item_block(block, dom, is_controlled, last_sibling);
 			}
 
-			b_blocks[i] = block;
+			b_blocks[b] = block;
 			last_block = block;
 		}
 	}
