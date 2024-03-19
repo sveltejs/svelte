@@ -2,8 +2,6 @@ import { ok, test } from '../../test';
 
 // test select binding behavior when a selected option is removed
 export default test({
-	solo: true,
-
 	skip_if_ssr: 'permanent',
 
 	html: `<p>selected: a</p><select><option value="a">a</option><option value="b">b</option><option value="c">c</option></select>`,
