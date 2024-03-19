@@ -434,11 +434,11 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		}
 	} else {
 		// Step 4
-		var pos = 0;
+		var moved = false;
 		var b_length = b_end - start;
 		var sources = new Int32Array(b_length);
 		var item_index = new Map();
-		for (b = 0; b < b_length; ++b) {
+		for (b = 0; b < b_length; b += 1) {
 			i = b + start;
 			sources[b] = NEW_BLOCK;
 			map_set(item_index, keys[i], i);
@@ -458,7 +458,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			i = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
 			block = a_blocks[b];
 			if (i !== undefined) {
-				pos = pos < i ? i : MOVED_BLOCK;
+				moved = true;
 				sources[i - start] = b;
 				b_blocks[i] = block;
 			} else if (block !== null) {
@@ -467,7 +467,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		}
 
 		// Step 5
-		if (pos === MOVED_BLOCK) {
+		if (moved) {
 			mark_lis(sources);
 		}
 
@@ -489,7 +489,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 				}
 			}
 
-			if (should_create || (pos === MOVED_BLOCK && mode !== LIS_BLOCK)) {
+			if (should_create || (moved && mode !== LIS_BLOCK)) {
 				last_sibling = last_block === undefined ? sibling : get_first_child(last_block);
 				sibling = insert_each_item_block(block, dom, is_controlled, last_sibling);
 			}
