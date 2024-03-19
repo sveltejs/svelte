@@ -91,6 +91,28 @@ export function bind_select_value(select, get_value, update) {
 		select.__value = value;
 		mounting = false;
 	});
+
+	// If one of the options gets removed from the DOM, the value might have changed
+	effect(() => {
+		var observer = new MutationObserver(() => {
+			// @ts-ignore
+			var value = select.__value;
+			select_option(select, value, mounting);
+			/** @type {HTMLOptionElement | null} */
+			var selected_option = select.querySelector(':checked');
+			if (selected_option === null || get_option_value(selected_option) !== value) {
+				update('');
+			}
+		});
+
+		observer.observe(select, {
+			childList: true
+		});
+
+		return () => {
+			observer.disconnect();
+		};
+	});
 }
 
 /**
