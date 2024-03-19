@@ -408,7 +408,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	}
 
 	// Step 2 — trim from the start
-	while (start <= a_end - 1 && start <= b_end - 1 && a_blocks[start].k === keys[start]) {
+	while (start < a_end && start < b_end && a_blocks[start].k === keys[start]) {
 		block = a_blocks[start];
 
 		if (should_update_block) {
