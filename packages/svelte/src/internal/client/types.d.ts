@@ -133,8 +133,6 @@ export type EachItemBlock = {
 	i: number | Source<number>;
 	/** key */
 	k: unknown;
-	/** parent */
-	p: EachBlock;
 };
 
 export type SnippetBlock = {

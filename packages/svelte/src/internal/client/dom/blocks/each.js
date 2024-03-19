@@ -640,9 +640,7 @@ function create_block(item, key, index, render_fn, flags) {
 		// key
 		k: key,
 		// item
-		v: item_value,
-		// parent
-		p: /** @type {import('#client').EachBlock} */ (current_block)
+		v: item_value
 	};
 
 	block.e = render_effect(
