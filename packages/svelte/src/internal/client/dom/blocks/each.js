@@ -434,13 +434,11 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			sibling = insert_each_item_block(block, dom, is_controlled, sibling);
 		}
 	} else if (start > b_end) {
-		b = start;
-
-		do {
-			if ((block = a_blocks[b++]) !== null) {
+		while (start <= a_end) {
+			if ((block = a_blocks[start++]) !== null) {
 				destroy_each_item_block(block);
 			}
-		} while (b <= a_end);
+		}
 	} else {
 		// Step 4
 		var pos = 0;
