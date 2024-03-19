@@ -191,7 +191,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 						break;
 					}
 
-					b_blocks[i] = create_each_item_block(array[i], keys?.[i], i, render_fn, flags);
+					b_blocks[i] = create_block(array[i], keys?.[i], i, render_fn, flags);
 
 					hydrating_node = /** @type {import('#client').TemplateNode} */ (
 						/** @type {Node} */ (
@@ -295,7 +295,7 @@ function reconcile_indexed_array(array, each_block, dom, is_controlled, render_f
 		item = array[i];
 		block = a_blocks[i];
 		b_blocks[i] = block;
-		update_each_item_block(block, item, i, flags);
+		update_block(block, item, i, flags);
 		resume_effect(block.e);
 	}
 
@@ -303,9 +303,9 @@ function reconcile_indexed_array(array, each_block, dom, is_controlled, render_f
 		// add items
 		for (; i < b; i += 1) {
 			item = array[i];
-			block = create_each_item_block(item, null, i, render_fn, flags);
+			block = create_block(item, null, i, render_fn, flags);
 			b_blocks[i] = block;
-			insert_each_item_block(block, dom, is_controlled, null);
+			insert_block(block, dom, is_controlled, null);
 		}
 
 		each_block.v = b_blocks;
@@ -364,9 +364,9 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	if (a === 0 || b === 0) {
 		if (a === 0) {
 			for (var i = 0; i < b; i += 1) {
-				var block = create_each_item_block(array[i], keys[i], i, render_fn, flags);
+				var block = create_block(array[i], keys[i], i, render_fn, flags);
 				b_blocks[i] = block;
-				insert_each_item_block(block, dom, is_controlled, null);
+				insert_block(block, dom, is_controlled, null);
 			}
 		} else if (b === 0) {
 			if (is_controlled) {
@@ -374,7 +374,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			}
 
 			while (a > 0) {
-				destroy_each_item_block(a_blocks[--a], is_controlled);
+				destroy_block(a_blocks[--a], is_controlled);
 			}
 		}
 
@@ -383,8 +383,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	}
 
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
-	var should_update_block =
-		is_animated || (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
+	var should_update = is_animated || (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 	var start = 0;
 
 	/** @type {null | Text | Element | Comment} */
@@ -397,8 +396,8 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 
 		block = a_blocks[a];
 
-		if (should_update_block) {
-			update_each_item_block(block, array[b], b, flags);
+		if (should_update) {
+			update_block(block, array[b], b, flags);
 		}
 
 		sibling = get_first_child(block);
@@ -409,8 +408,8 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	while (start < a && start < b && a_blocks[start].k === keys[start]) {
 		block = a_blocks[start];
 
-		if (should_update_block) {
-			update_each_item_block(block, array[start], start, flags);
+		if (should_update) {
+			update_block(block, array[start], start, flags);
 		}
 
 		b_blocks[start] = block;
@@ -420,14 +419,14 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	// Step 3
 	if (start >= a) {
 		while (--b >= start) {
-			block = create_each_item_block(array[b], keys[b], b, render_fn, flags);
+			block = create_block(array[b], keys[b], b, render_fn, flags);
 			b_blocks[b] = block;
-			sibling = insert_each_item_block(block, dom, is_controlled, sibling);
+			sibling = insert_block(block, dom, is_controlled, sibling);
 		}
 	} else if (start >= b) {
 		while (start < a) {
 			if ((block = a_blocks[start++]) !== null) {
-				destroy_each_item_block(block);
+				destroy_block(block);
 			}
 		}
 	} else {
@@ -446,7 +445,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			for (i = start; i < a; i += 1) {
 				var index = map_get(item_index, /** @type {V} */ (a_blocks[i].k));
 				if (index !== undefined) {
-					update_each_item_block(a_blocks[i], array[index], index, flags);
+					update_block(a_blocks[i], array[index], index, flags);
 				}
 			}
 		}
@@ -459,7 +458,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 				sources[index - start] = i;
 				b_blocks[index] = block;
 			} else if (block !== null) {
-				destroy_each_item_block(block);
+				destroy_block(block);
 			}
 		}
 
@@ -473,21 +472,21 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		var should_create;
 
 		while (b-- > start) {
-			const mode = sources[b - start];
+			var mode = sources[b - start];
 			should_create = mode === NEW_BLOCK;
 
 			if (should_create) {
-				block = create_each_item_block(array[b], keys[b], b, render_fn, flags);
+				block = create_block(array[b], keys[b], b, render_fn, flags);
 			} else {
 				block = b_blocks[b];
-				if (!is_animated && should_update_block) {
-					update_each_item_block(block, array[b], b, flags);
+				if (!is_animated && should_update) {
+					update_block(block, array[b], b, flags);
 				}
 			}
 
 			if (should_create || (moved && mode !== LIS_BLOCK)) {
 				last_sibling = last_block === undefined ? sibling : get_first_child(last_block);
-				sibling = insert_each_item_block(block, dom, is_controlled, last_sibling);
+				sibling = insert_block(block, dom, is_controlled, last_sibling);
 			}
 
 			b_blocks[b] = block;
@@ -592,7 +591,7 @@ function mark_lis(a) {
  * @param {null | Text | Element | Comment} sibling
  * @returns {Text | Element | Comment}
  */
-function insert_each_item_block(block, dom, is_controlled, sibling) {
+function insert_block(block, dom, is_controlled, sibling) {
 	var current = /** @type {import('#client').TemplateNode} */ (block.d);
 
 	if (sibling === null) {
@@ -627,7 +626,7 @@ function get_first_child(block) {
  * @param {number} type
  * @returns {void}
  */
-function update_each_item_block(block, item, index, type) {
+function update_block(block, item, index, type) {
 	if ((type & EACH_ITEM_REACTIVE) !== 0) {
 		set(block.v, item);
 	}
@@ -646,7 +645,7 @@ function update_each_item_block(block, item, index, type) {
  * @param {any} controlled
  * @returns {void}
  */
-function destroy_each_item_block(block, controlled = false) {
+function destroy_block(block, controlled = false) {
 	const dom = block.d;
 	if (!controlled && dom !== null) {
 		remove(dom);
@@ -663,7 +662,7 @@ function destroy_each_item_block(block, controlled = false) {
  * @param {number} flags
  * @returns {import('#client').EachItemBlock}
  */
-function create_each_item_block(item, key, index, render_fn, flags) {
+function create_block(item, key, index, render_fn, flags) {
 	const each_item_not_reactive = (flags & EACH_ITEM_REACTIVE) === 0;
 
 	const item_value = each_item_not_reactive
