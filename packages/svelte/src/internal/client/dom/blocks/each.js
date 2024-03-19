@@ -399,36 +399,32 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	/** @type {null | Text | Element | Comment} */
 	var sibling = null;
 
-	// Step 1
-	outer: {
-		// From the end
-		while (a_blocks[a_end].k === keys[b_end]) {
-			block = a_blocks[a_end--];
+	// Step 1 — trim from the end
+	while (a_end > 0 && b_end > 0 && a_blocks[a_end].k === keys[b_end]) {
+		block = a_blocks[a_end];
 
-			if (should_update_block) {
-				update_each_item_block(block, array[b_end], b_end, flags);
-			}
-
-			sibling = get_first_child(block);
-			b_blocks[b_end] = block;
-
-			if (start > --b_end || start > a_end) {
-				break outer;
-			}
+		if (should_update_block) {
+			update_each_item_block(block, array[b_end], b_end, flags);
 		}
 
-		// At the start
-		while (start <= a_end && start <= b_end && a_blocks[start].k === keys[start]) {
-			block = a_blocks[start];
-			if (should_update_block) {
-				update_each_item_block(block, array[start], start, flags);
-			}
-			b_blocks[start] = block;
-			++start;
-		}
+		sibling = get_first_child(block);
+		b_blocks[b_end] = block;
+
+		--a_end;
+		--b_end;
 	}
 
-	// Step 2
+	// Step 2 — trim from the start
+	while (start <= a_end && start <= b_end && a_blocks[start].k === keys[start]) {
+		block = a_blocks[start];
+		if (should_update_block) {
+			update_each_item_block(block, array[start], start, flags);
+		}
+		b_blocks[start] = block;
+		++start;
+	}
+
+	// Step 3
 	if (start > a_end) {
 		while (b_end >= start) {
 			block = each_item_block(array[b_end], keys[b_end], b_end, render_fn, flags);
@@ -444,7 +440,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			}
 		} while (b <= a_end);
 	} else {
-		// Step 3
+		// Step 4
 		var pos = 0;
 		var b_length = b_end - start + 1;
 		var sources = new Int32Array(b_length);
@@ -477,7 +473,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			}
 		}
 
-		// Step 4
+		// Step 5
 		if (pos === MOVED_BLOCK) {
 			mark_lis(sources);
 		}
