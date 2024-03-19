@@ -358,174 +358,173 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	var a = a_blocks.length;
 	var b = array.length;
 
-	/** @type {Array<import('#client').EachItemBlock>} */
-	var b_blocks;
-
-	var block;
-
+	// fast path – array is empty
 	if (b === 0) {
 		// Remove old blocks
 		if (is_controlled && a !== 0) {
 			clear_text_content(dom);
 		}
+
 		while (a > 0) {
-			block = a_blocks[--a];
-			destroy_each_item_block(block, is_controlled);
+			destroy_each_item_block(a_blocks[--a], is_controlled);
 		}
 
-		b_blocks = [];
-	} else {
-		var a_end = a - 1;
-		var b_end = b - 1;
-		var key;
-		var item;
-		var i;
+		each_block.v = [];
+		return;
+	}
 
-		b_blocks = Array(b);
+	/** @type {Array<import('#client').EachItemBlock>} */
+	var b_blocks = Array(b);
 
-		if (a === 0) {
-			// Create new blocks
-			while (b > 0) {
-				i = b_end - --b;
-				block = each_item_block(array[i], keys[i], i, render_fn, flags);
-				b_blocks[i] = block;
-				insert_each_item_block(block, dom, is_controlled, null);
-			}
-		} else {
-			var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
-			var should_update_block =
-				(flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0 || is_animated;
-			var start = 0;
+	// fast path — array WAS empty
+	if (a === 0) {
+		// Create new blocks
+		for (var i = 0; i < b; i += 1) {
+			var block = each_item_block(array[i], keys[i], i, render_fn, flags);
+			b_blocks[i] = block;
+			insert_each_item_block(block, dom, is_controlled, null);
+		}
 
-			/** @type {null | Text | Element | Comment} */
-			var sibling = null;
+		each_block.v = b_blocks;
+		return;
+	}
+
+	var a_end = a - 1;
+	var b_end = b - 1;
+	var key;
+	var item;
+	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
+	var should_update_block =
+		is_animated || (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
+	var start = 0;
+
+	/** @type {null | Text | Element | Comment} */
+	var sibling = null;
+	item = array[b_end];
+	key = keys[b_end];
+
+	// Step 1
+	outer: while (true) {
+		// From the end
+		while (a_blocks[a_end].k === key) {
+			block = a_blocks[a_end--];
 			item = array[b_end];
+
+			if (should_update_block) {
+				update_each_item_block(block, item, b_end, flags);
+			}
+
+			sibling = get_first_child(block);
+			b_blocks[b_end] = block;
+
+			if (start > --b_end || start > a_end) {
+				break outer;
+			}
+
 			key = keys[b_end];
+		}
 
-			// Step 1
-			outer: while (true) {
-				// From the end
-				while (a_blocks[a_end].k === key) {
-					block = a_blocks[a_end--];
-					item = array[b_end];
+		item = array[start];
+		key = keys[start];
 
-					if (should_update_block) {
-						update_each_item_block(block, item, b_end, flags);
-					}
-
-					sibling = get_first_child(block);
-					b_blocks[b_end] = block;
-
-					if (start > --b_end || start > a_end) {
-						break outer;
-					}
-
-					key = keys[b_end];
-				}
-
-				item = array[start];
-				key = keys[start];
-
-				// At the start
-				while (start <= a_end && start <= b_end && a_blocks[start].k === key) {
-					item = array[start];
-					block = a_blocks[start];
-					if (should_update_block) {
-						update_each_item_block(block, item, start, flags);
-					}
-					b_blocks[start] = block;
-					++start;
-					key = keys[start];
-				}
-
-				break;
+		// At the start
+		while (start <= a_end && start <= b_end && a_blocks[start].k === key) {
+			item = array[start];
+			block = a_blocks[start];
+			if (should_update_block) {
+				update_each_item_block(block, item, start, flags);
 			}
+			b_blocks[start] = block;
+			++start;
+			key = keys[start];
+		}
 
-			// Step 2
-			if (start > a_end) {
-				while (b_end >= start) {
-					block = each_item_block(array[b_end], keys[b_end], b_end, render_fn, flags);
-					b_blocks[b_end--] = block;
-					sibling = insert_each_item_block(block, dom, is_controlled, sibling);
-				}
-			} else if (start > b_end) {
-				b = start;
+		break;
+	}
 
-				do {
-					if ((block = a_blocks[b++]) !== null) {
-						destroy_each_item_block(block);
-					}
-				} while (b <= a_end);
-			} else {
-				// Step 3
-				var pos = 0;
-				var b_length = b_end - start + 1;
-				var sources = new Int32Array(b_length);
-				var item_index = new Map();
-				for (b = 0; b < b_length; ++b) {
-					a = b + start;
-					sources[b] = NEW_BLOCK;
+	// Step 2
+	if (start > a_end) {
+		while (b_end >= start) {
+			block = each_item_block(array[b_end], keys[b_end], b_end, render_fn, flags);
+			b_blocks[b_end--] = block;
+			sibling = insert_each_item_block(block, dom, is_controlled, sibling);
+		}
+	} else if (start > b_end) {
+		b = start;
+
+		do {
+			if ((block = a_blocks[b++]) !== null) {
+				destroy_each_item_block(block);
+			}
+		} while (b <= a_end);
+	} else {
+		// Step 3
+		var pos = 0;
+		var b_length = b_end - start + 1;
+		var sources = new Int32Array(b_length);
+		var item_index = new Map();
+		for (b = 0; b < b_length; ++b) {
+			a = b + start;
+			sources[b] = NEW_BLOCK;
+			item = array[a];
+			map_set(item_index, keys[a], a);
+		}
+
+		// If keys are animated, we need to do updates before actual moves
+		if (is_animated) {
+			for (b = start; b <= a_end; ++b) {
+				a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
+				if (a !== undefined) {
 					item = array[a];
-					map_set(item_index, keys[a], a);
-				}
-
-				// If keys are animated, we need to do updates before actual moves
-				if (is_animated) {
-					for (b = start; b <= a_end; ++b) {
-						a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
-						if (a !== undefined) {
-							item = array[a];
-							block = a_blocks[b];
-							update_each_item_block(block, item, a, flags);
-						}
-					}
-				}
-
-				for (b = start; b <= a_end; ++b) {
-					a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
 					block = a_blocks[b];
-					if (a !== undefined) {
-						pos = pos < a ? a : MOVED_BLOCK;
-						sources[a - start] = b;
-						b_blocks[a] = block;
-					} else if (block !== null) {
-						destroy_each_item_block(block);
-					}
-				}
-
-				// Step 4
-				if (pos === MOVED_BLOCK) {
-					mark_lis(sources);
-				}
-
-				var last_block;
-				var last_sibling;
-				var should_create;
-
-				while (b_length-- > 0) {
-					b_end = b_length + start;
-					a = sources[b_length];
-					should_create = a === -1;
-					item = array[b_end];
-
-					if (should_create) {
-						block = each_item_block(item, keys[b_end], b_end, render_fn, flags);
-					} else {
-						block = b_blocks[b_end];
-						if (!is_animated && should_update_block) {
-							update_each_item_block(block, item, b_end, flags);
-						}
-					}
-
-					if (should_create || (pos === MOVED_BLOCK && a !== LIS_BLOCK)) {
-						last_sibling = last_block === undefined ? sibling : get_first_child(last_block);
-						sibling = insert_each_item_block(block, dom, is_controlled, last_sibling);
-					}
-
-					b_blocks[b_end] = block;
-					last_block = block;
+					update_each_item_block(block, item, a, flags);
 				}
 			}
+		}
+
+		for (b = start; b <= a_end; ++b) {
+			a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
+			block = a_blocks[b];
+			if (a !== undefined) {
+				pos = pos < a ? a : MOVED_BLOCK;
+				sources[a - start] = b;
+				b_blocks[a] = block;
+			} else if (block !== null) {
+				destroy_each_item_block(block);
+			}
+		}
+
+		// Step 4
+		if (pos === MOVED_BLOCK) {
+			mark_lis(sources);
+		}
+
+		var last_block;
+		var last_sibling;
+		var should_create;
+
+		while (b_length-- > 0) {
+			b_end = b_length + start;
+			a = sources[b_length];
+			should_create = a === -1;
+			item = array[b_end];
+
+			if (should_create) {
+				block = each_item_block(item, keys[b_end], b_end, render_fn, flags);
+			} else {
+				block = b_blocks[b_end];
+				if (!is_animated && should_update_block) {
+					update_each_item_block(block, item, b_end, flags);
+				}
+			}
+
+			if (should_create || (pos === MOVED_BLOCK && a !== LIS_BLOCK)) {
+				last_sibling = last_block === undefined ? sibling : get_first_child(last_block);
+				sibling = insert_each_item_block(block, dom, is_controlled, last_sibling);
+			}
+
+			b_blocks[b_end] = block;
+			last_block = block;
 		}
 	}
 
