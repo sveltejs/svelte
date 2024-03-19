@@ -446,21 +446,21 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 
 		// If keys are animated, we need to do updates before actual moves
 		if (is_animated) {
-			for (b = start; b < a_end; b += 1) {
-				i = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
-				if (i !== undefined) {
-					update_each_item_block(a_blocks[b], array[i], i, flags);
+			for (i = start; i < a_end; i += 1) {
+				var index = map_get(item_index, /** @type {V} */ (a_blocks[i].k));
+				if (index !== undefined) {
+					update_each_item_block(a_blocks[i], array[index], index, flags);
 				}
 			}
 		}
 
-		for (b = start; b < a_end; b += 1) {
-			i = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
-			block = a_blocks[b];
-			if (i !== undefined) {
+		for (i = start; i < a_end; i += 1) {
+			var index = map_get(item_index, /** @type {V} */ (a_blocks[i].k));
+			block = a_blocks[i];
+			if (index !== undefined) {
 				moved = true;
-				sources[i - start] = b;
-				b_blocks[i] = block;
+				sources[index - start] = i;
+				b_blocks[index] = block;
 			} else if (block !== null) {
 				destroy_each_item_block(block);
 			}
