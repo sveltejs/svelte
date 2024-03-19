@@ -96,7 +96,7 @@ export function bind_select_value(select, get_value, update) {
 	effect(() => {
 		var observer = new MutationObserver(() => {
 			// @ts-ignore
-			const value = select.__value;
+			var value = select.__value;
 			select_option(select, value, mounting);
 			/** @type {HTMLOptionElement | null} */
 			var selected_option = select.querySelector(':checked');
