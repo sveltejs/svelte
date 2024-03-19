@@ -32,15 +32,15 @@ var LIS_BLOCK = -2;
 /**
  * @template V
  * @param {Element | Comment} anchor The next sibling node, or the parent node if this is a 'controlled' block
- * @param {() => V[]} collection
+ * @param {() => V[]} get_collection
  * @param {number} flags
- * @param {null | ((item: V) => string)} key_fn
+ * @param {null | ((item: V) => string)} get_key
  * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
  * @returns {void}
  */
-function each(anchor, collection, flags, key_fn, render_fn, fallback_fn, reconcile_fn) {
+function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, reconcile_fn) {
 	/** @type {import('#client').EachBlock} */
 	var block = {
 		// dom
@@ -65,17 +65,17 @@ function each(anchor, collection, flags, key_fn, render_fn, fallback_fn, reconci
 	/** @type {import('#client').Effect | null} */
 	var fallback = null;
 
-	var each = render_effect(
+	var effect = render_effect(
 		() => {
-			var maybe_array = collection();
+			var collection = get_collection();
 
-			var array = is_array(maybe_array)
-				? maybe_array
-				: maybe_array == null
+			var array = is_array(collection)
+				? collection
+				: collection == null
 					? []
-					: Array.from(maybe_array);
+					: Array.from(collection);
 
-			var keys = key_fn === null ? array : array.map(key_fn);
+			var keys = get_key === null ? array : array.map(get_key);
 
 			var length = array.length;
 
@@ -184,7 +184,7 @@ function each(anchor, collection, flags, key_fn, render_fn, fallback_fn, reconci
 		false
 	);
 
-	each.ondestroy = () => {
+	effect.ondestroy = () => {
 		for (var b of block.v) {
 			if (b.d !== null) {
 				destroy_effect(b.e);
@@ -195,34 +195,34 @@ function each(anchor, collection, flags, key_fn, render_fn, fallback_fn, reconci
 		if (fallback) destroy_effect(fallback);
 	};
 
-	block.e = each;
+	block.e = effect;
 }
 
 /**
  * @template V
  * @param {Element | Comment} anchor
- * @param {() => V[]} collection
+ * @param {() => V[]} get_collection
  * @param {number} flags
- * @param {null | ((item: V) => string)} key_fn
+ * @param {null | ((item: V) => string)} get_key
  * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
-export function each_keyed(anchor, collection, flags, key_fn, render_fn, fallback_fn) {
-	each(anchor, collection, flags, key_fn, render_fn, fallback_fn, reconcile_tracked_array);
+export function each_keyed(anchor, get_collection, flags, get_key, render_fn, fallback_fn) {
+	each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, reconcile_tracked_array);
 }
 
 /**
  * @template V
  * @param {Element | Comment} anchor
- * @param {() => V[]} collection
+ * @param {() => V[]} get_collection
  * @param {number} flags
  * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
-export function each_indexed(anchor, collection, flags, render_fn, fallback_fn) {
-	each(anchor, collection, flags, null, render_fn, fallback_fn, reconcile_indexed_array);
+export function each_indexed(anchor, get_collection, flags, render_fn, fallback_fn) {
+	each(anchor, get_collection, flags, null, render_fn, fallback_fn, reconcile_indexed_array);
 }
 
 /**
