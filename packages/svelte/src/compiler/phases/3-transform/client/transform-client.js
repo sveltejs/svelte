@@ -488,10 +488,7 @@ export function client_component(source, analysis, options) {
 		/** @type {import('estree').Property[]} */
 		const props_str = [];
 
-		for (const [name, binding] of analysis.instance.scope.declarations) {
-			if ((binding.kind !== 'prop' && binding.kind !== 'bindable_prop') || name.startsWith('$$'))
-				continue;
-
+		for (const [name, binding] of properties) {
 			const key = binding.prop_alias ?? name;
 			const prop_def = typeof ce === 'boolean' ? {} : ce.props?.[key] || {};
 			if (

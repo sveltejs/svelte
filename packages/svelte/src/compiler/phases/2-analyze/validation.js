@@ -969,9 +969,7 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 function validate_assignment(node, argument, state) {
 	validate_no_const_assignment(node, argument, state.scope, false);
 
-	if (!state.analysis.runes) return;
-
-	if (argument.type === 'Identifier') {
+	if (state.analysis.runes && argument.type === 'Identifier') {
 		const binding = state.scope.get(argument.name);
 		if (binding?.kind === 'derived') {
 			error(node, 'invalid-derived-assignment');
@@ -982,17 +980,17 @@ function validate_assignment(node, argument, state) {
 		}
 	}
 
-	let obj = /** @type {import('estree').Expression | import('estree').Super} */ (argument);
+	let object = /** @type {import('estree').Expression | import('estree').Super} */ (argument);
 
 	/** @type {import('estree').Expression | import('estree').PrivateIdentifier | null} */
 	let property = null;
 
-	while (obj.type === 'MemberExpression') {
-		property = obj.property;
-		obj = obj.object;
+	while (object.type === 'MemberExpression') {
+		property = object.property;
+		object = object.object;
 	}
 
-	if (obj.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
+	if (object.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
 		if (state.private_derived_state.includes(property.name)) {
 			error(node, 'invalid-derived-assignment');
 		}
