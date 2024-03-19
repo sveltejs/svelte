@@ -41,8 +41,6 @@ const LIS_BLOCK = -2;
  * @returns {void}
  */
 function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_fn) {
-	const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-
 	/** @type {import('#client').EachBlock} */
 	const block = {
 		// dom
@@ -56,7 +54,8 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		p: /** @type {import('#client').Block} */ (current_block)
 	};
 
-	hydrate_block_anchor(anchor_node, is_controlled);
+	const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
+	hydrate_block_anchor(is_controlled ? /** @type {Node} */ (anchor_node.firstChild) : anchor_node);
 
 	/** @type {import('#client').Effect | null} */
 	let fallback = null;

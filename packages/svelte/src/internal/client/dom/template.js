@@ -90,7 +90,7 @@ export function svg_template_with_script(svg, return_fragment) {
 function open_template(is_fragment, use_clone_node, anchor, template_element_fn) {
 	if (hydrating) {
 		if (anchor !== null) {
-			hydrate_block_anchor(anchor, false);
+			hydrate_block_anchor(anchor);
 		}
 		// In ssr+hydration optimization mode, we might remove the template_element,
 		// so we need to is_fragment flag to properly handle hydrated content accordingly.
