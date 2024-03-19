@@ -47,7 +47,7 @@ export function insert(current, parent_element, sibling) {
 			}
 		}
 		return current[0];
-	} else if (current !== null) {
+	} else {
 		if (sibling === null) {
 			append_child(/** @type {Element} */ (parent_element), /** @type {Node} */ (current));
 		} else {

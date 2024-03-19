@@ -7,10 +7,10 @@ import {
 	render_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
-import { insert, remove } from '../reconciler.js';
-import { current_block, execute_effect } from '../../runtime.js';
+import { remove } from '../reconciler.js';
+import { current_block } from '../../runtime.js';
 import { is_array } from '../../utils.js';
-import { run_transitions, set_run_transitions } from '../../render.js';
+import { set_run_transitions } from '../../render.js';
 
 /**
  * @param {import('#client').Block} block
@@ -119,7 +119,8 @@ export function element(anchor_node, tag_fn, is_svg, render_fn) {
 						render_fn(element, anchor);
 					}
 
-					insert(element, null, anchor_node);
+					anchor_node.before(element);
+
 					if (prev_element) {
 						swap_block_dom(block.p, prev_element, element);
 						prev_element.remove();
