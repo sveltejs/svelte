@@ -224,16 +224,12 @@ export const javascript_visitors_runes = {
 						}
 					} else {
 						// RestElement
-						declarations.push(
-							b.declarator(
-								property.argument,
-								b.call(
-									'$.rest_props',
-									b.id('$$props'),
-									b.array(seen.map((name) => b.literal(name)))
-								)
-							)
-						);
+						/** @type {import('estree').Expression[]} */
+						const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
+						if (rune === '$props.bindable') {
+							args.push(b.literal(true));
+						}
+						declarations.push(b.declarator(property.argument, b.call('$.rest_props', ...args)));
 					}
 				}
 

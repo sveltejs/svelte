@@ -1095,8 +1095,6 @@ export const validation_runes = merge(validation, a11y_validators, {
 					if (value.type !== 'Identifier') {
 						error(property, 'invalid-props-pattern');
 					}
-				} else if (rune === '$props.bindable') {
-					error(property, 'invalid-props-rest-element');
 				}
 			}
 		}

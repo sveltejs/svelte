@@ -180,7 +180,6 @@ const runes = {
 	'invalid-props-id': () => `$props() can only be used with an object destructuring pattern`,
 	'invalid-props-pattern': () =>
 		`$props() assignment must not contain nested properties or computed keys`,
-	'invalid-props-rest-element': () => `Cannot use ...rest parameter with $props.bindable()`,
 	'invalid-props-location': () =>
 		`$props() can only be used at the top level of components as a variable declaration initializer`,
 	/** @param {string} rune */

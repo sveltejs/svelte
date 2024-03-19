@@ -36,21 +36,39 @@ export function update_pre_prop(fn, d = 1) {
 /**
  * The proxy handler for rest props (i.e. `const { x, ...rest } = $props()`).
  * Is passed the full `$$props` object and excludes the named props.
- * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol> }>}}
+ * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol>, p: boolean }>}}
  */
 const rest_props_handler = {
 	get(target, key) {
 		if (target.exclude.includes(key)) return;
 		return target.props[key];
 	},
+	set(target, key, value) {
+		if (target.exclude.includes(key) || !(key in target.props)) return false;
+		if (DEV) {
+			if (!target.p) {
+				throw new Error(
+					`Cannot set read-only property '${String(key)}' of rest element of $props(). Only rest elements from $props.bindable() can be written to.'`
+				);
+			} else if (!get_descriptor(target.props, key)?.set) {
+				throw new Error(
+					`Cannot write to property '${String(key)}' of rest element of $props.bindable(). It is readonly because it was not declared using bind: on the consumer component.`
+				);
+			}
+		}
+		target.props[key] = value;
+		return true;
+	},
 	getOwnPropertyDescriptor(target, key) {
 		if (target.exclude.includes(key)) return;
 		if (key in target.props) {
-			return {
-				enumerable: true,
-				configurable: true,
-				value: target.props[key]
-			};
+			return target.p
+				? get_descriptor(target.props, key)
+				: {
+						enumerable: true,
+						configurable: true,
+						value: target.props[key]
+					};
 		}
 	},
 	has(target, key) {
@@ -65,10 +83,11 @@ const rest_props_handler = {
 /**
  * @param {Record<string, unknown>} props
  * @param {string[]} rest
+ * @param {boolean} [preserve_setters]
  * @returns {Record<string, unknown>}
  */
-export function rest_props(props, rest) {
-	return new Proxy({ props, exclude: rest }, rest_props_handler);
+export function rest_props(props, rest, preserve_setters = false) {
+	return new Proxy({ props, exclude: rest, p: preserve_setters }, rest_props_handler);
 }
 
 /**
