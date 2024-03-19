@@ -6,7 +6,6 @@ import {
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED
 } from '../../../../constants.js';
-import { noop } from '../../../common.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,
