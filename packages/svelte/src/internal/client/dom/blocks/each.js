@@ -393,18 +393,18 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	var sibling = null;
 
 	// Step 1 — trim from the end
-	while (a_end - 1 > 0 && b_end - 1 > 0 && a_blocks[a_end - 1].k === keys[b_end - 1]) {
-		block = a_blocks[a_end - 1];
+	while (a_end > 0 && b_end > 0 && a_blocks[a_end - 1].k === keys[b_end - 1]) {
+		a_end -= 1;
+		b_end -= 1;
+
+		block = a_blocks[a_end];
 
 		if (should_update_block) {
-			update_each_item_block(block, array[b_end - 1], b_end - 1, flags);
+			update_each_item_block(block, array[b_end], b_end, flags);
 		}
 
 		sibling = get_first_child(block);
-		b_blocks[b_end - 1] = block;
-
-		a_end -= 1;
-		b_end -= 1;
+		b_blocks[b_end] = block;
 	}
 
 	// Step 2 — trim from the start
