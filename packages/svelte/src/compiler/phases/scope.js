@@ -400,9 +400,9 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 						(attribute) => attribute.type === 'Attribute' && attribute.name === 'slot'
 					)
 				) {
-					// <div slot="..."> inherits the scope above the component, because slots are hella weird
-					scopes.set(child, state.scope);
-					visit(child);
+					// <div slot="..."> inherits the scope above the component unless the component is a named slot itself, because slots are hella weird
+					scopes.set(child, is_default_slot ? state.scope : scope);
+					visit(child, { scope: is_default_slot ? state.scope : scope });
 				} else {
 					if (child.type === 'ExpressionTag') {
 						// expression tag is a special case — we don't visit it directly, but via process_children,
