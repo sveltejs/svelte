@@ -359,17 +359,15 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	/** @type {Array<import('#client').EachItemBlock>} */
 	var b_blocks = Array(b);
 
-	var block;
-	var i;
-
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 	var should_update = is_animated || (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 	var start = 0;
+	var block;
 
 	/** @type {null | Text | Element | Comment} */
 	var sibling = null;
 
-	// Step 1 — trim common suffix
+	// Step 1 — trim common suffix
 	while (a > 0 && b > 0 && a_blocks[a - 1].k === keys[b - 1]) {
 		block = b_blocks[--b] = a_blocks[--a];
 		sibling = get_first_child(block);
@@ -379,7 +377,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		}
 	}
 
-	// Step 2 — trim common prefix
+	// Step 2 — trim common prefix
 	while (start < a && start < b && a_blocks[start].k === keys[start]) {
 		block = b_blocks[start] = a_blocks[start];
 
@@ -390,7 +388,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		start += 1;
 	}
 
-	// Step 3
+	// Step 3 — update
 	if (start === a) {
 		// add only
 		while (--b >= start) {
@@ -408,24 +406,15 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		var moved = false;
 		var sources = new Int32Array(b - start);
 		var indexes = new Map();
+		var i;
 
 		for (i = start; i < b; i += 1) {
 			sources[i - start] = NEW_BLOCK;
 			map_set(indexes, keys[i], i);
 		}
 
-		// If keys are animated, we need to do updates before actual moves
-		if (is_animated) {
-			for (i = start; i < a; i += 1) {
-				var index = map_get(indexes, /** @type {V} */ (a_blocks[i].k));
-				if (index !== undefined) {
-					update_block(a_blocks[i], array[index], index, flags);
-				}
-			}
-		}
-
 		for (i = start; i < a; i += 1) {
-			var index = map_get(indexes, /** @type {V} */ (a_blocks[i].k));
+			var index = map_get(indexes, a_blocks[i].k);
 			block = a_blocks[i];
 
 			if (index === undefined) {
@@ -434,10 +423,14 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 				moved = true;
 				sources[index - start] = i;
 				b_blocks[index] = block;
+
+				if (is_animated) {
+					// If keys are animated, we need to do updates before actual moves
+					update_block(a_blocks[i], array[index], index, flags);
+				}
 			}
 		}
 
-		// Step 5
 		if (moved) {
 			mark_lis(sources);
 		}
