@@ -203,12 +203,13 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 
 				remove_excess_hydration_nodes(hydration_list, hydrating_node);
 
+				block.v = b_blocks;
+
 				if (mismatch) {
 					// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
+					reconcile_fn(array, block, block.a, is_controlled, render_fn, flags, keys);
 					set_current_hydration_fragment([]);
 				}
-
-				block.v = b_blocks;
 			} else {
 				reconcile_fn(array, block, block.a, is_controlled, render_fn, flags, keys);
 			}
