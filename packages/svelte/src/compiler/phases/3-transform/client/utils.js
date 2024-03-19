@@ -5,8 +5,7 @@ import {
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,
 	PROPS_IS_RUNES,
-	PROPS_IS_UPDATED,
-	PROPS_IS_BINDABLE
+	PROPS_IS_UPDATED
 } from '../../../../constants.js';
 
 /**
@@ -638,19 +637,6 @@ export function get_prop_source(binding, state, name, initial) {
 
 	if (state.analysis.runes) {
 		flags |= PROPS_IS_RUNES;
-	}
-
-	if (
-		binding.kind === 'bindable_prop' ||
-		// Make sure that
-		// let { foo: _, ...rest } = $props();
-		// let { foo } = $props.bindable();
-		// marks both `foo` and `_` as bindable to prevent false-positive runtime validation errors
-		[...state.scope.declarations.values()].some(
-			(d) => d.kind === 'bindable_prop' && d.prop_alias === name
-		)
-	) {
-		flags |= PROPS_IS_BINDABLE;
 	}
 
 	if (

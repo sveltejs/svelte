@@ -1,6 +1,5 @@
 import { DEV } from 'esm-env';
 import {
-	PROPS_IS_BINDABLE,
 	PROPS_IS_IMMUTABLE,
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_RUNES,
@@ -142,15 +141,6 @@ export function prop(props, key, flags, initial) {
 	var runes = (flags & PROPS_IS_RUNES) !== 0;
 	var prop_value = /** @type {V} */ (props[key]);
 	var setter = get_descriptor(props, key)?.set;
-
-	if ((flags & PROPS_IS_BINDABLE) === 0 && setter) {
-		throw new Error(
-			'ERR_SVELTE_NOT_BINDABLE' +
-				(DEV
-					? `: Cannot bind:${key} because the property was not declared as bindable. To mark a property as bindable, use let \`{ ${key} } = $props.bindable()\` within the component.`
-					: '')
-		);
-	}
 
 	if (prop_value === undefined && initial !== undefined) {
 		if (setter && runes) {
