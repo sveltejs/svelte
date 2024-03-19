@@ -83,7 +83,8 @@ export const DOMBooleanAttributes = [
 	'required',
 	'reversed',
 	'seamless',
-	'selected'
+	'selected',
+	'webkitdirectory'
 ];
 
 export const namespace_svg = 'http://www.w3.org/2000/svg';
