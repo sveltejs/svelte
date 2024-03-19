@@ -438,15 +438,15 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		var b_length = b_end - start;
 		var sources = new Int32Array(b_length);
 		var item_index = new Map();
-		for (b = 0; b < b_length; b += 1) {
-			i = b + start;
-			sources[b] = NEW_BLOCK;
+
+		for (i = start; i < b_end; i += 1) {
+			sources[i - start] = NEW_BLOCK;
 			map_set(item_index, keys[i], i);
 		}
 
 		// If keys are animated, we need to do updates before actual moves
 		if (is_animated) {
-			for (b = start; b <= a_end - 1; b += 1) {
+			for (b = start; b < a_end; b += 1) {
 				i = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
 				if (i !== undefined) {
 					update_each_item_block(a_blocks[b], array[i], i, flags);
