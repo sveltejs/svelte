@@ -404,7 +404,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	key = keys[b_end];
 
 	// Step 1
-	outer: while (true) {
+	outer: {
 		// From the end
 		while (a_blocks[a_end].k === key) {
 			block = a_blocks[a_end--];
@@ -438,8 +438,6 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			++start;
 			key = keys[start];
 		}
-
-		break;
 	}
 
 	// Step 2
