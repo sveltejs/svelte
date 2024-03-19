@@ -408,6 +408,8 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		var indexes = new Map();
 		var i;
 		var index;
+		var last_block;
+		var last_sibling;
 
 		for (i = start; i < b; i += 1) {
 			sources[i - start] = NEW_BLOCK;
@@ -436,9 +438,6 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			mark_lis(sources);
 		}
 
-		var last_block;
-		var last_sibling;
-
 		while (b-- > start) {
 			index = sources[b - start];
 			var insert = index === NEW_BLOCK;
@@ -457,8 +456,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 				sibling = insert_block(block, dom, is_controlled, last_sibling);
 			}
 
-			b_blocks[b] = block;
-			last_block = block;
+			last_block = b_blocks[b] = block;
 		}
 	}
 
