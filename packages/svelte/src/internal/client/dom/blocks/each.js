@@ -382,8 +382,8 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		return;
 	}
 
-	var a_end = a - 1;
-	var b_end = b - 1;
+	var a_end = a;
+	var b_end = b;
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 	var should_update_block =
 		is_animated || (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
@@ -393,22 +393,22 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	var sibling = null;
 
 	// Step 1 — trim from the end
-	while (a_end > 0 && b_end > 0 && a_blocks[a_end].k === keys[b_end]) {
-		block = a_blocks[a_end];
+	while (a_end - 1 > 0 && b_end - 1 > 0 && a_blocks[a_end - 1].k === keys[b_end - 1]) {
+		block = a_blocks[a_end - 1];
 
 		if (should_update_block) {
-			update_each_item_block(block, array[b_end], b_end, flags);
+			update_each_item_block(block, array[b_end - 1], b_end - 1, flags);
 		}
 
 		sibling = get_first_child(block);
-		b_blocks[b_end] = block;
+		b_blocks[b_end - 1] = block;
 
 		a_end -= 1;
 		b_end -= 1;
 	}
 
 	// Step 2 — trim from the start
-	while (start <= a_end && start <= b_end && a_blocks[start].k === keys[start]) {
+	while (start <= a_end - 1 && start <= b_end - 1 && a_blocks[start].k === keys[start]) {
 		block = a_blocks[start];
 
 		if (should_update_block) {
@@ -420,14 +420,20 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	}
 
 	// Step 3
-	if (start > a_end) {
-		while (b_end >= start) {
-			block = create_each_item_block(array[b_end], keys[b_end], b_end, render_fn, flags);
-			b_blocks[b_end--] = block;
+	if (start > a_end - 1) {
+		while (b_end - 1 >= start) {
+			block = create_each_item_block(
+				array[b_end - 1],
+				keys[b_end - 1],
+				b_end - 1,
+				render_fn,
+				flags
+			);
+			b_blocks[b_end-- - 1] = block;
 			sibling = insert_each_item_block(block, dom, is_controlled, sibling);
 		}
-	} else if (start > b_end) {
-		while (start <= a_end) {
+	} else if (start > b_end - 1) {
+		while (start <= a_end - 1) {
 			if ((block = a_blocks[start++]) !== null) {
 				destroy_each_item_block(block);
 			}
@@ -435,7 +441,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	} else {
 		// Step 4
 		var pos = 0;
-		var b_length = b_end - start + 1;
+		var b_length = b_end - 1 - start + 1;
 		var sources = new Int32Array(b_length);
 		var item_index = new Map();
 		for (b = 0; b < b_length; ++b) {
@@ -446,7 +452,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 
 		// If keys are animated, we need to do updates before actual moves
 		if (is_animated) {
-			for (b = start; b <= a_end; ++b) {
+			for (b = start; b <= a_end - 1; ++b) {
 				a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
 				if (a !== undefined) {
 					update_each_item_block(a_blocks[b], array[a], a, flags);
@@ -454,7 +460,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			}
 		}
 
-		for (b = start; b <= a_end; ++b) {
+		for (b = start; b <= a_end - 1; ++b) {
 			a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
 			block = a_blocks[b];
 			if (a !== undefined) {
@@ -476,16 +482,16 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		var should_create;
 
 		while (b_length-- > 0) {
-			b_end = b_length + start;
+			const i = b_length + start;
 			a = sources[b_length];
 			should_create = a === -1;
 
 			if (should_create) {
-				block = create_each_item_block(array[b_end], keys[b_end], b_end, render_fn, flags);
+				block = create_each_item_block(array[i], keys[i], i, render_fn, flags);
 			} else {
-				block = b_blocks[b_end];
+				block = b_blocks[i];
 				if (!is_animated && should_update_block) {
-					update_each_item_block(block, array[b_end], b_end, flags);
+					update_each_item_block(block, array[i], i, flags);
 				}
 			}
 
@@ -494,7 +500,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 				sibling = insert_each_item_block(block, dom, is_controlled, last_sibling);
 			}
 
-			b_blocks[b_end] = block;
+			b_blocks[i] = block;
 			last_block = block;
 		}
 	}
