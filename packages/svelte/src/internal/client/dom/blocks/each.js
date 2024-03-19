@@ -13,7 +13,7 @@ import {
 	hydrating,
 	set_current_hydration_fragment
 } from '../hydration.js';
-import { clear_text_content, empty } from '../operations.js';
+import { empty } from '../operations.js';
 import { insert, remove } from '../reconciler.js';
 import { current_block } from '../../runtime.js';
 import {
@@ -45,8 +45,6 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 
 	/** @type {import('#client').EachBlock} */
 	const block = {
-		// anchor
-		a: anchor_node,
 		// dom
 		d: null,
 		// flags
@@ -63,9 +61,6 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	/** @type {V[]} */
 	let array;
 
-	/** @type {Array<string> | null} */
-	let keys = null;
-
 	/**
 	 * Whether or not there was a "rendered fallback but want to render items" (or vice versa) hydration mismatch.
 	 * Needs to be a `let` or else it isn't treeshaken out
@@ -75,7 +70,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	const create_fallback_effect = () => {
 		return render_effect(
 			() => {
-				let anchor = block.a;
+				let anchor = anchor_node;
 				const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
 
 				if (is_controlled) {
@@ -86,7 +81,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 						// Create a new anchor on the fly because there's none due to the optimization
 						// TODO this will happen every time the fallback renders...
 						anchor = empty();
-						block.a.appendChild(anchor);
+						anchor_node.appendChild(anchor);
 					} else {
 						// In case of hydration the anchor will be the first child of the surrounding element
 						anchor = /** @type {Comment} */ (anchor.firstChild);
@@ -205,11 +200,11 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 
 				if (mismatch) {
 					// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
-					reconcile_fn(array, block, block.a, is_controlled, render_fn, flags, keys);
+					reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, keys);
 					set_current_hydration_fragment([]);
 				}
 			} else {
-				reconcile_fn(array, block, block.a, is_controlled, render_fn, flags, keys);
+				reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, keys);
 			}
 		},
 		block,
@@ -222,9 +217,6 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	}
 
 	each.ondestroy = () => {
-		const flags = block.f;
-		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-
 		for (const b of block.v) {
 			if (b.d !== null) {
 				destroy_effect(b.e);
@@ -232,7 +224,6 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			}
 		}
 
-		// reconcile_fn([], block, block.a, is_controlled, render_fn, flags, false, keys);
 		if (fallback) destroy_effect(fallback);
 	};
 
@@ -639,8 +630,6 @@ function create_block(item, key, index, render_fn, flags) {
 
 	/** @type {import('#client').EachItemBlock} */
 	const block = {
-		// animate transition
-		a: null,
 		// dom
 		d: null,
 		// effect

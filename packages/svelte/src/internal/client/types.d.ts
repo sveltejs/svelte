@@ -110,8 +110,6 @@ export type AwaitBlock = {
 };
 
 export type EachBlock = {
-	/** anchor */
-	a: Element | Comment;
 	/** flags */
 	f: number;
 	/** dom */
@@ -125,8 +123,6 @@ export type EachBlock = {
 };
 
 export type EachItemBlock = {
-	/** transition */
-	a: null | ((block: EachItemBlock) => void);
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
