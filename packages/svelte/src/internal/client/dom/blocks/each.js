@@ -391,8 +391,6 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 
 	var a_end = a - 1;
 	var b_end = b - 1;
-	var key;
-	var item;
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 	var should_update_block =
 		is_animated || (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
@@ -400,8 +398,6 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 
 	/** @type {null | Text | Element | Comment} */
 	var sibling = null;
-	item = array[b_end];
-	key = keys[b_end];
 
 	// Step 1
 	outer: {
@@ -456,7 +452,6 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 		for (b = 0; b < b_length; ++b) {
 			a = b + start;
 			sources[b] = NEW_BLOCK;
-			item = array[a];
 			map_set(item_index, keys[a], a);
 		}
 
@@ -465,9 +460,7 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			for (b = start; b <= a_end; ++b) {
 				a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
 				if (a !== undefined) {
-					item = array[a];
-					block = a_blocks[b];
-					update_each_item_block(block, item, a, flags);
+					update_each_item_block(a_blocks[b], array[a], a, flags);
 				}
 			}
 		}
@@ -497,14 +490,13 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 			b_end = b_length + start;
 			a = sources[b_length];
 			should_create = a === -1;
-			item = array[b_end];
 
 			if (should_create) {
-				block = each_item_block(item, keys[b_end], b_end, render_fn, flags);
+				block = each_item_block(array[b_end], keys[b_end], b_end, render_fn, flags);
 			} else {
 				block = b_blocks[b_end];
 				if (!is_animated && should_update_block) {
-					update_each_item_block(block, item, b_end, flags);
+					update_each_item_block(block, array[b_end], b_end, flags);
 				}
 			}
 
