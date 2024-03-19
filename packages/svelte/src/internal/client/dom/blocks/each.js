@@ -420,16 +420,10 @@ function reconcile_tracked_array(array, each_block, dom, is_controlled, render_f
 	}
 
 	// Step 3
-	if (start > a_end - 1) {
-		while (b_end - 1 >= start) {
-			block = create_each_item_block(
-				array[b_end - 1],
-				keys[b_end - 1],
-				b_end - 1,
-				render_fn,
-				flags
-			);
-			b_blocks[b_end-- - 1] = block;
+	if (start >= a_end) {
+		while (--b_end >= start) {
+			block = create_each_item_block(array[b_end], keys[b_end], b_end, render_fn, flags);
+			b_blocks[b_end] = block;
 			sibling = insert_each_item_block(block, dom, is_controlled, sibling);
 		}
 	} else if (start > b_end - 1) {
