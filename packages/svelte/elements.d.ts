@@ -1056,6 +1056,7 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	type?: HTMLInputTypeAttribute | undefined | null;
 	value?: any;
 	width?: number | string | undefined | null;
+	webkitdirectory?: boolean | undefined | null;
 
 	'on:change'?: ChangeEventHandler<HTMLInputElement> | undefined | null;
 	onchange?: ChangeEventHandler<HTMLInputElement> | undefined | null;
