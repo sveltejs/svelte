@@ -599,26 +599,38 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		AwaitBlock(node, context) {
-			context.next();
+			context.visit(node.expression);
 
-			if (node.then && node.value !== null) {
-				const then_scope = /** @type {Scope} */ (scopes.get(node.then));
-				const value_scope = context.state.scope.child();
-				for (const id of extract_identifiers(node.value)) {
-					then_scope.declare(id, 'normal', 'const');
-					value_scope.declare(id, 'normal', 'const');
-				}
-				scopes.set(node.value, value_scope);
+			if (node.pending) {
+				context.visit(node.pending);
 			}
 
-			if (node.catch && node.error !== null) {
-				const catch_scope = /** @type {Scope} */ (scopes.get(node.catch));
-				const error_scope = context.state.scope.child();
-				for (const id of extract_identifiers(node.error)) {
-					catch_scope.declare(id, 'normal', 'const');
-					error_scope.declare(id, 'normal', 'const');
+			if (node.then) {
+				context.visit(node.then);
+				if (node.value) {
+					const then_scope = /** @type {Scope} */ (scopes.get(node.then));
+					const value_scope = context.state.scope.child();
+					scopes.set(node.value, value_scope);
+					context.visit(node.value, { scope: value_scope });
+					for (const id of extract_identifiers(node.value)) {
+						then_scope.declare(id, 'normal', 'const');
+						value_scope.declare(id, 'normal', 'const');
+					}
 				}
-				scopes.set(node.error, error_scope);
+			}
+
+			if (node.catch) {
+				context.visit(node.catch);
+				if (node.error) {
+					const catch_scope = /** @type {Scope} */ (scopes.get(node.catch));
+					const error_scope = context.state.scope.child();
+					scopes.set(node.error, error_scope);
+					context.visit(node.error, { scope: error_scope });
+					for (const id of extract_identifiers(node.error)) {
+						catch_scope.declare(id, 'normal', 'const');
+						error_scope.declare(id, 'normal', 'const');
+					}
+				}
 			}
 		},
 
