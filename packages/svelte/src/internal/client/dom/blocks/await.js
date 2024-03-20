@@ -57,13 +57,12 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 	/**
 	 * @param {(anchor: Comment, value: any) => void} fn
 	 * @param {any} value
-	 * @param {any} block
 	 */
-	function create_effect(fn, value, block) {
+	function create_effect(fn, value) {
 		set_current_effect(branch);
 		set_current_reaction(branch); // TODO do we need both?
 		set_current_component_context(component_context);
-		var effect = render_effect(() => fn(anchor_node, value), block, true);
+		var effect = render_effect(() => fn(anchor_node, value), {}, true);
 		set_current_component_context(null);
 		set_current_reaction(null);
 		set_current_effect(null);
@@ -109,7 +108,7 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 					if (pending_effect) pause(pending_effect);
 
 					if (then_fn) {
-						then_effect = create_effect(then_fn, value, {});
+						then_effect = create_effect(then_fn, value);
 					}
 				},
 				(error) => {
@@ -117,7 +116,7 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 					if (pending_effect) pause(pending_effect);
 
 					if (catch_fn) {
-						catch_effect = create_effect(catch_fn, error, {});
+						catch_effect = create_effect(catch_fn, error);
 					}
 				}
 			);
@@ -125,33 +124,21 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 			if (pending_effect) pause(pending_effect);
 			if (catch_effect) pause(catch_effect);
 
-			if (then_effect) {
-				if (then_effect.block?.d) remove(then_effect.block.d);
-				destroy_effect(then_effect);
-			}
-
 			if (then_fn) {
+				if (then_effect) {
+					if (then_effect.block?.d) remove(then_effect.block.d);
+					destroy_effect(then_effect);
+				}
+
 				then_effect = render_effect(() => then_fn(anchor_node, input), {}, true);
 			}
 		}
 	}, block);
 
 	branch.ondestroy = () => {
-		if (block.d) {
-			remove(block.d);
-		}
-
 		// TODO this sucks, tidy it up
-		if (pending_effect?.block?.d) {
-			remove(pending_effect.block.d);
-		}
-
-		if (then_effect?.block?.d) {
-			remove(then_effect.block.d);
-		}
-
-		if (catch_effect?.block?.d) {
-			remove(catch_effect.block.d);
-		}
+		if (pending_effect?.block?.d) remove(pending_effect.block.d);
+		if (then_effect?.block?.d) remove(then_effect.block.d);
+		if (catch_effect?.block?.d) remove(catch_effect.block.d);
 	};
 }
