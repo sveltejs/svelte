@@ -34,7 +34,7 @@ export default test({
 
 		assert.htmlEqual(
 			target.innerHTML,
-			`<button>show</button><button>animate</button><h1>Hello\n!</h1>`
+			`<button>show</button><button>animate</button><h1 style="opacity: 0;">Hello\n!</h1>`
 		);
 	}
 });

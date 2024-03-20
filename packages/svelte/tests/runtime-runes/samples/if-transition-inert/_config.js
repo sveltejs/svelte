@@ -11,6 +11,6 @@ export default test({
 			btn1.click();
 		});
 
-		assert.htmlEqual(target.innerHTML, `<button>hide</button><div>hello</div>`);
+		assert.htmlEqual(target.innerHTML, `<button>hide</button><div style="opacity: 0;">hello</div>`);
 	}
 });

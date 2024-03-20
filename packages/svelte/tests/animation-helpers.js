@@ -67,6 +67,8 @@ class Animation {
 				};
 			}
 		};
+
+		this._update();
 	}
 
 	_update() {
