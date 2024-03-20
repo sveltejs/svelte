@@ -166,7 +166,7 @@ export type TransitionFn<P> = (
 	element: Element,
 	props: P,
 	options: { direction?: 'in' | 'out' | 'both' }
-) => TransitionPayload;
+) => TransitionPayload | ((options: { direction?: 'in' | 'out' | 'both' }) => TransitionPayload);
 
 export type AnimateFn<P> = (
 	element: Element,

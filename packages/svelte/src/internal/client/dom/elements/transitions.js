@@ -1,10 +1,11 @@
 import { noop, run } from '../../../common.js';
-import { user_effect } from '../../reactivity/effects.js';
+import { render_effect, user_effect } from '../../reactivity/effects.js';
 import { current_effect, untrack } from '../../runtime.js';
 import { raf } from '../../timing.js';
 import { loop } from '../../loop.js';
 import { run_transitions } from '../../render.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../constants.js';
+import { is_function } from '../../utils.js';
 
 const active_tick_animations = new Set();
 const DELAY_NEXT_TICK = Number.MIN_SAFE_INTEGER;
@@ -83,6 +84,15 @@ function css_to_keyframe(css) {
 /** @param {number} t */
 const linear = (t) => t;
 
+/** @param {() => any} fn */
+function defer(fn) {
+	return new Promise((fulfil) => {
+		render_effect(() => {
+			fulfil(fn());
+		});
+	});
+}
+
 // TODO make transition mode (`in:`, `out:`, `transition:` and `|global`) a bitmask
 /**
  * @template P
@@ -121,16 +131,20 @@ export function transition(flags, element, get_fn, get_params) {
 	let callbacks = [];
 
 	/** @param {number} target */
-	function start(target) {
-		// TODO if this is an `in:` transition and we just called `out()`, do nothing (let it play until the block is destroyed, probably immediately)
-		// TODO if this is an `out:` transition and we just called `in()`, abort everything and reset to 1 immediately
-		// TODO add a `transition.abort()` method to cancel an outro transition immediately when an effect is destroyed before the transition finishes running — don't want tickers etc to continue
-
+	async function start(target) {
 		stop();
 
 		dispatch_event(element, target === 1 ? 'introstart' : 'outrostart');
 
-		current_options ??= get_fn()(element, get_params?.(), { direction });
+		if (!current_options) {
+			var result = get_fn()(element, get_params?.(), { direction });
+
+			current_options = is_function(result)
+				? await defer(() =>
+						/** @type {Function} */ (result)({ direction: target === 1 ? 'in' : 'out' })
+					)
+				: result;
+		}
 
 		if (!current_options?.duration) {
 			current_options = null;
