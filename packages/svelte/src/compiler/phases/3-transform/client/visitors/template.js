@@ -642,9 +642,12 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
 		)
 	);
 	const is_reactive = attribute.metadata.dynamic;
-	const is_select_with_reactive_value = element === 'select' && is_reactive;
+	const is_select_with_value =
+		// attribute.metadata.dynamic would give false negatives because even if the value does not change,
+		// the inner options could still change, so we need to always treat it as reactive
+		element === 'select' && attribute.value !== true && !is_text_attribute(attribute);
 	const assignment = b.stmt(
-		is_select_with_reactive_value
+		is_select_with_value
 			? b.sequence([
 					inner_assignment,
 					// This ensures a one-way street to the DOM in case it's <select {value}>
@@ -656,7 +659,7 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
 			: inner_assignment
 	);
 
-	if (is_select_with_reactive_value) {
+	if (is_select_with_value) {
 		state.init.push(b.stmt(b.call('$.init_select', node_id, b.thunk(value))));
 	}
 
