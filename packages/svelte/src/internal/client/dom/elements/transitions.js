@@ -107,9 +107,6 @@ export function transition(flags, element, get_fn, get_params) {
 
 	let p = 0;
 
-	/** @type {0 | TRANSITION_IN | TRANSITION_OUT} */
-	let current_direction = 0;
-
 	/** @type {Animation | null} */
 	let current_animation;
 
@@ -249,13 +246,9 @@ export function transition(flags, element, get_fn, get_params) {
 			}
 
 			if (intro) {
-				if (current_direction !== TRANSITION_IN) {
-					current_direction = TRANSITION_IN;
-					start(1);
-				}
+				start(1);
 			} else {
 				current_options?.tick?.(1, 0);
-				current_direction = 0;
 				stop();
 			}
 		},
@@ -265,11 +258,8 @@ export function transition(flags, element, get_fn, get_params) {
 					callbacks.push(callback);
 				}
 
-				if (current_direction !== TRANSITION_OUT) {
-					current_direction = TRANSITION_OUT;
-					element.inert = true;
-					start(0);
-				}
+				element.inert = true;
+				start(0);
 			} else {
 				if (callback) {
 					callback();
