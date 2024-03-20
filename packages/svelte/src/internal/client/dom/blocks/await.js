@@ -54,16 +54,6 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 	/** @type {import('#client').Effect | null} */
 	let catch_effect;
 
-	// TODO tidy this up
-	/** @type {{ d?: any } | null} */
-	let pending_block;
-
-	/** @type {{ d?: any } | null} */
-	let then_block;
-
-	/** @type {{ d?: any } | null} */
-	let catch_block;
-
 	/**
 	 * @param {(anchor: Comment, value: any) => void} fn
 	 * @param {any} value
@@ -103,11 +93,11 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 
 			if (pending_fn) {
 				if (pending_effect && (pending_effect.f & INERT) === 0) {
+					if (pending_effect.block?.d) remove(pending_effect.block.d);
 					destroy_effect(pending_effect);
-					if (pending_block?.d) remove(pending_block.d);
 				}
 
-				pending_effect = render_effect(() => pending_fn(anchor_node), (pending_block = {}), true);
+				pending_effect = render_effect(() => pending_fn(anchor_node), {}, true);
 			}
 
 			if (then_effect) pause(then_effect);
@@ -119,7 +109,7 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 					if (pending_effect) pause(pending_effect);
 
 					if (then_fn) {
-						then_effect = create_effect(then_fn, value, (then_block = {}));
+						then_effect = create_effect(then_fn, value, {});
 					}
 				},
 				(error) => {
@@ -127,7 +117,7 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 					if (pending_effect) pause(pending_effect);
 
 					if (catch_fn) {
-						catch_effect = create_effect(catch_fn, error, (catch_block = {}));
+						catch_effect = create_effect(catch_fn, error, {});
 					}
 				}
 			);
@@ -136,12 +126,12 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 			if (catch_effect) pause(catch_effect);
 
 			if (then_effect) {
+				if (then_effect.block?.d) remove(then_effect.block.d);
 				destroy_effect(then_effect);
-				if (then_block?.d) remove(then_block.d);
 			}
 
 			if (then_fn) {
-				then_effect = render_effect(() => then_fn(anchor_node, input), (then_block = {}), true);
+				then_effect = render_effect(() => then_fn(anchor_node, input), {}, true);
 			}
 		}
 	}, block);
@@ -152,16 +142,16 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 		}
 
 		// TODO this sucks, tidy it up
-		if (pending_block?.d) {
-			remove(pending_block.d);
+		if (pending_effect?.block?.d) {
+			remove(pending_effect.block.d);
 		}
 
-		if (then_block?.d) {
-			remove(then_block.d);
+		if (then_effect?.block?.d) {
+			remove(then_effect.block.d);
 		}
 
-		if (catch_block?.d) {
-			remove(catch_block.d);
+		if (catch_effect?.block?.d) {
+			remove(catch_effect.block.d);
 		}
 	};
 }
