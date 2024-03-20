@@ -181,18 +181,18 @@ export function comment(anchor) {
  * @returns {void}
  */
 function close_template(dom, is_fragment, anchor) {
-	const block = /** @type {import('#client').Block} */ (current_block);
-
 	/** @type {import('#client').TemplateNode | Array<import('#client').TemplateNode>} */
-	const current = is_fragment
+	var current = is_fragment
 		? is_array(dom)
 			? dom
 			: /** @type {import('#client').TemplateNode[]} */ (Array.from(dom.childNodes))
 		: dom;
+
 	if (!hydrating && anchor !== null) {
 		insert(current, anchor);
 	}
-	block.d = current;
+
+	/** @type {import('#client').Block} */ (current_block).d = current;
 }
 
 /**
