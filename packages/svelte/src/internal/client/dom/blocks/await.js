@@ -9,12 +9,7 @@ import {
 	set_current_effect,
 	set_current_reaction
 } from '../../runtime.js';
-import {
-	destroy_effect,
-	pause_effect,
-	render_effect,
-	resume_effect
-} from '../../reactivity/effects.js';
+import { destroy_effect, pause_effect, render_effect } from '../../reactivity/effects.js';
 
 /** @returns {import('../../types.js').AwaitBlock} */
 export function create_await_block() {
@@ -82,9 +77,17 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 		set_current_reaction(null);
 		set_current_effect(null);
 
-		flushSync();
+		flushSync(); // TODO remove this, just flush at the end of the then/catch
 
 		return effect;
+	}
+
+	function pause(effect, block) {
+		pause_effect(effect, () => {
+			// TODO make this unnecessary
+			const dom = block?.d;
+			if (dom) remove(dom);
+		});
 	}
 
 	const branch = render_effect(() => {
@@ -93,54 +96,33 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 		if (is_promise(input)) {
 			const promise = /** @type {Promise<any>} */ (input);
 
-			if (pending_effect) {
-				resume_effect(pending_effect);
-			} else if (pending_fn) {
+			if (pending_fn) {
 				pending_effect = render_effect(() => pending_fn(anchor_node), (pending_block = {}), true);
 			}
 
 			if (then_effect) {
-				pause_effect(then_effect, () => {
-					// TODO make this unnecessary
-					const dom = then_block?.d;
-					if (dom) remove(dom);
-
-					then_effect = then_block = null;
-				});
+				pause(then_effect, then_block);
 			}
 
 			if (catch_effect) {
-				pause_effect(catch_effect, () => {
-					// TODO make this unnecessary
-					const dom = catch_block?.d;
-					if (dom) remove(dom);
-
-					catch_effect = catch_block = null;
-				});
+				pause(catch_effect, catch_block);
 			}
 
 			promise
 				.then((value) => {
 					if (promise !== input) return;
 
-					flushSync(); // TODO this feels weird but is apparently necessary
+					console.log('in then');
+
+					flushSync(); // TODO this feels weird but is apparently necessary (should it go at the bottom?)
 
 					if (pending_effect) {
-						pause_effect(pending_effect, () => {
-							// TODO make this unnecessary
-							const dom = pending_block?.d;
-							if (dom) remove(dom);
-
-							pending_effect = pending_block = null;
-						});
+						console.log('pausing', pending_block.d);
+						pause(pending_effect, pending_block);
 					}
 
 					if (then_fn) {
-						if (then_effect) {
-							resume_effect(then_effect);
-						} else if (then_fn) {
-							then_effect = create_effect(then_fn, value, (then_block = {}));
-						}
+						then_effect = create_effect(then_fn, value, (then_block = {}));
 					}
 				})
 				.catch(() => {});
@@ -148,41 +130,20 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 			promise.catch((error) => {
 				if (promise !== input) return;
 
-				if (pending_effect) {
-					pause_effect(pending_effect, () => {
-						// TODO make this unnecessary
-						const dom = pending_block?.d;
-						if (dom) remove(dom);
+				flushSync(); // TODO this feels weird but is apparently necessary
 
-						pending_effect = pending_block = null;
-					});
+				if (pending_effect) {
+					pause(pending_effect, pending_block);
 				}
 
 				if (catch_fn) {
-					if (catch_effect) {
-						resume_effect(catch_effect);
-					} else if (catch_fn) {
-						catch_effect = create_effect(catch_fn, error, (catch_block = {}));
-					}
+					catch_effect = create_effect(catch_fn, error, (catch_block = {}));
 				}
 			});
 		} else {
 			if (pending_effect) {
-				pause_effect(pending_effect, () => {
-					// TODO make this unnecessary
-					const dom = pending_block?.d;
-					if (dom) remove(dom);
-
-					pending_effect = pending_block = null;
-				});
+				pause(pending_effect, pending_block);
 			}
-
-			// TODO it should really be this, but the `input` will never update
-			// if (then_effect) {
-			// 	resume_effect(then_effect);
-			// } else if (then_fn) {
-			// 	then_effect = render_effect(() => then_fn(anchor_node, input), (then_block = {}), true);
-			// }
 
 			if (then_effect) {
 				destroy_effect(then_effect);
@@ -194,13 +155,7 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 			}
 
 			if (catch_effect) {
-				pause_effect(catch_effect, () => {
-					// TODO make this unnecessary
-					const dom = catch_block?.d;
-					if (dom) remove(dom);
-
-					catch_effect = catch_block = null;
-				});
+				pause(catch_effect, catch_block);
 			}
 		}
 	}, block);
