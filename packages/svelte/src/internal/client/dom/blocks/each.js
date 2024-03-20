@@ -597,8 +597,7 @@ function create_block(item, key, index, render_fn, flags) {
 	};
 
 	block.e = render_effect(
-		/** @param {import('#client').EachItemBlock} block */
-		(block) => {
+		() => {
 			render_fn(null, block.v, block.i);
 		},
 		block,

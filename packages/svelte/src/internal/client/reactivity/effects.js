@@ -28,7 +28,7 @@ import { noop } from '../../common.js';
 
 /**
  * @param {import('./types.js').EffectType} type
- * @param {(() => void | (() => void)) | ((b: import('#client').Block) => void | (() => void))} fn
+ * @param {(() => void | (() => void))} fn
  * @param {boolean} sync
  * @param {null | import('#client').Block} block
  * @param {boolean} init
@@ -216,8 +216,7 @@ export function invalidate_effect(fn) {
 }
 
 /**
- * @template {import('#client').Block} B
- * @param {(block: B) => void | (() => void)} fn
+ * @param {(() => void)} fn
  * @param {any} block
  * @param {any} managed
  * @param {any} sync
@@ -249,6 +248,7 @@ export function destroy_effect(effect) {
 	effect.teardown?.();
 	effect.ondestroy?.();
 
+	// @ts-expect-error
 	effect.fn =
 		effect.effects =
 		effect.teardown =

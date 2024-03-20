@@ -21,7 +21,7 @@ export interface Value<V = unknown> extends Signal {
 
 export interface Reaction extends Signal {
 	/** The reaction function */
-	fn: null | Function;
+	fn: Function;
 	/** Signals that this signal reads from */
 	deps: null | Value[];
 	/** Effects created inside this signal */
@@ -44,7 +44,7 @@ export interface Effect extends Reaction {
 	/** Stuff to do when the effect is destroyed */
 	ondestroy: null | (() => void);
 	/** The effect function */
-	fn: null | (() => void | (() => void)) | ((b: Block, s: Signal) => void | (() => void));
+	fn: () => void | (() => void);
 	/** The teardown function returned from the effect function */
 	teardown: null | (() => void);
 	/** The depth from the root signal, used for ordering render/pre-effects topologically **/

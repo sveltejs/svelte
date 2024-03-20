@@ -215,7 +215,6 @@ export function check_dirtiness(reaction) {
 export function execute_reaction_fn(signal) {
 	const fn = signal.fn;
 	const flags = signal.f;
-	const is_render_effect = (flags & RENDER_EFFECT) !== 0;
 
 	const previous_dependencies = current_dependencies;
 	const previous_dependencies_index = current_dependencies_index;
@@ -232,19 +231,7 @@ export function execute_reaction_fn(signal) {
 	current_untracking = false;
 
 	try {
-		let res;
-		if (is_render_effect) {
-			res = /** @type {(block: import('#client').Block, signal: import('#client').Signal) => V} */ (
-				fn
-			)(
-				/** @type {import('#client').Block} */ (
-					/** @type {import('#client').Effect} */ (signal).block
-				),
-				/** @type {import('#client').Signal} */ (signal)
-			);
-		} else {
-			res = /** @type {() => V} */ (fn)();
-		}
+		let res = fn();
 		let dependencies = /** @type {import('./types.js').Value<unknown>[]} **/ (signal.deps);
 		if (current_dependencies !== null) {
 			let i;
