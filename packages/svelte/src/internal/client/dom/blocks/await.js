@@ -118,8 +118,8 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 				pause(catch_effect, catch_block);
 			}
 
-			promise
-				.then((value) => {
+			promise.then(
+				(value) => {
 					if (promise !== input) return;
 
 					if (pending_effect) {
@@ -129,20 +129,19 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 					if (then_fn) {
 						then_effect = create_effect(then_fn, value, (then_block = {}));
 					}
-				})
-				.catch(() => {});
+				},
+				(error) => {
+					if (promise !== input) return;
 
-			promise.catch((error) => {
-				if (promise !== input) return;
+					if (pending_effect) {
+						pause(pending_effect, pending_block);
+					}
 
-				if (pending_effect) {
-					pause(pending_effect, pending_block);
+					if (catch_fn) {
+						catch_effect = create_effect(catch_fn, error, (catch_block = {}));
+					}
 				}
-
-				if (catch_fn) {
-					catch_effect = create_effect(catch_fn, error, (catch_block = {}));
-				}
-			});
+			);
 		} else {
 			if (pending_effect) {
 				pause(pending_effect, pending_block);
