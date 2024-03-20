@@ -10,6 +10,7 @@ import {
 	set_current_reaction
 } from '../../runtime.js';
 import { destroy_effect, pause_effect, render_effect } from '../../reactivity/effects.js';
+import { INERT } from '../../constants.js';
 
 /** @returns {import('../../types.js').AwaitBlock} */
 export function create_await_block() {
@@ -82,6 +83,10 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 		return effect;
 	}
 
+	/**
+	 * @param {import('#client').Effect} effect
+	 * @param {any} block
+	 */
 	function pause(effect, block) {
 		pause_effect(effect, () => {
 			// TODO make this unnecessary
@@ -97,6 +102,11 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 			const promise = /** @type {Promise<any>} */ (input);
 
 			if (pending_fn) {
+				if (pending_effect && (pending_effect.f & INERT) === 0) {
+					destroy_effect(pending_effect);
+					if (pending_block?.d) remove(pending_block.d);
+				}
+
 				pending_effect = render_effect(() => pending_fn(anchor_node), (pending_block = {}), true);
 			}
 
@@ -112,12 +122,9 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 				.then((value) => {
 					if (promise !== input) return;
 
-					console.log('in then');
-
 					flushSync(); // TODO this feels weird but is apparently necessary (should it go at the bottom?)
 
 					if (pending_effect) {
-						console.log('pausing', pending_block.d);
 						pause(pending_effect, pending_block);
 					}
 
