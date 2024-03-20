@@ -26,9 +26,10 @@ export default test({
 		assert.equal(select.value, '');
 		assert.equal(select.selectedIndex, -1);
 
+		// model of selected value should be kept around, even if it is not in the list
 		assert.htmlEqual(
 			target.innerHTML,
-			`<p>selected:</p><select><option value="b">b</option><option value="c">c</option></select>`
+			`<p>selected: a</p><select><option value="b">b</option><option value="c">c</option></select>`
 		);
 	}
 });

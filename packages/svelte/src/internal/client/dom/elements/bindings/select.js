@@ -1,4 +1,5 @@
 import { effect } from '../../../reactivity/effects.js';
+import { untrack } from '../../../runtime.js';
 
 /**
  * Selects the correct option(s) (depending on whether this is a multiple select)
@@ -26,26 +27,43 @@ export function select_option(select, value, mounting) {
 }
 
 /**
- * Finds the containing `<select>` element and potentially updates its `selected` state.
- * @param {HTMLOptionElement} option
- * @returns {void}
+ * Selects the correct option(s) if `value` is given,
+ * and then sets up a mutation observer to sync the
+ * current selection to the dom when it changes. Such
+ * changes could for example occur when options are
+ * inside an `#each` block.
+ * @template V
+ * @param {HTMLSelectElement} select
+ * @param {() => V} [get_value]
  */
-export function selected(option) {
-	// Inside an effect because the element might not be connected
-	// to the parent <select> yet when this is called
+export function init_select(select, get_value) {
 	effect(() => {
-		var select = option.parentNode;
-
-		while (select != null) {
-			if (select.nodeName === 'SELECT') break;
-			select = select.parentNode;
+		if (get_value) {
+			select_option(select, untrack(get_value));
 		}
 
-		// @ts-ignore
-		if (select != null && option.__value === select.__value) {
-			// never set to false, since this causes browser to select default option
-			option.selected = true;
-		}
+		var observer = new MutationObserver(() => {
+			// @ts-ignore
+			var value = select.__value;
+			select_option(select, value);
+			// Deliberately don't update the potential binding value,
+			// the model should be preserved unless explicitly changed
+		});
+
+		observer.observe(select, {
+			// Listen to option element changes
+			childList: true,
+			subtree: true, // because of <optgroup>
+			// Listen to option element value attribute changes
+			// (doesn't get notified of select value changes,
+			// because that property is not reflected as an attribute)
+			attributes: true,
+			attributeFilter: ['value']
+		});
+
+		return () => {
+			observer.disconnect();
+		};
 	});
 }
 
@@ -78,6 +96,7 @@ export function bind_select_value(select, get_value, update) {
 		var value = get_value();
 		select_option(select, value, mounting);
 
+		// Mounting and value undefined -> take selection from dom
 		if (mounting && value === undefined) {
 			/** @type {HTMLOptionElement | null} */
 			var selected_option = select.querySelector(':checked');
@@ -92,27 +111,8 @@ export function bind_select_value(select, get_value, update) {
 		mounting = false;
 	});
 
-	// If one of the options gets removed from the DOM, the value might have changed
-	effect(() => {
-		var observer = new MutationObserver(() => {
-			// @ts-ignore
-			var value = select.__value;
-			select_option(select, value, mounting);
-			/** @type {HTMLOptionElement | null} */
-			var selected_option = select.querySelector(':checked');
-			if (selected_option === null || get_option_value(selected_option) !== value) {
-				update('');
-			}
-		});
-
-		observer.observe(select, {
-			childList: true
-		});
-
-		return () => {
-			observer.disconnect();
-		};
-	});
+	// don't pass get_value, we already initialize it in the effect above
+	init_select(select);
 }
 
 /**

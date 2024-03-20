@@ -159,26 +159,6 @@ function serialize_class_directives(class_directives, element_id, context, is_at
 }
 
 /**
- *
- * @param {string | null} spread_id
- * @param {import('#compiler').RegularElement} node
- * @param {import('../types.js').ComponentContext} context
- * @param {import('estree').Identifier} node_id
- */
-function add_select_to_spread_update(spread_id, node, context, node_id) {
-	if (spread_id !== null && node.name === 'select') {
-		context.state.update.push({
-			grouped: b.if(
-				b.binary('in', b.literal('value'), b.id(spread_id)),
-				b.block([
-					b.stmt(b.call('$.select_option', node_id, b.member(b.id(spread_id), b.id('value'))))
-				])
-			)
-		});
-	}
-}
-
-/**
  * @param {import('#compiler').Binding[]} references
  * @param {import('../types.js').ComponentContext} context
  */
@@ -223,6 +203,8 @@ function collect_transitive_dependencies(binding, seen = new Set()) {
  * @param {import('../types.js').ComponentContext} context
  */
 function setup_select_synchronization(value_binding, context) {
+	if (context.state.analysis.runes) return;
+
 	let bound = value_binding.expression;
 	while (bound.type === 'MemberExpression') {
 		bound = /** @type {import('estree').Identifier | import('estree').MemberExpression} */ (
@@ -243,59 +225,49 @@ function setup_select_synchronization(value_binding, context) {
 		}
 	}
 
-	if (!context.state.analysis.runes) {
-		const invalidator = b.call(
-			'$.invalidate_inner_signals',
-			b.thunk(
-				b.block(
-					names.map((name) => {
-						const serialized = serialize_get_binding(b.id(name), context.state);
-						return b.stmt(serialized);
-					})
-				)
+	const invalidator = b.call(
+		'$.invalidate_inner_signals',
+		b.thunk(
+			b.block(
+				names.map((name) => {
+					const serialized = serialize_get_binding(b.id(name), context.state);
+					return b.stmt(serialized);
+				})
 			)
-		);
+		)
+	);
 
-		context.state.init.push(
-			b.stmt(
-				b.call(
-					'$.invalidate_effect',
-					b.thunk(
-						b.block([
-							b.stmt(
-								/** @type {import('estree').Expression} */ (context.visit(value_binding.expression))
-							),
-							b.stmt(invalidator)
-						])
-					)
+	context.state.init.push(
+		b.stmt(
+			b.call(
+				'$.invalidate_effect',
+				b.thunk(
+					b.block([
+						b.stmt(
+							/** @type {import('estree').Expression} */ (context.visit(value_binding.expression))
+						),
+						b.stmt(invalidator)
+					])
 				)
 			)
-		);
-	}
+		)
+	);
 }
 
 /**
- * Serializes element attribute assignments that contain spreads to either only
- * the init or the the init and update arrays, depending on whether or not the value is dynamic.
- * Resulting code for static looks something like this:
- * ```js
- * $.spread_attributes(element, null, [...]);
- * ```
- * Resulting code for dynamic looks something like this:
- * ```js
- * let value;
- * $.render_effect(() => {
- * 	value = $.spread_attributes(element, value, [...])
- * });
- * ```
- * Returns the id of the spread_attribute variable if spread isn't isolated, `null` otherwise.
  * @param {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} attributes
  * @param {import('../types.js').ComponentContext} context
  * @param {import('#compiler').RegularElement} element
  * @param {import('estree').Identifier} element_id
- * @returns {string | null}
+ * @param {boolean} needs_select_handling
  */
-function serialize_element_spread_attributes(attributes, context, element, element_id) {
+function serialize_element_spread_attributes(
+	attributes,
+	context,
+	element,
+	element_id,
+	needs_select_handling
+) {
 	let needs_isolation = false;
 
 	/** @type {import('estree').Expression[]} */
@@ -317,8 +289,9 @@ function serialize_element_spread_attributes(attributes, context, element, eleme
 
 	const lowercase_attributes =
 		element.metadata.svg || is_custom_element_node(element) ? b.false : b.true;
+	const id = context.state.scope.generate('spread_attributes');
 
-	const isolated = b.stmt(
+	const standalone = b.stmt(
 		b.call(
 			'$.spread_attributes_effect',
 			element_id,
@@ -327,32 +300,57 @@ function serialize_element_spread_attributes(attributes, context, element, eleme
 			b.literal(context.state.analysis.css.hash)
 		)
 	);
+	const inside_effect = b.stmt(
+		b.assignment(
+			'=',
+			b.id(id),
+			b.call(
+				'$.spread_attributes',
+				element_id,
+				b.id(id),
+				b.array(values),
+				lowercase_attributes,
+				b.literal(context.state.analysis.css.hash)
+			)
+		)
+	);
+
+	if (!needs_isolation || needs_select_handling) {
+		context.state.init.push(b.let(id));
+	}
 
 	// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
 	if (needs_isolation) {
-		context.state.update_effects.push(isolated);
-		return null;
+		if (needs_select_handling) {
+			context.state.update_effects.push(
+				b.stmt(b.call('$.render_effect', b.arrow([], b.block([inside_effect]))))
+			);
+		} else {
+			context.state.update_effects.push(standalone);
+		}
 	} else {
-		const id = context.state.scope.generate('spread_attributes');
-		context.state.init.push(b.let(id));
 		context.state.update.push({
-			singular: isolated,
-			grouped: b.stmt(
-				b.assignment(
-					'=',
-					b.id(id),
-					b.call(
-						'$.spread_attributes',
-						element_id,
-						b.id(id),
-						b.array(values),
-						lowercase_attributes,
-						b.literal(context.state.analysis.css.hash)
-					)
-				)
+			singular: needs_select_handling ? undefined : standalone,
+			grouped: inside_effect
+		});
+	}
+
+	if (needs_select_handling) {
+		context.state.init.push(
+			b.stmt(b.call('$.init_select', element_id, b.thunk(b.member(b.id(id), b.id('value')))))
+		);
+		context.state.update.push({
+			grouped: b.if(
+				b.binary('in', b.literal('value'), b.id(id)),
+				b.block([
+					// This ensures a one-way street to the DOM in case it's <select {value}>
+					// and not <select bind:value>. We need it in addition to $.init_select
+					// because the select value is not reflected as an attribute, so the
+					// mutation observer wouldn't notice.
+					b.stmt(b.call('$.select_option', element_id, b.member(b.id(id), b.id('value'))))
+				])
 			)
 		});
-		return id;
 	}
 }
 
@@ -644,26 +642,26 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
 		)
 	);
 	const is_reactive = attribute.metadata.dynamic;
-	const needs_selected_call =
-		element === 'option' && (is_reactive || collect_parent_each_blocks(context).length > 0);
-	const needs_option_call = element === 'select' && is_reactive;
+	const is_select_with_value =
+		// attribute.metadata.dynamic would give false negatives because even if the value does not change,
+		// the inner options could still change, so we need to always treat it as reactive
+		element === 'select' && attribute.value !== true && !is_text_attribute(attribute);
 	const assignment = b.stmt(
-		needs_selected_call
+		is_select_with_value
 			? b.sequence([
 					inner_assignment,
-					// This ensures things stay in sync with the select binding
-					// in case of updates to the option value or new values appearing
-					b.call('$.selected', node_id)
+					// This ensures a one-way street to the DOM in case it's <select {value}>
+					// and not <select bind:value>. We need it in addition to $.init_select
+					// because the select value is not reflected as an attribute, so the
+					// mutation observer wouldn't notice.
+					b.call('$.select_option', node_id, value)
 				])
-			: needs_option_call
-				? b.sequence([
-						inner_assignment,
-						// This ensures a one-way street to the DOM in case it's <select {value}>
-						// and not <select bind:value>
-						b.call('$.select_option', node_id, value)
-					])
-				: inner_assignment
+			: inner_assignment
 	);
+
+	if (is_select_with_value) {
+		state.init.push(b.stmt(b.call('$.init_select', node_id, b.thunk(value))));
+	}
 
 	if (is_reactive) {
 		const id = state.scope.generate(`${node_id.name}_value`);
@@ -2082,11 +2080,15 @@ export const template_visitors = {
 		// Then do attributes
 		let is_attributes_reactive = false;
 		if (node.metadata.has_spread) {
-			const spread_id = serialize_element_spread_attributes(attributes, context, node, node_id);
-			if (child_metadata.namespace !== 'foreign') {
-				add_select_to_spread_update(spread_id, node, context, node_id);
-			}
-			is_attributes_reactive = spread_id !== null;
+			serialize_element_spread_attributes(
+				attributes,
+				context,
+				node,
+				node_id,
+				// If value binding exists, that one takes care of calling $.init_select
+				value_binding === null && node.name === 'select' && child_metadata.namespace !== 'foreign'
+			);
+			is_attributes_reactive = true;
 		} else {
 			for (const attribute of /** @type {import('#compiler').Attribute[]} */ (attributes)) {
 				if (is_event_attribute(attribute)) {
