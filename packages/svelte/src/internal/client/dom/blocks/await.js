@@ -78,7 +78,7 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 		set_current_reaction(null);
 		set_current_effect(null);
 
-		flushSync(); // TODO remove this, just flush at the end of the then/catch
+		flushSync();
 
 		return effect;
 	}
@@ -122,8 +122,6 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 				.then((value) => {
 					if (promise !== input) return;
 
-					flushSync(); // TODO this feels weird but is apparently necessary (should it go at the bottom?)
-
 					if (pending_effect) {
 						pause(pending_effect, pending_block);
 					}
@@ -136,8 +134,6 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 
 			promise.catch((error) => {
 				if (promise !== input) return;
-
-				flushSync(); // TODO this feels weird but is apparently necessary
 
 				if (pending_effect) {
 					pause(pending_effect, pending_block);
