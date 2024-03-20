@@ -150,7 +150,7 @@ export function validate_prop_bindings($$props, bindable) {
 			if (setter) {
 				throw new Error(
 					`Cannot use bind:${key} on this component because the property was not declared as bindable. ` +
-						`To mark a property as bindable, use let \`{ ${key} } = $props.bindable()\` within the component.`
+						`To mark a property as bindable, use the $bindable() rune like this: \`let { ${key} = $bindable() } = $props()\``
 				);
 			}
 		}

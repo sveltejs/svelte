@@ -1,5 +1,5 @@
 <script>
-	let { count = 0 } = $props.bindable();
+	let { count = $bindable(0) } = $props();
 </script>
 
 <span>{count}</span>

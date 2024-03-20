@@ -690,8 +690,22 @@ const javascript_visitors_runes = {
 				continue;
 			}
 
-			if (rune === '$props' || rune === '$props.bindable') {
-				declarations.push(b.declarator(declarator.id, b.id('$$props')));
+			if (rune === '$props') {
+				// remove $bindable() from props declaration
+				const id = walk(declarator.id, null, {
+					AssignmentPattern(node) {
+						if (
+							node.right.type === 'CallExpression' &&
+							get_rune(node.right, state.scope) === '$bindable'
+						) {
+							const right = node.right.arguments.length
+								? /** @type {import('estree').Expression} */ (visit(node.right.arguments[0]))
+								: b.id('undefined');
+							return b.assignment_pattern(node.left, right);
+						}
+					}
+				});
+				declarations.push(b.declarator(id, b.id('$$props')));
 				continue;
 			}
 

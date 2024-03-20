@@ -192,7 +192,7 @@ export const javascript_visitors_runes = {
 				continue;
 			}
 
-			if (rune === '$props' || rune === '$props.bindable') {
+			if (rune === '$props') {
 				assert.equal(declarator.id.type, 'ObjectPattern');
 
 				/** @type {string[]} */
@@ -207,17 +207,14 @@ export const javascript_visitors_runes = {
 
 						seen.push(name);
 
-						let id = property.value;
-						let initial = undefined;
-
-						if (property.value.type === 'AssignmentPattern') {
-							id = property.value.left;
-							initial = /** @type {import('estree').Expression} */ (visit(property.value.right));
-						}
-
+						let id =
+							property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
 						assert.equal(id.type, 'Identifier');
-
 						const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
+						let initial = /** @type {import('estree').Expression | null} */ (binding.initial);
+						if (initial) {
+							initial = /** @type {import('estree').Expression} */ (visit(initial));
+						}
 
 						if (binding.reassigned || state.analysis.accessors || initial) {
 							declarations.push(b.declarator(id, get_prop_source(binding, state, name, initial)));
@@ -226,9 +223,6 @@ export const javascript_visitors_runes = {
 						// RestElement
 						/** @type {import('estree').Expression[]} */
 						const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
-						if (rune === '$props.bindable') {
-							args.push(b.literal(true));
-						}
 						declarations.push(b.declarator(property.argument, b.call('$.rest_props', ...args)));
 					}
 				}

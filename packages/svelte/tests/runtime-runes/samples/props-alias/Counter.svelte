@@ -1,5 +1,5 @@
 <script>
-	let { count: definedCount } = $props.bindable();
+	let { count: definedCount = $bindable() } = $props();
 </script>
 
 <button on:click={() => definedCount++}>{definedCount}</button>

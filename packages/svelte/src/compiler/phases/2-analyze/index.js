@@ -422,7 +422,7 @@ export function analyze_component(root, options) {
 				options,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
 				parent_element: null,
-				has_props_rune: [false, false],
+				has_props_rune: false,
 				component_slots: new Set(),
 				expression: null,
 				private_derived_state: [],
@@ -446,7 +446,7 @@ export function analyze_component(root, options) {
 				analysis,
 				options,
 				parent_element: null,
-				has_props_rune: [false, false],
+				has_props_rune: false,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
 				instance_scope: instance.scope,
 				reactive_statement: null,
@@ -857,8 +857,7 @@ const runes_scope_tweaker = {
 			rune !== '$state.frozen' &&
 			rune !== '$derived' &&
 			rune !== '$derived.by' &&
-			rune !== '$props' &&
-			rune !== '$props.bindable'
+			rune !== '$props'
 		)
 			return;
 
@@ -874,12 +873,10 @@ const runes_scope_tweaker = {
 							? 'derived'
 							: path.is_rest
 								? 'rest_prop'
-								: rune === '$props.bindable'
-									? 'bindable_prop'
-									: 'prop';
+								: 'prop';
 		}
 
-		if (rune === '$props' || rune === '$props.bindable') {
+		if (rune === '$props') {
 			for (const property of /** @type {import('estree').ObjectPattern} */ (node.id).properties) {
 				if (property.type !== 'Property') continue;
 
@@ -891,11 +888,24 @@ const runes_scope_tweaker = {
 					property.key.type === 'Identifier'
 						? property.key.name
 						: /** @type {string} */ (/** @type {import('estree').Literal} */ (property.key).value);
-				const initial = property.value.type === 'AssignmentPattern' ? property.value.right : null;
+				let initial = property.value.type === 'AssignmentPattern' ? property.value.right : null;
 
 				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
 				binding.prop_alias = alias;
-				binding.initial = initial; // rewire initial from $props() to the actual initial value
+
+				// rewire initial from $props() to the actual initial value, stripping $bindable() if necessary
+				if (
+					initial?.type === 'CallExpression' &&
+					initial.callee.type === 'Identifier' &&
+					initial.callee.name === '$bindable'
+				) {
+					binding.initial = /** @type {import('estree').Expression | null} */ (
+						initial.arguments[0] ?? null
+					);
+					binding.kind = 'bindable_prop';
+				} else {
+					binding.initial = initial;
+				}
 			}
 		}
 	},

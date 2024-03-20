@@ -490,7 +490,7 @@ let { a, b, c, ...everythingElse }: MyProps = $props();
 >
 > ...TypeScript [widens the type](https://www.typescriptlang.org/play?#code/CYUwxgNghgTiAEAzArgOzAFwJYHtXwBIAHGHIgZwB4AVeAXnilQE8A+ACgEoAueagbgBQgiCAzwA3vAAe9eABYATPAC+c4qQqUp03uQwwsqAOaqOnIfCsB6a-AB6AfiA) of `x` to be `string | number`, instead of erroring.
 
-Props declared with `$props()` cannot be mutated, and you cannot `bind:` to them in the parent. To declare props as bindable, use [`$props.bindable()`](#propsbindable).
+By default props are treated as readonly, meaning reassignments will not propagate upwards and mutations will result in a warning. You will also get an error trying to `bind:` to them. To declare props as bindable, use [`$bindable()`](#bindable).
 
 ### What this replaces
 
@@ -498,9 +498,15 @@ Props declared with `$props()` cannot be mutated, and you cannot `bind:` to them
 
 Note that you can still use `export const` and `export function` to expose things to users of your component (if they're using `bind:this`, for example).
 
-### `$props.bindable()`
+### `$bindable()`
 
-To declare props as bindable, use `$props.bindable()`. Besides using them as regular props, the parent can then also `bind:` to these props. Works exactly like `$props()`. During development, attempts to mutate these props will result in a warning, unless the parent did `bind:` them.
+To declare props as bindable, use `$bindable()`. Besides using them as regular props, the parent can then also `bind:` to them.
+
+```svelte
+<script>
+	let { bindableProp = $bindable() } = $props();
+</script>
+```
 
 ## `$inspect`
 

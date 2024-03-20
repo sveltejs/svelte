@@ -15,7 +15,7 @@ export interface AnalysisState {
 	options: ValidatedCompileOptions;
 	ast_type: 'instance' | 'template' | 'module';
 	parent_element: string | null;
-	has_props_rune: [props: boolean, bindings: boolean];
+	has_props_rune: boolean;
 	/** Which slots the current parent component has */
 	component_slots: Set<string>;
 	/** The current {expression}, if any */
