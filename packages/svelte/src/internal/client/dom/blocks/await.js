@@ -10,7 +10,7 @@ import {
 	set_current_reaction
 } from '../../runtime.js';
 import { destroy_effect, pause_effect, render_effect } from '../../reactivity/effects.js';
-import { INERT } from '../../constants.js';
+import { DESTROYED, INERT } from '../../constants.js';
 
 /** @returns {import('../../types.js').AwaitBlock} */
 export function create_await_block() {
@@ -83,11 +83,11 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 		return effect;
 	}
 
-	/**
-	 * @param {import('#client').Effect} effect
-	 * @param {any} block
-	 */
-	function pause(effect, block) {
+	/** @param {import('#client').Effect} effect */
+	function pause(effect) {
+		if ((effect.f & DESTROYED) !== 0) return;
+		const block = effect.block;
+
 		pause_effect(effect, () => {
 			// TODO make this unnecessary
 			const dom = block?.d;
@@ -110,21 +110,13 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 				pending_effect = render_effect(() => pending_fn(anchor_node), (pending_block = {}), true);
 			}
 
-			if (then_effect) {
-				pause(then_effect, then_block);
-			}
-
-			if (catch_effect) {
-				pause(catch_effect, catch_block);
-			}
+			if (then_effect) pause(then_effect);
+			if (catch_effect) pause(catch_effect);
 
 			promise.then(
 				(value) => {
 					if (promise !== input) return;
-
-					if (pending_effect) {
-						pause(pending_effect, pending_block);
-					}
+					if (pending_effect) pause(pending_effect);
 
 					if (then_fn) {
 						then_effect = create_effect(then_fn, value, (then_block = {}));
@@ -132,10 +124,7 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 				},
 				(error) => {
 					if (promise !== input) return;
-
-					if (pending_effect) {
-						pause(pending_effect, pending_block);
-					}
+					if (pending_effect) pause(pending_effect);
 
 					if (catch_fn) {
 						catch_effect = create_effect(catch_fn, error, (catch_block = {}));
@@ -143,9 +132,8 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 				}
 			);
 		} else {
-			if (pending_effect) {
-				pause(pending_effect, pending_block);
-			}
+			if (pending_effect) pause(pending_effect);
+			if (catch_effect) pause(catch_effect);
 
 			if (then_effect) {
 				destroy_effect(then_effect);
@@ -154,10 +142,6 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 
 			if (then_fn) {
 				then_effect = render_effect(() => then_fn(anchor_node, input), (then_block = {}), true);
-			}
-
-			if (catch_effect) {
-				pause(catch_effect, catch_block);
 			}
 		}
 	}, block);
