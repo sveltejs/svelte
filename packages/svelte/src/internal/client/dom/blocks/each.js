@@ -288,8 +288,7 @@ function reconcile_indexed_array(array, each_block, anchor, render_fn, flags) {
 		};
 
 		for (; i < a; i += 1) {
-			block = a_blocks[i];
-			if (block.e) pause_effect(block.e, check);
+			pause_effect(a_blocks[i].e, check);
 		}
 	}
 }
@@ -321,10 +320,15 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 	var start = 0;
 	var block;
 
+	/** @type {Array<import('#client').EachItemBlock>} */
+	var to_destroy = [];
+
 	// Step 1 — trim common suffix
 	while (a > 0 && b > 0 && a_blocks[a - 1].k === keys[b - 1]) {
 		block = b_blocks[--b] = a_blocks[--a];
 		anchor = get_first_child(block);
+
+		resume_effect(block.e);
 
 		if (should_update) {
 			update_block(block, array[b], b, flags);
@@ -334,6 +338,8 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 	// Step 2 — trim common prefix
 	while (start < a && start < b && a_blocks[start].k === keys[start]) {
 		block = b_blocks[start] = a_blocks[start];
+
+		resume_effect(block.e);
 
 		if (should_update) {
 			update_block(block, array[start], start, flags);
@@ -355,7 +361,7 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 
 		// remove only
 		while (start < a) {
-			destroy_block(a_blocks[start++]);
+			to_destroy.push(a_blocks[start++]);
 		}
 	} else {
 		// reconcile
@@ -376,8 +382,10 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 			block = a_blocks[i];
 			index = map_get(indexes, block.k);
 
+			resume_effect(block.e);
+
 			if (index === undefined) {
-				destroy_block(block);
+				to_destroy.push(block);
 			} else {
 				moved = true;
 				sources[index - start] = i;
@@ -416,7 +424,30 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 		}
 	}
 
-	each_block.v = b_blocks;
+	var remaining = to_destroy.length;
+	if (remaining > 0) {
+		var clear = () => {
+			// TODO optimization for controlled case — just do `clear_text_content(dom)`
+
+			for (block of to_destroy) {
+				if (block.d) remove(block.d);
+			}
+
+			each_block.v = b_blocks;
+		};
+
+		var check = () => {
+			if (--remaining === 0) {
+				clear();
+			}
+		};
+
+		for (block of to_destroy) {
+			pause_effect(block.e, check);
+		}
+	} else {
+		each_block.v = b_blocks;
+	}
 }
 
 /**
@@ -549,18 +580,6 @@ function update_block(block, item, index, type) {
 	}
 
 	// TODO animations
-}
-
-/**
- * @param {import('#client').EachItemBlock} block
- * @returns {void}
- */
-function destroy_block(block) {
-	var dom = block.d;
-	if (dom !== null) {
-		remove(dom);
-	}
-	destroy_effect(/** @type {import('#client').Effect} */ (block.e));
 }
 
 /**
