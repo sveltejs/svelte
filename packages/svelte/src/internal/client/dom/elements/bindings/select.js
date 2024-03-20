@@ -55,7 +55,7 @@ export function init_select(select, get_value) {
 			childList: true,
 			subtree: true, // because of <optgroup>
 			// Listen to option element value attribute changes
-			// (doesn't get noticed of select value changes,
+			// (doesn't get notified of select value changes,
 			// because that property is not reflected as an attribute)
 			attributes: true,
 			attributeFilter: ['value']
