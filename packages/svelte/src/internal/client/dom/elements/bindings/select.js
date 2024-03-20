@@ -101,8 +101,8 @@ export function bind_select_value(select, get_value, update) {
 			select_option(select, value, mounting);
 			if (select.multiple) {
 				var selected_options = [].map.call(select.querySelectorAll(':checked'), get_option_value);
-				if (is_array(value) && selected_options.every(e => value.includes)) {
-					update(selected_options)
+				if (is_array(value) && selected_options.every((e) => value.includes)) {
+					update(selected_options);
 				}
 			} else {
 				/** @type {HTMLOptionElement | null} */
