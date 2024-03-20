@@ -68,6 +68,25 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 	/** @type {{ d?: any } | null} */
 	let catch_block;
 
+	/**
+	 * @param {(anchor: Comment, value: any) => void} fn
+	 * @param {any} value
+	 * @param {any} block
+	 */
+	function create_effect(fn, value, block) {
+		set_current_effect(branch);
+		set_current_reaction(branch); // TODO do we need both?
+		set_current_component_context(component_context);
+		var effect = render_effect(() => fn(anchor_node, value), block, true);
+		set_current_component_context(null);
+		set_current_reaction(null);
+		set_current_effect(null);
+
+		flushSync();
+
+		return effect;
+	}
+
 	const branch = render_effect(() => {
 		if (input === (input = get_input())) return;
 
@@ -120,17 +139,7 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 						if (then_effect) {
 							resume_effect(then_effect);
 						} else if (then_fn) {
-							set_current_effect(branch);
-							set_current_reaction(branch); // TODO do we need both?
-							set_current_component_context(component_context);
-							then_effect = render_effect(
-								() => then_fn(anchor_node, value),
-								(then_block = {}),
-								true
-							);
-							set_current_component_context(null);
-							set_current_reaction(null);
-							set_current_effect(null);
+							then_effect = create_effect(then_fn, value, (then_block = {}));
 						}
 					}
 				})
@@ -153,15 +162,7 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 					if (catch_effect) {
 						resume_effect(catch_effect);
 					} else if (catch_fn) {
-						set_current_effect(branch);
-						set_current_component_context(component_context);
-						catch_effect = render_effect(
-							() => catch_fn(anchor_node, error),
-							(catch_block = {}),
-							true
-						);
-						set_current_component_context(null);
-						set_current_effect(null);
+						catch_effect = create_effect(catch_fn, error, (catch_block = {}));
 					}
 				}
 			});

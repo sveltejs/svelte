@@ -21,7 +21,6 @@
 	export async function test() {
 		resolve_promise();
 		await tick();
-		await tick(); // TODO figure out why we need two ticks here
 		new_promise();
 		resolve_promise();
 		return tick();

@@ -1,5 +1,4 @@
-import { flushSync } from '../../../../src/main/main-client.js';
-import { ok, test } from '../../test';
+import { test } from '../../test';
 
 /** @type {(value: any) => void} */
 let fulfil;
