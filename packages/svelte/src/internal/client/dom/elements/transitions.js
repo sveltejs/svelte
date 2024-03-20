@@ -181,7 +181,6 @@ export function transition(flags, element, get_fn, get_params) {
 				.catch(noop);
 		} else {
 			// Timer
-			let running = true;
 			const start_time = raf.now() + delay;
 			const start_p = p;
 			const end_time = start_time + adjusted_duration;
@@ -189,21 +188,21 @@ export function transition(flags, element, get_fn, get_params) {
 			// tick?.(p, 1 - p); // TODO put in nested effect, to avoid interleaved reads/writes?
 
 			current_task = loop((now) => {
-				if (running) {
-					if (now >= end_time) {
-						p = target;
-						tick?.(target, 1 - target);
-						current_task = current_options = null;
-						callbacks.forEach(run);
-						dispatch_event(element, target === 1 ? 'introend' : 'outroend');
-						return (running = false);
-					}
-					if (now >= start_time) {
-						p = start_p + current_delta * easing((now - start_time) / adjusted_duration);
-						tick?.(p, 1 - p);
-					}
+				if (now >= end_time) {
+					p = target;
+					tick?.(target, 1 - target);
+					current_task = current_options = null;
+					callbacks.forEach(run);
+					dispatch_event(element, target === 1 ? 'introend' : 'outroend');
+					return false;
 				}
-				return running;
+
+				if (now >= start_time) {
+					p = start_p + current_delta * easing((now - start_time) / adjusted_duration);
+					tick?.(p, 1 - p);
+				}
+
+				return true;
 			});
 		}
 	}
