@@ -173,8 +173,12 @@ export function transition(flags, element, get_fn, get_params) {
 
 			current_animation.finished
 				.then(() => {
+					if (target === 1) {
+						current_options = null;
+						current_animation = null;
+					}
+
 					p = target;
-					current_animation = current_options = null;
 					callbacks.forEach(run);
 					dispatch_event(element, target === 1 ? 'introend' : 'outroend');
 				})
@@ -191,9 +195,13 @@ export function transition(flags, element, get_fn, get_params) {
 
 			current_task = loop((now) => {
 				if (now >= end_time) {
+					if (target === 1) {
+						current_task = null;
+						current_options = null;
+					}
+
 					p = target;
 					tick?.(target, 1 - target);
-					current_task = current_options = null;
 					callbacks.forEach(run);
 					dispatch_event(element, target === 1 ? 'introend' : 'outroend');
 					return false;
@@ -219,8 +227,6 @@ export function transition(flags, element, get_fn, get_params) {
 			const time = /** @type {number} */ (current_animation.currentTime);
 			const duration = /** @type {number} */ (current_options.duration);
 			p = (Math.abs(current_delta) * time) / duration;
-			current_animation.cancel();
-			current_animation = null;
 		}
 	}
 
@@ -236,6 +242,11 @@ export function transition(flags, element, get_fn, get_params) {
 		in() {
 			callbacks = [];
 			element.inert = inert;
+
+			if (current_animation) {
+				current_animation.cancel();
+				current_animation = null;
+			}
 
 			if (intro) {
 				if (current_direction !== TRANSITION_IN) {
