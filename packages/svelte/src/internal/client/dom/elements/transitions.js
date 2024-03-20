@@ -215,6 +215,8 @@ export function transition(flags, element, get_fn, get_params) {
 		}
 	}
 
+	var inert = element.inert;
+
 	/** @type {import('#client').Transition} */
 	// TODO this needs to be `in()` and `out()` rather than `to()`, and both
 	// need to be idempotent (because of `{#if ...}{#if ...}`). `out()` should
@@ -224,6 +226,7 @@ export function transition(flags, element, get_fn, get_params) {
 		global,
 		in() {
 			callbacks = [];
+			element.inert = inert;
 
 			if (intro) {
 				if (current_direction !== TRANSITION_IN) {
@@ -244,6 +247,7 @@ export function transition(flags, element, get_fn, get_params) {
 
 				if (current_direction !== TRANSITION_OUT) {
 					current_direction = TRANSITION_OUT;
+					element.inert = true;
 					start(0);
 				}
 			} else {

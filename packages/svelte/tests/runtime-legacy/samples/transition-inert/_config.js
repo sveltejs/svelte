@@ -6,29 +6,26 @@ export default test({
 		const b = target.querySelector('button.b');
 		ok(a);
 		ok(b);
-		// jsdom doesn't set the inert attribute, and the transition checks if it exists, so set it manually to trigger the inert logic
-		a.inert = false;
-		b.inert = false;
 
 		// check and abort halfway through the outro transition
 		component.visible = false;
 		raf.tick(50);
-		assert.strictEqual(target.querySelector('button.a')?.inert, true);
-		assert.strictEqual(target.querySelector('button.b')?.inert, true);
+		assert.ok(target.querySelector('button.a')?.inert);
+		assert.ok(target.querySelector('button.b')?.inert);
 
 		component.visible = true;
-		assert.strictEqual(target.querySelector('button.a')?.inert, false);
-		assert.strictEqual(target.querySelector('button.b')?.inert, false);
+		assert.ok(!target.querySelector('button.a')?.inert);
+		assert.ok(!target.querySelector('button.b')?.inert);
 
 		// let it transition out completely and then back in
 		component.visible = false;
 		raf.tick(101);
 		component.visible = true;
 		raf.tick(150);
-		assert.strictEqual(target.querySelector('button.a')?.inert, false);
-		assert.strictEqual(target.querySelector('button.b')?.inert, false);
+		assert.ok(!target.querySelector('button.a')?.inert);
+		assert.ok(!target.querySelector('button.b')?.inert);
 		raf.tick(151);
-		assert.strictEqual(target.querySelector('button.a')?.inert, false);
-		assert.strictEqual(target.querySelector('button.b')?.inert, false);
+		assert.ok(!target.querySelector('button.a')?.inert);
+		assert.ok(!target.querySelector('button.b')?.inert);
 	}
 });
