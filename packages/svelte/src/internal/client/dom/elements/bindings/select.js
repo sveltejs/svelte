@@ -99,21 +99,13 @@ export function bind_select_value(select, get_value, update) {
 			// @ts-ignore
 			var value = select.__value;
 			select_option(select, value, mounting);
-			if (select.multiple) {
-				var selected_options = [].map.call(select.querySelectorAll(':checked'), get_option_value);
-				update(selected_options);
-			} else {
-				/** @type {HTMLOptionElement | null} */
-				var selected_option = select.querySelector(':checked');
-				if (selected_option === null || get_option_value(selected_option) !== value) {
-					update('');
-				}
-			}
+			// Deliberately don't update the binding value,
+			// the model should be preserved unless explicitly changed
 		});
 
 		observer.observe(select, {
 			childList: true,
-			subtree: true
+			subtree: true // because of <optgroup>
 		});
 
 		return () => {
