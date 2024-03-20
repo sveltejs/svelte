@@ -1,17 +1,11 @@
 import { noop, run } from '../../../common.js';
-import { render_effect, user_effect } from '../../reactivity/effects.js';
+import { user_effect } from '../../reactivity/effects.js';
 import { current_effect, untrack } from '../../runtime.js';
 import { raf } from '../../timing.js';
 import { loop } from '../../loop.js';
 import { run_transitions } from '../../render.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../constants.js';
 import { is_function } from '../../utils.js';
-
-const active_tick_animations = new Set();
-const DELAY_NEXT_TICK = Number.MIN_SAFE_INTEGER;
-
-/** @type {undefined | number} */
-let active_tick_ref = undefined;
 
 /**
  * @template P
@@ -87,8 +81,8 @@ const linear = (t) => t;
 /** @param {() => any} fn */
 function defer(fn) {
 	return new Promise((fulfil) => {
-		render_effect(() => {
-			fulfil(fn());
+		user_effect(() => {
+			fulfil(untrack(fn));
 		});
 	});
 }
