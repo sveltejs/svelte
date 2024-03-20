@@ -6,7 +6,7 @@
 	let resolve;
 	let value = 0;
 	export let logs = [];
-	
+
 	async function new_promise() {
 		promise = new Promise(r => {
 			resolve = r;
@@ -20,7 +20,8 @@
 
 	export async function test() {
 		resolve_promise();
-		await Promise.resolve();
+		await tick();
+		await tick(); // TODO figure out why we need two ticks here
 		new_promise();
 		resolve_promise();
 		return tick();
