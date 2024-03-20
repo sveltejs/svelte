@@ -1,4 +1,5 @@
 import { effect } from '../../../reactivity/effects.js';
+import { is_array } from '../../../utils.js';
 
 /**
  * Selects the correct option(s) (depending on whether this is a multiple select)
@@ -98,15 +99,23 @@ export function bind_select_value(select, get_value, update) {
 			// @ts-ignore
 			var value = select.__value;
 			select_option(select, value, mounting);
-			/** @type {HTMLOptionElement | null} */
-			var selected_option = select.querySelector(':checked');
-			if (selected_option === null || get_option_value(selected_option) !== value) {
-				update('');
+			if (select.multiple) {
+				var selected_options = [].map.call(select.querySelectorAll(':checked'), get_option_value);
+				if (is_array(value) && selected_options.every(e => value.includes)) {
+					update(selected_options)
+				}
+			} else {
+				/** @type {HTMLOptionElement | null} */
+				var selected_option = select.querySelector(':checked');
+				if (selected_option === null || get_option_value(selected_option) !== value) {
+					update('');
+				}
 			}
 		});
 
 		observer.observe(select, {
-			childList: true
+			childList: true,
+			subtree: true
 		});
 
 		return () => {

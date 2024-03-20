@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: ensure select value is updated upon select element removal
+fix: ensure select value is updated upon select option removal
