@@ -48,8 +48,7 @@ function create_effect(type, fn, sync, block = current_block, init = true) {
 		teardown: null,
 		ctx: current_component_context,
 		ondestroy: null,
-		transitions: null,
-		ran: false
+		transitions: null
 	};
 
 	if (current_effect !== null) {

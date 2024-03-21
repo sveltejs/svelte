@@ -7,6 +7,7 @@ import { run_transitions } from '../../render.js';
 import { is_function } from '../../utils.js';
 import { current_each_item_block } from '../blocks/each.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
+import { EFFECT_RAN } from '../../constants.js';
 
 /**
  * @template T
@@ -207,14 +208,14 @@ export function transition(flags, element, get_fn, get_params) {
 	// if this is a local transition, we only want to run it if the parent (block) effect's
 	// parent (branch) effect is where the state change happened. we can determine that by
 	// looking at whether the branch effect is currently initializing
-	if (
-		is_intro &&
-		run_transitions &&
-		(is_global || /** @type {import('#client').Effect} */ (effect.parent).ran)
-	) {
-		user_effect(() => {
-			untrack(() => transition.in());
-		});
+	if (is_intro && run_transitions) {
+		var parent = /** @type {import('#client').Effect} */ (effect.parent);
+
+		if (is_global || (parent.f & EFFECT_RAN) !== 0) {
+			user_effect(() => {
+				untrack(() => transition.in());
+			});
+		}
 	}
 }
 

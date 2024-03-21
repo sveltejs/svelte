@@ -10,6 +10,7 @@ export const MAYBE_DIRTY = 1 << 10;
 export const INERT = 1 << 11;
 export const DESTROYED = 1 << 12;
 export const IS_ELSEIF = 1 << 13;
+export const EFFECT_RAN = 1 << 14;
 
 export const UNINITIALIZED = Symbol();
 export const STATE_SYMBOL = Symbol('$state');

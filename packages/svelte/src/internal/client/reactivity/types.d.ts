@@ -49,10 +49,8 @@ export interface Effect extends Reaction {
 	teardown: null | (() => void);
 	/** The depth from the root signal, used for ordering render/pre-effects topologically **/
 	l: number;
-
-	// transitions TODO
+	/** Transition managers created with `$.transition` */
 	transitions: null | TransitionManager[];
-	ran: boolean; // TODO fold this into the bitmask
 }
 
 export interface ValueDebug<V = unknown> extends Value<V> {

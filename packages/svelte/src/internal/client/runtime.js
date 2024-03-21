@@ -21,7 +21,8 @@ import {
 	DESTROYED,
 	INERT,
 	MANAGED,
-	STATE_SYMBOL
+	STATE_SYMBOL,
+	EFFECT_RAN
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -551,7 +552,7 @@ export function schedule_effect(signal, sync) {
 		}
 	}
 
-	signal.ran = true;
+	signal.f |= EFFECT_RAN;
 }
 
 /**
