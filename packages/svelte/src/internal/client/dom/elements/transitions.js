@@ -183,8 +183,6 @@ function animate(element, options, counterpart, target, callback) {
 		};
 	}
 
-	dispatch_event(element, target === 1 ? 'introstart' : 'outrostart');
-
 	counterpart?.neuter();
 
 	if (!options?.duration) {
@@ -197,28 +195,35 @@ function animate(element, options, counterpart, target, callback) {
 		};
 	}
 
-	const { delay = 0, duration, css, tick, easing = linear } = options;
+	dispatch_event(element, target === 1 ? 'introstart' : 'outrostart');
 
-	const n = options.duration / (1000 / 60);
+	const { delay = 0, duration, css, tick, easing = linear } = options;
 
 	const start_time = raf.now() + delay;
 	const start_p = counterpart?.p(start_time) ?? 1 - target;
-	const current_delta = target - start_p;
-	const adjusted_duration = duration * Math.abs(current_delta);
+	const delta = target - start_p;
+	const adjusted_duration = duration * Math.abs(delta);
 	const end_time = start_time + adjusted_duration;
+
+	/** @type {Animation} */
+	var animation;
+
+	/** @type {import('#client').Task} */
+	var task;
 
 	if (css) {
 		// WAAPI
 		const keyframes = [];
+		const n = options.duration / (1000 / 60); // TODO should be adjusted_duration?
 
 		for (let i = 0; i <= n; i += 1) {
 			const eased = easing(i / n);
-			const t = start_p + current_delta * eased;
+			const t = start_p + delta * eased;
 			const styles = css(t, 1 - t);
 			keyframes.push(css_to_keyframe(styles));
 		}
 
-		var animation = element.animate(keyframes, {
+		animation = element.animate(keyframes, {
 			delay,
 			duration: adjusted_duration,
 			easing: 'linear',
@@ -227,66 +232,37 @@ function animate(element, options, counterpart, target, callback) {
 
 		animation.finished
 			.then(() => {
-				// if (target === 1) {
-				// 	current_options = null;
-				// 	current_animation = null;
-				// }
-
-				// p = target;
 				callback?.();
 				dispatch_event(element, target === 1 ? 'introend' : 'outroend');
 			})
 			.catch(noop);
+	} else {
+		// Timer
+		if (start_p === 0) {
+			tick?.(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
+		}
 
-		return {
-			abort: () => {
-				animation.cancel();
-			},
-			neuter: () => {
-				callback = undefined;
-			},
-			reset: noop,
-			p: () => {
-				return clamp(
-					start_p + current_delta * easing((raf.now() - start_time) / adjusted_duration),
-					0,
-					1
-				);
+		task = loop((now) => {
+			if (now >= end_time) {
+				tick?.(target, 1 - target);
+				callback?.();
+				dispatch_event(element, target === 1 ? 'introend' : 'outroend');
+				return false;
 			}
-		};
+
+			if (now >= start_time) {
+				var p = start_p + delta * easing((now - start_time) / adjusted_duration);
+				tick?.(p, 1 - p);
+			}
+
+			return true;
+		});
 	}
-
-	// Timer
-	if (start_p === 0) {
-		tick?.(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
-	}
-
-	var task = loop((now) => {
-		if (now >= end_time) {
-			// if (target === 1) {
-			// 	current_task = null;
-			// 	current_options = null;
-			// }
-
-			// p = target;
-			tick?.(target, 1 - target);
-			callback?.();
-			dispatch_event(element, target === 1 ? 'introend' : 'outroend');
-			return false;
-		}
-
-		if (now >= start_time) {
-			var p = start_p + current_delta * easing((now - start_time) / adjusted_duration);
-			tick?.(p, 1 - p);
-		}
-
-		return true;
-	});
 
 	return {
 		abort: () => {
-			if (target === 0) tick?.(1, 0);
-			task.abort();
+			animation?.cancel();
+			task?.abort();
 		},
 		neuter: () => {
 			callback = undefined;
@@ -297,7 +273,7 @@ function animate(element, options, counterpart, target, callback) {
 			}
 		},
 		p: (now) => {
-			return clamp(start_p + current_delta * easing((now - start_time) / adjusted_duration), 0, 1);
+			return clamp(start_p + delta * easing((now - start_time) / adjusted_duration), 0, 1);
 		}
 	};
 }
