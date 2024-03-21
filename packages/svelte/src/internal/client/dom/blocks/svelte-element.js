@@ -34,13 +34,13 @@ function swap_block_dom(block, from, to) {
 }
 
 /**
- * @param {Comment} anchor_node
- * @param {() => string} tag_fn
+ * @param {Comment} anchor
+ * @param {() => string} get_tag
  * @param {boolean | null} is_svg `null` == not statically known
  * @param {undefined | ((element: Element, anchor: Node) => void)} render_fn
  * @returns {void}
  */
-export function element(anchor_node, tag_fn, is_svg, render_fn) {
+export function element(anchor, get_tag, is_svg, render_fn) {
 	/** @type {import('#client').DynamicElementBlock} */
 	const block = {
 		// dom
@@ -51,7 +51,7 @@ export function element(anchor_node, tag_fn, is_svg, render_fn) {
 		p: /** @type {import('#client').Block} */ (current_block)
 	};
 
-	hydrate_block_anchor(anchor_node);
+	hydrate_block_anchor(anchor);
 
 	/** @type {string | null} */
 	let tag;
@@ -68,7 +68,7 @@ export function element(anchor_node, tag_fn, is_svg, render_fn) {
 	let each_item_block = current_each_item_block;
 
 	const wrapper = render_effect(() => {
-		const next_tag = tag_fn() || null;
+		const next_tag = get_tag() || null;
 		if (next_tag === tag) return;
 
 		var previous_each_item_block = current_each_item_block;
@@ -80,9 +80,9 @@ export function element(anchor_node, tag_fn, is_svg, render_fn) {
 		const ns =
 			is_svg || next_tag === 'svg'
 				? namespace_svg
-				: is_svg === false || anchor_node.parentElement?.tagName === 'foreignObject'
+				: is_svg === false || anchor.parentElement?.tagName === 'foreignObject'
 					? null
-					: anchor_node.parentElement?.namespaceURI ?? null;
+					: anchor.parentElement?.namespaceURI ?? null;
 
 		if (effect) {
 			if (next_tag === null) {
@@ -125,7 +125,7 @@ export function element(anchor_node, tag_fn, is_svg, render_fn) {
 						render_fn(element, anchor);
 					}
 
-					anchor_node.before(element);
+					anchor.before(element);
 
 					if (prev_element) {
 						swap_block_dom(block.p, prev_element, element);

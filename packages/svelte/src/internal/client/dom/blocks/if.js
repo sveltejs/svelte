@@ -29,17 +29,17 @@ function create_if_block() {
 }
 
 /**
- * @param {Comment} anchor_node
- * @param {() => boolean} condition_fn
+ * @param {Comment} anchor
+ * @param {() => boolean} get_condition
  * @param {(anchor: Node) => void} consequent_fn
  * @param {null | ((anchor: Node) => void)} alternate_fn
  * @param {boolean} [elseif] True if this is an `{:else if ...}` block rather than an `{#if ...}`, as that affects which transitions are considered 'local'
  * @returns {void}
  */
-export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn, elseif = false) {
+export function if_block(anchor, get_condition, consequent_fn, alternate_fn, elseif = false) {
 	const block = create_if_block();
 
-	hydrate_block_anchor(anchor_node);
+	hydrate_block_anchor(anchor);
 
 	/** @type {null | import('#client').TemplateNode | Array<import('#client').TemplateNode>} */
 	let consequent_dom = null;
@@ -57,7 +57,7 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn,
 	let condition = null;
 
 	const if_effect = render_effect(() => {
-		if (condition === (condition = !!condition_fn())) return;
+		if (condition === (condition = !!get_condition())) return;
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
@@ -87,7 +87,7 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn,
 			} else {
 				consequent_effect = render_effect(
 					() => {
-						consequent_fn(anchor_node);
+						consequent_fn(anchor);
 						consequent_dom = block.d;
 
 						if (mismatch) {
@@ -121,7 +121,7 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn,
 			} else if (alternate_fn) {
 				alternate_effect = render_effect(
 					() => {
-						alternate_fn(anchor_node);
+						alternate_fn(anchor);
 						alternate_dom = block.d;
 
 						if (mismatch) {

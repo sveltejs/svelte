@@ -7,15 +7,15 @@ import { remove } from '../reconciler.js';
 /**
  * @template P
  * @template {(props: P) => void} C
- * @param {Comment} anchor_node
+ * @param {Comment} anchor
  * @param {() => C} get_component
  * @param {(component: C) => void} render_fn
  * @returns {void}
  */
-export function component(anchor_node, get_component, render_fn) {
+export function component(anchor, get_component, render_fn) {
 	const block = {};
 
-	hydrate_block_anchor(anchor_node);
+	hydrate_block_anchor(anchor);
 
 	/** @type {C} */
 	let component;

@@ -28,19 +28,19 @@ export function create_await_block() {
 
 /**
  * @template V
- * @param {Comment} anchor_node
+ * @param {Comment} anchor
  * @param {(() => Promise<V>)} get_input
  * @param {null | ((anchor: Node) => void)} pending_fn
  * @param {null | ((anchor: Node, value: V) => void)} then_fn
  * @param {null | ((anchor: Node, error: unknown) => void)} catch_fn
  * @returns {void}
  */
-export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_fn) {
+export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 	const block = create_await_block();
 
 	const component_context = current_component_context;
 
-	hydrate_block_anchor(anchor_node);
+	hydrate_block_anchor(anchor);
 
 	/** @type {any} */
 	let input;
@@ -62,7 +62,7 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 		set_current_effect(branch);
 		set_current_reaction(branch); // TODO do we need both?
 		set_current_component_context(component_context);
-		var effect = render_effect(() => fn(anchor_node, value), {}, true);
+		var effect = render_effect(() => fn(anchor, value), {}, true);
 		set_current_component_context(null);
 		set_current_reaction(null);
 		set_current_effect(null);
@@ -98,7 +98,7 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 					destroy_effect(pending_effect);
 				}
 
-				pending_effect = render_effect(() => pending_fn(anchor_node), {}, true);
+				pending_effect = render_effect(() => pending_fn(anchor), {}, true);
 			}
 
 			if (then_effect) pause(then_effect);
@@ -132,7 +132,7 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 					destroy_effect(then_effect);
 				}
 
-				then_effect = render_effect(() => then_fn(anchor_node, input), {}, true);
+				then_effect = render_effect(() => then_fn(anchor, input), {}, true);
 			}
 		}
 	}, block);
