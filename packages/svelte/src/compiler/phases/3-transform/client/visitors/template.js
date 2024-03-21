@@ -2345,6 +2345,9 @@ export const template_visitors = {
 			each_type |= EACH_ITEM_REACTIVE;
 		}
 
+		// Since `animate:` can only appear on elements that are the sole child of a keyed each block,
+		// we can determine at compile time whether the each block is animated or not (in which
+		// case it should measure animated elements before and after reconciliation).
 		if (
 			node.key &&
 			node.body.nodes.some((child) => {
