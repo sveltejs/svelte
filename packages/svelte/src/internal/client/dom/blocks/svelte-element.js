@@ -65,12 +65,18 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 	/** @type {import('#client').Effect | null} */
 	let effect;
 
+	/**
+	 * The keyed `{#each ...}` item block, if any, that this element is inside.
+	 * We track this so we can set it when changing the element, allowing any
+	 * `animate:` directive to bind itself to the correct block
+	 */
 	let each_item_block = current_each_item_block;
 
 	const wrapper = render_effect(() => {
 		const next_tag = get_tag() || null;
 		if (next_tag === tag) return;
 
+		// See explanation of `each_item_block` above
 		var previous_each_item_block = current_each_item_block;
 		set_current_each_item_block(each_item_block);
 
