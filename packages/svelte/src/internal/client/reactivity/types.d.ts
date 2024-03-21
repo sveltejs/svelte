@@ -1,4 +1,4 @@
-import type { Block, ComponentContext, Equals } from '#client';
+import type { Block, ComponentContext, Equals, TransitionManager } from '#client';
 import type { EFFECT, PRE_EFFECT, RENDER_EFFECT } from '../constants';
 
 export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFECT;
@@ -21,7 +21,7 @@ export interface Value<V = unknown> extends Signal {
 
 export interface Reaction extends Signal {
 	/** The reaction function */
-	fn: null | Function;
+	fn: Function;
 	/** Signals that this signal reads from */
 	deps: null | Value[];
 	/** Effects created inside this signal */
@@ -36,6 +36,7 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 }
 
 export interface Effect extends Reaction {
+	parent: Effect | null;
 	/** The block associated with this effect */
 	block: null | Block;
 	/** The associated component context */
@@ -43,11 +44,13 @@ export interface Effect extends Reaction {
 	/** Stuff to do when the effect is destroyed */
 	ondestroy: null | (() => void);
 	/** The effect function */
-	fn: null | (() => void | (() => void)) | ((b: Block, s: Signal) => void | (() => void));
+	fn: () => void | (() => void);
 	/** The teardown function returned from the effect function */
 	teardown: null | (() => void);
 	/** The depth from the root signal, used for ordering render/pre-effects topologically **/
 	l: number;
+	/** Transition managers created with `$.transition` */
+	transitions: null | TransitionManager[];
 }
 
 export interface ValueDebug<V = unknown> extends Value<V> {

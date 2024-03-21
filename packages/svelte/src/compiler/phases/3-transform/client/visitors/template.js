@@ -28,10 +28,14 @@ import {
 	AttributeAliases,
 	DOMBooleanAttributes,
 	EACH_INDEX_REACTIVE,
+	EACH_IS_ANIMATED,
 	EACH_IS_CONTROLLED,
 	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
-	EACH_KEYED
+	EACH_KEYED,
+	TRANSITION_GLOBAL,
+	TRANSITION_IN,
+	TRANSITION_OUT
 } from '../../../../../constants.js';
 import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
@@ -1922,7 +1926,7 @@ export const template_visitors = {
 		state.init.push(
 			b.stmt(
 				b.call(
-					'$.animate',
+					'$.animation',
 					state.node,
 					b.thunk(
 						/** @type {import('estree').Expression} */ (visit(parse_directive_name(node.name)))
@@ -1939,25 +1943,21 @@ export const template_visitors = {
 		error(node, 'INTERNAL', 'Node should have been handled elsewhere');
 	},
 	TransitionDirective(node, { state, visit }) {
-		const type = node.intro && node.outro ? '$.transition' : node.intro ? '$.in' : '$.out';
-		const expression =
-			node.expression === null
-				? b.literal(null)
-				: b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression)));
+		let flags = node.modifiers.includes('global') ? TRANSITION_GLOBAL : 0;
+		if (node.intro) flags |= TRANSITION_IN;
+		if (node.outro) flags |= TRANSITION_OUT;
 
-		state.init.push(
-			b.stmt(
-				b.call(
-					type,
-					state.node,
-					b.thunk(
-						/** @type {import('estree').Expression} */ (visit(parse_directive_name(node.name)))
-					),
-					expression,
-					node.modifiers.includes('global') ? b.true : b.false
-				)
-			)
-		);
+		const args = [
+			b.literal(flags),
+			state.node,
+			b.thunk(/** @type {import('estree').Expression} */ (visit(parse_directive_name(node.name))))
+		];
+
+		if (node.expression) {
+			args.push(b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression))));
+		}
+
+		state.init.push(b.stmt(b.call('$.transition', ...args)));
 	},
 	RegularElement(node, context) {
 		if (node.name === 'noscript') {
@@ -2345,6 +2345,19 @@ export const template_visitors = {
 			each_type |= EACH_ITEM_REACTIVE;
 		}
 
+		// Since `animate:` can only appear on elements that are the sole child of a keyed each block,
+		// we can determine at compile time whether the each block is animated or not (in which
+		// case it should measure animated elements before and after reconciliation).
+		if (
+			node.key &&
+			node.body.nodes.some((child) => {
+				if (child.type !== 'RegularElement' && child.type !== 'SvelteElement') return false;
+				return child.attributes.some((attr) => attr.type === 'AnimateDirective');
+			})
+		) {
+			each_type |= EACH_IS_ANIMATED;
+		}
+
 		if (each_node_meta.is_controlled) {
 			each_type |= EACH_IS_CONTROLLED;
 		}
@@ -2557,22 +2570,44 @@ export const template_visitors = {
 			context.visit(node.consequent)
 		);
 
-		context.state.after_update.push(
-			b.stmt(
-				b.call(
-					'$.if',
-					context.state.node,
-					b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.test))),
-					b.arrow([b.id('$$anchor')], consequent),
-					node.alternate
-						? b.arrow(
-								[b.id('$$anchor')],
-								/** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
-							)
-						: b.literal(null)
-				)
-			)
-		);
+		const args = [
+			context.state.node,
+			b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.test))),
+			b.arrow([b.id('$$anchor')], consequent),
+			node.alternate
+				? b.arrow(
+						[b.id('$$anchor')],
+						/** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
+					)
+				: b.literal(null)
+		];
+
+		if (node.elseif) {
+			// We treat this...
+			//
+			//   {#if x}
+			//     ...
+			//   {:else}
+			//     {#if y}
+			//       <div transition:foo>...</div>
+			//     {/if}
+			//   {/if}
+			//
+			// ...slightly differently to this...
+			//
+			//   {#if x}
+			//     ...
+			//   {:else if y}
+			//     <div transition:foo>...</div>
+			//   {/if}
+			//
+			// ...even though they're logically equivalent. In the first case, the
+			// transition will only play when `y` changes, but in the second it
+			// should play when `x` or `y` change — both are considered 'local'
+			args.push(b.literal(true));
+		}
+
+		context.state.after_update.push(b.stmt(b.call('$.if', ...args)));
 	},
 	AwaitBlock(node, context) {
 		context.state.template.push('<!>');

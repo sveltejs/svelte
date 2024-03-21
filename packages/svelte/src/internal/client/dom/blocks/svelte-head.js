@@ -1,4 +1,3 @@
-import { HEAD_BLOCK } from '../../constants.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,
@@ -22,11 +21,7 @@ export function head(render_fn) {
 		// effect
 		e: null,
 		// parent
-		p: /** @type {import('#client').Block} */ (current_block),
-		// transition
-		r: null,
-		// type
-		t: HEAD_BLOCK
+		p: /** @type {import('#client').Block} */ (current_block)
 	};
 
 	// The head function may be called after the first hydration pass and ssr comment nodes may still be present,

@@ -5,7 +5,7 @@
 		return {
 			duration: 100,
 			css: t => {
-				return `opacity: ${t}`;
+				return `scale: ${t}`;
 			}
 		};
 	}
@@ -14,7 +14,7 @@
 		return {
 			duration: 100,
 			css: t => {
-				return `opacity: ${t}`;
+				return `rotate: ${t * 360}deg; opacity: ${t}`;
 			}
 		};
 	}
