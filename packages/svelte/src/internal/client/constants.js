@@ -11,9 +11,5 @@ export const INERT = 1 << 11;
 export const DESTROYED = 1 << 12;
 export const IS_ELSEIF = 1 << 13;
 
-export const TRANSITION_IN = 1 << 1;
-export const TRANSITION_OUT = 1 << 2;
-export const TRANSITION_GLOBAL = 1 << 3;
-
 export const UNINITIALIZED = Symbol();
 export const STATE_SYMBOL = Symbol('$state');

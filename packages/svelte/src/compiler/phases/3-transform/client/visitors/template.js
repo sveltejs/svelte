@@ -32,17 +32,15 @@ import {
 	EACH_IS_CONTROLLED,
 	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
-	EACH_KEYED
+	EACH_KEYED,
+	TRANSITION_GLOBAL,
+	TRANSITION_IN,
+	TRANSITION_OUT
 } from '../../../../../constants.js';
 import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
 import { walk } from 'zimmerframe';
-import {
-	TRANSITION_GLOBAL,
-	TRANSITION_IN,
-	TRANSITION_OUT
-} from '../../../../../internal/client/constants.js';
 
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element

@@ -1,12 +1,12 @@
 import { noop } from '../../../common.js';
 import { user_effect } from '../../reactivity/effects.js';
-import { current_block, current_effect, untrack } from '../../runtime.js';
+import { current_effect, untrack } from '../../runtime.js';
 import { raf } from '../../timing.js';
 import { loop } from '../../loop.js';
 import { run_transitions } from '../../render.js';
-import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../constants.js';
 import { is_function } from '../../utils.js';
 import { current_each_item_block } from '../blocks/each.js';
+import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
 
 /**
  * @template T

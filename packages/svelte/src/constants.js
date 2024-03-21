@@ -12,6 +12,10 @@ export const PROPS_IS_RUNES = 1 << 1;
 export const PROPS_IS_UPDATED = 1 << 2;
 export const PROPS_IS_LAZY_INITIAL = 1 << 3;
 
+export const TRANSITION_IN = 1;
+export const TRANSITION_OUT = 1 << 1;
+export const TRANSITION_GLOBAL = 1 << 2;
+
 /** List of Element events that will be delegated */
 export const DelegatedEvents = [
 	'beforeinput',
