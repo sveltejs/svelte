@@ -28,6 +28,7 @@ import {
 	AttributeAliases,
 	DOMBooleanAttributes,
 	EACH_INDEX_REACTIVE,
+	EACH_IS_ANIMATED,
 	EACH_IS_CONTROLLED,
 	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
@@ -2335,6 +2336,16 @@ export const template_visitors = {
 			}
 		} else {
 			each_type |= EACH_ITEM_REACTIVE;
+		}
+
+		if (
+			node.key &&
+			node.body.nodes.some((child) => {
+				if (child.type !== 'RegularElement' && child.type !== 'SvelteElement') return false;
+				return child.attributes.some((attr) => attr.type === 'AnimateDirective');
+			})
+		) {
+			each_type |= EACH_IS_ANIMATED;
 		}
 
 		if (each_node_meta.is_controlled) {

@@ -15,12 +15,13 @@ import {
 } from '../hydration.js';
 import { empty } from '../operations.js';
 import { insert, remove } from '../reconciler.js';
-import { current_block } from '../../runtime.js';
+import { current_block, untrack } from '../../runtime.js';
 import {
 	destroy_effect,
 	pause_effect,
 	render_effect,
-	resume_effect
+	resume_effect,
+	user_effect
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen, map_get, map_set } from '../../utils.js';
@@ -28,6 +29,14 @@ import { STATE_SYMBOL } from '../../constants.js';
 
 var NEW_BLOCK = -1;
 var LIS_BLOCK = -2;
+
+/** @type {import('#client').EachItemBlock | null} */
+export let current_each_item_block = null;
+
+/** @param {import('#client').EachItemBlock | null} block */
+export function set_current_each_item_block(block) {
+	current_each_item_block = block;
+}
 
 /**
  * @template V
@@ -316,12 +325,22 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 	var b_blocks = Array(b);
 
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
-	var should_update = is_animated || (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
+	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 	var start = 0;
 	var block;
 
 	/** @type {Array<import('#client').EachItemBlock>} */
 	var to_destroy = [];
+
+	/** @type {Array<import('#client').EachItemBlock>} */
+	var to_animate = [];
+
+	if (is_animated) {
+		for (block of a_blocks) {
+			// TODO can we avoid measuring blocks that will be destroyed?
+			block.a?.measure();
+		}
+	}
 
 	// Step 1 — trim common suffix
 	while (a > 0 && b > 0 && a_blocks[a - 1].k === keys[b - 1]) {
@@ -392,8 +411,7 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 				b_blocks[index] = block;
 
 				if (is_animated) {
-					// If keys are animated, we need to do updates before actual moves
-					update_block(block, array[index], index, flags);
+					to_animate.push(block);
 				}
 			}
 		}
@@ -422,6 +440,16 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 
 			last_block = b_blocks[b] = block;
 		}
+	}
+
+	if (to_animate.length > 0) {
+		user_effect(() => {
+			untrack(() => {
+				for (block of to_animate) {
+					block.a?.apply();
+				}
+			});
+		});
 	}
 
 	var remaining = to_destroy.length;
@@ -602,6 +630,7 @@ function create_block(item, key, index, render_fn, flags) {
 
 	/** @type {import('#client').EachItemBlock} */
 	var block = {
+		a: null,
 		// dom
 		d: null,
 		// effect
@@ -615,13 +644,21 @@ function create_block(item, key, index, render_fn, flags) {
 		v: item_value
 	};
 
-	block.e = render_effect(
-		() => {
-			render_fn(null, block.v, block.i);
-		},
-		block,
-		true
-	);
+	var previous_each_item_block = current_each_item_block;
 
-	return block;
+	try {
+		current_each_item_block = block;
+
+		block.e = render_effect(
+			() => {
+				render_fn(null, block.v, block.i);
+			},
+			block,
+			true
+		);
+
+		return block;
+	} finally {
+		current_each_item_block = previous_each_item_block;
+	}
 }

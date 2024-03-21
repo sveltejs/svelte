@@ -123,6 +123,8 @@ export type EachBlock = {
 };
 
 export type EachItemBlock = {
+	/** animation manager */
+	a: AnimationManager | null;
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
@@ -160,6 +162,11 @@ export interface TransitionManager {
 	in: () => void;
 	out: (callback?: () => void) => void;
 	stop: () => void;
+}
+
+export interface AnimationManager {
+	measure: () => void;
+	apply: () => void;
 }
 
 export interface Animation {

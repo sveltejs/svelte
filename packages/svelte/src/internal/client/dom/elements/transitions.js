@@ -1,11 +1,12 @@
 import { noop } from '../../../common.js';
 import { user_effect } from '../../reactivity/effects.js';
-import { current_effect, untrack } from '../../runtime.js';
+import { current_block, current_effect, untrack } from '../../runtime.js';
 import { raf } from '../../timing.js';
 import { loop } from '../../loop.js';
 import { run_transitions } from '../../render.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../constants.js';
 import { is_function } from '../../utils.js';
+import { current_each_item_block } from '../blocks/each.js';
 
 /**
  * @template T
@@ -66,8 +67,42 @@ function css_to_keyframe(css) {
 /** @param {number} t */
 const linear = (t) => t;
 
-export function animation() {
-	// TODO
+/**
+ * @template P
+ * @param {Element} element
+ * @param {() => import('#client').AnimateFn<P | undefined>} get_fn
+ * @param {(() => P) | null} get_params
+ */
+export function animation(element, get_fn, get_params) {
+	/** @type {DOMRect} */
+	let from;
+
+	/** @type {DOMRect} */
+	let to;
+
+	/** @type {import('#client').Animation | undefined} */
+	let animation;
+
+	/** @type {import('#client').AnimationManager} */
+	const manager = {
+		measure() {
+			from = element.getBoundingClientRect();
+		},
+		apply() {
+			to = element.getBoundingClientRect();
+
+			const options = get_fn()(element, { from, to }, get_params?.(), {}); // TODO what is the last argument?
+
+			animation?.abort();
+
+			// TODO bail if `from` and `to` match
+			animation = animate(element, options, undefined, 1, () => {
+				animation = undefined;
+			});
+		}
+	};
+
+	/** @type {import('#client').EachItemBlock} */ (current_each_item_block).a = manager;
 }
 
 /**
@@ -195,7 +230,7 @@ function animate(element, options, counterpart, t2, callback) {
 		};
 	}
 
-	dispatch_event(element, t2 === 1 ? 'introstart' : 'outrostart');
+	dispatch_event(element, t2 === 1 ? 'introstart' : 'outrostart'); // TODO not for `animate:`
 
 	var { delay = 0, duration, css, tick, easing = linear } = options;
 

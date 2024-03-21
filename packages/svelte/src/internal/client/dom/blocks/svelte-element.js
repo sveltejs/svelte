@@ -11,6 +11,7 @@ import { remove } from '../reconciler.js';
 import { current_block } from '../../runtime.js';
 import { is_array } from '../../utils.js';
 import { set_run_transitions } from '../../render.js';
+import { current_each_item_block, set_current_each_item_block } from './each.js';
 
 /**
  * @param {import('#client').Block} block
@@ -64,9 +65,14 @@ export function element(anchor_node, tag_fn, is_svg, render_fn) {
 	/** @type {import('#client').Effect | null} */
 	let effect;
 
+	let each_item_block = current_each_item_block;
+
 	const wrapper = render_effect(() => {
 		const next_tag = tag_fn() || null;
 		if (next_tag === tag) return;
+
+		var previous_each_item_block = current_each_item_block;
+		set_current_each_item_block(each_item_block);
 
 		// We try our best infering the namespace in case it's not possible to determine statically,
 		// but on the first render on the client (without hydration) the parent will be undefined,
@@ -134,6 +140,8 @@ export function element(anchor_node, tag_fn, is_svg, render_fn) {
 		tag = next_tag;
 		if (tag) current_tag = tag;
 		set_run_transitions(true);
+
+		set_current_each_item_block(previous_each_item_block);
 	}, block);
 
 	wrapper.ondestroy = () => {
