@@ -457,8 +457,6 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 	var remaining = to_destroy.length;
 	if (remaining > 0) {
 		var clear = () => {
-			// TODO optimization for controlled case — just do `clear_text_content(dom)`
-
 			for (block of to_destroy) {
 				if (block.d) remove(block.d);
 			}
