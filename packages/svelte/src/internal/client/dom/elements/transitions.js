@@ -74,35 +74,41 @@ const linear = (t) => t;
  * @param {(() => P) | null} get_params
  */
 export function animation(element, get_fn, get_params) {
-	/** @type {DOMRect} */
-	let from;
+	var block = /** @type {import('#client').EachItemBlock} */ (current_each_item_block);
 
 	/** @type {DOMRect} */
-	let to;
+	var from;
+
+	/** @type {DOMRect} */
+	var to;
 
 	/** @type {import('#client').Animation | undefined} */
-	let animation;
+	var animation;
 
-	/** @type {import('#client').AnimationManager} */
-	const manager = {
+	block.a ??= {
+		element,
 		measure() {
-			from = element.getBoundingClientRect();
+			from = this.element.getBoundingClientRect();
 		},
 		apply() {
-			to = element.getBoundingClientRect();
+			to = this.element.getBoundingClientRect();
 
-			const options = get_fn()(element, { from, to }, get_params?.(), {}); // TODO what is the last argument?
+			const options = get_fn()(this.element, { from, to }, get_params?.(), {}); // TODO what is the last argument?
 
 			animation?.abort();
 
 			// TODO bail if `from` and `to` match
-			animation = animate(element, options, undefined, 1, () => {
+			animation = animate(this.element, options, undefined, 1, () => {
 				animation = undefined;
 			});
 		}
 	};
 
-	/** @type {import('#client').EachItemBlock} */ (current_each_item_block).a = manager;
+	// in the case of a `<svelte:element>`, it's possible for `$.animation(...)` to be called
+	// when an animation manager already exists, if the tag changes. in that case, we need to
+	// swap out the element rather than creating a new manager, in case it happened at the same
+	// moment as a reconciliation
+	block.a.element = element;
 }
 
 /**

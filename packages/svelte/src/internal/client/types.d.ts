@@ -165,6 +165,7 @@ export interface TransitionManager {
 }
 
 export interface AnimationManager {
+	element: Element;
 	measure: () => void;
 	apply: () => void;
 }
