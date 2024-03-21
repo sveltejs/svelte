@@ -94,11 +94,11 @@ export function animation(element, get_fn, get_params) {
 			from = this.element.getBoundingClientRect();
 		},
 		apply() {
+			animation?.abort();
+
 			to = this.element.getBoundingClientRect();
 
 			const options = get_fn()(this.element, { from, to }, get_params?.());
-
-			animation?.abort();
 
 			if (
 				from.left !== to.left ||
@@ -107,6 +107,7 @@ export function animation(element, get_fn, get_params) {
 				from.bottom !== to.bottom
 			) {
 				animation = animate(this.element, options, undefined, 1, () => {
+					animation?.abort();
 					animation = undefined;
 				});
 			}
