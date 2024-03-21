@@ -166,7 +166,9 @@ export function transition(flags, element, get_fn, get_params) {
 			element.inert = inert;
 
 			if (is_intro) {
+				dispatch_event(element, 'introstart');
 				intro = animate(element, get_options(), outro, 1, () => {
+					dispatch_event(element, 'introend');
 					intro = current_options = undefined;
 				});
 			} else {
@@ -178,7 +180,9 @@ export function transition(flags, element, get_fn, get_params) {
 			if (is_outro) {
 				element.inert = true;
 
+				dispatch_event(element, 'outrostart');
 				outro = animate(element, get_options(), intro, 0, () => {
+					dispatch_event(element, 'outroend');
 					outro = current_options = undefined;
 					fn?.();
 				});
@@ -258,8 +262,6 @@ function animate(element, options, counterpart, t2, callback) {
 		};
 	}
 
-	dispatch_event(element, t2 === 1 ? 'introstart' : 'outrostart'); // TODO not for `animate:`
-
 	var { delay = 0, duration, css, tick, easing = linear } = options;
 
 	var start = raf.now() + delay;
@@ -296,7 +298,6 @@ function animate(element, options, counterpart, t2, callback) {
 		animation.finished
 			.then(() => {
 				callback?.();
-				dispatch_event(element, t2 === 1 ? 'introend' : 'outroend');
 			})
 			.catch(noop);
 	} else {
@@ -309,7 +310,6 @@ function animate(element, options, counterpart, t2, callback) {
 			if (now >= end) {
 				tick?.(t2, 1 - t2);
 				callback?.();
-				dispatch_event(element, t2 === 1 ? 'introend' : 'outroend');
 				return false;
 			}
 
