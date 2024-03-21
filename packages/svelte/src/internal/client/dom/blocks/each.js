@@ -456,6 +456,10 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 		}
 
 		if (to_animate.length > 0) {
+			// TODO we need to briefly take any outroing elements out of the flow, so that
+			// we can figure out the eventual destination of the animating elements
+			// - https://github.com/sveltejs/svelte/pull/10798#issuecomment-2013681778
+			// - https://svelte.dev/repl/6e891305e9644a7ca7065fa95c79d2d2?version=4.2.9
 			user_effect(() => {
 				untrack(() => {
 					for (block of to_animate) {
