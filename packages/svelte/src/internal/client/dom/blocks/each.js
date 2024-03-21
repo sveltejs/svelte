@@ -336,16 +336,6 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 	/** @type {Array<import('#client').EachItemBlock>} */
 	var to_destroy = [];
 
-	/** @type {Array<import('#client').EachItemBlock>} */
-	var to_animate = [];
-
-	if (is_animated) {
-		for (block of a_blocks) {
-			// TODO can we avoid measuring blocks that will be destroyed?
-			block.a?.measure();
-		}
-	}
-
 	// Step 1 — trim common suffix
 	while (a > 0 && b > 0 && a_blocks[a - 1].k === keys[b - 1]) {
 		block = b_blocks[--b] = a_blocks[--a];
@@ -400,6 +390,21 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 			map_set(indexes, keys[i], i);
 		}
 
+		/** @type {Array<import('#client').EachItemBlock>} */
+		var to_animate = [];
+		if (is_animated) {
+			// for all blocks that were in both the old and the new list,
+			// measure them and store them in `to_animate` so we can
+			// apply animations once the DOM has been updated
+			for (i = 0; i < a_blocks.length; i += 1) {
+				block = a_blocks[i];
+				if (indexes.has(block.k)) {
+					block.a?.measure();
+					to_animate.push(block);
+				}
+			}
+		}
+
 		// populate the `sources` array for each old block with
 		// its new index, so that we can calculate moves
 		for (i = start; i < a; i += 1) {
@@ -437,7 +442,7 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 				block = create_block(array[b], keys[b], b, render_fn, flags);
 			} else {
 				block = b_blocks[b];
-				if (!is_animated && should_update) {
+				if (should_update) {
 					update_block(block, array[b], b, flags);
 				}
 			}
@@ -449,16 +454,16 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 
 			last_block = b_blocks[b] = block;
 		}
-	}
 
-	if (to_animate.length > 0) {
-		user_effect(() => {
-			untrack(() => {
-				for (block of to_animate) {
-					block.a?.apply();
-				}
+		if (to_animate.length > 0) {
+			user_effect(() => {
+				untrack(() => {
+					for (block of to_animate) {
+						block.a?.apply();
+					}
+				});
 			});
-		});
+		}
 	}
 
 	var remaining = to_destroy.length;
