@@ -54,15 +54,20 @@ export function listen_to_event_and_reset_event(element, event, handler, on_rese
 
 	if (!listening_to_form_reset) {
 		listening_to_form_reset = true;
-		document.addEventListener('reset', (evt) => {
-			requestAnimationFrame(() => {
-				if (!evt.defaultPrevented) {
-					for (const e of /**@type {HTMLFormElement} */ (evt.target).elements) {
-						// @ts-expect-error
-						e.__on_r?.();
+		document.addEventListener(
+			'reset',
+			(evt) => {
+				requestAnimationFrame(() => {
+					if (!evt.defaultPrevented) {
+						for (const e of /**@type {HTMLFormElement} */ (evt.target).elements) {
+							// @ts-expect-error
+							e.__on_r?.();
+						}
 					}
-				}
-			});
-		});
+				});
+			},
+			// In the capture phase to guarantee we get noticed of it (no possiblity of stopPropagation)
+			{ capture: true }
+		);
 	}
 }
