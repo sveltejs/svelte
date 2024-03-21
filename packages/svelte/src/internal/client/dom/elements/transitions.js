@@ -97,10 +97,16 @@ export function animation(element, get_fn, get_params) {
 
 			animation?.abort();
 
-			// TODO bail if `from` and `to` match
-			animation = animate(this.element, options, undefined, 1, () => {
-				animation = undefined;
-			});
+			if (
+				from.left !== to.left ||
+				from.right !== to.right ||
+				from.top !== to.top ||
+				from.bottom !== to.bottom
+			) {
+				animation = animate(this.element, options, undefined, 1, () => {
+					animation = undefined;
+				});
+			}
 		}
 	};
 
