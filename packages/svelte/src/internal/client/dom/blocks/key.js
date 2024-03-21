@@ -6,15 +6,15 @@ import { safe_not_equal } from '../../reactivity/equality.js';
 
 /**
  * @template V
- * @param {Comment} anchor_node
+ * @param {Comment} anchor
  * @param {() => V} get_key
  * @param {(anchor: Node) => void} render_fn
  * @returns {void}
  */
-export function key_block(anchor_node, get_key, render_fn) {
+export function key_block(anchor, get_key, render_fn) {
 	const block = {};
 
-	hydrate_block_anchor(anchor_node);
+	hydrate_block_anchor(anchor);
 
 	/** @type {V | typeof UNINITIALIZED} */
 	let key = UNINITIALIZED;
@@ -41,7 +41,7 @@ export function key_block(anchor_node, get_key, render_fn) {
 
 				effect = render_effect(
 					() => {
-						render_fn(anchor_node);
+						render_fn(anchor);
 
 						// @ts-expect-error TODO this should be unnecessary
 						const dom = block.d;
