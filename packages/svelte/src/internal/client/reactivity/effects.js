@@ -259,6 +259,11 @@ export function destroy_effect(effect) {
 }
 
 /**
+ * When a block effect is removed, we don't immediately destroy it or yank it
+ * out of the DOM, because it might have transitions. Instead, we 'pause' it.
+ * It stays around (in memory, and in the DOM) until outro transitions have
+ * completed, and if the state change is reversed then we _resume_ it.
+ * A paused effect does not update, and the DOM subtree becomes inert.
  * @param {import('#client').Effect} effect
  * @param {() => void} callback
  */
@@ -313,6 +318,8 @@ function pause_children(effect, transitions, local) {
 }
 
 /**
+ * The opposite of `pause_effect`. We call this if (for example)
+ * `x` becomes falsy then truthy: `{#if x}...{/if}`
  * @param {import('#client').Effect} effect
  */
 export function resume_effect(effect) {
@@ -327,6 +334,8 @@ function resume_children(effect, local) {
 	if ((effect.f & INERT) === 0) return;
 	effect.f ^= INERT;
 
+	// If a dependency of this effect changed while it was paused,
+	// apply the change now
 	if (check_dirtiness(effect)) {
 		execute_effect(effect);
 	}
