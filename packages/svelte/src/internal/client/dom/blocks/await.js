@@ -67,6 +67,8 @@ export function await_block(anchor_node, get_input, pending_fn, then_fn, catch_f
 		set_current_reaction(null);
 		set_current_effect(null);
 
+		// without this, the DOM does not update until two ticks after the promise,
+		// resolves which is unexpected behaviour (and somewhat irksome to test)
 		flushSync();
 
 		return effect;
