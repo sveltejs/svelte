@@ -297,7 +297,7 @@ function pause_children(effect, transitions, local) {
 	if ((effect.f & INERT) !== 0) return;
 	effect.f ^= INERT;
 
-	if (effect.transitions) {
+	if (effect.transitions !== null) {
 		for (const transition of effect.transitions) {
 			if (transition.is_global || local) {
 				transitions.push(transition);
@@ -305,7 +305,7 @@ function pause_children(effect, transitions, local) {
 		}
 	}
 
-	if (effect.effects) {
+	if (effect.effects !== null) {
 		for (const child of effect.effects) {
 			var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & MANAGED) !== 0;
 			pause_children(child, transitions, transparent ? local : false);
@@ -332,14 +332,14 @@ function resume_children(effect, local) {
 		execute_effect(effect);
 	}
 
-	if (effect.effects) {
+	if (effect.effects !== null) {
 		for (const child of effect.effects) {
 			var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & MANAGED) !== 0;
 			resume_children(child, transparent ? local : false);
 		}
 	}
 
-	if (effect.transitions) {
+	if (effect.transitions !== null) {
 		for (const transition of effect.transitions) {
 			if (transition.is_global || local) {
 				transition.in();
