@@ -299,7 +299,7 @@ function pause_children(effect, transitions, local) {
 
 	if (effect.transitions) {
 		for (const transition of effect.transitions) {
-			if (transition.global || local) {
+			if (transition.is_global || local) {
 				transitions.push(transition);
 			}
 		}
@@ -341,7 +341,7 @@ function resume_children(effect, local) {
 
 	if (effect.transitions) {
 		for (const transition of effect.transitions) {
-			if (transition.global || local) {
+			if (transition.is_global || local) {
 				transition.in();
 			}
 		}

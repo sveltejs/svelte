@@ -1,4 +1,4 @@
-import { noop, run } from '../../../common.js';
+import { noop } from '../../../common.js';
 import { user_effect } from '../../reactivity/effects.js';
 import { current_effect, untrack } from '../../runtime.js';
 import { raf } from '../../timing.js';
@@ -6,18 +6,6 @@ import { loop } from '../../loop.js';
 import { run_transitions } from '../../render.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../constants.js';
 import { is_function } from '../../utils.js';
-
-/**
- * @template P
- * @param {HTMLElement} dom
- * @param {() => import('#client').TransitionFn<P | undefined>} get_transition_fn
- * @param {(() => P) | null} props
- * @returns {void}
- */
-export function animate(dom, get_transition_fn, props) {
-	// TODO
-	// bind_transition(dom, get_transition_fn, props, 'key', false);
-}
 
 /**
  * @template T
@@ -33,7 +21,7 @@ function custom_event(type, detail, { bubbles = false, cancelable = false } = {}
 }
 
 /**
- * @param {HTMLElement} dom
+ * @param {Element} dom
  * @param {'introstart' | 'introend' | 'outrostart' | 'outroend'} type
  * @returns {void}
  */
@@ -78,7 +66,11 @@ function css_to_keyframe(css) {
 /** @param {number} t */
 const linear = (t) => t;
 
-/** @param {() => any} fn */
+/**
+ * @template T
+ * @param {() => T} fn
+ * @returns {Promise<T>}
+ */
 function defer(fn) {
 	return new Promise((fulfil) => {
 		user_effect(() => {
@@ -98,165 +90,76 @@ function defer(fn) {
 export function transition(flags, element, get_fn, get_params) {
 	const effect = /** @type {import('#client').Effect} */ (current_effect);
 
-	const intro = (flags & TRANSITION_IN) !== 0;
-	const outro = (flags & TRANSITION_OUT) !== 0;
-	const global = (flags & TRANSITION_GLOBAL) !== 0;
+	const is_intro = (flags & TRANSITION_IN) !== 0;
+	const is_outro = (flags & TRANSITION_OUT) !== 0;
+	const is_global = (flags & TRANSITION_GLOBAL) !== 0;
 
-	const direction = intro && outro ? 'both' : intro ? 'in' : 'out';
+	const direction = is_intro && is_outro ? 'both' : is_intro ? 'in' : 'out';
 
 	let p = 0;
 
-	/** @type {Animation | null} */
-	let current_animation;
-
-	/** @type {import('#client').Task | null} */
-	let current_task;
-
-	/** @type {import('#client').TransitionPayload | null} */
+	/** @type {import('#client').TransitionPayload | ((opts: { direction: 'in' | 'out' }) => import('#client').TransitionPayload) | undefined} */
 	let current_options;
-
-	let current_delta = 0;
 
 	/** @type {(() => void) | undefined} */
 	let callback;
 
-	/** @param {number} target */
-	async function start(target) {
-		stop();
-
-		dispatch_event(element, target === 1 ? 'introstart' : 'outrostart');
-
-		if (!current_options) {
-			var result = get_fn()(element, get_params?.(), { direction });
-
-			current_options = is_function(result)
-				? await defer(() =>
-						/** @type {Function} */ (result)({ direction: target === 1 ? 'in' : 'out' })
-					)
-				: result;
-		}
-
-		if (!current_options?.duration) {
-			current_options = null;
-			callback?.();
-			return;
-		}
-
-		const { delay = 0, duration, css, tick, easing = linear } = current_options;
-
-		const n = current_options.duration / (1000 / 60);
-		current_delta = target - p;
-
-		const adjusted_duration = duration * Math.abs(current_delta);
-
-		if (css) {
-			// WAAPI
-			const keyframes = [];
-
-			for (let i = 0; i <= n; i += 1) {
-				const eased = easing(i / n);
-				const t = p + current_delta * eased;
-				const styles = css(t, 1 - t);
-				keyframes.push(css_to_keyframe(styles));
-			}
-
-			current_animation = element.animate(keyframes, {
-				delay,
-				duration: adjusted_duration,
-				easing: 'linear',
-				fill: 'forwards'
-			});
-
-			current_animation.finished
-				.then(() => {
-					if (target === 1) {
-						current_options = null;
-						current_animation = null;
-					}
-
-					p = target;
-					callback?.();
-					dispatch_event(element, target === 1 ? 'introend' : 'outroend');
-				})
-				.catch(noop);
-		} else {
-			// Timer
-			const start_time = raf.now() + delay;
-			const start_p = p;
-			const end_time = start_time + adjusted_duration;
-
-			if (p === 0) {
-				tick?.(p, 1 - p); // TODO put in nested effect, to avoid interleaved reads/writes?
-			}
-
-			current_task = loop((now) => {
-				if (now >= end_time) {
-					if (target === 1) {
-						current_task = null;
-						current_options = null;
-					}
-
-					p = target;
-					tick?.(target, 1 - target);
-					callback?.();
-					dispatch_event(element, target === 1 ? 'introend' : 'outroend');
-					return false;
-				}
-
-				if (now >= start_time) {
-					p = start_p + current_delta * easing((now - start_time) / adjusted_duration);
-					tick?.(p, 1 - p);
-				}
-
-				return true;
-			});
-		}
-	}
-
-	function stop() {
-		if (current_task) {
-			current_task.abort();
-			current_task = null;
-		}
-
-		if (current_animation && current_options) {
-			const time = /** @type {number} */ (current_animation.currentTime);
-			const duration = /** @type {number} */ (current_options.duration);
-			p = (Math.abs(current_delta) * time) / duration;
-		}
+	function get_options() {
+		return (current_options ??= get_fn()(element, get_params?.(), { direction }));
 	}
 
 	var inert = element.inert;
 
+	/** @type {import('#client').Animation | undefined} */
+	var intro;
+
+	/** @type {import('#client').Animation | undefined} */
+	var outro;
+
+	/** @type {(() => void) | undefined} */
+	var reset;
+
 	/** @type {import('#client').Transition} */
 	const transition = {
-		global,
-		in() {
+		is_global,
+		async in() {
 			callback = undefined;
 			element.inert = inert;
 
-			if (current_animation) {
-				current_animation.cancel();
-				current_animation = null;
+			if (is_intro) {
+				intro = animate(element, get_options(), outro ? outro.p() : 0, 1, () => {
+					intro = current_options = undefined;
+				});
+
+				outro?.neuter();
+			} else {
+				outro?.abort();
+				reset?.();
 			}
 
-			if (intro) {
-				start(1);
-			} else {
-				current_options?.tick?.(1, 0);
-				stop();
-			}
+			reset = undefined;
 		},
-		out(fn) {
-			if (outro) {
+		async out(fn) {
+			if (is_outro) {
 				callback = fn;
 				element.inert = true;
-				start(0);
+
+				outro = animate(element, get_options(), intro ? intro.p() : 1, 0, () => {
+					outro = current_options = undefined;
+					fn?.();
+				});
+
+				reset = outro.reset;
+
+				intro?.neuter();
 			} else {
 				fn?.();
 			}
 		},
-		stop
+		stop: () => {
+			intro?.abort();
+			outro?.abort();
+		}
 	};
 
 	(effect.transitions ??= []).push(transition);
@@ -265,9 +168,9 @@ export function transition(flags, element, get_fn, get_params) {
 	// parent (branch) effect is where the state change happened. we can determine that by
 	// looking at whether the branch effect is currently initializing
 	if (
-		intro &&
+		is_intro &&
 		run_transitions &&
-		(global || /** @type {import('#client').Effect} */ (effect.parent).ran)
+		(is_global || /** @type {import('#client').Effect} */ (effect.parent).ran)
 	) {
 		user_effect(() => {
 			untrack(() => transition.in());
@@ -275,4 +178,153 @@ export function transition(flags, element, get_fn, get_params) {
 	} else {
 		p = 1;
 	}
+}
+
+/**
+ * @param {Element} element
+ * @param {import('#client').TransitionPayload | ((opts: { direction: 'in' | 'out' }) => import('#client').TransitionPayload)} options
+ * @param {number} p
+ * @param {number} target
+ * @param {(() => void) | undefined} callback
+ * @returns {import('#client').Animation}
+ */
+function animate(element, options, p, target, callback) {
+	dispatch_event(element, target === 1 ? 'introstart' : 'outrostart');
+
+	if (is_function(options)) {
+		/** @type {import('#client').Animation} */
+		var a;
+
+		user_effect(() => {
+			var o = untrack(() => options({ direction: target === 1 ? 'in' : 'out' }));
+			a = animate(element, o, p, target, callback);
+		});
+
+		return {
+			abort: () => a.abort(),
+			neuter: () => a.neuter(),
+			reset: noop,
+			p: () => a.p()
+		};
+	}
+
+	if (!options?.duration) {
+		callback?.();
+		return {
+			abort: noop,
+			neuter: noop,
+			reset: noop,
+			p: () => target
+		};
+	}
+
+	const { delay = 0, duration, css, tick, easing = linear } = options;
+
+	const n = options.duration / (1000 / 60);
+	const current_delta = target - p;
+
+	const adjusted_duration = duration * Math.abs(current_delta);
+
+	const start_time = raf.now() + delay;
+	const start_p = p;
+	const end_time = start_time + adjusted_duration;
+
+	if (css) {
+		// WAAPI
+		const keyframes = [];
+
+		for (let i = 0; i <= n; i += 1) {
+			const eased = easing(i / n);
+			const t = p + current_delta * eased;
+			const styles = css(t, 1 - t);
+			keyframes.push(css_to_keyframe(styles));
+		}
+
+		var animation = element.animate(keyframes, {
+			delay,
+			duration: adjusted_duration,
+			easing: 'linear',
+			fill: 'forwards'
+		});
+
+		animation.finished
+			.then(() => {
+				// if (target === 1) {
+				// 	current_options = null;
+				// 	current_animation = null;
+				// }
+
+				// p = target;
+				callback?.();
+				dispatch_event(element, target === 1 ? 'introend' : 'outroend');
+			})
+			.catch(noop);
+
+		return {
+			abort: () => {
+				animation.cancel();
+			},
+			neuter: () => {
+				callback = undefined;
+			},
+			reset: noop,
+			p: () => {
+				return clamp(
+					start_p + current_delta * easing((raf.now() - start_time) / adjusted_duration),
+					0,
+					1
+				);
+			}
+		};
+	}
+
+	// Timer
+	if (p === 0) {
+		tick?.(p, 1 - p); // TODO put in nested effect, to avoid interleaved reads/writes?
+	}
+
+	var task = loop((now) => {
+		if (now >= end_time) {
+			// if (target === 1) {
+			// 	current_task = null;
+			// 	current_options = null;
+			// }
+
+			// p = target;
+			tick?.(target, 1 - target);
+			callback?.();
+			dispatch_event(element, target === 1 ? 'introend' : 'outroend');
+			return false;
+		}
+
+		if (now >= start_time) {
+			p = start_p + current_delta * easing((now - start_time) / adjusted_duration);
+			tick?.(p, 1 - p);
+		}
+
+		return true;
+	});
+
+	return {
+		abort: () => {
+			if (target === 0) tick?.(1, 0);
+			task.abort();
+		},
+		neuter: () => {
+			callback = undefined;
+		},
+		reset: () => {
+			if (target === 0) tick?.(1, 0);
+		},
+		p: () => p
+	};
+}
+
+/**
+ * @param {number} n
+ * @param {number} min
+ * @param {number} max
+ */
+function clamp(n, min, max) {
+	return Math.max(min, Math.min(max, n));
 }

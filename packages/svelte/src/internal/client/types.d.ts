@@ -156,17 +156,24 @@ export type Block =
 	| SnippetBlock;
 
 export interface Transition {
-	global: boolean;
+	is_global: boolean;
 	in: () => void;
 	out: (callback?: () => void) => void;
 	stop: () => void;
+}
+
+export interface Animation {
+	abort: () => void;
+	neuter: () => void;
+	reset: () => void;
+	p: () => number;
 }
 
 export type TransitionFn<P> = (
 	element: Element,
 	props: P,
 	options: { direction?: 'in' | 'out' | 'both' }
-) => TransitionPayload | ((options: { direction?: 'in' | 'out' | 'both' }) => TransitionPayload);
+) => TransitionPayload | ((options: { direction?: 'in' | 'out' }) => TransitionPayload);
 
 export type AnimateFn<P> = (
 	element: Element,
