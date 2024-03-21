@@ -186,8 +186,7 @@ export type TransitionFn<P> = (
 export type AnimateFn<P> = (
 	element: Element,
 	rects: { from: DOMRect; to: DOMRect },
-	props: P,
-	options: {}
+	props: P
 ) => TransitionConfig;
 
 export type TransitionConfig = {

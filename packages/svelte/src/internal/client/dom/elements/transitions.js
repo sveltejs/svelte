@@ -93,7 +93,7 @@ export function animation(element, get_fn, get_params) {
 		apply() {
 			to = this.element.getBoundingClientRect();
 
-			const options = get_fn()(this.element, { from, to }, get_params?.(), {}); // TODO what is the last argument?
+			const options = get_fn()(this.element, { from, to }, get_params?.());
 
 			animation?.abort();
 
