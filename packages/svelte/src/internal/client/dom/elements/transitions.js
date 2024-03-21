@@ -79,23 +79,15 @@ export function animation() {
  * @returns {void}
  */
 export function transition(flags, element, get_fn, get_params) {
-	const effect = /** @type {import('#client').Effect} */ (current_effect);
+	var is_intro = (flags & TRANSITION_IN) !== 0;
+	var is_outro = (flags & TRANSITION_OUT) !== 0;
+	var is_global = (flags & TRANSITION_GLOBAL) !== 0;
 
-	const is_intro = (flags & TRANSITION_IN) !== 0;
-	const is_outro = (flags & TRANSITION_OUT) !== 0;
-	const is_global = (flags & TRANSITION_GLOBAL) !== 0;
-
-	const direction = is_intro && is_outro ? 'both' : is_intro ? 'in' : 'out';
+	/** @type {'in' | 'out' | 'both'} */
+	var direction = is_intro && is_outro ? 'both' : is_intro ? 'in' : 'out';
 
 	/** @type {import('#client').TransitionPayload | ((opts: { direction: 'in' | 'out' }) => import('#client').TransitionPayload) | undefined} */
-	let current_options;
-
-	/** @type {(() => void) | undefined} */
-	let callback;
-
-	function get_options() {
-		return (current_options ??= get_fn()(element, get_params?.(), { direction }));
-	}
+	var current_options;
 
 	var inert = element.inert;
 
@@ -108,30 +100,27 @@ export function transition(flags, element, get_fn, get_params) {
 	/** @type {(() => void) | undefined} */
 	var reset;
 
+	function get_options() {
+		return (current_options ??= get_fn()(element, get_params?.(), { direction }));
+	}
+
 	/** @type {import('#client').Transition} */
-	const transition = {
+	var transition = {
 		is_global,
 		async in() {
-			callback = undefined;
 			element.inert = inert;
 
 			if (is_intro) {
 				intro = animate(element, get_options(), outro, 1, () => {
 					intro = current_options = undefined;
 				});
-
-				outro?.neuter();
-				reset = intro.reset; // TODO handle this inside `animate`
 			} else {
 				outro?.abort();
 				reset?.();
 			}
-
-			reset = undefined;
 		},
 		async out(fn) {
 			if (is_outro) {
-				callback = fn;
 				element.inert = true;
 
 				outro = animate(element, get_options(), intro, 0, () => {
@@ -140,8 +129,6 @@ export function transition(flags, element, get_fn, get_params) {
 				});
 
 				reset = outro.reset;
-
-				intro?.neuter();
 			} else {
 				fn?.();
 			}
@@ -151,6 +138,8 @@ export function transition(flags, element, get_fn, get_params) {
 			outro?.abort();
 		}
 	};
+
+	var effect = /** @type {import('#client').Effect} */ (current_effect);
 
 	(effect.transitions ??= []).push(transition);
 
@@ -177,8 +166,6 @@ export function transition(flags, element, get_fn, get_params) {
  * @returns {import('#client').Animation}
  */
 function animate(element, options, counterpart, target, callback) {
-	dispatch_event(element, target === 1 ? 'introstart' : 'outrostart');
-
 	if (is_function(options)) {
 		/** @type {import('#client').Animation} */
 		var a;
@@ -195,6 +182,10 @@ function animate(element, options, counterpart, target, callback) {
 			p: (now) => a.p(now)
 		};
 	}
+
+	dispatch_event(element, target === 1 ? 'introstart' : 'outrostart');
+
+	counterpart?.neuter();
 
 	if (!options?.duration) {
 		callback?.();
