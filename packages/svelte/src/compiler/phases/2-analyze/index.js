@@ -1072,6 +1072,7 @@ const common_visitors = {
 			}
 
 			if (
+				context.state.analysis.runes &&
 				node !== binding.node &&
 				// If we have $state that can be proxied or frozen and isn't re-assigned, then that means
 				// it's likely not using a primitive value and thus this warning isn't that helpful.
