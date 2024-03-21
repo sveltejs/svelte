@@ -33,7 +33,7 @@ function create_if_block() {
  * @param {() => boolean} condition_fn
  * @param {(anchor: Node) => void} consequent_fn
  * @param {null | ((anchor: Node) => void)} alternate_fn
- * @param {boolean} [elseif]
+ * @param {boolean} [elseif] True if this is an `{:else if ...}` block rather than an `{#if ...}`, as that affects which transitions are considered 'local'
  * @returns {void}
  */
 export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn, elseif = false) {
