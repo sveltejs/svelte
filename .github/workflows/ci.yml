@@ -73,5 +73,5 @@ jobs:
           cache: pnpm
       - name: install
         run: pnpm install --frozen-lockfile
-      - name: type check
+      - name: check
         run: cd packages/svelte && node scripts/check-treeshakeability.js
