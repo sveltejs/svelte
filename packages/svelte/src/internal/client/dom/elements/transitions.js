@@ -138,7 +138,7 @@ export function transition(flags, element, get_fn, get_params) {
 	/** @type {'in' | 'out' | 'both'} */
 	var direction = is_intro && is_outro ? 'both' : is_intro ? 'in' : 'out';
 
-	/** @type {import('#client').TransitionConfig | ((opts: { direction: 'in' | 'out' }) => import('#client').TransitionConfig) | undefined} */
+	/** @type {import('#client').AnimationConfig | ((opts: { direction: 'in' | 'out' }) => import('#client').AnimationConfig) | undefined} */
 	var current_options;
 
 	var inert = element.inert;
@@ -183,6 +183,8 @@ export function transition(flags, element, get_fn, get_params) {
 					fn?.();
 				});
 
+				// TODO arguably the outro should never null itself out until _all_ outros for this effect have completed...
+				// in that case we wouldn't need to store `reset` separately
 				reset = outro.reset;
 			} else {
 				fn?.();
@@ -213,15 +215,19 @@ export function transition(flags, element, get_fn, get_params) {
 }
 
 /**
+ * Animates an element, according to the provided configuration
  * @param {Element} element
- * @param {import('#client').TransitionConfig | ((opts: { direction: 'in' | 'out' }) => import('#client').TransitionConfig)} options
- * @param {import('#client').Animation | undefined} counterpart
- * @param {number} t2
+ * @param {import('#client').AnimationConfig | ((opts: { direction: 'in' | 'out' }) => import('#client').AnimationConfig)} options
+ * @param {import('#client').Animation | undefined} counterpart The corresponding intro/outro to this outro/intro
+ * @param {number} t2 The target `t` value — `1` for intro, `0` for outro
  * @param {(() => void) | undefined} callback
  * @returns {import('#client').Animation}
  */
 function animate(element, options, counterpart, t2, callback) {
 	if (is_function(options)) {
+		// In the case of a deferred transition (such as `crossfade`), `option` will be
+		// a function rather than an `AnimationConfig`. We need to call this function
+		// once DOM has been updated...
 		/** @type {import('#client').Animation} */
 		var a;
 
@@ -230,23 +236,25 @@ function animate(element, options, counterpart, t2, callback) {
 			a = animate(element, o, counterpart, t2, callback);
 		});
 
+		// ...but we want to do so without using `async`/`await` everywhere, so
+		// we return a facade that allows everything to remain synchronous
 		return {
 			abort: () => a.abort(),
-			neuter: () => a.neuter(),
+			deactivate: () => a.deactivate(),
 			reset: () => a.reset(),
-			p: (now) => a.p(now)
+			t: (now) => a.t(now)
 		};
 	}
 
-	counterpart?.neuter();
+	counterpart?.deactivate();
 
 	if (!options?.duration) {
 		callback?.();
 		return {
 			abort: noop,
-			neuter: noop,
+			deactivate: noop,
 			reset: noop,
-			p: () => t2
+			t: () => t2
 		};
 	}
 
@@ -255,7 +263,7 @@ function animate(element, options, counterpart, t2, callback) {
 	var { delay = 0, duration, css, tick, easing = linear } = options;
 
 	var start = raf.now() + delay;
-	var t1 = counterpart?.p(start) ?? 1 - t2;
+	var t1 = counterpart?.t(start) ?? 1 - t2;
 	var delta = t2 - t1;
 
 	duration *= Math.abs(delta);
@@ -319,7 +327,7 @@ function animate(element, options, counterpart, t2, callback) {
 			animation?.cancel();
 			task?.abort();
 		},
-		neuter: () => {
+		deactivate: () => {
 			callback = undefined;
 		},
 		reset: () => {
@@ -327,7 +335,7 @@ function animate(element, options, counterpart, t2, callback) {
 				tick?.(1, 0);
 			}
 		},
-		p: (now) => {
+		t: (now) => {
 			var t = t1 + delta * easing((now - start) / duration);
 			return Math.min(1, Math.max(0, t));
 		}

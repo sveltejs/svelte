@@ -169,31 +169,38 @@ export interface TransitionManager {
 }
 
 export interface AnimationManager {
+	/** An element with an `animate:` directive */
 	element: Element;
+	/** Called during keyed each block reconciliation, before updates */
 	measure: () => void;
+	/** Called during keyed each block reconciliation, after updates — this triggers the animation */
 	apply: () => void;
 }
 
 export interface Animation {
+	/** Abort the animation */
 	abort: () => void;
-	neuter: () => void;
+	/** Allow the animation to continue running, but remove any callback. This prevents the removal of an outroing block if the corresponding intro has a `delay` */
+	deactivate: () => void;
+	/** Resets an animation to its starting state, if it uses `tick`. Exposed as a separate method so that an aborted `out:` can still reset even if the `outro` had already completed */
 	reset: () => void;
-	p: (now: number) => number;
+	/** Get the `t` value (between `0` and `1`) of the animation, so that its counterpart can start from the right place */
+	t: (now: number) => number;
 }
 
 export type TransitionFn<P> = (
 	element: Element,
 	props: P,
 	options: { direction?: 'in' | 'out' | 'both' }
-) => TransitionConfig | ((options: { direction?: 'in' | 'out' }) => TransitionConfig);
+) => AnimationConfig | ((options: { direction?: 'in' | 'out' }) => AnimationConfig);
 
 export type AnimateFn<P> = (
 	element: Element,
 	rects: { from: DOMRect; to: DOMRect },
 	props: P
-) => TransitionConfig;
+) => AnimationConfig;
 
-export type TransitionConfig = {
+export type AnimationConfig = {
 	delay?: number;
 	duration?: number;
 	easing?: (t: number) => number;
