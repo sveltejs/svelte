@@ -52,9 +52,9 @@ export default test({
 
 		divs = target.querySelectorAll('div');
 		assert.equal(divs[0].style.transform, 'translate(0px, 120px)');
-		assert.equal(divs[1].style.transform, 'translate(0px, 0px)');
-		assert.equal(divs[2].style.transform, 'translate(0px, 0px)');
-		assert.equal(divs[3].style.transform, 'translate(0px, 0px)');
+		assert.equal(divs[1].style.transform, '');
+		assert.equal(divs[2].style.transform, '');
+		assert.equal(divs[3].style.transform, '');
 		assert.equal(divs[4].style.transform, 'translate(0px, -120px)');
 
 		raf.tick(100);
