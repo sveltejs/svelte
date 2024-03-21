@@ -74,7 +74,7 @@ export function class_name(dom, value) {
 		// Removing the attribute when the value is only an empty string causes
 		// peformance issues vs simply making the className an empty string. So
 		// we should only remove the class if the the value is nullish.
-		if (value === null) {
+		if (value == null) {
 			dom.removeAttribute('class');
 		} else {
 			set_class_name(dom, next_class_name);
