@@ -30,7 +30,11 @@ import { STATE_SYMBOL } from '../../constants.js';
 var NEW_BLOCK = -1;
 var LIS_BLOCK = -2;
 
-/** @type {import('#client').EachItemBlock | null} */
+/**
+ * The row of a keyed each block that is currently updating. We track this
+ * so that `animate:` directives have something to attach themselves to
+ * @type {import('#client').EachItemBlock | null}
+ */
 export let current_each_item_block = null;
 
 /** @param {import('#client').EachItemBlock | null} block */
@@ -140,6 +144,7 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 
 					b_blocks[i] = create_block(array[i], keys?.[i], i, render_fn, flags);
 
+					// TODO helperise this
 					hydrating_node = /** @type {import('#client').TemplateNode} */ (
 						/** @type {Node} */ (
 							/** @type {Node} */ (fragment[fragment.length - 1] || hydrating_node).nextSibling
@@ -153,6 +158,7 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 			}
 
 			if (!hydrating) {
+				// TODO add 'empty controlled block' optimisation here
 				reconcile_fn(array, block, anchor, render_fn, flags, keys);
 			}
 
@@ -280,8 +286,6 @@ function reconcile_indexed_array(array, each_block, anchor, render_fn, flags) {
 		var remaining = a - b;
 
 		var clear = () => {
-			// TODO optimization for controlled case — just do `clear_text_content(dom)`
-
 			for (var i = b; i < a; i += 1) {
 				var block = a_blocks[i];
 				if (block.d) remove(block.d);
@@ -376,8 +380,6 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 			insert_block(block, anchor);
 		}
 	} else if (start === b) {
-		// TODO reinstate optimization for controlled blocks
-
 		// remove only
 		while (start < a) {
 			to_destroy.push(a_blocks[start++]);
