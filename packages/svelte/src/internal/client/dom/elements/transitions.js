@@ -3,7 +3,7 @@ import { user_effect } from '../../reactivity/effects.js';
 import { current_effect, untrack } from '../../runtime.js';
 import { raf } from '../../timing.js';
 import { loop } from '../../loop.js';
-import { run_transitions } from '../../render.js';
+import { should_intro } from '../../render.js';
 import { is_function } from '../../utils.js';
 import { current_each_item_block } from '../blocks/each.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
@@ -208,7 +208,7 @@ export function transition(flags, element, get_fn, get_params) {
 	// if this is a local transition, we only want to run it if the parent (block) effect's
 	// parent (branch) effect is where the state change happened. we can determine that by
 	// looking at whether the branch effect is currently initializing
-	if (is_intro && run_transitions) {
+	if (is_intro && should_intro) {
 		var parent = /** @type {import('#client').Effect} */ (effect.parent);
 
 		if (is_global || (parent.f & EFFECT_RAN) !== 0) {

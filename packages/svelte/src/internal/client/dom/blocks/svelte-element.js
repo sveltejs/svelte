@@ -10,7 +10,7 @@ import {
 import { remove } from '../reconciler.js';
 import { current_block } from '../../runtime.js';
 import { is_array } from '../../utils.js';
-import { set_run_transitions } from '../../render.js';
+import { set_should_intro } from '../../render.js';
 import { current_each_item_block, set_current_each_item_block } from './each.js';
 
 /**
@@ -104,7 +104,7 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 			} else {
 				// tag is changing — destroy immediately, render contents without intro transitions
 				destroy_effect(effect);
-				set_run_transitions(false);
+				set_should_intro(false);
 			}
 		}
 
@@ -145,7 +145,7 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 
 		tag = next_tag;
 		if (tag) current_tag = tag;
-		set_run_transitions(true);
+		set_should_intro(true);
 
 		set_current_each_item_block(previous_each_item_block);
 	}, block);

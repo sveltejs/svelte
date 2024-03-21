@@ -20,11 +20,16 @@ export const all_registered_events = new Set();
 /** @type {Set<(events: Array<string>) => void>} */
 export const root_event_handles = new Set();
 
-export let run_transitions = true;
+/**
+ * This is normally true — block effects should run their intro transitions —
+ * but is false during hydration and mounting (unless `options.intro` is `true`)
+ * and when creating the children of a `<svelte:element>` that just changed tag
+ */
+export let should_intro = true;
 
 /** @param {boolean} value */
-export function set_run_transitions(value) {
-	run_transitions = value;
+export function set_should_intro(value) {
+	should_intro = value;
 }
 
 /**
@@ -204,7 +209,7 @@ function _mount(Component, options) {
 	const registered_events = new Set();
 	const container = options.target;
 
-	run_transitions = options.intro ?? false;
+	should_intro = options.intro ?? false;
 
 	/** @type {import('#client').RootBlock} */
 	const block = {
@@ -250,7 +255,7 @@ function _mount(Component, options) {
 	const bound_event_listener = handle_event_propagation.bind(null, container);
 	const bound_document_event_listener = handle_event_propagation.bind(null, document);
 
-	run_transitions = true;
+	should_intro = true;
 
 	/** @param {Array<string>} events */
 	const event_handle = (events) => {
