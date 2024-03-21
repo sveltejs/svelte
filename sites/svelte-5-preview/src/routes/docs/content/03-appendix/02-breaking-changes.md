@@ -182,4 +182,4 @@ In Svelte 4, `null` and `undefined` were printed as the corresponding string. In
 
 ### Bindings now react to form resets
 
-Previously, calling `form.reset()` wasn't notified by bindings, as such values could get out of sync with the DOM. Svelte 5 fixes this by placing a `reset` listener on the document and invoking bindings where necessary.
+Previously, bindings did not take into account `reset` event of forms, and therefore values could get out of sync with the DOM. Svelte 5 fixes this by placing a `reset` listener on the document and invoking bindings where necessary.
