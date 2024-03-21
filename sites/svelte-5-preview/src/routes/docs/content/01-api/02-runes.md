@@ -93,6 +93,25 @@ This can improve performance with large arrays and objects that you weren't plan
 
 > Objects and arrays passed to `$state.frozen` will be shallowly frozen using `Object.freeze()`. If you don't want this, pass in a clone of the object or array instead.
 
+### Reactive Map, Set and Date
+
+Svelte provides reactive `Map`, `Set` and `Date` classes. These can be imported from `svelte/reactivity` and used just like their native counterparts.
+
+```svelte
+<script>
+	import { Map } from 'svelte/reactivity';
+
+	const map = new Map();
+	map.set('message', 'hello');
+
+	function update_message() {
+		map.set('message', 'goodbye');
+	}
+</script>
+
+<p>{map.get('message')}</p>
+```
+
 ## `$derived`
 
 Derived state is declared with the `$derived` rune:

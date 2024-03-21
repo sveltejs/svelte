@@ -41,7 +41,7 @@ export function derived(fn) {
 		/** @type {import('#client').DerivedDebug} */ (signal).inspect = new Set();
 	}
 
-	if (current_reaction !== null) {
+	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
 		if (current_reaction.deriveds === null) {
 			current_reaction.deriveds = [signal];
 		} else {

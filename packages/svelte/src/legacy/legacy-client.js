@@ -79,6 +79,7 @@ class Svelte4Component {
 		});
 
 		for (const key of Object.keys(this.#instance)) {
+			if (key === '$set' || key === '$destroy' || key === '$on') continue;
 			define_property(this, key, {
 				get() {
 					return this.#instance[key];

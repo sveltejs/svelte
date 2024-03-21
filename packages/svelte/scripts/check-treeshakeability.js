@@ -12,6 +12,15 @@ async function bundle_code(entry) {
 			virtual({
 				__entry__: entry
 			}),
+			{
+				name: 'resolve-svelte',
+				resolveId(importee) {
+					if (importee.startsWith('svelte')) {
+						const entry = pkg.exports[importee.replace('svelte', '.')];
+						return path.resolve(entry.browser ?? entry.default);
+					}
+				}
+			},
 			nodeResolve({
 				exportConditions: ['production', 'import', 'browser', 'default']
 			})
@@ -99,6 +108,7 @@ const without_hydration = await bundle_code(
 		{ filename: 'App.svelte' }
 	).js.code
 );
+
 if (!without_hydration.includes('current_hydration_fragment')) {
 	// eslint-disable-next-line no-console
 	console.error(`✅ Hydration code treeshakeable`);
