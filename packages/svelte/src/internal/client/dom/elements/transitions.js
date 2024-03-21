@@ -202,8 +202,9 @@ function animate(element, options, counterpart, t2, callback) {
 	var start = raf.now() + delay;
 	var t1 = counterpart?.p(start) ?? 1 - t2;
 	var delta = t2 - t1;
-	var adjusted_duration = duration * Math.abs(delta);
-	var end = start + adjusted_duration;
+
+	duration *= Math.abs(delta);
+	var end = start + duration;
 
 	/** @type {Animation} */
 	var animation;
@@ -214,7 +215,7 @@ function animate(element, options, counterpart, t2, callback) {
 	if (css) {
 		// WAAPI
 		var keyframes = [];
-		var n = adjusted_duration / (1000 / 60);
+		var n = duration / (1000 / 60);
 
 		for (var i = 0; i <= n; i += 1) {
 			var t = t1 + delta * easing(i / n);
@@ -224,7 +225,7 @@ function animate(element, options, counterpart, t2, callback) {
 
 		animation = element.animate(keyframes, {
 			delay,
-			duration: adjusted_duration,
+			duration,
 			easing: 'linear',
 			fill: 'forwards'
 		});
@@ -250,7 +251,7 @@ function animate(element, options, counterpart, t2, callback) {
 			}
 
 			if (now >= start) {
-				var p = t1 + delta * easing((now - start) / adjusted_duration);
+				var p = t1 + delta * easing((now - start) / duration);
 				tick?.(p, 1 - p);
 			}
 
@@ -272,16 +273,8 @@ function animate(element, options, counterpart, t2, callback) {
 			}
 		},
 		p: (now) => {
-			return clamp(t1 + delta * easing((now - start) / adjusted_duration), 0, 1);
+			var t = t1 + delta * easing((now - start) / duration);
+			return Math.min(1, Math.max(0, t));
 		}
 	};
-}
-
-/**
- * @param {number} n
- * @param {number} min
- * @param {number} max
- */
-function clamp(n, min, max) {
-	return Math.max(min, Math.min(max, n));
 }
