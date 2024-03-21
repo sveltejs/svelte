@@ -66,17 +66,8 @@ function css_to_keyframe(css) {
 /** @param {number} t */
 const linear = (t) => t;
 
-/**
- * @template T
- * @param {() => T} fn
- * @returns {Promise<T>}
- */
-function defer(fn) {
-	return new Promise((fulfil) => {
-		user_effect(() => {
-			fulfil(untrack(fn));
-		});
-	});
+export function animation() {
+	// TODO
 }
 
 /**
@@ -127,11 +118,12 @@ export function transition(flags, element, get_fn, get_params) {
 			element.inert = inert;
 
 			if (is_intro) {
-				intro = animate(element, get_options(), outro ? outro.p() : 0, 1, () => {
+				intro = animate(element, get_options(), outro?.p() ?? 0, 1, () => {
 					intro = current_options = undefined;
 				});
 
 				outro?.neuter();
+				reset = intro.reset;
 			} else {
 				outro?.abort();
 				reset?.();
@@ -144,7 +136,7 @@ export function transition(flags, element, get_fn, get_params) {
 				callback = fn;
 				element.inert = true;
 
-				outro = animate(element, get_options(), intro ? intro.p() : 1, 0, () => {
+				outro = animate(element, get_options(), intro?.p() ?? 1, 0, () => {
 					outro = current_options = undefined;
 					fn?.();
 				});
@@ -314,7 +306,9 @@ function animate(element, options, p, target, callback) {
 			callback = undefined;
 		},
 		reset: () => {
-			if (target === 0) tick?.(1, 0);
+			if (target === 0) {
+				tick?.(1, 0);
+			}
 		},
 		p: () => p
 	};

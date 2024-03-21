@@ -1922,7 +1922,7 @@ export const template_visitors = {
 		state.init.push(
 			b.stmt(
 				b.call(
-					'$.animate',
+					'$.animation',
 					state.node,
 					b.thunk(
 						/** @type {import('estree').Expression} */ (visit(parse_directive_name(node.name)))
