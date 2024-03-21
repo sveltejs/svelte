@@ -394,11 +394,14 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 		var last_block;
 		var last_sibling;
 
+		// store the indexes of each block in the new world
 		for (i = start; i < b; i += 1) {
 			sources[i - start] = NEW_BLOCK;
 			map_set(indexes, keys[i], i);
 		}
 
+		// populate the `sources` array for each old block with
+		// its new index, so that we can calculate moves
 		for (i = start; i < a; i += 1) {
 			block = a_blocks[i];
 			index = map_get(indexes, block.k);
@@ -418,10 +421,14 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 			}
 		}
 
+		// if we need to move blocks (as opposed to just adding/removing),
+		// figure out how to do so efficiently (I would be lying if I said
+		// I fully understand this part)
 		if (moved) {
 			mark_lis(sources);
 		}
 
+		// working from the back, insert new or moved blocks
 		while (b-- > start) {
 			index = sources[b - start];
 			var insert = index === NEW_BLOCK;
