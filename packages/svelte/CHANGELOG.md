@@ -1,5 +1,23 @@
 # svelte
 
+## 5.0.0-next.81
+
+### Patch Changes
+
+- feat: add support for webkitdirectory DOM boolean attribute ([#10847](https://github.com/sveltejs/svelte/pull/10847))
+
+- fix: don't override instance methods during legacy class creation ([#10834](https://github.com/sveltejs/svelte/pull/10834))
+
+- fix: adjust scope parent for named slots ([#10843](https://github.com/sveltejs/svelte/pull/10843))
+
+- fix: improve handling of unowned derived signals ([#10842](https://github.com/sveltejs/svelte/pull/10842))
+
+- fix: improve element class attribute behaviour ([#10856](https://github.com/sveltejs/svelte/pull/10856))
+
+- fix: ensure select value is updated upon select option removal ([#10846](https://github.com/sveltejs/svelte/pull/10846))
+
+- fix: ensure capture events don't call delegated events ([#10831](https://github.com/sveltejs/svelte/pull/10831))
+
 ## 5.0.0-next.80
 
 ### Patch Changes
