@@ -613,8 +613,6 @@ function update_block(block, item, index, type) {
 	} else {
 		block.i = index;
 	}
-
-	// TODO animations
 }
 
 /**
