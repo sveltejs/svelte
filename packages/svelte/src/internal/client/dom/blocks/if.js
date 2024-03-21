@@ -91,6 +91,7 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn,
 						consequent_dom = block.d;
 
 						if (mismatch) {
+							// Set fragment so that Svelte continues to operate in hydration mode
 							set_current_hydration_fragment([]);
 						}
 
@@ -124,6 +125,7 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn,
 						alternate_dom = block.d;
 
 						if (mismatch) {
+							// Set fragment so that Svelte continues to operate in hydration mode
 							set_current_hydration_fragment([]);
 						}
 
