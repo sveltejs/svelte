@@ -13,7 +13,7 @@
 
 <span
 	on:click="{toggle}"
-	class="{isCurrentlySelected ? 'selected' : ''}"
+	class="{isCurrentlySelected ? 'selected' : null}"
 >
 	<slot></slot>
 </span>

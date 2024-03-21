@@ -103,7 +103,17 @@ No. You can do the migration towards runes incrementally when Svelte 5 comes out
 
 ### When can I `npm install` the Svelte 5 preview?
 
-We plan to publish a pre-release version with enough time for brave souls to try it out in their apps and give us feedback on what breaks. Watch this space.
+Right now!
+
+```bash
+npm install svelte@next
+```
+
+You can also opt into Svelte 5 when creating a new SvelteKit project:
+
+```bash
+npm create svelte@latest
+```
 
 ### What's left to do?
 
@@ -119,7 +129,7 @@ We know that some of you are very keen on certain feature ideas, and we are too.
 
 ### I want to help. How do I contribute?
 
-We appreciate your enthusiasm! Right now it's not possible to accept contributions, but once we enter public beta, everything will be available on the Svelte GitHub repository.
+We appreciate your enthusiasm! We welcome issues on the [sveltejs/svelte](https://github.com/sveltejs/svelte) repo. Pull requests are a little dicier right now since many things are in flux, so we recommended starting with an issue.
 
 ### How can I share feedback or cool examples of what this enables?
 

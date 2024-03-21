@@ -1,33 +1,10 @@
 import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
+import { map } from './utils.js';
 
-var read = [
-	'difference',
-	'forEach',
-	'intersection',
-	'isDisjointFrom',
-	'isSubsetOf',
-	'isSupersetOf',
-	'symmetricDifference',
-	'union'
-];
-
-/**
- * @template T
- * @param {IterableIterator<T>} iterator
- */
-function make_iterable(iterator) {
-	iterator[Symbol.iterator] = get_self;
-	return iterator;
-}
-
-/**
- * @this {any}
- */
-function get_self() {
-	return this;
-}
+var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
+var set_like_methods = ['difference', 'intersection', 'symmetricDifference', 'union'];
 
 var inited = false;
 
@@ -41,7 +18,7 @@ export class ReactiveSet extends Set {
 	#size = source(0);
 
 	/**
-	 * @param {Iterable<T> | null | undefined} value
+	 * @param {Iterable<T> | null | undefined} [value]
 	 */
 	constructor(value) {
 		super();
@@ -50,9 +27,14 @@ export class ReactiveSet extends Set {
 		if (DEV) new Set(value);
 
 		if (value) {
+			var sources = this.#sources;
+
 			for (var element of value) {
-				this.add(element);
+				sources.set(element, source(true));
+				super.add(element);
 			}
+
+			this.#size.v = sources.size;
 		}
 
 		if (!inited) this.#init();
@@ -65,12 +47,26 @@ export class ReactiveSet extends Set {
 		var proto = ReactiveSet.prototype;
 		var set_proto = Set.prototype;
 
-		for (var method of read) {
+		/** @type {string} */
+		var method;
+
+		for (method of read_methods) {
 			// @ts-ignore
 			proto[method] = function (...v) {
 				get(this.#version);
 				// @ts-ignore
 				return set_proto[method].apply(this, v);
+			};
+		}
+
+		for (method of set_like_methods) {
+			// @ts-ignore
+			proto[method] = function (...v) {
+				get(this.#version);
+
+				// @ts-ignore
+				var set = /** @type {Set<T>} */ (set_proto[method].apply(this, v));
+				return new ReactiveSet(set);
 			};
 		}
 	}
@@ -81,9 +77,9 @@ export class ReactiveSet extends Set {
 
 	/** @param {T} value */
 	has(value) {
-		var source = this.#sources.get(value);
+		var s = this.#sources.get(value);
 
-		if (source === undefined) {
+		if (s === undefined) {
 			// We should always track the version in case
 			// the Set ever gets this value in the future.
 			get(this.#version);
@@ -91,7 +87,7 @@ export class ReactiveSet extends Set {
 			return false;
 		}
 
-		return get(source);
+		return get(s);
 	}
 
 	/** @param {T} value */
@@ -110,12 +106,12 @@ export class ReactiveSet extends Set {
 	/** @param {T} value */
 	delete(value) {
 		var sources = this.#sources;
-		var source = sources.get(value);
+		var s = sources.get(value);
 
-		if (source !== undefined) {
+		if (s !== undefined) {
 			sources.delete(value);
 			set(this.#size, sources.size);
-			set(source, false);
+			set(s, false);
 			this.#increment_version();
 		}
 
@@ -127,8 +123,8 @@ export class ReactiveSet extends Set {
 
 		if (sources.size !== 0) {
 			set(this.#size, 0);
-			for (var source of sources.values()) {
-				set(source, false);
+			for (var s of sources.values()) {
+				set(s, false);
 			}
 			this.#increment_version();
 		}
@@ -138,45 +134,20 @@ export class ReactiveSet extends Set {
 	}
 
 	keys() {
-		return this.values();
+		get(this.#version);
+		return this.#sources.keys();
 	}
 
 	values() {
-		get(this.#version);
-
-		var iterator = this.#sources.keys();
-
-		return make_iterable(
-			/** @type {IterableIterator<T>} */ ({
-				next() {
-					for (var value of iterator) {
-						return { value, done: false };
-					}
-
-					return { done: true };
-				}
-			})
-		);
+		return this.keys();
 	}
 
 	entries() {
-		var iterator = this.values();
-
-		return make_iterable(
-			/** @type {IterableIterator<[T, T]>} */ ({
-				next() {
-					for (var value of iterator) {
-						return { value: [value, value], done: false };
-					}
-
-					return { done: true };
-				}
-			})
-		);
+		return map(this.keys(), (key) => /** @type {[T, T]} */ ([key, key]));
 	}
 
 	[Symbol.iterator]() {
-		return this.values();
+		return this.keys();
 	}
 
 	get size() {

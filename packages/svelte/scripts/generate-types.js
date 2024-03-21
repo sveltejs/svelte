@@ -29,6 +29,7 @@ await createBundle({
 		[`${pkg.name}/easing`]: `${dir}/src/easing/index.js`,
 		[`${pkg.name}/legacy`]: `${dir}/src/legacy/legacy-client.js`,
 		[`${pkg.name}/motion`]: `${dir}/src/motion/public.d.ts`,
+		[`${pkg.name}/reactivity`]: `${dir}/src/reactivity/index.js`,
 		[`${pkg.name}/server`]: `${dir}/src/server/index.js`,
 		[`${pkg.name}/store`]: `${dir}/src/store/public.d.ts`,
 		[`${pkg.name}/transition`]: `${dir}/src/transition/public.d.ts`,
