@@ -178,7 +178,7 @@ function animate(element, options, counterpart, target, callback) {
 		return {
 			abort: () => a.abort(),
 			neuter: () => a.neuter(),
-			reset: noop,
+			reset: () => a.reset(),
 			p: (now) => a.p(now)
 		};
 	}
