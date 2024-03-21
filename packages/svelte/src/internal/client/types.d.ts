@@ -155,7 +155,7 @@ export type Block =
 	| EachItemBlock
 	| SnippetBlock;
 
-export interface Transition {
+export interface TransitionManager {
 	is_global: boolean;
 	in: () => void;
 	out: (callback?: () => void) => void;

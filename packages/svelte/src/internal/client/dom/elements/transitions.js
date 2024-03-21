@@ -104,7 +104,7 @@ export function transition(flags, element, get_fn, get_params) {
 		return (current_options ??= get_fn()(element, get_params?.(), { direction }));
 	}
 
-	/** @type {import('#client').Transition} */
+	/** @type {import('#client').TransitionManager} */
 	var transition = {
 		is_global,
 		async in() {

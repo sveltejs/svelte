@@ -264,7 +264,7 @@ export function destroy_effect(effect) {
  * @param {() => void} callback
  */
 export function pause_effect(effect, callback = noop) {
-	/** @type {import('#client').Transition[]} */
+	/** @type {import('#client').TransitionManager[]} */
 	const transitions = [];
 
 	pause_children(effect, transitions, true);
@@ -290,7 +290,7 @@ export function pause_effect(effect, callback = noop) {
 
 /**
  * @param {import('#client').Effect} effect
- * @param {import('#client').Transition[]} transitions
+ * @param {import('#client').TransitionManager[]} transitions
  * @param {boolean} local
  */
 function pause_children(effect, transitions, local) {

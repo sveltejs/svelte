@@ -1,4 +1,4 @@
-import type { Block, ComponentContext, Equals, Transition } from '#client';
+import type { Block, ComponentContext, Equals, TransitionManager } from '#client';
 import type { EFFECT, PRE_EFFECT, RENDER_EFFECT } from '../constants';
 
 export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFECT;
@@ -51,7 +51,7 @@ export interface Effect extends Reaction {
 	l: number;
 
 	// transitions TODO
-	transitions: null | Transition[];
+	transitions: null | TransitionManager[];
 	ran: boolean; // TODO fold this into the bitmask
 }
 
