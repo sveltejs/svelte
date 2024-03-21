@@ -473,6 +473,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 function serialize_element_attribute_update_assignment(element, node_id, attribute, context) {
 	const state = context.state;
 	const name = get_attribute_name(element, attribute, context);
+	const is_svg = context.state.metadata.namespace === 'svg';
 	let [contains_call_expression, value] = serialize_attribute_value(attribute.value, context);
 
 	// The foreign namespace doesn't have any special handling, everything goes through the attr function
@@ -507,13 +508,19 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		if (name === 'class') {
 			if (singular) {
 				return {
-					singular: b.stmt(b.call('$.class_name_effect', node_id, b.thunk(singular))),
-					grouped: b.stmt(b.call('$.class_name', node_id, singular)),
+					singular: b.stmt(
+						b.call(
+							is_svg ? '$.svg_class_name_effect' : '$.class_name_effect',
+							node_id,
+							b.thunk(singular)
+						)
+					),
+					grouped: b.stmt(b.call(is_svg ? '$.svg_class_name' : '$.class_name', node_id, singular)),
 					skip_condition: true
 				};
 			}
 			return {
-				grouped: b.stmt(b.call('$.class_name', node_id, value)),
+				grouped: b.stmt(b.call(is_svg ? '$.svg_class_name' : '$.class_name', node_id, value)),
 				skip_condition: true
 			};
 		} else if (!DOMProperties.includes(name)) {
