@@ -87,7 +87,6 @@ function defer(fn) {
 	});
 }
 
-// TODO make transition mode (`in:`, `out:`, `transition:` and `|global`) a bitmask
 /**
  * @template P
  * @param {number} flags
@@ -118,8 +117,8 @@ export function transition(flags, element, get_fn, get_params) {
 
 	let current_delta = 0;
 
-	/** @type {Array<() => void>} */
-	let callbacks = [];
+	/** @type {(() => void) | undefined} */
+	let callback;
 
 	/** @param {number} target */
 	async function start(target) {
@@ -139,7 +138,7 @@ export function transition(flags, element, get_fn, get_params) {
 
 		if (!current_options?.duration) {
 			current_options = null;
-			callbacks.forEach(run);
+			callback?.();
 			return;
 		}
 
@@ -176,7 +175,7 @@ export function transition(flags, element, get_fn, get_params) {
 					}
 
 					p = target;
-					callbacks.forEach(run);
+					callback?.();
 					dispatch_event(element, target === 1 ? 'introend' : 'outroend');
 				})
 				.catch(noop);
@@ -199,7 +198,7 @@ export function transition(flags, element, get_fn, get_params) {
 
 					p = target;
 					tick?.(target, 1 - target);
-					callbacks.forEach(run);
+					callback?.();
 					dispatch_event(element, target === 1 ? 'introend' : 'outroend');
 					return false;
 				}
@@ -230,14 +229,10 @@ export function transition(flags, element, get_fn, get_params) {
 	var inert = element.inert;
 
 	/** @type {import('#client').Transition} */
-	// TODO this needs to be `in()` and `out()` rather than `to()`, and both
-	// need to be idempotent (because of `{#if ...}{#if ...}`). `out()` should
-	// return a promise (callbacks would be more performant but we don't
-	// care about that yet)
 	const transition = {
 		global,
 		in() {
-			callbacks = [];
+			callback = undefined;
 			element.inert = inert;
 
 			if (current_animation) {
@@ -252,18 +247,13 @@ export function transition(flags, element, get_fn, get_params) {
 				stop();
 			}
 		},
-		out(callback) {
+		out(fn) {
 			if (outro) {
-				if (callback) {
-					callbacks.push(callback);
-				}
-
+				callback = fn;
 				element.inert = true;
 				start(0);
 			} else {
-				if (callback) {
-					callback();
-				}
+				fn?.();
 			}
 		},
 		stop
