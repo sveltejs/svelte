@@ -22,7 +22,11 @@ export function key_block(anchor_node, get_key, render_fn) {
 	/** @type {import('#client').Effect} */
 	let effect;
 
-	/** @type {Set<import('#client').Effect>} */
+	/**
+	 * Every time `key` changes, we create a new effect. Old effects are
+	 * removed from this set when they have fully transitioned out
+	 * @type {Set<import('#client').Effect>}
+	 */
 	let effects = new Set();
 
 	const key_effect = render_effect(
