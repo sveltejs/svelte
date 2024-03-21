@@ -83,12 +83,26 @@ class Animation {
 	}
 
 	/**
-	 * @param {number} target_frame
+	 * @param {number} t
 	 */
-	#apply_keyframe(target_frame) {
-		const keyframes = this.#keyframes;
-		const keyframes_size = keyframes.length - 1;
-		const frame = keyframes[Math.min(keyframes_size, Math.floor(keyframes.length * target_frame))];
+	#apply_keyframe(t) {
+		const n = Math.min(1, Math.max(0, t)) * (this.#keyframes.length - 1);
+
+		const lower = this.#keyframes[Math.floor(n)];
+		const upper = this.#keyframes[Math.ceil(n)];
+
+		let frame = lower;
+		if (lower !== upper) {
+			frame = {};
+
+			for (const key in lower) {
+				frame[key] = interpolate(
+					/** @type {string} */ (lower[key]),
+					/** @type {string} */ (upper[key]),
+					n % 1
+				);
+			}
+		}
 
 		for (let prop in frame) {
 			// @ts-ignore
@@ -112,6 +126,40 @@ class Animation {
 		this.#cancelled();
 		raf.animations.delete(this);
 	}
+}
+
+/**
+ * @param {string} a
+ * @param {string} b
+ * @param {number} p
+ */
+function interpolate(a, b, p) {
+	if (a === b) return a;
+
+	const fallback = p < 0.5 ? a : b;
+
+	const a_match = a.match(/[\d.]+|[^\d.]+/g);
+	const b_match = b.match(/[\d.]+|[^\d.]+/g);
+
+	if (!a_match || !b_match) return fallback;
+	if (a_match.length !== b_match.length) return fallback;
+
+	let result = '';
+
+	for (let i = 0; i < a_match.length; i += 2) {
+		const a_num = parseFloat(a_match[i]);
+		const b_num = parseFloat(b_match[i]);
+		result += a_num + (b_num - a_num) * p;
+
+		if (a_match[i + 1] !== b_match[i + 1]) {
+			// bail
+			return fallback;
+		}
+
+		result += a_match[i + 1] ?? '';
+	}
+
+	return result;
 }
 
 /**

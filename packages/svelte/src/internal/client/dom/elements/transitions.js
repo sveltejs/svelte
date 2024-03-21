@@ -214,7 +214,7 @@ function animate(element, options, counterpart, t2, callback) {
 	if (css) {
 		// WAAPI
 		var keyframes = [];
-		var n = options.duration / (1000 / 60); // TODO should be adjusted_duration?
+		var n = adjusted_duration / (1000 / 60);
 
 		for (var i = 0; i <= n; i += 1) {
 			var t = t1 + delta * easing(i / n);

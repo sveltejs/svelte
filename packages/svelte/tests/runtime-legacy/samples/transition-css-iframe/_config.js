@@ -18,7 +18,7 @@ export default test({
 		raf.tick(25);
 		assert.equal(div.style.opacity, '0.25');
 
-		raf.tick(49);
-		assert.equal(div.style.opacity, '0');
+		raf.tick(35);
+		assert.equal(div.style.opacity, '0.18333333333333335');
 	}
 });
