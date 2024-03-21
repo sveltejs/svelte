@@ -86,7 +86,7 @@ export function transition(flags, element, get_fn, get_params) {
 	/** @type {'in' | 'out' | 'both'} */
 	var direction = is_intro && is_outro ? 'both' : is_intro ? 'in' : 'out';
 
-	/** @type {import('#client').TransitionPayload | ((opts: { direction: 'in' | 'out' }) => import('#client').TransitionPayload) | undefined} */
+	/** @type {import('#client').TransitionConfig | ((opts: { direction: 'in' | 'out' }) => import('#client').TransitionConfig) | undefined} */
 	var current_options;
 
 	var inert = element.inert;
@@ -159,7 +159,7 @@ export function transition(flags, element, get_fn, get_params) {
 
 /**
  * @param {Element} element
- * @param {import('#client').TransitionPayload | ((opts: { direction: 'in' | 'out' }) => import('#client').TransitionPayload)} options
+ * @param {import('#client').TransitionConfig | ((opts: { direction: 'in' | 'out' }) => import('#client').TransitionConfig)} options
  * @param {import('#client').Animation | undefined} counterpart
  * @param {number} t2
  * @param {(() => void) | undefined} callback

@@ -173,16 +173,16 @@ export type TransitionFn<P> = (
 	element: Element,
 	props: P,
 	options: { direction?: 'in' | 'out' | 'both' }
-) => TransitionPayload | ((options: { direction?: 'in' | 'out' }) => TransitionPayload);
+) => TransitionConfig | ((options: { direction?: 'in' | 'out' }) => TransitionConfig);
 
 export type AnimateFn<P> = (
 	element: Element,
 	rects: { from: DOMRect; to: DOMRect },
 	props: P,
 	options: {}
-) => TransitionPayload;
+) => TransitionConfig;
 
-export type TransitionPayload = {
+export type TransitionConfig = {
 	delay?: number;
 	duration?: number;
 	easing?: (t: number) => number;
