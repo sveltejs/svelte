@@ -230,9 +230,12 @@ export type Render = {
 };
 
 export type Raf = {
+	/** Alias for `requestAnimationFrame`, exposed in such a way that we can override in tests */
 	tick: (callback: (time: DOMHighResTimeStamp) => void) => any;
+	/** Alias for `performance.now()`, exposed in such a way that we can override in tests */
 	now: () => number;
-	tasks: Set<any>;
+	/** A set of tasks that will run to completion, unless aborted */
+	tasks: Set<TaskEntry>;
 };
 
 export interface Task {
