@@ -161,18 +161,18 @@ export function transition(flags, element, get_fn, get_params) {
  * @param {Element} element
  * @param {import('#client').TransitionPayload | ((opts: { direction: 'in' | 'out' }) => import('#client').TransitionPayload)} options
  * @param {import('#client').Animation | undefined} counterpart
- * @param {number} target
+ * @param {number} t2
  * @param {(() => void) | undefined} callback
  * @returns {import('#client').Animation}
  */
-function animate(element, options, counterpart, target, callback) {
+function animate(element, options, counterpart, t2, callback) {
 	if (is_function(options)) {
 		/** @type {import('#client').Animation} */
 		var a;
 
 		user_effect(() => {
-			var o = untrack(() => options({ direction: target === 1 ? 'in' : 'out' }));
-			a = animate(element, o, counterpart, target, callback);
+			var o = untrack(() => options({ direction: t2 === 1 ? 'in' : 'out' }));
+			a = animate(element, o, counterpart, t2, callback);
 		});
 
 		return {
@@ -191,19 +191,19 @@ function animate(element, options, counterpart, target, callback) {
 			abort: noop,
 			neuter: noop,
 			reset: noop,
-			p: () => target
+			p: () => t2
 		};
 	}
 
-	dispatch_event(element, target === 1 ? 'introstart' : 'outrostart');
+	dispatch_event(element, t2 === 1 ? 'introstart' : 'outrostart');
 
-	const { delay = 0, duration, css, tick, easing = linear } = options;
+	var { delay = 0, duration, css, tick, easing = linear } = options;
 
-	const start_time = raf.now() + delay;
-	const start_p = counterpart?.p(start_time) ?? 1 - target;
-	const delta = target - start_p;
-	const adjusted_duration = duration * Math.abs(delta);
-	const end_time = start_time + adjusted_duration;
+	var start = raf.now() + delay;
+	var t1 = counterpart?.p(start) ?? 1 - t2;
+	var delta = t2 - t1;
+	var adjusted_duration = duration * Math.abs(delta);
+	var end = start + adjusted_duration;
 
 	/** @type {Animation} */
 	var animation;
@@ -213,13 +213,12 @@ function animate(element, options, counterpart, target, callback) {
 
 	if (css) {
 		// WAAPI
-		const keyframes = [];
-		const n = options.duration / (1000 / 60); // TODO should be adjusted_duration?
+		var keyframes = [];
+		var n = options.duration / (1000 / 60); // TODO should be adjusted_duration?
 
-		for (let i = 0; i <= n; i += 1) {
-			const eased = easing(i / n);
-			const t = start_p + delta * eased;
-			const styles = css(t, 1 - t);
+		for (var i = 0; i <= n; i += 1) {
+			var t = t1 + delta * easing(i / n);
+			var styles = css(t, 1 - t);
 			keyframes.push(css_to_keyframe(styles));
 		}
 
@@ -233,25 +232,25 @@ function animate(element, options, counterpart, target, callback) {
 		animation.finished
 			.then(() => {
 				callback?.();
-				dispatch_event(element, target === 1 ? 'introend' : 'outroend');
+				dispatch_event(element, t2 === 1 ? 'introend' : 'outroend');
 			})
 			.catch(noop);
 	} else {
 		// Timer
-		if (start_p === 0) {
+		if (t1 === 0) {
 			tick?.(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
 		}
 
 		task = loop((now) => {
-			if (now >= end_time) {
-				tick?.(target, 1 - target);
+			if (now >= end) {
+				tick?.(t2, 1 - t2);
 				callback?.();
-				dispatch_event(element, target === 1 ? 'introend' : 'outroend');
+				dispatch_event(element, t2 === 1 ? 'introend' : 'outroend');
 				return false;
 			}
 
-			if (now >= start_time) {
-				var p = start_p + delta * easing((now - start_time) / adjusted_duration);
+			if (now >= start) {
+				var p = t1 + delta * easing((now - start) / adjusted_duration);
 				tick?.(p, 1 - p);
 			}
 
@@ -268,12 +267,12 @@ function animate(element, options, counterpart, target, callback) {
 			callback = undefined;
 		},
 		reset: () => {
-			if (target === 0) {
+			if (t2 === 0) {
 				tick?.(1, 0);
 			}
 		},
 		p: (now) => {
-			return clamp(start_p + delta * easing((now - start_time) / adjusted_duration), 0, 1);
+			return clamp(t1 + delta * easing((now - start) / adjusted_duration), 0, 1);
 		}
 	};
 }
