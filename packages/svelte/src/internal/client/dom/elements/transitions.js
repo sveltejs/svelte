@@ -68,6 +68,8 @@ function css_to_keyframe(css) {
 const linear = (t) => t;
 
 /**
+ * Called inside keyed `{#each ...}` blocks (as `$.animation(...)`). This creates an animation manager
+ * and attaches it to the block, so that moves can be animated following reconciliation.
  * @template P
  * @param {Element} element
  * @param {() => import('#client').AnimateFn<P | undefined>} get_fn
@@ -118,6 +120,9 @@ export function animation(element, get_fn, get_params) {
 }
 
 /**
+ * Called inside block effects as `$.transition(...)`. This creates a transition manager and
+ * attaches it to the current effect — later, inside `pause_effect` and `resume_effect`, we
+ * use this to create `intro` and `outro` transitions.
  * @template P
  * @param {number} flags
  * @param {HTMLElement} element
@@ -148,13 +153,16 @@ export function transition(flags, element, get_fn, get_params) {
 	var reset;
 
 	function get_options() {
+		// If a transition is still ongoing, we use the existing options rather than generating
+		// new ones. This ensures that reversible transitions reverse smoothly, rather than
+		// jumping to a new spot because (for example) a different `duration` was used
 		return (current_options ??= get_fn()(element, get_params?.(), { direction }));
 	}
 
 	/** @type {import('#client').TransitionManager} */
 	var transition = {
 		is_global,
-		async in() {
+		in() {
 			element.inert = inert;
 
 			if (is_intro) {
@@ -166,7 +174,7 @@ export function transition(flags, element, get_fn, get_params) {
 				reset?.();
 			}
 		},
-		async out(fn) {
+		out(fn) {
 			if (is_outro) {
 				element.inert = true;
 

@@ -158,9 +158,13 @@ export type Block =
 	| SnippetBlock;
 
 export interface TransitionManager {
+	/** Whether the `global` modifier was used (i.e. `transition:fade|global`) */
 	is_global: boolean;
+	/** Called inside `resume_effect` */
 	in: () => void;
+	/** Called inside `pause_effect` */
 	out: (callback?: () => void) => void;
+	/** Called inside `destroy_effect` */
 	stop: () => void;
 }
 
