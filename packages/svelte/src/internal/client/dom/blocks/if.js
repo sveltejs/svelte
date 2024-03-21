@@ -41,9 +41,6 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn,
 
 	hydrate_block_anchor(anchor_node);
 
-	/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-	let mismatch = false;
-
 	/** @type {null | import('#client').TemplateNode | Array<import('#client').TemplateNode>} */
 	let consequent_dom = null;
 
@@ -61,6 +58,9 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn,
 
 	const if_effect = render_effect(() => {
 		if (condition === (condition = !!condition_fn())) return;
+
+		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
+		let mismatch = false;
 
 		if (hydrating) {
 			const comment_text = /** @type {Comment} */ (current_hydration_fragment?.[0])?.data;
@@ -153,8 +153,6 @@ export function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn,
 	if (elseif) {
 		if_effect.f |= IS_ELSEIF;
 	}
-
-	mismatch = false; // TODO not sure if we actually need this — belt and braces
 
 	if_effect.ondestroy = () => {
 		// TODO make this unnecessary by linking the dom to the effect,
