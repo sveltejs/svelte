@@ -87,8 +87,6 @@ export function transition(flags, element, get_fn, get_params) {
 
 	const direction = is_intro && is_outro ? 'both' : is_intro ? 'in' : 'out';
 
-	let p = 0;
-
 	/** @type {import('#client').TransitionPayload | ((opts: { direction: 'in' | 'out' }) => import('#client').TransitionPayload) | undefined} */
 	let current_options;
 
@@ -118,12 +116,12 @@ export function transition(flags, element, get_fn, get_params) {
 			element.inert = inert;
 
 			if (is_intro) {
-				intro = animate(element, get_options(), outro?.p() ?? 0, 1, () => {
+				intro = animate(element, get_options(), outro, 1, () => {
 					intro = current_options = undefined;
 				});
 
 				outro?.neuter();
-				reset = intro.reset;
+				reset = intro.reset; // TODO handle this inside `animate`
 			} else {
 				outro?.abort();
 				reset?.();
@@ -136,7 +134,7 @@ export function transition(flags, element, get_fn, get_params) {
 				callback = fn;
 				element.inert = true;
 
-				outro = animate(element, get_options(), intro?.p() ?? 1, 0, () => {
+				outro = animate(element, get_options(), intro, 0, () => {
 					outro = current_options = undefined;
 					fn?.();
 				});
@@ -167,20 +165,18 @@ export function transition(flags, element, get_fn, get_params) {
 		user_effect(() => {
 			untrack(() => transition.in());
 		});
-	} else {
-		p = 1;
 	}
 }
 
 /**
  * @param {Element} element
  * @param {import('#client').TransitionPayload | ((opts: { direction: 'in' | 'out' }) => import('#client').TransitionPayload)} options
- * @param {number} p
+ * @param {import('#client').Animation | undefined} counterpart
  * @param {number} target
  * @param {(() => void) | undefined} callback
  * @returns {import('#client').Animation}
  */
-function animate(element, options, p, target, callback) {
+function animate(element, options, counterpart, target, callback) {
 	dispatch_event(element, target === 1 ? 'introstart' : 'outrostart');
 
 	if (is_function(options)) {
@@ -189,14 +185,14 @@ function animate(element, options, p, target, callback) {
 
 		user_effect(() => {
 			var o = untrack(() => options({ direction: target === 1 ? 'in' : 'out' }));
-			a = animate(element, o, p, target, callback);
+			a = animate(element, o, counterpart, target, callback);
 		});
 
 		return {
 			abort: () => a.abort(),
 			neuter: () => a.neuter(),
 			reset: noop,
-			p: () => a.p()
+			p: (now) => a.p(now)
 		};
 	}
 
@@ -213,12 +209,11 @@ function animate(element, options, p, target, callback) {
 	const { delay = 0, duration, css, tick, easing = linear } = options;
 
 	const n = options.duration / (1000 / 60);
-	const current_delta = target - p;
-
-	const adjusted_duration = duration * Math.abs(current_delta);
 
 	const start_time = raf.now() + delay;
-	const start_p = p;
+	const start_p = counterpart?.p(start_time) ?? 1 - target;
+	const current_delta = target - start_p;
+	const adjusted_duration = duration * Math.abs(current_delta);
 	const end_time = start_time + adjusted_duration;
 
 	if (css) {
@@ -227,7 +222,7 @@ function animate(element, options, p, target, callback) {
 
 		for (let i = 0; i <= n; i += 1) {
 			const eased = easing(i / n);
-			const t = p + current_delta * eased;
+			const t = start_p + current_delta * eased;
 			const styles = css(t, 1 - t);
 			keyframes.push(css_to_keyframe(styles));
 		}
@@ -271,8 +266,8 @@ function animate(element, options, p, target, callback) {
 	}
 
 	// Timer
-	if (p === 0) {
-		tick?.(p, 1 - p); // TODO put in nested effect, to avoid interleaved reads/writes?
+	if (start_p === 0) {
+		tick?.(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
 	}
 
 	var task = loop((now) => {
@@ -290,7 +285,7 @@ function animate(element, options, p, target, callback) {
 		}
 
 		if (now >= start_time) {
-			p = start_p + current_delta * easing((now - start_time) / adjusted_duration);
+			var p = start_p + current_delta * easing((now - start_time) / adjusted_duration);
 			tick?.(p, 1 - p);
 		}
 
@@ -310,7 +305,9 @@ function animate(element, options, p, target, callback) {
 				tick?.(1, 0);
 			}
 		},
-		p: () => p
+		p: (now) => {
+			return clamp(start_p + current_delta * easing((now - start_time) / adjusted_duration), 0, 1);
+		}
 	};
 }
 

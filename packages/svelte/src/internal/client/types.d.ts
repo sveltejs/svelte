@@ -166,7 +166,7 @@ export interface Animation {
 	abort: () => void;
 	neuter: () => void;
 	reset: () => void;
-	p: () => number;
+	p: (now: number) => number;
 }
 
 export type TransitionFn<P> = (
