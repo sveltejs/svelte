@@ -32,6 +32,7 @@ export const Runes = /** @type {const} */ ([
 	'$state',
 	'$state.frozen',
 	'$props',
+	'$bindable',
 	'$derived',
 	'$derived.by',
 	'$effect',

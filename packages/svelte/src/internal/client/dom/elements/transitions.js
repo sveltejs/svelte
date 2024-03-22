@@ -1,85 +1,13 @@
-import { EACH_IS_ANIMATED, EACH_IS_CONTROLLED } from '../../../../constants.js';
-import { run_all } from '../../../common.js';
-import {
-	AWAIT_BLOCK,
-	DYNAMIC_COMPONENT_BLOCK,
-	EACH_BLOCK,
-	EACH_ITEM_BLOCK,
-	IF_BLOCK,
-	KEY_BLOCK,
-	ROOT_BLOCK
-} from '../../constants.js';
-import { destroy_each_item_block, get_first_element } from '../blocks/each.js';
-import { schedule_raf_task } from '../task.js';
-import { append_child, empty } from '../operations.js';
-import {
-	destroy_effect,
-	effect,
-	managed_effect,
-	managed_pre_effect
-} from '../../reactivity/effects.js';
-import {
-	current_block,
-	current_effect,
-	execute_effect,
-	mark_subtree_inert,
-	untrack
-} from '../../runtime.js';
+import { noop } from '../../../common.js';
+import { user_effect } from '../../reactivity/effects.js';
+import { current_effect, untrack } from '../../runtime.js';
 import { raf } from '../../timing.js';
-
-const active_tick_animations = new Set();
-const DELAY_NEXT_TICK = Number.MIN_SAFE_INTEGER;
-
-/** @type {undefined | number} */
-let active_tick_ref = undefined;
-
-/**
- * @template P
- * @param {HTMLElement} dom
- * @param {() => import('#client').TransitionFn<P | undefined>} get_transition_fn
- * @param {(() => P) | null} props
- * @param {any} global
- * @returns {void}
- */
-export function transition(dom, get_transition_fn, props, global = false) {
-	bind_transition(dom, get_transition_fn, props, 'both', global);
-}
-
-/**
- * @template P
- * @param {HTMLElement} dom
- * @param {() => import('#client').TransitionFn<P | undefined>} get_transition_fn
- * @param {(() => P) | null} props
- * @returns {void}
- */
-export function animate(dom, get_transition_fn, props) {
-	bind_transition(dom, get_transition_fn, props, 'key', false);
-}
-
-/**
- * @template P
- * @param {HTMLElement} dom
- * @param {() => import('#client').TransitionFn<P | undefined>} get_transition_fn
- * @param {(() => P) | null} props
- * @param {any} global
- * @returns {void}
- */
-function in_fn(dom, get_transition_fn, props, global = false) {
-	bind_transition(dom, get_transition_fn, props, 'in', global);
-}
-export { in_fn as in };
-
-/**
- * @template P
- * @param {HTMLElement} dom
- * @param {() => import('#client').TransitionFn<P | undefined>} get_transition_fn
- * @param {(() => P) | null} props
- * @param {any} global
- * @returns {void}
- */
-export function out(dom, get_transition_fn, props, global = false) {
-	bind_transition(dom, get_transition_fn, props, 'out', global);
-}
+import { loop } from '../../loop.js';
+import { should_intro } from '../../render.js';
+import { is_function } from '../../utils.js';
+import { current_each_item_block } from '../blocks/each.js';
+import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
+import { EFFECT_RAN } from '../../constants.js';
 
 /**
  * @template T
@@ -95,7 +23,7 @@ function custom_event(type, detail, { bubbles = false, cancelable = false } = {}
 }
 
 /**
- * @param {HTMLElement} dom
+ * @param {Element} dom
  * @param {'introstart' | 'introend' | 'outrostart' | 'outroend'} type
  * @returns {void}
  */
@@ -137,685 +65,281 @@ function css_to_keyframe(css) {
 	return keyframe;
 }
 
-class TickAnimation {
-	/** @type {null | (() => void)} */
-	onfinish;
-
-	/** @type {(t: number, u: number) => string} */
-	#tick_fn;
-
-	/** @type {number} */
-	#duration;
-
-	/** @type {number} */
-	#current;
-
-	/** @type {number} */
-	#delay;
-
-	/** @type {number} */
-	#previous;
-
-	/** @type {boolean} */
-	paused;
-
-	/** @type {boolean} */
-	#reversed;
-
-	/** @type {number} */
-	#delay_current;
-
-	/** @type {boolean} */
-	#delayed_reverse;
-
-	/**
-	 * @param {(t: number, u: number) => string} tick_fn
-	 * @param {number} duration
-	 * @param {number} delay
-	 * @param {boolean} out
-	 */
-	constructor(tick_fn, duration, delay, out) {
-		this.#duration = duration;
-		this.#delay = delay;
-		this.paused = false;
-		this.#tick_fn = tick_fn;
-		this.#reversed = out;
-		this.#delay_current = delay;
-		this.#current = out ? duration : 0;
-		this.#previous = 0;
-		this.#delayed_reverse = false;
-		this.onfinish = null;
-		if (this.#delay) {
-			if (!out) {
-				this.#tick_fn(0, 1);
-			}
-		}
-	}
-
-	pause() {
-		this.paused = true;
-	}
-
-	play() {
-		this.paused = false;
-		if (!active_tick_animations.has(this)) {
-			this.#previous = raf.now();
-			if (active_tick_ref === undefined) {
-				active_tick_ref = raf.tick(handle_raf);
-			}
-			active_tick_animations.add(this);
-		}
-	}
-
-	#reverse() {
-		this.#reversed = !this.#reversed;
-		if (this.paused) {
-			if (this.#current === 0) {
-				this.#current = this.#duration;
-			}
-			this.play();
-		}
-	}
-
-	reverse() {
-		if (this.#delay === 0) {
-			this.#reverse();
-		} else {
-			this.#delay_current = this.#delay;
-			this.#delayed_reverse = true;
-		}
-	}
-
-	cancel() {
-		active_tick_animations.delete(this);
-		const current = this.#current / this.#duration;
-		if (current > 0 && current < 1) {
-			const t = this.#reversed ? 1 : 0;
-			this.#tick_fn(t, 1 - t);
-		}
-	}
-
-	finish() {
-		active_tick_animations.delete(this);
-		if (this.onfinish) {
-			this.onfinish();
-		}
-	}
-
-	/** @param {number} time */
-	_update(time) {
-		let diff = time - this.#previous;
-		this.#previous = time;
-		if (this.#delay_current !== 0) {
-			const is_delayed = this.#delay_current === DELAY_NEXT_TICK;
-			let cancel = !this.#delayed_reverse;
-			this.#delay_current -= diff;
-			if (this.#delay_current < 0 || is_delayed || (this.#delay_current === 0 && this.#reversed)) {
-				const delay_diff = is_delayed ? 0 : -this.#delay_current;
-				this.#delay_current = 0;
-
-				if (this.#delayed_reverse) {
-					this.#delayed_reverse = false;
-					this.#reverse();
-				} else if (delay_diff !== 0 || this.#reversed) {
-					diff = delay_diff;
-				}
-				cancel = false;
-			} else if (this.#delay_current === 0) {
-				this.#delay_current = DELAY_NEXT_TICK;
-			}
-			if (cancel) {
-				return;
-			}
-		}
-		this.#current += this.#reversed ? -diff : diff;
-		let t = this.#current / this.#duration;
-
-		if (t < 0) {
-			t = 0;
-		} else if (t > 1) {
-			t = 1;
-		}
-
-		if ((this.#reversed && t <= 0) || (!this.#reversed && t >= 1)) {
-			t = this.#reversed ? 0 : 1;
-			if (this.#delay_current === 0) {
-				active_tick_animations.delete(this);
-				if (this.onfinish) {
-					this.paused = true;
-					this.onfinish();
-				}
-			}
-		}
-		this.#tick_fn(t, 1 - t);
-	}
-}
-
-/** @param {number} time */
-function handle_raf(time) {
-	for (const animation of active_tick_animations) {
-		if (!animation.paused) {
-			animation._update(time);
-		}
-	}
-	if (active_tick_animations.size !== 0) {
-		active_tick_ref = raf.tick(handle_raf);
-	} else {
-		active_tick_ref = undefined;
-	}
-}
-
-/**
- * @param {{(t: number): number;(t: number): number;(arg0: number): any;}} easing_fn
- * @param {((t: number, u: number) => string)} css_fn
- * @param {number} duration
- * @param {string} direction
- * @param {boolean} reverse
- */
-function create_keyframes(easing_fn, css_fn, duration, direction, reverse) {
-	/** @type {Keyframe[]} */
-	const keyframes = [];
-	// We need at least two frames
-	const frame_time = 16.666;
-	const max_duration = Math.max(duration, frame_time);
-	// Have a keyframe every fame for 60 FPS
-	for (let i = 0; i <= max_duration; i += frame_time) {
-		let time;
-		if (i + frame_time > max_duration) {
-			time = 1;
-		} else if (i === 0) {
-			time = 0;
-		} else {
-			time = i / max_duration;
-		}
-		let t = easing_fn(time);
-		if (reverse) {
-			t = 1 - t;
-		}
-		keyframes.push(css_to_keyframe(css_fn(t, 1 - t)));
-	}
-	if (direction === 'out' || reverse) {
-		keyframes.reverse();
-	}
-	return keyframes;
-}
-
 /** @param {number} t */
 const linear = (t) => t;
 
 /**
- * @param {HTMLElement} dom
- * @param {() => import('../../types.js').TransitionPayload} init
- * @param {'in' | 'out' | 'both' | 'key'} direction
- * @param {import('../../types.js').Effect} effect
- * @returns {import('../../types.js').Transition}
- */
-function create_transition(dom, init, direction, effect) {
-	let curr_direction = 'in';
-
-	/** @type {Array<() => void>} */
-	let subs = [];
-
-	/** @type {null | Animation | TickAnimation} */
-	let animation = null;
-	let cancelled = false;
-
-	const create_animation = () => {
-		let payload = /** @type {import('../../types.js').TransitionPayload} */ (transition.p);
-		if (typeof payload === 'function') {
-			// @ts-ignore
-			payload = payload({ direction: curr_direction });
-		}
-		if (payload == null) {
-			return;
-		}
-		const duration = payload.duration ?? 300;
-		const delay = payload.delay ?? 0;
-		const css_fn = payload.css;
-		const tick_fn = payload.tick;
-		const easing_fn = payload.easing || linear;
-
-		if (typeof tick_fn === 'function') {
-			animation = new TickAnimation(tick_fn, duration, delay, direction === 'out');
-		} else {
-			const keyframes =
-				typeof css_fn === 'function'
-					? create_keyframes(easing_fn, css_fn, duration, direction, false)
-					: [];
-			animation = dom.animate(keyframes, {
-				duration,
-				endDelay: delay,
-				delay,
-				fill: 'both'
-			});
-		}
-		animation.pause();
-
-		animation.onfinish = () => {
-			const is_outro = curr_direction === 'out';
-			/** @type {Animation | TickAnimation} */ (animation).cancel();
-			if (is_outro) {
-				run_all(subs);
-				subs = [];
-			}
-			dispatch_event(dom, is_outro ? 'outroend' : 'introend');
-		};
-	};
-
-	/** @type {import('../../types.js').Transition} */
-	const transition = {
-		e: effect,
-		i: init,
-		// payload
-		p: null,
-
-		// finished
-		/** @param {() => void} fn */
-		f(fn) {
-			subs.push(fn);
-		},
-		in() {
-			const needs_reverse = curr_direction !== 'in';
-			curr_direction = 'in';
-			if (animation === null || cancelled) {
-				cancelled = false;
-				create_animation();
-			}
-			if (animation === null) {
-				transition.x();
-			} else {
-				dispatch_event(dom, 'introstart');
-				if (needs_reverse) {
-					/** @type {Animation | TickAnimation} */ (animation).reverse();
-				}
-				/** @type {Animation | TickAnimation} */ (animation).play();
-			}
-		},
-		// out
-		o() {
-			// @ts-ignore
-			const has_keyed_transition = dom.__animate;
-			// If we're outroing an element that has an animation, then we need to fix
-			// its position to ensure it behaves nicely without causing layout shift.
-			if (has_keyed_transition) {
-				const style = getComputedStyle(dom);
-				const position = style.position;
-
-				if (position !== 'absolute' && position !== 'fixed') {
-					const { width, height } = style;
-					const a = dom.getBoundingClientRect();
-					dom.style.position = 'absolute';
-
-					dom.style.width = width;
-					dom.style.height = height;
-					const b = dom.getBoundingClientRect();
-					if (a.left !== b.left || a.top !== b.top) {
-						const translate = `translate(${a.left - b.left}px, ${a.top - b.top}px)`;
-						const existing_transform = style.transform;
-						if (existing_transform === 'none') {
-							dom.style.transform = translate;
-						} else {
-							// Previously, in the Svelte 4, we'd just apply the transform the the DOM element. However,
-							// because we're now using Web Animations, we can't do that as it won't work properly if the
-							// animation is also making use of the same transformations. So instead, we apply an
-							// instantaneous animation and pause it on the first frame, just applying the same behavior.
-							// We also need to take into consideration matrix transforms and how they might combine with
-							// an existing behavior that is already in progress (such as scale).
-							// > Follow the white rabbit.
-							const transform = existing_transform.startsWith('matrix(1,')
-								? translate
-								: `matrix(1,0,0,1,0,0)`;
-							const frame = {
-								transform
-							};
-							const animation = dom.animate([frame, frame], { duration: 1 });
-							animation.pause();
-						}
-					}
-				}
-			}
-			const needs_reverse = direction === 'both' && curr_direction !== 'out';
-			curr_direction = 'out';
-			if (animation === null || cancelled) {
-				cancelled = false;
-				create_animation();
-			}
-			if (animation === null) {
-				transition.x();
-			} else {
-				dispatch_event(dom, 'outrostart');
-				if (needs_reverse) {
-					const payload = transition.p;
-					const current_animation = /** @type {Animation} */ (animation);
-					// If we are working with CSS animations, then before we call reverse, we also need to ensure
-					// that we reverse the easing logic. To do this we need to re-create the keyframes so they're
-					// in reverse with easing properly reversed too.
-					if (
-						payload !== null &&
-						payload.css !== undefined &&
-						current_animation.playState === 'idle'
-					) {
-						const duration = payload.duration ?? 300;
-						const css_fn = payload.css;
-						const easing_fn = payload.easing || linear;
-						const keyframes = create_keyframes(easing_fn, css_fn, duration, direction, true);
-						const effect = current_animation.effect;
-						if (effect !== null) {
-							// @ts-ignore
-							effect.setKeyframes(keyframes);
-						}
-					}
-					/** @type {Animation | TickAnimation} */ (animation).reverse();
-				} else {
-					/** @type {Animation | TickAnimation} */ (animation).play();
-				}
-			}
-		},
-		// cancel
-		c() {
-			if (animation !== null) {
-				/** @type {Animation | TickAnimation} */ (animation).cancel();
-			}
-			cancelled = true;
-		},
-		// cleanup
-		x() {
-			run_all(subs);
-			subs = [];
-		},
-		r: direction,
-		d: dom
-	};
-	return transition;
-}
-
-/**
- * @param {import('../../types.js').Block} block
- * @returns {boolean}
- */
-function is_transition_block(block) {
-	const type = block.t;
-	return (
-		type === IF_BLOCK ||
-		type === EACH_ITEM_BLOCK ||
-		type === KEY_BLOCK ||
-		type === AWAIT_BLOCK ||
-		type === DYNAMIC_COMPONENT_BLOCK ||
-		(type === EACH_BLOCK && block.v.length === 0)
-	);
-}
-
-/**
+ * Called inside keyed `{#each ...}` blocks (as `$.animation(...)`). This creates an animation manager
+ * and attaches it to the block, so that moves can be animated following reconciliation.
  * @template P
- * @param {HTMLElement} dom
- * @param {() => import('../../types.js').TransitionFn<P | undefined> | import('../../types.js').AnimateFn<P | undefined>} get_transition_fn
- * @param {(() => P) | null} props_fn
- * @param {'in' | 'out' | 'both' | 'key'} direction
- * @param {boolean} global
- * @returns {void}
+ * @param {Element} element
+ * @param {() => import('#client').AnimateFn<P | undefined>} get_fn
+ * @param {(() => P) | null} get_params
  */
-function bind_transition(dom, get_transition_fn, props_fn, direction, global) {
-	const transition_effect = /** @type {import('../../types.js').Effect} */ (current_effect);
-	const block = current_block;
-	const is_keyed_transition = direction === 'key';
+export function animation(element, get_fn, get_params) {
+	var block = /** @type {import('#client').EachItem} */ (current_each_item_block);
 
-	let can_show_intro_on_mount = true;
-	let can_apply_lazy_transitions = false;
+	/** @type {DOMRect} */
+	var from;
 
-	if (is_keyed_transition) {
-		// @ts-ignore
-		dom.__animate = true;
-	}
-	/** @type {import('../../types.js').Block | null} */
-	let transition_block = block;
-	main: while (transition_block !== null) {
-		if (is_transition_block(transition_block)) {
-			if (transition_block.t === EACH_ITEM_BLOCK) {
-				// Lazily apply the each block transition
-				transition_block.r = each_item_transition;
-				transition_block.a = each_item_animate;
-				transition_block = transition_block.p;
-			} else if (transition_block.t === AWAIT_BLOCK && transition_block.n /* pending */) {
-				can_show_intro_on_mount = true;
-			} else if (transition_block.t === IF_BLOCK) {
-				transition_block.r = if_block_transition;
-				if (can_show_intro_on_mount) {
-					/** @type {import('../../types.js').Block | null} */
-					let if_block = transition_block;
-					while (if_block.t === IF_BLOCK) {
-						// If we have an if block parent that is currently falsy then
-						// we can show the intro on mount as long as that block is mounted
-						if (if_block.e !== null && !if_block.v) {
-							can_show_intro_on_mount = true;
-							break main;
-						}
-						if_block = if_block.p;
-					}
-				}
+	/** @type {DOMRect} */
+	var to;
+
+	/** @type {import('#client').Animation | undefined} */
+	var animation;
+
+	block.a ??= {
+		element,
+		measure() {
+			from = this.element.getBoundingClientRect();
+		},
+		apply() {
+			animation?.abort();
+
+			to = this.element.getBoundingClientRect();
+
+			const options = get_fn()(this.element, { from, to }, get_params?.());
+
+			if (
+				from.left !== to.left ||
+				from.right !== to.right ||
+				from.top !== to.top ||
+				from.bottom !== to.bottom
+			) {
+				animation = animate(this.element, options, undefined, 1, () => {
+					animation?.abort();
+					animation = undefined;
+				});
 			}
-			if (!can_apply_lazy_transitions && can_show_intro_on_mount) {
-				can_show_intro_on_mount = transition_block.e !== null;
-			}
-			if (can_show_intro_on_mount || !global) {
-				can_apply_lazy_transitions = true;
-			}
-		} else if (transition_block.t === ROOT_BLOCK && !can_apply_lazy_transitions) {
-			can_show_intro_on_mount = transition_block.e !== null || transition_block.i;
 		}
-		transition_block = transition_block.p;
-	}
+	};
 
-	/** @type {import('../../types.js').Transition} */
-	let transition;
-
-	effect(() => {
-		let already_mounted = false;
-		if (transition !== undefined) {
-			already_mounted = true;
-			// Destroy any existing transitions first
-			transition.x();
-		}
-		const transition_fn = get_transition_fn();
-		/** @param {DOMRect} [from] */
-		const init = (from) =>
-			untrack(() => {
-				const props = props_fn === null ? {} : props_fn();
-				return is_keyed_transition
-					? /** @type {import('../../types.js').AnimateFn<any>} */ (transition_fn)(
-							dom,
-							{ from: /** @type {DOMRect} */ (from), to: dom.getBoundingClientRect() },
-							props,
-							{}
-						)
-					: /** @type {import('../../types.js').TransitionFn<any>} */ (transition_fn)(dom, props, {
-							direction
-						});
-			});
-
-		transition = create_transition(dom, init, direction, transition_effect);
-		const is_intro = direction === 'in';
-		const show_intro = can_show_intro_on_mount && (is_intro || direction === 'both');
-
-		if (show_intro && !already_mounted) {
-			transition.p = transition.i();
-		}
-
-		const effect = managed_pre_effect(() => {
-			destroy_effect(effect);
-			dom.inert = false;
-
-			if (show_intro && !already_mounted) {
-				transition.in();
-			}
-
-			/** @type {import('../../types.js').Block | null} */
-			let transition_block = block;
-			while (!is_intro && transition_block !== null) {
-				const parent = transition_block.p;
-				if (is_transition_block(transition_block)) {
-					if (transition_block.r !== null) {
-						transition_block.r(transition);
-					}
-					if (
-						parent === null ||
-						(!global && (transition_block.t !== IF_BLOCK || parent.t !== IF_BLOCK || parent.v))
-					) {
-						break;
-					}
-				}
-				transition_block = parent;
-			}
-		});
-	});
-
-	if (direction === 'key') {
-		effect(() => {
-			return () => {
-				transition.x();
-			};
-		});
-	}
+	// in the case of a `<svelte:element>`, it's possible for `$.animation(...)` to be called
+	// when an animation manager already exists, if the tag changes. in that case, we need to
+	// swap out the element rather than creating a new manager, in case it happened at the same
+	// moment as a reconciliation
+	block.a.element = element;
 }
 
 /**
- * @param {Set<import('../../types.js').Transition>} transitions
- * @param {'in' | 'out' | 'key'} target_direction
- * @param {DOMRect} [from]
+ * Called inside block effects as `$.transition(...)`. This creates a transition manager and
+ * attaches it to the current effect — later, inside `pause_effect` and `resume_effect`, we
+ * use this to create `intro` and `outro` transitions.
+ * @template P
+ * @param {number} flags
+ * @param {HTMLElement} element
+ * @param {() => import('#client').TransitionFn<P | undefined>} get_fn
+ * @param {(() => P) | null} get_params
  * @returns {void}
  */
-export function trigger_transitions(transitions, target_direction, from) {
-	/** @type {Array<() => void>} */
-	const outros = [];
-	for (const transition of transitions) {
-		const direction = transition.r;
-		const effect = transition.e;
-		if (target_direction === 'in') {
-			if (direction === 'in' || direction === 'both') {
-				transition.in();
+export function transition(flags, element, get_fn, get_params) {
+	var is_intro = (flags & TRANSITION_IN) !== 0;
+	var is_outro = (flags & TRANSITION_OUT) !== 0;
+	var is_global = (flags & TRANSITION_GLOBAL) !== 0;
+
+	/** @type {'in' | 'out' | 'both'} */
+	var direction = is_intro && is_outro ? 'both' : is_intro ? 'in' : 'out';
+
+	/** @type {import('#client').AnimationConfig | ((opts: { direction: 'in' | 'out' }) => import('#client').AnimationConfig) | undefined} */
+	var current_options;
+
+	var inert = element.inert;
+
+	/** @type {import('#client').Animation | undefined} */
+	var intro;
+
+	/** @type {import('#client').Animation | undefined} */
+	var outro;
+
+	/** @type {(() => void) | undefined} */
+	var reset;
+
+	function get_options() {
+		// If a transition is still ongoing, we use the existing options rather than generating
+		// new ones. This ensures that reversible transitions reverse smoothly, rather than
+		// jumping to a new spot because (for example) a different `duration` was used
+		return (current_options ??= get_fn()(element, get_params?.(), { direction }));
+	}
+
+	/** @type {import('#client').TransitionManager} */
+	var transition = {
+		is_global,
+		in() {
+			element.inert = inert;
+
+			if (is_intro) {
+				dispatch_event(element, 'introstart');
+				intro = animate(element, get_options(), outro, 1, () => {
+					dispatch_event(element, 'introend');
+					intro = current_options = undefined;
+				});
 			} else {
-				transition.c();
+				outro?.abort();
+				reset?.();
 			}
-			transition.d.inert = false;
-			mark_subtree_inert(effect, false);
-		} else if (target_direction === 'key') {
-			if (direction === 'key') {
-				if (!transition.p) {
-					transition.p = transition.i(/** @type {DOMRect} */ (from));
-				}
-				transition.in();
+		},
+		out(fn) {
+			if (is_outro) {
+				element.inert = true;
+
+				dispatch_event(element, 'outrostart');
+				outro = animate(element, get_options(), intro, 0, () => {
+					dispatch_event(element, 'outroend');
+					outro = current_options = undefined;
+					fn?.();
+				});
+
+				// TODO arguably the outro should never null itself out until _all_ outros for this effect have completed...
+				// in that case we wouldn't need to store `reset` separately
+				reset = outro.reset;
+			} else {
+				fn?.();
 			}
-		} else {
-			if (direction === 'out' || direction === 'both') {
-				if (!transition.p) {
-					transition.p = transition.i();
-				}
-				outros.push(transition.o);
-			}
-			transition.d.inert = true;
-			mark_subtree_inert(effect, true);
+		},
+		stop: () => {
+			intro?.abort();
+			outro?.abort();
 		}
-	}
-	if (outros.length > 0) {
-		// Defer the outros to a microtask
-		const e = managed_pre_effect(() => {
-			destroy_effect(e);
-			const e2 = managed_effect(() => {
-				destroy_effect(e2);
-				run_all(outros);
+	};
+
+	var effect = /** @type {import('#client').Effect} */ (current_effect);
+
+	(effect.transitions ??= []).push(transition);
+
+	// if this is a local transition, we only want to run it if the parent (block) effect's
+	// parent (branch) effect is where the state change happened. we can determine that by
+	// looking at whether the branch effect is currently initializing
+	if (is_intro && should_intro) {
+		var parent = /** @type {import('#client').Effect} */ (effect.parent);
+
+		if (is_global || (parent.f & EFFECT_RAN) !== 0) {
+			user_effect(() => {
+				untrack(() => transition.in());
 			});
-		});
+		}
 	}
 }
 
 /**
- * @this {import('../../types.js').IfBlock}
- * @param {import('../../types.js').Transition} transition
- * @returns {void}
+ * Animates an element, according to the provided configuration
+ * @param {Element} element
+ * @param {import('#client').AnimationConfig | ((opts: { direction: 'in' | 'out' }) => import('#client').AnimationConfig)} options
+ * @param {import('#client').Animation | undefined} counterpart The corresponding intro/outro to this outro/intro
+ * @param {number} t2 The target `t` value — `1` for intro, `0` for outro
+ * @param {(() => void) | undefined} callback
+ * @returns {import('#client').Animation}
  */
-function if_block_transition(transition) {
-	const block = this;
-	// block.value === true
-	if (block.v) {
-		const consequent_transitions = (block.c ??= new Set());
-		consequent_transitions.add(transition);
-		transition.f(() => {
-			const c = /** @type {Set<import('../../types.js').Transition>} */ (consequent_transitions);
-			c.delete(transition);
-			// If the block has changed to falsy and has transitions
-			if (!block.v && c.size === 0) {
-				const consequent_effect = block.ce;
-				execute_effect(/** @type {import('../../types.js').Effect} */ (consequent_effect));
-			}
+function animate(element, options, counterpart, t2, callback) {
+	if (is_function(options)) {
+		// In the case of a deferred transition (such as `crossfade`), `option` will be
+		// a function rather than an `AnimationConfig`. We need to call this function
+		// once DOM has been updated...
+		/** @type {import('#client').Animation} */
+		var a;
+
+		user_effect(() => {
+			var o = untrack(() => options({ direction: t2 === 1 ? 'in' : 'out' }));
+			a = animate(element, o, counterpart, t2, callback);
 		});
+
+		// ...but we want to do so without using `async`/`await` everywhere, so
+		// we return a facade that allows everything to remain synchronous
+		return {
+			abort: () => a.abort(),
+			deactivate: () => a.deactivate(),
+			reset: () => a.reset(),
+			t: (now) => a.t(now)
+		};
+	}
+
+	counterpart?.deactivate();
+
+	if (!options?.duration) {
+		callback?.();
+		return {
+			abort: noop,
+			deactivate: noop,
+			reset: noop,
+			t: () => t2
+		};
+	}
+
+	var { delay = 0, duration, css, tick, easing = linear } = options;
+
+	var start = raf.now() + delay;
+	var t1 = counterpart?.t(start) ?? 1 - t2;
+	var delta = t2 - t1;
+
+	duration *= Math.abs(delta);
+	var end = start + duration;
+
+	/** @type {Animation} */
+	var animation;
+
+	/** @type {import('#client').Task} */
+	var task;
+
+	if (css) {
+		// WAAPI
+		var keyframes = [];
+		var n = duration / (1000 / 60);
+
+		for (var i = 0; i <= n; i += 1) {
+			var t = t1 + delta * easing(i / n);
+			var styles = css(t, 1 - t);
+			keyframes.push(css_to_keyframe(styles));
+		}
+
+		animation = element.animate(keyframes, {
+			delay,
+			duration,
+			easing: 'linear',
+			fill: 'forwards'
+		});
+
+		animation.finished
+			.then(() => {
+				callback?.();
+			})
+			.catch(noop);
 	} else {
-		const alternate_transitions = (block.a ??= new Set());
-		alternate_transitions.add(transition);
-		transition.f(() => {
-			const a = /** @type {Set<import('../../types.js').Transition>} */ (alternate_transitions);
-			a.delete(transition);
-			// If the block has changed to truthy and has transitions
-			if (block.v && a.size === 0) {
-				const alternate_effect = block.ae;
-				execute_effect(/** @type {import('../../types.js').Effect} */ (alternate_effect));
+		// Timer
+		if (t1 === 0) {
+			tick?.(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
+		}
+
+		task = loop((now) => {
+			if (now >= end) {
+				tick?.(t2, 1 - t2);
+				callback?.();
+				return false;
 			}
+
+			if (now >= start) {
+				var p = t1 + delta * easing((now - start) / duration);
+				tick?.(p, 1 - p);
+			}
+
+			return true;
 		});
 	}
-}
 
-/**
- * @this {import('../../types.js').EachItemBlock}
- * @param {import('../../types.js').Transition} transition
- * @returns {void}
- */
-function each_item_transition(transition) {
-	const block = this;
-	const each_block = block.p;
-	const is_controlled = (each_block.f & EACH_IS_CONTROLLED) !== 0;
-	// Disable optimization
-	if (is_controlled) {
-		const anchor = empty();
-		each_block.f ^= EACH_IS_CONTROLLED;
-		append_child(/** @type {Element} */ (each_block.a), anchor);
-		each_block.a = anchor;
-	}
-	if (transition.r === 'key' && (each_block.f & EACH_IS_ANIMATED) === 0) {
-		each_block.f |= EACH_IS_ANIMATED;
-	}
-	const transitions = (block.s ??= new Set());
-	transition.f(() => {
-		transitions.delete(transition);
-		if (transition.r !== 'key') {
-			for (let other of transitions) {
-				const type = other.r;
-				if (type === 'key' || type === 'in') {
-					transitions.delete(other);
-				}
+	return {
+		abort: () => {
+			animation?.cancel();
+			task?.abort();
+		},
+		deactivate: () => {
+			callback = undefined;
+		},
+		reset: () => {
+			if (t2 === 0) {
+				tick?.(1, 0);
 			}
-			if (transitions.size === 0) {
-				block.s = null;
-				destroy_each_item_block(block, null, true);
-			}
+		},
+		t: (now) => {
+			var t = t1 + delta * easing((now - start) / duration);
+			return Math.min(1, Math.max(0, t));
 		}
-	});
-	transitions.add(transition);
-}
-
-/**
- *
- * @param {import('../../types.js').EachItemBlock} block
- * @param {Set<import('../../types.js').Transition>} transitions
- */
-function each_item_animate(block, transitions) {
-	const from_dom = /** @type {Element} */ (get_first_element(block));
-	const from = from_dom.getBoundingClientRect();
-	// Cancel any existing key transitions
-	for (const transition of transitions) {
-		const type = transition.r;
-		if (type === 'key') {
-			transition.c();
-		}
-	}
-	schedule_raf_task(() => {
-		trigger_transitions(transitions, 'key', from);
-	});
+	};
 }

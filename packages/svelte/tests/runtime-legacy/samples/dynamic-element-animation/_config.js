@@ -23,7 +23,6 @@ export default test({
 	`,
 
 	test({ assert, component, target, raf }) {
-		raf.tick(0);
 		component.tag = 'p';
 		assert.equal(target.querySelectorAll('p').length, 5);
 
@@ -52,11 +51,11 @@ export default test({
 		];
 
 		divs = target.querySelectorAll('div');
-		assert.ok(~divs[0].style.transform);
-		assert.equal(divs[1].style.transform, 'translate(1px, 0px)');
-		assert.equal(divs[2].style.transform, 'translate(1px, 0px)');
-		assert.equal(divs[3].style.transform, 'translate(1px, 0px)');
-		assert.ok(~divs[4].style.transform);
+		assert.equal(divs[0].style.transform, 'translate(0px, 120px)');
+		assert.equal(divs[1].style.transform, '');
+		assert.equal(divs[2].style.transform, '');
+		assert.equal(divs[3].style.transform, '');
+		assert.equal(divs[4].style.transform, 'translate(0px, -120px)');
 
 		raf.tick(100);
 		assert.deepEqual([divs[0].style.transform, divs[4].style.transform], ['', '']);

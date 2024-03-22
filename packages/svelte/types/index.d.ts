@@ -708,7 +708,8 @@ declare module 'svelte/compiler' {
 		node: Identifier;
 		/**
 		 * - `normal`: A variable that is not in any way special
-		 * - `prop`: A normal prop (possibly mutated)
+		 * - `prop`: A normal prop (possibly reassigned or mutated)
+		 * - `bindable_prop`: A prop one can `bind:` to (possibly reassigned or mutated)
 		 * - `rest_prop`: A rest prop
 		 * - `state`: A state variable
 		 * - `derived`: A derived variable
@@ -720,6 +721,7 @@ declare module 'svelte/compiler' {
 		kind:
 			| 'normal'
 			| 'prop'
+			| 'bindable_prop'
 			| 'rest_prop'
 			| 'state'
 			| 'frozen_state'
@@ -747,7 +749,7 @@ declare module 'svelte/compiler' {
 		scope: Scope;
 		/** For `legacy_reactive`: its reactive dependencies */
 		legacy_dependencies: Binding[];
-		/** Legacy props: the `class` in `{ export klass as class}` */
+		/** Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props() */
 		prop_alias: string | null;
 		/**
 		 * If this is set, all references should use this expression instead of the identifier name.
@@ -2501,12 +2503,23 @@ declare namespace $effect {
  * Declares the props that a component accepts. Example:
  *
  * ```ts
- * let { optionalProp = 42, requiredProp }: { optionalProp?: number; requiredProps: string } = $props();
+ * let { optionalProp = 42, requiredProp, bindableProp = $bindable() }: { optionalProp?: number; requiredProps: string; bindableProp: boolean } = $props();
  * ```
  *
  * https://svelte-5-preview.vercel.app/docs/runes#$props
  */
 declare function $props(): any;
+
+/**
+ * Declares a prop as bindable, meaning the parent component can use `bind:propName={value}` to bind to it.
+ *
+ * ```ts
+ * let { propName = $bindable() }: { propName: boolean } = $props();
+ * ```
+ *
+ * https://svelte-5-preview.vercel.app/docs/runes#$bindable
+ */
+declare function $bindable<T>(t?: T): T;
 
 /**
  * Inspects one or more values whenever they, or the properties they contain, change. Example:

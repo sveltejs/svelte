@@ -207,33 +207,30 @@ export const javascript_visitors_runes = {
 
 						seen.push(name);
 
-						let id = property.value;
-						let initial = undefined;
-
-						if (property.value.type === 'AssignmentPattern') {
-							id = property.value.left;
-							initial = /** @type {import('estree').Expression} */ (visit(property.value.right));
-						}
-
+						let id =
+							property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
 						assert.equal(id.type, 'Identifier');
-
 						const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
+						const initial =
+							binding.initial &&
+							/** @type {import('estree').Expression} */ (visit(binding.initial));
 
 						if (binding.reassigned || state.analysis.accessors || initial) {
 							declarations.push(b.declarator(id, get_prop_source(binding, state, name, initial)));
 						}
 					} else {
 						// RestElement
-						declarations.push(
-							b.declarator(
-								property.argument,
-								b.call(
-									'$.rest_props',
-									b.id('$$props'),
-									b.array(seen.map((name) => b.literal(name)))
-								)
-							)
-						);
+						/** @type {import('estree').Expression[]} */
+						const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
+
+						if (state.options.dev) {
+							// include rest name, so we can provide informative error messages
+							args.push(
+								b.literal(/** @type {import('estree').Identifier} */ (property.argument).name)
+							);
+						}
+
+						declarations.push(b.declarator(property.argument, b.call('$.rest_props', ...args)));
 					}
 				}
 

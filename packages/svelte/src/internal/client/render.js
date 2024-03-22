@@ -12,7 +12,6 @@ import {
 	set_current_hydration_fragment
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
-import { ROOT_BLOCK } from './constants.js';
 import { handle_event_propagation } from './dom/elements/events.js';
 
 /** @type {Set<string>} */
@@ -20,6 +19,18 @@ export const all_registered_events = new Set();
 
 /** @type {Set<(events: Array<string>) => void>} */
 export const root_event_handles = new Set();
+
+/**
+ * This is normally true — block effects should run their intro transitions —
+ * but is false during hydration and mounting (unless `options.intro` is `true`)
+ * and when creating the children of a `<svelte:element>` that just changed tag
+ */
+export let should_intro = true;
+
+/** @param {boolean} value */
+export function set_should_intro(value) {
+	should_intro = value;
+}
 
 /**
  * @param {Element} dom
@@ -51,19 +62,19 @@ export function text(dom, value) {
 }
 
 /**
- * @param {Comment} anchor_node
+ * @param {Comment} anchor
  * @param {void | ((anchor: Comment, slot_props: Record<string, unknown>) => void)} slot_fn
  * @param {Record<string, unknown>} slot_props
  * @param {null | ((anchor: Comment) => void)} fallback_fn
  */
-export function slot(anchor_node, slot_fn, slot_props, fallback_fn) {
-	hydrate_block_anchor(anchor_node);
+export function slot(anchor, slot_fn, slot_props, fallback_fn) {
+	hydrate_block_anchor(anchor);
 	if (slot_fn === undefined) {
 		if (fallback_fn !== null) {
-			fallback_fn(anchor_node);
+			fallback_fn(anchor);
 		}
 	} else {
-		slot_fn(anchor_node, slot_props);
+		slot_fn(anchor, slot_props);
 	}
 }
 
@@ -198,20 +209,12 @@ function _mount(Component, options) {
 	const registered_events = new Set();
 	const container = options.target;
 
-	/** @type {import('#client').RootBlock} */
+	should_intro = options.intro ?? false;
+
+	/** @type {import('#client').Block} */
 	const block = {
 		// dom
-		d: null,
-		// effect
-		e: null,
-		// intro
-		i: options.intro || false,
-		// parent
-		p: null,
-		// transition
-		r: null,
-		// type
-		t: ROOT_BLOCK
+		d: null
 	};
 
 	/** @type {Exports} */
@@ -242,9 +245,11 @@ function _mount(Component, options) {
 		block,
 		true
 	);
-	block.e = effect;
+
 	const bound_event_listener = handle_event_propagation.bind(null, container);
 	const bound_document_event_listener = handle_event_propagation.bind(null, document);
+
+	should_intro = true;
 
 	/** @param {Array<string>} events */
 	const event_handle = (events) => {
@@ -290,7 +295,7 @@ function _mount(Component, options) {
 		if (dom !== null) {
 			remove(dom);
 		}
-		destroy_effect(/** @type {import('./types.js').Effect} */ (block.e));
+		destroy_effect(effect);
 	});
 
 	return component;

@@ -436,7 +436,7 @@ export function analyze_component(root, options) {
 			);
 		}
 	} else {
-		instance.scope.declare(b.id('$$props'), 'prop', 'synthetic');
+		instance.scope.declare(b.id('$$props'), 'bindable_prop', 'synthetic');
 		instance.scope.declare(b.id('$$restProps'), 'rest_prop', 'synthetic');
 
 		for (const { ast, scope, scopes } of [module, instance, template]) {
@@ -466,7 +466,10 @@ export function analyze_component(root, options) {
 		}
 
 		for (const [name, binding] of instance.scope.declarations) {
-			if (binding.kind === 'prop' && binding.node.name !== '$$props') {
+			if (
+				(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
+				binding.node.name !== '$$props'
+			) {
 				const references = binding.references.filter(
 					(r) => r.node !== binding.node && r.path.at(-1)?.type !== 'ExportSpecifier'
 				);
@@ -753,12 +756,13 @@ const legacy_scope_tweaker = {
 					state.scope.get(specifier.local.name)
 				);
 				if (
-					binding.kind === 'state' ||
-					binding.kind === 'frozen_state' ||
-					(binding.kind === 'normal' &&
-						(binding.declaration_kind === 'let' || binding.declaration_kind === 'var'))
+					binding !== null &&
+					(binding.kind === 'state' ||
+						binding.kind === 'frozen_state' ||
+						(binding.kind === 'normal' &&
+							(binding.declaration_kind === 'let' || binding.declaration_kind === 'var')))
 				) {
-					binding.kind = 'prop';
+					binding.kind = 'bindable_prop';
 					if (specifier.exported.name !== specifier.local.name) {
 						binding.prop_alias = specifier.exported.name;
 					}
@@ -796,7 +800,7 @@ const legacy_scope_tweaker = {
 			for (const declarator of node.declaration.declarations) {
 				for (const id of extract_identifiers(declarator.id)) {
 					const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
-					binding.kind = 'prop';
+					binding.kind = 'bindable_prop';
 				}
 			}
 		}
@@ -885,11 +889,24 @@ const runes_scope_tweaker = {
 					property.key.type === 'Identifier'
 						? property.key.name
 						: /** @type {string} */ (/** @type {import('estree').Literal} */ (property.key).value);
-				const initial = property.value.type === 'AssignmentPattern' ? property.value.right : null;
+				let initial = property.value.type === 'AssignmentPattern' ? property.value.right : null;
 
 				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
 				binding.prop_alias = alias;
-				binding.initial = initial; // rewire initial from $props() to the actual initial value
+
+				// rewire initial from $props() to the actual initial value, stripping $bindable() if necessary
+				if (
+					initial?.type === 'CallExpression' &&
+					initial.callee.type === 'Identifier' &&
+					initial.callee.name === '$bindable'
+				) {
+					binding.initial = /** @type {import('estree').Expression | null} */ (
+						initial.arguments[0] ?? null
+					);
+					binding.kind = 'bindable_prop';
+				} else {
+					binding.initial = initial;
+				}
 			}
 		}
 	},
@@ -1072,6 +1089,7 @@ const common_visitors = {
 			}
 
 			if (
+				context.state.analysis.runes &&
 				node !== binding.node &&
 				// If we have $state that can be proxied or frozen and isn't re-assigned, then that means
 				// it's likely not using a primitive value and thus this warning isn't that helpful.

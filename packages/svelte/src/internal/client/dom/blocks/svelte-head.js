@@ -1,4 +1,3 @@
-import { HEAD_BLOCK } from '../../constants.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,
@@ -8,26 +7,14 @@ import {
 import { empty } from '../operations.js';
 import { render_effect } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
-import { current_block } from '../../runtime.js';
+import { create_block } from './utils.js';
 
 /**
  * @param {(anchor: Node | null) => void} render_fn
  * @returns {void}
  */
 export function head(render_fn) {
-	/** @type {import('#client').HeadBlock} */
-	const block = {
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('#client').Block} */ (current_block),
-		// transition
-		r: null,
-		// type
-		t: HEAD_BLOCK
-	};
+	const block = create_block();
 
 	// The head function may be called after the first hydration pass and ssr comment nodes may still be present,
 	// therefore we need to skip that when we detect that we're not in hydration mode.
@@ -66,8 +53,6 @@ export function head(render_fn) {
 				remove(current);
 			}
 		};
-
-		block.e = head_effect;
 	} finally {
 		if (is_hydrating) {
 			set_current_hydration_fragment(previous_hydration_fragment);

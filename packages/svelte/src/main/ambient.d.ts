@@ -172,12 +172,23 @@ declare namespace $effect {
  * Declares the props that a component accepts. Example:
  *
  * ```ts
- * let { optionalProp = 42, requiredProp }: { optionalProp?: number; requiredProps: string } = $props();
+ * let { optionalProp = 42, requiredProp, bindableProp = $bindable() }: { optionalProp?: number; requiredProps: string; bindableProp: boolean } = $props();
  * ```
  *
  * https://svelte-5-preview.vercel.app/docs/runes#$props
  */
 declare function $props(): any;
+
+/**
+ * Declares a prop as bindable, meaning the parent component can use `bind:propName={value}` to bind to it.
+ *
+ * ```ts
+ * let { propName = $bindable() }: { propName: boolean } = $props();
+ * ```
+ *
+ * https://svelte-5-preview.vercel.app/docs/runes#$bindable
+ */
+declare function $bindable<T>(t?: T): T;
 
 /**
  * Inspects one or more values whenever they, or the properties they contain, change. Example:

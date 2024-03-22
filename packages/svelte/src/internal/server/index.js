@@ -588,8 +588,8 @@ export function sanitize_slots(props) {
 }
 
 /**
- * If the prop has a fallback and is bound in the parent component,
- * propagate the fallback value upwards.
+ * Legacy mode: If the prop has a fallback and is bound in the
+ * parent component, propagate the fallback value upwards.
  * @param {Record<string, unknown>} props_parent
  * @param {Record<string, unknown>} props_now
  */

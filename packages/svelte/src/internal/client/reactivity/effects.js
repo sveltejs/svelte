@@ -1,22 +1,34 @@
 import { DEV } from 'esm-env';
 import {
+	check_dirtiness,
 	current_block,
 	current_component_context,
 	current_effect,
 	current_reaction,
 	destroy_children,
+	execute_effect,
 	get,
 	remove_reactions,
 	schedule_effect,
 	set_signal_status,
 	untrack
 } from '../runtime.js';
-import { DIRTY, MANAGED, RENDER_EFFECT, EFFECT, PRE_EFFECT, DESTROYED } from '../constants.js';
+import {
+	DIRTY,
+	MANAGED,
+	RENDER_EFFECT,
+	EFFECT,
+	PRE_EFFECT,
+	DESTROYED,
+	INERT,
+	IS_ELSEIF
+} from '../constants.js';
 import { set } from './sources.js';
+import { noop } from '../../common.js';
 
 /**
  * @param {import('./types.js').EffectType} type
- * @param {(() => void | (() => void)) | ((b: import('#client').Block) => void | (() => void))} fn
+ * @param {(() => void | (() => void))} fn
  * @param {boolean} sync
  * @param {null | import('#client').Block} block
  * @param {boolean} init
@@ -25,6 +37,7 @@ import { set } from './sources.js';
 function create_effect(type, fn, sync, block = current_block, init = true) {
 	/** @type {import('#client').Effect} */
 	const signal = {
+		parent: current_effect,
 		block,
 		deps: null,
 		f: type | DIRTY,
@@ -34,7 +47,8 @@ function create_effect(type, fn, sync, block = current_block, init = true) {
 		deriveds: null,
 		teardown: null,
 		ctx: current_component_context,
-		ondestroy: null
+		ondestroy: null,
+		transitions: null
 	};
 
 	if (current_effect !== null) {
@@ -201,8 +215,7 @@ export function invalidate_effect(fn) {
 }
 
 /**
- * @template {import('#client').Block} B
- * @param {(block: B) => void | (() => void)} fn
+ * @param {(() => void)} fn
  * @param {any} block
  * @param {any} managed
  * @param {any} sync
@@ -217,22 +230,128 @@ export function render_effect(fn, block = current_block, managed = false, sync =
 }
 
 /**
- * @param {import('#client').Effect} signal
+ * @param {import('#client').Effect} effect
  * @returns {void}
  */
-export function destroy_effect(signal) {
-	destroy_children(signal);
-	remove_reactions(signal, 0);
-	set_signal_status(signal, DESTROYED);
+export function destroy_effect(effect) {
+	destroy_children(effect);
+	remove_reactions(effect, 0);
+	set_signal_status(effect, DESTROYED);
 
-	signal.teardown?.();
-	signal.ondestroy?.();
-	signal.fn =
-		signal.effects =
-		signal.teardown =
-		signal.ondestroy =
-		signal.ctx =
-		signal.block =
-		signal.deps =
+	if (effect.transitions) {
+		for (const transition of effect.transitions) {
+			transition.stop();
+		}
+	}
+
+	effect.teardown?.();
+	effect.ondestroy?.();
+
+	// @ts-expect-error
+	effect.fn =
+		effect.effects =
+		effect.teardown =
+		effect.ondestroy =
+		effect.ctx =
+		effect.block =
+		effect.deps =
 			null;
+}
+
+/**
+ * When a block effect is removed, we don't immediately destroy it or yank it
+ * out of the DOM, because it might have transitions. Instead, we 'pause' it.
+ * It stays around (in memory, and in the DOM) until outro transitions have
+ * completed, and if the state change is reversed then we _resume_ it.
+ * A paused effect does not update, and the DOM subtree becomes inert.
+ * @param {import('#client').Effect} effect
+ * @param {() => void} callback
+ */
+export function pause_effect(effect, callback = noop) {
+	/** @type {import('#client').TransitionManager[]} */
+	const transitions = [];
+
+	pause_children(effect, transitions, true);
+
+	let remaining = transitions.length;
+
+	if (remaining > 0) {
+		const check = () => {
+			if (!--remaining) {
+				destroy_effect(effect);
+				callback();
+			}
+		};
+
+		for (const transition of transitions) {
+			transition.out(check);
+		}
+	} else {
+		destroy_effect(effect);
+		callback();
+	}
+}
+
+/**
+ * @param {import('#client').Effect} effect
+ * @param {import('#client').TransitionManager[]} transitions
+ * @param {boolean} local
+ */
+function pause_children(effect, transitions, local) {
+	if ((effect.f & INERT) !== 0) return;
+	effect.f ^= INERT;
+
+	if (effect.transitions !== null) {
+		for (const transition of effect.transitions) {
+			if (transition.is_global || local) {
+				transitions.push(transition);
+			}
+		}
+	}
+
+	if (effect.effects !== null) {
+		for (const child of effect.effects) {
+			var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & MANAGED) !== 0;
+			pause_children(child, transitions, transparent ? local : false);
+		}
+	}
+}
+
+/**
+ * The opposite of `pause_effect`. We call this if (for example)
+ * `x` becomes falsy then truthy: `{#if x}...{/if}`
+ * @param {import('#client').Effect} effect
+ */
+export function resume_effect(effect) {
+	resume_children(effect, true);
+}
+
+/**
+ * @param {import('#client').Effect} effect
+ * @param {boolean} local
+ */
+function resume_children(effect, local) {
+	if ((effect.f & INERT) === 0) return;
+	effect.f ^= INERT;
+
+	// If a dependency of this effect changed while it was paused,
+	// apply the change now
+	if (check_dirtiness(effect)) {
+		execute_effect(effect);
+	}
+
+	if (effect.effects !== null) {
+		for (const child of effect.effects) {
+			var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & MANAGED) !== 0;
+			resume_children(child, transparent ? local : false);
+		}
+	}
+
+	if (effect.transitions !== null) {
+		for (const transition of effect.transitions) {
+			if (transition.is_global || local) {
+				transition.in();
+			}
+		}
+	}
 }
