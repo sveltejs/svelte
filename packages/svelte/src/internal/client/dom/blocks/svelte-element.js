@@ -34,6 +34,20 @@ function swap_block_dom(effect, from, to) {
 	}
 }
 
+let void_elements = new Map();
+
+/**
+ * @param {Element} element
+ * @returns {boolean}
+ */
+function is_void(element) {
+	if (!void_elements.has(element.nodeName)) {
+		void_elements.set(element.nodeName, !element.outerHTML.includes('/'));
+	}
+
+	return void_elements.get(element.nodeName);
+}
+
 /**
  * @param {Comment} anchor
  * @param {() => string} get_tag
@@ -110,7 +124,7 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 						? document.createElementNS(ns, next_tag)
 						: document.createElement(next_tag);
 
-				if (render_fn) {
+				if (render_fn && !is_void(element)) {
 					let anchor;
 					if (hydrating) {
 						// Use the existing ssr comment as the anchor so that the inner open and close
@@ -120,6 +134,7 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 						anchor = empty();
 						element.appendChild(anchor);
 					}
+
 					render_fn(element, anchor);
 				}
 
