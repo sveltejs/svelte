@@ -211,13 +211,14 @@ function _mount(Component, options) {
 
 	should_intro = options.intro ?? false;
 
-	/** @type {import('#client').RootBlock} */
+	/** @type {import('#client').Block} */
 	const block = {
 		// dom
 		d: null,
 		// effect
 		e: null,
 		// parent
+		// @ts-expect-error
 		p: null
 	};
 

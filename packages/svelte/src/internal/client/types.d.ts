@@ -49,7 +49,7 @@ export type Equals = (this: Value, value: unknown) => boolean;
 
 export type TemplateNode = Text | Element | Comment;
 
-export interface NormalBlock {
+export interface Block {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
@@ -58,29 +58,14 @@ export interface NormalBlock {
 	p: Block;
 }
 
-export interface RootBlock {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | Effect;
-	/** parent */
-	p: null;
-}
-
-export type EachBlock = {
+export type EachState = {
 	/** flags */
-	f: number;
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
+	flags: number;
 	/** items */
-	v: EachItemBlock[];
-	/** effect */
-	e: null | Effect;
-	/** parent */
-	p: Block;
+	items: EachItem[];
 };
 
-export type EachItemBlock = {
+export type EachItem = {
 	/** animation manager */
 	a: AnimationManager | null;
 	/** dom */
@@ -94,8 +79,6 @@ export type EachItemBlock = {
 	/** key */
 	k: unknown;
 };
-
-export type Block = RootBlock | NormalBlock | EachBlock | EachItemBlock;
 
 export interface TransitionManager {
 	/** Whether the `global` modifier was used (i.e. `transition:fade|global`) */

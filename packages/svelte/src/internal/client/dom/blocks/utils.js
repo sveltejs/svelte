@@ -1,6 +1,6 @@
 import { current_block } from '../../runtime.js';
 
-/** @returns {import('#client').NormalBlock} */
+/** @returns {import('#client').Block} */
 export function create_block() {
 	return {
 		// dom

@@ -15,7 +15,7 @@ import {
 } from '../hydration.js';
 import { empty } from '../operations.js';
 import { insert, remove } from '../reconciler.js';
-import { current_block, untrack } from '../../runtime.js';
+import { untrack } from '../../runtime.js';
 import {
 	destroy_effect,
 	pause_effect,
@@ -26,6 +26,7 @@ import {
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen, map_get, map_set } from '../../utils.js';
 import { STATE_SYMBOL } from '../../constants.js';
+import { create_block } from './utils.js';
 
 var NEW_BLOCK = -1;
 var LIS_BLOCK = -2;
@@ -33,11 +34,11 @@ var LIS_BLOCK = -2;
 /**
  * The row of a keyed each block that is currently updating. We track this
  * so that `animate:` directives have something to attach themselves to
- * @type {import('#client').EachItemBlock | null}
+ * @type {import('#client').EachItem | null}
  */
 export let current_each_item_block = null;
 
-/** @param {import('#client').EachItemBlock | null} block */
+/** @param {import('#client').EachItem | null} block */
 export function set_current_each_item_block(block) {
 	current_each_item_block = block;
 }
@@ -54,18 +55,10 @@ export function set_current_each_item_block(block) {
  * @returns {void}
  */
 function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, reconcile_fn) {
-	/** @type {import('#client').EachBlock} */
-	var block = {
-		// dom
-		d: null,
-		// flags
-		f: flags,
-		// items
-		v: [],
-		// effect
-		e: null,
-		p: /** @type {import('#client').Block} */ (current_block)
-	};
+	var block = create_block();
+
+	/** @type {import('#client').EachState} */
+	var state = { flags, items: [] };
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 	hydrate_block_anchor(is_controlled ? /** @type {Node} */ (anchor.firstChild) : anchor);
@@ -94,7 +87,7 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 
 			// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
 			// are treated as reactive, so they get wrapped in a signal.
-			var flags = block.f;
+			var flags = state.flags;
 			if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
 				flags ^= EACH_IS_STRICT_EQUALS;
 
@@ -142,7 +135,7 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 						break;
 					}
 
-					b_blocks[i] = create_block(array[i], keys?.[i], i, render_fn, flags);
+					b_blocks[i] = create_item(array[i], keys?.[i], i, render_fn, flags);
 
 					// TODO helperise this
 					hydrating_node = /** @type {import('#client').TemplateNode} */ (
@@ -154,12 +147,12 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 
 				remove_excess_hydration_nodes(hydration_list, hydrating_node);
 
-				block.v = b_blocks;
+				state.items = b_blocks;
 			}
 
 			if (!hydrating) {
 				// TODO add 'empty controlled block' optimisation here
-				reconcile_fn(array, block, anchor, render_fn, flags, keys);
+				reconcile_fn(array, state, anchor, render_fn, flags, keys);
 			}
 
 			if (fallback_fn !== null) {
@@ -200,10 +193,10 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 	);
 
 	effect.ondestroy = () => {
-		for (var b of block.v) {
-			if (b.d !== null) {
-				destroy_effect(b.e);
-				remove(b.d);
+		for (var item of state.items) {
+			if (item.d !== null) {
+				destroy_effect(item.e);
+				remove(item.d);
 			}
 		}
 
@@ -243,55 +236,55 @@ export function each_indexed(anchor, get_collection, flags, render_fn, fallback_
 /**
  * @template V
  * @param {Array<V>} array
- * @param {import('#client').EachBlock} each_block
+ * @param {import('#client').EachState} state
  * @param {Element | Comment | Text} anchor
  * @param {(anchor: null, item: V, index: number | import('#client').Source<number>) => void} render_fn
  * @param {number} flags
  * @returns {void}
  */
-function reconcile_indexed_array(array, each_block, anchor, render_fn, flags) {
-	var a_blocks = each_block.v;
+function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
+	var a_items = state.items;
 
-	var a = a_blocks.length;
+	var a = a_items.length;
 	var b = array.length;
 	var min = Math.min(a, b);
 
-	/** @type {typeof a_blocks} */
-	var b_blocks = Array(b);
+	/** @type {typeof a_items} */
+	var b_items = Array(b);
 
-	var block;
 	var item;
+	var value;
 
 	// update items
 	for (var i = 0; i < min; i += 1) {
-		item = array[i];
-		block = a_blocks[i];
-		b_blocks[i] = block;
-		update_block(block, item, i, flags);
-		resume_effect(block.e);
+		value = array[i];
+		item = a_items[i];
+		b_items[i] = item;
+		update_item(item, value, i, flags);
+		resume_effect(item.e);
 	}
 
 	if (b > a) {
 		// add items
 		for (; i < b; i += 1) {
-			item = array[i];
-			block = create_block(item, null, i, render_fn, flags);
-			b_blocks[i] = block;
-			insert_block(block, anchor);
+			value = array[i];
+			item = create_item(value, null, i, render_fn, flags);
+			b_items[i] = item;
+			insert_item(item, anchor);
 		}
 
-		each_block.v = b_blocks;
+		state.items = b_items;
 	} else if (a > b) {
 		// remove items
 		var remaining = a - b;
 
 		var clear = () => {
 			for (var i = b; i < a; i += 1) {
-				var block = a_blocks[i];
+				var block = a_items[i];
 				if (block.d) remove(block.d);
 			}
 
-			each_block.v = each_block.v.slice(0, b);
+			state.items.length = b;
 		};
 
 		var check = () => {
@@ -301,7 +294,7 @@ function reconcile_indexed_array(array, each_block, anchor, render_fn, flags) {
 		};
 
 		for (; i < a; i += 1) {
-			pause_effect(a_blocks[i].e, check);
+			pause_effect(a_items[i].e, check);
 		}
 	}
 }
@@ -312,20 +305,20 @@ function reconcile_indexed_array(array, each_block, anchor, render_fn, flags) {
  * https://github.com/localvoid/ivi/blob/9f1bd0918f487da5b131941228604763c5d8ef56/packages/ivi/src/client/core.ts#L968
  * @template V
  * @param {Array<V>} array
- * @param {import('#client').EachBlock} each_block
+ * @param {import('#client').EachState} state
  * @param {Element | Comment | Text} anchor
  * @param {(anchor: null, item: V, index: number | import('#client').Source<number>) => void} render_fn
  * @param {number} flags
  * @param {any[]} keys
  * @returns {void}
  */
-function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, keys) {
-	var a_blocks = each_block.v;
+function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
+	var a_blocks = state.items;
 
 	var a = a_blocks.length;
 	var b = array.length;
 
-	/** @type {Array<import('#client').EachItemBlock>} */
+	/** @type {Array<import('#client').EachItem>} */
 	var b_blocks = Array(b);
 
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
@@ -333,7 +326,7 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 	var start = 0;
 	var block;
 
-	/** @type {Array<import('#client').EachItemBlock>} */
+	/** @type {Array<import('#client').EachItem>} */
 	var to_destroy = [];
 
 	// Step 1 — trim common suffix
@@ -344,7 +337,7 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 		resume_effect(block.e);
 
 		if (should_update) {
-			update_block(block, array[b], b, flags);
+			update_item(block, array[b], b, flags);
 		}
 	}
 
@@ -355,7 +348,7 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 		resume_effect(block.e);
 
 		if (should_update) {
-			update_block(block, array[start], start, flags);
+			update_item(block, array[start], start, flags);
 		}
 
 		start += 1;
@@ -365,9 +358,9 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 	if (start === a) {
 		// add only
 		while (start < b) {
-			block = create_block(array[start], keys[start], start, render_fn, flags);
+			block = create_item(array[start], keys[start], start, render_fn, flags);
 			b_blocks[start++] = block;
-			insert_block(block, anchor);
+			insert_item(block, anchor);
 		}
 	} else if (start === b) {
 		// remove only
@@ -390,7 +383,7 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 			map_set(indexes, keys[i], i);
 		}
 
-		/** @type {Array<import('#client').EachItemBlock>} */
+		/** @type {Array<import('#client').EachItem>} */
 		var to_animate = [];
 		if (is_animated) {
 			// for all blocks that were in both the old and the new list,
@@ -439,17 +432,17 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 			var insert = index === NEW_BLOCK;
 
 			if (insert) {
-				block = create_block(array[b], keys[b], b, render_fn, flags);
+				block = create_item(array[b], keys[b], b, render_fn, flags);
 			} else {
 				block = b_blocks[b];
 				if (should_update) {
-					update_block(block, array[b], b, flags);
+					update_item(block, array[b], b, flags);
 				}
 			}
 
 			if (insert || (moved && index !== LIS_BLOCK)) {
 				last_sibling = last_block === undefined ? anchor : get_first_child(last_block);
-				anchor = insert_block(block, last_sibling);
+				anchor = insert_item(block, last_sibling);
 			}
 
 			last_block = b_blocks[b] = block;
@@ -477,7 +470,7 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 				if (block.d) remove(block.d);
 			}
 
-			each_block.v = b_blocks;
+			state.items = b_blocks;
 		};
 
 		var check = () => {
@@ -490,7 +483,7 @@ function reconcile_tracked_array(array, each_block, anchor, render_fn, flags, ke
 			pause_effect(block.e, check);
 		}
 	} else {
-		each_block.v = b_blocks;
+		state.items = b_blocks;
 	}
 }
 
@@ -582,17 +575,17 @@ function mark_lis(a) {
 }
 
 /**
- * @param {import('#client').Block} block
+ * @param {import('#client').EachItem} block
  * @param {Text | Element | Comment} sibling
  * @returns {Text | Element | Comment}
  */
-function insert_block(block, sibling) {
+function insert_item(block, sibling) {
 	var current = /** @type {import('#client').TemplateNode} */ (block.d);
 	return insert(current, sibling);
 }
 
 /**
- * @param {import('#client').Block} block
+ * @param {import('#client').EachItem} block
  * @returns {Text | Element | Comment}
  */
 function get_first_child(block) {
@@ -606,13 +599,13 @@ function get_first_child(block) {
 }
 
 /**
- * @param {import('#client').EachItemBlock} block
+ * @param {import('#client').EachItem} block
  * @param {any} item
  * @param {number} index
  * @param {number} type
  * @returns {void}
  */
-function update_block(block, item, index, type) {
+function update_item(block, item, index, type) {
 	if ((type & EACH_ITEM_REACTIVE) !== 0) {
 		set(block.v, item);
 	}
@@ -631,9 +624,9 @@ function update_block(block, item, index, type) {
  * @param {number} index
  * @param {(anchor: null, item: V, index: number | import('#client').Value<number>) => void} render_fn
  * @param {number} flags
- * @returns {import('#client').EachItemBlock}
+ * @returns {import('#client').EachItem}
  */
-function create_block(item, key, index, render_fn, flags) {
+function create_item(item, key, index, render_fn, flags) {
 	var each_item_not_reactive = (flags & EACH_ITEM_REACTIVE) === 0;
 
 	var item_value = each_item_not_reactive
@@ -642,7 +635,7 @@ function create_block(item, key, index, render_fn, flags) {
 			? source(item)
 			: mutable_source(item);
 
-	/** @type {import('#client').EachItemBlock} */
+	/** @type {import('#client').EachItem} */
 	var block = {
 		a: null,
 		// dom
