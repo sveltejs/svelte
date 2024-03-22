@@ -15,14 +15,14 @@ import { create_block } from './utils.js';
 import { current_block, current_effect } from '../../runtime.js';
 
 /**
- * @param {import('#client').Block} block
  * @param {import('#client').Effect} effect
  * @param {Element} from
  * @param {Element} to
  * @returns {void}
  */
-function swap_block_dom(block, effect, from, to) {
+function swap_block_dom(effect, from, to) {
 	const dom = effect.dom;
+
 	if (is_array(dom)) {
 		for (let i = 0; i < dom.length; i++) {
 			if (dom[i] === from) {
@@ -31,7 +31,6 @@ function swap_block_dom(block, effect, from, to) {
 			}
 		}
 	} else if (dom === from) {
-		block.d = to;
 		effect.dom = to;
 	}
 }
@@ -45,7 +44,6 @@ function swap_block_dom(block, effect, from, to) {
  */
 export function element(anchor, get_tag, is_svg, render_fn) {
 	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
-	const parent_block = /** @type {import('#client').Block} */ (current_block);
 	const block = create_block();
 
 	hydrate_block_anchor(anchor);
@@ -131,7 +129,7 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 					anchor.before(element);
 
 					if (prev_element) {
-						swap_block_dom(parent_block, parent_effect, prev_element, element);
+						swap_block_dom(parent_effect, prev_element, element);
 						prev_element.remove();
 					}
 				},
@@ -150,7 +148,6 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 	wrapper.ondestroy = () => {
 		if (element !== null) {
 			remove(element);
-			block.d = null;
 			element = null;
 		}
 
