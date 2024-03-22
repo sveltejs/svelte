@@ -1,5 +1,8 @@
 import { test } from '../../test';
 
+/**
+ * @type {{ (...data: any[]): void; (message?: any, ...optionalParams: any[]): void; (...data: any[]): void; (message?: any, ...optionalParams: any[]): void; }}
+ */
 let log;
 
 export default test({

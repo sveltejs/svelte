@@ -10,6 +10,7 @@ export default test({
 
 	async test({ assert, window, target }) {
 		const button = target.querySelector('button');
+		// @ts-ignore
 		await button.dispatchEvent(new window.Event('click'));
 		assert.htmlEqual(
 			target.innerHTML,
@@ -20,6 +21,7 @@ export default test({
 				<button>Toggle Component</button>
 			`
 		);
+		// @ts-ignore
 		await button.dispatchEvent(new window.Event('click'));
 		assert.htmlEqual(
 			target.innerHTML,

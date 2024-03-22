@@ -5,6 +5,7 @@ export default test({
 	test({ assert, component }) {
 		let count = 0;
 
+		// @ts-ignore
 		component.$on('state', ({ changed }) => {
 			if (changed.bar) count += 1;
 		});
