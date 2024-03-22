@@ -9,7 +9,8 @@ import {
 	get_hydration_fragment,
 	hydrate_block_anchor,
 	hydrating,
-	set_current_hydration_fragment
+	set_current_hydration_fragment,
+	set_hydrating
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
 import { handle_event_propagation } from './dom/elements/events.js';
@@ -146,6 +147,7 @@ export function hydrate(component, options) {
 	const hydration_fragment = get_hydration_fragment(first_child, true);
 	const previous_hydration_fragment = current_hydration_fragment;
 	set_current_hydration_fragment(hydration_fragment);
+	set_hydrating(true);
 
 	/** @type {null | Text} */
 	let anchor = null;
@@ -162,7 +164,7 @@ export function hydrate(component, options) {
 			const instance = _mount(component, { ...options, anchor });
 			// flush_sync will run this callback and then synchronously run any pending effects,
 			// which don't belong to the hydration phase anymore - therefore reset it here
-			set_current_hydration_fragment(null);
+			set_hydrating(false);
 			finished_hydrating = true;
 			return instance;
 		}, false);
@@ -179,12 +181,13 @@ export function hydrate(component, options) {
 			remove(hydration_fragment);
 			first_child.remove();
 			hydration_fragment[hydration_fragment.length - 1]?.nextSibling?.remove();
-			set_current_hydration_fragment(null);
+			set_hydrating(false);
 			return mount(component, options);
 		} else {
 			throw error;
 		}
 	} finally {
+		set_hydrating(!!previous_hydration_fragment);
 		set_current_hydration_fragment(previous_hydration_fragment);
 	}
 }

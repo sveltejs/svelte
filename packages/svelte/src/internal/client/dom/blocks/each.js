@@ -11,7 +11,8 @@ import {
 	get_hydration_fragment,
 	hydrate_block_anchor,
 	hydrating,
-	set_current_hydration_fragment
+	set_current_hydration_fragment,
+	set_hydrating
 } from '../hydration.js';
 import { empty } from '../operations.js';
 import { insert, remove } from '../reconciler.js';
@@ -104,7 +105,7 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 			if (is_else !== (length === 0)) {
 				// hydration mismatch — remove the server-rendered DOM and start over
 				remove(current_hydration_fragment);
-				set_current_hydration_fragment(null);
+				set_hydrating(false);
 				mismatch = true;
 			} else if (is_else) {
 				// Remove the each_else comment node or else it will confuse the subsequent hydration algorithm
@@ -129,6 +130,7 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 					// If fragment is null, then that means that the server rendered less items than what
 					// the client code specifies -> break out and continue with client-side node creation
 					mismatch = true;
+					set_hydrating(false);
 					break;
 				}
 
@@ -176,7 +178,7 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 
 		if (mismatch) {
 			// Set a fragment so that Svelte continues to operate in hydration mode
-			set_current_hydration_fragment([]);
+			set_hydrating(true);
 		}
 	});
 
