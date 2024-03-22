@@ -1070,7 +1070,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 		// TODO some of this is duplicated with above, seems off
 		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
 			error(node, 'invalid-rune-args-length', rune, [1]);
-		} else if (rune === '$state' && args.length > 1) {
+		} else if ((rune === '$state' || rune === '$bindable') && args.length > 1) {
 			error(node, 'invalid-rune-args-length', rune, [0, 1]);
 		} else if (rune === '$props') {
 			if (state.has_props_rune) {
