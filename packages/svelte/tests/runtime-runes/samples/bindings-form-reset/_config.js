@@ -10,7 +10,7 @@ export default test({
 		);
 
 		await target.querySelector('button')?.click();
-		await new Promise((r) => requestAnimationFrame(r));
+		await Promise.resolve();
 		assert.htmlEqual(
 			p?.innerHTML || '',
 			`{"text":"","checkbox":false,"radio_group":null,"checkbox_group":[],"select":"a","textarea":""}`

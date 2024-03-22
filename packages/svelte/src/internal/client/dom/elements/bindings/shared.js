@@ -57,7 +57,9 @@ export function listen_to_event_and_reset_event(element, event, handler, on_rese
 		document.addEventListener(
 			'reset',
 			(evt) => {
-				requestAnimationFrame(() => {
+				// Needs to happen one tick later or else the dom properties of the form
+				// elements have not updated to their reset values yet
+				Promise.resolve().then(() => {
 					if (!evt.defaultPrevented) {
 						for (const e of /**@type {HTMLFormElement} */ (evt.target).elements) {
 							// @ts-expect-error
