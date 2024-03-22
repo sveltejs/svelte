@@ -708,7 +708,7 @@ declare module 'svelte/compiler' {
 		node: Identifier;
 		/**
 		 * - `normal`: A variable that is not in any way special
-		 * - `prop`: A normal prop (possibly reassigned)
+		 * - `prop`: A normal prop (possibly reassigned or mutated)
 		 * - `bindable_prop`: A prop one can `bind:` to (possibly reassigned or mutated)
 		 * - `rest_prop`: A rest prop
 		 * - `state`: A state variable
