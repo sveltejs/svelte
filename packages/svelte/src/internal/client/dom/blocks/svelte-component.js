@@ -2,6 +2,7 @@ import { hydrate_block_anchor } from '../hydration.js';
 import { pause_effect, render_effect } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
 import { create_block } from './utils.js';
+import { current_effect } from '../../runtime.js';
 
 // TODO this is very similar to `key`, can we deduplicate?
 
@@ -47,12 +48,12 @@ export function component(anchor, get_component, render_fn) {
 					() => {
 						render_fn(component);
 
-						const dom = block.d;
+						// `render_fn` doesn't return anything, and we can't reference `effect`
+						// yet, so we reference it indirectly as `current_effect`
+						const dom = /** @type {import('#client').Effect} */ (current_effect).dom;
 
 						return () => {
-							if (dom !== null) {
-								remove(dom);
-							}
+							if (dom !== null) remove(dom);
 						};
 					},
 					block,
