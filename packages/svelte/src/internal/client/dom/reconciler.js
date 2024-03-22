@@ -29,7 +29,7 @@ export function create_fragment_with_script_from_html(html) {
 }
 
 /**
- * @param {Array<import('../types.js').TemplateNode> | import('../types.js').TemplateNode} current
+ * @param {import('#client').Dom} current
  * @param {Text | Element | Comment} sibling
  * @returns {Text | Element | Comment}
  */
@@ -49,7 +49,7 @@ export function insert(current, sibling) {
 }
 
 /**
- * @param {Array<import('../types.js').TemplateNode> | import('../types.js').TemplateNode} current
+ * @param {import('#client').Dom} current
  */
 export function remove(current) {
 	if (is_array(current)) {

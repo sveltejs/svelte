@@ -49,9 +49,11 @@ export type Equals = (this: Value, value: unknown) => boolean;
 
 export type TemplateNode = Text | Element | Comment;
 
+export type Dom = TemplateNode | TemplateNode[];
+
 export interface Block {
 	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
+	d: null | Dom;
 }
 
 export type EachState = {
@@ -65,7 +67,7 @@ export type EachItem = {
 	/** animation manager */
 	a: AnimationManager | null;
 	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
+	d: null | Dom;
 	/** effect */
 	e: Effect;
 	/** item */
@@ -138,15 +140,6 @@ export type StoreReferencesContainer = Record<
 >;
 
 export type ActionPayload<P> = { destroy?: () => void; update?: (value: P) => void };
-
-export type Render = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | Effect;
-	/** prev */
-	p: Render | null;
-};
 
 export type Raf = {
 	/** Alias for `requestAnimationFrame`, exposed in such a way that we can override in tests */
