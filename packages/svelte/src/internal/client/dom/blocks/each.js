@@ -19,6 +19,7 @@ import { untrack } from '../../runtime.js';
 import {
 	destroy_effect,
 	pause_effect,
+	pause_effects,
 	render_effect,
 	resume_effect,
 	user_effect
@@ -272,26 +273,14 @@ function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
 		state.items = b_items;
 	} else if (a > b) {
 		// remove items
-		var remaining = a - b;
-
-		var clear = () => {
-			for (var i = b; i < a; i += 1) {
-				item = a_items[i];
-				if (item.d) remove(item.d);
-			}
-
-			state.items.length = b;
-		};
-
-		var check = () => {
-			if (--remaining === 0) {
-				clear();
-			}
-		};
-
-		for (; i < a; i += 1) {
-			pause_effect(a_items[i].e, check);
+		var effects = [];
+		for (i = b; i < a; i += 1) {
+			effects.push(a_items[i].e);
 		}
+
+		pause_effects(effects, () => {
+			state.items.length = b;
+		});
 	}
 }
 
@@ -322,7 +311,7 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 	var start = 0;
 	var item;
 
-	/** @type {Array<import('#client').EachItem>} */
+	/** @type {import('#client').Effect[]} */
 	var to_destroy = [];
 
 	// Step 1 — trim common suffix
@@ -361,7 +350,7 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 	} else if (start === b) {
 		// remove only
 		while (start < a) {
-			to_destroy.push(a_items[start++]);
+			to_destroy.push(a_items[start++].e);
 		}
 	} else {
 		// reconcile
@@ -403,7 +392,7 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 			resume_effect(item.e);
 
 			if (index === undefined) {
-				to_destroy.push(item);
+				to_destroy.push(item.e);
 			} else {
 				moved = true;
 				sources[index - start] = i;
@@ -459,28 +448,9 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 		}
 	}
 
-	var remaining = to_destroy.length;
-	if (remaining > 0) {
-		var clear = () => {
-			for (item of to_destroy) {
-				if (item.d) remove(item.d);
-			}
-
-			state.items = b_items;
-		};
-
-		var check = () => {
-			if (--remaining === 0) {
-				clear();
-			}
-		};
-
-		for (item of to_destroy) {
-			pause_effect(item.e, check);
-		}
-	} else {
+	pause_effects(to_destroy, () => {
 		state.items = b_items;
-	}
+	});
 }
 
 /**
@@ -629,8 +599,6 @@ function create_item(value, key, index, render_fn, flags) {
 	var item = {
 		a: null,
 		// dom
-		d: null,
-		// effect
 		// @ts-expect-error
 		e: null,
 		// index
@@ -652,7 +620,13 @@ function create_item(value, key, index, render_fn, flags) {
 
 		item.e = render_effect(
 			() => {
-				render_fn(null, item.v, item.i);
+				var dom = render_fn(null, item.v, item.i);
+
+				return () => {
+					if (dom !== undefined) {
+						remove(dom);
+					}
+				};
 			},
 			item,
 			true

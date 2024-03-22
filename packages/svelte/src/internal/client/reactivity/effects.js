@@ -271,26 +271,51 @@ export function destroy_effect(effect) {
  */
 export function pause_effect(effect, callback = noop) {
 	/** @type {import('#client').TransitionManager[]} */
-	const transitions = [];
+	var transitions = [];
 
 	pause_children(effect, transitions, true);
 
-	let remaining = transitions.length;
+	out(transitions, () => {
+		destroy_effect(effect);
+		callback();
+	});
+}
 
+/**
+ * Pause multiple effects simultaneously, and coordinate their
+ * subsequent destruction. Used in each blocks
+ * @param {import('#client').Effect[]} effects
+ * @param {() => void} callback
+ */
+export function pause_effects(effects, callback = noop) {
+	/** @type {import('#client').TransitionManager[]} */
+	var transitions = [];
+
+	for (var effect of effects) {
+		pause_children(effect, transitions, true);
+	}
+
+	out(transitions, () => {
+		for (var effect of effects) {
+			destroy_effect(effect);
+		}
+		callback();
+	});
+}
+
+/**
+ * @param {import('#client').TransitionManager[]} transitions
+ * @param {() => void} fn
+ */
+function out(transitions, fn) {
+	var remaining = transitions.length;
 	if (remaining > 0) {
-		const check = () => {
-			if (!--remaining) {
-				destroy_effect(effect);
-				callback();
-			}
-		};
-
-		for (const transition of transitions) {
+		var check = () => --remaining || fn();
+		for (var transition of transitions) {
 			transition.out(check);
 		}
 	} else {
-		destroy_effect(effect);
-		callback();
+		fn();
 	}
 }
 
