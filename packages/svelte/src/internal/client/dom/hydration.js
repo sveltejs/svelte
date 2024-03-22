@@ -48,8 +48,7 @@ function get_hydrate_nodes(node, insert_text = false) {
 	/** @type {import('#client').TemplateNode[]} */
 	var nodes = [];
 
-	/** @type {null | Node} */
-	var current_node = node;
+	var current_node = /** @type {null | import('#client').TemplateNode} */ (node);
 
 	/** @type {null | string} */
 	var target_depth = null;
@@ -67,18 +66,18 @@ function get_hydrate_nodes(node, insert_text = false) {
 					if (insert_text && nodes.length === 0) {
 						var text = empty();
 						nodes.push(text);
-						text.before(current_node);
+						current_node.before(text);
 					}
 					return nodes;
 				} else {
-					nodes.push(/** @type {Text | Comment | Element} */ (current_node));
+					nodes.push(current_node);
 				}
 			}
 		} else if (target_depth !== null) {
-			nodes.push(/** @type {Text | Comment | Element} */ (current_node));
+			nodes.push(current_node);
 		}
 
-		current_node = current_node.nextSibling;
+		current_node = /** @type {null | import('#client').TemplateNode} */ (current_node.nextSibling);
 	}
 
 	return null;

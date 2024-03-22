@@ -114,7 +114,6 @@ export function createRoot() {
  * @returns {Exports}
  */
 export function mount(component, options) {
-	init_operations();
 	const anchor = empty();
 	options.target.appendChild(anchor);
 	// Don't flush previous effects to ensure order of outer effects stays consistent
@@ -139,8 +138,6 @@ export function mount(component, options) {
  * @returns {Exports}
  */
 export function hydrate(component, options) {
-	init_operations();
-
 	const container = options.target;
 	const first_child = /** @type {ChildNode} */ (container.firstChild);
 	const previous_hydrate_nodes = hydrate_nodes;
@@ -212,6 +209,8 @@ export function hydrate(component, options) {
  * @returns {Exports}
  */
 function _mount(Component, options) {
+	init_operations();
+
 	const registered_events = new Set();
 	const container = options.target;
 
