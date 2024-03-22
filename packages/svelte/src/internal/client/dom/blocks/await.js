@@ -79,7 +79,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 
 			if (pending_fn) {
 				if (pending_effect && (pending_effect.f & INERT) === 0) {
-					if (pending_effect.block?.d) remove(pending_effect.block.d);
+					if (pending_effect.dom) remove(pending_effect.dom);
 					destroy_effect(pending_effect);
 				}
 
@@ -113,7 +113,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 
 			if (then_fn) {
 				if (then_effect) {
-					if (then_effect.block?.d) remove(then_effect.block.d);
+					if (then_effect.dom) remove(then_effect.dom);
 					destroy_effect(then_effect);
 				}
 
@@ -124,8 +124,8 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 
 	branch.ondestroy = () => {
 		// TODO this sucks, tidy it up
-		if (pending_effect?.block?.d) remove(pending_effect.block.d);
-		if (then_effect?.block?.d) remove(then_effect.block.d);
-		if (catch_effect?.block?.d) remove(catch_effect.block.d);
+		if (pending_effect?.dom) remove(pending_effect.dom);
+		if (then_effect?.dom) remove(then_effect.dom);
+		if (catch_effect?.dom) remove(catch_effect.dom);
 	};
 }
