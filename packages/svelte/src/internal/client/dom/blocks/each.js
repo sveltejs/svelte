@@ -27,7 +27,6 @@ import {
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen, map_get, map_set } from '../../utils.js';
 import { STATE_SYMBOL } from '../../constants.js';
-import { create_block } from './utils.js';
 
 var NEW_ITEM = -1;
 var LIS_ITEM = -2;
@@ -56,8 +55,6 @@ export function set_current_each_item(item) {
  * @returns {void}
  */
 function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, reconcile_fn) {
-	var block = create_block();
-
 	/** @type {import('#client').EachState} */
 	var state = { flags, items: [] };
 
@@ -72,124 +69,116 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 	/** @type {import('#client').Effect | null} */
 	var fallback = null;
 
-	var effect = render_effect(
-		() => {
-			var collection = get_collection();
+	var effect = render_effect(() => {
+		var collection = get_collection();
 
-			var array = is_array(collection)
-				? collection
-				: collection == null
-					? []
-					: Array.from(collection);
+		var array = is_array(collection)
+			? collection
+			: collection == null
+				? []
+				: Array.from(collection);
 
-			var keys = get_key === null ? array : array.map(get_key);
+		var keys = get_key === null ? array : array.map(get_key);
 
-			var length = array.length;
+		var length = array.length;
 
-			// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
-			// are treated as reactive, so they get wrapped in a signal.
-			var flags = state.flags;
-			if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
-				flags ^= EACH_IS_STRICT_EQUALS;
+		// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
+		// are treated as reactive, so they get wrapped in a signal.
+		var flags = state.flags;
+		if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
+			flags ^= EACH_IS_STRICT_EQUALS;
 
-				// Additionally if we're in an keyed each block, we'll need ensure the items are all wrapped in signals.
-				if ((flags & EACH_KEYED) !== 0 && (flags & EACH_ITEM_REACTIVE) === 0) {
-					flags ^= EACH_ITEM_REACTIVE;
-				}
+			// Additionally if we're in an keyed each block, we'll need ensure the items are all wrapped in signals.
+			if ((flags & EACH_KEYED) !== 0 && (flags & EACH_ITEM_REACTIVE) === 0) {
+				flags ^= EACH_ITEM_REACTIVE;
 			}
+		}
 
-			/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-			let mismatch = false;
+		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
+		let mismatch = false;
 
-			if (hydrating) {
-				var is_else =
-					/** @type {Comment} */ (current_hydration_fragment?.[0])?.data === 'ssr:each_else';
+		if (hydrating) {
+			var is_else =
+				/** @type {Comment} */ (current_hydration_fragment?.[0])?.data === 'ssr:each_else';
 
-				if (is_else !== (length === 0)) {
-					// hydration mismatch — remove the server-rendered DOM and start over
-					remove(current_hydration_fragment);
-					set_current_hydration_fragment(null);
+			if (is_else !== (length === 0)) {
+				// hydration mismatch — remove the server-rendered DOM and start over
+				remove(current_hydration_fragment);
+				set_current_hydration_fragment(null);
+				mismatch = true;
+			} else if (is_else) {
+				// Remove the each_else comment node or else it will confuse the subsequent hydration algorithm
+				/** @type {import('#client').TemplateNode[]} */ (current_hydration_fragment).shift();
+			}
+		}
+
+		// this is separate to the previous block because `hydrating` might change
+		if (hydrating) {
+			var b_items = [];
+
+			// Hydrate block
+			var hydration_list = /** @type {import('#client').TemplateNode[]} */ (
+				current_hydration_fragment
+			);
+			var hydrating_node = hydration_list[0];
+
+			for (var i = 0; i < length; i++) {
+				var fragment = get_hydration_fragment(hydrating_node);
+				set_current_hydration_fragment(fragment);
+				if (!fragment) {
+					// If fragment is null, then that means that the server rendered less items than what
+					// the client code specifies -> break out and continue with client-side node creation
 					mismatch = true;
-				} else if (is_else) {
-					// Remove the each_else comment node or else it will confuse the subsequent hydration algorithm
-					/** @type {import('#client').TemplateNode[]} */ (current_hydration_fragment).shift();
+					break;
 				}
-			}
 
-			// this is separate to the previous block because `hydrating` might change
-			if (hydrating) {
-				var b_items = [];
+				b_items[i] = create_item(array[i], keys?.[i], i, render_fn, flags);
 
-				// Hydrate block
-				var hydration_list = /** @type {import('#client').TemplateNode[]} */ (
-					current_hydration_fragment
+				// TODO helperise this
+				hydrating_node = /** @type {import('#client').TemplateNode} */ (
+					/** @type {Node} */ (
+						/** @type {Node} */ (fragment[fragment.length - 1] || hydrating_node).nextSibling
+					).nextSibling
 				);
-				var hydrating_node = hydration_list[0];
+			}
 
-				for (var i = 0; i < length; i++) {
-					var fragment = get_hydration_fragment(hydrating_node);
-					set_current_hydration_fragment(fragment);
-					if (!fragment) {
-						// If fragment is null, then that means that the server rendered less items than what
-						// the client code specifies -> break out and continue with client-side node creation
-						mismatch = true;
-						break;
-					}
+			remove_excess_hydration_nodes(hydration_list, hydrating_node);
 
-					b_items[i] = create_item(array[i], keys?.[i], i, render_fn, flags);
+			state.items = b_items;
+		}
 
-					// TODO helperise this
-					hydrating_node = /** @type {import('#client').TemplateNode} */ (
-						/** @type {Node} */ (
-							/** @type {Node} */ (fragment[fragment.length - 1] || hydrating_node).nextSibling
-						).nextSibling
-					);
+		if (!hydrating) {
+			// TODO add 'empty controlled block' optimisation here
+			reconcile_fn(array, state, anchor, render_fn, flags, keys);
+		}
+
+		if (fallback_fn !== null) {
+			if (length === 0) {
+				if (fallback) {
+					resume_effect(fallback);
+				} else {
+					fallback = render_effect(() => {
+						var dom = fallback_fn(anchor);
+
+						return () => {
+							if (dom !== undefined) {
+								remove(dom);
+							}
+						};
+					}, true);
 				}
-
-				remove_excess_hydration_nodes(hydration_list, hydrating_node);
-
-				state.items = b_items;
+			} else if (fallback !== null) {
+				pause_effect(fallback, () => {
+					fallback = null;
+				});
 			}
+		}
 
-			if (!hydrating) {
-				// TODO add 'empty controlled block' optimisation here
-				reconcile_fn(array, state, anchor, render_fn, flags, keys);
-			}
-
-			if (fallback_fn !== null) {
-				if (length === 0) {
-					if (fallback) {
-						resume_effect(fallback);
-					} else {
-						fallback = render_effect(
-							() => {
-								var dom = fallback_fn(anchor);
-
-								return () => {
-									if (dom !== undefined) {
-										remove(dom);
-									}
-								};
-							},
-							block,
-							true
-						);
-					}
-				} else if (fallback !== null) {
-					pause_effect(fallback, () => {
-						fallback = null;
-					});
-				}
-			}
-
-			if (mismatch) {
-				// Set a fragment so that Svelte continues to operate in hydration mode
-				set_current_hydration_fragment([]);
-			}
-		},
-		block,
-		false
-	);
+		if (mismatch) {
+			// Set a fragment so that Svelte continues to operate in hydration mode
+			set_current_hydration_fragment([]);
+		}
+	});
 
 	effect.ondestroy = () => {
 		for (var item of state.items) {
@@ -618,19 +607,15 @@ function create_item(value, key, index, render_fn, flags) {
 	try {
 		current_each_item = item;
 
-		item.e = render_effect(
-			() => {
-				var dom = render_fn(null, item.v, item.i);
+		item.e = render_effect(() => {
+			var dom = render_fn(null, item.v, item.i);
 
-				return () => {
-					if (dom !== undefined) {
-						remove(dom);
-					}
-				};
-			},
-			item,
-			true
-		);
+			return () => {
+				if (dom !== undefined) {
+					remove(dom);
+				}
+			};
+		}, true);
 
 		return item;
 	} finally {

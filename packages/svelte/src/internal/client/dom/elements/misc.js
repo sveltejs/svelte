@@ -16,7 +16,6 @@ export function autofocus(dom, value) {
 					dom.focus();
 				}
 			},
-			null,
 			true,
 			false
 		);

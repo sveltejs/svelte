@@ -1,7 +1,6 @@
 import { render_effect } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
 import { untrack } from '../../runtime.js';
-import { create_block } from './utils.js';
 
 /**
  * @template {(node: import('#client').TemplateNode, ...args: any[]) => import('#client').Dom} SnippetFn
@@ -11,8 +10,6 @@ import { create_block } from './utils.js';
  * @returns {void}
  */
 export function snippet(get_snippet, node, ...args) {
-	const block = create_block();
-
 	/** @type {SnippetFn | null | undefined} */
 	var snippet_fn;
 
@@ -30,5 +27,5 @@ export function snippet(get_snippet, node, ...args) {
 				remove(dom);
 			}
 		};
-	}, block);
+	});
 }

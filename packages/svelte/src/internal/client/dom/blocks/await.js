@@ -10,7 +10,6 @@ import {
 } from '../../runtime.js';
 import { destroy_effect, pause_effect, render_effect } from '../../reactivity/effects.js';
 import { DESTROYED, INERT } from '../../constants.js';
-import { create_block } from './utils.js';
 
 /**
  * @template V
@@ -22,8 +21,6 @@ import { create_block } from './utils.js';
  * @returns {void}
  */
 export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
-	const block = create_block();
-
 	const component_context = current_component_context;
 
 	hydrate_block_anchor(anchor);
@@ -48,7 +45,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 		set_current_effect(branch);
 		set_current_reaction(branch); // TODO do we need both?
 		set_current_component_context(component_context);
-		var effect = render_effect(() => fn(anchor, value), {}, true);
+		var effect = render_effect(() => fn(anchor, value), true);
 		set_current_component_context(null);
 		set_current_reaction(null);
 		set_current_effect(null);
@@ -83,7 +80,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 					destroy_effect(pending_effect);
 				}
 
-				pending_effect = render_effect(() => pending_fn(anchor), {}, true);
+				pending_effect = render_effect(() => pending_fn(anchor), true);
 			}
 
 			if (then_effect) pause(then_effect);
@@ -117,10 +114,10 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 					destroy_effect(then_effect);
 				}
 
-				then_effect = render_effect(() => then_fn(anchor, input), {}, true);
+				then_effect = render_effect(() => then_fn(anchor, input), true);
 			}
 		}
-	}, block);
+	});
 
 	branch.ondestroy = () => {
 		// TODO this sucks, tidy it up

@@ -3,7 +3,6 @@ import { hydrate_block_anchor } from '../hydration.js';
 import { remove } from '../reconciler.js';
 import { pause_effect, render_effect } from '../../reactivity/effects.js';
 import { safe_not_equal } from '../../reactivity/equality.js';
-import { create_block } from './utils.js';
 
 /**
  * @template V
@@ -13,8 +12,6 @@ import { create_block } from './utils.js';
  * @returns {void}
  */
 export function key_block(anchor, get_key, render_fn) {
-	const block = create_block();
-
 	hydrate_block_anchor(anchor);
 
 	/** @type {V | typeof UNINITIALIZED} */
@@ -30,37 +27,32 @@ export function key_block(anchor, get_key, render_fn) {
 	 */
 	let effects = new Set();
 
-	const key_effect = render_effect(
-		() => {
-			if (safe_not_equal(key, (key = get_key()))) {
-				if (effect) {
-					var e = effect;
-					pause_effect(e, () => {
-						effects.delete(e);
-					});
-				}
-
-				effect = render_effect(
-					() => {
-						const dom = render_fn(anchor);
-
-						return () => {
-							if (dom !== undefined) {
-								remove(dom);
-							}
-						};
-					},
-					block,
-					true,
-					true
-				);
-
-				effects.add(effect);
+	const key_effect = render_effect(() => {
+		if (safe_not_equal(key, (key = get_key()))) {
+			if (effect) {
+				var e = effect;
+				pause_effect(e, () => {
+					effects.delete(e);
+				});
 			}
-		},
-		block,
-		false
-	);
+
+			effect = render_effect(
+				() => {
+					const dom = render_fn(anchor);
+
+					return () => {
+						if (dom !== undefined) {
+							remove(dom);
+						}
+					};
+				},
+				true,
+				true
+			);
+
+			effects.add(effect);
+		}
+	});
 
 	key_effect.ondestroy = () => {
 		for (const e of effects) {

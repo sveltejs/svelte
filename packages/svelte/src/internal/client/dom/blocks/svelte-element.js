@@ -11,7 +11,6 @@ import { remove } from '../reconciler.js';
 import { is_array } from '../../utils.js';
 import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
-import { create_block } from './utils.js';
 import { current_effect } from '../../runtime.js';
 
 /**
@@ -44,7 +43,6 @@ function swap_block_dom(effect, from, to) {
  */
 export function element(anchor, get_tag, is_svg, render_fn) {
 	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
-	const block = create_block();
 
 	hydrate_block_anchor(anchor);
 
@@ -72,7 +70,7 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 		if (next_tag === tag) return;
 
 		// See explanation of `each_item_block` above
-		var previous_each_item_block = current_each_item;
+		var previous_each_item = current_each_item;
 		set_current_each_item(each_item_block);
 
 		// We try our best infering the namespace in case it's not possible to determine statically,
@@ -104,46 +102,42 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 		}
 
 		if (next_tag && next_tag !== current_tag) {
-			effect = render_effect(
-				() => {
-					const prev_element = element;
-					element = hydrating
-						? /** @type {Element} */ (current_hydration_fragment[0])
-						: ns
-							? document.createElementNS(ns, next_tag)
-							: document.createElement(next_tag);
+			effect = render_effect(() => {
+				const prev_element = element;
+				element = hydrating
+					? /** @type {Element} */ (current_hydration_fragment[0])
+					: ns
+						? document.createElementNS(ns, next_tag)
+						: document.createElement(next_tag);
 
-					if (render_fn) {
-						let anchor;
-						if (hydrating) {
-							// Use the existing ssr comment as the anchor so that the inner open and close
-							// methods can pick up the existing nodes correctly
-							anchor = /** @type {Comment} */ (element.firstChild);
-						} else {
-							anchor = empty();
-							element.appendChild(anchor);
-						}
-						render_fn(element, anchor);
+				if (render_fn) {
+					let anchor;
+					if (hydrating) {
+						// Use the existing ssr comment as the anchor so that the inner open and close
+						// methods can pick up the existing nodes correctly
+						anchor = /** @type {Comment} */ (element.firstChild);
+					} else {
+						anchor = empty();
+						element.appendChild(anchor);
 					}
+					render_fn(element, anchor);
+				}
 
-					anchor.before(element);
+				anchor.before(element);
 
-					if (prev_element) {
-						swap_block_dom(parent_effect, prev_element, element);
-						prev_element.remove();
-					}
-				},
-				block,
-				true
-			);
+				if (prev_element) {
+					swap_block_dom(parent_effect, prev_element, element);
+					prev_element.remove();
+				}
+			}, true);
 		}
 
 		tag = next_tag;
 		if (tag) current_tag = tag;
 		set_should_intro(true);
 
-		set_current_each_item(previous_each_item_block);
-	}, block);
+		set_current_each_item(previous_each_item);
+	});
 
 	wrapper.ondestroy = () => {
 		if (element !== null) {

@@ -26,7 +26,6 @@ function run_test(runes: boolean, fn: (runes: boolean) => () => void) {
 			() => {
 				execute = fn(runes);
 			},
-			null,
 			true,
 			true
 		);

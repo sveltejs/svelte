@@ -12,7 +12,6 @@ import {
 	render_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
-import { create_block } from './utils.js';
 
 /**
  * @param {Comment} anchor
@@ -23,8 +22,6 @@ import { create_block } from './utils.js';
  * @returns {void}
  */
 export function if_block(anchor, get_condition, consequent_fn, alternate_fn, elseif = false) {
-	const block = create_block();
-
 	hydrate_block_anchor(anchor);
 
 	/** @type {undefined | import('#client').Dom} */
@@ -71,22 +68,18 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 			if (consequent_effect) {
 				resume_effect(consequent_effect);
 			} else {
-				consequent_effect = render_effect(
-					() => {
-						consequent_dom = consequent_fn(anchor);
+				consequent_effect = render_effect(() => {
+					consequent_dom = consequent_fn(anchor);
 
-						return () => {
-							// TODO make this unnecessary by linking the dom to the effect,
-							// and removing automatically on teardown
-							if (consequent_dom !== undefined) {
-								remove(consequent_dom);
-								consequent_dom = undefined;
-							}
-						};
-					},
-					block,
-					true
-				);
+					return () => {
+						// TODO make this unnecessary by linking the dom to the effect,
+						// and removing automatically on teardown
+						if (consequent_dom !== undefined) {
+							remove(consequent_dom);
+							consequent_dom = undefined;
+						}
+					};
+				}, true);
 			}
 
 			if (alternate_effect) {
@@ -99,22 +92,18 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 			if (alternate_effect) {
 				resume_effect(alternate_effect);
 			} else if (alternate_fn) {
-				alternate_effect = render_effect(
-					() => {
-						alternate_dom = alternate_fn(anchor);
+				alternate_effect = render_effect(() => {
+					alternate_dom = alternate_fn(anchor);
 
-						return () => {
-							// TODO make this unnecessary by linking the dom to the effect,
-							// and removing automatically on teardown
-							if (alternate_dom !== undefined) {
-								remove(alternate_dom);
-								alternate_dom = undefined;
-							}
-						};
-					},
-					block,
-					true
-				);
+					return () => {
+						// TODO make this unnecessary by linking the dom to the effect,
+						// and removing automatically on teardown
+						if (alternate_dom !== undefined) {
+							remove(alternate_dom);
+							alternate_dom = undefined;
+						}
+					};
+				}, true);
 			}
 
 			if (consequent_effect) {
@@ -129,7 +118,7 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 			// Set fragment so that Svelte continues to operate in hydration mode
 			set_current_hydration_fragment([]);
 		}
-	}, block);
+	});
 
 	if (elseif) {
 		if_effect.f |= IS_ELSEIF;

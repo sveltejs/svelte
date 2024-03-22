@@ -29,11 +29,10 @@ import { noop } from '../../common.js';
  * @param {import('./types.js').EffectType} type
  * @param {(() => void | (() => void))} fn
  * @param {boolean} sync
- * @param {null | import('#client').Block} block
  * @param {boolean} init
  * @returns {import('#client').Effect}
  */
-function create_effect(type, fn, sync, block = null, init = true) {
+function create_effect(type, fn, sync, init = true) {
 	/** @type {import('#client').Effect} */
 	const signal = {
 		parent: current_effect,
@@ -98,7 +97,7 @@ export function user_effect(fn) {
 		current_component_context !== null &&
 		!current_component_context.m;
 
-	const effect = create_effect(EFFECT, fn, false, null, !defer);
+	const effect = create_effect(EFFECT, fn, false, !defer);
 
 	if (defer) {
 		const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
@@ -114,7 +113,7 @@ export function user_effect(fn) {
  * @returns {() => void}
  */
 export function user_root_effect(fn) {
-	const effect = render_effect(fn, null, true);
+	const effect = render_effect(fn, true);
 	return () => {
 		destroy_effect(effect);
 	};
@@ -215,17 +214,15 @@ export function invalidate_effect(fn) {
 
 /**
  * @param {(() => void)} fn
- * @param {any} block
- * @param {any} managed
- * @param {any} sync
+ * @param {boolean} managed
+ * @param {boolean} sync
  * @returns {import('#client').Effect}
  */
-export function render_effect(fn, block = null, managed = false, sync = true) {
+export function render_effect(fn, managed = false, sync = true) {
 	let flags = RENDER_EFFECT;
-	if (managed) {
-		flags |= MANAGED;
-	}
-	return create_effect(flags, /** @type {any} */ (fn), sync, block);
+	if (managed) flags |= MANAGED;
+
+	return create_effect(flags, /** @type {any} */ (fn), sync);
 }
 
 /**
