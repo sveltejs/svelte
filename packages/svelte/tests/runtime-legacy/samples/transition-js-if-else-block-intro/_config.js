@@ -15,7 +15,7 @@ export default test({
 		raf.tick(500);
 		component.x = true;
 		assert.equal(component.no, null);
-		assert.equal(component.yes.foo, undefined);
+		assert.equal(component.yes.foo, 0);
 
 		raf.tick(700);
 		assert.equal(component.yes.foo, 0.5);

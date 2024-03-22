@@ -11,7 +11,7 @@ export default test({
 			btn?.click();
 		});
 
-		assert.htmlEqual(target.innerHTML, `<h1>Outside</h1><button>Hide</button>`);
+		assert.htmlEqual(target.innerHTML, `<h1>Outside</h1><button style="opacity: 0;">Hide</button>`);
 
 		raf.tick(100);
 

@@ -90,7 +90,7 @@ export function svg_template_with_script(svg, return_fragment) {
 function open_template(is_fragment, use_clone_node, anchor, template_element_fn) {
 	if (hydrating) {
 		if (anchor !== null) {
-			hydrate_block_anchor(anchor, false);
+			hydrate_block_anchor(anchor);
 		}
 		// In ssr+hydration optimization mode, we might remove the template_element,
 		// so we need to is_fragment flag to properly handle hydrated content accordingly.
@@ -181,18 +181,18 @@ export function comment(anchor) {
  * @returns {void}
  */
 function close_template(dom, is_fragment, anchor) {
-	const block = /** @type {import('#client').Block} */ (current_block);
-
 	/** @type {import('#client').TemplateNode | Array<import('#client').TemplateNode>} */
-	const current = is_fragment
+	var current = is_fragment
 		? is_array(dom)
 			? dom
 			: /** @type {import('#client').TemplateNode[]} */ (Array.from(dom.childNodes))
 		: dom;
+
 	if (!hydrating && anchor !== null) {
-		insert(current, null, anchor);
+		insert(current, anchor);
 	}
-	block.d = current;
+
+	/** @type {import('#client').Block} */ (current_block).d = current;
 }
 
 /**

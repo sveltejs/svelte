@@ -1,16 +1,4 @@
-import {
-	ROOT_BLOCK,
-	EACH_BLOCK,
-	EACH_ITEM_BLOCK,
-	IF_BLOCK,
-	AWAIT_BLOCK,
-	KEY_BLOCK,
-	HEAD_BLOCK,
-	DYNAMIC_COMPONENT_BLOCK,
-	DYNAMIC_ELEMENT_BLOCK,
-	SNIPPET_BLOCK,
-	STATE_SYMBOL
-} from './constants.js';
+import { STATE_SYMBOL } from './constants.js';
 import type { Effect, Source, Value } from './reactivity/types.js';
 
 type EventCallback = (event: Event) => boolean;
@@ -59,41 +47,7 @@ export type ComponentContext = {
 
 export type Equals = (this: Value, value: unknown) => boolean;
 
-export type BlockType =
-	| typeof ROOT_BLOCK
-	| typeof EACH_BLOCK
-	| typeof EACH_ITEM_BLOCK
-	| typeof IF_BLOCK
-	| typeof AWAIT_BLOCK
-	| typeof KEY_BLOCK
-	| typeof SNIPPET_BLOCK
-	| typeof HEAD_BLOCK
-	| typeof DYNAMIC_COMPONENT_BLOCK
-	| typeof DYNAMIC_ELEMENT_BLOCK;
-
 export type TemplateNode = Text | Element | Comment;
-
-export type Transition = {
-	/** effect */
-	e: Effect;
-	/** payload */
-	p: null | TransitionPayload;
-	/** init */
-	i: (from?: DOMRect) => TransitionPayload;
-	/** finished */
-	f: (fn: () => void) => void;
-	in: () => void;
-	/** out */
-	o: () => void;
-	/** cancel */
-	c: () => void;
-	/** cleanup */
-	x: () => void;
-	/** direction */
-	r: 'in' | 'out' | 'both' | 'key';
-	/** dom */
-	d: HTMLElement;
-};
 
 export type RootBlock = {
 	/** dom */
@@ -104,10 +58,6 @@ export type RootBlock = {
 	i: boolean;
 	/** parent */
 	p: null;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof ROOT_BLOCK;
 };
 
 export type IfBlock = {
@@ -119,31 +69,6 @@ export type IfBlock = {
 	e: null | Effect;
 	/** parent */
 	p: Block;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** consequent transitions */
-	c: null | Set<Transition>;
-	/** alternate transitions */
-	a: null | Set<Transition>;
-	/** effect */
-	ce: null | Effect;
-	/** effect */
-	ae: null | Effect;
-	/** type */
-	t: typeof IF_BLOCK;
-};
-
-export type KeyBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | Effect;
-	/** parent */
-	p: Block;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof KEY_BLOCK;
 };
 
 export type HeadBlock = {
@@ -153,10 +78,6 @@ export type HeadBlock = {
 	e: null | Effect;
 	/** parent */
 	p: Block;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof HEAD_BLOCK;
 };
 
 export type DynamicElementBlock = {
@@ -166,10 +87,6 @@ export type DynamicElementBlock = {
 	e: null | Effect;
 	/** parent */
 	p: Block;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof DYNAMIC_ELEMENT_BLOCK;
 };
 
 export type DynamicComponentBlock = {
@@ -179,10 +96,6 @@ export type DynamicComponentBlock = {
 	e: null | Effect;
 	/** parent */
 	p: Block;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof DYNAMIC_COMPONENT_BLOCK;
 };
 
 export type AwaitBlock = {
@@ -194,15 +107,9 @@ export type AwaitBlock = {
 	p: Block;
 	/** pending */
 	n: boolean;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** type */
-	t: typeof AWAIT_BLOCK;
 };
 
 export type EachBlock = {
-	/** anchor */
-	a: Element | Comment;
 	/** flags */
 	f: number;
 	/** dom */
@@ -213,35 +120,21 @@ export type EachBlock = {
 	e: null | Effect;
 	/** parent */
 	p: Block;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** transitions */
-	s: Array<EachItemBlock>;
-	/** type */
-	t: typeof EACH_BLOCK;
 };
 
 export type EachItemBlock = {
-	/** transition */
-	a: null | ((block: EachItemBlock, transitions: Set<Transition>) => void);
+	/** animation manager */
+	a: AnimationManager | null;
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | Effect;
+	e: Effect;
 	/** item */
 	v: any | Source<any>;
 	/** index */
 	i: number | Source<number>;
 	/** key */
 	k: unknown;
-	/** parent */
-	p: EachBlock;
-	/** transition */
-	r: null | ((transition: Transition) => void);
-	/** transitions */
-	s: null | Set<Transition>;
-	/** type */
-	t: typeof EACH_ITEM_BLOCK;
 };
 
 export type SnippetBlock = {
@@ -251,10 +144,6 @@ export type SnippetBlock = {
 	p: Block;
 	/** effect */
 	e: null | Effect;
-	/** transition */
-	r: null;
-	/** type */
-	t: typeof SNIPPET_BLOCK;
 };
 
 export type Block =
@@ -264,25 +153,54 @@ export type Block =
 	| DynamicElementBlock
 	| DynamicComponentBlock
 	| HeadBlock
-	| KeyBlock
 	| EachBlock
 	| EachItemBlock
 	| SnippetBlock;
+
+export interface TransitionManager {
+	/** Whether the `global` modifier was used (i.e. `transition:fade|global`) */
+	is_global: boolean;
+	/** Called inside `resume_effect` */
+	in: () => void;
+	/** Called inside `pause_effect` */
+	out: (callback?: () => void) => void;
+	/** Called inside `destroy_effect` */
+	stop: () => void;
+}
+
+export interface AnimationManager {
+	/** An element with an `animate:` directive */
+	element: Element;
+	/** Called during keyed each block reconciliation, before updates */
+	measure: () => void;
+	/** Called during keyed each block reconciliation, after updates — this triggers the animation */
+	apply: () => void;
+}
+
+export interface Animation {
+	/** Abort the animation */
+	abort: () => void;
+	/** Allow the animation to continue running, but remove any callback. This prevents the removal of an outroing block if the corresponding intro has a `delay` */
+	deactivate: () => void;
+	/** Resets an animation to its starting state, if it uses `tick`. Exposed as a separate method so that an aborted `out:` can still reset even if the `outro` had already completed */
+	reset: () => void;
+	/** Get the `t` value (between `0` and `1`) of the animation, so that its counterpart can start from the right place */
+	t: (now: number) => number;
+}
 
 export type TransitionFn<P> = (
 	element: Element,
 	props: P,
 	options: { direction?: 'in' | 'out' | 'both' }
-) => TransitionPayload;
+) => AnimationConfig | ((options: { direction?: 'in' | 'out' }) => AnimationConfig);
 
 export type AnimateFn<P> = (
 	element: Element,
 	rects: { from: DOMRect; to: DOMRect },
-	props: P,
-	options: {}
-) => TransitionPayload;
+	props: P
+) => AnimationConfig;
 
-export type TransitionPayload = {
+export type AnimationConfig = {
 	delay?: number;
 	duration?: number;
 	easing?: (t: number) => number;
@@ -307,15 +225,17 @@ export type Render = {
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
 	e: null | Effect;
-	/** transitions */
-	s: Set<Transition>;
 	/** prev */
 	p: Render | null;
 };
 
 export type Raf = {
+	/** Alias for `requestAnimationFrame`, exposed in such a way that we can override in tests */
 	tick: (callback: (time: DOMHighResTimeStamp) => void) => any;
+	/** Alias for `performance.now()`, exposed in such a way that we can override in tests */
 	now: () => number;
+	/** A set of tasks that will run to completion, unless aborted */
+	tasks: Set<TaskEntry>;
 };
 
 export interface Task {

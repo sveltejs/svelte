@@ -11,3 +11,5 @@
 /motion.d.ts
 /store.d.ts
 /transition.d.ts
+
+/scripts/_bundle.js
