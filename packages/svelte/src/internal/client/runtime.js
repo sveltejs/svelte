@@ -1260,29 +1260,32 @@ export function unwrap(value) {
 if (DEV) {
 	/**
 	 * @param {string} rune
-	 * @param {string[]} [variants]
 	 */
-	function throw_rune_error(rune, variants = []) {
+	function throw_rune_error(rune) {
 		if (!(rune in globalThis)) {
 			// TODO if people start adjusting the "this can contain runes" config through v-p-s more, adjust this message
-			// @ts-ignore
-			globalThis[rune] = () => {
-				throw new Error(`${rune}() is only available inside .svelte and .svelte.js/ts files`);
-			};
-			for (const variant of variants) {
-				// @ts-ignore
-				globalThis[rune][variant] = () => {
+			/** @type {any} */
+			let value; // let's hope noone modifies this global, but belts and braces
+			Object.defineProperty(globalThis, rune, {
+				configurable: true,
+				get: () => {
+					if (value !== undefined) {
+						return value;
+					}
 					throw new Error(
-						`${rune}.${variant}() is only available inside .svelte and .svelte.js/ts files`
+						`The ${rune} rune is only available inside .svelte and .svelte.js/ts files`
 					);
-				};
-			}
+				},
+				set: (v) => {
+					value = v;
+				}
+			});
 		}
 	}
 
-	throw_rune_error('$state', ['frozen']);
-	throw_rune_error('$effect', ['pre', 'root', 'active']);
-	throw_rune_error('$derived', ['by']);
+	throw_rune_error('$state');
+	throw_rune_error('$effect');
+	throw_rune_error('$derived');
 	throw_rune_error('$inspect');
 	throw_rune_error('$props');
 	throw_rune_error('$bindable');
