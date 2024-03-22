@@ -36,8 +36,9 @@ export function head(render_fn) {
 			() => {
 				if (dom !== null) {
 					remove(dom);
-					head_effect.dom = block.d = dom = null;
+					head_effect.dom = dom = null;
 				}
+
 				let anchor = null;
 				if (!hydrating) {
 					anchor = empty();
@@ -51,9 +52,8 @@ export function head(render_fn) {
 		);
 
 		head_effect.ondestroy = () => {
-			const current = block.d;
-			if (current !== null) {
-				remove(current);
+			if (dom !== null) {
+				remove(dom);
 			}
 		};
 	} finally {
