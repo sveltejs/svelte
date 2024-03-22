@@ -255,6 +255,7 @@ export function destroy_effect(effect) {
 		effect.ondestroy =
 		effect.ctx =
 		effect.block =
+		effect.dom =
 		effect.deps =
 			null;
 }
