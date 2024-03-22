@@ -9,7 +9,7 @@ import { create_block } from './utils.js';
  * @template V
  * @param {Comment} anchor
  * @param {() => V} get_key
- * @param {(anchor: Node) => void} render_fn
+ * @param {(anchor: Node) => import('#client').Dom | void} render_fn
  * @returns {void}
  */
 export function key_block(anchor, get_key, render_fn) {
@@ -42,12 +42,10 @@ export function key_block(anchor, get_key, render_fn) {
 
 				effect = render_effect(
 					() => {
-						render_fn(anchor);
-
-						const dom = block.d;
+						const dom = render_fn(anchor);
 
 						return () => {
-							if (dom !== null) {
+							if (dom !== undefined) {
 								remove(dom);
 							}
 						};

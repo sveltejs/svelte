@@ -10,7 +10,7 @@ import { create_block } from './utils.js';
  * @template {(props: P) => void} C
  * @param {Comment} anchor
  * @param {() => C} get_component
- * @param {(component: C) => void} render_fn
+ * @param {(component: C) => import('#client').Dom | void} render_fn
  * @returns {void}
  */
 export function component(anchor, get_component, render_fn) {

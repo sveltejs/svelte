@@ -162,13 +162,11 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 					} else {
 						fallback = render_effect(
 							() => {
-								fallback_fn(anchor);
-								var dom = block.d; // TODO would be nice if this was just returned from the managed effect function...
+								var dom = fallback_fn(anchor);
 
 								return () => {
-									if (dom !== null) {
+									if (dom !== undefined) {
 										remove(dom);
-										dom = null;
 									}
 								};
 							},
