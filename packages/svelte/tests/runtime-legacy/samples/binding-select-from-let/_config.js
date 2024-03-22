@@ -16,6 +16,7 @@ export default test({
 
 		const change = new window.Event('change');
 		options[1].selected = true;
+		// @ts-ignore
 		await select.dispatchEvent(change);
 
 		assert.equal(component.selected, options[1].value);

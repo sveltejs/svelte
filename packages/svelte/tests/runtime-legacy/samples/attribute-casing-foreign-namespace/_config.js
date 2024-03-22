@@ -11,7 +11,8 @@ export default test({
 	skip_if_hydrate: true,
 
 	test({ assert, target }) {
-		const attr = (sel) => target.querySelector(sel).attributes[0].name;
+		// @ts-ignore
+		const attr = (/** @type {string} */ sel) => target.querySelector(sel).attributes[0].name;
 		assert.equal(attr('page'), 'horizontalAlignment');
 		assert.equal(attr('button'), 'textWrap');
 	}
