@@ -49,80 +49,19 @@ export type Equals = (this: Value, value: unknown) => boolean;
 
 export type TemplateNode = Text | Element | Comment;
 
-export type RootBlock = {
+export interface Block {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | Effect;
-	/** intro */
-	i: boolean;
-	/** parent */
-	p: null;
-};
+}
 
-export type IfBlock = {
-	/** value */
-	v: boolean;
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | Effect;
-	/** parent */
-	p: Block;
-};
-
-export type HeadBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | Effect;
-	/** parent */
-	p: Block;
-};
-
-export type DynamicElementBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | Effect;
-	/** parent */
-	p: Block;
-};
-
-export type DynamicComponentBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | Effect;
-	/** parent */
-	p: Block;
-};
-
-export type AwaitBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | Effect;
-	/** parent */
-	p: Block;
-	/** pending */
-	n: boolean;
-};
-
-export type EachBlock = {
+export type EachState = {
 	/** flags */
-	f: number;
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
+	flags: number;
 	/** items */
-	v: EachItemBlock[];
-	/** effewct */
-	e: null | Effect;
-	/** parent */
-	p: Block;
+	items: EachItem[];
 };
 
-export type EachItemBlock = {
+export type EachItem = {
 	/** animation manager */
 	a: AnimationManager | null;
 	/** dom */
@@ -136,26 +75,6 @@ export type EachItemBlock = {
 	/** key */
 	k: unknown;
 };
-
-export type SnippetBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** parent */
-	p: Block;
-	/** effect */
-	e: null | Effect;
-};
-
-export type Block =
-	| RootBlock
-	| IfBlock
-	| AwaitBlock
-	| DynamicElementBlock
-	| DynamicComponentBlock
-	| HeadBlock
-	| EachBlock
-	| EachItemBlock
-	| SnippetBlock;
 
 export interface TransitionManager {
 	/** Whether the `global` modifier was used (i.e. `transition:fade|global`) */

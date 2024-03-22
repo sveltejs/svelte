@@ -178,7 +178,7 @@ export function comment(anchor) {
  * @param {Element | Text} dom
  * @param {boolean} is_fragment
  * @param {null | Text | Comment | Element} anchor
- * @returns {void}
+ * @returns {import('#client').TemplateNode | import('#client').TemplateNode[]}
  */
 function close_template(dom, is_fragment, anchor) {
 	/** @type {import('#client').TemplateNode | Array<import('#client').TemplateNode>} */
@@ -193,22 +193,22 @@ function close_template(dom, is_fragment, anchor) {
 	}
 
 	/** @type {import('#client').Block} */ (current_block).d = current;
+
+	return current;
 }
 
 /**
  * @param {null | Text | Comment | Element} anchor
  * @param {Element | Text} dom
- * @returns {void}
  */
 export function close(anchor, dom) {
-	close_template(dom, false, anchor);
+	return close_template(dom, false, anchor);
 }
 
 /**
  * @param {null | Text | Comment | Element} anchor
  * @param {Element | Text} dom
- * @returns {void}
  */
 export function close_frag(anchor, dom) {
-	close_template(dom, true, anchor);
+	return close_template(dom, true, anchor);
 }

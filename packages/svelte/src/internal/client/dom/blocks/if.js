@@ -6,46 +6,32 @@ import {
 	set_current_hydration_fragment
 } from '../hydration.js';
 import { remove } from '../reconciler.js';
-import { current_block } from '../../runtime.js';
 import {
 	destroy_effect,
 	pause_effect,
 	render_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
-
-/** @returns {import('#client').IfBlock} */
-function create_if_block() {
-	return {
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('#client').Block} */ (current_block),
-		// value
-		v: false
-	};
-}
+import { create_block } from './utils.js';
 
 /**
  * @param {Comment} anchor
  * @param {() => boolean} get_condition
- * @param {(anchor: Node) => void} consequent_fn
- * @param {null | ((anchor: Node) => void)} alternate_fn
+ * @param {(anchor: Node) => import('#client').TemplateNode | import('#client').TemplateNode[]} consequent_fn
+ * @param {null | ((anchor: Node) => import('#client').TemplateNode | import('#client').TemplateNode[])} alternate_fn
  * @param {boolean} [elseif] True if this is an `{:else if ...}` block rather than an `{#if ...}`, as that affects which transitions are considered 'local'
  * @returns {void}
  */
 export function if_block(anchor, get_condition, consequent_fn, alternate_fn, elseif = false) {
-	const block = create_if_block();
+	const block = create_block();
 
 	hydrate_block_anchor(anchor);
 
-	/** @type {null | import('#client').TemplateNode | Array<import('#client').TemplateNode>} */
-	let consequent_dom = null;
+	/** @type {undefined | import('#client').TemplateNode | Array<import('#client').TemplateNode>} */
+	let consequent_dom;
 
-	/** @type {null | import('#client').TemplateNode | Array<import('#client').TemplateNode>} */
-	let alternate_dom = null;
+	/** @type {undefined | import('#client').TemplateNode | Array<import('#client').TemplateNode>} */
+	let alternate_dom;
 
 	/** @type {import('#client').Effect | null} */
 	let consequent_effect = null;
@@ -87,15 +73,14 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 			} else {
 				consequent_effect = render_effect(
 					() => {
-						consequent_fn(anchor);
-						consequent_dom = block.d;
+						consequent_dom = consequent_fn(anchor);
 
 						return () => {
 							// TODO make this unnecessary by linking the dom to the effect,
 							// and removing automatically on teardown
-							if (consequent_dom !== null) {
+							if (consequent_dom !== undefined) {
 								remove(consequent_dom);
-								consequent_dom = null;
+								consequent_dom = undefined;
 							}
 						};
 					},
@@ -116,15 +101,14 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 			} else if (alternate_fn) {
 				alternate_effect = render_effect(
 					() => {
-						alternate_fn(anchor);
-						alternate_dom = block.d;
+						alternate_dom = alternate_fn(anchor);
 
 						return () => {
 							// TODO make this unnecessary by linking the dom to the effect,
 							// and removing automatically on teardown
-							if (alternate_dom !== null) {
+							if (alternate_dom !== undefined) {
 								remove(alternate_dom);
-								alternate_dom = null;
+								alternate_dom = undefined;
 							}
 						};
 					},
@@ -154,21 +138,20 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 	if_effect.ondestroy = () => {
 		// TODO make this unnecessary by linking the dom to the effect,
 		// and removing automatically on teardown
-		if (consequent_dom !== null) {
+		if (consequent_dom !== undefined) {
 			remove(consequent_dom);
 		}
 
-		if (alternate_dom !== null) {
+		if (alternate_dom !== undefined) {
 			remove(alternate_dom);
 		}
 
 		if (consequent_effect) {
 			destroy_effect(consequent_effect);
 		}
+
 		if (alternate_effect) {
 			destroy_effect(alternate_effect);
 		}
 	};
-
-	block.e = if_effect;
 }

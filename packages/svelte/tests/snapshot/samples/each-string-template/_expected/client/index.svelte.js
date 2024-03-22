@@ -21,7 +21,7 @@ export default function Each_string_template($$anchor, $$props) {
 
 			/* Update */
 			$.text_effect(text, () => `${$.stringify($.unwrap(thing))}, `);
-			$.close($$anchor, text);
+			return $.close($$anchor, text);
 		},
 		null
 	);

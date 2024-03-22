@@ -3,6 +3,7 @@ import { hydrate_block_anchor } from '../hydration.js';
 import { remove } from '../reconciler.js';
 import { pause_effect, render_effect } from '../../reactivity/effects.js';
 import { safe_not_equal } from '../../reactivity/equality.js';
+import { create_block } from './utils.js';
 
 /**
  * @template V
@@ -12,7 +13,7 @@ import { safe_not_equal } from '../../reactivity/equality.js';
  * @returns {void}
  */
 export function key_block(anchor, get_key, render_fn) {
-	const block = {};
+	const block = create_block();
 
 	hydrate_block_anchor(anchor);
 
@@ -43,7 +44,6 @@ export function key_block(anchor, get_key, render_fn) {
 					() => {
 						render_fn(anchor);
 
-						// @ts-expect-error TODO this should be unnecessary
 						const dom = block.d;
 
 						return () => {

@@ -77,7 +77,7 @@ const linear = (t) => t;
  * @param {(() => P) | null} get_params
  */
 export function animation(element, get_fn, get_params) {
-	var block = /** @type {import('#client').EachItemBlock} */ (current_each_item_block);
+	var block = /** @type {import('#client').EachItem} */ (current_each_item_block);
 
 	/** @type {DOMRect} */
 	var from;

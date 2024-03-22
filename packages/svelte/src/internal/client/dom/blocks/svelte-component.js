@@ -1,6 +1,7 @@
 import { hydrate_block_anchor } from '../hydration.js';
 import { pause_effect, render_effect } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
+import { create_block } from './utils.js';
 
 // TODO this is very similar to `key`, can we deduplicate?
 
@@ -13,7 +14,7 @@ import { remove } from '../reconciler.js';
  * @returns {void}
  */
 export function component(anchor, get_component, render_fn) {
-	const block = {};
+	const block = create_block();
 
 	hydrate_block_anchor(anchor);
 
@@ -46,7 +47,6 @@ export function component(anchor, get_component, render_fn) {
 					() => {
 						render_fn(component);
 
-						// @ts-expect-error TODO this should be unnecessary
 						const dom = block.d;
 
 						return () => {
