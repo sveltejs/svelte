@@ -45,7 +45,7 @@ const rest_props_handler = {
 	},
 	set(target, key) {
 		if (DEV) {
-			throw new Error(`${target.name}.${String(key)} is readonly`);
+			throw new Error(`Rest element properties of $props() such as ${target.name}.${String(key)} are readonly`);
 		}
 
 		return false;
