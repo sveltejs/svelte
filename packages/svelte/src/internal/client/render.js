@@ -140,6 +140,7 @@ export function mount(component, options) {
  */
 export function hydrate(component, options) {
 	init_operations();
+
 	const container = options.target;
 	const first_child = /** @type {ChildNode} */ (container.firstChild);
 	const previous_hydration_fragment = current_hydration_fragment;

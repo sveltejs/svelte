@@ -1,5 +1,3 @@
-// Handle hydration
-
 import { schedule_task } from './task.js';
 import { empty } from './operations.js';
 
