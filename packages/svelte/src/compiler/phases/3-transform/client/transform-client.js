@@ -262,7 +262,7 @@ export function client_component(source, analysis, options) {
 				b.stmt(b.call('$.flushSync'))
 			]);
 
-			if (binding.initial) {
+			if (analysis.runes && binding.initial) {
 				// turn `set foo($$value)` into `set foo($$value = expression)`
 				setter.value.params[0] = {
 					type: 'AssignmentPattern',
