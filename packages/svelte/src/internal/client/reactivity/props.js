@@ -139,18 +139,22 @@ export function spread_props(...props) {
 export function prop(props, key, flags, fallback) {
 	var immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
 	var runes = (flags & PROPS_IS_RUNES) !== 0;
+	var lazy = (flags & PROPS_IS_LAZY_INITIAL) !== 0;
+
 	var prop_value = /** @type {V} */ (props[key]);
 	var setter = get_descriptor(props, key)?.set;
 
-	var needs_new_fallback_value = true;
-	/** @type {V} */
-	var fallback_value;
-	var get_fallback = () =>
-		fallback !== undefined
-			? (flags & PROPS_IS_LAZY_INITIAL) !== 0
-				? /** @type {Function} */ (fallback)()
-				: fallback
-			: undefined;
+	var fallback_value = /** @type {V} */ (fallback);
+	var fallback_dirty = true;
+
+	var get_fallback = () => {
+		if (lazy && fallback_dirty) {
+			fallback_dirty = false;
+			fallback_value = untrack(/** @type {() => V} */ (fallback));
+		}
+
+		return fallback_value;
+	};
 
 	if (prop_value === undefined && fallback !== undefined) {
 		if (setter && runes) {
@@ -163,23 +167,15 @@ export function prop(props, key, flags, fallback) {
 			);
 		}
 
-		prop_value = fallback_value = get_fallback();
-		needs_new_fallback_value = false;
-
+		prop_value = get_fallback();
 		if (setter) setter(prop_value);
 	}
 
 	var getter = runes
 		? () => {
 				var value = /** @type {V} */ (props[key]);
-				if (value === undefined) {
-					if (needs_new_fallback_value) {
-						needs_new_fallback_value = false;
-						fallback_value = untrack(get_fallback);
-					}
-					return fallback_value;
-				}
-				needs_new_fallback_value = true;
+				if (value === undefined) return get_fallback();
+				fallback_dirty = true;
 				return value;
 			}
 		: () => {
