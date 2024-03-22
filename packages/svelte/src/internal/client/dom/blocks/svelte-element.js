@@ -1,5 +1,5 @@
 import { namespace_svg } from '../../../../constants.js';
-import { current_hydration_fragment, hydrate_block_anchor, hydrating } from '../hydration.js';
+import { hydrate_nodes, hydrate_block_anchor, hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import {
 	destroy_effect,
@@ -105,7 +105,7 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 			effect = render_effect(() => {
 				const prev_element = element;
 				element = hydrating
-					? /** @type {Element} */ (current_hydration_fragment[0])
+					? /** @type {Element} */ (hydrate_nodes[0])
 					: ns
 						? document.createElementNS(ns, next_tag)
 						: document.createElement(next_tag);

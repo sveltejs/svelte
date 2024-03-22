@@ -1,4 +1,4 @@
-import { capture_fragment_from_node, current_hydration_fragment, hydrating } from './hydration.js';
+import { capture_fragment_from_node, hydrate_nodes, hydrating } from './hydration.js';
 import { get_descriptor } from '../utils.js';
 
 // We cache the Node and Element prototype methods, so that we can avoid doing
@@ -151,7 +151,7 @@ export function child_frag(node, is_text) {
 		// text node to hydrate — we must therefore create one
 		if (is_text && first_node?.nodeType !== 3) {
 			const text = empty();
-			current_hydration_fragment.unshift(text);
+			hydrate_nodes.unshift(text);
 			if (first_node) {
 				/** @type {DocumentFragment} */ (first_node.parentNode).insertBefore(text, first_node);
 			}
@@ -183,13 +183,11 @@ export function sibling(node, is_text = false) {
 		if (is_text && next_sibling?.nodeType !== 3) {
 			const text = empty();
 			if (next_sibling) {
-				const index = current_hydration_fragment.indexOf(
-					/** @type {Text | Comment | Element} */ (next_sibling)
-				);
-				current_hydration_fragment.splice(index, 0, text);
+				const index = hydrate_nodes.indexOf(/** @type {Text | Comment | Element} */ (next_sibling));
+				hydrate_nodes.splice(index, 0, text);
 				/** @type {DocumentFragment} */ (next_sibling.parentNode).insertBefore(text, next_sibling);
 			} else {
-				current_hydration_fragment.push(text);
+				hydrate_nodes.push(text);
 			}
 
 			return text;

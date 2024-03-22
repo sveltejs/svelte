@@ -5,12 +5,12 @@ import { remove } from './dom/reconciler.js';
 import { flush_sync, push, pop, current_component_context } from './runtime.js';
 import { render_effect, destroy_effect } from './reactivity/effects.js';
 import {
-	current_hydration_fragment,
+	hydrate_nodes,
 	hydrate_block_anchor,
 	hydrating,
-	set_current_hydration_fragment,
+	set_hydrate_nodes,
 	set_hydrating,
-	update_hydration_fragment
+	update_hydrate_nodes
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
 import { handle_event_propagation } from './dom/elements/events.js';
@@ -143,17 +143,18 @@ export function hydrate(component, options) {
 
 	const container = options.target;
 	const first_child = /** @type {ChildNode} */ (container.firstChild);
-	const previous_hydration_fragment = current_hydration_fragment;
+	const previous_hydrate_nodes = hydrate_nodes;
 
 	// Call with insert_text == true to prevent empty {expressions} resulting in an empty
-	// fragment array, resulting in a hydration error down the line
+	// `nodes` array, resulting in a hydration error down the line
 	// TODO is both this and the `container.appendChild(anchor)` below necessary?
-	const hydration_fragment = update_hydration_fragment(first_child, true);
+	const nodes = update_hydrate_nodes(first_child, true);
 	set_hydrating(true);
 
 	/** @type {null | Text} */
 	let anchor = null;
-	if (hydration_fragment === null) {
+
+	if (nodes === null) {
 		anchor = empty();
 		container.appendChild(anchor);
 	}
@@ -171,7 +172,7 @@ export function hydrate(component, options) {
 			return instance;
 		}, false);
 	} catch (error) {
-		if (!finished_hydrating && options.recover !== false && hydration_fragment !== null) {
+		if (!finished_hydrating && options.recover !== false && nodes !== null) {
 			// eslint-disable-next-line no-console
 			console.error(
 				'ERR_SVELTE_HYDRATION_MISMATCH' +
@@ -180,17 +181,17 @@ export function hydrate(component, options) {
 						: ''),
 				error
 			);
-			remove(hydration_fragment);
+			remove(nodes);
 			first_child.remove();
-			hydration_fragment[hydration_fragment.length - 1]?.nextSibling?.remove();
+			nodes[nodes.length - 1]?.nextSibling?.remove();
 			set_hydrating(false);
 			return mount(component, options);
 		} else {
 			throw error;
 		}
 	} finally {
-		set_hydrating(!!previous_hydration_fragment);
-		set_current_hydration_fragment(previous_hydration_fragment);
+		set_hydrating(!!previous_hydrate_nodes);
+		set_hydrate_nodes(previous_hydrate_nodes);
 	}
 }
 

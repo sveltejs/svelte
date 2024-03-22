@@ -18,35 +18,35 @@ export function set_hydrating(value) {
  * the `hydrating` flag to tell whether or not we're in hydration mode at which point this is set.
  * @type {import('#client').TemplateNode[]}
  */
-export let current_hydration_fragment = /** @type {any} */ (null);
+export let hydrate_nodes = /** @type {any} */ (null);
 
 /**
- * @param {null | import('#client').TemplateNode[]} fragment
+ * @param {null | import('#client').TemplateNode[]} nodes
  * @returns {void}
  */
-export function set_current_hydration_fragment(fragment) {
-	current_hydration_fragment = /** @type {import('#client').TemplateNode[]} */ (fragment);
+export function set_hydrate_nodes(nodes) {
+	hydrate_nodes = /** @type {import('#client').TemplateNode[]} */ (nodes);
 }
 
 /**
  * @param {Node | null} first
- * @param {boolean} [insert_text] Whether to insert an empty text node if the fragment is empty
+ * @param {boolean} [insert_text] Whether to insert an empty text node if `nodes` is empty
  */
-export function update_hydration_fragment(first, insert_text) {
-	const fragment = get_hydration_fragment(first, insert_text);
-	set_current_hydration_fragment(fragment);
-	return fragment;
+export function update_hydrate_nodes(first, insert_text) {
+	const nodes = get_hydrate_nodes(first, insert_text);
+	set_hydrate_nodes(nodes);
+	return nodes;
 }
 
 /**
  * Returns all nodes between the first `<!--ssr:...-->` comment tag pair encountered.
  * @param {Node | null} node
- * @param {boolean} [insert_text] Whether to insert an empty text node if the fragment is empty
+ * @param {boolean} [insert_text] Whether to insert an empty text node if `nodes` is empty
  * @returns {import('#client').TemplateNode[] | null}
  */
-function get_hydration_fragment(node, insert_text = false) {
+function get_hydrate_nodes(node, insert_text = false) {
 	/** @type {import('#client').TemplateNode[]} */
-	const fragment = [];
+	const nodes = [];
 
 	/** @type {null | Node} */
 	let current_node = node;
@@ -67,14 +67,14 @@ function get_hydration_fragment(node, insert_text = false) {
 				if (target_depth === null) {
 					target_depth = depth;
 				} else if (depth === target_depth) {
-					if (insert_text && fragment.length === 0) {
+					if (insert_text && nodes.length === 0) {
 						const text = empty();
-						fragment.push(text);
+						nodes.push(text);
 						/** @type {Node} */ (current_node.parentNode).insertBefore(text, current_node);
 					}
-					return fragment;
+					return nodes;
 				} else {
-					fragment.push(/** @type {Text | Comment | Element} */ (current_node));
+					nodes.push(/** @type {Text | Comment | Element} */ (current_node));
 				}
 
 				current_node = next_sibling;
@@ -83,7 +83,7 @@ function get_hydration_fragment(node, insert_text = false) {
 		}
 
 		if (target_depth !== null) {
-			fragment.push(/** @type {Text | Comment | Element} */ (current_node));
+			nodes.push(/** @type {Text | Comment | Element} */ (current_node));
 		}
 
 		current_node = next_sibling;
@@ -101,19 +101,19 @@ export function hydrate_block_anchor(node) {
 
 	if (node.nodeType === 8) {
 		// @ts-ignore
-		let fragment = node.$$fragment;
-		if (fragment === undefined) {
-			fragment = get_hydration_fragment(node);
+		let nodes = node.$$fragment;
+		if (nodes === undefined) {
+			nodes = get_hydrate_nodes(node);
 		} else {
 			schedule_task(() => {
 				// @ts-expect-error clean up memory
 				node.$$fragment = undefined;
 			});
 		}
-		set_current_hydration_fragment(fragment);
+		set_hydrate_nodes(nodes);
 	} else {
 		const first_child = /** @type {Element | null} */ (node.firstChild);
-		set_current_hydration_fragment(first_child === null ? [] : [first_child]);
+		set_hydrate_nodes(first_child === null ? [] : [first_child]);
 	}
 }
 
@@ -126,13 +126,13 @@ export function capture_fragment_from_node(node) {
 	if (
 		node.nodeType === 8 &&
 		/** @type {Comment} */ (node).data.startsWith('ssr:') &&
-		current_hydration_fragment[current_hydration_fragment.length - 1] !== node
+		hydrate_nodes[hydrate_nodes.length - 1] !== node
 	) {
-		const fragment = /** @type {Array<Element | Text | Comment>} */ (get_hydration_fragment(node));
-		const last_child = fragment[fragment.length - 1] || node;
+		const nodes = /** @type {Node[]} */ (get_hydrate_nodes(node));
+		const last_child = nodes[nodes.length - 1] || node;
 		const target = /** @type {Node} */ (last_child.nextSibling);
 		// @ts-ignore
-		target.$$fragment = fragment;
+		target.$$fragment = nodes;
 		return target;
 	}
 	return node;
