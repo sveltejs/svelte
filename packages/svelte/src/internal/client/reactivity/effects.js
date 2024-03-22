@@ -1,7 +1,6 @@
 import { DEV } from 'esm-env';
 import {
 	check_dirtiness,
-	current_block,
 	current_component_context,
 	current_effect,
 	current_reaction,
@@ -25,20 +24,20 @@ import {
 } from '../constants.js';
 import { set } from './sources.js';
 import { noop } from '../../common.js';
+import { remove } from '../dom/reconciler.js';
 
 /**
  * @param {import('./types.js').EffectType} type
  * @param {(() => void | (() => void))} fn
  * @param {boolean} sync
- * @param {null | import('#client').Block} block
  * @param {boolean} init
  * @returns {import('#client').Effect}
  */
-function create_effect(type, fn, sync, block = current_block, init = true) {
+function create_effect(type, fn, sync, init = true) {
 	/** @type {import('#client').Effect} */
 	const signal = {
 		parent: current_effect,
-		block,
+		dom: null,
 		deps: null,
 		f: type | DIRTY,
 		l: 0,
@@ -99,7 +98,7 @@ export function user_effect(fn) {
 		current_component_context !== null &&
 		!current_component_context.m;
 
-	const effect = create_effect(EFFECT, fn, false, current_block, !defer);
+	const effect = create_effect(EFFECT, fn, false, !defer);
 
 	if (defer) {
 		const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
@@ -115,7 +114,7 @@ export function user_effect(fn) {
  * @returns {() => void}
  */
 export function user_root_effect(fn) {
-	const effect = render_effect(fn, current_block, true);
+	const effect = render_effect(fn, true);
 	return () => {
 		destroy_effect(effect);
 	};
@@ -216,17 +215,15 @@ export function invalidate_effect(fn) {
 
 /**
  * @param {(() => void)} fn
- * @param {any} block
- * @param {any} managed
- * @param {any} sync
+ * @param {boolean} managed
+ * @param {boolean} sync
  * @returns {import('#client').Effect}
  */
-export function render_effect(fn, block = current_block, managed = false, sync = true) {
+export function render_effect(fn, managed = false, sync = true) {
 	let flags = RENDER_EFFECT;
-	if (managed) {
-		flags |= MANAGED;
-	}
-	return create_effect(flags, /** @type {any} */ (fn), sync, block);
+	if (managed) flags |= MANAGED;
+
+	return create_effect(flags, /** @type {any} */ (fn), sync);
 }
 
 /**
@@ -245,6 +242,11 @@ export function destroy_effect(effect) {
 	}
 
 	effect.teardown?.();
+
+	if (effect.dom !== null) {
+		remove(effect.dom);
+	}
+
 	effect.ondestroy?.();
 
 	// @ts-expect-error
@@ -253,7 +255,7 @@ export function destroy_effect(effect) {
 		effect.teardown =
 		effect.ondestroy =
 		effect.ctx =
-		effect.block =
+		effect.dom =
 		effect.deps =
 			null;
 }
@@ -269,26 +271,51 @@ export function destroy_effect(effect) {
  */
 export function pause_effect(effect, callback = noop) {
 	/** @type {import('#client').TransitionManager[]} */
-	const transitions = [];
+	var transitions = [];
 
 	pause_children(effect, transitions, true);
 
-	let remaining = transitions.length;
+	out(transitions, () => {
+		destroy_effect(effect);
+		callback();
+	});
+}
 
+/**
+ * Pause multiple effects simultaneously, and coordinate their
+ * subsequent destruction. Used in each blocks
+ * @param {import('#client').Effect[]} effects
+ * @param {() => void} callback
+ */
+export function pause_effects(effects, callback = noop) {
+	/** @type {import('#client').TransitionManager[]} */
+	var transitions = [];
+
+	for (var effect of effects) {
+		pause_children(effect, transitions, true);
+	}
+
+	out(transitions, () => {
+		for (var effect of effects) {
+			destroy_effect(effect);
+		}
+		callback();
+	});
+}
+
+/**
+ * @param {import('#client').TransitionManager[]} transitions
+ * @param {() => void} fn
+ */
+function out(transitions, fn) {
+	var remaining = transitions.length;
 	if (remaining > 0) {
-		const check = () => {
-			if (!--remaining) {
-				destroy_effect(effect);
-				callback();
-			}
-		};
-
-		for (const transition of transitions) {
+		var check = () => --remaining || fn();
+		for (var transition of transitions) {
 			transition.out(check);
 		}
 	} else {
-		destroy_effect(effect);
-		callback();
+		fn();
 	}
 }
 

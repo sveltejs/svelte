@@ -1,7 +1,7 @@
 import { hydrate_block_anchor } from '../hydration.js';
 import { pause_effect, render_effect } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
-import { create_block } from './utils.js';
+import { current_effect } from '../../runtime.js';
 
 // TODO this is very similar to `key`, can we deduplicate?
 
@@ -10,12 +10,10 @@ import { create_block } from './utils.js';
  * @template {(props: P) => void} C
  * @param {Comment} anchor
  * @param {() => C} get_component
- * @param {(component: C) => void} render_fn
+ * @param {(component: C) => import('#client').Dom | void} render_fn
  * @returns {void}
  */
 export function component(anchor, get_component, render_fn) {
-	const block = create_block();
-
 	hydrate_block_anchor(anchor);
 
 	/** @type {C} */
@@ -31,49 +29,36 @@ export function component(anchor, get_component, render_fn) {
 	 */
 	let effects = new Set();
 
-	const component_effect = render_effect(
-		() => {
-			if (component === (component = get_component())) return;
+	const component_effect = render_effect(() => {
+		if (component === (component = get_component())) return;
 
-			if (effect) {
-				var e = effect;
-				pause_effect(e, () => {
-					effects.delete(e);
-				});
-			}
+		if (effect) {
+			var e = effect;
+			pause_effect(e, () => {
+				effects.delete(e);
+			});
+		}
 
-			if (component) {
-				effect = render_effect(
-					() => {
-						render_fn(component);
+		if (component) {
+			effect = render_effect(() => {
+				render_fn(component);
 
-						const dom = block.d;
+				// `render_fn` doesn't return anything, and we can't reference `effect`
+				// yet, so we reference it indirectly as `current_effect`
+				const dom = /** @type {import('#client').Effect} */ (current_effect).dom;
 
-						return () => {
-							if (dom !== null) {
-								remove(dom);
-							}
-						};
-					},
-					block,
-					true,
-					true
-				);
+				return () => {
+					if (dom !== null) remove(dom);
+				};
+			}, true);
 
-				// @ts-expect-error TODO tidy up
-				effect.d = block.d;
-
-				effects.add(effect);
-			}
-		},
-		block,
-		false
-	);
+			effects.add(effect);
+		}
+	});
 
 	component_effect.ondestroy = () => {
 		for (const e of effects) {
-			// @ts-expect-error TODO tidy up. ondestroy should be totally unnecessary
-			if (e.d) remove(e.d);
+			if (e.dom) remove(e.dom);
 		}
 	};
 }

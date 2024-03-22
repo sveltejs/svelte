@@ -51,10 +51,7 @@ export type TemplateNode = Text | Element | Comment;
 
 export type Dom = TemplateNode | TemplateNode[];
 
-export interface Block {
-	/** dom */
-	d: null | Dom;
-}
+export interface Block {}
 
 export type EachState = {
 	/** flags */
@@ -66,8 +63,6 @@ export type EachState = {
 export type EachItem = {
 	/** animation manager */
 	a: AnimationManager | null;
-	/** dom */
-	d: null | Dom;
 	/** effect */
 	e: Effect;
 	/** item */

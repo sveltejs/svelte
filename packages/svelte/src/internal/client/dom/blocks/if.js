@@ -12,7 +12,6 @@ import {
 	render_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
-import { create_block } from './utils.js';
 
 /**
  * @param {Comment} anchor
@@ -23,15 +22,7 @@ import { create_block } from './utils.js';
  * @returns {void}
  */
 export function if_block(anchor, get_condition, consequent_fn, alternate_fn, elseif = false) {
-	const block = create_block();
-
 	hydrate_block_anchor(anchor);
-
-	/** @type {undefined | import('#client').Dom} */
-	let consequent_dom;
-
-	/** @type {undefined | import('#client').Dom} */
-	let alternate_dom;
 
 	/** @type {import('#client').Effect | null} */
 	let consequent_effect = null;
@@ -71,56 +62,24 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 			if (consequent_effect) {
 				resume_effect(consequent_effect);
 			} else {
-				consequent_effect = render_effect(
-					() => {
-						consequent_dom = consequent_fn(anchor);
-
-						return () => {
-							// TODO make this unnecessary by linking the dom to the effect,
-							// and removing automatically on teardown
-							if (consequent_dom !== undefined) {
-								remove(consequent_dom);
-								consequent_dom = undefined;
-							}
-						};
-					},
-					block,
-					true
-				);
+				consequent_effect = render_effect(() => consequent_fn(anchor), true);
 			}
 
 			if (alternate_effect) {
 				pause_effect(alternate_effect, () => {
 					alternate_effect = null;
-					if (alternate_dom) remove(alternate_dom);
 				});
 			}
 		} else {
 			if (alternate_effect) {
 				resume_effect(alternate_effect);
 			} else if (alternate_fn) {
-				alternate_effect = render_effect(
-					() => {
-						alternate_dom = alternate_fn(anchor);
-
-						return () => {
-							// TODO make this unnecessary by linking the dom to the effect,
-							// and removing automatically on teardown
-							if (alternate_dom !== undefined) {
-								remove(alternate_dom);
-								alternate_dom = undefined;
-							}
-						};
-					},
-					block,
-					true
-				);
+				alternate_effect = render_effect(() => alternate_fn(anchor), true);
 			}
 
 			if (consequent_effect) {
 				pause_effect(consequent_effect, () => {
 					consequent_effect = null;
-					if (consequent_dom) remove(consequent_dom);
 				});
 			}
 		}
@@ -129,23 +88,14 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 			// Set fragment so that Svelte continues to operate in hydration mode
 			set_current_hydration_fragment([]);
 		}
-	}, block);
+	});
 
 	if (elseif) {
 		if_effect.f |= IS_ELSEIF;
 	}
 
 	if_effect.ondestroy = () => {
-		// TODO make this unnecessary by linking the dom to the effect,
-		// and removing automatically on teardown
-		if (consequent_dom !== undefined) {
-			remove(consequent_dom);
-		}
-
-		if (alternate_dom !== undefined) {
-			remove(alternate_dom);
-		}
-
+		// TODO why is this not automatic? this should be children of `if_effect`
 		if (consequent_effect) {
 			destroy_effect(consequent_effect);
 		}

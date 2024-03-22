@@ -1,6 +1,5 @@
 import { hydrating } from '../hydration.js';
 import { render_effect } from '../../reactivity/effects.js';
-import { current_block } from '../../runtime.js';
 
 /**
  * @param {HTMLElement} dom
@@ -17,7 +16,6 @@ export function autofocus(dom, value) {
 					dom.focus();
 				}
 			},
-			current_block,
 			true,
 			false
 		);

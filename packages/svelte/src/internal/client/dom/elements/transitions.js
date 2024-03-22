@@ -5,7 +5,7 @@ import { raf } from '../../timing.js';
 import { loop } from '../../loop.js';
 import { should_intro } from '../../render.js';
 import { is_function } from '../../utils.js';
-import { current_each_item_block } from '../blocks/each.js';
+import { current_each_item } from '../blocks/each.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
 import { EFFECT_RAN } from '../../constants.js';
 
@@ -77,7 +77,7 @@ const linear = (t) => t;
  * @param {(() => P) | null} get_params
  */
 export function animation(element, get_fn, get_params) {
-	var block = /** @type {import('#client').EachItem} */ (current_each_item_block);
+	var item = /** @type {import('#client').EachItem} */ (current_each_item);
 
 	/** @type {DOMRect} */
 	var from;
@@ -88,7 +88,7 @@ export function animation(element, get_fn, get_params) {
 	/** @type {import('#client').Animation | undefined} */
 	var animation;
 
-	block.a ??= {
+	item.a ??= {
 		element,
 		measure() {
 			from = this.element.getBoundingClientRect();
@@ -118,7 +118,7 @@ export function animation(element, get_fn, get_params) {
 	// when an animation manager already exists, if the tag changes. in that case, we need to
 	// swap out the element rather than creating a new manager, in case it happened at the same
 	// moment as a reconciliation
-	block.a.element = element;
+	item.a.element = element;
 }
 
 /**

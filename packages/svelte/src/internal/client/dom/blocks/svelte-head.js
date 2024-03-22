@@ -7,15 +7,12 @@ import {
 import { empty } from '../operations.js';
 import { render_effect } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
-import { create_block } from './utils.js';
 
 /**
- * @param {(anchor: Node | null) => void} render_fn
+ * @param {(anchor: Node | null) => import('#client').Dom | void} render_fn
  * @returns {void}
  */
 export function head(render_fn) {
-	const block = create_block();
-
 	// The head function may be called after the first hydration pass and ssr comment nodes may still be present,
 	// therefore we need to skip that when we detect that we're not in hydration mode.
 	let hydration_fragment = null;
@@ -29,28 +26,27 @@ export function head(render_fn) {
 	}
 
 	try {
-		const head_effect = render_effect(
-			() => {
-				const current = block.d;
-				if (current !== null) {
-					remove(current);
-					block.d = null;
-				}
-				let anchor = null;
-				if (!hydrating) {
-					anchor = empty();
-					document.head.appendChild(anchor);
-				}
-				render_fn(anchor);
-			},
-			block,
-			false
-		);
+		/** @type {import('#client').Dom | null} */
+		var dom = null;
+
+		const head_effect = render_effect(() => {
+			if (dom !== null) {
+				remove(dom);
+				head_effect.dom = dom = null;
+			}
+
+			let anchor = null;
+			if (!hydrating) {
+				anchor = empty();
+				document.head.appendChild(anchor);
+			}
+
+			dom = render_fn(anchor) ?? null;
+		});
 
 		head_effect.ondestroy = () => {
-			const current = block.d;
-			if (current !== null) {
-				remove(current);
+			if (dom !== null) {
+				remove(dom);
 			}
 		};
 	} finally {
