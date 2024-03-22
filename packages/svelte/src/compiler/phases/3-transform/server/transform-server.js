@@ -446,6 +446,7 @@ function serialize_set_binding(node, context, fallback) {
 		binding.kind !== 'state' &&
 		binding.kind !== 'frozen_state' &&
 		binding.kind !== 'prop' &&
+		binding.kind !== 'bindable_prop' &&
 		binding.kind !== 'each' &&
 		binding.kind !== 'legacy_reactive' &&
 		!is_store
@@ -690,7 +691,21 @@ const javascript_visitors_runes = {
 			}
 
 			if (rune === '$props') {
-				declarations.push(b.declarator(declarator.id, b.id('$$props')));
+				// remove $bindable() from props declaration
+				const id = walk(declarator.id, null, {
+					AssignmentPattern(node) {
+						if (
+							node.right.type === 'CallExpression' &&
+							get_rune(node.right, state.scope) === '$bindable'
+						) {
+							const right = node.right.arguments.length
+								? /** @type {import('estree').Expression} */ (visit(node.right.arguments[0]))
+								: b.id('undefined');
+							return b.assignment_pattern(node.left, right);
+						}
+					}
+				});
+				declarations.push(b.declarator(id, b.id('$$props')));
 				continue;
 			}
 
@@ -1131,7 +1146,7 @@ const javascript_visitors_legacy = {
 				state.scope.get_bindings(declarator)
 			);
 			const has_state = bindings.some((binding) => binding.kind === 'state');
-			const has_props = bindings.some((binding) => binding.kind === 'prop');
+			const has_props = bindings.some((binding) => binding.kind === 'bindable_prop');
 
 			if (!has_state && !has_props) {
 				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
@@ -2217,7 +2232,8 @@ export function server_component(analysis, options) {
 		});
 	}
 
-	// If the component binds to a child, we need to put the template in a loop and repeat until bindings are stable
+	// If the component binds to a child, we need to put the template in a loop and repeat until legacy bindings are stable.
+	// We can remove this once the legacy syntax is gone.
 	if (analysis.uses_component_bindings) {
 		template.body = [
 			b.let('$$settled', b.true),
@@ -2258,7 +2274,7 @@ export function server_component(analysis, options) {
 	/** @type {import('estree').Property[]} */
 	const props = [];
 	for (const [name, binding] of analysis.instance.scope.declarations) {
-		if (binding.kind === 'prop' && !name.startsWith('$$')) {
+		if (binding.kind === 'bindable_prop' && !name.startsWith('$$')) {
 			props.push(b.init(binding.prop_alias ?? name, b.id(name)));
 		}
 	}
@@ -2266,6 +2282,8 @@ export function server_component(analysis, options) {
 		props.push(b.init(alias ?? name, b.id(name)));
 	}
 	if (props.length > 0) {
+		// This has no effect in runes mode other than throwing an error when someone passes
+		// undefined to a binding that has a default value.
 		template.body.push(b.stmt(b.call('$.bind_props', b.id('$$props'), b.object(props))));
 	}
 
@@ -2280,7 +2298,7 @@ export function server_component(analysis, options) {
 		/** @type {string[]} */
 		const named_props = analysis.exports.map(({ name, alias }) => alias ?? name);
 		for (const [name, binding] of analysis.instance.scope.declarations) {
-			if (binding.kind === 'prop') named_props.push(binding.prop_alias ?? name);
+			if (binding.kind === 'bindable_prop') named_props.push(binding.prop_alias ?? name);
 		}
 
 		component_block.body.unshift(

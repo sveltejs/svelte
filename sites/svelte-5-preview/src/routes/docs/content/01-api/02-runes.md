@@ -490,13 +490,33 @@ let { a, b, c, ...everythingElse }: MyProps = $props();
 >
 > ...TypeScript [widens the type](https://www.typescriptlang.org/play?#code/CYUwxgNghgTiAEAzArgOzAFwJYHtXwBIAHGHIgZwB4AVeAXnilQE8A+ACgEoAueagbgBQgiCAzwA3vAAe9eABYATPAC+c4qQqUp03uQwwsqAOaqOnIfCsB6a-AB6AfiA) of `x` to be `string | number`, instead of erroring.
 
-Props cannot be mutated, unless the parent component uses `bind:`. During development, attempts to mutate props will result in an error.
+By default props are treated as readonly, meaning reassignments will not propagate upwards and mutations will result in a warning at runtime in development mode. You will also get a runtime error when trying to `bind:` to a readonly prop in a parent component. To declare props as bindable, use [`$bindable()`](#bindable).
 
 ### What this replaces
 
 `$props` replaces the `export let` and `export { x as y }` syntax for declaring props. It also replaces `$$props` and `$$restProps`, and the little-known `interface $$Props {...}` construct.
 
 Note that you can still use `export const` and `export function` to expose things to users of your component (if they're using `bind:this`, for example).
+
+### `$bindable()`
+
+To declare props as bindable, use `$bindable()`. Besides using them as regular props, the parent can (_can_, not _must_) then also `bind:` to them.
+
+```svelte
+<script>
+	let { bindableProp = $bindable() } = $props();
+</script>
+```
+
+You can pass an argument to `$bindable()`. This argument is used as a fallback value when the property is `undefined`.
+
+```svelte
+<script>
+	let { bindableProp = $bindable('fallback') } = $props();
+</script>
+```
+
+Note that the parent is not allowed to pass `undefined` to a property with a fallback if it `bind:`s to that property.
 
 ## `$inspect`
 

@@ -36,12 +36,21 @@ export function update_pre_prop(fn, d = 1) {
 /**
  * The proxy handler for rest props (i.e. `const { x, ...rest } = $props()`).
  * Is passed the full `$$props` object and excludes the named props.
- * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol> }>}}
+ * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol>, name?: string }>}}
  */
 const rest_props_handler = {
 	get(target, key) {
 		if (target.exclude.includes(key)) return;
 		return target.props[key];
+	},
+	set(target, key) {
+		if (DEV) {
+			throw new Error(
+				`Rest element properties of $props() such as ${target.name}.${String(key)} are readonly`
+			);
+		}
+
+		return false;
 	},
 	getOwnPropertyDescriptor(target, key) {
 		if (target.exclude.includes(key)) return;
@@ -64,11 +73,12 @@ const rest_props_handler = {
 
 /**
  * @param {Record<string, unknown>} props
- * @param {string[]} rest
+ * @param {string[]} exclude
+ * @param {string} [name]
  * @returns {Record<string, unknown>}
  */
-export function rest_props(props, rest) {
-	return new Proxy({ props, exclude: rest }, rest_props_handler);
+export function rest_props(props, exclude, name) {
+	return new Proxy(DEV ? { props, exclude, name } : { props, exclude }, rest_props_handler);
 }
 
 /**

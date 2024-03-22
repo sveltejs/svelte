@@ -1382,6 +1382,7 @@ function serialize_event_handler(node, { state, visit }) {
 					binding.kind === 'legacy_reactive' ||
 					binding.kind === 'derived' ||
 					binding.kind === 'prop' ||
+					binding.kind === 'bindable_prop' ||
 					binding.kind === 'store_sub')
 			) {
 				handler = dynamic_handler();

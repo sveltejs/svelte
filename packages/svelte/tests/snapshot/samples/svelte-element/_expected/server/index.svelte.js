@@ -11,6 +11,5 @@ export default function Svelte_element($$payload, $$props) {
 	$$payload.out += `${anchor}`;
 	if (tag) $.element($$payload, tag, () => {}, () => {});
 	$$payload.out += `${anchor}`;
-	$.bind_props($$props, { tag });
 	$.pop();
 }

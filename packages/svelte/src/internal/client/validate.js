@@ -1,5 +1,5 @@
 import { untrack } from './runtime.js';
-import { is_array } from './utils.js';
+import { get_descriptor, is_array } from './utils.js';
 
 /** regex of all html void element names */
 const void_element_names =
@@ -136,4 +136,23 @@ export function validate_component(component_fn) {
 		throw new Error('A snippet must be rendered with `{@render ...}`');
 	}
 	return component_fn;
+}
+
+/**
+ * @param {Record<string, any>} $$props
+ * @param {string[]} bindable
+ */
+export function validate_prop_bindings($$props, bindable) {
+	for (const key in $$props) {
+		if (!bindable.includes(key)) {
+			var setter = get_descriptor($$props, key)?.set;
+
+			if (setter) {
+				throw new Error(
+					`Cannot use bind:${key} on this component because the property was not declared as bindable. ` +
+						`To mark a property as bindable, use the $bindable() rune like this: \`let { ${key} = $bindable() } = $props()\``
+				);
+			}
+		}
+	}
 }
