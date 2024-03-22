@@ -212,10 +212,7 @@ function _mount(Component, options) {
 	should_intro = options.intro ?? false;
 
 	/** @type {import('#client').Block} */
-	const block = {
-		// dom
-		d: null
-	};
+	const block = {};
 
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously

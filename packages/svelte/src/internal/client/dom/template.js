@@ -193,7 +193,6 @@ function close_template(dom, is_fragment, anchor) {
 	}
 
 	/** @type {import('#client').Effect} */ (current_effect).dom = current;
-	/** @type {import('#client').Block} */ (current_block).d = current;
 
 	return current;
 }
