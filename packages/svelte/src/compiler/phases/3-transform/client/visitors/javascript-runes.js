@@ -211,10 +211,9 @@ export const javascript_visitors_runes = {
 							property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
 						assert.equal(id.type, 'Identifier');
 						const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
-						let initial = /** @type {import('estree').Expression | null} */ (binding.initial);
-						if (initial) {
-							initial = /** @type {import('estree').Expression} */ (visit(initial));
-						}
+						const initial =
+							binding.initial &&
+							/** @type {import('estree').Expression} */ (visit(binding.initial));
 
 						if (binding.reassigned || state.analysis.accessors || initial) {
 							declarations.push(b.declarator(id, get_prop_source(binding, state, name, initial)));
@@ -223,6 +222,14 @@ export const javascript_visitors_runes = {
 						// RestElement
 						/** @type {import('estree').Expression[]} */
 						const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
+
+						if (state.options.dev) {
+							// include rest name, so we can provide informative error messages
+							args.push(
+								b.literal(/** @type {import('estree').Identifier} */ (property.argument).name)
+							);
+						}
+
 						declarations.push(b.declarator(property.argument, b.call('$.rest_props', ...args)));
 					}
 				}

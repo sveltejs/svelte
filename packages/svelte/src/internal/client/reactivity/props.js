@@ -36,19 +36,18 @@ export function update_pre_prop(fn, d = 1) {
 /**
  * The proxy handler for rest props (i.e. `const { x, ...rest } = $props()`).
  * Is passed the full `$$props` object and excludes the named props.
- * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol> }>}}
+ * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol>, name: string }>}}
  */
 const rest_props_handler = {
 	get(target, key) {
 		if (target.exclude.includes(key)) return;
 		return target.props[key];
 	},
-	set(_, key) {
+	set(target, key) {
 		if (DEV) {
-			throw new Error(
-				`Cannot write to property '${String(key)}' of rest element of $props(). It is always readonly.`
-			);
+			throw new Error(`${target.name}.${String(key)} is readonly`);
 		}
+
 		return false;
 	},
 	getOwnPropertyDescriptor(target, key) {
@@ -73,10 +72,11 @@ const rest_props_handler = {
 /**
  * @param {Record<string, unknown>} props
  * @param {string[]} rest
+ * @param {string} [name]
  * @returns {Record<string, unknown>}
  */
-export function rest_props(props, rest) {
-	return new Proxy({ props, exclude: rest }, rest_props_handler);
+export function rest_props(props, rest, name) {
+	return new Proxy({ props, exclude: rest, name }, rest_props_handler);
 }
 
 /**
