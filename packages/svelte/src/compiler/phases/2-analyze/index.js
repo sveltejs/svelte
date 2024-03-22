@@ -753,10 +753,11 @@ const legacy_scope_tweaker = {
 					state.scope.get(specifier.local.name)
 				);
 				if (
-					binding.kind === 'state' ||
-					binding.kind === 'frozen_state' ||
-					(binding.kind === 'normal' &&
-						(binding.declaration_kind === 'let' || binding.declaration_kind === 'var'))
+					binding !== null &&
+					(binding.kind === 'state' ||
+						binding.kind === 'frozen_state' ||
+						(binding.kind === 'normal' &&
+							(binding.declaration_kind === 'let' || binding.declaration_kind === 'var')))
 				) {
 					binding.kind = 'prop';
 					if (specifier.exported.name !== specifier.local.name) {
