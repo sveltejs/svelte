@@ -14,8 +14,10 @@ export default test({
 		<p>selected: two</p>
 	`,
 
-	test({ assert, component, target }) {
+	async test({ assert, component, target }) {
 		component.items = ['one', 'two', 'three'];
+
+		await Promise.resolve(); // mutation observer
 
 		const options = target.querySelectorAll('option');
 		assert.ok(!options[0].selected);

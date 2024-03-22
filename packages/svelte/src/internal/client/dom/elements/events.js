@@ -17,7 +17,10 @@ export function event(event_name, dom, handler, capture, passive) {
 	 * @this {EventTarget}
 	 */
 	function target_handler(/** @type {Event} */ event) {
-		handle_event_propagation(dom, event);
+		if (!capture) {
+			// Only call in the bubble phase, else delegated events would be called before the capturing events
+			handle_event_propagation(dom, event);
+		}
 		if (!event.cancelBubble) {
 			return handler.call(this, event);
 		}

@@ -1,194 +1,132 @@
 import { is_promise } from '../../../common.js';
 import { hydrate_block_anchor } from '../hydration.js';
 import { remove } from '../reconciler.js';
-import { current_block, execute_effect, flushSync } from '../../runtime.js';
-import { destroy_effect, render_effect } from '../../reactivity/effects.js';
-import { trigger_transitions } from '../elements/transitions.js';
-import { AWAIT_BLOCK, UNINITIALIZED } from '../../constants.js';
-
-/** @returns {import('../../types.js').AwaitBlock} */
-export function create_await_block() {
-	return {
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('../../types.js').Block} */ (current_block),
-		// pending
-		n: true,
-		// transition
-		r: null,
-		// type
-		t: AWAIT_BLOCK
-	};
-}
+import {
+	current_component_context,
+	flushSync,
+	set_current_component_context,
+	set_current_effect,
+	set_current_reaction
+} from '../../runtime.js';
+import { destroy_effect, pause_effect, render_effect } from '../../reactivity/effects.js';
+import { DESTROYED, INERT } from '../../constants.js';
+import { create_block } from './utils.js';
 
 /**
  * @template V
- * @param {Comment} anchor_node
- * @param {(() => Promise<V>)} input
+ * @param {Comment} anchor
+ * @param {(() => Promise<V>)} get_input
  * @param {null | ((anchor: Node) => void)} pending_fn
  * @param {null | ((anchor: Node, value: V) => void)} then_fn
  * @param {null | ((anchor: Node, error: unknown) => void)} catch_fn
  * @returns {void}
  */
-export function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
-	const block = create_await_block();
+export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
+	const block = create_block();
 
-	/** @type {null | import('../../types.js').Render} */
-	let current_render = null;
-	hydrate_block_anchor(anchor_node);
+	const component_context = current_component_context;
 
-	/** @type {{}} */
-	let latest_token;
+	hydrate_block_anchor(anchor);
 
-	/** @type {typeof UNINITIALIZED | V} */
-	let resolved_value = UNINITIALIZED;
+	/** @type {any} */
+	let input;
 
-	/** @type {unknown} */
-	let error = UNINITIALIZED;
-	let pending = false;
-	block.r =
-		/**
-		 * @param {import('../../types.js').Transition} transition
-		 * @returns {void}
-		 */
-		(transition) => {
-			const render = /** @type {import('../../types.js').Render} */ (current_render);
-			const transitions = render.s;
-			transitions.add(transition);
-			transition.f(() => {
-				transitions.delete(transition);
-				if (transitions.size === 0) {
-					// If the current render has changed since, then we can remove the old render
-					// effect as it's stale.
-					if (current_render !== render && render.e !== null) {
-						if (render.d !== null) {
-							remove(render.d);
-							render.d = null;
-						}
-						destroy_effect(render.e);
-						render.e = null;
+	/** @type {import('#client').Effect | null} */
+	let pending_effect;
+
+	/** @type {import('#client').Effect | null} */
+	let then_effect;
+
+	/** @type {import('#client').Effect | null} */
+	let catch_effect;
+
+	/**
+	 * @param {(anchor: Comment, value: any) => void} fn
+	 * @param {any} value
+	 */
+	function create_effect(fn, value) {
+		set_current_effect(branch);
+		set_current_reaction(branch); // TODO do we need both?
+		set_current_component_context(component_context);
+		var effect = render_effect(() => fn(anchor, value), {}, true);
+		set_current_component_context(null);
+		set_current_reaction(null);
+		set_current_effect(null);
+
+		// without this, the DOM does not update until two ticks after the promise,
+		// resolves which is unexpected behaviour (and somewhat irksome to test)
+		flushSync();
+
+		return effect;
+	}
+
+	/** @param {import('#client').Effect} effect */
+	function pause(effect) {
+		if ((effect.f & DESTROYED) !== 0) return;
+		const block = effect.block;
+
+		pause_effect(effect, () => {
+			// TODO make this unnecessary
+			const dom = block?.d;
+			if (dom) remove(dom);
+		});
+	}
+
+	const branch = render_effect(() => {
+		if (input === (input = get_input())) return;
+
+		if (is_promise(input)) {
+			const promise = /** @type {Promise<any>} */ (input);
+
+			if (pending_fn) {
+				if (pending_effect && (pending_effect.f & INERT) === 0) {
+					if (pending_effect.block?.d) remove(pending_effect.block.d);
+					destroy_effect(pending_effect);
+				}
+
+				pending_effect = render_effect(() => pending_fn(anchor), {}, true);
+			}
+
+			if (then_effect) pause(then_effect);
+			if (catch_effect) pause(catch_effect);
+
+			promise.then(
+				(value) => {
+					if (promise !== input) return;
+					if (pending_effect) pause(pending_effect);
+
+					if (then_fn) {
+						then_effect = create_effect(then_fn, value);
+					}
+				},
+				(error) => {
+					if (promise !== input) return;
+					if (pending_effect) pause(pending_effect);
+
+					if (catch_fn) {
+						catch_effect = create_effect(catch_fn, error);
 					}
 				}
-			});
-		};
-	const create_render_effect = () => {
-		/** @type {import('../../types.js').Render} */
-		const render = {
-			d: null,
-			e: null,
-			s: new Set(),
-			p: current_render
-		};
-		const effect = render_effect(
-			() => {
-				if (error === UNINITIALIZED) {
-					if (resolved_value === UNINITIALIZED) {
-						// pending = true
-						block.n = true;
-						if (pending_fn !== null) {
-							pending_fn(anchor_node);
-						}
-					} else if (then_fn !== null) {
-						// pending = false
-						block.n = false;
-						then_fn(anchor_node, resolved_value);
-					}
-				} else if (catch_fn !== null) {
-					// pending = false
-					block.n = false;
-					catch_fn(anchor_node, error);
-				}
-				render.d = block.d;
-				block.d = null;
-			},
-			block,
-			true,
-			true
-		);
-		render.e = effect;
-		current_render = render;
-	};
-	const render = () => {
-		const render = current_render;
-		if (render === null) {
-			create_render_effect();
-			return;
-		}
-		const transitions = render.s;
-		if (transitions.size === 0) {
-			if (render.d !== null) {
-				remove(render.d);
-				render.d = null;
-			}
-			if (render.e) {
-				execute_effect(render.e);
-			} else {
-				create_render_effect();
-			}
+			);
 		} else {
-			create_render_effect();
-			trigger_transitions(transitions, 'out');
-		}
-	};
-	const await_effect = render_effect(
-		() => {
-			const token = {};
-			latest_token = token;
-			const promise = input();
-			if (is_promise(promise)) {
-				promise.then(
-					/** @param {V} v */
-					(v) => {
-						if (latest_token === token) {
-							// Ensure UI is in sync before resolving value.
-							flushSync();
-							resolved_value = v;
-							pending = false;
-							render();
-						}
-					},
-					/** @param {unknown} _error */
-					(_error) => {
-						error = _error;
-						pending = false;
-						render();
-					}
-				);
-				if (resolved_value !== UNINITIALIZED || error !== UNINITIALIZED) {
-					error = UNINITIALIZED;
-					resolved_value = UNINITIALIZED;
+			if (pending_effect) pause(pending_effect);
+			if (catch_effect) pause(catch_effect);
+
+			if (then_fn) {
+				if (then_effect) {
+					if (then_effect.block?.d) remove(then_effect.block.d);
+					destroy_effect(then_effect);
 				}
-				if (!pending) {
-					pending = true;
-					render();
-				}
-			} else {
-				error = UNINITIALIZED;
-				resolved_value = promise;
-				pending = false;
-				render();
+
+				then_effect = render_effect(() => then_fn(anchor, input), {}, true);
 			}
-		},
-		block,
-		false
-	);
-	await_effect.ondestroy = () => {
-		let render = current_render;
-		latest_token = {};
-		while (render !== null) {
-			const dom = render.d;
-			if (dom !== null) {
-				remove(dom);
-			}
-			const effect = render.e;
-			if (effect !== null) {
-				destroy_effect(effect);
-			}
-			render = render.p;
 		}
+	}, block);
+
+	branch.ondestroy = () => {
+		// TODO this sucks, tidy it up
+		if (pending_effect?.block?.d) remove(pending_effect.block.d);
+		if (then_effect?.block?.d) remove(then_effect.block.d);
+		if (catch_effect?.block?.d) remove(catch_effect.block.d);
 	};
-	block.e = await_effect;
 }
