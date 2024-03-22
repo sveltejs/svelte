@@ -8,7 +8,7 @@ import { reconcile_html, remove } from '../reconciler.js';
  * @returns {void}
  */
 export function html(dom, get_value, svg) {
-	/** @type {import('#client').TemplateNode | import('#client').TemplateNode[]} */
+	/** @type {import('#client').Dom} */
 	let html_dom;
 
 	/** @type {string} */

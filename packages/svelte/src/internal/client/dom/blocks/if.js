@@ -17,8 +17,8 @@ import { create_block } from './utils.js';
 /**
  * @param {Comment} anchor
  * @param {() => boolean} get_condition
- * @param {(anchor: Node) => import('#client').TemplateNode | import('#client').TemplateNode[]} consequent_fn
- * @param {null | ((anchor: Node) => import('#client').TemplateNode | import('#client').TemplateNode[])} alternate_fn
+ * @param {(anchor: Node) => import('#client').Dom} consequent_fn
+ * @param {null | ((anchor: Node) => import('#client').Dom)} alternate_fn
  * @param {boolean} [elseif] True if this is an `{:else if ...}` block rather than an `{#if ...}`, as that affects which transitions are considered 'local'
  * @returns {void}
  */
@@ -27,10 +27,10 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 
 	hydrate_block_anchor(anchor);
 
-	/** @type {undefined | import('#client').TemplateNode | Array<import('#client').TemplateNode>} */
+	/** @type {undefined | import('#client').Dom} */
 	let consequent_dom;
 
-	/** @type {undefined | import('#client').TemplateNode | Array<import('#client').TemplateNode>} */
+	/** @type {undefined | import('#client').Dom} */
 	let alternate_dom;
 
 	/** @type {import('#client').Effect | null} */

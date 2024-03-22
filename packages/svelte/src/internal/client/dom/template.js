@@ -178,10 +178,10 @@ export function comment(anchor) {
  * @param {Element | Text} dom
  * @param {boolean} is_fragment
  * @param {null | Text | Comment | Element} anchor
- * @returns {import('#client').TemplateNode | import('#client').TemplateNode[]}
+ * @returns {import('#client').Dom}
  */
 function close_template(dom, is_fragment, anchor) {
-	/** @type {import('#client').TemplateNode | Array<import('#client').TemplateNode>} */
+	/** @type {import('#client').Dom} */
 	var current = is_fragment
 		? is_array(dom)
 			? dom
