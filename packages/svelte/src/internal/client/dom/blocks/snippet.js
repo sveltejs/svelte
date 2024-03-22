@@ -20,7 +20,7 @@ export function snippet(get_snippet, node, ...args) {
 		if (snippet_fn === (snippet_fn = get_snippet())) return;
 
 		if (snippet_fn) {
-			// Only rerender when the snippet function itself changes,
+			// Untrack so we only rerender when the snippet function itself changes,
 			// not when an eagerly-read prop inside the snippet function changes
 			var dom = untrack(() => /** @type {SnippetFn} */ (snippet_fn)(node, ...args));
 		}
