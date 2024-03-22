@@ -891,6 +891,8 @@ export const validation_runes_js = {
 			error(node, 'invalid-rune-args-length', rune, [0, 1]);
 		} else if (rune === '$props') {
 			error(node, 'invalid-props-location');
+		} else if (rune === '$bindable') {
+			error(node, 'invalid-bindable-location');
 		}
 	},
 	AssignmentExpression(node, { state }) {
@@ -1070,10 +1072,10 @@ export const validation_runes = merge(validation, a11y_validators, {
 		// TODO some of this is duplicated with above, seems off
 		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
 			error(node, 'invalid-rune-args-length', rune, [1]);
-		} else if (rune === '$state' && args.length > 1) {
+		} else if ((rune === '$state' || rune === '$bindable') && args.length > 1) {
 			error(node, 'invalid-rune-args-length', rune, [0, 1]);
 		} else if (rune === '$props') {
-			if (rune === '$props' && state.has_props_rune) {
+			if (state.has_props_rune) {
 				error(node, 'duplicate-props-rune');
 			}
 

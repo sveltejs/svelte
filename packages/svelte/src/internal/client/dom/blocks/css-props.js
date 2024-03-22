@@ -2,7 +2,7 @@ import { namespace_svg } from '../../../../constants.js';
 import { current_hydration_fragment, hydrate_block_anchor, hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import { render_effect } from '../../reactivity/effects.js';
-import { insert, remove } from '../reconciler.js';
+import { remove } from '../reconciler.js';
 
 /**
  * @param {Element | Text | Comment} anchor
@@ -33,7 +33,7 @@ export function css_props(anchor, is_html, props, component) {
 			tag = document.createElementNS(namespace_svg, 'g');
 		}
 
-		insert(tag, null, anchor);
+		anchor.before(tag);
 		component_anchor = empty();
 		tag.appendChild(component_anchor);
 	}

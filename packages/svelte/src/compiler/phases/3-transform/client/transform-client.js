@@ -270,20 +270,24 @@ export function client_component(source, analysis, options) {
 	if (analysis.accessors) {
 		for (const [name, binding] of properties) {
 			const key = binding.prop_alias ?? name;
-			if (
-				binding.kind === 'prop' &&
-				[...analysis.instance.scope.declarations].some(
-					([name, d]) => d.kind === 'bindable_prop' && (d.prop_alias ?? name) === key
-				)
-			) {
-				// bindable prop takes precedence
-				continue;
+
+			const getter = b.get(key, [b.return(b.call(b.id(name)))]);
+
+			const setter = b.set(key, [
+				b.stmt(b.call(b.id(name), b.id('$$value'))),
+				b.stmt(b.call('$.flushSync'))
+			]);
+
+			if (analysis.runes && binding.initial) {
+				// turn `set foo($$value)` into `set foo($$value = expression)`
+				setter.value.params[0] = {
+					type: 'AssignmentPattern',
+					left: b.id('$$value'),
+					right: /** @type {import('estree').Expression} */ (binding.initial)
+				};
 			}
 
-			component_returned_object.push(
-				b.get(key, [b.return(b.call(b.id(name)))]),
-				b.set(key, [b.stmt(b.call(b.id(name), b.id('$$value'))), b.stmt(b.call('$.flushSync'))])
-			);
+			component_returned_object.push(getter, setter);
 		}
 	}
 

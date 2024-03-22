@@ -1,4 +1,4 @@
-import { ok, test } from '../../test';
+import { test } from '../../test';
 
 /** @type {(value: any) => void} */
 let fulfil;
@@ -36,8 +36,8 @@ export default test({
 			);
 			assert.equal(ps[0].className, 'pending');
 			assert.equal(ps[1].className, 'then');
-			assert.equal(ps[0].foo, 0.8);
-			assert.equal(ps[1].foo, undefined);
+			assert.equal(ps[0].foo, 0.2);
+			assert.equal(ps[1].foo, 0.3);
 			raf.tick(100);
 		});
 	}

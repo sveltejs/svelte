@@ -14,8 +14,6 @@ export default test({
 	intro: true,
 
 	async test({ assert, target, component, raf }) {
-		raf.tick(0);
-
 		assert.htmlEqual(target.innerHTML, '<p class="pending" foo="0.0">loading...</p>');
 
 		let time = 0;
@@ -24,10 +22,6 @@ export default test({
 		assert.htmlEqual(target.innerHTML, '<p class="pending" foo="0.5">loading...</p>');
 
 		await fulfil(42);
-		await Promise.resolve();
-		await Promise.resolve();
-
-		raf.tick(time);
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -61,9 +55,6 @@ export default test({
 			fulfil = f;
 		});
 		await Promise.resolve();
-		await Promise.resolve();
-
-		raf.tick(time);
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -83,11 +74,6 @@ export default test({
 		);
 
 		await fulfil(43);
-		await Promise.resolve();
-		await Promise.resolve();
-
-		raf.tick(time);
-
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -109,9 +95,6 @@ export default test({
 			fulfil = f;
 		});
 		await Promise.resolve();
-		await Promise.resolve();
-
-		raf.tick(time);
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -132,11 +115,6 @@ export default test({
 		);
 
 		await fulfil(44);
-		await Promise.resolve();
-		await Promise.resolve();
-
-		raf.tick(time);
-
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -159,10 +137,6 @@ export default test({
 			fulfil = f;
 		});
 		await Promise.resolve();
-		await Promise.resolve();
-
-		raf.tick(time);
-
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -172,7 +146,6 @@ export default test({
 		);
 
 		raf.tick((time += 40));
-
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -182,10 +155,6 @@ export default test({
 		);
 
 		await fulfil(45);
-		await Promise.resolve();
-		await Promise.resolve();
-
-		raf.tick(time);
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -197,7 +166,6 @@ export default test({
 		);
 
 		raf.tick((time += 20));
-
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -211,9 +179,6 @@ export default test({
 			fulfil = f;
 		});
 		await Promise.resolve();
-		await Promise.resolve();
-
-		raf.tick(time);
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -238,10 +203,6 @@ export default test({
 		);
 
 		await fulfil(46);
-		await Promise.resolve();
-		await Promise.resolve();
-
-		raf.tick(time);
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -255,7 +216,6 @@ export default test({
 		);
 
 		raf.tick((time += 10));
-
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -265,7 +225,6 @@ export default test({
 		);
 
 		raf.tick((time += 20));
-
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -274,7 +233,6 @@ export default test({
 		);
 
 		raf.tick((time += 70));
-
 		assert.htmlEqual(
 			target.innerHTML,
 			`

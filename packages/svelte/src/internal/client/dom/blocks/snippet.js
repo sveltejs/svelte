@@ -1,4 +1,3 @@
-import { SNIPPET_BLOCK } from '../../constants.js';
 import { render_effect } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
 import { current_block, untrack } from '../../runtime.js';
@@ -17,11 +16,7 @@ export function snippet(get_snippet, node, ...args) {
 		// parent
 		p: /** @type {import('#client').Block} */ (current_block),
 		// effect
-		e: null,
-		// transition
-		r: null,
-		// type
-		t: SNIPPET_BLOCK
+		e: null
 	};
 
 	render_effect(() => {

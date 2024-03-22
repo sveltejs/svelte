@@ -12,6 +12,15 @@ async function bundle_code(entry) {
 			virtual({
 				__entry__: entry
 			}),
+			{
+				name: 'resolve-svelte',
+				resolveId(importee) {
+					if (importee.startsWith('svelte')) {
+						const entry = pkg.exports[importee.replace('svelte', '.')];
+						return path.resolve(entry.browser ?? entry.default);
+					}
+				}
+			},
 			nodeResolve({
 				exportConditions: ['production', 'import', 'browser', 'default']
 			})
@@ -65,7 +74,7 @@ for (const key in pkg.exports) {
 }
 
 const client_main = path.resolve(pkg.exports['.'].browser);
-const without_hydration = await bundle_code(
+const bundle = await bundle_code(
 	// Use all features which contain hydration code to ensure it's treeshakeable
 	compile(
 		`
@@ -99,15 +108,18 @@ const without_hydration = await bundle_code(
 		{ filename: 'App.svelte' }
 	).js.code
 );
-if (!without_hydration.includes('current_hydration_fragment')) {
+
+if (!bundle.includes('current_hydration_fragment')) {
 	// eslint-disable-next-line no-console
 	console.error(`✅ Hydration code treeshakeable`);
 } else {
 	// eslint-disable-next-line no-console
-	console.error(without_hydration);
+	console.error(bundle);
 	// eslint-disable-next-line no-console
 	console.error(`❌ Hydration code not treeshakeable`);
 	failed = true;
+
+	fs.writeFileSync('scripts/_bundle.js', bundle);
 }
 
 // eslint-disable-next-line no-console

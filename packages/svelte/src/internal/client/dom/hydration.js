@@ -73,33 +73,26 @@ export function get_hydration_fragment(node, insert_text = false) {
 }
 
 /**
- * @param {Text | Comment | Element} anchor_node
- * @param {boolean} [is_controlled]
+ * @param {Node} node
  * @returns {void}
  */
-export function hydrate_block_anchor(anchor_node, is_controlled) {
-	if (hydrating) {
-		/** @type {Node} */
-		let target_node = anchor_node;
+export function hydrate_block_anchor(node) {
+	if (!hydrating) return;
 
-		if (is_controlled) {
-			target_node = /** @type {Node} */ (target_node.firstChild);
-		}
-		if (target_node.nodeType === 8) {
-			// @ts-ignore
-			let fragment = target_node.$$fragment;
-			if (fragment === undefined) {
-				fragment = get_hydration_fragment(target_node);
-			} else {
-				schedule_task(() => {
-					// @ts-expect-error clean up memory
-					target_node.$$fragment = undefined;
-				});
-			}
-			set_current_hydration_fragment(fragment);
+	if (node.nodeType === 8) {
+		// @ts-ignore
+		let fragment = node.$$fragment;
+		if (fragment === undefined) {
+			fragment = get_hydration_fragment(node);
 		} else {
-			const first_child = /** @type {Element | null} */ (target_node.firstChild);
-			set_current_hydration_fragment(first_child === null ? [] : [first_child]);
+			schedule_task(() => {
+				// @ts-expect-error clean up memory
+				node.$$fragment = undefined;
+			});
 		}
+		set_current_hydration_fragment(fragment);
+	} else {
+		const first_child = /** @type {Element | null} */ (node.firstChild);
+		set_current_hydration_fragment(first_child === null ? [] : [first_child]);
 	}
 }

@@ -8,7 +8,7 @@
 
 		return {
 			duration: 100,
-			css: (t, u) => `transform: translate(${u + dx}px, ${u * dy}px)`
+			css: (t, u) => `transform: translate(${u * dx}px, ${u * dy}px)`
 		};
 	}
 </script>
