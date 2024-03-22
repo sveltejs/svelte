@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.82
+
+### Patch Changes
+
+- fix: allow runes for variable declarations in the template ([#10879](https://github.com/sveltejs/svelte/pull/10879))
+
+- feat: take form resets into account for two way bindings ([#10617](https://github.com/sveltejs/svelte/pull/10617))
+
+- fix: handle multiple snippet parameters with one or more being optional ([#10833](https://github.com/sveltejs/svelte/pull/10833))
+
+- breaking: apply fallback value every time in runes mode ([#10797](https://github.com/sveltejs/svelte/pull/10797))
+
 ## 5.0.0-next.81
 
 ### Patch Changes
