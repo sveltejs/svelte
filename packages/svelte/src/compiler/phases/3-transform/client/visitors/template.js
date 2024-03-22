@@ -3223,5 +3223,6 @@ export const template_visitors = {
 			node: b.id('$.document')
 		});
 	},
-	CallExpression: javascript_visitors_runes.CallExpression
+	CallExpression: javascript_visitors_runes.CallExpression,
+	VariableDeclaration: javascript_visitors_runes.VariableDeclaration
 };
