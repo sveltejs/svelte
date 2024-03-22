@@ -50,18 +50,11 @@ export function insert(current, sibling) {
 
 /**
  * @param {Array<import('../types.js').TemplateNode> | import('../types.js').TemplateNode} current
- * @returns {Element | Comment | Text}
  */
 export function remove(current) {
-	var first_node = current;
 	if (is_array(current)) {
-		var i = 0;
-		var node;
-		for (; i < current.length; i++) {
-			node = current[i];
-			if (i === 0) {
-				first_node = node;
-			}
+		for (var i = 0; i < current.length; i++) {
+			var node = current[i];
 			if (node.isConnected) {
 				node.remove();
 			}
@@ -69,7 +62,6 @@ export function remove(current) {
 	} else if (current.isConnected) {
 		current.remove();
 	}
-	return /** @type {Element | Comment | Text} */ (first_node);
 }
 
 /**
