@@ -11,11 +11,15 @@ export default test({
 	async test({ assert, target, window }) {
 		const button = target.querySelector('button');
 		const event = new window.MouseEvent('click');
+		/**
+		 * @type {any[]}
+		 */
 		const messages = [];
 		const log = console.log;
 		console.log = (msg) => messages.push(msg);
 
 		flushSync(() => {
+			// @ts-ignore
 			button.dispatchEvent(event);
 		});
 

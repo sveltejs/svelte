@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { test } from '../../test';
 
 export default test({
