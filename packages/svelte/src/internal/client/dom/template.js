@@ -5,7 +5,7 @@ import {
 	create_fragment_with_script_from_html,
 	insert
 } from './reconciler.js';
-import { current_block } from '../runtime.js';
+import { current_block, current_effect } from '../runtime.js';
 import { is_array } from '../utils.js';
 
 /**
@@ -192,6 +192,7 @@ function close_template(dom, is_fragment, anchor) {
 		insert(current, anchor);
 	}
 
+	/** @type {import('#client').Effect} */ (current_effect).dom = current;
 	/** @type {import('#client').Block} */ (current_block).d = current;
 
 	return current;

@@ -10,7 +10,7 @@ import { remove } from '../reconciler.js';
 import { create_block } from './utils.js';
 
 /**
- * @param {(anchor: Node | null) => void} render_fn
+ * @param {(anchor: Node | null) => import('#client').Dom | void} render_fn
  * @returns {void}
  */
 export function head(render_fn) {
@@ -29,19 +29,22 @@ export function head(render_fn) {
 	}
 
 	try {
+		/** @type {import('#client').Dom | null} */
+		var dom = null;
+
 		const head_effect = render_effect(
 			() => {
-				const current = block.d;
-				if (current !== null) {
-					remove(current);
-					block.d = null;
+				if (dom !== null) {
+					remove(dom);
+					head_effect.dom = block.d = dom = null;
 				}
 				let anchor = null;
 				if (!hydrating) {
 					anchor = empty();
 					document.head.appendChild(anchor);
 				}
-				render_fn(anchor);
+
+				dom = render_fn(anchor) ?? null;
 			},
 			block,
 			false

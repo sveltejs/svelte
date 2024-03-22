@@ -38,6 +38,7 @@ function create_effect(type, fn, sync, block = current_block, init = true) {
 	/** @type {import('#client').Effect} */
 	const signal = {
 		parent: current_effect,
+		dom: null,
 		block,
 		deps: null,
 		f: type | DIRTY,

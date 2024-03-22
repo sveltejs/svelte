@@ -1,4 +1,4 @@
-import type { Block, ComponentContext, Equals, TransitionManager } from '#client';
+import type { Block, ComponentContext, Dom, Equals, TransitionManager } from '#client';
 import type { EFFECT, PRE_EFFECT, RENDER_EFFECT } from '../constants';
 
 export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFECT;
@@ -37,6 +37,7 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 
 export interface Effect extends Reaction {
 	parent: Effect | null;
+	dom: Dom | null;
 	/** The block associated with this effect */
 	block: null | Block;
 	/** The associated component context */

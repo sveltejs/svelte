@@ -12,16 +12,17 @@ import { is_array } from '../../utils.js';
 import { set_should_intro } from '../../render.js';
 import { current_each_item_block, set_current_each_item_block } from './each.js';
 import { create_block } from './utils.js';
-import { current_block } from '../../runtime.js';
+import { current_block, current_effect } from '../../runtime.js';
 
 /**
  * @param {import('#client').Block} block
+ * @param {import('#client').Effect} effect
  * @param {Element} from
  * @param {Element} to
  * @returns {void}
  */
-function swap_block_dom(block, from, to) {
-	const dom = block.d;
+function swap_block_dom(block, effect, from, to) {
+	const dom = effect.dom;
 	if (is_array(dom)) {
 		for (let i = 0; i < dom.length; i++) {
 			if (dom[i] === from) {
@@ -31,6 +32,7 @@ function swap_block_dom(block, from, to) {
 		}
 	} else if (dom === from) {
 		block.d = to;
+		effect.dom = to;
 	}
 }
 
@@ -42,6 +44,7 @@ function swap_block_dom(block, from, to) {
  * @returns {void}
  */
 export function element(anchor, get_tag, is_svg, render_fn) {
+	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
 	const parent_block = /** @type {import('#client').Block} */ (current_block);
 	const block = create_block();
 
@@ -128,7 +131,7 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 					anchor.before(element);
 
 					if (prev_element) {
-						swap_block_dom(parent_block, prev_element, element);
+						swap_block_dom(parent_block, parent_effect, prev_element, element);
 						prev_element.remove();
 					}
 				},

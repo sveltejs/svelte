@@ -57,9 +57,6 @@ export function key_block(anchor, get_key, render_fn) {
 					true
 				);
 
-				// @ts-expect-error TODO tidy up
-				effect.d = block.d;
-
 				effects.add(effect);
 			}
 		},
@@ -69,8 +66,7 @@ export function key_block(anchor, get_key, render_fn) {
 
 	key_effect.ondestroy = () => {
 		for (const e of effects) {
-			// @ts-expect-error TODO tidy up. ondestroy should be totally unnecessary
-			if (e.d) remove(e.d);
+			if (e.dom) remove(e.dom);
 		}
 	};
 }
