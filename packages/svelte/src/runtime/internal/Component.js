@@ -362,7 +362,8 @@ if (typeof HTMLElement === 'function') {
  */
 function get_custom_element_value(prop, value, props_definition, transform) {
 	const type = props_definition[prop]?.type;
-	value = type === 'Boolean' && typeof value !== 'boolean' ? value != null : value;
+	value =
+		type === 'Boolean' && typeof value !== 'boolean' ? value != null && value !== 'false' : value;
 	if (!transform || !props_definition[prop]) {
 		return value;
 	} else if (transform === 'toAttribute') {
