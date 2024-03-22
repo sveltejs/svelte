@@ -46,47 +46,39 @@ export function update_hydrate_nodes(first, insert_text) {
  */
 function get_hydrate_nodes(node, insert_text = false) {
 	/** @type {import('#client').TemplateNode[]} */
-	const nodes = [];
+	var nodes = [];
 
 	/** @type {null | Node} */
-	let current_node = node;
+	var current_node = node;
 
 	/** @type {null | string} */
-	let target_depth = null;
+	var target_depth = null;
 
 	while (current_node !== null) {
-		const node_type = current_node.nodeType;
-		const next_sibling = current_node.nextSibling;
-
-		if (node_type === 8) {
-			const data = /** @type {Comment} */ (current_node).data;
+		if (current_node.nodeType === 8) {
+			var data = /** @type {Comment} */ (current_node).data;
 
 			if (data.startsWith('ssr:')) {
-				const depth = data.slice(4);
+				var depth = data.slice(4);
 
 				if (target_depth === null) {
 					target_depth = depth;
 				} else if (depth === target_depth) {
 					if (insert_text && nodes.length === 0) {
-						const text = empty();
+						var text = empty();
 						nodes.push(text);
-						/** @type {Node} */ (current_node.parentNode).insertBefore(text, current_node);
+						text.before(current_node);
 					}
 					return nodes;
 				} else {
 					nodes.push(/** @type {Text | Comment | Element} */ (current_node));
 				}
-
-				current_node = next_sibling;
-				continue;
 			}
-		}
-
-		if (target_depth !== null) {
+		} else if (target_depth !== null) {
 			nodes.push(/** @type {Text | Comment | Element} */ (current_node));
 		}
 
-		current_node = next_sibling;
+		current_node = current_node.nextSibling;
 	}
 
 	return null;
