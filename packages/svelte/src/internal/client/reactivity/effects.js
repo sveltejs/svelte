@@ -39,7 +39,6 @@ function create_effect(type, fn, sync, block = current_block, init = true) {
 	const signal = {
 		parent: current_effect,
 		dom: null,
-		block,
 		deps: null,
 		f: type | DIRTY,
 		l: 0,
@@ -254,7 +253,6 @@ export function destroy_effect(effect) {
 		effect.teardown =
 		effect.ondestroy =
 		effect.ctx =
-		effect.block =
 		effect.dom =
 		effect.deps =
 			null;

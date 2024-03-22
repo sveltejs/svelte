@@ -38,8 +38,6 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 export interface Effect extends Reaction {
 	parent: Effect | null;
 	dom: Dom | null;
-	/** The block associated with this effect */
-	block: null | Block;
 	/** The associated component context */
 	ctx: null | ComponentContext;
 	/** Stuff to do when the effect is destroyed */
