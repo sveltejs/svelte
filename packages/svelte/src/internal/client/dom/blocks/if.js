@@ -89,11 +89,6 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 					() => {
 						consequent_dom = consequent_fn(anchor);
 
-						if (mismatch) {
-							// Set fragment so that Svelte continues to operate in hydration mode
-							set_current_hydration_fragment([]);
-						}
-
 						return () => {
 							// TODO make this unnecessary by linking the dom to the effect,
 							// and removing automatically on teardown
@@ -122,11 +117,6 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 					() => {
 						alternate_dom = alternate_fn(anchor);
 
-						if (mismatch) {
-							// Set fragment so that Svelte continues to operate in hydration mode
-							set_current_hydration_fragment([]);
-						}
-
 						return () => {
 							// TODO make this unnecessary by linking the dom to the effect,
 							// and removing automatically on teardown
@@ -147,6 +137,11 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 					if (consequent_dom) remove(consequent_dom);
 				});
 			}
+		}
+
+		if (mismatch) {
+			// Set fragment so that Svelte continues to operate in hydration mode
+			set_current_hydration_fragment([]);
 		}
 	}, block);
 
