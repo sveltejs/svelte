@@ -1042,6 +1042,9 @@ export const validation_runes = merge(validation, a11y_validators, {
 		}
 	},
 	CallExpression(node, { state, path }) {
+		if (get_rune(node, state.scope) === '$bindable' && node.arguments.length > 1) {
+			error(node, 'invalid-rune-args-length', '$bindable', [0, 1]);
+		}
 		validate_call_expression(node, state.scope, path);
 	},
 	EachBlock(node, { next, state }) {
@@ -1072,7 +1075,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 		// TODO some of this is duplicated with above, seems off
 		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
 			error(node, 'invalid-rune-args-length', rune, [1]);
-		} else if ((rune === '$state' || rune === '$bindable') && args.length > 1) {
+		} else if (rune === '$state' && args.length > 1) {
 			error(node, 'invalid-rune-args-length', rune, [0, 1]);
 		} else if (rune === '$props') {
 			if (state.has_props_rune) {
