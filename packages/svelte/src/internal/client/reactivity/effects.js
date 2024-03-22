@@ -24,6 +24,7 @@ import {
 } from '../constants.js';
 import { set } from './sources.js';
 import { noop } from '../../common.js';
+import { remove } from '../dom/reconciler.js';
 
 /**
  * @param {import('./types.js').EffectType} type
@@ -241,6 +242,11 @@ export function destroy_effect(effect) {
 	}
 
 	effect.teardown?.();
+
+	if (effect.dom !== null) {
+		remove(effect.dom);
+	}
+
 	effect.ondestroy?.();
 
 	// @ts-expect-error

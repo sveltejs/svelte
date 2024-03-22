@@ -24,12 +24,6 @@ import {
 export function if_block(anchor, get_condition, consequent_fn, alternate_fn, elseif = false) {
 	hydrate_block_anchor(anchor);
 
-	/** @type {undefined | import('#client').Dom} */
-	let consequent_dom;
-
-	/** @type {undefined | import('#client').Dom} */
-	let alternate_dom;
-
 	/** @type {import('#client').Effect | null} */
 	let consequent_effect = null;
 
@@ -68,48 +62,24 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 			if (consequent_effect) {
 				resume_effect(consequent_effect);
 			} else {
-				consequent_effect = render_effect(() => {
-					consequent_dom = consequent_fn(anchor);
-
-					return () => {
-						// TODO make this unnecessary by linking the dom to the effect,
-						// and removing automatically on teardown
-						if (consequent_dom !== undefined) {
-							remove(consequent_dom);
-							consequent_dom = undefined;
-						}
-					};
-				}, true);
+				consequent_effect = render_effect(() => consequent_fn(anchor), true);
 			}
 
 			if (alternate_effect) {
 				pause_effect(alternate_effect, () => {
 					alternate_effect = null;
-					if (alternate_dom) remove(alternate_dom);
 				});
 			}
 		} else {
 			if (alternate_effect) {
 				resume_effect(alternate_effect);
 			} else if (alternate_fn) {
-				alternate_effect = render_effect(() => {
-					alternate_dom = alternate_fn(anchor);
-
-					return () => {
-						// TODO make this unnecessary by linking the dom to the effect,
-						// and removing automatically on teardown
-						if (alternate_dom !== undefined) {
-							remove(alternate_dom);
-							alternate_dom = undefined;
-						}
-					};
-				}, true);
+				alternate_effect = render_effect(() => alternate_fn(anchor), true);
 			}
 
 			if (consequent_effect) {
 				pause_effect(consequent_effect, () => {
 					consequent_effect = null;
-					if (consequent_dom) remove(consequent_dom);
 				});
 			}
 		}
@@ -125,16 +95,7 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 	}
 
 	if_effect.ondestroy = () => {
-		// TODO make this unnecessary by linking the dom to the effect,
-		// and removing automatically on teardown
-		if (consequent_dom !== undefined) {
-			remove(consequent_dom);
-		}
-
-		if (alternate_dom !== undefined) {
-			remove(alternate_dom);
-		}
-
+		// TODO why is this not automatic? this should be children of `if_effect`
 		if (consequent_effect) {
 			destroy_effect(consequent_effect);
 		}
