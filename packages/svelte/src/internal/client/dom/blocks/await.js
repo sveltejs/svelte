@@ -9,7 +9,7 @@ import {
 	set_current_reaction
 } from '../../runtime.js';
 import { destroy_effect, pause_effect, render_effect } from '../../reactivity/effects.js';
-import { DESTROYED, INERT } from '../../constants.js';
+import { INERT } from '../../constants.js';
 
 /**
  * @template V
@@ -57,17 +57,6 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 		return effect;
 	}
 
-	/** @param {import('#client').Effect} effect */
-	function pause(effect) {
-		if ((effect.f & DESTROYED) !== 0) return;
-		const dom = effect.dom;
-
-		pause_effect(effect, () => {
-			// TODO make this unnecessary
-			if (dom !== null) remove(dom);
-		});
-	}
-
 	const branch = render_effect(() => {
 		if (input === (input = get_input())) return;
 
@@ -83,13 +72,13 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 				pending_effect = render_effect(() => pending_fn(anchor), true);
 			}
 
-			if (then_effect) pause(then_effect);
-			if (catch_effect) pause(catch_effect);
+			if (then_effect) pause_effect(then_effect);
+			if (catch_effect) pause_effect(catch_effect);
 
 			promise.then(
 				(value) => {
 					if (promise !== input) return;
-					if (pending_effect) pause(pending_effect);
+					if (pending_effect) pause_effect(pending_effect);
 
 					if (then_fn) {
 						then_effect = create_effect(then_fn, value);
@@ -97,7 +86,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 				},
 				(error) => {
 					if (promise !== input) return;
-					if (pending_effect) pause(pending_effect);
+					if (pending_effect) pause_effect(pending_effect);
 
 					if (catch_fn) {
 						catch_effect = create_effect(catch_fn, error);
@@ -105,8 +94,8 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 				}
 			);
 		} else {
-			if (pending_effect) pause(pending_effect);
-			if (catch_effect) pause(catch_effect);
+			if (pending_effect) pause_effect(pending_effect);
+			if (catch_effect) pause_effect(catch_effect);
 
 			if (then_fn) {
 				if (then_effect) {
