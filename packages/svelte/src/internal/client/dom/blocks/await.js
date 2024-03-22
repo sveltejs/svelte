@@ -63,12 +63,11 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 	/** @param {import('#client').Effect} effect */
 	function pause(effect) {
 		if ((effect.f & DESTROYED) !== 0) return;
-		const block = effect.block;
+		const dom = effect.dom;
 
 		pause_effect(effect, () => {
 			// TODO make this unnecessary
-			const dom = block?.d;
-			if (dom) remove(dom);
+			if (dom !== null) remove(dom);
 		});
 	}
 

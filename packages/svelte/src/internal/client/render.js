@@ -291,7 +291,7 @@ function _mount(Component, options) {
 			container.removeEventListener(event_name, bound_event_listener);
 		}
 		root_event_handles.delete(event_handle);
-		const dom = block.d;
+		const dom = effect.dom;
 		if (dom !== null) {
 			remove(dom);
 		}
