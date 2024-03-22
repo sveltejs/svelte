@@ -54,8 +54,6 @@ export interface Block {
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
 	e: null | Effect;
-	/** parent */
-	p: Block;
 }
 
 export type EachState = {

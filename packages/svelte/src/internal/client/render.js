@@ -216,10 +216,7 @@ function _mount(Component, options) {
 		// dom
 		d: null,
 		// effect
-		e: null,
-		// parent
-		// @ts-expect-error
-		p: null
+		e: null
 	};
 
 	/** @type {Exports} */
