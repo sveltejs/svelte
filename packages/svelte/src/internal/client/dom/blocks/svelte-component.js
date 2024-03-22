@@ -56,7 +56,6 @@ export function component(anchor, get_component, render_fn) {
 						};
 					},
 					block,
-					true,
 					true
 				);
 
