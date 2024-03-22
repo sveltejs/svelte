@@ -27,7 +27,7 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 
 			/* Update */
 			$.text_effect(text, () => `clicks: ${$.stringify($.get(count))}`);
-			$.close($$anchor, text);
+			return $.close($$anchor, text);
 		}
 	});
 
