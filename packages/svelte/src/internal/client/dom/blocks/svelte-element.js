@@ -10,7 +10,7 @@ import {
 import { remove } from '../reconciler.js';
 import { is_array } from '../../utils.js';
 import { set_should_intro } from '../../render.js';
-import { current_each_item_block, set_current_each_item_block } from './each.js';
+import { current_each_item, set_current_each_item } from './each.js';
 import { create_block } from './utils.js';
 import { current_block, current_effect } from '../../runtime.js';
 
@@ -65,15 +65,15 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 	 * We track this so we can set it when changing the element, allowing any
 	 * `animate:` directive to bind itself to the correct block
 	 */
-	let each_item_block = current_each_item_block;
+	let each_item_block = current_each_item;
 
 	const wrapper = render_effect(() => {
 		const next_tag = get_tag() || null;
 		if (next_tag === tag) return;
 
 		// See explanation of `each_item_block` above
-		var previous_each_item_block = current_each_item_block;
-		set_current_each_item_block(each_item_block);
+		var previous_each_item_block = current_each_item;
+		set_current_each_item(each_item_block);
 
 		// We try our best infering the namespace in case it's not possible to determine statically,
 		// but on the first render on the client (without hydration) the parent will be undefined,
@@ -142,7 +142,7 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 		if (tag) current_tag = tag;
 		set_should_intro(true);
 
-		set_current_each_item_block(previous_each_item_block);
+		set_current_each_item(previous_each_item_block);
 	}, block);
 
 	wrapper.ondestroy = () => {
