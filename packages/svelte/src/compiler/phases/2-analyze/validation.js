@@ -891,6 +891,8 @@ export const validation_runes_js = {
 			error(node, 'invalid-rune-args-length', rune, [0, 1]);
 		} else if (rune === '$props') {
 			error(node, 'invalid-props-location');
+		} else if (rune === '$bindable') {
+			error(node, 'invalid-bindable-location');
 		}
 	},
 	AssignmentExpression(node, { state }) {
