@@ -1,7 +1,6 @@
 import { DEV } from 'esm-env';
 import {
 	check_dirtiness,
-	current_block,
 	current_component_context,
 	current_effect,
 	current_reaction,
@@ -34,7 +33,7 @@ import { noop } from '../../common.js';
  * @param {boolean} init
  * @returns {import('#client').Effect}
  */
-function create_effect(type, fn, sync, block = current_block, init = true) {
+function create_effect(type, fn, sync, block = null, init = true) {
 	/** @type {import('#client').Effect} */
 	const signal = {
 		parent: current_effect,
@@ -99,7 +98,7 @@ export function user_effect(fn) {
 		current_component_context !== null &&
 		!current_component_context.m;
 
-	const effect = create_effect(EFFECT, fn, false, current_block, !defer);
+	const effect = create_effect(EFFECT, fn, false, null, !defer);
 
 	if (defer) {
 		const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
@@ -115,7 +114,7 @@ export function user_effect(fn) {
  * @returns {() => void}
  */
 export function user_root_effect(fn) {
-	const effect = render_effect(fn, current_block, true);
+	const effect = render_effect(fn, null, true);
 	return () => {
 		destroy_effect(effect);
 	};
@@ -221,7 +220,7 @@ export function invalidate_effect(fn) {
  * @param {any} sync
  * @returns {import('#client').Effect}
  */
-export function render_effect(fn, block = current_block, managed = false, sync = true) {
+export function render_effect(fn, block = null, managed = false, sync = true) {
 	let flags = RENDER_EFFECT;
 	if (managed) {
 		flags |= MANAGED;

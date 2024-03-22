@@ -107,11 +107,7 @@ export let inspect_fn = null;
 /** @type {Array<import('./types.js').ValueDebug>} */
 let inspect_captured_signals = [];
 
-// Handle rendering tree blocks and anchors
-/** @type {null | import('./types.js').Block} */
-export let current_block = null;
 // Handling runtime component context
-
 /** @type {import('./types.js').ComponentContext | null} */
 export let current_component_context = null;
 

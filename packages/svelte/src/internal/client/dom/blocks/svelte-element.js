@@ -12,7 +12,7 @@ import { is_array } from '../../utils.js';
 import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
 import { create_block } from './utils.js';
-import { current_block, current_effect } from '../../runtime.js';
+import { current_effect } from '../../runtime.js';
 
 /**
  * @param {import('#client').Effect} effect
