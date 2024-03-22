@@ -1,4 +1,5 @@
 import { effect } from '../../../reactivity/effects.js';
+import { listen_to_event_and_reset_event } from './shared.js';
 import { untrack } from '../../../runtime.js';
 
 /**
@@ -76,7 +77,7 @@ export function init_select(select, get_value) {
 export function bind_select_value(select, get_value, update) {
 	var mounting = true;
 
-	select.addEventListener('change', () => {
+	listen_to_event_and_reset_event(select, 'change', () => {
 		/** @type {unknown} */
 		var value;
 

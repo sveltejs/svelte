@@ -179,3 +179,7 @@ In Svelte 4, `null` and `undefined` were printed as the corresponding string. In
 ### `bind:files` values can only be `null`, `undefined` or `FileList`
 
 `bind:files` is now a two-way binding. As such, when setting a value, it needs to be either falsy (`null` or `undefined`) or of type `FileList`.
+
+### Bindings now react to form resets
+
+Previously, bindings did not take into account `reset` event of forms, and therefore values could get out of sync with the DOM. Svelte 5 fixes this by placing a `reset` listener on the document and invoking bindings where necessary.

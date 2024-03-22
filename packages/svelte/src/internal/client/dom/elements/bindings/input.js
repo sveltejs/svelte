@@ -1,6 +1,7 @@
 import { DEV } from 'esm-env';
 import { render_effect, user_effect } from '../../../reactivity/effects.js';
 import { stringify } from '../../../render.js';
+import { listen_to_event_and_reset_event } from './shared.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -9,7 +10,7 @@ import { stringify } from '../../../render.js';
  * @returns {void}
  */
 export function bind_value(input, get_value, update) {
-	input.addEventListener('input', () => {
+	listen_to_event_and_reset_event(input, 'input', () => {
 		if (DEV && input.type === 'checkbox') {
 			throw new Error(
 				'Using bind:value together with a checkbox input is not allowed. Use bind:checked instead'
@@ -72,16 +73,22 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 
 	binding_group.push(input);
 
-	input.addEventListener('change', () => {
-		// @ts-ignore
-		var value = input.__value;
+	listen_to_event_and_reset_event(
+		input,
+		'change',
+		() => {
+			// @ts-ignore
+			var value = input.__value;
 
-		if (is_checkbox) {
-			value = get_binding_group_value(binding_group, value, input.checked);
-		}
+			if (is_checkbox) {
+				value = get_binding_group_value(binding_group, value, input.checked);
+			}
 
-		update(value);
-	});
+			update(value);
+		},
+		// TODO better default value handling
+		() => update(is_checkbox ? [] : null)
+	);
 
 	render_effect(() => {
 		var value = get_value();
@@ -119,7 +126,7 @@ export function bind_group(inputs, group_index, input, get_value, update) {
  * @returns {void}
  */
 export function bind_checked(input, get_value, update) {
-	input.addEventListener('change', () => {
+	listen_to_event_and_reset_event(input, 'change', () => {
 		var value = input.checked;
 		update(value);
 	});
@@ -172,4 +179,18 @@ function is_numberlike_input(input) {
  */
 function to_number(value) {
 	return value === '' ? null : +value;
+}
+
+/**
+ * @param {HTMLInputElement} input
+ * @param {() => FileList | null} get_value
+ * @param {(value: FileList | null) => void} update
+ */
+export function bind_files(input, get_value, update) {
+	listen_to_event_and_reset_event(input, 'change', () => {
+		update(input.files);
+	});
+	render_effect(() => {
+		input.files = get_value();
+	});
 }

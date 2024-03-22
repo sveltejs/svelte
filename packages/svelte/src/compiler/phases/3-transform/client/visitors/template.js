@@ -2892,6 +2892,10 @@ export const template_visitors = {
 					break;
 				}
 
+				case 'files':
+					call_expr = b.call(`$.bind_files`, state.node, getter, setter);
+					break;
+
 				case 'this':
 					call_expr = serialize_bind_this(node.expression, context, state.node);
 					break;
