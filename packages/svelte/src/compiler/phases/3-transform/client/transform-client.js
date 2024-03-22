@@ -270,15 +270,6 @@ export function client_component(source, analysis, options) {
 	if (analysis.accessors) {
 		for (const [name, binding] of properties) {
 			const key = binding.prop_alias ?? name;
-			if (
-				binding.kind === 'prop' &&
-				[...analysis.instance.scope.declarations].some(
-					([name, d]) => d.kind === 'bindable_prop' && (d.prop_alias ?? name) === key
-				)
-			) {
-				// bindable prop takes precedence
-				continue;
-			}
 
 			component_returned_object.push(
 				b.get(key, [b.return(b.call(b.id(name)))]),

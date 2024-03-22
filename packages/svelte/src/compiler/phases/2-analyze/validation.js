@@ -1073,7 +1073,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 		} else if (rune === '$state' && args.length > 1) {
 			error(node, 'invalid-rune-args-length', rune, [0, 1]);
 		} else if (rune === '$props') {
-			if (rune === '$props' && state.has_props_rune) {
+			if (state.has_props_rune) {
 				error(node, 'duplicate-props-rune');
 			}
 

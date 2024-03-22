@@ -1279,7 +1279,8 @@ if (DEV) {
 	throw_rune_error('$effect', ['pre', 'root', 'active']);
 	throw_rune_error('$derived', ['by']);
 	throw_rune_error('$inspect');
-	throw_rune_error('$props', ['bindable']);
+	throw_rune_error('$props');
+	throw_rune_error('$bindable');
 }
 
 /**
