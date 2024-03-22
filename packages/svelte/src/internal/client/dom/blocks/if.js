@@ -6,27 +6,13 @@ import {
 	set_current_hydration_fragment
 } from '../hydration.js';
 import { remove } from '../reconciler.js';
-import { current_block } from '../../runtime.js';
 import {
 	destroy_effect,
 	pause_effect,
 	render_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
-
-/** @returns {import('#client').IfBlock} */
-function create_if_block() {
-	return {
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('#client').Block} */ (current_block),
-		// value
-		v: false
-	};
-}
+import { create_block } from './utils.js';
 
 /**
  * @param {Comment} anchor
@@ -37,7 +23,7 @@ function create_if_block() {
  * @returns {void}
  */
 export function if_block(anchor, get_condition, consequent_fn, alternate_fn, elseif = false) {
-	const block = create_if_block();
+	const block = create_block();
 
 	hydrate_block_anchor(anchor);
 

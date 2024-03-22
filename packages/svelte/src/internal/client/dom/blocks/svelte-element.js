@@ -8,10 +8,10 @@ import {
 	resume_effect
 } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
-import { current_block } from '../../runtime.js';
 import { is_array } from '../../utils.js';
 import { set_should_intro } from '../../render.js';
 import { current_each_item_block, set_current_each_item_block } from './each.js';
+import { create_block } from './utils.js';
 
 /**
  * @param {import('#client').Block} block
@@ -41,15 +41,7 @@ function swap_block_dom(block, from, to) {
  * @returns {void}
  */
 export function element(anchor, get_tag, is_svg, render_fn) {
-	/** @type {import('#client').DynamicElementBlock} */
-	const block = {
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('#client').Block} */ (current_block)
-	};
+	const block = create_block();
 
 	hydrate_block_anchor(anchor);
 

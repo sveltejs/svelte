@@ -2,7 +2,6 @@ import { is_promise } from '../../../common.js';
 import { hydrate_block_anchor } from '../hydration.js';
 import { remove } from '../reconciler.js';
 import {
-	current_block,
 	current_component_context,
 	flushSync,
 	set_current_component_context,
@@ -11,20 +10,7 @@ import {
 } from '../../runtime.js';
 import { destroy_effect, pause_effect, render_effect } from '../../reactivity/effects.js';
 import { DESTROYED, INERT } from '../../constants.js';
-
-/** @returns {import('../../types.js').AwaitBlock} */
-export function create_await_block() {
-	return {
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('../../types.js').Block} */ (current_block),
-		// pending
-		n: true
-	};
-}
+import { create_block } from './utils.js';
 
 /**
  * @template V
@@ -36,7 +22,7 @@ export function create_await_block() {
  * @returns {void}
  */
 export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
-	const block = create_await_block();
+	const block = create_block();
 
 	const component_context = current_component_context;
 

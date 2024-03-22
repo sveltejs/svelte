@@ -217,8 +217,6 @@ function _mount(Component, options) {
 		d: null,
 		// effect
 		e: null,
-		// intro
-		i: options.intro || false,
 		// parent
 		p: null
 	};

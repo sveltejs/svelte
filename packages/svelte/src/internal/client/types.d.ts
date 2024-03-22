@@ -49,65 +49,23 @@ export type Equals = (this: Value, value: unknown) => boolean;
 
 export type TemplateNode = Text | Element | Comment;
 
-export type RootBlock = {
+export interface NormalBlock {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
 	e: null | Effect;
-	/** intro */
-	i: boolean;
+	/** parent */
+	p: Block;
+}
+
+export interface RootBlock {
+	/** dom */
+	d: null | TemplateNode | Array<TemplateNode>;
+	/** effect */
+	e: null | Effect;
 	/** parent */
 	p: null;
-};
-
-export type IfBlock = {
-	/** value */
-	v: boolean;
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | Effect;
-	/** parent */
-	p: Block;
-};
-
-export type HeadBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | Effect;
-	/** parent */
-	p: Block;
-};
-
-export type DynamicElementBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | Effect;
-	/** parent */
-	p: Block;
-};
-
-export type DynamicComponentBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | Effect;
-	/** parent */
-	p: Block;
-};
-
-export type AwaitBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | Effect;
-	/** parent */
-	p: Block;
-	/** pending */
-	n: boolean;
-};
+}
 
 export type EachBlock = {
 	/** flags */
@@ -116,7 +74,7 @@ export type EachBlock = {
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** items */
 	v: EachItemBlock[];
-	/** effewct */
+	/** effect */
 	e: null | Effect;
 	/** parent */
 	p: Block;
@@ -137,25 +95,7 @@ export type EachItemBlock = {
 	k: unknown;
 };
 
-export type SnippetBlock = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** parent */
-	p: Block;
-	/** effect */
-	e: null | Effect;
-};
-
-export type Block =
-	| RootBlock
-	| IfBlock
-	| AwaitBlock
-	| DynamicElementBlock
-	| DynamicComponentBlock
-	| HeadBlock
-	| EachBlock
-	| EachItemBlock
-	| SnippetBlock;
+export type Block = RootBlock | NormalBlock | EachBlock | EachItemBlock;
 
 export interface TransitionManager {
 	/** Whether the `global` modifier was used (i.e. `transition:fade|global`) */
