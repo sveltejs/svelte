@@ -192,9 +192,9 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 
 	effect.ondestroy = () => {
 		for (var item of state.items) {
-			if (item.d !== null) {
+			if (item.e.dom !== null) {
+				remove(item.e.dom);
 				destroy_effect(item.e);
-				remove(item.d);
 			}
 		}
 
@@ -576,7 +576,7 @@ function mark_lis(a) {
  * @returns {Text | Element | Comment}
  */
 function insert_item(item, anchor) {
-	var current = /** @type {import('#client').TemplateNode} */ (item.d);
+	var current = /** @type {import('#client').Dom} */ (item.e.dom);
 	return insert(current, anchor);
 }
 
@@ -585,7 +585,7 @@ function insert_item(item, anchor) {
  * @returns {Text | Element | Comment}
  */
 function get_first_child(item) {
-	var current = item.d;
+	var current = item.e.dom;
 
 	if (is_array(current)) {
 		return /** @type {Text | Element | Comment} */ (current[0]);
