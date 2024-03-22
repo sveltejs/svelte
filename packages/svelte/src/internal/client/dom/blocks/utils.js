@@ -2,8 +2,6 @@
 export function create_block() {
 	return {
 		// dom
-		d: null,
-		// effect
-		e: null
+		d: null
 	};
 }

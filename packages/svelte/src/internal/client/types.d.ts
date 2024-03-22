@@ -52,8 +52,6 @@ export type TemplateNode = Text | Element | Comment;
 export interface Block {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | Effect;
 }
 
 export type EachState = {

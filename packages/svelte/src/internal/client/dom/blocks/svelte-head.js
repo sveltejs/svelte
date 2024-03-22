@@ -53,8 +53,6 @@ export function head(render_fn) {
 				remove(current);
 			}
 		};
-
-		block.e = head_effect;
 	} finally {
 		if (is_hydrating) {
 			set_current_hydration_fragment(previous_hydration_fragment);

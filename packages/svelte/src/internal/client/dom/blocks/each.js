@@ -202,8 +202,6 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 
 		if (fallback) destroy_effect(fallback);
 	};
-
-	block.e = effect;
 }
 
 /**

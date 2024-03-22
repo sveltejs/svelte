@@ -154,6 +154,4 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 			destroy_effect(alternate_effect);
 		}
 	};
-
-	block.e = if_effect;
 }

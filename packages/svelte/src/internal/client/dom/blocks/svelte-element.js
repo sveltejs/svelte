@@ -155,6 +155,4 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 			destroy_effect(effect);
 		}
 	};
-
-	block.e = wrapper;
 }

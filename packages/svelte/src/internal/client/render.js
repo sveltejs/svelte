@@ -214,9 +214,7 @@ function _mount(Component, options) {
 	/** @type {import('#client').Block} */
 	const block = {
 		// dom
-		d: null,
-		// effect
-		e: null
+		d: null
 	};
 
 	/** @type {Exports} */
@@ -247,7 +245,7 @@ function _mount(Component, options) {
 		block,
 		true
 	);
-	block.e = effect;
+
 	const bound_event_listener = handle_event_propagation.bind(null, container);
 	const bound_document_event_listener = handle_event_propagation.bind(null, document);
 
@@ -297,7 +295,7 @@ function _mount(Component, options) {
 		if (dom !== null) {
 			remove(dom);
 		}
-		destroy_effect(/** @type {import('./types.js').Effect} */ (block.e));
+		destroy_effect(effect);
 	});
 
 	return component;
