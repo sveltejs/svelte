@@ -27,8 +27,17 @@ export let current_hydration_fragment = /** @type {any} */ (null);
  * @returns {void}
  */
 export function set_current_hydration_fragment(fragment) {
-	// hydrating = fragment !== null;
 	current_hydration_fragment = /** @type {import('#client').TemplateNode[]} */ (fragment);
+}
+
+/**
+ * @param {Node | null} first
+ * @param {boolean} [insert_text] Whether to insert an empty text node if the fragment is empty
+ */
+export function update_hydration_fragment(first, insert_text) {
+	const fragment = get_hydration_fragment(first, insert_text);
+	set_current_hydration_fragment(fragment);
+	return fragment;
 }
 
 /**
@@ -37,7 +46,7 @@ export function set_current_hydration_fragment(fragment) {
  * @param {boolean} [insert_text] Whether to insert an empty text node if the fragment is empty
  * @returns {import('#client').TemplateNode[] | null}
  */
-export function get_hydration_fragment(node, insert_text = false) {
+function get_hydration_fragment(node, insert_text = false) {
 	/** @type {import('#client').TemplateNode[]} */
 	const fragment = [];
 
@@ -46,13 +55,17 @@ export function get_hydration_fragment(node, insert_text = false) {
 
 	/** @type {null | string} */
 	let target_depth = null;
+
 	while (current_node !== null) {
 		const node_type = current_node.nodeType;
 		const next_sibling = current_node.nextSibling;
+
 		if (node_type === 8) {
 			const data = /** @type {Comment} */ (current_node).data;
+
 			if (data.startsWith('ssr:')) {
 				const depth = data.slice(4);
+
 				if (target_depth === null) {
 					target_depth = depth;
 				} else if (depth === target_depth) {
@@ -65,15 +78,19 @@ export function get_hydration_fragment(node, insert_text = false) {
 				} else {
 					fragment.push(/** @type {Text | Comment | Element} */ (current_node));
 				}
+
 				current_node = next_sibling;
 				continue;
 			}
 		}
+
 		if (target_depth !== null) {
 			fragment.push(/** @type {Text | Comment | Element} */ (current_node));
 		}
+
 		current_node = next_sibling;
 	}
+
 	return null;
 }
 
@@ -100,4 +117,25 @@ export function hydrate_block_anchor(node) {
 		const first_child = /** @type {Element | null} */ (node.firstChild);
 		set_current_hydration_fragment(first_child === null ? [] : [first_child]);
 	}
+}
+
+/**
+ * Expects to only be called in hydration mode
+ * @param {Node} node
+ * @returns {Node}
+ */
+export function capture_fragment_from_node(node) {
+	if (
+		node.nodeType === 8 &&
+		/** @type {Comment} */ (node).data.startsWith('ssr:') &&
+		current_hydration_fragment[current_hydration_fragment.length - 1] !== node
+	) {
+		const fragment = /** @type {Array<Element | Text | Comment>} */ (get_hydration_fragment(node));
+		const last_child = fragment[fragment.length - 1] || node;
+		const target = /** @type {Node} */ (last_child.nextSibling);
+		// @ts-ignore
+		target.$$fragment = fragment;
+		return target;
+	}
+	return node;
 }

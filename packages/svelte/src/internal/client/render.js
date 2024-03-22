@@ -6,11 +6,11 @@ import { flush_sync, push, pop, current_component_context } from './runtime.js';
 import { render_effect, destroy_effect } from './reactivity/effects.js';
 import {
 	current_hydration_fragment,
-	get_hydration_fragment,
 	hydrate_block_anchor,
 	hydrating,
 	set_current_hydration_fragment,
-	set_hydrating
+	set_hydrating,
+	update_hydration_fragment
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
 import { handle_event_propagation } from './dom/elements/events.js';
@@ -142,11 +142,12 @@ export function hydrate(component, options) {
 	init_operations();
 	const container = options.target;
 	const first_child = /** @type {ChildNode} */ (container.firstChild);
+	const previous_hydration_fragment = current_hydration_fragment;
+
 	// Call with insert_text == true to prevent empty {expressions} resulting in an empty
 	// fragment array, resulting in a hydration error down the line
-	const hydration_fragment = get_hydration_fragment(first_child, true);
-	const previous_hydration_fragment = current_hydration_fragment;
-	set_current_hydration_fragment(hydration_fragment);
+	// TODO is both this and the `container.appendChild(anchor)` below necessary?
+	const hydration_fragment = update_hydration_fragment(first_child, true);
 	set_hydrating(true);
 
 	/** @type {null | Text} */

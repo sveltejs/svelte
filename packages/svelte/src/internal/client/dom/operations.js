@@ -1,4 +1,4 @@
-import { current_hydration_fragment, get_hydration_fragment, hydrating } from './hydration.js';
+import { capture_fragment_from_node, current_hydration_fragment, hydrating } from './hydration.js';
 import { get_descriptor } from '../utils.js';
 
 // We cache the Node and Element prototype methods, so that we can avoid doing
@@ -225,25 +225,4 @@ export function clear_text_content(node) {
 /*#__NO_SIDE_EFFECTS__*/
 export function create_element(name) {
 	return document.createElement(name);
-}
-
-/**
- * Expects to only be called in hydration mode
- * @param {Node} node
- * @returns {Node}
- */
-function capture_fragment_from_node(node) {
-	if (
-		node.nodeType === 8 &&
-		/** @type {Comment} */ (node).data.startsWith('ssr:') &&
-		current_hydration_fragment[current_hydration_fragment.length - 1] !== node
-	) {
-		const fragment = /** @type {Array<Element | Text | Comment>} */ (get_hydration_fragment(node));
-		const last_child = fragment[fragment.length - 1] || node;
-		const target = /** @type {Node} */ (last_child.nextSibling);
-		// @ts-ignore
-		target.$$fragment = fragment;
-		return target;
-	}
-	return node;
 }

@@ -8,11 +8,10 @@ import {
 } from '../../../../constants.js';
 import {
 	current_hydration_fragment,
-	get_hydration_fragment,
 	hydrate_block_anchor,
 	hydrating,
-	set_current_hydration_fragment,
-	set_hydrating
+	set_hydrating,
+	update_hydration_fragment
 } from '../hydration.js';
 import { empty } from '../operations.js';
 import { insert, remove } from '../reconciler.js';
@@ -124,11 +123,11 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 			var hydrating_node = hydration_list[0];
 
 			for (var i = 0; i < length; i++) {
-				var fragment = get_hydration_fragment(hydrating_node);
-				set_current_hydration_fragment(fragment);
-				if (!fragment) {
-					// If fragment is null, then that means that the server rendered less items than what
-					// the client code specifies -> break out and continue with client-side node creation
+				var fragment = update_hydration_fragment(hydrating_node);
+
+				if (fragment === null) {
+					// If fragment is null, then that means that the server rendered fewer items than what
+					// expected, so break out and continue appending non-hydrated items
 					mismatch = true;
 					set_hydrating(false);
 					break;
