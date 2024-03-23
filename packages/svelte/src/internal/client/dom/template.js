@@ -92,13 +92,10 @@ function open_template(is_fragment, use_clone_node, anchor, template_element_fn)
 		if (anchor !== null) {
 			hydrate_block_anchor(anchor);
 		}
-		// In ssr+hydration optimization mode, we might remove the template_element,
-		// so we need to is_fragment flag to properly handle hydrated content accordingly.
-		const nodes = hydrate_nodes;
-		if (nodes !== null) {
-			return is_fragment ? nodes : /** @type {Element} */ (nodes[0]);
-		}
+
+		return is_fragment ? hydrate_nodes : /** @type {Element} */ (hydrate_nodes[0]);
 	}
+
 	return use_clone_node
 		? clone_node(/** @type {() => Element} */ (template_element_fn)(), true)
 		: document.importNode(/** @type {() => Element} */ (template_element_fn)(), true);
