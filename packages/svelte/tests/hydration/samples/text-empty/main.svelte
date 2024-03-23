@@ -1,5 +1,5 @@
 <script>
-    let x = typeof window === 'undefined' ? '' : 'x'
+	let { x } = $props();
 </script>
 
 {x}
