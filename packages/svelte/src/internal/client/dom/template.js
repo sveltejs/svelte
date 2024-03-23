@@ -179,9 +179,11 @@ export function comment(anchor) {
 function close_template(dom, is_fragment, anchor) {
 	/** @type {import('#client').Dom} */
 	var current = is_fragment
-		? is_array(dom)
-			? dom
-			: /** @type {import('#client').TemplateNode[]} */ (Array.from(dom.childNodes))
+		? hydrating
+			? // if hydrating, `dom` is already an array of nodes
+				dom
+			: // otherwise we need to create an array to store it on the current effect
+				/** @type {import('#client').TemplateNode[]} */ (Array.from(dom.childNodes))
 		: dom;
 
 	if (!hydrating && anchor !== null) {
