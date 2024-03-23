@@ -12,7 +12,7 @@ export default function Main($$anchor, $$props) {
 	let x = 'test';
 	let y = () => 'test';
 	/* Init */
-	var fragment = $.open_frag($$anchor, false, frag);
+	var fragment = $.open_frag($$anchor, frag, false);
 	var div = $.child_frag(fragment);
 	var svg = $.sibling($.sibling(div, true));
 	var custom_element = $.sibling($.sibling(svg, true));
