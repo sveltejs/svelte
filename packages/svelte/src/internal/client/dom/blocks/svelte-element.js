@@ -111,19 +111,18 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 						: document.createElement(next_tag);
 
 				if (render_fn) {
-					let anchor;
+					// If hydrating, use the existing ssr comment as the anchor so that the
+					// inner open and close methods can pick up the existing nodes correctly
+					var child_anchor = hydrating
+						? /** @type {Comment} */ (element.firstChild)
+						: element.appendChild(empty());
 
-					if (hydrating) {
-						// Use the existing ssr comment as the anchor so that the inner open and close
-						// methods can pick up the existing nodes correctly
-						anchor = /** @type {Comment} */ (element.firstChild);
-					} else {
-						anchor = empty();
-						element.appendChild(anchor);
-					}
-
-					if (anchor) {
-						render_fn(element, anchor);
+					if (child_anchor) {
+						// `child_anchor` can be undefined if this is a void element with children,
+						// i.e. `<svelte:element this={"hr"}>...</svelte:element>`. This is
+						// user error, but we warn on it elsewhere (in dev) so here we just
+						// silently ignore it
+						render_fn(element, child_anchor);
 					}
 				}
 
