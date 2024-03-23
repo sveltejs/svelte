@@ -97,29 +97,16 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 			assert.ok(!got_hydration_error, 'Unexpected hydration error');
 		}
 
-		try {
-			assert_html_equal(target.innerHTML, read_html(`${cwd}/_after.html`, `${cwd}/_before.html`));
-		} catch (error) {
-			if (should_update_expected()) {
-				fs.writeFileSync(`${cwd}/_after.html`, target.innerHTML);
-				console.log(`Updated ${cwd}/_after.html.`);
-			} else {
-				throw error;
-			}
-		}
+		const expected = fs.existsSync(`${cwd}/_expected.html`)
+			? read_html(`${cwd}/_expected.html`)
+			: rendered.html;
+		assert_html_equal(target.innerHTML, expected);
 
 		if (rendered.head) {
-			try {
-				const after_head = read_html(`${cwd}/_after_head.html`, `${cwd}/_before_head.html`);
-				assert_html_equal(head.innerHTML, after_head);
-			} catch (error) {
-				if (should_update_expected()) {
-					fs.writeFileSync(`${cwd}/_after_head.html`, head.innerHTML);
-					console.log(`Updated ${cwd}/_after_head.html.`);
-				} else {
-					throw error;
-				}
-			}
+			const expected = fs.existsSync(`${cwd}/_expected_head.html`)
+				? read_html(`${cwd}/_expected_head.html`)
+				: rendered.head;
+			assert_html_equal(head.innerHTML, expected);
 		}
 
 		if (config.snapshot) {
