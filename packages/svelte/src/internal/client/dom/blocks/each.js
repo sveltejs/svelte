@@ -50,7 +50,7 @@ export function set_current_each_item(item) {
  * @param {number} flags
  * @param {null | ((item: V) => string)} get_key
  * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
- * @param {null | ((anchor: Node) => void)} fallback_fn
+ * @param {null | ((anchor: Node | null) => void)} fallback_fn
  * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
  * @returns {void}
  */
@@ -158,7 +158,7 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 					resume_effect(fallback);
 				} else {
 					fallback = render_effect(() => {
-						var dom = fallback_fn(anchor);
+						var dom = fallback_fn(hydrating ? null : anchor);
 
 						return () => {
 							if (dom !== undefined) {
@@ -199,7 +199,7 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
  * @param {number} flags
  * @param {null | ((item: V) => string)} get_key
  * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
- * @param {null | ((anchor: Node) => void)} fallback_fn
+ * @param {null | ((anchor: Node | null) => void)} fallback_fn
  * @returns {void}
  */
 export function each_keyed(anchor, get_collection, flags, get_key, render_fn, fallback_fn) {
@@ -212,7 +212,7 @@ export function each_keyed(anchor, get_collection, flags, get_key, render_fn, fa
  * @param {() => V[]} get_collection
  * @param {number} flags
  * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
- * @param {null | ((anchor: Node) => void)} fallback_fn
+ * @param {null | ((anchor: Node | null) => void)} fallback_fn
  * @returns {void}
  */
 export function each_indexed(anchor, get_collection, flags, render_fn, fallback_fn) {
