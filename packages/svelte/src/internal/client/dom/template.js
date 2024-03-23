@@ -182,7 +182,7 @@ function close_template(dom, is_fragment, anchor) {
 		if (is_fragment) {
 			// if hydrating, `dom` is already an array of nodes, but if not then
 			// we need to create an array to store it on the current effect
-			dom = /** @type {import('#client').Dom} */ (Array.from(/** @type {Node} */ (dom).childNodes));
+			dom = /** @type {import('#client').Dom} */ ([.../** @type {Node} */ (dom).childNodes]);
 		}
 
 		if (anchor !== null) {
