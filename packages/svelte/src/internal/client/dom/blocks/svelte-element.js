@@ -112,6 +112,7 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 
 				if (render_fn) {
 					let anchor;
+
 					if (hydrating) {
 						// Use the existing ssr comment as the anchor so that the inner open and close
 						// methods can pick up the existing nodes correctly
@@ -120,7 +121,10 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 						anchor = empty();
 						element.appendChild(anchor);
 					}
-					render_fn(element, anchor);
+
+					if (anchor) {
+						render_fn(element, anchor);
+					}
 				}
 
 				anchor.before(element);
