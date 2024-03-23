@@ -90,22 +90,19 @@ function get_hydrate_nodes(node, insert_text = false) {
 export function hydrate_block_anchor(node) {
 	if (!hydrating) return;
 
-	if (node.nodeType === 8) {
-		// @ts-ignore
-		let nodes = node.$$fragment;
-		if (nodes === undefined) {
-			nodes = get_hydrate_nodes(node);
-		} else {
-			schedule_task(() => {
-				// @ts-expect-error clean up memory
-				node.$$fragment = undefined;
-			});
-		}
-		set_hydrate_nodes(nodes);
+	// if hydrating, `node` is a `Comment`
+
+	// @ts-ignore
+	let nodes = node.$$fragment;
+	if (nodes === undefined) {
+		nodes = get_hydrate_nodes(node);
 	} else {
-		const first_child = /** @type {Element | null} */ (node.firstChild);
-		set_hydrate_nodes(first_child === null ? [] : [first_child]);
+		schedule_task(() => {
+			// @ts-expect-error clean up memory
+			node.$$fragment = undefined;
+		});
 	}
+	set_hydrate_nodes(nodes);
 }
 
 /**
