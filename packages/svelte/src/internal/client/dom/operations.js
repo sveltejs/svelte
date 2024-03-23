@@ -145,16 +145,14 @@ export function child(node) {
 /*#__NO_SIDE_EFFECTS__*/
 export function child_frag(node, is_text) {
 	if (hydrating) {
-		const first_node = /** @type {Node[]} */ (node)[0];
+		const first_node = /** @type {import('#client').TemplateNode[]} */ (node)[0];
 
 		// if an {expression} is empty during SSR, there might be no
 		// text node to hydrate — we must therefore create one
 		if (is_text && first_node?.nodeType !== 3) {
 			const text = empty();
 			hydrate_nodes.unshift(text);
-			if (first_node) {
-				/** @type {DocumentFragment} */ (first_node.parentNode).insertBefore(text, first_node);
-			}
+			first_node?.before(text);
 			return text;
 		}
 
