@@ -90,18 +90,8 @@ function get_hydrate_nodes(node, insert_text = false) {
 export function hydrate_block_anchor(node) {
 	if (!hydrating) return;
 
-	// if hydrating, `node` is a `Comment`
-
 	// @ts-ignore
-	let nodes = node.$$fragment;
-	if (nodes === undefined) {
-		nodes = get_hydrate_nodes(node);
-	} else {
-		schedule_task(() => {
-			// @ts-expect-error clean up memory
-			node.$$fragment = undefined;
-		});
-	}
+	var nodes = node.$$fragment ?? get_hydrate_nodes(node);
 	set_hydrate_nodes(nodes);
 }
 
@@ -121,6 +111,10 @@ export function capture_fragment_from_node(node) {
 		const target = /** @type {Node} */ (last_child.nextSibling);
 		// @ts-ignore
 		target.$$fragment = nodes;
+		schedule_task(() => {
+			// @ts-expect-error clean up memory
+			target.$$fragment = undefined;
+		});
 		return target;
 	}
 	return node;
