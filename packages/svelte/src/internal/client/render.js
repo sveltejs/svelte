@@ -104,7 +104,7 @@ export function createRoot() {
  * @template {Record<string, any>} Events
  * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
  * @param {{
- * 		target: Node;
+ * 		target: Document | Element | ShadowRoot;
  * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  *  	context?: Map<any, any>;
@@ -128,7 +128,7 @@ export function mount(component, options) {
  * @template {Record<string, any>} Events
  * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
  * @param {{
- * 		target: Node;
+ * 		target: Document | Element | ShadowRoot;
  * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  *  	context?: Map<any, any>;
@@ -195,7 +195,7 @@ export function hydrate(component, options) {
  * @template {Record<string, any>} Events
  * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} Component
  * @param {{
- * 		target: Node;
+ * 		target: Document | Element | ShadowRoot;
  * 		anchor: null | Text;
  * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
