@@ -1521,7 +1521,7 @@ const template_visitors = {
 		if (node.fallback) {
 			const fallback_stmts = create_block(node, node.fallback.nodes, context);
 			fallback_stmts.unshift(
-				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--ssr:each_else-->')))
+				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!ssr:each_else>')))
 			);
 			state.template.push(
 				t_statement(
@@ -1549,14 +1549,14 @@ const template_visitors = {
 
 		const consequent = create_block(node, node.consequent.nodes, context);
 		consequent.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--ssr:if:true-->')))
+			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!ssr:if:true>')))
 		);
 
 		const alternate = node.alternate
 			? /** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
 			: b.block([]);
 		alternate.body.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--ssr:if:false-->')))
+			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!ssr:if:false>')))
 		);
 
 		state.template.push(

@@ -637,7 +637,7 @@ export function ensure_array_like(array_like_or_iterator) {
 /** @param {{ anchor: number }} payload */
 export function create_anchor(payload) {
 	const depth = payload.anchor++;
-	return `<!--ssr:${depth}-->`;
+	return `<!ssr:${depth}>`;
 }
 
 /** @returns {[() => false, (value: boolean) => void]} */

@@ -77,7 +77,7 @@ export function normalize_html(
 	try {
 		const node = window.document.createElement('div');
 		node.innerHTML = html
-			.replace(/(<!--.*?-->)/g, preserveComments ? '$1' : '')
+			.replace(/(<!(--)?.*?\2>)/g, preserveComments ? '$1' : '')
 			.replace(/(data-svelte-h="[^"]+")/g, removeDataSvelte ? '' : '$1')
 			.replace(/>[ \t\n\r\f]+</g, '><')
 			.trim();
@@ -137,12 +137,12 @@ export function setup_html_equal(options = {}) {
 				withoutNormalizeHtml
 					? normalize_new_line(actual)
 							.replace(/(\sdata-svelte-h="[^"]+")/g, options.removeDataSvelte ? '' : '$1')
-							.replace(/(<!--.*?-->)/g, preserveComments !== false ? '$1' : '')
+							.replace(/(<!(--)?.*?\2>)/g, preserveComments !== false ? '$1' : '')
 					: normalize_html(window, actual, { ...options, preserveComments }),
 				withoutNormalizeHtml
 					? normalize_new_line(expected)
 							.replace(/(\sdata-svelte-h="[^"]+")/g, options.removeDataSvelte ? '' : '$1')
-							.replace(/(<!--.*?-->)/g, preserveComments !== false ? '$1' : '')
+							.replace(/(<!(--)?.*?\2>)/g, preserveComments !== false ? '$1' : '')
 					: normalize_html(window, expected, { ...options, preserveComments }),
 				message
 			);
