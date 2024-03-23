@@ -87,6 +87,7 @@ export function svg_template_with_script(svg, return_fragment) {
  * @param {() => Node} [template_element_fn]
  * @returns {Element | DocumentFragment | Node[]}
  */
+/*#__NO_SIDE_EFFECTS__*/
 function open_template(is_fragment, use_clone_node, anchor, template_element_fn) {
 	if (hydrating) {
 		if (anchor !== null) {
@@ -105,11 +106,10 @@ function open_template(is_fragment, use_clone_node, anchor, template_element_fn)
  * @param {null | Text | Comment | Element} anchor
  * @param {() => Node} template_element_fn
  * @param {boolean} [use_clone_node]
- * @returns {Element | DocumentFragment | Node[]}
+ * @returns {Element}
  */
-/*#__NO_SIDE_EFFECTS__*/
 export function open(anchor, template_element_fn, use_clone_node = true) {
-	return open_template(false, use_clone_node, anchor, template_element_fn);
+	return /** @type {Element} */ (open_template(false, use_clone_node, anchor, template_element_fn));
 }
 
 /**
@@ -118,7 +118,6 @@ export function open(anchor, template_element_fn, use_clone_node = true) {
  * @param {boolean} [use_clone_node]
  * @returns {Element | DocumentFragment | Node[]}
  */
-/*#__NO_SIDE_EFFECTS__*/
 export function open_frag(anchor, template_element_fn, use_clone_node = true) {
 	return open_template(true, use_clone_node, anchor, template_element_fn);
 }
