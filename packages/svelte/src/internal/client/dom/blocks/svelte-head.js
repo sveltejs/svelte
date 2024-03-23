@@ -18,6 +18,8 @@ export function head(render_fn) {
 		update_hydrate_nodes(document.head.firstChild);
 	}
 
+	var anchor = document.head.appendChild(empty());
+
 	try {
 		/** @type {import('#client').Dom | null} */
 		var dom = null;
@@ -28,13 +30,7 @@ export function head(render_fn) {
 				head_effect.dom = dom = null;
 			}
 
-			let anchor = null;
-			if (!hydrating) {
-				anchor = empty();
-				document.head.appendChild(anchor);
-			}
-
-			dom = render_fn(anchor) ?? null;
+			dom = render_fn(hydrating ? null : anchor) ?? null;
 		});
 
 		head_effect.ondestroy = () => {

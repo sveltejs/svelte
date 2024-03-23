@@ -109,7 +109,7 @@ const bundle = await bundle_code(
 	).js.code
 );
 
-if (!bundle.includes('current_hydration_fragment')) {
+if (!bundle.includes('hydrate_nodes')) {
 	// eslint-disable-next-line no-console
 	console.error(`✅ Hydration code treeshakeable`);
 } else {
