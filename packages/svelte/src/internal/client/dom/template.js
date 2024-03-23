@@ -178,22 +178,24 @@ export function comment(anchor) {
  * @returns {import('#client').Dom}
  */
 function close_template(dom, is_fragment, anchor) {
+	var current = dom;
+
 	if (!hydrating) {
 		if (is_fragment) {
 			// if hydrating, `dom` is already an array of nodes, but if not then
 			// we need to create an array to store it on the current effect
-			dom = /** @type {import('#client').Dom} */ ([.../** @type {Node} */ (dom).childNodes]);
+			current = /** @type {import('#client').Dom} */ ([.../** @type {Node} */ (dom).childNodes]);
 		}
 
 		if (anchor !== null) {
 			// TODO as with `open_template — why is this sometimes null and sometimes not?
-			insert(dom, anchor);
+			insert(current, anchor);
 		}
 	}
 
-	/** @type {import('#client').Effect} */ (current_effect).dom = dom;
+	/** @type {import('#client').Effect} */ (current_effect).dom = current;
 
-	return dom;
+	return current;
 }
 
 /**
