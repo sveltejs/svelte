@@ -114,8 +114,7 @@ export function createRoot() {
  * @returns {Exports}
  */
 export function mount(component, options) {
-	const anchor = empty();
-	options.target.appendChild(anchor);
+	const anchor = options.target.appendChild(empty());
 	// Don't flush previous effects to ensure order of outer effects stays consistent
 	return flush_sync(() => _mount(component, { ...options, anchor }), false);
 }
@@ -148,28 +147,21 @@ export function hydrate(component, options) {
 	const nodes = update_hydrate_nodes(first_child, true);
 	set_hydrating(true);
 
-	/** @type {null | Text} */
-	let anchor = null;
-
-	if (nodes === null) {
-		anchor = empty();
-		container.appendChild(anchor);
-	}
-
-	let finished_hydrating = false;
+	let hydrated = false;
 
 	try {
 		// Don't flush previous effects to ensure order of outer effects stays consistent
 		return flush_sync(() => {
+			const anchor = nodes === null ? container.appendChild(empty()) : null;
 			const instance = _mount(component, { ...options, anchor });
 			// flush_sync will run this callback and then synchronously run any pending effects,
 			// which don't belong to the hydration phase anymore - therefore reset it here
 			set_hydrating(false);
-			finished_hydrating = true;
+			hydrated = true;
 			return instance;
 		}, false);
 	} catch (error) {
-		if (!finished_hydrating && options.recover !== false && nodes !== null) {
+		if (!hydrated && options.recover !== false && nodes !== null) {
 			// eslint-disable-next-line no-console
 			console.error(
 				'ERR_SVELTE_HYDRATION_MISMATCH' +
