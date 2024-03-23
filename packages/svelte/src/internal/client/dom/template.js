@@ -91,6 +91,7 @@ export function svg_template_with_script(svg, return_fragment) {
 function open_template(is_fragment, use_clone_node, anchor, template_element_fn) {
 	if (hydrating) {
 		if (anchor !== null) {
+			// TODO why is this sometimes null and sometimes not? needs clear documentation
 			hydrate_block_anchor(anchor);
 		}
 
@@ -171,28 +172,28 @@ export function comment(anchor) {
 /**
  * Assign the created (or in hydration mode, traversed) dom elements to the current block
  * and insert the elements into the dom (in client mode).
- * @param {Element | Text} dom
+ * @param {import('#client').Dom} dom
  * @param {boolean} is_fragment
  * @param {null | Text | Comment | Element} anchor
  * @returns {import('#client').Dom}
  */
 function close_template(dom, is_fragment, anchor) {
-	/** @type {import('#client').Dom} */
-	var current = is_fragment
-		? hydrating
-			? // if hydrating, `dom` is already an array of nodes
-				dom
-			: // otherwise we need to create an array to store it on the current effect
-				/** @type {import('#client').TemplateNode[]} */ (Array.from(dom.childNodes))
-		: dom;
+	if (!hydrating) {
+		if (is_fragment) {
+			// if hydrating, `dom` is already an array of nodes, but if not then
+			// we need to create an array to store it on the current effect
+			dom = /** @type {import('#client').Dom} */ (Array.from(/** @type {Node} */ (dom).childNodes));
+		}
 
-	if (!hydrating && anchor !== null) {
-		insert(current, anchor);
+		if (anchor !== null) {
+			// TODO as with `open_template — why is this sometimes null and sometimes not?
+			insert(dom, anchor);
+		}
 	}
 
-	/** @type {import('#client').Effect} */ (current_effect).dom = current;
+	/** @type {import('#client').Effect} */ (current_effect).dom = dom;
 
-	return current;
+	return dom;
 }
 
 /**
