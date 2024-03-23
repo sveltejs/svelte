@@ -1,4 +1,4 @@
-import { current_hydration_fragment, get_hydration_fragment, hydrating } from './hydration.js';
+import { capture_fragment_from_node, hydrate_nodes, hydrating } from './hydration.js';
 import { get_descriptor } from '../utils.js';
 
 // We cache the Node and Element prototype methods, so that we can avoid doing
@@ -123,17 +123,14 @@ export function empty() {
 /*#__NO_SIDE_EFFECTS__*/
 export function child(node) {
 	const child = first_child_get.call(node);
-	if (hydrating) {
-		// Child can be null if we have an element with a single child, like `<p>{text}</p>`, where `text` is empty
-		if (child === null) {
-			const text = empty();
-			node.appendChild(text);
-			return text;
-		} else {
-			return capture_fragment_from_node(child);
-		}
+	if (!hydrating) return child;
+
+	// Child can be null if we have an element with a single child, like `<p>{text}</p>`, where `text` is empty
+	if (child === null) {
+		return node.appendChild(empty());
 	}
-	return child;
+
+	return capture_fragment_from_node(child);
 }
 
 /**
@@ -144,28 +141,26 @@ export function child(node) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function child_frag(node, is_text) {
-	if (hydrating) {
-		const first_node = /** @type {Node[]} */ (node)[0];
-
-		// if an {expression} is empty during SSR, there might be no
-		// text node to hydrate — we must therefore create one
-		if (is_text && first_node?.nodeType !== 3) {
-			const text = empty();
-			current_hydration_fragment.unshift(text);
-			if (first_node) {
-				/** @type {DocumentFragment} */ (first_node.parentNode).insertBefore(text, first_node);
-			}
-			return text;
-		}
-
-		if (first_node !== null) {
-			return capture_fragment_from_node(first_node);
-		}
-
-		return first_node;
+	if (!hydrating) {
+		return first_child_get.call(/** @type {Node} */ (node));
 	}
 
-	return first_child_get.call(/** @type {Node} */ (node));
+	const first_node = /** @type {import('#client').TemplateNode[]} */ (node)[0];
+
+	// if an {expression} is empty during SSR, there might be no
+	// text node to hydrate — we must therefore create one
+	if (is_text && first_node?.nodeType !== 3) {
+		const text = empty();
+		hydrate_nodes.unshift(text);
+		first_node?.before(text);
+		return text;
+	}
+
+	if (first_node !== null) {
+		return capture_fragment_from_node(first_node);
+	}
+
+	return first_node;
 }
 
 /**
@@ -177,19 +172,18 @@ export function child_frag(node, is_text) {
 /*#__NO_SIDE_EFFECTS__*/
 export function sibling(node, is_text = false) {
 	const next_sibling = next_sibling_get.call(node);
+
 	if (hydrating) {
 		// if a sibling {expression} is empty during SSR, there might be no
 		// text node to hydrate — we must therefore create one
 		if (is_text && next_sibling?.nodeType !== 3) {
 			const text = empty();
 			if (next_sibling) {
-				const index = current_hydration_fragment.indexOf(
-					/** @type {Text | Comment | Element} */ (next_sibling)
-				);
-				current_hydration_fragment.splice(index, 0, text);
-				/** @type {DocumentFragment} */ (next_sibling.parentNode).insertBefore(text, next_sibling);
+				const index = hydrate_nodes.indexOf(/** @type {Text | Comment | Element} */ (next_sibling));
+				hydrate_nodes.splice(index, 0, text);
+				next_sibling.before(text);
 			} else {
-				current_hydration_fragment.push(text);
+				hydrate_nodes.push(text);
 			}
 
 			return text;
@@ -199,6 +193,7 @@ export function sibling(node, is_text = false) {
 			return capture_fragment_from_node(next_sibling);
 		}
 	}
+
 	return next_sibling;
 }
 
@@ -225,25 +220,4 @@ export function clear_text_content(node) {
 /*#__NO_SIDE_EFFECTS__*/
 export function create_element(name) {
 	return document.createElement(name);
-}
-
-/**
- * Expects to only be called in hydration mode
- * @param {Node} node
- * @returns {Node}
- */
-function capture_fragment_from_node(node) {
-	if (
-		node.nodeType === 8 &&
-		/** @type {Comment} */ (node).data.startsWith('ssr:') &&
-		current_hydration_fragment[current_hydration_fragment.length - 1] !== node
-	) {
-		const fragment = /** @type {Array<Element | Text | Comment>} */ (get_hydration_fragment(node));
-		const last_child = fragment[fragment.length - 1] || node;
-		const target = /** @type {Node} */ (last_child.nextSibling);
-		// @ts-ignore
-		target.$$fragment = fragment;
-		return target;
-	}
-	return node;
 }

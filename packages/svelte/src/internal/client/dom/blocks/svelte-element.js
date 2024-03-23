@@ -1,5 +1,5 @@
 import { namespace_svg } from '../../../../constants.js';
-import { current_hydration_fragment, hydrate_block_anchor, hydrating } from '../hydration.js';
+import { hydrate_nodes, hydrate_block_anchor, hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import {
 	destroy_effect,
@@ -105,22 +105,25 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 			effect = render_effect(() => {
 				const prev_element = element;
 				element = hydrating
-					? /** @type {Element} */ (current_hydration_fragment[0])
+					? /** @type {Element} */ (hydrate_nodes[0])
 					: ns
 						? document.createElementNS(ns, next_tag)
 						: document.createElement(next_tag);
 
 				if (render_fn) {
-					let anchor;
-					if (hydrating) {
-						// Use the existing ssr comment as the anchor so that the inner open and close
-						// methods can pick up the existing nodes correctly
-						anchor = /** @type {Comment} */ (element.firstChild);
-					} else {
-						anchor = empty();
-						element.appendChild(anchor);
+					// If hydrating, use the existing ssr comment as the anchor so that the
+					// inner open and close methods can pick up the existing nodes correctly
+					var child_anchor = hydrating
+						? /** @type {Comment} */ (element.firstChild)
+						: element.appendChild(empty());
+
+					if (child_anchor) {
+						// `child_anchor` can be undefined if this is a void element with children,
+						// i.e. `<svelte:element this={"hr"}>...</svelte:element>`. This is
+						// user error, but we warn on it elsewhere (in dev) so here we just
+						// silently ignore it
+						render_fn(element, child_anchor);
 					}
-					render_fn(element, anchor);
 				}
 
 				anchor.before(element);

@@ -1,9 +1,4 @@
-import {
-	current_hydration_fragment,
-	get_hydration_fragment,
-	hydrating,
-	set_current_hydration_fragment
-} from '../hydration.js';
+import { hydrate_nodes, hydrating, set_hydrate_nodes, update_hydrate_nodes } from '../hydration.js';
 import { empty } from '../operations.js';
 import { render_effect } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
@@ -15,14 +10,12 @@ import { remove } from '../reconciler.js';
 export function head(render_fn) {
 	// The head function may be called after the first hydration pass and ssr comment nodes may still be present,
 	// therefore we need to skip that when we detect that we're not in hydration mode.
-	let hydration_fragment = null;
-	let previous_hydration_fragment = null;
+	let previous_hydrate_nodes = null;
+	let was_hydrating = hydrating;
 
-	let is_hydrating = hydrating;
-	if (is_hydrating) {
-		hydration_fragment = get_hydration_fragment(document.head.firstChild);
-		previous_hydration_fragment = current_hydration_fragment;
-		set_current_hydration_fragment(hydration_fragment);
+	if (hydrating) {
+		previous_hydrate_nodes = hydrate_nodes;
+		update_hydrate_nodes(document.head.firstChild);
 	}
 
 	try {
@@ -50,8 +43,8 @@ export function head(render_fn) {
 			}
 		};
 	} finally {
-		if (is_hydrating) {
-			set_current_hydration_fragment(previous_hydration_fragment);
+		if (was_hydrating) {
+			set_hydrate_nodes(previous_hydrate_nodes);
 		}
 	}
 }

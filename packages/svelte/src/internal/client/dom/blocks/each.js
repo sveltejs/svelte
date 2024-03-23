@@ -7,11 +7,11 @@ import {
 	EACH_KEYED
 } from '../../../../constants.js';
 import {
-	current_hydration_fragment,
-	get_hydration_fragment,
+	hydrate_nodes,
 	hydrate_block_anchor,
 	hydrating,
-	set_current_hydration_fragment
+	set_hydrating,
+	update_hydrate_nodes
 } from '../hydration.js';
 import { empty } from '../operations.js';
 import { insert, remove } from '../reconciler.js';
@@ -98,17 +98,16 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 		let mismatch = false;
 
 		if (hydrating) {
-			var is_else =
-				/** @type {Comment} */ (current_hydration_fragment?.[0])?.data === 'ssr:each_else';
+			var is_else = /** @type {Comment} */ (hydrate_nodes?.[0])?.data === 'ssr:each_else';
 
 			if (is_else !== (length === 0)) {
 				// hydration mismatch — remove the server-rendered DOM and start over
-				remove(current_hydration_fragment);
-				set_current_hydration_fragment(null);
+				remove(hydrate_nodes);
+				set_hydrating(false);
 				mismatch = true;
 			} else if (is_else) {
 				// Remove the each_else comment node or else it will confuse the subsequent hydration algorithm
-				/** @type {import('#client').TemplateNode[]} */ (current_hydration_fragment).shift();
+				/** @type {import('#client').TemplateNode[]} */ (hydrate_nodes).shift();
 			}
 		}
 
@@ -117,18 +116,17 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 			var b_items = [];
 
 			// Hydrate block
-			var hydration_list = /** @type {import('#client').TemplateNode[]} */ (
-				current_hydration_fragment
-			);
+			var hydration_list = /** @type {import('#client').TemplateNode[]} */ (hydrate_nodes);
 			var hydrating_node = hydration_list[0];
 
 			for (var i = 0; i < length; i++) {
-				var fragment = get_hydration_fragment(hydrating_node);
-				set_current_hydration_fragment(fragment);
-				if (!fragment) {
-					// If fragment is null, then that means that the server rendered less items than what
-					// the client code specifies -> break out and continue with client-side node creation
+				var nodes = update_hydrate_nodes(hydrating_node);
+
+				if (nodes === null) {
+					// If `nodes` is null, then that means that the server rendered fewer items than what
+					// expected, so break out and continue appending non-hydrated items
 					mismatch = true;
+					set_hydrating(false);
 					break;
 				}
 
@@ -137,7 +135,7 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 				// TODO helperise this
 				hydrating_node = /** @type {import('#client').TemplateNode} */ (
 					/** @type {Node} */ (
-						/** @type {Node} */ (fragment[fragment.length - 1] || hydrating_node).nextSibling
+						/** @type {Node} */ (nodes[nodes.length - 1] || hydrating_node).nextSibling
 					).nextSibling
 				);
 			}
@@ -175,8 +173,8 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 		}
 
 		if (mismatch) {
-			// Set a fragment so that Svelte continues to operate in hydration mode
-			set_current_hydration_fragment([]);
+			// continue in hydration mode
+			set_hydrating(true);
 		}
 	});
 

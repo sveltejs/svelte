@@ -1,10 +1,5 @@
 import { IS_ELSEIF } from '../../constants.js';
-import {
-	current_hydration_fragment,
-	hydrate_block_anchor,
-	hydrating,
-	set_current_hydration_fragment
-} from '../hydration.js';
+import { hydrate_nodes, hydrate_block_anchor, hydrating, set_hydrating } from '../hydration.js';
 import { remove } from '../reconciler.js';
 import {
 	destroy_effect,
@@ -40,7 +35,7 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 		let mismatch = false;
 
 		if (hydrating) {
-			const comment_text = /** @type {Comment} */ (current_hydration_fragment?.[0])?.data;
+			const comment_text = /** @type {Comment} */ (hydrate_nodes?.[0])?.data;
 
 			if (
 				!comment_text ||
@@ -49,12 +44,12 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 			) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.
 				// This could happen using when `{#if browser} .. {/if}` in SvelteKit.
-				remove(current_hydration_fragment);
-				set_current_hydration_fragment(null);
+				remove(hydrate_nodes);
+				set_hydrating(false);
 				mismatch = true;
 			} else {
 				// Remove the ssr:if comment node or else it will confuse the subsequent hydration algorithm
-				current_hydration_fragment.shift();
+				hydrate_nodes.shift();
 			}
 		}
 
@@ -85,8 +80,8 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 		}
 
 		if (mismatch) {
-			// Set fragment so that Svelte continues to operate in hydration mode
-			set_current_hydration_fragment([]);
+			// continue in hydration mode
+			set_hydrating(true);
 		}
 	});
 

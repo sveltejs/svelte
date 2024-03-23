@@ -1,4 +1,4 @@
-import { current_hydration_fragment, hydrate_block_anchor, hydrating } from './hydration.js';
+import { hydrate_nodes, hydrate_block_anchor, hydrating } from './hydration.js';
 import { child, clone_node, empty } from './operations.js';
 import {
 	create_fragment_from_html,
@@ -94,9 +94,9 @@ function open_template(is_fragment, use_clone_node, anchor, template_element_fn)
 		}
 		// In ssr+hydration optimization mode, we might remove the template_element,
 		// so we need to is_fragment flag to properly handle hydrated content accordingly.
-		const fragment = current_hydration_fragment;
-		if (fragment !== null) {
-			return is_fragment ? fragment : /** @type {Element} */ (fragment[0]);
+		const nodes = hydrate_nodes;
+		if (nodes !== null) {
+			return is_fragment ? nodes : /** @type {Element} */ (nodes[0]);
 		}
 	}
 	return use_clone_node

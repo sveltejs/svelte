@@ -1,5 +1,5 @@
 import { append_child } from './operations.js';
-import { current_hydration_fragment, hydrate_block_anchor, hydrating } from './hydration.js';
+import { hydrate_nodes, hydrate_block_anchor, hydrating } from './hydration.js';
 import { is_array } from '../utils.js';
 
 /** @param {string} html */
@@ -76,7 +76,7 @@ export function remove(current) {
 export function reconcile_html(target, value, svg) {
 	hydrate_block_anchor(target);
 	if (hydrating) {
-		return current_hydration_fragment;
+		return hydrate_nodes;
 	}
 	var html = value + '';
 	// Even if html is the empty string we need to continue to insert something or
