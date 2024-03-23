@@ -4,14 +4,14 @@ import * as fs from 'node:fs';
 import { assert } from 'vitest';
 import { compile_directory, should_update_expected } from '../helpers.js';
 import { assert_html_equal } from '../html_equal.js';
-import { suite, assert_ok } from '../suite.js';
+import { suite, assert_ok, type BaseTest } from '../suite.js';
 import { createClassComponent } from 'svelte/legacy';
+import { render } from 'svelte/server';
 import type { CompileOptions } from '#compiler';
 
-interface HydrationTest {
-	solo?: boolean;
-	skip?: boolean;
+interface HydrationTest extends BaseTest {
 	load_compiled?: boolean;
+	server_props?: Record<string, any>;
 	props?: Record<string, any>;
 	compileOptions?: Partial<CompileOptions>;
 	/**
@@ -53,14 +53,16 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 	const target = window.document.body;
 	const head = window.document.head;
 
-	target.innerHTML = read_html(`${cwd}/_before.html`);
+	const rendered = render((await import(`${cwd}/_output/server/main.svelte.js`)).default, {
+		props: config.server_props ?? config.props ?? {}
+	});
 
-	let before_head;
-	try {
-		before_head = read_html(`${cwd}/_before_head.html`);
-		head.innerHTML = before_head;
-	} catch (err) {
-		// continue regardless of error
+	fs.writeFileSync(`${cwd}/_output/body.html`, rendered.html + '\n');
+	target.innerHTML = rendered.html;
+
+	if (rendered.head) {
+		fs.writeFileSync(`${cwd}/_output/head.html`, rendered.head + '\n');
+		head.innerHTML = rendered.head;
 	}
 
 	config.before_test?.();
@@ -106,7 +108,7 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 			}
 		}
 
-		if (before_head) {
+		if (rendered.head) {
 			try {
 				const after_head = read_html(`${cwd}/_after_head.html`, `${cwd}/_before_head.html`);
 				assert_html_equal(head.innerHTML, after_head);
