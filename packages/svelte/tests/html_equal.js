@@ -135,15 +135,15 @@ export function setup_html_equal(options = {}) {
 		try {
 			assert.deepEqual(
 				withoutNormalizeHtml
-					? normalize_new_line(actual)
+					? normalize_new_line(actual.trim())
 							.replace(/(\sdata-svelte-h="[^"]+")/g, options.removeDataSvelte ? '' : '$1')
 							.replace(/(<!(--)?.*?\2>)/g, preserveComments !== false ? '$1' : '')
-					: normalize_html(window, actual, { ...options, preserveComments }),
+					: normalize_html(window, actual.trim(), { ...options, preserveComments }),
 				withoutNormalizeHtml
-					? normalize_new_line(expected)
+					? normalize_new_line(expected.trim())
 							.replace(/(\sdata-svelte-h="[^"]+")/g, options.removeDataSvelte ? '' : '$1')
 							.replace(/(<!(--)?.*?\2>)/g, preserveComments !== false ? '$1' : '')
-					: normalize_html(window, expected, { ...options, preserveComments }),
+					: normalize_html(window, expected.trim(), { ...options, preserveComments }),
 				message
 			);
 		} catch (e) {

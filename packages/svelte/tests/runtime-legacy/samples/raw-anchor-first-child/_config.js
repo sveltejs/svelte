@@ -11,7 +11,7 @@ export default test({
 		if (variant === 'dom') {
 			assert.ok(!span.previousSibling);
 		} else {
-			assert.ok(span.previousSibling?.textContent?.startsWith('ssr:')); // ssr commment node
+			assert.ok(span.previousSibling?.textContent === '['); // ssr commment node
 		}
 
 		component.raw = '<span>bar</span>';
