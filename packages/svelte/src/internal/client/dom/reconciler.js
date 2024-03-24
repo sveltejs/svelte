@@ -93,7 +93,7 @@ export function reconcile_html(target, value, svg) {
 		content = /** @type {DocumentFragment} */ (/** @type {unknown} */ (content.firstChild));
 	}
 	var clone = content.cloneNode(true);
-	frag_nodes = Array.from(clone.childNodes);
+	frag_nodes = [...clone.childNodes];
 	frag_nodes.forEach((node) => {
 		target.before(node);
 	});

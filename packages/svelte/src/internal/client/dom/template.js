@@ -87,18 +87,17 @@ export function svg_template_with_script(svg, return_fragment) {
  * @param {() => Node} [template_element_fn]
  * @returns {Element | DocumentFragment | Node[]}
  */
+/*#__NO_SIDE_EFFECTS__*/
 function open_template(is_fragment, use_clone_node, anchor, template_element_fn) {
 	if (hydrating) {
 		if (anchor !== null) {
+			// TODO why is this sometimes null and sometimes not? needs clear documentation
 			hydrate_block_anchor(anchor);
 		}
-		// In ssr+hydration optimization mode, we might remove the template_element,
-		// so we need to is_fragment flag to properly handle hydrated content accordingly.
-		const nodes = hydrate_nodes;
-		if (nodes !== null) {
-			return is_fragment ? nodes : /** @type {Element} */ (nodes[0]);
-		}
+
+		return is_fragment ? hydrate_nodes : /** @type {Element} */ (hydrate_nodes[0]);
 	}
+
 	return use_clone_node
 		? clone_node(/** @type {() => Element} */ (template_element_fn)(), true)
 		: document.importNode(/** @type {() => Element} */ (template_element_fn)(), true);
@@ -108,11 +107,10 @@ function open_template(is_fragment, use_clone_node, anchor, template_element_fn)
  * @param {null | Text | Comment | Element} anchor
  * @param {() => Node} template_element_fn
  * @param {boolean} [use_clone_node]
- * @returns {Element | DocumentFragment | Node[]}
+ * @returns {Element}
  */
-/*#__NO_SIDE_EFFECTS__*/
 export function open(anchor, template_element_fn, use_clone_node = true) {
-	return open_template(false, use_clone_node, anchor, template_element_fn);
+	return /** @type {Element} */ (open_template(false, use_clone_node, anchor, template_element_fn));
 }
 
 /**
@@ -121,7 +119,6 @@ export function open(anchor, template_element_fn, use_clone_node = true) {
  * @param {boolean} [use_clone_node]
  * @returns {Element | DocumentFragment | Node[]}
  */
-/*#__NO_SIDE_EFFECTS__*/
 export function open_frag(anchor, template_element_fn, use_clone_node = true) {
 	return open_template(true, use_clone_node, anchor, template_element_fn);
 }
@@ -175,21 +172,25 @@ export function comment(anchor) {
 /**
  * Assign the created (or in hydration mode, traversed) dom elements to the current block
  * and insert the elements into the dom (in client mode).
- * @param {Element | Text} dom
+ * @param {import('#client').Dom} dom
  * @param {boolean} is_fragment
  * @param {null | Text | Comment | Element} anchor
  * @returns {import('#client').Dom}
  */
 function close_template(dom, is_fragment, anchor) {
-	/** @type {import('#client').Dom} */
-	var current = is_fragment
-		? is_array(dom)
-			? dom
-			: /** @type {import('#client').TemplateNode[]} */ (Array.from(dom.childNodes))
-		: dom;
+	var current = dom;
 
-	if (!hydrating && anchor !== null) {
-		insert(current, anchor);
+	if (!hydrating) {
+		if (is_fragment) {
+			// if hydrating, `dom` is already an array of nodes, but if not then
+			// we need to create an array to store it on the current effect
+			current = /** @type {import('#client').Dom} */ ([.../** @type {Node} */ (dom).childNodes]);
+		}
+
+		if (anchor !== null) {
+			// TODO as with `open_template — why is this sometimes null and sometimes not?
+			insert(current, anchor);
+		}
 	}
 
 	/** @type {import('#client').Effect} */ (current_effect).dom = current;

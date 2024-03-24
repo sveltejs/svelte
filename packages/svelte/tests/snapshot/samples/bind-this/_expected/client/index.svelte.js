@@ -9,7 +9,7 @@ export default function Bind_this($$anchor, $$props) {
 
 	/* Init */
 	var fragment = $.comment($$anchor);
-	var node = $.child_frag(fragment);
+	var node = $.first_child(fragment);
 
 	$.bind_this(Foo(node, {}), ($$value) => foo = $$value, () => foo);
 	$.close_frag($$anchor, fragment);
