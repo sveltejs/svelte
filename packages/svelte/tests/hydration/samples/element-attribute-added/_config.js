@@ -1,6 +1,8 @@
 import { test } from '../../test';
 
 export default test({
+	server_props: {},
+
 	props: {
 		className: 'bar'
 	},

@@ -98,7 +98,7 @@ if (typeof HTMLElement === 'function') {
 					 * @param {Element} anchor
 					 */
 					return (anchor) => {
-						const node = open(anchor, true, () => {
+						const node = open(anchor, () => {
 							const slot = document.createElement('slot');
 							if (name !== 'default') {
 								slot.name = name;

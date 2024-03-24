@@ -1,4 +1,4 @@
-import { current_hydration_fragment, hydrate_block_anchor, hydrating } from './hydration.js';
+import { hydrate_nodes, hydrate_block_anchor, hydrating } from './hydration.js';
 import { child, clone_node, empty } from './operations.js';
 import {
 	create_fragment_from_html,
@@ -94,9 +94,9 @@ function open_template(is_fragment, use_clone_node, anchor, template_element_fn)
 		}
 		// In ssr+hydration optimization mode, we might remove the template_element,
 		// so we need to is_fragment flag to properly handle hydrated content accordingly.
-		const fragment = current_hydration_fragment;
-		if (fragment !== null) {
-			return is_fragment ? fragment : /** @type {Element} */ (fragment[0]);
+		const nodes = hydrate_nodes;
+		if (nodes !== null) {
+			return is_fragment ? nodes : /** @type {Element} */ (nodes[0]);
 		}
 	}
 	return use_clone_node
@@ -106,23 +106,23 @@ function open_template(is_fragment, use_clone_node, anchor, template_element_fn)
 
 /**
  * @param {null | Text | Comment | Element} anchor
- * @param {boolean} use_clone_node
- * @param {() => Node} [template_element_fn]
+ * @param {() => Node} template_element_fn
+ * @param {boolean} [use_clone_node]
  * @returns {Element | DocumentFragment | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function open(anchor, use_clone_node, template_element_fn) {
+export function open(anchor, template_element_fn, use_clone_node = true) {
 	return open_template(false, use_clone_node, anchor, template_element_fn);
 }
 
 /**
  * @param {null | Text | Comment | Element} anchor
- * @param {boolean} use_clone_node
- * @param {() => Node} [template_element_fn]
+ * @param {() => Node} template_element_fn
+ * @param {boolean} [use_clone_node]
  * @returns {Element | DocumentFragment | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function open_frag(anchor, use_clone_node, template_element_fn) {
+export function open_frag(anchor, template_element_fn, use_clone_node = true) {
 	return open_template(true, use_clone_node, anchor, template_element_fn);
 }
 
@@ -135,7 +135,7 @@ const comment_template = template('<!>', true);
 /*#__NO_SIDE_EFFECTS__*/
 export function space_frag(anchor) {
 	/** @type {Node | null} */
-	var node = /** @type {any} */ (open(anchor, true, space_template));
+	var node = /** @type {any} */ (open(anchor, space_template));
 	// if an {expression} is empty during SSR, there might be no
 	// text node to hydrate (or an anchor comment is falsely detected instead)
 	//  — we must therefore create one
@@ -169,7 +169,7 @@ export function space(anchor) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function comment(anchor) {
-	return open_frag(anchor, true, comment_template);
+	return open_frag(anchor, comment_template);
 }
 
 /**

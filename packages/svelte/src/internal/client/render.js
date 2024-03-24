@@ -5,11 +5,12 @@ import { remove } from './dom/reconciler.js';
 import { flush_sync, push, pop, current_component_context } from './runtime.js';
 import { render_effect, destroy_effect } from './reactivity/effects.js';
 import {
-	current_hydration_fragment,
-	get_hydration_fragment,
+	hydrate_nodes,
 	hydrate_block_anchor,
 	hydrating,
-	set_current_hydration_fragment
+	set_hydrate_nodes,
+	set_hydrating,
+	update_hydrate_nodes
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
 import { handle_event_propagation } from './dom/elements/events.js';
@@ -104,7 +105,7 @@ export function createRoot() {
  * @template {Record<string, any>} Events
  * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
  * @param {{
- * 		target: Node;
+ * 		target: Document | Element | ShadowRoot;
  * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  *  	context?: Map<any, any>;
@@ -113,9 +114,7 @@ export function createRoot() {
  * @returns {Exports}
  */
 export function mount(component, options) {
-	init_operations();
-	const anchor = empty();
-	options.target.appendChild(anchor);
+	const anchor = options.target.appendChild(empty());
 	// Don't flush previous effects to ensure order of outer effects stays consistent
 	return flush_sync(() => _mount(component, { ...options, anchor }), false);
 }
@@ -128,7 +127,7 @@ export function mount(component, options) {
  * @template {Record<string, any>} Events
  * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
  * @param {{
- * 		target: Node;
+ * 		target: Document | Element | ShadowRoot;
  * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  *  	context?: Map<any, any>;
@@ -138,36 +137,31 @@ export function mount(component, options) {
  * @returns {Exports}
  */
 export function hydrate(component, options) {
-	init_operations();
 	const container = options.target;
 	const first_child = /** @type {ChildNode} */ (container.firstChild);
+	const previous_hydrate_nodes = hydrate_nodes;
+
 	// Call with insert_text == true to prevent empty {expressions} resulting in an empty
-	// fragment array, resulting in a hydration error down the line
-	const hydration_fragment = get_hydration_fragment(first_child, true);
-	const previous_hydration_fragment = current_hydration_fragment;
-	set_current_hydration_fragment(hydration_fragment);
+	// `nodes` array, resulting in a hydration error down the line
+	// TODO is both this and the `container.appendChild(anchor)` below necessary?
+	const nodes = update_hydrate_nodes(first_child, true);
+	set_hydrating(true);
 
-	/** @type {null | Text} */
-	let anchor = null;
-	if (hydration_fragment === null) {
-		anchor = empty();
-		container.appendChild(anchor);
-	}
-
-	let finished_hydrating = false;
+	let hydrated = false;
 
 	try {
 		// Don't flush previous effects to ensure order of outer effects stays consistent
 		return flush_sync(() => {
+			const anchor = nodes === null ? container.appendChild(empty()) : null;
 			const instance = _mount(component, { ...options, anchor });
 			// flush_sync will run this callback and then synchronously run any pending effects,
 			// which don't belong to the hydration phase anymore - therefore reset it here
-			set_current_hydration_fragment(null);
-			finished_hydrating = true;
+			set_hydrating(false);
+			hydrated = true;
 			return instance;
 		}, false);
 	} catch (error) {
-		if (!finished_hydrating && options.recover !== false && hydration_fragment !== null) {
+		if (!hydrated && options.recover !== false && nodes !== null) {
 			// eslint-disable-next-line no-console
 			console.error(
 				'ERR_SVELTE_HYDRATION_MISMATCH' +
@@ -176,16 +170,17 @@ export function hydrate(component, options) {
 						: ''),
 				error
 			);
-			remove(hydration_fragment);
+			remove(nodes);
 			first_child.remove();
-			hydration_fragment[hydration_fragment.length - 1]?.nextSibling?.remove();
-			set_current_hydration_fragment(null);
+			nodes[nodes.length - 1]?.nextSibling?.remove();
+			set_hydrating(false);
 			return mount(component, options);
 		} else {
 			throw error;
 		}
 	} finally {
-		set_current_hydration_fragment(previous_hydration_fragment);
+		set_hydrating(!!previous_hydrate_nodes);
+		set_hydrate_nodes(previous_hydrate_nodes);
 	}
 }
 
@@ -195,7 +190,7 @@ export function hydrate(component, options) {
  * @template {Record<string, any>} Events
  * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} Component
  * @param {{
- * 		target: Node;
+ * 		target: Document | Element | ShadowRoot;
  * 		anchor: null | Text;
  * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
@@ -206,6 +201,8 @@ export function hydrate(component, options) {
  * @returns {Exports}
  */
 function _mount(Component, options) {
+	init_operations();
+
 	const registered_events = new Set();
 	const container = options.target;
 

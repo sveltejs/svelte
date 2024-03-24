@@ -1169,18 +1169,14 @@ function create_block(parent, name, nodes, context) {
 			)
 		);
 
-		body.push(
-			b.var(
-				id,
-				b.call(
-					'$.open',
-					b.id('$$anchor'),
-					b.literal(!state.metadata.context.template_needs_import_node),
-					template_name
-				)
-			),
-			...state.init
-		);
+		/** @type {import('estree').Expression[]} */
+		const args = [b.id('$$anchor'), template_name];
+
+		if (state.metadata.context.template_needs_import_node) {
+			args.push(b.false);
+		}
+
+		body.push(b.var(id, b.call('$.open', ...args)), ...state.init);
 		close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
 	} else if (is_single_child_not_needing_template) {
 		context.visit(trimmed[0], state);
@@ -1227,17 +1223,14 @@ function create_block(parent, name, nodes, context) {
 					)
 				);
 
-				body.push(
-					b.var(
-						id,
-						b.call(
-							'$.open_frag',
-							b.id('$$anchor'),
-							b.literal(!state.metadata.context.template_needs_import_node),
-							template_name
-						)
-					)
-				);
+				/** @type {import('estree').Expression[]} */
+				const args = [b.id('$$anchor'), template_name];
+
+				if (state.metadata.context.template_needs_import_node) {
+					args.push(b.false);
+				}
+
+				body.push(b.var(id, b.call('$.open_frag', ...args)));
 			}
 
 			body.push(...state.init);

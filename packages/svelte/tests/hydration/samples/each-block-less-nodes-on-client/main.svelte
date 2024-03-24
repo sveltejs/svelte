@@ -1,5 +1,5 @@
 <script>
-	let items = $state(typeof window !== 'undefined' ? [{name: 'a'}]: [{name: 'a'}, {name: 'b'}]);
+	let { items } = $props();
 </script>
 
 <ul>

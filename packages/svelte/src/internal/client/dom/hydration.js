@@ -1,5 +1,3 @@
-// Handle hydration
-
 import { schedule_task } from './task.js';
 import { empty } from './operations.js';
 
@@ -9,66 +7,79 @@ import { empty } from './operations.js';
  */
 export let hydrating = false;
 
+/** @param {boolean} value */
+export function set_hydrating(value) {
+	hydrating = value;
+}
+
 /**
  * Array of nodes to traverse for hydration. This will be null if we're not hydrating, but for
  * the sake of simplicity we're not going to use `null` checks everywhere and instead rely on
  * the `hydrating` flag to tell whether or not we're in hydration mode at which point this is set.
- * @type {import('../types.js').TemplateNode[]}
+ * @type {import('#client').TemplateNode[]}
  */
-export let current_hydration_fragment = /** @type {any} */ (null);
+export let hydrate_nodes = /** @type {any} */ (null);
 
 /**
- * @param {null | import('../types.js').TemplateNode[]} fragment
+ * @param {null | import('#client').TemplateNode[]} nodes
  * @returns {void}
  */
-export function set_current_hydration_fragment(fragment) {
-	hydrating = fragment !== null;
-	current_hydration_fragment = /** @type {import('../types.js').TemplateNode[]} */ (fragment);
+export function set_hydrate_nodes(nodes) {
+	hydrate_nodes = /** @type {import('#client').TemplateNode[]} */ (nodes);
+}
+
+/**
+ * @param {Node | null} first
+ * @param {boolean} [insert_text] Whether to insert an empty text node if `nodes` is empty
+ */
+export function update_hydrate_nodes(first, insert_text) {
+	const nodes = get_hydrate_nodes(first, insert_text);
+	set_hydrate_nodes(nodes);
+	return nodes;
 }
 
 /**
  * Returns all nodes between the first `<!--ssr:...-->` comment tag pair encountered.
  * @param {Node | null} node
- * @param {boolean} [insert_text] Whether to insert an empty text node if the fragment is empty
- * @returns {import('../types.js').TemplateNode[] | null}
+ * @param {boolean} [insert_text] Whether to insert an empty text node if `nodes` is empty
+ * @returns {import('#client').TemplateNode[] | null}
  */
-export function get_hydration_fragment(node, insert_text = false) {
-	/** @type {import('../types.js').TemplateNode[]} */
-	const fragment = [];
+function get_hydrate_nodes(node, insert_text = false) {
+	/** @type {import('#client').TemplateNode[]} */
+	var nodes = [];
 
-	/** @type {null | Node} */
-	let current_node = node;
+	var current_node = /** @type {null | import('#client').TemplateNode} */ (node);
 
 	/** @type {null | string} */
-	let target_depth = null;
+	var target_depth = null;
+
 	while (current_node !== null) {
-		const node_type = current_node.nodeType;
-		const next_sibling = current_node.nextSibling;
-		if (node_type === 8) {
-			const data = /** @type {Comment} */ (current_node).data;
+		if (current_node.nodeType === 8) {
+			var data = /** @type {Comment} */ (current_node).data;
+
 			if (data.startsWith('ssr:')) {
-				const depth = data.slice(4);
+				var depth = data.slice(4);
+
 				if (target_depth === null) {
 					target_depth = depth;
 				} else if (depth === target_depth) {
-					if (insert_text && fragment.length === 0) {
-						const text = empty();
-						fragment.push(text);
-						/** @type {Node} */ (current_node.parentNode).insertBefore(text, current_node);
+					if (insert_text && nodes.length === 0) {
+						var text = empty();
+						nodes.push(text);
+						current_node.before(text);
 					}
-					return fragment;
+					return nodes;
 				} else {
-					fragment.push(/** @type {Text | Comment | Element} */ (current_node));
+					nodes.push(current_node);
 				}
-				current_node = next_sibling;
-				continue;
 			}
+		} else if (target_depth !== null) {
+			nodes.push(current_node);
 		}
-		if (target_depth !== null) {
-			fragment.push(/** @type {Text | Comment | Element} */ (current_node));
-		}
-		current_node = next_sibling;
+
+		current_node = /** @type {null | import('#client').TemplateNode} */ (current_node.nextSibling);
 	}
+
 	return null;
 }
 
@@ -79,20 +90,32 @@ export function get_hydration_fragment(node, insert_text = false) {
 export function hydrate_block_anchor(node) {
 	if (!hydrating) return;
 
-	if (node.nodeType === 8) {
+	// @ts-ignore
+	var nodes = node.$$fragment ?? get_hydrate_nodes(node);
+	set_hydrate_nodes(nodes);
+}
+
+/**
+ * Expects to only be called in hydration mode
+ * @param {Node} node
+ * @returns {Node}
+ */
+export function capture_fragment_from_node(node) {
+	if (
+		node.nodeType === 8 &&
+		/** @type {Comment} */ (node).data.startsWith('ssr:') &&
+		hydrate_nodes[hydrate_nodes.length - 1] !== node
+	) {
+		const nodes = /** @type {Node[]} */ (get_hydrate_nodes(node));
+		const last_child = nodes[nodes.length - 1] || node;
+		const target = /** @type {Node} */ (last_child.nextSibling);
 		// @ts-ignore
-		let fragment = node.$$fragment;
-		if (fragment === undefined) {
-			fragment = get_hydration_fragment(node);
-		} else {
-			schedule_task(() => {
-				// @ts-expect-error clean up memory
-				node.$$fragment = undefined;
-			});
-		}
-		set_current_hydration_fragment(fragment);
-	} else {
-		const first_child = /** @type {Element | null} */ (node.firstChild);
-		set_current_hydration_fragment(first_child === null ? [] : [first_child]);
+		target.$$fragment = nodes;
+		schedule_task(() => {
+			// @ts-expect-error clean up memory
+			target.$$fragment = undefined;
+		});
+		return target;
 	}
+	return node;
 }
