@@ -1202,7 +1202,7 @@ function create_block(parent, name, nodes, context) {
 		} else {
 			/** @type {(is_text: boolean) => import('estree').Expression} */
 			const expression = (is_text) =>
-				is_text ? b.call('$.child_frag', id, b.true) : b.call('$.child_frag', id);
+				is_text ? b.call('$.first_child', id, b.true) : b.call('$.first_child', id);
 
 			process_children(trimmed, expression, false, { ...context, state });
 

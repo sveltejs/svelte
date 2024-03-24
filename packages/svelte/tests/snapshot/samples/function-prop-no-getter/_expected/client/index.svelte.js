@@ -15,7 +15,7 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 	const plusOne = (num) => num + 1;
 	/* Init */
 	var fragment = $.comment($$anchor);
-	var node = $.child_frag(fragment);
+	var node = $.first_child(fragment);
 
 	Button(node, {
 		onmousedown: () => $.set(count, $.get(count) + 1),
