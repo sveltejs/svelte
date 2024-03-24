@@ -1,5 +1,11 @@
 import { DEV } from 'esm-env';
-import { append_child, create_element, empty, init_operations } from './dom/operations.js';
+import {
+	append_child,
+	clear_text_content,
+	create_element,
+	empty,
+	init_operations
+} from './dom/operations.js';
 import { PassiveDelegatedEvents } from '../../constants.js';
 import { remove } from './dom/reconciler.js';
 import { flush_sync, push, pop, current_component_context } from './runtime.js';
@@ -170,9 +176,9 @@ export function hydrate(component, options) {
 						: ''),
 				error
 			);
-			remove(nodes);
-			first_child.remove();
-			nodes[nodes.length - 1]?.nextSibling?.remove();
+
+			clear_text_content(container);
+
 			set_hydrating(false);
 			return mount(component, options);
 		} else {
