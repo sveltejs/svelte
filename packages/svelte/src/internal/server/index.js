@@ -640,12 +640,6 @@ export function create_anchor(payload) {
 	return `<!ssr:${depth}>`;
 }
 
-/** @returns {[() => false, (value: boolean) => void]} */
-export function selector() {
-	// Add SSR stubs
-	return [() => false, noop];
-}
-
 /**
  * @param {number} timeout
  * @returns {() => void}

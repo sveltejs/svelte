@@ -952,25 +952,6 @@ const runes_scope_tweaker = {
 function is_known_safe_call(node, context) {
 	const callee = node.callee;
 
-	// Check for selector() API calls
-	if (callee.type === 'MemberExpression' && callee.object.type === 'Identifier') {
-		const binding = context.state.scope.get(callee.object.name);
-		const selector_binding = context.state.scope.get('selector');
-		if (
-			selector_binding !== null &&
-			selector_binding.declaration_kind === 'import' &&
-			selector_binding.initial !== null &&
-			selector_binding.initial.type === 'ImportDeclaration' &&
-			selector_binding.initial.source.value === 'svelte' &&
-			binding !== null &&
-			binding.initial !== null &&
-			binding.initial.type === 'CallExpression' &&
-			binding.initial.callee.type === 'Identifier' &&
-			binding.initial.callee.name === 'selector'
-		) {
-			return true;
-		}
-	}
 	// String / Number / BigInt / Boolean casting calls
 	if (callee.type === 'Identifier') {
 		const name = callee.name;
