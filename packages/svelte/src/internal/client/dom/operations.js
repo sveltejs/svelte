@@ -134,18 +134,19 @@ export function child(node) {
 }
 
 /**
- * @template {Node | Node[]} N
- * @param {N} node
+ * @param {DocumentFragment | import('#client').TemplateNode[]} fragment
  * @param {boolean} is_text
  * @returns {Node | null}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function child_frag(node, is_text) {
+export function first_child(fragment, is_text) {
 	if (!hydrating) {
-		return first_child_get.call(/** @type {Node} */ (node));
+		// when not hydrating, `fragment` is a `DocumentFragment` (the result of calling `open_frag`)
+		return first_child_get.call(/** @type {DocumentFragment} */ (fragment));
 	}
 
-	const first_node = /** @type {import('#client').TemplateNode[]} */ (node)[0];
+	// when we _are_ hydrating, `fragment` is an array of nodes
+	const first_node = /** @type {import('#client').TemplateNode[]} */ (fragment)[0];
 
 	// if an {expression} is empty during SSR, there might be no
 	// text node to hydrate — we must therefore create one

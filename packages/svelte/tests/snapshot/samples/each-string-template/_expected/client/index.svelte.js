@@ -9,7 +9,7 @@ export default function Each_string_template($$anchor, $$props) {
 
 	/* Init */
 	var fragment = $.comment($$anchor);
-	var node = $.child_frag(fragment);
+	var node = $.first_child(fragment);
 
 	$.each_indexed(
 		node,

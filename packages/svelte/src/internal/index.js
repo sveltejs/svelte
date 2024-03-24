@@ -64,7 +64,7 @@ export { proxy, unstate } from './client/proxy.js';
 export { create_custom_element } from './client/dom/elements/custom-element.js';
 export {
 	child,
-	child_frag,
+	first_child,
 	sibling,
 	$window as window,
 	$document as document
