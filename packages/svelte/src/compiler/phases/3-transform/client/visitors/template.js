@@ -2573,14 +2573,19 @@ export const template_visitors = {
 		const args = [
 			context.state.node,
 			b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.test))),
-			b.arrow([b.id('$$anchor')], consequent),
-			node.alternate
-				? b.arrow(
-						[b.id('$$anchor')],
-						/** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
-					)
-				: b.literal(null)
+			b.arrow([b.id('$$anchor')], consequent)
 		];
+
+		if (node.alternate || node.elseif) {
+			args.push(
+				node.alternate
+					? b.arrow(
+							[b.id('$$anchor')],
+							/** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
+						)
+					: b.literal(null)
+			);
+		}
 
 		if (node.elseif) {
 			// We treat this...

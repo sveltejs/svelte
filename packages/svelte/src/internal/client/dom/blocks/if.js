@@ -12,11 +12,17 @@ import {
  * @param {Comment} anchor
  * @param {() => boolean} get_condition
  * @param {(anchor: Node) => import('#client').Dom} consequent_fn
- * @param {null | ((anchor: Node) => import('#client').Dom)} alternate_fn
+ * @param {null | ((anchor: Node) => import('#client').Dom)} [alternate_fn]
  * @param {boolean} [elseif] True if this is an `{:else if ...}` block rather than an `{#if ...}`, as that affects which transitions are considered 'local'
  * @returns {void}
  */
-export function if_block(anchor, get_condition, consequent_fn, alternate_fn, elseif = false) {
+export function if_block(
+	anchor,
+	get_condition,
+	consequent_fn,
+	alternate_fn = null,
+	elseif = false
+) {
 	hydrate_block_anchor(anchor);
 
 	/** @type {import('#client').Effect | null} */
