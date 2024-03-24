@@ -6,10 +6,9 @@ export default function Svelte_element($$payload, $$props) {
 	$.push(true);
 
 	let { tag = 'hr' } = $$props;
-	const anchor = $.create_anchor($$payload);
 
-	$$payload.out += `${anchor}`;
+	$$payload.out += `<![>`;
 	if (tag) $.element($$payload, tag, () => {}, () => {});
-	$$payload.out += `${anchor}`;
+	$$payload.out += `<!]>`;
 	$.pop();
 }

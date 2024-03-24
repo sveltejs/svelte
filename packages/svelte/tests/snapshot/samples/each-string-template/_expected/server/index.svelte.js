@@ -5,18 +5,18 @@ import * as $ from "svelte/internal/server";
 export default function Each_string_template($$payload, $$props) {
 	$.push(false);
 
-	const anchor = $.create_anchor($$payload);
 	const each_array = $.ensure_array_like(['foo', 'bar', 'baz']);
 
-	$$payload.out += `${anchor}`;
+	$$payload.out += `<![>`;
 
 	for (let $$index = 0; $$index < each_array.length; $$index++) {
 		const thing = each_array[$$index];
-		const anchor_1 = $.create_anchor($$payload);
 
-		$$payload.out += `${anchor_1}${$.escape(thing)}, ${anchor_1}`;
+		$$payload.out += "<![>";
+		$$payload.out += `${$.escape(thing)}, `;
+		$$payload.out += "<!]>";
 	}
 
-	$$payload.out += `${anchor}`;
+	$$payload.out += `<!]>`;
 	$.pop();
 }
