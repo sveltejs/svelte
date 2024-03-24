@@ -62,14 +62,21 @@ function get_hydrate_nodes(node, insert_text = false) {
 			if (data === '[') {
 				depth += 1;
 				will_start = true;
-			} else if (data === ']' && --depth === 0) {
-				if (insert_text && nodes.length === 0) {
-					var text = empty();
-					nodes.push(text);
-					current_node.before(text);
+			} else if (data === ']') {
+				if (!started) {
+					// TODO get rid of this — it exists because each blocks are doubly wrapped
+					return null;
 				}
 
-				return nodes;
+				if (--depth === 0) {
+					if (insert_text && nodes.length === 0) {
+						var text = empty();
+						nodes.push(text);
+						current_node.before(text);
+					}
+
+					return nodes;
+				}
 			}
 		}
 
