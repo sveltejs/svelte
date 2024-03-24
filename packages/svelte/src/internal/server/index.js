@@ -162,13 +162,12 @@ export function element(payload, tag, attributes_fn, children_fn) {
 	payload.out += `>`;
 
 	if (!VoidElements.has(tag)) {
-		const anchor = tag !== 'textarea' ? create_anchor(payload) : null;
-		if (anchor !== null) {
-			payload.out += anchor;
+		if (tag !== 'textarea') {
+			payload.out += '<![>';
 		}
 		children_fn();
-		if (anchor !== null) {
-			payload.out += anchor;
+		if (tag !== 'textarea') {
+			payload.out += '<!]>';
 		}
 		payload.out += `</${tag}>`;
 	}
@@ -187,12 +186,10 @@ export let on_destroy = [];
  */
 export function render(component, options) {
 	const payload = create_payload();
-	const root_anchor = create_anchor(payload);
-	const root_head_anchor = create_anchor(payload.head);
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
-	payload.out += root_anchor;
+	payload.out += '<![>';
 
 	if (options.context) {
 		$.push({});
@@ -203,14 +200,14 @@ export function render(component, options) {
 	if (options.context) {
 		$.pop();
 	}
-	payload.out += root_anchor;
+	payload.out += '<!]>';
 	for (const cleanup of on_destroy) cleanup();
 	on_destroy = prev_on_destroy;
 
 	return {
 		head:
 			payload.head.out || payload.head.title
-				? payload.head.title + root_head_anchor + payload.head.out + root_head_anchor
+				? payload.head.title + '<![>' + payload.head.out + '<!]>'
 				: '',
 		html: payload.out
 	};
@@ -284,17 +281,16 @@ export function attr(name, value, boolean) {
  */
 export function css_props(payload, is_html, props, component) {
 	const styles = style_object_to_string(props);
-	const anchor = create_anchor(payload);
 	if (is_html) {
-		payload.out += `<div style="display: contents; ${styles}">${anchor}`;
+		payload.out += `<div style="display: contents; ${styles}"><![>`;
 	} else {
-		payload.out += `<g style="${styles}">${anchor}`;
+		payload.out += `<g style="${styles}"><![>`;
 	}
 	component();
 	if (is_html) {
-		payload.out += `${anchor}</div>`;
+		payload.out += `<!]></div>`;
 	} else {
-		payload.out += `${anchor}</g>`;
+		payload.out += `<!]></g>`;
 	}
 }
 
@@ -632,12 +628,6 @@ export function ensure_array_like(array_like_or_iterator) {
 	return array_like_or_iterator?.length !== undefined
 		? array_like_or_iterator
 		: Array.from(array_like_or_iterator);
-}
-
-/** @param {{ anchor: number }} payload */
-export function create_anchor(payload) {
-	const depth = payload.anchor++;
-	return `<!ssr:${depth}>`;
 }
 
 /** @returns {[() => false, (value: boolean) => void]} */
