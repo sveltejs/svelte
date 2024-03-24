@@ -630,12 +630,6 @@ export function ensure_array_like(array_like_or_iterator) {
 		: Array.from(array_like_or_iterator);
 }
 
-/** @returns {[() => false, (value: boolean) => void]} */
-export function selector() {
-	// Add SSR stubs
-	return [() => false, noop];
-}
-
 /**
  * @param {number} timeout
  * @returns {() => void}
