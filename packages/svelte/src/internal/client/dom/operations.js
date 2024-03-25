@@ -67,6 +67,8 @@ export function init_operations() {
 	text_prototype.__nodeValue = ' ';
 	// @ts-expect-error
 	element_prototype.__className = '';
+	// @ts-expect-error
+	element_prototype.__attributes = null;
 
 	first_child_get = /** @type {(this: Node) => ChildNode | null} */ (
 		// @ts-ignore
