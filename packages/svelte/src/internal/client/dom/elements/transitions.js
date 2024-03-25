@@ -1,5 +1,5 @@
 import { noop } from '../../../common.js';
-import { user_effect } from '../../reactivity/effects.js';
+import { effect } from '../../reactivity/effects.js';
 import { current_effect, untrack } from '../../runtime.js';
 import { raf } from '../../timing.js';
 import { loop } from '../../loop.js';
@@ -202,18 +202,18 @@ export function transition(flags, element, get_fn, get_params) {
 		}
 	};
 
-	var effect = /** @type {import('#client').Effect} */ (current_effect);
+	var e = /** @type {import('#client').Effect} */ (current_effect);
 
-	(effect.transitions ??= []).push(transition);
+	(e.transitions ??= []).push(transition);
 
 	// if this is a local transition, we only want to run it if the parent (block) effect's
 	// parent (branch) effect is where the state change happened. we can determine that by
 	// looking at whether the branch effect is currently initializing
 	if (is_intro && should_intro) {
-		var parent = /** @type {import('#client').Effect} */ (effect.parent);
+		var parent = /** @type {import('#client').Effect} */ (e.parent);
 
 		if (is_global || (parent.f & EFFECT_RAN) !== 0) {
-			user_effect(() => {
+			effect(() => {
 				untrack(() => transition.in());
 			});
 		}
@@ -237,7 +237,7 @@ function animate(element, options, counterpart, t2, callback) {
 		/** @type {import('#client').Animation} */
 		var a;
 
-		user_effect(() => {
+		effect(() => {
 			var o = untrack(() => options({ direction: t2 === 1 ? 'in' : 'out' }));
 			a = animate(element, o, counterpart, t2, callback);
 		});

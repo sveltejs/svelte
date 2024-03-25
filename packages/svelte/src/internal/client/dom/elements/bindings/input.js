@@ -1,5 +1,5 @@
 import { DEV } from 'esm-env';
-import { render_effect, user_effect } from '../../../reactivity/effects.js';
+import { render_effect, effect } from '../../../reactivity/effects.js';
 import { stringify } from '../../../render.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 
@@ -103,11 +103,6 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 		}
 	});
 
-	user_effect(() => {
-		// necessary to maintain binding group order in all insertion scenarios. TODO optimise
-		binding_group.sort((a, b) => (a.compareDocumentPosition(b) === 4 ? -1 : 1));
-	});
-
 	render_effect(() => {
 		return () => {
 			var index = binding_group.indexOf(input);
@@ -116,6 +111,11 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 				binding_group.splice(index, 1);
 			}
 		};
+	});
+
+	effect(() => {
+		// necessary to maintain binding group order in all insertion scenarios. TODO optimise
+		binding_group.sort((a, b) => (a.compareDocumentPosition(b) === 4 ? -1 : 1));
 	});
 }
 
