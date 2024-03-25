@@ -712,6 +712,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	contextmenu?: string | undefined | null;
 	dir?: string | undefined | null;
 	draggable?: Booleanish | undefined | null;
+	elementtiming?: string | undefined | null;
 	enterkeyhint?:
 		| 'enter'
 		| 'done'
