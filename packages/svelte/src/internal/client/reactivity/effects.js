@@ -109,6 +109,24 @@ export function user_effect(fn) {
 }
 
 /**
+ * Internal representation of `$effect.pre(...)`
+ * @param {() => void | (() => void)} fn
+ * @returns {import('#client').Effect}
+ */
+export function user_pre_effect(fn) {
+	if (current_effect === null) {
+		throw new Error(
+			'ERR_SVELTE_ORPHAN_EFFECT' +
+				(DEV
+					? ': The Svelte $effect.pre rune can only be used during component initialisation.'
+					: '')
+		);
+	}
+
+	return pre_effect(fn);
+}
+
+/**
  * Internal representation of `$effect.root(...)`
  * @param {() => void | (() => void)} fn
  * @returns {() => void}
@@ -129,24 +147,6 @@ export function effect(fn) {
 }
 
 /**
- * Internal representation of `$effect.pre(...)`
- * @param {() => void | (() => void)} fn
- * @returns {import('#client').Effect}
- */
-export function pre_effect(fn) {
-	if (current_effect === null) {
-		throw new Error(
-			'ERR_SVELTE_ORPHAN_EFFECT' +
-				(DEV
-					? ': The Svelte $effect.pre rune can only be used during component initialisation.'
-					: '')
-		);
-	}
-
-	return create_effect(PRE_EFFECT, fn, true);
-}
-
-/**
  * Internal representation of `$: ..`
  * @param {() => any} deps
  * @param {() => void | (() => void)} fn
@@ -157,19 +157,15 @@ export function legacy_pre_effect(deps, fn) {
 		current_component_context
 	);
 	const token = {};
-	return create_effect(
-		PRE_EFFECT,
-		() => {
-			deps();
-			if (component_context.l1.includes(token)) {
-				return;
-			}
-			component_context.l1.push(token);
-			set(component_context.l2, true);
-			return untrack(fn);
-		},
-		true
-	);
+	return pre_effect(() => {
+		deps();
+		if (component_context.l1.includes(token)) {
+			return;
+		}
+		component_context.l1.push(token);
+		set(component_context.l2, true);
+		return untrack(fn);
+	});
 }
 
 export function legacy_pre_effect_reset() {
@@ -186,13 +182,10 @@ export function legacy_pre_effect_reset() {
 }
 
 /**
- * This effect is used to ensure binding are kept in sync. We use a pre effect to ensure we run before the
- * bindings which are in later effects. However, we don't use a pre_effect directly as we don't want to flush anything.
- *
  * @param {() => void | (() => void)} fn
  * @returns {import('#client').Effect}
  */
-export function invalidate_effect(fn) {
+export function pre_effect(fn) {
 	return create_effect(PRE_EFFECT, fn, true);
 }
 

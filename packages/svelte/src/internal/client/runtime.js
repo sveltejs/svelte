@@ -8,7 +8,7 @@ import {
 	object_prototype
 } from './utils.js';
 import { unstate } from './proxy.js';
-import { destroy_effect, pre_effect } from './reactivity/effects.js';
+import { destroy_effect, user_pre_effect } from './reactivity/effects.js';
 import {
 	EFFECT,
 	PRE_EFFECT,
@@ -1201,7 +1201,7 @@ let warned_inspect_changed = false;
 export function inspect(get_value, inspect = console.log) {
 	let initial = true;
 
-	pre_effect(() => {
+	user_pre_effect(() => {
 		const fn = () => {
 			const value = untrack(() => get_value().map((v) => deep_unstate(v)));
 			if (value.length === 2 && typeof value[1] === 'function' && !warned_inspect_changed) {
