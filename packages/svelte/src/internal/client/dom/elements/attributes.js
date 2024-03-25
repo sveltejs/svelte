@@ -1,6 +1,5 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
-import { render_effect } from '../../reactivity/effects.js';
 import { get_descriptors, map_get, map_set, object_assign } from '../../utils.js';
 import { AttributeAliases, DelegatedEvents, namespace_svg } from '../../../../constants.js';
 import { delegate } from './events.js';
@@ -14,20 +13,9 @@ import { autofocus } from './misc.js';
  */
 export function remove_input_attr_defaults(dom) {
 	if (hydrating) {
-		attr(dom, 'value', null);
-		attr(dom, 'checked', null);
+		set_attribute(dom, 'value', null);
+		set_attribute(dom, 'checked', null);
 	}
-}
-
-/**
- * @param {Element} dom
- * @param {string} attribute
- * @param {() => string} value
- */
-export function attr_effect(dom, attribute, value) {
-	render_effect(() => {
-		attr(dom, attribute, value());
-	});
 }
 
 /**
@@ -35,7 +23,7 @@ export function attr_effect(dom, attribute, value) {
  * @param {string} attribute
  * @param {string | null} value
  */
-export function attr(element, attribute, value) {
+export function set_attribute(element, attribute, value) {
 	value = value == null ? null : value + '';
 
 	// @ts-expect-error
@@ -67,32 +55,10 @@ export function attr(element, attribute, value) {
 /**
  * @param {Element} dom
  * @param {string} attribute
- * @param {() => string} value
- */
-export function xlink_attr_effect(dom, attribute, value) {
-	render_effect(() => {
-		xlink_attr(dom, attribute, value());
-	});
-}
-
-/**
- * @param {Element} dom
- * @param {string} attribute
  * @param {string} value
  */
-export function xlink_attr(dom, attribute, value) {
+export function set_xlink_attribute(dom, attribute, value) {
 	dom.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
-}
-
-/**
- * @param {any} node
- * @param {string} prop
- * @param {() => any} value
- */
-export function set_custom_element_data_effect(node, prop, value) {
-	render_effect(() => {
-		set_custom_element_data(node, prop, value());
-	});
 }
 
 /**
@@ -104,24 +70,8 @@ export function set_custom_element_data(node, prop, value) {
 	if (prop in node) {
 		node[prop] = typeof node[prop] === 'boolean' && value === '' ? true : value;
 	} else {
-		attr(node, prop, value);
+		set_attribute(node, prop, value);
 	}
-}
-
-/**
- * Like `spread_attributes` but self-contained
- * @param {Element & ElementCSSInlineStyle} dom
- * @param {() => Record<string, unknown>[]} attrs
- * @param {boolean} lowercase_attributes
- * @param {string} css_hash
- */
-export function spread_attributes_effect(dom, attrs, lowercase_attributes, css_hash) {
-	/** @type {Record<string, any> | undefined} */
-	var current;
-
-	render_effect(() => {
-		current = spread_attributes(dom, current, attrs(), lowercase_attributes, css_hash);
-	});
 }
 
 /**
@@ -133,7 +83,7 @@ export function spread_attributes_effect(dom, attrs, lowercase_attributes, css_h
  * @param {string} css_hash
  * @returns {Record<string, unknown>}
  */
-export function spread_attributes(element, prev, attrs, lowercase_attributes, css_hash) {
+export function set_attributes(element, prev, attrs, lowercase_attributes, css_hash) {
 	var next = object_assign({}, ...attrs);
 	var has_hash = css_hash.length !== 0;
 
@@ -214,7 +164,7 @@ export function spread_attributes(element, prev, attrs, lowercase_attributes, cs
 					value += css_hash;
 				}
 
-				attr(element, name, value);
+				set_attribute(element, name, value);
 			}
 		}
 	}
@@ -224,25 +174,11 @@ export function spread_attributes(element, prev, attrs, lowercase_attributes, cs
 
 /**
  * @param {Element} node
- * @param {() => Record<string, unknown>[]} attrs
- * @param {string} css_hash
- */
-export function spread_dynamic_element_attributes_effect(node, attrs, css_hash) {
-	/** @type {Record<string, any> | undefined} */
-	var current;
-
-	render_effect(() => {
-		current = spread_dynamic_element_attributes(node, current, attrs(), css_hash);
-	});
-}
-
-/**
- * @param {Element} node
  * @param {Record<string, unknown> | undefined} prev
  * @param {Record<string, unknown>[]} attrs
  * @param {string} css_hash
  */
-export function spread_dynamic_element_attributes(node, prev, attrs, css_hash) {
+export function set_dynamic_element_attributes(node, prev, attrs, css_hash) {
 	if (node.tagName.includes('-')) {
 		var next = object_assign({}, ...attrs);
 
@@ -257,15 +193,15 @@ export function spread_dynamic_element_attributes(node, prev, attrs, css_hash) {
 		}
 
 		return next;
-	} else {
-		return spread_attributes(
-			/** @type {Element & ElementCSSInlineStyle} */ (node),
-			prev,
-			attrs,
-			node.namespaceURI !== namespace_svg,
-			css_hash
-		);
 	}
+
+	return set_attributes(
+		/** @type {Element & ElementCSSInlineStyle} */ (node),
+		prev,
+		attrs,
+		node.namespaceURI !== namespace_svg,
+		css_hash
+	);
 }
 
 /**

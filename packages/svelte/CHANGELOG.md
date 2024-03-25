@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.84
+
+### Patch Changes
+
+- fix: reliably remove undefined attributes during hydration ([#10917](https://github.com/sveltejs/svelte/pull/10917))
+
+- fix: Add `elementtiming` HTMLAttribute, remove `crossorigin` from HTMLInputAttributes ([#10921](https://github.com/sveltejs/svelte/pull/10921))
+
+- feat: shorter compiler output for attribute updates ([#10917](https://github.com/sveltejs/svelte/pull/10917))
+
 ## 5.0.0-next.83
 
 ### Patch Changes

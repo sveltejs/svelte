@@ -59,7 +59,7 @@ function get_attribute_name(element, attribute, context) {
 }
 
 /**
- * Serializes each style directive into something like `$.style(element, style_property, value)`
+ * Serializes each style directive into something like `$.set_style(element, style_property, value)`
  * and adds it either to init or update, depending on whether or not the value or the attributes are dynamic.
  * @param {import('#compiler').StyleDirective[]} style_directives
  * @param {import('estree').Identifier} element_id
@@ -74,23 +74,13 @@ function serialize_style_directives(style_directives, element_id, context, is_at
 			directive.value === true
 				? serialize_get_binding({ name: directive.name, type: 'Identifier' }, context.state)
 				: serialize_attribute_value(directive.value, context)[1];
-		const grouped = b.stmt(
+
+		const update = b.stmt(
 			b.call(
-				'$.style',
+				'$.set_style',
 				element_id,
 				b.literal(directive.name),
 				value,
-				/** @type {import('estree').Expression} */ (
-					directive.modifiers.includes('important') ? b.true : undefined
-				)
-			)
-		);
-		const singular = b.stmt(
-			b.call(
-				'$.style_effect',
-				element_id,
-				b.literal(directive.name),
-				b.arrow([], value),
 				/** @type {import('estree').Expression} */ (
 					directive.modifiers.includes('important') ? b.true : undefined
 				)
@@ -104,11 +94,11 @@ function serialize_style_directives(style_directives, element_id, context, is_at
 			);
 
 		if (!is_attributes_reactive && contains_call_expression) {
-			state.init.push(singular);
+			state.init.push(serialize_update(update));
 		} else if (is_attributes_reactive || directive.metadata.dynamic || contains_call_expression) {
-			state.update.push({ grouped, singular });
+			state.update.push(update);
 		} else {
-			state.init.push(grouped);
+			state.init.push(update);
 		}
 	}
 }
@@ -146,18 +136,15 @@ function serialize_class_directives(class_directives, element_id, context, is_at
 	const state = context.state;
 	for (const directive of class_directives) {
 		const value = /** @type {import('estree').Expression} */ (context.visit(directive.expression));
-		const grouped = b.stmt(b.call('$.class_toggle', element_id, b.literal(directive.name), value));
-		const singular = b.stmt(
-			b.call('$.class_toggle_effect', element_id, b.literal(directive.name), b.arrow([], value))
-		);
+		const update = b.stmt(b.call('$.toggle_class', element_id, b.literal(directive.name), value));
 		const contains_call_expression = directive.expression.type === 'CallExpression';
 
 		if (!is_attributes_reactive && contains_call_expression) {
-			state.init.push(singular);
+			state.init.push(serialize_update(update));
 		} else if (is_attributes_reactive || directive.metadata.dynamic || contains_call_expression) {
-			state.update.push({ grouped, singular });
+			state.update.push(update);
 		} else {
-			state.init.push(grouped);
+			state.init.push(update);
 		}
 	}
 }
@@ -293,23 +280,14 @@ function serialize_element_spread_attributes(
 
 	const lowercase_attributes =
 		element.metadata.svg || is_custom_element_node(element) ? b.false : b.true;
-	const id = context.state.scope.generate('spread_attributes');
+	const id = context.state.scope.generate('attributes');
 
-	const standalone = b.stmt(
-		b.call(
-			'$.spread_attributes_effect',
-			element_id,
-			b.thunk(b.array(values)),
-			lowercase_attributes,
-			b.literal(context.state.analysis.css.hash)
-		)
-	);
-	const inside_effect = b.stmt(
+	const update = b.stmt(
 		b.assignment(
 			'=',
 			b.id(id),
 			b.call(
-				'$.spread_attributes',
+				'$.set_attributes',
 				element_id,
 				b.id(id),
 				b.array(values),
@@ -319,32 +297,21 @@ function serialize_element_spread_attributes(
 		)
 	);
 
-	if (!needs_isolation || needs_select_handling) {
-		context.state.init.push(b.let(id));
-	}
+	context.state.init.push(b.let(id));
 
 	// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
 	if (needs_isolation) {
-		if (needs_select_handling) {
-			context.state.init.push(
-				b.stmt(b.call('$.render_effect', b.arrow([], b.block([inside_effect]))))
-			);
-		} else {
-			context.state.init.push(standalone);
-		}
+		context.state.init.push(serialize_update(update));
 	} else {
-		context.state.update.push({
-			singular: needs_select_handling ? undefined : standalone,
-			grouped: inside_effect
-		});
+		context.state.update.push(update);
 	}
 
 	if (needs_select_handling) {
 		context.state.init.push(
 			b.stmt(b.call('$.init_select', element_id, b.thunk(b.member(b.id(id), b.id('value')))))
 		);
-		context.state.update.push({
-			grouped: b.if(
+		context.state.update.push(
+			b.if(
 				b.binary('in', b.literal('value'), b.id(id)),
 				b.block([
 					// This ensures a one-way street to the DOM in case it's <select {value}>
@@ -354,7 +321,7 @@ function serialize_element_spread_attributes(
 					b.stmt(b.call('$.select_option', element_id, b.member(b.id(id), b.id('value'))))
 				])
 			)
-		});
+		);
 	}
 }
 
@@ -370,11 +337,13 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 	if (attributes.length === 0) {
 		if (context.state.analysis.css.hash) {
 			context.state.init.push(
-				b.stmt(b.call('$.class_name', element_id, b.literal(context.state.analysis.css.hash)))
+				b.stmt(b.call('$.set_class', element_id, b.literal(context.state.analysis.css.hash)))
 			);
 		}
 		return false;
 	}
+
+	// TODO why are we always treating this as a spread? needs docs, if that's not an error
 
 	let needs_isolation = false;
 	let is_reactive = false;
@@ -398,52 +367,45 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 			attribute.type === 'SpreadAttribute' && attribute.metadata.contains_call_expression;
 	}
 
-	const isolated = b.stmt(
-		b.call(
-			'$.spread_dynamic_element_attributes_effect',
-			element_id,
-			b.thunk(b.array(values)),
-			b.literal(context.state.analysis.css.hash)
-		)
-	);
-
-	if (needs_isolation) {
-		context.state.init.push(isolated);
-		return false;
-	} else if (is_reactive) {
-		const id = context.state.scope.generate('spread_attributes');
+	if (needs_isolation || is_reactive) {
+		const id = context.state.scope.generate('attributes');
 		context.state.init.push(b.let(id));
-		context.state.update.push({
-			singular: isolated,
-			grouped: b.stmt(
-				b.assignment(
-					'=',
-					b.id(id),
-					b.call(
-						'$.spread_dynamic_element_attributes',
-						element_id,
-						b.id(id),
-						b.array(values),
-						b.literal(context.state.analysis.css.hash)
-					)
-				)
-			)
-		});
-		return true;
-	} else {
-		context.state.init.push(
-			b.stmt(
+
+		const update = b.stmt(
+			b.assignment(
+				'=',
+				b.id(id),
 				b.call(
-					'$.spread_dynamic_element_attributes',
+					'$.set_dynamic_element_attributes',
 					element_id,
-					b.literal(null),
+					b.id(id),
 					b.array(values),
 					b.literal(context.state.analysis.css.hash)
 				)
 			)
 		);
-		return false;
+
+		if (needs_isolation) {
+			context.state.init.push(serialize_update(update));
+			return false;
+		}
+
+		context.state.update.push(update);
+		return true;
 	}
+
+	context.state.init.push(
+		b.stmt(
+			b.call(
+				'$.set_dynamic_element_attributes',
+				element_id,
+				b.literal(null),
+				b.array(values),
+				b.literal(context.state.analysis.css.hash)
+			)
+		)
+	);
+	return false;
 }
 
 /**
@@ -453,7 +415,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
  * ```js
  * element.property = value;
  * // or
- * $.attr(element, property, value);
+ * $.set_attribute(element, property, value);
  * });
  * ```
  * Resulting code for dynamic looks something like this:
@@ -463,7 +425,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
  * 	if (value !== (value = 'new value')) {
  * 		element.property = value;
  * 		// or
- * 		$.attr(element, property, value);
+ * 		$.set_attribute(element, property, value);
  * 	}
  * });
  * ```
@@ -482,7 +444,9 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 
 	// The foreign namespace doesn't have any special handling, everything goes through the attr function
 	if (context.state.metadata.namespace === 'foreign') {
-		const statement = { grouped: b.stmt(b.call('$.attr', node_id, b.literal(name), value)) };
+		const statement = {
+			grouped: b.stmt(b.call('$.set_attribute', node_id, b.literal(name), value))
+		};
 		if (attribute.metadata.dynamic) {
 			const id = state.scope.generate(`${node_id.name}_${name}`);
 			serialize_update_assignment(state, id, undefined, value, statement, contains_call_expression);
@@ -493,84 +457,32 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		}
 	}
 
-	let grouped_value = value;
-
 	if (name === 'autofocus') {
 		state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
 		return false;
 	}
 
+	/** @type {import('estree').Statement} */
+	let update;
+
 	if (name === 'class') {
-		grouped_value = b.call('$.to_class', value);
+		update = b.stmt(b.call(is_svg ? '$.set_svg_class' : '$.set_class', node_id, value));
+	} else if (DOMProperties.includes(name)) {
+		update = b.stmt(b.assignment('=', b.member(node_id, b.id(name)), value));
+	} else {
+		const callee = name.startsWith('xlink') ? '$.set_xlink_attribute' : '$.set_attribute';
+		update = b.stmt(b.call(callee, node_id, b.literal(name), value));
 	}
 
-	/**
-	 * @param {import('estree').Expression} grouped
-	 * @param {import('estree').Expression} [singular]
-	 */
-	const assign = (grouped, singular) => {
-		if (name === 'class') {
-			if (singular) {
-				return {
-					singular: b.stmt(
-						b.call(
-							is_svg ? '$.svg_class_name_effect' : '$.class_name_effect',
-							node_id,
-							b.thunk(singular)
-						)
-					),
-					grouped: b.stmt(b.call(is_svg ? '$.svg_class_name' : '$.class_name', node_id, singular))
-				};
-			}
-			return {
-				grouped: b.stmt(b.call(is_svg ? '$.svg_class_name' : '$.class_name', node_id, value))
-			};
-		} else if (!DOMProperties.includes(name)) {
-			if (singular) {
-				return {
-					singular: b.stmt(
-						b.call(
-							name.startsWith('xlink') ? '$.xlink_attr_effect' : '$.attr_effect',
-							node_id,
-							b.literal(name),
-							b.thunk(singular)
-						)
-					),
-					grouped: b.stmt(
-						b.call(
-							name.startsWith('xlink') ? '$.xlink_attr' : '$.attr',
-							node_id,
-							b.literal(name),
-							grouped
-						)
-					)
-				};
-			}
-			return {
-				grouped: b.stmt(
-					b.call(
-						name.startsWith('xlink') ? '$.xlink_attr' : '$.attr',
-						node_id,
-						b.literal(name),
-						grouped
-					)
-				)
-			};
-		} else {
-			return { grouped: b.stmt(b.assignment('=', b.member(node_id, b.id(name)), grouped)) };
-		}
-	};
-
 	if (attribute.metadata.dynamic) {
-		const { grouped, singular } = assign(grouped_value, value);
-		if (contains_call_expression && singular) {
-			state.init.push(singular);
+		if (contains_call_expression) {
+			state.init.push(serialize_update(update));
 		} else {
-			state.update.push({ singular, grouped });
+			state.update.push(update);
 		}
 		return true;
 	} else {
-		state.init.push(assign(grouped_value).grouped);
+		state.init.push(update);
 		return false;
 	}
 }
@@ -586,40 +498,18 @@ function serialize_custom_element_attribute_update_assignment(node_id, attribute
 	const state = context.state;
 	const name = attribute.name; // don't lowercase, as we set the element's property, which might be case sensitive
 	let [contains_call_expression, value] = serialize_attribute_value(attribute.value, context);
-	let grouped_value = value;
 
-	/**
-	 * @param {import('estree').Expression} grouped
-	 * @param {import('estree').Expression} [singular]
-	 */
-	const assign = (grouped, singular) => {
-		if (singular) {
-			return {
-				singular: b.stmt(
-					b.call('$.set_custom_element_data_effect', node_id, b.literal(name), b.thunk(singular))
-				),
-				grouped: b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), grouped))
-			};
-		}
-		return {
-			grouped: b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), grouped))
-		};
-	};
+	const update = b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), value));
 
 	if (attribute.metadata.dynamic) {
-		const id = state.scope.generate(`${node_id.name}_${name}`);
-		// TODO should this use the if condition? what if someone mutates the value passed to the ce?
-		serialize_update_assignment(
-			state,
-			id,
-			undefined,
-			grouped_value,
-			assign(b.id(id), value),
-			contains_call_expression
-		);
+		if (contains_call_expression) {
+			state.init.push(serialize_update(update));
+		} else {
+			state.update.push(update);
+		}
 		return true;
 	} else {
-		state.init.push(assign(grouped_value).grouped);
+		state.init.push(update);
 		return false;
 	}
 }
@@ -709,28 +599,18 @@ function serialize_update_assignment(state, id, init, value, assignment, contain
 	} else {
 		if (assignment.skip_condition) {
 			if (assignment.singular) {
-				state.update.push({
-					singular: assignment.singular,
-					grouped: assignment.grouped
-				});
+				state.update.push(assignment.grouped);
 			} else {
 				state.init.push(b.var(id, init));
-				state.update.push({
-					grouped
-				});
+				state.update.push(grouped);
 			}
 		} else {
 			if (assignment.singular) {
 				state.init.push(b.var(id, init));
-				state.update.push({
-					singular: assignment.singular,
-					grouped
-				});
+				state.update.push(grouped);
 			} else {
 				state.init.push(b.var(id, init));
-				state.update.push({
-					grouped
-				});
+				state.update.push(grouped);
 			}
 		}
 	}
@@ -1276,14 +1156,23 @@ function get_template_function(namespace, state) {
 
 /**
  *
+ * @param {import('estree').Statement} statement
+ */
+function serialize_update(statement) {
+	const body =
+		statement.type === 'ExpressionStatement' ? statement.expression : b.block([statement]);
+
+	return b.stmt(b.call('$.render_effect', b.thunk(body)));
+}
+
+/**
+ *
  * @param {import('../types.js').ComponentClientTransformState} state
  */
 function serialize_render_stmt(state) {
-	if (state.update.length === 1 && state.update[0].singular) {
-		return state.update[0].singular;
-	}
-
-	return b.stmt(b.call('$.render_effect', b.thunk(b.block(state.update.map((n) => n.grouped)))));
+	return state.update.length === 1
+		? serialize_update(state.update[0])
+		: b.stmt(b.call('$.render_effect', b.thunk(b.block(state.update))));
 }
 
 /**
@@ -1508,27 +1397,18 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 
 			const text_id = get_node_id(b.call('$.space', expression(true)), state, 'text');
 
-			const singular = b.stmt(
+			const update = b.stmt(
 				b.call(
-					'$.text_effect',
+					'$.set_text',
 					text_id,
-					b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression)))
+					/** @type {import('estree').Expression} */ (visit(node.expression))
 				)
 			);
 
 			if (node.metadata.contains_call_expression && !within_bound_contenteditable) {
-				state.init.push(singular);
+				state.init.push(serialize_update(update));
 			} else if (node.metadata.dynamic && !within_bound_contenteditable) {
-				state.update.push({
-					singular,
-					grouped: b.stmt(
-						b.call(
-							'$.text',
-							text_id,
-							/** @type {import('estree').Expression} */ (visit(node.expression))
-						)
-					)
-				});
+				state.update.push(update);
 			} else {
 				state.init.push(
 					b.stmt(
@@ -1551,25 +1431,19 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 
 			state.template.push(' ');
 
-			const contains_call_expression = sequence.some(
-				(n) => n.type === 'ExpressionTag' && n.metadata.contains_call_expression
-			);
-			const assignment = serialize_template_literal(sequence, visit, state)[1];
-			const init = b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), assignment));
-			const singular = b.stmt(b.call('$.text_effect', text_id, b.thunk(assignment)));
+			const [contains_call_expression, value] = serialize_template_literal(sequence, visit);
+
+			const update = b.stmt(b.call('$.set_text', text_id, value));
 
 			if (contains_call_expression && !within_bound_contenteditable) {
-				state.init.push(singular);
+				state.init.push(serialize_update(update));
 			} else if (
 				sequence.some((node) => node.type === 'ExpressionTag' && node.metadata.dynamic) &&
 				!within_bound_contenteditable
 			) {
-				state.update.push({
-					singular,
-					grouped: b.stmt(b.call('$.text', text_id, assignment))
-				});
+				state.update.push(update);
 			} else {
-				state.init.push(init);
+				state.init.push(b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), value)));
 			}
 
 			expression = (is_text) =>
@@ -1672,22 +1546,20 @@ function serialize_attribute_value(attribute_value, context) {
 		}
 	}
 
-	return serialize_template_literal(attribute_value, context.visit, context.state);
+	return serialize_template_literal(attribute_value, context.visit);
 }
 
 /**
  * @param {Array<import('#compiler').Text | import('#compiler').ExpressionTag>} values
  * @param {(node: import('#compiler').SvelteNode) => any} visit
- * @param {import('../types.js').ComponentClientTransformState} state
  * @returns {[boolean, import('estree').TemplateLiteral]}
  */
-function serialize_template_literal(values, visit, state) {
+function serialize_template_literal(values, visit) {
 	/** @type {import('estree').TemplateElement[]} */
 	const quasis = [];
 
 	/** @type {import('estree').Expression[]} */
 	const expressions = [];
-	const scope = state.scope;
 	let contains_call_expression = false;
 	quasis.push(b.quasi(''));
 
@@ -1711,6 +1583,7 @@ function serialize_template_literal(values, visit, state) {
 		}
 	}
 
+	// TODO instead of this tuple, return a `{ dynamic, complex, value }` object. will DRY stuff out
 	return [contains_call_expression, b.template(quasis, expressions)];
 }
 
@@ -3128,15 +3001,15 @@ export const template_visitors = {
 				)
 			);
 		} else {
-			state.update.push({
-				grouped: b.stmt(
+			state.update.push(
+				b.stmt(
 					b.assignment(
 						'=',
 						b.member(b.id('$.document'), b.id('title')),
-						serialize_template_literal(/** @type {any} */ (node.fragment.nodes), visit, state)[1]
+						serialize_template_literal(/** @type {any} */ (node.fragment.nodes), visit)[1]
 					)
 				)
-			});
+			);
 		}
 	},
 	SvelteBody(node, context) {
