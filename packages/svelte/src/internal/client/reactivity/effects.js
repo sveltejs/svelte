@@ -142,9 +142,8 @@ export function pre_effect(fn) {
 					: '')
 		);
 	}
-	const sync = current_effect !== null && (current_effect.f & RENDER_EFFECT) !== 0;
 
-	return create_effect(PRE_EFFECT, fn, sync);
+	return create_effect(PRE_EFFECT, fn, true);
 }
 
 /**
@@ -206,7 +205,7 @@ export function render_effect(fn, managed = false) {
 	let flags = RENDER_EFFECT;
 	if (managed) flags |= MANAGED;
 
-	return create_effect(flags, /** @type {any} */ (fn), true);
+	return create_effect(flags, fn, true);
 }
 
 /**
