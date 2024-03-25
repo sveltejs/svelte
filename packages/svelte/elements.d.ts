@@ -712,6 +712,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	contextmenu?: string | undefined | null;
 	dir?: string | undefined | null;
 	draggable?: Booleanish | undefined | null;
+	elementtiming?: string | undefined | null;
 	enterkeyhint?:
 		| 'enter'
 		| 'done'
@@ -1029,7 +1030,6 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	autocomplete?: string | undefined | null;
 	capture?: boolean | 'user' | 'environment' | undefined | null; // https://www.w3.org/TR/html-media-capture/#the-capture-attribute
 	checked?: boolean | undefined | null;
-	crossorigin?: string | undefined | null;
 	dirname?: string | undefined | null;
 	disabled?: boolean | undefined | null;
 	form?: string | undefined | null;
