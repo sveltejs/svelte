@@ -1029,7 +1029,6 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	autocomplete?: string | undefined | null;
 	capture?: boolean | 'user' | 'environment' | undefined | null; // https://www.w3.org/TR/html-media-capture/#the-capture-attribute
 	checked?: boolean | undefined | null;
-	crossorigin?: string | undefined | null;
 	dirname?: string | undefined | null;
 	disabled?: boolean | undefined | null;
 	form?: string | undefined | null;
