@@ -29,3 +29,22 @@ export function snippet(get_snippet, node, ...args) {
 		};
 	});
 }
+
+const snippet_symbol = Symbol.for('svelte.snippet');
+
+/**
+ * @param {any} fn
+ */
+export function add_snippet_symbol(fn) {
+	fn[snippet_symbol] = true;
+	return fn;
+}
+
+/**
+ * Returns true if given parameter is a snippet.
+ * @param {any} maybeSnippet
+ * @returns {maybeSnippet is import('svelte').Snippet}
+ */
+export function is_snippet(maybeSnippet) {
+	return /** @type {any} */ (maybeSnippet)?.[snippet_symbol] === true;
+}

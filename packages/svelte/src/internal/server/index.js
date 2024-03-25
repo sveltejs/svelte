@@ -11,6 +11,8 @@ import { DEV } from 'esm-env';
 import { UNINITIALIZED } from '../client/constants.js';
 
 export * from '../client/validate.js';
+export { add_snippet_symbol } from '../client/dom/blocks/snippet.js';
+export { default_slot } from '../client/dom/legacy/misc.js';
 
 /**
  * @typedef {{
