@@ -36,19 +36,15 @@ export function key_block(anchor, get_key, render_fn) {
 				});
 			}
 
-			effect = render_effect(
-				() => {
-					const dom = render_fn(anchor);
+			effect = render_effect(() => {
+				const dom = render_fn(anchor);
 
-					return () => {
-						if (dom !== undefined) {
-							remove(dom);
-						}
-					};
-				},
-				true,
-				true
-			);
+				return () => {
+					if (dom !== undefined) {
+						remove(dom);
+					}
+				};
+			}, true);
 
 			effects.add(effect);
 		}

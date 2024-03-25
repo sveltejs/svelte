@@ -216,14 +216,13 @@ export function invalidate_effect(fn) {
 /**
  * @param {(() => void)} fn
  * @param {boolean} managed
- * @param {boolean} sync
  * @returns {import('#client').Effect}
  */
-export function render_effect(fn, managed = false, sync = true) {
+export function render_effect(fn, managed = false) {
 	let flags = RENDER_EFFECT;
 	if (managed) flags |= MANAGED;
 
-	return create_effect(flags, /** @type {any} */ (fn), sync);
+	return create_effect(flags, /** @type {any} */ (fn), true);
 }
 
 /**
