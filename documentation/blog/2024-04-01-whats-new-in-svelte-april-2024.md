@@ -14,13 +14,13 @@ Also, this month, a ton of new features have been merged into Svelte 5 to make i
 
 [Svelte 5 is in preview](https://svelte-5-preview.vercel.app/docs/introduction) and gets closer to release every day. Below, you'll find some highlights from its [changelog](https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md):
 
+- The new `Map`, `Date` and `Set` classes can now be imported from svelte/reactivity and used just like their native counterparts to improve tree-shaking and make these objects fit better into Svelte's reactivity model (**5.0.0-next.79/67/76**,, [Docs](https://svelte-5-preview.vercel.app/docs/runes#state-frozen-reactive-map-set-and-date), [#10803](https://github.com/sveltejs/svelte/pull/10803), [#10622](https://github.com/sveltejs/svelte/pull/10622), [#10781](https://github.com/sveltejs/svelte/pull/10781))
 - state/derived/props can be explicitly exported from components again (**5.0.0-next.62**, [#10523](https://github.com/sveltejs/svelte/pull/10523))
 - `bind:value` now allows for a dynamic `type` attribute - fixing issues with common input bindings (**5.0.0-next.66**, [#10608](https://github.com/sveltejs/svelte/pull/10608))
-- A new reactive `Date` object simplifies time and date reactivity within Svelte (**5.0.0-next.67**, [Docs](https://svelte-5-preview.vercel.app/docs/runes#state-frozen-reactive-map-set-and-date), [#10622](https://github.com/sveltejs/svelte/pull/10622))
-- `SSR` HTML mismatch validation has been improved and provides clearer error messages (5.0.0-next.69, [#10658](https://github.com/sveltejs/svelte/pull/10658))
+- `SSR` HTML mismatch validation has been improved and provides clearer error messages (**5.0.0-next.69**, [#10658](https://github.com/sveltejs/svelte/pull/10658))
 - **Breaking:** Slots inside templates with a `shadowrootmode` attribute are now preserved (**5.0.0-next.73**, [#10721](https://github.com/sveltejs/svelte/pull/10721))
 - **Breaking:** The `$props()` no longer accepts a generic type argument. Instead, component authors should type their props like any other variable declaration (**5.0.0-next.76**, [#10694](https://github.com/sveltejs/svelte/pull/10694))
-- A new reactive `Map` object acts just like a normal Map but it will keep reactivity for enumeration, and all its API methods (**5.0.0-next.79**, [Docs](https://svelte-5-preview.vercel.app/docs/runes#state-frozen-reactive-map-set-and-date), [#10803](https://github.com/sveltejs/svelte/pull/10803))
+- The new `$bindable` rune allows parents to `:bind` to a component's prop in addition to using them as regular props ([Docs](https://svelte-5-preview.vercel.app/docs/runes#props-bindable), [#10851](https://github.com/sveltejs/svelte/pull/10851)) 
 - The webkitdirectory DOM boolean attribute is now supported (**5.0.0-next.81**, [#10847](https://github.com/sveltejs/svelte/pull/10847))
 - Form resets are now taken into account for two way bindings (**5.0.0-next.82**, [Docs](https://svelte-5-preview.vercel.app/docs/breaking-changes#other-breaking-changes-bindings-now-react-to-form-resets), [#10617](https://github.com/sveltejs/svelte/pull/10617))
 
