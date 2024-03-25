@@ -459,53 +459,32 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		}
 	}
 
-	let grouped_value = value;
-
 	if (name === 'autofocus') {
 		state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
 		return false;
 	}
 
+	/** @type {import('estree').Statement} */
+	let update;
+
 	if (name === 'class') {
-		grouped_value = b.call('$.to_class', value);
+		update = b.stmt(b.call(is_svg ? '$.svg_class_name' : '$.class_name', node_id, value));
+	} else if (DOMProperties.includes(name)) {
+		update = b.stmt(b.assignment('=', b.member(node_id, b.id(name)), value));
+	} else {
+		const callee = name.startsWith('xlink') ? '$.xlink_attr' : '$.attr';
+		update = b.stmt(b.call(callee, node_id, b.literal(name), value));
 	}
 
-	/**
-	 * @param {import('estree').Expression} grouped
-	 * @param {import('estree').Expression} [singular]
-	 */
-	const assign = (grouped, singular) => {
-		if (name === 'class') {
-			if (singular) {
-				return b.stmt(b.call(is_svg ? '$.svg_class_name' : '$.class_name', node_id, singular));
-			}
-			return b.stmt(b.call(is_svg ? '$.svg_class_name' : '$.class_name', node_id, value));
-		}
-
-		if (DOMProperties.includes(name)) {
-			return b.stmt(b.assignment('=', b.member(node_id, b.id(name)), grouped));
-		}
-
-		return b.stmt(
-			b.call(
-				name.startsWith('xlink') ? '$.xlink_attr' : '$.attr',
-				node_id,
-				b.literal(name),
-				grouped
-			)
-		);
-	};
-
 	if (attribute.metadata.dynamic) {
-		const grouped = assign(grouped_value, value);
 		if (contains_call_expression) {
-			state.init.push(serialize_update(grouped));
+			state.init.push(serialize_update(update));
 		} else {
-			state.update.push(grouped);
+			state.update.push(update);
 		}
 		return true;
 	} else {
-		state.init.push(assign(grouped_value));
+		state.init.push(update);
 		return false;
 	}
 }
