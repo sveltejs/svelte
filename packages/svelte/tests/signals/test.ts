@@ -22,13 +22,9 @@ function run_test(runes: boolean, fn: (runes: boolean) => () => void) {
 		$.push({}, runes);
 		// Create a render context so that effect validations etc don't fail
 		let execute: any;
-		const signal = render_effect(
-			() => {
-				execute = fn(runes);
-			},
-			true,
-			true
-		);
+		const signal = render_effect(() => {
+			execute = fn(runes);
+		}, true);
 		$.pop();
 		execute();
 		destroy_effect(signal);
