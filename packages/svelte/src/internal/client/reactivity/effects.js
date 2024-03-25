@@ -23,7 +23,6 @@ import {
 	DESTROYED,
 	INERT,
 	IS_ELSEIF,
-	CLEAN,
 	EFFECT_RAN
 } from '../constants.js';
 import { set } from './sources.js';
