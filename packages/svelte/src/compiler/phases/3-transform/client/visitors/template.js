@@ -74,23 +74,13 @@ function serialize_style_directives(style_directives, element_id, context, is_at
 			directive.value === true
 				? serialize_get_binding({ name: directive.name, type: 'Identifier' }, context.state)
 				: serialize_attribute_value(directive.value, context)[1];
-		const grouped = b.stmt(
+
+		const update = b.stmt(
 			b.call(
 				'$.style',
 				element_id,
 				b.literal(directive.name),
 				value,
-				/** @type {import('estree').Expression} */ (
-					directive.modifiers.includes('important') ? b.true : undefined
-				)
-			)
-		);
-		const singular = b.stmt(
-			b.call(
-				'$.style_effect',
-				element_id,
-				b.literal(directive.name),
-				b.arrow([], value),
 				/** @type {import('estree').Expression} */ (
 					directive.modifiers.includes('important') ? b.true : undefined
 				)
@@ -104,11 +94,11 @@ function serialize_style_directives(style_directives, element_id, context, is_at
 			);
 
 		if (!is_attributes_reactive && contains_call_expression) {
-			state.init.push(singular);
+			state.init.push(serialize_update(update));
 		} else if (is_attributes_reactive || directive.metadata.dynamic || contains_call_expression) {
-			state.update.push(grouped);
+			state.update.push(update);
 		} else {
-			state.init.push(grouped);
+			state.init.push(update);
 		}
 	}
 }
@@ -146,18 +136,15 @@ function serialize_class_directives(class_directives, element_id, context, is_at
 	const state = context.state;
 	for (const directive of class_directives) {
 		const value = /** @type {import('estree').Expression} */ (context.visit(directive.expression));
-		const grouped = b.stmt(b.call('$.class_toggle', element_id, b.literal(directive.name), value));
-		const singular = b.stmt(
-			b.call('$.class_toggle_effect', element_id, b.literal(directive.name), b.arrow([], value))
-		);
+		const update = b.stmt(b.call('$.class_toggle', element_id, b.literal(directive.name), value));
 		const contains_call_expression = directive.expression.type === 'CallExpression';
 
 		if (!is_attributes_reactive && contains_call_expression) {
-			state.init.push(singular);
+			state.init.push(serialize_update(update));
 		} else if (is_attributes_reactive || directive.metadata.dynamic || contains_call_expression) {
-			state.update.push(grouped);
+			state.update.push(update);
 		} else {
-			state.init.push(grouped);
+			state.init.push(update);
 		}
 	}
 }

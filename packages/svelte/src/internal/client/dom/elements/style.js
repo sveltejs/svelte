@@ -17,17 +17,3 @@ export function style(dom, key, value, important) {
 		style.setProperty(key, value, important ? 'important' : '');
 	}
 }
-
-/**
- * @param {HTMLElement} dom
- * @param {string} key
- * @param {() => string} value
- * @param {boolean} [important]
- * @returns {void}
- */
-export function style_effect(dom, key, value, important) {
-	render_effect(() => {
-		const string = value();
-		style(dom, key, string, important);
-	});
-}

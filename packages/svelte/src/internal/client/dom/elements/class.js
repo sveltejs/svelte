@@ -107,15 +107,3 @@ export function class_toggle(dom, class_name, value) {
 		dom.classList.remove(class_name);
 	}
 }
-
-/**
- * @param {Element} dom
- * @param {string} class_name
- * @param {() => boolean} value
- * @returns {void}
- */
-export function class_toggle_effect(dom, class_name, value) {
-	render_effect(() => {
-		class_toggle(dom, class_name, value());
-	});
-}
