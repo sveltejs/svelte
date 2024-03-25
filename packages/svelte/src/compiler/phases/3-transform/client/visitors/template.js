@@ -343,6 +343,8 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 		return false;
 	}
 
+	// TODO why are we always treating this as a spread? needs docs, if that's not an error
+
 	let needs_isolation = false;
 	let is_reactive = false;
 
@@ -365,51 +367,45 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 			attribute.type === 'SpreadAttribute' && attribute.metadata.contains_call_expression;
 	}
 
-	const isolated = b.stmt(
-		b.call(
-			'$.spread_dynamic_element_attributes_effect',
-			element_id,
-			b.thunk(b.array(values)),
-			b.literal(context.state.analysis.css.hash)
-		)
-	);
-
-	if (needs_isolation) {
-		context.state.init.push(isolated);
-		return false;
-	} else if (is_reactive) {
+	if (needs_isolation || is_reactive) {
 		const id = context.state.scope.generate('spread_attributes');
 		context.state.init.push(b.let(id));
-		context.state.update.push(
-			b.stmt(
-				b.assignment(
-					'=',
-					b.id(id),
-					b.call(
-						'$.spread_dynamic_element_attributes',
-						element_id,
-						b.id(id),
-						b.array(values),
-						b.literal(context.state.analysis.css.hash)
-					)
-				)
-			)
-		);
-		return true;
-	} else {
-		context.state.init.push(
-			b.stmt(
+
+		const update = b.stmt(
+			b.assignment(
+				'=',
+				b.id(id),
 				b.call(
 					'$.spread_dynamic_element_attributes',
 					element_id,
-					b.literal(null),
+					b.id(id),
 					b.array(values),
 					b.literal(context.state.analysis.css.hash)
 				)
 			)
 		);
-		return false;
+
+		if (needs_isolation) {
+			context.state.init.push(serialize_update(update));
+			return false;
+		}
+
+		context.state.update.push(update);
+		return true;
 	}
+
+	context.state.init.push(
+		b.stmt(
+			b.call(
+				'$.spread_dynamic_element_attributes',
+				element_id,
+				b.literal(null),
+				b.array(values),
+				b.literal(context.state.analysis.css.hash)
+			)
+		)
+	);
+	return false;
 }
 
 /**

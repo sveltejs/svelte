@@ -186,20 +186,6 @@ export function spread_attributes(element, prev, attrs, lowercase_attributes, cs
 
 /**
  * @param {Element} node
- * @param {() => Record<string, unknown>[]} attrs
- * @param {string} css_hash
- */
-export function spread_dynamic_element_attributes_effect(node, attrs, css_hash) {
-	/** @type {Record<string, any> | undefined} */
-	var current;
-
-	render_effect(() => {
-		current = spread_dynamic_element_attributes(node, current, attrs(), css_hash);
-	});
-}
-
-/**
- * @param {Element} node
  * @param {Record<string, unknown> | undefined} prev
  * @param {Record<string, unknown>[]} attrs
  * @param {string} css_hash
