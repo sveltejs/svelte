@@ -216,9 +216,6 @@ export function check_dirtiness(reaction) {
  * @returns {V}
  */
 export function execute_reaction_fn(signal) {
-	const fn = signal.fn;
-	const flags = signal.f;
-
 	const previous_dependencies = current_dependencies;
 	const previous_dependencies_index = current_dependencies_index;
 	const previous_untracked_writes = current_untracked_writes;
@@ -230,11 +227,11 @@ export function execute_reaction_fn(signal) {
 	current_dependencies_index = 0;
 	current_untracked_writes = null;
 	current_reaction = signal;
-	current_skip_reaction = !is_flushing_effect && (flags & UNOWNED) !== 0;
+	current_skip_reaction = !is_flushing_effect && (signal.f & UNOWNED) !== 0;
 	current_untracking = false;
 
 	try {
-		let res = fn();
+		let res = signal.fn();
 		let dependencies = /** @type {import('./types.js').Value<unknown>[]} **/ (signal.deps);
 		if (current_dependencies !== null) {
 			let i;

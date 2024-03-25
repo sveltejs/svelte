@@ -39,7 +39,7 @@ import { remove } from '../dom/reconciler.js';
  */
 function create_effect(type, fn, sync, init = true) {
 	/** @type {import('#client').Effect} */
-	const signal = {
+	const effect = {
 		parent: current_effect,
 		dom: null,
 		deps: null,
@@ -55,34 +55,35 @@ function create_effect(type, fn, sync, init = true) {
 	};
 
 	if (current_effect !== null) {
-		signal.l = current_effect.l + 1;
+		effect.l = current_effect.l + 1;
 	}
 
 	if (current_reaction !== null) {
 		if (current_reaction.effects === null) {
-			current_reaction.effects = [signal];
+			current_reaction.effects = [effect];
 		} else {
-			current_reaction.effects.push(signal);
+			current_reaction.effects.push(effect);
 		}
 	}
 
 	if (init) {
 		if (sync) {
 			const previously_flushing_effect = is_flushing_effect;
+
 			try {
 				set_is_flushing_effect(true);
-				execute_effect(signal);
-				set_signal_status(signal, CLEAN);
-				signal.f |= EFFECT_RAN;
+				execute_effect(effect);
+				set_signal_status(effect, CLEAN);
+				effect.f |= EFFECT_RAN;
 			} finally {
 				set_is_flushing_effect(previously_flushing_effect);
 			}
 		} else {
-			schedule_effect(signal);
+			schedule_effect(effect);
 		}
 	}
 
-	return signal;
+	return effect;
 }
 
 /**
