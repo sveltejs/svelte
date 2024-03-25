@@ -480,28 +480,20 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 				return b.stmt(b.call(is_svg ? '$.svg_class_name' : '$.class_name', node_id, singular));
 			}
 			return b.stmt(b.call(is_svg ? '$.svg_class_name' : '$.class_name', node_id, value));
-		} else if (!DOMProperties.includes(name)) {
-			if (singular) {
-				return b.stmt(
-					b.call(
-						name.startsWith('xlink') ? '$.xlink_attr' : '$.attr',
-						node_id,
-						b.literal(name),
-						grouped
-					)
-				);
-			}
-			return b.stmt(
-				b.call(
-					name.startsWith('xlink') ? '$.xlink_attr' : '$.attr',
-					node_id,
-					b.literal(name),
-					grouped
-				)
-			);
-		} else {
+		}
+
+		if (DOMProperties.includes(name)) {
 			return b.stmt(b.assignment('=', b.member(node_id, b.id(name)), grouped));
 		}
+
+		return b.stmt(
+			b.call(
+				name.startsWith('xlink') ? '$.xlink_attr' : '$.attr',
+				node_id,
+				b.literal(name),
+				grouped
+			)
+		);
 	};
 
 	if (attribute.metadata.dynamic) {
