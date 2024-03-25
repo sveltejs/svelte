@@ -106,7 +106,7 @@ function serialize_style_directives(style_directives, element_id, context, is_at
 		if (!is_attributes_reactive && contains_call_expression) {
 			state.init.push(singular);
 		} else if (is_attributes_reactive || directive.metadata.dynamic || contains_call_expression) {
-			state.update.push({ grouped });
+			state.update.push(grouped);
 		} else {
 			state.init.push(grouped);
 		}
@@ -155,7 +155,7 @@ function serialize_class_directives(class_directives, element_id, context, is_at
 		if (!is_attributes_reactive && contains_call_expression) {
 			state.init.push(singular);
 		} else if (is_attributes_reactive || directive.metadata.dynamic || contains_call_expression) {
-			state.update.push({ grouped });
+			state.update.push(grouped);
 		} else {
 			state.init.push(grouped);
 		}
@@ -333,17 +333,15 @@ function serialize_element_spread_attributes(
 			context.state.init.push(standalone);
 		}
 	} else {
-		context.state.update.push({
-			grouped: inside_effect
-		});
+		context.state.update.push(inside_effect);
 	}
 
 	if (needs_select_handling) {
 		context.state.init.push(
 			b.stmt(b.call('$.init_select', element_id, b.thunk(b.member(b.id(id), b.id('value')))))
 		);
-		context.state.update.push({
-			grouped: b.if(
+		context.state.update.push(
+			b.if(
 				b.binary('in', b.literal('value'), b.id(id)),
 				b.block([
 					// This ensures a one-way street to the DOM in case it's <select {value}>
@@ -353,7 +351,7 @@ function serialize_element_spread_attributes(
 					b.stmt(b.call('$.select_option', element_id, b.member(b.id(id), b.id('value'))))
 				])
 			)
-		});
+		);
 	}
 }
 
@@ -412,8 +410,8 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 	} else if (is_reactive) {
 		const id = context.state.scope.generate('spread_attributes');
 		context.state.init.push(b.let(id));
-		context.state.update.push({
-			grouped: b.stmt(
+		context.state.update.push(
+			b.stmt(
 				b.assignment(
 					'=',
 					b.id(id),
@@ -426,7 +424,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 					)
 				)
 			)
-		});
+		);
 		return true;
 	} else {
 		context.state.init.push(
@@ -564,7 +562,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		if (contains_call_expression && singular) {
 			state.init.push(singular);
 		} else {
-			state.update.push({ grouped });
+			state.update.push(grouped);
 		}
 		return true;
 	} else {
@@ -707,26 +705,18 @@ function serialize_update_assignment(state, id, init, value, assignment, contain
 	} else {
 		if (assignment.skip_condition) {
 			if (assignment.singular) {
-				state.update.push({
-					grouped: assignment.grouped
-				});
+				state.update.push(assignment.grouped);
 			} else {
 				state.init.push(b.var(id, init));
-				state.update.push({
-					grouped
-				});
+				state.update.push(grouped);
 			}
 		} else {
 			if (assignment.singular) {
 				state.init.push(b.var(id, init));
-				state.update.push({
-					grouped
-				});
+				state.update.push(grouped);
 			} else {
 				state.init.push(b.var(id, init));
-				state.update.push({
-					grouped
-				});
+				state.update.push(grouped);
 			}
 		}
 	}
@@ -1275,7 +1265,7 @@ function get_template_function(namespace, state) {
  * @param {import('../types.js').ComponentClientTransformState} state
  */
 function serialize_render_stmt(state) {
-	return b.stmt(b.call('$.render_effect', b.thunk(b.block(state.update.map((n) => n.grouped)))));
+	return b.stmt(b.call('$.render_effect', b.thunk(b.block(state.update))));
 }
 
 /**
@@ -1511,16 +1501,15 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 			if (node.metadata.contains_call_expression && !within_bound_contenteditable) {
 				state.init.push(singular);
 			} else if (node.metadata.dynamic && !within_bound_contenteditable) {
-				state.update.push({
-					singular,
-					grouped: b.stmt(
+				state.update.push(
+					b.stmt(
 						b.call(
 							'$.text',
 							text_id,
 							/** @type {import('estree').Expression} */ (visit(node.expression))
 						)
 					)
-				});
+				);
 			} else {
 				state.init.push(
 					b.stmt(
@@ -1556,10 +1545,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 				sequence.some((node) => node.type === 'ExpressionTag' && node.metadata.dynamic) &&
 				!within_bound_contenteditable
 			) {
-				state.update.push({
-					singular,
-					grouped: b.stmt(b.call('$.text', text_id, assignment))
-				});
+				state.update.push(b.stmt(b.call('$.text', text_id, assignment)));
 			} else {
 				state.init.push(init);
 			}
@@ -3120,15 +3106,15 @@ export const template_visitors = {
 				)
 			);
 		} else {
-			state.update.push({
-				grouped: b.stmt(
+			state.update.push(
+				b.stmt(
 					b.assignment(
 						'=',
 						b.member(b.id('$.document'), b.id('title')),
 						serialize_template_literal(/** @type {any} */ (node.fragment.nodes), visit, state)[1]
 					)
 				)
-			});
+			);
 		}
 	},
 	SvelteBody(node, context) {
