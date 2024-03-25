@@ -73,7 +73,6 @@ function create_effect(type, fn, sync, init = true) {
 			try {
 				set_is_flushing_effect(true);
 				execute_effect(effect);
-				set_signal_status(effect, CLEAN);
 				effect.f |= EFFECT_RAN;
 			} finally {
 				set_is_flushing_effect(previously_flushing_effect);

@@ -384,6 +384,8 @@ export function execute_effect(signal) {
 		return;
 	}
 
+	set_signal_status(signal, CLEAN);
+
 	const previous_effect = current_effect;
 	const previous_component_context = current_component_context;
 
@@ -439,7 +441,6 @@ function flush_queued_effects(effects) {
 
 			if ((signal.f & (DESTROYED | INERT)) === 0) {
 				if (check_dirtiness(signal)) {
-					set_signal_status(signal, CLEAN);
 					execute_effect(signal);
 				}
 			}
