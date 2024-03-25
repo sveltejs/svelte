@@ -7,8 +7,10 @@ import {
 	destroy_children,
 	execute_effect,
 	get,
+	is_flushing_effect,
 	remove_reactions,
 	schedule_effect,
+	set_is_flushing_effect,
 	set_signal_status,
 	untrack
 } from '../runtime.js';
@@ -20,7 +22,9 @@ import {
 	PRE_EFFECT,
 	DESTROYED,
 	INERT,
-	IS_ELSEIF
+	IS_ELSEIF,
+	CLEAN,
+	EFFECT_RAN
 } from '../constants.js';
 import { set } from './sources.js';
 import { noop } from '../../common.js';
@@ -63,7 +67,19 @@ function create_effect(type, fn, sync, init = true) {
 	}
 
 	if (init) {
-		schedule_effect(signal, sync);
+		if (sync) {
+			const previously_flushing_effect = is_flushing_effect;
+			try {
+				set_is_flushing_effect(true);
+				execute_effect(signal);
+				set_signal_status(signal, CLEAN);
+				signal.f |= EFFECT_RAN;
+			} finally {
+				set_is_flushing_effect(previously_flushing_effect);
+			}
+		} else {
+			schedule_effect(signal);
+		}
 	}
 
 	return signal;
