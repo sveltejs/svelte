@@ -45,9 +45,7 @@ export function attr(dom, attribute, value) {
 		attributes[attribute] = dom.getAttribute(attribute);
 
 		if (attribute === 'src' || attribute === 'href' || attribute === 'srcset') {
-			if (DEV) {
-				check_src_in_dev_hydration(dom, attribute, value);
-			}
+			check_src_in_dev_hydration(dom, attribute, value);
 
 			// If we reset these attributes, they would result in another network request, which we want to avoid.
 			// We assume they are the same between client and server as checking if they are equal is expensive
@@ -204,15 +202,9 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 			}
 
 			if (setters.includes(name)) {
-				if (DEV) {
+				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
 					check_src_in_dev_hydration(dom, name, value);
-				}
-
-				if (
-					!hydrating ||
-					//  @ts-ignore see attr method for an explanation of src/srcset
-					(dom[name] !== value && name !== 'src' && name !== 'href' && name !== 'srcset')
-				) {
+				} else {
 					// @ts-ignore
 					dom[name] = value;
 				}
@@ -311,9 +303,7 @@ function get_setters(element) {
  * @param {string | null} value
  */
 function check_src_in_dev_hydration(dom, attribute, value) {
-	if (!hydrating) return;
-	if (attribute !== 'src' && attribute !== 'href' && attribute !== 'srcset') return;
-
+	if (!DEV) return;
 	if (attribute === 'srcset' && srcset_url_equal(dom, value)) return;
 	if (src_url_equal(dom.getAttribute(attribute) ?? '', value ?? '')) return;
 
