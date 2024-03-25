@@ -31,33 +31,36 @@ export function attr_effect(dom, attribute, value) {
 }
 
 /**
- * @param {Element} dom
+ * @param {Element} element
  * @param {string} attribute
  * @param {string | null} value
  */
-export function attr(dom, attribute, value) {
+export function attr(element, attribute, value) {
 	value = value == null ? null : value + '';
 
-	if (DEV) {
-		check_src_in_dev_hydration(dom, attribute, value);
-	}
+	// @ts-expect-error
+	var attributes = (element.__attributes ??= {});
 
-	if (
-		!hydrating ||
-		(dom.getAttribute(attribute) !== value &&
-			// If we reset those, they would result in another network request, which we want to avoid.
+	if (hydrating) {
+		attributes[attribute] = element.getAttribute(attribute);
+
+		if (attribute === 'src' || attribute === 'href' || attribute === 'srcset') {
+			check_src_in_dev_hydration(element, attribute, value);
+
+			// If we reset these attributes, they would result in another network request, which we want to avoid.
 			// We assume they are the same between client and server as checking if they are equal is expensive
 			// (we can't just compare the strings as they can be different between client and server but result in the
 			// same url, so we would need to create hidden anchor elements to compare them)
-			attribute !== 'src' &&
-			attribute !== 'href' &&
-			attribute !== 'srcset')
-	) {
-		if (value === null) {
-			dom.removeAttribute(attribute);
-		} else {
-			dom.setAttribute(attribute, value);
+			return;
 		}
+	}
+
+	if (attributes[attribute] === (attributes[attribute] = value)) return;
+
+	if (value === null) {
+		element.removeAttribute(attribute);
+	} else {
+		element.setAttribute(attribute, value);
 	}
 }
 
@@ -123,14 +126,14 @@ export function spread_attributes_effect(dom, attrs, lowercase_attributes, css_h
 
 /**
  * Spreads attributes onto a DOM element, taking into account the currently set attributes
- * @param {Element & ElementCSSInlineStyle} dom
+ * @param {Element & ElementCSSInlineStyle} element
  * @param {Record<string, unknown> | undefined} prev
  * @param {Record<string, unknown>[]} attrs
  * @param {boolean} lowercase_attributes
  * @param {string} css_hash
  * @returns {Record<string, unknown>}
  */
-export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_hash) {
+export function spread_attributes(element, prev, attrs, lowercase_attributes, css_hash) {
 	var next = object_assign({}, ...attrs);
 	var has_hash = css_hash.length !== 0;
 
@@ -144,8 +147,8 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 		next.class = '';
 	}
 
-	var setters = map_get(setters_cache, dom.nodeName);
-	if (!setters) map_set(setters_cache, dom.nodeName, (setters = get_setters(dom)));
+	var setters = map_get(setters_cache, element.nodeName);
+	if (!setters) map_set(setters_cache, element.nodeName, (setters = get_setters(element)));
 
 	for (key in next) {
 		var value = next[key];
@@ -170,27 +173,27 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 			}
 
 			if (!delegated && prev?.[key]) {
-				dom.removeEventListener(event_name, /** @type {any} */ (prev[key]), opts);
+				element.removeEventListener(event_name, /** @type {any} */ (prev[key]), opts);
 			}
 
 			if (value != null) {
 				if (!delegated) {
-					dom.addEventListener(event_name, value, opts);
+					element.addEventListener(event_name, value, opts);
 				} else {
 					// @ts-ignore
-					dom[`__${event_name}`] = value;
+					element[`__${event_name}`] = value;
 					delegate([event_name]);
 				}
 			}
 		} else if (value == null) {
-			dom.removeAttribute(key);
+			element.removeAttribute(key);
 		} else if (key === 'style') {
-			dom.style.cssText = value + '';
+			element.style.cssText = value + '';
 		} else if (key === 'autofocus') {
-			autofocus(/** @type {HTMLElement} */ (dom), Boolean(value));
+			autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
 		} else if (key === '__value' || key === 'value') {
 			// @ts-ignore
-			dom.value = dom[key] = dom.__value = value;
+			element.value = element[key] = element.__value = value;
 		} else {
 			var name = key;
 			if (lowercase_attributes) {
@@ -199,17 +202,11 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 			}
 
 			if (setters.includes(name)) {
-				if (DEV) {
-					check_src_in_dev_hydration(dom, name, value);
-				}
-
-				if (
-					!hydrating ||
-					//  @ts-ignore see attr method for an explanation of src/srcset
-					(dom[name] !== value && name !== 'src' && name !== 'href' && name !== 'srcset')
-				) {
+				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
+					check_src_in_dev_hydration(element, name, value);
+				} else {
 					// @ts-ignore
-					dom[name] = value;
+					element[name] = value;
 				}
 			} else if (typeof value !== 'function') {
 				if (has_hash && name === 'class') {
@@ -217,7 +214,7 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 					value += css_hash;
 				}
 
-				attr(dom, name, value);
+				attr(element, name, value);
 			}
 		}
 	}
@@ -301,22 +298,20 @@ function get_setters(element) {
 }
 
 /**
- * @param {any} dom
+ * @param {any} element
  * @param {string} attribute
  * @param {string | null} value
  */
-function check_src_in_dev_hydration(dom, attribute, value) {
-	if (!hydrating) return;
-	if (attribute !== 'src' && attribute !== 'href' && attribute !== 'srcset') return;
-
-	if (attribute === 'srcset' && srcset_url_equal(dom, value)) return;
-	if (src_url_equal(dom.getAttribute(attribute) ?? '', value ?? '')) return;
+function check_src_in_dev_hydration(element, attribute, value) {
+	if (!DEV) return;
+	if (attribute === 'srcset' && srcset_url_equal(element, value)) return;
+	if (src_url_equal(element.getAttribute(attribute) ?? '', value ?? '')) return;
 
 	// eslint-disable-next-line no-console
 	console.error(
 		`Detected a ${attribute} attribute value change during hydration. This will not be repaired during hydration, ` +
 			`the ${attribute} value that came from the server will be used. Related element:`,
-		dom,
+		element,
 		' Differing value:',
 		value
 	);
