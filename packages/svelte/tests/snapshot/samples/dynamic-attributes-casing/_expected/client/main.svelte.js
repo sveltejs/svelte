@@ -18,11 +18,11 @@ export default function Main($$anchor, $$props) {
 	var custom_element_fooBar;
 	var div_1 = $.sibling($.sibling(custom_element, true));
 
-	$.attr_effect(div_1, "foobar", y);
+	$.render_effect(() => $.attr(div_1, "foobar", y()));
 
 	var svg_1 = $.sibling($.sibling(div_1, true));
 
-	$.attr_effect(svg_1, "viewBox", y);
+	$.render_effect(() => $.attr(svg_1, "viewBox", y()));
 
 	var custom_element_1 = $.sibling($.sibling(svg_1, true));
 

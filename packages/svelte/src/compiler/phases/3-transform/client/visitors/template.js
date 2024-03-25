@@ -477,66 +477,43 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 	const assign = (grouped, singular) => {
 		if (name === 'class') {
 			if (singular) {
-				return {
-					singular: b.stmt(
-						b.call(
-							is_svg ? '$.svg_class_name_effect' : '$.class_name_effect',
-							node_id,
-							b.thunk(singular)
-						)
-					),
-					grouped: b.stmt(b.call(is_svg ? '$.svg_class_name' : '$.class_name', node_id, singular))
-				};
+				return b.stmt(b.call(is_svg ? '$.svg_class_name' : '$.class_name', node_id, singular));
 			}
-			return {
-				grouped: b.stmt(b.call(is_svg ? '$.svg_class_name' : '$.class_name', node_id, value))
-			};
+			return b.stmt(b.call(is_svg ? '$.svg_class_name' : '$.class_name', node_id, value));
 		} else if (!DOMProperties.includes(name)) {
 			if (singular) {
-				return {
-					singular: b.stmt(
-						b.call(
-							name.startsWith('xlink') ? '$.xlink_attr_effect' : '$.attr_effect',
-							node_id,
-							b.literal(name),
-							b.thunk(singular)
-						)
-					),
-					grouped: b.stmt(
-						b.call(
-							name.startsWith('xlink') ? '$.xlink_attr' : '$.attr',
-							node_id,
-							b.literal(name),
-							grouped
-						)
-					)
-				};
-			}
-			return {
-				grouped: b.stmt(
+				return b.stmt(
 					b.call(
 						name.startsWith('xlink') ? '$.xlink_attr' : '$.attr',
 						node_id,
 						b.literal(name),
 						grouped
 					)
+				);
+			}
+			return b.stmt(
+				b.call(
+					name.startsWith('xlink') ? '$.xlink_attr' : '$.attr',
+					node_id,
+					b.literal(name),
+					grouped
 				)
-			};
+			);
 		} else {
-			return { grouped: b.stmt(b.assignment('=', b.member(node_id, b.id(name)), grouped)) };
+			return b.stmt(b.assignment('=', b.member(node_id, b.id(name)), grouped));
 		}
 	};
 
 	if (attribute.metadata.dynamic) {
-		const { grouped, singular } = assign(grouped_value, value);
-		if (contains_call_expression && singular) {
-			state.init.push(singular);
+		const grouped = assign(grouped_value, value);
+		if (contains_call_expression) {
+			state.init.push(serialize_update(grouped));
 		} else {
 			state.update.push(grouped);
 		}
 		return true;
 	} else {
-		state.init.push(assign(grouped_value).grouped);
+		state.init.push(assign(grouped_value));
 		return false;
 	}
 }
