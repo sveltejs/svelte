@@ -23,7 +23,10 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 		children: ($$anchor, $$slotProps) => {
 			var text = $.space_frag($$anchor);
 
-			$.text_effect(text, () => `clicks: ${$.stringify($.get(count))}`);
+			$.render_effect(() => {
+				$.text(text, `clicks: ${$.stringify($.get(count))}`);
+			});
+
 			return $.close($$anchor, text);
 		}
 	});

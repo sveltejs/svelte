@@ -33,8 +33,6 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly init: Statement[];
 	/** Stuff that happens inside the render effect */
 	readonly update: {
-		/** If the update array only contains a single entry, this singular entry will be used, if present */
-		singular?: Statement;
 		/** Used if condition for singular prop is false (see comment above) */
 		grouped: Statement;
 	}[];

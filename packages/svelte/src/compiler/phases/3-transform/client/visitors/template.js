@@ -106,7 +106,7 @@ function serialize_style_directives(style_directives, element_id, context, is_at
 		if (!is_attributes_reactive && contains_call_expression) {
 			state.init.push(singular);
 		} else if (is_attributes_reactive || directive.metadata.dynamic || contains_call_expression) {
-			state.update.push({ grouped, singular });
+			state.update.push({ grouped });
 		} else {
 			state.init.push(grouped);
 		}
@@ -155,7 +155,7 @@ function serialize_class_directives(class_directives, element_id, context, is_at
 		if (!is_attributes_reactive && contains_call_expression) {
 			state.init.push(singular);
 		} else if (is_attributes_reactive || directive.metadata.dynamic || contains_call_expression) {
-			state.update.push({ grouped, singular });
+			state.update.push({ grouped });
 		} else {
 			state.init.push(grouped);
 		}
@@ -334,7 +334,6 @@ function serialize_element_spread_attributes(
 		}
 	} else {
 		context.state.update.push({
-			singular: needs_select_handling ? undefined : standalone,
 			grouped: inside_effect
 		});
 	}
@@ -414,7 +413,6 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 		const id = context.state.scope.generate('spread_attributes');
 		context.state.init.push(b.let(id));
 		context.state.update.push({
-			singular: isolated,
 			grouped: b.stmt(
 				b.assignment(
 					'=',
@@ -566,7 +564,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		if (contains_call_expression && singular) {
 			state.init.push(singular);
 		} else {
-			state.update.push({ singular, grouped });
+			state.update.push({ grouped });
 		}
 		return true;
 	} else {
@@ -710,7 +708,6 @@ function serialize_update_assignment(state, id, init, value, assignment, contain
 		if (assignment.skip_condition) {
 			if (assignment.singular) {
 				state.update.push({
-					singular: assignment.singular,
 					grouped: assignment.grouped
 				});
 			} else {
@@ -723,7 +720,6 @@ function serialize_update_assignment(state, id, init, value, assignment, contain
 			if (assignment.singular) {
 				state.init.push(b.var(id, init));
 				state.update.push({
-					singular: assignment.singular,
 					grouped
 				});
 			} else {
@@ -1279,10 +1275,6 @@ function get_template_function(namespace, state) {
  * @param {import('../types.js').ComponentClientTransformState} state
  */
 function serialize_render_stmt(state) {
-	if (state.update.length === 1 && state.update[0].singular) {
-		return state.update[0].singular;
-	}
-
 	return b.stmt(b.call('$.render_effect', b.thunk(b.block(state.update.map((n) => n.grouped)))));
 }
 
