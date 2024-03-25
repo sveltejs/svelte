@@ -376,35 +376,35 @@ export function destroy_children(signal) {
 }
 
 /**
- * @param {import('./types.js').Effect} signal
+ * @param {import('./types.js').Effect} effect
  * @returns {void}
  */
-export function execute_effect(signal) {
-	if ((signal.f & DESTROYED) !== 0) {
+export function execute_effect(effect) {
+	if ((effect.f & DESTROYED) !== 0) {
 		return;
 	}
 
-	set_signal_status(signal, CLEAN);
+	set_signal_status(effect, CLEAN);
 
-	const previous_effect = current_effect;
-	const previous_component_context = current_component_context;
+	var component_context = effect.ctx;
 
-	const component_context = signal.ctx;
+	var previous_effect = current_effect;
+	var previous_component_context = current_component_context;
 
-	current_effect = signal;
+	current_effect = effect;
 	current_component_context = component_context;
 
 	try {
-		destroy_children(signal);
-		signal.teardown?.();
-		const teardown = execute_reaction_fn(signal);
-		signal.teardown = typeof teardown === 'function' ? teardown : null;
+		destroy_children(effect);
+		effect.teardown?.();
+		var teardown = execute_reaction_fn(effect);
+		effect.teardown = typeof teardown === 'function' ? teardown : null;
 	} finally {
 		current_effect = previous_effect;
 		current_component_context = previous_component_context;
 	}
 
-	if ((signal.f & PRE_EFFECT) !== 0 && current_queued_pre_and_render_effects.length > 0) {
+	if ((effect.f & PRE_EFFECT) !== 0 && current_queued_pre_and_render_effects.length > 0) {
 		flush_local_pre_effects(component_context);
 	}
 }
