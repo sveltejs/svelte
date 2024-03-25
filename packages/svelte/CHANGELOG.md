@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.83
+
+### Patch Changes
+
+- feat: more efficient if block compiler output ([#10906](https://github.com/sveltejs/svelte/pull/10906))
+
+- fix: update type of `options.target` ([#10892](https://github.com/sveltejs/svelte/pull/10892))
+
+- fix: correctly hydrate controlled each-else block ([#10887](https://github.com/sveltejs/svelte/pull/10887))
+
+- fix: Add `dirname` to HTMLInputAttributes ([#10908](https://github.com/sveltejs/svelte/pull/10908))
+
 ## 5.0.0-next.82
 
 ### Patch Changes
