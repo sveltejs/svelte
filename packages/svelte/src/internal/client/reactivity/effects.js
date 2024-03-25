@@ -129,14 +129,6 @@ export function effect(fn) {
 }
 
 /**
- * @param {() => void | (() => void)} fn
- * @returns {import('#client').Effect}
- */
-export function managed_pre_effect(fn) {
-	return create_effect(PRE_EFFECT | MANAGED, fn, false);
-}
-
-/**
  * Internal representation of `$effect.pre(...)`
  * @param {() => void | (() => void)} fn
  * @returns {import('#client').Effect}
