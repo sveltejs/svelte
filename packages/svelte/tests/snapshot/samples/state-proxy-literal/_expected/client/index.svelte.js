@@ -17,7 +17,6 @@ export default function State_proxy_literal($$anchor, $$props) {
 
 	let str = $.source('');
 	let tpl = $.source(``);
-	/* Init */
 	var fragment = $.open_frag($$anchor, frag);
 	var input = $.first_child(fragment);
 

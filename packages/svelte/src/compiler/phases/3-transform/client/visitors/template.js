@@ -104,7 +104,7 @@ function serialize_style_directives(style_directives, element_id, context, is_at
 			);
 
 		if (!is_attributes_reactive && contains_call_expression) {
-			state.update_effects.push(singular);
+			state.init.push(singular);
 		} else if (is_attributes_reactive || directive.metadata.dynamic || contains_call_expression) {
 			state.update.push({ grouped, singular });
 		} else {
@@ -153,7 +153,7 @@ function serialize_class_directives(class_directives, element_id, context, is_at
 		const contains_call_expression = directive.expression.type === 'CallExpression';
 
 		if (!is_attributes_reactive && contains_call_expression) {
-			state.update_effects.push(singular);
+			state.init.push(singular);
 		} else if (is_attributes_reactive || directive.metadata.dynamic || contains_call_expression) {
 			state.update.push({ grouped, singular });
 		} else {
@@ -326,11 +326,11 @@ function serialize_element_spread_attributes(
 	// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
 	if (needs_isolation) {
 		if (needs_select_handling) {
-			context.state.update_effects.push(
+			context.state.init.push(
 				b.stmt(b.call('$.render_effect', b.arrow([], b.block([inside_effect]))))
 			);
 		} else {
-			context.state.update_effects.push(standalone);
+			context.state.init.push(standalone);
 		}
 	} else {
 		context.state.update.push({
@@ -408,7 +408,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 	);
 
 	if (needs_isolation) {
-		context.state.update_effects.push(isolated);
+		context.state.init.push(isolated);
 		return false;
 	} else if (is_reactive) {
 		const id = context.state.scope.generate('spread_attributes');
@@ -710,7 +710,7 @@ function serialize_update_assignment(state, id, init, value, assignment, contain
 	);
 
 	if (contains_call_expression && assignment.singular) {
-		state.update_effects.push(assignment.singular);
+		state.init.push(assignment.singular);
 	} else {
 		if (assignment.skip_condition) {
 			if (assignment.singular) {
@@ -719,21 +719,21 @@ function serialize_update_assignment(state, id, init, value, assignment, contain
 					grouped: assignment.grouped
 				});
 			} else {
+				state.init.push(b.var(id, init));
 				state.update.push({
-					init: b.var(id, init),
 					grouped
 				});
 			}
 		} else {
 			if (assignment.singular) {
+				state.init.push(b.var(id, init));
 				state.update.push({
-					init: b.var(id, init),
 					singular: assignment.singular,
 					grouped
 				});
 			} else {
+				state.init.push(b.var(id, init));
 				state.update.push({
-					init: b.var(id, init),
 					grouped
 				});
 			}
@@ -1132,7 +1132,6 @@ function create_block(parent, name, nodes, context) {
 		...context.state,
 		init: [],
 		update: [],
-		update_effects: [],
 		after_update: [],
 		template: [],
 		metadata: {
@@ -1241,32 +1240,8 @@ function create_block(parent, name, nodes, context) {
 		body.push(...state.init);
 	}
 
-	if (state.update.length > 0 || state.update_effects.length > 0) {
-		/** @type {import('estree').Statement | undefined} */
-		let update;
-
-		if (state.update_effects.length > 0) {
-			for (const render of state.update_effects) {
-				if (!update) {
-					update = render;
-				}
-				body.push(render);
-			}
-		}
-		if (state.update.length > 0) {
-			const render = serialize_render_stmt(state, body);
-			if (!update) {
-				update = render;
-			}
-			body.push(render);
-		}
-
-		/** @type {import('estree').Statement} */ (update).leadingComments = [
-			{
-				type: 'Block',
-				value: ` Update `
-			}
-		];
+	if (state.update.length > 0) {
+		body.push(serialize_render_stmt(state));
 	}
 
 	body.push(...state.after_update);
@@ -1282,15 +1257,6 @@ function create_block(parent, name, nodes, context) {
 		}
 
 		body.push(close);
-	}
-
-	if (body[0]) {
-		body[0].leadingComments = [
-			{
-				type: 'Block',
-				value: ` Init `
-			}
-		];
 	}
 
 	return body;
@@ -1316,30 +1282,13 @@ function get_template_function(namespace, state) {
 /**
  *
  * @param {import('../types.js').ComponentClientTransformState} state
- * @param {import('estree').Statement[]} body
  */
-function serialize_render_stmt(state, body) {
-	let render;
+function serialize_render_stmt(state) {
 	if (state.update.length === 1 && state.update[0].singular) {
-		render = state.update[0].singular;
-	} else {
-		render = b.stmt(
-			b.call(
-				'$.render_effect',
-				b.thunk(
-					b.block(
-						state.update.map((n) => {
-							if (n.init) {
-								body.push(n.init);
-							}
-							return n.grouped;
-						})
-					)
-				)
-			)
-		);
+		return state.update[0].singular;
 	}
-	return render;
+
+	return b.stmt(b.call('$.render_effect', b.thunk(b.block(state.update.map((n) => n.grouped)))));
 }
 
 /**
@@ -1573,7 +1522,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 			);
 
 			if (node.metadata.contains_call_expression && !within_bound_contenteditable) {
-				state.update_effects.push(singular);
+				state.init.push(singular);
 			} else if (node.metadata.dynamic && !within_bound_contenteditable) {
 				state.update.push({
 					singular,
@@ -1615,7 +1564,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 			const singular = b.stmt(b.call('$.text_effect', text_id, b.thunk(assignment)));
 
 			if (contains_call_expression && !within_bound_contenteditable) {
-				state.update_effects.push(singular);
+				state.init.push(singular);
 			} else if (
 				sequence.some((node) => node.type === 'ExpressionTag' && node.metadata.dynamic) &&
 				!within_bound_contenteditable
@@ -2214,7 +2163,6 @@ export const template_visitors = {
 				node: element_id,
 				init: [],
 				update: [],
-				update_effects: [],
 				after_update: []
 			}
 		};
@@ -2259,15 +2207,8 @@ export const template_visitors = {
 
 		/** @type {import('estree').Statement[]} */
 		const inner = inner_context.state.init;
-		if (inner_context.state.update.length > 0 || inner_context.state.update_effects.length > 0) {
-			if (inner_context.state.update_effects.length > 0) {
-				for (const render of inner_context.state.update_effects) {
-					inner.push(render);
-				}
-			}
-			if (inner_context.state.update.length > 0) {
-				inner.push(serialize_render_stmt(inner_context.state, inner));
-			}
+		if (inner_context.state.update.length > 0) {
+			inner.push(serialize_render_stmt(inner_context.state));
 		}
 		inner.push(...inner_context.state.after_update);
 		inner.push(
