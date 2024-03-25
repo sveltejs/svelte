@@ -1,6 +1,5 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
-import { render_effect } from '../../reactivity/effects.js';
 import { get_descriptors, map_get, map_set, object_assign } from '../../utils.js';
 import { AttributeAliases, DelegatedEvents, namespace_svg } from '../../../../constants.js';
 import { delegate } from './events.js';
