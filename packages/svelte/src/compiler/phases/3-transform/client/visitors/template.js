@@ -59,7 +59,7 @@ function get_attribute_name(element, attribute, context) {
 }
 
 /**
- * Serializes each style directive into something like `$.style(element, style_property, value)`
+ * Serializes each style directive into something like `$.set_style(element, style_property, value)`
  * and adds it either to init or update, depending on whether or not the value or the attributes are dynamic.
  * @param {import('#compiler').StyleDirective[]} style_directives
  * @param {import('estree').Identifier} element_id
@@ -77,7 +77,7 @@ function serialize_style_directives(style_directives, element_id, context, is_at
 
 		const update = b.stmt(
 			b.call(
-				'$.style',
+				'$.set_style',
 				element_id,
 				b.literal(directive.name),
 				value,
@@ -136,7 +136,7 @@ function serialize_class_directives(class_directives, element_id, context, is_at
 	const state = context.state;
 	for (const directive of class_directives) {
 		const value = /** @type {import('estree').Expression} */ (context.visit(directive.expression));
-		const update = b.stmt(b.call('$.class_toggle', element_id, b.literal(directive.name), value));
+		const update = b.stmt(b.call('$.toggle_class', element_id, b.literal(directive.name), value));
 		const contains_call_expression = directive.expression.type === 'CallExpression';
 
 		if (!is_attributes_reactive && contains_call_expression) {
@@ -280,14 +280,14 @@ function serialize_element_spread_attributes(
 
 	const lowercase_attributes =
 		element.metadata.svg || is_custom_element_node(element) ? b.false : b.true;
-	const id = context.state.scope.generate('spread_attributes');
+	const id = context.state.scope.generate('attributes');
 
 	const update = b.stmt(
 		b.assignment(
 			'=',
 			b.id(id),
 			b.call(
-				'$.spread_attributes',
+				'$.set_attributes',
 				element_id,
 				b.id(id),
 				b.array(values),
@@ -337,7 +337,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 	if (attributes.length === 0) {
 		if (context.state.analysis.css.hash) {
 			context.state.init.push(
-				b.stmt(b.call('$.class_name', element_id, b.literal(context.state.analysis.css.hash)))
+				b.stmt(b.call('$.set_class', element_id, b.literal(context.state.analysis.css.hash)))
 			);
 		}
 		return false;
@@ -368,7 +368,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 	}
 
 	if (needs_isolation || is_reactive) {
-		const id = context.state.scope.generate('spread_attributes');
+		const id = context.state.scope.generate('attributes');
 		context.state.init.push(b.let(id));
 
 		const update = b.stmt(
@@ -376,7 +376,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 				'=',
 				b.id(id),
 				b.call(
-					'$.spread_dynamic_element_attributes',
+					'$.set_dynamic_element_attributes',
 					element_id,
 					b.id(id),
 					b.array(values),
@@ -397,7 +397,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 	context.state.init.push(
 		b.stmt(
 			b.call(
-				'$.spread_dynamic_element_attributes',
+				'$.set_dynamic_element_attributes',
 				element_id,
 				b.literal(null),
 				b.array(values),
@@ -415,7 +415,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
  * ```js
  * element.property = value;
  * // or
- * $.attr(element, property, value);
+ * $.set_attribute(element, property, value);
  * });
  * ```
  * Resulting code for dynamic looks something like this:
@@ -425,7 +425,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
  * 	if (value !== (value = 'new value')) {
  * 		element.property = value;
  * 		// or
- * 		$.attr(element, property, value);
+ * 		$.set_attribute(element, property, value);
  * 	}
  * });
  * ```
@@ -444,7 +444,9 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 
 	// The foreign namespace doesn't have any special handling, everything goes through the attr function
 	if (context.state.metadata.namespace === 'foreign') {
-		const statement = { grouped: b.stmt(b.call('$.attr', node_id, b.literal(name), value)) };
+		const statement = {
+			grouped: b.stmt(b.call('$.set_attribute', node_id, b.literal(name), value))
+		};
 		if (attribute.metadata.dynamic) {
 			const id = state.scope.generate(`${node_id.name}_${name}`);
 			serialize_update_assignment(state, id, undefined, value, statement, contains_call_expression);
@@ -464,11 +466,11 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 	let update;
 
 	if (name === 'class') {
-		update = b.stmt(b.call(is_svg ? '$.svg_class_name' : '$.class_name', node_id, value));
+		update = b.stmt(b.call(is_svg ? '$.set_svg_class' : '$.set_class', node_id, value));
 	} else if (DOMProperties.includes(name)) {
 		update = b.stmt(b.assignment('=', b.member(node_id, b.id(name)), value));
 	} else {
-		const callee = name.startsWith('xlink') ? '$.xlink_attr' : '$.attr';
+		const callee = name.startsWith('xlink') ? '$.set_xlink_attribute' : '$.set_attribute';
 		update = b.stmt(b.call(callee, node_id, b.literal(name), value));
 	}
 
@@ -1397,7 +1399,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 
 			const update = b.stmt(
 				b.call(
-					'$.text',
+					'$.set_text',
 					text_id,
 					/** @type {import('estree').Expression} */ (visit(node.expression))
 				)
@@ -1431,7 +1433,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 
 			const [contains_call_expression, value] = serialize_template_literal(sequence, visit);
 
-			const update = b.stmt(b.call('$.text', text_id, value));
+			const update = b.stmt(b.call('$.set_text', text_id, value));
 
 			if (contains_call_expression && !within_bound_contenteditable) {
 				state.init.push(serialize_update(update));

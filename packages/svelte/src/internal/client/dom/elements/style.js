@@ -1,12 +1,10 @@
-import { render_effect } from '../../reactivity/effects.js';
-
 /**
  * @param {HTMLElement} dom
  * @param {string} key
  * @param {string} value
  * @param {boolean} [important]
  */
-export function style(dom, key, value, important) {
+export function set_style(dom, key, value, important) {
 	const style = dom.style;
 	const prev_value = style.getPropertyValue(key);
 	if (value == null) {

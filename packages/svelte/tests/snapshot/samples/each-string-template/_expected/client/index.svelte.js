@@ -17,7 +17,7 @@ export default function Each_string_template($$anchor, $$props) {
 		($$anchor, thing, $$index) => {
 			var text = $.space_frag($$anchor);
 
-			$.render_effect(() => $.text(text, `${$.stringify($.unwrap(thing))}, `));
+			$.render_effect(() => $.set_text(text, `${$.stringify($.unwrap(thing))}, `));
 			return $.close($$anchor, text);
 		},
 		null

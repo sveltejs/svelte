@@ -44,7 +44,7 @@ export function set_should_intro(value) {
  * @param {string} value
  * @returns {void}
  */
-export function text(dom, value) {
+export function set_text(dom, value) {
 	// @ts-expect-error need to add __value to patched prototype
 	const prev_node_value = dom.__nodeValue;
 	const next_node_value = stringify(value);

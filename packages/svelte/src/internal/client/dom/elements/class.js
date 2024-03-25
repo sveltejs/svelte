@@ -6,7 +6,7 @@ import { set_class_name } from '../operations.js';
  * @param {string} value
  * @returns {void}
  */
-export function svg_class_name(dom, value) {
+export function set_svg_class(dom, value) {
 	// @ts-expect-error need to add __className to patched prototype
 	var prev_class_name = dom.__className;
 	var next_class_name = to_class(value);
@@ -35,7 +35,7 @@ export function svg_class_name(dom, value) {
  * @param {string} value
  * @returns {void}
  */
-export function class_name(dom, value) {
+export function set_class(dom, value) {
 	// @ts-expect-error need to add __className to patched prototype
 	var prev_class_name = dom.__className;
 	var next_class_name = to_class(value);
@@ -77,7 +77,7 @@ function to_class(value) {
  * @param {boolean} value
  * @returns {void}
  */
-export function class_toggle(dom, class_name, value) {
+export function toggle_class(dom, class_name, value) {
 	if (value) {
 		dom.classList.add(class_name);
 	} else {
