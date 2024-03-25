@@ -20,17 +20,6 @@ export function remove_input_attr_defaults(dom) {
 }
 
 /**
- * @param {Element} dom
- * @param {string} attribute
- * @param {() => string} value
- */
-export function attr_effect(dom, attribute, value) {
-	render_effect(() => {
-		attr(dom, attribute, value());
-	});
-}
-
-/**
  * @param {Element} element
  * @param {string} attribute
  * @param {string | null} value
@@ -62,17 +51,6 @@ export function attr(element, attribute, value) {
 	} else {
 		element.setAttribute(attribute, value);
 	}
-}
-
-/**
- * @param {Element} dom
- * @param {string} attribute
- * @param {() => string} value
- */
-export function xlink_attr_effect(dom, attribute, value) {
-	render_effect(() => {
-		xlink_attr(dom, attribute, value());
-	});
 }
 
 /**

@@ -1,28 +1,5 @@
 import { hydrating } from '../hydration.js';
 import { set_class_name } from '../operations.js';
-import { render_effect } from '../../reactivity/effects.js';
-
-/**
- * @param {HTMLElement} dom
- * @param {() => string} value
- * @returns {void}
- */
-export function class_name_effect(dom, value) {
-	render_effect(() => {
-		class_name(dom, value());
-	});
-}
-
-/**
- * @param {SVGElement} dom
- * @param {() => string} value
- * @returns {void}
- */
-export function svg_class_name_effect(dom, value) {
-	render_effect(() => {
-		svg_class_name(dom, value());
-	});
-}
 
 /**
  * @param {SVGElement} dom
@@ -90,7 +67,7 @@ export function class_name(dom, value) {
  * @param {V} value
  * @returns {string | V}
  */
-export function to_class(value) {
+function to_class(value) {
 	return value == null ? '' : value;
 }
 
