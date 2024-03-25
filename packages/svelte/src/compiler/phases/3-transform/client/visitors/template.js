@@ -1262,10 +1262,23 @@ function get_template_function(namespace, state) {
 
 /**
  *
+ * @param {import('estree').Statement} statement
+ */
+function serialize_update(statement) {
+	const body =
+		statement.type === 'ExpressionStatement' ? statement.expression : b.block([statement]);
+
+	return b.stmt(b.call('$.render_effect', b.thunk(body)));
+}
+
+/**
+ *
  * @param {import('../types.js').ComponentClientTransformState} state
  */
 function serialize_render_stmt(state) {
-	return b.stmt(b.call('$.render_effect', b.thunk(b.block(state.update))));
+	return state.update.length === 1
+		? serialize_update(state.update[0])
+		: b.stmt(b.call('$.render_effect', b.thunk(b.block(state.update))));
 }
 
 /**
@@ -1490,26 +1503,18 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 
 			const text_id = get_node_id(b.call('$.space', expression(true)), state, 'text');
 
-			const singular = b.stmt(
+			const update = b.stmt(
 				b.call(
-					'$.text_effect',
+					'$.text',
 					text_id,
-					b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression)))
+					/** @type {import('estree').Expression} */ (visit(node.expression))
 				)
 			);
 
 			if (node.metadata.contains_call_expression && !within_bound_contenteditable) {
-				state.init.push(singular);
+				state.init.push(serialize_update(update));
 			} else if (node.metadata.dynamic && !within_bound_contenteditable) {
-				state.update.push(
-					b.stmt(
-						b.call(
-							'$.text',
-							text_id,
-							/** @type {import('estree').Expression} */ (visit(node.expression))
-						)
-					)
-				);
+				state.update.push(update);
 			} else {
 				state.init.push(
 					b.stmt(
@@ -1532,22 +1537,19 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 
 			state.template.push(' ');
 
-			const contains_call_expression = sequence.some(
-				(n) => n.type === 'ExpressionTag' && n.metadata.contains_call_expression
-			);
-			const assignment = serialize_template_literal(sequence, visit, state)[1];
-			const init = b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), assignment));
-			const singular = b.stmt(b.call('$.text_effect', text_id, b.thunk(assignment)));
+			const [contains_call_expression, value] = serialize_template_literal(sequence, visit);
+
+			const update = b.stmt(b.call('$.text', text_id, value));
 
 			if (contains_call_expression && !within_bound_contenteditable) {
-				state.init.push(singular);
+				state.init.push(serialize_update(update));
 			} else if (
 				sequence.some((node) => node.type === 'ExpressionTag' && node.metadata.dynamic) &&
 				!within_bound_contenteditable
 			) {
-				state.update.push(b.stmt(b.call('$.text', text_id, assignment)));
+				state.update.push(update);
 			} else {
-				state.init.push(init);
+				state.init.push(b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), value)));
 			}
 
 			expression = (is_text) =>
@@ -1650,22 +1652,20 @@ function serialize_attribute_value(attribute_value, context) {
 		}
 	}
 
-	return serialize_template_literal(attribute_value, context.visit, context.state);
+	return serialize_template_literal(attribute_value, context.visit);
 }
 
 /**
  * @param {Array<import('#compiler').Text | import('#compiler').ExpressionTag>} values
  * @param {(node: import('#compiler').SvelteNode) => any} visit
- * @param {import('../types.js').ComponentClientTransformState} state
  * @returns {[boolean, import('estree').TemplateLiteral]}
  */
-function serialize_template_literal(values, visit, state) {
+function serialize_template_literal(values, visit) {
 	/** @type {import('estree').TemplateElement[]} */
 	const quasis = [];
 
 	/** @type {import('estree').Expression[]} */
 	const expressions = [];
-	const scope = state.scope;
 	let contains_call_expression = false;
 	quasis.push(b.quasi(''));
 
@@ -1689,6 +1689,7 @@ function serialize_template_literal(values, visit, state) {
 		}
 	}
 
+	// TODO instead of this tuple, return a `{ dynamic, complex, value }` object. will DRY stuff out
 	return [contains_call_expression, b.template(quasis, expressions)];
 }
 
@@ -3111,7 +3112,7 @@ export const template_visitors = {
 					b.assignment(
 						'=',
 						b.member(b.id('$.document'), b.id('title')),
-						serialize_template_literal(/** @type {any} */ (node.fragment.nodes), visit, state)[1]
+						serialize_template_literal(/** @type {any} */ (node.fragment.nodes), visit)[1]
 					)
 				)
 			);

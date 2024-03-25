@@ -41,15 +41,6 @@ export function set_should_intro(value) {
 
 /**
  * @param {Element} dom
- * @param {() => string} value
- * @returns {void}
- */
-export function text_effect(dom, value) {
-	render_effect(() => text(dom, value()));
-}
-
-/**
- * @param {Element} dom
  * @param {string} value
  * @returns {void}
  */
