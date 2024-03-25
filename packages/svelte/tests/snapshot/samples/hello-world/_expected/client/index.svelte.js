@@ -9,7 +9,6 @@ export default function Hello_world($$anchor, $$props) {
 	$.push($$props, false);
 	$.init();
 
-	/* Init */
 	var h1 = $.open($$anchor, frag);
 
 	$.close($$anchor, h1);

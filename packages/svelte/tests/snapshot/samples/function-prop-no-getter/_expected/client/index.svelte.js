@@ -13,7 +13,6 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 	}
 
 	const plusOne = (num) => num + 1;
-	/* Init */
 	var fragment = $.comment($$anchor);
 	var node = $.first_child(fragment);
 
@@ -22,10 +21,8 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 		onmouseup,
 		onmouseenter: () => $.set(count, $.proxy(plusOne($.get(count)))),
 		children: ($$anchor, $$slotProps) => {
-			/* Init */
 			var text = $.space_frag($$anchor);
 
-			/* Update */
 			$.text_effect(text, () => `clicks: ${$.stringify($.get(count))}`);
 			return $.close($$anchor, text);
 		}

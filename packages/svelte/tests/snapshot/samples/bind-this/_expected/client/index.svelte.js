@@ -7,7 +7,6 @@ export default function Bind_this($$anchor, $$props) {
 	$.push($$props, false);
 	$.init();
 
-	/* Init */
 	var fragment = $.comment($$anchor);
 	var node = $.first_child(fragment);
 

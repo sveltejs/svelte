@@ -62,13 +62,6 @@ export function client_component(source, analysis, options) {
 				error(null, 'INTERNAL', 'update.push should not be called outside create_block');
 			return a;
 		},
-		get update_effects() {
-			/** @type {any[]} */
-			const a = [];
-			a.push = () =>
-				error(null, 'INTERNAL', 'update_effects.push should not be called outside create_block');
-			return a;
-		},
 		get after_update() {
 			/** @type {any[]} */
 			const a = [];

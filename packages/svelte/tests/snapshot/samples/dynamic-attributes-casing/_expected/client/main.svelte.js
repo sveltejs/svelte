@@ -11,23 +11,24 @@ export default function Main($$anchor, $$props) {
 	// needs to be a snapshot test because jsdom does auto-correct the attribute casing
 	let x = 'test';
 	let y = () => 'test';
-	/* Init */
 	var fragment = $.open_frag($$anchor, frag, false);
 	var div = $.first_child(fragment);
+	var div_foobar;
 	var svg = $.sibling($.sibling(div, true));
+	var svg_viewBox;
 	var custom_element = $.sibling($.sibling(svg, true));
+	var custom_element_fooBar;
 	var div_1 = $.sibling($.sibling(custom_element, true));
+
+	$.attr_effect(div_1, "foobar", y);
+
 	var svg_1 = $.sibling($.sibling(div_1, true));
+
+	$.attr_effect(svg_1, "viewBox", y);
+
 	var custom_element_1 = $.sibling($.sibling(svg_1, true));
 
-	/* Update */
-	$.attr_effect(div_1, "foobar", y);
-	$.attr_effect(svg_1, "viewBox", y);
 	$.set_custom_element_data_effect(custom_element_1, "fooBar", y);
-
-	var div_foobar;
-	var svg_viewBox;
-	var custom_element_fooBar;
 
 	$.render_effect(() => {
 		if (div_foobar !== (div_foobar = x)) {

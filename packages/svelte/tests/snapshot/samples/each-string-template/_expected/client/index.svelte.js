@@ -7,7 +7,6 @@ export default function Each_string_template($$anchor, $$props) {
 	$.push($$props, false);
 	$.init();
 
-	/* Init */
 	var fragment = $.comment($$anchor);
 	var node = $.first_child(fragment);
 
@@ -16,10 +15,8 @@ export default function Each_string_template($$anchor, $$props) {
 		() => ['foo', 'bar', 'baz'],
 		1,
 		($$anchor, thing, $$index) => {
-			/* Init */
 			var text = $.space_frag($$anchor);
 
-			/* Update */
 			$.text_effect(text, () => `${$.stringify($.unwrap(thing))}, `);
 			return $.close($$anchor, text);
 		},
