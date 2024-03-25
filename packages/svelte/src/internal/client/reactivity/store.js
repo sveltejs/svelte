@@ -2,7 +2,7 @@ import { subscribe_to_store } from '../../../store/utils.js';
 import { noop } from '../../common.js';
 import { UNINITIALIZED } from '../constants.js';
 import { get, untrack } from '../runtime.js';
-import { user_effect } from './effects.js';
+import { effect } from './effects.js';
 import { mutable_source, set } from './sources.js';
 
 /**
@@ -155,5 +155,5 @@ export function update_pre_store(store, store_value, d = 1) {
  * @returns {void}
  */
 function on_destroy(fn) {
-	user_effect(() => () => untrack(fn));
+	effect(() => () => untrack(fn));
 }

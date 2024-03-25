@@ -1,5 +1,5 @@
 import { hydrating } from '../../hydration.js';
-import { render_effect, user_effect } from '../../../reactivity/effects.js';
+import { render_effect, effect } from '../../../reactivity/effects.js';
 import { listen } from './shared.js';
 
 /** @param {TimeRanges} ranges */
@@ -117,7 +117,7 @@ export function bind_playback_rate(media, get_value, update) {
 
 	// Needs to happen after the element is inserted into the dom, else playback will be set back to 1 by the browser.
 	// For hydration we could do it immediately but the additional code is not worth the lost microtask.
-	user_effect(() => {
+	effect(() => {
 		var value = get_value();
 
 		// through isNaN we also allow number strings, which is more robust

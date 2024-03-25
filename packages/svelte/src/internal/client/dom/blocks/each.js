@@ -18,11 +18,11 @@ import { insert, remove } from '../reconciler.js';
 import { untrack } from '../../runtime.js';
 import {
 	destroy_effect,
+	effect,
 	pause_effect,
 	pause_effects,
 	render_effect,
-	resume_effect,
-	user_effect
+	resume_effect
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen, map_get, map_set } from '../../utils.js';
@@ -425,7 +425,7 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 			// we can figure out the eventual destination of the animating elements
 			// - https://github.com/sveltejs/svelte/pull/10798#issuecomment-2013681778
 			// - https://svelte.dev/repl/6e891305e9644a7ca7065fa95c79d2d2?version=4.2.9
-			user_effect(() => {
+			effect(() => {
 				untrack(() => {
 					for (item of to_animate) {
 						item.a?.apply();
