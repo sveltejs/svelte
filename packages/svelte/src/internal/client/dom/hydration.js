@@ -39,7 +39,7 @@ export function update_hydrate_nodes(first, insert_text) {
 }
 
 /**
- * Returns all nodes between the first `<!--ssr:...-->` comment tag pair encountered.
+ * Returns all nodes between the first `<![>...<!]>` comment tag pair encountered.
  * @param {Node | null} node
  * @param {boolean} [insert_text] Whether to insert an empty text node if `nodes` is empty
  * @returns {import('#client').TemplateNode[] | null}
@@ -50,34 +50,43 @@ function get_hydrate_nodes(node, insert_text = false) {
 
 	var current_node = /** @type {null | import('#client').TemplateNode} */ (node);
 
-	/** @type {null | string} */
-	var target_depth = null;
+	var depth = 0;
+
+	var will_start = false;
+	var started = false;
 
 	while (current_node !== null) {
 		if (current_node.nodeType === 8) {
 			var data = /** @type {Comment} */ (current_node).data;
 
-			if (data.startsWith('ssr:')) {
-				var depth = data.slice(4);
+			if (data === '[') {
+				depth += 1;
+				will_start = true;
+			} else if (data === ']') {
+				if (!started) {
+					// TODO get rid of this — it exists because each blocks are doubly wrapped
+					return null;
+				}
 
-				if (target_depth === null) {
-					target_depth = depth;
-				} else if (depth === target_depth) {
+				if (--depth === 0) {
 					if (insert_text && nodes.length === 0) {
 						var text = empty();
 						nodes.push(text);
 						current_node.before(text);
 					}
+
 					return nodes;
-				} else {
-					nodes.push(current_node);
 				}
 			}
-		} else if (target_depth !== null) {
+		}
+
+		if (started) {
 			nodes.push(current_node);
 		}
 
 		current_node = /** @type {null | import('#client').TemplateNode} */ (current_node.nextSibling);
+
+		started = will_start;
 	}
 
 	return null;
@@ -103,7 +112,7 @@ export function hydrate_block_anchor(node) {
 export function capture_fragment_from_node(node) {
 	if (
 		node.nodeType === 8 &&
-		/** @type {Comment} */ (node).data.startsWith('ssr:') &&
+		/** @type {Comment} */ (node).data === '[' &&
 		hydrate_nodes[hydrate_nodes.length - 1] !== node
 	) {
 		const nodes = /** @type {Node[]} */ (get_hydrate_nodes(node));

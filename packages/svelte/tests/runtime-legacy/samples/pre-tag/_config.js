@@ -12,7 +12,7 @@ function get_html(ssr) {
 	// ssr rendered HTML has an extra newline prefixed within `<pre>` tag,
 	// if the <pre> tag starts with `\n`
 	// because when browser parses the SSR rendered HTML, it will ignore the 1st '\n' character
-	return `${ssr ? '<!--ssr:0-->' : ''}<pre id="pre">  A
+	return `${ssr ? '<!--[-->' : ''}<pre id="pre">  A
   B
   <span>
     C
@@ -35,5 +35,5 @@ function get_html(ssr) {
 leading newlines</pre></div> <div id="pre-without-leading-newline"><pre>without spaces</pre> <pre>  with spaces  </pre> <pre>${' '}
 newline after leading space</pre></div> <pre id="pre-with-multiple-leading-newlines">
 
-multiple leading newlines</pre>${ssr ? '<!--ssr:0-->' : ''}`;
+multiple leading newlines</pre>${ssr ? '<!--]-->' : ''}`;
 }
