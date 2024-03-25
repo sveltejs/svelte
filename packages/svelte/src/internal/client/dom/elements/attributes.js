@@ -109,22 +109,6 @@ export function set_custom_element_data(node, prop, value) {
 }
 
 /**
- * Like `spread_attributes` but self-contained
- * @param {Element & ElementCSSInlineStyle} dom
- * @param {() => Record<string, unknown>[]} attrs
- * @param {boolean} lowercase_attributes
- * @param {string} css_hash
- */
-export function spread_attributes_effect(dom, attrs, lowercase_attributes, css_hash) {
-	/** @type {Record<string, any> | undefined} */
-	var current;
-
-	render_effect(() => {
-		current = spread_attributes(dom, current, attrs(), lowercase_attributes, css_hash);
-	});
-}
-
-/**
  * Spreads attributes onto a DOM element, taking into account the currently set attributes
  * @param {Element & ElementCSSInlineStyle} element
  * @param {Record<string, unknown> | undefined} prev

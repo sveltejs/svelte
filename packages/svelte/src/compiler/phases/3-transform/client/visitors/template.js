@@ -282,16 +282,7 @@ function serialize_element_spread_attributes(
 		element.metadata.svg || is_custom_element_node(element) ? b.false : b.true;
 	const id = context.state.scope.generate('spread_attributes');
 
-	const standalone = b.stmt(
-		b.call(
-			'$.spread_attributes_effect',
-			element_id,
-			b.thunk(b.array(values)),
-			lowercase_attributes,
-			b.literal(context.state.analysis.css.hash)
-		)
-	);
-	const inside_effect = b.stmt(
+	const update = b.stmt(
 		b.assignment(
 			'=',
 			b.id(id),
@@ -306,21 +297,13 @@ function serialize_element_spread_attributes(
 		)
 	);
 
-	if (!needs_isolation || needs_select_handling) {
-		context.state.init.push(b.let(id));
-	}
+	context.state.init.push(b.let(id));
 
 	// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
 	if (needs_isolation) {
-		if (needs_select_handling) {
-			context.state.init.push(
-				b.stmt(b.call('$.render_effect', b.arrow([], b.block([inside_effect]))))
-			);
-		} else {
-			context.state.init.push(standalone);
-		}
+		context.state.init.push(serialize_update(update));
 	} else {
-		context.state.update.push(inside_effect);
+		context.state.update.push(update);
 	}
 
 	if (needs_select_handling) {
