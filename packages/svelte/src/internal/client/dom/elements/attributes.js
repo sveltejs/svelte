@@ -38,25 +38,26 @@ export function attr_effect(dom, attribute, value) {
 export function attr(dom, attribute, value) {
 	value = value == null ? null : value + '';
 
+	// @ts-expect-error
 	var attributes = (dom.__attributes ??= {});
 
 	if (hydrating) {
 		attributes[attribute] = dom.getAttribute(attribute);
+
+		if (attribute === 'src' || attribute === 'href' || attribute === 'srcset') {
+			if (DEV) {
+				check_src_in_dev_hydration(dom, attribute, value);
+			}
+
+			// If we reset these attributes, they would result in another network request, which we want to avoid.
+			// We assume they are the same between client and server as checking if they are equal is expensive
+			// (we can't just compare the strings as they can be different between client and server but result in the
+			// same url, so we would need to create hidden anchor elements to compare them)
+			return;
+		}
 	}
 
 	if (attributes[attribute] === (attributes[attribute] = value)) return;
-
-	if (DEV) {
-		check_src_in_dev_hydration(dom, attribute, value);
-	}
-
-	if (hydrating && (attribute === 'src' || attribute === 'href' || attribute === 'srcset')) {
-		// If we reset these attributes, they would result in another network request, which we want to avoid.
-		// We assume they are the same between client and server as checking if they are equal is expensive
-		// (we can't just compare the strings as they can be different between client and server but result in the
-		// same url, so we would need to create hidden anchor elements to compare them)
-		return;
-	}
 
 	if (value === null) {
 		dom.removeAttribute(attribute);
