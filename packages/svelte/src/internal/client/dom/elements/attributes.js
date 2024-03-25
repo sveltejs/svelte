@@ -65,17 +65,6 @@ export function xlink_attr(dom, attribute, value) {
 /**
  * @param {any} node
  * @param {string} prop
- * @param {() => any} value
- */
-export function set_custom_element_data_effect(node, prop, value) {
-	render_effect(() => {
-		set_custom_element_data(node, prop, value());
-	});
-}
-
-/**
- * @param {any} node
- * @param {string} prop
  * @param {any} value
  */
 export function set_custom_element_data(node, prop, value) {

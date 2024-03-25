@@ -496,40 +496,18 @@ function serialize_custom_element_attribute_update_assignment(node_id, attribute
 	const state = context.state;
 	const name = attribute.name; // don't lowercase, as we set the element's property, which might be case sensitive
 	let [contains_call_expression, value] = serialize_attribute_value(attribute.value, context);
-	let grouped_value = value;
 
-	/**
-	 * @param {import('estree').Expression} grouped
-	 * @param {import('estree').Expression} [singular]
-	 */
-	const assign = (grouped, singular) => {
-		if (singular) {
-			return {
-				singular: b.stmt(
-					b.call('$.set_custom_element_data_effect', node_id, b.literal(name), b.thunk(singular))
-				),
-				grouped: b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), grouped))
-			};
-		}
-		return {
-			grouped: b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), grouped))
-		};
-	};
+	const update = b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), value));
 
 	if (attribute.metadata.dynamic) {
-		const id = state.scope.generate(`${node_id.name}_${name}`);
-		// TODO should this use the if condition? what if someone mutates the value passed to the ce?
-		serialize_update_assignment(
-			state,
-			id,
-			undefined,
-			grouped_value,
-			assign(b.id(id), value),
-			contains_call_expression
-		);
+		if (contains_call_expression) {
+			state.init.push(serialize_update(update));
+		} else {
+			state.update.push(update);
+		}
 		return true;
 	} else {
-		state.init.push(assign(grouped_value).grouped);
+		state.init.push(update);
 		return false;
 	}
 }

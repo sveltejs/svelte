@@ -15,7 +15,6 @@ export default function Main($$anchor, $$props) {
 	var div = $.first_child(fragment);
 	var svg = $.sibling($.sibling(div, true));
 	var custom_element = $.sibling($.sibling(svg, true));
-	var custom_element_fooBar;
 	var div_1 = $.sibling($.sibling(custom_element, true));
 
 	$.render_effect(() => $.attr(div_1, "foobar", y()));
@@ -26,15 +25,12 @@ export default function Main($$anchor, $$props) {
 
 	var custom_element_1 = $.sibling($.sibling(svg_1, true));
 
-	$.set_custom_element_data_effect(custom_element_1, "fooBar", y);
+	$.render_effect(() => $.set_custom_element_data(custom_element_1, "fooBar", y()));
 
 	$.render_effect(() => {
 		$.attr(div, "foobar", x);
 		$.attr(svg, "viewBox", x);
-
-		if (custom_element_fooBar !== (custom_element_fooBar = x)) {
-			$.set_custom_element_data(custom_element, "fooBar", custom_element_fooBar);
-		}
+		$.set_custom_element_data(custom_element, "fooBar", x);
 	});
 
 	$.close_frag($$anchor, fragment);
