@@ -155,14 +155,6 @@ export function effect_root(fn) {
 }
 
 /**
- * TODO this is placeholder, just so we can get all the tests passing. eventually `_mount` should just create an effect root
- * @param {() => void | (() => void)} fn
- */
-export function fake_effect_root(fn) {
-	return create_effect(RENDER_EFFECT | ROOT_EFFECT, () => untrack(fn), true);
-}
-
-/**
  * @param {() => void | (() => void)} fn
  * @returns {import('#client').Effect}
  */

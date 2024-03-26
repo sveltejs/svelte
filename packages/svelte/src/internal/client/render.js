@@ -7,9 +7,8 @@ import {
 	init_operations
 } from './dom/operations.js';
 import { PassiveDelegatedEvents } from '../../constants.js';
-import { remove } from './dom/reconciler.js';
 import { flush_sync, push, pop, current_component_context, untrack } from './runtime.js';
-import { render_effect, destroy_effect, fake_effect_root } from './reactivity/effects.js';
+import { effect_root, branch } from './reactivity/effects.js';
 import {
 	hydrate_anchor,
 	hydrate_nodes,
@@ -19,7 +18,6 @@ import {
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
 import { handle_event_propagation } from './dom/elements/events.js';
-import { ROOT_EFFECT } from './constants.js';
 
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
@@ -190,49 +188,19 @@ export function hydrate(component, options) {
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
- * 		recover?: false;
  * 	}} options
  * @returns {Exports}
  */
-function _mount(Component, options) {
+function _mount(
+	Component,
+	{ target, anchor, props = /** @type {Props} */ ({}), events, context, intro = false }
+) {
 	init_operations();
 
 	const registered_events = new Set();
-	const container = options.target;
 
-	should_intro = options.intro ?? false;
-
-	/** @type {Exports} */
-	// @ts-expect-error will be defined because the render effect runs synchronously
-	let component = undefined;
-
-	// TODO should this just be a root effect, rather than having the destroy logic live separately?
-	const effect = fake_effect_root(() => {
-		if (options.context) {
-			push({});
-			var ctx = /** @type {import('#client').ComponentContext} */ (current_component_context);
-			ctx.c = options.context;
-		}
-
-		options.props ||= /** @type {Props} */ ({});
-
-		if (options.events) {
-			// We can't spread the object or else we'd lose the state proxy stuff, if it is one
-			/** @type {any} */ (options.props).$$events = options.events;
-		}
-
-		// @ts-expect-error the public typings are not what the actual function looks like
-		component = Component(options.anchor, options.props) || {};
-
-		if (options.context) {
-			pop();
-		}
-	});
-
-	const bound_event_listener = handle_event_propagation.bind(null, container);
+	const bound_event_listener = handle_event_propagation.bind(null, target);
 	const bound_document_event_listener = handle_event_propagation.bind(null, document);
-
-	should_intro = true;
 
 	/** @param {Array<string>} events */
 	const event_handle = (events) => {
@@ -243,7 +211,7 @@ function _mount(Component, options) {
 				// Add the event listener to both the container and the document.
 				// The container listener ensures we catch events from within in case
 				// the outer content stops propagation of the event.
-				container.addEventListener(
+				target.addEventListener(
 					event_name,
 					bound_event_listener,
 					PassiveDelegatedEvents.includes(event_name)
@@ -266,21 +234,49 @@ function _mount(Component, options) {
 			}
 		}
 	};
+
 	event_handle(array_from(all_registered_events));
 	root_event_handles.add(event_handle);
 
-	mounted_components.set(component, () => {
-		for (const event_name of registered_events) {
-			container.removeEventListener(event_name, bound_event_listener);
-		}
-		root_event_handles.delete(event_handle);
-		const dom = effect.dom;
-		if (dom !== null) {
-			remove(dom);
-		}
-		destroy_effect(effect);
+	/** @type {Exports} */
+	// @ts-expect-error will be defined because the render effect runs synchronously
+	let component = undefined;
+
+	// TODO should this just be a root effect, rather than having the destroy logic live separately?
+	const unmount = effect_root(() => {
+		branch(() => {
+			untrack(() => {
+				if (context) {
+					push({});
+					var ctx = /** @type {import('#client').ComponentContext} */ (current_component_context);
+					ctx.c = context;
+				}
+
+				if (events) {
+					// We can't spread the object or else we'd lose the state proxy stuff, if it is one
+					/** @type {any} */ (props).$$events = events;
+				}
+
+				should_intro = intro;
+				// @ts-expect-error the public typings are not what the actual function looks like
+				component = Component(anchor, props) || {};
+				should_intro = true;
+
+				if (context) {
+					pop();
+				}
+			});
+		});
+
+		return () => {
+			for (const event_name of registered_events) {
+				target.removeEventListener(event_name, bound_event_listener);
+			}
+			root_event_handles.delete(event_handle);
+		};
 	});
 
+	mounted_components.set(component, unmount);
 	return component;
 }
 
