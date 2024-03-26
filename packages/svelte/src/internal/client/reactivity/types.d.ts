@@ -40,8 +40,6 @@ export interface Effect extends Reaction {
 	dom: Dom | null;
 	/** The associated component context */
 	ctx: null | ComponentContext;
-	/** Stuff to do when the effect is destroyed */
-	ondestroy: null | (() => void);
 	/** The effect function */
 	fn: () => void | (() => void);
 	/** The teardown function returned from the effect function */

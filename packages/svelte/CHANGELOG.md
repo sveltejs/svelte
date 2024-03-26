@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.85
+
+### Patch Changes
+
+- feat: use implicit return for each block keys ([#10938](https://github.com/sveltejs/svelte/pull/10938))
+
+- breaking: always run pre effects immediately ([#10928](https://github.com/sveltejs/svelte/pull/10928))
+
+- fix: improve order of pre-effect execution ([#10942](https://github.com/sveltejs/svelte/pull/10942))
+
+- feat: more efficient each block compiler output ([#10937](https://github.com/sveltejs/svelte/pull/10937))
+
 ## 5.0.0-next.84
 
 ### Patch Changes

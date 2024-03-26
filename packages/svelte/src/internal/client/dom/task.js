@@ -26,18 +26,6 @@ function process_raf_task() {
  * @param {() => void} fn
  * @returns {void}
  */
-export function schedule_task(fn) {
-	if (!is_task_queued) {
-		is_task_queued = true;
-		setTimeout(process_task, 0);
-	}
-	current_queued_tasks.push(fn);
-}
-
-/**
- * @param {() => void} fn
- * @returns {void}
- */
 export function schedule_raf_task(fn) {
 	if (!is_raf_queued) {
 		is_raf_queued = true;

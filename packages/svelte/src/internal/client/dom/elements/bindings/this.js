@@ -28,7 +28,7 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 	/** @type {unknown[]} */
 	var parts;
 
-	var e = render_effect(() => {
+	render_effect(() => {
 		old_parts = parts;
 		// We only track changes to the parts, not the value itself to avoid unnecessary reruns.
 		parts = get_parts?.() || [];
@@ -43,18 +43,15 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 				}
 			}
 		});
-	});
 
-	// Add effect teardown (likely causes: if block became false, each item removed, component unmounted).
-	// In these cases we need to nullify the binding only if we detect that the value is still the same.
-	// If not, that means that another effect has now taken over the binding.
-	e.ondestroy = () => {
-		// Defer to the next tick so that all updates can be reconciled first.
-		// This solves the case where one variable is shared across multiple this-bindings.
-		effect(() => {
-			if (parts && is_bound_this(get_value(...parts), element_or_component)) {
-				update(null, ...parts);
-			}
-		});
-	};
+		return () => {
+			// Defer to the next tick so that all updates can be reconciled first.
+			// This solves the case where one variable is shared across multiple this-bindings.
+			effect(() => {
+				if (parts && is_bound_this(get_value(...parts), element_or_component)) {
+					update(null, ...parts);
+				}
+			});
+		};
+	});
 }

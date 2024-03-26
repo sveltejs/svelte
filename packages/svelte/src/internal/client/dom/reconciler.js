@@ -1,5 +1,4 @@
-import { append_child } from './operations.js';
-import { hydrate_nodes, hydrate_block_anchor, hydrating } from './hydration.js';
+import { hydrate_nodes, hydrating } from './hydration.js';
 import { is_array } from '../utils.js';
 
 /** @param {string} html */
@@ -31,7 +30,6 @@ export function create_fragment_with_script_from_html(html) {
 /**
  * @param {import('#client').Dom} current
  * @param {Text | Element | Comment} sibling
- * @returns {Text | Element | Comment}
  */
 export function insert(current, sibling) {
 	if (!current) return sibling;
@@ -40,12 +38,9 @@ export function insert(current, sibling) {
 		for (var i = 0; i < current.length; i++) {
 			sibling.before(/** @type {Node} */ (current[i]));
 		}
-
-		return current[0];
+	} else {
+		sibling.before(/** @type {Node} */ (current));
 	}
-
-	sibling.before(/** @type {Node} */ (current));
-	return /** @type {Text | Element | Comment} */ (current);
 }
 
 /**
@@ -74,7 +69,6 @@ export function remove(current) {
  * @returns {Element | Comment | (Element | Comment | Text)[]}
  */
 export function reconcile_html(target, value, svg) {
-	hydrate_block_anchor(target);
 	if (hydrating) {
 		return hydrate_nodes;
 	}

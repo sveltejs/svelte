@@ -444,15 +444,14 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 
 	// The foreign namespace doesn't have any special handling, everything goes through the attr function
 	if (context.state.metadata.namespace === 'foreign') {
-		const statement = {
-			grouped: b.stmt(b.call('$.set_attribute', node_id, b.literal(name), value))
-		};
+		const statement = b.stmt(b.call('$.set_attribute', node_id, b.literal(name), value));
+
 		if (attribute.metadata.dynamic) {
 			const id = state.scope.generate(`${node_id.name}_${name}`);
-			serialize_update_assignment(state, id, undefined, value, statement, contains_call_expression);
+			serialize_update_assignment(state, id, undefined, value, statement);
 			return true;
 		} else {
-			state.init.push(statement.grouped);
+			state.init.push(statement);
 			return false;
 		}
 	}
@@ -526,7 +525,7 @@ function serialize_custom_element_attribute_update_assignment(node_id, attribute
  */
 function serialize_element_special_value_attribute(element, node_id, attribute, context) {
 	const state = context.state;
-	const [contains_call_expression, value] = serialize_attribute_value(attribute.value, context);
+	const [, value] = serialize_attribute_value(attribute.value, context);
 
 	const inner_assignment = b.assignment(
 		'=',
@@ -542,7 +541,8 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
 		// attribute.metadata.dynamic would give false negatives because even if the value does not change,
 		// the inner options could still change, so we need to always treat it as reactive
 		element === 'select' && attribute.value !== true && !is_text_attribute(attribute);
-	const assignment = b.stmt(
+
+	const update = b.stmt(
 		is_select_with_value
 			? b.sequence([
 					inner_assignment,
@@ -561,17 +561,10 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
 
 	if (is_reactive) {
 		const id = state.scope.generate(`${node_id.name}_value`);
-		serialize_update_assignment(
-			state,
-			id,
-			undefined,
-			value,
-			{ grouped: assignment },
-			contains_call_expression
-		);
+		serialize_update_assignment(state, id, undefined, value, update);
 		return true;
 	} else {
-		state.init.push(assignment);
+		state.init.push(update);
 		return false;
 	}
 }
@@ -581,39 +574,13 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
  * @param {string} id
  * @param {import('estree').Expression | undefined} init
  * @param {import('estree').Expression} value
- * @param {{
- *   grouped: import('estree').ExpressionStatement;
- *   singular?: import('estree').ExpressionStatement;
- *   skip_condition?: boolean;
- * }} assignment
- * @param {boolean} contains_call_expression
+ * @param {import('estree').ExpressionStatement} update
  */
-function serialize_update_assignment(state, id, init, value, assignment, contains_call_expression) {
-	const grouped = b.if(
-		b.binary('!==', b.id(id), b.assignment('=', b.id(id), value)),
-		b.block([assignment.grouped])
+function serialize_update_assignment(state, id, init, value, update) {
+	state.init.push(b.var(id, init));
+	state.update.push(
+		b.if(b.binary('!==', b.id(id), b.assignment('=', b.id(id), value)), b.block([update]))
 	);
-
-	if (contains_call_expression && assignment.singular) {
-		state.init.push(assignment.singular);
-	} else {
-		if (assignment.skip_condition) {
-			if (assignment.singular) {
-				state.update.push(assignment.grouped);
-			} else {
-				state.init.push(b.var(id, init));
-				state.update.push(grouped);
-			}
-		} else {
-			if (assignment.singular) {
-				state.init.push(b.var(id, init));
-				state.update.push(grouped);
-			} else {
-				state.init.push(b.var(id, init));
-				state.update.push(grouped);
-			}
-		}
-	}
 }
 
 /**
@@ -1045,7 +1012,7 @@ function create_block(parent, name, nodes, context) {
 		);
 
 		/** @type {import('estree').Expression[]} */
-		const args = [b.id('$$anchor'), template_name];
+		const args = [template_name];
 
 		if (state.metadata.context.template_needs_import_node) {
 			args.push(b.false);
@@ -1064,7 +1031,7 @@ function create_block(parent, name, nodes, context) {
 			trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag');
 
 		if (use_space_template) {
-			// special case — we can use `$.space_frag` instead of creating a unique template
+			// special case — we can use `$.text` instead of creating a unique template
 			const id = b.id(context.state.scope.generate('text'));
 
 			process_children(trimmed, () => id, false, {
@@ -1072,11 +1039,7 @@ function create_block(parent, name, nodes, context) {
 				state
 			});
 
-			body.push(
-				b.var(id, b.call('$.space_frag', b.id('$$anchor'))),
-				...state.before_init,
-				...state.init
-			);
+			body.push(b.var(id, b.call('$.text', b.id('$$anchor'))), ...state.before_init, ...state.init);
 			close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
 		} else {
 			/** @type {(is_text: boolean) => import('estree').Expression} */
@@ -1089,7 +1052,7 @@ function create_block(parent, name, nodes, context) {
 
 			if (use_comment_template) {
 				// special case — we can use `$.comment` instead of creating a unique template
-				body.push(b.var(id, b.call('$.comment', b.id('$$anchor'))));
+				body.push(b.var(id, b.call('$.comment')));
 			} else {
 				state.hoisted.push(
 					b.var(
@@ -1103,7 +1066,7 @@ function create_block(parent, name, nodes, context) {
 				);
 
 				/** @type {import('estree').Expression[]} */
-				const args = [b.id('$$anchor'), template_name];
+				const args = [template_name];
 
 				if (state.metadata.context.template_needs_import_node) {
 					args.push(b.false);
@@ -1408,7 +1371,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 
 			state.template.push(' ');
 
-			const text_id = get_node_id(b.call('$.space', expression(true)), state, 'text');
+			const text_id = get_node_id(expression(true), state, 'text');
 
 			const update = b.stmt(
 				b.call(

@@ -261,7 +261,7 @@ async function run_test_variant(
 				target,
 				immutable: config.immutable,
 				intro: config.intro,
-				recover: config.recover === undefined ? false : config.recover,
+				recover: config.recover ?? false,
 				hydrate: variant === 'hydrate'
 			});
 
