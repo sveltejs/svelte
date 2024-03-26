@@ -1,4 +1,4 @@
-import { block, pause_effect, render_effect } from '../../reactivity/effects.js';
+import { block, branch, pause_effect, render_effect } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
 import { current_effect } from '../../runtime.js';
 
@@ -37,7 +37,7 @@ export function component(anchor, get_component, render_fn) {
 		}
 
 		if (component) {
-			effect = render_effect(() => {
+			effect = branch(() => {
 				render_fn(component);
 
 				// `render_fn` doesn't return anything, and we can't reference `effect`
@@ -47,7 +47,7 @@ export function component(anchor, get_component, render_fn) {
 				return () => {
 					if (dom !== null) remove(dom);
 				};
-			}, true);
+			});
 
 			effects.add(effect);
 		}

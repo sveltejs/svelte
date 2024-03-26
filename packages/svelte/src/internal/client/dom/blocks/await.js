@@ -7,7 +7,7 @@ import {
 	set_current_effect,
 	set_current_reaction
 } from '../../runtime.js';
-import { block, destroy_effect, pause_effect, render_effect } from '../../reactivity/effects.js';
+import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import { INERT } from '../../constants.js';
 
 /**
@@ -42,7 +42,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 		set_current_effect(effect);
 		set_current_reaction(effect); // TODO do we need both?
 		set_current_component_context(component_context);
-		var e = render_effect(() => fn(anchor, value), true);
+		var e = branch(() => fn(anchor, value));
 		set_current_component_context(null);
 		set_current_reaction(null);
 		set_current_effect(null);
@@ -66,7 +66,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 					destroy_effect(pending_effect);
 				}
 
-				pending_effect = render_effect(() => pending_fn(anchor), true);
+				pending_effect = branch(() => pending_fn(anchor));
 			}
 
 			if (then_effect) pause_effect(then_effect);
@@ -100,7 +100,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 					destroy_effect(then_effect);
 				}
 
-				then_effect = render_effect(() => then_fn(anchor, input), true);
+				then_effect = branch(() => then_fn(anchor, input));
 			}
 		}
 	});

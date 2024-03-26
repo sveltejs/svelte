@@ -3,9 +3,9 @@ import { hydrate_anchor, hydrate_nodes, hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import {
 	block,
+	branch,
 	destroy_effect,
 	pause_effect,
-	render_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
@@ -101,7 +101,7 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 		}
 
 		if (next_tag && next_tag !== current_tag) {
-			effect = render_effect(() => {
+			effect = branch(() => {
 				const prev_element = element;
 				element = hydrating
 					? /** @type {Element} */ (hydrate_nodes[0])
@@ -131,7 +131,7 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 					swap_block_dom(parent_effect, prev_element, element);
 					prev_element.remove();
 				}
-			}, true);
+			});
 		}
 
 		tag = next_tag;

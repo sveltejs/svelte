@@ -1,6 +1,6 @@
 import { UNINITIALIZED } from '../../constants.js';
 import { remove } from '../reconciler.js';
-import { block, pause_effect, render_effect } from '../../reactivity/effects.js';
+import { block, branch, pause_effect } from '../../reactivity/effects.js';
 import { safe_not_equal } from '../../reactivity/equality.js';
 
 /**
@@ -33,7 +33,7 @@ export function key_block(anchor, get_key, render_fn) {
 				});
 			}
 
-			effect = render_effect(() => {
+			effect = branch(() => {
 				const dom = render_fn(anchor);
 
 				return () => {
@@ -41,7 +41,7 @@ export function key_block(anchor, get_key, render_fn) {
 						remove(dom);
 					}
 				};
-			}, true);
+			});
 
 			effects.add(effect);
 		}

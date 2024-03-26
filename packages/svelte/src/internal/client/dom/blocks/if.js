@@ -3,9 +3,9 @@ import { hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
 import { remove } from '../reconciler.js';
 import {
 	block,
+	branch,
 	destroy_effect,
 	pause_effect,
-	render_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
 
@@ -62,7 +62,7 @@ export function if_block(
 			if (consequent_effect) {
 				resume_effect(consequent_effect);
 			} else {
-				consequent_effect = render_effect(() => consequent_fn(anchor), true);
+				consequent_effect = branch(() => consequent_fn(anchor));
 			}
 
 			if (alternate_effect) {
@@ -74,7 +74,7 @@ export function if_block(
 			if (alternate_effect) {
 				resume_effect(alternate_effect);
 			} else if (alternate_fn) {
-				alternate_effect = render_effect(() => alternate_fn(anchor), true);
+				alternate_effect = branch(() => alternate_fn(anchor));
 			}
 
 			if (consequent_effect) {

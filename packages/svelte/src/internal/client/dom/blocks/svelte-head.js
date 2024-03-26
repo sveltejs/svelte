@@ -1,6 +1,6 @@
 import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrate_nodes } from '../hydration.js';
 import { empty } from '../operations.js';
-import { block, render_effect } from '../../reactivity/effects.js';
+import { block } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
 
 /**

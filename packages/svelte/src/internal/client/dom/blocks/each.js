@@ -12,11 +12,11 @@ import { insert, remove } from '../reconciler.js';
 import { untrack } from '../../runtime.js';
 import {
 	block,
+	branch,
 	destroy_effect,
 	effect,
 	pause_effect,
 	pause_effects,
-	render_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
@@ -153,7 +153,7 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 				if (fallback) {
 					resume_effect(fallback);
 				} else {
-					fallback = render_effect(() => {
+					fallback = branch(() => {
 						var dom = fallback_fn(anchor);
 
 						return () => {
@@ -161,7 +161,7 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 								remove(dom);
 							}
 						};
-					}, true);
+					});
 				}
 			} else if (fallback !== null) {
 				pause_effect(fallback, () => {
@@ -579,7 +579,7 @@ function create_item(anchor, value, key, index, render_fn, flags) {
 	try {
 		current_each_item = item;
 
-		item.e = render_effect(() => {
+		item.e = branch(() => {
 			var dom = render_fn(anchor, item.v, item.i);
 
 			return () => {
@@ -587,7 +587,7 @@ function create_item(anchor, value, key, index, render_fn, flags) {
 					remove(dom);
 				}
 			};
-		}, true);
+		});
 
 		return item;
 	} finally {

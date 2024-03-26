@@ -222,6 +222,11 @@ export function block(fn) {
 	return create_effect(BLOCK_EFFECT, fn, true);
 }
 
+/** @param {(() => void)} fn */
+export function branch(fn) {
+	return create_effect(EFFECT | RENDER_EFFECT | MANAGED, fn, true);
+}
+
 /**
  * @param {import('#client').Effect} effect
  * @returns {void}
