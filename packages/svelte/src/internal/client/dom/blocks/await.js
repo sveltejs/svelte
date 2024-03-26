@@ -1,5 +1,4 @@
 import { is_promise } from '../../../common.js';
-import { remove } from '../reconciler.js';
 import {
 	current_component_context,
 	flushSync,
@@ -62,7 +61,6 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 
 			if (pending_fn) {
 				if (pending_effect && (pending_effect.f & INERT) === 0) {
-					if (pending_effect.dom) remove(pending_effect.dom);
 					destroy_effect(pending_effect);
 				}
 
@@ -96,7 +94,6 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 
 			if (then_fn) {
 				if (then_effect) {
-					if (then_effect.dom) remove(then_effect.dom);
 					destroy_effect(then_effect);
 				}
 
@@ -104,11 +101,4 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 			}
 		}
 	});
-
-	effect.ondestroy = () => {
-		// TODO this sucks, tidy it up
-		if (pending_effect?.dom) remove(pending_effect.dom);
-		if (then_effect?.dom) remove(then_effect.dom);
-		if (catch_effect?.dom) remove(catch_effect.dom);
-	};
 }

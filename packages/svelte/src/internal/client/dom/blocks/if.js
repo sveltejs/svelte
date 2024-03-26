@@ -1,13 +1,7 @@
 import { IS_ELSEIF } from '../../constants.js';
 import { hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
 import { remove } from '../reconciler.js';
-import {
-	block,
-	branch,
-	destroy_effect,
-	pause_effect,
-	resume_effect
-} from '../../reactivity/effects.js';
+import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 
 /**
  * @param {Comment} anchor
@@ -93,15 +87,4 @@ export function if_block(
 	if (elseif) {
 		effect.f |= IS_ELSEIF;
 	}
-
-	effect.ondestroy = () => {
-		// TODO why is this not automatic? this should be children of `if_effect`
-		if (consequent_effect) {
-			destroy_effect(consequent_effect);
-		}
-
-		if (alternate_effect) {
-			destroy_effect(alternate_effect);
-		}
-	};
 }
