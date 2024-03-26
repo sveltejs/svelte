@@ -113,7 +113,7 @@ export function capture_fragment_from_node(node) {
 	if (
 		node.nodeType === 8 &&
 		/** @type {Comment} */ (node).data === '[' &&
-		hydrate_nodes[hydrate_nodes.length - 1] !== node
+		hydrate_nodes?.[hydrate_nodes.length - 1] !== node
 	) {
 		const nodes = /** @type {Node[]} */ (get_hydrate_nodes(node));
 		const last_child = nodes[nodes.length - 1] || node;
