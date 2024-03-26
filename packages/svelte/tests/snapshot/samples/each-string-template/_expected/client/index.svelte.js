@@ -10,18 +10,12 @@ export default function Each_string_template($$anchor, $$props) {
 	var fragment = $.comment($$anchor);
 	var node = $.first_child(fragment);
 
-	$.each_indexed(
-		node,
-		() => ['foo', 'bar', 'baz'],
-		1,
-		($$anchor, thing, $$index) => {
-			var text = $.space_frag($$anchor);
+	$.each_indexed(node, () => ['foo', 'bar', 'baz'], 1, ($$anchor, thing, $$index) => {
+		var text = $.space_frag($$anchor);
 
-			$.render_effect(() => $.set_text(text, `${$.stringify($.unwrap(thing))}, `));
-			return $.close($$anchor, text);
-		},
-		null
-	);
+		$.render_effect(() => $.set_text(text, `${$.stringify($.unwrap(thing))}, `));
+		return $.close($$anchor, text);
+	});
 
 	$.close_frag($$anchor, fragment);
 	$.pop();
