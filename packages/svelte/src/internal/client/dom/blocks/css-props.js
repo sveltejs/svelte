@@ -1,5 +1,5 @@
 import { namespace_svg } from '../../../../constants.js';
-import { hydrate_nodes, hydrate_block_anchor, hydrating } from '../hydration.js';
+import { hydrate_nodes, hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import { render_effect } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
@@ -12,8 +12,6 @@ import { remove } from '../reconciler.js';
  * @returns {void}
  */
 export function css_props(anchor, is_html, props, component) {
-	hydrate_block_anchor(anchor);
-
 	/** @type {HTMLElement | SVGElement} */
 	let element;
 

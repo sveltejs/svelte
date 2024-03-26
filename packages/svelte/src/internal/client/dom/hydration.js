@@ -40,91 +40,43 @@ export function update_hydrate_nodes(first, insert_text) {
 
 /**
  * Returns all nodes between the first `<![>...<!]>` comment tag pair encountered.
- * @param {Node | null} node
- * @param {boolean} [insert_text] Whether to insert an empty text node if `nodes` is empty
- * @returns {import('#client').TemplateNode[] | null}
- */
-function get_hydrate_nodes(node, insert_text = false) {
-	/** @type {import('#client').TemplateNode[]} */
-	var nodes = [];
-
-	var current_node = /** @type {null | import('#client').TemplateNode} */ (node);
-
-	var depth = 0;
-
-	var will_start = false;
-	var started = false;
-
-	while (current_node !== null) {
-		if (current_node.nodeType === 8) {
-			var data = /** @type {Comment} */ (current_node).data;
-
-			if (data === '[') {
-				depth += 1;
-				will_start = true;
-			} else if (data === ']') {
-				if (!started) {
-					// TODO get rid of this — it exists because each blocks are doubly wrapped
-					return null;
-				}
-
-				if (--depth === 0) {
-					if (insert_text && nodes.length === 0) {
-						var text = empty();
-						nodes.push(text);
-						current_node.before(text);
-					}
-
-					return nodes;
-				}
-			}
-		}
-
-		if (started) {
-			nodes.push(current_node);
-		}
-
-		current_node = /** @type {null | import('#client').TemplateNode} */ (current_node.nextSibling);
-
-		started = will_start;
-	}
-
-	return null;
-}
-
-/**
- * @param {Node} node
- * @returns {void}
- */
-export function hydrate_block_anchor(node) {
-	if (!hydrating) return;
-
-	// @ts-ignore
-	var nodes = node.$$fragment ?? get_hydrate_nodes(node);
-	set_hydrate_nodes(nodes);
-}
-
-/**
- * Expects to only be called in hydration mode
  * @param {Node} node
  * @returns {Node}
  */
-export function capture_fragment_from_node(node) {
-	if (
-		node.nodeType === 8 &&
-		/** @type {Comment} */ (node).data === '[' &&
-		hydrate_nodes?.[hydrate_nodes.length - 1] !== node
-	) {
-		const nodes = /** @type {Node[]} */ (get_hydrate_nodes(node));
-		const last_child = nodes[nodes.length - 1] || node;
-		const target = /** @type {Node} */ (last_child.nextSibling);
-		// @ts-ignore
-		target.$$fragment = nodes;
-		schedule_task(() => {
-			// @ts-expect-error clean up memory
-			target.$$fragment = undefined;
-		});
-		return target;
+export function hydrate_anchor(node) {
+	if (node.nodeType !== 8) {
+		return node;
 	}
-	return node;
+
+	var current = /** @type {Node | null} */ (node);
+
+	// TODO this could have false positives, if a user comment consisted of `[`. need to tighten that up
+	if (/** @type {Comment} */ (current)?.data !== '[') {
+		return node;
+	}
+
+	/** @type {Node[]} */
+	var nodes = [];
+	var depth = 0;
+
+	while ((current = /** @type {Node} */ (current).nextSibling) !== null) {
+		if (current.nodeType === 8) {
+			var data = /** @type {Comment} */ (current).data;
+
+			if (data === '[') {
+				depth += 1;
+			} else if (data === ']') {
+				if (depth === 0) {
+					hydrate_nodes = /** @type {import('#client').TemplateNode[]} */ (nodes);
+					return current;
+				}
+
+				depth -= 1;
+			}
+		}
+
+		nodes.push(current);
+	}
+
+	throw new Error('Expected a closing hydration marker');
 }

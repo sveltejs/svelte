@@ -1,4 +1,4 @@
-import { capture_fragment_from_node, hydrate_nodes, hydrating } from './hydration.js';
+import { hydrate_anchor, hydrate_nodes, hydrating } from './hydration.js';
 import { get_descriptor } from '../utils.js';
 
 // We cache the Node and Element prototype methods, so that we can avoid doing
@@ -132,7 +132,7 @@ export function child(node) {
 		return node.appendChild(empty());
 	}
 
-	return capture_fragment_from_node(child);
+	return hydrate_anchor(child);
 }
 
 /**
@@ -159,11 +159,7 @@ export function first_child(fragment, is_text) {
 		return text;
 	}
 
-	if (first_node !== null) {
-		return capture_fragment_from_node(first_node);
-	}
-
-	return first_node;
+	return hydrate_anchor(first_node);
 }
 
 /**
@@ -176,28 +172,26 @@ export function first_child(fragment, is_text) {
 export function sibling(node, is_text = false) {
 	const next_sibling = next_sibling_get.call(node);
 
-	if (hydrating) {
-		// if a sibling {expression} is empty during SSR, there might be no
-		// text node to hydrate — we must therefore create one
-		if (is_text && next_sibling?.nodeType !== 3) {
-			const text = empty();
-			if (next_sibling) {
-				const index = hydrate_nodes.indexOf(/** @type {Text | Comment | Element} */ (next_sibling));
-				hydrate_nodes.splice(index, 0, text);
-				next_sibling.before(text);
-			} else {
-				hydrate_nodes.push(text);
-			}
-
-			return text;
-		}
-
-		if (next_sibling !== null) {
-			return capture_fragment_from_node(next_sibling);
-		}
+	if (!hydrating) {
+		return next_sibling;
 	}
 
-	return next_sibling;
+	// if a sibling {expression} is empty during SSR, there might be no
+	// text node to hydrate — we must therefore create one
+	if (is_text && next_sibling?.nodeType !== 3) {
+		const text = empty();
+		if (next_sibling) {
+			const index = hydrate_nodes.indexOf(/** @type {Text | Comment | Element} */ (next_sibling));
+			hydrate_nodes.splice(index, 0, text);
+			next_sibling.before(text);
+		} else {
+			hydrate_nodes.push(text);
+		}
+
+		return text;
+	}
+
+	return hydrate_anchor(/** @type {Node} */ (next_sibling));
 }
 
 /**

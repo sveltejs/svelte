@@ -1,4 +1,4 @@
-import { hydrate_nodes, hydrate_block_anchor, hydrating } from './hydration.js';
+import { hydrate_nodes, hydrating } from './hydration.js';
 import { child, clone_node, empty } from './operations.js';
 import {
 	create_fragment_from_html,
@@ -90,11 +90,6 @@ export function svg_template_with_script(svg, return_fragment) {
 /*#__NO_SIDE_EFFECTS__*/
 function open_template(is_fragment, use_clone_node, anchor, template_element_fn) {
 	if (hydrating) {
-		if (anchor !== null) {
-			// TODO why is this sometimes null and sometimes not? needs clear documentation
-			hydrate_block_anchor(anchor);
-		}
-
 		return is_fragment ? hydrate_nodes : /** @type {Element} */ (hydrate_nodes[0]);
 	}
 

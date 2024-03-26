@@ -1,4 +1,3 @@
-import { hydrate_block_anchor } from '../hydration.js';
 import { pause_effect, render_effect } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
 import { current_effect } from '../../runtime.js';
@@ -14,8 +13,6 @@ import { current_effect } from '../../runtime.js';
  * @returns {void}
  */
 export function component(anchor, get_component, render_fn) {
-	hydrate_block_anchor(anchor);
-
 	/** @type {C} */
 	let component;
 

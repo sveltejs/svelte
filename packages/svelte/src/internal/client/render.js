@@ -11,8 +11,8 @@ import { remove } from './dom/reconciler.js';
 import { flush_sync, push, pop, current_component_context } from './runtime.js';
 import { render_effect, destroy_effect } from './reactivity/effects.js';
 import {
+	hydrate_anchor,
 	hydrate_nodes,
-	hydrate_block_anchor,
 	hydrating,
 	set_hydrate_nodes,
 	set_hydrating,
@@ -66,7 +66,6 @@ export function set_text(dom, value) {
  * @param {null | ((anchor: Comment) => void)} fallback_fn
  */
 export function slot(anchor, slot_fn, slot_props, fallback_fn) {
-	hydrate_block_anchor(anchor);
 	if (slot_fn === undefined) {
 		if (fallback_fn !== null) {
 			fallback_fn(anchor);
@@ -138,27 +137,27 @@ export function hydrate(component, options) {
 	const first_child = /** @type {ChildNode} */ (container.firstChild);
 	const previous_hydrate_nodes = hydrate_nodes;
 
-	// Call with insert_text == true to prevent empty {expressions} resulting in an empty
-	// `nodes` array, resulting in a hydration error down the line
-	// TODO is both this and the `container.appendChild(anchor)` below necessary?
-	const nodes = update_hydrate_nodes(first_child, true);
-	set_hydrating(true);
-
 	let hydrated = false;
 
 	try {
 		// Don't flush previous effects to ensure order of outer effects stays consistent
 		return flush_sync(() => {
-			const anchor = nodes === null ? container.appendChild(empty()) : null;
+			set_hydrating(true);
+
+			const anchor = hydrate_anchor(first_child);
 			const instance = _mount(component, { ...options, anchor });
+
 			// flush_sync will run this callback and then synchronously run any pending effects,
 			// which don't belong to the hydration phase anymore - therefore reset it here
 			set_hydrating(false);
 			hydrated = true;
+
 			return instance;
 		}, false);
 	} catch (error) {
-		if (!hydrated && options.recover !== false && nodes !== null) {
+		console.error(error.stack);
+
+		if (!hydrated && options.recover !== false) {
 			// eslint-disable-next-line no-console
 			console.error(
 				'ERR_SVELTE_HYDRATION_MISMATCH' +
@@ -188,7 +187,7 @@ export function hydrate(component, options) {
  * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} Component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
- * 		anchor: null | Text;
+ * 		anchor: null | Node;
  * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  *  	context?: Map<any, any>;

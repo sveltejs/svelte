@@ -7,8 +7,8 @@ import {
 	EACH_KEYED
 } from '../../../../constants.js';
 import {
+	hydrate_anchor,
 	hydrate_nodes,
-	hydrate_block_anchor,
 	hydrating,
 	set_hydrating,
 	update_hydrate_nodes
@@ -59,11 +59,13 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 	var state = { flags, items: [] };
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-	hydrate_block_anchor(is_controlled ? /** @type {Node} */ (anchor.firstChild) : anchor);
 
 	if (is_controlled) {
 		var parent_node = /** @type {Element} */ (anchor);
-		parent_node.append((anchor = empty()));
+
+		anchor = /** @type {Comment | Text} */ (
+			hydrate_anchor(parent_node.firstChild ?? parent_node.appendChild(empty()))
+		);
 	}
 
 	/** @type {import('#client').Effect | null} */
@@ -115,14 +117,11 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 		if (hydrating) {
 			var b_items = [];
 
-			// Hydrate block
-			var hydration_list = /** @type {import('#client').TemplateNode[]} */ (hydrate_nodes);
-			var hydrating_node = hydration_list[0];
+			/** @type {Node} */
+			var child_anchor = hydrate_nodes[0];
 
 			for (var i = 0; i < length; i++) {
-				var nodes = update_hydrate_nodes(hydrating_node);
-
-				if (nodes === null) {
+				if (child_anchor.nodeType !== 8 || /** @type {Comment} */ (child_anchor).data !== '[') {
 					// If `nodes` is null, then that means that the server rendered fewer items than what
 					// expected, so break out and continue appending non-hydrated items
 					mismatch = true;
@@ -130,17 +129,17 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 					break;
 				}
 
+				child_anchor = hydrate_anchor(child_anchor);
 				b_items[i] = create_item(array[i], keys?.[i], i, render_fn, flags);
-
-				// TODO helperise this
-				hydrating_node = /** @type {import('#client').TemplateNode} */ (
-					/** @type {Node} */ (
-						/** @type {Node} */ (nodes[nodes.length - 1] || hydrating_node).nextSibling
-					).nextSibling
-				);
+				child_anchor = /** @type {Comment} */ (child_anchor.nextSibling);
 			}
 
-			remove_excess_hydration_nodes(hydration_list, hydrating_node);
+			// remove excess nodes
+			while (child_anchor !== anchor) {
+				var next = /** @type {import('#client').TemplateNode} */ (child_anchor.nextSibling);
+				/** @type {import('#client').TemplateNode} */ (child_anchor).remove();
+				child_anchor = next;
+			}
 
 			state.items = b_items;
 		}
@@ -438,20 +437,6 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 	pause_effects(to_destroy, () => {
 		state.items = b_items;
 	});
-}
-
-/**
- * The server could have rendered more list items than the client specifies.
- * In that case, we need to remove the remaining server-rendered nodes.
- * @param {import('#client').TemplateNode[]} hydration_list
- * @param {import('#client').TemplateNode | null} next_node
- */
-function remove_excess_hydration_nodes(hydration_list, next_node) {
-	if (next_node === null) return;
-	var idx = hydration_list.indexOf(next_node);
-	if (idx !== -1 && hydration_list.length > idx + 1) {
-		remove(hydration_list.slice(idx));
-	}
 }
 
 /**

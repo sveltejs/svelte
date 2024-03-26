@@ -1,5 +1,5 @@
 import { namespace_svg } from '../../../../constants.js';
-import { hydrate_nodes, hydrate_block_anchor, hydrating } from '../hydration.js';
+import { hydrate_nodes, hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import {
 	destroy_effect,
@@ -43,8 +43,6 @@ function swap_block_dom(effect, from, to) {
  */
 export function element(anchor, get_tag, is_svg, render_fn) {
 	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
-
-	hydrate_block_anchor(anchor);
 
 	/** @type {string | null} */
 	let tag;
