@@ -560,7 +560,7 @@ function collect_effects(effect, filter_flags, collected) {
 		for (i = 0; i < effects.length; i++) {
 			child = effects[i];
 			flags = child.f;
-			if (flags & CLEAN) {
+			if ((flags & CLEAN) !== 0) {
 				continue;
 			}
 
