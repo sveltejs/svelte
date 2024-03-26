@@ -1045,7 +1045,7 @@ function create_block(parent, name, nodes, context) {
 		);
 
 		/** @type {import('estree').Expression[]} */
-		const args = [b.id('$$anchor'), template_name];
+		const args = [template_name];
 
 		if (state.metadata.context.template_needs_import_node) {
 			args.push(b.false);
@@ -1089,7 +1089,7 @@ function create_block(parent, name, nodes, context) {
 
 			if (use_comment_template) {
 				// special case — we can use `$.comment` instead of creating a unique template
-				body.push(b.var(id, b.call('$.comment', b.id('$$anchor'))));
+				body.push(b.var(id, b.call('$.comment')));
 			} else {
 				state.hoisted.push(
 					b.var(
@@ -1103,7 +1103,7 @@ function create_block(parent, name, nodes, context) {
 				);
 
 				/** @type {import('estree').Expression[]} */
-				const args = [b.id('$$anchor'), template_name];
+				const args = [template_name];
 
 				if (state.metadata.context.template_needs_import_node) {
 					args.push(b.false);

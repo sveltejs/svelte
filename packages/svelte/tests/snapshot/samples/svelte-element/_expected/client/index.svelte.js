@@ -7,7 +7,7 @@ export default function Svelte_element($$anchor, $$props) {
 	$.push($$props, true);
 
 	let tag = $.prop($$props, "tag", 3, 'hr');
-	var fragment = $.comment($$anchor);
+	var fragment = $.comment();
 	var node = $.first_child(fragment);
 
 	$.element(node, tag, false);

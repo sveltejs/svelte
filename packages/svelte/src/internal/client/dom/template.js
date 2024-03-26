@@ -83,12 +83,11 @@ export function svg_template_with_script(svg, return_fragment) {
 /**
  * @param {boolean} is_fragment
  * @param {boolean} use_clone_node
- * @param {null | Text | Comment | Element} anchor
  * @param {() => Node} [template_element_fn]
  * @returns {Element | DocumentFragment | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-function open_template(is_fragment, use_clone_node, anchor, template_element_fn) {
+function open_template(is_fragment, use_clone_node, template_element_fn) {
 	if (hydrating) {
 		return is_fragment ? hydrate_nodes : /** @type {Element} */ (hydrate_nodes[0]);
 	}
@@ -99,23 +98,21 @@ function open_template(is_fragment, use_clone_node, anchor, template_element_fn)
 }
 
 /**
- * @param {null | Text | Comment | Element} anchor
  * @param {() => Node} template_element_fn
  * @param {boolean} [use_clone_node]
  * @returns {Element}
  */
-export function open(anchor, template_element_fn, use_clone_node = true) {
-	return /** @type {Element} */ (open_template(false, use_clone_node, anchor, template_element_fn));
+export function open(template_element_fn, use_clone_node = true) {
+	return /** @type {Element} */ (open_template(false, use_clone_node, template_element_fn));
 }
 
 /**
- * @param {null | Text | Comment | Element} anchor
  * @param {() => Node} template_element_fn
  * @param {boolean} [use_clone_node]
  * @returns {Element | DocumentFragment | Node[]}
  */
-export function open_frag(anchor, template_element_fn, use_clone_node = true) {
-	return open_template(true, use_clone_node, anchor, template_element_fn);
+export function open_frag(template_element_fn, use_clone_node = true) {
+	return open_template(true, use_clone_node, template_element_fn);
 }
 
 const space_template = template(' ', false);
@@ -127,7 +124,7 @@ const comment_template = template('<!>', true);
 /*#__NO_SIDE_EFFECTS__*/
 export function space_frag(anchor) {
 	/** @type {Node | null} */
-	var node = /** @type {any} */ (open(anchor, space_template));
+	var node = /** @type {any} */ (open(space_template));
 	// if an {expression} is empty during SSR, there might be no
 	// text node to hydrate (or an anchor comment is falsely detected instead)
 	//  — we must therefore create one
@@ -156,12 +153,9 @@ export function space(anchor) {
 	return anchor;
 }
 
-/**
- * @param {null | Text | Comment | Element} anchor
- */
 /*#__NO_SIDE_EFFECTS__*/
-export function comment(anchor) {
-	return open_frag(anchor, comment_template);
+export function comment() {
+	return open_frag(comment_template);
 }
 
 /**
