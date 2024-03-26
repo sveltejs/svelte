@@ -57,9 +57,11 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 	if (is_controlled) {
 		var parent_node = /** @type {Element} */ (anchor);
 
-		anchor = /** @type {Comment | Text} */ (
-			hydrate_anchor(parent_node.firstChild ?? parent_node.appendChild(empty()))
-		);
+		anchor = hydrating
+			? /** @type {Comment | Text} */ (
+					hydrate_anchor(/** @type {Comment | Text} */ (parent_node.firstChild))
+				)
+			: parent_node.appendChild(empty());
 	}
 
 	/** @type {import('#client').Effect | null} */
