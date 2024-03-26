@@ -17,12 +17,9 @@ export function set_hydrating(value) {
  */
 export let hydrate_nodes = /** @type {any} */ (null);
 
-/**
- * @param {null | import('#client').TemplateNode[]} nodes
- * @returns {void}
- */
+/** @param {import('#client').TemplateNode[]} nodes */
 export function set_hydrate_nodes(nodes) {
-	hydrate_nodes = /** @type {import('#client').TemplateNode[]} */ (nodes);
+	hydrate_nodes = nodes;
 }
 
 /**

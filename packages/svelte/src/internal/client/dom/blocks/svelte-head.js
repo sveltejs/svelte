@@ -4,7 +4,7 @@ import { render_effect } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
 
 /**
- * @param {(anchor: Node | null) => import('#client').Dom | void} render_fn
+ * @param {(anchor: Node) => import('#client').Dom | void} render_fn
  * @returns {void}
  */
 export function head(render_fn) {
@@ -36,7 +36,7 @@ export function head(render_fn) {
 				head_effect.dom = dom = null;
 			}
 
-			dom = render_fn(hydrating ? null : anchor) ?? null;
+			dom = render_fn(anchor) ?? null;
 		});
 
 		head_effect.ondestroy = () => {
@@ -46,7 +46,7 @@ export function head(render_fn) {
 		};
 	} finally {
 		if (was_hydrating) {
-			set_hydrate_nodes(previous_hydrate_nodes);
+			set_hydrate_nodes(/** @type {import('#client').TemplateNode[]} */ (previous_hydrate_nodes));
 		}
 	}
 }

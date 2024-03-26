@@ -184,7 +184,7 @@ export function hydrate(component, options) {
  * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} Component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
- * 		anchor: null | Node;
+ * 		anchor: Node;
  * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  *  	context?: Map<any, any>;
