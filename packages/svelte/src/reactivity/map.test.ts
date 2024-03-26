@@ -36,7 +36,7 @@ test('map.values()', () => {
 		map.clear();
 	});
 
-	assert.deepEqual(log, [5, true, [1, 2, 3, 4, 5], 4, false, [1, 2, 4, 5], 0, [], false]); // TODO update when we fix effect ordering bug
+	assert.deepEqual(log, [5, true, [1, 2, 3, 4, 5], 4, false, [1, 2, 4, 5], 0, false, []]);
 
 	cleanup();
 });
