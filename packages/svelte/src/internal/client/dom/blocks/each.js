@@ -13,7 +13,6 @@ import { untrack } from '../../runtime.js';
 import {
 	block,
 	branch,
-	destroy_effect,
 	effect,
 	pause_effect,
 	pause_effects,
@@ -68,7 +67,7 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 	/** @type {import('#client').Effect | null} */
 	var fallback = null;
 
-	var effect = block(() => {
+	block(() => {
 		var collection = get_collection();
 
 		var array = is_array(collection)
@@ -153,15 +152,7 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 				if (fallback) {
 					resume_effect(fallback);
 				} else {
-					fallback = branch(() => {
-						var dom = fallback_fn(anchor);
-
-						return () => {
-							if (dom !== undefined) {
-								remove(dom);
-							}
-						};
-					});
+					fallback = branch(() => fallback_fn(anchor));
 				}
 			} else if (fallback !== null) {
 				pause_effect(fallback, () => {
@@ -175,17 +166,6 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 			set_hydrating(true);
 		}
 	});
-
-	effect.ondestroy = () => {
-		for (var item of state.items) {
-			if (item.e.dom !== null) {
-				remove(item.e.dom);
-				destroy_effect(item.e);
-			}
-		}
-
-		if (fallback) destroy_effect(fallback);
-	};
 }
 
 /**
@@ -343,7 +323,6 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 		var i;
 		var index;
 		var last_item;
-		var last_sibling;
 
 		// store the indexes of each item in the new world
 		for (i = start; i < b; i += 1) {
@@ -549,45 +528,32 @@ function update_item(item, value, index, type) {
  * @param {V} value
  * @param {unknown} key
  * @param {number} index
- * @param {(anchor: Node, item: V, index: number | import('#client').Value<number>) => void} render_fn
+ * @param {(anchor: Node, item: V | import('#client').Source<V>, index: number | import('#client').Value<number>) => void} render_fn
  * @param {number} flags
  * @returns {import('#client').EachItem}
  */
 function create_item(anchor, value, key, index, render_fn, flags) {
-	var each_item_not_reactive = (flags & EACH_ITEM_REACTIVE) === 0;
-
-	/** @type {import('#client').EachItem} */
-	var item = {
-		a: null,
-		// dom
-		// @ts-expect-error
-		e: null,
-		// index
-		i: (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index),
-		// key
-		k: key,
-		// item
-		v: each_item_not_reactive
-			? value
-			: (flags & EACH_IS_STRICT_EQUALS) !== 0
-				? source(value)
-				: mutable_source(value)
-	};
-
 	var previous_each_item = current_each_item;
 
 	try {
+		var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
+		var mutable = (flags & EACH_IS_STRICT_EQUALS) === 0;
+
+		var v = reactive ? (mutable ? mutable_source(value) : source(value)) : value;
+		var i = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
+
+		/** @type {import('#client').EachItem} */
+		var item = {
+			i,
+			v,
+			k: key,
+			a: null,
+			// @ts-expect-error
+			e: null
+		};
+
 		current_each_item = item;
-
-		item.e = branch(() => {
-			var dom = render_fn(anchor, item.v, item.i);
-
-			return () => {
-				if (dom !== undefined) {
-					remove(dom);
-				}
-			};
-		});
+		item.e = branch(() => render_fn(anchor, v, i));
 
 		return item;
 	} finally {
