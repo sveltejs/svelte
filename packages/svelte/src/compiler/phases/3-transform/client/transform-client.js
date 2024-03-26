@@ -52,7 +52,8 @@ export function client_component(source, analysis, options) {
 		get before_init() {
 			/** @type {any[]} */
 			const a = [];
-			a.push = () => error(null, 'INTERNAL', 'before_init.push should not be called outside create_block');
+			a.push = () =>
+				error(null, 'INTERNAL', 'before_init.push should not be called outside create_block');
 			return a;
 		},
 		get init() {
