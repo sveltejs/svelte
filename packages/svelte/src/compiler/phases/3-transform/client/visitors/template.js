@@ -2317,11 +2317,13 @@ export const template_visitors = {
 		const key_function = node.key
 			? b.arrow(
 					[node.context.type === 'Identifier' ? node.context : b.id('$$item'), index],
-					b.block(
-						declarations.concat(
-							b.return(/** @type {import('estree').Expression} */ (context.visit(node.key)))
-						)
-					)
+					declarations.length > 0
+						? b.block(
+								declarations.concat(
+									b.return(/** @type {import('estree').Expression} */ (context.visit(node.key)))
+								)
+							)
+						: /** @type {import('estree').Expression} */ (context.visit(node.key))
 				)
 			: b.literal(null);
 
@@ -2347,16 +2349,16 @@ export const template_visitors = {
 
 			args.push(
 				context.state.node,
-				each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
 				b.literal(each_type),
+				each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
 				key_function,
 				b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children)))
 			);
 		} else {
 			args.push(
 				context.state.node,
-				each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
 				b.literal(each_type),
+				each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
 				b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children)))
 			);
 		}
