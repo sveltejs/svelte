@@ -359,10 +359,8 @@ export function remove_reactions(signal, start_index) {
  */
 export function destroy_children(signal) {
 	if (signal.effects) {
-		var effect, i;
-		for (i = 0; i < signal.effects.length; i += 1) {
-			effect = signal.effects[i];
-			destroy_effect(effect);
+		for (var i = 0; i < signal.effects.length; i += 1) {
+			destroy_effect(signal.effects[i]);
 		}
 		signal.effects = null;
 	}
