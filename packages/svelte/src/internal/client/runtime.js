@@ -23,7 +23,8 @@ import {
 	BRANCH_EFFECT,
 	STATE_SYMBOL,
 	BLOCK_EFFECT,
-	ROOT_EFFECT
+	ROOT_EFFECT,
+	EFFECT_RAN
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -442,7 +443,6 @@ function flush_queued_root_effects(root_effects) {
 
 	for (i = 0; i < root_effects.length; i++) {
 		signal = root_effects[i];
-		set_signal_status(signal, CLEAN);
 		effects = collect_effects(signal, PRE_EFFECT | RENDER_EFFECT | EFFECT);
 		flush_queued_effects(effects);
 	}
@@ -495,23 +495,24 @@ function process_microtask() {
  * @returns {void}
  */
 export function schedule_effect(signal) {
-	const flags = signal.f;
-
 	if (current_scheduler_mode === FLUSH_MICROTASK) {
 		if (!is_micro_task_queued) {
 			is_micro_task_queued = true;
 			queueMicrotask(process_microtask);
 		}
 	}
-	let root = signal;
+	var root = signal;
+	var parent;
+	var flags;
 
 	while (root !== null) {
-		const parent = root.parent;
+		parent = root.parent;
 		if (parent === null) {
 			break;
 		}
-		if ((parent.f & BRANCH_EFFECT) !== 0) {
-			if ((parent.f & CLEAN) === 0) {
+		flags = parent.f;
+		if ((flags & BRANCH_EFFECT) !== 0) {
+			if ((flags & CLEAN) === 0) {
 				return;
 			}
 			set_signal_status(parent, MAYBE_DIRTY);
@@ -610,10 +611,10 @@ function collect_effects_recursively(
 			}
 		}
 	}
-	if ((filter_flags & PRE_EFFECT) !== 0) {
+	if ((filter_flags & PRE_EFFECT) !== 0 && pre.length > 0) {
 		collected_pre_and_render.push(...pre);
 	}
-	if ((filter_flags & RENDER_EFFECT) !== 0) {
+	if ((filter_flags & RENDER_EFFECT) !== 0 && render.length > 0) {
 		collected_pre_and_render.push(...render);
 	}
 	if (!shallow) {
@@ -637,7 +638,7 @@ function collect_effects_recursively(
 			);
 		}
 	}
-	if ((filter_flags & EFFECT) !== 0) {
+	if ((filter_flags & EFFECT) !== 0 && user.length > 0) {
 		collected_user.push(...user);
 	}
 	if (!shallow) {

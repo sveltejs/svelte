@@ -203,17 +203,6 @@ export function branch(fn) {
 	return create_effect(RENDER_EFFECT | BRANCH_EFFECT, fn, true);
 }
 
-/**
- * @param {(() => void)} fn
- * @param {boolean} managed
- * @returns {import('#client').Effect}
- */
-export function deferred_render_effect(fn, managed = false) {
-	let flags = RENDER_EFFECT;
-	if (managed) flags |= MANAGED;
-
-	return create_effect(flags, fn, true, false);
-}
 
 /**
  * @param {import('#client').Effect} effect
