@@ -21,8 +21,7 @@ import {
 	DESTROYED,
 	INERT,
 	MANAGED,
-	STATE_SYMBOL,
-	EFFECT_RAN
+	STATE_SYMBOL
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -403,9 +402,10 @@ export function execute_effect(effect) {
 		current_effect = previous_effect;
 		current_component_context = previous_component_context;
 	}
+	const parent = effect.parent;
 
-	if ((effect.f & PRE_EFFECT) !== 0 && current_queued_pre_and_render_effects.length > 0) {
-		flush_local_pre_effects(component_context);
+	if ((effect.f & PRE_EFFECT) !== 0 && parent !== null) {
+		flush_local_pre_effects(parent);
 	}
 }
 
@@ -540,36 +540,86 @@ export function schedule_effect(signal) {
 }
 
 /**
+ *
+ * This function recursively collects effects in topological order from the starting effect passed in.
+ * Effects will be collected when they match the filtered bitwise flag passed in only. The collected
+ * array will be populated with all the effects.
+ *
+ * @param {import('./types.js').Effect} effect
+ * @param {number} filter_flags
+ * @param {import('./types.js').Effect[]} collected
  * @returns {void}
  */
-export function flush_local_render_effects() {
-	const effects = [];
-	for (let i = 0; i < current_queued_pre_and_render_effects.length; i++) {
-		const effect = current_queued_pre_and_render_effects[i];
-		if ((effect.f & RENDER_EFFECT) !== 0 && effect.ctx === current_component_context) {
-			effects.push(effect);
-			current_queued_pre_and_render_effects.splice(i, 1);
-			i--;
+function collect_effects(effect, filter_flags, collected) {
+	var effects = effect.effects;
+	if (effects === null) {
+		return;
+	}
+	var i, s, child, flags;
+	var render = [];
+	var user = [];
+
+	for (i = 0; i < effects.length; i++) {
+		child = effects[i];
+		flags = child.f;
+		if ((flags & CLEAN) !== 0) {
+			continue;
+		}
+
+		if ((flags & PRE_EFFECT) !== 0) {
+			if ((filter_flags & PRE_EFFECT) !== 0) {
+				collected.push(child);
+			}
+			collect_effects(child, filter_flags, collected);
+		} else if ((flags & RENDER_EFFECT) !== 0) {
+			render.push(child);
+		} else if ((flags & EFFECT) !== 0) {
+			user.push(child);
 		}
 	}
-	flush_queued_effects(effects);
+
+	if (render.length > 0) {
+		if ((filter_flags & RENDER_EFFECT) !== 0) {
+			collected.push(...render);
+		}
+		for (s = 0; s < render.length; s++) {
+			collect_effects(render[s], filter_flags, collected);
+		}
+	}
+	if (user.length > 0) {
+		if ((filter_flags & EFFECT) !== 0) {
+			collected.push(...user);
+		}
+		for (s = 0; s < user.length; s++) {
+			collect_effects(user[s], filter_flags, collected);
+		}
+	}
 }
 
 /**
- * @param {null | import('./types.js').ComponentContext} context
+ * @param {import('./types.js').Effect} effect
  * @returns {void}
  */
-export function flush_local_pre_effects(context) {
-	const effects = [];
-	for (let i = 0; i < current_queued_pre_and_render_effects.length; i++) {
-		const effect = current_queued_pre_and_render_effects[i];
-		if ((effect.f & PRE_EFFECT) !== 0 && effect.ctx === context) {
-			effects.push(effect);
-			current_queued_pre_and_render_effects.splice(i, 1);
-			i--;
-		}
-	}
-	flush_queued_effects(effects);
+export function flush_local_render_effects(effect) {
+	/**
+	 * @type {import("./types.js").Effect[]}
+	 */
+	var render_effects = [];
+	collect_effects(effect, RENDER_EFFECT, render_effects);
+	flush_queued_effects(render_effects);
+}
+
+/**
+ * @param {import('./types.js').Effect} effect
+ * @returns {void}
+ */
+export function flush_local_pre_effects(effect) {
+	/**
+	 * @type {import("./types.js").Effect[]}
+	 */
+	var pre_effects = [];
+	collect_effects(effect, PRE_EFFECT, pre_effects);
+	flush_queued_effects(pre_effects);
 }
 
 /**

@@ -2,6 +2,7 @@ import { run } from '../../../common.js';
 import { user_pre_effect, user_effect } from '../../reactivity/effects.js';
 import {
 	current_component_context,
+	current_effect,
 	deep_read_state,
 	flush_local_render_effects,
 	get,
@@ -25,7 +26,10 @@ export function init() {
 			// beforeUpdate might change state that affects rendering, ensure the render effects following from it
 			// are batched up with the current run. Avoids for example child components rerunning when they're
 			// now hidden because beforeUpdate did set an if block to false.
-			flush_local_render_effects();
+			const parent = current_effect?.parent;
+			if (parent != null) {
+				flush_local_render_effects(parent);
+			}
 		});
 	}
 
