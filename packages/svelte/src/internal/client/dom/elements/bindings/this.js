@@ -1,5 +1,5 @@
 import { STATE_SYMBOL } from '../../../constants.js';
-import { effect } from '../../../reactivity/effects.js';
+import { effect, render_effect } from '../../../reactivity/effects.js';
 import { untrack } from '../../../runtime.js';
 
 /**
@@ -28,7 +28,7 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 	/** @type {unknown[]} */
 	var parts;
 
-	var e = effect(() => {
+	var e = render_effect(() => {
 		old_parts = parts;
 		// We only track changes to the parts, not the value itself to avoid unnecessary reruns.
 		parts = get_parts?.() || [];

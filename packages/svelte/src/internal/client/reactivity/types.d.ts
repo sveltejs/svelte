@@ -46,8 +46,6 @@ export interface Effect extends Reaction {
 	fn: () => void | (() => void);
 	/** The teardown function returned from the effect function */
 	teardown: null | (() => void);
-	/** The depth from the root signal, used for ordering render/pre-effects topologically **/
-	l: number;
 	/** Transition managers created with `$.transition` */
 	transitions: null | TransitionManager[];
 }

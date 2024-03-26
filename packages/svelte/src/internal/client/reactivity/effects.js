@@ -43,7 +43,6 @@ function create_effect(type, fn, sync, init = true) {
 		dom: null,
 		deps: null,
 		f: type | DIRTY,
-		l: 0,
 		fn,
 		effects: null,
 		deriveds: null,
@@ -52,10 +51,6 @@ function create_effect(type, fn, sync, init = true) {
 		ondestroy: null,
 		transitions: null
 	};
-
-	if (current_effect !== null) {
-		effect.l = current_effect.l + 1;
-	}
 
 	if (current_reaction !== null) {
 		if (current_reaction.effects === null) {
@@ -105,22 +100,7 @@ export function user_effect(fn) {
 		);
 	}
 
-	// Non-nested `$effect(...)` in a component should be deferred
-	// until the component is mounted
-	const defer =
-		current_effect.f & RENDER_EFFECT &&
-		// TODO do we actually need this? removing them changes nothing
-		current_component_context !== null &&
-		!current_component_context.m;
-
-	const effect = create_effect(EFFECT, fn, false, !defer);
-
-	if (defer) {
-		const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
-		(context.e ??= []).push(effect);
-	}
-
-	return effect;
+	return create_effect(EFFECT, fn, false, true);
 }
 
 /**
@@ -214,6 +194,18 @@ export function render_effect(fn, managed = false) {
 	if (managed) flags |= MANAGED;
 
 	return create_effect(flags, fn, true);
+}
+
+/**
+ * @param {(() => void)} fn
+ * @param {boolean} managed
+ * @returns {import('#client').Effect}
+ */
+export function deferred_render_effect(fn, managed = false) {
+	let flags = RENDER_EFFECT;
+	if (managed) flags |= MANAGED;
+
+	return create_effect(flags, fn, true, false);
 }
 
 /**
