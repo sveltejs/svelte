@@ -1,121 +1,134 @@
 import { hydrate_nodes, hydrating } from './hydration.js';
-import { child, clone_node, empty } from './operations.js';
-import {
-	create_fragment_from_html,
-	create_fragment_with_script_from_html,
-	insert
-} from './reconciler.js';
+import { clone_node, empty } from './operations.js';
+import { create_fragment_from_html, insert } from './reconciler.js';
 import { current_effect } from '../runtime.js';
-import { is_array } from '../utils.js';
+import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
 
 /**
  * @param {string} html
- * @param {boolean} return_fragment
- * @returns {() => Node}
+ * @param {number} flags
+ * @returns {() => Node | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function template(html, return_fragment) {
-	/** @type {undefined | Node} */
-	let cached_content;
+export function template(html, flags) {
+	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
+	var use_import_node = (flags & TEMPLATE_USE_IMPORT_NODE) !== 0;
+
+	/** @type {Node} */
+	var node;
+
 	return () => {
-		if (cached_content === undefined) {
-			const content = create_fragment_from_html(html);
-			cached_content = return_fragment ? content : /** @type {Node} */ (child(content));
+		if (hydrating) {
+			return is_fragment ? hydrate_nodes : /** @type {Node} */ (hydrate_nodes[0]);
 		}
-		return cached_content;
+
+		if (!node) {
+			node = create_fragment_from_html(html);
+			if (!is_fragment) node = /** @type {Node} */ (node.firstChild);
+		}
+
+		return use_import_node ? document.importNode(node, true) : clone_node(node, true);
 	};
 }
 
 /**
  * @param {string} html
- * @param {boolean} return_fragment
- * @returns {() => Node}
+ * @param {number} flags
+ * @returns {() => Node | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function template_with_script(html, return_fragment) {
-	/** @type {undefined | Node} */
-	let cached_content;
+export function template_with_script(html, flags) {
+	var first = true;
+	var fn = template(html, flags);
+
 	return () => {
-		if (cached_content === undefined) {
-			const content = create_fragment_with_script_from_html(html);
-			cached_content = return_fragment ? content : /** @type {Node} */ (child(content));
+		if (hydrating) return fn();
+
+		var node = /** @type {Element | DocumentFragment} */ (fn());
+
+		if (first) {
+			first = false;
+			run_scripts(node);
 		}
-		return cached_content;
+
+		return node;
 	};
 }
 
 /**
  * @param {string} svg
- * @param {boolean} return_fragment
- * @returns {() => Node}
+ * @param {number} flags
+ * @returns {() => Node | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function svg_template(svg, return_fragment) {
-	/** @type {undefined | Node} */
-	let cached_content;
+export function svg_template(svg, flags) {
+	var fn = template(`<svg>${svg}</svg>`, flags & ~TEMPLATE_FRAGMENT);
+
+	/** @type {Element | DocumentFragment} */
+	var node;
+
 	return () => {
-		if (cached_content === undefined) {
-			const content = /** @type {Node} */ (child(create_fragment_from_html(`<svg>${svg}</svg>`)));
-			cached_content = return_fragment ? content : /** @type {Node} */ (child(content));
+		if (hydrating) {
+			return fn();
 		}
-		return cached_content;
+
+		if (!node) {
+			var element = /** @type {Element} */ (fn());
+
+			if ((flags & TEMPLATE_FRAGMENT) === 0) {
+				node = /** @type {Element} */ (element.firstChild);
+			} else {
+				node = document.createDocumentFragment();
+				while (element.firstChild) {
+					node.appendChild(element.firstChild);
+				}
+			}
+		}
+
+		return node;
 	};
 }
 
 /**
  * @param {string} svg
- * @param {boolean} return_fragment
- * @returns {() => Node}
+ * @param {number} flags
+ * @returns {() => Node | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function svg_template_with_script(svg, return_fragment) {
-	/** @type {undefined | Node} */
-	let cached_content;
+export function svg_template_with_script(svg, flags) {
+	var first = true;
+	var fn = svg_template(svg, flags);
+
 	return () => {
-		if (cached_content === undefined) {
-			const content = /** @type {Node} */ (child(create_fragment_from_html(`<svg>${svg}</svg>`)));
-			cached_content = return_fragment ? content : /** @type {Node} */ (child(content));
+		if (hydrating) return fn();
+
+		var node = /** @type {Element | DocumentFragment} */ (fn());
+
+		if (first) {
+			first = false;
+			run_scripts(node);
 		}
-		return cached_content;
+
+		return node;
 	};
 }
 
 /**
- * @param {boolean} is_fragment
- * @param {boolean} use_clone_node
- * @param {() => Node} [template_element_fn]
- * @returns {Element | DocumentFragment | Node[]}
+ * Creating a document fragment from HTML that contains script tags will not execute
+ * the scripts. We need to replace the script tags with new ones so that they are executed.
+ * @param {Element | DocumentFragment} node
  */
-/*#__NO_SIDE_EFFECTS__*/
-function open_template(is_fragment, use_clone_node, template_element_fn) {
-	if (hydrating) {
-		return is_fragment ? hydrate_nodes : /** @type {Element} */ (hydrate_nodes[0]);
+function run_scripts(node) {
+	for (const script of node.querySelectorAll('script')) {
+		var clone = document.createElement('script');
+		for (var attribute of script.attributes) {
+			clone.setAttribute(attribute.name, attribute.value);
+		}
+
+		clone.textContent = script.textContent;
+		script.replaceWith(clone);
 	}
-
-	return use_clone_node
-		? clone_node(/** @type {() => Element} */ (template_element_fn)(), true)
-		: document.importNode(/** @type {() => Element} */ (template_element_fn)(), true);
 }
-
-/**
- * @param {() => Node} template_element_fn
- * @param {boolean} [use_clone_node]
- * @returns {Element}
- */
-export function open(template_element_fn, use_clone_node = true) {
-	return /** @type {Element} */ (open_template(false, use_clone_node, template_element_fn));
-}
-
-/**
- * @param {() => Node} template_element_fn
- * @param {boolean} [use_clone_node]
- * @returns {Element | DocumentFragment | Node[]}
- */
-export function open_frag(template_element_fn, use_clone_node = true) {
-	return open_template(true, use_clone_node, template_element_fn);
-}
-
-const comment_template = template('<!>', true);
 
 /**
  * @param {Text | Comment | Element} anchor
@@ -136,9 +149,7 @@ export function text(anchor) {
 }
 
 /*#__NO_SIDE_EFFECTS__*/
-export function comment() {
-	return open_frag(comment_template);
-}
+export const comment = template('<!>', TEMPLATE_FRAGMENT);
 
 /**
  * Assign the created (or in hydration mode, traversed) dom elements to the current block

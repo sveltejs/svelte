@@ -16,6 +16,9 @@ export const TRANSITION_IN = 1;
 export const TRANSITION_OUT = 1 << 1;
 export const TRANSITION_GLOBAL = 1 << 2;
 
+export const TEMPLATE_FRAGMENT = 1;
+export const TEMPLATE_USE_IMPORT_NODE = 1 << 1;
+
 /** List of Element events that will be delegated */
 export const DelegatedEvents = [
 	'beforeinput',
