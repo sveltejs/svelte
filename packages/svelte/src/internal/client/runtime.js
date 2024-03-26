@@ -552,45 +552,46 @@ export function schedule_effect(signal) {
  */
 function collect_effects(effect, filter_flags, collected) {
 	var effects = effect.effects;
-	if (effects !== null) {
-		var i, s, child, flags;
-		var render = [];
-		var user = [];
+	if (effects === null) {
+		return;
+	}
+	var i, s, child, flags;
+	var render = [];
+	var user = [];
 
-		for (i = 0; i < effects.length; i++) {
-			child = effects[i];
-			flags = child.f;
-			if ((flags & CLEAN) !== 0) {
-				continue;
-			}
-
-			if ((flags & PRE_EFFECT) !== 0) {
-				if ((filter_flags & PRE_EFFECT) !== 0) {
-					collected.push(child);
-				}
-				collect_effects(child, filter_flags, collected);
-			} else if ((flags & RENDER_EFFECT) !== 0) {
-				render.push(child);
-			} else if ((flags & EFFECT) !== 0) {
-				user.push(child);
-			}
+	for (i = 0; i < effects.length; i++) {
+		child = effects[i];
+		flags = child.f;
+		if ((flags & CLEAN) !== 0) {
+			continue;
 		}
 
-		if (render.length > 0) {
-			if ((filter_flags & RENDER_EFFECT) !== 0) {
-				collected.push(...render);
+		if ((flags & PRE_EFFECT) !== 0) {
+			if ((filter_flags & PRE_EFFECT) !== 0) {
+				collected.push(child);
 			}
-			for (s = 0; s < render.length; s++) {
-				collect_effects(render[s], filter_flags, collected);
-			}
+			collect_effects(child, filter_flags, collected);
+		} else if ((flags & RENDER_EFFECT) !== 0) {
+			render.push(child);
+		} else if ((flags & EFFECT) !== 0) {
+			user.push(child);
 		}
-		if (user.length > 0) {
-			if ((filter_flags & EFFECT) !== 0) {
-				collected.push(...user);
-			}
-			for (s = 0; s < user.length; s++) {
-				collect_effects(user[s], filter_flags, collected);
-			}
+	}
+
+	if (render.length > 0) {
+		if ((filter_flags & RENDER_EFFECT) !== 0) {
+			collected.push(...render);
+		}
+		for (s = 0; s < render.length; s++) {
+			collect_effects(render[s], filter_flags, collected);
+		}
+	}
+	if (user.length > 0) {
+		if ((filter_flags & EFFECT) !== 0) {
+			collected.push(...user);
+		}
+		for (s = 0; s < user.length; s++) {
+			collect_effects(user[s], filter_flags, collected);
 		}
 	}
 }
