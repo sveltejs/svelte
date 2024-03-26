@@ -242,7 +242,6 @@ function _mount(
 	// @ts-expect-error will be defined because the render effect runs synchronously
 	let component = undefined;
 
-	// TODO should this just be a root effect, rather than having the destroy logic live separately?
 	const unmount = effect_root(() => {
 		branch(() => {
 			untrack(() => {
