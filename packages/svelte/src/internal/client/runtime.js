@@ -362,11 +362,7 @@ export function destroy_children(signal) {
 		for (var i = 0; i < signal.effects.length; i += 1) {
 			var effect = signal.effects[i];
 
-			// TODO figure out why we need this `if` condition. if we remove it,
-			// the only test that fails relates to root effects (is there a reasaon
-			// we don't want to destroy root effects when their parent effects are
-			// updated? seems leaky), but it looks like there are other managed
-			// effects aside from the immediate children of blocks
+			// TODO ideally root effects would be parentless
 			if ((effect.f & ROOT_EFFECT) === 0) {
 				destroy_effect(effect);
 			}
