@@ -1,6 +1,5 @@
 import { UNINITIALIZED } from '../../constants.js';
-import { remove } from '../reconciler.js';
-import { pause_effect, render_effect } from '../../reactivity/effects.js';
+import { block, branch, pause_effect } from '../../reactivity/effects.js';
 import { safe_not_equal } from '../../reactivity/equality.js';
 
 /**
@@ -17,39 +16,13 @@ export function key_block(anchor, get_key, render_fn) {
 	/** @type {import('#client').Effect} */
 	let effect;
 
-	/**
-	 * Every time `key` changes, we create a new effect. Old effects are
-	 * removed from this set when they have fully transitioned out
-	 * @type {Set<import('#client').Effect>}
-	 */
-	let effects = new Set();
-
-	const key_effect = render_effect(() => {
+	block(() => {
 		if (safe_not_equal(key, (key = get_key()))) {
 			if (effect) {
-				var e = effect;
-				pause_effect(e, () => {
-					effects.delete(e);
-				});
+				pause_effect(effect);
 			}
 
-			effect = render_effect(() => {
-				const dom = render_fn(anchor);
-
-				return () => {
-					if (dom !== undefined) {
-						remove(dom);
-					}
-				};
-			}, true);
-
-			effects.add(effect);
+			effect = branch(() => render_fn(anchor));
 		}
 	});
-
-	key_effect.ondestroy = () => {
-		for (const e of effects) {
-			if (e.dom) remove(e.dom);
-		}
-	};
 }

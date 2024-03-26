@@ -1,12 +1,7 @@
 import { IS_ELSEIF } from '../../constants.js';
 import { hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
 import { remove } from '../reconciler.js';
-import {
-	destroy_effect,
-	pause_effect,
-	render_effect,
-	resume_effect
-} from '../../reactivity/effects.js';
+import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 
 /**
  * @param {Comment} anchor
@@ -32,7 +27,7 @@ export function if_block(
 	/** @type {boolean | null} */
 	let condition = null;
 
-	const if_effect = render_effect(() => {
+	const effect = block(() => {
 		if (condition === (condition = !!get_condition())) return;
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
@@ -61,7 +56,7 @@ export function if_block(
 			if (consequent_effect) {
 				resume_effect(consequent_effect);
 			} else {
-				consequent_effect = render_effect(() => consequent_fn(anchor), true);
+				consequent_effect = branch(() => consequent_fn(anchor));
 			}
 
 			if (alternate_effect) {
@@ -73,7 +68,7 @@ export function if_block(
 			if (alternate_effect) {
 				resume_effect(alternate_effect);
 			} else if (alternate_fn) {
-				alternate_effect = render_effect(() => alternate_fn(anchor), true);
+				alternate_effect = branch(() => alternate_fn(anchor));
 			}
 
 			if (consequent_effect) {
@@ -90,17 +85,6 @@ export function if_block(
 	});
 
 	if (elseif) {
-		if_effect.f |= IS_ELSEIF;
+		effect.f |= IS_ELSEIF;
 	}
-
-	if_effect.ondestroy = () => {
-		// TODO why is this not automatic? this should be children of `if_effect`
-		if (consequent_effect) {
-			destroy_effect(consequent_effect);
-		}
-
-		if (alternate_effect) {
-			destroy_effect(alternate_effect);
-		}
-	};
 }

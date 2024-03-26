@@ -1,4 +1,4 @@
-import { pre_effect, user_root_effect } from '../internal/client/reactivity/effects.js';
+import { pre_effect, effect_root } from '../internal/client/reactivity/effects.js';
 import { flushSync } from '../main/main-client.js';
 import { ReactiveMap } from './map.js';
 import { assert, test } from 'vitest';
@@ -14,7 +14,7 @@ test('map.values()', () => {
 
 	const log: any = [];
 
-	const cleanup = user_root_effect(() => {
+	const cleanup = effect_root(() => {
 		pre_effect(() => {
 			log.push(map.size);
 		});
@@ -50,7 +50,7 @@ test('map.get(...)', () => {
 
 	const log: any = [];
 
-	const cleanup = user_root_effect(() => {
+	const cleanup = effect_root(() => {
 		pre_effect(() => {
 			log.push('get 1', map.get(1));
 		});
@@ -86,7 +86,7 @@ test('map.has(...)', () => {
 
 	const log: any = [];
 
-	const cleanup = user_root_effect(() => {
+	const cleanup = effect_root(() => {
 		pre_effect(() => {
 			log.push('has 1', map.has(1));
 		});
@@ -129,7 +129,7 @@ test('map handling of undefined values', () => {
 
 	const log: any = [];
 
-	const cleanup = user_root_effect(() => {
+	const cleanup = effect_root(() => {
 		map.set(1, undefined);
 
 		pre_effect(() => {

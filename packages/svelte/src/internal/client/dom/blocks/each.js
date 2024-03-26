@@ -11,11 +11,11 @@ import { empty } from '../operations.js';
 import { insert, remove } from '../reconciler.js';
 import { untrack } from '../../runtime.js';
 import {
-	destroy_effect,
+	block,
+	branch,
 	effect,
 	pause_effect,
 	pause_effects,
-	render_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
@@ -43,7 +43,7 @@ export function set_current_each_item(item) {
  * @param {number} flags
  * @param {() => V[]} get_collection
  * @param {null | ((item: V) => string)} get_key
- * @param {(anchor: Node, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
+ * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
  * @returns {void}
@@ -67,7 +67,7 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 	/** @type {import('#client').Effect | null} */
 	var fallback = null;
 
-	var effect = render_effect(() => {
+	block(() => {
 		var collection = get_collection();
 
 		var array = is_array(collection)
@@ -152,15 +152,7 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 				if (fallback) {
 					resume_effect(fallback);
 				} else {
-					fallback = render_effect(() => {
-						var dom = fallback_fn(anchor);
-
-						return () => {
-							if (dom !== undefined) {
-								remove(dom);
-							}
-						};
-					}, true);
+					fallback = branch(() => fallback_fn(anchor));
 				}
 			} else if (fallback !== null) {
 				pause_effect(fallback, () => {
@@ -174,17 +166,6 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 			set_hydrating(true);
 		}
 	});
-
-	effect.ondestroy = () => {
-		for (var item of state.items) {
-			if (item.e.dom !== null) {
-				remove(item.e.dom);
-				destroy_effect(item.e);
-			}
-		}
-
-		if (fallback) destroy_effect(fallback);
-	};
 }
 
 /**
@@ -193,7 +174,7 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
  * @param {number} flags
  * @param {() => V[]} get_collection
  * @param {null | ((item: V) => string)} get_key
- * @param {(anchor: Node, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
+ * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} [fallback_fn]
  * @returns {void}
  */
@@ -206,7 +187,7 @@ export function each_keyed(anchor, flags, get_collection, get_key, render_fn, fa
  * @param {Element | Comment} anchor
  * @param {number} flags
  * @param {() => V[]} get_collection
- * @param {(anchor: Node, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
+ * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} [fallback_fn]
  * @returns {void}
  */
@@ -219,7 +200,7 @@ export function each_indexed(anchor, flags, get_collection, render_fn, fallback_
  * @param {Array<V>} array
  * @param {import('#client').EachState} state
  * @param {Element | Comment | Text} anchor
- * @param {(anchor: Node, item: V, index: number | import('#client').Source<number>) => void} render_fn
+ * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: number | import('#client').Source<number>) => void} render_fn
  * @param {number} flags
  * @returns {void}
  */
@@ -275,7 +256,7 @@ function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
  * @param {Array<V>} array
  * @param {import('#client').EachState} state
  * @param {Element | Comment | Text} anchor
- * @param {(anchor: Node, item: V, index: number | import('#client').Source<number>) => void} render_fn
+ * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: number | import('#client').Source<number>) => void} render_fn
  * @param {number} flags
  * @param {any[]} keys
  * @returns {void}
@@ -342,7 +323,6 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 		var i;
 		var index;
 		var last_item;
-		var last_sibling;
 
 		// store the indexes of each item in the new world
 		for (i = start; i < b; i += 1) {
@@ -548,45 +528,32 @@ function update_item(item, value, index, type) {
  * @param {V} value
  * @param {unknown} key
  * @param {number} index
- * @param {(anchor: Node, item: V, index: number | import('#client').Value<number>) => void} render_fn
+ * @param {(anchor: Node, item: V | import('#client').Source<V>, index: number | import('#client').Value<number>) => void} render_fn
  * @param {number} flags
  * @returns {import('#client').EachItem}
  */
 function create_item(anchor, value, key, index, render_fn, flags) {
-	var each_item_not_reactive = (flags & EACH_ITEM_REACTIVE) === 0;
-
-	/** @type {import('#client').EachItem} */
-	var item = {
-		a: null,
-		// dom
-		// @ts-expect-error
-		e: null,
-		// index
-		i: (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index),
-		// key
-		k: key,
-		// item
-		v: each_item_not_reactive
-			? value
-			: (flags & EACH_IS_STRICT_EQUALS) !== 0
-				? source(value)
-				: mutable_source(value)
-	};
-
 	var previous_each_item = current_each_item;
 
 	try {
+		var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
+		var mutable = (flags & EACH_IS_STRICT_EQUALS) === 0;
+
+		var v = reactive ? (mutable ? mutable_source(value) : source(value)) : value;
+		var i = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
+
+		/** @type {import('#client').EachItem} */
+		var item = {
+			i,
+			v,
+			k: key,
+			a: null,
+			// @ts-expect-error
+			e: null
+		};
+
 		current_each_item = item;
-
-		item.e = render_effect(() => {
-			var dom = render_fn(anchor, item.v, item.i);
-
-			return () => {
-				if (dom !== undefined) {
-					remove(dom);
-				}
-			};
-		}, true);
+		item.e = branch(() => render_fn(anchor, v, i));
 
 		return item;
 	} finally {

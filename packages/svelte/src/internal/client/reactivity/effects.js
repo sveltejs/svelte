@@ -16,14 +16,16 @@ import {
 } from '../runtime.js';
 import {
 	DIRTY,
-	MANAGED,
+	BRANCH_EFFECT,
 	RENDER_EFFECT,
 	EFFECT,
 	PRE_EFFECT,
 	DESTROYED,
 	INERT,
 	IS_ELSEIF,
-	EFFECT_RAN
+	EFFECT_RAN,
+	BLOCK_EFFECT,
+	ROOT_EFFECT
 } from '../constants.js';
 import { set } from './sources.js';
 import { noop } from '../../common.js';
@@ -49,7 +51,6 @@ function create_effect(type, fn, sync, init = true) {
 		deriveds: null,
 		teardown: null,
 		ctx: current_component_context,
-		ondestroy: null,
 		transitions: null
 	};
 
@@ -89,7 +90,7 @@ function create_effect(type, fn, sync, init = true) {
  * @returns {boolean}
  */
 export function effect_active() {
-	return current_effect ? (current_effect.f & MANAGED) === 0 : false;
+	return current_effect ? (current_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 : false;
 }
 
 /**
@@ -146,8 +147,8 @@ export function user_pre_effect(fn) {
  * @param {() => void | (() => void)} fn
  * @returns {() => void}
  */
-export function user_root_effect(fn) {
-	const effect = render_effect(fn, true);
+export function effect_root(fn) {
+	const effect = create_effect(ROOT_EFFECT, () => untrack(fn), true);
 	return () => {
 		destroy_effect(effect);
 	};
@@ -206,14 +207,20 @@ export function pre_effect(fn) {
 
 /**
  * @param {(() => void)} fn
- * @param {boolean} managed
  * @returns {import('#client').Effect}
  */
-export function render_effect(fn, managed = false) {
-	let flags = RENDER_EFFECT;
-	if (managed) flags |= MANAGED;
+export function render_effect(fn) {
+	return create_effect(RENDER_EFFECT, fn, true);
+}
 
-	return create_effect(flags, fn, true);
+/** @param {(() => void)} fn */
+export function block(fn) {
+	return create_effect(RENDER_EFFECT | BLOCK_EFFECT, fn, true);
+}
+
+/** @param {(() => void)} fn */
+export function branch(fn) {
+	return create_effect(RENDER_EFFECT | BRANCH_EFFECT, fn, true);
 }
 
 /**
@@ -237,16 +244,13 @@ export function destroy_effect(effect) {
 		remove(effect.dom);
 	}
 
-	effect.ondestroy?.();
-
-	// @ts-expect-error
-	effect.fn =
-		effect.effects =
+	effect.effects =
 		effect.teardown =
-		effect.ondestroy =
 		effect.ctx =
 		effect.dom =
 		effect.deps =
+		// @ts-expect-error
+		effect.fn =
 			null;
 }
 
@@ -328,7 +332,7 @@ function pause_children(effect, transitions, local) {
 
 	if (effect.effects !== null) {
 		for (const child of effect.effects) {
-			var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & MANAGED) !== 0;
+			var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & BRANCH_EFFECT) !== 0;
 			pause_children(child, transitions, transparent ? local : false);
 		}
 	}
@@ -359,7 +363,7 @@ function resume_children(effect, local) {
 
 	if (effect.effects !== null) {
 		for (const child of effect.effects) {
-			var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & MANAGED) !== 0;
+			var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & BRANCH_EFFECT) !== 0;
 			resume_children(child, transparent ? local : false);
 		}
 	}

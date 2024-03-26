@@ -24,7 +24,7 @@ function run_test(runes: boolean, fn: (runes: boolean) => () => void) {
 		let execute: any;
 		const signal = render_effect(() => {
 			execute = fn(runes);
-		}, true);
+		});
 		$.pop();
 		execute();
 		destroy_effect(signal);

@@ -20,8 +20,10 @@ import {
 	UNOWNED,
 	DESTROYED,
 	INERT,
-	MANAGED,
-	STATE_SYMBOL
+	BRANCH_EFFECT,
+	STATE_SYMBOL,
+	BLOCK_EFFECT,
+	ROOT_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -359,7 +361,9 @@ export function destroy_children(signal) {
 	if (signal.effects) {
 		for (var i = 0; i < signal.effects.length; i += 1) {
 			var effect = signal.effects[i];
-			if ((effect.f & MANAGED) === 0) {
+
+			// TODO ideally root effects would be parentless
+			if ((effect.f & ROOT_EFFECT) === 0) {
 				destroy_effect(effect);
 			}
 		}
@@ -379,7 +383,9 @@ export function destroy_children(signal) {
  * @returns {void}
  */
 export function execute_effect(effect) {
-	if ((effect.f & DESTROYED) !== 0) {
+	var flags = effect.f;
+
+	if ((flags & DESTROYED) !== 0) {
 		return;
 	}
 
@@ -394,7 +400,10 @@ export function execute_effect(effect) {
 	current_component_context = component_context;
 
 	try {
-		destroy_children(effect);
+		if ((flags & BLOCK_EFFECT) === 0) {
+			destroy_children(effect);
+		}
+
 		effect.teardown?.();
 		var teardown = execute_reaction_fn(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
@@ -404,7 +413,7 @@ export function execute_effect(effect) {
 	}
 	const parent = effect.parent;
 
-	if ((effect.f & PRE_EFFECT) !== 0 && parent !== null) {
+	if ((flags & PRE_EFFECT) !== 0 && parent !== null) {
 		flush_local_pre_effects(parent);
 	}
 }
@@ -488,7 +497,7 @@ export function schedule_effect(signal) {
 		// before this effect is scheduled. We know they will be destroyed
 		// so we can make them inert to avoid having to find them in the
 		// queue and remove them.
-		if ((flags & MANAGED) === 0) {
+		if ((flags & BRANCH_EFFECT) === 0) {
 			mark_subtree_children_inert(signal, true);
 		}
 	} else {
@@ -709,7 +718,11 @@ export function get(signal) {
 	}
 
 	// Register the dependency on the current reaction signal.
-	if (current_reaction !== null && (current_reaction.f & MANAGED) === 0 && !current_untracking) {
+	if (
+		current_reaction !== null &&
+		(current_reaction.f & BRANCH_EFFECT) === 0 &&
+		!current_untracking
+	) {
 		const unowned = (current_reaction.f & UNOWNED) !== 0;
 		const dependencies = current_reaction.deps;
 		if (
@@ -734,7 +747,7 @@ export function get(signal) {
 			current_untracked_writes !== null &&
 			current_effect !== null &&
 			(current_effect.f & CLEAN) !== 0 &&
-			(current_effect.f & MANAGED) === 0 &&
+			(current_effect.f & BRANCH_EFFECT) === 0 &&
 			current_untracked_writes.includes(signal)
 		) {
 			set_signal_status(current_effect, DIRTY);

@@ -1,4 +1,4 @@
-import { pre_effect, user_root_effect } from '../internal/client/reactivity/effects.js';
+import { pre_effect, effect_root } from '../internal/client/reactivity/effects.js';
 import { flushSync } from '../main/main-client.js';
 import { ReactiveSet } from './set.js';
 import { assert, test } from 'vitest';
@@ -8,7 +8,7 @@ test('set.values()', () => {
 
 	const log: any = [];
 
-	const cleanup = user_root_effect(() => {
+	const cleanup = effect_root(() => {
 		pre_effect(() => {
 			log.push(set.size);
 		});
@@ -40,7 +40,7 @@ test('set.has(...)', () => {
 
 	const log: any = [];
 
-	const cleanup = user_root_effect(() => {
+	const cleanup = effect_root(() => {
 		pre_effect(() => {
 			log.push('has 1', set.has(1));
 		});

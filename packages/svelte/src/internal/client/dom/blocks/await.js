@@ -1,5 +1,4 @@
 import { is_promise } from '../../../common.js';
-import { remove } from '../reconciler.js';
 import {
 	current_component_context,
 	flushSync,
@@ -7,7 +6,7 @@ import {
 	set_current_effect,
 	set_current_reaction
 } from '../../runtime.js';
-import { destroy_effect, pause_effect, render_effect } from '../../reactivity/effects.js';
+import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import { INERT } from '../../constants.js';
 
 /**
@@ -39,10 +38,10 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 	 * @param {any} value
 	 */
 	function create_effect(fn, value) {
-		set_current_effect(branch);
-		set_current_reaction(branch); // TODO do we need both?
+		set_current_effect(effect);
+		set_current_reaction(effect); // TODO do we need both?
 		set_current_component_context(component_context);
-		var effect = render_effect(() => fn(anchor, value), true);
+		var e = branch(() => fn(anchor, value));
 		set_current_component_context(null);
 		set_current_reaction(null);
 		set_current_effect(null);
@@ -51,10 +50,10 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 		// resolves which is unexpected behaviour (and somewhat irksome to test)
 		flushSync();
 
-		return effect;
+		return e;
 	}
 
-	const branch = render_effect(() => {
+	const effect = block(() => {
 		if (input === (input = get_input())) return;
 
 		if (is_promise(input)) {
@@ -62,11 +61,10 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 
 			if (pending_fn) {
 				if (pending_effect && (pending_effect.f & INERT) === 0) {
-					if (pending_effect.dom) remove(pending_effect.dom);
 					destroy_effect(pending_effect);
 				}
 
-				pending_effect = render_effect(() => pending_fn(anchor), true);
+				pending_effect = branch(() => pending_fn(anchor));
 			}
 
 			if (then_effect) pause_effect(then_effect);
@@ -96,19 +94,11 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 
 			if (then_fn) {
 				if (then_effect) {
-					if (then_effect.dom) remove(then_effect.dom);
 					destroy_effect(then_effect);
 				}
 
-				then_effect = render_effect(() => then_fn(anchor, input), true);
+				then_effect = branch(() => then_fn(anchor, input));
 			}
 		}
 	});
-
-	branch.ondestroy = () => {
-		// TODO this sucks, tidy it up
-		if (pending_effect?.dom) remove(pending_effect.dom);
-		if (then_effect?.dom) remove(then_effect.dom);
-		if (catch_effect?.dom) remove(catch_effect.dom);
-	};
 }

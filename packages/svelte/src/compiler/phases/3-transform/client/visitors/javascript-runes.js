@@ -389,7 +389,7 @@ export const javascript_visitors_runes = {
 			const args = /** @type {import('estree').Expression[]} */ (
 				node.arguments.map((arg) => context.visit(arg))
 			);
-			return b.call('$.user_root_effect', ...args);
+			return b.call('$.effect_root', ...args);
 		}
 
 		if (rune === '$inspect' || rune === '$inspect().with') {

@@ -20,12 +20,10 @@ export function snippet(get_snippet, node, ...args) {
 			// Untrack so we only rerender when the snippet function itself changes,
 			// not when an eagerly-read prop inside the snippet function changes
 			var dom = untrack(() => /** @type {SnippetFn} */ (snippet_fn)(node, ...args));
-		}
 
-		return () => {
 			if (dom !== undefined) {
-				remove(dom);
+				return () => remove(dom);
 			}
-		};
+		}
 	});
 }

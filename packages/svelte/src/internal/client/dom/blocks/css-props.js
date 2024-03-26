@@ -39,26 +39,28 @@ export function css_props(anchor, is_html, props, component) {
 
 	component(component_anchor);
 
-	/** @type {Record<string, string>} */
-	let current_props = {};
+	render_effect(() => {
+		/** @type {Record<string, string>} */
+		let current_props = {};
 
-	const effect = render_effect(() => {
-		const next_props = props();
+		render_effect(() => {
+			const next_props = props();
 
-		for (const key in current_props) {
-			if (!(key in next_props)) {
-				element.style.removeProperty(key);
+			for (const key in current_props) {
+				if (!(key in next_props)) {
+					element.style.removeProperty(key);
+				}
 			}
-		}
 
-		for (const key in next_props) {
-			element.style.setProperty(key, next_props[key]);
-		}
+			for (const key in next_props) {
+				element.style.setProperty(key, next_props[key]);
+			}
 
-		current_props = next_props;
+			current_props = next_props;
+		});
+
+		return () => {
+			remove(element);
+		};
 	});
-
-	effect.ondestroy = () => {
-		remove(element);
-	};
 }
