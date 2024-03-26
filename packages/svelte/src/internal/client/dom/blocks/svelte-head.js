@@ -1,7 +1,6 @@
 import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrate_nodes } from '../hydration.js';
 import { empty } from '../operations.js';
 import { block } from '../../reactivity/effects.js';
-import { remove } from '../reconciler.js';
 
 /**
  * @param {(anchor: Node) => import('#client').Dom | void} render_fn
@@ -27,23 +26,7 @@ export function head(render_fn) {
 	var anchor = document.head.appendChild(empty());
 
 	try {
-		/** @type {import('#client').Dom | null} */
-		var dom = null;
-
-		const head_effect = block(() => {
-			if (dom !== null) {
-				remove(dom);
-				head_effect.dom = dom = null;
-			}
-
-			dom = render_fn(anchor) ?? null;
-		});
-
-		head_effect.ondestroy = () => {
-			if (dom !== null) {
-				remove(dom);
-			}
-		};
+		block(() => render_fn(anchor));
 	} finally {
 		if (was_hydrating) {
 			set_hydrate_nodes(/** @type {import('#client').TemplateNode[]} */ (previous_hydrate_nodes));
