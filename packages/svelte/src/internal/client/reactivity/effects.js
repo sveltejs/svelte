@@ -39,7 +39,7 @@ import { remove } from '../dom/reconciler.js';
  * @returns {import('#client').Effect}
  */
 function create_effect(type, fn, sync, init = true) {
-	var is_root = (type & ROOT_EFFECT) === 0;
+	var is_root = (type & ROOT_EFFECT) !== 0;
 	/** @type {import('#client').Effect} */
 	var effect = {
 		parent: is_root ? null : current_effect,
