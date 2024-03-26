@@ -1,5 +1,4 @@
 import { UNINITIALIZED } from '../../constants.js';
-import { hydrate_block_anchor } from '../hydration.js';
 import { remove } from '../reconciler.js';
 import { pause_effect, render_effect } from '../../reactivity/effects.js';
 import { safe_not_equal } from '../../reactivity/equality.js';
@@ -12,8 +11,6 @@ import { safe_not_equal } from '../../reactivity/equality.js';
  * @returns {void}
  */
 export function key_block(anchor, get_key, render_fn) {
-	hydrate_block_anchor(anchor);
-
 	/** @type {V | typeof UNINITIALIZED} */
 	let key = UNINITIALIZED;
 

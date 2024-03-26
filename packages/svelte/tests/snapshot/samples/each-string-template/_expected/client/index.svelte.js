@@ -7,7 +7,7 @@ export default function Each_string_template($$anchor, $$props) {
 	$.push($$props, false);
 	$.init();
 
-	var fragment = $.comment($$anchor);
+	var fragment = $.comment();
 	var node = $.first_child(fragment);
 
 	$.each_indexed(node, 1, () => ['foo', 'bar', 'baz'], ($$anchor, thing, $$index) => {

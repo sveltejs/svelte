@@ -1,5 +1,4 @@
 import { is_promise } from '../../../common.js';
-import { hydrate_block_anchor } from '../hydration.js';
 import { remove } from '../reconciler.js';
 import {
 	current_component_context,
@@ -22,8 +21,6 @@ import { INERT } from '../../constants.js';
  */
 export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 	const component_context = current_component_context;
-
-	hydrate_block_anchor(anchor);
 
 	/** @type {any} */
 	let input;

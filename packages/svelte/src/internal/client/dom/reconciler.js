@@ -1,5 +1,4 @@
-import { append_child } from './operations.js';
-import { hydrate_nodes, hydrate_block_anchor, hydrating } from './hydration.js';
+import { hydrate_nodes, hydrating } from './hydration.js';
 import { is_array } from '../utils.js';
 
 /** @param {string} html */
@@ -74,7 +73,6 @@ export function remove(current) {
  * @returns {Element | Comment | (Element | Comment | Text)[]}
  */
 export function reconcile_html(target, value, svg) {
-	hydrate_block_anchor(target);
 	if (hydrating) {
 		return hydrate_nodes;
 	}

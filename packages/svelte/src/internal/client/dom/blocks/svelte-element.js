@@ -1,5 +1,5 @@
 import { namespace_svg } from '../../../../constants.js';
-import { hydrate_nodes, hydrate_block_anchor, hydrating } from '../hydration.js';
+import { hydrate_anchor, hydrate_nodes, hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import {
 	destroy_effect,
@@ -43,8 +43,6 @@ function swap_block_dom(effect, from, to) {
  */
 export function element(anchor, get_tag, is_svg, render_fn) {
 	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
-
-	hydrate_block_anchor(anchor);
 
 	/** @type {string | null} */
 	let tag;
@@ -114,7 +112,7 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 					// If hydrating, use the existing ssr comment as the anchor so that the
 					// inner open and close methods can pick up the existing nodes correctly
 					var child_anchor = hydrating
-						? /** @type {Comment} */ (element.firstChild)
+						? element.firstChild && hydrate_anchor(/** @type {Comment} */ (element.firstChild))
 						: element.appendChild(empty());
 
 					if (child_anchor) {

@@ -1,5 +1,5 @@
 import { IS_ELSEIF } from '../../constants.js';
-import { hydrate_nodes, hydrate_block_anchor, hydrating, set_hydrating } from '../hydration.js';
+import { hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
 import { remove } from '../reconciler.js';
 import {
 	destroy_effect,
@@ -23,8 +23,6 @@ export function if_block(
 	alternate_fn = null,
 	elseif = false
 ) {
-	hydrate_block_anchor(anchor);
-
 	/** @type {import('#client').Effect | null} */
 	let consequent_effect = null;
 

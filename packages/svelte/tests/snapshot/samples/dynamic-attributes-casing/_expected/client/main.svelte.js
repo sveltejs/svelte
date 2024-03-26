@@ -11,7 +11,7 @@ export default function Main($$anchor, $$props) {
 	// needs to be a snapshot test because jsdom does auto-correct the attribute casing
 	let x = 'test';
 	let y = () => 'test';
-	var fragment = $.open_frag($$anchor, frag, false);
+	var fragment = $.open_frag(frag, false);
 	var div = $.first_child(fragment);
 	var svg = $.sibling($.sibling(div, true));
 	var custom_element = $.sibling($.sibling(svg, true));
