@@ -1005,6 +1005,7 @@ function create_block(parent, name, nodes, context) {
 	/** @type {import('../types').ComponentClientTransformState} */
 	const state = {
 		...context.state,
+		before_init: [],
 		init: [],
 		update: [],
 		after_update: [],
@@ -1050,11 +1051,11 @@ function create_block(parent, name, nodes, context) {
 			args.push(b.false);
 		}
 
-		body.push(b.var(id, b.call('$.open', ...args)), ...state.init);
+		body.push(b.var(id, b.call('$.open', ...args)), ...state.before_init, ...state.init);
 		close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
 	} else if (is_single_child_not_needing_template) {
 		context.visit(trimmed[0], state);
-		body.push(...state.init);
+		body.push(...state.before_init, ...state.init);
 	} else if (trimmed.length > 0) {
 		const id = b.id(context.state.scope.generate('fragment'));
 
@@ -1071,7 +1072,11 @@ function create_block(parent, name, nodes, context) {
 				state
 			});
 
-			body.push(b.var(id, b.call('$.space_frag', b.id('$$anchor'))), ...state.init);
+			body.push(
+				b.var(id, b.call('$.space_frag', b.id('$$anchor'))),
+				...state.before_init,
+				...state.init
+			);
 			close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
 		} else {
 			/** @type {(is_text: boolean) => import('estree').Expression} */
@@ -1107,12 +1112,12 @@ function create_block(parent, name, nodes, context) {
 				body.push(b.var(id, b.call('$.open_frag', ...args)));
 			}
 
-			body.push(...state.init);
+			body.push(...state.before_init, ...state.init);
 
 			close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
 		}
 	} else {
-		body.push(...state.init);
+		body.push(...state.before_init, ...state.init);
 	}
 
 	if (state.update.length > 0) {
@@ -1256,6 +1261,9 @@ function serialize_event_handler(node, { state, visit }) {
 function serialize_event(node, context) {
 	const state = context.state;
 
+	/** @type {import('estree').Statement} */
+	let statement;
+
 	if (node.expression) {
 		let handler = serialize_event_handler(node, context);
 		const event_name = node.name;
@@ -1323,13 +1331,18 @@ function serialize_event(node, context) {
 		}
 
 		// Events need to run in order with bindings/actions
-		state.after_update.push(b.stmt(b.call('$.event', ...args)));
+		statement = b.stmt(b.call('$.event', ...args));
 	} else {
-		state.after_update.push(
-			b.stmt(
-				b.call('$.event', b.literal(node.name), state.node, serialize_event_handler(node, context))
-			)
+		statement = b.stmt(
+			b.call('$.event', b.literal(node.name), state.node, serialize_event_handler(node, context))
 		);
+	}
+
+	const parent = /** @type {import('#compiler').SvelteNode} */ (context.path.at(-1));
+	if (parent.type === 'SvelteDocument' || parent.type === 'SvelteWindow') {
+		state.before_init.push(statement);
+	} else {
+		state.after_update.push(statement);
 	}
 }
 
@@ -2027,6 +2040,7 @@ export const template_visitors = {
 			state: {
 				...context.state,
 				node: element_id,
+				before_init: [],
 				init: [],
 				update: [],
 				after_update: []
