@@ -231,7 +231,7 @@ function setup_select_synchronization(value_binding, context) {
 	context.state.init.push(
 		b.stmt(
 			b.call(
-				'$.invalidate_effect',
+				'$.pre_effect',
 				b.thunk(
 					b.block([
 						b.stmt(
@@ -747,7 +747,7 @@ function serialize_inline_component(node, component_name, context) {
 					binding_initializers.push(
 						b.stmt(
 							b.call(
-								b.id('$.pre_effect'),
+								b.id('$.user_pre_effect'),
 								b.thunk(b.call(b.id('$.add_owner'), expression, b.id(component_name)))
 							)
 						)

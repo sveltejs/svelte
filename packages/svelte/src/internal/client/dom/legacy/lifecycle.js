@@ -1,5 +1,5 @@
 import { run } from '../../../common.js';
-import { pre_effect, user_effect } from '../../reactivity/effects.js';
+import { user_pre_effect, user_effect } from '../../reactivity/effects.js';
 import {
 	current_component_context,
 	deep_read_state,
@@ -19,7 +19,7 @@ export function init() {
 
 	// beforeUpdate
 	if (callbacks.b.length) {
-		pre_effect(() => {
+		user_pre_effect(() => {
 			observe_all(context);
 			callbacks.b.forEach(run);
 			// beforeUpdate might change state that affects rendering, ensure the render effects following from it
