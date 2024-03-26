@@ -7,8 +7,10 @@ import {
 	destroy_children,
 	execute_effect,
 	get,
+	is_flushing_effect,
 	remove_reactions,
 	schedule_effect,
+	set_is_flushing_effect,
 	set_signal_status,
 	untrack
 } from '../runtime.js';
@@ -20,7 +22,8 @@ import {
 	PRE_EFFECT,
 	DESTROYED,
 	INERT,
-	IS_ELSEIF
+	IS_ELSEIF,
+	EFFECT_RAN
 } from '../constants.js';
 import { set } from './sources.js';
 import { noop } from '../../common.js';
@@ -35,7 +38,7 @@ import { remove } from '../dom/reconciler.js';
  */
 function create_effect(type, fn, sync, init = true) {
 	/** @type {import('#client').Effect} */
-	const signal = {
+	const effect = {
 		parent: current_effect,
 		dom: null,
 		deps: null,
@@ -51,22 +54,34 @@ function create_effect(type, fn, sync, init = true) {
 	};
 
 	if (current_effect !== null) {
-		signal.l = current_effect.l + 1;
+		effect.l = current_effect.l + 1;
 	}
 
 	if (current_reaction !== null) {
 		if (current_reaction.effects === null) {
-			current_reaction.effects = [signal];
+			current_reaction.effects = [effect];
 		} else {
-			current_reaction.effects.push(signal);
+			current_reaction.effects.push(effect);
 		}
 	}
 
 	if (init) {
-		schedule_effect(signal, sync);
+		if (sync) {
+			const previously_flushing_effect = is_flushing_effect;
+
+			try {
+				set_is_flushing_effect(true);
+				execute_effect(effect);
+				effect.f |= EFFECT_RAN;
+			} finally {
+				set_is_flushing_effect(previously_flushing_effect);
+			}
+		} else {
+			schedule_effect(effect);
+		}
 	}
 
-	return signal;
+	return effect;
 }
 
 /**
@@ -109,6 +124,24 @@ export function user_effect(fn) {
 }
 
 /**
+ * Internal representation of `$effect.pre(...)`
+ * @param {() => void | (() => void)} fn
+ * @returns {import('#client').Effect}
+ */
+export function user_pre_effect(fn) {
+	if (current_effect === null) {
+		throw new Error(
+			'ERR_SVELTE_ORPHAN_EFFECT' +
+				(DEV
+					? ': The Svelte $effect.pre rune can only be used during component initialisation.'
+					: '')
+		);
+	}
+
+	return pre_effect(fn);
+}
+
+/**
  * Internal representation of `$effect.root(...)`
  * @param {() => void | (() => void)} fn
  * @returns {() => void}
@@ -129,24 +162,6 @@ export function effect(fn) {
 }
 
 /**
- * Internal representation of `$effect.pre(...)`
- * @param {() => void | (() => void)} fn
- * @returns {import('#client').Effect}
- */
-export function pre_effect(fn) {
-	if (current_effect === null) {
-		throw new Error(
-			'ERR_SVELTE_ORPHAN_EFFECT' +
-				(DEV
-					? ': The Svelte $effect.pre rune can only be used during component initialisation.'
-					: '')
-		);
-	}
-
-	return create_effect(PRE_EFFECT, fn, true);
-}
-
-/**
  * Internal representation of `$: ..`
  * @param {() => any} deps
  * @param {() => void | (() => void)} fn
@@ -157,19 +172,15 @@ export function legacy_pre_effect(deps, fn) {
 		current_component_context
 	);
 	const token = {};
-	return create_effect(
-		PRE_EFFECT,
-		() => {
-			deps();
-			if (component_context.l1.includes(token)) {
-				return;
-			}
-			component_context.l1.push(token);
-			set(component_context.l2, true);
-			return untrack(fn);
-		},
-		true
-	);
+	return pre_effect(() => {
+		deps();
+		if (component_context.l1.includes(token)) {
+			return;
+		}
+		component_context.l1.push(token);
+		set(component_context.l2, true);
+		return untrack(fn);
+	});
 }
 
 export function legacy_pre_effect_reset() {
@@ -186,13 +197,10 @@ export function legacy_pre_effect_reset() {
 }
 
 /**
- * This effect is used to ensure binding are kept in sync. We use a pre effect to ensure we run before the
- * bindings which are in later effects. However, we don't use a pre_effect directly as we don't want to flush anything.
- *
  * @param {() => void | (() => void)} fn
  * @returns {import('#client').Effect}
  */
-export function invalidate_effect(fn) {
+export function pre_effect(fn) {
 	return create_effect(PRE_EFFECT, fn, true);
 }
 

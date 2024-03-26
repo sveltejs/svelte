@@ -371,7 +371,7 @@ export const javascript_visitors_runes = {
 				const func = context.visit(node.expression.arguments[0]);
 				return {
 					...node,
-					expression: b.call('$.pre_effect', /** @type {import('estree').Expression} */ (func))
+					expression: b.call('$.user_pre_effect', /** @type {import('estree').Expression} */ (func))
 				};
 			}
 		}

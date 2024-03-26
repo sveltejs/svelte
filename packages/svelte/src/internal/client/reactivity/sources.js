@@ -135,7 +135,7 @@ export function set(signal, value) {
 		) {
 			if (current_dependencies !== null && current_dependencies.includes(signal)) {
 				set_signal_status(current_effect, DIRTY);
-				schedule_effect(current_effect, false);
+				schedule_effect(current_effect);
 			} else {
 				if (current_untracked_writes === null) {
 					set_current_untracked_writes([signal]);

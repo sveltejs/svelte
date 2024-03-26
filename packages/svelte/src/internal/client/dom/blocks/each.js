@@ -46,15 +46,15 @@ export function set_current_each_item(item) {
 /**
  * @template V
  * @param {Element | Comment} anchor The next sibling node, or the parent node if this is a 'controlled' block
- * @param {() => V[]} get_collection
  * @param {number} flags
+ * @param {() => V[]} get_collection
  * @param {null | ((item: V) => string)} get_key
  * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node | null) => void)} fallback_fn
  * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
  * @returns {void}
  */
-function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, reconcile_fn) {
+function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, reconcile_fn) {
 	/** @type {import('#client').EachState} */
 	var state = { flags, items: [] };
 
@@ -193,28 +193,28 @@ function each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, re
 /**
  * @template V
  * @param {Element | Comment} anchor
- * @param {() => V[]} get_collection
  * @param {number} flags
+ * @param {() => V[]} get_collection
  * @param {null | ((item: V) => string)} get_key
  * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node | null) => void)} [fallback_fn]
  * @returns {void}
  */
-export function each_keyed(anchor, get_collection, flags, get_key, render_fn, fallback_fn = null) {
-	each(anchor, get_collection, flags, get_key, render_fn, fallback_fn, reconcile_tracked_array);
+export function each_keyed(anchor, flags, get_collection, get_key, render_fn, fallback_fn = null) {
+	each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, reconcile_tracked_array);
 }
 
 /**
  * @template V
  * @param {Element | Comment} anchor
- * @param {() => V[]} get_collection
  * @param {number} flags
+ * @param {() => V[]} get_collection
  * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node | null) => void)} [fallback_fn]
  * @returns {void}
  */
-export function each_indexed(anchor, get_collection, flags, render_fn, fallback_fn = null) {
-	each(anchor, get_collection, flags, null, render_fn, fallback_fn, reconcile_indexed_array);
+export function each_indexed(anchor, flags, get_collection, render_fn, fallback_fn = null) {
+	each(anchor, flags, get_collection, null, render_fn, fallback_fn, reconcile_indexed_array);
 }
 
 /**
