@@ -2,6 +2,7 @@ import { namespace_svg } from '../../../../constants.js';
 import { hydrate_anchor, hydrate_nodes, hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import {
+	block,
 	destroy_effect,
 	pause_effect,
 	render_effect,
@@ -63,7 +64,7 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 	 */
 	let each_item_block = current_each_item;
 
-	const wrapper = render_effect(() => {
+	const wrapper = block(() => {
 		const next_tag = get_tag() || null;
 		if (next_tag === tag) return;
 

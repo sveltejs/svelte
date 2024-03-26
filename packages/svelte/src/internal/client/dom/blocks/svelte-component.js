@@ -1,4 +1,4 @@
-import { pause_effect, render_effect } from '../../reactivity/effects.js';
+import { block, pause_effect, render_effect } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
 import { current_effect } from '../../runtime.js';
 
@@ -26,7 +26,7 @@ export function component(anchor, get_component, render_fn) {
 	 */
 	let effects = new Set();
 
-	const component_effect = render_effect(() => {
+	const component_effect = block(() => {
 		if (component === (component = get_component())) return;
 
 		if (effect) {

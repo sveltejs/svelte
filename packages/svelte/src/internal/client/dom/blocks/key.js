@@ -1,6 +1,6 @@
 import { UNINITIALIZED } from '../../constants.js';
 import { remove } from '../reconciler.js';
-import { pause_effect, render_effect } from '../../reactivity/effects.js';
+import { block, pause_effect, render_effect } from '../../reactivity/effects.js';
 import { safe_not_equal } from '../../reactivity/equality.js';
 
 /**
@@ -24,7 +24,7 @@ export function key_block(anchor, get_key, render_fn) {
 	 */
 	let effects = new Set();
 
-	const key_effect = render_effect(() => {
+	const key_effect = block(() => {
 		if (safe_not_equal(key, (key = get_key()))) {
 			if (effect) {
 				var e = effect;

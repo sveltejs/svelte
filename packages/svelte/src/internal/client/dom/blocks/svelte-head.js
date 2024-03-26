@@ -1,6 +1,6 @@
 import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrate_nodes } from '../hydration.js';
 import { empty } from '../operations.js';
-import { render_effect } from '../../reactivity/effects.js';
+import { block, render_effect } from '../../reactivity/effects.js';
 import { remove } from '../reconciler.js';
 
 /**
@@ -30,7 +30,7 @@ export function head(render_fn) {
 		/** @type {import('#client').Dom | null} */
 		var dom = null;
 
-		const head_effect = render_effect(() => {
+		const head_effect = block(() => {
 			if (dom !== null) {
 				remove(dom);
 				head_effect.dom = dom = null;

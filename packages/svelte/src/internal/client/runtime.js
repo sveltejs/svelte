@@ -21,7 +21,8 @@ import {
 	DESTROYED,
 	INERT,
 	MANAGED,
-	STATE_SYMBOL
+	STATE_SYMBOL,
+	BLOCK_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -359,6 +360,12 @@ export function destroy_children(signal) {
 	if (signal.effects) {
 		for (var i = 0; i < signal.effects.length; i += 1) {
 			var effect = signal.effects[i];
+
+			// TODO figure out why we need this `if` condition. if we remove it,
+			// the only test that fails relates to root effects (is there a reasaon
+			// we don't want to destroy root effects when their parent effects are
+			// updated? seems leaky), but it looks like there are other managed
+			// effects aside from the immediate children of blocks
 			if ((effect.f & MANAGED) === 0) {
 				destroy_effect(effect);
 			}
@@ -379,7 +386,9 @@ export function destroy_children(signal) {
  * @returns {void}
  */
 export function execute_effect(effect) {
-	if ((effect.f & DESTROYED) !== 0) {
+	var flags = effect.f;
+
+	if ((flags & DESTROYED) !== 0) {
 		return;
 	}
 
@@ -394,7 +403,10 @@ export function execute_effect(effect) {
 	current_component_context = component_context;
 
 	try {
-		destroy_children(effect);
+		if ((flags & BLOCK_EFFECT) === 0) {
+			destroy_children(effect);
+		}
+
 		effect.teardown?.();
 		var teardown = execute_reaction_fn(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
@@ -404,7 +416,7 @@ export function execute_effect(effect) {
 	}
 	const parent = effect.parent;
 
-	if ((effect.f & PRE_EFFECT) !== 0 && parent !== null) {
+	if ((flags & PRE_EFFECT) !== 0 && parent !== null) {
 		flush_local_pre_effects(parent);
 	}
 }

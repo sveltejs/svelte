@@ -11,6 +11,7 @@ import { empty } from '../operations.js';
 import { insert, remove } from '../reconciler.js';
 import { untrack } from '../../runtime.js';
 import {
+	block,
 	destroy_effect,
 	effect,
 	pause_effect,
@@ -67,7 +68,7 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 	/** @type {import('#client').Effect | null} */
 	var fallback = null;
 
-	var effect = render_effect(() => {
+	var effect = block(() => {
 		var collection = get_collection();
 
 		var array = is_array(collection)

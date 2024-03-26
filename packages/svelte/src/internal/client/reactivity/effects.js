@@ -23,7 +23,8 @@ import {
 	DESTROYED,
 	INERT,
 	IS_ELSEIF,
-	EFFECT_RAN
+	EFFECT_RAN,
+	BLOCK_EFFECT
 } from '../constants.js';
 import { set } from './sources.js';
 import { noop } from '../../common.js';
@@ -214,6 +215,11 @@ export function render_effect(fn, managed = false) {
 	if (managed) flags |= MANAGED;
 
 	return create_effect(flags, fn, true);
+}
+
+/** @param {(() => void)} fn */
+export function block(fn) {
+	return create_effect(BLOCK_EFFECT, fn, true);
 }
 
 /**

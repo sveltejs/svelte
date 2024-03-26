@@ -7,7 +7,7 @@ import {
 	set_current_effect,
 	set_current_reaction
 } from '../../runtime.js';
-import { destroy_effect, pause_effect, render_effect } from '../../reactivity/effects.js';
+import { block, destroy_effect, pause_effect, render_effect } from '../../reactivity/effects.js';
 import { INERT } from '../../constants.js';
 
 /**
@@ -39,10 +39,10 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 	 * @param {any} value
 	 */
 	function create_effect(fn, value) {
-		set_current_effect(branch);
-		set_current_reaction(branch); // TODO do we need both?
+		set_current_effect(effect);
+		set_current_reaction(effect); // TODO do we need both?
 		set_current_component_context(component_context);
-		var effect = render_effect(() => fn(anchor, value), true);
+		var e = render_effect(() => fn(anchor, value), true);
 		set_current_component_context(null);
 		set_current_reaction(null);
 		set_current_effect(null);
@@ -51,10 +51,10 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 		// resolves which is unexpected behaviour (and somewhat irksome to test)
 		flushSync();
 
-		return effect;
+		return e;
 	}
 
-	const branch = render_effect(() => {
+	const effect = block(() => {
 		if (input === (input = get_input())) return;
 
 		if (is_promise(input)) {
@@ -105,7 +105,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 		}
 	});
 
-	branch.ondestroy = () => {
+	effect.ondestroy = () => {
 		// TODO this sucks, tidy it up
 		if (pending_effect?.dom) remove(pending_effect.dom);
 		if (then_effect?.dom) remove(then_effect.dom);

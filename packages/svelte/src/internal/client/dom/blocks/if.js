@@ -2,6 +2,7 @@ import { IS_ELSEIF } from '../../constants.js';
 import { hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
 import { remove } from '../reconciler.js';
 import {
+	block,
 	destroy_effect,
 	pause_effect,
 	render_effect,
@@ -32,7 +33,7 @@ export function if_block(
 	/** @type {boolean | null} */
 	let condition = null;
 
-	const if_effect = render_effect(() => {
+	const effect = block(() => {
 		if (condition === (condition = !!get_condition())) return;
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
@@ -90,10 +91,10 @@ export function if_block(
 	});
 
 	if (elseif) {
-		if_effect.f |= IS_ELSEIF;
+		effect.f |= IS_ELSEIF;
 	}
 
-	if_effect.ondestroy = () => {
+	effect.ondestroy = () => {
 		// TODO why is this not automatic? this should be children of `if_effect`
 		if (consequent_effect) {
 			destroy_effect(consequent_effect);
