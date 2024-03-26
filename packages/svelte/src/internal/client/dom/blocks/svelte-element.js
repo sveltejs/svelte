@@ -90,7 +90,7 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 					pause_effect(effect, () => {
 						effect = null;
 						current_tag = null;
-						element?.remove(); // TODO this should be unnecessary
+						element?.remove();
 					});
 				} else if (next_tag === current_tag) {
 					// same tag as is currently rendered — abort outro
