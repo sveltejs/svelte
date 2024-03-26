@@ -7,8 +7,10 @@ import {
 	destroy_children,
 	execute_effect,
 	get,
+	is_flushing_effect,
 	remove_reactions,
 	schedule_effect,
+	set_is_flushing_effect,
 	set_signal_status,
 	untrack
 } from '../runtime.js';
@@ -20,7 +22,8 @@ import {
 	PRE_EFFECT,
 	DESTROYED,
 	INERT,
-	IS_ELSEIF
+	IS_ELSEIF,
+	EFFECT_RAN
 } from '../constants.js';
 import { set } from './sources.js';
 import { noop } from '../../common.js';
@@ -35,7 +38,7 @@ import { remove } from '../dom/reconciler.js';
  */
 function create_effect(type, fn, sync, init = true) {
 	/** @type {import('#client').Effect} */
-	const signal = {
+	const effect = {
 		parent: current_effect,
 		dom: null,
 		deps: null,
@@ -51,22 +54,34 @@ function create_effect(type, fn, sync, init = true) {
 	};
 
 	if (current_effect !== null) {
-		signal.l = current_effect.l + 1;
+		effect.l = current_effect.l + 1;
 	}
 
 	if (current_reaction !== null) {
 		if (current_reaction.effects === null) {
-			current_reaction.effects = [signal];
+			current_reaction.effects = [effect];
 		} else {
-			current_reaction.effects.push(signal);
+			current_reaction.effects.push(effect);
 		}
 	}
 
 	if (init) {
-		schedule_effect(signal, sync);
+		if (sync) {
+			const previously_flushing_effect = is_flushing_effect;
+
+			try {
+				set_is_flushing_effect(true);
+				execute_effect(effect);
+				effect.f |= EFFECT_RAN;
+			} finally {
+				set_is_flushing_effect(previously_flushing_effect);
+			}
+		} else {
+			schedule_effect(effect);
+		}
 	}
 
-	return signal;
+	return effect;
 }
 
 /**
