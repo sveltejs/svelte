@@ -24,7 +24,8 @@ import {
 	INERT,
 	IS_ELSEIF,
 	EFFECT_RAN,
-	BLOCK_EFFECT
+	BLOCK_EFFECT,
+	ROOT_EFFECT
 } from '../constants.js';
 import { set } from './sources.js';
 import { noop } from '../../common.js';
@@ -90,7 +91,7 @@ function create_effect(type, fn, sync, init = true) {
  * @returns {boolean}
  */
 export function effect_active() {
-	return current_effect ? (current_effect.f & MANAGED) === 0 : false;
+	return current_effect ? (current_effect.f & (MANAGED | ROOT_EFFECT)) === 0 : false;
 }
 
 /**
@@ -147,11 +148,19 @@ export function user_pre_effect(fn) {
  * @param {() => void | (() => void)} fn
  * @returns {() => void}
  */
-export function user_root_effect(fn) {
-	const effect = render_effect(fn, true);
+export function effect_root(fn) {
+	const effect = create_effect(ROOT_EFFECT, () => untrack(fn), true);
 	return () => {
 		destroy_effect(effect);
 	};
+}
+
+/**
+ * TODO this is placeholder, just so we can get all the tests passing. eventually `_mount` should just create an effect root
+ * @param {() => void | (() => void)} fn
+ */
+export function fake_effect_root(fn) {
+	return create_effect(RENDER_EFFECT | ROOT_EFFECT, () => untrack(fn), true);
 }
 
 /**
@@ -207,24 +216,20 @@ export function pre_effect(fn) {
 
 /**
  * @param {(() => void)} fn
- * @param {boolean} managed
  * @returns {import('#client').Effect}
  */
-export function render_effect(fn, managed = false) {
-	let flags = RENDER_EFFECT;
-	if (managed) flags |= MANAGED;
-
-	return create_effect(flags, fn, true);
+export function render_effect(fn) {
+	return create_effect(RENDER_EFFECT, fn, true);
 }
 
 /** @param {(() => void)} fn */
 export function block(fn) {
-	return create_effect(BLOCK_EFFECT, fn, true);
+	return create_effect(RENDER_EFFECT | BLOCK_EFFECT, fn, true);
 }
 
 /** @param {(() => void)} fn */
 export function branch(fn) {
-	return create_effect(EFFECT | RENDER_EFFECT | MANAGED, fn, true);
+	return create_effect(RENDER_EFFECT | MANAGED, fn, true);
 }
 
 /**

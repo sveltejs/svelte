@@ -8,8 +8,8 @@ import {
 } from './dom/operations.js';
 import { PassiveDelegatedEvents } from '../../constants.js';
 import { remove } from './dom/reconciler.js';
-import { flush_sync, push, pop, current_component_context } from './runtime.js';
-import { render_effect, destroy_effect } from './reactivity/effects.js';
+import { flush_sync, push, pop, current_component_context, untrack } from './runtime.js';
+import { render_effect, destroy_effect, fake_effect_root } from './reactivity/effects.js';
 import {
 	hydrate_anchor,
 	hydrate_nodes,
@@ -19,6 +19,7 @@ import {
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
 import { handle_event_propagation } from './dom/elements/events.js';
+import { ROOT_EFFECT } from './constants.js';
 
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
@@ -205,26 +206,28 @@ function _mount(Component, options) {
 	// @ts-expect-error will be defined because the render effect runs synchronously
 	let component = undefined;
 
-	const effect = render_effect(() => {
+	// TODO should this just be a root effect, rather than having the destroy logic live separately?
+	const effect = fake_effect_root(() => {
 		if (options.context) {
 			push({});
-			/** @type {import('../client/types.js').ComponentContext} */ (current_component_context).c =
-				options.context;
+			var ctx = /** @type {import('#client').ComponentContext} */ (current_component_context);
+			ctx.c = options.context;
 		}
-		if (!options.props) {
-			options.props = /** @type {Props} */ ({});
-		}
+
+		options.props ||= /** @type {Props} */ ({});
+
 		if (options.events) {
 			// We can't spread the object or else we'd lose the state proxy stuff, if it is one
 			/** @type {any} */ (options.props).$$events = options.events;
 		}
-		component =
-			// @ts-expect-error the public typings are not what the actual function looks like
-			Component(options.anchor, options.props) || {};
+
+		// @ts-expect-error the public typings are not what the actual function looks like
+		component = Component(options.anchor, options.props) || {};
+
 		if (options.context) {
 			pop();
 		}
-	}, true);
+	});
 
 	const bound_event_listener = handle_event_propagation.bind(null, container);
 	const bound_document_event_listener = handle_event_propagation.bind(null, document);

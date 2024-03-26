@@ -22,7 +22,8 @@ import {
 	INERT,
 	MANAGED,
 	STATE_SYMBOL,
-	BLOCK_EFFECT
+	BLOCK_EFFECT,
+	ROOT_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -366,7 +367,7 @@ export function destroy_children(signal) {
 			// we don't want to destroy root effects when their parent effects are
 			// updated? seems leaky), but it looks like there are other managed
 			// effects aside from the immediate children of blocks
-			if ((effect.f & MANAGED) === 0) {
+			if ((effect.f & ROOT_EFFECT) === 0) {
 				destroy_effect(effect);
 			}
 		}
