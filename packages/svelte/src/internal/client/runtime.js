@@ -553,7 +553,7 @@ export function schedule_effect(signal) {
 function collect_effects(effect, filter_flags, collected) {
 	var effects = effect.effects;
 	if (effects !== null) {
-		var i, child, flags;
+		var i, s, child, flags;
 		var render = [];
 		var user = [];
 
@@ -580,16 +580,16 @@ function collect_effects(effect, filter_flags, collected) {
 			if ((filter_flags & RENDER_EFFECT) !== 0) {
 				collected.push(...render);
 			}
-			for (let i = 0; i < render.length; i++) {
-				collect_effects(render[i], filter_flags, collected);
+			for (s = 0; s < render.length; s++) {
+				collect_effects(render[s], filter_flags, collected);
 			}
 		}
 		if (user.length > 0) {
 			if ((filter_flags & EFFECT) !== 0) {
 				collected.push(...user);
 			}
-			for (let i = 0; i < user.length; i++) {
-				collect_effects(user[i], filter_flags, collected);
+			for (s = 0; s < user.length; s++) {
+				collect_effects(user[s], filter_flags, collected);
 			}
 		}
 	}
