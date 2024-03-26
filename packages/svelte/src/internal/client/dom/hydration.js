@@ -26,7 +26,9 @@ export function set_hydrate_nodes(nodes) {
 }
 
 /**
- * Returns all nodes between the first `<![>...<!]>` comment tag pair encountered.
+ * This function is only called when `hydrating` is true. If passed a `<![>` opening
+ * hydration marker, it finds the corresponding closing marker and sets `hydrate_nodes`
+ * to everything between the markers, before returning the closing marker.
  * @param {Node} node
  * @returns {Node}
  */
