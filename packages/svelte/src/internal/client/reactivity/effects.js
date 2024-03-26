@@ -39,9 +39,10 @@ import { remove } from '../dom/reconciler.js';
  * @returns {import('#client').Effect}
  */
 function create_effect(type, fn, sync, init = true) {
+	var is_root = (type & ROOT_EFFECT) !== 0;
 	/** @type {import('#client').Effect} */
-	const effect = {
-		parent: current_effect,
+	var effect = {
+		parent: is_root ? null : current_effect,
 		dom: null,
 		deps: null,
 		f: type | DIRTY,
@@ -63,7 +64,7 @@ function create_effect(type, fn, sync, init = true) {
 
 	if (init) {
 		if (sync) {
-			const previously_flushing_effect = is_flushing_effect;
+			var previously_flushing_effect = is_flushing_effect;
 
 			try {
 				set_is_flushing_effect(true);
