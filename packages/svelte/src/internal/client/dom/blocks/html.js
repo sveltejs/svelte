@@ -13,10 +13,10 @@ export function html(anchor, get_value, svg) {
 	let value = derived(get_value);
 
 	render_effect(() => {
-		var html_dom = reconcile_html(anchor, get(value), svg);
+		var dom = reconcile_html(anchor, get(value), svg);
 
-		if (html_dom) {
-			return () => remove(html_dom);
+		if (dom) {
+			return () => remove(dom);
 		}
 	});
 }

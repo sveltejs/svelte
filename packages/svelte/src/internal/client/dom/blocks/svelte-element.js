@@ -9,7 +9,6 @@ import {
 	render_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
-import { remove } from '../reconciler.js';
 import { is_array } from '../../utils.js';
 import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
