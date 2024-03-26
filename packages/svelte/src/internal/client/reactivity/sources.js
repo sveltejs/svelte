@@ -18,7 +18,7 @@ import {
 	untrack
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
-import { CLEAN, DERIVED, DIRTY, MANAGED, UNINITIALIZED } from '../constants.js';
+import { CLEAN, DERIVED, DIRTY, BRANCH_EFFECT, UNINITIALIZED } from '../constants.js';
 
 /**
  * @template V
@@ -131,7 +131,7 @@ export function set(signal, value) {
 			initialized &&
 			current_effect !== null &&
 			(current_effect.f & CLEAN) !== 0 &&
-			(current_effect.f & MANAGED) === 0
+			(current_effect.f & BRANCH_EFFECT) === 0
 		) {
 			if (current_dependencies !== null && current_dependencies.includes(signal)) {
 				set_signal_status(current_effect, DIRTY);

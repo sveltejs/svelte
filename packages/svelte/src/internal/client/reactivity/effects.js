@@ -16,7 +16,7 @@ import {
 } from '../runtime.js';
 import {
 	DIRTY,
-	MANAGED,
+	BRANCH_EFFECT,
 	RENDER_EFFECT,
 	EFFECT,
 	PRE_EFFECT,
@@ -91,7 +91,7 @@ function create_effect(type, fn, sync, init = true) {
  * @returns {boolean}
  */
 export function effect_active() {
-	return current_effect ? (current_effect.f & (MANAGED | ROOT_EFFECT)) === 0 : false;
+	return current_effect ? (current_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 : false;
 }
 
 /**
@@ -229,7 +229,7 @@ export function block(fn) {
 
 /** @param {(() => void)} fn */
 export function branch(fn) {
-	return create_effect(RENDER_EFFECT | MANAGED, fn, true);
+	return create_effect(RENDER_EFFECT | BRANCH_EFFECT, fn, true);
 }
 
 /**
@@ -344,7 +344,7 @@ function pause_children(effect, transitions, local) {
 
 	if (effect.effects !== null) {
 		for (const child of effect.effects) {
-			var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & MANAGED) !== 0;
+			var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & BRANCH_EFFECT) !== 0;
 			pause_children(child, transitions, transparent ? local : false);
 		}
 	}
@@ -375,7 +375,7 @@ function resume_children(effect, local) {
 
 	if (effect.effects !== null) {
 		for (const child of effect.effects) {
-			var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & MANAGED) !== 0;
+			var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & BRANCH_EFFECT) !== 0;
 			resume_children(child, transparent ? local : false);
 		}
 	}
