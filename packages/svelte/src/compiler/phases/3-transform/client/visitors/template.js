@@ -2317,11 +2317,13 @@ export const template_visitors = {
 		const key_function = node.key
 			? b.arrow(
 					[node.context.type === 'Identifier' ? node.context : b.id('$$item'), index],
-					b.block(
-						declarations.concat(
-							b.return(/** @type {import('estree').Expression} */ (context.visit(node.key)))
-						)
-					)
+					declarations.length > 0
+						? b.block(
+								declarations.concat(
+									b.return(/** @type {import('estree').Expression} */ (context.visit(node.key)))
+								)
+							)
+						: /** @type {import('estree').Expression} */ (context.visit(node.key))
 				)
 			: b.literal(null);
 
