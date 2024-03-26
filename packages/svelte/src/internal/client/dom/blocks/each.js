@@ -43,7 +43,7 @@ export function set_current_each_item(item) {
  * @param {number} flags
  * @param {() => V[]} get_collection
  * @param {null | ((item: V) => string)} get_key
- * @param {(anchor: Node, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
+ * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
  * @returns {void}
@@ -174,7 +174,7 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
  * @param {number} flags
  * @param {() => V[]} get_collection
  * @param {null | ((item: V) => string)} get_key
- * @param {(anchor: Node, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
+ * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} [fallback_fn]
  * @returns {void}
  */
@@ -187,7 +187,7 @@ export function each_keyed(anchor, flags, get_collection, get_key, render_fn, fa
  * @param {Element | Comment} anchor
  * @param {number} flags
  * @param {() => V[]} get_collection
- * @param {(anchor: Node, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
+ * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} [fallback_fn]
  * @returns {void}
  */
@@ -200,7 +200,7 @@ export function each_indexed(anchor, flags, get_collection, render_fn, fallback_
  * @param {Array<V>} array
  * @param {import('#client').EachState} state
  * @param {Element | Comment | Text} anchor
- * @param {(anchor: Node, item: V, index: number | import('#client').Source<number>) => void} render_fn
+ * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: number | import('#client').Source<number>) => void} render_fn
  * @param {number} flags
  * @returns {void}
  */
@@ -256,7 +256,7 @@ function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
  * @param {Array<V>} array
  * @param {import('#client').EachState} state
  * @param {Element | Comment | Text} anchor
- * @param {(anchor: Node, item: V, index: number | import('#client').Source<number>) => void} render_fn
+ * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: number | import('#client').Source<number>) => void} render_fn
  * @param {number} flags
  * @param {any[]} keys
  * @returns {void}
