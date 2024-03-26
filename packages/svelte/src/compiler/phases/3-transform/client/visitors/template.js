@@ -2326,12 +2326,6 @@ export const template_visitors = {
 		// TODO should use context.visit?
 		const children = create_block(node, 'each_block', node.body.nodes, context);
 
-		const else_block = node.fallback
-			? b.arrow(
-					[b.id('$$anchor')],
-					/** @type {import('estree').BlockStatement} */ (context.visit(node.fallback))
-				)
-			: b.literal(null);
 		const key_function = node.key
 			? b.arrow(
 					[node.context.type === 'Identifier' ? node.context : b.id('$$item'), index],
@@ -2349,6 +2343,11 @@ export const template_visitors = {
 			declarations.push(b.let(node.index, index));
 		}
 
+		let callee = '$.each_indexed';
+
+		/** @type {import('estree').Expression[]} */
+		const args = [];
+
 		if ((each_type & EACH_KEYED) !== 0) {
 			if (context.state.options.dev && key_function.type !== 'Literal') {
 				context.state.init.push(
@@ -2356,33 +2355,34 @@ export const template_visitors = {
 				);
 			}
 
-			context.state.init.push(
-				b.stmt(
-					b.call(
-						'$.each_keyed',
-						context.state.node,
-						each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
-						b.literal(each_type),
-						key_function,
-						b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children))),
-						else_block
-					)
-				)
+			callee = '$.each_keyed';
+
+			args.push(
+				context.state.node,
+				each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
+				b.literal(each_type),
+				key_function,
+				b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children)))
 			);
 		} else {
-			context.state.init.push(
-				b.stmt(
-					b.call(
-						'$.each_indexed',
-						context.state.node,
-						each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
-						b.literal(each_type),
-						b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children))),
-						else_block
-					)
+			args.push(
+				context.state.node,
+				each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
+				b.literal(each_type),
+				b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children)))
+			);
+		}
+
+		if (node.fallback) {
+			args.push(
+				b.arrow(
+					[b.id('$$anchor')],
+					/** @type {import('estree').BlockStatement} */ (context.visit(node.fallback))
 				)
 			);
 		}
+
+		context.state.init.push(b.stmt(b.call(callee, ...args)));
 	},
 	IfBlock(node, context) {
 		context.state.template.push('<!>');
