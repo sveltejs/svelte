@@ -137,22 +137,6 @@ export function space_frag(anchor) {
 	return node;
 }
 
-/**
- * @param {Text | Comment | Element} anchor
- */
-/*#__NO_SIDE_EFFECTS__*/
-export function space(anchor) {
-	// if an {expression} is empty during SSR, there might be no
-	// text node to hydrate (or an anchor comment is falsely detected instead)
-	//  — we must therefore create one
-	if (hydrating && anchor.nodeType !== 3) {
-		const node = empty();
-		anchor.before(node);
-		return node;
-	}
-	return anchor;
-}
-
 /*#__NO_SIDE_EFFECTS__*/
 export function comment() {
 	return open_frag(comment_template);

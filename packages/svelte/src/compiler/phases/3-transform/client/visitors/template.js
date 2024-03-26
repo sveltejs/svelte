@@ -1408,7 +1408,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 
 			state.template.push(' ');
 
-			const text_id = get_node_id(b.call('$.space', expression(true)), state, 'text');
+			const text_id = get_node_id(expression(true), state, 'text');
 
 			const update = b.stmt(
 				b.call(
