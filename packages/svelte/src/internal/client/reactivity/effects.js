@@ -51,7 +51,6 @@ function create_effect(type, fn, sync, init = true) {
 		deriveds: null,
 		teardown: null,
 		ctx: current_component_context,
-		ondestroy: null,
 		transitions: null
 	};
 
@@ -253,16 +252,13 @@ export function destroy_effect(effect) {
 		remove(effect.dom);
 	}
 
-	effect.ondestroy?.();
-
-	// @ts-expect-error
-	effect.fn =
-		effect.effects =
+	effect.effects =
 		effect.teardown =
-		effect.ondestroy =
 		effect.ctx =
 		effect.dom =
 		effect.deps =
+		// @ts-expect-error
+		effect.fn =
 			null;
 }
 
