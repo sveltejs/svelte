@@ -6,13 +6,7 @@ import {
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED
 } from '../../../../constants.js';
-import {
-	hydrate_anchor,
-	hydrate_nodes,
-	hydrating,
-	set_hydrating,
-	update_hydrate_nodes
-} from '../hydration.js';
+import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import { insert, remove } from '../reconciler.js';
 import { untrack } from '../../runtime.js';

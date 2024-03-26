@@ -15,8 +15,7 @@ import {
 	hydrate_nodes,
 	hydrating,
 	set_hydrate_nodes,
-	set_hydrating,
-	update_hydrate_nodes
+	set_hydrating
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
 import { handle_event_propagation } from './dom/elements/events.js';

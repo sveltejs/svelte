@@ -26,16 +26,6 @@ export function set_hydrate_nodes(nodes) {
 }
 
 /**
- * @param {Node | null} first
- * @param {boolean} [insert_text] Whether to insert an empty text node if `nodes` is empty
- */
-export function update_hydrate_nodes(first, insert_text) {
-	const nodes = get_hydrate_nodes(first, insert_text);
-	set_hydrate_nodes(nodes);
-	return nodes;
-}
-
-/**
  * Returns all nodes between the first `<![>...<!]>` comment tag pair encountered.
  * @param {Node} node
  * @returns {Node}
