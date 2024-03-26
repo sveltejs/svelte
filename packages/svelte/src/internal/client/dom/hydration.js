@@ -1,6 +1,3 @@
-import { schedule_task } from './task.js';
-import { empty } from './operations.js';
-
 /**
  * Use this variable to guard everything related to hydration code so it can be treeshaken out
  * if the user doesn't use the `hydrate` method and these code paths are therefore not needed.
