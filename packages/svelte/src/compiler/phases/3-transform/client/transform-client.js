@@ -49,6 +49,13 @@ export function client_component(source, analysis, options) {
 		hoisted: [b.import_all('$', 'svelte/internal')],
 		node: /** @type {any} */ (null), // populated by the root node
 		// these should be set by create_block - if they're called outside, it's a bug
+		get before_init() {
+			/** @type {any[]} */
+			const a = [];
+			a.push = () =>
+				error(null, 'INTERNAL', 'before_init.push should not be called outside create_block');
+			return a;
+		},
 		get init() {
 			/** @type {any[]} */
 			const a = [];

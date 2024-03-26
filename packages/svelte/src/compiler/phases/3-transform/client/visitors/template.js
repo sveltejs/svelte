@@ -1005,6 +1005,7 @@ function create_block(parent, name, nodes, context) {
 	/** @type {import('../types').ComponentClientTransformState} */
 	const state = {
 		...context.state,
+		before_init: [],
 		init: [],
 		update: [],
 		after_update: [],
@@ -1050,11 +1051,11 @@ function create_block(parent, name, nodes, context) {
 			args.push(b.false);
 		}
 
-		body.push(b.var(id, b.call('$.open', ...args)), ...state.init);
+		body.push(b.var(id, b.call('$.open', ...args)), ...state.before_init, ...state.init);
 		close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
 	} else if (is_single_child_not_needing_template) {
 		context.visit(trimmed[0], state);
-		body.push(...state.init);
+		body.push(...state.before_init, ...state.init);
 	} else if (trimmed.length > 0) {
 		const id = b.id(context.state.scope.generate('fragment'));
 
@@ -1071,7 +1072,11 @@ function create_block(parent, name, nodes, context) {
 				state
 			});
 
-			body.push(b.var(id, b.call('$.space_frag', b.id('$$anchor'))), ...state.init);
+			body.push(
+				b.var(id, b.call('$.space_frag', b.id('$$anchor'))),
+				...state.before_init,
+				...state.init
+			);
 			close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
 		} else {
 			/** @type {(is_text: boolean) => import('estree').Expression} */
@@ -1107,12 +1112,12 @@ function create_block(parent, name, nodes, context) {
 				body.push(b.var(id, b.call('$.open_frag', ...args)));
 			}
 
-			body.push(...state.init);
+			body.push(...state.before_init, ...state.init);
 
 			close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
 		}
 	} else {
-		body.push(...state.init);
+		body.push(...state.before_init, ...state.init);
 	}
 
 	if (state.update.length > 0) {
@@ -1256,6 +1261,9 @@ function serialize_event_handler(node, { state, visit }) {
 function serialize_event(node, context) {
 	const state = context.state;
 
+	/** @type {import('estree').Statement} */
+	let statement;
+
 	if (node.expression) {
 		let handler = serialize_event_handler(node, context);
 		const event_name = node.name;
@@ -1291,7 +1299,7 @@ function serialize_event(node, context) {
 				delegated_assignment = handler;
 			}
 
-			state.after_update.push(
+			state.init.push(
 				b.stmt(
 					b.assignment(
 						'=',
@@ -1323,13 +1331,18 @@ function serialize_event(node, context) {
 		}
 
 		// Events need to run in order with bindings/actions
-		state.after_update.push(b.stmt(b.call('$.event', ...args)));
+		statement = b.stmt(b.call('$.event', ...args));
 	} else {
-		state.after_update.push(
-			b.stmt(
-				b.call('$.event', b.literal(node.name), state.node, serialize_event_handler(node, context))
-			)
+		statement = b.stmt(
+			b.call('$.event', b.literal(node.name), state.node, serialize_event_handler(node, context))
 		);
+	}
+
+	const parent = /** @type {import('#compiler').SvelteNode} */ (context.path.at(-1));
+	if (parent.type === 'SvelteDocument' || parent.type === 'SvelteWindow') {
+		state.before_init.push(statement);
+	} else {
+		state.after_update.push(statement);
 	}
 }
 
@@ -1720,11 +1733,9 @@ export const template_visitors = {
 		}
 
 		if (is_reactive) {
-			context.state.after_update.push(
-				b.stmt(b.call('$.snippet', b.thunk(snippet_function), ...args))
-			);
+			context.state.init.push(b.stmt(b.call('$.snippet', b.thunk(snippet_function), ...args)));
 		} else {
-			context.state.after_update.push(
+			context.state.init.push(
 				b.stmt(
 					(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
 						snippet_function,
@@ -2029,6 +2040,7 @@ export const template_visitors = {
 			state: {
 				...context.state,
 				node: element_id,
+				before_init: [],
 				init: [],
 				update: [],
 				after_update: []
@@ -2091,7 +2103,7 @@ export const template_visitors = {
 				}
 			})
 		);
-		context.state.after_update.push(
+		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.element',
@@ -2372,7 +2384,7 @@ export const template_visitors = {
 			);
 		}
 
-		context.state.after_update.push(b.stmt(b.call(callee, ...args)));
+		context.state.init.push(b.stmt(b.call(callee, ...args)));
 	},
 	IfBlock(node, context) {
 		context.state.template.push('<!>');
@@ -2423,12 +2435,12 @@ export const template_visitors = {
 			args.push(b.literal(true));
 		}
 
-		context.state.after_update.push(b.stmt(b.call('$.if', ...args)));
+		context.state.init.push(b.stmt(b.call('$.if', ...args)));
 	},
 	AwaitBlock(node, context) {
 		context.state.template.push('<!>');
 
-		context.state.after_update.push(
+		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.await',
@@ -2470,7 +2482,7 @@ export const template_visitors = {
 		context.state.template.push('<!>');
 		const key = /** @type {import('estree').Expression} */ (context.visit(node.expression));
 		const body = /** @type {import('estree').Expression} */ (context.visit(node.fragment));
-		context.state.after_update.push(
+		context.state.init.push(
 			b.stmt(b.call('$.key', context.state.node, b.thunk(key), b.arrow([b.id('$$anchor')], body)))
 		);
 	},
@@ -2791,7 +2803,7 @@ export const template_visitors = {
 		if (binding !== null && binding.kind !== 'normal') {
 			// Handle dynamic references to what seems like static inline components
 			const component = serialize_inline_component(node, '$$component', context);
-			context.state.after_update.push(
+			context.state.init.push(
 				b.stmt(
 					b.call(
 						'$.component',
@@ -2808,12 +2820,12 @@ export const template_visitors = {
 			return;
 		}
 		const component = serialize_inline_component(node, node.name, context);
-		context.state.after_update.push(component);
+		context.state.init.push(component);
 	},
 	SvelteSelf(node, context) {
 		context.state.template.push('<!>');
 		const component = serialize_inline_component(node, context.state.analysis.name, context);
-		context.state.after_update.push(component);
+		context.state.init.push(component);
 	},
 	SvelteComponent(node, context) {
 		context.state.template.push('<!>');
@@ -2822,7 +2834,7 @@ export const template_visitors = {
 		if (context.state.options.dev) {
 			component = b.stmt(b.call('$.validate_dynamic_component', b.thunk(b.block([component]))));
 		}
-		context.state.after_update.push(
+		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.component',
@@ -2974,7 +2986,7 @@ export const template_visitors = {
 			: b.member(b.member(b.id('$$props'), b.id('$$slots')), name, true, true);
 
 		const slot = b.call('$.slot', context.state.node, expression, props_expression, fallback);
-		context.state.after_update.push(b.stmt(slot));
+		context.state.init.push(b.stmt(slot));
 	},
 	SvelteHead(node, context) {
 		// TODO attributes?

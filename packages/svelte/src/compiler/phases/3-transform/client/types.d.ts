@@ -30,6 +30,8 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly events: Set<string>;
 
 	/** Stuff that happens before the render effect(s) */
+	readonly before_init: Statement[];
+	/** Stuff that happens before the render effect(s) */
 	readonly init: Statement[];
 	/** Stuff that happens inside the render effect */
 	readonly update: Statement[];

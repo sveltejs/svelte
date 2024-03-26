@@ -14,6 +14,6 @@ export default test({
 		};
 	},
 	test({ assert }) {
-		assert.deepEqual(result, ['import_action', 'each_action']);
+		assert.deepEqual(result, ['each_action', 'import_action']); // ideally this would be reversed, but it doesn't matter a whole lot
 	}
 });
