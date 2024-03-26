@@ -12,6 +12,9 @@ export function head(render_fn) {
 	let previous_hydrate_nodes = null;
 	let was_hydrating = hydrating;
 
+	/** @type {Comment | Text} */
+	var anchor;
+
 	if (hydrating) {
 		previous_hydrate_nodes = hydrate_nodes;
 
@@ -21,9 +24,9 @@ export function head(render_fn) {
 		}
 
 		anchor = /** @type {import('#client').TemplateNode} */ (hydrate_anchor(anchor));
+	} else {
+		anchor = document.head.appendChild(empty());
 	}
-
-	var anchor = document.head.appendChild(empty());
 
 	try {
 		block(() => render_fn(anchor));
