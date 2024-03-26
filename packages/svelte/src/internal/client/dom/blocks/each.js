@@ -129,10 +129,12 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 			}
 
 			// remove excess nodes
-			while (child_anchor !== anchor) {
-				var next = /** @type {import('#client').TemplateNode} */ (child_anchor.nextSibling);
-				/** @type {import('#client').TemplateNode} */ (child_anchor).remove();
-				child_anchor = next;
+			if (length > 0) {
+				while (child_anchor !== anchor) {
+					var next = /** @type {import('#client').TemplateNode} */ (child_anchor.nextSibling);
+					/** @type {import('#client').TemplateNode} */ (child_anchor).remove();
+					child_anchor = next;
+				}
 			}
 
 			state.items = b_items;

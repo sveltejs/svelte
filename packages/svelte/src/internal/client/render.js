@@ -154,8 +154,6 @@ export function hydrate(component, options) {
 			return instance;
 		}, false);
 	} catch (error) {
-		console.error(error.stack);
-
 		if (!hydrated && options.recover !== false) {
 			// eslint-disable-next-line no-console
 			console.error(
