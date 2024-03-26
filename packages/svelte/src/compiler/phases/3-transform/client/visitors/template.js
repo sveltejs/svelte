@@ -2349,16 +2349,16 @@ export const template_visitors = {
 
 			args.push(
 				context.state.node,
-				each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
 				b.literal(each_type),
+				each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
 				key_function,
 				b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children)))
 			);
 		} else {
 			args.push(
 				context.state.node,
-				each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
 				b.literal(each_type),
+				each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
 				b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children)))
 			);
 		}
