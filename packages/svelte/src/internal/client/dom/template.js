@@ -163,7 +163,7 @@ export function comment() {
  * and insert the elements into the dom (in client mode).
  * @param {import('#client').Dom} dom
  * @param {boolean} is_fragment
- * @param {null | Text | Comment | Element} anchor
+ * @param {Text | Comment | Element} anchor
  * @returns {import('#client').Dom}
  */
 function close_template(dom, is_fragment, anchor) {
@@ -176,10 +176,8 @@ function close_template(dom, is_fragment, anchor) {
 			current = /** @type {import('#client').Dom} */ ([.../** @type {Node} */ (dom).childNodes]);
 		}
 
-		if (anchor !== null) {
-			// TODO as with `open_template — why is this sometimes null and sometimes not?
-			insert(current, anchor);
-		}
+		// TODO ideally we'd do `anchor.before(dom)`, but that fails because `dom` can be an array of nodes in the SVG case
+		insert(current, anchor);
 	}
 
 	/** @type {import('#client').Effect} */ (current_effect).dom = current;
@@ -188,7 +186,7 @@ function close_template(dom, is_fragment, anchor) {
 }
 
 /**
- * @param {null | Text | Comment | Element} anchor
+ * @param {Text | Comment | Element} anchor
  * @param {Element | Text} dom
  */
 export function close(anchor, dom) {
@@ -196,7 +194,7 @@ export function close(anchor, dom) {
 }
 
 /**
- * @param {null | Text | Comment | Element} anchor
+ * @param {Text | Comment | Element} anchor
  * @param {Element | Text} dom
  */
 export function close_frag(anchor, dom) {
