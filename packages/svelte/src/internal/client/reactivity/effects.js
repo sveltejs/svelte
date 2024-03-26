@@ -58,7 +58,7 @@ function create_effect(type, fn, sync, init = true) {
 		effect.l = current_effect.l + 1;
 	}
 
-	if (current_reaction !== null) {
+	if (current_reaction !== null && (type & ROOT_EFFECT) === 0) {
 		if (current_reaction.effects === null) {
 			current_reaction.effects = [effect];
 		} else {

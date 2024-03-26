@@ -359,13 +359,10 @@ export function remove_reactions(signal, start_index) {
  */
 export function destroy_children(signal) {
 	if (signal.effects) {
-		for (var i = 0; i < signal.effects.length; i += 1) {
-			var effect = signal.effects[i];
-
-			// TODO ideally root effects would be parentless
-			if ((effect.f & ROOT_EFFECT) === 0) {
-				destroy_effect(effect);
-			}
+		var effect, i;
+		for (i = 0; i < signal.effects.length; i += 1) {
+			effect = signal.effects[i];
+			destroy_effect(effect);
 		}
 		signal.effects = null;
 	}
