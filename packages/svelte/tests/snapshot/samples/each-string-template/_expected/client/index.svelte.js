@@ -11,7 +11,7 @@ export default function Each_string_template($$anchor, $$props) {
 	var node = $.first_child(fragment);
 
 	$.each_indexed(node, 1, () => ['foo', 'bar', 'baz'], ($$anchor, thing, $$index) => {
-		var text = $.space_frag($$anchor);
+		var text = $.text($$anchor);
 
 		$.render_effect(() => $.set_text(text, `${$.stringify($.unwrap(thing))}, `));
 		return $.close($$anchor, text);

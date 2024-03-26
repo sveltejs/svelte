@@ -121,7 +121,7 @@ const comment_template = template('<!>', true);
  * @param {Text | Comment | Element} anchor
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function space_frag(anchor) {
+export function text(anchor) {
 	if (!hydrating) return empty();
 
 	var node = hydrate_nodes[0];

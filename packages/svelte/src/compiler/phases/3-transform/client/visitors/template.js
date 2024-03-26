@@ -1064,7 +1064,7 @@ function create_block(parent, name, nodes, context) {
 			trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag');
 
 		if (use_space_template) {
-			// special case — we can use `$.space_frag` instead of creating a unique template
+			// special case — we can use `$.text` instead of creating a unique template
 			const id = b.id(context.state.scope.generate('text'));
 
 			process_children(trimmed, () => id, false, {
@@ -1072,11 +1072,7 @@ function create_block(parent, name, nodes, context) {
 				state
 			});
 
-			body.push(
-				b.var(id, b.call('$.space_frag', b.id('$$anchor'))),
-				...state.before_init,
-				...state.init
-			);
+			body.push(b.var(id, b.call('$.text', b.id('$$anchor'))), ...state.before_init, ...state.init);
 			close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
 		} else {
 			/** @type {(is_text: boolean) => import('estree').Expression} */
