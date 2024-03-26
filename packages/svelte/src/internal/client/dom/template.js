@@ -115,25 +115,23 @@ export function open_frag(template_element_fn, use_clone_node = true) {
 	return open_template(true, use_clone_node, template_element_fn);
 }
 
-const space_template = template(' ', false);
 const comment_template = template('<!>', true);
 
 /**
- * @param {Text | Comment | Element | null} anchor
+ * @param {Text | Comment | Element} anchor
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function space_frag(anchor) {
-	/** @type {Node | null} */
-	var node = /** @type {any} */ (open(space_template));
-	// if an {expression} is empty during SSR, there might be no
-	// text node to hydrate (or an anchor comment is falsely detected instead)
-	//  — we must therefore create one
-	if (hydrating && node?.nodeType !== 3) {
-		node = empty();
-		// @ts-ignore in this case the anchor should always be a comment,
-		// if not something more fundamental is wrong and throwing here is better to bail out early
-		anchor.before(node);
+	if (!hydrating) return empty();
+
+	var node = hydrate_nodes[0];
+
+	if (!node) {
+		// if an {expression} is empty during SSR, `hydrate_nodes` will be empty.
+		// we need to insert an empty text node
+		anchor.before((node = empty()));
 	}
+
 	return node;
 }
 
