@@ -407,10 +407,6 @@ export function execute_effect(effect) {
 		current_component_context = previous_component_context;
 	}
 	const parent = effect.parent;
-
-	if ((flags & PRE_EFFECT) !== 0 && parent !== null) {
-		flush_local_pre_effects(parent);
-	}
 }
 
 function infinite_loop_guard() {

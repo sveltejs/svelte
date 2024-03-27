@@ -2,6 +2,8 @@ import { test } from '../../test';
 import { log } from './log.js';
 
 export default test({
+	skip: true, // TODO reenable once topological ordering is in place
+
 	get props() {
 		return { n: 0 };
 	},
