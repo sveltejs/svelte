@@ -159,7 +159,7 @@ export const comment = template('<!>', TEMPLATE_FRAGMENT);
  * @param {import('#client').Dom} dom
  * @returns {import('#client').Dom}
  */
-export function close(anchor, dom) {
+export function append(anchor, dom) {
 	var current = dom;
 
 	if (!hydrating) {

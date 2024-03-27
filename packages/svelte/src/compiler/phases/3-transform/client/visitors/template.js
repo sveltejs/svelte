@@ -933,7 +933,7 @@ function serialize_bind_this(bind_this, context, node) {
  * // for the main block:
  * const id = block_name();
  * // init stuff and possibly render effect
- * $.close($$anchor, id);
+ * $.append($$anchor, id);
  * ```
  * Adds the hoisted parts to `context.state.hoisted` and returns the statements of the main block.
  * @param {import('#compiler').SvelteNode} parent
@@ -1015,7 +1015,7 @@ function create_block(parent, name, nodes, context) {
 		);
 
 		body.push(b.var(id, b.call(template_name)), ...state.before_init, ...state.init);
-		close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
+		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 	} else if (is_single_child_not_needing_template) {
 		context.visit(trimmed[0], state);
 		body.push(...state.before_init, ...state.init);
@@ -1036,7 +1036,7 @@ function create_block(parent, name, nodes, context) {
 			});
 
 			body.push(b.var(id, b.call('$.text', b.id('$$anchor'))), ...state.before_init, ...state.init);
-			close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
+			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 		} else {
 			/** @type {(is_text: boolean) => import('estree').Expression} */
 			const expression = (is_text) =>
@@ -1072,7 +1072,7 @@ function create_block(parent, name, nodes, context) {
 
 			body.push(...state.before_init, ...state.init);
 
-			close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
+			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 		}
 	} else {
 		body.push(...state.before_init, ...state.init);

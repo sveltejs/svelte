@@ -24,10 +24,10 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 			var text = $.text($$anchor);
 
 			$.render_effect(() => $.set_text(text, `clicks: ${$.stringify($.get(count))}`));
-			return $.close($$anchor, text);
+			return $.append($$anchor, text);
 		}
 	});
 
-	$.close($$anchor, fragment);
+	$.append($$anchor, fragment);
 	$.pop();
 }

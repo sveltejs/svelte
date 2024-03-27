@@ -11,6 +11,6 @@ export default function Bind_this($$anchor, $$props) {
 	var node = $.first_child(fragment);
 
 	$.bind_this(Foo(node, {}), ($$value) => foo = $$value, () => foo);
-	$.close($$anchor, fragment);
+	$.append($$anchor, fragment);
 	$.pop();
 }

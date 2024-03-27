@@ -11,6 +11,6 @@ export default function Hello_world($$anchor, $$props) {
 
 	var h1 = frag();
 
-	$.close($$anchor, h1);
+	$.append($$anchor, h1);
 	$.pop();
 }

@@ -14,9 +14,9 @@ export default function Each_string_template($$anchor, $$props) {
 		var text = $.text($$anchor);
 
 		$.render_effect(() => $.set_text(text, `${$.stringify($.unwrap(thing))}, `));
-		return $.close($$anchor, text);
+		return $.append($$anchor, text);
 	});
 
-	$.close($$anchor, fragment);
+	$.append($$anchor, fragment);
 	$.pop();
 }

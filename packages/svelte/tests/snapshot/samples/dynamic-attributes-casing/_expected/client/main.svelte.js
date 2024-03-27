@@ -33,6 +33,6 @@ export default function Main($$anchor, $$props) {
 		$.set_custom_element_data(custom_element, "fooBar", x);
 	});
 
-	$.close($$anchor, fragment);
+	$.append($$anchor, fragment);
 	$.pop();
 }
