@@ -806,40 +806,6 @@ export function invalidate_inner_signals(fn) {
 }
 
 /**
- * @param {import('#client').Effect} signal
- * @param {boolean} inert
- * @returns {void}
- */
-function mark_subtree_children_inert(signal, inert) {
-	const effects = signal.effects;
-
-	if (effects !== null) {
-		for (var i = 0; i < effects.length; i++) {
-			mark_subtree_inert(effects[i], inert);
-		}
-	}
-}
-
-/**
- * @param {import('#client').Effect} signal
- * @param {boolean} inert
- * @returns {void}
- */
-export function mark_subtree_inert(signal, inert) {
-	const flags = signal.f;
-	const is_already_inert = (flags & INERT) !== 0;
-
-	if (is_already_inert !== inert) {
-		signal.f ^= INERT;
-		if (!inert && (flags & CLEAN) === 0) {
-			schedule_effect(signal);
-		}
-	}
-
-	mark_subtree_children_inert(signal, inert);
-}
-
-/**
  * @param {import('#client').Value} signal
  * @param {number} to_status
  * @param {boolean} force_schedule
