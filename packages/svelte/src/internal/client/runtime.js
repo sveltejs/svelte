@@ -677,13 +677,6 @@ function get_nested_effects(effect, filter_flags, shallow = false) {
 		return [effect];
 	}
 	recursively_collect_effects(effect, filter_flags, shallow, render_effects, user_effects);
-	// Avoid expensive copies
-	if (user_effects.length === 0) {
-		return render_effects;
-	}
-	if (render_effects.length === 0) {
-		return user_effects;
-	}
 	return [...render_effects, ...user_effects];
 }
 
