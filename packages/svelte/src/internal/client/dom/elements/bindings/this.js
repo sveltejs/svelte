@@ -49,9 +49,11 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 	// This solves the case where one variable is shared across multiple this-bindings.
 	effect(() => {
 		return () => {
-			if (parts && is_bound_this(get_value(...parts), element_or_component)) {
-				update(null, ...parts);
-			}
+			effect(() => {
+				if (parts && is_bound_this(get_value(...parts), element_or_component)) {
+					update(null, ...parts);
+				}
+			});
 		};
 	});
 }
