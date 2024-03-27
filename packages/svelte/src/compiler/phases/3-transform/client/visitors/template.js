@@ -233,7 +233,7 @@ function setup_select_synchronization(value_binding, context) {
 	context.state.init.push(
 		b.stmt(
 			b.call(
-				'$.pre_effect',
+				'$.render_effect',
 				b.thunk(
 					b.block([
 						b.stmt(

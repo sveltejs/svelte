@@ -128,7 +128,7 @@ export function user_pre_effect(fn) {
 		);
 	}
 
-	return pre_effect(fn);
+	return render_effect(fn);
 }
 
 /**
@@ -162,7 +162,7 @@ export function legacy_pre_effect(deps, fn) {
 		current_component_context
 	);
 	const token = {};
-	return pre_effect(() => {
+	return render_effect(() => {
 		deps();
 		if (component_context.l1.includes(token)) {
 			return;
@@ -188,14 +188,6 @@ export function legacy_pre_effect_reset() {
 
 /**
  * @param {() => void | (() => void)} fn
- * @returns {import('#client').Effect}
- */
-export function pre_effect(fn) {
-	return create_effect(RENDER_EFFECT, fn, true);
-}
-
-/**
- * @param {(() => void)} fn
  * @returns {import('#client').Effect}
  */
 export function render_effect(fn) {
