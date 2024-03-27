@@ -10,22 +10,6 @@ export function create_fragment_from_html(html) {
 
 /**
  * @param {import('#client').Dom} current
- * @param {Text | Element | Comment} sibling
- */
-export function insert(current, sibling) {
-	if (!current) return sibling;
-
-	if (is_array(current)) {
-		for (var i = 0; i < current.length; i++) {
-			sibling.before(/** @type {Node} */ (current[i]));
-		}
-	} else {
-		sibling.before(/** @type {Node} */ (current));
-	}
-}
-
-/**
- * @param {import('#client').Dom} current
  */
 export function remove(current) {
 	if (is_array(current)) {
