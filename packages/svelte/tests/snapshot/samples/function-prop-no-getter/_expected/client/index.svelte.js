@@ -28,6 +28,6 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 		}
 	});
 
-	$.close_frag($$anchor, fragment);
+	$.close($$anchor, fragment);
 	$.pop();
 }

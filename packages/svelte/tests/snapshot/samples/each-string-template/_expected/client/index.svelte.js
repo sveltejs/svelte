@@ -17,6 +17,6 @@ export default function Each_string_template($$anchor, $$props) {
 		return $.close($$anchor, text);
 	});
 
-	$.close_frag($$anchor, fragment);
+	$.close($$anchor, fragment);
 	$.pop();
 }

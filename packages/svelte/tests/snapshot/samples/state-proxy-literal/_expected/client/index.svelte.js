@@ -31,7 +31,7 @@ export default function State_proxy_literal($$anchor, $$props) {
 	button.__click = [reset, str, tpl];
 	$.bind_value(input, () => $.get(str), ($$value) => $.set(str, $$value));
 	$.bind_value(input_1, () => $.get(tpl), ($$value) => $.set(tpl, $$value));
-	$.close_frag($$anchor, fragment);
+	$.close($$anchor, fragment);
 	$.pop();
 }
 

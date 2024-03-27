@@ -1072,7 +1072,7 @@ function create_block(parent, name, nodes, context) {
 
 			body.push(...state.before_init, ...state.init);
 
-			close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
+			close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
 		}
 	} else {
 		body.push(...state.before_init, ...state.init);

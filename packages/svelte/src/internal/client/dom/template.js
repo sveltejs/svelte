@@ -155,16 +155,15 @@ export const comment = template('<!>', TEMPLATE_FRAGMENT);
 /**
  * Assign the created (or in hydration mode, traversed) dom elements to the current block
  * and insert the elements into the dom (in client mode).
- * @param {import('#client').Dom} dom
- * @param {boolean} is_fragment
  * @param {Text | Comment | Element} anchor
+ * @param {import('#client').Dom} dom
  * @returns {import('#client').Dom}
  */
-function close_template(dom, is_fragment, anchor) {
+export function close(anchor, dom) {
 	var current = dom;
 
 	if (!hydrating) {
-		if (is_fragment) {
+		if (/** @type {Node} */ (dom).nodeType === 11) {
 			// if hydrating, `dom` is already an array of nodes, but if not then
 			// we need to create an array to store it on the current effect
 			current = /** @type {import('#client').Dom} */ ([.../** @type {Node} */ (dom).childNodes]);
@@ -177,20 +176,4 @@ function close_template(dom, is_fragment, anchor) {
 	/** @type {import('#client').Effect} */ (current_effect).dom = current;
 
 	return current;
-}
-
-/**
- * @param {Text | Comment | Element} anchor
- * @param {Element | Text} dom
- */
-export function close(anchor, dom) {
-	return close_template(dom, false, anchor);
-}
-
-/**
- * @param {Text | Comment | Element} anchor
- * @param {Element | Text} dom
- */
-export function close_frag(anchor, dom) {
-	return close_template(dom, true, anchor);
 }
