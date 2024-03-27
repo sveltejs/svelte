@@ -2,7 +2,8 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	skip_if_hydrate: 'permanent',
+	mode: ['client', 'server'],
+
 	async test({ assert, target }) {
 		let [btn1, btn2] = target.querySelectorAll('button');
 		const input = target.querySelector('input');

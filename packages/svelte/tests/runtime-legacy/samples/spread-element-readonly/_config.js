@@ -1,7 +1,7 @@
 import { test } from '../../test';
 
 export default test({
-	skip_if_ssr: 'permanent', // DOM and SSR output is different, a separate SSR test exists
+	mode: ['client', 'hydrate'], // DOM and SSR output is different, a separate SSR test exists
 	html: '<input form="qux" list="quu" />',
 
 	test({ assert, target }) {

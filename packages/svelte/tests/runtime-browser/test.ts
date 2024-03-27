@@ -28,7 +28,11 @@ const { run: run_browser_tests } = suite_with_variants<
 >(
 	['dom', 'hydrate'],
 	(variant, config) => {
-		if (variant === 'hydrate' && config.skip_if_hydrate) return true;
+		if (variant === 'hydrate') {
+			if (config.mode && !config.mode.includes('hydrate')) return 'no-test';
+			if (config.skip_mode?.includes('hydrate')) return true;
+		}
+
 		return false;
 	},
 	() => {},

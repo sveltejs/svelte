@@ -1,7 +1,7 @@
 import { test } from '../../test';
 
 export default test({
-	skip_if_hydrate: 'permanent', // output is correct, but test suite chokes on the extra ssr comment which is harmless
+	mode: ['client', 'server'], // output is correct, but test suite chokes on the extra ssr comment which is harmless
 	withoutNormalizeHtml: true,
 	html: get_html(false),
 	ssrHtml: get_html(true)

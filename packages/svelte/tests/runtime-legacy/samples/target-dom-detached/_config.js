@@ -1,10 +1,12 @@
 import { test } from '../../test';
 
 export default test({
-	skip_if_ssr: true,
+	skip_mode: ['server'],
+
 	compileOptions: {
 		cssHash: () => 'svelte-xyz'
 	},
+
 	async test({ assert, component, window }) {
 		assert.htmlEqual(
 			window.document.head.innerHTML,

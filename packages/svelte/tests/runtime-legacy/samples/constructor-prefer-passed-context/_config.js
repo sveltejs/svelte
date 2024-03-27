@@ -1,7 +1,8 @@
 import { test } from '../../test';
 
 export default test({
-	skip_if_ssr: true,
+	skip_mode: ['server'],
+
 	html: `
 		<div><div>Value in child component: </div></div>
 	`
