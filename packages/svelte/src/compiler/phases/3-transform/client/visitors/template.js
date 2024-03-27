@@ -33,6 +33,8 @@ import {
 	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED,
+	TEMPLATE_FRAGMENT,
+	TEMPLATE_USE_IMPORT_NODE,
 	TRANSITION_GLOBAL,
 	TRANSITION_IN,
 	TRANSITION_OUT
@@ -929,9 +931,9 @@ function serialize_bind_this(bind_this, context, node) {
  * const block_name = $.template(`...`);
  *
  * // for the main block:
- * const id = $.open(block_name);
+ * const id = block_name();
  * // init stuff and possibly render effect
- * $.close(id);
+ * $.append($$anchor, id);
  * ```
  * Adds the hoisted parts to `context.state.hoisted` and returns the statements of the main block.
  * @param {import('#compiler').SvelteNode} parent
@@ -1001,25 +1003,19 @@ function create_block(parent, name, nodes, context) {
 			node: id
 		});
 
-		context.state.hoisted.push(
-			b.var(
-				template_name,
-				b.call(
-					get_template_function(namespace, state),
-					b.template([b.quasi(state.template.join(''), true)], [])
-				)
-			)
-		);
-
 		/** @type {import('estree').Expression[]} */
-		const args = [template_name];
+		const args = [b.template([b.quasi(state.template.join(''), true)], [])];
 
 		if (state.metadata.context.template_needs_import_node) {
-			args.push(b.false);
+			args.push(b.literal(TEMPLATE_USE_IMPORT_NODE));
 		}
 
-		body.push(b.var(id, b.call('$.open', ...args)), ...state.before_init, ...state.init);
-		close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
+		context.state.hoisted.push(
+			b.var(template_name, b.call(get_template_function(namespace, state), ...args))
+		);
+
+		body.push(b.var(id, b.call(template_name)), ...state.before_init, ...state.init);
+		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 	} else if (is_single_child_not_needing_template) {
 		context.visit(trimmed[0], state);
 		body.push(...state.before_init, ...state.init);
@@ -1040,7 +1036,7 @@ function create_block(parent, name, nodes, context) {
 			});
 
 			body.push(b.var(id, b.call('$.text', b.id('$$anchor'))), ...state.before_init, ...state.init);
-			close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
+			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 		} else {
 			/** @type {(is_text: boolean) => import('estree').Expression} */
 			const expression = (is_text) =>
@@ -1054,30 +1050,29 @@ function create_block(parent, name, nodes, context) {
 				// special case — we can use `$.comment` instead of creating a unique template
 				body.push(b.var(id, b.call('$.comment')));
 			} else {
+				let flags = TEMPLATE_FRAGMENT;
+
+				if (state.metadata.context.template_needs_import_node) {
+					flags |= TEMPLATE_USE_IMPORT_NODE;
+				}
+
 				state.hoisted.push(
 					b.var(
 						template_name,
 						b.call(
 							get_template_function(namespace, state),
 							b.template([b.quasi(state.template.join(''), true)], []),
-							b.true
+							b.literal(flags)
 						)
 					)
 				);
 
-				/** @type {import('estree').Expression[]} */
-				const args = [template_name];
-
-				if (state.metadata.context.template_needs_import_node) {
-					args.push(b.false);
-				}
-
-				body.push(b.var(id, b.call('$.open_frag', ...args)));
+				body.push(b.var(id, b.call(template_name)));
 			}
 
 			body.push(...state.before_init, ...state.init);
 
-			close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
+			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 		}
 	} else {
 		body.push(...state.before_init, ...state.init);
@@ -1093,12 +1088,6 @@ function create_block(parent, name, nodes, context) {
 		// It's important that close is the last statement in the block, as any previous statements
 		// could contain element insertions into the template, which the close statement needs to
 		// know of when constructing the list of current inner elements.
-
-		if (context.path.length > 0) {
-			// this is a block — return DOM so it can be attached directly to the effect
-			close = b.return(close.expression);
-		}
-
 		body.push(close);
 	}
 
@@ -1566,7 +1555,7 @@ function serialize_template_literal(values, visit) {
 /** @type {import('../types').ComponentVisitors} */
 export const template_visitors = {
 	Fragment(node, context) {
-		const body = create_block(node, 'frag', node.nodes, context);
+		const body = create_block(node, 'root', node.nodes, context);
 		return b.block(body);
 	},
 	Comment(node, context) {

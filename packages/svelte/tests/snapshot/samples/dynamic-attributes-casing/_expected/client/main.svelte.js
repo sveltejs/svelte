@@ -3,7 +3,7 @@
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal";
 
-var frag = $.template(`<div></div> <svg></svg> <custom-element></custom-element> <div></div> <svg></svg> <custom-element></custom-element>`, true);
+var root = $.template(`<div></div> <svg></svg> <custom-element></custom-element> <div></div> <svg></svg> <custom-element></custom-element>`, 3);
 
 export default function Main($$anchor, $$props) {
 	$.push($$props, true);
@@ -11,7 +11,7 @@ export default function Main($$anchor, $$props) {
 	// needs to be a snapshot test because jsdom does auto-correct the attribute casing
 	let x = 'test';
 	let y = () => 'test';
-	var fragment = $.open_frag(frag, false);
+	var fragment = root();
 	var div = $.first_child(fragment);
 	var svg = $.sibling($.sibling(div, true));
 	var custom_element = $.sibling($.sibling(svg, true));
@@ -33,6 +33,6 @@ export default function Main($$anchor, $$props) {
 		$.set_custom_element_data(custom_element, "fooBar", x);
 	});
 
-	$.close_frag($$anchor, fragment);
+	$.append($$anchor, fragment);
 	$.pop();
 }

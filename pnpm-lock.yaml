@@ -45,7 +45,7 @@ importers:
         specifier: 22.0.0
         version: 22.0.0
       playwright:
-        specifier: ^1.35.1
+        specifier: ^1.41.1
         version: 1.41.1
       prettier:
         specifier: ^3.2.4

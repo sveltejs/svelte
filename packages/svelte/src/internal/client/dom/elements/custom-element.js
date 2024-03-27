@@ -1,6 +1,6 @@
 import { createClassComponent } from '../../../../legacy/legacy-client.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';
-import { open, close } from '../template.js';
+import { append } from '../template.js';
 import { define_property } from '../../utils.js';
 
 /**
@@ -98,14 +98,10 @@ if (typeof HTMLElement === 'function') {
 					 * @param {Element} anchor
 					 */
 					return (anchor) => {
-						const node = open(() => {
-							const slot = document.createElement('slot');
-							if (name !== 'default') {
-								slot.name = name;
-							}
-							return slot;
-						});
-						close(anchor, /** @type {Element} */ (node));
+						const slot = document.createElement('slot');
+						if (name !== 'default') slot.name = name;
+
+						append(anchor, slot);
 					};
 				}
 				/** @type {Record<string, any>} */
