@@ -406,7 +406,6 @@ export function execute_effect(effect) {
 		current_effect = previous_effect;
 		current_component_context = previous_component_context;
 	}
-	const parent = effect.parent;
 }
 
 function infinite_loop_guard() {
