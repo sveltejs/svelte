@@ -24,7 +24,8 @@ import {
 	STATE_SYMBOL,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	EFFECT_RAN
+	EFFECT_RAN,
+	BIND_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -602,7 +603,11 @@ function collect_effects_recursively(
 					collected_user
 				);
 			} else {
-				user.push(child);
+				if (flags & BIND_EFFECT) {
+					render.push(child);
+				} else {
+					user.push(child);
+				}
 			}
 		}
 	}

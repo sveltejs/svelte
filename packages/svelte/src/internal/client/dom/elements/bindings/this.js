@@ -1,5 +1,5 @@
 import { STATE_SYMBOL } from '../../../constants.js';
-import { destroy_effect, effect, render_effect } from '../../../reactivity/effects.js';
+import { bind_effect, destroy_effect, effect, render_effect } from '../../../reactivity/effects.js';
 import { untrack } from '../../../runtime.js';
 
 /**
@@ -22,18 +22,18 @@ function is_bound_this(bound_value, element_or_component) {
  * @returns {void}
  */
 export function bind_this(element_or_component, update, get_value, get_parts) {
-	/** @type {unknown[]} */
-	var old_parts;
+	bind_effect(() => {
+		/** @type {unknown[]} */
+		var old_parts;
 
-	/** @type {unknown[]} */
-	var parts;
+		/** @type {unknown[]} */
+		var parts;
 
-	render_effect(() => {
-		old_parts = parts;
-		// We only track changes to the parts, not the value itself to avoid unnecessary reruns.
-		parts = get_parts?.() || [];
+		render_effect(() => {
+			old_parts = parts;
+			// We only track changes to the parts, not the value itself to avoid unnecessary reruns.
+			parts = get_parts?.() || [];
 
-		effect(() => {
 			untrack(() => {
 				if (element_or_component !== get_value(...parts)) {
 					update(element_or_component, ...parts);
@@ -45,13 +45,15 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 				}
 			});
 		});
-	});
 
-	effect(() => {
 		return () => {
-			if (parts && is_bound_this(get_value(...parts), element_or_component)) {
-				update(null, ...parts);
-			}
+			// Defer to the next tick so that all updates can be reconciled first.
+			// This solves the case where one variable is shared across multiple this-bindings.
+			effect(() => {
+				if (parts && is_bound_this(get_value(...parts), element_or_component)) {
+					update(null, ...parts);
+				}
+			});
 		};
 	});
 }
