@@ -1,4 +1,4 @@
-import { effect, render_effect } from '../../../reactivity/effects.js';
+import { render_effect } from '../../../reactivity/effects.js';
 
 /**
  * @param {'innerHTML' | 'textContent' | 'innerText'} property
@@ -13,7 +13,7 @@ export function bind_content_editable(property, element, get_value, update) {
 		update(element[property]);
 	});
 
-	effect(() => {
+	render_effect(() => {
 		var value = get_value();
 
 		if (element[property] !== value) {
