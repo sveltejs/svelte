@@ -46,8 +46,8 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 			});
 		});
 
-		effect(() => {
-			return () => {
+		return () => {
+			effect(() => {
 				if (parts && is_bound_this(get_value(...parts), element_or_component)) {
 					update(null, ...parts);
 				}
