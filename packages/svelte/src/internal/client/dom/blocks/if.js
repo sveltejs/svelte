@@ -72,7 +72,6 @@ export function if_block(
 			}
 
 			if (consequent_effect) {
-				debugger
 				pause_effect(consequent_effect, () => {
 					consequent_effect = null;
 				});
