@@ -27,10 +27,10 @@ type Assert = typeof import('vitest').assert & {
 
 export interface RuntimeTest<Props extends Record<string, any> = Record<string, any>>
 	extends BaseTest {
-	/** Use `true` to signal a temporary skip, and `"permanent"` to signal that this test is never intended to run in ssr mode */
-	skip_if_ssr?: boolean | 'permanent';
-	/** Use `true` to signal a temporary skip, and `"permanent"` to signal that this test is never intended to run in hydration mode */
-	skip_if_hydrate?: boolean | 'permanent';
+	/** Use e.g. `mode: ['client']` to indicate that this test should never run in server/hydrate modes */
+	mode?: Array<'server' | 'client' | 'hydrate'>;
+	/** Temporarily skip specific modes, without skipping the entire test */
+	skip_mode?: Array<'server' | 'client' | 'hydrate'>;
 	html?: string;
 	ssrHtml?: string;
 	compileOptions?: Partial<CompileOptions>;
@@ -96,12 +96,13 @@ export function runtime_suite(runes: boolean) {
 		['dom', 'hydrate', 'ssr'],
 		(variant, config) => {
 			if (variant === 'hydrate') {
-				if (config.skip_if_hydrate === 'permanent') return 'no-test';
-				if (config.skip_if_hydrate) return true;
+				if (config.mode && !config.mode.includes('hydrate')) return 'no-test';
+				if (config.skip_mode?.includes('hydrate')) return true;
 			}
+
 			if (variant === 'ssr') {
 				if (
-					config.skip_if_ssr === 'permanent' ||
+					(config.mode && !config.mode.includes('server')) ||
 					(!config.test_ssr &&
 						config.html === undefined &&
 						config.ssrHtml === undefined &&
@@ -109,7 +110,7 @@ export function runtime_suite(runes: boolean) {
 				) {
 					return 'no-test';
 				}
-				if (config.skip_if_ssr) return true;
+				if (config.skip_mode?.includes('server')) return true;
 			}
 
 			return false;

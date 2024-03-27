@@ -2,7 +2,7 @@ import { ok, test } from '../../test';
 import { flushSync } from 'svelte';
 
 export default test({
-	skip_if_ssr: 'permanent', // relies on onMount firing, which does not happen in SSR mode
+	mode: ['client', 'hydrate'], // relies on onMount firing, which does not happen in SSR mode
 
 	get props() {
 		return { count: 3 };

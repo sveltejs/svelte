@@ -3,8 +3,6 @@ import { test } from '../../test';
 export default test({
 	skip: true, // TODO: needs fixing
 
-	skip_if_ssr: true,
-
 	html: `
 		<span>3</span>
 		<span>2</span>

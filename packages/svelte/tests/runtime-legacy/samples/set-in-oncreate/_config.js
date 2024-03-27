@@ -1,7 +1,7 @@
 import { test } from '../../test';
 
 export default test({
-	skip_if_ssr: 'permanent', // uses oncreate
+	mode: ['client', 'hydrate'], // uses oncreate
 
 	html: '<p>2</p>'
 });
