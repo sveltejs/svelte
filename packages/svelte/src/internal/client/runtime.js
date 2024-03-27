@@ -488,25 +488,20 @@ export function schedule_effect(signal) {
 			queueMicrotask(process_microtask);
 		}
 	}
-	var root = signal;
-	var parent;
-	var flags;
 
-	while (root !== null) {
-		parent = root.parent;
-		if (parent === null) {
-			break;
-		}
-		flags = parent.f;
+	var effect = signal;
+
+	while (effect.parent !== null) {
+		var effect = effect.parent;
+		var flags = effect.f;
+
 		if ((flags & BRANCH_EFFECT) !== 0) {
-			if ((flags & CLEAN) === 0) {
-				return;
-			}
-			set_signal_status(parent, MAYBE_DIRTY);
+			if ((flags & CLEAN) === 0) return;
+			set_signal_status(effect, MAYBE_DIRTY);
 		}
-		root = parent;
 	}
-	current_queued_root_effects.push(root);
+
+	current_queued_root_effects.push(effect);
 }
 
 /**
@@ -535,54 +530,48 @@ function recursively_collect_effects(
 	collected_user
 ) {
 	var effects = effect.effects;
-	if (effects === null) {
-		return;
-	}
-	var i, s, child, flags;
+	if (effects === null) return;
+
 	var render = [];
 	var user = [];
-	var is_branch;
 
-	for (i = 0; i < effects.length; i++) {
-		child = effects[i];
-		flags = child.f;
-		is_branch = flags & BRANCH_EFFECT;
-		// Skip this branch if it's clean
-		if (is_branch && (flags & CLEAN) !== 0) {
-			continue;
-		}
+	for (var i = 0; i < effects.length; i++) {
+		var child = effects[i];
+		var flags = child.f;
+		var is_branch = flags & BRANCH_EFFECT;
+
 		if (is_branch) {
+			// Skip this branch if it's clean
+			if ((flags & CLEAN) !== 0) continue;
 			set_signal_status(child, CLEAN);
 		}
 
 		if ((flags & RENDER_EFFECT) !== 0) {
 			if (is_branch) {
-				if (shallow) {
-					continue;
-				}
+				if (shallow) continue;
 				recursively_collect_effects(child, filter_flags, false, collected_render, collected_user);
 			} else {
 				render.push(child);
 			}
 		} else if ((flags & EFFECT) !== 0) {
 			if (is_branch) {
-				if (shallow) {
-					continue;
-				}
+				if (shallow) continue;
 				recursively_collect_effects(child, filter_flags, false, collected_render, collected_user);
 			} else {
 				user.push(child);
 			}
 		}
 	}
+
 	if (render.length > 0) {
 		if ((filter_flags & RENDER_EFFECT) !== 0) {
 			collected_render.push(...render);
 		}
+
 		if (!shallow) {
-			for (s = 0; s < render.length; s++) {
+			for (i = 0; i < render.length; i++) {
 				recursively_collect_effects(
-					render[s],
+					render[i],
 					filter_flags,
 					false,
 					collected_render,
@@ -591,13 +580,15 @@ function recursively_collect_effects(
 			}
 		}
 	}
+
 	if (user.length > 0) {
 		if ((filter_flags & EFFECT) !== 0) {
 			collected_user.push(...user);
 		}
+
 		if (!shallow) {
-			for (s = 0; s < user.length; s++) {
-				recursively_collect_effects(user[s], filter_flags, false, collected_render, collected_user);
+			for (i = 0; i < user.length; i++) {
+				recursively_collect_effects(user[i], filter_flags, false, collected_render, collected_user);
 			}
 		}
 	}
