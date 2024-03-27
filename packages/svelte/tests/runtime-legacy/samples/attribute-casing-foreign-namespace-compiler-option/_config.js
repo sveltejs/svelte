@@ -9,11 +9,11 @@ export default test({
 			<text wordWrap="true"></text>
 		</page>
 	`,
-	skip_if_hydrate: true,
 
 	compileOptions: {
 		namespace: 'foreign'
 	},
+
 	test({ assert, target }) {
 		// @ts-ignore
 		const attr = (/** @type {string} */ sel) => target.querySelector(sel).attributes[0].name;

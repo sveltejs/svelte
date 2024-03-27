@@ -1,7 +1,7 @@
 import { test } from '../../test';
 
 export default test({
-	skip_if_ssr: 'permanent', // a separate SSR test exists
+	mode: ['client', 'hydrate'], // a separate SSR test exists
 
 	compileOptions: {
 		preserveComments: true

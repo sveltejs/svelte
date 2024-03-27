@@ -9,7 +9,7 @@ let originalSpanGetBoundingClientRect;
 let originalParagraphGetBoundingClientRect;
 
 export default test({
-	skip_if_ssr: 'permanent', // no animations in SSR
+	mode: ['client', 'hydrate'], // no animations in SSR
 	get props() {
 		return {
 			things: [

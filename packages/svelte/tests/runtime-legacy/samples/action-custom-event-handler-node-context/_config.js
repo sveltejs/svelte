@@ -1,7 +1,7 @@
 import { ok, test } from '../../test';
 
 export default test({
-	skip_if_ssr: 'permanent', // unnecessary to test this in ssr mode
+	mode: ['client', 'hydrate'],
 
 	html: '<button>10</button>',
 

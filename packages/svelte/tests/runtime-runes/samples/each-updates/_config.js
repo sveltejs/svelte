@@ -2,9 +2,9 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
+	mode: ['client'],
+
 	html: `<p>test costs $1</p><p>test 2 costs $2</p><p>test costs $1</p><p>test 2 costs $2</p><button>add</button><button>change</button><button>reload</button>`,
-	skip_if_ssr: 'permanent',
-	skip_if_hydrate: 'permanent',
 
 	async test({ assert, target }) {
 		const [btn1, btn2, btn3] = target.querySelectorAll('button');
