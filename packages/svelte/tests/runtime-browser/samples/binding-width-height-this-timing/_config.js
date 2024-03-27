@@ -7,7 +7,6 @@ export default test({
 
 		assert.deepEqual(log, [
 			[false, 0, 0],
-			[true, 0, 0],
 			[true, 100, 100]
 		]);
 	}

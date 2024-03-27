@@ -11,7 +11,6 @@ import { unstate } from './proxy.js';
 import { destroy_effect, user_pre_effect } from './reactivity/effects.js';
 import {
 	EFFECT,
-	PRE_EFFECT,
 	RENDER_EFFECT,
 	DIRTY,
 	MAYBE_DIRTY,
@@ -402,11 +401,6 @@ export function execute_effect(effect) {
 		current_effect = previous_effect;
 		current_component_context = previous_component_context;
 	}
-	const parent = effect.parent;
-
-	if ((flags & PRE_EFFECT) !== 0 && parent !== null) {
-		flush_local_pre_effects(parent);
-	}
 }
 
 function infinite_loop_guard() {
@@ -436,7 +430,7 @@ function flush_queued_root_effects(root_effects) {
 
 	for (i = 0; i < root_effects.length; i++) {
 		signal = root_effects[i];
-		effects = get_nested_effects(signal, PRE_EFFECT | RENDER_EFFECT | EFFECT);
+		effects = get_nested_effects(signal, RENDER_EFFECT | EFFECT);
 		flush_queued_effects(effects);
 	}
 }
@@ -529,7 +523,7 @@ export function schedule_effect(signal) {
  * @param {import('./types.js').Effect} effect
  * @param {number} filter_flags
  * @param {boolean} shallow
- * @param {import('./types.js').Effect[]} collected_pre_and_render
+ * @param {import('./types.js').Effect[]} collected_render
  * @param {import('./types.js').Effect[]} collected_user
  * @returns {void}
  */
@@ -537,7 +531,7 @@ function recursively_collect_effects(
 	effect,
 	filter_flags,
 	shallow,
-	collected_pre_and_render,
+	collected_render,
 	collected_user
 ) {
 	var effects = effect.effects;
@@ -545,7 +539,6 @@ function recursively_collect_effects(
 		return;
 	}
 	var i, s, child, flags;
-	var pre = [];
 	var render = [];
 	var user = [];
 	var is_branch;
@@ -562,33 +555,12 @@ function recursively_collect_effects(
 			set_signal_status(child, CLEAN);
 		}
 
-		if ((flags & PRE_EFFECT) !== 0) {
+		if ((flags & RENDER_EFFECT) !== 0) {
 			if (is_branch) {
 				if (shallow) {
 					continue;
 				}
-				recursively_collect_effects(
-					child,
-					filter_flags,
-					false,
-					collected_pre_and_render,
-					collected_user
-				);
-			} else {
-				pre.push(child);
-			}
-		} else if ((flags & RENDER_EFFECT) !== 0) {
-			if (is_branch) {
-				if (shallow) {
-					continue;
-				}
-				recursively_collect_effects(
-					child,
-					filter_flags,
-					false,
-					collected_pre_and_render,
-					collected_user
-				);
+				recursively_collect_effects(child, filter_flags, false, collected_render, collected_user);
 			} else {
 				render.push(child);
 			}
@@ -597,57 +569,36 @@ function recursively_collect_effects(
 				if (shallow) {
 					continue;
 				}
-				recursively_collect_effects(
-					child,
-					filter_flags,
-					false,
-					collected_pre_and_render,
-					collected_user
-				);
+				recursively_collect_effects(child, filter_flags, false, collected_render, collected_user);
 			} else {
 				user.push(child);
 			}
 		}
 	}
-	if ((filter_flags & PRE_EFFECT) !== 0 && pre.length > 0) {
-		collected_pre_and_render.push(...pre);
-	}
-	if ((filter_flags & RENDER_EFFECT) !== 0 && render.length > 0) {
-		collected_pre_and_render.push(...render);
-	}
-	if (!shallow) {
-		for (s = 0; s < pre.length; s++) {
-			recursively_collect_effects(
-				pre[s],
-				filter_flags,
-				false,
-				collected_pre_and_render,
-				collected_user
-			);
+	if (render.length > 0) {
+		if ((filter_flags & RENDER_EFFECT) !== 0) {
+			collected_render.push(...render);
 		}
-
-		for (s = 0; s < render.length; s++) {
-			recursively_collect_effects(
-				render[s],
-				filter_flags,
-				false,
-				collected_pre_and_render,
-				collected_user
-			);
+		if (!shallow) {
+			for (s = 0; s < render.length; s++) {
+				recursively_collect_effects(
+					render[s],
+					filter_flags,
+					false,
+					collected_render,
+					collected_user
+				);
+			}
 		}
 	}
-	if ((filter_flags & EFFECT) !== 0 && user.length > 0) {
-		collected_user.push(...user);
-	}
-	if (!shallow) {
-		for (s = 0; s < user.length; s++) {
-			recursively_collect_effects(
-				user[s],
-				filter_flags,
-				false,
-				collected_pre_and_render,
-				collected_user
-			);
+	if (user.length > 0) {
+		if ((filter_flags & EFFECT) !== 0) {
+			collected_user.push(...user);
+		}
+		if (!shallow) {
+			for (s = 0; s < user.length; s++) {
+				recursively_collect_effects(user[s], filter_flags, false, collected_render, collected_user);
+			}
 		}
 	}
 }
@@ -690,18 +641,6 @@ export function flush_local_render_effects(effect) {
 	 */
 	var render_effects = get_nested_effects(effect, RENDER_EFFECT, true);
 	flush_queued_effects(render_effects);
-}
-
-/**
- * @param {import('./types.js').Effect} effect
- * @returns {void}
- */
-export function flush_local_pre_effects(effect) {
-	/**
-	 * @type {import("./types.js").Effect[]}
-	 */
-	var pre_effects = get_nested_effects(effect, PRE_EFFECT, true);
-	flush_queued_effects(pre_effects);
 }
 
 /**

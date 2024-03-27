@@ -19,7 +19,6 @@ import {
 	BRANCH_EFFECT,
 	RENDER_EFFECT,
 	EFFECT,
-	PRE_EFFECT,
 	DESTROYED,
 	INERT,
 	IS_ELSEIF,
@@ -183,7 +182,7 @@ export function legacy_pre_effect_reset() {
  * @returns {import('#client').Effect}
  */
 export function pre_effect(fn) {
-	return create_effect(PRE_EFFECT, fn, true);
+	return create_effect(RENDER_EFFECT, fn, true);
 }
 
 /**
