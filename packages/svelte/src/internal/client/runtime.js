@@ -22,7 +22,7 @@ import {
 	INERT,
 	BRANCH_EFFECT,
 	STATE_SYMBOL,
-	BLOCK_EFFECT,
+	BLOCK_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -672,7 +672,12 @@ function collect_effects(effect, filter_flags, shallow = false) {
 	 * @type {import("./types.js").Effect[]}
 	 */
 	var user_effects = [];
-	collect_effects_recursively(effect, filter_flags, shallow, render_effects, user_effects);
+	// When working with custom-elements, the root effects might not have a root
+	if (effect.effects === null && (effect.f & BRANCH_EFFECT) === 0) {
+		return [effect];
+	} else {
+		collect_effects_recursively(effect, filter_flags, shallow, render_effects, user_effects);
+	}
 	return [...render_effects, ...user_effects];
 }
 

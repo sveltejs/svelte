@@ -25,7 +25,7 @@ import {
 	IS_ELSEIF,
 	EFFECT_RAN,
 	BLOCK_EFFECT,
-	ROOT_EFFECT,
+	ROOT_EFFECT
 } from '../constants.js';
 import { set } from './sources.js';
 import { noop } from '../../common.js';
