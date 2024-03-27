@@ -1,5 +1,5 @@
 import { STATE_SYMBOL } from '../../../constants.js';
-import { bind_effect, destroy_effect, effect, pre_effect, render_effect } from '../../../reactivity/effects.js';
+import { effect, pre_effect, render_effect } from '../../../reactivity/effects.js';
 import { untrack } from '../../../runtime.js';
 
 /**

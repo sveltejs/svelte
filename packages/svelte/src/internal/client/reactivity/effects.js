@@ -26,7 +26,6 @@ import {
 	EFFECT_RAN,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	BIND_EFFECT
 } from '../constants.js';
 import { set } from './sources.js';
 import { noop } from '../../common.js';
@@ -144,13 +143,6 @@ export function effect(fn) {
 	return create_effect(EFFECT, fn, false);
 }
 
-/**
- * @param {() => void | (() => void)} fn
- * @returns {import('#client').Effect}
- */
-export function bind_effect(fn) {
-	return create_effect(EFFECT | BIND_EFFECT, fn, false);
-}
 /**
  * Internal representation of `$: ..`
  * @param {() => any} deps
