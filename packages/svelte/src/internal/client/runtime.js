@@ -565,7 +565,7 @@ function collect_effects_recursively(
 		if ((flags & PRE_EFFECT) !== 0) {
 			if (is_branch) {
 				if (shallow) {
-					return;
+					continue;
 				}
 				collect_effects_recursively(
 					child,
@@ -580,7 +580,7 @@ function collect_effects_recursively(
 		} else if ((flags & RENDER_EFFECT) !== 0) {
 			if (is_branch) {
 				if (shallow) {
-					return;
+					continue;
 				}
 				collect_effects_recursively(
 					child,
@@ -595,7 +595,7 @@ function collect_effects_recursively(
 		} else if ((flags & EFFECT) !== 0) {
 			if (is_branch) {
 				if (shallow) {
-					return;
+					continue;
 				}
 				collect_effects_recursively(
 					child,
