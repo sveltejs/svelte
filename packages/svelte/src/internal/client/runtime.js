@@ -604,7 +604,7 @@ function collect_effects_recursively(
 				);
 			} else {
 				if ((flags & BIND_EFFECT) !== 0) {
-					render.push(child);
+					pre.push(child);
 				} else {
 					user.push(child);
 				}
