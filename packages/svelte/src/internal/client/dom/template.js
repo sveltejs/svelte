@@ -163,10 +163,12 @@ export function append(anchor, dom) {
 	var current = dom;
 
 	if (!hydrating) {
-		if (/** @type {Node} */ (dom).nodeType === 11) {
+		var node = /** @type {Node} */ (dom);
+
+		if (node.nodeType === 11) {
 			// if hydrating, `dom` is already an array of nodes, but if not then
 			// we need to create an array to store it on the current effect
-			current = /** @type {import('#client').Dom} */ ([.../** @type {Node} */ (dom).childNodes]);
+			current = /** @type {import('#client').Dom} */ ([...node.childNodes]);
 		}
 
 		// TODO ideally we'd do `anchor.before(dom)`, but that fails because `dom` can be an array of nodes in the SVG case
