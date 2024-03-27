@@ -436,7 +436,7 @@ function flush_queued_root_effects(root_effects) {
 
 	for (i = 0; i < root_effects.length; i++) {
 		signal = root_effects[i];
-		effects = collect_effects(signal, PRE_EFFECT | RENDER_EFFECT | EFFECT);
+		effects = get_nested_effects(signal, PRE_EFFECT | RENDER_EFFECT | EFFECT);
 		flush_queued_effects(effects);
 	}
 }
@@ -533,7 +533,7 @@ export function schedule_effect(signal) {
  * @param {import('./types.js').Effect[]} collected_user
  * @returns {void}
  */
-function collect_effects_recursively(
+function recursively_collect_effects(
 	effect,
 	filter_flags,
 	shallow,
@@ -567,7 +567,7 @@ function collect_effects_recursively(
 				if (shallow) {
 					continue;
 				}
-				collect_effects_recursively(
+				recursively_collect_effects(
 					child,
 					filter_flags,
 					false,
@@ -582,7 +582,7 @@ function collect_effects_recursively(
 				if (shallow) {
 					continue;
 				}
-				collect_effects_recursively(
+				recursively_collect_effects(
 					child,
 					filter_flags,
 					false,
@@ -597,7 +597,7 @@ function collect_effects_recursively(
 				if (shallow) {
 					continue;
 				}
-				collect_effects_recursively(
+				recursively_collect_effects(
 					child,
 					filter_flags,
 					false,
@@ -617,7 +617,7 @@ function collect_effects_recursively(
 	}
 	if (!shallow) {
 		for (s = 0; s < pre.length; s++) {
-			collect_effects_recursively(
+			recursively_collect_effects(
 				pre[s],
 				filter_flags,
 				false,
@@ -627,7 +627,7 @@ function collect_effects_recursively(
 		}
 
 		for (s = 0; s < render.length; s++) {
-			collect_effects_recursively(
+			recursively_collect_effects(
 				render[s],
 				filter_flags,
 				false,
@@ -641,7 +641,7 @@ function collect_effects_recursively(
 	}
 	if (!shallow) {
 		for (s = 0; s < user.length; s++) {
-			collect_effects_recursively(
+			recursively_collect_effects(
 				user[s],
 				filter_flags,
 				false,
@@ -663,7 +663,7 @@ function collect_effects_recursively(
  * @param {boolean} [shallow]
  * @returns {import('./types.js').Effect[]}
  */
-function collect_effects(effect, filter_flags, shallow = false) {
+function get_nested_effects(effect, filter_flags, shallow = false) {
 	/**
 	 * @type {import("./types.js").Effect[]}
 	 */
@@ -675,8 +675,14 @@ function collect_effects(effect, filter_flags, shallow = false) {
 	// When working with custom-elements, the root effects might not have a root
 	if (effect.effects === null && (effect.f & BRANCH_EFFECT) === 0) {
 		return [effect];
-	} else {
-		collect_effects_recursively(effect, filter_flags, shallow, render_effects, user_effects);
+	}
+	recursively_collect_effects(effect, filter_flags, shallow, render_effects, user_effects);
+	// Avoid expensive copies
+	if (user_effects.length === 0) {
+		return render_effects;
+	}
+	if (render_effects.length === 0) {
+		return user_effects;
 	}
 	return [...render_effects, ...user_effects];
 }
@@ -689,7 +695,7 @@ export function flush_local_render_effects(effect) {
 	/**
 	 * @type {import("./types.js").Effect[]}
 	 */
-	var render_effects = collect_effects(effect, RENDER_EFFECT, true);
+	var render_effects = get_nested_effects(effect, RENDER_EFFECT, true);
 	flush_queued_effects(render_effects);
 }
 
@@ -701,7 +707,7 @@ export function flush_local_pre_effects(effect) {
 	/**
 	 * @type {import("./types.js").Effect[]}
 	 */
-	var pre_effects = collect_effects(effect, PRE_EFFECT, true);
+	var pre_effects = get_nested_effects(effect, PRE_EFFECT, true);
 	flush_queued_effects(pre_effects);
 }
 
