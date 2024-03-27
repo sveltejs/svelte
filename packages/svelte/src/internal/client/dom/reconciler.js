@@ -9,41 +9,6 @@ export function create_fragment_from_html(html) {
 }
 
 /**
- * Creating a document fragment from HTML that contains script tags will not execute
- * the scripts. We need to replace the script tags with new ones so that they are executed.
- * @param {string} html
- */
-export function create_fragment_with_script_from_html(html) {
-	var content = create_fragment_from_html(html);
-	var scripts = content.querySelectorAll('script');
-	for (const script of scripts) {
-		var new_script = document.createElement('script');
-		for (var i = 0; i < script.attributes.length; i++) {
-			new_script.setAttribute(script.attributes[i].name, script.attributes[i].value);
-		}
-		new_script.textContent = script.textContent;
-		/** @type {Node} */ (script.parentNode).replaceChild(new_script, script);
-	}
-	return content;
-}
-
-/**
- * @param {import('#client').Dom} current
- * @param {Text | Element | Comment} sibling
- */
-export function insert(current, sibling) {
-	if (!current) return sibling;
-
-	if (is_array(current)) {
-		for (var i = 0; i < current.length; i++) {
-			sibling.before(/** @type {Node} */ (current[i]));
-		}
-	} else {
-		sibling.before(/** @type {Node} */ (current));
-	}
-}
-
-/**
  * @param {import('#client').Dom} current
  */
 export function remove(current) {

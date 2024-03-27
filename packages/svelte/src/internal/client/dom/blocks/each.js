@@ -8,7 +8,7 @@ import {
 } from '../../../../constants.js';
 import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
-import { insert, remove } from '../reconciler.js';
+import { remove } from '../reconciler.js';
 import { untrack } from '../../runtime.js';
 import {
 	block,
@@ -389,7 +389,7 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 
 				if (moved && index !== LIS_ITEM) {
 					if (last_item !== undefined) anchor = get_first_child(last_item);
-					insert(/** @type {import('#client').Dom} */ (item.e.dom), anchor);
+					move(/** @type {import('#client').Dom} */ (item.e.dom), anchor);
 				}
 			}
 
@@ -558,5 +558,19 @@ function create_item(anchor, value, key, index, render_fn, flags) {
 		return item;
 	} finally {
 		current_each_item = previous_each_item;
+	}
+}
+
+/**
+ * @param {import('#client').Dom} current
+ * @param {Text | Element | Comment} anchor
+ */
+function move(current, anchor) {
+	if (is_array(current)) {
+		for (var i = 0; i < current.length; i++) {
+			anchor.before(current[i]);
+		}
+	} else {
+		anchor.before(current);
 	}
 }
