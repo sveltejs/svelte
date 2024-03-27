@@ -34,10 +34,9 @@ import { remove } from '../dom/reconciler.js';
  * @param {import('./types.js').EffectType} type
  * @param {(() => void | (() => void))} fn
  * @param {boolean} sync
- * @param {boolean} init
  * @returns {import('#client').Effect}
  */
-export function create_effect(type, fn, sync, init = true) {
+function create_effect(type, fn, sync) {
 	var is_root = (type & ROOT_EFFECT) !== 0;
 	/** @type {import('#client').Effect} */
 	var effect = {
@@ -61,20 +60,18 @@ export function create_effect(type, fn, sync, init = true) {
 		}
 	}
 
-	if (init) {
-		if (sync) {
-			var previously_flushing_effect = is_flushing_effect;
+	if (sync) {
+		var previously_flushing_effect = is_flushing_effect;
 
-			try {
-				set_is_flushing_effect(true);
-				execute_effect(effect);
-				effect.f |= EFFECT_RAN;
-			} finally {
-				set_is_flushing_effect(previously_flushing_effect);
-			}
-		} else {
-			schedule_effect(effect);
+		try {
+			set_is_flushing_effect(true);
+			execute_effect(effect);
+			effect.f |= EFFECT_RAN;
+		} finally {
+			set_is_flushing_effect(previously_flushing_effect);
 		}
+	} else {
+		schedule_effect(effect);
 	}
 
 	return effect;
@@ -112,7 +109,7 @@ export function user_effect(fn) {
 		const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
 		(context.e ??= []).push(fn);
 	} else {
-		create_effect(EFFECT, fn, false, true);
+		effect(fn);
 	}
 }
 

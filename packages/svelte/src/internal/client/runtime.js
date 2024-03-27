@@ -8,7 +8,7 @@ import {
 	object_prototype
 } from './utils.js';
 import { unstate } from './proxy.js';
-import { create_effect, destroy_effect, user_pre_effect } from './reactivity/effects.js';
+import { destroy_effect, effect, user_pre_effect } from './reactivity/effects.js';
 import {
 	EFFECT,
 	RENDER_EFFECT,
@@ -1135,7 +1135,7 @@ export function pop(component) {
 		if (effects !== null) {
 			context_stack_item.e = null;
 			for (let i = 0; i < effects.length; i++) {
-				create_effect(EFFECT, effects[i], false, true);
+				effect(effects[i]);
 			}
 		}
 		current_component_context = context_stack_item.p;
