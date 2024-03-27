@@ -62,6 +62,7 @@ export function template_with_script(content, flags) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function svg_template(content, flags) {
+	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
 	var fn = template(`<svg>${content}</svg>`, 0); // we don't need to worry about using importNode for SVGs
 
 	/** @type {Element | DocumentFragment} */
@@ -69,7 +70,7 @@ export function svg_template(content, flags) {
 
 	return () => {
 		if (hydrating) {
-			return fn();
+			return is_fragment ? hydrate_nodes : /** @type {Node} */ (hydrate_nodes[0]);
 		}
 
 		if (!node) {
@@ -85,7 +86,7 @@ export function svg_template(content, flags) {
 			}
 		}
 
-		return node;
+		return clone_node(node, true);
 	};
 }
 
