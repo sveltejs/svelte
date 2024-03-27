@@ -3,6 +3,7 @@ import * as $ from '../../src/internal/client/runtime';
 import {
 	destroy_effect,
 	effect,
+	effect_root,
 	render_effect,
 	user_effect
 } from '../../src/internal/client/reactivity/effects';
@@ -248,8 +249,10 @@ describe('signals', () => {
 	test('effect with derived using unowned derived every time', () => {
 		const log: Array<number | string> = [];
 
-		const effect = user_effect(() => {
-			log.push($.get(calc));
+		const destroy = effect_root(() => {
+			user_effect(() => {
+				log.push($.get(calc));
+			});
 		});
 
 		return () => {
@@ -261,7 +264,7 @@ describe('signals', () => {
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.reactions?.length, 1);
 			assert.deepEqual(log, [0, 2, 'limit', 0]);
-			destroy_effect(effect);
+			destroy();
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.reactions, null);
 		};

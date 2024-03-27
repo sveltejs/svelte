@@ -20,6 +20,8 @@ export type ComponentContext = {
 	s: Record<string, unknown>;
 	/** exports (and props, if `accessors: true`) */
 	x: Record<string, any> | null;
+	/** deferred effects */
+	e: null | Array<() => void | (() => void)>;
 	/** mounted */
 	m: boolean;
 	/** parent */

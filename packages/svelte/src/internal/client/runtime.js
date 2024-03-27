@@ -8,7 +8,7 @@ import {
 	object_prototype
 } from './utils.js';
 import { unstate } from './proxy.js';
-import { destroy_effect, user_pre_effect } from './reactivity/effects.js';
+import { create_effect, destroy_effect, user_pre_effect } from './reactivity/effects.js';
 import {
 	EFFECT,
 	RENDER_EFFECT,
@@ -1094,6 +1094,8 @@ export function push(props, runes = false, fn) {
 		x: null,
 		// context
 		c: null,
+		// effects
+		e: null,
 		// mounted
 		m: false,
 		// parent
@@ -1128,6 +1130,13 @@ export function pop(component) {
 	if (context_stack_item !== null) {
 		if (component !== undefined) {
 			context_stack_item.x = component;
+		}
+		const effects = context_stack_item.e;
+		if (effects !== null) {
+			context_stack_item.e = null;
+			for (let i = 0; i < effects.length; i++) {
+				create_effect(EFFECT, effects[i], false, true);
+			}
 		}
 		current_component_context = context_stack_item.p;
 		context_stack_item.m = true;

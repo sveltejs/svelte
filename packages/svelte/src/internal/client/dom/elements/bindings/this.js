@@ -22,7 +22,7 @@ function is_bound_this(bound_value, element_or_component) {
  * @returns {void}
  */
 export function bind_this(element_or_component, update, get_value, get_parts) {
-	render_effect(() => {
+	effect(() => {
 		/** @type {unknown[]} */
 		var old_parts;
 
