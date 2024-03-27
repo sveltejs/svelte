@@ -22,7 +22,7 @@ function is_bound_this(bound_value, element_or_component) {
  * @returns {void}
  */
 export function bind_this(element_or_component, update, get_value, get_parts) {
-	bind_effect(() => {
+	render_effect(() => {
 		/** @type {unknown[]} */
 		var old_parts;
 
@@ -46,14 +46,12 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 			});
 		});
 
-		return () => {
-			// Defer to the next tick so that all updates can be reconciled first.
-			// This solves the case where one variable is shared across multiple this-bindings.
-			effect(() => {
+		effect(() => {
+			return () => {
 				if (parts && is_bound_this(get_value(...parts), element_or_component)) {
 					update(null, ...parts);
 				}
-			});
-		};
+			};
+		});
 	});
 }

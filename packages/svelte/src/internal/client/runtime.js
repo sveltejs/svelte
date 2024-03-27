@@ -603,7 +603,7 @@ function collect_effects_recursively(
 					collected_user
 				);
 			} else {
-				if (flags & BIND_EFFECT) {
+				if ((flags & BIND_EFFECT) !== 0) {
 					render.push(child);
 				} else {
 					user.push(child);
