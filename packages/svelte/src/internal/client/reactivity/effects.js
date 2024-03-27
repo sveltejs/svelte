@@ -204,7 +204,6 @@ export function branch(fn) {
 	return create_effect(RENDER_EFFECT | BRANCH_EFFECT, fn, true);
 }
 
-
 /**
  * @param {import('#client').Effect} effect
  * @returns {void}
