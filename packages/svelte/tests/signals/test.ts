@@ -1,7 +1,6 @@
 import { describe, assert, it } from 'vitest';
 import * as $ from '../../src/internal/client/runtime';
 import {
-	destroy_effect,
 	effect,
 	effect_root,
 	render_effect,
@@ -23,12 +22,12 @@ function run_test(runes: boolean, fn: (runes: boolean) => () => void) {
 		$.push({}, runes);
 		// Create a render context so that effect validations etc don't fail
 		let execute: any;
-		const signal = render_effect(() => {
+		const destroy = effect_root(() => {
 			execute = fn(runes);
 		});
 		$.pop();
 		execute();
-		destroy_effect(signal);
+		destroy();
 	};
 }
 
