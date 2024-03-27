@@ -554,10 +554,10 @@ function collect_effects_recursively(
 		child = effects[i];
 		flags = child.f;
 		is_branch = flags & BRANCH_EFFECT;
-		// TODO: put this in when we have proper working removal of managed effects from their parents
-		// if ((flags & CLEAN) !== 0) {
-		// 	continue;
-		// }
+		// Skip this branch if it's clean
+		if (is_branch && (flags & CLEAN) !== 0) {
+			continue;
+		}
 		if (is_branch) {
 			set_signal_status(child, CLEAN);
 		}
