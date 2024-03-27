@@ -412,7 +412,7 @@ export function execute_effect(effect) {
 }
 
 function infinite_loop_guard() {
-	if (flush_count > 100) {
+	if (flush_count > 1000) {
 		flush_count = 0;
 		throw new Error(
 			'ERR_SVELTE_TOO_MANY_UPDATES' +
