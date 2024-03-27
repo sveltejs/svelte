@@ -137,6 +137,8 @@ export function user_pre_effect(fn) {
  * @returns {() => void}
  */
 export function effect_root(fn) {
+	// TODO is `untrack` correct here? Should `fn` re-run if its dependencies change?
+	// Should it even be modelled as an effect?
 	const effect = create_effect(ROOT_EFFECT, () => untrack(fn), true);
 	return () => {
 		destroy_effect(effect);
