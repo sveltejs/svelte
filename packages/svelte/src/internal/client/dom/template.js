@@ -1,6 +1,6 @@
 import { hydrate_nodes, hydrating } from './hydration.js';
 import { clone_node, empty } from './operations.js';
-import { create_fragment_from_html, insert } from './reconciler.js';
+import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
 
@@ -171,8 +171,7 @@ export function append(anchor, dom) {
 			current = /** @type {import('#client').Dom} */ ([...node.childNodes]);
 		}
 
-		// TODO ideally we'd do `anchor.before(dom)`, but that fails because `dom` can be an array of nodes in the SVG case
-		insert(current, anchor);
+		anchor.before(node);
 	}
 
 	/** @type {import('#client').Effect} */ (current_effect).dom = current;
