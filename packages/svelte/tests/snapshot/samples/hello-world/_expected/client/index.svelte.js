@@ -3,13 +3,13 @@
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal";
 
-var frag = $.template(`<h1>hello world</h1>`);
+var root = $.template(`<h1>hello world</h1>`);
 
 export default function Hello_world($$anchor, $$props) {
 	$.push($$props, false);
 	$.init();
 
-	var h1 = frag();
+	var h1 = root();
 
 	$.append($$anchor, h1);
 	$.pop();

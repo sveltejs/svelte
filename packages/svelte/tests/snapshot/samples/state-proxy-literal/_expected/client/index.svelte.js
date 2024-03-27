@@ -10,14 +10,14 @@ function reset(_, str, tpl) {
 	$.set(tpl, ``);
 }
 
-var frag = $.template(`<input> <input> <button>reset</button>`, 1);
+var root = $.template(`<input> <input> <button>reset</button>`, 1);
 
 export default function State_proxy_literal($$anchor, $$props) {
 	$.push($$props, true);
 
 	let str = $.source('');
 	let tpl = $.source(``);
-	var fragment = frag();
+	var fragment = root();
 	var input = $.first_child(fragment);
 
 	$.remove_input_attr_defaults(input);

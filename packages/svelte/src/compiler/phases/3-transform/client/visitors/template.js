@@ -1555,7 +1555,7 @@ function serialize_template_literal(values, visit) {
 /** @type {import('../types').ComponentVisitors} */
 export const template_visitors = {
 	Fragment(node, context) {
-		const body = create_block(node, 'frag', node.nodes, context);
+		const body = create_block(node, 'root', node.nodes, context);
 		return b.block(body);
 	},
 	Comment(node, context) {
