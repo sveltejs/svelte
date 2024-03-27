@@ -157,7 +157,6 @@ export const comment = template('<!>', TEMPLATE_FRAGMENT);
  * and insert the elements into the dom (in client mode).
  * @param {Text | Comment | Element} anchor
  * @param {import('#client').Dom} dom
- * @returns {import('#client').Dom}
  */
 export function append(anchor, dom) {
 	var current = dom;
@@ -175,6 +174,4 @@ export function append(anchor, dom) {
 	}
 
 	/** @type {import('#client').Effect} */ (current_effect).dom = current;
-
-	return current;
 }

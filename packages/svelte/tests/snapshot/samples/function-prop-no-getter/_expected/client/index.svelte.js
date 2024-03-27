@@ -24,7 +24,7 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 			var text = $.text($$anchor);
 
 			$.render_effect(() => $.set_text(text, `clicks: ${$.stringify($.get(count))}`));
-			return $.append($$anchor, text);
+			$.append($$anchor, text);
 		}
 	});
 

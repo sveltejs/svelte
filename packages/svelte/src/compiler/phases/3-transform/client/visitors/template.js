@@ -1088,12 +1088,6 @@ function create_block(parent, name, nodes, context) {
 		// It's important that close is the last statement in the block, as any previous statements
 		// could contain element insertions into the template, which the close statement needs to
 		// know of when constructing the list of current inner elements.
-
-		if (context.path.length > 0) {
-			// this is a block — return DOM so it can be attached directly to the effect
-			close = b.return(close.expression);
-		}
-
 		body.push(close);
 	}
 
