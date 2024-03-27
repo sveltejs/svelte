@@ -1,7 +1,4 @@
 import type { ComponentContext, Dom, Equals, TransitionManager } from '#client';
-import type { EFFECT, RENDER_EFFECT } from '../constants';
-
-export type EffectType = typeof EFFECT | typeof RENDER_EFFECT;
 
 export interface Signal {
 	/** Flags bitmask */

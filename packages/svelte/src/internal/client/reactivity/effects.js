@@ -31,7 +31,7 @@ import { noop } from '../../common.js';
 import { remove } from '../dom/reconciler.js';
 
 /**
- * @param {import('./types.js').EffectType} type
+ * @param {number} type
  * @param {(() => void | (() => void))} fn
  * @param {boolean} sync
  * @returns {import('#client').Effect}

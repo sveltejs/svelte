@@ -51,8 +51,6 @@ export type TemplateNode = Text | Element | Comment;
 
 export type Dom = TemplateNode | TemplateNode[];
 
-export interface Block {}
-
 export type EachState = {
 	/** flags */
 	flags: number;
