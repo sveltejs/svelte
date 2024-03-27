@@ -5,12 +5,12 @@ import { current_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
 
 /**
- * @param {string} html
+ * @param {string} content
  * @param {number} flags
  * @returns {() => Node | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function template(html, flags) {
+export function template(content, flags) {
 	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
 	var use_import_node = (flags & TEMPLATE_USE_IMPORT_NODE) !== 0;
 
@@ -23,7 +23,7 @@ export function template(html, flags) {
 		}
 
 		if (!node) {
-			node = create_fragment_from_html(html);
+			node = create_fragment_from_html(content);
 			if (!is_fragment) node = /** @type {Node} */ (node.firstChild);
 		}
 
@@ -32,14 +32,14 @@ export function template(html, flags) {
 }
 
 /**
- * @param {string} html
+ * @param {string} content
  * @param {number} flags
  * @returns {() => Node | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function template_with_script(html, flags) {
+export function template_with_script(content, flags) {
 	var first = true;
-	var fn = template(html, flags);
+	var fn = template(content, flags);
 
 	return () => {
 		if (hydrating) return fn();
@@ -56,13 +56,13 @@ export function template_with_script(html, flags) {
 }
 
 /**
- * @param {string} svg
+ * @param {string} content
  * @param {number} flags
  * @returns {() => Node | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function svg_template(svg, flags) {
-	var fn = template(`<svg>${svg}</svg>`, flags & ~TEMPLATE_FRAGMENT);
+export function svg_template(content, flags) {
+	var fn = template(`<svg>${content}</svg>`, 0); // we don't need to worry about using importNode for SVGs
 
 	/** @type {Element | DocumentFragment} */
 	var node;
@@ -73,14 +73,14 @@ export function svg_template(svg, flags) {
 		}
 
 		if (!node) {
-			var element = /** @type {Element} */ (fn());
+			var svg = /** @type {Element} */ (fn());
 
 			if ((flags & TEMPLATE_FRAGMENT) === 0) {
-				node = /** @type {Element} */ (element.firstChild);
+				node = /** @type {Element} */ (svg.firstChild);
 			} else {
 				node = document.createDocumentFragment();
-				while (element.firstChild) {
-					node.appendChild(element.firstChild);
+				while (svg.firstChild) {
+					node.appendChild(svg.firstChild);
 				}
 			}
 		}
@@ -90,14 +90,14 @@ export function svg_template(svg, flags) {
 }
 
 /**
- * @param {string} svg
+ * @param {string} content
  * @param {number} flags
  * @returns {() => Node | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function svg_template_with_script(svg, flags) {
+export function svg_template_with_script(content, flags) {
 	var first = true;
-	var fn = svg_template(svg, flags);
+	var fn = svg_template(content, flags);
 
 	return () => {
 		if (hydrating) return fn();
