@@ -11,6 +11,6 @@ export default function Svelte_element($$anchor, $$props) {
 	var node = $.first_child(fragment);
 
 	$.element(node, tag, false);
-	$.close_frag($$anchor, fragment);
+	$.append($$anchor, fragment);
 	$.pop();
 }
