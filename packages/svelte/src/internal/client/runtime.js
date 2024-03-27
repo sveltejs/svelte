@@ -515,10 +515,10 @@ export function schedule_effect(signal) {
  * Effects will be collected when they match the filtered bitwise flag passed in only. The collected
  * array will be populated with all the effects.
  *
- * In an ideal world, we could juest execute effects as we encouner them using this approach. However,
+ * In an ideal world, we could just execute effects as we encounter them using this approach. However,
  * this isn't possible due to how effects in Svelte are modelled to be possibly side-effectful. Thus,
  * executing an effect might invalidate other parts of the tree, which means this this tree walking function
- * will possivly pick up effects that are dirty too soon.
+ * will possibly pick up effects that are dirty too soon.
  *
  * @param {import('./types.js').Effect} effect
  * @param {number} filter_flags
