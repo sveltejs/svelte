@@ -64,7 +64,8 @@
     },
     "./reactivity": {
       "types": "./types/index.d.ts",
-      "default": "./src/reactivity/index.js"
+      "browser": "./src/reactivity/index-client.js",
+      "default": "./src/reactivity/index-server.js"
     },
     "./server": {
       "types": "./types/index.d.ts",
