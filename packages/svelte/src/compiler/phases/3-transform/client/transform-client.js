@@ -206,16 +206,93 @@ export function client_component(source, analysis, options) {
 		}
 	}
 
-	for (const [node] of analysis.reactive_statements) {
-		const statement = [...state.legacy_reactive_statements].find(([n]) => n === node);
-		if (statement === undefined) {
-			error(node, 'INTERNAL', 'Could not find reactive statement');
+	const legacy_reactive_statements = Array.from(analysis.reactive_statements.keys()).map(
+		(node) =>
+			/** @type {import('./types').LegacyReactiveStatement} */ (
+				state.legacy_reactive_statements.get(node)
+			)
+	);
+
+	/** @type {import('#compiler').Binding[]} */
+	const dependencies = [];
+
+	for (const statement of legacy_reactive_statements) {
+		if (statement.dependencies.length === 0) {
+			instance.body.push(statement.body);
+		} else {
+			for (const dep of statement.dependencies) {
+				if (!dependencies.includes(dep)) {
+					dependencies.push(dep);
+				}
+			}
 		}
-		instance.body.push(statement[1]);
 	}
 
-	if (analysis.reactive_statements.size > 0) {
-		instance.body.push(b.stmt(b.call('$.legacy_pre_effect_reset')));
+	if (dependencies.length > 0) {
+		instance.body.push(b.var('$$deps', b.array(dependencies.map((dep) => b.literal(-1)))));
+
+		/** @type {import('estree').Statement[]} */
+		const body = [
+			b.stmt(
+				b.sequence(
+					dependencies.map((binding) =>
+						binding.kind === 'bindable_prop' || binding.kind === 'rest_prop'
+							? b.call(
+									'$.deep_read_state',
+									serialize_get_binding(b.id(binding.node.name), instance_state)
+								)
+							: serialize_get_binding(b.id(binding.node.name), instance_state)
+					)
+				)
+			)
+		];
+
+		const versions = dependencies.map((binding) => {
+			if (
+				binding.kind === 'state' ||
+				binding.kind === 'frozen_state' ||
+				binding.kind === 'derived'
+			) {
+				return b.member(binding.node, b.id('version'));
+			}
+
+			return b.call(
+				'$.get_version',
+				b.thunk(serialize_get_binding(b.id(binding.node.name), instance_state))
+			);
+		});
+
+		for (const statement of legacy_reactive_statements) {
+			const { dependencies } = statement;
+			if (dependencies.length === 0) continue;
+
+			let condition = null;
+
+			for (const binding of dependencies) {
+				const index = dependencies.indexOf(binding);
+				const version = versions[index];
+
+				const comparison = b.binary(
+					'!==',
+					version,
+					b.member(b.id('$$deps'), b.literal(index), true)
+				);
+
+				condition = condition ? b.logical('||', condition, comparison) : comparison;
+			}
+
+			body.push(
+				b.if(/** @type {import('estree').Expression} */ (condition), b.block([statement.body]))
+			);
+		}
+
+		for (let i = 0; i < dependencies.length; i += 1) {
+			body.push(
+				b.stmt(b.assignment('=', b.member(b.id('$$deps'), b.literal(i), true), versions[i]))
+			);
+		}
+
+		instance.body.push(b.stmt(b.call('$.render_effect', b.thunk(b.block(body)))));
 	}
 
 	/**

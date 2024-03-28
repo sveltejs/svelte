@@ -135,7 +135,7 @@ var uses_version_sum = false;
 export function get_version(fn) {
 	version_sum = 0;
 	uses_version_sum = true;
-	fn();
+	deep_read_state(untrack(fn));
 	return version_sum;
 }
 
@@ -1177,6 +1177,7 @@ export function deep_read(value, visited = new Set()) {
 			proto !== Date.prototype
 		) {
 			const descriptors = get_descriptors(proto);
+
 			for (let key in descriptors) {
 				const get = descriptors[key].get;
 				if (get) {

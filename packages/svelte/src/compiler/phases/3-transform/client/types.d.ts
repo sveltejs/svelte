@@ -5,9 +5,14 @@ import type {
 	Identifier,
 	PrivateIdentifier
 } from 'estree';
-import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
+import type { Binding, Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
+
+export interface LegacyReactiveStatement {
+	dependencies: Binding[];
+	body: Statement;
+}
 
 export interface ClientTransformState extends TransformState {
 	readonly private_state: Map<string, StateField>;
@@ -20,7 +25,7 @@ export interface ClientTransformState extends TransformState {
 	readonly in_constructor: boolean;
 
 	/** The $: calls, which will be ordered in the end */
-	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
+	readonly legacy_reactive_statements: Map<LabeledStatement, LegacyReactiveStatement>;
 }
 
 export interface ComponentClientTransformState extends ClientTransformState {

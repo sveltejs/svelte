@@ -148,44 +148,19 @@ export const javascript_visitors_legacy = {
 
 		if (!reactive_stmt) return; // not the instance context
 
-		const { dependencies } = reactive_stmt;
-
-		let serialized_body = /** @type {import('estree').Statement} */ (context.visit(node.body));
-
-		if (serialized_body.type !== 'BlockStatement') {
-			serialized_body = b.block([serialized_body]);
-		}
-
-		const body = serialized_body.body;
-
-		/** @type {import('estree').Expression[]} */
-		const sequence = [];
-		for (const binding of dependencies) {
-			if (binding.kind === 'normal') continue;
-
-			const name = binding.node.name;
-			let serialized = serialize_get_binding(b.id(name), state);
-
-			// If the binding is a prop, we need to deep read it because it could be fine-grained $state
-			// from a runes-component, where mutations don't trigger an update on the prop as a whole.
-			if (name === '$$props' || name === '$$restProps' || binding.kind === 'bindable_prop') {
-				serialized = b.call('$.deep_read_state', serialized);
+		/** @type {import('#compiler').Binding[]} */
+		const dependencies = [];
+		for (const dependency of reactive_stmt.dependencies) {
+			if (dependency.kind !== 'normal') {
+				dependencies.push(dependency);
 			}
-
-			sequence.push(serialized);
 		}
 
 		// these statements will be topologically ordered later
-		state.legacy_reactive_statements.set(
-			node,
-			b.stmt(
-				b.call(
-					'$.legacy_pre_effect',
-					sequence.length > 0 ? b.thunk(b.sequence(sequence)) : b.thunk(b.block([])),
-					b.thunk(b.block(body))
-				)
-			)
-		);
+		state.legacy_reactive_statements.set(node, {
+			dependencies,
+			body: /** @type {import('estree').Statement} */ (context.visit(node.body))
+		});
 
 		return b.empty;
 	},

@@ -1,6 +1,6 @@
 export {
 	get,
-	get_version_sum,
+	get_version,
 	invalidate_inner_signals,
 	flushSync,
 	tick,
