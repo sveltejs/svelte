@@ -584,7 +584,7 @@ function flush_nested_effects(effect, filter_flags, shallow = false) {
 	is_flushing_effect = true;
 
 	try {
-		// When working with custom-elements, the root effects might not have a root
+		// When working with custom elements, the root effects might not have a root
 		if (effect.effects === null && (effect.f & BRANCH_EFFECT) === 0) {
 			flush_queued_effects([effect]);
 		} else {
