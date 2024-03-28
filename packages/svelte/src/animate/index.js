@@ -14,8 +14,12 @@ export function flip(node, { from, to }, params = {}) {
 	const style = getComputedStyle(node);
 	const transform = style.transform === 'none' ? '' : style.transform;
 	const [ox, oy] = style.transformOrigin.split(' ').map(parseFloat);
-	const dx = from.left + (from.width * ox) / to.width - (to.left + ox);
-	const dy = from.top + (from.height * oy) / to.height - (to.top + oy);
+	// In order to avoid possible division by zero issues (the element might be hidden due to another
+	// active transition), we make the size a single pixel.
+	const to_width = to.width === 0 ? 1 : to.width;
+	const to_height = to.height === 0 ? 1 : to.height;
+	const dx = from.left + (from.width * ox) / to_width - (to.left + ox);
+	const dy = from.top + (from.height * oy) / to_height - (to.top + oy);
 	const { delay = 0, duration = (d) => Math.sqrt(d) * 120, easing = cubicOut } = params;
 	return {
 		delay,
