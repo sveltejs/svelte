@@ -437,27 +437,18 @@ function flush_queued_effects(effects) {
 	if (length === 0) return;
 
 	infinite_loop_guard();
-	var previously_flushing_effect = is_flushing_effect;
-	is_flushing_effect = true;
+	for (var i = 0; i < length; i++) {
+		var signal = effects[i];
+		var flags = signal.f;
 
-	try {
-		for (var i = 0; i < length; i++) {
-			var signal = effects[i];
-			var flags = signal.f;
-
-			if ((flags & (DESTROYED | INERT)) === 0) {
-				if (check_dirtiness(signal)) {
-					execute_effect(signal);
-				} else if ((flags & MAYBE_DIRTY) !== 0) {
-					set_signal_status(signal, CLEAN);
-				}
+		if ((flags & (DESTROYED | INERT)) === 0) {
+			if (check_dirtiness(signal)) {
+				execute_effect(signal);
+			} else if ((flags & MAYBE_DIRTY) !== 0) {
+				set_signal_status(signal, CLEAN);
 			}
 		}
-	} finally {
-		is_flushing_effect = previously_flushing_effect;
 	}
-
-	effects.length = 0;
 }
 
 function process_microtask() {
@@ -588,12 +579,20 @@ function flush_nested_effects(effect, filter_flags, shallow = false) {
 	 * @type {import("./types.js").Effect[]}
 	 */
 	var user_effects = [];
-	// When working with custom-elements, the root effects might not have a root
-	if (effect.effects === null && (effect.f & BRANCH_EFFECT) === 0) {
-		flush_queued_effects([effect]);
-	} else {
-		recursively_process_effects(effect, filter_flags, shallow, user_effects);
-		flush_queued_effects(user_effects);
+
+	var previously_flushing_effect = is_flushing_effect;
+	is_flushing_effect = true;
+
+	try {
+		// When working with custom-elements, the root effects might not have a root
+		if (effect.effects === null && (effect.f & BRANCH_EFFECT) === 0) {
+			flush_queued_effects([effect]);
+		} else {
+			recursively_process_effects(effect, filter_flags, shallow, user_effects);
+			flush_queued_effects(user_effects);
+		}
+	} finally {
+		is_flushing_effect = previously_flushing_effect;
 	}
 }
 
