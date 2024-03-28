@@ -1,6 +1,8 @@
 import { noop, run } from '../internal/common.js';
 import { subscribe_to_store } from './utils.js';
 
+const SUBSCRIBERS_SYMBOL = Symbol('subscribers');
+
 /**
  * @type {Array<import('./private').SubscribeInvalidateTuple<any> | any>}
  */
@@ -16,8 +18,11 @@ const subscriber_queue = [];
  * @returns {import('./public').Readable<T>}
  */
 export function readable(value, start) {
+	const w = writable(value, start);
 	return {
-		subscribe: writable(value, start).subscribe
+		// @ts-expect-error we don't want this to be on the public types
+		[SUBSCRIBERS_SYMBOL]: w[SUBSCRIBERS_SYMBOL],
+		subscribe: w.subscribe
 	};
 }
 
@@ -55,21 +60,19 @@ export function writable(value, start = noop) {
 	 * @returns {void}
 	 */
 	function set(new_value) {
-		if (safe_not_equal(value, new_value)) {
-			value = new_value;
-			if (stop) {
-				// store is ready
-				const run_queue = !subscriber_queue.length;
-				for (const subscriber of subscribers) {
-					subscriber[1]();
-					subscriber_queue.push(subscriber, value);
+		value = new_value;
+		if (stop) {
+			// store is ready
+			const run_queue = !subscriber_queue.length;
+			for (const subscriber of subscribers) {
+				subscriber[1]();
+				subscriber_queue.push(subscriber, value);
+			}
+			if (run_queue) {
+				for (let i = 0; i < subscriber_queue.length; i += 2) {
+					subscriber_queue[i][0](subscriber_queue[i + 1]);
 				}
-				if (run_queue) {
-					for (let i = 0; i < subscriber_queue.length; i += 2) {
-						subscriber_queue[i][0](subscriber_queue[i + 1]);
-					}
-					subscriber_queue.length = 0;
-				}
+				subscriber_queue.length = 0;
 			}
 		}
 	}
@@ -103,7 +106,23 @@ export function writable(value, start = noop) {
 			}
 		};
 	}
-	return { set, update, subscribe };
+
+	/** @param {T} new_value */
+	function set_if_changed(new_value) {
+		if (safe_not_equal(value, new_value)) {
+			set(new_value);
+		}
+	}
+
+	return {
+		// @ts-expect-error
+		[SUBSCRIBERS_SYMBOL]: subscribers,
+		set: set_if_changed,
+		update: (fn) => {
+			set_if_changed(fn(/** @type {T} */ (value)));
+		},
+		subscribe
+	};
 }
 
 /**
@@ -156,7 +175,7 @@ export function derived(stores, fn, initial_value) {
 		throw new Error('derived() expects stores as input, got a falsy value');
 	}
 	const auto = fn.length < 2;
-	return readable(initial_value, (set, update) => {
+	const r = readable(initial_value, (set, update) => {
 		let started = false;
 		/** @type {T[]} */
 		const values = [];
@@ -186,6 +205,11 @@ export function derived(stores, fn, initial_value) {
 				},
 				() => {
 					pending |= 1 << i;
+
+					// @ts-expect-error
+					for (const s of r[SUBSCRIBERS_SYMBOL]) {
+						s[1]();
+					}
 				}
 			)
 		);
@@ -200,6 +224,7 @@ export function derived(stores, fn, initial_value) {
 			started = false;
 		};
 	});
+	return r;
 }
 
 /**
