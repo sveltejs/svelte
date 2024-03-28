@@ -7,6 +7,7 @@ import { map } from './utils.js';
 /**
  * @template K
  * @template V
+ * @extends {Map<K, V>}
  */
 export class ReactiveMap extends Map {
 	/** @type {Map<K, import('#client').Source<V>>} */

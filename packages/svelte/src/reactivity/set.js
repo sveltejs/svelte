@@ -10,6 +10,7 @@ var inited = false;
 
 /**
  * @template T
+ * @extends {Set<T>}
  */
 export class ReactiveSet extends Set {
 	/** @type {Map<T, import('#client').Source<boolean>>} */
