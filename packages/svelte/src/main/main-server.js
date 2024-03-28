@@ -13,7 +13,7 @@ export {
 	unmount,
 	untrack,
 	createRoot
-} from './main-client.js';
+} from '../index-client.js';
 
 /** @returns {void} */
 export function onMount() {}

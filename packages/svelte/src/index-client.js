@@ -1,6 +1,6 @@
-import { current_component_context, untrack } from '../internal/client/runtime.js';
-import { is_array } from '../internal/client/utils.js';
-import { user_effect } from '../internal/index.js';
+import { current_component_context, untrack } from './internal/client/runtime.js';
+import { is_array } from './internal/client/utils.js';
+import { user_effect } from './internal/index.js';
 
 /**
  * @template T
@@ -86,7 +86,7 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
  *
  * https://svelte.dev/docs/svelte#createeventdispatcher
  * @template {Record<string, any>} [EventMap = any]
- * @returns {import('./public.js').EventDispatcher<EventMap>}
+ * @returns {import('./main/public.js').EventDispatcher<EventMap>}
  */
 export function createEventDispatcher() {
 	const component_context = current_component_context;
@@ -166,7 +166,7 @@ export function afterUpdate(fn) {
 
 /**
  * Legacy-mode: Init callbacks object for onMount/beforeUpdate/afterUpdate
- * @param {import('../internal/client/types.js').ComponentContext} context
+ * @param {import('./internal/client/types.js').ComponentContext} context
  */
 function init_update_callbacks(context) {
 	return (context.u ??= { a: [], b: [], m: [] });
@@ -187,4 +187,4 @@ export {
 	getContext,
 	getAllContexts,
 	setContext
-} from '../internal/index.js';
+} from './internal/index.js';
