@@ -174,7 +174,7 @@ export function legacy_pre_effect(deps, fn) {
 
 		token.ran = true;
 		set(context.l2, true);
-		return untrack(fn);
+		untrack(fn);
 	});
 }
 
@@ -182,17 +182,20 @@ export function legacy_pre_effect_reset() {
 	const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
 
 	render_effect(() => {
-		if (get(context.l2)) {
-			for (const token of context.l1) {
-				const effect = token.effect;
-				// Invoke any local legacy pre effects that might be dirty
-				if (check_dirtiness(effect)) {
-					execute_effect(effect);
-				}
-				token.ran = false;
+		if (!get(context.l2)) return;
+
+		// Run dirty `$:` statements
+		for (const token of context.l1) {
+			const effect = token.effect;
+
+			if (check_dirtiness(effect)) {
+				execute_effect(effect);
 			}
-			context.l2.v = false; // set directly to avoid rerunning this effect
+
+			token.ran = false;
 		}
+
+		context.l2.v = false; // set directly to avoid rerunning this effect
 	});
 }
 
