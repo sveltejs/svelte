@@ -533,8 +533,6 @@ function recursively_process_effects(effect, filter_flags, shallow, collected_us
 			} else {
 				if (check_dirtiness(child)) {
 					execute_effect(child);
-				} else if ((flags & MAYBE_DIRTY) !== 0) {
-					set_signal_status(child, CLEAN);
 				}
 				recursively_process_effects(child, filter_flags, false, collected_user);
 			}
