@@ -22,11 +22,11 @@ function run_tasks(now) {
 /**
  * Creates a new task that runs on each raf frame
  * until it returns a falsy value or is aborted
- * @param {import('./types.js').TaskCallback} callback
- * @returns {import('./types.js').Task}
+ * @param {import('#client').TaskCallback} callback
+ * @returns {import('#client').Task}
  */
 export function loop(callback) {
-	/** @type {import('./types.js').TaskEntry} */
+	/** @type {import('#client').TaskEntry} */
 	let task;
 
 	if (raf.tasks.size === 0) {
