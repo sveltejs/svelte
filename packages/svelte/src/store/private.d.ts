@@ -3,8 +3,11 @@ import { Readable, Subscriber } from './public.js';
 /** Cleanup logic callback. */
 export type Invalidator<T> = (value?: T) => void;
 
+/** Cleanup logic callback. */
+export type Revalidator<T> = (value?: T) => void;
+
 /** Pair of subscriber and invalidator. */
-export type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator<T>];
+export type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator<T>, Revalidator<T>];
 
 /** One or more `Readable`s. */
 export type Stores =

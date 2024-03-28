@@ -46,9 +46,38 @@ export function safe_not_equal(a, b) {
 export function writable(value, start = noop) {
 	/** @type {import('./public').Unsubscriber | null} */
 	let stop = null;
+	let invalidated = false;
 
 	/** @type {Set<import('./private').SubscribeInvalidateTuple<T>>} */
 	const subscribers = new Set();
+
+	function invalidate() {
+		if (invalidated)
+			return;
+
+		if (stop) {
+			invalidated = true;
+
+			// immediately signal each subscriber as invalid
+			for (const subscriber of subscribers) {
+				subscriber[1]();
+			}
+		}
+	}
+
+	function revalidate() {
+		if (!invalidated)
+			return;
+
+		invalidated = false;
+
+		if (stop) {
+			// immediately signal each subscriber as revalidated
+			for (const subscriber of subscribers) {
+				subscriber[2]();
+			}
+		}
+	}
 
 	/**
 	 * @param {T} new_value
@@ -57,6 +86,8 @@ export function writable(value, start = noop) {
 	function set(new_value) {
 		if (safe_not_equal(value, new_value)) {
 			value = new_value;
+			invalidated = false;
+
 			if (stop) {
 				// store is ready
 				const run_queue = !subscriber_queue.length;
@@ -72,7 +103,24 @@ export function writable(value, start = noop) {
 				}
 			}
 		}
+		else
+			revalidate();
 	}
+
+
+	const complex_set = Object.assign(
+		/**
+		 * @param {T} new_value
+		 * @returns {void}
+		 */
+		(new_value) => set(new_value),
+		{
+			set,
+			update,
+			invalidate,
+			revalidate
+		}
+	)
 
 	/**
 	 * @param {import('./public').Updater<T>} fn
@@ -85,14 +133,15 @@ export function writable(value, start = noop) {
 	/**
 	 * @param {import('./public').Subscriber<T>} run
 	 * @param {import('./private').Invalidator<T>} [invalidate]
+	 * @param {import('./private').Revalidator<T>} [revalidate]
 	 * @returns {import('./public').Unsubscriber}
 	 */
-	function subscribe(run, invalidate = noop) {
+	function subscribe(run, invalidate = noop, revalidate = noop) {
 		/** @type {import('./private').SubscribeInvalidateTuple<T>} */
-		const subscriber = [run, invalidate];
+		const subscriber = [run, invalidate, revalidate];
 		subscribers.add(subscriber);
 		if (subscribers.size === 1) {
-			stop = start(set, update) || noop;
+			stop = start(complex_set, update) || noop;
 		}
 		run(/** @type {T} */ (value));
 		return () => {
@@ -157,15 +206,18 @@ export function derived(stores, fn, initial_value) {
 	}
 	const auto = fn.length < 2;
 	return readable(initial_value, (set, update) => {
+		const { invalidate, revalidate } = set;
 		let started = false;
 		/** @type {T[]} */
 		const values = [];
 		let pending = 0;
+		let changed = stores_array.length === 0;
 		let cleanup = noop;
 		const sync = () => {
-			if (pending) {
+			if (!changed || pending) {
 				return;
 			}
+			changed = false;
 			cleanup();
 			const result = fn(single ? values[0] : values, set, update);
 			if (auto) {
@@ -179,6 +231,7 @@ export function derived(stores, fn, initial_value) {
 				store,
 				(value) => {
 					values[i] = value;
+					changed = true;
 					pending &= ~(1 << i);
 					if (started) {
 						sync();
@@ -186,6 +239,17 @@ export function derived(stores, fn, initial_value) {
 				},
 				() => {
 					pending |= 1 << i;
+					invalidate();
+				},
+				() => {
+					pending &= ~(1 << i);
+					if (!changed && !pending) {
+						revalidate();
+					}
+					else
+					if (started) {
+						sync();
+					}
 				}
 			)
 		);

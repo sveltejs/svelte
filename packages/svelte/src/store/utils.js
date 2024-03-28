@@ -5,9 +5,10 @@ import { noop } from '../internal/common.js';
  * @param {import('./public').Readable<T> | null | undefined} store
  * @param {(value: T) => void} run
  * @param {(value: T) => void} [invalidate]
+ * @param {(value: T) => void} [revalidate]
  * @returns {() => void}
  */
-export function subscribe_to_store(store, run, invalidate) {
+export function subscribe_to_store(store, run, invalidate, revalidate) {
 	if (store == null) {
 		// @ts-expect-error
 		run(undefined);
@@ -22,7 +23,8 @@ export function subscribe_to_store(store, run, invalidate) {
 	const unsub = store.subscribe(
 		run,
 		// @ts-expect-error
-		invalidate
+		invalidate,
+		revalidate
 	);
 
 	// Also support RxJS
