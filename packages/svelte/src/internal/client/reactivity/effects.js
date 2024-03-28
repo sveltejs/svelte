@@ -157,38 +157,36 @@ export function effect(fn) {
  * Internal representation of `$: ..`
  * @param {() => any} deps
  * @param {() => void | (() => void)} fn
- * @returns {import('#client').Effect}
  */
 export function legacy_pre_effect(deps, fn) {
 	const component_context = /** @type {import('#client').ComponentContext} */ (
 		current_component_context
 	);
+
 	/** @type {{ effect: null | import('#client').Effect, ran: boolean }} */
 	const token = { effect: null, ran: false };
 	component_context.l1.push(token);
 
-	const effect = render_effect(() => {
+	token.effect = render_effect(() => {
 		deps();
+
 		// If this legacy pre effect has already run before the end of the reset, then
 		// bail-out to emulate the same behavior.
-		if (token.ran) {
-			return;
-		}
+		if (token.ran) return;
+
 		token.ran = true;
 		set(component_context.l2, true);
 		return untrack(fn);
 	});
-	token.effect = effect;
-	return effect;
 }
 
 export function legacy_pre_effect_reset() {
 	const component_context = /** @type {import('#client').ComponentContext} */ (
 		current_component_context
 	);
-	return render_effect(() => {
-		const x = get(component_context.l2);
-		if (x) {
+
+	render_effect(() => {
+		if (get(component_context.l2)) {
 			for (const token of component_context.l1) {
 				const effect = token.effect;
 				// Invoke any local legacy pre effects that might be dirty
