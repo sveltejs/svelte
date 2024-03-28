@@ -97,7 +97,7 @@ export function animation(element, get_fn, get_params) {
 			animation?.abort();
 
 			// Avoid passing through a rect without any width/height
-			if (!this.element.checkVisibility({ checkOpacity : true })) {
+			if (!this.element.checkVisibility({ checkOpacity: true })) {
 				return;
 			}
 
