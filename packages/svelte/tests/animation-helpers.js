@@ -173,3 +173,5 @@ HTMLElement.prototype.animate = function (keyframes, options) {
 	// @ts-ignore
 	return animation;
 };
+
+HTMLElement.prototype.checkVisibility = () => true;

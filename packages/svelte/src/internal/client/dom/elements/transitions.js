@@ -96,6 +96,11 @@ export function animation(element, get_fn, get_params) {
 		apply() {
 			animation?.abort();
 
+			// Avoid passing through a rect without any width/height
+			if (!this.element.checkVisibility({ checkOpacity : true })) {
+				return;
+			}
+
 			to = this.element.getBoundingClientRect();
 
 			const options = get_fn()(this.element, { from, to }, get_params?.());
