@@ -24,7 +24,7 @@ export interface Template {
 
 export interface ReactiveStatement {
 	assignments: Set<Binding>;
-	dependencies: Set<Binding>;
+	dependencies: Binding[];
 }
 
 export interface RawWarning {

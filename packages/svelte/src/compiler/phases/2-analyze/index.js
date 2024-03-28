@@ -608,7 +608,7 @@ const legacy_scope_tweaker = {
 		/** @type {import('../types.js').ReactiveStatement} */
 		const reactive_statement = {
 			assignments: new Set(),
-			dependencies: new Set()
+			dependencies: []
 		};
 
 		next({ ...state, reactive_statement, function_depth: state.scope.function_depth + 1 });
@@ -638,7 +638,7 @@ const legacy_scope_tweaker = {
 					continue;
 				}
 
-				reactive_statement.dependencies.add(binding);
+				reactive_statement.dependencies.push(binding);
 				break;
 			}
 		}
@@ -648,8 +648,8 @@ const legacy_scope_tweaker = {
 		// Ideally this would be in the validation file, but that isn't possible because this visitor
 		// calls "next" before setting the reactive statements.
 		if (
-			reactive_statement.dependencies.size &&
-			[...reactive_statement.dependencies].every(
+			reactive_statement.dependencies.length &&
+			reactive_statement.dependencies.every(
 				(d) => d.scope === state.analysis.module.scope && d.declaration_kind !== 'const'
 			)
 		) {
@@ -1375,11 +1375,11 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	const lookup = new Map();
 
 	for (const [node, declaration] of unsorted_reactive_declarations) {
-		declaration.assignments.forEach((binding) => {
+		for (const binding of declaration.assignments) {
 			const statements = lookup.get(binding.node.name) ?? [];
 			statements.push([node, declaration]);
 			lookup.set(binding.node.name, statements);
-		});
+		}
 	}
 
 	/** @type {Array<[string, string]>} */
@@ -1388,7 +1388,7 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	for (const [, { assignments, dependencies }] of unsorted_reactive_declarations) {
 		for (const assignment of assignments) {
 			for (const dependency of dependencies) {
-				if (![...assignments].find((assignment) => dependency.node.name === assignment.node.name)) {
+				if (!assignments.has(dependency)) {
 					edges.push([assignment.node.name, dependency.node.name]);
 				}
 			}
@@ -1413,14 +1413,17 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	 */
 	const add_declaration = (node, declaration) => {
 		if ([...reactive_declarations.values()].includes(declaration)) return;
-		declaration.dependencies.forEach(({ node: { name } }) => {
-			if ([...declaration.assignments].some((a) => a.node.name === name)) return;
-			for (const [node, earlier] of lookup.get(name) ?? []) {
+
+		for (const binding of declaration.dependencies) {
+			if (declaration.assignments.has(binding)) continue;
+			for (const [node, earlier] of lookup.get(binding.node.name) ?? []) {
 				add_declaration(node, earlier);
 			}
-		});
+		}
+
 		reactive_declarations.set(node, declaration);
 	};
+
 	for (const [node, declaration] of unsorted_reactive_declarations) {
 		add_declaration(node, declaration);
 	}
