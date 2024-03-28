@@ -27,7 +27,7 @@ import {
 	ROOT_EFFECT
 } from '../constants.js';
 import { set } from './sources.js';
-import { noop } from '../../common.js';
+import { noop } from '../../shared/utils.js';
 import { remove } from '../dom/reconciler.js';
 
 /**

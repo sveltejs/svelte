@@ -13,8 +13,9 @@ import {
 } from './utils.js';
 import { add_owner, check_ownership, strip_owner } from './dev/ownership.js';
 import { mutable_source, source, set } from './reactivity/sources.js';
-import { STATE_SYMBOL, UNINITIALIZED } from './constants.js';
+import { STATE_SYMBOL } from './constants.js';
 import { updating_derived } from './reactivity/deriveds.js';
+import { UNINITIALIZED } from '../../constants.js';
 
 /**
  * @template T

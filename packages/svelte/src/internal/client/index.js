@@ -120,15 +120,10 @@ export {
 	hasContext
 } from './runtime.js';
 export {
-	add_snippet_symbol,
-	validate_component,
 	validate_dynamic_component,
-	validate_dynamic_element_tag,
 	validate_each_keys,
 	validate_prop_bindings,
-	validate_snippet,
-	validate_store,
-	validate_void_dynamic_element
+	validate_store
 } from './validate.js';
 export { raf } from './timing.js';
 export { proxy, unstate } from './proxy.js';
@@ -140,4 +135,11 @@ export {
 	$window as window,
 	$document as document
 } from './dom/operations.js';
-export { noop } from '../common.js';
+export { noop } from '../shared/utils.js';
+export {
+	add_snippet_symbol,
+	validate_component,
+	validate_dynamic_element_tag,
+	validate_snippet,
+	validate_void_dynamic_element
+} from '../shared/validate.js';

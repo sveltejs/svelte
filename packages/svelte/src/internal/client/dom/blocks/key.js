@@ -1,4 +1,4 @@
-import { UNINITIALIZED } from '../../constants.js';
+import { UNINITIALIZED } from '../../../../constants.js';
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
 import { safe_not_equal } from '../../reactivity/equality.js';
 
