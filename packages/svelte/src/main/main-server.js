@@ -1,4 +1,4 @@
-import { on_destroy } from '../internal/server/index.js';
+import { current_component_context } from '../internal/client/runtime.js';
 
 export {
 	createEventDispatcher,
@@ -18,9 +18,10 @@ export {
 /** @returns {void} */
 export function onMount() {}
 
-/** @param {Function} fn */
+/** @param {() => void} fn */
 export function onDestroy(fn) {
-	on_destroy.push(fn);
+	const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
+	(context.ondestroy ??= []).push(fn);
 }
 
 /** @returns {void} */

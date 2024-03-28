@@ -1,4 +1,4 @@
-import { pre_effect, effect_root } from '../internal/client/reactivity/effects.js';
+import { render_effect, effect_root } from '../internal/client/reactivity/effects.js';
 import { flushSync } from '../main/main-client.js';
 import { ReactiveMap } from './map.js';
 import { assert, test } from 'vitest';
@@ -15,15 +15,15 @@ test('map.values()', () => {
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
-		pre_effect(() => {
+		render_effect(() => {
 			log.push(map.size);
 		});
 
-		pre_effect(() => {
+		render_effect(() => {
 			log.push(map.has(3));
 		});
 
-		pre_effect(() => {
+		render_effect(() => {
 			log.push(Array.from(map.values()));
 		});
 	});
@@ -51,15 +51,15 @@ test('map.get(...)', () => {
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
-		pre_effect(() => {
+		render_effect(() => {
 			log.push('get 1', map.get(1));
 		});
 
-		pre_effect(() => {
+		render_effect(() => {
 			log.push('get 2', map.get(2));
 		});
 
-		pre_effect(() => {
+		render_effect(() => {
 			log.push('get 3', map.get(3));
 		});
 	});
@@ -87,15 +87,15 @@ test('map.has(...)', () => {
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
-		pre_effect(() => {
+		render_effect(() => {
 			log.push('has 1', map.has(1));
 		});
 
-		pre_effect(() => {
+		render_effect(() => {
 			log.push('has 2', map.has(2));
 		});
 
-		pre_effect(() => {
+		render_effect(() => {
 			log.push('has 3', map.has(3));
 		});
 	});
@@ -132,7 +132,7 @@ test('map handling of undefined values', () => {
 	const cleanup = effect_root(() => {
 		map.set(1, undefined);
 
-		pre_effect(() => {
+		render_effect(() => {
 			log.push(map.get(1));
 		});
 

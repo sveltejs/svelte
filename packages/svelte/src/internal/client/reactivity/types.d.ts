@@ -1,7 +1,4 @@
-import type { Block, ComponentContext, Dom, Equals, TransitionManager } from '#client';
-import type { EFFECT, PRE_EFFECT, RENDER_EFFECT } from '../constants';
-
-export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFECT;
+import type { ComponentContext, Dom, Equals, TransitionManager } from '#client';
 
 export interface Signal {
 	/** Flags bitmask */
@@ -44,8 +41,6 @@ export interface Effect extends Reaction {
 	fn: () => void | (() => void);
 	/** The teardown function returned from the effect function */
 	teardown: null | (() => void);
-	/** The depth from the root signal, used for ordering render/pre-effects topologically **/
-	l: number;
 	/** Transition managers created with `$.transition` */
 	transitions: null | TransitionManager[];
 }

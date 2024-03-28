@@ -20,8 +20,8 @@ export type ComponentContext = {
 	s: Record<string, unknown>;
 	/** exports (and props, if `accessors: true`) */
 	x: Record<string, any> | null;
-	/** effects */
-	e: null | Effect[];
+	/** deferred effects */
+	e: null | Array<() => void | (() => void)>;
 	/** mounted */
 	m: boolean;
 	/** parent */
@@ -43,6 +43,8 @@ export type ComponentContext = {
 		/** onMount callbacks */
 		m: Array<() => any>;
 	};
+	// TODO move this to a separate server component context object
+	ondestroy: null | Array<() => void>;
 };
 
 export type Equals = (this: Value, value: unknown) => boolean;
@@ -50,8 +52,6 @@ export type Equals = (this: Value, value: unknown) => boolean;
 export type TemplateNode = Text | Element | Comment;
 
 export type Dom = TemplateNode | TemplateNode[];
-
-export interface Block {}
 
 export type EachState = {
 	/** flags */

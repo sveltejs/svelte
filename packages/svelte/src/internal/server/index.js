@@ -221,6 +221,13 @@ export function push(runes) {
 }
 
 export function pop() {
+	var context = /** @type {import('#client').ComponentContext} */ ($.current_component_context);
+	var ondestroy = context.ondestroy;
+
+	if (ondestroy) {
+		on_destroy.push(...ondestroy);
+	}
+
 	$.pop();
 }
 
