@@ -1,4 +1,3 @@
-import * as $ from '../client/runtime.js';
 import { is_promise, noop } from '../common.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
@@ -8,7 +7,8 @@ import {
 	is_tag_valid_with_parent
 } from '../../constants.js';
 import { DEV } from 'esm-env';
-import { UNINITIALIZED } from '../client/constants.js';
+import { UNINITIALIZED } from '../../constants.js';
+import { current_component, pop, push } from './context.js';
 
 export * from '../client/validate.js';
 
@@ -192,14 +192,16 @@ export function render(component, options) {
 	payload.out += '<![>';
 
 	if (options.context) {
-		$.push({});
-		/** @type {import('../client/types.js').ComponentContext} */ ($.current_component_context).c =
-			options.context;
+		push();
+		/** @type {import('#server').Component} */ (current_component).c = options.context;
 	}
+
 	component(payload, options.props, {}, {});
+
 	if (options.context) {
-		$.pop();
+		pop();
 	}
+
 	payload.out += '<!]>';
 	for (const cleanup of on_destroy) cleanup();
 	on_destroy = prev_on_destroy;
@@ -211,24 +213,6 @@ export function render(component, options) {
 				: '',
 		html: payload.out
 	};
-}
-
-/**
- * @param {boolean} runes
- */
-export function push(runes) {
-	$.push({}, runes);
-}
-
-export function pop() {
-	var context = /** @type {import('#client').ComponentContext} */ ($.current_component_context);
-	var ondestroy = context.ondestroy;
-
-	if (ondestroy) {
-		on_destroy.push(...ondestroy);
-	}
-
-	$.pop();
 }
 
 /**
@@ -672,3 +656,5 @@ export function once(get_value) {
 		return value;
 	};
 }
+
+export { push, pop } from './context.js';

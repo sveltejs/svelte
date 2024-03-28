@@ -1,12 +1,10 @@
-import { current_component_context } from './internal/client/runtime.js';
+import { current_component } from './internal/server/context.js';
 import { noop } from './internal/common.js';
-
-export { getAllContexts, getContext, hasContext, setContext } from './index-client.js';
 
 /** @param {() => void} fn */
 export function onDestroy(fn) {
-	const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
-	(context.ondestroy ??= []).push(fn);
+	var context = /** @type {import('#server').Component} */ (current_component);
+	(context.d ??= []).push(fn);
 }
 
 export {
@@ -44,3 +42,5 @@ export function unstate(value) {
 	// There's no signals/proxies on the server, so just return the value
 	return value;
 }
+
+export { getAllContexts, getContext, hasContext, setContext } from './internal/server/context.js';

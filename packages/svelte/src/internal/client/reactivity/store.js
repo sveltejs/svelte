@@ -1,6 +1,6 @@
 import { subscribe_to_store } from '../../../store/utils.js';
 import { noop } from '../../common.js';
-import { UNINITIALIZED } from '../constants.js';
+import { UNINITIALIZED } from '../../../constants.js';
 import { get, untrack } from '../runtime.js';
 import { effect } from './effects.js';
 import { mutable_source, set } from './sources.js';
