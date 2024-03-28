@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.87
+
+### Patch Changes
+
+- fix: apply animate on prefix/suffix each block mutations ([#10965](https://github.com/sveltejs/svelte/pull/10965))
+
 ## 5.0.0-next.86
 
 ### Patch Changes
