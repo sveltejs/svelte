@@ -1,4 +1,4 @@
-import { is_promise, noop } from '../common.js';
+import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
 	DOMBooleanAttributes,
@@ -9,8 +9,6 @@ import {
 import { DEV } from 'esm-env';
 import { UNINITIALIZED } from '../../constants.js';
 import { current_component, pop, push } from './context.js';
-
-export * from '../client/validate.js';
 
 /**
  * @typedef {{
@@ -419,7 +417,7 @@ export function merge_styles(style_attribute, style_directive) {
  * @template V
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('../client/types.js').Store<V> | null | undefined} store
+ * @param {import('#shared').Store<V> | null | undefined} store
  * @returns {V}
  */
 export function store_get(store_values, store_name, store) {
@@ -456,7 +454,7 @@ export function validate_store(store, name) {
 /**
  * Sets the new value of a store and returns that value.
  * @template V
- * @param {import('../client/types.js').Store<V>} store
+ * @param {import('#shared').Store<V>} store
  * @param {V} value
  * @returns {V}
  */
@@ -470,7 +468,7 @@ export function store_set(store, value) {
  * @template V
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('../client/types.js').Store<V>} store
+ * @param {import('#shared').Store<V>} store
  * @param {any} expression
  */
 export function mutate_store(store_values, store_name, store, expression) {
@@ -481,7 +479,7 @@ export function mutate_store(store_values, store_name, store, expression) {
 /**
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('../client/types.js').Store<number>} store
+ * @param {import('#shared').Store<number>} store
  * @param {1 | -1} [d]
  * @returns {number}
  */
@@ -494,7 +492,7 @@ export function update_store(store_values, store_name, store, d = 1) {
 /**
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('../client/types.js').Store<number>} store
+ * @param {import('#shared').Store<number>} store
  * @param {1 | -1} [d]
  * @returns {number}
  */
@@ -658,3 +656,11 @@ export function once(get_value) {
 }
 
 export { push, pop } from './context.js';
+
+export {
+	add_snippet_symbol,
+	validate_component,
+	validate_dynamic_element_tag,
+	validate_snippet,
+	validate_void_dynamic_element
+} from '../shared/validate.js';

@@ -1,4 +1,4 @@
-import { noop } from '../internal/common.js';
+import { noop } from '../internal/shared/utils.js';
 
 /**
  * @template T

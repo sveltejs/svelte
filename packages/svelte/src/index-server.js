@@ -1,5 +1,5 @@
 import { current_component } from './internal/server/context.js';
-import { noop } from './internal/common.js';
+import { noop } from './internal/shared/utils.js';
 
 /** @param {() => void} fn */
 export function onDestroy(fn) {
@@ -13,7 +13,7 @@ export {
 	noop as onMount,
 	noop as flushSync,
 	run as untrack
-} from './internal/common.js';
+} from './internal/shared/utils.js';
 
 export function createEventDispatcher() {
 	return noop;

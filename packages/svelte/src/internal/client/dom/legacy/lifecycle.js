@@ -1,4 +1,4 @@
-import { run, run_all } from '../../../common.js';
+import { run, run_all } from '../../../shared/utils.js';
 import { user_pre_effect, user_effect } from '../../reactivity/effects.js';
 import {
 	current_component_context,

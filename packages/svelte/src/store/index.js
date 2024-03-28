@@ -1,4 +1,4 @@
-import { noop, run_all } from '../internal/common.js';
+import { noop, run_all } from '../internal/shared/utils.js';
 import { subscribe_to_store } from './utils.js';
 
 /**
