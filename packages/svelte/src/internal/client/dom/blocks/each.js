@@ -277,6 +277,8 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 
 	/** @type {import('#client').Effect[]} */
 	var to_destroy = [];
+	/** @type {Array<import('#client').EachItem>} */
+	var to_animate = [];
 
 	// Step 1 — trim common suffix
 	while (a > 0 && b > 0 && a_items[a - 1].k === keys[b - 1]) {
@@ -288,6 +290,10 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 		if (should_update) {
 			update_item(item, array[b], b, flags);
 		}
+		if (is_animated) {
+			item.a?.measure();
+			to_animate.push(item);
+		}
 	}
 
 	// Step 2 — trim common prefix
@@ -298,6 +304,10 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 
 		if (should_update) {
 			update_item(item, array[start], start, flags);
+		}
+		if (is_animated) {
+			item.a?.measure();
+			to_animate.push(item);
 		}
 
 		start += 1;
@@ -330,8 +340,6 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 			map_set(indexes, keys[i], i);
 		}
 
-		/** @type {Array<import('#client').EachItem>} */
-		var to_animate = [];
 		if (is_animated) {
 			// for all items that were in both the old and the new list,
 			// measure them and store them in `to_animate` so we can
@@ -395,20 +403,20 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 
 			last_item = b_items[b] = item;
 		}
+	}
 
-		if (to_animate.length > 0) {
-			// TODO we need to briefly take any outroing elements out of the flow, so that
-			// we can figure out the eventual destination of the animating elements
-			// - https://github.com/sveltejs/svelte/pull/10798#issuecomment-2013681778
-			// - https://svelte.dev/repl/6e891305e9644a7ca7065fa95c79d2d2?version=4.2.9
-			effect(() => {
-				untrack(() => {
-					for (item of to_animate) {
-						item.a?.apply();
-					}
-				});
+	if (to_animate.length > 0) {
+		// TODO we need to briefly take any outroing elements out of the flow, so that
+		// we can figure out the eventual destination of the animating elements
+		// - https://github.com/sveltejs/svelte/pull/10798#issuecomment-2013681778
+		// - https://svelte.dev/repl/6e891305e9644a7ca7065fa95c79d2d2?version=4.2.9
+		effect(() => {
+			untrack(() => {
+				for (item of to_animate) {
+					item.a?.apply();
+				}
 			});
-		}
+		});
 	}
 
 	pause_effects(to_destroy, () => {
