@@ -1055,8 +1055,7 @@ export function push(props, runes = false, fn) {
 		l1: [],
 		l2: source(false),
 		// update_callbacks
-		u: null,
-		ondestroy: null
+		u: null
 	};
 
 	if (DEV) {

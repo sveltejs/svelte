@@ -1,4 +1,4 @@
-import { noop } from '../common.js';
+import { noop } from '../shared/utils.js';
 
 const is_client = typeof window !== 'undefined';
 

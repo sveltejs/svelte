@@ -1,33 +1,37 @@
-import { current_component_context } from './internal/client/runtime.js';
-
-export {
-	createEventDispatcher,
-	flushSync,
-	getAllContexts,
-	getContext,
-	hasContext,
-	mount,
-	hydrate,
-	setContext,
-	tick,
-	unmount,
-	untrack
-} from './index-client.js';
-
-/** @returns {void} */
-export function onMount() {}
+import { current_component } from './internal/server/context.js';
+import { noop } from './internal/shared/utils.js';
 
 /** @param {() => void} fn */
 export function onDestroy(fn) {
-	const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
-	(context.ondestroy ??= []).push(fn);
+	var context = /** @type {import('#server').Component} */ (current_component);
+	(context.d ??= []).push(fn);
 }
 
-/** @returns {void} */
-export function beforeUpdate() {}
+export {
+	noop as beforeUpdate,
+	noop as afterUpdate,
+	noop as onMount,
+	noop as flushSync,
+	run as untrack
+} from './internal/shared/utils.js';
 
-/** @returns {void} */
-export function afterUpdate() {}
+export function createEventDispatcher() {
+	return noop;
+}
+
+export function mount() {
+	throw new Error('mount(...) is not available on the server');
+}
+
+export function hydrate() {
+	throw new Error('hydrate(...) is not available on the server');
+}
+
+export function unmount() {
+	throw new Error('unmount(...) is not available on the server');
+}
+
+export async function tick() {}
 
 /**
  * @template T
@@ -38,3 +42,5 @@ export function unstate(value) {
 	// There's no signals/proxies on the server, so just return the value
 	return value;
 }
+
+export { getAllContexts, getContext, hasContext, setContext } from './internal/server/context.js';

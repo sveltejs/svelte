@@ -1,4 +1,4 @@
-import { run_all } from '../../../common.js';
+import { run, run_all } from '../../../shared/utils.js';
 import { user_pre_effect, user_effect } from '../../reactivity/effects.js';
 import {
 	current_component_context,
@@ -8,11 +8,6 @@ import {
 	get,
 	untrack
 } from '../../runtime.js';
-
-/** @param {Function} fn */
-function run(fn) {
-	return fn();
-}
 
 /**
  * Legacy-mode only: Call `onMount` callbacks and set up `beforeUpdate`/`afterUpdate` effects

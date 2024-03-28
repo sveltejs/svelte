@@ -1,4 +1,4 @@
-import { noop } from '../../../common.js';
+import { noop } from '../../../shared/utils.js';
 import { effect } from '../../reactivity/effects.js';
 import { current_effect, untrack } from '../../runtime.js';
 import { raf } from '../../timing.js';

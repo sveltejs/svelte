@@ -6,7 +6,6 @@ import {
 	current_effect,
 	current_untracked_writes,
 	current_untracking,
-	flush_sync,
 	get,
 	is_batching_effect,
 	is_runes,
@@ -18,7 +17,8 @@ import {
 	untrack
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
-import { CLEAN, DERIVED, DIRTY, BRANCH_EFFECT, UNINITIALIZED } from '../constants.js';
+import { CLEAN, DERIVED, DIRTY, BRANCH_EFFECT } from '../constants.js';
+import { UNINITIALIZED } from '../../../constants.js';
 
 /**
  * @template V

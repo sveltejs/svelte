@@ -1,4 +1,4 @@
-import { is_promise } from '../../../common.js';
+import { is_promise } from '../../../shared/utils.js';
 import {
 	current_component_context,
 	flush_sync,

@@ -1,6 +1,6 @@
 import { subscribe_to_store } from '../../../store/utils.js';
-import { noop } from '../../common.js';
-import { UNINITIALIZED } from '../constants.js';
+import { noop } from '../../shared/utils.js';
+import { UNINITIALIZED } from '../../../constants.js';
 import { get, untrack } from '../runtime.js';
 import { effect } from './effects.js';
 import { mutable_source, set } from './sources.js';
@@ -10,7 +10,7 @@ import { mutable_source, set } from './sources.js';
  * signal that will be updated when the store is. The store references container is needed to
  * track reassignments to stores and to track the correct component context.
  * @template V
- * @param {import('#client').Store<V> | null | undefined} store
+ * @param {import('#shared').Store<V> | null | undefined} store
  * @param {string} store_name
  * @param {import('#client').StoreReferencesContainer} stores
  * @returns {V}
@@ -46,7 +46,7 @@ export function store_get(store, store_name, stores) {
  * Unsubscribe from a store if it's not the same as the one in the store references container.
  * We need this in addition to `store_get` because someone could unsubscribe from a store but
  * then never subscribe to the new one (if any), causing the subscription to stay open wrongfully.
- * @param {import('#client').Store<any> | null | undefined} store
+ * @param {import('#shared').Store<any> | null | undefined} store
  * @param {string} store_name
  * @param {import('#client').StoreReferencesContainer} stores
  */
@@ -65,7 +65,7 @@ export function store_unsub(store, store_name, stores) {
 
 /**
  * @template V
- * @param {import('#client').Store<V> | null | undefined} store
+ * @param {import('#shared').Store<V> | null | undefined} store
  * @param {import('#client').Source<V>} source
  */
 function connect_store_to_signal(store, source) {
@@ -80,7 +80,7 @@ function connect_store_to_signal(store, source) {
 /**
  * Sets the new value of a store and returns that value.
  * @template V
- * @param {import('#client').Store<V>} store
+ * @param {import('#shared').Store<V>} store
  * @param {V} value
  * @returns {V}
  */
@@ -116,7 +116,7 @@ export function unsubscribe_on_destroy(stores) {
 
 /**
  * Updates a store with a new value.
- * @param {import('#client').Store<V>} store  the store to update
+ * @param {import('#shared').Store<V>} store  the store to update
  * @param {any} expression  the expression that mutates the store
  * @param {V} new_value  the new store value
  * @template V
@@ -127,7 +127,7 @@ export function mutate_store(store, expression, new_value) {
 }
 
 /**
- * @param {import('#client').Store<number>} store
+ * @param {import('#shared').Store<number>} store
  * @param {number} store_value
  * @param {1 | -1} [d]
  * @returns {number}
@@ -138,7 +138,7 @@ export function update_store(store, store_value, d = 1) {
 }
 
 /**
- * @param {import('#client').Store<number>} store
+ * @param {import('#shared').Store<number>} store
  * @param {number} store_value
  * @param {1 | -1} [d]
  * @returns {number}

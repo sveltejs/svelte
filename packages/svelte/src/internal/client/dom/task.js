@@ -1,4 +1,4 @@
-import { run_all } from '../../common.js';
+import { run_all } from '../../shared/utils.js';
 
 let is_task_queued = false;
 let is_raf_queued = false;
