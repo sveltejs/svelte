@@ -13,7 +13,7 @@
 	import { get_full_filename } from './utils.js';
 	import Compiler from './Output/Compiler.js';
 
-	export let packagesUrl = 'https://unpkg.com';
+	export let packagesUrl = 'https://cdn.jsdelivr.net/npm';
 	export let svelteUrl = `${BROWSER ? location.origin : ''}/svelte`;
 	export let embedded = false;
 	/** @type {'columns' | 'rows'} */

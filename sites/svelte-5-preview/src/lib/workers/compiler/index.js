@@ -29,8 +29,7 @@ self.addEventListener(
 					.then((r) => r.json())
 					.catch(() => ({ version: 'experimental' }));
 
-				// unpkg doesn't set the correct MIME type for .cjs files
-				// https://github.com/mjackson/unpkg/issues/355
+				// .cjs files have an unhelpful MIME type
 				const compiler = await fetch(`${svelte_url}/compiler.cjs`).then((r) => r.text());
 				(0, eval)(compiler + '\n//# sourceURL=compiler.cjs@' + version);
 
