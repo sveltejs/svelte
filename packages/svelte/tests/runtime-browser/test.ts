@@ -120,7 +120,7 @@ async function run_test(
 
 	let build_result_ssr;
 	if (hydrate) {
-		const ssr_entry = path.resolve(__dirname, '../../src/main/main-server.js');
+		const ssr_entry = path.resolve(__dirname, '../../src/index-server.js');
 
 		build_result_ssr = await build({
 			entryPoints: [`${__dirname}/driver-ssr.js`],

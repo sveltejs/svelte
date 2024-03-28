@@ -16,13 +16,13 @@
     "*.d.ts",
     "README.md"
   ],
-  "module": "src/main/main-client.js",
-  "main": "src/main/main-client.js",
+  "module": "src/index-client.js",
+  "main": "src/index-client.js",
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
-      "browser": "./src/main/main-client.js",
-      "default": "./src/main/main-server.js"
+      "browser": "./src/index-client.js",
+      "default": "./src/index-server.js"
     },
     "./package.json": "./package.json",
     "./action": {
