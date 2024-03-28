@@ -43,6 +43,8 @@ export type ComponentContext = {
 		/** onMount callbacks */
 		m: Array<() => any>;
 	};
+	// TODO move this to a separate server component context object
+	ondestroy: null | Array<() => void>;
 };
 
 export type Equals = (this: Value, value: unknown) => boolean;

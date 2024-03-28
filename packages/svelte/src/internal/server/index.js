@@ -174,12 +174,6 @@ export function element(payload, tag, attributes_fn, children_fn) {
 }
 
 /**
- * Array of `onDestroy` callbacks that should be called at the end of the server render function
- * @type {Function[]}
- */
-export let on_destroy = [];
-
-/**
  * @param {(...args: any[]) => void} component
  * @param {{ props: Record<string, any>; context?: Map<any, any> }} options
  * @returns {RenderOutput}
@@ -187,8 +181,6 @@ export let on_destroy = [];
 export function render(component, options) {
 	const payload = create_payload();
 
-	const prev_on_destroy = on_destroy;
-	on_destroy = [];
 	payload.out += '<![>';
 
 	if (options.context) {
@@ -201,8 +193,6 @@ export function render(component, options) {
 		$.pop();
 	}
 	payload.out += '<!]>';
-	for (const cleanup of on_destroy) cleanup();
-	on_destroy = prev_on_destroy;
 
 	return {
 		head:
@@ -221,6 +211,13 @@ export function push(runes) {
 }
 
 export function pop() {
+	var context = /** @type {import('#client').ComponentContext} */ ($.current_component_context);
+	var ondestroy = context.ondestroy;
+
+	if (ondestroy) {
+		for (const fn of ondestroy) fn();
+	}
+
 	$.pop();
 }
 
