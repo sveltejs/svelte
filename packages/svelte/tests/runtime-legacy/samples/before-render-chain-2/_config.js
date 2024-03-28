@@ -6,6 +6,6 @@ export default test({
 		const [btn1] = target.querySelectorAll('button');
 		flushSync(() => {
 			// This test would result in an infinite loop, so if this doesn't error, then the test is working.
-		})
+		});
 	}
 });
