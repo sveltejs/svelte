@@ -22,7 +22,7 @@ fs.writeFileSync(`${dir}/types/compiler/interfaces.d.ts`, "import '../index.js';
 await createBundle({
 	output: `${dir}/types/index.d.ts`,
 	modules: {
-		[pkg.name]: `${dir}/src/main/public.d.ts`,
+		[pkg.name]: `${dir}/src/index.d.ts`,
 		[`${pkg.name}/action`]: `${dir}/src/action/public.d.ts`,
 		[`${pkg.name}/animate`]: `${dir}/src/animate/public.d.ts`,
 		[`${pkg.name}/compiler`]: `${dir}/src/compiler/index.js`,

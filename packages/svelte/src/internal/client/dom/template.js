@@ -149,7 +149,6 @@ export function text(anchor) {
 	return node;
 }
 
-/*#__NO_SIDE_EFFECTS__*/
 export const comment = template('<!>', TEMPLATE_FRAGMENT);
 
 /**

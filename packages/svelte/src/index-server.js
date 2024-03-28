@@ -1,4 +1,4 @@
-import { current_component_context } from '../internal/client/runtime.js';
+import { current_component_context } from './internal/client/runtime.js';
 
 export {
 	createEventDispatcher,
@@ -13,7 +13,7 @@ export {
 	unmount,
 	untrack,
 	createRoot
-} from './main-client.js';
+} from './index-client.js';
 
 /** @returns {void} */
 export function onMount() {}
