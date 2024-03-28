@@ -1,5 +1,21 @@
 # svelte
 
+## 5.0.0-next.87
+
+### Patch Changes
+
+- fix: apply animate on prefix/suffix each block mutations ([#10965](https://github.com/sveltejs/svelte/pull/10965))
+
+## 5.0.0-next.86
+
+### Patch Changes
+
+- fix: improved effect sequencing and execution order ([#10949](https://github.com/sveltejs/svelte/pull/10949))
+
+- breaking: onDestroy functions run child-first ([#10949](https://github.com/sveltejs/svelte/pull/10949))
+
+- fix: improve action support for nested $effect ([#10962](https://github.com/sveltejs/svelte/pull/10962))
+
 ## 5.0.0-next.85
 
 ### Patch Changes
