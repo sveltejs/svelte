@@ -97,7 +97,7 @@ export function createRoot() {
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
  * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
+ * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
  * 		props?: Props;
@@ -119,7 +119,7 @@ export function mount(component, options) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
  * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
+ * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
  * 		props?: Props;
@@ -180,7 +180,7 @@ export function hydrate(component, options) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
  * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} Component
+ * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} Component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
  * 		anchor: Node;

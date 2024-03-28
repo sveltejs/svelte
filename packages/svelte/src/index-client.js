@@ -86,7 +86,7 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
  *
  * https://svelte.dev/docs/svelte#createeventdispatcher
  * @template {Record<string, any>} [EventMap = any]
- * @returns {import('./main/public.js').EventDispatcher<EventMap>}
+ * @returns {import('./index.js').EventDispatcher<EventMap>}
  */
 export function createEventDispatcher() {
 	const component_context = current_component_context;
