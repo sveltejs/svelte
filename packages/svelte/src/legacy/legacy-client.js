@@ -1,5 +1,5 @@
 import { define_property } from '../internal/client/utils.js';
-import * as $ from '../internal/index.js';
+import * as $ from '../internal/client/index.js';
 
 /**
  * Takes the same options as a Svelte 4 component and the component function and returns a Svelte 4 compatible component.

@@ -46,7 +46,7 @@ export function client_component(source, analysis, options) {
 		options,
 		scope: analysis.module.scope,
 		scopes: analysis.template.scopes,
-		hoisted: [b.import_all('$', 'svelte/internal')],
+		hoisted: [b.import_all('$', 'svelte/internal/client')],
 		node: /** @type {any} */ (null), // populated by the root node
 		// these should be set by create_block - if they're called outside, it's a bug
 		get before_init() {
@@ -582,6 +582,6 @@ export function client_module(analysis, options) {
 	return {
 		type: 'Program',
 		sourceType: 'module',
-		body: [b.import_all('$', 'svelte/internal'), ...module.body]
+		body: [b.import_all('$', 'svelte/internal/client'), ...module.body]
 	};
 }

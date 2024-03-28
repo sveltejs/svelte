@@ -1,6 +1,6 @@
 import { current_component_context, untrack } from './internal/client/runtime.js';
 import { is_array } from './internal/client/utils.js';
-import { user_effect } from './internal/index.js';
+import { user_effect } from './internal/client/index.js';
 
 /**
  * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
@@ -182,4 +182,4 @@ export {
 	getContext,
 	getAllContexts,
 	setContext
-} from './internal/index.js';
+} from './internal/client/index.js';

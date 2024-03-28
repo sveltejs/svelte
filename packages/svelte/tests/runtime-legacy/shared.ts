@@ -1,8 +1,7 @@
 import * as fs from 'node:fs';
 import { setImmediate } from 'node:timers/promises';
 import glob from 'tiny-glob/sync.js';
-// import { clear_loops, flush, set_now, set_raf } from 'svelte/internal';
-import * as $ from 'svelte/internal';
+import * as $ from 'svelte/internal/client';
 import { createClassComponent } from 'svelte/legacy';
 import { render } from 'svelte/server';
 import { afterAll, assert, beforeAll } from 'vitest';
