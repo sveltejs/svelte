@@ -68,7 +68,10 @@ export function set_xlink_attribute(dom, attribute, value) {
  */
 export function set_custom_element_data(node, prop, value) {
 	if (prop in node) {
-		node[prop] = typeof node[prop] === 'boolean' && value === '' ? true : value;
+		var next_val = typeof node[prop] === 'boolean' && value === '' ? true : value;
+		if (typeof node[prop] !== 'object' || node[prop] !== next_val) {
+			node[prop] = next_val;
+		}
 	} else {
 		set_attribute(node, prop, value);
 	}
