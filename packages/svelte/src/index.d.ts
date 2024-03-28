@@ -223,4 +223,4 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 }
 
 export * from './index-client.js';
-import './main/ambient.js';
+import './ambient.js';

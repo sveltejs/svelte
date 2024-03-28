@@ -287,9 +287,7 @@ declare module 'svelte' {
 	 * @deprecated Use `$effect` instead — see https://svelte-5-preview.vercel.app/docs/deprecations#beforeupdate-and-afterupdate
 	 * */
 	export function afterUpdate(fn: () => void): void;
-	/**
-	 * Anything except a function
-	 */
+	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
 	/**
 	 * @deprecated Use `mount` or `hydrate` instead

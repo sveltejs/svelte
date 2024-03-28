@@ -3,11 +3,6 @@ import { is_array } from './internal/client/utils.js';
 import { user_effect } from './internal/index.js';
 
 /**
- * @template T
- * @typedef {T extends Function ? never : T} NotFunction
- */
-
-/**
  * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
  * It must be called during the component's initialisation (but doesn't need to live *inside* the component;
  * it can be called from an external module).
@@ -18,7 +13,7 @@ import { user_effect } from './internal/index.js';
  *
  * https://svelte.dev/docs/svelte#onmount
  * @template T
- * @param {() => NotFunction<T> | Promise<NotFunction<T>> | (() => any)} fn
+ * @param {() => import('./internal/types').NotFunction<T> | Promise<import('./internal/types').NotFunction<T>> | (() => any)} fn
  * @returns {void}
  */
 export function onMount(fn) {
