@@ -163,16 +163,23 @@ export function legacy_pre_effect(deps, fn) {
 	const component_context = /** @type {import('#client').ComponentContext} */ (
 		current_component_context
 	);
-	const token = {};
-	return render_effect(() => {
+	/** @type {{ effect: null | import('#client').Effect, ran: boolean }} */
+	const token = { effect: null, ran: false };
+	component_context.l1.push(token);
+
+	const effect = render_effect(() => {
 		deps();
-		if (component_context.l1.includes(token)) {
+		// If this legacy pre effect has already run before the end of the reset, then
+		// bail-out to emulate the same behavior.
+		if (token.ran) {
 			return;
 		}
-		component_context.l1.push(token);
+		token.ran = true;
 		set(component_context.l2, true);
 		return untrack(fn);
 	});
+	token.effect = effect;
+	return effect;
 }
 
 export function legacy_pre_effect_reset() {
@@ -182,7 +189,14 @@ export function legacy_pre_effect_reset() {
 	return render_effect(() => {
 		const x = get(component_context.l2);
 		if (x) {
-			component_context.l1.length = 0;
+			for (const token of component_context.l1) {
+				const effect = token.effect;
+				// Invoke any local legacy pre effects that might be dirty
+				if (check_dirtiness(effect)) {
+					execute_effect(effect);
+				}
+				token.ran = false;
+			}
 			component_context.l2.v = false; // set directly to avoid rerunning this effect
 		}
 	});
