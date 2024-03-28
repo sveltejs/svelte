@@ -11,8 +11,7 @@ export {
 	setContext,
 	tick,
 	unmount,
-	untrack,
-	createRoot
+	untrack
 } from './index-client.js';
 
 /** @returns {void} */

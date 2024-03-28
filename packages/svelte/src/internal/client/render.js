@@ -81,16 +81,6 @@ export function stringify(value) {
 	return typeof value === 'string' ? value : value == null ? '' : value + '';
 }
 
-// TODO 5.0 remove this
-/**
- * @deprecated Use `mount` or `hydrate` instead
- */
-export function createRoot() {
-	throw new Error(
-		'`createRoot` has been removed. Use `mount` or `hydrate` instead. See the updated docs for more info: https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes'
-	);
-}
-
 /**
  * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
  *
