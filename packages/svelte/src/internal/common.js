@@ -19,8 +19,3 @@ export function run_all(arr) {
 		arr[i]();
 	}
 }
-
-/** @param {Function} fn */
-export function run(fn) {
-	return fn();
-}

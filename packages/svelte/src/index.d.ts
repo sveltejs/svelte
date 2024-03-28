@@ -222,5 +222,5 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 	): boolean;
 }
 
-export * from './main-client.js';
+export * from './index-client.js';
 import './ambient.js';

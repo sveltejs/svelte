@@ -1,7 +1,7 @@
 // index.svelte (Svelte VERSION)
 // Note: compiler output will change before 5.0 is released!
 import "svelte/internal/disclose-version";
-import * as $ from "svelte/internal";
+import * as $ from "svelte/internal/client";
 
 export default function Each_string_template($$anchor, $$props) {
 	$.push($$props, false);

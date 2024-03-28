@@ -1,4 +1,4 @@
-import { raf as svelte_raf } from 'svelte/internal';
+import { raf as svelte_raf } from 'svelte/internal/client';
 
 export const raf = {
 	animations: new Set(),

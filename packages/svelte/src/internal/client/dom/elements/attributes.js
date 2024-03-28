@@ -273,7 +273,7 @@ function split_srcset(srcset) {
  * @param {string | undefined | null} srcset
  * @returns {boolean}
  */
-export function srcset_url_equal(element, srcset) {
+function srcset_url_equal(element, srcset) {
 	var element_urls = split_srcset(element.srcset);
 	var urls = split_srcset(srcset ?? '');
 

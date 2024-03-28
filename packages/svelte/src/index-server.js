@@ -1,4 +1,4 @@
-import { current_component_context } from '../internal/client/runtime.js';
+import { current_component_context } from './internal/client/runtime.js';
 
 export {
 	createEventDispatcher,
@@ -11,9 +11,8 @@ export {
 	setContext,
 	tick,
 	unmount,
-	untrack,
-	createRoot
-} from './main-client.js';
+	untrack
+} from './index-client.js';
 
 /** @returns {void} */
 export function onMount() {}

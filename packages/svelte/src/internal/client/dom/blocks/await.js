@@ -1,7 +1,7 @@
 import { is_promise } from '../../../common.js';
 import {
 	current_component_context,
-	flushSync,
+	flush_sync,
 	set_current_component_context,
 	set_current_effect,
 	set_current_reaction
@@ -48,7 +48,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 
 		// without this, the DOM does not update until two ticks after the promise,
 		// resolves which is unexpected behaviour (and somewhat irksome to test)
-		flushSync();
+		flush_sync();
 
 		return e;
 	}

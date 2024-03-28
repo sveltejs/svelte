@@ -1,6 +1,6 @@
-import { current_component_context, untrack } from '../internal/client/runtime.js';
-import { is_array } from '../internal/client/utils.js';
-import { user_effect } from '../internal/index.js';
+import { current_component_context, flush_sync, untrack } from './internal/client/runtime.js';
+import { is_array } from './internal/client/utils.js';
+import { user_effect } from './internal/client/index.js';
 
 /**
  * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
@@ -13,7 +13,7 @@ import { user_effect } from '../internal/index.js';
  *
  * https://svelte.dev/docs/svelte#onmount
  * @template T
- * @param {() => import('./private.js').NotFunction<T> | Promise<import('./private.js').NotFunction<T>> | (() => any)} fn
+ * @param {() => import('./internal/types').NotFunction<T> | Promise<import('./internal/types').NotFunction<T>> | (() => any)} fn
  * @returns {void}
  */
 export function onMount(fn) {
@@ -81,7 +81,7 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
  *
  * https://svelte.dev/docs/svelte#createeventdispatcher
  * @template {Record<string, any>} [EventMap = any]
- * @returns {import('./public.js').EventDispatcher<EventMap>}
+ * @returns {import('./index.js').EventDispatcher<EventMap>}
  */
 export function createEventDispatcher() {
 	const component_context = current_component_context;
@@ -161,25 +161,30 @@ export function afterUpdate(fn) {
 
 /**
  * Legacy-mode: Init callbacks object for onMount/beforeUpdate/afterUpdate
- * @param {import('../internal/client/types.js').ComponentContext} context
+ * @param {import('./internal/client/types.js').ComponentContext} context
  */
 function init_update_callbacks(context) {
 	return (context.u ??= { a: [], b: [], m: [] });
 }
 
-// TODO bring implementations in here
-// (except probably untrack — do we want to expose that, if there's also a rune?)
+/**
+ * Synchronously flushes any pending state changes and those that result from it.
+ * @param {() => void} [fn]
+ * @returns {void}
+ */
+export function flushSync(fn) {
+	flush_sync(fn);
+}
+
+export { unstate } from './internal/client/proxy.js';
+
+export { hydrate, mount, unmount } from './internal/client/render.js';
+
 export {
-	flushSync,
-	mount,
-	hydrate,
-	tick,
-	unmount,
-	untrack,
-	unstate,
-	createRoot,
-	hasContext,
 	getContext,
 	getAllContexts,
-	setContext
-} from '../internal/index.js';
+	hasContext,
+	setContext,
+	tick,
+	untrack
+} from './internal/client/runtime.js';

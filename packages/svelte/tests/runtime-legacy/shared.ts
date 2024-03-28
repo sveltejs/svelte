@@ -1,9 +1,9 @@
 import * as fs from 'node:fs';
 import { setImmediate } from 'node:timers/promises';
 import glob from 'tiny-glob/sync.js';
-// import { clear_loops, flush, set_now, set_raf } from 'svelte/internal';
-import * as $ from 'svelte/internal';
+import * as $ from 'svelte/internal/client';
 import { createClassComponent } from 'svelte/legacy';
+import { flushSync } from 'svelte';
 import { render } from 'svelte/server';
 import { afterAll, assert, beforeAll } from 'vitest';
 import { compile_directory } from '../helpers.js';
@@ -284,7 +284,7 @@ async function run_test_variant(
 			}
 
 			if (config.html) {
-				$.flushSync();
+				flushSync();
 				assert_html_equal_with_options(target.innerHTML, config.html, {
 					preserveComments:
 						config.withoutNormalizeHtml === 'only-strip-comments' ? false : undefined,
@@ -294,7 +294,7 @@ async function run_test_variant(
 
 			try {
 				if (config.test) {
-					$.flushSync();
+					flushSync();
 					await config.test({
 						// @ts-expect-error TS doesn't get it
 						assert: {

@@ -6,7 +6,7 @@ import {
 	current_effect,
 	current_untracked_writes,
 	current_untracking,
-	flushSync,
+	flush_sync,
 	get,
 	is_batching_effect,
 	is_runes,
@@ -60,16 +60,6 @@ export function mutable_source(initial_value) {
 	}
 
 	return s;
-}
-
-/**
- * @template V
- * @param {import('#client').Source<V>} signal
- * @param {V} value
- * @returns {void}
- */
-export function set_sync(signal, value) {
-	flushSync(() => set(signal, value));
 }
 
 /**

@@ -288,13 +288,12 @@ declare module 'svelte' {
 	 * */
 	export function afterUpdate(fn: () => void): void;
 	/**
-	 * Anything except a function
-	 */
+	 * Synchronously flushes any pending state changes and those that result from it.
+	 * */
+	export function flushSync(fn?: (() => void) | undefined): void;
+	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
-	/**
-	 * @deprecated Use `mount` or `hydrate` instead
-	 */
-	export function createRoot(): void;
+	export function unstate<T>(value: T): T;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
 	 *
@@ -322,10 +321,6 @@ declare module 'svelte' {
 	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
 	 * */
 	export function unmount(component: Record<string, any>): void;
-	/**
-	 * Synchronously flushes any pending state changes and those that result from it.
-	 * */
-	export function flushSync(fn?: (() => void) | undefined): void;
 	/**
 	 * Returns a promise that resolves once any pending state changes have been applied.
 	 * */
@@ -368,7 +363,6 @@ declare module 'svelte' {
 	 * https://svelte.dev/docs/svelte#getallcontexts
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
-	export function unstate<T>(value: T): T;
 }
 
 declare module 'svelte/action' {

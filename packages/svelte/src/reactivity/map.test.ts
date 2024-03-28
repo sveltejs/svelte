@@ -1,5 +1,5 @@
 import { render_effect, effect_root } from '../internal/client/reactivity/effects.js';
-import { flushSync } from '../main/main-client.js';
+import { flushSync } from '../index-client.js';
 import { ReactiveMap } from './map.js';
 import { assert, test } from 'vitest';
 
