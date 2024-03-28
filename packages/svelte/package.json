@@ -137,7 +137,9 @@
   "knip": {
     "entry": [
       "src/*/index.js",
-      "src/*/public.d.ts"
+      "src/index-client.ts",
+      "src/index-server.ts",
+      "src/index.d.ts"
     ],
     "project": [
       "src/**"

@@ -64,16 +64,6 @@ export function mutable_source(initial_value) {
 
 /**
  * @template V
- * @param {import('#client').Source<V>} signal
- * @param {V} value
- * @returns {void}
- */
-export function set_sync(signal, value) {
-	flush_sync(() => set(signal, value));
-}
-
-/**
- * @template V
  * @param {import('#client').Value<V>} source
  * @param {V} value
  */

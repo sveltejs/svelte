@@ -23,18 +23,6 @@ function process_raf_task() {
 }
 
 /**
- * @param {() => void} fn
- * @returns {void}
- */
-export function schedule_raf_task(fn) {
-	if (!is_raf_queued) {
-		is_raf_queued = true;
-		requestAnimationFrame(process_raf_task);
-	}
-	current_raf_tasks.push(fn);
-}
-
-/**
  * Synchronously run any queued tasks.
  */
 export function flush_tasks() {
