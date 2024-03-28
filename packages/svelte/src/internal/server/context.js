@@ -5,10 +5,6 @@ import { on_destroy } from './index.js';
 export var current_component = null;
 
 /**
- * Retrieves the context that belongs to the closest parent component with the specified `key`.
- * Must be called during component initialisation.
- *
- * https://svelte.dev/docs/svelte#getcontext
  * @template T
  * @param {any} key
  * @returns {T}
@@ -21,13 +17,6 @@ export function getContext(key) {
 }
 
 /**
- * Associates an arbitrary `context` object with the current component and the specified `key`
- * and returns that object. The context is then available to children of the component
- * (including slotted content) with `getContext`.
- *
- * Like lifecycle functions, this must be called during component initialisation.
- *
- * https://svelte.dev/docs/svelte#setcontext
  * @template T
  * @param {any} key
  * @param {T} context
@@ -39,10 +28,6 @@ export function setContext(key, context) {
 }
 
 /**
- * Checks whether a given `key` has been set in the context of a parent component.
- * Must be called during component initialisation.
- *
- * https://svelte.dev/docs/svelte#hascontext
  * @param {any} key
  * @returns {boolean}
  */
@@ -50,14 +35,7 @@ export function hasContext(key) {
 	return getAllContexts().has(key);
 }
 
-/**
- * Retrieves the whole context map that belongs to the closest parent component.
- * Must be called during component initialisation. Useful, for example, if you
- * programmatically create a component and want to pass the existing context to it.
- *
- * https://svelte.dev/docs/svelte#getallcontexts
- * @returns {Map<any, any>}
- */
+/** @returns {Map<any, any>} */
 export function getAllContexts() {
 	const context = current_component;
 
@@ -72,11 +50,7 @@ export function getAllContexts() {
 }
 
 export function push() {
-	current_component = {
-		p: current_component,
-		c: null,
-		d: null
-	};
+	current_component = { p: current_component, c: null, d: null };
 }
 
 export function pop() {
