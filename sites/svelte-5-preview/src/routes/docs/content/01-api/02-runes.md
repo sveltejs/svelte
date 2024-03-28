@@ -222,41 +222,7 @@ To run side-effects like logging or analytics whenever some specific values chan
 <p>{count} doubled is {doubled}</p>
 ```
 
-An effect only reruns when the object it reads changes, not when a property inside it changes. If you want to react to _any_ change inside an object for inspection purposes at dev time, you may want to use [`inspect`](#inspect).
-
-```svelte
-<script>
-	let object = $state({ count: 0 });
-	let derived_object = $derived({
-		doubled: object.count * 2
-	});
-
-	$effect(() => {
-		// never reruns, because object does not change,
-		// only its property changes
-		object;
-		console.log('object');
-	});
-
-	$effect(() => {
-		// reruns, because object.count changes
-		object.count;
-		console.log('object.count');
-	});
-
-	$effect(() => {
-		// reruns, because $derived produces a new object on each rerun
-		derived_object;
-		console.log('derived_object');
-	});
-</script>
-
-<button on:click={() => object.count++}>
-	{doubled}
-</button>
-
-<p>{count} doubled is {doubled}</p>
-```
+> `$effect` tracks updates _shallowly_ — if `user.name` changes, for example, something that only reads `user` will not re-run (unless the `name` property is read as a result of e.g. logging or JSON serialisation). The [`$inspect`](#inspect) rune, by contrast, tracks updates _deeply_.
 
 You can return a function from `$effect`, which will run immediately before the effect re-runs, and before it is destroyed ([demo](/#H4sIAAAAAAAAE42SzW6DMBCEX2Vl5RDaVCQ9JoDUY--9lUox9lKsGBvZC1GEePcaKPnpqSe86_m0M2t6ViqNnu0_e2Z4jWzP3pqGbRhdmrHwHWrCUHvbOjF2Ei-caijLTU4aCYRtDUEKK0-ccL2NDstNrbRWHoU10t8Eu-121gTVCssSBa3XEaQZ9GMrpziGj0p5OAccCgSHwmEgJZwrNNihg6MyhK7j-gii4uYb_YyGUZ5guQwzPdL7b_U4ZNSOvp9T2B3m1rB5cLx4zMkhtc7AHz7YVCVwEFzrgosTBMuNs52SKDegaPbvWnMH8AhUXaNUIY6-hHCldQhUIcyLCFlfAuHvkCKaYk8iYevGGgy2wyyJnpy9oLwG0sjdNe2yhGhJN32HsUzi2xOapNpl_bSLIYnDeeoVLZE1YI3QSpzSfo7-8J5PKbwOmdf2jC6JZyD7HxpPaMk93aHhF6utVKVCyfbkWhy-hh9Z3o_2nQIAAA==)).
 
