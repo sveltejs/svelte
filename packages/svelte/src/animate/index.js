@@ -28,8 +28,8 @@ export function flip(node, { from, to }, params = {}) {
 		css: (t, u) => {
 			const x = u * dx;
 			const y = u * dy;
-			const sx = t + (u * from.width) / to.width;
-			const sy = t + (u * from.height) / to.height;
+			const sx = t + (u * from.width) / to_width;
+			const sy = t + (u * from.height) / to_height;
 			return `transform: ${transform} translate(${x}px, ${y}px) scale(${sx}, ${sy});`;
 		}
 	};
