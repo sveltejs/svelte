@@ -422,15 +422,9 @@ function infinite_loop_guard() {
  * @returns {void}
  */
 function flush_queued_root_effects(root_effects) {
-	var i, signal;
-	/**
-	 * @type {import("./types.js").Effect[]}
-	 */
-	var effects;
-
-	for (i = 0; i < root_effects.length; i++) {
-		signal = root_effects[i];
-		effects = get_nested_effects(signal, RENDER_EFFECT | EFFECT);
+	for (var i = 0; i < root_effects.length; i++) {
+		var signal = root_effects[i];
+		var effects = get_nested_effects(signal, RENDER_EFFECT | EFFECT);
 		flush_queued_effects(effects);
 	}
 }
@@ -492,7 +486,7 @@ export function schedule_effect(signal) {
 	var effect = signal;
 
 	while (effect.parent !== null) {
-		var effect = effect.parent;
+		effect = effect.parent;
 		var flags = effect.f;
 
 		if ((flags & BRANCH_EFFECT) !== 0) {
@@ -651,33 +645,36 @@ export function flushSync(fn) {
  * @returns {any}
  */
 export function flush_sync(fn, flush_previous = true) {
-	const previous_scheduler_mode = current_scheduler_mode;
-	const previous_queued_root_effects = current_queued_root_effects;
-	let result;
+	var previous_scheduler_mode = current_scheduler_mode;
+	var previous_queued_root_effects = current_queued_root_effects;
 
 	try {
 		infinite_loop_guard();
+
 		/** @type {import('./types.js').Effect[]} */
 		const root_effects = [];
+
 		current_scheduler_mode = FLUSH_SYNC;
 		current_queued_root_effects = root_effects;
+
 		if (flush_previous) {
 			flush_queued_root_effects(previous_queued_root_effects);
 		}
-		if (fn !== undefined) {
-			result = fn();
-		}
+
+		var result = fn?.();
+
 		if (current_queued_root_effects.length > 0 || root_effects.length > 0) {
-			flushSync();
+			flush_sync();
 		}
+
 		flush_tasks();
 		flush_count = 0;
+
+		return result;
 	} finally {
 		current_scheduler_mode = previous_scheduler_mode;
 		current_queued_root_effects = previous_queued_root_effects;
 	}
-
-	return result;
 }
 
 /**
