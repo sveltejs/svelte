@@ -23,7 +23,7 @@ export interface Template {
 }
 
 export interface ReactiveStatement {
-	assignments: Set<Identifier>;
+	assignments: Set<Binding>;
 	dependencies: Set<Binding>;
 }
 
