@@ -1,21 +1,7 @@
 import { current_component_context } from './internal/client/runtime.js';
+import { noop } from './internal/common.js';
 
-export {
-	createEventDispatcher,
-	flushSync,
-	getAllContexts,
-	getContext,
-	hasContext,
-	mount,
-	hydrate,
-	setContext,
-	tick,
-	unmount,
-	untrack
-} from './index-client.js';
-
-/** @returns {void} */
-export function onMount() {}
+export { getAllContexts, getContext, hasContext, setContext } from './index-client.js';
 
 /** @param {() => void} fn */
 export function onDestroy(fn) {
@@ -23,11 +9,31 @@ export function onDestroy(fn) {
 	(context.ondestroy ??= []).push(fn);
 }
 
-/** @returns {void} */
-export function beforeUpdate() {}
+export {
+	noop as beforeUpdate,
+	noop as afterUpdate,
+	noop as onMount,
+	noop as flushSync,
+	run as untrack
+} from './internal/common.js';
 
-/** @returns {void} */
-export function afterUpdate() {}
+export function createEventDispatcher() {
+	return noop;
+}
+
+export function mount() {
+	throw new Error('mount(...) is not available on the server');
+}
+
+export function hydrate() {
+	throw new Error('hydrate(...) is not available on the server');
+}
+
+export function unmount() {
+	throw new Error('unmount(...) is not available on the server');
+}
+
+export async function tick() {}
 
 /**
  * @template T
