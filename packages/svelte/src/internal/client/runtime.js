@@ -444,8 +444,6 @@ function flush_queued_effects(effects) {
 		if ((flags & (DESTROYED | INERT)) === 0) {
 			if (check_dirtiness(signal)) {
 				execute_effect(signal);
-			} else if ((flags & MAYBE_DIRTY) !== 0) {
-				set_signal_status(signal, CLEAN);
 			}
 		}
 	}
