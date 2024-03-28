@@ -424,8 +424,7 @@ function infinite_loop_guard() {
 function flush_queued_root_effects(root_effects) {
 	for (var i = 0; i < root_effects.length; i++) {
 		var signal = root_effects[i];
-		var effects = process_nested_effects(signal, RENDER_EFFECT | EFFECT);
-		flush_queued_effects(effects);
+		flush_nested_effects(signal, RENDER_EFFECT | EFFECT);
 	}
 }
 
@@ -582,19 +581,20 @@ function recursively_process_effects(effect, filter_flags, shallow, collected_us
  * @param {import('./types.js').Effect} effect
  * @param {number} filter_flags
  * @param {boolean} [shallow]
- * @returns {import('./types.js').Effect[]}
+ * @returns {void}
  */
-function process_nested_effects(effect, filter_flags, shallow = false) {
+function flush_nested_effects(effect, filter_flags, shallow = false) {
 	/**
 	 * @type {import("./types.js").Effect[]}
 	 */
 	var user_effects = [];
 	// When working with custom-elements, the root effects might not have a root
 	if (effect.effects === null && (effect.f & BRANCH_EFFECT) === 0) {
-		return [effect];
+		flush_queued_effects([effect]);
+	} else {
+		recursively_process_effects(effect, filter_flags, shallow, user_effects);
+		flush_queued_effects(user_effects);
 	}
-	recursively_process_effects(effect, filter_flags, shallow, user_effects);
-	return user_effects;
 }
 
 /**
@@ -604,10 +604,7 @@ function process_nested_effects(effect, filter_flags, shallow = false) {
 export function flush_local_render_effects(effect) {
 	// We are entering a new flush sequence, so ensure counter is reset.
 	flush_count = 0;
-	/**
-	 * @type {import("./types.js").Effect[]}
-	 */
-	process_nested_effects(effect, RENDER_EFFECT, true);
+	flush_nested_effects(effect, RENDER_EFFECT, true);
 }
 
 /**
