@@ -1,13 +1,13 @@
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
+	UNINITIALIZED,
 	DOMBooleanAttributes,
 	disallowed_paragraph_contents,
 	interactive_elements,
 	is_tag_valid_with_parent
 } from '../../constants.js';
 import { DEV } from 'esm-env';
-import { UNINITIALIZED } from '../../constants.js';
 import { current_component, pop, push } from './context.js';
 
 /**
