@@ -18,6 +18,10 @@ export function action(dom, action, get_value) {
 
 			render_effect(() => {
 				var value = get_value();
+
+				// Action's update method is coarse-grained, i.e. when anything in the passed value changes, update.
+				// This works in legacy mode because of mutable_source being updated as a whole, but when using $state
+				// together with actions and mutation, it wouldn't notice the change without a deep read.
 				deep_read_state(value);
 
 				if (inited) {
