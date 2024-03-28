@@ -571,9 +571,7 @@ function recursively_process_effects(effect, filter_flags, shallow, collected_us
  * @returns {void}
  */
 function flush_nested_effects(effect, filter_flags, shallow = false) {
-	/**
-	 * @type {import("./types.js").Effect[]}
-	 */
+	/** @type {import('#client').Effect[]} */
 	var user_effects = [];
 
 	var previously_flushing_effect = is_flushing_effect;
