@@ -629,15 +629,6 @@ export function flush_local_render_effects(effect) {
 }
 
 /**
- * Synchronously flushes any pending state changes and those that result from it.
- * @param {() => void} [fn]
- * @returns {void}
- */
-export function flushSync(fn) {
-	flush_sync(fn);
-}
-
-/**
  * Internal version of `flushSync` with the option to not flush previous effects.
  * Returns the result of the passed function, if given.
  * @param {() => any} [fn]
@@ -683,9 +674,9 @@ export function flush_sync(fn, flush_previous = true) {
  */
 export async function tick() {
 	await Promise.resolve();
-	// By calling flushSync we guarantee that any pending state changes are applied after one tick.
+	// By calling flush_sync we guarantee that any pending state changes are applied after one tick.
 	// TODO look into whether we can make flushing subsequent updates synchronously in the future.
-	flushSync();
+	flush_sync();
 }
 
 /**

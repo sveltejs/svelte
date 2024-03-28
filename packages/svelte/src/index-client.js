@@ -1,4 +1,4 @@
-import { current_component_context, untrack } from './internal/client/runtime.js';
+import { current_component_context, flush_sync, untrack } from './internal/client/runtime.js';
 import { is_array } from './internal/client/utils.js';
 import { user_effect } from './internal/client/index.js';
 
@@ -167,19 +167,24 @@ function init_update_callbacks(context) {
 	return (context.u ??= { a: [], b: [], m: [] });
 }
 
-// TODO bring implementations in here
-// (except probably untrack — do we want to expose that, if there's also a rune?)
+/**
+ * Synchronously flushes any pending state changes and those that result from it.
+ * @param {() => void} [fn]
+ * @returns {void}
+ */
+export function flushSync(fn) {
+	flush_sync(fn);
+}
+
+export { unstate } from './internal/client/proxy.js';
+
+export { hydrate, mount, unmount } from './internal/client/render.js';
+
 export {
-	flushSync,
-	mount,
-	hydrate,
-	tick,
-	unmount,
-	untrack,
-	unstate,
-	createRoot,
-	hasContext,
 	getContext,
 	getAllContexts,
-	setContext
-} from './internal/client/index.js';
+	hasContext,
+	setContext,
+	tick,
+	untrack
+} from './internal/client/runtime.js';

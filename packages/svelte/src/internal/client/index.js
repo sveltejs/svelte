@@ -1,25 +1,3 @@
-export {
-	get,
-	invalidate_inner_signals,
-	flushSync,
-	tick,
-	untrack,
-	update,
-	update_pre,
-	value_or_fallback,
-	exclude_from_object,
-	pop,
-	push,
-	inspect,
-	unwrap,
-	freeze,
-	deep_read,
-	deep_read_state,
-	getAllContexts,
-	getContext,
-	setContext,
-	hasContext
-} from './runtime.js';
 export * from './dev/ownership.js';
 export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
@@ -58,6 +36,28 @@ export * from './reactivity/equality.js';
 export * from './reactivity/props.js';
 export * from './reactivity/store.js';
 export * from './render.js';
+export {
+	get,
+	invalidate_inner_signals,
+	flush_sync,
+	tick,
+	untrack,
+	update,
+	update_pre,
+	value_or_fallback,
+	exclude_from_object,
+	pop,
+	push,
+	inspect,
+	unwrap,
+	freeze,
+	deep_read,
+	deep_read_state,
+	getAllContexts,
+	getContext,
+	setContext,
+	hasContext
+} from './runtime.js';
 export * from './validate.js';
 export { raf } from './timing.js';
 export { proxy, unstate } from './proxy.js';
