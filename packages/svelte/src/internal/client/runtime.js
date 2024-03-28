@@ -124,6 +124,22 @@ export function is_runes() {
 }
 
 /**
+ * This represents the sum of all signal versions that are read inside a
+ * `get_version_sum` callback, which is used to determine if a prop
+ * is dirty inside a legacy reactive statement
+ */
+var version_sum = 0;
+var uses_version_sum = false;
+
+/** @param {() => any} fn */
+export function get_version(fn) {
+	version_sum = 0;
+	uses_version_sum = true;
+	fn();
+	return version_sum;
+}
+
+/**
  * @param {import('./types.js').ProxyStateObject} target
  * @param {string | symbol} prop
  * @param {any} receiver
@@ -699,6 +715,12 @@ export function get(signal) {
 		/** @type {import('./types.js').ValueDebug} */ (signal).inspect.add(inspect_fn);
 		// @ts-expect-error
 		inspect_captured_signals.push(signal);
+	}
+
+	if (uses_version_sum) {
+		// Putting this inside an if block lets us DCE everything related to `version_sum`
+		// if we don't have any legacy reactive statements that depend on props
+		version_sum += signal.version;
 	}
 
 	const flags = signal.f;
