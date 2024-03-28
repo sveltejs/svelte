@@ -64,6 +64,8 @@ export const VoidElements = new Set([
 	'wbr'
 ]);
 
+export const RawTextElements = new Set(['textarea', 'script', 'style', 'title']);
+
 /**
  * @type {Element | null}
  */
@@ -162,11 +164,11 @@ export function element(payload, tag, attributes_fn, children_fn) {
 	payload.out += `>`;
 
 	if (!VoidElements.has(tag)) {
-		if (tag !== 'textarea') {
+		if (!RawTextElements.has(tag)) {
 			payload.out += '<![>';
 		}
 		children_fn();
-		if (tag !== 'textarea') {
+		if (!RawTextElements.has(tag)) {
 			payload.out += '<!]>';
 		}
 		payload.out += `</${tag}>`;
