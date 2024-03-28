@@ -613,15 +613,33 @@ const legacy_scope_tweaker = {
 
 		next({ ...state, reactive_statement, function_depth: state.scope.function_depth + 1 });
 
+		// Every referenced binding becomes a dependency, unless it's on
+		// the left-hand side of an `=` assignment
 		for (const [name, nodes] of state.scope.references) {
 			const binding = state.scope.get(name);
 			if (binding === null) continue;
 
-			// Include bindings that have references other than assignments and their own declarations
-			if (
-				nodes.some((n) => n.node !== binding.node && !reactive_statement.assignments.has(n.node))
-			) {
+			for (const { node, path } of nodes) {
+				/** @type {import('estree').Expression} */
+				let left = node;
+
+				let i = path.length - 1;
+				let parent = /** @type {import('estree').Expression} */ (path.at(i));
+				while (parent.type === 'MemberExpression') {
+					left = parent;
+					parent = /** @type {import('estree').Expression} */ (path.at(--i));
+				}
+
+				if (
+					parent.type === 'AssignmentExpression' &&
+					parent.operator === '=' &&
+					parent.left === left
+				) {
+					continue;
+				}
+
 				reactive_statement.dependencies.add(binding);
+				break;
 			}
 		}
 
@@ -660,15 +678,29 @@ const legacy_scope_tweaker = {
 		}
 	},
 	AssignmentExpression(node, { state, next }) {
-		if (state.reactive_statement && node.operator === '=') {
-			if (node.left.type === 'MemberExpression') {
-				const id = object(node.left);
-				if (id !== null) {
-					state.reactive_statement.assignments.add(id);
-				}
-			} else {
+		if (state.reactive_statement) {
+			const id = node.left.type === 'MemberExpression' ? object(node.left) : node.left;
+			if (id !== null) {
 				for (const id of extract_identifiers(node.left)) {
-					state.reactive_statement.assignments.add(id);
+					const binding = state.scope.get(id.name);
+
+					if (binding) {
+						state.reactive_statement.assignments.add(binding);
+					}
+				}
+			}
+		}
+
+		next();
+	},
+	UpdateExpression(node, { state, next }) {
+		if (state.reactive_statement) {
+			const id = node.argument.type === 'MemberExpression' ? object(node.argument) : node.argument;
+			if (id?.type === 'Identifier') {
+				const binding = state.scope.get(id.name);
+
+				if (binding) {
+					state.reactive_statement.assignments.add(binding);
 				}
 			}
 		}
@@ -1343,10 +1375,10 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	const lookup = new Map();
 
 	for (const [node, declaration] of unsorted_reactive_declarations) {
-		declaration.assignments.forEach(({ name }) => {
-			const statements = lookup.get(name) ?? [];
+		declaration.assignments.forEach((binding) => {
+			const statements = lookup.get(binding.node.name) ?? [];
 			statements.push([node, declaration]);
-			lookup.set(name, statements);
+			lookup.set(binding.node.name, statements);
 		});
 	}
 
@@ -1354,10 +1386,10 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	const edges = [];
 
 	for (const [, { assignments, dependencies }] of unsorted_reactive_declarations) {
-		for (const { name } of assignments) {
-			for (const { node } of dependencies) {
-				if (![...assignments].find(({ name }) => node.name === name)) {
-					edges.push([name, node.name]);
+		for (const assignment of assignments) {
+			for (const dependency of dependencies) {
+				if (![...assignments].find((assignment) => dependency.node.name === assignment.node.name)) {
+					edges.push([assignment.node.name, dependency.node.name]);
 				}
 			}
 		}
@@ -1382,7 +1414,7 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	const add_declaration = (node, declaration) => {
 		if ([...reactive_declarations.values()].includes(declaration)) return;
 		declaration.dependencies.forEach(({ node: { name } }) => {
-			if ([...declaration.assignments].some((a) => a.name === name)) return;
+			if ([...declaration.assignments].some((a) => a.node.name === name)) return;
 			for (const [node, earlier] of lookup.get(name) ?? []) {
 				add_declaration(node, earlier);
 			}
