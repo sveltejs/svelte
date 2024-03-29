@@ -46,7 +46,6 @@ function create_effect(type, fn, sync) {
 		f: type | DIRTY,
 		fn,
 		effects: null,
-		deriveds: null,
 		teardown: null,
 		ctx: current_component_context,
 		transitions: null
