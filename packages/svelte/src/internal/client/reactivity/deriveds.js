@@ -3,7 +3,6 @@ import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../const
 import {
 	current_reaction,
 	current_effect,
-	destroy_children,
 	remove_reactions,
 	set_signal_status,
 	mark_reactions,
@@ -11,6 +10,7 @@ import {
 	execute_reaction_fn
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
+import { destroy_effect } from './effects.js';
 
 export let updating_derived = false;
 
@@ -42,10 +42,11 @@ export function derived(fn) {
 	}
 
 	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
-		if (current_reaction.deriveds === null) {
-			current_reaction.deriveds = [signal];
+		var current_derived = /** @type {import('#client').Derived<V>} */ (current_reaction);
+		if (current_derived.deriveds === null) {
+			current_derived.deriveds = [signal];
 		} else {
-			current_reaction.deriveds.push(signal);
+			current_derived.deriveds.push(signal);
 		}
 	}
 
@@ -65,6 +66,27 @@ export function derived_safe_equal(fn) {
 }
 
 /**
+ * @param {import('./types.js').Derived} signal
+ * @returns {void}
+ */
+function destroy_derived_children(signal) {
+	// TODO: should it be possible to create effects in deriveds given they're meant to be pure?
+	if (signal.effects) {
+		for (var i = 0; i < signal.effects.length; i += 1) {
+			destroy_effect(signal.effects[i]);
+		}
+		signal.effects = null;
+	}
+
+	if (signal.deriveds) {
+		for (i = 0; i < signal.deriveds.length; i += 1) {
+			destroy_derived(signal.deriveds[i]);
+		}
+		signal.deriveds = null;
+	}
+}
+
+/**
  * @param {import('#client').Derived} derived
  * @param {boolean} force_schedule
  * @returns {void}
@@ -72,7 +94,7 @@ export function derived_safe_equal(fn) {
 export function update_derived(derived, force_schedule) {
 	var previous_updating_derived = updating_derived;
 	updating_derived = true;
-	destroy_children(derived);
+	destroy_derived_children(derived);
 	var value = execute_reaction_fn(derived);
 	updating_derived = previous_updating_derived;
 
@@ -98,7 +120,7 @@ export function update_derived(derived, force_schedule) {
  * @returns {void}
  */
 export function destroy_derived(signal) {
-	destroy_children(signal);
+	destroy_derived_children(signal);
 	remove_reactions(signal, 0);
 	set_signal_status(signal, DESTROYED);
 

@@ -349,7 +349,7 @@ export function remove_reactions(signal, start_index) {
 }
 
 /**
- * @param {import('./types.js').Reaction} signal
+ * @param {import('./types.js').Effect} signal
  * @returns {void}
  */
 export function destroy_children(signal) {
@@ -358,13 +358,6 @@ export function destroy_children(signal) {
 			destroy_effect(signal.effects[i]);
 		}
 		signal.effects = null;
-	}
-
-	if (signal.deriveds) {
-		for (i = 0; i < signal.deriveds.length; i += 1) {
-			destroy_derived(signal.deriveds[i]);
-		}
-		signal.deriveds = null;
 	}
 }
 
