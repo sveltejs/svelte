@@ -34,27 +34,35 @@ export function remove(current) {
  * @returns {Element | Comment | (Element | Comment | Text)[]}
  */
 export function reconcile_html(target, value, svg) {
-	if (hydrating) {
-		return hydrate_nodes;
-	}
+	if (hydrating) return hydrate_nodes;
+
 	var html = value + '';
-	// Even if html is the empty string we need to continue to insert something or
-	// else the element ordering gets out of sync, resulting in subsequent values
-	// not getting inserted anymore.
-	var frag_nodes;
-	if (svg) {
-		html = `<svg>${html}</svg>`;
-	}
+	if (svg) html = `<svg>${html}</svg>`;
+
 	// Don't use create_fragment_with_script_from_html here because that would mean script tags are executed.
 	// @html is basically `.innerHTML = ...` and that doesn't execute scripts either due to security reasons.
-	var content = create_fragment_from_html(html);
+	/** @type {DocumentFragment | Element} */
+	var node = create_fragment_from_html(html);
+
 	if (svg) {
-		content = /** @type {DocumentFragment} */ (/** @type {unknown} */ (content.firstChild));
+		node = /** @type {Element} */ (node.firstChild);
 	}
-	var clone = content.cloneNode(true);
-	frag_nodes = [...clone.childNodes];
-	frag_nodes.forEach((node) => {
+
+	if (node.childNodes.length === 1) {
+		var child = /** @type {Text | Element | Comment} */ (node.firstChild);
+		target.before(child);
+		return child;
+	}
+
+	var nodes = /** @type {Array<Text | Element | Comment>} */ ([...node.childNodes]);
+
+	if (svg) {
+		while (node.firstChild) {
+			target.before(node.firstChild);
+		}
+	} else {
 		target.before(node);
-	});
-	return /** @type {Array<Text | Comment | Element>} */ (frag_nodes);
+	}
+
+	return nodes;
 }
