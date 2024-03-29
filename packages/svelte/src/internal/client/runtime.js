@@ -438,13 +438,10 @@ function flush_queued_effects(effects) {
 
 	infinite_loop_guard();
 	for (var i = 0; i < length; i++) {
-		var signal = effects[i];
-		var flags = signal.f;
+		var effect = effects[i];
 
-		if ((flags & (DESTROYED | INERT)) === 0) {
-			if (check_dirtiness(signal)) {
-				execute_effect(signal);
-			}
+		if ((effect.f & (DESTROYED | INERT)) === 0 && check_dirtiness(effect)) {
+			execute_effect(effect);
 		}
 	}
 }
