@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.89
+
+### Patch Changes
+
+- fix: expose 'svelte/internal' to prevent Vite erroring on startup ([#10987](https://github.com/sveltejs/svelte/pull/10987))
+
+- fix: revert SSR shorthand comments ([#10980](https://github.com/sveltejs/svelte/pull/10980))
+
+- fix: child effects are removed from parent branches ([#10985](https://github.com/sveltejs/svelte/pull/10985))
+
 ## 5.0.0-next.88
 
 ### Patch Changes
