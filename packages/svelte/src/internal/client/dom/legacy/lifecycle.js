@@ -1,3 +1,4 @@
+import { CLEAN } from '../../constants.js';
 import { run, run_all } from '../../../shared/utils.js';
 import { user_pre_effect, user_effect } from '../../reactivity/effects.js';
 import {
@@ -27,7 +28,7 @@ export function init() {
 			// are batched up with the current run. Avoids for example child components rerunning when they're
 			// now hidden because beforeUpdate did set an if block to false.
 			const parent = current_effect?.parent;
-			if (parent != null) {
+			if (parent != null && (parent.f & CLEAN) === 0) {
 				flush_local_render_effects(parent);
 			}
 		});
