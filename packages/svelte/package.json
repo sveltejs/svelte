@@ -44,6 +44,9 @@
     "./elements": {
       "types": "./elements.d.ts"
     },
+    "./internal": {
+      "default": "./src/internal/index.js"
+    },
     "./internal/client": {
       "default": "./src/internal/client/index.js"
     },
