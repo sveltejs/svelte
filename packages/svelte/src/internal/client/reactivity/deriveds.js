@@ -70,19 +70,22 @@ export function derived_safe_equal(fn) {
  * @returns {void}
  */
 function destroy_derived_children(signal) {
-	// TODO: should it be possible to create effects in deriveds given they're meant to be pure?
-	if (signal.effects) {
-		for (var i = 0; i < signal.effects.length; i += 1) {
-			destroy_effect(signal.effects[i]);
-		}
-		signal.effects = null;
-	}
+	var effects = signal.effects;
 
-	if (signal.deriveds) {
-		for (i = 0; i < signal.deriveds.length; i += 1) {
-			destroy_derived(signal.deriveds[i]);
+	// TODO: should it be possible to create effects in deriveds given they're meant to be pure?
+	if (effects !== null) {
+		signal.effects = null;
+		for (var i = 0; i < effects.length; i += 1) {
+			destroy_effect(effects[i]);
 		}
+	}
+	var deriveds = signal.deriveds;
+
+	if (deriveds !== null) {
 		signal.deriveds = null;
+		for (i = 0; i < deriveds.length; i += 1) {
+			destroy_derived(deriveds[i]);
+		}
 	}
 }
 
