@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.88
+
+### Patch Changes
+
+- fix: further improvements to effect scheduling and flushing ([#10971](https://github.com/sveltejs/svelte/pull/10971))
+
+- feat: re-export built-ins from `svelte/reactivity` on the server ([#10973](https://github.com/sveltejs/svelte/pull/10973))
+
 ## 5.0.0-next.87
 
 ### Patch Changes
