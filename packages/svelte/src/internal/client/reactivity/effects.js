@@ -239,7 +239,7 @@ export function destroy_effect(effect) {
 
 	var parent = effect.parent;
 
-	if (parent !== null && (parent.f & BRANCH_EFFECT) !== 0) {
+	if (parent !== null && (effect.f & BRANCH_EFFECT) !== 0) {
 		var effects = parent.effects;
 		if (effects !== null) {
 			var index = effects.indexOf(effect);
