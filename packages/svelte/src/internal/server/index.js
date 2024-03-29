@@ -161,11 +161,11 @@ export function element(payload, tag, attributes_fn, children_fn) {
 
 	if (!VoidElements.has(tag)) {
 		if (tag !== 'textarea') {
-			payload.out += '<![>';
+			payload.out += '<!--[-->';
 		}
 		children_fn();
 		if (tag !== 'textarea') {
-			payload.out += '<!]>';
+			payload.out += '<!--]-->';
 		}
 		payload.out += `</${tag}>`;
 	}
@@ -187,7 +187,7 @@ export function render(component, options) {
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
-	payload.out += '<![>';
+	payload.out += '<!--[-->';
 
 	if (options.context) {
 		push();
@@ -200,14 +200,14 @@ export function render(component, options) {
 		pop();
 	}
 
-	payload.out += '<!]>';
+	payload.out += '<!--]-->';
 	for (const cleanup of on_destroy) cleanup();
 	on_destroy = prev_on_destroy;
 
 	return {
 		head:
 			payload.head.out || payload.head.title
-				? payload.head.title + '<![>' + payload.head.out + '<!]>'
+				? payload.head.title + '<!--[-->' + payload.head.out + '<!--]-->'
 				: '',
 		html: payload.out
 	};
@@ -271,15 +271,15 @@ export function attr(name, value, boolean) {
 export function css_props(payload, is_html, props, component) {
 	const styles = style_object_to_string(props);
 	if (is_html) {
-		payload.out += `<div style="display: contents; ${styles}"><![>`;
+		payload.out += `<div style="display: contents; ${styles}"><!--[-->`;
 	} else {
-		payload.out += `<g style="${styles}"><![>`;
+		payload.out += `<g style="${styles}"><!--[-->`;
 	}
 	component();
 	if (is_html) {
-		payload.out += `<!]></div>`;
+		payload.out += `<!--]--></div>`;
 	} else {
-		payload.out += `<!]></g>`;
+		payload.out += `<!--]--></g>`;
 	}
 }
 

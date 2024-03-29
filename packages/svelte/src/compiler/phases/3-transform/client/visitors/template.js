@@ -1044,7 +1044,7 @@ function create_block(parent, name, nodes, context) {
 
 			process_children(trimmed, expression, false, { ...context, state });
 
-			const use_comment_template = state.template.length === 1 && state.template[0] === '<!>';
+			const use_comment_template = state.template.length === 1 && state.template[0] === '<!---->';
 
 			if (use_comment_template) {
 				// special case — we can use `$.comment` instead of creating a unique template
@@ -1563,7 +1563,7 @@ export const template_visitors = {
 		context.state.template.push(`<!--${node.data}-->`);
 	},
 	HtmlTag(node, context) {
-		context.state.template.push('<!>');
+		context.state.template.push('<!---->');
 
 		// push into init, so that bindings run afterwards, which might trigger another run and override hydration
 		context.state.init.push(
@@ -1667,7 +1667,7 @@ export const template_visitors = {
 		);
 	},
 	RenderTag(node, context) {
-		context.state.template.push('<!>');
+		context.state.template.push('<!---->');
 		const callee = unwrap_optional(node.expression).callee;
 		const raw_args = unwrap_optional(node.expression).arguments;
 		const is_reactive =
@@ -1741,7 +1741,7 @@ export const template_visitors = {
 	},
 	RegularElement(node, context) {
 		if (node.name === 'noscript') {
-			context.state.template.push('<!>');
+			context.state.template.push('<!---->');
 			return;
 		}
 		if (node.name === 'script') {
@@ -1968,7 +1968,7 @@ export const template_visitors = {
 		}
 	},
 	SvelteElement(node, context) {
-		context.state.template.push(`<!>`);
+		context.state.template.push(`<!---->`);
 
 		/** @type {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} */
 		const attributes = [];
@@ -2079,7 +2079,7 @@ export const template_visitors = {
 		let each_item_is_reactive = true;
 
 		if (!each_node_meta.is_controlled) {
-			context.state.template.push('<!>');
+			context.state.template.push('<!---->');
 		}
 
 		if (each_node_meta.array_name !== null) {
@@ -2339,7 +2339,7 @@ export const template_visitors = {
 		context.state.init.push(b.stmt(b.call(callee, ...args)));
 	},
 	IfBlock(node, context) {
-		context.state.template.push('<!>');
+		context.state.template.push('<!---->');
 
 		const consequent = /** @type {import('estree').BlockStatement} */ (
 			context.visit(node.consequent)
@@ -2390,7 +2390,7 @@ export const template_visitors = {
 		context.state.init.push(b.stmt(b.call('$.if', ...args)));
 	},
 	AwaitBlock(node, context) {
-		context.state.template.push('<!>');
+		context.state.template.push('<!---->');
 
 		context.state.init.push(
 			b.stmt(
@@ -2431,7 +2431,7 @@ export const template_visitors = {
 		);
 	},
 	KeyBlock(node, context) {
-		context.state.template.push('<!>');
+		context.state.template.push('<!---->');
 		const key = /** @type {import('estree').Expression} */ (context.visit(node.expression));
 		const body = /** @type {import('estree').Expression} */ (context.visit(node.fragment));
 		context.state.init.push(
@@ -2747,7 +2747,7 @@ export const template_visitors = {
 		}
 	},
 	Component(node, context) {
-		context.state.template.push('<!>');
+		context.state.template.push('<!---->');
 
 		const binding = context.state.scope.get(
 			node.name.includes('.') ? node.name.slice(0, node.name.indexOf('.')) : node.name
@@ -2775,12 +2775,12 @@ export const template_visitors = {
 		context.state.init.push(component);
 	},
 	SvelteSelf(node, context) {
-		context.state.template.push('<!>');
+		context.state.template.push('<!---->');
 		const component = serialize_inline_component(node, context.state.analysis.name, context);
 		context.state.init.push(component);
 	},
 	SvelteComponent(node, context) {
-		context.state.template.push('<!>');
+		context.state.template.push('<!---->');
 
 		let component = serialize_inline_component(node, '$$component', context);
 		if (context.state.options.dev) {
@@ -2880,7 +2880,7 @@ export const template_visitors = {
 	},
 	SlotElement(node, context) {
 		// <slot {a}>fallback</slot>  -->   $.slot($$slots.default, { get a() { .. } }, () => ...fallback);
-		context.state.template.push('<!>');
+		context.state.template.push('<!---->');
 
 		/** @type {import('estree').Property[]} */
 		const props = [];
