@@ -23,13 +23,13 @@ export interface Reaction extends Signal {
 	deps: null | Value[];
 	/** Effects created inside this signal */
 	effects: null | Effect[];
-	/** Deriveds created inside this signal */
-	deriveds: null | Derived[];
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {
 	/** The derived function */
 	fn: () => V;
+	/** Deriveds created inside this signal */
+	deriveds: null | Derived[];
 }
 
 export interface Effect extends Reaction {

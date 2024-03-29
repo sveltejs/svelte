@@ -44,7 +44,6 @@
 					"column": 0
 				}
 			},
-			"leadingComments": [{ "type": "Line", "value": "should not error out" }],
 			"body": [
 				{
 					"type": "VariableDeclaration",
@@ -127,7 +126,13 @@
 					"kind": "let"
 				}
 			],
-			"sourceType": "module"
+			"sourceType": "module",
+			"leadingComments": [
+				{
+					"type": "Line",
+					"value": "should not error out"
+				}
+			]
 		}
 	}
 }
