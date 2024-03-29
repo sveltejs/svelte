@@ -15,7 +15,7 @@ packages/svelte/tests/hydration/samples/*/_before_head.html
 packages/svelte/tests/hydration/samples/*/_after.html
 packages/svelte/tests/hydration/samples/*/_after_head.html
 packages/svelte/types
-packages/svelte/compiler.cjs
+packages/svelte/compiler/index.js
 playgrounds/demo/src
 playgrounds/sandbox/input/**.svelte
 playgrounds/sandbox/output

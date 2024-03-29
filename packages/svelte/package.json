@@ -12,7 +12,7 @@
     "src",
     "!src/**/*.test.*",
     "types",
-    "compiler.cjs",
+    "compiler/index.js",
     "*.d.ts",
     "README.md"
   ],
@@ -34,7 +34,7 @@
     },
     "./compiler": {
       "types": "./types/index.d.ts",
-      "require": "./compiler.cjs",
+      "require": "./compiler/index.js",
       "default": "./src/compiler/index.js"
     },
     "./easing": {
