@@ -353,11 +353,13 @@ export function remove_reactions(signal, start_index) {
  * @returns {void}
  */
 export function destroy_children(signal) {
-	if (signal.effects) {
-		for (var i = 0; i < signal.effects.length; i += 1) {
-			destroy_effect(signal.effects[i]);
-		}
+	var effects = signal.effects;
+
+	if (effects !== null) {
 		signal.effects = null;
+		for (var i = 0; i < effects.length; i += 1) {
+			destroy_effect(effects[i]);
+		}
 	}
 }
 
