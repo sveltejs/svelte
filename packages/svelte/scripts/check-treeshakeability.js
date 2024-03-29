@@ -51,6 +51,7 @@ console.group('checking treeshakeability');
 for (const key in pkg.exports) {
 	// special cases
 	if (key === './compiler') continue;
+	if (key === './internal') continue;
 	if (key === './internal/disclose-version') continue;
 
 	for (const type of ['browser', 'default']) {
