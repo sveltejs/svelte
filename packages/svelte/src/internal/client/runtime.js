@@ -26,7 +26,7 @@ import {
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { mutate, set, source } from './reactivity/sources.js';
-import { destroy_derived, update_derived } from './reactivity/deriveds.js';
+import { update_derived } from './reactivity/deriveds.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -349,17 +349,18 @@ export function remove_reactions(signal, start_index) {
 }
 
 /**
- * @param {import('./types.js').Effect} signal
+ * @param {import('./types.js').Reaction} signal
  * @returns {void}
  */
-export function destroy_children(signal) {
-	var effects = signal.effects;
-
-	if (effects !== null) {
-		signal.effects = null;
-		for (var i = 0; i < effects.length; i += 1) {
-			destroy_effect(effects[i]);
-		}
+export function destroy_effect_children(signal) {
+	let effect = signal.first;
+	signal.first = null;
+	signal.last = null;
+	var sibling;
+	while (effect !== null) {
+		sibling = effect.next;
+		destroy_effect(effect);
+		effect = sibling;
 	}
 }
 
@@ -386,7 +387,7 @@ export function execute_effect(effect) {
 
 	try {
 		if ((flags & BLOCK_EFFECT) === 0) {
-			destroy_children(effect);
+			destroy_effect_children(effect);
 		}
 
 		effect.teardown?.();
@@ -499,13 +500,12 @@ export function schedule_effect(signal) {
  * @returns {void}
  */
 function recursively_process_effects(effect, filter_flags, shallow, collected_user) {
-	var effects = effect.effects;
-	if (effects === null) return;
-
+	var current_child = effect.first;
 	var user = [];
 
-	for (var i = 0; i < effects.length; i++) {
-		var child = effects[i];
+	while (current_child !== null) {
+		var child = current_child;
+		current_child = child.next;
 		var flags = child.f;
 		var is_inactive = (flags & (DESTROYED | INERT)) !== 0;
 		if (is_inactive) continue;
@@ -521,16 +521,19 @@ function recursively_process_effects(effect, filter_flags, shallow, collected_us
 		if ((flags & RENDER_EFFECT) !== 0) {
 			if (is_branch) {
 				if (shallow) continue;
+				// TODO we don't need to call recursively_process_effects recursively with a linked list in place
 				recursively_process_effects(child, filter_flags, false, collected_user);
 			} else {
 				if (check_dirtiness(child)) {
 					execute_effect(child);
 				}
+				// TODO we don't need to call recursively_process_effects recursively with a linked list in place
 				recursively_process_effects(child, filter_flags, false, collected_user);
 			}
 		} else if ((flags & EFFECT) !== 0) {
 			if (is_branch || is_clean) {
 				if (shallow) continue;
+				// TODO we don't need to call recursively_process_effects recursively with a linked list in place
 				recursively_process_effects(child, filter_flags, false, collected_user);
 			} else {
 				user.push(child);
@@ -544,7 +547,8 @@ function recursively_process_effects(effect, filter_flags, shallow, collected_us
 		}
 
 		if (!shallow) {
-			for (i = 0; i < user.length; i++) {
+			for (var i = 0; i < user.length; i++) {
+				// TODO we don't need to call recursively_process_effects recursively with a linked list in place
 				recursively_process_effects(user[i], filter_flags, false, collected_user);
 			}
 		}
@@ -571,7 +575,7 @@ function flush_nested_effects(effect, filter_flags, shallow = false) {
 
 	try {
 		// When working with custom elements, the root effects might not have a root
-		if (effect.effects === null && (effect.f & BRANCH_EFFECT) === 0) {
+		if (effect.first === null && (effect.f & BRANCH_EFFECT) === 0) {
 			flush_queued_effects([effect]);
 		} else {
 			recursively_process_effects(effect, filter_flags, shallow, user_effects);
