@@ -91,15 +91,11 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 			assert.ok(!got_hydration_error, 'Unexpected hydration error');
 		}
 
-		const expected = fs.existsSync(`${cwd}/_expected.html`)
-			? read(`${cwd}/_expected.html`)
-			: rendered.html;
+		const expected = read(`${cwd}/_expected.html`) ?? rendered.html;
 		assert_html_equal(target.innerHTML, expected);
 
 		if (rendered.head) {
-			const expected = fs.existsSync(`${cwd}/_expected_head.html`)
-				? read(`${cwd}/_expected_head.html`)
-				: rendered.head;
+			const expected = read(`${cwd}/_expected_head.html`) ?? rendered.head;
 			assert_html_equal(head.innerHTML, expected);
 		}
 
