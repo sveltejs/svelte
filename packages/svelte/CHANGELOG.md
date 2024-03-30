@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.90
+
+### Patch Changes
+
+- fix: hydrate HTML with surrounding whitespace ([#10996](https://github.com/sveltejs/svelte/pull/10996))
+
+- feat: faster HTML tags ([#10986](https://github.com/sveltejs/svelte/pull/10986))
+
 ## 5.0.0-next.89
 
 ### Patch Changes
