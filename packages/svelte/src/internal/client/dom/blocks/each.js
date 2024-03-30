@@ -359,6 +359,7 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 		var i;
 		var index;
 		var last_item;
+		var apply_controlled_optimization = (flags & EACH_IS_CONTROLLED) !== 0;
 
 		// store the indexes of each item in the new world
 		for (i = start; i < b; i += 1) {
@@ -389,6 +390,9 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 
 			if (index === undefined) {
 				to_destroy.push(item.e);
+				if (item.e.transitions !== null && apply_controlled_optimization) {
+					apply_controlled_optimization = false;
+				}
 			} else {
 				moved = true;
 				sources[index - start] = i;
@@ -405,6 +409,17 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 		// I fully understand this part)
 		if (moved) {
 			mark_lis(sources);
+		} else if (apply_controlled_optimization && to_destroy.length === a_items.length) {
+			// We can optimize the case where we change all items of the eacb block to an entirely new set of items.
+			// In this case we can first clear the DOM fast, second we can remove all effects fast, then we can continue
+			// with the normal logcial that appends them.
+			var parent = /** @type {Element} */ (anchor.parentNode);
+			var block_effect = /** @type {import('#client').Effect} */ (current_effect);
+			parent.textContent = '';
+			parent.append(anchor);
+			destroy_effect_children(block_effect);
+			// We've already handled all the effects
+			to_destroy = [];
 		}
 
 		// working from the back, insert new or moved items
