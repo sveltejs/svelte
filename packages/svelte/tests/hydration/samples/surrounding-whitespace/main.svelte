@@ -1,0 +1,1 @@
+{#if true}hello{/if}
