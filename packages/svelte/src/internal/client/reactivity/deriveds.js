@@ -120,6 +120,8 @@ export function destroy_derived(signal) {
 	remove_reactions(signal, 0);
 	set_signal_status(signal, DESTROYED);
 
+	// TODO we need to ensure we remove the derived from any parent derives
+
 	signal.first =
 		signal.last =
 		signal.deps =
