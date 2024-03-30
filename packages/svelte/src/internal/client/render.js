@@ -6,7 +6,7 @@ import {
 	empty,
 	init_operations
 } from './dom/operations.js';
-import { PassiveDelegatedEvents } from '../../constants.js';
+import { HYDRATION_START, PassiveDelegatedEvents } from '../../constants.js';
 import { flush_sync, push, pop, current_component_context, untrack } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
 import {
@@ -121,8 +121,7 @@ export function mount(component, options) {
  * @returns {Exports}
  */
 export function hydrate(component, options) {
-	const container = options.target;
-	const first_child = /** @type {ChildNode} */ (container.firstChild);
+	const target = options.target;
 	const previous_hydrate_nodes = hydrate_nodes;
 
 	let hydrated = false;
@@ -132,7 +131,19 @@ export function hydrate(component, options) {
 		return flush_sync(() => {
 			set_hydrating(true);
 
-			const anchor = hydrate_anchor(first_child);
+			var node = target.firstChild;
+			while (
+				node &&
+				(node.nodeType !== 8 || /** @type {Comment} */ (node).data !== HYDRATION_START)
+			) {
+				node = node.nextSibling;
+			}
+
+			if (!node) {
+				throw new Error('Missing hydration marker');
+			}
+
+			const anchor = hydrate_anchor(node);
 			const instance = _mount(component, { ...options, anchor });
 
 			// flush_sync will run this callback and then synchronously run any pending effects,
@@ -153,7 +164,7 @@ export function hydrate(component, options) {
 				error
 			);
 
-			clear_text_content(container);
+			clear_text_content(target);
 
 			set_hydrating(false);
 			return mount(component, options);

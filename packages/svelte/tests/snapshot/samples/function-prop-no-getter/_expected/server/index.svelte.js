@@ -13,7 +13,7 @@ export default function Function_prop_no_getter($$payload, $$props) {
 
 	const plusOne = (num) => num + 1;
 
-	$$payload.out += `<![>`;
+	$$payload.out += `<!--[-->`;
 
 	Button($$payload, {
 		onmousedown: () => count += 1,
@@ -24,6 +24,6 @@ export default function Function_prop_no_getter($$payload, $$props) {
 		}
 	});
 
-	$$payload.out += `<!]>`;
+	$$payload.out += `<!--]-->`;
 	$.pop();
 }

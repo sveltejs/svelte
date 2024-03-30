@@ -1,3 +1,5 @@
+import { HYDRATION_END, HYDRATION_START } from '../../../constants.js';
+
 /**
  * Use this variable to guard everything related to hydration code so it can be treeshaken out
  * if the user doesn't use the `hydrate` method and these code paths are therefore not needed.
@@ -23,7 +25,7 @@ export function set_hydrate_nodes(nodes) {
 }
 
 /**
- * This function is only called when `hydrating` is true. If passed a `<![>` opening
+ * This function is only called when `hydrating` is true. If passed a `<!--[-->` opening
  * hydration marker, it finds the corresponding closing marker and sets `hydrate_nodes`
  * to everything between the markers, before returning the closing marker.
  * @param {Node} node
@@ -37,7 +39,7 @@ export function hydrate_anchor(node) {
 	var current = /** @type {Node | null} */ (node);
 
 	// TODO this could have false positives, if a user comment consisted of `[`. need to tighten that up
-	if (/** @type {Comment} */ (current)?.data !== '[') {
+	if (/** @type {Comment} */ (current)?.data !== HYDRATION_START) {
 		return node;
 	}
 
@@ -49,9 +51,9 @@ export function hydrate_anchor(node) {
 		if (current.nodeType === 8) {
 			var data = /** @type {Comment} */ (current).data;
 
-			if (data === '[') {
+			if (data === HYDRATION_START) {
 				depth += 1;
-			} else if (data === ']') {
+			} else if (data === HYDRATION_END) {
 				if (depth === 0) {
 					hydrate_nodes = /** @type {import('#client').TemplateNode[]} */ (nodes);
 					return current;

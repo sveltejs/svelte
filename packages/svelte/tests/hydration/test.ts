@@ -34,17 +34,11 @@ interface HydrationTest extends BaseTest {
 	after_test?: () => void;
 }
 
-const { test, run } = suite<HydrationTest>(async (config, cwd) => {
-	/**
-	 * Read file and remove whitespace between ssr comments
-	 */
-	function read_html(path: string, fallback?: string): string {
-		const html = fs.readFileSync(fallback && !fs.existsSync(path) ? fallback : path, 'utf-8');
-		return config.trim_whitespace !== false
-			? html.replace(/(<!--ssr:.?-->)[ \t\n\r\f]+(<!--ssr:.?-->)/g, '$1$2')
-			: html;
-	}
+function read(path: string): string | void {
+	return fs.existsSync(path) ? fs.readFileSync(path, 'utf-8') : undefined;
+}
 
+const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 	if (!config.load_compiled) {
 		await compile_directory(cwd, 'client', { accessors: true, ...config.compileOptions });
 		await compile_directory(cwd, 'server', config.compileOptions);
@@ -58,7 +52,7 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 	});
 
 	fs.writeFileSync(`${cwd}/_output/body.html`, rendered.html + '\n');
-	target.innerHTML = rendered.html;
+	target.innerHTML = read(`${cwd}/_override.html`) ?? rendered.html;
 
 	if (rendered.head) {
 		fs.writeFileSync(`${cwd}/_output/head.html`, rendered.head + '\n');
@@ -97,15 +91,11 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 			assert.ok(!got_hydration_error, 'Unexpected hydration error');
 		}
 
-		const expected = fs.existsSync(`${cwd}/_expected.html`)
-			? read_html(`${cwd}/_expected.html`)
-			: rendered.html;
+		const expected = read(`${cwd}/_expected.html`) ?? rendered.html;
 		assert_html_equal(target.innerHTML, expected);
 
 		if (rendered.head) {
-			const expected = fs.existsSync(`${cwd}/_expected_head.html`)
-				? read_html(`${cwd}/_expected_head.html`)
-				: rendered.head;
+			const expected = read(`${cwd}/_expected_head.html`) ?? rendered.head;
 			assert_html_equal(head.innerHTML, expected);
 		}
 

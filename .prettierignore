@@ -10,10 +10,8 @@ packages/svelte/tests/**/_actual*
 packages/svelte/tests/**/expected*
 packages/svelte/tests/**/_output
 packages/svelte/tests/**/shards/*.test.js
-packages/svelte/tests/hydration/samples/*/_before.html
-packages/svelte/tests/hydration/samples/*/_before_head.html
-packages/svelte/tests/hydration/samples/*/_after.html
-packages/svelte/tests/hydration/samples/*/_after_head.html
+packages/svelte/tests/hydration/samples/*/_expected.html
+packages/svelte/tests/hydration/samples/*/_override.html
 packages/svelte/types
 packages/svelte/compiler.cjs
 playgrounds/demo/src

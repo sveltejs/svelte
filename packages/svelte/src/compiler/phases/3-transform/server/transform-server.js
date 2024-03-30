@@ -24,11 +24,11 @@ import { create_attribute, is_custom_element_node, is_element_node } from '../..
 import { error } from '../../../errors.js';
 import { binding_properties } from '../../bindings.js';
 import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patterns.js';
-import { DOMBooleanAttributes } from '../../../../constants.js';
+import { DOMBooleanAttributes, HYDRATION_END, HYDRATION_START } from '../../../../constants.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
 
-const block_open = t_string('<![>');
-const block_close = t_string('<!]>');
+export const block_open = t_string(`<!--${HYDRATION_START}-->`);
+export const block_close = t_string(`<!--${HYDRATION_END}-->`);
 
 /**
  * @param {string} value
