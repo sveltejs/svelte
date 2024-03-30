@@ -6,7 +6,13 @@ import {
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED
 } from '../../../../constants.js';
-import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
+import {
+	HYDRATION_START,
+	hydrate_anchor,
+	hydrate_nodes,
+	hydrating,
+	set_hydrating
+} from '../hydration.js';
 import { empty } from '../operations.js';
 import { remove } from '../reconciler.js';
 import { untrack } from '../../runtime.js';
@@ -117,7 +123,10 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 			var child_anchor = hydrate_nodes[0];
 
 			for (var i = 0; i < length; i++) {
-				if (child_anchor.nodeType !== 8 || /** @type {Comment} */ (child_anchor).data !== '[') {
+				if (
+					child_anchor.nodeType !== 8 ||
+					/** @type {Comment} */ (child_anchor).data !== HYDRATION_START
+				) {
 					// If `nodes` is null, then that means that the server rendered fewer items than what
 					// expected, so break out and continue appending non-hydrated items
 					mismatch = true;

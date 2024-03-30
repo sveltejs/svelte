@@ -10,6 +10,7 @@ import { PassiveDelegatedEvents } from '../../constants.js';
 import { flush_sync, push, pop, current_component_context, untrack } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
 import {
+	HYDRATION_START,
 	hydrate_anchor,
 	hydrate_nodes,
 	hydrating,
@@ -132,7 +133,10 @@ export function hydrate(component, options) {
 			set_hydrating(true);
 
 			var node = target.firstChild;
-			while (node && (node.nodeType !== 8 || /** @type {Comment} */ (node).data !== '[')) {
+			while (
+				node &&
+				(node.nodeType !== 8 || /** @type {Comment} */ (node).data !== HYDRATION_START)
+			) {
 				node = node.nextSibling;
 			}
 
