@@ -9,6 +9,7 @@ import {
 } from '../../constants.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
+import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 
 /**
  * @typedef {{
@@ -161,11 +162,11 @@ export function element(payload, tag, attributes_fn, children_fn) {
 
 	if (!VoidElements.has(tag)) {
 		if (tag !== 'textarea') {
-			payload.out += '<!--[-->';
+			payload.out += BLOCK_OPEN;
 		}
 		children_fn();
 		if (tag !== 'textarea') {
-			payload.out += '<!--]-->';
+			payload.out += BLOCK_CLOSE;
 		}
 		payload.out += `</${tag}>`;
 	}
@@ -187,7 +188,7 @@ export function render(component, options) {
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
-	payload.out += '<!--[-->';
+	payload.out += BLOCK_OPEN;
 
 	if (options.context) {
 		push();
@@ -200,14 +201,14 @@ export function render(component, options) {
 		pop();
 	}
 
-	payload.out += '<!--]-->';
+	payload.out += BLOCK_CLOSE;
 	for (const cleanup of on_destroy) cleanup();
 	on_destroy = prev_on_destroy;
 
 	return {
 		head:
 			payload.head.out || payload.head.title
-				? payload.head.title + '<!--[-->' + payload.head.out + '<!--]-->'
+				? payload.head.title + BLOCK_OPEN + payload.head.out + BLOCK_CLOSE
 				: '',
 		html: payload.out
 	};

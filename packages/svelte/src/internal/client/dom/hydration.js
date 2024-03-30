@@ -1,5 +1,4 @@
-export const HYDRATION_START = '[';
-export const HYDRATION_END = ']';
+import { HYDRATION_END, HYDRATION_START } from '../../../constants.js';
 
 /**
  * Use this variable to guard everything related to hydration code so it can be treeshaken out

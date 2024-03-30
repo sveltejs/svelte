@@ -6,11 +6,10 @@ import {
 	empty,
 	init_operations
 } from './dom/operations.js';
-import { PassiveDelegatedEvents } from '../../constants.js';
+import { HYDRATION_START, PassiveDelegatedEvents } from '../../constants.js';
 import { flush_sync, push, pop, current_component_context, untrack } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
 import {
-	HYDRATION_START,
 	hydrate_anchor,
 	hydrate_nodes,
 	hydrating,

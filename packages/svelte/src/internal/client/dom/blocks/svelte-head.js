@@ -1,12 +1,7 @@
-import {
-	HYDRATION_START,
-	hydrate_anchor,
-	hydrate_nodes,
-	hydrating,
-	set_hydrate_nodes
-} from '../hydration.js';
+import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrate_nodes } from '../hydration.js';
 import { empty } from '../operations.js';
 import { block } from '../../reactivity/effects.js';
+import { HYDRATION_START } from '../../../../constants.js';
 
 /**
  * @param {(anchor: Node) => import('#client').Dom | void} render_fn

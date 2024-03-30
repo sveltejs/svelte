@@ -4,15 +4,10 @@ import {
 	EACH_IS_CONTROLLED,
 	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
-	EACH_KEYED
+	EACH_KEYED,
+	HYDRATION_START
 } from '../../../../constants.js';
-import {
-	HYDRATION_START,
-	hydrate_anchor,
-	hydrate_nodes,
-	hydrating,
-	set_hydrating
-} from '../hydration.js';
+import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import { remove } from '../reconciler.js';
 import { untrack } from '../../runtime.js';
