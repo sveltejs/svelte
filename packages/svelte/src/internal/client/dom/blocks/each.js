@@ -10,7 +10,7 @@ import {
 import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import { remove } from '../reconciler.js';
-import { untrack } from '../../runtime.js';
+import { current_effect, destroy_effect_children, untrack } from '../../runtime.js';
 import {
 	block,
 	branch,
@@ -147,8 +147,30 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 		}
 
 		if (!hydrating) {
-			// TODO add 'empty controlled block' optimisation here
-			reconcile_fn(array, state, anchor, render_fn, flags, keys);
+			var items = state.items;
+			var apply_controlled_optimization = is_controlled && length === 0 && items.length !== 0;
+
+			// We need to see if there are any active transitions, which means we will need to bail-out.
+			if (apply_controlled_optimization) {
+				for (i = 0; i < items.length; i++) {
+					if (items[i].e.transitions !== null) {
+						apply_controlled_optimization = false;
+					}
+				}
+			}
+
+			if (apply_controlled_optimization) {
+				// Fast-path for clearing the DOM elements
+				var parent = /** @type {Element} */ (anchor.parentNode);
+				var block_effect = /** @type {import('#client').Effect} */ (current_effect);
+				// The fastest way to clear all the DOM nodes from an element.
+				parent.textContent = '';
+				parent.append(anchor);
+				destroy_effect_children(block_effect);
+				state.items = [];
+			} else {
+				reconcile_fn(array, state, anchor, render_fn, flags, keys);
+			}
 		}
 
 		if (fallback_fn !== null) {
