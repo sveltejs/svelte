@@ -21,8 +21,10 @@ export interface Reaction extends Signal {
 	fn: Function;
 	/** Signals that this signal reads from */
 	deps: null | Value[];
-	/** Effects created inside this signal */
-	effects: null | Effect[];
+	/** First child effect created inside this signal */
+	first: null | Effect;
+	/** Last child effect created inside this signal */
+	last: null | Effect;
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {
@@ -43,6 +45,10 @@ export interface Effect extends Reaction {
 	teardown: null | (() => void);
 	/** Transition managers created with `$.transition` */
 	transitions: null | TransitionManager[];
+	/** Next sibling child effect created inside the parent signal */
+	prev: null | Effect;
+	/** Next sibling child effect created inside the parent signal */
+	next: null | Effect;
 }
 
 export interface ValueDebug<V = unknown> extends Value<V> {
