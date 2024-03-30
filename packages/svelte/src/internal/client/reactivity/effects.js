@@ -4,7 +4,7 @@ import {
 	current_component_context,
 	current_effect,
 	current_reaction,
-	destroy_children,
+	destroy_effect_children,
 	execute_effect,
 	get,
 	is_flushing_effect,
@@ -21,14 +21,29 @@ import {
 	EFFECT,
 	DESTROYED,
 	INERT,
-	IS_ELSEIF,
 	EFFECT_RAN,
 	BLOCK_EFFECT,
-	ROOT_EFFECT
+	ROOT_EFFECT,
+	IS_ELSEIF
 } from '../constants.js';
 import { set } from './sources.js';
 import { noop } from '../../shared/utils.js';
 import { remove } from '../dom/reconciler.js';
+
+/**
+ * @param {import("#client").Effect} effect
+ * @param {import("#client").Reaction} parent_effect
+ */
+export function push_effect(effect, parent_effect) {
+	var parent_last = parent_effect.last;
+	if (parent_last === null) {
+		parent_effect.last = parent_effect.first = effect;
+	} else {
+		parent_last.next = effect;
+		effect.prev = parent_last;
+		parent_effect.last = effect;
+	}
+}
 
 /**
  * @param {number} type
@@ -40,23 +55,22 @@ function create_effect(type, fn, sync) {
 	var is_root = (type & ROOT_EFFECT) !== 0;
 	/** @type {import('#client').Effect} */
 	var effect = {
-		parent: is_root ? null : current_effect,
-		dom: null,
-		deps: null,
-		f: type | DIRTY,
-		fn,
-		effects: null,
-		teardown: null,
 		ctx: current_component_context,
+		deps: null,
+		dom: null,
+		f: type | DIRTY,
+		first: null,
+		fn,
+		last: null,
+		next: null,
+		parent: is_root ? null : current_effect,
+		prev: null,
+		teardown: null,
 		transitions: null
 	};
 
 	if (current_reaction !== null && !is_root) {
-		if (current_reaction.effects === null) {
-			current_reaction.effects = [effect];
-		} else {
-			current_reaction.effects.push(effect);
-		}
+		push_effect(effect, current_reaction);
 	}
 
 	if (sync) {
@@ -221,7 +235,7 @@ export function branch(fn) {
  * @returns {void}
  */
 export function destroy_effect(effect) {
-	destroy_children(effect);
+	destroy_effect_children(effect);
 	remove_reactions(effect, 0);
 	set_signal_status(effect, DESTROYED);
 
@@ -239,15 +253,31 @@ export function destroy_effect(effect) {
 
 	var parent = effect.parent;
 
-	if (parent !== null && (effect.f & BRANCH_EFFECT) !== 0) {
-		var effects = parent.effects;
-		if (effects !== null) {
-			var index = effects.indexOf(effect);
-			effects.splice(index, 1);
+	// If the parent doesn't have any children, then skip this work altogether
+	if (parent !== null && (effect.f & BRANCH_EFFECT) !== 0 && parent.first !== null) {
+		var previous = effect.prev;
+		var next = effect.next;
+		if (previous !== null) {
+			if (next !== null) {
+				previous.next = next;
+				next.prev = previous;
+			} else {
+				previous.next = null;
+				parent.last = previous;
+			}
+		} else if (next !== null) {
+			next.prev = null;
+			parent.first = next;
+		} else {
+			parent.first = null;
+			parent.last = null;
 		}
 	}
 
-	effect.effects =
+	effect.first =
+		effect.last =
+		effect.next =
+		effect.prev =
 		effect.teardown =
 		effect.ctx =
 		effect.dom =
@@ -334,11 +364,14 @@ function pause_children(effect, transitions, local) {
 		}
 	}
 
-	if (effect.effects !== null) {
-		for (const child of effect.effects) {
-			var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & BRANCH_EFFECT) !== 0;
-			pause_children(child, transitions, transparent ? local : false);
-		}
+	var child = effect.first;
+
+	while (child !== null) {
+		var sibling = child.next;
+		var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & BRANCH_EFFECT) !== 0;
+		// TODO we don't need to call pause_children recursively with a linked list in place
+		pause_children(child, transitions, transparent ? local : false);
+		child = sibling;
 	}
 }
 
@@ -365,11 +398,14 @@ function resume_children(effect, local) {
 		execute_effect(effect);
 	}
 
-	if (effect.effects !== null) {
-		for (const child of effect.effects) {
-			var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & BRANCH_EFFECT) !== 0;
-			resume_children(child, transparent ? local : false);
-		}
+	var child = effect.first;
+
+	while (child !== null) {
+		var sibling = child.next;
+		var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & BRANCH_EFFECT) !== 0;
+		// TODO we don't need to call resume_children recursively with a linked list in place
+		resume_children(child, transparent ? local : false);
+		child = sibling;
 	}
 
 	if (effect.transitions !== null) {

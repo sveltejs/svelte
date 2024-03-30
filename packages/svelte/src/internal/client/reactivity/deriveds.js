@@ -7,10 +7,10 @@ import {
 	set_signal_status,
 	mark_reactions,
 	current_skip_reaction,
-	execute_reaction_fn
+	execute_reaction_fn,
+	destroy_effect_children
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
-import { destroy_effect } from './effects.js';
 
 export let updating_derived = false;
 
@@ -26,13 +26,14 @@ export function derived(fn) {
 
 	/** @type {import('#client').Derived<V>} */
 	const signal = {
-		reactions: null,
 		deps: null,
+		deriveds: null,
 		equals,
 		f: flags,
+		first: null,
 		fn,
-		effects: null,
-		deriveds: null,
+		last: null,
+		reactions: null,
 		v: /** @type {V} */ (null),
 		version: 0
 	};
@@ -70,20 +71,12 @@ export function derived_safe_equal(fn) {
  * @returns {void}
  */
 function destroy_derived_children(signal) {
-	var effects = signal.effects;
-
-	// TODO: should it be possible to create effects in deriveds given they're meant to be pure?
-	if (effects !== null) {
-		signal.effects = null;
-		for (var i = 0; i < effects.length; i += 1) {
-			destroy_effect(effects[i]);
-		}
-	}
+	destroy_effect_children(signal);
 	var deriveds = signal.deriveds;
 
 	if (deriveds !== null) {
 		signal.deriveds = null;
-		for (i = 0; i < deriveds.length; i += 1) {
+		for (var i = 0; i < deriveds.length; i += 1) {
 			destroy_derived(deriveds[i]);
 		}
 	}
@@ -127,7 +120,10 @@ export function destroy_derived(signal) {
 	remove_reactions(signal, 0);
 	set_signal_status(signal, DESTROYED);
 
-	signal.effects =
+	// TODO we need to ensure we remove the derived from any parent derives
+
+	signal.first =
+		signal.last =
 		signal.deps =
 		signal.reactions =
 		// @ts-expect-error `signal.fn` cannot be `null` while the signal is alive
