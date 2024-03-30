@@ -27,8 +27,8 @@ import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patte
 import { DOMBooleanAttributes } from '../../../../constants.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
 
-const block_open = t_string('<![>');
-const block_close = t_string('<!]>');
+const block_open = t_string('<!--[-->');
+const block_close = t_string('<!--]-->');
 
 /**
  * @param {string} value
