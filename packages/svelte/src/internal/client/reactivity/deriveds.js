@@ -11,7 +11,6 @@ import {
 	destroy_effect_children
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
-import { destroy_effect } from './effects.js';
 
 export let updating_derived = false;
 
@@ -27,14 +26,14 @@ export function derived(fn) {
 
 	/** @type {import('#client').Derived<V>} */
 	const signal = {
-		reactions: null,
 		deps: null,
+		deriveds: null,
 		equals,
 		f: flags,
-		fn,
 		first: null,
+		fn,
 		last: null,
-		deriveds: null,
+		reactions: null,
 		v: /** @type {V} */ (null),
 		version: 0
 	};
