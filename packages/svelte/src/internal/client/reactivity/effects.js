@@ -274,9 +274,8 @@ export function destroy_effect(effect) {
 		}
 	}
 
-	effect.first =
-		effect.last =
-		effect.next =
+	// `first` and `child` are nulled out in destroy_effect_children
+	effect.next =
 		effect.prev =
 		effect.teardown =
 		effect.ctx =
@@ -318,14 +317,15 @@ export function pause_effect(effect, callback = noop) {
 export function pause_effects(effects, callback = noop) {
 	/** @type {import('#client').TransitionManager[]} */
 	var transitions = [];
+	var length = effects.length;
 
-	for (var effect of effects) {
-		pause_children(effect, transitions, true);
+	for (var i = 0; i < length; i++) {
+		pause_children(effects[i], transitions, true);
 	}
 
 	out(transitions, () => {
-		for (var effect of effects) {
-			destroy_effect(effect);
+		for (var i = 0; i < length; i++) {
+			destroy_effect(effects[i]);
 		}
 		callback();
 	});

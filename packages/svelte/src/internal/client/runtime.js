@@ -484,72 +484,92 @@ export function schedule_effect(signal) {
 
 /**
  *
- * This function recursively collects effects in topological order from the starting effect passed in.
- * Effects will be collected when they match the filtered bitwise flag passed in only. The collected
- * array will be populated with all the effects.
- *
- * In an ideal world, we could just execute effects as we encounter them using this approach. However,
- * this isn't possible due to how effects in Svelte are modelled to be possibly side-effectful. Thus,
- * executing an effect might invalidate other parts of the tree, which means this this tree walking function
- * will possibly pick up effects that are dirty too soon.
+ * This function both runs render effects and collects user effects in topological order
+ * from the starting effect passed in. Effects will be collected when they match the filtered
+ * bitwise flag passed in only. The collected effects array will be populated with all the user
+ * effects to be flushed.
  *
  * @param {import('./types.js').Effect} effect
  * @param {number} filter_flags
  * @param {boolean} shallow
- * @param {import('./types.js').Effect[]} collected_user
+ * @param {import('./types.js').Effect[]} collected_effects
  * @returns {void}
  */
-function recursively_process_effects(effect, filter_flags, shallow, collected_user) {
-	var current_child = effect.first;
-	var user = [];
+function process_effects(effect, filter_flags, shallow, collected_effects) {
+	var current_effect = effect.first;
+	var effects = [];
 
-	while (current_child !== null) {
-		var child = current_child;
-		current_child = child.next;
-		var flags = child.f;
-		var is_inactive = (flags & (DESTROYED | INERT)) !== 0;
-		if (is_inactive) continue;
+	main_loop: while (current_effect !== null) {
+		var flags = current_effect.f;
+		// TODO: we probably don't need to check for destroyed as it shouldn't be encountered?
+		var is_active = (flags & (DESTROYED | INERT)) === 0;
 		var is_branch = flags & BRANCH_EFFECT;
 		var is_clean = (flags & CLEAN) !== 0;
+		var child = current_effect.first;
 
-		if (is_branch) {
-			// Skip this branch if it's clean
-			if (is_clean) continue;
-			set_signal_status(child, CLEAN);
-		}
-
-		if ((flags & RENDER_EFFECT) !== 0) {
+		// Skip this branch if it's clean
+		if (is_active && (!is_branch || !is_clean)) {
 			if (is_branch) {
-				if (shallow) continue;
-				// TODO we don't need to call recursively_process_effects recursively with a linked list in place
-				recursively_process_effects(child, filter_flags, false, collected_user);
-			} else {
-				if (check_dirtiness(child)) {
-					execute_effect(child);
-				}
-				// TODO we don't need to call recursively_process_effects recursively with a linked list in place
-				recursively_process_effects(child, filter_flags, false, collected_user);
+				set_signal_status(current_effect, CLEAN);
 			}
-		} else if ((flags & EFFECT) !== 0) {
-			if (is_branch || is_clean) {
-				if (shallow) continue;
-				// TODO we don't need to call recursively_process_effects recursively with a linked list in place
-				recursively_process_effects(child, filter_flags, false, collected_user);
-			} else {
-				user.push(child);
+
+			if ((flags & RENDER_EFFECT) !== 0) {
+				if (is_branch) {
+					if (!shallow && child !== null) {
+						current_effect = child;
+						continue;
+					}
+				} else {
+					if (check_dirtiness(current_effect)) {
+						execute_effect(current_effect);
+						// Child might have been mutated since running the effect
+						child = current_effect.first;
+					}
+					if (!shallow && child !== null) {
+						current_effect = child;
+						continue;
+					}
+				}
+			} else if ((flags & EFFECT) !== 0) {
+				if (is_branch || is_clean) {
+					if (!shallow && child !== null) {
+						current_effect = child;
+						continue;
+					}
+				} else {
+					effects.push(current_effect);
+				}
 			}
 		}
+		var sibling = current_effect.next;
+
+		if (sibling === null) {
+			let parent = current_effect.parent;
+
+			while (parent !== null) {
+				if (effect === parent) {
+					break main_loop;
+				}
+				var parent_sibling = parent.next;
+				if (parent_sibling !== null) {
+					current_effect = parent_sibling;
+					continue main_loop;
+				}
+				parent = parent.parent;
+			}
+		}
+
+		current_effect = sibling;
 	}
 
-	if (user.length > 0) {
+	if (effects.length > 0) {
 		if ((filter_flags & EFFECT) !== 0) {
-			collected_user.push(...user);
+			collected_effects.push(...effects);
 		}
 
 		if (!shallow) {
-			for (var i = 0; i < user.length; i++) {
-				// TODO we don't need to call recursively_process_effects recursively with a linked list in place
-				recursively_process_effects(user[i], filter_flags, false, collected_user);
+			for (var i = 0; i < effects.length; i++) {
+				process_effects(effects[i], filter_flags, false, collected_effects);
 			}
 		}
 	}
@@ -568,7 +588,7 @@ function recursively_process_effects(effect, filter_flags, shallow, collected_us
  */
 function flush_nested_effects(effect, filter_flags, shallow = false) {
 	/** @type {import('#client').Effect[]} */
-	var user_effects = [];
+	var collected_effects = [];
 
 	var previously_flushing_effect = is_flushing_effect;
 	is_flushing_effect = true;
@@ -578,8 +598,8 @@ function flush_nested_effects(effect, filter_flags, shallow = false) {
 		if (effect.first === null && (effect.f & BRANCH_EFFECT) === 0) {
 			flush_queued_effects([effect]);
 		} else {
-			recursively_process_effects(effect, filter_flags, shallow, user_effects);
-			flush_queued_effects(user_effects);
+			process_effects(effect, filter_flags, shallow, collected_effects);
+			flush_queued_effects(collected_effects);
 		}
 	} finally {
 		is_flushing_effect = previously_flushing_effect;
