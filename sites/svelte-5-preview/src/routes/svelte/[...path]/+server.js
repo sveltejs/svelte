@@ -4,7 +4,8 @@ import { read } from '$app/server';
 
 const files = import.meta.glob('../../../../../../packages/svelte/src/**/*.js', {
 	eager: true,
-	as: 'url'
+	query: '?url',
+	import: 'default'
 });
 
 const prefix = '../../../../../../packages/svelte/';
