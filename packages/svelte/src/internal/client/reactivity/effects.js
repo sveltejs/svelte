@@ -274,9 +274,8 @@ export function destroy_effect(effect) {
 		}
 	}
 
-	effect.first =
-		effect.last =
-		effect.next =
+	// `first` and `child` are nulled out in destroy_effect_children
+	effect.next =
 		effect.prev =
 		effect.teardown =
 		effect.ctx =
@@ -318,14 +317,17 @@ export function pause_effect(effect, callback = noop) {
 export function pause_effects(effects, callback = noop) {
 	/** @type {import('#client').TransitionManager[]} */
 	var transitions = [];
+	var length = effects.length;
 
-	for (var effect of effects) {
-		pause_children(effect, transitions, true);
+	for (var i = 0; i < length; i++) {
+		pause_children(effects[i], transitions, true);
 	}
 
+	// TODO: would be good to avoid this closure in the case where we have no
+	// transitions at all. It would make it far more JIT friendly in the hot cases.
 	out(transitions, () => {
-		for (var effect of effects) {
-			destroy_effect(effect);
+		for (var i = 0; i < length; i++) {
+			destroy_effect(effects[i]);
 		}
 		callback();
 	});
@@ -370,6 +372,8 @@ function pause_children(effect, transitions, local) {
 		var sibling = child.next;
 		var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & BRANCH_EFFECT) !== 0;
 		// TODO we don't need to call pause_children recursively with a linked list in place
+		// it's slightly more involved though as we have to account for `transparent` changing
+		// through the tree.
 		pause_children(child, transitions, transparent ? local : false);
 		child = sibling;
 	}
@@ -404,6 +408,8 @@ function resume_children(effect, local) {
 		var sibling = child.next;
 		var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & BRANCH_EFFECT) !== 0;
 		// TODO we don't need to call resume_children recursively with a linked list in place
+		// it's slightly more involved though as we have to account for `transparent` changing
+		// through the tree.
 		resume_children(child, transparent ? local : false);
 		child = sibling;
 	}

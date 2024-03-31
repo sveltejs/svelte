@@ -423,6 +423,8 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 		});
 	}
 
+	// TODO: would be good to avoid this closure in the case where we have no
+	// transitions at all. It would make it far more JIT friendly in the hot cases.
 	pause_effects(to_destroy, () => {
 		state.items = b_items;
 	});
