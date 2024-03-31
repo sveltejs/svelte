@@ -27,7 +27,14 @@ Also, this month, a ton of new features have been merged into Svelte 5 to make i
 
 ## What's new in SvelteKit
 
-Just bugfixes this month! For all the changes in kit, check out the [CHANGELOG](https://github.com/sveltejs/kit/blob/main/packages/kit/CHANGELOG.md).
+- `adapter-vercel` now has Skew Protection which ensures that the client and server stay in sync for any particular deployment (**@sveltejs/adapter-vercel@5.2.0**, [Docs](https://vercel.com/docs/deployments/skew-protection), [#11987](https://github.com/sveltejs/kit/pull/11987))
+- `adapter-vercel`'s build output files now include framework metadata - improving observability on the platform (**@sveltejs/adapter-vercel@5.2.0**, [#11800](https://github.com/sveltejs/kit/pull/11800))
+- `adapter-cloudflare` and `adapter-cloudflare-workers` now include `adapter.emulate` which allows the adapter to influence the environment during dev, build and prerendering ([#11732](https://github.com/sveltejs/kit/pull/11732))
+- **Breaking:** `adapter-node` now shuts down gracefully and supports the new `IDLE_TIMEOUT` and `SHUTDOWN_TIMEOUT` environment variables (**@sveltejs/adapter-node@5.0.1**, [Docs](https://kit.svelte.dev/docs/adapter-node#environment-variables-shutdown-timeout), [#11653](https://github.com/sveltejs/kit/pull/11653))
+- **Breaking:** The default value of `precompress` in `adapter-node` is now `true` - making sites faster by default (**@sveltejs/adapter-node@5.0.0**, [Docs](https://kit.svelte.dev/docs/adapter-node#options-precompress), [#11945](https://github.com/sveltejs/kit/pull/11945))
+- Google Cloud is now supported in `adapter-auto` without any additional configuration (**@sveltejs/adapter-auto@3.2.0**, [Docs](https://kit.svelte.dev/docs/adapter-auto), [#12015](https://github.com/sveltejs/kit/pull/12015))
+
+For all the changes in SvelteKit, including bug fixes and adapter-specific changes check out the [CHANGELOGs in each of the packages](https://github.com/sveltejs/kit/tree/f1e73c2fe54280d254a1bdfba430a678f4db527a/packages).
 
 
 ---
@@ -46,6 +53,8 @@ Just bugfixes this month! For all the changes in kit, check out the [CHANGELOG](
 - [Bird Flapping](https://github.com/zonetecde/bird-flapping) is that game with a flapping bird (not to be confused with FlappyBird)
 - [Minesweeper](https://codeberg.org/wires5210/minesweeper-funnymode) FUNNYMODE is minesweeper, but FUNNY
 - [Routickr](https://www.routickr.com/) is a habit-tracking app with Firefox and Chrome extensions
+- [immich](https://immich.app/) is a self-hosted photo and video management solution
+
 
 **Learning Resources**
 
