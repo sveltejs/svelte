@@ -5,6 +5,7 @@ import {
 	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED,
+	HYDRATION_END_ELSE,
 	HYDRATION_START
 } from '../../../../constants.js';
 import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
@@ -97,16 +98,13 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 		let mismatch = false;
 
 		if (hydrating) {
-			var is_else = /** @type {Comment} */ (hydrate_nodes?.[0])?.data === 'ssr:each_else';
+			var is_else = /** @type {Comment} */ (anchor).data === HYDRATION_END_ELSE;
 
 			if (is_else !== (length === 0)) {
 				// hydration mismatch — remove the server-rendered DOM and start over
 				remove(hydrate_nodes);
 				set_hydrating(false);
 				mismatch = true;
-			} else if (is_else) {
-				// Remove the each_else comment node or else it will confuse the subsequent hydration algorithm
-				/** @type {import('#client').TemplateNode[]} */ (hydrate_nodes).shift();
 			}
 		}
 

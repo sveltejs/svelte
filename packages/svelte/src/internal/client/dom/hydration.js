@@ -53,7 +53,7 @@ export function hydrate_anchor(node) {
 
 			if (data === HYDRATION_START) {
 				depth += 1;
-			} else if (data === HYDRATION_END) {
+			} else if (data[0] === HYDRATION_END) {
 				if (depth === 0) {
 					hydrate_nodes = /** @type {import('#client').TemplateNode[]} */ (nodes);
 					return current;

@@ -2,6 +2,7 @@ import { IS_ELSEIF } from '../../constants.js';
 import { hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
 import { remove } from '../reconciler.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
+import { HYDRATION_END_ELSE } from '../../../../constants.js';
 
 /**
  * @param {Comment} anchor
@@ -34,21 +35,14 @@ export function if_block(
 		let mismatch = false;
 
 		if (hydrating) {
-			const comment_text = /** @type {Comment} */ (hydrate_nodes?.[0])?.data;
+			const is_else = anchor.data === HYDRATION_END_ELSE;
 
-			if (
-				!comment_text ||
-				(comment_text === 'ssr:if:true' && !condition) ||
-				(comment_text === 'ssr:if:false' && condition)
-			) {
+			if (condition === is_else) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.
-				// This could happen using when `{#if browser} .. {/if}` in SvelteKit.
+				// This could happen with `{#if browser}...{/if}`, for example
 				remove(hydrate_nodes);
 				set_hydrating(false);
 				mismatch = true;
-			} else {
-				// Remove the ssr:if comment node or else it will confuse the subsequent hydration algorithm
-				hydrate_nodes.shift();
 			}
 		}
 
