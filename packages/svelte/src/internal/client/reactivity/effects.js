@@ -53,6 +53,7 @@ export function push_effect(effect, parent_effect) {
  */
 function create_effect(type, fn, sync) {
 	var is_root = (type & ROOT_EFFECT) !== 0;
+
 	/** @type {import('#client').Effect} */
 	var effect = {
 		ctx: current_component_context,
@@ -150,9 +151,7 @@ export function user_pre_effect(fn) {
  * @returns {() => void}
  */
 export function effect_root(fn) {
-	// TODO is `untrack` correct here? Should `fn` re-run if its dependencies change?
-	// Should it even be modelled as an effect?
-	const effect = create_effect(ROOT_EFFECT, () => untrack(fn), true);
+	const effect = create_effect(ROOT_EFFECT, fn, true);
 	return () => {
 		destroy_effect(effect);
 	};
