@@ -498,7 +498,7 @@ By default props are treated as readonly, meaning reassignments will not propaga
 
 Note that you can still use `export const` and `export function` to expose things to users of your component (if they're using `bind:this`, for example).
 
-### `$bindable()`
+## `$bindable`
 
 To declare props as bindable, use `$bindable()`. Besides using them as regular props, the parent can (_can_, not _must_) then also `bind:` to them.
 
