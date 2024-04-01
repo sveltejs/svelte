@@ -1500,24 +1500,28 @@ const template_visitors = {
 			b.update('++', index, false),
 			b.block(each)
 		);
+
+		const close = b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE)));
+
 		if (node.fallback) {
-			const fallback_stmts = create_block(node, node.fallback.nodes, context);
-			fallback_stmts.unshift(
-				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!ssr:each_else>')))
+			const fallback = create_block(node, node.fallback.nodes, context);
+
+			fallback.push(
+				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(`<!--${HYDRATION_END}!-->`)))
 			);
+
 			state.template.push(
 				t_statement(
 					b.if(
 						b.binary('!==', b.member(array_id, b.id('length')), b.literal(0)),
-						for_loop,
-						b.block(fallback_stmts)
+						b.block([for_loop, close]),
+						b.block(fallback)
 					)
 				)
 			);
 		} else {
-			state.template.push(t_statement(for_loop));
+			state.template.push(t_statement(for_loop), t_statement(close));
 		}
-		state.template.push(block_close);
 	},
 	IfBlock(node, context) {
 		const state = context.state;

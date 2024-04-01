@@ -17,6 +17,6 @@ export default function Each_string_template($$payload, $$props) {
 		$$payload.out += "<!--]-->";
 	}
 
-	$$payload.out += `<!--]-->`;
+	$$payload.out += "<!--]-->";
 	$.pop();
 }
