@@ -906,6 +906,7 @@ export interface HTMLDataAttributes extends HTMLAttributes<HTMLDataElement> {
 
 export interface HTMLDetailsAttributes extends HTMLAttributes<HTMLDetailsElement> {
 	open?: boolean | undefined | null;
+	name?: string | undefined | null;
 
 	'bind:open'?: boolean | undefined | null;
 
