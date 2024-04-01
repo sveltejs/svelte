@@ -1,11 +1,11 @@
 ---
 title: "What's new in Svelte: April 2024"
-description: 'Svelte Summit Spring on April 27! Plus: Maps, Dates and Sets'
+description: 'Svelte Summit Spring on April 27! Plus: reactive `Map`, `Date` and `Set`'
 author: Dani Sandoval
 authorURL: https://dreamindani.com
 ---
 
-Spring is just around the corner (for half the globe at least), which means [Svelte Summit Spring](https://www.sveltesummit.com/) is coming soon! The event will take place on April 27 and could feature you (yes you!). The call for proposals is happening now so submit a talk (or three!) at [this form](https://www.sveltesummit.com/2024/spring/submit).
+Spring is just around the corner (for half the globe at least), which means [Svelte Summit Spring](https://www.sveltesummit.com/) is coming soon! The event will be streamed on [the Svelte Society YouTube channel](https://youtube.com/sveltesociety) on April 27.
 
 Also, this month, a ton of new features have been merged into Svelte 5 to make it the best version of Svelte yet. We'll get into them all below, so let's jump right in!
 
@@ -14,7 +14,7 @@ Also, this month, a ton of new features have been merged into Svelte 5 to make i
 
 [Svelte 5 is in preview](https://svelte-5-preview.vercel.app/docs/introduction) and gets closer to release every day. Below, you'll find some highlights from its [changelog](https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md):
 
-- The new `Map`, `Date` and `Set` classes can now be imported from svelte/reactivity and used just like their native counterparts to improve tree-shaking and make these objects fit better into Svelte's reactivity model (**5.0.0-next.79/67/76**,, [Docs](https://svelte-5-preview.vercel.app/docs/runes#state-frozen-reactive-map-set-and-date), [#10803](https://github.com/sveltejs/svelte/pull/10803), [#10622](https://github.com/sveltejs/svelte/pull/10622), [#10781](https://github.com/sveltejs/svelte/pull/10781))
+- The new `Map`, `Date` and `Set` classes can now be imported from `svelte/reactivity` and used just like their native counterparts to fit into Svelte's reactivity model (**5.0.0-next.79**, [Docs](https://svelte-5-preview.vercel.app/docs/runes#state-frozen-reactive-map-set-and-date), [#10803](https://github.com/sveltejs/svelte/pull/10803), [#10622](https://github.com/sveltejs/svelte/pull/10622), [#10781](https://github.com/sveltejs/svelte/pull/10781))
 - state/derived/props can be explicitly exported from components again (**5.0.0-next.62**, [#10523](https://github.com/sveltejs/svelte/pull/10523))
 - `bind:value` now allows for a dynamic `type` attribute - fixing issues with common input bindings (**5.0.0-next.66**, [#10608](https://github.com/sveltejs/svelte/pull/10608))
 - `SSR` HTML mismatch validation has been improved and provides clearer error messages (**5.0.0-next.69**, [#10658](https://github.com/sveltejs/svelte/pull/10658))
@@ -29,7 +29,7 @@ Also, this month, a ton of new features have been merged into Svelte 5 to make i
 
 - `adapter-vercel` now has Skew Protection which ensures that the client and server stay in sync for any particular deployment (**@sveltejs/adapter-vercel@5.2.0**, [Docs](https://vercel.com/docs/deployments/skew-protection), [#11987](https://github.com/sveltejs/kit/pull/11987))
 - `adapter-vercel`'s build output files now include framework metadata - improving observability on the platform (**@sveltejs/adapter-vercel@5.2.0**, [#11800](https://github.com/sveltejs/kit/pull/11800))
-- `adapter-cloudflare` and `adapter-cloudflare-workers` now include `adapter.emulate` which allows the adapter to influence the environment during dev, build and prerendering ([#11732](https://github.com/sveltejs/kit/pull/11732))
+- `adapter-cloudflare` and `adapter-cloudflare-workers` now implement `adapter.emulate` which allows the adapter to emulate the Cloudflare platform during dev and preview ([#11732](https://github.com/sveltejs/kit/pull/11732))
 - **Breaking:** `adapter-node` now shuts down gracefully and supports the new `IDLE_TIMEOUT` and `SHUTDOWN_TIMEOUT` environment variables (**@sveltejs/adapter-node@5.0.1**, [Docs](https://kit.svelte.dev/docs/adapter-node#environment-variables-shutdown-timeout), [#11653](https://github.com/sveltejs/kit/pull/11653))
 - **Breaking:** The default value of `precompress` in `adapter-node` is now `true` - making sites faster by default (**@sveltejs/adapter-node@5.0.0**, [Docs](https://kit.svelte.dev/docs/adapter-node#options-precompress), [#11945](https://github.com/sveltejs/kit/pull/11945))
 - Google Cloud is now supported in `adapter-auto` without any additional configuration (**@sveltejs/adapter-auto@3.2.0**, [Docs](https://kit.svelte.dev/docs/adapter-auto), [#12015](https://github.com/sveltejs/kit/pull/12015))
