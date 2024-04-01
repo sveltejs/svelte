@@ -11,6 +11,7 @@
 **/vite.config.js
 **/vite.prod.config.js
 **/node_modules
+**/compiler/index.js
 
 **/tests/**
 
@@ -20,4 +21,4 @@ documentation/**
 # contains a fork of the REPL which doesn't adhere to eslint rules
 sites/svelte-5-preview/**
 # Wasn't checked previously, reenable at some point
-sites/svelte.dev/** 
+sites/svelte.dev/**

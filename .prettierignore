@@ -13,7 +13,7 @@ packages/svelte/tests/**/shards/*.test.js
 packages/svelte/tests/hydration/samples/*/_expected.html
 packages/svelte/tests/hydration/samples/*/_override.html
 packages/svelte/types
-packages/svelte/compiler.cjs
+packages/svelte/compiler/index.js
 playgrounds/demo/src
 playgrounds/sandbox/input/**.svelte
 playgrounds/sandbox/output
