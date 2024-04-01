@@ -2,7 +2,7 @@ import { IS_ELSEIF } from '../../constants.js';
 import { hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
 import { remove } from '../reconciler.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
-import { HYDRATION_END } from '../../../../constants.js';
+import { HYDRATION_END_ELSE } from '../../../../constants.js';
 
 /**
  * @param {Comment} anchor
@@ -35,7 +35,7 @@ export function if_block(
 		let mismatch = false;
 
 		if (hydrating) {
-			const is_else = anchor.data === `${HYDRATION_END}!`;
+			const is_else = anchor.data === HYDRATION_END_ELSE;
 
 			if (condition === is_else) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.

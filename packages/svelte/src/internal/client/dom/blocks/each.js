@@ -5,7 +5,7 @@ import {
 	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED,
-	HYDRATION_END,
+	HYDRATION_END_ELSE,
 	HYDRATION_START
 } from '../../../../constants.js';
 import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
@@ -98,7 +98,7 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 		let mismatch = false;
 
 		if (hydrating) {
-			var is_else = /** @type {Comment} */ (anchor).data === `${HYDRATION_END}!`;
+			var is_else = /** @type {Comment} */ (anchor).data === HYDRATION_END_ELSE;
 
 			if (is_else !== (length === 0)) {
 				// hydration mismatch — remove the server-rendered DOM and start over

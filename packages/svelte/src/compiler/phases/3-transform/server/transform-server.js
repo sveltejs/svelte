@@ -24,9 +24,14 @@ import { create_attribute, is_custom_element_node, is_element_node } from '../..
 import { error } from '../../../errors.js';
 import { binding_properties } from '../../bindings.js';
 import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patterns.js';
-import { DOMBooleanAttributes, HYDRATION_END, HYDRATION_START } from '../../../../constants.js';
+import {
+	DOMBooleanAttributes,
+	HYDRATION_END,
+	HYDRATION_END_ELSE,
+	HYDRATION_START
+} from '../../../../constants.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
-import { BLOCK_CLOSE } from '../../../../internal/server/hydration.js';
+import { BLOCK_CLOSE, BLOCK_CLOSE_ELSE } from '../../../../internal/server/hydration.js';
 
 export const block_open = t_string(`<!--${HYDRATION_START}-->`);
 export const block_close = t_string(`<!--${HYDRATION_END}-->`);
@@ -1506,9 +1511,7 @@ const template_visitors = {
 		if (node.fallback) {
 			const fallback = create_block(node, node.fallback.nodes, context);
 
-			fallback.push(
-				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(`<!--${HYDRATION_END}!-->`)))
-			);
+			fallback.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE))));
 
 			state.template.push(
 				t_statement(
@@ -1531,9 +1534,7 @@ const template_visitors = {
 		const alternate = node.alternate ? create_block(node, node.alternate.nodes, context) : [];
 
 		consequent.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE))));
-		alternate.push(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(`<!--${HYDRATION_END}!-->`)))
-		);
+		alternate.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE))));
 
 		state.template.push(
 			t_statement(
