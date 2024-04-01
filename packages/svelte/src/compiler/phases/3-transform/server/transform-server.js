@@ -26,6 +26,7 @@ import { binding_properties } from '../../bindings.js';
 import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patterns.js';
 import { DOMBooleanAttributes, HYDRATION_END, HYDRATION_START } from '../../../../constants.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
+import { BLOCK_CLOSE } from '../../../../internal/server/hydration.js';
 
 export const block_open = t_string(`<!--${HYDRATION_START}-->`);
 export const block_close = t_string(`<!--${HYDRATION_END}-->`);
@@ -1522,32 +1523,23 @@ const template_visitors = {
 		const state = context.state;
 		state.template.push(block_open);
 
-		// Insert ssr:if:true/false anchors in addition to the other anchors so that
-		// the if block can catch hydration mismatches (false on the server, true on the client and vice versa)
-		// and continue hydration without having to re-render everything from scratch.
-
 		const consequent = create_block(node, node.consequent.nodes, context);
-		consequent.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!ssr:if:true>')))
-		);
+		const alternate = node.alternate ? create_block(node, node.alternate.nodes, context) : [];
 
-		const alternate = node.alternate
-			? /** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
-			: b.block([]);
-		alternate.body.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!ssr:if:false>')))
+		consequent.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE))));
+		alternate.push(
+			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(`<!--${HYDRATION_END}!-->`)))
 		);
 
 		state.template.push(
 			t_statement(
 				b.if(
 					/** @type {import('estree').Expression} */ (context.visit(node.test)),
-					b.block(/** @type {import('estree').Statement[]} */ (consequent)),
-					alternate
+					b.block(consequent),
+					b.block(alternate)
 				)
 			)
 		);
-		state.template.push(block_close);
 	},
 	AwaitBlock(node, context) {
 		const state = context.state;
