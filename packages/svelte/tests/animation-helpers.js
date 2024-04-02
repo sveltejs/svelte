@@ -42,6 +42,7 @@ class Animation {
 	#cancelled = () => {};
 
 	currentTime = 0;
+	startTime = 0;
 
 	/**
 	 * @param {HTMLElement} target
@@ -122,7 +123,10 @@ class Animation {
 		if (this.currentTime > 0 && this.currentTime < this.#duration) {
 			this.#apply_keyframe(0);
 		}
-
+		// @ts-ignore
+		this.currentTime = null;
+		// @ts-ignore
+		this.startTime = null;
 		this.#cancelled();
 		raf.animations.delete(this);
 	}

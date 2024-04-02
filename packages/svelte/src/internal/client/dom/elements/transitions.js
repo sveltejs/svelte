@@ -301,7 +301,17 @@ function animate(element, options, counterpart, t2, callback) {
 			.then(() => {
 				callback?.();
 			})
-			.catch(noop);
+			.catch((e) => {
+				// Error for DOMException: The user aborted a request. This results in two things:
+				// - startTime is `null`
+				// - currentTime is `null`
+				// We can't use the existence of an AbortError as this error and error code is shared
+				// with other Web APIs such as fetch().
+
+				if (animation.startTime !== null && animation.currentTime !== null) {
+					throw e;
+				}
+			});
 	} else {
 		// Timer
 		if (t1 === 0) {
