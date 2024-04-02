@@ -63,10 +63,6 @@ class Animation {
 				return {
 					/** @param {() => void} callback */
 					catch: (callback) => {
-						// @ts-ignore
-						this.currentTime = null;
-						// @ts-ignore
-						this.startTime = null;
 						this.#cancelled = callback;
 					}
 				};
@@ -127,7 +123,10 @@ class Animation {
 		if (this.currentTime > 0 && this.currentTime < this.#duration) {
 			this.#apply_keyframe(0);
 		}
-
+		// @ts-ignore
+		this.currentTime = null;
+		// @ts-ignore
+		this.startTime = null;
 		this.#cancelled();
 		raf.animations.delete(this);
 	}
