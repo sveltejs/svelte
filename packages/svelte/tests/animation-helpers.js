@@ -42,6 +42,7 @@ class Animation {
 	#cancelled = () => {};
 
 	currentTime = 0;
+	startTime = 0;
 
 	/**
 	 * @param {HTMLElement} target
@@ -62,6 +63,10 @@ class Animation {
 				return {
 					/** @param {() => void} callback */
 					catch: (callback) => {
+						// @ts-ignore
+						this.currentTime = null;
+						// @ts-ignore
+						this.startTime = null;
 						this.#cancelled = callback;
 					}
 				};
