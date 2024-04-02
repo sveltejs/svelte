@@ -309,7 +309,6 @@ function animate(element, options, counterpart, t2, callback) {
 				// with other Web APIs such as fetch().
 
 				if (animation.startTime !== null && animation.currentTime !== null) {
-					debugger
 					throw e;
 				}
 			});
