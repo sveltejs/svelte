@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.93
+
+### Patch Changes
+
+- breaking: prevent unparenthesized sequence expressions in attributes ([#11032](https://github.com/sveltejs/svelte/pull/11032))
+
+- fix: ensure transition errors are not swallowed ([#11039](https://github.com/sveltejs/svelte/pull/11039))
+
 ## 5.0.0-next.92
 
 ### Patch Changes
