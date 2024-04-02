@@ -301,7 +301,7 @@ export const javascript_visitors_runes = {
 					declarations.push(
 						b.declarator(
 							b.id(object_id),
-							b.call('$.derived', b.thunk(rune === '$derived.by' ? b.call(value) : value))
+							b.call('$.derived', rune === '$derived.by' ? value : b.thunk(value))
 						)
 					);
 					declarations.push(
