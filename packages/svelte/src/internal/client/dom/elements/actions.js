@@ -11,9 +11,8 @@ import { deep_read_state, untrack } from '../../runtime.js';
 export function action(dom, action, get_value) {
 	effect(() => {
 		var payload = untrack(() => action(dom, get_value?.()) || {});
-		var update = payload?.update;
 
-		if (get_value && update) {
+		if (get_value && payload?.update) {
 			var inited = false;
 
 			render_effect(() => {
@@ -25,13 +24,15 @@ export function action(dom, action, get_value) {
 				deep_read_state(value);
 
 				if (inited) {
-					/** @type {Function} */ (update)(value);
+					/** @type {Function} */ (payload.update)(value);
 				}
 			});
 
 			inited = true;
 		}
 
-		return payload?.destroy;
+		if (payload?.destroy) {
+			return () => /** @type {Function} */ (payload.destroy)();
+		}
 	});
 }
