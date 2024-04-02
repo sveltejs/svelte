@@ -1,17 +1,6 @@
 <script>
   let count = $state(0);
-	let other = $state(0);
-	function create_derived() {
-		other++;
-		return () => {
-			return {
-				get double() {
-					return count * 2;
-				}
-			}
-		}
-	}
-  let {double} = $derived.by(create_derived());
+  let double = $derived.by(() => count * 2);
 </script>
 
 <button on:click={() => count++}>{double}</button>
