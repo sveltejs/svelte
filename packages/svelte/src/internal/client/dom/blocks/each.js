@@ -246,11 +246,13 @@ function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
 		}
 
 		var transitions = get_pause_transitons(effects);
+		var items = state.items;
+
 		if (transitions.length === 0) {
-			state.items.length = b;
+			items.length = b;
 		} else {
 			pause_effects_with_transitions(effects, transitions, () => {
-				state.items.length = b;
+				items.length = b;
 			});
 		}
 	}
@@ -428,6 +430,7 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 	}
 
 	var transitions = get_pause_transitons(to_destroy);
+
 	if (transitions.length === 0) {
 		state.items = b_items;
 	} else {
