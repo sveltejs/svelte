@@ -390,7 +390,7 @@ export function execute_effect(effect) {
 			destroy_effect_children(effect);
 		}
 
-		effect.teardown?.();
+		effect.teardown?.call(null);
 		var teardown = execute_reaction_fn(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 	} finally {
