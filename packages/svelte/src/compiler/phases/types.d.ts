@@ -73,6 +73,7 @@ export interface ComponentAnalysis extends Analysis {
 		hash: string;
 		keyframes: string[];
 	};
+	source: string;
 }
 
 declare module 'estree' {

@@ -258,10 +258,11 @@ export function analyze_module(ast, options) {
 
 /**
  * @param {import('#compiler').Root} root
+ * @param {string} source
  * @param {import('#compiler').ValidatedCompileOptions} options
  * @returns {import('../types.js').ComponentAnalysis}
  */
-export function analyze_component(root, options) {
+export function analyze_component(root, source, options) {
 	const scope_root = new ScopeRoot();
 
 	const module = js(root.module, scope_root, false, null);
@@ -396,7 +397,8 @@ export function analyze_component(root, options) {
 					})
 				: '',
 			keyframes: []
-		}
+		},
+		source
 	};
 
 	if (!options.customElement && root.options?.customElement) {

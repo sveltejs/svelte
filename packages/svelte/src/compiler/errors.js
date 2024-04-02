@@ -282,7 +282,9 @@ const attributes = {
 	},
 	'invalid-let-directive-placement': () => 'let directive at invalid position',
 	'invalid-style-directive-modifier': () =>
-		`Invalid 'style:' modifier. Valid modifiers are: 'important'`
+		`Invalid 'style:' modifier. Valid modifiers are: 'important'`,
+	'invalid-sequence-expression': () =>
+		`Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses`
 };
 
 /** @satisfies {Errors} */
