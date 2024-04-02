@@ -171,6 +171,7 @@ export function check_dirtiness(reaction) {
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
+		var is_unowned = (flags & UNOWNED) !== 0;
 
 		if (dependencies !== null) {
 			var length = dependencies.length;
@@ -191,7 +192,6 @@ export function check_dirtiness(reaction) {
 				// if our dependency write version is higher. If it is then we can assume
 				// that state has changed to a newer version and thus this unowned signal
 				// is also dirty.
-				var is_unowned = (flags & UNOWNED) !== 0;
 				var version = dependency.version;
 
 				if (is_unowned && version > /** @type {import('#client').Derived} */ (reaction).version) {
@@ -201,7 +201,10 @@ export function check_dirtiness(reaction) {
 			}
 		}
 
-		set_signal_status(reaction, CLEAN);
+		// Unowned signals are always maybe dirty, as we instead check their depedency versions.
+		if (!is_unowned) {
+			set_signal_status(reaction, CLEAN);
+		}
 	}
 
 	return false;
