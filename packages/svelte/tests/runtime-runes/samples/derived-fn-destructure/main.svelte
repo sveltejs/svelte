@@ -1,8 +1,9 @@
 <script>
+	import {log} from './log.js'
+
   let count = $state(0);
-	let other = $state(0);
 	function create_derived() {
-		other++;
+		log.push('create_derived');
 		return () => {
 			return {
 				get double() {
