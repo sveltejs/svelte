@@ -301,7 +301,7 @@ function animate(element, options, counterpart, t2, callback) {
 			.then(() => {
 				callback?.();
 			})
-			.catch(e => {
+			.catch((e) => {
 				// Error for DOMException: The user aborted a request. This results in two things:
 				// - startTime is `null`
 				// - currentTime is `null`
