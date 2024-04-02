@@ -246,11 +246,11 @@ export function destroy_effect(effect) {
 
 	effect.teardown?.call(null);
 
-	if (effect.dom !== null) {
+	var parent = effect.parent;
+
+	if (effect.dom !== null && (parent === null || (parent.f & DESTROYED) === 0)) {
 		remove(effect.dom);
 	}
-
-	var parent = effect.parent;
 
 	// If the parent doesn't have any children, then skip this work altogether
 	if (parent !== null && (effect.f & BRANCH_EFFECT) !== 0 && parent.first !== null) {

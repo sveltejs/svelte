@@ -14,11 +14,9 @@ export function remove(current) {
 	if (is_array(current)) {
 		for (var i = 0; i < current.length; i++) {
 			var node = current[i];
-			if (node.isConnected) {
-				node.remove();
-			}
+			node.remove();
 		}
-	} else if (current.isConnected) {
+	} else {
 		current.remove();
 	}
 }
