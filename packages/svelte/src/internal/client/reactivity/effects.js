@@ -234,6 +234,12 @@ export function branch(fn) {
  * @returns {void}
  */
 export function destroy_effect(effect) {
+	var dom = effect.dom;
+
+	if (dom !== null) {
+		remove(dom);
+	}
+
 	destroy_effect_children(effect);
 	remove_reactions(effect, 0);
 	set_signal_status(effect, DESTROYED);
@@ -245,10 +251,6 @@ export function destroy_effect(effect) {
 	}
 
 	effect.teardown?.call(null);
-
-	if (effect.dom !== null) {
-		remove(effect.dom);
-	}
 
 	var parent = effect.parent;
 
