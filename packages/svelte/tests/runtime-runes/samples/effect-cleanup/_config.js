@@ -15,6 +15,6 @@ export default test({
 		flushSync(() => {
 			b1.click();
 		});
-		assert.deepEqual(log, ['init 0', 'cleanup 2', 'init 2', 'cleanup 4', 'init 4']);
+		assert.deepEqual(log, ['init 0', 'cleanup 2', null, 'init 2', 'cleanup 4', null, 'init 4']);
 	}
 });

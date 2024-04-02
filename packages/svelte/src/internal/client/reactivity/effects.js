@@ -244,7 +244,7 @@ export function destroy_effect(effect) {
 		}
 	}
 
-	effect.teardown?.();
+	effect.teardown?.call(null);
 
 	if (effect.dom !== null) {
 		remove(effect.dom);
