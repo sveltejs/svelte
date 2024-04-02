@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.92
+
+### Patch Changes
+
+- fix: include compiler/package.json in package ([#11033](https://github.com/sveltejs/svelte/pull/11033))
+
 ## 5.0.0-next.91
 
 ### Patch Changes
