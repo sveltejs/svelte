@@ -19,7 +19,7 @@ import {
 	pause_effect,
 	get_pause_transitons,
 	resume_effect,
-	pause_effects_with_transitions,
+	pause_effects,
 	destroy_effects
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
@@ -253,7 +253,7 @@ function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
 			destroy_effects(effects);
 			items.length = b;
 		} else {
-			pause_effects_with_transitions(effects, transitions, () => {
+			pause_effects(effects, transitions, () => {
 				items.length = b;
 			});
 		}
@@ -437,7 +437,7 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 		destroy_effects(to_destroy);
 		state.items = b_items;
 	} else {
-		pause_effects_with_transitions(to_destroy, transitions, () => {
+		pause_effects(to_destroy, transitions, () => {
 			state.items = b_items;
 		});
 	}

@@ -342,7 +342,7 @@ export function destroy_effects(effects) {
  * @param {import('#client').TransitionManager[]} transitions
  * @param {() => void} callback
  */
-export function pause_effects_with_transitions(effects, transitions, callback = noop) {
+export function pause_effects(effects, transitions, callback = noop) {
 	out(transitions, () => {
 		destroy_effects(effects);
 		callback();
