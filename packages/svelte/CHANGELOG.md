@@ -1,5 +1,23 @@
 # svelte
 
+## 5.0.0-next.91
+
+### Patch Changes
+
+- fix: improve unowned derived signal heuristics ([#11029](https://github.com/sveltejs/svelte/pull/11029))
+
+- fix: ensure correct context for action update/destroy functions ([#11023](https://github.com/sveltejs/svelte/pull/11023))
+
+- feat: more efficient hydration markers ([#11019](https://github.com/sveltejs/svelte/pull/11019))
+
+- fix: ensure effect cleanup functions are called with null `this` ([#11024](https://github.com/sveltejs/svelte/pull/11024))
+
+- fix: correctly handle closure passed to $derived.by when destructuring ([#11028](https://github.com/sveltejs/svelte/pull/11028))
+
+- Add `name` to HTMLDetailsAttributes ([#11013](https://github.com/sveltejs/svelte/pull/11013))
+
+- breaking: move compiler.cjs to compiler/index.js ([#10988](https://github.com/sveltejs/svelte/pull/10988))
+
 ## 5.0.0-next.90
 
 ### Patch Changes
