@@ -313,21 +313,29 @@ export function pause_effect(effect, callback = noop) {
  * Pause multiple effects simultaneously, and coordinate their
  * subsequent destruction. Used in each blocks
  * @param {import('#client').Effect[]} effects
- * @param {() => void} callback
+ * @returns {import('#client').TransitionManager[]}
  */
-export function pause_effects(effects, callback = noop) {
+export function get_pause_transitons(effects) {
 	/** @type {import('#client').TransitionManager[]} */
 	var transitions = [];
-	var length = effects.length;
 
-	for (var i = 0; i < length; i++) {
+	for (var i = 0; i < effects.length; i++) {
 		pause_children(effects[i], transitions, true);
 	}
 
-	// TODO: would be good to avoid this closure in the case where we have no
-	// transitions at all. It would make it far more JIT friendly in the hot cases.
+	return transitions;
+}
+
+/**
+ * Pause multiple effects simultaneously, and coordinate their
+ * subsequent destruction. Used in each blocks
+ * @param {import('#client').Effect[]} effects
+ * @param {import('#client').TransitionManager[]} transitions
+ * @param {() => void} callback
+ */
+export function pause_effects_with_transitions(effects, transitions, callback = noop) {
 	out(transitions, () => {
-		for (var i = 0; i < length; i++) {
+		for (var i = 0; i < effects.length; i++) {
 			destroy_effect(effects[i]);
 		}
 		callback();
@@ -340,6 +348,7 @@ export function pause_effects(effects, callback = noop) {
  */
 function out(transitions, fn) {
 	var remaining = transitions.length;
+	// TODO: do we still needs this if statement?
 	if (remaining > 0) {
 		var check = () => --remaining || fn();
 		for (var transition of transitions) {
