@@ -348,7 +348,6 @@ export function pause_effects_with_transitions(effects, transitions, callback = 
  */
 function out(transitions, fn) {
 	var remaining = transitions.length;
-	// TODO: do we still needs this if statement?
 	if (remaining > 0) {
 		var check = () => --remaining || fn();
 		for (var transition of transitions) {
