@@ -201,7 +201,7 @@ export function check_dirtiness(reaction) {
 			}
 		}
 
-		// Unowned signals are always maybe dirty, as we instead check their depedency versions.
+		// Unowned signals are always maybe dirty, as we instead check their dependency versions.
 		if (!is_unowned) {
 			set_signal_status(reaction, CLEAN);
 		}
