@@ -226,7 +226,11 @@
 					type: 'keyword',
 					boost: 3
 				}),
-				{ label: '$effect.active', type: 'keyword', boost: 2 },
+				snip('$effect.active()', {
+					label: '$effect.active',
+					type: 'keyword',
+					boost: 2
+				}),
 				{ label: '$inspect', type: 'keyword', boost: 1 }
 			]
 		};
