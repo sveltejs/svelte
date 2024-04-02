@@ -245,27 +245,25 @@ function _mount(
 
 	const unmount = effect_root(() => {
 		branch(() => {
-			untrack(() => {
-				if (context) {
-					push({});
-					var ctx = /** @type {import('#client').ComponentContext} */ (current_component_context);
-					ctx.c = context;
-				}
+			if (context) {
+				push({});
+				var ctx = /** @type {import('#client').ComponentContext} */ (current_component_context);
+				ctx.c = context;
+			}
 
-				if (events) {
-					// We can't spread the object or else we'd lose the state proxy stuff, if it is one
-					/** @type {any} */ (props).$$events = events;
-				}
+			if (events) {
+				// We can't spread the object or else we'd lose the state proxy stuff, if it is one
+				/** @type {any} */ (props).$$events = events;
+			}
 
-				should_intro = intro;
-				// @ts-expect-error the public typings are not what the actual function looks like
-				component = Component(anchor, props) || {};
-				should_intro = true;
+			should_intro = intro;
+			// @ts-expect-error the public typings are not what the actual function looks like
+			component = Component(anchor, props) || {};
+			should_intro = true;
 
-				if (context) {
-					pop();
-				}
-			});
+			if (context) {
+				pop();
+			}
 		});
 
 		return () => {

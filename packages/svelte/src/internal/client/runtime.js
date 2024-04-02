@@ -21,7 +21,8 @@ import {
 	INERT,
 	BRANCH_EFFECT,
 	STATE_SYMBOL,
-	BLOCK_EFFECT
+	BLOCK_EFFECT,
+	ROOT_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -692,7 +693,7 @@ export function get(signal) {
 	// Register the dependency on the current reaction signal.
 	if (
 		current_reaction !== null &&
-		(current_reaction.f & BRANCH_EFFECT) === 0 &&
+		(current_reaction.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 &&
 		!current_untracking
 	) {
 		const unowned = (current_reaction.f & UNOWNED) !== 0;
@@ -741,6 +742,7 @@ export function get(signal) {
 			update_derived(/** @type {import('./types.js').Derived} **/ (signal), false);
 		}
 	}
+
 	return signal.v;
 }
 
