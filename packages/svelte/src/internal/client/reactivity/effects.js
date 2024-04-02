@@ -327,6 +327,15 @@ export function get_pause_transitons(effects) {
 }
 
 /**
+ * @param {import('#client').Effect[]} effects
+ */
+export function destroy_effects(effects) {
+	for (var i = 0; i < effects.length; i++) {
+		destroy_effect(effects[i]);
+	}
+}
+
+/**
  * Pause multiple effects simultaneously, and coordinate their
  * subsequent destruction. Used in each blocks
  * @param {import('#client').Effect[]} effects
@@ -335,9 +344,7 @@ export function get_pause_transitons(effects) {
  */
 export function pause_effects_with_transitions(effects, transitions, callback = noop) {
 	out(transitions, () => {
-		for (var i = 0; i < effects.length; i++) {
-			destroy_effect(effects[i]);
-		}
+		destroy_effects(effects);
 		callback();
 	});
 }
