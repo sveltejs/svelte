@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: ensure transiton errors are not swallowed
+fix: ensure transition errors are not swallowed
