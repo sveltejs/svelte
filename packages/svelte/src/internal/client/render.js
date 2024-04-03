@@ -89,6 +89,7 @@ export function stringify(value) {
  * @template {Record<string, any>} Events
  * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} component
  * @param {{
+ *    anchor?: Node;
  * 		target: Document | Element | ShadowRoot;
  * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
@@ -98,7 +99,7 @@ export function stringify(value) {
  * @returns {Exports}
  */
 export function mount(component, options) {
-	const anchor = options.target.appendChild(empty());
+	const anchor = options.anchor || options.target.appendChild(empty());
 	// Don't flush previous effects to ensure order of outer effects stays consistent
 	return flush_sync(() => _mount(component, { ...options, anchor }), false);
 }
