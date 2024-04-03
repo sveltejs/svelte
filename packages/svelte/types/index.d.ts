@@ -1845,7 +1845,7 @@ declare module 'svelte/reactivity' {
 }
 
 declare module 'svelte/server' {
-	export function render(component: (...args: any[]) => void, options: {
+	export function render(component: typeof import('svelte').SvelteComponent, options: {
 		props: Record<string, any>;
 		context?: Map<any, any>;
 	}): RenderOutput;

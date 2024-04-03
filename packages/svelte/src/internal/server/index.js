@@ -179,7 +179,7 @@ export function element(payload, tag, attributes_fn, children_fn) {
 export let on_destroy = [];
 
 /**
- * @param {(...args: any[]) => void} component
+ * @param {typeof import('svelte').SvelteComponent} component
  * @param {{ props: Record<string, any>; context?: Map<any, any> }} options
  * @returns {RenderOutput}
  */
@@ -195,6 +195,7 @@ export function render(component, options) {
 		/** @type {import('#server').Component} */ (current_component).c = options.context;
 	}
 
+	// @ts-expect-error
 	component(payload, options.props, {}, {});
 
 	if (options.context) {
