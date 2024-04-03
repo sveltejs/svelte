@@ -99,7 +99,7 @@ export function stringify(value) {
  * @returns {Exports}
  */
 export function mount(component, options) {
-	const anchor = options.anchor || options.target.appendChild(empty());
+	const anchor = options.anchor ?? options.target.appendChild(empty());
 	// Don't flush previous effects to ensure order of outer effects stays consistent
 	return flush_sync(() => _mount(component, { ...options, anchor }), false);
 }
