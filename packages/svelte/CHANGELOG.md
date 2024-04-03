@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.94
+
+### Patch Changes
+
+- fix: add `anchor` support to mount() API ([#11050](https://github.com/sveltejs/svelte/pull/11050))
+
 ## 5.0.0-next.93
 
 ### Patch Changes
