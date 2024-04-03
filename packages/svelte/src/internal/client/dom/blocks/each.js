@@ -17,7 +17,7 @@ import {
 	branch,
 	effect,
 	pause_effect,
-	get_pause_transitons,
+	get_out_transitions,
 	resume_effect,
 	pause_effects,
 	destroy_effects
@@ -246,7 +246,7 @@ function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
 			effects.push(a_items[i].e);
 		}
 
-		var transitions = get_pause_transitons(effects);
+		var transitions = get_out_transitions(effects);
 		var items = state.items;
 
 		if (transitions.length === 0) {
@@ -431,7 +431,7 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 		});
 	}
 
-	var transitions = get_pause_transitons(to_destroy);
+	var transitions = get_out_transitions(to_destroy);
 
 	if (transitions.length === 0) {
 		destroy_effects(to_destroy);

@@ -315,7 +315,7 @@ export function pause_effect(effect, callback = noop) {
  * @param {import('#client').Effect[]} effects
  * @returns {import('#client').TransitionManager[]}
  */
-export function get_pause_transitons(effects) {
+export function get_out_transitions(effects) {
 	/** @type {import('#client').TransitionManager[]} */
 	var transitions = [];
 
