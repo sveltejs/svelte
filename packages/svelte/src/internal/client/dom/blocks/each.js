@@ -60,15 +60,16 @@ function pause_effects(effects, controlled_anchor, callback) {
 	// If we have a controlled anchor, it means that the each block is inside a single
 	// DOM element, so we can apply a fast-path for clearing the contents of the element.
 	if (effects.length > 0 && transitions.length === 0 && controlled_anchor !== null) {
-		const each_element = /** @type {Element} */ (controlled_anchor.parentNode);
-		each_element.textContent = '';
-		each_element.append(controlled_anchor);
+		var parent_node = /** @type {Element} */ (controlled_anchor.parentNode);
+		parent_node.textContent = '';
+		parent_node.append(controlled_anchor);
 	}
 
 	run_out_transitions(transitions, () => {
 		for (var i = 0; i < length; i++) {
 			destroy_effect(effects[i]);
 		}
+
 		if (callback !== undefined) callback();
 	});
 }
