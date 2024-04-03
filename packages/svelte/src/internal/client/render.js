@@ -90,15 +90,16 @@ export function stringify(value) {
  * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
+ * 		anchor?: Node;
  * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
- *  	context?: Map<any, any>;
+ * 		context?: Map<any, any>;
  * 		intro?: boolean;
  * 	}} options
  * @returns {Exports}
  */
 export function mount(component, options) {
-	const anchor = options.target.appendChild(empty());
+	const anchor = options.anchor ?? options.target.appendChild(empty());
 	// Don't flush previous effects to ensure order of outer effects stays consistent
 	return flush_sync(() => _mount(component, { ...options, anchor }), false);
 }
@@ -187,7 +188,7 @@ export function hydrate(component, options) {
  * 		anchor: Node;
  * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
- *  	context?: Map<any, any>;
+ * 		context?: Map<any, any>;
  * 		intro?: boolean;
  * 	}} options
  * @returns {Exports}
