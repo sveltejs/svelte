@@ -15,9 +15,11 @@ import { untrack } from '../../runtime.js';
 import {
 	block,
 	branch,
+	destroy_effect,
 	effect,
+	run_out_transitions,
+	pause_children,
 	pause_effect,
-	pause_effects,
 	resume_effect
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
@@ -37,6 +39,39 @@ export let current_each_item = null;
 /** @param {import('#client').EachItem | null} item */
 export function set_current_each_item(item) {
 	current_each_item = item;
+}
+
+/**
+ * Pause multiple effects simultaneously, and coordinate their
+ * subsequent destruction. Used in each blocks
+ * @param {import('#client').Effect[]} effects
+ * @param {null | Node} controlled_anchor
+ * @param {() => void} [callback]
+ */
+function pause_effects(effects, controlled_anchor, callback) {
+	/** @type {import('#client').TransitionManager[]} */
+	var transitions = [];
+	var length = effects.length;
+
+	for (var i = 0; i < length; i++) {
+		pause_children(effects[i], transitions, true);
+	}
+
+	// If we have a controlled anchor, it means that the each block is inside a single
+	// DOM element, so we can apply a fast-path for clearing the contents of the element.
+	if (effects.length > 0 && transitions.length === 0 && controlled_anchor !== null) {
+		var parent_node = /** @type {Element} */ (controlled_anchor.parentNode);
+		parent_node.textContent = '';
+		parent_node.append(controlled_anchor);
+	}
+
+	run_out_transitions(transitions, () => {
+		for (var i = 0; i < length; i++) {
+			destroy_effect(effects[i]);
+		}
+
+		if (callback !== undefined) callback();
+	});
 }
 
 /**
@@ -145,7 +180,6 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 		}
 
 		if (!hydrating) {
-			// TODO add 'empty controlled block' optimisation here
 			reconcile_fn(array, state, anchor, render_fn, flags, keys);
 		}
 
@@ -244,7 +278,9 @@ function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
 			effects.push(a_items[i].e);
 		}
 
-		pause_effects(effects, () => {
+		var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && b === 0 ? anchor : null;
+
+		pause_effects(effects, controlled_anchor, () => {
 			state.items.length = b;
 		});
 	}
@@ -274,6 +310,7 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
+	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 	var start = 0;
 	var item;
 
@@ -381,6 +418,11 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 		// I fully understand this part)
 		if (moved) {
 			mark_lis(sources);
+		} else if (is_controlled && to_destroy.length === a_items.length) {
+			// We can optimize the case in which all items are replaced —
+			// destroy everything first, then append new items
+			pause_effects(to_destroy, anchor);
+			to_destroy = [];
 		}
 
 		// working from the back, insert new or moved items
@@ -421,9 +463,9 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 		});
 	}
 
-	// TODO: would be good to avoid this closure in the case where we have no
-	// transitions at all. It would make it far more JIT friendly in the hot cases.
-	pause_effects(to_destroy, () => {
+	var controlled_anchor = is_controlled && b_items.length === 0 ? anchor : null;
+
+	pause_effects(to_destroy, controlled_anchor, () => {
 		state.items = b_items;
 	});
 }
