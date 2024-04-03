@@ -1,21 +1,12 @@
 import { is_void } from '../../compiler/phases/1-parse/utils/names.js';
-
-const snippet_symbol = Symbol.for('svelte.snippet');
-
-/**
- * @param {any} fn
- */
-export function add_snippet_symbol(fn) {
-	fn[snippet_symbol] = true;
-	return fn;
-}
+import { is_snippet } from '../client/dom/blocks/snippet.js';
 
 /**
  * Validate that the function handed to `{@render ...}` is a snippet function, and not some other kind of function.
  * @param {any} snippet_fn
  */
 export function validate_snippet(snippet_fn) {
-	if (snippet_fn && snippet_fn[snippet_symbol] !== true) {
+	if (snippet_fn && !is_snippet(snippet_fn)) {
 		throw new Error(
 			'The argument to `{@render ...}` must be a snippet function, not a component or some other kind of function. ' +
 				'If you want to dynamically render one snippet or another, use `$derived` and pass its result to `{@render ...}`.'
@@ -29,7 +20,7 @@ export function validate_snippet(snippet_fn) {
  * @param {any} component_fn
  */
 export function validate_component(component_fn) {
-	if (component_fn?.[snippet_symbol] === true) {
+	if (is_snippet(component_fn)) {
 		throw new Error('A snippet must be rendered with `{@render ...}`');
 	}
 	return component_fn;
