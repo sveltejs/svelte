@@ -27,7 +27,6 @@ import {
 	IS_ELSEIF
 } from '../constants.js';
 import { set } from './sources.js';
-import { noop } from '../../shared/utils.js';
 import { remove } from '../dom/reconciler.js';
 
 /**
@@ -295,9 +294,9 @@ export function destroy_effect(effect) {
  * completed, and if the state change is reversed then we _resume_ it.
  * A paused effect does not update, and the DOM subtree becomes inert.
  * @param {import('#client').Effect} effect
- * @param {() => void} callback
+ * @param {() => void} [callback]
  */
-export function pause_effect(effect, callback = noop) {
+export function pause_effect(effect, callback) {
 	/** @type {import('#client').TransitionManager[]} */
 	var transitions = [];
 
@@ -305,7 +304,7 @@ export function pause_effect(effect, callback = noop) {
 
 	out(transitions, () => {
 		destroy_effect(effect);
-		callback();
+		if (callback) callback();
 	});
 }
 
