@@ -89,8 +89,8 @@ export function stringify(value) {
  * @template {Record<string, any>} Events
  * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} component
  * @param {{
- * 		anchor?: Node;
  * 		target: Document | Element | ShadowRoot;
+ * 		anchor?: Node;
  * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  * 		context?: Map<any, any>;
