@@ -49,7 +49,7 @@ This is handy when you want to pass some state to an external library or API tha
 Instantiates a component and mounts it to the given target:
 
 ```js
-// @errors: 2724 2305
+// @errors: 2322
 import { mount } from 'svelte';
 import App from './App.svelte';
 
@@ -64,7 +64,7 @@ const app = mount(App, {
 Like `mount`, but will pick up any HTML rendered by Svelte's SSR output (from the `render` function) inside the target and make it interactive:
 
 ```js
-// @errors: 2724 2305
+// @errors: 2322
 import { hydrate } from 'svelte';
 import App from './App.svelte';
 
