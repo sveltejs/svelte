@@ -27,6 +27,7 @@ import {
 	IS_ELSEIF
 } from '../constants.js';
 import { set } from './sources.js';
+import { noop } from '../../shared/utils.js';
 import { remove } from '../dom/reconciler.js';
 
 /**
@@ -294,17 +295,42 @@ export function destroy_effect(effect) {
  * completed, and if the state change is reversed then we _resume_ it.
  * A paused effect does not update, and the DOM subtree becomes inert.
  * @param {import('#client').Effect} effect
- * @param {() => void} [callback]
+ * @param {() => void} callback
  */
-export function pause_effect(effect, callback) {
+export function pause_effect(effect, callback = noop) {
 	/** @type {import('#client').TransitionManager[]} */
 	var transitions = [];
 
 	pause_children(effect, transitions, true);
 
-	run_out_transitions(transitions, () => {
+	out(transitions, () => {
 		destroy_effect(effect);
-		if (callback) callback();
+		callback();
+	});
+}
+
+/**
+ * Pause multiple effects simultaneously, and coordinate their
+ * subsequent destruction. Used in each blocks
+ * @param {import('#client').Effect[]} effects
+ * @param {() => void} callback
+ */
+export function pause_effects(effects, callback = noop) {
+	/** @type {import('#client').TransitionManager[]} */
+	var transitions = [];
+	var length = effects.length;
+
+	for (var i = 0; i < length; i++) {
+		pause_children(effects[i], transitions, true);
+	}
+
+	// TODO: would be good to avoid this closure in the case where we have no
+	// transitions at all. It would make it far more JIT friendly in the hot cases.
+	out(transitions, () => {
+		for (var i = 0; i < length; i++) {
+			destroy_effect(effects[i]);
+		}
+		callback();
 	});
 }
 
@@ -312,7 +338,7 @@ export function pause_effect(effect, callback) {
  * @param {import('#client').TransitionManager[]} transitions
  * @param {() => void} fn
  */
-export function run_out_transitions(transitions, fn) {
+function out(transitions, fn) {
 	var remaining = transitions.length;
 	if (remaining > 0) {
 		var check = () => --remaining || fn();
@@ -329,7 +355,7 @@ export function run_out_transitions(transitions, fn) {
  * @param {import('#client').TransitionManager[]} transitions
  * @param {boolean} local
  */
-export function pause_children(effect, transitions, local) {
+function pause_children(effect, transitions, local) {
 	if ((effect.f & INERT) !== 0) return;
 	effect.f ^= INERT;
 
