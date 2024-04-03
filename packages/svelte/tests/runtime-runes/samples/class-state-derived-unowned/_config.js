@@ -4,7 +4,7 @@ import { log } from './log.js';
 
 export default test({
 	// The component context class instance gets shared between tests, strangely, causing hydration to fail?
-	skip_if_hydrate: 'permanent',
+	mode: ['client', 'server'],
 
 	before_test() {
 		log.length = 0;

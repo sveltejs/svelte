@@ -1,7 +1,4 @@
-// Handle hydration
-
-import { schedule_task } from './task.js';
-import { empty } from './operations.js';
+import { HYDRATION_END, HYDRATION_START } from '../../../constants.js';
 
 /**
  * Use this variable to guard everything related to hydration code so it can be treeshaken out
@@ -9,90 +6,65 @@ import { empty } from './operations.js';
  */
 export let hydrating = false;
 
+/** @param {boolean} value */
+export function set_hydrating(value) {
+	hydrating = value;
+}
+
 /**
  * Array of nodes to traverse for hydration. This will be null if we're not hydrating, but for
  * the sake of simplicity we're not going to use `null` checks everywhere and instead rely on
  * the `hydrating` flag to tell whether or not we're in hydration mode at which point this is set.
- * @type {import('../types.js').TemplateNode[]}
+ * @type {import('#client').TemplateNode[]}
  */
-export let current_hydration_fragment = /** @type {any} */ (null);
+export let hydrate_nodes = /** @type {any} */ (null);
 
-/**
- * @param {null | import('../types.js').TemplateNode[]} fragment
- * @returns {void}
- */
-export function set_current_hydration_fragment(fragment) {
-	hydrating = fragment !== null;
-	current_hydration_fragment = /** @type {import('../types.js').TemplateNode[]} */ (fragment);
+/** @param {import('#client').TemplateNode[]} nodes */
+export function set_hydrate_nodes(nodes) {
+	hydrate_nodes = nodes;
 }
 
 /**
- * Returns all nodes between the first `<!--ssr:...-->` comment tag pair encountered.
- * @param {Node | null} node
- * @param {boolean} [insert_text] Whether to insert an empty text node if the fragment is empty
- * @returns {import('../types.js').TemplateNode[] | null}
+ * This function is only called when `hydrating` is true. If passed a `<!--[-->` opening
+ * hydration marker, it finds the corresponding closing marker and sets `hydrate_nodes`
+ * to everything between the markers, before returning the closing marker.
+ * @param {Node} node
+ * @returns {Node}
  */
-export function get_hydration_fragment(node, insert_text = false) {
-	/** @type {import('../types.js').TemplateNode[]} */
-	const fragment = [];
+export function hydrate_anchor(node) {
+	if (node.nodeType !== 8) {
+		return node;
+	}
 
-	/** @type {null | Node} */
-	let current_node = node;
+	var current = /** @type {Node | null} */ (node);
 
-	/** @type {null | string} */
-	let target_depth = null;
-	while (current_node !== null) {
-		const node_type = current_node.nodeType;
-		const next_sibling = current_node.nextSibling;
-		if (node_type === 8) {
-			const data = /** @type {Comment} */ (current_node).data;
-			if (data.startsWith('ssr:')) {
-				const depth = data.slice(4);
-				if (target_depth === null) {
-					target_depth = depth;
-				} else if (depth === target_depth) {
-					if (insert_text && fragment.length === 0) {
-						const text = empty();
-						fragment.push(text);
-						/** @type {Node} */ (current_node.parentNode).insertBefore(text, current_node);
-					}
-					return fragment;
-				} else {
-					fragment.push(/** @type {Text | Comment | Element} */ (current_node));
+	// TODO this could have false positives, if a user comment consisted of `[`. need to tighten that up
+	if (/** @type {Comment} */ (current)?.data !== HYDRATION_START) {
+		return node;
+	}
+
+	/** @type {Node[]} */
+	var nodes = [];
+	var depth = 0;
+
+	while ((current = /** @type {Node} */ (current).nextSibling) !== null) {
+		if (current.nodeType === 8) {
+			var data = /** @type {Comment} */ (current).data;
+
+			if (data === HYDRATION_START) {
+				depth += 1;
+			} else if (data[0] === HYDRATION_END) {
+				if (depth === 0) {
+					hydrate_nodes = /** @type {import('#client').TemplateNode[]} */ (nodes);
+					return current;
 				}
-				current_node = next_sibling;
-				continue;
+
+				depth -= 1;
 			}
 		}
-		if (target_depth !== null) {
-			fragment.push(/** @type {Text | Comment | Element} */ (current_node));
-		}
-		current_node = next_sibling;
-	}
-	return null;
-}
 
-/**
- * @param {Node} node
- * @returns {void}
- */
-export function hydrate_block_anchor(node) {
-	if (!hydrating) return;
-
-	if (node.nodeType === 8) {
-		// @ts-ignore
-		let fragment = node.$$fragment;
-		if (fragment === undefined) {
-			fragment = get_hydration_fragment(node);
-		} else {
-			schedule_task(() => {
-				// @ts-expect-error clean up memory
-				node.$$fragment = undefined;
-			});
-		}
-		set_current_hydration_fragment(fragment);
-	} else {
-		const first_child = /** @type {Element | null} */ (node.firstChild);
-		set_current_hydration_fragment(first_child === null ? [] : [first_child]);
+		nodes.push(current);
 	}
+
+	throw new Error('Expected a closing hydration marker');
 }

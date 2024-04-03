@@ -1,11 +1,11 @@
-import { noop } from '../../../common.js';
-import { user_effect } from '../../reactivity/effects.js';
+import { noop } from '../../../shared/utils.js';
+import { effect } from '../../reactivity/effects.js';
 import { current_effect, untrack } from '../../runtime.js';
 import { raf } from '../../timing.js';
 import { loop } from '../../loop.js';
 import { should_intro } from '../../render.js';
 import { is_function } from '../../utils.js';
-import { current_each_item_block } from '../blocks/each.js';
+import { current_each_item } from '../blocks/each.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
 import { EFFECT_RAN } from '../../constants.js';
 
@@ -77,7 +77,7 @@ const linear = (t) => t;
  * @param {(() => P) | null} get_params
  */
 export function animation(element, get_fn, get_params) {
-	var block = /** @type {import('#client').EachItem} */ (current_each_item_block);
+	var item = /** @type {import('#client').EachItem} */ (current_each_item);
 
 	/** @type {DOMRect} */
 	var from;
@@ -88,7 +88,7 @@ export function animation(element, get_fn, get_params) {
 	/** @type {import('#client').Animation | undefined} */
 	var animation;
 
-	block.a ??= {
+	item.a ??= {
 		element,
 		measure() {
 			from = this.element.getBoundingClientRect();
@@ -118,7 +118,7 @@ export function animation(element, get_fn, get_params) {
 	// when an animation manager already exists, if the tag changes. in that case, we need to
 	// swap out the element rather than creating a new manager, in case it happened at the same
 	// moment as a reconciliation
-	block.a.element = element;
+	item.a.element = element;
 }
 
 /**
@@ -202,18 +202,18 @@ export function transition(flags, element, get_fn, get_params) {
 		}
 	};
 
-	var effect = /** @type {import('#client').Effect} */ (current_effect);
+	var e = /** @type {import('#client').Effect} */ (current_effect);
 
-	(effect.transitions ??= []).push(transition);
+	(e.transitions ??= []).push(transition);
 
 	// if this is a local transition, we only want to run it if the parent (block) effect's
 	// parent (branch) effect is where the state change happened. we can determine that by
 	// looking at whether the branch effect is currently initializing
 	if (is_intro && should_intro) {
-		var parent = /** @type {import('#client').Effect} */ (effect.parent);
+		var parent = /** @type {import('#client').Effect} */ (e.parent);
 
 		if (is_global || (parent.f & EFFECT_RAN) !== 0) {
-			user_effect(() => {
+			effect(() => {
 				untrack(() => transition.in());
 			});
 		}
@@ -237,7 +237,7 @@ function animate(element, options, counterpart, t2, callback) {
 		/** @type {import('#client').Animation} */
 		var a;
 
-		user_effect(() => {
+		effect(() => {
 			var o = untrack(() => options({ direction: t2 === 1 ? 'in' : 'out' }));
 			a = animate(element, o, counterpart, t2, callback);
 		});
@@ -301,7 +301,17 @@ function animate(element, options, counterpart, t2, callback) {
 			.then(() => {
 				callback?.();
 			})
-			.catch(noop);
+			.catch((e) => {
+				// Error for DOMException: The user aborted a request. This results in two things:
+				// - startTime is `null`
+				// - currentTime is `null`
+				// We can't use the existence of an AbortError as this error and error code is shared
+				// with other Web APIs such as fetch().
+
+				if (animation.startTime !== null && animation.currentTime !== null) {
+					throw e;
+				}
+			});
 	} else {
 		// Timer
 		if (t1 === 0) {

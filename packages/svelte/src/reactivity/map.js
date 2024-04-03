@@ -1,7 +1,7 @@
 import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
-import { UNINITIALIZED } from '../internal/client/constants.js';
+import { UNINITIALIZED } from '../constants.js';
 import { map } from './utils.js';
 
 /**

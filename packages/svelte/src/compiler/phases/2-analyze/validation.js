@@ -50,6 +50,18 @@ function validate_component(node, context) {
 		}
 
 		if (attribute.type === 'Attribute') {
+			if (context.state.analysis.runes && is_expression_attribute(attribute)) {
+				const expression = attribute.value[0].expression;
+				if (expression.type === 'SequenceExpression') {
+					let i = /** @type {number} */ (expression.start);
+					while (--i > 0) {
+						const char = context.state.analysis.source[i];
+						if (char === '(') break; // parenthesized sequence expressions are ok
+						if (char === '{') error(expression, 'invalid-sequence-expression');
+					}
+				}
+			}
+
 			validate_attribute_name(attribute, context);
 
 			if (attribute.name === 'slot') {
@@ -81,12 +93,21 @@ function validate_element(node, context) {
 
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'Attribute') {
+			const is_expression = is_expression_attribute(attribute);
+
+			if (context.state.analysis.runes && is_expression) {
+				const expression = attribute.value[0].expression;
+				if (expression.type === 'SequenceExpression') {
+					error(expression, 'invalid-sequence-expression');
+				}
+			}
+
 			if (regex_illegal_attribute_character.test(attribute.name)) {
 				error(attribute, 'invalid-attribute-name', attribute.name);
 			}
 
 			if (attribute.name.startsWith('on') && attribute.name.length > 2) {
-				if (!is_expression_attribute(attribute)) {
+				if (!is_expression) {
 					error(attribute, 'invalid-event-attribute-value');
 				}
 
@@ -299,17 +320,19 @@ const validation = {
 			error(node, 'invalid-binding-expression');
 		}
 
+		const binding = context.state.scope.get(left.name);
+
 		if (
 			assignee.type === 'Identifier' &&
 			node.name !== 'this' // bind:this also works for regular variables
 		) {
-			const binding = context.state.scope.get(left.name);
 			// reassignment
 			if (
 				!binding ||
 				(binding.kind !== 'state' &&
 					binding.kind !== 'frozen_state' &&
 					binding.kind !== 'prop' &&
+					binding.kind !== 'bindable_prop' &&
 					binding.kind !== 'each' &&
 					binding.kind !== 'store_sub' &&
 					!binding.mutated)
@@ -327,8 +350,6 @@ const validation = {
 
 			// TODO handle mutations of non-state/props in runes mode
 		}
-
-		const binding = context.state.scope.get(left.name);
 
 		if (node.name === 'group') {
 			if (!binding) {
@@ -780,7 +801,25 @@ function validate_call_expression(node, scope, path) {
 		error(node, 'invalid-props-location');
 	}
 
-	if (rune === '$state' || rune === '$derived' || rune === '$derived.by') {
+	if (rune === '$bindable') {
+		if (parent.type === 'AssignmentPattern' && path.at(-3)?.type === 'ObjectPattern') {
+			const declarator = path.at(-4);
+			if (
+				declarator?.type === 'VariableDeclarator' &&
+				get_rune(declarator.init, scope) === '$props'
+			) {
+				return;
+			}
+		}
+		error(node, 'invalid-bindable-location');
+	}
+
+	if (
+		rune === '$state' ||
+		rune === '$state.frozen' ||
+		rune === '$derived' ||
+		rune === '$derived.by'
+	) {
 		if (parent.type === 'VariableDeclarator') return;
 		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
 		error(node, 'invalid-state-location', rune);
@@ -873,6 +912,8 @@ export const validation_runes_js = {
 			error(node, 'invalid-rune-args-length', rune, [0, 1]);
 		} else if (rune === '$props') {
 			error(node, 'invalid-props-location');
+		} else if (rune === '$bindable') {
+			error(node, 'invalid-bindable-location');
 		}
 	},
 	AssignmentExpression(node, { state }) {
@@ -1022,6 +1063,9 @@ export const validation_runes = merge(validation, a11y_validators, {
 		}
 	},
 	CallExpression(node, { state, path }) {
+		if (get_rune(node, state.scope) === '$bindable' && node.arguments.length > 1) {
+			error(node, 'invalid-rune-args-length', '$bindable', [0, 1]);
+		}
 		validate_call_expression(node, state.scope, path);
 	},
 	EachBlock(node, { next, state }) {
@@ -1062,7 +1106,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 			state.has_props_rune = true;
 
 			if (args.length > 0) {
-				error(node, 'invalid-rune-args-length', '$props', [0]);
+				error(node, 'invalid-rune-args-length', rune, [0]);
 			}
 
 			if (node.id.type !== 'ObjectPattern') {

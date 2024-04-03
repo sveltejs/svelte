@@ -18,6 +18,15 @@ export function array_pattern(elements) {
 }
 
 /**
+ * @param {import('estree').Pattern} left
+ * @param {import('estree').Expression} right
+ * @returns {import('estree').AssignmentPattern}
+ */
+export function assignment_pattern(left, right) {
+	return { type: 'AssignmentPattern', left, right };
+}
+
+/**
  * @param {Array<import('estree').Pattern>} params
  * @param {import('estree').BlockStatement | import('estree').Expression} body
  * @returns {import('estree').ArrowFunctionExpression}

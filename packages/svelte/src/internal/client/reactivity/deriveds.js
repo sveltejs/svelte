@@ -3,12 +3,12 @@ import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../const
 import {
 	current_reaction,
 	current_effect,
-	destroy_children,
 	remove_reactions,
 	set_signal_status,
 	mark_reactions,
 	current_skip_reaction,
-	execute_reaction_fn
+	execute_reaction_fn,
+	destroy_effect_children
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 
@@ -26,13 +26,14 @@ export function derived(fn) {
 
 	/** @type {import('#client').Derived<V>} */
 	const signal = {
-		reactions: null,
 		deps: null,
+		deriveds: null,
 		equals,
 		f: flags,
+		first: null,
 		fn,
-		effects: null,
-		deriveds: null,
+		last: null,
+		reactions: null,
 		v: /** @type {V} */ (null),
 		version: 0
 	};
@@ -42,10 +43,11 @@ export function derived(fn) {
 	}
 
 	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
-		if (current_reaction.deriveds === null) {
-			current_reaction.deriveds = [signal];
+		var current_derived = /** @type {import('#client').Derived<V>} */ (current_reaction);
+		if (current_derived.deriveds === null) {
+			current_derived.deriveds = [signal];
 		} else {
-			current_reaction.deriveds.push(signal);
+			current_derived.deriveds.push(signal);
 		}
 	}
 
@@ -65,6 +67,22 @@ export function derived_safe_equal(fn) {
 }
 
 /**
+ * @param {import('./types.js').Derived} signal
+ * @returns {void}
+ */
+function destroy_derived_children(signal) {
+	destroy_effect_children(signal);
+	var deriveds = signal.deriveds;
+
+	if (deriveds !== null) {
+		signal.deriveds = null;
+		for (var i = 0; i < deriveds.length; i += 1) {
+			destroy_derived(deriveds[i]);
+		}
+	}
+}
+
+/**
  * @param {import('#client').Derived} derived
  * @param {boolean} force_schedule
  * @returns {void}
@@ -72,7 +90,7 @@ export function derived_safe_equal(fn) {
 export function update_derived(derived, force_schedule) {
 	var previous_updating_derived = updating_derived;
 	updating_derived = true;
-	destroy_children(derived);
+	destroy_derived_children(derived);
 	var value = execute_reaction_fn(derived);
 	updating_derived = previous_updating_derived;
 
@@ -98,11 +116,14 @@ export function update_derived(derived, force_schedule) {
  * @returns {void}
  */
 export function destroy_derived(signal) {
-	destroy_children(signal);
+	destroy_derived_children(signal);
 	remove_reactions(signal, 0);
 	set_signal_status(signal, DESTROYED);
 
-	signal.effects =
+	// TODO we need to ensure we remove the derived from any parent derives
+
+	signal.first =
+		signal.last =
 		signal.deps =
 		signal.reactions =
 		// @ts-expect-error `signal.fn` cannot be `null` while the signal is alive

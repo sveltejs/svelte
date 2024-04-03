@@ -220,12 +220,17 @@
 					boost: 5
 				}),
 				{ label: '$state.frozen', type: 'keyword', boost: 4 },
+				{ label: '$bindable', type: 'keyword', boost: 4 },
 				snip('$effect.root(() => {\n\t${}\n});', {
 					label: '$effect.root',
 					type: 'keyword',
 					boost: 3
 				}),
-				{ label: '$effect.active', type: 'keyword', boost: 2 },
+				snip('$effect.active()', {
+					label: '$effect.active',
+					type: 'keyword',
+					boost: 2
+				}),
 				{ label: '$inspect', type: 'keyword', boost: 1 }
 			]
 		};

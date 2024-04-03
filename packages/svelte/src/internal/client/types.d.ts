@@ -1,13 +1,9 @@
+import type { Store } from '#shared';
 import { STATE_SYMBOL } from './constants.js';
 import type { Effect, Source, Value } from './reactivity/types.js';
 
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
-
-export type Store<V> = {
-	subscribe: (run: (value: V) => void) => () => void;
-	set(value: V): void;
-};
 
 // For all the core internal objects, we use single-character property strings.
 // This not only reduces code-size and parsing, but it also improves the performance
@@ -20,8 +16,8 @@ export type ComponentContext = {
 	s: Record<string, unknown>;
 	/** exports (and props, if `accessors: true`) */
 	x: Record<string, any> | null;
-	/** effects */
-	e: null | Effect[];
+	/** deferred effects */
+	e: null | Array<() => void | (() => void)>;
 	/** mounted */
 	m: boolean;
 	/** parent */
@@ -49,10 +45,7 @@ export type Equals = (this: Value, value: unknown) => boolean;
 
 export type TemplateNode = Text | Element | Comment;
 
-export interface Block {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-}
+export type Dom = TemplateNode | TemplateNode[];
 
 export type EachState = {
 	/** flags */
@@ -64,8 +57,6 @@ export type EachState = {
 export type EachItem = {
 	/** animation manager */
 	a: AnimationManager | null;
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
 	e: Effect;
 	/** item */
@@ -138,15 +129,6 @@ export type StoreReferencesContainer = Record<
 >;
 
 export type ActionPayload<P> = { destroy?: () => void; update?: (value: P) => void };
-
-export type Render = {
-	/** dom */
-	d: null | TemplateNode | Array<TemplateNode>;
-	/** effect */
-	e: null | Effect;
-	/** prev */
-	p: Render | null;
-};
 
 export type Raf = {
 	/** Alias for `requestAnimationFrame`, exposed in such a way that we can override in tests */

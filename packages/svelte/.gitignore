@@ -1,6 +1,6 @@
 /types/*.map
 /types/compiler
-/compiler.cjs
+/compiler/index.js
 
 /action.d.ts
 /animate.d.ts

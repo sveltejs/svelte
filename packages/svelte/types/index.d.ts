@@ -288,19 +288,19 @@ declare module 'svelte' {
 	 * */
 	export function afterUpdate(fn: () => void): void;
 	/**
-	 * Anything except a function
-	 */
+	 * Synchronously flushes any pending state changes and those that result from it.
+	 * */
+	export function flushSync(fn?: (() => void) | undefined): void;
+	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
-	/**
-	 * @deprecated Use `mount` or `hydrate` instead
-	 */
-	export function createRoot(): void;
+	export function unstate<T>(value: T): T;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
 	 *
 	 * */
 	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
-		target: Node;
+		target: Document | Element | ShadowRoot;
+		anchor?: Node | undefined;
 		props?: Props | undefined;
 		events?: { [Property in keyof Events]: (e: Events[Property]) => any; } | undefined;
 		context?: Map<any, any> | undefined;
@@ -311,7 +311,7 @@ declare module 'svelte' {
 	 *
 	 * */
 	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
-		target: Node;
+		target: Document | Element | ShadowRoot;
 		props?: Props | undefined;
 		events?: { [Property in keyof Events]: (e: Events[Property]) => any; } | undefined;
 		context?: Map<any, any> | undefined;
@@ -322,10 +322,6 @@ declare module 'svelte' {
 	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
 	 * */
 	export function unmount(component: Record<string, any>): void;
-	/**
-	 * Synchronously flushes any pending state changes and those that result from it.
-	 * */
-	export function flushSync(fn?: (() => void) | undefined): void;
 	/**
 	 * Returns a promise that resolves once any pending state changes have been applied.
 	 * */
@@ -368,7 +364,6 @@ declare module 'svelte' {
 	 * https://svelte.dev/docs/svelte#getallcontexts
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
-	export function unstate<T>(value: T): T;
 }
 
 declare module 'svelte/action' {
@@ -708,7 +703,8 @@ declare module 'svelte/compiler' {
 		node: Identifier;
 		/**
 		 * - `normal`: A variable that is not in any way special
-		 * - `prop`: A normal prop (possibly mutated)
+		 * - `prop`: A normal prop (possibly reassigned or mutated)
+		 * - `bindable_prop`: A prop one can `bind:` to (possibly reassigned or mutated)
 		 * - `rest_prop`: A rest prop
 		 * - `state`: A state variable
 		 * - `derived`: A derived variable
@@ -720,6 +716,7 @@ declare module 'svelte/compiler' {
 		kind:
 			| 'normal'
 			| 'prop'
+			| 'bindable_prop'
 			| 'rest_prop'
 			| 'state'
 			| 'frozen_state'
@@ -747,7 +744,7 @@ declare module 'svelte/compiler' {
 		scope: Scope;
 		/** For `legacy_reactive`: its reactive dependencies */
 		legacy_dependencies: Binding[];
-		/** Legacy props: the `class` in `{ export klass as class}` */
+		/** Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props() */
 		prop_alias: string | null;
 		/**
 		 * If this is set, all references should use this expression instead of the identifier name.
@@ -1849,7 +1846,7 @@ declare module 'svelte/reactivity' {
 }
 
 declare module 'svelte/server' {
-	export function render(component: (...args: any[]) => void, options: {
+	export function render(component: typeof import('svelte').SvelteComponent, options: {
 		props: Record<string, any>;
 		context?: Map<any, any>;
 	}): RenderOutput;
@@ -2501,12 +2498,23 @@ declare namespace $effect {
  * Declares the props that a component accepts. Example:
  *
  * ```ts
- * let { optionalProp = 42, requiredProp }: { optionalProp?: number; requiredProps: string } = $props();
+ * let { optionalProp = 42, requiredProp, bindableProp = $bindable() }: { optionalProp?: number; requiredProps: string; bindableProp: boolean } = $props();
  * ```
  *
  * https://svelte-5-preview.vercel.app/docs/runes#$props
  */
 declare function $props(): any;
+
+/**
+ * Declares a prop as bindable, meaning the parent component can use `bind:propName={value}` to bind to it.
+ *
+ * ```ts
+ * let { propName = $bindable() }: { propName: boolean } = $props();
+ * ```
+ *
+ * https://svelte-5-preview.vercel.app/docs/runes#$bindable
+ */
+declare function $bindable<T>(t?: T): T;
 
 /**
  * Inspects one or more values whenever they, or the properties they contain, change. Example:

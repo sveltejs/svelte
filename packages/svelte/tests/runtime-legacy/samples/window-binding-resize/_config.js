@@ -20,7 +20,7 @@ export default test({
 		});
 	},
 
-	skip_if_ssr: 'permanent',
+	mode: ['client', 'hydrate'],
 
 	async test({ assert, target, window }) {
 		const event = new window.Event('resize');

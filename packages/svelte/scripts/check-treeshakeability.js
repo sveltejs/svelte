@@ -51,6 +51,7 @@ console.group('checking treeshakeability');
 for (const key in pkg.exports) {
 	// special cases
 	if (key === './compiler') continue;
+	if (key === './internal') continue;
 	if (key === './internal/disclose-version') continue;
 
 	for (const type of ['browser', 'default']) {
@@ -109,7 +110,7 @@ const bundle = await bundle_code(
 	).js.code
 );
 
-if (!bundle.includes('current_hydration_fragment')) {
+if (!bundle.includes('hydrate_nodes') && !bundle.includes('hydrate_anchor')) {
 	// eslint-disable-next-line no-console
 	console.error(`✅ Hydration code treeshakeable`);
 } else {

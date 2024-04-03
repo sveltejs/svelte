@@ -1,5 +1,125 @@
 # svelte
 
+## 5.0.0-next.93
+
+### Patch Changes
+
+- breaking: prevent unparenthesized sequence expressions in attributes ([#11032](https://github.com/sveltejs/svelte/pull/11032))
+
+- fix: ensure transition errors are not swallowed ([#11039](https://github.com/sveltejs/svelte/pull/11039))
+
+## 5.0.0-next.92
+
+### Patch Changes
+
+- fix: include compiler/package.json in package ([#11033](https://github.com/sveltejs/svelte/pull/11033))
+
+## 5.0.0-next.91
+
+### Patch Changes
+
+- fix: improve unowned derived signal heuristics ([#11029](https://github.com/sveltejs/svelte/pull/11029))
+
+- fix: ensure correct context for action update/destroy functions ([#11023](https://github.com/sveltejs/svelte/pull/11023))
+
+- feat: more efficient hydration markers ([#11019](https://github.com/sveltejs/svelte/pull/11019))
+
+- fix: ensure effect cleanup functions are called with null `this` ([#11024](https://github.com/sveltejs/svelte/pull/11024))
+
+- fix: correctly handle closure passed to $derived.by when destructuring ([#11028](https://github.com/sveltejs/svelte/pull/11028))
+
+- Add `name` to HTMLDetailsAttributes ([#11013](https://github.com/sveltejs/svelte/pull/11013))
+
+- breaking: move compiler.cjs to compiler/index.js ([#10988](https://github.com/sveltejs/svelte/pull/10988))
+
+## 5.0.0-next.90
+
+### Patch Changes
+
+- fix: hydrate HTML with surrounding whitespace ([#10996](https://github.com/sveltejs/svelte/pull/10996))
+
+- feat: faster HTML tags ([#10986](https://github.com/sveltejs/svelte/pull/10986))
+
+## 5.0.0-next.89
+
+### Patch Changes
+
+- fix: expose 'svelte/internal' to prevent Vite erroring on startup ([#10987](https://github.com/sveltejs/svelte/pull/10987))
+
+- fix: revert SSR shorthand comments ([#10980](https://github.com/sveltejs/svelte/pull/10980))
+
+- fix: child effects are removed from parent branches ([#10985](https://github.com/sveltejs/svelte/pull/10985))
+
+## 5.0.0-next.88
+
+### Patch Changes
+
+- fix: further improvements to effect scheduling and flushing ([#10971](https://github.com/sveltejs/svelte/pull/10971))
+
+- feat: re-export built-ins from `svelte/reactivity` on the server ([#10973](https://github.com/sveltejs/svelte/pull/10973))
+
+## 5.0.0-next.87
+
+### Patch Changes
+
+- fix: apply animate on prefix/suffix each block mutations ([#10965](https://github.com/sveltejs/svelte/pull/10965))
+
+## 5.0.0-next.86
+
+### Patch Changes
+
+- fix: improved effect sequencing and execution order ([#10949](https://github.com/sveltejs/svelte/pull/10949))
+
+- breaking: onDestroy functions run child-first ([#10949](https://github.com/sveltejs/svelte/pull/10949))
+
+- fix: improve action support for nested $effect ([#10962](https://github.com/sveltejs/svelte/pull/10962))
+
+## 5.0.0-next.85
+
+### Patch Changes
+
+- feat: use implicit return for each block keys ([#10938](https://github.com/sveltejs/svelte/pull/10938))
+
+- breaking: always run pre effects immediately ([#10928](https://github.com/sveltejs/svelte/pull/10928))
+
+- fix: improve order of pre-effect execution ([#10942](https://github.com/sveltejs/svelte/pull/10942))
+
+- feat: more efficient each block compiler output ([#10937](https://github.com/sveltejs/svelte/pull/10937))
+
+## 5.0.0-next.84
+
+### Patch Changes
+
+- fix: reliably remove undefined attributes during hydration ([#10917](https://github.com/sveltejs/svelte/pull/10917))
+
+- fix: Add `elementtiming` HTMLAttribute, remove `crossorigin` from HTMLInputAttributes ([#10921](https://github.com/sveltejs/svelte/pull/10921))
+
+- feat: shorter compiler output for attribute updates ([#10917](https://github.com/sveltejs/svelte/pull/10917))
+
+## 5.0.0-next.83
+
+### Patch Changes
+
+- feat: more efficient if block compiler output ([#10906](https://github.com/sveltejs/svelte/pull/10906))
+
+- fix: update type of `options.target` ([#10892](https://github.com/sveltejs/svelte/pull/10892))
+
+- fix: correctly hydrate controlled each-else block ([#10887](https://github.com/sveltejs/svelte/pull/10887))
+
+- fix: Add `dirname` to HTMLInputAttributes ([#10908](https://github.com/sveltejs/svelte/pull/10908))
+
+## 5.0.0-next.82
+
+### Patch Changes
+
+- fix: allow runes for variable declarations in the template ([#10879](https://github.com/sveltejs/svelte/pull/10879))
+
+- feat: take form resets into account for two way bindings ([#10617](https://github.com/sveltejs/svelte/pull/10617))
+
+- fix: handle multiple snippet parameters with one or more being optional ([#10833](https://github.com/sveltejs/svelte/pull/10833))
+
+- breaking: apply fallback value every time in runes mode ([#10797](https://github.com/sveltejs/svelte/pull/10797))
+
 ## 5.0.0-next.81
 
 ### Patch Changes

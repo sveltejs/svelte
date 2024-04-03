@@ -1,4 +1,4 @@
-import { noop, run } from '../internal/common.js';
+import { noop, run_all } from '../internal/shared/utils.js';
 import { subscribe_to_store } from './utils.js';
 
 /**
@@ -104,14 +104,6 @@ export function writable(value, start = noop) {
 		};
 	}
 	return { set, update, subscribe };
-}
-
-/**
- * @param {Function[]} fns
- * @returns {void}
- */
-function run_all(fns) {
-	fns.forEach(run);
 }
 
 /**

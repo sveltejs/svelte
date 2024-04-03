@@ -1,6 +1,6 @@
 import { is_snippet } from './dom/blocks/snippet.js';
 import { untrack } from './runtime.js';
-import { is_array } from './utils.js';
+import { get_descriptor, is_array } from './utils.js';
 
 /** regex of all html void element names */
 const void_element_names =
@@ -40,27 +40,6 @@ export function validate_dynamic_component(component_fn) {
 		} else {
 			throw err;
 		}
-	}
-}
-
-/**
- * @param {() => string} tag_fn
- * @returns {void}
- */
-export function validate_void_dynamic_element(tag_fn) {
-	const tag = tag_fn();
-	if (tag && is_void(tag)) {
-		// eslint-disable-next-line no-console
-		console.warn(`<svelte:element this="${tag}"> is self-closing and cannot have content.`);
-	}
-}
-
-/** @param {() => unknown} tag_fn */
-export function validate_dynamic_element_tag(tag_fn) {
-	const tag = tag_fn();
-	const is_string = typeof tag === 'string';
-	if (tag && !is_string) {
-		throw new Error('<svelte:element> expects "this" attribute to be a string.');
 	}
 }
 
@@ -105,26 +84,20 @@ export function loop_guard(timeout) {
 }
 
 /**
- * Validate that the function handed to `{@render ...}` is a snippet function, and not some other kind of function.
- * @param {any} snippet_fn
+ * @param {Record<string, any>} $$props
+ * @param {string[]} bindable
  */
-export function validate_snippet(snippet_fn) {
-	if (snippet_fn && !is_snippet(snippet_fn)) {
-		throw new Error(
-			'The argument to `{@render ...}` must be a snippet function, not a component or some other kind of function. ' +
-				'If you want to dynamically render one snippet or another, use `$derived` and pass its result to `{@render ...}`.'
-		);
-	}
-	return snippet_fn;
-}
+export function validate_prop_bindings($$props, bindable) {
+	for (const key in $$props) {
+		if (!bindable.includes(key)) {
+			var setter = get_descriptor($$props, key)?.set;
 
-/**
- * Validate that the function behind `<Component />` isn't a snippet.
- * @param {any} component_fn
- */
-export function validate_component(component_fn) {
-	if (is_snippet(component_fn)) {
-		throw new Error('A snippet must be rendered with `{@render ...}`');
+			if (setter) {
+				throw new Error(
+					`Cannot use bind:${key} on this component because the property was not declared as bindable. ` +
+						`To mark a property as bindable, use the $bindable() rune like this: \`let { ${key} = $bindable() } = $props()\``
+				);
+			}
+		}
 	}
-	return component_fn;
 }

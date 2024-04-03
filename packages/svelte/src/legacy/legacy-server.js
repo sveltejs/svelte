@@ -15,8 +15,8 @@ export { createClassComponent };
  * @template {Record<string, any>} Events
  * @template {Record<string, any>} Slots
  *
- * @param {import('../main/public.js').SvelteComponent<Props, Events, Slots>} component
- * @returns {typeof import('../main/public.js').SvelteComponent<Props, Events, Slots> & Exports}
+ * @param {import('../index.js').SvelteComponent<Props, Events, Slots>} component
+ * @returns {typeof import('../index.js').SvelteComponent<Props, Events, Slots> & Exports}
  */
 export function asClassComponent(component) {
 	const component_constructor = as_class_component(component);

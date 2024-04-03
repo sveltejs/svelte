@@ -1,6 +1,6 @@
 import { test } from '../../test';
 
 export default test({
-	skip_if_ssr: 'permanent',
+	mode: ['client', 'hydrate'],
 	html: '<div>object</div>'
 });

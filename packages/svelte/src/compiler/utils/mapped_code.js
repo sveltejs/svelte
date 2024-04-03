@@ -412,7 +412,7 @@ export function merge_with_preprocessor_map(result, options, source_name) {
  * @param {string} from
  * @param {string} to
  */
-export function get_relative_path(from, to) {
+function get_relative_path(from, to) {
 	// Don't use node's utils here to ensure the compiler is usable in a browser environment
 	const from_parts = from.split(/[/\\]/);
 	const to_parts = to.split(/[/\\]/);

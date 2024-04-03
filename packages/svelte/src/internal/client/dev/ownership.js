@@ -9,7 +9,7 @@ const boundaries = {};
 const chrome_pattern = /at (?:.+ \()?(.+):(\d+):(\d+)\)?$/;
 const firefox_pattern = /@(.+):(\d+):(\d+)$/;
 
-export function get_stack() {
+function get_stack() {
 	const stack = new Error().stack;
 	if (!stack) return null;
 

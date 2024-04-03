@@ -41,7 +41,7 @@ export function compile(source, options) {
 			};
 		}
 
-		const analysis = analyze_component(parsed, combined_options);
+		const analysis = analyze_component(parsed, source, combined_options);
 
 		const result = transform_component(analysis, source, combined_options);
 		return result;

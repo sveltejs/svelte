@@ -1,8 +1,8 @@
 import { test } from '../../assert';
 
 export default test({
-	skip_if_ssr: 'permanent',
-	skip_if_hydrate: 'permanent',
+	mode: ['client'],
+
 	props: {
 		tag: /** @type {string | null} */ ('my-custom-element'),
 		name: /** @type {string | null | undefined} */ (null)

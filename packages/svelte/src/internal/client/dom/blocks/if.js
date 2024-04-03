@@ -1,38 +1,24 @@
 import { IS_ELSEIF } from '../../constants.js';
-import {
-	current_hydration_fragment,
-	hydrate_block_anchor,
-	hydrating,
-	set_current_hydration_fragment
-} from '../hydration.js';
+import { hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
 import { remove } from '../reconciler.js';
-import {
-	destroy_effect,
-	pause_effect,
-	render_effect,
-	resume_effect
-} from '../../reactivity/effects.js';
-import { create_block } from './utils.js';
+import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
+import { HYDRATION_END_ELSE } from '../../../../constants.js';
 
 /**
  * @param {Comment} anchor
  * @param {() => boolean} get_condition
- * @param {(anchor: Node) => import('#client').TemplateNode | import('#client').TemplateNode[]} consequent_fn
- * @param {null | ((anchor: Node) => import('#client').TemplateNode | import('#client').TemplateNode[])} alternate_fn
+ * @param {(anchor: Node) => import('#client').Dom} consequent_fn
+ * @param {null | ((anchor: Node) => import('#client').Dom)} [alternate_fn]
  * @param {boolean} [elseif] True if this is an `{:else if ...}` block rather than an `{#if ...}`, as that affects which transitions are considered 'local'
  * @returns {void}
  */
-export function if_block(anchor, get_condition, consequent_fn, alternate_fn, elseif = false) {
-	const block = create_block();
-
-	hydrate_block_anchor(anchor);
-
-	/** @type {undefined | import('#client').TemplateNode | Array<import('#client').TemplateNode>} */
-	let consequent_dom;
-
-	/** @type {undefined | import('#client').TemplateNode | Array<import('#client').TemplateNode>} */
-	let alternate_dom;
-
+export function if_block(
+	anchor,
+	get_condition,
+	consequent_fn,
+	alternate_fn = null,
+	elseif = false
+) {
 	/** @type {import('#client').Effect | null} */
 	let consequent_effect = null;
 
@@ -42,28 +28,21 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 	/** @type {boolean | null} */
 	let condition = null;
 
-	const if_effect = render_effect(() => {
+	const effect = block(() => {
 		if (condition === (condition = !!get_condition())) return;
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
 
 		if (hydrating) {
-			const comment_text = /** @type {Comment} */ (current_hydration_fragment?.[0])?.data;
+			const is_else = anchor.data === HYDRATION_END_ELSE;
 
-			if (
-				!comment_text ||
-				(comment_text === 'ssr:if:true' && !condition) ||
-				(comment_text === 'ssr:if:false' && condition)
-			) {
+			if (condition === is_else) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.
-				// This could happen using when `{#if browser} .. {/if}` in SvelteKit.
-				remove(current_hydration_fragment);
-				set_current_hydration_fragment(null);
+				// This could happen with `{#if browser}...{/if}`, for example
+				remove(hydrate_nodes);
+				set_hydrating(false);
 				mismatch = true;
-			} else {
-				// Remove the ssr:if comment node or else it will confuse the subsequent hydration algorithm
-				current_hydration_fragment.shift();
 			}
 		}
 
@@ -71,87 +50,35 @@ export function if_block(anchor, get_condition, consequent_fn, alternate_fn, els
 			if (consequent_effect) {
 				resume_effect(consequent_effect);
 			} else {
-				consequent_effect = render_effect(
-					() => {
-						consequent_dom = consequent_fn(anchor);
-
-						return () => {
-							// TODO make this unnecessary by linking the dom to the effect,
-							// and removing automatically on teardown
-							if (consequent_dom !== undefined) {
-								remove(consequent_dom);
-								consequent_dom = undefined;
-							}
-						};
-					},
-					block,
-					true
-				);
+				consequent_effect = branch(() => consequent_fn(anchor));
 			}
 
 			if (alternate_effect) {
 				pause_effect(alternate_effect, () => {
 					alternate_effect = null;
-					if (alternate_dom) remove(alternate_dom);
 				});
 			}
 		} else {
 			if (alternate_effect) {
 				resume_effect(alternate_effect);
 			} else if (alternate_fn) {
-				alternate_effect = render_effect(
-					() => {
-						alternate_dom = alternate_fn(anchor);
-
-						return () => {
-							// TODO make this unnecessary by linking the dom to the effect,
-							// and removing automatically on teardown
-							if (alternate_dom !== undefined) {
-								remove(alternate_dom);
-								alternate_dom = undefined;
-							}
-						};
-					},
-					block,
-					true
-				);
+				alternate_effect = branch(() => alternate_fn(anchor));
 			}
 
 			if (consequent_effect) {
 				pause_effect(consequent_effect, () => {
 					consequent_effect = null;
-					if (consequent_dom) remove(consequent_dom);
 				});
 			}
 		}
 
 		if (mismatch) {
-			// Set fragment so that Svelte continues to operate in hydration mode
-			set_current_hydration_fragment([]);
+			// continue in hydration mode
+			set_hydrating(true);
 		}
-	}, block);
+	});
 
 	if (elseif) {
-		if_effect.f |= IS_ELSEIF;
+		effect.f |= IS_ELSEIF;
 	}
-
-	if_effect.ondestroy = () => {
-		// TODO make this unnecessary by linking the dom to the effect,
-		// and removing automatically on teardown
-		if (consequent_dom !== undefined) {
-			remove(consequent_dom);
-		}
-
-		if (alternate_dom !== undefined) {
-			remove(alternate_dom);
-		}
-
-		if (consequent_effect) {
-			destroy_effect(consequent_effect);
-		}
-
-		if (alternate_effect) {
-			destroy_effect(alternate_effect);
-		}
-	};
 }

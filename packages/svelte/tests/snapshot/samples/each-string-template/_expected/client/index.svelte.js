@@ -1,31 +1,22 @@
 // index.svelte (Svelte VERSION)
 // Note: compiler output will change before 5.0 is released!
 import "svelte/internal/disclose-version";
-import * as $ from "svelte/internal";
+import * as $ from "svelte/internal/client";
 
 export default function Each_string_template($$anchor, $$props) {
 	$.push($$props, false);
 	$.init();
 
-	/* Init */
-	var fragment = $.comment($$anchor);
-	var node = $.child_frag(fragment);
+	var fragment = $.comment();
+	var node = $.first_child(fragment);
 
-	$.each_indexed(
-		node,
-		() => ['foo', 'bar', 'baz'],
-		1,
-		($$anchor, thing, $$index) => {
-			/* Init */
-			var text = $.space_frag($$anchor);
+	$.each_indexed(node, 1, () => ['foo', 'bar', 'baz'], ($$anchor, thing, $$index) => {
+		var text = $.text($$anchor);
 
-			/* Update */
-			$.text_effect(text, () => `${$.stringify($.unwrap(thing))}, `);
-			return $.close($$anchor, text);
-		},
-		null
-	);
+		$.render_effect(() => $.set_text(text, `${$.stringify($.unwrap(thing))}, `));
+		$.append($$anchor, text);
+	});
 
-	$.close_frag($$anchor, fragment);
+	$.append($$anchor, fragment);
 	$.pop();
 }

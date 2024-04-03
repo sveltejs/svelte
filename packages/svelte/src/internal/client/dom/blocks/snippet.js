@@ -1,30 +1,23 @@
-import { render_effect } from '../../reactivity/effects.js';
-import { remove } from '../reconciler.js';
-import { untrack } from '../../runtime.js';
-import { create_block } from './utils.js';
+import { branch, render_effect } from '../../reactivity/effects.js';
 
 /**
- * @param {() => Function | null | undefined} get_snippet
- * @param {Node} node
+ * @template {(node: import('#client').TemplateNode, ...args: any[]) => import('#client').Dom} SnippetFn
+ * @param {() => SnippetFn | null | undefined} get_snippet
+ * @param {import('#client').TemplateNode} node
  * @param {(() => any)[]} args
  * @returns {void}
  */
 export function snippet(get_snippet, node, ...args) {
-	const block = create_block();
+	/** @type {SnippetFn | null | undefined} */
+	var snippet;
 
 	render_effect(() => {
-		// Only rerender when the snippet function itself changes,
-		// not when an eagerly-read prop inside the snippet function changes
-		const snippet = get_snippet();
+		if (snippet === (snippet = get_snippet())) return;
+
 		if (snippet) {
-			untrack(() => snippet(node, ...args));
+			branch(() => /** @type {SnippetFn} */ (snippet)(node, ...args));
 		}
-		return () => {
-			if (block.d !== null) {
-				remove(block.d);
-			}
-		};
-	}, block);
+	});
 }
 
 const snippet_symbol = Symbol.for('svelte.snippet');

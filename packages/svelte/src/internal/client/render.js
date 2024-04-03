@@ -1,15 +1,20 @@
 import { DEV } from 'esm-env';
-import { append_child, create_element, empty, init_operations } from './dom/operations.js';
-import { PassiveDelegatedEvents } from '../../constants.js';
-import { remove } from './dom/reconciler.js';
-import { flush_sync, push, pop, current_component_context } from './runtime.js';
-import { render_effect, destroy_effect } from './reactivity/effects.js';
 import {
-	current_hydration_fragment,
-	get_hydration_fragment,
-	hydrate_block_anchor,
+	append_child,
+	clear_text_content,
+	create_element,
+	empty,
+	init_operations
+} from './dom/operations.js';
+import { HYDRATION_START, PassiveDelegatedEvents } from '../../constants.js';
+import { flush_sync, push, pop, current_component_context, untrack } from './runtime.js';
+import { effect_root, branch } from './reactivity/effects.js';
+import {
+	hydrate_anchor,
+	hydrate_nodes,
 	hydrating,
-	set_current_hydration_fragment
+	set_hydrate_nodes,
+	set_hydrating
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
 import { handle_event_propagation } from './dom/elements/events.js';
@@ -34,19 +39,10 @@ export function set_should_intro(value) {
 
 /**
  * @param {Element} dom
- * @param {() => string} value
- * @returns {void}
- */
-export function text_effect(dom, value) {
-	render_effect(() => text(dom, value()));
-}
-
-/**
- * @param {Element} dom
  * @param {string} value
  * @returns {void}
  */
-export function text(dom, value) {
+export function set_text(dom, value) {
 	// @ts-expect-error need to add __value to patched prototype
 	const prev_node_value = dom.__nodeValue;
 	const next_node_value = stringify(value);
@@ -68,7 +64,6 @@ export function text(dom, value) {
  * @param {null | ((anchor: Comment) => void)} fallback_fn
  */
 export function slot(anchor, slot_fn, slot_props, fallback_fn) {
-	hydrate_block_anchor(anchor);
 	if (slot_fn === undefined) {
 		if (fallback_fn !== null) {
 			fallback_fn(anchor);
@@ -86,36 +81,25 @@ export function stringify(value) {
 	return typeof value === 'string' ? value : value == null ? '' : value + '';
 }
 
-// TODO 5.0 remove this
-/**
- * @deprecated Use `mount` or `hydrate` instead
- */
-export function createRoot() {
-	throw new Error(
-		'`createRoot` has been removed. Use `mount` or `hydrate` instead. See the updated docs for more info: https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes'
-	);
-}
-
 /**
  * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
  * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
+ * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} component
  * @param {{
- * 		target: Node;
+ * 		target: Document | Element | ShadowRoot;
+ * 		anchor?: Node;
  * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
- *  	context?: Map<any, any>;
+ * 		context?: Map<any, any>;
  * 		intro?: boolean;
  * 	}} options
  * @returns {Exports}
  */
 export function mount(component, options) {
-	init_operations();
-	const anchor = empty();
-	options.target.appendChild(anchor);
+	const anchor = options.anchor ?? options.target.appendChild(empty());
 	// Don't flush previous effects to ensure order of outer effects stays consistent
 	return flush_sync(() => _mount(component, { ...options, anchor }), false);
 }
@@ -126,9 +110,9 @@ export function mount(component, options) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
  * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
+ * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} component
  * @param {{
- * 		target: Node;
+ * 		target: Document | Element | ShadowRoot;
  * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  *  	context?: Map<any, any>;
@@ -138,36 +122,40 @@ export function mount(component, options) {
  * @returns {Exports}
  */
 export function hydrate(component, options) {
-	init_operations();
-	const container = options.target;
-	const first_child = /** @type {ChildNode} */ (container.firstChild);
-	// Call with insert_text == true to prevent empty {expressions} resulting in an empty
-	// fragment array, resulting in a hydration error down the line
-	const hydration_fragment = get_hydration_fragment(first_child, true);
-	const previous_hydration_fragment = current_hydration_fragment;
-	set_current_hydration_fragment(hydration_fragment);
+	const target = options.target;
+	const previous_hydrate_nodes = hydrate_nodes;
 
-	/** @type {null | Text} */
-	let anchor = null;
-	if (hydration_fragment === null) {
-		anchor = empty();
-		container.appendChild(anchor);
-	}
-
-	let finished_hydrating = false;
+	let hydrated = false;
 
 	try {
 		// Don't flush previous effects to ensure order of outer effects stays consistent
 		return flush_sync(() => {
+			set_hydrating(true);
+
+			var node = target.firstChild;
+			while (
+				node &&
+				(node.nodeType !== 8 || /** @type {Comment} */ (node).data !== HYDRATION_START)
+			) {
+				node = node.nextSibling;
+			}
+
+			if (!node) {
+				throw new Error('Missing hydration marker');
+			}
+
+			const anchor = hydrate_anchor(node);
 			const instance = _mount(component, { ...options, anchor });
+
 			// flush_sync will run this callback and then synchronously run any pending effects,
 			// which don't belong to the hydration phase anymore - therefore reset it here
-			set_current_hydration_fragment(null);
-			finished_hydrating = true;
+			set_hydrating(false);
+			hydrated = true;
+
 			return instance;
 		}, false);
 	} catch (error) {
-		if (!finished_hydrating && options.recover !== false && hydration_fragment !== null) {
+		if (!hydrated && options.recover !== false) {
 			// eslint-disable-next-line no-console
 			console.error(
 				'ERR_SVELTE_HYDRATION_MISMATCH' +
@@ -176,16 +164,17 @@ export function hydrate(component, options) {
 						: ''),
 				error
 			);
-			remove(hydration_fragment);
-			first_child.remove();
-			hydration_fragment[hydration_fragment.length - 1]?.nextSibling?.remove();
-			set_current_hydration_fragment(null);
+
+			clear_text_content(target);
+
+			set_hydrating(false);
 			return mount(component, options);
 		} else {
 			throw error;
 		}
 	} finally {
-		set_current_hydration_fragment(previous_hydration_fragment);
+		set_hydrating(!!previous_hydrate_nodes);
+		set_hydrate_nodes(previous_hydrate_nodes);
 	}
 }
 
@@ -193,63 +182,27 @@ export function hydrate(component, options) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
  * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} Component
+ * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} Component
  * @param {{
- * 		target: Node;
- * 		anchor: null | Text;
+ * 		target: Document | Element | ShadowRoot;
+ * 		anchor: Node;
  * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
- *  	context?: Map<any, any>;
+ * 		context?: Map<any, any>;
  * 		intro?: boolean;
- * 		recover?: false;
  * 	}} options
  * @returns {Exports}
  */
-function _mount(Component, options) {
+function _mount(
+	Component,
+	{ target, anchor, props = /** @type {Props} */ ({}), events, context, intro = false }
+) {
+	init_operations();
+
 	const registered_events = new Set();
-	const container = options.target;
 
-	should_intro = options.intro ?? false;
-
-	/** @type {import('#client').Block} */
-	const block = {
-		// dom
-		d: null
-	};
-
-	/** @type {Exports} */
-	// @ts-expect-error will be defined because the render effect runs synchronously
-	let component = undefined;
-
-	const effect = render_effect(
-		() => {
-			if (options.context) {
-				push({});
-				/** @type {import('../client/types.js').ComponentContext} */ (current_component_context).c =
-					options.context;
-			}
-			if (!options.props) {
-				options.props = /** @type {Props} */ ({});
-			}
-			if (options.events) {
-				// We can't spread the object or else we'd lose the state proxy stuff, if it is one
-				/** @type {any} */ (options.props).$$events = options.events;
-			}
-			component =
-				// @ts-expect-error the public typings are not what the actual function looks like
-				Component(options.anchor, options.props) || {};
-			if (options.context) {
-				pop();
-			}
-		},
-		block,
-		true
-	);
-
-	const bound_event_listener = handle_event_propagation.bind(null, container);
+	const bound_event_listener = handle_event_propagation.bind(null, target);
 	const bound_document_event_listener = handle_event_propagation.bind(null, document);
-
-	should_intro = true;
 
 	/** @param {Array<string>} events */
 	const event_handle = (events) => {
@@ -260,7 +213,7 @@ function _mount(Component, options) {
 				// Add the event listener to both the container and the document.
 				// The container listener ensures we catch events from within in case
 				// the outer content stops propagation of the event.
-				container.addEventListener(
+				target.addEventListener(
 					event_name,
 					bound_event_listener,
 					PassiveDelegatedEvents.includes(event_name)
@@ -283,21 +236,46 @@ function _mount(Component, options) {
 			}
 		}
 	};
+
 	event_handle(array_from(all_registered_events));
 	root_event_handles.add(event_handle);
 
-	mounted_components.set(component, () => {
-		for (const event_name of registered_events) {
-			container.removeEventListener(event_name, bound_event_listener);
-		}
-		root_event_handles.delete(event_handle);
-		const dom = block.d;
-		if (dom !== null) {
-			remove(dom);
-		}
-		destroy_effect(effect);
+	/** @type {Exports} */
+	// @ts-expect-error will be defined because the render effect runs synchronously
+	let component = undefined;
+
+	const unmount = effect_root(() => {
+		branch(() => {
+			if (context) {
+				push({});
+				var ctx = /** @type {import('#client').ComponentContext} */ (current_component_context);
+				ctx.c = context;
+			}
+
+			if (events) {
+				// We can't spread the object or else we'd lose the state proxy stuff, if it is one
+				/** @type {any} */ (props).$$events = events;
+			}
+
+			should_intro = intro;
+			// @ts-expect-error the public typings are not what the actual function looks like
+			component = Component(anchor, props) || {};
+			should_intro = true;
+
+			if (context) {
+				pop();
+			}
+		});
+
+		return () => {
+			for (const event_name of registered_events) {
+				target.removeEventListener(event_name, bound_event_listener);
+			}
+			root_event_handles.delete(event_handle);
+		};
 	});
 
+	mounted_components.set(component, unmount);
 	return component;
 }
 

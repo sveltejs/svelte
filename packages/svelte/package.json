@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.0.0-next.81",
+  "version": "5.0.0-next.93",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -12,17 +12,17 @@
     "src",
     "!src/**/*.test.*",
     "types",
-    "compiler.cjs",
+    "compiler",
     "*.d.ts",
     "README.md"
   ],
-  "module": "src/main/main-client.js",
-  "main": "src/main/main-client.js",
+  "module": "src/index-client.js",
+  "main": "src/index-client.js",
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
-      "browser": "./src/main/main-client.js",
-      "default": "./src/main/main-server.js"
+      "browser": "./src/index-client.js",
+      "default": "./src/index-server.js"
     },
     "./package.json": "./package.json",
     "./action": {
@@ -34,7 +34,7 @@
     },
     "./compiler": {
       "types": "./types/index.d.ts",
-      "require": "./compiler.cjs",
+      "require": "./compiler/index.js",
       "default": "./src/compiler/index.js"
     },
     "./easing": {
@@ -46,6 +46,9 @@
     },
     "./internal": {
       "default": "./src/internal/index.js"
+    },
+    "./internal/client": {
+      "default": "./src/internal/client/index.js"
     },
     "./internal/disclose-version": {
       "default": "./src/internal/disclose-version.js"
@@ -64,7 +67,8 @@
     },
     "./reactivity": {
       "types": "./types/index.d.ts",
-      "default": "./src/reactivity/index.js"
+      "browser": "./src/reactivity/index-client.js",
+      "default": "./src/reactivity/index-server.js"
     },
     "./server": {
       "types": "./types/index.d.ts",
@@ -137,7 +141,9 @@
   "knip": {
     "entry": [
       "src/*/index.js",
-      "src/*/public.d.ts"
+      "src/index-client.ts",
+      "src/index-server.ts",
+      "src/index.d.ts"
     ],
     "project": [
       "src/**"
