@@ -17,7 +17,7 @@ import {
 	branch,
 	destroy_effect,
 	effect,
-	out,
+	run_out_transitions,
 	pause_children,
 	pause_effect,
 	resume_effect
@@ -65,7 +65,7 @@ function pause_effects(effects, controlled_anchor, callback) {
 		each_element.append(controlled_anchor);
 	}
 
-	out(transitions, () => {
+	run_out_transitions(transitions, () => {
 		for (var i = 0; i < length; i++) {
 			destroy_effect(effects[i]);
 		}

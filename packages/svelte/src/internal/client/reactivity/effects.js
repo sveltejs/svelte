@@ -302,7 +302,7 @@ export function pause_effect(effect, callback) {
 
 	pause_children(effect, transitions, true);
 
-	out(transitions, () => {
+	run_out_transitions(transitions, () => {
 		destroy_effect(effect);
 		if (callback) callback();
 	});
@@ -312,7 +312,7 @@ export function pause_effect(effect, callback) {
  * @param {import('#client').TransitionManager[]} transitions
  * @param {() => void} fn
  */
-export function out(transitions, fn) {
+export function run_out_transitions(transitions, fn) {
 	var remaining = transitions.length;
 	if (remaining > 0) {
 		var check = () => --remaining || fn();
