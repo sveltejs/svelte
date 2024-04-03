@@ -313,23 +313,38 @@ export function pause_effect(effect, callback = noop) {
  * Pause multiple effects simultaneously, and coordinate their
  * subsequent destruction. Used in each blocks
  * @param {import('#client').Effect[]} effects
- * @param {() => void} callback
+ * @returns {import('#client').TransitionManager[]}
  */
-export function pause_effects(effects, callback = noop) {
+export function get_out_transitions(effects) {
 	/** @type {import('#client').TransitionManager[]} */
 	var transitions = [];
-	var length = effects.length;
 
-	for (var i = 0; i < length; i++) {
+	for (var i = 0; i < effects.length; i++) {
 		pause_children(effects[i], transitions, true);
 	}
 
-	// TODO: would be good to avoid this closure in the case where we have no
-	// transitions at all. It would make it far more JIT friendly in the hot cases.
+	return transitions;
+}
+
+/**
+ * @param {import('#client').Effect[]} effects
+ */
+export function destroy_effects(effects) {
+	for (var i = 0; i < effects.length; i++) {
+		destroy_effect(effects[i]);
+	}
+}
+
+/**
+ * Pause multiple effects simultaneously, and coordinate their
+ * subsequent destruction. Used in each blocks
+ * @param {import('#client').Effect[]} effects
+ * @param {import('#client').TransitionManager[]} transitions
+ * @param {() => void} callback
+ */
+export function pause_effects(effects, transitions, callback = noop) {
 	out(transitions, () => {
-		for (var i = 0; i < length; i++) {
-			destroy_effect(effects[i]);
-		}
+		destroy_effects(effects);
 		callback();
 	});
 }
@@ -370,13 +385,12 @@ function pause_children(effect, transitions, local) {
 	var child = effect.first;
 
 	while (child !== null) {
-		var sibling = child.next;
 		var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & BRANCH_EFFECT) !== 0;
 		// TODO we don't need to call pause_children recursively with a linked list in place
 		// it's slightly more involved though as we have to account for `transparent` changing
 		// through the tree.
 		pause_children(child, transitions, transparent ? local : false);
-		child = sibling;
+		child = child.next;
 	}
 }
 
