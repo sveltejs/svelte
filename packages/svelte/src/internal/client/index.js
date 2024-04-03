@@ -5,7 +5,7 @@ export { key_block as key } from './dom/blocks/key.js';
 export { css_props } from './dom/blocks/css-props.js';
 export { each_keyed, each_indexed } from './dom/blocks/each.js';
 export { html } from './dom/blocks/html.js';
-export { snippet } from './dom/blocks/snippet.js';
+export { snippet, add_snippet_symbol } from './dom/blocks/snippet.js';
 export { component } from './dom/blocks/svelte-component.js';
 export { element } from './dom/blocks/svelte-element.js';
 export { head } from './dom/blocks/svelte-head.js';
@@ -137,7 +137,6 @@ export {
 } from './dom/operations.js';
 export { noop } from '../shared/utils.js';
 export {
-	add_snippet_symbol,
 	validate_component,
 	validate_dynamic_element_tag,
 	validate_snippet,
