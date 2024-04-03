@@ -89,11 +89,11 @@ export function stringify(value) {
  * @template {Record<string, any>} Events
  * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} component
  * @param {{
- *    anchor?: Node;
+ * 		anchor?: Node;
  * 		target: Document | Element | ShadowRoot;
  * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
- *  	context?: Map<any, any>;
+ * 		context?: Map<any, any>;
  * 		intro?: boolean;
  * 	}} options
  * @returns {Exports}
@@ -188,7 +188,7 @@ export function hydrate(component, options) {
  * 		anchor: Node;
  * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
- *  	context?: Map<any, any>;
+ * 		context?: Map<any, any>;
  * 		intro?: boolean;
  * 	}} options
  * @returns {Exports}
