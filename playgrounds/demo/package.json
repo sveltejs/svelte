@@ -15,6 +15,6 @@
     "express": "^4.19.2",
     "nodemon": "^3.0.3",
     "svelte": "workspace:*",
-    "vite": "^5.0.12"
+    "vite": "^5.0.13"
   }
 }
