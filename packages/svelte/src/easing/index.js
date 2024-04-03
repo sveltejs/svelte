@@ -19,8 +19,7 @@ export function linear(t) {
  */
 export function backInOut(t) {
 	const s = 1.70158 * 1.525;
-	if ((t *= 2) < 1) return 0.5 * (t * t * ((s + 1) * t - s));
-	return 0.5 * ((t -= 2) * t * ((s + 1) * t + s) + 2);
+	return (t *= 2) < 1 ? (0.5 * (t * t * ((s + 1) * t - s))) : (0.5 * ((t -= 2) * t * ((s + 1) * t + s) + 2));
 }
 
 /**
@@ -89,8 +88,7 @@ export function bounceIn(t) {
  * @returns {number}
  */
 export function circInOut(t) {
-	if ((t *= 2) < 1) return -0.5 * (Math.sqrt(1 - t * t) - 1);
-	return 0.5 * (Math.sqrt(1 - (t -= 2) * t) + 1);
+	return (t *= 2) < 1 ? (-0.5 * (Math.sqrt(1 - t * t) - 1)) : (0.5 * (Math.sqrt(1 - (t -= 2) * t) + 1));
 }
 
 /**
@@ -265,8 +263,7 @@ export function quartOut(t) {
  * @returns {number}
  */
 export function quintInOut(t) {
-	if ((t *= 2) < 1) return 0.5 * t * t * t * t * t;
-	return 0.5 * ((t -= 2) * t * t * t * t + 2);
+	return (t *= 2) < 1 ? (0.5 * t * t * t * t * t) : (0.5 * ((t -= 2) * t * t * t * t + 2));
 }
 
 /**
@@ -303,8 +300,7 @@ export function sineInOut(t) {
  */
 export function sineIn(t) {
 	const v = Math.cos(t * Math.PI * 0.5);
-	if (Math.abs(v) < 1e-14) return 1;
-	else return 1 - v;
+	return Math.abs(v) < 1e-14 ? 1 : (1 - v);
 }
 
 /**
