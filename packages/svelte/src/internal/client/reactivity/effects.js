@@ -385,13 +385,12 @@ function pause_children(effect, transitions, local) {
 	var child = effect.first;
 
 	while (child !== null) {
-		var sibling = child.next;
 		var transparent = (child.f & IS_ELSEIF) !== 0 || (child.f & BRANCH_EFFECT) !== 0;
 		// TODO we don't need to call pause_children recursively with a linked list in place
 		// it's slightly more involved though as we have to account for `transparent` changing
 		// through the tree.
 		pause_children(child, transitions, transparent ? local : false);
-		child = sibling;
+		child = child.next;
 	}
 }
 
