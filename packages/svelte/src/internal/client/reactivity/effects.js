@@ -310,35 +310,10 @@ export function pause_effect(effect, callback = noop) {
 }
 
 /**
- * Pause multiple effects simultaneously, and coordinate their
- * subsequent destruction. Used in each blocks
- * @param {import('#client').Effect[]} effects
- * @param {() => void} callback
- */
-export function pause_effects(effects, callback = noop) {
-	/** @type {import('#client').TransitionManager[]} */
-	var transitions = [];
-	var length = effects.length;
-
-	for (var i = 0; i < length; i++) {
-		pause_children(effects[i], transitions, true);
-	}
-
-	// TODO: would be good to avoid this closure in the case where we have no
-	// transitions at all. It would make it far more JIT friendly in the hot cases.
-	out(transitions, () => {
-		for (var i = 0; i < length; i++) {
-			destroy_effect(effects[i]);
-		}
-		callback();
-	});
-}
-
-/**
  * @param {import('#client').TransitionManager[]} transitions
  * @param {() => void} fn
  */
-function out(transitions, fn) {
+export function out(transitions, fn) {
 	var remaining = transitions.length;
 	if (remaining > 0) {
 		var check = () => --remaining || fn();
@@ -355,7 +330,7 @@ function out(transitions, fn) {
  * @param {import('#client').TransitionManager[]} transitions
  * @param {boolean} local
  */
-function pause_children(effect, transitions, local) {
+export function pause_children(effect, transitions, local) {
 	if ((effect.f & INERT) !== 0) return;
 	effect.f ^= INERT;
 
