@@ -222,5 +222,16 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 	): boolean;
 }
 
+/**
+ * Can be used to type `getContext`/`setContext`:
+ * ```ts
+ * import { getContext, setContext, type ContextKey } from 'svelte';
+ * const context_key: ContextKey<boolean> = Symbol('my boolean context key');
+ * setContext(context_key, true);
+ * const value = getContext(context_key); // infered as boolean | undefined
+ * ```
+ */
+export interface ContextKey<T> extends Symbol {}
+
 export * from './index-client.js';
 import './ambient.js';

@@ -1,4 +1,6 @@
 import type { Store } from '#shared';
+import type { ContextKey } from 'svelte';
+import type { IsAny } from '../types.js';
 import { STATE_SYMBOL } from './constants.js';
 import type { Effect, Source, Value } from './reactivity/types.js';
 
@@ -168,5 +170,9 @@ export interface ProxyMetadata<T = Record<string | symbol, any>> {
 export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
 	[STATE_SYMBOL]: ProxyMetadata;
 };
+
+export type ContextType<T, Key> =
+	// We need to specifically check for `any` because else it satisfies both conditions which results in the type being `unknown`
+	IsAny<Key> extends true ? T : Key extends ContextKey<infer X> ? X | undefined : T;
 
 export * from './reactivity/types';

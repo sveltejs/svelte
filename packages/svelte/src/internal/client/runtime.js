@@ -871,12 +871,13 @@ export function is_signal(val) {
  *
  * https://svelte.dev/docs/svelte#getcontext
  * @template T
- * @param {any} key
- * @returns {T}
+ * @template [Key=any]
+ * @param {Key} key
+ * @returns {import('./types.js').ContextType<T, Key>}
  */
 export function getContext(key) {
 	const context_map = get_or_init_context_map();
-	const result = /** @type {T} */ (context_map.get(key));
+	const result = /** @type {any} */ (context_map.get(key));
 
 	if (DEV) {
 		// @ts-expect-error
@@ -898,9 +899,10 @@ export function getContext(key) {
  *
  * https://svelte.dev/docs/svelte#setcontext
  * @template T
- * @param {any} key
- * @param {T} context
- * @returns {T}
+ * @template [Key=any]
+ * @param {Key} key
+ * @param {import('./types.js').ContextType<T, Key>} context
+ * @returns {import('./types.js').ContextType<T, Key>}
  */
 export function setContext(key, context) {
 	const context_map = get_or_init_context_map();
