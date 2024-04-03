@@ -17,10 +17,8 @@ import {
 	branch,
 	effect,
 	pause_effect,
-	get_out_transitions,
-	resume_effect,
 	pause_effects,
-	destroy_effects
+	resume_effect
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen, map_get, map_set } from '../../utils.js';
@@ -246,17 +244,9 @@ function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
 			effects.push(a_items[i].e);
 		}
 
-		var transitions = get_out_transitions(effects);
-		var items = state.items;
-
-		if (transitions.length === 0) {
-			destroy_effects(effects);
-			items.length = b;
-		} else {
-			pause_effects(effects, transitions, () => {
-				items.length = b;
-			});
-		}
+		pause_effects(effects, () => {
+			state.items.length = b;
+		});
 	}
 }
 
@@ -431,16 +421,11 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 		});
 	}
 
-	var transitions = get_out_transitions(to_destroy);
-
-	if (transitions.length === 0) {
-		destroy_effects(to_destroy);
+	// TODO: would be good to avoid this closure in the case where we have no
+	// transitions at all. It would make it far more JIT friendly in the hot cases.
+	pause_effects(to_destroy, () => {
 		state.items = b_items;
-	} else {
-		pause_effects(to_destroy, transitions, () => {
-			state.items = b_items;
-		});
-	}
+	});
 }
 
 /**
