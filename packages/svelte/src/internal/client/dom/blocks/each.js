@@ -418,9 +418,8 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 		if (moved) {
 			mark_lis(sources);
 		} else if (is_controlled && to_destroy.length === a_items.length) {
-			// We can optimize the case where we change all items of the each block to an entirely new set of items.
-			// In this case we can first clear the DOM fast, along with all their effect, then we can continue
-			// with the normal logic that appends them.
+			// We can optimize the case in which all items are replaced —
+			// destroy everything first, then append new items
 			pause_effects(to_destroy, anchor);
 			to_destroy = [];
 		}
