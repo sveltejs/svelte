@@ -299,8 +299,8 @@ declare module 'svelte' {
 	 *
 	 * */
 	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
-		anchor?: Node | undefined;
 		target: Document | Element | ShadowRoot;
+		anchor?: Node | undefined;
 		props?: Props | undefined;
 		events?: { [Property in keyof Events]: (e: Events[Property]) => any; } | undefined;
 		context?: Map<any, any> | undefined;
