@@ -14,7 +14,7 @@ Learn more at the [Svelte website](https://svelte.dev), or stop by the [Discord 
 
 You can play around with Svelte in the [tutorial](https://learn.svelte.dev/), [examples](https://svelte.dev/examples), and [REPL](https://svelte.dev/repl).
 
-When you're ready to build a full-fledge application, we recommend using [SvelteKit](https://kit.svelte.dev):
+When you're ready to build a full-fledged application, we recommend using [SvelteKit](https://kit.svelte.dev):
 
 ```bash
 npm create svelte@latest my-app
