@@ -437,6 +437,20 @@ export function analyze_component(root, source, options) {
 				merge(set_scope(scopes), validation_runes, runes_scope_tweaker, common_visitors)
 			);
 		}
+
+		if (analysis.exports.length > 0) {
+			for (const [_, binding] of instance.scope.declarations) {
+				if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
+					if (
+						analysis.exports.some(
+							({ alias, name }) => (binding.prop_alias ?? binding.node.name) === (alias ?? name)
+						)
+					) {
+						error(binding.node, 'conflicting-property-name');
+					}
+				}
+			}
+		}
 	} else {
 		instance.scope.declare(b.id('$$props'), 'bindable_prop', 'synthetic');
 		instance.scope.declare(b.id('$$restProps'), 'rest_prop', 'synthetic');

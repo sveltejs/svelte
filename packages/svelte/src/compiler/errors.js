@@ -212,7 +212,9 @@ const runes = {
 	'duplicate-props-rune': () => `Cannot use $props() more than once`,
 	'invalid-each-assignment': () =>
 		`Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. 'array[i] = value' instead of 'entry = value')`,
-	'invalid-derived-call': () => `$derived.call(...) has been replaced with $derived.by(...)`
+	'invalid-derived-call': () => `$derived.call(...) has been replaced with $derived.by(...)`,
+	'conflicting-property-name': () =>
+		`Cannot have a property and a component export with the same name`
 };
 
 /** @satisfies {Errors} */
