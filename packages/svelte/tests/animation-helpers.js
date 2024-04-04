@@ -123,12 +123,14 @@ class Animation {
 		if (this.currentTime > 0 && this.currentTime < this.#duration) {
 			this.#apply_keyframe(0);
 		}
-		// @ts-ignore
-		this.currentTime = null;
-		// @ts-ignore
-		this.startTime = null;
-		this.#cancelled();
-		raf.animations.delete(this);
+		if (this.currentTime !== null && this.startTime !== null) {
+			// @ts-ignore
+			this.currentTime = null;
+			// @ts-ignore
+			this.startTime = null;
+			this.#cancelled();
+			raf.animations.delete(this);
+		}
 	}
 }
 

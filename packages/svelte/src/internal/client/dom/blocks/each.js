@@ -59,7 +59,7 @@ function pause_effects(items, paused, controlled_anchor) {
 		transitions_count = transitions.length;
 		pause_children(item.e, transitions, true);
 		if (transitions_count !== transitions.length) {
-			paused.set(item.k === null ? item.i : item.k, item);
+			paused.set(item.k, item);
 		}
 	}
 
@@ -75,7 +75,7 @@ function pause_effects(items, paused, controlled_anchor) {
 
 	run_out_transitions(transitions, () => {
 		for (var i = 0; i < length; i++) {
-			paused.delete(item.k === null ? item.i : item.k);
+			paused.delete(item.k);
 			destroy_effect(items[i].e);
 		}
 	});
@@ -266,6 +266,8 @@ function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
 		value = array[i];
 		item = a_items[i];
 		b_items[i] = item;
+		// Indexed each blocks use the value as the key
+		item.k = value;
 		update_item(item, value, i, flags);
 		resume_effect(item.e);
 	}
@@ -274,11 +276,11 @@ function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
 		// add items
 		for (; i < b; i += 1) {
 			value = array[i];
-			item = paused.get(i);
+			item = paused.get(value);
 
 			if (item === undefined || item.e.dom === null) {
-				paused.delete(i);
-				item = create_item(anchor, value, null, i, render_fn, flags);
+				paused.delete(value);
+				item = create_item(anchor, value, value, i, render_fn, flags);
 			} else {
 				resume_effect(item.e);
 				move(/** @type {import('#client').Dom} */ (item.e.dom), anchor);
