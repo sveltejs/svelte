@@ -311,6 +311,9 @@ function animate(element, options, counterpart, t2, callback) {
 				if (animation.startTime !== null && animation.currentTime !== null) {
 					throw e;
 				}
+				// If we have an aborted request and the element is detached from the DOM, then that
+				// means that it's likely that the animation was paused upon the DOM element being
+				// removed. This won't trigger the finish logic, so we need to ensure the callback is fired.
 				if (!element.isConnected) {
 					callback?.();
 				}

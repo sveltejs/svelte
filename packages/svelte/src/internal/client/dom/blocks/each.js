@@ -75,8 +75,9 @@ function pause_effects(items, paused, controlled_anchor) {
 
 	run_out_transitions(transitions, () => {
 		for (var i = 0; i < length; i++) {
+			var item = items[i];
 			paused.delete(item.k);
-			destroy_effect(items[i].e);
+			destroy_effect(item.e);
 		}
 	});
 }
@@ -266,8 +267,6 @@ function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
 		value = array[i];
 		item = a_items[i];
 		b_items[i] = item;
-		// Indexed each blocks use the index as the key
-		item.k = i;
 		update_item(item, value, i, flags);
 		resume_effect(item.e);
 	}
@@ -278,12 +277,12 @@ function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
 			value = array[i];
 			item = paused.get(i);
 
-			if (item === undefined || item.e.dom === null) {
+			if (item === undefined) {
 				paused.delete(i);
 				item = create_item(anchor, value, i, i, render_fn, flags);
 			} else {
-				resume_effect(item.e);
 				move(/** @type {import('#client').Dom} */ (item.e.dom), anchor);
+				resume_effect(item.e);
 			}
 
 			b_items[i] = item;
@@ -380,12 +379,12 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 			key = keys[start];
 			item = paused.get(key);
 
-			if (item === undefined || item.e.dom === null) {
+			if (item === undefined) {
 				paused.delete(key);
 				item = create_item(anchor, array[start], key, start, render_fn, flags);
 			} else {
-				resume_effect(item.e);
 				move(/** @type {import('#client').Dom} */ (item.e.dom), anchor);
+				resume_effect(item.e);
 			}
 
 			b_items[start++] = item;
@@ -466,12 +465,12 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 				key = keys[b];
 				item = paused.get(keys[b]);
 
-				if (item === undefined || item.e.dom === null) {
+				if (item === undefined) {
 					paused.delete(key);
 					item = create_item(anchor, array[b], key, b, render_fn, flags);
 				} else {
-					resume_effect(item.e);
 					move(/** @type {import('#client').Dom} */ (item.e.dom), anchor);
+					resume_effect(item.e);
 				}
 			} else {
 				item = b_items[b];
