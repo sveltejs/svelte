@@ -311,7 +311,9 @@ function animate(element, options, counterpart, t2, callback) {
 				if (animation.startTime !== null && animation.currentTime !== null) {
 					throw e;
 				}
-				callback?.();
+				if (!element.isConnected) {
+					callback?.();
+				}
 			});
 	} else {
 		// Timer
