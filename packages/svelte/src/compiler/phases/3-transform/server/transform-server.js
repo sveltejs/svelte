@@ -767,6 +767,10 @@ const javascript_visitors_runes = {
 	CallExpression(node, context) {
 		const rune = get_rune(node, context.state.scope);
 
+		if (rune === '$host') {
+			return b.id('undefined');
+		}
+
 		if (rune === '$effect.active') {
 			return b.literal(false);
 		}
