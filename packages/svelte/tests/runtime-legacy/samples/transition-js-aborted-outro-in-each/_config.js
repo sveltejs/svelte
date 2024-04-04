@@ -23,7 +23,6 @@ export default test({
 		assert.equal(spans[1].foo, 0.25);
 		assert.equal(spans[2].foo, 0.75);
 
-		debugger;
 		component.things = things;
 
 		raf.tick(225);
