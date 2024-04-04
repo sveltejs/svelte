@@ -59,7 +59,7 @@ function pause_effects(items, paused, controlled_anchor) {
 		transitions_count = transitions.length;
 		pause_children(item.e, transitions, true);
 		if (transitions_count !== transitions.length) {
-			paused.set(item.k, item);
+			paused.set(item.k === null ? item.i : item.k, item);
 		}
 	}
 
@@ -71,16 +71,11 @@ function pause_effects(items, paused, controlled_anchor) {
 			parent_node.textContent = '';
 			parent_node.append(controlled_anchor);
 		}
-		// We can avoid deleting paused items from the paused map as there are no transitions active.
-		for (i = 0; i < length; i++) {
-			destroy_effect(items[i].e);
-		}
-		return;
 	}
 
 	run_out_transitions(transitions, () => {
 		for (var i = 0; i < length; i++) {
-			paused.delete(item.k);
+			paused.delete(item.k === null ? item.i : item.k);
 			destroy_effect(items[i].e);
 		}
 	});
@@ -279,7 +274,16 @@ function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
 		// add items
 		for (; i < b; i += 1) {
 			value = array[i];
-			item = create_item(anchor, value, null, i, render_fn, flags);
+			item = paused.get(i);
+
+			if (item === undefined || item.e.dom === null) {
+				paused.delete(i);
+				item = create_item(anchor, value, null, i, render_fn, flags);
+			} else {
+				resume_effect(item.e);
+				move(/** @type {import('#client').Dom} */ (item.e.dom), anchor);
+			}
+
 			b_items[i] = item;
 		}
 
@@ -327,6 +331,7 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 	var start = 0;
 	var item;
+	var key;
 
 	/** @type {import('#client').EachItem[]} */
 	var to_destroy = [];
@@ -370,13 +375,15 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 	if (start === a) {
 		// add only
 		while (start < b) {
-			item = paused.get(keys[start]);
+			key = keys[start];
+			item = paused.get(key);
 
 			if (item === undefined || item.e.dom === null) {
-				item = create_item(anchor, array[start], keys[start], start, render_fn, flags);
+				paused.delete(key);
+				item = create_item(anchor, array[start], key, start, render_fn, flags);
 			} else {
 				resume_effect(item.e);
-				// move(/** @type {import('#client').Dom} */ (item.e.dom), anchor);
+				move(/** @type {import('#client').Dom} */ (item.e.dom), anchor);
 			}
 
 			b_items[start++] = item;
@@ -454,13 +461,15 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 
 			if (should_insert) {
 				if (last_item !== undefined) anchor = get_first_child(last_item);
+				key = keys[b];
 				item = paused.get(keys[b]);
 
 				if (item === undefined || item.e.dom === null) {
-					item = create_item(anchor, array[b], keys[b], b, render_fn, flags);
+					paused.delete(key);
+					item = create_item(anchor, array[b], key, b, render_fn, flags);
 				} else {
 					resume_effect(item.e);
-					// move(/** @type {import('#client').Dom} */ (item.e.dom), anchor);
+					move(/** @type {import('#client').Dom} */ (item.e.dom), anchor);
 				}
 			} else {
 				item = b_items[b];
