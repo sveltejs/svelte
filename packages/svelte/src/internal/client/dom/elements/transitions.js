@@ -297,27 +297,8 @@ function animate(element, options, counterpart, t2, callback) {
 			fill: 'forwards'
 		});
 
-		animation.finished
-			.then(() => {
-				callback?.();
-			})
-			.catch((e) => {
-				// Error for DOMException: The user aborted a request. This results in two things:
-				// - startTime is `null`
-				// - currentTime is `null`
-				// We can't use the existence of an AbortError as this error and error code is shared
-				// with other Web APIs such as fetch().
-
-				if (animation.startTime !== null && animation.currentTime !== null) {
-					throw e;
-				}
-				// If we have an aborted request and the element is detached from the DOM, then that
-				// means that it's likely that the animation was paused upon the DOM element being
-				// removed. This won't trigger the finish logic, so we need to ensure the callback is fired.
-				if (!element.isConnected) {
-					callback?.();
-				}
-			});
+		// @ts-ignore
+		animation.onfinish = callback?.()
 	} else {
 		// Timer
 		if (t1 === 0) {
