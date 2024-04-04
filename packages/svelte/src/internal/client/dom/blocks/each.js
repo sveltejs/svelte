@@ -120,7 +120,7 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 				? []
 				: Array.from(collection);
 
-		var keys = get_key === null ? array : array.map(get_key);
+		var keys = get_key === null ? array.map((_, i) => i) : array.map(get_key);
 
 		var length = array.length;
 
@@ -170,7 +170,7 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 				}
 
 				child_anchor = hydrate_anchor(child_anchor);
-				b_items[i] = create_item(child_anchor, array[i], keys?.[i], i, render_fn, flags);
+				b_items[i] = create_item(child_anchor, array[i], keys[i], i, render_fn, flags);
 				child_anchor = /** @type {Comment} */ (child_anchor.nextSibling);
 			}
 
@@ -266,8 +266,8 @@ function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
 		value = array[i];
 		item = a_items[i];
 		b_items[i] = item;
-		// Indexed each blocks use the value as the key
-		item.k = value;
+		// Indexed each blocks use the index as the key
+		item.k = i;
 		update_item(item, value, i, flags);
 		resume_effect(item.e);
 	}
@@ -276,11 +276,11 @@ function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
 		// add items
 		for (; i < b; i += 1) {
 			value = array[i];
-			item = paused.get(value);
+			item = paused.get(i);
 
 			if (item === undefined || item.e.dom === null) {
-				paused.delete(value);
-				item = create_item(anchor, value, value, i, render_fn, flags);
+				paused.delete(i);
+				item = create_item(anchor, value, i, i, render_fn, flags);
 			} else {
 				resume_effect(item.e);
 				move(/** @type {import('#client').Dom} */ (item.e.dom), anchor);
