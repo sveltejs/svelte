@@ -44,33 +44,45 @@ export function set_current_each_item(item) {
 /**
  * Pause multiple effects simultaneously, and coordinate their
  * subsequent destruction. Used in each blocks
- * @param {import('#client').Effect[]} effects
+ * @param {import('#client').EachItem[]} items
+ * @param {Map<unknown, import('#client').EachItem>} paused
  * @param {null | Node} controlled_anchor
- * @param {() => void} [callback]
  */
-function pause_effects(effects, controlled_anchor, callback) {
+function pause_effects(items, paused, controlled_anchor) {
 	/** @type {import('#client').TransitionManager[]} */
 	var transitions = [];
-	var length = effects.length;
+	var length = items.length;
+	var transitions_count;
 
 	for (var i = 0; i < length; i++) {
-		pause_children(effects[i], transitions, true);
+		var item = items[i];
+		transitions_count = transitions.length;
+		pause_children(item.e, transitions, true);
+		if (transitions_count !== transitions.length) {
+			paused.set(item.k, item);
+		}
 	}
 
 	// If we have a controlled anchor, it means that the each block is inside a single
 	// DOM element, so we can apply a fast-path for clearing the contents of the element.
-	if (effects.length > 0 && transitions.length === 0 && controlled_anchor !== null) {
-		var parent_node = /** @type {Element} */ (controlled_anchor.parentNode);
-		parent_node.textContent = '';
-		parent_node.append(controlled_anchor);
+	if (items.length > 0 && transitions.length === 0) {
+		if (controlled_anchor !== null) {
+			var parent_node = /** @type {Element} */ (controlled_anchor.parentNode);
+			parent_node.textContent = '';
+			parent_node.append(controlled_anchor);
+		}
+		// We can avoid deleting paused items from the paused map as there are no transitions active.
+		for (i = 0; i < length; i++) {
+			destroy_effect(items[i].e);
+		}
+		return;
 	}
 
 	run_out_transitions(transitions, () => {
 		for (var i = 0; i < length; i++) {
-			destroy_effect(effects[i]);
+			paused.delete(item.k);
+			destroy_effect(items[i].e);
 		}
-
-		if (callback !== undefined) callback();
 	});
 }
 
@@ -87,7 +99,7 @@ function pause_effects(effects, controlled_anchor, callback) {
  */
 function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, reconcile_fn) {
 	/** @type {import('#client').EachState} */
-	var state = { flags, items: [] };
+	var state = { flags, items: [], paused: new Map() };
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
@@ -242,6 +254,7 @@ export function each_indexed(anchor, flags, get_collection, render_fn, fallback_
  */
 function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
 	var a_items = state.items;
+	var paused = state.paused;
 
 	var a = a_items.length;
 	var b = array.length;
@@ -273,16 +286,16 @@ function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
 		state.items = b_items;
 	} else if (a > b) {
 		// remove items
-		var effects = [];
+		var items = [];
 		for (i = b; i < a; i += 1) {
-			effects.push(a_items[i].e);
+			items.push(a_items[i]);
 		}
 
 		var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && b === 0 ? anchor : null;
 
-		pause_effects(effects, controlled_anchor, () => {
-			state.items.length = b;
-		});
+		state.items.length = b;
+
+		pause_effects(items, paused, controlled_anchor);
 	}
 }
 
@@ -301,6 +314,7 @@ function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
  */
 function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 	var a_items = state.items;
+	var paused = state.paused;
 
 	var a = a_items.length;
 	var b = array.length;
@@ -314,7 +328,7 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 	var start = 0;
 	var item;
 
-	/** @type {import('#client').Effect[]} */
+	/** @type {import('#client').EachItem[]} */
 	var to_destroy = [];
 	/** @type {Array<import('#client').EachItem>} */
 	var to_animate = [];
@@ -356,13 +370,21 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 	if (start === a) {
 		// add only
 		while (start < b) {
-			item = create_item(anchor, array[start], keys[start], start, render_fn, flags);
+			item = paused.get(keys[start]);
+
+			if (item === undefined || item.e.dom === null) {
+				item = create_item(anchor, array[start], keys[start], start, render_fn, flags);
+			} else {
+				resume_effect(item.e);
+				// move(/** @type {import('#client').Dom} */ (item.e.dom), anchor);
+			}
+
 			b_items[start++] = item;
 		}
 	} else if (start === b) {
 		// remove only
 		while (start < a) {
-			to_destroy.push(a_items[start++].e);
+			to_destroy.push(a_items[start++]);
 		}
 	} else {
 		// reconcile
@@ -401,7 +423,7 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 			resume_effect(item.e);
 
 			if (index === undefined) {
-				to_destroy.push(item.e);
+				to_destroy.push(item);
 			} else {
 				moved = true;
 				sources[index - start] = i;
@@ -421,7 +443,7 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 		} else if (is_controlled && to_destroy.length === a_items.length) {
 			// We can optimize the case in which all items are replaced —
 			// destroy everything first, then append new items
-			pause_effects(to_destroy, anchor);
+			pause_effects(to_destroy, paused, anchor);
 			to_destroy = [];
 		}
 
@@ -432,7 +454,14 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 
 			if (should_insert) {
 				if (last_item !== undefined) anchor = get_first_child(last_item);
-				item = create_item(anchor, array[b], keys[b], b, render_fn, flags);
+				item = paused.get(keys[b]);
+
+				if (item === undefined || item.e.dom === null) {
+					item = create_item(anchor, array[b], keys[b], b, render_fn, flags);
+				} else {
+					resume_effect(item.e);
+					// move(/** @type {import('#client').Dom} */ (item.e.dom), anchor);
+				}
 			} else {
 				item = b_items[b];
 				if (should_update) {
@@ -465,9 +494,9 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 
 	var controlled_anchor = is_controlled && b_items.length === 0 ? anchor : null;
 
-	pause_effects(to_destroy, controlled_anchor, () => {
-		state.items = b_items;
-	});
+	state.items = b_items;
+
+	pause_effects(to_destroy, paused, controlled_anchor);
 }
 
 /**

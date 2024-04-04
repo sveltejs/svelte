@@ -52,6 +52,8 @@ export type EachState = {
 	flags: number;
 	/** items */
 	items: EachItem[];
+  /** paused items */
+	paused: Map<unknown, EachItem>
 };
 
 export type EachItem = {
