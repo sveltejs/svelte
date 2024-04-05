@@ -1,4 +1,4 @@
-import compiler_cjs from '../../../../../../packages/svelte/compiler/index.js?url';
+import compiler_js from '../../../../../../packages/svelte/compiler/index.js?url';
 import package_json from '../../../../../../packages/svelte/package.json?url';
 import { read } from '$app/server';
 
@@ -20,14 +20,18 @@ export function entries() {
 
 // service worker requests files under this path to load the compiler and runtime
 export async function GET({ params }) {
-	let url = '';
+	let file = '';
+
 	if (params.path === 'compiler/index.js') {
-		url = compiler_cjs;
+		file = compiler_js;
 	} else if (params.path === 'package.json') {
-		url = package_json;
+		file = package_json;
 	} else {
-		url = files[prefix + params.path];
+		file = /** @type {string} */ (files[prefix + params.path]);
+
+		// remove query string added by Vite when changing source code locally
+		file = file.split('?')[0];
 	}
 
-	return read(url);
+	return read(file);
 }
