@@ -38,8 +38,7 @@ class Animation {
 
 	#offset = raf.time;
 
-	#finished = () => {};
-	#cancelled = () => {};
+	onfinish = () => {};
 
 	currentTime = 0;
 	startTime = 0;
@@ -54,21 +53,6 @@ class Animation {
 		this.#keyframes = keyframes;
 		this.#duration = duration;
 
-		// Promise-like semantics, but call callbacks immediately on raf.tick
-		this.finished = {
-			/** @param {() => void} callback */
-			then: (callback) => {
-				this.#finished = callback;
-
-				return {
-					/** @param {() => void} callback */
-					catch: (callback) => {
-						this.#cancelled = callback;
-					}
-				};
-			}
-		};
-
 		this._update();
 	}
 
@@ -78,7 +62,7 @@ class Animation {
 		this.#apply_keyframe(target_frame);
 
 		if (this.currentTime >= this.#duration) {
-			this.#finished();
+			this.onfinish();
 			raf.animations.delete(this);
 		}
 	}
@@ -128,7 +112,6 @@ class Animation {
 			this.currentTime = null;
 			// @ts-ignore
 			this.startTime = null;
-			this.#cancelled();
 			raf.animations.delete(this);
 		}
 	}
