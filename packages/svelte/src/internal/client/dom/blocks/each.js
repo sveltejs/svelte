@@ -49,23 +49,30 @@ export function set_current_each_item(item) {
  * @param {null | Node} controlled_anchor
  */
 function pause_effects(items, paused, controlled_anchor) {
-	/** @type {import('#client').TransitionManager[]} */
-	var transitions = [];
 	var length = items.length;
-	var transitions_count;
+	var has_transitions = false;
+	var to_destoy = [];
 
 	for (var i = 0; i < length; i++) {
-		var item = items[i];
-		transitions_count = transitions.length;
+		const item = items[i];
+		/** @type {import('#client').TransitionManager[]} */
+		const transitions = [];
 		pause_children(item.e, transitions, true);
-		if (transitions_count !== transitions.length) {
-			paused.set(item.k, item);
+		if (transitions.length > 0) {
+			has_transitions = true;
+
+			run_out_transitions(transitions, () => {
+				paused.delete(item.k);
+				destroy_effect(item.e);
+			});
+		} else {
+			to_destoy.push(item);
 		}
 	}
 
 	// If we have a controlled anchor, it means that the each block is inside a single
 	// DOM element, so we can apply a fast-path for clearing the contents of the element.
-	if (items.length > 0 && transitions.length === 0) {
+	if (items.length > 0 && !has_transitions) {
 		if (controlled_anchor !== null) {
 			var parent_node = /** @type {Element} */ (controlled_anchor.parentNode);
 			parent_node.textContent = '';
@@ -73,13 +80,11 @@ function pause_effects(items, paused, controlled_anchor) {
 		}
 	}
 
-	run_out_transitions(transitions, () => {
-		for (var i = 0; i < length; i++) {
-			var item = items[i];
-			paused.delete(item.k);
-			destroy_effect(item.e);
-		}
-	});
+	for (i = 0; i < to_destoy.length; i++) {
+		var item = to_destoy[i];
+		paused.delete(item.k);
+		destroy_effect(item.e);
+	}
 }
 
 /**
