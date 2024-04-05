@@ -297,8 +297,8 @@ function animate(element, options, counterpart, t2, callback) {
 			fill: 'forwards'
 		});
 
-		// @ts-ignore
-		animation.onfinish = callback;
+		// we can't do `= callback` since the callback can change
+		animation.onfinish = () => callback?.();
 	} else {
 		// Timer
 		if (t1 === 0) {
