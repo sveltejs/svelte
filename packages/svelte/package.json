@@ -116,7 +116,7 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/aria-query": "^5.0.4",
-    "dts-buddy": "^0.4.4",
+    "dts-buddy": "^0.4.6",
     "esbuild": "^0.19.11",
     "knip": "^4.2.1",
     "rollup": "^4.9.5",
