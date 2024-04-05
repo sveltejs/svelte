@@ -298,7 +298,7 @@ function animate(element, options, counterpart, t2, callback) {
 		});
 
 		// @ts-ignore
-		animation.onfinish = callback?.()
+		animation.onfinish = callback;
 	} else {
 		// Timer
 		if (t1 === 0) {
