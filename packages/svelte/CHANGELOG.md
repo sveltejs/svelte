@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.95
+
+### Patch Changes
+
+- breaking: robustify interop of exports and props in runes mode ([#11064](https://github.com/sveltejs/svelte/pull/11064))
+
+- fix: improve handled of unowned derived signals ([#11077](https://github.com/sveltejs/svelte/pull/11077))
+
+- fix: bundle CSS types ([#11067](https://github.com/sveltejs/svelte/pull/11067))
+
 ## 5.0.0-next.94
 
 ### Patch Changes
