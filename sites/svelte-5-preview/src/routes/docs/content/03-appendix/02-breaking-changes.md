@@ -195,3 +195,7 @@ In Svelte 4, `null` and `undefined` were printed as the corresponding string. In
 ### Bindings now react to form resets
 
 Previously, bindings did not take into account `reset` event of forms, and therefore values could get out of sync with the DOM. Svelte 5 fixes this by placing a `reset` listener on the document and invoking bindings where necessary.
+
+### `walk` not longer exported
+
+`svelte/compiler` reexported `walk` from `estree-walker` for convenience. This is no longer true in Svelte 5, import it directly from that package instead in case you need it.
