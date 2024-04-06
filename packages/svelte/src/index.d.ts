@@ -11,12 +11,27 @@ export interface ComponentConstructorOptions<
 > {
 	target: Element | Document | ShadowRoot;
 	anchor?: Element;
-	props?: Props;
+	props?: PropToBindable<Props>;
 	context?: Map<any, any>;
 	hydrate?: boolean;
 	intro?: boolean;
 	$$inline?: boolean;
 }
+
+export type _Prop<T> = T & { 'a property': 'a non-bindable property' };
+export type _Binding<T> = { 'bind:': T };
+export type _Bindable<T> = T | _Binding<T>;
+
+type PropToBindable<Props extends Record<string, any>> = {
+	[Key in keyof Props]: Props[Key] extends _Prop<infer Value> ? Value : _Bindable<Props[Key]>;
+};
+
+// TODO don't export this publicly
+export type RemoveBindable<Props extends Record<string, any>> = {
+	[Key in keyof Props as Props[Key] extends _Binding<unknown>
+		? never
+		: Key]: Props[Key] extends _Bindable<infer Value> ? Value : Props[Key];
+};
 
 // Utility type for ensuring backwards compatibility on a type level: If there's a default slot, add 'children' to the props if it doesn't exist there already
 type PropsWithChildren<Props, Slots> = Props &
@@ -71,7 +86,7 @@ export class SvelteComponent<
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
 	 * */
-	$$prop_def: PropsWithChildren<Props, Slots>;
+	$$prop_def: RemoveBindable<PropToBindable<PropsWithChildren<Props, Slots>>>;
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
@@ -151,7 +166,7 @@ export type ComponentEvents<Comp extends SvelteComponent> =
  * ```
  */
 export type ComponentProps<Comp extends SvelteComponent> =
-	Comp extends SvelteComponent<infer Props> ? Props : never;
+	Comp extends SvelteComponent<infer Props> ? RemoveBindable<Props> : never;
 
 /**
  * Convenience type to get the type of a Svelte component. Useful for example in combination with
