@@ -127,7 +127,7 @@ In runes mode, bindings to component exports don't show up in rest props. For ex
 
 ### Bindings need to be explicitly defined using `$bindable()`
 
-In Svelte 4 syntax, every property (declared via `export let`) is bindable, meaning you can `bind:` to it. In runes mode, properties are not bindable by default: you need to denote bindable props with the [/docs/runes#$bindable](`$bindable`) rune.
+In Svelte 4 syntax, every property (declared via `export let`) is bindable, meaning you can `bind:` to it. In runes mode, properties are not bindable by default: you need to denote bindable props with the [`$bindable`](/docs/runes#$bindable) rune.
 
 ## Other breaking changes
 
