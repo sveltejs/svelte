@@ -60,6 +60,9 @@ declare module 'svelte' {
 		Events extends Record<string, any> = any,
 		Slots extends Record<string, any> = any
 	> {
+		/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
+		static element?: typeof HTMLElement;
+
 		[prop: string]: any;
 		/**
 		 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
@@ -2215,7 +2218,7 @@ declare module 'svelte/transition' {
 	 * https://svelte.dev/docs/svelte-transition#crossfade
 	 * */
 	export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
-		fallback?: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
+		fallback?: ((node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig) | undefined;
 	}): [(node: any, params: CrossfadeParams & {
 		key: any;
 	}) => () => TransitionConfig, (node: any, params: CrossfadeParams & {
