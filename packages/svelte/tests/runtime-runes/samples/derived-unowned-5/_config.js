@@ -7,9 +7,6 @@ export default test({
 		await Promise.resolve();
 		await Promise.resolve();
 
-		assert.htmlEqual(
-			target.innerHTML,
-			`<div>Zeeba Neighba</div>`
-		);
+		assert.htmlEqual(target.innerHTML, `<div>Zeeba Neighba</div>`);
 	}
 });
