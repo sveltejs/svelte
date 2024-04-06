@@ -691,7 +691,8 @@ const javascript_visitors_runes = {
 			}
 
 			if (rune === '$props') {
-				// remove $bindable() from props declaration
+				// remove $bindable() from props declaration and handle rest props
+				let uses_rest_props = false;
 				const id = walk(declarator.id, null, {
 					AssignmentPattern(node) {
 						if (
@@ -703,9 +704,26 @@ const javascript_visitors_runes = {
 								: b.id('undefined');
 							return b.assignment_pattern(node.left, right);
 						}
+					},
+					RestElement(node, { path }) {
+						if (path.at(-1) === declarator.id) {
+							uses_rest_props = true;
+						}
 					}
 				});
-				declarations.push(b.declarator(id, b.id('$$props')));
+
+				const exports = /** @type {import('../../types').ComponentAnalysis} */ (
+					state.analysis
+				).exports.map(({ name, alias }) => b.literal(alias ?? name));
+
+				declarations.push(
+					b.declarator(
+						id,
+						uses_rest_props && exports.length > 0
+							? b.call('$.rest_props', b.id('$$props'), b.array(exports))
+							: b.id('$$props')
+					)
+				);
 				continue;
 			}
 
