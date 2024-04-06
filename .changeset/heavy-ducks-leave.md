@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: robustify interop of exports and props
+breaking: robustify interop of exports and props in runes mode
