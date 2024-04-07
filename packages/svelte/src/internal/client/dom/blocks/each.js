@@ -42,6 +42,22 @@ export function set_current_each_item(item) {
 }
 
 /**
+ * @template T
+ * @param {T} item
+ */
+export function identity(item) {
+	return item;
+}
+
+/**
+ * @param {any} _
+ * @param {number} i
+ */
+export function index(_, i) {
+	return i;
+}
+
+/**
  * Pause multiple effects simultaneously, and coordinate their
  * subsequent destruction. Used in each blocks
  * @param {import('#client').Effect[]} effects
@@ -82,10 +98,9 @@ function pause_effects(effects, controlled_anchor, callback) {
  * @param {null | ((item: V) => string)} get_key
  * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
- * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
  * @returns {void}
  */
-function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, reconcile_fn) {
+export function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn = null) {
 	/** @type {import('#client').EachState} */
 	var state = { flags, items: [] };
 
@@ -180,7 +195,7 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 		}
 
 		if (!hydrating) {
-			reconcile_fn(array, state, anchor, render_fn, flags, keys);
+			reconcile(array, state, anchor, render_fn, flags, keys);
 		}
 
 		if (fallback_fn !== null) {
@@ -205,88 +220,6 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 }
 
 /**
- * @template V
- * @param {Element | Comment} anchor
- * @param {number} flags
- * @param {() => V[]} get_collection
- * @param {null | ((item: V) => string)} get_key
- * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: import('#client').MaybeSource<number>) => void} render_fn
- * @param {null | ((anchor: Node) => void)} [fallback_fn]
- * @returns {void}
- */
-export function each_keyed(anchor, flags, get_collection, get_key, render_fn, fallback_fn = null) {
-	each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, reconcile_tracked_array);
-}
-
-/**
- * @template V
- * @param {Element | Comment} anchor
- * @param {number} flags
- * @param {() => V[]} get_collection
- * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: import('#client').MaybeSource<number>) => void} render_fn
- * @param {null | ((anchor: Node) => void)} [fallback_fn]
- * @returns {void}
- */
-export function each_indexed(anchor, flags, get_collection, render_fn, fallback_fn = null) {
-	each(anchor, flags, get_collection, null, render_fn, fallback_fn, reconcile_indexed_array);
-}
-
-/**
- * @template V
- * @param {Array<V>} array
- * @param {import('#client').EachState} state
- * @param {Element | Comment | Text} anchor
- * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: number | import('#client').Source<number>) => void} render_fn
- * @param {number} flags
- * @returns {void}
- */
-function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
-	var a_items = state.items;
-
-	var a = a_items.length;
-	var b = array.length;
-	var min = Math.min(a, b);
-
-	/** @type {typeof a_items} */
-	var b_items = Array(b);
-
-	var item;
-	var value;
-
-	// update items
-	for (var i = 0; i < min; i += 1) {
-		value = array[i];
-		item = a_items[i];
-		b_items[i] = item;
-		update_item(item, value, i, flags);
-		resume_effect(item.e);
-	}
-
-	if (b > a) {
-		// add items
-		for (; i < b; i += 1) {
-			value = array[i];
-			item = create_item(anchor, value, null, i, render_fn, flags);
-			b_items[i] = item;
-		}
-
-		state.items = b_items;
-	} else if (a > b) {
-		// remove items
-		var effects = [];
-		for (i = b; i < a; i += 1) {
-			effects.push(a_items[i].e);
-		}
-
-		var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && b === 0 ? anchor : null;
-
-		pause_effects(effects, controlled_anchor, () => {
-			state.items.length = b;
-		});
-	}
-}
-
-/**
  * Reconcile arrays by the equality of the elements in the array. This algorithm
  * is based on Ivi's reconcilation logic:
  * https://github.com/localvoid/ivi/blob/9f1bd0918f487da5b131941228604763c5d8ef56/packages/ivi/src/client/core.ts#L968
@@ -299,7 +232,7 @@ function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
  * @param {any[]} keys
  * @returns {void}
  */
-function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
+function reconcile(array, state, anchor, render_fn, flags, keys) {
 	var a_items = state.items;
 
 	var a = a_items.length;
