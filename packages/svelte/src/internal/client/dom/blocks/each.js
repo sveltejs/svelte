@@ -258,6 +258,19 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	/** @type {import('#client').EachItem[]} */
 	var to_animate = [];
 
+	if (is_animated) {
+		for (let i = 0; i < array.length; i += 1) {
+			var value = array[i];
+			var key = get_key(value, i);
+			var item = lookup.get(key);
+
+			if (item !== undefined) {
+				item.a?.measure();
+				to_animate.push(item);
+			}
+		}
+	}
+
 	for (let i = 0; i < array.length; i += 1) {
 		var value = array[i];
 		var key = get_key(value, i);
@@ -276,11 +289,6 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 				flags
 			);
 		} else {
-			if (is_animated) {
-				item.a?.measure();
-				to_animate.push(item);
-			}
-
 			update_item(item, value, i, flags);
 
 			while (current && current.k !== key) {
@@ -321,9 +329,13 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	);
 
 	if (is_animated) {
-		for (const item of to_animate) {
-			item.a?.apply();
-		}
+		effect(() => {
+			untrack(() => {
+				for (item of to_animate) {
+					item.a?.apply();
+				}
+			});
+		});
 	}
 }
 
