@@ -74,6 +74,7 @@ If the `on:` directive is used without a value, the component will _forward_ the
 It's possible to have multiple event listeners for the same event:
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	let counter = 0;
 	function increment() {
@@ -284,6 +285,7 @@ bind:group={variable}
 Inputs that work together can use `bind:group`.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	let tortilla = 'Plain';
 
@@ -315,6 +317,7 @@ bind:this={dom_node}
 To get a reference to a DOM node, use `bind:this`.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import { onMount } from 'svelte';
 
@@ -420,6 +423,7 @@ action = (node: HTMLElement, parameters: any) => {
 Actions are functions that are called when an element is created. They can return an object with a `destroy` method that is called after the element is unmounted:
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	/** @type {import('svelte/action').Action}  */
 	function foo(node) {
@@ -441,6 +445,7 @@ An action can have a parameter. If the returned value has an `update` method, it
 > Don't worry about the fact that we're redeclaring the `foo` function for every component instance — Svelte will hoist any functions that don't depend on local state out of the component definition.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	export let bar;
 
@@ -558,6 +563,7 @@ The `t` argument passed to `css` is a value between `0` and `1` after the `easin
 The function is called repeatedly _before_ the transition begins, with different `t` and `u` arguments.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import { elasticOut } from 'svelte/easing';
 
