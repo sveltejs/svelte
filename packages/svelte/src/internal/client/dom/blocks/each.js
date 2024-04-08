@@ -292,16 +292,18 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		update_item(item, value, i, flags);
 		resume_effect(item.e);
 
-		if (current !== null && seen.has(item)) {
-			move(item, prev, get_first_child(current));
-		} else {
-			while (current && current.k !== key) {
-				seen.add(current);
-				current = current.next;
-			}
+		if (item !== current) {
+			if (current !== null && seen.has(item)) {
+				move(item, prev, get_first_child(current));
+			} else {
+				while (current && current.k !== key) {
+					seen.add(current);
+					current = current.next;
+				}
 
-			if (current === null) {
-				move(item, prev, anchor);
+				if (current === null) {
+					move(item, prev, anchor);
+				}
 			}
 		}
 
