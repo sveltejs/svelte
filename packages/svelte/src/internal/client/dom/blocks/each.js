@@ -166,6 +166,9 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 			/** @type {import('#client').EachItem | import('#client').EachState} */
 			var prev = state;
 
+			/** @type {import('#client').EachItem} */
+			var item;
+
 			for (var i = 0; i < length; i++) {
 				if (
 					child_anchor.nodeType !== 8 ||
@@ -179,7 +182,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 				}
 
 				child_anchor = hydrate_anchor(child_anchor);
-				var item = create_item(child_anchor, prev, null, array[i], keys?.[i], i, render_fn, flags);
+				item = create_item(child_anchor, prev, null, array[i], keys?.[i], i, render_fn, flags);
 				child_anchor = /** @type {Comment} */ (child_anchor.nextSibling);
 
 				prev = item;
@@ -251,38 +254,12 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	for (let i = 0; i < array.length; i += 1) {
 		var value = array[i];
 		var key = get_key(value, i);
+		var item = lookup.get(key);
 
-		/** @type {import('#client').EachItem} */
-		var item;
-
-		if (!current) {
-			// append
-			item = create_item(anchor, prev, prev.next, value, key, i, render_fn, flags);
-			prev = item;
-			current = item.next;
-			continue;
-		}
-
-		if (key === current.k) {
-			// noop
-			current = current.next;
-			continue;
-		}
-
-		item = lookup.get(key);
-
-		if (item !== undefined) {
-			// move
-			prev.next = item;
-			current.prev = item;
-			item.prev = prev;
-			item.next = current;
-
-			move(/** @type {import('#client').Dom} */ (item.e.dom), get_first_child(current));
-		} else {
+		if (item === undefined) {
 			// create
 			item = create_item(
-				get_first_child(current),
+				current ? get_first_child(current) : anchor,
 				prev,
 				prev.next,
 				value,
@@ -291,10 +268,42 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 				render_fn,
 				flags
 			);
-			prev = item;
-			current = item.next;
+		} else {
+			update_item(item, value, i, flags);
+
+			while (current && current.k !== key) {
+				current = current.next;
+			}
+
+			if (current === null) {
+				move(item.e.dom, anchor);
+				if (item.prev) item.prev.next = item.next;
+				if (item.next) item.next.prev = item.prev;
+
+				prev.next = item;
+				item.prev = prev;
+				item.next = null;
+			}
+
+			lookup.delete(key);
 		}
+
+		prev = item;
+		current = item.next;
 	}
+
+	const to_destroy = Array.from(lookup.values());
+
+	pause_effects(
+		to_destroy.map((item) => item.e),
+		null,
+		() => {
+			for (const item of to_destroy) {
+				if (item.prev) item.prev.next = item.next;
+				if (item.next) item.next.prev = item.prev;
+			}
+		}
+	);
 }
 
 /**
