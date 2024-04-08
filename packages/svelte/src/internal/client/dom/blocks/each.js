@@ -26,9 +26,6 @@ import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen, map_get, map_set } from '../../utils.js';
 import { STATE_SYMBOL } from '../../constants.js';
 
-var NEW_ITEM = -1;
-var LIS_ITEM = -2;
-
 /**
  * The row of a keyed each block that is currently updating. We track this
  * so that `animate:` directives have something to attach themselves to
@@ -335,79 +332,6 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 				}
 			});
 		});
-	}
-}
-
-/**
- * Longest Increased Subsequence algorithm
- * @param {Int32Array} a
- * @returns {void}
- */
-function mark_lis(a) {
-	var length = a.length;
-	var parent = new Int32Array(length);
-	var index = new Int32Array(length);
-	var index_length = 0;
-	var i = 0;
-
-	/** @type {number} */
-	var j;
-
-	/** @type {number} */
-	var k;
-
-	/** @type {number} */
-	var lo;
-
-	/** @type {number} */
-	var hi;
-
-	// Skip -1 values at the start of the input array `a`.
-	for (; a[i] === NEW_ITEM; ++i) {
-		/**/
-	}
-
-	index[0] = i++;
-
-	for (; i < length; ++i) {
-		k = a[i];
-
-		if (k !== NEW_ITEM) {
-			// Ignore -1 values.
-			j = index[index_length];
-
-			if (a[j] < k) {
-				parent[i] = j;
-				index[++index_length] = i;
-			} else {
-				lo = 0;
-				hi = index_length;
-
-				while (lo < hi) {
-					j = (lo + hi) >> 1;
-					if (a[index[j]] < k) {
-						lo = j + 1;
-					} else {
-						hi = j;
-					}
-				}
-
-				if (k < a[index[lo]]) {
-					if (lo > 0) {
-						parent[i] = index[lo - 1];
-					}
-					index[lo] = i;
-				}
-			}
-		}
-	}
-
-	// Mutate input array `a` and assign -2 value to all nodes that are part of LIS.
-	j = index[index_length];
-
-	while (index_length-- >= 0) {
-		a[j] = LIS_ITEM;
-		j = parent[j];
 	}
 }
 
