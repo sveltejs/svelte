@@ -50,12 +50,11 @@ Svelte 5 introduces [event attributes](/docs/event-handlers) which deprecate eve
 <script>
 -	import { createEventDispatcher } from 'svelte';
 -	const dispatch = createEventDispatcher();
-+	let { onGreet } = $props();
++	let { greet } = $props();
 
-	function greet() {
+-	function greet() {
 -		dispatch('greet');
-+		onGreet?.();
-	}
+-	}
 </script>
 
 <button
