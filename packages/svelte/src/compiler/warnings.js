@@ -301,6 +301,11 @@ export function warn(array, node, path, code, ...args) {
 				)
 			);
 		}
+
+		// Style nodes
+		if (current.type === 'StyleSheet' && current.content.comment) {
+			ignores.push(...current.content.comment.ignores);
+		}
 	}
 
 	if (ignores.includes(code)) return;

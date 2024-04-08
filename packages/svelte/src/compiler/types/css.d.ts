@@ -1,3 +1,5 @@
+import type { Comment } from '#compiler';
+
 export namespace Css {
 	export interface BaseNode {
 		start: number;
@@ -12,6 +14,8 @@ export namespace Css {
 			start: number;
 			end: number;
 			styles: string;
+			/** Possible comment atop the style tag */
+			comment: Comment | null;
 		};
 	}
 
