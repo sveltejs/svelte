@@ -266,6 +266,7 @@ declare module 'svelte' {
 	 * ```
 	 *
 	 * https://svelte.dev/docs/svelte#createeventdispatcher
+	 * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte-5-preview.vercel.app/docs/deprecations#createeventdispatcher
 	 * */
 	export function createEventDispatcher<EventMap extends Record<string, any> = any>(): EventDispatcher<EventMap>;
 	/**
@@ -2689,5 +2690,26 @@ declare function $bindable<T>(t?: T): T;
 declare function $inspect<T extends any[]>(
 	...values: T
 ): { with: (fn: (type: 'init' | 'update', ...values: T) => void) => void };
+
+/**
+ * Retrieves the `this` reference of the custom element that contains this component. Example:
+ *
+ * ```svelte
+ * <svelte:options customElement="my-element" />
+ *
+ * <script>
+ * 	function greet(greeting) {
+ * 		$host().dispatchEvent(new CustomEvent('greeting', { detail: greeting }))
+ * 	}
+ * </script>
+ *
+ * <button onclick={() => greet('hello')}>say hello</button>
+ * ```
+ *
+ * Only available inside custom element components, and only on the client-side.
+ *
+ * https://svelte-5-preview.vercel.app/docs/runes#$host
+ */
+declare function $host<El extends HTMLElement = HTMLElement>(): El;
 
 //# sourceMappingURL=index.d.ts.map

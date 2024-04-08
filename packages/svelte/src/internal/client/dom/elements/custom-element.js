@@ -138,7 +138,8 @@ if (typeof HTMLElement === 'function') {
 					target: this.shadowRoot || this,
 					props: {
 						...this.$$d,
-						$$slots
+						$$slots,
+						$$host: this
 					}
 				});
 
