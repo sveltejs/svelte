@@ -2218,7 +2218,7 @@ declare module 'svelte/transition' {
 	 * https://svelte.dev/docs/svelte-transition#crossfade
 	 * */
 	export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
-		fallback?: ((node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig) | undefined;
+		fallback?: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
 	}): [(node: any, params: CrossfadeParams & {
 		key: any;
 	}) => () => TransitionConfig, (node: any, params: CrossfadeParams & {
