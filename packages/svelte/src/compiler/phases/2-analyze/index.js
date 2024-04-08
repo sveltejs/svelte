@@ -23,6 +23,7 @@ import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
 import { hash } from './utils.js';
+import { warn_unused } from './css/css-warn.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -548,6 +549,7 @@ export function analyze_component(root, source, options) {
 		for (const element of analysis.elements) {
 			prune(analysis.css.ast, element);
 		}
+		warn_unused(analysis.css.ast, analysis.warnings);
 
 		outer: for (const element of analysis.elements) {
 			if (element.metadata.scoped) {

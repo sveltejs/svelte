@@ -7,7 +7,8 @@ import {
 
 /** @satisfies {Warnings} */
 const css = {
-	'unused-selector': () => 'Unused CSS selector'
+	/** @param {string} name */
+	'css-unused-selector': (name) => `Unused CSS selector "${name}"`
 };
 
 /** @satisfies {Warnings} */
