@@ -1,7 +1,16 @@
 import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrate_nodes } from '../hydration.js';
 import { empty } from '../operations.js';
 import { block } from '../../reactivity/effects.js';
-import { HYDRATION_START } from '../../../../constants.js';
+import { HYDRATION_END, HYDRATION_START } from '../../../../constants.js';
+
+/**
+ * @type {Node | undefined}
+ */
+let head_anchor;
+
+export function reset_head_anchor() {
+	head_anchor = undefined;
+}
 
 /**
  * @param {(anchor: Node) => import('#client').Dom | void} render_fn
@@ -19,12 +28,31 @@ export function head(render_fn) {
 	if (hydrating) {
 		previous_hydrate_nodes = hydrate_nodes;
 
-		let anchor = /** @type {import('#client').TemplateNode} */ (document.head.firstChild);
-		while (anchor.nodeType !== 8 || /** @type {Comment} */ (anchor).data !== HYDRATION_START) {
-			anchor = /** @type {import('#client').TemplateNode} */ (anchor.nextSibling);
+		// There might be multiple head blocks in our app, so we need to account for each one needing independent hydration.
+		if (head_anchor === undefined) {
+			head_anchor = /** @type {import('#client').TemplateNode} */ (document.head.firstChild);
 		}
 
-		anchor = /** @type {import('#client').TemplateNode} */ (hydrate_anchor(anchor));
+		var depth = 0;
+
+		while (head_anchor !== null) {
+			if (head_anchor.nodeType === 8) {
+				var data = /** @type {Comment} */ (head_anchor).data;
+				if (data === HYDRATION_START) {
+					if (depth === 0) {
+						break;
+					}
+					depth++;
+				}
+				if (data === HYDRATION_END) {
+					depth--;
+				}
+			}
+			head_anchor = /** @type {import('#client').TemplateNode} */ (head_anchor.nextSibling);
+		}
+
+		head_anchor = /** @type {import('#client').TemplateNode} */ (hydrate_anchor(head_anchor));
+		head_anchor = /** @type {import('#client').TemplateNode} */ (head_anchor.nextSibling);
 	} else {
 		anchor = document.head.appendChild(empty());
 	}
