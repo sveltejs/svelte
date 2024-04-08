@@ -320,8 +320,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		null,
 		() => {
 			for (const item of to_destroy) {
-				if (item.prev) item.prev.next = item.next;
-				if (item.next) item.next.prev = item.prev;
+				link(item.prev, item.next);
 			}
 		}
 	);
@@ -404,7 +403,7 @@ function create_item(anchor, prev, next, value, key, index, render_fn, flags) {
 			next
 		};
 
-		if (prev) prev.next = item;
+		prev.next = item;
 		if (next) next.prev = item;
 
 		current_each_item = item;
@@ -434,14 +433,17 @@ function move(item, prev, anchor) {
 		}
 	}
 
-	item.prev.next = item.next;
-	if (item.next) item.next.prev = item.prev;
+	link(item.prev, item.next);
+	link(item, prev.next);
+	link(prev, item);
+}
 
-	var next = prev.next;
-
-	item.prev = prev;
-	item.next = next;
-
-	prev.next = item;
-	if (next) next.prev = item;
+/**
+ *
+ * @param {import('#client').EachItem | import('#client').EachState} prev
+ * @param {import('#client').EachItem | null} next
+ */
+function link(prev, next) {
+	prev.next = next;
+	if (next) next.prev = prev;
 }
