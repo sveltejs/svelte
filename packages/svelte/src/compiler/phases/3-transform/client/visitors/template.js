@@ -2998,7 +2998,7 @@ export const template_visitors = {
 					b.assignment(
 						'=',
 						b.member(b.id('$.document'), b.id('title')),
-						serialize_template_literal(/** @type {any} */ (node.fragment.nodes), visit)[1]
+						serialize_template_literal(/** @type {any} */ (node.fragment.nodes), visit, state)[1]
 					)
 				)
 			);
