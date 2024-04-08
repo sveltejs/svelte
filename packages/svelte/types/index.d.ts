@@ -60,6 +60,9 @@ declare module 'svelte' {
 		Events extends Record<string, any> = any,
 		Slots extends Record<string, any> = any
 	> {
+		/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
+		static element?: typeof HTMLElement;
+
 		[prop: string]: any;
 		/**
 		 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
