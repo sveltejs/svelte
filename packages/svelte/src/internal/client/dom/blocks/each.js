@@ -237,8 +237,12 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
  * @returns {void}
  */
 function reconcile(array, state, anchor, render_fn, flags, get_key) {
+	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
+
 	var first = state.next;
 	var current = first;
+
+	/** @type {Map<any, import('#client').EachItem>} */
 	var lookup = new Map();
 
 	while (current) {
@@ -250,6 +254,9 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 
 	/** @type {import('#client').EachState | import('#client').EachItem} */
 	var prev = state;
+
+	/** @type {import('#client').EachItem[]} */
+	var to_animate = [];
 
 	for (let i = 0; i < array.length; i += 1) {
 		var value = array[i];
@@ -269,6 +276,11 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 				flags
 			);
 		} else {
+			if (is_animated) {
+				item.a?.measure();
+				to_animate.push(item);
+			}
+
 			update_item(item, value, i, flags);
 
 			while (current && current.k !== key) {
@@ -276,7 +288,10 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			}
 
 			if (current === null) {
-				move(item.e.dom, anchor);
+				if (item.e.dom) {
+					move(item.e.dom, anchor);
+				}
+
 				if (item.prev) item.prev.next = item.next;
 				if (item.next) item.next.prev = item.prev;
 
@@ -304,6 +319,12 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			}
 		}
 	);
+
+	if (is_animated) {
+		for (const item of to_animate) {
+			item.a?.apply();
+		}
+	}
 }
 
 /**
