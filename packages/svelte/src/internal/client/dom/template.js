@@ -121,6 +121,9 @@ export function svg_template_with_script(content, flags) {
  * @param {Element | DocumentFragment} node
  */
 function run_scripts(node) {
+	// scripts were SSR'd, in which case they will run
+	if (hydrating) return;
+
 	const scripts =
 		/** @type {HTMLElement} */ (node).tagName === 'SCRIPT'
 			? [/** @type {HTMLScriptElement} */ (node)]
