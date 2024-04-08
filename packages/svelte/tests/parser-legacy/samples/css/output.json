@@ -78,6 +78,7 @@
 		"content": {
 			"start": 23,
 			"end": 48,
+			"comment": null,
 			"styles": "\n\tdiv {\n\t\tcolor: red;\n\t}\n"
 		}
 	}
