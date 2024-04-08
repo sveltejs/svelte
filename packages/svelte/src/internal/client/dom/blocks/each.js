@@ -224,9 +224,6 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 }
 
 /**
- * Reconcile arrays by the equality of the elements in the array. This algorithm
- * is based on Ivi's reconcilation logic:
- * https://github.com/localvoid/ivi/blob/9f1bd0918f487da5b131941228604763c5d8ef56/packages/ivi/src/client/core.ts#L968
  * @template V
  * @param {Array<V>} array
  * @param {import('#client').EachState} state
@@ -244,6 +241,9 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 
 	/** @type {Map<any, import('#client').EachItem>} */
 	var lookup = new Map();
+
+	/** @type {Set<import('#client').EachItem>} */
+	var seen = new Set();
 
 	while (current) {
 		lookup.set(current.k, current);
@@ -277,8 +277,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		var item = lookup.get(key);
 
 		if (item === undefined) {
-			// create
-			item = create_item(
+			prev = create_item(
 				current ? get_first_child(current) : anchor,
 				prev,
 				prev.next,
@@ -288,28 +287,27 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 				render_fn,
 				flags
 			);
-		} else {
-			update_item(item, value, i, flags);
 
+			current = prev.next;
+			continue;
+		}
+
+		update_item(item, value, i, flags);
+
+		if (current !== null && seen.has(item)) {
+			move(item, prev, get_first_child(current));
+		} else {
 			while (current && current.k !== key) {
+				seen.add(current);
 				current = current.next;
 			}
 
 			if (current === null) {
-				if (item.e.dom) {
-					move(item.e.dom, anchor);
-				}
-
-				if (item.prev) item.prev.next = item.next;
-				if (item.next) item.next.prev = item.prev;
-
-				prev.next = item;
-				item.prev = prev;
-				item.next = null;
+				move(item, prev, anchor);
 			}
-
-			lookup.delete(key);
 		}
+
+		lookup.delete(key);
 
 		prev = item;
 		current = item.next;
@@ -448,7 +446,7 @@ function update_item(item, value, index, type) {
 /**
  * @template V
  * @param {Node} anchor
- * @param {import('#client').EachItem | import('#client').EachState | null} prev
+ * @param {import('#client').EachItem | import('#client').EachState} prev
  * @param {import('#client').EachItem | null} next
  * @param {V} value
  * @param {unknown} key
@@ -492,15 +490,31 @@ function create_item(anchor, prev, next, value, key, index, render_fn, flags) {
 }
 
 /**
- * @param {import('#client').Dom} current
+ * @param {import('#client').EachItem} item
+ * @param {import('#client').EachItem | import('#client').EachState} prev
  * @param {Text | Element | Comment} anchor
  */
-function move(current, anchor) {
-	if (is_array(current)) {
-		for (var i = 0; i < current.length; i++) {
-			anchor.before(current[i]);
+function move(item, prev, anchor) {
+	var dom = item.e.dom;
+
+	if (dom !== null) {
+		if (is_array(dom)) {
+			for (var i = 0; i < dom.length; i++) {
+				anchor.before(dom[i]);
+			}
+		} else {
+			anchor.before(dom);
 		}
-	} else {
-		anchor.before(current);
 	}
+
+	item.prev.next = item.next;
+	if (item.next) item.next.prev = item.prev;
+
+	var next = prev.next;
+
+	item.prev = prev;
+	item.next = next;
+
+	prev.next = item;
+	if (next) next.prev = item;
 }

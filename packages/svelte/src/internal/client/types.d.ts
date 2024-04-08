@@ -65,7 +65,7 @@ export type EachItem = {
 	i: number | Source<number>;
 	/** key */
 	k: unknown;
-	prev: EachItem | EachState | null;
+	prev: EachItem | EachState;
 	next: EachItem | null;
 };
 
