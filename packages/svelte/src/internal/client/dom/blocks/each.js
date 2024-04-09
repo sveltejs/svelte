@@ -268,6 +268,12 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		}
 	}
 
+	/** @type {import('#client').EachItem[]} */
+	var matched = [];
+
+	/** @type {import('#client').EachItem[]} */
+	var stashed = [];
+
 	for (let i = 0; i < array.length; i += 1) {
 		var value = array[i];
 		var key = get_key(value, i);
@@ -294,19 +300,52 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 
 		if (item !== current) {
 			if (seen.has(item)) {
-				move(item, prev, current ? get_first_child(current) : anchor);
+				if (matched.length < stashed.length) {
+					// more efficient to move later items to the front
+					prev = stashed[0].prev;
+					const a = get_first_child(stashed[0]);
+
+					for (var thing of matched) {
+						move(thing, prev, a);
+						prev = thing;
+					}
+
+					for (var thing of stashed) {
+						seen.delete(thing);
+					}
+
+					current = stashed[0];
+					i -= 1;
+
+					matched = [];
+					stashed = [];
+				} else {
+					// more efficient to move earlier items to the back
+					const a = current ? get_first_child(current) : anchor;
+
+					lookup.delete(key);
+					move(item, prev, a);
+				}
 			} else {
 				while (current && current.k !== key) {
 					seen.add(current);
+					stashed.push(current);
 					current = current.next;
 				}
+
+				if (current) {
+					matched.push(current);
+					current = item.next;
+					prev = item;
+					lookup.delete(key);
+				}
 			}
+		} else {
+			matched.push(current);
+			current = item.next;
+			prev = item;
+			lookup.delete(key);
 		}
-
-		lookup.delete(key);
-
-		prev = item;
-		current = item.next;
 	}
 
 	const to_destroy = Array.from(lookup.values());
