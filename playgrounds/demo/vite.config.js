@@ -6,6 +6,5 @@ export default defineConfig({
 	optimizeDeps: {
 		// svelte is a local workspace package, optimizing it would require dev server restarts with --force for every change
 		exclude: ['svelte']
-	},
-	hmr: true
+	}
 });
