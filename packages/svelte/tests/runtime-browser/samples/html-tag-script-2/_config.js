@@ -8,7 +8,10 @@ export default test({
 		// In here to give effects etc time to execute
 		assert.htmlEqual(
 			window.document.body.innerHTML,
-			`<main><div></div><script>document.body.innerHTML = 'this should not be executed'</script></main>`
+			`<main>
+				<div><script></script></div><script>document.body.innerHTML = 'this should not be executed'</script>
+				<script></script><script>document.body.innerHTML = 'this neither'</script>
+			</main>`
 		);
 	}
 });
