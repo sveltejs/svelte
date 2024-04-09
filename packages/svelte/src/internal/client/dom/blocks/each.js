@@ -39,14 +39,6 @@ export function set_current_each_item(item) {
 }
 
 /**
- * @template T
- * @param {T} item
- */
-export function identity(item) {
-	return item;
-}
-
-/**
  * @param {any} _
  * @param {number} i
  */
