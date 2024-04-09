@@ -33,21 +33,10 @@ export function head(render_fn) {
 			head_anchor = /** @type {import('#client').TemplateNode} */ (document.head.firstChild);
 		}
 
-		var depth = 0;
-
-		while (head_anchor !== null) {
-			if (head_anchor.nodeType === 8) {
-				var data = /** @type {Comment} */ (head_anchor).data;
-				if (data === HYDRATION_START) {
-					if (depth === 0) {
-						break;
-					}
-					depth++;
-				}
-				if (data === HYDRATION_END) {
-					depth--;
-				}
-			}
+		while (
+			head_anchor.nodeType !== 8 ||
+			/** @type {Comment} */ (head_anchor).data !== HYDRATION_START
+		) {
 			head_anchor = /** @type {import('#client').TemplateNode} */ (head_anchor.nextSibling);
 		}
 
