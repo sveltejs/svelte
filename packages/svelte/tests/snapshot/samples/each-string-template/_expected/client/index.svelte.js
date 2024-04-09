@@ -3,7 +3,7 @@
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 
-export default function Each_string_template($$anchor, $$props) {
+function Each_string_template($$anchor, $$props) {
 	$.push($$props, false);
 	$.init();
 
@@ -20,3 +20,5 @@ export default function Each_string_template($$anchor, $$props) {
 	$.append($$anchor, fragment);
 	$.pop();
 }
+
+export default Each_string_template;

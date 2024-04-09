@@ -143,3 +143,4 @@ export {
 	validate_snippet,
 	validate_void_dynamic_element
 } from '../shared/validate.js';
+export { hmr } from './hmr.js';

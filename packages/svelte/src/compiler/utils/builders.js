@@ -600,6 +600,20 @@ export function throw_error(str) {
 	};
 }
 
+/**
+ * @return {import('estree').MemberExpression}
+ */
+export function import_meta_hot() {
+	return member(
+		{
+			type: 'MetaProperty',
+			meta: id('import'),
+			property: id('meta')
+		},
+		id('hot')
+	);
+}
+
 export {
 	await_builder as await,
 	let_builder as let,

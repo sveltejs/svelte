@@ -178,6 +178,12 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * @default null
 	 */
 	cssOutputFilename?: string;
+	/**
+	 * If `true`, compiles components with hot reloading support.
+	 *
+	 * @default false
+	 */
+	hmr?: boolean;
 }
 
 export interface ModuleCompileOptions {
@@ -225,6 +231,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		legacy: Required<Required<CompileOptions>['legacy']>;
 		runes: CompileOptions['runes'];
 		customElementOptions: SvelteOptions['customElement'];
+		hmr: CompileOptions['hmr'];
 	};
 
 export type DeclarationKind =
