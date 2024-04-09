@@ -291,6 +291,9 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 				flags
 			);
 
+			matched = [];
+			stashed = [];
+
 			current = prev.next;
 			continue;
 		}
@@ -325,27 +328,31 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 
 					lookup.delete(key);
 					move(item, prev, a);
-				}
-			} else {
-				while (current && current.k !== key) {
-					seen.add(current);
-					stashed.push(current);
-					current = current.next;
+
+					prev = item;
 				}
 
-				if (current) {
-					matched.push(current);
-					current = item.next;
-					prev = item;
-					lookup.delete(key);
-				}
+				continue;
 			}
-		} else {
-			matched.push(current);
-			current = item.next;
-			prev = item;
-			lookup.delete(key);
+
+			while (current && current.k !== key) {
+				seen.add(current);
+				stashed.push(current);
+				current = current.next;
+			}
+
+			if (current === null) {
+				continue;
+			}
+
+			item = current;
 		}
+
+		matched.push(item);
+		prev = item;
+		current = item.next;
+
+		lookup.delete(key);
 	}
 
 	const to_destroy = Array.from(lookup.values());
