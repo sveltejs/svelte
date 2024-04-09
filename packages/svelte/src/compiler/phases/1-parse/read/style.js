@@ -36,7 +36,8 @@ export default function read_style(parser, start, attributes) {
 		content: {
 			start: content_start,
 			end: content_end,
-			styles: parser.template.slice(content_start, content_end)
+			styles: parser.template.slice(content_start, content_end),
+			comment: null
 		}
 	};
 }

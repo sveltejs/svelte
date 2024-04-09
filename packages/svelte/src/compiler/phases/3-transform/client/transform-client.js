@@ -399,15 +399,12 @@ export function client_component(source, analysis, options) {
 	}
 
 	if (analysis.uses_props || analysis.uses_rest_props) {
+		const to_remove = [b.literal('children'), b.literal('$$slots'), b.literal('$$events')];
+		if (analysis.custom_element) {
+			to_remove.push(b.literal('$$host'));
+		}
 		component_block.body.unshift(
-			b.const(
-				'$$sanitized_props',
-				b.call(
-					'$.rest_props',
-					b.id('$$props'),
-					b.array([b.literal('children'), b.literal('$$slots'), b.literal('$$events')])
-				)
-			)
+			b.const('$$sanitized_props', b.call('$.rest_props', b.id('$$props'), b.array(to_remove)))
 		);
 	}
 

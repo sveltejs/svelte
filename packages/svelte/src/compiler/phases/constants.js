@@ -40,7 +40,8 @@ export const Runes = /** @type {const} */ ([
 	'$effect.active',
 	'$effect.root',
 	'$inspect',
-	'$inspect().with'
+	'$inspect().with',
+	'$host'
 ]);
 
 /**

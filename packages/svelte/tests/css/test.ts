@@ -8,12 +8,17 @@ import { mount, unmount } from 'svelte';
 import { suite, type BaseTest } from '../suite.js';
 import type { CompileOptions, Warning } from '#compiler';
 
-// function normalize_warning(warning) {
-// 	warning.frame = warning.frame.replace(/^\n/, '').replace(/^\t+/gm, '').replace(/\s+$/gm, '');
-// 	delete warning.filename;
-// 	delete warning.toString;
-// 	return warning;
-// }
+function normalize_warning(warning: Warning) {
+	delete warning.filename;
+	return warning;
+}
+
+function load_warnings(path: string) {
+	if (!fs.existsSync(path)) {
+		return [];
+	}
+	return JSON.parse(fs.readFileSync(path, 'utf-8')).map(normalize_warning);
+}
 
 interface CssTest extends BaseTest {
 	compileOptions?: Partial<CompileOptions>;
@@ -22,9 +27,6 @@ interface CssTest extends BaseTest {
 }
 
 const { test, run } = suite<CssTest>(async (config, cwd) => {
-	// TODO
-	// const expected_warnings = (config.warnings || []).map(normalize_warning);
-
 	await compile_directory(cwd, 'client', { cssHash: () => 'svelte-xyz', ...config.compileOptions });
 	await compile_directory(cwd, 'server', { cssHash: () => 'svelte-xyz', ...config.compileOptions });
 
@@ -33,11 +35,11 @@ const { test, run } = suite<CssTest>(async (config, cwd) => {
 
 	assert.equal(dom_css, ssr_css);
 
-	// TODO reenable
-	// const dom_warnings = dom.warnings.map(normalize_warning);
-	// const ssr_warnings = ssr.warnings.map(normalize_warning);
-	// assert.deepEqual(dom_warnings, ssr_warnings);
-	// assert.deepEqual(dom_warnings.map(normalize_warning), expected_warnings);
+	const dom_warnings = load_warnings(`${cwd}/_output/client/input.svelte.warnings.json`);
+	const ssr_warnings = load_warnings(`${cwd}/_output/server/input.svelte.warnings.json`);
+	const expected_warnings = (config.warnings || []).map(normalize_warning);
+	assert.deepEqual(dom_warnings, ssr_warnings);
+	assert.deepEqual(dom_warnings.map(normalize_warning), expected_warnings);
 
 	const expected = {
 		html: try_read_file(`${cwd}/expected.html`),
