@@ -3,7 +3,7 @@ export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
 export { key_block as key } from './dom/blocks/key.js';
 export { css_props } from './dom/blocks/css-props.js';
-export { identity, index, each } from './dom/blocks/each.js';
+export { index, each } from './dom/blocks/each.js';
 export { html } from './dom/blocks/html.js';
 export { snippet } from './dom/blocks/snippet.js';
 export { component } from './dom/blocks/svelte-component.js';

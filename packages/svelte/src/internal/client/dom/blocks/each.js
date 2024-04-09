@@ -234,6 +234,27 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	/** @type {Set<import('#client').EachItem>} */
 	var seen = new Set();
 
+	/** @type {import('#client').EachState | import('#client').EachItem} */
+	var prev = state;
+
+	/** @type {import('#client').EachItem[]} */
+	var to_animate = [];
+
+	/** @type {import('#client').EachItem[]} */
+	var matched = [];
+
+	/** @type {import('#client').EachItem[]} */
+	var stashed = [];
+
+	/** @type {V} */
+	var value;
+
+	/** @type {any} */
+	var key;
+
+	/** @type {import('#client').EachItem | undefined} */
+	var item;
+
 	while (current) {
 		lookup.set(current.k, current);
 		current = current.next;
@@ -241,17 +262,11 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 
 	current = first;
 
-	/** @type {import('#client').EachState | import('#client').EachItem} */
-	var prev = state;
-
-	/** @type {import('#client').EachItem[]} */
-	var to_animate = [];
-
 	if (is_animated) {
 		for (let i = 0; i < array.length; i += 1) {
-			var value = array[i];
-			var key = get_key(value, i);
-			var item = lookup.get(key);
+			value = array[i];
+			key = get_key(value, i);
+			item = lookup.get(key);
 
 			if (item !== undefined) {
 				item.a?.measure();
@@ -260,16 +275,10 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		}
 	}
 
-	/** @type {import('#client').EachItem[]} */
-	var matched = [];
-
-	/** @type {import('#client').EachItem[]} */
-	var stashed = [];
-
 	for (let i = 0; i < array.length; i += 1) {
-		var value = array[i];
-		var key = get_key(value, i);
-		var item = lookup.get(key);
+		value = array[i];
+		key = get_key(value, i);
+		item = lookup.get(key);
 
 		if (item === undefined) {
 			prev = create_item(
@@ -300,13 +309,13 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 					prev = stashed[0].prev;
 					const a = get_first_child(stashed[0]);
 
-					for (var thing of matched) {
-						move(thing, prev, a);
-						prev = thing;
+					for (item of matched) {
+						move(item, prev, a);
+						prev = item;
 					}
 
-					for (var thing of stashed) {
-						seen.delete(thing);
+					for (item of stashed) {
+						seen.delete(item);
 					}
 
 					current = stashed[0];
