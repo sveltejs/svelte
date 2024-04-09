@@ -335,6 +335,9 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 				continue;
 			}
 
+			matched = [];
+			stashed = [];
+
 			while (current && current.k !== key) {
 				seen.add(current);
 				stashed.push(current);
