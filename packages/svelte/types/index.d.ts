@@ -1087,6 +1087,8 @@ declare module 'svelte/compiler' {
 				start: number;
 				end: number;
 				styles: string;
+				/** Possible comment atop the style tag */
+				comment: Comment | null;
 			};
 		}
 

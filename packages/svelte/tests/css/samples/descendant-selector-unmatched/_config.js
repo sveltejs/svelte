@@ -5,15 +5,15 @@ export default test({
 		{
 			code: 'css-unused-selector',
 			end: {
-				character: 479,
-				column: 19,
-				line: 22
+				character: 33,
+				column: 6,
+				line: 6
 			},
-			message: 'Unused CSS selector ":global(.x) + .bar"',
+			message: 'Unused CSS selector "x y z"',
 			start: {
-				character: 461,
+				character: 28,
 				column: 1,
-				line: 22
+				line: 6
 			}
 		}
 	]

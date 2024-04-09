@@ -7,7 +7,8 @@ import {
 
 /** @satisfies {Warnings} */
 const css = {
-	'unused-selector': () => 'Unused CSS selector'
+	/** @param {string} name */
+	'css-unused-selector': (name) => `Unused CSS selector "${name}"`
 };
 
 /** @satisfies {Warnings} */
@@ -299,6 +300,11 @@ export function warn(array, node, path, code, ...args) {
 					current.nodes
 				)
 			);
+		}
+
+		// Style nodes
+		if (current.type === 'StyleSheet' && current.content.comment) {
+			ignores.push(...current.content.comment.ignores);
 		}
 	}
 

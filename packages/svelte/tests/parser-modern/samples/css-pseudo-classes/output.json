@@ -393,6 +393,7 @@
 		"content": {
 			"start": 7,
 			"end": 378,
+			"comment": null,
 			"styles": "\n    /* test that all these are parsed correctly */\n\t::view-transition-old(x-y)  {\n\t\tcolor: red;\n    }\n\t:global(::view-transition-old(x-y))  {\n\t\tcolor: red;\n    }\n\t::highlight(rainbow-color-1) {\n\t\tcolor: red;\n\t}\n\tcustom-element::part(foo) {\n\t\tcolor: red;\n\t}\n\t::slotted(.content) {\n\t\tcolor: red;\n\t}\n\t:is( /*button*/\n\t\tbutton, /*p after h1*/\n\t\th1 + p\n\t\t){\n\t\tcolor: red;\n\t}\n"
 		}
 	},
