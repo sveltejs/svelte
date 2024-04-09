@@ -207,10 +207,7 @@ export function render(component, options) {
 	on_destroy = prev_on_destroy;
 
 	return {
-		head:
-			payload.head.out || payload.head.title
-				? payload.head.title + BLOCK_OPEN + payload.head.out + BLOCK_CLOSE
-				: '',
+		head: payload.head.out || payload.head.title ? payload.head.out + payload.head.title : '',
 		html: payload.out
 	};
 }
@@ -247,7 +244,9 @@ export function escape(value, is_attr = false) {
  */
 export function head(payload, fn) {
 	const head_payload = payload.head;
+	payload.head.out += BLOCK_OPEN;
 	fn(head_payload);
+	payload.head.out += BLOCK_CLOSE;
 }
 
 /**
