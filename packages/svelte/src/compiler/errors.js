@@ -187,6 +187,8 @@ const runes = {
 	'invalid-state-location': (rune) =>
 		`${rune}(...) can only be used as a variable declaration initializer or a class field`,
 	'invalid-effect-location': () => `$effect() can only be used as an expression statement`,
+	'invalid-host-location': () =>
+		`$host() can only be used inside custom element component instances`,
 	/**
 	 * @param {boolean} is_binding
 	 * @param {boolean} show_details

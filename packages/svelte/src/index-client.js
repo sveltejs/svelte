@@ -80,6 +80,7 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
  * ```
  *
  * https://svelte.dev/docs/svelte#createeventdispatcher
+ * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte-5-preview.vercel.app/docs/deprecations#createeventdispatcher
  * @template {Record<string, any>} [EventMap = any]
  * @returns {import('./index.js').EventDispatcher<EventMap>}
  */

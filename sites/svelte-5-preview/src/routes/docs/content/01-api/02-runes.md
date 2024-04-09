@@ -561,6 +561,26 @@ $inspect(stuff).with(console.trace);
 
 > `$inspect` only works during development.
 
+## `$host`
+
+Retrieves the `this` reference of the custom element that contains this component. Example:
+
+```svelte
+<svelte:options customElement="my-element" />
+
+<script>
+	function greet(greeting) {
+		$host().dispatchEvent(
+			new CustomEvent('greeting', { detail: greeting })
+		);
+	}
+</script>
+
+<button onclick={() => greet('hello')}>say hello</button>
+```
+
+> Only available inside custom element components, and only on the client-side
+
 ## How to opt in
 
 Current Svelte code will continue to work without any adjustments. Components using the Svelte 4 syntax can use components using runes and vice versa.

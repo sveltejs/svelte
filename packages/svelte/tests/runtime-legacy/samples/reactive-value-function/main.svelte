@@ -1,7 +1,7 @@
 <script>
 	let foo = () => 1;
 
-	function bar() {
+	var bar = function() {
 		return 2;
 	}
 
