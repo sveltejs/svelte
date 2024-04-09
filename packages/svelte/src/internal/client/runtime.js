@@ -949,11 +949,7 @@ export function getAllContexts() {
 /** @returns {Map<unknown, unknown>} */
 function get_or_init_context_map() {
 	const component_context = current_component_context;
-	if (
-		component_context === null ||
-		current_effect === null ||
-		(current_effect.f & BRANCH_EFFECT) === 0
-	) {
+	if (component_context === null) {
 		throw new Error(
 			'ERR_SVELTE_ORPHAN_CONTEXT' +
 				(DEV ? 'Context can only be used during component initialisation.' : '')
