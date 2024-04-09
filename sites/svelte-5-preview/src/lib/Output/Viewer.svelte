@@ -276,9 +276,9 @@
 			</button>
 		</div>
 
-		<!-- <section slot="panel-body">
+		<section slot="panel-body">
 			<Console {logs} {theme} on:clear={clear_logs} />
-		</section> -->
+		</section>
 	</PaneWithPanel>
 
 	<div class="overlay">
