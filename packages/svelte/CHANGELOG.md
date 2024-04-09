@@ -1,5 +1,25 @@
 # svelte
 
+## 5.0.0-next.96
+
+### Patch Changes
+
+- feat: introduce `$host` rune, deprecate `createEventDispatcher` ([#11059](https://github.com/sveltejs/svelte/pull/11059))
+
+- fix: execute sole static script tag ([#11095](https://github.com/sveltejs/svelte/pull/11095))
+
+- fix: make static `element` property available for the SvelteComponent type ([#11079](https://github.com/sveltejs/svelte/pull/11079))
+
+- fix: improve internal proxied state signal heuristic ([#11102](https://github.com/sveltejs/svelte/pull/11102))
+
+- fix: keep sibling selectors when dealing with slots/render tags/`svelte:element` tags ([#11096](https://github.com/sveltejs/svelte/pull/11096))
+
+- fix: ensure deep mutation ownership widening ([#11094](https://github.com/sveltejs/svelte/pull/11094))
+
+- fix: improve compiled output of multiple call expression in single text node ([#11097](https://github.com/sveltejs/svelte/pull/11097))
+
+- fix: improve hydration of svelte head blocks ([#11099](https://github.com/sveltejs/svelte/pull/11099))
+
 ## 5.0.0-next.95
 
 ### Patch Changes
