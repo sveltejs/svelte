@@ -7,7 +7,6 @@ import { get } from './runtime';
  * @param {(anchor: Comment, props: any) => any} new_component
  */
 export function hmr(data, new_component) {
-	debugger;
 	let prev_component = data.component;
 
 	if (prev_component === undefined) {
