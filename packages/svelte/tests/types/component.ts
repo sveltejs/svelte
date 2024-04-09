@@ -8,6 +8,8 @@ import {
 	hydrate
 } from 'svelte';
 
+SvelteComponent.element === HTMLElement;
+
 // --------------------------------------------------------------------------- legacy: classes
 
 class LegacyComponent extends SvelteComponent<

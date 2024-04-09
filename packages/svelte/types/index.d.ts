@@ -60,6 +60,9 @@ declare module 'svelte' {
 		Events extends Record<string, any> = any,
 		Slots extends Record<string, any> = any
 	> {
+		/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
+		static element?: typeof HTMLElement;
+
 		[prop: string]: any;
 		/**
 		 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
@@ -263,6 +266,7 @@ declare module 'svelte' {
 	 * ```
 	 *
 	 * https://svelte.dev/docs/svelte#createeventdispatcher
+	 * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte-5-preview.vercel.app/docs/deprecations#createeventdispatcher
 	 * */
 	export function createEventDispatcher<EventMap extends Record<string, any> = any>(): EventDispatcher<EventMap>;
 	/**
@@ -1083,6 +1087,8 @@ declare module 'svelte/compiler' {
 				start: number;
 				end: number;
 				styles: string;
+				/** Possible comment atop the style tag */
+				comment: Comment | null;
 			};
 		}
 
@@ -2686,5 +2692,26 @@ declare function $bindable<T>(t?: T): T;
 declare function $inspect<T extends any[]>(
 	...values: T
 ): { with: (fn: (type: 'init' | 'update', ...values: T) => void) => void };
+
+/**
+ * Retrieves the `this` reference of the custom element that contains this component. Example:
+ *
+ * ```svelte
+ * <svelte:options customElement="my-element" />
+ *
+ * <script>
+ * 	function greet(greeting) {
+ * 		$host().dispatchEvent(new CustomEvent('greeting', { detail: greeting }))
+ * 	}
+ * </script>
+ *
+ * <button onclick={() => greet('hello')}>say hello</button>
+ * ```
+ *
+ * Only available inside custom element components, and only on the client-side.
+ *
+ * https://svelte-5-preview.vercel.app/docs/runes#$host
+ */
+declare function $host<El extends HTMLElement = HTMLElement>(): El;
 
 //# sourceMappingURL=index.d.ts.map

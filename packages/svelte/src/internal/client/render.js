@@ -18,6 +18,7 @@ import {
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
 import { handle_event_propagation } from './dom/elements/events.js';
+import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
@@ -175,6 +176,7 @@ export function hydrate(component, options) {
 	} finally {
 		set_hydrating(!!previous_hydrate_nodes);
 		set_hydrate_nodes(previous_hydrate_nodes);
+		reset_head_anchor();
 	}
 }
 
