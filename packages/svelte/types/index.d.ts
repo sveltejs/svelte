@@ -670,6 +670,12 @@ declare module 'svelte/compiler' {
 		 * @default null
 		 */
 		cssOutputFilename?: string;
+		/**
+		 * If `true`, compiles components with hot reloading support.
+		 *
+		 * @default false
+		 */
+		hmr?: boolean;
 	}
 
 	interface ModuleCompileOptions {
@@ -2449,6 +2455,12 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * @default null
 		 */
 		cssOutputFilename?: string;
+		/**
+		 * If `true`, compiles components with hot reloading support.
+		 *
+		 * @default false
+		 */
+		hmr?: boolean;
 	}
 
 	interface ModuleCompileOptions {
