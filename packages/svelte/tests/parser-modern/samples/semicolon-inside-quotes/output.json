@@ -71,8 +71,8 @@
 		"content": {
 			"start": 43,
 			"end": 197,
-			"comment": null,
-			"styles": "\n\t@import url(\"https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap\");\n\th1 {\n\t\tfont-weight: bold;\n\t\tbackground: url(\"whatever\");\n\t}\n"
+			"styles": "\n\t@import url(\"https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap\");\n\th1 {\n\t\tfont-weight: bold;\n\t\tbackground: url(\"whatever\");\n\t}\n",
+			"comment": null
 		}
 	},
 	"js": [],
