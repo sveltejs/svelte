@@ -50,6 +50,8 @@ export type Dom = TemplateNode | TemplateNode[];
 export type EachState = {
 	/** flags */
 	flags: number;
+	/** a key -> item lookup */
+	items: Map<any, EachItem>;
 	/** head of the linked list of items */
 	next: EachItem | null;
 };

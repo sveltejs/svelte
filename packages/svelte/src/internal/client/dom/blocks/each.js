@@ -91,7 +91,7 @@ function pause_effects(effects, controlled_anchor, callback) {
  */
 export function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn = null) {
 	/** @type {import('#client').EachState} */
-	var state = { flags, next: null };
+	var state = { flags, items: new Map(), next: null };
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
@@ -116,8 +116,6 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 			: collection == null
 				? []
 				: Array.from(collection);
-
-		var keys = get_key === null ? array : array.map(get_key);
 
 		var length = array.length;
 
@@ -171,7 +169,10 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 				}
 
 				child_anchor = hydrate_anchor(child_anchor);
-				item = create_item(child_anchor, prev, null, array[i], keys?.[i], i, render_fn, flags);
+				var value = array[i];
+				var key = get_key(value, i);
+				item = create_item(child_anchor, prev, null, value, key, i, render_fn, flags);
+				state.items.set(key, item);
 				child_anchor = /** @type {Comment} */ (child_anchor.nextSibling);
 
 				prev = item;
@@ -225,11 +226,9 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 
+	var items = state.items;
 	var first = state.next;
 	var current = first;
-
-	/** @type {Map<any, import('#client').EachItem>} */
-	var lookup = new Map();
 
 	/** @type {Set<import('#client').EachItem>} */
 	var seen = new Set();
@@ -255,18 +254,11 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	/** @type {import('#client').EachItem | undefined} */
 	var item;
 
-	while (current) {
-		lookup.set(current.k, current);
-		current = current.next;
-	}
-
-	current = first;
-
 	if (is_animated) {
 		for (let i = 0; i < array.length; i += 1) {
 			value = array[i];
 			key = get_key(value, i);
-			item = lookup.get(key);
+			item = items.get(key);
 
 			if (item !== undefined) {
 				item.a?.measure();
@@ -278,7 +270,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	for (let i = 0; i < array.length; i += 1) {
 		value = array[i];
 		key = get_key(value, i);
-		item = lookup.get(key);
+		item = items.get(key);
 
 		if (item === undefined) {
 			prev = create_item(
@@ -291,6 +283,8 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 				render_fn,
 				flags
 			);
+
+			items.set(key, prev);
 
 			matched = [];
 			stashed = [];
@@ -369,6 +363,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		null,
 		() => {
 			for (const item of to_destroy) {
+				items.delete(item.k);
 				link(item.prev, item.next);
 			}
 		}
