@@ -12,4 +12,4 @@
 	style="{foo}"
 	style:background-color="{bg}en"
 	style:border-color={borderColor}
-/>
+></p>

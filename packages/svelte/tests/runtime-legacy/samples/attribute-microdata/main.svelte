@@ -1,7 +1,7 @@
 <!-- Example from https://developer.mozilla.org/en-US/docs/Web/HTML/Microdata -->
 <div itemscope itemtype="https://schema.org/SoftwareApplication">
 	<span itemprop="name">Game</span> - REQUIRES
-	<span itemprop="operatingSystem">OS</span><br></span>
+	<span itemprop="operatingSystem">OS</span><br />
 	<link
 		itemprop="applicationCategory"
 		href="https://schema.org/GameApplication"

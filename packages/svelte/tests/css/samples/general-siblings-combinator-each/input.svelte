@@ -17,4 +17,4 @@
 	<div class="each"></div>
 {/each}
 
-<span />
+<span></span>
