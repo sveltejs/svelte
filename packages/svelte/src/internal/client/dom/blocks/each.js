@@ -371,12 +371,12 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		current = item.next;
 	}
 
+	const to_destroy = Array.from(seen);
+
 	while (current) {
-		seen.add(current);
+		to_destroy.push(current);
 		current = current.next;
 	}
-
-	const to_destroy = Array.from(seen);
 
 	var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
 
