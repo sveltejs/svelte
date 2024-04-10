@@ -17,12 +17,8 @@ export default [
 
 			// TODO: enable these rules and run `pnpm lint:fix`
 			// skipping that for now so as to avoid impacting real work
-			'@typescript-eslint/array-type': 'off',
-			'@typescript-eslint/no-namespace': 'off',
-			'@typescript-eslint/no-non-null-assertion': 'off',
 			'@typescript-eslint/no-unused-vars': 'off',
 			'prefer-const': 'off',
-			'svelte/valid-compile': 'off',
 			quotes: 'off'
 		}
 	},
