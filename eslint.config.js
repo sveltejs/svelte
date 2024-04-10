@@ -8,15 +8,6 @@ export default [
 		plugins: {
 			lube
 		},
-		languageOptions: {
-			// TODO: add runes to eslint-plugin-svelte
-			globals: {
-				$state: true,
-				$derived: true,
-				$effect: true,
-				$props: true
-			}
-		},
 		rules: {
 			'no-console': 'error',
 			'lube/svelte-naming-convention': ['error', { fixSameNames: true }],
