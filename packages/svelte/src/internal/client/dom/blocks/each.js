@@ -256,8 +256,11 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	/** @type {import('#client').EachItem | undefined} */
 	var item;
 
+	/** @type {number} */
+	var i;
+
 	if (is_animated) {
-		for (let i = 0; i < length; i += 1) {
+		for (i = 0; i < length; i += 1) {
 			value = array[i];
 			key = get_key(value, i);
 			item = items.get(key);
@@ -269,7 +272,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		}
 	}
 
-	for (let i = 0; i < length; i += 1) {
+	for (i = 0; i < length; i += 1) {
 		value = array[i];
 		key = get_key(value, i);
 		item = items.get(key);
@@ -305,29 +308,31 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			if (seen.has(item)) {
 				if (matched.length < stashed.length) {
 					// more efficient to move later items to the front
-					prev = stashed[0].prev;
-					const a = get_first_child(stashed[0]);
+					var start = stashed[0];
+					var local_anchor = get_first_child(start);
+					var j;
 
-					for (item of matched) {
-						move(item, prev, a);
+					prev = start.prev;
+
+					for (j = 0; j < matched.length; j += 1) {
+						item = matched[j];
+						move(item, prev, local_anchor);
 						prev = item;
 					}
 
-					for (item of stashed) {
-						seen.delete(item);
+					for (j = 0; j < stashed.length; j += 1) {
+						seen.delete(stashed[j]);
 					}
 
-					current = stashed[0];
+					current = start;
 					i -= 1;
 
 					matched = [];
 					stashed = [];
 				} else {
 					// more efficient to move earlier items to the back
-					const a = current ? get_first_child(current) : anchor;
-
 					seen.delete(item);
-					move(item, prev, a);
+					move(item, prev, current ? get_first_child(current) : anchor);
 
 					prev = item;
 				}
