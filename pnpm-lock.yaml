@@ -15,8 +15,8 @@ importers:
         specifier: ^2.27.1
         version: 2.27.1
       '@sveltejs/eslint-config':
-        specifier: jrmajor/svelte-eslint-config#stylistic
-        version: github.com/jrmajor/svelte-eslint-config/70c2b0540f203cd0249c66ea68d63835176f8935(@stylistic/eslint-plugin-js@1.7.0)(eslint-config-prettier@9.1.0)(eslint-plugin-svelte@2.36.0)(eslint-plugin-unicorn@52.0.0)(eslint@9.0.0)(globals@15.0.0)(typescript-eslint@7.6.0)(typescript@5.3.3)
+        specifier: ^7.0.1
+        version: 7.0.1(@stylistic/eslint-plugin-js@1.7.0)(eslint-config-prettier@9.1.0)(eslint-plugin-svelte@2.36.0)(eslint-plugin-unicorn@52.0.0)(eslint@9.0.0)(typescript-eslint@7.6.0)(typescript@5.3.3)
       '@svitejs/changesets-changelog-github-compact':
         specifier: ^1.1.0
         version: 1.1.0
@@ -2527,6 +2527,27 @@ packages:
     transitivePeerDependencies:
       - encoding
       - supports-color
+    dev: true
+
+  /@sveltejs/eslint-config@7.0.1(@stylistic/eslint-plugin-js@1.7.0)(eslint-config-prettier@9.1.0)(eslint-plugin-svelte@2.36.0)(eslint-plugin-unicorn@52.0.0)(eslint@9.0.0)(typescript-eslint@7.6.0)(typescript@5.3.3):
+    resolution: {integrity: sha512-0c65gMzIRkfSNxVtUmMB/0I0A+ypyIS7aJhXXU7dEdoOEmdN5K+GpGB4ybYBmqODJdZlNRmwNFaKxzzUGBkXQA==}
+    peerDependencies:
+      '@stylistic/eslint-plugin-js': '>= 1'
+      eslint: '>= 9'
+      eslint-config-prettier: '>= 9'
+      eslint-plugin-svelte: '>= 2.36'
+      eslint-plugin-unicorn: '>= 50'
+      typescript: '>= 5'
+      typescript-eslint: '>= 7.5'
+    dependencies:
+      '@stylistic/eslint-plugin-js': 1.7.0(eslint@9.0.0)
+      eslint: 9.0.0
+      eslint-config-prettier: 9.1.0(eslint@9.0.0)
+      eslint-plugin-svelte: 2.36.0(eslint@9.0.0)(svelte@packages+svelte)
+      eslint-plugin-unicorn: 52.0.0(eslint@9.0.0)
+      globals: 15.0.0
+      typescript: 5.3.3
+      typescript-eslint: 7.6.0(eslint@9.0.0)(typescript@5.3.3)
     dev: true
 
   /@sveltejs/kit@2.4.3(@sveltejs/vite-plugin-svelte@3.0.1)(svelte@4.2.9)(vite@5.0.13):
@@ -8964,29 +8985,4 @@ packages:
 
   /zod@3.22.4:
     resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
-    dev: true
-
-  github.com/jrmajor/svelte-eslint-config/70c2b0540f203cd0249c66ea68d63835176f8935(@stylistic/eslint-plugin-js@1.7.0)(eslint-config-prettier@9.1.0)(eslint-plugin-svelte@2.36.0)(eslint-plugin-unicorn@52.0.0)(eslint@9.0.0)(globals@15.0.0)(typescript-eslint@7.6.0)(typescript@5.3.3):
-    resolution: {tarball: https://codeload.github.com/jrmajor/svelte-eslint-config/tar.gz/70c2b0540f203cd0249c66ea68d63835176f8935}
-    id: github.com/jrmajor/svelte-eslint-config/70c2b0540f203cd0249c66ea68d63835176f8935
-    name: '@sveltejs/eslint-config'
-    version: 6.0.4
-    peerDependencies:
-      '@stylistic/eslint-plugin-js': '>= 1'
-      eslint: '>= 9'
-      eslint-config-prettier: '>= 9'
-      eslint-plugin-svelte: '>= 2.36'
-      eslint-plugin-unicorn: '>= 50'
-      globals: '>= 15'
-      typescript: '>= 5'
-      typescript-eslint: '>= 7.5'
-    dependencies:
-      '@stylistic/eslint-plugin-js': 1.7.0(eslint@9.0.0)
-      eslint: 9.0.0
-      eslint-config-prettier: 9.1.0(eslint@9.0.0)
-      eslint-plugin-svelte: 2.36.0(eslint@9.0.0)(svelte@packages+svelte)
-      eslint-plugin-unicorn: 52.0.0(eslint@9.0.0)
-      globals: 15.0.0
-      typescript: 5.3.3
-      typescript-eslint: 7.6.0(eslint@9.0.0)(typescript@5.3.3)
     dev: true
