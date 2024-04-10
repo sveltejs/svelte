@@ -19,13 +19,42 @@ declare module 'svelte' {
 		$$inline?: boolean;
 	}
 
-	// Utility type for ensuring backwards compatibility on a type level: If there's a default slot, add 'children' to the props if it doesn't exist there already
-	type PropsWithChildren<Props, Slots> = Props &
+	/** Tooling for types uses this for properties that can only ever be bound to */
+	export type Binding<T> = { 'bind:': T };
+	/** Tooling for types uses this for properties that may be bound to */
+	export type Bindable<T> = T | Binding<T>;
+
+	type WithBindings<T> = {
+		[Key in keyof T]: Bindable<T[Key]>;
+	};
+
+	export type RemoveBindable<Props extends Record<string, any>> = Props extends '_explicit_' &
+		infer Props
+		? {
+				[Key in keyof Props as Props[Key] extends Binding<unknown>
+					? never
+					: Key]: Props[Key] extends Bindable<infer Value> ? Value : Props[Key];
+			}
+		: Props;
+
+	type StripBindable<Props extends Record<string, any>> = {
+		[Key in keyof Props]: Props[Key] extends Bindable<infer Value> ? Value : Props[Key];
+	};
+
+	// Utility types for ensuring backwards compatibility on a type level:
+	// - If there's a default slot, add 'children' to the props if it doesn't exist there already
+	// - If not explicitly opted in, all props are bindable
+
+	type PropsWithChildren<Props, Slots> = PropsWithBindings<Props> &
 		(Props extends { children?: any }
 			? {}
 			: Slots extends { default: any }
 				? { children?: Snippet }
 				: {});
+
+	type PropsWithBindings<Props> = Props extends '_explicit_' & infer ActualProps
+		? ActualProps
+		: WithBindings<Props>;
 
 	/**
 	 * Can be used to create strongly typed Svelte components.
@@ -56,7 +85,7 @@ declare module 'svelte' {
 	 * for more info.
 	 */
 	export class SvelteComponent<
-		Props extends Record<string, any> = any,
+		Props extends Record<string, any> | (Record<string, any> & '_explicit_') = Record<string, any>,
 		Events extends Record<string, any> = any,
 		Slots extends Record<string, any> = any
 	> {
@@ -75,7 +104,7 @@ declare module 'svelte' {
 		 * Does not exist at runtime.
 		 * ### DO NOT USE!
 		 * */
-		$$prop_def: PropsWithChildren<Props, Slots>;
+		$$prop_def: StripBindable<PropsWithChildren<Props, Slots>>;
 		/**
 		 * For type checking capabilities only.
 		 * Does not exist at runtime.
@@ -120,7 +149,7 @@ declare module 'svelte' {
 	 * @deprecated Use `SvelteComponent` instead. See TODO for more information.
 	 */
 	export class SvelteComponentTyped<
-		Props extends Record<string, any> = any,
+		Props extends Record<string, any> | (Record<string, any> & '_explicit_') = Record<string, any>,
 		Events extends Record<string, any> = any,
 		Slots extends Record<string, any> = any
 	> extends SvelteComponent<Props, Events, Slots> {}
@@ -155,7 +184,7 @@ declare module 'svelte' {
 	 * ```
 	 */
 	export type ComponentProps<Comp extends SvelteComponent> =
-		Comp extends SvelteComponent<infer Props> ? Props : never;
+		Comp extends SvelteComponent<infer Props> ? RemoveBindable<Props> : never;
 
 	/**
 	 * Convenience type to get the type of a Svelte component. Useful for example in combination with
@@ -305,7 +334,7 @@ declare module 'svelte' {
 	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
 		target: Document | Element | ShadowRoot;
 		anchor?: Node | undefined;
-		props?: Props | undefined;
+		props?: RemoveBindable<Props> | undefined;
 		events?: { [Property in keyof Events]: (e: Events[Property]) => any; } | undefined;
 		context?: Map<any, any> | undefined;
 		intro?: boolean | undefined;
@@ -316,7 +345,7 @@ declare module 'svelte' {
 	 * */
 	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
 		target: Document | Element | ShadowRoot;
-		props?: Props | undefined;
+		props?: RemoveBindable<Props> | undefined;
 		events?: { [Property in keyof Events]: (e: Events[Property]) => any; } | undefined;
 		context?: Map<any, any> | undefined;
 		intro?: boolean | undefined;
@@ -501,10 +530,22 @@ declare module 'svelte/compiler' {
 	 *
 	 * https://svelte.dev/docs/svelte-compiler#svelte-parse
 	 * */
+	export function parse(source: string, options: {
+		filename?: string;
+		modern: true;
+	}): Root;
+	/**
+	 * The parse function parses a component, returning only its abstract syntax tree.
+	 *
+	 * The `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
+	 * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
+	 *
+	 * https://svelte.dev/docs/svelte-compiler#svelte-parse
+	 * */
 	export function parse(source: string, options?: {
 		filename?: string | undefined;
-		modern?: boolean | undefined;
-	} | undefined): Root | LegacyRoot;
+		modern?: false | undefined;
+	} | undefined): LegacyRoot;
 	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
 	 * */

@@ -11,35 +11,49 @@ export interface ComponentConstructorOptions<
 > {
 	target: Element | Document | ShadowRoot;
 	anchor?: Element;
-	props?: PropToBindable<Props>;
+	props?: Props;
 	context?: Map<any, any>;
 	hydrate?: boolean;
 	intro?: boolean;
 	$$inline?: boolean;
 }
 
-export type _Prop<T> = T & { 'a property': 'a non-bindable property' };
-export type _Binding<T> = { 'bind:': T };
-export type _Bindable<T> = T | _Binding<T>;
+/** Tooling for types uses this for properties that can only ever be bound to */
+export type Binding<T> = { 'bind:': T };
+/** Tooling for types uses this for properties that may be bound to */
+export type Bindable<T> = T | Binding<T>;
 
-type PropToBindable<Props extends Record<string, any>> = {
-	[Key in keyof Props]: Props[Key] extends _Prop<infer Value> ? Value : _Bindable<Props[Key]>;
+type WithBindings<T> = {
+	[Key in keyof T]: Bindable<T[Key]>;
 };
 
-// TODO don't export this publicly
-export type RemoveBindable<Props extends Record<string, any>> = {
-	[Key in keyof Props as Props[Key] extends _Binding<unknown>
-		? never
-		: Key]: Props[Key] extends _Bindable<infer Value> ? Value : Props[Key];
+export type RemoveBindable<Props extends Record<string, any>> = Props extends '_explicit_' &
+	infer Props
+	? {
+			[Key in keyof Props as Props[Key] extends Binding<unknown>
+				? never
+				: Key]: Props[Key] extends Bindable<infer Value> ? Value : Props[Key];
+		}
+	: Props;
+
+type StripBindable<Props extends Record<string, any>> = {
+	[Key in keyof Props]: Props[Key] extends Bindable<infer Value> ? Value : Props[Key];
 };
 
-// Utility type for ensuring backwards compatibility on a type level: If there's a default slot, add 'children' to the props if it doesn't exist there already
-type PropsWithChildren<Props, Slots> = Props &
+// Utility types for ensuring backwards compatibility on a type level:
+// - If there's a default slot, add 'children' to the props if it doesn't exist there already
+// - If not explicitly opted in, all props are bindable
+
+type PropsWithChildren<Props, Slots> = PropsWithBindings<Props> &
 	(Props extends { children?: any }
 		? {}
 		: Slots extends { default: any }
 			? { children?: Snippet }
 			: {});
+
+type PropsWithBindings<Props> = Props extends '_explicit_' & infer ActualProps
+	? ActualProps
+	: WithBindings<Props>;
 
 /**
  * Can be used to create strongly typed Svelte components.
@@ -70,7 +84,7 @@ type PropsWithChildren<Props, Slots> = Props &
  * for more info.
  */
 export class SvelteComponent<
-	Props extends Record<string, any> = any,
+	Props extends Record<string, any> | (Record<string, any> & '_explicit_') = Record<string, any>,
 	Events extends Record<string, any> = any,
 	Slots extends Record<string, any> = any
 > {
@@ -89,7 +103,7 @@ export class SvelteComponent<
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
 	 * */
-	$$prop_def: RemoveBindable<PropToBindable<PropsWithChildren<Props, Slots>>>;
+	$$prop_def: StripBindable<PropsWithChildren<Props, Slots>>;
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
@@ -134,7 +148,7 @@ export class SvelteComponent<
  * @deprecated Use `SvelteComponent` instead. See TODO for more information.
  */
 export class SvelteComponentTyped<
-	Props extends Record<string, any> = any,
+	Props extends Record<string, any> | (Record<string, any> & '_explicit_') = Record<string, any>,
 	Events extends Record<string, any> = any,
 	Slots extends Record<string, any> = any
 > extends SvelteComponent<Props, Events, Slots> {}

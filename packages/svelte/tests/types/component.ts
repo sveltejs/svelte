@@ -5,7 +5,9 @@ import {
 	type ComponentProps,
 	type ComponentType,
 	mount,
-	hydrate
+	hydrate,
+	type Bindable,
+	type Binding
 } from 'svelte';
 
 SvelteComponent.element === HTMLElement;
@@ -173,4 +175,48 @@ const x: typeof asLegacyComponent = createClassComponent({
 	target: null as any,
 	hydrate: true,
 	component: NewComponent
+});
+
+// --------------------------------------------------------------------------- bindable
+
+// Test that
+// - everything's bindable unless _explicit_ is set to true (for backwards compatibility)
+// - when using mount etc the props are never bindable because this is language-tools only concept
+
+function binding<T>(value: T): Binding<T> {
+	return value as any;
+}
+
+class Explicit extends SvelteComponent<{ foo: string; bar: Bindable<boolean> } & '_explicit_'> {}
+new Explicit({ target: null as any, props: { foo: 'foo', bar: binding(true) } });
+new Explicit({ target: null as any, props: { foo: 'foo', bar: true } });
+new Explicit({
+	target: null as any,
+	props: {
+		// @ts-expect-error
+		foo: binding(''),
+		bar: true
+	}
+});
+mount(Explicit, { target: null as any, props: { foo: 'foo', bar: true } });
+mount(Explicit, {
+	target: null as any,
+	props: {
+		foo: 'foo',
+		// @ts-expect-error
+		bar: binding(true)
+	}
+});
+
+class Implicit extends SvelteComponent<{ foo: string; bar: boolean }> {}
+new Implicit({ target: null as any, props: { foo: 'foo', bar: true } });
+new Implicit({ target: null as any, props: { foo: binding(''), bar: binding(true) } });
+mount(Implicit, { target: null as any, props: { foo: 'foo', bar: true } });
+mount(Implicit, {
+	target: null as any,
+	props: {
+		foo: 'foo',
+		// @ts-expect-error
+		bar: binding(true)
+	}
 });
