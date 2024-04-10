@@ -1,11 +1,5 @@
 import { DEV } from 'esm-env';
-import {
-	get,
-	batch_inspect,
-	current_component_context,
-	untrack,
-	current_effect
-} from './runtime.js';
+import { get, batch_inspect, current_component_context, untrack } from './runtime.js';
 import {
 	array_prototype,
 	define_property,
@@ -19,7 +13,6 @@ import {
 import { add_owner, check_ownership, strip_owner } from './dev/ownership.js';
 import { mutable_source, source, set } from './reactivity/sources.js';
 import { STATE_SYMBOL } from './constants.js';
-import { updating_derived } from './reactivity/deriveds.js';
 import { UNINITIALIZED } from '../../constants.js';
 
 /**
@@ -209,11 +202,7 @@ const state_proxy_handler = {
 
 		// if we're reading a property in a reactive context, create a source,
 		// but only if it's an own property and not a prototype property
-		if (
-			s === undefined &&
-			(current_effect !== null || updating_derived) &&
-			(!(prop in target) || get_descriptor(target, prop)?.writable)
-		) {
+		if (s === undefined && (!(prop in target) || get_descriptor(target, prop)?.writable)) {
 			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i, metadata.o));
 			metadata.s.set(prop, s);
 		}
@@ -255,10 +244,7 @@ const state_proxy_handler = {
 		const has = Reflect.has(target, prop);
 
 		let s = metadata.s.get(prop);
-		if (
-			s !== undefined ||
-			(current_effect !== null && (!has || get_descriptor(target, prop)?.writable))
-		) {
+		if (s !== undefined || !has || get_descriptor(target, prop)?.writable) {
 			if (s === undefined) {
 				s = (metadata.i ? source : mutable_source)(
 					has ? proxy(target[prop], metadata.i, metadata.o) : UNINITIALIZED
@@ -281,7 +267,7 @@ const state_proxy_handler = {
 		// we do so otherwise if we read it later, then the write won't be tracked and
 		// the heuristics of effects will be different vs if we had read the proxied
 		// object property before writing to that property.
-		if (s === undefined && current_effect !== null) {
+		if (s === undefined) {
 			// the read creates a signal
 			untrack(() => receiver[prop]);
 			s = metadata.s.get(prop);
