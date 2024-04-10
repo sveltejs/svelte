@@ -7,8 +7,8 @@ import {
 	init_operations
 } from './dom/operations.js';
 import { HYDRATION_START, PassiveDelegatedEvents } from '../../constants.js';
-import { flush_sync, push, pop, current_component_context, untrack, get } from './runtime.js';
-import { effect_root, branch, block, pause_effect } from './reactivity/effects.js';
+import { flush_sync, push, pop, current_component_context } from './runtime.js';
+import { effect_root, branch } from './reactivity/effects.js';
 import {
 	hydrate_anchor,
 	hydrate_nodes,
@@ -19,7 +19,6 @@ import {
 import { array_from } from './utils.js';
 import { handle_event_propagation } from './dom/elements/events.js';
 import { reset_head_anchor } from './dom/blocks/svelte-head.js';
-import { set, source } from './reactivity/sources.js';
 
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
@@ -340,45 +339,4 @@ function get_root_for_style(node) {
 		return /** @type {ShadowRoot} */ (root);
 	}
 	return /** @type {Document} */ (node.ownerDocument);
-}
-
-/**
- * @param {{ component: import("#client").Source<(anchor: Comment, props: any) => any>; wrapper: (anchor: Comment, props: any) => any; }} data
- * @param {(anchor: Comment, props: any) => any} new_component
- */
-export function hmr(data, new_component) {
-	let prev_component = data.component;
-
-	if (prev_component === undefined) {
-		prev_component = data.component = source(new_component);
-	} else {
-		set(prev_component, new_component);
-		return data.wrapper;
-	}
-
-	const wrapper = (/** @type {Comment} */ anchor, /** @type {any} */ props) => {
-		let output;
-		/**
-		 * @type {import("#client").Effect}
-		 */
-		let effect;
-
-		block(() => {
-			const component = get(data.component);
-
-			if (effect) {
-				pause_effect(effect);
-			}
-
-			effect = branch(() => {
-				output = component(anchor, props);
-			});
-		});
-
-		return output;
-	};
-
-	data.wrapper = wrapper;
-
-	return wrapper;
 }

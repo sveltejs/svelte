@@ -1,3 +1,4 @@
+export { hmr } from './dev/hmr.js';
 export { add_owner, mark_module_start, mark_module_end } from './dev/ownership.js';
 export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
@@ -96,7 +97,7 @@ export {
 	update_pre_store,
 	update_store
 } from './reactivity/store.js';
-export { append_styles, sanitize_slots, set_text, slot, stringify, hmr } from './render.js';
+export { append_styles, sanitize_slots, set_text, slot, stringify } from './render.js';
 export {
 	get,
 	invalidate_inner_signals,
