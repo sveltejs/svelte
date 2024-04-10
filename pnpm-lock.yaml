@@ -15,8 +15,8 @@ importers:
         specifier: ^2.27.1
         version: 2.27.1
       '@sveltejs/eslint-config':
-        specifier: jrmajor/svelte-eslint-config#eslint-9
-        version: github.com/jrmajor/svelte-eslint-config/523c1496980d7ac5f655ede879cbad660143a809(eslint-config-prettier@9.1.0)(eslint-plugin-svelte@2.36.0)(eslint-plugin-unicorn@52.0.0)(eslint@9.0.0)(globals@15.0.0)(typescript-eslint@7.6.0)(typescript@5.3.3)
+        specifier: jrmajor/svelte-eslint-config#stylistic
+        version: github.com/jrmajor/svelte-eslint-config/70c2b0540f203cd0249c66ea68d63835176f8935(@stylistic/eslint-plugin-js@1.7.0)(eslint-config-prettier@9.1.0)(eslint-plugin-svelte@2.36.0)(eslint-plugin-unicorn@52.0.0)(eslint@9.0.0)(globals@15.0.0)(typescript-eslint@7.6.0)(typescript@5.3.3)
       '@svitejs/changesets-changelog-github-compact':
         specifier: ^1.1.0
         version: 1.1.0
@@ -2424,6 +2424,20 @@ packages:
       p-map: 4.0.0
     dev: true
 
+  /@stylistic/eslint-plugin-js@1.7.0(eslint@9.0.0):
+    resolution: {integrity: sha512-PN6On/+or63FGnhhMKSQfYcWutRlzOiYlVdLM6yN7lquoBTqUJHYnl4TA4MHwiAt46X5gRxDr1+xPZ1lOLcL+Q==}
+    engines: {node: ^16.0.0 || >=18.0.0}
+    peerDependencies:
+      eslint: '>=8.40.0'
+    dependencies:
+      '@types/eslint': 8.56.7
+      acorn: 8.11.3
+      escape-string-regexp: 4.0.0
+      eslint: 9.0.0
+      eslint-visitor-keys: 3.4.3
+      espree: 9.6.1
+    dev: true
+
   /@supabase/functions-js@2.1.5:
     resolution: {integrity: sha512-BNzC5XhCzzCaggJ8s53DP+WeHHGT/NfTsx2wUSSGKR2/ikLFQTBCDzMvGz/PxYMqRko/LwncQtKXGOYp1PkPaw==}
     dependencies:
@@ -2739,6 +2753,13 @@ packages:
 
   /@types/cookie@0.6.0:
     resolution: {integrity: sha512-4Kh9a6B2bQciAhf7FSuMRRkUWecJgJu9nPnx3yzpsfXX/c50REIqpHY4C82bXP90qrLtXtkDxTZosYO3UpOwlA==}
+
+  /@types/eslint@8.56.7:
+    resolution: {integrity: sha512-SjDvI/x3zsZnOkYZ3lCt9lOZWZLB2jIlNKz+LBgCtDurK0JZcwucxYHn1w2BJkD34dgX9Tjnak0txtq4WTggEA==}
+    dependencies:
+      '@types/estree': 1.0.5
+      '@types/json-schema': 7.0.15
+    dev: true
 
   /@types/estree@1.0.5:
     resolution: {integrity: sha512-/kYRxGDLWzHOB7q+wtSUQlFrtcdUccpfy+X+9iMBpHK8QLLhx2wIPYuS5DYtR9Wa/YlZAbIovy7qVdB1Aq6Lyw==}
@@ -8945,12 +8966,13 @@ packages:
     resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
     dev: true
 
-  github.com/jrmajor/svelte-eslint-config/523c1496980d7ac5f655ede879cbad660143a809(eslint-config-prettier@9.1.0)(eslint-plugin-svelte@2.36.0)(eslint-plugin-unicorn@52.0.0)(eslint@9.0.0)(globals@15.0.0)(typescript-eslint@7.6.0)(typescript@5.3.3):
-    resolution: {tarball: https://codeload.github.com/jrmajor/svelte-eslint-config/tar.gz/523c1496980d7ac5f655ede879cbad660143a809}
-    id: github.com/jrmajor/svelte-eslint-config/523c1496980d7ac5f655ede879cbad660143a809
+  github.com/jrmajor/svelte-eslint-config/70c2b0540f203cd0249c66ea68d63835176f8935(@stylistic/eslint-plugin-js@1.7.0)(eslint-config-prettier@9.1.0)(eslint-plugin-svelte@2.36.0)(eslint-plugin-unicorn@52.0.0)(eslint@9.0.0)(globals@15.0.0)(typescript-eslint@7.6.0)(typescript@5.3.3):
+    resolution: {tarball: https://codeload.github.com/jrmajor/svelte-eslint-config/tar.gz/70c2b0540f203cd0249c66ea68d63835176f8935}
+    id: github.com/jrmajor/svelte-eslint-config/70c2b0540f203cd0249c66ea68d63835176f8935
     name: '@sveltejs/eslint-config'
     version: 6.0.4
     peerDependencies:
+      '@stylistic/eslint-plugin-js': '>= 1'
       eslint: '>= 9'
       eslint-config-prettier: '>= 9'
       eslint-plugin-svelte: '>= 2.36'
@@ -8959,6 +8981,7 @@ packages:
       typescript: '>= 5'
       typescript-eslint: '>= 7.5'
     dependencies:
+      '@stylistic/eslint-plugin-js': 1.7.0(eslint@9.0.0)
       eslint: 9.0.0
       eslint-config-prettier: 9.1.0(eslint@9.0.0)
       eslint-plugin-svelte: 2.36.0(eslint@9.0.0)(svelte@packages+svelte)

@@ -17,9 +17,9 @@ export default [
 
 			// TODO: enable these rules and run `pnpm lint:fix`
 			// skipping that for now so as to avoid impacting real work
+			'@stylistic/quotes': 'off',
 			'@typescript-eslint/no-unused-vars': 'off',
-			'prefer-const': 'off',
-			quotes: 'off'
+			'prefer-const': 'off'
 		}
 	},
 	{
