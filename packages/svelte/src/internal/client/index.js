@@ -96,7 +96,7 @@ export {
 	update_pre_store,
 	update_store
 } from './reactivity/store.js';
-export { append_styles, sanitize_slots, set_text, slot, stringify } from './render.js';
+export { append_styles, sanitize_slots, set_text, slot, stringify, hmr } from './render.js';
 export {
 	get,
 	invalidate_inner_signals,
@@ -143,4 +143,3 @@ export {
 	validate_snippet,
 	validate_void_dynamic_element
 } from '../shared/validate.js';
-export { hmr } from './hmr.js';
