@@ -1,5 +1,3 @@
-# NOTE: In general this should be kept in sync with .eslintignore
-
 packages/**/dist/*.js
 packages/**/build/*.js
 packages/**/npm/**/*
@@ -31,7 +29,6 @@ sites/svelte.dev/src/lib/generated
 **/.vercel
 .github/CODEOWNERS
 .prettierignore
-.eslintignore
 .changeset
 pnpm-lock.yaml
 pnpm-workspace.yaml

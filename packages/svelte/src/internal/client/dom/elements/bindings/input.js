@@ -131,7 +131,6 @@ export function bind_checked(input, get_value, update) {
 		update(value);
 	});
 
-	// eslint-disable-next-line eqeqeq
 	if (get_value() == undefined) {
 		update(false);
 	}

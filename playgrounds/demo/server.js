@@ -43,12 +43,10 @@ async function createServer() {
 createServer()
 	.then(({ app }) =>
 		app.listen(PORT, () => {
-			// eslint-disable-next-line no-console
 			console.log(`http://localhost:${PORT}`);
 		})
 	)
 	.catch((err) => {
-		// eslint-disable-next-line no-console
 		console.error('Error Starting Server:\n', err);
 		process.exit(1);
 	});
