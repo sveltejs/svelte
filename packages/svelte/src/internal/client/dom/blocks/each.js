@@ -49,22 +49,22 @@ export function index(_, i) {
 /**
  * Pause multiple effects simultaneously, and coordinate their
  * subsequent destruction. Used in each blocks
- * @param {import('#client').Effect[]} effects
+ * @param {import('#client').EachItem[]} items
  * @param {null | Node} controlled_anchor
  * @param {() => void} [callback]
  */
-function pause_effects(effects, controlled_anchor, callback) {
+function pause_effects(items, controlled_anchor, callback) {
 	/** @type {import('#client').TransitionManager[]} */
 	var transitions = [];
-	var length = effects.length;
+	var length = items.length;
 
 	for (var i = 0; i < length; i++) {
-		pause_children(effects[i], transitions, true);
+		pause_children(items[i].e, transitions, true);
 	}
 
 	// If we have a controlled anchor, it means that the each block is inside a single
 	// DOM element, so we can apply a fast-path for clearing the contents of the element.
-	if (effects.length > 0 && transitions.length === 0 && controlled_anchor !== null) {
+	if (length > 0 && transitions.length === 0 && controlled_anchor !== null) {
 		var parent_node = /** @type {Element} */ (controlled_anchor.parentNode);
 		parent_node.textContent = '';
 		parent_node.append(controlled_anchor);
@@ -72,7 +72,7 @@ function pause_effects(effects, controlled_anchor, callback) {
 
 	run_out_transitions(transitions, () => {
 		for (var i = 0; i < length; i++) {
-			destroy_effect(effects[i]);
+			destroy_effect(items[i].e);
 		}
 
 		if (callback !== undefined) callback();
@@ -225,7 +225,9 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
  */
 function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
+	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 
+	var length = array.length;
 	var items = state.items;
 	var first = state.next;
 	var current = first;
@@ -255,7 +257,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	var item;
 
 	if (is_animated) {
-		for (let i = 0; i < array.length; i += 1) {
+		for (let i = 0; i < length; i += 1) {
 			value = array[i];
 			key = get_key(value, i);
 			item = items.get(key);
@@ -267,7 +269,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		}
 	}
 
-	for (let i = 0; i < array.length; i += 1) {
+	for (let i = 0; i < length; i += 1) {
 		value = array[i];
 		key = get_key(value, i);
 		item = items.get(key);
@@ -293,7 +295,10 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			continue;
 		}
 
-		update_item(item, value, i, flags);
+		if (should_update) {
+			update_item(item, value, i, flags);
+		}
+
 		resume_effect(item.e);
 
 		if (item !== current) {
@@ -333,7 +338,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			matched = [];
 			stashed = [];
 
-			while (current && current.k !== key) {
+			while (current !== null && current.k !== key) {
 				seen.add(current);
 				stashed.push(current);
 				current = current.next;
@@ -358,16 +363,15 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 
 	const to_destroy = Array.from(seen);
 
-	pause_effects(
-		to_destroy.map((item) => item.e),
-		null,
-		() => {
-			for (const item of to_destroy) {
-				items.delete(item.k);
-				link(item.prev, item.next);
-			}
+	var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
+
+	pause_effects(to_destroy, controlled_anchor, () => {
+		for (var i = 0; i < to_destroy.length; i += 1) {
+			var item = to_destroy[i];
+			items.delete(item.k);
+			link(item.prev, item.next);
 		}
-	);
+	});
 
 	if (is_animated) {
 		effect(() => {
@@ -448,7 +452,7 @@ function create_item(anchor, prev, next, value, key, index, render_fn, flags) {
 		};
 
 		prev.next = item;
-		if (next) next.prev = item;
+		if (next !== null) next.prev = item;
 
 		current_each_item = item;
 		item.e = branch(() => render_fn(anchor, v, i));
@@ -489,5 +493,5 @@ function move(item, prev, anchor) {
  */
 function link(prev, next) {
 	prev.next = next;
-	if (next) next.prev = prev;
+	if (next !== null) next.prev = prev;
 }
