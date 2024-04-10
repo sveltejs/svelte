@@ -314,10 +314,15 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 
 					prev = start.prev;
 
+					var a = matched[0];
+					var b = matched[matched.length - 1];
+
+					link(a.prev, b.next);
+					link(prev, a);
+					link(b, start);
+
 					for (j = 0; j < matched.length; j += 1) {
-						item = matched[j];
-						move(item, prev, local_anchor);
-						prev = item;
+						move(matched[j], local_anchor);
 					}
 
 					for (j = 0; j < stashed.length; j += 1) {
@@ -325,6 +330,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 					}
 
 					current = start;
+					prev = b;
 					i -= 1;
 
 					matched = [];
@@ -332,7 +338,11 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 				} else {
 					// more efficient to move earlier items to the back
 					seen.delete(item);
-					move(item, prev, current ? get_first_child(current) : anchor);
+					move(item, current ? get_first_child(current) : anchor);
+
+					link(item.prev, item.next);
+					link(item, prev.next);
+					link(prev, item);
 
 					prev = item;
 				}
@@ -470,10 +480,9 @@ function create_item(anchor, prev, next, value, key, index, render_fn, flags) {
 
 /**
  * @param {import('#client').EachItem} item
- * @param {import('#client').EachItem | import('#client').EachState} prev
  * @param {Text | Element | Comment} anchor
  */
-function move(item, prev, anchor) {
+function move(item, anchor) {
 	var dom = item.e.dom;
 
 	if (dom !== null) {
@@ -485,10 +494,6 @@ function move(item, prev, anchor) {
 			anchor.before(dom);
 		}
 	}
-
-	link(item.prev, item.next);
-	link(item, prev.next);
-	link(prev, item);
 }
 
 /**
