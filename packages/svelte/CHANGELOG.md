@@ -1,5 +1,11 @@
 # svelte
 
+## 4.2.13
+
+### Patch Changes
+
+- fix: applying :global for +,~ sibling combinator when slots are present ([#9282](https://github.com/sveltejs/svelte/pull/9282))
+
 ## 4.2.12
 
 ### Patch Changes
