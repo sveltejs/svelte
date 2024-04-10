@@ -3,28 +3,24 @@ import { set, source } from '../reactivity/sources.js';
 import { get } from '../runtime.js';
 
 /**
- * @param {{ component: import("#client").Source<(anchor: Comment, props: any) => any>; wrapper: (anchor: Comment, props: any) => any; }} data
- * @param {(anchor: Comment, props: any) => any} new_component
+ * @param {{ source: import("#client").Source<(anchor: Comment, props: any) => any>; wrapper: (anchor: Comment, props: any) => any; }} data
+ * @param {(anchor: Comment, props: any) => any} component
  */
-export function hmr(data, new_component) {
-	let prev_component = data.component;
-
-	if (prev_component === undefined) {
-		prev_component = data.component = source(new_component);
+export function hmr(data, component) {
+	if (data.source) {
+		set(data.source, component);
 	} else {
-		set(prev_component, new_component);
-		return data.wrapper;
+		data.source = source(component);
 	}
 
-	const wrapper = (/** @type {Comment} */ anchor, /** @type {any} */ props) => {
+	return (data.wrapper ??= (/** @type {Comment} */ anchor, /** @type {any} */ props) => {
 		let output;
-		/**
-		 * @type {import("#client").Effect}
-		 */
+
+		/** @type {import("#client").Effect} */
 		let effect;
 
 		block(() => {
-			const component = get(data.component);
+			const component = get(data.source);
 
 			if (effect) {
 				pause_effect(effect);
@@ -36,9 +32,5 @@ export function hmr(data, new_component) {
 		});
 
 		return output;
-	};
-
-	data.wrapper = wrapper;
-
-	return wrapper;
+	});
 }
