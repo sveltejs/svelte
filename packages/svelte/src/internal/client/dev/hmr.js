@@ -16,7 +16,7 @@ export function hmr(data, component) {
 
 	return (data.wrapper ??= /** @type {Component} */ (
 		(anchor, props) => {
-			let output;
+			let instance = {};
 
 			/** @type {import("#client").Effect} */
 			let effect;
@@ -25,15 +25,17 @@ export function hmr(data, component) {
 				const component = get(data.source);
 
 				if (effect) {
+					// @ts-ignore
+					for (var k in instance) delete instance[k];
 					pause_effect(effect);
 				}
 
 				effect = branch(() => {
-					output = component(anchor, props);
+					Object.assign(instance, component(anchor, props));
 				});
 			});
 
-			return output;
+			return instance;
 		}
 	));
 }
