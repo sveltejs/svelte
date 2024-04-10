@@ -4,5 +4,5 @@
 
 {#each array as a}
   {@const b = a + 1}
-  <button on:click={() => b ++} />
+  <button on:click={() => b ++}></button>
 {/each}

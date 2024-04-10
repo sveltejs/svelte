@@ -3,5 +3,5 @@
 </script>
 
 <div>
-	<p style:color={myColor} />
+	<p style:color={myColor}></p>
 </div>

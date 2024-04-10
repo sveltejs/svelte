@@ -302,7 +302,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 25,
+			"column": 32,
 			"line": 35
 		},
 		"message": "A11y: <select> cannot have role 'article'",
@@ -314,7 +314,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 24,
+			"column": 31,
 			"line": 36
 		},
 		"message": "A11y: <select> cannot have role 'banner'",
@@ -326,7 +326,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 31,
+			"column": 38,
 			"line": 37
 		},
 		"message": "A11y: <select> cannot have role 'complementary'",
@@ -338,7 +338,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 21,
+			"column": 28,
 			"line": 38
 		},
 		"message": "A11y: <select> cannot have role 'img'",
@@ -350,7 +350,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 26,
+			"column": 33,
 			"line": 39
 		},
 		"message": "A11y: <select> cannot have role 'listitem'",
@@ -362,7 +362,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 22,
+			"column": 29,
 			"line": 40
 		},
 		"message": "A11y: <select> cannot have role 'main'",
@@ -374,7 +374,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 24,
+			"column": 31,
 			"line": 41
 		},
 		"message": "A11y: <select> cannot have role 'region'",
@@ -386,7 +386,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 25,
+			"column": 32,
 			"line": 42
 		},
 		"message": "A11y: <select> cannot have role 'tooltip'",
@@ -398,7 +398,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 27,
+			"column": 36,
 			"line": 46
 		},
 		"message": "A11y: <textarea> cannot have role 'article'",
@@ -410,7 +410,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 26,
+			"column": 35,
 			"line": 47
 		},
 		"message": "A11y: <textarea> cannot have role 'banner'",
@@ -422,7 +422,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 33,
+			"column": 42,
 			"line": 48
 		},
 		"message": "A11y: <textarea> cannot have role 'complementary'",
@@ -434,7 +434,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 23,
+			"column": 32,
 			"line": 49
 		},
 		"message": "A11y: <textarea> cannot have role 'img'",
@@ -446,7 +446,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 28,
+			"column": 37,
 			"line": 50
 		},
 		"message": "A11y: <textarea> cannot have role 'listitem'",
@@ -458,7 +458,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 24,
+			"column": 33,
 			"line": 51
 		},
 		"message": "A11y: <textarea> cannot have role 'main'",
@@ -470,7 +470,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 26,
+			"column": 35,
 			"line": 52
 		},
 		"message": "A11y: <textarea> cannot have role 'region'",
@@ -482,7 +482,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 27,
+			"column": 36,
 			"line": 53
 		},
 		"message": "A11y: <textarea> cannot have role 'tooltip'",
@@ -638,7 +638,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 28,
+			"column": 37,
 			"line": 143
 		},
 		"message": "A11y: <menuitem> cannot have role 'listitem'",
@@ -650,7 +650,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 38,
+			"column": 45,
 			"line": 144
 		},
 		"message": "A11y: <option> cannot have role 'listitem'",
@@ -662,7 +662,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 38,
+			"column": 45,
 			"line": 145
 		},
 		"message": "A11y: <select> cannot have role 'listitem'",
@@ -674,7 +674,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 40,
+			"column": 49,
 			"line": 146
 		},
 		"message": "A11y: <textarea> cannot have role 'listitem'",
@@ -686,7 +686,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 22,
+			"column": 25,
 			"line": 147
 		},
 		"message": "A11y: <tr> cannot have role 'listitem'",
@@ -698,7 +698,7 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 27,
+			"column": 35,
 			"line": 148
 		},
 		"message": "A11y: <summary> cannot have role 'listitem'",

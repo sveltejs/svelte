@@ -1,7 +1,7 @@
-<div aria-valuemax="yes" />
-<div aria-valuemax="no" />
-<div aria-valuemax={`abc`} />
-<div aria-valuemax={true} />
-<div aria-valuemax />
-<div aria-valuemax={'false'} />
-<div aria-valuemax={!'false'} />
+<div aria-valuemax="yes"></div>
+<div aria-valuemax="no"></div>
+<div aria-valuemax={`abc`}></div>
+<div aria-valuemax={true}></div>
+<div aria-valuemax></div>
+<div aria-valuemax={'false'}></div>
+<div aria-valuemax={!'false'}></div>

@@ -7,5 +7,5 @@
 </script>
 
 <Outer {prop} let:value>
-	<Inner><button on:click={() => { log(value); }} /></Inner>
+	<Inner><button on:click={() => { log(value); }}></button></Inner>
 </Outer>

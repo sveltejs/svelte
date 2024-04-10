@@ -11,4 +11,4 @@
 		}
 	}
 </script>
-<button on:click={click} />
+<button on:click={click}></button>

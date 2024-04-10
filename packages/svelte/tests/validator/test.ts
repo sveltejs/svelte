@@ -133,7 +133,7 @@ it("does not throw error if 'this' is bound for foreign element", () => {
 		<script>
 			let whatever;
 		</script>
-		<div bind:this={whatever} />`,
+		<div bind:this={whatever}></div>`,
 			{
 				name: 'test',
 				namespace: 'foreign'

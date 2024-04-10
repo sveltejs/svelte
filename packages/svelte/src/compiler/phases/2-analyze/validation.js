@@ -15,7 +15,12 @@ import {
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { binding_properties } from '../bindings.js';
-import { ContentEditableBindings, EventModifiers, SVGElements } from '../constants.js';
+import {
+	ContentEditableBindings,
+	EventModifiers,
+	SVGElements,
+	VoidElements
+} from '../constants.js';
 import { is_custom_element_node } from '../nodes.js';
 import {
 	regex_illegal_attribute_character,
@@ -563,6 +568,17 @@ const validation = {
 					error(node, 'invalid-node-placement', `<${node.name}>`, parent.name);
 				}
 			}
+		}
+
+		const is_self_closing = context.state.analysis.source[node.end - 2] === '/';
+		if (is_self_closing && !VoidElements.includes(node.name) && !SVGElements.includes(node.name)) {
+			warn(
+				context.state.analysis.warnings,
+				node,
+				context.path,
+				'invalid-self-closing-tag',
+				node.name
+			);
 		}
 
 		context.next({

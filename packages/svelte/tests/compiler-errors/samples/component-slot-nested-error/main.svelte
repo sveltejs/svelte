@@ -4,6 +4,6 @@
 
 <Nested>
 	<div slot="slot1">
-		<div slot="slot2" />
+		<div slot="slot2"></div>
 	</div>
 </Nested>

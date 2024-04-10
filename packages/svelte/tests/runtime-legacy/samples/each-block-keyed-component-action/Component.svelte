@@ -2,4 +2,4 @@
 	export let action;
 </script>
 
-<div use:action />
+<div use:action></div>
