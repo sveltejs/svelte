@@ -200,8 +200,7 @@ const state_proxy_handler = {
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
 
-		// if we're reading a property in a reactive context, create a source,
-		// but only if it's an own property and not a prototype property
+		// create a source, but only if it's an own property and not a prototype property
 		if (s === undefined && (!(prop in target) || get_descriptor(target, prop)?.writable)) {
 			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i, metadata.o));
 			metadata.s.set(prop, s);
