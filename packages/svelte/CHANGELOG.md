@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.97
+
+### Patch Changes
+
+- fix: loosen proxy signal creation heuristics ([#11109](https://github.com/sveltejs/svelte/pull/11109))
+
+- fix: ensure top level snippets are defined when binding to component prop ([#11104](https://github.com/sveltejs/svelte/pull/11104))
+
+- feat: hot module reloading support for Svelte 5 ([#11106](https://github.com/sveltejs/svelte/pull/11106))
+
 ## 5.0.0-next.96
 
 ### Patch Changes

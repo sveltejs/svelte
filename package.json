@@ -20,8 +20,8 @@
     "check": "cd packages/svelte && pnpm build && cd ../../ && pnpm -r check",
     "format": "prettier --write .",
     "lint": "cd packages/svelte && pnpm exec rollup -c && cd ../../ && prettier --check . && eslint",
-    "test": "vitest run --coverage",
-    "test-output": "vitest run --reporter=json --outputFile=sites/svelte-5-preview/src/routes/status/results.json",
+    "test": "vitest run",
+    "test-output": "vitest run --coverage --reporter=json --outputFile=sites/svelte-5-preview/src/routes/status/results.json",
     "changeset:version": "changeset version && pnpm -r generate:version && git add --all",
     "changeset:publish": "changeset publish"
   },

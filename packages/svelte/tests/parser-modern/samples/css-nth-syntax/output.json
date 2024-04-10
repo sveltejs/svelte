@@ -1074,8 +1074,8 @@
 		"content": {
 			"start": 7,
 			"end": 798,
-			"comment": null,
-			"styles": "\n    /* test that all these are parsed correctly */\n\th1:nth-of-type(2n+1){\n        background: red;\n    }\n    h1:nth-child(-n + 3 of li.important) {\n        background: red;\n    }\n    h1:nth-child(1) {\n        background: red;\n    }\n    h1:nth-child(p) {\n        background: red;\n    }\n    h1:nth-child(n+7) {\n        background: red;\n    }\n    h1:nth-child(even) {\n        background: red;\n    }\n    h1:nth-child(odd) {\n        background: red;\n    }\n    h1:nth-child(\n        n\n    ) {\n        background: red;\n    }\n    h1:global(nav) {\n        background: red;\n    }\n\t\th1:nth-of-type(10n+1){\n        background: red;\n    }\n\t\th1:nth-of-type(-2n+3){\n        background: red;\n    }\n\t\th1:nth-of-type(+12){\n        background: red;\n    }\n\t\th1:nth-of-type(+3n){\n        background: red;\n    }\n"
+			"styles": "\n    /* test that all these are parsed correctly */\n\th1:nth-of-type(2n+1){\n        background: red;\n    }\n    h1:nth-child(-n + 3 of li.important) {\n        background: red;\n    }\n    h1:nth-child(1) {\n        background: red;\n    }\n    h1:nth-child(p) {\n        background: red;\n    }\n    h1:nth-child(n+7) {\n        background: red;\n    }\n    h1:nth-child(even) {\n        background: red;\n    }\n    h1:nth-child(odd) {\n        background: red;\n    }\n    h1:nth-child(\n        n\n    ) {\n        background: red;\n    }\n    h1:global(nav) {\n        background: red;\n    }\n\t\th1:nth-of-type(10n+1){\n        background: red;\n    }\n\t\th1:nth-of-type(-2n+3){\n        background: red;\n    }\n\t\th1:nth-of-type(+12){\n        background: red;\n    }\n\t\th1:nth-of-type(+3n){\n        background: red;\n    }\n",
+			"comment": null
 		}
 	},
 	"js": [],
