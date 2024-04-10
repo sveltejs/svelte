@@ -7,7 +7,7 @@ import TextInput from './Child.svelte';
 var root_1 = $.template(`Something`, 1);
 var root = $.template(`<!> `, 1);
 
-export default function Bind_component_snippet($$anchor, $$props) {
+function Bind_component_snippet($$anchor, $$props) {
 	$.push($$props, true);
 
 	let value = $.source('');
@@ -37,3 +37,5 @@ export default function Bind_component_snippet($$anchor, $$props) {
 	$.append($$anchor, fragment_1);
 	$.pop();
 }
+
+export default Bind_component_snippet;

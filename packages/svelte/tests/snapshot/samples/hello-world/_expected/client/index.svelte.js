@@ -5,7 +5,7 @@ import * as $ from "svelte/internal/client";
 
 var root = $.template(`<h1>hello world</h1>`);
 
-export default function Hello_world($$anchor, $$props) {
+function Hello_world($$anchor, $$props) {
 	$.push($$props, false);
 	$.init();
 
@@ -14,3 +14,5 @@ export default function Hello_world($$anchor, $$props) {
 	$.append($$anchor, h1);
 	$.pop();
 }
+
+export default Hello_world;

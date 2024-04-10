@@ -415,14 +415,30 @@ export function client_component(source, analysis, options) {
 	const body = [
 		...state.hoisted,
 		...module.body,
-		b.export_default(
-			b.function_declaration(
-				b.id(analysis.name),
-				[b.id('$$anchor'), b.id('$$props')],
-				component_block
-			)
+		b.function_declaration(
+			b.id(analysis.name),
+			[b.id('$$anchor'), b.id('$$props')],
+			component_block
 		)
 	];
+
+	if (options.hmr) {
+		body.push(
+			b.export_default(
+				b.conditional(
+					b.import_meta_hot(),
+					b.call('$.hmr', b.member(b.import_meta_hot(), b.id('data')), b.id(analysis.name)),
+					b.id(analysis.name)
+				)
+			),
+			b.if(
+				b.import_meta_hot(),
+				b.stmt(b.call('import.meta.hot.acceptExports', b.literal('default')))
+			)
+		);
+	} else {
+		body.push(b.export_default(b.id(analysis.name)));
+	}
 
 	if (options.dev) {
 		if (options.filename) {
