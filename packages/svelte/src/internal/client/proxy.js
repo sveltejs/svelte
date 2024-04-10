@@ -1,5 +1,11 @@
 import { DEV } from 'esm-env';
-import { get, batch_inspect, current_component_context, untrack } from './runtime.js';
+import {
+	get,
+	batch_inspect,
+	current_component_context,
+	untrack,
+	current_effect
+} from './runtime.js';
 import {
 	array_prototype,
 	define_property,
@@ -243,7 +249,10 @@ const state_proxy_handler = {
 		const has = Reflect.has(target, prop);
 
 		let s = metadata.s.get(prop);
-		if (s !== undefined || !has || get_descriptor(target, prop)?.writable) {
+		if (
+			s !== undefined ||
+			(current_effect !== null && (!has || get_descriptor(target, prop)?.writable))
+		) {
 			if (s === undefined) {
 				s = (metadata.i ? source : mutable_source)(
 					has ? proxy(target[prop], metadata.i, metadata.o) : UNINITIALIZED
