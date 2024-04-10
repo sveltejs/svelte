@@ -27,48 +27,22 @@ export default [
 		}
 	},
 	{
-		// scripts and playground should be console logging so don't lint against them
-		files: ['playgrounds/**/*', 'scripts/**/*'],
+		files: ['playgrounds/**/*'],
 		rules: {
+			'lube/svelte-naming-convention': 'off',
 			'no-console': 'off'
 		}
 	},
 	{
-		// the playgrounds can use public naming conventions since they're examples
-		files: ['playgrounds/**/*'],
-		rules: {
-			'lube/svelte-naming-convention': 'off'
-		}
-	},
-	{
-		files: ['packages/svelte/src/compiler/**/*'],
-		rules: {
-			'no-var': 'error'
-		}
-	},
-	{
 		ignores: [
-			'**/dist/**',
-			'**/config/**',
-			'**/build/**',
-			'**/playgrounds/sandbox/**',
-			'**/npm/**',
-			'**/*.js.flow',
 			'**/*.d.ts',
-			'**/playwright*/**',
-			'**/vite.config.js',
-			'**/vite.prod.config.js',
-			'**/node_modules',
-			'**/compiler/index.js',
-			
-			'**/tests/**',
-			
+			'**/tests',
+			'packages/svelte/compiler/index.js',
 			// documentation can contain invalid examples
-			'documentation/**',
-			
+			'documentation',
 			// contains a fork of the REPL which doesn't adhere to eslint rules
 			'sites/svelte-5-preview/**',
-			// Wasn't checked previously, reenable at some point
+			// wasn't checked previously, reenable at some point
 			'sites/svelte.dev/**'
 		]
 	}
