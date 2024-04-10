@@ -38,7 +38,6 @@ export default function read_options(node) {
 			}
 			case 'tag': {
 				error(attribute, 'tag-option-deprecated');
-				break; // eslint doesn't know this is unnecessary
 			}
 			case 'customElement': {
 				/** @type {import('#compiler').SvelteOptions['customElement']} */
