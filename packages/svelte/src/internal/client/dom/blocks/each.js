@@ -327,7 +327,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 					// more efficient to move earlier items to the back
 					const a = current ? get_first_child(current) : anchor;
 
-					lookup.delete(key);
+					seen.delete(item);
 					move(item, prev, a);
 
 					prev = item;
@@ -355,11 +355,14 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		matched.push(item);
 		prev = item;
 		current = item.next;
-
-		lookup.delete(key);
 	}
 
-	const to_destroy = Array.from(lookup.values());
+	while (current) {
+		seen.add(current);
+		current = current.next;
+	}
+
+	const to_destroy = Array.from(seen);
 
 	pause_effects(
 		to_destroy.map((item) => item.e),
