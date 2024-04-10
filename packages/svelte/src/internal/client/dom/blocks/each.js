@@ -26,9 +26,6 @@ import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen, map_get, map_set } from '../../utils.js';
 import { STATE_SYMBOL } from '../../constants.js';
 
-var NEW_ITEM = -1;
-var LIS_ITEM = -2;
-
 /**
  * The row of a keyed each block that is currently updating. We track this
  * so that `animate:` directives have something to attach themselves to
@@ -42,24 +39,32 @@ export function set_current_each_item(item) {
 }
 
 /**
+ * @param {any} _
+ * @param {number} i
+ */
+export function index(_, i) {
+	return i;
+}
+
+/**
  * Pause multiple effects simultaneously, and coordinate their
  * subsequent destruction. Used in each blocks
- * @param {import('#client').Effect[]} effects
+ * @param {import('#client').EachItem[]} items
  * @param {null | Node} controlled_anchor
  * @param {() => void} [callback]
  */
-function pause_effects(effects, controlled_anchor, callback) {
+function pause_effects(items, controlled_anchor, callback) {
 	/** @type {import('#client').TransitionManager[]} */
 	var transitions = [];
-	var length = effects.length;
+	var length = items.length;
 
 	for (var i = 0; i < length; i++) {
-		pause_children(effects[i], transitions, true);
+		pause_children(items[i].e, transitions, true);
 	}
 
 	// If we have a controlled anchor, it means that the each block is inside a single
 	// DOM element, so we can apply a fast-path for clearing the contents of the element.
-	if (effects.length > 0 && transitions.length === 0 && controlled_anchor !== null) {
+	if (length > 0 && transitions.length === 0 && controlled_anchor !== null) {
 		var parent_node = /** @type {Element} */ (controlled_anchor.parentNode);
 		parent_node.textContent = '';
 		parent_node.append(controlled_anchor);
@@ -67,7 +72,7 @@ function pause_effects(effects, controlled_anchor, callback) {
 
 	run_out_transitions(transitions, () => {
 		for (var i = 0; i < length; i++) {
-			destroy_effect(effects[i]);
+			destroy_effect(items[i].e);
 		}
 
 		if (callback !== undefined) callback();
@@ -79,15 +84,14 @@ function pause_effects(effects, controlled_anchor, callback) {
  * @param {Element | Comment} anchor The next sibling node, or the parent node if this is a 'controlled' block
  * @param {number} flags
  * @param {() => V[]} get_collection
- * @param {null | ((item: V) => string)} get_key
+ * @param {(value: V, index: number) => any} get_key
  * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
- * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
  * @returns {void}
  */
-function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, reconcile_fn) {
+export function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn = null) {
 	/** @type {import('#client').EachState} */
-	var state = { flags, items: [] };
+	var state = { flags, items: new Map(), next: null };
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
@@ -112,8 +116,6 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 			: collection == null
 				? []
 				: Array.from(collection);
-
-		var keys = get_key === null ? array : array.map(get_key);
 
 		var length = array.length;
 
@@ -145,10 +147,14 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 
 		// this is separate to the previous block because `hydrating` might change
 		if (hydrating) {
-			var b_items = [];
-
 			/** @type {Node} */
 			var child_anchor = hydrate_nodes[0];
+
+			/** @type {import('#client').EachItem | import('#client').EachState} */
+			var prev = state;
+
+			/** @type {import('#client').EachItem} */
+			var item;
 
 			for (var i = 0; i < length; i++) {
 				if (
@@ -163,8 +169,13 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 				}
 
 				child_anchor = hydrate_anchor(child_anchor);
-				b_items[i] = create_item(child_anchor, array[i], keys?.[i], i, render_fn, flags);
+				var value = array[i];
+				var key = get_key(value, i);
+				item = create_item(child_anchor, prev, null, value, key, i, render_fn, flags);
+				state.items.set(key, item);
 				child_anchor = /** @type {Comment} */ (child_anchor.nextSibling);
+
+				prev = item;
 			}
 
 			// remove excess nodes
@@ -175,12 +186,10 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 					child_anchor = next;
 				}
 			}
-
-			state.items = b_items;
 		}
 
 		if (!hydrating) {
-			reconcile_fn(array, state, anchor, render_fn, flags, keys);
+			reconcile(array, state, anchor, render_fn, flags, get_key);
 		}
 
 		if (fallback_fn !== null) {
@@ -206,254 +215,180 @@ function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, re
 
 /**
  * @template V
- * @param {Element | Comment} anchor
- * @param {number} flags
- * @param {() => V[]} get_collection
- * @param {null | ((item: V) => string)} get_key
- * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: import('#client').MaybeSource<number>) => void} render_fn
- * @param {null | ((anchor: Node) => void)} [fallback_fn]
- * @returns {void}
- */
-export function each_keyed(anchor, flags, get_collection, get_key, render_fn, fallback_fn = null) {
-	each(anchor, flags, get_collection, get_key, render_fn, fallback_fn, reconcile_tracked_array);
-}
-
-/**
- * @template V
- * @param {Element | Comment} anchor
- * @param {number} flags
- * @param {() => V[]} get_collection
- * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: import('#client').MaybeSource<number>) => void} render_fn
- * @param {null | ((anchor: Node) => void)} [fallback_fn]
- * @returns {void}
- */
-export function each_indexed(anchor, flags, get_collection, render_fn, fallback_fn = null) {
-	each(anchor, flags, get_collection, null, render_fn, fallback_fn, reconcile_indexed_array);
-}
-
-/**
- * @template V
  * @param {Array<V>} array
  * @param {import('#client').EachState} state
  * @param {Element | Comment | Text} anchor
  * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: number | import('#client').Source<number>) => void} render_fn
  * @param {number} flags
+ * @param {(value: V, index: number) => any} get_key
  * @returns {void}
  */
-function reconcile_indexed_array(array, state, anchor, render_fn, flags) {
-	var a_items = state.items;
-
-	var a = a_items.length;
-	var b = array.length;
-	var min = Math.min(a, b);
-
-	/** @type {typeof a_items} */
-	var b_items = Array(b);
-
-	var item;
-	var value;
-
-	// update items
-	for (var i = 0; i < min; i += 1) {
-		value = array[i];
-		item = a_items[i];
-		b_items[i] = item;
-		update_item(item, value, i, flags);
-		resume_effect(item.e);
-	}
-
-	if (b > a) {
-		// add items
-		for (; i < b; i += 1) {
-			value = array[i];
-			item = create_item(anchor, value, null, i, render_fn, flags);
-			b_items[i] = item;
-		}
-
-		state.items = b_items;
-	} else if (a > b) {
-		// remove items
-		var effects = [];
-		for (i = b; i < a; i += 1) {
-			effects.push(a_items[i].e);
-		}
-
-		var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && b === 0 ? anchor : null;
-
-		pause_effects(effects, controlled_anchor, () => {
-			state.items.length = b;
-		});
-	}
-}
-
-/**
- * Reconcile arrays by the equality of the elements in the array. This algorithm
- * is based on Ivi's reconcilation logic:
- * https://github.com/localvoid/ivi/blob/9f1bd0918f487da5b131941228604763c5d8ef56/packages/ivi/src/client/core.ts#L968
- * @template V
- * @param {Array<V>} array
- * @param {import('#client').EachState} state
- * @param {Element | Comment | Text} anchor
- * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: number | import('#client').Source<number>) => void} render_fn
- * @param {number} flags
- * @param {any[]} keys
- * @returns {void}
- */
-function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
-	var a_items = state.items;
-
-	var a = a_items.length;
-	var b = array.length;
-
-	/** @type {Array<import('#client').EachItem>} */
-	var b_items = Array(b);
-
+function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
-	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-	var start = 0;
-	var item;
 
-	/** @type {import('#client').Effect[]} */
-	var to_destroy = [];
-	/** @type {Array<import('#client').EachItem>} */
+	var length = array.length;
+	var items = state.items;
+	var first = state.next;
+	var current = first;
+
+	/** @type {Set<import('#client').EachItem>} */
+	var seen = new Set();
+
+	/** @type {import('#client').EachState | import('#client').EachItem} */
+	var prev = state;
+
+	/** @type {import('#client').EachItem[]} */
 	var to_animate = [];
 
-	// Step 1 — trim common suffix
-	while (a > 0 && b > 0 && a_items[a - 1].k === keys[b - 1]) {
-		item = b_items[--b] = a_items[--a];
-		anchor = get_first_child(item);
+	/** @type {import('#client').EachItem[]} */
+	var matched = [];
+
+	/** @type {import('#client').EachItem[]} */
+	var stashed = [];
+
+	/** @type {V} */
+	var value;
+
+	/** @type {any} */
+	var key;
+
+	/** @type {import('#client').EachItem | undefined} */
+	var item;
+
+	/** @type {number} */
+	var i;
+
+	if (is_animated) {
+		for (i = 0; i < length; i += 1) {
+			value = array[i];
+			key = get_key(value, i);
+			item = items.get(key);
+
+			if (item !== undefined) {
+				item.a?.measure();
+				to_animate.push(item);
+			}
+		}
+	}
+
+	for (i = 0; i < length; i += 1) {
+		value = array[i];
+		key = get_key(value, i);
+		item = items.get(key);
+
+		if (item === undefined) {
+			prev = create_item(
+				current ? get_first_child(current) : anchor,
+				prev,
+				prev.next,
+				value,
+				key,
+				i,
+				render_fn,
+				flags
+			);
+
+			items.set(key, prev);
+
+			matched = [];
+			stashed = [];
+
+			current = prev.next;
+			continue;
+		}
+
+		if (should_update) {
+			update_item(item, value, i, flags);
+		}
 
 		resume_effect(item.e);
 
-		if (should_update) {
-			update_item(item, array[b], b, flags);
-		}
-		if (is_animated) {
-			item.a?.measure();
-			to_animate.push(item);
-		}
-	}
+		if (item !== current) {
+			if (seen.has(item)) {
+				if (matched.length < stashed.length) {
+					// more efficient to move later items to the front
+					var start = stashed[0];
+					var local_anchor = get_first_child(start);
+					var j;
 
-	// Step 2 — trim common prefix
-	while (start < a && start < b && a_items[start].k === keys[start]) {
-		item = b_items[start] = a_items[start];
+					prev = start.prev;
 
-		resume_effect(item.e);
+					var a = matched[0];
+					var b = matched[matched.length - 1];
 
-		if (should_update) {
-			update_item(item, array[start], start, flags);
-		}
-		if (is_animated) {
-			item.a?.measure();
-			to_animate.push(item);
-		}
+					link(a.prev, b.next);
+					link(prev, a);
+					link(b, start);
 
-		start += 1;
-	}
+					for (j = 0; j < matched.length; j += 1) {
+						move(matched[j], local_anchor);
+					}
 
-	// Step 3 — update
-	if (start === a) {
-		// add only
-		while (start < b) {
-			item = create_item(anchor, array[start], keys[start], start, render_fn, flags);
-			b_items[start++] = item;
-		}
-	} else if (start === b) {
-		// remove only
-		while (start < a) {
-			to_destroy.push(a_items[start++].e);
-		}
-	} else {
-		// reconcile
-		var moved = false;
-		var sources = new Int32Array(b - start);
-		var indexes = new Map();
-		var i;
-		var index;
-		var last_item;
+					for (j = 0; j < stashed.length; j += 1) {
+						seen.delete(stashed[j]);
+					}
 
-		// store the indexes of each item in the new world
-		for (i = start; i < b; i += 1) {
-			sources[i - start] = NEW_ITEM;
-			map_set(indexes, keys[i], i);
-		}
+					current = start;
+					prev = b;
+					i -= 1;
 
-		if (is_animated) {
-			// for all items that were in both the old and the new list,
-			// measure them and store them in `to_animate` so we can
-			// apply animations once the DOM has been updated
-			for (i = 0; i < a_items.length; i += 1) {
-				item = a_items[i];
-				if (indexes.has(item.k)) {
-					item.a?.measure();
-					to_animate.push(item);
-				}
-			}
-		}
+					matched = [];
+					stashed = [];
+				} else {
+					// more efficient to move earlier items to the back
+					seen.delete(item);
+					move(item, current ? get_first_child(current) : anchor);
 
-		// populate the `sources` array for each old item with
-		// its new index, so that we can calculate moves
-		for (i = start; i < a; i += 1) {
-			item = a_items[i];
-			index = map_get(indexes, item.k);
+					link(item.prev, item.next);
+					link(item, prev.next);
+					link(prev, item);
 
-			resume_effect(item.e);
-
-			if (index === undefined) {
-				to_destroy.push(item.e);
-			} else {
-				moved = true;
-				sources[index - start] = i;
-				b_items[index] = item;
-
-				if (is_animated) {
-					to_animate.push(item);
-				}
-			}
-		}
-
-		// if we need to move items (as opposed to just adding/removing),
-		// figure out how to do so efficiently (I would be lying if I said
-		// I fully understand this part)
-		if (moved) {
-			mark_lis(sources);
-		} else if (is_controlled && to_destroy.length === a_items.length) {
-			// We can optimize the case in which all items are replaced —
-			// destroy everything first, then append new items
-			pause_effects(to_destroy, anchor);
-			to_destroy = [];
-		}
-
-		// working from the back, insert new or moved items
-		while (b-- > start) {
-			index = sources[b - start];
-			var should_insert = index === NEW_ITEM;
-
-			if (should_insert) {
-				if (last_item !== undefined) anchor = get_first_child(last_item);
-				item = create_item(anchor, array[b], keys[b], b, render_fn, flags);
-			} else {
-				item = b_items[b];
-				if (should_update) {
-					update_item(item, array[b], b, flags);
+					prev = item;
 				}
 
-				if (moved && index !== LIS_ITEM) {
-					if (last_item !== undefined) anchor = get_first_child(last_item);
-					move(/** @type {import('#client').Dom} */ (item.e.dom), anchor);
-				}
+				continue;
 			}
 
-			last_item = b_items[b] = item;
+			matched = [];
+			stashed = [];
+
+			while (current !== null && current.k !== key) {
+				seen.add(current);
+				stashed.push(current);
+				current = current.next;
+			}
+
+			if (current === null) {
+				continue;
+			}
+
+			item = current;
 		}
+
+		matched.push(item);
+		prev = item;
+		current = item.next;
 	}
 
-	if (to_animate.length > 0) {
-		// TODO we need to briefly take any outroing elements out of the flow, so that
-		// we can figure out the eventual destination of the animating elements
-		// - https://github.com/sveltejs/svelte/pull/10798#issuecomment-2013681778
-		// - https://svelte.dev/repl/6e891305e9644a7ca7065fa95c79d2d2?version=4.2.9
+	const to_destroy = Array.from(seen);
+
+	while (current) {
+		to_destroy.push(current);
+		current = current.next;
+	}
+
+	var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
+
+	pause_effects(to_destroy, controlled_anchor, () => {
+		for (var i = 0; i < to_destroy.length; i += 1) {
+			var item = to_destroy[i];
+			items.delete(item.k);
+			link(item.prev, item.next);
+		}
+	});
+
+	if (is_animated) {
 		effect(() => {
 			untrack(() => {
 				for (item of to_animate) {
@@ -461,85 +396,6 @@ function reconcile_tracked_array(array, state, anchor, render_fn, flags, keys) {
 				}
 			});
 		});
-	}
-
-	var controlled_anchor = is_controlled && b_items.length === 0 ? anchor : null;
-
-	pause_effects(to_destroy, controlled_anchor, () => {
-		state.items = b_items;
-	});
-}
-
-/**
- * Longest Increased Subsequence algorithm
- * @param {Int32Array} a
- * @returns {void}
- */
-function mark_lis(a) {
-	var length = a.length;
-	var parent = new Int32Array(length);
-	var index = new Int32Array(length);
-	var index_length = 0;
-	var i = 0;
-
-	/** @type {number} */
-	var j;
-
-	/** @type {number} */
-	var k;
-
-	/** @type {number} */
-	var lo;
-
-	/** @type {number} */
-	var hi;
-
-	// Skip -1 values at the start of the input array `a`.
-	for (; a[i] === NEW_ITEM; ++i) {
-		/**/
-	}
-
-	index[0] = i++;
-
-	for (; i < length; ++i) {
-		k = a[i];
-
-		if (k !== NEW_ITEM) {
-			// Ignore -1 values.
-			j = index[index_length];
-
-			if (a[j] < k) {
-				parent[i] = j;
-				index[++index_length] = i;
-			} else {
-				lo = 0;
-				hi = index_length;
-
-				while (lo < hi) {
-					j = (lo + hi) >> 1;
-					if (a[index[j]] < k) {
-						lo = j + 1;
-					} else {
-						hi = j;
-					}
-				}
-
-				if (k < a[index[lo]]) {
-					if (lo > 0) {
-						parent[i] = index[lo - 1];
-					}
-					index[lo] = i;
-				}
-			}
-		}
-	}
-
-	// Mutate input array `a` and assign -2 value to all nodes that are part of LIS.
-	j = index[index_length];
-
-	while (index_length-- >= 0) {
-		a[j] = LIS_ITEM;
-		j = parent[j];
 	}
 }
 
@@ -579,6 +435,8 @@ function update_item(item, value, index, type) {
 /**
  * @template V
  * @param {Node} anchor
+ * @param {import('#client').EachItem | import('#client').EachState} prev
+ * @param {import('#client').EachItem | null} next
  * @param {V} value
  * @param {unknown} key
  * @param {number} index
@@ -586,7 +444,7 @@ function update_item(item, value, index, type) {
  * @param {number} flags
  * @returns {import('#client').EachItem}
  */
-function create_item(anchor, value, key, index, render_fn, flags) {
+function create_item(anchor, prev, next, value, key, index, render_fn, flags) {
 	var previous_each_item = current_each_item;
 
 	try {
@@ -603,8 +461,13 @@ function create_item(anchor, value, key, index, render_fn, flags) {
 			k: key,
 			a: null,
 			// @ts-expect-error
-			e: null
+			e: null,
+			prev,
+			next
 		};
+
+		prev.next = item;
+		if (next !== null) next.prev = item;
 
 		current_each_item = item;
 		item.e = branch(() => render_fn(anchor, v, i));
@@ -616,15 +479,29 @@ function create_item(anchor, value, key, index, render_fn, flags) {
 }
 
 /**
- * @param {import('#client').Dom} current
+ * @param {import('#client').EachItem} item
  * @param {Text | Element | Comment} anchor
  */
-function move(current, anchor) {
-	if (is_array(current)) {
-		for (var i = 0; i < current.length; i++) {
-			anchor.before(current[i]);
+function move(item, anchor) {
+	var dom = item.e.dom;
+
+	if (dom !== null) {
+		if (is_array(dom)) {
+			for (var i = 0; i < dom.length; i++) {
+				anchor.before(dom[i]);
+			}
+		} else {
+			anchor.before(dom);
 		}
-	} else {
-		anchor.before(current);
 	}
+}
+
+/**
+ *
+ * @param {import('#client').EachItem | import('#client').EachState} prev
+ * @param {import('#client').EachItem | null} next
+ */
+function link(prev, next) {
+	prev.next = next;
+	if (next !== null) next.prev = prev;
 }

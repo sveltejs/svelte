@@ -50,8 +50,10 @@ export type Dom = TemplateNode | TemplateNode[];
 export type EachState = {
 	/** flags */
 	flags: number;
-	/** items */
-	items: EachItem[];
+	/** a key -> item lookup */
+	items: Map<any, EachItem>;
+	/** head of the linked list of items */
+	next: EachItem | null;
 };
 
 export type EachItem = {
@@ -65,6 +67,8 @@ export type EachItem = {
 	i: number | Source<number>;
 	/** key */
 	k: unknown;
+	prev: EachItem | EachState;
+	next: EachItem | null;
 };
 
 export interface TransitionManager {

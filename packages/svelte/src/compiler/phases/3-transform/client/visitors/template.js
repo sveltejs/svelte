@@ -2315,7 +2315,7 @@ export const template_visitors = {
 							)
 						: /** @type {import('estree').Expression} */ (context.visit(node.key))
 				)
-			: b.literal(null);
+			: b.id('$.index');
 
 		if (node.index && each_node_meta.contains_group_binding) {
 			// We needed to create a unique identifier for the index above, but we want to use the
@@ -2323,35 +2323,20 @@ export const template_visitors = {
 			declarations.push(b.let(node.index, index));
 		}
 
-		let callee = '$.each_indexed';
-
-		/** @type {import('estree').Expression[]} */
-		const args = [];
-
-		if ((each_type & EACH_KEYED) !== 0) {
-			if (context.state.options.dev && key_function.type !== 'Literal') {
-				context.state.init.push(
-					b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
-				);
-			}
-
-			callee = '$.each_keyed';
-
-			args.push(
-				context.state.node,
-				b.literal(each_type),
-				each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
-				key_function,
-				b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children)))
-			);
-		} else {
-			args.push(
-				context.state.node,
-				b.literal(each_type),
-				each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
-				b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children)))
+		if (context.state.options.dev && (each_type & EACH_KEYED) !== 0) {
+			context.state.init.push(
+				b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
 			);
 		}
+
+		/** @type {import('estree').Expression[]} */
+		const args = [
+			context.state.node,
+			b.literal(each_type),
+			each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
+			key_function,
+			b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children)))
+		];
 
 		if (node.fallback) {
 			args.push(
@@ -2362,7 +2347,7 @@ export const template_visitors = {
 			);
 		}
 
-		context.state.init.push(b.stmt(b.call(callee, ...args)));
+		context.state.init.push(b.stmt(b.call('$.each', ...args)));
 	},
 	IfBlock(node, context) {
 		context.state.template.push('<!>');
