@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
-import { createServer as createViteServer, createViteRuntime } from 'vite';
+import { createServer as createViteServer } from 'vite';
 
 const PORT = process.env.PORT || '5173';
 
@@ -28,10 +28,7 @@ async function createServer() {
 
 		const template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
 		const transformed_template = await vite.transformIndexHtml(req.originalUrl, template);
-
-		const runtime = await createViteRuntime(vite, { hmr: { logger: false } });
-		const { html: appHtml, head: headHtml } =
-			await runtime.executeEntrypoint('./src/entry-server.ts');
+		const { html: appHtml, head: headHtml } = await vite.ssrLoadModule('./src/entry-server.ts');
 
 		const html = transformed_template
 			.replace(`<!--ssr-html-->`, appHtml)
