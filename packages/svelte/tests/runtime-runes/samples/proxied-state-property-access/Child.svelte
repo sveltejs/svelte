@@ -1,5 +1,5 @@
 <script>
-	const { settings } = $props();
+	import { settings } from './main.svelte';
 </script>
 
 Child: {settings.showInRgb}
