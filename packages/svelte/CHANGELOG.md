@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.99
+
+### Patch Changes
+
+- fix: use correct meta property for hmr key ([#11125](https://github.com/sveltejs/svelte/pull/11125))
+
 ## 5.0.0-next.98
 
 ### Patch Changes
