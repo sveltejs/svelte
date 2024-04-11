@@ -11,7 +11,7 @@ import { get } from '../runtime.js';
  */
 export function hmr(hot_data, component, key) {
 	var components = (hot_data.components ??= new Map());
-	let data = components.get(key);
+	var data = components.get(key);
 
 	if (data === undefined) {
 		components.set(
@@ -24,6 +24,7 @@ export function hmr(hot_data, component, key) {
 	} else {
 		set(data.source, component);
 	}
+	const component_source = data.source;
 
 	return (data.wrapper ??= /** @type {Component} */ (
 		(anchor, props) => {
@@ -33,7 +34,7 @@ export function hmr(hot_data, component, key) {
 			let effect;
 
 			block(() => {
-				const component = get(data.source);
+				const component = get(component_source);
 
 				if (effect) {
 					// @ts-ignore
