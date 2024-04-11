@@ -424,18 +424,24 @@ export function client_component(source, analysis, options) {
 
 	if (options.hmr) {
 		body.push(
-			b.if(b.id('import.meta.hot'), b.block([
-				b.const(b.id('s'), b.call('$.source', b.id(analysis.name))),
-				b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
-				b.stmt(
-					b.call(
-						'import.meta.hot.accept',
-						b.arrow([b.id('module')], b.block([
-							b.stmt(b.call('$.set', b.id('s'), b.member(b.id('module'), b.id('default'))))
-						]))
+			b.if(
+				b.id('import.meta.hot'),
+				b.block([
+					b.const(b.id('s'), b.call('$.source', b.id(analysis.name))),
+					b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
+					b.stmt(
+						b.call(
+							'import.meta.hot.accept',
+							b.arrow(
+								[b.id('module')],
+								b.block([
+									b.stmt(b.call('$.set', b.id('s'), b.member(b.id('module'), b.id('default'))))
+								])
+							)
+						)
 					)
-				)
-			]))
+				])
+			)
 		);
 	}
 
