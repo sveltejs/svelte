@@ -422,7 +422,10 @@ export function client_component(source, analysis, options) {
 		)
 	];
 
-	if (options.hmr) {
+	// In order for hmr to work correctly, we need associate each component with a unique key.
+	// This is because bundlers might put many components into a the same module (usuaully as a chunk).
+	// `import.meta.hot` will then be the same object for all components in that modules.
+	if (options.hmr && options.filename) {
 		body.push(
 			b.export_default(
 				b.conditional(
@@ -431,7 +434,7 @@ export function client_component(source, analysis, options) {
 						'$.hmr',
 						b.member(b.import_meta_hot(), b.id('data')),
 						b.id(analysis.name),
-						b.member(b.member(b.id('import'), b.id('meta')), b.id('url'))
+						b.literal(options.filename)
 					),
 					b.id(analysis.name)
 				)
