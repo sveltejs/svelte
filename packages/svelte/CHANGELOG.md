@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.100
+
+### Patch Changes
+
+- fix: further improvements to hmr component key generation ([#11129](https://github.com/sveltejs/svelte/pull/11129))
+
 ## 5.0.0-next.99
 
 ### Patch Changes
