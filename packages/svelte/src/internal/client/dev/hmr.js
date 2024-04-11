@@ -1,5 +1,5 @@
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
-import { set, source as create_source } from '../reactivity/sources.js';
+import { set, source } from '../reactivity/sources.js';
 import { set_should_intro } from '../render.js';
 import { get } from '../runtime.js';
 
@@ -17,7 +17,7 @@ export function hmr(hot_data, component, key) {
 		components.set(
 			key,
 			(data = {
-				source: create_source(component),
+				source: source(component),
 				wrapper: null
 			})
 		);
