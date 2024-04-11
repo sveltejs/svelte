@@ -47,3 +47,15 @@ export function map_get(map, key) {
 export function is_function(thing) {
 	return typeof thing === 'function';
 }
+
+/** @param {any} object */
+export function is_exotic_object(object) {
+	const proto = Object.getPrototypeOf(object);
+	return (
+		proto !== Object.prototype &&
+		proto !== Array.prototype &&
+		proto !== Map.prototype &&
+		proto !== Set.prototype &&
+		proto !== Date.prototype
+	);
+}

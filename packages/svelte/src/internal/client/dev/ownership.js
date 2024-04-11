@@ -1,7 +1,9 @@
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
 import { STATE_SYMBOL } from '../constants.js';
+import { unstate } from '../proxy.js';
 import { untrack } from '../runtime.js';
+import { get_descriptors } from '../utils.js';
 
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
 const boundaries = {};
@@ -98,20 +100,56 @@ export function mark_module_end() {
  */
 export function add_owner(object, owner) {
 	untrack(() => {
-		add_owner_to_object(object, owner);
+		var previous_owner = current_owner;
+		current_owner = owner;
+		add_owner_to_object(object);
+		current_owner = previous_owner;
 	});
 }
 
+/** @type {any} */
+export var current_owner = null;
+
 /**
  * @param {any} object
- * @param {Function} owner
+ * @param {Set<any>} [seen]
  */
-function add_owner_to_object(object, owner) {
-	if (object?.[STATE_SYMBOL]?.o && !object[STATE_SYMBOL].o.has(owner)) {
-		object[STATE_SYMBOL].o.add(owner);
+function add_owner_to_object(object, seen = new Set()) {
+	if (seen.has(object) || typeof object !== 'object' || object === null) {
+		return;
+	}
 
-		for (const key in object) {
-			add_owner_to_object(object[key], owner);
+	if (object?.[STATE_SYMBOL]?.o) {
+		object[STATE_SYMBOL].o.add(current_owner);
+	} else {
+		seen.add(object);
+
+		for (let key in object) {
+			try {
+				add_owner_to_object(object[key], seen);
+			} catch (e) {
+				// continue
+			}
+		}
+		const proto = Object.getPrototypeOf(object);
+		if (
+			proto !== Object.prototype &&
+			proto !== Array.prototype &&
+			proto !== Map.prototype &&
+			proto !== Set.prototype &&
+			proto !== Date.prototype
+		) {
+			const descriptors = get_descriptors(proto);
+			for (let key in descriptors) {
+				const get = descriptors[key].get;
+				if (get) {
+					try {
+						get.call(object);
+					} catch (e) {
+						// continue
+					}
+				}
+			}
 		}
 	}
 }

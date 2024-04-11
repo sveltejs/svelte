@@ -25,7 +25,7 @@ import {
 	ROOT_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
-import { add_owner } from './dev/ownership.js';
+import { add_owner, current_owner } from './dev/ownership.js';
 import { mutate, set, source } from './reactivity/sources.js';
 import { update_derived } from './reactivity/deriveds.js';
 
@@ -756,6 +756,10 @@ export function get(signal) {
 		} else {
 			update_derived(/** @type {import('./types.js').Derived} **/ (signal), false);
 		}
+	}
+
+	if (current_owner !== null && signal.v?.[STATE_SYMBOL]?.o) {
+		signal.v[STATE_SYMBOL].o.add(current_owner);
 	}
 
 	return signal.v;
