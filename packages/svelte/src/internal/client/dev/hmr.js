@@ -5,7 +5,7 @@ import { get } from '../runtime.js';
 
 /**
  * @template {(anchor: Comment, props: any) => any} Component
- * @param {{ components: Map<string, { source: import("#client").Source<Component>; wrapper: null | Component; }>}} hot_data
+ * @param {{ components: Map<string, { source: import("#client").Source<Component>; wrapper: null | Component; }> }} hot_data
  * @param {string} key
  * @param {Component} component
  */
