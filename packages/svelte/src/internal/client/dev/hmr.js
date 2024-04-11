@@ -5,15 +5,26 @@ import { get } from '../runtime.js';
 
 /**
  * @template {(anchor: Comment, props: any) => any} Component
- * @param {{ source: import("#client").Source<Component>; wrapper: Component; }} data
+ * @param {{ components: Map<string, { source: import("#client").Source<Component>; wrapper: null | Component; }> }} hot_data
+ * @param {string} key
  * @param {Component} component
  */
-export function hmr(data, component) {
-	if (data.source) {
-		set(data.source, component);
+export function hmr(hot_data, component, key) {
+	var components = (hot_data.components ??= new Map());
+	var data = components.get(key);
+
+	if (data === undefined) {
+		components.set(
+			key,
+			(data = {
+				source: source(component),
+				wrapper: null
+			})
+		);
 	} else {
-		data.source = source(component);
+		set(data.source, component);
 	}
+	const component_source = data.source;
 
 	return (data.wrapper ??= /** @type {Component} */ (
 		(anchor, props) => {
@@ -23,7 +34,7 @@ export function hmr(data, component) {
 			let effect;
 
 			block(() => {
-				const component = get(data.source);
+				const component = get(component_source);
 
 				if (effect) {
 					// @ts-ignore
