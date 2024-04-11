@@ -431,7 +431,7 @@ export function client_component(source, analysis, options) {
 						'$.hmr',
 						b.member(b.import_meta_hot(), b.id('data')),
 						b.id(analysis.name),
-						b.member(b.member(b.literal('import'), b.literal('meta')), b.literal('url'))
+						b.member(b.member(b.id('import'), b.id('meta')), b.id('url'))
 					),
 					b.id(analysis.name)
 				)
