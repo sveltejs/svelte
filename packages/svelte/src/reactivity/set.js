@@ -47,10 +47,7 @@ export class ReactiveSet extends Set {
 		var proto = ReactiveSet.prototype;
 		var set_proto = Set.prototype;
 
-		/** @type {string} */
-		var method;
-
-		for (method of read_methods) {
+		for (const method of read_methods) {
 			// @ts-ignore
 			proto[method] = function (...v) {
 				get(this.#version);
@@ -59,7 +56,7 @@ export class ReactiveSet extends Set {
 			};
 		}
 
-		for (method of set_like_methods) {
+		for (const method of set_like_methods) {
 			// @ts-ignore
 			proto[method] = function (...v) {
 				get(this.#version);
