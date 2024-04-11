@@ -1,55 +1,38 @@
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
-import { set, source } from '../reactivity/sources.js';
 import { set_should_intro } from '../render.js';
 import { get } from '../runtime.js';
 
 /**
  * @template {(anchor: Comment, props: any) => any} Component
- * @param {{ components: Map<string, { source: import("#client").Source<Component>; wrapper: null | Component; }> }} hot_data
- * @param {string} key
- * @param {Component} component
+ * @param {import("#client").Source<Component>} source
  */
-export function hmr(hot_data, component, key) {
-	var components = (hot_data.components ??= new Map());
-	var data = components.get(key);
+export function hmr(source) {
+	/**
+	 * @param {Comment} anchor
+	 * @param {any} props
+	 */
+	return (anchor, props) => {
+		let instance = {};
 
-	if (data === undefined) {
-		components.set(
-			key,
-			(data = {
-				source: source(component),
-				wrapper: null
-			})
-		);
-	} else {
-		set(data.source, component);
-	}
-	const component_source = data.source;
+		/** @type {import("#client").Effect} */
+		let effect;
 
-	return (data.wrapper ??= /** @type {Component} */ (
-		(anchor, props) => {
-			let instance = {};
+		block(() => {
+			const component = get(source);
 
-			/** @type {import("#client").Effect} */
-			let effect;
+			if (effect) {
+				// @ts-ignore
+				for (var k in instance) delete instance[k];
+				destroy_effect(effect);
+			}
 
-			block(() => {
-				const component = get(component_source);
-
-				if (effect) {
-					// @ts-ignore
-					for (var k in instance) delete instance[k];
-					destroy_effect(effect);
-				}
-
-				effect = branch(() => {
-					set_should_intro(false);
-					Object.assign(instance, component(anchor, props));
-					set_should_intro(true);
-				});
+			effect = branch(() => {
+				set_should_intro(false);
+				Object.assign(instance, component(anchor, props));
+				set_should_intro(true);
 			});
+		});
 
-			return instance;
-		}
-	));
+		return instance;
+	};
 }
