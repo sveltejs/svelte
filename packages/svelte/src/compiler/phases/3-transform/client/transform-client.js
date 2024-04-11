@@ -427,7 +427,12 @@ export function client_component(source, analysis, options) {
 			b.export_default(
 				b.conditional(
 					b.import_meta_hot(),
-					b.call('$.hmr', b.member(b.import_meta_hot(), b.id('data')), b.id(analysis.name)),
+					b.call(
+						'$.hmr',
+						b.member(b.import_meta_hot(), b.id('data')),
+						b.id(analysis.name),
+						b.member(b.member(b.literal('import'), b.literal('meta')), b.literal('url'))
+					),
 					b.id(analysis.name)
 				)
 			),

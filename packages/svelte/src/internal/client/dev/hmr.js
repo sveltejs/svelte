@@ -1,18 +1,28 @@
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
-import { set, source } from '../reactivity/sources.js';
+import { set, source as create_source } from '../reactivity/sources.js';
 import { set_should_intro } from '../render.js';
 import { get } from '../runtime.js';
 
 /**
  * @template {(anchor: Comment, props: any) => any} Component
- * @param {{ source: import("#client").Source<Component>; wrapper: Component; }} data
+ * @param {{ components: Map<string, { source: import("#client").Source<Component>; wrapper: null | Component; }>}} hot_data
+ * @param {string} key
  * @param {Component} component
  */
-export function hmr(data, component) {
-	if (data.source) {
-		set(data.source, component);
+export function hmr(hot_data, component, key) {
+	var components = (hot_data.components ??= new Map());
+	let data = components.get(key);
+
+	if (data === undefined) {
+		components.set(
+			key,
+			(data = {
+				source: create_source(component),
+				wrapper: null
+			})
+		);
 	} else {
-		data.source = source(component);
+		set(data.source, component);
 	}
 
 	return (data.wrapper ??= /** @type {Component} */ (
