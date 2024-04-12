@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.102
+
+### Patch Changes
+
+- fix: generate correct types for reactive Map/Set/Date ([#11153](https://github.com/sveltejs/svelte/pull/11153))
+
 ## 5.0.0-next.101
 
 ### Patch Changes
