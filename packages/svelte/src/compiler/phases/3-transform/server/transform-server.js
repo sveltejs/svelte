@@ -853,9 +853,7 @@ function serialize_attribute_value(
 	/** @type {import('estree').Expression[]} */
 	const expressions = [];
 
-	if (attribute_value[0].type !== 'Text') {
-		quasis.push(b.quasi('', false));
-	}
+	quasis.push(b.quasi('', false));
 
 	let i = 0;
 	for (const node of attribute_value) {
@@ -866,7 +864,8 @@ function serialize_attribute_value(
 				// don't trim, space could be important to separate from expression tag
 				data = data.replace(regex_whitespaces_strict, ' ');
 			}
-			quasis.push(b.quasi(data, i === attribute_value.length));
+			const last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
+			last.value.raw += data;
 		} else {
 			expressions.push(
 				b.call(
@@ -874,9 +873,7 @@ function serialize_attribute_value(
 					/** @type {import('estree').Expression} */ (context.visit(node.expression))
 				)
 			);
-			if (i === attribute_value.length || attribute_value[i]?.type !== 'Text') {
-				quasis.push(b.quasi('', true));
-			}
+			quasis.push(b.quasi('', i + 1 === attribute_value.length));
 		}
 	}
 
