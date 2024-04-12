@@ -1750,6 +1750,8 @@ declare module 'svelte/compiler' {
 		style?: Preprocessor;
 		script?: Preprocessor;
 	}
+
+	export { walk };
 }
 
 declare module 'svelte/easing' {
@@ -1965,12 +1967,12 @@ declare module 'svelte/motion' {
 }
 
 declare module 'svelte/reactivity' {
-	export class Date extends Date {
+	class ReactiveDate extends Date {
 		
 		constructor(...values: any[]);
 		#private;
 	}
-	export class Set<T> extends Set<any> {
+	class ReactiveSet<T> extends Set<any> {
 		
 		constructor(value?: Iterable<T> | null | undefined);
 		
@@ -1985,7 +1987,7 @@ declare module 'svelte/reactivity' {
 		[Symbol.iterator](): IterableIterator<T>;
 		#private;
 	}
-	export class Map<K, V> extends Map<any, any> {
+	class ReactiveMap<K, V> extends Map<any, any> {
 		
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
 		
@@ -2004,6 +2006,8 @@ declare module 'svelte/reactivity' {
 		[Symbol.iterator](): IterableIterator<[K, V]>;
 		#private;
 	}
+
+	export { ReactiveDate as Date, ReactiveSet as Set, ReactiveMap as Map };
 }
 
 declare module 'svelte/server' {
