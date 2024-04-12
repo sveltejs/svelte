@@ -1,5 +1,11 @@
 # svelte
 
+## 4.2.14
+
+### Patch Changes
+
+- fix parsing camelcase container query name ([#11131](https://github.com/sveltejs/svelte/pull/11131))
+
 ## 4.2.13
 
 ### Patch Changes
