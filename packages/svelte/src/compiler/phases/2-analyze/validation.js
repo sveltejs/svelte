@@ -98,7 +98,12 @@ function validate_element(node, context) {
 			if (context.state.analysis.runes && is_expression) {
 				const expression = attribute.value[0].expression;
 				if (expression.type === 'SequenceExpression') {
-					error(expression, 'invalid-sequence-expression');
+					let i = /** @type {number} */ (expression.start);
+					while (--i > 0) {
+						const char = context.state.analysis.source[i];
+						if (char === '(') break; // parenthesized sequence expressions are ok
+						if (char === '{') error(expression, 'invalid-sequence-expression');
+					}
 				}
 			}
 
