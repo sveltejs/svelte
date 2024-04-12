@@ -2,7 +2,6 @@
 
 import { STATE_SYMBOL } from '../constants.js';
 import { untrack } from '../runtime.js';
-import { get_descriptors } from '../utils.js';
 
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
 const boundaries = {};
@@ -92,107 +91,49 @@ export function mark_module_end() {
 	}
 }
 
-let add_owner_visited = new Set();
-
 /**
  *
  * @param {any} object
  * @param {any} owner
  */
 export function add_owner(object, owner) {
-	// Needed because ownership addition can invoke getters on a proxy,
-	// calling add_owner anew, so just keeping the set as part of
-	// add_owner_to_object would not be enough.
-	const prev = add_owner_visited;
-	try {
-		add_owner_visited = new Set(add_owner_visited);
-		untrack(() => {
-			add_owner_to_object(object, owner, add_owner_visited);
-		});
-	} finally {
-		add_owner_visited = prev;
-	}
+	untrack(() => {
+		add_owner_to_object(object, owner);
+	});
 }
 
 /**
  * @param {any} object
  * @param {Function} owner
- * @param {Set<any>} visited
  */
-function add_owner_to_object(object, owner, visited) {
-	if (visited.has(object)) return;
-	visited.add(object);
-
+function add_owner_to_object(object, owner) {
 	if (object?.[STATE_SYMBOL]?.o && !object[STATE_SYMBOL].o.has(owner)) {
 		object[STATE_SYMBOL].o.add(owner);
-	}
-	// Not inside previous if-block; there could be normal objects in-between
-	traverse_for_owners(object, (nested) => add_owner_to_object(nested, owner, visited));
-}
 
-let strip_owner_visited = new Set();
+		for (const key in object) {
+			add_owner_to_object(object[key], owner);
+		}
+	}
+}
 
 /**
  * @param {any} object
  */
 export function strip_owner(object) {
-	// Needed because ownership stripping can invoke getters on a proxy,
-	// calling strip_owner anew, so just keeping the set as part of
-	// strip_owner_from_object would not be enough.
-	const prev = strip_owner_visited;
-	try {
-		untrack(() => {
-			strip_owner_from_object(object, strip_owner_visited);
-		});
-	} finally {
-		strip_owner_visited = prev;
-	}
+	untrack(() => {
+		strip_owner_from_object(object);
+	});
 }
 
 /**
  * @param {any} object
- * @param {Set<any>} visited
  */
-function strip_owner_from_object(object, visited) {
-	if (visited.has(object)) return;
-	visited.add(object);
-
+function strip_owner_from_object(object) {
 	if (object?.[STATE_SYMBOL]?.o) {
 		object[STATE_SYMBOL].o = null;
-	}
-	// Not inside previous if-block; there could be normal objects in-between
-	traverse_for_owners(object, (nested) => strip_owner_from_object(nested, visited));
-}
 
-/**
- * @param {any} object
- * @param {(obj: any) => void} cb
- */
-function traverse_for_owners(object, cb) {
-	if (typeof object === 'object' && object !== null && !(object instanceof EventTarget)) {
 		for (const key in object) {
-			cb(object[key]);
-		}
-		// deal with state on classes
-		const proto = Object.getPrototypeOf(object);
-		if (
-			proto !== Object.prototype &&
-			proto !== Array.prototype &&
-			proto !== Map.prototype &&
-			proto !== Set.prototype &&
-			proto !== Date.prototype
-		) {
-			const descriptors = get_descriptors(proto);
-			for (let key in descriptors) {
-				const get = descriptors[key].get;
-				if (get) {
-					try {
-						cb(object[key]);
-					} catch (e) {
-						// continue
-					}
-				}
-			}
+			strip_owner(object[key]);
 		}
 	}
 }
