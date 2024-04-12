@@ -19,6 +19,9 @@ export function hmr(source) {
 
 		block(() => {
 			const component = get(source);
+			if (!component) {
+				debugger
+			}
 
 			if (effect) {
 				// @ts-ignore
