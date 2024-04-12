@@ -6,12 +6,12 @@ export default test({
 			code: 'css-unused-selector',
 			message: 'Unused CSS selector ":host > span"',
 			start: {
-				character: 147,
+				character: 145,
 				column: 1,
 				line: 18
 			},
 			end: {
-				character: 159,
+				character: 157,
 				column: 13,
 				line: 18
 			}

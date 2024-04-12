@@ -1396,7 +1396,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 
 			state.template.push(' ');
 
-			const [contains_call_expression, value] = serialize_template_literal(sequence, visit);
+			const [contains_call_expression, value] = serialize_template_literal(sequence, visit, state);
 
 			const update = b.stmt(b.call('$.set_text', text_id, value));
 
@@ -1511,25 +1511,39 @@ function serialize_attribute_value(attribute_value, context) {
 		}
 	}
 
-	return serialize_template_literal(attribute_value, context.visit);
+	return serialize_template_literal(attribute_value, context.visit, context.state);
 }
 
 /**
  * @param {Array<import('#compiler').Text | import('#compiler').ExpressionTag>} values
  * @param {(node: import('#compiler').SvelteNode) => any} visit
+ * @param {import("../types.js").ComponentClientTransformState} state
  * @returns {[boolean, import('estree').TemplateLiteral]}
  */
-function serialize_template_literal(values, visit) {
+function serialize_template_literal(values, visit, state) {
 	/** @type {import('estree').TemplateElement[]} */
 	const quasis = [];
 
 	/** @type {import('estree').Expression[]} */
 	const expressions = [];
 	let contains_call_expression = false;
+	let contains_multiple_call_expression = false;
 	quasis.push(b.quasi(''));
 
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
+
+		if (node.type === 'ExpressionTag' && node.metadata.contains_call_expression) {
+			if (contains_call_expression) {
+				contains_multiple_call_expression = true;
+			}
+			contains_call_expression = true;
+		}
+	}
+
+	for (let i = 0; i < values.length; i++) {
+		const node = values[i];
+
 		if (node.type === 'Text') {
 			const last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
 			last.value.raw += sanitize_template_string(node.data);
@@ -1539,11 +1553,23 @@ function serialize_template_literal(values, visit) {
 				last.value.raw += sanitize_template_string(node.expression.value + '');
 			}
 		} else {
-			if (node.type === 'ExpressionTag' && node.metadata.contains_call_expression) {
-				contains_call_expression = true;
-			}
+			if (contains_multiple_call_expression) {
+				const id = b.id(state.scope.generate('stringified_text'));
 
-			expressions.push(b.call('$.stringify', visit(node.expression)));
+				state.init.push(
+					b.const(
+						id,
+						b.call(
+							// In runes mode, we want things to be fine-grained - but not in legacy mode
+							state.analysis.runes ? '$.derived' : '$.derived_safe_equal',
+							b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression)))
+						)
+					)
+				);
+				expressions.push(b.call('$.get', id));
+			} else {
+				expressions.push(b.call('$.stringify', visit(node.expression)));
+			}
 			quasis.push(b.quasi('', i + 1 === values.length));
 		}
 	}
@@ -1586,7 +1612,7 @@ export const template_visitors = {
 					declaration.id,
 					b.call(
 						// In runes mode, we want things to be fine-grained - but not in legacy mode
-						state.options.runes ? '$.derived' : '$.derived_safe_equal',
+						state.analysis.runes ? '$.derived' : '$.derived_safe_equal',
 						b.thunk(/** @type {import('estree').Expression} */ (visit(declaration.init)))
 					)
 				)
@@ -1623,7 +1649,7 @@ export const template_visitors = {
 
 			state.init.push(
 				// In runes mode, we want things to be fine-grained - but not in legacy mode
-				b.const(tmp, b.call(state.options.runes ? '$.derived' : '$.derived_safe_equal', fn))
+				b.const(tmp, b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', fn))
 			);
 
 			// we need to eagerly evaluate the expression in order to hit any
@@ -2289,7 +2315,7 @@ export const template_visitors = {
 							)
 						: /** @type {import('estree').Expression} */ (context.visit(node.key))
 				)
-			: b.literal(null);
+			: b.id('$.index');
 
 		if (node.index && each_node_meta.contains_group_binding) {
 			// We needed to create a unique identifier for the index above, but we want to use the
@@ -2297,35 +2323,20 @@ export const template_visitors = {
 			declarations.push(b.let(node.index, index));
 		}
 
-		let callee = '$.each_indexed';
-
-		/** @type {import('estree').Expression[]} */
-		const args = [];
-
-		if ((each_type & EACH_KEYED) !== 0) {
-			if (context.state.options.dev && key_function.type !== 'Literal') {
-				context.state.init.push(
-					b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
-				);
-			}
-
-			callee = '$.each_keyed';
-
-			args.push(
-				context.state.node,
-				b.literal(each_type),
-				each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
-				key_function,
-				b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children)))
-			);
-		} else {
-			args.push(
-				context.state.node,
-				b.literal(each_type),
-				each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
-				b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children)))
+		if (context.state.options.dev && (each_type & EACH_KEYED) !== 0) {
+			context.state.init.push(
+				b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
 			);
 		}
+
+		/** @type {import('estree').Expression[]} */
+		const args = [
+			context.state.node,
+			b.literal(each_type),
+			each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
+			key_function,
+			b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children)))
+		];
 
 		if (node.fallback) {
 			args.push(
@@ -2336,7 +2347,7 @@ export const template_visitors = {
 			);
 		}
 
-		context.state.init.push(b.stmt(b.call(callee, ...args)));
+		context.state.init.push(b.stmt(b.call('$.each', ...args)));
 	},
 	IfBlock(node, context) {
 		context.state.template.push('<!>');
@@ -2972,7 +2983,7 @@ export const template_visitors = {
 					b.assignment(
 						'=',
 						b.member(b.id('$.document'), b.id('title')),
-						serialize_template_literal(/** @type {any} */ (node.fragment.nodes), visit)[1]
+						serialize_template_literal(/** @type {any} */ (node.fragment.nodes), visit, state)[1]
 					)
 				)
 			);

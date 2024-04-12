@@ -1,5 +1,75 @@
 # svelte
 
+## 5.0.0-next.101
+
+### Patch Changes
+
+- fix missing classes after dynamic expressions in class attribute ([#11134](https://github.com/sveltejs/svelte/pull/11134))
+
+- feat: simplify HMR implementation ([#11132](https://github.com/sveltejs/svelte/pull/11132))
+
+- fix: add validation around disallowed sequence expressions to element attributes ([#11149](https://github.com/sveltejs/svelte/pull/11149))
+
+## 5.0.0-next.100
+
+### Patch Changes
+
+- fix: further improvements to hmr component key generation ([#11129](https://github.com/sveltejs/svelte/pull/11129))
+
+## 5.0.0-next.99
+
+### Patch Changes
+
+- fix: use correct meta property for hmr key ([#11125](https://github.com/sveltejs/svelte/pull/11125))
+
+## 5.0.0-next.98
+
+### Patch Changes
+
+- fix: use keys for hmr modules ([#11123](https://github.com/sveltejs/svelte/pull/11123))
+
+- fix: addresses reactive Set bug in certain engines ([#11120](https://github.com/sveltejs/svelte/pull/11120))
+
+## 5.0.0-next.97
+
+### Patch Changes
+
+- fix: loosen proxy signal creation heuristics ([#11109](https://github.com/sveltejs/svelte/pull/11109))
+
+- fix: ensure top level snippets are defined when binding to component prop ([#11104](https://github.com/sveltejs/svelte/pull/11104))
+
+- feat: hot module reloading support for Svelte 5 ([#11106](https://github.com/sveltejs/svelte/pull/11106))
+
+## 5.0.0-next.96
+
+### Patch Changes
+
+- feat: introduce `$host` rune, deprecate `createEventDispatcher` ([#11059](https://github.com/sveltejs/svelte/pull/11059))
+
+- fix: execute sole static script tag ([#11095](https://github.com/sveltejs/svelte/pull/11095))
+
+- fix: make static `element` property available for the SvelteComponent type ([#11079](https://github.com/sveltejs/svelte/pull/11079))
+
+- fix: improve internal proxied state signal heuristic ([#11102](https://github.com/sveltejs/svelte/pull/11102))
+
+- fix: keep sibling selectors when dealing with slots/render tags/`svelte:element` tags ([#11096](https://github.com/sveltejs/svelte/pull/11096))
+
+- fix: ensure deep mutation ownership widening ([#11094](https://github.com/sveltejs/svelte/pull/11094))
+
+- fix: improve compiled output of multiple call expression in single text node ([#11097](https://github.com/sveltejs/svelte/pull/11097))
+
+- fix: improve hydration of svelte head blocks ([#11099](https://github.com/sveltejs/svelte/pull/11099))
+
+## 5.0.0-next.95
+
+### Patch Changes
+
+- breaking: robustify interop of exports and props in runes mode ([#11064](https://github.com/sveltejs/svelte/pull/11064))
+
+- fix: improve handled of unowned derived signals ([#11077](https://github.com/sveltejs/svelte/pull/11077))
+
+- fix: bundle CSS types ([#11067](https://github.com/sveltejs/svelte/pull/11067))
+
 ## 5.0.0-next.94
 
 ### Patch Changes

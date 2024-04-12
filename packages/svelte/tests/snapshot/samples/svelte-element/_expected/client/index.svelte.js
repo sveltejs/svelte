@@ -3,7 +3,7 @@
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 
-export default function Svelte_element($$anchor, $$props) {
+function Svelte_element($$anchor, $$props) {
 	$.push($$props, true);
 
 	let tag = $.prop($$props, "tag", 3, 'hr');
@@ -14,3 +14,5 @@ export default function Svelte_element($$anchor, $$props) {
 	$.append($$anchor, fragment);
 	$.pop();
 }
+
+export default Svelte_element;

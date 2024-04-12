@@ -1,9 +1,10 @@
+export { hmr } from './dev/hmr.js';
 export { add_owner, mark_module_start, mark_module_end } from './dev/ownership.js';
 export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
 export { key_block as key } from './dom/blocks/key.js';
 export { css_props } from './dom/blocks/css-props.js';
-export { each_keyed, each_indexed } from './dom/blocks/each.js';
+export { index, each } from './dom/blocks/each.js';
 export { html } from './dom/blocks/html.js';
 export { snippet } from './dom/blocks/snippet.js';
 export { component } from './dom/blocks/svelte-component.js';

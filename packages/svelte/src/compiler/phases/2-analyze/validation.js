@@ -98,7 +98,12 @@ function validate_element(node, context) {
 			if (context.state.analysis.runes && is_expression) {
 				const expression = attribute.value[0].expression;
 				if (expression.type === 'SequenceExpression') {
-					error(expression, 'invalid-sequence-expression');
+					let i = /** @type {number} */ (expression.start);
+					while (--i > 0) {
+						const char = context.state.analysis.source[i];
+						if (char === '(') break; // parenthesized sequence expressions are ok
+						if (char === '{') error(expression, 'invalid-sequence-expression');
+					}
 				}
 			}
 
@@ -896,6 +901,9 @@ export const validation_runes_js = {
 		}
 	},
 	CallExpression(node, { state, path }) {
+		if (get_rune(node, state.scope) === '$host') {
+			error(node, 'invalid-host-location');
+		}
 		validate_call_expression(node, state.scope, path);
 	},
 	VariableDeclarator(node, { state }) {
@@ -1063,9 +1071,17 @@ export const validation_runes = merge(validation, a11y_validators, {
 		}
 	},
 	CallExpression(node, { state, path }) {
-		if (get_rune(node, state.scope) === '$bindable' && node.arguments.length > 1) {
+		const rune = get_rune(node, state.scope);
+		if (rune === '$bindable' && node.arguments.length > 1) {
 			error(node, 'invalid-rune-args-length', '$bindable', [0, 1]);
+		} else if (rune === '$host') {
+			if (node.arguments.length > 0) {
+				error(node, 'invalid-rune-args-length', '$host', [0]);
+			} else if (state.ast_type === 'module' || !state.analysis.custom_element) {
+				error(node, 'invalid-host-location');
+			}
 		}
+
 		validate_call_expression(node, state.scope, path);
 	},
 	EachBlock(node, { next, state }) {

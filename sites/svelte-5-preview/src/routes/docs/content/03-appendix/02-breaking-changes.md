@@ -117,6 +117,18 @@ Svelte now use Mutation Observers instead of IFrames to measure dimensions for `
 
 Content inside component tags becomes a [snippet prop](/docs/snippets) called `children`. You cannot have a separate prop by that name.
 
+## Breaking changes in runes mode
+
+Some breaking changes only apply once your component is in runes mode.
+
+### Bindings to component exports don't show up in rest props
+
+In runes mode, bindings to component exports don't show up in rest props. For example, `rest` in `let { foo, bar, ...rest } = $props();` would not contain `baz` if `baz` was defined as `export const baz = ...;` inside the component. In Svelte 4 syntax, the equivalent to `rest` would be `$$restProps`, which contains these component exports.
+
+### Bindings need to be explicitly defined using `$bindable()`
+
+In Svelte 4 syntax, every property (declared via `export let`) is bindable, meaning you can `bind:` to it. In runes mode, properties are not bindable by default: you need to denote bindable props with the [`$bindable`](/docs/runes#$bindable) rune.
+
 ## Other breaking changes
 
 ### Stricter `@const` assignment validation
@@ -183,3 +195,7 @@ In Svelte 4, `null` and `undefined` were printed as the corresponding string. In
 ### Bindings now react to form resets
 
 Previously, bindings did not take into account `reset` event of forms, and therefore values could get out of sync with the DOM. Svelte 5 fixes this by placing a `reset` listener on the document and invoking bindings where necessary.
+
+### `walk` not longer exported
+
+`svelte/compiler` reexported `walk` from `estree-walker` for convenience. This is no longer true in Svelte 5, import it directly from that package instead in case you need it.

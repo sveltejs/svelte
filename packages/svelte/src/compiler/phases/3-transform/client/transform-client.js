@@ -255,8 +255,7 @@ export function client_component(source, analysis, options) {
 	);
 
 	if (analysis.runes && options.dev) {
-		/** @type {import('estree').Literal[]} */
-		const bindable = [];
+		const bindable = analysis.exports.map(({ name, alias }) => b.literal(alias ?? name));
 		for (const [name, binding] of properties) {
 			if (binding.kind === 'bindable_prop') {
 				bindable.push(b.literal(binding.prop_alias ?? name));
@@ -382,7 +381,6 @@ export function client_component(source, analysis, options) {
 	);
 
 	if (analysis.uses_rest_props) {
-		/** @type {string[]} */
 		const named_props = analysis.exports.map(({ name, alias }) => alias ?? name);
 		for (const [name, binding] of analysis.instance.scope.declarations) {
 			if (binding.kind === 'bindable_prop') named_props.push(binding.prop_alias ?? name);
@@ -401,15 +399,12 @@ export function client_component(source, analysis, options) {
 	}
 
 	if (analysis.uses_props || analysis.uses_rest_props) {
+		const to_remove = [b.literal('children'), b.literal('$$slots'), b.literal('$$events')];
+		if (analysis.custom_element) {
+			to_remove.push(b.literal('$$host'));
+		}
 		component_block.body.unshift(
-			b.const(
-				'$$sanitized_props',
-				b.call(
-					'$.rest_props',
-					b.id('$$props'),
-					b.array([b.literal('children'), b.literal('$$slots'), b.literal('$$events')])
-				)
-			)
+			b.const('$$sanitized_props', b.call('$.rest_props', b.id('$$props'), b.array(to_remove)))
 		);
 	}
 
@@ -420,14 +415,37 @@ export function client_component(source, analysis, options) {
 	const body = [
 		...state.hoisted,
 		...module.body,
-		b.export_default(
-			b.function_declaration(
-				b.id(analysis.name),
-				[b.id('$$anchor'), b.id('$$props')],
-				component_block
-			)
+		b.function_declaration(
+			b.id(analysis.name),
+			[b.id('$$anchor'), b.id('$$props')],
+			component_block
 		)
 	];
+
+	if (options.hmr) {
+		body.push(
+			b.if(
+				b.id('import.meta.hot'),
+				b.block([
+					b.const(b.id('s'), b.call('$.source', b.id(analysis.name))),
+					b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
+					b.stmt(
+						b.call(
+							'import.meta.hot.accept',
+							b.arrow(
+								[b.id('module')],
+								b.block([
+									b.stmt(b.call('$.set', b.id('s'), b.member(b.id('module'), b.id('default'))))
+								])
+							)
+						)
+					)
+				])
+			)
+		);
+	}
+
+	body.push(b.export_default(b.id(analysis.name)));
 
 	if (options.dev) {
 		if (options.filename) {

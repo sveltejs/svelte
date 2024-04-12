@@ -140,14 +140,21 @@
 						// can get deeply read and tracked by accident when using the console. We can avoid this by
 						// ensuring we untrack the main console methods.
 
+						const original = {};
+
 						for (const method of console_methods) {
-							const original = console[method];
+							original[method] = console[method];
 							console[method] = function (...v) {
-								return untrack(() => original.apply(this, v));
+								return untrack(() => original[method].apply(this, v));
 							}
 						}
 						const component = mount(App, { target: document.body });
-						window.__unmount_previous = () => unmount(component);
+						window.__unmount_previous = () => {
+							for (const method of console_methods) {
+								console[method] = original[method];
+							}
+							unmount(component);
+						}
 					}
 					//# sourceURL=playground:output
 				`);

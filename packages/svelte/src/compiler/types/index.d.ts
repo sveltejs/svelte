@@ -10,7 +10,7 @@ import type { Location } from 'locate-character';
 import type { SourceMap } from 'magic-string';
 import type { Context } from 'zimmerframe';
 import type { Scope } from '../phases/scope.js';
-import * as Css from './css.js';
+import type { Css } from './css.js';
 import type { EachBlock, Namespace, SvelteNode, SvelteOptions } from './template.js';
 
 /** The return value of `compile` from `svelte/compiler` */
@@ -178,6 +178,12 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * @default null
 	 */
 	cssOutputFilename?: string;
+	/**
+	 * If `true`, compiles components with hot reloading support.
+	 *
+	 * @default false
+	 */
+	hmr?: boolean;
 }
 
 export interface ModuleCompileOptions {
@@ -225,6 +231,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		legacy: Required<Required<CompileOptions>['legacy']>;
 		runes: CompileOptions['runes'];
 		customElementOptions: SvelteOptions['customElement'];
+		hmr: CompileOptions['hmr'];
 	};
 
 export type DeclarationKind =

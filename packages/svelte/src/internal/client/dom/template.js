@@ -3,6 +3,7 @@ import { clone_node, empty } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
+import { effect } from '../reactivity/effects.js';
 
 /**
  * @param {string} content
@@ -120,14 +121,29 @@ export function svg_template_with_script(content, flags) {
  * @param {Element | DocumentFragment} node
  */
 function run_scripts(node) {
-	for (const script of node.querySelectorAll('script')) {
+	// scripts were SSR'd, in which case they will run
+	if (hydrating) return;
+
+	const scripts =
+		/** @type {HTMLElement} */ (node).tagName === 'SCRIPT'
+			? [/** @type {HTMLScriptElement} */ (node)]
+			: node.querySelectorAll('script');
+	for (const script of scripts) {
 		var clone = document.createElement('script');
 		for (var attribute of script.attributes) {
 			clone.setAttribute(attribute.name, attribute.value);
 		}
 
 		clone.textContent = script.textContent;
-		script.replaceWith(clone);
+		// If node === script tag, replaceWith will do nothing because there's no parent yet,
+		// waiting until that's the case using an effect solves this.
+		// Don't do it in other circumstances or we could accidentally execute scripts
+		// in an adjacent @html tag that was instantiated in the meantime.
+		if (script === node) {
+			effect(() => script.replaceWith(clone));
+		} else {
+			script.replaceWith(clone);
+		}
 	}
 }
 
