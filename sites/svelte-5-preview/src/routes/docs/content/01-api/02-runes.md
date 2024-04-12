@@ -222,7 +222,7 @@ To run side-effects like logging or analytics whenever some specific values chan
 <p>{count} doubled is {doubled}</p>
 ```
 
-An effect only reruns when the object it reads changes, not when a property inside it changes. If you want to react to _any_ change inside an object for inspection purposes at dev time, you may want to use [`inspect`](#inspect).
+An effect only reruns when the object it reads changes, not when a property inside it changes. If you want to react to _any_ change inside an object for inspection purposes at dev time, you may want to use [`inspect`](#$inspect).
 
 ```svelte
 <script>
@@ -408,7 +408,7 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 </div>
 ```
 
-Apart from the timing, `$effect.pre` works exactly like [`$effect`](#effect) — refer to its documentation for more info.
+Apart from the timing, `$effect.pre` works exactly like [`$effect`](#$effect) — refer to its documentation for more info.
 
 ### What this replaces
 
@@ -490,7 +490,7 @@ let { a, b, c, ...everythingElse }: MyProps = $props();
 >
 > ...TypeScript [widens the type](https://www.typescriptlang.org/play?#code/CYUwxgNghgTiAEAzArgOzAFwJYHtXwBIAHGHIgZwB4AVeAXnilQE8A+ACgEoAueagbgBQgiCAzwA3vAAe9eABYATPAC+c4qQqUp03uQwwsqAOaqOnIfCsB6a-AB6AfiA) of `x` to be `string | number`, instead of erroring.
 
-By default props are treated as readonly, meaning reassignments will not propagate upwards and mutations will result in a warning at runtime in development mode. You will also get a runtime error when trying to `bind:` to a readonly prop in a parent component. To declare props as bindable, use [`$bindable()`](#bindable).
+By default props are treated as readonly, meaning reassignments will not propagate upwards and mutations will result in a warning at runtime in development mode. You will also get a runtime error when trying to `bind:` to a readonly prop in a parent component. To declare props as bindable, use [`$bindable()`](#$bindable).
 
 ### What this replaces
 
