@@ -26,7 +26,7 @@ export function parse() {
 		// Container name doesn't match a query keyword, so assign it as container name.
 		if (!CONTAINER_QUERY_KEYWORDS.has(container_name.toLowerCase())) {
 			name = container_name;
-			this.eatIdent(container_name);
+			this.eat(Ident);
 		}
 	}
 
