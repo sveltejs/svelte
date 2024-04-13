@@ -3,13 +3,13 @@ import { is_promise, noop } from '../common.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
 	DOMBooleanAttributes,
+	RawTextElements,
 	disallowed_paragraph_contents,
 	interactive_elements,
 	is_tag_valid_with_parent
 } from '../../constants.js';
 import { DEV } from 'esm-env';
 import { UNINITIALIZED } from '../client/constants.js';
-import { RawTextElements } from '../../compiler/phases/constants.js';
 
 export * from '../client/validate.js';
 

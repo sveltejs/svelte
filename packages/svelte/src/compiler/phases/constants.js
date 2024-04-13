@@ -26,8 +26,6 @@ export const VoidElements = [
 	'wbr'
 ];
 
-export const RawTextElements = ['textarea', 'script', 'style', 'title'];
-
 export const PassiveEvents = ['wheel', 'touchstart', 'touchmove', 'touchend', 'touchcancel'];
 
 export const Runes = /** @type {const} */ ([

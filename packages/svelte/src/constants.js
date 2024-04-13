@@ -16,6 +16,9 @@ export const TRANSITION_IN = 1;
 export const TRANSITION_OUT = 1 << 1;
 export const TRANSITION_GLOBAL = 1 << 2;
 
+/** List of elements that require raw contents and should not have SSR comments put in them */
+export const RawTextElements = ['textarea', 'script', 'style', 'title'];
+
 /** List of Element events that will be delegated */
 export const DelegatedEvents = [
 	'beforeinput',
