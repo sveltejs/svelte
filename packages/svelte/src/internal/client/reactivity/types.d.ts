@@ -1,7 +1,4 @@
-import type { Block, ComponentContext, Dom, Equals, TransitionManager } from '#client';
-import type { EFFECT, PRE_EFFECT, RENDER_EFFECT } from '../constants';
-
-export type EffectType = typeof EFFECT | typeof PRE_EFFECT | typeof RENDER_EFFECT;
+import type { ComponentContext, Dom, Equals, TransitionManager } from '#client';
 
 export interface Signal {
 	/** Flags bitmask */
@@ -24,15 +21,17 @@ export interface Reaction extends Signal {
 	fn: Function;
 	/** Signals that this signal reads from */
 	deps: null | Value[];
-	/** Effects created inside this signal */
-	effects: null | Effect[];
-	/** Deriveds created inside this signal */
-	deriveds: null | Derived[];
+	/** First child effect created inside this signal */
+	first: null | Effect;
+	/** Last child effect created inside this signal */
+	last: null | Effect;
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {
 	/** The derived function */
 	fn: () => V;
+	/** Deriveds created inside this signal */
+	deriveds: null | Derived[];
 }
 
 export interface Effect extends Reaction {
@@ -40,16 +39,16 @@ export interface Effect extends Reaction {
 	dom: Dom | null;
 	/** The associated component context */
 	ctx: null | ComponentContext;
-	/** Stuff to do when the effect is destroyed */
-	ondestroy: null | (() => void);
 	/** The effect function */
 	fn: () => void | (() => void);
 	/** The teardown function returned from the effect function */
 	teardown: null | (() => void);
-	/** The depth from the root signal, used for ordering render/pre-effects topologically **/
-	l: number;
 	/** Transition managers created with `$.transition` */
 	transitions: null | TransitionManager[];
+	/** Next sibling child effect created inside the parent signal */
+	prev: null | Effect;
+	/** Next sibling child effect created inside the parent signal */
+	next: null | Effect;
 }
 
 export interface ValueDebug<V = unknown> extends Value<V> {

@@ -1,6 +1,11 @@
 import { DEV } from 'esm-env';
-import { get, batch_inspect, current_component_context, untrack } from './runtime.js';
-import { effect_active } from './reactivity/effects.js';
+import {
+	get,
+	batch_inspect,
+	current_component_context,
+	untrack,
+	current_effect
+} from './runtime.js';
 import {
 	array_prototype,
 	define_property,
@@ -13,21 +18,21 @@ import {
 } from './utils.js';
 import { add_owner, check_ownership, strip_owner } from './dev/ownership.js';
 import { mutable_source, source, set } from './reactivity/sources.js';
-import { STATE_SYMBOL, UNINITIALIZED } from './constants.js';
-import { updating_derived } from './reactivity/deriveds.js';
+import { STATE_SYMBOL } from './constants.js';
+import { UNINITIALIZED } from '../../constants.js';
 
 /**
  * @template T
  * @param {T} value
  * @param {boolean} [immutable]
  * @param {Set<Function> | null} [owners]
- * @returns {import('./types.js').ProxyStateObject<T> | T}
+ * @returns {import('#client').ProxyStateObject<T> | T}
  */
 export function proxy(value, immutable = true, owners) {
 	if (typeof value === 'object' && value != null && !is_frozen(value)) {
 		// If we have an existing proxy, return it...
 		if (STATE_SYMBOL in value) {
-			const metadata = /** @type {import('./types.js').ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
+			const metadata = /** @type {import('#client').ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
 			// ...unless the proxy belonged to a different object, because
 			// someone copied the state symbol using `Reflect.ownKeys(...)`
 			if (metadata.t === value || metadata.p === value) {
@@ -52,7 +57,7 @@ export function proxy(value, immutable = true, owners) {
 			const proxy = new Proxy(value, state_proxy_handler);
 
 			define_property(value, STATE_SYMBOL, {
-				value: /** @type {import('./types.js').ProxyMetadata} */ ({
+				value: /** @type {import('#client').ProxyMetadata} */ ({
 					s: new Map(),
 					v: source(0),
 					a: is_array(value),
@@ -85,7 +90,7 @@ export function proxy(value, immutable = true, owners) {
 }
 
 /**
- * @template {import('./types.js').ProxyStateObject} T
+ * @template {import('#client').ProxyStateObject} T
  * @param {T} value
  * @param {Map<T, Record<string | symbol, any>>} already_unwrapped
  * @returns {Record<string | symbol, any>}
@@ -137,23 +142,23 @@ function unwrap(value, already_unwrapped) {
  */
 export function unstate(value) {
 	return /** @type {T} */ (
-		unwrap(/** @type {import('./types.js').ProxyStateObject} */ (value), new Map())
+		unwrap(/** @type {import('#client').ProxyStateObject} */ (value), new Map())
 	);
 }
 
 /**
- * @param {import('./types.js').Source<number>} signal
+ * @param {import('#client').Source<number>} signal
  * @param {1 | -1} [d]
  */
 function update_version(signal, d = 1) {
 	set(signal, signal.v + d);
 }
 
-/** @type {ProxyHandler<import('./types.js').ProxyStateObject<any>>} */
+/** @type {ProxyHandler<import('#client').ProxyStateObject<any>>} */
 const state_proxy_handler = {
 	defineProperty(target, prop, descriptor) {
 		if (descriptor.value) {
-			/** @type {import('./types.js').ProxyMetadata} */
+			/** @type {import('#client').ProxyMetadata} */
 			const metadata = target[STATE_SYMBOL];
 
 			const s = metadata.s.get(prop);
@@ -164,7 +169,7 @@ const state_proxy_handler = {
 	},
 
 	deleteProperty(target, prop) {
-		/** @type {import('./types.js').ProxyMetadata} */
+		/** @type {import('#client').ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 		const s = metadata.s.get(prop);
 		const is_array = metadata.a;
@@ -197,17 +202,12 @@ const state_proxy_handler = {
 			return Reflect.get(target, STATE_SYMBOL);
 		}
 
-		/** @type {import('./types.js').ProxyMetadata} */
+		/** @type {import('#client').ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
 
-		// if we're reading a property in a reactive context, create a source,
-		// but only if it's an own property and not a prototype property
-		if (
-			s === undefined &&
-			(effect_active() || updating_derived) &&
-			(!(prop in target) || get_descriptor(target, prop)?.writable)
-		) {
+		// create a source, but only if it's an own property and not a prototype property
+		if (s === undefined && (!(prop in target) || get_descriptor(target, prop)?.writable)) {
 			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i, metadata.o));
 			metadata.s.set(prop, s);
 		}
@@ -228,7 +228,7 @@ const state_proxy_handler = {
 	getOwnPropertyDescriptor(target, prop) {
 		const descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
 		if (descriptor && 'value' in descriptor) {
-			/** @type {import('./types.js').ProxyMetadata} */
+			/** @type {import('#client').ProxyMetadata} */
 			const metadata = target[STATE_SYMBOL];
 			const s = metadata.s.get(prop);
 
@@ -244,12 +244,15 @@ const state_proxy_handler = {
 		if (prop === STATE_SYMBOL) {
 			return true;
 		}
-		/** @type {import('./types.js').ProxyMetadata} */
+		/** @type {import('#client').ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 		const has = Reflect.has(target, prop);
 
 		let s = metadata.s.get(prop);
-		if (s !== undefined || (effect_active() && (!has || get_descriptor(target, prop)?.writable))) {
+		if (
+			s !== undefined ||
+			(current_effect !== null && (!has || get_descriptor(target, prop)?.writable))
+		) {
 			if (s === undefined) {
 				s = (metadata.i ? source : mutable_source)(
 					has ? proxy(target[prop], metadata.i, metadata.o) : UNINITIALIZED
@@ -265,14 +268,14 @@ const state_proxy_handler = {
 	},
 
 	set(target, prop, value, receiver) {
-		/** @type {import('./types.js').ProxyMetadata} */
+		/** @type {import('#client').ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
 		// If we haven't yet created a source for this property, we need to ensure
 		// we do so otherwise if we read it later, then the write won't be tracked and
 		// the heuristics of effects will be different vs if we had read the proxied
 		// object property before writing to that property.
-		if (s === undefined && effect_active()) {
+		if (s === undefined) {
 			// the read creates a signal
 			untrack(() => receiver[prop]);
 			s = metadata.s.get(prop);
@@ -328,7 +331,7 @@ const state_proxy_handler = {
 	},
 
 	ownKeys(target) {
-		/** @type {import('./types.js').ProxyMetadata} */
+		/** @type {import('#client').ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 
 		get(metadata.v);

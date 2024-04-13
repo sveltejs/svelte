@@ -48,10 +48,8 @@ self.addEventListener(
 				const { version } = await fetch(`${svelte_url}/package.json`).then((r) => r.json());
 				console.log(`Using Svelte compiler version ${version}`);
 
-				// unpkg doesn't set the correct MIME type for .cjs files
-				// https://github.com/mjackson/unpkg/issues/355
-				const compiler = await fetch(`${svelte_url}/compiler.cjs`).then((r) => r.text());
-				(0, eval)(compiler + '\n//# sourceURL=compiler.cjs@' + version);
+				const compiler = await fetch(`${svelte_url}/compiler/index.js`).then((r) => r.text());
+				(0, eval)(compiler + '\n//# sourceURL=compiler/index.js@' + version);
 
 				svelte = globalThis.svelte;
 
@@ -262,6 +260,9 @@ async function get_bundle(uid, mode, cache, local_files_lookup) {
 		name: 'svelte-repl',
 		async resolveId(importee, importer) {
 			if (uid !== current_id) throw ABORT;
+
+			if (importee === 'esm-env') return importee;
+
 			const v5 = is_v5();
 			const v4 = !v5 && is_v4();
 
@@ -359,6 +360,10 @@ async function get_bundle(uid, mode, cache, local_files_lookup) {
 		},
 		async load(resolved) {
 			if (uid !== current_id) throw ABORT;
+
+			if (resolved === 'esm-env') {
+				return `export const BROWSER = true; export const DEV = true`;
+			}
 
 			const cached_file = local_files_lookup.get(resolved);
 			if (cached_file) return cached_file.source;

@@ -1,4 +1,4 @@
-import { run_all } from '../../common.js';
+import { run_all } from '../../shared/utils.js';
 
 let is_task_queued = false;
 let is_raf_queued = false;
@@ -20,30 +20,6 @@ function process_raf_task() {
 	const tasks = current_raf_tasks.slice();
 	current_raf_tasks = [];
 	run_all(tasks);
-}
-
-/**
- * @param {() => void} fn
- * @returns {void}
- */
-export function schedule_task(fn) {
-	if (!is_task_queued) {
-		is_task_queued = true;
-		setTimeout(process_task, 0);
-	}
-	current_queued_tasks.push(fn);
-}
-
-/**
- * @param {() => void} fn
- * @returns {void}
- */
-export function schedule_raf_task(fn) {
-	if (!is_raf_queued) {
-		is_raf_queued = true;
-		requestAnimationFrame(process_raf_task);
-	}
-	current_raf_tasks.push(fn);
 }
 
 /**

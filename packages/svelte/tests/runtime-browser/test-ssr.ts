@@ -46,7 +46,8 @@ export async function run_ssr_test(
 }
 
 const { run } = suite<ReturnType<typeof import('./assert').test>>(async (config, test_dir) => {
-	if (config.skip_if_ssr) return;
+	if (config.mode && !config.mode.includes('server')) return;
+	if (config.skip_mode?.includes('server')) return;
 	await run_ssr_test(config, test_dir);
 });
 

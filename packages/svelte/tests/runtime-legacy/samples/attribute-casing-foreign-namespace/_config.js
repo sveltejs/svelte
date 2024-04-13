@@ -8,7 +8,6 @@ export default test({
 			<button textWrap="true" text="button">
 		</page>
 	`,
-	skip_if_hydrate: true,
 
 	test({ assert, target }) {
 		// @ts-ignore

@@ -95,6 +95,8 @@ export const validate_component_options =
 
 			runes: boolean(undefined),
 
+			hmr: boolean(false),
+
 			sourcemap: validator(undefined, (input) => {
 				// Source maps can take on a variety of values, including string, JSON, map objects from magic-string and source-map,
 				// so there's no good way to check type validity here

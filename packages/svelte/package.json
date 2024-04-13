@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.0.0-next.83",
+  "version": "5.0.0-next.102",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -12,17 +12,17 @@
     "src",
     "!src/**/*.test.*",
     "types",
-    "compiler.cjs",
+    "compiler",
     "*.d.ts",
     "README.md"
   ],
-  "module": "src/main/main-client.js",
-  "main": "src/main/main-client.js",
+  "module": "src/index-client.js",
+  "main": "src/index-client.js",
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
-      "browser": "./src/main/main-client.js",
-      "default": "./src/main/main-server.js"
+      "browser": "./src/index-client.js",
+      "default": "./src/index-server.js"
     },
     "./package.json": "./package.json",
     "./action": {
@@ -34,7 +34,7 @@
     },
     "./compiler": {
       "types": "./types/index.d.ts",
-      "require": "./compiler.cjs",
+      "require": "./compiler/index.js",
       "default": "./src/compiler/index.js"
     },
     "./easing": {
@@ -46,6 +46,9 @@
     },
     "./internal": {
       "default": "./src/internal/index.js"
+    },
+    "./internal/client": {
+      "default": "./src/internal/client/index.js"
     },
     "./internal/disclose-version": {
       "default": "./src/internal/disclose-version.js"
@@ -64,7 +67,8 @@
     },
     "./reactivity": {
       "types": "./types/index.d.ts",
-      "default": "./src/reactivity/index.js"
+      "browser": "./src/reactivity/index-client.js",
+      "default": "./src/reactivity/index-server.js"
     },
     "./server": {
       "types": "./types/index.d.ts",
@@ -100,7 +104,7 @@
     "check": "tsc && cd ./tests/types && tsc",
     "check:watch": "tsc --watch",
     "generate:version": "node ./scripts/generate-version.js",
-    "generate:types": "node ./scripts/generate-types.js",
+    "generate:types": "node ./scripts/generate-types.js && tsc -p tsconfig.generated.json",
     "prepublishOnly": "pnpm build",
     "knip": "knip"
   },
@@ -112,7 +116,7 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/aria-query": "^5.0.4",
-    "dts-buddy": "^0.4.4",
+    "dts-buddy": "^0.4.7",
     "esbuild": "^0.19.11",
     "knip": "^4.2.1",
     "rollup": "^4.9.5",
@@ -137,7 +141,9 @@
   "knip": {
     "entry": [
       "src/*/index.js",
-      "src/*/public.d.ts"
+      "src/index-client.ts",
+      "src/index-server.ts",
+      "src/index.d.ts"
     ],
     "project": [
       "src/**"

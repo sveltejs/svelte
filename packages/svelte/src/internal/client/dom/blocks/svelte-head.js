@@ -1,10 +1,19 @@
-import { hydrate_nodes, hydrating, set_hydrate_nodes, update_hydrate_nodes } from '../hydration.js';
+import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrate_nodes } from '../hydration.js';
 import { empty } from '../operations.js';
-import { render_effect } from '../../reactivity/effects.js';
-import { remove } from '../reconciler.js';
+import { block } from '../../reactivity/effects.js';
+import { HYDRATION_END, HYDRATION_START } from '../../../../constants.js';
 
 /**
- * @param {(anchor: Node | null) => import('#client').Dom | void} render_fn
+ * @type {Node | undefined}
+ */
+let head_anchor;
+
+export function reset_head_anchor() {
+	head_anchor = undefined;
+}
+
+/**
+ * @param {(anchor: Node) => import('#client').Dom | void} render_fn
  * @returns {void}
  */
 export function head(render_fn) {
@@ -13,34 +22,35 @@ export function head(render_fn) {
 	let previous_hydrate_nodes = null;
 	let was_hydrating = hydrating;
 
+	/** @type {Comment | Text} */
+	var anchor;
+
 	if (hydrating) {
 		previous_hydrate_nodes = hydrate_nodes;
-		update_hydrate_nodes(document.head.firstChild);
+
+		// There might be multiple head blocks in our app, so we need to account for each one needing independent hydration.
+		if (head_anchor === undefined) {
+			head_anchor = /** @type {import('#client').TemplateNode} */ (document.head.firstChild);
+		}
+
+		while (
+			head_anchor.nodeType !== 8 ||
+			/** @type {Comment} */ (head_anchor).data !== HYDRATION_START
+		) {
+			head_anchor = /** @type {import('#client').TemplateNode} */ (head_anchor.nextSibling);
+		}
+
+		head_anchor = /** @type {import('#client').TemplateNode} */ (hydrate_anchor(head_anchor));
+		head_anchor = /** @type {import('#client').TemplateNode} */ (head_anchor.nextSibling);
+	} else {
+		anchor = document.head.appendChild(empty());
 	}
 
-	var anchor = document.head.appendChild(empty());
-
 	try {
-		/** @type {import('#client').Dom | null} */
-		var dom = null;
-
-		const head_effect = render_effect(() => {
-			if (dom !== null) {
-				remove(dom);
-				head_effect.dom = dom = null;
-			}
-
-			dom = render_fn(hydrating ? null : anchor) ?? null;
-		});
-
-		head_effect.ondestroy = () => {
-			if (dom !== null) {
-				remove(dom);
-			}
-		};
+		block(() => render_fn(anchor));
 	} finally {
 		if (was_hydrating) {
-			set_hydrate_nodes(previous_hydrate_nodes);
+			set_hydrate_nodes(/** @type {import('#client').TemplateNode[]} */ (previous_hydrate_nodes));
 		}
 	}
 }

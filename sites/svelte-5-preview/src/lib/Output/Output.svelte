@@ -34,7 +34,7 @@
 	/** @type {import('../workers/workers').CompileMessageData | null} */
 	export let compiled;
 
-	$: if (selected) {
+	$: if (selected && js_editor && css_editor) {
 		if (selected.type === 'json') {
 			js_editor.set({ code: `/* Select a component to see its compiled code */`, lang: 'js' });
 			css_editor.set({ code: `/* Select a component to see its compiled code */`, lang: 'css' });

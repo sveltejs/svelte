@@ -1,5 +1,6 @@
+import { proxy } from '../internal/client/proxy.js';
+import { hydrate, mount, unmount } from '../internal/client/render.js';
 import { define_property } from '../internal/client/utils.js';
-import * as $ from '../internal/index.js';
 
 /**
  * Takes the same options as a Svelte 4 component and the component function and returns a Svelte 4 compatible component.
@@ -52,7 +53,7 @@ export function asClassComponent(component) {
 
 class Svelte4Component {
 	/** @type {any} */
-	#events = {};
+	#events;
 
 	/** @type {Record<string, any>} */
 	#instance;
@@ -69,14 +70,16 @@ class Svelte4Component {
 		// Using proxy state here isn't completely mirroring the Svelte 4 behavior, because mutations to a property
 		// cause fine-grained updates to only the places where that property is used, and not the entire property.
 		// Reactive statements and actions (the things where this matters) are handling this properly regardless, so it should be fine in practise.
-		const props = $.proxy({ ...(options.props || {}), $$events: this.#events }, false);
-		this.#instance = (options.hydrate ? $.hydrate : $.mount)(options.component, {
+		const props = proxy({ ...(options.props || {}), $$events: {} }, false);
+		this.#instance = (options.hydrate ? hydrate : mount)(options.component, {
 			target: options.target,
 			props,
 			context: options.context,
 			intro: options.intro,
 			recover: options.recover
 		});
+
+		this.#events = props.$$events;
 
 		for (const key of Object.keys(this.#instance)) {
 			if (key === '$set' || key === '$destroy' || key === '$on') continue;
@@ -96,7 +99,7 @@ class Svelte4Component {
 			Object.assign(props, next);
 		};
 		this.#instance.$destroy = () => {
-			$.unmount(this.#instance);
+			unmount(this.#instance);
 		};
 	}
 

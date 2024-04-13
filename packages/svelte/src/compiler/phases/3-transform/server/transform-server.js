@@ -24,11 +24,17 @@ import { create_attribute, is_custom_element_node, is_element_node } from '../..
 import { error } from '../../../errors.js';
 import { binding_properties } from '../../bindings.js';
 import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patterns.js';
-import { DOMBooleanAttributes } from '../../../../constants.js';
+import {
+	DOMBooleanAttributes,
+	HYDRATION_END,
+	HYDRATION_END_ELSE,
+	HYDRATION_START
+} from '../../../../constants.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
+import { BLOCK_CLOSE, BLOCK_CLOSE_ELSE } from '../../../../internal/server/hydration.js';
 
-const block_open = t_string('<![>');
-const block_close = t_string('<!]>');
+export const block_open = t_string(`<!--${HYDRATION_START}-->`);
+export const block_close = t_string(`<!--${HYDRATION_END}-->`);
 
 /**
  * @param {string} value
@@ -685,7 +691,8 @@ const javascript_visitors_runes = {
 			}
 
 			if (rune === '$props') {
-				// remove $bindable() from props declaration
+				// remove $bindable() from props declaration and handle rest props
+				let uses_rest_props = false;
 				const id = walk(declarator.id, null, {
 					AssignmentPattern(node) {
 						if (
@@ -697,9 +704,26 @@ const javascript_visitors_runes = {
 								: b.id('undefined');
 							return b.assignment_pattern(node.left, right);
 						}
+					},
+					RestElement(node, { path }) {
+						if (path.at(-1) === declarator.id) {
+							uses_rest_props = true;
+						}
 					}
 				});
-				declarations.push(b.declarator(id, b.id('$$props')));
+
+				const exports = /** @type {import('../../types').ComponentAnalysis} */ (
+					state.analysis
+				).exports.map(({ name, alias }) => b.literal(alias ?? name));
+
+				declarations.push(
+					b.declarator(
+						id,
+						uses_rest_props && exports.length > 0
+							? b.call('$.rest_props', b.id('$$props'), b.array(exports))
+							: b.id('$$props')
+					)
+				);
 				continue;
 			}
 
@@ -760,6 +784,10 @@ const javascript_visitors_runes = {
 	},
 	CallExpression(node, context) {
 		const rune = get_rune(node, context.state.scope);
+
+		if (rune === '$host') {
+			return b.id('undefined');
+		}
 
 		if (rune === '$effect.active') {
 			return b.literal(false);
@@ -825,9 +853,7 @@ function serialize_attribute_value(
 	/** @type {import('estree').Expression[]} */
 	const expressions = [];
 
-	if (attribute_value[0].type !== 'Text') {
-		quasis.push(b.quasi('', false));
-	}
+	quasis.push(b.quasi('', false));
 
 	let i = 0;
 	for (const node of attribute_value) {
@@ -838,7 +864,8 @@ function serialize_attribute_value(
 				// don't trim, space could be important to separate from expression tag
 				data = data.replace(regex_whitespaces_strict, ' ');
 			}
-			quasis.push(b.quasi(data, i === attribute_value.length));
+			const last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
+			last.value.raw += data;
 		} else {
 			expressions.push(
 				b.call(
@@ -846,9 +873,7 @@ function serialize_attribute_value(
 					/** @type {import('estree').Expression} */ (context.visit(node.expression))
 				)
 			);
-			if (i === attribute_value.length || attribute_value[i]?.type !== 'Text') {
-				quasis.push(b.quasi('', true));
-			}
+			quasis.push(b.quasi('', i + 1 === attribute_value.length));
 		}
 	}
 
@@ -1499,55 +1524,46 @@ const template_visitors = {
 			b.update('++', index, false),
 			b.block(each)
 		);
+
+		const close = b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE)));
+
 		if (node.fallback) {
-			const fallback_stmts = create_block(node, node.fallback.nodes, context);
-			fallback_stmts.unshift(
-				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!ssr:each_else>')))
-			);
+			const fallback = create_block(node, node.fallback.nodes, context);
+
+			fallback.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE))));
+
 			state.template.push(
 				t_statement(
 					b.if(
 						b.binary('!==', b.member(array_id, b.id('length')), b.literal(0)),
-						for_loop,
-						b.block(fallback_stmts)
+						b.block([for_loop, close]),
+						b.block(fallback)
 					)
 				)
 			);
 		} else {
-			state.template.push(t_statement(for_loop));
+			state.template.push(t_statement(for_loop), t_statement(close));
 		}
-		state.template.push(block_close);
 	},
 	IfBlock(node, context) {
 		const state = context.state;
 		state.template.push(block_open);
 
-		// Insert ssr:if:true/false anchors in addition to the other anchors so that
-		// the if block can catch hydration mismatches (false on the server, true on the client and vice versa)
-		// and continue hydration without having to re-render everything from scratch.
-
 		const consequent = create_block(node, node.consequent.nodes, context);
-		consequent.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!ssr:if:true>')))
-		);
+		const alternate = node.alternate ? create_block(node, node.alternate.nodes, context) : [];
 
-		const alternate = node.alternate
-			? /** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
-			: b.block([]);
-		alternate.body.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!ssr:if:false>')))
-		);
+		consequent.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE))));
+		alternate.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE))));
 
 		state.template.push(
 			t_statement(
 				b.if(
 					/** @type {import('estree').Expression} */ (context.visit(node.test)),
-					b.block(/** @type {import('estree').Statement[]} */ (consequent)),
-					alternate
+					b.block(consequent),
+					b.block(alternate)
 				)
 			)
 		);
-		state.template.push(block_close);
 	},
 	AwaitBlock(node, context) {
 		const state = context.state;
@@ -1595,14 +1611,15 @@ const template_visitors = {
 		state.template.push(block_close);
 	},
 	SnippetBlock(node, context) {
-		// TODO hoist where possible
-		context.state.init.push(
-			b.function_declaration(
-				node.expression,
-				[b.id('$$payload'), ...node.parameters],
-				/** @type {import('estree').BlockStatement} */ (context.visit(node.body))
-			)
+		const fn = b.function_declaration(
+			node.expression,
+			[b.id('$$payload'), ...node.parameters],
+			/** @type {import('estree').BlockStatement} */ (context.visit(node.body))
 		);
+		// @ts-expect-error - TODO remove this hack once $$render_inner for legacy bindings is gone
+		fn.___snippet = true;
+		// TODO hoist where possible
+		context.state.init.push(fn);
 
 		if (context.state.options.dev) {
 			context.state.init.push(b.stmt(b.call('$.add_snippet_symbol', node.expression)));
@@ -2202,14 +2219,27 @@ export function server_component(analysis, options) {
 	// If the component binds to a child, we need to put the template in a loop and repeat until legacy bindings are stable.
 	// We can remove this once the legacy syntax is gone.
 	if (analysis.uses_component_bindings) {
+		const snippets = template.body.filter(
+			(node) =>
+				node.type === 'FunctionDeclaration' &&
+				// @ts-expect-error
+				node.___snippet
+		);
+		const rest = template.body.filter(
+			(node) =>
+				node.type !== 'FunctionDeclaration' ||
+				// @ts-expect-error
+				!node.___snippet
+		);
 		template.body = [
+			...snippets,
 			b.let('$$settled', b.true),
 			b.let('$$inner_payload'),
 			b.stmt(
 				b.function(
 					b.id('$$render_inner'),
 					[b.id('$$payload')],
-					b.block(/** @type {import('estree').Statement[]} */ (template.body))
+					b.block(/** @type {import('estree').Statement[]} */ (rest))
 				)
 			),
 			b.do_while(

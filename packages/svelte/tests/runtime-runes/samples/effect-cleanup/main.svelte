@@ -8,8 +8,10 @@
 
 		log.push('init ' + double);
 
-		return () => {
+		return function() {
 			log.push('cleanup ' + double);
+			// @ts-expect-error
+			log.push(this);
 		};
 	})
 </script>

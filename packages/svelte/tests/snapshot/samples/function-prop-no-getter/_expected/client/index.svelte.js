@@ -1,9 +1,9 @@
 // index.svelte (Svelte VERSION)
 // Note: compiler output will change before 5.0 is released!
 import "svelte/internal/disclose-version";
-import * as $ from "svelte/internal";
+import * as $ from "svelte/internal/client";
 
-export default function Function_prop_no_getter($$anchor, $$props) {
+function Function_prop_no_getter($$anchor, $$props) {
 	$.push($$props, true);
 
 	let count = $.source(0);
@@ -13,7 +13,7 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 	}
 
 	const plusOne = (num) => num + 1;
-	var fragment = $.comment($$anchor);
+	var fragment = $.comment();
 	var node = $.first_child(fragment);
 
 	Button(node, {
@@ -21,13 +21,15 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 		onmouseup,
 		onmouseenter: () => $.set(count, $.proxy(plusOne($.get(count)))),
 		children: ($$anchor, $$slotProps) => {
-			var text = $.space_frag($$anchor);
+			var text = $.text($$anchor);
 
-			$.text_effect(text, () => `clicks: ${$.stringify($.get(count))}`);
-			return $.close($$anchor, text);
+			$.render_effect(() => $.set_text(text, `clicks: ${$.stringify($.get(count))}`));
+			$.append($$anchor, text);
 		}
 	});
 
-	$.close_frag($$anchor, fragment);
+	$.append($$anchor, fragment);
 	$.pop();
 }
+
+export default Function_prop_no_getter;

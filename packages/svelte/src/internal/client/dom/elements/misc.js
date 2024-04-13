@@ -1,5 +1,5 @@
 import { hydrating } from '../hydration.js';
-import { render_effect } from '../../reactivity/effects.js';
+import { effect } from '../../reactivity/effects.js';
 
 /**
  * @param {HTMLElement} dom
@@ -10,15 +10,12 @@ export function autofocus(dom, value) {
 	if (value) {
 		const body = document.body;
 		dom.autofocus = true;
-		render_effect(
-			() => {
-				if (document.activeElement === body) {
-					dom.focus();
-				}
-			},
-			true,
-			false
-		);
+
+		effect(() => {
+			if (document.activeElement === body) {
+				dom.focus();
+			}
+		});
 	}
 }
 

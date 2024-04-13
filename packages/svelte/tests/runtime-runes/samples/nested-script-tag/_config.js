@@ -10,8 +10,8 @@ let log;
 let original_log;
 
 export default test({
-	skip_if_ssr: 'permanent',
-	skip_if_hydrate: 'permanent', // log patching will be too late
+	mode: ['client'],
+
 	before_test() {
 		log = [];
 		original_log = console.log;

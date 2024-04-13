@@ -60,6 +60,9 @@ declare module 'svelte' {
 		Events extends Record<string, any> = any,
 		Slots extends Record<string, any> = any
 	> {
+		/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
+		static element?: typeof HTMLElement;
+
 		[prop: string]: any;
 		/**
 		 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
@@ -263,6 +266,7 @@ declare module 'svelte' {
 	 * ```
 	 *
 	 * https://svelte.dev/docs/svelte#createeventdispatcher
+	 * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte-5-preview.vercel.app/docs/deprecations#createeventdispatcher
 	 * */
 	export function createEventDispatcher<EventMap extends Record<string, any> = any>(): EventDispatcher<EventMap>;
 	/**
@@ -288,19 +292,19 @@ declare module 'svelte' {
 	 * */
 	export function afterUpdate(fn: () => void): void;
 	/**
-	 * Anything except a function
-	 */
+	 * Synchronously flushes any pending state changes and those that result from it.
+	 * */
+	export function flushSync(fn?: (() => void) | undefined): void;
+	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
-	/**
-	 * @deprecated Use `mount` or `hydrate` instead
-	 */
-	export function createRoot(): void;
+	export function unstate<T>(value: T): T;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
 	 *
 	 * */
 	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
 		target: Document | Element | ShadowRoot;
+		anchor?: Node | undefined;
 		props?: Props | undefined;
 		events?: { [Property in keyof Events]: (e: Events[Property]) => any; } | undefined;
 		context?: Map<any, any> | undefined;
@@ -322,10 +326,6 @@ declare module 'svelte' {
 	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
 	 * */
 	export function unmount(component: Record<string, any>): void;
-	/**
-	 * Synchronously flushes any pending state changes and those that result from it.
-	 * */
-	export function flushSync(fn?: (() => void) | undefined): void;
 	/**
 	 * Returns a promise that resolves once any pending state changes have been applied.
 	 * */
@@ -368,7 +368,6 @@ declare module 'svelte' {
 	 * https://svelte.dev/docs/svelte#getallcontexts
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
-	export function unstate<T>(value: T): T;
 }
 
 declare module 'svelte/action' {
@@ -671,6 +670,12 @@ declare module 'svelte/compiler' {
 		 * @default null
 		 */
 		cssOutputFilename?: string;
+		/**
+		 * If `true`, compiles components with hot reloading support.
+		 *
+		 * @default false
+		 */
+		hmr?: boolean;
 	}
 
 	interface ModuleCompileOptions {
@@ -1073,6 +1078,157 @@ declare module 'svelte/compiler' {
 		conflicts: Set<string>;
 		
 		unique(preferred_name: string): import("estree").Identifier;
+	}
+	namespace Css {
+		export interface BaseNode {
+			start: number;
+			end: number;
+		}
+
+		export interface StyleSheet extends BaseNode {
+			type: 'StyleSheet';
+			attributes: any[]; // TODO
+			children: Array<Atrule | Rule>;
+			content: {
+				start: number;
+				end: number;
+				styles: string;
+				/** Possible comment atop the style tag */
+				comment: Comment | null;
+			};
+		}
+
+		export interface Atrule extends BaseNode {
+			type: 'Atrule';
+			name: string;
+			prelude: string;
+			block: Block | null;
+		}
+
+		export interface Rule extends BaseNode {
+			type: 'Rule';
+			prelude: SelectorList;
+			block: Block;
+			metadata: {
+				parent_rule: null | Rule;
+				has_local_selectors: boolean;
+			};
+		}
+
+		export interface SelectorList extends BaseNode {
+			type: 'SelectorList';
+			children: ComplexSelector[];
+		}
+
+		export interface ComplexSelector extends BaseNode {
+			type: 'ComplexSelector';
+			children: RelativeSelector[];
+			metadata: {
+				rule: null | Rule;
+				used: boolean;
+			};
+		}
+
+		export interface RelativeSelector extends BaseNode {
+			type: 'RelativeSelector';
+			combinator: null | Combinator;
+			selectors: SimpleSelector[];
+			metadata: {
+				is_global: boolean;
+				is_host: boolean;
+				is_root: boolean;
+				scoped: boolean;
+			};
+		}
+
+		export interface TypeSelector extends BaseNode {
+			type: 'TypeSelector';
+			name: string;
+		}
+
+		export interface IdSelector extends BaseNode {
+			type: 'IdSelector';
+			name: string;
+		}
+
+		export interface ClassSelector extends BaseNode {
+			type: 'ClassSelector';
+			name: string;
+		}
+
+		export interface AttributeSelector extends BaseNode {
+			type: 'AttributeSelector';
+			name: string;
+			matcher: string | null;
+			value: string | null;
+			flags: string | null;
+		}
+
+		export interface PseudoElementSelector extends BaseNode {
+			type: 'PseudoElementSelector';
+			name: string;
+		}
+
+		export interface PseudoClassSelector extends BaseNode {
+			type: 'PseudoClassSelector';
+			name: string;
+			args: SelectorList | null;
+		}
+
+		export interface Percentage extends BaseNode {
+			type: 'Percentage';
+			value: string;
+		}
+
+		export interface NestingSelector extends BaseNode {
+			type: 'NestingSelector';
+			name: '&';
+		}
+
+		export interface Nth extends BaseNode {
+			type: 'Nth';
+			value: string;
+		}
+
+		export type SimpleSelector =
+			| TypeSelector
+			| IdSelector
+			| ClassSelector
+			| AttributeSelector
+			| PseudoElementSelector
+			| PseudoClassSelector
+			| Percentage
+			| Nth
+			| NestingSelector;
+
+		export interface Combinator extends BaseNode {
+			type: 'Combinator';
+			name: string;
+		}
+
+		export interface Block extends BaseNode {
+			type: 'Block';
+			children: Array<Declaration | Rule | Atrule>;
+		}
+
+		export interface Declaration extends BaseNode {
+			type: 'Declaration';
+			property: string;
+			value: string;
+		}
+
+		// for zimmerframe
+		export type Node =
+			| StyleSheet
+			| Rule
+			| Atrule
+			| SelectorList
+			| Block
+			| ComplexSelector
+			| RelativeSelector
+			| Combinator
+			| SimpleSelector
+			| Declaration;
 	}
 	interface BaseNode {
 		type: string;
@@ -1594,6 +1750,8 @@ declare module 'svelte/compiler' {
 		style?: Preprocessor;
 		script?: Preprocessor;
 	}
+
+	export { walk };
 }
 
 declare module 'svelte/easing' {
@@ -1809,12 +1967,12 @@ declare module 'svelte/motion' {
 }
 
 declare module 'svelte/reactivity' {
-	export class Date extends Date {
+	class ReactiveDate extends Date {
 		
 		constructor(...values: any[]);
 		#private;
 	}
-	export class Set<T> extends Set<any> {
+	class ReactiveSet<T> extends Set<any> {
 		
 		constructor(value?: Iterable<T> | null | undefined);
 		
@@ -1829,7 +1987,7 @@ declare module 'svelte/reactivity' {
 		[Symbol.iterator](): IterableIterator<T>;
 		#private;
 	}
-	export class Map<K, V> extends Map<any, any> {
+	class ReactiveMap<K, V> extends Map<any, any> {
 		
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
 		
@@ -1848,10 +2006,12 @@ declare module 'svelte/reactivity' {
 		[Symbol.iterator](): IterableIterator<[K, V]>;
 		#private;
 	}
+
+	export { ReactiveDate as Date, ReactiveSet as Set, ReactiveMap as Map };
 }
 
 declare module 'svelte/server' {
-	export function render(component: (...args: any[]) => void, options: {
+	export function render(component: typeof import('svelte').SvelteComponent, options: {
 		props: Record<string, any>;
 		context?: Map<any, any>;
 	}): RenderOutput;
@@ -2071,7 +2231,7 @@ declare module 'svelte/transition' {
 	 * https://svelte.dev/docs/svelte-transition#crossfade
 	 * */
 	export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
-		fallback?: ((node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig) | undefined;
+		fallback?: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
 	}): [(node: any, params: CrossfadeParams & {
 		key: any;
 	}) => () => TransitionConfig, (node: any, params: CrossfadeParams & {
@@ -2299,6 +2459,12 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * @default null
 		 */
 		cssOutputFilename?: string;
+		/**
+		 * If `true`, compiles components with hot reloading support.
+		 *
+		 * @default false
+		 */
+		hmr?: boolean;
 	}
 
 	interface ModuleCompileOptions {
@@ -2542,5 +2708,26 @@ declare function $bindable<T>(t?: T): T;
 declare function $inspect<T extends any[]>(
 	...values: T
 ): { with: (fn: (type: 'init' | 'update', ...values: T) => void) => void };
+
+/**
+ * Retrieves the `this` reference of the custom element that contains this component. Example:
+ *
+ * ```svelte
+ * <svelte:options customElement="my-element" />
+ *
+ * <script>
+ * 	function greet(greeting) {
+ * 		$host().dispatchEvent(new CustomEvent('greeting', { detail: greeting }))
+ * 	}
+ * </script>
+ *
+ * <button onclick={() => greet('hello')}>say hello</button>
+ * ```
+ *
+ * Only available inside custom element components, and only on the client-side.
+ *
+ * https://svelte-5-preview.vercel.app/docs/runes#$host
+ */
+declare function $host<El extends HTMLElement = HTMLElement>(): El;
 
 //# sourceMappingURL=index.d.ts.map

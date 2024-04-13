@@ -1,9 +1,9 @@
 import * as fs from 'node:fs';
 import { setImmediate } from 'node:timers/promises';
 import glob from 'tiny-glob/sync.js';
-// import { clear_loops, flush, set_now, set_raf } from 'svelte/internal';
-import * as $ from 'svelte/internal';
+import * as $ from 'svelte/internal/client';
 import { createClassComponent } from 'svelte/legacy';
+import { flushSync } from 'svelte';
 import { render } from 'svelte/server';
 import { afterAll, assert, beforeAll } from 'vitest';
 import { compile_directory } from '../helpers.js';
@@ -27,10 +27,10 @@ type Assert = typeof import('vitest').assert & {
 
 export interface RuntimeTest<Props extends Record<string, any> = Record<string, any>>
 	extends BaseTest {
-	/** Use `true` to signal a temporary skip, and `"permanent"` to signal that this test is never intended to run in ssr mode */
-	skip_if_ssr?: boolean | 'permanent';
-	/** Use `true` to signal a temporary skip, and `"permanent"` to signal that this test is never intended to run in hydration mode */
-	skip_if_hydrate?: boolean | 'permanent';
+	/** Use e.g. `mode: ['client']` to indicate that this test should never run in server/hydrate modes */
+	mode?: Array<'server' | 'client' | 'hydrate'>;
+	/** Temporarily skip specific modes, without skipping the entire test */
+	skip_mode?: Array<'server' | 'client' | 'hydrate'>;
 	html?: string;
 	ssrHtml?: string;
 	compileOptions?: Partial<CompileOptions>;
@@ -96,12 +96,13 @@ export function runtime_suite(runes: boolean) {
 		['dom', 'hydrate', 'ssr'],
 		(variant, config) => {
 			if (variant === 'hydrate') {
-				if (config.skip_if_hydrate === 'permanent') return 'no-test';
-				if (config.skip_if_hydrate) return true;
+				if (config.mode && !config.mode.includes('hydrate')) return 'no-test';
+				if (config.skip_mode?.includes('hydrate')) return true;
 			}
+
 			if (variant === 'ssr') {
 				if (
-					config.skip_if_ssr === 'permanent' ||
+					(config.mode && !config.mode.includes('server')) ||
 					(!config.test_ssr &&
 						config.html === undefined &&
 						config.ssrHtml === undefined &&
@@ -109,7 +110,7 @@ export function runtime_suite(runes: boolean) {
 				) {
 					return 'no-test';
 				}
-				if (config.skip_if_ssr) return true;
+				if (config.skip_mode?.includes('server')) return true;
 			}
 
 			return false;
@@ -261,7 +262,7 @@ async function run_test_variant(
 				target,
 				immutable: config.immutable,
 				intro: config.intro,
-				recover: config.recover === undefined ? false : config.recover,
+				recover: config.recover ?? false,
 				hydrate: variant === 'hydrate'
 			});
 
@@ -283,7 +284,7 @@ async function run_test_variant(
 			}
 
 			if (config.html) {
-				$.flushSync();
+				flushSync();
 				assert_html_equal_with_options(target.innerHTML, config.html, {
 					preserveComments:
 						config.withoutNormalizeHtml === 'only-strip-comments' ? false : undefined,
@@ -293,7 +294,7 @@ async function run_test_variant(
 
 			try {
 				if (config.test) {
-					$.flushSync();
+					flushSync();
 					await config.test({
 						// @ts-expect-error TS doesn't get it
 						assert: {

@@ -23,8 +23,8 @@ export interface Template {
 }
 
 export interface ReactiveStatement {
-	assignments: Set<Identifier>;
-	dependencies: Set<Binding>;
+	assignments: Set<Binding>;
+	dependencies: Binding[];
 }
 
 export interface RawWarning {
@@ -73,6 +73,7 @@ export interface ComponentAnalysis extends Analysis {
 		hash: string;
 		keyframes: string[];
 	};
+	source: string;
 }
 
 declare module 'estree' {

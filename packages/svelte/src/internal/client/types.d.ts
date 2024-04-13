@@ -1,13 +1,9 @@
+import type { Store } from '#shared';
 import { STATE_SYMBOL } from './constants.js';
 import type { Effect, Source, Value } from './reactivity/types.js';
 
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
-
-export type Store<V> = {
-	subscribe: (run: (value: V) => void) => () => void;
-	set(value: V): void;
-};
 
 // For all the core internal objects, we use single-character property strings.
 // This not only reduces code-size and parsing, but it also improves the performance
@@ -20,8 +16,8 @@ export type ComponentContext = {
 	s: Record<string, unknown>;
 	/** exports (and props, if `accessors: true`) */
 	x: Record<string, any> | null;
-	/** effects */
-	e: null | Effect[];
+	/** deferred effects */
+	e: null | Array<() => void | (() => void)>;
 	/** mounted */
 	m: boolean;
 	/** parent */
@@ -51,13 +47,13 @@ export type TemplateNode = Text | Element | Comment;
 
 export type Dom = TemplateNode | TemplateNode[];
 
-export interface Block {}
-
 export type EachState = {
 	/** flags */
 	flags: number;
-	/** items */
-	items: EachItem[];
+	/** a key -> item lookup */
+	items: Map<any, EachItem>;
+	/** head of the linked list of items */
+	next: EachItem | null;
 };
 
 export type EachItem = {
@@ -71,6 +67,8 @@ export type EachItem = {
 	i: number | Source<number>;
 	/** key */
 	k: unknown;
+	prev: EachItem | EachState;
+	next: EachItem | null;
 };
 
 export interface TransitionManager {

@@ -1,7 +1,7 @@
-import * as $ from '../client/runtime.js';
-import { is_promise, noop } from '../common.js';
+import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
+	UNINITIALIZED,
 	DOMBooleanAttributes,
 	RawTextElements,
 	disallowed_paragraph_contents,
@@ -9,9 +9,8 @@ import {
 	is_tag_valid_with_parent
 } from '../../constants.js';
 import { DEV } from 'esm-env';
-import { UNINITIALIZED } from '../client/constants.js';
-
-export * from '../client/validate.js';
+import { current_component, pop, push } from './context.js';
+import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 
 /**
  * @typedef {{
@@ -164,11 +163,11 @@ export function element(payload, tag, attributes_fn, children_fn) {
 
 	if (!VoidElements.has(tag)) {
 		if (!RawTextElements.includes(tag)) {
-			payload.out += '<![>';
+			payload.out += BLOCK_OPEN;
 		}
 		children_fn();
 		if (!RawTextElements.includes(tag)) {
-			payload.out += '<!]>';
+			payload.out += BLOCK_CLOSE;
 		}
 		payload.out += `</${tag}>`;
 	}
@@ -181,7 +180,7 @@ export function element(payload, tag, attributes_fn, children_fn) {
 export let on_destroy = [];
 
 /**
- * @param {(...args: any[]) => void} component
+ * @param {typeof import('svelte').SvelteComponent} component
  * @param {{ props: Record<string, any>; context?: Map<any, any> }} options
  * @returns {RenderOutput}
  */
@@ -190,39 +189,28 @@ export function render(component, options) {
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
-	payload.out += '<![>';
+	payload.out += BLOCK_OPEN;
 
 	if (options.context) {
-		$.push({});
-		/** @type {import('../client/types.js').ComponentContext} */ ($.current_component_context).c =
-			options.context;
+		push();
+		/** @type {import('#server').Component} */ (current_component).c = options.context;
 	}
+
+	// @ts-expect-error
 	component(payload, options.props, {}, {});
+
 	if (options.context) {
-		$.pop();
+		pop();
 	}
-	payload.out += '<!]>';
+
+	payload.out += BLOCK_CLOSE;
 	for (const cleanup of on_destroy) cleanup();
 	on_destroy = prev_on_destroy;
 
 	return {
-		head:
-			payload.head.out || payload.head.title
-				? payload.head.title + '<![>' + payload.head.out + '<!]>'
-				: '',
+		head: payload.head.out || payload.head.title ? payload.head.out + payload.head.title : '',
 		html: payload.out
 	};
-}
-
-/**
- * @param {boolean} runes
- */
-export function push(runes) {
-	$.push({}, runes);
-}
-
-export function pop() {
-	$.pop();
 }
 
 /**
@@ -257,7 +245,9 @@ export function escape(value, is_attr = false) {
  */
 export function head(payload, fn) {
 	const head_payload = payload.head;
+	payload.head.out += BLOCK_OPEN;
 	fn(head_payload);
+	payload.head.out += BLOCK_CLOSE;
 }
 
 /**
@@ -283,15 +273,15 @@ export function attr(name, value, boolean) {
 export function css_props(payload, is_html, props, component) {
 	const styles = style_object_to_string(props);
 	if (is_html) {
-		payload.out += `<div style="display: contents; ${styles}"><![>`;
+		payload.out += `<div style="display: contents; ${styles}"><!--[-->`;
 	} else {
-		payload.out += `<g style="${styles}"><![>`;
+		payload.out += `<g style="${styles}"><!--[-->`;
 	}
 	component();
 	if (is_html) {
-		payload.out += `<!]></div>`;
+		payload.out += `<!--]--></div>`;
 	} else {
-		payload.out += `<!]></g>`;
+		payload.out += `<!--]--></g>`;
 	}
 }
 
@@ -429,7 +419,7 @@ export function merge_styles(style_attribute, style_directive) {
  * @template V
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('../client/types.js').Store<V> | null | undefined} store
+ * @param {import('#shared').Store<V> | null | undefined} store
  * @returns {V}
  */
 export function store_get(store_values, store_name, store) {
@@ -466,7 +456,7 @@ export function validate_store(store, name) {
 /**
  * Sets the new value of a store and returns that value.
  * @template V
- * @param {import('../client/types.js').Store<V>} store
+ * @param {import('#shared').Store<V>} store
  * @param {V} value
  * @returns {V}
  */
@@ -480,7 +470,7 @@ export function store_set(store, value) {
  * @template V
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('../client/types.js').Store<V>} store
+ * @param {import('#shared').Store<V>} store
  * @param {any} expression
  */
 export function mutate_store(store_values, store_name, store, expression) {
@@ -491,7 +481,7 @@ export function mutate_store(store_values, store_name, store, expression) {
 /**
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('../client/types.js').Store<number>} store
+ * @param {import('#shared').Store<number>} store
  * @param {1 | -1} [d]
  * @returns {number}
  */
@@ -504,7 +494,7 @@ export function update_store(store_values, store_name, store, d = 1) {
 /**
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('../client/types.js').Store<number>} store
+ * @param {import('#shared').Store<number>} store
  * @param {1 | -1} [d]
  * @returns {number}
  */
@@ -666,3 +656,13 @@ export function once(get_value) {
 		return value;
 	};
 }
+
+export { push, pop } from './context.js';
+
+export {
+	add_snippet_symbol,
+	validate_component,
+	validate_dynamic_element_tag,
+	validate_snippet,
+	validate_void_dynamic_element
+} from '../shared/validate.js';

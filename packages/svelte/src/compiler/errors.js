@@ -187,6 +187,8 @@ const runes = {
 	'invalid-state-location': (rune) =>
 		`${rune}(...) can only be used as a variable declaration initializer or a class field`,
 	'invalid-effect-location': () => `$effect() can only be used as an expression statement`,
+	'invalid-host-location': () =>
+		`$host() can only be used inside custom element component instances`,
 	/**
 	 * @param {boolean} is_binding
 	 * @param {boolean} show_details
@@ -212,7 +214,9 @@ const runes = {
 	'duplicate-props-rune': () => `Cannot use $props() more than once`,
 	'invalid-each-assignment': () =>
 		`Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. 'array[i] = value' instead of 'entry = value')`,
-	'invalid-derived-call': () => `$derived.call(...) has been replaced with $derived.by(...)`
+	'invalid-derived-call': () => `$derived.call(...) has been replaced with $derived.by(...)`,
+	'conflicting-property-name': () =>
+		`Cannot have a property and a component export with the same name`
 };
 
 /** @satisfies {Errors} */
@@ -282,7 +286,9 @@ const attributes = {
 	},
 	'invalid-let-directive-placement': () => 'let directive at invalid position',
 	'invalid-style-directive-modifier': () =>
-		`Invalid 'style:' modifier. Valid modifiers are: 'important'`
+		`Invalid 'style:' modifier. Valid modifiers are: 'important'`,
+	'invalid-sequence-expression': () =>
+		`Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses`
 };
 
 /** @satisfies {Errors} */

@@ -195,8 +195,7 @@ export const javascript_visitors_runes = {
 			if (rune === '$props') {
 				assert.equal(declarator.id.type, 'ObjectPattern');
 
-				/** @type {string[]} */
-				const seen = [];
+				const seen = state.analysis.exports.map(({ name, alias }) => alias ?? name);
 
 				for (const property of declarator.id.properties) {
 					if (property.type === 'Property') {
@@ -301,7 +300,7 @@ export const javascript_visitors_runes = {
 					declarations.push(
 						b.declarator(
 							b.id(object_id),
-							b.call('$.derived', b.thunk(rune === '$derived.by' ? b.call(value) : value))
+							b.call('$.derived', rune === '$derived.by' ? value : b.thunk(value))
 						)
 					);
 					declarations.push(
@@ -371,7 +370,7 @@ export const javascript_visitors_runes = {
 				const func = context.visit(node.expression.arguments[0]);
 				return {
 					...node,
-					expression: b.call('$.pre_effect', /** @type {import('estree').Expression} */ (func))
+					expression: b.call('$.user_pre_effect', /** @type {import('estree').Expression} */ (func))
 				};
 			}
 		}
@@ -381,6 +380,10 @@ export const javascript_visitors_runes = {
 	CallExpression(node, context) {
 		const rune = get_rune(node, context.state.scope);
 
+		if (rune === '$host') {
+			return b.id('$$props.$$host');
+		}
+
 		if (rune === '$effect.active') {
 			return b.call('$.effect_active');
 		}
@@ -389,7 +392,7 @@ export const javascript_visitors_runes = {
 			const args = /** @type {import('estree').Expression[]} */ (
 				node.arguments.map((arg) => context.visit(arg))
 			);
-			return b.call('$.user_root_effect', ...args);
+			return b.call('$.effect_root', ...args);
 		}
 
 		if (rune === '$inspect' || rune === '$inspect().with') {

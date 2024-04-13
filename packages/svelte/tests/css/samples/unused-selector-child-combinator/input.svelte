@@ -1,7 +1,7 @@
 <style>
 	article > * {
 		font-size: 36px;
-  }
+	}
 
 	article * {
 		font-size: 36px;

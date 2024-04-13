@@ -1,0 +1,13 @@
+
+	.before.svelte-xyz + .foo:where(.svelte-xyz) { color: green; }
+	.before.svelte-xyz ~ .foo:where(.svelte-xyz) { color: green; }
+	.before.svelte-xyz ~ .bar:where(.svelte-xyz) { color: green; }
+
+	.x + .foo.svelte-xyz { color: green; }
+	.x + .foo.svelte-xyz span:where(.svelte-xyz) { color: green; }
+	.x ~ .foo.svelte-xyz { color: green; }
+	.x ~ .foo.svelte-xyz span:where(.svelte-xyz) { color: green; }
+	.x ~ .bar.svelte-xyz { color: green; }
+
+	/* no match */
+	/* (unused) :global(.x) + .bar { color: green; }*/

@@ -11,7 +11,7 @@
 
 		const nested_cleanup = $effect.root(() => {
 			return () => {
-				log.push('cleanup 2')	;
+				log.push('cleanup 2');
 			}
 		});
 
@@ -22,6 +22,6 @@
 	});
 </script>
 
-<button on:click={() => x++}>{x}</button>
-<button on:click={() => y++}>{y}</button>
-<button on:click={() => cleanup()}>cleanup</button>
+<button onclick={() => x++}>{x}</button>
+<button onclick={() => y++}>{y}</button>
+<button onclick={cleanup}>cleanup</button>

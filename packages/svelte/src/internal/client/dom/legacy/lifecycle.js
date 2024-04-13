@@ -1,7 +1,9 @@
-import { run } from '../../../common.js';
-import { pre_effect, user_effect } from '../../reactivity/effects.js';
+import { CLEAN } from '../../constants.js';
+import { run, run_all } from '../../../shared/utils.js';
+import { user_pre_effect, user_effect } from '../../reactivity/effects.js';
 import {
 	current_component_context,
+	current_effect,
 	deep_read_state,
 	flush_local_render_effects,
 	get,
@@ -19,13 +21,16 @@ export function init() {
 
 	// beforeUpdate
 	if (callbacks.b.length) {
-		pre_effect(() => {
+		user_pre_effect(() => {
 			observe_all(context);
-			callbacks.b.forEach(run);
+			run_all(callbacks.b);
 			// beforeUpdate might change state that affects rendering, ensure the render effects following from it
 			// are batched up with the current run. Avoids for example child components rerunning when they're
 			// now hidden because beforeUpdate did set an if block to false.
-			flush_local_render_effects();
+			const parent = current_effect?.parent;
+			if (parent != null && (parent.f & CLEAN) === 0) {
+				flush_local_render_effects(parent);
+			}
 		});
 	}
 
@@ -45,7 +50,7 @@ export function init() {
 	if (callbacks.a.length) {
 		user_effect(() => {
 			observe_all(context);
-			callbacks.a.forEach(run);
+			run_all(callbacks.a);
 		});
 	}
 }
