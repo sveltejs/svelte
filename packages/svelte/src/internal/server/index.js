@@ -9,6 +9,7 @@ import {
 } from '../../constants.js';
 import { DEV } from 'esm-env';
 import { UNINITIALIZED } from '../client/constants.js';
+import { RawTextElements } from '../../compiler/phases/constants.js';
 
 export * from '../client/validate.js';
 
@@ -63,8 +64,6 @@ export const VoidElements = new Set([
 	'track',
 	'wbr'
 ]);
-
-export const RawTextElements = new Set(['textarea', 'script', 'style', 'title']);
 
 /**
  * @type {Element | null}
@@ -164,11 +163,11 @@ export function element(payload, tag, attributes_fn, children_fn) {
 	payload.out += `>`;
 
 	if (!VoidElements.has(tag)) {
-		if (!RawTextElements.has(tag)) {
+		if (!RawTextElements.includes(tag)) {
 			payload.out += '<![>';
 		}
 		children_fn();
-		if (!RawTextElements.has(tag)) {
+		if (!RawTextElements.includes(tag)) {
 			payload.out += '<!]>';
 		}
 		payload.out += `</${tag}>`;
