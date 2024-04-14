@@ -302,8 +302,8 @@ export function analyze_component(root, source, options) {
 					declaration.initial.source.value === 'svelte/store'
 				))
 		) {
-			let is_nested_store_subscription = false;
-			for (const reference of references) {
+			let is_nested_store_subscription_node = undefined;
+			search: for (const reference of references) {
 				for (let i = reference.path.length - 1; i >= 0; i--) {
 					const scope =
 						scopes.get(reference.path[i]) ||
@@ -311,14 +311,17 @@ export function analyze_component(root, source, options) {
 						instance.scopes.get(reference.path[i]);
 					if (scope) {
 						const owner = scope?.owner(store_name);
-						is_nested_store_subscription =
-							!!owner && owner !== module.scope && owner !== instance.scope;
+						if (!!owner && owner !== module.scope && owner !== instance.scope) {
+							is_nested_store_subscription_node = reference.node;
+							break search;
+						}
 						break;
 					}
 				}
 			}
-			if (is_nested_store_subscription) {
-				error(references[0].node, 'illegal-store-subscription');
+
+			if (is_nested_store_subscription_node) {
+				error(is_nested_store_subscription_node, 'illegal-store-subscription');
 			}
 
 			if (options.runes !== false) {
