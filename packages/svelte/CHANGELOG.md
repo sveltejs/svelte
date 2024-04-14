@@ -1,5 +1,21 @@
 # svelte
 
+## 5.0.0-next.103
+
+### Patch Changes
+
+- fix: throw error when auto-subscribed store variable shadow by local variable ([#11170](https://github.com/sveltejs/svelte/pull/11170))
+
+- fix: make ownership validation work correctly with HMR ([#11171](https://github.com/sveltejs/svelte/pull/11171))
+
+- fix: revert ownership widening change ([#11161](https://github.com/sveltejs/svelte/pull/11161))
+
+- fix: fix string name of reactive map and set iterator ([#11169](https://github.com/sveltejs/svelte/pull/11169))
+
+- feat: reactive `URL` and `URLSearchParams` classes ([#11157](https://github.com/sveltejs/svelte/pull/11157))
+
+- feat: update error message for snippet binding and assignments ([#11168](https://github.com/sveltejs/svelte/pull/11168))
+
 ## 5.0.0-next.102
 
 ### Patch Changes
