@@ -253,8 +253,8 @@ export interface Binding {
 	 * - `rest_prop`: A rest prop
 	 * - `state`: A state variable
 	 * - `derived`: A derived variable
-	 * - `each`: An each block context variable
-	 * - `snippet`: A snippet block context variable
+	 * - `each`: An each block parameter
+	 * - `snippet`: A snippet parameter
 	 * - `store_sub`: A $store value
 	 * - `legacy_reactive`: A `$:` declaration
 	 * - `legacy_reactive_import`: An imported binding that is mutated inside the component
