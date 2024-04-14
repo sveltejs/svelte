@@ -20,7 +20,7 @@ export default test({
 		]);
 		log.length = 0;
 
-		b1.click(); // map.set('key', 'value')
+		flushSync(() => b1.click()); // map.set('key', 'value')
 
 		in1.value = 'name';
 		in2.value = 'Svelte';
@@ -54,13 +54,13 @@ export default test({
 		]);
 		log.length = 0;
 
-		b2.click(); // set.add('name');
+		flushSync(() => b2.click()); // set.add('name');
 
 		in1.value = 'Svelte';
 		in1.dispatchEvent(new window.Event('input', { bubbles: true }));
-		b2.click(); // set.add('Svelte');
+		flushSync(() => b2.click()); // set.add('Svelte');
 
-		b2.click(); // set.add('Svelte');
+		flushSync(() => b2.click()); // set.add('Svelte');
 
 		assert.deepEqual(log, [
 			{ label: 'set', type: 'update', values: ['name'] },
@@ -68,9 +68,9 @@ export default test({
 		]);
 		log.length = 0;
 
-		b3.click(); // date.minutes++
-		b3.click(); // date.minutes++
-		b3.click(); // date.minutes++
+		flushSync(() => b3.click()); // date.minutes++
+		flushSync(() => b3.click()); // date.minutes++
+		flushSync(() => b3.click()); // date.minutes++
 
 		assert.deepEqual(log, [
 			{ label: 'date', type: 'update', values: 1712966460000 },

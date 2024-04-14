@@ -13,7 +13,6 @@ export class ReactiveMap extends Map {
 	/** @type {Map<K, import('#client').Source<V>>} */
 	#sources = new Map();
 	#version = source(0);
-	#inspect_version = source(0);
 	#size = source(0);
 
 	/**
@@ -39,9 +38,6 @@ export class ReactiveMap extends Map {
 
 	#increment_version() {
 		set(this.#version, this.#version.v + 1);
-	}
-	#increment_inspect_version() {
-		set(this.#inspect_version, this.#inspect_version.v + 1);
 	}
 
 	/** @param {K} key */
@@ -97,11 +93,8 @@ export class ReactiveMap extends Map {
 			sources.set(key, source(value));
 			set(this.#size, sources.size);
 			this.#increment_version();
-			this.#increment_inspect_version();
 		} else {
-			const old_version = s.version;
 			set(s, value);
-			if (s.version !== old_version) this.#increment_inspect_version();
 		}
 
 		return super.set(key, value);
@@ -117,7 +110,6 @@ export class ReactiveMap extends Map {
 			set(this.#size, sources.size);
 			set(s, /** @type {V} */ (UNINITIALIZED));
 			this.#increment_version();
-			this.#increment_inspect_version();
 		}
 
 		return super.delete(key);
@@ -132,7 +124,6 @@ export class ReactiveMap extends Map {
 				set(s, /** @type {V} */ (UNINITIALIZED));
 			}
 			this.#increment_version();
-			this.#increment_inspect_version();
 		}
 
 		sources.clear();
@@ -167,6 +158,12 @@ export class ReactiveMap extends Map {
 	}
 
 	[INSPECT_SYMBOL]() {
-		get(this.#inspect_version);
+		// changes could either introduced by
+		// - modifying the value, or
+		// - add / remove entries to the map
+		for (const [, source] of this.#sources) {
+			get(source);
+		}
+		get(this.#size);
 	}
 }
