@@ -3,6 +3,6 @@ import { test } from '../../test';
 export default test({
 	error: {
 		code: 'invalid-snippet-assignment',
-		message: 'Cannot reassign or bind to snippet function argument in runes mode'
+		message: 'Cannot reassign or bind to snippet parameter'
 	}
 });
