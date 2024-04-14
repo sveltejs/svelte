@@ -15,11 +15,11 @@ export class ReactiveURL extends URL {
 		search: source(super.search),
 		hash: source(super.hash)
 	};
+
 	#searchParams = new ReactiveURLSearchParams(super.searchParams, this.#url.search);
 
 	get hash() {
-		get(this.#url.hash);
-		return super.hash;
+		return get(this.#url.hash);
 	}
 
 	set hash(value) {
@@ -40,8 +40,7 @@ export class ReactiveURL extends URL {
 	}
 
 	get hostname() {
-		get(this.#url.hostname);
-		return super.hostname;
+		return get(this.#url.hostname);
 	}
 
 	set hostname(value) {
@@ -75,8 +74,7 @@ export class ReactiveURL extends URL {
 	}
 
 	get password() {
-		get(this.#url.password);
-		return super.password;
+		return get(this.#url.password);
 	}
 
 	set password(value) {
@@ -85,8 +83,7 @@ export class ReactiveURL extends URL {
 	}
 
 	get pathname() {
-		get(this.#url.pathname);
-		return super.pathname;
+		return get(this.#url.pathname);
 	}
 
 	set pathname(value) {
@@ -95,8 +92,7 @@ export class ReactiveURL extends URL {
 	}
 
 	get port() {
-		get(this.#url.port);
-		return super.port;
+		return get(this.#url.port);
 	}
 
 	set port(value) {
@@ -105,8 +101,7 @@ export class ReactiveURL extends URL {
 	}
 
 	get protocol() {
-		get(this.#url.protocol);
-		return super.protocol;
+		return get(this.#url.protocol);
 	}
 
 	set protocol(value) {
@@ -127,8 +122,7 @@ export class ReactiveURL extends URL {
 	}
 
 	get username() {
-		get(this.#url.username);
-		return super.username;
+		return get(this.#url.username);
 	}
 
 	set username(value) {
@@ -148,21 +142,11 @@ export class ReactiveURL extends URL {
 	}
 
 	toString() {
-		this.href;
-		return super.toString();
+		return this.href;
 	}
 
 	toJSON() {
-		this.href;
-		return super.toJSON();
-	}
-
-	/**
-	 * @param {string} input
-	 * @param {string=} base
-	 */
-	constructor(input, base) {
-		super(input, base);
+		return this.href;
 	}
 }
 
