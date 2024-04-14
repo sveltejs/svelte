@@ -356,8 +356,6 @@ const validation = {
 			if (binding.kind === 'snippet') {
 				error(node, 'invalid-snippet-assignment');
 			}
-
-			// TODO handle mutations of non-state/props in runes mode
 		}
 
 		if (node.name === 'group') {
