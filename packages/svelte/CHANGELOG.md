@@ -1,5 +1,21 @@
 # svelte
 
+## 5.0.0-next.102
+
+### Patch Changes
+
+- fix: generate correct types for reactive Map/Set/Date ([#11153](https://github.com/sveltejs/svelte/pull/11153))
+
+## 5.0.0-next.101
+
+### Patch Changes
+
+- fix missing classes after dynamic expressions in class attribute ([#11134](https://github.com/sveltejs/svelte/pull/11134))
+
+- feat: simplify HMR implementation ([#11132](https://github.com/sveltejs/svelte/pull/11132))
+
+- fix: add validation around disallowed sequence expressions to element attributes ([#11149](https://github.com/sveltejs/svelte/pull/11149))
+
 ## 5.0.0-next.100
 
 ### Patch Changes

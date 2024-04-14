@@ -132,7 +132,7 @@ export class ReactiveSet extends Set {
 
 	keys() {
 		get(this.#version);
-		return this.#sources.keys();
+		return map(this.#sources.keys(), (key) => key, 'Set Iterator');
 	}
 
 	values() {
@@ -140,7 +140,7 @@ export class ReactiveSet extends Set {
 	}
 
 	entries() {
-		return map(this.keys(), (key) => /** @type {[T, T]} */ ([key, key]));
+		return map(this.keys(), (key) => /** @type {[T, T]} */ ([key, key]), 'Set Iterator');
 	}
 
 	[Symbol.iterator]() {

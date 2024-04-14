@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.0.0-next.100",
+  "version": "5.0.0-next.102",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -104,7 +104,7 @@
     "check": "tsc && cd ./tests/types && tsc",
     "check:watch": "tsc --watch",
     "generate:version": "node ./scripts/generate-version.js",
-    "generate:types": "node ./scripts/generate-types.js",
+    "generate:types": "node ./scripts/generate-types.js && tsc -p tsconfig.generated.json",
     "prepublishOnly": "pnpm build",
     "knip": "knip"
   },
@@ -116,7 +116,7 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/aria-query": "^5.0.4",
-    "dts-buddy": "^0.4.6",
+    "dts-buddy": "^0.4.7",
     "esbuild": "^0.19.11",
     "knip": "^4.2.1",
     "rollup": "^4.9.5",

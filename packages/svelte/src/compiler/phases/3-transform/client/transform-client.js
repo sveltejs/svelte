@@ -464,8 +464,8 @@ export function client_component(source, analysis, options) {
 			);
 		}
 
-		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'), b.id(analysis.name))));
-		body.push(b.stmt(b.call(b.id('$.mark_module_end'))));
+		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'))));
+		body.push(b.stmt(b.call(b.id('$.mark_module_end'), b.id(analysis.name))));
 	}
 
 	if (options.discloseVersion) {

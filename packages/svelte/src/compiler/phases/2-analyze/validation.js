@@ -98,7 +98,12 @@ function validate_element(node, context) {
 			if (context.state.analysis.runes && is_expression) {
 				const expression = attribute.value[0].expression;
 				if (expression.type === 'SequenceExpression') {
-					error(expression, 'invalid-sequence-expression');
+					let i = /** @type {number} */ (expression.start);
+					while (--i > 0) {
+						const char = context.state.analysis.source[i];
+						if (char === '(') break; // parenthesized sequence expressions are ok
+						if (char === '{') error(expression, 'invalid-sequence-expression');
+					}
 				}
 			}
 
@@ -348,7 +353,9 @@ const validation = {
 				error(node, 'invalid-each-assignment');
 			}
 
-			// TODO handle mutations of non-state/props in runes mode
+			if (binding.kind === 'snippet') {
+				error(node, 'invalid-snippet-assignment');
+			}
 		}
 
 		if (node.name === 'group') {
@@ -1008,14 +1015,21 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 function validate_assignment(node, argument, state) {
 	validate_no_const_assignment(node, argument, state.scope, false);
 
-	if (state.analysis.runes && argument.type === 'Identifier') {
+	if (argument.type === 'Identifier') {
 		const binding = state.scope.get(argument.name);
-		if (binding?.kind === 'derived') {
-			error(node, 'invalid-derived-assignment');
+
+		if (state.analysis.runes) {
+			if (binding?.kind === 'derived') {
+				error(node, 'invalid-derived-assignment');
+			}
+
+			if (binding?.kind === 'each') {
+				error(node, 'invalid-each-assignment');
+			}
 		}
 
-		if (binding?.kind === 'each') {
-			error(node, 'invalid-each-assignment');
+		if (binding?.kind === 'snippet') {
+			error(node, 'invalid-snippet-assignment');
 		}
 	}
 
