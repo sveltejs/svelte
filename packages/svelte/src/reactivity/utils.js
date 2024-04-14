@@ -16,6 +16,7 @@ export function map(iterable, fn, name) {
 
 			return { done: true, value: undefined };
 		},
+		// @ts-expect-error
 		get [Symbol.toStringTag]() {
 			return name;
 		}
