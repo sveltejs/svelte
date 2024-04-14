@@ -352,8 +352,6 @@ const validation = {
 			if (context.state.analysis.runes && binding.kind === 'each') {
 				error(node, 'invalid-each-assignment');
 			}
-
-			// TODO handle mutations of non-state/props in runes mode
 		}
 
 		if (node.name === 'group') {
