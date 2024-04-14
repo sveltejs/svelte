@@ -11,11 +11,20 @@ export class ReactiveURL extends URL {
 		hostname: source(super.hostname),
 		port: source(super.port),
 		pathname: source(super.pathname),
-		search: source(super.search),
 		hash: source(super.hash)
 	};
 
-	#searchParams = new ReactiveURLSearchParams(super.searchParams);
+	#searchParams = new ReactiveURLSearchParams();
+
+	/**
+	 * @param {string | URL} url
+	 * @param {string | URL} [base]
+	 */
+	constructor(url, base) {
+		url = new URL(url, base);
+		super(url);
+		this.#searchParams[REPLACE](url.searchParams);
+	}
 
 	get hash() {
 		return get(this.#url.hash);
@@ -54,8 +63,8 @@ export class ReactiveURL extends URL {
 		get(this.#url.hostname);
 		get(this.#url.port);
 		get(this.#url.pathname);
-		get(this.#url.search);
 		get(this.#url.hash);
+		this.#searchParams.toString();
 		return super.href;
 	}
 
@@ -67,7 +76,6 @@ export class ReactiveURL extends URL {
 		set(this.#url.hostname, super.hostname);
 		set(this.#url.port, super.port);
 		set(this.#url.pathname, super.pathname);
-		set(this.#url.search, super.search);
 		set(this.#url.hash, super.hash);
 		this.#searchParams[REPLACE](super.searchParams);
 	}
@@ -109,13 +117,12 @@ export class ReactiveURL extends URL {
 	}
 
 	get search() {
-		const search = this.#searchParams.toString();
+		const search = this.#searchParams?.toString();
 		return search ? `?${search}` : '';
 	}
 
 	set search(value) {
-		super.search = value;
-		this.#searchParams[REPLACE](super.searchParams);
+		this.#searchParams[REPLACE](new URLSearchParams(value.replace(/^\?/, '')));
 	}
 
 	get username() {
