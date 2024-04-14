@@ -3,9 +3,10 @@
  * @template U
  * @param {Iterable<T>} iterable
  * @param {(value: T) => U} fn
+ * @param {string} name
  * @returns {IterableIterator<U>}
  */
-export function map(iterable, fn) {
+export function map(iterable, fn, name) {
 	return {
 		[Symbol.iterator]: get_this,
 		next() {
@@ -14,6 +15,9 @@ export function map(iterable, fn) {
 			}
 
 			return { done: true, value: undefined };
+		},
+		get [Symbol.toStringTag]() {
+			return name;
 		}
 	};
 }
