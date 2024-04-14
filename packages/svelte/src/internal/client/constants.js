@@ -14,3 +14,4 @@ export const IS_ELSEIF = 1 << 13;
 export const EFFECT_RAN = 1 << 14;
 
 export const STATE_SYMBOL = Symbol('$state');
+export const INSPECT_SYMBOL = Symbol('$inspect');

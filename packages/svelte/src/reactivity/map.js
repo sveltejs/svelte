@@ -3,6 +3,7 @@ import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { UNINITIALIZED } from '../constants.js';
 import { map } from './utils.js';
+import { INSPECT_SYMBOL } from '../internal/client/constants.js';
 
 /**
  * @template K
@@ -12,6 +13,7 @@ export class ReactiveMap extends Map {
 	/** @type {Map<K, import('#client').Source<V>>} */
 	#sources = new Map();
 	#version = source(0);
+	#inspect_version = source(0);
 	#size = source(0);
 
 	/**
@@ -37,6 +39,9 @@ export class ReactiveMap extends Map {
 
 	#increment_version() {
 		set(this.#version, this.#version.v + 1);
+	}
+	#increment_inspect_version() {
+		set(this.#inspect_version, this.#inspect_version.v + 1);
 	}
 
 	/** @param {K} key */
@@ -92,8 +97,11 @@ export class ReactiveMap extends Map {
 			sources.set(key, source(value));
 			set(this.#size, sources.size);
 			this.#increment_version();
+			this.#increment_inspect_version();
 		} else {
+			const old_version = s.version;
 			set(s, value);
+			if (s.version !== old_version) this.#increment_inspect_version();
 		}
 
 		return super.set(key, value);
@@ -109,6 +117,7 @@ export class ReactiveMap extends Map {
 			set(this.#size, sources.size);
 			set(s, /** @type {V} */ (UNINITIALIZED));
 			this.#increment_version();
+			this.#increment_inspect_version();
 		}
 
 		return super.delete(key);
@@ -123,6 +132,7 @@ export class ReactiveMap extends Map {
 				set(s, /** @type {V} */ (UNINITIALIZED));
 			}
 			this.#increment_version();
+			this.#increment_inspect_version();
 		}
 
 		sources.clear();
@@ -154,5 +164,9 @@ export class ReactiveMap extends Map {
 
 	get size() {
 		return get(this.#size);
+	}
+
+	[INSPECT_SYMBOL]() {
+		get(this.#inspect_version);
 	}
 }
