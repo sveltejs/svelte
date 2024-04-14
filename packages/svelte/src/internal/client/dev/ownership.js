@@ -67,9 +67,8 @@ function get_component() {
  * Together with `mark_module_end`, this function establishes the boundaries of a `.svelte` file,
  * such that subsequent calls to `get_component` can tell us which component is responsible
  * for a given state change
- * @param {Function} component
  */
-export function mark_module_start(component) {
+export function mark_module_start() {
 	const start = get_stack()?.[2];
 
 	if (start) {
@@ -77,17 +76,24 @@ export function mark_module_start(component) {
 			start,
 			// @ts-expect-error
 			end: null,
-			component
+			// @ts-expect-error we add the component at the end, since HMR will overwrite the function
+			component: null
 		});
 	}
 }
 
-export function mark_module_end() {
+/**
+ * @param {Function} component
+ */
+export function mark_module_end(component) {
 	const end = get_stack()?.[2];
 
 	if (end) {
 		const boundaries_file = boundaries[end.file];
-		boundaries_file[boundaries_file.length - 1].end = end;
+		const boundary = boundaries_file[boundaries_file.length - 1];
+
+		boundary.end = end;
+		boundary.component = component;
 	}
 }
 
