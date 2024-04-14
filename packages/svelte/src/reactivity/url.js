@@ -159,6 +159,7 @@ export class ReactiveURLSearchParams extends URLSearchParams {
 	#increment_version() {
 		set(this.#version, this.#version.v + 1);
 	}
+
 	#update_search() {
 		set(this.#search, '?' + this.#url_search_params.toString());
 	}
@@ -171,8 +172,8 @@ export class ReactiveURLSearchParams extends URLSearchParams {
 		this.#url_search_params = value;
 		this.#increment_version();
 	}
+
 	/**
-	 *
 	 * @param {URLSearchParams} url_search_params
 	 * @param {import('../internal/client/reactivity/types.js').Source<string>} search
 	 */
@@ -183,7 +184,6 @@ export class ReactiveURLSearchParams extends URLSearchParams {
 	}
 
 	/**
-	 *
 	 * @param {string} name
 	 * @param {string} value
 	 * @returns {void}
@@ -193,8 +193,8 @@ export class ReactiveURLSearchParams extends URLSearchParams {
 		this.#update_search();
 		return this.#url_search_params.append(name, value);
 	}
+
 	/**
-	 *
 	 * @param {string} name
 	 * @param {string=} value
 	 * @returns {void}
@@ -204,8 +204,8 @@ export class ReactiveURLSearchParams extends URLSearchParams {
 		this.#update_search();
 		return this.#url_search_params.delete(name, value);
 	}
+
 	/**
-	 *
 	 * @param {string} name
 	 * @returns {string|null}
 	 */
@@ -213,8 +213,8 @@ export class ReactiveURLSearchParams extends URLSearchParams {
 		get(this.#version);
 		return this.#url_search_params.get(name);
 	}
+
 	/**
-	 *
 	 * @param {string} name
 	 * @returns {string[]}
 	 */
@@ -222,8 +222,8 @@ export class ReactiveURLSearchParams extends URLSearchParams {
 		get(this.#version);
 		return this.#url_search_params.getAll(name);
 	}
+
 	/**
-	 *
 	 * @param {string} name
 	 * @param {string=} value
 	 * @returns {boolean}
@@ -232,12 +232,13 @@ export class ReactiveURLSearchParams extends URLSearchParams {
 		get(this.#version);
 		return this.#url_search_params.has(name, value);
 	}
+
 	keys() {
 		get(this.#version);
 		return this.#url_search_params.keys();
 	}
+
 	/**
-	 *
 	 * @param {string} name
 	 * @param {string} value
 	 * @returns {void}
@@ -247,26 +248,32 @@ export class ReactiveURLSearchParams extends URLSearchParams {
 		this.#update_search();
 		return this.#url_search_params.set(name, value);
 	}
+
 	sort() {
 		this.#increment_version();
 		this.#update_search();
 		return this.#url_search_params.sort();
 	}
+
 	toString() {
 		get(this.#version);
 		return this.#url_search_params.toString();
 	}
+
 	values() {
 		get(this.#version);
 		return this.#url_search_params.values();
 	}
+
 	entries() {
 		get(this.#version);
 		return this.#url_search_params.entries();
 	}
+
 	[Symbol.iterator]() {
 		return this.entries();
 	}
+
 	get size() {
 		return this.#url_search_params.size;
 	}
