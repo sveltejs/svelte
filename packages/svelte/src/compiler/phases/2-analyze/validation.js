@@ -353,7 +353,7 @@ const validation = {
 				error(node, 'invalid-each-assignment');
 			}
 
-			if (context.state.analysis.runes && binding.kind === 'snippet') {
+			if (binding.kind === 'snippet') {
 				error(node, 'invalid-snippet-assignment');
 			}
 
@@ -1017,14 +1017,17 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 function validate_assignment(node, argument, state) {
 	validate_no_const_assignment(node, argument, state.scope, false);
 
-	if (state.analysis.runes && argument.type === 'Identifier') {
+	if (argument.type === 'Identifier') {
 		const binding = state.scope.get(argument.name);
-		if (binding?.kind === 'derived') {
-			error(node, 'invalid-derived-assignment');
-		}
 
-		if (binding?.kind === 'each') {
-			error(node, 'invalid-each-assignment');
+		if (state.analysis.runes) {
+			if (binding?.kind === 'derived') {
+				error(node, 'invalid-derived-assignment');
+			}
+
+			if (binding?.kind === 'each') {
+				error(node, 'invalid-each-assignment');
+			}
 		}
 
 		if (binding?.kind === 'snippet') {
