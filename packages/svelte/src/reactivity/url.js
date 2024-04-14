@@ -122,6 +122,7 @@ export class ReactiveURL extends URL {
 	}
 
 	set search(value) {
+		super.search = value;
 		this.#searchParams[REPLACE](new URLSearchParams(value.replace(/^\?/, '')));
 	}
 
