@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-feat: reactive url
+feat: reactive `URL` and `URLSearchParams` classes
