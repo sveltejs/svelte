@@ -4,16 +4,13 @@ import { get } from '../internal/client/runtime.js';
 const REPLACE = Symbol();
 
 export class ReactiveURL extends URL {
-	#url = {
-		protocol: source(super.protocol),
-		username: source(super.username),
-		password: source(super.password),
-		hostname: source(super.hostname),
-		port: source(super.port),
-		pathname: source(super.pathname),
-		hash: source(super.hash)
-	};
-
+	#protocol = source(super.protocol);
+	#username = source(super.username);
+	#password = source(super.password);
+	#hostname = source(super.hostname);
+	#port = source(super.port);
+	#pathname = source(super.pathname);
+	#hash = source(super.hash);
 	#searchParams = new ReactiveURLSearchParams();
 
 	/**
@@ -27,93 +24,93 @@ export class ReactiveURL extends URL {
 	}
 
 	get hash() {
-		return get(this.#url.hash);
+		return get(this.#hash);
 	}
 
 	set hash(value) {
 		super.hash = value;
-		set(this.#url.hash, super.hash);
+		set(this.#hash, super.hash);
 	}
 
 	get host() {
-		get(this.#url.hostname);
-		get(this.#url.port);
+		get(this.#hostname);
+		get(this.#port);
 		return super.host;
 	}
 
 	set host(value) {
 		super.host = value;
-		set(this.#url.hostname, super.hostname);
-		set(this.#url.port, super.port);
+		set(this.#hostname, super.hostname);
+		set(this.#port, super.port);
 	}
 
 	get hostname() {
-		return get(this.#url.hostname);
+		return get(this.#hostname);
 	}
 
 	set hostname(value) {
 		super.hostname = value;
-		set(this.#url.hostname, super.hostname);
+		set(this.#hostname, super.hostname);
 	}
 
 	get href() {
-		get(this.#url.protocol);
-		get(this.#url.username);
-		get(this.#url.password);
-		get(this.#url.hostname);
-		get(this.#url.port);
-		get(this.#url.pathname);
-		get(this.#url.hash);
+		get(this.#protocol);
+		get(this.#username);
+		get(this.#password);
+		get(this.#hostname);
+		get(this.#port);
+		get(this.#pathname);
+		get(this.#hash);
 		this.#searchParams.toString();
 		return super.href;
 	}
 
 	set href(value) {
 		super.href = value;
-		set(this.#url.protocol, super.protocol);
-		set(this.#url.username, super.username);
-		set(this.#url.password, super.password);
-		set(this.#url.hostname, super.hostname);
-		set(this.#url.port, super.port);
-		set(this.#url.pathname, super.pathname);
-		set(this.#url.hash, super.hash);
+		set(this.#protocol, super.protocol);
+		set(this.#username, super.username);
+		set(this.#password, super.password);
+		set(this.#hostname, super.hostname);
+		set(this.#port, super.port);
+		set(this.#pathname, super.pathname);
+		set(this.#hash, super.hash);
 		this.#searchParams[REPLACE](super.searchParams);
 	}
 
 	get password() {
-		return get(this.#url.password);
+		return get(this.#password);
 	}
 
 	set password(value) {
 		super.password = value;
-		set(this.#url.password, super.password);
+		set(this.#password, super.password);
 	}
 
 	get pathname() {
-		return get(this.#url.pathname);
+		return get(this.#pathname);
 	}
 
 	set pathname(value) {
 		super.pathname = value;
-		set(this.#url.pathname, super.pathname);
+		set(this.#pathname, super.pathname);
 	}
 
 	get port() {
-		return get(this.#url.port);
+		return get(this.#port);
 	}
 
 	set port(value) {
 		super.port = value;
-		set(this.#url.port, super.port);
+		set(this.#port, super.port);
 	}
 
 	get protocol() {
-		return get(this.#url.protocol);
+		return get(this.#protocol);
 	}
 
 	set protocol(value) {
 		super.protocol = value;
-		set(this.#url.protocol, super.protocol);
+		set(this.#protocol, super.protocol);
 	}
 
 	get search() {
@@ -127,18 +124,18 @@ export class ReactiveURL extends URL {
 	}
 
 	get username() {
-		return get(this.#url.username);
+		return get(this.#username);
 	}
 
 	set username(value) {
 		super.username = value;
-		set(this.#url.username, super.username);
+		set(this.#username, super.username);
 	}
 
 	get origin() {
-		get(this.#url.protocol);
-		get(this.#url.hostname);
-		get(this.#url.port);
+		get(this.#protocol);
+		get(this.#hostname);
+		get(this.#port);
 		return super.origin;
 	}
 
