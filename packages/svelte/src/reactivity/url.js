@@ -1,8 +1,8 @@
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
-import { map } from './utils.js';
 
-const UPDATE = Symbol.for('UPDATE');
+const UPDATE = Symbol('UPDATE');
+const VERSION = Symbol('version');
 
 export class ReactiveURL extends URL {
 	#url = {
@@ -116,6 +116,7 @@ export class ReactiveURL extends URL {
 
 	get search() {
 		get(this.#url.search);
+		get(this.#searchParams[VERSION]);
 		return super.search;
 	}
 
@@ -169,6 +170,7 @@ export class ReactiveURLSearchParams extends URLSearchParams {
 	#url_search_params;
 	#search;
 	#version = source(0);
+	[VERSION] = this.#version;
 
 	#increment_version() {
 		set(this.#version, this.#version.v + 1);
