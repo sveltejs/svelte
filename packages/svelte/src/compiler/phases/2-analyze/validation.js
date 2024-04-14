@@ -353,6 +353,10 @@ const validation = {
 				error(node, 'invalid-each-assignment');
 			}
 
+			if (context.state.analysis.runes && binding.kind === 'snippet') {
+				error(node, 'invalid-snippet-assignment');
+			}
+
 			// TODO handle mutations of non-state/props in runes mode
 		}
 
@@ -1021,6 +1025,10 @@ function validate_assignment(node, argument, state) {
 
 		if (binding?.kind === 'each') {
 			error(node, 'invalid-each-assignment');
+		}
+
+		if (binding?.kind === 'snippet') {
+			error(node, 'invalid-snippet-assignment');
 		}
 	}
 

@@ -719,6 +719,7 @@ declare module 'svelte/compiler' {
 		 * - `state`: A state variable
 		 * - `derived`: A derived variable
 		 * - `each`: An each block context variable
+		 * - `snippet`: A snippet block context variable
 		 * - `store_sub`: A $store value
 		 * - `legacy_reactive`: A `$:` declaration
 		 * - `legacy_reactive_import`: An imported binding that is mutated inside the component
@@ -732,6 +733,7 @@ declare module 'svelte/compiler' {
 			| 'frozen_state'
 			| 'derived'
 			| 'each'
+			| 'snippet'
 			| 'store_sub'
 			| 'legacy_reactive'
 			| 'legacy_reactive_import';
