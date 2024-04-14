@@ -2008,8 +2008,18 @@ declare module 'svelte/reactivity' {
 		[Symbol.iterator](): IterableIterator<[K, V]>;
 		#private;
 	}
+	class ReactiveURL extends URL {
+		get searchParams(): ReactiveURLSearchParams;
+		#private;
+	}
+	class ReactiveURLSearchParams extends URLSearchParams {
+		
+		[REPLACE](params: URLSearchParams): void;
+		#private;
+	}
+	const REPLACE: unique symbol;
 
-	export { ReactiveDate as Date, ReactiveSet as Set, ReactiveMap as Map };
+	export { ReactiveDate as Date, ReactiveSet as Set, ReactiveMap as Map, ReactiveURL as URL, ReactiveURLSearchParams as URLSearchParams };
 }
 
 declare module 'svelte/server' {
