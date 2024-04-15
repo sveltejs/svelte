@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.104
+
+### Patch Changes
+
+- fix: ssr comments in head elements that require raw content ([#10936](https://github.com/sveltejs/svelte/pull/10936))
+
+- fix: improve spreading of attributes ([#11177](https://github.com/sveltejs/svelte/pull/11177))
+
 ## 5.0.0-next.103
 
 ### Patch Changes
