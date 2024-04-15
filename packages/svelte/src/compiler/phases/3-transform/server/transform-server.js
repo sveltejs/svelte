@@ -793,6 +793,14 @@ const javascript_visitors_runes = {
 			return b.literal(false);
 		}
 
+		if (rune === '$state.clean') {
+			const arg =
+				node.arguments.length > 0
+					? /** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
+					: b.id('undefined');
+			return context.visit(arg);
+		}
+
 		if (rune === '$inspect' || rune === '$inspect().with') {
 			return transform_inspect_rune(node, context);
 		}

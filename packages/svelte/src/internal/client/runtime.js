@@ -7,7 +7,7 @@ import {
 	object_freeze,
 	object_prototype
 } from './utils.js';
-import { unstate } from './proxy.js';
+import { clean } from './proxy.js';
 import { destroy_effect, effect, user_pre_effect } from './reactivity/effects.js';
 import {
 	EFFECT,
@@ -1173,7 +1173,7 @@ export function deep_read(value, visited = new Set()) {
  */
 function deep_unstate(value, visited = new Map()) {
 	if (typeof value === 'object' && value !== null && !visited.has(value)) {
-		const unstated = unstate(value);
+		const unstated = clean(value);
 		if (unstated !== value) {
 			visited.set(value, unstated);
 			return unstated;
@@ -1303,7 +1303,7 @@ export function freeze(value) {
 	if (typeof value === 'object' && value != null && !is_frozen(value)) {
 		// If the object is already proxified, then unstate the value
 		if (STATE_SYMBOL in value) {
-			return object_freeze(unstate(value));
+			return object_freeze(clean(value));
 		}
 		// Otherwise freeze the object
 		object_freeze(value);

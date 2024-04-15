@@ -294,7 +294,8 @@ function animate(element, options, counterpart, t2, callback) {
 			delay,
 			duration,
 			easing: 'linear',
-			fill: 'forwards'
+			fill: 'none',
+			composite: 'accumulate'
 		});
 
 		animation.finished

@@ -23,7 +23,7 @@ import {
 	resume_effect
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
-import { is_array, is_frozen, map_get, map_set } from '../../utils.js';
+import { is_array, is_frozen } from '../../utils.js';
 import { STATE_SYMBOL } from '../../constants.js';
 
 /**

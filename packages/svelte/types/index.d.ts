@@ -1011,15 +1011,15 @@ declare module 'svelte/compiler' {
 		filename?: string | undefined;
 	} | undefined): Promise<Processed>;
 	export class CompileError extends Error {
-		
+
 		constructor(code: string, message: string, position: [number, number] | undefined);
-		
+
 		filename: CompileError_1['filename'];
-		
+
 		position: CompileError_1['position'];
-		
+
 		start: CompileError_1['start'];
-		
+
 		end: CompileError_1['end'];
 		code: string;
 	}
@@ -1030,9 +1030,9 @@ declare module 'svelte/compiler' {
 	 * */
 	export const VERSION: string;
 	class Scope {
-		
+
 		constructor(root: ScopeRoot, parent: Scope | null, porous: boolean);
-		
+
 		root: ScopeRoot;
 		/**
 		 * The immediate parent scope
@@ -1060,25 +1060,25 @@ declare module 'svelte/compiler' {
 		 * which is usually an error. Block statements do not increase this value
 		 */
 		function_depth: number;
-		
+
 		declare(node: import('estree').Identifier, kind: Binding['kind'], declaration_kind: DeclarationKind, initial?: null | import('estree').Expression | import('estree').FunctionDeclaration | import('estree').ClassDeclaration | import('estree').ImportDeclaration | EachBlock): Binding;
 		child(porous?: boolean): Scope;
-		
+
 		generate(preferred_name: string): string;
-		
+
 		get(name: string): Binding | null;
-		
+
 		get_bindings(node: import('estree').VariableDeclarator | LetDirective): Binding[];
-		
+
 		owner(name: string): Scope | null;
-		
+
 		reference(node: import('estree').Identifier, path: SvelteNode[]): void;
 		#private;
 	}
 	class ScopeRoot {
-		
+
 		conflicts: Set<string>;
-		
+
 		unique(preferred_name: string): import("estree").Identifier;
 	}
 	namespace Css {
@@ -1970,18 +1970,18 @@ declare module 'svelte/motion' {
 
 declare module 'svelte/reactivity' {
 	class ReactiveDate extends Date {
-		
+
 		constructor(...values: any[]);
 		#private;
 	}
 	class ReactiveSet<T> extends Set<any> {
-		
+
 		constructor(value?: Iterable<T> | null | undefined);
-		
+
 		has(value: T): boolean;
-		
+
 		add(value: T): this;
-		
+
 		delete(value: T): boolean;
 		keys(): IterableIterator<T>;
 		values(): IterableIterator<T>;
@@ -1990,17 +1990,17 @@ declare module 'svelte/reactivity' {
 		#private;
 	}
 	class ReactiveMap<K, V> extends Map<any, any> {
-		
+
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
-		
+
 		has(key: K): boolean;
-		
+
 		forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void, this_arg?: any): void;
-		
+
 		get(key: K): V | undefined;
-		
+
 		set(key: K, value: V): this;
-		
+
 		delete(key: K): boolean;
 		keys(): IterableIterator<K>;
 		values(): IterableIterator<V>;
@@ -2013,7 +2013,7 @@ declare module 'svelte/reactivity' {
 		#private;
 	}
 	class ReactiveURLSearchParams extends URLSearchParams {
-		
+
 		[REPLACE](params: URLSearchParams): void;
 		#private;
 	}
@@ -2551,6 +2551,25 @@ declare namespace $state {
 	 */
 	export function frozen<T>(initial: T): Readonly<T>;
 	export function frozen<T>(): Readonly<T> | undefined;
+	/**
+	 * To remove reactivity from objects and arrays created with `$state`, use `$state.clean`:
+	 *
+	 * Example:
+	 * ```ts
+	 * <script>
+	 *   let counter = $state({ count: 0 });
+	 *
+	 *   $effect(() => {
+	 *     console.log($state.clean(counter));
+	 *   };
+	 * </script>
+	 * ```
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$state.clean
+	 *
+	 * @param state The state object to clean
+	 */
+	export function clean<T>(state: T): T;
 }
 
 /**
