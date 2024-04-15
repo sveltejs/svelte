@@ -137,7 +137,9 @@ function add_owner_to_object(object, owner) {
 		(metadata.owners ??= new Set()).add(owner);
 	} else if (object && typeof object === 'object') {
 		if (object[ADD_OWNER]) {
-			// this is a class with state fields
+			// this is a class with state fields. we put this in a render effect
+			// so that if state is replaced (e.g. `instance.name = { first, last }`)
+			// the new state is also co-owned by the caller of `getContext`
 			render_effect(() => {
 				object[ADD_OWNER](owner);
 			});
