@@ -107,6 +107,7 @@ export {
 	update,
 	update_pre,
 	value_or_fallback,
+	value_or_fallback_async,
 	exclude_from_object,
 	pop,
 	push,
@@ -136,7 +137,7 @@ export {
 	$window as window,
 	$document as document
 } from './dom/operations.js';
-export { noop } from '../shared/utils.js';
+export { noop, call_once } from '../shared/utils.js';
 export {
 	add_snippet_symbol,
 	validate_component,

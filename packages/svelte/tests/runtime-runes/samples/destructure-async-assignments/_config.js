@@ -35,9 +35,7 @@ export default test({
 		const btn = target.querySelector('button');
 		const clickEvent = new window.Event('click', { bubbles: true });
 		await btn?.dispatchEvent(clickEvent);
-		for (let i = 1; i <= 42; i += 1) {
-			await Promise.resolve();
-		}
+		await new Promise((r) => setTimeout(() => r(0), 100));
 
 		assert.htmlEqual(
 			target.innerHTML,

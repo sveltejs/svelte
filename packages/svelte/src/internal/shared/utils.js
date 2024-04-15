@@ -23,3 +23,19 @@ export function run_all(arr) {
 		arr[i]();
 	}
 }
+
+/**
+ * @param {Function} fn
+ */
+export function call_once(fn) {
+	let called = false;
+	/** @type {unknown} */
+	let result;
+	return function () {
+		if (!called) {
+			called = true;
+			result = fn();
+		}
+		return result;
+	};
+}

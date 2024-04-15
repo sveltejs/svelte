@@ -398,9 +398,10 @@ export function template(elements, expressions) {
 
 /**
  * @param {import('estree').Expression | import('estree').BlockStatement} expression
+ * @param {boolean} [async]
  * @returns {import('estree').Expression}
  */
-export function thunk(expression) {
+export function thunk(expression, async = false) {
 	if (
 		expression.type === 'CallExpression' &&
 		expression.callee.type !== 'Super' &&
@@ -411,7 +412,9 @@ export function thunk(expression) {
 		return expression.callee;
 	}
 
-	return arrow([], expression);
+	const fn = arrow([], expression);
+	if (async) fn.async = true;
+	return fn;
 }
 
 /**
