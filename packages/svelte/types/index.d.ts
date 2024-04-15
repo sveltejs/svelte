@@ -1751,6 +1751,8 @@ declare module 'svelte/compiler' {
 		style?: Preprocessor;
 		script?: Preprocessor;
 	}
+
+	export { walk };
 }
 
 declare module 'svelte/easing' {
@@ -1966,12 +1968,12 @@ declare module 'svelte/motion' {
 }
 
 declare module 'svelte/reactivity' {
-	export class Date extends Date {
+	class ReactiveDate extends Date {
 		
 		constructor(...values: any[]);
 		#private;
 	}
-	export class Set<T> extends Set<any> {
+	class ReactiveSet<T> extends Set<any> {
 		
 		constructor(value?: Iterable<T> | null | undefined);
 		
@@ -1986,7 +1988,7 @@ declare module 'svelte/reactivity' {
 		[Symbol.iterator](): IterableIterator<T>;
 		#private;
 	}
-	export class Map<K, V> extends Map<any, any> {
+	class ReactiveMap<K, V> extends Map<any, any> {
 		
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
 		
@@ -2005,16 +2007,18 @@ declare module 'svelte/reactivity' {
 		[Symbol.iterator](): IterableIterator<[K, V]>;
 		#private;
 	}
-	export class URL extends URL {
-		get searchParams(): URLSearchParams;
+	class ReactiveURL extends URL {
+		get searchParams(): ReactiveURLSearchParams;
 		#private;
 	}
-	export class URLSearchParams extends URLSearchParams {
+	class ReactiveURLSearchParams extends URLSearchParams {
 		
 		[REPLACE](params: URLSearchParams): void;
 		#private;
 	}
 	const REPLACE: unique symbol;
+
+	export { ReactiveDate as Date, ReactiveSet as Set, ReactiveMap as Map, ReactiveURL as URL, ReactiveURLSearchParams as URLSearchParams };
 }
 
 declare module 'svelte/server' {
