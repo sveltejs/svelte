@@ -105,11 +105,10 @@ export function set_attributes(element, prev, attrs, lowercase_attributes, css_h
 	if (!setters) map_set(setters_cache, element.nodeName, (setters = get_setters(element)));
 
 	// @ts-expect-error
-	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes = {});
+	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes ??= {});
 
 	for (key in next) {
 		var value = next[key];
-		attributes[key] = value;
 		if (value === prev?.[key]) continue;
 
 		var prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
@@ -144,6 +143,7 @@ export function set_attributes(element, prev, attrs, lowercase_attributes, css_h
 				}
 			}
 		} else if (value == null) {
+			attributes[key] = null;
 			element.removeAttribute(key);
 		} else if (key === 'style') {
 			element.style.cssText = value + '';
