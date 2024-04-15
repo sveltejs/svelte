@@ -542,6 +542,8 @@ declare module 'svelte/compiler' {
 			 */
 			runes: boolean;
 		};
+		/** The AST */
+		ast: any;
 	}
 
 	interface Warning {
@@ -676,6 +678,13 @@ declare module 'svelte/compiler' {
 		 * @default false
 		 */
 		hmr?: boolean;
+		/**
+		 * If `true`, returns the modern version of the AST.
+		 * Will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
+		 *
+		 * @default false
+		 */
+		modernAst?: boolean;
 	}
 
 	interface ModuleCompileOptions {
@@ -2477,6 +2486,13 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * @default false
 		 */
 		hmr?: boolean;
+		/**
+		 * If `true`, returns the modern version of the AST.
+		 * Will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
+		 *
+		 * @default false
+		 */
+		modernAst?: boolean;
 	}
 
 	interface ModuleCompileOptions {
