@@ -42,6 +42,25 @@ declare namespace $state {
 	 */
 	export function frozen<T>(initial: T): Readonly<T>;
 	export function frozen<T>(): Readonly<T> | undefined;
+	/**
+	 * To remove reactivity from objects and arrays created with `$state`, use `$state.snapshot`:
+	 *
+	 * Example:
+	 * ```ts
+	 * <script>
+	 *   let counter = $state({ count: 0 });
+	 *
+	 *   $effect(() => {
+	 *     console.log($state.snapshot(counter));
+	 *   };
+	 * </script>
+	 * ```
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$state.snapshot
+	 *
+	 * @param state The state object to snapshot
+	 */
+	export function snapshot<T>(state: T): T;
 }
 
 /**

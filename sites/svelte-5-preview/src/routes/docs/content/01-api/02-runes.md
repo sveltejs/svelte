@@ -112,9 +112,9 @@ Svelte provides reactive `Map`, `Set` and `Date` classes. These can be imported 
 <p>{map.get('message')}</p>
 ```
 
-## `$state.raw`
+## `$state.snapshot`
 
-To remove reactivity from objects and arrays created with `$state`, use `$state.raw`:
+To remove reactivity from objects and arrays created with `$state`, use `$state.snapshot`:
 
 ```svelte
 <script>
@@ -122,14 +122,14 @@ To remove reactivity from objects and arrays created with `$state`, use `$state.
 
 	$effect(() => {
 		// Will log { count: 0 }
-		console.log($state.raw(counter));
+		console.log($state.snapshot(counter));
 	});
 </script>
 ```
 
 This is handy when you want to pass some state to an external library or API that doesn't expect a reactive object – such as `structuredClone`.
 
-> Note that `$state.raw` will return a new object from the input when removing reactivity. If the object passed isn't reactive, it will be returned as is.
+> Note that `$state.snapshot` will return a new object from the input when removing reactivity. If the object passed isn't reactive, it will be returned as is.
 
 ## `$derived`
 

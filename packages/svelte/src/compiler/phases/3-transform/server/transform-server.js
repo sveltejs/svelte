@@ -793,7 +793,7 @@ const javascript_visitors_runes = {
 			return b.literal(false);
 		}
 
-		if (rune === '$state.raw') {
+		if (rune === '$state.snapshot') {
 			const arg =
 				node.arguments.length > 0
 					? /** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
