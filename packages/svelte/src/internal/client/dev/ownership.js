@@ -116,10 +116,13 @@ function add_owner_to_object(object, owner) {
 	const metadata = /** @type {import('#client').ProxyMetadata} */ (object?.[STATE_SYMBOL]);
 
 	if (metadata) {
-		// this is a state object, add owner directly
+		// this is a state proxy, add owner directly
 		(metadata.owners ??= new Set()).add(owner);
-	} else {
-		// TODO recurse until we find state, or a class with state fields
+	} else if (object && typeof object === 'object') {
+		// recurse until we find a state proxy
+		for (const key in object) {
+			add_owner_to_object(object[key], owner);
+		}
 	}
 }
 
