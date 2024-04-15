@@ -1,6 +1,7 @@
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
 import { STATE_SYMBOL } from '../constants.js';
+import { render_effect } from '../reactivity/effects.js';
 import { current_component_context, untrack } from '../runtime.js';
 
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
@@ -63,6 +64,8 @@ function get_component() {
 	return null;
 }
 
+export const ADD_OWNER = Symbol('ADD_OWNER');
+
 /**
  * Together with `mark_module_end`, this function establishes the boundaries of a `.svelte` file,
  * such that subsequent calls to `get_component` can tell us which component is responsible
@@ -119,9 +122,7 @@ export function add_owner(object, owner, global = false) {
 		}
 	}
 
-	untrack(() => {
-		add_owner_to_object(object, owner);
-	});
+	add_owner_to_object(object, owner);
 }
 
 /**
@@ -135,9 +136,16 @@ function add_owner_to_object(object, owner) {
 		// this is a state proxy, add owner directly
 		(metadata.owners ??= new Set()).add(owner);
 	} else if (object && typeof object === 'object') {
-		// recurse until we find a state proxy
-		for (const key in object) {
-			add_owner_to_object(object[key], owner);
+		if (object[ADD_OWNER]) {
+			// this is a class with state fields
+			render_effect(() => {
+				object[ADD_OWNER](owner);
+			});
+		} else {
+			// recurse until we find a state proxy
+			for (const key in object) {
+				add_owner_to_object(object[key], owner);
+			}
 		}
 	}
 }

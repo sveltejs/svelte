@@ -8,7 +8,7 @@ import {
 	object_prototype
 } from './utils.js';
 import { unstate } from './proxy.js';
-import { destroy_effect, effect, user_pre_effect } from './reactivity/effects.js';
+import { destroy_effect, effect, render_effect, user_pre_effect } from './reactivity/effects.js';
 import {
 	EFFECT,
 	RENDER_EFFECT,
