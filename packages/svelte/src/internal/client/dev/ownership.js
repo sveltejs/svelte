@@ -113,48 +113,48 @@ export function add_owner(object, owner) {
  * @param {Function} owner
  */
 function add_owner_to_object(object, owner) {
-	if (object?.[STATE_SYMBOL]?.o && !object[STATE_SYMBOL].o.has(owner)) {
-		object[STATE_SYMBOL].o.add(owner);
+	const metadata = /** @type {import('#client').ProxyMetadata} */ (object?.[STATE_SYMBOL]);
 
-		for (const key in object) {
-			add_owner_to_object(object[key], owner);
-		}
+	if (metadata) {
+		// this is a state object, add owner directly
+		(metadata.owners ??= new Set()).add(owner);
+	} else {
+		// TODO recurse until we find state, or a class with state fields
 	}
 }
 
 /**
- * @param {any} object
+ * @param {import('#client').ProxyMetadata} metadata
+ * @param {Function} component
+ * @returns {boolean}
  */
-export function strip_owner(object) {
-	untrack(() => {
-		strip_owner_from_object(object);
-	});
+function has_owner(metadata, component) {
+	if (metadata.owners === null) {
+		return metadata.parent === null ? true : has_owner(metadata.parent, component);
+	}
+
+	return metadata.owners.has(component);
 }
 
 /**
- * @param {any} object
+ * @param {import('#client').ProxyMetadata} metadata
+ * @returns {Function}
  */
-function strip_owner_from_object(object) {
-	if (object?.[STATE_SYMBOL]?.o) {
-		object[STATE_SYMBOL].o = null;
-
-		for (const key in object) {
-			strip_owner(object[key]);
-		}
-	}
+function get_owner(metadata) {
+	return (
+		metadata?.owners?.values().next().value ??
+		get_owner(/** @type {import('#client').ProxyMetadata} */ (metadata.parent))
+	);
 }
 
 /**
  * @param {import('#client').ProxyMetadata} metadata
  */
 export function check_ownership(metadata) {
-	const owners = metadata.owners;
-	if (!owners) return;
-
 	const component = get_component();
 
-	if (component && !owners.has(component)) {
-		let original = [...owners][0];
+	if (component && !has_owner(metadata, component)) {
+		let original = get_owner(metadata);
 
 		let message =
 			// @ts-expect-error

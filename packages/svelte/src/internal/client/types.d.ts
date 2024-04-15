@@ -167,6 +167,8 @@ export interface ProxyMetadata<T = Record<string | symbol, any>> {
 	t: T;
 	/** Dev-only — the components that 'own' this state, if any */
 	owners: null | Set<Function>;
+	/** Dev-only — the parent metadata object */
+	parent: null | ProxyMetadata;
 }
 
 export type ProxyStateObject<T = Record<string | symbol, any>> = T & {

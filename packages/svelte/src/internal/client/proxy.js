@@ -16,7 +16,7 @@ import {
 	is_frozen,
 	object_prototype
 } from './utils.js';
-import { add_owner, check_ownership, strip_owner } from './dev/ownership.js';
+import { check_ownership } from './dev/ownership.js';
 import { mutable_source, source, set } from './reactivity/sources.js';
 import { STATE_SYMBOL } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
@@ -25,26 +25,20 @@ import { UNINITIALIZED } from '../../constants.js';
  * @template T
  * @param {T} value
  * @param {boolean} [immutable]
- * @param {Set<Function> | null} [owners]
+ * @param {import('#client').ProxyMetadata | null} [parent]
  * @returns {import('#client').ProxyStateObject<T> | T}
  */
-export function proxy(value, immutable = true, owners) {
+export function proxy(value, immutable = true, parent = null) {
 	if (typeof value === 'object' && value != null && !is_frozen(value)) {
 		// If we have an existing proxy, return it...
 		if (STATE_SYMBOL in value) {
 			const metadata = /** @type {import('#client').ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
+
 			// ...unless the proxy belonged to a different object, because
 			// someone copied the state symbol using `Reflect.ownKeys(...)`
 			if (metadata.t === value || metadata.p === value) {
 				if (DEV) {
-					// update ownership
-					if (owners) {
-						for (const owner of owners) {
-							add_owner(value, owner);
-						}
-					} else {
-						strip_owner(value);
-					}
+					metadata.parent = parent;
 				}
 
 				return metadata.p;
@@ -70,16 +64,15 @@ export function proxy(value, immutable = true, owners) {
 			});
 
 			if (DEV) {
-				// set ownership — either of the parent proxy's owners (if provided) or,
-				// when calling `$.proxy(...)`, to the current component if such there be
 				// @ts-expect-error
-				value[STATE_SYMBOL].o =
-					owners === undefined
-						? current_component_context
-							? // @ts-expect-error
-								new Set([current_component_context.function])
-							: null
-						: owners && new Set(owners);
+				value[STATE_SYMBOL].parent = parent;
+
+				// @ts-expect-error
+				value[STATE_SYMBOL].owners =
+					parent === null && current_component_context !== null
+						? // @ts-expect-error
+							new Set([current_component_context.function])
+						: null;
 			}
 
 			return proxy;
@@ -162,7 +155,7 @@ const state_proxy_handler = {
 			const metadata = target[STATE_SYMBOL];
 
 			const s = metadata.s.get(prop);
-			if (s !== undefined) set(s, proxy(descriptor.value, metadata.i, metadata.owners));
+			if (s !== undefined) set(s, proxy(descriptor.value, metadata.i, metadata));
 		}
 
 		return Reflect.defineProperty(target, prop, descriptor);
@@ -208,7 +201,7 @@ const state_proxy_handler = {
 
 		// create a source, but only if it's an own property and not a prototype property
 		if (s === undefined && (!(prop in target) || get_descriptor(target, prop)?.writable)) {
-			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i, metadata.owners));
+			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i, metadata));
 			metadata.s.set(prop, s);
 		}
 
@@ -255,7 +248,7 @@ const state_proxy_handler = {
 		) {
 			if (s === undefined) {
 				s = (metadata.i ? source : mutable_source)(
-					has ? proxy(target[prop], metadata.i, metadata.owners) : UNINITIALIZED
+					has ? proxy(target[prop], metadata.i, metadata) : UNINITIALIZED
 				);
 				metadata.s.set(prop, s);
 			}
@@ -281,23 +274,13 @@ const state_proxy_handler = {
 			s = metadata.s.get(prop);
 		}
 		if (s !== undefined) {
-			set(s, proxy(value, metadata.i, metadata.owners));
+			set(s, proxy(value, metadata.i, metadata));
 		}
 		const is_array = metadata.a;
 		const not_has = !(prop in target);
 
 		if (DEV) {
-			// First check ownership of the object that is assigned to.
-			// Then, if the new object has owners, widen them with the ones from the current object.
-			// If it doesn't have owners that means it's ownerless, and so the assigned object should be, too.
-			if (metadata.owners) {
-				check_ownership(metadata);
-				for (const owner in metadata.owners) {
-					add_owner(value, owner);
-				}
-			} else {
-				strip_owner(value);
-			}
+			check_ownership(metadata);
 		}
 
 		// variable.length = value -> clear all signals with index >= value
