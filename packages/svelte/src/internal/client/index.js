@@ -127,7 +127,7 @@ export {
 	validate_store
 } from './validate.js';
 export { raf } from './timing.js';
-export { proxy, clean } from './proxy.js';
+export { proxy, raw } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
 export {
 	child,

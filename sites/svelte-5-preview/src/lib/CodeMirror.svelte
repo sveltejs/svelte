@@ -226,7 +226,7 @@
 					type: 'keyword',
 					boost: 4
 				}),
-				{ label: '$state.clean', type: 'keyword', boost: 3 },
+				{ label: '$state.raw', type: 'keyword', boost: 3 },
 				snip('$effect.active()', {
 					label: '$effect.active',
 					type: 'keyword',
