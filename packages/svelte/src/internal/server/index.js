@@ -3,6 +3,7 @@ import { subscribe_to_store } from '../../store/utils.js';
 import {
 	UNINITIALIZED,
 	DOMBooleanAttributes,
+	RawTextElements,
 	disallowed_paragraph_contents,
 	interactive_elements,
 	is_tag_valid_with_parent
@@ -161,11 +162,11 @@ export function element(payload, tag, attributes_fn, children_fn) {
 	payload.out += `>`;
 
 	if (!VoidElements.has(tag)) {
-		if (tag !== 'textarea') {
+		if (!RawTextElements.includes(tag)) {
 			payload.out += BLOCK_OPEN;
 		}
 		children_fn();
-		if (tag !== 'textarea') {
+		if (!RawTextElements.includes(tag)) {
 			payload.out += BLOCK_CLOSE;
 		}
 		payload.out += `</${tag}>`;
