@@ -1,7 +1,7 @@
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
 import { STATE_SYMBOL } from '../constants.js';
-import { untrack } from '../runtime.js';
+import { current_component_context, untrack } from '../runtime.js';
 
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
 const boundaries = {};
@@ -98,11 +98,27 @@ export function mark_module_end(component) {
 }
 
 /**
- *
  * @param {any} object
  * @param {any} owner
+ * @param {boolean} [global]
  */
-export function add_owner(object, owner) {
+export function add_owner(object, owner, global = false) {
+	if (object && !global) {
+		// @ts-expect-error
+		const component = current_component_context.function;
+		const metadata = object[STATE_SYMBOL];
+		if (metadata && !has_owner(metadata, component)) {
+			let original = get_owner(metadata);
+
+			if (owner.filename !== component.filename) {
+				let message = `${component.filename} passed a value to ${owner.filename} with \`bind:\`, but the value is owned by ${original.filename}. Consider creating a binding between ${original.filename} and ${component.filename}`;
+
+				// eslint-disable-next-line no-console
+				console.warn(message);
+			}
+		}
+	}
+
 	untrack(() => {
 		add_owner_to_object(object, owner);
 	});
@@ -141,7 +157,7 @@ function has_owner(metadata, component) {
 
 /**
  * @param {import('#client').ProxyMetadata} metadata
- * @returns {Function}
+ * @returns {any}
  */
 function get_owner(metadata) {
 	return (
