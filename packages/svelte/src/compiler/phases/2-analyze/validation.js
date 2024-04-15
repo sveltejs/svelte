@@ -1113,7 +1113,6 @@ export const validation_runes = merge(validation, a11y_validators, {
 			if (init?.type === 'Identifier' && init.name === '$props' && !state.scope.get('props')) {
 				warn(state.analysis.warnings, node, path, 'invalid-props-declaration');
 			}
-			// console.log({init, p: !state.scope.get('bindable')});
 			return;
 		}
 
@@ -1170,7 +1169,11 @@ export const validation_runes = merge(validation, a11y_validators, {
 		}
 	},
 	AssignmentPattern(node, { state, path }) {
-		if (node.right.type === 'Identifier' && node.right.name === '$bindable' && !state.scope.get('bindable')) {
+		if (
+			node.right.type === 'Identifier' &&
+			node.right.name === '$bindable' &&
+			!state.scope.get('bindable')
+		) {
 			warn(state.analysis.warnings, node, path, 'invalid-bindable-declaration');
 		}
 	},
