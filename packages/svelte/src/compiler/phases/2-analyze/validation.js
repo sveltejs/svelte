@@ -570,8 +570,12 @@ const validation = {
 			}
 		}
 
-		const is_self_closing = context.state.analysis.source[node.end - 2] === '/';
-		if (is_self_closing && !VoidElements.includes(node.name) && !SVGElements.includes(node.name)) {
+		if (
+			context.state.analysis.source[node.end - 2] === '/' &&
+			context.state.options.namespace !== 'foreign' &&
+			!VoidElements.includes(node.name) &&
+			!SVGElements.includes(node.name)
+		) {
 			warn(
 				context.state.analysis.warnings,
 				node,
