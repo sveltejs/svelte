@@ -1,3 +1,4 @@
+import { INSPECT_SYMBOL } from '../internal/client/constants.js';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 
@@ -149,6 +150,10 @@ export class ReactiveURL extends URL {
 
 	toJSON() {
 		return this.href;
+	}
+
+	[INSPECT_SYMBOL]() {
+		this.href;
 	}
 }
 
