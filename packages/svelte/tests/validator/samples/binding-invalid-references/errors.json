@@ -1,0 +1,14 @@
+[
+	{
+		"code": "invalid-binding-reference",
+		"message": "'focused' binding doesn't support multiple element",
+		"start": {
+			"line": 5,
+			"column": 21
+		},
+		"end": {
+			"line": 5,
+			"column": 37
+		}
+	}
+]

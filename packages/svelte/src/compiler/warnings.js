@@ -198,7 +198,8 @@ const a11y = {
 	'a11y-mouse-events-have-key-events': (event, accompanied_by) =>
 		`A11y: '${event}' event must be accompanied by '${accompanied_by}' event`,
 	/** @param {string} name */
-	'a11y-missing-content': (name) => `A11y: <${name}> element should have child content`
+	'a11y-missing-content': (name) => `A11y: <${name}> element should have child content`,
+	'a11y-binding-focused': (name) => `Avoid use of binding '${name}' for screen reader`,
 };
 
 /** @satisfies {Warnings} */

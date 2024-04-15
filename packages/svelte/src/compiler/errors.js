@@ -325,6 +325,7 @@ const bindings = {
 		(elements
 			? `'${binding}' binding can only be used with ${elements}`
 			: `'${binding}' is not a valid binding`) + post,
+	'invalid-binding-reference': (binding) => `'${binding}' binding doesn't support multiple element`,
 	'invalid-type-attribute': () =>
 		`'type' attribute must be a static text value if input uses two-way binding`,
 	'invalid-multiple-attribute': () =>

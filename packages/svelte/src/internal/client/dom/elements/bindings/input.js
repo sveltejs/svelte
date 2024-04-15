@@ -1,3 +1,4 @@
+/* eslint-disable no-debugger */
 import { DEV } from 'esm-env';
 import { render_effect, effect } from '../../../reactivity/effects.js';
 import { stringify } from '../../../render.js';

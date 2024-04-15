@@ -1,0 +1,14 @@
+[
+	{
+		"code": "a11y-binding-focused",
+		"end": {
+			"column": 37,
+			"line": 5
+		},
+		"message": "Avoid use of binding 'focused' for screen reader",
+		"start": {
+			"column": 21,
+			"line": 5
+		}
+	}
+]

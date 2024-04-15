@@ -718,6 +718,11 @@ function check_element(node, state, path) {
 			ContentEditableBindings.includes(attribute.name)
 		) {
 			has_contenteditable_binding = true;
+		} else if (
+			attribute.type === 'BindDirective' &&
+			attribute.name === 'focused'
+		) {
+			push_warning(attribute, 'a11y-binding-focused', attribute.name);
 		}
 	}
 

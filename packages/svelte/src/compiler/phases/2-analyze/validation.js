@@ -358,6 +358,11 @@ const validation = {
 			}
 		}
 
+		debugger;
+		if (node.name === 'focused' && binding?.references.length && binding?.references.length > 2) {
+			error(node, 'invalid-binding-reference', node.name);
+		}
+
 		if (node.name === 'group') {
 			if (!binding) {
 				error(node, 'INTERNAL', 'Cannot find declaration for bind:group');
