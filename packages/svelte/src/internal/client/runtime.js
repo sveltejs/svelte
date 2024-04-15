@@ -1301,12 +1301,16 @@ if (DEV) {
  */
 export function freeze(value) {
 	if (typeof value === 'object' && value != null && !is_frozen(value)) {
-		// If the object is already proxified, then unstate the value
-		if (STATE_SYMBOL in value) {
-			return object_freeze(unstate(value));
+		const prototype = get_prototype_of(value);
+		// Leave class instances etc alone, they're not traversed by $state, either
+		if (prototype === object_prototype || prototype === array_prototype) {
+			// If the object is already proxified, then unstate the value
+			if (STATE_SYMBOL in value) {
+				return object_freeze(unstate(value));
+			}
+			// Otherwise freeze the object
+			object_freeze(value);
 		}
-		// Otherwise freeze the object
-		object_freeze(value);
 	}
 	return value;
 }

@@ -19,7 +19,7 @@ declare function $state<T>(): T | undefined;
 
 declare namespace $state {
 	/**
-	 * Declares reactive read-only state that is shallowly immutable.
+	 * Declares reactive read-only state that is shallowly immutable, if it's a plain object or array.
 	 *
 	 * Example:
 	 * ```ts
@@ -40,8 +40,8 @@ declare namespace $state {
 	 *
 	 * @param initial The initial value
 	 */
-	export function frozen<T>(initial: T): Readonly<T>;
-	export function frozen<T>(): Readonly<T> | undefined;
+	export function frozen<T>(initial: T): T;
+	export function frozen<T>(): T | undefined;
 }
 
 /**
