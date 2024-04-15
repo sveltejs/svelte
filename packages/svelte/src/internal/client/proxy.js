@@ -162,7 +162,7 @@ const state_proxy_handler = {
 			const metadata = target[STATE_SYMBOL];
 
 			const s = metadata.s.get(prop);
-			if (s !== undefined) set(s, proxy(descriptor.value, metadata.i, metadata.o));
+			if (s !== undefined) set(s, proxy(descriptor.value, metadata.i, metadata.owners));
 		}
 
 		return Reflect.defineProperty(target, prop, descriptor);
@@ -208,7 +208,7 @@ const state_proxy_handler = {
 
 		// create a source, but only if it's an own property and not a prototype property
 		if (s === undefined && (!(prop in target) || get_descriptor(target, prop)?.writable)) {
-			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i, metadata.o));
+			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i, metadata.owners));
 			metadata.s.set(prop, s);
 		}
 
@@ -255,7 +255,7 @@ const state_proxy_handler = {
 		) {
 			if (s === undefined) {
 				s = (metadata.i ? source : mutable_source)(
-					has ? proxy(target[prop], metadata.i, metadata.o) : UNINITIALIZED
+					has ? proxy(target[prop], metadata.i, metadata.owners) : UNINITIALIZED
 				);
 				metadata.s.set(prop, s);
 			}
@@ -281,7 +281,7 @@ const state_proxy_handler = {
 			s = metadata.s.get(prop);
 		}
 		if (s !== undefined) {
-			set(s, proxy(value, metadata.i, metadata.o));
+			set(s, proxy(value, metadata.i, metadata.owners));
 		}
 		const is_array = metadata.a;
 		const not_has = !(prop in target);
@@ -290,9 +290,9 @@ const state_proxy_handler = {
 			// First check ownership of the object that is assigned to.
 			// Then, if the new object has owners, widen them with the ones from the current object.
 			// If it doesn't have owners that means it's ownerless, and so the assigned object should be, too.
-			if (metadata.o) {
-				check_ownership(metadata.o);
-				for (const owner in metadata.o) {
+			if (metadata.owners) {
+				check_ownership(metadata);
+				for (const owner in metadata.owners) {
 					add_owner(value, owner);
 				}
 			} else {

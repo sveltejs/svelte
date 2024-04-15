@@ -145,9 +145,12 @@ function strip_owner_from_object(object) {
 }
 
 /**
- * @param {Set<Function>} owners
+ * @param {import('#client').ProxyMetadata} metadata
  */
-export function check_ownership(owners) {
+export function check_ownership(metadata) {
+	const owners = metadata.owners;
+	if (!owners) return;
+
 	const component = get_component();
 
 	if (component && !owners.has(component)) {
