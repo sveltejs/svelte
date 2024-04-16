@@ -865,6 +865,12 @@ function validate_call_expression(node, scope, path) {
 			error(node, 'invalid-rune-args-length', rune, [1]);
 		}
 	}
+
+	if (rune === '$state.snapshot') {
+		if (node.arguments.length !== 1) {
+			error(node, 'invalid-rune-args-length', rune, [1]);
+		}
+	}
 }
 
 /**

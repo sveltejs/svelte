@@ -107,6 +107,7 @@ export {
 	update,
 	update_pre,
 	value_or_fallback,
+	value_or_fallback_async,
 	exclude_from_object,
 	pop,
 	push,
@@ -127,7 +128,7 @@ export {
 	validate_store
 } from './validate.js';
 export { raf } from './timing.js';
-export { proxy, unstate } from './proxy.js';
+export { proxy, snapshot } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
 export {
 	child,

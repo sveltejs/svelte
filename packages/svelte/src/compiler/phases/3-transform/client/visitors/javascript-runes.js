@@ -388,6 +388,13 @@ export const javascript_visitors_runes = {
 			return b.call('$.effect_active');
 		}
 
+		if (rune === '$state.snapshot') {
+			return b.call(
+				'$.snapshot',
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
+			);
+		}
+
 		if (rune === '$effect.root') {
 			const args = /** @type {import('estree').Expression[]} */ (
 				node.arguments.map((arg) => context.visit(arg))

@@ -40,7 +40,7 @@ class Todo {
 
 > In this example, the compiler transforms `done` and `text` into `get`/`set` methods on the class prototype referencing private fields
 
-Objects and arrays [are made deeply reactive](/#H4sIAAAAAAAAE42QwWrDMBBEf2URhUhUNEl7c21DviPOwZY3jVpZEtIqUBz9e-UUt9BTj7M784bdmZ21wciq48xsPyGr2MF7Jhl9-kXEKxrCoqNLQS2TOqqgPbWd7cgggU3TgCFCAw-RekJ-3Et4lvByEq-drbe_dlsPichZcFYZrT6amQto2pXw5FO88FUYtG90gUfYi3zvWrYL75vxL57zfA07_zfr23k1vjtt-aZ0bQTcbrDL5ZifZcAxKeS8lzDc8X0xDhJ2ItdbX1jlOZMb9VnjyCoKCfMpfwG975NFVwEAAA==):
+Objects and arrays [are made deeply reactive](/#H4sIAAAAAAAAE42QwWrDMBBEf2URhUhUNEl7c21DviPOwZY3jVpZEtIqUBz9e-UUt9BTj7M784bdmZ21wciq48xsPyGr2MF7Jhl9-kXEKxrCoqNLQS2TOqqgPbWd7cgggU3TgCFCAw-RekJ-3Et4lvByEq-drbe_dlsPichZcFYZrT6amQto2pXw5FO88FUYtG90gUfYi3zvWrYL75vxL57zfA07_zfr23k1vjtt-aZ0bQTcbrDL5ZifZcAxKeS8lzDc8X0xDhJ2ItdbX1jlOZMb9VnjyCoKCfMpfwG975NFVwEAAA==) by wrapping them with [`Proxies`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy):
 
 ```svelte
 <script>
@@ -93,24 +93,24 @@ This can improve performance with large arrays and objects that you weren't plan
 
 > Objects and arrays passed to `$state.frozen` will be shallowly frozen using `Object.freeze()`. If you don't want this, pass in a clone of the object or array instead.
 
-### Reactive Map, Set and Date
+## `$state.snapshot`
 
-Svelte provides reactive `Map`, `Set` and `Date` classes. These can be imported from `svelte/reactivity` and used just like their native counterparts.
+To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:
 
 ```svelte
 <script>
-	import { Map } from 'svelte/reactivity';
+	let counter = $state({ count: 0 });
 
-	const map = new Map();
-	map.set('message', 'hello');
-
-	function update_message() {
-		map.set('message', 'goodbye');
+	function onclick() {
+		// Will log `{ count: ... }` rather than `Proxy { ... }`
+		console.log($state.snapshot(counter));
 	}
 </script>
-
-<p>{map.get('message')}</p>
 ```
+
+This is handy when you want to pass some state to an external library or API that doesn't expect a proxy, such as `structuredClone`.
+
+> Note that `$state.snapshot` will clone the data when removing reactivity. If the value passed isn't a `$state` proxy, it will be returned as-is.
 
 ## `$derived`
 
