@@ -74,7 +74,7 @@ export function proxy(value, immutable = true, parent = null) {
 							? // @ts-expect-error
 								new Set([current_component_context.function])
 							: null
-						: parent.owners;
+						: new Set();
 			}
 
 			return proxy;
