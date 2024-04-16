@@ -11,8 +11,6 @@ import {
 	is_flushing_effect,
 	remove_reactions,
 	schedule_effect,
-	set_current_effect,
-	set_current_reaction,
 	set_is_destroying_effect,
 	set_is_flushing_effect,
 	set_signal_status,
