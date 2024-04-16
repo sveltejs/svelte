@@ -137,7 +137,7 @@ export {
 	$window as window,
 	$document as document
 } from './dom/operations.js';
-export { noop, call_once } from '../shared/utils.js';
+export { noop } from '../shared/utils.js';
 export {
 	add_snippet_symbol,
 	validate_component,
