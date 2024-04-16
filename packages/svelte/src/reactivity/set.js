@@ -67,6 +67,12 @@ export class ReactiveSet extends Set {
 				return new ReactiveSet(set);
 			};
 		}
+
+		if (DEV) {
+			proto[INSPECT_SYMBOL] = function () {
+				get(this.#version);
+			};
+		}
 	}
 
 	#increment_version() {
@@ -150,8 +156,5 @@ export class ReactiveSet extends Set {
 
 	get size() {
 		return get(this.#size);
-	}
-	[INSPECT_SYMBOL]() {
-		get(this.#version);
 	}
 }

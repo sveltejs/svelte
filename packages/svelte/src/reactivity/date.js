@@ -1,3 +1,4 @@
+import { DEV } from 'esm-env';
 import { INSPECT_SYMBOL } from '../internal/client/constants.js';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
@@ -89,6 +90,12 @@ export class ReactiveDate extends Date {
 					return v;
 				};
 			}
+
+			if (DEV) {
+				proto[INSPECT_SYMBOL] = function () {
+					get(this.#raw_time);
+				};
+			}
 		}
 	}
 
@@ -99,9 +106,5 @@ export class ReactiveDate extends Date {
 		// @ts-ignore
 		super(...values);
 		this.#init();
-	}
-
-	[INSPECT_SYMBOL]() {
-		get(this.#raw_time);
 	}
 }

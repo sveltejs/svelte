@@ -5,6 +5,8 @@ import { UNINITIALIZED } from '../constants.js';
 import { map } from './utils.js';
 import { INSPECT_SYMBOL } from '../internal/client/constants.js';
 
+var inited = false;
+
 /**
  * @template K
  * @template V
@@ -20,6 +22,21 @@ export class ReactiveMap extends Map {
 	 */
 	constructor(value) {
 		super();
+
+		if (DEV) {
+			if (!inited) {
+				inited = true;
+				ReactiveMap.prototype[INSPECT_SYMBOL] = function () {
+					// changes could either introduced by
+					// - modifying the value, or
+					// - add / remove entries to the map
+					for (const [, source] of this.#sources) {
+						get(source);
+					}
+					get(this.#size);
+				};
+			}
+		}
 
 		// If the value is invalid then the native exception will fire here
 		if (DEV) new Map(value);
@@ -155,15 +172,5 @@ export class ReactiveMap extends Map {
 
 	get size() {
 		return get(this.#size);
-	}
-
-	[INSPECT_SYMBOL]() {
-		// changes could either introduced by
-		// - modifying the value, or
-		// - add / remove entries to the map
-		for (const [, source] of this.#sources) {
-			get(source);
-		}
-		get(this.#size);
 	}
 }
