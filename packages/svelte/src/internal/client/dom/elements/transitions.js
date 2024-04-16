@@ -7,7 +7,7 @@ import { should_intro } from '../../render.js';
 import { is_function } from '../../utils.js';
 import { current_each_item } from '../blocks/each.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
-import { EFFECT_RAN } from '../../constants.js';
+import { BLOCK_EFFECT, EFFECT_RAN } from '../../constants.js';
 
 /**
  * @template T
@@ -211,6 +211,11 @@ export function transition(flags, element, get_fn, get_params) {
 	// looking at whether the branch effect is currently initializing
 	if (is_intro && should_intro) {
 		var parent = /** @type {import('#client').Effect} */ (e.parent);
+
+		// e.g snippets are implemented as render effects — keep going until we find the parent block
+		while ((parent.f & BLOCK_EFFECT) === 0 && parent.parent) {
+			parent = parent.parent;
+		}
 
 		if (is_global || (parent.f & EFFECT_RAN) !== 0) {
 			effect(() => {
