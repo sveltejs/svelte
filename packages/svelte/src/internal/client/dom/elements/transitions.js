@@ -98,14 +98,14 @@ export function animation(element, get_fn, get_params) {
 
 			to = this.element.getBoundingClientRect();
 
-			const options = get_fn()(this.element, { from, to }, get_params?.());
-
 			if (
 				from.left !== to.left ||
 				from.right !== to.right ||
 				from.top !== to.top ||
 				from.bottom !== to.bottom
 			) {
+				const options = get_fn()(this.element, { from, to }, get_params?.());
+
 				animation = animate(this.element, options, undefined, 1, () => {
 					animation?.abort();
 					animation = undefined;

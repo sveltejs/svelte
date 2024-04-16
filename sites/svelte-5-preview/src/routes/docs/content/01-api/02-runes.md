@@ -40,7 +40,7 @@ class Todo {
 
 > In this example, the compiler transforms `done` and `text` into `get`/`set` methods on the class prototype referencing private fields
 
-Objects and arrays [are made deeply reactive](/#H4sIAAAAAAAAE42QwWrDMBBEf2URhUhUNEl7c21DviPOwZY3jVpZEtIqUBz9e-UUt9BTj7M784bdmZ21wciq48xsPyGr2MF7Jhl9-kXEKxrCoqNLQS2TOqqgPbWd7cgggU3TgCFCAw-RekJ-3Et4lvByEq-drbe_dlsPichZcFYZrT6amQto2pXw5FO88FUYtG90gUfYi3zvWrYL75vxL57zfA07_zfr23k1vjtt-aZ0bQTcbrDL5ZifZcAxKeS8lzDc8X0xDhJ2ItdbX1jlOZMb9VnjyCoKCfMpfwG975NFVwEAAA==):
+Objects and arrays [are made deeply reactive](/#H4sIAAAAAAAAE42QwWrDMBBEf2URhUhUNEl7c21DviPOwZY3jVpZEtIqUBz9e-UUt9BTj7M784bdmZ21wciq48xsPyGr2MF7Jhl9-kXEKxrCoqNLQS2TOqqgPbWd7cgggU3TgCFCAw-RekJ-3Et4lvByEq-drbe_dlsPichZcFYZrT6amQto2pXw5FO88FUYtG90gUfYi3zvWrYL75vxL57zfA07_zfr23k1vjtt-aZ0bQTcbrDL5ZifZcAxKeS8lzDc8X0xDhJ2ItdbX1jlOZMb9VnjyCoKCfMpfwG975NFVwEAAA==) by wrapping them with [`Proxies`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy):
 
 ```svelte
 <script>
@@ -93,24 +93,24 @@ This can improve performance with large arrays and objects that you weren't plan
 
 > Objects and arrays passed to `$state.frozen` will be shallowly frozen using `Object.freeze()`. If you don't want this, pass in a clone of the object or array instead.
 
-### Reactive Map, Set and Date
+## `$state.snapshot`
 
-Svelte provides reactive `Map`, `Set` and `Date` classes. These can be imported from `svelte/reactivity` and used just like their native counterparts.
+To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:
 
 ```svelte
 <script>
-	import { Map } from 'svelte/reactivity';
+	let counter = $state({ count: 0 });
 
-	const map = new Map();
-	map.set('message', 'hello');
-
-	function update_message() {
-		map.set('message', 'goodbye');
+	function onclick() {
+		// Will log `{ count: ... }` rather than `Proxy { ... }`
+		console.log($state.snapshot(counter));
 	}
 </script>
-
-<p>{map.get('message')}</p>
 ```
+
+This is handy when you want to pass some state to an external library or API that doesn't expect a proxy, such as `structuredClone`.
+
+> Note that `$state.snapshot` will clone the data when removing reactivity. If the value passed isn't a `$state` proxy, it will be returned as-is.
 
 ## `$derived`
 
@@ -222,7 +222,7 @@ To run side-effects like logging or analytics whenever some specific values chan
 <p>{count} doubled is {doubled}</p>
 ```
 
-An effect only reruns when the object it reads changes, not when a property inside it changes. If you want to react to _any_ change inside an object for inspection purposes at dev time, you may want to use [`inspect`](#inspect).
+An effect only reruns when the object it reads changes, not when a property inside it changes. If you want to react to _any_ change inside an object for inspection purposes at dev time, you may want to use [`inspect`](#$inspect).
 
 ```svelte
 <script>
@@ -252,10 +252,10 @@ An effect only reruns when the object it reads changes, not when a property insi
 </script>
 
 <button on:click={() => object.count++}>
-	{doubled}
+	{derived_object.doubled}
 </button>
 
-<p>{count} doubled is {doubled}</p>
+<p>{object.count} doubled is {derived_object.doubled}</p>
 ```
 
 You can return a function from `$effect`, which will run immediately before the effect re-runs, and before it is destroyed ([demo](/#H4sIAAAAAAAAE42SzW6DMBCEX2Vl5RDaVCQ9JoDUY--9lUox9lKsGBvZC1GEePcaKPnpqSe86_m0M2t6ViqNnu0_e2Z4jWzP3pqGbRhdmrHwHWrCUHvbOjF2Ei-caijLTU4aCYRtDUEKK0-ccL2NDstNrbRWHoU10t8Eu-121gTVCssSBa3XEaQZ9GMrpziGj0p5OAccCgSHwmEgJZwrNNihg6MyhK7j-gii4uYb_YyGUZ5guQwzPdL7b_U4ZNSOvp9T2B3m1rB5cLx4zMkhtc7AHz7YVCVwEFzrgosTBMuNs52SKDegaPbvWnMH8AhUXaNUIY6-hHCldQhUIcyLCFlfAuHvkCKaYk8iYevGGgy2wyyJnpy9oLwG0sjdNe2yhGhJN32HsUzi2xOapNpl_bSLIYnDeeoVLZE1YI3QSpzSfo7-8J5PKbwOmdf2jC6JZyD7HxpPaMk93aHhF6utVKVCyfbkWhy-hh9Z3o_2nQIAAA==)).
@@ -408,7 +408,7 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 </div>
 ```
 
-Apart from the timing, `$effect.pre` works exactly like [`$effect`](#effect) — refer to its documentation for more info.
+Apart from the timing, `$effect.pre` works exactly like [`$effect`](#$effect) — refer to its documentation for more info.
 
 ### What this replaces
 
@@ -490,7 +490,7 @@ let { a, b, c, ...everythingElse }: MyProps = $props();
 >
 > ...TypeScript [widens the type](https://www.typescriptlang.org/play?#code/CYUwxgNghgTiAEAzArgOzAFwJYHtXwBIAHGHIgZwB4AVeAXnilQE8A+ACgEoAueagbgBQgiCAzwA3vAAe9eABYATPAC+c4qQqUp03uQwwsqAOaqOnIfCsB6a-AB6AfiA) of `x` to be `string | number`, instead of erroring.
 
-By default props are treated as readonly, meaning reassignments will not propagate upwards and mutations will result in a warning at runtime in development mode. You will also get a runtime error when trying to `bind:` to a readonly prop in a parent component. To declare props as bindable, use [`$bindable()`](#bindable).
+By default props are treated as readonly, meaning reassignments will not propagate upwards and mutations will result in a warning at runtime in development mode. You will also get a runtime error when trying to `bind:` to a readonly prop in a parent component. To declare props as bindable, use [`$bindable()`](#$bindable).
 
 ### What this replaces
 

@@ -415,14 +415,37 @@ export function client_component(source, analysis, options) {
 	const body = [
 		...state.hoisted,
 		...module.body,
-		b.export_default(
-			b.function_declaration(
-				b.id(analysis.name),
-				[b.id('$$anchor'), b.id('$$props')],
-				component_block
-			)
+		b.function_declaration(
+			b.id(analysis.name),
+			[b.id('$$anchor'), b.id('$$props')],
+			component_block
 		)
 	];
+
+	if (options.hmr) {
+		body.push(
+			b.if(
+				b.id('import.meta.hot'),
+				b.block([
+					b.const(b.id('s'), b.call('$.source', b.id(analysis.name))),
+					b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
+					b.stmt(
+						b.call(
+							'import.meta.hot.accept',
+							b.arrow(
+								[b.id('module')],
+								b.block([
+									b.stmt(b.call('$.set', b.id('s'), b.member(b.id('module'), b.id('default'))))
+								])
+							)
+						)
+					)
+				])
+			)
+		);
+	}
+
+	body.push(b.export_default(b.id(analysis.name)));
 
 	if (options.dev) {
 		if (options.filename) {
@@ -441,8 +464,8 @@ export function client_component(source, analysis, options) {
 			);
 		}
 
-		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'), b.id(analysis.name))));
-		body.push(b.stmt(b.call(b.id('$.mark_module_end'))));
+		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'))));
+		body.push(b.stmt(b.call(b.id('$.mark_module_end'), b.id(analysis.name))));
 	}
 
 	if (options.discloseVersion) {

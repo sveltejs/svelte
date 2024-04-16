@@ -4,6 +4,7 @@ import {
 	extract_identifiers,
 	extract_paths,
 	is_event_attribute,
+	is_expression_async,
 	unwrap_optional
 } from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
@@ -793,6 +794,10 @@ const javascript_visitors_runes = {
 			return b.literal(false);
 		}
 
+		if (rune === '$state.snapshot') {
+			return /** @type {import('estree').Expression} */ (context.visit(node.arguments[0]));
+		}
+
 		if (rune === '$inspect' || rune === '$inspect().with') {
 			return transform_inspect_rune(node, context);
 		}
@@ -853,9 +858,7 @@ function serialize_attribute_value(
 	/** @type {import('estree').Expression[]} */
 	const expressions = [];
 
-	if (attribute_value[0].type !== 'Text') {
-		quasis.push(b.quasi('', false));
-	}
+	quasis.push(b.quasi('', false));
 
 	let i = 0;
 	for (const node of attribute_value) {
@@ -866,7 +869,8 @@ function serialize_attribute_value(
 				// don't trim, space could be important to separate from expression tag
 				data = data.replace(regex_whitespaces_strict, ' ');
 			}
-			quasis.push(b.quasi(data, i === attribute_value.length));
+			const last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
+			last.value.raw += data;
 		} else {
 			expressions.push(
 				b.call(
@@ -874,9 +878,7 @@ function serialize_attribute_value(
 					/** @type {import('estree').Expression} */ (context.visit(node.expression))
 				)
 			);
-			if (i === attribute_value.length || attribute_value[i]?.type !== 'Text') {
-				quasis.push(b.quasi('', true));
-			}
+			quasis.push(b.quasi('', i + 1 === attribute_value.length));
 		}
 	}
 
@@ -1194,7 +1196,9 @@ const javascript_visitors_legacy = {
 						const name = /** @type {import('estree').Identifier} */ (path.node).name;
 						const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
 						const prop = b.member(b.id('$$props'), b.literal(binding.prop_alias ?? name), true);
-						declarations.push(b.declarator(path.node, b.call('$.value_or_fallback', prop, value)));
+						declarations.push(
+							b.declarator(path.node, b.call('$.value_or_fallback', prop, b.thunk(value)))
+						);
 					}
 					continue;
 				}
@@ -1207,13 +1211,15 @@ const javascript_visitors_legacy = {
 					b.literal(binding.prop_alias ?? declarator.id.name),
 					true
 				);
-				const init = declarator.init
-					? b.call(
-							'$.value_or_fallback',
-							prop,
-							/** @type {import('estree').Expression} */ (visit(declarator.init))
-						)
-					: prop;
+
+				/** @type {import('estree').Expression} */
+				let init = prop;
+				if (declarator.init) {
+					const default_value = /** @type {import('estree').Expression} */ (visit(declarator.init));
+					init = is_expression_async(default_value)
+						? b.await(b.call('$.value_or_fallback_async', prop, b.thunk(default_value, true)))
+						: b.call('$.value_or_fallback', prop, b.thunk(default_value));
+				}
 
 				declarations.push(b.declarator(declarator.id, init));
 
@@ -1614,14 +1620,15 @@ const template_visitors = {
 		state.template.push(block_close);
 	},
 	SnippetBlock(node, context) {
-		// TODO hoist where possible
-		context.state.init.push(
-			b.function_declaration(
-				node.expression,
-				[b.id('$$payload'), ...node.parameters],
-				/** @type {import('estree').BlockStatement} */ (context.visit(node.body))
-			)
+		const fn = b.function_declaration(
+			node.expression,
+			[b.id('$$payload'), ...node.parameters],
+			/** @type {import('estree').BlockStatement} */ (context.visit(node.body))
 		);
+		// @ts-expect-error - TODO remove this hack once $$render_inner for legacy bindings is gone
+		fn.___snippet = true;
+		// TODO hoist where possible
+		context.state.init.push(fn);
 
 		if (context.state.options.dev) {
 			context.state.init.push(b.stmt(b.call('$.add_snippet_symbol', node.expression)));
@@ -2221,14 +2228,27 @@ export function server_component(analysis, options) {
 	// If the component binds to a child, we need to put the template in a loop and repeat until legacy bindings are stable.
 	// We can remove this once the legacy syntax is gone.
 	if (analysis.uses_component_bindings) {
+		const snippets = template.body.filter(
+			(node) =>
+				node.type === 'FunctionDeclaration' &&
+				// @ts-expect-error
+				node.___snippet
+		);
+		const rest = template.body.filter(
+			(node) =>
+				node.type !== 'FunctionDeclaration' ||
+				// @ts-expect-error
+				!node.___snippet
+		);
 		template.body = [
+			...snippets,
 			b.let('$$settled', b.true),
 			b.let('$$inner_payload'),
 			b.stmt(
 				b.function(
 					b.id('$$render_inner'),
 					[b.id('$$payload')],
-					b.block(/** @type {import('estree').Statement[]} */ (template.body))
+					b.block(/** @type {import('estree').Statement[]} */ (rest))
 				)
 			),
 			b.do_while(

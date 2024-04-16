@@ -104,6 +104,9 @@ export function set_attributes(element, prev, attrs, lowercase_attributes, css_h
 	var setters = map_get(setters_cache, element.nodeName);
 	if (!setters) map_set(setters_cache, element.nodeName, (setters = get_setters(element)));
 
+	// @ts-expect-error
+	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes ??= {});
+
 	for (key in next) {
 		var value = next[key];
 		if (value === prev?.[key]) continue;
@@ -140,6 +143,7 @@ export function set_attributes(element, prev, attrs, lowercase_attributes, css_h
 				}
 			}
 		} else if (value == null) {
+			attributes[key] = null;
 			element.removeAttribute(key);
 		} else if (key === 'style') {
 			element.style.cssText = value + '';

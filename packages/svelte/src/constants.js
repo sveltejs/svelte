@@ -25,6 +25,9 @@ export const HYDRATION_END_ELSE = `${HYDRATION_END}!`; // used to indicate that 
 
 export const UNINITIALIZED = Symbol();
 
+/** List of elements that require raw contents and should not have SSR comments put in them */
+export const RawTextElements = ['textarea', 'script', 'style', 'title'];
+
 /** List of Element events that will be delegated */
 export const DelegatedEvents = [
 	'beforeinput',

@@ -20,7 +20,8 @@ export function transform_component(analysis, source, options) {
 			warnings: transform_warnings(source, options.filename, analysis.warnings),
 			metadata: {
 				runes: analysis.runes
-			}
+			},
+			ast: /** @type {any} */ (null) // set afterwards
 		};
 	}
 
@@ -62,7 +63,8 @@ export function transform_component(analysis, source, options) {
 		warnings: transform_warnings(source, options.filename, analysis.warnings), // TODO apply preprocessor sourcemap
 		metadata: {
 			runes: analysis.runes
-		}
+		},
+		ast: /** @type {any} */ (null) // set afterwards
 	};
 }
 
@@ -80,7 +82,8 @@ export function transform_module(analysis, source, options) {
 			warnings: transform_warnings(source, analysis.name, analysis.warnings),
 			metadata: {
 				runes: true
-			}
+			},
+			ast: /** @type {any} */ (null) // set afterwards
 		};
 	}
 
@@ -105,7 +108,8 @@ export function transform_module(analysis, source, options) {
 		warnings: transform_warnings(source, analysis.name, analysis.warnings),
 		metadata: {
 			runes: true
-		}
+		},
+		ast: /** @type {any} */ (null) // set afterwards
 	};
 }
 

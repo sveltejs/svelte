@@ -12,7 +12,7 @@ function reset(_, str, tpl) {
 
 var root = $.template(`<input> <input> <button>reset</button>`, 1);
 
-export default function State_proxy_literal($$anchor, $$props) {
+function State_proxy_literal($$anchor, $$props) {
 	$.push($$props, true);
 
 	let str = $.source('');
@@ -34,5 +34,7 @@ export default function State_proxy_literal($$anchor, $$props) {
 	$.append($$anchor, fragment);
 	$.pop();
 }
+
+export default State_proxy_literal;
 
 $.delegate(["click"]);

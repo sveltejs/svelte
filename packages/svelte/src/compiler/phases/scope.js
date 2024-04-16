@@ -649,7 +649,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 			for (const param of node.parameters) {
 				for (const id of extract_identifiers(param)) {
-					child_scope.declare(id, 'each', 'let');
+					child_scope.declare(id, 'snippet', 'let');
 				}
 			}
 

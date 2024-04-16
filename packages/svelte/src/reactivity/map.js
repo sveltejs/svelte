@@ -136,14 +136,15 @@ export class ReactiveMap extends Map {
 
 	values() {
 		get(this.#version);
-		return map(this.#sources.values(), get);
+		return map(this.#sources.values(), get, 'Map Iterator');
 	}
 
 	entries() {
 		get(this.#version);
 		return map(
 			this.#sources.entries(),
-			([key, source]) => /** @type {[K, V]} */ ([key, get(source)])
+			([key, source]) => /** @type {[K, V]} */ ([key, get(source)]),
+			'Map Iterator'
 		);
 	}
 

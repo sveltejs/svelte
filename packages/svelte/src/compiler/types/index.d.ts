@@ -46,6 +46,8 @@ export interface CompileResult {
 		 */
 		runes: boolean;
 	};
+	/** The AST */
+	ast: any;
 }
 
 export interface Warning {
@@ -178,6 +180,19 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * @default null
 	 */
 	cssOutputFilename?: string;
+	/**
+	 * If `true`, compiles components with hot reloading support.
+	 *
+	 * @default false
+	 */
+	hmr?: boolean;
+	/**
+	 * If `true`, returns the modern version of the AST.
+	 * Will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
+	 *
+	 * @default false
+	 */
+	modernAst?: boolean;
 }
 
 export interface ModuleCompileOptions {
@@ -225,6 +240,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		legacy: Required<Required<CompileOptions>['legacy']>;
 		runes: CompileOptions['runes'];
 		customElementOptions: SvelteOptions['customElement'];
+		hmr: CompileOptions['hmr'];
 	};
 
 export type DeclarationKind =
@@ -246,7 +262,8 @@ export interface Binding {
 	 * - `rest_prop`: A rest prop
 	 * - `state`: A state variable
 	 * - `derived`: A derived variable
-	 * - `each`: An each block context variable
+	 * - `each`: An each block parameter
+	 * - `snippet`: A snippet parameter
 	 * - `store_sub`: A $store value
 	 * - `legacy_reactive`: A `$:` declaration
 	 * - `legacy_reactive_import`: An imported binding that is mutated inside the component
@@ -260,6 +277,7 @@ export interface Binding {
 		| 'frozen_state'
 		| 'derived'
 		| 'each'
+		| 'snippet'
 		| 'store_sub'
 		| 'legacy_reactive'
 		| 'legacy_reactive_import';
