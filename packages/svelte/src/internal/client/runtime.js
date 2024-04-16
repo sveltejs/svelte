@@ -8,7 +8,12 @@ import {
 	object_prototype
 } from './utils.js';
 import { snapshot } from './proxy.js';
-import { destroy_effect, effect, user_pre_effect } from './reactivity/effects.js';
+import {
+	destroy_effect,
+	effect,
+	execute_effect_teardown,
+	user_pre_effect
+} from './reactivity/effects.js';
 import {
 	EFFECT,
 	RENDER_EFFECT,
@@ -412,7 +417,7 @@ export function execute_effect(effect) {
 			destroy_effect_children(effect);
 		}
 
-		effect.teardown?.call(null);
+		execute_effect_teardown(effect);
 		var teardown = execute_reaction_fn(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 	} finally {

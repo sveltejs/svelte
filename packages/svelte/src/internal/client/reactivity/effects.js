@@ -245,6 +245,22 @@ export function branch(fn) {
 }
 
 /**
+ * @param {import("#client").Effect} effect
+ */
+export function execute_effect_teardown(effect) {
+	var teardown = effect.teardown;
+	if (teardown !== null) {
+		const previously_destroying_effect = is_destroying_effect;
+		set_is_destroying_effect(true);
+		try {
+			teardown.call(null);
+		} finally {
+			set_is_destroying_effect(previously_destroying_effect);
+		}
+	}
+}
+
+/**
  * @param {import('#client').Effect} effect
  * @returns {void}
  */
@@ -265,21 +281,9 @@ export function destroy_effect(effect) {
 		}
 	}
 
-	var parent = effect.parent;
-	var teardown = effect.teardown;
+	execute_effect_teardown(effect);
 
-	// We need to ensure that we correctly set the parent
-	// effect when tearing down, so any effects created from
-	// within are attached to the correct effect.
-	if (teardown !== null) {
-		const previously_destroying_effect = is_destroying_effect;
-		set_is_destroying_effect(true);
-		try {
-			teardown.call(null);
-		} finally {
-			set_is_destroying_effect(previously_destroying_effect);
-		}
-	}
+	var parent = effect.parent;
 
 	// If the parent doesn't have any children, then skip this work altogether
 	if (parent !== null && (effect.f & BRANCH_EFFECT) !== 0 && parent.first !== null) {
