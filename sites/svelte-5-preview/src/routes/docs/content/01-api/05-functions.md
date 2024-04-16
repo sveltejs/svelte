@@ -1,10 +1,57 @@
 ---
-title: Functions
+title: Imports
 ---
 
-As well as runes, Svelte 5 will introduce a couple of new functions, in addition to existing functions like `getContext`, `setContext` and `tick`. These are introduced as functions rather than runes because they are used directly and the compiler does not need to touch them to make them function as it does with runes. However, these functions may still use Svelte internals.
+As well as runes, Svelte 5 introduces a handful of new things you can import, alongside existing ones like `getContext`, `setContext` and `tick`.
 
-## `untrack`
+## `svelte`
+
+### `mount`
+
+Instantiates a component and mounts it to the given target:
+
+```js
+// @errors: 2322
+import { mount } from 'svelte';
+import App from './App.svelte';
+
+const app = mount(App, {
+	target: document.querySelector('#app'),
+	props: { some: 'property' }
+});
+```
+
+### `hydrate`
+
+Like `mount`, but will reuse up any HTML rendered by Svelte's SSR output (from the [`render`](#svelte-server-render) function) inside the target and make it interactive:
+
+```js
+// @errors: 2322
+import { hydrate } from 'svelte';
+import App from './App.svelte';
+
+const app = hydrate(App, {
+	target: document.querySelector('#app'),
+	props: { some: 'property' }
+});
+```
+
+### `unmount`
+
+Unmounts a component created with [`mount`](#svelte-mount) or [`hydrate`](#svelte-hydrate):
+
+```js
+// @errors: 1109
+import { mount, unmount } from 'svelte';
+import App from './App.svelte';
+
+const app = mount(App, {...});
+
+// later
+unmount(app);
+```
+
+### `untrack`
 
 To prevent something from being treated as an `$effect`/`$derived` dependency, use `untrack`:
 
@@ -23,37 +70,31 @@ To prevent something from being treated as an `$effect`/`$derived` dependency, u
 </script>
 ```
 
-## `mount`
+## `svelte/reactivity`
 
-Instantiates a component and mounts it to the given target:
+Svelte provides reactive `Map`, `Set`, `Date` and `URL` classes. These can be imported from `svelte/reactivity` and used just like their native counterparts. [Demo:](https://svelte-5-preview.vercel.app/#H4sIAAAAAAAAE32QzWrDMBCEX2Wri1uo7bvrBHrvqdBTUogqryuBfhZp5SQYv3slSsmpOc7uN8zsrmI2FpMYDqvw0qEYxCuReBZ8pSrSgpax6BRyVHUyJhUN8f7oj2wchciwwsf7G2wwx-Cg-bX0EaVisxi-Ni-FLbQKPjHkaGEHHs_V9NhoZkpD3-NFOrLYqeB6kqybp-Ia-1uYHx_aFpSW_hsTcADWmLDrOmjbsh-Np8zwZfw0LNJm3K0lqaMYOKhgt_8RHRLX0-8gtdAfUiAdb4XOxlrINElGOOmI8wmkn2AxCmHBmOTdetWw7ct7XZjMbHASA8eM2-f2A-JarmyZAQAA)
 
-```js
-// @errors: 2322
-import { mount } from 'svelte';
-import App from './App.svelte';
+```svelte
+<script>
+	import { URL } from 'svelte/reactivity';
 
-const app = mount(App, {
-	target: document.querySelector('#app'),
-	props: { some: 'property' }
-});
+	const url = new URL('https://example.com/path');
+</script>
+
+<!-- changes to these... -->
+<input bind:value={url.protocol} />
+<input bind:value={url.hostname} />
+<input bind:value={url.pathname} />
+
+<hr />
+
+<!-- will update `href` and vice versa -->
+<input bind:value={url.href} />
 ```
 
-## `hydrate`
+## `svelte/server`
 
-Like `mount`, but will pick up any HTML rendered by Svelte's SSR output (from the `render` function) inside the target and make it interactive:
-
-```js
-// @errors: 2322
-import { hydrate } from 'svelte';
-import App from './App.svelte';
-
-const app = hydrate(App, {
-	target: document.querySelector('#app'),
-	props: { some: 'property' }
-});
-```
-
-## `render`
+### `render`
 
 Only available on the server and when compiling with the `server` option. Takes a component and returns an object with `html` and `head` properties on it, which you can use to populate the HTML when server-rendering your app:
 
