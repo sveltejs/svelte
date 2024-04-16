@@ -1152,7 +1152,7 @@ export function deep_read(value, visited = new Set()) {
 				// continue
 			}
 		}
-		const proto = Object.getPrototypeOf(value);
+		const proto = get_prototype_of(value);
 		if (
 			proto !== Object.prototype &&
 			proto !== Array.prototype &&

@@ -3,6 +3,7 @@
 import { STATE_SYMBOL } from '../constants.js';
 import { render_effect } from '../reactivity/effects.js';
 import { current_component_context, untrack } from '../runtime.js';
+import { get_prototype_of } from '../utils.js';
 
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
 const boundaries = {};
@@ -167,9 +168,18 @@ function add_owner_to_object(object, owner) {
 				object[ADD_OWNER](owner);
 			});
 		} else {
-			// recurse until we find a state proxy
-			for (const key in object) {
-				add_owner_to_object(object[key], owner);
+			var proto = get_prototype_of(object);
+
+			if (proto === Object.prototype) {
+				// recurse until we find a state proxy
+				for (const key in object) {
+					add_owner_to_object(object[key], owner);
+				}
+			} else if (proto === Array.prototype) {
+				// recurse until we find a state proxy
+				for (let i = 0; i < object.length; i += 1) {
+					add_owner_to_object(object[i], owner);
+				}
 			}
 		}
 	}
