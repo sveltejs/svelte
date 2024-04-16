@@ -69,10 +69,12 @@ export function proxy(value, immutable = true, parent = null) {
 
 				// @ts-expect-error
 				value[STATE_SYMBOL].owners =
-					parent === null && current_component_context !== null
-						? // @ts-expect-error
-							new Set([current_component_context.function])
-						: null;
+					parent === null
+						? current_component_context !== null
+							? // @ts-expect-error
+								new Set([current_component_context.function])
+							: null
+						: parent.owners;
 			}
 
 			return proxy;
