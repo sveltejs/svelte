@@ -123,7 +123,7 @@ export function add_owner(object, owner, global = false) {
 		}
 	}
 
-	add_owner_to_object(object, owner);
+	add_owner_to_object(object, owner, new Set());
 }
 
 /**
@@ -140,9 +140,11 @@ export function widen_ownership(from, to) {
 			to.owners = null;
 			break;
 		}
+
 		for (const owner of from.owners) {
 			to.owners.add(owner);
 		}
+
 		from = from.parent;
 	}
 }
@@ -150,8 +152,9 @@ export function widen_ownership(from, to) {
 /**
  * @param {any} object
  * @param {Function} owner
+ * @param {Set<any>} seen
  */
-function add_owner_to_object(object, owner) {
+function add_owner_to_object(object, owner, seen) {
 	const metadata = /** @type {import('#client').ProxyMetadata} */ (object?.[STATE_SYMBOL]);
 
 	if (metadata) {
@@ -160,6 +163,9 @@ function add_owner_to_object(object, owner) {
 			metadata.owners.add(owner);
 		}
 	} else if (object && typeof object === 'object') {
+		if (seen.has(object)) return;
+		seen.add(object);
+
 		if (object[ADD_OWNER]) {
 			// this is a class with state fields. we put this in a render effect
 			// so that if state is replaced (e.g. `instance.name = { first, last }`)
@@ -173,12 +179,12 @@ function add_owner_to_object(object, owner) {
 			if (proto === Object.prototype) {
 				// recurse until we find a state proxy
 				for (const key in object) {
-					add_owner_to_object(object[key], owner);
+					add_owner_to_object(object[key], owner, seen);
 				}
 			} else if (proto === Array.prototype) {
 				// recurse until we find a state proxy
 				for (let i = 0; i < object.length; i += 1) {
-					add_owner_to_object(object[i], owner);
+					add_owner_to_object(object[i], owner, seen);
 				}
 			}
 		}
