@@ -1166,12 +1166,12 @@ export function deep_read(value, visited = new Set()) {
 }
 
 /**
- * Like `unstate`, but recursively traverses into normal arrays/objects to find potential states in them.
+ * Like `snapshot`, but recursively traverses into normal arrays/objects to find potential states in them.
  * @param {any} value
  * @param {Map<any, any>} visited
  * @returns {any}
  */
-function deep_unstate(value, visited = new Map()) {
+function deep_snapshot(value, visited = new Map()) {
 	if (typeof value === 'object' && value !== null && !visited.has(value)) {
 		const unstated = snapshot(value);
 		if (unstated !== value) {
@@ -1179,13 +1179,13 @@ function deep_unstate(value, visited = new Map()) {
 			return unstated;
 		}
 		const prototype = get_prototype_of(value);
-		// Only deeply unstate plain objects and arrays
+		// Only deeply snapshot plain objects and arrays
 		if (prototype === object_prototype || prototype === array_prototype) {
 			let contains_unstated = false;
 			/** @type {any} */
 			const nested_unstated = Array.isArray(value) ? [] : {};
 			for (let key in value) {
-				const result = deep_unstate(value[key], visited);
+				const result = deep_snapshot(value[key], visited);
 				nested_unstated[key] = result;
 				if (result !== value[key]) {
 					contains_unstated = true;
@@ -1213,7 +1213,7 @@ export function inspect(get_value, inspect = console.log) {
 
 	user_pre_effect(() => {
 		const fn = () => {
-			const value = untrack(() => get_value().map((v) => deep_unstate(v)));
+			const value = untrack(() => get_value().map((v) => deep_snapshot(v)));
 			if (value.length === 2 && typeof value[1] === 'function' && !warned_inspect_changed) {
 				// eslint-disable-next-line no-console
 				console.warn(
@@ -1301,7 +1301,7 @@ if (DEV) {
  */
 export function freeze(value) {
 	if (typeof value === 'object' && value != null && !is_frozen(value)) {
-		// If the object is already proxified, then unstate the value
+		// If the object is already proxified, then snapshot the value
 		if (STATE_SYMBOL in value) {
 			return object_freeze(snapshot(value));
 		}
