@@ -917,6 +917,11 @@ function serialize_bind_this(bind_this, context, node) {
 
 	/** @type {import('estree').Expression[]} */
 	const args = [node, b.arrow([b.id('$$value'), ...ids], update), b.arrow([...ids], bind_this_id)];
+	// If we're mutating a property, then it might already be non-existent.
+	// We can use an optional member accessor to avoid any runtime issues.
+	if (bind_this_id.type === 'MemberExpression') {
+		bind_this_id.optional = true;
+	}
 	if (each_ids.size) {
 		args.push(b.thunk(b.array(Array.from(each_ids.values()).map((id) => id[1]))));
 	}
