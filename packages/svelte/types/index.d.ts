@@ -2551,14 +2551,15 @@ declare namespace $state {
 	export function frozen<T>(initial: T): Readonly<T>;
 	export function frozen<T>(): Readonly<T> | undefined;
 	/**
-	 * To remove reactivity from objects and arrays created with `$state`, use `$state.snapshot`:
+	 * To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:
 	 *
 	 * Example:
 	 * ```ts
 	 * <script>
 	 *   let counter = $state({ count: 0 });
 	 *
-	 *   $effect(() => {
+	 *   function onclick() {
+	 *     // Will log `{ count: ... }` rather than `Proxy { ... }`
 	 *     console.log($state.snapshot(counter));
 	 *   };
 	 * </script>
