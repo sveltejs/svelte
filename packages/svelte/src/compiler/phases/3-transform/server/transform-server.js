@@ -794,11 +794,7 @@ const javascript_visitors_runes = {
 		}
 
 		if (rune === '$state.snapshot') {
-			const arg =
-				node.arguments.length > 0
-					? /** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
-					: b.id('undefined');
-			return context.visit(arg);
+			return /** @type {import('estree').Expression} */ (context.visit(node.arguments[0]));
 		}
 
 		if (rune === '$inspect' || rune === '$inspect().with') {

@@ -389,11 +389,10 @@ export const javascript_visitors_runes = {
 		}
 
 		if (rune === '$state.snapshot') {
-			const arg =
-				node.arguments.length > 0
-					? /** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
-					: b.id('undefined');
-			return b.call('$.snapshot', arg);
+			return b.call(
+				'$.snapshot',
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
+			);
 		}
 
 		if (rune === '$effect.root') {
