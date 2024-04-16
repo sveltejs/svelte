@@ -165,8 +165,10 @@ export interface ProxyMetadata<T = Record<string | symbol, any>> {
 	p: ProxyStateObject<T>;
 	/** The original target this proxy was created for */
 	t: T;
-	/** Dev-only — the components that 'own' this state, if any */
-	o: null | Set<Function>;
+	/** Dev-only — the components that 'own' this state, if any. `null` means no owners, i.e. everyone can mutate this state. */
+	owners: null | Set<Function>;
+	/** Dev-only — the parent metadata object */
+	parent: null | ProxyMetadata;
 }
 
 export type ProxyStateObject<T = Record<string | symbol, any>> = T & {

@@ -894,7 +894,7 @@ export function getContext(key) {
 		// @ts-expect-error
 		const fn = current_component_context?.function;
 		if (fn) {
-			add_owner(result, fn);
+			add_owner(result, fn, true);
 		}
 	}
 
@@ -950,7 +950,7 @@ export function getAllContexts() {
 		const fn = current_component_context?.function;
 		if (fn) {
 			for (const value of context_map.values()) {
-				add_owner(value, fn);
+				add_owner(value, fn, true);
 			}
 		}
 	}
@@ -1152,7 +1152,7 @@ export function deep_read(value, visited = new Set()) {
 				// continue
 			}
 		}
-		const proto = Object.getPrototypeOf(value);
+		const proto = get_prototype_of(value);
 		if (
 			proto !== Object.prototype &&
 			proto !== Array.prototype &&

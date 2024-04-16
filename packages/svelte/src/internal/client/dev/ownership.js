@@ -1,7 +1,9 @@
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
 import { STATE_SYMBOL } from '../constants.js';
-import { untrack } from '../runtime.js';
+import { render_effect } from '../reactivity/effects.js';
+import { current_component_context, untrack } from '../runtime.js';
+import { get_prototype_of } from '../utils.js';
 
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
 const boundaries = {};
@@ -63,6 +65,8 @@ function get_component() {
 	return null;
 }
 
+export const ADD_OWNER = Symbol('ADD_OWNER');
+
 /**
  * Together with `mark_module_end`, this function establishes the boundaries of a `.svelte` file,
  * such that subsequent calls to `get_component` can tell us which component is responsible
@@ -98,60 +102,130 @@ export function mark_module_end(component) {
 }
 
 /**
- *
  * @param {any} object
  * @param {any} owner
+ * @param {boolean} [global]
  */
-export function add_owner(object, owner) {
-	untrack(() => {
-		add_owner_to_object(object, owner);
-	});
+export function add_owner(object, owner, global = false) {
+	if (object && !global) {
+		// @ts-expect-error
+		const component = current_component_context.function;
+		const metadata = object[STATE_SYMBOL];
+		if (metadata && !has_owner(metadata, component)) {
+			let original = get_owner(metadata);
+
+			if (owner.filename !== component.filename) {
+				let message = `${component.filename} passed a value to ${owner.filename} with \`bind:\`, but the value is owned by ${original.filename}. Consider creating a binding between ${original.filename} and ${component.filename}`;
+
+				// eslint-disable-next-line no-console
+				console.warn(message);
+			}
+		}
+	}
+
+	add_owner_to_object(object, owner, new Set());
+}
+
+/**
+ * @param {import('#client').ProxyMetadata | null} from
+ * @param {import('#client').ProxyMetadata} to
+ */
+export function widen_ownership(from, to) {
+	if (to.owners === null) {
+		return;
+	}
+
+	while (from) {
+		if (from.owners === null) {
+			to.owners = null;
+			break;
+		}
+
+		for (const owner of from.owners) {
+			to.owners.add(owner);
+		}
+
+		from = from.parent;
+	}
 }
 
 /**
  * @param {any} object
  * @param {Function} owner
+ * @param {Set<any>} seen
  */
-function add_owner_to_object(object, owner) {
-	if (object?.[STATE_SYMBOL]?.o && !object[STATE_SYMBOL].o.has(owner)) {
-		object[STATE_SYMBOL].o.add(owner);
+function add_owner_to_object(object, owner, seen) {
+	const metadata = /** @type {import('#client').ProxyMetadata} */ (object?.[STATE_SYMBOL]);
 
-		for (const key in object) {
-			add_owner_to_object(object[key], owner);
+	if (metadata) {
+		// this is a state proxy, add owner directly, if not globally shared
+		if (metadata.owners !== null) {
+			metadata.owners.add(owner);
+		}
+	} else if (object && typeof object === 'object') {
+		if (seen.has(object)) return;
+		seen.add(object);
+
+		if (object[ADD_OWNER]) {
+			// this is a class with state fields. we put this in a render effect
+			// so that if state is replaced (e.g. `instance.name = { first, last }`)
+			// the new state is also co-owned by the caller of `getContext`
+			render_effect(() => {
+				object[ADD_OWNER](owner);
+			});
+		} else {
+			var proto = get_prototype_of(object);
+
+			if (proto === Object.prototype) {
+				// recurse until we find a state proxy
+				for (const key in object) {
+					add_owner_to_object(object[key], owner, seen);
+				}
+			} else if (proto === Array.prototype) {
+				// recurse until we find a state proxy
+				for (let i = 0; i < object.length; i += 1) {
+					add_owner_to_object(object[i], owner, seen);
+				}
+			}
 		}
 	}
 }
 
 /**
- * @param {any} object
+ * @param {import('#client').ProxyMetadata} metadata
+ * @param {Function} component
+ * @returns {boolean}
  */
-export function strip_owner(object) {
-	untrack(() => {
-		strip_owner_from_object(object);
-	});
-}
-
-/**
- * @param {any} object
- */
-function strip_owner_from_object(object) {
-	if (object?.[STATE_SYMBOL]?.o) {
-		object[STATE_SYMBOL].o = null;
-
-		for (const key in object) {
-			strip_owner(object[key]);
-		}
+function has_owner(metadata, component) {
+	if (metadata.owners === null) {
+		return true;
 	}
+
+	return (
+		metadata.owners.has(component) ||
+		(metadata.parent !== null && has_owner(metadata.parent, component))
+	);
 }
 
 /**
- * @param {Set<Function>} owners
+ * @param {import('#client').ProxyMetadata} metadata
+ * @returns {any}
  */
-export function check_ownership(owners) {
+function get_owner(metadata) {
+	return (
+		metadata?.owners?.values().next().value ??
+		get_owner(/** @type {import('#client').ProxyMetadata} */ (metadata.parent))
+	);
+}
+
+/**
+ * @param {import('#client').ProxyMetadata} metadata
+ */
+export function check_ownership(metadata) {
 	const component = get_component();
 
-	if (component && !owners.has(component)) {
-		let original = [...owners][0];
+	if (component && !has_owner(metadata, component)) {
+		let original = get_owner(metadata);
 
 		let message =
 			// @ts-expect-error
