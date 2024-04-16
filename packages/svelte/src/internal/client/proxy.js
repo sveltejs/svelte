@@ -140,7 +140,7 @@ function unwrap(value, already_unwrapped) {
  * @param {T} value
  * @returns {T}
  */
-export function unstate(value) {
+export function snapshot(value) {
 	return /** @type {T} */ (
 		unwrap(/** @type {import('#client').ProxyStateObject} */ (value), new Map())
 	);

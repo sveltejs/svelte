@@ -177,8 +177,6 @@ export function flushSync(fn) {
 	flush_sync(fn);
 }
 
-export { unstate } from './internal/client/proxy.js';
-
 export { hydrate, mount, unmount } from './internal/client/render.js';
 
 export {
