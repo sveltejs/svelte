@@ -1,6 +1,12 @@
 import { STATE_SYMBOL } from '../../../constants.js';
 import { branch, effect, render_effect } from '../../../reactivity/effects.js';
-import { current_effect, current_reaction, set_current_effect, set_current_reaction, untrack } from '../../../runtime.js';
+import {
+	current_effect,
+	current_reaction,
+	set_current_effect,
+	set_current_reaction,
+	untrack
+} from '../../../runtime.js';
 
 /**
  * @param {any} bound_value
