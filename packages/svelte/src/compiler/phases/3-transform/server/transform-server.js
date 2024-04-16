@@ -4,6 +4,7 @@ import {
 	extract_identifiers,
 	extract_paths,
 	is_event_attribute,
+	is_expression_async,
 	unwrap_optional
 } from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
@@ -793,6 +794,10 @@ const javascript_visitors_runes = {
 			return b.literal(false);
 		}
 
+		if (rune === '$state.snapshot') {
+			return /** @type {import('estree').Expression} */ (context.visit(node.arguments[0]));
+		}
+
 		if (rune === '$inspect' || rune === '$inspect().with') {
 			return transform_inspect_rune(node, context);
 		}
@@ -1191,7 +1196,9 @@ const javascript_visitors_legacy = {
 						const name = /** @type {import('estree').Identifier} */ (path.node).name;
 						const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
 						const prop = b.member(b.id('$$props'), b.literal(binding.prop_alias ?? name), true);
-						declarations.push(b.declarator(path.node, b.call('$.value_or_fallback', prop, value)));
+						declarations.push(
+							b.declarator(path.node, b.call('$.value_or_fallback', prop, b.thunk(value)))
+						);
 					}
 					continue;
 				}
@@ -1204,13 +1211,15 @@ const javascript_visitors_legacy = {
 					b.literal(binding.prop_alias ?? declarator.id.name),
 					true
 				);
-				const init = declarator.init
-					? b.call(
-							'$.value_or_fallback',
-							prop,
-							/** @type {import('estree').Expression} */ (visit(declarator.init))
-						)
-					: prop;
+
+				/** @type {import('estree').Expression} */
+				let init = prop;
+				if (declarator.init) {
+					const default_value = /** @type {import('estree').Expression} */ (visit(declarator.init));
+					init = is_expression_async(default_value)
+						? b.await(b.call('$.value_or_fallback_async', prop, b.thunk(default_value, true)))
+						: b.call('$.value_or_fallback', prop, b.thunk(default_value));
+				}
 
 				declarations.push(b.declarator(declarator.id, init));
 

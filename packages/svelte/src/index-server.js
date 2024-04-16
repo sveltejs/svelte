@@ -33,14 +33,4 @@ export function unmount() {
 
 export async function tick() {}
 
-/**
- * @template T
- * @param {T} value
- * @returns {T}
- */
-export function unstate(value) {
-	// There's no signals/proxies on the server, so just return the value
-	return value;
-}
-
 export { getAllContexts, getContext, hasContext, setContext } from './internal/server/context.js';

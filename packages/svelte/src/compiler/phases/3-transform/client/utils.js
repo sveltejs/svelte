@@ -1,5 +1,10 @@
 import * as b from '../../../utils/builders.js';
-import { extract_paths, is_simple_expression, object } from '../../../utils/ast.js';
+import {
+	extract_paths,
+	is_expression_async,
+	is_simple_expression,
+	object
+} from '../../../utils/ast.js';
 import { error } from '../../../errors.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
@@ -113,103 +118,6 @@ export function serialize_get_binding(node, state) {
 	}
 
 	return node;
-}
-
-/**
- * @param {import('estree').Expression | import('estree').Pattern} expression
- * @returns {boolean}
- */
-function is_expression_async(expression) {
-	switch (expression.type) {
-		case 'AwaitExpression': {
-			return true;
-		}
-		case 'ArrayPattern': {
-			return expression.elements.some((element) => element && is_expression_async(element));
-		}
-		case 'ArrayExpression': {
-			return expression.elements.some((element) => {
-				if (!element) {
-					return false;
-				} else if (element.type === 'SpreadElement') {
-					return is_expression_async(element.argument);
-				} else {
-					return is_expression_async(element);
-				}
-			});
-		}
-		case 'AssignmentPattern':
-		case 'AssignmentExpression':
-		case 'BinaryExpression':
-		case 'LogicalExpression': {
-			return is_expression_async(expression.left) || is_expression_async(expression.right);
-		}
-		case 'CallExpression':
-		case 'NewExpression': {
-			return (
-				(expression.callee.type !== 'Super' && is_expression_async(expression.callee)) ||
-				expression.arguments.some((element) => {
-					if (element.type === 'SpreadElement') {
-						return is_expression_async(element.argument);
-					} else {
-						return is_expression_async(element);
-					}
-				})
-			);
-		}
-		case 'ChainExpression': {
-			return is_expression_async(expression.expression);
-		}
-		case 'ConditionalExpression': {
-			return (
-				is_expression_async(expression.test) ||
-				is_expression_async(expression.alternate) ||
-				is_expression_async(expression.consequent)
-			);
-		}
-		case 'ImportExpression': {
-			return is_expression_async(expression.source);
-		}
-		case 'MemberExpression': {
-			return (
-				(expression.object.type !== 'Super' && is_expression_async(expression.object)) ||
-				(expression.property.type !== 'PrivateIdentifier' &&
-					is_expression_async(expression.property))
-			);
-		}
-		case 'ObjectPattern':
-		case 'ObjectExpression': {
-			return expression.properties.some((property) => {
-				if (property.type === 'SpreadElement') {
-					return is_expression_async(property.argument);
-				} else if (property.type === 'Property') {
-					return (
-						(property.key.type !== 'PrivateIdentifier' && is_expression_async(property.key)) ||
-						is_expression_async(property.value)
-					);
-				}
-			});
-		}
-		case 'RestElement': {
-			return is_expression_async(expression.argument);
-		}
-		case 'SequenceExpression':
-		case 'TemplateLiteral': {
-			return expression.expressions.some((subexpression) => is_expression_async(subexpression));
-		}
-		case 'TaggedTemplateExpression': {
-			return is_expression_async(expression.tag) || is_expression_async(expression.quasi);
-		}
-		case 'UnaryExpression':
-		case 'UpdateExpression': {
-			return is_expression_async(expression.argument);
-		}
-		case 'YieldExpression': {
-			return expression.argument ? is_expression_async(expression.argument) : false;
-		}
-		default:
-			return false;
-	}
 }
 
 /**
