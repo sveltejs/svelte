@@ -44,7 +44,8 @@ export function compile(source, options) {
 		const analysis = analyze_component(parsed, source, combined_options);
 
 		const result = transform_component(analysis, source, combined_options);
-		return { ...result, ast: to_public_ast(source, parsed, options.modernAst) };
+		result.ast = to_public_ast(source, parsed, options.modernAst);
+		return result;
 	} catch (e) {
 		if (e instanceof CompileError) {
 			handle_compile_error(e, options.filename, source);
