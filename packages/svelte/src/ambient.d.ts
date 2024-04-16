@@ -59,7 +59,7 @@ declare namespace $state {
 	 *
 	 * https://svelte-5-preview.vercel.app/docs/runes#$state.snapshot
 	 *
-	 * @param state The state object to snapshot
+	 * @param state The value to snapshot
 	 */
 	export function snapshot<T>(state: T): T;
 }
