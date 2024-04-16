@@ -7,11 +7,13 @@ import {
 	destroy_effect_children,
 	execute_effect,
 	get,
+	is_destroying_effect,
 	is_flushing_effect,
 	remove_reactions,
 	schedule_effect,
 	set_current_effect,
 	set_current_reaction,
+	set_is_destroying_effect,
 	set_is_flushing_effect,
 	set_signal_status,
 	untrack
@@ -111,6 +113,12 @@ export function user_effect(fn) {
 				(DEV ? ': The Svelte $effect rune can only be used during component initialisation.' : '')
 		);
 	}
+	if (is_destroying_effect) {
+		throw new Error(
+			'ERR_SVELTE_EFFECT_IN_TEARDOWN' +
+				(DEV ? ': The Svelte $effect rune can not be used in the teardown phase of an effect.' : '')
+		);
+	}
 
 	// Non-nested `$effect(...)` in a component should be deferred
 	// until the component is mounted
@@ -139,6 +147,14 @@ export function user_pre_effect(fn) {
 			'ERR_SVELTE_ORPHAN_EFFECT' +
 				(DEV
 					? ': The Svelte $effect.pre rune can only be used during component initialisation.'
+					: '')
+		);
+	}
+	if (is_destroying_effect) {
+		throw new Error(
+			'ERR_SVELTE_EFFECT_IN_TEARDOWN' +
+				(DEV
+					? ': The Svelte $effect.pre rune can not be used in the teardown phase of an effect.'
 					: '')
 		);
 	}
@@ -258,15 +274,12 @@ export function destroy_effect(effect) {
 	// effect when tearing down, so any effects created from
 	// within are attached to the correct effect.
 	if (teardown !== null) {
-		const previous_effect = current_effect;
-		const previous_reaction = current_reaction;
-		set_current_effect(parent);
-		set_current_reaction(parent);
+		const previously_destroying_effect = is_destroying_effect;
+		set_is_destroying_effect(true);
 		try {
 			teardown.call(null);
 		} finally {
-			set_current_effect(previous_effect);
-			set_current_reaction(previous_reaction);
+			set_is_destroying_effect(previously_destroying_effect);
 		}
 	}
 

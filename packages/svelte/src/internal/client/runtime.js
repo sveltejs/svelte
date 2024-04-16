@@ -37,10 +37,16 @@ let current_scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
 export let is_flushing_effect = false;
+export let is_destroying_effect = false;
 
 /** @param {boolean} value */
 export function set_is_flushing_effect(value) {
 	is_flushing_effect = value;
+}
+
+/** @param {boolean} value */
+export function set_is_destroying_effect(value) {
+	is_destroying_effect = value;
 }
 
 // Used for $inspect
