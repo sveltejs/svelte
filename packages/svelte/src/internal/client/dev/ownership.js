@@ -126,6 +126,27 @@ export function add_owner(object, owner, global = false) {
 }
 
 /**
+ * @param {import('#client').ProxyMetadata | null} from
+ * @param {import('#client').ProxyMetadata} to
+ */
+export function widen_ownership(from, to) {
+	if (to.owners === null) {
+		return;
+	}
+
+	while (from) {
+		if (from.owners === null) {
+			to.owners = null;
+			break;
+		}
+		for (const owner of from.owners) {
+			to.owners.add(owner);
+		}
+		from = from.parent;
+	}
+}
+
+/**
  * @param {any} object
  * @param {Function} owner
  */

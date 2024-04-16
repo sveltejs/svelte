@@ -16,7 +16,7 @@ import {
 	is_frozen,
 	object_prototype
 } from './utils.js';
-import { check_ownership } from './dev/ownership.js';
+import { check_ownership, widen_ownership } from './dev/ownership.js';
 import { mutable_source, source, set } from './reactivity/sources.js';
 import { STATE_SYMBOL } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
@@ -280,6 +280,11 @@ const state_proxy_handler = {
 		const not_has = !(prop in target);
 
 		if (DEV) {
+			/** @type {import('#client').ProxyMetadata | undefined} */
+			const prop_metadata = value?.[STATE_SYMBOL];
+			if (prop_metadata && prop_metadata?.parent !== metadata) {
+				widen_ownership(metadata, prop_metadata);
+			}
 			check_ownership(metadata);
 		}
 

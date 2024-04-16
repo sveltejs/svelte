@@ -2,7 +2,8 @@
 	import Counter from './Counter.svelte';
 	import { global } from './state.svelte.js';
 
-	global.object = { count: 0 };
+	let object = $state({ count: 0 });
+	global.object = object;
 </script>
 
 <Counter />
