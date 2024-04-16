@@ -133,8 +133,10 @@ function add_owner_to_object(object, owner) {
 	const metadata = /** @type {import('#client').ProxyMetadata} */ (object?.[STATE_SYMBOL]);
 
 	if (metadata) {
-		// this is a state proxy, add owner directly
-		(metadata.owners ??= new Set()).add(owner);
+		// this is a state proxy, add owner directly, if not globally shared
+		if (metadata.owners !== null) {
+			metadata.owners.add(owner);
+		}
 	} else if (object && typeof object === 'object') {
 		if (object[ADD_OWNER]) {
 			// this is a class with state fields. we put this in a render effect
@@ -159,10 +161,13 @@ function add_owner_to_object(object, owner) {
  */
 function has_owner(metadata, component) {
 	if (metadata.owners === null) {
-		return metadata.parent === null ? true : has_owner(metadata.parent, component);
+		return true;
 	}
 
-	return metadata.owners.has(component);
+	return (
+		metadata.owners.has(component) ||
+		(metadata.parent !== null && has_owner(metadata.parent, component))
+	);
 }
 
 /**
