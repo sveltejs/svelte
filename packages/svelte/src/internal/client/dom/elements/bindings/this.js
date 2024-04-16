@@ -1,5 +1,5 @@
 import { STATE_SYMBOL } from '../../../constants.js';
-import { destroy_effect, effect, render_effect } from '../../../reactivity/effects.js';
+import { branch, effect, render_effect } from '../../../reactivity/effects.js';
 import { untrack } from '../../../runtime.js';
 
 /**
@@ -47,12 +47,10 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 		});
 
 		return () => {
-			const e = effect(() => {
+			branch(() => {
 				if (parts && is_bound_this(get_value(...parts), element_or_component)) {
 					update(null, ...parts);
 				}
-				// Prevent leaking memory by ensuring we tidy up this effect
-				destroy_effect(e);
 			});
 		};
 	});

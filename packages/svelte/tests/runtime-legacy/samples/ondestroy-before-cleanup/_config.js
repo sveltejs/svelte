@@ -8,6 +8,6 @@ export default test({
 		const div = target.querySelector('div');
 
 		component.visible = false;
-		assert.equal(container.div, div);
+		assert.equal(container.div, null);
 	}
 });

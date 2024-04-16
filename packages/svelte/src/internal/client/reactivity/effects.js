@@ -10,6 +10,8 @@ import {
 	is_flushing_effect,
 	remove_reactions,
 	schedule_effect,
+	set_current_effect,
+	set_current_reaction,
 	set_is_flushing_effect,
 	set_signal_status,
 	untrack
@@ -249,9 +251,24 @@ export function destroy_effect(effect) {
 		}
 	}
 
-	effect.teardown?.call(null);
-
 	var parent = effect.parent;
+	var teardown = effect.teardown;
+
+	// We need to ensure that we correctly set the parent
+	// effect when tearing down, so any effects created from
+	// within are attached to the correct effect.
+	if (teardown !== null) {
+		const previous_effect = current_effect;
+		const previous_reaction = current_reaction;
+		set_current_effect(parent);
+		set_current_reaction(parent);
+		try {
+			teardown.call(null);
+		} finally {
+			set_current_effect(previous_effect);
+			set_current_reaction(previous_reaction);
+		}
+	}
 
 	// If the parent doesn't have any children, then skip this work altogether
 	if (parent !== null && (effect.f & BRANCH_EFFECT) !== 0 && parent.first !== null) {
