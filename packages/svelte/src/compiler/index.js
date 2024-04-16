@@ -44,6 +44,7 @@ export function compile(source, options) {
 		const analysis = analyze_component(parsed, source, combined_options);
 
 		const result = transform_component(analysis, source, combined_options);
+		result.ast = to_public_ast(source, parsed, options.modernAst);
 		return result;
 	} catch (e) {
 		if (e instanceof CompileError) {
@@ -121,7 +122,16 @@ export function parse(source, options = {}) {
 		throw e;
 	}
 
-	if (options.modern) {
+	return to_public_ast(source, ast, options.modern);
+}
+
+/**
+ * @param {string} source
+ * @param {import('#compiler').Root} ast
+ * @param {boolean | undefined} modern
+ */
+function to_public_ast(source, ast, modern) {
+	if (modern) {
 		// remove things that we don't want to treat as public API
 		return walk(ast, null, {
 			_(node, { next }) {

@@ -46,6 +46,8 @@ export interface CompileResult {
 		 */
 		runes: boolean;
 	};
+	/** The AST */
+	ast: any;
 }
 
 export interface Warning {
@@ -184,6 +186,13 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * @default false
 	 */
 	hmr?: boolean;
+	/**
+	 * If `true`, returns the modern version of the AST.
+	 * Will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
+	 *
+	 * @default false
+	 */
+	modernAst?: boolean;
 }
 
 export interface ModuleCompileOptions {
