@@ -141,29 +141,37 @@ export function convert(source, ast) {
 				};
 
 				if (node.pending) {
-					const first = /** @type {import('#compiler').BaseNode} */ (node.pending.nodes.at(0));
-					const last = /** @type {import('#compiler').BaseNode} */ (node.pending.nodes.at(-1));
+					const first = node.pending.nodes.at(0);
+					const last = node.pending.nodes.at(-1);
 
-					pendingblock.start = first.start;
-					pendingblock.end = last.end;
+					pendingblock.start = first?.start ?? source.indexOf('}', node.expression.end) + 1;
+					pendingblock.end = last?.end ?? pendingblock.start;
 					pendingblock.skip = false;
 				}
 
 				if (node.then) {
-					const first = /** @type {import('#compiler').BaseNode} */ (node.then.nodes.at(0));
-					const last = /** @type {import('#compiler').BaseNode} */ (node.then.nodes.at(-1));
+					const first = node.then.nodes.at(0);
+					const last = node.then.nodes.at(-1);
 
-					thenblock.start = pendingblock.end ?? first.start;
-					thenblock.end = last.end;
+					thenblock.start =
+						pendingblock.end ?? first?.start ?? source.indexOf('}', node.expression.end) + 1;
+					thenblock.end =
+						last?.end ?? source.lastIndexOf('}', pendingblock.end ?? node.expression.end) + 1;
 					thenblock.skip = false;
 				}
 
 				if (node.catch) {
-					const first = /** @type {import('#compiler').BaseNode} */ (node.catch.nodes.at(0));
-					const last = /** @type {import('#compiler').BaseNode} */ (node.catch.nodes.at(-1));
+					const first = node.catch.nodes.at(0);
+					const last = node.catch.nodes.at(-1);
 
-					catchblock.start = thenblock.end ?? pendingblock.end ?? first.start;
-					catchblock.end = last.end;
+					catchblock.start =
+						thenblock.end ??
+						pendingblock.end ??
+						first?.start ??
+						source.indexOf('}', node.expression.end) + 1;
+					catchblock.end =
+						last?.end ??
+						source.lastIndexOf('}', thenblock.end ?? pendingblock.end ?? node.expression.end) + 1;
 					catchblock.skip = false;
 				}
 
