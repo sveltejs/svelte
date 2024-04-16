@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.106
+
+### Patch Changes
+
+- feat: use state proxy ancestry for ownership validation ([#11184](https://github.com/sveltejs/svelte/pull/11184))
+
+- fix: make snippet effects transparent for transitions ([#11195](https://github.com/sveltejs/svelte/pull/11195))
+
+- fix: return ast from `compile` (like Svelte 4 does) ([#11191](https://github.com/sveltejs/svelte/pull/11191))
+
+- fix: ensure bind:this unmount behavior for members is conditional ([#11193](https://github.com/sveltejs/svelte/pull/11193))
+
 ## 5.0.0-next.105
 
 ### Patch Changes
