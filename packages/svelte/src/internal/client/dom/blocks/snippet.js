@@ -1,3 +1,4 @@
+import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { branch, render_effect } from '../../reactivity/effects.js';
 
 /**
@@ -11,11 +12,13 @@ export function snippet(get_snippet, node, ...args) {
 	/** @type {SnippetFn | null | undefined} */
 	var snippet;
 
-	render_effect(() => {
+	var effect = render_effect(() => {
 		if (snippet === (snippet = get_snippet())) return;
 
 		if (snippet) {
 			branch(() => /** @type {SnippetFn} */ (snippet)(node, ...args));
 		}
 	});
+
+	effect.f |= EFFECT_TRANSPARENT;
 }

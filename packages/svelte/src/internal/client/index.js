@@ -1,5 +1,5 @@
 export { hmr } from './dev/hmr.js';
-export { add_owner, mark_module_start, mark_module_end } from './dev/ownership.js';
+export { ADD_OWNER, add_owner, mark_module_start, mark_module_end } from './dev/ownership.js';
 export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
 export { key_block as key } from './dom/blocks/key.js';

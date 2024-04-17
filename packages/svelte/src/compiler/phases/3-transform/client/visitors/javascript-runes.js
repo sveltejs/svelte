@@ -168,6 +168,27 @@ export const javascript_visitors_runes = {
 			body.push(/** @type {import('estree').MethodDefinition} **/ (visit(definition, child_state)));
 		}
 
+		if (state.options.dev && public_state.size > 0) {
+			// add an `[$.ADD_OWNER]` method so that a class with state fields can widen ownership
+			body.push(
+				b.method(
+					'method',
+					b.id('$.ADD_OWNER'),
+					[b.id('owner')],
+					Array.from(public_state.keys()).map((name) =>
+						b.stmt(
+							b.call(
+								'$.add_owner',
+								b.call('$.get', b.member(b.this, b.private_id(name))),
+								b.id('owner')
+							)
+						)
+					),
+					true
+				)
+			);
+		}
+
 		return { ...node, body };
 	},
 	VariableDeclaration(node, { state, visit }) {
