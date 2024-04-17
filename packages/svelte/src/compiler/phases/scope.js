@@ -506,7 +506,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				scopes.set(node, scope);
 
 				for (const id of extract_identifiers(node.param)) {
-					state.scope.declare(id, 'normal', 'let');
+					scope.declare(id, 'normal', 'let');
 				}
 
 				next({ scope });
