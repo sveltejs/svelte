@@ -1,9 +1,30 @@
 import { derived } from '../../reactivity/deriveds.js';
 import { render_effect } from '../../reactivity/effects.js';
 import { current_effect, get } from '../../runtime.js';
+import { is_array } from '../../utils.js';
 import { hydrate_nodes, hydrating } from '../hydration.js';
 import { create_fragment_from_html, remove } from '../reconciler.js';
 import { push_template_node } from '../template.js';
+
+/**
+ * @param {import('#client').Effect} effect
+ * @param {(Element | Comment | Text)[]} to_remove
+ * @returns {void}
+ */
+function remove_from_parent_effect(effect, to_remove) {
+	const dom = effect.dom;
+
+	if (is_array(dom)) {
+		for (let i = dom.length - 1; i >= 0; i--) {
+			if (to_remove.includes(dom[i])) {
+				dom.splice(i, 1);
+				break;
+			}
+		}
+	} else if (dom !== null && to_remove.includes(dom)) {
+		effect.dom = null;
+	}
+}
 
 /**
  * @param {Element | Text | Comment} anchor
@@ -12,15 +33,19 @@ import { push_template_node } from '../template.js';
  * @returns {void}
  */
 export function html(anchor, get_value, svg) {
-	var effect = anchor.parentNode !== current_effect?.dom ? current_effect : null;
+	const parent_effect = anchor.parentNode !== current_effect?.dom ? current_effect : null;
 	let value = derived(get_value);
 
 	render_effect(() => {
-		var dom = html_to_dom(anchor, effect, get(value), svg);
-		effect = null;
+		var dom = html_to_dom(anchor, parent_effect, get(value), svg);
 
 		if (dom) {
-			return () => remove(dom);
+			return () => {
+				if (parent_effect !== null) {
+					remove_from_parent_effect(parent_effect, is_array(dom) ? dom : [dom]);
+				}
+				remove(dom);
+			};
 		}
 	});
 }
