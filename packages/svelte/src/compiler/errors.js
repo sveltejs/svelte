@@ -189,6 +189,8 @@ const runes = {
 	'invalid-effect-location': () => `$effect() can only be used as an expression statement`,
 	'invalid-host-location': () =>
 		`$host() can only be used inside custom element component instances`,
+	'invalid-lazy-location': () =>
+		`$lazy() can only be used as the property value within an object or array literal expression`,
 	/**
 	 * @param {boolean} is_binding
 	 * @param {boolean} show_details

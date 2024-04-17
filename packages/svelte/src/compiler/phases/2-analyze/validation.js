@@ -808,6 +808,14 @@ function validate_call_expression(node, scope, path) {
 		error(node, 'invalid-props-location');
 	}
 
+	if (rune === '$lazy') {
+		if (node.arguments.length === 0 || node.arguments.length > 2) {
+			error(node, 'invalid-rune-args-length', rune, [1, 2]);
+		}
+		if (parent.type === 'Property' || parent.type === 'ArrayExpression') return;
+		error(node, 'invalid-lazy-location');
+	}
+
 	if (rune === '$bindable') {
 		if (parent.type === 'AssignmentPattern' && path.at(-3)?.type === 'ObjectPattern') {
 			const declarator = path.at(-4);

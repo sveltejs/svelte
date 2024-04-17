@@ -42,7 +42,8 @@ export const Runes = /** @type {const} */ ([
 	'$effect.root',
 	'$inspect',
 	'$inspect().with',
-	'$host'
+	'$host',
+	'$lazy'
 ]);
 
 /**

@@ -2777,4 +2777,6 @@ declare function $inspect<T extends any[]>(
  */
 declare function $host<El extends HTMLElement = HTMLElement>(): El;
 
+declare function $lazy<V>(value: V, setter: (value: V) => unknown): V;
+
 //# sourceMappingURL=index.d.ts.map

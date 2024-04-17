@@ -205,33 +205,34 @@
 		return {
 			from: word.from - 1,
 			options: [
-				{ label: '$state', type: 'keyword', boost: 12 },
-				{ label: '$props', type: 'keyword', boost: 11 },
-				{ label: '$derived', type: 'keyword', boost: 10 },
+				{ label: '$state', type: 'keyword', boost: 13 },
+				{ label: '$props', type: 'keyword', boost: 12 },
+				{ label: '$derived', type: 'keyword', boost: 11 },
 				snip('$derived.by(() => {\n\t${}\n});', {
 					label: '$derived.by',
 					type: 'keyword',
-					boost: 9
+					boost: 10
 				}),
-				snip('$effect(() => {\n\t${}\n});', { label: '$effect', type: 'keyword', boost: 8 }),
+				snip('$effect(() => {\n\t${}\n});', { label: '$effect', type: 'keyword', boost: 9 }),
 				snip('$effect.pre(() => {\n\t${}\n});', {
 					label: '$effect.pre',
 					type: 'keyword',
-					boost: 7
+					boost: 8
 				}),
-				{ label: '$state.frozen', type: 'keyword', boost: 6 },
-				{ label: '$bindable', type: 'keyword', boost: 5 },
+				{ label: '$state.frozen', type: 'keyword', boost: 7 },
+				{ label: '$bindable', type: 'keyword', boost: 6 },
 				snip('$effect.root(() => {\n\t${}\n});', {
 					label: '$effect.root',
 					type: 'keyword',
-					boost: 4
+					boost: 5
 				}),
-				{ label: '$state.snapshot', type: 'keyword', boost: 3 },
+				{ label: '$state.snapshot', type: 'keyword', boost: 4 },
 				snip('$effect.active()', {
 					label: '$effect.active',
 					type: 'keyword',
-					boost: 2
+					boost: 3
 				}),
+				{ label: '$lazy', type: 'keyword', boost: 2 },
 				{ label: '$inspect', type: 'keyword', boost: 1 }
 			]
 		};

@@ -252,3 +252,21 @@ declare function $inspect<T extends any[]>(
  * https://svelte-5-preview.vercel.app/docs/runes#$host
  */
 declare function $host<El extends HTMLElement = HTMLElement>(): El;
+
+/**
+ * Creates a lazy object or array property binding, similar to that of a getter/setter. If passed
+ * a single argument, the lazy property binding with be read-only.
+ *
+ * ```svelte
+ * let count = $state(0);
+ * let double = $derived(count * 2);
+ *
+ * let object = {
+ *   count: $lazy(count, value => count = value),
+ *   double: $lazy(double),
+ * };
+ * ```
+ *
+ * https://svelte-5-preview.vercel.app/docs/runes#$lazy
+ */
+declare function $lazy<V>(value: V, setter: (value: V) => unknown): V;

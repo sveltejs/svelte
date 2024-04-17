@@ -398,6 +398,132 @@ export const javascript_visitors_runes = {
 
 		context.next();
 	},
+	ArrayExpression(node, context) {
+		const elements = node.elements;
+		let new_elements = [];
+		/** @type {import('estree').Expression[]} */
+		const lazy_call_parts = [];
+		let has_lazy = false;
+
+		for (const element of elements) {
+			const rune = get_rune(element, context.state.scope);
+
+			if (rune === '$lazy' && element?.type === 'CallExpression') {
+				const args = element.arguments;
+				if (new_elements.length > 0) {
+					lazy_call_parts.push(b.array(new_elements));
+					new_elements = [];
+				}
+				has_lazy = true;
+				const lazy_object_properties = [
+					b.prop(
+						'init',
+						b.id('get'),
+						b.thunk(/** @type {import('estree').Expression} */ (context.visit(args[0])))
+					)
+				];
+				const second_arg = args[1];
+
+				if (
+					second_arg &&
+					(second_arg.type === 'ArrowFunctionExpression' ||
+						second_arg.type === 'FunctionExpression')
+				) {
+					lazy_object_properties.push(
+						b.prop(
+							'init',
+							b.id('set'),
+							/** @type {import('estree').Expression} */ (context.visit(second_arg))
+						)
+					);
+				}
+
+				lazy_call_parts.push(b.object(lazy_object_properties));
+			} else if (element === null) {
+				new_elements.push(null);
+			} else {
+				new_elements.push(/** @type {import('estree').Expression} */ (context.visit(element)));
+			}
+		}
+
+		if (has_lazy) {
+			if (new_elements.length > 0) {
+				lazy_call_parts.push(b.array(new_elements));
+			}
+			return b.call('$.lazy_array', ...lazy_call_parts);
+		}
+
+		context.next();
+	},
+	ObjectExpression(node, context) {
+		const properties = node.properties;
+		const new_properties = [];
+		let has_lazy = false;
+
+		for (const property of properties) {
+			if (property.type === 'Property') {
+				const value = property.value;
+				const rune = get_rune(value, context.state.scope);
+
+				if (rune === '$lazy' && value.type === 'CallExpression') {
+					const key = /** @type {import('estree').Expression} */ (property.key);
+					const args = value.arguments;
+					has_lazy = true;
+					new_properties.push(
+						b.prop(
+							'get',
+							key,
+							b.function(
+								null,
+								[],
+								b.block([
+									b.return(/** @type {import('estree').Expression} */ (context.visit(args[0])))
+								])
+							)
+						)
+					);
+					const second_arg = args[1];
+					if (
+						second_arg &&
+						(second_arg.type === 'ArrowFunctionExpression' ||
+							second_arg.type === 'FunctionExpression')
+					) {
+						new_properties.push(
+							b.prop(
+								'set',
+								key,
+								b.function(
+									null,
+									second_arg.params,
+									second_arg.body.type === 'BlockStatement'
+										? /** @type {import('estree').BlockStatement} */ (
+												context.visit(second_arg.body)
+											)
+										: b.block([
+												b.stmt(
+													/** @type {import('estree').Expression} */ (
+														context.visit(second_arg.body)
+													)
+												)
+											])
+								)
+							)
+						);
+					}
+				} else {
+					new_properties.push(/** @type {import('estree').Property} */ (context.visit(property)));
+				}
+			} else {
+				new_properties.push(/** @type {import('estree').Property} */ (context.visit(property)));
+			}
+		}
+
+		if (has_lazy) {
+			return { ...node, properties: new_properties };
+		}
+
+		context.next();
+	},
 	CallExpression(node, context) {
 		const rune = get_rune(node, context.state.scope);
 
