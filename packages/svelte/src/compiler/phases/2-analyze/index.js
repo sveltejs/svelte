@@ -892,8 +892,8 @@ const runes_scope_tweaker = {
 	CallExpression(node, { state, next }) {
 		const rune = get_rune(node, state.scope);
 
-		// `$inspect(foo)` should not trigger the `static-state-reference` warning
-		if (rune === '$inspect') {
+		// `$inspect(foo)` or $lazy(foo) should not trigger the `static-state-reference` warning
+		if (rune === '$inspect' || rune === '$lazy') {
 			next({ ...state, function_depth: state.function_depth + 1 });
 		}
 	},
