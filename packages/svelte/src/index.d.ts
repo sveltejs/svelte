@@ -27,33 +27,27 @@ type WithBindings<T> = {
 	[Key in keyof T]: Bindable<T[Key]>;
 };
 
-export type RemoveBindable<Props extends Record<string, any>> = Props extends '_explicit_' &
-	infer Props
-	? {
-			[Key in keyof Props as Props[Key] extends Binding<unknown>
-				? never
-				: Key]: Props[Key] extends Bindable<infer Value> ? Value : Props[Key];
-		}
-	: Props;
+export type RemoveBindable<Props extends Record<string, any>> = {
+	[Key in keyof Props as Props[Key] extends Binding<unknown>
+		? never
+		: Key]: Props[Key] extends Bindable<infer Value> ? Value : Props[Key];
+};
 
 type StripBindable<Props extends Record<string, any>> = {
 	[Key in keyof Props]: Props[Key] extends Bindable<infer Value> ? Value : Props[Key];
 };
 
-// Utility types for ensuring backwards compatibility on a type level:
-// - If there's a default slot, add 'children' to the props if it doesn't exist there already
-// - If not explicitly opted in, all props are bindable
-
-type PropsWithChildren<Props, Slots> = PropsWithBindings<Props> &
+/**
+ * Utility type for ensuring backwards compatibility on a type level:
+ * - If there's a default slot, add 'children' to the props if it doesn't exist there already
+ * - All props are bindable
+ */
+type PropsWithChildren<Props, Slots> = WithBindings<Props> &
 	(Props extends { children?: any }
 		? {}
 		: Slots extends { default: any }
 			? { children?: Snippet }
 			: {});
-
-type PropsWithBindings<Props> = Props extends '_explicit_' & infer ActualProps
-	? ActualProps
-	: WithBindings<Props>;
 
 /**
  * Can be used to create strongly typed Svelte components.
@@ -84,7 +78,7 @@ type PropsWithBindings<Props> = Props extends '_explicit_' & infer ActualProps
  * for more info.
  */
 export class SvelteComponent<
-	Props extends Record<string, any> | (Record<string, any> & '_explicit_') = Record<string, any>,
+	Props extends Record<string, any> = Record<string, any>,
 	Events extends Record<string, any> = any,
 	Slots extends Record<string, any> = any
 > {
@@ -148,7 +142,7 @@ export class SvelteComponent<
  * @deprecated Use `SvelteComponent` instead. See TODO for more information.
  */
 export class SvelteComponentTyped<
-	Props extends Record<string, any> | (Record<string, any> & '_explicit_') = Record<string, any>,
+	Props extends Record<string, any> = Record<string, any>,
 	Events extends Record<string, any> = any,
 	Slots extends Record<string, any> = any
 > extends SvelteComponent<Props, Events, Slots> {}
