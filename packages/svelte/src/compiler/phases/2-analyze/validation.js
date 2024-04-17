@@ -1174,6 +1174,15 @@ export const validation_runes = merge(validation, a11y_validators, {
 			}
 		}
 	},
+	AssignmentPattern(node, { state, path }) {
+		if (
+			node.right.type === 'Identifier' &&
+			node.right.name === '$bindable' &&
+			!state.scope.get('bindable')
+		) {
+			warn(state.analysis.warnings, node, path, 'invalid-bindable-declaration');
+		}
+	},
 	// TODO this is a code smell. need to refactor this stuff
 	ClassBody: validation_runes_js.ClassBody,
 	ClassDeclaration: validation_runes_js.ClassDeclaration,

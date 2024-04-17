@@ -39,7 +39,9 @@ const runes = {
 	'derived-iife': () =>
 		`Use \`$derived.by(() => {...})\` instead of \`$derived((() => {...})());\``,
 	'invalid-props-declaration': () =>
-		`Component properties are declared using $props() in runes mode. Did you forget to call the function?`
+		`Component properties are declared using $props() in runes mode. Did you forget to call the function?`,
+	'invalid-bindable-declaration': () =>
+		`Bindable component properties are declared using $bindable() in runes mode. Did you forget to call the function?`
 };
 
 /** @satisfies {Warnings} */
