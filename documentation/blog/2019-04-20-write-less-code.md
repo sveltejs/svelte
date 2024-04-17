@@ -40,7 +40,7 @@ Reducing the amount of code you have to write is an explicit goal of Svelte. To 
 <div class="max">
 	<iframe
 		title="Simple component example"
-		src="/repl/embed?example=blog-write-less-code"
+		src="/repl/blog-write-less-code/embed?version=4.2.15"
 		scrolling="no"
 	></iframe>
 </div>
