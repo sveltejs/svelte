@@ -578,6 +578,8 @@ const validation = {
 		});
 	},
 	RenderTag(node, context) {
+		context.state.analysis.uses_render_tags = true;
+
 		const raw_args = unwrap_optional(node.expression).arguments;
 		for (const arg of raw_args) {
 			if (arg.type === 'SpreadElement') {
@@ -1194,9 +1196,6 @@ export const validation_runes = merge(validation, a11y_validators, {
 		if (parent_type === 'RegularElement' || parent_type === 'SvelteElement') {
 			warn(state.analysis.warnings, node, path, 'deprecated-event-handler', node.name);
 		}
-	},
-	RenderTag(_, { state }) {
-		state.analysis.uses_render_tags = true;
 	},
 	// TODO this is a code smell. need to refactor this stuff
 	ClassBody: validation_runes_js.ClassBody,
