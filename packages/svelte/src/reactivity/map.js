@@ -28,7 +28,6 @@ export class ReactiveMap extends Map {
 
 			for (var [key, v] of value) {
 				sources.set(key, source(v));
-				super.set(key, v);
 			}
 
 			this.#size.v = sources.size;
@@ -62,7 +61,8 @@ export class ReactiveMap extends Map {
 	forEach(callbackfn, this_arg) {
 		get(this.#version);
 
-		return super.forEach(callbackfn, this_arg);
+		var bound_callbackfn = callbackfn.bind(this_arg);
+		this.#sources.forEach((s, key) => bound_callbackfn(s.v, key, this));
 	}
 
 	/** @param {K} key */
@@ -96,7 +96,7 @@ export class ReactiveMap extends Map {
 			set(s, value);
 		}
 
-		return super.set(key, value);
+		return this;
 	}
 
 	/** @param {K} key */
@@ -105,13 +105,14 @@ export class ReactiveMap extends Map {
 		var s = sources.get(key);
 
 		if (s !== undefined) {
-			sources.delete(key);
+			var removed = sources.delete(key);
 			set(this.#size, sources.size);
 			set(s, /** @type {V} */ (UNINITIALIZED));
 			this.#increment_version();
+			return removed;
 		}
 
-		return super.delete(key);
+		return false;
 	}
 
 	clear() {
@@ -126,7 +127,6 @@ export class ReactiveMap extends Map {
 		}
 
 		sources.clear();
-		super.clear();
 	}
 
 	keys() {
