@@ -230,7 +230,7 @@ const visitors = {
 
 				context.state.specificity.bumped = true;
 
-				// TODO err... can this happen?
+				// for any :global() at the middle of compound selector
 				for (const selector of relative_selector.selectors) {
 					if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
 						remove_global_pseudo_class(selector);

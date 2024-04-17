@@ -99,41 +99,31 @@ const validation_visitors = {
 			}
 		}
 
-		// ensure `:global(...)`contains a single selector
-		// (standalone :global() with multiple selectors is OK)
-		if (node.children.length > 1 || node.children[0].selectors.length > 1) {
-			for (const relative_selector of node.children) {
-				for (const selector of relative_selector.selectors) {
-					if (
-						selector.type === 'PseudoClassSelector' &&
-						selector.name === 'global' &&
-						selector.args !== null &&
-						selector.args.children.length > 1
-					) {
-						error(selector, 'invalid-css-global-selector');
-					}
-				}
-			}
-		}
-
-		// ensure `:global(...)` is not part of a larger compound selector
+		// ensure `:global(...)` do not lead to invalid css after `:global()` is removed
 		for (const relative_selector of node.children) {
 			for (let i = 0; i < relative_selector.selectors.length; i++) {
 				const selector = relative_selector.selectors[i];
 
 				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
 					const child = selector.args?.children[0].children[0];
-					if (
-						child?.selectors[0].type === 'TypeSelector' &&
-						!/[.:#]/.test(child.selectors[0].name[0]) &&
-						(i !== 0 ||
-							relative_selector.selectors
-								.slice(1)
-								.some(
-									(s) => s.type !== 'PseudoElementSelector' && s.type !== 'PseudoClassSelector'
-								))
-					) {
+					// ensure `:global(element)` to be at the first position in a compound selector
+					if (child?.selectors[0].type === 'TypeSelector' && i !== 0) {
 						error(selector, 'invalid-css-global-selector-list');
+					}
+
+					// ensure `:global(.class)` is not followed by a type selector, eg: `:global(.class)element`
+					if (relative_selector.selectors[i + 1]?.type === 'TypeSelector') {
+						error(relative_selector.selectors[i + 1], 'invalid-css-type-selector-placement');
+					}
+
+					// ensure `:global(...)`contains a single selector
+					// (standalone :global() with multiple selectors is OK)
+					if (
+						selector.args !== null &&
+						selector.args.children.length > 1 &&
+						(node.children.length > 1 || relative_selector.selectors.length > 1)
+					) {
+						error(selector, 'invalid-css-global-selector');
 					}
 				}
 			}
