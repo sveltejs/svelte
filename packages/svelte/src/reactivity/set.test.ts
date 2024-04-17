@@ -77,3 +77,12 @@ test('set.has(...)', () => {
 
 	cleanup();
 });
+
+test('set.delete(...)', () => {
+	const set = new ReactiveSet([1, 2, 3]);
+
+	assert.equal(set.delete(3), true);
+	assert.equal(set.delete(3), false);
+
+	assert.deepEqual(Array.from(set.values()), [1, 2]);
+});
