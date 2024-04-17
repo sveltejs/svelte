@@ -379,6 +379,7 @@ export function analyze_component(root, source, options) {
 		uses_rest_props: false,
 		uses_slots: false,
 		uses_component_bindings: false,
+		uses_render_tags: false,
 		custom_element: options.customElementOptions ?? options.customElement,
 		inject_styles: options.css === 'injected' || options.customElement,
 		accessors: options.customElement
@@ -388,7 +389,7 @@ export function analyze_component(root, source, options) {
 				!!options.legacy?.componentApi,
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
-		slot_names: new Set(),
+		slot_names: new Map(),
 		warnings,
 		css: {
 			ast: root.css,
@@ -500,6 +501,10 @@ export function analyze_component(root, source, options) {
 		}
 
 		analysis.reactive_statements = order_reactive_statements(analysis.reactive_statements);
+	}
+
+	if (analysis.uses_render_tags && (analysis.uses_slots || analysis.slot_names.size > 0)) {
+		error(analysis.slot_names.values().next().value, 'conflicting-slot-usage');
 	}
 
 	// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
@@ -1087,7 +1092,7 @@ const common_visitors = {
 				break;
 			}
 		}
-		context.state.analysis.slot_names.add(name);
+		context.state.analysis.slot_names.set(name, node);
 	},
 	StyleDirective(node, context) {
 		if (node.value === true) {

@@ -163,7 +163,9 @@ const special_elements = {
 	 * @param {string | null} match
 	 */
 	'invalid-svelte-tag': (tags, match) =>
-		`Valid <svelte:...> tag names are ${list(tags)}${match ? ' (did you mean ' + match + '?)' : ''}`
+		`Valid <svelte:...> tag names are ${list(tags)}${match ? ' (did you mean ' + match + '?)' : ''}`,
+	'conflicting-slot-usage': () =>
+		`Cannot use <slot> syntax and {@render ...} tags in the same component. Migrate towards {@render ...} tags completely.`
 };
 
 /** @satisfies {Errors} */
