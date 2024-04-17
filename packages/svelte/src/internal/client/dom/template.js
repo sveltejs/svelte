@@ -45,7 +45,6 @@ export function template(content, flags) {
 	var node;
 
 	return () => {
-		var effect = /** @type {import('#client').Effect} */ (current_effect);
 		if (hydrating) {
 			var hydration_content = push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
 			return /** @type {Node} */ (hydration_content);
@@ -105,7 +104,6 @@ export function svg_template(content, flags) {
 	var node;
 
 	return () => {
-		var effect = /** @type {import('#client').Effect} */ (current_effect);
 		if (hydrating) {
 			var hydration_content = push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
 			return /** @type {Node} */ (hydration_content);
