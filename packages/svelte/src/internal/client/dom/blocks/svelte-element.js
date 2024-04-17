@@ -133,7 +133,7 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 						swap_block_dom(parent_effect, prev_element, element);
 						prev_element.remove();
 					} else if (!hydrating) {
-						push_template_node(parent_effect, element);
+						push_template_node(element, parent_effect);
 					}
 				});
 			}
