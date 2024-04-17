@@ -1,4 +1,4 @@
-import { is_array } from '../utils';
+import { is_array } from '../utils.js';
 
 /**
  * @param {Array<unknown[] | { get: () => unknown, set: (v: unknown) => unknown }>} parts
