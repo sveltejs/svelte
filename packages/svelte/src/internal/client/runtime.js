@@ -8,7 +8,12 @@ import {
 	object_prototype
 } from './utils.js';
 import { snapshot } from './proxy.js';
-import { destroy_effect, effect, user_pre_effect } from './reactivity/effects.js';
+import {
+	destroy_effect,
+	effect,
+	execute_effect_teardown,
+	user_pre_effect
+} from './reactivity/effects.js';
 import {
 	EFFECT,
 	RENDER_EFFECT,
@@ -37,10 +42,16 @@ let current_scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
 export let is_flushing_effect = false;
+export let is_destroying_effect = false;
 
 /** @param {boolean} value */
 export function set_is_flushing_effect(value) {
 	is_flushing_effect = value;
+}
+
+/** @param {boolean} value */
+export function set_is_destroying_effect(value) {
+	is_destroying_effect = value;
 }
 
 // Used for $inspect
@@ -406,7 +417,7 @@ export function execute_effect(effect) {
 			destroy_effect_children(effect);
 		}
 
-		effect.teardown?.call(null);
+		execute_effect_teardown(effect);
 		var teardown = execute_reaction_fn(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 	} finally {
@@ -658,11 +669,11 @@ export function flush_sync(fn, flush_previous = true) {
 
 		var result = fn?.();
 
+		flush_tasks();
 		if (current_queued_root_effects.length > 0 || root_effects.length > 0) {
 			flush_sync();
 		}
 
-		flush_tasks();
 		flush_count = 0;
 
 		return result;
