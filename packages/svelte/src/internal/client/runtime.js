@@ -669,11 +669,11 @@ export function flush_sync(fn, flush_previous = true) {
 
 		var result = fn?.();
 
+		flush_tasks();
 		if (current_queued_root_effects.length > 0 || root_effects.length > 0) {
 			flush_sync();
 		}
 
-		flush_tasks();
 		flush_count = 0;
 
 		return result;

@@ -1,12 +1,7 @@
 import { STATE_SYMBOL } from '../../../constants.js';
-import { branch, effect, render_effect } from '../../../reactivity/effects.js';
-import {
-	current_effect,
-	current_reaction,
-	set_current_effect,
-	set_current_reaction,
-	untrack
-} from '../../../runtime.js';
+import { effect, render_effect } from '../../../reactivity/effects.js';
+import { untrack } from '../../../runtime.js';
+import { queue_task } from '../../task.js';
 
 /**
  * @param {any} bound_value
@@ -53,18 +48,12 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 		});
 
 		return () => {
-			const previous_effect = current_effect;
-			const previous_reaction = current_reaction;
-			// TODO: maybe we should use something other an effect branch here to emulate the microtask behaviour.
-			set_current_effect(null);
-			set_current_reaction(null);
-			branch(() => {
+			// We cannot use effects in the teardown phase, we we use a microtask instead.
+			queue_task(() => {
 				if (parts && is_bound_this(get_value(...parts), element_or_component)) {
 					update(null, ...parts);
 				}
 			});
-			set_current_effect(previous_effect);
-			set_current_reaction(previous_reaction);
 		};
 	});
 }
