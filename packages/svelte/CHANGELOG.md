@@ -1,5 +1,11 @@
 # svelte
 
+## 4.2.15
+
+### Patch Changes
+
+- support attribute selector inside :global() ([#11135](https://github.com/sveltejs/svelte/pull/11135))
+
 ## 4.2.14
 
 ### Patch Changes
