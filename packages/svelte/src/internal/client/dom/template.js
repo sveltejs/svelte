@@ -21,18 +21,11 @@ export function push_template_node(
 		if (!is_array(current_dom)) {
 			current_dom = effect.dom = [current_dom];
 		}
-		var anchor;
-		// If we're working with an anchor, then remove it and put it at the end.
-		if (current_dom[0].nodeType === 8) {
-			anchor = current_dom.pop();
-		}
+
 		if (is_array(dom)) {
 			current_dom.push(...dom);
 		} else {
 			current_dom.push(dom);
-		}
-		if (anchor !== undefined) {
-			current_dom.push(anchor);
 		}
 	}
 	return dom;

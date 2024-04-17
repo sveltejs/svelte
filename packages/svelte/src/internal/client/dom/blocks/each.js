@@ -25,6 +25,7 @@ import {
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen } from '../../utils.js';
 import { STATE_SYMBOL } from '../../constants.js';
+import { push_template_node } from '../template.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -168,10 +169,11 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 					break;
 				}
 
+				var child_open = /** @type {Comment} */ (child_anchor);
 				child_anchor = hydrate_anchor(child_anchor);
 				var value = array[i];
 				var key = get_key(value, i);
-				item = create_item(child_anchor, prev, null, value, key, i, render_fn, flags);
+				item = create_item(child_open, child_anchor, prev, null, value, key, i, render_fn, flags);
 				state.items.set(key, item);
 				child_anchor = /** @type {Comment} */ (child_anchor.nextSibling);
 
@@ -278,8 +280,14 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		item = items.get(key);
 
 		if (item === undefined) {
+			var child_open = /** @type {Text} */ (push_template_node(empty()));
+			var child_anchor = current ? current.o : anchor;
+
+			child_anchor.before(child_open);
+
 			prev = create_item(
-				current ? get_first_child(current) : anchor,
+				child_open,
+				child_anchor,
 				prev,
 				prev.next,
 				value,
@@ -309,7 +317,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 				if (matched.length < stashed.length) {
 					// more efficient to move later items to the front
 					var start = stashed[0];
-					var local_anchor = get_first_child(start);
+					var local_anchor = start.o;
 					var j;
 
 					prev = start.prev;
@@ -338,7 +346,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 				} else {
 					// more efficient to move earlier items to the back
 					seen.delete(item);
-					move(item, current ? get_first_child(current) : anchor);
+					move(item, current ? current.o : anchor);
 
 					link(item.prev, item.next);
 					link(item, prev.next);
@@ -401,20 +409,6 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 
 /**
  * @param {import('#client').EachItem} item
- * @returns {Text | Element | Comment}
- */
-function get_first_child(item) {
-	var current = item.e.dom;
-
-	if (is_array(current)) {
-		return /** @type {Text | Element | Comment} */ (current[0]);
-	}
-
-	return /** @type {Text | Element | Comment} */ (current);
-}
-
-/**
- * @param {import('#client').EachItem} item
  * @param {any} value
  * @param {number} index
  * @param {number} type
@@ -434,6 +428,7 @@ function update_item(item, value, index, type) {
 
 /**
  * @template V
+ * @param {Comment | Text} open
  * @param {Node} anchor
  * @param {import('#client').EachItem | import('#client').EachState} prev
  * @param {import('#client').EachItem | null} next
@@ -444,7 +439,7 @@ function update_item(item, value, index, type) {
  * @param {number} flags
  * @returns {import('#client').EachItem}
  */
-function create_item(anchor, prev, next, value, key, index, render_fn, flags) {
+function create_item(open, anchor, prev, next, value, key, index, render_fn, flags) {
 	var previous_each_item = current_each_item;
 
 	try {
@@ -462,6 +457,7 @@ function create_item(anchor, prev, next, value, key, index, render_fn, flags) {
 			a: null,
 			// @ts-expect-error
 			e: null,
+			o: open,
 			prev,
 			next
 		};
@@ -483,6 +479,8 @@ function create_item(anchor, prev, next, value, key, index, render_fn, flags) {
  * @param {Text | Element | Comment} anchor
  */
 function move(item, anchor) {
+	anchor.before(item.o);
+
 	var dom = item.e.dom;
 
 	if (dom !== null) {
