@@ -1183,6 +1183,21 @@ export const validation_runes = merge(validation, a11y_validators, {
 			warn(state.analysis.warnings, node, path, 'invalid-bindable-declaration');
 		}
 	},
+	SlotElement(node, { state, path }) {
+		if (!state.analysis.custom_element) {
+			warn(state.analysis.warnings, node, path, 'deprecated-slot-element');
+		}
+	},
+	OnDirective(node, { state, path }) {
+		const parent_type = path.at(-1)?.type;
+		// Don't warn on component events; these might not be under the author's control so the warning would be unactionable
+		if (parent_type === 'RegularElement' || parent_type === 'SvelteElement') {
+			warn(state.analysis.warnings, node, path, 'deprecated-event-handler', node.name);
+		}
+	},
+	RenderTag(_, { state }) {
+		state.analysis.uses_render_tags = true;
+	},
 	// TODO this is a code smell. need to refactor this stuff
 	ClassBody: validation_runes_js.ClassBody,
 	ClassDeclaration: validation_runes_js.ClassDeclaration,

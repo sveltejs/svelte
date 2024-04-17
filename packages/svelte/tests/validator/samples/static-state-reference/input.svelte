@@ -8,6 +8,6 @@
 	console.log(doubled);
 </script>
 
-<button on:click={() => count += 1}>
+<button onclick={() => count += 1}>
 	clicks: {count}
 </button>
