@@ -31,7 +31,6 @@ export class ReactiveSet extends Set {
 
 			for (var element of value) {
 				sources.set(element, source(true));
-				super.add(element);
 			}
 
 			this.#size.v = sources.size;
@@ -97,7 +96,7 @@ export class ReactiveSet extends Set {
 			this.#increment_version();
 		}
 
-		return super.add(value);
+		return this;
 	}
 
 	/** @param {T} value */
@@ -106,13 +105,14 @@ export class ReactiveSet extends Set {
 		var s = sources.get(value);
 
 		if (s !== undefined) {
-			sources.delete(value);
+			var removed = sources.delete(value);
 			set(this.#size, sources.size);
 			set(s, false);
 			this.#increment_version();
+			return removed;
 		}
 
-		return super.delete(value);
+		return false;
 	}
 
 	clear() {
@@ -127,7 +127,6 @@ export class ReactiveSet extends Set {
 		}
 
 		sources.clear();
-		super.clear();
 	}
 
 	keys() {
