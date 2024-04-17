@@ -24,7 +24,7 @@ import {
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen } from '../../utils.js';
-import { STATE_SYMBOL } from '../../constants.js';
+import { INERT, STATE_SYMBOL } from '../../constants.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -70,7 +70,7 @@ function pause_effects(items, controlled_anchor, callback) {
 		parent_node.append(controlled_anchor);
 	}
 
-	run_out_transitions(transitions, () => {
+	run_out_transitions(transitions, true, () => {
 		for (var i = 0; i < length; i++) {
 			destroy_effect(items[i].e);
 		}
@@ -238,8 +238,8 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	/** @type {import('#client').EachState | import('#client').EachItem} */
 	var prev = state;
 
-	/** @type {import('#client').EachItem[]} */
-	var to_animate = [];
+	/** @type {Set<import('#client').EachItem>} */
+	var to_animate = new Set();
 
 	/** @type {import('#client').EachItem[]} */
 	var matched = [];
@@ -267,7 +267,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 
 			if (item !== undefined) {
 				item.a?.measure();
-				to_animate.push(item);
+				to_animate.add(item);
 			}
 		}
 	}
@@ -302,7 +302,10 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			update_item(item, value, i, flags);
 		}
 
-		resume_effect(item.e);
+		if ((item.e.f & INERT) !== 0) {
+			resume_effect(item.e);
+			to_animate.delete(item);
+		}
 
 		if (item !== current) {
 			if (seen.has(item)) {

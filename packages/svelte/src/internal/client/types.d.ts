@@ -77,7 +77,7 @@ export interface TransitionManager {
 	/** Called inside `resume_effect` */
 	in: () => void;
 	/** Called inside `pause_effect` */
-	out: (callback?: () => void) => void;
+	out: (callback?: () => void, position_absolute?: boolean) => void;
 	/** Called inside `destroy_effect` */
 	stop: () => void;
 }
