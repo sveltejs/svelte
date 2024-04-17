@@ -7,9 +7,11 @@ import {
 	destroy_effect_children,
 	execute_effect,
 	get,
+	is_destroying_effect,
 	is_flushing_effect,
 	remove_reactions,
 	schedule_effect,
+	set_is_destroying_effect,
 	set_is_flushing_effect,
 	set_signal_status,
 	untrack
@@ -109,6 +111,12 @@ export function user_effect(fn) {
 				(DEV ? ': The Svelte $effect rune can only be used during component initialisation.' : '')
 		);
 	}
+	if (is_destroying_effect) {
+		throw new Error(
+			'ERR_SVELTE_EFFECT_IN_TEARDOWN' +
+				(DEV ? ': The Svelte $effect rune can not be used in the teardown phase of an effect.' : '')
+		);
+	}
 
 	// Non-nested `$effect(...)` in a component should be deferred
 	// until the component is mounted
@@ -137,6 +145,14 @@ export function user_pre_effect(fn) {
 			'ERR_SVELTE_ORPHAN_EFFECT' +
 				(DEV
 					? ': The Svelte $effect.pre rune can only be used during component initialisation.'
+					: '')
+		);
+	}
+	if (is_destroying_effect) {
+		throw new Error(
+			'ERR_SVELTE_EFFECT_IN_TEARDOWN' +
+				(DEV
+					? ': The Svelte $effect.pre rune can not be used in the teardown phase of an effect.'
 					: '')
 		);
 	}
@@ -229,6 +245,22 @@ export function branch(fn) {
 }
 
 /**
+ * @param {import("#client").Effect} effect
+ */
+export function execute_effect_teardown(effect) {
+	var teardown = effect.teardown;
+	if (teardown !== null) {
+		const previously_destroying_effect = is_destroying_effect;
+		set_is_destroying_effect(true);
+		try {
+			teardown.call(null);
+		} finally {
+			set_is_destroying_effect(previously_destroying_effect);
+		}
+	}
+}
+
+/**
  * @param {import('#client').Effect} effect
  * @returns {void}
  */
@@ -249,7 +281,7 @@ export function destroy_effect(effect) {
 		}
 	}
 
-	effect.teardown?.call(null);
+	execute_effect_teardown(effect);
 
 	var parent = effect.parent;
 
