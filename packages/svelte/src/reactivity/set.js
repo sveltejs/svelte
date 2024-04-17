@@ -69,6 +69,7 @@ export class ReactiveSet extends Set {
 		}
 
 		if (DEV) {
+			// @ts-ignore
 			proto[INSPECT_SYMBOL] = function () {
 				get(this.#version);
 			};

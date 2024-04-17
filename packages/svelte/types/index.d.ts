@@ -1972,7 +1972,6 @@ declare module 'svelte/reactivity' {
 	class ReactiveDate extends Date {
 		
 		constructor(...values: any[]);
-		[INSPECT_SYMBOL](): void;
 		#private;
 	}
 	class ReactiveSet<T> extends Set<any> {
@@ -1988,7 +1987,6 @@ declare module 'svelte/reactivity' {
 		values(): IterableIterator<T>;
 		entries(): IterableIterator<[T, T]>;
 		[Symbol.iterator](): IterableIterator<T>;
-		[INSPECT_SYMBOL](): void;
 		#private;
 	}
 	class ReactiveMap<K, V> extends Map<any, any> {
@@ -2008,7 +2006,6 @@ declare module 'svelte/reactivity' {
 		values(): IterableIterator<V>;
 		entries(): IterableIterator<[K, V]>;
 		[Symbol.iterator](): IterableIterator<[K, V]>;
-		[INSPECT_SYMBOL](): void;
 		#private;
 	}
 	class ReactiveURL extends URL {
@@ -2016,12 +2013,12 @@ declare module 'svelte/reactivity' {
 		#private;
 	}
 	class ReactiveURLSearchParams extends URLSearchParams {
+		constructor();
 		
 		[REPLACE](params: URLSearchParams): void;
 		#private;
 	}
 	const REPLACE: unique symbol;
-	const INSPECT_SYMBOL: unique symbol;
 
 	export { ReactiveDate as Date, ReactiveSet as Set, ReactiveMap as Map, ReactiveURL as URL, ReactiveURLSearchParams as URLSearchParams };
 }

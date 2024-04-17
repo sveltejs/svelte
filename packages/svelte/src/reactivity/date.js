@@ -92,6 +92,7 @@ export class ReactiveDate extends Date {
 			}
 
 			if (DEV) {
+				// @ts-ignore
 				proto[INSPECT_SYMBOL] = function () {
 					get(this.#raw_time);
 				};

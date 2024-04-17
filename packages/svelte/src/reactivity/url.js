@@ -1,8 +1,11 @@
+import { DEV } from 'esm-env';
 import { INSPECT_SYMBOL } from '../internal/client/constants.js';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 
 const REPLACE = Symbol();
+var inited_url = false;
+var inited_search_params = false;
 
 export class ReactiveURL extends URL {
 	#protocol = source(super.protocol);
@@ -22,6 +25,14 @@ export class ReactiveURL extends URL {
 		url = new URL(url, base);
 		super(url);
 		this.#searchParams[REPLACE](url.searchParams);
+
+		if (DEV && !inited_url) {
+			inited_url = true;
+			// @ts-ignore
+			ReactiveURL.prototype[INSPECT_SYMBOL] = function () {
+				this.href;
+			};
+		}
 	}
 
 	get hash() {
@@ -151,10 +162,6 @@ export class ReactiveURL extends URL {
 	toJSON() {
 		return this.href;
 	}
-
-	[INSPECT_SYMBOL]() {
-		this.href;
-	}
 }
 
 export class ReactiveURLSearchParams extends URLSearchParams {
@@ -162,6 +169,17 @@ export class ReactiveURLSearchParams extends URLSearchParams {
 
 	#increment_version() {
 		set(this.#version, this.#version.v + 1);
+	}
+
+	constructor() {
+		super();
+		if (DEV && !inited_search_params) {
+			inited_search_params = true;
+			// @ts-ignore
+			ReactiveURLSearchParams.prototype[INSPECT_SYMBOL] = function () {
+				get(this.#version);
+			};
+		}
 	}
 
 	/**

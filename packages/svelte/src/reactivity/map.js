@@ -26,6 +26,7 @@ export class ReactiveMap extends Map {
 		if (DEV) {
 			if (!inited) {
 				inited = true;
+				// @ts-ignore
 				ReactiveMap.prototype[INSPECT_SYMBOL] = function () {
 					// changes could either introduced by
 					// - modifying the value, or
