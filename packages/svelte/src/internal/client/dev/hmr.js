@@ -28,7 +28,11 @@ export function hmr(source) {
 
 			effect = branch(() => {
 				set_should_intro(false);
-				Object.assign(instance, component(anchor, props));
+				// preserve getters/setters
+				Object.defineProperties(
+					instance,
+					Object.getOwnPropertyDescriptors(component(anchor, props))
+				);
 				set_should_intro(true);
 			});
 		});
