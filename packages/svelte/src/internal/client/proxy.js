@@ -38,6 +38,9 @@ export function proxy(value, immutable = true, parent = null) {
 			// someone copied the state symbol using `Reflect.ownKeys(...)`
 			if (metadata.t === value || metadata.p === value) {
 				if (DEV) {
+					// Since original parent relationship gets lost, we need to copy over ancestor owners
+					// into current metadata. The object might still exist on both, so we need to widen it.
+					widen_ownership(metadata, metadata);
 					metadata.parent = parent;
 				}
 
