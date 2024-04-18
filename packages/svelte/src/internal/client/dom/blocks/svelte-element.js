@@ -69,7 +69,11 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace) {
 
 		block(() => {
 			const next_tag = get_tag() || null;
-			const ns = get_namespace?.() || (is_svg || next_tag === 'svg' ? namespace_svg : null);
+			const ns = get_namespace
+				? get_namespace()
+				: is_svg || next_tag === 'svg'
+					? namespace_svg
+					: null;
 			// Assumption: Noone changes the namespace but not the tag (what would that even mean?)
 			if (next_tag === tag) return;
 

@@ -2041,9 +2041,8 @@ export const template_visitors = {
 			if (attribute.type === 'Attribute') {
 				if (attribute.name === 'xmlns' && !is_text_attribute(attribute)) {
 					dynamic_namespace = attribute.value;
-				} else {
-					attributes.push(attribute);
 				}
+				attributes.push(attribute);
 			} else if (attribute.type === 'SpreadAttribute') {
 				attributes.push(attribute);
 			} else if (attribute.type === 'ClassDirective') {

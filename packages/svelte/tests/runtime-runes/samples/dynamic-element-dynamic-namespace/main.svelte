@@ -5,7 +5,7 @@
 
 <button onclick={() => {
 	tag = 'div';
-	xmlns = 'http://www.w3.org/1999/xhtml';
+	xmlns = null;
 }}>change</button>
 
 <!-- wrapper necessary or else jsdom says this is always an xhtml namespace -->
