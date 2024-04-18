@@ -32,6 +32,29 @@ import { set } from './sources.js';
 import { remove } from '../dom/reconciler.js';
 
 /**
+ * @param {import('#client').Effect | null} effect
+ * @param {'$effect' | '$effect.pre' | '$inspect'} rune
+ * @returns {asserts effect}
+ */
+export function validate_effect(effect, rune) {
+	if (effect === null) {
+		throw new Error(
+			'ERR_SVELTE_ORPHAN_EFFECT' +
+				(DEV
+					? `: ${rune} can only be used inside an effect (e.g. during component initialisation)`
+					: '')
+		);
+	}
+
+	if (is_destroying_effect) {
+		throw new Error(
+			'ERR_SVELTE_EFFECT_IN_TEARDOWN' +
+				(DEV ? `: ${rune} cannot be used inside an effect cleanup function.` : '')
+		);
+	}
+}
+
+/**
  * @param {import("#client").Effect} effect
  * @param {import("#client").Reaction} parent_effect
  */
@@ -105,18 +128,7 @@ export function effect_active() {
  * @param {() => void | (() => void)} fn
  */
 export function user_effect(fn) {
-	if (current_effect === null) {
-		throw new Error(
-			'ERR_SVELTE_ORPHAN_EFFECT' +
-				(DEV ? ': The Svelte $effect rune can only be used during component initialisation.' : '')
-		);
-	}
-	if (is_destroying_effect) {
-		throw new Error(
-			'ERR_SVELTE_EFFECT_IN_TEARDOWN' +
-				(DEV ? ': The Svelte $effect rune can not be used in the teardown phase of an effect.' : '')
-		);
-	}
+	validate_effect(current_effect, '$effect');
 
 	// Non-nested `$effect(...)` in a component should be deferred
 	// until the component is mounted
@@ -140,23 +152,7 @@ export function user_effect(fn) {
  * @returns {import('#client').Effect}
  */
 export function user_pre_effect(fn) {
-	if (current_effect === null) {
-		throw new Error(
-			'ERR_SVELTE_ORPHAN_EFFECT' +
-				(DEV
-					? ': The Svelte $effect.pre rune can only be used during component initialisation.'
-					: '')
-		);
-	}
-	if (is_destroying_effect) {
-		throw new Error(
-			'ERR_SVELTE_EFFECT_IN_TEARDOWN' +
-				(DEV
-					? ': The Svelte $effect.pre rune can not be used in the teardown phase of an effect.'
-					: '')
-		);
-	}
-
+	validate_effect(current_effect, '$effect.pre');
 	return render_effect(fn);
 }
 

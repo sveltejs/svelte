@@ -1,5 +1,5 @@
 import { snapshot } from '../proxy.js';
-import { render_effect } from '../reactivity/effects.js';
+import { render_effect, validate_effect } from '../reactivity/effects.js';
 import { current_effect, deep_read } from '../runtime.js';
 import { array_prototype, get_prototype_of, object_prototype } from '../utils.js';
 
@@ -20,11 +20,7 @@ export let inspect_captured_signals = [];
  */
 // eslint-disable-next-line no-console
 export function inspect(get_value, inspector = console.log) {
-	if (!current_effect) {
-		throw new Error(
-			'$inspect can only be used inside an effect (e.g. during component initialisation)'
-		);
-	}
+	validate_effect(current_effect, '$inspect');
 
 	let initial = true;
 
