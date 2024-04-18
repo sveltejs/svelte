@@ -7,4 +7,4 @@
 		});
 	</script>
 </svelte:head>
-<button />
+<button></button>

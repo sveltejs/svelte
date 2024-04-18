@@ -15,16 +15,16 @@
 	.b ~ .g { color: green; }
 </style>
 
-<div class="a" />
+<div class="a"></div>
 <App>
-	<div class="b" slot="a" />
+	<div class="b" slot="a"></div>
 
 	<div class="c" slot="b">
-		<div class="d" />
-		<div class="e" />
+		<div class="d"></div>
+		<div class="e"></div>
 	</div>
 
-	<div class="f" slot="c" />
+	<div class="f" slot="c"></div>
 </App>
 
-<div class="g" />
+<div class="g"></div>

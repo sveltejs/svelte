@@ -10,65 +10,65 @@
 
 <!-- should warn -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:click={noop} />
+<div on:click={noop}></div>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:click={noop} aria-hidden="false" />
+<div on:click={noop} aria-hidden="false"></div>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<section on:click={noop} />
+<section on:click={noop}></section>
 <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-<main on:click={noop} />
+<main on:click={noop}></main>
 <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-<article on:click={noop} />
+<article on:click={noop}></article>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<header on:click={noop} />
+<header on:click={noop}></header>
 <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-<footer on:click={noop} />
+<footer on:click={noop}></footer>
 <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-<footer onclick={noop} />
+<footer onclick={noop}></footer>
 
 <!-- should not warn -->
-<div class="foo" />
+<div class="foo"></div>
 
 <a href="http://x.y.z" on:click={noop}>foo</a>
-<button on:click={noop} />
-<select on:click={noop} />
+<button on:click={noop}></button>
+<select on:click={noop}></select>
 
 <input type="button" on:click={noop} />
 <input type={dynamicTypeValue} on:click={noop} />
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:click={noop} {...props} />
+<div on:click={noop} {...props}></div>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:click={noop} on:keydown={noop} />
+<div on:click={noop} on:keydown={noop}></div>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:click={noop} on:keyup={noop} />
+<div on:click={noop} on:keyup={noop}></div>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:click={noop} on:keypress={noop} />
+<div on:click={noop} on:keypress={noop}></div>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:click={noop} on:keydown={noop} on:keyup={noop} />
+<div on:click={noop} on:keydown={noop} on:keyup={noop}></div>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:click={noop} on:keyup={noop} on:keypress={noop} />
+<div on:click={noop} on:keyup={noop} on:keypress={noop}></div>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:click={noop} on:keypress={noop} on:keydown={noop} />
+<div on:click={noop} on:keypress={noop} on:keydown={noop}></div>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:click={noop} on:keydown={noop} on:keyup={noop} on:keypress={noop} />
+<div on:click={noop} on:keydown={noop} on:keyup={noop} on:keypress={noop}></div>
 
 <input on:click={noop} type="hidden" />
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:click={noop} aria-hidden />
+<div on:click={noop} aria-hidden></div>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:click={noop} aria-hidden="true" />
+<div on:click={noop} aria-hidden="true"></div>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:click={noop} aria-hidden="false" on:keydown={noop} />
+<div on:click={noop} aria-hidden="false" on:keydown={noop}></div>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:click={noop} aria-hidden={dynamicAriaHiddenValue} />
+<div on:click={noop} aria-hidden={dynamicAriaHiddenValue}></div>
 
-<div on:click={noop} role="presentation" />
-<div on:click={noop} role="none" />
-<div on:click={noop} role={dynamicRole} />
-<div onclick={noop} role={dynamicRole} />
+<div on:click={noop} role="presentation"></div>
+<div on:click={noop} role="none"></div>
+<div on:click={noop} role={dynamicRole}></div>
+<div onclick={noop} role={dynamicRole}></div>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <svelte:element this={Math.random() ? 'button' : 'div'} on:click={noop} />

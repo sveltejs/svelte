@@ -6,10 +6,10 @@
 <Nested>
 	<custom-element>
 		<div>
-			<div slot='foo' />
+			<div slot='foo'></div>
 		</div>
 		{#if thing}
-			<div slot='bar' />
+			<div slot='bar'></div>
 		{/if}
 	</custom-element>
 </Nested>

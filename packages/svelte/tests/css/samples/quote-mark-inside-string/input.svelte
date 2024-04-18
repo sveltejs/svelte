@@ -1,4 +1,4 @@
-<div />
+<div></div>
 
 <style>
 	div {

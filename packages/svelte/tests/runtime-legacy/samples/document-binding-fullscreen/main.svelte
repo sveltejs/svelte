@@ -4,4 +4,4 @@
 
 <svelte:document bind:fullscreenElement={fullscreen}/>
 
-<div />
+<div></div>

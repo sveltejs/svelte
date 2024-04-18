@@ -13,5 +13,5 @@
 </script>
 
 {#each refs as xxx}
-	<div bind:this={xxx.ref} />
+	<div bind:this={xxx.ref}></div>
 {/each}

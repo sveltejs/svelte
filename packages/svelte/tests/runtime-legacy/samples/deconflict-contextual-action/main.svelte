@@ -8,10 +8,10 @@
 	const array = [each_action];
 </script>
 
-<div use:action={collect} />
+<div use:action={collect}></div>
 
 <ul>
 	{#each array as action}
-		<div use:action={collect} />
+		<div use:action={collect}></div>
 	{/each}
 </ul>

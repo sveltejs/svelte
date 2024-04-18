@@ -18,14 +18,14 @@
 	.b ~ .c { color: green; }
 </style>
 
-<div class="a" />
+<div class="a"></div>
 
 {#if foo}
-	<div class="b" />
+	<div class="b"></div>
 {:else}
 	{#each array as item}
-		<div class="c" />
+		<div class="c"></div>
 	{/each}
 {/if}
 
-<div class="d" />
+<div class="d"></div>

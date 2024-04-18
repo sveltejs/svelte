@@ -5,6 +5,6 @@
 </script>
 
 {#if $condition}
-	<button on:click={() => ($condition = false)} id="1" />
+	<button on:click={() => ($condition = false)} id="1"></button>
 	<Component {condition} />
 {/if}

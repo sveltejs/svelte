@@ -7,4 +7,4 @@
 	export let flagged = false;
 </script>
 
-<my-widget class="foo" {items} flag1={flagged} flag2 />
+<my-widget class="foo" {items} flag1={flagged} flag2></my-widget>

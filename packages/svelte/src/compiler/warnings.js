@@ -250,6 +250,12 @@ const options = {
 		"The 'customElement' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?"
 };
 
+const misc = {
+	/** @param {string} name */
+	'invalid-self-closing-tag': (name) =>
+		`Self-closing HTML tags for non-void elements are ambiguous — use <${name} ...></${name}> rather than <${name} ... />`
+};
+
 /** @satisfies {Warnings} */
 const warnings = {
 	...css,
@@ -261,7 +267,8 @@ const warnings = {
 	...components,
 	...legacy,
 	...block,
-	...options
+	...options,
+	...misc
 };
 
 /** @typedef {typeof warnings} AllWarnings */

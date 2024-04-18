@@ -8,13 +8,13 @@
 	}
 </style>
 
-<div />
+<div></div>
 
 {#each array as item}
-	<span class="each" />
-	<div class="each" />
-	<span class="each" />
-	<div class="each" />
+	<span class="each"></span>
+	<div class="each"></div>
+	<span class="each"></span>
+	<div class="each"></div>
 {/each}
 
-<span />
+<span></span>

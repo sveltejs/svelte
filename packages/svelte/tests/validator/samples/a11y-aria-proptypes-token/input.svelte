@@ -1,6 +1,6 @@
-<div aria-sort="" />
-<div aria-sort="incorrect" />
-<div aria-sort />
-<div aria-sort={true} />
-<div aria-sort={"false"} />
-<div aria-sort="ascending descending" />
+<div aria-sort=""></div>
+<div aria-sort="incorrect"></div>
+<div aria-sort></div>
+<div aria-sort={true}></div>
+<div aria-sort={"false"}></div>
+<div aria-sort="ascending descending"></div>

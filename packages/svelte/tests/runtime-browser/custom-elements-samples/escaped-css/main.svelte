@@ -1,6 +1,6 @@
 <svelte:options customElement="custom-element" />
 
-<span class="icon" />
+<span class="icon"></span>
 
 <style>
 	.icon::before {

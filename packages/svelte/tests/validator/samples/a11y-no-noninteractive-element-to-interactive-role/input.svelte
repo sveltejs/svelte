@@ -1,22 +1,22 @@
 <!-- ALL INVALID: HTML elements with interactive role  -->
-<article role="button" />
-<aside role="checkbox" aria-checked={false} />
-<blockquote role="columnheader" />
+<article role="button"></article>
+<aside role="checkbox" aria-checked={false}></aside>
+<blockquote role="columnheader"></blockquote>
 <br role="grid" />
-<caption role="gridcell" />
-<dd role="link" />
-<details role="listbox" />
-<dir role="menu" />
-<dl role="menubar" />
-<dfn role="menuitem" />
-<dt role="menuitemcheckbox" aria-checked />
-<fieldset role="menuitemradio" aria-checked />
+<caption role="gridcell"></caption>
+<dd role="link"></dd>
+<details role="listbox"></details>
+<dir role="menu"></dir>
+<dl role="menubar"></dl>
+<dfn role="menuitem"></dfn>
+<dt role="menuitemcheckbox" aria-checked></dt>
+<fieldset role="menuitemradio" aria-checked></fieldset>
 <figure>
-	<figcaption role="menuitemradio" aria-checked />
+	<figcaption role="menuitemradio" aria-checked></figcaption>
 </figure>
-<figure role="option" aria-selected />
-<footer role="radio" aria-checked />
-<form role="radiogroup" />
+<figure role="option" aria-selected></figure>
+<footer role="radio" aria-checked></footer>
+<form role="radiogroup"></form>
 <h1 role="rowheader">Button</h1>
 <h2 role="scrollbar" aria-controls={[]} aria-valuenow={0}>Button</h2>
 <h3 role="searchbox">Button</h3>
@@ -25,85 +25,85 @@
 <h6 role="switch" aria-checked>Button</h6>
 <hr role="tab" />
 <img role="tabpanel" alt="tabpanel" />
-<label role="textbox" />
-<legend role="toolbar" />
-<li role="tree" />
-<main role="treegrid" />
-<mark role="treeitem" aria-selected />
-<marquee role="doc-backlink" />
-<menu role="doc-biblioref" />
-<meter role="doc-glossref" />
-<nav role="doc-noteref" />
-<ol role="button" />
-<optgroup role="treeitem" aria-selected />
-<output role="treegrid" />
-<p role="columnheader" />
-<pre role="tree" />
-<progress role="combobox" aria-controls={[]} aria-expanded />
-<ruby role="toolbar" />
-<section role="radio" aria-label="radio" aria-checked />
-<table role="menu" />
-<tbody role="searchbox" />
-<tfoot role="listbox" />
-<thead role="slider" aria-valuenow={0} />
-<time role="doc-backlink" />
-<ul role="spinbutton" />
+<label role="textbox"></label>
+<legend role="toolbar"></legend>
+<li role="tree"></li>
+<main role="treegrid"></main>
+<mark role="treeitem" aria-selected></mark>
+<marquee role="doc-backlink"></marquee>
+<menu role="doc-biblioref"></menu>
+<meter role="doc-glossref"></meter>
+<nav role="doc-noteref"></nav>
+<ol role="button"></ol>
+<optgroup role="treeitem" aria-selected></optgroup>
+<output role="treegrid"></output>
+<p role="columnheader"></p>
+<pre role="tree"></pre>
+<progress role="combobox" aria-controls={[]} aria-expanded></progress>
+<ruby role="toolbar"></ruby>
+<section role="radio" aria-label="radio" aria-checked></section>
+<table role="menu"></table>
+<tbody role="searchbox"></tbody>
+<tfoot role="listbox"></tfoot>
+<thead role="slider" aria-valuenow={0}></thead>
+<time role="doc-backlink"></time>
+<ul role="spinbutton"></ul>
 
 <!-- VALID under recommended settings, INVALID under strict settings: ul, ol, li has interactive roles -->
 <!-- ul -->
-<ul role="menu" />
-<ul role="menubar" />
-<ul role="radiogroup" />
-<ul role="tablist" />
-<ul role="tree" />
-<ul role="treegrid" />
+<ul role="menu"></ul>
+<ul role="menubar"></ul>
+<ul role="radiogroup"></ul>
+<ul role="tablist"></ul>
+<ul role="tree"></ul>
+<ul role="treegrid"></ul>
 <!-- ol -->
-<ol role="menu" />
-<ol role="menubar" />
-<ol role="radiogroup" />
-<ol role="tablist" />
-<ol role="tree" />
-<ol role="treegrid" />
+<ol role="menu"></ol>
+<ol role="menubar"></ol>
+<ol role="radiogroup"></ol>
+<ol role="tablist"></ol>
+<ol role="tree"></ol>
+<ol role="treegrid"></ol>
 <!-- li -->
-<li role="tab" />
-<li role="menuitem" />
-<li role="row" />
-<li role="treeitem" aria-selected={false} />
+<li role="tab"></li>
+<li role="menuitem"></li>
+<li role="row"></li>
+<li role="treeitem" aria-selected={false}></li>
 
 <!-- VALID: elements assigned an interactive role. -->
-<div role="button" />
-<div role="checkbox" aria-checked={true} />
-<div role="columnheader" />
-<div role="combobox" aria-controls={[]} aria-expanded={true} />
-<div role="grid" />
-<div role="gridcell" />
-<div role="link" />
-<div role="listbox" />
-<div role="menu" />
-<div role="menubar" />
-<div role="menuitem" />
-<div role="menuitemcheckbox" aria-checked />
-<div role="menuitemradio" aria-checked />
-<div role="option" aria-selected />
-<div role="progressbar" />
-<div role="radio" aria-checked />
-<div role="radiogroup" />
-<div role="row" />
-<div role="rowheader" />
-<div role="scrollbar" aria-controls={[]} aria-valuenow={0} />
-<div role="searchbox" />
-<div role="slider" aria-valuenow={0} />
-<div role="spinbutton" />
-<div role="switch" aria-checked />
-<div role="tab" />
-<div role="textbox" />
-<div role="treeitem" aria-selected={true} />
-<body role="combobox" aria-controls={[]} aria-expanded />
-<td role="button" />
+<div role="button"></div>
+<div role="checkbox" aria-checked={true}></div>
+<div role="columnheader"></div>
+<div role="combobox" aria-controls={[]} aria-expanded={true}></div>
+<div role="grid"></div>
+<div role="gridcell"></div>
+<div role="link"></div>
+<div role="listbox"></div>
+<div role="menu"></div>
+<div role="menubar"></div>
+<div role="menuitem"></div>
+<div role="menuitemcheckbox" aria-checked></div>
+<div role="menuitemradio" aria-checked></div>
+<div role="option" aria-selected></div>
+<div role="progressbar"></div>
+<div role="radio" aria-checked></div>
+<div role="radiogroup"></div>
+<div role="row"></div>
+<div role="rowheader"></div>
+<div role="scrollbar" aria-controls={[]} aria-valuenow={0}></div>
+<div role="searchbox"></div>
+<div role="slider" aria-valuenow={0}></div>
+<div role="spinbutton"></div>
+<div role="switch" aria-checked></div>
+<div role="tab"></div>
+<div role="textbox"></div>
+<div role="treeitem" aria-selected={true}></div>
+<body role="combobox" aria-controls={[]} aria-expanded></body>
+<td role="button"></td>
 
 <!-- VALID: HTML elements attributed with a non-interactive role -->
-<div role="alert" />
-<div role="document" />
-<div role="separator" />
-<div role="timer" />
-<frame role="row" />
+<div role="alert"></div>
+<div role="document"></div>
+<div role="separator"></div>
+<div role="timer"></div>
+<frame role="row"></frame>
