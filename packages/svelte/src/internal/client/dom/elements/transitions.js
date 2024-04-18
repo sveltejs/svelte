@@ -88,6 +88,9 @@ export function animation(element, get_fn, get_params) {
 	/** @type {import('#client').Animation | undefined} */
 	var animation;
 
+	/** @type {null | { position: string, width: string, height: string }} */
+	var original_styles = null;
+
 	item.a ??= {
 		element,
 		measure() {
@@ -110,6 +113,38 @@ export function animation(element, get_fn, get_params) {
 					animation?.abort();
 					animation = undefined;
 				});
+			}
+		},
+		fix() {
+			var computed_style = getComputedStyle(element);
+
+			if (computed_style.position !== 'absolute' && computed_style.position !== 'fixed') {
+				var style = /** @type {HTMLElement | SVGElement} */ (element).style;
+
+				original_styles = {
+					position: style.position,
+					width: style.width,
+					height: style.height
+				};
+
+				style.position = 'absolute';
+				style.width = computed_style.width;
+				style.height = computed_style.height;
+				var to = element.getBoundingClientRect();
+
+				if (from.left !== to.left || from.top !== to.top) {
+					var transform = `translate(${from.left - to.left}px, ${from.top - to.top}px)`;
+					style.transform = style.transform ? `${style.transform} ${transform}` : transform;
+				}
+			}
+		},
+		unfix() {
+			if (original_styles) {
+				var style = /** @type {HTMLElement | SVGElement} */ (element).style;
+
+				style.position = original_styles.position;
+				style.width = original_styles.width;
+				style.height = original_styles.height;
 			}
 		}
 	};
@@ -305,6 +340,10 @@ function animate(element, options, counterpart, t2, callback) {
 		animation.finished
 			.then(() => {
 				callback?.();
+
+				if (t2 === 1) {
+					animation.cancel();
+				}
 			})
 			.catch((e) => {
 				// Error for DOMException: The user aborted a request. This results in two things:
