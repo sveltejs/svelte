@@ -92,7 +92,7 @@ export function stringify(value) {
  * @param {{
  * 		target: Document | Element | ShadowRoot;
  * 		anchor?: Node;
- * 		props?: import('../../index.js').RemoveBindable<Props>;
+ * 		props?: import('../types.js').RemoveBindable<Props>;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  * 		context?: Map<any, any>;
  * 		intro?: boolean;
@@ -114,7 +114,7 @@ export function mount(component, options) {
  * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
- * 		props?: import('../../index.js').RemoveBindable<Props>;
+ * 		props?: import('../types.js').RemoveBindable<Props>;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
@@ -182,7 +182,7 @@ export function hydrate(component, options) {
 
 /**
  * @template {Record<string, any>} Exports
- * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent>} Component
+ * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<any>>} Component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
  * 		anchor: Node;

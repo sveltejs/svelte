@@ -1,6 +1,4 @@
 declare module 'svelte' {
-	// This should contain all the public interfaces (not all of them are actually importable, check current Svelte for which ones are).
-
 	/**
 	 * @deprecated Svelte components were classes in Svelte 4. In Svelte 5, thy are not anymore.
 	 * Use `mount` or `createRoot` instead to instantiate components.
@@ -26,12 +24,6 @@ declare module 'svelte' {
 
 	type WithBindings<T> = {
 		[Key in keyof T]: Bindable<T[Key]>;
-	};
-
-	export type RemoveBindable<Props extends Record<string, any>> = {
-		[Key in keyof Props as Props[Key] extends Binding<unknown>
-			? never
-			: Key]: Props[Key] extends Bindable<infer Value> ? Value : Props[Key];
 	};
 
 	type StripBindable<Props extends Record<string, any>> = {
@@ -251,6 +243,14 @@ declare module 'svelte' {
 					: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
 		): boolean;
 	}
+	/** Anything except a function */
+	type NotFunction<T> = T extends Function ? never : T;
+
+	type RemoveBindable<Props extends Record<string, any>> = {
+		[Key in keyof Props as Props[Key] extends Binding<unknown>
+			? never
+			: Key]: Props[Key] extends Bindable<infer Value> ? Value : Props[Key];
+	};
 	/**
 	 * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
 	 * It must be called during the component's initialisation (but doesn't need to live *inside* the component;
@@ -321,8 +321,6 @@ declare module 'svelte' {
 	 * Synchronously flushes any pending state changes and those that result from it.
 	 * */
 	export function flushSync(fn?: (() => void) | undefined): void;
-	/** Anything except a function */
-	type NotFunction<T> = T extends Function ? never : T;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
 	 *

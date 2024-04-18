@@ -1,5 +1,8 @@
 // This should contain all the public interfaces (not all of them are actually importable, check current Svelte for which ones are).
 
+import './ambient.js';
+import type { RemoveBindable } from './internal/types.js';
+
 /**
  * @deprecated Svelte components were classes in Svelte 4. In Svelte 5, thy are not anymore.
  * Use `mount` or `createRoot` instead to instantiate components.
@@ -25,12 +28,6 @@ export type Bindable<T> = T | Binding<T>;
 
 type WithBindings<T> = {
 	[Key in keyof T]: Bindable<T[Key]>;
-};
-
-export type RemoveBindable<Props extends Record<string, any>> = {
-	[Key in keyof Props as Props[Key] extends Binding<unknown>
-		? never
-		: Key]: Props[Key] extends Bindable<infer Value> ? Value : Props[Key];
 };
 
 type StripBindable<Props extends Record<string, any>> = {
@@ -252,4 +249,3 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 }
 
 export * from './index-client.js';
-import './ambient.js';
