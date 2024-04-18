@@ -3,6 +3,7 @@ import type {
 	Css,
 	Fragment,
 	RegularElement,
+	SlotElement,
 	SvelteElement,
 	SvelteNode,
 	SvelteOptions
@@ -61,13 +62,14 @@ export interface ComponentAnalysis extends Analysis {
 	/** Whether the component uses `$$slots` */
 	uses_slots: boolean;
 	uses_component_bindings: boolean;
+	uses_render_tags: boolean;
 	custom_element: boolean | SvelteOptions['customElement'];
 	/** If `true`, should append styles through JavaScript */
 	inject_styles: boolean;
 	reactive_statements: Map<LabeledStatement, ReactiveStatement>;
 	/** Identifiers that make up the `bind:group` expression -> internal group binding name */
 	binding_groups: Map<[key: string, bindings: Array<Binding | null>], Identifier>;
-	slot_names: Set<string>;
+	slot_names: Map<string, SlotElement>;
 	css: {
 		ast: Css.StyleSheet | null;
 		hash: string;

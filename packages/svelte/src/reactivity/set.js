@@ -2,6 +2,7 @@ import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { map } from './utils.js';
+import { INSPECT_SYMBOL } from '../internal/client/constants.js';
 
 var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
 var set_like_methods = ['difference', 'intersection', 'symmetricDifference', 'union'];
@@ -31,7 +32,6 @@ export class ReactiveSet extends Set {
 
 			for (var element of value) {
 				sources.set(element, source(true));
-				super.add(element);
 			}
 
 			this.#size.v = sources.size;
@@ -66,6 +66,13 @@ export class ReactiveSet extends Set {
 				return new ReactiveSet(set);
 			};
 		}
+
+		if (DEV) {
+			// @ts-ignore
+			proto[INSPECT_SYMBOL] = function () {
+				get(this.#version);
+			};
+		}
 	}
 
 	#increment_version() {
@@ -97,7 +104,7 @@ export class ReactiveSet extends Set {
 			this.#increment_version();
 		}
 
-		return super.add(value);
+		return this;
 	}
 
 	/** @param {T} value */
@@ -106,13 +113,14 @@ export class ReactiveSet extends Set {
 		var s = sources.get(value);
 
 		if (s !== undefined) {
-			sources.delete(value);
+			var removed = sources.delete(value);
 			set(this.#size, sources.size);
 			set(s, false);
 			this.#increment_version();
+			return removed;
 		}
 
-		return super.delete(value);
+		return false;
 	}
 
 	clear() {
@@ -127,7 +135,6 @@ export class ReactiveSet extends Set {
 		}
 
 		sources.clear();
-		super.clear();
 	}
 
 	keys() {

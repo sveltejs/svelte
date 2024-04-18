@@ -67,6 +67,8 @@ export type EachItem = {
 	i: number | Source<number>;
 	/** key */
 	k: unknown;
+	/** anchor for items inserted before this */
+	o: Comment | Text;
 	prev: EachItem | EachState;
 	next: EachItem | null;
 };
@@ -77,7 +79,7 @@ export interface TransitionManager {
 	/** Called inside `resume_effect` */
 	in: () => void;
 	/** Called inside `pause_effect` */
-	out: (callback?: () => void) => void;
+	out: (callback?: () => void, position_absolute?: boolean) => void;
 	/** Called inside `destroy_effect` */
 	stop: () => void;
 }

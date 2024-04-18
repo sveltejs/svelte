@@ -13,6 +13,7 @@ import { is_array } from '../../utils.js';
 import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
 import { current_effect } from '../../runtime.js';
+import { push_template_node } from '../template.js';
 
 /**
  * @param {import('#client').Effect} effect
@@ -38,11 +39,12 @@ function swap_block_dom(effect, from, to) {
 /**
  * @param {Comment} anchor
  * @param {() => string} get_tag
- * @param {boolean | null} is_svg `null` == not statically known
- * @param {undefined | ((element: Element, anchor: Node) => void)} render_fn
+ * @param {boolean} is_svg
+ * @param {undefined | ((element: Element, anchor: Node) => void)} render_fn,
+ * @param {undefined | (() => string)} get_namespace
  * @returns {void}
  */
-export function element(anchor, get_tag, is_svg, render_fn) {
+export function element(anchor, get_tag, is_svg, render_fn, get_namespace) {
 	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
 
 	render_effect(() => {
@@ -67,21 +69,17 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 
 		block(() => {
 			const next_tag = get_tag() || null;
+			const ns = get_namespace
+				? get_namespace()
+				: is_svg || next_tag === 'svg'
+					? namespace_svg
+					: null;
+			// Assumption: Noone changes the namespace but not the tag (what would that even mean?)
 			if (next_tag === tag) return;
 
 			// See explanation of `each_item_block` above
 			var previous_each_item = current_each_item;
 			set_current_each_item(each_item_block);
-
-			// We try our best infering the namespace in case it's not possible to determine statically,
-			// but on the first render on the client (without hydration) the parent will be undefined,
-			// since the anchor is not attached to its parent / the dom yet.
-			const ns =
-				is_svg || next_tag === 'svg'
-					? namespace_svg
-					: is_svg === false || anchor.parentElement?.tagName === 'foreignObject'
-						? null
-						: anchor.parentElement?.namespaceURI ?? null;
 
 			if (effect) {
 				if (next_tag === null) {
@@ -131,6 +129,8 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 					if (prev_element) {
 						swap_block_dom(parent_effect, prev_element, element);
 						prev_element.remove();
+					} else if (!hydrating) {
+						push_template_node(element, parent_effect);
 					}
 				});
 			}

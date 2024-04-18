@@ -108,6 +108,8 @@ const css = {
 	'invalid-css-global-selector': () => `:global(...) must contain exactly one selector`,
 	'invalid-css-global-selector-list': () =>
 		`:global(...) must not contain type or universal selectors when used in a compound selector`,
+	'invalid-css-type-selector-placement': () =>
+		`:global(...) must not be followed with a type selector`,
 	'invalid-css-selector': () => `Invalid selector`,
 	'invalid-css-identifier': () => 'Expected a valid CSS identifier',
 	'invalid-nesting-selector': () => `Nesting selectors can only be used inside a rule`,
@@ -161,7 +163,9 @@ const special_elements = {
 	 * @param {string | null} match
 	 */
 	'invalid-svelte-tag': (tags, match) =>
-		`Valid <svelte:...> tag names are ${list(tags)}${match ? ' (did you mean ' + match + '?)' : ''}`
+		`Valid <svelte:...> tag names are ${list(tags)}${match ? ' (did you mean ' + match + '?)' : ''}`,
+	'conflicting-slot-usage': () =>
+		`Cannot use <slot> syntax and {@render ...} tags in the same component. Migrate towards {@render ...} tags completely.`
 };
 
 /** @satisfies {Errors} */

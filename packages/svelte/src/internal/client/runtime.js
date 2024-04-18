@@ -8,7 +8,12 @@ import {
 	object_prototype
 } from './utils.js';
 import { snapshot } from './proxy.js';
-import { destroy_effect, effect, user_pre_effect } from './reactivity/effects.js';
+import {
+	destroy_effect,
+	effect,
+	execute_effect_teardown,
+	user_pre_effect
+} from './reactivity/effects.js';
 import {
 	EFFECT,
 	RENDER_EFFECT,
@@ -22,7 +27,8 @@ import {
 	BRANCH_EFFECT,
 	STATE_SYMBOL,
 	BLOCK_EFFECT,
-	ROOT_EFFECT
+	ROOT_EFFECT,
+	INSPECT_SYMBOL
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -37,10 +43,16 @@ let current_scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
 export let is_flushing_effect = false;
+export let is_destroying_effect = false;
 
 /** @param {boolean} value */
 export function set_is_flushing_effect(value) {
 	is_flushing_effect = value;
+}
+
+/** @param {boolean} value */
+export function set_is_destroying_effect(value) {
+	is_destroying_effect = value;
 }
 
 // Used for $inspect
@@ -406,7 +418,7 @@ export function execute_effect(effect) {
 			destroy_effect_children(effect);
 		}
 
-		effect.teardown?.call(null);
+		execute_effect_teardown(effect);
 		var teardown = execute_reaction_fn(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 	} finally {
@@ -658,11 +670,11 @@ export function flush_sync(fn, flush_previous = true) {
 
 		var result = fn?.();
 
+		flush_tasks();
 		if (current_queued_root_effects.length > 0 || root_effects.length > 0) {
 			flush_sync();
 		}
 
-		flush_tasks();
 		flush_count = 0;
 
 		return result;
@@ -1107,6 +1119,24 @@ export function pop(component) {
 }
 
 /**
+ *
+ * This is called from the inspect.
+ * Deeply traverse every item in the array with `deep_read` to register for inspect callback
+ * If the item implements INSPECT_SYMBOL, will use that instead
+ * @param {Array<any>} value
+ * @returns {void}
+ */
+function deep_read_inpect(value) {
+	for (const item of value) {
+		if (item && typeof item[INSPECT_SYMBOL] === 'function') {
+			item[INSPECT_SYMBOL]();
+		} else {
+			deep_read(item);
+		}
+	}
+}
+
+/**
  * Possibly traverse an object and read all its properties so that they're all reactive in case this is `$state`.
  * Does only check first level of an object for performance reasons (heuristic should be good for 99% of all cases).
  * @param {any} value
@@ -1236,7 +1266,7 @@ export function inspect(get_value, inspect = console.log) {
 
 		inspect_fn = fn;
 		const value = get_value();
-		deep_read(value);
+		deep_read_inpect(value);
 		inspect_fn = null;
 
 		const signals = inspect_captured_signals.slice();

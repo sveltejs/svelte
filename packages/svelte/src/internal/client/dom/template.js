@@ -4,6 +4,32 @@ import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
 import { effect } from '../reactivity/effects.js';
+import { is_array } from '../utils.js';
+
+/**
+ * @param {import("#client").TemplateNode | import("#client").TemplateNode[]} dom
+ * @param {import("#client").Effect} effect
+ */
+export function push_template_node(
+	dom,
+	effect = /** @type {import('#client').Effect} */ (current_effect)
+) {
+	var current_dom = effect.dom;
+	if (current_dom === null) {
+		effect.dom = dom;
+	} else {
+		if (!is_array(current_dom)) {
+			current_dom = effect.dom = [current_dom];
+		}
+
+		if (is_array(dom)) {
+			current_dom.push(...dom);
+		} else {
+			current_dom.push(dom);
+		}
+	}
+	return dom;
+}
 
 /**
  * @param {string} content
@@ -20,15 +46,23 @@ export function template(content, flags) {
 
 	return () => {
 		if (hydrating) {
-			return is_fragment ? hydrate_nodes : /** @type {Node} */ (hydrate_nodes[0]);
+			var hydration_content = push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
+			return /** @type {Node} */ (hydration_content);
 		}
 
 		if (!node) {
 			node = create_fragment_from_html(content);
 			if (!is_fragment) node = /** @type {Node} */ (node.firstChild);
 		}
+		var clone = use_import_node ? document.importNode(node, true) : clone_node(node, true);
 
-		return use_import_node ? document.importNode(node, true) : clone_node(node, true);
+		push_template_node(
+			is_fragment
+				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
+				: /** @type {import('#client').TemplateNode} */ (clone)
+		);
+
+		return clone;
 	};
 }
 
@@ -71,7 +105,8 @@ export function svg_template(content, flags) {
 
 	return () => {
 		if (hydrating) {
-			return is_fragment ? hydrate_nodes : /** @type {Node} */ (hydrate_nodes[0]);
+			var hydration_content = push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
+			return /** @type {Node} */ (hydration_content);
 		}
 
 		if (!node) {
@@ -87,7 +122,15 @@ export function svg_template(content, flags) {
 			}
 		}
 
-		return clone_node(node, true);
+		var clone = clone_node(node, true);
+
+		push_template_node(
+			is_fragment
+				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
+				: /** @type {import('#client').TemplateNode} */ (clone)
+		);
+
+		return clone;
 	};
 }
 
@@ -152,7 +195,7 @@ function run_scripts(node) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function text(anchor) {
-	if (!hydrating) return empty();
+	if (!hydrating) return push_template_node(empty());
 
 	var node = hydrate_nodes[0];
 
@@ -162,7 +205,7 @@ export function text(anchor) {
 		anchor.before((node = empty()));
 	}
 
-	return node;
+	return push_template_node(node);
 }
 
 export const comment = template('<!>', TEMPLATE_FRAGMENT);
@@ -174,19 +217,7 @@ export const comment = template('<!>', TEMPLATE_FRAGMENT);
  * @param {import('#client').Dom} dom
  */
 export function append(anchor, dom) {
-	var current = dom;
-
 	if (!hydrating) {
-		var node = /** @type {Node} */ (dom);
-
-		if (node.nodeType === 11) {
-			// if hydrating, `dom` is already an array of nodes, but if not then
-			// we need to create an array to store it on the current effect
-			current = /** @type {import('#client').Dom} */ ([...node.childNodes]);
-		}
-
-		anchor.before(node);
+		anchor.before(/** @type {Node} */ (dom));
 	}
-
-	/** @type {import('#client').Effect} */ (current_effect).dom = current;
 }

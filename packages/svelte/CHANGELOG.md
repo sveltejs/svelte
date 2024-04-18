@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.107
+
+### Patch Changes
+
+- fix: refine css `:global()` selector checks in a compound selector ([#11142](https://github.com/sveltejs/svelte/pull/11142))
+
+- fix: remove memory leak from bind:this ([#11194](https://github.com/sveltejs/svelte/pull/11194))
+
+- fix: remove memory leak from retaining old DOM elements ([#11197](https://github.com/sveltejs/svelte/pull/11197))
+
+- feat: add warning when using `$bindable` rune without calling it ([#11181](https://github.com/sveltejs/svelte/pull/11181))
+
 ## 5.0.0-next.106
 
 ### Patch Changes

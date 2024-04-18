@@ -124,6 +124,40 @@ test('map.has(...)', () => {
 	cleanup();
 });
 
+test('map.forEach(...)', () => {
+	const map = new ReactiveMap([
+		[1, 1],
+		[2, 2],
+		[3, 3]
+	]);
+
+	const log: any = [];
+	const this_arg = {};
+
+	map.forEach(function (this: unknown, ...args) {
+		log.push([...args, this]);
+	}, this_arg);
+
+	assert.deepEqual(log, [
+		[1, 1, map, this_arg],
+		[2, 2, map, this_arg],
+		[3, 3, map, this_arg]
+	]);
+});
+
+test('map.delete(...)', () => {
+	const map = new ReactiveMap([
+		[1, 1],
+		[2, 2],
+		[3, 3]
+	]);
+
+	assert.equal(map.delete(3), true);
+	assert.equal(map.delete(3), false);
+
+	assert.deepEqual(Array.from(map.values()), [1, 2]);
+});
+
 test('map handling of undefined values', () => {
 	const map = new ReactiveMap();
 
