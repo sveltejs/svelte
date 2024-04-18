@@ -39,15 +39,18 @@ type StripBindable<Props extends Record<string, any>> = {
 
 /**
  * Utility type for ensuring backwards compatibility on a type level:
- * - If there's a default slot, add 'children' to the props if it doesn't exist there already
+ * - If there's a default slot, add 'children' to the props
  * - All props are bindable
  */
 type PropsWithChildren<Props, Slots> = WithBindings<Props> &
-	(Props extends { children?: any }
-		? {}
-		: Slots extends { default: any }
-			? { children?: Snippet }
-			: {});
+	(Slots extends { default: any }
+		? // This is unfortunate because it means "accepts no props" turns into "accepts any prop"
+			// but the alternative is non-fixable type errors because of the way TypeScript index
+			// signatures work (they will always take precedence and make an impossible-to-satisfy children type).
+			Props extends Record<string, never>
+			? any
+			: { children: any }
+		: {});
 
 /**
  * Can be used to create strongly typed Svelte components.
