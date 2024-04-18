@@ -334,7 +334,7 @@ export function pause_effect(effect, callback) {
 
 	pause_children(effect, transitions, true);
 
-	run_out_transitions(transitions, false, () => {
+	run_out_transitions(transitions, () => {
 		destroy_effect(effect);
 		if (callback) callback();
 	});
@@ -342,15 +342,14 @@ export function pause_effect(effect, callback) {
 
 /**
  * @param {import('#client').TransitionManager[]} transitions
- * @param {boolean} position_absolute
  * @param {() => void} fn
  */
-export function run_out_transitions(transitions, position_absolute, fn) {
+export function run_out_transitions(transitions, fn) {
 	var remaining = transitions.length;
 	if (remaining > 0) {
 		var check = () => --remaining || fn();
 		for (var transition of transitions) {
-			transition.out(check, position_absolute);
+			transition.out(check);
 		}
 	} else {
 		fn();
