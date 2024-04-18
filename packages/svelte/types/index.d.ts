@@ -2021,6 +2021,7 @@ declare module 'svelte/reactivity' {
 		#private;
 	}
 	class ReactiveURLSearchParams extends URLSearchParams {
+		constructor();
 		
 		[REPLACE](params: URLSearchParams): void;
 		#private;

@@ -16,3 +16,4 @@ export const EFFECT_RAN = 1 << 13;
 export const EFFECT_TRANSPARENT = 1 << 14;
 
 export const STATE_SYMBOL = Symbol('$state');
+export const INSPECT_SYMBOL = Symbol('$inspect');
