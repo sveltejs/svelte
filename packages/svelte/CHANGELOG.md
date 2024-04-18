@@ -1,5 +1,21 @@
 # svelte
 
+## 5.0.0-next.108
+
+### Patch Changes
+
+- breaking: warn on slots and event handlers in runes mode, error on `<slot>` + `{@render ...}` tag usage in same component ([#11203](https://github.com/sveltejs/svelte/pull/11203))
+
+- fix: fall back to component namespace when not statically determinable, add way to tell `<svelte:element>` the namespace at runtime ([#11219](https://github.com/sveltejs/svelte/pull/11219))
+
+- fix: measure elements before taking siblings out of the flow ([#11216](https://github.com/sveltejs/svelte/pull/11216))
+
+- breaking: warn on self-closing non-void HTML tags ([#11114](https://github.com/sveltejs/svelte/pull/11114))
+
+- fix: take outroing elements out of the flow when animating siblings ([#11208](https://github.com/sveltejs/svelte/pull/11208))
+
+- fix: widen ownership when sub state is assigned to new state ([#11217](https://github.com/sveltejs/svelte/pull/11217))
+
 ## 5.0.0-next.107
 
 ### Patch Changes
