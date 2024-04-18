@@ -39,7 +39,7 @@ function swap_block_dom(effect, from, to) {
 /**
  * @param {Comment} anchor
  * @param {() => string} get_tag
- * @param {boolean | null} is_svg `null` == not statically known
+ * @param {boolean} is_svg
  * @param {undefined | ((element: Element, anchor: Node) => void)} render_fn
  * @returns {void}
  */
@@ -74,15 +74,10 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 			var previous_each_item = current_each_item;
 			set_current_each_item(each_item_block);
 
-			// We try our best infering the namespace in case it's not possible to determine statically,
-			// but on the first render on the client (without hydration) the parent will be undefined,
-			// since the anchor is not attached to its parent / the dom yet.
-			const ns =
-				is_svg || next_tag === 'svg'
-					? namespace_svg
-					: is_svg === false || anchor.parentElement?.tagName === 'foreignObject'
-						? null
-						: anchor.parentElement?.namespaceURI ?? null;
+			// The namespace may not be statically known but we can't really infer it either,
+			// because on the first render on the client (without hydration) the parent will be undefined,
+			// and the element itself could be a tag that changes the namespace.
+			const ns = is_svg || next_tag === 'svg' ? namespace_svg : null;
 
 			if (effect) {
 				if (next_tag === null) {

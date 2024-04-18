@@ -2096,11 +2096,7 @@ export const template_visitors = {
 					'$.element',
 					context.state.node,
 					get_tag,
-					node.metadata.svg === true
-						? b.true
-						: node.metadata.svg === false
-							? b.false
-							: b.literal(null),
+					node.metadata.svg ? b.true : b.false,
 					inner.length === 0
 						? /** @type {any} */ (undefined)
 						: b.arrow([element_id, b.id('$$anchor')], b.block(inner))
