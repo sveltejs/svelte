@@ -2008,6 +2008,9 @@ export const template_visitors = {
 		/** @type {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} */
 		const attributes = [];
 
+		/** @type {import('#compiler').Attribute['value'] | undefined} */
+		let dynamic_namespace = undefined;
+
 		/** @type {import('#compiler').ClassDirective[]} */
 		const class_directives = [];
 
@@ -2036,7 +2039,11 @@ export const template_visitors = {
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute') {
-				attributes.push(attribute);
+				if (attribute.name === 'xmlns' && !is_text_attribute(attribute)) {
+					dynamic_namespace = attribute.value;
+				} else {
+					attributes.push(attribute);
+				}
 			} else if (attribute.type === 'SpreadAttribute') {
 				attributes.push(attribute);
 			} else if (attribute.type === 'ClassDirective') {
@@ -2090,19 +2097,16 @@ export const template_visitors = {
 				}
 			})
 		);
-		context.state.init.push(
-			b.stmt(
-				b.call(
-					'$.element',
-					context.state.node,
-					get_tag,
-					node.metadata.svg ? b.true : b.false,
-					inner.length === 0
-						? /** @type {any} */ (undefined)
-						: b.arrow([element_id, b.id('$$anchor')], b.block(inner))
-				)
-			)
-		);
+
+		const args = [context.state.node, get_tag, node.metadata.svg ? b.true : b.false];
+		if (inner.length > 0) {
+			args.push(b.arrow([element_id, b.id('$$anchor')], b.block(inner)));
+		}
+		if (dynamic_namespace) {
+			if (inner.length === 0) args.push(b.id('undefined'));
+			args.push(b.thunk(serialize_attribute_value(dynamic_namespace, context)[1]));
+		}
+		context.state.init.push(b.stmt(b.call('$.element', ...args)));
 	},
 	EachBlock(node, context) {
 		const each_node_meta = node.metadata;

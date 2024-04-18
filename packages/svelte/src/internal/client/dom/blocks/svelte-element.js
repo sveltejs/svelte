@@ -40,10 +40,11 @@ function swap_block_dom(effect, from, to) {
  * @param {Comment} anchor
  * @param {() => string} get_tag
  * @param {boolean} is_svg
- * @param {undefined | ((element: Element, anchor: Node) => void)} render_fn
+ * @param {undefined | ((element: Element, anchor: Node) => void)} render_fn,
+ * @param {undefined | (() => string)} get_namespace
  * @returns {void}
  */
-export function element(anchor, get_tag, is_svg, render_fn) {
+export function element(anchor, get_tag, is_svg, render_fn, get_namespace) {
 	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
 
 	render_effect(() => {
@@ -68,16 +69,13 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 
 		block(() => {
 			const next_tag = get_tag() || null;
+			const ns = get_namespace?.() || (is_svg || next_tag === 'svg' ? namespace_svg : null);
+			// Assumption: Noone changes the namespace but not the tag (what would that even mean?)
 			if (next_tag === tag) return;
 
 			// See explanation of `each_item_block` above
 			var previous_each_item = current_each_item;
 			set_current_each_item(each_item_block);
-
-			// The namespace may not be statically known but we can't really infer it either,
-			// because on the first render on the client (without hydration) the parent will be undefined,
-			// and the element itself could be a tag that changes the namespace.
-			const ns = is_svg || next_tag === 'svg' ? namespace_svg : null;
 
 			if (effect) {
 				if (next_tag === null) {
