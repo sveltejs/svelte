@@ -71,7 +71,7 @@ function pause_effects(items, controlled_anchor, callback) {
 		parent_node.append(controlled_anchor);
 	}
 
-	run_out_transitions(transitions, true, () => {
+	run_out_transitions(transitions, () => {
 		for (var i = 0; i < length; i++) {
 			destroy_effect(items[i].e);
 		}
@@ -312,7 +312,10 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 
 		if ((item.e.f & INERT) !== 0) {
 			resume_effect(item.e);
-			to_animate.delete(item);
+			if (is_animated) {
+				item.a?.unfix();
+				to_animate.delete(item);
+			}
 		}
 
 		if (item !== current) {
@@ -390,6 +393,16 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	}
 
 	var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
+
+	if (is_animated) {
+		for (i = 0; i < to_destroy.length; i += 1) {
+			to_destroy[i].a?.measure();
+		}
+
+		for (i = 0; i < to_destroy.length; i += 1) {
+			to_destroy[i].a?.fix();
+		}
+	}
 
 	pause_effects(to_destroy, controlled_anchor, () => {
 		for (var i = 0; i < to_destroy.length; i += 1) {
