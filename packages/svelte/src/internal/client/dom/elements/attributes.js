@@ -4,6 +4,9 @@ import { get_descriptors, map_get, map_set, object_assign } from '../../utils.js
 import { AttributeAliases, DelegatedEvents, namespace_svg } from '../../../../constants.js';
 import { delegate } from './events.js';
 import { autofocus } from './misc.js';
+import { run } from '../../../shared/utils.js';
+import { untrack } from '../../runtime.js';
+import { effect } from '../../reactivity/effects.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -85,11 +88,21 @@ export function set_custom_element_data(node, prop, value) {
  * @param {Record<string, unknown>[]} attrs
  * @param {boolean} lowercase_attributes
  * @param {string} css_hash
+ * @param {undefined | (() => void)} [to_init_after_attributes]
  * @returns {Record<string, unknown>}
  */
-export function set_attributes(element, prev, attrs, lowercase_attributes, css_hash) {
+export function set_attributes(
+	element,
+	prev,
+	attrs,
+	lowercase_attributes,
+	css_hash,
+	to_init_after_attributes
+) {
 	var next = object_assign({}, ...attrs);
 	var has_hash = css_hash.length !== 0;
+	/** @type {Array<() => void>} */
+	var events = [];
 
 	for (var key in prev) {
 		if (!(key in next)) {
@@ -130,12 +143,20 @@ export function set_attributes(element, prev, attrs, lowercase_attributes, css_h
 			}
 
 			if (!delegated && prev?.[key]) {
+				console.log('removing listener');
 				element.removeEventListener(event_name, /** @type {any} */ (prev[key]), opts);
 			}
 
 			if (value != null) {
 				if (!delegated) {
-					element.addEventListener(event_name, value, opts);
+					if (prev || !to_init_after_attributes) {
+						element.addEventListener(event_name, value, opts);
+					} else {
+						events.push(() => {
+							console.log('add');
+							element.addEventListener(event_name, value, opts);
+						});
+					}
 				} else {
 					// @ts-ignore
 					element[`__${event_name}`] = value;
@@ -175,6 +196,15 @@ export function set_attributes(element, prev, attrs, lowercase_attributes, css_h
 				set_attribute(element, name, value);
 			}
 		}
+	}
+
+	// On the first run, if there are bindings etc, initialize them after all attributes
+	// have been set, but before the event listeners are added
+	if (!prev && to_init_after_attributes) {
+		untrack(to_init_after_attributes);
+		// Because actions run after an effect, we need to add the listeners in an effect,
+		// too, to gurarantee they run after actions
+		effect(() => events.forEach(run));
 	}
 
 	return next;

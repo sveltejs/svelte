@@ -249,6 +249,7 @@ function setup_select_synchronization(value_binding, context) {
 
 /**
  * @param {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} attributes
+ * @param {Array<import('estree').CallExpression>} to_init_after_attributes
  * @param {import('../types.js').ComponentContext} context
  * @param {import('#compiler').RegularElement} element
  * @param {import('estree').Identifier} element_id
@@ -256,6 +257,7 @@ function setup_select_synchronization(value_binding, context) {
  */
 function serialize_element_spread_attributes(
 	attributes,
+	to_init_after_attributes,
 	context,
 	element,
 	element_id,
@@ -294,7 +296,10 @@ function serialize_element_spread_attributes(
 				b.id(id),
 				b.array(values),
 				lowercase_attributes,
-				b.literal(context.state.analysis.css.hash)
+				b.literal(context.state.analysis.css.hash),
+				!to_init_after_attributes.length
+					? /** @type {any} */ (undefined)
+					: b.thunk(b.sequence(to_init_after_attributes))
 			)
 		)
 	);
@@ -867,7 +872,7 @@ function serialize_inline_component(node, component_name, context) {
 /**
  * Serializes `bind:this` for components and elements.
  * @param {import('estree').Identifier | import('estree').MemberExpression} bind_this
- * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('../types.js').ComponentClientTransformState>} context
+ * @param {import('../types.js').ComponentContext} context
  * @param {import('estree').Expression} node
  * @returns
  */
@@ -1215,6 +1220,24 @@ function serialize_event_handler(node, { state, visit }) {
 }
 
 /**
+ * @param {{name: string; modifiers: string[]; expression: import('estree').Expression | null; delegated?: import('#compiler').DelegatedEvent | null; }} node
+ * @param {import('../types.js').ComponentContext} context
+ */
+function serialize_and_add_event(node, context) {
+	const call_expr = serialize_event(node, context);
+	if (!call_expr) return;
+
+	const statement = b.stmt(call_expr);
+	const parent = /** @type {import('#compiler').SvelteNode} */ (context.path.at(-1));
+	if (parent.type === 'SvelteDocument' || parent.type === 'SvelteWindow') {
+		context.state.before_init.push(statement);
+	} else {
+		// Events need to run in order with bindings/actions
+		context.state.after_update.push(statement);
+	}
+}
+
+/**
  * Serializes an event handler function of the `on:` directive or an attribute starting with `on`
  * @param {{name: string; modifiers: string[]; expression: import('estree').Expression | null; delegated?: import('#compiler').DelegatedEvent | null; }} node
  * @param {import('../types.js').ComponentContext} context
@@ -1222,8 +1245,8 @@ function serialize_event_handler(node, { state, visit }) {
 function serialize_event(node, context) {
 	const state = context.state;
 
-	/** @type {import('estree').Statement} */
-	let statement;
+	/** @type {import('estree').CallExpression} */
+	let call_expr;
 
 	if (node.expression) {
 		let handler = serialize_event_handler(node, context);
@@ -1291,20 +1314,17 @@ function serialize_event(node, context) {
 			args.push(b.literal(true));
 		}
 
-		// Events need to run in order with bindings/actions
-		statement = b.stmt(b.call('$.event', ...args));
+		call_expr = b.call('$.event', ...args);
 	} else {
-		statement = b.stmt(
-			b.call('$.event', b.literal(node.name), state.node, serialize_event_handler(node, context))
+		call_expr = b.call(
+			'$.event',
+			b.literal(node.name),
+			state.node,
+			serialize_event_handler(node, context)
 		);
 	}
 
-	const parent = /** @type {import('#compiler').SvelteNode} */ (context.path.at(-1));
-	if (parent.type === 'SvelteDocument' || parent.type === 'SvelteWindow') {
-		state.before_init.push(statement);
-	} else {
-		state.after_update.push(statement);
-	}
+	return call_expr;
 }
 
 /**
@@ -1325,7 +1345,7 @@ function serialize_event_attribute(node, context) {
 		modifiers.push('capture');
 	}
 
-	serialize_event(
+	serialize_and_add_event(
 		{
 			name: event_name,
 			expression: node.value[0].expression,
@@ -1794,6 +1814,9 @@ export const template_visitors = {
 		/** @type {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} */
 		const attributes = [];
 
+		/** @type {Array<import('estree').CallExpression>} */
+		const to_init_after_attributes = [];
+
 		/** @type {import('#compiler').ClassDirective[]} */
 		const class_directives = [];
 
@@ -1849,23 +1872,41 @@ export const template_visitors = {
 				style_directives.push(attribute);
 			} else if (attribute.type === 'LetDirective') {
 				lets.push(/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute)));
-			} else {
-				if (attribute.type === 'BindDirective') {
-					if (attribute.name === 'group' || attribute.name === 'checked') {
-						needs_special_value_handling = true;
-						needs_input_reset = true;
-					} else if (attribute.name === 'value') {
-						value_binding = attribute;
-						needs_content_reset = true;
-						needs_input_reset = true;
-					} else if (
-						attribute.name === 'innerHTML' ||
-						attribute.name === 'innerText' ||
-						attribute.name === 'textContent'
-					) {
-						has_content_editable_binding = true;
-					}
+			} else if (attribute.type === 'BindDirective') {
+				if (attribute.name === 'group' || attribute.name === 'checked') {
+					needs_special_value_handling = true;
+					needs_input_reset = true;
+				} else if (attribute.name === 'value') {
+					value_binding = attribute;
+					needs_content_reset = true;
+					needs_input_reset = true;
+				} else if (
+					attribute.name === 'innerHTML' ||
+					attribute.name === 'innerText' ||
+					attribute.name === 'textContent'
+				) {
+					has_content_editable_binding = true;
 				}
+
+				context.path.push(node);
+				const call_expr = serialize_bind_directive(attribute, context);
+				context.path.pop();
+				// Bindings need to happen after attribute updates, therefore after the render effect, and in order with events/actions.
+				// bind:this is a special case as it's one-way and could influence the render effect.
+				if (node.name === 'this') {
+					context.state.init.push(b.stmt(call_expr));
+				} else {
+					to_init_after_attributes.push(call_expr);
+				}
+			} else if (attribute.type === 'OnDirective') {
+				const call_expr = serialize_event(attribute, context);
+				// undefined == delegated event == guaranteed to run after others
+				if (call_expr) {
+					to_init_after_attributes.push(call_expr);
+				}
+			} else if (attribute.type === 'UseDirective') {
+				to_init_after_attributes.push(serialize_use_directive(attribute, context));
+			} else {
 				context.visit(attribute);
 			}
 		}
@@ -1904,6 +1945,7 @@ export const template_visitors = {
 		if (node.metadata.has_spread) {
 			serialize_element_spread_attributes(
 				attributes,
+				to_init_after_attributes,
 				context,
 				node,
 				node_id,
@@ -1912,9 +1954,11 @@ export const template_visitors = {
 			);
 			is_attributes_reactive = true;
 		} else {
+			const event_attributes = [];
+
 			for (const attribute of /** @type {import('#compiler').Attribute[]} */ (attributes)) {
 				if (is_event_attribute(attribute)) {
-					serialize_event_attribute(attribute, context);
+					event_attributes.push(attribute);
 					continue;
 				}
 
@@ -1950,6 +1994,14 @@ export const template_visitors = {
 						? serialize_custom_element_attribute_update_assignment(node_id, attribute, context)
 						: serialize_element_attribute_update_assignment(node, node_id, attribute, context);
 				if (is) is_attributes_reactive = true;
+			}
+
+			for (const init of to_init_after_attributes) {
+				context.state.after_update.push(b.stmt(init));
+			}
+
+			for (const attribute of event_attributes) {
+				serialize_event_attribute(attribute, context);
 			}
 		}
 
@@ -2534,231 +2586,23 @@ export const template_visitors = {
 		context.next({ ...context.state, in_constructor: false });
 	},
 	OnDirective(node, context) {
-		serialize_event(node, context);
+		serialize_and_add_event(node, context);
 	},
-	UseDirective(node, { state, next, visit }) {
-		const params = [b.id('$$node')];
-
-		if (node.expression) {
-			params.push(b.id('$$action_arg'));
-		}
-
-		/** @type {import('estree').Expression[]} */
-		const args = [
-			state.node,
-			b.arrow(
-				params,
-				b.call(
-					/** @type {import('estree').Expression} */ (visit(parse_directive_name(node.name))),
-					...params
-				)
-			)
-		];
-
-		if (node.expression) {
-			args.push(b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression))));
-		}
+	UseDirective(node, context) {
+		const call_expr = serialize_use_directive(node, context);
 
 		// actions need to run after attribute updates in order with bindings/events
-		state.after_update.push(b.stmt(b.call('$.action', ...args)));
-		next();
+		context.state.after_update.push(b.stmt(call_expr));
+		// next(); ??
 	},
 	BindDirective(node, context) {
-		const { state, path, visit } = context;
-		const expression = node.expression;
-		const getter = b.thunk(/** @type {import('estree').Expression} */ (visit(expression)));
-		const assignment = b.assignment('=', expression, b.id('$$value'));
-		const setter = b.arrow(
-			[b.id('$$value')],
-			serialize_set_binding(
-				assignment,
-				context,
-				() => /** @type {import('estree').Expression} */ (visit(assignment)),
-				{
-					skip_proxy_and_freeze: true
-				}
-			)
-		);
-
-		/** @type {import('estree').CallExpression} */
-		let call_expr;
-
-		const property = binding_properties[node.name];
-		if (property && property.event) {
-			call_expr = b.call(
-				'$.bind_property',
-				b.literal(node.name),
-				b.literal(property.event),
-				b.literal(property.type ?? 'get'),
-				state.node,
-				getter,
-				setter
-			);
-		} else {
-			// special cases
-			switch (node.name) {
-				// window
-				case 'online':
-					call_expr = b.call(`$.bind_online`, setter);
-					break;
-
-				case 'scrollX':
-				case 'scrollY':
-					call_expr = b.call(
-						'$.bind_window_scroll',
-						b.literal(node.name === 'scrollX' ? 'x' : 'y'),
-						getter,
-						setter
-					);
-					break;
-
-				case 'innerWidth':
-				case 'innerHeight':
-				case 'outerWidth':
-				case 'outerHeight':
-					call_expr = b.call('$.bind_window_size', b.literal(node.name), setter);
-					break;
-
-				// media
-				case 'muted':
-					call_expr = b.call(`$.bind_muted`, state.node, getter, setter);
-					break;
-				case 'paused':
-					call_expr = b.call(`$.bind_paused`, state.node, getter, setter);
-					break;
-				case 'volume':
-					call_expr = b.call(`$.bind_volume`, state.node, getter, setter);
-					break;
-				case 'playbackRate':
-					call_expr = b.call(`$.bind_playback_rate`, state.node, getter, setter);
-					break;
-				case 'currentTime':
-					call_expr = b.call(`$.bind_current_time`, state.node, getter, setter);
-					break;
-				case 'buffered':
-					call_expr = b.call(`$.bind_buffered`, state.node, setter);
-					break;
-				case 'played':
-					call_expr = b.call(`$.bind_played`, state.node, setter);
-					break;
-				case 'seekable':
-					call_expr = b.call(`$.bind_seekable`, state.node, setter);
-					break;
-				case 'seeking':
-					call_expr = b.call(`$.bind_seeking`, state.node, setter);
-					break;
-				case 'ended':
-					call_expr = b.call(`$.bind_ended`, state.node, setter);
-					break;
-				case 'readyState':
-					call_expr = b.call(`$.bind_ready_state`, state.node, setter);
-					break;
-
-				// dimensions
-				case 'contentRect':
-				case 'contentBoxSize':
-				case 'borderBoxSize':
-				case 'devicePixelContentBoxSize':
-					call_expr = b.call('$.bind_resize_observer', state.node, b.literal(node.name), setter);
-					break;
-
-				case 'clientWidth':
-				case 'clientHeight':
-				case 'offsetWidth':
-				case 'offsetHeight':
-					call_expr = b.call('$.bind_element_size', state.node, b.literal(node.name), setter);
-					break;
-
-				// various
-				case 'value': {
-					const parent = path.at(-1);
-					if (parent?.type === 'RegularElement' && parent.name === 'select') {
-						call_expr = b.call(`$.bind_select_value`, state.node, getter, setter);
-					} else {
-						call_expr = b.call(`$.bind_value`, state.node, getter, setter);
-					}
-					break;
-				}
-
-				case 'files':
-					call_expr = b.call(`$.bind_files`, state.node, getter, setter);
-					break;
-
-				case 'this':
-					call_expr = serialize_bind_this(node.expression, context, state.node);
-					break;
-				case 'textContent':
-				case 'innerHTML':
-				case 'innerText':
-					call_expr = b.call(
-						'$.bind_content_editable',
-						b.literal(node.name),
-						state.node,
-						getter,
-						setter
-					);
-					break;
-
-				// checkbox/radio
-				case 'checked':
-					call_expr = b.call(`$.bind_checked`, state.node, getter, setter);
-					break;
-
-				case 'group': {
-					/** @type {import('estree').CallExpression[]} */
-					const indexes = [];
-					for (const parent_each_block of node.metadata.parent_each_blocks) {
-						indexes.push(b.call('$.unwrap', parent_each_block.metadata.index));
-					}
-
-					// We need to additionally invoke the value attribute signal to register it as a dependency,
-					// so that when the value is updated, the group binding is updated
-					let group_getter = getter;
-					const parent = path.at(-1);
-					if (parent?.type === 'RegularElement') {
-						const value = /** @type {any[]} */ (
-							/** @type {import('#compiler').Attribute} */ (
-								parent.attributes.find(
-									(a) =>
-										a.type === 'Attribute' &&
-										a.name === 'value' &&
-										!is_text_attribute(a) &&
-										a.value !== true
-								)
-							)?.value
-						);
-						if (value !== undefined) {
-							group_getter = b.thunk(
-								b.block([
-									b.stmt(serialize_attribute_value(value, context)[1]),
-									b.return(/** @type {import('estree').Expression} */ (visit(expression)))
-								])
-							);
-						}
-					}
-
-					call_expr = b.call(
-						'$.bind_group',
-						node.metadata.binding_group_name,
-						b.array(indexes),
-						state.node,
-						group_getter,
-						setter
-					);
-					break;
-				}
-
-				default:
-					error(node, 'INTERNAL', 'unknown binding ' + node.name);
-			}
-		}
-
+		const call_expr = serialize_bind_directive(node, context);
 		// Bindings need to happen after attribute updates, therefore after the render effect, and in order with events/actions.
 		// bind:this is a special case as it's one-way and could influence the render effect.
 		if (node.name === 'this') {
-			state.init.push(b.stmt(call_expr));
+			context.state.init.push(b.stmt(call_expr));
 		} else {
-			state.after_update.push(b.stmt(call_expr));
+			context.state.after_update.push(b.stmt(call_expr));
 		}
 	},
 	Component(node, context) {
@@ -3014,3 +2858,231 @@ export const template_visitors = {
 	CallExpression: javascript_visitors_runes.CallExpression,
 	VariableDeclaration: javascript_visitors_runes.VariableDeclaration
 };
+
+/**
+ * @param {import('#compiler').BindDirective} node
+ * @param {import('../types.js').ComponentContext} context
+ * @returns
+ */
+function serialize_bind_directive(node, context) {
+	const { state, path, visit } = context;
+	const expression = node.expression;
+	const getter = b.thunk(/** @type {import('estree').Expression} */ (visit(expression)));
+	const assignment = b.assignment('=', expression, b.id('$$value'));
+	const setter = b.arrow(
+		[b.id('$$value')],
+		serialize_set_binding(
+			assignment,
+			context,
+			() => /** @type {import('estree').Expression} */ (visit(assignment)),
+			{
+				skip_proxy_and_freeze: true
+			}
+		)
+	);
+
+	/** @type {import('estree').CallExpression} */
+	let call_expr;
+
+	const property = binding_properties[node.name];
+	if (property && property.event) {
+		call_expr = b.call(
+			'$.bind_property',
+			b.literal(node.name),
+			b.literal(property.event),
+			b.literal(property.type ?? 'get'),
+			state.node,
+			getter,
+			setter
+		);
+	} else {
+		// special cases
+		switch (node.name) {
+			// window
+			case 'online':
+				call_expr = b.call(`$.bind_online`, setter);
+				break;
+
+			case 'scrollX':
+			case 'scrollY':
+				call_expr = b.call(
+					'$.bind_window_scroll',
+					b.literal(node.name === 'scrollX' ? 'x' : 'y'),
+					getter,
+					setter
+				);
+				break;
+
+			case 'innerWidth':
+			case 'innerHeight':
+			case 'outerWidth':
+			case 'outerHeight':
+				call_expr = b.call('$.bind_window_size', b.literal(node.name), setter);
+				break;
+
+			// media
+			case 'muted':
+				call_expr = b.call(`$.bind_muted`, state.node, getter, setter);
+				break;
+			case 'paused':
+				call_expr = b.call(`$.bind_paused`, state.node, getter, setter);
+				break;
+			case 'volume':
+				call_expr = b.call(`$.bind_volume`, state.node, getter, setter);
+				break;
+			case 'playbackRate':
+				call_expr = b.call(`$.bind_playback_rate`, state.node, getter, setter);
+				break;
+			case 'currentTime':
+				call_expr = b.call(`$.bind_current_time`, state.node, getter, setter);
+				break;
+			case 'buffered':
+				call_expr = b.call(`$.bind_buffered`, state.node, setter);
+				break;
+			case 'played':
+				call_expr = b.call(`$.bind_played`, state.node, setter);
+				break;
+			case 'seekable':
+				call_expr = b.call(`$.bind_seekable`, state.node, setter);
+				break;
+			case 'seeking':
+				call_expr = b.call(`$.bind_seeking`, state.node, setter);
+				break;
+			case 'ended':
+				call_expr = b.call(`$.bind_ended`, state.node, setter);
+				break;
+			case 'readyState':
+				call_expr = b.call(`$.bind_ready_state`, state.node, setter);
+				break;
+
+			// dimensions
+			case 'contentRect':
+			case 'contentBoxSize':
+			case 'borderBoxSize':
+			case 'devicePixelContentBoxSize':
+				call_expr = b.call('$.bind_resize_observer', state.node, b.literal(node.name), setter);
+				break;
+
+			case 'clientWidth':
+			case 'clientHeight':
+			case 'offsetWidth':
+			case 'offsetHeight':
+				call_expr = b.call('$.bind_element_size', state.node, b.literal(node.name), setter);
+				break;
+
+			// various
+			case 'value': {
+				const parent = path.at(-1);
+				if (parent?.type === 'RegularElement' && parent.name === 'select') {
+					call_expr = b.call(`$.bind_select_value`, state.node, getter, setter);
+				} else {
+					call_expr = b.call(`$.bind_value`, state.node, getter, setter);
+				}
+				break;
+			}
+
+			case 'files':
+				call_expr = b.call(`$.bind_files`, state.node, getter, setter);
+				break;
+
+			case 'this':
+				call_expr = serialize_bind_this(node.expression, context, state.node);
+				break;
+			case 'textContent':
+			case 'innerHTML':
+			case 'innerText':
+				call_expr = b.call(
+					'$.bind_content_editable',
+					b.literal(node.name),
+					state.node,
+					getter,
+					setter
+				);
+				break;
+
+			// checkbox/radio
+			case 'checked':
+				call_expr = b.call(`$.bind_checked`, state.node, getter, setter);
+				break;
+
+			case 'group': {
+				/** @type {import('estree').CallExpression[]} */
+				const indexes = [];
+				for (const parent_each_block of node.metadata.parent_each_blocks) {
+					indexes.push(b.call('$.unwrap', parent_each_block.metadata.index));
+				}
+
+				// We need to additionally invoke the value attribute signal to register it as a dependency,
+				// so that when the value is updated, the group binding is updated
+				let group_getter = getter;
+				const parent = path.at(-1);
+				if (parent?.type === 'RegularElement') {
+					const value = /** @type {any[]} */ (
+						/** @type {import('#compiler').Attribute} */ (
+							parent.attributes.find(
+								(a) =>
+									a.type === 'Attribute' &&
+									a.name === 'value' &&
+									!is_text_attribute(a) &&
+									a.value !== true
+							)
+						)?.value
+					);
+					if (value !== undefined) {
+						group_getter = b.thunk(
+							b.block([
+								b.stmt(serialize_attribute_value(value, context)[1]),
+								b.return(/** @type {import('estree').Expression} */ (visit(expression)))
+							])
+						);
+					}
+				}
+
+				call_expr = b.call(
+					'$.bind_group',
+					node.metadata.binding_group_name,
+					b.array(indexes),
+					state.node,
+					group_getter,
+					setter
+				);
+				break;
+			}
+
+			default:
+				error(node, 'INTERNAL', 'unknown binding ' + node.name);
+		}
+	}
+	return call_expr;
+}
+
+/**
+ * @param {import('#compiler').UseDirective} node
+ * @param {import('../types.js').ComponentContext} context
+ * @returns
+ */
+function serialize_use_directive(node, { state, visit }) {
+	const params = [b.id('$$node')];
+
+	if (node.expression) {
+		params.push(b.id('$$action_arg'));
+	}
+
+	/** @type {import('estree').Expression[]} */
+	const args = [
+		state.node,
+		b.arrow(
+			params,
+			b.call(
+				/** @type {import('estree').Expression} */ (visit(parse_directive_name(node.name))),
+				...params
+			)
+		)
+	];
+
+	if (node.expression) {
+		args.push(b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression))));
+	}
+
+	return b.call('$.action', ...args);
+}
