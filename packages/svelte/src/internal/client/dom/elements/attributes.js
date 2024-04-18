@@ -4,6 +4,8 @@ import { get_descriptors, map_get, map_set, object_assign } from '../../utils.js
 import { AttributeAliases, DelegatedEvents, namespace_svg } from '../../../../constants.js';
 import { delegate } from './events.js';
 import { autofocus } from './misc.js';
+import { effect } from '../../reactivity/effects.js';
+import { run } from '../../../shared/utils.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -106,6 +108,8 @@ export function set_attributes(element, prev, attrs, lowercase_attributes, css_h
 
 	// @ts-expect-error
 	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes ??= {});
+	/** @type {Array<() => void>} */
+	var events = [];
 
 	for (key in next) {
 		var value = next[key];
@@ -135,7 +139,11 @@ export function set_attributes(element, prev, attrs, lowercase_attributes, css_h
 
 			if (value != null) {
 				if (!delegated) {
-					element.addEventListener(event_name, value, opts);
+					if (!prev) {
+						events.push(() => element.addEventListener(event_name, value, opts));
+					} else {
+						element.addEventListener(event_name, value, opts);
+					}
 				} else {
 					// @ts-ignore
 					element[`__${event_name}`] = value;
@@ -175,6 +183,12 @@ export function set_attributes(element, prev, attrs, lowercase_attributes, css_h
 				set_attribute(element, name, value);
 			}
 		}
+	}
+
+	// On the first run, ensure that events are added after bindings so
+	// that their listeners fire after the binding listeners
+	if (!prev) {
+		effect(() => events.forEach(run));
 	}
 
 	return next;
