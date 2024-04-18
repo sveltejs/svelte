@@ -8,8 +8,9 @@ import {
 import { get_descriptor, is_function } from '../utils.js';
 import { mutable_source, set } from './sources.js';
 import { derived } from './deriveds.js';
-import { get, inspect_fn, is_signals_recorded, untrack } from '../runtime.js';
+import { get, is_signals_recorded, untrack } from '../runtime.js';
 import { safe_equals } from './equality.js';
+import { inspect_fn } from '../dev/inspect.js';
 
 /**
  * @param {((value?: number) => number)} fn
