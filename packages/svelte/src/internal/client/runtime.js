@@ -15,7 +15,8 @@ import {
 	BRANCH_EFFECT,
 	STATE_SYMBOL,
 	BLOCK_EFFECT,
-	ROOT_EFFECT
+	ROOT_EFFECT,
+	STATE_SNAPSHOT_SYMBOL
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -1137,6 +1138,12 @@ export function deep_read(value, visited = new Set()) {
 		!visited.has(value)
 	) {
 		visited.add(value);
+
+		if (STATE_SNAPSHOT_SYMBOL in value) {
+			value[STATE_SNAPSHOT_SYMBOL](true);
+			return;
+		}
+
 		for (let key in value) {
 			try {
 				deep_read(value[key], visited);
@@ -1144,6 +1151,7 @@ export function deep_read(value, visited = new Set()) {
 				// continue
 			}
 		}
+
 		const proto = get_prototype_of(value);
 		if (
 			proto !== Object.prototype &&

@@ -1,4 +1,4 @@
-import { STATE_SYMBOL } from '../constants.js';
+import { STATE_SNAPSHOT_SYMBOL, STATE_SYMBOL } from '../constants.js';
 import { array_prototype, get_prototype_of, is_array, object_prototype } from '../utils.js';
 
 /**
@@ -13,17 +13,22 @@ export function snapshot(value, deep = false, values = new Map()) {
 		return value;
 	}
 
+	var unwrapped = /** @type {T} */ (values.get(value));
+	if (unwrapped !== undefined) {
+		return unwrapped;
+	}
+
+	if (STATE_SNAPSHOT_SYMBOL in value) {
+		// @ts-expect-error
+		return value[STATE_SNAPSHOT_SYMBOL](deep);
+	}
+
 	var proto = get_prototype_of(value);
 
 	if (
 		(proto === object_prototype || proto === array_prototype) &&
 		(deep || STATE_SYMBOL in value)
 	) {
-		var unwrapped = /** @type {T} */ (values.get(value));
-		if (unwrapped !== undefined) {
-			return unwrapped;
-		}
-
 		if (is_array(value)) {
 			var length = value.length;
 			var array = Array(length);

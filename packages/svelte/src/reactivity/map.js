@@ -3,6 +3,8 @@ import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { UNINITIALIZED } from '../constants.js';
 import { map } from './utils.js';
+import { STATE_SNAPSHOT_SYMBOL } from '../internal/client/constants.js';
+import { snapshot } from '../internal/client/reactivity/snapshot.js';
 
 /**
  * @template K
@@ -154,5 +156,16 @@ export class ReactiveMap extends Map {
 
 	get size() {
 		return get(this.#size);
+	}
+
+	/** @param {boolean} deep */
+	[STATE_SNAPSHOT_SYMBOL](deep) {
+		return new Map(
+			map(
+				this.#sources.entries(),
+				([key, source]) => /** @type {[K, V]} */ ([key, snapshot(get(source), deep)]),
+				'Map Iterator'
+			)
+		);
 	}
 }
