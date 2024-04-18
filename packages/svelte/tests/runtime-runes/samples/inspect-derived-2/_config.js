@@ -25,13 +25,6 @@ export default test({
 		console.log = original_log;
 	},
 	async test({ assert, target }) {
-		const button = target.querySelector('button');
-
-		flushSync(() => {
-			button?.click();
-		});
-
-		assert.htmlEqual(target.innerHTML, `<button>update</button>\n1`);
 		assert.deepEqual(log, [
 			'init',
 			{
@@ -40,7 +33,19 @@ export default test({
 					list: []
 				},
 				derived: []
-			},
+			}
+		]);
+
+		log.length = 0;
+
+		const button = target.querySelector('button');
+
+		flushSync(() => {
+			button?.click();
+		});
+
+		assert.htmlEqual(target.innerHTML, `<button>update</button>\n1`);
+		assert.deepEqual(log, [
 			'update',
 			{
 				data: {

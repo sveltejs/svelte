@@ -88,6 +88,7 @@ export {
 	update_pre_prop,
 	update_prop
 } from './reactivity/props.js';
+export { snapshot } from './reactivity/snapshot.js';
 export {
 	invalidate_store,
 	mutate_store,
@@ -128,7 +129,7 @@ export {
 	validate_store
 } from './validate.js';
 export { raf } from './timing.js';
-export { proxy, snapshot } from './proxy.js';
+export { proxy } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
 export {
 	child,

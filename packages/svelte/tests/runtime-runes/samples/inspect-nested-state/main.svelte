@@ -1,5 +1,5 @@
 <script>
-	let x = $state({count: 0});
+	let x = $state({ count: 0 });
 
 	$inspect({x}, [x]);
 </script>

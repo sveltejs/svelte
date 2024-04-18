@@ -1,33 +1,34 @@
 import { test } from '../../test';
 
-/**
- * @type {any[]}
- */
+/** @type {any[]} */
 let log;
-/**
- * @type {typeof console.log}}
- */
-let original_log;
+
+let original_log = console.log;
 
 export default test({
 	compileOptions: {
 		dev: true
 	},
+
 	before_test() {
 		log = [];
-		original_log = console.log;
 		console.log = (...v) => {
 			log.push(...v);
 		};
 	},
+
 	after_test() {
 		console.log = original_log;
 	},
+
 	async test({ assert, target }) {
+		assert.deepEqual(log, ['init', {}, 'init', []]);
+		log.length = 0;
+
 		const [btn] = target.querySelectorAll('button');
 		btn.click();
 		await Promise.resolve();
 
-		assert.deepEqual(log, ['init', {}, 'init', [], 'update', { x: 'hello' }, 'update', ['hello']]);
+		assert.deepEqual(log, ['update', { x: 'hello' }, 'update', ['hello']]);
 	}
 });
