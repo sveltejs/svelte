@@ -79,7 +79,7 @@ function html_to_dom(target, effect, value, svg) {
 		var child = /** @type {Text | Element | Comment} */ (node.firstChild);
 		target.before(child);
 		if (effect !== null) {
-			push_template_node(effect, child);
+			push_template_node(child, effect);
 		}
 		return child;
 	}
@@ -95,7 +95,7 @@ function html_to_dom(target, effect, value, svg) {
 	}
 
 	if (effect !== null) {
-		push_template_node(effect, nodes);
+		push_template_node(nodes, effect);
 	}
 
 	return nodes;

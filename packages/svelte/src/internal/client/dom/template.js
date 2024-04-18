@@ -7,10 +7,13 @@ import { effect } from '../reactivity/effects.js';
 import { is_array } from '../utils.js';
 
 /**
- * @param {import("#client").Effect} effect
  * @param {import("#client").TemplateNode | import("#client").TemplateNode[]} dom
+ * @param {import("#client").Effect} effect
  */
-export function push_template_node(effect, dom) {
+export function push_template_node(
+	dom,
+	effect = /** @type {import('#client').Effect} */ (current_effect)
+) {
 	var current_dom = effect.dom;
 	if (current_dom === null) {
 		effect.dom = dom;
@@ -18,18 +21,11 @@ export function push_template_node(effect, dom) {
 		if (!is_array(current_dom)) {
 			current_dom = effect.dom = [current_dom];
 		}
-		var anchor;
-		// If we're working with an anchor, then remove it and put it at the end.
-		if (current_dom[0].nodeType === 8) {
-			anchor = current_dom.pop();
-		}
+
 		if (is_array(dom)) {
 			current_dom.push(...dom);
 		} else {
 			current_dom.push(dom);
-		}
-		if (anchor !== undefined) {
-			current_dom.push(anchor);
 		}
 	}
 	return dom;
@@ -49,12 +45,8 @@ export function template(content, flags) {
 	var node;
 
 	return () => {
-		var effect = /** @type {import('#client').Effect} */ (current_effect);
 		if (hydrating) {
-			var hydration_content = push_template_node(
-				effect,
-				is_fragment ? hydrate_nodes : hydrate_nodes[0]
-			);
+			var hydration_content = push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
 			return /** @type {Node} */ (hydration_content);
 		}
 
@@ -64,14 +56,11 @@ export function template(content, flags) {
 		}
 		var clone = use_import_node ? document.importNode(node, true) : clone_node(node, true);
 
-		if (is_fragment) {
-			push_template_node(
-				effect,
-				/** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
-			);
-		} else {
-			push_template_node(effect, /** @type {import('#client').TemplateNode} */ (clone));
-		}
+		push_template_node(
+			is_fragment
+				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
+				: /** @type {import('#client').TemplateNode} */ (clone)
+		);
 
 		return clone;
 	};
@@ -115,12 +104,8 @@ export function svg_template(content, flags) {
 	var node;
 
 	return () => {
-		var effect = /** @type {import('#client').Effect} */ (current_effect);
 		if (hydrating) {
-			var hydration_content = push_template_node(
-				effect,
-				is_fragment ? hydrate_nodes : hydrate_nodes[0]
-			);
+			var hydration_content = push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
 			return /** @type {Node} */ (hydration_content);
 		}
 
@@ -139,14 +124,11 @@ export function svg_template(content, flags) {
 
 		var clone = clone_node(node, true);
 
-		if (is_fragment) {
-			push_template_node(
-				effect,
-				/** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
-			);
-		} else {
-			push_template_node(effect, /** @type {import('#client').TemplateNode} */ (clone));
-		}
+		push_template_node(
+			is_fragment
+				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
+				: /** @type {import('#client').TemplateNode} */ (clone)
+		);
 
 		return clone;
 	};
@@ -213,8 +195,7 @@ function run_scripts(node) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function text(anchor) {
-	var effect = /** @type {import('#client').Effect} */ (current_effect);
-	if (!hydrating) return push_template_node(effect, empty());
+	if (!hydrating) return push_template_node(empty());
 
 	var node = hydrate_nodes[0];
 
@@ -224,7 +205,7 @@ export function text(anchor) {
 		anchor.before((node = empty()));
 	}
 
-	return push_template_node(effect, node);
+	return push_template_node(node);
 }
 
 export const comment = template('<!>', TEMPLATE_FRAGMENT);
