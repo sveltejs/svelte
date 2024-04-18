@@ -1,19 +1,7 @@
 import { DEV } from 'esm-env';
-import {
-	array_prototype,
-	get_descriptors,
-	get_prototype_of,
-	is_frozen,
-	object_freeze,
-	object_prototype
-} from './utils.js';
+import { get_descriptors, get_prototype_of, is_frozen, object_freeze } from './utils.js';
 import { snapshot } from './proxy.js';
-import {
-	destroy_effect,
-	effect,
-	execute_effect_teardown,
-	user_pre_effect
-} from './reactivity/effects.js';
+import { destroy_effect, effect, execute_effect_teardown } from './reactivity/effects.js';
 import {
 	EFFECT,
 	RENDER_EFFECT,
@@ -33,6 +21,7 @@ import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { mutate, set, source } from './reactivity/sources.js';
 import { update_derived } from './reactivity/deriveds.js';
+import { inspect_captured_signals, inspect_fn, set_inspect_fn } from './dev/inspect.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -114,12 +103,6 @@ export let current_skip_reaction = false;
 // Handle collecting all signals which are read during a specific time frame
 export let is_signals_recorded = false;
 let captured_signals = new Set();
-
-/** @type {Function | null} */
-export let inspect_fn = null;
-
-/** @type {Array<import('./types.js').ValueDebug>} */
-let inspect_captured_signals = [];
 
 // Handling runtime component context
 /** @type {import('./types.js').ComponentContext | null} */
@@ -700,11 +683,10 @@ export async function tick() {
  * @returns {V}
  */
 export function get(signal) {
-	// @ts-expect-error
-	if (DEV && signal.inspect && inspect_fn) {
-		/** @type {import('./types.js').ValueDebug} */ (signal).inspect.add(inspect_fn);
-		// @ts-expect-error
-		inspect_captured_signals.push(signal);
+	if (DEV && inspect_fn) {
+		var s = /** @type {import('#client').ValueDebug} */ (signal);
+		s.inspect.add(inspect_fn);
+		inspect_captured_signals.push(s);
 	}
 
 	const flags = signal.f;
@@ -761,9 +743,9 @@ export function get(signal) {
 		if (DEV) {
 			// we want to avoid tracking indirect dependencies
 			const previous_inspect_fn = inspect_fn;
-			inspect_fn = null;
+			set_inspect_fn(null);
 			update_derived(/** @type {import('./types.js').Derived} **/ (signal), false);
-			inspect_fn = previous_inspect_fn;
+			set_inspect_fn(previous_inspect_fn);
 		} else {
 			update_derived(/** @type {import('./types.js').Derived} **/ (signal), false);
 		}
@@ -1184,86 +1166,6 @@ export function deep_read(value, visited = new Set()) {
 			}
 		}
 	}
-}
-
-/**
- * Like `snapshot`, but recursively traverses into normal arrays/objects to find potential states in them.
- * @param {any} value
- * @param {Map<any, any>} visited
- * @returns {any}
- */
-function deep_snapshot(value, visited = new Map()) {
-	if (typeof value === 'object' && value !== null && !visited.has(value)) {
-		const unstated = snapshot(value);
-		if (unstated !== value) {
-			visited.set(value, unstated);
-			return unstated;
-		}
-		const prototype = get_prototype_of(value);
-		// Only deeply snapshot plain objects and arrays
-		if (prototype === object_prototype || prototype === array_prototype) {
-			let contains_unstated = false;
-			/** @type {any} */
-			const nested_unstated = Array.isArray(value) ? [] : {};
-			for (let key in value) {
-				const result = deep_snapshot(value[key], visited);
-				nested_unstated[key] = result;
-				if (result !== value[key]) {
-					contains_unstated = true;
-				}
-			}
-			visited.set(value, contains_unstated ? nested_unstated : value);
-		} else {
-			visited.set(value, value);
-		}
-	}
-
-	return visited.get(value) ?? value;
-}
-
-// TODO remove in a few versions, before 5.0 at the latest
-let warned_inspect_changed = false;
-
-/**
- * @param {() => any[]} get_value
- * @param {Function} [inspect]
- */
-// eslint-disable-next-line no-console
-export function inspect(get_value, inspect = console.log) {
-	let initial = true;
-
-	user_pre_effect(() => {
-		const fn = () => {
-			const value = untrack(() => get_value().map((v) => deep_snapshot(v)));
-			if (value.length === 2 && typeof value[1] === 'function' && !warned_inspect_changed) {
-				// eslint-disable-next-line no-console
-				console.warn(
-					'$inspect() API has changed. See https://svelte-5-preview.vercel.app/docs/runes#$inspect for more information.'
-				);
-				warned_inspect_changed = true;
-			}
-			inspect(initial ? 'init' : 'update', ...value);
-		};
-
-		inspect_fn = fn;
-		const value = get_value();
-		deep_read(value);
-		inspect_fn = null;
-
-		const signals = inspect_captured_signals.slice();
-		inspect_captured_signals = [];
-
-		if (initial) {
-			fn();
-			initial = false;
-		}
-
-		return () => {
-			for (const s of signals) {
-				s.inspect.delete(fn);
-			}
-		};
-	});
 }
 
 /**
