@@ -97,7 +97,7 @@ export class SvelteComponent<
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
 	 * */
-	$$prop_def: StripBindable<PropsWithChildren<Props, Slots>>;
+	$$prop_def: StripBindable<Props>; // Without PropsWithChildren: unnecessary, causes type bugs
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
