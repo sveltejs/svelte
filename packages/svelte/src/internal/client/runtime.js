@@ -27,8 +27,7 @@ import {
 	BRANCH_EFFECT,
 	STATE_SYMBOL,
 	BLOCK_EFFECT,
-	ROOT_EFFECT,
-	INSPECT_SYMBOL
+	ROOT_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -1119,24 +1118,6 @@ export function pop(component) {
 }
 
 /**
- *
- * This is called from the inspect.
- * Deeply traverse every item in the array with `deep_read` to register for inspect callback
- * If the item implements INSPECT_SYMBOL, will use that instead
- * @param {Array<any>} value
- * @returns {void}
- */
-function deep_read_inpect(value) {
-	for (const item of value) {
-		if (item && typeof item[INSPECT_SYMBOL] === 'function') {
-			item[INSPECT_SYMBOL]();
-		} else {
-			deep_read(item);
-		}
-	}
-}
-
-/**
  * Possibly traverse an object and read all its properties so that they're all reactive in case this is `$state`.
  * Does only check first level of an object for performance reasons (heuristic should be good for 99% of all cases).
  * @param {any} value
@@ -1266,7 +1247,7 @@ export function inspect(get_value, inspect = console.log) {
 
 		inspect_fn = fn;
 		const value = get_value();
-		deep_read_inpect(value);
+		deep_read(value);
 		inspect_fn = null;
 
 		const signals = inspect_captured_signals.slice();
