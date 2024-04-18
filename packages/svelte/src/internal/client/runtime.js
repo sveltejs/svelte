@@ -125,9 +125,8 @@ export function is_runes() {
  */
 export function batch_inspect(target, prop, receiver) {
 	const value = Reflect.get(target, prop, receiver);
-	/**
-	 * @this {any}
-	 */
+
+	/** @this {any} */
 	return function () {
 		const previously_batching_effect = is_batching_effect;
 		is_batching_effect = true;

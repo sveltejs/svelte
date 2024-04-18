@@ -1,18 +1,24 @@
 import { STATE_SYMBOL } from '../constants.js';
-import { is_array } from '../utils.js';
+import { array_prototype, get_prototype_of, is_array, object_prototype } from '../utils.js';
 
 /**
  * @template {any} T
  * @param {T} value
+ * @param {boolean} deep
  * @param {Map<any, any>} values
  * @returns {T}
  */
-export function snapshot(value, values = new Map()) {
+export function snapshot(value, deep = false, values = new Map()) {
 	if (typeof value !== 'object' || value === null) {
 		return value;
 	}
 
-	if (STATE_SYMBOL in value) {
+	var proto = get_prototype_of(value);
+
+	if (
+		(proto === object_prototype || proto === array_prototype) &&
+		(deep || STATE_SYMBOL in value)
+	) {
 		var unwrapped = /** @type {T} */ (values.get(value));
 		if (unwrapped !== undefined) {
 			return unwrapped;
@@ -25,7 +31,7 @@ export function snapshot(value, values = new Map()) {
 			values.set(value, array);
 
 			for (var i = 0; i < length; i += 1) {
-				array[i] = snapshot(value[i], values);
+				array[i] = snapshot(value[i], deep, values);
 			}
 
 			return /** @type {T} */ (array);
@@ -36,7 +42,7 @@ export function snapshot(value, values = new Map()) {
 		values.set(value, obj);
 
 		for (var [k, v] of Object.entries(value)) {
-			obj[k] = snapshot(v, values);
+			obj[k] = snapshot(v, deep, values);
 		}
 
 		return /** @type {T} */ (obj);

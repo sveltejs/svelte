@@ -31,7 +31,7 @@ export function inspect(get_value, inspector = console.log) {
 	// calling `inspector` directly inside the effect, so that
 	// we get useful stack traces
 	var fn = () => {
-		const value = snapshot(get_value());
+		const value = snapshot(get_value(), true);
 		inspector(initial ? 'init' : 'update', ...value);
 	};
 
