@@ -1,19 +1,7 @@
 import { DEV } from 'esm-env';
-import {
-	array_prototype,
-	get_descriptors,
-	get_prototype_of,
-	is_frozen,
-	object_freeze,
-	object_prototype
-} from './utils.js';
+import { get_descriptors, get_prototype_of, is_frozen, object_freeze } from './utils.js';
 import { snapshot } from './proxy.js';
-import {
-	destroy_effect,
-	effect,
-	execute_effect_teardown,
-	user_pre_effect
-} from './reactivity/effects.js';
+import { destroy_effect, effect, execute_effect_teardown } from './reactivity/effects.js';
 import {
 	EFFECT,
 	RENDER_EFFECT,
