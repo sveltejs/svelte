@@ -2,6 +2,8 @@ import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { map } from './utils.js';
+import { STATE_SNAPSHOT_SYMBOL } from '../internal/client/constants.js';
+import { snapshot } from '../internal/client/reactivity/snapshot.js';
 
 var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
 var set_like_methods = ['difference', 'intersection', 'symmetricDifference', 'union'];
@@ -148,5 +150,10 @@ export class ReactiveSet extends Set {
 
 	get size() {
 		return get(this.#size);
+	}
+
+	/** @param {boolean} deep */
+	[STATE_SNAPSHOT_SYMBOL](deep) {
+		return new Set(map(this.keys(), (key) => snapshot(key, deep), 'Set Iterator'));
 	}
 }
