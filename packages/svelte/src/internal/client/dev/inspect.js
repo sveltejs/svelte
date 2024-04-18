@@ -37,6 +37,9 @@ export function inspect(get_value, inspector = console.log) {
 
 	render_effect(() => {
 		inspect_fn = fn;
+		// TODO ideally we'd use `snapshot` here instead of `deep_read`, and pass
+		// the result to `fn` on the initial run, but it doesn't work because
+		// of some weird (and possibly buggy?) behaviour around `batch_inspect`
 		deep_read(get_value());
 		inspect_fn = null;
 
