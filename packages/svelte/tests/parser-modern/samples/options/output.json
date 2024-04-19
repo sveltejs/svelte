@@ -153,12 +153,12 @@
 	"instance": {
 		"type": "Script",
 		"start": 114,
-		"end": 142,
+		"end": 179,
 		"context": "default",
 		"content": {
 			"type": "Program",
-			"start": 132,
-			"end": 133,
+			"start": 169,
+			"end": 170,
 			"loc": {
 				"start": {
 					"line": 1,
@@ -185,6 +185,21 @@
 						"type": "Text",
 						"raw": "ts",
 						"data": "ts"
+					}
+				]
+			},
+			{
+				"type": "Attribute",
+				"start": 132,
+				"end": 168,
+				"name": "generics",
+				"value": [
+					{
+						"start": 142,
+						"end": 167,
+						"type": "Text",
+						"raw": "T extends { foo: number }",
+						"data": "T extends { foo: number }"
 					}
 				]
 			}
