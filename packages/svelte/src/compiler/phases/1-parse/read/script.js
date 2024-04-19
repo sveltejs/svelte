@@ -63,6 +63,7 @@ export function read_script(parser, start, attributes) {
 		end: parser.index,
 		context: get_context(attributes),
 		content: ast,
-		parent: null
+		parent: null,
+		attributes: attributes
 	};
 }

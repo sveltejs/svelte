@@ -86,11 +86,15 @@ export function convert(source, ast) {
 				if (instance) {
 					// @ts-ignore
 					delete instance.parent;
+					// @ts-ignore
+					delete instance.attributes;
 				}
 
 				if (module) {
 					// @ts-ignore
 					delete module.parent;
+					// @ts-ignore
+					delete module.attributes;
 				}
 
 				return {

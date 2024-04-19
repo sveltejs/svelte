@@ -467,6 +467,7 @@ export interface Script extends BaseNode {
 	type: 'Script';
 	context: string;
 	content: Program;
+	attributes: Array<Attribute | SpreadAttribute | Directive>;
 }
 
 declare module 'estree' {
