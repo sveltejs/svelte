@@ -280,7 +280,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		item = items.get(key);
 
 		if (item === undefined) {
-			var child_open = /** @type {Text} */ (push_template_node(empty()));
+			var child_open = push_template_node(empty());
 			var child_anchor = current ? current.o : anchor;
 
 			child_anchor.before(child_open);
