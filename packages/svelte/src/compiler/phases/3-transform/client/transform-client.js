@@ -255,14 +255,18 @@ export function client_component(source, analysis, options) {
 	);
 
 	if (analysis.runes && options.dev) {
-		const bindable = analysis.exports.map(({ name, alias }) => b.literal(alias ?? name));
+		const exports = analysis.exports.map(({ name, alias }) => b.literal(alias ?? name));
+		/** @type {import('estree').Literal[]} */
+		const bindable = [];
 		for (const [name, binding] of properties) {
 			if (binding.kind === 'bindable_prop') {
 				bindable.push(b.literal(binding.prop_alias ?? name));
 			}
 		}
 		instance.body.unshift(
-			b.stmt(b.call('$.validate_prop_bindings', b.id('$$props'), b.array(bindable)))
+			b.stmt(
+				b.call('$.validate_prop_bindings', b.id('$$props'), b.array(bindable), b.array(exports))
+			)
 		);
 	}
 

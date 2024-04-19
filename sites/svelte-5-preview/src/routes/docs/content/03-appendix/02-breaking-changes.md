@@ -121,9 +121,9 @@ Content inside component tags becomes a [snippet prop](/docs/snippets) called `c
 
 Some breaking changes only apply once your component is in runes mode.
 
-### Bindings to component exports don't show up in rest props
+### Bindings to component exports are not allowed
 
-In runes mode, bindings to component exports don't show up in rest props. For example, `rest` in `let { foo, bar, ...rest } = $props();` would not contain `baz` if `baz` was defined as `export const baz = ...;` inside the component. In Svelte 4 syntax, the equivalent to `rest` would be `$$restProps`, which contains these component exports.
+In runes mode, bindings to component exports are not allowed. For example, having `export const foo = ...` in component `A` and then doing `<A bind:foo />` is a runtime error. Use `bind:this` instead, e.g. `<A bind:this={a} />` and then do `a.foo`. This change was done to make things easier to reason about - it's now clear without looking into the component to know that all bindings except `bind:this` are always for component properties.
 
 ### Bindings need to be explicitly defined using `$bindable()`
 

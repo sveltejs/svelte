@@ -2,16 +2,9 @@ import { test } from '../../test';
 
 export default test({
 	compileOptions: {
-		dev: true // to ensure we don't throw a false-positive "cannot bind to this" error
+		dev: true // to ensure we we catch the error
 	},
-	html: `0 0 <button>increment</button>`,
-
-	async test({ assert, target }) {
-		const btn = target.querySelector('button');
-
-		btn?.click();
-		await Promise.resolve();
-
-		assert.htmlEqual(target.innerHTML, `0 1 <button>increment</button>`);
-	}
+	error:
+		'Cannot use bind:increment on this component because it is a component export, and you can only bind to properties in runes mode. ' +
+		'Use bind:this instead and then access the property on the bound component instance.'
 });

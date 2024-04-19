@@ -85,13 +85,20 @@ export function loop_guard(timeout) {
 /**
  * @param {Record<string, any>} $$props
  * @param {string[]} bindable
+ * @param {string[]} exports
  */
-export function validate_prop_bindings($$props, bindable) {
+export function validate_prop_bindings($$props, bindable, exports) {
 	for (const key in $$props) {
-		if (!bindable.includes(key)) {
-			var setter = get_descriptor($$props, key)?.set;
+		var setter = get_descriptor($$props, key)?.set;
 
-			if (setter) {
+		if (setter) {
+			if (exports.includes(key)) {
+				throw new Error(
+					`Cannot use bind:${key} on this component because it is a component export, and you can only bind to properties in runes mode. ` +
+						`Use bind:this instead and then access the property on the bound component instance.`
+				);
+			}
+			if (!bindable.includes(key)) {
 				throw new Error(
 					`Cannot use bind:${key} on this component because the property was not declared as bindable. ` +
 						`To mark a property as bindable, use the $bindable() rune like this: \`let { ${key} = $bindable() } = $props()\``
