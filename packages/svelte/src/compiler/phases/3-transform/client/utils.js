@@ -455,9 +455,19 @@ export const function_visitor = (node, context) => {
 function get_hoistable_params(node, context) {
 	const scope = context.state.scope;
 
-	/** @type {import('estree').Pattern[]} */
+	/** @type {import('estree').Identifier[]} */
 	const params = [];
 	let added_props = false;
+
+	/**
+	 * we only want to push if it's not already present to avoid name clashing
+	 * @param {import('estree').Identifier} id
+	 */
+	function safe_push(id) {
+		if (!params.find((param) => param.name === id.name)) {
+			params.push(id);
+		}
+	}
 
 	for (const [reference] of scope.references) {
 		const binding = scope.get(reference);
@@ -465,8 +475,8 @@ function get_hoistable_params(node, context) {
 		if (binding !== null && !scope.declarations.has(reference) && binding.initial !== node) {
 			if (binding.kind === 'store_sub') {
 				// We need both the subscription for getting the value and the store for updating
-				params.push(b.id(binding.node.name.slice(1)));
-				params.push(b.id(binding.node.name));
+				safe_push(b.id(binding.node.name.slice(1)));
+				safe_push(b.id(binding.node.name));
 			} else if (
 				// If it's a destructured derived binding, then we can extract the derived signal reference and use that.
 				binding.expression !== null &&
@@ -477,7 +487,7 @@ function get_hoistable_params(node, context) {
 				binding.expression.object.callee.name === '$.get' &&
 				binding.expression.object.arguments[0].type === 'Identifier'
 			) {
-				params.push(b.id(binding.expression.object.arguments[0].name));
+				safe_push(b.id(binding.expression.object.arguments[0].name));
 			} else if (
 				// If we are referencing a simple $$props value, then we need to reference the object property instead
 				(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
@@ -488,11 +498,11 @@ function get_hoistable_params(node, context) {
 				// Handle $$props.something use-cases
 				if (!added_props) {
 					added_props = true;
-					params.push(b.id('$$props'));
+					safe_push(b.id('$$props'));
 				}
 			} else {
 				// create a copy to remove start/end tags which would mess up source maps
-				params.push(b.id(binding.node.name));
+				safe_push(b.id(binding.node.name));
 			}
 		}
 	}
