@@ -322,7 +322,7 @@ function animate(element, options, counterpart, t2, callback) {
 	if (css) {
 		// WAAPI
 		var keyframes = [];
-		var n = duration / (1000 / 60);
+		var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
 
 		for (var i = 0; i <= n; i += 1) {
 			var t = t1 + delta * easing(i / n);
