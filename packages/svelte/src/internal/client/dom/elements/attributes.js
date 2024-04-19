@@ -4,6 +4,8 @@ import { get_descriptors, map_get, map_set, object_assign } from '../../utils.js
 import { AttributeAliases, DelegatedEvents, namespace_svg } from '../../../../constants.js';
 import { delegate } from './events.js';
 import { autofocus } from './misc.js';
+import { effect } from '../../reactivity/effects.js';
+import { run } from '../../../shared/utils.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -81,14 +83,13 @@ export function set_custom_element_data(node, prop, value) {
 /**
  * Spreads attributes onto a DOM element, taking into account the currently set attributes
  * @param {Element & ElementCSSInlineStyle} element
- * @param {Record<string, unknown> | undefined} prev
- * @param {Record<string, unknown>[]} attrs
+ * @param {Record<string, any> | undefined} prev
+ * @param {Record<string, any>} next New attributes - this function mutates this object
  * @param {boolean} lowercase_attributes
  * @param {string} css_hash
- * @returns {Record<string, unknown>}
+ * @returns {Record<string, any>}
  */
-export function set_attributes(element, prev, attrs, lowercase_attributes, css_hash) {
-	var next = object_assign({}, ...attrs);
+export function set_attributes(element, prev, next, lowercase_attributes, css_hash) {
 	var has_hash = css_hash.length !== 0;
 
 	for (var key in prev) {
@@ -106,6 +107,8 @@ export function set_attributes(element, prev, attrs, lowercase_attributes, css_h
 
 	// @ts-expect-error
 	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes ??= {});
+	/** @type {Array<() => void>} */
+	var events = [];
 
 	for (key in next) {
 		var value = next[key];
@@ -135,7 +138,11 @@ export function set_attributes(element, prev, attrs, lowercase_attributes, css_h
 
 			if (value != null) {
 				if (!delegated) {
-					element.addEventListener(event_name, value, opts);
+					if (!prev) {
+						events.push(() => element.addEventListener(event_name, value, opts));
+					} else {
+						element.addEventListener(event_name, value, opts);
+					}
 				} else {
 					// @ts-ignore
 					element[`__${event_name}`] = value;
@@ -177,19 +184,23 @@ export function set_attributes(element, prev, attrs, lowercase_attributes, css_h
 		}
 	}
 
+	// On the first run, ensure that events are added after bindings so
+	// that their listeners fire after the binding listeners
+	if (!prev) {
+		effect(() => events.forEach(run));
+	}
+
 	return next;
 }
 
 /**
  * @param {Element} node
- * @param {Record<string, unknown> | undefined} prev
- * @param {Record<string, unknown>[]} attrs
+ * @param {Record<string, any> | undefined} prev
+ * @param {Record<string, any>} next The new attributes - this function mutates this object
  * @param {string} css_hash
  */
-export function set_dynamic_element_attributes(node, prev, attrs, css_hash) {
+export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 	if (node.tagName.includes('-')) {
-		var next = object_assign({}, ...attrs);
-
 		for (var key in prev) {
 			if (!(key in next)) {
 				next[key] = null;
@@ -206,7 +217,7 @@ export function set_dynamic_element_attributes(node, prev, attrs, css_hash) {
 	return set_attributes(
 		/** @type {Element & ElementCSSInlineStyle} */ (node),
 		prev,
-		attrs,
+		next,
 		node.namespaceURI !== namespace_svg,
 		css_hash
 	);

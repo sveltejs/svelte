@@ -263,7 +263,7 @@ function serialize_element_spread_attributes(
 ) {
 	let needs_isolation = false;
 
-	/** @type {import('estree').Expression[]} */
+	/** @type {import('estree').ObjectExpression['properties']} */
 	const values = [];
 
 	for (const attribute of attributes) {
@@ -271,9 +271,21 @@ function serialize_element_spread_attributes(
 			const name = get_attribute_name(element, attribute, context);
 			// TODO: handle contains_call_expression
 			const [, value] = serialize_attribute_value(attribute.value, context);
-			values.push(b.object([b.init(name, value)]));
+
+			if (
+				is_event_attribute(attribute) &&
+				(attribute.value[0].expression.type === 'ArrowFunctionExpression' ||
+					attribute.value[0].expression.type === 'FunctionExpression')
+			) {
+				// Give the event handler a stable ID so it isn't removed and readded on every update
+				const id = context.state.scope.generate('event_handler');
+				context.state.init.push(b.var(id, value));
+				values.push(b.init(attribute.name, b.id(id)));
+			} else {
+				values.push(b.init(name, value));
+			}
 		} else {
-			values.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
+			values.push(b.spread(/** @type {import('estree').Expression} */ (context.visit(attribute))));
 		}
 
 		needs_isolation ||=
@@ -292,7 +304,7 @@ function serialize_element_spread_attributes(
 				'$.set_attributes',
 				element_id,
 				b.id(id),
-				b.array(values),
+				b.object(values),
 				lowercase_attributes,
 				b.literal(context.state.analysis.css.hash)
 			)
@@ -350,15 +362,27 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 	let needs_isolation = false;
 	let is_reactive = false;
 
-	/** @type {import('estree').Expression[]} */
+	/** @type {import('estree').ObjectExpression['properties']} */
 	const values = [];
 
 	for (const attribute of attributes) {
 		if (attribute.type === 'Attribute') {
 			const [, value] = serialize_attribute_value(attribute.value, context);
-			values.push(b.object([b.init(attribute.name, value)]));
+
+			if (
+				is_event_attribute(attribute) &&
+				(attribute.value[0].expression.type === 'ArrowFunctionExpression' ||
+					attribute.value[0].expression.type === 'FunctionExpression')
+			) {
+				// Give the event handler a stable ID so it isn't removed and readded on every update
+				const id = context.state.scope.generate('event_handler');
+				context.state.init.push(b.var(id, value));
+				values.push(b.init(attribute.name, b.id(id)));
+			} else {
+				values.push(b.init(attribute.name, value));
+			}
 		} else {
-			values.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
+			values.push(b.spread(/** @type {import('estree').Expression} */ (context.visit(attribute))));
 		}
 
 		is_reactive ||=
@@ -381,7 +405,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 					'$.set_dynamic_element_attributes',
 					element_id,
 					b.id(id),
-					b.array(values),
+					b.object(values),
 					b.literal(context.state.analysis.css.hash)
 				)
 			)
@@ -402,7 +426,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 				'$.set_dynamic_element_attributes',
 				element_id,
 				b.literal(null),
-				b.array(values),
+				b.object(values),
 				b.literal(context.state.analysis.css.hash)
 			)
 		)
