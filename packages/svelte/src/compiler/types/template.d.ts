@@ -93,6 +93,7 @@ export interface SvelteOptions {
 		 */
 		extend?: ArrowFunctionExpression | Identifier;
 	};
+	attributes: Array<Attribute | SpreadAttribute | Directive>;
 }
 
 /** Static text */

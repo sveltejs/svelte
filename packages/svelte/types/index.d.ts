@@ -1316,6 +1316,7 @@ declare module 'svelte/compiler' {
 			 */
 			extend?: ArrowFunctionExpression | Identifier;
 		};
+		attributes: Array<Attribute | SpreadAttribute | Directive>;
 	}
 
 	/** Static text */
