@@ -274,7 +274,8 @@ function serialize_element_spread_attributes(
 
 			if (
 				is_event_attribute(attribute) &&
-				attribute.value[0].expression.type === 'ArrowFunctionExpression'
+				(attribute.value[0].expression.type === 'ArrowFunctionExpression' ||
+					attribute.value[0].expression.type === 'FunctionExpression')
 			) {
 				// Give the event handler a stable ID so it isn't removed and readded on every update
 				const id = context.state.scope.generate('event_handler');
@@ -370,7 +371,8 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 
 			if (
 				is_event_attribute(attribute) &&
-				attribute.value[0].expression.type === 'ArrowFunctionExpression'
+				(attribute.value[0].expression.type === 'ArrowFunctionExpression' ||
+					attribute.value[0].expression.type === 'FunctionExpression')
 			) {
 				// Give the event handler a stable ID so it isn't removed and readded on every update
 				const id = context.state.scope.generate('event_handler');
