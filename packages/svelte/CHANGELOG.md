@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.110
+
+### Patch Changes
+
+- fix: make sure event attributes run after bindings ([#11230](https://github.com/sveltejs/svelte/pull/11230))
+
 ## 5.0.0-next.109
 
 ### Patch Changes
