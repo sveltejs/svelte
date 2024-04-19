@@ -93,7 +93,7 @@ export interface SvelteOptions {
 		 */
 		extend?: ArrowFunctionExpression | Identifier;
 	};
-	attributes: Array<Attribute | SpreadAttribute | Directive>;
+	attributes: Attribute[];
 }
 
 /** Static text */
@@ -468,7 +468,7 @@ export interface Script extends BaseNode {
 	type: 'Script';
 	context: string;
 	content: Program;
-	attributes: Array<Attribute | SpreadAttribute | Directive>;
+	attributes: Attribute[];
 }
 
 declare module 'estree' {

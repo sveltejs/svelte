@@ -12,6 +12,7 @@ export default function read_options(node) {
 	const component_options = {
 		start: node.start,
 		end: node.end,
+		// @ts-ignore
 		attributes: node.attributes
 	};
 

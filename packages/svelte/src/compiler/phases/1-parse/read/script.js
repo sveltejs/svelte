@@ -64,6 +64,7 @@ export function read_script(parser, start, attributes) {
 		context: get_context(attributes),
 		content: ast,
 		parent: null,
+		// @ts-ignore
 		attributes: attributes
 	};
 }

@@ -1316,7 +1316,7 @@ declare module 'svelte/compiler' {
 			 */
 			extend?: ArrowFunctionExpression | Identifier;
 		};
-		attributes: Array<Attribute | SpreadAttribute | Directive>;
+		attributes: Attribute[];
 	}
 
 	/** Static text */
@@ -1691,7 +1691,7 @@ declare module 'svelte/compiler' {
 		type: 'Script';
 		context: string;
 		content: Program;
-		attributes: Array<Attribute | SpreadAttribute | Directive>;
+		attributes: Attribute[];
 	}
 	/**
 	 * The result of a preprocessor run. If the preprocessor does not return a result, it is assumed that the code is unchanged.
