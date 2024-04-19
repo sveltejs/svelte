@@ -1,5 +1,25 @@
 # svelte
 
+## 5.0.0-next.109
+
+### Patch Changes
+
+- fix: more robust moving of each item nodes ([#11254](https://github.com/sveltejs/svelte/pull/11254))
+
+- fix: ensure that CSS is generated for the final frame of a transition ([#11251](https://github.com/sveltejs/svelte/pull/11251))
+
+- fix: more accurate error message when creating orphan effects ([#11227](https://github.com/sveltejs/svelte/pull/11227))
+
+- fix: support `$state.snapshot` as part of variable declarations ([#11235](https://github.com/sveltejs/svelte/pull/11235))
+
+- fix: optimize object property mutations in compilation ([#11243](https://github.com/sveltejs/svelte/pull/11243))
+
+- breaking: don't allow children in svelte:options ([#11250](https://github.com/sveltejs/svelte/pull/11250))
+
+- fix: possible name clash in hoisted functions ([#11237](https://github.com/sveltejs/svelte/pull/11237))
+
+- fix: preserve getters/setters in HMR mode ([#11231](https://github.com/sveltejs/svelte/pull/11231))
+
 ## 5.0.0-next.108
 
 ### Patch Changes
