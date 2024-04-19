@@ -1,26 +1,50 @@
 [
 	{
 		"code": "invalid-self-closing-tag",
-		"message": "Self-closing HTML tags for non-void elements are ambiguous — use <div ...></div> rather than <div ... />",
+		"message": "Self-closing tags for non-void elements are ambiguous — use <div ...></div> rather than <div ... />",
 		"start": {
-			"line": 6,
+			"line": 26,
 			"column": 0
 		},
 		"end": {
-			"line": 6,
+			"line": 26,
 			"column": 7
 		}
 	},
 	{
 		"code": "invalid-self-closing-tag",
-		"message": "Self-closing HTML tags for non-void elements are ambiguous — use <my-thing ...></my-thing> rather than <my-thing ... />",
+		"message": "Self-closing tags for non-void elements are ambiguous — use <my-thing ...></my-thing> rather than <my-thing ... />",
 		"start": {
-			"line": 7,
+			"line": 27,
 			"column": 0
 		},
 		"end": {
-			"line": 7,
+			"line": 27,
 			"column": 12
+		}
+	},
+	{
+		"code": "invalid-self-closing-tag",
+		"message": "Self-closing tags for non-void elements are ambiguous — use <svelte:head ...></svelte:head> rather than <svelte:head ... />",
+		"start": {
+			"line": 28,
+			"column": 0
+		},
+		"end": {
+			"line": 28,
+			"column": 15
+		}
+	},
+	{
+		"code": "invalid-self-closing-tag",
+		"message": "Self-closing tags for non-void elements are ambiguous — use <svelte:fragment ...></svelte:fragment> rather than <svelte:fragment ... />",
+		"start": {
+			"line": 30,
+			"column": 1
+		},
+		"end": {
+			"line": 30,
+			"column": 34
 		}
 	}
 ]

@@ -676,10 +676,20 @@ const validation = {
 			error(node, 'invalid-style-directive-modifier');
 		}
 	},
-	SvelteHead(node) {
+	SvelteHead(node, context) {
 		const attribute = node.attributes[0];
 		if (attribute) {
 			error(attribute, 'illegal-svelte-head-attribute');
+		}
+
+		if (context.state.analysis.source[node.end - 2] === '/') {
+			warn(
+				context.state.analysis.warnings,
+				node,
+				context.path,
+				'invalid-self-closing-tag',
+				node.name
+			);
 		}
 	},
 	SvelteElement(node, context) {
@@ -703,6 +713,16 @@ const validation = {
 			} else if (attribute.type !== 'LetDirective') {
 				error(attribute, 'invalid-svelte-fragment-attribute');
 			}
+		}
+
+		if (context.state.analysis.source[node.end - 2] === '/') {
+			warn(
+				context.state.analysis.warnings,
+				node,
+				context.path,
+				'invalid-self-closing-tag',
+				node.name
+			);
 		}
 	},
 	SlotElement(node) {

@@ -253,7 +253,7 @@ const options = {
 const misc = {
 	/** @param {string} name */
 	'invalid-self-closing-tag': (name) =>
-		`Self-closing HTML tags for non-void elements are ambiguous — use <${name} ...></${name}> rather than <${name} ... />`
+		`Self-closing tags for non-void elements are ambiguous — use <${name} ...></${name}> rather than <${name} ... />`
 };
 
 /** @satisfies {Warnings} */
