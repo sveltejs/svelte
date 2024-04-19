@@ -7,8 +7,10 @@ import { effect } from '../reactivity/effects.js';
 import { is_array } from '../utils.js';
 
 /**
- * @param {import("#client").TemplateNode | import("#client").TemplateNode[]} dom
+ * @template {import("#client").TemplateNode | import("#client").TemplateNode[]} T
+ * @param {T} dom
  * @param {import("#client").Effect} effect
+ * @returns {T}
  */
 export function push_template_node(
 	dom,
@@ -46,8 +48,7 @@ export function template(content, flags) {
 
 	return () => {
 		if (hydrating) {
-			var hydration_content = push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
-			return /** @type {Node} */ (hydration_content);
+			return push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
 		}
 
 		if (!node) {
@@ -105,8 +106,7 @@ export function svg_template(content, flags) {
 
 	return () => {
 		if (hydrating) {
-			var hydration_content = push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
-			return /** @type {Node} */ (hydration_content);
+			return push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
 		}
 
 		if (!node) {
