@@ -105,6 +105,8 @@ export const global_visitors = {
 			if (serialized_assignment === assignment) {
 				// No change to output -> nothing to transform -> we can keep the original update expression
 				return next();
+			} else if (context.state.analysis.runes) {
+				return serialized_assignment;
 			} else {
 				/** @type {import('estree').Statement[]} */
 				let statements;
