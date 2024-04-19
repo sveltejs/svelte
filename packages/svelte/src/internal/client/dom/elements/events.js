@@ -131,11 +131,19 @@ export function handle_event_propagation(handler_element, event) {
 		var delegated = current_target[internal_prop_name];
 
 		if (delegated !== undefined && !(/** @type {any} */ (current_target).disabled)) {
-			if (is_array(delegated)) {
-				var [fn, ...data] = delegated;
-				fn.apply(current_target, [event, ...data]);
-			} else {
-				delegated.call(current_target, event);
+			try {
+				if (is_array(delegated)) {
+					var [fn, ...data] = delegated;
+					fn.apply(current_target, [event, ...data]);
+				} else {
+					delegated.call(current_target, event);
+				}
+			} catch (e) {
+				// @ts-expect-error ensure we don't run other handlers. Strictly speaking this is different
+				// from attaching multiple separate event listeners because those above would still run,
+				// but it's impossible for us to simulate this behavior here.
+				event.__root = document;
+				throw e;
 			}
 		}
 
