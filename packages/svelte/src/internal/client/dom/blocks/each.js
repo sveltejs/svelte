@@ -331,10 +331,6 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 					var a = matched[0];
 					var b = matched[matched.length - 1];
 
-					link(a.prev, b.next);
-					link(prev, a);
-					link(b, start);
-
 					for (j = 0; j < matched.length; j += 1) {
 						move(matched[j], local_anchor);
 					}
@@ -342,6 +338,10 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 					for (j = 0; j < stashed.length; j += 1) {
 						seen.delete(stashed[j]);
 					}
+
+					link(a.prev, b.next);
+					link(prev, a);
+					link(b, start);
 
 					current = start;
 					prev = b;
