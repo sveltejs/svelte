@@ -12,8 +12,8 @@
 	<title>Cute test</title>
 </svelte:head>
 
-<svelte:window on:click></svelte:window>
-<svelte:body on:mouseenter></svelte:body>
+<svelte:window on:click>
+<svelte:body on:mouseenter>
 
 {#each everyone as someone (someone)}
 	<p>{someone}</p>

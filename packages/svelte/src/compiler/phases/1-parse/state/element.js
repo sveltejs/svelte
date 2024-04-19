@@ -99,18 +99,7 @@ export default function tag(parser) {
 	const name = read_tag_name(parser);
 
 	if (root_only_meta_tags.has(name)) {
-		if (is_closing_tag) {
-			if (
-				(name === 'svelte:window' || name === 'svelte:body' || name === 'svelte:document') &&
-				/** @type {import('#compiler').ElementLike} */ (parent).fragment.nodes.length
-			) {
-				error(
-					/** @type {import('#compiler').ElementLike} */ (parent).fragment.nodes[0].start,
-					'invalid-element-content',
-					name
-				);
-			}
-		} else {
+		if (!is_closing_tag) {
 			if (name in parser.meta_tags) {
 				error(start, 'duplicate-svelte-element', name);
 			}

@@ -1,0 +1,210 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 148,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "Text",
+				"start": 34,
+				"end": 35,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "SvelteWindow",
+				"start": 35,
+				"end": 72,
+				"name": "svelte:window",
+				"attributes": [
+					{
+						"start": 50,
+						"end": 71,
+						"type": "OnDirective",
+						"name": "event",
+						"modifiers": [],
+						"expression": {
+							"type": "ArrowFunctionExpression",
+							"start": 60,
+							"end": 70,
+							"loc": {
+								"start": {
+									"line": 2,
+									"column": 25
+								},
+								"end": {
+									"line": 2,
+									"column": 35
+								}
+							},
+							"id": null,
+							"expression": true,
+							"generator": false,
+							"async": false,
+							"params": [],
+							"body": {
+								"type": "Literal",
+								"start": 66,
+								"end": 70,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 31
+									},
+									"end": {
+										"line": 2,
+										"column": 35
+									}
+								},
+								"value": null,
+								"raw": "null"
+							}
+						}
+					}
+				],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": [],
+					"transparent": true
+				}
+			},
+			{
+				"type": "Text",
+				"start": 72,
+				"end": 73,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "SvelteDocument",
+				"start": 73,
+				"end": 112,
+				"name": "svelte:document",
+				"attributes": [
+					{
+						"start": 90,
+						"end": 111,
+						"type": "OnDirective",
+						"name": "event",
+						"modifiers": [],
+						"expression": {
+							"type": "ArrowFunctionExpression",
+							"start": 100,
+							"end": 110,
+							"loc": {
+								"start": {
+									"line": 3,
+									"column": 27
+								},
+								"end": {
+									"line": 3,
+									"column": 37
+								}
+							},
+							"id": null,
+							"expression": true,
+							"generator": false,
+							"async": false,
+							"params": [],
+							"body": {
+								"type": "Literal",
+								"start": 106,
+								"end": 110,
+								"loc": {
+									"start": {
+										"line": 3,
+										"column": 33
+									},
+									"end": {
+										"line": 3,
+										"column": 37
+									}
+								},
+								"value": null,
+								"raw": "null"
+							}
+						}
+					}
+				],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": [],
+					"transparent": true
+				}
+			},
+			{
+				"type": "Text",
+				"start": 112,
+				"end": 113,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "SvelteBody",
+				"start": 113,
+				"end": 148,
+				"name": "svelte:body",
+				"attributes": [
+					{
+						"start": 126,
+						"end": 147,
+						"type": "OnDirective",
+						"name": "event",
+						"modifiers": [],
+						"expression": {
+							"type": "ArrowFunctionExpression",
+							"start": 136,
+							"end": 146,
+							"loc": {
+								"start": {
+									"line": 4,
+									"column": 23
+								},
+								"end": {
+									"line": 4,
+									"column": 33
+								}
+							},
+							"id": null,
+							"expression": true,
+							"generator": false,
+							"async": false,
+							"params": [],
+							"body": {
+								"type": "Literal",
+								"start": 142,
+								"end": 146,
+								"loc": {
+									"start": {
+										"line": 4,
+										"column": 29
+									},
+									"end": {
+										"line": 4,
+										"column": 33
+									}
+								},
+								"value": null,
+								"raw": "null"
+							}
+						}
+					}
+				],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": [],
+					"transparent": true
+				}
+			}
+		],
+		"transparent": false
+	},
+	"options": {
+		"start": 0,
+		"end": 34,
+		"immutable": false
+	}
+}

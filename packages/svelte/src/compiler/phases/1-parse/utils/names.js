@@ -65,7 +65,11 @@ const void_element_names = [
 	'param',
 	'source',
 	'track',
-	'wbr'
+	'wbr',
+	'svelte:options',
+	'svelte:window',
+	'svelte:document',
+	'svelte:body'
 ];
 
 /** @param {string} name */

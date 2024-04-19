@@ -229,8 +229,6 @@ const elements = {
 	'invalid-textarea-content': () =>
 		`A <textarea> can have either a value attribute or (equivalently) child content, but not both`,
 	'invalid-void-content': () => `Void elements cannot have children or closing tags`,
-	/** @param {string} name */
-	'invalid-element-content': (name) => `<${name}> cannot have children`,
 	'invalid-tag-name': () => 'Expected valid tag name',
 	/**
 	 * @param {string} node
