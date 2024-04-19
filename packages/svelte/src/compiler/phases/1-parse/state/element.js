@@ -101,7 +101,7 @@ export default function tag(parser) {
 	if (root_only_meta_tags.has(name)) {
 		if (is_closing_tag) {
 			if (
-				(name === 'svelte:window' || name === 'svelte:body' || name === 'svelte:document') &&
+				['svelte:options', 'svelte:window', 'svelte:body', 'svelte:document'].includes(name) &&
 				/** @type {import('#compiler').ElementLike} */ (parent).fragment.nodes.length
 			) {
 				error(
