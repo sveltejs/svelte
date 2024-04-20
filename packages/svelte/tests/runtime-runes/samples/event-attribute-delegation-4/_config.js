@@ -1,17 +1,12 @@
 import { test } from '../../test';
-import { log } from './log.js';
 
 export default test({
-	before_test() {
-		log.length = 0;
-	},
-
-	async test({ assert, target }) {
+	async test({ assert, target, logs }) {
 		const [btn1, btn2] = target.querySelectorAll('button');
 
 		btn1?.click();
 		await Promise.resolve();
-		assert.deepEqual(log, [
+		assert.deepEqual(logs, [
 			'button main',
 			'div main 1',
 			'div main 2',
@@ -21,10 +16,10 @@ export default test({
 			'window sub'
 		]);
 
-		log.length = 0;
+		logs.length = 0;
 		btn2?.click();
 		await Promise.resolve();
-		assert.deepEqual(log, [
+		assert.deepEqual(logs, [
 			'button sub',
 			'document main',
 			'document sub',

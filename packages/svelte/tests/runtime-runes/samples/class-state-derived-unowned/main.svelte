@@ -11,8 +11,6 @@
 </script>
 
 <script>
-	import { log } from './log.js';
-
 	function increment() {
 		someLogic.trigger();
 	}
@@ -20,13 +18,13 @@
 	let localDerived = $derived(someLogic.someValue > 3);
 
 	$effect(() => {
-		log.push(someLogic.someValue);
+		console.log(someLogic.someValue);
 	});
 	$effect(() => {
-		log.push('class trigger ' + someLogic.isAboveThree)
+		console.log('class trigger ' + someLogic.isAboveThree)
 	});
 	$effect(() => {
-		log.push('local trigger ' + localDerived)
+		console.log('local trigger ' + localDerived)
 	});
 
 </script>

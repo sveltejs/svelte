@@ -1,23 +1,21 @@
 <script>
-	import { log } from './log.js';
-
 	let { index, n } = $props();
 
 	function logRender () {
-		log.push(`${index}: render ${n}`);
+		console.log(`${index}: render ${n}`);
 		return index;
 	}
 
 	$effect.pre(() => {
-		log.push(`${index}: $effect.pre ${n}`);
+		console.log(`${index}: $effect.pre ${n}`);
 
 		$effect.pre(() => {
-			log.push(`${index}: nested $effect.pre ${n}`);
+			console.log(`${index}: nested $effect.pre ${n}`);
 		});
 	});
 
 	$effect(() => {
-		log.push(`${index}: $effect ${n}`);
+		console.log(`${index}: $effect ${n}`);
 	});
 </script>
 

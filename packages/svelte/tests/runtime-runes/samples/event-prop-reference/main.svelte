@@ -1,10 +1,8 @@
 <script>
-	import { log } from './log.js';
-
 	let { item } = $props();
 
 	function onclick() {
-		log.push(item?.name);
+		console.log(item?.name);
 	}
 </script>
 

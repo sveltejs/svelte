@@ -7,7 +7,7 @@
 
 	$effect(() => {
 		$count;
-		log.push(++ran);
+		console.log(++ran);
 	});
 </script>
 

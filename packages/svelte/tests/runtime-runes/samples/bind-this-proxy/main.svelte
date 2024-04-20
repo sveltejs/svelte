@@ -1,12 +1,11 @@
 <script>
-	import { log } from './log.js';
 	import Component from './Component.svelte';
 
 	let type = $state(Component)
 	let elem = $state()
 
 	$effect(() => {
-		log.push(elem);
+		console.log(elem);
 	});
 </script>
 

@@ -1,11 +1,9 @@
 <script>
-	import { log } from './log.js';
-
 	let x = $state.frozen(0);
 	let y = $state.frozen(0);
 
 	$effect(() => {
-		log.push(x);
+		console.log(x);
 	});
 </script>
 

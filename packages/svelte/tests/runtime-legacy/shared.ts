@@ -1,7 +1,6 @@
 import * as fs from 'node:fs';
 import { setImmediate } from 'node:timers/promises';
 import glob from 'tiny-glob/sync.js';
-import * as $ from 'svelte/internal/client';
 import { createClassComponent } from 'svelte/legacy';
 import { flushSync } from 'svelte';
 import { render } from 'svelte/server';
@@ -153,6 +152,36 @@ async function run_test_variant(
 ) {
 	let unintended_error = false;
 
+	// eslint-disable-next-line no-console
+	const { log, warn } = console;
+
+	let logs: string[] = [];
+	let warnings: string[] = [];
+
+	{
+		// use some crude static analysis to determine if logs/warnings are intercepted.
+		// we do this instead of using getters on the `test` parameters so that we can
+		// squelch logs in SSR tests while printing temporary logs in other cases
+		let str = config.test?.toString() ?? '';
+		let n = 0;
+		let i = 0;
+		while (i < str.length) {
+			if (str[i] === '(') n++;
+			if (str[i] === ')' && --n === 0) break;
+			i++;
+		}
+
+		if (str.slice(0, i).includes('logs')) {
+			// eslint-disable-next-line no-console
+			console.log = (...args) => logs.push(...args);
+		}
+
+		if (str.slice(0, i).includes('warnings')) {
+			// eslint-disable-next-line no-console
+			console.warn = (...args) => warnings.push(...args);
+		}
+	}
+
 	try {
 		unhandled_rejection = null;
 
@@ -239,46 +268,9 @@ async function run_test_variant(
 				});
 			}
 		} else {
+			logs.length = warnings.length = 0;
+
 			config.before_test?.();
-
-			let test_started = false;
-
-			let intercepted_logs = false;
-			let intercepted_warnings = false;
-
-			let logs: string[] = [];
-			let warnings: string[] = [];
-
-			// eslint-disable-next-line no-console
-			const { log, warn } = console;
-
-			// eslint-disable-next-line no-console
-			console.log = (...args) => {
-				if (test_started && !intercepted_logs) {
-					if (logs.length) {
-						log.apply(console, logs);
-						logs.length = 0;
-					}
-
-					log.apply(console, args);
-				} else {
-					logs.push(...args);
-				}
-			};
-
-			// eslint-disable-next-line no-console
-			console.warn = (...args) => {
-				if (test_started && !intercepted_warnings) {
-					if (warnings.length) {
-						warn.apply(console, warnings);
-						warnings.length = 0;
-					}
-
-					warn.apply(console, args);
-				} else {
-					warnings.push(...args);
-				}
-			};
 
 			// eslint-disable-next-line no-console
 			const error = console.error;
@@ -299,8 +291,6 @@ async function run_test_variant(
 				hydrate: variant === 'hydrate'
 			});
 
-			// eslint-disable-next-line no-console
-			console.warn = warn;
 			// eslint-disable-next-line no-console
 			console.error = error;
 
@@ -328,7 +318,6 @@ async function run_test_variant(
 			try {
 				if (config.test) {
 					flushSync();
-					test_started = true;
 					await config.test({
 						// @ts-expect-error TS doesn't get it
 						assert: {
@@ -344,14 +333,8 @@ async function run_test_variant(
 						window,
 						raf,
 						compileOptions,
-						get logs() {
-							intercepted_logs = true;
-							return logs;
-						},
-						get warnings() {
-							intercepted_warnings = true;
-							return warnings;
-						}
+						logs,
+						warnings
 					});
 				}
 
@@ -361,12 +344,6 @@ async function run_test_variant(
 				}
 			} finally {
 				instance.$destroy();
-
-				console.log = log;
-				console.warn = warn;
-
-				if (logs.length && !intercepted_logs) console.log(...logs);
-				if (warnings.length && !intercepted_warnings) console.warn(...warnings);
 
 				assert_html_equal(
 					target.innerHTML,
@@ -390,6 +367,9 @@ async function run_test_variant(
 			throw err;
 		}
 	} finally {
+		console.log = log;
+		console.warn = warn;
+
 		config.after_test?.();
 
 		// Free up the microtask queue
