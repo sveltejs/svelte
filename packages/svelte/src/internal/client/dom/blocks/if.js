@@ -28,7 +28,7 @@ export function if_block(
 	/** @type {boolean | null} */
 	let condition = null;
 
-	const effect = block(() => {
+	block(() => {
 		if (condition === (condition = !!get_condition())) return;
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
@@ -76,9 +76,5 @@ export function if_block(
 			// continue in hydration mode
 			set_hydrating(true);
 		}
-	});
-
-	if (elseif) {
-		effect.f |= EFFECT_TRANSPARENT;
-	}
+	}, EFFECT_TRANSPARENT);
 }

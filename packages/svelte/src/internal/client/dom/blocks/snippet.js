@@ -15,19 +15,16 @@ export function snippet(get_snippet, node, ...args) {
 	/** @type {import('#client').Effect | null} */
 	var snippet_effect;
 
-	block(
-		() => {
-			if (snippet === (snippet = get_snippet())) return;
+	block(() => {
+		if (snippet === (snippet = get_snippet())) return;
 
-			if (snippet_effect) {
-				destroy_effect(snippet_effect);
-				snippet_effect = null;
-			}
+		if (snippet_effect) {
+			destroy_effect(snippet_effect);
+			snippet_effect = null;
+		}
 
-			if (snippet) {
-				snippet_effect = branch(() => /** @type {SnippetFn} */ (snippet)(node, ...args));
-			}
-		},
-		EFFECT_TRANSPARENT | (1 << 20)
-	);
+		if (snippet) {
+			snippet_effect = branch(() => /** @type {SnippetFn} */ (snippet)(node, ...args));
+		}
+	}, EFFECT_TRANSPARENT);
 }
