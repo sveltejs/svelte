@@ -142,15 +142,13 @@ export function handle_event_propagation(handler_element, event) {
 			}
 		} finally {
 			if (
-				event.cancelBubble ||
-				parent_element === handler_element ||
-				parent_element === null ||
-				current_target === handler_element
+				!event.cancelBubble &&
+				parent_element !== handler_element &&
+				parent_element !== null &&
+				current_target !== handler_element
 			) {
-				return;
+				next(parent_element);
 			}
-
-			next(parent_element);
 		}
 	}
 
