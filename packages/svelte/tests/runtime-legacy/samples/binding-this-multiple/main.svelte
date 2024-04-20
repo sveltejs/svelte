@@ -1,9 +1,8 @@
 <script>
 	let activeTab = 0;
 	let activeHeading;
-	export let log = [];
 
-	$: log.push(activeHeading);
+	$: console.log(activeHeading);
 </script>
 
 <div class="tabs">
