@@ -56,6 +56,8 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 			KeyboardEvent: typeof KeyboardEvent;
 			MouseEvent: typeof MouseEvent;
 		};
+		logs: any[];
+		warnings: any[];
 	}) => void | Promise<void>;
 	test_ssr?: (args: { assert: Assert }) => void | Promise<void>;
 	accessors?: boolean;
@@ -239,12 +241,43 @@ async function run_test_variant(
 		} else {
 			config.before_test?.();
 
-			const warnings: string[] = [];
+			let test_started = false;
+
+			let intercepted_logs = false;
+			let intercepted_warnings = false;
+
+			let logs: string[] = [];
+			let warnings: string[] = [];
+
 			// eslint-disable-next-line no-console
-			const warn = console.warn;
+			const { log, warn } = console;
+
 			// eslint-disable-next-line no-console
-			console.warn = (warning) => {
-				warnings.push(warning);
+			console.log = (...args) => {
+				if (test_started && !intercepted_logs) {
+					if (logs.length) {
+						log.apply(console, logs);
+						logs.length = 0;
+					}
+
+					log.apply(console, args);
+				} else {
+					logs.push(...args);
+				}
+			};
+
+			// eslint-disable-next-line no-console
+			console.warn = (...args) => {
+				if (test_started && !intercepted_warnings) {
+					if (warnings.length) {
+						warn.apply(console, warnings);
+						warnings.length = 0;
+					}
+
+					warn.apply(console, args);
+				} else {
+					warnings.push(...args);
+				}
 			};
 
 			// eslint-disable-next-line no-console
@@ -295,6 +328,7 @@ async function run_test_variant(
 			try {
 				if (config.test) {
 					flushSync();
+					test_started = true;
 					await config.test({
 						// @ts-expect-error TS doesn't get it
 						assert: {
@@ -309,7 +343,15 @@ async function run_test_variant(
 						snapshot,
 						window,
 						raf,
-						compileOptions
+						compileOptions,
+						get logs() {
+							intercepted_logs = true;
+							return logs;
+						},
+						get warnings() {
+							intercepted_warnings = true;
+							return warnings;
+						}
 					});
 				}
 
@@ -319,6 +361,13 @@ async function run_test_variant(
 				}
 			} finally {
 				instance.$destroy();
+
+				console.log = log;
+				console.warn = warn;
+
+				if (logs.length && !intercepted_logs) console.log(...logs);
+				if (warnings.length && !intercepted_warnings) console.warn(...warnings);
+
 				assert_html_equal(
 					target.innerHTML,
 					'',

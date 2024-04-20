@@ -1,6 +1,4 @@
 <script>
-	import { log } from './log.js';
-
   const { prop } = $props()
 
   let trackedState = $state(0)
@@ -8,7 +6,7 @@
 
   function dummyAction(el, { getTrackedState, propFromComponent }) {
     $effect(() => {
-      log.push("action $effect: ", { buttonClicked: getTrackedState() })
+      console.log("action $effect: ", { buttonClicked: getTrackedState() })
     })
   }
 </script>
