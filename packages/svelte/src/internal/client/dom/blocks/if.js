@@ -28,53 +28,56 @@ export function if_block(
 	/** @type {boolean | null} */
 	let condition = null;
 
-	block(() => {
-		if (condition === (condition = !!get_condition())) return;
+	block(
+		() => {
+			if (condition === (condition = !!get_condition())) return;
 
-		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-		let mismatch = false;
+			/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
+			let mismatch = false;
 
-		if (hydrating) {
-			const is_else = anchor.data === HYDRATION_END_ELSE;
+			if (hydrating) {
+				const is_else = anchor.data === HYDRATION_END_ELSE;
 
-			if (condition === is_else) {
-				// Hydration mismatch: remove everything inside the anchor and start fresh.
-				// This could happen with `{#if browser}...{/if}`, for example
-				remove(hydrate_nodes);
-				set_hydrating(false);
-				mismatch = true;
+				if (condition === is_else) {
+					// Hydration mismatch: remove everything inside the anchor and start fresh.
+					// This could happen with `{#if browser}...{/if}`, for example
+					remove(hydrate_nodes);
+					set_hydrating(false);
+					mismatch = true;
+				}
 			}
-		}
 
-		if (condition) {
-			if (consequent_effect) {
-				resume_effect(consequent_effect);
+			if (condition) {
+				if (consequent_effect) {
+					resume_effect(consequent_effect);
+				} else {
+					consequent_effect = branch(() => consequent_fn(anchor));
+				}
+
+				if (alternate_effect) {
+					pause_effect(alternate_effect, () => {
+						alternate_effect = null;
+					});
+				}
 			} else {
-				consequent_effect = branch(() => consequent_fn(anchor));
+				if (alternate_effect) {
+					resume_effect(alternate_effect);
+				} else if (alternate_fn) {
+					alternate_effect = branch(() => alternate_fn(anchor));
+				}
+
+				if (consequent_effect) {
+					pause_effect(consequent_effect, () => {
+						consequent_effect = null;
+					});
+				}
 			}
 
-			if (alternate_effect) {
-				pause_effect(alternate_effect, () => {
-					alternate_effect = null;
-				});
+			if (mismatch) {
+				// continue in hydration mode
+				set_hydrating(true);
 			}
-		} else {
-			if (alternate_effect) {
-				resume_effect(alternate_effect);
-			} else if (alternate_fn) {
-				alternate_effect = branch(() => alternate_fn(anchor));
-			}
-
-			if (consequent_effect) {
-				pause_effect(consequent_effect, () => {
-					consequent_effect = null;
-				});
-			}
-		}
-
-		if (mismatch) {
-			// continue in hydration mode
-			set_hydrating(true);
-		}
-	}, EFFECT_TRANSPARENT);
+		},
+		elseif ? EFFECT_TRANSPARENT : 0
+	);
 }

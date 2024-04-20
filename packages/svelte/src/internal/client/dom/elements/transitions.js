@@ -248,16 +248,16 @@ export function transition(flags, element, get_fn, get_params) {
 		let run = is_global;
 
 		if (!run) {
-			var block = /** @type {import('#client').Effect} */ (e.parent);
+			var block = /** @type {import('#client').Effect | null} */ (e.parent);
 
 			// skip over transparent blocks (e.g. snippets, else-if blocks)
 			while (block && (block.f & EFFECT_TRANSPARENT) !== 0) {
-				while ((block = /** @type {import('#client').Effect} */ (block.parent))) {
+				while ((block = block.parent)) {
 					if ((block.f & BLOCK_EFFECT) !== 0) break;
 				}
 			}
 
-			run = (block.f & EFFECT_RAN) !== 0;
+			run = !block || (block.f & EFFECT_RAN) !== 0;
 		}
 
 		if (run) {
