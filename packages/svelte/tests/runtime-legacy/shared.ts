@@ -299,13 +299,6 @@ async function run_test_variant(
 				assert.fail('Expected a runtime error');
 			}
 
-			if (config.warnings) {
-				assert.deepEqual(warnings, config.warnings);
-			} else if (warnings.length) {
-				unintended_error = true;
-				assert.fail('Received unexpected warnings');
-			}
-
 			if (config.html) {
 				flushSync();
 				assert_html_equal_with_options(target.innerHTML, config.html, {
@@ -344,6 +337,14 @@ async function run_test_variant(
 				}
 			} finally {
 				instance.$destroy();
+
+				if (config.warnings) {
+					assert.deepEqual(warnings, config.warnings);
+				} else if (warnings.length && console.warn === warn) {
+					unintended_error = true;
+					warn.apply(console, warnings);
+					assert.fail('Received unexpected warnings');
+				}
 
 				assert_html_equal(
 					target.innerHTML,
