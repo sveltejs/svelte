@@ -176,7 +176,7 @@ async function run_test_variant(
 			console.log = (...args) => logs.push(...args);
 		}
 
-		if (str.slice(0, i).includes('warnings')) {
+		if (str.slice(0, i).includes('warnings') || config.warnings) {
 			// eslint-disable-next-line no-console
 			console.warn = (...args) => warnings.push(...args);
 		}
