@@ -14,7 +14,6 @@ let browser: import('@playwright/test').Browser;
 
 beforeAll(async () => {
 	browser = await chromium.launch();
-	console.log('[runtime-browser] Launched browser');
 }, 20000);
 
 afterAll(async () => {
