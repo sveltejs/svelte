@@ -1,5 +1,4 @@
 <script>
-	import { log } from "./log";
 	import Sub from "./sub.svelte";
 </script>
 
