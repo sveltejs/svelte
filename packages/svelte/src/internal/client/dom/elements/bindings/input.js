@@ -81,13 +81,29 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 			var value = input.__value;
 
 			if (is_checkbox) {
-				value = get_binding_group_value(binding_group, value, input.checked);
+				let initial = get_value()
+				if (!Array.isArray(initial)) initial = []
+				value = get_binding_group_value(binding_group, value, input.checked, initial);
 			}
 
 			update(value);
 		},
 		// TODO better default value handling
-		() => update(is_checkbox ? [] : null)
+		() => {
+			if (is_checkbox) {
+				let initial = get_value()
+				if (!Array.isArray(initial)) initial = []
+				var value = new Set(initial);
+
+				for (const input of binding_group) {
+					value.delete(input.__value);
+				}
+
+				update(Array.from(value));
+			} else {
+				update(null);
+			}
+		}
 	);
 
 	render_effect(() => {
@@ -146,10 +162,11 @@ export function bind_checked(input, get_value, update) {
  * @param {Array<HTMLInputElement>} group
  * @param {V} __value
  * @param {boolean} checked
+ * @param {Array<V>} initial
  * @returns {V[]}
  */
-function get_binding_group_value(group, __value, checked) {
-	var value = new Set();
+function get_binding_group_value(group, __value, checked, initial) {
+	var value = new Set(initial);
 
 	for (var i = 0; i < group.length; i += 1) {
 		if (group[i].checked) {

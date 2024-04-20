@@ -7,7 +7,7 @@
   "license": "MIT",
   "packageManager": "pnpm@8.6.12",
   "engines": {
-    "pnpm": "^8.0.0"
+    "pnpm": "^8.0.0 || ^9"
   },
   "repository": {
     "type": "git",
