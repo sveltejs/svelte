@@ -263,11 +263,6 @@ async function run_test_variant(
 			if (runes) {
 				props = $.proxy({ ...(config.props || {}) });
 
-				// TODO get rid
-				props.$set = (new_props: Record<string, any>) => {
-					Object.assign(props, new_props);
-				};
-
 				const render = variant === 'hydrate' ? hydrate : mount;
 				instance = render(mod.default, {
 					target,

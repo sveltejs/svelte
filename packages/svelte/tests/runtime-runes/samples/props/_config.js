@@ -1,4 +1,4 @@
-import { flushSync } from '../../../../src/index-client.js';
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -14,13 +14,10 @@ export default test({
 	html: `x 1 2 3 z`,
 
 	async test({ assert, target, component }) {
-		flushSync(() => {
-			component.foo = 'y';
-		});
+		flushSync(() => (component.foo = 'y'));
 		assert.htmlEqual(target.innerHTML, `y 1 2 3 z`);
 
-		// rest props don't generate accessors, so we need to use $set
-		await component.$set({ bar: 'w' });
+		flushSync(() => (component.bar = 'w'));
 		assert.htmlEqual(target.innerHTML, `y 1 2 3 w`);
 	}
 });
