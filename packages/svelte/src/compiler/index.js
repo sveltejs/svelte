@@ -1,5 +1,5 @@
 import { getLocator } from 'locate-character';
-import { walk } from 'zimmerframe';
+import { walk as zimmerframe_walk } from 'zimmerframe';
 import { CompileError } from './errors.js';
 import { convert } from './legacy.js';
 import { parse as parse_acorn } from './phases/1-parse/acorn.js';
@@ -133,7 +133,7 @@ export function parse(source, options = {}) {
 function to_public_ast(source, ast, modern) {
 	if (modern) {
 		// remove things that we don't want to treat as public API
-		return walk(ast, null, {
+		return zimmerframe_walk(ast, null, {
 			_(node, { next }) {
 				// @ts-ignore
 				delete node.parent;
@@ -151,13 +151,11 @@ function to_public_ast(source, ast, modern) {
  * @deprecated Replace this with `import { walk } from 'estree-walker'`
  * @returns {never}
  */
-function _walk() {
+export function walk() {
 	throw new Error(
 		`'svelte/compiler' no longer exports a \`walk\` utility — please import it directly from 'estree-walker' instead`
 	);
 }
-
-export { _walk as walk };
 
 export { CompileError } from './errors.js';
 
