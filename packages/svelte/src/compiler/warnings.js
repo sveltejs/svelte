@@ -238,7 +238,11 @@ const legacy = {
 		`Using <slot> to render parent content is deprecated. Use {@render ...} tags instead.`,
 	/** @param {string} name */
 	'deprecated-event-handler': (name) =>
-		`Using on:${name} to listen to the ${name} event is is deprecated. Use the event attribute on${name} instead.`
+		`Using on:${name} to listen to the ${name} event is is deprecated. Use the event attribute on${name} instead.`,
+	'deprecated-accessors': () =>
+		`The accessors option has been deprecated. It will have no effect in runes mode.`,
+	'deprecated-immutable': () =>
+		`The immutable option has been deprecated. It will have no effect in runes mode.`
 };
 
 const block = {

@@ -406,8 +406,20 @@ export function analyze_component(root, source, options) {
 		source
 	};
 
-	if (!options.customElement && root.options?.customElement) {
-		warn(analysis.warnings, root.options, [], 'missing-custom-element-compile-option');
+	if (root.options) {
+		for (const attribute of root.options.attributes) {
+			if (attribute.name === 'accessors') {
+				warn(analysis.warnings, attribute, [], 'deprecated-accessors');
+			}
+
+			if (attribute.name === 'customElement' && !options.customElement) {
+				warn(analysis.warnings, attribute, [], 'missing-custom-element-compile-option');
+			}
+
+			if (attribute.name === 'immutable') {
+				warn(analysis.warnings, attribute, [], 'deprecated-immutable');
+			}
+		}
 	}
 
 	if (analysis.runes) {
