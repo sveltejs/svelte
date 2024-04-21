@@ -1,3 +1,3 @@
 <style>
-	:global {}
+	.x .y:global {}
 </style>
