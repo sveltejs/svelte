@@ -107,6 +107,7 @@ const css = {
 		`A :global {...} block cannot be part of a selector list with more than one item`,
 	'invalid-css-global-block-modifier': () =>
 		`A :global {...} block cannot modify an existing selector`,
+	/** @param {string} name */
 	'invalid-css-global-block-combinator': (name) =>
 		`A :global {...} block cannot follow a ${name} combinator`,
 	'invalid-css-global-block-declaration': () =>
