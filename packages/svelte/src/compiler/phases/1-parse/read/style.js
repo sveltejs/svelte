@@ -3,7 +3,6 @@ import { error } from '../../../errors.js';
 const REGEX_MATCHER = /^[~^$*|]?=/;
 const REGEX_CLOSING_BRACKET = /[\s\]]/;
 const REGEX_ATTRIBUTE_FLAGS = /^[a-zA-Z]+/; // only `i` and `s` are valid today, but make it future-proof
-const REGEX_COMBINATOR_WHITESPACE = /^\s*(\+|~|>|\|\|)\s*/;
 const REGEX_COMBINATOR = /^(\+|~|>|\|\|)/;
 const REGEX_PERCENTAGE = /^\d+(\.\d+)?%/;
 const REGEX_NTH_OF =
@@ -116,7 +115,8 @@ function read_rule(parser) {
 		end: parser.index,
 		metadata: {
 			parent_rule: null,
-			has_local_selectors: false
+			has_local_selectors: false,
+			is_global_block: false
 		}
 	};
 }
@@ -252,8 +252,6 @@ function read_selector(parser, inside_pseudo_class = false) {
 			if (parser.eat('(')) {
 				args = read_selector_list(parser, true);
 				parser.eat(')', true);
-			} else if (name === 'global') {
-				error(parser.index, 'invalid-css-global-selector');
 			}
 
 			relative_selector.selectors.push({
