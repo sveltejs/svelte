@@ -118,7 +118,7 @@ export function mount(component, options) {
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
- * 		recover?: false;
+ * 		recover?: boolean;
  * 	}} options
  * @returns {Exports}
  */
