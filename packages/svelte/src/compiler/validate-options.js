@@ -40,7 +40,10 @@ export const validate_component_options =
 		object({
 			...common,
 
-			accessors: boolean(false),
+			accessors: deprecate(
+				'The accessors option has been deprecated. It will have no effect in runes mode.',
+				boolean(false)
+			),
 
 			css: validator('external', (input) => {
 				if (input === true || input === false) {
@@ -73,7 +76,7 @@ export const validate_component_options =
 			discloseVersion: boolean(true),
 
 			immutable: deprecate(
-				'The immutable option has been deprecated. It has no effect in runes mode.',
+				'The immutable option has been deprecated. It will have no effect in runes mode.',
 				boolean(false)
 			),
 
