@@ -2727,7 +2727,9 @@ export const template_visitors = {
 				case 'checked':
 					call_expr = b.call(`$.bind_checked`, state.node, getter, setter);
 					break;
-
+				case 'focused':
+					call_expr = b.call(`$.bind_focused`, state.node, setter);
+					break;
 				case 'group': {
 					/** @type {import('estree').CallExpression[]} */
 					const indexes = [];

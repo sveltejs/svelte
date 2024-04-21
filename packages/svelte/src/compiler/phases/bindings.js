@@ -21,6 +21,7 @@ export const binding_properties = {
 		event: 'durationchange',
 		omit_in_ssr: true
 	},
+	focused: {},
 	paused: {
 		valid_elements: ['audio', 'video'],
 		omit_in_ssr: true

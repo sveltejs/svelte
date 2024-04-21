@@ -67,3 +67,31 @@ export function bind_property(property, event_name, type, element, get_value, up
 		}
 	});
 }
+
+/**
+ * @param {HTMLElement} element
+ * @param {(value: unknown) => void} update
+ * @returns {void}
+ */
+export function bind_focused(element, update) {
+	var focus_handler = () => {
+		update(true);
+	}
+	var blur_handler = () => {
+		update(false);
+	}
+
+	element.addEventListener('focus', focus_handler);
+	element.addEventListener('blur', blur_handler);
+
+	/** @type {ReturnType<typeof setTimeout>} */
+
+	render_effect(() => {
+		if(element === document.activeElement) {
+			update(true)
+		} else {
+			update(false)
+		}
+
+	});
+}

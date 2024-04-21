@@ -25,7 +25,6 @@ export function event(event_name, dom, handler, capture, passive) {
 			return handler.call(this, event);
 		}
 	}
-
 	dom.addEventListener(event_name, target_handler, options);
 
 	// @ts-ignore
@@ -149,7 +148,6 @@ export function handle_event_propagation(handler_element, event) {
 
 		current_target = parent_element;
 	}
-
 	// @ts-expect-error is used above
 	event.__root = handler_element;
 	// @ts-expect-error is used above
