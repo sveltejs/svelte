@@ -384,7 +384,7 @@ export function analyze_component(root, source, options) {
 		inject_styles: options.css === 'injected' || options.customElement,
 		accessors: options.customElement
 			? true
-			: !!options.accessors ||
+			: (runes ? false : !!options.accessors) ||
 				// because $set method needs accessors
 				!!options.legacy?.componentApi,
 		reactive_statements: new Map(),
