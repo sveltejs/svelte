@@ -319,7 +319,7 @@ declare module 'svelte' {
 		events?: { [Property in keyof Events]: (e: Events[Property]) => any; } | undefined;
 		context?: Map<any, any> | undefined;
 		intro?: boolean | undefined;
-		recover?: false | undefined;
+		recover?: boolean | undefined;
 	}): Exports;
 	/**
 	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
