@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 import { log } from './log.js';
 
@@ -28,7 +29,7 @@ export default test({
 
 		log.length = 0;
 
-		component.n += 1;
+		flushSync(() => (component.n += 1));
 
 		assert.deepEqual(log, [
 			'parent: $effect.pre 1',
