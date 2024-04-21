@@ -995,7 +995,8 @@ function create_block(parent, name, nodes, context) {
 			},
 			namespace,
 			bound_contenteditable: context.state.metadata.bound_contenteditable
-		}
+		},
+		optimisation_oneling: false
 	};
 
 	for (const node of hoisted) {
@@ -1446,7 +1447,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 				// get hoisted inside clean_nodes?
 				visit(node, state);
 			} else {
-				if (node.type === 'EachBlock' && nodes.length === 1 && is_element) {
+				if (node.type === 'EachBlock' && state.optimisation_oneling) {
 					node.metadata.is_controlled = true;
 					visit(node, state);
 				} else {
@@ -1598,7 +1599,7 @@ export const template_visitors = {
 		context.state.template.push(`<!--${node.data}-->`);
 	},
 	HtmlTag(node, context) {
-		context.state.template.push('<!>');
+		if (!context.state.optimisation_oneling) context.state.template.push('<!>');
 
 		// push into init, so that bindings run afterwards, which might trigger another run and override hydration
 		context.state.init.push(
@@ -1702,7 +1703,7 @@ export const template_visitors = {
 		);
 	},
 	RenderTag(node, context) {
-		context.state.template.push('<!>');
+		if (!context.state.optimisation_oneling) context.state.template.push('<!>');
 		const callee = unwrap_optional(node.expression).callee;
 		const raw_args = unwrap_optional(node.expression).arguments;
 		const is_reactive =
@@ -1981,6 +1982,21 @@ export const template_visitors = {
 			state.options.preserveComments
 		);
 
+		const optimisation_oneling =
+			trimmed.length === 1 &&
+			(trimmed[0].type === 'Component' ||
+				trimmed[0].type === 'HtmlTag' ||
+				trimmed[0].type === 'RenderTag' ||
+				trimmed[0].type === 'IfBlock' ||
+				trimmed[0].type === 'AwaitBlock' ||
+				trimmed[0].type === 'KeyBlock' ||
+				trimmed[0].type === 'EachBlock' ||
+				trimmed[0].type === 'SvelteSelf' ||
+				trimmed[0].type === 'SvelteElement' ||
+				trimmed[0].type === 'SvelteComponent' ||
+				trimmed[0].type === 'SlotElement');
+		state.optimisation_oneling = optimisation_oneling;
+
 		for (const node of hoisted) {
 			context.visit(node, state);
 		}
@@ -1989,7 +2005,7 @@ export const template_visitors = {
 			trimmed,
 			() =>
 				b.call(
-					'$.child',
+					optimisation_oneling ? '$.anchor' : '$.child',
 					node.name === 'template'
 						? b.member(context.state.node, b.id('content'))
 						: context.state.node
@@ -2003,7 +2019,7 @@ export const template_visitors = {
 		}
 	},
 	SvelteElement(node, context) {
-		context.state.template.push(`<!>`);
+		if (!context.state.optimisation_oneling) context.state.template.push(`<!>`);
 
 		/** @type {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} */
 		const attributes = [];
@@ -2356,7 +2372,7 @@ export const template_visitors = {
 		context.state.init.push(b.stmt(b.call('$.each', ...args)));
 	},
 	IfBlock(node, context) {
-		context.state.template.push('<!>');
+		if (!context.state.optimisation_oneling) context.state.template.push('<!>');
 
 		const consequent = /** @type {import('estree').BlockStatement} */ (
 			context.visit(node.consequent)
@@ -2407,7 +2423,7 @@ export const template_visitors = {
 		context.state.init.push(b.stmt(b.call('$.if', ...args)));
 	},
 	AwaitBlock(node, context) {
-		context.state.template.push('<!>');
+		if (!context.state.optimisation_oneling) context.state.template.push('<!>');
 
 		context.state.init.push(
 			b.stmt(
@@ -2448,7 +2464,7 @@ export const template_visitors = {
 		);
 	},
 	KeyBlock(node, context) {
-		context.state.template.push('<!>');
+		if (!context.state.optimisation_oneling) context.state.template.push('<!>');
 		const key = /** @type {import('estree').Expression} */ (context.visit(node.expression));
 		const body = /** @type {import('estree').Expression} */ (context.visit(node.fragment));
 		context.state.init.push(
@@ -2763,7 +2779,7 @@ export const template_visitors = {
 		}
 	},
 	Component(node, context) {
-		context.state.template.push('<!>');
+		if (!context.state.optimisation_oneling) context.state.template.push('<!>');
 
 		const binding = context.state.scope.get(
 			node.name.includes('.') ? node.name.slice(0, node.name.indexOf('.')) : node.name
@@ -2791,12 +2807,12 @@ export const template_visitors = {
 		context.state.init.push(component);
 	},
 	SvelteSelf(node, context) {
-		context.state.template.push('<!>');
+		if (!context.state.optimisation_oneling) context.state.template.push('<!>');
 		const component = serialize_inline_component(node, context.state.analysis.name, context);
 		context.state.init.push(component);
 	},
 	SvelteComponent(node, context) {
-		context.state.template.push('<!>');
+		if (!context.state.optimisation_oneling) context.state.template.push('<!>');
 
 		let component = serialize_inline_component(node, '$$component', context);
 		if (context.state.options.dev) {
@@ -2896,7 +2912,7 @@ export const template_visitors = {
 	},
 	SlotElement(node, context) {
 		// <slot {a}>fallback</slot>  -->   $.slot($$slots.default, { get a() { .. } }, () => ...fallback);
-		context.state.template.push('<!>');
+		if (!context.state.optimisation_oneling) context.state.template.push('<!>');
 
 		/** @type {import('estree').Property[]} */
 		const props = [];

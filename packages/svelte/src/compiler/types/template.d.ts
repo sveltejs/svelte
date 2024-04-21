@@ -291,6 +291,8 @@ export interface RegularElement extends BaseElement {
 		/** `true` if contains a SpreadAttribute */
 		has_spread: boolean;
 		scoped: boolean;
+		/** `true` if only has one child */
+		optimisation_oneling: boolean;
 	};
 }
 

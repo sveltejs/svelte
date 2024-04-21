@@ -9,7 +9,7 @@ import {
 	HYDRATION_START
 } from '../../../../constants.js';
 import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
-import { empty } from '../operations.js';
+import { child, empty, anchor as get_anchor } from '../operations.js';
 import { remove } from '../reconciler.js';
 import { untrack } from '../../runtime.js';
 import {
@@ -98,11 +98,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 	if (is_controlled) {
 		var parent_node = /** @type {Element} */ (anchor);
 
-		anchor = hydrating
-			? /** @type {Comment | Text} */ (
-					hydrate_anchor(/** @type {Comment | Text} */ (parent_node.firstChild))
-				)
-			: parent_node.appendChild(empty());
+		anchor = get_anchor(parent_node);
 	}
 
 	/** @type {import('#client').Effect | null} */

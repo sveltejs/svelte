@@ -60,6 +60,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	};
 	readonly preserve_whitespace: boolean;
 
+	readonly optimisation_oneling: boolean;
 	/** The anchor node for the current context */
 	readonly node: Identifier;
 }

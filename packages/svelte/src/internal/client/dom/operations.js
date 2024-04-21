@@ -1,5 +1,7 @@
-import { hydrate_anchor, hydrate_nodes, hydrating } from './hydration.js';
+import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrate_nodes } from './hydration.js';
 import { get_descriptor } from '../utils.js';
+import { comment } from './template.js';
+import { HYDRATION_END_ELSE } from '../../../constants.js';
 
 // We cache the Node and Element prototype methods, so that we can avoid doing
 // expensive prototype chain lookups.
@@ -133,6 +135,37 @@ export function child(node) {
 	}
 
 	return hydrate_anchor(child);
+}
+
+/**
+ * @template {Node} N
+ * @param {N} node
+ * @returns {Node | null}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function anchor(node) {
+	if (!hydrating) {
+		const anchor = empty();
+		node.appendChild(anchor);
+		return anchor;
+	}
+
+	let anchor = node.lastChild;
+	if (anchor === null) {
+		anchor = empty();
+		node.appendChild(anchor);
+		return anchor;
+	}
+
+	if (anchor.nodeType === 8 && /** @type {Comment} */ (anchor).data === HYDRATION_END_ELSE) {
+		set_hydrate_nodes(Array.from(node.childNodes).slice(0, -1));
+		return anchor;
+	}
+
+	set_hydrate_nodes(Array.from(node.childNodes));
+	anchor = empty();
+	node.appendChild(anchor);
+	return anchor;
 }
 
 /**
