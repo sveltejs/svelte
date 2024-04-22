@@ -1122,6 +1122,7 @@ declare module 'svelte/compiler' {
 			metadata: {
 				parent_rule: null | Rule;
 				has_local_selectors: boolean;
+				is_global_block: boolean;
 			};
 		}
 

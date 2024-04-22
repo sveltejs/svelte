@@ -1,0 +1,3 @@
+<style>
+	.x > :global {}
+</style>
