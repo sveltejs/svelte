@@ -16,7 +16,7 @@ import {
 import { DOMProperties, PassiveEvents, VoidElements } from '../../../constants.js';
 import { is_custom_element_node, is_element_node } from '../../../nodes.js';
 import * as b from '../../../../utils/builders.js';
-import { error } from '../../../../errors.js';
+import { error } from '../../../../errors-tmp.js';
 import {
 	with_loc,
 	function_visitor,

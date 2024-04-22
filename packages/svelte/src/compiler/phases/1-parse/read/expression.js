@@ -1,6 +1,6 @@
 import { parse_expression_at } from '../acorn.js';
 import { regex_whitespace } from '../../patterns.js';
-import { error } from '../../../errors.js';
+import { error } from '../../../errors-tmp.js';
 
 /**
  * @param {import('../index.js').Parser} parser

@@ -22,7 +22,7 @@ import {
 	transform_inspect_rune
 } from '../utils.js';
 import { create_attribute, is_custom_element_node, is_element_node } from '../../nodes.js';
-import { error } from '../../../errors.js';
+import { error } from '../../../errors-tmp.js';
 import { binding_properties } from '../../bindings.js';
 import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patterns.js';
 import {

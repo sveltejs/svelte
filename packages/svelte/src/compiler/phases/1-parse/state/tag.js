@@ -1,6 +1,6 @@
 import read_pattern from '../read/context.js';
 import read_expression from '../read/expression.js';
-import { error } from '../../../errors.js';
+import { error } from '../../../errors-tmp.js';
 import { create_fragment } from '../utils/create.js';
 import { walk } from 'zimmerframe';
 

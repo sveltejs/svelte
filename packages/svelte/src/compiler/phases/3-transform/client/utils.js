@@ -5,7 +5,7 @@ import {
 	is_simple_expression,
 	object
 } from '../../../utils/ast.js';
-import { error } from '../../../errors.js';
+import { error } from '../../../errors-tmp.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,

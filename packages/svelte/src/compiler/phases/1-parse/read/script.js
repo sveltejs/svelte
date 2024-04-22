@@ -1,6 +1,6 @@
 import * as acorn from '../acorn.js';
 import { regex_not_newline_characters } from '../../patterns.js';
-import { error } from '../../../errors.js';
+import { error } from '../../../errors-tmp.js';
 
 const regex_closing_script_tag = /<\/script\s*>/;
 const regex_starts_with_closing_script_tag = /^<\/script\s*>/;

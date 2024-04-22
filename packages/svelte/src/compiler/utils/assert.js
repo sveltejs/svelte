@@ -1,4 +1,4 @@
-import { error } from '../errors.js';
+import { error } from '../errors-tmp.js';
 
 /**
  * @template T

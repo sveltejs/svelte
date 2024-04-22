@@ -5,7 +5,7 @@ import read_expression from '../read/expression.js';
 import { read_script } from '../read/script.js';
 import read_style from '../read/style.js';
 import { closing_tag_omitted, decode_character_references } from '../utils/html.js';
-import { error } from '../../../errors.js';
+import { error } from '../../../errors-tmp.js';
 import { create_fragment } from '../utils/create.js';
 import { create_attribute } from '../../nodes.js';
 

@@ -1,5 +1,5 @@
 import { namespace_svg } from '../../../../constants.js';
-import { error } from '../../../errors.js';
+import { error } from '../../../errors-tmp.js';
 
 const regex_valid_tag_name = /^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/;
 

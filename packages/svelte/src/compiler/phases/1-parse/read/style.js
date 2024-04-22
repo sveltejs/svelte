@@ -1,4 +1,4 @@
-import { error } from '../../../errors.js';
+import { error } from '../../../errors-tmp.js';
 
 const REGEX_MATCHER = /^[~^$*|]?=/;
 const REGEX_CLOSING_BRACKET = /[\s\]]/;

@@ -3,7 +3,7 @@ import {
 	interactive_elements,
 	is_tag_valid_with_parent
 } from '../../../constants.js';
-import { error } from '../../errors.js';
+import { error } from '../../errors-tmp.js';
 import {
 	extract_identifiers,
 	get_parent,

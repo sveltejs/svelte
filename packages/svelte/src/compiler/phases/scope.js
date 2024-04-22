@@ -2,7 +2,7 @@ import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import { is_element_node } from './nodes.js';
 import * as b from '../utils/builders.js';
-import { error } from '../errors.js';
+import { error } from '../errors-tmp.js';
 import { extract_identifiers, extract_identifiers_from_destructuring } from '../utils/ast.js';
 import { JsKeywords, Runes } from './constants.js';
 

@@ -1,5 +1,5 @@
 import { walk } from 'zimmerframe';
-import { error } from '../../../errors.js';
+import { error } from '../../../errors-tmp.js';
 import * as b from '../../../utils/builders.js';
 import { set_scope } from '../../scope.js';
 import { template_visitors } from './visitors/template.js';

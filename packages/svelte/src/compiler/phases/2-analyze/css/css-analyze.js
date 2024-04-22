@@ -1,5 +1,5 @@
 import { walk } from 'zimmerframe';
-import { error } from '../../../errors.js';
+import { error } from '../../../errors-tmp.js';
 import { is_keyframes_node } from '../../css.js';
 import { merge } from '../../visitors.js';
 

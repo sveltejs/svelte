@@ -1,6 +1,6 @@
 import { getLocator } from 'locate-character';
 import { walk as zimmerframe_walk } from 'zimmerframe';
-import { CompileError } from './errors.js';
+import { CompileError } from './errors-tmp.js';
 import { convert } from './legacy.js';
 import { parse as parse_acorn } from './phases/1-parse/acorn.js';
 import { parse as _parse } from './phases/1-parse/index.js';
@@ -157,6 +157,6 @@ export function walk() {
 	);
 }
 
-export { CompileError } from './errors.js';
+export { CompileError } from './errors-tmp.js';
 
 export { VERSION } from '../version.js';
