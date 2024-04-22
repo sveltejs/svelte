@@ -1,4 +1,5 @@
 import { error } from '../../../errors-tmp.js';
+import * as e from '../../../errors.js';
 
 const REGEX_MATCHER = /^[~^$*|]?=/;
 const REGEX_CLOSING_BRACKET = /[\s\]]/;
@@ -64,7 +65,7 @@ function read_body(parser, close) {
 		}
 	}
 
-	error(parser.template.length, 'expected-token', close);
+	e.expected_token(parser.template.length, close);
 }
 
 /**
@@ -154,7 +155,7 @@ function read_selector_list(parser, inside_pseudo_class = false) {
 		}
 	}
 
-	error(parser.template.length, 'unexpected-eof');
+	e.unexpected_eof(parser.template.length);
 }
 
 /**
@@ -370,7 +371,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 		}
 	}
 
-	error(parser.template.length, 'unexpected-eof');
+	e.unexpected_eof(parser.template.length);
 }
 
 /**
@@ -531,7 +532,7 @@ function read_value(parser) {
 		parser.index++;
 	}
 
-	error(parser.template.length, 'unexpected-eof');
+	e.unexpected_eof(parser.template.length);
 }
 
 /**
@@ -564,7 +565,7 @@ function read_attribute_value(parser) {
 		parser.index++;
 	}
 
-	error(parser.template.length, 'unexpected-eof');
+	e.unexpected_eof(parser.template.length);
 }
 
 /**

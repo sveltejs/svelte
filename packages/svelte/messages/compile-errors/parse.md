@@ -1,6 +1,6 @@
 ## unclosed_element
 
-<%name%> was left open
+%name% was left open
 
 ## unclosed_block
 
@@ -12,11 +12,11 @@ Unexpected block closing tag
 
 ## unexpected_eof
 
-TODO
+Unexpected end of input
 
 ## js_parse_error
 
-TODO
+%message%
 
 ## expected_token
 
@@ -116,32 +116,32 @@ The $ name is reserved. To reference a global variable called $, use globalThis.
 
 ## illegal_subscription
 
-Cannot reference store value inside <script context="module">
+Cannot reference store value inside `<script context="module">`
 
 ## duplicate_style_element
 
-A component can have a single top-level <style> element
+A component can have a single top-level `<style>` element
 
 ## duplicate_script_element
 
-A component can have a single top-level <script> element and/or a single top-level <script context="module"> element
+A component can have a single top-level `<script>` element and/or a single top-level `<script context="module">` element
 
 ## invalid_render_expression
 
-TODO
+{@render ...} tags can only contain call expressions
 
 ## invalid_render_arguments
 
-TODO
+expected at most one argument
 
 ## invalid_render_call
 
-TODO
+Calling a snippet function using apply, bind or call is not allowed
 
 ## invalid_render_spread_argument
 
-TODO
+cannot use spread arguments in {@render ...} tags
 
 ## invalid_snippet_rest_parameter
 
-TODO
+snippets do not support rest parameters; use an array instead

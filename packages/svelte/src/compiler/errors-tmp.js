@@ -384,7 +384,6 @@ const const_tag = {
 /** @satisfies {Errors} */
 const errors = {
 	...internal,
-	...parse,
 	...css,
 	...special_elements,
 	...runes,

@@ -6,6 +6,7 @@ import { read_script } from '../read/script.js';
 import read_style from '../read/style.js';
 import { closing_tag_omitted, decode_character_references } from '../utils/html.js';
 import { error } from '../../../errors-tmp.js';
+import * as e from '../../../errors.js';
 import { create_fragment } from '../utils/create.js';
 import { create_attribute } from '../../nodes.js';
 
@@ -177,14 +178,9 @@ export default function tag(parser) {
 		while (/** @type {import('#compiler').RegularElement} */ (parent).name !== name) {
 			if (parent.type !== 'RegularElement') {
 				if (parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name) {
-					error(
-						start,
-						'invalid-closing-tag-after-autoclose',
-						name,
-						parser.last_auto_closed_tag.reason
-					);
+					e.invalid_closing_tag_after_autoclose(start, name, parser.last_auto_closed_tag.reason);
 				} else {
-					error(start, 'invalid-closing-tag', name);
+					e.invalid_closing_tag(start, name);
 				}
 			}
 
@@ -311,17 +307,17 @@ export default function tag(parser) {
 			}
 
 			if (content.context === 'module') {
-				if (current.module) error(start, 'duplicate-script-element');
+				if (current.module) e.duplicate_script_element(start);
 				current.module = content;
 			} else {
-				if (current.instance) error(start, 'duplicate-script-element');
+				if (current.instance) e.duplicate_script_element(start);
 				current.instance = content;
 			}
 		} else {
 			const content = read_style(parser, start, element.attributes);
 			content.content.comment = prev_comment;
 
-			if (current.css) error(start, 'duplicate-style-element');
+			if (current.css) e.duplicate_style_element(start);
 			current.css = content;
 		}
 		return;
@@ -445,7 +441,7 @@ function read_static_attribute(parser) {
 		parser.allow_whitespace();
 		let raw = parser.match_regex(regex_attribute_value);
 		if (!raw) {
-			error(parser.index, 'missing-attribute-value');
+			e.missing_attribute_value(parser.index);
 		}
 
 		parser.index += raw.length;
@@ -468,7 +464,7 @@ function read_static_attribute(parser) {
 	}
 
 	if (parser.match_regex(regex_starts_with_quote_characters)) {
-		error(parser.index, 'expected-token', '=');
+		e.expected_token(parser.index, '=');
 	}
 
 	return create_attribute(name, start, parser.index, value);
@@ -554,14 +550,14 @@ function read_attribute(parser) {
 		value = read_attribute_value(parser);
 		end = parser.index;
 	} else if (parser.match_regex(regex_starts_with_quote_characters)) {
-		error(parser.index, 'expected-token', '=');
+		e.expected_token(parser.index, '=');
 	}
 
 	if (type) {
 		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
 
 		if (directive_name === '') {
-			error(start + colon_index + 1, 'empty-directive-name', type);
+			e.empty_directive_name(start + colon_index + 1, type);
 		}
 
 		if (type === 'StyleDirective') {
@@ -586,7 +582,7 @@ function read_attribute(parser) {
 			const attribute_contains_text =
 				/** @type {any[]} */ (value).length > 1 || first_value.type === 'Text';
 			if (attribute_contains_text) {
-				error(/** @type {number} */ (first_value.start), 'invalid-directive-value');
+				e.invalid_directive_value(/** @type {number} */ (first_value.start));
 			} else {
 				expression = first_value.expression;
 			}
@@ -679,22 +675,22 @@ function read_attribute_value(parser) {
 			},
 			'in attribute value'
 		);
-	} catch (/** @type {any} e */ e) {
-		if (e.code === 'js-parse-error') {
+	} catch (/** @type {any} */ error) {
+		if (error.code === 'js-parse-error') {
 			// if the attribute value didn't close + self-closing tag
 			// eg: `<Component test={{a:1} />`
 			// acorn may throw a `Unterminated regular expression` because of `/>`
-			const pos = e.position?.[0];
+			const pos = error.position?.[0];
 			if (pos !== undefined && parser.template.slice(pos - 1, pos + 1) === '/>') {
 				parser.index = pos;
-				error(pos, 'unclosed-attribute-value', quote_mark || '}');
+				e.unclosed_attribute_value(pos, quote_mark || '}');
 			}
 		}
 		throw e;
 	}
 
 	if (value.length === 0 && !quote_mark) {
-		error(parser.index, 'missing-attribute-value');
+		e.missing_attribute_value(parser.index);
 	}
 
 	if (quote_mark) parser.index += 1;
@@ -741,12 +737,12 @@ function read_sequence(parser, done, location) {
 				const index = parser.index - 1;
 				parser.eat('#');
 				const name = parser.read_until(/[^a-z]/);
-				error(index, 'invalid-block-placement', location, name);
+				e.invalid_block_placement(index, location, name);
 			} else if (parser.match('@')) {
 				const index = parser.index - 1;
 				parser.eat('@');
 				const name = parser.read_until(/[^a-z]/);
-				error(index, 'invalid-tag-placement', location, name);
+				e.invalid_tag_placement(index, location, name);
 			}
 
 			flush(parser.index - 1);
@@ -784,5 +780,5 @@ function read_sequence(parser, done, location) {
 		}
 	}
 
-	error(parser.template.length, 'unexpected-eof');
+	e.unexpected_eof(parser.template.length);
 }

@@ -1,6 +1,7 @@
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import { error } from '../../errors-tmp.js';
+import * as e from '../../errors.js';
 import {
 	extract_identifiers,
 	extract_all_identifiers_from_expression,
@@ -345,7 +346,7 @@ export function analyze_component(root, source, options) {
 						// const state = $state(0) is valid
 						get_rune(/** @type {import('estree').Node} */ (path.at(-1)), module.scope) === null
 					) {
-						error(node, 'illegal-subscription');
+						e.illegal_subscription(node);
 					}
 				}
 			}

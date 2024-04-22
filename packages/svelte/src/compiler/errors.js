@@ -470,7 +470,7 @@ export function cyclical_reactive_declaration(node) {
  * @returns {never}
  */
 export function unclosed_element(node, name) {
-	__error(node, "unclosed_element", `<${name}> was left open`);
+	__error(node, "unclosed_element", `${name} was left open`);
 }
 
 /**
@@ -497,16 +497,16 @@ export function unexpected_block_close(node) {
  * @returns {never}
  */
 export function unexpected_eof(node) {
-	__error(node, "unexpected_eof", "TODO");
+	__error(node, "unexpected_eof", "Unexpected end of input");
 }
 
 /**
  * @param {number | NodeLike} node
-
+ * @param {string} message
  * @returns {never}
  */
-export function js_parse_error(node) {
-	__error(node, "js_parse_error", "TODO");
+export function js_parse_error(node, message) {
+	__error(node, "js_parse_error", `${message}`);
 }
 
 /**
@@ -735,7 +735,7 @@ export function invalid_dollar_global(node) {
  * @returns {never}
  */
 export function illegal_subscription(node) {
-	__error(node, "illegal_subscription", "Cannot reference store value inside <script context=\"module\">");
+	__error(node, "illegal_subscription", "Cannot reference store value inside `<script context=\"module\">`");
 }
 
 /**
@@ -744,7 +744,7 @@ export function illegal_subscription(node) {
  * @returns {never}
  */
 export function duplicate_style_element(node) {
-	__error(node, "duplicate_style_element", "A component can have a single top-level <style> element");
+	__error(node, "duplicate_style_element", "A component can have a single top-level `<style>` element");
 }
 
 /**
@@ -753,7 +753,7 @@ export function duplicate_style_element(node) {
  * @returns {never}
  */
 export function duplicate_script_element(node) {
-	__error(node, "duplicate_script_element", "A component can have a single top-level <script> element and/or a single top-level <script context=\"module\"> element");
+	__error(node, "duplicate_script_element", "A component can have a single top-level `<script>` element and/or a single top-level `<script context=\"module\">` element");
 }
 
 /**
@@ -762,7 +762,7 @@ export function duplicate_script_element(node) {
  * @returns {never}
  */
 export function invalid_render_expression(node) {
-	__error(node, "invalid_render_expression", "TODO");
+	__error(node, "invalid_render_expression", "{@render ...} tags can only contain call expressions");
 }
 
 /**
@@ -771,7 +771,7 @@ export function invalid_render_expression(node) {
  * @returns {never}
  */
 export function invalid_render_arguments(node) {
-	__error(node, "invalid_render_arguments", "TODO");
+	__error(node, "invalid_render_arguments", "expected at most one argument");
 }
 
 /**
@@ -780,7 +780,7 @@ export function invalid_render_arguments(node) {
  * @returns {never}
  */
 export function invalid_render_call(node) {
-	__error(node, "invalid_render_call", "TODO");
+	__error(node, "invalid_render_call", "Calling a snippet function using apply, bind or call is not allowed");
 }
 
 /**
@@ -789,7 +789,7 @@ export function invalid_render_call(node) {
  * @returns {never}
  */
 export function invalid_render_spread_argument(node) {
-	__error(node, "invalid_render_spread_argument", "TODO");
+	__error(node, "invalid_render_spread_argument", "cannot use spread arguments in {@render ...} tags");
 }
 
 /**
@@ -798,7 +798,7 @@ export function invalid_render_spread_argument(node) {
  * @returns {never}
  */
 export function invalid_snippet_rest_parameter(node) {
-	__error(node, "invalid_snippet_rest_parameter", "TODO");
+	__error(node, "invalid_snippet_rest_parameter", "snippets do not support rest parameters; use an array instead");
 }
 
 /**

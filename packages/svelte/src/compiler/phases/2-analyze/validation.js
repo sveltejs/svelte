@@ -4,6 +4,7 @@ import {
 	is_tag_valid_with_parent
 } from '../../../constants.js';
 import { error } from '../../errors-tmp.js';
+import * as e from '../../errors.js';
 import {
 	extract_identifiers,
 	get_parent,
@@ -603,7 +604,7 @@ const validation = {
 		const raw_args = unwrap_optional(node.expression).arguments;
 		for (const arg of raw_args) {
 			if (arg.type === 'SpreadElement') {
-				error(arg, 'invalid-render-spread-argument');
+				e.invalid_render_spread_argument(arg);
 			}
 		}
 
@@ -613,7 +614,7 @@ const validation = {
 			callee.property.type === 'Identifier' &&
 			['bind', 'apply', 'call'].includes(callee.property.name)
 		) {
-			error(node, 'invalid-render-call');
+			e.invalid_render_call(node);
 		}
 
 		const is_inside_textarea = context.path.find((n) => {
@@ -625,9 +626,8 @@ const validation = {
 			);
 		});
 		if (is_inside_textarea) {
-			error(
+			e.invalid_tag_placement(
 				node,
-				'invalid-tag-placement',
 				'inside <textarea> or <svelte:element this="textarea">',
 				'render'
 			);

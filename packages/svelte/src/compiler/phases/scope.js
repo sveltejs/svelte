@@ -3,6 +3,7 @@ import { walk } from 'zimmerframe';
 import { is_element_node } from './nodes.js';
 import * as b from '../utils/builders.js';
 import { error } from '../errors-tmp.js';
+import * as e from '../errors.js';
 import { extract_identifiers, extract_identifiers_from_destructuring } from '../utils/ast.js';
 import { JsKeywords, Runes } from './constants.js';
 
@@ -70,7 +71,7 @@ export class Scope {
 	 */
 	declare(node, kind, declaration_kind, initial = null) {
 		if (node.name === '$') {
-			error(node, 'invalid-dollar-binding');
+			e.invalid_dollar_binding(node);
 		}
 
 		if (
@@ -80,7 +81,7 @@ export class Scope {
 			declaration_kind !== 'rest_param' &&
 			this.function_depth <= 1
 		) {
-			error(node, 'invalid-dollar-prefix');
+			e.invalid_dollar_prefix(node);
 		}
 
 		if (this.parent) {
