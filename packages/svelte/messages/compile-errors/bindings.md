@@ -1,0 +1,27 @@
+## invalid_binding_expression
+
+Can only bind to an Identifier or MemberExpression
+
+## invalid_binding_value
+
+Can only bind to state or props
+
+## invalid_binding
+
+TODO
+
+## invalid_type_attribute
+
+'type' attribute must be a static text value if input uses two-way binding
+
+## invalid_multiple_attribute
+
+'multiple' attribute must be static if select uses two-way binding
+
+## missing_contenteditable_attribute
+
+'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings
+
+## dynamic_contenteditable_attribute
+
+'contenteditable' attribute cannot be dynamic if element uses two-way binding
