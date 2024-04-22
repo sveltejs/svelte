@@ -189,8 +189,8 @@ export function invalid_binding_value(node) {
 
  * @returns {never}
  */
-export function invalid_binding(node) {
-	e(node, "invalid_binding", "TODO");
+export function invalid_bind_directive(node) {
+	e(node, "invalid_bind_directive", "TODO");
 }
 
 /**
@@ -929,29 +929,29 @@ export function invalid_host_location(node) {
 
 /**
  * @param {number | NodeLike} node
+ * @param {string} thing
+ * @returns {never}
+ */
+export function invalid_assignment(node, thing) {
+	e(node, "invalid_assignment", `Invalid assignment to ${thing}`);
+}
+
+/**
+ * @param {number | NodeLike} node
+ * @param {string} thing
+ * @returns {never}
+ */
+export function invalid_binding(node, thing) {
+	e(node, "invalid_binding", `Invalid assignment to ${thing}`);
+}
+
+/**
+ * @param {number | NodeLike} node
 
  * @returns {never}
  */
 export function invalid_const_assignment(node) {
-	e(node, "invalid_const_assignment", "Invalid %is_binding ? 'binding' : 'assignment'% to const variable%\n\t\t\tshow_details\n\t\t\t\t? ' ($derived values, let: directives, :then/:catch variables and @const declarations count as const)'\n\t\t\t\t: ''\n\t\t%");
-}
-
-/**
- * @param {number | NodeLike} node
-
- * @returns {never}
- */
-export function invalid_derived_assignment(node) {
-	e(node, "invalid_derived_assignment", "Invalid assignment to derived state");
-}
-
-/**
- * @param {number | NodeLike} node
-
- * @returns {never}
- */
-export function invalid_derived_binding(node) {
-	e(node, "invalid_derived_binding", "Invalid binding to derived state");
+	e(node, "invalid_const_assignment", "Invalid %is_binding ? 'binding' : 'assignment'% to const variable%\nshow_details\n? ' ($derived values, let: directives, :then/:catch variables and @const declarations count as const)'\n: ''\n%");
 }
 
 /**
@@ -959,10 +959,18 @@ export function invalid_derived_binding(node) {
  * @param {string} rune
  * @returns {never}
  */
-export function invalid_rune_args_length(node, rune) {
-	e(node, "invalid_rune_args_length", `${rune} can only be called with %list(args, 'or')% %
-			args.length === 1 && args[0] === 1 ? 'argument' : 'arguments'
-		%`);
+export function invalid_rune_args(node, rune) {
+	e(node, "invalid_rune_args", `${rune} cannot be called with arguments`);
+}
+
+/**
+ * @param {number | NodeLike} node
+ * @param {string} rune
+ * @param {string} args
+ * @returns {never}
+ */
+export function invalid_rune_args_length(node, rune, args) {
+	e(node, "invalid_rune_args_length", `${rune} must be called with ${args}`);
 }
 
 /**

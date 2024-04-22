@@ -54,27 +54,21 @@ $effect() can only be used as an expression statement
 
 $host() can only be used inside custom element component instances
 
-## invalid_const_assignment
+## invalid_assignment
 
-Invalid %is_binding ? 'binding' : 'assignment'% to const variable%
-			show_details
-				? ' ($derived values, let: directives, :then/:catch variables and @const declarations count as const)'
-				: ''
-		%
+Invalid assignment to %thing%
 
-## invalid_derived_assignment
+## invalid_binding
 
-Invalid assignment to derived state
+Invalid assignment to %thing%
 
-## invalid_derived_binding
+## invalid_rune_args
 
-Invalid binding to derived state
+%rune% cannot be called with arguments
 
 ## invalid_rune_args_length
 
-%rune% can only be called with %list(args, 'or')% %
-			args.length === 1 && args[0] === 1 ? 'argument' : 'arguments'
-		%
+%rune% must be called with %args%
 
 ## invalid_runes_mode_import
 

@@ -352,15 +352,15 @@ const validation = {
 			}
 
 			if (binding.kind === 'derived') {
-				error(node.expression, 'invalid-derived-binding');
+				e.invalid_binding(node.expression, 'derived state');
 			}
 
 			if (context.state.analysis.runes && binding.kind === 'each') {
-				error(node, 'invalid-each-assignment');
+				e.invalid_each_assignment(node);
 			}
 
 			if (binding.kind === 'snippet') {
-				error(node, 'invalid-snippet-assignment');
+				e.invalid_snippet_assignment(node);
 			}
 		}
 
@@ -503,7 +503,7 @@ const validation = {
 						specifier.imported.name === 'beforeUpdate' ||
 						specifier.imported.name === 'afterUpdate'
 					) {
-						error(specifier, 'invalid-runes-mode-import', specifier.imported.name);
+						e.invalid_runes_mode_import(specifier, specifier.imported.name);
 					}
 				}
 			}
@@ -772,7 +772,7 @@ export const validation_legacy = merge(validation, a11y_validators, {
 		}
 
 		if (state.scope.get(callee.name)?.kind !== 'store_sub') {
-			error(node.init, 'invalid-rune-usage', callee.name);
+			e.invalid_rune_usage(node.init, callee.name);
 		}
 	},
 	AssignmentExpression(node, { state, path }) {
@@ -805,11 +805,11 @@ function validate_export(node, scope, name) {
 	if (!binding) return;
 
 	if (binding.kind === 'derived') {
-		error(node, 'invalid-derived-export');
+		e.invalid_derived_export(node);
 	}
 
 	if ((binding.kind === 'state' || binding.kind === 'frozen_state') && binding.reassigned) {
-		error(node, 'invalid-state-export');
+		e.invalid_state_export(node);
 	}
 }
 
@@ -827,7 +827,7 @@ function validate_call_expression(node, scope, path) {
 
 	if (rune === '$props') {
 		if (parent.type === 'VariableDeclarator') return;
-		error(node, 'invalid-props-location');
+		e.invalid_props_location(node);
 	}
 
 	if (rune === '$bindable') {
@@ -840,7 +840,7 @@ function validate_call_expression(node, scope, path) {
 				return;
 			}
 		}
-		error(node, 'invalid-bindable-location');
+		e.invalid_bindable_location(node);
 	}
 
 	if (
@@ -851,46 +851,46 @@ function validate_call_expression(node, scope, path) {
 	) {
 		if (parent.type === 'VariableDeclarator') return;
 		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
-		error(node, 'invalid-state-location', rune);
+		e.invalid_state_location(node, rune);
 	}
 
 	if (rune === '$effect' || rune === '$effect.pre') {
 		if (parent.type !== 'ExpressionStatement') {
-			error(node, 'invalid-effect-location');
+			e.invalid_effect_location(node);
 		}
 
 		if (node.arguments.length !== 1) {
-			error(node, 'invalid-rune-args-length', rune, [1]);
+			e.invalid_rune_args_length(node, rune, 'exactly one argument');
 		}
 	}
 
 	if (rune === '$effect.active') {
 		if (node.arguments.length !== 0) {
-			error(node, 'invalid-rune-args-length', rune, [0]);
+			e.invalid_rune_args(node, rune);
 		}
 	}
 
 	if (rune === '$effect.root') {
 		if (node.arguments.length !== 1) {
-			error(node, 'invalid-rune-args-length', rune, [1]);
+			e.invalid_rune_args_length(node, rune, 'exactly one argument');
 		}
 	}
 
 	if (rune === '$inspect') {
 		if (node.arguments.length < 1) {
-			error(node, 'invalid-rune-args-length', rune, [1, 'more']);
+			e.invalid_rune_args_length(node, rune, 'one or more arguments');
 		}
 	}
 
 	if (rune === '$inspect().with') {
 		if (node.arguments.length !== 1) {
-			error(node, 'invalid-rune-args-length', rune, [1]);
+			e.invalid_rune_args_length(node, rune, 'exactly one argument');
 		}
 	}
 
 	if (rune === '$state.snapshot') {
 		if (node.arguments.length !== 1) {
-			error(node, 'invalid-rune-args-length', rune, [1]);
+			e.invalid_rune_args_length(node, rune, 'exactly one argument');
 		}
 	}
 }
@@ -932,7 +932,7 @@ export const validation_runes_js = {
 	},
 	CallExpression(node, { state, path }) {
 		if (get_rune(node, state.scope) === '$host') {
-			error(node, 'invalid-host-location');
+			e.invalid_host_location(node);
 		}
 		validate_call_expression(node, state.scope, path);
 	},
@@ -945,13 +945,13 @@ export const validation_runes_js = {
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
 		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
-			error(node, 'invalid-rune-args-length', rune, [1]);
+			e.invalid_rune_args_length(node, rune, 'exactly one argument');
 		} else if (rune === '$state' && args.length > 1) {
-			error(node, 'invalid-rune-args-length', rune, [0, 1]);
+			e.invalid_rune_args_length(node, rune, 'zero or one arguments');
 		} else if (rune === '$props') {
-			error(node, 'invalid-props-location');
+			e.invalid_props_location(node);
 		} else if (rune === '$bindable') {
-			error(node, 'invalid-bindable-location');
+			e.invalid_bindable_location(node);
 		}
 	},
 	AssignmentExpression(node, { state }) {
@@ -1021,16 +1021,21 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 	} else if (argument.type === 'Identifier') {
 		const binding = scope.get(argument.name);
 		if (binding?.declaration_kind === 'const' && binding.kind !== 'each') {
-			error(
-				node,
-				'invalid-const-assignment',
-				is_binding,
-				// This takes advantage of the fact that we don't assign initial for let directives and then/catch variables.
-				// If we start doing that, we need another property on the binding to differentiate, or give up on the more precise error message.
-				binding.kind !== 'state' &&
-					binding.kind !== 'frozen_state' &&
-					(binding.kind !== 'normal' || !binding.initial)
-			);
+			// e.invalid_const_assignment(
+			// 	node,
+			// 	is_binding,
+			// 	// This takes advantage of the fact that we don't assign initial for let directives and then/catch variables.
+			// 	// If we start doing that, we need another property on the binding to differentiate, or give up on the more precise error message.
+			// 	binding.kind !== 'state' &&
+			// 		binding.kind !== 'frozen_state' &&
+			// 		(binding.kind !== 'normal' || !binding.initial)
+			// );
+
+			if (is_binding) {
+				e.invalid_binding(node, 'TODO');
+			} else {
+				e.invalid_assignment(node, 'TODO');
+			}
 		}
 	}
 }
@@ -1048,16 +1053,16 @@ function validate_assignment(node, argument, state) {
 
 		if (state.analysis.runes) {
 			if (binding?.kind === 'derived') {
-				error(node, 'invalid-derived-assignment');
+				e.invalid_assignment(node, 'derived state');
 			}
 
 			if (binding?.kind === 'each') {
-				error(node, 'invalid-each-assignment');
+				e.invalid_each_assignment(node);
 			}
 		}
 
 		if (binding?.kind === 'snippet') {
-			error(node, 'invalid-snippet-assignment');
+			e.invalid_snippet_assignment(node);
 		}
 	}
 
@@ -1073,7 +1078,7 @@ function validate_assignment(node, argument, state) {
 
 	if (object.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
 		if (state.private_derived_state.includes(property.name)) {
-			error(node, 'invalid-derived-assignment');
+			e.invalid_assignment(node, 'derived state');
 		}
 	}
 }
@@ -1081,7 +1086,7 @@ function validate_assignment(node, argument, state) {
 export const validation_runes = merge(validation, a11y_validators, {
 	LabeledStatement(node, { path }) {
 		if (node.label.name !== '$' || path.at(-1)?.type !== 'Program') return;
-		error(node, 'invalid-legacy-reactive-statement');
+		e.invalid_legacy_reactive_statement(node);
 	},
 	ExportNamedDeclaration(node, { state, next }) {
 		if (state.ast_type === 'module') {
@@ -1099,7 +1104,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 			if (node.declaration?.type !== 'VariableDeclaration') return;
 			if (node.declaration.kind !== 'let') return;
 			if (state.analysis.instance.scope !== state.scope) return;
-			error(node, 'invalid-legacy-export');
+			e.invalid_legacy_export(node);
 		}
 	},
 	ExportSpecifier(node, { state }) {
@@ -1110,12 +1115,12 @@ export const validation_runes = merge(validation, a11y_validators, {
 	CallExpression(node, { state, path }) {
 		const rune = get_rune(node, state.scope);
 		if (rune === '$bindable' && node.arguments.length > 1) {
-			error(node, 'invalid-rune-args-length', '$bindable', [0, 1]);
+			e.invalid_rune_args_length(node, '$bindable', 'zero or one arguments');
 		} else if (rune === '$host') {
 			if (node.arguments.length > 0) {
-				error(node, 'invalid-rune-args-length', '$host', [0]);
+				e.invalid_rune_args(node, '$host');
 			} else if (state.ast_type === 'module' || !state.analysis.custom_element) {
-				error(node, 'invalid-host-location');
+				e.invalid_host_location(node);
 			}
 		}
 
@@ -1127,7 +1132,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 			context.type === 'Identifier' &&
 			(context.name === '$state' || context.name === '$derived')
 		) {
-			error(node, 'invalid-state-location', context.name);
+			e.invalid_state_location(node, context.name);
 		}
 		next({ ...state });
 	},
@@ -1148,39 +1153,39 @@ export const validation_runes = merge(validation, a11y_validators, {
 
 		// TODO some of this is duplicated with above, seems off
 		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
-			error(node, 'invalid-rune-args-length', rune, [1]);
+			e.invalid_rune_args_length(node, rune, 'exactly one argument');
 		} else if (rune === '$state' && args.length > 1) {
-			error(node, 'invalid-rune-args-length', rune, [0, 1]);
+			e.invalid_rune_args_length(node, rune, 'zero or one arguments');
 		} else if (rune === '$props') {
 			if (state.has_props_rune) {
-				error(node, 'duplicate-props-rune');
+				e.duplicate_props_rune(node);
 			}
 
 			state.has_props_rune = true;
 
 			if (args.length > 0) {
-				error(node, 'invalid-rune-args-length', rune, [0]);
+				e.invalid_rune_args(node, rune);
 			}
 
 			if (node.id.type !== 'ObjectPattern') {
-				error(node, 'invalid-props-id');
+				e.invalid_props_id(node);
 			}
 
 			if (state.scope !== state.analysis.instance.scope) {
-				error(node, 'invalid-props-location');
+				e.invalid_props_location(node);
 			}
 
 			for (const property of node.id.properties) {
 				if (property.type === 'Property') {
 					if (property.computed) {
-						error(property, 'invalid-props-pattern');
+						e.invalid_props_pattern(property);
 					}
 
 					const value =
 						property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
 
 					if (value.type !== 'Identifier') {
-						error(property, 'invalid-props-pattern');
+						e.invalid_props_pattern(property);
 					}
 				}
 			}

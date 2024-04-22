@@ -414,12 +414,12 @@ export function analyze_component(root, source, options) {
 	if (analysis.runes) {
 		const props_refs = module.scope.references.get('$$props');
 		if (props_refs) {
-			error(props_refs[0].node, 'invalid-legacy-props');
+			e.invalid_legacy_props(props_refs[0].node);
 		}
 
 		const rest_props_refs = module.scope.references.get('$$restProps');
 		if (rest_props_refs) {
-			error(rest_props_refs[0].node, 'invalid-legacy-rest-props');
+			e.invalid_legacy_rest_props(rest_props_refs[0].node);
 		}
 
 		for (const { ast, scope, scopes } of [module, instance, template]) {
@@ -452,7 +452,7 @@ export function analyze_component(root, source, options) {
 							({ alias, name }) => (binding.prop_alias ?? binding.node.name) === (alias ?? name)
 						)
 					) {
-						error(binding.node, 'conflicting-property-name');
+						e.conflicting_property_name(binding.node);
 					}
 				}
 			}

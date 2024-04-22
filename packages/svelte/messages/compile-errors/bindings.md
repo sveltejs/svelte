@@ -6,7 +6,7 @@ Can only bind to an Identifier or MemberExpression
 
 Can only bind to state or props
 
-## invalid_binding
+## invalid_bind_directive
 
 TODO
 

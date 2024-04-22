@@ -21,114 +21,6 @@ const internal = {
 };
 
 /** @satisfies {Errors} */
-const special_elements = {
-	'invalid-svelte-option-attribute': () => `<svelte:options> can only receive static attributes`,
-	'invalid-svelte-option-namespace': () =>
-		`Unsupported <svelte:option> value for "namespace". Valid values are "html", "svg" or "foreign".`,
-	'tag-option-deprecated': () => `"tag" option is deprecated — use "customElement" instead`,
-	'invalid-svelte-option-runes': () =>
-		`Unsupported <svelte:option> value for "runes". Valid values are true or false.`,
-	'invalid-svelte-option-accessors': () =>
-		'Unsupported <svelte:option> value for "accessors". Valid values are true or false.',
-	'invalid-svelte-option-preserveWhitespace': () =>
-		'Unsupported <svelte:option> value for "preserveWhitespace". Valid values are true or false.',
-	'invalid-svelte-option-immutable': () =>
-		'Unsupported <svelte:option> value for "immutable". Valid values are true or false.',
-	'invalid-tag-property': () => 'tag name must be two or more words joined by the "-" character',
-	'invalid-svelte-option-customElement': () =>
-		'"customElement" must be a string literal defining a valid custom element name or an object of the form ' +
-		'{ tag: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }',
-	'invalid-customElement-props-attribute': () =>
-		'"props" must be a statically analyzable object literal of the form ' +
-		'"{ [key: string]: { attribute?: string; reflect?: boolean; type?: "String" | "Boolean" | "Number" | "Array" | "Object" }"',
-	'invalid-customElement-shadow-attribute': () => '"shadow" must be either "open" or "none"',
-	'unknown-svelte-option-attribute': /** @param {string} name */ (name) =>
-		`<svelte:options> unknown attribute '${name}'`,
-	'illegal-svelte-head-attribute': () => '<svelte:head> cannot have attributes nor directives',
-	'invalid-svelte-fragment-attribute': () =>
-		`<svelte:fragment> can only have a slot attribute and (optionally) a let: directive`,
-	'invalid-svelte-fragment-slot': () => `<svelte:fragment> slot attribute must have a static value`,
-	'invalid-svelte-fragment-placement': () =>
-		`<svelte:fragment> must be the direct child of a component`,
-	/** @param {string} name */
-	'invalid-svelte-element-placement': (name) =>
-		`<${name}> tags cannot be inside elements or blocks`,
-	/** @param {string} name */
-	'duplicate-svelte-element': (name) => `A component can only have one <${name}> element`,
-	'invalid-self-placement': () =>
-		`<svelte:self> components can only exist inside {#if} blocks, {#each} blocks, {#snippet} blocks or slots passed to components`,
-	'missing-svelte-element-definition': () => `<svelte:element> must have a 'this' attribute`,
-	'missing-svelte-component-definition': () => `<svelte:component> must have a 'this' attribute`,
-	'invalid-svelte-element-definition': () => `Invalid element definition — must be an {expression}`,
-	'invalid-svelte-component-definition': () =>
-		`Invalid component definition — must be an {expression}`,
-	/**
-	 * @param {string[]} tags
-	 * @param {string | null} match
-	 */
-	'invalid-svelte-tag': (tags, match) =>
-		`Valid <svelte:...> tag names are ${list(tags)}${match ? ' (did you mean ' + match + '?)' : ''}`,
-	'conflicting-slot-usage': () =>
-		`Cannot use <slot> syntax and {@render ...} tags in the same component. Migrate towards {@render ...} tags completely.`
-};
-
-/** @satisfies {Errors} */
-const runes = {
-	'invalid-legacy-props': () => `Cannot use $$props in runes mode`,
-	'invalid-legacy-rest-props': () => `Cannot use $$restProps in runes mode`,
-	'invalid-legacy-reactive-statement': () =>
-		`$: is not allowed in runes mode, use $derived or $effect instead`,
-	'invalid-legacy-export': () => `Cannot use \`export let\` in runes mode — use $props instead`,
-	/** @param {string} rune */
-	'invalid-rune-usage': (rune) => `Cannot use ${rune} rune in non-runes mode`,
-	'invalid-state-export': () =>
-		`Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties`,
-	'invalid-derived-export': () =>
-		`Cannot export derived state from a module. To expose the current derived value, export a function returning its value`,
-	'invalid-props-id': () => `$props() can only be used with an object destructuring pattern`,
-	'invalid-props-pattern': () =>
-		`$props() assignment must not contain nested properties or computed keys`,
-	'invalid-props-location': () =>
-		`$props() can only be used at the top level of components as a variable declaration initializer`,
-	'invalid-bindable-location': () => `$bindable() can only be used inside a $props() declaration`,
-	/** @param {string} rune */
-	'invalid-state-location': (rune) =>
-		`${rune}(...) can only be used as a variable declaration initializer or a class field`,
-	'invalid-effect-location': () => `$effect() can only be used as an expression statement`,
-	'invalid-host-location': () =>
-		`$host() can only be used inside custom element component instances`,
-	/**
-	 * @param {boolean} is_binding
-	 * @param {boolean} show_details
-	 */
-	'invalid-const-assignment': (is_binding, show_details) =>
-		`Invalid ${is_binding ? 'binding' : 'assignment'} to const variable${
-			show_details
-				? ' ($derived values, let: directives, :then/:catch variables and @const declarations count as const)'
-				: ''
-		}`,
-	'invalid-derived-assignment': () => `Invalid assignment to derived state`,
-	'invalid-derived-binding': () => `Invalid binding to derived state`,
-	/**
-	 * @param {string} rune
-	 * @param {Array<number | string>} args
-	 */
-	'invalid-rune-args-length': (rune, args) =>
-		`${rune} can only be called with ${list(args, 'or')} ${
-			args.length === 1 && args[0] === 1 ? 'argument' : 'arguments'
-		}`,
-	/** @param {string} name */
-	'invalid-runes-mode-import': (name) => `${name} cannot be used in runes mode`,
-	'duplicate-props-rune': () => `Cannot use $props() more than once`,
-	'invalid-each-assignment': () =>
-		`Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. 'array[i] = value' instead of 'entry = value')`,
-	'invalid-snippet-assignment': () => `Cannot reassign or bind to snippet parameter`,
-	'invalid-derived-call': () => `$derived.call(...) has been replaced with $derived.by(...)`,
-	'conflicting-property-name': () =>
-		`Cannot have a property and a component export with the same name`
-};
-
-/** @satisfies {Errors} */
 const elements = {
 	'invalid-textarea-content': () =>
 		`A <textarea> can have either a value attribute or (equivalently) child content, but not both`,
@@ -279,7 +171,6 @@ const const_tag = {
 /** @satisfies {Errors} */
 const errors = {
 	...internal,
-	...runes,
 	...elements,
 	...components,
 	...attributes,
