@@ -1,5 +1,6 @@
 import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
+import { effect } from '../internal/client/reactivity/effects.js';
 import { get } from '../internal/client/runtime.js';
 import { map } from './utils.js';
 
@@ -13,7 +14,7 @@ var inited = false;
  */
 export class ReactiveSet extends Set {
 	/** @type {Map<T, import('#client').Source<boolean>>} */
-	#sources = new Map();
+	#tracked = new Map();
 	#version = source(0);
 	#size = source(0);
 
@@ -27,13 +28,11 @@ export class ReactiveSet extends Set {
 		if (DEV) new Set(value);
 
 		if (value) {
-			var sources = this.#sources;
-
 			for (var element of value) {
-				sources.set(element, source(true));
+				super.add(element);
 			}
 
-			this.#size.v = sources.size;
+			this.#size.v = super.size;
 		}
 
 		if (!inited) this.#init();
@@ -73,27 +72,36 @@ export class ReactiveSet extends Set {
 
 	/** @param {T} value */
 	has(value) {
-		var s = this.#sources.get(value);
+		var exists = super.has(value);
+		var s = this.#tracked.get(value);
 
 		if (s === undefined) {
-			// We should always track the version in case
-			// the Set ever gets this value in the future.
-			get(this.#version);
-
-			return false;
+			s = source(exists);
+			this.#tracked.set(value, s);
 		}
+
+		effect(() => () => {
+			queueMicrotask(() => {
+				if (s && !s.reactions) {
+					this.#tracked.delete(value);
+				}
+			});
+		});
 
 		return get(s);
 	}
 
 	/** @param {T} value */
 	add(value) {
-		var sources = this.#sources;
-
-		if (!sources.has(value)) {
-			sources.set(value, source(true));
-			set(this.#size, sources.size);
+		if (!super.has(value)) {
+			super.add(value);
+			set(this.#size, super.size);
 			this.#increment_version();
+
+			var s = this.#tracked.get(value);
+			if (s !== undefined) {
+				set(s, true);
+			}
 		}
 
 		return this;
@@ -101,37 +109,35 @@ export class ReactiveSet extends Set {
 
 	/** @param {T} value */
 	delete(value) {
-		var sources = this.#sources;
-		var s = sources.get(value);
-
-		if (s !== undefined) {
-			var removed = sources.delete(value);
-			set(this.#size, sources.size);
-			set(s, false);
+		var removed = super.delete(value);
+		if (removed) {
+			set(this.#size, super.size);
 			this.#increment_version();
-			return removed;
+
+			var s = this.#tracked.get(value);
+			if (s !== undefined) {
+				set(s, false);
+			}
 		}
 
-		return false;
+		return removed;
 	}
 
 	clear() {
-		var sources = this.#sources;
-
-		if (sources.size !== 0) {
+		if (super.size !== 0) {
 			set(this.#size, 0);
-			for (var s of sources.values()) {
+			for (var s of this.#tracked.values()) {
 				set(s, false);
 			}
 			this.#increment_version();
 		}
 
-		sources.clear();
+		super.clear();
 	}
 
 	keys() {
 		get(this.#version);
-		return map(this.#sources.keys(), (key) => key, 'Set Iterator');
+		return map(super.keys(), (key) => key, 'Set Iterator');
 	}
 
 	values() {

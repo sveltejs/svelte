@@ -30,7 +30,7 @@ test('set.values()', () => {
 		set.clear();
 	});
 
-	assert.deepEqual(log, [5, true, [1, 2, 3, 4, 5], 4, false, [1, 2, 4, 5], 0, false, []]);
+	assert.deepEqual(log, [5, true, [1, 2, 3, 4, 5], 4, false, [1, 2, 4, 5], 0, []]);
 
 	cleanup();
 });
@@ -56,6 +56,10 @@ test('set.has(...)', () => {
 
 	flushSync(() => {
 		set.delete(2);
+	});
+
+	flushSync(() => {
+		set.add(4);
 	});
 
 	flushSync(() => {
