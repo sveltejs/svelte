@@ -21,45 +21,8 @@ const internal = {
 };
 
 /** @satisfies {Errors} */
-const variables = {
-	'illegal-global': /** @param {string} name */ (name) =>
-		`${name} is an illegal variable name. To reference a global variable called ${name}, use globalThis.${name}`,
-	/** @param {string} name */
-	'duplicate-declaration': (name) => `'${name}' has already been declared`,
-	'default-export': () => `A component cannot have a default export`,
-	'illegal-variable-declaration': () =>
-		'Cannot declare same variable name which is imported inside <script context="module">',
-	'illegal-store-subscription': () =>
-		'Cannot subscribe to stores that are not declared at the top level of the component'
-};
-
-/** @satisfies {Errors} */
-const legacy_reactivity = {
-	'cyclical-reactive-declaration': /** @param {string[]} cycle */ (cycle) =>
-		`Cyclical dependency detected: ${cycle.join(' → ')}`
-};
-
-/** @satisfies {Errors} */
-const compiler_options = {
-	/** @param {string} msg */
-	'invalid-compiler-option': (msg) => `Invalid compiler option: ${msg}`,
-	/** @param {string} msg */
-	'removed-compiler-option': (msg) => `Invalid compiler option: ${msg}`
-};
-
-/** @satisfies {Errors} */
-const const_tag = {
-	'invalid-const-placement': () =>
-		`{@const} must be the immediate child of {#snippet}, {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>`
-};
-
-/** @satisfies {Errors} */
 const errors = {
-	...internal,
-	// ...variables,
-	...compiler_options,
-	...legacy_reactivity,
-	...const_tag
+	...internal
 
 	// missing_contenteditable_attribute: {
 	// 	code: 'missing-contenteditable-attribute',

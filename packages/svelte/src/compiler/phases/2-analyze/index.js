@@ -1426,7 +1426,7 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	const cycle = check_graph_for_cycles(edges);
 	if (cycle?.length) {
 		const declaration = /** @type {Tuple[]} */ (lookup.get(cycle[0]))[0];
-		error(declaration[0], 'cyclical-reactive-declaration', cycle);
+		e.cyclical_reactive_declaration(declaration[0], cycle.join(' → '));
 	}
 
 	// We use a map and take advantage of the fact that the spec says insertion order is preserved when iterating

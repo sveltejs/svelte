@@ -45,7 +45,7 @@ export class CompileError extends Error {
 
 /**
  *
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} code
  * @param {string} message
  * @returns {never}
@@ -58,7 +58,7 @@ function e(node, code, message) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -67,7 +67,7 @@ export function empty_attribute_shorthand(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -76,7 +76,7 @@ export function duplicate_attribute(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -85,7 +85,7 @@ export function invalid_event_attribute_value(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @returns {never}
  */
@@ -94,7 +94,7 @@ export function invalid_attribute_name(node, name) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -103,7 +103,7 @@ export function animation_invalid_placement(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -112,7 +112,7 @@ export function animation_missing_key(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -121,7 +121,7 @@ export function animation_duplicate(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} list
  * @returns {never}
  */
@@ -130,7 +130,7 @@ export function invalid_event_modifier(node, list) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -139,7 +139,7 @@ export function invalid_component_event_modifier(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} modifier1
  * @param {string} modifier2
  * @returns {never}
@@ -149,7 +149,7 @@ export function invalid_event_modifier_combination(node, modifier1, modifier2) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} type
  * @returns {never}
  */
@@ -158,7 +158,7 @@ export function transition_duplicate(node, type) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} type
  * @param {string} existing
  * @returns {never}
@@ -168,7 +168,7 @@ export function transition_conflict(node, type, existing) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -177,7 +177,7 @@ export function invalid_let_directive_placement(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -186,7 +186,7 @@ export function invalid_style_directive_modifier(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -195,7 +195,7 @@ export function invalid_sequence_expression(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -204,7 +204,7 @@ export function invalid_binding_expression(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -213,7 +213,7 @@ export function invalid_binding_value(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @param {string} elements
  * @returns {never}
@@ -223,7 +223,7 @@ export function bind_invalid_target(node, name, elements) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @returns {never}
  */
@@ -232,7 +232,7 @@ export function bind_invalid(node, name) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @param {string} explanation
  * @returns {never}
@@ -242,7 +242,7 @@ export function bind_invalid_detailed(node, name, explanation) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -251,7 +251,7 @@ export function invalid_type_attribute(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -260,7 +260,7 @@ export function invalid_multiple_attribute(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -269,7 +269,7 @@ export function missing_contenteditable_attribute(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -278,7 +278,7 @@ export function dynamic_contenteditable_attribute(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} msg
  * @returns {never}
  */
@@ -287,7 +287,7 @@ export function invalid_compiler_option(node, msg) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} msg
  * @returns {never}
  */
@@ -296,7 +296,7 @@ export function removed_compiler_option(node, msg) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -305,7 +305,7 @@ export function invalid_component_directive(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -314,7 +314,7 @@ export function invalid_const_placement(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -323,7 +323,7 @@ export function css_parse_error(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -332,7 +332,7 @@ export function invalid_css_empty_declaration(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -341,7 +341,7 @@ export function invalid_css_global_block_list(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -350,7 +350,7 @@ export function invalid_css_global_block_modifier(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @returns {never}
  */
@@ -359,7 +359,7 @@ export function invalid_css_global_block_combinator(node, name) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -368,7 +368,7 @@ export function invalid_css_global_block_declaration(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -377,7 +377,7 @@ export function invalid_css_global_placement(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -386,7 +386,7 @@ export function invalid_css_global_selector(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -395,7 +395,7 @@ export function invalid_css_global_selector_list(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -404,7 +404,7 @@ export function invalid_css_type_selector_placement(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -413,7 +413,7 @@ export function invalid_css_selector(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -422,7 +422,7 @@ export function invalid_css_identifier(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -431,7 +431,7 @@ export function invalid_nesting_selector(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -440,7 +440,7 @@ export function invalid_css_declaration(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -449,7 +449,7 @@ export function invalid_textarea_content(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -458,7 +458,7 @@ export function invalid_void_content(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @returns {never}
  */
@@ -467,7 +467,7 @@ export function invalid_element_content(node, name) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -476,7 +476,7 @@ export function invalid_tag_name(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} thing
  * @param {string} parent
  * @returns {never}
@@ -486,7 +486,7 @@ export function invalid_node_placement(node, thing, parent) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -495,7 +495,7 @@ export function illegal_title_attribute(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -504,16 +504,16 @@ export function invalid_title_content(node) {
 }
 
 /**
- * @param {number | NodeLike} node
-
+ * @param {null | number | NodeLike} node
+ * @param {string} cycle
  * @returns {never}
  */
-export function cyclical_reactive_declaration(node) {
-	e(node, "cyclical_reactive_declaration", "Cyclical dependency detected: %cycle.join(' → ')%");
+export function cyclical_reactive_declaration(node, cycle) {
+	e(node, "cyclical_reactive_declaration", `Cyclical dependency detected: ${cycle}`);
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @returns {never}
  */
@@ -522,7 +522,7 @@ export function unclosed_element(node, name) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -531,7 +531,7 @@ export function unclosed_block(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -540,7 +540,7 @@ export function unexpected_block_close(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -549,7 +549,7 @@ export function unexpected_eof(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} message
  * @returns {never}
  */
@@ -558,7 +558,7 @@ export function js_parse_error(node, message) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} token
  * @returns {never}
  */
@@ -567,7 +567,7 @@ export function expected_token(node, token) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} word
  * @returns {never}
  */
@@ -576,7 +576,7 @@ export function unexpected_reserved_word(node, word) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -585,7 +585,7 @@ export function missing_whitespace(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -594,7 +594,7 @@ export function expected_pattern(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -603,7 +603,7 @@ export function invalid_script_context(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -612,7 +612,7 @@ export function invalid_elseif(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -621,7 +621,7 @@ export function invalid_continuing_block_placement(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} child
  * @param {string} parent
  * @returns {never}
@@ -631,7 +631,7 @@ export function invalid_block_missing_parent(node, child, parent) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @returns {never}
  */
@@ -640,7 +640,7 @@ export function duplicate_block_part(node, name) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -649,7 +649,7 @@ export function expected_block_type(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -658,7 +658,7 @@ export function expected_identifier(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -667,7 +667,7 @@ export function invalid_debug(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -676,7 +676,7 @@ export function invalid_const(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @param {string} location
  * @returns {never}
@@ -686,7 +686,7 @@ export function invalid_block_placement(node, name, location) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @param {string} location
  * @returns {never}
@@ -696,7 +696,7 @@ export function invalid_tag_placement(node, name, location) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -705,7 +705,7 @@ export function missing_attribute_value(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} delimiter
  * @returns {never}
  */
@@ -714,7 +714,7 @@ export function unclosed_attribute_value(node, delimiter) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -723,7 +723,7 @@ export function invalid_directive_value(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} type
  * @returns {never}
  */
@@ -732,7 +732,7 @@ export function empty_directive_name(node, type) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @returns {never}
  */
@@ -741,7 +741,7 @@ export function invalid_closing_tag(node, name) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @param {string} reason
  * @returns {never}
@@ -751,7 +751,7 @@ export function invalid_closing_tag_after_autoclose(node, name, reason) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -760,7 +760,7 @@ export function invalid_dollar_binding(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -769,7 +769,7 @@ export function invalid_dollar_prefix(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -778,7 +778,7 @@ export function invalid_dollar_global(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -787,7 +787,7 @@ export function illegal_subscription(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -796,7 +796,7 @@ export function duplicate_style_element(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -805,7 +805,7 @@ export function duplicate_script_element(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -814,7 +814,7 @@ export function invalid_render_expression(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -823,7 +823,7 @@ export function invalid_render_arguments(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -832,7 +832,7 @@ export function invalid_render_call(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -841,7 +841,7 @@ export function invalid_render_spread_argument(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -850,43 +850,43 @@ export function invalid_snippet_rest_parameter(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
 export function invalid_legacy_props(node) {
-	e(node, "invalid_legacy_props", "Cannot use $$props in runes mode");
+	e(node, "invalid_legacy_props", "Cannot use `$$props` in runes mode");
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
 export function invalid_legacy_rest_props(node) {
-	e(node, "invalid_legacy_rest_props", "Cannot use $$restProps in runes mode");
+	e(node, "invalid_legacy_rest_props", "Cannot use `$$restProps` in runes mode");
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
 export function invalid_legacy_reactive_statement(node) {
-	e(node, "invalid_legacy_reactive_statement", "$: is not allowed in runes mode, use $derived or $effect instead");
+	e(node, "invalid_legacy_reactive_statement", "`$:` is not allowed in runes mode, use `$derived` or `$effect` instead");
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
 export function invalid_legacy_export(node) {
-	e(node, "invalid_legacy_export", "Cannot use \\`export let\\` in runes mode — use $props instead");
+	e(node, "invalid_legacy_export", "Cannot use `export let` in runes mode — use $props instead");
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} rune
  * @returns {never}
  */
@@ -895,7 +895,7 @@ export function invalid_rune_usage(node, rune) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -904,7 +904,7 @@ export function invalid_state_export(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -913,107 +913,107 @@ export function invalid_derived_export(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
 export function invalid_props_id(node) {
-	e(node, "invalid_props_id", "$props() can only be used with an object destructuring pattern");
+	e(node, "invalid_props_id", "`$props()` can only be used with an object destructuring pattern");
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
 export function invalid_props_pattern(node) {
-	e(node, "invalid_props_pattern", "$props() assignment must not contain nested properties or computed keys");
+	e(node, "invalid_props_pattern", "`$props()` assignment must not contain nested properties or computed keys");
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
 export function invalid_props_location(node) {
-	e(node, "invalid_props_location", "$props() can only be used at the top level of components as a variable declaration initializer");
+	e(node, "invalid_props_location", "`$props()` can only be used at the top level of components as a variable declaration initializer");
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
 export function invalid_bindable_location(node) {
-	e(node, "invalid_bindable_location", "$bindable() can only be used inside a $props() declaration");
+	e(node, "invalid_bindable_location", "`$bindable()` can only be used inside a `$props()` declaration");
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} rune
  * @returns {never}
  */
 export function invalid_state_location(node, rune) {
-	e(node, "invalid_state_location", `${rune}(...) can only be used as a variable declaration initializer or a class field`);
+	e(node, "invalid_state_location", `\`${rune}(...)\` can only be used as a variable declaration initializer or a class field`);
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
 export function invalid_effect_location(node) {
-	e(node, "invalid_effect_location", "$effect() can only be used as an expression statement");
+	e(node, "invalid_effect_location", "`$effect()` can only be used as an expression statement");
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
 export function invalid_host_location(node) {
-	e(node, "invalid_host_location", "$host() can only be used inside custom element component instances");
+	e(node, "invalid_host_location", "`$host()` can only be used inside custom element component instances");
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} thing
  * @returns {never}
  */
 export function invalid_assignment(node, thing) {
-	e(node, "invalid_assignment", `Invalid assignment to ${thing}`);
+	e(node, "invalid_assignment", `Cannot assign to \`${thing}\``);
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} thing
  * @returns {never}
  */
 export function invalid_binding(node, thing) {
-	e(node, "invalid_binding", `Invalid assignment to ${thing}`);
+	e(node, "invalid_binding", `Cannot bind to \`${thing}\``);
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} rune
  * @returns {never}
  */
 export function invalid_rune_args(node, rune) {
-	e(node, "invalid_rune_args", `${rune} cannot be called with arguments`);
+	e(node, "invalid_rune_args", `\`${rune}\` cannot be called with arguments`);
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} rune
  * @param {string} args
  * @returns {never}
  */
 export function invalid_rune_args_length(node, rune, args) {
-	e(node, "invalid_rune_args_length", `${rune} must be called with ${args}`);
+	e(node, "invalid_rune_args_length", `\`${rune}\` must be called with ${args}`);
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @returns {never}
  */
@@ -1022,25 +1022,25 @@ export function invalid_runes_mode_import(node, name) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
 export function duplicate_props_rune(node) {
-	e(node, "duplicate_props_rune", "Cannot use $props() more than once");
+	e(node, "duplicate_props_rune", "Cannot use `$props()` more than once");
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
 export function invalid_each_assignment(node) {
-	e(node, "invalid_each_assignment", "Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. 'array[i] = value' instead of 'entry = value')");
+	e(node, "invalid_each_assignment", "Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)");
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1049,16 +1049,16 @@ export function invalid_snippet_assignment(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
 export function invalid_derived_call(node) {
-	e(node, "invalid_derived_call", "$derived.call(...) has been replaced with $derived.by(...)");
+	e(node, "invalid_derived_call", "`$derived.call(...)` has been replaced with `$derived.by(...)`");
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1067,7 +1067,7 @@ export function conflicting_property_name(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1076,7 +1076,7 @@ export function invalid_slot_element_attribute(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1085,7 +1085,7 @@ export function invalid_slot_attribute(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1094,7 +1094,7 @@ export function invalid_slot_name_default(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1103,7 +1103,7 @@ export function invalid_slot_name(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1112,7 +1112,7 @@ export function invalid_slot_placement(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @param {string} component
  * @returns {never}
@@ -1122,7 +1122,7 @@ export function duplicate_slot_name(node, name, component) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1131,7 +1131,7 @@ export function invalid_default_slot_content(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1140,7 +1140,7 @@ export function conflicting_children_snippet(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1149,7 +1149,7 @@ export function invalid_svelte_option_attribute(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1158,7 +1158,7 @@ export function invalid_svelte_option_namespace(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1167,7 +1167,7 @@ export function tag_option_deprecated(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1176,7 +1176,7 @@ export function invalid_svelte_option_runes(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1185,7 +1185,7 @@ export function invalid_svelte_option_accessors(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1194,7 +1194,7 @@ export function invalid_svelte_option_preserveWhitespace(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1203,7 +1203,7 @@ export function invalid_svelte_option_immutable(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1212,7 +1212,7 @@ export function invalid_tag_property(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1221,7 +1221,7 @@ export function invalid_svelte_option_customElement(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1230,7 +1230,7 @@ export function invalid_customElement_props_attribute(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1239,7 +1239,7 @@ export function invalid_customElement_shadow_attribute(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @returns {never}
  */
@@ -1248,7 +1248,7 @@ export function unknown_svelte_option_attribute(node, name) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1257,7 +1257,7 @@ export function illegal_svelte_head_attribute(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1266,7 +1266,7 @@ export function invalid_svelte_fragment_attribute(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1275,7 +1275,7 @@ export function invalid_svelte_fragment_slot(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1284,7 +1284,7 @@ export function invalid_svelte_fragment_placement(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @returns {never}
  */
@@ -1293,7 +1293,7 @@ export function invalid_svelte_element_placement(node, name) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @returns {never}
  */
@@ -1302,7 +1302,7 @@ export function duplicate_svelte_element(node, name) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1311,7 +1311,7 @@ export function invalid_self_placement(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1320,7 +1320,7 @@ export function missing_svelte_element_definition(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1329,7 +1329,7 @@ export function missing_svelte_component_definition(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1338,7 +1338,7 @@ export function invalid_svelte_element_definition(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1347,7 +1347,7 @@ export function invalid_svelte_component_definition(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} list
  * @returns {never}
  */
@@ -1356,7 +1356,7 @@ export function invalid_svelte_tag(node, list) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1365,25 +1365,25 @@ export function conflicting_slot_usage(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @returns {never}
  */
 export function illegal_global(node, name) {
-	e(node, "illegal_global", `${name} is an illegal variable name. To reference a global variable called ${name}, use globalThis.${name}`);
+	e(node, "illegal_global", `\`${name}\` is an illegal variable name. To reference a global variable called \`${name}\`, use \`globalThis.${name}\``);
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
  * @param {string} name
  * @returns {never}
  */
 export function duplicate_declaration(node, name) {
-	e(node, "duplicate_declaration", `'${name}' has already been declared`);
+	e(node, "duplicate_declaration", `\`${name}\` has already been declared`);
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
@@ -1392,19 +1392,19 @@ export function default_export(node) {
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
 export function illegal_variable_declaration(node) {
-	e(node, "illegal_variable_declaration", "TODO");
+	e(node, "illegal_variable_declaration", "Cannot declare same variable name which is imported inside `<script context=\"module\">`");
 }
 
 /**
- * @param {number | NodeLike} node
+ * @param {null | number | NodeLike} node
 
  * @returns {never}
  */
 export function illegal_store_subscription(node) {
-	e(node, "illegal_store_subscription", "TODO");
+	e(node, "illegal_store_subscription", "Cannot subscribe to stores that are not declared at the top level of the component");
 }

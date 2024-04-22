@@ -1,4 +1,5 @@
 import { error } from './errors-tmp.js';
+import * as e from './errors.js';
 
 /**
  * @template [Input=any]
@@ -141,7 +142,7 @@ export const validate_component_options =
 function removed(msg) {
 	return (input) => {
 		if (input !== undefined) {
-			error(null, 'removed-compiler-option', msg);
+			e.removed_compiler_option(null, msg);
 		}
 		return /** @type {any} */ (undefined);
 	};
@@ -200,9 +201,8 @@ function object(children, allow_unknown = false) {
 				if (allow_unknown) {
 					output[key] = input[key];
 				} else {
-					error(
+					e.invalid_compiler_option(
 						null,
-						'invalid-compiler-option',
 						`Unexpected option ${keypath ? `${keypath}.${key}` : key}`
 					);
 				}
@@ -307,5 +307,5 @@ function fun(fallback) {
 
 /** @param {string} msg */
 function throw_error(msg) {
-	error(null, 'invalid-compiler-option', msg);
+	e.invalid_compiler_option(null, msg);
 }

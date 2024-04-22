@@ -485,7 +485,7 @@ const validation = {
 				((grand_parent?.type !== 'RegularElement' && grand_parent?.type !== 'SvelteElement') ||
 					!grand_parent.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')))
 		) {
-			error(node, 'invalid-const-placement');
+			e.invalid_const_placement(node);
 		}
 	},
 	ImportDeclaration(node, context) {
