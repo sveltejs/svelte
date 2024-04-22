@@ -7,7 +7,7 @@ import { global_visitors } from './visitors/global.js';
 import { javascript_visitors } from './visitors/javascript.js';
 import { javascript_visitors_runes } from './visitors/javascript-runes.js';
 import { javascript_visitors_legacy } from './visitors/javascript-legacy.js';
-import { is_state_source, serialize_get_binding } from './utils.js';
+import { serialize_get_binding } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
 
 /**
@@ -46,9 +46,16 @@ export function client_component(source, analysis, options) {
 		options,
 		scope: analysis.module.scope,
 		scopes: analysis.template.scopes,
-		hoisted: [b.import_all('$', 'svelte/internal')],
+		hoisted: [b.import_all('$', 'svelte/internal/client')],
 		node: /** @type {any} */ (null), // populated by the root node
 		// these should be set by create_block - if they're called outside, it's a bug
+		get before_init() {
+			/** @type {any[]} */
+			const a = [];
+			a.push = () =>
+				error(null, 'INTERNAL', 'before_init.push should not be called outside create_block');
+			return a;
+		},
 		get init() {
 			/** @type {any[]} */
 			const a = [];
@@ -60,13 +67,6 @@ export function client_component(source, analysis, options) {
 			const a = [];
 			a.push = () =>
 				error(null, 'INTERNAL', 'update.push should not be called outside create_block');
-			return a;
-		},
-		get update_effects() {
-			/** @type {any[]} */
-			const a = [];
-			a.push = () =>
-				error(null, 'INTERNAL', 'update_effects.push should not be called outside create_block');
 			return a;
 		},
 		get after_update() {
@@ -239,7 +239,7 @@ export function client_component(source, analysis, options) {
 		);
 	});
 
-	const properties = analysis.exports.map(({ name, alias }) => {
+	const component_returned_object = analysis.exports.map(({ name, alias }) => {
 		const expression = serialize_get_binding(b.id(name), instance_state);
 
 		if (expression.type === 'Identifier' && !options.dev) {
@@ -249,21 +249,49 @@ export function client_component(source, analysis, options) {
 		return b.get(alias ?? name, [b.return(expression)]);
 	});
 
-	if (analysis.accessors) {
-		for (const [name, binding] of analysis.instance.scope.declarations) {
-			if (binding.kind !== 'prop' || name.startsWith('$$')) continue;
+	const properties = [...analysis.instance.scope.declarations].filter(
+		([name, binding]) =>
+			(binding.kind === 'prop' || binding.kind === 'bindable_prop') && !name.startsWith('$$')
+	);
 
+	if (analysis.runes && options.dev) {
+		const bindable = analysis.exports.map(({ name, alias }) => b.literal(alias ?? name));
+		for (const [name, binding] of properties) {
+			if (binding.kind === 'bindable_prop') {
+				bindable.push(b.literal(binding.prop_alias ?? name));
+			}
+		}
+		instance.body.unshift(
+			b.stmt(b.call('$.validate_prop_bindings', b.id('$$props'), b.array(bindable)))
+		);
+	}
+
+	if (analysis.accessors) {
+		for (const [name, binding] of properties) {
 			const key = binding.prop_alias ?? name;
 
-			properties.push(
-				b.get(key, [b.return(b.call(b.id(name)))]),
-				b.set(key, [b.stmt(b.call(b.id(name), b.id('$$value'))), b.stmt(b.call('$.flushSync'))])
-			);
+			const getter = b.get(key, [b.return(b.call(b.id(name)))]);
+
+			const setter = b.set(key, [
+				b.stmt(b.call(b.id(name), b.id('$$value'))),
+				b.stmt(b.call('$.flush_sync'))
+			]);
+
+			if (analysis.runes && binding.initial) {
+				// turn `set foo($$value)` into `set foo($$value = expression)`
+				setter.value.params[0] = {
+					type: 'AssignmentPattern',
+					left: b.id('$$value'),
+					right: /** @type {import('estree').Expression} */ (binding.initial)
+				};
+			}
+
+			component_returned_object.push(getter, setter);
 		}
 	}
 
 	if (options.legacy.componentApi) {
-		properties.push(
+		component_returned_object.push(
 			b.init('$set', b.id('$.update_legacy_props')),
 			b.init(
 				'$on',
@@ -279,7 +307,7 @@ export function client_component(source, analysis, options) {
 			)
 		);
 	} else if (options.dev) {
-		properties.push(
+		component_returned_object.push(
 			b.init(
 				'$set',
 				b.thunk(
@@ -347,16 +375,15 @@ export function client_component(source, analysis, options) {
 
 	append_styles();
 	component_block.body.push(
-		properties.length > 0
-			? b.return(b.call('$.pop', b.object(properties)))
+		component_returned_object.length > 0
+			? b.return(b.call('$.pop', b.object(component_returned_object)))
 			: b.stmt(b.call('$.pop'))
 	);
 
 	if (analysis.uses_rest_props) {
-		/** @type {string[]} */
 		const named_props = analysis.exports.map(({ name, alias }) => alias ?? name);
 		for (const [name, binding] of analysis.instance.scope.declarations) {
-			if (binding.kind === 'prop') named_props.push(binding.prop_alias ?? name);
+			if (binding.kind === 'bindable_prop') named_props.push(binding.prop_alias ?? name);
 		}
 
 		component_block.body.unshift(
@@ -372,15 +399,12 @@ export function client_component(source, analysis, options) {
 	}
 
 	if (analysis.uses_props || analysis.uses_rest_props) {
+		const to_remove = [b.literal('children'), b.literal('$$slots'), b.literal('$$events')];
+		if (analysis.custom_element) {
+			to_remove.push(b.literal('$$host'));
+		}
 		component_block.body.unshift(
-			b.const(
-				'$$sanitized_props',
-				b.call(
-					'$.rest_props',
-					b.id('$$props'),
-					b.array([b.literal('children'), b.literal('$$slots'), b.literal('$$events')])
-				)
-			)
+			b.const('$$sanitized_props', b.call('$.rest_props', b.id('$$props'), b.array(to_remove)))
 		);
 	}
 
@@ -391,14 +415,37 @@ export function client_component(source, analysis, options) {
 	const body = [
 		...state.hoisted,
 		...module.body,
-		b.export_default(
-			b.function_declaration(
-				b.id(analysis.name),
-				[b.id('$$anchor'), b.id('$$props')],
-				component_block
-			)
+		b.function_declaration(
+			b.id(analysis.name),
+			[b.id('$$anchor'), b.id('$$props')],
+			component_block
 		)
 	];
+
+	if (options.hmr) {
+		body.push(
+			b.if(
+				b.id('import.meta.hot'),
+				b.block([
+					b.const(b.id('s'), b.call('$.source', b.id(analysis.name))),
+					b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
+					b.stmt(
+						b.call(
+							'import.meta.hot.accept',
+							b.arrow(
+								[b.id('module')],
+								b.block([
+									b.stmt(b.call('$.set', b.id('s'), b.member(b.id('module'), b.id('default'))))
+								])
+							)
+						)
+					)
+				])
+			)
+		);
+	}
+
+	body.push(b.export_default(b.id(analysis.name)));
 
 	if (options.dev) {
 		if (options.filename) {
@@ -417,8 +464,8 @@ export function client_component(source, analysis, options) {
 			);
 		}
 
-		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'), b.id(analysis.name))));
-		body.push(b.stmt(b.call(b.id('$.mark_module_end'))));
+		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'))));
+		body.push(b.stmt(b.call(b.id('$.mark_module_end'), b.id(analysis.name))));
 	}
 
 	if (options.discloseVersion) {
@@ -463,9 +510,7 @@ export function client_component(source, analysis, options) {
 		/** @type {import('estree').Property[]} */
 		const props_str = [];
 
-		for (const [name, binding] of analysis.instance.scope.declarations) {
-			if (binding.kind !== 'prop' || name.startsWith('$$')) continue;
-
+		for (const [name, binding] of properties) {
 			const key = binding.prop_alias ?? name;
 			const prop_def = typeof ce === 'boolean' ? {} : ce.props?.[key] || {};
 			if (
@@ -555,6 +600,6 @@ export function client_module(analysis, options) {
 	return {
 		type: 'Program',
 		sourceType: 'module',
-		body: [b.import_all('$', 'svelte/internal'), ...module.body]
+		body: [b.import_all('$', 'svelte/internal/client'), ...module.body]
 	};
 }

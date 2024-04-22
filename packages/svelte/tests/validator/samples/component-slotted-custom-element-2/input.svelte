@@ -7,7 +7,7 @@
 	<Nested>
 		{#if thing}
 			<div>
-				<div slot='bar' />
+				<div slot='bar'></div>
 			</div>
 		{/if}
 	</Nested>

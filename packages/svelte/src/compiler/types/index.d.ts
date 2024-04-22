@@ -10,7 +10,7 @@ import type { Location } from 'locate-character';
 import type { SourceMap } from 'magic-string';
 import type { Context } from 'zimmerframe';
 import type { Scope } from '../phases/scope.js';
-import * as Css from './css.js';
+import type { Css } from './css.js';
 import type { EachBlock, Namespace, SvelteNode, SvelteOptions } from './template.js';
 
 /** The return value of `compile` from `svelte/compiler` */
@@ -46,6 +46,8 @@ export interface CompileResult {
 		 */
 		runes: boolean;
 	};
+	/** The AST */
+	ast: any;
 }
 
 export interface Warning {
@@ -178,6 +180,19 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * @default null
 	 */
 	cssOutputFilename?: string;
+	/**
+	 * If `true`, compiles components with hot reloading support.
+	 *
+	 * @default false
+	 */
+	hmr?: boolean;
+	/**
+	 * If `true`, returns the modern version of the AST.
+	 * Will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
+	 *
+	 * @default false
+	 */
+	modernAst?: boolean;
 }
 
 export interface ModuleCompileOptions {
@@ -225,6 +240,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		legacy: Required<Required<CompileOptions>['legacy']>;
 		runes: CompileOptions['runes'];
 		customElementOptions: SvelteOptions['customElement'];
+		hmr: CompileOptions['hmr'];
 	};
 
 export type DeclarationKind =
@@ -241,11 +257,13 @@ export interface Binding {
 	node: Identifier;
 	/**
 	 * - `normal`: A variable that is not in any way special
-	 * - `prop`: A normal prop (possibly mutated)
+	 * - `prop`: A normal prop (possibly reassigned or mutated)
+	 * - `bindable_prop`: A prop one can `bind:` to (possibly reassigned or mutated)
 	 * - `rest_prop`: A rest prop
 	 * - `state`: A state variable
 	 * - `derived`: A derived variable
-	 * - `each`: An each block context variable
+	 * - `each`: An each block parameter
+	 * - `snippet`: A snippet parameter
 	 * - `store_sub`: A $store value
 	 * - `legacy_reactive`: A `$:` declaration
 	 * - `legacy_reactive_import`: An imported binding that is mutated inside the component
@@ -253,11 +271,13 @@ export interface Binding {
 	kind:
 		| 'normal'
 		| 'prop'
+		| 'bindable_prop'
 		| 'rest_prop'
 		| 'state'
 		| 'frozen_state'
 		| 'derived'
 		| 'each'
+		| 'snippet'
 		| 'store_sub'
 		| 'legacy_reactive'
 		| 'legacy_reactive_import';
@@ -280,7 +300,7 @@ export interface Binding {
 	scope: Scope;
 	/** For `legacy_reactive`: its reactive dependencies */
 	legacy_dependencies: Binding[];
-	/** Legacy props: the `class` in `{ export klass as class}` */
+	/** Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props() */
 	prop_alias: string | null;
 	/**
 	 * If this is set, all references should use this expression instead of the identifier name.

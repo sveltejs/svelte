@@ -1,5 +1,5 @@
-import { pre_effect, user_root_effect } from '../internal/client/reactivity/effects.js';
-import { flushSync } from '../main/main-client.js';
+import { render_effect, effect_root } from '../internal/client/reactivity/effects.js';
+import { flushSync } from '../index-client.js';
 import { ReactiveMap } from './map.js';
 import { assert, test } from 'vitest';
 
@@ -14,16 +14,16 @@ test('map.values()', () => {
 
 	const log: any = [];
 
-	const cleanup = user_root_effect(() => {
-		pre_effect(() => {
+	const cleanup = effect_root(() => {
+		render_effect(() => {
 			log.push(map.size);
 		});
 
-		pre_effect(() => {
+		render_effect(() => {
 			log.push(map.has(3));
 		});
 
-		pre_effect(() => {
+		render_effect(() => {
 			log.push(Array.from(map.values()));
 		});
 	});
@@ -36,7 +36,7 @@ test('map.values()', () => {
 		map.clear();
 	});
 
-	assert.deepEqual(log, [5, true, [1, 2, 3, 4, 5], 4, false, [1, 2, 4, 5], 0, [], false]); // TODO update when we fix effect ordering bug
+	assert.deepEqual(log, [5, true, [1, 2, 3, 4, 5], 4, false, [1, 2, 4, 5], 0, false, []]);
 
 	cleanup();
 });
@@ -50,16 +50,16 @@ test('map.get(...)', () => {
 
 	const log: any = [];
 
-	const cleanup = user_root_effect(() => {
-		pre_effect(() => {
+	const cleanup = effect_root(() => {
+		render_effect(() => {
 			log.push('get 1', map.get(1));
 		});
 
-		pre_effect(() => {
+		render_effect(() => {
 			log.push('get 2', map.get(2));
 		});
 
-		pre_effect(() => {
+		render_effect(() => {
 			log.push('get 3', map.get(3));
 		});
 	});
@@ -86,16 +86,16 @@ test('map.has(...)', () => {
 
 	const log: any = [];
 
-	const cleanup = user_root_effect(() => {
-		pre_effect(() => {
+	const cleanup = effect_root(() => {
+		render_effect(() => {
 			log.push('has 1', map.has(1));
 		});
 
-		pre_effect(() => {
+		render_effect(() => {
 			log.push('has 2', map.has(2));
 		});
 
-		pre_effect(() => {
+		render_effect(() => {
 			log.push('has 3', map.has(3));
 		});
 	});
@@ -124,15 +124,49 @@ test('map.has(...)', () => {
 	cleanup();
 });
 
+test('map.forEach(...)', () => {
+	const map = new ReactiveMap([
+		[1, 1],
+		[2, 2],
+		[3, 3]
+	]);
+
+	const log: any = [];
+	const this_arg = {};
+
+	map.forEach(function (this: unknown, ...args) {
+		log.push([...args, this]);
+	}, this_arg);
+
+	assert.deepEqual(log, [
+		[1, 1, map, this_arg],
+		[2, 2, map, this_arg],
+		[3, 3, map, this_arg]
+	]);
+});
+
+test('map.delete(...)', () => {
+	const map = new ReactiveMap([
+		[1, 1],
+		[2, 2],
+		[3, 3]
+	]);
+
+	assert.equal(map.delete(3), true);
+	assert.equal(map.delete(3), false);
+
+	assert.deepEqual(Array.from(map.values()), [1, 2]);
+});
+
 test('map handling of undefined values', () => {
 	const map = new ReactiveMap();
 
 	const log: any = [];
 
-	const cleanup = user_root_effect(() => {
+	const cleanup = effect_root(() => {
 		map.set(1, undefined);
 
-		pre_effect(() => {
+		render_effect(() => {
 			log.push(map.get(1));
 		});
 

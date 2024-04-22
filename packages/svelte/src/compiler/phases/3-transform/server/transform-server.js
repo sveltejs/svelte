@@ -4,6 +4,7 @@ import {
 	extract_identifiers,
 	extract_paths,
 	is_event_attribute,
+	is_expression_async,
 	unwrap_optional
 } from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
@@ -24,8 +25,17 @@ import { create_attribute, is_custom_element_node, is_element_node } from '../..
 import { error } from '../../../errors.js';
 import { binding_properties } from '../../bindings.js';
 import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patterns.js';
-import { DOMBooleanAttributes } from '../../../../constants.js';
+import {
+	DOMBooleanAttributes,
+	HYDRATION_END,
+	HYDRATION_END_ELSE,
+	HYDRATION_START
+} from '../../../../constants.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
+import { BLOCK_CLOSE, BLOCK_CLOSE_ELSE } from '../../../../internal/server/hydration.js';
+
+export const block_open = t_string(`<!--${HYDRATION_START}-->`);
+export const block_close = t_string(`<!--${HYDRATION_END}-->`);
 
 /**
  * @param {string} value
@@ -50,15 +60,6 @@ function t_expression(value, needs_escaping = false) {
  */
 function t_statement(value) {
 	return { type: 'statement', value };
-}
-
-/**
- * @param {import('./types').ServerTransformState} state
- * @returns {[import('estree').VariableDeclaration, import('estree').Identifier]}
- */
-function serialize_anchor(state) {
-	const id = state.scope.root.unique('anchor');
-	return [b.const(id, b.call('$.create_anchor', b.id('$$payload'))), id];
 }
 
 /**
@@ -446,6 +447,7 @@ function serialize_set_binding(node, context, fallback) {
 		binding.kind !== 'state' &&
 		binding.kind !== 'frozen_state' &&
 		binding.kind !== 'prop' &&
+		binding.kind !== 'bindable_prop' &&
 		binding.kind !== 'each' &&
 		binding.kind !== 'legacy_reactive' &&
 		!is_store
@@ -690,7 +692,39 @@ const javascript_visitors_runes = {
 			}
 
 			if (rune === '$props') {
-				declarations.push(b.declarator(declarator.id, b.id('$$props')));
+				// remove $bindable() from props declaration and handle rest props
+				let uses_rest_props = false;
+				const id = walk(declarator.id, null, {
+					AssignmentPattern(node) {
+						if (
+							node.right.type === 'CallExpression' &&
+							get_rune(node.right, state.scope) === '$bindable'
+						) {
+							const right = node.right.arguments.length
+								? /** @type {import('estree').Expression} */ (visit(node.right.arguments[0]))
+								: b.id('undefined');
+							return b.assignment_pattern(node.left, right);
+						}
+					},
+					RestElement(node, { path }) {
+						if (path.at(-1) === declarator.id) {
+							uses_rest_props = true;
+						}
+					}
+				});
+
+				const exports = /** @type {import('../../types').ComponentAnalysis} */ (
+					state.analysis
+				).exports.map(({ name, alias }) => b.literal(alias ?? name));
+
+				declarations.push(
+					b.declarator(
+						id,
+						uses_rest_props && exports.length > 0
+							? b.call('$.rest_props', b.id('$$props'), b.array(exports))
+							: b.id('$$props')
+					)
+				);
 				continue;
 			}
 
@@ -752,8 +786,16 @@ const javascript_visitors_runes = {
 	CallExpression(node, context) {
 		const rune = get_rune(node, context.state.scope);
 
+		if (rune === '$host') {
+			return b.id('undefined');
+		}
+
 		if (rune === '$effect.active') {
 			return b.literal(false);
+		}
+
+		if (rune === '$state.snapshot') {
+			return /** @type {import('estree').Expression} */ (context.visit(node.arguments[0]));
 		}
 
 		if (rune === '$inspect' || rune === '$inspect().with') {
@@ -816,9 +858,7 @@ function serialize_attribute_value(
 	/** @type {import('estree').Expression[]} */
 	const expressions = [];
 
-	if (attribute_value[0].type !== 'Text') {
-		quasis.push(b.quasi('', false));
-	}
+	quasis.push(b.quasi('', false));
 
 	let i = 0;
 	for (const node of attribute_value) {
@@ -829,7 +869,8 @@ function serialize_attribute_value(
 				// don't trim, space could be important to separate from expression tag
 				data = data.replace(regex_whitespaces_strict, ' ');
 			}
-			quasis.push(b.quasi(data, i === attribute_value.length));
+			const last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
+			last.value.raw += data;
 		} else {
 			expressions.push(
 				b.call(
@@ -837,9 +878,7 @@ function serialize_attribute_value(
 					/** @type {import('estree').Expression} */ (context.visit(node.expression))
 				)
 			);
-			if (i === attribute_value.length || attribute_value[i]?.type !== 'Text') {
-				quasis.push(b.quasi('', true));
-			}
+			quasis.push(b.quasi('', i + 1 === attribute_value.length));
 		}
 	}
 
@@ -1131,7 +1170,7 @@ const javascript_visitors_legacy = {
 				state.scope.get_bindings(declarator)
 			);
 			const has_state = bindings.some((binding) => binding.kind === 'state');
-			const has_props = bindings.some((binding) => binding.kind === 'prop');
+			const has_props = bindings.some((binding) => binding.kind === 'bindable_prop');
 
 			if (!has_state && !has_props) {
 				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
@@ -1157,7 +1196,9 @@ const javascript_visitors_legacy = {
 						const name = /** @type {import('estree').Identifier} */ (path.node).name;
 						const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
 						const prop = b.member(b.id('$$props'), b.literal(binding.prop_alias ?? name), true);
-						declarations.push(b.declarator(path.node, b.call('$.value_or_fallback', prop, value)));
+						declarations.push(
+							b.declarator(path.node, b.call('$.value_or_fallback', prop, b.thunk(value)))
+						);
 					}
 					continue;
 				}
@@ -1170,13 +1211,15 @@ const javascript_visitors_legacy = {
 					b.literal(binding.prop_alias ?? declarator.id.name),
 					true
 				);
-				const init = declarator.init
-					? b.call(
-							'$.value_or_fallback',
-							prop,
-							/** @type {import('estree').Expression} */ (visit(declarator.init))
-						)
-					: prop;
+
+				/** @type {import('estree').Expression} */
+				let init = prop;
+				if (declarator.init) {
+					const default_value = /** @type {import('estree').Expression} */ (visit(declarator.init));
+					init = is_expression_async(default_value)
+						? b.await(b.call('$.value_or_fallback_async', prop, b.thunk(default_value, true)))
+						: b.call('$.value_or_fallback', prop, b.thunk(default_value));
+				}
 
 				declarations.push(b.declarator(declarator.id, init));
 
@@ -1222,12 +1265,10 @@ const template_visitors = {
 	},
 	HtmlTag(node, context) {
 		const state = context.state;
-		const [dec, id] = serialize_anchor(state);
-		state.init.push(dec);
-		state.template.push(t_expression(id));
+		state.template.push(block_open);
 		const raw = /** @type {import('estree').Expression} */ (context.visit(node.expression));
 		context.state.template.push(t_expression(raw));
-		state.template.push(t_expression(id));
+		state.template.push(block_close);
 	},
 	ConstTag(node, { state, visit }) {
 		const declaration = node.declaration.declarations[0];
@@ -1258,10 +1299,8 @@ const template_visitors = {
 	},
 	RenderTag(node, context) {
 		const state = context.state;
-		const [anchor, anchor_id] = serialize_anchor(state);
 
-		state.init.push(anchor);
-		state.template.push(t_expression(anchor_id));
+		state.template.push(block_open);
 
 		const callee = unwrap_optional(node.expression).callee;
 		const raw_args = unwrap_optional(node.expression).arguments;
@@ -1287,7 +1326,7 @@ const template_visitors = {
 			)
 		);
 
-		state.template.push(t_expression(anchor_id));
+		state.template.push(block_close);
 	},
 	ClassDirective(node) {
 		error(node, 'INTERNAL', 'Node should have been handled elsewhere');
@@ -1412,9 +1451,7 @@ const template_visitors = {
 			}
 		};
 
-		const [el_anchor, anchor_id] = serialize_anchor(context.state);
-		context.state.init.push(el_anchor);
-		context.state.template.push(t_expression(anchor_id));
+		context.state.template.push(block_open);
 
 		const main = create_block(node, node.fragment.nodes, {
 			...context,
@@ -1450,7 +1487,7 @@ const template_visitors = {
 					)
 				)
 			),
-			t_expression(anchor_id)
+			block_close
 		);
 		if (context.state.options.dev) {
 			context.state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));
@@ -1458,9 +1495,7 @@ const template_visitors = {
 	},
 	EachBlock(node, context) {
 		const state = context.state;
-		const [dec, id] = serialize_anchor(state);
-		state.init.push(dec);
-		state.template.push(t_expression(id));
+		state.template.push(block_open);
 
 		const each_node_meta = node.metadata;
 		const collection = /** @type {import('estree').Expression} */ (context.visit(node.expression));
@@ -1470,14 +1505,6 @@ const template_visitors = {
 				? each_node_meta.index
 				: b.id(node.index);
 		const children = node.body.nodes;
-
-		const [each_dec, each_id] = serialize_anchor(state);
-
-		/** @type {import('./types').Anchor} */
-		const anchor = {
-			type: 'Anchor',
-			id: each_id
-		};
 
 		const array_id = state.scope.root.unique('each_array');
 		state.init.push(b.const(array_id, b.call('$.ensure_array_like', collection)));
@@ -1492,10 +1519,13 @@ const template_visitors = {
 			each.push(b.let(node.index, index));
 		}
 
+		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(block_open.value))));
+
 		each.push(
-			each_dec,
-			.../** @type {import('estree').Statement[]} */ (create_block(node, children, context, anchor))
+			.../** @type {import('estree').Statement[]} */ (create_block(node, children, context))
 		);
+
+		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(block_close.value))));
 
 		const for_loop = b.for(
 			b.let(index, b.literal(0)),
@@ -1503,63 +1533,50 @@ const template_visitors = {
 			b.update('++', index, false),
 			b.block(each)
 		);
+
+		const close = b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE)));
+
 		if (node.fallback) {
-			const fallback_stmts = create_block(node, node.fallback.nodes, context);
-			fallback_stmts.unshift(
-				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--ssr:each_else-->')))
-			);
+			const fallback = create_block(node, node.fallback.nodes, context);
+
+			fallback.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE))));
+
 			state.template.push(
 				t_statement(
 					b.if(
 						b.binary('!==', b.member(array_id, b.id('length')), b.literal(0)),
-						for_loop,
-						b.block(fallback_stmts)
+						b.block([for_loop, close]),
+						b.block(fallback)
 					)
 				)
 			);
 		} else {
-			state.template.push(t_statement(for_loop));
+			state.template.push(t_statement(for_loop), t_statement(close));
 		}
-		state.template.push(t_expression(id));
 	},
 	IfBlock(node, context) {
 		const state = context.state;
-		const [dec, id] = serialize_anchor(state);
-		state.init.push(dec);
-		state.template.push(t_expression(id));
-
-		// Insert ssr:if:true/false anchors in addition to the other anchors so that
-		// the if block can catch hydration mismatches (false on the server, true on the client and vice versa)
-		// and continue hydration without having to re-render everything from scratch.
+		state.template.push(block_open);
 
 		const consequent = create_block(node, node.consequent.nodes, context);
-		consequent.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--ssr:if:true-->')))
-		);
+		const alternate = node.alternate ? create_block(node, node.alternate.nodes, context) : [];
 
-		const alternate = node.alternate
-			? /** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
-			: b.block([]);
-		alternate.body.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--ssr:if:false-->')))
-		);
+		consequent.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE))));
+		alternate.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE))));
 
 		state.template.push(
 			t_statement(
 				b.if(
 					/** @type {import('estree').Expression} */ (context.visit(node.test)),
-					b.block(/** @type {import('estree').Statement[]} */ (consequent)),
-					alternate
+					b.block(consequent),
+					b.block(alternate)
 				)
 			)
 		);
-		state.template.push(t_expression(id));
 	},
 	AwaitBlock(node, context) {
 		const state = context.state;
-		const [dec, id] = serialize_anchor(state);
-		state.init.push(dec);
-		state.template.push(t_expression(id));
+		state.template.push(block_open);
 
 		state.template.push(
 			t_statement(
@@ -1593,26 +1610,25 @@ const template_visitors = {
 			)
 		);
 
-		state.template.push(t_expression(id));
+		state.template.push(block_close);
 	},
 	KeyBlock(node, context) {
 		const state = context.state;
-		const [dec, id] = serialize_anchor(state);
-		state.init.push(dec);
-		state.template.push(t_expression(id));
+		state.template.push(block_open);
 		const body = create_block(node, node.fragment.nodes, context);
 		state.template.push(t_statement(b.block(body)));
-		state.template.push(t_expression(id));
+		state.template.push(block_close);
 	},
 	SnippetBlock(node, context) {
-		// TODO hoist where possible
-		context.state.init.push(
-			b.function_declaration(
-				node.expression,
-				[b.id('$$payload'), ...node.parameters],
-				/** @type {import('estree').BlockStatement} */ (context.visit(node.body))
-			)
+		const fn = b.function_declaration(
+			node.expression,
+			[b.id('$$payload'), ...node.parameters],
+			/** @type {import('estree').BlockStatement} */ (context.visit(node.body))
 		);
+		// @ts-expect-error - TODO remove this hack once $$render_inner for legacy bindings is gone
+		fn.___snippet = true;
+		// TODO hoist where possible
+		context.state.init.push(fn);
 
 		if (context.state.options.dev) {
 			context.state.init.push(b.stmt(b.call('$.add_snippet_symbol', node.expression)));
@@ -1620,34 +1636,28 @@ const template_visitors = {
 	},
 	Component(node, context) {
 		const state = context.state;
-		const [dec, id] = serialize_anchor(state);
-		state.init.push(dec);
-		state.template.push(t_expression(id));
+		state.template.push(block_open);
 		const call = serialize_inline_component(node, node.name, context);
 		state.template.push(t_statement(call));
-		state.template.push(t_expression(id));
+		state.template.push(block_close);
 	},
 	SvelteSelf(node, context) {
 		const state = context.state;
-		const [dec, id] = serialize_anchor(state);
-		state.init.push(dec);
-		state.template.push(t_expression(id));
+		state.template.push(block_open);
 		const call = serialize_inline_component(node, context.state.analysis.name, context);
 		state.template.push(t_statement(call));
-		state.template.push(t_expression(id));
+		state.template.push(block_close);
 	},
 	SvelteComponent(node, context) {
 		const state = context.state;
-		const [dec, id] = serialize_anchor(state);
-		state.init.push(dec);
-		state.template.push(t_expression(id));
+		state.template.push(block_open);
 		const call = serialize_inline_component(
 			node,
 			/** @type {import('estree').Expression} */ (context.visit(node.expression)),
 			context
 		);
 		state.template.push(t_statement(call));
-		state.template.push(t_expression(id));
+		state.template.push(block_close);
 	},
 	LetDirective(node, { state }) {
 		if (node.expression && node.expression.type !== 'Identifier') {
@@ -1730,9 +1740,7 @@ const template_visitors = {
 	},
 	SlotElement(node, context) {
 		const state = context.state;
-		const [dec, id] = serialize_anchor(state);
-		state.init.push(dec);
-		state.template.push(t_expression(id));
+		state.template.push(block_open);
 
 		/** @type {import('estree').Property[]} */
 		const props = [];
@@ -1779,7 +1787,7 @@ const template_visitors = {
 		const slot = b.call('$.slot', b.id('$$payload'), expression, props_expression, fallback);
 
 		state.template.push(t_statement(b.stmt(slot)));
-		state.template.push(t_expression(id));
+		state.template.push(block_close);
 	},
 	SvelteHead(node, context) {
 		const state = context.state;
@@ -2217,16 +2225,30 @@ export function server_component(analysis, options) {
 		});
 	}
 
-	// If the component binds to a child, we need to put the template in a loop and repeat until bindings are stable
+	// If the component binds to a child, we need to put the template in a loop and repeat until legacy bindings are stable.
+	// We can remove this once the legacy syntax is gone.
 	if (analysis.uses_component_bindings) {
+		const snippets = template.body.filter(
+			(node) =>
+				node.type === 'FunctionDeclaration' &&
+				// @ts-expect-error
+				node.___snippet
+		);
+		const rest = template.body.filter(
+			(node) =>
+				node.type !== 'FunctionDeclaration' ||
+				// @ts-expect-error
+				!node.___snippet
+		);
 		template.body = [
+			...snippets,
 			b.let('$$settled', b.true),
 			b.let('$$inner_payload'),
 			b.stmt(
 				b.function(
 					b.id('$$render_inner'),
 					[b.id('$$payload')],
-					b.block(/** @type {import('estree').Statement[]} */ (template.body))
+					b.block(/** @type {import('estree').Statement[]} */ (rest))
 				)
 			),
 			b.do_while(
@@ -2258,7 +2280,7 @@ export function server_component(analysis, options) {
 	/** @type {import('estree').Property[]} */
 	const props = [];
 	for (const [name, binding] of analysis.instance.scope.declarations) {
-		if (binding.kind === 'prop' && !name.startsWith('$$')) {
+		if (binding.kind === 'bindable_prop' && !name.startsWith('$$')) {
 			props.push(b.init(binding.prop_alias ?? name, b.id(name)));
 		}
 	}
@@ -2266,6 +2288,8 @@ export function server_component(analysis, options) {
 		props.push(b.init(alias ?? name, b.id(name)));
 	}
 	if (props.length > 0) {
+		// This has no effect in runes mode other than throwing an error when someone passes
+		// undefined to a binding that has a default value.
 		template.body.push(b.stmt(b.call('$.bind_props', b.id('$$props'), b.object(props))));
 	}
 
@@ -2280,7 +2304,7 @@ export function server_component(analysis, options) {
 		/** @type {string[]} */
 		const named_props = analysis.exports.map(({ name, alias }) => alias ?? name);
 		for (const [name, binding] of analysis.instance.scope.declarations) {
-			if (binding.kind === 'prop') named_props.push(binding.prop_alias ?? name);
+			if (binding.kind === 'bindable_prop') named_props.push(binding.prop_alias ?? name);
 		}
 
 		component_block.body.unshift(

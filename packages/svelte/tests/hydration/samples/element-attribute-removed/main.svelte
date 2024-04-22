@@ -1,5 +1,12 @@
 <script>
-	export let className;
+	export let id;
 </script>
 
-<div class={className}></div>
+<!-- single update -->
+<div id={id}></div>
+
+{#if true}
+	<!-- grouped updates -->
+	<div id={id}></div>
+	<div id={id}></div>
+{/if}

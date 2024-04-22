@@ -8,8 +8,9 @@ import {
 import { get_descriptor, is_function } from '../utils.js';
 import { mutable_source, set } from './sources.js';
 import { derived } from './deriveds.js';
-import { get, inspect_fn, is_signals_recorded } from '../runtime.js';
-import { safe_equals, safe_not_equal } from './equality.js';
+import { get, is_signals_recorded, untrack } from '../runtime.js';
+import { safe_equals } from './equality.js';
+import { inspect_fn } from '../dev/inspect.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -36,12 +37,21 @@ export function update_pre_prop(fn, d = 1) {
 /**
  * The proxy handler for rest props (i.e. `const { x, ...rest } = $props()`).
  * Is passed the full `$$props` object and excludes the named props.
- * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol> }>}}
+ * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol>, name?: string }>}}
  */
 const rest_props_handler = {
 	get(target, key) {
 		if (target.exclude.includes(key)) return;
 		return target.props[key];
+	},
+	set(target, key) {
+		if (DEV) {
+			throw new Error(
+				`Rest element properties of $props() such as ${target.name}.${String(key)} are readonly`
+			);
+		}
+
+		return false;
 	},
 	getOwnPropertyDescriptor(target, key) {
 		if (target.exclude.includes(key)) return;
@@ -64,11 +74,12 @@ const rest_props_handler = {
 
 /**
  * @param {Record<string, unknown>} props
- * @param {string[]} rest
+ * @param {string[]} exclude
+ * @param {string} [name]
  * @returns {Record<string, unknown>}
  */
-export function rest_props(props, rest) {
-	return new Proxy({ props, exclude: rest }, rest_props_handler);
+export function rest_props(props, exclude, name) {
+	return new Proxy(DEV ? { props, exclude, name } : { props, exclude }, rest_props_handler);
 }
 
 /**
@@ -133,16 +144,30 @@ export function spread_props(...props) {
  * @param {Record<string, unknown>} props
  * @param {string} key
  * @param {number} flags
- * @param {V | (() => V)} [initial]
+ * @param {V | (() => V)} [fallback]
  * @returns {(() => V | ((arg: V) => V) | ((arg: V, mutation: boolean) => V))}
  */
-export function prop(props, key, flags, initial) {
+export function prop(props, key, flags, fallback) {
 	var immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
 	var runes = (flags & PROPS_IS_RUNES) !== 0;
+	var lazy = (flags & PROPS_IS_LAZY_INITIAL) !== 0;
+
 	var prop_value = /** @type {V} */ (props[key]);
 	var setter = get_descriptor(props, key)?.set;
 
-	if (prop_value === undefined && initial !== undefined) {
+	var fallback_value = /** @type {V} */ (fallback);
+	var fallback_dirty = true;
+
+	var get_fallback = () => {
+		if (lazy && fallback_dirty) {
+			fallback_dirty = false;
+			fallback_value = untrack(/** @type {() => V} */ (fallback));
+		}
+
+		return fallback_value;
+	};
+
+	if (prop_value === undefined && fallback !== undefined) {
 		if (setter && runes) {
 			// TODO consolidate all these random runtime errors
 			throw new Error(
@@ -153,19 +178,22 @@ export function prop(props, key, flags, initial) {
 			);
 		}
 
-		// @ts-expect-error would need a cumbersome method overload to type this
-		if ((flags & PROPS_IS_LAZY_INITIAL) !== 0) initial = initial();
-
-		prop_value = /** @type {V} */ (initial);
-
+		prop_value = get_fallback();
 		if (setter) setter(prop_value);
 	}
 
-	var getter = () => {
-		var value = /** @type {V} */ (props[key]);
-		if (value !== undefined) initial = undefined;
-		return value === undefined ? /** @type {V} */ (initial) : value;
-	};
+	var getter = runes
+		? () => {
+				var value = /** @type {V} */ (props[key]);
+				if (value === undefined) return get_fallback();
+				fallback_dirty = true;
+				return value;
+			}
+		: () => {
+				var value = /** @type {V} */ (props[key]);
+				if (value !== undefined) fallback_value = /** @type {V} */ (undefined);
+				return value === undefined ? fallback_value : value;
+			};
 
 	// easy mode — prop is never written to
 	if ((flags & PROPS_IS_UPDATED) === 0) {

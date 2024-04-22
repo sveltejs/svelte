@@ -23,6 +23,7 @@ import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
 import { hash } from './utils.js';
+import { warn_unused } from './css/css-warn.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -258,10 +259,11 @@ export function analyze_module(ast, options) {
 
 /**
  * @param {import('#compiler').Root} root
+ * @param {string} source
  * @param {import('#compiler').ValidatedCompileOptions} options
  * @returns {import('../types.js').ComponentAnalysis}
  */
-export function analyze_component(root, options) {
+export function analyze_component(root, source, options) {
 	const scope_root = new ScopeRoot();
 
 	const module = js(root.module, scope_root, false, null);
@@ -300,8 +302,8 @@ export function analyze_component(root, options) {
 					declaration.initial.source.value === 'svelte/store'
 				))
 		) {
-			let is_nested_store_subscription = false;
-			for (const reference of references) {
+			let is_nested_store_subscription_node = undefined;
+			search: for (const reference of references) {
 				for (let i = reference.path.length - 1; i >= 0; i--) {
 					const scope =
 						scopes.get(reference.path[i]) ||
@@ -309,14 +311,17 @@ export function analyze_component(root, options) {
 						instance.scopes.get(reference.path[i]);
 					if (scope) {
 						const owner = scope?.owner(store_name);
-						is_nested_store_subscription =
-							!!owner && owner !== module.scope && owner !== instance.scope;
+						if (!!owner && owner !== module.scope && owner !== instance.scope) {
+							is_nested_store_subscription_node = reference.node;
+							break search;
+						}
 						break;
 					}
 				}
 			}
-			if (is_nested_store_subscription) {
-				error(references[0].node, 'illegal-store-subscription');
+
+			if (is_nested_store_subscription_node) {
+				error(is_nested_store_subscription_node, 'illegal-store-subscription');
 			}
 
 			if (options.runes !== false) {
@@ -374,6 +379,7 @@ export function analyze_component(root, options) {
 		uses_rest_props: false,
 		uses_slots: false,
 		uses_component_bindings: false,
+		uses_render_tags: false,
 		custom_element: options.customElementOptions ?? options.customElement,
 		inject_styles: options.css === 'injected' || options.customElement,
 		accessors: options.customElement
@@ -383,7 +389,7 @@ export function analyze_component(root, options) {
 				!!options.legacy?.componentApi,
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
-		slot_names: new Set(),
+		slot_names: new Map(),
 		warnings,
 		css: {
 			ast: root.css,
@@ -396,7 +402,8 @@ export function analyze_component(root, options) {
 					})
 				: '',
 			keyframes: []
-		}
+		},
+		source
 	};
 
 	if (!options.customElement && root.options?.customElement) {
@@ -435,8 +442,22 @@ export function analyze_component(root, options) {
 				merge(set_scope(scopes), validation_runes, runes_scope_tweaker, common_visitors)
 			);
 		}
+
+		if (analysis.exports.length > 0) {
+			for (const [_, binding] of instance.scope.declarations) {
+				if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
+					if (
+						analysis.exports.some(
+							({ alias, name }) => (binding.prop_alias ?? binding.node.name) === (alias ?? name)
+						)
+					) {
+						error(binding.node, 'conflicting-property-name');
+					}
+				}
+			}
+		}
 	} else {
-		instance.scope.declare(b.id('$$props'), 'prop', 'synthetic');
+		instance.scope.declare(b.id('$$props'), 'bindable_prop', 'synthetic');
 		instance.scope.declare(b.id('$$restProps'), 'rest_prop', 'synthetic');
 
 		for (const { ast, scope, scopes } of [module, instance, template]) {
@@ -466,7 +487,10 @@ export function analyze_component(root, options) {
 		}
 
 		for (const [name, binding] of instance.scope.declarations) {
-			if (binding.kind === 'prop' && binding.node.name !== '$$props') {
+			if (
+				(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
+				binding.node.name !== '$$props'
+			) {
 				const references = binding.references.filter(
 					(r) => r.node !== binding.node && r.path.at(-1)?.type !== 'ExportSpecifier'
 				);
@@ -477,6 +501,10 @@ export function analyze_component(root, options) {
 		}
 
 		analysis.reactive_statements = order_reactive_statements(analysis.reactive_statements);
+	}
+
+	if (analysis.uses_render_tags && (analysis.uses_slots || analysis.slot_names.size > 0)) {
+		error(analysis.slot_names.values().next().value, 'conflicting-slot-usage');
 	}
 
 	// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
@@ -529,6 +557,7 @@ export function analyze_component(root, options) {
 		for (const element of analysis.elements) {
 			prune(analysis.css.ast, element);
 		}
+		warn_unused(analysis.css.ast, analysis.warnings);
 
 		outer: for (const element of analysis.elements) {
 			if (element.metadata.scoped) {
@@ -605,20 +634,38 @@ const legacy_scope_tweaker = {
 		/** @type {import('../types.js').ReactiveStatement} */
 		const reactive_statement = {
 			assignments: new Set(),
-			dependencies: new Set()
+			dependencies: []
 		};
 
 		next({ ...state, reactive_statement, function_depth: state.scope.function_depth + 1 });
 
+		// Every referenced binding becomes a dependency, unless it's on
+		// the left-hand side of an `=` assignment
 		for (const [name, nodes] of state.scope.references) {
 			const binding = state.scope.get(name);
 			if (binding === null) continue;
 
-			// Include bindings that have references other than assignments and their own declarations
-			if (
-				nodes.some((n) => n.node !== binding.node && !reactive_statement.assignments.has(n.node))
-			) {
-				reactive_statement.dependencies.add(binding);
+			for (const { node, path } of nodes) {
+				/** @type {import('estree').Expression} */
+				let left = node;
+
+				let i = path.length - 1;
+				let parent = /** @type {import('estree').Expression} */ (path.at(i));
+				while (parent.type === 'MemberExpression') {
+					left = parent;
+					parent = /** @type {import('estree').Expression} */ (path.at(--i));
+				}
+
+				if (
+					parent.type === 'AssignmentExpression' &&
+					parent.operator === '=' &&
+					parent.left === left
+				) {
+					continue;
+				}
+
+				reactive_statement.dependencies.push(binding);
+				break;
 			}
 		}
 
@@ -627,8 +674,8 @@ const legacy_scope_tweaker = {
 		// Ideally this would be in the validation file, but that isn't possible because this visitor
 		// calls "next" before setting the reactive statements.
 		if (
-			reactive_statement.dependencies.size &&
-			[...reactive_statement.dependencies].every(
+			reactive_statement.dependencies.length &&
+			reactive_statement.dependencies.every(
 				(d) => d.scope === state.analysis.module.scope && d.declaration_kind !== 'const'
 			)
 		) {
@@ -657,15 +704,29 @@ const legacy_scope_tweaker = {
 		}
 	},
 	AssignmentExpression(node, { state, next }) {
-		if (state.reactive_statement && node.operator === '=') {
-			if (node.left.type === 'MemberExpression') {
-				const id = object(node.left);
-				if (id !== null) {
-					state.reactive_statement.assignments.add(id);
-				}
-			} else {
+		if (state.reactive_statement) {
+			const id = node.left.type === 'MemberExpression' ? object(node.left) : node.left;
+			if (id !== null) {
 				for (const id of extract_identifiers(node.left)) {
-					state.reactive_statement.assignments.add(id);
+					const binding = state.scope.get(id.name);
+
+					if (binding) {
+						state.reactive_statement.assignments.add(binding);
+					}
+				}
+			}
+		}
+
+		next();
+	},
+	UpdateExpression(node, { state, next }) {
+		if (state.reactive_statement) {
+			const id = node.argument.type === 'MemberExpression' ? object(node.argument) : node.argument;
+			if (id?.type === 'Identifier') {
+				const binding = state.scope.get(id.name);
+
+				if (binding) {
+					state.reactive_statement.assignments.add(binding);
 				}
 			}
 		}
@@ -753,12 +814,13 @@ const legacy_scope_tweaker = {
 					state.scope.get(specifier.local.name)
 				);
 				if (
-					binding.kind === 'state' ||
-					binding.kind === 'frozen_state' ||
-					(binding.kind === 'normal' &&
-						(binding.declaration_kind === 'let' || binding.declaration_kind === 'var'))
+					binding !== null &&
+					(binding.kind === 'state' ||
+						binding.kind === 'frozen_state' ||
+						(binding.kind === 'normal' &&
+							(binding.declaration_kind === 'let' || binding.declaration_kind === 'var')))
 				) {
-					binding.kind = 'prop';
+					binding.kind = 'bindable_prop';
 					if (specifier.exported.name !== specifier.local.name) {
 						binding.prop_alias = specifier.exported.name;
 					}
@@ -796,7 +858,7 @@ const legacy_scope_tweaker = {
 			for (const declarator of node.declaration.declarations) {
 				for (const id of extract_identifiers(declarator.id)) {
 					const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
-					binding.kind = 'prop';
+					binding.kind = 'bindable_prop';
 				}
 			}
 		}
@@ -885,11 +947,24 @@ const runes_scope_tweaker = {
 					property.key.type === 'Identifier'
 						? property.key.name
 						: /** @type {string} */ (/** @type {import('estree').Literal} */ (property.key).value);
-				const initial = property.value.type === 'AssignmentPattern' ? property.value.right : null;
+				let initial = property.value.type === 'AssignmentPattern' ? property.value.right : null;
 
 				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
 				binding.prop_alias = alias;
-				binding.initial = initial; // rewire initial from $props() to the actual initial value
+
+				// rewire initial from $props() to the actual initial value, stripping $bindable() if necessary
+				if (
+					initial?.type === 'CallExpression' &&
+					initial.callee.type === 'Identifier' &&
+					initial.callee.name === '$bindable'
+				) {
+					binding.initial = /** @type {import('estree').Expression | null} */ (
+						initial.arguments[0] ?? null
+					);
+					binding.kind = 'bindable_prop';
+				} else {
+					binding.initial = initial;
+				}
 			}
 		}
 	},
@@ -935,25 +1010,6 @@ const runes_scope_tweaker = {
 function is_known_safe_call(node, context) {
 	const callee = node.callee;
 
-	// Check for selector() API calls
-	if (callee.type === 'MemberExpression' && callee.object.type === 'Identifier') {
-		const binding = context.state.scope.get(callee.object.name);
-		const selector_binding = context.state.scope.get('selector');
-		if (
-			selector_binding !== null &&
-			selector_binding.declaration_kind === 'import' &&
-			selector_binding.initial !== null &&
-			selector_binding.initial.type === 'ImportDeclaration' &&
-			selector_binding.initial.source.value === 'svelte' &&
-			binding !== null &&
-			binding.initial !== null &&
-			binding.initial.type === 'CallExpression' &&
-			binding.initial.callee.type === 'Identifier' &&
-			binding.initial.callee.name === 'selector'
-		) {
-			return true;
-		}
-	}
 	// String / Number / BigInt / Boolean casting calls
 	if (callee.type === 'Identifier') {
 		const name = callee.name;
@@ -1036,7 +1092,7 @@ const common_visitors = {
 				break;
 			}
 		}
-		context.state.analysis.slot_names.add(name);
+		context.state.analysis.slot_names.set(name, node);
 	},
 	StyleDirective(node, context) {
 		if (node.value === true) {
@@ -1072,6 +1128,7 @@ const common_visitors = {
 			}
 
 			if (
+				context.state.analysis.runes &&
 				node !== binding.node &&
 				// If we have $state that can be proxied or frozen and isn't re-assigned, then that means
 				// it's likely not using a primitive value and thus this warning isn't that helpful.
@@ -1284,7 +1341,8 @@ const common_visitors = {
 				ancestor.type === 'SvelteFragment' ||
 				ancestor.type === 'SnippetBlock'
 			) {
-				// Inside a slot or a snippet -> this resets the namespace, so we can't determine it
+				// Inside a slot or a snippet -> this resets the namespace, so assume the component namespace
+				node.metadata.svg = context.state.options.namespace === 'svg';
 				return;
 			}
 			if (ancestor.type === 'SvelteElement' || ancestor.type === 'RegularElement') {
@@ -1344,21 +1402,21 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	const lookup = new Map();
 
 	for (const [node, declaration] of unsorted_reactive_declarations) {
-		declaration.assignments.forEach(({ name }) => {
-			const statements = lookup.get(name) ?? [];
+		for (const binding of declaration.assignments) {
+			const statements = lookup.get(binding.node.name) ?? [];
 			statements.push([node, declaration]);
-			lookup.set(name, statements);
-		});
+			lookup.set(binding.node.name, statements);
+		}
 	}
 
 	/** @type {Array<[string, string]>} */
 	const edges = [];
 
 	for (const [, { assignments, dependencies }] of unsorted_reactive_declarations) {
-		for (const { name } of assignments) {
-			for (const { node } of dependencies) {
-				if (![...assignments].find(({ name }) => node.name === name)) {
-					edges.push([name, node.name]);
+		for (const assignment of assignments) {
+			for (const dependency of dependencies) {
+				if (!assignments.has(dependency)) {
+					edges.push([assignment.node.name, dependency.node.name]);
 				}
 			}
 		}
@@ -1382,14 +1440,17 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	 */
 	const add_declaration = (node, declaration) => {
 		if ([...reactive_declarations.values()].includes(declaration)) return;
-		declaration.dependencies.forEach(({ node: { name } }) => {
-			if ([...declaration.assignments].some((a) => a.name === name)) return;
-			for (const [node, earlier] of lookup.get(name) ?? []) {
+
+		for (const binding of declaration.dependencies) {
+			if (declaration.assignments.has(binding)) continue;
+			for (const [node, earlier] of lookup.get(binding.node.name) ?? []) {
 				add_declaration(node, earlier);
 			}
-		});
+		}
+
 		reactive_declarations.set(node, declaration);
 	};
+
 	for (const [node, declaration] of unsorted_reactive_declarations) {
 		add_declaration(node, declaration);
 	}

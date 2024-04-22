@@ -1,76 +1,56 @@
-import { HEAD_BLOCK } from '../../constants.js';
-import {
-	current_hydration_fragment,
-	get_hydration_fragment,
-	hydrating,
-	set_current_hydration_fragment
-} from '../hydration.js';
+import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrate_nodes } from '../hydration.js';
 import { empty } from '../operations.js';
-import { render_effect } from '../../reactivity/effects.js';
-import { remove } from '../reconciler.js';
-import { current_block } from '../../runtime.js';
+import { block } from '../../reactivity/effects.js';
+import { HYDRATION_END, HYDRATION_START } from '../../../../constants.js';
 
 /**
- * @param {(anchor: Node | null) => void} render_fn
+ * @type {Node | undefined}
+ */
+let head_anchor;
+
+export function reset_head_anchor() {
+	head_anchor = undefined;
+}
+
+/**
+ * @param {(anchor: Node) => import('#client').Dom | void} render_fn
  * @returns {void}
  */
 export function head(render_fn) {
-	/** @type {import('#client').HeadBlock} */
-	const block = {
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('#client').Block} */ (current_block),
-		// transition
-		r: null,
-		// type
-		t: HEAD_BLOCK
-	};
-
 	// The head function may be called after the first hydration pass and ssr comment nodes may still be present,
 	// therefore we need to skip that when we detect that we're not in hydration mode.
-	let hydration_fragment = null;
-	let previous_hydration_fragment = null;
+	let previous_hydrate_nodes = null;
+	let was_hydrating = hydrating;
 
-	let is_hydrating = hydrating;
-	if (is_hydrating) {
-		hydration_fragment = get_hydration_fragment(document.head.firstChild);
-		previous_hydration_fragment = current_hydration_fragment;
-		set_current_hydration_fragment(hydration_fragment);
+	/** @type {Comment | Text} */
+	var anchor;
+
+	if (hydrating) {
+		previous_hydrate_nodes = hydrate_nodes;
+
+		// There might be multiple head blocks in our app, so we need to account for each one needing independent hydration.
+		if (head_anchor === undefined) {
+			head_anchor = /** @type {import('#client').TemplateNode} */ (document.head.firstChild);
+		}
+
+		while (
+			head_anchor.nodeType !== 8 ||
+			/** @type {Comment} */ (head_anchor).data !== HYDRATION_START
+		) {
+			head_anchor = /** @type {import('#client').TemplateNode} */ (head_anchor.nextSibling);
+		}
+
+		head_anchor = /** @type {import('#client').TemplateNode} */ (hydrate_anchor(head_anchor));
+		head_anchor = /** @type {import('#client').TemplateNode} */ (head_anchor.nextSibling);
+	} else {
+		anchor = document.head.appendChild(empty());
 	}
 
 	try {
-		const head_effect = render_effect(
-			() => {
-				const current = block.d;
-				if (current !== null) {
-					remove(current);
-					block.d = null;
-				}
-				let anchor = null;
-				if (!hydrating) {
-					anchor = empty();
-					document.head.appendChild(anchor);
-				}
-				render_fn(anchor);
-			},
-			block,
-			false
-		);
-
-		head_effect.ondestroy = () => {
-			const current = block.d;
-			if (current !== null) {
-				remove(current);
-			}
-		};
-
-		block.e = head_effect;
+		block(() => render_fn(anchor));
 	} finally {
-		if (is_hydrating) {
-			set_current_hydration_fragment(previous_hydration_fragment);
+		if (was_hydrating) {
+			set_hydrate_nodes(/** @type {import('#client').TemplateNode[]} */ (previous_hydrate_nodes));
 		}
 	}
 }

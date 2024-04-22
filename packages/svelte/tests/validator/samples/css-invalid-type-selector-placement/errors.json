@@ -1,0 +1,14 @@
+[
+	{
+		"code": "invalid-css-type-selector-placement",
+		"message": ":global(...) must not be followed with a type selector",
+		"start": {
+			"line": 17,
+			"column": 14
+		},
+		"end": {
+			"line": 17,
+			"column": 16
+		}
+	}
+]

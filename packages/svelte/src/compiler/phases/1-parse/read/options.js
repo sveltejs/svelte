@@ -11,7 +11,9 @@ export default function read_options(node) {
 	/** @type {import('#compiler').SvelteOptions} */
 	const component_options = {
 		start: node.start,
-		end: node.end
+		end: node.end,
+		// @ts-ignore
+		attributes: node.attributes
 	};
 
 	if (!node) {

@@ -1,11 +1,10 @@
 <script>
-	import { log } from './log.js';
 	const action = () => {}
 </script>
-<div use:action onclick={() => log.push('clicked container')} onkeydown={() => {}}>
-	<div use:action onclick={(e) => { log.push('clicked div 1') }}>
-		<div onclick={(e) => { log.push('clicked div 2') }}>
-			<button onclick={(e) => { log.push('clicked button') }}>
+<div use:action onclick={() => console.log('clicked container')} onkeydown={() => {}}>
+	<div use:action onclick={(e) => { console.log('clicked div 1') }}>
+		<div onclick={(e) => { console.log('clicked div 2') }}>
+			<button onclick={(e) => { console.log('clicked button') }}>
 				Button
 			</button>
 		</div>

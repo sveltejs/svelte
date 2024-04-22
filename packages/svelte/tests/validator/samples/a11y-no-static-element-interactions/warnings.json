@@ -2,7 +2,7 @@
 	{
 		"code": "a11y-no-static-element-interactions",
 		"end": {
-			"column": 29,
+			"column": 33,
 			"line": 17
 		},
 		"message": "A11y: <div> with keydown handler must have an ARIA role",

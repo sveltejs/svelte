@@ -12,6 +12,22 @@ export const PROPS_IS_RUNES = 1 << 1;
 export const PROPS_IS_UPDATED = 1 << 2;
 export const PROPS_IS_LAZY_INITIAL = 1 << 3;
 
+export const TRANSITION_IN = 1;
+export const TRANSITION_OUT = 1 << 1;
+export const TRANSITION_GLOBAL = 1 << 2;
+
+export const TEMPLATE_FRAGMENT = 1;
+export const TEMPLATE_USE_IMPORT_NODE = 1 << 1;
+
+export const HYDRATION_START = '[';
+export const HYDRATION_END = ']';
+export const HYDRATION_END_ELSE = `${HYDRATION_END}!`; // used to indicate that an `{:else}...` block was rendered
+
+export const UNINITIALIZED = Symbol();
+
+/** List of elements that require raw contents and should not have SSR comments put in them */
+export const RawTextElements = ['textarea', 'script', 'style', 'title'];
+
 /** List of Element events that will be delegated */
 export const DelegatedEvents = [
 	'beforeinput',
@@ -83,11 +99,11 @@ export const DOMBooleanAttributes = [
 	'required',
 	'reversed',
 	'seamless',
-	'selected'
+	'selected',
+	'webkitdirectory'
 ];
 
 export const namespace_svg = 'http://www.w3.org/2000/svg';
-export const namespace_html = 'http://www.w3.org/1999/xhtml';
 
 // while `input` is also an interactive element, it is never moved by the browser, so we don't need to check for it
 export const interactive_elements = new Set([

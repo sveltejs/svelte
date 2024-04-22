@@ -1,10 +1,11 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
-import { render_effect } from '../../reactivity/effects.js';
 import { get_descriptors, map_get, map_set, object_assign } from '../../utils.js';
 import { AttributeAliases, DelegatedEvents, namespace_svg } from '../../../../constants.js';
 import { delegate } from './events.js';
 import { autofocus } from './misc.js';
+import { effect } from '../../reactivity/effects.js';
+import { run } from '../../../shared/utils.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -14,62 +15,43 @@ import { autofocus } from './misc.js';
  */
 export function remove_input_attr_defaults(dom) {
 	if (hydrating) {
-		attr(dom, 'value', null);
-		attr(dom, 'checked', null);
+		set_attribute(dom, 'value', null);
+		set_attribute(dom, 'checked', null);
 	}
 }
 
 /**
- * @param {Element} dom
- * @param {string} attribute
- * @param {() => string} value
- */
-export function attr_effect(dom, attribute, value) {
-	render_effect(() => {
-		attr(dom, attribute, value());
-	});
-}
-
-/**
- * @param {Element} dom
+ * @param {Element} element
  * @param {string} attribute
  * @param {string | null} value
  */
-export function attr(dom, attribute, value) {
+export function set_attribute(element, attribute, value) {
 	value = value == null ? null : value + '';
 
-	if (DEV) {
-		check_src_in_dev_hydration(dom, attribute, value);
-	}
+	// @ts-expect-error
+	var attributes = (element.__attributes ??= {});
 
-	if (
-		!hydrating ||
-		(dom.getAttribute(attribute) !== value &&
-			// If we reset those, they would result in another network request, which we want to avoid.
+	if (hydrating) {
+		attributes[attribute] = element.getAttribute(attribute);
+
+		if (attribute === 'src' || attribute === 'href' || attribute === 'srcset') {
+			check_src_in_dev_hydration(element, attribute, value);
+
+			// If we reset these attributes, they would result in another network request, which we want to avoid.
 			// We assume they are the same between client and server as checking if they are equal is expensive
 			// (we can't just compare the strings as they can be different between client and server but result in the
 			// same url, so we would need to create hidden anchor elements to compare them)
-			attribute !== 'src' &&
-			attribute !== 'href' &&
-			attribute !== 'srcset')
-	) {
-		if (value === null) {
-			dom.removeAttribute(attribute);
-		} else {
-			dom.setAttribute(attribute, value);
+			return;
 		}
 	}
-}
 
-/**
- * @param {Element} dom
- * @param {string} attribute
- * @param {() => string} value
- */
-export function xlink_attr_effect(dom, attribute, value) {
-	render_effect(() => {
-		xlink_attr(dom, attribute, value());
-	});
+	if (attributes[attribute] === (attributes[attribute] = value)) return;
+
+	if (value === null) {
+		element.removeAttribute(attribute);
+	} else {
+		element.setAttribute(attribute, value);
+	}
 }
 
 /**
@@ -77,19 +59,8 @@ export function xlink_attr_effect(dom, attribute, value) {
  * @param {string} attribute
  * @param {string} value
  */
-export function xlink_attr(dom, attribute, value) {
+export function set_xlink_attribute(dom, attribute, value) {
 	dom.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
-}
-
-/**
- * @param {any} node
- * @param {string} prop
- * @param {() => any} value
- */
-export function set_custom_element_data_effect(node, prop, value) {
-	render_effect(() => {
-		set_custom_element_data(node, prop, value());
-	});
 }
 
 /**
@@ -99,39 +70,26 @@ export function set_custom_element_data_effect(node, prop, value) {
  */
 export function set_custom_element_data(node, prop, value) {
 	if (prop in node) {
-		node[prop] = typeof node[prop] === 'boolean' && value === '' ? true : value;
+		var curr_val = node[prop];
+		var next_val = typeof curr_val === 'boolean' && value === '' ? true : value;
+		if (typeof curr_val !== 'object' || curr_val !== next_val) {
+			node[prop] = next_val;
+		}
 	} else {
-		attr(node, prop, value);
+		set_attribute(node, prop, value);
 	}
 }
 
 /**
- * Like `spread_attributes` but self-contained
- * @param {Element & ElementCSSInlineStyle} dom
- * @param {() => Record<string, unknown>[]} attrs
- * @param {boolean} lowercase_attributes
- * @param {string} css_hash
- */
-export function spread_attributes_effect(dom, attrs, lowercase_attributes, css_hash) {
-	/** @type {Record<string, any> | undefined} */
-	var current;
-
-	render_effect(() => {
-		current = spread_attributes(dom, current, attrs(), lowercase_attributes, css_hash);
-	});
-}
-
-/**
  * Spreads attributes onto a DOM element, taking into account the currently set attributes
- * @param {Element & ElementCSSInlineStyle} dom
- * @param {Record<string, unknown> | undefined} prev
- * @param {Record<string, unknown>[]} attrs
+ * @param {Element & ElementCSSInlineStyle} element
+ * @param {Record<string, any> | undefined} prev
+ * @param {Record<string, any>} next New attributes - this function mutates this object
  * @param {boolean} lowercase_attributes
  * @param {string} css_hash
- * @returns {Record<string, unknown>}
+ * @returns {Record<string, any>}
  */
-export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_hash) {
-	var next = object_assign({}, ...attrs);
+export function set_attributes(element, prev, next, lowercase_attributes, css_hash) {
 	var has_hash = css_hash.length !== 0;
 
 	for (var key in prev) {
@@ -144,8 +102,13 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 		next.class = '';
 	}
 
-	var setters = map_get(setters_cache, dom.nodeName);
-	if (!setters) map_set(setters_cache, dom.nodeName, (setters = get_setters(dom)));
+	var setters = map_get(setters_cache, element.nodeName);
+	if (!setters) map_set(setters_cache, element.nodeName, (setters = get_setters(element)));
+
+	// @ts-expect-error
+	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes ??= {});
+	/** @type {Array<() => void>} */
+	var events = [];
 
 	for (key in next) {
 		var value = next[key];
@@ -170,27 +133,32 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 			}
 
 			if (!delegated && prev?.[key]) {
-				dom.removeEventListener(event_name, /** @type {any} */ (prev[key]), opts);
+				element.removeEventListener(event_name, /** @type {any} */ (prev[key]), opts);
 			}
 
 			if (value != null) {
 				if (!delegated) {
-					dom.addEventListener(event_name, value, opts);
+					if (!prev) {
+						events.push(() => element.addEventListener(event_name, value, opts));
+					} else {
+						element.addEventListener(event_name, value, opts);
+					}
 				} else {
 					// @ts-ignore
-					dom[`__${event_name}`] = value;
+					element[`__${event_name}`] = value;
 					delegate([event_name]);
 				}
 			}
 		} else if (value == null) {
-			dom.removeAttribute(key);
+			attributes[key] = null;
+			element.removeAttribute(key);
 		} else if (key === 'style') {
-			dom.style.cssText = value + '';
+			element.style.cssText = value + '';
 		} else if (key === 'autofocus') {
-			autofocus(/** @type {HTMLElement} */ (dom), Boolean(value));
+			autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
 		} else if (key === '__value' || key === 'value') {
 			// @ts-ignore
-			dom.value = dom[key] = dom.__value = value;
+			element.value = element[key] = element.__value = value;
 		} else {
 			var name = key;
 			if (lowercase_attributes) {
@@ -199,17 +167,11 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 			}
 
 			if (setters.includes(name)) {
-				if (DEV) {
-					check_src_in_dev_hydration(dom, name, value);
-				}
-
-				if (
-					!hydrating ||
-					//  @ts-ignore see attr method for an explanation of src/srcset
-					(dom[name] !== value && name !== 'src' && name !== 'href' && name !== 'srcset')
-				) {
+				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
+					check_src_in_dev_hydration(element, name, value);
+				} else {
 					// @ts-ignore
-					dom[name] = value;
+					element[name] = value;
 				}
 			} else if (typeof value !== 'function') {
 				if (has_hash && name === 'class') {
@@ -217,9 +179,15 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 					value += css_hash;
 				}
 
-				attr(dom, name, value);
+				set_attribute(element, name, value);
 			}
 		}
+	}
+
+	// On the first run, ensure that events are added after bindings so
+	// that their listeners fire after the binding listeners
+	if (!prev) {
+		effect(() => events.forEach(run));
 	}
 
 	return next;
@@ -227,28 +195,12 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 
 /**
  * @param {Element} node
- * @param {() => Record<string, unknown>[]} attrs
+ * @param {Record<string, any> | undefined} prev
+ * @param {Record<string, any>} next The new attributes - this function mutates this object
  * @param {string} css_hash
  */
-export function spread_dynamic_element_attributes_effect(node, attrs, css_hash) {
-	/** @type {Record<string, any> | undefined} */
-	var current;
-
-	render_effect(() => {
-		current = spread_dynamic_element_attributes(node, current, attrs(), css_hash);
-	});
-}
-
-/**
- * @param {Element} node
- * @param {Record<string, unknown> | undefined} prev
- * @param {Record<string, unknown>[]} attrs
- * @param {string} css_hash
- */
-export function spread_dynamic_element_attributes(node, prev, attrs, css_hash) {
+export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 	if (node.tagName.includes('-')) {
-		var next = object_assign({}, ...attrs);
-
 		for (var key in prev) {
 			if (!(key in next)) {
 				next[key] = null;
@@ -260,15 +212,15 @@ export function spread_dynamic_element_attributes(node, prev, attrs, css_hash) {
 		}
 
 		return next;
-	} else {
-		return spread_attributes(
-			/** @type {Element & ElementCSSInlineStyle} */ (node),
-			prev,
-			attrs,
-			node.namespaceURI !== namespace_svg,
-			css_hash
-		);
 	}
+
+	return set_attributes(
+		/** @type {Element & ElementCSSInlineStyle} */ (node),
+		prev,
+		next,
+		node.namespaceURI !== namespace_svg,
+		css_hash
+	);
 }
 
 /**
@@ -301,22 +253,20 @@ function get_setters(element) {
 }
 
 /**
- * @param {any} dom
+ * @param {any} element
  * @param {string} attribute
  * @param {string | null} value
  */
-function check_src_in_dev_hydration(dom, attribute, value) {
-	if (!hydrating) return;
-	if (attribute !== 'src' && attribute !== 'href' && attribute !== 'srcset') return;
-
-	if (attribute === 'srcset' && srcset_url_equal(dom, value)) return;
-	if (src_url_equal(dom.getAttribute(attribute) ?? '', value ?? '')) return;
+function check_src_in_dev_hydration(element, attribute, value) {
+	if (!DEV) return;
+	if (attribute === 'srcset' && srcset_url_equal(element, value)) return;
+	if (src_url_equal(element.getAttribute(attribute) ?? '', value ?? '')) return;
 
 	// eslint-disable-next-line no-console
 	console.error(
 		`Detected a ${attribute} attribute value change during hydration. This will not be repaired during hydration, ` +
 			`the ${attribute} value that came from the server will be used. Related element:`,
-		dom,
+		element,
 		' Differing value:',
 		value
 	);
@@ -342,7 +292,7 @@ function split_srcset(srcset) {
  * @param {string | undefined | null} srcset
  * @returns {boolean}
  */
-export function srcset_url_equal(element, srcset) {
+function srcset_url_equal(element, srcset) {
 	var element_urls = split_srcset(element.srcset);
 	var urls = split_srcset(srcset ?? '');
 

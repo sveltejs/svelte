@@ -1,0 +1,17 @@
+	/* :global {*/
+		.x {
+			color: green;
+		}
+	/*}*/
+
+	div.svelte-xyz {
+		.y {
+			color: green;
+		}
+	}
+
+	/* (unused) .unused :global {
+		.z {
+			color: red;
+		}
+	}*/

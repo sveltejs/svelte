@@ -17,7 +17,10 @@ export function event(event_name, dom, handler, capture, passive) {
 	 * @this {EventTarget}
 	 */
 	function target_handler(/** @type {Event} */ event) {
-		handle_event_propagation(dom, event);
+		if (!capture) {
+			// Only call in the bubble phase, else delegated events would be called before the capturing events
+			handle_event_propagation(dom, event);
+		}
 		if (!event.cancelBubble) {
 			return handler.call(this, event);
 		}
@@ -119,36 +122,42 @@ export function handle_event_propagation(handler_element, event) {
 		}
 	});
 
-	while (current_target !== null) {
+	/** @param {Element} current_target */
+	function next(current_target) {
 		/** @type {null | Element} */
 		var parent_element =
 			current_target.parentNode || /** @type {any} */ (current_target).host || null;
-		var internal_prop_name = '__' + event_name;
-		// @ts-ignore
-		var delegated = current_target[internal_prop_name];
 
-		if (delegated !== undefined && !(/** @type {any} */ (current_target).disabled)) {
-			if (is_array(delegated)) {
-				var [fn, ...data] = delegated;
-				fn.apply(current_target, [event, ...data]);
-			} else {
-				delegated.call(current_target, event);
+		try {
+			// @ts-expect-error
+			var delegated = current_target['__' + event_name];
+
+			if (delegated !== undefined && !(/** @type {any} */ (current_target).disabled)) {
+				if (is_array(delegated)) {
+					var [fn, ...data] = delegated;
+					fn.apply(current_target, [event, ...data]);
+				} else {
+					delegated.call(current_target, event);
+				}
+			}
+		} finally {
+			if (
+				!event.cancelBubble &&
+				parent_element !== handler_element &&
+				parent_element !== null &&
+				current_target !== handler_element
+			) {
+				next(parent_element);
 			}
 		}
-
-		if (
-			event.cancelBubble ||
-			parent_element === handler_element ||
-			current_target === handler_element
-		) {
-			break;
-		}
-
-		current_target = parent_element;
 	}
 
-	// @ts-expect-error is used above
-	event.__root = handler_element;
-	// @ts-expect-error is used above
-	current_target = handler_element;
+	try {
+		next(current_target);
+	} finally {
+		// @ts-expect-error is used above
+		event.__root = handler_element;
+		// @ts-expect-error is used above
+		current_target = handler_element;
+	}
 }

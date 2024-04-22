@@ -31,7 +31,9 @@ export const PassiveEvents = ['wheel', 'touchstart', 'touchmove', 'touchend', 't
 export const Runes = /** @type {const} */ ([
 	'$state',
 	'$state.frozen',
+	'$state.snapshot',
 	'$props',
+	'$bindable',
 	'$derived',
 	'$derived.by',
 	'$effect',
@@ -39,7 +41,8 @@ export const Runes = /** @type {const} */ ([
 	'$effect.active',
 	'$effect.root',
 	'$inspect',
-	'$inspect().with'
+	'$inspect().with',
+	'$host'
 ]);
 
 /**

@@ -4,939 +4,515 @@ import {
 	EACH_IS_CONTROLLED,
 	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
-	EACH_KEYED
+	EACH_KEYED,
+	HYDRATION_END_ELSE,
+	HYDRATION_START
 } from '../../../../constants.js';
-import { noop } from '../../../common.js';
+import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
+import { empty } from '../operations.js';
+import { remove } from '../reconciler.js';
+import { untrack } from '../../runtime.js';
 import {
-	current_hydration_fragment,
-	get_hydration_fragment,
-	hydrate_block_anchor,
-	hydrating,
-	set_current_hydration_fragment
-} from '../hydration.js';
-import { clear_text_content, empty } from '../operations.js';
-import { insert, remove } from '../reconciler.js';
-import { current_block, execute_effect } from '../../runtime.js';
-import { destroy_effect, render_effect } from '../../reactivity/effects.js';
+	block,
+	branch,
+	destroy_effect,
+	effect,
+	run_out_transitions,
+	pause_children,
+	pause_effect,
+	resume_effect
+} from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
-import { trigger_transitions } from '../elements/transitions.js';
-import { is_array, is_frozen, map_get, map_set } from '../../utils.js';
-import { EACH_BLOCK, EACH_ITEM_BLOCK, STATE_SYMBOL } from '../../constants.js';
-
-const NEW_BLOCK = -1;
-const MOVED_BLOCK = 99999999;
-const LIS_BLOCK = -2;
+import { is_array, is_frozen } from '../../utils.js';
+import { INERT, STATE_SYMBOL } from '../../constants.js';
+import { push_template_node } from '../template.js';
 
 /**
- * @param {number} flags
- * @param {Element | Comment} anchor
- * @returns {import('../../types.js').EachBlock}
+ * The row of a keyed each block that is currently updating. We track this
+ * so that `animate:` directives have something to attach themselves to
+ * @type {import('#client').EachItem | null}
  */
-export function create_each_block(flags, anchor) {
-	return {
-		// anchor
-		a: anchor,
-		// dom
-		d: null,
-		// flags
-		f: flags,
-		// items
-		v: [],
-		// effect
-		e: null,
-		p: /** @type {import('../../types.js').Block} */ (current_block),
-		// transition
-		r: null,
-		// transitions
-		s: [],
-		// type
-		t: EACH_BLOCK
-	};
+export let current_each_item = null;
+
+/** @param {import('#client').EachItem | null} item */
+export function set_current_each_item(item) {
+	current_each_item = item;
 }
 
 /**
- * @param {any | import('../../types.js').Value<any>} item
- * @param {number | import('../../types.js').Value<number>} index
- * @param {null | unknown} key
- * @returns {import('../../types.js').EachItemBlock}
+ * @param {any} _
+ * @param {number} i
  */
-export function create_each_item_block(item, index, key) {
-	return {
-		// animate transition
-		a: null,
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// index
-		i: index,
-		// key
-		k: key,
-		// item
-		v: item,
-		// parent
-		p: /** @type {import('../../types.js').EachBlock} */ (current_block),
-		// transition
-		r: null,
-		// transitions
-		s: null,
-		// type
-		t: EACH_ITEM_BLOCK
-	};
+export function index(_, i) {
+	return i;
+}
+
+/**
+ * Pause multiple effects simultaneously, and coordinate their
+ * subsequent destruction. Used in each blocks
+ * @param {import('#client').EachItem[]} items
+ * @param {null | Node} controlled_anchor
+ * @param {() => void} [callback]
+ */
+function pause_effects(items, controlled_anchor, callback) {
+	/** @type {import('#client').TransitionManager[]} */
+	var transitions = [];
+	var length = items.length;
+
+	for (var i = 0; i < length; i++) {
+		pause_children(items[i].e, transitions, true);
+	}
+
+	// If we have a controlled anchor, it means that the each block is inside a single
+	// DOM element, so we can apply a fast-path for clearing the contents of the element.
+	if (length > 0 && transitions.length === 0 && controlled_anchor !== null) {
+		var parent_node = /** @type {Element} */ (controlled_anchor.parentNode);
+		parent_node.textContent = '';
+		parent_node.append(controlled_anchor);
+	}
+
+	run_out_transitions(transitions, () => {
+		for (var i = 0; i < length; i++) {
+			destroy_effect(items[i].e);
+		}
+
+		if (callback !== undefined) callback();
+	});
 }
 
 /**
  * @template V
- * @param {Element | Comment} anchor_node
- * @param {() => V[]} collection
+ * @param {Element | Comment} anchor The next sibling node, or the parent node if this is a 'controlled' block
  * @param {number} flags
- * @param {null | ((item: V) => string)} key_fn
- * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
+ * @param {() => V[]} get_collection
+ * @param {(value: V, index: number) => any} get_key
+ * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: import('#client').MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
- * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
  * @returns {void}
  */
-function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_fn) {
-	const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-	const block = create_each_block(flags, anchor_node);
+export function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn = null) {
+	/** @type {import('#client').EachState} */
+	var state = { flags, items: new Map(), next: null };
 
-	/** @type {null | import('../../types.js').Render} */
-	let current_fallback = null;
-	hydrate_block_anchor(anchor_node, is_controlled);
+	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
-	/** @type {V[]} */
-	let array;
+	if (is_controlled) {
+		var parent_node = /** @type {Element} */ (anchor);
 
-	/** @type {Array<string> | null} */
-	let keys = null;
+		anchor = hydrating
+			? /** @type {Comment | Text} */ (
+					hydrate_anchor(/** @type {Comment | Text} */ (parent_node.firstChild))
+				)
+			: parent_node.appendChild(empty());
+	}
 
-	/** @type {null | import('../../types.js').Effect} */
-	let render = null;
+	/** @type {import('#client').Effect | null} */
+	var fallback = null;
 
-	/**
-	 * Whether or not there was a "rendered fallback but want to render items" (or vice versa) hydration mismatch.
-	 * Needs to be a `let` or else it isn't treeshaken out
-	 */
-	let mismatch = false;
+	block(() => {
+		var collection = get_collection();
 
-	block.r =
-		/** @param {import('../../types.js').Transition} transition */
-		(transition) => {
-			const fallback = /** @type {import('../../types.js').Render} */ (current_fallback);
-			const transitions = fallback.s;
-			transitions.add(transition);
-			transition.f(() => {
-				transitions.delete(transition);
-				if (transitions.size === 0) {
-					if (fallback.e !== null) {
-						if (fallback.d !== null) {
-							remove(fallback.d);
-							fallback.d = null;
-						}
-						destroy_effect(fallback.e);
-						fallback.e = null;
+		var array = is_array(collection)
+			? collection
+			: collection == null
+				? []
+				: Array.from(collection);
+
+		var length = array.length;
+
+		// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
+		// are treated as reactive, so they get wrapped in a signal.
+		var flags = state.flags;
+		if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
+			flags ^= EACH_IS_STRICT_EQUALS;
+
+			// Additionally if we're in an keyed each block, we'll need ensure the items are all wrapped in signals.
+			if ((flags & EACH_KEYED) !== 0 && (flags & EACH_ITEM_REACTIVE) === 0) {
+				flags ^= EACH_ITEM_REACTIVE;
+			}
+		}
+
+		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
+		let mismatch = false;
+
+		if (hydrating) {
+			var is_else = /** @type {Comment} */ (anchor).data === HYDRATION_END_ELSE;
+
+			if (is_else !== (length === 0)) {
+				// hydration mismatch — remove the server-rendered DOM and start over
+				remove(hydrate_nodes);
+				set_hydrating(false);
+				mismatch = true;
+			}
+		}
+
+		// this is separate to the previous block because `hydrating` might change
+		if (hydrating) {
+			/** @type {Node} */
+			var child_anchor = hydrate_nodes[0];
+
+			/** @type {import('#client').EachItem | import('#client').EachState} */
+			var prev = state;
+
+			/** @type {import('#client').EachItem} */
+			var item;
+
+			for (var i = 0; i < length; i++) {
+				if (
+					child_anchor.nodeType !== 8 ||
+					/** @type {Comment} */ (child_anchor).data !== HYDRATION_START
+				) {
+					// If `nodes` is null, then that means that the server rendered fewer items than what
+					// expected, so break out and continue appending non-hydrated items
+					mismatch = true;
+					set_hydrating(false);
+					break;
+				}
+
+				var child_open = /** @type {Comment} */ (child_anchor);
+				child_anchor = hydrate_anchor(child_anchor);
+				var value = array[i];
+				var key = get_key(value, i);
+				item = create_item(child_open, child_anchor, prev, null, value, key, i, render_fn, flags);
+				state.items.set(key, item);
+				child_anchor = /** @type {Comment} */ (child_anchor.nextSibling);
+
+				prev = item;
+			}
+
+			// remove excess nodes
+			if (length > 0) {
+				while (child_anchor !== anchor) {
+					var next = /** @type {import('#client').TemplateNode} */ (child_anchor.nextSibling);
+					/** @type {import('#client').TemplateNode} */ (child_anchor).remove();
+					child_anchor = next;
+				}
+			}
+		}
+
+		if (!hydrating) {
+			reconcile(array, state, anchor, render_fn, flags, get_key);
+		}
+
+		if (fallback_fn !== null) {
+			if (length === 0) {
+				if (fallback) {
+					resume_effect(fallback);
+				} else {
+					fallback = branch(() => fallback_fn(anchor));
+				}
+			} else if (fallback !== null) {
+				pause_effect(fallback, () => {
+					fallback = null;
+				});
+			}
+		}
+
+		if (mismatch) {
+			// continue in hydration mode
+			set_hydrating(true);
+		}
+	});
+}
+
+/**
+ * @template V
+ * @param {Array<V>} array
+ * @param {import('#client').EachState} state
+ * @param {Element | Comment | Text} anchor
+ * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: number | import('#client').Source<number>) => void} render_fn
+ * @param {number} flags
+ * @param {(value: V, index: number) => any} get_key
+ * @returns {void}
+ */
+function reconcile(array, state, anchor, render_fn, flags, get_key) {
+	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
+	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
+
+	var length = array.length;
+	var items = state.items;
+	var first = state.next;
+	var current = first;
+
+	/** @type {Set<import('#client').EachItem>} */
+	var seen = new Set();
+
+	/** @type {import('#client').EachState | import('#client').EachItem} */
+	var prev = state;
+
+	/** @type {Set<import('#client').EachItem>} */
+	var to_animate = new Set();
+
+	/** @type {import('#client').EachItem[]} */
+	var matched = [];
+
+	/** @type {import('#client').EachItem[]} */
+	var stashed = [];
+
+	/** @type {V} */
+	var value;
+
+	/** @type {any} */
+	var key;
+
+	/** @type {import('#client').EachItem | undefined} */
+	var item;
+
+	/** @type {number} */
+	var i;
+
+	if (is_animated) {
+		for (i = 0; i < length; i += 1) {
+			value = array[i];
+			key = get_key(value, i);
+			item = items.get(key);
+
+			if (item !== undefined) {
+				item.a?.measure();
+				to_animate.add(item);
+			}
+		}
+	}
+
+	for (i = 0; i < length; i += 1) {
+		value = array[i];
+		key = get_key(value, i);
+		item = items.get(key);
+
+		if (item === undefined) {
+			var child_open = push_template_node(empty());
+			var child_anchor = current ? current.o : anchor;
+
+			child_anchor.before(child_open);
+
+			prev = create_item(
+				child_open,
+				child_anchor,
+				prev,
+				prev.next,
+				value,
+				key,
+				i,
+				render_fn,
+				flags
+			);
+
+			items.set(key, prev);
+
+			matched = [];
+			stashed = [];
+
+			current = prev.next;
+			continue;
+		}
+
+		if (should_update) {
+			update_item(item, value, i, flags);
+		}
+
+		if ((item.e.f & INERT) !== 0) {
+			resume_effect(item.e);
+			if (is_animated) {
+				item.a?.unfix();
+				to_animate.delete(item);
+			}
+		}
+
+		if (item !== current) {
+			if (seen.has(item)) {
+				if (matched.length < stashed.length) {
+					// more efficient to move later items to the front
+					var start = stashed[0];
+					var j;
+
+					prev = start.prev;
+
+					var a = matched[0];
+					var b = matched[matched.length - 1];
+
+					for (j = 0; j < matched.length; j += 1) {
+						move(matched[j], start, anchor);
 					}
+
+					for (j = 0; j < stashed.length; j += 1) {
+						seen.delete(stashed[j]);
+					}
+
+					link(a.prev, b.next);
+					link(prev, a);
+					link(b, start);
+
+					current = start;
+					prev = b;
+					i -= 1;
+
+					matched = [];
+					stashed = [];
+				} else {
+					// more efficient to move earlier items to the back
+					seen.delete(item);
+					move(item, current, anchor);
+
+					link(item.prev, item.next);
+					link(item, prev.next);
+					link(prev, item);
+
+					prev = item;
+				}
+
+				continue;
+			}
+
+			matched = [];
+			stashed = [];
+
+			while (current !== null && current.k !== key) {
+				seen.add(current);
+				stashed.push(current);
+				current = current.next;
+			}
+
+			if (current === null) {
+				continue;
+			}
+
+			item = current;
+		}
+
+		matched.push(item);
+		prev = item;
+		current = item.next;
+	}
+
+	const to_destroy = Array.from(seen);
+
+	while (current) {
+		to_destroy.push(current);
+		current = current.next;
+	}
+
+	var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
+
+	if (is_animated) {
+		for (i = 0; i < to_destroy.length; i += 1) {
+			to_destroy[i].a?.measure();
+		}
+
+		for (i = 0; i < to_destroy.length; i += 1) {
+			to_destroy[i].a?.fix();
+		}
+	}
+
+	pause_effects(to_destroy, controlled_anchor, () => {
+		for (var i = 0; i < to_destroy.length; i += 1) {
+			var item = to_destroy[i];
+			items.delete(item.k);
+			link(item.prev, item.next);
+		}
+	});
+
+	if (is_animated) {
+		effect(() => {
+			untrack(() => {
+				for (item of to_animate) {
+					item.a?.apply();
 				}
 			});
-		};
-
-	const create_fallback_effect = () => {
-		/** @type {import('../../types.js').Render} */
-		const fallback = {
-			d: null,
-			e: null,
-			s: new Set(),
-			p: current_fallback
-		};
-		// Managed effect
-		const effect = render_effect(
-			() => {
-				const dom = block.d;
-				if (dom !== null) {
-					remove(dom);
-					block.d = null;
-				}
-				let anchor = block.a;
-				const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
-				if (is_controlled) {
-					// If the each block is controlled, then the anchor node will be the surrounding
-					// element in which the each block is rendered, which requires certain handling
-					// depending on whether we're in hydration mode or not
-					if (!hydrating) {
-						// Create a new anchor on the fly because there's none due to the optimization
-						anchor = empty();
-						block.a.appendChild(anchor);
-					} else {
-						// In case of hydration the anchor will be the first child of the surrounding element
-						anchor = /** @type {Comment} */ (anchor.firstChild);
-					}
-				}
-				/** @type {(anchor: Node) => void} */ (fallback_fn)(anchor);
-				fallback.d = block.d;
-				block.d = null;
-			},
-			block,
-			true
-		);
-		fallback.e = effect;
-		current_fallback = fallback;
-	};
-
-	/** @param {import('../../types.js').EachBlock} block */
-	const render_each = (block) => {
-		const flags = block.f;
-		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-		const anchor_node = block.a;
-		reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, true, keys);
-	};
-
-	const each = render_effect(
-		() => {
-			/** @type {V[]} */
-			const maybe_array = collection();
-			array = is_array(maybe_array)
-				? maybe_array
-				: maybe_array == null
-					? []
-					: Array.from(maybe_array);
-
-			if (key_fn !== null) {
-				keys = array.map(key_fn);
-			} else if ((flags & EACH_KEYED) === 0) {
-				array.map(noop);
-			}
-
-			const length = array.length;
-
-			if (hydrating) {
-				const is_each_else_comment =
-					/** @type {Comment} */ (current_hydration_fragment?.[0])?.data === 'ssr:each_else';
-				// Check for hydration mismatch which can happen if the server renders the each fallback
-				// but the client has items, or vice versa. If so, remove everything inside the anchor and start fresh.
-				if ((is_each_else_comment && length) || (!is_each_else_comment && !length)) {
-					remove(current_hydration_fragment);
-					set_current_hydration_fragment(null);
-					mismatch = true;
-				} else if (is_each_else_comment) {
-					// Remove the each_else comment node or else it will confuse the subsequent hydration algorithm
-					/** @type {import('../../types.js').TemplateNode[]} */ (
-						current_hydration_fragment
-					).shift();
-				}
-			}
-
-			if (fallback_fn !== null) {
-				if (length === 0) {
-					if (block.v.length !== 0 || render === null) {
-						render_each(block);
-						create_fallback_effect();
-						return;
-					}
-				} else if (block.v.length === 0 && current_fallback !== null) {
-					const fallback = current_fallback;
-					const transitions = fallback.s;
-					if (transitions.size === 0) {
-						if (fallback.d !== null) {
-							remove(fallback.d);
-							fallback.d = null;
-						}
-					} else {
-						trigger_transitions(transitions, 'out');
-					}
-				}
-			}
-
-			if (render !== null) {
-				execute_effect(render);
-			}
-		},
-		block,
-		false
-	);
-
-	render = render_effect(render_each, block, true);
-
-	if (mismatch) {
-		// Set a fragment so that Svelte continues to operate in hydration mode
-		set_current_hydration_fragment([]);
-	}
-
-	each.ondestroy = () => {
-		const flags = block.f;
-		const anchor_node = block.a;
-		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-		let fallback = current_fallback;
-		while (fallback !== null) {
-			const dom = fallback.d;
-			if (dom !== null) {
-				remove(dom);
-			}
-			const effect = fallback.e;
-			if (effect !== null) {
-				destroy_effect(effect);
-			}
-			fallback = fallback.p;
-		}
-		// Clear the array
-		reconcile_fn([], block, anchor_node, is_controlled, render_fn, flags, false, keys);
-		destroy_effect(/** @type {import('#client').Effect} */ (render));
-	};
-
-	block.e = each;
-}
-
-/**
- * @template V
- * @param {Element | Comment} anchor_node
- * @param {() => V[]} collection
- * @param {number} flags
- * @param {null | ((item: V) => string)} key_fn
- * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
- * @param {null | ((anchor: Node) => void)} fallback_fn
- * @returns {void}
- */
-export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fallback_fn) {
-	each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_tracked_array);
-}
-
-/**
- * @template V
- * @param {Element | Comment} anchor_node
- * @param {() => V[]} collection
- * @param {number} flags
- * @param {(anchor: null, item: V, index: import('#client').MaybeSource<number>) => void} render_fn
- * @param {null | ((anchor: Node) => void)} fallback_fn
- * @returns {void}
- */
-export function each_indexed(anchor_node, collection, flags, render_fn, fallback_fn) {
-	each(anchor_node, collection, flags, null, render_fn, fallback_fn, reconcile_indexed_array);
-}
-
-/**
- * @template V
- * @param {Array<V>} array
- * @param {import('../../types.js').EachBlock} each_block
- * @param {Element | Comment | Text} dom
- * @param {boolean} is_controlled
- * @param {(anchor: null, item: V, index: number | import('../../types.js').Source<number>) => void} render_fn
- * @param {number} flags
- * @param {boolean} apply_transitions
- * @returns {void}
- */
-function reconcile_indexed_array(
-	array,
-	each_block,
-	dom,
-	is_controlled,
-	render_fn,
-	flags,
-	apply_transitions
-) {
-	// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
-	// are treated as reactive, so they get wrapped in a signal.
-	if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
-		flags ^= EACH_IS_STRICT_EQUALS;
-	}
-	var a_blocks = each_block.v;
-	var active_transitions = each_block.s;
-
-	/** @type {number | void} */
-	var a = a_blocks.length;
-
-	/** @type {number} */
-	var b = array.length;
-	var length = Math.max(a, b);
-	var index = 0;
-
-	/** @type {Array<import('../../types.js').EachItemBlock>} */
-	var b_blocks;
-	var block;
-
-	if (active_transitions.length !== 0) {
-		destroy_active_transition_blocks(active_transitions);
-	}
-
-	if (b === 0) {
-		b_blocks = [];
-		// Remove old blocks
-		if (is_controlled && a !== 0) {
-			clear_text_content(dom);
-		}
-		while (index < length) {
-			block = a_blocks[index++];
-			destroy_each_item_block(block, active_transitions, apply_transitions, is_controlled);
-		}
-	} else {
-		var item;
-		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-		let mismatch = false;
-		b_blocks = Array(b);
-		if (hydrating) {
-			// Hydrate block
-			var hydration_list = /** @type {import('../../types.js').TemplateNode[]} */ (
-				current_hydration_fragment
-			);
-			var hydrating_node = hydration_list[0];
-			for (; index < length; index++) {
-				var fragment = get_hydration_fragment(hydrating_node);
-				set_current_hydration_fragment(fragment);
-				if (!fragment) {
-					// If fragment is null, then that means that the server rendered less items than what
-					// the client code specifies -> break out and continue with client-side node creation
-					mismatch = true;
-					break;
-				}
-
-				item = array[index];
-				block = each_item_block(item, null, index, render_fn, flags);
-				b_blocks[index] = block;
-
-				hydrating_node = /** @type {import('../../types.js').TemplateNode} */ (
-					/** @type {Node} */ (/** @type {Node} */ (fragment[fragment.length - 1]).nextSibling)
-						.nextSibling
-				);
-			}
-
-			remove_excess_hydration_nodes(hydration_list, hydrating_node);
-		}
-
-		for (; index < length; index++) {
-			if (index >= a) {
-				// Add block
-				item = array[index];
-				block = each_item_block(item, null, index, render_fn, flags);
-				b_blocks[index] = block;
-				insert_each_item_block(block, dom, is_controlled, null);
-			} else if (index >= b) {
-				// Remove block
-				block = a_blocks[index];
-				destroy_each_item_block(block, active_transitions, apply_transitions);
-			} else {
-				// Update block
-				item = array[index];
-				block = a_blocks[index];
-				b_blocks[index] = block;
-				update_each_item_block(block, item, index, flags);
-			}
-		}
-
-		if (mismatch) {
-			// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
-			set_current_hydration_fragment([]);
-		}
-	}
-
-	each_block.v = b_blocks;
-}
-
-/**
- * Reconcile arrays by the equality of the elements in the array. This algorithm
- * is based on Ivi's reconcilation logic:
- * https://github.com/localvoid/ivi/blob/9f1bd0918f487da5b131941228604763c5d8ef56/packages/ivi/src/client/core.ts#L968
- * @template V
- * @param {Array<V>} array
- * @param {import('../../types.js').EachBlock} each_block
- * @param {Element | Comment | Text} dom
- * @param {boolean} is_controlled
- * @param {(anchor: null, item: V, index: number | import('../../types.js').Source<number>) => void} render_fn
- * @param {number} flags
- * @param {boolean} apply_transitions
- * @param {Array<string> | null} keys
- * @returns {void}
- */
-function reconcile_tracked_array(
-	array,
-	each_block,
-	dom,
-	is_controlled,
-	render_fn,
-	flags,
-	apply_transitions,
-	keys
-) {
-	// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
-	// are treated as reactive, so they get wrapped in a signal.
-	if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
-		flags ^= EACH_IS_STRICT_EQUALS;
-		// Additionally as we're in an keyed each block, we'll need ensure the itens are all wrapped in signals.
-		if ((flags & EACH_ITEM_REACTIVE) === 0) {
-			flags ^= EACH_ITEM_REACTIVE;
-		}
-	}
-	var a_blocks = each_block.v;
-	const is_computed_key = keys !== null;
-	var active_transitions = each_block.s;
-
-	/** @type {number | void} */
-	var a = a_blocks.length;
-
-	/** @type {number} */
-	var b = array.length;
-
-	/** @type {Array<import('../../types.js').EachItemBlock>} */
-	var b_blocks;
-	var block;
-
-	if (active_transitions.length !== 0) {
-		destroy_active_transition_blocks(active_transitions);
-	}
-
-	if (b === 0) {
-		b_blocks = [];
-		// Remove old blocks
-		if (is_controlled && a !== 0) {
-			clear_text_content(dom);
-		}
-		while (a > 0) {
-			block = a_blocks[--a];
-			destroy_each_item_block(block, active_transitions, apply_transitions, is_controlled);
-		}
-	} else {
-		var a_end = a - 1;
-		var b_end = b - 1;
-		var key;
-		var item;
-		var idx;
-		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-		let mismatch = false;
-		b_blocks = Array(b);
-		if (hydrating) {
-			// Hydrate block
-			var fragment;
-			var hydration_list = /** @type {import('../../types.js').TemplateNode[]} */ (
-				current_hydration_fragment
-			);
-			var hydrating_node = hydration_list[0];
-			while (b > 0) {
-				fragment = get_hydration_fragment(hydrating_node);
-				set_current_hydration_fragment(fragment);
-				if (!fragment) {
-					// If fragment is null, then that means that the server rendered less items than what
-					// the client code specifies -> break out and continue with client-side node creation
-					mismatch = true;
-					break;
-				}
-
-				idx = b_end - --b;
-				item = array[idx];
-				key = is_computed_key ? keys[idx] : item;
-				block = each_item_block(item, key, idx, render_fn, flags);
-				b_blocks[idx] = block;
-
-				// Get the <!--ssr:..--> tag of the next item in the list
-				// The fragment array can be empty if each block has no content
-				hydrating_node = /** @type {import('../../types.js').TemplateNode} */ (
-					/** @type {Node} */ ((fragment[fragment.length - 1] || hydrating_node).nextSibling)
-						.nextSibling
-				);
-			}
-
-			remove_excess_hydration_nodes(hydration_list, hydrating_node);
-		}
-
-		if (a === 0) {
-			// Create new blocks
-			while (b > 0) {
-				idx = b_end - --b;
-				item = array[idx];
-				key = is_computed_key ? keys[idx] : item;
-				block = each_item_block(item, key, idx, render_fn, flags);
-				b_blocks[idx] = block;
-				insert_each_item_block(block, dom, is_controlled, null);
-			}
-		} else {
-			var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
-			var should_update_block =
-				(flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0 || is_animated;
-			var start = 0;
-
-			/** @type {null | Text | Element | Comment} */
-			var sibling = null;
-			item = array[b_end];
-			key = is_computed_key ? keys[b_end] : item;
-			// Step 1
-			outer: while (true) {
-				// From the end
-				while (a_blocks[a_end].k === key) {
-					block = a_blocks[a_end--];
-					item = array[b_end];
-					if (should_update_block) {
-						update_each_item_block(block, item, b_end, flags);
-					}
-					sibling = get_first_child(block);
-					b_blocks[b_end] = block;
-					if (start > --b_end || start > a_end) {
-						break outer;
-					}
-					key = is_computed_key ? keys[b_end] : item;
-				}
-				item = array[start];
-				key = is_computed_key ? keys[start] : item;
-				// At the start
-				while (start <= a_end && start <= b_end && a_blocks[start].k === key) {
-					item = array[start];
-					block = a_blocks[start];
-					if (should_update_block) {
-						update_each_item_block(block, item, start, flags);
-					}
-					b_blocks[start] = block;
-					++start;
-					key = is_computed_key ? keys[start] : array[start];
-				}
-				break;
-			}
-			// Step 2
-			if (start > a_end) {
-				while (b_end >= start) {
-					item = array[b_end];
-					key = is_computed_key ? keys[b_end] : item;
-					block = each_item_block(item, key, b_end, render_fn, flags);
-					b_blocks[b_end--] = block;
-					sibling = insert_each_item_block(block, dom, is_controlled, sibling);
-				}
-			} else if (start > b_end) {
-				b = start;
-				do {
-					if ((block = a_blocks[b++]) !== null) {
-						destroy_each_item_block(block, active_transitions, apply_transitions);
-					}
-				} while (b <= a_end);
-			} else {
-				// Step 3
-				var pos = 0;
-				var b_length = b_end - start + 1;
-				var sources = new Int32Array(b_length);
-				var item_index = new Map();
-				for (b = 0; b < b_length; ++b) {
-					a = b + start;
-					sources[b] = NEW_BLOCK;
-					item = array[a];
-					key = is_computed_key ? keys[a] : item;
-					map_set(item_index, key, a);
-				}
-				// If keys are animated, we need to do updates before actual moves
-				if (is_animated) {
-					for (b = start; b <= a_end; ++b) {
-						a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
-						if (a !== undefined) {
-							item = array[a];
-							block = a_blocks[b];
-							update_each_item_block(block, item, a, flags);
-						}
-					}
-				}
-				for (b = start; b <= a_end; ++b) {
-					a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
-					block = a_blocks[b];
-					if (a !== undefined) {
-						pos = pos < a ? a : MOVED_BLOCK;
-						sources[a - start] = b;
-						b_blocks[a] = block;
-					} else if (block !== null) {
-						destroy_each_item_block(block, active_transitions, apply_transitions);
-					}
-				}
-				// Step 4
-				if (pos === MOVED_BLOCK) {
-					mark_lis(sources);
-				}
-				var last_block;
-				var last_sibling;
-				var should_create;
-				while (b_length-- > 0) {
-					b_end = b_length + start;
-					a = sources[b_length];
-					should_create = a === -1;
-					item = array[b_end];
-					if (should_create) {
-						key = is_computed_key ? keys[b_end] : item;
-						block = each_item_block(item, key, b_end, render_fn, flags);
-					} else {
-						block = b_blocks[b_end];
-						if (!is_animated && should_update_block) {
-							update_each_item_block(block, item, b_end, flags);
-						}
-					}
-					if (should_create || (pos === MOVED_BLOCK && a !== LIS_BLOCK)) {
-						last_sibling = last_block === undefined ? sibling : get_first_child(last_block);
-						sibling = insert_each_item_block(block, dom, is_controlled, last_sibling);
-					}
-					b_blocks[b_end] = block;
-					last_block = block;
-				}
-			}
-		}
-
-		if (mismatch) {
-			// Server rendered less nodes than the client -> set empty array so that Svelte continues to operate in hydration mode
-			set_current_hydration_fragment([]);
-		}
-	}
-
-	each_block.v = b_blocks;
-}
-
-/**
- * The server could have rendered more list items than the client specifies.
- * In that case, we need to remove the remaining server-rendered nodes.
- * @param {import('../../types.js').TemplateNode[]} hydration_list
- * @param {import('../../types.js').TemplateNode | null} next_node
- */
-function remove_excess_hydration_nodes(hydration_list, next_node) {
-	if (next_node === null) return;
-	var idx = hydration_list.indexOf(next_node);
-	if (idx !== -1 && hydration_list.length > idx + 1) {
-		remove(hydration_list.slice(idx));
+		});
 	}
 }
 
 /**
- * Longest Increased Subsequence algorithm
- * @param {Int32Array} a
- * @returns {void}
- */
-function mark_lis(a) {
-	var length = a.length;
-	var parent = new Int32Array(length);
-	var index = new Int32Array(length);
-	var index_length = 0;
-	var i = 0;
-
-	/** @type {number} */
-	var j;
-
-	/** @type {number} */
-	var k;
-
-	/** @type {number} */
-	var lo;
-
-	/** @type {number} */
-	var hi;
-
-	// Skip -1 values at the start of the input array `a`.
-	for (; a[i] === NEW_BLOCK; ++i) {
-		/**/
-	}
-
-	index[0] = i++;
-
-	for (; i < length; ++i) {
-		k = a[i];
-
-		if (k !== NEW_BLOCK) {
-			// Ignore -1 values.
-			j = index[index_length];
-
-			if (a[j] < k) {
-				parent[i] = j;
-				index[++index_length] = i;
-			} else {
-				lo = 0;
-				hi = index_length;
-
-				while (lo < hi) {
-					j = (lo + hi) >> 1;
-					if (a[index[j]] < k) {
-						lo = j + 1;
-					} else {
-						hi = j;
-					}
-				}
-
-				if (k < a[index[lo]]) {
-					if (lo > 0) {
-						parent[i] = index[lo - 1];
-					}
-					index[lo] = i;
-				}
-			}
-		}
-	}
-
-	// Mutate input array `a` and assign -2 value to all nodes that are part of LIS.
-	j = index[index_length];
-
-	while (index_length-- >= 0) {
-		a[j] = LIS_BLOCK;
-		j = parent[j];
-	}
-}
-
-/**
- * @param {import('../../types.js').Block} block
- * @param {Element | Comment | Text} dom
- * @param {boolean} is_controlled
- * @param {null | Text | Element | Comment} sibling
- * @returns {Text | Element | Comment}
- */
-function insert_each_item_block(block, dom, is_controlled, sibling) {
-	var current = /** @type {import('../../types.js').TemplateNode} */ (block.d);
-
-	if (sibling === null) {
-		if (is_controlled) {
-			return insert(current, /** @type {Element} */ (dom), null);
-		} else {
-			return insert(current, /** @type {Element} */ (dom.parentNode), dom);
-		}
-	}
-
-	return insert(current, null, sibling);
-}
-
-/**
- * @param {import('../../types.js').Block} block
- * @returns {Text | Element | Comment}
- */
-function get_first_child(block) {
-	var current = block.d;
-
-	if (is_array(current)) {
-		return /** @type {Text | Element | Comment} */ (current[0]);
-	}
-
-	return /** @type {Text | Element | Comment} */ (current);
-}
-
-/**
- * @param {Array<import('../../types.js').EachItemBlock>} active_transitions
- * @returns {void}
- */
-function destroy_active_transition_blocks(active_transitions) {
-	var length = active_transitions.length;
-
-	if (length > 0) {
-		var i = 0;
-		var block;
-		var transition;
-
-		for (; i < length; i++) {
-			block = active_transitions[i];
-			transition = block.r;
-			if (transition !== null) {
-				block.r = null;
-				destroy_each_item_block(block, null, false);
-			}
-		}
-
-		active_transitions.length = 0;
-	}
-}
-
-/**
- * @param {import('../../types.js').Block} block
- * @returns {Text | Element | Comment}
- */
-export function get_first_element(block) {
-	const current = block.d;
-
-	if (is_array(current)) {
-		for (let i = 0; i < current.length; i++) {
-			const node = current[i];
-			if (node.nodeType !== 8) {
-				return node;
-			}
-		}
-	}
-
-	return /** @type {Text | Element | Comment} */ (current);
-}
-
-/**
- * @param {import('../../types.js').EachItemBlock} block
- * @param {any} item
+ * @param {import('#client').EachItem} item
+ * @param {any} value
  * @param {number} index
  * @param {number} type
  * @returns {void}
  */
-function update_each_item_block(block, item, index, type) {
-	const block_v = block.v;
+function update_item(item, value, index, type) {
 	if ((type & EACH_ITEM_REACTIVE) !== 0) {
-		set(block_v, item);
+		set(item.v, value);
 	}
-	const transitions = block.s;
-	const index_is_reactive = (type & EACH_INDEX_REACTIVE) !== 0;
-	// Handle each item animations
-	const each_animation = block.a;
-	if (transitions !== null && (type & EACH_KEYED) !== 0 && each_animation !== null) {
-		each_animation(block, transitions);
-	}
-	if (index_is_reactive) {
-		set(/** @type {import('../../types.js').Value<number>} */ (block.i), index);
+
+	if ((type & EACH_INDEX_REACTIVE) !== 0) {
+		set(/** @type {import('#client').Value<number>} */ (item.i), index);
 	} else {
-		block.i = index;
+		item.i = index;
 	}
-}
-
-/**
- * @param {import('../../types.js').EachItemBlock} block
- * @param {null | Array<import('../../types.js').Block>} transition_block
- * @param {boolean} apply_transitions
- * @param {any} controlled
- * @returns {void}
- */
-export function destroy_each_item_block(
-	block,
-	transition_block,
-	apply_transitions,
-	controlled = false
-) {
-	const transitions = block.s;
-
-	if (apply_transitions && transitions !== null) {
-		// We might have pending key transitions, if so remove them first
-		for (let other of transitions) {
-			if (other.r === 'key') {
-				transitions.delete(other);
-			}
-		}
-		if (transitions.size === 0) {
-			block.s = null;
-		} else {
-			trigger_transitions(transitions, 'out');
-			if (transition_block !== null) {
-				transition_block.push(block);
-			}
-			return;
-		}
-	}
-	const dom = block.d;
-	if (!controlled && dom !== null) {
-		remove(dom);
-	}
-	destroy_effect(/** @type {import('#client').Effect} */ (block.e));
 }
 
 /**
  * @template V
- * @param {V} item
+ * @param {Comment | Text} open
+ * @param {Node} anchor
+ * @param {import('#client').EachItem | import('#client').EachState} prev
+ * @param {import('#client').EachItem | null} next
+ * @param {V} value
  * @param {unknown} key
  * @param {number} index
- * @param {(anchor: null, item: V, index: number | import('../../types.js').Value<number>) => void} render_fn
+ * @param {(anchor: Node, item: V | import('#client').Source<V>, index: number | import('#client').Value<number>) => void} render_fn
  * @param {number} flags
- * @returns {import('../../types.js').EachItemBlock}
+ * @returns {import('#client').EachItem}
  */
-function each_item_block(item, key, index, render_fn, flags) {
-	const each_item_not_reactive = (flags & EACH_ITEM_REACTIVE) === 0;
+function create_item(open, anchor, prev, next, value, key, index, render_fn, flags) {
+	var previous_each_item = current_each_item;
 
-	const item_value = each_item_not_reactive
-		? item
-		: (flags & EACH_IS_STRICT_EQUALS) !== 0
-			? source(item)
-			: mutable_source(item);
+	try {
+		var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
+		var mutable = (flags & EACH_IS_STRICT_EQUALS) === 0;
 
-	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
-	const block = create_each_item_block(item_value, index_value, key);
+		var v = reactive ? (mutable ? mutable_source(value) : source(value)) : value;
+		var i = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
 
-	const effect = render_effect(
-		/** @param {import('../../types.js').EachItemBlock} block */
-		(block) => {
-			render_fn(null, block.v, block.i);
-		},
-		block,
-		true
-	);
+		/** @type {import('#client').EachItem} */
+		var item = {
+			i,
+			v,
+			k: key,
+			a: null,
+			// @ts-expect-error
+			e: null,
+			o: open,
+			prev,
+			next
+		};
 
-	block.e = effect;
-	return block;
+		prev.next = item;
+		if (next !== null) next.prev = item;
+
+		current_each_item = item;
+		item.e = branch(() => render_fn(anchor, v, i));
+
+		return item;
+	} finally {
+		current_each_item = previous_each_item;
+	}
+}
+
+/**
+ * @param {import('#client').EachItem} item
+ * @param {import('#client').EachItem | null} next
+ * @param {Text | Element | Comment} anchor
+ */
+function move(item, next, anchor) {
+	var end = item.next ? item.next.o : anchor;
+	var dest = next ? next.o : anchor;
+
+	var node = /** @type {import('#client').TemplateNode} */ (item.o);
+
+	while (node !== end) {
+		var next_node = /** @type {import('#client').TemplateNode} */ (node.nextSibling);
+		dest.before(node);
+		node = next_node;
+	}
+}
+
+/**
+ *
+ * @param {import('#client').EachItem | import('#client').EachState} prev
+ * @param {import('#client').EachItem | null} next
+ */
+function link(prev, next) {
+	prev.next = next;
+	if (next !== null) next.prev = prev;
 }

@@ -1,1 +1,1 @@
-<div style="{@html text}" />
+<div style="{@html text}"></div>

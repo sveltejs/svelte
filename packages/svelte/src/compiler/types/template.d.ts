@@ -93,6 +93,7 @@ export interface SvelteOptions {
 		 */
 		extend?: ArrowFunctionExpression | Identifier;
 	};
+	attributes: Attribute[];
 }
 
 /** Static text */
@@ -316,10 +317,10 @@ export interface SvelteElement extends BaseElement {
 	tag: Expression;
 	metadata: {
 		/**
-		 * `true`/`false` if this is definitely (not) an svg element.
-		 * `null` means we can't know statically.
+		 * `true` if this is an svg element. The boolean may not be accurate because
+		 * the tag is dynamic, but we do our best to infer it from the template.
 		 */
-		svg: boolean | null;
+		svg: boolean;
 		scoped: boolean;
 	};
 }
@@ -467,6 +468,7 @@ export interface Script extends BaseNode {
 	type: 'Script';
 	context: string;
 	content: Program;
+	attributes: Attribute[];
 }
 
 declare module 'estree' {

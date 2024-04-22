@@ -32,7 +32,6 @@ export class ReactiveSet extends Set {
 
 			for (var element of value) {
 				sources.set(element, source(true));
-				super.add(element);
 			}
 
 			this.#size.v = sources.size;
@@ -48,10 +47,7 @@ export class ReactiveSet extends Set {
 		var proto = ReactiveSet.prototype;
 		var set_proto = Set.prototype;
 
-		/** @type {string} */
-		var method;
-
-		for (method of read_methods) {
+		for (const method of read_methods) {
 			// @ts-ignore
 			proto[method] = function (...v) {
 				get(this.#version);
@@ -60,7 +56,7 @@ export class ReactiveSet extends Set {
 			};
 		}
 
-		for (method of set_like_methods) {
+		for (const method of set_like_methods) {
 			// @ts-ignore
 			proto[method] = function (...v) {
 				get(this.#version);
@@ -101,7 +97,7 @@ export class ReactiveSet extends Set {
 			this.#increment_version();
 		}
 
-		return super.add(value);
+		return this;
 	}
 
 	/** @param {T} value */
@@ -110,13 +106,14 @@ export class ReactiveSet extends Set {
 		var s = sources.get(value);
 
 		if (s !== undefined) {
-			sources.delete(value);
+			var removed = sources.delete(value);
 			set(this.#size, sources.size);
 			set(s, false);
 			this.#increment_version();
+			return removed;
 		}
 
-		return super.delete(value);
+		return false;
 	}
 
 	clear() {
@@ -131,12 +128,11 @@ export class ReactiveSet extends Set {
 		}
 
 		sources.clear();
-		super.clear();
 	}
 
 	keys() {
 		get(this.#version);
-		return this.#sources.keys();
+		return map(this.#sources.keys(), (key) => key, 'Set Iterator');
 	}
 
 	values() {
@@ -144,7 +140,7 @@ export class ReactiveSet extends Set {
 	}
 
 	entries() {
-		return map(this.keys(), (key) => /** @type {[T, T]} */ ([key, key]));
+		return map(this.keys(), (key) => /** @type {[T, T]} */ ([key, key]), 'Set Iterator');
 	}
 
 	[Symbol.iterator]() {

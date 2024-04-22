@@ -121,7 +121,10 @@ function read_type_annotation(parser, optional_allowed = false) {
 	const template =
 		parser.template.slice(0, a).replace(/[^\n]/g, ' ') +
 		insert +
-		parser.template.slice(parser.index);
+		// If this is a type annotation for a function parameter, Acorn-TS will treat subsequent
+		// parameters as part of a sequence expression instead, and will then error on optional
+		// parameters (`?:`). Therefore replace that sequence with something that will not error.
+		parser.template.slice(parser.index).replace(/\?\s*:/g, ':');
 	let expression = parse_expression_at(template, parser.ts, a);
 
 	// `foo: bar = baz` gets mangled — fix it

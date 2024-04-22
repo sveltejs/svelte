@@ -1,7 +1,7 @@
 import { createClassComponent } from '../../../../legacy/legacy-client.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';
-import { open, close } from '../template.js';
-import { define_property } from '../../utils.js';
+import { append } from '../template.js';
+import { define_property, object_keys } from '../../utils.js';
 
 /**
  * @typedef {Object} CustomElementPropDefinition
@@ -98,14 +98,10 @@ if (typeof HTMLElement === 'function') {
 					 * @param {Element} anchor
 					 */
 					return (anchor) => {
-						const node = open(anchor, true, () => {
-							const slot = document.createElement('slot');
-							if (name !== 'default') {
-								slot.name = name;
-							}
-							return slot;
-						});
-						close(anchor, /** @type {Element} */ (node));
+						const slot = document.createElement('slot');
+						if (name !== 'default') slot.name = name;
+
+						append(anchor, slot);
 					};
 				}
 				/** @type {Record<string, any>} */
@@ -142,14 +138,15 @@ if (typeof HTMLElement === 'function') {
 					target: this.shadowRoot || this,
 					props: {
 						...this.$$d,
-						$$slots
+						$$slots,
+						$$host: this
 					}
 				});
 
 				// Reflect component props as attributes
 				this.$$me = render_effect(() => {
 					this.$$r = true;
-					for (const key of Object.keys(this.$$c)) {
+					for (const key of object_keys(this.$$c)) {
 						if (!this.$$p_d[key]?.reflect) continue;
 						this.$$d[key] = this.$$c[key];
 						const attribute_value = get_custom_element_value(
@@ -209,7 +206,7 @@ if (typeof HTMLElement === 'function') {
 		 */
 		$$g_p(attribute_name) {
 			return (
-				Object.keys(this.$$p_d).find(
+				object_keys(this.$$p_d).find(
 					(key) =>
 						this.$$p_d[key].attribute === attribute_name ||
 						(!this.$$p_d[key].attribute && key.toLowerCase() === attribute_name)
@@ -294,12 +291,12 @@ export function create_custom_element(
 			this.$$p_d = props_definition;
 		}
 		static get observedAttributes() {
-			return Object.keys(props_definition).map((key) =>
+			return object_keys(props_definition).map((key) =>
 				(props_definition[key].attribute || key).toLowerCase()
 			);
 		}
 	};
-	Object.keys(props_definition).forEach((prop) => {
+	object_keys(props_definition).forEach((prop) => {
 		define_property(Class.prototype, prop, {
 			get() {
 				return this.$$c && prop in this.$$c ? this.$$c[prop] : this.$$d[prop];

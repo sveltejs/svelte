@@ -1,5 +1,5 @@
-import { pre_effect, user_root_effect } from '../internal/client/reactivity/effects.js';
-import { flushSync } from '../main/main-client.js';
+import { render_effect, effect_root } from '../internal/client/reactivity/effects.js';
+import { flushSync } from '../index-client.js';
 import { ReactiveSet } from './set.js';
 import { assert, test } from 'vitest';
 
@@ -8,16 +8,16 @@ test('set.values()', () => {
 
 	const log: any = [];
 
-	const cleanup = user_root_effect(() => {
-		pre_effect(() => {
+	const cleanup = effect_root(() => {
+		render_effect(() => {
 			log.push(set.size);
 		});
 
-		pre_effect(() => {
+		render_effect(() => {
 			log.push(set.has(3));
 		});
 
-		pre_effect(() => {
+		render_effect(() => {
 			log.push(Array.from(set));
 		});
 	});
@@ -30,7 +30,7 @@ test('set.values()', () => {
 		set.clear();
 	});
 
-	assert.deepEqual(log, [5, true, [1, 2, 3, 4, 5], 4, false, [1, 2, 4, 5], 0, [], false]); // TODO update when we fix effect ordering bug
+	assert.deepEqual(log, [5, true, [1, 2, 3, 4, 5], 4, false, [1, 2, 4, 5], 0, false, []]);
 
 	cleanup();
 });
@@ -40,16 +40,16 @@ test('set.has(...)', () => {
 
 	const log: any = [];
 
-	const cleanup = user_root_effect(() => {
-		pre_effect(() => {
+	const cleanup = effect_root(() => {
+		render_effect(() => {
 			log.push('has 1', set.has(1));
 		});
 
-		pre_effect(() => {
+		render_effect(() => {
 			log.push('has 2', set.has(2));
 		});
 
-		pre_effect(() => {
+		render_effect(() => {
 			log.push('has 3', set.has(3));
 		});
 	});
@@ -76,4 +76,13 @@ test('set.has(...)', () => {
 	]);
 
 	cleanup();
+});
+
+test('set.delete(...)', () => {
+	const set = new ReactiveSet([1, 2, 3]);
+
+	assert.equal(set.delete(3), true);
+	assert.equal(set.delete(3), false);
+
+	assert.deepEqual(Array.from(set.values()), [1, 2]);
 });

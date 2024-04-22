@@ -44,7 +44,6 @@
 					"column": 0
 				}
 			},
-			"leadingComments": [{ "type": "Line", "value": "should not error out" }],
 			"body": [
 				{
 					"type": "VariableDeclaration",
@@ -127,7 +126,30 @@
 					"kind": "let"
 				}
 			],
-			"sourceType": "module"
-		}
+			"sourceType": "module",
+			"leadingComments": [
+				{
+					"type": "Line",
+					"value": "should not error out"
+				}
+			]
+		},
+		"attributes": [
+			{
+				"type": "Attribute",
+				"start": 36,
+				"end": 45,
+				"name": "lang",
+				"value": [
+					{
+						"start": 42,
+						"end": 44,
+						"type": "Text",
+						"raw": "ts",
+						"data": "ts"
+					}
+				]
+			}
+		]
 	}
 }

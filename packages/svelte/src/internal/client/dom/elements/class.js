@@ -1,24 +1,41 @@
 import { hydrating } from '../hydration.js';
 import { set_class_name } from '../operations.js';
-import { render_effect } from '../../reactivity/effects.js';
 
 /**
- * @param {Element} dom
- * @param {() => string} value
- * @returns {void}
- */
-export function class_name_effect(dom, value) {
-	render_effect(() => {
-		class_name(dom, value());
-	});
-}
-
-/**
- * @param {Element} dom
+ * @param {SVGElement} dom
  * @param {string} value
  * @returns {void}
  */
-export function class_name(dom, value) {
+export function set_svg_class(dom, value) {
+	// @ts-expect-error need to add __className to patched prototype
+	var prev_class_name = dom.__className;
+	var next_class_name = to_class(value);
+
+	if (hydrating && dom.getAttribute('class') === next_class_name) {
+		// In case of hydration don't reset the class as it's already correct.
+		// @ts-expect-error need to add __className to patched prototype
+		dom.__className = next_class_name;
+	} else if (
+		prev_class_name !== next_class_name ||
+		(hydrating && dom.getAttribute('class') !== next_class_name)
+	) {
+		if (next_class_name === '') {
+			dom.removeAttribute('class');
+		} else {
+			dom.setAttribute('class', next_class_name);
+		}
+
+		// @ts-expect-error need to add __className to patched prototype
+		dom.__className = next_class_name;
+	}
+}
+
+/**
+ * @param {HTMLElement} dom
+ * @param {string} value
+ * @returns {void}
+ */
+export function set_class(dom, value) {
 	// @ts-expect-error need to add __className to patched prototype
 	var prev_class_name = dom.__className;
 	var next_class_name = to_class(value);
@@ -31,7 +48,10 @@ export function class_name(dom, value) {
 		prev_class_name !== next_class_name ||
 		(hydrating && dom.className !== next_class_name)
 	) {
-		if (next_class_name === '') {
+		// Removing the attribute when the value is only an empty string causes
+		// peformance issues vs simply making the className an empty string. So
+		// we should only remove the class if the the value is nullish.
+		if (value == null) {
 			dom.removeAttribute('class');
 		} else {
 			set_class_name(dom, next_class_name);
@@ -47,7 +67,7 @@ export function class_name(dom, value) {
  * @param {V} value
  * @returns {string | V}
  */
-export function to_class(value) {
+function to_class(value) {
 	return value == null ? '' : value;
 }
 
@@ -57,22 +77,10 @@ export function to_class(value) {
  * @param {boolean} value
  * @returns {void}
  */
-export function class_toggle(dom, class_name, value) {
+export function toggle_class(dom, class_name, value) {
 	if (value) {
 		dom.classList.add(class_name);
 	} else {
 		dom.classList.remove(class_name);
 	}
-}
-
-/**
- * @param {Element} dom
- * @param {string} class_name
- * @param {() => boolean} value
- * @returns {void}
- */
-export function class_toggle_effect(dom, class_name, value) {
-	render_effect(() => {
-		class_toggle(dom, class_name, value());
-	});
 }

@@ -168,6 +168,27 @@ export const javascript_visitors_runes = {
 			body.push(/** @type {import('estree').MethodDefinition} **/ (visit(definition, child_state)));
 		}
 
+		if (state.options.dev && public_state.size > 0) {
+			// add an `[$.ADD_OWNER]` method so that a class with state fields can widen ownership
+			body.push(
+				b.method(
+					'method',
+					b.id('$.ADD_OWNER'),
+					[b.id('owner')],
+					Array.from(public_state.keys()).map((name) =>
+						b.stmt(
+							b.call(
+								'$.add_owner',
+								b.call('$.get', b.member(b.this, b.private_id(name))),
+								b.id('owner')
+							)
+						)
+					),
+					true
+				)
+			);
+		}
+
 		return { ...node, body };
 	},
 	VariableDeclaration(node, { state, visit }) {
@@ -176,7 +197,13 @@ export const javascript_visitors_runes = {
 		for (const declarator of node.declarations) {
 			const init = declarator.init;
 			const rune = get_rune(init, state.scope);
-			if (!rune || rune === '$effect.active' || rune === '$effect.root' || rune === '$inspect') {
+			if (
+				!rune ||
+				rune === '$effect.active' ||
+				rune === '$effect.root' ||
+				rune === '$inspect' ||
+				rune === '$state.snapshot'
+			) {
 				if (init != null && is_hoistable_function(init)) {
 					const hoistable_function = visit(init);
 					state.hoisted.push(
@@ -195,8 +222,7 @@ export const javascript_visitors_runes = {
 			if (rune === '$props') {
 				assert.equal(declarator.id.type, 'ObjectPattern');
 
-				/** @type {string[]} */
-				const seen = [];
+				const seen = state.analysis.exports.map(({ name, alias }) => alias ?? name);
 
 				for (const property of declarator.id.properties) {
 					if (property.type === 'Property') {
@@ -207,33 +233,30 @@ export const javascript_visitors_runes = {
 
 						seen.push(name);
 
-						let id = property.value;
-						let initial = undefined;
-
-						if (property.value.type === 'AssignmentPattern') {
-							id = property.value.left;
-							initial = /** @type {import('estree').Expression} */ (visit(property.value.right));
-						}
-
+						let id =
+							property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
 						assert.equal(id.type, 'Identifier');
-
 						const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
+						const initial =
+							binding.initial &&
+							/** @type {import('estree').Expression} */ (visit(binding.initial));
 
 						if (binding.reassigned || state.analysis.accessors || initial) {
 							declarations.push(b.declarator(id, get_prop_source(binding, state, name, initial)));
 						}
 					} else {
 						// RestElement
-						declarations.push(
-							b.declarator(
-								property.argument,
-								b.call(
-									'$.rest_props',
-									b.id('$$props'),
-									b.array(seen.map((name) => b.literal(name)))
-								)
-							)
-						);
+						/** @type {import('estree').Expression[]} */
+						const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
+
+						if (state.options.dev) {
+							// include rest name, so we can provide informative error messages
+							args.push(
+								b.literal(/** @type {import('estree').Identifier} */ (property.argument).name)
+							);
+						}
+
+						declarations.push(b.declarator(property.argument, b.call('$.rest_props', ...args)));
 					}
 				}
 
@@ -304,7 +327,7 @@ export const javascript_visitors_runes = {
 					declarations.push(
 						b.declarator(
 							b.id(object_id),
-							b.call('$.derived', b.thunk(rune === '$derived.by' ? b.call(value) : value))
+							b.call('$.derived', rune === '$derived.by' ? value : b.thunk(value))
 						)
 					);
 					declarations.push(
@@ -374,7 +397,7 @@ export const javascript_visitors_runes = {
 				const func = context.visit(node.expression.arguments[0]);
 				return {
 					...node,
-					expression: b.call('$.pre_effect', /** @type {import('estree').Expression} */ (func))
+					expression: b.call('$.user_pre_effect', /** @type {import('estree').Expression} */ (func))
 				};
 			}
 		}
@@ -384,15 +407,26 @@ export const javascript_visitors_runes = {
 	CallExpression(node, context) {
 		const rune = get_rune(node, context.state.scope);
 
+		if (rune === '$host') {
+			return b.id('$$props.$$host');
+		}
+
 		if (rune === '$effect.active') {
 			return b.call('$.effect_active');
+		}
+
+		if (rune === '$state.snapshot') {
+			return b.call(
+				'$.snapshot',
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
+			);
 		}
 
 		if (rune === '$effect.root') {
 			const args = /** @type {import('estree').Expression[]} */ (
 				node.arguments.map((arg) => context.visit(arg))
 			);
-			return b.call('$.user_root_effect', ...args);
+			return b.call('$.effect_root', ...args);
 		}
 
 		if (rune === '$inspect' || rune === '$inspect().with') {

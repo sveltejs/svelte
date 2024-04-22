@@ -8,6 +8,8 @@ import {
 	hydrate
 } from 'svelte';
 
+SvelteComponent.element === HTMLElement;
+
 // --------------------------------------------------------------------------- legacy: classes
 
 class LegacyComponent extends SvelteComponent<
@@ -105,7 +107,7 @@ const newComponentEvents2: ComponentEvents<NewComponent> = {
 };
 
 mount(NewComponent, {
-	target: null as any as Document | Element | ShadowRoot | Text | Comment,
+	target: null as any as Document | Element | ShadowRoot,
 	props: {
 		prop: 'foo',
 		// @ts-expect-error
@@ -120,7 +122,7 @@ mount(NewComponent, {
 });
 
 hydrate(NewComponent, {
-	target: null as any as Document | Element | ShadowRoot | Text | Comment,
+	target: null as any as Document | Element | ShadowRoot,
 	props: {
 		prop: 'foo',
 		// @ts-expect-error

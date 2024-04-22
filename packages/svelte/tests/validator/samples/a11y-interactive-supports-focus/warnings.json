@@ -2,79 +2,79 @@
 	{
 		"code": "a11y-interactive-supports-focus",
 		"end": {
+			"column": 48,
+			"line": 11
+		},
+		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",
+		"start": {
+			"column": 0,
+			"line": 11
+		}
+	},
+	{
+		"code": "a11y-interactive-supports-focus",
+		"end": {
+			"column": 51,
+			"line": 12
+		},
+		"message": "A11y: Elements with the 'menuitem' interactive role must have a tabindex value.",
+		"start": {
+			"column": 0,
+			"line": 12
+		}
+	},
+	{
+		"code": "a11y-interactive-supports-focus",
+		"end": {
+			"column": 45,
+			"line": 13
+		},
+		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",
+		"start": {
+			"column": 0,
+			"line": 13
+		}
+	},
+	{
+		"code": "a11y-interactive-supports-focus",
+		"end": {
+			"column": 72,
+			"line": 14
+		},
+		"message": "A11y: Elements with the 'menuitem' interactive role must have a tabindex value.",
+		"start": {
+			"column": 0,
+			"line": 14
+		}
+	},
+	{
+		"code": "a11y-interactive-supports-focus",
+		"end": {
+			"column": 51,
+			"line": 15
+		},
+		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",
+		"start": {
+			"column": 0,
+			"line": 15
+		}
+	},
+	{
+		"code": "a11y-interactive-supports-focus",
+		"end": {
+			"column": 52,
+			"line": 16
+		},
+		"message": "A11y: Elements with the 'menuitem' interactive role must have a tabindex value.",
+		"start": {
+			"column": 0,
+			"line": 16
+		}
+	},
+	{
+		"code": "a11y-interactive-supports-focus",
+		"end": {
 			"column": 44,
-			"line": 11
-		},
-		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",
-		"start": {
-			"column": 0,
-			"line": 11
-		}
-	},
-	{
-		"code": "a11y-interactive-supports-focus",
-		"end": {
-			"column": 46,
-			"line": 12
-		},
-		"message": "A11y: Elements with the 'menuitem' interactive role must have a tabindex value.",
-		"start": {
-			"column": 0,
-			"line": 12
-		}
-	},
-	{
-		"code": "a11y-interactive-supports-focus",
-		"end": {
-			"column": 41,
-			"line": 13
-		},
-		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",
-		"start": {
-			"column": 0,
-			"line": 13
-		}
-	},
-	{
-		"code": "a11y-interactive-supports-focus",
-		"end": {
-			"column": 67,
-			"line": 14
-		},
-		"message": "A11y: Elements with the 'menuitem' interactive role must have a tabindex value.",
-		"start": {
-			"column": 0,
-			"line": 14
-		}
-	},
-	{
-		"code": "a11y-interactive-supports-focus",
-		"end": {
-			"column": 47,
-			"line": 15
-		},
-		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",
-		"start": {
-			"column": 0,
-			"line": 15
-		}
-	},
-	{
-		"code": "a11y-interactive-supports-focus",
-		"end": {
-			"column": 47,
-			"line": 16
-		},
-		"message": "A11y: Elements with the 'menuitem' interactive role must have a tabindex value.",
-		"start": {
-			"column": 0,
-			"line": 16
-		}
-	},
-	{
-		"code": "a11y-interactive-supports-focus",
-		"end": {
-			"column": 40,
 			"line": 17
 		},
 		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",
@@ -86,103 +86,103 @@
 	{
 		"code": "a11y-interactive-supports-focus",
 		"end": {
-			"column": 46,
+			"column": 51,
 			"line": 18
 		},
 		"message": "A11y: Elements with the 'menuitem' interactive role must have a tabindex value.",
 		"start": {
 			"column": 0,
 			"line": 18
-		}
-	},
-	{
-		"code": "a11y-interactive-supports-focus",
-		"end": {
-			"column": 45,
-			"line": 19
-		},
-		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",
-		"start": {
-			"column": 0,
-			"line": 19
-		}
-	},
-	{
-		"code": "a11y-interactive-supports-focus",
-		"end": {
-			"column": 47,
-			"line": 20
-		},
-		"message": "A11y: Elements with the 'menuitem' interactive role must have a tabindex value.",
-		"start": {
-			"column": 0,
-			"line": 20
-		}
-	},
-	{
-		"code": "a11y-interactive-supports-focus",
-		"end": {
-			"column": 45,
-			"line": 21
-		},
-		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",
-		"start": {
-			"column": 0,
-			"line": 21
-		}
-	},
-	{
-		"code": "a11y-interactive-supports-focus",
-		"end": {
-			"column": 47,
-			"line": 22
-		},
-		"message": "A11y: Elements with the 'menuitem' interactive role must have a tabindex value.",
-		"start": {
-			"column": 0,
-			"line": 22
-		}
-	},
-	{
-		"code": "a11y-interactive-supports-focus",
-		"end": {
-			"column": 45,
-			"line": 23
-		},
-		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",
-		"start": {
-			"column": 0,
-			"line": 23
-		}
-	},
-	{
-		"code": "a11y-interactive-supports-focus",
-		"end": {
-			"column": 43,
-			"line": 24
-		},
-		"message": "A11y: Elements with the 'menuitem' interactive role must have a tabindex value.",
-		"start": {
-			"column": 0,
-			"line": 24
-		}
-	},
-	{
-		"code": "a11y-interactive-supports-focus",
-		"end": {
-			"column": 45,
-			"line": 25
-		},
-		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",
-		"start": {
-			"column": 0,
-			"line": 25
 		}
 	},
 	{
 		"code": "a11y-interactive-supports-focus",
 		"end": {
 			"column": 49,
+			"line": 19
+		},
+		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",
+		"start": {
+			"column": 0,
+			"line": 19
+		}
+	},
+	{
+		"code": "a11y-interactive-supports-focus",
+		"end": {
+			"column": 52,
+			"line": 20
+		},
+		"message": "A11y: Elements with the 'menuitem' interactive role must have a tabindex value.",
+		"start": {
+			"column": 0,
+			"line": 20
+		}
+	},
+	{
+		"code": "a11y-interactive-supports-focus",
+		"end": {
+			"column": 49,
+			"line": 21
+		},
+		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",
+		"start": {
+			"column": 0,
+			"line": 21
+		}
+	},
+	{
+		"code": "a11y-interactive-supports-focus",
+		"end": {
+			"column": 52,
+			"line": 22
+		},
+		"message": "A11y: Elements with the 'menuitem' interactive role must have a tabindex value.",
+		"start": {
+			"column": 0,
+			"line": 22
+		}
+	},
+	{
+		"code": "a11y-interactive-supports-focus",
+		"end": {
+			"column": 49,
+			"line": 23
+		},
+		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",
+		"start": {
+			"column": 0,
+			"line": 23
+		}
+	},
+	{
+		"code": "a11y-interactive-supports-focus",
+		"end": {
+			"column": 48,
+			"line": 24
+		},
+		"message": "A11y: Elements with the 'menuitem' interactive role must have a tabindex value.",
+		"start": {
+			"column": 0,
+			"line": 24
+		}
+	},
+	{
+		"code": "a11y-interactive-supports-focus",
+		"end": {
+			"column": 49,
+			"line": 25
+		},
+		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",
+		"start": {
+			"column": 0,
+			"line": 25
+		}
+	},
+	{
+		"code": "a11y-interactive-supports-focus",
+		"end": {
+			"column": 54,
 			"line": 26
 		},
 		"message": "A11y: Elements with the 'menuitem' interactive role must have a tabindex value.",
@@ -194,7 +194,7 @@
 	{
 		"code": "a11y-interactive-supports-focus",
 		"end": {
-			"column": 46,
+			"column": 50,
 			"line": 27
 		},
 		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",
@@ -206,7 +206,7 @@
 	{
 		"code": "a11y-interactive-supports-focus",
 		"end": {
-			"column": 48,
+			"column": 53,
 			"line": 28
 		},
 		"message": "A11y: Elements with the 'menuitem' interactive role must have a tabindex value.",
@@ -218,7 +218,7 @@
 	{
 		"code": "a11y-interactive-supports-focus",
 		"end": {
-			"column": 44,
+			"column": 48,
 			"line": 29
 		},
 		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",
@@ -230,7 +230,7 @@
 	{
 		"code": "a11y-mouse-events-have-key-events",
 		"end": {
-			"column": 44,
+			"column": 48,
 			"line": 29
 		},
 		"message": "A11y: 'mouseout' event must be accompanied by 'blur' event",
@@ -242,7 +242,7 @@
 	{
 		"code": "a11y-interactive-supports-focus",
 		"end": {
-			"column": 48,
+			"column": 53,
 			"line": 30
 		},
 		"message": "A11y: Elements with the 'menuitem' interactive role must have a tabindex value.",
@@ -254,7 +254,7 @@
 	{
 		"code": "a11y-mouse-events-have-key-events",
 		"end": {
-			"column": 48,
+			"column": 53,
 			"line": 30
 		},
 		"message": "A11y: 'mouseover' event must be accompanied by 'focus' event",
@@ -266,7 +266,7 @@
 	{
 		"code": "a11y-interactive-supports-focus",
 		"end": {
-			"column": 43,
+			"column": 47,
 			"line": 31
 		},
 		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",

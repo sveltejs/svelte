@@ -7,7 +7,8 @@ import {
 
 /** @satisfies {Warnings} */
 const css = {
-	'unused-selector': () => 'Unused CSS selector'
+	/** @param {string} name */
+	'css-unused-selector': (name) => `Unused CSS selector "${name}"`
 };
 
 /** @satisfies {Warnings} */
@@ -38,7 +39,9 @@ const runes = {
 	'derived-iife': () =>
 		`Use \`$derived.by(() => {...})\` instead of \`$derived((() => {...})());\``,
 	'invalid-props-declaration': () =>
-		`Component properties are declared using $props() in runes mode. Did you forget to call the function?`
+		`Component properties are declared using $props() in runes mode. Did you forget to call the function?`,
+	'invalid-bindable-declaration': () =>
+		`Bindable component properties are declared using $bindable() in runes mode. Did you forget to call the function?`
 };
 
 /** @satisfies {Warnings} */
@@ -230,7 +233,12 @@ const legacy = {
 		'All dependencies of the reactive declaration are declared in a module script and will not be reactive',
 	/** @param {string} name */
 	'unused-export-let': (name) =>
-		`Component has unused export property '${name}'. If it is for external reference only, please consider using \`export const ${name}\``
+		`Component has unused export property '${name}'. If it is for external reference only, please consider using \`export const ${name}\``,
+	'deprecated-slot-element': () =>
+		`Using <slot> to render parent content is deprecated. Use {@render ...} tags instead.`,
+	/** @param {string} name */
+	'deprecated-event-handler': (name) =>
+		`Using on:${name} to listen to the ${name} event is is deprecated. Use the event attribute on${name} instead.`
 };
 
 const block = {
@@ -240,6 +248,12 @@ const block = {
 const options = {
 	'missing-custom-element-compile-option': () =>
 		"The 'customElement' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?"
+};
+
+const misc = {
+	/** @param {string} name */
+	'invalid-self-closing-tag': (name) =>
+		`Self-closing HTML tags for non-void elements are ambiguous — use <${name} ...></${name}> rather than <${name} ... />`
 };
 
 /** @satisfies {Warnings} */
@@ -253,7 +267,8 @@ const warnings = {
 	...components,
 	...legacy,
 	...block,
-	...options
+	...options,
+	...misc
 };
 
 /** @typedef {typeof warnings} AllWarnings */
@@ -299,6 +314,11 @@ export function warn(array, node, path, code, ...args) {
 					current.nodes
 				)
 			);
+		}
+
+		// Style nodes
+		if (current.type === 'StyleSheet' && current.content.comment) {
+			ignores.push(...current.content.comment.ignores);
 		}
 	}
 

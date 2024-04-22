@@ -1,5 +1,5 @@
 import { hydrating } from '../../hydration.js';
-import { destroy_effect, managed_effect, render_effect } from '../../../reactivity/effects.js';
+import { render_effect, effect } from '../../../reactivity/effects.js';
 import { listen } from './shared.js';
 
 /** @param {TimeRanges} ranges */
@@ -115,47 +115,21 @@ export function bind_ready_state(media, update) {
 export function bind_playback_rate(media, get_value, update) {
 	var updating = false;
 
-	var callback = () => {
-		if (!updating) {
-			update(media.playbackRate);
-		}
-		updating = false;
-	};
-
 	// Needs to happen after the element is inserted into the dom, else playback will be set back to 1 by the browser.
 	// For hydration we could do it immediately but the additional code is not worth the lost microtask.
+	effect(() => {
+		var value = get_value();
 
-	/** @type {import('#client').Effect | undefined} */
-	var render;
-	var destroyed = false;
-
-	var effect = managed_effect(() => {
-		destroy_effect(effect);
-
-		if (destroyed) return;
-
-		if (get_value() == null) {
-			callback();
+		// through isNaN we also allow number strings, which is more robust
+		if (!isNaN(/** @type {any} */ (value)) && value !== media.playbackRate) {
+			updating = true;
+			media.playbackRate = /** @type {number} */ (value);
 		}
 
-		listen(media, ['ratechange'], callback, false);
-
-		render = render_effect(() => {
-			var value = get_value();
-
-			// through isNaN we also allow number strings, which is more robust
-			if (!isNaN(/** @type {any} */ (value)) && value !== media.playbackRate) {
-				updating = true;
-				media.playbackRate = /** @type {number} */ (value);
-			}
+		listen(media, ['ratechange'], () => {
+			if (!updating) update(media.playbackRate);
+			updating = false;
 		});
-	});
-
-	render_effect(() => () => {
-		destroyed = true;
-		if (render) {
-			destroy_effect(render);
-		}
 	});
 }
 

@@ -8,4 +8,4 @@
 	});
 </script>
 
-<div id="target" />
+<div id="target"></div>

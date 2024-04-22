@@ -1,0 +1,14 @@
+[
+	{
+		"code": "invalid-css-global-selector-list",
+		"message": ":global(...) must not contain type or universal selectors when used in a compound selector",
+		"start": {
+			"line": 20,
+			"column": 6
+		},
+		"end": {
+			"line": 20,
+			"column": 17
+		}
+	}
+]

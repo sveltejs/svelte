@@ -1,16 +1,16 @@
 <a href="/" role="link">a link</a>
-<article role="article" />
-<aside role="complementary" />
-<body role="document" />
-<button role="button" />
-<datalist role="listbox" />
-<dd role="definition" />
-<dfn role="term" />
-<details role="group" />
-<dialog role="dialog" />
-<dt role="term" />
-<fieldset role="group" />
-<figure role="figure" />
+<article role="article"></article>
+<aside role="complementary"></aside>
+<body role="document"></body>
+<button role="button"></button>
+<datalist role="listbox"></datalist>
+<dd role="definition"></dd>
+<dfn role="term"></dfn>
+<details role="group"></details>
+<dialog role="dialog"></dialog>
+<dt role="term"></dt>
+<fieldset role="group"></fieldset>
+<figure role="figure"></figure>
 <form role="form">foo</form>
 <h1 role="heading">heading</h1>
 <h2 role="heading">heading</h2>
@@ -21,28 +21,28 @@
 <hr role="separator" />
 <!-- <li role="listitem" /> allowed since CSS list-style none removes semantic meaning and role brings it back -->
 <link role="link" />
-<main role="main" />
-<menu role="list" />
-<nav role="navigation" />
+<main role="main"></main>
+<menu role="list"></menu>
+<nav role="navigation"></nav>
 <!-- <ol role="list" /> allowed, see comment above -->
-<optgroup role="group" />
-<option role="option" />
-<output role="status" />
-<progress role="progressbar" />
-<section role="region" />
-<summary role="button" />
-<table role="table" />
-<tbody role="rowgroup" />
-<textarea role="textbox" />
-<tfoot role="rowgroup" />
-<thead role="rowgroup" />
-<tr role="row" />
+<optgroup role="group"></optgroup>
+<option role="option"></option>
+<output role="status"></output>
+<progress role="progressbar"></progress>
+<section role="region"></section>
+<summary role="button"></summary>
+<table role="table"></table>
+<tbody role="rowgroup"></tbody>
+<textarea role="textbox"></textarea>
+<tfoot role="rowgroup"></tfoot>
+<thead role="rowgroup"></thead>
+<tr role="row"></tr>
 <!--<ul role="list" /> allowed, see comment above -->
 
 <!-- Tested header/footer not nested in section/article -->
-<header role="banner" />
-<footer role="contentinfo" />
+<header role="banner"></header>
+<footer role="contentinfo"></footer>
 
 <!-- Allowed -->
 <!-- svelte-ignore a11y-no-noninteractive-element-to-interactive-role -->
-<menu role="menu" />
+<menu role="menu"></menu>

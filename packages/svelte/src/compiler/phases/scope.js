@@ -400,9 +400,9 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 						(attribute) => attribute.type === 'Attribute' && attribute.name === 'slot'
 					)
 				) {
-					// <div slot="..."> inherits the scope above the component, because slots are hella weird
-					scopes.set(child, state.scope);
-					visit(child);
+					// <div slot="..."> inherits the scope above the component unless the component is a named slot itself, because slots are hella weird
+					scopes.set(child, is_default_slot ? state.scope : scope);
+					visit(child, { scope: is_default_slot ? state.scope : scope });
 				} else {
 					if (child.type === 'ExpressionTag') {
 						// expression tag is a special case — we don't visit it directly, but via process_children,
@@ -506,7 +506,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				scopes.set(node, scope);
 
 				for (const id of extract_identifiers(node.param)) {
-					state.scope.declare(id, 'normal', 'let');
+					scope.declare(id, 'normal', 'let');
 				}
 
 				next({ scope });
@@ -599,26 +599,38 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		AwaitBlock(node, context) {
-			context.next();
+			context.visit(node.expression);
 
-			if (node.then && node.value !== null) {
-				const then_scope = /** @type {Scope} */ (scopes.get(node.then));
-				const value_scope = context.state.scope.child();
-				for (const id of extract_identifiers(node.value)) {
-					then_scope.declare(id, 'normal', 'const');
-					value_scope.declare(id, 'normal', 'const');
-				}
-				scopes.set(node.value, value_scope);
+			if (node.pending) {
+				context.visit(node.pending);
 			}
 
-			if (node.catch && node.error !== null) {
-				const catch_scope = /** @type {Scope} */ (scopes.get(node.catch));
-				const error_scope = context.state.scope.child();
-				for (const id of extract_identifiers(node.error)) {
-					catch_scope.declare(id, 'normal', 'const');
-					error_scope.declare(id, 'normal', 'const');
+			if (node.then) {
+				context.visit(node.then);
+				if (node.value) {
+					const then_scope = /** @type {Scope} */ (scopes.get(node.then));
+					const value_scope = context.state.scope.child();
+					scopes.set(node.value, value_scope);
+					context.visit(node.value, { scope: value_scope });
+					for (const id of extract_identifiers(node.value)) {
+						then_scope.declare(id, 'normal', 'const');
+						value_scope.declare(id, 'normal', 'const');
+					}
 				}
-				scopes.set(node.error, error_scope);
+			}
+
+			if (node.catch) {
+				context.visit(node.catch);
+				if (node.error) {
+					const catch_scope = /** @type {Scope} */ (scopes.get(node.catch));
+					const error_scope = context.state.scope.child();
+					scopes.set(node.error, error_scope);
+					context.visit(node.error, { scope: error_scope });
+					for (const id of extract_identifiers(node.error)) {
+						catch_scope.declare(id, 'normal', 'const');
+						error_scope.declare(id, 'normal', 'const');
+					}
+				}
 			}
 		},
 
@@ -637,7 +649,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 			for (const param of node.parameters) {
 				for (const id of extract_identifiers(param)) {
-					child_scope.declare(id, 'each', 'let');
+					child_scope.declare(id, 'snippet', 'let');
 				}
 			}
 

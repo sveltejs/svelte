@@ -111,9 +111,9 @@ function normalize_children(node) {
  * @template Props
  * @param {{
  *	skip?: boolean;
- *	skip_if_ssr?: boolean | 'permanent';
- *	skip_if_hydrate?: boolean | 'permanent';
  *	solo?: boolean;
+ *  mode?: Array<'server' | 'client' | 'hydrate'>;
+ *  skip_mode?: Array<'server' | 'client' | 'hydrate'>;
  *	html?: string;
  *	ssrHtml?: string;
  *	props?: Props;

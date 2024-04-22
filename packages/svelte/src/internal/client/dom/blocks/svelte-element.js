@@ -1,20 +1,29 @@
 import { namespace_svg } from '../../../../constants.js';
-import { DYNAMIC_ELEMENT_BLOCK } from '../../constants.js';
-import { current_hydration_fragment, hydrate_block_anchor, hydrating } from '../hydration.js';
+import { hydrate_anchor, hydrate_nodes, hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
-import { destroy_effect, render_effect } from '../../reactivity/effects.js';
-import { insert, remove } from '../reconciler.js';
-import { current_block, execute_effect } from '../../runtime.js';
+import {
+	block,
+	branch,
+	destroy_effect,
+	pause_effect,
+	render_effect,
+	resume_effect
+} from '../../reactivity/effects.js';
 import { is_array } from '../../utils.js';
+import { set_should_intro } from '../../render.js';
+import { current_each_item, set_current_each_item } from './each.js';
+import { current_effect } from '../../runtime.js';
+import { push_template_node } from '../template.js';
 
 /**
- * @param {import('#client').Block} block
+ * @param {import('#client').Effect} effect
  * @param {Element} from
  * @param {Element} to
  * @returns {void}
  */
-function swap_block_dom(block, from, to) {
-	const dom = block.d;
+function swap_block_dom(effect, from, to) {
+	const dom = effect.dom;
+
 	if (is_array(dom)) {
 		for (let i = 0; i < dom.length; i++) {
 			if (dom[i] === from) {
@@ -23,117 +32,116 @@ function swap_block_dom(block, from, to) {
 			}
 		}
 	} else if (dom === from) {
-		block.d = to;
+		effect.dom = to;
 	}
 }
 
 /**
- * @param {Comment} anchor_node
- * @param {() => string} tag_fn
- * @param {boolean | null} is_svg `null` == not statically known
- * @param {undefined | ((element: Element, anchor: Node) => void)} render_fn
+ * @param {Comment} anchor
+ * @param {() => string} get_tag
+ * @param {boolean} is_svg
+ * @param {undefined | ((element: Element, anchor: Node | null) => void)} render_fn,
+ * @param {undefined | (() => string)} get_namespace
  * @returns {void}
  */
-export function element(anchor_node, tag_fn, is_svg, render_fn) {
-	/** @type {import('#client').DynamicElementBlock} */
-	const block = {
-		// dom
-		d: null,
-		// effect
-		e: null,
-		// parent
-		p: /** @type {import('#client').Block} */ (current_block),
-		// transition
-		r: null,
-		// type
-		t: DYNAMIC_ELEMENT_BLOCK
-	};
+export function element(anchor, get_tag, is_svg, render_fn, get_namespace) {
+	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
 
-	hydrate_block_anchor(anchor_node);
-	let has_mounted = false;
+	render_effect(() => {
+		/** @type {string | null} */
+		let tag;
 
-	/** @type {string} */
-	let tag;
+		/** @type {string | null} */
+		let current_tag;
 
-	/** @type {null | Element} */
-	let element = null;
+		/** @type {null | Element} */
+		let element = null;
 
-	const element_effect = render_effect(
-		() => {
-			tag = tag_fn();
-			if (has_mounted) {
-				execute_effect(render_effect_signal);
-			}
-			has_mounted = true;
-		},
-		block,
-		false
-	);
+		/** @type {import('#client').Effect | null} */
+		let effect;
 
-	// Managed effect
-	const render_effect_signal = render_effect(
-		() => {
-			// We try our best infering the namespace in case it's not possible to determine statically,
-			// but on the first render on the client (without hydration) the parent will be undefined,
-			// since the anchor is not attached to its parent / the dom yet.
-			const ns =
-				is_svg || tag === 'svg'
+		/**
+		 * The keyed `{#each ...}` item block, if any, that this element is inside.
+		 * We track this so we can set it when changing the element, allowing any
+		 * `animate:` directive to bind itself to the correct block
+		 */
+		let each_item_block = current_each_item;
+
+		block(() => {
+			const next_tag = get_tag() || null;
+			const ns = get_namespace
+				? get_namespace()
+				: is_svg || next_tag === 'svg'
 					? namespace_svg
-					: is_svg === false || anchor_node.parentElement?.tagName === 'foreignObject'
-						? null
-						: anchor_node.parentElement?.namespaceURI ?? null;
+					: null;
+			// Assumption: Noone changes the namespace but not the tag (what would that even mean?)
+			if (next_tag === tag) return;
 
-			const next_element = tag
-				? hydrating
-					? /** @type {Element} */ (current_hydration_fragment[0])
-					: ns
-						? document.createElementNS(ns, tag)
-						: document.createElement(tag)
-				: null;
+			// See explanation of `each_item_block` above
+			var previous_each_item = current_each_item;
+			set_current_each_item(each_item_block);
 
-			const prev_element = element;
-			if (prev_element !== null) {
-				block.d = null;
-			}
-
-			element = next_element;
-			if (element !== null && render_fn !== undefined) {
-				let anchor;
-				if (hydrating) {
-					// Use the existing ssr comment as the anchor so that the inner open and close
-					// methods can pick up the existing nodes correctly
-					anchor = /** @type {Comment} */ (element.firstChild);
+			if (effect) {
+				if (next_tag === null) {
+					// start outro
+					pause_effect(effect, () => {
+						effect = null;
+						current_tag = null;
+						element?.remove();
+					});
+				} else if (next_tag === current_tag) {
+					// same tag as is currently rendered — abort outro
+					resume_effect(effect);
 				} else {
-					anchor = empty();
-					element.appendChild(anchor);
-				}
-				render_fn(element, anchor);
-			}
-
-			const has_prev_element = prev_element !== null;
-			if (has_prev_element) {
-				remove(prev_element);
-			}
-			if (element !== null) {
-				insert(element, null, anchor_node);
-				if (has_prev_element) {
-					const parent_block = block.p;
-					swap_block_dom(parent_block, prev_element, element);
+					// tag is changing — destroy immediately, render contents without intro transitions
+					destroy_effect(effect);
+					set_should_intro(false);
 				}
 			}
-		},
-		block,
-		true
-	);
 
-	element_effect.ondestroy = () => {
-		if (element !== null) {
-			remove(element);
-			block.d = null;
-			element = null;
-		}
-		destroy_effect(render_effect_signal);
-	};
+			if (next_tag && next_tag !== current_tag) {
+				effect = branch(() => {
+					const prev_element = element;
+					element = hydrating
+						? /** @type {Element} */ (hydrate_nodes[0])
+						: ns
+							? document.createElementNS(ns, next_tag)
+							: document.createElement(next_tag);
 
-	block.e = element_effect;
+					if (render_fn) {
+						// If hydrating, use the existing ssr comment as the anchor so that the
+						// inner open and close methods can pick up the existing nodes correctly
+						var child_anchor = hydrating
+							? element.firstChild && hydrate_anchor(/** @type {Comment} */ (element.firstChild))
+							: element.appendChild(empty());
+
+						// `child_anchor` is undefined if this is a void element, but we still
+						// need to call `render_fn` in order to run actions etc. If the element
+						// contains children, it's a user error (which is warned on elsewhere)
+						// and the DOM will be silently discarded
+						render_fn(element, child_anchor);
+					}
+
+					anchor.before(element);
+
+					if (prev_element) {
+						swap_block_dom(parent_effect, prev_element, element);
+						prev_element.remove();
+					} else if (!hydrating) {
+						push_template_node(element, parent_effect);
+					}
+				});
+			}
+
+			tag = next_tag;
+			if (tag) current_tag = tag;
+			set_should_intro(true);
+
+			set_current_each_item(previous_each_item);
+		});
+
+		return () => {
+			element?.remove();
+		};
+	});
 }

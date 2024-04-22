@@ -1,6 +1,6 @@
 /types/*.map
 /types/compiler
-/compiler.cjs
+/compiler/index.js
 
 /action.d.ts
 /animate.d.ts
@@ -11,3 +11,5 @@
 /motion.d.ts
 /store.d.ts
 /transition.d.ts
+
+/scripts/_bundle.js

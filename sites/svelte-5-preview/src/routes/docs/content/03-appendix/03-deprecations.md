@@ -40,6 +40,50 @@ These functions run indiscriminately when _anything_ changes. By using `$effect.
 
 Note that using `$effect` and `$effect.pre` will put you in [runes mode](/docs/runes) — be sure to update your props and state accordingly.
 
+## `createEventDispatcher`
+
+`createEventDispatcher` returns a function from which you can dispatch custom events. The usage is somewhat boilerplate-y, but it was encouraged in Svelte 4 due to consistency with how you listen to dom events (via `on:click` for example).
+
+Svelte 5 introduces [event attributes](/docs/event-handlers) which deprecate event directives (`onclick` instead of `on:click`), and as such we also encourage you to use callback properties for events instead:
+
+```diff
+<script>
+-	import { createEventDispatcher } from 'svelte';
+-	const dispatch = createEventDispatcher();
++	let { greet } = $props();
+
+-	function greet() {
+-		dispatch('greet');
+-	}
+</script>
+
+<button
+-	on:click={greet}
++	onclick={greet}
+>greet</button>
+```
+
+When authoring custom elements, use the new [host rune](/docs/runes#$host) to dispatch events (among other things):
+
+```diff
+<script>
+-	import { createEventDispatcher } from 'svelte';
+-	const dispatch = createEventDispatcher();
+
+	function greet() {
+-		dispatch('greet');
++		$host().dispatchEvent(new CustomEvent('greet'));
+	}
+</script>
+
+<button
+-	on:click={greet}
++	onclick={greet}
+>greet</button>
+```
+
+Note that using `$props` and `$host` will put you in [runes mode](/docs/runes) — be sure to update your props and state accordingly.
+
 ## `immutable`
 
 The `immutable` compiler option is deprecated. Use runes mode instead, where all state is immutable (which means that assigning to `object.property` won't cause updates for anything that is observing `object` itself, or a different property of it).

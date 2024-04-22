@@ -9,5 +9,5 @@
 <div>Length: {length}</div>
 <div>Values: {values.join(',')}</div>
 
-<div {...$$restProps} />
-<div {...$$props} />
+<div {...$$restProps}></div>
+<div {...$$props}></div>

@@ -15,7 +15,12 @@ import {
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { binding_properties } from '../bindings.js';
-import { ContentEditableBindings, EventModifiers, SVGElements } from '../constants.js';
+import {
+	ContentEditableBindings,
+	EventModifiers,
+	SVGElements,
+	VoidElements
+} from '../constants.js';
 import { is_custom_element_node } from '../nodes.js';
 import {
 	regex_illegal_attribute_character,
@@ -50,6 +55,18 @@ function validate_component(node, context) {
 		}
 
 		if (attribute.type === 'Attribute') {
+			if (context.state.analysis.runes && is_expression_attribute(attribute)) {
+				const expression = attribute.value[0].expression;
+				if (expression.type === 'SequenceExpression') {
+					let i = /** @type {number} */ (expression.start);
+					while (--i > 0) {
+						const char = context.state.analysis.source[i];
+						if (char === '(') break; // parenthesized sequence expressions are ok
+						if (char === '{') error(expression, 'invalid-sequence-expression');
+					}
+				}
+			}
+
 			validate_attribute_name(attribute, context);
 
 			if (attribute.name === 'slot') {
@@ -81,12 +98,26 @@ function validate_element(node, context) {
 
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'Attribute') {
+			const is_expression = is_expression_attribute(attribute);
+
+			if (context.state.analysis.runes && is_expression) {
+				const expression = attribute.value[0].expression;
+				if (expression.type === 'SequenceExpression') {
+					let i = /** @type {number} */ (expression.start);
+					while (--i > 0) {
+						const char = context.state.analysis.source[i];
+						if (char === '(') break; // parenthesized sequence expressions are ok
+						if (char === '{') error(expression, 'invalid-sequence-expression');
+					}
+				}
+			}
+
 			if (regex_illegal_attribute_character.test(attribute.name)) {
 				error(attribute, 'invalid-attribute-name', attribute.name);
 			}
 
 			if (attribute.name.startsWith('on') && attribute.name.length > 2) {
-				if (!is_expression_attribute(attribute)) {
+				if (!is_expression) {
 					error(attribute, 'invalid-event-attribute-value');
 				}
 
@@ -299,17 +330,19 @@ const validation = {
 			error(node, 'invalid-binding-expression');
 		}
 
+		const binding = context.state.scope.get(left.name);
+
 		if (
 			assignee.type === 'Identifier' &&
 			node.name !== 'this' // bind:this also works for regular variables
 		) {
-			const binding = context.state.scope.get(left.name);
 			// reassignment
 			if (
 				!binding ||
 				(binding.kind !== 'state' &&
 					binding.kind !== 'frozen_state' &&
 					binding.kind !== 'prop' &&
+					binding.kind !== 'bindable_prop' &&
 					binding.kind !== 'each' &&
 					binding.kind !== 'store_sub' &&
 					!binding.mutated)
@@ -325,10 +358,10 @@ const validation = {
 				error(node, 'invalid-each-assignment');
 			}
 
-			// TODO handle mutations of non-state/props in runes mode
+			if (binding.kind === 'snippet') {
+				error(node, 'invalid-snippet-assignment');
+			}
 		}
-
-		const binding = context.state.scope.get(left.name);
 
 		if (node.name === 'group') {
 			if (!binding) {
@@ -544,12 +577,29 @@ const validation = {
 			}
 		}
 
+		if (
+			context.state.analysis.source[node.end - 2] === '/' &&
+			context.state.options.namespace !== 'foreign' &&
+			!VoidElements.includes(node.name) &&
+			!SVGElements.includes(node.name)
+		) {
+			warn(
+				context.state.analysis.warnings,
+				node,
+				context.path,
+				'invalid-self-closing-tag',
+				node.name
+			);
+		}
+
 		context.next({
 			...context.state,
 			parent_element: node.name
 		});
 	},
 	RenderTag(node, context) {
+		context.state.analysis.uses_render_tags = true;
+
 		const raw_args = unwrap_optional(node.expression).arguments;
 		for (const arg of raw_args) {
 			if (arg.type === 'SpreadElement') {
@@ -780,7 +830,25 @@ function validate_call_expression(node, scope, path) {
 		error(node, 'invalid-props-location');
 	}
 
-	if (rune === '$state' || rune === '$derived' || rune === '$derived.by') {
+	if (rune === '$bindable') {
+		if (parent.type === 'AssignmentPattern' && path.at(-3)?.type === 'ObjectPattern') {
+			const declarator = path.at(-4);
+			if (
+				declarator?.type === 'VariableDeclarator' &&
+				get_rune(declarator.init, scope) === '$props'
+			) {
+				return;
+			}
+		}
+		error(node, 'invalid-bindable-location');
+	}
+
+	if (
+		rune === '$state' ||
+		rune === '$state.frozen' ||
+		rune === '$derived' ||
+		rune === '$derived.by'
+	) {
 		if (parent.type === 'VariableDeclarator') return;
 		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
 		error(node, 'invalid-state-location', rune);
@@ -815,6 +883,12 @@ function validate_call_expression(node, scope, path) {
 	}
 
 	if (rune === '$inspect().with') {
+		if (node.arguments.length !== 1) {
+			error(node, 'invalid-rune-args-length', rune, [1]);
+		}
+	}
+
+	if (rune === '$state.snapshot') {
 		if (node.arguments.length !== 1) {
 			error(node, 'invalid-rune-args-length', rune, [1]);
 		}
@@ -857,6 +931,9 @@ export const validation_runes_js = {
 		}
 	},
 	CallExpression(node, { state, path }) {
+		if (get_rune(node, state.scope) === '$host') {
+			error(node, 'invalid-host-location');
+		}
 		validate_call_expression(node, state.scope, path);
 	},
 	VariableDeclarator(node, { state }) {
@@ -873,6 +950,8 @@ export const validation_runes_js = {
 			error(node, 'invalid-rune-args-length', rune, [0, 1]);
 		} else if (rune === '$props') {
 			error(node, 'invalid-props-location');
+		} else if (rune === '$bindable') {
+			error(node, 'invalid-bindable-location');
 		}
 	},
 	AssignmentExpression(node, { state }) {
@@ -964,14 +1043,21 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 function validate_assignment(node, argument, state) {
 	validate_no_const_assignment(node, argument, state.scope, false);
 
-	if (state.analysis.runes && argument.type === 'Identifier') {
+	if (argument.type === 'Identifier') {
 		const binding = state.scope.get(argument.name);
-		if (binding?.kind === 'derived') {
-			error(node, 'invalid-derived-assignment');
+
+		if (state.analysis.runes) {
+			if (binding?.kind === 'derived') {
+				error(node, 'invalid-derived-assignment');
+			}
+
+			if (binding?.kind === 'each') {
+				error(node, 'invalid-each-assignment');
+			}
 		}
 
-		if (binding?.kind === 'each') {
-			error(node, 'invalid-each-assignment');
+		if (binding?.kind === 'snippet') {
+			error(node, 'invalid-snippet-assignment');
 		}
 	}
 
@@ -1022,6 +1108,17 @@ export const validation_runes = merge(validation, a11y_validators, {
 		}
 	},
 	CallExpression(node, { state, path }) {
+		const rune = get_rune(node, state.scope);
+		if (rune === '$bindable' && node.arguments.length > 1) {
+			error(node, 'invalid-rune-args-length', '$bindable', [0, 1]);
+		} else if (rune === '$host') {
+			if (node.arguments.length > 0) {
+				error(node, 'invalid-rune-args-length', '$host', [0]);
+			} else if (state.ast_type === 'module' || !state.analysis.custom_element) {
+				error(node, 'invalid-host-location');
+			}
+		}
+
 		validate_call_expression(node, state.scope, path);
 	},
 	EachBlock(node, { next, state }) {
@@ -1062,7 +1159,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 			state.has_props_rune = true;
 
 			if (args.length > 0) {
-				error(node, 'invalid-rune-args-length', '$props', [0]);
+				error(node, 'invalid-rune-args-length', rune, [0]);
 			}
 
 			if (node.id.type !== 'ObjectPattern') {
@@ -1097,6 +1194,27 @@ export const validation_runes = merge(validation, a11y_validators, {
 			) {
 				warn(state.analysis.warnings, node, path, 'derived-iife');
 			}
+		}
+	},
+	AssignmentPattern(node, { state, path }) {
+		if (
+			node.right.type === 'Identifier' &&
+			node.right.name === '$bindable' &&
+			!state.scope.get('bindable')
+		) {
+			warn(state.analysis.warnings, node, path, 'invalid-bindable-declaration');
+		}
+	},
+	SlotElement(node, { state, path }) {
+		if (!state.analysis.custom_element) {
+			warn(state.analysis.warnings, node, path, 'deprecated-slot-element');
+		}
+	},
+	OnDirective(node, { state, path }) {
+		const parent_type = path.at(-1)?.type;
+		// Don't warn on component events; these might not be under the author's control so the warning would be unactionable
+		if (parent_type === 'RegularElement' || parent_type === 'SvelteElement') {
+			warn(state.analysis.warnings, node, path, 'deprecated-event-handler', node.name);
 		}
 	},
 	// TODO this is a code smell. need to refactor this stuff

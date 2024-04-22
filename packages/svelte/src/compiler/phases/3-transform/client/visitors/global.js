@@ -52,6 +52,7 @@ export const global_visitors = {
 				binding?.kind === 'each' ||
 				binding?.kind === 'legacy_reactive' ||
 				binding?.kind === 'prop' ||
+				binding?.kind === 'bindable_prop' ||
 				is_store
 			) {
 				/** @type {import('estree').Expression[]} */
@@ -64,7 +65,7 @@ export const global_visitors = {
 					fn += '_store';
 					args.push(serialize_get_binding(b.id(name), state), b.call('$' + name));
 				} else {
-					if (binding.kind === 'prop') fn += '_prop';
+					if (binding.kind === 'prop' || binding.kind === 'bindable_prop') fn += '_prop';
 					args.push(b.id(name));
 				}
 
@@ -104,6 +105,8 @@ export const global_visitors = {
 			if (serialized_assignment === assignment) {
 				// No change to output -> nothing to transform -> we can keep the original update expression
 				return next();
+			} else if (context.state.analysis.runes) {
+				return serialized_assignment;
 			} else {
 				/** @type {import('estree').Statement[]} */
 				let statements;

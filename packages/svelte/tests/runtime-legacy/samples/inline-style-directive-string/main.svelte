@@ -1,1 +1,1 @@
-<p style:color="red" />
+<p style:color="red"></p>

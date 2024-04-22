@@ -1,6 +1,10 @@
 import { test } from '../../test';
 
 export default test({
+	server_props: {
+		name: 'world'
+	},
+
 	props: {
 		name: 'everybody'
 	},

@@ -103,11 +103,22 @@ const css = {
 	/** @param {string} message */
 	'css-parse-error': (message) => message,
 	'invalid-css-empty-declaration': () => `Declaration cannot be empty`,
+	'invalid-css-global-block-list': () =>
+		`A :global {...} block cannot be part of a selector list with more than one item`,
+	'invalid-css-global-block-modifier': () =>
+		`A :global {...} block cannot modify an existing selector`,
+	/** @param {string} name */
+	'invalid-css-global-block-combinator': (name) =>
+		`A :global {...} block cannot follow a ${name} combinator`,
+	'invalid-css-global-block-declaration': () =>
+		`A :global {...} block can only contain rules, not declarations`,
 	'invalid-css-global-placement': () =>
 		`:global(...) can be at the start or end of a selector sequence, but not in the middle`,
 	'invalid-css-global-selector': () => `:global(...) must contain exactly one selector`,
 	'invalid-css-global-selector-list': () =>
 		`:global(...) must not contain type or universal selectors when used in a compound selector`,
+	'invalid-css-type-selector-placement': () =>
+		`:global(...) must not be followed with a type selector`,
 	'invalid-css-selector': () => `Invalid selector`,
 	'invalid-css-identifier': () => 'Expected a valid CSS identifier',
 	'invalid-nesting-selector': () => `Nesting selectors can only be used inside a rule`,
@@ -161,7 +172,9 @@ const special_elements = {
 	 * @param {string | null} match
 	 */
 	'invalid-svelte-tag': (tags, match) =>
-		`Valid <svelte:...> tag names are ${list(tags)}${match ? ' (did you mean ' + match + '?)' : ''}`
+		`Valid <svelte:...> tag names are ${list(tags)}${match ? ' (did you mean ' + match + '?)' : ''}`,
+	'conflicting-slot-usage': () =>
+		`Cannot use <slot> syntax and {@render ...} tags in the same component. Migrate towards {@render ...} tags completely.`
 };
 
 /** @satisfies {Errors} */
@@ -182,10 +195,13 @@ const runes = {
 		`$props() assignment must not contain nested properties or computed keys`,
 	'invalid-props-location': () =>
 		`$props() can only be used at the top level of components as a variable declaration initializer`,
+	'invalid-bindable-location': () => `$bindable() can only be used inside a $props() declaration`,
 	/** @param {string} rune */
 	'invalid-state-location': (rune) =>
 		`${rune}(...) can only be used as a variable declaration initializer or a class field`,
 	'invalid-effect-location': () => `$effect() can only be used as an expression statement`,
+	'invalid-host-location': () =>
+		`$host() can only be used inside custom element component instances`,
 	/**
 	 * @param {boolean} is_binding
 	 * @param {boolean} show_details
@@ -211,7 +227,10 @@ const runes = {
 	'duplicate-props-rune': () => `Cannot use $props() more than once`,
 	'invalid-each-assignment': () =>
 		`Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. 'array[i] = value' instead of 'entry = value')`,
-	'invalid-derived-call': () => `$derived.call(...) has been replaced with $derived.by(...)`
+	'invalid-snippet-assignment': () => `Cannot reassign or bind to snippet parameter`,
+	'invalid-derived-call': () => `$derived.call(...) has been replaced with $derived.by(...)`,
+	'conflicting-property-name': () =>
+		`Cannot have a property and a component export with the same name`
 };
 
 /** @satisfies {Errors} */
@@ -281,7 +300,9 @@ const attributes = {
 	},
 	'invalid-let-directive-placement': () => 'let directive at invalid position',
 	'invalid-style-directive-modifier': () =>
-		`Invalid 'style:' modifier. Valid modifiers are: 'important'`
+		`Invalid 'style:' modifier. Valid modifiers are: 'important'`,
+	'invalid-sequence-expression': () =>
+		`Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses`
 };
 
 /** @satisfies {Errors} */

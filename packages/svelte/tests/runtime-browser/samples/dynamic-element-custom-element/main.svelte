@@ -29,4 +29,4 @@
 </script>
 
 <svelte:element this="{tag}" {name} id="a" />
-<my-custom-element {name} id="b" />
+<my-custom-element {name} id="b"></my-custom-element>

@@ -1,40 +1,30 @@
-import { SNIPPET_BLOCK } from '../../constants.js';
-import { render_effect } from '../../reactivity/effects.js';
-import { remove } from '../reconciler.js';
-import { current_block, untrack } from '../../runtime.js';
+import { EFFECT_TRANSPARENT } from '../../constants.js';
+import { branch, block, destroy_effect } from '../../reactivity/effects.js';
 
 /**
- * @param {() => Function | null | undefined} get_snippet
- * @param {Node} node
+ * @template {(node: import('#client').TemplateNode, ...args: any[]) => import('#client').Dom} SnippetFn
+ * @param {() => SnippetFn | null | undefined} get_snippet
+ * @param {import('#client').TemplateNode} node
  * @param {(() => any)[]} args
  * @returns {void}
  */
 export function snippet(get_snippet, node, ...args) {
-	/** @type {import('#client').SnippetBlock} */
-	const block = {
-		// dom
-		d: null,
-		// parent
-		p: /** @type {import('#client').Block} */ (current_block),
-		// effect
-		e: null,
-		// transition
-		r: null,
-		// type
-		t: SNIPPET_BLOCK
-	};
+	/** @type {SnippetFn | null | undefined} */
+	var snippet;
 
-	render_effect(() => {
-		// Only rerender when the snippet function itself changes,
-		// not when an eagerly-read prop inside the snippet function changes
-		const snippet = get_snippet();
-		if (snippet) {
-			untrack(() => snippet(node, ...args));
+	/** @type {import('#client').Effect | null} */
+	var snippet_effect;
+
+	block(() => {
+		if (snippet === (snippet = get_snippet())) return;
+
+		if (snippet_effect) {
+			destroy_effect(snippet_effect);
+			snippet_effect = null;
 		}
-		return () => {
-			if (block.d !== null) {
-				remove(block.d);
-			}
-		};
-	}, block);
+
+		if (snippet) {
+			snippet_effect = branch(() => /** @type {SnippetFn} */ (snippet)(node, ...args));
+		}
+	}, EFFECT_TRANSPARENT);
 }
