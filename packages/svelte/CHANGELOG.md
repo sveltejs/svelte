@@ -1,5 +1,25 @@
 # svelte
 
+## 5.0.0-next.111
+
+### Patch Changes
+
+- fix: run render functions for dynamic void elements ([#11258](https://github.com/sveltejs/svelte/pull/11258))
+
+- fix: allow events to continue propagating following an error ([#11263](https://github.com/sveltejs/svelte/pull/11263))
+
+- fix: resolve type definition error in `svelte/compiler` ([#11283](https://github.com/sveltejs/svelte/pull/11283))
+
+- feat: include `script` and `svelte:options` attributes in ast ([#11241](https://github.com/sveltejs/svelte/pull/11241))
+
+- fix: only destroy snippets when they have changed ([#11267](https://github.com/sveltejs/svelte/pull/11267))
+
+- fix: add type arguments to Map and Set ([#10820](https://github.com/sveltejs/svelte/pull/10820))
+
+- feat: implement `:global {...}` CSS blocks ([#11276](https://github.com/sveltejs/svelte/pull/11276))
+
+- feat: add read-only `bind:focused` ([#11271](https://github.com/sveltejs/svelte/pull/11271))
+
 ## 5.0.0-next.110
 
 ### Patch Changes
