@@ -318,15 +318,6 @@ export function invalid_const_placement(node) {
 
  * @returns {never}
  */
-export function css_parse_error(node) {
-	e(node, "css_parse_error", "TODO");
-}
-
-/**
- * @param {null | number | NodeLike} node
-
- * @returns {never}
- */
 export function invalid_css_empty_declaration(node) {
 	e(node, "invalid_css_empty_declaration", "Declaration cannot be empty");
 }

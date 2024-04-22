@@ -1,7 +1,3 @@
-## css_parse_error
-
-TODO
-
 ## invalid_css_empty_declaration
 
 Declaration cannot be empty
