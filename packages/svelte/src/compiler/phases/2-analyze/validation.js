@@ -1029,8 +1029,6 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 			// TODO have a more specific error message for assignments to things like `{:then foo}`
 			const thing = 'constant';
 
-			console.log(binding);
-
 			if (is_binding) {
 				e.invalid_binding(node, thing);
 			} else {
