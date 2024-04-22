@@ -94,22 +94,56 @@ const spread_props_handler = {
 		let i = target.props.length;
 		while (i--) {
 			let p = target.props[i];
-			if (is_function(p)) p = p();
-			if (typeof p === 'object' && p !== null && key in p) return p[key];
+			let obj = p;
+			debugger;
+			// in case the prop is the spread prop calling the function
+			// will track that state as a dep even if the requested key
+			// is not in it. to avoid that we call the function in untrack
+			// and check on the object. If it's there we call the function again
+			// to track and then access the key
+			untrack(() => {
+				if (is_function(p)) obj = p();
+			});
+			if (typeof obj === 'object' && obj !== null && key in obj) {
+				if (is_function(p)) p = p();
+				return p[key];
+			}
 		}
 	},
 	getOwnPropertyDescriptor(target, key) {
 		let i = target.props.length;
 		while (i--) {
 			let p = target.props[i];
-			if (is_function(p)) p = p();
-			if (typeof p === 'object' && p !== null && key in p) return get_descriptor(p, key);
+			let obj = p;
+			// in case the prop is the spread prop calling the function
+			// will track that state as a dep even if the requested key
+			// is not in it. to avoid that we call the function in untrack
+			// and check on the object. If it's there we call the function again
+			// to track and then access the key
+			untrack(() => {
+				if (is_function(p)) obj = p();
+			});
+			if (typeof obj === 'object' && obj !== null && key in obj) {
+				if (is_function(p)) p = p();
+				return get_descriptor(p, key);
+			}
 		}
 	},
 	has(target, key) {
 		for (let p of target.props) {
-			if (is_function(p)) p = p();
-			if (key in p) return true;
+			let obj = p;
+			// in case the prop is the spread prop calling the function
+			// will track that state as a dep even if the requested key
+			// is not in it. to avoid that we call the function in untrack
+			// and check on the object. If it's there we call the function again
+			// to track and then access the key
+			untrack(() => {
+				if (is_function(p)) obj = p();
+			});
+			if (key in obj) {
+				if (is_function(p)) p();
+				return true;
+			}
 		}
 
 		return false;
@@ -119,9 +153,20 @@ const spread_props_handler = {
 		const keys = [];
 
 		for (let p of target.props) {
-			if (is_function(p)) p = p();
-			for (const key in p) {
-				if (!keys.includes(key)) keys.push(key);
+			let obj = p;
+			// in case the prop is the spread prop calling the function
+			// will track that state as a dep even if the requested key
+			// is not in it. to avoid that we call the function in untrack
+			// and check on the object. If it's there we call the function again
+			// to track and then access the key
+			untrack(() => {
+				if (is_function(p)) obj = p();
+			});
+			for (const key in obj) {
+				if (!keys.includes(key)) {
+					if (is_function(p)) obj = p();
+					keys.push(key);
+				}
 			}
 		}
 
