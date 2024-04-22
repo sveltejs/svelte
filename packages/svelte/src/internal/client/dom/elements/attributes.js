@@ -111,7 +111,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 	var events = [];
 
 	for (key in next) {
-		var value = next[key];
+		let value = next[key];
 		if (value === prev?.[key]) continue;
 
 		var prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
