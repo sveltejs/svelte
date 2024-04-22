@@ -14,29 +14,37 @@ Event attribute must be a JavaScript expression, not a string
 
 '%name%' is not a valid attribute name
 
-## invalid_animation
+## animation_invalid_placement
 
-An element that uses the animate directive must be the immediate child of a keyed each block`
-			: type === 'each-key'
-				? `An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?`
-				: `An element that uses the animate directive must be the sole child of a keyed each block
+An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block
 
-## duplicate_animation
+## animation_missing_key
+
+An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block. Did you forget to add a key to your each block?
+
+## animation_duplicate
 
 An element can only have one 'animate' directive
 
 ## invalid_event_modifier
 
-Valid event modifiers are %modifiers.slice(0, -1).join(', ')% or %modifiers.slice(-1)%`
-			: `Event modifiers other than 'once' can only be used on DOM elements
+Valid event modifiers are %list%
+
+## invalid_component_event_modifier
+
+Event modifiers other than 'once' can only be used on DOM elements
 
 ## invalid_event_modifier_combination
 
 The '%modifier1%' and '%modifier2%' modifiers cannot be used together
 
-## duplicate_transition
+## transition_duplicate
 
-TODO
+Cannot use multiple `%type%:` directives on a single element
+
+## transition_conflict
+
+Cannot use `%type%:` alongside existing `%existing%:` directive
 
 ## invalid_let_directive_placement
 

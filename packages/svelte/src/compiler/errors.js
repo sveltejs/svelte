@@ -98,8 +98,8 @@ export function invalid_attribute_name(node, name) {
 
  * @returns {never}
  */
-export function invalid_animation(node) {
-	e(node, "invalid_animation", "An element that uses the animate directive must be the immediate child of a keyed each block`\n\t\t\t: type === 'each-key'\n\t\t\t\t? `An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?`\n\t\t\t\t: `An element that uses the animate directive must be the sole child of a keyed each block");
+export function animation_invalid_placement(node) {
+	e(node, "animation_invalid_placement", "An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block");
 }
 
 /**
@@ -107,8 +107,8 @@ export function invalid_animation(node) {
 
  * @returns {never}
  */
-export function duplicate_animation(node) {
-	e(node, "duplicate_animation", "An element can only have one 'animate' directive");
+export function animation_missing_key(node) {
+	e(node, "animation_missing_key", "An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block. Did you forget to add a key to your each block?");
 }
 
 /**
@@ -116,8 +116,26 @@ export function duplicate_animation(node) {
 
  * @returns {never}
  */
-export function invalid_event_modifier(node) {
-	e(node, "invalid_event_modifier", "Valid event modifiers are %modifiers.slice(0, -1).join(', ')% or %modifiers.slice(-1)%`\n\t\t\t: `Event modifiers other than 'once' can only be used on DOM elements");
+export function animation_duplicate(node) {
+	e(node, "animation_duplicate", "An element can only have one 'animate' directive");
+}
+
+/**
+ * @param {number | NodeLike} node
+ * @param {string} list
+ * @returns {never}
+ */
+export function invalid_event_modifier(node, list) {
+	e(node, "invalid_event_modifier", `Valid event modifiers are ${list}`);
+}
+
+/**
+ * @param {number | NodeLike} node
+
+ * @returns {never}
+ */
+export function invalid_component_event_modifier(node) {
+	e(node, "invalid_component_event_modifier", "Event modifiers other than 'once' can only be used on DOM elements");
 }
 
 /**
@@ -132,11 +150,21 @@ export function invalid_event_modifier_combination(node, modifier1, modifier2) {
 
 /**
  * @param {number | NodeLike} node
-
+ * @param {string} type
  * @returns {never}
  */
-export function duplicate_transition(node) {
-	e(node, "duplicate_transition", "TODO");
+export function transition_duplicate(node, type) {
+	e(node, "transition_duplicate", `Cannot use multiple \`${type}:\` directives on a single element`);
+}
+
+/**
+ * @param {number | NodeLike} node
+ * @param {string} type
+ * @param {string} existing
+ * @returns {never}
+ */
+export function transition_conflict(node, type, existing) {
+	e(node, "transition_conflict", `Cannot use \`${type}:\` alongside existing \`${existing}:\` directive`);
 }
 
 /**
@@ -397,7 +425,7 @@ export function invalid_css_declaration(node) {
  * @returns {never}
  */
 export function invalid_textarea_content(node) {
-	e(node, "invalid_textarea_content", "A <textarea> can have either a value attribute or (equivalently) child content, but not both");
+	e(node, "invalid_textarea_content", "A `<textarea>` can have either a value attribute or (equivalently) child content, but not both");
 }
 
 /**
@@ -424,7 +452,7 @@ export function invalid_element_content(node, name) {
  * @returns {never}
  */
 export function invalid_tag_name(node) {
-	e(node, "invalid_tag_name", "TODO");
+	e(node, "invalid_tag_name", "Expected valid tag name");
 }
 
 /**
@@ -443,7 +471,7 @@ export function invalid_node_placement(node, thing, parent) {
  * @returns {never}
  */
 export function illegal_title_attribute(node) {
-	e(node, "illegal_title_attribute", "TODO");
+	e(node, "illegal_title_attribute", "`<title>` cannot have attributes nor directives");
 }
 
 /**
@@ -452,7 +480,7 @@ export function illegal_title_attribute(node) {
  * @returns {never}
  */
 export function invalid_title_content(node) {
-	e(node, "invalid_title_content", "TODO");
+	e(node, "invalid_title_content", "`<title>` can only contain text and {tags}");
 }
 
 /**
@@ -943,15 +971,6 @@ export function invalid_assignment(node, thing) {
  */
 export function invalid_binding(node, thing) {
 	e(node, "invalid_binding", `Invalid assignment to ${thing}`);
-}
-
-/**
- * @param {number | NodeLike} node
-
- * @returns {never}
- */
-export function invalid_const_assignment(node) {
-	e(node, "invalid_const_assignment", "Invalid %is_binding ? 'binding' : 'assignment'% to const variable%\nshow_details\n? ' ($derived values, let: directives, :then/:catch variables and @const declarations count as const)'\n: ''\n%");
 }
 
 /**

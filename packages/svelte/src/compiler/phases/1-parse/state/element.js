@@ -5,7 +5,6 @@ import read_expression from '../read/expression.js';
 import { read_script } from '../read/script.js';
 import read_style from '../read/style.js';
 import { closing_tag_omitted, decode_character_references } from '../utils/html.js';
-import { error } from '../../../errors-tmp.js';
 import * as e from '../../../errors.js';
 import { create_fragment } from '../utils/create.js';
 import { create_attribute } from '../../nodes.js';
@@ -220,7 +219,7 @@ export default function tag(parser) {
 	while ((attribute = read(parser))) {
 		if (attribute.type === 'Attribute' || attribute.type === 'BindDirective') {
 			if (unique_names.includes(attribute.name)) {
-				error(attribute.start, 'duplicate-attribute');
+				e.duplicate_attribute(attribute.start);
 				// <svelte:element bind:this this=..> is allowed
 			} else if (attribute.name !== 'this') {
 				unique_names.push(attribute.name);
@@ -507,7 +506,7 @@ function read_attribute(parser) {
 			const name = parser.read_identifier();
 
 			if (name === null) {
-				error(start, 'empty-attribute-shorthand');
+				e.empty_attribute_shorthand(start);
 			}
 
 			parser.allow_whitespace();

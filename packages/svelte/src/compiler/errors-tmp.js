@@ -149,7 +149,6 @@ const const_tag = {
 /** @satisfies {Errors} */
 const errors = {
 	...internal,
-	...attributes,
 	...slots,
 	...bindings,
 	...variables,

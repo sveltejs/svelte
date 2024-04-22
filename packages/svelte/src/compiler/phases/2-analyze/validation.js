@@ -52,7 +52,7 @@ function validate_component(node, context) {
 			attribute.type === 'OnDirective' &&
 			(attribute.modifiers.length > 1 || attribute.modifiers.some((m) => m !== 'once'))
 		) {
-			error(attribute, 'invalid-event-modifier');
+			e.invalid_component_event_modifier(attribute);
 		}
 
 		if (attribute.type === 'Attribute') {
@@ -63,7 +63,7 @@ function validate_component(node, context) {
 					while (--i > 0) {
 						const char = context.state.analysis.source[i];
 						if (char === '(') break; // parenthesized sequence expressions are ok
-						if (char === '{') error(expression, 'invalid-sequence-expression');
+						if (char === '{') e.invalid_sequence_expression(expression);
 					}
 				}
 			}
@@ -94,8 +94,12 @@ const react_attributes = new Map([
  */
 function validate_element(node, context) {
 	let has_animate_directive = false;
-	let has_in_transition = false;
-	let has_out_transition = false;
+
+	/** @type {import('#compiler').TransitionDirective | null} */
+	let in_transition = null;
+
+	/** @type {import('#compiler').TransitionDirective | null} */
+	let out_transition = null;
 
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'Attribute') {
@@ -108,18 +112,18 @@ function validate_element(node, context) {
 					while (--i > 0) {
 						const char = context.state.analysis.source[i];
 						if (char === '(') break; // parenthesized sequence expressions are ok
-						if (char === '{') error(expression, 'invalid-sequence-expression');
+						if (char === '{') e.invalid_sequence_expression(expression);
 					}
 				}
 			}
 
 			if (regex_illegal_attribute_character.test(attribute.name)) {
-				error(attribute, 'invalid-attribute-name', attribute.name);
+				e.invalid_attribute_name(attribute, attribute.name);
 			}
 
 			if (attribute.name.startsWith('on') && attribute.name.length > 2) {
 				if (!is_expression) {
-					error(attribute, 'invalid-event-attribute-value');
+					e.invalid_event_attribute_value(attribute);
 				}
 
 				const value = attribute.value[0].expression;
@@ -163,9 +167,9 @@ function validate_element(node, context) {
 		} else if (attribute.type === 'AnimateDirective') {
 			const parent = context.path.at(-2);
 			if (parent?.type !== 'EachBlock') {
-				error(attribute, 'invalid-animation', 'no-each');
+				e.animation_invalid_placement(attribute);
 			} else if (!parent.key) {
-				error(attribute, 'invalid-animation', 'each-key');
+				e.animation_missing_key(attribute);
 			} else if (
 				parent.body.nodes.filter(
 					(n) =>
@@ -174,34 +178,36 @@ function validate_element(node, context) {
 						(n.type !== 'Text' || n.data.trim() !== '')
 				).length > 1
 			) {
-				error(attribute, 'invalid-animation', 'child');
+				e.animation_invalid_placement(attribute);
 			}
 
 			if (has_animate_directive) {
-				error(attribute, 'duplicate-animation');
+				e.animation_duplicate(attribute);
 			} else {
 				has_animate_directive = true;
 			}
 		} else if (attribute.type === 'TransitionDirective') {
-			if ((attribute.outro && has_out_transition) || (attribute.intro && has_in_transition)) {
-				/** @param {boolean} _in @param {boolean} _out */
-				const type = (_in, _out) => (_in && _out ? 'transition' : _in ? 'in' : 'out');
-				error(
-					attribute,
-					'duplicate-transition',
-					type(has_in_transition, has_out_transition),
-					type(attribute.intro, attribute.outro)
-				);
+			const existing = /** @type {import('#compiler').TransitionDirective | null} */ (
+				attribute.intro ? in_transition : out_transition
+			);
+
+			if (existing !== null) {
+				if (attribute.name === existing.name) {
+					e.transition_duplicate(attribute, attribute.name);
+				} else {
+					e.transition_conflict(attribute, attribute.name, existing.name);
+				}
 			}
 
-			has_in_transition = has_in_transition || attribute.intro;
-			has_out_transition = has_out_transition || attribute.outro;
+			if (attribute.intro) in_transition = attribute;
+			if (attribute.outro) out_transition = attribute;
 		} else if (attribute.type === 'OnDirective') {
 			let has_passive_modifier = false;
 			let conflicting_passive_modifier = '';
 			for (const modifier of attribute.modifiers) {
 				if (!EventModifiers.includes(modifier)) {
-					error(attribute, 'invalid-event-modifier', EventModifiers);
+					const list = `${EventModifiers.slice(0, 1)} or ${EventModifiers.at(-1)}`;
+					e.invalid_event_modifier(attribute, list);
 				}
 				if (modifier === 'passive') {
 					has_passive_modifier = true;
@@ -209,12 +215,7 @@ function validate_element(node, context) {
 					conflicting_passive_modifier = modifier;
 				}
 				if (has_passive_modifier && conflicting_passive_modifier) {
-					error(
-						attribute,
-						'invalid-event-modifier-combination',
-						'passive',
-						conflicting_passive_modifier
-					);
+					e.invalid_event_modifier_combination(attribute, 'passive', conflicting_passive_modifier);
 				}
 			}
 		}
@@ -521,7 +522,7 @@ const validation = {
 				parent.type !== 'SvelteSelf' &&
 				parent.type !== 'SvelteFragment')
 		) {
-			error(node, 'invalid-let-directive-placement');
+			e.invalid_let_directive_placement(node);
 		}
 	},
 	RegularElement(node, context) {
@@ -673,7 +674,7 @@ const validation = {
 	},
 	StyleDirective(node) {
 		if (node.modifiers.length > 1 || (node.modifiers.length && node.modifiers[0] !== 'important')) {
-			error(node, 'invalid-style-directive-modifier');
+			e.invalid_style_directive_modifier(node);
 		}
 	},
 	SvelteHead(node) {
