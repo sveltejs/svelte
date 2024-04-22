@@ -21,111 +21,6 @@ const internal = {
 };
 
 /** @satisfies {Errors} */
-const parse = {
-	/** @param {string} name */
-	'unclosed-element': (name) => `<${name}> was left open`,
-	'unclosed-block': () => `Block was left open`,
-	'unexpected-block-close': () => `Unexpected block closing tag`,
-	/** @param {string} [expected]  */
-	'unexpected-eof': (expected) =>
-		`Unexpected end of input` + (expected ? ` (expected ${expected})` : ''),
-	/** @param {string} message */
-	'js-parse-error': (message) => message,
-	/** @param {string} token */
-	'expected-token': (token) => `Expected token ${token}`,
-	/** @param {string} word */
-	'unexpected-reserved-word': (word) =>
-		`'${word}' is a reserved word in JavaScript and cannot be used here`,
-	'missing-whitespace': () => `Expected whitespace`,
-	'expected-pattern': () => `Expected identifier or destructure pattern`,
-	'invalid-script-context': () =>
-		`If the context attribute is supplied, its value must be "module"`,
-	'invalid-elseif': () => `'elseif' should be 'else if'`,
-	'invalid-continuing-block-placement': () =>
-		`{:...} block is invalid at this position (did you forget to close the preceeding element or block?)`,
-	/**
-	 * @param {string} child
-	 * @param {string} parent
-	 */
-	'invalid-block-missing-parent': (child, parent) => `${child} block must be a child of ${parent}`,
-	/** @param {string} name */
-	'duplicate-block-part': (name) => `${name} cannot appear more than once within a block`,
-	'expected-block-type': () => `Expected 'if', 'each', 'await', 'key' or 'snippet'`,
-	'expected-identifier': () => `Expected an identifier`,
-	'invalid-debug': () => `{@debug ...} arguments must be identifiers, not arbitrary expressions`,
-	'invalid-const': () => `{@const ...} must be an assignment`,
-	/**
-	 * @param {string} location
-	 * @param {string} name
-	 */
-	'invalid-block-placement': (location, name) => `{#${name} ...} block cannot be ${location}`,
-	/**
-	 * @param {string} location
-	 * @param {string} name
-	 */
-	'invalid-tag-placement': (location, name) => `{@${name} ...} tag cannot be ${location}`,
-	'missing-attribute-value': () => `Expected attribute value`,
-	/** @param {string} delimiter */
-	'unclosed-attribute-value': (delimiter) => `Expected closing ${delimiter} character`,
-	'invalid-directive-value': () =>
-		`Directive value must be a JavaScript expression enclosed in curly braces`,
-	/** @param {string} type */
-	'empty-directive-name': (type) => `${type} name cannot be empty`,
-	/** @param {string} name */
-	'invalid-closing-tag': (name) => `</${name}> attempted to close an element that was not open`,
-	/**
-	 * @param {string} name
-	 * @param {string} reason
-	 */
-	'invalid-closing-tag-after-autoclose': (name, reason) =>
-		`</${name}> attempted to close element that was already automatically closed by <${reason}> (cannot nest <${reason}> inside <${name}>)`,
-	'invalid-dollar-binding': () =>
-		`The $ name is reserved, and cannot be used for variables and imports`,
-	'invalid-dollar-prefix': () =>
-		`The $ prefix is reserved, and cannot be used for variables and imports`,
-	'invalid-dollar-global': () =>
-		`The $ name is reserved. To reference a global variable called $, use globalThis.$`,
-	'illegal-subscription': () => `Cannot reference store value inside <script context="module">`,
-	'duplicate-style-element': () => `A component can have a single top-level <style> element`,
-	'duplicate-script-element': () =>
-		`A component can have a single top-level <script> element and/or a single top-level <script context="module"> element`,
-	'invalid-render-expression': () => '{@render ...} tags can only contain call expressions',
-	'invalid-render-arguments': () => 'expected at most one argument',
-	'invalid-render-call': () =>
-		'Calling a snippet function using apply, bind or call is not allowed',
-	'invalid-render-spread-argument': () => 'cannot use spread arguments in {@render ...} tags',
-	'invalid-snippet-rest-parameter': () =>
-		'snippets do not support rest parameters; use an array instead'
-};
-
-/** @satisfies {Errors} */
-const css = {
-	/** @param {string} message */
-	'css-parse-error': (message) => message,
-	'invalid-css-empty-declaration': () => `Declaration cannot be empty`,
-	'invalid-css-global-block-list': () =>
-		`A :global {...} block cannot be part of a selector list with more than one item`,
-	'invalid-css-global-block-modifier': () =>
-		`A :global {...} block cannot modify an existing selector`,
-	/** @param {string} name */
-	'invalid-css-global-block-combinator': (name) =>
-		`A :global {...} block cannot follow a ${name} combinator`,
-	'invalid-css-global-block-declaration': () =>
-		`A :global {...} block can only contain rules, not declarations`,
-	'invalid-css-global-placement': () =>
-		`:global(...) can be at the start or end of a selector sequence, but not in the middle`,
-	'invalid-css-global-selector': () => `:global(...) must contain exactly one selector`,
-	'invalid-css-global-selector-list': () =>
-		`:global(...) must not contain type or universal selectors when used in a compound selector`,
-	'invalid-css-type-selector-placement': () =>
-		`:global(...) must not be followed with a type selector`,
-	'invalid-css-selector': () => `Invalid selector`,
-	'invalid-css-identifier': () => 'Expected a valid CSS identifier',
-	'invalid-nesting-selector': () => `Nesting selectors can only be used inside a rule`,
-	'invalid-css-declaration': () => 'Declaration cannot be empty'
-};
-
-/** @satisfies {Errors} */
 const special_elements = {
 	'invalid-svelte-option-attribute': () => `<svelte:options> can only receive static attributes`,
 	'invalid-svelte-option-namespace': () =>
@@ -384,7 +279,6 @@ const const_tag = {
 /** @satisfies {Errors} */
 const errors = {
 	...internal,
-	...css,
 	...special_elements,
 	...runes,
 	...elements,
