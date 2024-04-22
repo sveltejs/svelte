@@ -5,6 +5,7 @@ import { regex_whitespace } from '../patterns.js';
 import { reserved } from './utils/names.js';
 import full_char_code_at from './utils/full_char_code_at.js';
 import { error } from '../../errors-tmp.js';
+import * as errors from '../../errors.js';
 import { create_fragment } from './utils/create.js';
 import read_options from './read/options.js';
 import { getLocator } from 'locate-character';
@@ -92,10 +93,10 @@ export class Parser {
 
 			if (current.type === 'RegularElement') {
 				current.end = current.start + 1;
-				error(current, 'unclosed-element', current.name);
+				errors.unclosed_element(current, `<${current.name}>`);
 			} else {
 				current.end = current.start + 1;
-				error(current, 'unclosed-block');
+				errors.unclosed_block(current);
 			}
 		}
 
