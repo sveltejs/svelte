@@ -87,7 +87,7 @@ export function rest_props(props, exclude, name) {
  * that looks like `() => { dynamic: props }, { static: prop }, ..` and wraps
  * them so that the whole thing is passed to the component as the `$$props` argument.
  * @template {Record<string | symbol, unknown>} T
- * @type {ProxyHandler<{ props: (Array<T | (() => T)>), keys: T }>}}
+ * @type {ProxyHandler<{ props: (Array<T | (() => T)>), keys: (Array<(() => import('./types.js').Value<string>) | undefined>) }>}}
  */
 const spread_props_handler = {
 	get(target, key) {
@@ -159,10 +159,10 @@ const spread_props_handler = {
 
 /**
  * @param {Array<Record<string, unknown> | (() => Record<string, unknown>)>} props
+ * @param {(Array<(() => import('./types.js').Value<string>) | undefined>)} keys
  * @returns {any}
  */
-export function spread_props(...props) {
-	const keys = props.pop();
+export function spread_props(props, keys) {
 	return new Proxy({ props, keys }, spread_props_handler);
 }
 
