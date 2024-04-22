@@ -1023,10 +1023,13 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 			// 		(binding.kind !== 'normal' || !binding.initial)
 			// );
 
+			// TODO have a more specific error message for assignments to things like `{:then foo}`
+			const thing = 'constant';
+
 			if (is_binding) {
-				e.invalid_binding(node, 'TODO');
+				e.invalid_binding(node, thing);
 			} else {
-				e.invalid_assignment(node, 'TODO');
+				e.invalid_assignment(node, thing);
 			}
 		}
 	}

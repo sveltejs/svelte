@@ -418,7 +418,7 @@ export function invalid_css_selector(node) {
  * @returns {never}
  */
 export function invalid_css_identifier(node) {
-	e(node, "invalid_css_identifier", "TODO");
+	e(node, "invalid_css_identifier", "Expected a valid CSS identifier");
 }
 
 /**
@@ -518,7 +518,7 @@ export function cyclical_reactive_declaration(node, cycle) {
  * @returns {never}
  */
 export function unclosed_element(node, name) {
-	e(node, "unclosed_element", `${name} was left open`);
+	e(node, "unclosed_element", `\`<${name}>\` was left open`);
 }
 
 /**
@@ -981,7 +981,7 @@ export function invalid_host_location(node) {
  * @returns {never}
  */
 export function invalid_assignment(node, thing) {
-	e(node, "invalid_assignment", `Cannot assign to \`${thing}\``);
+	e(node, "invalid_assignment", `Cannot assign to ${thing}`);
 }
 
 /**
@@ -990,7 +990,7 @@ export function invalid_assignment(node, thing) {
  * @returns {never}
  */
 export function invalid_binding(node, thing) {
-	e(node, "invalid_binding", `Cannot bind to \`${thing}\``);
+	e(node, "invalid_binding", `Cannot bind to ${thing}`);
 }
 
 /**

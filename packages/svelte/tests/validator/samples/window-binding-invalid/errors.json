@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid-binding",
+		"code": "bind_invalid_target",
 		"message": "'potato' is not a valid binding",
 		"start": {
 			"line": 5,

@@ -44,7 +44,7 @@ Invalid selector
 
 ## invalid_css_identifier
 
-TODO
+Expected a valid CSS identifier
 
 ## invalid_nesting_selector
 

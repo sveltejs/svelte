@@ -1,6 +1,6 @@
 [
 	{
-		"code": "default-export",
+		"code": "default_export",
 		"message": "A component cannot have a default export",
 		"start": {
 			"line": 2,

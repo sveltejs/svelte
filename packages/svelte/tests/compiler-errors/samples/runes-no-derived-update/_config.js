@@ -2,7 +2,7 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'invalid-derived-assignment',
-		message: 'Invalid assignment to derived state'
+		code: 'invalid_assignment',
+		message: 'Cannot assign to derived state'
 	}
 });

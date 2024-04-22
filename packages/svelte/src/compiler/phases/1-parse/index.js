@@ -92,7 +92,7 @@ export class Parser {
 
 			if (current.type === 'RegularElement') {
 				current.end = current.start + 1;
-				e.unclosed_element(current, `<${current.name}>`);
+				e.unclosed_element(current, current.name);
 			} else {
 				current.end = current.start + 1;
 				e.unclosed_block(current);

@@ -56,11 +56,11 @@ Cannot export derived state from a module. To expose the current derived value, 
 
 ## invalid_assignment
 
-Cannot assign to `%thing%`
+Cannot assign to %thing%
 
 ## invalid_binding
 
-Cannot bind to `%thing%`
+Cannot bind to %thing%
 
 ## invalid_rune_args
 

@@ -1,8 +1,14 @@
 [
 	{
-		"code": "invalid-const-placement",
+		"code": "invalid_const_placement",
 		"message": "{@const} must be the immediate child of {#snippet}, {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>",
-		"start": { "line": 7, "column": 4 },
-		"end": { "line": 7, "column": 18 }
+		"start": {
+			"line": 7,
+			"column": 4
+		},
+		"end": {
+			"line": 7,
+			"column": 18
+		}
 	}
 ]

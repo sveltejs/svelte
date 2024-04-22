@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid-animation",
+		"code": "invalid_animation",
 		"message": "An element that uses the animate directive must be the sole child of a keyed each block",
 		"start": {
 			"line": 6,

@@ -1,6 +1,6 @@
 [
 	{
-		"code": "duplicate-transition",
+		"code": "transition_conflict",
 		"message": "An element can only have one 'in' directive",
 		"start": {
 			"line": 6,

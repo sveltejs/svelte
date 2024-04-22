@@ -1,6 +1,6 @@
 ## unclosed_element
 
-%name% was left open
+`<%name%>` was left open
 
 ## unclosed_block
 
