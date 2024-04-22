@@ -230,9 +230,12 @@ export function render_effect(fn) {
 	return create_effect(RENDER_EFFECT, fn, true);
 }
 
-/** @param {(() => void)} fn */
-export function block(fn) {
-	return create_effect(RENDER_EFFECT | BLOCK_EFFECT, fn, true);
+/**
+ * @param {(() => void)} fn
+ * @param {number} flags
+ */
+export function block(fn, flags = 0) {
+	return create_effect(RENDER_EFFECT | BLOCK_EFFECT | flags, fn, true);
 }
 
 /** @param {(() => void)} fn */

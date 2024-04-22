@@ -7,7 +7,7 @@ import { should_intro } from '../../render.js';
 import { is_function } from '../../utils.js';
 import { current_each_item } from '../blocks/each.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
-import { BLOCK_EFFECT, EFFECT_RAN } from '../../constants.js';
+import { BLOCK_EFFECT, EFFECT_RAN, EFFECT_TRANSPARENT } from '../../constants.js';
 
 /**
  * @template T
@@ -241,18 +241,26 @@ export function transition(flags, element, get_fn, get_params) {
 
 	(e.transitions ??= []).push(transition);
 
-	// if this is a local transition, we only want to run it if the parent (block) effect's
-	// parent (branch) effect is where the state change happened. we can determine that by
-	// looking at whether the branch effect is currently initializing
+	// if this is a local transition, we only want to run it if the parent (branch) effect's
+	// parent (block) effect is where the state change happened. we can determine that by
+	// looking at whether the block effect is currently initializing
 	if (is_intro && should_intro) {
-		var parent = /** @type {import('#client').Effect} */ (e.parent);
+		let run = is_global;
 
-		// e.g snippets are implemented as render effects — keep going until we find the parent block
-		while ((parent.f & BLOCK_EFFECT) === 0 && parent.parent) {
-			parent = parent.parent;
+		if (!run) {
+			var block = /** @type {import('#client').Effect | null} */ (e.parent);
+
+			// skip over transparent blocks (e.g. snippets, else-if blocks)
+			while (block && (block.f & EFFECT_TRANSPARENT) !== 0) {
+				while ((block = block.parent)) {
+					if ((block.f & BLOCK_EFFECT) !== 0) break;
+				}
+			}
+
+			run = !block || (block.f & EFFECT_RAN) !== 0;
 		}
 
-		if (is_global || (parent.f & EFFECT_RAN) !== 0) {
+		if (run) {
 			effect(() => {
 				untrack(() => transition.in());
 			});
