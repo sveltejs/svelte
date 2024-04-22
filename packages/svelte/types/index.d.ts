@@ -507,7 +507,7 @@ declare module 'svelte/compiler' {
 	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
 	 * */
-	function walk(): never;
+	export function walk(): never;
 	/** The return value of `compile` from `svelte/compiler` */
 	interface CompileResult {
 		/** The compiled JavaScript */
@@ -1763,8 +1763,6 @@ declare module 'svelte/compiler' {
 		style?: Preprocessor;
 		script?: Preprocessor;
 	}
-
-	export { walk };
 }
 
 declare module 'svelte/easing' {
