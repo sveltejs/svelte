@@ -1,7 +1,6 @@
 import * as fs from 'node:fs';
 import { setImmediate } from 'node:timers/promises';
 import glob from 'tiny-glob/sync.js';
-import * as $ from 'svelte/internal/client';
 import { createClassComponent } from 'svelte/legacy';
 import { flushSync } from 'svelte';
 import { render } from 'svelte/server';
@@ -56,6 +55,8 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 			KeyboardEvent: typeof KeyboardEvent;
 			MouseEvent: typeof MouseEvent;
 		};
+		logs: any[];
+		warnings: any[];
 	}) => void | Promise<void>;
 	test_ssr?: (args: { assert: Assert }) => void | Promise<void>;
 	accessors?: boolean;
@@ -151,6 +152,36 @@ async function run_test_variant(
 ) {
 	let unintended_error = false;
 
+	// eslint-disable-next-line no-console
+	const { log, warn } = console;
+
+	let logs: string[] = [];
+	let warnings: string[] = [];
+
+	{
+		// use some crude static analysis to determine if logs/warnings are intercepted.
+		// we do this instead of using getters on the `test` parameters so that we can
+		// squelch logs in SSR tests while printing temporary logs in other cases
+		let str = config.test?.toString() ?? '';
+		let n = 0;
+		let i = 0;
+		while (i < str.length) {
+			if (str[i] === '(') n++;
+			if (str[i] === ')' && --n === 0) break;
+			i++;
+		}
+
+		if (str.slice(0, i).includes('logs')) {
+			// eslint-disable-next-line no-console
+			console.log = (...args) => logs.push(...args);
+		}
+
+		if (str.slice(0, i).includes('warnings') || config.warnings) {
+			// eslint-disable-next-line no-console
+			console.warn = (...args) => warnings.push(...args);
+		}
+	}
+
 	try {
 		unhandled_rejection = null;
 
@@ -237,15 +268,9 @@ async function run_test_variant(
 				});
 			}
 		} else {
-			config.before_test?.();
+			logs.length = warnings.length = 0;
 
-			const warnings: string[] = [];
-			// eslint-disable-next-line no-console
-			const warn = console.warn;
-			// eslint-disable-next-line no-console
-			console.warn = (warning) => {
-				warnings.push(warning);
-			};
+			config.before_test?.();
 
 			// eslint-disable-next-line no-console
 			const error = console.error;
@@ -267,20 +292,11 @@ async function run_test_variant(
 			});
 
 			// eslint-disable-next-line no-console
-			console.warn = warn;
-			// eslint-disable-next-line no-console
 			console.error = error;
 
 			if (config.error) {
 				unintended_error = true;
 				assert.fail('Expected a runtime error');
-			}
-
-			if (config.warnings) {
-				assert.deepEqual(warnings, config.warnings);
-			} else if (warnings.length) {
-				unintended_error = true;
-				assert.fail('Received unexpected warnings');
 			}
 
 			if (config.html) {
@@ -309,7 +325,9 @@ async function run_test_variant(
 						snapshot,
 						window,
 						raf,
-						compileOptions
+						compileOptions,
+						logs,
+						warnings
 					});
 				}
 
@@ -319,6 +337,15 @@ async function run_test_variant(
 				}
 			} finally {
 				instance.$destroy();
+
+				if (config.warnings) {
+					assert.deepEqual(warnings, config.warnings);
+				} else if (warnings.length && console.warn === warn) {
+					unintended_error = true;
+					warn.apply(console, warnings);
+					assert.fail('Received unexpected warnings');
+				}
+
 				assert_html_equal(
 					target.innerHTML,
 					'',
@@ -341,6 +368,9 @@ async function run_test_variant(
 			throw err;
 		}
 	} finally {
+		console.log = log;
+		console.warn = warn;
+
 		config.after_test?.();
 
 		// Free up the microtask queue

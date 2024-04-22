@@ -1,16 +1,15 @@
 <script>
 	import Item from './Item.svelte';
-	import { log } from './log.js';
 
 	let { n = 0 } = $props();
 
 	function logRender () {
-		log.push(`parent: render ${n}`);
+		console.log(`parent: render ${n}`);
 		return 'parent';
 	}
 
 	$effect(() => {
-		log.push(`parent: $effect ${n}`);
+		console.log(`parent: $effect ${n}`);
 	});
 </script>
 

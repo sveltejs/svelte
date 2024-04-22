@@ -6,13 +6,8 @@ export default test({
 		<button>toggle</button>
 		<button>increase count</button>
 	`,
-	props: {
-		get log() {
-			return [];
-		}
-	},
 
-	async test({ assert, target, component }) {
+	async test({ assert, target, logs }) {
 		const [toggle, increment] = target.querySelectorAll('button');
 
 		await increment?.click();
@@ -24,7 +19,7 @@ export default test({
 				<button>increase count</button>
 			`
 		);
-		assert.deepEqual(component.log, []);
+		assert.deepEqual(logs, []);
 
 		await toggle?.click();
 		assert.htmlEqual(
@@ -35,7 +30,7 @@ export default test({
 				<button>increase count</button>
 			`
 		);
-		assert.deepEqual(component.log, [1]);
+		assert.deepEqual(logs, [1]);
 
 		await increment?.click();
 		assert.htmlEqual(
@@ -46,7 +41,7 @@ export default test({
 				<button>increase count</button>
 			`
 		);
-		assert.deepEqual(component.log, [1]);
+		assert.deepEqual(logs, [1]);
 
 		await toggle?.click();
 		assert.htmlEqual(
@@ -57,6 +52,6 @@ export default test({
 				<button>increase count</button>
 			`
 		);
-		assert.deepEqual(component.log, [1]);
+		assert.deepEqual(logs, [1]);
 	}
 });
