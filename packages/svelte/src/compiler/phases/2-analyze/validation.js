@@ -329,7 +329,7 @@ const validation = {
 		const left = object(assignee);
 
 		if (left === null) {
-			error(node, 'invalid-binding-expression');
+			e.invalid_binding_expression(node);
 		}
 
 		const binding = context.state.scope.get(left.name);
@@ -349,7 +349,7 @@ const validation = {
 					binding.kind !== 'store_sub' &&
 					!binding.mutated)
 			) {
-				error(node.expression, 'invalid-binding-value');
+				e.invalid_binding_value(node.expression);
 			}
 
 			if (binding.kind === 'derived') {
@@ -391,21 +391,14 @@ const validation = {
 			parent?.type === 'SvelteBody'
 		) {
 			if (context.state.options.namespace === 'foreign' && node.name !== 'this') {
-				error(
-					node,
-					'invalid-binding',
-					node.name,
-					undefined,
-					'. Foreign elements only support bind:this'
-				);
+				e.bind_invalid_detailed(node, node.name, 'Foreign elements only support `bind:this`');
 			}
 
 			if (node.name in binding_properties) {
 				const property = binding_properties[node.name];
 				if (property.valid_elements && !property.valid_elements.includes(parent.name)) {
-					error(
+					e.bind_invalid_target(
 						node,
-						'invalid-binding',
 						node.name,
 						property.valid_elements.map((valid_element) => `<${valid_element}>`).join(', ')
 					);
@@ -417,17 +410,17 @@ const validation = {
 					);
 					if (type && !is_text_attribute(type)) {
 						if (node.name !== 'value' || type.value === true) {
-							error(type, 'invalid-type-attribute');
+							e.invalid_type_attribute(type);
 						}
 						return; // bind:value can handle dynamic `type` attributes
 					}
 
 					if (node.name === 'checked' && type?.value[0].data !== 'checkbox') {
-						error(node, 'invalid-binding', node.name, '<input type="checkbox">');
+						e.bind_invalid_target(node, node.name, '<input type="checkbox">');
 					}
 
 					if (node.name === 'files' && type?.value[0].data !== 'file') {
-						error(node, 'invalid-binding', node.name, '<input type="file">');
+						e.bind_invalid_target(node, node.name, '<input type="file">');
 					}
 				}
 
@@ -440,14 +433,13 @@ const validation = {
 							a.value !== true
 					);
 					if (multiple) {
-						error(multiple, 'invalid-multiple-attribute');
+						e.invalid_multiple_attribute(multiple);
 					}
 				}
 
 				if (node.name === 'offsetWidth' && SVGElements.includes(parent.name)) {
-					error(
+					e.bind_invalid_target(
 						node,
-						'invalid-binding',
 						node.name,
 						`non-<svg> elements. Use 'clientWidth' for <svg> instead`
 					);
@@ -458,9 +450,9 @@ const validation = {
 						parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'contenteditable')
 					);
 					if (!contenteditable) {
-						error(node, 'missing-contenteditable-attribute');
+						e.missing_contenteditable_attribute(node);
 					} else if (!is_text_attribute(contenteditable) && contenteditable.value !== true) {
-						error(contenteditable, 'dynamic-contenteditable-attribute');
+						e.dynamic_contenteditable_attribute(node);
 					}
 				}
 			} else {
@@ -468,10 +460,10 @@ const validation = {
 				if (match) {
 					const property = binding_properties[match];
 					if (!property.valid_elements || property.valid_elements.includes(parent.name)) {
-						error(node, 'invalid-binding', node.name, undefined, ` (did you mean '${match}'?)`);
+						e.bind_invalid_detailed(node, node.name, ` Did you mean '${match}'?`);
 					}
 				}
-				error(node, 'invalid-binding', node.name);
+				e.bind_invalid(node, node.name);
 			}
 		}
 	},

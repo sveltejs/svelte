@@ -214,11 +214,31 @@ export function invalid_binding_value(node) {
 
 /**
  * @param {number | NodeLike} node
-
+ * @param {string} name
+ * @param {string} elements
  * @returns {never}
  */
-export function invalid_bind_directive(node) {
-	e(node, "invalid_bind_directive", "TODO");
+export function bind_invalid_target(node, name, elements) {
+	e(node, "bind_invalid_target", `\`bind:${name}\` can only be used with ${elements}`);
+}
+
+/**
+ * @param {number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function bind_invalid(node, name) {
+	e(node, "bind_invalid", `\`bind:${name}\` is not a valid binding`);
+}
+
+/**
+ * @param {number | NodeLike} node
+ * @param {string} name
+ * @param {string} explanation
+ * @returns {never}
+ */
+export function bind_invalid_detailed(node, name, explanation) {
+	e(node, "bind_invalid_detailed", `\`bind:${name}\` is not a valid binding. ${explanation}`);
 }
 
 /**

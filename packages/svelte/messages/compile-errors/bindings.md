@@ -6,9 +6,17 @@ Can only bind to an Identifier or MemberExpression
 
 Can only bind to state or props
 
-## invalid_bind_directive
+## bind_invalid_target
 
-TODO
+`bind:%name%` can only be used with %elements%
+
+## bind_invalid
+
+`bind:%name%` is not a valid binding
+
+## bind_invalid_detailed
+
+`bind:%name%` is not a valid binding. %explanation%
 
 ## invalid_type_attribute
 

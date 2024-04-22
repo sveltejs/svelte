@@ -21,29 +21,6 @@ const internal = {
 };
 
 /** @satisfies {Errors} */
-const bindings = {
-	'invalid-binding-expression': () => `Can only bind to an Identifier or MemberExpression`,
-	'invalid-binding-value': () => `Can only bind to state or props`,
-	/**
-	 * @param {string} binding
-	 * @param {string} [elements]
-	 * @param {string} [post]
-	 */
-	'invalid-binding': (binding, elements, post = '') =>
-		(elements
-			? `'${binding}' binding can only be used with ${elements}`
-			: `'${binding}' is not a valid binding`) + post,
-	'invalid-type-attribute': () =>
-		`'type' attribute must be a static text value if input uses two-way binding`,
-	'invalid-multiple-attribute': () =>
-		`'multiple' attribute must be static if select uses two-way binding`,
-	'missing-contenteditable-attribute': () =>
-		`'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings`,
-	'dynamic-contenteditable-attribute': () =>
-		`'contenteditable' attribute cannot be dynamic if element uses two-way binding`
-};
-
-/** @satisfies {Errors} */
 const variables = {
 	'illegal-global': /** @param {string} name */ (name) =>
 		`${name} is an illegal variable name. To reference a global variable called ${name}, use globalThis.${name}`,
@@ -79,7 +56,6 @@ const const_tag = {
 /** @satisfies {Errors} */
 const errors = {
 	...internal,
-	...bindings,
 	...variables,
 	...compiler_options,
 	...legacy_reactivity,
