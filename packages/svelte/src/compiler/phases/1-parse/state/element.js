@@ -113,11 +113,11 @@ export default function tag(parser) {
 			}
 		} else {
 			if (name in parser.meta_tags) {
-				error(start, 'duplicate-svelte-element', name);
+				e.duplicate_svelte_element(start, name);
 			}
 
 			if (parent.type !== 'Root') {
-				error(start, 'invalid-svelte-element-placement', name);
+				e.invalid_svelte_element_placement(start, name);
 			}
 
 			parser.meta_tags[name] = true;
@@ -238,7 +238,7 @@ export default function tag(parser) {
 			(attr) => attr.type === 'Attribute' && attr.name === 'this'
 		);
 		if (index === -1) {
-			error(start, 'missing-svelte-component-definition');
+			e.missing_svelte_component_definition(start);
 		}
 
 		const definition = /** @type {import('#compiler').Attribute} */ (
@@ -249,7 +249,7 @@ export default function tag(parser) {
 			definition.value.length !== 1 ||
 			definition.value[0].type === 'Text'
 		) {
-			error(definition.start, 'invalid-svelte-component-definition');
+			e.invalid_svelte_component_definition(definition.start);
 		}
 
 		element.expression = definition.value[0].expression;
@@ -261,14 +261,14 @@ export default function tag(parser) {
 			(attr) => attr.type === 'Attribute' && attr.name === 'this'
 		);
 		if (index === -1) {
-			error(start, 'missing-svelte-element-definition');
+			e.missing_svelte_element_definition(start);
 		}
 
 		const definition = /** @type {import('#compiler').Attribute} */ (
 			element.attributes.splice(index, 1)[0]
 		);
 		if (definition.value === true || definition.value.length !== 1) {
-			error(definition.start, 'invalid-svelte-element-definition');
+			e.invalid_svelte_element_definition(definition.start);
 		}
 		const chunk = definition.value[0];
 		element.tag =
@@ -392,7 +392,7 @@ function read_tag_name(parser) {
 		}
 
 		if (!legal) {
-			error(start, 'invalid-self-placement');
+			e.invalid_self_placement(start);
 		}
 
 		return 'svelte:self';
@@ -409,7 +409,10 @@ function read_tag_name(parser) {
 
 	if (name.startsWith('svelte:')) {
 		const match = fuzzymatch(name.slice(7), valid_meta_tags);
-		error(start, 'invalid-svelte-tag', valid_meta_tags, match);
+		if (match === null) {
+		}
+		const list = `${valid_meta_tags.slice(0, -1).join(', ')} or ${valid_meta_tags[valid_meta_tags.length - 1]}`;
+		e.invalid_svelte_tag(start, list);
 	}
 
 	if (!valid_tag_name.test(name)) {

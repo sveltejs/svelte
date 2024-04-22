@@ -505,7 +505,7 @@ export function analyze_component(root, source, options) {
 	}
 
 	if (analysis.uses_render_tags && (analysis.uses_slots || analysis.slot_names.size > 0)) {
-		error(analysis.slot_names.values().next().value, 'conflicting-slot-usage');
+		e.conflicting_slot_usage(analysis.slot_names.values().next().value);
 	}
 
 	// warn on any nonstate declarations that are a) reassigned and b) referenced in the template

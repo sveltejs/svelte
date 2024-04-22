@@ -53,7 +53,7 @@ export class CompileError extends Error {
  * @param {string} message
  * @returns {never}
  */
-function __error(node, code, message) {
+function e(node, code, message) {
 	const start = typeof node === 'number' ? node : node?.start;
 	const end = typeof node === 'number' ? node : node?.end;
 
@@ -70,5 +70,5 @@ function __error(node, code, message) {
  * @returns {never}
  */
 export function CODE(node, PARAMETER) {
-	__error(node, 'CODE', MESSAGE);
+	e(node, 'CODE', MESSAGE);
 }

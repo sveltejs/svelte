@@ -50,7 +50,7 @@ export class CompileError extends Error {
  * @param {string} message
  * @returns {never}
  */
-function __error(node, code, message) {
+function e(node, code, message) {
 	const start = typeof node === 'number' ? node : node?.start;
 	const end = typeof node === 'number' ? node : node?.end;
 
@@ -63,7 +63,7 @@ function __error(node, code, message) {
  * @returns {never}
  */
 export function empty_attribute_shorthand(node) {
-	__error(node, "empty_attribute_shorthand", "Attribute shorthand cannot be empty");
+	e(node, "empty_attribute_shorthand", "Attribute shorthand cannot be empty");
 }
 
 /**
@@ -72,7 +72,7 @@ export function empty_attribute_shorthand(node) {
  * @returns {never}
  */
 export function duplicate_attribute(node) {
-	__error(node, "duplicate_attribute", "Attributes need to be unique");
+	e(node, "duplicate_attribute", "Attributes need to be unique");
 }
 
 /**
@@ -81,7 +81,7 @@ export function duplicate_attribute(node) {
  * @returns {never}
  */
 export function invalid_event_attribute_value(node) {
-	__error(node, "invalid_event_attribute_value", "Event attribute must be a JavaScript expression, not a string");
+	e(node, "invalid_event_attribute_value", "Event attribute must be a JavaScript expression, not a string");
 }
 
 /**
@@ -90,7 +90,7 @@ export function invalid_event_attribute_value(node) {
  * @returns {never}
  */
 export function invalid_attribute_name(node, name) {
-	__error(node, "invalid_attribute_name", `'${name}' is not a valid attribute name`);
+	e(node, "invalid_attribute_name", `'${name}' is not a valid attribute name`);
 }
 
 /**
@@ -99,7 +99,7 @@ export function invalid_attribute_name(node, name) {
  * @returns {never}
  */
 export function invalid_animation(node) {
-	__error(node, "invalid_animation", "An element that uses the animate directive must be the immediate child of a keyed each block`\n\t\t\t: type === 'each-key'\n\t\t\t\t? `An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?`\n\t\t\t\t: `An element that uses the animate directive must be the sole child of a keyed each block");
+	e(node, "invalid_animation", "An element that uses the animate directive must be the immediate child of a keyed each block`\n\t\t\t: type === 'each-key'\n\t\t\t\t? `An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?`\n\t\t\t\t: `An element that uses the animate directive must be the sole child of a keyed each block");
 }
 
 /**
@@ -108,7 +108,7 @@ export function invalid_animation(node) {
  * @returns {never}
  */
 export function duplicate_animation(node) {
-	__error(node, "duplicate_animation", "An element can only have one 'animate' directive");
+	e(node, "duplicate_animation", "An element can only have one 'animate' directive");
 }
 
 /**
@@ -117,7 +117,7 @@ export function duplicate_animation(node) {
  * @returns {never}
  */
 export function invalid_event_modifier(node) {
-	__error(node, "invalid_event_modifier", "Valid event modifiers are %modifiers.slice(0, -1).join(', ')% or %modifiers.slice(-1)%`\n\t\t\t: `Event modifiers other than 'once' can only be used on DOM elements");
+	e(node, "invalid_event_modifier", "Valid event modifiers are %modifiers.slice(0, -1).join(', ')% or %modifiers.slice(-1)%`\n\t\t\t: `Event modifiers other than 'once' can only be used on DOM elements");
 }
 
 /**
@@ -127,7 +127,7 @@ export function invalid_event_modifier(node) {
  * @returns {never}
  */
 export function invalid_event_modifier_combination(node, modifier1, modifier2) {
-	__error(node, "invalid_event_modifier_combination", `The '${modifier1}' and '${modifier2}' modifiers cannot be used together`);
+	e(node, "invalid_event_modifier_combination", `The '${modifier1}' and '${modifier2}' modifiers cannot be used together`);
 }
 
 /**
@@ -136,7 +136,7 @@ export function invalid_event_modifier_combination(node, modifier1, modifier2) {
  * @returns {never}
  */
 export function duplicate_transition(node) {
-	__error(node, "duplicate_transition", "TODO");
+	e(node, "duplicate_transition", "TODO");
 }
 
 /**
@@ -145,7 +145,7 @@ export function duplicate_transition(node) {
  * @returns {never}
  */
 export function invalid_let_directive_placement(node) {
-	__error(node, "invalid_let_directive_placement", "TODO");
+	e(node, "invalid_let_directive_placement", "TODO");
 }
 
 /**
@@ -154,7 +154,7 @@ export function invalid_let_directive_placement(node) {
  * @returns {never}
  */
 export function invalid_style_directive_modifier(node) {
-	__error(node, "invalid_style_directive_modifier", "Invalid 'style:' modifier. Valid modifiers are: 'important'");
+	e(node, "invalid_style_directive_modifier", "Invalid 'style:' modifier. Valid modifiers are: 'important'");
 }
 
 /**
@@ -163,7 +163,7 @@ export function invalid_style_directive_modifier(node) {
  * @returns {never}
  */
 export function invalid_sequence_expression(node) {
-	__error(node, "invalid_sequence_expression", "Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses");
+	e(node, "invalid_sequence_expression", "Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses");
 }
 
 /**
@@ -172,7 +172,7 @@ export function invalid_sequence_expression(node) {
  * @returns {never}
  */
 export function invalid_binding_expression(node) {
-	__error(node, "invalid_binding_expression", "Can only bind to an Identifier or MemberExpression");
+	e(node, "invalid_binding_expression", "Can only bind to an Identifier or MemberExpression");
 }
 
 /**
@@ -181,7 +181,7 @@ export function invalid_binding_expression(node) {
  * @returns {never}
  */
 export function invalid_binding_value(node) {
-	__error(node, "invalid_binding_value", "Can only bind to state or props");
+	e(node, "invalid_binding_value", "Can only bind to state or props");
 }
 
 /**
@@ -190,7 +190,7 @@ export function invalid_binding_value(node) {
  * @returns {never}
  */
 export function invalid_binding(node) {
-	__error(node, "invalid_binding", "TODO");
+	e(node, "invalid_binding", "TODO");
 }
 
 /**
@@ -199,7 +199,7 @@ export function invalid_binding(node) {
  * @returns {never}
  */
 export function invalid_type_attribute(node) {
-	__error(node, "invalid_type_attribute", "'type' attribute must be a static text value if input uses two-way binding");
+	e(node, "invalid_type_attribute", "'type' attribute must be a static text value if input uses two-way binding");
 }
 
 /**
@@ -208,7 +208,7 @@ export function invalid_type_attribute(node) {
  * @returns {never}
  */
 export function invalid_multiple_attribute(node) {
-	__error(node, "invalid_multiple_attribute", "'multiple' attribute must be static if select uses two-way binding");
+	e(node, "invalid_multiple_attribute", "'multiple' attribute must be static if select uses two-way binding");
 }
 
 /**
@@ -217,7 +217,7 @@ export function invalid_multiple_attribute(node) {
  * @returns {never}
  */
 export function missing_contenteditable_attribute(node) {
-	__error(node, "missing_contenteditable_attribute", "'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings");
+	e(node, "missing_contenteditable_attribute", "'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings");
 }
 
 /**
@@ -226,7 +226,7 @@ export function missing_contenteditable_attribute(node) {
  * @returns {never}
  */
 export function dynamic_contenteditable_attribute(node) {
-	__error(node, "dynamic_contenteditable_attribute", "'contenteditable' attribute cannot be dynamic if element uses two-way binding");
+	e(node, "dynamic_contenteditable_attribute", "'contenteditable' attribute cannot be dynamic if element uses two-way binding");
 }
 
 /**
@@ -235,7 +235,7 @@ export function dynamic_contenteditable_attribute(node) {
  * @returns {never}
  */
 export function invalid_compiler_option(node, msg) {
-	__error(node, "invalid_compiler_option", `Invalid compiler option: ${msg}`);
+	e(node, "invalid_compiler_option", `Invalid compiler option: ${msg}`);
 }
 
 /**
@@ -244,7 +244,7 @@ export function invalid_compiler_option(node, msg) {
  * @returns {never}
  */
 export function removed_compiler_option(node, msg) {
-	__error(node, "removed_compiler_option", `Invalid compiler option: ${msg}`);
+	e(node, "removed_compiler_option", `Invalid compiler option: ${msg}`);
 }
 
 /**
@@ -253,7 +253,7 @@ export function removed_compiler_option(node, msg) {
  * @returns {never}
  */
 export function invalid_component_directive(node) {
-	__error(node, "invalid_component_directive", "This type of directive is not valid on components");
+	e(node, "invalid_component_directive", "This type of directive is not valid on components");
 }
 
 /**
@@ -262,7 +262,7 @@ export function invalid_component_directive(node) {
  * @returns {never}
  */
 export function invalid_const_placement(node) {
-	__error(node, "invalid_const_placement", "{@const} must be the immediate child of {#snippet}, {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>");
+	e(node, "invalid_const_placement", "{@const} must be the immediate child of {#snippet}, {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>");
 }
 
 /**
@@ -271,7 +271,7 @@ export function invalid_const_placement(node) {
  * @returns {never}
  */
 export function css_parse_error(node) {
-	__error(node, "css_parse_error", "TODO");
+	e(node, "css_parse_error", "TODO");
 }
 
 /**
@@ -280,7 +280,7 @@ export function css_parse_error(node) {
  * @returns {never}
  */
 export function invalid_css_empty_declaration(node) {
-	__error(node, "invalid_css_empty_declaration", "Declaration cannot be empty");
+	e(node, "invalid_css_empty_declaration", "Declaration cannot be empty");
 }
 
 /**
@@ -289,7 +289,7 @@ export function invalid_css_empty_declaration(node) {
  * @returns {never}
  */
 export function invalid_css_global_block_list(node) {
-	__error(node, "invalid_css_global_block_list", "A :global {...} block cannot be part of a selector list with more than one item");
+	e(node, "invalid_css_global_block_list", "A :global {...} block cannot be part of a selector list with more than one item");
 }
 
 /**
@@ -298,7 +298,7 @@ export function invalid_css_global_block_list(node) {
  * @returns {never}
  */
 export function invalid_css_global_block_modifier(node) {
-	__error(node, "invalid_css_global_block_modifier", "A :global {...} block cannot modify an existing selector");
+	e(node, "invalid_css_global_block_modifier", "A :global {...} block cannot modify an existing selector");
 }
 
 /**
@@ -307,7 +307,7 @@ export function invalid_css_global_block_modifier(node) {
  * @returns {never}
  */
 export function invalid_css_global_block_combinator(node, name) {
-	__error(node, "invalid_css_global_block_combinator", `A :global {...} block cannot follow a ${name} combinator`);
+	e(node, "invalid_css_global_block_combinator", `A :global {...} block cannot follow a ${name} combinator`);
 }
 
 /**
@@ -316,7 +316,7 @@ export function invalid_css_global_block_combinator(node, name) {
  * @returns {never}
  */
 export function invalid_css_global_block_declaration(node) {
-	__error(node, "invalid_css_global_block_declaration", "A :global {...} block can only contain rules, not declarations");
+	e(node, "invalid_css_global_block_declaration", "A :global {...} block can only contain rules, not declarations");
 }
 
 /**
@@ -325,7 +325,7 @@ export function invalid_css_global_block_declaration(node) {
  * @returns {never}
  */
 export function invalid_css_global_placement(node) {
-	__error(node, "invalid_css_global_placement", ":global(...) can be at the start or end of a selector sequence, but not in the middle");
+	e(node, "invalid_css_global_placement", ":global(...) can be at the start or end of a selector sequence, but not in the middle");
 }
 
 /**
@@ -334,7 +334,7 @@ export function invalid_css_global_placement(node) {
  * @returns {never}
  */
 export function invalid_css_global_selector(node) {
-	__error(node, "invalid_css_global_selector", ":global(...) must contain exactly one selector");
+	e(node, "invalid_css_global_selector", ":global(...) must contain exactly one selector");
 }
 
 /**
@@ -343,7 +343,7 @@ export function invalid_css_global_selector(node) {
  * @returns {never}
  */
 export function invalid_css_global_selector_list(node) {
-	__error(node, "invalid_css_global_selector_list", ":global(...) must not contain type or universal selectors when used in a compound selector");
+	e(node, "invalid_css_global_selector_list", ":global(...) must not contain type or universal selectors when used in a compound selector");
 }
 
 /**
@@ -352,7 +352,7 @@ export function invalid_css_global_selector_list(node) {
  * @returns {never}
  */
 export function invalid_css_type_selector_placement(node) {
-	__error(node, "invalid_css_type_selector_placement", ":global(...) must not be followed with a type selector");
+	e(node, "invalid_css_type_selector_placement", ":global(...) must not be followed with a type selector");
 }
 
 /**
@@ -361,7 +361,7 @@ export function invalid_css_type_selector_placement(node) {
  * @returns {never}
  */
 export function invalid_css_selector(node) {
-	__error(node, "invalid_css_selector", "Invalid selector");
+	e(node, "invalid_css_selector", "Invalid selector");
 }
 
 /**
@@ -370,7 +370,7 @@ export function invalid_css_selector(node) {
  * @returns {never}
  */
 export function invalid_css_identifier(node) {
-	__error(node, "invalid_css_identifier", "TODO");
+	e(node, "invalid_css_identifier", "TODO");
 }
 
 /**
@@ -379,7 +379,7 @@ export function invalid_css_identifier(node) {
  * @returns {never}
  */
 export function invalid_nesting_selector(node) {
-	__error(node, "invalid_nesting_selector", "Nesting selectors can only be used inside a rule");
+	e(node, "invalid_nesting_selector", "Nesting selectors can only be used inside a rule");
 }
 
 /**
@@ -388,7 +388,7 @@ export function invalid_nesting_selector(node) {
  * @returns {never}
  */
 export function invalid_css_declaration(node) {
-	__error(node, "invalid_css_declaration", "TODO");
+	e(node, "invalid_css_declaration", "TODO");
 }
 
 /**
@@ -397,7 +397,7 @@ export function invalid_css_declaration(node) {
  * @returns {never}
  */
 export function invalid_textarea_content(node) {
-	__error(node, "invalid_textarea_content", "A <textarea> can have either a value attribute or (equivalently) child content, but not both");
+	e(node, "invalid_textarea_content", "A <textarea> can have either a value attribute or (equivalently) child content, but not both");
 }
 
 /**
@@ -406,7 +406,7 @@ export function invalid_textarea_content(node) {
  * @returns {never}
  */
 export function invalid_void_content(node) {
-	__error(node, "invalid_void_content", "Void elements cannot have children or closing tags");
+	e(node, "invalid_void_content", "Void elements cannot have children or closing tags");
 }
 
 /**
@@ -415,7 +415,7 @@ export function invalid_void_content(node) {
  * @returns {never}
  */
 export function invalid_element_content(node, name) {
-	__error(node, "invalid_element_content", `<${name}> cannot have children`);
+	e(node, "invalid_element_content", `<${name}> cannot have children`);
 }
 
 /**
@@ -424,7 +424,7 @@ export function invalid_element_content(node, name) {
  * @returns {never}
  */
 export function invalid_tag_name(node) {
-	__error(node, "invalid_tag_name", "TODO");
+	e(node, "invalid_tag_name", "TODO");
 }
 
 /**
@@ -434,7 +434,7 @@ export function invalid_tag_name(node) {
  * @returns {never}
  */
 export function invalid_node_placement(node, thing, parent) {
-	__error(node, "invalid_node_placement", `${thing} is invalid inside <${parent}>`);
+	e(node, "invalid_node_placement", `${thing} is invalid inside <${parent}>`);
 }
 
 /**
@@ -443,7 +443,7 @@ export function invalid_node_placement(node, thing, parent) {
  * @returns {never}
  */
 export function illegal_title_attribute(node) {
-	__error(node, "illegal_title_attribute", "TODO");
+	e(node, "illegal_title_attribute", "TODO");
 }
 
 /**
@@ -452,7 +452,7 @@ export function illegal_title_attribute(node) {
  * @returns {never}
  */
 export function invalid_title_content(node) {
-	__error(node, "invalid_title_content", "TODO");
+	e(node, "invalid_title_content", "TODO");
 }
 
 /**
@@ -461,7 +461,7 @@ export function invalid_title_content(node) {
  * @returns {never}
  */
 export function cyclical_reactive_declaration(node) {
-	__error(node, "cyclical_reactive_declaration", "Cyclical dependency detected: %cycle.join(' → ')%");
+	e(node, "cyclical_reactive_declaration", "Cyclical dependency detected: %cycle.join(' → ')%");
 }
 
 /**
@@ -470,7 +470,7 @@ export function cyclical_reactive_declaration(node) {
  * @returns {never}
  */
 export function unclosed_element(node, name) {
-	__error(node, "unclosed_element", `${name} was left open`);
+	e(node, "unclosed_element", `${name} was left open`);
 }
 
 /**
@@ -479,7 +479,7 @@ export function unclosed_element(node, name) {
  * @returns {never}
  */
 export function unclosed_block(node) {
-	__error(node, "unclosed_block", "Block was left open");
+	e(node, "unclosed_block", "Block was left open");
 }
 
 /**
@@ -488,7 +488,7 @@ export function unclosed_block(node) {
  * @returns {never}
  */
 export function unexpected_block_close(node) {
-	__error(node, "unexpected_block_close", "Unexpected block closing tag");
+	e(node, "unexpected_block_close", "Unexpected block closing tag");
 }
 
 /**
@@ -497,7 +497,7 @@ export function unexpected_block_close(node) {
  * @returns {never}
  */
 export function unexpected_eof(node) {
-	__error(node, "unexpected_eof", "Unexpected end of input");
+	e(node, "unexpected_eof", "Unexpected end of input");
 }
 
 /**
@@ -506,7 +506,7 @@ export function unexpected_eof(node) {
  * @returns {never}
  */
 export function js_parse_error(node, message) {
-	__error(node, "js_parse_error", `${message}`);
+	e(node, "js_parse_error", `${message}`);
 }
 
 /**
@@ -515,7 +515,7 @@ export function js_parse_error(node, message) {
  * @returns {never}
  */
 export function expected_token(node, token) {
-	__error(node, "expected_token", `Expected token ${token}`);
+	e(node, "expected_token", `Expected token ${token}`);
 }
 
 /**
@@ -524,7 +524,7 @@ export function expected_token(node, token) {
  * @returns {never}
  */
 export function unexpected_reserved_word(node, word) {
-	__error(node, "unexpected_reserved_word", `'${word}' is a reserved word in JavaScript and cannot be used here`);
+	e(node, "unexpected_reserved_word", `'${word}' is a reserved word in JavaScript and cannot be used here`);
 }
 
 /**
@@ -533,7 +533,7 @@ export function unexpected_reserved_word(node, word) {
  * @returns {never}
  */
 export function missing_whitespace(node) {
-	__error(node, "missing_whitespace", "Expected whitespace");
+	e(node, "missing_whitespace", "Expected whitespace");
 }
 
 /**
@@ -542,7 +542,7 @@ export function missing_whitespace(node) {
  * @returns {never}
  */
 export function expected_pattern(node) {
-	__error(node, "expected_pattern", "Expected identifier or destructure pattern");
+	e(node, "expected_pattern", "Expected identifier or destructure pattern");
 }
 
 /**
@@ -551,7 +551,7 @@ export function expected_pattern(node) {
  * @returns {never}
  */
 export function invalid_script_context(node) {
-	__error(node, "invalid_script_context", "If the context attribute is supplied, its value must be \"module\"");
+	e(node, "invalid_script_context", "If the context attribute is supplied, its value must be \"module\"");
 }
 
 /**
@@ -560,7 +560,7 @@ export function invalid_script_context(node) {
  * @returns {never}
  */
 export function invalid_elseif(node) {
-	__error(node, "invalid_elseif", "'elseif' should be 'else if'");
+	e(node, "invalid_elseif", "'elseif' should be 'else if'");
 }
 
 /**
@@ -569,7 +569,7 @@ export function invalid_elseif(node) {
  * @returns {never}
  */
 export function invalid_continuing_block_placement(node) {
-	__error(node, "invalid_continuing_block_placement", "{:...} block is invalid at this position (did you forget to close the preceeding element or block?)");
+	e(node, "invalid_continuing_block_placement", "{:...} block is invalid at this position (did you forget to close the preceeding element or block?)");
 }
 
 /**
@@ -579,7 +579,7 @@ export function invalid_continuing_block_placement(node) {
  * @returns {never}
  */
 export function invalid_block_missing_parent(node, child, parent) {
-	__error(node, "invalid_block_missing_parent", `${child} block must be a child of ${parent}`);
+	e(node, "invalid_block_missing_parent", `${child} block must be a child of ${parent}`);
 }
 
 /**
@@ -588,7 +588,7 @@ export function invalid_block_missing_parent(node, child, parent) {
  * @returns {never}
  */
 export function duplicate_block_part(node, name) {
-	__error(node, "duplicate_block_part", `${name} cannot appear more than once within a block`);
+	e(node, "duplicate_block_part", `${name} cannot appear more than once within a block`);
 }
 
 /**
@@ -597,7 +597,7 @@ export function duplicate_block_part(node, name) {
  * @returns {never}
  */
 export function expected_block_type(node) {
-	__error(node, "expected_block_type", "Expected 'if', 'each', 'await', 'key' or 'snippet'");
+	e(node, "expected_block_type", "Expected 'if', 'each', 'await', 'key' or 'snippet'");
 }
 
 /**
@@ -606,7 +606,7 @@ export function expected_block_type(node) {
  * @returns {never}
  */
 export function expected_identifier(node) {
-	__error(node, "expected_identifier", "Expected an identifier");
+	e(node, "expected_identifier", "Expected an identifier");
 }
 
 /**
@@ -615,7 +615,7 @@ export function expected_identifier(node) {
  * @returns {never}
  */
 export function invalid_debug(node) {
-	__error(node, "invalid_debug", "{@debug ...} arguments must be identifiers, not arbitrary expressions");
+	e(node, "invalid_debug", "{@debug ...} arguments must be identifiers, not arbitrary expressions");
 }
 
 /**
@@ -624,7 +624,7 @@ export function invalid_debug(node) {
  * @returns {never}
  */
 export function invalid_const(node) {
-	__error(node, "invalid_const", "{@const ...} must be an assignment");
+	e(node, "invalid_const", "{@const ...} must be an assignment");
 }
 
 /**
@@ -634,7 +634,7 @@ export function invalid_const(node) {
  * @returns {never}
  */
 export function invalid_block_placement(node, name, location) {
-	__error(node, "invalid_block_placement", `{#${name} ...} block cannot be ${location}`);
+	e(node, "invalid_block_placement", `{#${name} ...} block cannot be ${location}`);
 }
 
 /**
@@ -644,7 +644,7 @@ export function invalid_block_placement(node, name, location) {
  * @returns {never}
  */
 export function invalid_tag_placement(node, name, location) {
-	__error(node, "invalid_tag_placement", `{@${name} ...} tag cannot be ${location}`);
+	e(node, "invalid_tag_placement", `{@${name} ...} tag cannot be ${location}`);
 }
 
 /**
@@ -653,7 +653,7 @@ export function invalid_tag_placement(node, name, location) {
  * @returns {never}
  */
 export function missing_attribute_value(node) {
-	__error(node, "missing_attribute_value", "Expected attribute value");
+	e(node, "missing_attribute_value", "Expected attribute value");
 }
 
 /**
@@ -662,7 +662,7 @@ export function missing_attribute_value(node) {
  * @returns {never}
  */
 export function unclosed_attribute_value(node, delimiter) {
-	__error(node, "unclosed_attribute_value", `Expected closing ${delimiter} character`);
+	e(node, "unclosed_attribute_value", `Expected closing ${delimiter} character`);
 }
 
 /**
@@ -671,7 +671,7 @@ export function unclosed_attribute_value(node, delimiter) {
  * @returns {never}
  */
 export function invalid_directive_value(node) {
-	__error(node, "invalid_directive_value", "Directive value must be a JavaScript expression enclosed in curly braces");
+	e(node, "invalid_directive_value", "Directive value must be a JavaScript expression enclosed in curly braces");
 }
 
 /**
@@ -680,7 +680,7 @@ export function invalid_directive_value(node) {
  * @returns {never}
  */
 export function empty_directive_name(node, type) {
-	__error(node, "empty_directive_name", `${type} name cannot be empty`);
+	e(node, "empty_directive_name", `${type} name cannot be empty`);
 }
 
 /**
@@ -689,7 +689,7 @@ export function empty_directive_name(node, type) {
  * @returns {never}
  */
 export function invalid_closing_tag(node, name) {
-	__error(node, "invalid_closing_tag", `</${name}> attempted to close an element that was not open`);
+	e(node, "invalid_closing_tag", `</${name}> attempted to close an element that was not open`);
 }
 
 /**
@@ -699,7 +699,7 @@ export function invalid_closing_tag(node, name) {
  * @returns {never}
  */
 export function invalid_closing_tag_after_autoclose(node, name, reason) {
-	__error(node, "invalid_closing_tag_after_autoclose", `</${name}> attempted to close element that was already automatically closed by <${reason}> (cannot nest <${reason}> inside <${name}>)`);
+	e(node, "invalid_closing_tag_after_autoclose", `</${name}> attempted to close element that was already automatically closed by <${reason}> (cannot nest <${reason}> inside <${name}>)`);
 }
 
 /**
@@ -708,7 +708,7 @@ export function invalid_closing_tag_after_autoclose(node, name, reason) {
  * @returns {never}
  */
 export function invalid_dollar_binding(node) {
-	__error(node, "invalid_dollar_binding", "The $ name is reserved, and cannot be used for variables and imports");
+	e(node, "invalid_dollar_binding", "The $ name is reserved, and cannot be used for variables and imports");
 }
 
 /**
@@ -717,7 +717,7 @@ export function invalid_dollar_binding(node) {
  * @returns {never}
  */
 export function invalid_dollar_prefix(node) {
-	__error(node, "invalid_dollar_prefix", "The $ prefix is reserved, and cannot be used for variables and imports");
+	e(node, "invalid_dollar_prefix", "The $ prefix is reserved, and cannot be used for variables and imports");
 }
 
 /**
@@ -726,7 +726,7 @@ export function invalid_dollar_prefix(node) {
  * @returns {never}
  */
 export function invalid_dollar_global(node) {
-	__error(node, "invalid_dollar_global", "The $ name is reserved. To reference a global variable called $, use globalThis.$");
+	e(node, "invalid_dollar_global", "The $ name is reserved. To reference a global variable called $, use globalThis.$");
 }
 
 /**
@@ -735,7 +735,7 @@ export function invalid_dollar_global(node) {
  * @returns {never}
  */
 export function illegal_subscription(node) {
-	__error(node, "illegal_subscription", "Cannot reference store value inside `<script context=\"module\">`");
+	e(node, "illegal_subscription", "Cannot reference store value inside `<script context=\"module\">`");
 }
 
 /**
@@ -744,7 +744,7 @@ export function illegal_subscription(node) {
  * @returns {never}
  */
 export function duplicate_style_element(node) {
-	__error(node, "duplicate_style_element", "A component can have a single top-level `<style>` element");
+	e(node, "duplicate_style_element", "A component can have a single top-level `<style>` element");
 }
 
 /**
@@ -753,7 +753,7 @@ export function duplicate_style_element(node) {
  * @returns {never}
  */
 export function duplicate_script_element(node) {
-	__error(node, "duplicate_script_element", "A component can have a single top-level `<script>` element and/or a single top-level `<script context=\"module\">` element");
+	e(node, "duplicate_script_element", "A component can have a single top-level `<script>` element and/or a single top-level `<script context=\"module\">` element");
 }
 
 /**
@@ -762,7 +762,7 @@ export function duplicate_script_element(node) {
  * @returns {never}
  */
 export function invalid_render_expression(node) {
-	__error(node, "invalid_render_expression", "{@render ...} tags can only contain call expressions");
+	e(node, "invalid_render_expression", "{@render ...} tags can only contain call expressions");
 }
 
 /**
@@ -771,7 +771,7 @@ export function invalid_render_expression(node) {
  * @returns {never}
  */
 export function invalid_render_arguments(node) {
-	__error(node, "invalid_render_arguments", "expected at most one argument");
+	e(node, "invalid_render_arguments", "expected at most one argument");
 }
 
 /**
@@ -780,7 +780,7 @@ export function invalid_render_arguments(node) {
  * @returns {never}
  */
 export function invalid_render_call(node) {
-	__error(node, "invalid_render_call", "Calling a snippet function using apply, bind or call is not allowed");
+	e(node, "invalid_render_call", "Calling a snippet function using apply, bind or call is not allowed");
 }
 
 /**
@@ -789,7 +789,7 @@ export function invalid_render_call(node) {
  * @returns {never}
  */
 export function invalid_render_spread_argument(node) {
-	__error(node, "invalid_render_spread_argument", "cannot use spread arguments in {@render ...} tags");
+	e(node, "invalid_render_spread_argument", "cannot use spread arguments in {@render ...} tags");
 }
 
 /**
@@ -798,7 +798,7 @@ export function invalid_render_spread_argument(node) {
  * @returns {never}
  */
 export function invalid_snippet_rest_parameter(node) {
-	__error(node, "invalid_snippet_rest_parameter", "snippets do not support rest parameters; use an array instead");
+	e(node, "invalid_snippet_rest_parameter", "snippets do not support rest parameters; use an array instead");
 }
 
 /**
@@ -807,7 +807,7 @@ export function invalid_snippet_rest_parameter(node) {
  * @returns {never}
  */
 export function invalid_legacy_props(node) {
-	__error(node, "invalid_legacy_props", "Cannot use $$props in runes mode");
+	e(node, "invalid_legacy_props", "Cannot use $$props in runes mode");
 }
 
 /**
@@ -816,7 +816,7 @@ export function invalid_legacy_props(node) {
  * @returns {never}
  */
 export function invalid_legacy_rest_props(node) {
-	__error(node, "invalid_legacy_rest_props", "Cannot use $$restProps in runes mode");
+	e(node, "invalid_legacy_rest_props", "Cannot use $$restProps in runes mode");
 }
 
 /**
@@ -825,7 +825,7 @@ export function invalid_legacy_rest_props(node) {
  * @returns {never}
  */
 export function invalid_legacy_reactive_statement(node) {
-	__error(node, "invalid_legacy_reactive_statement", "$: is not allowed in runes mode, use $derived or $effect instead");
+	e(node, "invalid_legacy_reactive_statement", "$: is not allowed in runes mode, use $derived or $effect instead");
 }
 
 /**
@@ -834,7 +834,7 @@ export function invalid_legacy_reactive_statement(node) {
  * @returns {never}
  */
 export function invalid_legacy_export(node) {
-	__error(node, "invalid_legacy_export", "Cannot use \\`export let\\` in runes mode — use $props instead");
+	e(node, "invalid_legacy_export", "Cannot use \\`export let\\` in runes mode — use $props instead");
 }
 
 /**
@@ -843,7 +843,7 @@ export function invalid_legacy_export(node) {
  * @returns {never}
  */
 export function invalid_rune_usage(node, rune) {
-	__error(node, "invalid_rune_usage", `Cannot use ${rune} rune in non-runes mode`);
+	e(node, "invalid_rune_usage", `Cannot use ${rune} rune in non-runes mode`);
 }
 
 /**
@@ -852,7 +852,7 @@ export function invalid_rune_usage(node, rune) {
  * @returns {never}
  */
 export function invalid_state_export(node) {
-	__error(node, "invalid_state_export", "Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties");
+	e(node, "invalid_state_export", "Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties");
 }
 
 /**
@@ -861,7 +861,7 @@ export function invalid_state_export(node) {
  * @returns {never}
  */
 export function invalid_derived_export(node) {
-	__error(node, "invalid_derived_export", "Cannot export derived state from a module. To expose the current derived value, export a function returning its value");
+	e(node, "invalid_derived_export", "Cannot export derived state from a module. To expose the current derived value, export a function returning its value");
 }
 
 /**
@@ -870,7 +870,7 @@ export function invalid_derived_export(node) {
  * @returns {never}
  */
 export function invalid_props_id(node) {
-	__error(node, "invalid_props_id", "$props() can only be used with an object destructuring pattern");
+	e(node, "invalid_props_id", "$props() can only be used with an object destructuring pattern");
 }
 
 /**
@@ -879,7 +879,7 @@ export function invalid_props_id(node) {
  * @returns {never}
  */
 export function invalid_props_pattern(node) {
-	__error(node, "invalid_props_pattern", "$props() assignment must not contain nested properties or computed keys");
+	e(node, "invalid_props_pattern", "$props() assignment must not contain nested properties or computed keys");
 }
 
 /**
@@ -888,7 +888,7 @@ export function invalid_props_pattern(node) {
  * @returns {never}
  */
 export function invalid_props_location(node) {
-	__error(node, "invalid_props_location", "$props() can only be used at the top level of components as a variable declaration initializer");
+	e(node, "invalid_props_location", "$props() can only be used at the top level of components as a variable declaration initializer");
 }
 
 /**
@@ -897,7 +897,7 @@ export function invalid_props_location(node) {
  * @returns {never}
  */
 export function invalid_bindable_location(node) {
-	__error(node, "invalid_bindable_location", "$bindable() can only be used inside a $props() declaration");
+	e(node, "invalid_bindable_location", "$bindable() can only be used inside a $props() declaration");
 }
 
 /**
@@ -906,7 +906,7 @@ export function invalid_bindable_location(node) {
  * @returns {never}
  */
 export function invalid_state_location(node, rune) {
-	__error(node, "invalid_state_location", `${rune}(...) can only be used as a variable declaration initializer or a class field`);
+	e(node, "invalid_state_location", `${rune}(...) can only be used as a variable declaration initializer or a class field`);
 }
 
 /**
@@ -915,7 +915,7 @@ export function invalid_state_location(node, rune) {
  * @returns {never}
  */
 export function invalid_effect_location(node) {
-	__error(node, "invalid_effect_location", "$effect() can only be used as an expression statement");
+	e(node, "invalid_effect_location", "$effect() can only be used as an expression statement");
 }
 
 /**
@@ -924,7 +924,7 @@ export function invalid_effect_location(node) {
  * @returns {never}
  */
 export function invalid_host_location(node) {
-	__error(node, "invalid_host_location", "$host() can only be used inside custom element component instances");
+	e(node, "invalid_host_location", "$host() can only be used inside custom element component instances");
 }
 
 /**
@@ -933,7 +933,7 @@ export function invalid_host_location(node) {
  * @returns {never}
  */
 export function invalid_const_assignment(node) {
-	__error(node, "invalid_const_assignment", "Invalid %is_binding ? 'binding' : 'assignment'% to const variable%\n\t\t\tshow_details\n\t\t\t\t? ' ($derived values, let: directives, :then/:catch variables and @const declarations count as const)'\n\t\t\t\t: ''\n\t\t%");
+	e(node, "invalid_const_assignment", "Invalid %is_binding ? 'binding' : 'assignment'% to const variable%\n\t\t\tshow_details\n\t\t\t\t? ' ($derived values, let: directives, :then/:catch variables and @const declarations count as const)'\n\t\t\t\t: ''\n\t\t%");
 }
 
 /**
@@ -942,7 +942,7 @@ export function invalid_const_assignment(node) {
  * @returns {never}
  */
 export function invalid_derived_assignment(node) {
-	__error(node, "invalid_derived_assignment", "Invalid assignment to derived state");
+	e(node, "invalid_derived_assignment", "Invalid assignment to derived state");
 }
 
 /**
@@ -951,7 +951,7 @@ export function invalid_derived_assignment(node) {
  * @returns {never}
  */
 export function invalid_derived_binding(node) {
-	__error(node, "invalid_derived_binding", "Invalid binding to derived state");
+	e(node, "invalid_derived_binding", "Invalid binding to derived state");
 }
 
 /**
@@ -960,7 +960,7 @@ export function invalid_derived_binding(node) {
  * @returns {never}
  */
 export function invalid_rune_args_length(node, rune) {
-	__error(node, "invalid_rune_args_length", `${rune} can only be called with %list(args, 'or')% %
+	e(node, "invalid_rune_args_length", `${rune} can only be called with %list(args, 'or')% %
 			args.length === 1 && args[0] === 1 ? 'argument' : 'arguments'
 		%`);
 }
@@ -971,7 +971,7 @@ export function invalid_rune_args_length(node, rune) {
  * @returns {never}
  */
 export function invalid_runes_mode_import(node, name) {
-	__error(node, "invalid_runes_mode_import", `${name} cannot be used in runes mode`);
+	e(node, "invalid_runes_mode_import", `${name} cannot be used in runes mode`);
 }
 
 /**
@@ -980,7 +980,7 @@ export function invalid_runes_mode_import(node, name) {
  * @returns {never}
  */
 export function duplicate_props_rune(node) {
-	__error(node, "duplicate_props_rune", "Cannot use $props() more than once");
+	e(node, "duplicate_props_rune", "Cannot use $props() more than once");
 }
 
 /**
@@ -989,7 +989,7 @@ export function duplicate_props_rune(node) {
  * @returns {never}
  */
 export function invalid_each_assignment(node) {
-	__error(node, "invalid_each_assignment", "Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. 'array[i] = value' instead of 'entry = value')");
+	e(node, "invalid_each_assignment", "Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. 'array[i] = value' instead of 'entry = value')");
 }
 
 /**
@@ -998,7 +998,7 @@ export function invalid_each_assignment(node) {
  * @returns {never}
  */
 export function invalid_snippet_assignment(node) {
-	__error(node, "invalid_snippet_assignment", "Cannot reassign or bind to snippet parameter");
+	e(node, "invalid_snippet_assignment", "Cannot reassign or bind to snippet parameter");
 }
 
 /**
@@ -1007,7 +1007,7 @@ export function invalid_snippet_assignment(node) {
  * @returns {never}
  */
 export function invalid_derived_call(node) {
-	__error(node, "invalid_derived_call", "$derived.call(...) has been replaced with $derived.by(...)");
+	e(node, "invalid_derived_call", "$derived.call(...) has been replaced with $derived.by(...)");
 }
 
 /**
@@ -1016,7 +1016,7 @@ export function invalid_derived_call(node) {
  * @returns {never}
  */
 export function conflicting_property_name(node) {
-	__error(node, "conflicting_property_name", "Cannot have a property and a component export with the same name");
+	e(node, "conflicting_property_name", "Cannot have a property and a component export with the same name");
 }
 
 /**
@@ -1025,7 +1025,7 @@ export function conflicting_property_name(node) {
  * @returns {never}
  */
 export function invalid_slot_element_attribute(node) {
-	__error(node, "invalid_slot_element_attribute", "<slot> can only receive attributes and (optionally) let directives");
+	e(node, "invalid_slot_element_attribute", "<slot> can only receive attributes and (optionally) let directives");
 }
 
 /**
@@ -1034,7 +1034,7 @@ export function invalid_slot_element_attribute(node) {
  * @returns {never}
  */
 export function invalid_slot_attribute(node) {
-	__error(node, "invalid_slot_attribute", "slot attribute must be a static value");
+	e(node, "invalid_slot_attribute", "slot attribute must be a static value");
 }
 
 /**
@@ -1043,7 +1043,7 @@ export function invalid_slot_attribute(node) {
  * @returns {never}
  */
 export function invalid_slot_name(node) {
-	__error(node, "invalid_slot_name", "default is a reserved word — it cannot be used as a slot name`\n\t\t\t: `slot attribute must be a static value");
+	e(node, "invalid_slot_name", "default is a reserved word — it cannot be used as a slot name`\n\t\t\t: `slot attribute must be a static value");
 }
 
 /**
@@ -1052,7 +1052,7 @@ export function invalid_slot_name(node) {
  * @returns {never}
  */
 export function invalid_slot_placement(node) {
-	__error(node, "invalid_slot_placement", "Element with a slot='...' attribute must be a child of a component or a descendant of a custom element");
+	e(node, "invalid_slot_placement", "Element with a slot='...' attribute must be a child of a component or a descendant of a custom element");
 }
 
 /**
@@ -1062,7 +1062,7 @@ export function invalid_slot_placement(node) {
  * @returns {never}
  */
 export function duplicate_slot_name(node, name, component) {
-	__error(node, "duplicate_slot_name", `Duplicate slot name '${name}' in <${component}>`);
+	e(node, "duplicate_slot_name", `Duplicate slot name '${name}' in <${component}>`);
 }
 
 /**
@@ -1071,7 +1071,7 @@ export function duplicate_slot_name(node, name, component) {
  * @returns {never}
  */
 export function invalid_default_slot_content(node) {
-	__error(node, "invalid_default_slot_content", "Found default slot content alongside an explicit slot=\"default\"");
+	e(node, "invalid_default_slot_content", "Found default slot content alongside an explicit slot=\"default\"");
 }
 
 /**
@@ -1080,7 +1080,7 @@ export function invalid_default_slot_content(node) {
  * @returns {never}
  */
 export function conflicting_children_snippet(node) {
-	__error(node, "conflicting_children_snippet", "Cannot use explicit children snippet at the same time as implicit children content. Remove either the non-whitespace content or the children snippet block");
+	e(node, "conflicting_children_snippet", "Cannot use explicit children snippet at the same time as implicit children content. Remove either the non-whitespace content or the children snippet block");
 }
 
 /**
@@ -1089,7 +1089,7 @@ export function conflicting_children_snippet(node) {
  * @returns {never}
  */
 export function invalid_svelte_option_attribute(node) {
-	__error(node, "invalid_svelte_option_attribute", "<svelte:options> can only receive static attributes");
+	e(node, "invalid_svelte_option_attribute", "`<svelte:options>` can only receive static attributes");
 }
 
 /**
@@ -1098,7 +1098,7 @@ export function invalid_svelte_option_attribute(node) {
  * @returns {never}
  */
 export function invalid_svelte_option_namespace(node) {
-	__error(node, "invalid_svelte_option_namespace", "Unsupported <svelte:option> value for \"namespace\". Valid values are \"html\", \"svg\" or \"foreign\".");
+	e(node, "invalid_svelte_option_namespace", "Unsupported `<svelte:option>` value for \"namespace\". Valid values are \"html\", \"svg\" or \"foreign\"");
 }
 
 /**
@@ -1107,7 +1107,7 @@ export function invalid_svelte_option_namespace(node) {
  * @returns {never}
  */
 export function tag_option_deprecated(node) {
-	__error(node, "tag_option_deprecated", "\"tag\" option is deprecated — use \"customElement\" instead");
+	e(node, "tag_option_deprecated", "\"tag\" option is deprecated — use \"customElement\" instead");
 }
 
 /**
@@ -1116,7 +1116,7 @@ export function tag_option_deprecated(node) {
  * @returns {never}
  */
 export function invalid_svelte_option_runes(node) {
-	__error(node, "invalid_svelte_option_runes", "Unsupported <svelte:option> value for \"runes\". Valid values are true or false.");
+	e(node, "invalid_svelte_option_runes", "Unsupported `<svelte:option>` value for \"runes\". Valid values are true or false");
 }
 
 /**
@@ -1125,7 +1125,7 @@ export function invalid_svelte_option_runes(node) {
  * @returns {never}
  */
 export function invalid_svelte_option_accessors(node) {
-	__error(node, "invalid_svelte_option_accessors", "TODO");
+	e(node, "invalid_svelte_option_accessors", "Unsupported `<svelte:option>` value for \"accessors\". Valid values are true or false");
 }
 
 /**
@@ -1134,7 +1134,7 @@ export function invalid_svelte_option_accessors(node) {
  * @returns {never}
  */
 export function invalid_svelte_option_preserveWhitespace(node) {
-	__error(node, "invalid_svelte_option_preserveWhitespace", "TODO");
+	e(node, "invalid_svelte_option_preserveWhitespace", "Unsupported `<svelte:option>` value for \"preserveWhitespace\". Valid values are true or false");
 }
 
 /**
@@ -1143,7 +1143,7 @@ export function invalid_svelte_option_preserveWhitespace(node) {
  * @returns {never}
  */
 export function invalid_svelte_option_immutable(node) {
-	__error(node, "invalid_svelte_option_immutable", "TODO");
+	e(node, "invalid_svelte_option_immutable", "Unsupported `<svelte:option>` value for \"immutable\". Valid values are true or false");
 }
 
 /**
@@ -1152,7 +1152,7 @@ export function invalid_svelte_option_immutable(node) {
  * @returns {never}
  */
 export function invalid_tag_property(node) {
-	__error(node, "invalid_tag_property", "TODO");
+	e(node, "invalid_tag_property", "Tag name must be two or more words joined by the \"-\" character");
 }
 
 /**
@@ -1161,7 +1161,7 @@ export function invalid_tag_property(node) {
  * @returns {never}
  */
 export function invalid_svelte_option_customElement(node) {
-	__error(node, "invalid_svelte_option_customElement", "TODO");
+	e(node, "invalid_svelte_option_customElement", "\"customElement\" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: \"open\" | \"none\"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }");
 }
 
 /**
@@ -1170,7 +1170,7 @@ export function invalid_svelte_option_customElement(node) {
  * @returns {never}
  */
 export function invalid_customElement_props_attribute(node) {
-	__error(node, "invalid_customElement_props_attribute", "TODO");
+	e(node, "invalid_customElement_props_attribute", "\"props\" must be a statically analyzable object literal of the form \"{ [key: string]: { attribute?: string; reflect?: boolean; type?: \"String\" | \"Boolean\" | \"Number\" | \"Array\" | \"Object\" }\"");
 }
 
 /**
@@ -1179,7 +1179,7 @@ export function invalid_customElement_props_attribute(node) {
  * @returns {never}
  */
 export function invalid_customElement_shadow_attribute(node) {
-	__error(node, "invalid_customElement_shadow_attribute", "TODO");
+	e(node, "invalid_customElement_shadow_attribute", "\"shadow\" must be either \"open\" or \"none\"");
 }
 
 /**
@@ -1188,7 +1188,7 @@ export function invalid_customElement_shadow_attribute(node) {
  * @returns {never}
  */
 export function unknown_svelte_option_attribute(node, name) {
-	__error(node, "unknown_svelte_option_attribute", `<svelte:options> unknown attribute '${name}'`);
+	e(node, "unknown_svelte_option_attribute", `\`<svelte:options>\` unknown attribute '${name}'`);
 }
 
 /**
@@ -1197,7 +1197,7 @@ export function unknown_svelte_option_attribute(node, name) {
  * @returns {never}
  */
 export function illegal_svelte_head_attribute(node) {
-	__error(node, "illegal_svelte_head_attribute", "TODO");
+	e(node, "illegal_svelte_head_attribute", "`<svelte:head>` cannot have attributes nor directives");
 }
 
 /**
@@ -1206,7 +1206,7 @@ export function illegal_svelte_head_attribute(node) {
  * @returns {never}
  */
 export function invalid_svelte_fragment_attribute(node) {
-	__error(node, "invalid_svelte_fragment_attribute", "<svelte:fragment> can only have a slot attribute and (optionally) a let: directive");
+	e(node, "invalid_svelte_fragment_attribute", "`<svelte:fragment>` can only have a slot attribute and (optionally) a let: directive");
 }
 
 /**
@@ -1215,7 +1215,7 @@ export function invalid_svelte_fragment_attribute(node) {
  * @returns {never}
  */
 export function invalid_svelte_fragment_slot(node) {
-	__error(node, "invalid_svelte_fragment_slot", "<svelte:fragment> slot attribute must have a static value");
+	e(node, "invalid_svelte_fragment_slot", "`<svelte:fragment>` slot attribute must have a static value");
 }
 
 /**
@@ -1224,7 +1224,7 @@ export function invalid_svelte_fragment_slot(node) {
  * @returns {never}
  */
 export function invalid_svelte_fragment_placement(node) {
-	__error(node, "invalid_svelte_fragment_placement", "<svelte:fragment> must be the direct child of a component");
+	e(node, "invalid_svelte_fragment_placement", "`<svelte:fragment>` must be the direct child of a component");
 }
 
 /**
@@ -1233,7 +1233,7 @@ export function invalid_svelte_fragment_placement(node) {
  * @returns {never}
  */
 export function invalid_svelte_element_placement(node, name) {
-	__error(node, "invalid_svelte_element_placement", `<${name}> tags cannot be inside elements or blocks`);
+	e(node, "invalid_svelte_element_placement", `<${name}> tags cannot be inside elements or blocks`);
 }
 
 /**
@@ -1242,7 +1242,7 @@ export function invalid_svelte_element_placement(node, name) {
  * @returns {never}
  */
 export function duplicate_svelte_element(node, name) {
-	__error(node, "duplicate_svelte_element", `A component can only have one <${name}> element`);
+	e(node, "duplicate_svelte_element", `A component can only have one <${name}> element`);
 }
 
 /**
@@ -1251,7 +1251,7 @@ export function duplicate_svelte_element(node, name) {
  * @returns {never}
  */
 export function invalid_self_placement(node) {
-	__error(node, "invalid_self_placement", "<svelte:self> components can only exist inside {#if} blocks, {#each} blocks, {#snippet} blocks or slots passed to components");
+	e(node, "invalid_self_placement", "`<svelte:self>` components can only exist inside {#if} blocks, {#each} blocks, {#snippet} blocks or slots passed to components");
 }
 
 /**
@@ -1260,7 +1260,7 @@ export function invalid_self_placement(node) {
  * @returns {never}
  */
 export function missing_svelte_element_definition(node) {
-	__error(node, "missing_svelte_element_definition", "<svelte:element> must have a 'this' attribute");
+	e(node, "missing_svelte_element_definition", "`<svelte:element>` must have a 'this' attribute");
 }
 
 /**
@@ -1269,7 +1269,7 @@ export function missing_svelte_element_definition(node) {
  * @returns {never}
  */
 export function missing_svelte_component_definition(node) {
-	__error(node, "missing_svelte_component_definition", "<svelte:component> must have a 'this' attribute");
+	e(node, "missing_svelte_component_definition", "`<svelte:component>` must have a 'this' attribute");
 }
 
 /**
@@ -1278,7 +1278,7 @@ export function missing_svelte_component_definition(node) {
  * @returns {never}
  */
 export function invalid_svelte_element_definition(node) {
-	__error(node, "invalid_svelte_element_definition", "Invalid element definition — must be an {expression}");
+	e(node, "invalid_svelte_element_definition", "Invalid element definition — must be an {expression}");
 }
 
 /**
@@ -1287,16 +1287,16 @@ export function invalid_svelte_element_definition(node) {
  * @returns {never}
  */
 export function invalid_svelte_component_definition(node) {
-	__error(node, "invalid_svelte_component_definition", "Invalid component definition — must be an {expression}");
+	e(node, "invalid_svelte_component_definition", "Invalid component definition — must be an {expression}");
 }
 
 /**
  * @param {number | NodeLike} node
-
+ * @param {string} list
  * @returns {never}
  */
-export function invalid_svelte_tag(node) {
-	__error(node, "invalid_svelte_tag", "Valid <svelte:...> tag names are %list(tags)%%match ? ' (did you mean ' + match + '?)' : ''%");
+export function invalid_svelte_tag(node, list) {
+	e(node, "invalid_svelte_tag", `Valid \`<svelte:...>\` tag names are ${list}`);
 }
 
 /**
@@ -1305,7 +1305,7 @@ export function invalid_svelte_tag(node) {
  * @returns {never}
  */
 export function conflicting_slot_usage(node) {
-	__error(node, "conflicting_slot_usage", "Cannot use <slot> syntax and {@render ...} tags in the same component. Migrate towards {@render ...} tags completely.");
+	e(node, "conflicting_slot_usage", "Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.");
 }
 
 /**
@@ -1314,7 +1314,7 @@ export function conflicting_slot_usage(node) {
  * @returns {never}
  */
 export function illegal_global(node, name) {
-	__error(node, "illegal_global", `${name} is an illegal variable name. To reference a global variable called ${name}, use globalThis.${name}`);
+	e(node, "illegal_global", `${name} is an illegal variable name. To reference a global variable called ${name}, use globalThis.${name}`);
 }
 
 /**
@@ -1323,7 +1323,7 @@ export function illegal_global(node, name) {
  * @returns {never}
  */
 export function duplicate_declaration(node, name) {
-	__error(node, "duplicate_declaration", `'${name}' has already been declared`);
+	e(node, "duplicate_declaration", `'${name}' has already been declared`);
 }
 
 /**
@@ -1332,7 +1332,7 @@ export function duplicate_declaration(node, name) {
  * @returns {never}
  */
 export function default_export(node) {
-	__error(node, "default_export", "A component cannot have a default export");
+	e(node, "default_export", "A component cannot have a default export");
 }
 
 /**
@@ -1341,7 +1341,7 @@ export function default_export(node) {
  * @returns {never}
  */
 export function illegal_variable_declaration(node) {
-	__error(node, "illegal_variable_declaration", "TODO");
+	e(node, "illegal_variable_declaration", "TODO");
 }
 
 /**
@@ -1350,5 +1350,5 @@ export function illegal_variable_declaration(node) {
  * @returns {never}
  */
 export function illegal_store_subscription(node) {
-	__error(node, "illegal_store_subscription", "TODO");
+	e(node, "illegal_store_subscription", "TODO");
 }

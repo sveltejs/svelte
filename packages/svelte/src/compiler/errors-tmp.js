@@ -279,7 +279,6 @@ const const_tag = {
 /** @satisfies {Errors} */
 const errors = {
 	...internal,
-	...special_elements,
 	...runes,
 	...elements,
 	...components,
