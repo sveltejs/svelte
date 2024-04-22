@@ -1,7 +1,7 @@
 [
 	{
 		"code": "duplicate_declaration",
-		"message": "'item' has already been declared",
+		"message": "`item` has already been declared",
 		"start": {
 			"line": 6,
 			"column": 10

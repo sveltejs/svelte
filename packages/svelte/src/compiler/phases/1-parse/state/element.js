@@ -738,12 +738,12 @@ function read_sequence(parser, done, location) {
 				const index = parser.index - 1;
 				parser.eat('#');
 				const name = parser.read_until(/[^a-z]/);
-				e.invalid_block_placement(index, location, name);
+				e.invalid_block_placement(index, name, location);
 			} else if (parser.match('@')) {
 				const index = parser.index - 1;
 				parser.eat('@');
 				const name = parser.read_until(/[^a-z]/);
-				e.invalid_tag_placement(index, location, name);
+				e.invalid_tag_placement(index, name, location);
 			}
 
 			flush(parser.index - 1);

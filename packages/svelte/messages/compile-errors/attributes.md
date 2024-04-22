@@ -48,7 +48,7 @@ Cannot use `%type%:` alongside existing `%existing%:` directive
 
 ## invalid_let_directive_placement
 
-TODO
+`let:` directive at invalid position
 
 ## invalid_style_directive_modifier
 

@@ -173,7 +173,7 @@ export function transition_conflict(node, type, existing) {
  * @returns {never}
  */
 export function invalid_let_directive_placement(node) {
-	e(node, "invalid_let_directive_placement", "TODO");
+	e(node, "invalid_let_directive_placement", "`let:` directive at invalid position");
 }
 
 /**
@@ -436,7 +436,7 @@ export function invalid_nesting_selector(node) {
  * @returns {never}
  */
 export function invalid_css_declaration(node) {
-	e(node, "invalid_css_declaration", "TODO");
+	e(node, "invalid_css_declaration", "Declaration cannot be empty");
 }
 
 /**

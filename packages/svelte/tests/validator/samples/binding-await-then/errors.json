@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid_assignment",
+		"code": "invalid_binding",
 		"message": "Invalid binding to const variable ($derived values, let: directives, :then/:catch variables and @const declarations count as const)",
 		"start": {
 			"line": 5,

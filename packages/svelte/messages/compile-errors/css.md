@@ -52,4 +52,4 @@ Nesting selectors can only be used inside a rule
 
 ## invalid_css_declaration
 
-TODO
+Declaration cannot be empty

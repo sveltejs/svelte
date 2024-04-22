@@ -1,7 +1,7 @@
 [
 	{
 		"code": "illegal_svelte_head_attribute",
-		"message": "<svelte:head> cannot have attributes nor directives",
+		"message": "`<svelte:head>` cannot have attributes nor directives",
 		"start": {
 			"line": 1,
 			"column": 13

@@ -187,14 +187,17 @@ function validate_element(node, context) {
 			}
 		} else if (attribute.type === 'TransitionDirective') {
 			const existing = /** @type {import('#compiler').TransitionDirective | null} */ (
-				attribute.intro ? in_transition : out_transition
+				(attribute.intro && in_transition) || (attribute.outro && out_transition)
 			);
 
-			if (existing !== null) {
-				if (attribute.name === existing.name) {
-					e.transition_duplicate(attribute, attribute.name);
+			if (existing) {
+				const a = existing.intro ? (existing.outro ? 'transition' : 'in') : 'out';
+				const b = attribute.intro ? (attribute.outro ? 'transition' : 'in') : 'out';
+
+				if (a === b) {
+					e.transition_duplicate(attribute, a);
 				} else {
-					e.transition_conflict(attribute, attribute.name, existing.name);
+					e.transition_conflict(attribute, a, b);
 				}
 			}
 
@@ -205,7 +208,7 @@ function validate_element(node, context) {
 			let conflicting_passive_modifier = '';
 			for (const modifier of attribute.modifiers) {
 				if (!EventModifiers.includes(modifier)) {
-					const list = `${EventModifiers.slice(0, 1)} or ${EventModifiers.at(-1)}`;
+					const list = `${EventModifiers.slice(0, -1).join(', ')} or ${EventModifiers.at(-1)}`;
 					e.invalid_event_modifier(attribute, list);
 				}
 				if (modifier === 'passive') {
@@ -451,7 +454,7 @@ const validation = {
 					if (!contenteditable) {
 						e.missing_contenteditable_attribute(node);
 					} else if (!is_text_attribute(contenteditable) && contenteditable.value !== true) {
-						e.dynamic_contenteditable_attribute(node);
+						e.dynamic_contenteditable_attribute(contenteditable);
 					}
 				}
 			} else {
@@ -459,7 +462,7 @@ const validation = {
 				if (match) {
 					const property = binding_properties[match];
 					if (!property.valid_elements || property.valid_elements.includes(parent.name)) {
-						e.bind_invalid_detailed(node, node.name, ` Did you mean '${match}'?`);
+						e.bind_invalid_detailed(node, node.name, `Did you mean '${match}'?`);
 					}
 				}
 				e.bind_invalid(node, node.name);
@@ -1025,6 +1028,8 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 
 			// TODO have a more specific error message for assignments to things like `{:then foo}`
 			const thing = 'constant';
+
+			console.log(binding);
 
 			if (is_binding) {
 				e.invalid_binding(node, thing);
