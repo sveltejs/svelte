@@ -21,76 +21,6 @@ const internal = {
 };
 
 /** @satisfies {Errors} */
-const attributes = {
-	'empty-attribute-shorthand': () => `Attribute shorthand cannot be empty`,
-	'duplicate-attribute': () => `Attributes need to be unique`,
-	'invalid-event-attribute-value': () =>
-		`Event attribute must be a JavaScript expression, not a string`,
-	/** @param {string} name */
-	'invalid-attribute-name': (name) => `'${name}' is not a valid attribute name`,
-	/** @param {'no-each' | 'each-key' | 'child'} type */
-	'invalid-animation': (type) =>
-		type === 'no-each'
-			? `An element that uses the animate directive must be the immediate child of a keyed each block`
-			: type === 'each-key'
-				? `An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?`
-				: `An element that uses the animate directive must be the sole child of a keyed each block`,
-	'duplicate-animation': () => `An element can only have one 'animate' directive`,
-	/** @param {string[] | undefined} [modifiers] */
-	'invalid-event-modifier': (modifiers) =>
-		modifiers
-			? `Valid event modifiers are ${modifiers.slice(0, -1).join(', ')} or ${modifiers.slice(-1)}`
-			: `Event modifiers other than 'once' can only be used on DOM elements`,
-	/**
-	 * @param {string} modifier1
-	 * @param {string} modifier2
-	 */
-	'invalid-event-modifier-combination': (modifier1, modifier2) =>
-		`The '${modifier1}' and '${modifier2}' modifiers cannot be used together`,
-	/**
-	 * @param {string} directive1
-	 * @param {string} directive2
-	 */
-	'duplicate-transition': (directive1, directive2) => {
-		/** @param {string} _directive */
-		function describe(_directive) {
-			return _directive === 'transition' ? "a 'transition'" : `an '${_directive}'`;
-		}
-
-		return directive1 === directive2
-			? `An element can only have one '${directive1}' directive`
-			: `An element cannot have both ${describe(directive1)} directive and ${describe(
-					directive2
-				)} directive`;
-	},
-	'invalid-let-directive-placement': () => 'let directive at invalid position',
-	'invalid-style-directive-modifier': () =>
-		`Invalid 'style:' modifier. Valid modifiers are: 'important'`,
-	'invalid-sequence-expression': () =>
-		`Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses`
-};
-
-/** @satisfies {Errors} */
-const slots = {
-	'invalid-slot-element-attribute': () =>
-		`<slot> can only receive attributes and (optionally) let directives`,
-	'invalid-slot-attribute': () => `slot attribute must be a static value`,
-	/** @param {boolean} is_default */
-	'invalid-slot-name': (is_default) =>
-		is_default
-			? `default is a reserved word — it cannot be used as a slot name`
-			: `slot attribute must be a static value`,
-	'invalid-slot-placement': () =>
-		`Element with a slot='...' attribute must be a child of a component or a descendant of a custom element`,
-	/** @param {string} name @param {string} component */
-	'duplicate-slot-name': (name, component) => `Duplicate slot name '${name}' in <${component}>`,
-	'invalid-default-slot-content': () =>
-		`Found default slot content alongside an explicit slot="default"`,
-	'conflicting-children-snippet': () =>
-		`Cannot use explicit children snippet at the same time as implicit children content. Remove either the non-whitespace content or the children snippet block`
-};
-
-/** @satisfies {Errors} */
 const bindings = {
 	'invalid-binding-expression': () => `Can only bind to an Identifier or MemberExpression`,
 	'invalid-binding-value': () => `Can only bind to state or props`,
@@ -149,7 +79,6 @@ const const_tag = {
 /** @satisfies {Errors} */
 const errors = {
 	...internal,
-	...slots,
 	...bindings,
 	...variables,
 	...compiler_options,

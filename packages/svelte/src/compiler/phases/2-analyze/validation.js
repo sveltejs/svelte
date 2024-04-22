@@ -261,7 +261,7 @@ function validate_slot_attribute(context, attribute) {
 
 	if (owner) {
 		if (!is_text_attribute(attribute)) {
-			error(attribute, 'invalid-slot-attribute');
+			e.invalid_slot_attribute(attribute);
 		}
 
 		if (
@@ -270,13 +270,13 @@ function validate_slot_attribute(context, attribute) {
 			owner.type === 'SvelteSelf'
 		) {
 			if (owner !== context.path.at(-2)) {
-				error(attribute, 'invalid-slot-placement');
+				e.invalid_slot_placement(attribute);
 			}
 
 			const name = attribute.value[0].data;
 
 			if (context.state.component_slots.has(name)) {
-				error(attribute, 'duplicate-slot-name', name, owner.name);
+				e.duplicate_slot_name(attribute, name, owner.name);
 			}
 
 			context.state.component_slots.add(name);
@@ -293,12 +293,12 @@ function validate_slot_attribute(context, attribute) {
 						}
 					}
 
-					error(node, 'invalid-default-slot-content');
+					e.invalid_default_slot_content(node);
 				}
 			}
 		}
 	} else {
-		error(attribute, 'invalid-slot-placement');
+		e.invalid_slot_placement(attribute);
 	}
 }
 
@@ -668,7 +668,7 @@ const validation = {
 					(node) => node.type !== 'SnippetBlock' && (node.type !== 'Text' || node.data.trim())
 				)
 			) {
-				error(node, 'conflicting-children-snippet');
+				e.conflicting_children_snippet(node);
 			}
 		}
 	},
@@ -711,15 +711,15 @@ const validation = {
 			if (attribute.type === 'Attribute') {
 				if (attribute.name === 'name') {
 					if (!is_text_attribute(attribute)) {
-						error(attribute, 'invalid-slot-name', false);
+						e.invalid_slot_name(attribute);
 					}
 					const slot_name = attribute.value[0].data;
 					if (slot_name === 'default') {
-						error(attribute, 'invalid-slot-name', true);
+						e.invalid_slot_name_default(attribute);
 					}
 				}
 			} else if (attribute.type !== 'SpreadAttribute' && attribute.type !== 'LetDirective') {
-				error(attribute, 'invalid-slot-element-attribute');
+				e.invalid_slot_element_attribute(attribute);
 			}
 		}
 	},

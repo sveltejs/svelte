@@ -1052,7 +1052,7 @@ export function conflicting_property_name(node) {
  * @returns {never}
  */
 export function invalid_slot_element_attribute(node) {
-	e(node, "invalid_slot_element_attribute", "<slot> can only receive attributes and (optionally) let directives");
+	e(node, "invalid_slot_element_attribute", "`<slot>` can only receive attributes and (optionally) let directives");
 }
 
 /**
@@ -1069,8 +1069,17 @@ export function invalid_slot_attribute(node) {
 
  * @returns {never}
  */
+export function invalid_slot_name_default(node) {
+	e(node, "invalid_slot_name_default", "`default` is a reserved word — it cannot be used as a slot name");
+}
+
+/**
+ * @param {number | NodeLike} node
+
+ * @returns {never}
+ */
 export function invalid_slot_name(node) {
-	e(node, "invalid_slot_name", "default is a reserved word — it cannot be used as a slot name`\n\t\t\t: `slot attribute must be a static value");
+	e(node, "invalid_slot_name", "slot attribute must be a static value");
 }
 
 /**

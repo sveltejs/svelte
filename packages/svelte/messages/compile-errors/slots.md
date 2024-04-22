@@ -1,15 +1,18 @@
 ## invalid_slot_element_attribute
 
-<slot> can only receive attributes and (optionally) let directives
+`<slot>` can only receive attributes and (optionally) let directives
 
 ## invalid_slot_attribute
 
 slot attribute must be a static value
 
+## invalid_slot_name_default
+
+`default` is a reserved word — it cannot be used as a slot name
+
 ## invalid_slot_name
 
-default is a reserved word — it cannot be used as a slot name`
-			: `slot attribute must be a static value
+slot attribute must be a static value
 
 ## invalid_slot_placement
 
