@@ -1,4 +1,3 @@
-import { error } from './errors-tmp.js';
 import * as e from './errors.js';
 
 /**

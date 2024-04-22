@@ -1,6 +1,5 @@
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
-import { error } from '../../errors-tmp.js';
 import * as e from '../../errors.js';
 import {
 	extract_identifiers,

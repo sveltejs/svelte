@@ -9,7 +9,6 @@ import {
 } from '../utils/bracket.js';
 import { parse_expression_at } from '../acorn.js';
 import { regex_not_newline_characters } from '../../patterns.js';
-import { error } from '../../../errors-tmp.js';
 import * as e from '../../../errors.js';
 
 /**

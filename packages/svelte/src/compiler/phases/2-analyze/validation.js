@@ -3,7 +3,6 @@ import {
 	interactive_elements,
 	is_tag_valid_with_parent
 } from '../../../constants.js';
-import { error } from '../../errors-tmp.js';
 import * as e from '../../errors.js';
 import {
 	extract_identifiers,
@@ -367,7 +366,7 @@ const validation = {
 
 		if (node.name === 'group') {
 			if (!binding) {
-				error(node, 'INTERNAL', 'Cannot find declaration for bind:group');
+				throw new Error('Cannot find declaration for bind:group');
 			}
 		}
 

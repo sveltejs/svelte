@@ -4,7 +4,6 @@ import fragment from './state/fragment.js';
 import { regex_whitespace } from '../patterns.js';
 import { reserved } from './utils/names.js';
 import full_char_code_at from './utils/full_char_code_at.js';
-import { error } from '../../errors-tmp.js';
 import * as e from '../../errors.js';
 import { create_fragment } from './utils/create.js';
 import read_options from './read/options.js';
