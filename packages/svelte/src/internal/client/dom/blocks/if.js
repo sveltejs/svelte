@@ -20,64 +20,63 @@ export function if_block(
 	elseif = false
 ) {
 	/** @type {import('#client').Effect | null} */
-	let consequent_effect = null;
+	var consequent_effect = null;
 
 	/** @type {import('#client').Effect | null} */
-	let alternate_effect = null;
+	var alternate_effect = null;
 
 	/** @type {boolean | null} */
-	let condition = null;
+	var condition = null;
 
-	block(
-		() => {
-			if (condition === (condition = !!get_condition())) return;
+	var flags = elseif ? EFFECT_TRANSPARENT : 0;
 
-			/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-			let mismatch = false;
+	block(() => {
+		if (condition === (condition = !!get_condition())) return;
 
-			if (hydrating) {
-				const is_else = anchor.data === HYDRATION_END_ELSE;
+		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
+		let mismatch = false;
 
-				if (condition === is_else) {
-					// Hydration mismatch: remove everything inside the anchor and start fresh.
-					// This could happen with `{#if browser}...{/if}`, for example
-					remove(hydrate_nodes);
-					set_hydrating(false);
-					mismatch = true;
-				}
+		if (hydrating) {
+			const is_else = anchor.data === HYDRATION_END_ELSE;
+
+			if (condition === is_else) {
+				// Hydration mismatch: remove everything inside the anchor and start fresh.
+				// This could happen with `{#if browser}...{/if}`, for example
+				remove(hydrate_nodes);
+				set_hydrating(false);
+				mismatch = true;
 			}
+		}
 
-			if (condition) {
-				if (consequent_effect) {
-					resume_effect(consequent_effect);
-				} else {
-					consequent_effect = branch(() => consequent_fn(anchor));
-				}
-
-				if (alternate_effect) {
-					pause_effect(alternate_effect, () => {
-						alternate_effect = null;
-					});
-				}
+		if (condition) {
+			if (consequent_effect) {
+				resume_effect(consequent_effect);
 			} else {
-				if (alternate_effect) {
-					resume_effect(alternate_effect);
-				} else if (alternate_fn) {
-					alternate_effect = branch(() => alternate_fn(anchor));
-				}
-
-				if (consequent_effect) {
-					pause_effect(consequent_effect, () => {
-						consequent_effect = null;
-					});
-				}
+				consequent_effect = branch(() => consequent_fn(anchor));
 			}
 
-			if (mismatch) {
-				// continue in hydration mode
-				set_hydrating(true);
+			if (alternate_effect) {
+				pause_effect(alternate_effect, () => {
+					alternate_effect = null;
+				});
 			}
-		},
-		elseif ? EFFECT_TRANSPARENT : 0
-	);
+		} else {
+			if (alternate_effect) {
+				resume_effect(alternate_effect);
+			} else if (alternate_fn) {
+				alternate_effect = branch(() => alternate_fn(anchor));
+			}
+
+			if (consequent_effect) {
+				pause_effect(consequent_effect, () => {
+					consequent_effect = null;
+				});
+			}
+		}
+
+		if (mismatch) {
+			// continue in hydration mode
+			set_hydrating(true);
+		}
+	}, flags);
 }
