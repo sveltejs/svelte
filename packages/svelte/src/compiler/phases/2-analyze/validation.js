@@ -468,7 +468,7 @@ const validation = {
 		}
 	},
 	ExportDefaultDeclaration(node) {
-		error(node, 'default-export');
+		e.default_export(node);
 	},
 	ConstTag(node, context) {
 		const parent = context.path.at(-1);
@@ -899,7 +899,7 @@ function ensure_no_module_import_conflict(node, state) {
 			state.scope === state.analysis.instance.scope &&
 			state.analysis.module.scope.get(id.name)?.declaration_kind === 'import'
 		) {
-			error(node.id, 'illegal-variable-declaration');
+			e.illegal_variable_declaration(node.id);
 		}
 	}
 }

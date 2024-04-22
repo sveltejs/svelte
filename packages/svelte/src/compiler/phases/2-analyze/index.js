@@ -230,7 +230,7 @@ export function analyze_module(ast, options) {
 	for (const [name, references] of scope.references) {
 		if (name[0] !== '$' || ReservedKeywords.includes(name)) continue;
 		if (name === '$' || name[1] === '$') {
-			error(references[0].node, 'illegal-global', name);
+			e.illegal_global(references[0].node, name);
 		}
 	}
 
@@ -282,7 +282,7 @@ export function analyze_component(root, source, options) {
 	for (const [name, references] of module.scope.references) {
 		if (name[0] !== '$' || ReservedKeywords.includes(name)) continue;
 		if (name === '$' || name[1] === '$') {
-			error(references[0].node, 'illegal-global', name);
+			e.illegal_global(references[0].node, name);
 		}
 
 		const store_name = name.slice(1);
@@ -322,12 +322,12 @@ export function analyze_component(root, source, options) {
 			}
 
 			if (is_nested_store_subscription_node) {
-				error(is_nested_store_subscription_node, 'illegal-store-subscription');
+				e.illegal_store_subscription(is_nested_store_subscription_node);
 			}
 
 			if (options.runes !== false) {
 				if (declaration === null && /[a-z]/.test(store_name[0])) {
-					error(references[0].node, 'illegal-global', name);
+					e.illegal_global(references[0].node, name);
 				} else if (declaration !== null && Runes.includes(/** @type {any} */ (name))) {
 					for (const { node, path } of references) {
 						if (path.at(-1)?.type === 'CallExpression') {

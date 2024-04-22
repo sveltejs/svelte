@@ -56,7 +56,7 @@ const const_tag = {
 /** @satisfies {Errors} */
 const errors = {
 	...internal,
-	...variables,
+	// ...variables,
 	...compiler_options,
 	...legacy_reactivity,
 	...const_tag
