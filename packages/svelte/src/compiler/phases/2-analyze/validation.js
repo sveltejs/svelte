@@ -45,7 +45,7 @@ function validate_component(node, context) {
 			attribute.type !== 'OnDirective' &&
 			attribute.type !== 'BindDirective'
 		) {
-			error(attribute, 'invalid-component-directive');
+			e.invalid_component_directive(attribute);
 		}
 
 		if (
@@ -528,7 +528,7 @@ const validation = {
 		if (node.name === 'textarea' && node.fragment.nodes.length > 0) {
 			for (const attribute of node.attributes) {
 				if (attribute.type === 'Attribute' && attribute.name === 'value') {
-					error(node, 'invalid-textarea-content');
+					e.invalid_textarea_content(node);
 				}
 			}
 		}
@@ -552,7 +552,7 @@ const validation = {
 
 		if (context.state.parent_element) {
 			if (!is_tag_valid_with_parent(node.name, context.state.parent_element)) {
-				error(node, 'invalid-node-placement', `<${node.name}>`, context.state.parent_element);
+				e.invalid_node_placement(node, `<${node.name}>`, context.state.parent_element);
 			}
 		}
 
@@ -564,7 +564,7 @@ const validation = {
 					parent.name === node.name &&
 					interactive_elements.has(parent.name)
 				) {
-					error(node, 'invalid-node-placement', `<${node.name}>`, parent.name);
+					e.invalid_node_placement(node, `<${node.name}>`, parent.name);
 				}
 			}
 		}
@@ -573,7 +573,7 @@ const validation = {
 			const path = context.path;
 			for (let parent of path) {
 				if (parent.type === 'RegularElement' && parent.name === 'p') {
-					error(node, 'invalid-node-placement', `<${node.name}>`, parent.name);
+					e.invalid_node_placement(node, `<${node.name}>`, parent.name);
 				}
 			}
 		}
@@ -729,19 +729,19 @@ const validation = {
 		if (!node.parent) return;
 		if (context.state.parent_element && regex_not_whitespace.test(node.data)) {
 			if (!is_tag_valid_with_parent('#text', context.state.parent_element)) {
-				error(node, 'invalid-node-placement', 'Text node', context.state.parent_element);
+				e.invalid_node_placement(node, 'Text node', context.state.parent_element);
 			}
 		}
 	},
 	TitleElement(node) {
 		const attribute = node.attributes[0];
 		if (attribute) {
-			error(attribute, 'illegal-title-attribute');
+			e.illegal_title_attribute(attribute);
 		}
 
 		const child = node.fragment.nodes.find((n) => n.type !== 'Text' && n.type !== 'ExpressionTag');
 		if (child) {
-			error(child, 'invalid-title-content');
+			e.invalid_title_content(child);
 		}
 	},
 	UpdateExpression(node, context) {
@@ -751,7 +751,7 @@ const validation = {
 		if (!node.parent) return;
 		if (context.state.parent_element) {
 			if (!is_tag_valid_with_parent('#text', context.state.parent_element)) {
-				error(node, 'invalid-node-placement', '{expression}', context.state.parent_element);
+				e.invalid_node_placement(node, '{expression}', context.state.parent_element);
 			}
 		}
 	}

@@ -1,6 +1,6 @@
 ## invalid_textarea_content
 
-A <textarea> can have either a value attribute or (equivalently) child content, but not both
+A `<textarea>` can have either a value attribute or (equivalently) child content, but not both
 
 ## invalid_void_content
 
@@ -12,7 +12,7 @@ Void elements cannot have children or closing tags
 
 ## invalid_tag_name
 
-TODO
+Expected valid tag name
 
 ## invalid_node_placement
 
@@ -20,8 +20,8 @@ TODO
 
 ## illegal_title_attribute
 
-TODO
+`<title>` cannot have attributes nor directives
 
 ## invalid_title_content
 
-TODO
+`<title>` can only contain text and {tags}

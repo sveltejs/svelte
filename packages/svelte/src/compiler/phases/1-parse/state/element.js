@@ -105,9 +105,8 @@ export default function tag(parser) {
 				['svelte:options', 'svelte:window', 'svelte:body', 'svelte:document'].includes(name) &&
 				/** @type {import('#compiler').ElementLike} */ (parent).fragment.nodes.length
 			) {
-				error(
+				e.invalid_element_content(
 					/** @type {import('#compiler').ElementLike} */ (parent).fragment.nodes[0].start,
-					'invalid-element-content',
 					name
 				);
 			}
@@ -169,7 +168,7 @@ export default function tag(parser) {
 
 	if (is_closing_tag) {
 		if (is_void(name)) {
-			error(start, 'invalid-void-content');
+			e.invalid_void_content(start);
 		}
 
 		parser.eat('>', true);
@@ -416,7 +415,7 @@ function read_tag_name(parser) {
 	}
 
 	if (!valid_tag_name.test(name)) {
-		error(start, 'invalid-tag-name');
+		e.invalid_tag_name(start);
 	}
 
 	return name;

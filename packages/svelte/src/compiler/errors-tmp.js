@@ -21,28 +21,6 @@ const internal = {
 };
 
 /** @satisfies {Errors} */
-const elements = {
-	'invalid-textarea-content': () =>
-		`A <textarea> can have either a value attribute or (equivalently) child content, but not both`,
-	'invalid-void-content': () => `Void elements cannot have children or closing tags`,
-	/** @param {string} name */
-	'invalid-element-content': (name) => `<${name}> cannot have children`,
-	'invalid-tag-name': () => 'Expected valid tag name',
-	/**
-	 * @param {string} node
-	 * @param {string} parent
-	 */
-	'invalid-node-placement': (node, parent) => `${node} is invalid inside <${parent}>`,
-	'illegal-title-attribute': () => '<title> cannot have attributes nor directives',
-	'invalid-title-content': () => '<title> can only contain text and {tags}'
-};
-
-/** @satisfies {Errors} */
-const components = {
-	'invalid-component-directive': () => `This type of directive is not valid on components`
-};
-
-/** @satisfies {Errors} */
 const attributes = {
 	'empty-attribute-shorthand': () => `Attribute shorthand cannot be empty`,
 	'duplicate-attribute': () => `Attributes need to be unique`,
@@ -171,8 +149,6 @@ const const_tag = {
 /** @satisfies {Errors} */
 const errors = {
 	...internal,
-	...elements,
-	...components,
 	...attributes,
 	...slots,
 	...bindings,
