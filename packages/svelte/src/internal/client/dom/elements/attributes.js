@@ -111,6 +111,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 	var events = [];
 
 	for (key in next) {
+		// let instead of var because referenced in a closure
 		let value = next[key];
 		if (value === prev?.[key]) continue;
 
