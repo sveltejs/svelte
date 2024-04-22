@@ -40,7 +40,7 @@ function swap_block_dom(effect, from, to) {
  * @param {Comment} anchor
  * @param {() => string} get_tag
  * @param {boolean} is_svg
- * @param {undefined | ((element: Element, anchor: Node) => void)} render_fn,
+ * @param {undefined | ((element: Element, anchor: Node | null) => void)} render_fn,
  * @param {undefined | (() => string)} get_namespace
  * @returns {void}
  */
@@ -115,13 +115,11 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace) {
 							? element.firstChild && hydrate_anchor(/** @type {Comment} */ (element.firstChild))
 							: element.appendChild(empty());
 
-						if (child_anchor) {
-							// `child_anchor` can be undefined if this is a void element with children,
-							// i.e. `<svelte:element this={"hr"}>...</svelte:element>`. This is
-							// user error, but we warn on it elsewhere (in dev) so here we just
-							// silently ignore it
-							render_fn(element, child_anchor);
-						}
+						// `child_anchor` is undefined if this is a void element, but we still
+						// need to call `render_fn` in order to run actions etc. If the element
+						// contains children, it's a user error (which is warned on elsewhere)
+						// and the DOM will be silently discarded
+						render_fn(element, child_anchor);
 					}
 
 					anchor.before(element);
