@@ -120,8 +120,8 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 
 		if (prefix === 'on') {
 			/** @type {{ capture?: true }} */
-			var opts = {};
-			var event_name = key.slice(2);
+			const opts = {};
+			let event_name = key.slice(2);
 			var delegated = DelegatedEvents.includes(event_name);
 
 			if (
