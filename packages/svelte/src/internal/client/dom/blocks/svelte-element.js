@@ -115,7 +115,7 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace) {
 							? element.firstChild && hydrate_anchor(/** @type {Comment} */ (element.firstChild))
 							: element.appendChild(empty());
 
-						// `child_anchor` is undefined if this is a void element, but we still,
+						// `child_anchor` is undefined if this is a void element, but we still
 						// need to call `render_fn` in order to run actions etc. If the element
 						// contains children, it's a user error (which is warned on elsewhere)
 						// and the DOM will be silently discarded
