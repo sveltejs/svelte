@@ -1,8 +1,3 @@
-import {
-	extract_ignores_above_position,
-	extract_svelte_ignore_from_comments
-} from './utils/extract_svelte_ignore.js';
-
 /** @typedef {Record<string, (...args: any[]) => string>} Warnings */
 
 /** @satisfies {Warnings} */
