@@ -87,8 +87,7 @@ export default function tag(parser) {
 			type: 'Comment',
 			start,
 			end: parser.index,
-			data,
-			ignores: extract_svelte_ignore(data)
+			data
 		});
 
 		return;
