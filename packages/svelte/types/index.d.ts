@@ -1984,19 +1984,11 @@ declare module 'svelte/reactivity' {
 		constructor(...values: any[]);
 		#private;
 	}
-	class ReactiveSet<T> extends Set<any> {
+	class ReactiveSet<T> extends Set<T> {
 		
 		constructor(value?: Iterable<T> | null | undefined);
 		
-		has(value: T): boolean;
-		
 		add(value: T): this;
-		
-		delete(value: T): boolean;
-		keys(): IterableIterator<T>;
-		values(): IterableIterator<T>;
-		entries(): IterableIterator<[T, T]>;
-		[Symbol.iterator](): IterableIterator<T>;
 		#private;
 	}
 	class ReactiveMap<K, V> extends Map<any, any> {
