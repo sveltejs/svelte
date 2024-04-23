@@ -1,3 +1,5 @@
+import { warnings as array, filename, locator } from './warnings.js';
+
 /** @typedef {Record<string, (...args: any[]) => string>} Warnings */
 
 /** @satisfies {Warnings} */
@@ -270,25 +272,23 @@ const warnings = {
 
 /**
  * @template {keyof AllWarnings} T
- * @param {import('./phases/types').RawWarning[]} array the array to push the warning to, if not ignored
  * @param {{ start?: number, end?: number, type?: string, parent?: import('#compiler').SvelteNode | null, leadingComments?: import('estree').Comment[] } | null} node the node related to the warning
  * @param {T} code the warning code
  * @param  {Parameters<AllWarnings[T]>} args the arguments to pass to the warning function
  * @returns {void}
  */
-export function warn(array, node, code, ...args) {
+export function warn(node, code, ...args) {
 	// @ts-expect-error
 	if (node.ignores?.has(code)) return;
 
 	const fn = warnings[code];
 
-	const start = node?.start;
-	const end = node?.end;
-
 	array.push({
 		code,
 		// @ts-expect-error
 		message: fn(...args),
-		position: start !== undefined && end !== undefined ? [start, end] : undefined
+		filename,
+		start: node?.start !== undefined ? locator(node.start) : undefined,
+		end: node?.end !== undefined ? locator(node.end) : undefined
 	});
 }

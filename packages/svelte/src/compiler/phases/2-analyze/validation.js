@@ -131,12 +131,7 @@ function validate_element(node, context) {
 					value.name === attribute.name &&
 					!context.state.scope.get(value.name)
 				) {
-					warn(
-						context.state.analysis.warnings,
-						attribute,
-						'global-event-reference',
-						attribute.name
-					);
+					warn(attribute, 'global-event-reference', attribute.name);
 				}
 			}
 
@@ -146,18 +141,12 @@ function validate_element(node, context) {
 			}
 
 			if (attribute.name === 'is' && context.state.options.namespace !== 'foreign') {
-				warn(context.state.analysis.warnings, attribute, 'avoid-is');
+				warn(attribute, 'avoid-is');
 			}
 
 			const correct_name = react_attributes.get(attribute.name);
 			if (correct_name) {
-				warn(
-					context.state.analysis.warnings,
-					attribute,
-					'invalid-html-attribute',
-					attribute.name,
-					correct_name
-				);
+				warn(attribute, 'invalid-html-attribute', attribute.name, correct_name);
 			}
 
 			validate_attribute_name(attribute, context);
@@ -233,7 +222,7 @@ function validate_attribute_name(attribute, context) {
 		!attribute.name.startsWith('xlink:') &&
 		!attribute.name.startsWith('xml:')
 	) {
-		warn(context.state.analysis.warnings, attribute, 'illegal-attribute-character');
+		warn(attribute, 'illegal-attribute-character');
 	}
 }
 
@@ -311,7 +300,7 @@ function validate_block_not_empty(node, context) {
 	// Assumption: If the block has zero elements, someone's in the middle of typing it out,
 	// so don't warn in that case because it would be distracting.
 	if (node.nodes.length === 1 && node.nodes[0].type === 'Text' && !node.nodes[0].raw.trim()) {
-		warn(context.state.analysis.warnings, node.nodes[0], 'empty-block');
+		warn(node.nodes[0], 'empty-block');
 	}
 }
 
@@ -372,12 +361,7 @@ const validation = {
 		}
 
 		if (binding?.kind === 'each' && binding.metadata?.inside_rest) {
-			warn(
-				context.state.analysis.warnings,
-				binding.node,
-				'invalid-rest-eachblock-binding',
-				binding.node.name
-			);
+			warn(binding.node, 'invalid-rest-eachblock-binding', binding.node.name);
 		}
 
 		const parent = context.path.at(-1);
@@ -531,7 +515,7 @@ const validation = {
 			binding.declaration_kind === 'import' &&
 			binding.references.length === 0
 		) {
-			warn(context.state.analysis.warnings, node, 'component-name-lowercase', node.name);
+			warn(node, 'component-name-lowercase', node.name);
 		}
 
 		validate_element(node, context);
@@ -570,7 +554,7 @@ const validation = {
 			!VoidElements.includes(node.name) &&
 			!SVGElements.includes(node.name)
 		) {
-			warn(context.state.analysis.warnings, node, 'invalid-self-closing-tag', node.name);
+			warn(node, 'invalid-self-closing-tag', node.name);
 		}
 
 		context.next({
@@ -766,7 +750,7 @@ export const validation_legacy = merge(validation, a11y_validators, {
 			(state.ast_type !== 'instance' ||
 				/** @type {import('#compiler').SvelteNode} */ (path.at(-1)).type !== 'Program')
 		) {
-			warn(state.analysis.warnings, node, 'no-reactive-declaration');
+			warn(node, 'no-reactive-declaration');
 		}
 	},
 	UpdateExpression(node, { state }) {
@@ -969,12 +953,12 @@ export const validation_runes_js = {
 		const allowed_depth = context.state.ast_type === 'module' ? 0 : 1;
 
 		if (context.state.scope.function_depth > allowed_depth) {
-			warn(context.state.analysis.warnings, node, 'avoid-nested-class');
+			warn(node, 'avoid-nested-class');
 		}
 	},
 	NewExpression(node, context) {
 		if (node.callee.type === 'ClassExpression' && context.state.scope.function_depth > 0) {
-			warn(context.state.analysis.warnings, node, 'avoid-inline-class');
+			warn(node, 'avoid-inline-class');
 		}
 	}
 };
@@ -1127,7 +1111,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 
 		if (rune === null) {
 			if (init?.type === 'Identifier' && init.name === '$props' && !state.scope.get('props')) {
-				warn(state.analysis.warnings, node, 'invalid-props-declaration');
+				warn(node, 'invalid-props-declaration');
 			}
 			return;
 		}
@@ -1180,7 +1164,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 				arg.type === 'CallExpression' &&
 				(arg.callee.type === 'ArrowFunctionExpression' || arg.callee.type === 'FunctionExpression')
 			) {
-				warn(state.analysis.warnings, node, 'derived-iife');
+				warn(node, 'derived-iife');
 			}
 		}
 	},
@@ -1190,19 +1174,19 @@ export const validation_runes = merge(validation, a11y_validators, {
 			node.right.name === '$bindable' &&
 			!state.scope.get('bindable')
 		) {
-			warn(state.analysis.warnings, node, 'invalid-bindable-declaration');
+			warn(node, 'invalid-bindable-declaration');
 		}
 	},
 	SlotElement(node, { state }) {
 		if (!state.analysis.custom_element) {
-			warn(state.analysis.warnings, node, 'deprecated-slot-element');
+			warn(node, 'deprecated-slot-element');
 		}
 	},
-	OnDirective(node, { state, path }) {
+	OnDirective(node, { path }) {
 		const parent_type = path.at(-1)?.type;
 		// Don't warn on component events; these might not be under the author's control so the warning would be unactionable
 		if (parent_type === 'RegularElement' || parent_type === 'SvelteElement') {
-			warn(state.analysis.warnings, node, 'deprecated-event-handler', node.name);
+			warn(node, 'deprecated-event-handler', node.name);
 		}
 	},
 	// TODO this is a code smell. need to refactor this stuff

@@ -672,15 +672,6 @@ function check_element(node, state) {
 	// foreign namespace means elements can have completely different meanings, therefore we don't check them
 	if (state.options.namespace === 'foreign') return;
 
-	/**
-	 * @template {keyof import('../../warnings-tmp.js').AllWarnings} T
-	 * @param {{ start?: number, end?: number }} node
-	 * @param {T} code
-	 * @param  {Parameters<import('../../warnings-tmp.js').AllWarnings[T]>} args
-	 * @returns {void}
-	 */
-	const push_warning = (node, code, ...args) => warn(state.analysis.warnings, node, code, ...args);
-
 	/** @type {Map<string, import('#compiler').Attribute>} */
 	const attribute_map = new Map();
 
@@ -727,17 +718,17 @@ function check_element(node, state) {
 		if (name.startsWith('aria-')) {
 			if (invisible_elements.includes(node.name)) {
 				// aria-unsupported-elements
-				push_warning(attribute, 'a11y-aria-attributes', node.name);
+				warn(attribute, 'a11y-aria-attributes', node.name);
 			}
 
 			const type = name.slice(5);
 			if (!aria_attributes.includes(type)) {
 				const match = fuzzymatch(type, aria_attributes);
-				push_warning(attribute, 'a11y-unknown-aria-attribute', type, match);
+				warn(attribute, 'a11y-unknown-aria-attribute', type, match);
 			}
 
 			if (name === 'aria-hidden' && regex_heading_tags.test(node.name)) {
-				push_warning(attribute, 'a11y-hidden', node.name);
+				warn(attribute, 'a11y-hidden', node.name);
 			}
 
 			// aria-proptypes
@@ -747,7 +738,7 @@ function check_element(node, state) {
 			if (value !== null && value !== undefined) {
 				const schema = aria.get(/** @type {import('aria-query').ARIAProperty} */ (name));
 				if (schema !== undefined && !is_valid_aria_attribute_value(schema, value)) {
-					push_warning(attribute, 'a11y-incorrect-aria-attribute-type', schema, name);
+					warn(attribute, 'a11y-incorrect-aria-attribute-type', schema, name);
 				}
 			}
 
@@ -758,7 +749,7 @@ function check_element(node, state) {
 				!is_interactive_element(node.name, attribute_map) &&
 				!attribute_map.has('tabindex')
 			) {
-				push_warning(attribute, 'a11y-aria-activedescendant-has-tabindex');
+				warn(attribute, 'a11y-aria-activedescendant-has-tabindex');
 			}
 		}
 
@@ -766,7 +757,7 @@ function check_element(node, state) {
 		if (name === 'role') {
 			if (invisible_elements.includes(node.name)) {
 				// aria-unsupported-elements
-				push_warning(attribute, 'a11y-misplaced-role', node.name);
+				warn(attribute, 'a11y-misplaced-role', node.name);
 			}
 
 			const value = get_static_value(attribute);
@@ -776,10 +767,10 @@ function check_element(node, state) {
 						/** @type {import('aria-query').ARIARoleDefinitionKey} current_role */ (c_r);
 
 					if (current_role && is_abstract_role(current_role)) {
-						push_warning(attribute, 'a11y-no-abstract-role', current_role);
+						warn(attribute, 'a11y-no-abstract-role', current_role);
 					} else if (current_role && !aria_roles.includes(current_role)) {
 						const match = fuzzymatch(current_role, aria_roles);
-						push_warning(attribute, 'a11y-unknown-role', current_role, match);
+						warn(attribute, 'a11y-unknown-role', current_role, match);
 					}
 
 					// no-redundant-roles
@@ -788,7 +779,7 @@ function check_element(node, state) {
 						// <ul role="list"> is ok because CSS list-style:none removes the semantics and this is a way to bring them back
 						!['ul', 'ol', 'li'].includes(node.name)
 					) {
-						push_warning(attribute, 'a11y-no-redundant-roles', current_role);
+						warn(attribute, 'a11y-no-redundant-roles', current_role);
 					}
 
 					// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
@@ -797,7 +788,7 @@ function check_element(node, state) {
 						const has_nested_redundant_role =
 							current_role === a11y_nested_implicit_semantics.get(node.name);
 						if (has_nested_redundant_role) {
-							push_warning(attribute, 'a11y-no-redundant-roles', current_role);
+							warn(attribute, 'a11y-no-redundant-roles', current_role);
 						}
 					}
 
@@ -813,7 +804,7 @@ function check_element(node, state) {
 								(prop) => !attributes.find((a) => a.name === prop)
 							);
 							if (has_missing_props) {
-								push_warning(
+								warn(
 									attribute,
 									'a11y-role-has-required-aria-props',
 									current_role,
@@ -836,7 +827,7 @@ function check_element(node, state) {
 							a11y_interactive_handlers.includes(handler)
 						);
 						if (has_interactive_handlers) {
-							push_warning(node, 'a11y-interactive-supports-focus', current_role);
+							warn(node, 'a11y-interactive-supports-focus', current_role);
 						}
 					}
 
@@ -845,7 +836,7 @@ function check_element(node, state) {
 						is_interactive_element(node.name, attribute_map) &&
 						(is_non_interactive_roles(current_role) || is_presentation_role(current_role))
 					) {
-						push_warning(
+						warn(
 							node,
 							'a11y-no-interactive-element-to-noninteractive-role',
 							current_role,
@@ -861,7 +852,7 @@ function check_element(node, state) {
 							current_role
 						)
 					) {
-						push_warning(
+						warn(
 							node,
 							'a11y-no-noninteractive-element-to-interactive-role',
 							current_role,
@@ -874,17 +865,17 @@ function check_element(node, state) {
 
 		// no-access-key
 		if (name === 'accesskey') {
-			push_warning(attribute, 'a11y-accesskey');
+			warn(attribute, 'a11y-accesskey');
 		}
 
 		// no-autofocus
 		if (name === 'autofocus') {
-			push_warning(attribute, 'a11y-autofocus');
+			warn(attribute, 'a11y-autofocus');
 		}
 
 		// scope
 		if (name === 'scope' && !is_dynamic_element && node.name !== 'th') {
-			push_warning(attribute, 'a11y-misplaced-scope');
+			warn(attribute, 'a11y-misplaced-scope');
 		}
 
 		// tabindex-no-positive
@@ -892,7 +883,7 @@ function check_element(node, state) {
 			const value = get_static_value(attribute);
 			// @ts-ignore todo is tabindex=true correct case?
 			if (!isNaN(value) && +value > 0) {
-				push_warning(attribute, 'a11y-positive-tabindex');
+				warn(attribute, 'a11y-positive-tabindex');
 			}
 		}
 	}
@@ -916,7 +907,7 @@ function check_element(node, state) {
 			const has_key_event =
 				handlers.has('keydown') || handlers.has('keyup') || handlers.has('keypress');
 			if (!has_key_event) {
-				push_warning(node, 'a11y-click-events-have-key-events');
+				warn(node, 'a11y-click-events-have-key-events');
 			}
 		}
 	}
@@ -934,7 +925,7 @@ function check_element(node, state) {
 		const tab_index = attribute_map.get('tabindex');
 		const tab_index_value = get_static_text_value(tab_index);
 		if (tab_index && (tab_index_value === null || Number(tab_index_value) >= 0)) {
-			push_warning(node, 'a11y-no-noninteractive-tabindex');
+			warn(node, 'a11y-no-noninteractive-tabindex');
 		}
 	}
 
@@ -949,14 +940,7 @@ function check_element(node, state) {
 			if (
 				invalid_aria_props.includes(/** @type {import('aria-query').ARIAProperty} */ (attr.name))
 			) {
-				push_warning(
-					attr,
-					'a11y-role-supports-aria-props',
-					attr.name,
-					role_value,
-					is_implicit,
-					node.name
-				);
+				warn(attr, 'a11y-role-supports-aria-props', attr.name, role_value, is_implicit, node.name);
 			}
 		}
 	}
@@ -974,7 +958,7 @@ function check_element(node, state) {
 			a11y_recommended_interactive_handlers.includes(handler)
 		);
 		if (has_interactive_handlers) {
-			push_warning(node, 'a11y-no-noninteractive-element-interactions', node.name);
+			warn(node, 'a11y-no-noninteractive-element-interactions', node.name);
 		}
 	}
 
@@ -993,16 +977,16 @@ function check_element(node, state) {
 			a11y_interactive_handlers.includes(handler)
 		);
 		if (interactive_handlers.length > 0) {
-			push_warning(node, 'a11y-no-static-element-interactions', node.name, interactive_handlers);
+			warn(node, 'a11y-no-static-element-interactions', node.name, interactive_handlers);
 		}
 	}
 
 	if (handlers.has('mouseover') && !handlers.has('focus')) {
-		push_warning(node, 'a11y-mouse-events-have-key-events', 'mouseover', 'focus');
+		warn(node, 'a11y-mouse-events-have-key-events', 'mouseover', 'focus');
 	}
 
 	if (handlers.has('mouseout') && !handlers.has('blur')) {
-		push_warning(node, 'a11y-mouse-events-have-key-events', 'mouseout', 'blur');
+		warn(node, 'a11y-mouse-events-have-key-events', 'mouseout', 'blur');
 	}
 
 	// element-specific checks
@@ -1021,14 +1005,14 @@ function check_element(node, state) {
 			const href_value = get_static_text_value(href);
 			if (href_value !== null) {
 				if (href_value === '' || href_value === '#' || /^\W*javascript:/i.test(href_value)) {
-					push_warning(href, 'a11y-invalid-attribute', href.name, href_value);
+					warn(href, 'a11y-invalid-attribute', href.name, href_value);
 				}
 			}
 		} else if (!has_spread) {
 			const id_attribute = get_static_value(attribute_map.get('id'));
 			const name_attribute = get_static_value(attribute_map.get('name'));
 			if (!id_attribute && !name_attribute) {
-				push_warning(...warn_missing_attribute(node, ['href']));
+				warn(...warn_missing_attribute(node, ['href']));
 			}
 		}
 	} else if (!has_spread) {
@@ -1036,7 +1020,7 @@ function check_element(node, state) {
 		if (required_attributes) {
 			const has_attribute = required_attributes.some((name) => attribute_map.has(name));
 			if (!has_attribute) {
-				push_warning(...warn_missing_attribute(node, required_attributes));
+				warn(...warn_missing_attribute(node, required_attributes));
 			}
 		}
 	}
@@ -1048,7 +1032,7 @@ function check_element(node, state) {
 			const required_attributes = ['alt', 'aria-label', 'aria-labelledby'];
 			const has_attribute = required_attributes.some((name) => attribute_map.has(name));
 			if (!has_attribute) {
-				push_warning(...warn_missing_attribute(node, required_attributes, 'input type="image"'));
+				warn(...warn_missing_attribute(node, required_attributes, 'input type="image"'));
 			}
 		}
 		// autocomplete-valid
@@ -1056,7 +1040,7 @@ function check_element(node, state) {
 		if (type && autocomplete) {
 			const autocomplete_value = get_static_value(autocomplete);
 			if (!is_valid_autocomplete(autocomplete_value)) {
-				push_warning(autocomplete, 'a11y-autocomplete-valid', type_value, autocomplete_value);
+				warn(autocomplete, 'a11y-autocomplete-valid', type_value, autocomplete_value);
 			}
 		}
 	}
@@ -1066,7 +1050,7 @@ function check_element(node, state) {
 		const aria_hidden = get_static_value(attribute_map.get('aria-hidden'));
 		if (alt_attribute && !aria_hidden) {
 			if (/\b(image|picture|photo)\b/i.test(alt_attribute)) {
-				push_warning(node, 'a11y-img-redundant-alt');
+				warn(node, 'a11y-img-redundant-alt');
 			}
 		}
 	}
@@ -1096,7 +1080,7 @@ function check_element(node, state) {
 			return has;
 		};
 		if (!attribute_map.has('for') && !has_input_child(node)) {
-			push_warning(node, 'a11y-label-has-associated-control');
+			warn(node, 'a11y-label-has-associated-control');
 		}
 	}
 
@@ -1118,13 +1102,13 @@ function check_element(node, state) {
 			);
 		}
 		if (!has_caption) {
-			push_warning(node, 'a11y-media-has-caption');
+			warn(node, 'a11y-media-has-caption');
 		}
 	}
 
 	if (node.name === 'figcaption') {
 		if (!is_parent(node.parent, ['figure'])) {
-			push_warning(node, 'a11y-structure', true);
+			warn(node, 'a11y-structure', true);
 		}
 	}
 
@@ -1138,13 +1122,13 @@ function check_element(node, state) {
 			(child) => child.type === 'RegularElement' && child.name === 'figcaption'
 		);
 		if (index !== -1 && index !== 0 && index !== children.length - 1) {
-			push_warning(children[index], 'a11y-structure', false);
+			warn(children[index], 'a11y-structure', false);
 		}
 	}
 
 	if (a11y_distracting_elements.includes(node.name)) {
 		// no-distracting-elements
-		push_warning(node, 'a11y-distracting-elements', node.name);
+		warn(node, 'a11y-distracting-elements', node.name);
 	}
 
 	// Check content
@@ -1154,7 +1138,7 @@ function check_element(node, state) {
 		a11y_required_content.includes(node.name) &&
 		node.fragment.nodes.length === 0
 	) {
-		push_warning(node, 'a11y-missing-content', node.name);
+		warn(node, 'a11y-missing-content', node.name);
 	}
 }
 

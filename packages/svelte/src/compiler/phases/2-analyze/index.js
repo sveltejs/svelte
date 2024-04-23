@@ -25,6 +25,7 @@ import { prune } from './css/css-prune.js';
 import { hash } from './utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
+import { reset_warnings } from '../../warnings.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -234,16 +235,9 @@ export function analyze_module(ast, options) {
 		}
 	}
 
-	/** @type {import('../types').RawWarning[]} */
-	const warnings = [];
-
-	const analysis = {
-		warnings
-	};
-
 	walk(
 		/** @type {import('estree').Node} */ (ast),
-		{ scope, analysis },
+		{ scope },
 		// @ts-expect-error TODO clean this mess up
 		merge(set_scope(scopes), validation_runes_js, runes_scope_js_tweaker)
 	);
@@ -251,7 +245,6 @@ export function analyze_module(ast, options) {
 	return {
 		module: { ast, scope, scopes },
 		name: options.filename || 'module',
-		warnings,
 		accessors: false,
 		runes: true,
 		immutable: true
@@ -274,9 +267,6 @@ export function analyze_component(root, source, options) {
 
 	/** @type {import('../types.js').Template} */
 	const template = { ast: root.fragment, scope, scopes };
-
-	/** @type {import('../types').RawWarning[]} */
-	const warnings = [];
 
 	// create synthetic bindings for store subscriptions
 	for (const [name, references] of module.scope.references) {
@@ -331,7 +321,7 @@ export function analyze_component(root, source, options) {
 				} else if (declaration !== null && Runes.includes(/** @type {any} */ (name))) {
 					for (const { node, path } of references) {
 						if (path.at(-1)?.type === 'CallExpression') {
-							warn(warnings, node, 'store-with-rune-name', store_name);
+							warn(node, 'store-with-rune-name', store_name);
 						}
 					}
 				}
@@ -391,7 +381,6 @@ export function analyze_component(root, source, options) {
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
 		slot_names: new Map(),
-		warnings,
 		css: {
 			ast: root.css,
 			hash: root.css
@@ -408,7 +397,7 @@ export function analyze_component(root, source, options) {
 	};
 
 	if (!options.customElement && root.options?.customElement) {
-		warn(analysis.warnings, root.options, 'missing-custom-element-compile-option');
+		warn(root.options, 'missing-custom-element-compile-option');
 	}
 
 	if (analysis.runes) {
@@ -498,7 +487,7 @@ export function analyze_component(root, source, options) {
 					(r) => r.node !== binding.node && r.path.at(-1)?.type !== 'ExportSpecifier'
 				);
 				if (!references.length && !instance.scope.declarations.has(`$${name}`)) {
-					warn(warnings, binding.node, 'unused-export-let', name);
+					warn(binding.node, 'unused-export-let', name);
 				}
 			}
 		}
@@ -538,7 +527,7 @@ export function analyze_component(root, source, options) {
 									type === 'AwaitBlock' ||
 									type === 'KeyBlock'
 								) {
-									warn(warnings, binding.node, 'non-state-reference', name);
+									warn(binding.node, 'non-state-reference', name);
 									continue outer;
 								}
 							}
@@ -546,7 +535,7 @@ export function analyze_component(root, source, options) {
 						}
 					}
 
-					warn(warnings, binding.node, 'non-state-reference', name);
+					warn(binding.node, 'non-state-reference', name);
 					continue outer;
 				}
 			}
@@ -565,7 +554,7 @@ export function analyze_component(root, source, options) {
 			!analysis.css.ast.content.comment ||
 			!extract_svelte_ignore(analysis.css.ast.content.comment.data).includes('css-unused-selector')
 		) {
-			warn_unused(analysis.css.ast, analysis.warnings);
+			warn_unused(analysis.css.ast);
 		}
 
 		outer: for (const element of analysis.elements) {
@@ -688,7 +677,7 @@ const legacy_scope_tweaker = {
 				(d) => d.scope === state.analysis.module.scope && d.declaration_kind !== 'const'
 			)
 		) {
-			warn(state.analysis.warnings, node, 'module-script-reactive-declaration');
+			warn(node, 'module-script-reactive-declaration');
 		}
 
 		if (
@@ -874,7 +863,7 @@ const legacy_scope_tweaker = {
 	}
 };
 
-/** @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, { scope: Scope, analysis: { warnings: import('../types').RawWarning[] } }>} */
+/** @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, { scope: Scope }>} */
 const runes_scope_js_tweaker = {
 	VariableDeclarator(node, { state }) {
 		if (node.init?.type !== 'CallExpression') return;
@@ -1210,7 +1199,7 @@ const common_visitors = {
 					binding.kind === 'derived') &&
 				context.state.function_depth === binding.scope.function_depth
 			) {
-				warn(context.state.analysis.warnings, node, 'static-state-reference');
+				warn(node, 'static-state-reference');
 			}
 		}
 	},
