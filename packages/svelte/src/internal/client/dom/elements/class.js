@@ -63,6 +63,42 @@ export function set_class(dom, value) {
 }
 
 /**
+ * @param {HTMLElement} dom
+ * @param {{[s: string]: any}} value
+ * @returns {void}
+ */
+export function set_class_list(dom, value) {
+
+	// with the toggle, and force option, as per
+	// the entry value, class can be added or removed
+	if (value) {
+		var entries = Object.entries(value)
+		for (let [key, entry] of entries) {
+			dom.classList.toggle(key, !!entry)
+		}
+	}
+
+	var next_class_name = dom.className;
+
+	// for performance reason remove this
+	if (!next_class_name) {
+		dom.removeAttribute('class');
+	}
+	// Set the updated className
+	// @ts-expect-error need to add __className to patched prototype
+	dom.__className = next_class_name;
+	// always remove the attribute
+
+	// Does classlist, need the check of
+	// dom.className === next_class_name ? in case of
+	// hydration, if the value
+	// or say next_class_name differs from the
+	// className, isn't this should simply update the
+	// token list and set the _className
+}
+
+
+/**
  * @template V
  * @param {V} value
  * @returns {string | V}

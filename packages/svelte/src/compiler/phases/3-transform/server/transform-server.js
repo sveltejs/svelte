@@ -2019,8 +2019,24 @@ function serialize_element_attributes(node, context) {
 				WhitespaceInsensitiveAttributes.includes(name)
 			);
 
+			//Any other tidy way to rewrite
+			const is_class_list =
+				name === 'class' &&
+				attribute &&
+				attribute.value &&
+				attribute.value[0] &&
+				attribute.value[0].type === 'ExpressionTag' &&
+				attribute.value[0].expression.type === 'ObjectExpression';
+			
 			context.state.template.push(
-				t_expression(b.call('$.attr', b.literal(name), value, b.literal(is_boolean)))
+				t_expression(
+					b.call(
+						is_class_list ? '$.attr_class_list' : '$.attr',
+						b.literal(name),
+						value,
+						b.literal(is_boolean)
+					)
+				)
 			);
 		}
 	}

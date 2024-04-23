@@ -491,7 +491,11 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 	let update;
 
 	if (name === 'class') {
-		update = b.stmt(b.call(is_svg ? '$.set_svg_class' : '$.set_class', node_id, value));
+		if (value.type === 'ObjectExpression') {
+			update = b.stmt(b.call('$.set_class_list', node_id, value));
+		} else {
+			update = b.stmt(b.call(is_svg ? '$.set_svg_class' : '$.set_class', node_id, value));
+		}
 	} else if (DOMProperties.includes(name)) {
 		update = b.stmt(b.assignment('=', b.member(node_id, b.id(name)), value));
 	} else {

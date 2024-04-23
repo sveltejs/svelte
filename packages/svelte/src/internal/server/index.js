@@ -263,6 +263,27 @@ export function attr(name, value, boolean) {
 	return ` ${name}${assignment}`;
 }
 
+// Separating the classlist for
+// readability?
+
+/**
+ * @template V
+ * @param {string} name
+ * @param {{[s: string]: any}} value
+ * @returns {string}
+ */
+export function attr_class_list(name, value) {
+	const entries = Object.entries(value).reduce((prev, [key, val], idx) => {
+		if (val) {
+			return idx === 0 ? key : prev + ' ' + key;
+		}
+		return prev;
+	}, '');
+
+	const assignment = `="${escape(entries, true)}"`;
+	return ` ${name}${assignment}`;
+}
+
 /**
  * @param {Payload} payload
  * @param {boolean} is_html
