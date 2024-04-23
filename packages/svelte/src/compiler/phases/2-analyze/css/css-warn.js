@@ -30,5 +30,12 @@ const visitors = {
 		}
 
 		context.next();
+	},
+	Rule(node, context) {
+		if (node.metadata.is_global_block) {
+			context.visit(node.prelude);
+		} else {
+			context.next();
+		}
 	}
 };

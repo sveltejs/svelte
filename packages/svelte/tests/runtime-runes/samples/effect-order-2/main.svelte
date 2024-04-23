@@ -1,19 +1,18 @@
 <script>
-	import { log } from './log.js';
 	let a = $state(1);
 	let b = $state(1);
 	let c = $state(1);
 
 	$effect(() => {
-		log.push({ a });
+		console.log({ a });
 	});
 
 	$effect(() => {
-		log.push({ b });
+		console.log({ b });
 	});
 
 	$effect(() => {
-		log.push({ c });
+		console.log({ c });
 	});
 
 	function increment() {

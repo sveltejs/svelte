@@ -280,7 +280,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		item = items.get(key);
 
 		if (item === undefined) {
-			var child_open = /** @type {Text} */ (push_template_node(empty()));
+			var child_open = push_template_node(empty());
 			var child_anchor = current ? current.o : anchor;
 
 			child_anchor.before(child_open);
@@ -323,7 +323,6 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 				if (matched.length < stashed.length) {
 					// more efficient to move later items to the front
 					var start = stashed[0];
-					var local_anchor = start.o;
 					var j;
 
 					prev = start.prev;
@@ -331,17 +330,17 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 					var a = matched[0];
 					var b = matched[matched.length - 1];
 
-					link(a.prev, b.next);
-					link(prev, a);
-					link(b, start);
-
 					for (j = 0; j < matched.length; j += 1) {
-						move(matched[j], local_anchor);
+						move(matched[j], start, anchor);
 					}
 
 					for (j = 0; j < stashed.length; j += 1) {
 						seen.delete(stashed[j]);
 					}
+
+					link(a.prev, b.next);
+					link(prev, a);
+					link(b, start);
 
 					current = start;
 					prev = b;
@@ -352,7 +351,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 				} else {
 					// more efficient to move earlier items to the back
 					seen.delete(item);
-					move(item, current ? current.o : anchor);
+					move(item, current, anchor);
 
 					link(item.prev, item.next);
 					link(item, prev.next);
@@ -492,21 +491,19 @@ function create_item(open, anchor, prev, next, value, key, index, render_fn, fla
 
 /**
  * @param {import('#client').EachItem} item
+ * @param {import('#client').EachItem | null} next
  * @param {Text | Element | Comment} anchor
  */
-function move(item, anchor) {
-	anchor.before(item.o);
+function move(item, next, anchor) {
+	var end = item.next ? item.next.o : anchor;
+	var dest = next ? next.o : anchor;
 
-	var dom = item.e.dom;
+	var node = /** @type {import('#client').TemplateNode} */ (item.o);
 
-	if (dom !== null) {
-		if (is_array(dom)) {
-			for (var i = 0; i < dom.length; i++) {
-				anchor.before(dom[i]);
-			}
-		} else {
-			anchor.before(dom);
-		}
+	while (node !== end) {
+		var next_node = /** @type {import('#client').TemplateNode} */ (node.nextSibling);
+		dest.before(node);
+		node = next_node;
 	}
 }
 

@@ -32,6 +32,7 @@ interface HydrationTest extends BaseTest {
 	) => void | Promise<void>;
 	before_test?: () => void;
 	after_test?: () => void;
+	errors?: any[];
 }
 
 function read(path: string): string | void {
@@ -65,6 +66,7 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 		const snapshot = config.snapshot ? config.snapshot(target) : {};
 
 		const error = console.error;
+		const errors: any[] = [];
 		let got_hydration_error = false;
 		console.error = (message: any) => {
 			if (typeof message === 'string' && message.startsWith('ERR_SVELTE_HYDRATION_MISMATCH')) {
@@ -73,7 +75,7 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 					error(message);
 				}
 			} else {
-				error(message);
+				errors.push(message);
 			}
 		};
 
@@ -85,10 +87,17 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 		});
 
 		console.error = error;
+
 		if (config.expect_hydration_error) {
 			assert.ok(got_hydration_error, 'Expected hydration error');
 		} else {
 			assert.ok(!got_hydration_error, 'Unexpected hydration error');
+		}
+
+		if (config.errors) {
+			assert.deepEqual(errors, config.errors);
+		} else if (errors.length) {
+			throw new Error(`Unexpected errors: ${errors.join('\n')}`);
 		}
 
 		const expected = read(`${cwd}/_expected.html`) ?? rendered.html;

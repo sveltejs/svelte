@@ -1,24 +1,23 @@
 <script>
 	import Item from './Item.svelte';
-	import { log } from './log.js';
 
 	let { n = 0 } = $props();
 
 	function logRender () {
-		log.push(`parent: render ${n}`);
+		console.log(`parent: render ${n}`);
 		return 'parent';
 	}
 
 	$effect.pre(() => {
-		log.push(`parent: $effect.pre ${n}`);
+		console.log(`parent: $effect.pre ${n}`);
 
 		$effect.pre(() => {
-			log.push(`parent: nested $effect.pre ${n}`);
+			console.log(`parent: nested $effect.pre ${n}`);
 		});
 	});
 
 	$effect(() => {
-		log.push(`parent: $effect ${n}`);
+		console.log(`parent: $effect ${n}`);
 	});
 </script>
 

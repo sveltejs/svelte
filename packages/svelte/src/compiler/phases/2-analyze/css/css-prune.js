@@ -1,7 +1,6 @@
 import { walk } from 'zimmerframe';
 import { get_possible_values } from './utils.js';
 import { regex_ends_with_whitespace, regex_starts_with_whitespace } from '../../patterns.js';
-import { error } from '../../../errors.js';
 
 /**
  * @typedef {{
@@ -60,6 +59,13 @@ export function prune(stylesheet, element) {
 
 /** @type {import('zimmerframe').Visitors<import('#compiler').Css.Node, State>} */
 const visitors = {
+	Rule(node, context) {
+		if (node.metadata.is_global_block) {
+			context.visit(node.prelude);
+		} else {
+			context.next();
+		}
+	},
 	ComplexSelector(node, context) {
 		const selectors = truncate(node);
 		const inner = selectors[selectors.length - 1];

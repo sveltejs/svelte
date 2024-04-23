@@ -197,7 +197,13 @@ export const javascript_visitors_runes = {
 		for (const declarator of node.declarations) {
 			const init = declarator.init;
 			const rune = get_rune(init, state.scope);
-			if (!rune || rune === '$effect.active' || rune === '$effect.root' || rune === '$inspect') {
+			if (
+				!rune ||
+				rune === '$effect.active' ||
+				rune === '$effect.root' ||
+				rune === '$inspect' ||
+				rune === '$state.snapshot'
+			) {
 				if (init != null && is_hoistable_function(init)) {
 					const hoistable_function = visit(init);
 					state.hoisted.push(

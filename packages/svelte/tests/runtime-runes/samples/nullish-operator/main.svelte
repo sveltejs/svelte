@@ -1,15 +1,13 @@
 <script>
-	import { log } from './log.js';
-
 	let a1 = $state();
 	let b1 = $state();
 
 	$effect(() => {
-		log.push('a1: ', a1);
+		console.log('a1: ', a1);
 	});
 
 	$effect(() => {
-		log.push('b1: ', b1);
+		console.log('b1: ', b1);
 	});
 
 	a();

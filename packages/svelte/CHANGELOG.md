@@ -1,5 +1,51 @@
 # svelte
 
+## 5.0.0-next.111
+
+### Patch Changes
+
+- fix: run render functions for dynamic void elements ([#11258](https://github.com/sveltejs/svelte/pull/11258))
+
+- fix: allow events to continue propagating following an error ([#11263](https://github.com/sveltejs/svelte/pull/11263))
+
+- fix: resolve type definition error in `svelte/compiler` ([#11283](https://github.com/sveltejs/svelte/pull/11283))
+
+- feat: include `script` and `svelte:options` attributes in ast ([#11241](https://github.com/sveltejs/svelte/pull/11241))
+
+- fix: only destroy snippets when they have changed ([#11267](https://github.com/sveltejs/svelte/pull/11267))
+
+- fix: add type arguments to Map and Set ([#10820](https://github.com/sveltejs/svelte/pull/10820))
+
+- feat: implement `:global {...}` CSS blocks ([#11276](https://github.com/sveltejs/svelte/pull/11276))
+
+- feat: add read-only `bind:focused` ([#11271](https://github.com/sveltejs/svelte/pull/11271))
+
+## 5.0.0-next.110
+
+### Patch Changes
+
+- fix: make sure event attributes run after bindings ([#11230](https://github.com/sveltejs/svelte/pull/11230))
+
+## 5.0.0-next.109
+
+### Patch Changes
+
+- fix: more robust moving of each item nodes ([#11254](https://github.com/sveltejs/svelte/pull/11254))
+
+- fix: ensure that CSS is generated for the final frame of a transition ([#11251](https://github.com/sveltejs/svelte/pull/11251))
+
+- fix: more accurate error message when creating orphan effects ([#11227](https://github.com/sveltejs/svelte/pull/11227))
+
+- fix: support `$state.snapshot` as part of variable declarations ([#11235](https://github.com/sveltejs/svelte/pull/11235))
+
+- fix: optimize object property mutations in compilation ([#11243](https://github.com/sveltejs/svelte/pull/11243))
+
+- breaking: don't allow children in svelte:options ([#11250](https://github.com/sveltejs/svelte/pull/11250))
+
+- fix: possible name clash in hoisted functions ([#11237](https://github.com/sveltejs/svelte/pull/11237))
+
+- fix: preserve getters/setters in HMR mode ([#11231](https://github.com/sveltejs/svelte/pull/11231))
+
 ## 5.0.0-next.108
 
 ### Patch Changes
