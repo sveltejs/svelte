@@ -182,11 +182,11 @@ export function effect(fn) {
  * @param {() => void | (() => void)} fn
  */
 export function legacy_pre_effect(deps, fn) {
-	var context = /** @type {import('#client').ComponentContext} */ (current_component_context);
+	var context = /** @type {import('#client').ComponentContextLegacy} */ (current_component_context);
 
 	/** @type {{ effect: null | import('#client').Effect, ran: boolean }} */
 	var token = { effect: null, ran: false };
-	context.l1.push(token);
+	context.l.r1.push(token);
 
 	token.effect = render_effect(() => {
 		deps();
@@ -196,19 +196,19 @@ export function legacy_pre_effect(deps, fn) {
 		if (token.ran) return;
 
 		token.ran = true;
-		set(context.l2, true);
+		set(context.l.r2, true);
 		untrack(fn);
 	});
 }
 
 export function legacy_pre_effect_reset() {
-	var context = /** @type {import('#client').ComponentContext} */ (current_component_context);
+	var context = /** @type {import('#client').ComponentContextLegacy} */ (current_component_context);
 
 	render_effect(() => {
-		if (!get(context.l2)) return;
+		if (!get(context.l.r2)) return;
 
 		// Run dirty `$:` statements
-		for (var token of context.l1) {
+		for (var token of context.l.r1) {
 			var effect = token.effect;
 
 			if (check_dirtiness(effect)) {
@@ -218,7 +218,7 @@ export function legacy_pre_effect_reset() {
 			token.ran = false;
 		}
 
-		context.l2.v = false; // set directly to avoid rerunning this effect
+		context.l.r2.v = false; // set directly to avoid rerunning this effect
 	});
 }
 
