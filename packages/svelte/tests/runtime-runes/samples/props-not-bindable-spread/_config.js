@@ -5,7 +5,8 @@ export default test({
 		dev: true
 	},
 	error:
-		'Cannot use bind:count on this component because the property was not declared as bindable. ' +
-		'To mark a property as bindable, use the $bindable() rune like this: `let { count = $bindable() } = $props()`',
+		'A component is binding to property count of Counter.svelte (i.e. <Counter bind:count />). This is disallowed because the property was ' +
+		'not declared as bindable inside .../samples/props-not-bindable-spread/Counter.svelte. To mark a property as bindable, use the $bindable() rune ' +
+		'in Counter.svelte like this: `let { count = $bindable() } = $props()`',
 	html: `0`
 });

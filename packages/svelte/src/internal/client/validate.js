@@ -85,16 +85,26 @@ export function loop_guard(timeout) {
 /**
  * @param {Record<string, any>} $$props
  * @param {string[]} bindable
+ * @param {string[]} exports
+ * @param {Function & { filename: string }} component
  */
-export function validate_prop_bindings($$props, bindable) {
+export function validate_prop_bindings($$props, bindable, exports, component) {
 	for (const key in $$props) {
-		if (!bindable.includes(key)) {
-			var setter = get_descriptor($$props, key)?.set;
+		var setter = get_descriptor($$props, key)?.set;
+		var name = component.name;
 
-			if (setter) {
+		if (setter) {
+			if (exports.includes(key)) {
 				throw new Error(
-					`Cannot use bind:${key} on this component because the property was not declared as bindable. ` +
-						`To mark a property as bindable, use the $bindable() rune like this: \`let { ${key} = $bindable() } = $props()\``
+					`Component ${component.filename} has an export named ${key} that a consumer component is trying to access using bind:${key}, which is disallowed. ` +
+						`Instead, use bind:this (e.g. <${name} bind:this={component} />) ` +
+						`and then access the property on the bound component instance (e.g. component.${key}).`
+				);
+			}
+			if (!bindable.includes(key)) {
+				throw new Error(
+					`A component is binding to property ${key} of ${name}.svelte (i.e. <${name} bind:${key} />). This is disallowed because the property was not declared as bindable inside ${component.filename}. ` +
+						`To mark a property as bindable, use the $bindable() rune in ${name}.svelte like this: \`let { ${key} = $bindable() } = $props()\``
 				);
 			}
 		}
