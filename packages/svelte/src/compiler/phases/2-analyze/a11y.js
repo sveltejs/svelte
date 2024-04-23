@@ -7,7 +7,7 @@ import {
 	regex_starts_with_vowel,
 	regex_whitespaces
 } from '../patterns.js';
-import { warn } from '../../warnings.js';
+import { warn } from '../../warnings-tmp.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { is_event_attribute, is_text_attribute } from '../../utils/ast.js';
 import { ContentEditableBindings } from '../constants.js';
@@ -673,10 +673,10 @@ function check_element(node, state) {
 	if (state.options.namespace === 'foreign') return;
 
 	/**
-	 * @template {keyof import('../../warnings.js').AllWarnings} T
+	 * @template {keyof import('../../warnings-tmp.js').AllWarnings} T
 	 * @param {{ start?: number, end?: number }} node
 	 * @param {T} code
-	 * @param  {Parameters<import('../../warnings.js').AllWarnings[T]>} args
+	 * @param  {Parameters<import('../../warnings-tmp.js').AllWarnings[T]>} args
 	 * @returns {void}
 	 */
 	const push_warning = (node, code, ...args) => warn(state.analysis.warnings, node, code, ...args);

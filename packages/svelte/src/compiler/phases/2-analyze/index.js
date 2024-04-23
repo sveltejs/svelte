@@ -14,7 +14,7 @@ import { ReservedKeywords, Runes, SVGElements } from '../constants.js';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import { merge } from '../visitors.js';
 import { validation_legacy, validation_runes, validation_runes_js } from './validation.js';
-import { warn } from '../../warnings.js';
+import { warn } from '../../warnings-tmp.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';

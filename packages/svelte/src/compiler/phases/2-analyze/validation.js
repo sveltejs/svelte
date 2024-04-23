@@ -12,7 +12,7 @@ import {
 	object,
 	unwrap_optional
 } from '../../utils/ast.js';
-import { warn } from '../../warnings.js';
+import { warn } from '../../warnings-tmp.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { binding_properties } from '../bindings.js';
 import {

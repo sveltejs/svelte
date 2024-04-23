@@ -1,5 +1,5 @@
 import { walk } from 'zimmerframe';
-import { warn } from '../../../warnings.js';
+import { warn } from '../../../warnings-tmp.js';
 import { is_keyframes_node } from '../../css.js';
 
 /**
