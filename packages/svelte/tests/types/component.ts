@@ -191,7 +191,6 @@ function binding<T>(value: T): Binding<T> {
 class Explicit extends SvelteComponent<{
 	foo: string;
 	bar: Bindable<boolean>;
-	baz?: Binding<string>;
 }> {
 	constructor(options: ComponentConstructorOptions<{ foo: string; bar: Bindable<boolean> }>) {
 		super(options);
@@ -211,16 +210,8 @@ mount(Explicit, { target: null as any, props: { foo: 'foo', bar: true } });
 mount(Explicit, {
 	target: null as any,
 	props: {
-		baz: '',
 		// @ts-expect-error
 		bar: binding(true)
-	}
-});
-mount(Explicit, {
-	target: null as any,
-	props: {
-		// @ts-expect-error
-		baz: ''
 	}
 });
 

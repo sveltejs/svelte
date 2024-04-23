@@ -30,10 +30,6 @@ type WithBindings<T> = {
 	[Key in keyof T]: Bindable<T[Key]>;
 };
 
-type StripBindable<Props extends Record<string, any>> = {
-	[Key in keyof Props]: Props[Key] extends Bindable<infer Value> ? Value : Props[Key];
-};
-
 /**
  * Utility type for ensuring backwards compatibility on a type level:
  * - If there's a default slot, add 'children' to the props
@@ -97,7 +93,7 @@ export class SvelteComponent<
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
 	 * */
-	$$prop_def: StripBindable<Props>; // Without PropsWithChildren: unnecessary, causes type bugs
+	$$prop_def: RemoveBindable<Props>; // Without PropsWithChildren: unnecessary, causes type bugs
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
