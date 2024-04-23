@@ -5,6 +5,6 @@ export default test({
 		dev: true // to ensure we we catch the error
 	},
 	error:
-		'Cannot use bind:increment on this component because it is a component export, and you can only bind to properties in runes mode. ' +
-		'Use bind:this instead and then access the property on the bound component instance.'
+		'Component .../samples/export-binding/Counter.svelte has an export named increment that a consumer component is trying to access using bind:increment, which is disallowed. ' +
+		'Instead, use bind:this (e.g. <Counter bind:this={component} />) and then access the property on the bound component instance (e.g. component.increment).'
 });
