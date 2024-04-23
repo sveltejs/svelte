@@ -123,7 +123,7 @@ Some breaking changes only apply once your component is in runes mode.
 
 ### Bindings to component exports are not allowed
 
-In runes mode, bindings to component exports are not allowed. For example, having `export const foo = ...` in component `A` and then doing `<A bind:foo />` is a runtime error. Use `bind:this` instead, e.g. `<A bind:this={a} />` and then do `a.foo`. This change was done to make things easier to reason about - it's now clear without looking into the component to know that all bindings except `bind:this` are always for component properties.
+Exports from runes mode components cannot be bound to directly. For example, having `export const foo = ...` in component `A` and then doing `<A bind:foo />` causes an error. Use `bind:this` instead — `<A bind:this={a} />` — and access the export as `a.foo`. This change makes things easier to reason about, as it enforces a clear separation between props and exports.
 
 ### Bindings need to be explicitly defined using `$bindable()`
 
