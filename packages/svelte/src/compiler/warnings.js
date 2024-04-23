@@ -1,8 +1,3 @@
-import {
-	extract_ignores_above_position,
-	extract_svelte_ignore_from_comments
-} from './utils/extract_svelte_ignore.js';
-
 /** @typedef {Record<string, (...args: any[]) => string>} Warnings */
 
 /** @satisfies {Warnings} */
@@ -277,52 +272,15 @@ const warnings = {
  * @template {keyof AllWarnings} T
  * @param {import('./phases/types').RawWarning[]} array the array to push the warning to, if not ignored
  * @param {{ start?: number, end?: number, type?: string, parent?: import('#compiler').SvelteNode | null, leadingComments?: import('estree').Comment[] } | null} node the node related to the warning
- * @param {import('#compiler').SvelteNode[]} path the path to the node, so that we can traverse upwards to find svelte-ignore comments
  * @param {T} code the warning code
  * @param  {Parameters<AllWarnings[T]>} args the arguments to pass to the warning function
  * @returns {void}
  */
-export function warn(array, node, path, code, ...args) {
+export function warn(array, node, code, ...args) {
+	// @ts-expect-error
+	if (node.ignores?.has(code)) return;
+
 	const fn = warnings[code];
-
-	// Traverse the AST upwards to find any svelte-ignore comments.
-	// This assumes that people don't have their code littered with warnings,
-	// at which point this might become inefficient.
-	/** @type {string[]} */
-	const ignores = [];
-
-	if (node) {
-		// comments inside JavaScript (estree)
-		if ('leadingComments' in node) {
-			ignores.push(...extract_svelte_ignore_from_comments(node));
-		}
-	}
-
-	for (let i = path.length - 1; i >= 0; i--) {
-		const current = path[i];
-
-		// comments inside JavaScript (estree)
-		if ('leadingComments' in current) {
-			ignores.push(...extract_svelte_ignore_from_comments(current));
-		}
-
-		// Svelte nodes
-		if (current.type === 'Fragment') {
-			ignores.push(
-				...extract_ignores_above_position(
-					/** @type {import('#compiler').TemplateNode} */ (path[i + 1] ?? node),
-					current.nodes
-				)
-			);
-		}
-
-		// Style nodes
-		if (current.type === 'StyleSheet' && current.content.comment) {
-			ignores.push(...current.content.comment.ignores);
-		}
-	}
-
-	if (ignores.includes(code)) return;
 
 	const start = node?.start;
 	const end = node?.end;

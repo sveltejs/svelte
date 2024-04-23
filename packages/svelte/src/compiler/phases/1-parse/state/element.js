@@ -1,5 +1,3 @@
-import { extract_svelte_ignore } from '../../../utils/extract_svelte_ignore.js';
-import fuzzymatch from '../utils/fuzzymatch.js';
 import { is_void } from '../utils/names.js';
 import read_expression from '../read/expression.js';
 import { read_script } from '../read/script.js';
@@ -87,8 +85,7 @@ export default function tag(parser) {
 			type: 'Comment',
 			start,
 			end: parser.index,
-			data,
-			ignores: extract_svelte_ignore(data)
+			data
 		});
 
 		return;

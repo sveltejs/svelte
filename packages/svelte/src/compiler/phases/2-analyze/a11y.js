@@ -667,9 +667,8 @@ function get_static_text_value(attribute) {
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
  * @param {import('./types.js').AnalysisState} state
- * @param {import('#compiler').SvelteNode[]} path
  */
-function check_element(node, state, path) {
+function check_element(node, state) {
 	// foreign namespace means elements can have completely different meanings, therefore we don't check them
 	if (state.options.namespace === 'foreign') return;
 
@@ -680,8 +679,7 @@ function check_element(node, state, path) {
 	 * @param  {Parameters<import('../../warnings.js').AllWarnings[T]>} args
 	 * @returns {void}
 	 */
-	const push_warning = (node, code, ...args) =>
-		warn(state.analysis.warnings, node, path, code, ...args);
+	const push_warning = (node, code, ...args) => warn(state.analysis.warnings, node, code, ...args);
 
 	/** @type {Map<string, import('#compiler').Attribute>} */
 	const attribute_map = new Map();
@@ -1165,9 +1163,9 @@ function check_element(node, state, path) {
  */
 export const a11y_validators = {
 	RegularElement(node, context) {
-		check_element(node, context.state, context.path);
+		check_element(node, context.state);
 	},
 	SvelteElement(node, context) {
-		check_element(node, context.state, context.path);
+		check_element(node, context.state);
 	}
 };

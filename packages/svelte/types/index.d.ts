@@ -955,6 +955,14 @@ declare module 'svelte/compiler' {
 		type: 'Window';
 	}
 
+	interface LegacyComment extends BaseNode_1 {
+		type: 'Comment';
+		/** the contents of the comment */
+		data: string;
+		/** any svelte-ignore directives — <!-- svelte-ignore a b c --> would result in ['a', 'b', 'c'] */
+		ignores: string[];
+	}
+
 	type LegacyDirective =
 		| LegacyAnimation
 		| LegacyBinding
@@ -970,6 +978,7 @@ declare module 'svelte/compiler' {
 	type LegacyElementLike =
 		| LegacyBody
 		| LegacyCatchBlock
+		| LegacyComment
 		| LegacyDocument
 		| LegacyElement
 		| LegacyHead
@@ -1355,8 +1364,6 @@ declare module 'svelte/compiler' {
 		type: 'Comment';
 		/** the contents of the comment */
 		data: string;
-		/** any svelte-ignore directives — <!-- svelte-ignore a b c --> would result in ['a', 'b', 'c'] */
-		ignores: string[];
 	}
 
 	/** A `{@const ...}` tag */
