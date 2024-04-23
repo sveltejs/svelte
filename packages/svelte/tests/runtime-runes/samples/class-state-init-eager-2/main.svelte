@@ -1,8 +1,6 @@
 <script>
-	import { log } from './log.js';
-
 	const logger = (obj) => {
-		log.push(obj.count)
+		console.log(obj.count)
 	}
 
 	class Counter {

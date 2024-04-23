@@ -8,14 +8,14 @@
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:mouseover={() => void 0} />
+<div on:mouseover={() => void 0}></div>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:mouseover={() => void 0} on:focus={() => void 0} />
+<div on:mouseover={() => void 0} on:focus={() => void 0}></div>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:mouseover={() => void 0} {...otherProps} />
+<div on:mouseover={() => void 0} {...otherProps}></div>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:mouseout={() => void 0} />
+<div on:mouseout={() => void 0}></div>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:mouseout={() => void 0} on:blur={() => void 0} />
+<div on:mouseout={() => void 0} on:blur={() => void 0}></div>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:mouseout={() => void 0} {...otherProps} />
+<div on:mouseout={() => void 0} {...otherProps}></div>

@@ -2,4 +2,4 @@
 	export let myColor = "red";
 </script>
 
-<p style:--border-color={myColor} />
+<p style:--border-color={myColor}></p>

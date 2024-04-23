@@ -14,12 +14,12 @@
 	.b ~ .c { color: green; }
 </style>
 
-<div class="a" />
+<div class="a"></div>
 
 {#if foo}
-	<div class="b" />
+	<div class="b"></div>
 {:else if bar}
-	<div class="c" />
+	<div class="c"></div>
 {/if}
 
-<div class="d" />
+<div class="d"></div>

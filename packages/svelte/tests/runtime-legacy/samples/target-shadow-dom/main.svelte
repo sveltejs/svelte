@@ -16,4 +16,4 @@
 	});
 </script>
 
-<div bind:this={div} />
+<div bind:this={div}></div>

@@ -32,6 +32,29 @@ import { set } from './sources.js';
 import { remove } from '../dom/reconciler.js';
 
 /**
+ * @param {import('#client').Effect | null} effect
+ * @param {'$effect' | '$effect.pre' | '$inspect'} rune
+ * @returns {asserts effect}
+ */
+export function validate_effect(effect, rune) {
+	if (effect === null) {
+		throw new Error(
+			'ERR_SVELTE_ORPHAN_EFFECT' +
+				(DEV
+					? `: ${rune} can only be used inside an effect (e.g. during component initialisation)`
+					: '')
+		);
+	}
+
+	if (is_destroying_effect) {
+		throw new Error(
+			'ERR_SVELTE_EFFECT_IN_TEARDOWN' +
+				(DEV ? `: ${rune} cannot be used inside an effect cleanup function.` : '')
+		);
+	}
+}
+
+/**
  * @param {import("#client").Effect} effect
  * @param {import("#client").Reaction} parent_effect
  */
@@ -105,18 +128,7 @@ export function effect_active() {
  * @param {() => void | (() => void)} fn
  */
 export function user_effect(fn) {
-	if (current_effect === null) {
-		throw new Error(
-			'ERR_SVELTE_ORPHAN_EFFECT' +
-				(DEV ? ': The Svelte $effect rune can only be used during component initialisation.' : '')
-		);
-	}
-	if (is_destroying_effect) {
-		throw new Error(
-			'ERR_SVELTE_EFFECT_IN_TEARDOWN' +
-				(DEV ? ': The Svelte $effect rune can not be used in the teardown phase of an effect.' : '')
-		);
-	}
+	validate_effect(current_effect, '$effect');
 
 	// Non-nested `$effect(...)` in a component should be deferred
 	// until the component is mounted
@@ -140,23 +152,7 @@ export function user_effect(fn) {
  * @returns {import('#client').Effect}
  */
 export function user_pre_effect(fn) {
-	if (current_effect === null) {
-		throw new Error(
-			'ERR_SVELTE_ORPHAN_EFFECT' +
-				(DEV
-					? ': The Svelte $effect.pre rune can only be used during component initialisation.'
-					: '')
-		);
-	}
-	if (is_destroying_effect) {
-		throw new Error(
-			'ERR_SVELTE_EFFECT_IN_TEARDOWN' +
-				(DEV
-					? ': The Svelte $effect.pre rune can not be used in the teardown phase of an effect.'
-					: '')
-		);
-	}
-
+	validate_effect(current_effect, '$effect.pre');
 	return render_effect(fn);
 }
 
@@ -234,9 +230,12 @@ export function render_effect(fn) {
 	return create_effect(RENDER_EFFECT, fn, true);
 }
 
-/** @param {(() => void)} fn */
-export function block(fn) {
-	return create_effect(RENDER_EFFECT | BLOCK_EFFECT, fn, true);
+/**
+ * @param {(() => void)} fn
+ * @param {number} flags
+ */
+export function block(fn, flags = 0) {
+	return create_effect(RENDER_EFFECT | BLOCK_EFFECT | flags, fn, true);
 }
 
 /** @param {(() => void)} fn */
@@ -334,7 +333,7 @@ export function pause_effect(effect, callback) {
 
 	pause_children(effect, transitions, true);
 
-	run_out_transitions(transitions, false, () => {
+	run_out_transitions(transitions, () => {
 		destroy_effect(effect);
 		if (callback) callback();
 	});
@@ -342,15 +341,14 @@ export function pause_effect(effect, callback) {
 
 /**
  * @param {import('#client').TransitionManager[]} transitions
- * @param {boolean} position_absolute
  * @param {() => void} fn
  */
-export function run_out_transitions(transitions, position_absolute, fn) {
+export function run_out_transitions(transitions, fn) {
 	var remaining = transitions.length;
 	if (remaining > 0) {
 		var check = () => --remaining || fn();
 		for (var transition of transitions) {
-			transition.out(check, position_absolute);
+			transition.out(check);
 		}
 	} else {
 		fn();

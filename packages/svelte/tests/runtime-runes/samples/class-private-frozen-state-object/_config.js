@@ -1,14 +1,9 @@
 import { test } from '../../test';
-import { log } from './log.js';
 
 export default test({
 	html: `<button>0</button>`,
 
-	before_test() {
-		log.length = 0;
-	},
-
-	async test({ assert, target }) {
+	async test({ assert, target, logs }) {
 		const btn = target.querySelector('button');
 
 		await btn?.click();
@@ -17,6 +12,6 @@ export default test({
 		await btn?.click();
 		assert.htmlEqual(target.innerHTML, `<button>0</button>`);
 
-		assert.deepEqual(log, ['read only', 'read only']);
+		assert.deepEqual(logs, ['read only', 'read only']);
 	}
 });

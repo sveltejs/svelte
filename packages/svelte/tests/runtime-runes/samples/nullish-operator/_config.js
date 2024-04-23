@@ -1,14 +1,9 @@
 import { test } from '../../test';
-import { log } from './log.js';
 
 export default test({
-	before_test() {
-		log.length = 0;
-	},
-
-	async test({ assert }) {
+	async test({ assert, logs }) {
 		await Promise.resolve();
 		await Promise.resolve();
-		assert.deepEqual(log, ['a1: ', true, 'b1: ', true]);
+		assert.deepEqual(logs, ['a1: ', true, 'b1: ', true]);
 	}
 });

@@ -543,7 +543,7 @@ declare module 'svelte/compiler' {
 	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
 	 * */
-	function walk(): never;
+	export function walk(): never;
 	/** The return value of `compile` from `svelte/compiler` */
 	interface CompileResult {
 		/** The compiled JavaScript */
@@ -1158,6 +1158,7 @@ declare module 'svelte/compiler' {
 			metadata: {
 				parent_rule: null | Rule;
 				has_local_selectors: boolean;
+				is_global_block: boolean;
 			};
 		}
 
@@ -1352,6 +1353,7 @@ declare module 'svelte/compiler' {
 			 */
 			extend?: ArrowFunctionExpression | Identifier;
 		};
+		attributes: Attribute[];
 	}
 
 	/** Static text */
@@ -1726,6 +1728,7 @@ declare module 'svelte/compiler' {
 		type: 'Script';
 		context: string;
 		content: Program;
+		attributes: Attribute[];
 	}
 	/**
 	 * The result of a preprocessor run. If the preprocessor does not return a result, it is assumed that the code is unchanged.
@@ -1796,8 +1799,6 @@ declare module 'svelte/compiler' {
 		style?: Preprocessor;
 		script?: Preprocessor;
 	}
-
-	export { walk };
 }
 
 declare module 'svelte/easing' {
@@ -2018,38 +2019,18 @@ declare module 'svelte/reactivity' {
 		constructor(...values: any[]);
 		#private;
 	}
-	class ReactiveSet<T> extends Set<any> {
+	class ReactiveSet<T> extends Set<T> {
 		
 		constructor(value?: Iterable<T> | null | undefined);
 		
-		has(value: T): boolean;
-		
 		add(value: T): this;
-		
-		delete(value: T): boolean;
-		keys(): IterableIterator<T>;
-		values(): IterableIterator<T>;
-		entries(): IterableIterator<[T, T]>;
-		[Symbol.iterator](): IterableIterator<T>;
 		#private;
 	}
-	class ReactiveMap<K, V> extends Map<any, any> {
+	class ReactiveMap<K, V> extends Map<K, V> {
 		
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
 		
-		has(key: K): boolean;
-		
-		forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void, this_arg?: any): void;
-		
-		get(key: K): V | undefined;
-		
 		set(key: K, value: V): this;
-		
-		delete(key: K): boolean;
-		keys(): IterableIterator<K>;
-		values(): IterableIterator<V>;
-		entries(): IterableIterator<[K, V]>;
-		[Symbol.iterator](): IterableIterator<[K, V]>;
 		#private;
 	}
 	class ReactiveURL extends URL {
@@ -2057,7 +2038,6 @@ declare module 'svelte/reactivity' {
 		#private;
 	}
 	class ReactiveURLSearchParams extends URLSearchParams {
-		constructor();
 		
 		[REPLACE](params: URLSearchParams): void;
 		#private;

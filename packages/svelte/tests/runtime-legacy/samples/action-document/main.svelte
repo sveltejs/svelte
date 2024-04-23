@@ -21,4 +21,4 @@
 </script>
 
 <svelte:document use:tooltip="{'Perform an Action'}" />
-<div bind:this={container} />
+<div bind:this={container}></div>

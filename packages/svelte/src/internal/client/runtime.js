@@ -1,19 +1,7 @@
 import { DEV } from 'esm-env';
-import {
-	array_prototype,
-	get_descriptors,
-	get_prototype_of,
-	is_frozen,
-	object_freeze,
-	object_prototype
-} from './utils.js';
+import { get_descriptors, get_prototype_of, is_frozen, object_freeze } from './utils.js';
 import { snapshot } from './proxy.js';
-import {
-	destroy_effect,
-	effect,
-	execute_effect_teardown,
-	user_pre_effect
-} from './reactivity/effects.js';
+import { destroy_effect, effect, execute_effect_teardown } from './reactivity/effects.js';
 import {
 	EFFECT,
 	RENDER_EFFECT,
@@ -27,13 +15,13 @@ import {
 	BRANCH_EFFECT,
 	STATE_SYMBOL,
 	BLOCK_EFFECT,
-	ROOT_EFFECT,
-	INSPECT_SYMBOL
+	ROOT_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { mutate, set, source } from './reactivity/sources.js';
 import { update_derived } from './reactivity/deriveds.js';
+import { inspect_captured_signals, inspect_fn, set_inspect_fn } from './dev/inspect.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -61,47 +49,47 @@ let is_inspecting_signal = false;
 
 // Handle effect queues
 
-/** @type {import('./types.js').Effect[]} */
+/** @type {import('#client').Effect[]} */
 let current_queued_root_effects = [];
 
 let flush_count = 0;
 // Handle signal reactivity tree dependencies and reactions
 
-/** @type {null | import('./types.js').Reaction} */
+/** @type {null | import('#client').Reaction} */
 export let current_reaction = null;
 
-/** @param {null | import('./types.js').Reaction} reaction */
+/** @param {null | import('#client').Reaction} reaction */
 export function set_current_reaction(reaction) {
 	current_reaction = reaction;
 }
 
-/** @type {null | import('./types.js').Effect} */
+/** @type {null | import('#client').Effect} */
 export let current_effect = null;
 
-/** @param {null | import('./types.js').Effect} effect */
+/** @param {null | import('#client').Effect} effect */
 export function set_current_effect(effect) {
 	current_effect = effect;
 }
 
-/** @type {null | import('./types.js').Value[]} */
+/** @type {null | import('#client').Value[]} */
 export let current_dependencies = null;
 let current_dependencies_index = 0;
 /**
  * Tracks writes that the effect it's executed in doesn't listen to yet,
  * so that the dependency can be added to the effect later on if it then reads it
- * @type {null | import('./types.js').Source[]}
+ * @type {null | import('#client').Source[]}
  */
 export let current_untracked_writes = null;
 
-/** @param {null | import('./types.js').Source[]} value */
+/** @param {null | import('#client').Source[]} value */
 export function set_current_untracked_writes(value) {
 	current_untracked_writes = value;
 }
 
-/** @type {null | import('./types.js').ValueDebug} */
+/** @type {null | import('#client').ValueDebug} */
 export let last_inspected_signal = null;
 
-/** @param {null | import('./types.js').ValueDebug} signal */
+/** @param {null | import('#client').ValueDebug} signal */
 export function set_last_inspected_signal(signal) {
 	last_inspected_signal = signal;
 }
@@ -116,17 +104,11 @@ export let current_skip_reaction = false;
 export let is_signals_recorded = false;
 let captured_signals = new Set();
 
-/** @type {Function | null} */
-export let inspect_fn = null;
-
-/** @type {Array<import('./types.js').ValueDebug>} */
-let inspect_captured_signals = [];
-
 // Handling runtime component context
-/** @type {import('./types.js').ComponentContext | null} */
+/** @type {import('#client').ComponentContext | null} */
 export let current_component_context = null;
 
-/** @param {import('./types.js').ComponentContext | null} context */
+/** @param {import('#client').ComponentContext | null} context */
 export function set_current_component_context(context) {
 	current_component_context = context;
 }
@@ -137,7 +119,7 @@ export function is_runes() {
 }
 
 /**
- * @param {import('./types.js').ProxyStateObject} target
+ * @param {import('#client').ProxyStateObject} target
  * @param {string | symbol} prop
  * @param {any} receiver
  */
@@ -171,7 +153,7 @@ export function batch_inspect(target, prop, receiver) {
 /**
  * Determines whether a derived or effect is dirty.
  * If it is MAYBE_DIRTY, will set the status to CLEAN
- * @param {import('./types.js').Reaction} reaction
+ * @param {import('#client').Reaction} reaction
  * @returns {boolean}
  */
 export function check_dirtiness(reaction) {
@@ -236,7 +218,7 @@ export function check_dirtiness(reaction) {
 
 /**
  * @template V
- * @param {import('./types.js').Reaction} signal
+ * @param {import('#client').Reaction} signal
  * @returns {V}
  */
 export function execute_reaction_fn(signal) {
@@ -247,7 +229,7 @@ export function execute_reaction_fn(signal) {
 	const previous_skip_reaction = current_skip_reaction;
 	const previous_untracking = current_untracking;
 
-	current_dependencies = /** @type {null | import('./types.js').Value[]} */ (null);
+	current_dependencies = /** @type {null | import('#client').Value[]} */ (null);
 	current_dependencies_index = 0;
 	current_untracked_writes = null;
 	current_reaction = signal;
@@ -256,7 +238,7 @@ export function execute_reaction_fn(signal) {
 
 	try {
 		let res = signal.fn();
-		let dependencies = /** @type {import('./types.js').Value<unknown>[]} **/ (signal.deps);
+		let dependencies = /** @type {import('#client').Value<unknown>[]} **/ (signal.deps);
 		if (current_dependencies !== null) {
 			let i;
 			if (dependencies !== null) {
@@ -291,7 +273,7 @@ export function execute_reaction_fn(signal) {
 					dependencies[current_dependencies_index + i] = current_dependencies[i];
 				}
 			} else {
-				signal.deps = /** @type {import('./types.js').Value<V>[]} **/ (
+				signal.deps = /** @type {import('#client').Value<V>[]} **/ (
 					dependencies = current_dependencies
 				);
 			}
@@ -329,8 +311,8 @@ export function execute_reaction_fn(signal) {
 
 /**
  * @template V
- * @param {import('./types.js').Reaction} signal
- * @param {import('./types.js').Value<V>} dependency
+ * @param {import('#client').Reaction} signal
+ * @param {import('#client').Value<V>} dependency
  * @returns {void}
  */
 function remove_reaction(signal, dependency) {
@@ -352,12 +334,12 @@ function remove_reaction(signal, dependency) {
 	if (reactions_length === 0 && (dependency.f & UNOWNED) !== 0) {
 		// If the signal is unowned then we need to make sure to change it to dirty.
 		set_signal_status(dependency, DIRTY);
-		remove_reactions(/** @type {import('./types.js').Derived} **/ (dependency), 0);
+		remove_reactions(/** @type {import('#client').Derived} **/ (dependency), 0);
 	}
 }
 
 /**
- * @param {import('./types.js').Reaction} signal
+ * @param {import('#client').Reaction} signal
  * @param {number} start_index
  * @returns {void}
  */
@@ -377,7 +359,7 @@ export function remove_reactions(signal, start_index) {
 }
 
 /**
- * @param {import('./types.js').Reaction} signal
+ * @param {import('#client').Reaction} signal
  * @returns {void}
  */
 export function destroy_effect_children(signal) {
@@ -393,7 +375,7 @@ export function destroy_effect_children(signal) {
 }
 
 /**
- * @param {import('./types.js').Effect} effect
+ * @param {import('#client').Effect} effect
  * @returns {void}
  */
 export function execute_effect(effect) {
@@ -442,7 +424,7 @@ function infinite_loop_guard() {
 }
 
 /**
- * @param {Array<import('./types.js').Effect>} root_effects
+ * @param {Array<import('#client').Effect>} root_effects
  * @returns {void}
  */
 function flush_queued_root_effects(root_effects) {
@@ -453,7 +435,7 @@ function flush_queued_root_effects(root_effects) {
 }
 
 /**
- * @param {Array<import('./types.js').Effect>} effects
+ * @param {Array<import('#client').Effect>} effects
  * @returns {void}
  */
 function flush_queued_effects(effects) {
@@ -484,7 +466,7 @@ function process_microtask() {
 }
 
 /**
- * @param {import('./types.js').Effect} signal
+ * @param {import('#client').Effect} signal
  * @returns {void}
  */
 export function schedule_effect(signal) {
@@ -517,10 +499,10 @@ export function schedule_effect(signal) {
  * bitwise flag passed in only. The collected effects array will be populated with all the user
  * effects to be flushed.
  *
- * @param {import('./types.js').Effect} effect
+ * @param {import('#client').Effect} effect
  * @param {number} filter_flags
  * @param {boolean} shallow
- * @param {import('./types.js').Effect[]} collected_effects
+ * @param {import('#client').Effect[]} collected_effects
  * @returns {void}
  */
 function process_effects(effect, filter_flags, shallow, collected_effects) {
@@ -609,7 +591,7 @@ function process_effects(effect, filter_flags, shallow, collected_effects) {
  * Effects will be collected when they match the filtered bitwise flag passed in only. The collected
  * array will be populated with all the effects.
  *
- * @param {import('./types.js').Effect} effect
+ * @param {import('#client').Effect} effect
  * @param {number} filter_flags
  * @param {boolean} [shallow]
  * @returns {void}
@@ -635,7 +617,7 @@ function flush_nested_effects(effect, filter_flags, shallow = false) {
 }
 
 /**
- * @param {import('./types.js').Effect} effect
+ * @param {import('#client').Effect} effect
  * @returns {void}
  */
 export function flush_local_render_effects(effect) {
@@ -658,7 +640,7 @@ export function flush_sync(fn, flush_previous = true) {
 	try {
 		infinite_loop_guard();
 
-		/** @type {import('./types.js').Effect[]} */
+		/** @type {import('#client').Effect[]} */
 		const root_effects = [];
 
 		current_scheduler_mode = FLUSH_SYNC;
@@ -697,15 +679,14 @@ export async function tick() {
 
 /**
  * @template V
- * @param {import('./types.js').Value<V>} signal
+ * @param {import('#client').Value<V>} signal
  * @returns {V}
  */
 export function get(signal) {
-	// @ts-expect-error
-	if (DEV && signal.inspect && inspect_fn) {
-		/** @type {import('./types.js').ValueDebug} */ (signal).inspect.add(inspect_fn);
-		// @ts-expect-error
-		inspect_captured_signals.push(signal);
+	if (DEV && inspect_fn) {
+		var s = /** @type {import('#client').ValueDebug} */ (signal);
+		s.inspect.add(inspect_fn);
+		inspect_captured_signals.push(s);
 	}
 
 	const flags = signal.f;
@@ -762,11 +743,11 @@ export function get(signal) {
 		if (DEV) {
 			// we want to avoid tracking indirect dependencies
 			const previous_inspect_fn = inspect_fn;
-			inspect_fn = null;
-			update_derived(/** @type {import('./types.js').Derived} **/ (signal), false);
-			inspect_fn = previous_inspect_fn;
+			set_inspect_fn(null);
+			update_derived(/** @type {import('#client').Derived} **/ (signal), false);
+			set_inspect_fn(previous_inspect_fn);
 		} else {
-			update_derived(/** @type {import('./types.js').Derived} **/ (signal), false);
+			update_derived(/** @type {import('#client').Derived} **/ (signal), false);
 		}
 	}
 
@@ -868,7 +849,7 @@ export function untrack(fn) {
 const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
 
 /**
- * @param {import('./types.js').Signal} signal
+ * @param {import('#client').Signal} signal
  * @param {number} status
  * @returns {void}
  */
@@ -878,14 +859,14 @@ export function set_signal_status(signal, status) {
 
 /**
  * @template V
- * @param {V | import('./types.js').Value<V>} val
- * @returns {val is import('./types.js').Value<V>}
+ * @param {V | import('#client').Value<V>} val
+ * @returns {val is import('#client').Value<V>}
  */
 export function is_signal(val) {
 	return (
 		typeof val === 'object' &&
 		val !== null &&
-		typeof (/** @type {import('./types.js').Value<V>} */ (val).f) === 'number'
+		typeof (/** @type {import('#client').Value<V>} */ (val).f) === 'number'
 	);
 }
 
@@ -983,7 +964,7 @@ function get_or_init_context_map() {
 }
 
 /**
- * @param {import('./types.js').ComponentContext} component_context
+ * @param {import('#client').ComponentContext} component_context
  * @returns {Map<unknown, unknown> | null}
  */
 function get_parent_context(component_context) {
@@ -999,7 +980,7 @@ function get_parent_context(component_context) {
 }
 
 /**
- * @param {import('./types.js').Value<number>} signal
+ * @param {import('#client').Value<number>} signal
  * @param {1 | -1} [d]
  * @returns {number}
  */
@@ -1010,7 +991,7 @@ export function update(signal, d = 1) {
 }
 
 /**
- * @param {import('./types.js').Value<number>} signal
+ * @param {import('#client').Value<number>} signal
  * @param {1 | -1} [d]
  * @returns {number}
  */
@@ -1119,24 +1100,6 @@ export function pop(component) {
 }
 
 /**
- *
- * This is called from the inspect.
- * Deeply traverse every item in the array with `deep_read` to register for inspect callback
- * If the item implements INSPECT_SYMBOL, will use that instead
- * @param {Array<any>} value
- * @returns {void}
- */
-function deep_read_inpect(value) {
-	for (const item of value) {
-		if (item && typeof item[INSPECT_SYMBOL] === 'function') {
-			item[INSPECT_SYMBOL]();
-		} else {
-			deep_read(item);
-		}
-	}
-}
-
-/**
  * Possibly traverse an object and read all its properties so that they're all reactive in case this is `$state`.
  * Does only check first level of an object for performance reasons (heuristic should be good for 99% of all cases).
  * @param {any} value
@@ -1203,86 +1166,6 @@ export function deep_read(value, visited = new Set()) {
 			}
 		}
 	}
-}
-
-/**
- * Like `snapshot`, but recursively traverses into normal arrays/objects to find potential states in them.
- * @param {any} value
- * @param {Map<any, any>} visited
- * @returns {any}
- */
-function deep_snapshot(value, visited = new Map()) {
-	if (typeof value === 'object' && value !== null && !visited.has(value)) {
-		const unstated = snapshot(value);
-		if (unstated !== value) {
-			visited.set(value, unstated);
-			return unstated;
-		}
-		const prototype = get_prototype_of(value);
-		// Only deeply snapshot plain objects and arrays
-		if (prototype === object_prototype || prototype === array_prototype) {
-			let contains_unstated = false;
-			/** @type {any} */
-			const nested_unstated = Array.isArray(value) ? [] : {};
-			for (let key in value) {
-				const result = deep_snapshot(value[key], visited);
-				nested_unstated[key] = result;
-				if (result !== value[key]) {
-					contains_unstated = true;
-				}
-			}
-			visited.set(value, contains_unstated ? nested_unstated : value);
-		} else {
-			visited.set(value, value);
-		}
-	}
-
-	return visited.get(value) ?? value;
-}
-
-// TODO remove in a few versions, before 5.0 at the latest
-let warned_inspect_changed = false;
-
-/**
- * @param {() => any[]} get_value
- * @param {Function} [inspect]
- */
-// eslint-disable-next-line no-console
-export function inspect(get_value, inspect = console.log) {
-	let initial = true;
-
-	user_pre_effect(() => {
-		const fn = () => {
-			const value = untrack(() => get_value().map((v) => deep_snapshot(v)));
-			if (value.length === 2 && typeof value[1] === 'function' && !warned_inspect_changed) {
-				// eslint-disable-next-line no-console
-				console.warn(
-					'$inspect() API has changed. See https://svelte-5-preview.vercel.app/docs/runes#$inspect for more information.'
-				);
-				warned_inspect_changed = true;
-			}
-			inspect(initial ? 'init' : 'update', ...value);
-		};
-
-		inspect_fn = fn;
-		const value = get_value();
-		deep_read_inpect(value);
-		inspect_fn = null;
-
-		const signals = inspect_captured_signals.slice();
-		inspect_captured_signals = [];
-
-		if (initial) {
-			fn();
-			initial = false;
-		}
-
-		return () => {
-			for (const s of signals) {
-				s.inspect.delete(fn);
-			}
-		};
-	});
 }
 
 /**

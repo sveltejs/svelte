@@ -1,6 +1,6 @@
 
 <script>
-  import { onDestroy } from 'svelte';
+	import { onDestroy } from 'svelte';
 
 	onDestroy(() => {
 		console.log('destroy');

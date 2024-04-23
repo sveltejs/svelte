@@ -1,16 +1,14 @@
 <script>
-	import { log } from './log.js';
-
 	let x = $state(0);
 	let y = $state(0);
 
 	function getX() {
-		log.push('x')
+		console.log('x')
 		return x;
 	}
 
 	function getY() {
-		log.push('y')
+		console.log('y')
 		return y;
 	}
 </script>

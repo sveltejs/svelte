@@ -1,14 +1,8 @@
 import { flushSync } from 'svelte';
 import { test } from '../../test';
 
-/** @type {typeof console.warn} */
-let warn;
-
 /** @type {typeof console.trace} */
 let trace;
-
-/** @type {any[]} */
-let warnings = [];
 
 export default test({
 	html: `<button>clicks: 0</button><button>clicks: 0</button>`,
@@ -18,24 +12,16 @@ export default test({
 	},
 
 	before_test: () => {
-		warn = console.warn;
 		trace = console.trace;
-
-		console.warn = (...args) => {
-			warnings.push(...args);
-		};
 
 		console.trace = () => {};
 	},
 
 	after_test: () => {
-		console.warn = warn;
 		console.trace = trace;
-
-		warnings = [];
 	},
 
-	async test({ assert, target }) {
+	async test({ assert, target, warnings }) {
 		const [btn1, btn2] = target.querySelectorAll('button');
 
 		flushSync(() => btn1.click());

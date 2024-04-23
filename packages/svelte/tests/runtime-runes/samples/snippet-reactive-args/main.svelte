@@ -1,8 +1,6 @@
 <script>
 	import Inner from "./inner.svelte";
 
-	let { log } = $props();
-
 	let count = $state(0);
 	let show_foo = $state(true);
 	let snippet = $derived(show_foo ? foo : bar);
@@ -16,7 +14,7 @@
 	<Inner {...props}></Inner>
 {/snippet}
 
-{@render snippet({ count, log })}
+{@render snippet({ count })}
 
 <button onclick={() => show_foo = !show_foo}>toggle</button>
 <button onclick={() => count++}>increase count</button>

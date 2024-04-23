@@ -80,7 +80,7 @@ export interface TransitionManager {
 	/** Called inside `resume_effect` */
 	in: () => void;
 	/** Called inside `pause_effect` */
-	out: (callback?: () => void, position_absolute?: boolean) => void;
+	out: (callback?: () => void) => void;
 	/** Called inside `destroy_effect` */
 	stop: () => void;
 }
@@ -92,6 +92,10 @@ export interface AnimationManager {
 	measure: () => void;
 	/** Called during keyed each block reconciliation, after updates — this triggers the animation */
 	apply: () => void;
+	/** Fix the element position, so that siblings can move to the correct destination */
+	fix: () => void;
+	/** Unfix the element position if the outro is aborted */
+	unfix: () => void;
 }
 
 export interface Animation {

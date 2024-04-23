@@ -5,6 +5,6 @@
 <div>
   {#each [] as n (n)}
     {@const a = n}
-    <div animate:flip={a} />
+    <div animate:flip={a}></div>
   {/each}
 </div>

@@ -1,17 +1,15 @@
 <script>
-	import { log } from './log.js';
-
 	let s = $state(0);
 	let d = $derived(s)
 
 	$effect(() => {
 		s;
-		log.push('A')
+		console.log('A')
 	})
 
 	$effect(() => {
 		d;
-		log.push('B')
+		console.log('B')
 	})
 </script>
 
