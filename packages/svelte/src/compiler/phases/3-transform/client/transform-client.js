@@ -270,7 +270,7 @@ export function client_component(source, analysis, options) {
 					b.id('$$props'),
 					b.array(bindable),
 					b.array(exports),
-					b.id(`${analysis.name}.filename`)
+					b.id(`${analysis.name}`)
 				)
 			)
 		);

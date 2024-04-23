@@ -86,17 +86,17 @@ export function loop_guard(timeout) {
  * @param {Record<string, any>} $$props
  * @param {string[]} bindable
  * @param {string[]} exports
- * @param {string} filename
+ * @param {Function & { filename: string }} component
  */
-export function validate_prop_bindings($$props, bindable, exports, filename = '') {
+export function validate_prop_bindings($$props, bindable, exports, component) {
 	for (const key in $$props) {
 		var setter = get_descriptor($$props, key)?.set;
-		var name = filename.split('/').pop()?.split('.')[0] || 'Component';
+		var name = component.name;
 
 		if (setter) {
 			if (exports.includes(key)) {
 				throw new Error(
-					`Component ${filename} has an export named ${key} that a consumer component is trying to access using bind:${key}, which is disallowed. ` +
+					`Component ${component.filename} has an export named ${key} that a consumer component is trying to access using bind:${key}, which is disallowed. ` +
 						`Instead, use bind:this (e.g. <${name} bind:this={component} />) ` +
 						`and then access the property on the bound component instance (e.g. component.${key}).`
 				);
