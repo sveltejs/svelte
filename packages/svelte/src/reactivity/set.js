@@ -72,11 +72,10 @@ export class ReactiveSet extends Set {
 
 	/** @param {T} value */
 	has(value) {
-		var exists = super.has(value);
 		var s = this.#tracked.get(value);
 
 		if (s === undefined) {
-			s = source(exists);
+			s = source(super.has(value));
 			this.#tracked.set(value, s);
 		}
 
