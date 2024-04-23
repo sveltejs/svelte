@@ -103,7 +103,7 @@ export function validate_prop_bindings($$props, bindable, exports, component) {
 			}
 			if (!bindable.includes(key)) {
 				throw new Error(
-					`A component is binding to property ${key} of ${name}.svelte (i.e. <${name} bind:${key} />). This is disallowed because the property was not declared as bindable inside ${filename}. ` +
+					`A component is binding to property ${key} of ${name}.svelte (i.e. <${name} bind:${key} />). This is disallowed because the property was not declared as bindable inside ${component.filename}. ` +
 						`To mark a property as bindable, use the $bindable() rune in ${name}.svelte like this: \`let { ${key} = $bindable() } = $props()\``
 				);
 			}
