@@ -265,7 +265,13 @@ export function client_component(source, analysis, options) {
 		}
 		instance.body.unshift(
 			b.stmt(
-				b.call('$.validate_prop_bindings', b.id('$$props'), b.array(bindable), b.array(exports))
+				b.call(
+					'$.validate_prop_bindings',
+					b.id('$$props'),
+					b.array(bindable),
+					b.array(exports),
+					b.id(`${analysis.name}.filename`)
+				)
 			)
 		);
 	}
