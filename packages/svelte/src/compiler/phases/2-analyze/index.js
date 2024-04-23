@@ -331,7 +331,7 @@ export function analyze_component(root, source, options) {
 				} else if (declaration !== null && Runes.includes(/** @type {any} */ (name))) {
 					for (const { node, path } of references) {
 						if (path.at(-1)?.type === 'CallExpression') {
-							warn(warnings, node, [], 'store-with-rune-name', store_name);
+							warn(warnings, node, 'store-with-rune-name', store_name);
 						}
 					}
 				}
@@ -408,7 +408,7 @@ export function analyze_component(root, source, options) {
 	};
 
 	if (!options.customElement && root.options?.customElement) {
-		warn(analysis.warnings, root.options, [], 'missing-custom-element-compile-option');
+		warn(analysis.warnings, root.options, 'missing-custom-element-compile-option');
 	}
 
 	if (analysis.runes) {
@@ -498,7 +498,7 @@ export function analyze_component(root, source, options) {
 					(r) => r.node !== binding.node && r.path.at(-1)?.type !== 'ExportSpecifier'
 				);
 				if (!references.length && !instance.scope.declarations.has(`$${name}`)) {
-					warn(warnings, binding.node, [], 'unused-export-let', name);
+					warn(warnings, binding.node, 'unused-export-let', name);
 				}
 			}
 		}
@@ -538,7 +538,7 @@ export function analyze_component(root, source, options) {
 									type === 'AwaitBlock' ||
 									type === 'KeyBlock'
 								) {
-									warn(warnings, binding.node, [], 'non-state-reference', name);
+									warn(warnings, binding.node, 'non-state-reference', name);
 									continue outer;
 								}
 							}
@@ -546,7 +546,7 @@ export function analyze_component(root, source, options) {
 						}
 					}
 
-					warn(warnings, binding.node, [], 'non-state-reference', name);
+					warn(warnings, binding.node, 'non-state-reference', name);
 					continue outer;
 				}
 			}
@@ -688,7 +688,7 @@ const legacy_scope_tweaker = {
 				(d) => d.scope === state.analysis.module.scope && d.declaration_kind !== 'const'
 			)
 		) {
-			warn(state.analysis.warnings, node, path, 'module-script-reactive-declaration');
+			warn(state.analysis.warnings, node, 'module-script-reactive-declaration');
 		}
 
 		if (
@@ -1210,7 +1210,7 @@ const common_visitors = {
 					binding.kind === 'derived') &&
 				context.state.function_depth === binding.scope.function_depth
 			) {
-				warn(context.state.analysis.warnings, node, context.path, 'static-state-reference');
+				warn(context.state.analysis.warnings, node, 'static-state-reference');
 			}
 		}
 	},

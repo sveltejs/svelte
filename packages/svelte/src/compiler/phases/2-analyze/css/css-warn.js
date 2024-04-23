@@ -26,7 +26,7 @@ const visitors = {
 		if (!node.metadata.used) {
 			const content = context.state.stylesheet.content;
 			const text = content.styles.substring(node.start - content.start, node.end - content.start);
-			warn(context.state.warnings, node, context.path, 'css-unused-selector', text);
+			warn(context.state.warnings, node, 'css-unused-selector', text);
 		}
 
 		context.next();

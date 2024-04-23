@@ -277,12 +277,11 @@ const warnings = {
  * @template {keyof AllWarnings} T
  * @param {import('./phases/types').RawWarning[]} array the array to push the warning to, if not ignored
  * @param {{ start?: number, end?: number, type?: string, parent?: import('#compiler').SvelteNode | null, leadingComments?: import('estree').Comment[] } | null} node the node related to the warning
- * @param {import('#compiler').SvelteNode[]} path the path to the node, so that we can traverse upwards to find svelte-ignore comments
  * @param {T} code the warning code
  * @param  {Parameters<AllWarnings[T]>} args the arguments to pass to the warning function
  * @returns {void}
  */
-export function warn(array, node, path, code, ...args) {
+export function warn(array, node, code, ...args) {
 	// @ts-expect-error
 	if (node.ignores?.has(code)) return;
 
