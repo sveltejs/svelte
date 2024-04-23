@@ -44,9 +44,9 @@ export type ComponentContext = {
 			/** onMount callbacks */
 			m: Array<() => any>;
 		};
-		/** if `$:` statements are allowed to run (ensures they only run once per render) */
+		/** `$:` statements */
 		r1: any[];
-		/** if `$:` statements are allowed to run (ensures they only run once per render) */
+		/** This tracks whether `$:` statements have run in the current cycle, to ensure they only run once */
 		r2: Source<boolean>;
 	};
 };
