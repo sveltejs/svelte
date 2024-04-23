@@ -1,8 +1,14 @@
 [
 	{
-		"code": "invalid-const-assignment",
-		"message": "Invalid binding to const variable ($derived values, let: directives, :then/:catch variables and @const declarations count as const)",
-		"start": { "line": 5, "column": 9 },
-		"end": { "line": 5, "column": 19 }
+		"code": "invalid_binding",
+		"message": "Cannot bind to constant",
+		"start": {
+			"line": 5,
+			"column": 9
+		},
+		"end": {
+			"line": 5,
+			"column": 19
+		}
 	}
 ]

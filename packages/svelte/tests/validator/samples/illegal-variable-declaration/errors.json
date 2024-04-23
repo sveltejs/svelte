@@ -1,7 +1,7 @@
 [
 	{
-		"code": "illegal-variable-declaration",
-		"message": "Cannot declare same variable name which is imported inside <script context=\"module\">",
+		"code": "illegal_variable_declaration",
+		"message": "Cannot declare same variable name which is imported inside `<script context=\"module\">`",
 		"start": {
 			"line": 12,
 			"column": 5

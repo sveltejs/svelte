@@ -1,8 +1,14 @@
 [
 	{
-		"code": "invalid-slot-placement",
+		"code": "invalid_slot_placement",
 		"message": "Element with a slot='...' attribute must be a child of a component or a descendant of a custom element",
-		"start": { "line": 10, "column": 9 },
-		"end": { "line": 10, "column": 19 }
+		"start": {
+			"line": 10,
+			"column": 9
+		},
+		"end": {
+			"line": 10,
+			"column": 19
+		}
 	}
 ]

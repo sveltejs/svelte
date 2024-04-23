@@ -1,6 +1,6 @@
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
-import { error } from '../../errors.js';
+import * as e from '../../errors.js';
 import {
 	extract_identifiers,
 	extract_all_identifiers_from_expression,
@@ -229,7 +229,7 @@ export function analyze_module(ast, options) {
 	for (const [name, references] of scope.references) {
 		if (name[0] !== '$' || ReservedKeywords.includes(name)) continue;
 		if (name === '$' || name[1] === '$') {
-			error(references[0].node, 'illegal-global', name);
+			e.illegal_global(references[0].node, name);
 		}
 	}
 
@@ -281,7 +281,7 @@ export function analyze_component(root, source, options) {
 	for (const [name, references] of module.scope.references) {
 		if (name[0] !== '$' || ReservedKeywords.includes(name)) continue;
 		if (name === '$' || name[1] === '$') {
-			error(references[0].node, 'illegal-global', name);
+			e.illegal_global(references[0].node, name);
 		}
 
 		const store_name = name.slice(1);
@@ -321,12 +321,12 @@ export function analyze_component(root, source, options) {
 			}
 
 			if (is_nested_store_subscription_node) {
-				error(is_nested_store_subscription_node, 'illegal-store-subscription');
+				e.illegal_store_subscription(is_nested_store_subscription_node);
 			}
 
 			if (options.runes !== false) {
 				if (declaration === null && /[a-z]/.test(store_name[0])) {
-					error(references[0].node, 'illegal-global', name);
+					e.illegal_global(references[0].node, name);
 				} else if (declaration !== null && Runes.includes(/** @type {any} */ (name))) {
 					for (const { node, path } of references) {
 						if (path.at(-1)?.type === 'CallExpression') {
@@ -345,7 +345,7 @@ export function analyze_component(root, source, options) {
 						// const state = $state(0) is valid
 						get_rune(/** @type {import('estree').Node} */ (path.at(-1)), module.scope) === null
 					) {
-						error(node, 'illegal-subscription');
+						e.illegal_subscription(node);
 					}
 				}
 			}
@@ -413,12 +413,12 @@ export function analyze_component(root, source, options) {
 	if (analysis.runes) {
 		const props_refs = module.scope.references.get('$$props');
 		if (props_refs) {
-			error(props_refs[0].node, 'invalid-legacy-props');
+			e.invalid_legacy_props(props_refs[0].node);
 		}
 
 		const rest_props_refs = module.scope.references.get('$$restProps');
 		if (rest_props_refs) {
-			error(rest_props_refs[0].node, 'invalid-legacy-rest-props');
+			e.invalid_legacy_rest_props(rest_props_refs[0].node);
 		}
 
 		for (const { ast, scope, scopes } of [module, instance, template]) {
@@ -451,7 +451,7 @@ export function analyze_component(root, source, options) {
 							({ alias, name }) => (binding.prop_alias ?? binding.node.name) === (alias ?? name)
 						)
 					) {
-						error(binding.node, 'conflicting-property-name');
+						e.conflicting_property_name(binding.node);
 					}
 				}
 			}
@@ -504,7 +504,7 @@ export function analyze_component(root, source, options) {
 	}
 
 	if (analysis.uses_render_tags && (analysis.uses_slots || analysis.slot_names.size > 0)) {
-		error(analysis.slot_names.values().next().value, 'conflicting-slot-usage');
+		e.conflicting_slot_usage(analysis.slot_names.values().next().value);
 	}
 
 	// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
@@ -1425,7 +1425,7 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	const cycle = check_graph_for_cycles(edges);
 	if (cycle?.length) {
 		const declaration = /** @type {Tuple[]} */ (lookup.get(cycle[0]))[0];
-		error(declaration[0], 'cyclical-reactive-declaration', cycle);
+		e.cyclical_reactive_declaration(declaration[0], cycle.join(' → '));
 	}
 
 	// We use a map and take advantage of the fact that the spec says insertion order is preserved when iterating

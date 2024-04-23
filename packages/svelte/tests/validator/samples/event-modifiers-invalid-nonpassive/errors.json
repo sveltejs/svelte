@@ -1,7 +1,7 @@
 [
 	{
 		"message": "The 'passive' and 'nonpassive' modifiers cannot be used together",
-		"code": "invalid-event-modifier-combination",
+		"code": "invalid_event_modifier_combination",
 		"start": {
 			"line": 1,
 			"column": 5

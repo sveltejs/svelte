@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-slot-name",
-		"message": "default is a reserved word — it cannot be used as a slot name",
+		"code": "invalid_slot_name_default",
+		"message": "`default` is a reserved word — it cannot be used as a slot name",
 		"start": {
 			"line": 1,
 			"column": 6

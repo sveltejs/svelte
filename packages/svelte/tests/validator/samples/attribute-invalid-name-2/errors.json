@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid-attribute-name",
+		"code": "invalid_attribute_name",
 		"message": "'3aa' is not a valid attribute name",
 		"start": {
 			"line": 1,

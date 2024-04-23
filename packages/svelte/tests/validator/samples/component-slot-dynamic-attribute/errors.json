@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid-slot-attribute",
+		"code": "invalid_slot_attribute",
 		"message": "slot attribute must be a static value",
 		"start": {
 			"line": 6,

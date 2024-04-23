@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-binding",
-		"message": "'innerwidth' is not a valid binding (did you mean 'innerWidth'?)",
+		"code": "bind_invalid_detailed",
+		"message": "`bind:innerwidth` is not a valid binding. Did you mean 'innerWidth'?",
 		"start": {
 			"line": 5,
 			"column": 15

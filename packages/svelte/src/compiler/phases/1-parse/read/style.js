@@ -1,4 +1,4 @@
-import { error } from '../../../errors.js';
+import * as e from '../../../errors.js';
 
 const REGEX_MATCHER = /^[~^$*|]?=/;
 const REGEX_CLOSING_BRACKET = /[\s\]]/;
@@ -64,7 +64,7 @@ function read_body(parser, close) {
 		}
 	}
 
-	error(parser.template.length, 'expected-token', close);
+	e.expected_token(parser.template.length, close);
 }
 
 /**
@@ -154,7 +154,7 @@ function read_selector_list(parser, inside_pseudo_class = false) {
 		}
 	}
 
-	error(parser.template.length, 'unexpected-eof');
+	e.unexpected_eof(parser.template.length);
 }
 
 /**
@@ -352,7 +352,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 		if (combinator) {
 			if (relative_selector.selectors.length === 0) {
 				if (!inside_pseudo_class) {
-					error(start, 'invalid-css-selector');
+					e.invalid_css_selector(start);
 				}
 			} else {
 				relative_selector.end = index;
@@ -365,12 +365,12 @@ function read_selector(parser, inside_pseudo_class = false) {
 			parser.allow_whitespace();
 
 			if (parser.match(',') || (inside_pseudo_class ? parser.match(')') : parser.match('{'))) {
-				error(parser.index, 'invalid-css-selector');
+				e.invalid_css_selector(parser.index);
 			}
 		}
 	}
 
-	error(parser.template.length, 'unexpected-eof');
+	e.unexpected_eof(parser.template.length);
 }
 
 /**
@@ -476,7 +476,7 @@ function read_declaration(parser) {
 	const value = read_value(parser);
 
 	if (!value && !property.startsWith('--')) {
-		error(parser.index, 'invalid-css-declaration');
+		e.invalid_css_declaration(parser.index);
 	}
 
 	const end = parser.index;
@@ -531,7 +531,7 @@ function read_value(parser) {
 		parser.index++;
 	}
 
-	error(parser.template.length, 'unexpected-eof');
+	e.unexpected_eof(parser.template.length);
 }
 
 /**
@@ -564,7 +564,7 @@ function read_attribute_value(parser) {
 		parser.index++;
 	}
 
-	error(parser.template.length, 'unexpected-eof');
+	e.unexpected_eof(parser.template.length);
 }
 
 /**
@@ -577,7 +577,7 @@ function read_identifier(parser) {
 	let identifier = '';
 
 	if (parser.match('--') || parser.match_regex(REGEX_LEADING_HYPHEN_OR_DIGIT)) {
-		error(start, 'invalid-css-identifier');
+		e.invalid_css_identifier(start);
 	}
 
 	let escaped = false;
@@ -602,7 +602,7 @@ function read_identifier(parser) {
 	}
 
 	if (identifier === '') {
-		error(start, 'invalid-css-identifier');
+		e.invalid_css_identifier(start);
 	}
 
 	return identifier;

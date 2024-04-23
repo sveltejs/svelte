@@ -2,6 +2,8 @@ packages/**/dist/*.js
 packages/**/build/*.js
 packages/**/npm/**/*
 packages/**/config/*.js
+packages/svelte/messages/**/*.md
+packages/svelte/src/compiler/errors.js
 packages/svelte/tests/**/*.svelte
 packages/svelte/tests/**/_expected*
 packages/svelte/tests/**/_actual*

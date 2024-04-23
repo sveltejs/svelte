@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-title-content",
-		"message": "<title> can only contain text and {tags}",
+		"code": "invalid_title_content",
+		"message": "`<title>` can only contain text and {tags}",
 		"start": {
 			"line": 2,
 			"column": 11

@@ -2,8 +2,8 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'unexpected-eof',
-		message: 'Unexpected end of input (expected -->)',
+		code: 'expected_token',
+		message: 'Expected token -->',
 		position: [24, 24]
 	}
 });

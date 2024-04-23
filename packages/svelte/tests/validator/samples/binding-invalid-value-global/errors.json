@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid-binding-value",
+		"code": "invalid_binding_value",
 		"message": "Can only bind to state or props",
 		"start": {
 			"line": 4,

@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid-type-attribute",
+		"code": "invalid_type_attribute",
 		"message": "'type' attribute must be a static text value if input uses two-way binding",
 		"start": {
 			"line": 5,

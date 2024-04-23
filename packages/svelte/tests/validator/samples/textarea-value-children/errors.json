@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-textarea-content",
-		"message": "A <textarea> can have either a value attribute or (equivalently) child content, but not both",
+		"code": "invalid_textarea_content",
+		"message": "A `<textarea>` can have either a value attribute or (equivalently) child content, but not both",
 		"start": {
 			"line": 1,
 			"column": 0

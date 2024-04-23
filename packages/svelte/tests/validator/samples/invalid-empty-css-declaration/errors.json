@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid-css-declaration",
+		"code": "invalid_css_declaration",
 		"message": "Declaration cannot be empty",
 		"start": {
 			"line": 5,

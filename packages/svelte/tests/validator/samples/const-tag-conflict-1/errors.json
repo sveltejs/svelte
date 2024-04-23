@@ -1,8 +1,14 @@
 [
 	{
-		"code": "duplicate-declaration",
-		"message": "'a' has already been declared",
-		"start": { "line": 7, "column": 10 },
-		"end": { "line": 7, "column": 11 }
+		"code": "duplicate_declaration",
+		"message": "`a` has already been declared",
+		"start": {
+			"line": 7,
+			"column": 10
+		},
+		"end": {
+			"line": 7,
+			"column": 11
+		}
 	}
 ]

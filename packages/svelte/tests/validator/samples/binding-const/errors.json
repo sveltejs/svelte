@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-const-assignment",
-		"message": "Invalid binding to const variable",
+		"code": "invalid_binding",
+		"message": "Cannot bind to constant",
 		"start": {
 			"line": 5,
 			"column": 7
