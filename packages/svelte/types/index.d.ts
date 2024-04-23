@@ -1355,8 +1355,6 @@ declare module 'svelte/compiler' {
 		type: 'Comment';
 		/** the contents of the comment */
 		data: string;
-		/** any svelte-ignore directives — <!-- svelte-ignore a b c --> would result in ['a', 'b', 'c'] */
-		ignores: string[];
 	}
 
 	/** A `{@const ...}` tag */
