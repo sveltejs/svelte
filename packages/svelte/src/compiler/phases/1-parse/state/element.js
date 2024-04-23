@@ -406,9 +406,6 @@ function read_tag_name(parser) {
 	if (meta_tags.has(name)) return name;
 
 	if (name.startsWith('svelte:')) {
-		const match = fuzzymatch(name.slice(7), valid_meta_tags);
-		if (match === null) {
-		}
 		const list = `${valid_meta_tags.slice(0, -1).join(', ')} or ${valid_meta_tags[valid_meta_tags.length - 1]}`;
 		e.invalid_svelte_tag(start, list);
 	}
