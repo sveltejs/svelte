@@ -283,46 +283,10 @@ const warnings = {
  * @returns {void}
  */
 export function warn(array, node, path, code, ...args) {
+	// @ts-expect-error
+	if (node.ignores?.has(code)) return;
+
 	const fn = warnings[code];
-
-	// Traverse the AST upwards to find any svelte-ignore comments.
-	// This assumes that people don't have their code littered with warnings,
-	// at which point this might become inefficient.
-	/** @type {string[]} */
-	const ignores = [];
-
-	if (node) {
-		// comments inside JavaScript (estree)
-		if ('leadingComments' in node) {
-			ignores.push(...extract_svelte_ignore_from_comments(node));
-		}
-	}
-
-	for (let i = path.length - 1; i >= 0; i--) {
-		const current = path[i];
-
-		// comments inside JavaScript (estree)
-		if ('leadingComments' in current) {
-			ignores.push(...extract_svelte_ignore_from_comments(current));
-		}
-
-		// Svelte nodes
-		if (current.type === 'Fragment') {
-			ignores.push(
-				...extract_ignores_above_position(
-					/** @type {import('#compiler').TemplateNode} */ (path[i + 1] ?? node),
-					current.nodes
-				)
-			);
-		}
-
-		// Style nodes
-		if (current.type === 'StyleSheet' && current.content.comment) {
-			ignores.push(...current.content.comment.ignores);
-		}
-	}
-
-	if (ignores.includes(code)) return;
 
 	const start = node?.start;
 	const end = node?.end;

@@ -24,6 +24,7 @@ import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
 import { hash } from './utils.js';
 import { warn_unused } from './css/css-warn.js';
+import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -433,7 +434,8 @@ export function analyze_component(root, source, options) {
 				component_slots: new Set(),
 				expression: null,
 				private_derived_state: [],
-				function_depth: scope.function_depth
+				function_depth: scope.function_depth,
+				ignores: new Set()
 			};
 
 			walk(
@@ -475,7 +477,8 @@ export function analyze_component(root, source, options) {
 				component_slots: new Set(),
 				expression: null,
 				private_derived_state: [],
-				function_depth: scope.function_depth
+				function_depth: scope.function_depth,
+				ignores: new Set()
 			};
 
 			walk(
@@ -557,7 +560,13 @@ export function analyze_component(root, source, options) {
 		for (const element of analysis.elements) {
 			prune(analysis.css.ast, element);
 		}
-		warn_unused(analysis.css.ast, analysis.warnings);
+
+		if (
+			!analysis.css.ast.content.comment ||
+			!extract_svelte_ignore(analysis.css.ast.content.comment.data).includes('css-unused-selector')
+		) {
+			warn_unused(analysis.css.ast, analysis.warnings);
+		}
 
 		outer: for (const element of analysis.elements) {
 			if (element.metadata.scoped) {
@@ -1045,6 +1054,65 @@ const function_visitor = (node, context) => {
 
 /** @type {import('./types').Visitors} */
 const common_visitors = {
+	_(node, context) {
+		// @ts-expect-error
+		const comments = /** @type {import('estree').Comment[]} */ (node.leadingComments);
+
+		if (comments) {
+			/** @type {string[]} */
+			const ignores = [];
+
+			for (const comment of comments) {
+				ignores.push(...extract_svelte_ignore(comment.value));
+			}
+
+			if (ignores.length > 0) {
+				// @ts-expect-error see below
+				node.ignores = new Set([...context.state.ignores, ...ignores]);
+			}
+		}
+
+		// @ts-expect-error
+		if (node.ignores) {
+			context.next({
+				...context.state,
+				// @ts-expect-error see below
+				ignores: node.ignores
+			});
+		} else if (context.state.ignores.size > 0) {
+			// @ts-expect-error
+			node.ignores = context.state.ignores;
+		}
+	},
+	Fragment(node, context) {
+		/** @type {string[]} */
+		let ignores = [];
+
+		for (const child of node.nodes) {
+			if (child.type === 'Text' && child.data.trim() === '') {
+				continue;
+			}
+
+			if (child.type === 'Comment') {
+				ignores.push(...extract_svelte_ignore(child.data));
+			} else {
+				const combined_ignores = new Set(context.state.ignores);
+				for (const ignore of ignores) combined_ignores.add(ignore);
+
+				if (combined_ignores.size > 0) {
+					// TODO this is a grotesque hack that's made necessary by the fact that
+					// we can't call `context.visit(...)` here, because we do the convoluted
+					// visitor merging thing. I'm increasingly of the view that we should
+					// rearchitect this stuff and have a single visitor per node. It'd be
+					// more efficient and much simpler.
+					// @ts-expect-error
+					child.ignores = combined_ignores;
+				}
+
+				ignores = [];
+			}
+		}
+	},
 	Attribute(node, context) {
 		if (node.value === true) return;
 
