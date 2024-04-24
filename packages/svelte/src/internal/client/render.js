@@ -297,6 +297,7 @@ export function unmount(component) {
 	const fn = mounted_components.get(component);
 	if (DEV && !fn) {
 		w.lifecycle_double_unmount();
+		// eslint-disable-next-line no-console
 		console.trace('stack trace');
 	}
 	fn?.();

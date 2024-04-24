@@ -35,6 +35,9 @@ export default [
 			'**/tests',
 			'packages/svelte/scripts/process-messages/templates/*.js',
 			'packages/svelte/src/compiler/errors.js',
+			'packages/svelte/src/internal/client/errors.js',
+			'packages/svelte/src/internal/client/warnings.js',
+			'packages/svelte/src/internal/shared/warnings.js',
 			'packages/svelte/compiler/index.js',
 			// documentation can contain invalid examples
 			'documentation',
