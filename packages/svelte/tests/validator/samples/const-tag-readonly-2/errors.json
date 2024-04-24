@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid_binding",
+		"code": "constant_binding",
 		"message": "Cannot bind to constant",
 		"start": {
 			"line": 7,

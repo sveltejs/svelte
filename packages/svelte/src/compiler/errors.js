@@ -205,212 +205,6 @@ export function options_unrecognised(node, keypath) {
 }
 
 /**
- * Cannot use `$props()` more than once
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function duplicate_props_rune(node) {
-	e(node, "duplicate_props_rune", "Cannot use `$props()` more than once");
-}
-
-/**
- * Cannot assign to %thing%
- * @param {null | number | NodeLike} node
- * @param {string} thing
- * @returns {never}
- */
-export function invalid_assignment(node, thing) {
-	e(node, "invalid_assignment", `Cannot assign to ${thing}`);
-}
-
-/**
- * `$bindable()` can only be used inside a `$props()` declaration
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_bindable_location(node) {
-	e(node, "invalid_bindable_location", "`$bindable()` can only be used inside a `$props()` declaration");
-}
-
-/**
- * Cannot bind to %thing%
- * @param {null | number | NodeLike} node
- * @param {string} thing
- * @returns {never}
- */
-export function invalid_binding(node, thing) {
-	e(node, "invalid_binding", `Cannot bind to ${thing}`);
-}
-
-/**
- * Cannot export derived state from a module. To expose the current derived value, export a function returning its value
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_derived_export(node) {
-	e(node, "invalid_derived_export", "Cannot export derived state from a module. To expose the current derived value, export a function returning its value");
-}
-
-/**
- * Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_each_assignment(node) {
-	e(node, "invalid_each_assignment", "Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)");
-}
-
-/**
- * `$effect()` can only be used as an expression statement
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_effect_location(node) {
-	e(node, "invalid_effect_location", "`$effect()` can only be used as an expression statement");
-}
-
-/**
- * `$host()` can only be used inside custom element component instances
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_host_location(node) {
-	e(node, "invalid_host_location", "`$host()` can only be used inside custom element component instances");
-}
-
-/**
- * Cannot use `export let` in runes mode — use $props instead
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_legacy_export(node) {
-	e(node, "invalid_legacy_export", "Cannot use `export let` in runes mode — use $props instead");
-}
-
-/**
- * Cannot use `$$props` in runes mode
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_legacy_props(node) {
-	e(node, "invalid_legacy_props", "Cannot use `$$props` in runes mode");
-}
-
-/**
- * `$:` is not allowed in runes mode, use `$derived` or `$effect` instead
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_legacy_reactive_statement(node) {
-	e(node, "invalid_legacy_reactive_statement", "`$:` is not allowed in runes mode, use `$derived` or `$effect` instead");
-}
-
-/**
- * Cannot use `$$restProps` in runes mode
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_legacy_rest_props(node) {
-	e(node, "invalid_legacy_rest_props", "Cannot use `$$restProps` in runes mode");
-}
-
-/**
- * `$props()` can only be used with an object destructuring pattern
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_props_id(node) {
-	e(node, "invalid_props_id", "`$props()` can only be used with an object destructuring pattern");
-}
-
-/**
- * `$props()` can only be used at the top level of components as a variable declaration initializer
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_props_location(node) {
-	e(node, "invalid_props_location", "`$props()` can only be used at the top level of components as a variable declaration initializer");
-}
-
-/**
- * `$props()` assignment must not contain nested properties or computed keys
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_props_pattern(node) {
-	e(node, "invalid_props_pattern", "`$props()` assignment must not contain nested properties or computed keys");
-}
-
-/**
- * `%rune%` cannot be called with arguments
- * @param {null | number | NodeLike} node
- * @param {string} rune
- * @returns {never}
- */
-export function invalid_rune_args(node, rune) {
-	e(node, "invalid_rune_args", `\`${rune}\` cannot be called with arguments`);
-}
-
-/**
- * `%rune%` must be called with %args%
- * @param {null | number | NodeLike} node
- * @param {string} rune
- * @param {string} args
- * @returns {never}
- */
-export function invalid_rune_args_length(node, rune, args) {
-	e(node, "invalid_rune_args_length", `\`${rune}\` must be called with ${args}`);
-}
-
-/**
- * Cannot use %rune% rune in non-runes mode
- * @param {null | number | NodeLike} node
- * @param {string} rune
- * @returns {never}
- */
-export function invalid_rune_usage(node, rune) {
-	e(node, "invalid_rune_usage", `Cannot use ${rune} rune in non-runes mode`);
-}
-
-/**
- * %name% cannot be used in runes mode
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @returns {never}
- */
-export function invalid_runes_mode_import(node, name) {
-	e(node, "invalid_runes_mode_import", `${name} cannot be used in runes mode`);
-}
-
-/**
- * Cannot reassign or bind to snippet parameter
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_snippet_assignment(node) {
-	e(node, "invalid_snippet_assignment", "Cannot reassign or bind to snippet parameter");
-}
-
-/**
- * Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_state_export(node) {
-	e(node, "invalid_state_export", "Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties");
-}
-
-/**
- * `%rune%(...)` can only be used as a variable declaration initializer or a class field
- * @param {null | number | NodeLike} node
- * @param {string} rune
- * @returns {never}
- */
-export function invalid_state_location(node, rune) {
-	e(node, "invalid_state_location", `\`${rune}(...)\` can only be used as a variable declaration initializer or a class field`);
-}
-
-/**
  * `%name%` has already been declared
  * @param {null | number | NodeLike} node
  * @param {string} name
@@ -492,6 +286,212 @@ export function store_invalid_scoped_subscription(node) {
  */
 export function store_invalid_subscription(node) {
 	e(node, "store_invalid_subscription", "Cannot reference store value inside `<script context=\"module\">`");
+}
+
+/**
+ * `$bindable()` can only be used inside a `$props()` declaration
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function bindable_invalid_location(node) {
+	e(node, "bindable_invalid_location", "`$bindable()` can only be used inside a `$props()` declaration");
+}
+
+/**
+ * Cannot assign to %thing%
+ * @param {null | number | NodeLike} node
+ * @param {string} thing
+ * @returns {never}
+ */
+export function constant_assignment(node, thing) {
+	e(node, "constant_assignment", `Cannot assign to ${thing}`);
+}
+
+/**
+ * Cannot bind to %thing%
+ * @param {null | number | NodeLike} node
+ * @param {string} thing
+ * @returns {never}
+ */
+export function constant_binding(node, thing) {
+	e(node, "constant_binding", `Cannot bind to ${thing}`);
+}
+
+/**
+ * Cannot export derived state from a module. To expose the current derived value, export a function returning its value
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function derived_invalid_export(node) {
+	e(node, "derived_invalid_export", "Cannot export derived state from a module. To expose the current derived value, export a function returning its value");
+}
+
+/**
+ * Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function each_item_invalid_assignment(node) {
+	e(node, "each_item_invalid_assignment", "Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)");
+}
+
+/**
+ * `$effect()` can only be used as an expression statement
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function effect_invalid_placement(node) {
+	e(node, "effect_invalid_placement", "`$effect()` can only be used as an expression statement");
+}
+
+/**
+ * `$host()` can only be used inside custom element component instances
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function host_invalid_placement(node) {
+	e(node, "host_invalid_placement", "`$host()` can only be used inside custom element component instances");
+}
+
+/**
+ * Cannot use `export let` in runes mode — use $props instead
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function legacy_export_invalid(node) {
+	e(node, "legacy_export_invalid", "Cannot use `export let` in runes mode — use $props instead");
+}
+
+/**
+ * Cannot use `$$props` in runes mode
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function legacy_props_invalid(node) {
+	e(node, "legacy_props_invalid", "Cannot use `$$props` in runes mode");
+}
+
+/**
+ * `$:` is not allowed in runes mode, use `$derived` or `$effect` instead
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function legacy_reactive_statement_invalid(node) {
+	e(node, "legacy_reactive_statement_invalid", "`$:` is not allowed in runes mode, use `$derived` or `$effect` instead");
+}
+
+/**
+ * Cannot use `$$restProps` in runes mode
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function legacy_rest_props_invalid(node) {
+	e(node, "legacy_rest_props_invalid", "Cannot use `$$restProps` in runes mode");
+}
+
+/**
+ * Cannot use `$props()` more than once
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function props_duplicate(node) {
+	e(node, "props_duplicate", "Cannot use `$props()` more than once");
+}
+
+/**
+ * `$props()` can only be used with an object destructuring pattern
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function props_invalid_identifier(node) {
+	e(node, "props_invalid_identifier", "`$props()` can only be used with an object destructuring pattern");
+}
+
+/**
+ * `$props()` assignment must not contain nested properties or computed keys
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function props_invalid_pattern(node) {
+	e(node, "props_invalid_pattern", "`$props()` assignment must not contain nested properties or computed keys");
+}
+
+/**
+ * `$props()` can only be used at the top level of components as a variable declaration initializer
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function props_invalid_placement(node) {
+	e(node, "props_invalid_placement", "`$props()` can only be used at the top level of components as a variable declaration initializer");
+}
+
+/**
+ * `%rune%` cannot be called with arguments
+ * @param {null | number | NodeLike} node
+ * @param {string} rune
+ * @returns {never}
+ */
+export function rune_invalid_arguments(node, rune) {
+	e(node, "rune_invalid_arguments", `\`${rune}\` cannot be called with arguments`);
+}
+
+/**
+ * `%rune%` must be called with %args%
+ * @param {null | number | NodeLike} node
+ * @param {string} rune
+ * @param {string} args
+ * @returns {never}
+ */
+export function rune_invalid_arguments_length(node, rune, args) {
+	e(node, "rune_invalid_arguments_length", `\`${rune}\` must be called with ${args}`);
+}
+
+/**
+ * Cannot use %rune% rune in non-runes mode
+ * @param {null | number | NodeLike} node
+ * @param {string} rune
+ * @returns {never}
+ */
+export function rune_invalid_usage(node, rune) {
+	e(node, "rune_invalid_usage", `Cannot use ${rune} rune in non-runes mode`);
+}
+
+/**
+ * %name% cannot be used in runes mode
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function runes_mode_invalid_import(node, name) {
+	e(node, "runes_mode_invalid_import", `${name} cannot be used in runes mode`);
+}
+
+/**
+ * Cannot reassign or bind to snippet parameter
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function snippet_parameter_assignment(node) {
+	e(node, "snippet_parameter_assignment", "Cannot reassign or bind to snippet parameter");
+}
+
+/**
+ * Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function state_invalid_export(node) {
+	e(node, "state_invalid_export", "Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties");
+}
+
+/**
+ * `%rune%(...)` can only be used as a variable declaration initializer or a class field
+ * @param {null | number | NodeLike} node
+ * @param {string} rune
+ * @returns {never}
+ */
+export function state_invalid_placement(node, rune) {
+	e(node, "state_invalid_placement", `\`${rune}(...)\` can only be used as a variable declaration initializer or a class field`);
 }
 
 /**

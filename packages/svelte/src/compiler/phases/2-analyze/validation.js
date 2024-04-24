@@ -345,15 +345,15 @@ const validation = {
 			}
 
 			if (binding.kind === 'derived') {
-				e.invalid_binding(node.expression, 'derived state');
+				e.constant_binding(node.expression, 'derived state');
 			}
 
 			if (context.state.analysis.runes && binding.kind === 'each') {
-				e.invalid_each_assignment(node);
+				e.each_item_invalid_assignment(node);
 			}
 
 			if (binding.kind === 'snippet') {
-				e.invalid_snippet_assignment(node);
+				e.snippet_parameter_assignment(node);
 			}
 		}
 
@@ -482,7 +482,7 @@ const validation = {
 						specifier.imported.name === 'beforeUpdate' ||
 						specifier.imported.name === 'afterUpdate'
 					) {
-						e.invalid_runes_mode_import(specifier, specifier.imported.name);
+						e.runes_mode_invalid_import(specifier, specifier.imported.name);
 					}
 				}
 			}
@@ -739,7 +739,7 @@ export const validation_legacy = merge(validation, a11y_validators, {
 		}
 
 		if (state.scope.get(callee.name)?.kind !== 'store_sub') {
-			e.invalid_rune_usage(node.init, callee.name);
+			e.rune_invalid_usage(node.init, callee.name);
 		}
 	},
 	AssignmentExpression(node, { state, path }) {
@@ -772,11 +772,11 @@ function validate_export(node, scope, name) {
 	if (!binding) return;
 
 	if (binding.kind === 'derived') {
-		e.invalid_derived_export(node);
+		e.derived_invalid_export(node);
 	}
 
 	if ((binding.kind === 'state' || binding.kind === 'frozen_state') && binding.reassigned) {
-		e.invalid_state_export(node);
+		e.state_invalid_export(node);
 	}
 }
 
@@ -794,7 +794,7 @@ function validate_call_expression(node, scope, path) {
 
 	if (rune === '$props') {
 		if (parent.type === 'VariableDeclarator') return;
-		e.invalid_props_location(node);
+		e.props_invalid_placement(node);
 	}
 
 	if (rune === '$bindable') {
@@ -807,7 +807,7 @@ function validate_call_expression(node, scope, path) {
 				return;
 			}
 		}
-		e.invalid_bindable_location(node);
+		e.bindable_invalid_location(node);
 	}
 
 	if (
@@ -818,46 +818,46 @@ function validate_call_expression(node, scope, path) {
 	) {
 		if (parent.type === 'VariableDeclarator') return;
 		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
-		e.invalid_state_location(node, rune);
+		e.state_invalid_placement(node, rune);
 	}
 
 	if (rune === '$effect' || rune === '$effect.pre') {
 		if (parent.type !== 'ExpressionStatement') {
-			e.invalid_effect_location(node);
+			e.effect_invalid_placement(node);
 		}
 
 		if (node.arguments.length !== 1) {
-			e.invalid_rune_args_length(node, rune, 'exactly one argument');
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		}
 	}
 
 	if (rune === '$effect.active') {
 		if (node.arguments.length !== 0) {
-			e.invalid_rune_args(node, rune);
+			e.rune_invalid_arguments(node, rune);
 		}
 	}
 
 	if (rune === '$effect.root') {
 		if (node.arguments.length !== 1) {
-			e.invalid_rune_args_length(node, rune, 'exactly one argument');
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		}
 	}
 
 	if (rune === '$inspect') {
 		if (node.arguments.length < 1) {
-			e.invalid_rune_args_length(node, rune, 'one or more arguments');
+			e.rune_invalid_arguments_length(node, rune, 'one or more arguments');
 		}
 	}
 
 	if (rune === '$inspect().with') {
 		if (node.arguments.length !== 1) {
-			e.invalid_rune_args_length(node, rune, 'exactly one argument');
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		}
 	}
 
 	if (rune === '$state.snapshot') {
 		if (node.arguments.length !== 1) {
-			e.invalid_rune_args_length(node, rune, 'exactly one argument');
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		}
 	}
 }
@@ -899,7 +899,7 @@ export const validation_runes_js = {
 	},
 	CallExpression(node, { state, path }) {
 		if (get_rune(node, state.scope) === '$host') {
-			e.invalid_host_location(node);
+			e.host_invalid_placement(node);
 		}
 		validate_call_expression(node, state.scope, path);
 	},
@@ -912,13 +912,13 @@ export const validation_runes_js = {
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
 		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
-			e.invalid_rune_args_length(node, rune, 'exactly one argument');
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		} else if (rune === '$state' && args.length > 1) {
-			e.invalid_rune_args_length(node, rune, 'zero or one arguments');
+			e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
 		} else if (rune === '$props') {
-			e.invalid_props_location(node);
+			e.props_invalid_placement(node);
 		} else if (rune === '$bindable') {
-			e.invalid_bindable_location(node);
+			e.bindable_invalid_location(node);
 		}
 	},
 	AssignmentExpression(node, { state }) {
@@ -1002,9 +1002,9 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 			const thing = 'constant';
 
 			if (is_binding) {
-				e.invalid_binding(node, thing);
+				e.constant_binding(node, thing);
 			} else {
-				e.invalid_assignment(node, thing);
+				e.constant_assignment(node, thing);
 			}
 		}
 	}
@@ -1023,16 +1023,16 @@ function validate_assignment(node, argument, state) {
 
 		if (state.analysis.runes) {
 			if (binding?.kind === 'derived') {
-				e.invalid_assignment(node, 'derived state');
+				e.constant_assignment(node, 'derived state');
 			}
 
 			if (binding?.kind === 'each') {
-				e.invalid_each_assignment(node);
+				e.each_item_invalid_assignment(node);
 			}
 		}
 
 		if (binding?.kind === 'snippet') {
-			e.invalid_snippet_assignment(node);
+			e.snippet_parameter_assignment(node);
 		}
 	}
 
@@ -1048,7 +1048,7 @@ function validate_assignment(node, argument, state) {
 
 	if (object.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
 		if (state.private_derived_state.includes(property.name)) {
-			e.invalid_assignment(node, 'derived state');
+			e.constant_assignment(node, 'derived state');
 		}
 	}
 }
@@ -1056,7 +1056,7 @@ function validate_assignment(node, argument, state) {
 export const validation_runes = merge(validation, a11y_validators, {
 	LabeledStatement(node, { path }) {
 		if (node.label.name !== '$' || path.at(-1)?.type !== 'Program') return;
-		e.invalid_legacy_reactive_statement(node);
+		e.legacy_reactive_statement_invalid(node);
 	},
 	ExportNamedDeclaration(node, { state, next }) {
 		if (state.ast_type === 'module') {
@@ -1074,7 +1074,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 			if (node.declaration?.type !== 'VariableDeclaration') return;
 			if (node.declaration.kind !== 'let') return;
 			if (state.analysis.instance.scope !== state.scope) return;
-			e.invalid_legacy_export(node);
+			e.legacy_export_invalid(node);
 		}
 	},
 	ExportSpecifier(node, { state }) {
@@ -1085,12 +1085,12 @@ export const validation_runes = merge(validation, a11y_validators, {
 	CallExpression(node, { state, path }) {
 		const rune = get_rune(node, state.scope);
 		if (rune === '$bindable' && node.arguments.length > 1) {
-			e.invalid_rune_args_length(node, '$bindable', 'zero or one arguments');
+			e.rune_invalid_arguments_length(node, '$bindable', 'zero or one arguments');
 		} else if (rune === '$host') {
 			if (node.arguments.length > 0) {
-				e.invalid_rune_args(node, '$host');
+				e.rune_invalid_arguments(node, '$host');
 			} else if (state.ast_type === 'module' || !state.analysis.custom_element) {
-				e.invalid_host_location(node);
+				e.host_invalid_placement(node);
 			}
 		}
 
@@ -1102,7 +1102,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 			context.type === 'Identifier' &&
 			(context.name === '$state' || context.name === '$derived')
 		) {
-			e.invalid_state_location(node, context.name);
+			e.state_invalid_placement(node, context.name);
 		}
 		next({ ...state });
 	},
@@ -1123,39 +1123,39 @@ export const validation_runes = merge(validation, a11y_validators, {
 
 		// TODO some of this is duplicated with above, seems off
 		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
-			e.invalid_rune_args_length(node, rune, 'exactly one argument');
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		} else if (rune === '$state' && args.length > 1) {
-			e.invalid_rune_args_length(node, rune, 'zero or one arguments');
+			e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
 		} else if (rune === '$props') {
 			if (state.has_props_rune) {
-				e.duplicate_props_rune(node);
+				e.props_duplicate(node);
 			}
 
 			state.has_props_rune = true;
 
 			if (args.length > 0) {
-				e.invalid_rune_args(node, rune);
+				e.rune_invalid_arguments(node, rune);
 			}
 
 			if (node.id.type !== 'ObjectPattern') {
-				e.invalid_props_id(node);
+				e.props_invalid_identifier(node);
 			}
 
 			if (state.scope !== state.analysis.instance.scope) {
-				e.invalid_props_location(node);
+				e.props_invalid_placement(node);
 			}
 
 			for (const property of node.id.properties) {
 				if (property.type === 'Property') {
 					if (property.computed) {
-						e.invalid_props_pattern(property);
+						e.props_invalid_pattern(property);
 					}
 
 					const value =
 						property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
 
 					if (value.type !== 'Identifier') {
-						e.invalid_props_pattern(property);
+						e.props_invalid_pattern(property);
 					}
 				}
 			}
