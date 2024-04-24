@@ -1,4 +1,5 @@
 import * as e from './errors.js';
+import * as w from './warnings.js';
 
 /**
  * @template [Input=any]
@@ -13,9 +14,7 @@ const common = {
 
 	generate: validator('client', (input, keypath) => {
 		if (input === 'dom' || input === 'ssr') {
-			warn(
-				'`generate: "dom"` and `generate: "ssr"` options have been renamed to "client" and "server" respectively'
-			);
+			warn_once(w.options_renamed_ssr_dom);
 			return input === 'dom' ? 'client' : 'server';
 		}
 
@@ -72,16 +71,13 @@ export const validate_component_options =
 
 			discloseVersion: boolean(true),
 
-			immutable: deprecate(
-				'The immutable option has been deprecated. It has no effect in runes mode.',
-				boolean(false)
-			),
+			immutable: deprecate(w.options_deprecated_immutable, boolean(false)),
 
 			legacy: object({
 				componentApi: boolean(false)
 			}),
 
-			loopGuardTimeout: warn_removed('The loopGuardTimeout option has been removed.'),
+			loopGuardTimeout: warn_removed(w.options_removed_loop_guard_timeout),
 
 			name: string(undefined),
 
@@ -103,12 +99,8 @@ export const validate_component_options =
 				return input;
 			}),
 
-			enableSourcemap: warn_removed(
-				'The enableSourcemap option has been removed. Source maps are always generated now, and tooling can choose to ignore them.'
-			),
-			hydratable: warn_removed(
-				'The hydratable option has been removed. Svelte components are always hydratable now.'
-			),
+			enableSourcemap: warn_removed(w.options_removed_enable_sourcemap),
+			hydratable: warn_removed(w.options_removed_hydratable),
 			format: removed(
 				'The format option has been removed in Svelte 4, the compiler only outputs ESM now. Remove "format" from your compiler options. ' +
 					'If you did not set this yourself, bump the version of your bundler plugin (vite-plugin-svelte/rollup-plugin-svelte/svelte-loader)'
@@ -149,34 +141,33 @@ function removed(msg) {
 
 const warned = new Set();
 
-/** @param {string} message */
-function warn(message) {
-	if (!warned.has(message)) {
-		warned.add(message);
-		// eslint-disable-next-line no-console
-		console.warn(message);
+/** @param {(node: null) => void} fn */
+function warn_once(fn) {
+	if (!warned.has(fn)) {
+		warned.add(fn);
+		fn(null);
 	}
 }
 
 /**
- * @param {string} message
+ * @param {(node: null) => void} fn
  * @returns {Validator}
  */
-function warn_removed(message) {
+function warn_removed(fn) {
 	return (input) => {
-		if (input !== undefined) warn(message);
+		if (input !== undefined) warn_once(fn);
 		return /** @type {any} */ (undefined);
 	};
 }
 
 /**
- * @param {string} message
+ * @param {(node: null) => void} fn
  * @param {Validator} validator
  * @returns {Validator}
  */
-function deprecate(message, validator) {
+function deprecate(fn, validator) {
 	return (input, keypath) => {
-		if (input !== undefined) warn(message);
+		if (input !== undefined) warn_once(fn);
 		return validator(input, keypath);
 	};
 }
