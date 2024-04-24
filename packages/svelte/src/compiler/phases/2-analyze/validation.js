@@ -51,7 +51,7 @@ function validate_component(node, context) {
 			attribute.type === 'OnDirective' &&
 			(attribute.modifiers.length > 1 || attribute.modifiers.some((m) => m !== 'once'))
 		) {
-			e.invalid_component_event_modifier(attribute);
+			e.event_handler_invalid_component_modifier(attribute);
 		}
 
 		if (attribute.type === 'Attribute') {
@@ -196,7 +196,7 @@ function validate_element(node, context) {
 			for (const modifier of attribute.modifiers) {
 				if (!EventModifiers.includes(modifier)) {
 					const list = `${EventModifiers.slice(0, -1).join(', ')} or ${EventModifiers.at(-1)}`;
-					e.invalid_event_modifier(attribute, list);
+					e.event_handler_invalid_modifier(attribute, list);
 				}
 				if (modifier === 'passive') {
 					has_passive_modifier = true;
@@ -204,7 +204,11 @@ function validate_element(node, context) {
 					conflicting_passive_modifier = modifier;
 				}
 				if (has_passive_modifier && conflicting_passive_modifier) {
-					e.invalid_event_modifier_combination(attribute, 'passive', conflicting_passive_modifier);
+					e.event_handler_invalid_modifier_combination(
+						attribute,
+						'passive',
+						conflicting_passive_modifier
+					);
 				}
 			}
 		}

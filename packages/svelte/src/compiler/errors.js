@@ -57,6 +57,33 @@ function e(node, code, message) {
 }
 
 /**
+ * An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function animation_invalid_placement(node) {
+	e(node, "animation_invalid_placement", "An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block");
+}
+
+/**
+ * An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block. Did you forget to add a key to your each block?
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function animation_missing_key(node) {
+	e(node, "animation_missing_key", "An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block. Did you forget to add a key to your each block?");
+}
+
+/**
+ * An element can only have one 'animate' directive
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function animation_duplicate(node) {
+	e(node, "animation_duplicate", "An element can only have one 'animate' directive");
+}
+
+/**
  * Attribute shorthand cannot be empty
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -91,84 +118,6 @@ export function invalid_event_attribute_value(node) {
  */
 export function invalid_attribute_name(node, name) {
 	e(node, "invalid_attribute_name", `'${name}' is not a valid attribute name`);
-}
-
-/**
- * An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function animation_invalid_placement(node) {
-	e(node, "animation_invalid_placement", "An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block");
-}
-
-/**
- * An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block. Did you forget to add a key to your each block?
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function animation_missing_key(node) {
-	e(node, "animation_missing_key", "An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block. Did you forget to add a key to your each block?");
-}
-
-/**
- * An element can only have one 'animate' directive
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function animation_duplicate(node) {
-	e(node, "animation_duplicate", "An element can only have one 'animate' directive");
-}
-
-/**
- * Valid event modifiers are %list%
- * @param {null | number | NodeLike} node
- * @param {string} list
- * @returns {never}
- */
-export function invalid_event_modifier(node, list) {
-	e(node, "invalid_event_modifier", `Valid event modifiers are ${list}`);
-}
-
-/**
- * Event modifiers other than 'once' can only be used on DOM elements
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_component_event_modifier(node) {
-	e(node, "invalid_component_event_modifier", "Event modifiers other than 'once' can only be used on DOM elements");
-}
-
-/**
- * The '%modifier1%' and '%modifier2%' modifiers cannot be used together
- * @param {null | number | NodeLike} node
- * @param {string} modifier1
- * @param {string} modifier2
- * @returns {never}
- */
-export function invalid_event_modifier_combination(node, modifier1, modifier2) {
-	e(node, "invalid_event_modifier_combination", `The '${modifier1}' and '${modifier2}' modifiers cannot be used together`);
-}
-
-/**
- * Cannot use multiple `%type%:` directives on a single element
- * @param {null | number | NodeLike} node
- * @param {string} type
- * @returns {never}
- */
-export function transition_duplicate(node, type) {
-	e(node, "transition_duplicate", `Cannot use multiple \`${type}:\` directives on a single element`);
-}
-
-/**
- * Cannot use `%type%:` alongside existing `%existing%:` directive
- * @param {null | number | NodeLike} node
- * @param {string} type
- * @param {string} existing
- * @returns {never}
- */
-export function transition_conflict(node, type, existing) {
-	e(node, "transition_conflict", `Cannot use \`${type}:\` alongside existing \`${existing}:\` directive`);
 }
 
 /**
@@ -494,6 +443,36 @@ export function illegal_title_attribute(node) {
  */
 export function invalid_title_content(node) {
 	e(node, "invalid_title_content", "`<title>` can only contain text and {tags}");
+}
+
+/**
+ * Valid event modifiers are %list%
+ * @param {null | number | NodeLike} node
+ * @param {string} list
+ * @returns {never}
+ */
+export function invalid_event_modifier(node, list) {
+	e(node, "invalid_event_modifier", `Valid event modifiers are ${list}`);
+}
+
+/**
+ * Event modifiers other than 'once' can only be used on DOM elements
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_component_event_modifier(node) {
+	e(node, "invalid_component_event_modifier", "Event modifiers other than 'once' can only be used on DOM elements");
+}
+
+/**
+ * The '%modifier1%' and '%modifier2%' modifiers cannot be used together
+ * @param {null | number | NodeLike} node
+ * @param {string} modifier1
+ * @param {string} modifier2
+ * @returns {never}
+ */
+export function invalid_event_modifier_combination(node, modifier1, modifier2) {
+	e(node, "invalid_event_modifier_combination", `The '${modifier1}' and '${modifier2}' modifiers cannot be used together`);
 }
 
 /**
@@ -1380,6 +1359,27 @@ export function invalid_svelte_tag(node, list) {
  */
 export function conflicting_slot_usage(node) {
 	e(node, "conflicting_slot_usage", "Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.");
+}
+
+/**
+ * Cannot use multiple `%type%:` directives on a single element
+ * @param {null | number | NodeLike} node
+ * @param {string} type
+ * @returns {never}
+ */
+export function transition_duplicate(node, type) {
+	e(node, "transition_duplicate", `Cannot use multiple \`${type}:\` directives on a single element`);
+}
+
+/**
+ * Cannot use `%type%:` alongside existing `%existing%:` directive
+ * @param {null | number | NodeLike} node
+ * @param {string} type
+ * @param {string} existing
+ * @returns {never}
+ */
+export function transition_conflict(node, type, existing) {
+	e(node, "transition_conflict", `Cannot use \`${type}:\` alongside existing \`${existing}:\` directive`);
 }
 
 /**
