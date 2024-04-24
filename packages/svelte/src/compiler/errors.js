@@ -228,24 +228,14 @@ export function bind_invalid_target(node, name, elements) {
 }
 
 /**
- * `bind:%name%` is not a valid binding
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @returns {never}
- */
-export function bind_invalid(node, name) {
-	e(node, "bind_invalid", `\`bind:${name}\` is not a valid binding`);
-}
-
-/**
  * `bind:%name%` is not a valid binding. %explanation%
  * @param {null | number | NodeLike} node
  * @param {string} name
- * @param {string} explanation
+ * @param {string | undefined | null} [explanation]
  * @returns {never}
  */
-export function bind_invalid_detailed(node, name, explanation) {
-	e(node, "bind_invalid_detailed", `\`bind:${name}\` is not a valid binding. ${explanation}`);
+export function bind_invalid(node, name, explanation) {
+	e(node, "bind_invalid", explanation ? `\`bind:${name}\` is not a valid binding. ${explanation}` : `\`bind:${name}\` is not a valid binding`);
 }
 
 /**

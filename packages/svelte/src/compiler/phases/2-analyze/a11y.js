@@ -739,12 +739,7 @@ function check_element(node, state) {
 			const type = name.slice(5);
 			if (!aria_attributes.includes(type)) {
 				const match = fuzzymatch(type, aria_attributes);
-				if (match) {
-					// TODO allow 'overloads' in messages, so that we can use the same code with and without suggestions
-					w.a11y_unknown_aria_attribute_suggestion(attribute, type, match);
-				} else {
-					w.a11y_unknown_aria_attribute(attribute, type);
-				}
+				w.a11y_unknown_aria_attribute(attribute, type, match);
 			}
 
 			if (name === 'aria-hidden' && regex_heading_tags.test(node.name)) {
@@ -792,11 +787,7 @@ function check_element(node, state) {
 						w.a11y_no_abstract_role(attribute, current_role);
 					} else if (current_role && !aria_roles.includes(current_role)) {
 						const match = fuzzymatch(current_role, aria_roles);
-						if (match) {
-							w.a11y_unknown_role_suggestion(attribute, current_role, match);
-						} else {
-							w.a11y_unknown_role(attribute, current_role);
-						}
+						w.a11y_unknown_role(attribute, current_role, match);
 					}
 
 					// no-redundant-roles

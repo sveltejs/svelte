@@ -14,8 +14,6 @@
 
 > `bind:%name%` is not a valid binding
 
-## bind_invalid_detailed
-
 > `bind:%name%` is not a valid binding. %explanation%
 
 ## invalid_type_attribute

@@ -373,7 +373,7 @@ const validation = {
 			parent?.type === 'SvelteBody'
 		) {
 			if (context.state.options.namespace === 'foreign' && node.name !== 'this') {
-				e.bind_invalid_detailed(node, node.name, 'Foreign elements only support `bind:this`');
+				e.bind_invalid(node, node.name, 'Foreign elements only support `bind:this`');
 			}
 
 			if (node.name in binding_properties) {
@@ -442,7 +442,7 @@ const validation = {
 				if (match) {
 					const property = binding_properties[match];
 					if (!property.valid_elements || property.valid_elements.includes(parent.name)) {
-						e.bind_invalid_detailed(node, node.name, `Did you mean '${match}'?`);
+						e.bind_invalid(node, node.name, `Did you mean '${match}'?`);
 					}
 				}
 				e.bind_invalid(node, node.name);
