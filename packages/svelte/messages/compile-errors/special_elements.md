@@ -1,30 +1,14 @@
-## invalid_svelte_option_attribute
+## svelte_options_invalid_attribute
 
 > `<svelte:options>` can only receive static attributes
 
-## invalid_svelte_option_namespace
+## svelte_options_invalid_attribute_value
 
-> Unsupported `<svelte:option>` value for "namespace". Valid values are "html", "svg" or "foreign"
+> Valid values are %list%
 
 ## tag_option_deprecated
 
 > "tag" option is deprecated — use "customElement" instead
-
-## invalid_svelte_option_runes
-
-> Unsupported `<svelte:option>` value for "runes". Valid values are true or false
-
-## invalid_svelte_option_accessors
-
-> Unsupported `<svelte:option>` value for "accessors". Valid values are true or false
-
-## invalid_svelte_option_preserveWhitespace
-
-> Unsupported `<svelte:option>` value for "preserveWhitespace". Valid values are true or false
-
-## invalid_svelte_option_immutable
-
-> Unsupported `<svelte:option>` value for "immutable". Valid values are true or false
 
 ## invalid_tag_property
 
