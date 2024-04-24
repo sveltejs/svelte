@@ -58,6 +58,7 @@ export interface ComponentAnalysis extends Analysis {
 	uses_component_bindings: boolean;
 	uses_render_tags: boolean;
 	needs_context: boolean;
+	needs_props: boolean;
 	custom_element: boolean | SvelteOptions['customElement'];
 	/** If `true`, should append styles through JavaScript */
 	inject_styles: boolean;

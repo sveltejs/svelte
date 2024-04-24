@@ -442,27 +442,11 @@ export function client_component(source, analysis, options) {
 
 	let should_inject_props =
 		should_inject_context ||
+		analysis.needs_props ||
 		analysis.uses_props ||
 		analysis.uses_rest_props ||
 		analysis.uses_slots ||
 		analysis.slot_names.size > 0;
-
-	if (!should_inject_props) {
-		for (const declaration of analysis.instance.scope.declarations.values()) {
-			if (declaration.declaration_kind === 'synthetic') {
-				continue;
-			}
-
-			if (
-				declaration.kind === 'prop' ||
-				declaration.kind === 'bindable_prop' ||
-				declaration.kind === 'rest_prop'
-			) {
-				should_inject_props = true;
-				break;
-			}
-		}
-	}
 
 	const body = [
 		...state.hoisted,

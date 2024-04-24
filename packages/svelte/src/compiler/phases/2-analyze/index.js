@@ -371,6 +371,7 @@ export function analyze_component(root, source, options) {
 		uses_component_bindings: false,
 		uses_render_tags: false,
 		needs_context: false,
+		needs_props: false,
 		custom_element: options.customElementOptions ?? options.customElement,
 		inject_styles: options.css === 'injected' || options.customElement,
 		accessors: options.customElement
@@ -818,6 +819,8 @@ const legacy_scope_tweaker = {
 			return next();
 		}
 
+		state.analysis.needs_props = true;
+
 		if (!node.declaration) {
 			for (const specifier of node.specifiers) {
 				const binding = /** @type {import('#compiler').Binding} */ (
@@ -946,6 +949,8 @@ const runes_scope_tweaker = {
 		}
 
 		if (rune === '$props') {
+			state.analysis.needs_props = true;
+
 			for (const property of /** @type {import('estree').ObjectPattern} */ (node.id).properties) {
 				if (property.type !== 'Property') continue;
 

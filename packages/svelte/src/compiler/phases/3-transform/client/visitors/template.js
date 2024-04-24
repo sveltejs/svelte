@@ -1228,6 +1228,8 @@ function serialize_event_handler(node, { state, visit }) {
 
 		return handler;
 	} else {
+		state.analysis.needs_props = true;
+
 		// Function + .call to preserve "this" context as much as possible
 		return b.function(
 			null,
