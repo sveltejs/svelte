@@ -111,12 +111,20 @@ function transform(name, dest) {
 				const value = node.value
 					.split('\n')
 					.map((line) => {
+						if (line === ' * MESSAGE') {
+							return message
+								.split('\n')
+								.map((line) => ` * ${line}`)
+								.join('\n');
+						}
+
 						if (line.includes('PARAMETER')) {
 							return vars.map((name) => ` * @param {string} ${name}`).join('\n');
 						}
 
 						return line;
 					})
+					.filter((x) => x !== '')
 					.join('\n');
 
 				if (value !== node.value) {

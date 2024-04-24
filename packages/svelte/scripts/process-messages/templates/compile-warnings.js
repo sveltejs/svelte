@@ -25,7 +25,6 @@ export function reset_warnings(options) {
 }
 
 /**
- *
  * @param {null | NodeLike} node
  * @param {string} code
  * @param {string} message
@@ -44,6 +43,7 @@ function w(node, code, message) {
 }
 
 /**
+ * MESSAGE
  * @param {null | NodeLike} node
  * @param {string} PARAMETER
  */

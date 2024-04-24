@@ -47,7 +47,6 @@ export class CompileError extends Error {
 }
 
 /**
- *
  * @param {null | number | NodeLike} node
  * @param {string} code
  * @param {string} message
@@ -65,6 +64,7 @@ function e(node, code, message) {
 }
 
 /**
+ * MESSAGE
  * @param {null | number | NodeLike} node
  * @param {string} PARAMETER
  * @returns {never}
