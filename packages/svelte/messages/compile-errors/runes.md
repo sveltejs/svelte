@@ -1,7 +1,3 @@
-## conflicting_property_name
-
-> Cannot have a property and a component export with the same name
-
 ## duplicate_props_rune
 
 > Cannot use `$props()` more than once
