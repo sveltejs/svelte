@@ -232,18 +232,6 @@ export function client_component(source, analysis, options) {
 		group_binding_declarations.push(b.const(group.name, b.array([])));
 	}
 
-	// Bind static exports to props so that people can access them with bind:x
-	const static_bindings = analysis.exports.map(({ name, alias }) => {
-		return b.stmt(
-			b.call(
-				'$.bind_prop',
-				b.id('$$props'),
-				b.literal(alias ?? name),
-				serialize_get_binding(b.id(name), instance_state)
-			)
-		);
-	});
-
 	const component_returned_object = analysis.exports.map(({ name, alias }) => {
 		const expression = serialize_get_binding(b.id(name), instance_state);
 
@@ -369,9 +357,24 @@ export function client_component(source, analysis, options) {
 		...group_binding_declarations,
 		.../** @type {import('estree').Statement[]} */ (instance.body),
 		analysis.runes ? b.empty : b.stmt(b.call('$.init')),
-		.../** @type {import('estree').Statement[]} */ (template.body),
-		...static_bindings
+		.../** @type {import('estree').Statement[]} */ (template.body)
 	]);
+
+	if (!analysis.runes) {
+		// Bind static exports to props so that people can access them with bind:x
+		for (const { name, alias } of analysis.exports) {
+			component_block.body.push(
+				b.stmt(
+					b.call(
+						'$.bind_prop',
+						b.id('$$props'),
+						b.literal(alias ?? name),
+						serialize_get_binding(b.id(name), instance_state)
+					)
+				)
+			);
+		}
+	}
 
 	const append_styles =
 		analysis.inject_styles && analysis.css.ast
