@@ -64,6 +64,18 @@
 
 > Can only bind to state or props
 
+## component_invalid_directive
+
+> This type of directive is not valid on components
+
+## const_tag_invalid_placement
+
+> `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>` or `<Component>`
+
+## element_invalid_tag_name
+
+> Expected valid tag name
+
 ## event_handler_invalid_modifier
 
 > Valid event modifiers are %list%
@@ -79,6 +91,10 @@
 ## let_directive_invalid_placement
 
 > `let:` directive at invalid position
+
+## node_invalid_placement
+
+> %thing% is invalid inside <%parent%>
 
 ## slot_snippet_conflict
 
@@ -128,6 +144,10 @@
 
 > A component can only have one `<%name%>` element
 
+## svelte_meta_invalid_content
+
+> <%name%> cannot have children
+
 ## svelte_meta_invalid_tag
 
 > Valid `<svelte:...>` tag names are %list%
@@ -168,6 +188,18 @@
 
 > `<svelte:self>` components can only exist inside `{#if}` blocks, `{#each}` blocks, `{#snippet}` blocks or slots passed to components
 
+## textarea_invalid_content
+
+> A `<textarea>` can have either a value attribute or (equivalently) child content, but not both
+
+## title_illegal_attribute
+
+> `<title>` cannot have attributes nor directives
+
+## title_invalid_content
+
+> `<title>` can only contain text and {tags}
+
 ## transition_duplicate
 
 > Cannot use multiple `%type%:` directives on a single element
@@ -175,3 +207,7 @@
 ## transition_conflict
 
 > Cannot use `%type%:` alongside existing `%existing%:` directive
+
+## void_element_invalid_content
+
+> Void elements cannot have children or closing tags

@@ -77,24 +77,6 @@ export function removed_compiler_option(node, msg) {
 }
 
 /**
- * This type of directive is not valid on components
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_component_directive(node) {
-	e(node, "invalid_component_directive", "This type of directive is not valid on components");
-}
-
-/**
- * {@const} must be the immediate child of {#snippet}, {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_const_placement(node) {
-	e(node, "invalid_const_placement", "{@const} must be the immediate child of {#snippet}, {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>");
-}
-
-/**
  * Declaration cannot be empty
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -210,72 +192,6 @@ export function invalid_nesting_selector(node) {
  */
 export function invalid_css_declaration(node) {
 	e(node, "invalid_css_declaration", "Declaration cannot be empty");
-}
-
-/**
- * A `<textarea>` can have either a value attribute or (equivalently) child content, but not both
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_textarea_content(node) {
-	e(node, "invalid_textarea_content", "A `<textarea>` can have either a value attribute or (equivalently) child content, but not both");
-}
-
-/**
- * Void elements cannot have children or closing tags
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_void_content(node) {
-	e(node, "invalid_void_content", "Void elements cannot have children or closing tags");
-}
-
-/**
- * <%name%> cannot have children
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @returns {never}
- */
-export function invalid_element_content(node, name) {
-	e(node, "invalid_element_content", `<${name}> cannot have children`);
-}
-
-/**
- * Expected valid tag name
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_tag_name(node) {
-	e(node, "invalid_tag_name", "Expected valid tag name");
-}
-
-/**
- * %thing% is invalid inside <%parent%>
- * @param {null | number | NodeLike} node
- * @param {string} thing
- * @param {string} parent
- * @returns {never}
- */
-export function invalid_node_placement(node, thing, parent) {
-	e(node, "invalid_node_placement", `${thing} is invalid inside <${parent}>`);
-}
-
-/**
- * `<title>` cannot have attributes nor directives
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function illegal_title_attribute(node) {
-	e(node, "illegal_title_attribute", "`<title>` cannot have attributes nor directives");
-}
-
-/**
- * `<title>` can only contain text and {tags}
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_title_content(node) {
-	e(node, "invalid_title_content", "`<title>` can only contain text and {tags}");
 }
 
 /**
@@ -1085,6 +1001,33 @@ export function bind_invalid_value(node) {
 }
 
 /**
+ * This type of directive is not valid on components
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function component_invalid_directive(node) {
+	e(node, "component_invalid_directive", "This type of directive is not valid on components");
+}
+
+/**
+ * `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>` or `<Component>`
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function const_tag_invalid_placement(node) {
+	e(node, "const_tag_invalid_placement", "`{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>` or `<Component>`");
+}
+
+/**
+ * Expected valid tag name
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function element_invalid_tag_name(node) {
+	e(node, "element_invalid_tag_name", "Expected valid tag name");
+}
+
+/**
  * Valid event modifiers are %list%
  * @param {null | number | NodeLike} node
  * @param {string} list
@@ -1121,6 +1064,17 @@ export function event_handler_invalid_component_modifier(node) {
  */
 export function let_directive_invalid_placement(node) {
 	e(node, "let_directive_invalid_placement", "`let:` directive at invalid position");
+}
+
+/**
+ * %thing% is invalid inside <%parent%>
+ * @param {null | number | NodeLike} node
+ * @param {string} thing
+ * @param {string} parent
+ * @returns {never}
+ */
+export function node_invalid_placement(node, thing, parent) {
+	e(node, "node_invalid_placement", `${thing} is invalid inside <${parent}>`);
 }
 
 /**
@@ -1234,6 +1188,16 @@ export function svelte_meta_duplicate(node, name) {
 }
 
 /**
+ * <%name%> cannot have children
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function svelte_meta_invalid_content(node, name) {
+	e(node, "svelte_meta_invalid_content", `<${name}> cannot have children`);
+}
+
+/**
  * Valid `<svelte:...>` tag names are %list%
  * @param {null | number | NodeLike} node
  * @param {string} list
@@ -1327,6 +1291,33 @@ export function svelte_self_invalid_placement(node) {
 }
 
 /**
+ * A `<textarea>` can have either a value attribute or (equivalently) child content, but not both
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function textarea_invalid_content(node) {
+	e(node, "textarea_invalid_content", "A `<textarea>` can have either a value attribute or (equivalently) child content, but not both");
+}
+
+/**
+ * `<title>` cannot have attributes nor directives
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function title_illegal_attribute(node) {
+	e(node, "title_illegal_attribute", "`<title>` cannot have attributes nor directives");
+}
+
+/**
+ * `<title>` can only contain text and {tags}
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function title_invalid_content(node) {
+	e(node, "title_invalid_content", "`<title>` can only contain text and {tags}");
+}
+
+/**
  * Cannot use multiple `%type%:` directives on a single element
  * @param {null | number | NodeLike} node
  * @param {string} type
@@ -1345,6 +1336,15 @@ export function transition_duplicate(node, type) {
  */
 export function transition_conflict(node, type, existing) {
 	e(node, "transition_conflict", `Cannot use \`${type}:\` alongside existing \`${existing}:\` directive`);
+}
+
+/**
+ * Void elements cannot have children or closing tags
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function void_element_invalid_content(node) {
+	e(node, "void_element_invalid_content", "Void elements cannot have children or closing tags");
 }
 
 /**

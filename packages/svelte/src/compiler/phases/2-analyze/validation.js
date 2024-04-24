@@ -44,7 +44,7 @@ function validate_component(node, context) {
 			attribute.type !== 'OnDirective' &&
 			attribute.type !== 'BindDirective'
 		) {
-			e.invalid_component_directive(attribute);
+			e.component_invalid_directive(attribute);
 		}
 
 		if (
@@ -471,7 +471,7 @@ const validation = {
 				((grand_parent?.type !== 'RegularElement' && grand_parent?.type !== 'SvelteElement') ||
 					!grand_parent.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')))
 		) {
-			e.invalid_const_placement(node);
+			e.const_tag_invalid_placement(node);
 		}
 	},
 	ImportDeclaration(node, context) {
@@ -507,7 +507,7 @@ const validation = {
 		if (node.name === 'textarea' && node.fragment.nodes.length > 0) {
 			for (const attribute of node.attributes) {
 				if (attribute.type === 'Attribute' && attribute.name === 'value') {
-					e.invalid_textarea_content(node);
+					e.textarea_invalid_content(node);
 				}
 			}
 		}
@@ -525,7 +525,7 @@ const validation = {
 
 		if (context.state.parent_element) {
 			if (!is_tag_valid_with_parent(node.name, context.state.parent_element)) {
-				e.invalid_node_placement(node, `<${node.name}>`, context.state.parent_element);
+				e.node_invalid_placement(node, `<${node.name}>`, context.state.parent_element);
 			}
 		}
 
@@ -537,7 +537,7 @@ const validation = {
 					parent.name === node.name &&
 					interactive_elements.has(parent.name)
 				) {
-					e.invalid_node_placement(node, `<${node.name}>`, parent.name);
+					e.node_invalid_placement(node, `<${node.name}>`, parent.name);
 				}
 			}
 		}
@@ -546,7 +546,7 @@ const validation = {
 			const path = context.path;
 			for (let parent of path) {
 				if (parent.type === 'RegularElement' && parent.name === 'p') {
-					e.invalid_node_placement(node, `<${node.name}>`, parent.name);
+					e.node_invalid_placement(node, `<${node.name}>`, parent.name);
 				}
 			}
 		}
@@ -696,19 +696,19 @@ const validation = {
 		if (!node.parent) return;
 		if (context.state.parent_element && regex_not_whitespace.test(node.data)) {
 			if (!is_tag_valid_with_parent('#text', context.state.parent_element)) {
-				e.invalid_node_placement(node, 'Text node', context.state.parent_element);
+				e.node_invalid_placement(node, 'Text node', context.state.parent_element);
 			}
 		}
 	},
 	TitleElement(node) {
 		const attribute = node.attributes[0];
 		if (attribute) {
-			e.illegal_title_attribute(attribute);
+			e.title_illegal_attribute(attribute);
 		}
 
 		const child = node.fragment.nodes.find((n) => n.type !== 'Text' && n.type !== 'ExpressionTag');
 		if (child) {
-			e.invalid_title_content(child);
+			e.title_invalid_content(child);
 		}
 	},
 	UpdateExpression(node, context) {
@@ -718,7 +718,7 @@ const validation = {
 		if (!node.parent) return;
 		if (context.state.parent_element) {
 			if (!is_tag_valid_with_parent('#text', context.state.parent_element)) {
-				e.invalid_node_placement(node, '{expression}', context.state.parent_element);
+				e.node_invalid_placement(node, '{expression}', context.state.parent_element);
 			}
 		}
 	}
