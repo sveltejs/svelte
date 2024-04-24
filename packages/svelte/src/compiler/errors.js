@@ -413,24 +413,24 @@ export function directive_missing_name(node, type) {
 }
 
 /**
- * </%name%> attempted to close an element that was not open
+ * `</%name%>` attempted to close an element that was not open
  * @param {null | number | NodeLike} node
  * @param {string} name
  * @returns {never}
  */
 export function element_invalid_closing_tag(node, name) {
-	e(node, "element_invalid_closing_tag", `</${name}> attempted to close an element that was not open`);
+	e(node, "element_invalid_closing_tag", `\`</${name}>\` attempted to close an element that was not open`);
 }
 
 /**
- * </%name%> attempted to close element that was already automatically closed by <%reason%> (cannot nest <%reason%> inside <%name%>)
+ * `</%name%>` attempted to close element that was already automatically closed by `<%reason%>` (cannot nest `<%reason%>` inside `<%name%>`)
  * @param {null | number | NodeLike} node
  * @param {string} name
  * @param {string} reason
  * @returns {never}
  */
-export function invalid_closing_tag_after_autoclose(node, name, reason) {
-	e(node, "invalid_closing_tag_after_autoclose", `</${name}> attempted to close element that was already automatically closed by <${reason}> (cannot nest <${reason}> inside <${name}>)`);
+export function element_invalid_closing_tag_autoclosed(node, name, reason) {
+	e(node, "element_invalid_closing_tag_autoclosed", `\`</${name}>\` attempted to close element that was already automatically closed by \`<${reason}>\` (cannot nest \`<${reason}>\` inside \`<${name}>\`)`);
 }
 
 /**
@@ -438,8 +438,8 @@ export function invalid_closing_tag_after_autoclose(node, name, reason) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_dollar_binding(node) {
-	e(node, "invalid_dollar_binding", "The $ name is reserved, and cannot be used for variables and imports");
+export function dollar_binding_invalid(node) {
+	e(node, "dollar_binding_invalid", "The $ name is reserved, and cannot be used for variables and imports");
 }
 
 /**
@@ -447,17 +447,8 @@ export function invalid_dollar_binding(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_dollar_prefix(node) {
-	e(node, "invalid_dollar_prefix", "The $ prefix is reserved, and cannot be used for variables and imports");
-}
-
-/**
- * The $ name is reserved. To reference a global variable called $, use globalThis.$
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_dollar_global(node) {
-	e(node, "invalid_dollar_global", "The $ name is reserved. To reference a global variable called $, use globalThis.$");
+export function dollar_prefix_invalid(node) {
+	e(node, "dollar_prefix_invalid", "The $ prefix is reserved, and cannot be used for variables and imports");
 }
 
 /**
@@ -465,8 +456,8 @@ export function invalid_dollar_global(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function illegal_subscription(node) {
-	e(node, "illegal_subscription", "Cannot reference store value inside `<script context=\"module\">`");
+export function store_invalid_subscription(node) {
+	e(node, "store_invalid_subscription", "Cannot reference store value inside `<script context=\"module\">`");
 }
 
 /**
@@ -474,8 +465,8 @@ export function illegal_subscription(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function duplicate_style_element(node) {
-	e(node, "duplicate_style_element", "A component can have a single top-level `<style>` element");
+export function style_duplicate(node) {
+	e(node, "style_duplicate", "A component can have a single top-level `<style>` element");
 }
 
 /**
@@ -483,26 +474,17 @@ export function duplicate_style_element(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function duplicate_script_element(node) {
-	e(node, "duplicate_script_element", "A component can have a single top-level `<script>` element and/or a single top-level `<script context=\"module\">` element");
+export function script_duplicate(node) {
+	e(node, "script_duplicate", "A component can have a single top-level `<script>` element and/or a single top-level `<script context=\"module\">` element");
 }
 
 /**
- * {@render ...} tags can only contain call expressions
+ * `{@render ...}` tags can only contain call expressions
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_render_expression(node) {
-	e(node, "invalid_render_expression", "{@render ...} tags can only contain call expressions");
-}
-
-/**
- * expected at most one argument
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_render_arguments(node) {
-	e(node, "invalid_render_arguments", "expected at most one argument");
+export function render_tag_invalid_expression(node) {
+	e(node, "render_tag_invalid_expression", "`{@render ...}` tags can only contain call expressions");
 }
 
 /**
@@ -510,17 +492,17 @@ export function invalid_render_arguments(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_render_call(node) {
-	e(node, "invalid_render_call", "Calling a snippet function using apply, bind or call is not allowed");
+export function render_tag_invalid_call_expression(node) {
+	e(node, "render_tag_invalid_call_expression", "Calling a snippet function using apply, bind or call is not allowed");
 }
 
 /**
- * cannot use spread arguments in {@render ...} tags
+ * cannot use spread arguments in `{@render ...}` tags
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_render_spread_argument(node) {
-	e(node, "invalid_render_spread_argument", "cannot use spread arguments in {@render ...} tags");
+export function render_tag_invalid_spread_argument(node) {
+	e(node, "render_tag_invalid_spread_argument", "cannot use spread arguments in `{@render ...}` tags");
 }
 
 /**
@@ -528,8 +510,8 @@ export function invalid_render_spread_argument(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_snippet_rest_parameter(node) {
-	e(node, "invalid_snippet_rest_parameter", "snippets do not support rest parameters; use an array instead");
+export function snippet_invalid_rest_parameter(node) {
+	e(node, "snippet_invalid_rest_parameter", "snippets do not support rest parameters; use an array instead");
 }
 
 /**
