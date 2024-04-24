@@ -104,11 +104,10 @@ const spread_props_handler = {
 				if (is_function(p)) obj = p();
 			});
 			const keys_function = target.keys[i];
-			if (keys_function && keys_function instanceof Function) get(keys_function());
 			if (typeof obj === 'object' && obj !== null && key in obj) {
 				if (is_function(p)) p = p();
 				return p[key];
-			}
+			} else if (keys_function && keys_function instanceof Function) get(keys_function());
 		}
 	},
 	getOwnPropertyDescriptor(target, key) {
@@ -125,11 +124,10 @@ const spread_props_handler = {
 				if (is_function(p)) obj = p();
 			});
 			const keys_function = target.keys[i];
-			if (keys_function && keys_function instanceof Function) get(keys_function());
 			if (typeof obj === 'object' && obj !== null && key in obj) {
 				if (is_function(p)) p = p();
 				return get_descriptor(p, key);
-			}
+			} else if (keys_function && keys_function instanceof Function) get(keys_function());
 		}
 	},
 	has(target, key) {
