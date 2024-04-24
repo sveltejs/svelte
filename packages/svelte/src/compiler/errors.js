@@ -1154,8 +1154,8 @@ export function svelte_options_unknown_attribute(node, name) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function illegal_svelte_head_attribute(node) {
-	e(node, "illegal_svelte_head_attribute", "`<svelte:head>` cannot have attributes nor directives");
+export function svelte_head_illegal_attribute(node) {
+	e(node, "svelte_head_illegal_attribute", "`<svelte:head>` cannot have attributes nor directives");
 }
 
 /**
@@ -1163,8 +1163,8 @@ export function illegal_svelte_head_attribute(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_svelte_fragment_attribute(node) {
-	e(node, "invalid_svelte_fragment_attribute", "`<svelte:fragment>` can only have a slot attribute and (optionally) a let: directive");
+export function svelte_fragment_invalid_attribute(node) {
+	e(node, "svelte_fragment_invalid_attribute", "`<svelte:fragment>` can only have a slot attribute and (optionally) a let: directive");
 }
 
 /**
@@ -1172,8 +1172,8 @@ export function invalid_svelte_fragment_attribute(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_svelte_fragment_slot(node) {
-	e(node, "invalid_svelte_fragment_slot", "`<svelte:fragment>` slot attribute must have a static value");
+export function svelte_fragment_invalid_slot(node) {
+	e(node, "svelte_fragment_invalid_slot", "`<svelte:fragment>` slot attribute must have a static value");
 }
 
 /**
@@ -1181,8 +1181,8 @@ export function invalid_svelte_fragment_slot(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_svelte_fragment_placement(node) {
-	e(node, "invalid_svelte_fragment_placement", "`<svelte:fragment>` must be the direct child of a component");
+export function svelte_fragment_invalid_placement(node) {
+	e(node, "svelte_fragment_invalid_placement", "`<svelte:fragment>` must be the direct child of a component");
 }
 
 /**
@@ -1191,8 +1191,8 @@ export function invalid_svelte_fragment_placement(node) {
  * @param {string} name
  * @returns {never}
  */
-export function invalid_svelte_element_placement(node, name) {
-	e(node, "invalid_svelte_element_placement", `<${name}> tags cannot be inside elements or blocks`);
+export function svelte_meta_invalid_placement(node, name) {
+	e(node, "svelte_meta_invalid_placement", `<${name}> tags cannot be inside elements or blocks`);
 }
 
 /**
@@ -1201,8 +1201,8 @@ export function invalid_svelte_element_placement(node, name) {
  * @param {string} name
  * @returns {never}
  */
-export function duplicate_svelte_element(node, name) {
-	e(node, "duplicate_svelte_element", `A component can only have one <${name}> element`);
+export function svelte_meta_duplicate(node, name) {
+	e(node, "svelte_meta_duplicate", `A component can only have one <${name}> element`);
 }
 
 /**
@@ -1210,8 +1210,8 @@ export function duplicate_svelte_element(node, name) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_self_placement(node) {
-	e(node, "invalid_self_placement", "`<svelte:self>` components can only exist inside {#if} blocks, {#each} blocks, {#snippet} blocks or slots passed to components");
+export function svelte_self_invalid_placement(node) {
+	e(node, "svelte_self_invalid_placement", "`<svelte:self>` components can only exist inside {#if} blocks, {#each} blocks, {#snippet} blocks or slots passed to components");
 }
 
 /**
@@ -1219,8 +1219,8 @@ export function invalid_self_placement(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function missing_svelte_element_definition(node) {
-	e(node, "missing_svelte_element_definition", "`<svelte:element>` must have a 'this' attribute");
+export function svelte_element_missing_this(node) {
+	e(node, "svelte_element_missing_this", "`<svelte:element>` must have a 'this' attribute");
 }
 
 /**
@@ -1228,8 +1228,8 @@ export function missing_svelte_element_definition(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function missing_svelte_component_definition(node) {
-	e(node, "missing_svelte_component_definition", "`<svelte:component>` must have a 'this' attribute");
+export function svelte_component_missing_this(node) {
+	e(node, "svelte_component_missing_this", "`<svelte:component>` must have a 'this' attribute");
 }
 
 /**
@@ -1237,8 +1237,8 @@ export function missing_svelte_component_definition(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_svelte_element_definition(node) {
-	e(node, "invalid_svelte_element_definition", "Invalid element definition — must be an {expression}");
+export function svelte_element_invalid_this(node) {
+	e(node, "svelte_element_invalid_this", "Invalid element definition — must be an {expression}");
 }
 
 /**
@@ -1246,8 +1246,8 @@ export function invalid_svelte_element_definition(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_svelte_component_definition(node) {
-	e(node, "invalid_svelte_component_definition", "Invalid component definition — must be an {expression}");
+export function svelte_component_invalid_this(node) {
+	e(node, "svelte_component_invalid_this", "Invalid component definition — must be an {expression}");
 }
 
 /**
@@ -1256,8 +1256,8 @@ export function invalid_svelte_component_definition(node) {
  * @param {string} list
  * @returns {never}
  */
-export function invalid_svelte_tag(node, list) {
-	e(node, "invalid_svelte_tag", `Valid \`<svelte:...>\` tag names are ${list}`);
+export function svelte_meta_invalid_tag(node, list) {
+	e(node, "svelte_meta_invalid_tag", `Valid \`<svelte:...>\` tag names are ${list}`);
 }
 
 /**
@@ -1265,8 +1265,8 @@ export function invalid_svelte_tag(node, list) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function conflicting_slot_usage(node) {
-	e(node, "conflicting_slot_usage", "Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.");
+export function slot_snippet_conflict(node) {
+	e(node, "slot_snippet_conflict", "Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.");
 }
 
 /**

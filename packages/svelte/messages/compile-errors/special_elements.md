@@ -30,54 +30,54 @@
 
 > `<svelte:options>` unknown attribute '%name%'
 
-## illegal_svelte_head_attribute
+## svelte_head_illegal_attribute
 
 > `<svelte:head>` cannot have attributes nor directives
 
-## invalid_svelte_fragment_attribute
+## svelte_fragment_invalid_attribute
 
 > `<svelte:fragment>` can only have a slot attribute and (optionally) a let: directive
 
-## invalid_svelte_fragment_slot
+## svelte_fragment_invalid_slot
 
 > `<svelte:fragment>` slot attribute must have a static value
 
-## invalid_svelte_fragment_placement
+## svelte_fragment_invalid_placement
 
 > `<svelte:fragment>` must be the direct child of a component
 
-## invalid_svelte_element_placement
+## svelte_meta_invalid_placement
 
 > <%name%> tags cannot be inside elements or blocks
 
-## duplicate_svelte_element
+## svelte_meta_duplicate
 
 > A component can only have one <%name%> element
 
-## invalid_self_placement
+## svelte_self_invalid_placement
 
 > `<svelte:self>` components can only exist inside {#if} blocks, {#each} blocks, {#snippet} blocks or slots passed to components
 
-## missing_svelte_element_definition
+## svelte_element_missing_this
 
 > `<svelte:element>` must have a 'this' attribute
 
-## missing_svelte_component_definition
+## svelte_component_missing_this
 
 > `<svelte:component>` must have a 'this' attribute
 
-## invalid_svelte_element_definition
+## svelte_element_invalid_this
 
 > Invalid element definition — must be an {expression}
 
-## invalid_svelte_component_definition
+## svelte_component_invalid_this
 
 > Invalid component definition — must be an {expression}
 
-## invalid_svelte_tag
+## svelte_meta_invalid_tag
 
 > Valid `<svelte:...>` tag names are %list%
 
-## conflicting_slot_usage
+## slot_snippet_conflict
 
 > Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.

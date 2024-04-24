@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid_svelte_element_definition",
+		"code": "svelte_element_invalid_this",
 		"message": "Invalid element definition — must be an {expression}",
 		"start": {
 			"line": 2,

@@ -646,7 +646,7 @@ const validation = {
 	SvelteHead(node) {
 		const attribute = node.attributes[0];
 		if (attribute) {
-			e.illegal_svelte_head_attribute(attribute);
+			e.svelte_head_illegal_attribute(attribute);
 		}
 	},
 	SvelteElement(node, context) {
@@ -659,7 +659,7 @@ const validation = {
 	SvelteFragment(node, context) {
 		const parent = context.path.at(-2);
 		if (parent?.type !== 'Component' && parent?.type !== 'SvelteComponent') {
-			e.invalid_svelte_fragment_placement(node);
+			e.svelte_fragment_invalid_placement(node);
 		}
 
 		for (const attribute of node.attributes) {
@@ -668,7 +668,7 @@ const validation = {
 					validate_slot_attribute(context, attribute);
 				}
 			} else if (attribute.type !== 'LetDirective') {
-				e.invalid_svelte_fragment_attribute(attribute);
+				e.svelte_fragment_invalid_attribute(attribute);
 			}
 		}
 	},

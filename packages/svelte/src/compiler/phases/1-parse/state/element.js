@@ -108,11 +108,11 @@ export default function tag(parser) {
 			}
 		} else {
 			if (name in parser.meta_tags) {
-				e.duplicate_svelte_element(start, name);
+				e.svelte_meta_duplicate(start, name);
 			}
 
 			if (parent.type !== 'Root') {
-				e.invalid_svelte_element_placement(start, name);
+				e.svelte_meta_invalid_placement(start, name);
 			}
 
 			parser.meta_tags[name] = true;
@@ -233,7 +233,7 @@ export default function tag(parser) {
 			(attr) => attr.type === 'Attribute' && attr.name === 'this'
 		);
 		if (index === -1) {
-			e.missing_svelte_component_definition(start);
+			e.svelte_component_missing_this(start);
 		}
 
 		const definition = /** @type {import('#compiler').Attribute} */ (
@@ -244,7 +244,7 @@ export default function tag(parser) {
 			definition.value.length !== 1 ||
 			definition.value[0].type === 'Text'
 		) {
-			e.invalid_svelte_component_definition(definition.start);
+			e.svelte_component_invalid_this(definition.start);
 		}
 
 		element.expression = definition.value[0].expression;
@@ -256,14 +256,14 @@ export default function tag(parser) {
 			(attr) => attr.type === 'Attribute' && attr.name === 'this'
 		);
 		if (index === -1) {
-			e.missing_svelte_element_definition(start);
+			e.svelte_element_missing_this(start);
 		}
 
 		const definition = /** @type {import('#compiler').Attribute} */ (
 			element.attributes.splice(index, 1)[0]
 		);
 		if (definition.value === true || definition.value.length !== 1) {
-			e.invalid_svelte_element_definition(definition.start);
+			e.svelte_element_invalid_this(definition.start);
 		}
 		const chunk = definition.value[0];
 		element.tag =
@@ -387,7 +387,7 @@ function read_tag_name(parser) {
 		}
 
 		if (!legal) {
-			e.invalid_self_placement(start);
+			e.svelte_self_invalid_placement(start);
 		}
 
 		return 'svelte:self';
@@ -404,7 +404,7 @@ function read_tag_name(parser) {
 
 	if (name.startsWith('svelte:')) {
 		const list = `${valid_meta_tags.slice(0, -1).join(', ')} or ${valid_meta_tags[valid_meta_tags.length - 1]}`;
-		e.invalid_svelte_tag(start, list);
+		e.svelte_meta_invalid_tag(start, list);
 	}
 
 	if (!valid_tag_name.test(name)) {
