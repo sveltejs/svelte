@@ -13,9 +13,11 @@ for (const category of fs.readdirSync('messages')) {
 	for (const file of fs.readdirSync(`messages/${category}`)) {
 		if (!file.endsWith('.md')) continue;
 
-		const markdown = fs.readFileSync(`messages/${category}/${file}`, 'utf-8');
+		const markdown = fs
+			.readFileSync(`messages/${category}/${file}`, 'utf-8')
+			.replace(/\r\n/g, '\n');
 
-		for (const match of markdown.matchAll(/## ([\w]+)\r?\n\r?\n([^]+?)(?=$|\r?\n\r?\n## )/g)) {
+		for (const match of markdown.matchAll(/## ([\w]+)\n\n([^]+?)(?=$|\n\n## )/g)) {
 			const [_, code, text] = match;
 
 			if (seen.has(code)) {
@@ -29,7 +31,9 @@ for (const category of fs.readdirSync('messages')) {
 }
 
 function transform(name, dest) {
-	const source = fs.readFileSync(new URL(`./templates/${name}.js`, import.meta.url), 'utf-8');
+	const source = fs
+		.readFileSync(new URL(`./templates/${name}.js`, import.meta.url), 'utf-8')
+		.replace(/\r\n/g, '\n');
 
 	const comments = [];
 
