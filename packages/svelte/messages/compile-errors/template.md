@@ -10,6 +10,14 @@
 
 > An element can only have one 'animate' directive
 
+## attribute_contenteditable_missing
+
+> 'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings
+
+## attribute_contenteditable_dynamic
+
+> 'contenteditable' attribute cannot be dynamic if element uses two-way binding
+
 ## attribute_duplicate
 
 > Attributes need to be unique
@@ -22,6 +30,10 @@
 
 > Event attribute must be a JavaScript expression, not a string
 
+## attribute_invalid_multiple
+
+> 'multiple' attribute must be static if select uses two-way binding
+
 ## attribute_invalid_name
 
 > '%name%' is not a valid attribute name
@@ -29,6 +41,28 @@
 ## attribute_invalid_sequence_expression
 
 > Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses
+
+## attribute_invalid_type
+
+> 'type' attribute must be a static text value if input uses two-way binding
+
+## bind_invalid_expression
+
+> Can only bind to an Identifier or MemberExpression
+
+## bind_invalid_name
+
+> `bind:%name%` is not a valid binding
+
+> `bind:%name%` is not a valid binding. %explanation%
+
+## bind_invalid_target
+
+> `bind:%name%` can only be used with %elements%
+
+## bind_invalid_value
+
+> Can only bind to state or props
 
 ## event_handler_invalid_modifier
 

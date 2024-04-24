@@ -321,7 +321,7 @@ const validation = {
 		const left = object(assignee);
 
 		if (left === null) {
-			e.invalid_binding_expression(node);
+			e.bind_invalid_expression(node);
 		}
 
 		const binding = context.state.scope.get(left.name);
@@ -341,7 +341,7 @@ const validation = {
 					binding.kind !== 'store_sub' &&
 					!binding.mutated)
 			) {
-				e.invalid_binding_value(node.expression);
+				e.bind_invalid_value(node.expression);
 			}
 
 			if (binding.kind === 'derived') {
@@ -377,7 +377,7 @@ const validation = {
 			parent?.type === 'SvelteBody'
 		) {
 			if (context.state.options.namespace === 'foreign' && node.name !== 'this') {
-				e.bind_invalid(node, node.name, 'Foreign elements only support `bind:this`');
+				e.bind_invalid_name(node, node.name, 'Foreign elements only support `bind:this`');
 			}
 
 			if (node.name in binding_properties) {
@@ -396,7 +396,7 @@ const validation = {
 					);
 					if (type && !is_text_attribute(type)) {
 						if (node.name !== 'value' || type.value === true) {
-							e.invalid_type_attribute(type);
+							e.attribute_invalid_type(type);
 						}
 						return; // bind:value can handle dynamic `type` attributes
 					}
@@ -419,7 +419,7 @@ const validation = {
 							a.value !== true
 					);
 					if (multiple) {
-						e.invalid_multiple_attribute(multiple);
+						e.attribute_invalid_multiple(multiple);
 					}
 				}
 
@@ -436,9 +436,9 @@ const validation = {
 						parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'contenteditable')
 					);
 					if (!contenteditable) {
-						e.missing_contenteditable_attribute(node);
+						e.attribute_contenteditable_missing(node);
 					} else if (!is_text_attribute(contenteditable) && contenteditable.value !== true) {
-						e.dynamic_contenteditable_attribute(contenteditable);
+						e.attribute_contenteditable_dynamic(contenteditable);
 					}
 				}
 			} else {
@@ -446,10 +446,10 @@ const validation = {
 				if (match) {
 					const property = binding_properties[match];
 					if (!property.valid_elements || property.valid_elements.includes(parent.name)) {
-						e.bind_invalid(node, node.name, `Did you mean '${match}'?`);
+						e.bind_invalid_name(node, node.name, `Did you mean '${match}'?`);
 					}
 				}
-				e.bind_invalid(node, node.name);
+				e.bind_invalid_name(node, node.name);
 			}
 		}
 	},

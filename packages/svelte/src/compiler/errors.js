@@ -57,109 +57,6 @@ function e(node, code, message) {
 }
 
 /**
- * `let:` directive at invalid position
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function let_directive_invalid_placement(node) {
-	e(node, "let_directive_invalid_placement", "`let:` directive at invalid position");
-}
-
-/**
- * `style:` directive can only use the `important` modifier
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function style_directive_invalid_modifier(node) {
-	e(node, "style_directive_invalid_modifier", "`style:` directive can only use the `important` modifier");
-}
-
-/**
- * Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function attribute_invalid_sequence_expression(node) {
-	e(node, "attribute_invalid_sequence_expression", "Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses");
-}
-
-/**
- * Can only bind to an Identifier or MemberExpression
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_binding_expression(node) {
-	e(node, "invalid_binding_expression", "Can only bind to an Identifier or MemberExpression");
-}
-
-/**
- * Can only bind to state or props
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_binding_value(node) {
-	e(node, "invalid_binding_value", "Can only bind to state or props");
-}
-
-/**
- * `bind:%name%` can only be used with %elements%
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @param {string} elements
- * @returns {never}
- */
-export function bind_invalid_target(node, name, elements) {
-	e(node, "bind_invalid_target", `\`bind:${name}\` can only be used with ${elements}`);
-}
-
-/**
- * `bind:%name%` is not a valid binding. %explanation%
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @param {string | undefined | null} [explanation]
- * @returns {never}
- */
-export function bind_invalid(node, name, explanation) {
-	e(node, "bind_invalid", explanation ? `\`bind:${name}\` is not a valid binding. ${explanation}` : `\`bind:${name}\` is not a valid binding`);
-}
-
-/**
- * 'type' attribute must be a static text value if input uses two-way binding
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_type_attribute(node) {
-	e(node, "invalid_type_attribute", "'type' attribute must be a static text value if input uses two-way binding");
-}
-
-/**
- * 'multiple' attribute must be static if select uses two-way binding
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_multiple_attribute(node) {
-	e(node, "invalid_multiple_attribute", "'multiple' attribute must be static if select uses two-way binding");
-}
-
-/**
- * 'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function missing_contenteditable_attribute(node) {
-	e(node, "missing_contenteditable_attribute", "'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings");
-}
-
-/**
- * 'contenteditable' attribute cannot be dynamic if element uses two-way binding
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function dynamic_contenteditable_attribute(node) {
-	e(node, "dynamic_contenteditable_attribute", "'contenteditable' attribute cannot be dynamic if element uses two-way binding");
-}
-
-/**
  * Invalid compiler option: %msg%
  * @param {null | number | NodeLike} node
  * @param {string} msg
@@ -1066,6 +963,24 @@ export function animation_duplicate(node) {
 }
 
 /**
+ * 'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function attribute_contenteditable_missing(node) {
+	e(node, "attribute_contenteditable_missing", "'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings");
+}
+
+/**
+ * 'contenteditable' attribute cannot be dynamic if element uses two-way binding
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function attribute_contenteditable_dynamic(node) {
+	e(node, "attribute_contenteditable_dynamic", "'contenteditable' attribute cannot be dynamic if element uses two-way binding");
+}
+
+/**
  * Attributes need to be unique
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -1093,6 +1008,15 @@ export function attribute_invalid_event_handler(node) {
 }
 
 /**
+ * 'multiple' attribute must be static if select uses two-way binding
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function attribute_invalid_multiple(node) {
+	e(node, "attribute_invalid_multiple", "'multiple' attribute must be static if select uses two-way binding");
+}
+
+/**
  * '%name%' is not a valid attribute name
  * @param {null | number | NodeLike} node
  * @param {string} name
@@ -1100,6 +1024,64 @@ export function attribute_invalid_event_handler(node) {
  */
 export function attribute_invalid_name(node, name) {
 	e(node, "attribute_invalid_name", `'${name}' is not a valid attribute name`);
+}
+
+/**
+ * Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function attribute_invalid_sequence_expression(node) {
+	e(node, "attribute_invalid_sequence_expression", "Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses");
+}
+
+/**
+ * 'type' attribute must be a static text value if input uses two-way binding
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function attribute_invalid_type(node) {
+	e(node, "attribute_invalid_type", "'type' attribute must be a static text value if input uses two-way binding");
+}
+
+/**
+ * Can only bind to an Identifier or MemberExpression
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function bind_invalid_expression(node) {
+	e(node, "bind_invalid_expression", "Can only bind to an Identifier or MemberExpression");
+}
+
+/**
+ * `bind:%name%` is not a valid binding. %explanation%
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @param {string | undefined | null} [explanation]
+ * @returns {never}
+ */
+export function bind_invalid_name(node, name, explanation) {
+	e(node, "bind_invalid_name", explanation ? `\`bind:${name}\` is not a valid binding. ${explanation}` : `\`bind:${name}\` is not a valid binding`);
+}
+
+/**
+ * `bind:%name%` can only be used with %elements%
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @param {string} elements
+ * @returns {never}
+ */
+export function bind_invalid_target(node, name, elements) {
+	e(node, "bind_invalid_target", `\`bind:${name}\` can only be used with ${elements}`);
+}
+
+/**
+ * Can only bind to state or props
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function bind_invalid_value(node) {
+	e(node, "bind_invalid_value", "Can only bind to state or props");
 }
 
 /**
@@ -1133,12 +1115,30 @@ export function event_handler_invalid_component_modifier(node) {
 }
 
 /**
+ * `let:` directive at invalid position
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function let_directive_invalid_placement(node) {
+	e(node, "let_directive_invalid_placement", "`let:` directive at invalid position");
+}
+
+/**
  * Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function slot_snippet_conflict(node) {
 	e(node, "slot_snippet_conflict", "Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.");
+}
+
+/**
+ * `style:` directive can only use the `important` modifier
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function style_directive_invalid_modifier(node) {
+	e(node, "style_directive_invalid_modifier", "`style:` directive can only use the `important` modifier");
 }
 
 /**
