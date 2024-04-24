@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.114
+
+### Patch Changes
+
+- feat: introduce types to express bindability ([#11225](https://github.com/sveltejs/svelte/pull/11225))
+
 ## 5.0.0-next.113
 
 ### Patch Changes
