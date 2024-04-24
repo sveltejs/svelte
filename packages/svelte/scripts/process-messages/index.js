@@ -111,12 +111,20 @@ function transform(name, dest) {
 				const value = node.value
 					.split('\n')
 					.map((line) => {
+						if (line === ' * MESSAGE') {
+							return message
+								.split('\n')
+								.map((line) => ` * ${line}`)
+								.join('\n');
+						}
+
 						if (line.includes('PARAMETER')) {
 							return vars.map((name) => ` * @param {string} ${name}`).join('\n');
 						}
 
 						return line;
 					})
+					.filter((x) => x !== '')
 					.join('\n');
 
 				if (value !== node.value) {
@@ -168,7 +176,7 @@ function transform(name, dest) {
 					for (let i = 0; i < parts.length; i += 1) {
 						const part = parts[i];
 						if (i % 2 === 0) {
-							const str = part.replace(/(`|\$)/g, '\\$1');
+							const str = part.replace(/(`|\${)/g, '\\$1');
 							quasis.push({
 								type: 'TemplateElement',
 								value: { raw: str, cooked: str },
@@ -211,3 +219,4 @@ function transform(name, dest) {
 }
 
 transform('compile-errors', 'src/compiler/errors.js');
+transform('compile-warnings', 'src/compiler/warnings.js');

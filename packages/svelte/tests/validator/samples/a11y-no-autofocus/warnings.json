@@ -1,7 +1,7 @@
 [
 	{
-		"code": "a11y-autofocus",
-		"message": "A11y: Avoid using autofocus",
+		"code": "a11y_autofocus",
+		"message": "Avoid using autofocus",
 		"start": {
 			"line": 1,
 			"column": 5

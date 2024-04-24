@@ -1,4 +1,4 @@
-<!-- svelte-ignore a11y-structure a11y-missing-attribute -->
+<!-- svelte-ignore a11y_figcaption_parent a11y_missing_attribute -->
 <div>
 	<figure>
 		<img src="potato.jpg">
@@ -7,7 +7,7 @@
 		</marquee>
 	</figure>
 
-	<!-- svelte-ignore a11y-distracting-elements -->
+	<!-- svelte-ignore a11y_distracting_elements -->
 	<figure>
 		<img src="potato.jpg">
 		<marquee>

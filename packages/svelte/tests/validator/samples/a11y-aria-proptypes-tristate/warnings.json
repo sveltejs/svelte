@@ -1,7 +1,7 @@
 [
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-checked' must be exactly one of true, false, or mixed",
+		"code": "a11y_incorrect_aria_attribute_type_tristate",
+		"message": "The value of 'aria-checked' must be exactly one of true, false, or mixed",
 		"start": {
 			"line": 5,
 			"column": 5
@@ -12,8 +12,8 @@
 		}
 	},
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-checked' must be exactly one of true, false, or mixed",
+		"code": "a11y_incorrect_aria_attribute_type_tristate",
+		"message": "The value of 'aria-checked' must be exactly one of true, false, or mixed",
 		"start": {
 			"line": 6,
 			"column": 5

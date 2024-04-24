@@ -1,6 +1,7 @@
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import * as e from '../../errors.js';
+import * as w from '../../warnings.js';
 import {
 	extract_identifiers,
 	extract_all_identifiers_from_expression,
@@ -14,7 +15,6 @@ import { ReservedKeywords, Runes, SVGElements } from '../constants.js';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import { merge } from '../visitors.js';
 import { validation_legacy, validation_runes, validation_runes_js } from './validation.js';
-import { warn } from '../../warnings.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
@@ -234,16 +234,9 @@ export function analyze_module(ast, options) {
 		}
 	}
 
-	/** @type {import('../types').RawWarning[]} */
-	const warnings = [];
-
-	const analysis = {
-		warnings
-	};
-
 	walk(
 		/** @type {import('estree').Node} */ (ast),
-		{ scope, analysis },
+		{ scope },
 		// @ts-expect-error TODO clean this mess up
 		merge(set_scope(scopes), validation_runes_js, runes_scope_js_tweaker)
 	);
@@ -251,7 +244,6 @@ export function analyze_module(ast, options) {
 	return {
 		module: { ast, scope, scopes },
 		name: options.filename || 'module',
-		warnings,
 		accessors: false,
 		runes: true,
 		immutable: true
@@ -274,9 +266,6 @@ export function analyze_component(root, source, options) {
 
 	/** @type {import('../types.js').Template} */
 	const template = { ast: root.fragment, scope, scopes };
-
-	/** @type {import('../types').RawWarning[]} */
-	const warnings = [];
 
 	// create synthetic bindings for store subscriptions
 	for (const [name, references] of module.scope.references) {
@@ -331,7 +320,7 @@ export function analyze_component(root, source, options) {
 				} else if (declaration !== null && Runes.includes(/** @type {any} */ (name))) {
 					for (const { node, path } of references) {
 						if (path.at(-1)?.type === 'CallExpression') {
-							warn(warnings, node, 'store-with-rune-name', store_name);
+							w.store_with_rune_name(node, store_name);
 						}
 					}
 				}
@@ -391,7 +380,6 @@ export function analyze_component(root, source, options) {
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
 		slot_names: new Map(),
-		warnings,
 		css: {
 			ast: root.css,
 			hash: root.css
@@ -408,7 +396,7 @@ export function analyze_component(root, source, options) {
 	};
 
 	if (!options.customElement && root.options?.customElement) {
-		warn(analysis.warnings, root.options, 'missing-custom-element-compile-option');
+		w.missing_custom_element_compile_option(root.options);
 	}
 
 	if (analysis.runes) {
@@ -498,7 +486,7 @@ export function analyze_component(root, source, options) {
 					(r) => r.node !== binding.node && r.path.at(-1)?.type !== 'ExportSpecifier'
 				);
 				if (!references.length && !instance.scope.declarations.has(`$${name}`)) {
-					warn(warnings, binding.node, 'unused-export-let', name);
+					w.unused_export_let(binding.node, name);
 				}
 			}
 		}
@@ -538,7 +526,7 @@ export function analyze_component(root, source, options) {
 									type === 'AwaitBlock' ||
 									type === 'KeyBlock'
 								) {
-									warn(warnings, binding.node, 'non-state-reference', name);
+									w.non_state_reference(binding.node, name);
 									continue outer;
 								}
 							}
@@ -546,7 +534,7 @@ export function analyze_component(root, source, options) {
 						}
 					}
 
-					warn(warnings, binding.node, 'non-state-reference', name);
+					w.non_state_reference(binding.node, name);
 					continue outer;
 				}
 			}
@@ -563,9 +551,9 @@ export function analyze_component(root, source, options) {
 
 		if (
 			!analysis.css.ast.content.comment ||
-			!extract_svelte_ignore(analysis.css.ast.content.comment.data).includes('css-unused-selector')
+			!extract_svelte_ignore(analysis.css.ast.content.comment.data).includes('css_unused_selector')
 		) {
-			warn_unused(analysis.css.ast, analysis.warnings);
+			warn_unused(analysis.css.ast);
 		}
 
 		outer: for (const element of analysis.elements) {
@@ -688,7 +676,7 @@ const legacy_scope_tweaker = {
 				(d) => d.scope === state.analysis.module.scope && d.declaration_kind !== 'const'
 			)
 		) {
-			warn(state.analysis.warnings, node, 'module-script-reactive-declaration');
+			w.module_script_reactive_declaration(node);
 		}
 
 		if (
@@ -874,7 +862,7 @@ const legacy_scope_tweaker = {
 	}
 };
 
-/** @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, { scope: Scope, analysis: { warnings: import('../types').RawWarning[] } }>} */
+/** @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, { scope: Scope }>} */
 const runes_scope_js_tweaker = {
 	VariableDeclarator(node, { state }) {
 		if (node.init?.type !== 'CallExpression') return;
@@ -1210,7 +1198,7 @@ const common_visitors = {
 					binding.kind === 'derived') &&
 				context.state.function_depth === binding.scope.function_depth
 			) {
-				warn(context.state.analysis.warnings, node, 'static-state-reference');
+				w.static_state_reference(node);
 			}
 		}
 	},

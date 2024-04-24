@@ -1,7 +1,7 @@
 [
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-relevant' must be a space-separated list of one or more of additions, all, removals, text",
+		"code": "a11y_incorrect_aria_attribute_type_tokenlist",
+		"message": "The value of 'aria-relevant' must be a space-separated list of one or more of \"additions\", \"all\", \"removals\" or \"text\"",
 		"start": {
 			"line": 1,
 			"column": 5
@@ -12,8 +12,8 @@
 		}
 	},
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-relevant' must be a space-separated list of one or more of additions, all, removals, text",
+		"code": "a11y_incorrect_aria_attribute_type_tokenlist",
+		"message": "The value of 'aria-relevant' must be a space-separated list of one or more of \"additions\", \"all\", \"removals\" or \"text\"",
 		"start": {
 			"line": 2,
 			"column": 5
@@ -24,8 +24,8 @@
 		}
 	},
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-relevant' must be a space-separated list of one or more of additions, all, removals, text",
+		"code": "a11y_incorrect_aria_attribute_type_tokenlist",
+		"message": "The value of 'aria-relevant' must be a space-separated list of one or more of \"additions\", \"all\", \"removals\" or \"text\"",
 		"start": {
 			"line": 3,
 			"column": 5
@@ -36,8 +36,8 @@
 		}
 	},
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-relevant' must be a space-separated list of one or more of additions, all, removals, text",
+		"code": "a11y_incorrect_aria_attribute_type_tokenlist",
+		"message": "The value of 'aria-relevant' must be a space-separated list of one or more of \"additions\", \"all\", \"removals\" or \"text\"",
 		"start": {
 			"line": 6,
 			"column": 5
@@ -48,8 +48,8 @@
 		}
 	},
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-relevant' must be a space-separated list of one or more of additions, all, removals, text",
+		"code": "a11y_incorrect_aria_attribute_type_tokenlist",
+		"message": "The value of 'aria-relevant' must be a space-separated list of one or more of \"additions\", \"all\", \"removals\" or \"text\"",
 		"start": {
 			"line": 7,
 			"column": 5

@@ -1,6 +1,6 @@
 [
 	{
-		"code": "css-unused-selector",
+		"code": "css_unused_selector",
 		"end": {
 			"column": 17,
 			"line": 10

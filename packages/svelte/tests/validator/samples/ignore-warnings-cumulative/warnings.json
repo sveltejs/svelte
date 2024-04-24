@@ -1,11 +1,11 @@
 [
 	{
-		"code": "a11y-distracting-elements",
+		"code": "a11y_distracting_elements",
 		"end": {
 			"column": 12,
 			"line": 7
 		},
-		"message": "A11y: Avoid <marquee> elements",
+		"message": "Avoid <marquee> elements",
 		"start": {
 			"column": 2,
 			"line": 5

@@ -1,6 +1,6 @@
 [
 	{
-		"code": "deprecated-slot-element",
+		"code": "deprecated_slot_element",
 		"end": {
 			"column": 13,
 			"line": 11
@@ -12,7 +12,7 @@
 		}
 	},
 	{
-		"code": "deprecated-slot-element",
+		"code": "deprecated_slot_element",
 		"end": {
 			"column": 24,
 			"line": 12
@@ -24,7 +24,7 @@
 		}
 	},
 	{
-		"code": "deprecated-event-handler",
+		"code": "deprecated_event_handler",
 		"end": {
 			"column": 22,
 			"line": 13

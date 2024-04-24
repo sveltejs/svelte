@@ -1,23 +1,23 @@
 [
 	{
-		"code": "a11y-distracting-elements",
+		"code": "a11y_distracting_elements",
 		"end": {
 			"column": 49,
 			"line": 4
 		},
-		"message": "A11y: Avoid <marquee> elements",
+		"message": "Avoid <marquee> elements",
 		"start": {
 			"column": 1,
 			"line": 4
 		}
 	},
 	{
-		"code": "a11y-missing-attribute",
+		"code": "a11y_missing_attribute",
 		"end": {
 			"column": 22,
 			"line": 7
 		},
-		"message": "A11y: <img> element should have an alt attribute",
+		"message": "<img> element should have an alt attribute",
 		"start": {
 			"column": 0,
 			"line": 7

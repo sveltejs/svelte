@@ -1,7 +1,7 @@
 [
 	{
-		"code": "a11y-unknown-aria-attribute",
-		"message": "A11y: Unknown aria attribute 'aria-labeledby' (did you mean 'labelledby'?)",
+		"code": "a11y_unknown_aria_attribute_suggestion",
+		"message": "Unknown aria attribute 'aria-labeledby'. Did you mean 'labelledby'?",
 		"start": {
 			"line": 1,
 			"column": 20
@@ -12,8 +12,8 @@
 		}
 	},
 	{
-		"code": "a11y-missing-attribute",
-		"message": "A11y: <input type=\"image\"> element should have an alt, aria-label or aria-labelledby attribute",
+		"code": "a11y_missing_attribute",
+		"message": "<input type=\"image\"> element should have an alt, aria-label or aria-labelledby attribute",
 		"start": {
 			"column": 0,
 			"line": 1
