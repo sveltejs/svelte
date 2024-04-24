@@ -1,6 +1,6 @@
 [
 	{
-		"code": "a11y_unknown_aria_attribute_suggestion",
+		"code": "a11y_unknown_aria_attribute",
 		"message": "Unknown aria attribute 'aria-labeledby'. Did you mean 'labelledby'?",
 		"start": {
 			"line": 1,

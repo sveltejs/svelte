@@ -50,22 +50,13 @@ export function a11y_aria_attributes(node, name) {
 }
 
 /**
- * Unknown aria attribute 'aria-%attribute%'
- * @param {null | NodeLike} node
- * @param {string} attribute
- */
-export function a11y_unknown_aria_attribute(node, attribute) {
-	w(node, "a11y_unknown_aria_attribute", `Unknown aria attribute 'aria-${attribute}'`);
-}
-
-/**
  * Unknown aria attribute 'aria-%attribute%'. Did you mean '%suggestion%'?
  * @param {null | NodeLike} node
  * @param {string} attribute
- * @param {string} suggestion
+ * @param {string | undefined | null} [suggestion]
  */
-export function a11y_unknown_aria_attribute_suggestion(node, attribute, suggestion) {
-	w(node, "a11y_unknown_aria_attribute_suggestion", `Unknown aria attribute 'aria-${attribute}'. Did you mean '${suggestion}'?`);
+export function a11y_unknown_aria_attribute(node, attribute, suggestion) {
+	w(node, "a11y_unknown_aria_attribute", suggestion ? `Unknown aria attribute 'aria-${attribute}'. Did you mean '${suggestion}'?` : `Unknown aria attribute 'aria-${attribute}'`);
 }
 
 /**
@@ -179,22 +170,13 @@ export function a11y_no_abstract_role(node, role) {
 }
 
 /**
- * Unknown role '%role%'
- * @param {null | NodeLike} node
- * @param {string} role
- */
-export function a11y_unknown_role(node, role) {
-	w(node, "a11y_unknown_role", `Unknown role '${role}'`);
-}
-
-/**
  * Unknown role '%role%'. Did you mean '%suggestion%'?
  * @param {null | NodeLike} node
  * @param {string} role
- * @param {string} suggestion
+ * @param {string | undefined | null} [suggestion]
  */
-export function a11y_unknown_role_suggestion(node, role, suggestion) {
-	w(node, "a11y_unknown_role_suggestion", `Unknown role '${role}'. Did you mean '${suggestion}'?`);
+export function a11y_unknown_role(node, role, suggestion) {
+	w(node, "a11y_unknown_role", suggestion ? `Unknown role '${role}'. Did you mean '${suggestion}'?` : `Unknown role '${role}'`);
 }
 
 /**
@@ -545,11 +527,11 @@ export function invalid_self_closing_tag(node, name) {
 }
 
 /**
- * e `accessors` option has been deprecated. It will have no effect in runes mode
+ * The `accessors` option has been deprecated. It will have no effect in runes mode
  * @param {null | NodeLike} node
  */
 export function options_deprecated_accessors(node) {
-	w(node, "options_deprecated_accessors", "e `accessors` option has been deprecated. It will have no effect in runes mode");
+	w(node, "options_deprecated_accessors", "The `accessors` option has been deprecated. It will have no effect in runes mode");
 }
 
 /**

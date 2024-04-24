@@ -31,3 +31,17 @@ export function ownership_invalid_binding(parent, child, owner) {
 		console.warn("ownership_invalid_binding");
 	}
 }
+
+/**
+ * %component% mutated a value owned by %owner%. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead
+ * @param {string | undefined | null} [component]
+ * @param {string | undefined | null} [owner]
+ */
+export function ownership_invalid_mutation(component, owner) {
+	if (DEV) {
+		console.warn(`%c[svelte] ${"ownership_invalid_mutation"}\n%c${`${component} mutated a value owned by ${owner}. This is strongly discouraged. Consider passing values to child components with \`bind:\`, or use a callback instead`}`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("ownership_invalid_mutation");
+	}
+}

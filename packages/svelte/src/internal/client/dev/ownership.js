@@ -225,18 +225,13 @@ export function check_ownership(metadata) {
 	if (component && !has_owner(metadata, component)) {
 		let original = get_owner(metadata);
 
-		let message =
+		// @ts-expect-error
+		if (original.filename !== component.filename) {
 			// @ts-expect-error
-			original.filename !== component.filename
-				? // @ts-expect-error
-					`${component.filename} mutated a value owned by ${original.filename}. This is strongly discouraged`
-				: 'Mutating a value outside the component that created it is strongly discouraged';
-
-		// TODO get rid of this, but implement message overloads first
-		// eslint-disable-next-line no-console
-		console.warn(
-			`${message}. Consider passing values to child components with \`bind:\`, or use a callback instead.`
-		);
+			w.ownership_invalid_mutation(component.filename, original.filename);
+		} else {
+			w.ownership_invalid_mutation();
+		}
 
 		// eslint-disable-next-line no-console
 		console.trace();

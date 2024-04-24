@@ -1,6 +1,6 @@
 [
 	{
-		"code": "bind_invalid_detailed",
+		"code": "bind_invalid",
 		"message": "`bind:innerwidth` is not a valid binding. Did you mean 'innerWidth'?",
 		"start": {
 			"line": 5,
