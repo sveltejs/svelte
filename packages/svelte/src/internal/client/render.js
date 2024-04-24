@@ -19,6 +19,7 @@ import {
 import { array_from } from './utils.js';
 import { handle_event_propagation } from './dom/elements/events.js';
 import { reset_head_anchor } from './dom/blocks/svelte-head.js';
+import * as w from './warnings.js';
 
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
@@ -274,6 +275,7 @@ function _mount(
 				target.removeEventListener(event_name, bound_event_listener);
 			}
 			root_event_handles.delete(event_handle);
+			mounted_components.delete(component);
 		};
 	});
 
@@ -294,8 +296,7 @@ let mounted_components = new WeakMap();
 export function unmount(component) {
 	const fn = mounted_components.get(component);
 	if (DEV && !fn) {
-		// eslint-disable-next-line no-console
-		console.warn('Tried to unmount a component that was not mounted.');
+		w.lifecycle_double_unmount(true);
 	}
 	fn?.();
 }

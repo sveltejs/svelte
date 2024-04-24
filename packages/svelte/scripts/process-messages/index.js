@@ -220,3 +220,6 @@ function transform(name, dest) {
 
 transform('compile-errors', 'src/compiler/errors.js');
 transform('compile-warnings', 'src/compiler/warnings.js');
+
+transform('client-warnings', 'src/internal/client/warnings.js');
+transform('shared-warnings', 'src/internal/shared/warnings.js');
