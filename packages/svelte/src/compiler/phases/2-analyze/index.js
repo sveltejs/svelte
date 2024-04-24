@@ -484,7 +484,7 @@ export function analyze_component(root, source, options) {
 					(r) => r.node !== binding.node && r.path.at(-1)?.type !== 'ExportSpecifier'
 				);
 				if (!references.length && !instance.scope.declarations.has(`$${name}`)) {
-					w.unused_export_let(binding.node, name);
+					w.export_let_unused(binding.node, name);
 				}
 			}
 		}
@@ -674,7 +674,7 @@ const legacy_scope_tweaker = {
 				(d) => d.scope === state.analysis.module.scope && d.declaration_kind !== 'const'
 			)
 		) {
-			w.module_script_reactive_declaration(node);
+			w.reactive_declaration_module_script(node);
 		}
 
 		if (

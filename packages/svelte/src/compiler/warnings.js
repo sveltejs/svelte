@@ -415,109 +415,6 @@ export function a11y_unknown_role(node, role, suggestion) {
 }
 
 /**
- * The "is" attribute is not supported cross-browser and should be avoided
- * @param {null | NodeLike} node
- */
-export function avoid_is(node) {
-	w(node, "avoid_is", "The \"is\" attribute is not supported cross-browser and should be avoided");
-}
-
-/**
- * You are referencing globalThis.%name%. Did you forget to declare a variable with that name?
- * @param {null | NodeLike} node
- * @param {string} name
- */
-export function global_event_reference(node, name) {
-	w(node, "global_event_reference", `You are referencing globalThis.${name}. Did you forget to declare a variable with that name?`);
-}
-
-/**
- * Attributes should not contain ':' characters to prevent ambiguity with Svelte directives
- * @param {null | NodeLike} node
- */
-export function illegal_attribute_character(node) {
-	w(node, "illegal_attribute_character", "Attributes should not contain ':' characters to prevent ambiguity with Svelte directives");
-}
-
-/**
- * '%wrong%' is not a valid HTML attribute. Did you mean '%right%'?
- * @param {null | NodeLike} node
- * @param {string} wrong
- * @param {string} right
- */
-export function invalid_html_attribute(node, wrong, right) {
-	w(node, "invalid_html_attribute", `'${wrong}' is not a valid HTML attribute. Did you mean '${right}'?`);
-}
-
-/**
- * Empty block
- * @param {null | NodeLike} node
- */
-export function empty_block(node) {
-	w(node, "empty_block", "Empty block");
-}
-
-/**
- * <%name%> will be treated as an HTML element unless it begins with a capital letter
- * @param {null | NodeLike} node
- * @param {string} name
- */
-export function component_name_lowercase(node, name) {
-	w(node, "component_name_lowercase", `<${name}> will be treated as an HTML element unless it begins with a capital letter`);
-}
-
-/**
- * Unused CSS selector "%name%"
- * @param {null | NodeLike} node
- * @param {string} name
- */
-export function css_unused_selector(node, name) {
-	w(node, "css_unused_selector", `Unused CSS selector "${name}"`);
-}
-
-/**
- * Using on:%name% to listen to the %name% event is is deprecated. Use the event attribute on%name% instead.
- * @param {null | NodeLike} node
- * @param {string} name
- */
-export function deprecated_event_handler(node, name) {
-	w(node, "deprecated_event_handler", `Using on:${name} to listen to the ${name} event is is deprecated. Use the event attribute on${name} instead.`);
-}
-
-/**
- * Using <slot> to render parent content is deprecated. Use {@render ...} tags instead.
- * @param {null | NodeLike} node
- */
-export function deprecated_slot_element(node) {
-	w(node, "deprecated_slot_element", "Using <slot> to render parent content is deprecated. Use {@render ...} tags instead.");
-}
-
-/**
- * All dependencies of the reactive declaration are declared in a module script and will not be reactive
- * @param {null | NodeLike} node
- */
-export function module_script_reactive_declaration(node) {
-	w(node, "module_script_reactive_declaration", "All dependencies of the reactive declaration are declared in a module script and will not be reactive");
-}
-
-/**
- * Reactive declarations only exist at the top level of the instance script
- * @param {null | NodeLike} node
- */
-export function no_reactive_declaration(node) {
-	w(node, "no_reactive_declaration", "Reactive declarations only exist at the top level of the instance script");
-}
-
-/**
- * Component has unused export property '%name%'. If it is for external reference only, please consider using `export const %name%`
- * @param {null | NodeLike} node
- * @param {string} name
- */
-export function unused_export_let(node, name) {
-	w(node, "unused_export_let", `Component has unused export property '${name}'. If it is for external reference only, please consider using \`export const ${name}\``);
-}
-
-/**
  * Self-closing HTML tags for non-void elements are ambiguous — use <%name% ...></%name%> rather than <%name% ... />
  * @param {null | NodeLike} node
  * @param {string} name
@@ -583,22 +480,6 @@ export function options_renamed_ssr_dom(node) {
 }
 
 /**
- * Avoid 'new class' — instead, declare the class at the top level scope
- * @param {null | NodeLike} node
- */
-export function avoid_inline_class(node) {
-	w(node, "avoid_inline_class", "Avoid 'new class' — instead, declare the class at the top level scope");
-}
-
-/**
- * Avoid declaring classes below the top level scope
- * @param {null | NodeLike} node
- */
-export function avoid_nested_class(node) {
-	w(node, "avoid_nested_class", "Avoid declaring classes below the top level scope");
-}
-
-/**
  * Use `$derived.by(() => {...})` instead of `$derived((() => {...})())`
  * @param {null | NodeLike} node
  */
@@ -641,6 +522,47 @@ export function store_with_rune_name(node, name) {
 }
 
 /**
+ * Avoid 'new class' — instead, declare the class at the top level scope
+ * @param {null | NodeLike} node
+ */
+export function perf_avoid_inline_class(node) {
+	w(node, "perf_avoid_inline_class", "Avoid 'new class' — instead, declare the class at the top level scope");
+}
+
+/**
+ * Avoid declaring classes below the top level scope
+ * @param {null | NodeLike} node
+ */
+export function perf_avoid_nested_class(node) {
+	w(node, "perf_avoid_nested_class", "Avoid declaring classes below the top level scope");
+}
+
+/**
+ * All dependencies of the reactive declaration are declared in a module script and will not be reactive
+ * @param {null | NodeLike} node
+ */
+export function reactive_declaration_module_script(node) {
+	w(node, "reactive_declaration_module_script", "All dependencies of the reactive declaration are declared in a module script and will not be reactive");
+}
+
+/**
+ * Reactive declarations only exist at the top level of the instance script
+ * @param {null | NodeLike} node
+ */
+export function reactive_declaration_invalid_placement(node) {
+	w(node, "reactive_declaration_invalid_placement", "Reactive declarations only exist at the top level of the instance script");
+}
+
+/**
+ * Component has unused export property '%name%'. If it is for external reference only, please consider using `export const %name%`
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function export_let_unused(node, name) {
+	w(node, "export_let_unused", `Component has unused export property '${name}'. If it is for external reference only, please consider using \`export const ${name}\``);
+}
+
+/**
  * The rest operator (...) will create a new object and binding '%name%' with the original object will not work
  * @param {null | NodeLike} node
  * @param {string} name
@@ -655,4 +577,91 @@ export function invalid_rest_eachblock_binding(node, name) {
  */
 export function static_state_reference(node) {
 	w(node, "static_state_reference", "State referenced in its own scope will never update. Did you mean to reference it inside a closure?");
+}
+
+/**
+ * Unused CSS selector "%name%"
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function css_unused_selector(node, name) {
+	w(node, "css_unused_selector", `Unused CSS selector "${name}"`);
+}
+
+/**
+ * The "is" attribute is not supported cross-browser and should be avoided
+ * @param {null | NodeLike} node
+ */
+export function attribute_avoid_is(node) {
+	w(node, "attribute_avoid_is", "The \"is\" attribute is not supported cross-browser and should be avoided");
+}
+
+/**
+ * Attributes should not contain ':' characters to prevent ambiguity with Svelte directives
+ * @param {null | NodeLike} node
+ */
+export function attribute_illegal_colon(node) {
+	w(node, "attribute_illegal_colon", "Attributes should not contain ':' characters to prevent ambiguity with Svelte directives");
+}
+
+/**
+ * '%wrong%' is not a valid HTML attribute. Did you mean '%right%'?
+ * @param {null | NodeLike} node
+ * @param {string} wrong
+ * @param {string} right
+ */
+export function attribute_invalid_property_name(node, wrong, right) {
+	w(node, "attribute_invalid_property_name", `'${wrong}' is not a valid HTML attribute. Did you mean '${right}'?`);
+}
+
+/**
+ * You are referencing globalThis.%name%. Did you forget to declare a variable with that name?
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function attribute_global_event_reference(node, name) {
+	w(node, "attribute_global_event_reference", `You are referencing globalThis.${name}. Did you forget to declare a variable with that name?`);
+}
+
+/**
+ * Empty block
+ * @param {null | NodeLike} node
+ */
+export function block_empty(node) {
+	w(node, "block_empty", "Empty block");
+}
+
+/**
+ * `<%name%>` will be treated as an HTML element unless it begins with a capital letter
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function component_name_lowercase(node, name) {
+	w(node, "component_name_lowercase", `\`<${name}>\` will be treated as an HTML element unless it begins with a capital letter`);
+}
+
+/**
+ * Using on:%name% to listen to the %name% event is is deprecated. Use the event attribute on%name% instead.
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function event_directive_deprecated(node, name) {
+	w(node, "event_directive_deprecated", `Using on:${name} to listen to the ${name} event is is deprecated. Use the event attribute on${name} instead.`);
+}
+
+/**
+ * Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead.
+ * @param {null | NodeLike} node
+ */
+export function slot_element_deprecated(node) {
+	w(node, "slot_element_deprecated", "Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead.");
+}
+
+/**
+ * Self-closing HTML tags for non-void elements are ambiguous — use `<%name% ...></%name%>` rather than `<%name% ... />`
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function element_invalid_self_closing_tag(node, name) {
+	w(node, "element_invalid_self_closing_tag", `Self-closing HTML tags for non-void elements are ambiguous — use \`<${name} ...></${name}>\` rather than \`<${name} ... />\``);
 }

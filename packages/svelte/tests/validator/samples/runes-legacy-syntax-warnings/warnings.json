@@ -1,30 +1,30 @@
 [
 	{
-		"code": "deprecated_slot_element",
+		"code": "slot_element_deprecated",
 		"end": {
 			"column": 13,
 			"line": 11
 		},
-		"message": "Using <slot> to render parent content is deprecated. Use {@render ...} tags instead.",
+		"message": "Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead.",
 		"start": {
 			"column": 0,
 			"line": 11
 		}
 	},
 	{
-		"code": "deprecated_slot_element",
+		"code": "slot_element_deprecated",
 		"end": {
 			"column": 24,
 			"line": 12
 		},
-		"message": "Using <slot> to render parent content is deprecated. Use {@render ...} tags instead.",
+		"message": "Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead.",
 		"start": {
 			"column": 0,
 			"line": 12
 		}
 	},
 	{
-		"code": "deprecated_event_handler",
+		"code": "event_directive_deprecated",
 		"end": {
 			"column": 22,
 			"line": 13

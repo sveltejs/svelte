@@ -131,7 +131,7 @@ function validate_element(node, context) {
 					value.name === attribute.name &&
 					!context.state.scope.get(value.name)
 				) {
-					w.global_event_reference(attribute, attribute.name);
+					w.attribute_global_event_reference(attribute, attribute.name);
 				}
 			}
 
@@ -141,12 +141,12 @@ function validate_element(node, context) {
 			}
 
 			if (attribute.name === 'is' && context.state.options.namespace !== 'foreign') {
-				w.avoid_is(attribute);
+				w.attribute_avoid_is(attribute);
 			}
 
 			const correct_name = react_attributes.get(attribute.name);
 			if (correct_name) {
-				w.invalid_html_attribute(attribute, attribute.name, correct_name);
+				w.attribute_invalid_property_name(attribute, attribute.name, correct_name);
 			}
 
 			validate_attribute_name(attribute);
@@ -225,7 +225,7 @@ function validate_attribute_name(attribute) {
 		!attribute.name.startsWith('xlink:') &&
 		!attribute.name.startsWith('xml:')
 	) {
-		w.illegal_attribute_character(attribute);
+		w.attribute_illegal_colon(attribute);
 	}
 }
 
@@ -303,7 +303,7 @@ function validate_block_not_empty(node, context) {
 	// Assumption: If the block has zero elements, someone's in the middle of typing it out,
 	// so don't warn in that case because it would be distracting.
 	if (node.nodes.length === 1 && node.nodes[0].type === 'Text' && !node.nodes[0].raw.trim()) {
-		w.empty_block(node.nodes[0]);
+		w.block_empty(node.nodes[0]);
 	}
 }
 
@@ -557,7 +557,7 @@ const validation = {
 			!VoidElements.includes(node.name) &&
 			!SVGElements.includes(node.name)
 		) {
-			w.invalid_self_closing_tag(node, node.name);
+			w.element_invalid_self_closing_tag(node, node.name);
 		}
 
 		context.next({
@@ -753,7 +753,7 @@ export const validation_legacy = merge(validation, a11y_validators, {
 			(state.ast_type !== 'instance' ||
 				/** @type {import('#compiler').SvelteNode} */ (path.at(-1)).type !== 'Program')
 		) {
-			w.no_reactive_declaration(node);
+			w.reactive_declaration_invalid_placement(node);
 		}
 	},
 	UpdateExpression(node, { state }) {
@@ -956,12 +956,12 @@ export const validation_runes_js = {
 		const allowed_depth = context.state.ast_type === 'module' ? 0 : 1;
 
 		if (context.state.scope.function_depth > allowed_depth) {
-			w.avoid_nested_class(node);
+			w.perf_avoid_nested_class(node);
 		}
 	},
 	NewExpression(node, context) {
 		if (node.callee.type === 'ClassExpression' && context.state.scope.function_depth > 0) {
-			w.avoid_inline_class(node);
+			w.perf_avoid_inline_class(node);
 		}
 	}
 };
@@ -1182,14 +1182,14 @@ export const validation_runes = merge(validation, a11y_validators, {
 	},
 	SlotElement(node, { state }) {
 		if (!state.analysis.custom_element) {
-			w.deprecated_slot_element(node);
+			w.slot_element_deprecated(node);
 		}
 	},
 	OnDirective(node, { path }) {
 		const parent_type = path.at(-1)?.type;
 		// Don't warn on component events; these might not be under the author's control so the warning would be unactionable
 		if (parent_type === 'RegularElement' || parent_type === 'SvelteElement') {
-			w.deprecated_event_handler(node, node.name);
+			w.event_directive_deprecated(node, node.name);
 		}
 	},
 	// TODO this is a code smell. need to refactor this stuff

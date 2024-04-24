@@ -1,6 +1,6 @@
 [
 	{
-		"code": "avoid_inline_class",
+		"code": "perf_avoid_inline_class",
 		"message": "Avoid 'new class' — instead, declare the class at the top level scope",
 		"start": {
 			"column": 12,

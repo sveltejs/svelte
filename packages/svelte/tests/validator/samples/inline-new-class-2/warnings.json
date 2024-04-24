@@ -1,6 +1,6 @@
 [
 	{
-		"code": "avoid_nested_class",
+		"code": "perf_avoid_nested_class",
 		"message": "Avoid declaring classes below the top level scope",
 		"start": {
 			"column": 2,

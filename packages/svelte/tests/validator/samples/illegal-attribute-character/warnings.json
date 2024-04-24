@@ -1,6 +1,6 @@
 [
 	{
-		"code": "illegal_attribute_character",
+		"code": "attribute_illegal_colon",
 		"end": {
 			"column": 15,
 			"line": 14
@@ -12,7 +12,7 @@
 		}
 	},
 	{
-		"code": "illegal_attribute_character",
+		"code": "attribute_illegal_colon",
 		"end": {
 			"column": 10,
 			"line": 15

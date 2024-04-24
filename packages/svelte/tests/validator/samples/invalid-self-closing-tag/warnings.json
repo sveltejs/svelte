@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid_self_closing_tag",
-		"message": "Self-closing HTML tags for non-void elements are ambiguous — use <div ...></div> rather than <div ... />",
+		"code": "element_invalid_self_closing_tag",
+		"message": "Self-closing HTML tags for non-void elements are ambiguous — use `<div ...></div>` rather than `<div ... />`",
 		"start": {
 			"line": 6,
 			"column": 0
@@ -12,8 +12,8 @@
 		}
 	},
 	{
-		"code": "invalid_self_closing_tag",
-		"message": "Self-closing HTML tags for non-void elements are ambiguous — use <my-thing ...></my-thing> rather than <my-thing ... />",
+		"code": "element_invalid_self_closing_tag",
+		"message": "Self-closing HTML tags for non-void elements are ambiguous — use `<my-thing ...></my-thing>` rather than `<my-thing ... />`",
 		"start": {
 			"line": 7,
 			"column": 0
