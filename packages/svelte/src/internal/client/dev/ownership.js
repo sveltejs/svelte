@@ -116,7 +116,7 @@ export function add_owner(object, owner, global = false) {
 			let original = get_owner(metadata);
 
 			if (owner.filename !== component.filename) {
-				w.ownership_invalid_binding(false, component.filename, owner.filename, original.filename);
+				w.ownership_invalid_binding(component.filename, owner.filename, original.filename);
 			}
 		}
 	}
