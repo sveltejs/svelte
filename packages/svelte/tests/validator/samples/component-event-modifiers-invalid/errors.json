@@ -1,7 +1,7 @@
 [
 	{
 		"message": "Event modifiers other than 'once' can only be used on DOM elements",
-		"code": "invalid-event-modifier",
+		"code": "invalid_component_event_modifier",
 		"start": {
 			"line": 6,
 			"column": 8

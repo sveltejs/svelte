@@ -1,8 +1,14 @@
 [
 	{
-		"code": "invalid-const-assignment",
-		"message": "Invalid assignment to const variable ($derived values, let: directives, :then/:catch variables and @const declarations count as const)",
-		"start": { "line": 7, "column": 26 },
-		"end": { "line": 7, "column": 30 }
+		"code": "invalid_assignment",
+		"message": "Cannot assign to constant",
+		"start": {
+			"line": 7,
+			"column": 26
+		},
+		"end": {
+			"line": 7,
+			"column": 30
+		}
 	}
 ]

@@ -1,6 +1,6 @@
 [
 	{
-		"code": "js-parse-error",
+		"code": "js_parse_error",
 		"message": "Unexpected token",
 		"start": {
 			"line": 1,

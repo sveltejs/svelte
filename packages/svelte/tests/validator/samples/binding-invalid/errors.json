@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-binding",
-		"message": "'whatever' is not a valid binding",
+		"code": "bind_invalid",
+		"message": "`bind:whatever` is not a valid binding",
 		"start": {
 			"line": 5,
 			"column": 5

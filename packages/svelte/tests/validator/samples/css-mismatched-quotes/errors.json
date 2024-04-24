@@ -1,6 +1,6 @@
 [
 	{
-		"code": "unexpected-eof",
+		"code": "unexpected_eof",
 		"message": "Unexpected end of input",
 		"start": {
 			"line": 7,

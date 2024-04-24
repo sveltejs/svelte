@@ -1,7 +1,7 @@
 [
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-disabled' must be exactly one of true or false",
+		"code": "a11y_incorrect_aria_attribute_type_boolean",
+		"message": "The value of 'aria-disabled' must be either 'true' or 'false'",
 		"start": {
 			"line": 5,
 			"column": 8
@@ -12,8 +12,8 @@
 		}
 	},
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-disabled' must be exactly one of true or false",
+		"code": "a11y_incorrect_aria_attribute_type_boolean",
+		"message": "The value of 'aria-disabled' must be either 'true' or 'false'",
 		"start": {
 			"line": 6,
 			"column": 8

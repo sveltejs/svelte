@@ -1,5 +1,4 @@
 import { walk } from 'zimmerframe';
-import { error } from '../../../errors.js';
 import * as b from '../../../utils/builders.js';
 import { set_scope } from '../../scope.js';
 import { template_visitors } from './visitors/template.js';
@@ -52,35 +51,41 @@ export function client_component(source, analysis, options) {
 		get before_init() {
 			/** @type {any[]} */
 			const a = [];
-			a.push = () =>
-				error(null, 'INTERNAL', 'before_init.push should not be called outside create_block');
+			a.push = () => {
+				throw new Error('before_init.push should not be called outside create_block');
+			};
 			return a;
 		},
 		get init() {
 			/** @type {any[]} */
 			const a = [];
-			a.push = () => error(null, 'INTERNAL', 'init.push should not be called outside create_block');
+			a.push = () => {
+				throw new Error('init.push should not be called outside create_block');
+			};
 			return a;
 		},
 		get update() {
 			/** @type {any[]} */
 			const a = [];
-			a.push = () =>
-				error(null, 'INTERNAL', 'update.push should not be called outside create_block');
+			a.push = () => {
+				throw new Error('update.push should not be called outside create_block');
+			};
 			return a;
 		},
 		get after_update() {
 			/** @type {any[]} */
 			const a = [];
-			a.push = () =>
-				error(null, 'INTERNAL', 'after_update.push should not be called outside create_block');
+			a.push = () => {
+				throw new Error('after_update.push should not be called outside create_block');
+			};
 			return a;
 		},
 		get template() {
 			/** @type {any[]} */
 			const a = [];
-			a.push = () =>
-				error(null, 'INTERNAL', 'template.push should not be called outside create_block');
+			a.push = () => {
+				throw new Error('template.push should not be called outside create_block');
+			};
 			return a;
 		},
 		legacy_reactive_statements: new Map(),
@@ -209,7 +214,7 @@ export function client_component(source, analysis, options) {
 	for (const [node] of analysis.reactive_statements) {
 		const statement = [...state.legacy_reactive_statements].find(([n]) => n === node);
 		if (statement === undefined) {
-			error(node, 'INTERNAL', 'Could not find reactive statement');
+			throw new Error('Could not find reactive statement');
 		}
 		instance.body.push(statement[1]);
 	}
@@ -255,14 +260,24 @@ export function client_component(source, analysis, options) {
 	);
 
 	if (analysis.runes && options.dev) {
-		const bindable = analysis.exports.map(({ name, alias }) => b.literal(alias ?? name));
+		const exports = analysis.exports.map(({ name, alias }) => b.literal(alias ?? name));
+		/** @type {import('estree').Literal[]} */
+		const bindable = [];
 		for (const [name, binding] of properties) {
 			if (binding.kind === 'bindable_prop') {
 				bindable.push(b.literal(binding.prop_alias ?? name));
 			}
 		}
 		instance.body.unshift(
-			b.stmt(b.call('$.validate_prop_bindings', b.id('$$props'), b.array(bindable)))
+			b.stmt(
+				b.call(
+					'$.validate_prop_bindings',
+					b.id('$$props'),
+					b.array(bindable),
+					b.array(exports),
+					b.id(`${analysis.name}`)
+				)
+			)
 		);
 	}
 

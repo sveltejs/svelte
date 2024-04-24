@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid-html-attribute",
+		"code": "invalid_html_attribute",
 		"message": "'className' is not a valid HTML attribute. Did you mean 'class'?",
 		"start": {
 			"column": 5,
@@ -12,7 +12,7 @@
 		}
 	},
 	{
-		"code": "invalid-html-attribute",
+		"code": "invalid_html_attribute",
 		"message": "'htmlFor' is not a valid HTML attribute. Did you mean 'for'?",
 		"start": {
 			"column": 7,

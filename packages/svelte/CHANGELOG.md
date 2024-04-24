@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.113
+
+### Patch Changes
+
+- breaking: disallow binding to component exports in runes mode ([#11238](https://github.com/sveltejs/svelte/pull/11238))
+
+## 5.0.0-next.112
+
+### Patch Changes
+
+- fix: avoid hoisting error by using 'let' instead of 'var' ([#11291](https://github.com/sveltejs/svelte/pull/11291))
+
 ## 5.0.0-next.111
 
 ### Patch Changes

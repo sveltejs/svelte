@@ -1,7 +1,7 @@
 [
 	{
-		"code": "store-with-rune-name",
-		"message": "It looks like you're using the $state rune, but there is a local binding called state. Referencing a local variable with a $ prefix will create a store subscription. Please rename state to avoid the ambiguity.",
+		"code": "store_with_rune_name",
+		"message": "It looks like you're using the `$state` rune, but there is a local binding called `state`. Referencing a local variable with a `$` prefix will create a store subscription. Please rename `state` to avoid the ambiguity",
 		"start": {
 			"column": 1,
 			"line": 3

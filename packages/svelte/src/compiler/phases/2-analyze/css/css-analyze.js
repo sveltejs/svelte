@@ -1,5 +1,5 @@
 import { walk } from 'zimmerframe';
-import { error } from '../../../errors.js';
+import * as e from '../../../errors.js';
 import { is_keyframes_node } from '../../css.js';
 import { merge } from '../../visitors.js';
 
@@ -98,31 +98,26 @@ const validation_visitors = {
 	Rule(node, context) {
 		if (node.metadata.is_global_block) {
 			if (node.prelude.children.length > 1) {
-				error(node.prelude, 'invalid-css-global-block-list');
+				e.invalid_css_global_block_list(node.prelude);
 			}
 
 			const complex_selector = node.prelude.children[0];
 			const relative_selector = complex_selector.children[complex_selector.children.length - 1];
 
 			if (relative_selector.selectors.length > 1) {
-				error(
-					relative_selector.selectors[relative_selector.selectors.length - 1],
-					'invalid-css-global-block-modifier'
+				e.invalid_css_global_block_modifier(
+					relative_selector.selectors[relative_selector.selectors.length - 1]
 				);
 			}
 
 			if (relative_selector.combinator && relative_selector.combinator.name !== ' ') {
-				error(
-					relative_selector,
-					'invalid-css-global-block-combinator',
-					relative_selector.combinator.name
-				);
+				e.invalid_css_global_block_combinator(relative_selector, relative_selector.combinator.name);
 			}
 
 			const declaration = node.block.children.find((child) => child.type === 'Declaration');
 
 			if (declaration) {
-				error(declaration, 'invalid-css-global-block-declaration');
+				e.invalid_css_global_block_declaration(declaration);
 			}
 		}
 
@@ -137,7 +132,7 @@ const validation_visitors = {
 			if (a !== b) {
 				for (let i = a; i <= b; i += 1) {
 					if (is_global(node.children[i])) {
-						error(node.children[i].selectors[0], 'invalid-css-global-placement');
+						e.invalid_css_global_placement(node.children[i].selectors[0]);
 					}
 				}
 			}
@@ -152,12 +147,12 @@ const validation_visitors = {
 					const child = selector.args?.children[0].children[0];
 					// ensure `:global(element)` to be at the first position in a compound selector
 					if (child?.selectors[0].type === 'TypeSelector' && i !== 0) {
-						error(selector, 'invalid-css-global-selector-list');
+						e.invalid_css_global_selector_list(selector);
 					}
 
 					// ensure `:global(.class)` is not followed by a type selector, eg: `:global(.class)element`
 					if (relative_selector.selectors[i + 1]?.type === 'TypeSelector') {
-						error(relative_selector.selectors[i + 1], 'invalid-css-type-selector-placement');
+						e.invalid_css_type_selector_placement(relative_selector.selectors[i + 1]);
 					}
 
 					// ensure `:global(...)`contains a single selector
@@ -167,7 +162,7 @@ const validation_visitors = {
 						selector.args.children.length > 1 &&
 						(node.children.length > 1 || relative_selector.selectors.length > 1)
 					) {
-						error(selector, 'invalid-css-global-selector');
+						e.invalid_css_global_selector(selector);
 					}
 				}
 			}
@@ -176,7 +171,7 @@ const validation_visitors = {
 	NestingSelector(node, context) {
 		const rule = /** @type {import('#compiler').Css.Rule} */ (context.state.rule);
 		if (!rule.metadata.parent_rule) {
-			error(node, 'invalid-nesting-selector');
+			e.invalid_nesting_selector(node);
 		}
 	}
 };

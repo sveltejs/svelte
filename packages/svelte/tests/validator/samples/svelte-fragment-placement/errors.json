@@ -1,8 +1,14 @@
 [
 	{
-		"code": "invalid-svelte-fragment-placement",
-		"message": "<svelte:fragment> must be the direct child of a component",
-		"start": { "line": 7, "column": 2 },
-		"end": { "line": 9, "column": 20 }
+		"code": "invalid_svelte_fragment_placement",
+		"message": "`<svelte:fragment>` must be the direct child of a component",
+		"start": {
+			"line": 7,
+			"column": 2
+		},
+		"end": {
+			"line": 9,
+			"column": 20
+		}
 	}
 ]

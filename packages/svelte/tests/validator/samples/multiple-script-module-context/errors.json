@@ -1,7 +1,7 @@
 [
 	{
-		"code": "duplicate-script-element",
-		"message": "A component can have a single top-level <script> element and/or a single top-level <script context=\"module\"> element",
+		"code": "duplicate_script_element",
+		"message": "A component can have a single top-level `<script>` element and/or a single top-level `<script context=\"module\">` element",
 		"start": {
 			"line": 5,
 			"column": 0

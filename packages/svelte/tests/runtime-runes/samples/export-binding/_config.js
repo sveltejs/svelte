@@ -2,16 +2,9 @@ import { test } from '../../test';
 
 export default test({
 	compileOptions: {
-		dev: true // to ensure we don't throw a false-positive "cannot bind to this" error
+		dev: true // to ensure we we catch the error
 	},
-	html: `0 0 <button>increment</button>`,
-
-	async test({ assert, target }) {
-		const btn = target.querySelector('button');
-
-		btn?.click();
-		await Promise.resolve();
-
-		assert.htmlEqual(target.innerHTML, `0 1 <button>increment</button>`);
-	}
+	error:
+		'Component .../export-binding/counter/index.svelte has an export named increment that a consumer component is trying to access using bind:increment, which is disallowed. ' +
+		'Instead, use bind:this (e.g. <Counter bind:this={component} />) and then access the property on the bound component instance (e.g. component.increment).'
 });

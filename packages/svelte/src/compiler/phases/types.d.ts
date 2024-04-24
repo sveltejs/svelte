@@ -6,7 +6,8 @@ import type {
 	SlotElement,
 	SvelteElement,
 	SvelteNode,
-	SvelteOptions
+	SvelteOptions,
+	Warning
 } from '#compiler';
 import type { Identifier, LabeledStatement, Program } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
@@ -28,19 +29,12 @@ export interface ReactiveStatement {
 	dependencies: Binding[];
 }
 
-export interface RawWarning {
-	code: string;
-	message: string;
-	position: [number, number] | undefined;
-}
-
 /**
  * Analysis common to modules and components
  */
 export interface Analysis {
 	module: Js;
 	name: string; // TODO should this be filename? it's used in `compileModule` as well as `compile`
-	warnings: RawWarning[];
 	runes: boolean;
 	immutable: boolean;
 

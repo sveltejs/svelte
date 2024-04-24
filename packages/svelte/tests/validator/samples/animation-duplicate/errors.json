@@ -1,6 +1,6 @@
 [
 	{
-		"code": "duplicate-animation",
+		"code": "animation_duplicate",
 		"message": "An element can only have one 'animate' directive",
 		"start": {
 			"line": 7,

@@ -1,8 +1,14 @@
 [
 	{
-		"code": "invalid-block-placement",
+		"code": "invalid_block_placement",
 		"message": "{#if ...} block cannot be in attribute value",
-		"start": { "line": 1, "column": 12 },
-		"end": { "line": 1, "column": 12 }
+		"start": {
+			"line": 1,
+			"column": 12
+		},
+		"end": {
+			"line": 1,
+			"column": 12
+		}
 	}
 ]

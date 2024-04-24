@@ -4,7 +4,7 @@ import fragment from './state/fragment.js';
 import { regex_whitespace } from '../patterns.js';
 import { reserved } from './utils/names.js';
 import full_char_code_at from './utils/full_char_code_at.js';
-import { error } from '../../errors.js';
+import * as e from '../../errors.js';
 import { create_fragment } from './utils/create.js';
 import read_options from './read/options.js';
 import { getLocator } from 'locate-character';
@@ -92,15 +92,15 @@ export class Parser {
 
 			if (current.type === 'RegularElement') {
 				current.end = current.start + 1;
-				error(current, 'unclosed-element', current.name);
+				e.unclosed_element(current, current.name);
 			} else {
 				current.end = current.start + 1;
-				error(current, 'unclosed-block');
+				e.unclosed_block(current);
 			}
 		}
 
 		if (state !== fragment) {
-			error(this.index, 'unexpected-eof');
+			e.unexpected_eof(this.index);
 		}
 
 		if (this.root.fragment.nodes.length) {
@@ -158,7 +158,7 @@ export class Parser {
 	 * @returns {never}
 	 */
 	acorn_error(err) {
-		error(err.pos, 'js-parse-error', err.message.replace(regex_position_indicator, ''));
+		e.js_parse_error(err.pos, err.message.replace(regex_position_indicator, ''));
 	}
 
 	/**
@@ -172,11 +172,7 @@ export class Parser {
 		}
 
 		if (required) {
-			if (this.index === this.template.length) {
-				error(this.index, 'unexpected-eof', str);
-			} else {
-				error(this.index, 'expected-token', str);
-			}
+			e.expected_token(this.index, str);
 		}
 
 		return false;
@@ -241,7 +237,7 @@ export class Parser {
 		const identifier = this.template.slice(this.index, (this.index = i));
 
 		if (!allow_reserved && reserved.includes(identifier)) {
-			error(start, 'unexpected-reserved-word', identifier);
+			e.unexpected_reserved_word(start, identifier);
 		}
 
 		return identifier;
@@ -250,7 +246,7 @@ export class Parser {
 	/** @param {RegExp} pattern */
 	read_until(pattern) {
 		if (this.index >= this.template.length) {
-			error(this.template.length, 'unexpected-eof');
+			e.unexpected_eof(this.template.length);
 		}
 
 		const start = this.index;
@@ -267,7 +263,7 @@ export class Parser {
 
 	require_whitespace() {
 		if (!regex_whitespace.test(this.template[this.index])) {
-			error(this.index, 'missing-whitespace');
+			e.missing_whitespace(this.index);
 		}
 
 		this.allow_whitespace();

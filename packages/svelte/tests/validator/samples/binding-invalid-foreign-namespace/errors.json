@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-binding",
-		"message": "'value' is not a valid binding. Foreign elements only support bind:this",
+		"code": "bind_invalid_detailed",
+		"message": "`bind:value` is not a valid binding. Foreign elements only support `bind:this`",
 		"start": {
 			"line": 6,
 			"column": 7

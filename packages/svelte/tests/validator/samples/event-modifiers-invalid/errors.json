@@ -1,7 +1,7 @@
 [
 	{
 		"message": "Valid event modifiers are preventDefault, stopPropagation, stopImmediatePropagation, capture, once, passive, nonpassive, self or trusted",
-		"code": "invalid-event-modifier",
+		"code": "invalid_event_modifier",
 		"start": {
 			"line": 1,
 			"column": 8

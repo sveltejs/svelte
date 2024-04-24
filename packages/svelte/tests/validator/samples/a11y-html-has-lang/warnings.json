@@ -1,7 +1,7 @@
 [
 	{
-		"code": "a11y-missing-attribute",
-		"message": "A11y: <html> element should have a lang attribute",
+		"code": "a11y_missing_attribute",
+		"message": "<html> element should have a lang attribute",
 		"start": {
 			"column": 0,
 			"line": 9

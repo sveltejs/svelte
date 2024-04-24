@@ -222,7 +222,8 @@ export const javascript_visitors_runes = {
 			if (rune === '$props') {
 				assert.equal(declarator.id.type, 'ObjectPattern');
 
-				const seen = state.analysis.exports.map(({ name, alias }) => alias ?? name);
+				/** @type {string[]} */
+				const seen = [];
 
 				for (const property of declarator.id.properties) {
 					if (property.type === 'Property') {
