@@ -25,7 +25,11 @@ for (const category of fs.readdirSync('messages')) {
 			}
 
 			seen.add(code);
-			messages[category][code] = text.trim();
+			messages[category][code] = text
+				.trim()
+				.split('\n')
+				.map((line) => line.slice(2))
+				.join('\n');
 		}
 	}
 }

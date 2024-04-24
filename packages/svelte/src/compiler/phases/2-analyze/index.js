@@ -398,7 +398,7 @@ export function analyze_component(root, source, options) {
 	if (root.options) {
 		for (const attribute of root.options.attributes) {
 			if (attribute.name === 'accessors') {
-				w.deprecated_accessors(attribute);
+				w.options_deprecated_accessors(attribute);
 			}
 
 			if (attribute.name === 'customElement' && !options.customElement) {
@@ -406,7 +406,7 @@ export function analyze_component(root, source, options) {
 			}
 
 			if (attribute.name === 'immutable') {
-				w.deprecated_immutable(attribute);
+				w.options_deprecated_immutable(attribute);
 			}
 		}
 	}

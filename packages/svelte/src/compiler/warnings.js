@@ -536,22 +536,6 @@ export function deprecated_event_handler(node, name) {
 }
 
 /**
- * The accessors option has been deprecated. It will have no effect in runes mode.
- * @param {null | NodeLike} node
- */
-export function deprecated_accessors(node) {
-	w(node, "deprecated_accessors", "The accessors option has been deprecated. It will have no effect in runes mode.");
-}
-
-/**
- * The immutable option has been deprecated. It will have no effect in runes mode.
- * @param {null | NodeLike} node
- */
-export function deprecated_immutable(node) {
-	w(node, "deprecated_immutable", "The immutable option has been deprecated. It will have no effect in runes mode.");
-}
-
-/**
  * Self-closing HTML tags for non-void elements are ambiguous — use <%name% ...></%name%> rather than <%name% ... />
  * @param {null | NodeLike} node
  * @param {string} name
@@ -561,11 +545,11 @@ export function invalid_self_closing_tag(node, name) {
 }
 
 /**
- * The `accessors` option has been deprecated. It will have no effect in runes mode
+ * e `accessors` option has been deprecated. It will have no effect in runes mode
  * @param {null | NodeLike} node
  */
 export function options_deprecated_accessors(node) {
-	w(node, "options_deprecated_accessors", "The `accessors` option has been deprecated. It will have no effect in runes mode");
+	w(node, "options_deprecated_accessors", "e `accessors` option has been deprecated. It will have no effect in runes mode");
 }
 
 /**
