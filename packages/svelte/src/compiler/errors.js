@@ -386,6 +386,15 @@ export function css_empty_declaration(node) {
 }
 
 /**
+ * Expected a valid CSS identifier
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_expected_identifier(node) {
+	e(node, "css_expected_identifier", "Expected a valid CSS identifier");
+}
+
+/**
  * A :global {...} block cannot follow a %name% combinator
  * @param {null | number | NodeLike} node
  * @param {string} name
@@ -450,12 +459,12 @@ export function css_global_invalid_selector_list(node) {
 }
 
 /**
- * Expected a valid CSS identifier
+ * Nesting selectors can only be used inside a rule
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function css_expected_identifier(node) {
-	e(node, "css_expected_identifier", "Expected a valid CSS identifier");
+export function css_nesting_selector_invalid_placement(node) {
+	e(node, "css_nesting_selector_invalid_placement", "Nesting selectors can only be used inside a rule");
 }
 
 /**
@@ -474,15 +483,6 @@ export function css_selector_invalid(node) {
  */
 export function css_type_selector_invalid_placement(node) {
 	e(node, "css_type_selector_invalid_placement", ":global(...) must not be followed with a type selector");
-}
-
-/**
- * Nesting selectors can only be used inside a rule
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function css_nesting_selector_invalid_placement(node) {
-	e(node, "css_nesting_selector_invalid_placement", "Nesting selectors can only be used inside a rule");
 }
 
 /**
