@@ -1099,44 +1099,8 @@ export function svelte_options_invalid_attribute_value(node, list) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function tag_option_deprecated(node) {
-	e(node, "tag_option_deprecated", "\"tag\" option is deprecated — use \"customElement\" instead");
-}
-
-/**
- * Unsupported `<svelte:option>` value for "runes". Valid values are true or false
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_svelte_option_runes(node) {
-	e(node, "invalid_svelte_option_runes", "Unsupported `<svelte:option>` value for \"runes\". Valid values are true or false");
-}
-
-/**
- * Unsupported `<svelte:option>` value for "accessors". Valid values are true or false
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_svelte_option_accessors(node) {
-	e(node, "invalid_svelte_option_accessors", "Unsupported `<svelte:option>` value for \"accessors\". Valid values are true or false");
-}
-
-/**
- * Unsupported `<svelte:option>` value for "preserveWhitespace". Valid values are true or false
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_svelte_option_preserveWhitespace(node) {
-	e(node, "invalid_svelte_option_preserveWhitespace", "Unsupported `<svelte:option>` value for \"preserveWhitespace\". Valid values are true or false");
-}
-
-/**
- * Unsupported `<svelte:option>` value for "immutable". Valid values are true or false
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_svelte_option_immutable(node) {
-	e(node, "invalid_svelte_option_immutable", "Unsupported `<svelte:option>` value for \"immutable\". Valid values are true or false");
+export function svelte_options_deprecated_tag(node) {
+	e(node, "svelte_options_deprecated_tag", "\"tag\" option is deprecated — use \"customElement\" instead");
 }
 
 /**
@@ -1144,8 +1108,8 @@ export function invalid_svelte_option_immutable(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_tag_property(node) {
-	e(node, "invalid_tag_property", "Tag name must be two or more words joined by the \"-\" character");
+export function svelte_options_invalid_tagname(node) {
+	e(node, "svelte_options_invalid_tagname", "Tag name must be two or more words joined by the \"-\" character");
 }
 
 /**
@@ -1153,8 +1117,8 @@ export function invalid_tag_property(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_svelte_option_customElement(node) {
-	e(node, "invalid_svelte_option_customElement", "\"customElement\" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: \"open\" | \"none\"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }");
+export function svelte_options_invalid_customelement(node) {
+	e(node, "svelte_options_invalid_customelement", "\"customElement\" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: \"open\" | \"none\"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }");
 }
 
 /**
@@ -1162,8 +1126,8 @@ export function invalid_svelte_option_customElement(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_customElement_props_attribute(node) {
-	e(node, "invalid_customElement_props_attribute", "\"props\" must be a statically analyzable object literal of the form \"{ [key: string]: { attribute?: string; reflect?: boolean; type?: \"String\" | \"Boolean\" | \"Number\" | \"Array\" | \"Object\" }\"");
+export function svelte_options_invalid_customelement_props(node) {
+	e(node, "svelte_options_invalid_customelement_props", "\"props\" must be a statically analyzable object literal of the form \"{ [key: string]: { attribute?: string; reflect?: boolean; type?: \"String\" | \"Boolean\" | \"Number\" | \"Array\" | \"Object\" }\"");
 }
 
 /**
@@ -1171,8 +1135,8 @@ export function invalid_customElement_props_attribute(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_customElement_shadow_attribute(node) {
-	e(node, "invalid_customElement_shadow_attribute", "\"shadow\" must be either \"open\" or \"none\"");
+export function svelte_options_invalid_customelement_shadow(node) {
+	e(node, "svelte_options_invalid_customelement_shadow", "\"shadow\" must be either \"open\" or \"none\"");
 }
 
 /**
@@ -1181,8 +1145,8 @@ export function invalid_customElement_shadow_attribute(node) {
  * @param {string} name
  * @returns {never}
  */
-export function unknown_svelte_option_attribute(node, name) {
-	e(node, "unknown_svelte_option_attribute", `\`<svelte:options>\` unknown attribute '${name}'`);
+export function svelte_options_unknown_attribute(node, name) {
+	e(node, "svelte_options_unknown_attribute", `\`<svelte:options>\` unknown attribute '${name}'`);
 }
 
 /**

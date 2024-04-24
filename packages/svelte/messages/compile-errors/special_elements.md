@@ -6,27 +6,27 @@
 
 > Valid values are %list%
 
-## tag_option_deprecated
+## svelte_options_deprecated_tag
 
 > "tag" option is deprecated — use "customElement" instead
 
-## invalid_tag_property
+## svelte_options_invalid_tagname
 
 > Tag name must be two or more words joined by the "-" character
 
-## invalid_svelte_option_customElement
+## svelte_options_invalid_customelement
 
 > "customElement" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
 
-## invalid_customElement_props_attribute
+## svelte_options_invalid_customelement_props
 
 > "props" must be a statically analyzable object literal of the form "{ [key: string]: { attribute?: string; reflect?: boolean; type?: "String" | "Boolean" | "Number" | "Array" | "Object" }"
 
-## invalid_customElement_shadow_attribute
+## svelte_options_invalid_customelement_shadow
 
 > "shadow" must be either "open" or "none"
 
-## unknown_svelte_option_attribute
+## svelte_options_unknown_attribute
 
 > `<svelte:options>` unknown attribute '%name%'
 
