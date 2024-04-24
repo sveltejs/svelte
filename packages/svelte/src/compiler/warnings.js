@@ -39,3 +39,606 @@ function w(node, code, message) {
 		end: node?.end !== undefined ? locator(node.end) : undefined
 	});
 }
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function a11y_aria_attributes(node, name) {
+	w(node, "a11y_aria_attributes", `<${name}> should not have aria-* attributes`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} attribute
+ */
+export function a11y_unknown_aria_attribute(node, attribute) {
+	w(node, "a11y_unknown_aria_attribute", `Unknown aria attribute 'aria-${attribute}'`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} attribute
+ * @param {string} suggestion
+ */
+export function a11y_unknown_aria_attribute_suggestion(node, attribute, suggestion) {
+	w(node, "a11y_unknown_aria_attribute_suggestion", `Unknown aria attribute 'aria-${attribute}'. Did you mean '${suggestion}'?`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function a11y_hidden(node, name) {
+	w(node, "a11y_hidden", `<${name}> element should not be hidden`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} attribute
+ */
+export function a11y_incorrect_aria_attribute_type_boolean(node, attribute) {
+	w(node, "a11y_incorrect_aria_attribute_type_boolean", `The value of '${attribute}' must be either 'true' or 'false'`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} attribute
+ */
+export function a11y_incorrect_aria_attribute_type_integer(node, attribute) {
+	w(node, "a11y_incorrect_aria_attribute_type_integer", `The value of '${attribute}' must be an integer`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} attribute
+ */
+export function a11y_incorrect_aria_attribute_type_id(node, attribute) {
+	w(node, "a11y_incorrect_aria_attribute_type_id", `The value of '${attribute}' must be a string that represents a DOM element ID`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} attribute
+ */
+export function a11y_incorrect_aria_attribute_type_idlist(node, attribute) {
+	w(node, "a11y_incorrect_aria_attribute_type_idlist", `The value of '${attribute}' must be a space-separated list of strings that represent DOM element IDs`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} attribute
+ */
+export function a11y_incorrect_aria_attribute_type_tristate(node, attribute) {
+	w(node, "a11y_incorrect_aria_attribute_type_tristate", `The value of '${attribute}' must be exactly one of true, false, or mixed`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} attribute
+ * @param {string} values
+ */
+export function a11y_incorrect_aria_attribute_type_token(node, attribute, values) {
+	w(node, "a11y_incorrect_aria_attribute_type_token", `The value of '${attribute}' must be exactly one of ${values}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} attribute
+ * @param {string} values
+ */
+export function a11y_incorrect_aria_attribute_type_tokenlist(node, attribute, values) {
+	w(node, "a11y_incorrect_aria_attribute_type_tokenlist", `The value of '${attribute}' must be a space-separated list of one or more of ${values}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} attribute
+ * @param {string} type
+ */
+export function a11y_incorrect_aria_attribute_type(node, attribute, type) {
+	w(node, "a11y_incorrect_aria_attribute_type", `The value of '${attribute}' must be of type ${type}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function a11y_aria_activedescendant_has_tabindex(node) {
+	w(node, "a11y_aria_activedescendant_has_tabindex", "Elements with attribute aria-activedescendant should have tabindex value");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function a11y_misplaced_role(node, name) {
+	w(node, "a11y_misplaced_role", `<${name}> should not have role attribute`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} role
+ */
+export function a11y_no_abstract_role(node, role) {
+	w(node, "a11y_no_abstract_role", `Abstract role '${role}' is forbidden`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} role
+ */
+export function a11y_unknown_role(node, role) {
+	w(node, "a11y_unknown_role", `Unknown role '${role}'`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} role
+ * @param {string} suggestion
+ */
+export function a11y_unknown_role_suggestion(node, role, suggestion) {
+	w(node, "a11y_unknown_role_suggestion", `Unknown role '${role}'. Did you mean '${suggestion}'?`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} role
+ */
+export function a11y_no_redundant_roles(node, role) {
+	w(node, "a11y_no_redundant_roles", `Redundant role '${role}'`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} role
+ * @param {string} props
+ */
+export function a11y_role_has_required_aria_props(node, role, props) {
+	w(node, "a11y_role_has_required_aria_props", `Elements with the ARIA role "${role}" must have the following attributes defined: ${props}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} role
+ */
+export function a11y_interactive_supports_focus(node, role) {
+	w(node, "a11y_interactive_supports_focus", `Elements with the '${role}' interactive role must have a tabindex value.`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} element
+ * @param {string} role
+ */
+export function a11y_no_interactive_element_to_noninteractive_role(node, element, role) {
+	w(node, "a11y_no_interactive_element_to_noninteractive_role", `<${element}> cannot have role '${role}'`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} element
+ * @param {string} role
+ */
+export function a11y_no_noninteractive_element_to_interactive_role(node, element, role) {
+	w(node, "a11y_no_noninteractive_element_to_interactive_role", `Non-interactive element <${element}> cannot have interactive role '${role}'`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function a11y_accesskey(node) {
+	w(node, "a11y_accesskey", "Avoid using accesskey");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function a11y_autofocus(node) {
+	w(node, "a11y_autofocus", "Avoid using autofocus");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function a11y_misplaced_scope(node) {
+	w(node, "a11y_misplaced_scope", "The scope attribute should only be used with <th> elements");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function a11y_positive_tabindex(node) {
+	w(node, "a11y_positive_tabindex", "Avoid tabindex values above zero");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function a11y_click_events_have_key_events(node) {
+	w(node, "a11y_click_events_have_key_events", "Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type=\"button\"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function a11y_no_noninteractive_tabindex(node) {
+	w(node, "a11y_no_noninteractive_tabindex", "noninteractive element cannot have nonnegative tabIndex value");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} attribute
+ * @param {string} role
+ */
+export function a11y_role_supports_aria_props(node, attribute, role) {
+	w(node, "a11y_role_supports_aria_props", `The attribute '${attribute}' is not supported by the role '${role}'`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} attribute
+ * @param {string} role
+ * @param {string} name
+ */
+export function a11y_role_supports_aria_props_implicit(node, attribute, role, name) {
+	w(node, "a11y_role_supports_aria_props_implicit", `The attribute '${attribute}' is not supported by the role '${role}'. This role is implicit on the element <${name}>`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} element
+ */
+export function a11y_no_noninteractive_element_interactions(node, element) {
+	w(node, "a11y_no_noninteractive_element_interactions", `Non-interactive element <${element}> should not be assigned mouse or keyboard event listeners.`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} element
+ * @param {string} handler
+ */
+export function a11y_no_static_element_interactions(node, element, handler) {
+	w(node, "a11y_no_static_element_interactions", `<${element}> with a ${handler} handler must have an ARIA role`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} href_value
+ * @param {string} href_attribute
+ */
+export function a11y_invalid_attribute(node, href_value, href_attribute) {
+	w(node, "a11y_invalid_attribute", `'${href_value}' is not a valid ${href_attribute} attribute`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} name
+ * @param {string} article
+ * @param {string} sequence
+ */
+export function a11y_missing_attribute(node, name, article, sequence) {
+	w(node, "a11y_missing_attribute", `<${name}> element should have ${article} ${sequence} attribute`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} value
+ * @param {string} type
+ */
+export function a11y_autocomplete_valid(node, value, type) {
+	w(node, "a11y_autocomplete_valid", `The value '${value}' is not supported by the attribute 'autocomplete' on element <input type="${type}">`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function a11y_img_redundant_alt(node) {
+	w(node, "a11y_img_redundant_alt", "Screenreaders already announce <img> elements as an image.");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function a11y_label_has_associated_control(node) {
+	w(node, "a11y_label_has_associated_control", "A form label must be associated with a control.");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function a11y_media_has_caption(node) {
+	w(node, "a11y_media_has_caption", "<video> elements must have a <track kind=\"captions\">");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function a11y_distracting_elements(node, name) {
+	w(node, "a11y_distracting_elements", `Avoid <${name}> elements`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function a11y_figcaption_parent(node) {
+	w(node, "a11y_figcaption_parent", "`<figcaption>` must be an immediate child of `<figure>`");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function a11y_figcaption_index(node) {
+	w(node, "a11y_figcaption_index", "`<figcaption>` must be first or last child of `<figure>`");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} event
+ * @param {string} accompanied_by
+ */
+export function a11y_mouse_events_have_key_events(node, event, accompanied_by) {
+	w(node, "a11y_mouse_events_have_key_events", `'${event}' event must be accompanied by '${accompanied_by}' event`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function a11y_missing_content(node, name) {
+	w(node, "a11y_missing_content", `<${name}> element should have child content`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function avoid_is(node) {
+	w(node, "avoid_is", "The \"is\" attribute is not supported cross-browser and should be avoided");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function global_event_reference(node, name) {
+	w(node, "global_event_reference", `You are referencing globalThis.${name}. Did you forget to declare a variable with that name?`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function illegal_attribute_character(node) {
+	w(node, "illegal_attribute_character", "Attributes should not contain ':' characters to prevent ambiguity with Svelte directives");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} wrong
+ * @param {string} right
+ */
+export function invalid_html_attribute(node, wrong, right) {
+	w(node, "invalid_html_attribute", `'${wrong}' is not a valid HTML attribute. Did you mean '${right}'?`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function empty_block(node) {
+	w(node, "empty_block", "Empty block");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function component_name_lowercase(node, name) {
+	w(node, "component_name_lowercase", `<${name}> will be treated as an HTML element unless it begins with a capital letter`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function css_unused_selector(node, name) {
+	w(node, "css_unused_selector", `Unused CSS selector "${name}"`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function no_reactive_declaration(node) {
+	w(node, "no_reactive_declaration", "Reactive declarations only exist at the top level of the instance script");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function module_script_reactive_declaration(node) {
+	w(node, "module_script_reactive_declaration", "All dependencies of the reactive declaration are declared in a module script and will not be reactive");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function unused_export_let(node, name) {
+	w(node, "unused_export_let", `Component has unused export property '${name}'. If it is for external reference only, please consider using \`export const ${name}\``);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function deprecated_slot_element(node) {
+	w(node, "deprecated_slot_element", "Using <slot> to render parent content is deprecated. Use {@render ...} tags instead.");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function deprecated_event_handler(node, name) {
+	w(node, "deprecated_event_handler", `Using on:${name} to listen to the ${name} event is is deprecated. Use the event attribute on${name} instead.`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function deprecated_accessors(node) {
+	w(node, "deprecated_accessors", "The accessors option has been deprecated. It will have no effect in runes mode.");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function deprecated_immutable(node) {
+	w(node, "deprecated_immutable", "The immutable option has been deprecated. It will have no effect in runes mode.");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function invalid_self_closing_tag(node, name) {
+	w(node, "invalid_self_closing_tag", `Self-closing HTML tags for non-void elements are ambiguous — use <${name} ...></${name}> rather than <${name} ... />`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function missing_custom_element_compile_option(node) {
+	w(node, "missing_custom_element_compile_option", "The 'customElement' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function avoid_inline_class(node) {
+	w(node, "avoid_inline_class", "Avoid 'new class' — instead, declare the class at the top level scope");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function avoid_nested_class(node) {
+	w(node, "avoid_nested_class", "Avoid declaring classes below the top level scope");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function store_with_rune_name(node, name) {
+	w(node, "store_with_rune_name", `It looks like you're using the \`$${name}\` rune, but there is a local binding called \`${name}\`. Referencing a local variable with a \`$\` prefix will create a store subscription. Please rename \`${name}\` to avoid the ambiguity`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function non_state_reference(node, name) {
+	w(node, "non_state_reference", `\`${name}\` is updated, but is not declared with \`$state(...)\`. Changing its value will not correctly trigger updates`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function derived_iife(node) {
+	w(node, "derived_iife", "Use `$derived.by(() => {...})` instead of `$derived((() => {...})())`");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function invalid_props_declaration(node) {
+	w(node, "invalid_props_declaration", "Component properties are declared using `$props()` in runes mode. Did you forget to call the function?");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function invalid_bindable_declaration(node) {
+	w(node, "invalid_bindable_declaration", "Bindable component properties are declared using `$bindable()` in runes mode. Did you forget to call the function?");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ */
+export function static_state_reference(node) {
+	w(node, "static_state_reference", "State referenced in its own scope will never update. Did you mean to reference it inside a closure?");
+}
+
+/**
+ * MESSAGE
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function invalid_rest_eachblock_binding(node, name) {
+	w(node, "invalid_rest_eachblock_binding", `The rest operator (...) will create a new object and binding '${name}' with the original object will not work`);
+}

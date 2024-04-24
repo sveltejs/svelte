@@ -15,7 +15,7 @@ for (const category of fs.readdirSync('messages')) {
 
 		const markdown = fs.readFileSync(`messages/${category}/${file}`, 'utf-8');
 
-		for (const match of markdown.matchAll(/## ([\w]+)\n\n([^]+?)(?=$|\n\n## )/g)) {
+		for (const match of markdown.matchAll(/## ([\w]+)\r?\n\r?\n([^]+?)(?=$|\r?\n\r?\n## )/g)) {
 			const [_, code, text] = match;
 
 			if (seen.has(code)) {

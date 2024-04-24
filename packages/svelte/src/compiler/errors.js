@@ -55,3 +55,1386 @@ function e(node, code, message) {
 
 	throw new CompileError(code, message, start !== undefined && end !== undefined ? [start, end] : undefined);
 }
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function empty_attribute_shorthand(node) {
+	e(node, "empty_attribute_shorthand", "Attribute shorthand cannot be empty");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function duplicate_attribute(node) {
+	e(node, "duplicate_attribute", "Attributes need to be unique");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_event_attribute_value(node) {
+	e(node, "invalid_event_attribute_value", "Event attribute must be a JavaScript expression, not a string");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function invalid_attribute_name(node, name) {
+	e(node, "invalid_attribute_name", `'${name}' is not a valid attribute name`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function animation_invalid_placement(node) {
+	e(node, "animation_invalid_placement", "An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function animation_missing_key(node) {
+	e(node, "animation_missing_key", "An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block. Did you forget to add a key to your each block?");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function animation_duplicate(node) {
+	e(node, "animation_duplicate", "An element can only have one 'animate' directive");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} list
+ * @returns {never}
+ */
+export function invalid_event_modifier(node, list) {
+	e(node, "invalid_event_modifier", `Valid event modifiers are ${list}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_component_event_modifier(node) {
+	e(node, "invalid_component_event_modifier", "Event modifiers other than 'once' can only be used on DOM elements");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} modifier1
+ * @param {string} modifier2
+ * @returns {never}
+ */
+export function invalid_event_modifier_combination(node, modifier1, modifier2) {
+	e(node, "invalid_event_modifier_combination", `The '${modifier1}' and '${modifier2}' modifiers cannot be used together`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} type
+ * @returns {never}
+ */
+export function transition_duplicate(node, type) {
+	e(node, "transition_duplicate", `Cannot use multiple \`${type}:\` directives on a single element`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} type
+ * @param {string} existing
+ * @returns {never}
+ */
+export function transition_conflict(node, type, existing) {
+	e(node, "transition_conflict", `Cannot use \`${type}:\` alongside existing \`${existing}:\` directive`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_let_directive_placement(node) {
+	e(node, "invalid_let_directive_placement", "`let:` directive at invalid position");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_style_directive_modifier(node) {
+	e(node, "invalid_style_directive_modifier", "Invalid 'style:' modifier. Valid modifiers are: 'important'");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_sequence_expression(node) {
+	e(node, "invalid_sequence_expression", "Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_binding_expression(node) {
+	e(node, "invalid_binding_expression", "Can only bind to an Identifier or MemberExpression");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_binding_value(node) {
+	e(node, "invalid_binding_value", "Can only bind to state or props");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @param {string} elements
+ * @returns {never}
+ */
+export function bind_invalid_target(node, name, elements) {
+	e(node, "bind_invalid_target", `\`bind:${name}\` can only be used with ${elements}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function bind_invalid(node, name) {
+	e(node, "bind_invalid", `\`bind:${name}\` is not a valid binding`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @param {string} explanation
+ * @returns {never}
+ */
+export function bind_invalid_detailed(node, name, explanation) {
+	e(node, "bind_invalid_detailed", `\`bind:${name}\` is not a valid binding. ${explanation}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_type_attribute(node) {
+	e(node, "invalid_type_attribute", "'type' attribute must be a static text value if input uses two-way binding");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_multiple_attribute(node) {
+	e(node, "invalid_multiple_attribute", "'multiple' attribute must be static if select uses two-way binding");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function missing_contenteditable_attribute(node) {
+	e(node, "missing_contenteditable_attribute", "'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function dynamic_contenteditable_attribute(node) {
+	e(node, "dynamic_contenteditable_attribute", "'contenteditable' attribute cannot be dynamic if element uses two-way binding");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} msg
+ * @returns {never}
+ */
+export function invalid_compiler_option(node, msg) {
+	e(node, "invalid_compiler_option", `Invalid compiler option: ${msg}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} msg
+ * @returns {never}
+ */
+export function removed_compiler_option(node, msg) {
+	e(node, "removed_compiler_option", `Invalid compiler option: ${msg}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_component_directive(node) {
+	e(node, "invalid_component_directive", "This type of directive is not valid on components");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_const_placement(node) {
+	e(node, "invalid_const_placement", "{@const} must be the immediate child of {#snippet}, {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_css_empty_declaration(node) {
+	e(node, "invalid_css_empty_declaration", "Declaration cannot be empty");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_css_global_block_list(node) {
+	e(node, "invalid_css_global_block_list", "A :global {...} block cannot be part of a selector list with more than one item");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_css_global_block_modifier(node) {
+	e(node, "invalid_css_global_block_modifier", "A :global {...} block cannot modify an existing selector");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function invalid_css_global_block_combinator(node, name) {
+	e(node, "invalid_css_global_block_combinator", `A :global {...} block cannot follow a ${name} combinator`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_css_global_block_declaration(node) {
+	e(node, "invalid_css_global_block_declaration", "A :global {...} block can only contain rules, not declarations");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_css_global_placement(node) {
+	e(node, "invalid_css_global_placement", ":global(...) can be at the start or end of a selector sequence, but not in the middle");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_css_global_selector(node) {
+	e(node, "invalid_css_global_selector", ":global(...) must contain exactly one selector");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_css_global_selector_list(node) {
+	e(node, "invalid_css_global_selector_list", ":global(...) must not contain type or universal selectors when used in a compound selector");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_css_type_selector_placement(node) {
+	e(node, "invalid_css_type_selector_placement", ":global(...) must not be followed with a type selector");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_css_selector(node) {
+	e(node, "invalid_css_selector", "Invalid selector");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_css_identifier(node) {
+	e(node, "invalid_css_identifier", "Expected a valid CSS identifier");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_nesting_selector(node) {
+	e(node, "invalid_nesting_selector", "Nesting selectors can only be used inside a rule");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_css_declaration(node) {
+	e(node, "invalid_css_declaration", "Declaration cannot be empty");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_textarea_content(node) {
+	e(node, "invalid_textarea_content", "A `<textarea>` can have either a value attribute or (equivalently) child content, but not both");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_void_content(node) {
+	e(node, "invalid_void_content", "Void elements cannot have children or closing tags");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function invalid_element_content(node, name) {
+	e(node, "invalid_element_content", `<${name}> cannot have children`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_tag_name(node) {
+	e(node, "invalid_tag_name", "Expected valid tag name");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} thing
+ * @param {string} parent
+ * @returns {never}
+ */
+export function invalid_node_placement(node, thing, parent) {
+	e(node, "invalid_node_placement", `${thing} is invalid inside <${parent}>`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function illegal_title_attribute(node) {
+	e(node, "illegal_title_attribute", "`<title>` cannot have attributes nor directives");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_title_content(node) {
+	e(node, "invalid_title_content", "`<title>` can only contain text and {tags}");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} cycle
+ * @returns {never}
+ */
+export function cyclical_reactive_declaration(node, cycle) {
+	e(node, "cyclical_reactive_declaration", `Cyclical dependency detected: ${cycle}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function unclosed_element(node, name) {
+	e(node, "unclosed_element", `\`<${name}>\` was left open`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function unclosed_block(node) {
+	e(node, "unclosed_block", "Block was left open");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function unexpected_block_close(node) {
+	e(node, "unexpected_block_close", "Unexpected block closing tag");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function unexpected_eof(node) {
+	e(node, "unexpected_eof", "Unexpected end of input");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} message
+ * @returns {never}
+ */
+export function js_parse_error(node, message) {
+	e(node, "js_parse_error", `${message}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} token
+ * @returns {never}
+ */
+export function expected_token(node, token) {
+	e(node, "expected_token", `Expected token ${token}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} word
+ * @returns {never}
+ */
+export function unexpected_reserved_word(node, word) {
+	e(node, "unexpected_reserved_word", `'${word}' is a reserved word in JavaScript and cannot be used here`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function missing_whitespace(node) {
+	e(node, "missing_whitespace", "Expected whitespace");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function expected_pattern(node) {
+	e(node, "expected_pattern", "Expected identifier or destructure pattern");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_script_context(node) {
+	e(node, "invalid_script_context", "If the context attribute is supplied, its value must be \"module\"");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_elseif(node) {
+	e(node, "invalid_elseif", "'elseif' should be 'else if'");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_continuing_block_placement(node) {
+	e(node, "invalid_continuing_block_placement", "{:...} block is invalid at this position (did you forget to close the preceeding element or block?)");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} child
+ * @param {string} parent
+ * @returns {never}
+ */
+export function invalid_block_missing_parent(node, child, parent) {
+	e(node, "invalid_block_missing_parent", `${child} block must be a child of ${parent}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function duplicate_block_part(node, name) {
+	e(node, "duplicate_block_part", `${name} cannot appear more than once within a block`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function expected_block_type(node) {
+	e(node, "expected_block_type", "Expected 'if', 'each', 'await', 'key' or 'snippet'");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function expected_identifier(node) {
+	e(node, "expected_identifier", "Expected an identifier");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_debug(node) {
+	e(node, "invalid_debug", "{@debug ...} arguments must be identifiers, not arbitrary expressions");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_const(node) {
+	e(node, "invalid_const", "{@const ...} must be an assignment");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @param {string} location
+ * @returns {never}
+ */
+export function invalid_block_placement(node, name, location) {
+	e(node, "invalid_block_placement", `{#${name} ...} block cannot be ${location}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @param {string} location
+ * @returns {never}
+ */
+export function invalid_tag_placement(node, name, location) {
+	e(node, "invalid_tag_placement", `{@${name} ...} tag cannot be ${location}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function missing_attribute_value(node) {
+	e(node, "missing_attribute_value", "Expected attribute value");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} delimiter
+ * @returns {never}
+ */
+export function unclosed_attribute_value(node, delimiter) {
+	e(node, "unclosed_attribute_value", `Expected closing ${delimiter} character`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_directive_value(node) {
+	e(node, "invalid_directive_value", "Directive value must be a JavaScript expression enclosed in curly braces");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} type
+ * @returns {never}
+ */
+export function empty_directive_name(node, type) {
+	e(node, "empty_directive_name", `${type} name cannot be empty`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function invalid_closing_tag(node, name) {
+	e(node, "invalid_closing_tag", `</${name}> attempted to close an element that was not open`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @param {string} reason
+ * @returns {never}
+ */
+export function invalid_closing_tag_after_autoclose(node, name, reason) {
+	e(node, "invalid_closing_tag_after_autoclose", `</${name}> attempted to close element that was already automatically closed by <${reason}> (cannot nest <${reason}> inside <${name}>)`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_dollar_binding(node) {
+	e(node, "invalid_dollar_binding", "The $ name is reserved, and cannot be used for variables and imports");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_dollar_prefix(node) {
+	e(node, "invalid_dollar_prefix", "The $ prefix is reserved, and cannot be used for variables and imports");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_dollar_global(node) {
+	e(node, "invalid_dollar_global", "The $ name is reserved. To reference a global variable called $, use globalThis.$");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function illegal_subscription(node) {
+	e(node, "illegal_subscription", "Cannot reference store value inside `<script context=\"module\">`");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function duplicate_style_element(node) {
+	e(node, "duplicate_style_element", "A component can have a single top-level `<style>` element");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function duplicate_script_element(node) {
+	e(node, "duplicate_script_element", "A component can have a single top-level `<script>` element and/or a single top-level `<script context=\"module\">` element");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_render_expression(node) {
+	e(node, "invalid_render_expression", "{@render ...} tags can only contain call expressions");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_render_arguments(node) {
+	e(node, "invalid_render_arguments", "expected at most one argument");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_render_call(node) {
+	e(node, "invalid_render_call", "Calling a snippet function using apply, bind or call is not allowed");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_render_spread_argument(node) {
+	e(node, "invalid_render_spread_argument", "cannot use spread arguments in {@render ...} tags");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_snippet_rest_parameter(node) {
+	e(node, "invalid_snippet_rest_parameter", "snippets do not support rest parameters; use an array instead");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_legacy_props(node) {
+	e(node, "invalid_legacy_props", "Cannot use `$$props` in runes mode");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_legacy_rest_props(node) {
+	e(node, "invalid_legacy_rest_props", "Cannot use `$$restProps` in runes mode");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_legacy_reactive_statement(node) {
+	e(node, "invalid_legacy_reactive_statement", "`$:` is not allowed in runes mode, use `$derived` or `$effect` instead");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_legacy_export(node) {
+	e(node, "invalid_legacy_export", "Cannot use `export let` in runes mode — use $props instead");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} rune
+ * @returns {never}
+ */
+export function invalid_rune_usage(node, rune) {
+	e(node, "invalid_rune_usage", `Cannot use ${rune} rune in non-runes mode`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_state_export(node) {
+	e(node, "invalid_state_export", "Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_derived_export(node) {
+	e(node, "invalid_derived_export", "Cannot export derived state from a module. To expose the current derived value, export a function returning its value");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_props_id(node) {
+	e(node, "invalid_props_id", "`$props()` can only be used with an object destructuring pattern");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_props_pattern(node) {
+	e(node, "invalid_props_pattern", "`$props()` assignment must not contain nested properties or computed keys");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_props_location(node) {
+	e(node, "invalid_props_location", "`$props()` can only be used at the top level of components as a variable declaration initializer");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_bindable_location(node) {
+	e(node, "invalid_bindable_location", "`$bindable()` can only be used inside a `$props()` declaration");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} rune
+ * @returns {never}
+ */
+export function invalid_state_location(node, rune) {
+	e(node, "invalid_state_location", `\`${rune}(...)\` can only be used as a variable declaration initializer or a class field`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_effect_location(node) {
+	e(node, "invalid_effect_location", "`$effect()` can only be used as an expression statement");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_host_location(node) {
+	e(node, "invalid_host_location", "`$host()` can only be used inside custom element component instances");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} thing
+ * @returns {never}
+ */
+export function invalid_assignment(node, thing) {
+	e(node, "invalid_assignment", `Cannot assign to ${thing}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} thing
+ * @returns {never}
+ */
+export function invalid_binding(node, thing) {
+	e(node, "invalid_binding", `Cannot bind to ${thing}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} rune
+ * @returns {never}
+ */
+export function invalid_rune_args(node, rune) {
+	e(node, "invalid_rune_args", `\`${rune}\` cannot be called with arguments`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} rune
+ * @param {string} args
+ * @returns {never}
+ */
+export function invalid_rune_args_length(node, rune, args) {
+	e(node, "invalid_rune_args_length", `\`${rune}\` must be called with ${args}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function invalid_runes_mode_import(node, name) {
+	e(node, "invalid_runes_mode_import", `${name} cannot be used in runes mode`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function duplicate_props_rune(node) {
+	e(node, "duplicate_props_rune", "Cannot use `$props()` more than once");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_each_assignment(node) {
+	e(node, "invalid_each_assignment", "Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_snippet_assignment(node) {
+	e(node, "invalid_snippet_assignment", "Cannot reassign or bind to snippet parameter");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_derived_call(node) {
+	e(node, "invalid_derived_call", "`$derived.call(...)` has been replaced with `$derived.by(...)`");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function conflicting_property_name(node) {
+	e(node, "conflicting_property_name", "Cannot have a property and a component export with the same name");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_slot_element_attribute(node) {
+	e(node, "invalid_slot_element_attribute", "`<slot>` can only receive attributes and (optionally) let directives");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_slot_attribute(node) {
+	e(node, "invalid_slot_attribute", "slot attribute must be a static value");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_slot_name_default(node) {
+	e(node, "invalid_slot_name_default", "`default` is a reserved word — it cannot be used as a slot name");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_slot_name(node) {
+	e(node, "invalid_slot_name", "slot attribute must be a static value");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_slot_placement(node) {
+	e(node, "invalid_slot_placement", "Element with a slot='...' attribute must be a child of a component or a descendant of a custom element");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @param {string} component
+ * @returns {never}
+ */
+export function duplicate_slot_name(node, name, component) {
+	e(node, "duplicate_slot_name", `Duplicate slot name '${name}' in <${component}>`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_default_slot_content(node) {
+	e(node, "invalid_default_slot_content", "Found default slot content alongside an explicit slot=\"default\"");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function conflicting_children_snippet(node) {
+	e(node, "conflicting_children_snippet", "Cannot use explicit children snippet at the same time as implicit children content. Remove either the non-whitespace content or the children snippet block");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_svelte_option_attribute(node) {
+	e(node, "invalid_svelte_option_attribute", "`<svelte:options>` can only receive static attributes");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_svelte_option_namespace(node) {
+	e(node, "invalid_svelte_option_namespace", "Unsupported `<svelte:option>` value for \"namespace\". Valid values are \"html\", \"svg\" or \"foreign\"");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function tag_option_deprecated(node) {
+	e(node, "tag_option_deprecated", "\"tag\" option is deprecated — use \"customElement\" instead");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_svelte_option_runes(node) {
+	e(node, "invalid_svelte_option_runes", "Unsupported `<svelte:option>` value for \"runes\". Valid values are true or false");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_svelte_option_accessors(node) {
+	e(node, "invalid_svelte_option_accessors", "Unsupported `<svelte:option>` value for \"accessors\". Valid values are true or false");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_svelte_option_preserveWhitespace(node) {
+	e(node, "invalid_svelte_option_preserveWhitespace", "Unsupported `<svelte:option>` value for \"preserveWhitespace\". Valid values are true or false");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_svelte_option_immutable(node) {
+	e(node, "invalid_svelte_option_immutable", "Unsupported `<svelte:option>` value for \"immutable\". Valid values are true or false");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_tag_property(node) {
+	e(node, "invalid_tag_property", "Tag name must be two or more words joined by the \"-\" character");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_svelte_option_customElement(node) {
+	e(node, "invalid_svelte_option_customElement", "\"customElement\" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: \"open\" | \"none\"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_customElement_props_attribute(node) {
+	e(node, "invalid_customElement_props_attribute", "\"props\" must be a statically analyzable object literal of the form \"{ [key: string]: { attribute?: string; reflect?: boolean; type?: \"String\" | \"Boolean\" | \"Number\" | \"Array\" | \"Object\" }\"");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_customElement_shadow_attribute(node) {
+	e(node, "invalid_customElement_shadow_attribute", "\"shadow\" must be either \"open\" or \"none\"");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function unknown_svelte_option_attribute(node, name) {
+	e(node, "unknown_svelte_option_attribute", `\`<svelte:options>\` unknown attribute '${name}'`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function illegal_svelte_head_attribute(node) {
+	e(node, "illegal_svelte_head_attribute", "`<svelte:head>` cannot have attributes nor directives");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_svelte_fragment_attribute(node) {
+	e(node, "invalid_svelte_fragment_attribute", "`<svelte:fragment>` can only have a slot attribute and (optionally) a let: directive");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_svelte_fragment_slot(node) {
+	e(node, "invalid_svelte_fragment_slot", "`<svelte:fragment>` slot attribute must have a static value");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_svelte_fragment_placement(node) {
+	e(node, "invalid_svelte_fragment_placement", "`<svelte:fragment>` must be the direct child of a component");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function invalid_svelte_element_placement(node, name) {
+	e(node, "invalid_svelte_element_placement", `<${name}> tags cannot be inside elements or blocks`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function duplicate_svelte_element(node, name) {
+	e(node, "duplicate_svelte_element", `A component can only have one <${name}> element`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_self_placement(node) {
+	e(node, "invalid_self_placement", "`<svelte:self>` components can only exist inside {#if} blocks, {#each} blocks, {#snippet} blocks or slots passed to components");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function missing_svelte_element_definition(node) {
+	e(node, "missing_svelte_element_definition", "`<svelte:element>` must have a 'this' attribute");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function missing_svelte_component_definition(node) {
+	e(node, "missing_svelte_component_definition", "`<svelte:component>` must have a 'this' attribute");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_svelte_element_definition(node) {
+	e(node, "invalid_svelte_element_definition", "Invalid element definition — must be an {expression}");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_svelte_component_definition(node) {
+	e(node, "invalid_svelte_component_definition", "Invalid component definition — must be an {expression}");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} list
+ * @returns {never}
+ */
+export function invalid_svelte_tag(node, list) {
+	e(node, "invalid_svelte_tag", `Valid \`<svelte:...>\` tag names are ${list}`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function conflicting_slot_usage(node) {
+	e(node, "conflicting_slot_usage", "Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function illegal_global(node, name) {
+	e(node, "illegal_global", `\`${name}\` is an illegal variable name. To reference a global variable called \`${name}\`, use \`globalThis.${name}\``);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function duplicate_declaration(node, name) {
+	e(node, "duplicate_declaration", `\`${name}\` has already been declared`);
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function default_export(node) {
+	e(node, "default_export", "A component cannot have a default export");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function illegal_variable_declaration(node) {
+	e(node, "illegal_variable_declaration", "Cannot declare same variable name which is imported inside `<script context=\"module\">`");
+}
+
+/**
+ * MESSAGE
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function illegal_store_subscription(node) {
+	e(node, "illegal_store_subscription", "Cannot subscribe to stores that are not declared at the top level of the component");
+}
