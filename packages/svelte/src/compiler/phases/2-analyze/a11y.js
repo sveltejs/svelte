@@ -103,7 +103,7 @@ function has_disabled_attribute(attribute_map) {
 	const aria_disabled_attr = attribute_map.get('aria-disabled');
 	if (aria_disabled_attr) {
 		const aria_disabled_attr_value = get_static_value(aria_disabled_attr);
-		if (aria_disabled_attr_value === true) {
+		if (aria_disabled_attr_value === 'true') {
 			return true;
 		}
 	}
@@ -601,10 +601,13 @@ function is_parent(parent, elements) {
  */
 function validate_aria_attribute_value(attribute, name, schema, value) {
 	const type = schema.type;
-	const is_string = typeof value === 'string';
 
 	if (value === null) return;
-	if (value === true) value = 'true'; // TODO this is actually incorrect, and we should fix it
+
+	if (value === true) {
+		w.a11y_empty_aria_attribute(attribute, name);
+		return;
+	}
 
 	if (type === 'boolean' && value !== 'true' && value !== 'false') {
 		w.a11y_incorrect_aria_attribute_type_boolean(attribute, name);
@@ -612,10 +615,6 @@ function validate_aria_attribute_value(attribute, name, schema, value) {
 		w.a11y_incorrect_aria_attribute_type_integer(attribute, name);
 	} else if (type === 'number' && isNaN(+value)) {
 		w.a11y_incorrect_aria_attribute_type(attribute, name, 'number');
-	} else if ((type === 'string' || type === 'id') && !is_string) {
-		w.a11y_incorrect_aria_attribute_type(attribute, name, 'string');
-	} else if (type === 'idlist' && !is_string) {
-		w.a11y_incorrect_aria_attribute_type_idlist(attribute, name);
 	} else if (type === 'token') {
 		const values = (schema.values ?? []).map((value) => value.toString());
 		if (!values.includes(value.toLowerCase())) {

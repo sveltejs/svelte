@@ -24,14 +24,14 @@
 		}
 	},
 	{
-		"code": "a11y_incorrect_aria_attribute_type_integer",
-		"message": "The value of 'aria-level' must be an integer",
+		"code": "a11y_empty_aria_attribute",
+		"message": "'aria-level' cannot be empty — change it to `aria-level=\"true\"`",
 		"start": {
-			"line": 5,
+			"line": 4,
 			"column": 5
 		},
 		"end": {
-			"line": 5,
+			"line": 4,
 			"column": 15
 		}
 	}

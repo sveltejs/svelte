@@ -69,6 +69,15 @@ export function a11y_hidden(node, name) {
 }
 
 /**
+ * '%attribute%' cannot be empty — change it to `%attribute%="true"`
+ * @param {null | NodeLike} node
+ * @param {string} attribute
+ */
+export function a11y_empty_aria_attribute(node, attribute) {
+	w(node, "a11y_empty_aria_attribute", `'${attribute}' cannot be empty — change it to \`${attribute}="true"\``);
+}
+
+/**
  * The value of '%attribute%' must be either 'true' or 'false'
  * @param {null | NodeLike} node
  * @param {string} attribute
