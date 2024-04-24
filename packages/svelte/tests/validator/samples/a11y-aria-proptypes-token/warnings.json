@@ -1,7 +1,7 @@
 [
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-sort' must be exactly one of ascending, descending, none, other",
+		"code": "a11y_incorrect_aria_attribute_type_token",
+		"message": "The value of 'aria-sort' must be exactly one of \"ascending\", \"descending\", \"none\" or \"other\"",
 		"start": {
 			"line": 1,
 			"column": 5
@@ -12,8 +12,8 @@
 		}
 	},
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-sort' must be exactly one of ascending, descending, none, other",
+		"code": "a11y_incorrect_aria_attribute_type_token",
+		"message": "The value of 'aria-sort' must be exactly one of \"ascending\", \"descending\", \"none\" or \"other\"",
 		"start": {
 			"line": 2,
 			"column": 5
@@ -24,8 +24,8 @@
 		}
 	},
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-sort' must be exactly one of ascending, descending, none, other",
+		"code": "a11y_incorrect_aria_attribute_type_token",
+		"message": "The value of 'aria-sort' must be exactly one of \"ascending\", \"descending\", \"none\" or \"other\"",
 		"start": {
 			"line": 3,
 			"column": 5
@@ -36,8 +36,8 @@
 		}
 	},
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-sort' must be exactly one of ascending, descending, none, other",
+		"code": "a11y_incorrect_aria_attribute_type_token",
+		"message": "The value of 'aria-sort' must be exactly one of \"ascending\", \"descending\", \"none\" or \"other\"",
 		"start": {
 			"line": 6,
 			"column": 5

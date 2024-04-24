@@ -1,7 +1,7 @@
 [
 	{
-		"code": "a11y-missing-content",
-		"message": "A11y: <a> element should have child content",
+		"code": "a11y_missing_content",
+		"message": "<a> element should have child content",
 		"start": {
 			"line": 1,
 			"column": 0

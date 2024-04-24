@@ -12,7 +12,7 @@ import {
 	object,
 	unwrap_optional
 } from '../../utils/ast.js';
-import { warn } from '../../warnings-tmp.js';
+import * as w from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { binding_properties } from '../bindings.js';
 import {
@@ -67,7 +67,7 @@ function validate_component(node, context) {
 				}
 			}
 
-			validate_attribute_name(attribute, context);
+			validate_attribute_name(attribute);
 
 			if (attribute.name === 'slot') {
 				validate_slot_attribute(context, attribute);
@@ -131,7 +131,7 @@ function validate_element(node, context) {
 					value.name === attribute.name &&
 					!context.state.scope.get(value.name)
 				) {
-					warn(attribute, 'global-event-reference', attribute.name);
+					w.global_event_reference(attribute, attribute.name);
 				}
 			}
 
@@ -141,15 +141,15 @@ function validate_element(node, context) {
 			}
 
 			if (attribute.name === 'is' && context.state.options.namespace !== 'foreign') {
-				warn(attribute, 'avoid-is');
+				w.avoid_is(attribute);
 			}
 
 			const correct_name = react_attributes.get(attribute.name);
 			if (correct_name) {
-				warn(attribute, 'invalid-html-attribute', attribute.name, correct_name);
+				w.invalid_html_attribute(attribute, attribute.name, correct_name);
 			}
 
-			validate_attribute_name(attribute, context);
+			validate_attribute_name(attribute);
 		} else if (attribute.type === 'AnimateDirective') {
 			const parent = context.path.at(-2);
 			if (parent?.type !== 'EachBlock') {
@@ -213,16 +213,15 @@ function validate_element(node, context) {
 
 /**
  * @param {import('#compiler').Attribute} attribute
- * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
  */
-function validate_attribute_name(attribute, context) {
+function validate_attribute_name(attribute) {
 	if (
 		attribute.name.includes(':') &&
 		!attribute.name.startsWith('xmlns:') &&
 		!attribute.name.startsWith('xlink:') &&
 		!attribute.name.startsWith('xml:')
 	) {
-		warn(attribute, 'illegal-attribute-character');
+		w.illegal_attribute_character(attribute);
 	}
 }
 
@@ -300,7 +299,7 @@ function validate_block_not_empty(node, context) {
 	// Assumption: If the block has zero elements, someone's in the middle of typing it out,
 	// so don't warn in that case because it would be distracting.
 	if (node.nodes.length === 1 && node.nodes[0].type === 'Text' && !node.nodes[0].raw.trim()) {
-		warn(node.nodes[0], 'empty-block');
+		w.empty_block(node.nodes[0]);
 	}
 }
 
@@ -361,7 +360,7 @@ const validation = {
 		}
 
 		if (binding?.kind === 'each' && binding.metadata?.inside_rest) {
-			warn(binding.node, 'invalid-rest-eachblock-binding', binding.node.name);
+			w.invalid_rest_eachblock_binding(binding.node, binding.node.name);
 		}
 
 		const parent = context.path.at(-1);
@@ -515,7 +514,7 @@ const validation = {
 			binding.declaration_kind === 'import' &&
 			binding.references.length === 0
 		) {
-			warn(node, 'component-name-lowercase', node.name);
+			w.component_name_lowercase(node, node.name);
 		}
 
 		validate_element(node, context);
@@ -554,7 +553,7 @@ const validation = {
 			!VoidElements.includes(node.name) &&
 			!SVGElements.includes(node.name)
 		) {
-			warn(node, 'invalid-self-closing-tag', node.name);
+			w.invalid_self_closing_tag(node, node.name);
 		}
 
 		context.next({
@@ -750,7 +749,7 @@ export const validation_legacy = merge(validation, a11y_validators, {
 			(state.ast_type !== 'instance' ||
 				/** @type {import('#compiler').SvelteNode} */ (path.at(-1)).type !== 'Program')
 		) {
-			warn(node, 'no-reactive-declaration');
+			w.no_reactive_declaration(node);
 		}
 	},
 	UpdateExpression(node, { state }) {
@@ -953,12 +952,12 @@ export const validation_runes_js = {
 		const allowed_depth = context.state.ast_type === 'module' ? 0 : 1;
 
 		if (context.state.scope.function_depth > allowed_depth) {
-			warn(node, 'avoid-nested-class');
+			w.avoid_nested_class(node);
 		}
 	},
 	NewExpression(node, context) {
 		if (node.callee.type === 'ClassExpression' && context.state.scope.function_depth > 0) {
-			warn(node, 'avoid-inline-class');
+			w.avoid_inline_class(node);
 		}
 	}
 };
@@ -1111,7 +1110,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 
 		if (rune === null) {
 			if (init?.type === 'Identifier' && init.name === '$props' && !state.scope.get('props')) {
-				warn(node, 'invalid-props-declaration');
+				w.invalid_props_declaration(node);
 			}
 			return;
 		}
@@ -1164,7 +1163,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 				arg.type === 'CallExpression' &&
 				(arg.callee.type === 'ArrowFunctionExpression' || arg.callee.type === 'FunctionExpression')
 			) {
-				warn(node, 'derived-iife');
+				w.derived_iife(node);
 			}
 		}
 	},
@@ -1174,19 +1173,19 @@ export const validation_runes = merge(validation, a11y_validators, {
 			node.right.name === '$bindable' &&
 			!state.scope.get('bindable')
 		) {
-			warn(node, 'invalid-bindable-declaration');
+			w.invalid_bindable_declaration(node);
 		}
 	},
 	SlotElement(node, { state }) {
 		if (!state.analysis.custom_element) {
-			warn(node, 'deprecated-slot-element');
+			w.deprecated_slot_element(node);
 		}
 	},
 	OnDirective(node, { path }) {
 		const parent_type = path.at(-1)?.type;
 		// Don't warn on component events; these might not be under the author's control so the warning would be unactionable
 		if (parent_type === 'RegularElement' || parent_type === 'SvelteElement') {
-			warn(node, 'deprecated-event-handler', node.name);
+			w.deprecated_event_handler(node, node.name);
 		}
 	},
 	// TODO this is a code smell. need to refactor this stuff

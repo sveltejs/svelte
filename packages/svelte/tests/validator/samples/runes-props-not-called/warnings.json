@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-props-declaration",
-		"message": "Component properties are declared using $props() in runes mode. Did you forget to call the function?",
+		"code": "invalid_props_declaration",
+		"message": "Component properties are declared using `$props()` in runes mode. Did you forget to call the function?",
 		"start": {
 			"column": 5,
 			"line": 2

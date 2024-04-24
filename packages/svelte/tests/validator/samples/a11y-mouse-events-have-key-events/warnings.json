@@ -1,47 +1,47 @@
 [
 	{
-		"code": "a11y-mouse-events-have-key-events",
+		"code": "a11y_mouse_events_have_key_events",
 		"end": {
 			"column": 39,
 			"line": 11
 		},
-		"message": "A11y: 'mouseover' event must be accompanied by 'focus' event",
+		"message": "'mouseover' event must be accompanied by 'focus' event",
 		"start": {
 			"column": 0,
 			"line": 11
 		}
 	},
 	{
-		"code": "a11y-mouse-events-have-key-events",
+		"code": "a11y_mouse_events_have_key_events",
 		"end": {
 			"column": 55,
 			"line": 15
 		},
-		"message": "A11y: 'mouseover' event must be accompanied by 'focus' event",
+		"message": "'mouseover' event must be accompanied by 'focus' event",
 		"start": {
 			"column": 0,
 			"line": 15
 		}
 	},
 	{
-		"code": "a11y-mouse-events-have-key-events",
+		"code": "a11y_mouse_events_have_key_events",
 		"end": {
 			"column": 38,
 			"line": 17
 		},
-		"message": "A11y: 'mouseout' event must be accompanied by 'blur' event",
+		"message": "'mouseout' event must be accompanied by 'blur' event",
 		"start": {
 			"column": 0,
 			"line": 17
 		}
 	},
 	{
-		"code": "a11y-mouse-events-have-key-events",
+		"code": "a11y_mouse_events_have_key_events",
 		"end": {
 			"column": 54,
 			"line": 21
 		},
-		"message": "A11y: 'mouseout' event must be accompanied by 'blur' event",
+		"message": "'mouseout' event must be accompanied by 'blur' event",
 		"start": {
 			"column": 0,
 			"line": 21

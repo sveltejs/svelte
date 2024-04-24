@@ -1,6 +1,6 @@
 [
 	{
-		"code": "global-event-reference",
+		"code": "global_event_reference",
 		"message": "You are referencing globalThis.onkeydown. Did you forget to declare a variable with that name?",
 		"start": {
 			"column": 8,
@@ -12,7 +12,7 @@
 		}
 	},
 	{
-		"code": "global-event-reference",
+		"code": "global_event_reference",
 		"message": "You are referencing globalThis.onkeydown. Did you forget to declare a variable with that name?",
 		"start": {
 			"column": 8,

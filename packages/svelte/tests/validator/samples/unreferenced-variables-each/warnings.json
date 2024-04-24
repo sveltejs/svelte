@@ -1,6 +1,6 @@
 [
 	{
-		"code": "unused-export-let",
+		"code": "unused_export_let",
 		"message": "Component has unused export property 'default_value_5'. If it is for external reference only, please consider using `export const default_value_5`",
 		"start": {
 			"column": 12,
@@ -12,7 +12,7 @@
 		}
 	},
 	{
-		"code": "unused-export-let",
+		"code": "unused_export_let",
 		"message": "Component has unused export property 'default_value_6'. If it is for external reference only, please consider using `export const default_value_6`",
 		"start": {
 			"column": 12,

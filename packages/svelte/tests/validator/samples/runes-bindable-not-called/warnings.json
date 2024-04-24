@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-bindable-declaration",
-		"message": "Bindable component properties are declared using $bindable() in runes mode. Did you forget to call the function?",
+		"code": "invalid_bindable_declaration",
+		"message": "Bindable component properties are declared using `$bindable()` in runes mode. Did you forget to call the function?",
 		"start": {
 			"column": 7,
 			"line": 2

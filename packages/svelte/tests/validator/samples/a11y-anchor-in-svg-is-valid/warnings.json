@@ -1,7 +1,7 @@
 [
 	{
-		"code": "a11y-missing-attribute",
-		"message": "A11y: <a> element should have an href attribute",
+		"code": "a11y_missing_attribute",
+		"message": "<a> element should have an href attribute",
 		"start": {
 			"line": 1,
 			"column": 11
@@ -12,8 +12,8 @@
 		}
 	},
 	{
-		"code": "a11y-invalid-attribute",
-		"message": "A11y: '' is not a valid xlink:href attribute",
+		"code": "a11y_invalid_attribute",
+		"message": "'' is not a valid xlink:href attribute",
 		"start": {
 			"line": 2,
 			"column": 14
@@ -24,8 +24,8 @@
 		}
 	},
 	{
-		"code": "a11y-invalid-attribute",
-		"message": "A11y: '#' is not a valid xlink:href attribute",
+		"code": "a11y_invalid_attribute",
+		"message": "'#' is not a valid xlink:href attribute",
 		"start": {
 			"line": 3,
 			"column": 14

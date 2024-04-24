@@ -1,7 +1,7 @@
 [
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-label' must be of type string",
+		"code": "a11y_incorrect_aria_attribute_type",
+		"message": "The value of 'aria-label' must be of type string",
 		"start": {
 			"line": 1,
 			"column": 5

@@ -1,6 +1,7 @@
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import * as e from '../../errors.js';
+import * as w from '../../warnings.js';
 import {
 	extract_identifiers,
 	extract_all_identifiers_from_expression,
@@ -14,7 +15,6 @@ import { ReservedKeywords, Runes, SVGElements } from '../constants.js';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import { merge } from '../visitors.js';
 import { validation_legacy, validation_runes, validation_runes_js } from './validation.js';
-import { warn } from '../../warnings-tmp.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
@@ -25,7 +25,6 @@ import { prune } from './css/css-prune.js';
 import { hash } from './utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
-import { reset_warnings } from '../../warnings.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -321,7 +320,7 @@ export function analyze_component(root, source, options) {
 				} else if (declaration !== null && Runes.includes(/** @type {any} */ (name))) {
 					for (const { node, path } of references) {
 						if (path.at(-1)?.type === 'CallExpression') {
-							warn(node, 'store-with-rune-name', store_name);
+							w.store_with_rune_name(node, store_name);
 						}
 					}
 				}
@@ -397,7 +396,7 @@ export function analyze_component(root, source, options) {
 	};
 
 	if (!options.customElement && root.options?.customElement) {
-		warn(root.options, 'missing-custom-element-compile-option');
+		w.missing_custom_element_compile_option(root.options);
 	}
 
 	if (analysis.runes) {
@@ -487,7 +486,7 @@ export function analyze_component(root, source, options) {
 					(r) => r.node !== binding.node && r.path.at(-1)?.type !== 'ExportSpecifier'
 				);
 				if (!references.length && !instance.scope.declarations.has(`$${name}`)) {
-					warn(binding.node, 'unused-export-let', name);
+					w.unused_export_let(binding.node, name);
 				}
 			}
 		}
@@ -527,7 +526,7 @@ export function analyze_component(root, source, options) {
 									type === 'AwaitBlock' ||
 									type === 'KeyBlock'
 								) {
-									warn(binding.node, 'non-state-reference', name);
+									w.non_state_reference(binding.node, name);
 									continue outer;
 								}
 							}
@@ -535,7 +534,7 @@ export function analyze_component(root, source, options) {
 						}
 					}
 
-					warn(binding.node, 'non-state-reference', name);
+					w.non_state_reference(binding.node, name);
 					continue outer;
 				}
 			}
@@ -552,7 +551,7 @@ export function analyze_component(root, source, options) {
 
 		if (
 			!analysis.css.ast.content.comment ||
-			!extract_svelte_ignore(analysis.css.ast.content.comment.data).includes('css-unused-selector')
+			!extract_svelte_ignore(analysis.css.ast.content.comment.data).includes('css_unused_selector')
 		) {
 			warn_unused(analysis.css.ast);
 		}
@@ -677,7 +676,7 @@ const legacy_scope_tweaker = {
 				(d) => d.scope === state.analysis.module.scope && d.declaration_kind !== 'const'
 			)
 		) {
-			warn(node, 'module-script-reactive-declaration');
+			w.module_script_reactive_declaration(node);
 		}
 
 		if (
@@ -1199,7 +1198,7 @@ const common_visitors = {
 					binding.kind === 'derived') &&
 				context.state.function_depth === binding.scope.function_depth
 			) {
-				warn(node, 'static-state-reference');
+				w.static_state_reference(node);
 			}
 		}
 	},

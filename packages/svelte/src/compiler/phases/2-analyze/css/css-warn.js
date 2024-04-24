@@ -1,5 +1,5 @@
 import { walk } from 'zimmerframe';
-import { warn } from '../../../warnings-tmp.js';
+import * as w from '../../../warnings.js';
 import { is_keyframes_node } from '../../css.js';
 
 /**
@@ -25,7 +25,7 @@ const visitors = {
 		if (!node.metadata.used) {
 			const content = context.state.stylesheet.content;
 			const text = content.styles.substring(node.start - content.start, node.end - content.start);
-			warn(node, 'css-unused-selector', text);
+			w.css_unused_selector(node, text);
 		}
 
 		context.next();

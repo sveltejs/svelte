@@ -1,7 +1,7 @@
 [
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-level' must be of type integer",
+		"code": "a11y_incorrect_aria_attribute_type_integer",
+		"message": "The value of 'aria-level' must be an integer",
 		"start": {
 			"line": 1,
 			"column": 5
@@ -12,8 +12,8 @@
 		}
 	},
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-level' must be of type integer",
+		"code": "a11y_incorrect_aria_attribute_type_integer",
+		"message": "The value of 'aria-level' must be an integer",
 		"start": {
 			"line": 2,
 			"column": 5
@@ -24,8 +24,8 @@
 		}
 	},
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-level' must be of type integer",
+		"code": "a11y_incorrect_aria_attribute_type_integer",
+		"message": "The value of 'aria-level' must be an integer",
 		"start": {
 			"line": 5,
 			"column": 5

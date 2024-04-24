@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid-self-closing-tag",
+		"code": "invalid_self_closing_tag",
 		"message": "Self-closing HTML tags for non-void elements are ambiguous — use <div ...></div> rather than <div ... />",
 		"start": {
 			"line": 6,
@@ -12,7 +12,7 @@
 		}
 	},
 	{
-		"code": "invalid-self-closing-tag",
+		"code": "invalid_self_closing_tag",
 		"message": "Self-closing HTML tags for non-void elements are ambiguous — use <my-thing ...></my-thing> rather than <my-thing ... />",
 		"start": {
 			"line": 7,
