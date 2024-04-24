@@ -95,7 +95,7 @@ export class Scope {
 
 		if (this.declarations.has(node.name)) {
 			// This also errors on var/function types, but that's arguably a good thing
-			e.duplicate_declaration(node, node.name);
+			e.declaration_duplicate(node, node.name);
 		}
 
 		/** @type {import('#compiler').Binding} */

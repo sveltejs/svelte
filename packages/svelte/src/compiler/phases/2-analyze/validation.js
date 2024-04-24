@@ -454,7 +454,7 @@ const validation = {
 		}
 	},
 	ExportDefaultDeclaration(node) {
-		e.default_export(node);
+		e.module_illegal_default_export(node);
 	},
 	ConstTag(node, context) {
 		const parent = context.path.at(-1);
@@ -873,7 +873,7 @@ function ensure_no_module_import_conflict(node, state) {
 			state.scope === state.analysis.instance.scope &&
 			state.analysis.module.scope.get(id.name)?.declaration_kind === 'import'
 		) {
-			e.illegal_variable_declaration(node.id);
+			e.declaration_duplicate_module_import(node.id);
 		}
 	}
 }

@@ -64,17 +64,69 @@
 
 > Can only bind to state or props
 
+## block_duplicate_clause
+
+> %name% cannot appear more than once within a block
+
+## block_invalid_continuation_placement
+
+> {:...} block is invalid at this position (did you forget to close the preceeding element or block?)
+
+## block_invalid_elseif
+
+> 'elseif' should be 'else if'
+
+## block_invalid_placement
+
+> {#%name% ...} block cannot be %location%
+
+## block_unclosed
+
+> Block was left open
+
+## block_unexpected_close
+
+> Unexpected block closing tag
+
 ## component_invalid_directive
 
 > This type of directive is not valid on components
+
+## const_tag_invalid_expression
+
+> {@const ...} must be an assignment
 
 ## const_tag_invalid_placement
 
 > `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>` or `<Component>`
 
+## debug_tag_invalid_arguments
+
+> {@debug ...} arguments must be identifiers, not arbitrary expressions
+
+## directive_invalid_value
+
+> Directive value must be a JavaScript expression enclosed in curly braces
+
+## directive_missing_name
+
+> `%type%` name cannot be empty
+
+## element_invalid_closing_tag
+
+> `</%name%>` attempted to close an element that was not open
+
+## element_invalid_closing_tag_autoclosed
+
+> `</%name%>` attempted to close element that was already automatically closed by `<%reason%>` (cannot nest `<%reason%>` inside `<%name%>`)
+
 ## element_invalid_tag_name
 
 > Expected valid tag name
+
+## element_unclosed
+
+> `<%name%>` was left open
 
 ## event_handler_invalid_component_modifier
 
@@ -88,6 +140,34 @@
 
 > The '%modifier1%' and '%modifier2%' modifiers cannot be used together
 
+## expected_attribute_value
+
+> Expected attribute value
+
+## expected_block_type
+
+> Expected 'if', 'each', 'await', 'key' or 'snippet'
+
+## expected_identifier
+
+> Expected an identifier
+
+## expected_pattern
+
+> Expected identifier or destructure pattern
+
+## expected_token
+
+> Expected token %token%
+
+## expected_whitespace
+
+> Expected whitespace
+
+## js_parse_error
+
+> %message%
+
 ## let_directive_invalid_placement
 
 > `let:` directive at invalid position
@@ -95,6 +175,26 @@
 ## node_invalid_placement
 
 > %thing% is invalid inside <%parent%>
+
+## render_tag_invalid_call_expression
+
+> Calling a snippet function using apply, bind or call is not allowed
+
+## render_tag_invalid_expression
+
+> `{@render ...}` tags can only contain call expressions
+
+## render_tag_invalid_spread_argument
+
+> cannot use spread arguments in `{@render ...}` tags
+
+## script_duplicate
+
+> A component can have a single top-level `<script>` element and/or a single top-level `<script context="module">` element
+
+## script_invalid_context
+
+> If the context attribute is supplied, its value must be "module"
 
 ## slot_attribute_duplicate
 
@@ -132,9 +232,17 @@
 
 > Cannot use explicit children snippet at the same time as implicit children content. Remove either the non-whitespace content or the children snippet block
 
+## snippet_invalid_rest_parameter
+
+> snippets do not support rest parameters; use an array instead
+
 ## style_directive_invalid_modifier
 
 > `style:` directive can only use the `important` modifier
+
+## style_duplicate
+
+> A component can have a single top-level `<style>` element
 
 ## svelte_component_invalid_this
 
@@ -220,6 +328,10 @@
 
 > `<svelte:self>` components can only exist inside `{#if}` blocks, `{#each}` blocks, `{#snippet}` blocks or slots passed to components
 
+## tag_invalid_placement
+
+> {@%name% ...} tag cannot be %location%
+
 ## textarea_invalid_content
 
 > A `<textarea>` can have either a value attribute or (equivalently) child content, but not both
@@ -239,6 +351,14 @@
 ## transition_duplicate
 
 > Cannot use multiple `%type%:` directives on a single element
+
+## unexpected_eof
+
+> Unexpected end of input
+
+## unexpected_reserved_word
+
+> '%word%' is a reserved word in JavaScript and cannot be used here
 
 ## void_element_invalid_content
 

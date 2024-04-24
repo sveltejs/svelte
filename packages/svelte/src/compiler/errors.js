@@ -57,23 +57,12 @@ function e(node, code, message) {
 }
 
 /**
- * Invalid compiler option: %msg%
+ * Declaration cannot be empty
  * @param {null | number | NodeLike} node
- * @param {string} msg
  * @returns {never}
  */
-export function invalid_compiler_option(node, msg) {
-	e(node, "invalid_compiler_option", `Invalid compiler option: ${msg}`);
-}
-
-/**
- * Invalid compiler option: %msg%
- * @param {null | number | NodeLike} node
- * @param {string} msg
- * @returns {never}
- */
-export function removed_compiler_option(node, msg) {
-	e(node, "removed_compiler_option", `Invalid compiler option: ${msg}`);
+export function invalid_css_declaration(node) {
+	e(node, "invalid_css_declaration", "Declaration cannot be empty");
 }
 
 /**
@@ -83,24 +72,6 @@ export function removed_compiler_option(node, msg) {
  */
 export function invalid_css_empty_declaration(node) {
 	e(node, "invalid_css_empty_declaration", "Declaration cannot be empty");
-}
-
-/**
- * A :global {...} block cannot be part of a selector list with more than one item
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_css_global_block_list(node) {
-	e(node, "invalid_css_global_block_list", "A :global {...} block cannot be part of a selector list with more than one item");
-}
-
-/**
- * A :global {...} block cannot modify an existing selector
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_css_global_block_modifier(node) {
-	e(node, "invalid_css_global_block_modifier", "A :global {...} block cannot modify an existing selector");
 }
 
 /**
@@ -120,6 +91,24 @@ export function invalid_css_global_block_combinator(node, name) {
  */
 export function invalid_css_global_block_declaration(node) {
 	e(node, "invalid_css_global_block_declaration", "A :global {...} block can only contain rules, not declarations");
+}
+
+/**
+ * A :global {...} block cannot be part of a selector list with more than one item
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_css_global_block_list(node) {
+	e(node, "invalid_css_global_block_list", "A :global {...} block cannot be part of a selector list with more than one item");
+}
+
+/**
+ * A :global {...} block cannot modify an existing selector
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_css_global_block_modifier(node) {
+	e(node, "invalid_css_global_block_modifier", "A :global {...} block cannot modify an existing selector");
 }
 
 /**
@@ -150,12 +139,12 @@ export function invalid_css_global_selector_list(node) {
 }
 
 /**
- * :global(...) must not be followed with a type selector
+ * Expected a valid CSS identifier
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_css_type_selector_placement(node) {
-	e(node, "invalid_css_type_selector_placement", ":global(...) must not be followed with a type selector");
+export function invalid_css_identifier(node) {
+	e(node, "invalid_css_identifier", "Expected a valid CSS identifier");
 }
 
 /**
@@ -168,12 +157,12 @@ export function invalid_css_selector(node) {
 }
 
 /**
- * Expected a valid CSS identifier
+ * :global(...) must not be followed with a type selector
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_css_identifier(node) {
-	e(node, "invalid_css_identifier", "Expected a valid CSS identifier");
+export function invalid_css_type_selector_placement(node) {
+	e(node, "invalid_css_type_selector_placement", ":global(...) must not be followed with a type selector");
 }
 
 /**
@@ -186,423 +175,61 @@ export function invalid_nesting_selector(node) {
 }
 
 /**
- * Declaration cannot be empty
+ * Invalid compiler option: %details%
  * @param {null | number | NodeLike} node
+ * @param {string} details
  * @returns {never}
  */
-export function invalid_css_declaration(node) {
-	e(node, "invalid_css_declaration", "Declaration cannot be empty");
+export function options_invalid_value(node, details) {
+	e(node, "options_invalid_value", `Invalid compiler option: ${details}`);
 }
 
 /**
- * Cyclical dependency detected: %cycle%
+ * Invalid compiler option: %details%
  * @param {null | number | NodeLike} node
- * @param {string} cycle
+ * @param {string} details
  * @returns {never}
  */
-export function cyclical_reactive_declaration(node, cycle) {
-	e(node, "cyclical_reactive_declaration", `Cyclical dependency detected: ${cycle}`);
+export function options_removed(node, details) {
+	e(node, "options_removed", `Invalid compiler option: ${details}`);
 }
 
 /**
- * `<%name%>` was left open
+ * Unrecognised compiler option %keypath%
  * @param {null | number | NodeLike} node
- * @param {string} name
+ * @param {string} keypath
  * @returns {never}
  */
-export function element_unclosed(node, name) {
-	e(node, "element_unclosed", `\`<${name}>\` was left open`);
+export function options_unrecognised(node, keypath) {
+	e(node, "options_unrecognised", `Unrecognised compiler option ${keypath}`);
 }
 
 /**
- * Block was left open
+ * Cannot have a property and a component export with the same name
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function block_unclosed(node) {
-	e(node, "block_unclosed", "Block was left open");
+export function conflicting_property_name(node) {
+	e(node, "conflicting_property_name", "Cannot have a property and a component export with the same name");
 }
 
 /**
- * Unexpected block closing tag
+ * Cannot use `$props()` more than once
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function block_unexpected_close(node) {
-	e(node, "block_unexpected_close", "Unexpected block closing tag");
+export function duplicate_props_rune(node) {
+	e(node, "duplicate_props_rune", "Cannot use `$props()` more than once");
 }
 
 /**
- * Unexpected end of input
+ * Cannot assign to %thing%
  * @param {null | number | NodeLike} node
+ * @param {string} thing
  * @returns {never}
  */
-export function unexpected_eof(node) {
-	e(node, "unexpected_eof", "Unexpected end of input");
-}
-
-/**
- * %message%
- * @param {null | number | NodeLike} node
- * @param {string} message
- * @returns {never}
- */
-export function js_parse_error(node, message) {
-	e(node, "js_parse_error", `${message}`);
-}
-
-/**
- * Expected token %token%
- * @param {null | number | NodeLike} node
- * @param {string} token
- * @returns {never}
- */
-export function expected_token(node, token) {
-	e(node, "expected_token", `Expected token ${token}`);
-}
-
-/**
- * '%word%' is a reserved word in JavaScript and cannot be used here
- * @param {null | number | NodeLike} node
- * @param {string} word
- * @returns {never}
- */
-export function unexpected_reserved_word(node, word) {
-	e(node, "unexpected_reserved_word", `'${word}' is a reserved word in JavaScript and cannot be used here`);
-}
-
-/**
- * Expected whitespace
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function expected_whitespace(node) {
-	e(node, "expected_whitespace", "Expected whitespace");
-}
-
-/**
- * Expected identifier or destructure pattern
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function expected_pattern(node) {
-	e(node, "expected_pattern", "Expected identifier or destructure pattern");
-}
-
-/**
- * If the context attribute is supplied, its value must be "module"
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function script_invalid_context(node) {
-	e(node, "script_invalid_context", "If the context attribute is supplied, its value must be \"module\"");
-}
-
-/**
- * 'elseif' should be 'else if'
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function block_invalid_elseif(node) {
-	e(node, "block_invalid_elseif", "'elseif' should be 'else if'");
-}
-
-/**
- * {:...} block is invalid at this position (did you forget to close the preceeding element or block?)
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function block_invalid_continuation_placement(node) {
-	e(node, "block_invalid_continuation_placement", "{:...} block is invalid at this position (did you forget to close the preceeding element or block?)");
-}
-
-/**
- * %name% cannot appear more than once within a block
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @returns {never}
- */
-export function block_duplicate_clause(node, name) {
-	e(node, "block_duplicate_clause", `${name} cannot appear more than once within a block`);
-}
-
-/**
- * Expected 'if', 'each', 'await', 'key' or 'snippet'
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function expected_block_type(node) {
-	e(node, "expected_block_type", "Expected 'if', 'each', 'await', 'key' or 'snippet'");
-}
-
-/**
- * Expected an identifier
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function expected_identifier(node) {
-	e(node, "expected_identifier", "Expected an identifier");
-}
-
-/**
- * {@debug ...} arguments must be identifiers, not arbitrary expressions
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function debug_tag_invalid_arguments(node) {
-	e(node, "debug_tag_invalid_arguments", "{@debug ...} arguments must be identifiers, not arbitrary expressions");
-}
-
-/**
- * {@const ...} must be an assignment
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function const_tag_invalid_expression(node) {
-	e(node, "const_tag_invalid_expression", "{@const ...} must be an assignment");
-}
-
-/**
- * {#%name% ...} block cannot be %location%
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @param {string} location
- * @returns {never}
- */
-export function block_invalid_placement(node, name, location) {
-	e(node, "block_invalid_placement", `{#${name} ...} block cannot be ${location}`);
-}
-
-/**
- * {@%name% ...} tag cannot be %location%
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @param {string} location
- * @returns {never}
- */
-export function tag_invalid_placement(node, name, location) {
-	e(node, "tag_invalid_placement", `{@${name} ...} tag cannot be ${location}`);
-}
-
-/**
- * Expected attribute value
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function expected_attribute_value(node) {
-	e(node, "expected_attribute_value", "Expected attribute value");
-}
-
-/**
- * Directive value must be a JavaScript expression enclosed in curly braces
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function directive_invalid_value(node) {
-	e(node, "directive_invalid_value", "Directive value must be a JavaScript expression enclosed in curly braces");
-}
-
-/**
- * `%type%` name cannot be empty
- * @param {null | number | NodeLike} node
- * @param {string} type
- * @returns {never}
- */
-export function directive_missing_name(node, type) {
-	e(node, "directive_missing_name", `\`${type}\` name cannot be empty`);
-}
-
-/**
- * `</%name%>` attempted to close an element that was not open
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @returns {never}
- */
-export function element_invalid_closing_tag(node, name) {
-	e(node, "element_invalid_closing_tag", `\`</${name}>\` attempted to close an element that was not open`);
-}
-
-/**
- * `</%name%>` attempted to close element that was already automatically closed by `<%reason%>` (cannot nest `<%reason%>` inside `<%name%>`)
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @param {string} reason
- * @returns {never}
- */
-export function element_invalid_closing_tag_autoclosed(node, name, reason) {
-	e(node, "element_invalid_closing_tag_autoclosed", `\`</${name}>\` attempted to close element that was already automatically closed by \`<${reason}>\` (cannot nest \`<${reason}>\` inside \`<${name}>\`)`);
-}
-
-/**
- * The $ name is reserved, and cannot be used for variables and imports
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function dollar_binding_invalid(node) {
-	e(node, "dollar_binding_invalid", "The $ name is reserved, and cannot be used for variables and imports");
-}
-
-/**
- * The $ prefix is reserved, and cannot be used for variables and imports
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function dollar_prefix_invalid(node) {
-	e(node, "dollar_prefix_invalid", "The $ prefix is reserved, and cannot be used for variables and imports");
-}
-
-/**
- * Cannot reference store value inside `<script context="module">`
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function store_invalid_subscription(node) {
-	e(node, "store_invalid_subscription", "Cannot reference store value inside `<script context=\"module\">`");
-}
-
-/**
- * A component can have a single top-level `<style>` element
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function style_duplicate(node) {
-	e(node, "style_duplicate", "A component can have a single top-level `<style>` element");
-}
-
-/**
- * A component can have a single top-level `<script>` element and/or a single top-level `<script context="module">` element
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function script_duplicate(node) {
-	e(node, "script_duplicate", "A component can have a single top-level `<script>` element and/or a single top-level `<script context=\"module\">` element");
-}
-
-/**
- * `{@render ...}` tags can only contain call expressions
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function render_tag_invalid_expression(node) {
-	e(node, "render_tag_invalid_expression", "`{@render ...}` tags can only contain call expressions");
-}
-
-/**
- * Calling a snippet function using apply, bind or call is not allowed
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function render_tag_invalid_call_expression(node) {
-	e(node, "render_tag_invalid_call_expression", "Calling a snippet function using apply, bind or call is not allowed");
-}
-
-/**
- * cannot use spread arguments in `{@render ...}` tags
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function render_tag_invalid_spread_argument(node) {
-	e(node, "render_tag_invalid_spread_argument", "cannot use spread arguments in `{@render ...}` tags");
-}
-
-/**
- * snippets do not support rest parameters; use an array instead
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function snippet_invalid_rest_parameter(node) {
-	e(node, "snippet_invalid_rest_parameter", "snippets do not support rest parameters; use an array instead");
-}
-
-/**
- * Cannot use `$$props` in runes mode
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_legacy_props(node) {
-	e(node, "invalid_legacy_props", "Cannot use `$$props` in runes mode");
-}
-
-/**
- * Cannot use `$$restProps` in runes mode
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_legacy_rest_props(node) {
-	e(node, "invalid_legacy_rest_props", "Cannot use `$$restProps` in runes mode");
-}
-
-/**
- * `$:` is not allowed in runes mode, use `$derived` or `$effect` instead
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_legacy_reactive_statement(node) {
-	e(node, "invalid_legacy_reactive_statement", "`$:` is not allowed in runes mode, use `$derived` or `$effect` instead");
-}
-
-/**
- * Cannot use `export let` in runes mode — use $props instead
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_legacy_export(node) {
-	e(node, "invalid_legacy_export", "Cannot use `export let` in runes mode — use $props instead");
-}
-
-/**
- * Cannot use %rune% rune in non-runes mode
- * @param {null | number | NodeLike} node
- * @param {string} rune
- * @returns {never}
- */
-export function invalid_rune_usage(node, rune) {
-	e(node, "invalid_rune_usage", `Cannot use ${rune} rune in non-runes mode`);
-}
-
-/**
- * Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_state_export(node) {
-	e(node, "invalid_state_export", "Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties");
-}
-
-/**
- * Cannot export derived state from a module. To expose the current derived value, export a function returning its value
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_derived_export(node) {
-	e(node, "invalid_derived_export", "Cannot export derived state from a module. To expose the current derived value, export a function returning its value");
-}
-
-/**
- * `$props()` can only be used with an object destructuring pattern
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_props_id(node) {
-	e(node, "invalid_props_id", "`$props()` can only be used with an object destructuring pattern");
-}
-
-/**
- * `$props()` assignment must not contain nested properties or computed keys
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_props_pattern(node) {
-	e(node, "invalid_props_pattern", "`$props()` assignment must not contain nested properties or computed keys");
-}
-
-/**
- * `$props()` can only be used at the top level of components as a variable declaration initializer
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_props_location(node) {
-	e(node, "invalid_props_location", "`$props()` can only be used at the top level of components as a variable declaration initializer");
+export function invalid_assignment(node, thing) {
+	e(node, "invalid_assignment", `Cannot assign to ${thing}`);
 }
 
 /**
@@ -615,13 +242,40 @@ export function invalid_bindable_location(node) {
 }
 
 /**
- * `%rune%(...)` can only be used as a variable declaration initializer or a class field
+ * Cannot bind to %thing%
  * @param {null | number | NodeLike} node
- * @param {string} rune
+ * @param {string} thing
  * @returns {never}
  */
-export function invalid_state_location(node, rune) {
-	e(node, "invalid_state_location", `\`${rune}(...)\` can only be used as a variable declaration initializer or a class field`);
+export function invalid_binding(node, thing) {
+	e(node, "invalid_binding", `Cannot bind to ${thing}`);
+}
+
+/**
+ * `$derived.call(...)` has been replaced with `$derived.by(...)`
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_derived_call(node) {
+	e(node, "invalid_derived_call", "`$derived.call(...)` has been replaced with `$derived.by(...)`");
+}
+
+/**
+ * Cannot export derived state from a module. To expose the current derived value, export a function returning its value
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_derived_export(node) {
+	e(node, "invalid_derived_export", "Cannot export derived state from a module. To expose the current derived value, export a function returning its value");
+}
+
+/**
+ * Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_each_assignment(node) {
+	e(node, "invalid_each_assignment", "Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)");
 }
 
 /**
@@ -643,23 +297,66 @@ export function invalid_host_location(node) {
 }
 
 /**
- * Cannot assign to %thing%
+ * Cannot use `export let` in runes mode — use $props instead
  * @param {null | number | NodeLike} node
- * @param {string} thing
  * @returns {never}
  */
-export function invalid_assignment(node, thing) {
-	e(node, "invalid_assignment", `Cannot assign to ${thing}`);
+export function invalid_legacy_export(node) {
+	e(node, "invalid_legacy_export", "Cannot use `export let` in runes mode — use $props instead");
 }
 
 /**
- * Cannot bind to %thing%
+ * Cannot use `$$props` in runes mode
  * @param {null | number | NodeLike} node
- * @param {string} thing
  * @returns {never}
  */
-export function invalid_binding(node, thing) {
-	e(node, "invalid_binding", `Cannot bind to ${thing}`);
+export function invalid_legacy_props(node) {
+	e(node, "invalid_legacy_props", "Cannot use `$$props` in runes mode");
+}
+
+/**
+ * `$:` is not allowed in runes mode, use `$derived` or `$effect` instead
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_legacy_reactive_statement(node) {
+	e(node, "invalid_legacy_reactive_statement", "`$:` is not allowed in runes mode, use `$derived` or `$effect` instead");
+}
+
+/**
+ * Cannot use `$$restProps` in runes mode
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_legacy_rest_props(node) {
+	e(node, "invalid_legacy_rest_props", "Cannot use `$$restProps` in runes mode");
+}
+
+/**
+ * `$props()` can only be used with an object destructuring pattern
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_props_id(node) {
+	e(node, "invalid_props_id", "`$props()` can only be used with an object destructuring pattern");
+}
+
+/**
+ * `$props()` can only be used at the top level of components as a variable declaration initializer
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_props_location(node) {
+	e(node, "invalid_props_location", "`$props()` can only be used at the top level of components as a variable declaration initializer");
+}
+
+/**
+ * `$props()` assignment must not contain nested properties or computed keys
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_props_pattern(node) {
+	e(node, "invalid_props_pattern", "`$props()` assignment must not contain nested properties or computed keys");
 }
 
 /**
@@ -684,6 +381,16 @@ export function invalid_rune_args_length(node, rune, args) {
 }
 
 /**
+ * Cannot use %rune% rune in non-runes mode
+ * @param {null | number | NodeLike} node
+ * @param {string} rune
+ * @returns {never}
+ */
+export function invalid_rune_usage(node, rune) {
+	e(node, "invalid_rune_usage", `Cannot use ${rune} rune in non-runes mode`);
+}
+
+/**
  * %name% cannot be used in runes mode
  * @param {null | number | NodeLike} node
  * @param {string} name
@@ -691,24 +398,6 @@ export function invalid_rune_args_length(node, rune, args) {
  */
 export function invalid_runes_mode_import(node, name) {
 	e(node, "invalid_runes_mode_import", `${name} cannot be used in runes mode`);
-}
-
-/**
- * Cannot use `$props()` more than once
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function duplicate_props_rune(node) {
-	e(node, "duplicate_props_rune", "Cannot use `$props()` more than once");
-}
-
-/**
- * Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_each_assignment(node) {
-	e(node, "invalid_each_assignment", "Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)");
 }
 
 /**
@@ -721,21 +410,115 @@ export function invalid_snippet_assignment(node) {
 }
 
 /**
- * `$derived.call(...)` has been replaced with `$derived.by(...)`
+ * Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_derived_call(node) {
-	e(node, "invalid_derived_call", "`$derived.call(...)` has been replaced with `$derived.by(...)`");
+export function invalid_state_export(node) {
+	e(node, "invalid_state_export", "Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties");
 }
 
 /**
- * Cannot have a property and a component export with the same name
+ * `%rune%(...)` can only be used as a variable declaration initializer or a class field
+ * @param {null | number | NodeLike} node
+ * @param {string} rune
+ * @returns {never}
+ */
+export function invalid_state_location(node, rune) {
+	e(node, "invalid_state_location", `\`${rune}(...)\` can only be used as a variable declaration initializer or a class field`);
+}
+
+/**
+ * `%name%` has already been declared
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function declaration_duplicate(node, name) {
+	e(node, "declaration_duplicate", `\`${name}\` has already been declared`);
+}
+
+/**
+ * Cannot declare same variable name which is imported inside `<script context="module">`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function conflicting_property_name(node) {
-	e(node, "conflicting_property_name", "Cannot have a property and a component export with the same name");
+export function declaration_duplicate_module_import(node) {
+	e(node, "declaration_duplicate_module_import", "Cannot declare same variable name which is imported inside `<script context=\"module\">`");
+}
+
+/**
+ * The $ name is reserved, and cannot be used for variables and imports
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function dollar_binding_invalid(node) {
+	e(node, "dollar_binding_invalid", "The $ name is reserved, and cannot be used for variables and imports");
+}
+
+/**
+ * The $ prefix is reserved, and cannot be used for variables and imports
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function dollar_prefix_invalid(node) {
+	e(node, "dollar_prefix_invalid", "The $ prefix is reserved, and cannot be used for variables and imports");
+}
+
+/**
+ * `%name%` is an illegal variable name. To reference a global variable called `%name%`, use `globalThis.%name%`
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function global_reference_invalid(node, name) {
+	e(node, "global_reference_invalid", `\`${name}\` is an illegal variable name. To reference a global variable called \`${name}\`, use \`globalThis.${name}\``);
+}
+
+/**
+ * A component cannot have a default export
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function module_illegal_default_export(node) {
+	e(node, "module_illegal_default_export", "A component cannot have a default export");
+}
+
+/**
+ * Cyclical dependency detected: %cycle%
+ * @param {null | number | NodeLike} node
+ * @param {string} cycle
+ * @returns {never}
+ */
+export function reactive_declaration_cycle(node, cycle) {
+	e(node, "reactive_declaration_cycle", `Cyclical dependency detected: ${cycle}`);
+}
+
+/**
+ * Cannot subscribe to stores that are not declared at the top level of the component
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function store_invalid_scoped_subscription(node) {
+	e(node, "store_invalid_scoped_subscription", "Cannot subscribe to stores that are not declared at the top level of the component");
+}
+
+/**
+ * Cannot reference store value inside `<script context="module">`
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function store_invalid_subscription(node) {
+	e(node, "store_invalid_subscription", "Cannot reference store value inside `<script context=\"module\">`");
+}
+
+/**
+ * An element can only have one 'animate' directive
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function animation_duplicate(node) {
+	e(node, "animation_duplicate", "An element can only have one 'animate' directive");
 }
 
 /**
@@ -757,12 +540,12 @@ export function animation_missing_key(node) {
 }
 
 /**
- * An element can only have one 'animate' directive
+ * 'contenteditable' attribute cannot be dynamic if element uses two-way binding
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function animation_duplicate(node) {
-	e(node, "animation_duplicate", "An element can only have one 'animate' directive");
+export function attribute_contenteditable_dynamic(node) {
+	e(node, "attribute_contenteditable_dynamic", "'contenteditable' attribute cannot be dynamic if element uses two-way binding");
 }
 
 /**
@@ -772,15 +555,6 @@ export function animation_duplicate(node) {
  */
 export function attribute_contenteditable_missing(node) {
 	e(node, "attribute_contenteditable_missing", "'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings");
-}
-
-/**
- * 'contenteditable' attribute cannot be dynamic if element uses two-way binding
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function attribute_contenteditable_dynamic(node) {
-	e(node, "attribute_contenteditable_dynamic", "'contenteditable' attribute cannot be dynamic if element uses two-way binding");
 }
 
 /**
@@ -888,12 +662,78 @@ export function bind_invalid_value(node) {
 }
 
 /**
+ * %name% cannot appear more than once within a block
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function block_duplicate_clause(node, name) {
+	e(node, "block_duplicate_clause", `${name} cannot appear more than once within a block`);
+}
+
+/**
+ * {:...} block is invalid at this position (did you forget to close the preceeding element or block?)
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function block_invalid_continuation_placement(node) {
+	e(node, "block_invalid_continuation_placement", "{:...} block is invalid at this position (did you forget to close the preceeding element or block?)");
+}
+
+/**
+ * 'elseif' should be 'else if'
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function block_invalid_elseif(node) {
+	e(node, "block_invalid_elseif", "'elseif' should be 'else if'");
+}
+
+/**
+ * {#%name% ...} block cannot be %location%
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @param {string} location
+ * @returns {never}
+ */
+export function block_invalid_placement(node, name, location) {
+	e(node, "block_invalid_placement", `{#${name} ...} block cannot be ${location}`);
+}
+
+/**
+ * Block was left open
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function block_unclosed(node) {
+	e(node, "block_unclosed", "Block was left open");
+}
+
+/**
+ * Unexpected block closing tag
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function block_unexpected_close(node) {
+	e(node, "block_unexpected_close", "Unexpected block closing tag");
+}
+
+/**
  * This type of directive is not valid on components
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function component_invalid_directive(node) {
 	e(node, "component_invalid_directive", "This type of directive is not valid on components");
+}
+
+/**
+ * {@const ...} must be an assignment
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function const_tag_invalid_expression(node) {
+	e(node, "const_tag_invalid_expression", "{@const ...} must be an assignment");
 }
 
 /**
@@ -906,12 +746,80 @@ export function const_tag_invalid_placement(node) {
 }
 
 /**
+ * {@debug ...} arguments must be identifiers, not arbitrary expressions
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function debug_tag_invalid_arguments(node) {
+	e(node, "debug_tag_invalid_arguments", "{@debug ...} arguments must be identifiers, not arbitrary expressions");
+}
+
+/**
+ * Directive value must be a JavaScript expression enclosed in curly braces
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function directive_invalid_value(node) {
+	e(node, "directive_invalid_value", "Directive value must be a JavaScript expression enclosed in curly braces");
+}
+
+/**
+ * `%type%` name cannot be empty
+ * @param {null | number | NodeLike} node
+ * @param {string} type
+ * @returns {never}
+ */
+export function directive_missing_name(node, type) {
+	e(node, "directive_missing_name", `\`${type}\` name cannot be empty`);
+}
+
+/**
+ * `</%name%>` attempted to close an element that was not open
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function element_invalid_closing_tag(node, name) {
+	e(node, "element_invalid_closing_tag", `\`</${name}>\` attempted to close an element that was not open`);
+}
+
+/**
+ * `</%name%>` attempted to close element that was already automatically closed by `<%reason%>` (cannot nest `<%reason%>` inside `<%name%>`)
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @param {string} reason
+ * @returns {never}
+ */
+export function element_invalid_closing_tag_autoclosed(node, name, reason) {
+	e(node, "element_invalid_closing_tag_autoclosed", `\`</${name}>\` attempted to close element that was already automatically closed by \`<${reason}>\` (cannot nest \`<${reason}>\` inside \`<${name}>\`)`);
+}
+
+/**
  * Expected valid tag name
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function element_invalid_tag_name(node) {
 	e(node, "element_invalid_tag_name", "Expected valid tag name");
+}
+
+/**
+ * `<%name%>` was left open
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function element_unclosed(node, name) {
+	e(node, "element_unclosed", `\`<${name}>\` was left open`);
+}
+
+/**
+ * Event modifiers other than 'once' can only be used on DOM elements
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function event_handler_invalid_component_modifier(node) {
+	e(node, "event_handler_invalid_component_modifier", "Event modifiers other than 'once' can only be used on DOM elements");
 }
 
 /**
@@ -936,12 +844,68 @@ export function event_handler_invalid_modifier_combination(node, modifier1, modi
 }
 
 /**
- * Event modifiers other than 'once' can only be used on DOM elements
+ * Expected attribute value
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function event_handler_invalid_component_modifier(node) {
-	e(node, "event_handler_invalid_component_modifier", "Event modifiers other than 'once' can only be used on DOM elements");
+export function expected_attribute_value(node) {
+	e(node, "expected_attribute_value", "Expected attribute value");
+}
+
+/**
+ * Expected 'if', 'each', 'await', 'key' or 'snippet'
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function expected_block_type(node) {
+	e(node, "expected_block_type", "Expected 'if', 'each', 'await', 'key' or 'snippet'");
+}
+
+/**
+ * Expected an identifier
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function expected_identifier(node) {
+	e(node, "expected_identifier", "Expected an identifier");
+}
+
+/**
+ * Expected identifier or destructure pattern
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function expected_pattern(node) {
+	e(node, "expected_pattern", "Expected identifier or destructure pattern");
+}
+
+/**
+ * Expected token %token%
+ * @param {null | number | NodeLike} node
+ * @param {string} token
+ * @returns {never}
+ */
+export function expected_token(node, token) {
+	e(node, "expected_token", `Expected token ${token}`);
+}
+
+/**
+ * Expected whitespace
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function expected_whitespace(node) {
+	e(node, "expected_whitespace", "Expected whitespace");
+}
+
+/**
+ * %message%
+ * @param {null | number | NodeLike} node
+ * @param {string} message
+ * @returns {never}
+ */
+export function js_parse_error(node, message) {
+	e(node, "js_parse_error", `${message}`);
 }
 
 /**
@@ -965,6 +929,62 @@ export function node_invalid_placement(node, thing, parent) {
 }
 
 /**
+ * Calling a snippet function using apply, bind or call is not allowed
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function render_tag_invalid_call_expression(node) {
+	e(node, "render_tag_invalid_call_expression", "Calling a snippet function using apply, bind or call is not allowed");
+}
+
+/**
+ * `{@render ...}` tags can only contain call expressions
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function render_tag_invalid_expression(node) {
+	e(node, "render_tag_invalid_expression", "`{@render ...}` tags can only contain call expressions");
+}
+
+/**
+ * cannot use spread arguments in `{@render ...}` tags
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function render_tag_invalid_spread_argument(node) {
+	e(node, "render_tag_invalid_spread_argument", "cannot use spread arguments in `{@render ...}` tags");
+}
+
+/**
+ * A component can have a single top-level `<script>` element and/or a single top-level `<script context="module">` element
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function script_duplicate(node) {
+	e(node, "script_duplicate", "A component can have a single top-level `<script>` element and/or a single top-level `<script context=\"module\">` element");
+}
+
+/**
+ * If the context attribute is supplied, its value must be "module"
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function script_invalid_context(node) {
+	e(node, "script_invalid_context", "If the context attribute is supplied, its value must be \"module\"");
+}
+
+/**
+ * Duplicate slot name '%name%' in <%component%>
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @param {string} component
+ * @returns {never}
+ */
+export function slot_attribute_duplicate(node, name, component) {
+	e(node, "slot_attribute_duplicate", `Duplicate slot name '${name}' in <${component}>`);
+}
+
+/**
  * slot attribute must be a static value
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -980,6 +1000,15 @@ export function slot_attribute_invalid(node) {
  */
 export function slot_attribute_invalid_placement(node) {
 	e(node, "slot_attribute_invalid_placement", "Element with a slot='...' attribute must be a child of a component or a descendant of a custom element");
+}
+
+/**
+ * Found default slot content alongside an explicit slot="default"
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function slot_default_duplicate(node) {
+	e(node, "slot_default_duplicate", "Found default slot content alongside an explicit slot=\"default\"");
 }
 
 /**
@@ -1010,26 +1039,6 @@ export function slot_element_invalid_name_default(node) {
 }
 
 /**
- * Duplicate slot name '%name%' in <%component%>
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @param {string} component
- * @returns {never}
- */
-export function slot_attribute_duplicate(node, name, component) {
-	e(node, "slot_attribute_duplicate", `Duplicate slot name '${name}' in <${component}>`);
-}
-
-/**
- * Found default slot content alongside an explicit slot="default"
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function slot_default_duplicate(node) {
-	e(node, "slot_default_duplicate", "Found default slot content alongside an explicit slot=\"default\"");
-}
-
-/**
  * Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -1048,12 +1057,30 @@ export function snippet_conflict(node) {
 }
 
 /**
+ * snippets do not support rest parameters; use an array instead
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function snippet_invalid_rest_parameter(node) {
+	e(node, "snippet_invalid_rest_parameter", "snippets do not support rest parameters; use an array instead");
+}
+
+/**
  * `style:` directive can only use the `important` modifier
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function style_directive_invalid_modifier(node) {
 	e(node, "style_directive_invalid_modifier", "`style:` directive can only use the `important` modifier");
+}
+
+/**
+ * A component can have a single top-level `<style>` element
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function style_duplicate(node) {
+	e(node, "style_duplicate", "A component can have a single top-level `<style>` element");
 }
 
 /**
@@ -1102,15 +1129,6 @@ export function svelte_fragment_invalid_attribute(node) {
 }
 
 /**
- * `<svelte:fragment>` slot attribute must have a static value
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function svelte_fragment_invalid_slot(node) {
-	e(node, "svelte_fragment_invalid_slot", "`<svelte:fragment>` slot attribute must have a static value");
-}
-
-/**
  * `<svelte:fragment>` must be the direct child of a component
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -1120,22 +1138,21 @@ export function svelte_fragment_invalid_placement(node) {
 }
 
 /**
+ * `<svelte:fragment>` slot attribute must have a static value
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_fragment_invalid_slot(node) {
+	e(node, "svelte_fragment_invalid_slot", "`<svelte:fragment>` slot attribute must have a static value");
+}
+
+/**
  * `<svelte:head>` cannot have attributes nor directives
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function svelte_head_illegal_attribute(node) {
 	e(node, "svelte_head_illegal_attribute", "`<svelte:head>` cannot have attributes nor directives");
-}
-
-/**
- * `<%name%>` tags cannot be inside elements or blocks
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @returns {never}
- */
-export function svelte_meta_invalid_placement(node, name) {
-	e(node, "svelte_meta_invalid_placement", `\`<${name}>\` tags cannot be inside elements or blocks`);
 }
 
 /**
@@ -1156,6 +1173,16 @@ export function svelte_meta_duplicate(node, name) {
  */
 export function svelte_meta_invalid_content(node, name) {
 	e(node, "svelte_meta_invalid_content", `<${name}> cannot have children`);
+}
+
+/**
+ * `<%name%>` tags cannot be inside elements or blocks
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function svelte_meta_invalid_placement(node, name) {
+	e(node, "svelte_meta_invalid_placement", `\`<${name}>\` tags cannot be inside elements or blocks`);
 }
 
 /**
@@ -1252,6 +1279,17 @@ export function svelte_self_invalid_placement(node) {
 }
 
 /**
+ * {@%name% ...} tag cannot be %location%
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @param {string} location
+ * @returns {never}
+ */
+export function tag_invalid_placement(node, name, location) {
+	e(node, "tag_invalid_placement", `{@${name} ...} tag cannot be ${location}`);
+}
+
+/**
  * A `<textarea>` can have either a value attribute or (equivalently) child content, but not both
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -1279,16 +1317,6 @@ export function title_invalid_content(node) {
 }
 
 /**
- * Cannot use multiple `%type%:` directives on a single element
- * @param {null | number | NodeLike} node
- * @param {string} type
- * @returns {never}
- */
-export function transition_duplicate(node, type) {
-	e(node, "transition_duplicate", `Cannot use multiple \`${type}:\` directives on a single element`);
-}
-
-/**
  * Cannot use `%type%:` alongside existing `%existing%:` directive
  * @param {null | number | NodeLike} node
  * @param {string} type
@@ -1300,57 +1328,39 @@ export function transition_conflict(node, type, existing) {
 }
 
 /**
+ * Cannot use multiple `%type%:` directives on a single element
+ * @param {null | number | NodeLike} node
+ * @param {string} type
+ * @returns {never}
+ */
+export function transition_duplicate(node, type) {
+	e(node, "transition_duplicate", `Cannot use multiple \`${type}:\` directives on a single element`);
+}
+
+/**
+ * Unexpected end of input
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function unexpected_eof(node) {
+	e(node, "unexpected_eof", "Unexpected end of input");
+}
+
+/**
+ * '%word%' is a reserved word in JavaScript and cannot be used here
+ * @param {null | number | NodeLike} node
+ * @param {string} word
+ * @returns {never}
+ */
+export function unexpected_reserved_word(node, word) {
+	e(node, "unexpected_reserved_word", `'${word}' is a reserved word in JavaScript and cannot be used here`);
+}
+
+/**
  * Void elements cannot have children or closing tags
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function void_element_invalid_content(node) {
 	e(node, "void_element_invalid_content", "Void elements cannot have children or closing tags");
-}
-
-/**
- * `%name%` is an illegal variable name. To reference a global variable called `%name%`, use `globalThis.%name%`
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @returns {never}
- */
-export function illegal_global(node, name) {
-	e(node, "illegal_global", `\`${name}\` is an illegal variable name. To reference a global variable called \`${name}\`, use \`globalThis.${name}\``);
-}
-
-/**
- * `%name%` has already been declared
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @returns {never}
- */
-export function duplicate_declaration(node, name) {
-	e(node, "duplicate_declaration", `\`${name}\` has already been declared`);
-}
-
-/**
- * A component cannot have a default export
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function default_export(node) {
-	e(node, "default_export", "A component cannot have a default export");
-}
-
-/**
- * Cannot declare same variable name which is imported inside `<script context="module">`
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function illegal_variable_declaration(node) {
-	e(node, "illegal_variable_declaration", "Cannot declare same variable name which is imported inside `<script context=\"module\">`");
-}
-
-/**
- * Cannot subscribe to stores that are not declared at the top level of the component
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function illegal_store_subscription(node) {
-	e(node, "illegal_store_subscription", "Cannot subscribe to stores that are not declared at the top level of the component");
 }

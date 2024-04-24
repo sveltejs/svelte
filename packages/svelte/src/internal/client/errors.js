@@ -19,23 +19,6 @@ export function effect_update_depth_exceeded() {
 }
 
 /**
- * `%name%(...)` can only be used during component initialisation
- * @param {string} name
- * @returns {never}
- */
-export function lifecycle_outside_component(name) {
-	if (DEV) {
-		const error = new Error(`${"lifecycle_outside_component"}\n${`\`${name}(...)\` can only be used during component initialisation`}`);
-
-		error.name = 'Svelte error';
-		throw error;
-	} else {
-		// TODO print a link to the documentation
-		throw new Error("lifecycle_outside_component");
-	}
-}
-
-/**
  * `%name%(...)` cannot be used in runes mode
  * @param {string} name
  * @returns {never}
@@ -49,5 +32,22 @@ export function lifecycle_legacy_only(name) {
 	} else {
 		// TODO print a link to the documentation
 		throw new Error("lifecycle_legacy_only");
+	}
+}
+
+/**
+ * `%name%(...)` can only be used during component initialisation
+ * @param {string} name
+ * @returns {never}
+ */
+export function lifecycle_outside_component(name) {
+	if (DEV) {
+		const error = new Error(`${"lifecycle_outside_component"}\n${`\`${name}(...)\` can only be used during component initialisation`}`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("lifecycle_outside_component");
 	}
 }

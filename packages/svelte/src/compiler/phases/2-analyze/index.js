@@ -230,7 +230,7 @@ export function analyze_module(ast, options) {
 	for (const [name, references] of scope.references) {
 		if (name[0] !== '$' || ReservedKeywords.includes(name)) continue;
 		if (name === '$' || name[1] === '$') {
-			e.illegal_global(references[0].node, name);
+			e.global_reference_invalid(references[0].node, name);
 		}
 	}
 
@@ -271,7 +271,7 @@ export function analyze_component(root, source, options) {
 	for (const [name, references] of module.scope.references) {
 		if (name[0] !== '$' || ReservedKeywords.includes(name)) continue;
 		if (name === '$' || name[1] === '$') {
-			e.illegal_global(references[0].node, name);
+			e.global_reference_invalid(references[0].node, name);
 		}
 
 		const store_name = name.slice(1);
@@ -311,12 +311,12 @@ export function analyze_component(root, source, options) {
 			}
 
 			if (is_nested_store_subscription_node) {
-				e.illegal_store_subscription(is_nested_store_subscription_node);
+				e.store_invalid_scoped_subscription(is_nested_store_subscription_node);
 			}
 
 			if (options.runes !== false) {
 				if (declaration === null && /[a-z]/.test(store_name[0])) {
-					e.illegal_global(references[0].node, name);
+					e.global_reference_invalid(references[0].node, name);
 				} else if (declaration !== null && Runes.includes(/** @type {any} */ (name))) {
 					for (const { node, path } of references) {
 						if (path.at(-1)?.type === 'CallExpression') {
@@ -1493,7 +1493,7 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	const cycle = check_graph_for_cycles(edges);
 	if (cycle?.length) {
 		const declaration = /** @type {Tuple[]} */ (lookup.get(cycle[0]))[0];
-		e.cyclical_reactive_declaration(declaration[0], cycle.join(' → '));
+		e.reactive_declaration_cycle(declaration[0], cycle.join(' → '));
 	}
 
 	// We use a map and take advantage of the fact that the spec says insertion order is preserved when iterating
