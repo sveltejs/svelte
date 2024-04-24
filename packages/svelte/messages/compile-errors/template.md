@@ -1,3 +1,7 @@
+## animation_duplicate
+
+> An element can only have one 'animate' directive
+
 ## animation_invalid_placement
 
 > An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block
@@ -6,17 +10,13 @@
 
 > An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block. Did you forget to add a key to your each block?
 
-## animation_duplicate
+## attribute_contenteditable_dynamic
 
-> An element can only have one 'animate' directive
+> 'contenteditable' attribute cannot be dynamic if element uses two-way binding
 
 ## attribute_contenteditable_missing
 
 > 'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings
-
-## attribute_contenteditable_dynamic
-
-> 'contenteditable' attribute cannot be dynamic if element uses two-way binding
 
 ## attribute_duplicate
 
@@ -76,6 +76,10 @@
 
 > Expected valid tag name
 
+## event_handler_invalid_component_modifier
+
+> Event modifiers other than 'once' can only be used on DOM elements
+
 ## event_handler_invalid_modifier
 
 > Valid event modifiers are %list%
@@ -83,10 +87,6 @@
 ## event_handler_invalid_modifier_combination
 
 > The '%modifier1%' and '%modifier2%' modifiers cannot be used together
-
-## event_handler_invalid_component_modifier
-
-> Event modifiers other than 'once' can only be used on DOM elements
 
 ## let_directive_invalid_placement
 
@@ -96,6 +96,10 @@
 
 > %thing% is invalid inside <%parent%>
 
+## slot_attribute_duplicate
+
+> Duplicate slot name '%name%' in <%component%>
+
 ## slot_attribute_invalid
 
 > slot attribute must be a static value
@@ -103,6 +107,10 @@
 ## slot_attribute_invalid_placement
 
 > Element with a slot='...' attribute must be a child of a component or a descendant of a custom element
+
+## slot_default_duplicate
+
+> Found default slot content alongside an explicit slot="default"
 
 ## slot_element_invalid_attribute
 
@@ -115,14 +123,6 @@
 ## slot_element_invalid_name_default
 
 > `default` is a reserved word — it cannot be used as a slot name
-
-## slot_attribute_duplicate
-
-> Duplicate slot name '%name%' in <%component%>
-
-## slot_default_duplicate
-
-> Found default slot content alongside an explicit slot="default"
 
 ## slot_snippet_conflict
 
@@ -156,21 +156,17 @@
 
 > `<svelte:fragment>` can only have a slot attribute and (optionally) a let: directive
 
-## svelte_fragment_invalid_slot
-
-> `<svelte:fragment>` slot attribute must have a static value
-
 ## svelte_fragment_invalid_placement
 
 > `<svelte:fragment>` must be the direct child of a component
 
+## svelte_fragment_invalid_slot
+
+> `<svelte:fragment>` slot attribute must have a static value
+
 ## svelte_head_illegal_attribute
 
 > `<svelte:head>` cannot have attributes nor directives
-
-## svelte_meta_invalid_placement
-
-> `<%name%>` tags cannot be inside elements or blocks
 
 ## svelte_meta_duplicate
 
@@ -179,6 +175,10 @@
 ## svelte_meta_invalid_content
 
 > <%name%> cannot have children
+
+## svelte_meta_invalid_placement
+
+> `<%name%>` tags cannot be inside elements or blocks
 
 ## svelte_meta_invalid_tag
 
@@ -232,13 +232,13 @@
 
 > `<title>` can only contain text and {tags}
 
-## transition_duplicate
-
-> Cannot use multiple `%type%:` directives on a single element
-
 ## transition_conflict
 
 > Cannot use `%type%:` alongside existing `%existing%:` directive
+
+## transition_duplicate
+
+> Cannot use multiple `%type%:` directives on a single element
 
 ## void_element_invalid_content
 

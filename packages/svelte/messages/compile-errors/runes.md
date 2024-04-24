@@ -1,50 +1,34 @@
-## invalid_legacy_props
+## conflicting_property_name
 
-> Cannot use `$$props` in runes mode
+> Cannot have a property and a component export with the same name
 
-## invalid_legacy_rest_props
+## duplicate_props_rune
 
-> Cannot use `$$restProps` in runes mode
+> Cannot use `$props()` more than once
 
-## invalid_legacy_reactive_statement
+## invalid_assignment
 
-> `$:` is not allowed in runes mode, use `$derived` or `$effect` instead
-
-## invalid_legacy_export
-
-> Cannot use `export let` in runes mode — use $props instead
-
-## invalid_rune_usage
-
-> Cannot use %rune% rune in non-runes mode
-
-## invalid_state_export
-
-> Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties
-
-## invalid_derived_export
-
-> Cannot export derived state from a module. To expose the current derived value, export a function returning its value
-
-## invalid_props_id
-
-> `$props()` can only be used with an object destructuring pattern
-
-## invalid_props_pattern
-
-> `$props()` assignment must not contain nested properties or computed keys
-
-## invalid_props_location
-
-> `$props()` can only be used at the top level of components as a variable declaration initializer
+> Cannot assign to %thing%
 
 ## invalid_bindable_location
 
 > `$bindable()` can only be used inside a `$props()` declaration
 
-## invalid_state_location
+## invalid_binding
 
-> `%rune%(...)` can only be used as a variable declaration initializer or a class field
+> Cannot bind to %thing%
+
+## invalid_derived_call
+
+> `$derived.call(...)` has been replaced with `$derived.by(...)`
+
+## invalid_derived_export
+
+> Cannot export derived state from a module. To expose the current derived value, export a function returning its value
+
+## invalid_each_assignment
+
+> Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)
 
 ## invalid_effect_location
 
@@ -54,13 +38,33 @@
 
 > `$host()` can only be used inside custom element component instances
 
-## invalid_assignment
+## invalid_legacy_export
 
-> Cannot assign to %thing%
+> Cannot use `export let` in runes mode — use $props instead
 
-## invalid_binding
+## invalid_legacy_props
 
-> Cannot bind to %thing%
+> Cannot use `$$props` in runes mode
+
+## invalid_legacy_reactive_statement
+
+> `$:` is not allowed in runes mode, use `$derived` or `$effect` instead
+
+## invalid_legacy_rest_props
+
+> Cannot use `$$restProps` in runes mode
+
+## invalid_props_id
+
+> `$props()` can only be used with an object destructuring pattern
+
+## invalid_props_location
+
+> `$props()` can only be used at the top level of components as a variable declaration initializer
+
+## invalid_props_pattern
+
+> `$props()` assignment must not contain nested properties or computed keys
 
 ## invalid_rune_args
 
@@ -70,26 +74,22 @@
 
 > `%rune%` must be called with %args%
 
+## invalid_rune_usage
+
+> Cannot use %rune% rune in non-runes mode
+
 ## invalid_runes_mode_import
 
 > %name% cannot be used in runes mode
-
-## duplicate_props_rune
-
-> Cannot use `$props()` more than once
-
-## invalid_each_assignment
-
-> Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)
 
 ## invalid_snippet_assignment
 
 > Cannot reassign or bind to snippet parameter
 
-## invalid_derived_call
+## invalid_state_export
 
-> `$derived.call(...)` has been replaced with `$derived.by(...)`
+> Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties
 
-## conflicting_property_name
+## invalid_state_location
 
-> Cannot have a property and a component export with the same name
+> `%rune%(...)` can only be used as a variable declaration initializer or a class field

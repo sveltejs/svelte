@@ -1,14 +1,10 @@
-## invalid_css_empty_declaration
+## invalid_css_declaration
 
 > Declaration cannot be empty
 
-## invalid_css_global_block_list
+## invalid_css_empty_declaration
 
-> A :global {...} block cannot be part of a selector list with more than one item
-
-## invalid_css_global_block_modifier
-
-> A :global {...} block cannot modify an existing selector
+> Declaration cannot be empty
 
 ## invalid_css_global_block_combinator
 
@@ -17,6 +13,14 @@
 ## invalid_css_global_block_declaration
 
 > A :global {...} block can only contain rules, not declarations
+
+## invalid_css_global_block_list
+
+> A :global {...} block cannot be part of a selector list with more than one item
+
+## invalid_css_global_block_modifier
+
+> A :global {...} block cannot modify an existing selector
 
 ## invalid_css_global_placement
 
@@ -30,22 +34,18 @@
 
 > :global(...) must not contain type or universal selectors when used in a compound selector
 
-## invalid_css_type_selector_placement
+## invalid_css_identifier
 
-> :global(...) must not be followed with a type selector
+> Expected a valid CSS identifier
 
 ## invalid_css_selector
 
 > Invalid selector
 
-## invalid_css_identifier
+## invalid_css_type_selector_placement
 
-> Expected a valid CSS identifier
+> :global(...) must not be followed with a type selector
 
 ## invalid_nesting_selector
 
 > Nesting selectors can only be used inside a rule
-
-## invalid_css_declaration
-
-> Declaration cannot be empty
