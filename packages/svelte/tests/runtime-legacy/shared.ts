@@ -180,7 +180,15 @@ async function run_test_variant(
 
 		if (str.slice(0, i).includes('warnings') || config.warnings) {
 			// eslint-disable-next-line no-console
-			console.warn = (...args) => warnings.push(...args);
+			console.warn = (...args) => {
+				if (args[0].startsWith('%c[svelte]')) {
+					// TODO convert this to structured data, for more robust comparison?
+					const message = args[0];
+					warnings.push(message.slice(message.indexOf('%c', 2) + 2));
+				} else {
+					warnings.push(...args);
+				}
+			};
 		}
 	}
 
