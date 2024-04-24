@@ -875,11 +875,7 @@ export function is_signal(val) {
  * @returns {T}
  */
 export function getContext(key) {
-	if (current_component_context === null) {
-		e.lifecycle_outside_component('getContext');
-	}
-
-	const context_map = get_or_init_context_map(current_component_context);
+	const context_map = get_or_init_context_map('getContext');
 	const result = /** @type {T} */ (context_map.get(key));
 
 	if (DEV) {
@@ -907,11 +903,7 @@ export function getContext(key) {
  * @returns {T}
  */
 export function setContext(key, context) {
-	if (current_component_context === null) {
-		e.lifecycle_outside_component('setContext');
-	}
-
-	const context_map = get_or_init_context_map(current_component_context);
+	const context_map = get_or_init_context_map('setContext');
 	context_map.set(key, context);
 	return context;
 }
@@ -925,11 +917,7 @@ export function setContext(key, context) {
  * @returns {boolean}
  */
 export function hasContext(key) {
-	if (current_component_context === null) {
-		e.lifecycle_outside_component('hasContext');
-	}
-
-	const context_map = get_or_init_context_map(current_component_context);
+	const context_map = get_or_init_context_map('hasContext');
 	return context_map.has(key);
 }
 
@@ -943,11 +931,7 @@ export function hasContext(key) {
  * @returns {T}
  */
 export function getAllContexts() {
-	if (current_component_context === null) {
-		e.lifecycle_outside_component('getAllContexts');
-	}
-
-	const context_map = get_or_init_context_map(current_component_context);
+	const context_map = get_or_init_context_map('getAllContexts');
 
 	if (DEV) {
 		// @ts-expect-error
@@ -963,11 +947,17 @@ export function getAllContexts() {
 }
 
 /**
- * @param {import('#client').ComponentContext} context
+ * @param {string} name
  * @returns {Map<unknown, unknown>}
  */
-function get_or_init_context_map(context) {
-	return (context.c ??= new Map(get_parent_context(context) || undefined));
+function get_or_init_context_map(name) {
+	if (current_component_context === null) {
+		e.lifecycle_outside_component(name);
+	}
+
+	return (current_component_context.c ??= new Map(
+		get_parent_context(current_component_context) || undefined
+	));
 }
 
 /**
