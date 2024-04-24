@@ -92,7 +92,7 @@ export function stringify(value) {
  * @param {{
  * 		target: Document | Element | ShadowRoot;
  * 		anchor?: Node;
- * 		props?: Props;
+ * 		props?: import('../types.js').RemoveBindable<Props>;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  * 		context?: Map<any, any>;
  * 		intro?: boolean;
@@ -114,7 +114,7 @@ export function mount(component, options) {
  * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
- * 		props?: Props;
+ * 		props?: import('../types.js').RemoveBindable<Props>;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
@@ -181,24 +181,19 @@ export function hydrate(component, options) {
 }
 
 /**
- * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
- * @template {Record<string, any>} Events
- * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} Component
+ * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<any>>} Component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
  * 		anchor: Node;
- * 		props?: Props;
- * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
+ * 		props?: any;
+ * 		events?: any;
  * 		context?: Map<any, any>;
  * 		intro?: boolean;
  * 	}} options
  * @returns {Exports}
  */
-function _mount(
-	Component,
-	{ target, anchor, props = /** @type {Props} */ ({}), events, context, intro = false }
-) {
+function _mount(Component, { target, anchor, props = {}, events, context, intro = false }) {
 	init_operations();
 
 	const registered_events = new Set();

@@ -1,3 +1,4 @@
+import type { Bindable, Binding } from '../../index.js';
 import type { Store } from '#shared';
 import { STATE_SYMBOL } from './constants.js';
 import type { Effect, Source, Value } from './reactivity/types.js';

@@ -111,6 +111,32 @@ function handle_compile_error(error, filename, source) {
  * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
  *
  * https://svelte.dev/docs/svelte-compiler#svelte-parse
+ * @overload
+ * @param {string} source
+ * @param {{ filename?: string; modern: true }} options
+ * @returns {import('#compiler').Root}
+ */
+
+/**
+ * The parse function parses a component, returning only its abstract syntax tree.
+ *
+ * The `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
+ * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
+ *
+ * https://svelte.dev/docs/svelte-compiler#svelte-parse
+ * @overload
+ * @param {string} source
+ * @param {{ filename?: string; modern?: false }} [options]
+ * @returns {import('./types/legacy-nodes.js').LegacyRoot}
+ */
+
+/**
+ * The parse function parses a component, returning only its abstract syntax tree.
+ *
+ * The `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
+ * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
+ *
+ * https://svelte.dev/docs/svelte-compiler#svelte-parse
  * @param {string} source
  * @param {{ filename?: string; modern?: boolean }} [options]
  * @returns {import('#compiler').Root | import('./types/legacy-nodes.js').LegacyRoot}
