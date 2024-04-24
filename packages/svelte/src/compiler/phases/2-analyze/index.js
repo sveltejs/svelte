@@ -236,7 +236,7 @@ export function analyze_module(ast, options) {
 
 	walk(
 		/** @type {import('estree').Node} */ (ast),
-		{ scope },
+		{ scope, analysis: { runes: true } },
 		// @ts-expect-error TODO clean this mess up
 		merge(set_scope(scopes), validation_runes_js, runes_scope_js_tweaker)
 	);
@@ -874,7 +874,7 @@ const legacy_scope_tweaker = {
 	}
 };
 
-/** @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, { scope: Scope }>} */
+/** @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, { scope: Scope, analysis: { runes: true } }>} */
 const runes_scope_js_tweaker = {
 	VariableDeclarator(node, { state }) {
 		if (node.init?.type !== 'CallExpression') return;
