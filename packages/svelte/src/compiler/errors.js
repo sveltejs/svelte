@@ -57,124 +57,6 @@ function e(node, code, message) {
 }
 
 /**
- * Declaration cannot be empty
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_css_declaration(node) {
-	e(node, "invalid_css_declaration", "Declaration cannot be empty");
-}
-
-/**
- * Declaration cannot be empty
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_css_empty_declaration(node) {
-	e(node, "invalid_css_empty_declaration", "Declaration cannot be empty");
-}
-
-/**
- * A :global {...} block cannot follow a %name% combinator
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @returns {never}
- */
-export function invalid_css_global_block_combinator(node, name) {
-	e(node, "invalid_css_global_block_combinator", `A :global {...} block cannot follow a ${name} combinator`);
-}
-
-/**
- * A :global {...} block can only contain rules, not declarations
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_css_global_block_declaration(node) {
-	e(node, "invalid_css_global_block_declaration", "A :global {...} block can only contain rules, not declarations");
-}
-
-/**
- * A :global {...} block cannot be part of a selector list with more than one item
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_css_global_block_list(node) {
-	e(node, "invalid_css_global_block_list", "A :global {...} block cannot be part of a selector list with more than one item");
-}
-
-/**
- * A :global {...} block cannot modify an existing selector
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_css_global_block_modifier(node) {
-	e(node, "invalid_css_global_block_modifier", "A :global {...} block cannot modify an existing selector");
-}
-
-/**
- * :global(...) can be at the start or end of a selector sequence, but not in the middle
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_css_global_placement(node) {
-	e(node, "invalid_css_global_placement", ":global(...) can be at the start or end of a selector sequence, but not in the middle");
-}
-
-/**
- * :global(...) must contain exactly one selector
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_css_global_selector(node) {
-	e(node, "invalid_css_global_selector", ":global(...) must contain exactly one selector");
-}
-
-/**
- * :global(...) must not contain type or universal selectors when used in a compound selector
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_css_global_selector_list(node) {
-	e(node, "invalid_css_global_selector_list", ":global(...) must not contain type or universal selectors when used in a compound selector");
-}
-
-/**
- * Expected a valid CSS identifier
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_css_identifier(node) {
-	e(node, "invalid_css_identifier", "Expected a valid CSS identifier");
-}
-
-/**
- * Invalid selector
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_css_selector(node) {
-	e(node, "invalid_css_selector", "Invalid selector");
-}
-
-/**
- * :global(...) must not be followed with a type selector
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_css_type_selector_placement(node) {
-	e(node, "invalid_css_type_selector_placement", ":global(...) must not be followed with a type selector");
-}
-
-/**
- * Nesting selectors can only be used inside a rule
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_nesting_selector(node) {
-	e(node, "invalid_nesting_selector", "Nesting selectors can only be used inside a rule");
-}
-
-/**
  * Invalid compiler option: %details%
  * @param {null | number | NodeLike} node
  * @param {string} details
@@ -202,90 +84,6 @@ export function options_removed(node, details) {
  */
 export function options_unrecognised(node, keypath) {
 	e(node, "options_unrecognised", `Unrecognised compiler option ${keypath}`);
-}
-
-/**
- * `%name%` has already been declared
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @returns {never}
- */
-export function declaration_duplicate(node, name) {
-	e(node, "declaration_duplicate", `\`${name}\` has already been declared`);
-}
-
-/**
- * Cannot declare same variable name which is imported inside `<script context="module">`
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function declaration_duplicate_module_import(node) {
-	e(node, "declaration_duplicate_module_import", "Cannot declare same variable name which is imported inside `<script context=\"module\">`");
-}
-
-/**
- * The $ name is reserved, and cannot be used for variables and imports
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function dollar_binding_invalid(node) {
-	e(node, "dollar_binding_invalid", "The $ name is reserved, and cannot be used for variables and imports");
-}
-
-/**
- * The $ prefix is reserved, and cannot be used for variables and imports
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function dollar_prefix_invalid(node) {
-	e(node, "dollar_prefix_invalid", "The $ prefix is reserved, and cannot be used for variables and imports");
-}
-
-/**
- * `%name%` is an illegal variable name. To reference a global variable called `%name%`, use `globalThis.%name%`
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @returns {never}
- */
-export function global_reference_invalid(node, name) {
-	e(node, "global_reference_invalid", `\`${name}\` is an illegal variable name. To reference a global variable called \`${name}\`, use \`globalThis.${name}\``);
-}
-
-/**
- * A component cannot have a default export
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function module_illegal_default_export(node) {
-	e(node, "module_illegal_default_export", "A component cannot have a default export");
-}
-
-/**
- * Cyclical dependency detected: %cycle%
- * @param {null | number | NodeLike} node
- * @param {string} cycle
- * @returns {never}
- */
-export function reactive_declaration_cycle(node, cycle) {
-	e(node, "reactive_declaration_cycle", `Cyclical dependency detected: ${cycle}`);
-}
-
-/**
- * Cannot subscribe to stores that are not declared at the top level of the component
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function store_invalid_scoped_subscription(node) {
-	e(node, "store_invalid_scoped_subscription", "Cannot subscribe to stores that are not declared at the top level of the component");
-}
-
-/**
- * Cannot reference store value inside `<script context="module">`
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function store_invalid_subscription(node) {
-	e(node, "store_invalid_subscription", "Cannot reference store value inside `<script context=\"module\">`");
 }
 
 /**
@@ -318,12 +116,49 @@ export function constant_binding(node, thing) {
 }
 
 /**
+ * `%name%` has already been declared
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function declaration_duplicate(node, name) {
+	e(node, "declaration_duplicate", `\`${name}\` has already been declared`);
+}
+
+/**
+ * Cannot declare same variable name which is imported inside `<script context="module">`
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function declaration_duplicate_module_import(node) {
+	e(node, "declaration_duplicate_module_import", "Cannot declare same variable name which is imported inside `<script context=\"module\">`");
+}
+
+/**
  * Cannot export derived state from a module. To expose the current derived value, export a function returning its value
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function derived_invalid_export(node) {
 	e(node, "derived_invalid_export", "Cannot export derived state from a module. To expose the current derived value, export a function returning its value");
+}
+
+/**
+ * The $ name is reserved, and cannot be used for variables and imports
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function dollar_binding_invalid(node) {
+	e(node, "dollar_binding_invalid", "The $ name is reserved, and cannot be used for variables and imports");
+}
+
+/**
+ * The $ prefix is reserved, and cannot be used for variables and imports
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function dollar_prefix_invalid(node) {
+	e(node, "dollar_prefix_invalid", "The $ prefix is reserved, and cannot be used for variables and imports");
 }
 
 /**
@@ -342,6 +177,16 @@ export function each_item_invalid_assignment(node) {
  */
 export function effect_invalid_placement(node) {
 	e(node, "effect_invalid_placement", "`$effect()` can only be used as an expression statement");
+}
+
+/**
+ * `%name%` is an illegal variable name. To reference a global variable called `%name%`, use `globalThis.%name%`
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function global_reference_invalid(node, name) {
+	e(node, "global_reference_invalid", `\`${name}\` is an illegal variable name. To reference a global variable called \`${name}\`, use \`globalThis.${name}\``);
 }
 
 /**
@@ -390,6 +235,15 @@ export function legacy_rest_props_invalid(node) {
 }
 
 /**
+ * A component cannot have a default export
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function module_illegal_default_export(node) {
+	e(node, "module_illegal_default_export", "A component cannot have a default export");
+}
+
+/**
  * Cannot use `$props()` more than once
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -423,6 +277,16 @@ export function props_invalid_pattern(node) {
  */
 export function props_invalid_placement(node) {
 	e(node, "props_invalid_placement", "`$props()` can only be used at the top level of components as a variable declaration initializer");
+}
+
+/**
+ * Cyclical dependency detected: %cycle%
+ * @param {null | number | NodeLike} node
+ * @param {string} cycle
+ * @returns {never}
+ */
+export function reactive_declaration_cycle(node, cycle) {
+	e(node, "reactive_declaration_cycle", `Cyclical dependency detected: ${cycle}`);
 }
 
 /**
@@ -492,6 +356,133 @@ export function state_invalid_export(node) {
  */
 export function state_invalid_placement(node, rune) {
 	e(node, "state_invalid_placement", `\`${rune}(...)\` can only be used as a variable declaration initializer or a class field`);
+}
+
+/**
+ * Cannot subscribe to stores that are not declared at the top level of the component
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function store_invalid_scoped_subscription(node) {
+	e(node, "store_invalid_scoped_subscription", "Cannot subscribe to stores that are not declared at the top level of the component");
+}
+
+/**
+ * Cannot reference store value inside `<script context="module">`
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function store_invalid_subscription(node) {
+	e(node, "store_invalid_subscription", "Cannot reference store value inside `<script context=\"module\">`");
+}
+
+/**
+ * Declaration cannot be empty
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_empty_declaration(node) {
+	e(node, "css_empty_declaration", "Declaration cannot be empty");
+}
+
+/**
+ * A :global {...} block cannot follow a %name% combinator
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function css_global_block_invalid_combinator(node, name) {
+	e(node, "css_global_block_invalid_combinator", `A :global {...} block cannot follow a ${name} combinator`);
+}
+
+/**
+ * A :global {...} block can only contain rules, not declarations
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_global_block_invalid_declaration(node) {
+	e(node, "css_global_block_invalid_declaration", "A :global {...} block can only contain rules, not declarations");
+}
+
+/**
+ * A :global {...} block cannot be part of a selector list with more than one item
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_global_block_invalid_list(node) {
+	e(node, "css_global_block_invalid_list", "A :global {...} block cannot be part of a selector list with more than one item");
+}
+
+/**
+ * A :global {...} block cannot modify an existing selector
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_global_block_invalid_modifier(node) {
+	e(node, "css_global_block_invalid_modifier", "A :global {...} block cannot modify an existing selector");
+}
+
+/**
+ * :global(...) can be at the start or end of a selector sequence, but not in the middle
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_global_invalid_placement(node) {
+	e(node, "css_global_invalid_placement", ":global(...) can be at the start or end of a selector sequence, but not in the middle");
+}
+
+/**
+ * :global(...) must contain exactly one selector
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_global_invalid_selector(node) {
+	e(node, "css_global_invalid_selector", ":global(...) must contain exactly one selector");
+}
+
+/**
+ * :global(...) must not contain type or universal selectors when used in a compound selector
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_global_invalid_selector_list(node) {
+	e(node, "css_global_invalid_selector_list", ":global(...) must not contain type or universal selectors when used in a compound selector");
+}
+
+/**
+ * Expected a valid CSS identifier
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_expected_identifier(node) {
+	e(node, "css_expected_identifier", "Expected a valid CSS identifier");
+}
+
+/**
+ * Invalid selector
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_selector_invalid(node) {
+	e(node, "css_selector_invalid", "Invalid selector");
+}
+
+/**
+ * :global(...) must not be followed with a type selector
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_type_selector_invalid_placement(node) {
+	e(node, "css_type_selector_invalid_placement", ":global(...) must not be followed with a type selector");
+}
+
+/**
+ * Nesting selectors can only be used inside a rule
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_nesting_selector_invalid_placement(node) {
+	e(node, "css_nesting_selector_invalid_placement", "Nesting selectors can only be used inside a rule");
 }
 
 /**

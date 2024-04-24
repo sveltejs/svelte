@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid_css_global_selector",
+		"code": "css_global_invalid_selector",
 		"message": ":global(...) must contain exactly one selector",
 		"start": {
 			"line": 11,
