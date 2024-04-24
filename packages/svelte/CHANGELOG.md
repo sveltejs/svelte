@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.115
+
+### Patch Changes
+
+- fix: remove `bind_prop` in runes mode ([#11321](https://github.com/sveltejs/svelte/pull/11321))
+
+- fix: mark `accessors` and `immutable` as deprecated ([#11277](https://github.com/sveltejs/svelte/pull/11277))
+
 ## 5.0.0-next.114
 
 ### Patch Changes
