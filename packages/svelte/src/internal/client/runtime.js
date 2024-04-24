@@ -115,7 +115,7 @@ export function set_current_component_context(context) {
 
 /** @returns {boolean} */
 export function is_runes() {
-	return current_component_context !== null && current_component_context.r;
+	return current_component_context !== null && current_component_context.l === null;
 }
 
 /**
@@ -1043,28 +1043,23 @@ export async function value_or_fallback_async(value, fallback) {
  */
 export function push(props, runes = false, fn) {
 	current_component_context = {
-		// exports (and props, if `accessors: true`)
-		x: null,
-		// context
-		c: null,
-		// effects
-		e: null,
-		// mounted
-		m: false,
-		// parent
 		p: current_component_context,
-		// signals
-		d: null,
-		// props
+		c: null,
+		e: null,
+		m: false,
 		s: props,
-		// runes
-		r: runes,
-		// legacy $:
-		l1: [],
-		l2: source(false),
-		// update_callbacks
-		u: null
+		x: null,
+		l: null
 	};
+
+	if (!runes) {
+		current_component_context.l = {
+			s: null,
+			u: null,
+			r1: [],
+			r2: source(false)
+		};
+	}
 
 	if (DEV) {
 		// component function
