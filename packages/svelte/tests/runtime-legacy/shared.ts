@@ -44,6 +44,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 		component: Props & {
 			[key: string]: any;
 		};
+		instance: Record<string, any>;
 		mod: any;
 		ok: typeof ok;
 		raf: {
@@ -345,6 +346,7 @@ async function run_test_variant(
 						},
 						variant,
 						component: runes ? props : instance,
+						instance,
 						mod,
 						target,
 						snapshot,
