@@ -205,15 +205,6 @@ export function options_unrecognised(node, keypath) {
 }
 
 /**
- * Cannot have a property and a component export with the same name
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function conflicting_property_name(node) {
-	e(node, "conflicting_property_name", "Cannot have a property and a component export with the same name");
-}
-
-/**
  * Cannot use `$props()` more than once
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -249,15 +240,6 @@ export function invalid_bindable_location(node) {
  */
 export function invalid_binding(node, thing) {
 	e(node, "invalid_binding", `Cannot bind to ${thing}`);
-}
-
-/**
- * `$derived.call(...)` has been replaced with `$derived.by(...)`
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_derived_call(node) {
-	e(node, "invalid_derived_call", "`$derived.call(...)` has been replaced with `$derived.by(...)`");
 }
 
 /**

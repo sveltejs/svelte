@@ -767,7 +767,6 @@ export function get_rune(node, scope) {
 
 	joined = n.name + joined;
 
-	if (joined === '$derived.call') e.invalid_derived_call(node);
 	if (!Runes.includes(/** @type {any} */ (joined))) return null;
 
 	const binding = scope.get(n.name);

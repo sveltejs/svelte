@@ -14,10 +14,6 @@
 
 > Cannot bind to %thing%
 
-## invalid_derived_call
-
-> `$derived.call(...)` has been replaced with `$derived.by(...)`
-
 ## invalid_derived_export
 
 > Cannot export derived state from a module. To expose the current derived value, export a function returning its value
