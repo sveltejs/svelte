@@ -1,3 +1,3 @@
 ## cyclical_reactive_declaration
 
-Cyclical dependency detected: %cycle%
+> Cyclical dependency detected: %cycle%

@@ -1,3 +1,3 @@
 ## empty_block
 
-Empty block
+> Empty block
