@@ -396,7 +396,7 @@ export function analyze_component(root, source, options) {
 	};
 
 	if (!options.customElement && root.options?.customElement) {
-		w.missing_custom_element_compile_option(root.options);
+		w.options_missing_custom_element(root.options);
 	}
 
 	if (analysis.runes) {

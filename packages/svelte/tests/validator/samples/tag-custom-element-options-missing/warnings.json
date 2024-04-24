@@ -1,7 +1,7 @@
 [
 	{
-		"code": "missing_custom_element_compile_option",
-		"message": "The 'customElement' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?",
+		"code": "options_missing_custom_element",
+		"message": "The `customElement` option is used when generating a custom element. Did you forget the `customElement: true` compile option?",
 		"start": {
 			"line": 1,
 			"column": 0

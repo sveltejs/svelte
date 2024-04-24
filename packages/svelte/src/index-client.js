@@ -22,13 +22,13 @@ export function onMount(fn) {
 		e.lifecycle_outside_component('onMount');
 	}
 
-	if (current_component_context.r) {
+	if (current_component_context.l !== null) {
+		init_update_callbacks(current_component_context).m.push(fn);
+	} else {
 		user_effect(() => {
 			const cleanup = untrack(fn);
 			if (typeof cleanup === 'function') return /** @type {() => void} */ (cleanup);
 		});
-	} else {
-		init_update_callbacks(current_component_context).m.push(fn);
 	}
 }
 
@@ -130,8 +130,8 @@ export function beforeUpdate(fn) {
 		e.lifecycle_outside_component('beforeUpdate');
 	}
 
-	if (current_component_context.r) {
-		e.lifecycle_legacy_only('beforeUpdate');
+	if (current_component_context.l === null) {
+		throw new Error('beforeUpdate cannot be used in runes mode');
 	}
 
 	init_update_callbacks(current_component_context).b.push(fn);
@@ -154,7 +154,7 @@ export function afterUpdate(fn) {
 		e.lifecycle_outside_component('afterUpdate');
 	}
 
-	if (current_component_context.r) {
+	if (current_component_context.l === null) {
 		e.lifecycle_legacy_only('afterUpdate');
 	}
 
@@ -163,10 +163,11 @@ export function afterUpdate(fn) {
 
 /**
  * Legacy-mode: Init callbacks object for onMount/beforeUpdate/afterUpdate
- * @param {import('./internal/client/types.js').ComponentContext} context
+ * @param {import('#client').ComponentContext} context
  */
 function init_update_callbacks(context) {
-	return (context.u ??= { a: [], b: [], m: [] });
+	var l = /** @type {import('#client').ComponentContextLegacy} */ (context).l;
+	return (l.u ??= { a: [], b: [], m: [] });
 }
 
 /**
