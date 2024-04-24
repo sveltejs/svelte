@@ -1,3 +1,7 @@
+## options_deprecated_accessors
+
+The `accessors` option has been deprecated. It will have no effect in runes mode
+
 ## options_deprecated_immutable
 
 > The `immutable` option has been deprecated. It will have no effect in runes mode

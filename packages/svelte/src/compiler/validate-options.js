@@ -39,7 +39,7 @@ export const validate_component_options =
 		object({
 			...common,
 
-			accessors: boolean(false),
+			accessors: deprecate(w.options_deprecated_accessors, boolean(false)),
 
 			css: validator('external', (input) => {
 				if (input === true || input === false) {

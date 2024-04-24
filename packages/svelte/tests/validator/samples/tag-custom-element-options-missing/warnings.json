@@ -4,11 +4,11 @@
 		"message": "The `customElement` option is used when generating a custom element. Did you forget the `customElement: true` compile option?",
 		"start": {
 			"line": 1,
-			"column": 0
+			"column": 16
 		},
 		"end": {
 			"line": 1,
-			"column": 49
+			"column": 46
 		}
 	}
 ]

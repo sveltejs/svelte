@@ -94,7 +94,10 @@ async function run_test(
 
 						write(`${test_dir}/_output/client/${path.basename(args.path)}.js`, compiled.js.code);
 
-						compiled.warnings.forEach((warning) => warnings.push(warning));
+						compiled.warnings.forEach((warning) => {
+							if (warning.code === 'options_deprecated_accessors') return;
+							warnings.push(warning);
+						});
 
 						if (compiled.css !== null) {
 							compiled.js.code += `document.head.innerHTML += \`<style>${compiled.css.code}</style>\``;
@@ -179,6 +182,7 @@ async function run_test(
 			);
 		} else if (warnings.length) {
 			/* eslint-disable no-unsafe-finally */
+			console.warn(warnings);
 			throw new Error('Received unexpected warnings');
 		}
 	}

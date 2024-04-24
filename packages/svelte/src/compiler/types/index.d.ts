@@ -94,6 +94,7 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * If `true`, getters and setters will be created for the component's props. If `false`, they will only be created for readonly exported values (i.e. those declared with `const`, `class` and `function`). If compiling with `customElement: true` this option defaults to `true`.
 	 *
 	 * @default false
+	 * @deprecated This will have no effect in runes mode
 	 */
 	accessors?: boolean;
 	/**
@@ -107,6 +108,7 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * This allows it to be less conservative about checking whether values have changed.
 	 *
 	 * @default false
+	 * @deprecated This will have no effect in runes mode
 	 */
 	immutable?: boolean;
 	/**
