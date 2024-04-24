@@ -5,7 +5,7 @@ import * as $ from "svelte/internal/client";
 
 var root = $.template(`<div></div> <svg></svg> <custom-element></custom-element> <div></div> <svg></svg> <custom-element></custom-element>`, 3);
 
-function Main($$anchor, $$props) {
+function Main($$anchor) {
 	// needs to be a snapshot test because jsdom does auto-correct the attribute casing
 	let x = 'test';
 	let y = () => 'test';

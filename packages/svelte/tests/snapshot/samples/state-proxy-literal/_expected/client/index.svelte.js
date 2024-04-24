@@ -12,7 +12,7 @@ function reset(_, str, tpl) {
 
 var root = $.template(`<input> <input> <button>reset</button>`, 1);
 
-function State_proxy_literal($$anchor, $$props) {
+function State_proxy_literal($$anchor) {
 	let str = $.source('');
 	let tpl = $.source(``);
 	var fragment = root();

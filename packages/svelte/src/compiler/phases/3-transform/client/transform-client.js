@@ -392,12 +392,13 @@ export function client_component(source, analysis, options) {
 
 	append_styles();
 
-	if (
+	const should_inject_context =
 		analysis.needs_context ||
 		analysis.reactive_statements.size > 0 ||
 		component_returned_object.length > 0 ||
-		options.dev
-	) {
+		options.dev;
+
+	if (should_inject_context) {
 		component_block.body.unshift(b.stmt(b.call('$.push', ...push_args)));
 
 		component_block.body.push(
@@ -439,12 +440,32 @@ export function client_component(source, analysis, options) {
 		component_block.body.unshift(b.const('$$slots', b.call('$.sanitize_slots', b.id('$$props'))));
 	}
 
+	let should_inject_props =
+		should_inject_context ||
+		analysis.uses_props ||
+		analysis.uses_rest_props ||
+		analysis.uses_slots ||
+		analysis.slot_names.size > 0;
+
+	if (!should_inject_props) {
+		for (const declaration of analysis.instance.scope.declarations.values()) {
+			if (
+				declaration.kind === 'prop' ||
+				declaration.kind === 'bindable_prop' ||
+				declaration.kind === 'rest_prop'
+			) {
+				should_inject_props = true;
+				break;
+			}
+		}
+	}
+
 	const body = [
 		...state.hoisted,
 		...module.body,
 		b.function_declaration(
 			b.id(analysis.name),
-			[b.id('$$anchor'), b.id('$$props')],
+			should_inject_props ? [b.id('$$anchor'), b.id('$$props')] : [b.id('$$anchor')],
 			component_block
 		)
 	];

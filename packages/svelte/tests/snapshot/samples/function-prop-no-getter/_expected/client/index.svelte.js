@@ -3,7 +3,7 @@
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 
-function Function_prop_no_getter($$anchor, $$props) {
+function Function_prop_no_getter($$anchor) {
 	let count = $.source(0);
 
 	function onmouseup() {
