@@ -1,12 +1,10 @@
 <script>
-	import { log } from './log.js';
-
 	class Counter {
 		count = $state();
 		#count;
 
 		constructor(initial_count) {
-			log.push(this.count)
+			console.log(this.count)
 			this.count = initial_count;
 		}
 	}

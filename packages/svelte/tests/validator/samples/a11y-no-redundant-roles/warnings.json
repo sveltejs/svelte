@@ -1,467 +1,467 @@
 [
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 23,
 			"line": 1
 		},
-		"message": "A11y: Redundant role 'link'",
+		"message": "Redundant role 'link'",
 		"start": {
 			"column": 12,
 			"line": 1
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 23,
 			"line": 2
 		},
-		"message": "A11y: Redundant role 'article'",
+		"message": "Redundant role 'article'",
 		"start": {
 			"column": 9,
 			"line": 2
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 27,
 			"line": 3
 		},
-		"message": "A11y: Redundant role 'complementary'",
+		"message": "Redundant role 'complementary'",
 		"start": {
 			"column": 7,
 			"line": 3
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 21,
 			"line": 4
 		},
-		"message": "A11y: Redundant role 'document'",
+		"message": "Redundant role 'document'",
 		"start": {
 			"column": 6,
 			"line": 4
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 21,
 			"line": 5
 		},
-		"message": "A11y: Redundant role 'button'",
+		"message": "Redundant role 'button'",
 		"start": {
 			"column": 8,
 			"line": 5
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 24,
 			"line": 6
 		},
-		"message": "A11y: Redundant role 'listbox'",
+		"message": "Redundant role 'listbox'",
 		"start": {
 			"column": 10,
 			"line": 6
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 21,
 			"line": 7
 		},
-		"message": "A11y: Redundant role 'definition'",
+		"message": "Redundant role 'definition'",
 		"start": {
 			"column": 4,
 			"line": 7
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 16,
 			"line": 8
 		},
-		"message": "A11y: Redundant role 'term'",
+		"message": "Redundant role 'term'",
 		"start": {
 			"column": 5,
 			"line": 8
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 21,
 			"line": 9
 		},
-		"message": "A11y: Redundant role 'group'",
+		"message": "Redundant role 'group'",
 		"start": {
 			"column": 9,
 			"line": 9
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 21,
 			"line": 10
 		},
-		"message": "A11y: Redundant role 'dialog'",
+		"message": "Redundant role 'dialog'",
 		"start": {
 			"column": 8,
 			"line": 10
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 15,
 			"line": 11
 		},
-		"message": "A11y: Redundant role 'term'",
+		"message": "Redundant role 'term'",
 		"start": {
 			"column": 4,
 			"line": 11
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 22,
 			"line": 12
 		},
-		"message": "A11y: Redundant role 'group'",
+		"message": "Redundant role 'group'",
 		"start": {
 			"column": 10,
 			"line": 12
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 21,
 			"line": 13
 		},
-		"message": "A11y: Redundant role 'figure'",
+		"message": "Redundant role 'figure'",
 		"start": {
 			"column": 8,
 			"line": 13
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 17,
 			"line": 14
 		},
-		"message": "A11y: Redundant role 'form'",
+		"message": "Redundant role 'form'",
 		"start": {
 			"column": 6,
 			"line": 14
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 18,
 			"line": 15
 		},
-		"message": "A11y: Redundant role 'heading'",
+		"message": "Redundant role 'heading'",
 		"start": {
 			"column": 4,
 			"line": 15
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 18,
 			"line": 16
 		},
-		"message": "A11y: Redundant role 'heading'",
+		"message": "Redundant role 'heading'",
 		"start": {
 			"column": 4,
 			"line": 16
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 18,
 			"line": 17
 		},
-		"message": "A11y: Redundant role 'heading'",
+		"message": "Redundant role 'heading'",
 		"start": {
 			"column": 4,
 			"line": 17
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 18,
 			"line": 18
 		},
-		"message": "A11y: Redundant role 'heading'",
+		"message": "Redundant role 'heading'",
 		"start": {
 			"column": 4,
 			"line": 18
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 18,
 			"line": 19
 		},
-		"message": "A11y: Redundant role 'heading'",
+		"message": "Redundant role 'heading'",
 		"start": {
 			"column": 4,
 			"line": 19
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 18,
 			"line": 20
 		},
-		"message": "A11y: Redundant role 'heading'",
+		"message": "Redundant role 'heading'",
 		"start": {
 			"column": 4,
 			"line": 20
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 20,
 			"line": 21
 		},
-		"message": "A11y: Redundant role 'separator'",
+		"message": "Redundant role 'separator'",
 		"start": {
 			"column": 4,
 			"line": 21
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 17,
 			"line": 23
 		},
-		"message": "A11y: Redundant role 'link'",
+		"message": "Redundant role 'link'",
 		"start": {
 			"column": 6,
 			"line": 23
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 17,
 			"line": 24
 		},
-		"message": "A11y: Redundant role 'main'",
+		"message": "Redundant role 'main'",
 		"start": {
 			"column": 6,
 			"line": 24
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 17,
 			"line": 25
 		},
-		"message": "A11y: Redundant role 'list'",
+		"message": "Redundant role 'list'",
 		"start": {
 			"column": 6,
 			"line": 25
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 22,
 			"line": 26
 		},
-		"message": "A11y: Redundant role 'navigation'",
+		"message": "Redundant role 'navigation'",
 		"start": {
 			"column": 5,
 			"line": 26
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 22,
 			"line": 28
 		},
-		"message": "A11y: Redundant role 'group'",
+		"message": "Redundant role 'group'",
 		"start": {
 			"column": 10,
 			"line": 28
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 21,
 			"line": 29
 		},
-		"message": "A11y: Redundant role 'option'",
+		"message": "Redundant role 'option'",
 		"start": {
 			"column": 8,
 			"line": 29
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 21,
 			"line": 30
 		},
-		"message": "A11y: Redundant role 'status'",
+		"message": "Redundant role 'status'",
 		"start": {
 			"column": 8,
 			"line": 30
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 28,
 			"line": 31
 		},
-		"message": "A11y: Redundant role 'progressbar'",
+		"message": "Redundant role 'progressbar'",
 		"start": {
 			"column": 10,
 			"line": 31
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 22,
 			"line": 32
 		},
-		"message": "A11y: Redundant role 'region'",
+		"message": "Redundant role 'region'",
 		"start": {
 			"column": 9,
 			"line": 32
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 22,
 			"line": 33
 		},
-		"message": "A11y: Redundant role 'button'",
+		"message": "Redundant role 'button'",
 		"start": {
 			"column": 9,
 			"line": 33
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 19,
 			"line": 34
 		},
-		"message": "A11y: Redundant role 'table'",
+		"message": "Redundant role 'table'",
 		"start": {
 			"column": 7,
 			"line": 34
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 22,
 			"line": 35
 		},
-		"message": "A11y: Redundant role 'rowgroup'",
+		"message": "Redundant role 'rowgroup'",
 		"start": {
 			"column": 7,
 			"line": 35
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 24,
 			"line": 36
 		},
-		"message": "A11y: Redundant role 'textbox'",
+		"message": "Redundant role 'textbox'",
 		"start": {
 			"column": 10,
 			"line": 36
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 22,
 			"line": 37
 		},
-		"message": "A11y: Redundant role 'rowgroup'",
+		"message": "Redundant role 'rowgroup'",
 		"start": {
 			"column": 7,
 			"line": 37
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 22,
 			"line": 38
 		},
-		"message": "A11y: Redundant role 'rowgroup'",
+		"message": "Redundant role 'rowgroup'",
 		"start": {
 			"column": 7,
 			"line": 38
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 14,
 			"line": 39
 		},
-		"message": "A11y: Redundant role 'row'",
+		"message": "Redundant role 'row'",
 		"start": {
 			"column": 4,
 			"line": 39
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 21,
 			"line": 43
 		},
-		"message": "A11y: Redundant role 'banner'",
+		"message": "Redundant role 'banner'",
 		"start": {
 			"column": 8,
 			"line": 43
 		}
 	},
 	{
-		"code": "a11y-no-redundant-roles",
+		"code": "a11y_no_redundant_roles",
 		"end": {
 			"column": 26,
 			"line": 44
 		},
-		"message": "A11y: Redundant role 'contentinfo'",
+		"message": "Redundant role 'contentinfo'",
 		"start": {
 			"column": 8,
 			"line": 44

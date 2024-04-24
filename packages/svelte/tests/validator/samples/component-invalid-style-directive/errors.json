@@ -1,8 +1,14 @@
 [
 	{
-		"code": "invalid-component-directive",
+		"code": "invalid_component_directive",
 		"message": "This type of directive is not valid on components",
-		"start": { "line": 7, "column": 19 },
-		"end": { "line": 7, "column": 36 }
+		"start": {
+			"line": 7,
+			"column": 19
+		},
+		"end": {
+			"line": 7,
+			"column": 36
+		}
 	}
 ]

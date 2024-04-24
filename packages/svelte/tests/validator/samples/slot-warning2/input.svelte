@@ -3,7 +3,7 @@
 </script>
 
 <Component>
-	<!-- svelte-ignore unrelated-warning -->
-	<!-- svelte-ignore a11y-no-static-element-interactions -->
+	<!-- svelte-ignore unrelated_warning -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div slot='foo' on:click>hi!</div>
 </Component>

@@ -1,6 +1,6 @@
 <script>
-    let { count, log } = $props();
-    log.push(count);
+    let { count } = $props();
+    console.log(count);
 </script>
 
 <p>component: {count}</p>

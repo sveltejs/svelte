@@ -1,12 +1,10 @@
 <script>
-	import { log } from './log.js';
-
 	let count = $state(0);
 	const derived = $derived(Math.floor(count / 2));
 	const derived2 = $derived(derived * 2);
 
 	$effect(() => {
-		log.push(derived2);
+		console.log(derived2);
 	});
 </script>
 

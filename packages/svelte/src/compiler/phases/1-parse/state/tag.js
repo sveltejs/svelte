@@ -1,6 +1,6 @@
 import read_pattern from '../read/context.js';
 import read_expression from '../read/expression.js';
-import { error } from '../../../errors.js';
+import * as e from '../../../errors.js';
 import { create_fragment } from '../utils/create.js';
 import { walk } from 'zimmerframe';
 
@@ -147,7 +147,7 @@ function open(parser) {
 			parser.allow_whitespace();
 			index = parser.read_identifier();
 			if (!index) {
-				error(parser.index, 'expected-identifier');
+				e.expected_identifier(parser.index);
 			}
 
 			parser.allow_whitespace();
@@ -265,7 +265,7 @@ function open(parser) {
 		const name_end = parser.index;
 
 		if (name === null) {
-			error(parser.index, 'expected-identifier');
+			e.expected_identifier(parser.index);
 		}
 
 		parser.eat('(', true);
@@ -320,7 +320,7 @@ function open(parser) {
 		return;
 	}
 
-	error(parser.index, 'expected-block-type');
+	e.expected_block_type(parser.index);
 }
 
 /** @param {import('../index.js').Parser} parser */
@@ -330,8 +330,8 @@ function next(parser) {
 	const block = parser.current(); // TODO type should not be TemplateNode, that's much too broad
 
 	if (block.type === 'IfBlock') {
-		if (!parser.eat('else')) error(start, 'expected-token', '{:else} or {:else if}');
-		if (parser.eat('if')) error(start, 'invalid-elseif');
+		if (!parser.eat('else')) e.expected_token(start, '{:else} or {:else if}');
+		if (parser.eat('if')) e.invalid_elseif(start);
 
 		parser.allow_whitespace();
 
@@ -373,7 +373,7 @@ function next(parser) {
 	}
 
 	if (block.type === 'EachBlock') {
-		if (!parser.eat('else')) error(start, 'expected-token', '{:else}');
+		if (!parser.eat('else')) e.expected_token(start, '{:else}');
 
 		parser.allow_whitespace();
 		parser.eat('}', true);
@@ -389,7 +389,7 @@ function next(parser) {
 	if (block.type === 'AwaitBlock') {
 		if (parser.eat('then')) {
 			if (block.then) {
-				error(start, 'duplicate-block-part', '{:then}');
+				e.duplicate_block_part(start, '{:then}');
 			}
 
 			if (!parser.eat('}')) {
@@ -408,7 +408,7 @@ function next(parser) {
 
 		if (parser.eat('catch')) {
 			if (block.catch) {
-				error(start, 'duplicate-block-part', '{:catch}');
+				e.duplicate_block_part(start, '{:catch}');
 			}
 
 			if (!parser.eat('}')) {
@@ -425,10 +425,10 @@ function next(parser) {
 			return;
 		}
 
-		error(start, 'expected-token', '{:then ...} or {:catch ...}');
+		e.expected_token(start, '{:then ...} or {:catch ...}');
 	}
 
-	error(start, 'invalid-continuing-block-placement');
+	e.invalid_continuing_block_placement(start);
 }
 
 /** @param {import('../index.js').Parser} parser */
@@ -466,11 +466,11 @@ function close(parser) {
 
 		case 'RegularElement':
 			// TODO handle implicitly closed elements
-			error(start, 'unexpected-block-close');
+			e.unexpected_block_close(start);
 			break;
 
 		default:
-			error(start, 'unexpected-block-close');
+			e.unexpected_block_close(start);
 	}
 
 	parser.allow_whitespace();
@@ -522,7 +522,7 @@ function special(parser) {
 			identifiers.forEach(
 				/** @param {any} node */ (node) => {
 					if (node.type !== 'Identifier') {
-						error(/** @type {number} */ (node.start), 'invalid-debug');
+						e.invalid_debug(/** @type {number} */ (node.start));
 					}
 				}
 			);
@@ -583,7 +583,7 @@ function special(parser) {
 				expression.expression.type !== 'CallExpression' ||
 				!expression.expression.optional)
 		) {
-			error(expression, 'invalid-render-expression');
+			e.invalid_render_expression(expression);
 		}
 
 		parser.allow_whitespace();

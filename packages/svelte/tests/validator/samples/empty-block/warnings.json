@@ -1,26 +1,50 @@
 [
 	{
-		"code": "empty-block",
+		"code": "empty_block",
 		"message": "Empty block",
-		"start": { "line": 13, "column": 23 },
-		"end": { "line": 15, "column": 0 }
+		"start": {
+			"line": 13,
+			"column": 23
+		},
+		"end": {
+			"line": 15,
+			"column": 0
+		}
 	},
 	{
-		"code": "empty-block",
+		"code": "empty_block",
 		"message": "Empty block",
-		"start": { "line": 16, "column": 10 },
-		"end": { "line": 16, "column": 11 }
+		"start": {
+			"line": 16,
+			"column": 10
+		},
+		"end": {
+			"line": 16,
+			"column": 11
+		}
 	},
 	{
-		"code": "empty-block",
+		"code": "empty_block",
 		"message": "Empty block",
-		"start": { "line": 17, "column": 13 },
-		"end": { "line": 17, "column": 14 }
+		"start": {
+			"line": 17,
+			"column": 13
+		},
+		"end": {
+			"line": 17,
+			"column": 14
+		}
 	},
 	{
-		"code": "empty-block",
+		"code": "empty_block",
 		"message": "Empty block",
-		"start": { "line": 18, "column": 16 },
-		"end": { "line": 18, "column": 17 }
+		"start": {
+			"line": 18,
+			"column": 16
+		},
+		"end": {
+			"line": 18,
+			"column": 17
+		}
 	}
 ]

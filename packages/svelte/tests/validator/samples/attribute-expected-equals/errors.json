@@ -1,6 +1,6 @@
 [
 	{
-		"code": "expected-token",
+		"code": "expected_token",
 		"message": "Expected token =",
 		"start": {
 			"line": 5,

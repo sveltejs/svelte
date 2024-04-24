@@ -1,17 +1,20 @@
 <script>
 	import { untrack } from 'svelte';
-	import { log } from './log.js';
+
 	let { n = 0 } = $props();
 	let i = $state(0);
+
 	function logRender(i) {
-		log.push(`render ${i}`);
+		console.log(`render ${i}`);
 	}
+
 	$effect.pre(() => {
-		log.push(`$effect.pre ${n}`);
+		console.log(`$effect.pre ${n}`);
 		untrack(() => i++)
 	});
+
 	$effect.pre(() => {
-		log.push('another $effect.pre '+ i);
+		console.log('another $effect.pre '+ i);
 	})
 </script>
 

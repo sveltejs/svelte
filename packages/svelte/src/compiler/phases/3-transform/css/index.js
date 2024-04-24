@@ -116,7 +116,7 @@ const visitors = {
 			}
 		}
 	},
-	Rule(node, { state, next }) {
+	Rule(node, { state, next, visit }) {
 		// keep empty rules in dev, because it's convenient to
 		// see them in devtools
 		if (!state.dev && is_empty(node)) {
@@ -131,6 +131,26 @@ const visitors = {
 			state.code.appendLeft(node.end, '*/');
 			escape_comment_close(node, state.code);
 
+			return;
+		}
+
+		if (node.metadata.is_global_block) {
+			const selector = node.prelude.children[0];
+
+			if (selector.children.length === 1) {
+				// `:global {...}`
+				state.code.prependRight(node.start, '/* ');
+				state.code.appendLeft(node.block.start + 1, '*/');
+
+				state.code.prependRight(node.block.end - 1, '/*');
+				state.code.appendLeft(node.block.end, '*/');
+
+				// don't recurse into selector or body
+				return;
+			}
+
+			// don't recurse into body
+			visit(node.prelude);
 			return;
 		}
 
@@ -275,6 +295,10 @@ const visitors = {
 
 /** @param {import('#compiler').Css.Rule} rule */
 function is_empty(rule) {
+	if (rule.metadata.is_global_block) {
+		return rule.block.children.length === 0;
+	}
+
 	for (const child of rule.block.children) {
 		if (child.type === 'Declaration') {
 			return false;

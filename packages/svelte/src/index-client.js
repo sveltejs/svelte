@@ -21,13 +21,13 @@ export function onMount(fn) {
 		throw new Error('onMount can only be used during component initialisation.');
 	}
 
-	if (current_component_context.r) {
+	if (current_component_context.l !== null) {
+		init_update_callbacks(current_component_context).m.push(fn);
+	} else {
 		user_effect(() => {
 			const cleanup = untrack(fn);
 			if (typeof cleanup === 'function') return /** @type {() => void} */ (cleanup);
 		});
-	} else {
-		init_update_callbacks(current_component_context).m.push(fn);
 	}
 }
 
@@ -129,7 +129,7 @@ export function beforeUpdate(fn) {
 		throw new Error('beforeUpdate can only be used during component initialisation');
 	}
 
-	if (current_component_context.r) {
+	if (current_component_context.l === null) {
 		throw new Error('beforeUpdate cannot be used in runes mode');
 	}
 
@@ -153,7 +153,7 @@ export function afterUpdate(fn) {
 		throw new Error('afterUpdate can only be used during component initialisation.');
 	}
 
-	if (current_component_context.r) {
+	if (current_component_context.l === null) {
 		throw new Error('afterUpdate cannot be used in runes mode');
 	}
 
@@ -162,10 +162,11 @@ export function afterUpdate(fn) {
 
 /**
  * Legacy-mode: Init callbacks object for onMount/beforeUpdate/afterUpdate
- * @param {import('./internal/client/types.js').ComponentContext} context
+ * @param {import('#client').ComponentContext} context
  */
 function init_update_callbacks(context) {
-	return (context.u ??= { a: [], b: [], m: [] });
+	var l = /** @type {import('#client').ComponentContextLegacy} */ (context).l;
+	return (l.u ??= { a: [], b: [], m: [] });
 }
 
 /**

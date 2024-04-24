@@ -3,7 +3,7 @@ import { test } from '../../test';
 export default test({
 	warnings: [
 		{
-			code: 'css-unused-selector',
+			code: 'css_unused_selector',
 			end: {
 				character: 44,
 				column: 14,

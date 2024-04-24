@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid-const-assignment",
+		"code": "invalid_const_assignment",
 		"message": "Invalid assignment to const",
 		"start": {
 			"line": 5,
@@ -12,7 +12,7 @@
 		}
 	},
 	{
-		"code": "invalid-binding-value",
+		"code": "invalid_binding_value",
 		"message": "Can only bind to state or props",
 		"end": {
 			"column": 29,

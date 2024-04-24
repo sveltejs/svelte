@@ -1,7 +1,7 @@
 [
 	{
 		"message": "Invalid 'style:' modifier. Valid modifiers are: 'important'",
-		"code": "invalid-style-directive-modifier",
+		"code": "invalid_style_directive_modifier",
 		"start": {
 			"line": 1,
 			"column": 8

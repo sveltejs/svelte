@@ -1,8 +1,14 @@
 [
 	{
-		"code": "duplicate-declaration",
-		"message": "'item' has already been declared",
-		"start": { "line": 6, "column": 10 },
-		"end": { "line": 6, "column": 14 }
+		"code": "duplicate_declaration",
+		"message": "`item` has already been declared",
+		"start": {
+			"line": 6,
+			"column": 10
+		},
+		"end": {
+			"line": 6,
+			"column": 14
+		}
 	}
 ]

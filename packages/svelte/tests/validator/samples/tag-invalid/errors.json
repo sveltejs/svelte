@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-tag-property",
-		"message": "tag name must be two or more words joined by the \"-\" character",
+		"code": "invalid_tag_property",
+		"message": "Tag name must be two or more words joined by the \"-\" character",
 		"start": {
 			"line": 1,
 			"column": 16

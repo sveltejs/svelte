@@ -1,7 +1,7 @@
 [
 	{
-		"code": "non-state-reference",
-		"message": "b is updated, but is not declared with $state(...). Changing its value will not correctly trigger updates.",
+		"code": "non_state_reference",
+		"message": "`b` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates",
 		"start": {
 			"column": 5,
 			"line": 3
@@ -12,8 +12,8 @@
 		}
 	},
 	{
-		"code": "non-state-reference",
-		"message": "c is updated, but is not declared with $state(...). Changing its value will not correctly trigger updates.",
+		"code": "non_state_reference",
+		"message": "`c` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates",
 		"start": {
 			"column": 5,
 			"line": 4

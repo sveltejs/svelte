@@ -1,7 +1,7 @@
 [
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-valuemax' must be of type number",
+		"code": "a11y_incorrect_aria_attribute_type",
+		"message": "The value of 'aria-valuemax' must be of type number",
 		"start": {
 			"line": 1,
 			"column": 5
@@ -12,8 +12,8 @@
 		}
 	},
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-valuemax' must be of type number",
+		"code": "a11y_incorrect_aria_attribute_type",
+		"message": "The value of 'aria-valuemax' must be of type number",
 		"start": {
 			"line": 2,
 			"column": 5
@@ -24,8 +24,8 @@
 		}
 	},
 	{
-		"code": "a11y-incorrect-aria-attribute-type",
-		"message": "A11y: The value of 'aria-valuemax' must be of type number",
+		"code": "a11y_incorrect_aria_attribute_type",
+		"message": "The value of 'aria-valuemax' must be of type number",
 		"start": {
 			"line": 5,
 			"column": 5

@@ -1,7 +1,7 @@
 [
 	{
-		"code": "duplicate-transition",
-		"message": "An element cannot have both an 'in' directive and a 'transition' directive",
+		"code": "transition_conflict",
+		"message": "Cannot use `in:` alongside existing `transition:` directive",
 		"start": {
 			"line": 6,
 			"column": 12

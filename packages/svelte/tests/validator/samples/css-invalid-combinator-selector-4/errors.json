@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid-css-selector",
+		"code": "invalid_css_selector",
 		"message": "Invalid selector",
 		"start": {
 			"line": 4,

@@ -1,6 +1,6 @@
 [
 	{
-		"code": "missing-custom-element-compile-option",
+		"code": "missing_custom_element_compile_option",
 		"message": "The 'customElement' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?",
 		"start": {
 			"line": 1,

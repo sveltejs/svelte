@@ -1,6 +1,4 @@
 declare module 'svelte' {
-	// This should contain all the public interfaces (not all of them are actually importable, check current Svelte for which ones are).
-
 	/**
 	 * @deprecated Svelte components were classes in Svelte 4. In Svelte 5, thy are not anymore.
 	 * Use `mount` or `createRoot` instead to instantiate components.
@@ -19,13 +17,37 @@ declare module 'svelte' {
 		$$inline?: boolean;
 	}
 
-	// Utility type for ensuring backwards compatibility on a type level: If there's a default slot, add 'children' to the props if it doesn't exist there already
-	type PropsWithChildren<Props, Slots> = Props &
-		(Props extends { children?: any }
-			? {}
-			: Slots extends { default: any }
-				? { children?: Snippet }
-				: {});
+	/** Tooling for types uses this for properties are being used with `bind:` */
+	export type Binding<T> = { 'bind:': T };
+	/**
+	 * Tooling for types uses this for properties that may be bound to.
+	 * Only use this if you author Svelte component type definition files by hand (we recommend using `@sveltejs/package` instead).
+	 * Example:
+	 * ```ts
+	 * export class MyComponent extends SvelteComponent<{ readonly: string, bindable: Bindable<string> }> {}
+	 * ```
+	 * means you can now do `<MyComponent {readonly} bind:bindable />`
+	 */
+	export type Bindable<T> = T | Binding<T>;
+
+	type WithBindings<T> = {
+		[Key in keyof T]: Bindable<T[Key]>;
+	};
+
+	/**
+	 * Utility type for ensuring backwards compatibility on a type level:
+	 * - If there's a default slot, add 'children' to the props
+	 * - All props are bindable
+	 */
+	type PropsWithChildren<Props, Slots> = WithBindings<Props> &
+		(Slots extends { default: any }
+			? // This is unfortunate because it means "accepts no props" turns into "accepts any prop"
+				// but the alternative is non-fixable type errors because of the way TypeScript index
+				// signatures work (they will always take precedence and make an impossible-to-satisfy children type).
+				Props extends Record<string, never>
+				? any
+				: { children?: any }
+			: {});
 
 	/**
 	 * Can be used to create strongly typed Svelte components.
@@ -56,7 +78,7 @@ declare module 'svelte' {
 	 * for more info.
 	 */
 	export class SvelteComponent<
-		Props extends Record<string, any> = any,
+		Props extends Record<string, any> = Record<string, any>,
 		Events extends Record<string, any> = any,
 		Slots extends Record<string, any> = any
 	> {
@@ -75,7 +97,7 @@ declare module 'svelte' {
 		 * Does not exist at runtime.
 		 * ### DO NOT USE!
 		 * */
-		$$prop_def: PropsWithChildren<Props, Slots>;
+		$$prop_def: RemoveBindable<Props>; // Without PropsWithChildren: unnecessary, causes type bugs
 		/**
 		 * For type checking capabilities only.
 		 * Does not exist at runtime.
@@ -120,7 +142,7 @@ declare module 'svelte' {
 	 * @deprecated Use `SvelteComponent` instead. See TODO for more information.
 	 */
 	export class SvelteComponentTyped<
-		Props extends Record<string, any> = any,
+		Props extends Record<string, any> = Record<string, any>,
 		Events extends Record<string, any> = any,
 		Slots extends Record<string, any> = any
 	> extends SvelteComponent<Props, Events, Slots> {}
@@ -155,7 +177,7 @@ declare module 'svelte' {
 	 * ```
 	 */
 	export type ComponentProps<Comp extends SvelteComponent> =
-		Comp extends SvelteComponent<infer Props> ? Props : never;
+		Comp extends SvelteComponent<infer Props> ? RemoveBindable<Props> : never;
 
 	/**
 	 * Convenience type to get the type of a Svelte component. Useful for example in combination with
@@ -225,6 +247,12 @@ declare module 'svelte' {
 					: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
 		): boolean;
 	}
+	/** Anything except a function */
+	type NotFunction<T> = T extends Function ? never : T;
+
+	type RemoveBindable<Props extends Record<string, any>> = {
+		[Key in keyof Props]: Props[Key] extends Bindable<infer Value> ? Value : Props[Key];
+	};
 	/**
 	 * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
 	 * It must be called during the component's initialisation (but doesn't need to live *inside* the component;
@@ -295,8 +323,6 @@ declare module 'svelte' {
 	 * Synchronously flushes any pending state changes and those that result from it.
 	 * */
 	export function flushSync(fn?: (() => void) | undefined): void;
-	/** Anything except a function */
-	type NotFunction<T> = T extends Function ? never : T;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
 	 *
@@ -304,7 +330,7 @@ declare module 'svelte' {
 	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
 		target: Document | Element | ShadowRoot;
 		anchor?: Node | undefined;
-		props?: Props | undefined;
+		props?: RemoveBindable<Props> | undefined;
 		events?: { [Property in keyof Events]: (e: Events[Property]) => any; } | undefined;
 		context?: Map<any, any> | undefined;
 		intro?: boolean | undefined;
@@ -315,7 +341,7 @@ declare module 'svelte' {
 	 * */
 	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
 		target: Document | Element | ShadowRoot;
-		props?: Props | undefined;
+		props?: RemoveBindable<Props> | undefined;
 		events?: { [Property in keyof Events]: (e: Events[Property]) => any; } | undefined;
 		context?: Map<any, any> | undefined;
 		intro?: boolean | undefined;
@@ -500,14 +526,26 @@ declare module 'svelte/compiler' {
 	 *
 	 * https://svelte.dev/docs/svelte-compiler#svelte-parse
 	 * */
+	export function parse(source: string, options: {
+		filename?: string;
+		modern: true;
+	}): Root;
+	/**
+	 * The parse function parses a component, returning only its abstract syntax tree.
+	 *
+	 * The `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
+	 * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
+	 *
+	 * https://svelte.dev/docs/svelte-compiler#svelte-parse
+	 * */
 	export function parse(source: string, options?: {
 		filename?: string | undefined;
-		modern?: boolean | undefined;
-	} | undefined): Root | LegacyRoot;
+		modern?: false | undefined;
+	} | undefined): LegacyRoot;
 	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
 	 * */
-	function walk(): never;
+	export function walk(): never;
 	/** The return value of `compile` from `svelte/compiler` */
 	interface CompileResult {
 		/** The compiled JavaScript */
@@ -957,6 +995,14 @@ declare module 'svelte/compiler' {
 		type: 'Window';
 	}
 
+	interface LegacyComment extends BaseNode_1 {
+		type: 'Comment';
+		/** the contents of the comment */
+		data: string;
+		/** any svelte-ignore directives — <!-- svelte-ignore a b c --> would result in ['a', 'b', 'c'] */
+		ignores: string[];
+	}
+
 	type LegacyDirective =
 		| LegacyAnimation
 		| LegacyBinding
@@ -972,6 +1018,7 @@ declare module 'svelte/compiler' {
 	type LegacyElementLike =
 		| LegacyBody
 		| LegacyCatchBlock
+		| LegacyComment
 		| LegacyDocument
 		| LegacyElement
 		| LegacyHead
@@ -1124,6 +1171,7 @@ declare module 'svelte/compiler' {
 			metadata: {
 				parent_rule: null | Rule;
 				has_local_selectors: boolean;
+				is_global_block: boolean;
 			};
 		}
 
@@ -1356,8 +1404,6 @@ declare module 'svelte/compiler' {
 		type: 'Comment';
 		/** the contents of the comment */
 		data: string;
-		/** any svelte-ignore directives — <!-- svelte-ignore a b c --> would result in ['a', 'b', 'c'] */
-		ignores: string[];
 	}
 
 	/** A `{@const ...}` tag */
@@ -1764,8 +1810,6 @@ declare module 'svelte/compiler' {
 		style?: Preprocessor;
 		script?: Preprocessor;
 	}
-
-	export { walk };
 }
 
 declare module 'svelte/easing' {
@@ -1986,38 +2030,18 @@ declare module 'svelte/reactivity' {
 		constructor(...values: any[]);
 		#private;
 	}
-	class ReactiveSet<T> extends Set<any> {
+	class ReactiveSet<T> extends Set<T> {
 		
 		constructor(value?: Iterable<T> | null | undefined);
 		
-		has(value: T): boolean;
-		
 		add(value: T): this;
-		
-		delete(value: T): boolean;
-		keys(): IterableIterator<T>;
-		values(): IterableIterator<T>;
-		entries(): IterableIterator<[T, T]>;
-		[Symbol.iterator](): IterableIterator<T>;
 		#private;
 	}
-	class ReactiveMap<K, V> extends Map<any, any> {
+	class ReactiveMap<K, V> extends Map<K, V> {
 		
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
 		
-		has(key: K): boolean;
-		
-		forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void, this_arg?: any): void;
-		
-		get(key: K): V | undefined;
-		
 		set(key: K, value: V): this;
-		
-		delete(key: K): boolean;
-		keys(): IterableIterator<K>;
-		values(): IterableIterator<V>;
-		entries(): IterableIterator<[K, V]>;
-		[Symbol.iterator](): IterableIterator<[K, V]>;
 		#private;
 	}
 	class ReactiveURL extends URL {

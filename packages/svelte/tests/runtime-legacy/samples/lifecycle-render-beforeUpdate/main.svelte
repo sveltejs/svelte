@@ -2,8 +2,6 @@
 	import { beforeUpdate } from 'svelte';
 	import Child from './Child.svelte';
 
-	export let log = [];
-	
 	let name = 'rich';
 	let allowed = false;
 
@@ -16,5 +14,5 @@
 <input bind:value={name} />
 
 {#if allowed}
-	<Child name={name} log={log} />
+	<Child name={name} />
 {/if}

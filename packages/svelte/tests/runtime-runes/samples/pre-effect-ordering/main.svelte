@@ -1,6 +1,4 @@
 <script>
-    import { log } from './log.js';
-
 	let count = $state(0);
 
 	function increment() {
@@ -8,13 +6,13 @@
 	}
 
 	$effect.pre(() => {
-		log.push(`Outer Effect Start (${count})`)
+		console.log(`Outer Effect Start (${count})`)
 
 		$effect.pre(() => {
-			log.push(`Inner Effect (${count})`)
+			console.log(`Inner Effect (${count})`)
 		});
 
-		log.push(`Outer Effect End (${count})`)
+		console.log(`Outer Effect End (${count})`)
 	});
 </script>
 

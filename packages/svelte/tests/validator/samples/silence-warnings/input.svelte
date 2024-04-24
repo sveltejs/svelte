@@ -3,11 +3,11 @@
 </script>
 
 <script>
-	// svelte-ignore module-script-reactive-declaration
+	// svelte-ignore module_script_reactive_declaration
 	$: reactive = foo;
 </script>
 
-<!-- svelte-ignore css-unused-selector -->
+<!-- svelte-ignore css_unused_selector -->
 <style>
 	.unused {}
 </style>

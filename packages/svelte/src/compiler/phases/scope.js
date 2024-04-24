@@ -2,7 +2,7 @@ import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import { is_element_node } from './nodes.js';
 import * as b from '../utils/builders.js';
-import { error } from '../errors.js';
+import * as e from '../errors.js';
 import { extract_identifiers, extract_identifiers_from_destructuring } from '../utils/ast.js';
 import { JsKeywords, Runes } from './constants.js';
 
@@ -70,7 +70,7 @@ export class Scope {
 	 */
 	declare(node, kind, declaration_kind, initial = null) {
 		if (node.name === '$') {
-			error(node, 'invalid-dollar-binding');
+			e.invalid_dollar_binding(node);
 		}
 
 		if (
@@ -80,7 +80,7 @@ export class Scope {
 			declaration_kind !== 'rest_param' &&
 			this.function_depth <= 1
 		) {
-			error(node, 'invalid-dollar-prefix');
+			e.invalid_dollar_prefix(node);
 		}
 
 		if (this.parent) {
@@ -95,7 +95,7 @@ export class Scope {
 
 		if (this.declarations.has(node.name)) {
 			// This also errors on var/function types, but that's arguably a good thing
-			error(node, 'duplicate-declaration', node.name);
+			e.duplicate_declaration(node, node.name);
 		}
 
 		/** @type {import('#compiler').Binding} */
@@ -166,7 +166,7 @@ export class Scope {
 	get_bindings(node) {
 		const bindings = this.declarators.get(node);
 		if (!bindings) {
-			error(node, 'INTERNAL', 'No binding found for declarator');
+			throw new Error('No binding found for declarator');
 		}
 		return bindings;
 	}
@@ -767,7 +767,7 @@ export function get_rune(node, scope) {
 
 	joined = n.name + joined;
 
-	if (joined === '$derived.call') error(node, 'invalid-derived-call');
+	if (joined === '$derived.call') e.invalid_derived_call(node);
 	if (!Runes.includes(/** @type {any} */ (joined))) return null;
 
 	const binding = scope.get(n.name);
