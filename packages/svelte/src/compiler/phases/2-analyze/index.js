@@ -1053,6 +1053,33 @@ const function_visitor = (node, context) => {
 	});
 };
 
+/**
+ * A 'safe' identifier means that the `foo` in `foo.bar` or `foo()` will not
+ * call functions that require component context to exist
+ * @param {import('estree').Expression | import('estree').Super} expression
+ * @param {Scope} scope
+ */
+function is_safe_identifier(expression, scope) {
+	let node = expression;
+	while (node.type === 'MemberExpression') node = node.object;
+
+	if (node.type !== 'Identifier') return false;
+
+	const binding = scope.get(node.name);
+
+	if (
+		binding &&
+		(binding.kind === 'prop' ||
+			binding.kind === 'bindable_prop' ||
+			binding.kind === 'rest_prop' ||
+			binding.declaration_kind === 'import')
+	) {
+		return false;
+	}
+
+	return true;
+}
+
 /** @type {import('./types').Visitors} */
 const common_visitors = {
 	_(node, context) {
@@ -1245,12 +1272,14 @@ const common_visitors = {
 			}
 		}
 
-		if (rune === null || rune === '$effect' || rune === '$effect.pre') {
+		if (rune === '$effect' || rune === '$effect.pre') {
 			// `$effect` needs context because Svelte needs to know whether it should re-run
 			// effects that invalidate themselves, and that's determined by whether we're in runes mode
-
-			// TODO differentiate between safe/unsafe calls. For now, err on the side of caution
 			context.state.analysis.needs_context = true;
+		} else if (rune === null) {
+			if (!is_safe_identifier(callee, context.state.scope)) {
+				context.state.analysis.needs_context = true;
+			}
 		}
 
 		context.next();
@@ -1260,8 +1289,9 @@ const common_visitors = {
 			context.state.expression.metadata.dynamic = true;
 		}
 
-		// TODO differentiate between safe/unsafe accesses. For now, err on the side of caution
-		context.state.analysis.needs_context = true;
+		if (!is_safe_identifier(node, context.state.scope)) {
+			context.state.analysis.needs_context = true;
+		}
 
 		context.next();
 	},
