@@ -10,6 +10,26 @@
 
 > An element can only have one 'animate' directive
 
+## attribute_duplicate
+
+> Attributes need to be unique
+
+## attribute_empty_shorthand
+
+> Attribute shorthand cannot be empty
+
+## attribute_invalid_event_handler
+
+> Event attribute must be a JavaScript expression, not a string
+
+## attribute_invalid_name
+
+> '%name%' is not a valid attribute name
+
+## attribute_invalid_sequence_expression
+
+> Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses
+
 ## event_handler_invalid_modifier
 
 > Valid event modifiers are %list%
@@ -22,9 +42,17 @@
 
 > Event modifiers other than 'once' can only be used on DOM elements
 
+## let_directive_invalid_placement
+
+> `let:` directive at invalid position
+
 ## slot_snippet_conflict
 
 > Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.
+
+## style_directive_invalid_modifier
+
+> `style:` directive can only use the `important` modifier
 
 ## svelte_component_invalid_this
 

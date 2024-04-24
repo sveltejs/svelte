@@ -57,58 +57,21 @@ function e(node, code, message) {
 }
 
 /**
- * Attribute shorthand cannot be empty
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function empty_attribute_shorthand(node) {
-	e(node, "empty_attribute_shorthand", "Attribute shorthand cannot be empty");
-}
-
-/**
- * Attributes need to be unique
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function duplicate_attribute(node) {
-	e(node, "duplicate_attribute", "Attributes need to be unique");
-}
-
-/**
- * Event attribute must be a JavaScript expression, not a string
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_event_attribute_value(node) {
-	e(node, "invalid_event_attribute_value", "Event attribute must be a JavaScript expression, not a string");
-}
-
-/**
- * '%name%' is not a valid attribute name
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @returns {never}
- */
-export function invalid_attribute_name(node, name) {
-	e(node, "invalid_attribute_name", `'${name}' is not a valid attribute name`);
-}
-
-/**
  * `let:` directive at invalid position
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_let_directive_placement(node) {
-	e(node, "invalid_let_directive_placement", "`let:` directive at invalid position");
+export function let_directive_invalid_placement(node) {
+	e(node, "let_directive_invalid_placement", "`let:` directive at invalid position");
 }
 
 /**
- * Invalid 'style:' modifier. Valid modifiers are: 'important'
+ * `style:` directive can only use the `important` modifier
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_style_directive_modifier(node) {
-	e(node, "invalid_style_directive_modifier", "Invalid 'style:' modifier. Valid modifiers are: 'important'");
+export function style_directive_invalid_modifier(node) {
+	e(node, "style_directive_invalid_modifier", "`style:` directive can only use the `important` modifier");
 }
 
 /**
@@ -116,8 +79,8 @@ export function invalid_style_directive_modifier(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_sequence_expression(node) {
-	e(node, "invalid_sequence_expression", "Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses");
+export function attribute_invalid_sequence_expression(node) {
+	e(node, "attribute_invalid_sequence_expression", "Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses");
 }
 
 /**
@@ -1100,6 +1063,43 @@ export function animation_missing_key(node) {
  */
 export function animation_duplicate(node) {
 	e(node, "animation_duplicate", "An element can only have one 'animate' directive");
+}
+
+/**
+ * Attributes need to be unique
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function attribute_duplicate(node) {
+	e(node, "attribute_duplicate", "Attributes need to be unique");
+}
+
+/**
+ * Attribute shorthand cannot be empty
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function attribute_empty_shorthand(node) {
+	e(node, "attribute_empty_shorthand", "Attribute shorthand cannot be empty");
+}
+
+/**
+ * Event attribute must be a JavaScript expression, not a string
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function attribute_invalid_event_handler(node) {
+	e(node, "attribute_invalid_event_handler", "Event attribute must be a JavaScript expression, not a string");
+}
+
+/**
+ * '%name%' is not a valid attribute name
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function attribute_invalid_name(node, name) {
+	e(node, "attribute_invalid_name", `'${name}' is not a valid attribute name`);
 }
 
 /**

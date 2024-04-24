@@ -216,7 +216,7 @@ export default function tag(parser) {
 	while ((attribute = read(parser))) {
 		if (attribute.type === 'Attribute' || attribute.type === 'BindDirective') {
 			if (unique_names.includes(attribute.name)) {
-				e.duplicate_attribute(attribute.start);
+				e.attribute_duplicate(attribute.start);
 				// <svelte:element bind:this this=..> is allowed
 			} else if (attribute.name !== 'this') {
 				unique_names.push(attribute.name);
@@ -500,7 +500,7 @@ function read_attribute(parser) {
 			const name = parser.read_identifier();
 
 			if (name === null) {
-				e.empty_attribute_shorthand(start);
+				e.attribute_empty_shorthand(start);
 			}
 
 			parser.allow_whitespace();

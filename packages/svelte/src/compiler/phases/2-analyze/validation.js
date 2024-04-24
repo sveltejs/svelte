@@ -62,7 +62,7 @@ function validate_component(node, context) {
 					while (--i > 0) {
 						const char = context.state.analysis.source[i];
 						if (char === '(') break; // parenthesized sequence expressions are ok
-						if (char === '{') e.invalid_sequence_expression(expression);
+						if (char === '{') e.attribute_invalid_sequence_expression(expression);
 					}
 				}
 			}
@@ -111,18 +111,18 @@ function validate_element(node, context) {
 					while (--i > 0) {
 						const char = context.state.analysis.source[i];
 						if (char === '(') break; // parenthesized sequence expressions are ok
-						if (char === '{') e.invalid_sequence_expression(expression);
+						if (char === '{') e.attribute_invalid_sequence_expression(expression);
 					}
 				}
 			}
 
 			if (regex_illegal_attribute_character.test(attribute.name)) {
-				e.invalid_attribute_name(attribute, attribute.name);
+				e.attribute_invalid_name(attribute, attribute.name);
 			}
 
 			if (attribute.name.startsWith('on') && attribute.name.length > 2) {
 				if (!is_expression) {
-					e.invalid_event_attribute_value(attribute);
+					e.attribute_invalid_event_handler(attribute);
 				}
 
 				const value = attribute.value[0].expression;
@@ -500,7 +500,7 @@ const validation = {
 				parent.type !== 'SvelteSelf' &&
 				parent.type !== 'SvelteFragment')
 		) {
-			e.invalid_let_directive_placement(node);
+			e.let_directive_invalid_placement(node);
 		}
 	},
 	RegularElement(node, context) {
@@ -640,7 +640,7 @@ const validation = {
 	},
 	StyleDirective(node) {
 		if (node.modifiers.length > 1 || (node.modifiers.length && node.modifiers[0] !== 'important')) {
-			e.invalid_style_directive_modifier(node);
+			e.style_directive_invalid_modifier(node);
 		}
 	},
 	SvelteHead(node) {
