@@ -5,7 +5,7 @@ import * as $ from "svelte/internal/client";
 
 var root = $.template(`<h1>hello world</h1>`);
 
-function Hello_world($$anchor, $$props) {
+function Hello_world($$anchor) {
 	var h1 = root();
 
 	$.append($$anchor, h1);

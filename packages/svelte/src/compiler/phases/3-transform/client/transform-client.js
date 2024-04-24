@@ -449,6 +449,10 @@ export function client_component(source, analysis, options) {
 
 	if (!should_inject_props) {
 		for (const declaration of analysis.instance.scope.declarations.values()) {
+			if (declaration.declaration_kind === 'synthetic') {
+				continue;
+			}
+
 			if (
 				declaration.kind === 'prop' ||
 				declaration.kind === 'bindable_prop' ||

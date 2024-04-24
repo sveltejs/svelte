@@ -3,7 +3,7 @@
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 
-function Each_string_template($$anchor, $$props) {
+function Each_string_template($$anchor) {
 	var fragment = $.comment();
 	var node = $.first_child(fragment);
 

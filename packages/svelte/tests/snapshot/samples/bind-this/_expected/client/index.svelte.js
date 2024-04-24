@@ -3,7 +3,7 @@
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 
-function Bind_this($$anchor, $$props) {
+function Bind_this($$anchor) {
 	var fragment = $.comment();
 	var node = $.first_child(fragment);
 
