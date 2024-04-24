@@ -17,6 +17,44 @@ export const javascript_visitors_runes = {
 		/** @type {string[]} */
 		const private_ids = [];
 
+		/**
+		 *
+		 * @param {import("estree").PropertyDefinition} definition
+		 * @param {boolean} is_private
+		 * @param {string} name
+		 */
+		function create_state_field(definition, is_private, name) {
+			if (definition.value?.type === 'CallExpression') {
+				const rune = get_rune(definition.value, state.scope);
+				if (
+					rune === '$state' ||
+					rune === '$state.frozen' ||
+					rune === '$derived' ||
+					rune === '$derived.by'
+				) {
+					/** @type {import('../types.js').StateField} */
+					const field = {
+						kind:
+							rune === '$state'
+								? 'state'
+								: rune === '$state.frozen'
+									? 'frozen_state'
+									: rune === '$derived.by'
+										? 'derived_call'
+										: 'derived',
+						// @ts-expect-error this is set in the next pass
+						id: is_private ? definition.key : null
+					};
+
+					if (is_private) {
+						private_state.set(name, field);
+					} else {
+						public_state.set(name, field);
+					}
+				}
+			}
+		}
+
 		for (const definition of node.body) {
 			if (
 				definition.type === 'PropertyDefinition' &&
@@ -27,35 +65,10 @@ export const javascript_visitors_runes = {
 				const is_private = type === 'PrivateIdentifier';
 				if (is_private) private_ids.push(name);
 
-				if (definition.value?.type === 'CallExpression') {
-					const rune = get_rune(definition.value, state.scope);
-					if (
-						rune === '$state' ||
-						rune === '$state.frozen' ||
-						rune === '$derived' ||
-						rune === '$derived.by'
-					) {
-						/** @type {import('../types.js').StateField} */
-						const field = {
-							kind:
-								rune === '$state'
-									? 'state'
-									: rune === '$state.frozen'
-										? 'frozen_state'
-										: rune === '$derived.by'
-											? 'derived_call'
-											: 'derived',
-							// @ts-expect-error this is set in the next pass
-							id: is_private ? definition.key : null
-						};
-
-						if (is_private) {
-							private_state.set(name, field);
-						} else {
-							public_state.set(name, field);
-						}
-					}
-				}
+				create_state_field(definition, is_private, name);
+			} else if (definition.type === 'PropertyDefinition' && definition.key.type === 'Literal') {
+				const name = definition.key.value?.toString().replace('-', '_');
+				if (name) create_state_field(definition, false, name);
 			}
 		}
 
@@ -75,6 +88,95 @@ export const javascript_visitors_runes = {
 
 		const child_state = { ...state, public_state, private_state };
 
+		/**
+		 *
+		 * @param {import("estree").PropertyDefinition} definition
+		 * @param {boolean} is_private
+		 * @param {string} name
+		 */
+		function replace_class_body(definition, is_private, name) {
+			const field = (is_private ? private_state : public_state).get(name);
+
+			if (definition.value?.type === 'CallExpression' && field !== undefined) {
+				let value = null;
+
+				if (definition.value.arguments.length > 0) {
+					const init = /** @type {import('estree').Expression} **/ (
+						visit(definition.value.arguments[0], child_state)
+					);
+
+					value =
+						field.kind === 'state'
+							? b.call(
+									'$.source',
+									should_proxy_or_freeze(init, state.scope) ? b.call('$.proxy', init) : init
+								)
+							: field.kind === 'frozen_state'
+								? b.call(
+										'$.source',
+										should_proxy_or_freeze(init, state.scope) ? b.call('$.freeze', init) : init
+									)
+								: field.kind === 'derived_call'
+									? b.call('$.derived', init)
+									: b.call('$.derived', b.thunk(init));
+				} else {
+					// if no arguments, we know it's state as `$derived()` is a compile error
+					value = b.call('$.source');
+				}
+
+				if (is_private) {
+					body.push(b.prop_def(field.id, value));
+				} else {
+					// #foo;
+					const member = b.member(b.this, field.id);
+					body.push(b.prop_def(field.id, value));
+
+					// get foo() { return this.#foo; }
+					body.push(b.method('get', definition.key, [], [b.return(b.call('$.get', member))]));
+
+					if (field.kind === 'state') {
+						// set foo(value) { this.#foo = value; }
+						const value = b.id('value');
+						body.push(
+							b.method(
+								'set',
+								definition.key,
+								[value],
+								[b.stmt(b.call('$.set', member, b.call('$.proxy', value)))]
+							)
+						);
+					}
+
+					if (field.kind === 'frozen_state') {
+						// set foo(value) { this.#foo = value; }
+						const value = b.id('value');
+						body.push(
+							b.method(
+								'set',
+								definition.key,
+								[value],
+								[b.stmt(b.call('$.set', member, b.call('$.freeze', value)))]
+							)
+						);
+					}
+
+					if ((field.kind === 'derived' || field.kind === 'derived_call') && state.options.dev) {
+						body.push(
+							b.method(
+								'set',
+								definition.key,
+								[b.id('_')],
+								[b.throw_error(`Cannot update a derived property ('${name}')`)]
+							)
+						);
+					}
+				}
+
+				return true;
+			}
+			return false;
+		}
+
 		// Replace parts of the class body
 		for (const definition of node.body) {
 			if (
@@ -84,83 +186,14 @@ export const javascript_visitors_runes = {
 				const name = definition.key.name;
 
 				const is_private = definition.key.type === 'PrivateIdentifier';
-				const field = (is_private ? private_state : public_state).get(name);
 
-				if (definition.value?.type === 'CallExpression' && field !== undefined) {
-					let value = null;
+				if (replace_class_body(definition, is_private, name)) {
+					continue;
+				}
+			} else if (definition.type === 'PropertyDefinition' && definition.key.type === 'Literal') {
+				const name = definition.key.value?.toString().replace('-', '_');
 
-					if (definition.value.arguments.length > 0) {
-						const init = /** @type {import('estree').Expression} **/ (
-							visit(definition.value.arguments[0], child_state)
-						);
-
-						value =
-							field.kind === 'state'
-								? b.call(
-										'$.source',
-										should_proxy_or_freeze(init, state.scope) ? b.call('$.proxy', init) : init
-									)
-								: field.kind === 'frozen_state'
-									? b.call(
-											'$.source',
-											should_proxy_or_freeze(init, state.scope) ? b.call('$.freeze', init) : init
-										)
-									: field.kind === 'derived_call'
-										? b.call('$.derived', init)
-										: b.call('$.derived', b.thunk(init));
-					} else {
-						// if no arguments, we know it's state as `$derived()` is a compile error
-						value = b.call('$.source');
-					}
-
-					if (is_private) {
-						body.push(b.prop_def(field.id, value));
-					} else {
-						// #foo;
-						const member = b.member(b.this, field.id);
-						body.push(b.prop_def(field.id, value));
-
-						// get foo() { return this.#foo; }
-						body.push(b.method('get', definition.key, [], [b.return(b.call('$.get', member))]));
-
-						if (field.kind === 'state') {
-							// set foo(value) { this.#foo = value; }
-							const value = b.id('value');
-							body.push(
-								b.method(
-									'set',
-									definition.key,
-									[value],
-									[b.stmt(b.call('$.set', member, b.call('$.proxy', value)))]
-								)
-							);
-						}
-
-						if (field.kind === 'frozen_state') {
-							// set foo(value) { this.#foo = value; }
-							const value = b.id('value');
-							body.push(
-								b.method(
-									'set',
-									definition.key,
-									[value],
-									[b.stmt(b.call('$.set', member, b.call('$.freeze', value)))]
-								)
-							);
-						}
-
-						if ((field.kind === 'derived' || field.kind === 'derived_call') && state.options.dev) {
-							body.push(
-								b.method(
-									'set',
-									definition.key,
-									[b.id('_')],
-									[b.throw_error(`Cannot update a derived property ('${name}')`)]
-								)
-							);
-						}
-					}
-
+				if (name && replace_class_body(definition, false, name)) {
 					continue;
 				}
 			}
