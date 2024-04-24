@@ -8,8 +8,6 @@ var root_1 = $.template(`Something`, 1);
 var root = $.template(`<!> `, 1);
 
 function Bind_component_snippet($$anchor, $$props) {
-	$.push($$props, true);
-
 	let value = $.source('');
 	const _snippet = snippet;
 	var fragment_1 = root();
@@ -35,7 +33,6 @@ function Bind_component_snippet($$anchor, $$props) {
 
 	$.render_effect(() => $.set_text(text, ` value: ${$.stringify($.get(value))}`));
 	$.append($$anchor, fragment_1);
-	$.pop();
 }
 
 export default Bind_component_snippet;

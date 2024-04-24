@@ -4,15 +4,12 @@ import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 
 function Svelte_element($$anchor, $$props) {
-	$.push($$props, true);
-
 	let tag = $.prop($$props, "tag", 3, 'hr');
 	var fragment = $.comment();
 	var node = $.first_child(fragment);
 
 	$.element(node, tag, false);
 	$.append($$anchor, fragment);
-	$.pop();
 }
 
 export default Svelte_element;

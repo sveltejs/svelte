@@ -13,8 +13,6 @@ function reset(_, str, tpl) {
 var root = $.template(`<input> <input> <button>reset</button>`, 1);
 
 function State_proxy_literal($$anchor, $$props) {
-	$.push($$props, true);
-
 	let str = $.source('');
 	let tpl = $.source(``);
 	var fragment = root();
@@ -32,7 +30,6 @@ function State_proxy_literal($$anchor, $$props) {
 	$.bind_value(input, () => $.get(str), ($$value) => $.set(str, $$value));
 	$.bind_value(input_1, () => $.get(tpl), ($$value) => $.set(tpl, $$value));
 	$.append($$anchor, fragment);
-	$.pop();
 }
 
 export default State_proxy_literal;

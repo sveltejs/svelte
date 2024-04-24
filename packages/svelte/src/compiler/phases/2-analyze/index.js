@@ -370,6 +370,7 @@ export function analyze_component(root, source, options) {
 		uses_slots: false,
 		uses_component_bindings: false,
 		uses_render_tags: false,
+		needs_context: false,
 		custom_element: options.customElementOptions ?? options.customElement,
 		inject_styles: options.css === 'injected' || options.customElement,
 		accessors: options.customElement
@@ -1223,6 +1224,8 @@ const common_visitors = {
 		}
 
 		const callee = node.callee;
+		const rune = callee.type === 'Identifier' ? get_rune(node, context.state.scope) : null;
+
 		if (callee.type === 'Identifier') {
 			const binding = context.state.scope.get(callee.name);
 
@@ -1230,7 +1233,7 @@ const common_visitors = {
 				binding.is_called = true;
 			}
 
-			if (get_rune(node, context.state.scope) === '$derived') {
+			if (rune === '$derived') {
 				// special case — `$derived(foo)` is treated as `$derived(() => foo)`
 				// for the purposes of identifying static state references
 				context.next({
@@ -1242,12 +1245,23 @@ const common_visitors = {
 			}
 		}
 
+		if (rune === null || rune === '$effect' || rune === '$effect.pre') {
+			// `$effect` needs context because Svelte needs to know whether it should re-run
+			// effects that invalidate themselves, and that's determined by whether we're in runes mode
+
+			// TODO differentiate between safe/unsafe calls. For now, err on the side of caution
+			context.state.analysis.needs_context = true;
+		}
+
 		context.next();
 	},
 	MemberExpression(node, context) {
 		if (context.state.expression) {
 			context.state.expression.metadata.dynamic = true;
 		}
+
+		// TODO differentiate between safe/unsafe accesses. For now, err on the side of caution
+		context.state.analysis.needs_context = true;
 
 		context.next();
 	},
