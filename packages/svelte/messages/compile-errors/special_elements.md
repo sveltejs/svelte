@@ -48,15 +48,15 @@
 
 ## svelte_meta_invalid_placement
 
-> <%name%> tags cannot be inside elements or blocks
+> `<%name%>` tags cannot be inside elements or blocks
 
 ## svelte_meta_duplicate
 
-> A component can only have one <%name%> element
+> A component can only have one `<%name%>` element
 
 ## svelte_self_invalid_placement
 
-> `<svelte:self>` components can only exist inside {#if} blocks, {#each} blocks, {#snippet} blocks or slots passed to components
+> `<svelte:self>` components can only exist inside `{#if}` blocks, `{#each}` blocks, `{#snippet}` blocks or slots passed to components
 
 ## svelte_element_missing_this
 
@@ -68,11 +68,11 @@
 
 ## svelte_element_invalid_this
 
-> Invalid element definition — must be an {expression}
+> Invalid element definition — must be an `{expression}`
 
 ## svelte_component_invalid_this
 
-> Invalid component definition — must be an {expression}
+> Invalid component definition — must be an `{expression}`
 
 ## svelte_meta_invalid_tag
 
