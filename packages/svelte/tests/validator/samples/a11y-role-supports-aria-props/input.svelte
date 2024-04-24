@@ -49,10 +49,10 @@
 <div role="button" aria-colspan="0"></div>
 <div role="caption" aria-setsize="0"></div>
 <div role="cell" aria-multiline="true"></div>
-<div role="checkbox" aria-multiline="true"></div>
+<div role="checkbox" aria-multiline="true" aria-checked="true"></div>
 <div role="code" aria-invalid="true"></div>
 <div role="columnheader" aria-colcount="0"></div>
-<div role="combobox" aria-multiselectable="true" aria-controls={[]}></div>
+<div role="combobox" aria-multiselectable="true" aria-controls={[]} aria-expanded="true"></div>
 <div role="complementary" aria-readonly="true"></div>
 <div role="contentinfo" aria-valuetext=""></div>
 <div role="definition" aria-multiline="true"></div>
@@ -237,7 +237,7 @@
 <div role="checkbox" aria-checked="true" aria-details="id"></div>
 <div role="code" aria-keyshortcuts=""></div>
 <div role="columnheader" aria-rowspan="0"></div>
-<div role="combobox" aria-invalid="true" aria-controls={[]}></div>
+<div role="combobox" aria-invalid="true" aria-controls={[]} aria-expanded="true"></div>
 <div role="complementary" aria-label=""></div>
 <div role="contentinfo" aria-dropeffect="none"></div>
 <div role="definition" aria-grabbed="true"></div>
@@ -268,7 +268,7 @@
 <div role="menubar" aria-grabbed="true"></div>
 <div role="menuitem" aria-grabbed="true"></div>
 <div role="menuitemcheckbox" aria-checked="true" aria-controls={[]}></div>
-<div role="menuitemradio" aria-checked="true"></div>
+<div role="menuitemradio" aria-checked="true" aria-grabbed="true"></div>
 <div role="meter" aria-valuenow="0" aria-valuetext=""></div>
 <div role="navigation" aria-controls={[]}></div>
 <div role="none" undefined></div>

@@ -588,18 +588,6 @@
 		}
 	},
 	{
-		"code": "a11y_role_has_required_aria_props",
-		"end": {
-			"column": 20,
-			"line": 52
-		},
-		"message": "Elements with the ARIA role \"checkbox\" must have the following attributes defined: \"aria-checked\"",
-		"start": {
-			"column": 5,
-			"line": 52
-		}
-	},
-	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
 			"column": 42,
@@ -633,18 +621,6 @@
 		"start": {
 			"column": 25,
 			"line": 54
-		}
-	},
-	{
-		"code": "a11y_role_has_required_aria_props",
-		"end": {
-			"column": 20,
-			"line": 55
-		},
-		"message": "Elements with the ARIA role \"combobox\" must have the following attributes defined: \"aria-controls\" and \"aria-expanded\"",
-		"start": {
-			"column": 5,
-			"line": 55
 		}
 	},
 	{
@@ -2169,18 +2145,6 @@
 		"start": {
 			"column": 23,
 			"line": 184
-		}
-	},
-	{
-		"code": "a11y_role_has_required_aria_props",
-		"end": {
-			"column": 20,
-			"line": 240
-		},
-		"message": "Elements with the ARIA role \"combobox\" must have the following attributes defined: \"aria-controls\" and \"aria-expanded\"",
-		"start": {
-			"column": 5,
-			"line": 240
 		}
 	}
 ]
