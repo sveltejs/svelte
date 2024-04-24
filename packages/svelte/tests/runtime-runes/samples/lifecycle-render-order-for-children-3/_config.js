@@ -1,4 +1,3 @@
-import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -23,7 +22,7 @@ export default test({
 
 		logs.length = 0;
 
-		flushSync(() => (component.n += 1));
+		component.n += 1;
 
 		assert.deepEqual(logs, [
 			'parent: render 1',

@@ -1,4 +1,3 @@
-import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -14,10 +13,10 @@ export default test({
 	html: `x 1 2 3 z`,
 
 	async test({ assert, target, component }) {
-		flushSync(() => (component.foo = 'y'));
+		component.foo = 'y';
 		assert.htmlEqual(target.innerHTML, `y 1 2 3 z`);
 
-		flushSync(() => (component.bar = 'w'));
+		component.bar = 'w';
 		assert.htmlEqual(target.innerHTML, `y 1 2 3 w`);
 	}
 });

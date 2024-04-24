@@ -131,7 +131,7 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 		generate: 'client',
 		...config.compileOptions,
 		immutable: config.immutable,
-		accessors: 'accessors' in config ? config.accessors : true,
+		accessors: 'accessors' in config ? config.accessors : runes ? undefined : true,
 		runes
 	};
 
@@ -284,20 +284,35 @@ async function run_test_variant(
 			};
 
 			let instance: any;
-			let props: any;
+			let component: any;
 
 			if (runes) {
-				props = proxy({ ...(config.props || {}) });
-
+				const props: any = proxy({ ...(config.props || {}) });
 				const render = variant === 'hydrate' ? hydrate : mount;
+
 				instance = render(mod.default, {
 					target,
 					props,
 					intro: config.intro,
 					recover: config.recover ?? false
 				});
+
+				component = new Proxy(instance, {
+					get(target, key) {
+						if (key in target) return target[key];
+						return props[key];
+					},
+					set(target, key, value) {
+						if (key in target) {
+							target[key] = value;
+						} else {
+							flushSync(() => (props[key] = value));
+						}
+						return true;
+					}
+				});
 			} else {
-				instance = createClassComponent({
+				instance = component = createClassComponent({
 					component: mod.default,
 					props: config.props,
 					target,
@@ -336,7 +351,7 @@ async function run_test_variant(
 							htmlEqualWithOptions: assert_html_equal_with_options
 						},
 						variant,
-						component: runes ? props : instance,
+						component,
 						mod,
 						target,
 						snapshot,
