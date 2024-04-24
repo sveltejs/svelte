@@ -176,7 +176,7 @@ function transform(name, dest) {
 					for (let i = 0; i < parts.length; i += 1) {
 						const part = parts[i];
 						if (i % 2 === 0) {
-							const str = part.replace(/(`|\$)/g, '\\$1');
+							const str = part.replace(/(`|\${)/g, '\\$1');
 							quasis.push({
 								type: 'TemplateElement',
 								value: { raw: str, cooked: str },
