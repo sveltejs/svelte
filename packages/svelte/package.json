@@ -99,8 +99,8 @@
     "templating"
   ],
   "scripts": {
-    "build": "rollup -c && pnpm generate:types && node scripts/check-treeshakeability.js",
-    "dev": "rollup -cw",
+    "build": "node scripts/process-messages && rollup -c && pnpm generate:types && node scripts/check-treeshakeability.js",
+    "dev": "node scripts/process-messages && rollup -cw",
     "check": "tsc && cd ./tests/types && tsc",
     "check:watch": "tsc --watch",
     "generate:version": "node ./scripts/generate-version.js",

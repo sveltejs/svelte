@@ -2,12 +2,13 @@ import { getLocator } from 'locate-character';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
 
-// TODO no need to export these, it's temporary
 /** @type {import('#compiler').Warning[]} */
-export let warnings = [];
+let warnings = [];
+
 /** @type {string | undefined} */
-export let filename;
-export let locator = getLocator('', { offsetLine: 1 });
+let filename;
+
+let locator = getLocator('', { offsetLine: 1 });
 
 /**
  * @param {{
