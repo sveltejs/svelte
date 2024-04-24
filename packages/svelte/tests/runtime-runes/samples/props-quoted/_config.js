@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -8,7 +9,7 @@ export default test({
 	html: `hello`,
 
 	async test({ assert, target, component }) {
-		component['kebab-case'] = 'goodbye';
+		flushSync(() => (component['kebab-case'] = 'goodbye'));
 		assert.htmlEqual(target.innerHTML, `goodbye`);
 	}
 });
