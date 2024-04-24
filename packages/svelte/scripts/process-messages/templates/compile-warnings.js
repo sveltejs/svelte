@@ -31,7 +31,7 @@ export function reset_warnings(options) {
  */
 function w(node, code, message) {
 	// @ts-expect-error
-	if (node.ignores?.has(code)) return;
+	if (node?.ignores?.has(code)) return;
 
 	warnings.push({
 		code,

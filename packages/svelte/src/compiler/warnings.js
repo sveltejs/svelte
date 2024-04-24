@@ -29,7 +29,7 @@ export function reset_warnings(options) {
  */
 function w(node, code, message) {
 	// @ts-expect-error
-	if (node.ignores?.has(code)) return;
+	if (node?.ignores?.has(code)) return;
 
 	warnings.push({
 		code,
@@ -561,11 +561,59 @@ export function invalid_self_closing_tag(node, name) {
 }
 
 /**
- * The 'customElement' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?
+ * The `accessors` option has been deprecated. It will have no effect in runes mode
  * @param {null | NodeLike} node
  */
-export function missing_custom_element_compile_option(node) {
-	w(node, "missing_custom_element_compile_option", "The 'customElement' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?");
+export function options_deprecated_accessors(node) {
+	w(node, "options_deprecated_accessors", "The `accessors` option has been deprecated. It will have no effect in runes mode");
+}
+
+/**
+ * The `immutable` option has been deprecated. It will have no effect in runes mode
+ * @param {null | NodeLike} node
+ */
+export function options_deprecated_immutable(node) {
+	w(node, "options_deprecated_immutable", "The `immutable` option has been deprecated. It will have no effect in runes mode");
+}
+
+/**
+ * The `customElement` option is used when generating a custom element. Did you forget the `customElement: true` compile option?
+ * @param {null | NodeLike} node
+ */
+export function options_missing_custom_element(node) {
+	w(node, "options_missing_custom_element", "The `customElement` option is used when generating a custom element. Did you forget the `customElement: true` compile option?");
+}
+
+/**
+ * `generate: "dom"` and `generate: "ssr"` options have been renamed to "client" and "server" respectively
+ * @param {null | NodeLike} node
+ */
+export function options_renamed_ssr_dom(node) {
+	w(node, "options_renamed_ssr_dom", "`generate: \"dom\"` and `generate: \"ssr\"` options have been renamed to \"client\" and \"server\" respectively");
+}
+
+/**
+ * The `enableSourcemap` option has been removed. Source maps are always generated now, and tooling can choose to ignore them
+ * @param {null | NodeLike} node
+ */
+export function options_removed_enable_sourcemap(node) {
+	w(node, "options_removed_enable_sourcemap", "The `enableSourcemap` option has been removed. Source maps are always generated now, and tooling can choose to ignore them");
+}
+
+/**
+ * The `hydratable` option has been removed. Svelte components are always hydratable now
+ * @param {null | NodeLike} node
+ */
+export function options_removed_hydratable(node) {
+	w(node, "options_removed_hydratable", "The `hydratable` option has been removed. Svelte components are always hydratable now");
+}
+
+/**
+ * The `loopGuardTimeout` option has been removed
+ * @param {null | NodeLike} node
+ */
+export function options_removed_loop_guard_timeout(node) {
+	w(node, "options_removed_loop_guard_timeout", "The `loopGuardTimeout` option has been removed");
 }
 
 /**
