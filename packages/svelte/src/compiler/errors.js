@@ -1076,200 +1076,6 @@ export function conflicting_children_snippet(node) {
 }
 
 /**
- * `<svelte:options>` can only receive static attributes
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function svelte_options_invalid_attribute(node) {
-	e(node, "svelte_options_invalid_attribute", "`<svelte:options>` can only receive static attributes");
-}
-
-/**
- * Valid values are %list%
- * @param {null | number | NodeLike} node
- * @param {string} list
- * @returns {never}
- */
-export function svelte_options_invalid_attribute_value(node, list) {
-	e(node, "svelte_options_invalid_attribute_value", `Valid values are ${list}`);
-}
-
-/**
- * "tag" option is deprecated — use "customElement" instead
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function svelte_options_deprecated_tag(node) {
-	e(node, "svelte_options_deprecated_tag", "\"tag\" option is deprecated — use \"customElement\" instead");
-}
-
-/**
- * Tag name must be two or more words joined by the "-" character
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function svelte_options_invalid_tagname(node) {
-	e(node, "svelte_options_invalid_tagname", "Tag name must be two or more words joined by the \"-\" character");
-}
-
-/**
- * "customElement" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function svelte_options_invalid_customelement(node) {
-	e(node, "svelte_options_invalid_customelement", "\"customElement\" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: \"open\" | \"none\"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }");
-}
-
-/**
- * "props" must be a statically analyzable object literal of the form "{ [key: string]: { attribute?: string; reflect?: boolean; type?: "String" | "Boolean" | "Number" | "Array" | "Object" }"
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function svelte_options_invalid_customelement_props(node) {
-	e(node, "svelte_options_invalid_customelement_props", "\"props\" must be a statically analyzable object literal of the form \"{ [key: string]: { attribute?: string; reflect?: boolean; type?: \"String\" | \"Boolean\" | \"Number\" | \"Array\" | \"Object\" }\"");
-}
-
-/**
- * "shadow" must be either "open" or "none"
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function svelte_options_invalid_customelement_shadow(node) {
-	e(node, "svelte_options_invalid_customelement_shadow", "\"shadow\" must be either \"open\" or \"none\"");
-}
-
-/**
- * `<svelte:options>` unknown attribute '%name%'
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @returns {never}
- */
-export function svelte_options_unknown_attribute(node, name) {
-	e(node, "svelte_options_unknown_attribute", `\`<svelte:options>\` unknown attribute '${name}'`);
-}
-
-/**
- * `<svelte:head>` cannot have attributes nor directives
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function svelte_head_illegal_attribute(node) {
-	e(node, "svelte_head_illegal_attribute", "`<svelte:head>` cannot have attributes nor directives");
-}
-
-/**
- * `<svelte:fragment>` can only have a slot attribute and (optionally) a let: directive
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function svelte_fragment_invalid_attribute(node) {
-	e(node, "svelte_fragment_invalid_attribute", "`<svelte:fragment>` can only have a slot attribute and (optionally) a let: directive");
-}
-
-/**
- * `<svelte:fragment>` slot attribute must have a static value
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function svelte_fragment_invalid_slot(node) {
-	e(node, "svelte_fragment_invalid_slot", "`<svelte:fragment>` slot attribute must have a static value");
-}
-
-/**
- * `<svelte:fragment>` must be the direct child of a component
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function svelte_fragment_invalid_placement(node) {
-	e(node, "svelte_fragment_invalid_placement", "`<svelte:fragment>` must be the direct child of a component");
-}
-
-/**
- * <%name%> tags cannot be inside elements or blocks
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @returns {never}
- */
-export function svelte_meta_invalid_placement(node, name) {
-	e(node, "svelte_meta_invalid_placement", `<${name}> tags cannot be inside elements or blocks`);
-}
-
-/**
- * A component can only have one <%name%> element
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @returns {never}
- */
-export function svelte_meta_duplicate(node, name) {
-	e(node, "svelte_meta_duplicate", `A component can only have one <${name}> element`);
-}
-
-/**
- * `<svelte:self>` components can only exist inside {#if} blocks, {#each} blocks, {#snippet} blocks or slots passed to components
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function svelte_self_invalid_placement(node) {
-	e(node, "svelte_self_invalid_placement", "`<svelte:self>` components can only exist inside {#if} blocks, {#each} blocks, {#snippet} blocks or slots passed to components");
-}
-
-/**
- * `<svelte:element>` must have a 'this' attribute
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function svelte_element_missing_this(node) {
-	e(node, "svelte_element_missing_this", "`<svelte:element>` must have a 'this' attribute");
-}
-
-/**
- * `<svelte:component>` must have a 'this' attribute
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function svelte_component_missing_this(node) {
-	e(node, "svelte_component_missing_this", "`<svelte:component>` must have a 'this' attribute");
-}
-
-/**
- * Invalid element definition — must be an {expression}
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function svelte_element_invalid_this(node) {
-	e(node, "svelte_element_invalid_this", "Invalid element definition — must be an {expression}");
-}
-
-/**
- * Invalid component definition — must be an {expression}
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function svelte_component_invalid_this(node) {
-	e(node, "svelte_component_invalid_this", "Invalid component definition — must be an {expression}");
-}
-
-/**
- * Valid `<svelte:...>` tag names are %list%
- * @param {null | number | NodeLike} node
- * @param {string} list
- * @returns {never}
- */
-export function svelte_meta_invalid_tag(node, list) {
-	e(node, "svelte_meta_invalid_tag", `Valid \`<svelte:...>\` tag names are ${list}`);
-}
-
-/**
- * Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function slot_snippet_conflict(node) {
-	e(node, "slot_snippet_conflict", "Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.");
-}
-
-/**
  * An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -1324,6 +1130,200 @@ export function event_handler_invalid_modifier_combination(node, modifier1, modi
  */
 export function event_handler_invalid_component_modifier(node) {
 	e(node, "event_handler_invalid_component_modifier", "Event modifiers other than 'once' can only be used on DOM elements");
+}
+
+/**
+ * Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function slot_snippet_conflict(node) {
+	e(node, "slot_snippet_conflict", "Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.");
+}
+
+/**
+ * Invalid component definition — must be an `{expression}`
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_component_invalid_this(node) {
+	e(node, "svelte_component_invalid_this", "Invalid component definition — must be an `{expression}`");
+}
+
+/**
+ * `<svelte:component>` must have a 'this' attribute
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_component_missing_this(node) {
+	e(node, "svelte_component_missing_this", "`<svelte:component>` must have a 'this' attribute");
+}
+
+/**
+ * Invalid element definition — must be an `{expression}`
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_element_invalid_this(node) {
+	e(node, "svelte_element_invalid_this", "Invalid element definition — must be an `{expression}`");
+}
+
+/**
+ * `<svelte:element>` must have a 'this' attribute
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_element_missing_this(node) {
+	e(node, "svelte_element_missing_this", "`<svelte:element>` must have a 'this' attribute");
+}
+
+/**
+ * `<svelte:fragment>` can only have a slot attribute and (optionally) a let: directive
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_fragment_invalid_attribute(node) {
+	e(node, "svelte_fragment_invalid_attribute", "`<svelte:fragment>` can only have a slot attribute and (optionally) a let: directive");
+}
+
+/**
+ * `<svelte:fragment>` slot attribute must have a static value
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_fragment_invalid_slot(node) {
+	e(node, "svelte_fragment_invalid_slot", "`<svelte:fragment>` slot attribute must have a static value");
+}
+
+/**
+ * `<svelte:fragment>` must be the direct child of a component
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_fragment_invalid_placement(node) {
+	e(node, "svelte_fragment_invalid_placement", "`<svelte:fragment>` must be the direct child of a component");
+}
+
+/**
+ * `<svelte:head>` cannot have attributes nor directives
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_head_illegal_attribute(node) {
+	e(node, "svelte_head_illegal_attribute", "`<svelte:head>` cannot have attributes nor directives");
+}
+
+/**
+ * `<%name%>` tags cannot be inside elements or blocks
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function svelte_meta_invalid_placement(node, name) {
+	e(node, "svelte_meta_invalid_placement", `\`<${name}>\` tags cannot be inside elements or blocks`);
+}
+
+/**
+ * A component can only have one `<%name%>` element
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function svelte_meta_duplicate(node, name) {
+	e(node, "svelte_meta_duplicate", `A component can only have one \`<${name}>\` element`);
+}
+
+/**
+ * Valid `<svelte:...>` tag names are %list%
+ * @param {null | number | NodeLike} node
+ * @param {string} list
+ * @returns {never}
+ */
+export function svelte_meta_invalid_tag(node, list) {
+	e(node, "svelte_meta_invalid_tag", `Valid \`<svelte:...>\` tag names are ${list}`);
+}
+
+/**
+ * "tag" option is deprecated — use "customElement" instead
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_options_deprecated_tag(node) {
+	e(node, "svelte_options_deprecated_tag", "\"tag\" option is deprecated — use \"customElement\" instead");
+}
+
+/**
+ * `<svelte:options>` can only receive static attributes
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_options_invalid_attribute(node) {
+	e(node, "svelte_options_invalid_attribute", "`<svelte:options>` can only receive static attributes");
+}
+
+/**
+ * Valid values are %list%
+ * @param {null | number | NodeLike} node
+ * @param {string} list
+ * @returns {never}
+ */
+export function svelte_options_invalid_attribute_value(node, list) {
+	e(node, "svelte_options_invalid_attribute_value", `Valid values are ${list}`);
+}
+
+/**
+ * "customElement" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_options_invalid_customelement(node) {
+	e(node, "svelte_options_invalid_customelement", "\"customElement\" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: \"open\" | \"none\"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }");
+}
+
+/**
+ * "props" must be a statically analyzable object literal of the form "{ [key: string]: { attribute?: string; reflect?: boolean; type?: "String" | "Boolean" | "Number" | "Array" | "Object" }"
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_options_invalid_customelement_props(node) {
+	e(node, "svelte_options_invalid_customelement_props", "\"props\" must be a statically analyzable object literal of the form \"{ [key: string]: { attribute?: string; reflect?: boolean; type?: \"String\" | \"Boolean\" | \"Number\" | \"Array\" | \"Object\" }\"");
+}
+
+/**
+ * "shadow" must be either "open" or "none"
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_options_invalid_customelement_shadow(node) {
+	e(node, "svelte_options_invalid_customelement_shadow", "\"shadow\" must be either \"open\" or \"none\"");
+}
+
+/**
+ * Tag name must be two or more words joined by the "-" character
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_options_invalid_tagname(node) {
+	e(node, "svelte_options_invalid_tagname", "Tag name must be two or more words joined by the \"-\" character");
+}
+
+/**
+ * `<svelte:options>` unknown attribute '%name%'
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function svelte_options_unknown_attribute(node, name) {
+	e(node, "svelte_options_unknown_attribute", `\`<svelte:options>\` unknown attribute '${name}'`);
+}
+
+/**
+ * `<svelte:self>` components can only exist inside `{#if}` blocks, `{#each}` blocks, `{#snippet}` blocks or slots passed to components
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_self_invalid_placement(node) {
+	e(node, "svelte_self_invalid_placement", "`<svelte:self>` components can only exist inside `{#if}` blocks, `{#each}` blocks, `{#snippet}` blocks or slots passed to components");
 }
 
 /**
