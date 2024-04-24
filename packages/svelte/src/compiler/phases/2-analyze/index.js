@@ -402,7 +402,7 @@ export function analyze_component(root, source, options) {
 			}
 
 			if (attribute.name === 'customElement' && !options.customElement) {
-				w.options_missing_custom_element(root.options);
+				w.options_missing_custom_element(attribute);
 			}
 
 			if (attribute.name === 'immutable') {
