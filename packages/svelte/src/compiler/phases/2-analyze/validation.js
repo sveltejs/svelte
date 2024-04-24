@@ -253,7 +253,7 @@ function validate_slot_attribute(context, attribute) {
 
 	if (owner) {
 		if (!is_text_attribute(attribute)) {
-			e.invalid_slot_attribute(attribute);
+			e.slot_attribute_invalid(attribute);
 		}
 
 		if (
@@ -262,13 +262,13 @@ function validate_slot_attribute(context, attribute) {
 			owner.type === 'SvelteSelf'
 		) {
 			if (owner !== context.path.at(-2)) {
-				e.invalid_slot_placement(attribute);
+				e.slot_attribute_invalid_placement(attribute);
 			}
 
 			const name = attribute.value[0].data;
 
 			if (context.state.component_slots.has(name)) {
-				e.duplicate_slot_name(attribute, name, owner.name);
+				e.slot_attribute_duplicate(attribute, name, owner.name);
 			}
 
 			context.state.component_slots.add(name);
@@ -285,12 +285,12 @@ function validate_slot_attribute(context, attribute) {
 						}
 					}
 
-					e.invalid_default_slot_content(node);
+					e.slot_default_duplicate(node);
 				}
 			}
 		}
 	} else {
-		e.invalid_slot_placement(attribute);
+		e.slot_attribute_invalid_placement(attribute);
 	}
 }
 
@@ -593,7 +593,7 @@ const validation = {
 			);
 		});
 		if (is_inside_textarea) {
-			e.invalid_tag_placement(
+			e.tag_invalid_placement(
 				node,
 				'inside <textarea> or <svelte:element this="textarea">',
 				'render'
@@ -634,7 +634,7 @@ const validation = {
 					(node) => node.type !== 'SnippetBlock' && (node.type !== 'Text' || node.data.trim())
 				)
 			) {
-				e.conflicting_children_snippet(node);
+				e.snippet_conflict(node);
 			}
 		}
 	},
@@ -677,15 +677,15 @@ const validation = {
 			if (attribute.type === 'Attribute') {
 				if (attribute.name === 'name') {
 					if (!is_text_attribute(attribute)) {
-						e.invalid_slot_name(attribute);
+						e.slot_element_invalid_name(attribute);
 					}
 					const slot_name = attribute.value[0].data;
 					if (slot_name === 'default') {
-						e.invalid_slot_name_default(attribute);
+						e.slot_element_invalid_name_default(attribute);
 					}
 				}
 			} else if (attribute.type !== 'SpreadAttribute' && attribute.type !== 'LetDirective') {
-				e.invalid_slot_element_attribute(attribute);
+				e.slot_element_invalid_attribute(attribute);
 			}
 		}
 	},

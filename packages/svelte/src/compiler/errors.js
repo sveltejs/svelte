@@ -210,8 +210,8 @@ export function cyclical_reactive_declaration(node, cycle) {
  * @param {string} name
  * @returns {never}
  */
-export function unclosed_element(node, name) {
-	e(node, "unclosed_element", `\`<${name}>\` was left open`);
+export function element_unclosed(node, name) {
+	e(node, "element_unclosed", `\`<${name}>\` was left open`);
 }
 
 /**
@@ -219,8 +219,8 @@ export function unclosed_element(node, name) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function unclosed_block(node) {
-	e(node, "unclosed_block", "Block was left open");
+export function block_unclosed(node) {
+	e(node, "block_unclosed", "Block was left open");
 }
 
 /**
@@ -228,8 +228,8 @@ export function unclosed_block(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function unexpected_block_close(node) {
-	e(node, "unexpected_block_close", "Unexpected block closing tag");
+export function block_unexpected_close(node) {
+	e(node, "block_unexpected_close", "Unexpected block closing tag");
 }
 
 /**
@@ -276,8 +276,8 @@ export function unexpected_reserved_word(node, word) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function missing_whitespace(node) {
-	e(node, "missing_whitespace", "Expected whitespace");
+export function expected_whitespace(node) {
+	e(node, "expected_whitespace", "Expected whitespace");
 }
 
 /**
@@ -294,8 +294,8 @@ export function expected_pattern(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_script_context(node) {
-	e(node, "invalid_script_context", "If the context attribute is supplied, its value must be \"module\"");
+export function script_invalid_context(node) {
+	e(node, "script_invalid_context", "If the context attribute is supplied, its value must be \"module\"");
 }
 
 /**
@@ -303,8 +303,8 @@ export function invalid_script_context(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_elseif(node) {
-	e(node, "invalid_elseif", "'elseif' should be 'else if'");
+export function block_invalid_elseif(node) {
+	e(node, "block_invalid_elseif", "'elseif' should be 'else if'");
 }
 
 /**
@@ -312,19 +312,8 @@ export function invalid_elseif(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_continuing_block_placement(node) {
-	e(node, "invalid_continuing_block_placement", "{:...} block is invalid at this position (did you forget to close the preceeding element or block?)");
-}
-
-/**
- * %child% block must be a child of %parent%
- * @param {null | number | NodeLike} node
- * @param {string} child
- * @param {string} parent
- * @returns {never}
- */
-export function invalid_block_missing_parent(node, child, parent) {
-	e(node, "invalid_block_missing_parent", `${child} block must be a child of ${parent}`);
+export function block_invalid_continuation_placement(node) {
+	e(node, "block_invalid_continuation_placement", "{:...} block is invalid at this position (did you forget to close the preceeding element or block?)");
 }
 
 /**
@@ -333,8 +322,8 @@ export function invalid_block_missing_parent(node, child, parent) {
  * @param {string} name
  * @returns {never}
  */
-export function duplicate_block_part(node, name) {
-	e(node, "duplicate_block_part", `${name} cannot appear more than once within a block`);
+export function block_duplicate_clause(node, name) {
+	e(node, "block_duplicate_clause", `${name} cannot appear more than once within a block`);
 }
 
 /**
@@ -360,8 +349,8 @@ export function expected_identifier(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_debug(node) {
-	e(node, "invalid_debug", "{@debug ...} arguments must be identifiers, not arbitrary expressions");
+export function debug_tag_invalid_arguments(node) {
+	e(node, "debug_tag_invalid_arguments", "{@debug ...} arguments must be identifiers, not arbitrary expressions");
 }
 
 /**
@@ -369,8 +358,8 @@ export function invalid_debug(node) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_const(node) {
-	e(node, "invalid_const", "{@const ...} must be an assignment");
+export function const_tag_invalid_expression(node) {
+	e(node, "const_tag_invalid_expression", "{@const ...} must be an assignment");
 }
 
 /**
@@ -380,8 +369,8 @@ export function invalid_const(node) {
  * @param {string} location
  * @returns {never}
  */
-export function invalid_block_placement(node, name, location) {
-	e(node, "invalid_block_placement", `{#${name} ...} block cannot be ${location}`);
+export function block_invalid_placement(node, name, location) {
+	e(node, "block_invalid_placement", `{#${name} ...} block cannot be ${location}`);
 }
 
 /**
@@ -391,8 +380,8 @@ export function invalid_block_placement(node, name, location) {
  * @param {string} location
  * @returns {never}
  */
-export function invalid_tag_placement(node, name, location) {
-	e(node, "invalid_tag_placement", `{@${name} ...} tag cannot be ${location}`);
+export function tag_invalid_placement(node, name, location) {
+	e(node, "tag_invalid_placement", `{@${name} ...} tag cannot be ${location}`);
 }
 
 /**
@@ -400,18 +389,8 @@ export function invalid_tag_placement(node, name, location) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function missing_attribute_value(node) {
-	e(node, "missing_attribute_value", "Expected attribute value");
-}
-
-/**
- * Expected closing %delimiter% character
- * @param {null | number | NodeLike} node
- * @param {string} delimiter
- * @returns {never}
- */
-export function unclosed_attribute_value(node, delimiter) {
-	e(node, "unclosed_attribute_value", `Expected closing ${delimiter} character`);
+export function expected_attribute_value(node) {
+	e(node, "expected_attribute_value", "Expected attribute value");
 }
 
 /**
@@ -419,18 +398,18 @@ export function unclosed_attribute_value(node, delimiter) {
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function invalid_directive_value(node) {
-	e(node, "invalid_directive_value", "Directive value must be a JavaScript expression enclosed in curly braces");
+export function directive_invalid_value(node) {
+	e(node, "directive_invalid_value", "Directive value must be a JavaScript expression enclosed in curly braces");
 }
 
 /**
- * %type% name cannot be empty
+ * `%type%` name cannot be empty
  * @param {null | number | NodeLike} node
  * @param {string} type
  * @returns {never}
  */
-export function empty_directive_name(node, type) {
-	e(node, "empty_directive_name", `${type} name cannot be empty`);
+export function directive_missing_name(node, type) {
+	e(node, "directive_missing_name", `\`${type}\` name cannot be empty`);
 }
 
 /**
@@ -778,80 +757,6 @@ export function conflicting_property_name(node) {
 }
 
 /**
- * `<slot>` can only receive attributes and (optionally) let directives
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_slot_element_attribute(node) {
-	e(node, "invalid_slot_element_attribute", "`<slot>` can only receive attributes and (optionally) let directives");
-}
-
-/**
- * slot attribute must be a static value
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_slot_attribute(node) {
-	e(node, "invalid_slot_attribute", "slot attribute must be a static value");
-}
-
-/**
- * `default` is a reserved word — it cannot be used as a slot name
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_slot_name_default(node) {
-	e(node, "invalid_slot_name_default", "`default` is a reserved word — it cannot be used as a slot name");
-}
-
-/**
- * slot attribute must be a static value
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_slot_name(node) {
-	e(node, "invalid_slot_name", "slot attribute must be a static value");
-}
-
-/**
- * Element with a slot='...' attribute must be a child of a component or a descendant of a custom element
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_slot_placement(node) {
-	e(node, "invalid_slot_placement", "Element with a slot='...' attribute must be a child of a component or a descendant of a custom element");
-}
-
-/**
- * Duplicate slot name '%name%' in <%component%>
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @param {string} component
- * @returns {never}
- */
-export function duplicate_slot_name(node, name, component) {
-	e(node, "duplicate_slot_name", `Duplicate slot name '${name}' in <${component}>`);
-}
-
-/**
- * Found default slot content alongside an explicit slot="default"
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_default_slot_content(node) {
-	e(node, "invalid_default_slot_content", "Found default slot content alongside an explicit slot=\"default\"");
-}
-
-/**
- * Cannot use explicit children snippet at the same time as implicit children content. Remove either the non-whitespace content or the children snippet block
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function conflicting_children_snippet(node) {
-	e(node, "conflicting_children_snippet", "Cannot use explicit children snippet at the same time as implicit children content. Remove either the non-whitespace content or the children snippet block");
-}
-
-/**
  * An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -1078,12 +983,86 @@ export function node_invalid_placement(node, thing, parent) {
 }
 
 /**
+ * slot attribute must be a static value
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function slot_attribute_invalid(node) {
+	e(node, "slot_attribute_invalid", "slot attribute must be a static value");
+}
+
+/**
+ * Element with a slot='...' attribute must be a child of a component or a descendant of a custom element
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function slot_attribute_invalid_placement(node) {
+	e(node, "slot_attribute_invalid_placement", "Element with a slot='...' attribute must be a child of a component or a descendant of a custom element");
+}
+
+/**
+ * `<slot>` can only receive attributes and (optionally) let directives
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function slot_element_invalid_attribute(node) {
+	e(node, "slot_element_invalid_attribute", "`<slot>` can only receive attributes and (optionally) let directives");
+}
+
+/**
+ * slot attribute must be a static value
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function slot_element_invalid_name(node) {
+	e(node, "slot_element_invalid_name", "slot attribute must be a static value");
+}
+
+/**
+ * `default` is a reserved word — it cannot be used as a slot name
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function slot_element_invalid_name_default(node) {
+	e(node, "slot_element_invalid_name_default", "`default` is a reserved word — it cannot be used as a slot name");
+}
+
+/**
+ * Duplicate slot name '%name%' in <%component%>
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @param {string} component
+ * @returns {never}
+ */
+export function slot_attribute_duplicate(node, name, component) {
+	e(node, "slot_attribute_duplicate", `Duplicate slot name '${name}' in <${component}>`);
+}
+
+/**
+ * Found default slot content alongside an explicit slot="default"
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function slot_default_duplicate(node) {
+	e(node, "slot_default_duplicate", "Found default slot content alongside an explicit slot=\"default\"");
+}
+
+/**
  * Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function slot_snippet_conflict(node) {
 	e(node, "slot_snippet_conflict", "Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.");
+}
+
+/**
+ * Cannot use explicit children snippet at the same time as implicit children content. Remove either the non-whitespace content or the children snippet block
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function snippet_conflict(node) {
+	e(node, "snippet_conflict", "Cannot use explicit children snippet at the same time as implicit children content. Remove either the non-whitespace content or the children snippet block");
 }
 
 /**

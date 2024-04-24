@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid_debug",
+		"code": "debug_tag_invalid_arguments",
 		"message": "{@debug ...} arguments must be identifiers, not arbitrary expressions",
 		"start": {
 			"line": 2,

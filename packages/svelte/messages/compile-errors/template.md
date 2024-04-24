@@ -96,9 +96,41 @@
 
 > %thing% is invalid inside <%parent%>
 
+## slot_attribute_invalid
+
+> slot attribute must be a static value
+
+## slot_attribute_invalid_placement
+
+> Element with a slot='...' attribute must be a child of a component or a descendant of a custom element
+
+## slot_element_invalid_attribute
+
+> `<slot>` can only receive attributes and (optionally) let directives
+
+## slot_element_invalid_name
+
+> slot attribute must be a static value
+
+## slot_element_invalid_name_default
+
+> `default` is a reserved word — it cannot be used as a slot name
+
+## slot_attribute_duplicate
+
+> Duplicate slot name '%name%' in <%component%>
+
+## slot_default_duplicate
+
+> Found default slot content alongside an explicit slot="default"
+
 ## slot_snippet_conflict
 
 > Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.
+
+## snippet_conflict
+
+> Cannot use explicit children snippet at the same time as implicit children content. Remove either the non-whitespace content or the children snippet block
 
 ## style_directive_invalid_modifier
 

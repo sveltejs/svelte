@@ -436,7 +436,7 @@ function read_static_attribute(parser) {
 		parser.allow_whitespace();
 		let raw = parser.match_regex(regex_attribute_value);
 		if (!raw) {
-			e.missing_attribute_value(parser.index);
+			e.expected_attribute_value(parser.index);
 		}
 
 		parser.index += raw.length;
@@ -552,7 +552,7 @@ function read_attribute(parser) {
 		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
 
 		if (directive_name === '') {
-			e.empty_directive_name(start + colon_index + 1, type);
+			e.directive_missing_name({ start, end: start + colon_index + 1 }, name);
 		}
 
 		if (type === 'StyleDirective') {
@@ -577,7 +577,7 @@ function read_attribute(parser) {
 			const attribute_contains_text =
 				/** @type {any[]} */ (value).length > 1 || first_value.type === 'Text';
 			if (attribute_contains_text) {
-				e.invalid_directive_value(/** @type {number} */ (first_value.start));
+				e.directive_invalid_value(/** @type {number} */ (first_value.start));
 			} else {
 				expression = first_value.expression;
 			}
@@ -678,14 +678,14 @@ function read_attribute_value(parser) {
 			const pos = error.position?.[0];
 			if (pos !== undefined && parser.template.slice(pos - 1, pos + 1) === '/>') {
 				parser.index = pos;
-				e.unclosed_attribute_value(pos, quote_mark || '}');
+				e.expected_token(pos, quote_mark || '}');
 			}
 		}
 		throw error;
 	}
 
 	if (value.length === 0 && !quote_mark) {
-		e.missing_attribute_value(parser.index);
+		e.expected_attribute_value(parser.index);
 	}
 
 	if (quote_mark) parser.index += 1;
@@ -732,12 +732,12 @@ function read_sequence(parser, done, location) {
 				const index = parser.index - 1;
 				parser.eat('#');
 				const name = parser.read_until(/[^a-z]/);
-				e.invalid_block_placement(index, name, location);
+				e.block_invalid_placement(index, name, location);
 			} else if (parser.match('@')) {
 				const index = parser.index - 1;
 				parser.eat('@');
 				const name = parser.read_until(/[^a-z]/);
-				e.invalid_tag_placement(index, name, location);
+				e.tag_invalid_placement(index, name, location);
 			}
 
 			flush(parser.index - 1);

@@ -1,12 +1,12 @@
-## unclosed_element
+## element_unclosed
 
 > `<%name%>` was left open
 
-## unclosed_block
+## block_unclosed
 
 > Block was left open
 
-## unexpected_block_close
+## block_unexpected_close
 
 > Unexpected block closing tag
 
@@ -26,7 +26,7 @@
 
 > '%word%' is a reserved word in JavaScript and cannot be used here
 
-## missing_whitespace
+## expected_whitespace
 
 > Expected whitespace
 
@@ -34,23 +34,19 @@
 
 > Expected identifier or destructure pattern
 
-## invalid_script_context
+## script_invalid_context
 
 > If the context attribute is supplied, its value must be "module"
 
-## invalid_elseif
+## block_invalid_elseif
 
 > 'elseif' should be 'else if'
 
-## invalid_continuing_block_placement
+## block_invalid_continuation_placement
 
 > {:...} block is invalid at this position (did you forget to close the preceeding element or block?)
 
-## invalid_block_missing_parent
-
-> %child% block must be a child of %parent%
-
-## duplicate_block_part
+## block_duplicate_clause
 
 > %name% cannot appear more than once within a block
 
@@ -62,37 +58,33 @@
 
 > Expected an identifier
 
-## invalid_debug
+## debug_tag_invalid_arguments
 
 > {@debug ...} arguments must be identifiers, not arbitrary expressions
 
-## invalid_const
+## const_tag_invalid_expression
 
 > {@const ...} must be an assignment
 
-## invalid_block_placement
+## block_invalid_placement
 
 > {#%name% ...} block cannot be %location%
 
-## invalid_tag_placement
+## tag_invalid_placement
 
 > {@%name% ...} tag cannot be %location%
 
-## missing_attribute_value
+## expected_attribute_value
 
 > Expected attribute value
 
-## unclosed_attribute_value
-
-> Expected closing %delimiter% character
-
-## invalid_directive_value
+## directive_invalid_value
 
 > Directive value must be a JavaScript expression enclosed in curly braces
 
-## empty_directive_name
+## directive_missing_name
 
-> %type% name cannot be empty
+> `%type%` name cannot be empty
 
 ## invalid_closing_tag
 

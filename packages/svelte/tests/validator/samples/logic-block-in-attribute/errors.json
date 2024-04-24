@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid_block_placement",
+		"code": "block_invalid_placement",
 		"message": "{#if ...} block cannot be in attribute value",
 		"start": {
 			"line": 1,
