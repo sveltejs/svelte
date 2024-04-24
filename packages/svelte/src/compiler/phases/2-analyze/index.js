@@ -335,7 +335,7 @@ export function analyze_component(root, source, options) {
 						// const state = $state(0) is valid
 						get_rune(/** @type {import('estree').Node} */ (path.at(-1)), module.scope) === null
 					) {
-						e.illegal_subscription(node);
+						e.store_invalid_subscription(node);
 					}
 				}
 			}

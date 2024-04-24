@@ -583,7 +583,7 @@ function special(parser) {
 				expression.expression.type !== 'CallExpression' ||
 				!expression.expression.optional)
 		) {
-			e.invalid_render_expression(expression);
+			e.render_tag_invalid_expression(expression);
 		}
 
 		parser.allow_whitespace();

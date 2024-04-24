@@ -86,54 +86,46 @@
 
 > `%type%` name cannot be empty
 
-## invalid_closing_tag
+## element_invalid_closing_tag
 
-> </%name%> attempted to close an element that was not open
+> `</%name%>` attempted to close an element that was not open
 
-## invalid_closing_tag_after_autoclose
+## element_invalid_closing_tag_autoclosed
 
-> </%name%> attempted to close element that was already automatically closed by <%reason%> (cannot nest <%reason%> inside <%name%>)
+> `</%name%>` attempted to close element that was already automatically closed by `<%reason%>` (cannot nest `<%reason%>` inside `<%name%>`)
 
-## invalid_dollar_binding
+## dollar_binding_invalid
 
 > The $ name is reserved, and cannot be used for variables and imports
 
-## invalid_dollar_prefix
+## dollar_prefix_invalid
 
 > The $ prefix is reserved, and cannot be used for variables and imports
 
-## invalid_dollar_global
-
-> The $ name is reserved. To reference a global variable called $, use globalThis.$
-
-## illegal_subscription
+## store_invalid_subscription
 
 > Cannot reference store value inside `<script context="module">`
 
-## duplicate_style_element
+## style_duplicate
 
 > A component can have a single top-level `<style>` element
 
-## duplicate_script_element
+## script_duplicate
 
 > A component can have a single top-level `<script>` element and/or a single top-level `<script context="module">` element
 
-## invalid_render_expression
+## render_tag_invalid_expression
 
-> {@render ...} tags can only contain call expressions
+> `{@render ...}` tags can only contain call expressions
 
-## invalid_render_arguments
-
-> expected at most one argument
-
-## invalid_render_call
+## render_tag_invalid_call_expression
 
 > Calling a snippet function using apply, bind or call is not allowed
 
-## invalid_render_spread_argument
+## render_tag_invalid_spread_argument
 
-> cannot use spread arguments in {@render ...} tags
+> cannot use spread arguments in `{@render ...}` tags
 
-## invalid_snippet_rest_parameter
+## snippet_invalid_rest_parameter
 
 > snippets do not support rest parameters; use an array instead

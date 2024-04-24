@@ -418,8 +418,8 @@ export function directive_missing_name(node, type) {
  * @param {string} name
  * @returns {never}
  */
-export function invalid_closing_tag(node, name) {
-	e(node, "invalid_closing_tag", `</${name}> attempted to close an element that was not open`);
+export function element_invalid_closing_tag(node, name) {
+	e(node, "element_invalid_closing_tag", `</${name}> attempted to close an element that was not open`);
 }
 
 /**

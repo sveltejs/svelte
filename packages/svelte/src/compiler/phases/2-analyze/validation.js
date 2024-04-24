@@ -571,7 +571,7 @@ const validation = {
 		const raw_args = unwrap_optional(node.expression).arguments;
 		for (const arg of raw_args) {
 			if (arg.type === 'SpreadElement') {
-				e.invalid_render_spread_argument(arg);
+				e.render_tag_invalid_spread_argument(arg);
 			}
 		}
 
@@ -581,7 +581,7 @@ const validation = {
 			callee.property.type === 'Identifier' &&
 			['bind', 'apply', 'call'].includes(callee.property.name)
 		) {
-			e.invalid_render_call(node);
+			e.render_tag_invalid_call_expression(node);
 		}
 
 		const is_inside_textarea = context.path.find((n) => {

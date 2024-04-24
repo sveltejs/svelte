@@ -173,9 +173,9 @@ export default function tag(parser) {
 		while (/** @type {import('#compiler').RegularElement} */ (parent).name !== name) {
 			if (parent.type !== 'RegularElement') {
 				if (parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name) {
-					e.invalid_closing_tag_after_autoclose(start, name, parser.last_auto_closed_tag.reason);
+					e.element_invalid_closing_tag_autoclosed(start, name, parser.last_auto_closed_tag.reason);
 				} else {
-					e.invalid_closing_tag(start, name);
+					e.element_invalid_closing_tag(start, name);
 				}
 			}
 
@@ -302,17 +302,17 @@ export default function tag(parser) {
 			}
 
 			if (content.context === 'module') {
-				if (current.module) e.duplicate_script_element(start);
+				if (current.module) e.script_duplicate(start);
 				current.module = content;
 			} else {
-				if (current.instance) e.duplicate_script_element(start);
+				if (current.instance) e.script_duplicate(start);
 				current.instance = content;
 			}
 		} else {
 			const content = read_style(parser, start, element.attributes);
 			content.content.comment = prev_comment;
 
-			if (current.css) e.duplicate_style_element(start);
+			if (current.css) e.style_duplicate(start);
 			current.css = content;
 		}
 		return;

@@ -70,7 +70,7 @@ export class Scope {
 	 */
 	declare(node, kind, declaration_kind, initial = null) {
 		if (node.name === '$') {
-			e.invalid_dollar_binding(node);
+			e.dollar_binding_invalid(node);
 		}
 
 		if (
@@ -80,7 +80,7 @@ export class Scope {
 			declaration_kind !== 'rest_param' &&
 			this.function_depth <= 1
 		) {
-			e.invalid_dollar_prefix(node);
+			e.dollar_prefix_invalid(node);
 		}
 
 		if (this.parent) {
