@@ -327,7 +327,7 @@ describe('signals', () => {
 			try {
 				flushSync();
 			} catch (e: any) {
-				assert.include(e.message, 'ERR_SVELTE_TOO_MANY_UPDATES');
+				assert.include(e.message, 'effect_update_depth_exceeded');
 				errored = true;
 			}
 			assert.equal(errored, true);
@@ -348,7 +348,7 @@ describe('signals', () => {
 			try {
 				flushSync();
 			} catch (e: any) {
-				assert.include(e.message, 'ERR_SVELTE_TOO_MANY_UPDATES');
+				assert.include(e.message, 'effect_update_depth_exceeded');
 				errored = true;
 			}
 			assert.equal(errored, true);

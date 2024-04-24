@@ -8,7 +8,7 @@ export default test({
 	},
 
 	warnings: [
-		'Tried to unmount a component that was not mounted.',
-		'Tried to unmount a component that was not mounted.'
+		'Tried to unmount a component that was not mounted',
+		'Tried to unmount a component that was not mounted'
 	]
 });

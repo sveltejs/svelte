@@ -1,4 +1,5 @@
 import { is_void } from '../../compiler/phases/1-parse/utils/names.js';
+import * as w from './warnings.js';
 
 const snippet_symbol = Symbol.for('svelte.snippet');
 
@@ -42,8 +43,7 @@ export function validate_component(component_fn) {
 export function validate_void_dynamic_element(tag_fn) {
 	const tag = tag_fn();
 	if (tag && is_void(tag)) {
-		// eslint-disable-next-line no-console
-		console.warn(`<svelte:element this="${tag}"> is self-closing and cannot have content.`);
+		w.dynamic_void_element_content(false, tag);
 	}
 }
 
