@@ -4,7 +4,7 @@
 
 ## attribute_global_event_reference
 
-> You are referencing globalThis.%name%. Did you forget to declare a variable with that name?
+> You are referencing `globalThis.%name%`. Did you forget to declare a variable with that name?
 
 ## attribute_illegal_colon
 
@@ -28,7 +28,7 @@
 
 ## event_directive_deprecated
 
-> Using on:%name% to listen to the %name% event is is deprecated. Use the event attribute on%name% instead.
+> Using `on:%name%` to listen to the %name% event is deprecated. Use the event attribute `on%name%` instead.
 
 ## slot_element_deprecated
 

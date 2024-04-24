@@ -415,15 +415,6 @@ export function a11y_unknown_role(node, role, suggestion) {
 }
 
 /**
- * Self-closing HTML tags for non-void elements are ambiguous — use <%name% ...></%name%> rather than <%name% ... />
- * @param {null | NodeLike} node
- * @param {string} name
- */
-export function invalid_self_closing_tag(node, name) {
-	w(node, "invalid_self_closing_tag", `Self-closing HTML tags for non-void elements are ambiguous — use <${name} ...></${name}> rather than <${name} ... />`);
-}
-
-/**
  * The `accessors` option has been deprecated. It will have no effect in runes mode
  * @param {null | NodeLike} node
  */
@@ -522,6 +513,15 @@ export function store_with_rune_name(node, name) {
 }
 
 /**
+ * Component has unused export property '%name%'. If it is for external reference only, please consider using `export const %name%`
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function export_let_unused(node, name) {
+	w(node, "export_let_unused", `Component has unused export property '${name}'. If it is for external reference only, please consider using \`export const ${name}\``);
+}
+
+/**
  * Avoid 'new class' — instead, declare the class at the top level scope
  * @param {null | NodeLike} node
  */
@@ -538,14 +538,6 @@ export function perf_avoid_nested_class(node) {
 }
 
 /**
- * All dependencies of the reactive declaration are declared in a module script and will not be reactive
- * @param {null | NodeLike} node
- */
-export function reactive_declaration_module_script(node) {
-	w(node, "reactive_declaration_module_script", "All dependencies of the reactive declaration are declared in a module script and will not be reactive");
-}
-
-/**
  * Reactive declarations only exist at the top level of the instance script
  * @param {null | NodeLike} node
  */
@@ -554,12 +546,11 @@ export function reactive_declaration_invalid_placement(node) {
 }
 
 /**
- * Component has unused export property '%name%'. If it is for external reference only, please consider using `export const %name%`
+ * All dependencies of the reactive declaration are declared in a module script and will not be reactive
  * @param {null | NodeLike} node
- * @param {string} name
  */
-export function export_let_unused(node, name) {
-	w(node, "export_let_unused", `Component has unused export property '${name}'. If it is for external reference only, please consider using \`export const ${name}\``);
+export function reactive_declaration_module_script(node) {
+	w(node, "reactive_declaration_module_script", "All dependencies of the reactive declaration are declared in a module script and will not be reactive");
 }
 
 /**
@@ -597,6 +588,15 @@ export function attribute_avoid_is(node) {
 }
 
 /**
+ * You are referencing `globalThis.%name%`. Did you forget to declare a variable with that name?
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function attribute_global_event_reference(node, name) {
+	w(node, "attribute_global_event_reference", `You are referencing \`globalThis.${name}\`. Did you forget to declare a variable with that name?`);
+}
+
+/**
  * Attributes should not contain ':' characters to prevent ambiguity with Svelte directives
  * @param {null | NodeLike} node
  */
@@ -612,15 +612,6 @@ export function attribute_illegal_colon(node) {
  */
 export function attribute_invalid_property_name(node, wrong, right) {
 	w(node, "attribute_invalid_property_name", `'${wrong}' is not a valid HTML attribute. Did you mean '${right}'?`);
-}
-
-/**
- * You are referencing globalThis.%name%. Did you forget to declare a variable with that name?
- * @param {null | NodeLike} node
- * @param {string} name
- */
-export function attribute_global_event_reference(node, name) {
-	w(node, "attribute_global_event_reference", `You are referencing globalThis.${name}. Did you forget to declare a variable with that name?`);
 }
 
 /**
@@ -641,12 +632,21 @@ export function component_name_lowercase(node, name) {
 }
 
 /**
- * Using on:%name% to listen to the %name% event is is deprecated. Use the event attribute on%name% instead.
+ * Self-closing HTML tags for non-void elements are ambiguous — use `<%name% ...></%name%>` rather than `<%name% ... />`
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function element_invalid_self_closing_tag(node, name) {
+	w(node, "element_invalid_self_closing_tag", `Self-closing HTML tags for non-void elements are ambiguous — use \`<${name} ...></${name}>\` rather than \`<${name} ... />\``);
+}
+
+/**
+ * Using `on:%name%` to listen to the %name% event is deprecated. Use the event attribute `on%name%` instead.
  * @param {null | NodeLike} node
  * @param {string} name
  */
 export function event_directive_deprecated(node, name) {
-	w(node, "event_directive_deprecated", `Using on:${name} to listen to the ${name} event is is deprecated. Use the event attribute on${name} instead.`);
+	w(node, "event_directive_deprecated", `Using \`on:${name}\` to listen to the ${name} event is deprecated. Use the event attribute \`on${name}\` instead.`);
 }
 
 /**
@@ -655,13 +655,4 @@ export function event_directive_deprecated(node, name) {
  */
 export function slot_element_deprecated(node) {
 	w(node, "slot_element_deprecated", "Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead.");
-}
-
-/**
- * Self-closing HTML tags for non-void elements are ambiguous — use `<%name% ...></%name%>` rather than `<%name% ... />`
- * @param {null | NodeLike} node
- * @param {string} name
- */
-export function element_invalid_self_closing_tag(node, name) {
-	w(node, "element_invalid_self_closing_tag", `Self-closing HTML tags for non-void elements are ambiguous — use \`<${name} ...></${name}>\` rather than \`<${name} ... />\``);
 }

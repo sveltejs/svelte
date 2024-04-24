@@ -29,7 +29,7 @@
 			"column": 22,
 			"line": 13
 		},
-		"message": "Using on:click to listen to the click event is is deprecated. Use the event attribute onclick instead.",
+		"message": "Using `on:click` to listen to the click event is deprecated. Use the event attribute `onclick` instead.",
 		"start": {
 			"column": 8,
 			"line": 13
