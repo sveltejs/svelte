@@ -1256,7 +1256,7 @@ const common_visitors = {
 		}
 
 		const callee = node.callee;
-		const rune = callee.type === 'Identifier' ? get_rune(node, context.state.scope) : null;
+		const rune = get_rune(node, context.state.scope);
 
 		if (callee.type === 'Identifier') {
 			const binding = context.state.scope.get(callee.name);
