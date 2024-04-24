@@ -17,9 +17,17 @@ declare module 'svelte' {
 		$$inline?: boolean;
 	}
 
-	/** Tooling for types uses this for properties that can only ever be bound to */
+	/** Tooling for types uses this for properties are being used with `bind:` */
 	export type Binding<T> = { 'bind:': T };
-	/** Tooling for types uses this for properties that may be bound to */
+	/**
+	 * Tooling for types uses this for properties that may be bound to.
+	 * Only use this if you author Svelte component type definition files by hand (we recommend using `@sveltejs/package` instead).
+	 * Example:
+	 * ```ts
+	 * export class MyComponent extends SvelteComponent<{ readonly: string, bindable: Bindable<string> }> {}
+	 * ```
+	 * means you can now do `<MyComponent {readonly} bind:bindable />`
+	 */
 	export type Bindable<T> = T | Binding<T>;
 
 	type WithBindings<T> = {
@@ -38,7 +46,7 @@ declare module 'svelte' {
 				// signatures work (they will always take precedence and make an impossible-to-satisfy children type).
 				Props extends Record<string, never>
 				? any
-				: { children: any }
+				: { children?: any }
 			: {});
 
 	/**
