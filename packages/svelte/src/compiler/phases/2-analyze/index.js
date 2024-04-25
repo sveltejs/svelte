@@ -1071,18 +1071,18 @@ function is_safe_identifier(expression, scope) {
 	if (node.type !== 'Identifier') return false;
 
 	const binding = scope.get(node.name);
+	if (!binding) return true;
 
-	if (
-		binding &&
-		(binding.kind === 'prop' ||
-			binding.kind === 'bindable_prop' ||
-			binding.kind === 'rest_prop' ||
-			binding.declaration_kind === 'import')
-	) {
-		return false;
+	if (binding.kind === 'store_sub') {
+		return is_safe_identifier({ name: node.name.slice(1), type: 'Identifier' }, scope);
 	}
 
-	return true;
+	return (
+		binding.declaration_kind !== 'import' &&
+		binding.kind !== 'prop' &&
+		binding.kind !== 'bindable_prop' &&
+		binding.kind !== 'rest_prop'
+	);
 }
 
 /** @type {import('./types').Visitors} */
