@@ -1,11 +1,9 @@
-// main.svelte (Svelte VERSION)
-// Note: compiler output will change before 5.0 is released!
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 
 var root = $.template(`<div></div> <svg></svg> <custom-element></custom-element> <div></div> <svg></svg> <custom-element></custom-element>`, 3);
 
-function Main($$anchor, $$props) {
+export default function Main($$anchor, $$props) {
 	$.push($$props, true);
 
 	// needs to be a snapshot test because jsdom does auto-correct the attribute casing
@@ -36,5 +34,3 @@ function Main($$anchor, $$props) {
 	$.append($$anchor, fragment);
 	$.pop();
 }
-
-export default Main;
