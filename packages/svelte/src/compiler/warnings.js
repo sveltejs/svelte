@@ -101,16 +101,6 @@ export function a11y_distracting_elements(node, name) {
 }
 
 /**
- * '%attribute%' cannot be empty — change it to `%attribute%="%value%"`
- * @param {null | NodeLike} node
- * @param {string} attribute
- * @param {string | undefined | null} [value]
- */
-export function a11y_empty_aria_attribute(node, attribute, value) {
-	w(node, "a11y_empty_aria_attribute", value ? `'${attribute}' cannot be empty — change it to \`${attribute}="${value}"\`` : `'${attribute}' cannot be empty`);
-}
-
-/**
  * `<figcaption>` must be first or last child of `<figure>`
  * @param {null | NodeLike} node
  */
@@ -144,22 +134,12 @@ export function a11y_img_redundant_alt(node) {
 }
 
 /**
- * The value of '%attribute%' must be of type %type%
- * @param {null | NodeLike} node
- * @param {string} attribute
- * @param {string} type
- */
-export function a11y_incorrect_aria_attribute_type(node, attribute, type) {
-	w(node, "a11y_incorrect_aria_attribute_type", `The value of '${attribute}' must be of type ${type}`);
-}
-
-/**
- * The value of '%attribute%' must be either 'true' or 'false'
+ * The value of '%attribute%' must be either 'true' or 'false'. It cannot be empty
  * @param {null | NodeLike} node
  * @param {string} attribute
  */
 export function a11y_incorrect_aria_attribute_type_boolean(node, attribute) {
-	w(node, "a11y_incorrect_aria_attribute_type_boolean", `The value of '${attribute}' must be either 'true' or 'false'`);
+	w(node, "a11y_incorrect_aria_attribute_type_boolean", `The value of '${attribute}' must be either 'true' or 'false'. It cannot be empty`);
 }
 
 /**
@@ -187,6 +167,16 @@ export function a11y_incorrect_aria_attribute_type_idlist(node, attribute) {
  */
 export function a11y_incorrect_aria_attribute_type_integer(node, attribute) {
 	w(node, "a11y_incorrect_aria_attribute_type_integer", `The value of '${attribute}' must be an integer`);
+}
+
+/**
+ * The value of '%attribute%' must be a %type%
+ * @param {null | NodeLike} node
+ * @param {string} attribute
+ * @param {string} type
+ */
+export function a11y_incorrect_aria_attribute_type(node, attribute, type) {
+	w(node, "a11y_incorrect_aria_attribute_type", `The value of '${attribute}' must be a ${type}`);
 }
 
 /**

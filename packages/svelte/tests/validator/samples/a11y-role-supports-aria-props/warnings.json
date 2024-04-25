@@ -314,7 +314,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 22,
+			"column": 23,
 			"line": 28
 		},
 		"message": "The attribute 'aria-valuetext' is not supported by the role 'navigation'. This role is implicit on the element `<nav>`",
@@ -542,7 +542,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 40,
+			"column": 41,
 			"line": 48
 		},
 		"message": "The attribute 'aria-valuetext' is not supported by the role 'blockquote'",
@@ -650,7 +650,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 41,
+			"column": 42,
 			"line": 57
 		},
 		"message": "The attribute 'aria-valuetext' is not supported by the role 'contentinfo'",
@@ -1022,7 +1022,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 36,
+			"column": 37,
 			"line": 88
 		},
 		"message": "The attribute 'aria-placeholder' is not supported by the role 'none'",
@@ -1214,7 +1214,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 56,
+			"column": 57,
 			"line": 104
 		},
 		"message": "The attribute 'aria-placeholder' is not supported by the role 'slider'",
@@ -1394,7 +1394,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 37,
+			"column": 38,
 			"line": 119
 		},
 		"message": "The attribute 'aria-valuetext' is not supported by the role 'toolbar'",
@@ -1730,7 +1730,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 42,
+			"column": 43,
 			"line": 147
 		},
 		"message": "The attribute 'aria-valuetext' is not supported by the role 'doc-glossary'",
@@ -1742,7 +1742,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 44,
+			"column": 45,
 			"line": 148
 		},
 		"message": "The attribute 'aria-placeholder' is not supported by the role 'doc-glossref'",
@@ -2145,6 +2145,18 @@
 		"start": {
 			"column": 23,
 			"line": 184
+		}
+	},
+	{
+		"code": "a11y_incorrect_aria_attribute_type_integer",
+		"end": {
+			"column": 33,
+			"line": 256
+		},
+		"message": "The value of 'aria-level' must be an integer",
+		"start": {
+			"column": 20,
+			"line": 256
 		}
 	}
 ]

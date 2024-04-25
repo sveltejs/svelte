@@ -25,7 +25,7 @@
 <link aria-rowcount="0" />
 <menu aria-valuemin="0"></menu>
 <meter aria-colspan="0"></meter>
-<nav aria-valuetext=""></nav>
+<nav aria-valuetext="x"></nav>
 <ol aria-sort="none"></ol>
 <option aria-invalid="true"></option>
 <optgroup aria-sort="none"></optgroup>
@@ -45,7 +45,7 @@
 <div role="application" aria-required="true"></div>
 <div role="article" aria-multiline="true"></div>
 <div role="banner" aria-autocomplete="inline"></div>
-<div role="blockquote" aria-valuetext=""></div>
+<div role="blockquote" aria-valuetext="x"></div>
 <div role="button" aria-colspan="0"></div>
 <div role="caption" aria-setsize="0"></div>
 <div role="cell" aria-multiline="true"></div>
@@ -54,7 +54,7 @@
 <div role="columnheader" aria-colcount="0"></div>
 <div role="combobox" aria-multiselectable="true" aria-controls={[]} aria-expanded="true"></div>
 <div role="complementary" aria-readonly="true"></div>
-<div role="contentinfo" aria-valuetext=""></div>
+<div role="contentinfo" aria-valuetext="x"></div>
 <div role="definition" aria-multiline="true"></div>
 <div role="deletion" aria-expanded="true"></div>
 <div role="dialog" aria-multiline="true"></div>
@@ -85,7 +85,7 @@
 <div role="menuitemradio" aria-rowspan="0" aria-checked="false"></div>
 <div role="meter" aria-valuenow="0" aria-haspopup="true"></div>
 <div role="navigation" aria-expanded="true"></div>
-<div role="none" aria-placeholder=""></div>
+<div role="none" aria-placeholder="x"></div>
 <div role="note" aria-modal="true"></div>
 <div role="option" aria-selected="true" aria-valuemax="0"></div>
 <div role="paragraph" aria-level="0"></div>
@@ -101,7 +101,7 @@
 <div role="search" aria-autocomplete="inline"></div>
 <div role="searchbox" aria-colindex="0"></div>
 <div role="separator" aria-sort="none"></div>
-<div role="slider" aria-valuenow="0" aria-placeholder=""></div>
+<div role="slider" aria-valuenow="0" aria-placeholder="x"></div>
 <div role="spinbutton" aria-posinset="0"></div>
 <div role="status" aria-valuemin="0"></div>
 <div role="strong" aria-valuemin="0"></div>
@@ -116,7 +116,7 @@
 <div role="textbox" aria-colspan="0"></div>
 <div role="time" aria-selected="true"></div>
 <div role="timer" aria-sort="none"></div>
-<div role="toolbar" aria-valuetext=""></div>
+<div role="toolbar" aria-valuetext="x"></div>
 <div role="tooltip" aria-multiline="true"></div>
 <div role="tree" aria-expanded="true"></div>
 <div role="treegrid" aria-level="0"></div>
@@ -144,8 +144,8 @@
 <div role="doc-example" aria-multiselectable="true"></div>
 <div role="doc-footnote" aria-rowcount="0"></div>
 <div role="doc-foreword" aria-valuenow="0"></div>
-<div role="doc-glossary" aria-valuetext=""></div>
-<div role="doc-glossref" aria-placeholder=""></div>
+<div role="doc-glossary" aria-valuetext="x"></div>
+<div role="doc-glossref" aria-placeholder="x"></div>
 <div role="doc-index" aria-rowcount="0"></div>
 <div role="doc-introduction" aria-pressed="true"></div>
 <div role="doc-noteref" aria-valuenow="0"></div>
@@ -184,21 +184,21 @@
 <menuitem type="radio" aria-placeholder="placeholder"></menuitem> <!-- implicit role: menuitemradio -->
 
 <!-- VALID -->
-<a aria-keyshortcuts="" href="/">Link</a>
+<a aria-keyshortcuts="x" href="/">Link</a>
 <area aria-expanded="true" alt="" />
 <article aria-dropeffect="none"></article>
-<aside aria-keyshortcuts=""></aside>
+<aside aria-keyshortcuts="x"></aside>
 <body aria-labelledby="id"></body>
 <button aria-hidden="true"></button>
 <datalist aria-activedescendant="id" tabindex="0"></datalist>
 <dd aria-labelledby="id"></dd>
 <dfn aria-details="id"></dfn>
-<dialog aria-keyshortcuts=""></dialog>
-<details aria-keyshortcuts=""></details>
+<dialog aria-keyshortcuts="x"></dialog>
+<details aria-keyshortcuts="x"></details>
 <dt aria-hidden="true"></dt>
 <fieldset aria-owns="id"></fieldset>
-<form aria-keyshortcuts=""></form>
-<h1 aria-keyshortcuts="">H1</h1>
+<form aria-keyshortcuts="x"></form>
+<h1 aria-keyshortcuts="x">H1</h1>
 <h2 aria-controls={[]}>H2</h2>
 <h3 aria-controls={[]}>H3</h3>
 <h4 aria-details="id">H4</h4>
@@ -206,9 +206,9 @@
 <h6 aria-grabbed="true">H6</h6>
 <hr aria-relevant="all" />
 <img aria-flowto="id" alt="Valid aria role" />
-<li aria-label=""></li>
+<li aria-label="x"></li>
 <link aria-hidden="true" />
-<menu aria-roledescription=""></menu>
+<menu aria-roledescription="x"></menu>
 <meter aria-valuemin="0"></meter>
 <nav aria-labelledby="id"></nav>
 <ol aria-grabbed="true"></ol>
@@ -235,10 +235,10 @@
 <div role="caption" aria-grabbed="true"></div>
 <div role="cell" aria-rowindex="0"></div>
 <div role="checkbox" aria-checked="true" aria-details="id"></div>
-<div role="code" aria-keyshortcuts=""></div>
+<div role="code" aria-keyshortcuts="x"></div>
 <div role="columnheader" aria-rowspan="0"></div>
 <div role="combobox" aria-invalid="true" aria-controls={[]} aria-expanded="true"></div>
-<div role="complementary" aria-label=""></div>
+<div role="complementary" aria-label="x"></div>
 <div role="contentinfo" aria-dropeffect="none"></div>
 <div role="definition" aria-grabbed="true"></div>
 <div role="deletion" aria-busy="true"></div>
@@ -248,20 +248,20 @@
 <div role="emphasis" aria-atomic="true"></div>
 <div role="feed" aria-atomic="true"></div>
 <div role="figure" aria-busy="true"></div>
-<div role="form" aria-roledescription=""></div>
+<div role="form" aria-roledescription="x"></div>
 <div role="generic" aria-current="true"></div>
 <div role="grid" aria-busy="true"></div>
 <div role="gridcell" aria-relevant="all"></div>
 <div role="group" aria-busy="true"></div>
 <div role="heading" aria-level="" aria-flowto="id"></div>
 <div role="img" aria-grabbed="true"></div>
-<div role="insertion" aria-roledescription=""></div>
+<div role="insertion" aria-roledescription="x"></div>
 <div role="link" aria-owns="id"></div>
 <div role="list" aria-labelledby="id"></div>
 <div role="listbox" aria-current="true"></div>
 <div role="listitem" aria-controls={[]}></div>
 <div role="log" aria-controls={[]}></div>
-<div role="main" aria-keyshortcuts=""></div>
+<div role="main" aria-keyshortcuts="x"></div>
 <div role="marquee" aria-labelledby="id"></div>
 <div role="math" aria-labelledby="id"></div>
 <div role="menu" aria-atomic="true"></div>
@@ -269,7 +269,7 @@
 <div role="menuitem" aria-grabbed="true"></div>
 <div role="menuitemcheckbox" aria-checked="true" aria-controls={[]}></div>
 <div role="menuitemradio" aria-checked="true" aria-grabbed="true"></div>
-<div role="meter" aria-valuenow="0" aria-valuetext=""></div>
+<div role="meter" aria-valuenow="0" aria-valuetext="x"></div>
 <div role="navigation" aria-controls={[]}></div>
 <div role="none" undefined></div>
 <div role="note" aria-hidden="true"></div>
@@ -277,42 +277,42 @@
 <div role="paragraph" aria-grabbed="true"></div>
 <div role="presentation" aria-relevant="all"></div>
 <div role="progressbar" aria-valuemin="0"></div>
-<div role="radio" aria-checked="true" aria-roledescription=""></div>
+<div role="radio" aria-checked="true" aria-roledescription="x"></div>
 <div role="radiogroup" aria-required="true"></div>
-<div role="region" aria-roledescription=""></div>
+<div role="region" aria-roledescription="x"></div>
 <div role="row" aria-posinset="0"></div>
 <div role="rowgroup" aria-busy="true"></div>
-<div role="rowheader" aria-label=""></div>
+<div role="rowheader" aria-label="x"></div>
 <div role="scrollbar" aria-controls={[]} aria-valuenow="0" aria-relevant="all"></div>
 <div role="search" aria-grabbed="true"></div>
 <div role="searchbox" aria-dropeffect="none"></div>
-<div role="separator" aria-roledescription=""></div>
+<div role="separator" aria-roledescription="x"></div>
 <div role="slider" aria-valuenow="0" aria-relevant="all"></div>
 <div role="spinbutton" aria-required="true"></div>
-<div role="status" aria-label=""></div>
-<div role="strong" aria-keyshortcuts=""></div>
-<div role="subscript" aria-keyshortcuts=""></div>
+<div role="status" aria-label="x"></div>
+<div role="strong" aria-keyshortcuts="x"></div>
+<div role="subscript" aria-keyshortcuts="x"></div>
 <div role="superscript" aria-live="off"></div>
-<div role="switch" aria-checked="true" aria-roledescription=""></div>
+<div role="switch" aria-checked="true" aria-roledescription="x"></div>
 <div role="tab" aria-flowto="id"></div>
 <div role="table" aria-rowcount="0"></div>
 <div role="tablist" aria-atomic="true"></div>
 <div role="tabpanel" aria-labelledby="id"></div>
 <div role="term" aria-details="id"></div>
 <div role="textbox" aria-hidden="true"></div>
-<div role="time" aria-label=""></div>
+<div role="time" aria-label="x"></div>
 <div role="timer" aria-hidden="true"></div>
-<div role="toolbar" aria-roledescription=""></div>
+<div role="toolbar" aria-roledescription="x"></div>
 <div role="tooltip" aria-owns="id"></div>
 <div role="tree" aria-errormessage="error"></div>
 <div role="treegrid" aria-details="id"></div>
 <div role="treeitem" aria-selected="true" aria-dropeffect="none"></div>
-<div role="doc-abstract" aria-label=""></div>
+<div role="doc-abstract" aria-label="x"></div>
 <div role="doc-acknowledgments" aria-controls={[]}></div>
 <div role="doc-afterword" aria-flowto="id"></div>
 <div role="doc-appendix" aria-describedby="id"></div>
 <div role="doc-backlink" aria-dropeffect="none"></div>
-<div role="doc-biblioentry" aria-roledescription=""></div>
+<div role="doc-biblioentry" aria-roledescription="x"></div>
 <div role="doc-bibliography" aria-labelledby="id"></div>
 <div role="doc-biblioref" aria-haspopup="true"></div>
 <div role="doc-chapter" aria-controls={[]}></div>
@@ -321,12 +321,12 @@
 <div role="doc-cover" aria-controls={[]}></div>
 <div role="doc-credit" aria-haspopup="true"></div>
 <div role="doc-credits" aria-describedby="id"></div>
-<div role="doc-dedication" aria-roledescription=""></div>
+<div role="doc-dedication" aria-roledescription="x"></div>
 <div role="doc-endnote" aria-errormessage="error"></div>
 <div role="doc-endnotes" aria-owns="id"></div>
 <div role="doc-epigraph" aria-controls={[]}></div>
 <div role="doc-epilogue" aria-relevant="all"></div>
-<div role="doc-errata" aria-keyshortcuts=""></div>
+<div role="doc-errata" aria-keyshortcuts="x"></div>
 <div role="doc-example" aria-invalid="true"></div>
 <div role="doc-footnote" aria-labelledby="id"></div>
 <div role="doc-foreword" aria-expanded="true"></div>
@@ -339,7 +339,7 @@
 <div role="doc-pagebreak" aria-owns="id"></div>
 <div role="doc-pagelist" aria-disabled="true"></div>
 <div role="doc-part" aria-relevant="all"></div>
-<div role="doc-preface" aria-label=""></div>
+<div role="doc-preface" aria-label="x"></div>
 <div role="doc-prologue" aria-invalid="true"></div>
 <div role="doc-pullquote" undefined></div>
 <div role="doc-qna" aria-errormessage="error"></div>

@@ -603,19 +603,18 @@ function validate_aria_attribute_value(attribute, name, schema, value) {
 	const type = schema.type;
 
 	if (value === null) return;
-
-	if (value === true) {
-		const v = type === 'boolean' || type === 'tristate' ? 'true' : undefined;
-		w.a11y_empty_aria_attribute(attribute, name, v);
-		return;
-	}
+	if (value === true) value = '';
 
 	if (type === 'boolean' && value !== 'true' && value !== 'false') {
 		w.a11y_incorrect_aria_attribute_type_boolean(attribute, name);
-	} else if (type === 'integer' && !Number.isInteger(+value)) {
+	} else if (type === 'integer' && (value === '' || !Number.isInteger(+value))) {
 		w.a11y_incorrect_aria_attribute_type_integer(attribute, name);
-	} else if (type === 'number' && isNaN(+value)) {
+	} else if (type === 'number' && (value === '' || isNaN(+value))) {
 		w.a11y_incorrect_aria_attribute_type(attribute, name, 'number');
+	} else if ((type === 'string' || type === 'id') && value === '') {
+		w.a11y_incorrect_aria_attribute_type(attribute, name, 'non-empty string');
+	} else if (type === 'idlist' && value === '') {
+		w.a11y_incorrect_aria_attribute_type_idlist(attribute, name);
 	} else if (type === 'token') {
 		const values = (schema.values ?? []).map((value) => value.toString());
 		if (!values.includes(value.toLowerCase())) {
