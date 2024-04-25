@@ -199,12 +199,12 @@ export function host_invalid_placement(node) {
 }
 
 /**
- * Cannot use `export let` in runes mode — use $props instead
+ * Cannot use `export let` in runes mode — use `$props()` instead
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function legacy_export_invalid(node) {
-	e(node, "legacy_export_invalid", "Cannot use `export let` in runes mode — use $props instead");
+	e(node, "legacy_export_invalid", "Cannot use `export let` in runes mode — use `$props()` instead");
 }
 
 /**

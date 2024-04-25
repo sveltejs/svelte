@@ -14,6 +14,6 @@ export default test({
 	},
 
 	errors: [
-		'The `href` attribute on `<a href="/bar">...</a>` changed value between server and client renders. The client value, `/foo`, will be ignored in favour of the server value'
+		'The `href` attribute on `<a href="/bar">...</a>` changed its value between server and client renders. The client value, `/foo`, will be ignored in favour of the server value'
 	]
 });

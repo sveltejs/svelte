@@ -6,14 +6,14 @@ var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
 
 /**
- * The `%attribute%` attribute on `%html%` changed value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
+ * The `%attribute%` attribute on `%html%` changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
  * @param {string} attribute
  * @param {string} html
  * @param {string} value
  */
 export function hydration_attribute_changed(attribute, html, value) {
 	if (DEV) {
-		console.warn(`%c[svelte] ${"hydration_attribute_changed"}\n%c${`The \`${attribute}\` attribute on \`${html}\` changed value between server and client renders. The client value, \`${value}\`, will be ignored in favour of the server value`}`, bold, normal);
+		console.warn(`%c[svelte] ${"hydration_attribute_changed"}\n%c${`The \`${attribute}\` attribute on \`${html}\` changed its value between server and client renders. The client value, \`${value}\`, will be ignored in favour of the server value`}`, bold, normal);
 	} else {
 		// TODO print a link to the documentation
 		console.warn("hydration_attribute_changed");
