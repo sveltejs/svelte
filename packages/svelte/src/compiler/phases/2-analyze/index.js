@@ -1196,7 +1196,7 @@ const common_visitors = {
 					binding.kind === 'derived') &&
 				context.state.function_depth === binding.scope.function_depth
 			) {
-				w.static_state_reference(node);
+				w.state_referenced_locally(node);
 			}
 		}
 	},

@@ -538,20 +538,11 @@ export function store_rune_conflict(node, name) {
 }
 
 /**
- * The rest operator (...) will create a new object and binding '%name%' with the original object will not work
- * @param {null | NodeLike} node
- * @param {string} name
- */
-export function invalid_rest_eachblock_binding(node, name) {
-	w(node, "invalid_rest_eachblock_binding", `The rest operator (...) will create a new object and binding '${name}' with the original object will not work`);
-}
-
-/**
  * State referenced in its own scope will never update. Did you mean to reference it inside a closure?
  * @param {null | NodeLike} node
  */
-export function static_state_reference(node) {
-	w(node, "static_state_reference", "State referenced in its own scope will never update. Did you mean to reference it inside a closure?");
+export function state_referenced_locally(node) {
+	w(node, "state_referenced_locally", "State referenced in its own scope will never update. Did you mean to reference it inside a closure?");
 }
 
 /**
@@ -639,4 +630,13 @@ export function event_directive_deprecated(node, name) {
  */
 export function slot_element_deprecated(node) {
 	w(node, "slot_element_deprecated", "Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead.");
+}
+
+/**
+ * The rest operator (...) will create a new object and binding '%name%' with the original object will not work
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function bind_invalid_each_rest(node, name) {
+	w(node, "bind_invalid_each_rest", `The rest operator (...) will create a new object and binding '${name}' with the original object will not work`);
 }

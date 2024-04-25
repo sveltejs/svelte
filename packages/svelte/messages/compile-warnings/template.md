@@ -14,6 +14,10 @@
 
 > '%wrong%' is not a valid HTML attribute. Did you mean '%right%'?
 
+## bind_invalid_each_rest
+
+> The rest operator (...) will create a new object and binding '%name%' with the original object will not work
+
 ## block_empty
 
 > Empty block

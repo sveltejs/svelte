@@ -366,7 +366,7 @@ const validation = {
 		}
 
 		if (binding?.kind === 'each' && binding.metadata?.inside_rest) {
-			w.invalid_rest_eachblock_binding(binding.node, binding.node.name);
+			w.bind_invalid_each_rest(binding.node, binding.node.name);
 		}
 
 		const parent = context.path.at(-1);
@@ -1063,7 +1063,8 @@ export const validation_runes = merge(validation, a11y_validators, {
 		if (
 			Runes.includes(/** @type {Runes[number]} */ (node.name)) &&
 			is_reference(node, parent) &&
-			!state.scope.get(node.name.slice(1))
+			state.scope.get(node.name) === null &&
+			state.scope.get(node.name.slice(1)) === null
 		) {
 			/** @type {import('estree').Expression} */
 			let current = node;
@@ -1082,7 +1083,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 			}
 
 			if (parent.type !== 'CallExpression') {
-				e.rune_missing_parentheses(current, name);
+				e.rune_missing_parentheses(current);
 			}
 		}
 	},

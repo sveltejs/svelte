@@ -26,6 +26,10 @@
 
 > All dependencies of the reactive declaration are declared in a module script and will not be reactive
 
+## state_referenced_locally
+
+> State referenced in its own scope will never update. Did you mean to reference it inside a closure?
+
 ## store_rune_conflict
 
 > It looks like you're using the `$%name%` rune, but there is a local binding called `%name%`. Referencing a local variable with a `$` prefix will create a store subscription. Please rename `%name%` to avoid the ambiguity
