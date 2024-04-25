@@ -479,22 +479,6 @@ export function derived_iife(node) {
 }
 
 /**
- * Bindable component properties are declared using `$bindable()` in runes mode. Did you forget to call the function?
- * @param {null | NodeLike} node
- */
-export function invalid_bindable_declaration(node) {
-	w(node, "invalid_bindable_declaration", "Bindable component properties are declared using `$bindable()` in runes mode. Did you forget to call the function?");
-}
-
-/**
- * Component properties are declared using `$props()` in runes mode. Did you forget to call the function?
- * @param {null | NodeLike} node
- */
-export function invalid_props_declaration(node) {
-	w(node, "invalid_props_declaration", "Component properties are declared using `$props()` in runes mode. Did you forget to call the function?");
-}
-
-/**
  * `%name%` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
  * @param {null | NodeLike} node
  * @param {string} name

@@ -2,14 +2,6 @@
 
 > Use `$derived.by(() => {...})` instead of `$derived((() => {...})())`
 
-## invalid_bindable_declaration
-
-> Bindable component properties are declared using `$bindable()` in runes mode. Did you forget to call the function?
-
-## invalid_props_declaration
-
-> Component properties are declared using `$props()` in runes mode. Did you forget to call the function?
-
 ## non_state_reference
 
 > `%name%` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates

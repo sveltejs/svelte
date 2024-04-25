@@ -311,13 +311,41 @@ export function rune_invalid_arguments_length(node, rune, args) {
 }
 
 /**
- * Cannot use %rune% rune in non-runes mode
+ * Cannot access a computed property of a rune
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function rune_invalid_computed_property(node) {
+	e(node, "rune_invalid_computed_property", "Cannot access a computed property of a rune");
+}
+
+/**
+ * `%name%` is not a valid rune
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function rune_invalid_name(node, name) {
+	e(node, "rune_invalid_name", `\`${name}\` is not a valid rune`);
+}
+
+/**
+ * Cannot use `%rune%` rune in non-runes mode
  * @param {null | number | NodeLike} node
  * @param {string} rune
  * @returns {never}
  */
 export function rune_invalid_usage(node, rune) {
-	e(node, "rune_invalid_usage", `Cannot use ${rune} rune in non-runes mode`);
+	e(node, "rune_invalid_usage", `Cannot use \`${rune}\` rune in non-runes mode`);
+}
+
+/**
+ * Cannot use rune without parentheses
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function rune_missing_parentheses(node) {
+	e(node, "rune_missing_parentheses", "Cannot use rune without parentheses");
 }
 
 /**

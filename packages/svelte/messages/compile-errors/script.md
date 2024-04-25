@@ -94,9 +94,21 @@
 
 > `%rune%` must be called with %args%
 
+## rune_invalid_computed_property
+
+> Cannot access a computed property of a rune
+
+## rune_invalid_name
+
+> `%name%` is not a valid rune
+
 ## rune_invalid_usage
 
-> Cannot use %rune% rune in non-runes mode
+> Cannot use `%rune%` rune in non-runes mode
+
+## rune_missing_parentheses
+
+> Cannot use rune without parentheses
 
 ## runes_mode_invalid_import
 

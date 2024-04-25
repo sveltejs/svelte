@@ -1,3 +1,4 @@
+import is_reference from 'is-reference';
 import {
 	disallowed_paragraph_contents,
 	interactive_elements,
@@ -18,6 +19,7 @@ import { binding_properties } from '../bindings.js';
 import {
 	ContentEditableBindings,
 	EventModifiers,
+	Runes,
 	SVGElements,
 	VoidElements
 } from '../constants.js';
@@ -1054,6 +1056,36 @@ function validate_assignment(node, argument, state) {
 }
 
 export const validation_runes = merge(validation, a11y_validators, {
+	Identifier(node, { path, state }) {
+		let i = path.length;
+		let parent = /** @type {import('estree').Expression} */ (path[--i]);
+
+		if (
+			Runes.includes(/** @type {Runes[number]} */ (node.name)) &&
+			is_reference(node, parent) &&
+			!state.scope.get(node.name.slice(1))
+		) {
+			/** @type {import('estree').Expression} */
+			let current = node;
+			let name = node.name;
+
+			while (parent.type === 'MemberExpression') {
+				if (parent.computed) e.rune_invalid_computed_property(parent);
+				name += `.${/** @type {import('estree').Identifier} */ (parent.property).name}`;
+
+				current = parent;
+				parent = /** @type {import('estree').Expression} */ (path[--i]);
+
+				if (!Runes.includes(/** @type {Runes[number]} */ (name))) {
+					e.rune_invalid_name(parent, name);
+				}
+			}
+
+			if (parent.type !== 'CallExpression') {
+				e.rune_missing_parentheses(current, name);
+			}
+		}
+	},
 	LabeledStatement(node, { path }) {
 		if (node.label.name !== '$' || path.at(-1)?.type !== 'Program') return;
 		e.legacy_reactive_statement_invalid(node);
@@ -1112,13 +1144,6 @@ export const validation_runes = merge(validation, a11y_validators, {
 		const init = node.init;
 		const rune = get_rune(init, state.scope);
 
-		if (rune === null) {
-			if (init?.type === 'Identifier' && init.name === '$props' && !state.scope.get('props')) {
-				w.invalid_props_declaration(node);
-			}
-			return;
-		}
-
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
 		// TODO some of this is duplicated with above, seems off
@@ -1169,15 +1194,6 @@ export const validation_runes = merge(validation, a11y_validators, {
 			) {
 				w.derived_iife(node);
 			}
-		}
-	},
-	AssignmentPattern(node, { state }) {
-		if (
-			node.right.type === 'Identifier' &&
-			node.right.name === '$bindable' &&
-			!state.scope.get('bindable')
-		) {
-			w.invalid_bindable_declaration(node);
 		}
 	},
 	SlotElement(node, { state }) {
