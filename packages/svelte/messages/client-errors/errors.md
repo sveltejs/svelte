@@ -1,3 +1,7 @@
+## bind_invalid_checkbox_value
+
+> Using `bind:value` together with a checkbox input is not allowed. Use `bind:checked` instead
+
 ## bind_invalid_export
 
 > Component %component% has an export named `%key%` that a consumer component is trying to access using `bind:%key%`, which is disallowed. Instead, use `bind:this` (e.g. `<%name% bind:this={component} />`) and then access the property on the bound component instance (e.g. `component.%key%`)
@@ -11,6 +15,14 @@
 > Keyed each block has duplicate key at indexes %a% and %b%
 
 > Keyed each block has duplicate key `%value%` at indexes %a% and %b%
+
+## effect_in_teardown
+
+> `%rune%` cannot be used inside an effect cleanup function
+
+## effect_orphan
+
+> `%rune%` can only be used inside an effect (e.g. during component initialisation)
 
 ## effect_update_depth_exceeded
 
@@ -28,9 +40,13 @@
 
 > `%name%(...)` cannot be used in runes mode
 
-## lifecycle_outside_component
+## props_invalid_value
 
-> `%name%(...)` can only be used during component initialisation
+> Cannot do `bind:%key%={undefined}` when `%key%` has a fallback value
+
+## props_rest_readonly
+
+> Rest element properties of `$props()` such as `%property%` are readonly
 
 ## rune_outside_svelte
 
@@ -39,6 +55,12 @@
 ## state_prototype_fixed
 
 > Cannot set prototype of `$state` object
+
+## state_unsafe_mutation
+
+> Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. This can lead to unexpected errors and possibly cause infinite loops.
+>
+> If the object is not meant to be reactive, declare it without `$state`
 
 ## svelte_component_invalid_this_value
 

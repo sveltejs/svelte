@@ -18,11 +18,9 @@ export function add_snippet_symbol(fn) {
  */
 export function validate_snippet(snippet_fn) {
 	if (snippet_fn && snippet_fn[snippet_symbol] !== true) {
-		throw new Error(
-			'The argument to `{@render ...}` must be a snippet function, not a component or some other kind of function. ' +
-				'If you want to dynamically render one snippet or another, use `$derived` and pass its result to `{@render ...}`.'
-		);
+		e.render_tag_invalid_argument();
 	}
+
 	return snippet_fn;
 }
 
@@ -32,8 +30,9 @@ export function validate_snippet(snippet_fn) {
  */
 export function validate_component(component_fn) {
 	if (component_fn?.[snippet_symbol] === true) {
-		throw new Error('A snippet must be rendered with `{@render ...}`');
+		e.snippet_used_as_component();
 	}
+
 	return component_fn;
 }
 
@@ -53,7 +52,7 @@ export function validate_dynamic_element_tag(tag_fn) {
 	const tag = tag_fn();
 	const is_string = typeof tag === 'string';
 	if (tag && !is_string) {
-		throw new Error('<svelte:element> expects "this" attribute to be a string.');
+		e.svelte_element_invalid_this_value();
 	}
 }
 

@@ -3,6 +3,22 @@
 import { DEV } from 'esm-env';
 
 /**
+ * Using `bind:value` together with a checkbox input is not allowed. Use `bind:checked` instead
+ * @returns {never}
+ */
+export function bind_invalid_checkbox_value() {
+	if (DEV) {
+		const error = new Error(`${"bind_invalid_checkbox_value"}\n${"Using `bind:value` together with a checkbox input is not allowed. Use `bind:checked` instead"}`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("bind_invalid_checkbox_value");
+	}
+}
+
+/**
  * Component %component% has an export named `%key%` that a consumer component is trying to access using `bind:%key%`, which is disallowed. Instead, use `bind:this` (e.g. `<%name% bind:this={component} />`) and then access the property on the bound component instance (e.g. `component.%key%`)
  * @param {string} component
  * @param {string} key
@@ -56,6 +72,40 @@ export function each_key_duplicate(a, b, value) {
 	} else {
 		// TODO print a link to the documentation
 		throw new Error("each_key_duplicate");
+	}
+}
+
+/**
+ * `%rune%` cannot be used inside an effect cleanup function
+ * @param {string} rune
+ * @returns {never}
+ */
+export function effect_in_teardown(rune) {
+	if (DEV) {
+		const error = new Error(`${"effect_in_teardown"}\n${`\`${rune}\` cannot be used inside an effect cleanup function`}`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("effect_in_teardown");
+	}
+}
+
+/**
+ * `%rune%` can only be used inside an effect (e.g. during component initialisation)
+ * @param {string} rune
+ * @returns {never}
+ */
+export function effect_orphan(rune) {
+	if (DEV) {
+		const error = new Error(`${"effect_orphan"}\n${`\`${rune}\` can only be used inside an effect (e.g. during component initialisation)`}`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("effect_orphan");
 	}
 }
 
@@ -125,19 +175,36 @@ export function lifecycle_legacy_only(name) {
 }
 
 /**
- * `%name%(...)` can only be used during component initialisation
- * @param {string} name
+ * Cannot do `bind:%key%={undefined}` when `%key%` has a fallback value
+ * @param {string} key
  * @returns {never}
  */
-export function lifecycle_outside_component(name) {
+export function props_invalid_value(key) {
 	if (DEV) {
-		const error = new Error(`${"lifecycle_outside_component"}\n${`\`${name}(...)\` can only be used during component initialisation`}`);
+		const error = new Error(`${"props_invalid_value"}\n${`Cannot do \`bind:${key}={undefined}\` when \`${key}\` has a fallback value`}`);
 
 		error.name = 'Svelte error';
 		throw error;
 	} else {
 		// TODO print a link to the documentation
-		throw new Error("lifecycle_outside_component");
+		throw new Error("props_invalid_value");
+	}
+}
+
+/**
+ * Rest element properties of `$props()` such as `%property%` are readonly
+ * @param {string} property
+ * @returns {never}
+ */
+export function props_rest_readonly(property) {
+	if (DEV) {
+		const error = new Error(`${"props_rest_readonly"}\n${`Rest element properties of \`$props()\` such as \`${property}\` are readonly`}`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("props_rest_readonly");
 	}
 }
 
@@ -171,6 +238,24 @@ export function state_prototype_fixed() {
 	} else {
 		// TODO print a link to the documentation
 		throw new Error("state_prototype_fixed");
+	}
+}
+
+/**
+ * Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. This can lead to unexpected errors and possibly cause infinite loops.
+ * >
+ * If the object is not meant to be reactive, declare it without `$state`
+ * @returns {never}
+ */
+export function state_unsafe_mutation() {
+	if (DEV) {
+		const error = new Error(`${"state_unsafe_mutation"}\n${"Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. This can lead to unexpected errors and possibly cause infinite loops.\n>\nIf the object is not meant to be reactive, declare it without `$state`"}`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("state_unsafe_mutation");
 	}
 }
 
