@@ -131,7 +131,7 @@ export function beforeUpdate(fn) {
 	}
 
 	if (current_component_context.l === null) {
-		throw new Error('beforeUpdate cannot be used in runes mode');
+		e.lifecycle_legacy_only('beforeUpdate');
 	}
 
 	init_update_callbacks(current_component_context).b.push(fn);
