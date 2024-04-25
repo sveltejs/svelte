@@ -26,3 +26,9 @@ export type BundleMessageData = {
 	svelte_url: string;
 	files: File[];
 };
+
+export type MigrateMessageData = {
+	id: number;
+	source: string;
+	error?: string;
+};

@@ -41,6 +41,11 @@ self.addEventListener(
 				await ready;
 				postMessage(compile(event.data));
 				break;
+
+			case 'migrate':
+				await ready;
+				postMessage(migrate(event.data));
+				break;
 		}
 	}
 );
@@ -124,6 +129,27 @@ function compile({ id, source, options, return_ast }) {
 				warnings: [],
 				metadata: null
 			}
+		};
+	}
+}
+
+/** @param {import("../workers").MigrateMessageData} param0 */
+function migrate({ id, source }) {
+	try {
+		source = svelte.migrate(source);
+
+		return {
+			id,
+			source
+		};
+	} catch (err) {
+		// @ts-ignore
+		let message = `/*\nError migrating ${err.filename ?? 'component'}:\n${err.message}\n*/`;
+
+		return {
+			id,
+			source,
+			error: message
 		};
 	}
 }

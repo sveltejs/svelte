@@ -190,5 +190,5 @@ export function walk() {
 }
 
 export { CompileError } from './errors.js';
-
 export { VERSION } from '../version.js';
+export { migrate } from './migrate/index.js';
