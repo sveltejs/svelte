@@ -41,7 +41,8 @@ export function migrate(source) {
 			props_insertion_point: 0,
 			has_props_rune: false,
 			props_name: analysis.root.unique('props').name,
-			rest_props_name: analysis.root.unique('rest').name
+			rest_props_name: analysis.root.unique('rest').name,
+			end: parsed.end
 		};
 
 		if (parsed.instance) {
@@ -113,6 +114,7 @@ export function migrate(source) {
  *  has_props_rune: boolean;
  * 	props_name: string;
  * 	rest_props_name: string;
+ *  end: number;
  * }} State
  */
 
@@ -290,10 +292,7 @@ const instance_script = {
 			state.str.indent(state.indent, {
 				exclude: [
 					[0, /** @type {number} */ (node.body.start)],
-					[
-						/** @type {number} */ (node.body.end),
-						/** @type {number} */ (/** @type {import('estree').Program} */ (path.at(-1)).end)
-					]
+					[/** @type {number} */ (node.body.end), state.end]
 				]
 			});
 			state.str.appendRight(/** @type {number} */ (node.end), `\n${state.indent}});`);
