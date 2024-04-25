@@ -17,7 +17,7 @@ export default test({
 		} catch (err) {
 			assert.equal(
 				/** @type {Error} */ (err).message,
-				'this={...} of <svelte:component> should specify a Svelte component.'
+				'svelte_component_invalid_this_value\nThe `this={...}` property of a `<svelte:component>` must be a Svelte component, if defined'
 			);
 		}
 	}

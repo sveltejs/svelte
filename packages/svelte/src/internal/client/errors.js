@@ -3,6 +3,25 @@
 import { DEV } from 'esm-env';
 
 /**
+ * Keyed each block has duplicate key `%value%` at indexes %a% and %b%
+ * @param {string} a
+ * @param {string} b
+ * @param {string | undefined | null} [value]
+ * @returns {never}
+ */
+export function each_key_duplicate(a, b, value) {
+	if (DEV) {
+		const error = new Error(`${"each_key_duplicate"}\n${value ? `Keyed each block has duplicate key \`${value}\` at indexes ${a} and ${b}` : `Keyed each block has duplicate key at indexes ${a} and ${b}`}`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("each_key_duplicate");
+	}
+}
+
+/**
  * Maximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops
  * @returns {never}
  */
@@ -15,6 +34,38 @@ export function effect_update_depth_exceeded() {
 	} else {
 		// TODO print a link to the documentation
 		throw new Error("effect_update_depth_exceeded");
+	}
+}
+
+/**
+ * Missing hydration closing marker
+ * @returns {never}
+ */
+export function hydration_missing_marker_close() {
+	if (DEV) {
+		const error = new Error(`${"hydration_missing_marker_close"}\n${"Missing hydration closing marker"}`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("hydration_missing_marker_close");
+	}
+}
+
+/**
+ * Missing hydration opening marker
+ * @returns {never}
+ */
+export function hydration_missing_marker_open() {
+	if (DEV) {
+		const error = new Error(`${"hydration_missing_marker_open"}\n${"Missing hydration opening marker"}`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("hydration_missing_marker_open");
 	}
 }
 
@@ -49,5 +100,54 @@ export function lifecycle_outside_component(name) {
 	} else {
 		// TODO print a link to the documentation
 		throw new Error("lifecycle_outside_component");
+	}
+}
+
+/**
+ * The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
+ * @param {string} rune
+ * @returns {never}
+ */
+export function rune_outside_svelte(rune) {
+	if (DEV) {
+		const error = new Error(`${"rune_outside_svelte"}\n${`The \`${rune}\` rune is only available inside \`.svelte\` and \`.svelte.js/ts\` files`}`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("rune_outside_svelte");
+	}
+}
+
+/**
+ * Cannot set prototype of `$state` object
+ * @returns {never}
+ */
+export function state_prototype_fixed() {
+	if (DEV) {
+		const error = new Error(`${"state_prototype_fixed"}\n${"Cannot set prototype of `$state` object"}`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("state_prototype_fixed");
+	}
+}
+
+/**
+ * The `this={...}` property of a `<svelte:component>` must be a Svelte component, if defined
+ * @returns {never}
+ */
+export function svelte_component_invalid_this_value() {
+	if (DEV) {
+		const error = new Error(`${"svelte_component_invalid_this_value"}\n${"The `this={...}` property of a `<svelte:component>` must be a Svelte component, if defined"}`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("svelte_component_invalid_this_value");
 	}
 }

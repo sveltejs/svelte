@@ -300,4 +300,5 @@ transform('compile-warnings', 'src/compiler/warnings.js');
 transform('client-warnings', 'src/internal/client/warnings.js');
 transform('client-errors', 'src/internal/client/errors.js');
 transform('server-errors', 'src/internal/server/errors.js');
+transform('shared-errors', 'src/internal/shared/errors.js');
 transform('shared-warnings', 'src/internal/shared/warnings.js');

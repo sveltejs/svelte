@@ -1,5 +1,6 @@
 import { is_void } from '../../compiler/phases/1-parse/utils/names.js';
 import * as w from './warnings.js';
+import * as e from './errors.js';
 
 const snippet_symbol = Symbol.for('svelte.snippet');
 
@@ -53,5 +54,15 @@ export function validate_dynamic_element_tag(tag_fn) {
 	const is_string = typeof tag === 'string';
 	if (tag && !is_string) {
 		throw new Error('<svelte:element> expects "this" attribute to be a string.');
+	}
+}
+
+/**
+ * @param {any} store
+ * @param {string} name
+ */
+export function validate_store(store, name) {
+	if (store != null && typeof store.subscribe !== 'function') {
+		e.store_invalid_shape(name);
 	}
 }

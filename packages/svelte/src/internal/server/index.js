@@ -11,6 +11,7 @@ import {
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import { validate_store } from '../shared/validate.js';
 
 /**
  * @typedef {{
@@ -441,16 +442,6 @@ export function store_get(store_values, store_name, store) {
 	);
 	store_values[store_name][1] = unsub;
 	return store_values[store_name][2];
-}
-
-/**
- * @param {any} store
- * @param {string} name
- */
-export function validate_store(store, name) {
-	if (store != null && typeof store.subscribe !== 'function') {
-		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
-	}
 }
 
 /**

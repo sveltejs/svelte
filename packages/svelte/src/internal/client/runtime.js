@@ -1189,9 +1189,8 @@ if (DEV) {
 					if (value !== undefined) {
 						return value;
 					}
-					throw new Error(
-						`The ${rune} rune is only available inside .svelte and .svelte.js/ts files`
-					);
+
+					e.rune_outside_svelte(rune);
 				},
 				set: (v) => {
 					value = v;
