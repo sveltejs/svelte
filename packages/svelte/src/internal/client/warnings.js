@@ -6,18 +6,6 @@ var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
 
 /**
- * Hydration failed because the initial UI does not match what was rendered on the server
- */
-export function hydration_mismatch() {
-	if (DEV) {
-		console.warn(`%c[svelte] ${"hydration_mismatch"}\n%c${"Hydration failed because the initial UI does not match what was rendered on the server"}`, bold, normal);
-	} else {
-		// TODO print a link to the documentation
-		console.warn("hydration_mismatch");
-	}
-}
-
-/**
  * The `%attribute%` attribute on `%html%` changed value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
  * @param {string} attribute
  * @param {string} html
@@ -29,6 +17,18 @@ export function hydration_attribute_changed(attribute, html, value) {
 	} else {
 		// TODO print a link to the documentation
 		console.warn("hydration_attribute_changed");
+	}
+}
+
+/**
+ * Hydration failed because the initial UI does not match what was rendered on the server
+ */
+export function hydration_mismatch() {
+	if (DEV) {
+		console.warn(`%c[svelte] ${"hydration_mismatch"}\n%c${"Hydration failed because the initial UI does not match what was rendered on the server"}`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("hydration_mismatch");
 	}
 }
 
