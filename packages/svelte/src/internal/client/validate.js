@@ -78,17 +78,11 @@ export function validate_prop_bindings($$props, bindable, exports, component) {
 
 		if (setter) {
 			if (exports.includes(key)) {
-				throw new Error(
-					`Component ${component.filename} has an export named ${key} that a consumer component is trying to access using bind:${key}, which is disallowed. ` +
-						`Instead, use bind:this (e.g. <${name} bind:this={component} />) ` +
-						`and then access the property on the bound component instance (e.g. component.${key}).`
-				);
+				e.bind_invalid_export(component.filename, key, name);
 			}
+
 			if (!bindable.includes(key)) {
-				throw new Error(
-					`A component is binding to property ${key} of ${name}.svelte (i.e. <${name} bind:${key} />). This is disallowed because the property was not declared as bindable inside ${component.filename}. ` +
-						`To mark a property as bindable, use the $bindable() rune in ${name}.svelte like this: \`let { ${key} = $bindable() } = $props()\``
-				);
+				e.bind_not_bindable(key, component.filename, name);
 			}
 		}
 	}

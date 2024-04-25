@@ -3,6 +3,44 @@
 import { DEV } from 'esm-env';
 
 /**
+ * Component %component% has an export named `%key%` that a consumer component is trying to access using `bind:%key%`, which is disallowed. Instead, use `bind:this` (e.g. `<%name% bind:this={component} />`) and then access the property on the bound component instance (e.g. `component.%key%`)
+ * @param {string} component
+ * @param {string} key
+ * @param {string} name
+ * @returns {never}
+ */
+export function bind_invalid_export(component, key, name) {
+	if (DEV) {
+		const error = new Error(`${"bind_invalid_export"}\n${`Component ${component} has an export named \`${key}\` that a consumer component is trying to access using \`bind:${key}\`, which is disallowed. Instead, use \`bind:this\` (e.g. \`<${name} bind:this={component} />\`) and then access the property on the bound component instance (e.g. \`component.${key}\`)`}`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("bind_invalid_export");
+	}
+}
+
+/**
+ * A component is attempting to bind to a non-bindable property `%key%` belonging to %component% (i.e. `<%name% bind:%key%={...}>`). To mark a property as bindable: `let { %key% = $bindable() } = $props()`
+ * @param {string} key
+ * @param {string} component
+ * @param {string} name
+ * @returns {never}
+ */
+export function bind_not_bindable(key, component, name) {
+	if (DEV) {
+		const error = new Error(`${"bind_not_bindable"}\n${`A component is attempting to bind to a non-bindable property \`${key}\` belonging to ${component} (i.e. \`<${name} bind:${key}={...}>\`). To mark a property as bindable: \`let { ${key} = $bindable() } = $props()\``}`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("bind_not_bindable");
+	}
+}
+
+/**
  * Keyed each block has duplicate key `%value%` at indexes %a% and %b%
  * @param {string} a
  * @param {string} b

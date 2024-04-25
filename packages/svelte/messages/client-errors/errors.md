@@ -1,3 +1,11 @@
+## bind_invalid_export
+
+> Component %component% has an export named `%key%` that a consumer component is trying to access using `bind:%key%`, which is disallowed. Instead, use `bind:this` (e.g. `<%name% bind:this={component} />`) and then access the property on the bound component instance (e.g. `component.%key%`)
+
+## bind_not_bindable
+
+> A component is attempting to bind to a non-bindable property `%key%` belonging to %component% (i.e. `<%name% bind:%key%={...}>`). To mark a property as bindable: `let { %key% = $bindable() } = $props()`
+
 ## each_key_duplicate
 
 > Keyed each block has duplicate key at indexes %a% and %b%
