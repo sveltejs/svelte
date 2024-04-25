@@ -101,6 +101,16 @@ export function a11y_distracting_elements(node, name) {
 }
 
 /**
+ * '%attribute%' cannot be empty — change it to `%attribute%="%value%"`
+ * @param {null | NodeLike} node
+ * @param {string} attribute
+ * @param {string | undefined | null} [value]
+ */
+export function a11y_empty_aria_attribute(node, attribute, value) {
+	w(node, "a11y_empty_aria_attribute", value ? `'${attribute}' cannot be empty — change it to \`${attribute}="${value}"\`` : `'${attribute}' cannot be empty`);
+}
+
+/**
  * `<figcaption>` must be first or last child of `<figure>`
  * @param {null | NodeLike} node
  */
@@ -141,15 +151,6 @@ export function a11y_img_redundant_alt(node) {
  */
 export function a11y_incorrect_aria_attribute_type(node, attribute, type) {
 	w(node, "a11y_incorrect_aria_attribute_type", `The value of '${attribute}' must be of type ${type}`);
-}
-
-/**
- * '%attribute%' cannot be empty — change it to `%attribute%="true"`
- * @param {null | NodeLike} node
- * @param {string} attribute
- */
-export function a11y_empty_aria_attribute(node, attribute) {
-	w(node, "a11y_empty_aria_attribute", `'${attribute}' cannot be empty — change it to \`${attribute}="true"\``);
 }
 
 /**

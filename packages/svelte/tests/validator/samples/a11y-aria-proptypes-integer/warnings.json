@@ -25,7 +25,7 @@
 	},
 	{
 		"code": "a11y_empty_aria_attribute",
-		"message": "'aria-level' cannot be empty — change it to `aria-level=\"true\"`",
+		"message": "'aria-level' cannot be empty",
 		"start": {
 			"line": 4,
 			"column": 5

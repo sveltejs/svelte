@@ -605,7 +605,8 @@ function validate_aria_attribute_value(attribute, name, schema, value) {
 	if (value === null) return;
 
 	if (value === true) {
-		w.a11y_empty_aria_attribute(attribute, name);
+		const v = type === 'boolean' || type === 'tristate' ? 'true' : undefined;
+		w.a11y_empty_aria_attribute(attribute, name, v);
 		return;
 	}
 
