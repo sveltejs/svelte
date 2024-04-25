@@ -1185,6 +1185,7 @@ if (DEV) {
 			let value; // let's hope noone modifies this global, but belts and braces
 			Object.defineProperty(globalThis, rune, {
 				configurable: true,
+				// eslint-disable-next-line getter-return
 				get: () => {
 					if (value !== undefined) {
 						return value;
