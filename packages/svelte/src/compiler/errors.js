@@ -919,6 +919,16 @@ export function let_directive_invalid_placement(node) {
 }
 
 /**
+ * Mixing old (on:%name%) and new syntaxes for event handling is not allowed. Use only the on%name% syntax.
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function mixed_event_handler_syntaxes(node, name) {
+	e(node, "mixed_event_handler_syntaxes", `Mixing old (on:${name}) and new syntaxes for event handling is not allowed. Use only the on${name} syntax.`);
+}
+
+/**
  * %thing% is invalid inside <%parent%>
  * @param {null | number | NodeLike} node
  * @param {string} thing

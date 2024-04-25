@@ -172,6 +172,10 @@
 
 > `let:` directive at invalid position
 
+## mixed_event_handler_syntaxes
+
+> Mixing old (on:%name%) and new syntaxes for event handling is not allowed. Use only the on%name% syntax.
+
 ## node_invalid_placement
 
 > %thing% is invalid inside <%parent%>
