@@ -1144,6 +1144,8 @@ export const validation_runes = merge(validation, a11y_validators, {
 		const init = node.init;
 		const rune = get_rune(init, state.scope);
 
+		if (rune === null) return;
+
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
 		// TODO some of this is duplicated with above, seems off
