@@ -239,14 +239,17 @@ const instance_script = {
 			node.body.expression.type === 'AssignmentExpression'
 		) {
 			// $derived
-			// TODO $: ({ x } = ...)
 			state.str.update(
 				/** @type {number} */ (node.start),
 				/** @type {number} */ (node.body.expression.start),
 				'let '
 			);
 			state.str.prependLeft(/** @type {number} */ (node.body.expression.right.start), '$derived(');
-			state.str.appendRight(/** @type {number} */ (node.body.expression.right.end), ')');
+			state.str.update(
+				/** @type {number} */ (node.body.expression.right.end),
+				/** @type {number} */ (node.end),
+				');'
+			);
 		} else {
 			const is_block_stmt = node.body.type === 'BlockStatement';
 			const start_end = /** @type {number} */ (node.body.start);
