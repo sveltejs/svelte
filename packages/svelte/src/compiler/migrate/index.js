@@ -5,6 +5,7 @@ import { analyze_component } from '../phases/2-analyze/index.js';
 import { validate_component_options } from '../validate-options.js';
 import { get_rune } from '../phases/scope.js';
 import { reset_warnings } from '../warnings.js';
+import { extract_identifiers } from '../utils/ast.js';
 
 /**
  * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
@@ -238,45 +239,64 @@ const instance_script = {
 			node.body.type === 'ExpressionStatement' &&
 			node.body.expression.type === 'AssignmentExpression'
 		) {
-			// $derived
-			state.str.update(
-				/** @type {number} */ (node.start),
-				/** @type {number} */ (node.body.expression.start),
-				'let '
-			);
-			state.str.prependLeft(/** @type {number} */ (node.body.expression.right.start), '$derived(');
-			state.str.update(
-				/** @type {number} */ (node.body.expression.right.end),
-				/** @type {number} */ (node.end),
-				');'
-			);
-		} else {
-			const is_block_stmt = node.body.type === 'BlockStatement';
-			const start_end = /** @type {number} */ (node.body.start);
-			// $effect.pre, to be precise, but we gloss over that
-			// TODO try to find out if we can use $derived.by instead?
-			// TODO SSR mode variant needed
-			if (is_block_stmt) {
-				state.str.update(/** @type {number} */ (node.start), start_end + 1, '$effect(() => {');
-				const end = /** @type {number} */ (node.body.end);
-				state.str.update(end - 1, end, '});');
-			} else {
+			const ids = extract_identifiers(node.body.expression.left);
+			const reassigned_ids = ids.filter((id) => state.scope.get(id.name)?.reassigned);
+			if (reassigned_ids.length === 0) {
+				// $derived
 				state.str.update(
 					/** @type {number} */ (node.start),
-					start_end,
-					`$effect(() => {\n${state.indent}`
+					/** @type {number} */ (node.body.expression.start),
+					'let '
 				);
-				state.str.indent(state.indent, {
-					exclude: [
-						[0, /** @type {number} */ (node.body.start)],
-						[
-							/** @type {number} */ (node.body.end),
-							/** @type {number} */ (/** @type {import('estree').Program} */ (path.at(-1)).end)
-						]
-					]
-				});
-				state.str.appendRight(/** @type {number} */ (node.end), `\n${state.indent}});`);
+				state.str.prependLeft(
+					/** @type {number} */ (node.body.expression.right.start),
+					'$derived('
+				);
+				state.str.update(
+					/** @type {number} */ (node.body.expression.right.end),
+					/** @type {number} */ (node.end),
+					');'
+				);
+				return;
+			} else {
+				for (const id of reassigned_ids) {
+					const binding = state.scope.get(id.name);
+					if (binding?.node === id) {
+						// implicitly-declared variable which we need to make explicit
+						state.str.prependLeft(
+							/** @type {number} */ (node.start),
+							`let ${id.name}${binding.kind === 'state' ? ' = $state()' : ''};\n${state.indent}`
+						);
+					}
+				}
 			}
+		}
+
+		const is_block_stmt = node.body.type === 'BlockStatement';
+		const start_end = /** @type {number} */ (node.body.start);
+		// $effect.pre, to be precise, but we gloss over that
+		// TODO try to find out if we can use $derived.by instead?
+		// TODO SSR mode variant needed
+		if (is_block_stmt) {
+			state.str.update(/** @type {number} */ (node.start), start_end + 1, '$effect(() => {');
+			const end = /** @type {number} */ (node.body.end);
+			state.str.update(end - 1, end, '});');
+		} else {
+			state.str.update(
+				/** @type {number} */ (node.start),
+				start_end,
+				`$effect(() => {\n${state.indent}`
+			);
+			state.str.indent(state.indent, {
+				exclude: [
+					[0, /** @type {number} */ (node.body.start)],
+					[
+						/** @type {number} */ (node.body.end),
+						/** @type {number} */ (/** @type {import('estree').Program} */ (path.at(-1)).end)
+					]
+				]
+			});
+			state.str.appendRight(/** @type {number} */ (node.end), `\n${state.indent}});`);
 		}
 	}
 };
