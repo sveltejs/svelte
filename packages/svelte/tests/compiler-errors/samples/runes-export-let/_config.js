@@ -2,7 +2,7 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'invalid_legacy_export',
-		message: 'Cannot use `export let` in runes mode — use $props instead'
+		code: 'legacy_export_invalid',
+		message: 'Cannot use `export let` in runes mode — use `$props()` instead'
 	}
 });

@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid_let_directive_placement",
+		"code": "let_directive_invalid_placement",
 		"message": "`let:` directive at invalid position",
 		"start": {
 			"line": 6,

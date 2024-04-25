@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid_script_context",
+		"code": "script_invalid_context",
 		"message": "If the context attribute is supplied, its value must be \"module\"",
 		"start": {
 			"line": 1,

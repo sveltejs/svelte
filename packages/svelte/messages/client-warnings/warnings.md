@@ -1,3 +1,11 @@
+## hydration_attribute_changed
+
+> The `%attribute%` attribute on `%html%` changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
+
+## hydration_mismatch
+
+> Hydration failed because the initial UI does not match what was rendered on the server
+
 ## lifecycle_double_unmount
 
 > Tried to unmount a component that was not mounted

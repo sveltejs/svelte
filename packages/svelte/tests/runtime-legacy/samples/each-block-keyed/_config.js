@@ -29,7 +29,7 @@ export default test({
 
 		const [p3] = target.querySelectorAll('p');
 
-		assert.ok(!target.contains(p1), 'first <p> element should be removed');
-		assert.equal(p2, p3, 'second <p> element should be retained');
+		assert.ok(!target.contains(p1), 'first `<p>` element should be removed');
+		assert.equal(p2, p3, 'second `<p>` element should be retained');
 	}
 });

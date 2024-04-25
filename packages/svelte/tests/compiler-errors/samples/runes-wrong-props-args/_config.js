@@ -2,7 +2,7 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'invalid_rune_args',
+		code: 'rune_invalid_arguments',
 		message: '`$props` cannot be called with arguments'
 	}
 });

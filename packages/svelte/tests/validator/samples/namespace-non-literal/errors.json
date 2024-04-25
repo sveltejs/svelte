@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid_svelte_option_namespace",
-		"message": "Unsupported `<svelte:option>` value for \"namespace\". Valid values are \"html\", \"svg\" or \"foreign\"",
+		"code": "svelte_options_invalid_attribute_value",
+		"message": "Valid values are \"html\", \"svg\" or \"foreign\"",
 		"start": {
 			"line": 1,
 			"column": 16

@@ -5,7 +5,7 @@
 			"column": 33,
 			"line": 17
 		},
-		"message": "<div> with a keydown handler must have an ARIA role",
+		"message": "`<div>` with a keydown handler must have an ARIA role",
 		"start": {
 			"column": 0,
 			"line": 17
@@ -17,7 +17,7 @@
 			"column": 76,
 			"line": 19
 		},
-		"message": "<a> with a mousedown or mouseup handler must have an ARIA role",
+		"message": "`<a>` with a mousedown or mouseup handler must have an ARIA role",
 		"start": {
 			"column": 0,
 			"line": 19

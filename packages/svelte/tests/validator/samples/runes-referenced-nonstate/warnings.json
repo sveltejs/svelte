@@ -1,6 +1,6 @@
 [
 	{
-		"code": "non_state_reference",
+		"code": "non_reactive_update",
 		"message": "`b` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates",
 		"start": {
 			"column": 5,
@@ -12,7 +12,7 @@
 		}
 	},
 	{
-		"code": "non_state_reference",
+		"code": "non_reactive_update",
 		"message": "`c` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates",
 		"start": {
 			"column": 5,

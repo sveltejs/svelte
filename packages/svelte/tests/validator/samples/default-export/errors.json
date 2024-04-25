@@ -1,6 +1,6 @@
 [
 	{
-		"code": "default_export",
+		"code": "module_illegal_default_export",
 		"message": "A component cannot have a default export",
 		"start": {
 			"line": 2,

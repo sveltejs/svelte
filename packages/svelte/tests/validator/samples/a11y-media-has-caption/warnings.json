@@ -5,7 +5,7 @@
 			"column": 15,
 			"line": 2
 		},
-		"message": "<video> elements must have a <track kind=\"captions\">",
+		"message": "`<video>` elements must have a `<track kind=\"captions\">`",
 		"start": {
 			"column": 0,
 			"line": 2
@@ -17,7 +17,7 @@
 			"column": 24,
 			"line": 3
 		},
-		"message": "<video> elements must have a <track kind=\"captions\">",
+		"message": "`<video>` elements must have a `<track kind=\"captions\">`",
 		"start": {
 			"column": 0,
 			"line": 3
@@ -29,7 +29,7 @@
 			"column": 27,
 			"line": 5
 		},
-		"message": "<video> elements must have a <track kind=\"captions\">",
+		"message": "`<video>` elements must have a `<track kind=\"captions\">`",
 		"start": {
 			"column": 0,
 			"line": 5
@@ -41,7 +41,7 @@
 			"column": 35,
 			"line": 6
 		},
-		"message": "<video> elements must have a <track kind=\"captions\">",
+		"message": "`<video>` elements must have a `<track kind=\"captions\">`",
 		"start": {
 			"column": 0,
 			"line": 6

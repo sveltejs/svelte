@@ -1,6 +1,6 @@
 [
 	{
-		"code": "illegal_global",
+		"code": "global_reference_invalid",
 		"message": "`$` is an illegal variable name. To reference a global variable called `$`, use `globalThis.$`",
 		"start": {
 			"line": 1,

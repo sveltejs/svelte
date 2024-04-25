@@ -19,6 +19,7 @@ import {
 import { equals, safe_equals } from './equality.js';
 import { CLEAN, DERIVED, DIRTY, BRANCH_EFFECT } from '../constants.js';
 import { UNINITIALIZED } from '../../../constants.js';
+import * as e from '../errors.js';
 
 /**
  * @template V
@@ -91,14 +92,7 @@ export function set(signal, value) {
 		is_runes() &&
 		(current_reaction.f & DERIVED) !== 0
 	) {
-		throw new Error(
-			'ERR_SVELTE_UNSAFE_MUTATION' +
-				(DEV
-					? ": Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. " +
-						'This can lead to unexpected errors and possibly cause infinite loops.\n\nIf this mutation is not meant ' +
-						'to be reactive do not use the "$state" rune for that declaration.'
-					: '')
-		);
+		e.state_unsafe_mutation();
 	}
 
 	if (!signal.equals(value)) {

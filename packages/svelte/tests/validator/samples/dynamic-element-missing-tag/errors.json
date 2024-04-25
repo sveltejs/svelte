@@ -1,6 +1,6 @@
 [
 	{
-		"code": "missing_svelte_element_definition",
+		"code": "svelte_element_missing_this",
 		"message": "`<svelte:element>` must have a 'this' attribute",
 		"start": {
 			"line": 2,

@@ -70,7 +70,7 @@ export class Scope {
 	 */
 	declare(node, kind, declaration_kind, initial = null) {
 		if (node.name === '$') {
-			e.invalid_dollar_binding(node);
+			e.dollar_binding_invalid(node);
 		}
 
 		if (
@@ -80,7 +80,7 @@ export class Scope {
 			declaration_kind !== 'rest_param' &&
 			this.function_depth <= 1
 		) {
-			e.invalid_dollar_prefix(node);
+			e.dollar_prefix_invalid(node);
 		}
 
 		if (this.parent) {
@@ -95,7 +95,7 @@ export class Scope {
 
 		if (this.declarations.has(node.name)) {
 			// This also errors on var/function types, but that's arguably a good thing
-			e.duplicate_declaration(node, node.name);
+			e.declaration_duplicate(node, node.name);
 		}
 
 		/** @type {import('#compiler').Binding} */
@@ -767,7 +767,6 @@ export function get_rune(node, scope) {
 
 	joined = n.name + joined;
 
-	if (joined === '$derived.call') e.invalid_derived_call(node);
 	if (!Runes.includes(/** @type {any} */ (joined))) return null;
 
 	const binding = scope.get(n.name);

@@ -1,6 +1,6 @@
 [
 	{
-		"code": "illegal_title_attribute",
+		"code": "title_illegal_attribute",
 		"message": "`<title>` cannot have attributes nor directives",
 		"start": {
 			"line": 2,

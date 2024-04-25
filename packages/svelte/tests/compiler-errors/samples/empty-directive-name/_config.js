@@ -2,8 +2,8 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'empty_directive_name',
-		message: 'UseDirective name cannot be empty',
-		position: [8, 8]
+		code: 'directive_missing_name',
+		message: '`use:` name cannot be empty',
+		position: [4, 8]
 	}
 });

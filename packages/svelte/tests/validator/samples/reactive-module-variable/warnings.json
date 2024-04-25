@@ -1,6 +1,6 @@
 [
 	{
-		"code": "module_script_reactive_declaration",
+		"code": "reactive_declaration_module_script",
 		"message": "All dependencies of the reactive declaration are declared in a module script and will not be reactive",
 		"start": {
 			"column": 1,

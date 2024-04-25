@@ -1,7 +1,7 @@
 [
 	{
 		"message": "Event attribute must be a JavaScript expression, not a string",
-		"code": "invalid_event_attribute_value",
+		"code": "attribute_invalid_event_handler",
 		"start": {
 			"line": 4,
 			"column": 8

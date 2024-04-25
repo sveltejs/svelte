@@ -12,7 +12,7 @@
 		}
 	},
 	{
-		"code": "invalid_binding_value",
+		"code": "bind_invalid_value",
 		"message": "Can only bind to state or props",
 		"end": {
 			"column": 29,
