@@ -430,18 +430,17 @@ export function client_component(source, analysis, options) {
 		component_block.body.unshift(b.const('$$slots', b.call('$.sanitize_slots', b.id('$$props'))));
 	}
 
-	const body = [
-		...state.hoisted,
-		...module.body,
-		b.function_declaration(
-			b.id(analysis.name),
-			[b.id('$$anchor'), b.id('$$props')],
-			component_block
-		)
-	];
+	const body = [...state.hoisted, ...module.body];
+
+	const component = b.function_declaration(
+		b.id(analysis.name),
+		[b.id('$$anchor'), b.id('$$props')],
+		component_block
+	);
 
 	if (options.hmr) {
 		body.push(
+			component,
 			b.if(
 				b.id('import.meta.hot'),
 				b.block([
@@ -459,11 +458,13 @@ export function client_component(source, analysis, options) {
 						)
 					)
 				])
-			)
-		);
-	}
+			),
 
-	body.push(b.export_default(b.id(analysis.name)));
+			b.export_default(b.id(analysis.name))
+		);
+	} else {
+		body.push(b.export_default(component));
+	}
 
 	if (options.dev) {
 		if (options.filename) {
