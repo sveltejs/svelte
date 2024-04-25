@@ -1,6 +1,6 @@
 ## hydration_attribute_changed
 
-> The `%attribute%` attribute on `%html%` changed value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
+> The `%attribute%` attribute on `%html%` changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
 
 ## hydration_mismatch
 
