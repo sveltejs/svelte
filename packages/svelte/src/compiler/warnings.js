@@ -134,6 +134,16 @@ export function a11y_img_redundant_alt(node) {
 }
 
 /**
+ * The value of '%attribute%' must be a %type%
+ * @param {null | NodeLike} node
+ * @param {string} attribute
+ * @param {string} type
+ */
+export function a11y_incorrect_aria_attribute_type(node, attribute, type) {
+	w(node, "a11y_incorrect_aria_attribute_type", `The value of '${attribute}' must be a ${type}`);
+}
+
+/**
  * The value of '%attribute%' must be either 'true' or 'false'. It cannot be empty
  * @param {null | NodeLike} node
  * @param {string} attribute
@@ -167,16 +177,6 @@ export function a11y_incorrect_aria_attribute_type_idlist(node, attribute) {
  */
 export function a11y_incorrect_aria_attribute_type_integer(node, attribute) {
 	w(node, "a11y_incorrect_aria_attribute_type_integer", `The value of '${attribute}' must be an integer`);
-}
-
-/**
- * The value of '%attribute%' must be a %type%
- * @param {null | NodeLike} node
- * @param {string} attribute
- * @param {string} type
- */
-export function a11y_incorrect_aria_attribute_type(node, attribute, type) {
-	w(node, "a11y_incorrect_aria_attribute_type", `The value of '${attribute}' must be a ${type}`);
 }
 
 /**
