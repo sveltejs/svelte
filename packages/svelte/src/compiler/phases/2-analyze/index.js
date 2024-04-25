@@ -320,7 +320,7 @@ export function analyze_component(root, source, options) {
 				} else if (declaration !== null && Runes.includes(/** @type {any} */ (name))) {
 					for (const { node, path } of references) {
 						if (path.at(-1)?.type === 'CallExpression') {
-							w.store_with_rune_name(node, store_name);
+							w.store_rune_conflict(node, store_name);
 						}
 					}
 				}
@@ -524,7 +524,7 @@ export function analyze_component(root, source, options) {
 									type === 'AwaitBlock' ||
 									type === 'KeyBlock'
 								) {
-									w.non_state_reference(binding.node, name);
+									w.non_reactive_update(binding.node, name);
 									continue outer;
 								}
 							}
@@ -532,7 +532,7 @@ export function analyze_component(root, source, options) {
 						}
 					}
 
-					w.non_state_reference(binding.node, name);
+					w.non_reactive_update(binding.node, name);
 					continue outer;
 				}
 			}

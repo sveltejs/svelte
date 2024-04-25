@@ -479,30 +479,21 @@ export function derived_iife(node) {
 }
 
 /**
- * `%name%` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
- * @param {null | NodeLike} node
- * @param {string} name
- */
-export function non_state_reference(node, name) {
-	w(node, "non_state_reference", `\`${name}\` is updated, but is not declared with \`$state(...)\`. Changing its value will not correctly trigger updates`);
-}
-
-/**
- * It looks like you're using the `$%name%` rune, but there is a local binding called `%name%`. Referencing a local variable with a `$` prefix will create a store subscription. Please rename `%name%` to avoid the ambiguity
- * @param {null | NodeLike} node
- * @param {string} name
- */
-export function store_with_rune_name(node, name) {
-	w(node, "store_with_rune_name", `It looks like you're using the \`$${name}\` rune, but there is a local binding called \`${name}\`. Referencing a local variable with a \`$\` prefix will create a store subscription. Please rename \`${name}\` to avoid the ambiguity`);
-}
-
-/**
  * Component has unused export property '%name%'. If it is for external reference only, please consider using `export const %name%`
  * @param {null | NodeLike} node
  * @param {string} name
  */
 export function export_let_unused(node, name) {
 	w(node, "export_let_unused", `Component has unused export property '${name}'. If it is for external reference only, please consider using \`export const ${name}\``);
+}
+
+/**
+ * `%name%` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function non_reactive_update(node, name) {
+	w(node, "non_reactive_update", `\`${name}\` is updated, but is not declared with \`$state(...)\`. Changing its value will not correctly trigger updates`);
 }
 
 /**
@@ -535,6 +526,15 @@ export function reactive_declaration_invalid_placement(node) {
  */
 export function reactive_declaration_module_script(node) {
 	w(node, "reactive_declaration_module_script", "All dependencies of the reactive declaration are declared in a module script and will not be reactive");
+}
+
+/**
+ * It looks like you're using the `$%name%` rune, but there is a local binding called `%name%`. Referencing a local variable with a `$` prefix will create a store subscription. Please rename `%name%` to avoid the ambiguity
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function store_rune_conflict(node, name) {
+	w(node, "store_rune_conflict", `It looks like you're using the \`$${name}\` rune, but there is a local binding called \`${name}\`. Referencing a local variable with a \`$\` prefix will create a store subscription. Please rename \`${name}\` to avoid the ambiguity`);
 }
 
 /**
