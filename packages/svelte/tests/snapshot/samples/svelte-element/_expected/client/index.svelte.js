@@ -1,9 +1,7 @@
-// index.svelte (Svelte VERSION)
-// Note: compiler output will change before 5.0 is released!
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 
-function Svelte_element($$anchor, $$props) {
+export default function Svelte_element($$anchor, $$props) {
 	$.push($$props, true);
 
 	let tag = $.prop($$props, "tag", 3, 'hr');
@@ -14,5 +12,3 @@ function Svelte_element($$anchor, $$props) {
 	$.append($$anchor, fragment);
 	$.pop();
 }
-
-export default Svelte_element;
