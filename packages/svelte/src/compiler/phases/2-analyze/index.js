@@ -370,6 +370,8 @@ export function analyze_component(root, source, options) {
 		uses_slots: false,
 		uses_component_bindings: false,
 		uses_render_tags: false,
+		needs_context: false,
+		needs_props: false,
 		custom_element: options.customElementOptions ?? options.customElement,
 		inject_styles: options.css === 'injected' || options.customElement,
 		accessors: options.customElement
@@ -803,6 +805,8 @@ const legacy_scope_tweaker = {
 			return next();
 		}
 
+		state.analysis.needs_props = true;
+
 		if (!node.declaration) {
 			for (const specifier of node.specifiers) {
 				const binding = /** @type {import('#compiler').Binding} */ (
@@ -931,6 +935,8 @@ const runes_scope_tweaker = {
 		}
 
 		if (rune === '$props') {
+			state.analysis.needs_props = true;
+
 			for (const property of /** @type {import('estree').ObjectPattern} */ (node.id).properties) {
 				if (property.type !== 'Property') continue;
 
@@ -1037,6 +1043,33 @@ const function_visitor = (node, context) => {
 		function_depth: context.state.function_depth + 1
 	});
 };
+
+/**
+ * A 'safe' identifier means that the `foo` in `foo.bar` or `foo()` will not
+ * call functions that require component context to exist
+ * @param {import('estree').Expression | import('estree').Super} expression
+ * @param {Scope} scope
+ */
+function is_safe_identifier(expression, scope) {
+	let node = expression;
+	while (node.type === 'MemberExpression') node = node.object;
+
+	if (node.type !== 'Identifier') return false;
+
+	const binding = scope.get(node.name);
+	if (!binding) return true;
+
+	if (binding.kind === 'store_sub') {
+		return is_safe_identifier({ name: node.name.slice(1), type: 'Identifier' }, scope);
+	}
+
+	return (
+		binding.declaration_kind !== 'import' &&
+		binding.kind !== 'prop' &&
+		binding.kind !== 'bindable_prop' &&
+		binding.kind !== 'rest_prop'
+	);
+}
 
 /** @type {import('./types').Visitors} */
 const common_visitors = {
@@ -1209,6 +1242,8 @@ const common_visitors = {
 		}
 
 		const callee = node.callee;
+		const rune = get_rune(node, context.state.scope);
+
 		if (callee.type === 'Identifier') {
 			const binding = context.state.scope.get(callee.name);
 
@@ -1216,7 +1251,7 @@ const common_visitors = {
 				binding.is_called = true;
 			}
 
-			if (get_rune(node, context.state.scope) === '$derived') {
+			if (rune === '$derived') {
 				// special case — `$derived(foo)` is treated as `$derived(() => foo)`
 				// for the purposes of identifying static state references
 				context.next({
@@ -1228,11 +1263,25 @@ const common_visitors = {
 			}
 		}
 
+		if (rune === '$effect' || rune === '$effect.pre') {
+			// `$effect` needs context because Svelte needs to know whether it should re-run
+			// effects that invalidate themselves, and that's determined by whether we're in runes mode
+			context.state.analysis.needs_context = true;
+		} else if (rune === null) {
+			if (!is_safe_identifier(callee, context.state.scope)) {
+				context.state.analysis.needs_context = true;
+			}
+		}
+
 		context.next();
 	},
 	MemberExpression(node, context) {
 		if (context.state.expression) {
 			context.state.expression.metadata.dynamic = true;
+		}
+
+		if (!is_safe_identifier(node, context.state.scope)) {
+			context.state.analysis.needs_context = true;
 		}
 
 		context.next();

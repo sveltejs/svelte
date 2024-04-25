@@ -1,9 +1,7 @@
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 
-export default function Function_prop_no_getter($$anchor, $$props) {
-	$.push($$props, true);
-
+export default function Function_prop_no_getter($$anchor) {
 	let count = $.source(0);
 
 	function onmouseup() {
@@ -27,5 +25,4 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 	});
 
 	$.append($$anchor, fragment);
-	$.pop();
 }
