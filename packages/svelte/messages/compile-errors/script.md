@@ -48,7 +48,7 @@
 
 ## legacy_export_invalid
 
-> Cannot use `export let` in runes mode — use $props instead
+> Cannot use `export let` in runes mode — use `$props()` instead
 
 ## legacy_props_invalid
 
