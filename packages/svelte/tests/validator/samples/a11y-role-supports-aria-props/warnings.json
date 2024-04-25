@@ -14,7 +14,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 18,
+			"column": 25,
 			"line": 3
 		},
 		"message": "The attribute 'aria-pressed' is not supported by the role 'link'. This role is implicit on the element `<area>`",
@@ -38,7 +38,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 17,
+			"column": 24,
 			"line": 5
 		},
 		"message": "The attribute 'aria-modal' is not supported by the role 'complementary'. This role is implicit on the element `<aside>`",
@@ -50,7 +50,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 18,
+			"column": 25,
 			"line": 6
 		},
 		"message": "The attribute 'aria-invalid' is not supported by the role 'document'. This role is implicit on the element `<body>`",
@@ -158,7 +158,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 19,
+			"column": 26,
 			"line": 15
 		},
 		"message": "The attribute 'aria-disabled' is not supported by the role 'form'. This role is implicit on the element `<form>`",
@@ -170,7 +170,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 17,
+			"column": 24,
 			"line": 16
 		},
 		"message": "The attribute 'aria-selected' is not supported by the role 'heading'. This role is implicit on the element `<h1>`",
@@ -182,7 +182,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 17,
+			"column": 24,
 			"line": 17
 		},
 		"message": "The attribute 'aria-selected' is not supported by the role 'heading'. This role is implicit on the element `<h2>`",
@@ -194,7 +194,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 17,
+			"column": 24,
 			"line": 18
 		},
 		"message": "The attribute 'aria-expanded' is not supported by the role 'heading'. This role is implicit on the element `<h3>`",
@@ -218,7 +218,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 17,
+			"column": 24,
 			"line": 20
 		},
 		"message": "The attribute 'aria-readonly' is not supported by the role 'heading'. This role is implicit on the element `<h5>`",
@@ -242,7 +242,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 17,
+			"column": 24,
 			"line": 22
 		},
 		"message": "The attribute 'aria-required' is not supported by the role 'separator'. This role is implicit on the element `<hr>`",
@@ -266,7 +266,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 17,
+			"column": 24,
 			"line": 24
 		},
 		"message": "The attribute 'aria-required' is not supported by the role 'listitem'. This role is implicit on the element `<li>`",
@@ -314,7 +314,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 22,
+			"column": 23,
 			"line": 28
 		},
 		"message": "The attribute 'aria-valuetext' is not supported by the role 'navigation'. This role is implicit on the element `<nav>`",
@@ -338,7 +338,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 20,
+			"column": 27,
 			"line": 30
 		},
 		"message": "The attribute 'aria-invalid' is not supported by the role 'option'. This role is implicit on the element `<option>`",
@@ -362,7 +362,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 22,
+			"column": 29,
 			"line": 32
 		},
 		"message": "The attribute 'aria-multiline' is not supported by the role 'status'. This role is implicit on the element `<output>`",
@@ -386,7 +386,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 21,
+			"column": 28,
 			"line": 34
 		},
 		"message": "The attribute 'aria-invalid' is not supported by the role 'region'. This role is implicit on the element `<section>`",
@@ -434,7 +434,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 20,
+			"column": 27,
 			"line": 38
 		},
 		"message": "The attribute 'aria-required' is not supported by the role 'rowgroup'. This role is implicit on the element `<tfoot>`",
@@ -458,7 +458,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 16,
+			"column": 23,
 			"line": 40
 		},
 		"message": "The attribute 'aria-pressed' is not supported by the role 'row'. This role is implicit on the element `<tr>`",
@@ -470,7 +470,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 24,
+			"column": 31,
 			"line": 41
 		},
 		"message": "The attribute 'aria-multiselectable' is not supported by the role 'list'. This role is implicit on the element `<ul>`",
@@ -506,7 +506,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 37,
+			"column": 44,
 			"line": 45
 		},
 		"message": "The attribute 'aria-required' is not supported by the role 'application'",
@@ -518,7 +518,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 34,
+			"column": 41,
 			"line": 46
 		},
 		"message": "The attribute 'aria-multiline' is not supported by the role 'article'",
@@ -542,7 +542,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 40,
+			"column": 41,
 			"line": 48
 		},
 		"message": "The attribute 'aria-valuetext' is not supported by the role 'blockquote'",
@@ -578,7 +578,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 31,
+			"column": 38,
 			"line": 51
 		},
 		"message": "The attribute 'aria-multiline' is not supported by the role 'cell'",
@@ -590,7 +590,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 35,
+			"column": 42,
 			"line": 52
 		},
 		"message": "The attribute 'aria-multiline' is not supported by the role 'checkbox'",
@@ -602,7 +602,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 29,
+			"column": 36,
 			"line": 53
 		},
 		"message": "The attribute 'aria-invalid' is not supported by the role 'code'",
@@ -626,7 +626,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 41,
+			"column": 48,
 			"line": 55
 		},
 		"message": "The attribute 'aria-multiselectable' is not supported by the role 'combobox'",
@@ -638,7 +638,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 39,
+			"column": 46,
 			"line": 56
 		},
 		"message": "The attribute 'aria-readonly' is not supported by the role 'complementary'",
@@ -650,7 +650,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 41,
+			"column": 42,
 			"line": 57
 		},
 		"message": "The attribute 'aria-valuetext' is not supported by the role 'contentinfo'",
@@ -662,7 +662,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 37,
+			"column": 44,
 			"line": 58
 		},
 		"message": "The attribute 'aria-multiline' is not supported by the role 'definition'",
@@ -674,7 +674,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 34,
+			"column": 41,
 			"line": 59
 		},
 		"message": "The attribute 'aria-expanded' is not supported by the role 'deletion'",
@@ -686,7 +686,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 33,
+			"column": 40,
 			"line": 60
 		},
 		"message": "The attribute 'aria-multiline' is not supported by the role 'dialog'",
@@ -758,7 +758,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 30,
+			"column": 37,
 			"line": 66
 		},
 		"message": "The attribute 'aria-readonly' is not supported by the role 'form'",
@@ -782,7 +782,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 29,
+			"column": 36,
 			"line": 68
 		},
 		"message": "The attribute 'aria-checked' is not supported by the role 'grid'",
@@ -842,7 +842,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 31,
+			"column": 38,
 			"line": 73
 		},
 		"message": "The attribute 'aria-multiline' is not supported by the role 'link'",
@@ -854,7 +854,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 30,
+			"column": 37,
 			"line": 74
 		},
 		"message": "The attribute 'aria-selected' is not supported by the role 'list'",
@@ -866,7 +866,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 33,
+			"column": 40,
 			"line": 75
 		},
 		"message": "The attribute 'aria-haspopup' is not supported by the role 'listbox'",
@@ -890,7 +890,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 29,
+			"column": 36,
 			"line": 77
 		},
 		"message": "The attribute 'aria-required' is not supported by the role 'log'",
@@ -926,7 +926,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 31,
+			"column": 38,
 			"line": 80
 		},
 		"message": "The attribute 'aria-multiline' is not supported by the role 'math'",
@@ -938,7 +938,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 29,
+			"column": 36,
 			"line": 81
 		},
 		"message": "The attribute 'aria-checked' is not supported by the role 'menu'",
@@ -962,7 +962,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 33,
+			"column": 40,
 			"line": 83
 		},
 		"message": "The attribute 'aria-checked' is not supported by the role 'menuitem'",
@@ -974,7 +974,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 41,
+			"column": 48,
 			"line": 84
 		},
 		"message": "The attribute 'aria-pressed' is not supported by the role 'menuitemcheckbox'",
@@ -998,7 +998,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 49,
+			"column": 56,
 			"line": 86
 		},
 		"message": "The attribute 'aria-haspopup' is not supported by the role 'meter'",
@@ -1010,7 +1010,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 36,
+			"column": 43,
 			"line": 87
 		},
 		"message": "The attribute 'aria-expanded' is not supported by the role 'navigation'",
@@ -1022,7 +1022,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 36,
+			"column": 37,
 			"line": 88
 		},
 		"message": "The attribute 'aria-placeholder' is not supported by the role 'none'",
@@ -1034,7 +1034,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 27,
+			"column": 34,
 			"line": 89
 		},
 		"message": "The attribute 'aria-modal' is not supported by the role 'note'",
@@ -1046,12 +1046,12 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 50,
+			"column": 57,
 			"line": 90
 		},
 		"message": "The attribute 'aria-valuemax' is not supported by the role 'option'",
 		"start": {
-			"column": 33,
+			"column": 40,
 			"line": 90
 		}
 	},
@@ -1070,7 +1070,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 38,
+			"column": 45,
 			"line": 92
 		},
 		"message": "The attribute 'aria-disabled' is not supported by the role 'presentation'",
@@ -1082,7 +1082,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 37,
+			"column": 44,
 			"line": 93
 		},
 		"message": "The attribute 'aria-expanded' is not supported by the role 'progressbar'",
@@ -1094,12 +1094,12 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 48,
+			"column": 55,
 			"line": 94
 		},
 		"message": "The attribute 'aria-rowindex' is not supported by the role 'radio'",
 		"start": {
-			"column": 31,
+			"column": 38,
 			"line": 94
 		}
 	},
@@ -1130,7 +1130,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 29,
+			"column": 36,
 			"line": 97
 		},
 		"message": "The attribute 'aria-required' is not supported by the role 'row'",
@@ -1142,7 +1142,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 34,
+			"column": 41,
 			"line": 98
 		},
 		"message": "The attribute 'aria-expanded' is not supported by the role 'rowgroup'",
@@ -1214,7 +1214,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 56,
+			"column": 57,
 			"line": 104
 		},
 		"message": "The attribute 'aria-placeholder' is not supported by the role 'slider'",
@@ -1286,19 +1286,19 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 49,
+			"column": 56,
 			"line": 110
 		},
 		"message": "The attribute 'aria-valuenow' is not supported by the role 'switch'",
 		"start": {
-			"column": 32,
+			"column": 39,
 			"line": 110
 		}
 	},
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 29,
+			"column": 36,
 			"line": 111
 		},
 		"message": "The attribute 'aria-required' is not supported by the role 'tab'",
@@ -1310,7 +1310,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 28,
+			"column": 35,
 			"line": 112
 		},
 		"message": "The attribute 'aria-modal' is not supported by the role 'table'",
@@ -1334,7 +1334,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 41,
+			"column": 48,
 			"line": 114
 		},
 		"message": "The attribute 'aria-multiselectable' is not supported by the role 'tabpanel'",
@@ -1370,7 +1370,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 30,
+			"column": 37,
 			"line": 117
 		},
 		"message": "The attribute 'aria-selected' is not supported by the role 'time'",
@@ -1394,7 +1394,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 37,
+			"column": 38,
 			"line": 119
 		},
 		"message": "The attribute 'aria-valuetext' is not supported by the role 'toolbar'",
@@ -1406,7 +1406,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 34,
+			"column": 41,
 			"line": 120
 		},
 		"message": "The attribute 'aria-multiline' is not supported by the role 'tooltip'",
@@ -1418,7 +1418,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 30,
+			"column": 37,
 			"line": 121
 		},
 		"message": "The attribute 'aria-expanded' is not supported by the role 'tree'",
@@ -1442,12 +1442,12 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 61,
+			"column": 68,
 			"line": 123
 		},
 		"message": "The attribute 'aria-activedescendant' is not supported by the role 'treeitem'",
 		"start": {
-			"column": 35,
+			"column": 42,
 			"line": 123
 		}
 	},
@@ -1478,7 +1478,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 36,
+			"column": 43,
 			"line": 126
 		},
 		"message": "The attribute 'aria-modal' is not supported by the role 'doc-afterword'",
@@ -1538,7 +1538,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 38,
+			"column": 45,
 			"line": 131
 		},
 		"message": "The attribute 'aria-checked' is not supported by the role 'doc-biblioref'",
@@ -1550,7 +1550,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 37,
+			"column": 44,
 			"line": 132
 		},
 		"message": "The attribute 'aria-required' is not supported by the role 'doc-chapter'",
@@ -1586,7 +1586,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 32,
+			"column": 39,
 			"line": 135
 		},
 		"message": "The attribute 'aria-modal' is not supported by the role 'doc-cover'",
@@ -1598,7 +1598,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 36,
+			"column": 43,
 			"line": 136
 		},
 		"message": "The attribute 'aria-selected' is not supported by the role 'doc-credit'",
@@ -1634,7 +1634,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 36,
+			"column": 43,
 			"line": 139
 		},
 		"message": "The attribute 'aria-checked' is not supported by the role 'doc-endnote'",
@@ -1658,7 +1658,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 39,
+			"column": 46,
 			"line": 141
 		},
 		"message": "The attribute 'aria-multiline' is not supported by the role 'doc-epigraph'",
@@ -1694,7 +1694,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 44,
+			"column": 51,
 			"line": 144
 		},
 		"message": "The attribute 'aria-multiselectable' is not supported by the role 'doc-example'",
@@ -1730,7 +1730,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 42,
+			"column": 43,
 			"line": 147
 		},
 		"message": "The attribute 'aria-valuetext' is not supported by the role 'doc-glossary'",
@@ -1742,7 +1742,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 44,
+			"column": 45,
 			"line": 148
 		},
 		"message": "The attribute 'aria-placeholder' is not supported by the role 'doc-glossref'",
@@ -1766,7 +1766,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 41,
+			"column": 48,
 			"line": 150
 		},
 		"message": "The attribute 'aria-pressed' is not supported by the role 'doc-introduction'",
@@ -1790,7 +1790,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 36,
+			"column": 43,
 			"line": 152
 		},
 		"message": "The attribute 'aria-selected' is not supported by the role 'doc-notice'",
@@ -1814,7 +1814,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 35,
+			"column": 42,
 			"line": 154
 		},
 		"message": "The attribute 'aria-modal' is not supported by the role 'doc-pagelist'",
@@ -1850,7 +1850,7 @@
 	{
 		"code": "a11y_role_supports_aria_props",
 		"end": {
-			"column": 38,
+			"column": 45,
 			"line": 157
 		},
 		"message": "The attribute 'aria-required' is not supported by the role 'doc-prologue'",
@@ -1934,7 +1934,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 30,
+			"column": 37,
 			"line": 167
 		},
 		"message": "The attribute 'aria-pressed' is not supported by the role 'textbox'. This role is implicit on the element `<input>`",
@@ -1958,7 +1958,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 32,
+			"column": 39,
 			"line": 169
 		},
 		"message": "The attribute 'aria-pressed' is not supported by the role 'textbox'. This role is implicit on the element `<input>`",
@@ -2018,7 +2018,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 44,
+			"column": 51,
 			"line": 174
 		},
 		"message": "The attribute 'aria-modal' is not supported by the role 'combobox'. This role is implicit on the element `<input>`",
@@ -2054,7 +2054,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 30,
+			"column": 37,
 			"line": 177
 		},
 		"message": "The attribute 'aria-modal' is not supported by the role 'button'. This role is implicit on the element `<input>`",
@@ -2102,7 +2102,7 @@
 	{
 		"code": "a11y_role_supports_aria_props_implicit",
 		"end": {
-			"column": 32,
+			"column": 39,
 			"line": 181
 		},
 		"message": "The attribute 'aria-checked' is not supported by the role 'slider'. This role is implicit on the element `<input>`",
@@ -2145,6 +2145,18 @@
 		"start": {
 			"column": 23,
 			"line": 184
+		}
+	},
+	{
+		"code": "a11y_incorrect_aria_attribute_type_integer",
+		"end": {
+			"column": 33,
+			"line": 256
+		},
+		"message": "The value of 'aria-level' must be an integer",
+		"start": {
+			"column": 20,
+			"line": 256
 		}
 	}
 ]

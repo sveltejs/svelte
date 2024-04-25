@@ -57,7 +57,7 @@
 <input on:click={noop} type="hidden" />
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div on:click={noop} aria-hidden></div>
+<div on:click={noop} aria-hidden="true"></div>
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div on:click={noop} aria-hidden="true"></div>
 <!-- svelte-ignore a11y_no_static_element_interactions -->

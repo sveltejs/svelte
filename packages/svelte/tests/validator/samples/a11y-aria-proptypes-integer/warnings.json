@@ -27,11 +27,11 @@
 		"code": "a11y_incorrect_aria_attribute_type_integer",
 		"message": "The value of 'aria-level' must be an integer",
 		"start": {
-			"line": 5,
+			"line": 4,
 			"column": 5
 		},
 		"end": {
-			"line": 5,
+			"line": 4,
 			"column": 15
 		}
 	}
