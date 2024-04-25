@@ -60,7 +60,7 @@ function compile({ id, source, options, return_ast }) {
 				filename: options.filename,
 				generate: options.generate,
 				dev: options.dev,
-				discloseVersion: false
+				discloseVersion: false // less visual noise in the output tab
 			});
 
 			const { js, css, warnings, metadata } = compiled;
