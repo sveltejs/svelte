@@ -5,7 +5,7 @@
 			"column": 38,
 			"line": 2
 		},
-		"message": "<a> cannot have role 'article'",
+		"message": "`<a>` cannot have role 'article'",
 		"start": {
 			"column": 0,
 			"line": 2
@@ -17,7 +17,7 @@
 			"column": 37,
 			"line": 3
 		},
-		"message": "<a> cannot have role 'banner'",
+		"message": "`<a>` cannot have role 'banner'",
 		"start": {
 			"column": 0,
 			"line": 3
@@ -29,7 +29,7 @@
 			"column": 44,
 			"line": 4
 		},
-		"message": "<a> cannot have role 'complementary'",
+		"message": "`<a>` cannot have role 'complementary'",
 		"start": {
 			"column": 0,
 			"line": 4
@@ -41,7 +41,7 @@
 			"column": 34,
 			"line": 5
 		},
-		"message": "<a> cannot have role 'img'",
+		"message": "`<a>` cannot have role 'img'",
 		"start": {
 			"column": 0,
 			"line": 5
@@ -53,7 +53,7 @@
 			"column": 39,
 			"line": 6
 		},
-		"message": "<a> cannot have role 'listitem'",
+		"message": "`<a>` cannot have role 'listitem'",
 		"start": {
 			"column": 0,
 			"line": 6
@@ -65,7 +65,7 @@
 			"column": 35,
 			"line": 7
 		},
-		"message": "<a> cannot have role 'main'",
+		"message": "`<a>` cannot have role 'main'",
 		"start": {
 			"column": 0,
 			"line": 7
@@ -77,7 +77,7 @@
 			"column": 37,
 			"line": 8
 		},
-		"message": "<a> cannot have role 'region'",
+		"message": "`<a>` cannot have role 'region'",
 		"start": {
 			"column": 0,
 			"line": 8
@@ -89,7 +89,7 @@
 			"column": 38,
 			"line": 9
 		},
-		"message": "<a> cannot have role 'tooltip'",
+		"message": "`<a>` cannot have role 'tooltip'",
 		"start": {
 			"column": 0,
 			"line": 9
@@ -101,7 +101,7 @@
 			"column": 38,
 			"line": 13
 		},
-		"message": "<button> cannot have role 'article'",
+		"message": "`<button>` cannot have role 'article'",
 		"start": {
 			"column": 0,
 			"line": 13
@@ -113,7 +113,7 @@
 			"column": 37,
 			"line": 14
 		},
-		"message": "<button> cannot have role 'banner'",
+		"message": "`<button>` cannot have role 'banner'",
 		"start": {
 			"column": 0,
 			"line": 14
@@ -125,7 +125,7 @@
 			"column": 44,
 			"line": 15
 		},
-		"message": "<button> cannot have role 'complementary'",
+		"message": "`<button>` cannot have role 'complementary'",
 		"start": {
 			"column": 0,
 			"line": 15
@@ -137,7 +137,7 @@
 			"column": 34,
 			"line": 16
 		},
-		"message": "<button> cannot have role 'img'",
+		"message": "`<button>` cannot have role 'img'",
 		"start": {
 			"column": 0,
 			"line": 16
@@ -149,7 +149,7 @@
 			"column": 39,
 			"line": 17
 		},
-		"message": "<button> cannot have role 'listitem'",
+		"message": "`<button>` cannot have role 'listitem'",
 		"start": {
 			"column": 0,
 			"line": 17
@@ -161,7 +161,7 @@
 			"column": 35,
 			"line": 18
 		},
-		"message": "<button> cannot have role 'main'",
+		"message": "`<button>` cannot have role 'main'",
 		"start": {
 			"column": 0,
 			"line": 18
@@ -173,7 +173,7 @@
 			"column": 37,
 			"line": 19
 		},
-		"message": "<button> cannot have role 'region'",
+		"message": "`<button>` cannot have role 'region'",
 		"start": {
 			"column": 0,
 			"line": 19
@@ -185,7 +185,7 @@
 			"column": 38,
 			"line": 20
 		},
-		"message": "<button> cannot have role 'tooltip'",
+		"message": "`<button>` cannot have role 'tooltip'",
 		"start": {
 			"column": 0,
 			"line": 20
@@ -209,7 +209,7 @@
 			"column": 24,
 			"line": 24
 		},
-		"message": "<input> cannot have role 'article'",
+		"message": "`<input>` cannot have role 'article'",
 		"start": {
 			"column": 0,
 			"line": 24
@@ -221,7 +221,7 @@
 			"column": 23,
 			"line": 25
 		},
-		"message": "<input> cannot have role 'banner'",
+		"message": "`<input>` cannot have role 'banner'",
 		"start": {
 			"column": 0,
 			"line": 25
@@ -233,7 +233,7 @@
 			"column": 30,
 			"line": 26
 		},
-		"message": "<input> cannot have role 'complementary'",
+		"message": "`<input>` cannot have role 'complementary'",
 		"start": {
 			"column": 0,
 			"line": 26
@@ -245,7 +245,7 @@
 			"column": 20,
 			"line": 27
 		},
-		"message": "<input> cannot have role 'img'",
+		"message": "`<input>` cannot have role 'img'",
 		"start": {
 			"column": 0,
 			"line": 27
@@ -257,7 +257,7 @@
 			"column": 25,
 			"line": 28
 		},
-		"message": "<input> cannot have role 'listitem'",
+		"message": "`<input>` cannot have role 'listitem'",
 		"start": {
 			"column": 0,
 			"line": 28
@@ -269,7 +269,7 @@
 			"column": 21,
 			"line": 29
 		},
-		"message": "<input> cannot have role 'main'",
+		"message": "`<input>` cannot have role 'main'",
 		"start": {
 			"column": 0,
 			"line": 29
@@ -281,7 +281,7 @@
 			"column": 23,
 			"line": 30
 		},
-		"message": "<input> cannot have role 'region'",
+		"message": "`<input>` cannot have role 'region'",
 		"start": {
 			"column": 0,
 			"line": 30
@@ -293,7 +293,7 @@
 			"column": 24,
 			"line": 31
 		},
-		"message": "<input> cannot have role 'tooltip'",
+		"message": "`<input>` cannot have role 'tooltip'",
 		"start": {
 			"column": 0,
 			"line": 31
@@ -305,7 +305,7 @@
 			"column": 32,
 			"line": 35
 		},
-		"message": "<select> cannot have role 'article'",
+		"message": "`<select>` cannot have role 'article'",
 		"start": {
 			"column": 0,
 			"line": 35
@@ -317,7 +317,7 @@
 			"column": 31,
 			"line": 36
 		},
-		"message": "<select> cannot have role 'banner'",
+		"message": "`<select>` cannot have role 'banner'",
 		"start": {
 			"column": 0,
 			"line": 36
@@ -329,7 +329,7 @@
 			"column": 38,
 			"line": 37
 		},
-		"message": "<select> cannot have role 'complementary'",
+		"message": "`<select>` cannot have role 'complementary'",
 		"start": {
 			"column": 0,
 			"line": 37
@@ -341,7 +341,7 @@
 			"column": 28,
 			"line": 38
 		},
-		"message": "<select> cannot have role 'img'",
+		"message": "`<select>` cannot have role 'img'",
 		"start": {
 			"column": 0,
 			"line": 38
@@ -353,7 +353,7 @@
 			"column": 33,
 			"line": 39
 		},
-		"message": "<select> cannot have role 'listitem'",
+		"message": "`<select>` cannot have role 'listitem'",
 		"start": {
 			"column": 0,
 			"line": 39
@@ -365,7 +365,7 @@
 			"column": 29,
 			"line": 40
 		},
-		"message": "<select> cannot have role 'main'",
+		"message": "`<select>` cannot have role 'main'",
 		"start": {
 			"column": 0,
 			"line": 40
@@ -377,7 +377,7 @@
 			"column": 31,
 			"line": 41
 		},
-		"message": "<select> cannot have role 'region'",
+		"message": "`<select>` cannot have role 'region'",
 		"start": {
 			"column": 0,
 			"line": 41
@@ -389,7 +389,7 @@
 			"column": 32,
 			"line": 42
 		},
-		"message": "<select> cannot have role 'tooltip'",
+		"message": "`<select>` cannot have role 'tooltip'",
 		"start": {
 			"column": 0,
 			"line": 42
@@ -401,7 +401,7 @@
 			"column": 36,
 			"line": 46
 		},
-		"message": "<textarea> cannot have role 'article'",
+		"message": "`<textarea>` cannot have role 'article'",
 		"start": {
 			"column": 0,
 			"line": 46
@@ -413,7 +413,7 @@
 			"column": 35,
 			"line": 47
 		},
-		"message": "<textarea> cannot have role 'banner'",
+		"message": "`<textarea>` cannot have role 'banner'",
 		"start": {
 			"column": 0,
 			"line": 47
@@ -425,7 +425,7 @@
 			"column": 42,
 			"line": 48
 		},
-		"message": "<textarea> cannot have role 'complementary'",
+		"message": "`<textarea>` cannot have role 'complementary'",
 		"start": {
 			"column": 0,
 			"line": 48
@@ -437,7 +437,7 @@
 			"column": 32,
 			"line": 49
 		},
-		"message": "<textarea> cannot have role 'img'",
+		"message": "`<textarea>` cannot have role 'img'",
 		"start": {
 			"column": 0,
 			"line": 49
@@ -449,7 +449,7 @@
 			"column": 37,
 			"line": 50
 		},
-		"message": "<textarea> cannot have role 'listitem'",
+		"message": "`<textarea>` cannot have role 'listitem'",
 		"start": {
 			"column": 0,
 			"line": 50
@@ -461,7 +461,7 @@
 			"column": 33,
 			"line": 51
 		},
-		"message": "<textarea> cannot have role 'main'",
+		"message": "`<textarea>` cannot have role 'main'",
 		"start": {
 			"column": 0,
 			"line": 51
@@ -473,7 +473,7 @@
 			"column": 35,
 			"line": 52
 		},
-		"message": "<textarea> cannot have role 'region'",
+		"message": "`<textarea>` cannot have role 'region'",
 		"start": {
 			"column": 0,
 			"line": 52
@@ -485,7 +485,7 @@
 			"column": 36,
 			"line": 53
 		},
-		"message": "<textarea> cannot have role 'tooltip'",
+		"message": "`<textarea>` cannot have role 'tooltip'",
 		"start": {
 			"column": 0,
 			"line": 53
@@ -641,7 +641,7 @@
 			"column": 37,
 			"line": 143
 		},
-		"message": "<menuitem> cannot have role 'listitem'",
+		"message": "`<menuitem>` cannot have role 'listitem'",
 		"start": {
 			"column": 0,
 			"line": 143
@@ -653,7 +653,7 @@
 			"column": 45,
 			"line": 144
 		},
-		"message": "<option> cannot have role 'listitem'",
+		"message": "`<option>` cannot have role 'listitem'",
 		"start": {
 			"column": 0,
 			"line": 144
@@ -665,7 +665,7 @@
 			"column": 45,
 			"line": 145
 		},
-		"message": "<select> cannot have role 'listitem'",
+		"message": "`<select>` cannot have role 'listitem'",
 		"start": {
 			"column": 0,
 			"line": 145
@@ -677,7 +677,7 @@
 			"column": 49,
 			"line": 146
 		},
-		"message": "<textarea> cannot have role 'listitem'",
+		"message": "`<textarea>` cannot have role 'listitem'",
 		"start": {
 			"column": 0,
 			"line": 146
@@ -689,7 +689,7 @@
 			"column": 25,
 			"line": 147
 		},
-		"message": "<tr> cannot have role 'listitem'",
+		"message": "`<tr>` cannot have role 'listitem'",
 		"start": {
 			"column": 0,
 			"line": 147
@@ -701,7 +701,7 @@
 			"column": 35,
 			"line": 148
 		},
-		"message": "<summary> cannot have role 'listitem'",
+		"message": "`<summary>` cannot have role 'listitem'",
 		"start": {
 			"column": 0,
 			"line": 148

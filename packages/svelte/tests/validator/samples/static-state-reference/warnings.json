@@ -1,6 +1,6 @@
 [
 	{
-		"code": "static_state_reference",
+		"code": "state_referenced_locally",
 		"message": "State referenced in its own scope will never update. Did you mean to reference it inside a closure?",
 		"start": {
 			"column": 13,
@@ -12,7 +12,7 @@
 		}
 	},
 	{
-		"code": "static_state_reference",
+		"code": "state_referenced_locally",
 		"message": "State referenced in its own scope will never update. Did you mean to reference it inside a closure?",
 		"start": {
 			"column": 13,

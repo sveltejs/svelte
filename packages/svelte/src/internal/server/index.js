@@ -11,6 +11,7 @@ import {
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import { validate_store } from '../shared/validate.js';
 
 /**
  * @typedef {{
@@ -444,16 +445,6 @@ export function store_get(store_values, store_name, store) {
 }
 
 /**
- * @param {any} store
- * @param {string} name
- */
-export function validate_store(store, name) {
-	if (store != null && typeof store.subscribe !== 'function') {
-		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
-	}
-}
-
-/**
  * Sets the new value of a store and returns that value.
  * @template V
  * @param {import('#shared').Store<V>} store
@@ -629,19 +620,6 @@ export function ensure_array_like(array_like_or_iterator) {
 	return array_like_or_iterator?.length !== undefined
 		? array_like_or_iterator
 		: Array.from(array_like_or_iterator);
-}
-
-/**
- * @param {number} timeout
- * @returns {() => void}
- * */
-export function loop_guard(timeout) {
-	const start = Date.now();
-	return () => {
-		if (Date.now() - start > timeout) {
-			throw new Error('Infinite loop detected');
-		}
-	};
 }
 
 /**

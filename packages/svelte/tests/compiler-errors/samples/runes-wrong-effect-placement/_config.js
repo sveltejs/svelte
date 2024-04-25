@@ -2,7 +2,7 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'invalid_effect_location',
+		code: 'effect_invalid_placement',
 		message: '`$effect()` can only be used as an expression statement'
 	}
 });

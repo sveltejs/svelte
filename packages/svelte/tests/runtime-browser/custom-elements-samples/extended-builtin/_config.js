@@ -4,7 +4,7 @@ const tick = () => Promise.resolve();
 export default test({
 	warnings: [
 		{
-			code: 'avoid_is',
+			code: 'attribute_avoid_is',
 			message: 'The "is" attribute is not supported cross-browser and should be avoided',
 			start: {
 				character: 109,

@@ -5,7 +5,7 @@
 			"column": 36,
 			"line": 16
 		},
-		"message": "Elements with attribute aria-activedescendant should have tabindex value",
+		"message": "An element with an aria-activedescendant attribute should have a tabindex value",
 		"start": {
 			"column": 5,
 			"line": 16

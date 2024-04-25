@@ -448,18 +448,17 @@ export function client_component(source, analysis, options) {
 		analysis.uses_slots ||
 		analysis.slot_names.size > 0;
 
-	const body = [
-		...state.hoisted,
-		...module.body,
-		b.function_declaration(
-			b.id(analysis.name),
-			should_inject_props ? [b.id('$$anchor'), b.id('$$props')] : [b.id('$$anchor')],
-			component_block
-		)
-	];
+	const body = [...state.hoisted, ...module.body];
+
+	const component = b.function_declaration(
+		b.id(analysis.name),
+		should_inject_props ? [b.id('$$anchor'), b.id('$$props')] : [b.id('$$anchor')],
+		component_block
+	);
 
 	if (options.hmr) {
 		body.push(
+			component,
 			b.if(
 				b.id('import.meta.hot'),
 				b.block([
@@ -477,11 +476,13 @@ export function client_component(source, analysis, options) {
 						)
 					)
 				])
-			)
-		);
-	}
+			),
 
-	body.push(b.export_default(b.id(analysis.name)));
+			b.export_default(b.id(analysis.name))
+		);
+	} else {
+		body.push(b.export_default(component));
+	}
 
 	if (options.dev) {
 		if (options.filename) {

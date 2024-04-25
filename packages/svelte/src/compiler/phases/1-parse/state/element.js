@@ -101,18 +101,18 @@ export default function tag(parser) {
 				['svelte:options', 'svelte:window', 'svelte:body', 'svelte:document'].includes(name) &&
 				/** @type {import('#compiler').ElementLike} */ (parent).fragment.nodes.length
 			) {
-				e.invalid_element_content(
+				e.svelte_meta_invalid_content(
 					/** @type {import('#compiler').ElementLike} */ (parent).fragment.nodes[0].start,
 					name
 				);
 			}
 		} else {
 			if (name in parser.meta_tags) {
-				e.duplicate_svelte_element(start, name);
+				e.svelte_meta_duplicate(start, name);
 			}
 
 			if (parent.type !== 'Root') {
-				e.invalid_svelte_element_placement(start, name);
+				e.svelte_meta_invalid_placement(start, name);
 			}
 
 			parser.meta_tags[name] = true;
@@ -164,7 +164,7 @@ export default function tag(parser) {
 
 	if (is_closing_tag) {
 		if (is_void(name)) {
-			e.invalid_void_content(start);
+			e.void_element_invalid_content(start);
 		}
 
 		parser.eat('>', true);
@@ -173,9 +173,9 @@ export default function tag(parser) {
 		while (/** @type {import('#compiler').RegularElement} */ (parent).name !== name) {
 			if (parent.type !== 'RegularElement') {
 				if (parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name) {
-					e.invalid_closing_tag_after_autoclose(start, name, parser.last_auto_closed_tag.reason);
+					e.element_invalid_closing_tag_autoclosed(start, name, parser.last_auto_closed_tag.reason);
 				} else {
-					e.invalid_closing_tag(start, name);
+					e.element_invalid_closing_tag(start, name);
 				}
 			}
 
@@ -216,7 +216,7 @@ export default function tag(parser) {
 	while ((attribute = read(parser))) {
 		if (attribute.type === 'Attribute' || attribute.type === 'BindDirective') {
 			if (unique_names.includes(attribute.name)) {
-				e.duplicate_attribute(attribute.start);
+				e.attribute_duplicate(attribute.start);
 				// <svelte:element bind:this this=..> is allowed
 			} else if (attribute.name !== 'this') {
 				unique_names.push(attribute.name);
@@ -233,7 +233,7 @@ export default function tag(parser) {
 			(attr) => attr.type === 'Attribute' && attr.name === 'this'
 		);
 		if (index === -1) {
-			e.missing_svelte_component_definition(start);
+			e.svelte_component_missing_this(start);
 		}
 
 		const definition = /** @type {import('#compiler').Attribute} */ (
@@ -244,7 +244,7 @@ export default function tag(parser) {
 			definition.value.length !== 1 ||
 			definition.value[0].type === 'Text'
 		) {
-			e.invalid_svelte_component_definition(definition.start);
+			e.svelte_component_invalid_this(definition.start);
 		}
 
 		element.expression = definition.value[0].expression;
@@ -256,14 +256,14 @@ export default function tag(parser) {
 			(attr) => attr.type === 'Attribute' && attr.name === 'this'
 		);
 		if (index === -1) {
-			e.missing_svelte_element_definition(start);
+			e.svelte_element_missing_this(start);
 		}
 
 		const definition = /** @type {import('#compiler').Attribute} */ (
 			element.attributes.splice(index, 1)[0]
 		);
 		if (definition.value === true || definition.value.length !== 1) {
-			e.invalid_svelte_element_definition(definition.start);
+			e.svelte_element_invalid_this(definition.start);
 		}
 		const chunk = definition.value[0];
 		element.tag =
@@ -302,17 +302,17 @@ export default function tag(parser) {
 			}
 
 			if (content.context === 'module') {
-				if (current.module) e.duplicate_script_element(start);
+				if (current.module) e.script_duplicate(start);
 				current.module = content;
 			} else {
-				if (current.instance) e.duplicate_script_element(start);
+				if (current.instance) e.script_duplicate(start);
 				current.instance = content;
 			}
 		} else {
 			const content = read_style(parser, start, element.attributes);
 			content.content.comment = prev_comment;
 
-			if (current.css) e.duplicate_style_element(start);
+			if (current.css) e.style_duplicate(start);
 			current.css = content;
 		}
 		return;
@@ -387,7 +387,7 @@ function read_tag_name(parser) {
 		}
 
 		if (!legal) {
-			e.invalid_self_placement(start);
+			e.svelte_self_invalid_placement(start);
 		}
 
 		return 'svelte:self';
@@ -404,11 +404,11 @@ function read_tag_name(parser) {
 
 	if (name.startsWith('svelte:')) {
 		const list = `${valid_meta_tags.slice(0, -1).join(', ')} or ${valid_meta_tags[valid_meta_tags.length - 1]}`;
-		e.invalid_svelte_tag(start, list);
+		e.svelte_meta_invalid_tag(start, list);
 	}
 
 	if (!valid_tag_name.test(name)) {
-		e.invalid_tag_name(start);
+		e.element_invalid_tag_name(start);
 	}
 
 	return name;
@@ -436,7 +436,7 @@ function read_static_attribute(parser) {
 		parser.allow_whitespace();
 		let raw = parser.match_regex(regex_attribute_value);
 		if (!raw) {
-			e.missing_attribute_value(parser.index);
+			e.expected_attribute_value(parser.index);
 		}
 
 		parser.index += raw.length;
@@ -500,7 +500,7 @@ function read_attribute(parser) {
 			const name = parser.read_identifier();
 
 			if (name === null) {
-				e.empty_attribute_shorthand(start);
+				e.attribute_empty_shorthand(start);
 			}
 
 			parser.allow_whitespace();
@@ -552,7 +552,7 @@ function read_attribute(parser) {
 		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
 
 		if (directive_name === '') {
-			e.empty_directive_name(start + colon_index + 1, type);
+			e.directive_missing_name({ start, end: start + colon_index + 1 }, name);
 		}
 
 		if (type === 'StyleDirective') {
@@ -577,7 +577,7 @@ function read_attribute(parser) {
 			const attribute_contains_text =
 				/** @type {any[]} */ (value).length > 1 || first_value.type === 'Text';
 			if (attribute_contains_text) {
-				e.invalid_directive_value(/** @type {number} */ (first_value.start));
+				e.directive_invalid_value(/** @type {number} */ (first_value.start));
 			} else {
 				expression = first_value.expression;
 			}
@@ -678,14 +678,14 @@ function read_attribute_value(parser) {
 			const pos = error.position?.[0];
 			if (pos !== undefined && parser.template.slice(pos - 1, pos + 1) === '/>') {
 				parser.index = pos;
-				e.unclosed_attribute_value(pos, quote_mark || '}');
+				e.expected_token(pos, quote_mark || '}');
 			}
 		}
 		throw error;
 	}
 
 	if (value.length === 0 && !quote_mark) {
-		e.missing_attribute_value(parser.index);
+		e.expected_attribute_value(parser.index);
 	}
 
 	if (quote_mark) parser.index += 1;
@@ -732,12 +732,12 @@ function read_sequence(parser, done, location) {
 				const index = parser.index - 1;
 				parser.eat('#');
 				const name = parser.read_until(/[^a-z]/);
-				e.invalid_block_placement(index, name, location);
+				e.block_invalid_placement(index, name, location);
 			} else if (parser.match('@')) {
 				const index = parser.index - 1;
 				parser.eat('@');
 				const name = parser.read_until(/[^a-z]/);
-				e.invalid_tag_placement(index, name, location);
+				e.tag_invalid_placement(index, name, location);
 			}
 
 			flush(parser.index - 1);

@@ -1,6 +1,6 @@
 [
 	{
-		"code": "a11y_unknown_role_suggestion",
+		"code": "a11y_unknown_role",
 		"message": "Unknown role 'toooltip'. Did you mean 'tooltip'?",
 		"start": {
 			"line": 6,
@@ -12,7 +12,7 @@
 		}
 	},
 	{
-		"code": "a11y_unknown_role_suggestion",
+		"code": "a11y_unknown_role",
 		"message": "Unknown role 'toooltip'. Did you mean 'tooltip'?",
 		"start": {
 			"line": 7,

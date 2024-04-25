@@ -1,6 +1,6 @@
 [
 	{
-		"code": "missing_contenteditable_attribute",
+		"code": "attribute_contenteditable_missing",
 		"message": "'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings",
 		"start": {
 			"line": 4,

@@ -1,9 +1,7 @@
-// index.svelte (Svelte VERSION)
-// Note: compiler output will change before 5.0 is released!
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 
-function Function_prop_no_getter($$anchor) {
+export default function Function_prop_no_getter($$anchor) {
 	let count = $.source(0);
 
 	function onmouseup() {
@@ -28,5 +26,3 @@ function Function_prop_no_getter($$anchor) {
 
 	$.append($$anchor, fragment);
 }
-
-export default Function_prop_no_getter;

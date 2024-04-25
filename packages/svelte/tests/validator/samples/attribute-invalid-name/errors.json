@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid_attribute_name",
+		"code": "attribute_invalid_name",
 		"message": "'}' is not a valid attribute name",
 		"start": {
 			"line": 1,

@@ -331,7 +331,7 @@ function next(parser) {
 
 	if (block.type === 'IfBlock') {
 		if (!parser.eat('else')) e.expected_token(start, '{:else} or {:else if}');
-		if (parser.eat('if')) e.invalid_elseif(start);
+		if (parser.eat('if')) e.block_invalid_elseif(start);
 
 		parser.allow_whitespace();
 
@@ -389,7 +389,7 @@ function next(parser) {
 	if (block.type === 'AwaitBlock') {
 		if (parser.eat('then')) {
 			if (block.then) {
-				e.duplicate_block_part(start, '{:then}');
+				e.block_duplicate_clause(start, '{:then}');
 			}
 
 			if (!parser.eat('}')) {
@@ -408,7 +408,7 @@ function next(parser) {
 
 		if (parser.eat('catch')) {
 			if (block.catch) {
-				e.duplicate_block_part(start, '{:catch}');
+				e.block_duplicate_clause(start, '{:catch}');
 			}
 
 			if (!parser.eat('}')) {
@@ -428,7 +428,7 @@ function next(parser) {
 		e.expected_token(start, '{:then ...} or {:catch ...}');
 	}
 
-	e.invalid_continuing_block_placement(start);
+	e.block_invalid_continuation_placement(start);
 }
 
 /** @param {import('../index.js').Parser} parser */
@@ -466,11 +466,11 @@ function close(parser) {
 
 		case 'RegularElement':
 			// TODO handle implicitly closed elements
-			e.unexpected_block_close(start);
+			e.block_unexpected_close(start);
 			break;
 
 		default:
-			e.unexpected_block_close(start);
+			e.block_unexpected_close(start);
 	}
 
 	parser.allow_whitespace();
@@ -522,7 +522,7 @@ function special(parser) {
 			identifiers.forEach(
 				/** @param {any} node */ (node) => {
 					if (node.type !== 'Identifier') {
-						e.invalid_debug(/** @type {number} */ (node.start));
+						e.debug_tag_invalid_arguments(/** @type {number} */ (node.start));
 					}
 				}
 			);
@@ -583,7 +583,7 @@ function special(parser) {
 				expression.expression.type !== 'CallExpression' ||
 				!expression.expression.optional)
 		) {
-			e.invalid_render_expression(expression);
+			e.render_tag_invalid_expression(expression);
 		}
 
 		parser.allow_whitespace();

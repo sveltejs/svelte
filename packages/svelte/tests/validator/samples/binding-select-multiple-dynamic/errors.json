@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid_multiple_attribute",
+		"code": "attribute_invalid_multiple",
 		"message": "'multiple' attribute must be static if select uses two-way binding",
 		"start": {
 			"line": 6,

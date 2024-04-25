@@ -5,6 +5,5 @@ export default test({
 		dev: true
 	},
 
-	error:
-		"Cannot have duplicate keys in a keyed each: Keys at index 0 and 3 with value '1' are duplicates"
+	error: 'each_key_duplicate\nKeyed each block has duplicate key `1` at indexes 0 and 3'
 });

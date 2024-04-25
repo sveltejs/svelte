@@ -1,5 +1,6 @@
 import { untrack } from './runtime.js';
 import { get_descriptor, is_array } from './utils.js';
+import * as e from './errors.js';
 
 /** regex of all html void element names */
 const void_element_names =
@@ -11,34 +12,26 @@ function is_void(tag) {
 }
 
 /**
- * @param {any} store
- * @param {string} name
- */
-export function validate_store(store, name) {
-	if (store != null && typeof store.subscribe !== 'function') {
-		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
-	}
-}
-
-/**
  * @param {() => any} component_fn
  * @returns {any}
  */
 export function validate_dynamic_component(component_fn) {
-	const error_message = 'this={...} of <svelte:component> should specify a Svelte component.';
 	try {
 		const instance = component_fn();
+
 		if (instance !== undefined && typeof instance !== 'object') {
-			throw new Error(error_message);
+			e.svelte_component_invalid_this_value();
 		}
+
 		return instance;
 	} catch (err) {
 		const { message } = /** @type {Error} */ (err);
+
 		if (typeof message === 'string' && message.indexOf('is not a function') !== -1) {
-			throw new Error(error_message);
-		} else {
-			throw err;
+			e.svelte_component_invalid_this_value();
 		}
+
+		throw err;
 	}
 }
 
@@ -59,27 +52,17 @@ export function validate_each_keys(collection, key_fn) {
 	for (let i = 0; i < length; i++) {
 		const key = key_fn(array[i], i);
 		if (keys.has(key)) {
-			throw new Error(
-				`Cannot have duplicate keys in a keyed each: Keys at index ${keys.get(
-					key
-				)} and ${i} with value '${array[i]}' are duplicates`
-			);
+			const a = String(keys.get(key));
+			const b = String(i);
+
+			/** @type {string | null} */
+			let k = String(array[i]);
+			if (k.startsWith('[object ')) k = null;
+
+			e.each_key_duplicate(a, b, k);
 		}
 		keys.set(key, i);
 	}
-}
-
-/**
- * @param {number} timeout
- * @returns {() => void}
- * */
-export function loop_guard(timeout) {
-	const start = Date.now();
-	return () => {
-		if (Date.now() - start > timeout) {
-			throw new Error('Infinite loop detected');
-		}
-	};
 }
 
 /**
@@ -95,17 +78,11 @@ export function validate_prop_bindings($$props, bindable, exports, component) {
 
 		if (setter) {
 			if (exports.includes(key)) {
-				throw new Error(
-					`Component ${component.filename} has an export named ${key} that a consumer component is trying to access using bind:${key}, which is disallowed. ` +
-						`Instead, use bind:this (e.g. <${name} bind:this={component} />) ` +
-						`and then access the property on the bound component instance (e.g. component.${key}).`
-				);
+				e.bind_invalid_export(component.filename, key, name);
 			}
+
 			if (!bindable.includes(key)) {
-				throw new Error(
-					`A component is binding to property ${key} of ${name}.svelte (i.e. <${name} bind:${key} />). This is disallowed because the property was not declared as bindable inside ${component.filename}. ` +
-						`To mark a property as bindable, use the $bindable() rune in ${name}.svelte like this: \`let { ${key} = $bindable() } = $props()\``
-				);
+				e.bind_not_bindable(key, component.filename, name);
 			}
 		}
 	}

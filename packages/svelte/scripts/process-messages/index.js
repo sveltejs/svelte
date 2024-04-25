@@ -4,6 +4,7 @@ import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import * as esrap from 'esrap';
 
+/** @type {Record<string, Record<string, { messages: string[], details: string | null }>>} */
 const messages = {};
 const seen = new Set();
 
@@ -17,6 +18,8 @@ for (const category of fs.readdirSync('messages')) {
 			.readFileSync(`messages/${category}/${file}`, 'utf-8')
 			.replace(/\r\n/g, '\n');
 
+		const sorted = [];
+
 		for (const match of markdown.matchAll(/## ([\w]+)\n\n([^]+?)(?=$|\n\n## )/g)) {
 			const [_, code, text] = match;
 
@@ -24,13 +27,30 @@ for (const category of fs.readdirSync('messages')) {
 				throw new Error(`Duplicate message code ${category}/${code}`);
 			}
 
+			sorted.push({ code, _ });
+
+			const sections = text.trim().split('\n\n');
+			let details = null;
+			if (!sections[sections.length - 1].startsWith('> ')) {
+				details = /** @type {string} */ (sections.pop());
+			}
+
+			if (sections.length === 0) {
+				throw new Error('No message text');
+			}
+
 			seen.add(code);
-			messages[category][code] = text
-				.trim()
-				.split('\n')
-				.map((line) => line.slice(2))
-				.join('\n');
+			messages[category][code] = {
+				messages: sections.map((section) => section.replace(/^> /gm, '')),
+				details
+			};
 		}
+
+		sorted.sort((a, b) => (a.code < b.code ? -1 : 1));
+		fs.writeFileSync(
+			`messages/${category}/${file}`,
+			sorted.map((x) => x._.trim()).join('\n\n') + '\n'
+		);
 	}
 }
 
@@ -102,13 +122,89 @@ function transform(name, dest) {
 	ast.body.splice(index, 1);
 
 	for (const code in category) {
-		const message = category[code];
+		const { messages } = category[code];
 		const vars = [];
-		for (const match of message.matchAll(/%(\w+)%/g)) {
-			const name = match[1];
-			if (!vars.includes(name)) {
-				vars.push(match[1]);
+
+		const group = messages.map((text, i) => {
+			for (const match of text.matchAll(/%(\w+)%/g)) {
+				const name = match[1];
+				if (!vars.includes(name)) {
+					vars.push(match[1]);
+				}
 			}
+
+			return {
+				text,
+				vars: vars.slice()
+			};
+		});
+
+		/** @type {import('estree').Expression} */
+		let message = { type: 'Literal', value: '' };
+		let prev_vars;
+
+		for (let i = 0; i < group.length; i += 1) {
+			const { text, vars } = group[i];
+
+			if (vars.length === 0) {
+				message = {
+					type: 'Literal',
+					value: text
+				};
+				continue;
+			}
+
+			const parts = text.split(/(%\w+%)/);
+
+			/** @type {import('estree').Expression[]} */
+			const expressions = [];
+
+			/** @type {import('estree').TemplateElement[]} */
+			const quasis = [];
+
+			for (let i = 0; i < parts.length; i += 1) {
+				const part = parts[i];
+				if (i % 2 === 0) {
+					const str = part.replace(/(`|\${)/g, '\\$1');
+					quasis.push({
+						type: 'TemplateElement',
+						value: { raw: str, cooked: str },
+						tail: i === parts.length - 1
+					});
+				} else {
+					expressions.push({
+						type: 'Identifier',
+						name: part.slice(1, -1)
+					});
+				}
+			}
+
+			/** @type {import('estree').Expression} */
+			const expression = {
+				type: 'TemplateLiteral',
+				expressions,
+				quasis
+			};
+
+			if (prev_vars) {
+				if (vars.length === prev_vars.length) {
+					throw new Error('Message overloads must have new parameters');
+				}
+
+				message = {
+					type: 'ConditionalExpression',
+					test: {
+						type: 'Identifier',
+						name: vars[prev_vars.length]
+					},
+					consequent: expression,
+					alternate: message
+				};
+			} else {
+				message = expression;
+			}
+
+			prev_vars = vars;
 		}
 
 		const clone = walk(/** @type {import('estree').Node} */ (template_node), null, {
@@ -120,14 +216,22 @@ function transform(name, dest) {
 					.split('\n')
 					.map((line) => {
 						if (line === ' * MESSAGE') {
-							return message
+							return messages[messages.length - 1]
 								.split('\n')
 								.map((line) => ` * ${line}`)
 								.join('\n');
 						}
 
 						if (line.includes('PARAMETER')) {
-							return vars.map((name) => ` * @param {string} ${name}`).join('\n');
+							return vars
+								.map((name, i) => {
+									const optional = i >= group[0].vars.length;
+
+									return optional
+										? ` * @param {string | undefined | null} [${name}]`
+										: ` * @param {string} ${name}`;
+								})
+								.join('\n');
 						}
 
 						return line;
@@ -171,44 +275,7 @@ function transform(name, dest) {
 			},
 			Identifier(node) {
 				if (node.name !== 'MESSAGE') return;
-
-				if (/%\w+%/.test(message)) {
-					const parts = message.split(/(%\w+%)/);
-
-					/** @type {import('estree').Expression[]} */
-					const expressions = [];
-
-					/** @type {import('estree').TemplateElement[]} */
-					const quasis = [];
-
-					for (let i = 0; i < parts.length; i += 1) {
-						const part = parts[i];
-						if (i % 2 === 0) {
-							const str = part.replace(/(`|\${)/g, '\\$1');
-							quasis.push({
-								type: 'TemplateElement',
-								value: { raw: str, cooked: str },
-								tail: i === parts.length - 1
-							});
-						} else {
-							expressions.push({
-								type: 'Identifier',
-								name: part.slice(1, -1)
-							});
-						}
-					}
-
-					return {
-						type: 'TemplateLiteral',
-						expressions,
-						quasis
-					};
-				}
-
-				return {
-					type: 'Literal',
-					value: message
-				};
+				return message;
 			}
 		});
 
@@ -232,4 +299,6 @@ transform('compile-warnings', 'src/compiler/warnings.js');
 
 transform('client-warnings', 'src/internal/client/warnings.js');
 transform('client-errors', 'src/internal/client/errors.js');
+transform('server-errors', 'src/internal/server/errors.js');
+transform('shared-errors', 'src/internal/shared/errors.js');
 transform('shared-warnings', 'src/internal/shared/warnings.js');

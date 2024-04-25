@@ -22,18 +22,18 @@ export default function read_options(node) {
 
 	for (const attribute of node.attributes) {
 		if (attribute.type !== 'Attribute') {
-			e.invalid_svelte_option_attribute(attribute);
+			e.svelte_options_invalid_attribute(attribute);
 		}
 
 		const { name } = attribute;
 
 		switch (name) {
 			case 'runes': {
-				component_options.runes = get_boolean_value(attribute, e.invalid_svelte_option_runes);
+				component_options.runes = get_boolean_value(attribute);
 				break;
 			}
 			case 'tag': {
-				e.tag_option_deprecated(attribute);
+				e.svelte_options_deprecated_tag(attribute);
 				break; // eslint doesn't know this is unnecessary
 			}
 			case 'customElement': {
@@ -42,9 +42,9 @@ export default function read_options(node) {
 
 				const { value } = attribute;
 				if (value === true) {
-					e.invalid_svelte_option_customElement(attribute);
+					e.svelte_options_invalid_customelement(attribute);
 				} else if (value[0].type === 'Text') {
-					const tag = get_static_value(attribute, () => e.invalid_tag_property(attribute));
+					const tag = get_static_value(attribute);
 					validate_tag(attribute, tag);
 					ce.tag = tag;
 					component_options.customElement = ce;
@@ -55,7 +55,7 @@ export default function read_options(node) {
 					if (value[0].expression.type === 'Literal' && value[0].expression.value === null) {
 						break;
 					}
-					e.invalid_svelte_option_customElement(attribute);
+					e.svelte_options_invalid_customelement(attribute);
 				}
 
 				/** @type {Array<[string, any]>} */
@@ -66,7 +66,7 @@ export default function read_options(node) {
 						property.computed ||
 						property.key.type !== 'Identifier'
 					) {
-						e.invalid_svelte_option_customElement(attribute);
+						e.svelte_options_invalid_customelement(attribute);
 					}
 					properties.push([property.key.name, property.value]);
 				}
@@ -77,13 +77,13 @@ export default function read_options(node) {
 					validate_tag(tag, tag_value);
 					ce.tag = tag_value;
 				} else {
-					e.invalid_svelte_option_customElement(attribute);
+					e.svelte_options_invalid_customelement(attribute);
 				}
 
 				const props = properties.find(([name]) => name === 'props')?.[1];
 				if (props) {
 					if (props.type !== 'ObjectExpression') {
-						e.invalid_customElement_props_attribute(attribute);
+						e.svelte_options_invalid_customelement_props(attribute);
 					}
 					ce.props = {};
 					for (const property of /** @type {import('estree').ObjectExpression} */ (props)
@@ -94,7 +94,7 @@ export default function read_options(node) {
 							property.key.type !== 'Identifier' ||
 							property.value.type !== 'ObjectExpression'
 						) {
-							e.invalid_customElement_props_attribute(attribute);
+							e.svelte_options_invalid_customelement_props(attribute);
 						}
 						ce.props[property.key.name] = {};
 						for (const prop of property.value.properties) {
@@ -104,7 +104,7 @@ export default function read_options(node) {
 								prop.key.type !== 'Identifier' ||
 								prop.value.type !== 'Literal'
 							) {
-								e.invalid_customElement_props_attribute(attribute);
+								e.svelte_options_invalid_customelement_props(attribute);
 							}
 
 							if (prop.key.name === 'type') {
@@ -113,21 +113,21 @@ export default function read_options(node) {
 										/** @type {string} */ (prop.value.value)
 									) === -1
 								) {
-									e.invalid_customElement_props_attribute(attribute);
+									e.svelte_options_invalid_customelement_props(attribute);
 								}
 								ce.props[property.key.name].type = /** @type {any} */ (prop.value.value);
 							} else if (prop.key.name === 'reflect') {
 								if (typeof prop.value.value !== 'boolean') {
-									e.invalid_customElement_props_attribute(attribute);
+									e.svelte_options_invalid_customelement_props(attribute);
 								}
 								ce.props[property.key.name].reflect = prop.value.value;
 							} else if (prop.key.name === 'attribute') {
 								if (typeof prop.value.value !== 'string') {
-									e.invalid_customElement_props_attribute(attribute);
+									e.svelte_options_invalid_customelement_props(attribute);
 								}
 								ce.props[property.key.name].attribute = prop.value.value;
 							} else {
-								e.invalid_customElement_props_attribute(attribute);
+								e.svelte_options_invalid_customelement_props(attribute);
 							}
 						}
 					}
@@ -137,7 +137,7 @@ export default function read_options(node) {
 				if (shadow) {
 					const shadowdom = shadow?.value;
 					if (shadowdom !== 'open' && shadowdom !== 'none') {
-						e.invalid_customElement_shadow_attribute(shadow);
+						e.svelte_options_invalid_customelement_shadow(shadow);
 					}
 					ce.shadow = shadowdom;
 				}
@@ -151,46 +151,32 @@ export default function read_options(node) {
 				break;
 			}
 			case 'namespace': {
-				const value = get_static_value(attribute, () =>
-					e.invalid_svelte_option_namespace(attribute)
-				);
-				if (typeof value !== 'string') {
-					e.invalid_svelte_option_namespace(attribute);
-				}
+				const value = get_static_value(attribute);
 
 				if (value === namespace_svg) {
 					component_options.namespace = 'svg';
 				} else if (value === 'html' || value === 'svg' || value === 'foreign') {
 					component_options.namespace = value;
 				} else {
-					e.invalid_svelte_option_namespace(attribute);
+					e.svelte_options_invalid_attribute_value(attribute, `"html", "svg" or "foreign"`);
 				}
 
 				break;
 			}
 			case 'immutable': {
-				component_options.immutable = get_boolean_value(
-					attribute,
-					e.invalid_svelte_option_immutable
-				);
+				component_options.immutable = get_boolean_value(attribute);
 				break;
 			}
 			case 'preserveWhitespace': {
-				component_options.preserveWhitespace = get_boolean_value(
-					attribute,
-					e.invalid_svelte_option_preserveWhitespace
-				);
+				component_options.preserveWhitespace = get_boolean_value(attribute);
 				break;
 			}
 			case 'accessors': {
-				component_options.accessors = get_boolean_value(
-					attribute,
-					e.invalid_svelte_option_accessors
-				);
+				component_options.accessors = get_boolean_value(attribute);
 				break;
 			}
 			default:
-				e.unknown_svelte_option_attribute(attribute, name);
+				e.svelte_options_unknown_attribute(attribute, name);
 		}
 	}
 
@@ -199,45 +185,43 @@ export default function read_options(node) {
 
 /**
  * @param {any} attribute
- * @param {(attribute: any) => never} error
  */
-function get_static_value(attribute, error) {
+function get_static_value(attribute) {
 	const { value } = attribute;
 	const chunk = value[0];
 	if (!chunk) return true;
 	if (value.length > 1) {
-		error(attribute);
+		return null;
 	}
 	if (chunk.type === 'Text') return chunk.data;
 	if (chunk.expression.type !== 'Literal') {
-		error(attribute);
+		return null;
 	}
 	return chunk.expression.value;
 }
 
 /**
  * @param {any} attribute
- * @param {(attribute: any) => never} error
  */
-function get_boolean_value(attribute, error) {
-	const value = get_static_value(attribute, () => error(attribute));
+function get_boolean_value(attribute) {
+	const value = get_static_value(attribute);
 	if (typeof value !== 'boolean') {
-		error(attribute);
+		e.svelte_options_invalid_attribute_value(attribute, 'true or false');
 	}
 	return value;
 }
 
 /**
  * @param {any} attribute
- * @param {string} tag
+ * @param {string | null} tag
  * @returns {asserts tag is string}
  */
 function validate_tag(attribute, tag) {
-	if (typeof tag !== 'string' && tag !== null) {
-		e.invalid_tag_property(attribute);
+	if (typeof tag !== 'string') {
+		e.svelte_options_invalid_tagname(attribute);
 	}
 	if (tag && !regex_valid_tag_name.test(tag)) {
-		e.invalid_tag_property(attribute);
+		e.svelte_options_invalid_tagname(attribute);
 	}
 	// TODO do we still need this?
 	// if (tag && !component.compile_options.customElement) {

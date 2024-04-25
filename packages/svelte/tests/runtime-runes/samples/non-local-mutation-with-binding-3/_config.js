@@ -33,7 +33,7 @@ export default test({
 		assert.htmlEqual(target.innerHTML, `<button>clicks: 1</button><button>clicks: 1</button>`);
 
 		assert.deepEqual(warnings, [
-			'.../samples/non-local-mutation-with-binding-3/Counter.svelte mutated a value owned by .../samples/non-local-mutation-with-binding-3/main.svelte. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead.'
+			'.../samples/non-local-mutation-with-binding-3/Counter.svelte mutated a value owned by .../samples/non-local-mutation-with-binding-3/main.svelte. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead'
 		]);
 	}
 });
