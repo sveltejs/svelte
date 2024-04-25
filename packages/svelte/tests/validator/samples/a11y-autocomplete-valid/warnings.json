@@ -5,7 +5,7 @@
 			"column": 31,
 			"line": 25
 		},
-		"message": "The value 'true' is not supported by the attribute 'autocomplete' on element <input type=\"text\">",
+		"message": "'true' is an invalid value for 'autocomplete' on `<input type=\"text\">`",
 		"start": {
 			"column": 19,
 			"line": 25
@@ -17,7 +17,7 @@
 			"column": 43,
 			"line": 26
 		},
-		"message": "The value 'incorrect' is not supported by the attribute 'autocomplete' on element <input type=\"text\">",
+		"message": "'incorrect' is an invalid value for 'autocomplete' on `<input type=\"text\">`",
 		"start": {
 			"column": 19,
 			"line": 26
@@ -29,7 +29,7 @@
 			"column": 42,
 			"line": 27
 		},
-		"message": "The value 'webauthn' is not supported by the attribute 'autocomplete' on element <input type=\"text\">",
+		"message": "'webauthn' is an invalid value for 'autocomplete' on `<input type=\"text\">`",
 		"start": {
 			"column": 19,
 			"line": 27

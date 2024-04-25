@@ -13,7 +13,7 @@
 	},
 	{
 		"code": "a11y_missing_attribute",
-		"message": "<input type=\"image\"> element should have an alt, aria-label or aria-labelledby attribute",
+		"message": "`<input type=\"image\">` element should have an alt, aria-label or aria-labelledby attribute",
 		"start": {
 			"column": 0,
 			"line": 1

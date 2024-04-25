@@ -49,30 +49,30 @@ export function a11y_accesskey(node) {
 }
 
 /**
- * Elements with attribute aria-activedescendant should have tabindex value
+ * An element with an aria-activedescendant attribute should have a tabindex value
  * @param {null | NodeLike} node
  */
 export function a11y_aria_activedescendant_has_tabindex(node) {
-	w(node, "a11y_aria_activedescendant_has_tabindex", "Elements with attribute aria-activedescendant should have tabindex value");
+	w(node, "a11y_aria_activedescendant_has_tabindex", "An element with an aria-activedescendant attribute should have a tabindex value");
 }
 
 /**
- * <%name%> should not have aria-* attributes
+ * `<%name%>` should not have aria-* attributes
  * @param {null | NodeLike} node
  * @param {string} name
  */
 export function a11y_aria_attributes(node, name) {
-	w(node, "a11y_aria_attributes", `<${name}> should not have aria-* attributes`);
+	w(node, "a11y_aria_attributes", `\`<${name}>\` should not have aria-* attributes`);
 }
 
 /**
- * The value '%value%' is not supported by the attribute 'autocomplete' on element <input type="%type%">
+ * '%value%' is an invalid value for 'autocomplete' on `<input type="%type%">`
  * @param {null | NodeLike} node
  * @param {string} value
  * @param {string} type
  */
 export function a11y_autocomplete_valid(node, value, type) {
-	w(node, "a11y_autocomplete_valid", `The value '${value}' is not supported by the attribute 'autocomplete' on element <input type="${type}">`);
+	w(node, "a11y_autocomplete_valid", `'${value}' is an invalid value for 'autocomplete' on \`<input type="${type}">\``);
 }
 
 /**
@@ -84,20 +84,20 @@ export function a11y_autofocus(node) {
 }
 
 /**
- * Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
+ * Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
  * @param {null | NodeLike} node
  */
 export function a11y_click_events_have_key_events(node) {
-	w(node, "a11y_click_events_have_key_events", "Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type=\"button\"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.");
+	w(node, "a11y_click_events_have_key_events", "Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type=\"button\">` or `<a>` might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.");
 }
 
 /**
- * Avoid <%name%> elements
+ * Avoid `<%name%>` elements
  * @param {null | NodeLike} node
  * @param {string} name
  */
 export function a11y_distracting_elements(node, name) {
-	w(node, "a11y_distracting_elements", `Avoid <${name}> elements`);
+	w(node, "a11y_distracting_elements", `Avoid \`<${name}>\` elements`);
 }
 
 /**
@@ -117,20 +117,20 @@ export function a11y_figcaption_parent(node) {
 }
 
 /**
- * <%name%> element should not be hidden
+ * `<%name%>` element should not be hidden
  * @param {null | NodeLike} node
  * @param {string} name
  */
 export function a11y_hidden(node, name) {
-	w(node, "a11y_hidden", `<${name}> element should not be hidden`);
+	w(node, "a11y_hidden", `\`<${name}>\` element should not be hidden`);
 }
 
 /**
- * Screenreaders already announce <img> elements as an image.
+ * Screenreaders already announce `<img>` elements as an image.
  * @param {null | NodeLike} node
  */
 export function a11y_img_redundant_alt(node) {
-	w(node, "a11y_img_redundant_alt", "Screenreaders already announce <img> elements as an image.");
+	w(node, "a11y_img_redundant_alt", "Screenreaders already announce `<img>` elements as an image.");
 }
 
 /**
@@ -236,48 +236,48 @@ export function a11y_label_has_associated_control(node) {
 }
 
 /**
- * <video> elements must have a <track kind="captions">
+ * `<video>` elements must have a `<track kind="captions">`
  * @param {null | NodeLike} node
  */
 export function a11y_media_has_caption(node) {
-	w(node, "a11y_media_has_caption", "<video> elements must have a <track kind=\"captions\">");
+	w(node, "a11y_media_has_caption", "`<video>` elements must have a `<track kind=\"captions\">`");
 }
 
 /**
- * <%name%> should not have role attribute
+ * `<%name%>` should not have role attribute
  * @param {null | NodeLike} node
  * @param {string} name
  */
 export function a11y_misplaced_role(node, name) {
-	w(node, "a11y_misplaced_role", `<${name}> should not have role attribute`);
+	w(node, "a11y_misplaced_role", `\`<${name}>\` should not have role attribute`);
 }
 
 /**
- * The scope attribute should only be used with <th> elements
+ * The scope attribute should only be used with `<th>` elements
  * @param {null | NodeLike} node
  */
 export function a11y_misplaced_scope(node) {
-	w(node, "a11y_misplaced_scope", "The scope attribute should only be used with <th> elements");
+	w(node, "a11y_misplaced_scope", "The scope attribute should only be used with `<th>` elements");
 }
 
 /**
- * <%name%> element should have %article% %sequence% attribute
+ * `<%name%>` element should have %article% %sequence% attribute
  * @param {null | NodeLike} node
  * @param {string} name
  * @param {string} article
  * @param {string} sequence
  */
 export function a11y_missing_attribute(node, name, article, sequence) {
-	w(node, "a11y_missing_attribute", `<${name}> element should have ${article} ${sequence} attribute`);
+	w(node, "a11y_missing_attribute", `\`<${name}>\` element should have ${article} ${sequence} attribute`);
 }
 
 /**
- * <%name%> element should have child content
+ * `<%name%>` element should have child content
  * @param {null | NodeLike} node
  * @param {string} name
  */
 export function a11y_missing_content(node, name) {
-	w(node, "a11y_missing_content", `<${name}> element should have child content`);
+	w(node, "a11y_missing_content", `\`<${name}>\` element should have child content`);
 }
 
 /**
@@ -300,32 +300,32 @@ export function a11y_no_abstract_role(node, role) {
 }
 
 /**
- * <%element%> cannot have role '%role%'
+ * `<%element%>` cannot have role '%role%'
  * @param {null | NodeLike} node
  * @param {string} element
  * @param {string} role
  */
 export function a11y_no_interactive_element_to_noninteractive_role(node, element, role) {
-	w(node, "a11y_no_interactive_element_to_noninteractive_role", `<${element}> cannot have role '${role}'`);
+	w(node, "a11y_no_interactive_element_to_noninteractive_role", `\`<${element}>\` cannot have role '${role}'`);
 }
 
 /**
- * Non-interactive element <%element%> should not be assigned mouse or keyboard event listeners.
+ * Non-interactive element `<%element%>` should not be assigned mouse or keyboard event listeners.
  * @param {null | NodeLike} node
  * @param {string} element
  */
 export function a11y_no_noninteractive_element_interactions(node, element) {
-	w(node, "a11y_no_noninteractive_element_interactions", `Non-interactive element <${element}> should not be assigned mouse or keyboard event listeners.`);
+	w(node, "a11y_no_noninteractive_element_interactions", `Non-interactive element \`<${element}>\` should not be assigned mouse or keyboard event listeners.`);
 }
 
 /**
- * Non-interactive element <%element%> cannot have interactive role '%role%'
+ * Non-interactive element `<%element%>` cannot have interactive role '%role%'
  * @param {null | NodeLike} node
  * @param {string} element
  * @param {string} role
  */
 export function a11y_no_noninteractive_element_to_interactive_role(node, element, role) {
-	w(node, "a11y_no_noninteractive_element_to_interactive_role", `Non-interactive element <${element}> cannot have interactive role '${role}'`);
+	w(node, "a11y_no_noninteractive_element_to_interactive_role", `Non-interactive element \`<${element}>\` cannot have interactive role '${role}'`);
 }
 
 /**
@@ -346,13 +346,13 @@ export function a11y_no_redundant_roles(node, role) {
 }
 
 /**
- * <%element%> with a %handler% handler must have an ARIA role
+ * `<%element%>` with a %handler% handler must have an ARIA role
  * @param {null | NodeLike} node
  * @param {string} element
  * @param {string} handler
  */
 export function a11y_no_static_element_interactions(node, element, handler) {
-	w(node, "a11y_no_static_element_interactions", `<${element}> with a ${handler} handler must have an ARIA role`);
+	w(node, "a11y_no_static_element_interactions", `\`<${element}>\` with a ${handler} handler must have an ARIA role`);
 }
 
 /**
@@ -384,14 +384,14 @@ export function a11y_role_supports_aria_props(node, attribute, role) {
 }
 
 /**
- * The attribute '%attribute%' is not supported by the role '%role%'. This role is implicit on the element <%name%>
+ * The attribute '%attribute%' is not supported by the role '%role%'. This role is implicit on the element `<%name%>`
  * @param {null | NodeLike} node
  * @param {string} attribute
  * @param {string} role
  * @param {string} name
  */
 export function a11y_role_supports_aria_props_implicit(node, attribute, role, name) {
-	w(node, "a11y_role_supports_aria_props_implicit", `The attribute '${attribute}' is not supported by the role '${role}'. This role is implicit on the element <${name}>`);
+	w(node, "a11y_role_supports_aria_props_implicit", `The attribute '${attribute}' is not supported by the role '${role}'. This role is implicit on the element \`<${name}>\``);
 }
 
 /**
@@ -529,20 +529,20 @@ export function reactive_declaration_module_script(node) {
 }
 
 /**
+ * State referenced in its own scope will never update. Did you mean to reference it inside a closure?
+ * @param {null | NodeLike} node
+ */
+export function state_referenced_locally(node) {
+	w(node, "state_referenced_locally", "State referenced in its own scope will never update. Did you mean to reference it inside a closure?");
+}
+
+/**
  * It looks like you're using the `$%name%` rune, but there is a local binding called `%name%`. Referencing a local variable with a `$` prefix will create a store subscription. Please rename `%name%` to avoid the ambiguity
  * @param {null | NodeLike} node
  * @param {string} name
  */
 export function store_rune_conflict(node, name) {
 	w(node, "store_rune_conflict", `It looks like you're using the \`$${name}\` rune, but there is a local binding called \`${name}\`. Referencing a local variable with a \`$\` prefix will create a store subscription. Please rename \`${name}\` to avoid the ambiguity`);
-}
-
-/**
- * State referenced in its own scope will never update. Did you mean to reference it inside a closure?
- * @param {null | NodeLike} node
- */
-export function state_referenced_locally(node) {
-	w(node, "state_referenced_locally", "State referenced in its own scope will never update. Did you mean to reference it inside a closure?");
 }
 
 /**
@@ -590,6 +590,15 @@ export function attribute_invalid_property_name(node, wrong, right) {
 }
 
 /**
+ * The rest operator (...) will create a new object and binding '%name%' with the original object will not work
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function bind_invalid_each_rest(node, name) {
+	w(node, "bind_invalid_each_rest", `The rest operator (...) will create a new object and binding '${name}' with the original object will not work`);
+}
+
+/**
  * Empty block
  * @param {null | NodeLike} node
  */
@@ -630,13 +639,4 @@ export function event_directive_deprecated(node, name) {
  */
 export function slot_element_deprecated(node) {
 	w(node, "slot_element_deprecated", "Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead.");
-}
-
-/**
- * The rest operator (...) will create a new object and binding '%name%' with the original object will not work
- * @param {null | NodeLike} node
- * @param {string} name
- */
-export function bind_invalid_each_rest(node, name) {
-	w(node, "bind_invalid_each_rest", `The rest operator (...) will create a new object and binding '${name}' with the original object will not work`);
 }
