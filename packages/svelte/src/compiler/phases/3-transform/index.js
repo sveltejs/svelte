@@ -30,20 +30,6 @@ export function transform_component(analysis, source, options) {
 			? server_component(analysis, options)
 			: client_component(source, analysis, options);
 
-	const basename = (options.filename ?? 'Component').split(/[/\\]/).at(-1);
-	if (program.body.length > 0) {
-		program.body[0].leadingComments = [
-			{
-				type: 'Line',
-				value: ` ${basename} (Svelte v${VERSION})`
-			},
-			{
-				type: 'Line',
-				value: ' Note: compiler output will change before 5.0 is released!'
-			}
-		];
-	}
-
 	const js_source_name = get_source_name(options.filename, options.outputFilename, 'input.svelte');
 	const js = print(program, {
 		// include source content; makes it easier/more robust looking up the source map code

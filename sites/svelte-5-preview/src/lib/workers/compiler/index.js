@@ -59,7 +59,8 @@ function compile({ id, source, options, return_ast }) {
 			const compiled = svelte.compile(source, {
 				filename: options.filename,
 				generate: options.generate,
-				dev: options.dev
+				dev: options.dev,
+				discloseVersion: false
 			});
 
 			const { js, css, warnings, metadata } = compiled;
