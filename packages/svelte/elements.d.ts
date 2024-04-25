@@ -839,6 +839,7 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	step?: number | string | undefined | null;
 	type?: HTMLInputTypeAttribute | undefined | null;
 	value?: any;
+	valueAsDate?: Date | undefined | null;
 	width?: number | string | undefined | null;
 
 	'on:change'?: ChangeEventHandler<HTMLInputElement> | undefined | null;
