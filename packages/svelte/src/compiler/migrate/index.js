@@ -28,12 +28,14 @@ export function migrate(source) {
 
 		const str = new MagicString(source);
 		const analysis = analyze_component(parsed, source, combined_options);
+		const indent = guess_indent(source);
 
 		/** @type {State} */
 		let state = {
 			scope: analysis.instance.scope,
 			analysis,
 			str,
+			indent,
 			props: [],
 			props_insertion_point: 0,
 			has_props_rune: false,
@@ -81,13 +83,13 @@ export function migrate(source) {
 						// no regular props found, but render tags or events to forward found, $props() will be first in the script tag
 						str.appendRight(
 							/** @type {number} */ (parsed.instance.content.start),
-							`\n\t${props_declaration}`
+							`\n${indent}${props_declaration}`
 						);
 					} else {
 						str.appendRight(state.props_insertion_point, props_declaration);
 					}
 				} else {
-					str.prepend(`<script>${props_declaration}</script>`);
+					str.prepend(`<script>\n${indent}${props_declaration}\n</script>`);
 				}
 			}
 		}
@@ -104,6 +106,7 @@ export function migrate(source) {
  *  scope: import('../phases/scope.js').Scope;
  *  str: MagicString;
  *  analysis: import('../phases/types.js').ComponentAnalysis;
+ *  indent: string;
  *  props: Array<{ local: string; exported: string; init: string; bindable: boolean }>;
  *  props_insertion_point: number;
  *  has_props_rune: boolean;
@@ -245,15 +248,32 @@ const instance_script = {
 			state.str.prependLeft(/** @type {number} */ (node.body.expression.right.start), '$derived(');
 			state.str.appendRight(/** @type {number} */ (node.body.expression.right.end), ')');
 		} else {
+			const is_block_stmt = node.body.type === 'BlockStatement';
+			const start_end = /** @type {number} */ (node.body.start);
 			// $effect.pre, to be precise, but we gloss over that
 			// TODO try to find out if we can use $derived.by instead?
 			// TODO SSR mode variant needed
-			state.str.update(
-				/** @type {number} */ (node.start),
-				/** @type {number} */ (node.body.start),
-				'$effect(() => {'
-			);
-			state.str.appendRight(/** @type {number} */ (node.end), '})');
+			if (is_block_stmt) {
+				state.str.update(/** @type {number} */ (node.start), start_end + 1, '$effect(() => {');
+				const end = /** @type {number} */ (node.body.end);
+				state.str.update(end - 1, end, '});');
+			} else {
+				state.str.update(
+					/** @type {number} */ (node.start),
+					start_end,
+					`$effect(() => {\n${state.indent}`
+				);
+				state.str.indent(state.indent, {
+					exclude: [
+						[0, /** @type {number} */ (node.body.start)],
+						[
+							/** @type {number} */ (node.body.end),
+							/** @type {number} */ (/** @type {import('estree').Program} */ (path.at(-1)).end)
+						]
+					]
+				});
+				state.str.appendRight(/** @type {number} */ (node.end), `\n${state.indent}});`);
+			}
 		}
 	}
 };
@@ -366,4 +386,31 @@ function handle_identifier(node, state) {
 			state.rest_props_name
 		);
 	}
+}
+
+/** @param {string} content */
+function guess_indent(content) {
+	const lines = content.split('\n');
+
+	const tabbed = lines.filter((line) => /^\t+/.test(line));
+	const spaced = lines.filter((line) => /^ {2,}/.test(line));
+
+	if (tabbed.length === 0 && spaced.length === 0) {
+		return '\t';
+	}
+
+	// More lines tabbed than spaced? Assume tabs, and
+	// default to tabs in the case of a tie (or nothing
+	// to go on)
+	if (tabbed.length >= spaced.length) {
+		return '\t';
+	}
+
+	// Otherwise, we need to guess the multiple
+	const min = spaced.reduce((previous, current) => {
+		const count = /^ +/.exec(current)?.[0].length ?? 0;
+		return Math.min(count, previous);
+	}, Infinity);
+
+	return ' '.repeat(min);
 }
