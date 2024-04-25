@@ -4,6 +4,7 @@ import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
 import { get_prop_source, is_state_source, should_proxy_or_freeze } from '../utils.js';
 import { extract_paths } from '../../../../utils/ast.js';
+import { regex_invalid_identifier_chars } from '../../../patterns.js';
 
 /** @type {import('../types.js').ComponentVisitors} */
 export const javascript_visitors_runes = {
@@ -67,7 +68,9 @@ export const javascript_visitors_runes = {
 
 				create_state_field(definition, is_private, name);
 			} else if (definition.type === 'PropertyDefinition' && definition.key.type === 'Literal') {
-				const name = definition.key.value?.toString().replace('-', '_');
+				const name = definition.key.value
+					?.toString()
+					.replaceAll(regex_invalid_identifier_chars, '_');
 				if (name) create_state_field(definition, false, name);
 			}
 		}
@@ -191,7 +194,9 @@ export const javascript_visitors_runes = {
 					continue;
 				}
 			} else if (definition.type === 'PropertyDefinition' && definition.key.type === 'Literal') {
-				const name = definition.key.value?.toString().replace('-', '_');
+				const name = definition.key.value
+					?.toString()
+					.replaceAll(regex_invalid_identifier_chars, '_');
 
 				if (name && replace_class_body(definition, false, name)) {
 					continue;

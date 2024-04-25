@@ -15,6 +15,8 @@ export const regex_only_whitespaces = /^[ \t\n\r\f]+$/;
 export const regex_not_newline_characters = /[^\n]/g;
 
 export const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
+// used in replace all to remove all invalid chars from a literal identifier
+export const regex_invalid_identifier_chars = /(^[^a-zA-Z_$]|[^a-zA-Z0-9_$])/g;
 
 export const regex_starts_with_vowel = /^[aeiou]/;
 export const regex_heading_tags = /^h[1-6]$/;
