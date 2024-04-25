@@ -623,19 +623,6 @@ export function ensure_array_like(array_like_or_iterator) {
 }
 
 /**
- * @param {number} timeout
- * @returns {() => void}
- * */
-export function loop_guard(timeout) {
-	const start = Date.now();
-	return () => {
-		if (Date.now() - start > timeout) {
-			throw new Error('Infinite loop detected');
-		}
-	};
-}
-
-/**
  * @param {any[]} args
  * @param {Function} [inspect]
  */

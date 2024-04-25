@@ -66,19 +66,6 @@ export function validate_each_keys(collection, key_fn) {
 }
 
 /**
- * @param {number} timeout
- * @returns {() => void}
- * */
-export function loop_guard(timeout) {
-	const start = Date.now();
-	return () => {
-		if (Date.now() - start > timeout) {
-			throw new Error('Infinite loop detected');
-		}
-	};
-}
-
-/**
  * @param {Record<string, any>} $$props
  * @param {string[]} bindable
  * @param {string[]} exports
