@@ -1,7 +1,7 @@
 [
 	{
 		"code": "a11y_distracting_elements",
-		"message": "Avoid <marquee> elements",
+		"message": "Avoid `<marquee>` elements",
 		"start": {
 			"line": 1,
 			"column": 0
@@ -13,7 +13,7 @@
 	},
 	{
 		"code": "a11y_distracting_elements",
-		"message": "Avoid <blink> elements",
+		"message": "Avoid `<blink>` elements",
 		"start": {
 			"line": 2,
 			"column": 0

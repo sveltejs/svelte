@@ -92,10 +92,10 @@ export class Parser {
 
 			if (current.type === 'RegularElement') {
 				current.end = current.start + 1;
-				e.unclosed_element(current, current.name);
+				e.element_unclosed(current, current.name);
 			} else {
 				current.end = current.start + 1;
-				e.unclosed_block(current);
+				e.block_unclosed(current);
 			}
 		}
 
@@ -263,7 +263,7 @@ export class Parser {
 
 	require_whitespace() {
 		if (!regex_whitespace.test(this.template[this.index])) {
-			e.missing_whitespace(this.index);
+			e.expected_whitespace(this.index);
 		}
 
 		this.allow_whitespace();

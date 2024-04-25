@@ -2,7 +2,7 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'unclosed_element',
+		code: 'element_unclosed',
 		message: '`<script>` was left open',
 		position: [32, 32]
 	}

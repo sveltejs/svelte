@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid_css_type_selector_placement",
+		"code": "css_type_selector_invalid_placement",
 		"message": ":global(...) must not be followed with a type selector",
 		"start": {
 			"line": 17,

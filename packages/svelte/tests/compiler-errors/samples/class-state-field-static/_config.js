@@ -2,7 +2,7 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'invalid_state_location',
+		code: 'state_invalid_placement',
 		message:
 			'`$state(...)` can only be used as a variable declaration initializer or a class field',
 		position: [33, 41]

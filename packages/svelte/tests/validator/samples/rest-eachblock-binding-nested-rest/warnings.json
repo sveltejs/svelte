@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid_rest_eachblock_binding",
+		"code": "bind_invalid_each_rest",
 		"end": {
 			"column": 37,
 			"line": 5
@@ -12,7 +12,7 @@
 		}
 	},
 	{
-		"code": "invalid_rest_eachblock_binding",
+		"code": "bind_invalid_each_rest",
 		"end": {
 			"column": 50,
 			"line": 5

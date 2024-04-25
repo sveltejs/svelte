@@ -1,7 +1,7 @@
 [
 	{
 		"code": "a11y_missing_attribute",
-		"message": "<a> element should have an href attribute",
+		"message": "`<a>` element should have an href attribute",
 		"start": {
 			"line": 1,
 			"column": 0
@@ -49,7 +49,7 @@
 	},
 	{
 		"code": "a11y_missing_attribute",
-		"message": "<a> element should have an href attribute",
+		"message": "`<a>` element should have an href attribute",
 		"start": {
 			"line": 5,
 			"column": 0
@@ -61,7 +61,7 @@
 	},
 	{
 		"code": "a11y_missing_attribute",
-		"message": "<a> element should have an href attribute",
+		"message": "`<a>` element should have an href attribute",
 		"start": {
 			"line": 6,
 			"column": 0

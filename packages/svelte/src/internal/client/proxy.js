@@ -20,6 +20,7 @@ import { check_ownership, widen_ownership } from './dev/ownership.js';
 import { mutable_source, source, set } from './reactivity/sources.js';
 import { STATE_SYMBOL } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
+import * as e from './errors.js';
 
 /**
  * @template T
@@ -334,6 +335,6 @@ const state_proxy_handler = {
 
 if (DEV) {
 	state_proxy_handler.setPrototypeOf = () => {
-		throw new Error('Cannot set prototype of $state object');
+		e.state_prototype_fixed();
 	};
 }

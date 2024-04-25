@@ -2,6 +2,7 @@ import { current_component_context, flush_sync, untrack } from './internal/clien
 import { is_array } from './internal/client/utils.js';
 import { user_effect } from './internal/client/index.js';
 import * as e from './internal/client/errors.js';
+import { lifecycle_outside_component } from './internal/shared/errors.js';
 
 /**
  * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
@@ -19,7 +20,7 @@ import * as e from './internal/client/errors.js';
  */
 export function onMount(fn) {
 	if (current_component_context === null) {
-		e.lifecycle_outside_component('onMount');
+		lifecycle_outside_component('onMount');
 	}
 
 	if (current_component_context.l !== null) {
@@ -44,7 +45,7 @@ export function onMount(fn) {
  */
 export function onDestroy(fn) {
 	if (current_component_context === null) {
-		e.lifecycle_outside_component('onDestroy');
+		lifecycle_outside_component('onDestroy');
 	}
 
 	onMount(() => () => untrack(fn));
@@ -88,7 +89,7 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
 export function createEventDispatcher() {
 	const component_context = current_component_context;
 	if (component_context === null) {
-		e.lifecycle_outside_component('createEventDispatcher');
+		lifecycle_outside_component('createEventDispatcher');
 	}
 
 	return (type, detail, options) => {
@@ -127,11 +128,11 @@ export function createEventDispatcher() {
  */
 export function beforeUpdate(fn) {
 	if (current_component_context === null) {
-		e.lifecycle_outside_component('beforeUpdate');
+		lifecycle_outside_component('beforeUpdate');
 	}
 
 	if (current_component_context.l === null) {
-		throw new Error('beforeUpdate cannot be used in runes mode');
+		e.lifecycle_legacy_only('beforeUpdate');
 	}
 
 	init_update_callbacks(current_component_context).b.push(fn);
@@ -151,7 +152,7 @@ export function beforeUpdate(fn) {
  */
 export function afterUpdate(fn) {
 	if (current_component_context === null) {
-		e.lifecycle_outside_component('afterUpdate');
+		lifecycle_outside_component('afterUpdate');
 	}
 
 	if (current_component_context.l === null) {

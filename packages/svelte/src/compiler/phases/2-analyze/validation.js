@@ -1,3 +1,4 @@
+import is_reference from 'is-reference';
 import {
 	disallowed_paragraph_contents,
 	interactive_elements,
@@ -18,6 +19,7 @@ import { binding_properties } from '../bindings.js';
 import {
 	ContentEditableBindings,
 	EventModifiers,
+	Runes,
 	SVGElements,
 	VoidElements
 } from '../constants.js';
@@ -44,14 +46,14 @@ function validate_component(node, context) {
 			attribute.type !== 'OnDirective' &&
 			attribute.type !== 'BindDirective'
 		) {
-			e.invalid_component_directive(attribute);
+			e.component_invalid_directive(attribute);
 		}
 
 		if (
 			attribute.type === 'OnDirective' &&
 			(attribute.modifiers.length > 1 || attribute.modifiers.some((m) => m !== 'once'))
 		) {
-			e.invalid_component_event_modifier(attribute);
+			e.event_handler_invalid_component_modifier(attribute);
 		}
 
 		if (attribute.type === 'Attribute') {
@@ -62,7 +64,7 @@ function validate_component(node, context) {
 					while (--i > 0) {
 						const char = context.state.analysis.source[i];
 						if (char === '(') break; // parenthesized sequence expressions are ok
-						if (char === '{') e.invalid_sequence_expression(expression);
+						if (char === '{') e.attribute_invalid_sequence_expression(expression);
 					}
 				}
 			}
@@ -111,18 +113,18 @@ function validate_element(node, context) {
 					while (--i > 0) {
 						const char = context.state.analysis.source[i];
 						if (char === '(') break; // parenthesized sequence expressions are ok
-						if (char === '{') e.invalid_sequence_expression(expression);
+						if (char === '{') e.attribute_invalid_sequence_expression(expression);
 					}
 				}
 			}
 
 			if (regex_illegal_attribute_character.test(attribute.name)) {
-				e.invalid_attribute_name(attribute, attribute.name);
+				e.attribute_invalid_name(attribute, attribute.name);
 			}
 
 			if (attribute.name.startsWith('on') && attribute.name.length > 2) {
 				if (!is_expression) {
-					e.invalid_event_attribute_value(attribute);
+					e.attribute_invalid_event_handler(attribute);
 				}
 
 				const value = attribute.value[0].expression;
@@ -131,7 +133,7 @@ function validate_element(node, context) {
 					value.name === attribute.name &&
 					!context.state.scope.get(value.name)
 				) {
-					w.global_event_reference(attribute, attribute.name);
+					w.attribute_global_event_reference(attribute, attribute.name);
 				}
 			}
 
@@ -141,12 +143,12 @@ function validate_element(node, context) {
 			}
 
 			if (attribute.name === 'is' && context.state.options.namespace !== 'foreign') {
-				w.avoid_is(attribute);
+				w.attribute_avoid_is(attribute);
 			}
 
 			const correct_name = react_attributes.get(attribute.name);
 			if (correct_name) {
-				w.invalid_html_attribute(attribute, attribute.name, correct_name);
+				w.attribute_invalid_property_name(attribute, attribute.name, correct_name);
 			}
 
 			validate_attribute_name(attribute);
@@ -196,7 +198,7 @@ function validate_element(node, context) {
 			for (const modifier of attribute.modifiers) {
 				if (!EventModifiers.includes(modifier)) {
 					const list = `${EventModifiers.slice(0, -1).join(', ')} or ${EventModifiers.at(-1)}`;
-					e.invalid_event_modifier(attribute, list);
+					e.event_handler_invalid_modifier(attribute, list);
 				}
 				if (modifier === 'passive') {
 					has_passive_modifier = true;
@@ -204,7 +206,11 @@ function validate_element(node, context) {
 					conflicting_passive_modifier = modifier;
 				}
 				if (has_passive_modifier && conflicting_passive_modifier) {
-					e.invalid_event_modifier_combination(attribute, 'passive', conflicting_passive_modifier);
+					e.event_handler_invalid_modifier_combination(
+						attribute,
+						'passive',
+						conflicting_passive_modifier
+					);
 				}
 			}
 		}
@@ -221,7 +227,7 @@ function validate_attribute_name(attribute) {
 		!attribute.name.startsWith('xlink:') &&
 		!attribute.name.startsWith('xml:')
 	) {
-		w.illegal_attribute_character(attribute);
+		w.attribute_illegal_colon(attribute);
 	}
 }
 
@@ -249,7 +255,7 @@ function validate_slot_attribute(context, attribute) {
 
 	if (owner) {
 		if (!is_text_attribute(attribute)) {
-			e.invalid_slot_attribute(attribute);
+			e.slot_attribute_invalid(attribute);
 		}
 
 		if (
@@ -258,13 +264,13 @@ function validate_slot_attribute(context, attribute) {
 			owner.type === 'SvelteSelf'
 		) {
 			if (owner !== context.path.at(-2)) {
-				e.invalid_slot_placement(attribute);
+				e.slot_attribute_invalid_placement(attribute);
 			}
 
 			const name = attribute.value[0].data;
 
 			if (context.state.component_slots.has(name)) {
-				e.duplicate_slot_name(attribute, name, owner.name);
+				e.slot_attribute_duplicate(attribute, name, owner.name);
 			}
 
 			context.state.component_slots.add(name);
@@ -281,12 +287,12 @@ function validate_slot_attribute(context, attribute) {
 						}
 					}
 
-					e.invalid_default_slot_content(node);
+					e.slot_default_duplicate(node);
 				}
 			}
 		}
 	} else {
-		e.invalid_slot_placement(attribute);
+		e.slot_attribute_invalid_placement(attribute);
 	}
 }
 
@@ -299,7 +305,7 @@ function validate_block_not_empty(node, context) {
 	// Assumption: If the block has zero elements, someone's in the middle of typing it out,
 	// so don't warn in that case because it would be distracting.
 	if (node.nodes.length === 1 && node.nodes[0].type === 'Text' && !node.nodes[0].raw.trim()) {
-		w.empty_block(node.nodes[0]);
+		w.block_empty(node.nodes[0]);
 	}
 }
 
@@ -317,7 +323,7 @@ const validation = {
 		const left = object(assignee);
 
 		if (left === null) {
-			e.invalid_binding_expression(node);
+			e.bind_invalid_expression(node);
 		}
 
 		const binding = context.state.scope.get(left.name);
@@ -337,19 +343,19 @@ const validation = {
 					binding.kind !== 'store_sub' &&
 					!binding.mutated)
 			) {
-				e.invalid_binding_value(node.expression);
+				e.bind_invalid_value(node.expression);
 			}
 
 			if (binding.kind === 'derived') {
-				e.invalid_binding(node.expression, 'derived state');
+				e.constant_binding(node.expression, 'derived state');
 			}
 
 			if (context.state.analysis.runes && binding.kind === 'each') {
-				e.invalid_each_assignment(node);
+				e.each_item_invalid_assignment(node);
 			}
 
 			if (binding.kind === 'snippet') {
-				e.invalid_snippet_assignment(node);
+				e.snippet_parameter_assignment(node);
 			}
 		}
 
@@ -360,7 +366,7 @@ const validation = {
 		}
 
 		if (binding?.kind === 'each' && binding.metadata?.inside_rest) {
-			w.invalid_rest_eachblock_binding(binding.node, binding.node.name);
+			w.bind_invalid_each_rest(binding.node, binding.node.name);
 		}
 
 		const parent = context.path.at(-1);
@@ -373,7 +379,7 @@ const validation = {
 			parent?.type === 'SvelteBody'
 		) {
 			if (context.state.options.namespace === 'foreign' && node.name !== 'this') {
-				e.bind_invalid(node, node.name, 'Foreign elements only support `bind:this`');
+				e.bind_invalid_name(node, node.name, 'Foreign elements only support `bind:this`');
 			}
 
 			if (node.name in binding_properties) {
@@ -392,7 +398,7 @@ const validation = {
 					);
 					if (type && !is_text_attribute(type)) {
 						if (node.name !== 'value' || type.value === true) {
-							e.invalid_type_attribute(type);
+							e.attribute_invalid_type(type);
 						}
 						return; // bind:value can handle dynamic `type` attributes
 					}
@@ -415,7 +421,7 @@ const validation = {
 							a.value !== true
 					);
 					if (multiple) {
-						e.invalid_multiple_attribute(multiple);
+						e.attribute_invalid_multiple(multiple);
 					}
 				}
 
@@ -432,9 +438,9 @@ const validation = {
 						parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'contenteditable')
 					);
 					if (!contenteditable) {
-						e.missing_contenteditable_attribute(node);
+						e.attribute_contenteditable_missing(node);
 					} else if (!is_text_attribute(contenteditable) && contenteditable.value !== true) {
-						e.dynamic_contenteditable_attribute(contenteditable);
+						e.attribute_contenteditable_dynamic(contenteditable);
 					}
 				}
 			} else {
@@ -442,15 +448,15 @@ const validation = {
 				if (match) {
 					const property = binding_properties[match];
 					if (!property.valid_elements || property.valid_elements.includes(parent.name)) {
-						e.bind_invalid(node, node.name, `Did you mean '${match}'?`);
+						e.bind_invalid_name(node, node.name, `Did you mean '${match}'?`);
 					}
 				}
-				e.bind_invalid(node, node.name);
+				e.bind_invalid_name(node, node.name);
 			}
 		}
 	},
 	ExportDefaultDeclaration(node) {
-		e.default_export(node);
+		e.module_illegal_default_export(node);
 	},
 	ConstTag(node, context) {
 		const parent = context.path.at(-1);
@@ -467,7 +473,7 @@ const validation = {
 				((grand_parent?.type !== 'RegularElement' && grand_parent?.type !== 'SvelteElement') ||
 					!grand_parent.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')))
 		) {
-			e.invalid_const_placement(node);
+			e.const_tag_invalid_placement(node);
 		}
 	},
 	ImportDeclaration(node, context) {
@@ -478,7 +484,7 @@ const validation = {
 						specifier.imported.name === 'beforeUpdate' ||
 						specifier.imported.name === 'afterUpdate'
 					) {
-						e.invalid_runes_mode_import(specifier, specifier.imported.name);
+						e.runes_mode_invalid_import(specifier, specifier.imported.name);
 					}
 				}
 			}
@@ -496,14 +502,14 @@ const validation = {
 				parent.type !== 'SvelteSelf' &&
 				parent.type !== 'SvelteFragment')
 		) {
-			e.invalid_let_directive_placement(node);
+			e.let_directive_invalid_placement(node);
 		}
 	},
 	RegularElement(node, context) {
 		if (node.name === 'textarea' && node.fragment.nodes.length > 0) {
 			for (const attribute of node.attributes) {
 				if (attribute.type === 'Attribute' && attribute.name === 'value') {
-					e.invalid_textarea_content(node);
+					e.textarea_invalid_content(node);
 				}
 			}
 		}
@@ -521,7 +527,7 @@ const validation = {
 
 		if (context.state.parent_element) {
 			if (!is_tag_valid_with_parent(node.name, context.state.parent_element)) {
-				e.invalid_node_placement(node, `<${node.name}>`, context.state.parent_element);
+				e.node_invalid_placement(node, `<${node.name}>`, context.state.parent_element);
 			}
 		}
 
@@ -533,7 +539,7 @@ const validation = {
 					parent.name === node.name &&
 					interactive_elements.has(parent.name)
 				) {
-					e.invalid_node_placement(node, `<${node.name}>`, parent.name);
+					e.node_invalid_placement(node, `<${node.name}>`, parent.name);
 				}
 			}
 		}
@@ -542,7 +548,7 @@ const validation = {
 			const path = context.path;
 			for (let parent of path) {
 				if (parent.type === 'RegularElement' && parent.name === 'p') {
-					e.invalid_node_placement(node, `<${node.name}>`, parent.name);
+					e.node_invalid_placement(node, `<${node.name}>`, parent.name);
 				}
 			}
 		}
@@ -553,7 +559,7 @@ const validation = {
 			!VoidElements.includes(node.name) &&
 			!SVGElements.includes(node.name)
 		) {
-			w.invalid_self_closing_tag(node, node.name);
+			w.element_invalid_self_closing_tag(node, node.name);
 		}
 
 		context.next({
@@ -567,7 +573,7 @@ const validation = {
 		const raw_args = unwrap_optional(node.expression).arguments;
 		for (const arg of raw_args) {
 			if (arg.type === 'SpreadElement') {
-				e.invalid_render_spread_argument(arg);
+				e.render_tag_invalid_spread_argument(arg);
 			}
 		}
 
@@ -577,7 +583,7 @@ const validation = {
 			callee.property.type === 'Identifier' &&
 			['bind', 'apply', 'call'].includes(callee.property.name)
 		) {
-			e.invalid_render_call(node);
+			e.render_tag_invalid_call_expression(node);
 		}
 
 		const is_inside_textarea = context.path.find((n) => {
@@ -589,7 +595,7 @@ const validation = {
 			);
 		});
 		if (is_inside_textarea) {
-			e.invalid_tag_placement(
+			e.tag_invalid_placement(
 				node,
 				'inside <textarea> or <svelte:element this="textarea">',
 				'render'
@@ -630,19 +636,19 @@ const validation = {
 					(node) => node.type !== 'SnippetBlock' && (node.type !== 'Text' || node.data.trim())
 				)
 			) {
-				e.conflicting_children_snippet(node);
+				e.snippet_conflict(node);
 			}
 		}
 	},
 	StyleDirective(node) {
 		if (node.modifiers.length > 1 || (node.modifiers.length && node.modifiers[0] !== 'important')) {
-			e.invalid_style_directive_modifier(node);
+			e.style_directive_invalid_modifier(node);
 		}
 	},
 	SvelteHead(node) {
 		const attribute = node.attributes[0];
 		if (attribute) {
-			e.illegal_svelte_head_attribute(attribute);
+			e.svelte_head_illegal_attribute(attribute);
 		}
 	},
 	SvelteElement(node, context) {
@@ -655,7 +661,7 @@ const validation = {
 	SvelteFragment(node, context) {
 		const parent = context.path.at(-2);
 		if (parent?.type !== 'Component' && parent?.type !== 'SvelteComponent') {
-			e.invalid_svelte_fragment_placement(node);
+			e.svelte_fragment_invalid_placement(node);
 		}
 
 		for (const attribute of node.attributes) {
@@ -664,7 +670,7 @@ const validation = {
 					validate_slot_attribute(context, attribute);
 				}
 			} else if (attribute.type !== 'LetDirective') {
-				e.invalid_svelte_fragment_attribute(attribute);
+				e.svelte_fragment_invalid_attribute(attribute);
 			}
 		}
 	},
@@ -673,15 +679,15 @@ const validation = {
 			if (attribute.type === 'Attribute') {
 				if (attribute.name === 'name') {
 					if (!is_text_attribute(attribute)) {
-						e.invalid_slot_name(attribute);
+						e.slot_element_invalid_name(attribute);
 					}
 					const slot_name = attribute.value[0].data;
 					if (slot_name === 'default') {
-						e.invalid_slot_name_default(attribute);
+						e.slot_element_invalid_name_default(attribute);
 					}
 				}
 			} else if (attribute.type !== 'SpreadAttribute' && attribute.type !== 'LetDirective') {
-				e.invalid_slot_element_attribute(attribute);
+				e.slot_element_invalid_attribute(attribute);
 			}
 		}
 	},
@@ -692,19 +698,19 @@ const validation = {
 		if (!node.parent) return;
 		if (context.state.parent_element && regex_not_whitespace.test(node.data)) {
 			if (!is_tag_valid_with_parent('#text', context.state.parent_element)) {
-				e.invalid_node_placement(node, 'Text node', context.state.parent_element);
+				e.node_invalid_placement(node, 'Text node', context.state.parent_element);
 			}
 		}
 	},
 	TitleElement(node) {
 		const attribute = node.attributes[0];
 		if (attribute) {
-			e.illegal_title_attribute(attribute);
+			e.title_illegal_attribute(attribute);
 		}
 
 		const child = node.fragment.nodes.find((n) => n.type !== 'Text' && n.type !== 'ExpressionTag');
 		if (child) {
-			e.invalid_title_content(child);
+			e.title_invalid_content(child);
 		}
 	},
 	UpdateExpression(node, context) {
@@ -714,7 +720,7 @@ const validation = {
 		if (!node.parent) return;
 		if (context.state.parent_element) {
 			if (!is_tag_valid_with_parent('#text', context.state.parent_element)) {
-				e.invalid_node_placement(node, '{expression}', context.state.parent_element);
+				e.node_invalid_placement(node, '{expression}', context.state.parent_element);
 			}
 		}
 	}
@@ -735,7 +741,7 @@ export const validation_legacy = merge(validation, a11y_validators, {
 		}
 
 		if (state.scope.get(callee.name)?.kind !== 'store_sub') {
-			e.invalid_rune_usage(node.init, callee.name);
+			e.rune_invalid_usage(node.init, callee.name);
 		}
 	},
 	AssignmentExpression(node, { state, path }) {
@@ -749,7 +755,7 @@ export const validation_legacy = merge(validation, a11y_validators, {
 			(state.ast_type !== 'instance' ||
 				/** @type {import('#compiler').SvelteNode} */ (path.at(-1)).type !== 'Program')
 		) {
-			w.no_reactive_declaration(node);
+			w.reactive_declaration_invalid_placement(node);
 		}
 	},
 	UpdateExpression(node, { state }) {
@@ -768,11 +774,11 @@ function validate_export(node, scope, name) {
 	if (!binding) return;
 
 	if (binding.kind === 'derived') {
-		e.invalid_derived_export(node);
+		e.derived_invalid_export(node);
 	}
 
 	if ((binding.kind === 'state' || binding.kind === 'frozen_state') && binding.reassigned) {
-		e.invalid_state_export(node);
+		e.state_invalid_export(node);
 	}
 }
 
@@ -790,7 +796,7 @@ function validate_call_expression(node, scope, path) {
 
 	if (rune === '$props') {
 		if (parent.type === 'VariableDeclarator') return;
-		e.invalid_props_location(node);
+		e.props_invalid_placement(node);
 	}
 
 	if (rune === '$bindable') {
@@ -803,7 +809,7 @@ function validate_call_expression(node, scope, path) {
 				return;
 			}
 		}
-		e.invalid_bindable_location(node);
+		e.bindable_invalid_location(node);
 	}
 
 	if (
@@ -814,46 +820,46 @@ function validate_call_expression(node, scope, path) {
 	) {
 		if (parent.type === 'VariableDeclarator') return;
 		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
-		e.invalid_state_location(node, rune);
+		e.state_invalid_placement(node, rune);
 	}
 
 	if (rune === '$effect' || rune === '$effect.pre') {
 		if (parent.type !== 'ExpressionStatement') {
-			e.invalid_effect_location(node);
+			e.effect_invalid_placement(node);
 		}
 
 		if (node.arguments.length !== 1) {
-			e.invalid_rune_args_length(node, rune, 'exactly one argument');
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		}
 	}
 
 	if (rune === '$effect.active') {
 		if (node.arguments.length !== 0) {
-			e.invalid_rune_args(node, rune);
+			e.rune_invalid_arguments(node, rune);
 		}
 	}
 
 	if (rune === '$effect.root') {
 		if (node.arguments.length !== 1) {
-			e.invalid_rune_args_length(node, rune, 'exactly one argument');
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		}
 	}
 
 	if (rune === '$inspect') {
 		if (node.arguments.length < 1) {
-			e.invalid_rune_args_length(node, rune, 'one or more arguments');
+			e.rune_invalid_arguments_length(node, rune, 'one or more arguments');
 		}
 	}
 
 	if (rune === '$inspect().with') {
 		if (node.arguments.length !== 1) {
-			e.invalid_rune_args_length(node, rune, 'exactly one argument');
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		}
 	}
 
 	if (rune === '$state.snapshot') {
 		if (node.arguments.length !== 1) {
-			e.invalid_rune_args_length(node, rune, 'exactly one argument');
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		}
 	}
 }
@@ -869,7 +875,7 @@ function ensure_no_module_import_conflict(node, state) {
 			state.scope === state.analysis.instance.scope &&
 			state.analysis.module.scope.get(id.name)?.declaration_kind === 'import'
 		) {
-			e.illegal_variable_declaration(node.id);
+			e.declaration_duplicate_module_import(node.id);
 		}
 	}
 }
@@ -895,7 +901,7 @@ export const validation_runes_js = {
 	},
 	CallExpression(node, { state, path }) {
 		if (get_rune(node, state.scope) === '$host') {
-			e.invalid_host_location(node);
+			e.host_invalid_placement(node);
 		}
 		validate_call_expression(node, state.scope, path);
 	},
@@ -908,13 +914,13 @@ export const validation_runes_js = {
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
 		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
-			e.invalid_rune_args_length(node, rune, 'exactly one argument');
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		} else if (rune === '$state' && args.length > 1) {
-			e.invalid_rune_args_length(node, rune, 'zero or one arguments');
+			e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
 		} else if (rune === '$props') {
-			e.invalid_props_location(node);
+			e.props_invalid_placement(node);
 		} else if (rune === '$bindable') {
-			e.invalid_bindable_location(node);
+			e.bindable_invalid_location(node);
 		}
 	},
 	AssignmentExpression(node, { state }) {
@@ -952,12 +958,12 @@ export const validation_runes_js = {
 		const allowed_depth = context.state.ast_type === 'module' ? 0 : 1;
 
 		if (context.state.scope.function_depth > allowed_depth) {
-			w.avoid_nested_class(node);
+			w.perf_avoid_nested_class(node);
 		}
 	},
 	NewExpression(node, context) {
 		if (node.callee.type === 'ClassExpression' && context.state.scope.function_depth > 0) {
-			w.avoid_inline_class(node);
+			w.perf_avoid_inline_class(node);
 		}
 	}
 };
@@ -998,9 +1004,9 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 			const thing = 'constant';
 
 			if (is_binding) {
-				e.invalid_binding(node, thing);
+				e.constant_binding(node, thing);
 			} else {
-				e.invalid_assignment(node, thing);
+				e.constant_assignment(node, thing);
 			}
 		}
 	}
@@ -1019,16 +1025,16 @@ function validate_assignment(node, argument, state) {
 
 		if (state.analysis.runes) {
 			if (binding?.kind === 'derived') {
-				e.invalid_assignment(node, 'derived state');
+				e.constant_assignment(node, 'derived state');
 			}
 
 			if (binding?.kind === 'each') {
-				e.invalid_each_assignment(node);
+				e.each_item_invalid_assignment(node);
 			}
 		}
 
 		if (binding?.kind === 'snippet') {
-			e.invalid_snippet_assignment(node);
+			e.snippet_parameter_assignment(node);
 		}
 	}
 
@@ -1044,15 +1050,46 @@ function validate_assignment(node, argument, state) {
 
 	if (object.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
 		if (state.private_derived_state.includes(property.name)) {
-			e.invalid_assignment(node, 'derived state');
+			e.constant_assignment(node, 'derived state');
 		}
 	}
 }
 
 export const validation_runes = merge(validation, a11y_validators, {
+	Identifier(node, { path, state }) {
+		let i = path.length;
+		let parent = /** @type {import('estree').Expression} */ (path[--i]);
+
+		if (
+			Runes.includes(/** @type {Runes[number]} */ (node.name)) &&
+			is_reference(node, parent) &&
+			state.scope.get(node.name) === null &&
+			state.scope.get(node.name.slice(1)) === null
+		) {
+			/** @type {import('estree').Expression} */
+			let current = node;
+			let name = node.name;
+
+			while (parent.type === 'MemberExpression') {
+				if (parent.computed) e.rune_invalid_computed_property(parent);
+				name += `.${/** @type {import('estree').Identifier} */ (parent.property).name}`;
+
+				current = parent;
+				parent = /** @type {import('estree').Expression} */ (path[--i]);
+
+				if (!Runes.includes(/** @type {Runes[number]} */ (name))) {
+					e.rune_invalid_name(parent, name);
+				}
+			}
+
+			if (parent.type !== 'CallExpression') {
+				e.rune_missing_parentheses(current);
+			}
+		}
+	},
 	LabeledStatement(node, { path }) {
 		if (node.label.name !== '$' || path.at(-1)?.type !== 'Program') return;
-		e.invalid_legacy_reactive_statement(node);
+		e.legacy_reactive_statement_invalid(node);
 	},
 	ExportNamedDeclaration(node, { state, next }) {
 		if (state.ast_type === 'module') {
@@ -1070,7 +1107,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 			if (node.declaration?.type !== 'VariableDeclaration') return;
 			if (node.declaration.kind !== 'let') return;
 			if (state.analysis.instance.scope !== state.scope) return;
-			e.invalid_legacy_export(node);
+			e.legacy_export_invalid(node);
 		}
 	},
 	ExportSpecifier(node, { state }) {
@@ -1081,12 +1118,12 @@ export const validation_runes = merge(validation, a11y_validators, {
 	CallExpression(node, { state, path }) {
 		const rune = get_rune(node, state.scope);
 		if (rune === '$bindable' && node.arguments.length > 1) {
-			e.invalid_rune_args_length(node, '$bindable', 'zero or one arguments');
+			e.rune_invalid_arguments_length(node, '$bindable', 'zero or one arguments');
 		} else if (rune === '$host') {
 			if (node.arguments.length > 0) {
-				e.invalid_rune_args(node, '$host');
+				e.rune_invalid_arguments(node, '$host');
 			} else if (state.ast_type === 'module' || !state.analysis.custom_element) {
-				e.invalid_host_location(node);
+				e.host_invalid_placement(node);
 			}
 		}
 
@@ -1098,7 +1135,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 			context.type === 'Identifier' &&
 			(context.name === '$state' || context.name === '$derived')
 		) {
-			e.invalid_state_location(node, context.name);
+			e.state_invalid_placement(node, context.name);
 		}
 		next({ ...state });
 	},
@@ -1108,50 +1145,45 @@ export const validation_runes = merge(validation, a11y_validators, {
 		const init = node.init;
 		const rune = get_rune(init, state.scope);
 
-		if (rune === null) {
-			if (init?.type === 'Identifier' && init.name === '$props' && !state.scope.get('props')) {
-				w.invalid_props_declaration(node);
-			}
-			return;
-		}
+		if (rune === null) return;
 
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
 		// TODO some of this is duplicated with above, seems off
 		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
-			e.invalid_rune_args_length(node, rune, 'exactly one argument');
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		} else if (rune === '$state' && args.length > 1) {
-			e.invalid_rune_args_length(node, rune, 'zero or one arguments');
+			e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
 		} else if (rune === '$props') {
 			if (state.has_props_rune) {
-				e.duplicate_props_rune(node);
+				e.props_duplicate(node);
 			}
 
 			state.has_props_rune = true;
 
 			if (args.length > 0) {
-				e.invalid_rune_args(node, rune);
+				e.rune_invalid_arguments(node, rune);
 			}
 
 			if (node.id.type !== 'ObjectPattern') {
-				e.invalid_props_id(node);
+				e.props_invalid_identifier(node);
 			}
 
 			if (state.scope !== state.analysis.instance.scope) {
-				e.invalid_props_location(node);
+				e.props_invalid_placement(node);
 			}
 
 			for (const property of node.id.properties) {
 				if (property.type === 'Property') {
 					if (property.computed) {
-						e.invalid_props_pattern(property);
+						e.props_invalid_pattern(property);
 					}
 
 					const value =
 						property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
 
 					if (value.type !== 'Identifier') {
-						e.invalid_props_pattern(property);
+						e.props_invalid_pattern(property);
 					}
 				}
 			}
@@ -1167,25 +1199,16 @@ export const validation_runes = merge(validation, a11y_validators, {
 			}
 		}
 	},
-	AssignmentPattern(node, { state }) {
-		if (
-			node.right.type === 'Identifier' &&
-			node.right.name === '$bindable' &&
-			!state.scope.get('bindable')
-		) {
-			w.invalid_bindable_declaration(node);
-		}
-	},
 	SlotElement(node, { state }) {
 		if (!state.analysis.custom_element) {
-			w.deprecated_slot_element(node);
+			w.slot_element_deprecated(node);
 		}
 	},
 	OnDirective(node, { path }) {
 		const parent_type = path.at(-1)?.type;
 		// Don't warn on component events; these might not be under the author's control so the warning would be unactionable
 		if (parent_type === 'RegularElement' || parent_type === 'SvelteElement') {
-			w.deprecated_event_handler(node, node.name);
+			w.event_directive_deprecated(node, node.name);
 		}
 	},
 	// TODO this is a code smell. need to refactor this stuff

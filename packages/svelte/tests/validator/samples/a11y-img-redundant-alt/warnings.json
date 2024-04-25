@@ -1,7 +1,7 @@
 [
 	{
 		"code": "a11y_img_redundant_alt",
-		"message": "Screenreaders already announce <img> elements as an image.",
+		"message": "Screenreaders already announce `<img>` elements as an image.",
 		"end": {
 			"column": 49,
 			"line": 3
@@ -13,7 +13,7 @@
 	},
 	{
 		"code": "a11y_img_redundant_alt",
-		"message": "Screenreaders already announce <img> elements as an image.",
+		"message": "Screenreaders already announce `<img>` elements as an image.",
 		"end": {
 			"column": 45,
 			"line": 4
@@ -25,7 +25,7 @@
 	},
 	{
 		"code": "a11y_img_redundant_alt",
-		"message": "Screenreaders already announce <img> elements as an image.",
+		"message": "Screenreaders already announce `<img>` elements as an image.",
 		"end": {
 			"column": 52,
 			"line": 5

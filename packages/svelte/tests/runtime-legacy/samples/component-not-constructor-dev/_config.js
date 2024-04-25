@@ -7,5 +7,6 @@ export default test({
 		dev: true
 	},
 
-	error: 'this={...} of <svelte:component> should specify a Svelte component.'
+	error:
+		'svelte_component_invalid_this_value\nThe `this={...}` property of a `<svelte:component>` must be a Svelte component, if defined'
 });

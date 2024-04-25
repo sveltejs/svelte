@@ -1,7 +1,7 @@
 [
 	{
 		"message": "Reactive declarations only exist at the top level of the instance script",
-		"code": "no_reactive_declaration",
+		"code": "reactive_declaration_invalid_placement",
 		"start": {
 			"line": 6,
 			"column": 2

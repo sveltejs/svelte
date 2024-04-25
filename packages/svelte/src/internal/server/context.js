@@ -1,5 +1,6 @@
 import { DEV } from 'esm-env';
 import { on_destroy } from './index.js';
+import * as e from '../shared/errors.js';
 
 /** @type {import('#server').Component | null} */
 export var current_component = null;
@@ -10,7 +11,7 @@ export var current_component = null;
  * @returns {T}
  */
 export function getContext(key) {
-	const context_map = getAllContexts();
+	const context_map = get_or_init_context_map('getContext');
 	const result = /** @type {T} */ (context_map.get(key));
 
 	return result;
@@ -23,7 +24,7 @@ export function getContext(key) {
  * @returns {T}
  */
 export function setContext(key, context) {
-	getAllContexts().set(key, context);
+	get_or_init_context_map('setContext').set(key, context);
 	return context;
 }
 
@@ -32,21 +33,24 @@ export function setContext(key, context) {
  * @returns {boolean}
  */
 export function hasContext(key) {
-	return getAllContexts().has(key);
+	return get_or_init_context_map('hasContext').has(key);
 }
 
 /** @returns {Map<any, any>} */
 export function getAllContexts() {
-	const context = current_component;
+	return get_or_init_context_map('getAllContexts');
+}
 
-	if (context === null) {
-		throw new Error(
-			'ERR_SVELTE_ORPHAN_CONTEXT' +
-				(DEV ? 'Context can only be used during component initialisation.' : '')
-		);
+/**
+ * @param {string} name
+ * @returns {Map<unknown, unknown>}
+ */
+function get_or_init_context_map(name) {
+	if (current_component === null) {
+		e.lifecycle_outside_component(name);
 	}
 
-	return (context.c ??= new Map(get_parent_context(context) || undefined));
+	return (current_component.c ??= new Map(get_parent_context(current_component) || undefined));
 }
 
 export function push() {

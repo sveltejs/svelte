@@ -1,6 +1,6 @@
 [
 	{
-		"code": "empty_block",
+		"code": "block_empty",
 		"message": "Empty block",
 		"start": {
 			"line": 13,
@@ -12,7 +12,7 @@
 		}
 	},
 	{
-		"code": "empty_block",
+		"code": "block_empty",
 		"message": "Empty block",
 		"start": {
 			"line": 16,
@@ -24,7 +24,7 @@
 		}
 	},
 	{
-		"code": "empty_block",
+		"code": "block_empty",
 		"message": "Empty block",
 		"start": {
 			"line": 17,
@@ -36,7 +36,7 @@
 		}
 	},
 	{
-		"code": "empty_block",
+		"code": "block_empty",
 		"message": "Empty block",
 		"start": {
 			"line": 18,

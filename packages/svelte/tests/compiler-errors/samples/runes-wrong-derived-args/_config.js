@@ -2,7 +2,7 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'invalid_rune_args_length',
+		code: 'rune_invalid_arguments_length',
 		message: '`$derived` must be called with exactly one argument'
 	}
 });

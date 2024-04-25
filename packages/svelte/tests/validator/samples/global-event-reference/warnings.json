@@ -1,7 +1,7 @@
 [
 	{
-		"code": "global_event_reference",
-		"message": "You are referencing globalThis.onkeydown. Did you forget to declare a variable with that name?",
+		"code": "attribute_global_event_reference",
+		"message": "You are referencing `globalThis.onkeydown`. Did you forget to declare a variable with that name?",
 		"start": {
 			"column": 8,
 			"line": 8
@@ -12,8 +12,8 @@
 		}
 	},
 	{
-		"code": "global_event_reference",
-		"message": "You are referencing globalThis.onkeydown. Did you forget to declare a variable with that name?",
+		"code": "attribute_global_event_reference",
+		"message": "You are referencing `globalThis.onkeydown`. Did you forget to declare a variable with that name?",
 		"start": {
 			"column": 8,
 			"line": 9

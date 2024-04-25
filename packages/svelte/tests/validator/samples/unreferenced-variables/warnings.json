@@ -1,6 +1,6 @@
 [
 	{
-		"code": "unused_export_let",
+		"code": "export_let_unused",
 		"end": {
 			"column": 8,
 			"line": 28
@@ -12,7 +12,7 @@
 		}
 	},
 	{
-		"code": "unused_export_let",
+		"code": "export_let_unused",
 		"end": {
 			"column": 8,
 			"line": 29
@@ -24,7 +24,7 @@
 		}
 	},
 	{
-		"code": "unused_export_let",
+		"code": "export_let_unused",
 		"end": {
 			"column": 15,
 			"line": 32
@@ -36,7 +36,7 @@
 		}
 	},
 	{
-		"code": "unused_export_let",
+		"code": "export_let_unused",
 		"end": {
 			"column": 15,
 			"line": 33
@@ -48,7 +48,7 @@
 		}
 	},
 	{
-		"code": "unused_export_let",
+		"code": "export_let_unused",
 		"end": {
 			"column": 15,
 			"line": 35
