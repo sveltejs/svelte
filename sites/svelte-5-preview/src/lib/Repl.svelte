@@ -170,7 +170,7 @@
 			if (file.name === $selected?.name) {
 				return {
 					...file,
-					source: result.source
+					source: result.result.code
 				};
 			}
 			return file;

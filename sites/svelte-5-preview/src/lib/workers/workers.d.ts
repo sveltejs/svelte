@@ -29,6 +29,6 @@ export type BundleMessageData = {
 
 export type MigrateMessageData = {
 	id: number;
-	source: string;
+	result: { code: string };
 	error?: string;
 };

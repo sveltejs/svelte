@@ -1088,8 +1088,12 @@ declare module 'svelte/compiler' {
 	export const VERSION: string;
 	/**
 	 * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
+	 * May throw an error if the code is too complex to migrate automatically.
+	 *
 	 * */
-	export function migrate(source: string): string;
+	export function migrate(source: string): {
+		code: string;
+	};
 	class Scope {
 		
 		constructor(root: ScopeRoot, parent: Scope | null, porous: boolean);

@@ -10,8 +10,10 @@ import { regex_is_valid_identifier } from '../phases/patterns.js';
 
 /**
  * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
+ * May throw an error if the code is too complex to migrate automatically.
+ *
  * @param {string} source
- * @returns {string}
+ * @returns {{ code: string; }}
  */
 export function migrate(source) {
 	try {
@@ -145,7 +147,7 @@ export function migrate(source) {
 			}
 		}
 
-		return str.toString();
+		return { code: str.toString() };
 	} catch (e) {
 		// eslint-disable-next-line no-console
 		console.error('Error while migrating Svelte code');

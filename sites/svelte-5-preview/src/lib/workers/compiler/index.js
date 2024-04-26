@@ -136,11 +136,11 @@ function compile({ id, source, options, return_ast }) {
 /** @param {import("../workers").MigrateMessageData} param0 */
 function migrate({ id, source }) {
 	try {
-		source = svelte.migrate(source);
+		const result = svelte.migrate(source);
 
 		return {
 			id,
-			source
+			result
 		};
 	} catch (err) {
 		// @ts-ignore
@@ -148,7 +148,7 @@ function migrate({ id, source }) {
 
 		return {
 			id,
-			source,
+			result: { code: source },
 			error: message
 		};
 	}
