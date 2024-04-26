@@ -200,7 +200,13 @@ const instance_script = {
 				continue;
 			}
 
-			const bindings = state.scope.get_bindings(declarator);
+			let bindings;
+			try {
+				bindings = state.scope.get_bindings(declarator);
+			} catch (e) {
+				// no bindings, so we can skip this
+				continue;
+			}
 			const has_state = bindings.some((binding) => binding.kind === 'state');
 			const has_props = bindings.some((binding) => binding.kind === 'bindable_prop');
 
@@ -212,7 +218,7 @@ const instance_script = {
 				nr_of_props++;
 
 				if (declarator.id.type !== 'Identifier') {
-					// TODO
+					// TODO invest time in this?
 					throw new Error(
 						'Encountered an export declaration pattern that is not supported for automigration.'
 					);
@@ -238,7 +244,6 @@ const instance_script = {
 					// 		declarations.push(b.declarator(path.node, value));
 					// 	}
 					// }
-					continue;
 				}
 
 				const binding = /** @type {import('#compiler').Binding} */ (
@@ -310,8 +315,9 @@ const instance_script = {
 			node.body.expression.type === 'AssignmentExpression'
 		) {
 			const ids = extract_identifiers(node.body.expression.left);
-			const reassigned_ids = ids.filter((id) => state.scope.get(id.name)?.reassigned);
-			if (reassigned_ids.length === 0) {
+			const bindings = ids.map((id) => state.scope.get(id.name));
+			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
+			if (reassigned_bindings.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
 				// $derived
 				state.str.update(
 					/** @type {number} */ (node.start),
@@ -329,13 +335,12 @@ const instance_script = {
 				);
 				return;
 			} else {
-				for (const id of reassigned_ids) {
-					const binding = state.scope.get(id.name);
-					if (binding?.node === id) {
+				for (const binding of reassigned_bindings) {
+					if (binding && ids.includes(binding.node)) {
 						// implicitly-declared variable which we need to make explicit
 						state.str.prependLeft(
 							/** @type {number} */ (node.start),
-							`let ${id.name}${binding.kind === 'state' ? ' = $state()' : ''};\n${state.indent}`
+							`let ${binding.node.name}${binding.kind === 'state' ? ' = $state()' : ''};\n${state.indent}`
 						);
 					}
 				}

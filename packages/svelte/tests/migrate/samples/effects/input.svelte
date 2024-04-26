@@ -7,4 +7,5 @@
 	$: {
 		console.log('foo');
 	}
+	$: $count = 1;
 </script>

@@ -13,4 +13,7 @@
 	run(() => {
 		console.log('foo');
 	});
+	run(() => {
+		$count = 1;
+	});
 </script>
