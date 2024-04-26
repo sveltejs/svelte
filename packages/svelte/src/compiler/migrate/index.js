@@ -163,6 +163,27 @@ const instance_script = {
 	Identifier(node, { state }) {
 		handle_identifier(node, state);
 	},
+	ExportNamedDeclaration(node, { state, next }) {
+		if (node.declaration) {
+			next();
+			return;
+		}
+
+		let count_removed = 0;
+		for (const specifier of node.specifiers) {
+			const binding = state.scope.get(specifier.local.name);
+			if (binding?.kind === 'bindable_prop') {
+				state.str.remove(
+					/** @type {number} */ (specifier.start),
+					/** @type {number} */ (specifier.end)
+				);
+				count_removed++;
+			}
+		}
+		if (count_removed === node.specifiers.length) {
+			state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
+		}
+	},
 	VariableDeclaration(node, { state, path }) {
 		if (state.scope !== state.analysis.instance.scope) {
 			return;
@@ -192,6 +213,9 @@ const instance_script = {
 
 				if (declarator.id.type !== 'Identifier') {
 					// TODO
+					throw new Error(
+						'Encountered an export declaration pattern that is not supported for automigration.'
+					);
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
 					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
 					// const tmp = state.scope.generate('tmp');
