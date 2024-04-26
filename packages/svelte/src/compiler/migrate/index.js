@@ -85,7 +85,24 @@ export function migrate(source) {
 				// some render tags or forwarded event attributes to add
 				str.appendRight(state.props_insertion_point, ` ${props},`);
 			} else {
-				const props_declaration = `let { ${props} } = $props();`;
+				let type = '';
+				if (
+					parsed.instance?.attributes.some(
+						(attr) => attr.name === 'lang' && /** @type {any} */ (attr).value[0].data === 'ts'
+					)
+				) {
+					if (analysis.uses_props || analysis.uses_rest_props) {
+						type = ' : Record<string, any>';
+					} else {
+						type = ` : { ${state.props
+							.map((prop) => {
+								return `${prop.exported}${prop.optional ? '?' : ''}: ${prop.type}`;
+							})
+							.join(', ')} }`;
+					}
+				}
+
+				const props_declaration = `let { ${props} }${type} = $props();`;
 				if (parsed.instance) {
 					if (state.props_insertion_point === 0) {
 						// no regular props found, but render tags or events to forward found, $props() will be first in the script tag
@@ -129,7 +146,7 @@ export function migrate(source) {
  *  str: MagicString;
  *  analysis: import('../phases/types.js').ComponentAnalysis;
  *  indent: string;
- *  props: Array<{ local: string; exported: string; init: string; bindable: boolean }>;
+ *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; optional: boolean; type: string }>;
  *  props_insertion_point: number;
  *  has_props_rune: boolean;
  * 	props_name: string;
@@ -221,6 +238,8 @@ const instance_script = {
 								/** @type {number} */ (declarator.init.end)
 							)
 						: '',
+					optional: !!declarator.init,
+					type: extract_type(declarator, state.str),
 					bindable: binding.mutated || binding.reassigned
 				});
 				state.props_insertion_point = /** @type {number} */ (declarator.end);
@@ -382,7 +401,9 @@ const template = {
 			local: name,
 			exported: name,
 			init: '',
-			bindable: false
+			bindable: false,
+			optional: true,
+			type: slot_props ? 'Snippet' : 'Snippet<[any]>'
 		});
 
 		if (node.fragment.nodes.length > 0) {
@@ -398,6 +419,30 @@ const template = {
 		}
 	}
 };
+
+/**
+ * @param {import('estree').VariableDeclarator} declarator
+ * @param {MagicString} str
+ */
+function extract_type(declarator, str) {
+	if (declarator.id.typeAnnotation) {
+		let start = declarator.id.typeAnnotation.start + 1; // skip the colon
+		while (str.original[start] === ' ') {
+			start++;
+		}
+		return str.original.substring(start, declarator.id.typeAnnotation.end);
+	}
+
+	// try to infer it from the init
+	if (declarator.init?.type === 'Literal') {
+		const type = typeof declarator.init.value;
+		if (type === 'string' || type === 'number' || type === 'boolean') {
+			return type;
+		}
+	}
+
+	return 'any';
+}
 
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement | import('#compiler').SvelteWindow | import('#compiler').SvelteDocument | import('#compiler').SvelteBody} node
@@ -455,7 +500,9 @@ function handle_events(node, state) {
 						local,
 						exported,
 						init: '',
-						bindable: false
+						bindable: false,
+						optional: true,
+						type: '(payload: any) => void'
 					});
 				}
 				prepend += `\n${state.indent}${local}?.(${payload_name});\n`;
@@ -519,7 +566,9 @@ function handle_events(node, state) {
 					local,
 					exported,
 					init: '',
-					bindable: false
+					bindable: false,
+					optional: true,
+					type: '(payload: any) => void'
 				});
 			}
 
