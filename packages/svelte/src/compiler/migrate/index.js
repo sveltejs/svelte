@@ -647,11 +647,11 @@ function handle_events(node, state) {
 
 					const needs_curlies = last.expression.body.type !== 'BlockStatement';
 					state.str.prependRight(
-						/** @type {number} */ (pos),
+						/** @type {number} */ (pos) + (needs_curlies ? 0 : 1),
 						`${needs_curlies ? '{' : ''}${prepend}${state.indent}`
 					);
 					state.str.appendRight(
-						/** @type {number} */ (last.expression.body.end),
+						/** @type {number} */ (last.expression.body.end) - (needs_curlies ? 0 : 1),
 						`\n${needs_curlies ? '}' : ''}`
 					);
 				} else {

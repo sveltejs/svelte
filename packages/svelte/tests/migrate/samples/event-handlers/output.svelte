@@ -32,7 +32,7 @@
 }}>click me</button>
 <button onclick={(payload_9) => {
 	payload_9.stopPropagation();
-	''
+	
 }}>click me</button>
 <button onclick={(payload_10) => {
 	payload_10.stopImmediatePropagation();
