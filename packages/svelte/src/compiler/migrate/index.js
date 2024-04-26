@@ -39,7 +39,7 @@ export function migrate(source) {
 			str,
 			indent,
 			props: [],
-			props_insertion_point: 0,
+			props_insertion_point: parsed.instance?.content.start ?? 0,
 			has_props_rune: false,
 			props_name: analysis.root.unique('props').name,
 			rest_props_name: analysis.root.unique('rest').name,
@@ -59,6 +59,8 @@ export function migrate(source) {
 		let added_legacy_import = false;
 
 		if (state.props.length > 0 || analysis.uses_rest_props || analysis.uses_props) {
+			const has_many_props = state.props.length > 3;
+			const props_separator = has_many_props ? `\n${indent}${indent}` : ' ';
 			let props = '';
 			if (analysis.uses_props) {
 				props = `...${state.props_name}`;
@@ -74,10 +76,10 @@ export function migrate(source) {
 						}
 						return prop_str;
 					})
-					.join(', ');
+					.join(`,${props_separator}`);
 
 				if (analysis.uses_rest_props) {
-					props += `, ...${state.rest_props_name}`;
+					props += `,${props_separator}...${state.rest_props_name}`;
 				}
 			}
 
@@ -85,6 +87,7 @@ export function migrate(source) {
 				// some render tags or forwarded event attributes to add
 				str.appendRight(state.props_insertion_point, ` ${props},`);
 			} else {
+				const type_name = state.scope.root.unique('Props').name;
 				let type = '';
 				if (
 					parsed.instance?.attributes.some(
@@ -92,27 +95,25 @@ export function migrate(source) {
 					)
 				) {
 					if (analysis.uses_props || analysis.uses_rest_props) {
-						type = ' : Record<string, any>';
+						type = `interface ${type_name} { [key: string]: any }`;
 					} else {
-						type = ` : { ${state.props
+						type = `interface ${type_name} {${props_separator}${state.props
 							.map((prop) => {
 								return `${prop.exported}${prop.optional ? '?' : ''}: ${prop.type}`;
 							})
-							.join(', ')} }`;
+							.join(`,${props_separator}`)}${has_many_props ? `\n${indent}` : ' '}}`;
 					}
 				}
 
-				const props_declaration = `let { ${props} }${type} = $props();`;
+				let props_declaration = `let {${props_separator}${props}${has_many_props ? `\n${indent}` : ' '}}`;
+				if (type) {
+					props_declaration = `${type}\n\n${indent}${props_declaration}`;
+				}
+				props_declaration = `${props_declaration}${type ? `: ${type_name}` : ''} = $props();`;
+
 				if (parsed.instance) {
-					if (state.props_insertion_point === 0) {
-						// no regular props found, but render tags or events to forward found, $props() will be first in the script tag
-						str.appendRight(
-							/** @type {number} */ (parsed.instance.content.start),
-							`\n${indent}${props_declaration}`
-						);
-					} else {
-						str.appendRight(state.props_insertion_point, props_declaration);
-					}
+					props_declaration = `\n${indent}${props_declaration}`;
+					str.appendRight(state.props_insertion_point, props_declaration);
 				} else {
 					const imports = state.needs_run ? `${indent}${run_import}\n` : '';
 					str.prepend(`<script>\n${imports}${indent}${props_declaration}\n</script>\n\n`);
@@ -270,6 +271,8 @@ const instance_script = {
 				start = /** @type {number} */ (parent.start);
 				end = /** @type {number} */ (parent.end);
 			}
+			while (state.str.original[start] !== '\n') start--;
+			while (state.str.original[end] !== '\n') end++;
 			state.str.update(start, end, '');
 		}
 	},

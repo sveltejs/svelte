@@ -1,8 +1,10 @@
 <script>
-    
-    
-    
-    let { readonly, optional = 'foo', binding = $bindable(), bindingOptional = $bindable('bar') } = $props();
+    let {
+        readonly,
+        optional = 'foo',
+        binding = $bindable(),
+        bindingOptional = $bindable('bar')
+    } = $props();
 </script>
 
 {readonly}
