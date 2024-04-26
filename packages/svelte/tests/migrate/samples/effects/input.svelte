@@ -6,6 +6,8 @@
 	}
 	$: {
 		console.log('foo');
+		if (x) break $;
+		console.log('bar');
 	}
 	$: $count = 1;
 </script>

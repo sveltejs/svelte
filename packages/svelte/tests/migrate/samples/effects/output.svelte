@@ -12,6 +12,8 @@
 	});
 	run(() => {
 		console.log('foo');
+		if (x) return;
+		console.log('bar');
 	});
 	run(() => {
 		$count = 1;

@@ -305,10 +305,21 @@ const instance_script = {
 			state.str.update(start, end, '');
 		}
 	},
-	LabeledStatement(node, { path, state }) {
+	BreakStatement(node, { state, path }) {
+		if (path[1].type !== 'LabeledStatement') return;
+		if (node.label?.name !== '$') return;
+		state.str.update(
+			/** @type {number} */ (node.start),
+			/** @type {number} */ (node.end),
+			'return;'
+		);
+	},
+	LabeledStatement(node, { path, state, next }) {
 		if (state.analysis.runes) return;
 		if (path.length > 1) return;
 		if (node.label.name !== '$') return;
+
+		next();
 
 		if (
 			node.body.type === 'ExpressionStatement' &&
