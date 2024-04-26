@@ -64,9 +64,7 @@ export class Parser {
 
 		this.root = {
 			css: null,
-			instance: null,
-			module: null,
-			parent: null,
+			js: [],
 			// @ts-ignore
 			start: null,
 			// @ts-ignore
