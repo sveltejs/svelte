@@ -704,7 +704,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		} else {
 			extract_identifiers(node).forEach((identifier) => {
 				const binding = scope.get(identifier.name);
-				if (binding) {
+				if (binding && identifier !== binding.node) {
 					binding.mutated = true;
 					binding.reassigned = true;
 				}
