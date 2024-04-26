@@ -421,7 +421,7 @@ const template = {
 				slot_props += `...${state.str.original.substring(/** @type {number} */ (attr.expression.start), attr.expression.end)}, `;
 			} else if (attr.type === 'Attribute') {
 				if (attr.name === 'name') {
-					name = /** @type {any} */ (attr.value)[0].data;
+					name = state.scope.generate(/** @type {any} */ (attr.value)[0].data);
 				} else {
 					const value =
 						attr.value !== true
