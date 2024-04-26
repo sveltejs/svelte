@@ -547,7 +547,7 @@ function handle_events(node, state) {
 			last.expression?.type === 'ArrowFunctionExpression' &&
 			last.expression.params[0]?.type === 'Identifier'
 				? last.expression.params[0].name
-				: state.scope.generate('payload');
+				: generate_event_name(last, state);
 		let prepend = '';
 
 		for (let i = 0; i < nodes.length - 1; i += 1) {
@@ -587,7 +587,7 @@ function handle_events(node, state) {
 						init: '',
 						bindable: false,
 						optional: true,
-						type: '(payload: any) => void'
+						type: '(event: any) => void'
 					});
 				}
 				prepend += `\n${state.indent}${local}?.(${payload_name});\n`;
@@ -676,7 +676,7 @@ function handle_events(node, state) {
 					init: '',
 					bindable: false,
 					optional: true,
-					type: '(payload: any) => void'
+					type: '(event: any) => void'
 				});
 			}
 
@@ -694,6 +694,22 @@ function handle_events(node, state) {
 			state.str.update(last.start, last.end, replacement);
 		}
 	}
+}
+
+/**
+ * @param {import('#compiler').OnDirective} last
+ * @param {State} state
+ */
+function generate_event_name(last, state) {
+	const scope =
+		(last.expression && state.analysis.template.scopes.get(last.expression)) || state.scope;
+
+	let name = 'event';
+	if (!scope.get(name)) return name;
+
+	let i = 1;
+	while (scope.get(`${name}${i}`)) i += 1;
+	return `${name}${i}`;
 }
 
 /**

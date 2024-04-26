@@ -1,23 +1,23 @@
 <script>
-	/** @type {{onclick?: (payload: any) => void, ontoggle?: (payload: any) => void, 'oncustom-event-bubble'?: (payload: any) => void}} */
+	/** @type {{onclick?: (event: any) => void, ontoggle?: (event: any) => void, 'oncustom-event-bubble'?: (event: any) => void}} */
 	let { onclick, ontoggle, 'oncustom-event-bubble': oncustom_event_bubble } = $props();
 </script>
 
-<button  onclick={(payload) => {
+<button  onclick={(event) => {
 	console.log('hi')
 
-	onclick?.(payload);
+	onclick?.(event);
 }}>click me</button>
-<button   onclick={(payload_1) => {
+<button   onclick={(event) => {
 	console.log('before')
 
-	onclick?.(payload_1);
+	onclick?.(event);
 	console.log('after')
 }}>click me</button>
-<button  onclick={(payload_2) => {
-	onclick?.(payload_2);
+<button  onclick={(event) => {
+	onclick?.(event);
 
-	foo?.(payload_2);
+	foo?.(event);
 }}>click me</button>
 <button {onclick}>click me</button>
 
@@ -26,20 +26,20 @@
 <button oncustom-event={() => 'hi'}>click me</button>
 <button oncustom-event-bubble={oncustom_event_bubble}>click me</button>
 
-<button onclick={(payload_8) => {
-	payload_8.preventDefault();
+<button onclick={(event) => {
+	event.preventDefault();
 	''
 }}>click me</button>
-<button onclick={(payload_9) => {
-	payload_9.stopPropagation();
+<button onclick={(event) => {
+	event.stopPropagation();
 	
 }}>click me</button>
-<button onclick={(payload_10) => {
-	payload_10.stopImmediatePropagation();
+<button onclick={(event) => {
+	event.stopImmediatePropagation();
 	''
 }}>click me</button>
 <button onclickcapture={() => ''}>click me</button>
-<button onclick={(payload_12) => {
+<button onclick={(event) => {
 	// @migration-task: incorporate self modifier
 	''
 }}>click me</button>
