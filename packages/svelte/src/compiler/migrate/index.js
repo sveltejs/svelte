@@ -6,6 +6,7 @@ import { validate_component_options } from '../validate-options.js';
 import { get_rune } from '../phases/scope.js';
 import { reset_warnings } from '../warnings.js';
 import { extract_identifiers } from '../utils/ast.js';
+import { regex_is_valid_identifier } from '../phases/patterns.js';
 
 /**
  * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
@@ -42,7 +43,7 @@ export function migrate(source) {
 			has_props_rune: false,
 			props_name: analysis.root.unique('props').name,
 			rest_props_name: analysis.root.unique('rest').name,
-			end: parsed.end,
+			end: source.length,
 			run_name: analysis.root.unique('run').name,
 			needs_run: false
 		};
@@ -97,7 +98,7 @@ export function migrate(source) {
 					}
 				} else {
 					const imports = state.needs_run ? `${indent}${run_import}\n` : '';
-					str.prepend(`<script>\n${imports}${indent}${props_declaration}\n</script>`);
+					str.prepend(`<script>\n${imports}${indent}${props_declaration}\n</script>\n\n`);
 					added_legacy_import = true;
 				}
 			}
@@ -110,7 +111,7 @@ export function migrate(source) {
 					`\n${indent}${run_import}\n`
 				);
 			} else {
-				str.prepend(`<script>\n${indent}${run_import}\n</script>`);
+				str.prepend(`<script>\n${indent}${run_import}\n</script>\n\n`);
 			}
 		}
 
@@ -295,15 +296,19 @@ const instance_script = {
 			}
 		}
 
+		state.needs_run = true;
 		const is_block_stmt = node.body.type === 'BlockStatement';
 		const start_end = /** @type {number} */ (node.body.start);
 		// TODO try to find out if we can use $derived.by instead?
 		if (is_block_stmt) {
-			state.str.update(/** @type {number} */ (node.start), start_end + 1, '$effect(() => {');
+			state.str.update(
+				/** @type {number} */ (node.start),
+				start_end + 1,
+				`${state.run_name}(() => {`
+			);
 			const end = /** @type {number} */ (node.body.end);
 			state.str.update(end - 1, end, '});');
 		} else {
-			state.needs_run = true;
 			state.str.update(
 				/** @type {number} */ (node.start),
 				start_end,
@@ -325,36 +330,27 @@ const template = {
 	Identifier(node, { state }) {
 		handle_identifier(node, state);
 	},
-	OnDirective(node, { state, path }) {
-		const parent = path.at(-1);
-		if (
-			parent?.type === 'SvelteSelf' ||
-			parent?.type === 'SvelteComponent' ||
-			parent?.type === 'Component'
-		) {
-			return;
-		}
-
-		if (node.expression) {
-			// remove : from on:click
-			state.str.update(node.start, node.start + 3, 'on');
-		} else {
-			// turn on:click into a prop
-			// Check if prop already set, could happen when on:click on different elements
-			// TODO what to do when this results in a variable name clash?
-			if (!state.props.some((prop) => prop.local === node.name)) {
-				state.props.push({
-					local: node.name,
-					exported: node.name,
-					init: '',
-					bindable: false
-				});
-			}
-
-			state.str.update(node.start, node.end, `{${node.name}}`);
-		}
+	RegularElement(node, { state, next }) {
+		handle_events(node, state);
+		next();
 	},
-	SlotElement(node, { state }) {
+	SvelteElement(node, { state, next }) {
+		handle_events(node, state);
+		next();
+	},
+	SvelteWindow(node, { state, next }) {
+		handle_events(node, state);
+		next();
+	},
+	SvelteBody(node, { state, next }) {
+		handle_events(node, state);
+		next();
+	},
+	SvelteDocument(node, { state, next }) {
+		handle_events(node, state);
+		next();
+	},
+	SlotElement(node, { state, next }) {
 		let name = 'children';
 		let slot_props = '{ ';
 
@@ -390,6 +386,7 @@ const template = {
 		});
 
 		if (node.fragment.nodes.length > 0) {
+			next();
 			state.str.update(
 				node.start,
 				node.fragment.nodes[0].start,
@@ -401,6 +398,147 @@ const template = {
 		}
 	}
 };
+
+/**
+ * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement | import('#compiler').SvelteWindow | import('#compiler').SvelteDocument | import('#compiler').SvelteBody} node
+ * @param {State} state
+ */
+function handle_events(node, state) {
+	/** @type {Map<string, import('#compiler').OnDirective[]>} */
+	const handlers = new Map();
+	for (const attribute of node.attributes) {
+		if (attribute.type !== 'OnDirective') continue;
+
+		const nodes = handlers.get(attribute.name) || [];
+		nodes.push(attribute);
+		handlers.set(attribute.name, nodes);
+	}
+
+	for (const [name, nodes] of handlers) {
+		// turn on:click into a prop
+		let exported = `on${name}`;
+		if (!regex_is_valid_identifier.test(name)) {
+			exported = `'${name}'`;
+		}
+		// Check if prop already set, could happen when on:click on different elements
+		let local = state.props.find((prop) => prop.exported === exported)?.local;
+
+		const last = nodes[nodes.length - 1];
+		const payload_name =
+			last.expression?.type === 'ArrowFunctionExpression' &&
+			last.expression.params[0]?.type === 'Identifier'
+				? last.expression.params[0].name
+				: state.scope.generate('payload');
+		let prepend = '';
+
+		for (let i = 0; i < nodes.length - 1; i += 1) {
+			const node = nodes[i];
+			if (node.expression) {
+				let body = '';
+				if (node.expression.type === 'ArrowFunctionExpression') {
+					body = state.str.original.substring(
+						/** @type {number} */ (node.expression.body.start),
+						/** @type {number} */ (node.expression.body.end)
+					);
+				} else {
+					body = `${state.str.original.substring(
+						/** @type {number} */ (node.expression.start),
+						/** @type {number} */ (node.expression.end)
+					)}();`;
+				}
+				// TODO check how many indents needed
+				prepend += `\n${state.indent}${body}\n`;
+			} else {
+				if (!local) {
+					local = state.scope.generate(`on${node.name}`);
+					state.props.push({
+						local,
+						exported,
+						init: '',
+						bindable: false
+					});
+				}
+				prepend += `\n${state.indent}${local}?.(${payload_name});\n`;
+			}
+
+			state.str.remove(node.start, node.end);
+		}
+
+		if (last.expression) {
+			// remove : from on:click
+			state.str.update(last.start, last.start + 3, 'on');
+			if (prepend) {
+				let pos = last.expression.start;
+				if (last.expression.type === 'ArrowFunctionExpression') {
+					pos = last.expression.body.start;
+					if (
+						last.expression.params.length > 0 &&
+						last.expression.params[0].type !== 'Identifier'
+					) {
+						const start = /** @type {number} */ (last.expression.params[0].start);
+						const end = /** @type {number} */ (last.expression.params[0].end);
+						// replace event payload with generated one that others use,
+						// then destructure generated payload param into what the user wrote
+						state.str.overwrite(start, end, payload_name);
+						prepend = `let ${state.str.original.substring(
+							start,
+							end
+						)} = ${payload_name};\n${prepend}`;
+					} else if (last.expression.params.length === 0) {
+						// add generated payload param to arrow function
+						const pos = state.str.original.lastIndexOf(')', last.expression.body.start);
+						state.str.prependLeft(pos, payload_name);
+					}
+
+					const needs_curlies = last.expression.body.type !== 'BlockStatement';
+					state.str.prependRight(
+						/** @type {number} */ (pos),
+						`${needs_curlies ? '{' : ''}${prepend}${state.indent}`
+					);
+					state.str.appendRight(
+						/** @type {number} */ (last.expression.body.end),
+						`\n${needs_curlies ? '}' : ''}`
+					);
+				} else {
+					state.str.update(
+						/** @type {number} */ (last.expression.start),
+						/** @type {number} */ (last.expression.end),
+						`(${payload_name}) => {${prepend}\n${state.indent}${state.str.original.substring(
+							/** @type {number} */ (last.expression.start),
+							/** @type {number} */ (last.expression.end)
+						)}?.(${payload_name});\n}`
+					);
+				}
+			}
+		} else {
+			// turn on:click into a prop
+			// Check if prop already set, could happen when on:click on different elements
+			if (!local) {
+				local = state.scope.generate(`on${last.name}`);
+				state.props.push({
+					local,
+					exported,
+					init: '',
+					bindable: false
+				});
+			}
+
+			const event_name = `on${name}`;
+			let replacement = '';
+			if (!prepend) {
+				if (exported === local) {
+					replacement = `{${event_name}}`;
+				} else {
+					replacement = `${event_name}={${local}}`;
+				}
+			} else {
+				replacement = `${event_name}={(${payload_name}) => {${prepend}\n${state.indent}${local}?.(${payload_name});\n}}`;
+			}
+
+			state.str.update(last.start, last.end, replacement);
+		}
+	}
+}
 
 /**
  * @param {import('estree').Identifier} node
