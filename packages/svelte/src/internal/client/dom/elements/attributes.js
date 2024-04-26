@@ -103,9 +103,6 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 		next.class = '';
 	}
 
-	var setters = map_get(setters_cache, element.nodeName);
-	if (!setters) map_set(setters_cache, element.nodeName, (setters = get_setters(element)));
-
 	// @ts-expect-error
 	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes ??= {});
 	/** @type {Array<() => void>} */
@@ -167,6 +164,9 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 				name = name.toLowerCase();
 				name = AttributeAliases[name] || name;
 			}
+
+			var setters = map_get(setters_cache, element.nodeName);
+			if (!setters) map_set(setters_cache, element.nodeName, (setters = get_setters(element)));
 
 			if (setters.includes(name)) {
 				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
