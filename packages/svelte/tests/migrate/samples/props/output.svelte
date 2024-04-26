@@ -1,4 +1,5 @@
 <script>
+    /** @type {{readonly: any, optional?: string, binding: any, bindingOptional?: string}} */
     let {
         readonly,
         optional = 'foo',

@@ -87,13 +87,12 @@ export function migrate(source) {
 				// some render tags or forwarded event attributes to add
 				str.appendRight(state.props_insertion_point, ` ${props},`);
 			} else {
+				const uses_ts = parsed.instance?.attributes.some(
+					(attr) => attr.name === 'lang' && /** @type {any} */ (attr).value[0].data === 'ts'
+				);
 				const type_name = state.scope.root.unique('Props').name;
 				let type = '';
-				if (
-					parsed.instance?.attributes.some(
-						(attr) => attr.name === 'lang' && /** @type {any} */ (attr).value[0].data === 'ts'
-					)
-				) {
+				if (uses_ts) {
 					if (analysis.uses_props || analysis.uses_rest_props) {
 						type = `interface ${type_name} { [key: string]: any }`;
 					} else {
@@ -103,13 +102,26 @@ export function migrate(source) {
 							})
 							.join(`,${props_separator}`)}${has_many_props ? `\n${indent}` : ' '}}`;
 					}
+				} else {
+					if (analysis.uses_props || analysis.uses_rest_props) {
+						type = `{Record<string, any>}`;
+					} else {
+						type = `{${state.props
+							.map((prop) => {
+								return `${prop.exported}${prop.optional ? '?' : ''}: ${prop.type}`;
+							})
+							.join(`, `)}}`;
+					}
 				}
 
 				let props_declaration = `let {${props_separator}${props}${has_many_props ? `\n${indent}` : ' '}}`;
-				if (type) {
+				if (uses_ts) {
 					props_declaration = `${type}\n\n${indent}${props_declaration}`;
+					props_declaration = `${props_declaration}${type ? `: ${type_name}` : ''} = $props();`;
+				} else {
+					props_declaration = `/** @type {${type}} */\n${indent}${props_declaration}`;
+					props_declaration = `${props_declaration} = $props();`;
 				}
-				props_declaration = `${props_declaration}${type ? `: ${type_name}` : ''} = $props();`;
 
 				if (parsed.instance) {
 					props_declaration = `\n${indent}${props_declaration}`;
@@ -269,7 +281,7 @@ const instance_script = {
 							)
 						: '',
 					optional: !!declarator.init,
-					type: extract_type(declarator, state.str),
+					type: extract_type(declarator, state.str, path),
 					bindable: binding.mutated || binding.reassigned
 				});
 				state.props_insertion_point = /** @type {number} */ (declarator.end);
@@ -446,7 +458,7 @@ const template = {
 			init: '',
 			bindable: false,
 			optional: true,
-			type: slot_props ? 'Snippet' : 'Snippet<[any]>'
+			type: `import('svelte').${slot_props ? 'Snippet<[any]>' : 'Snippet'}`
 		});
 
 		if (node.fragment.nodes.length > 0) {
@@ -466,14 +478,28 @@ const template = {
 /**
  * @param {import('estree').VariableDeclarator} declarator
  * @param {MagicString} str
+ * @param {import('#compiler').SvelteNode[]} path
  */
-function extract_type(declarator, str) {
+function extract_type(declarator, str, path) {
 	if (declarator.id.typeAnnotation) {
 		let start = declarator.id.typeAnnotation.start + 1; // skip the colon
 		while (str.original[start] === ' ') {
 			start++;
 		}
 		return str.original.substring(start, declarator.id.typeAnnotation.end);
+	}
+
+	// try to find a comment with a type annotation, hinting at jsdoc
+	const parent = path.at(-1);
+	if (parent?.type === 'ExportNamedDeclaration' && parent.leadingComments) {
+		const last = parent.leadingComments[parent.leadingComments.length - 1];
+		if (last.type === 'Block') {
+			const match = /@type {([^}]+)}/.exec(last.value);
+			if (match) {
+				str.update(/** @type {any} */ (last).start, /** @type {any} */ (last).end, '');
+				return match[1];
+			}
+		}
 	}
 
 	// try to infer it from the init
@@ -506,7 +532,7 @@ function handle_events(node, state) {
 		// turn on:click into a prop
 		let exported = `on${name}`;
 		if (!regex_is_valid_identifier.test(name)) {
-			exported = `'${name}'`;
+			exported = `'${exported}'`;
 		}
 		// Check if prop already set, could happen when on:click on different elements
 		let local = state.props.find((prop) => prop.exported === exported)?.local;

@@ -1,5 +1,6 @@
 <script>
-	let { onclick, ontoggle, 'custom-event-bubble': oncustom_event_bubble } = $props();
+	/** @type {{onclick?: (payload: any) => void, ontoggle?: (payload: any) => void, 'oncustom-event-bubble'?: (payload: any) => void}} */
+	let { onclick, ontoggle, 'oncustom-event-bubble': oncustom_event_bubble } = $props();
 </script>
 
 <button  onclick={(payload) => {
