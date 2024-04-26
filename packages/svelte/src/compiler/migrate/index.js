@@ -42,7 +42,9 @@ export function migrate(source) {
 			has_props_rune: false,
 			props_name: analysis.root.unique('props').name,
 			rest_props_name: analysis.root.unique('rest').name,
-			end: parsed.end
+			end: parsed.end,
+			run_name: analysis.root.unique('run').name,
+			needs_run: false
 		};
 
 		if (parsed.instance) {
@@ -51,6 +53,9 @@ export function migrate(source) {
 
 		state = { ...state, scope: analysis.template.scope };
 		walk(parsed.fragment, state, template);
+
+		const run_import = `import { run${state.run_name === 'run' ? '' : `as ${state.run_name}`} } from 'svelte/legacy';`;
+		let added_legacy_import = false;
 
 		if (state.props.length > 0 || analysis.uses_rest_props || analysis.uses_props) {
 			let props = '';
@@ -91,13 +96,27 @@ export function migrate(source) {
 						str.appendRight(state.props_insertion_point, props_declaration);
 					}
 				} else {
-					str.prepend(`<script>\n${indent}${props_declaration}\n</script>`);
+					const imports = state.needs_run ? `${indent}${run_import}\n` : '';
+					str.prepend(`<script>\n${imports}${indent}${props_declaration}\n</script>`);
+					added_legacy_import = true;
 				}
+			}
+		}
+
+		if (state.needs_run && !added_legacy_import) {
+			if (parsed.instance) {
+				str.appendRight(
+					/** @type {number} */ (parsed.instance.content.start),
+					`\n${indent}${run_import}\n`
+				);
+			} else {
+				str.prepend(`<script>\n${indent}${run_import}\n</script>`);
 			}
 		}
 
 		return str.toString();
 	} catch (e) {
+		// eslint-disable-next-line no-console
 		console.error('Error while migrating Svelte code');
 		throw e;
 	}
@@ -115,6 +134,8 @@ export function migrate(source) {
  * 	props_name: string;
  * 	rest_props_name: string;
  *  end: number;
+ *  run_name: string;
+ *  needs_run: boolean;
  * }} State
  */
 
@@ -276,18 +297,17 @@ const instance_script = {
 
 		const is_block_stmt = node.body.type === 'BlockStatement';
 		const start_end = /** @type {number} */ (node.body.start);
-		// $effect.pre, to be precise, but we gloss over that
 		// TODO try to find out if we can use $derived.by instead?
-		// TODO SSR mode variant needed
 		if (is_block_stmt) {
 			state.str.update(/** @type {number} */ (node.start), start_end + 1, '$effect(() => {');
 			const end = /** @type {number} */ (node.body.end);
 			state.str.update(end - 1, end, '});');
 		} else {
+			state.needs_run = true;
 			state.str.update(
 				/** @type {number} */ (node.start),
 				start_end,
-				`$effect(() => {\n${state.indent}`
+				`${state.run_name}(() => {\n${state.indent}`
 			);
 			state.str.indent(state.indent, {
 				exclude: [
