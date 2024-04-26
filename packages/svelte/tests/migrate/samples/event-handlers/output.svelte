@@ -26,4 +26,22 @@
 <button oncustom-event={() => 'hi'}>click me</button>
 <button oncustom-event-bubble={oncustom_event_bubble}>click me</button>
 
+<button onclick={(payload_8) => {
+	payload_8.preventDefault();
+	''
+}}>click me</button>
+<button onclick={(payload_9) => {
+	payload_9.stopPropagation();
+	''
+}}>click me</button>
+<button onclick={(payload_10) => {
+	payload_10.stopImmediatePropagation();
+	''
+}}>click me</button>
+<button onclickcapture={() => ''}>click me</button>
+<button onclick={(payload_12) => {
+	// @migration-task: incorporate self modifier
+	''
+}}>click me</button>
+
 <Button on:click={() => 'leave untouched'} on:click>click me</Button>

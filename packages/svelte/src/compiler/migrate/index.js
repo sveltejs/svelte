@@ -523,14 +523,19 @@ function handle_events(node, state) {
 	for (const attribute of node.attributes) {
 		if (attribute.type !== 'OnDirective') continue;
 
-		const nodes = handlers.get(attribute.name) || [];
+		let name = `on${attribute.name}`;
+		if (attribute.modifiers.includes('capture')) {
+			name += 'capture';
+		}
+
+		const nodes = handlers.get(name) || [];
 		nodes.push(attribute);
-		handlers.set(attribute.name, nodes);
+		handlers.set(name, nodes);
 	}
 
 	for (const [name, nodes] of handlers) {
 		// turn on:click into a prop
-		let exported = `on${name}`;
+		let exported = name;
 		if (!regex_is_valid_identifier.test(name)) {
 			exported = `'${exported}'`;
 		}
@@ -561,6 +566,17 @@ function handle_events(node, state) {
 					)}();`;
 				}
 				// TODO check how many indents needed
+				for (const modifier of node.modifiers) {
+					if (modifier === 'stopPropagation') {
+						body = `\n${state.indent}${payload_name}.stopPropagation();\n${body}`;
+					} else if (modifier === 'preventDefault') {
+						body = `\n${state.indent}${payload_name}.preventDefault();\n${body}`;
+					} else if (modifier === 'stopImmediatePropagation') {
+						body = `\n${state.indent}${payload_name}.stopImmediatePropagation();\n${body}`;
+					} else {
+						body = `\n${state.indent}// @migration-task: incorporate ${modifier} modifier\n${body}`;
+					}
+				}
 				prepend += `\n${state.indent}${body}\n`;
 			} else {
 				if (!local) {
@@ -582,7 +598,30 @@ function handle_events(node, state) {
 
 		if (last.expression) {
 			// remove : from on:click
-			state.str.update(last.start, last.start + 3, 'on');
+			state.str.remove(last.start + 2, last.start + 3);
+			// remove modifiers
+			if (last.modifiers.length > 0) {
+				state.str.remove(
+					last.start + last.name.length + 3,
+					state.str.original.indexOf('=', last.start)
+				);
+			}
+			if (last.modifiers.includes('capture')) {
+				state.str.appendRight(last.start + last.name.length + 3, 'capture');
+			}
+
+			for (const modifier of last.modifiers) {
+				if (modifier === 'stopPropagation') {
+					prepend += `\n${state.indent}${payload_name}.stopPropagation();\n`;
+				} else if (modifier === 'preventDefault') {
+					prepend += `\n${state.indent}${payload_name}.preventDefault();\n`;
+				} else if (modifier === 'stopImmediatePropagation') {
+					prepend += `\n${state.indent}${payload_name}.stopImmediatePropagation();\n`;
+				} else if (modifier !== 'capture') {
+					prepend += `\n${state.indent}// @migration-task: incorporate ${modifier} modifier\n`;
+				}
+			}
+
 			if (prepend) {
 				let pos = last.expression.start;
 				if (last.expression.type === 'ArrowFunctionExpression') {
@@ -641,16 +680,15 @@ function handle_events(node, state) {
 				});
 			}
 
-			const event_name = `on${name}`;
 			let replacement = '';
 			if (!prepend) {
 				if (exported === local) {
-					replacement = `{${event_name}}`;
+					replacement = `{${name}}`;
 				} else {
-					replacement = `${event_name}={${local}}`;
+					replacement = `${name}={${local}}`;
 				}
 			} else {
-				replacement = `${event_name}={(${payload_name}) => {${prepend}\n${state.indent}${local}?.(${payload_name});\n}}`;
+				replacement = `${name}={(${payload_name}) => {${prepend}\n${state.indent}${local}?.(${payload_name});\n}}`;
 			}
 
 			state.str.update(last.start, last.end, replacement);

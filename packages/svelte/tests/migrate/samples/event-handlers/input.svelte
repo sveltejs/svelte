@@ -8,4 +8,10 @@
 <button on:custom-event={() => 'hi'}>click me</button>
 <button on:custom-event-bubble>click me</button>
 
+<button on:click|preventDefault={() => ''}>click me</button>
+<button on:click|stopPropagation={() => ''}>click me</button>
+<button on:click|stopImmediatePropagation={() => ''}>click me</button>
+<button on:click|capture={() => ''}>click me</button>
+<button on:click|self={() => ''}>click me</button>
+
 <Button on:click={() => 'leave untouched'} on:click>click me</Button>
