@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-hr, script and template as valid select children
+fix: make hr, script and template valid select children
