@@ -688,8 +688,16 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 	// we do this after the fact, so that we don't need to worry
 	// about encountering references before their declarations
-	for (const [scope, { node, path }] of references) {
-		scope.reference(node, path);
+	for (const [ref_scope, { node, path }] of references) {
+		// We need to declare the synthetic $$props and $$restProps bindings if they are used
+		// right here in order to get their references, which are important later on
+		if (node.name === '$$props' && !scope.get('$$props')) {
+			scope.declare(b.id('$$props'), 'rest_prop', 'synthetic');
+		} else if (node.name === '$$restProps' && !scope.get('$$restProps')) {
+			scope.declare(b.id('$$restProps'), 'rest_prop', 'synthetic');
+		}
+
+		ref_scope.reference(node, path);
 	}
 
 	for (const [scope, node] of updates) {

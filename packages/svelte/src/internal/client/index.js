@@ -88,6 +88,7 @@ export { mutable_source, mutate, source, set } from './reactivity/sources.js';
 export {
 	prop,
 	rest_props,
+	legacy_rest_props,
 	spread_props,
 	update_pre_prop,
 	update_prop

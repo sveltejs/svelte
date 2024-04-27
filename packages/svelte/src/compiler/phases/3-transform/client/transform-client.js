@@ -418,9 +418,10 @@ export function client_component(source, analysis, options) {
 			b.const(
 				'$$restProps',
 				b.call(
-					'$.rest_props',
+					'$.legacy_rest_props',
 					b.id('$$sanitized_props'),
-					b.array(named_props.map((name) => b.literal(name)))
+					b.array(named_props.map((name) => b.literal(name))),
+					b.array([])
 				)
 			)
 		);
@@ -431,8 +432,34 @@ export function client_component(source, analysis, options) {
 		if (analysis.custom_element) {
 			to_remove.push(b.literal('$$host'));
 		}
+
+		// Find keys that are reassigned in the component because those can get out of sync
+		// with the parent and therefore need special handling. This currently doesn't handle
+		// dynamic keys, let's hope noone does that.
+		const reassigned = [];
+		const props = [
+			analysis.instance.scope.get('$$restProps'),
+			analysis.instance.scope.get('$$props')
+		];
+		for (const prop of props) {
+			for (const { path } of prop?.references ?? []) {
+				const reference = path.at(-1);
+				const parent = path.at(-2);
+				if (
+					reference?.type === 'MemberExpression' &&
+					reference.property.type === 'Identifier' &&
+					parent?.type === 'AssignmentExpression'
+				) {
+					reassigned.push(b.literal(reference.property.name));
+				}
+			}
+		}
+
 		component_block.body.unshift(
-			b.const('$$sanitized_props', b.call('$.rest_props', b.id('$$props'), b.array(to_remove)))
+			b.const(
+				'$$sanitized_props',
+				b.call('$.legacy_rest_props', b.id('$$props'), b.array(to_remove), b.array(reassigned))
+			)
 		);
 	}
 

@@ -73,13 +73,77 @@ const rest_props_handler = {
 };
 
 /**
+ * The proxy handler for legacy $$restProps and $$props
+ * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol>, special: Record<string | symbol, (v?: unknown) => unknown> }>}}
+ */
+const legacy_rest_props_handler = {
+	get(target, key) {
+		if (target.exclude.includes(key)) return;
+		return key in target.special ? target.special[key]() : target.props[key];
+	},
+	set(target, key, value) {
+		if (key in target.special) {
+			target.special[key](value);
+		} else {
+			target.props[key] = value;
+		}
+
+		return true;
+	},
+	getOwnPropertyDescriptor(target, key) {
+		if (target.exclude.includes(key)) return;
+		if (key in target.props) {
+			return {
+				enumerable: true,
+				configurable: true,
+				value: target.props[key]
+			};
+		}
+	},
+	has(target, key) {
+		if (target.exclude.includes(key)) return false;
+		return key in target.props;
+	},
+	ownKeys(target) {
+		return Reflect.ownKeys(target.props).filter((key) => !target.exclude.includes(key));
+	}
+};
+
+/**
  * @param {Record<string, unknown>} props
  * @param {string[]} exclude
  * @param {string} [name]
  * @returns {Record<string, unknown>}
  */
 export function rest_props(props, exclude, name) {
-	return new Proxy(DEV ? { props, exclude, name } : { props, exclude }, rest_props_handler);
+	return new Proxy(
+		DEV ? { props, exclude, name, other: {}, to_proxy: [] } : { props, exclude },
+		rest_props_handler
+	);
+}
+
+/**
+ * @param {Record<string, unknown>} props
+ * @param {string[]} exclude
+ * @param {string[]} reassigned
+ * @returns {Record<string, unknown>}
+ */
+export function legacy_rest_props(props, exclude, reassigned) {
+	// Handle props that can temporarily get out of sync with the parent
+	/** @type {Record<string, (v?: unknown) => unknown>} */
+	const special = {};
+	for (const key of reassigned) {
+		special[key] = prop(
+			{
+				get [key]() {
+					return props[key];
+				}
+			},
+			key,
+			PROPS_IS_UPDATED
+		);
+	}
+	return new Proxy({ props, exclude, special }, legacy_rest_props_handler);
 }
 
 /**
