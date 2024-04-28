@@ -111,7 +111,7 @@ const legacy_rest_props_handler = {
 		}
 
 		target.special[key](value);
-		update(target.version); // $$props is coarse-grained: when $$props.y is updated, usages of $$props.y etc are also rerun
+		update(target.version); // $$props is coarse-grained: when $$props.x is updated, usages of $$props.y etc are also rerun
 		return true;
 	},
 	getOwnPropertyDescriptor(target, key) {
