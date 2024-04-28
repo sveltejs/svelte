@@ -27,7 +27,7 @@ export default test({
 			target.innerHTML,
 			`
 			<button>increment</button>
-			<p>2 b</p>
+			<p>4 b</p>
 			<button>update</button>
 		`
 		);

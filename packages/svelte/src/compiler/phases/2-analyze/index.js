@@ -447,6 +447,9 @@ export function analyze_component(root, source, options) {
 			);
 		}
 	} else {
+		instance.scope.declare(b.id('$$props'), 'rest_prop', 'synthetic');
+		instance.scope.declare(b.id('$$restProps'), 'rest_prop', 'synthetic');
+
 		for (const { ast, scope, scopes } of [module, instance, template]) {
 			/** @type {import('./types').LegacyAnalysisState} */
 			const state = {

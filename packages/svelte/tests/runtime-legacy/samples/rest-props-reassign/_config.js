@@ -3,7 +3,7 @@ import { test } from '../../test';
 export default test({
 	html: `
 		<button>increment</button>
-		<p>0 </p>
+		<p>0 c</p>
 		<button>update</button>
 	`,
 
@@ -16,7 +16,7 @@ export default test({
 			target.innerHTML,
 			`
 			<button>increment</button>
-			<p>2 </p>
+			<p>1 c</p>
 			<button>update</button>
 		`
 		);
@@ -27,7 +27,7 @@ export default test({
 			target.innerHTML,
 			`
 			<button>increment</button>
-			<p>2 b</p>
+			<p>1 b c</p>
 			<button>update</button>
 		`
 		);
