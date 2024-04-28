@@ -105,18 +105,6 @@ function validate_element(node, context) {
 
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'Attribute') {
-			const parent_type = node.type;
-
-			// Don't warn on component events; these might not be under the author's control so the warning would be unactionable
-			if (
-				(parent_type === 'RegularElement' || parent_type === 'SvelteElement') &&
-				is_event_attribute(attribute) &&
-				context.state.analysis.event_directive_node
-			) {
-				const { event_directive_node } = context.state.analysis;
-				e.mixed_event_handler_syntaxes(event_directive_node, event_directive_node.name);
-			}
-
 			const is_expression = is_expression_attribute(attribute);
 
 			if (context.state.analysis.runes && is_expression) {
@@ -1217,13 +1205,10 @@ export const validation_runes = merge(validation, a11y_validators, {
 			w.slot_element_deprecated(node);
 		}
 	},
-	OnDirective(node, { state, path }) {
+	OnDirective(node, { path }) {
 		const parent_type = path.at(-1)?.type;
 		// Don't warn on component events; these might not be under the author's control so the warning would be unactionable
 		if (parent_type === 'RegularElement' || parent_type === 'SvelteElement') {
-			if (state.analysis.uses_event_attributes) {
-				e.mixed_event_handler_syntaxes(node, node.name);
-			}
 			w.event_directive_deprecated(node, node.name);
 		}
 	},

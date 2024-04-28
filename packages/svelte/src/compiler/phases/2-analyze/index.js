@@ -496,6 +496,13 @@ export function analyze_component(root, source, options) {
 		analysis.reactive_statements = order_reactive_statements(analysis.reactive_statements);
 	}
 
+	if (analysis.event_directive_node && analysis.uses_event_attributes) {
+		e.mixed_event_handler_syntaxes(
+			analysis.event_directive_node,
+			analysis.event_directive_node.name
+		);
+	}
+
 	if (analysis.uses_render_tags && (analysis.uses_slots || analysis.slot_names.size > 0)) {
 		e.slot_snippet_conflict(analysis.slot_names.values().next().value);
 	}
