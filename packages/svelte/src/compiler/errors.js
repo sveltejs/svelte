@@ -729,7 +729,7 @@ export function component_invalid_directive(node) {
 }
 
 /**
- * {@const ...} must be an assignment
+ * {@const ...} must consist of a single variable declaration
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
