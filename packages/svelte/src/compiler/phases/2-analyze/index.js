@@ -1162,7 +1162,10 @@ const common_visitors = {
 		});
 
 		if (is_event_attribute(node)) {
-			context.state.analysis.uses_event_attributes = true;
+			const parent = context.path.at(-1);
+			if (parent?.type === 'RegularElement' || parent?.type === 'SvelteElement') {
+				context.state.analysis.uses_event_attributes = true;
+			}
 
 			const expression = node.value[0].expression;
 
