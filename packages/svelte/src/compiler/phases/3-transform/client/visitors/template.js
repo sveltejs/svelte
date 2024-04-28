@@ -2996,7 +2996,7 @@ export const template_visitors = {
 		const props_expression =
 			spreads.length === 0
 				? b.object(props)
-				: b.call('$.spread_props', b.object(props), b.array(spreads), b.array(spreads_keys));
+				: b.call('$.spread_props', b.array([b.object(props), ...spreads]), b.array(spreads_keys));
 		const fallback =
 			node.fragment.nodes.length === 0
 				? b.literal(null)
