@@ -89,6 +89,7 @@ _To Read_
 
 _To Watch_
 
+- [Build a Animated Website with SvelteKit, GSAP & Prismic](https://www.youtube.com/watch?v=v5Ncz5AcXjI) by Prismic
 - [Svelte 5: What's New](https://www.youtube.com/watch?v=kvFqpaTP0a0) by Simon Holthausen
 - [Build the Ultimate Learning Platform with SvelteKit, PocketBase & TailwindCSS!](https://www.youtube.com/watch?v=b2ftRSX1iZ0&t=47s) and [Lets Build A Filtering System with Svelte 5 , Sveltekit 2, Tailwind, Upstash](https://www.youtube.com/watch?v=5urk4ui_l5o) by Lawal Adebola
 - [Porting a vanilla JavaScript library to Svelte 5](https://www.youtube.com/watch?v=apIJlWJ3HgQ) by Stanislav Khromov
@@ -99,6 +100,7 @@ _To Watch_
 - [sk-seo](https://github.com/TheDahoom/Sveltekit-seo/) is a dead simple, no dependencies, svelte component that automates a lot of the annoying SEO parts for you
 - [Svelte Lib Helpers](https://github.com/shinokada/svelte-lib-helpers) is a utility package designed to streamline various tasks when developing Svelte libraries
 - [skitsa](https://github.com/michaelcuneo/sveltekit-sst-auth) is a simple yet fully fledged operational demonstration of SvelteKit Magic Links using SST, hosted on AWS, as a Lambda application
+- [svelte-zoomable-circles](https://www.npmjs.com/package/svelte-zoomable-circles) is a Svelte component for displaying and browsing hierarchical data using zoomable circles
 
 
 That's it for this month! Feel free to let us know if we missed anything on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.gg/svelte).
