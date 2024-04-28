@@ -372,6 +372,8 @@ export function analyze_component(root, source, options) {
 		uses_render_tags: false,
 		needs_context: false,
 		needs_props: false,
+		event_directive_node: null,
+		uses_event_attributes: false,
 		custom_element: options.customElementOptions ?? options.customElement,
 		inject_styles: options.css === 'injected' || options.customElement,
 		accessors: options.customElement
@@ -492,6 +494,13 @@ export function analyze_component(root, source, options) {
 		}
 
 		analysis.reactive_statements = order_reactive_statements(analysis.reactive_statements);
+	}
+
+	if (analysis.event_directive_node && analysis.uses_event_attributes) {
+		e.mixed_event_handler_syntaxes(
+			analysis.event_directive_node,
+			analysis.event_directive_node.name
+		);
 	}
 
 	if (analysis.uses_render_tags && (analysis.uses_slots || analysis.slot_names.size > 0)) {
@@ -1153,6 +1162,11 @@ const common_visitors = {
 		});
 
 		if (is_event_attribute(node)) {
+			const parent = context.path.at(-1);
+			if (parent?.type === 'RegularElement' || parent?.type === 'SvelteElement') {
+				context.state.analysis.uses_event_attributes = true;
+			}
+
 			const expression = node.value[0].expression;
 
 			const delegated_event = get_delegated_event(node.name.slice(2), expression, context);
@@ -1285,6 +1299,13 @@ const common_visitors = {
 		}
 
 		context.next();
+	},
+	OnDirective(node, { state, path, next }) {
+		const parent = path.at(-1);
+		if (parent?.type === 'SvelteElement' || parent?.type === 'RegularElement') {
+			state.analysis.event_directive_node ??= node;
+		}
+		next();
 	},
 	BindDirective(node, context) {
 		let i = context.path.length;

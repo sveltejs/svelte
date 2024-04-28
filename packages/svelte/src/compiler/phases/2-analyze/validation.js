@@ -8,6 +8,7 @@ import * as e from '../../errors.js';
 import {
 	extract_identifiers,
 	get_parent,
+	is_event_attribute,
 	is_expression_attribute,
 	is_text_attribute,
 	object,

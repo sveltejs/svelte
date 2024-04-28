@@ -2,6 +2,7 @@ import type {
 	Binding,
 	Css,
 	Fragment,
+	OnDirective,
 	RegularElement,
 	SlotElement,
 	SvelteElement,
@@ -59,6 +60,10 @@ export interface ComponentAnalysis extends Analysis {
 	uses_render_tags: boolean;
 	needs_context: boolean;
 	needs_props: boolean;
+	/** Set to the first event directive (on:x) found on a DOM element in the code */
+	event_directive_node: OnDirective | null;
+	/** true if uses event attributes (onclick) on a DOM element */
+	uses_event_attributes: boolean;
 	custom_element: boolean | SvelteOptions['customElement'];
 	/** If `true`, should append styles through JavaScript */
 	inject_styles: boolean;
