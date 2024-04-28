@@ -44,5 +44,5 @@
 <footer role="contentinfo"></footer>
 
 <!-- Allowed -->
-<!-- svelte-ignore a11y-no-noninteractive-element-to-interactive-role -->
+<!-- svelte-ignore a11y_no_noninteractive_element_to_interactive_role -->
 <menu role="menu"></menu>

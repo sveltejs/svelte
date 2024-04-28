@@ -5,7 +5,6 @@ import {
 	is_simple_expression,
 	object
 } from '../../../utils/ast.js';
-import { error } from '../../../errors.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,
@@ -185,7 +184,7 @@ export function serialize_set_binding(node, context, fallback, options) {
 	}
 
 	if (assignee.type !== 'Identifier' && assignee.type !== 'MemberExpression') {
-		error(node, 'INTERNAL', `Unexpected assignment type ${assignee.type}`);
+		throw new Error(`Unexpected assignment type ${assignee.type}`);
 	}
 
 	// Handle class private/public state assignment cases

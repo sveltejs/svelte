@@ -4,7 +4,7 @@ export default test({
 	warnings: [
 		{
 			filename: 'SvelteComponent.svelte',
-			code: 'css-unused-selector',
+			code: 'css_unused_selector',
 			message: 'Unused CSS selector "img[alt=""]"',
 			start: {
 				character: 87,

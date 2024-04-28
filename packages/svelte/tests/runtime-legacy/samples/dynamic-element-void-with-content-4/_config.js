@@ -8,5 +8,5 @@ export default test({
 		return { tag: 'br' };
 	},
 	html: '<br>',
-	warnings: ['<svelte:element this="br"> is self-closing and cannot have content.']
+	warnings: ['`<svelte:element this="br">` is a void element — it cannot have content']
 });

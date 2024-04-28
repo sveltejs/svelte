@@ -128,8 +128,7 @@ export {
 export {
 	validate_dynamic_component,
 	validate_each_keys,
-	validate_prop_bindings,
-	validate_store
+	validate_prop_bindings
 } from './validate.js';
 export { raf } from './timing.js';
 export { proxy, snapshot } from './proxy.js';
@@ -147,5 +146,6 @@ export {
 	validate_component,
 	validate_dynamic_element_tag,
 	validate_snippet,
+	validate_store,
 	validate_void_dynamic_element
 } from '../shared/validate.js';

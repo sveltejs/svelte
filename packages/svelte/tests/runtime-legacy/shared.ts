@@ -2,7 +2,8 @@ import * as fs from 'node:fs';
 import { setImmediate } from 'node:timers/promises';
 import glob from 'tiny-glob/sync.js';
 import { createClassComponent } from 'svelte/legacy';
-import { flushSync } from 'svelte';
+import { proxy } from 'svelte/internal/client';
+import { flushSync, hydrate, mount, unmount } from 'svelte';
 import { render } from 'svelte/server';
 import { afterAll, assert, beforeAll } from 'vitest';
 import { compile_directory } from '../helpers.js';
@@ -43,6 +44,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 		component: Props & {
 			[key: string]: any;
 		};
+		instance: Record<string, any>;
 		mod: any;
 		ok: typeof ok;
 		raf: {
@@ -120,7 +122,7 @@ export function runtime_suite(runes: boolean) {
 			return common_setup(cwd, runes, config);
 		},
 		async (config, cwd, variant, common) => {
-			await run_test_variant(cwd, config, variant, common);
+			await run_test_variant(cwd, config, variant, common, runes);
 		}
 	);
 }
@@ -148,7 +150,8 @@ async function run_test_variant(
 	cwd: string,
 	config: RuntimeTest,
 	variant: 'dom' | 'hydrate' | 'ssr',
-	compileOptions: CompileOptions
+	compileOptions: CompileOptions,
+	runes: boolean
 ) {
 	let unintended_error = false;
 
@@ -178,7 +181,15 @@ async function run_test_variant(
 
 		if (str.slice(0, i).includes('warnings') || config.warnings) {
 			// eslint-disable-next-line no-console
-			console.warn = (...args) => warnings.push(...args);
+			console.warn = (...args) => {
+				if (args[0].startsWith('%c[svelte]')) {
+					// TODO convert this to structured data, for more robust comparison?
+					const message = args[0];
+					warnings.push(message.slice(message.indexOf('%c', 2) + 2));
+				} else {
+					warnings.push(...args);
+				}
+			};
 		}
 	}
 
@@ -281,15 +292,30 @@ async function run_test_variant(
 				}
 			};
 
-			const instance = createClassComponent({
-				component: mod.default,
-				props: config.props,
-				target,
-				immutable: config.immutable,
-				intro: config.intro,
-				recover: config.recover ?? false,
-				hydrate: variant === 'hydrate'
-			});
+			let instance: any;
+			let props: any;
+
+			if (runes) {
+				props = proxy({ ...(config.props || {}) });
+
+				const render = variant === 'hydrate' ? hydrate : mount;
+				instance = render(mod.default, {
+					target,
+					props,
+					intro: config.intro,
+					recover: config.recover ?? false
+				});
+			} else {
+				instance = createClassComponent({
+					component: mod.default,
+					props: config.props,
+					target,
+					immutable: config.immutable,
+					intro: config.intro,
+					recover: config.recover ?? false,
+					hydrate: variant === 'hydrate'
+				});
+			}
 
 			// eslint-disable-next-line no-console
 			console.error = error;
@@ -319,7 +345,8 @@ async function run_test_variant(
 							htmlEqualWithOptions: assert_html_equal_with_options
 						},
 						variant,
-						component: instance,
+						component: runes ? props : instance,
+						instance,
 						mod,
 						target,
 						snapshot,
@@ -336,7 +363,11 @@ async function run_test_variant(
 					assert.fail('Expected a runtime error');
 				}
 			} finally {
-				instance.$destroy();
+				if (runes) {
+					unmount(instance);
+				} else {
+					instance.$destroy();
+				}
 
 				if (config.warnings) {
 					assert.deepEqual(warnings, config.warnings);

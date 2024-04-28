@@ -6,5 +6,5 @@ export default test({
 		unmount(component.l1);
 	},
 
-	warnings: ['Tried to unmount a component that was not mounted.']
+	warnings: ['Tried to unmount a component that was not mounted']
 });

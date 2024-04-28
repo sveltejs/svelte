@@ -1,7 +1,7 @@
 [
 	{
-		"code": "a11y-accesskey",
-		"message": "A11y: Avoid using accesskey",
+		"code": "a11y_accesskey",
+		"message": "Avoid using accesskey",
 		"start": {
 			"line": 1,
 			"column": 5

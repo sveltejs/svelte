@@ -22,6 +22,8 @@ import { add_owner } from './dev/ownership.js';
 import { mutate, set, source } from './reactivity/sources.js';
 import { update_derived } from './reactivity/deriveds.js';
 import { inspect_captured_signals, inspect_fn, set_inspect_fn } from './dev/inspect.js';
+import * as e from './errors.js';
+import { lifecycle_outside_component } from '../shared/errors.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -115,7 +117,7 @@ export function set_current_component_context(context) {
 
 /** @returns {boolean} */
 export function is_runes() {
-	return current_component_context !== null && current_component_context.r;
+	return current_component_context !== null && current_component_context.l === null;
 }
 
 /**
@@ -412,13 +414,7 @@ export function execute_effect(effect) {
 function infinite_loop_guard() {
 	if (flush_count > 1000) {
 		flush_count = 0;
-		throw new Error(
-			'ERR_SVELTE_TOO_MANY_UPDATES' +
-				(DEV
-					? ': Maximum update depth exceeded. This can happen when a reactive block or effect ' +
-						'repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops.'
-					: '')
-		);
+		e.effect_update_depth_exceeded();
 	}
 	flush_count++;
 }
@@ -880,12 +876,12 @@ export function is_signal(val) {
  * @returns {T}
  */
 export function getContext(key) {
-	const context_map = get_or_init_context_map();
+	const context_map = get_or_init_context_map('getContext');
 	const result = /** @type {T} */ (context_map.get(key));
 
 	if (DEV) {
 		// @ts-expect-error
-		const fn = current_component_context?.function;
+		const fn = current_component_context.function;
 		if (fn) {
 			add_owner(result, fn, true);
 		}
@@ -908,7 +904,7 @@ export function getContext(key) {
  * @returns {T}
  */
 export function setContext(key, context) {
-	const context_map = get_or_init_context_map();
+	const context_map = get_or_init_context_map('setContext');
 	context_map.set(key, context);
 	return context;
 }
@@ -922,7 +918,7 @@ export function setContext(key, context) {
  * @returns {boolean}
  */
 export function hasContext(key) {
-	const context_map = get_or_init_context_map();
+	const context_map = get_or_init_context_map('hasContext');
 	return context_map.has(key);
 }
 
@@ -936,7 +932,7 @@ export function hasContext(key) {
  * @returns {T}
  */
 export function getAllContexts() {
-	const context_map = get_or_init_context_map();
+	const context_map = get_or_init_context_map('getAllContexts');
 
 	if (DEV) {
 		// @ts-expect-error
@@ -951,16 +947,18 @@ export function getAllContexts() {
 	return /** @type {T} */ (context_map);
 }
 
-/** @returns {Map<unknown, unknown>} */
-function get_or_init_context_map() {
-	const component_context = current_component_context;
-	if (component_context === null) {
-		throw new Error(
-			'ERR_SVELTE_ORPHAN_CONTEXT' +
-				(DEV ? 'Context can only be used during component initialisation.' : '')
-		);
+/**
+ * @param {string} name
+ * @returns {Map<unknown, unknown>}
+ */
+function get_or_init_context_map(name) {
+	if (current_component_context === null) {
+		lifecycle_outside_component(name);
 	}
-	return (component_context.c ??= new Map(get_parent_context(component_context) || undefined));
+
+	return (current_component_context.c ??= new Map(
+		get_parent_context(current_component_context) || undefined
+	));
 }
 
 /**
@@ -1043,28 +1041,23 @@ export async function value_or_fallback_async(value, fallback) {
  */
 export function push(props, runes = false, fn) {
 	current_component_context = {
-		// exports (and props, if `accessors: true`)
-		x: null,
-		// context
-		c: null,
-		// effects
-		e: null,
-		// mounted
-		m: false,
-		// parent
 		p: current_component_context,
-		// signals
-		d: null,
-		// props
+		c: null,
+		e: null,
+		m: false,
 		s: props,
-		// runes
-		r: runes,
-		// legacy $:
-		l1: [],
-		l2: source(false),
-		// update_callbacks
-		u: null
+		x: null,
+		l: null
 	};
+
+	if (!runes) {
+		current_component_context.l = {
+			s: null,
+			u: null,
+			r1: [],
+			r2: source(false)
+		};
+	}
 
 	if (DEV) {
 		// component function
@@ -1193,13 +1186,13 @@ if (DEV) {
 			let value; // let's hope noone modifies this global, but belts and braces
 			Object.defineProperty(globalThis, rune, {
 				configurable: true,
+				// eslint-disable-next-line getter-return
 				get: () => {
 					if (value !== undefined) {
 						return value;
 					}
-					throw new Error(
-						`The ${rune} rune is only available inside .svelte and .svelte.js/ts files`
-					);
+
+					e.rune_outside_svelte(rune);
 				},
 				set: (v) => {
 					value = v;

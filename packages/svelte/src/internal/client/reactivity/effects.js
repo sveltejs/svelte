@@ -1,4 +1,3 @@
-import { DEV } from 'esm-env';
 import {
 	check_dirtiness,
 	current_component_context,
@@ -30,6 +29,7 @@ import {
 } from '../constants.js';
 import { set } from './sources.js';
 import { remove } from '../dom/reconciler.js';
+import * as e from '../errors.js';
 
 /**
  * @param {import('#client').Effect | null} effect
@@ -38,19 +38,11 @@ import { remove } from '../dom/reconciler.js';
  */
 export function validate_effect(effect, rune) {
 	if (effect === null) {
-		throw new Error(
-			'ERR_SVELTE_ORPHAN_EFFECT' +
-				(DEV
-					? `: ${rune} can only be used inside an effect (e.g. during component initialisation)`
-					: '')
-		);
+		e.effect_orphan(rune);
 	}
 
 	if (is_destroying_effect) {
-		throw new Error(
-			'ERR_SVELTE_EFFECT_IN_TEARDOWN' +
-				(DEV ? `: ${rune} cannot be used inside an effect cleanup function.` : '')
-		);
+		e.effect_in_teardown(rune);
 	}
 }
 
@@ -182,11 +174,11 @@ export function effect(fn) {
  * @param {() => void | (() => void)} fn
  */
 export function legacy_pre_effect(deps, fn) {
-	var context = /** @type {import('#client').ComponentContext} */ (current_component_context);
+	var context = /** @type {import('#client').ComponentContextLegacy} */ (current_component_context);
 
 	/** @type {{ effect: null | import('#client').Effect, ran: boolean }} */
 	var token = { effect: null, ran: false };
-	context.l1.push(token);
+	context.l.r1.push(token);
 
 	token.effect = render_effect(() => {
 		deps();
@@ -196,19 +188,19 @@ export function legacy_pre_effect(deps, fn) {
 		if (token.ran) return;
 
 		token.ran = true;
-		set(context.l2, true);
+		set(context.l.r2, true);
 		untrack(fn);
 	});
 }
 
 export function legacy_pre_effect_reset() {
-	var context = /** @type {import('#client').ComponentContext} */ (current_component_context);
+	var context = /** @type {import('#client').ComponentContextLegacy} */ (current_component_context);
 
 	render_effect(() => {
-		if (!get(context.l2)) return;
+		if (!get(context.l.r2)) return;
 
 		// Run dirty `$:` statements
-		for (var token of context.l1) {
+		for (var token of context.l.r1) {
 			var effect = token.effect;
 
 			if (check_dirtiness(effect)) {
@@ -218,7 +210,7 @@ export function legacy_pre_effect_reset() {
 			token.ran = false;
 		}
 
-		context.l2.v = false; // set directly to avoid rerunning this effect
+		context.l.r2.v = false; // set directly to avoid rerunning this effect
 	});
 }
 

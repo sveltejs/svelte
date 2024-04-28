@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-binding",
-		"message": "'open' binding can only be used with <details>",
+		"code": "bind_invalid_target",
+		"message": "`bind:open` can only be used with <details>",
 		"start": {
 			"line": 5,
 			"column": 5

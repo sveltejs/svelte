@@ -4,6 +4,7 @@ import { STATE_SYMBOL } from '../constants.js';
 import { render_effect } from '../reactivity/effects.js';
 import { current_component_context, untrack } from '../runtime.js';
 import { get_prototype_of } from '../utils.js';
+import * as w from '../warnings.js';
 
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
 const boundaries = {};
@@ -115,10 +116,7 @@ export function add_owner(object, owner, global = false) {
 			let original = get_owner(metadata);
 
 			if (owner.filename !== component.filename) {
-				let message = `${component.filename} passed a value to ${owner.filename} with \`bind:\`, but the value is owned by ${original.filename}. Consider creating a binding between ${original.filename} and ${component.filename}`;
-
-				// eslint-disable-next-line no-console
-				console.warn(message);
+				w.ownership_invalid_binding(component.filename, owner.filename, original.filename);
 			}
 		}
 	}
@@ -227,17 +225,13 @@ export function check_ownership(metadata) {
 	if (component && !has_owner(metadata, component)) {
 		let original = get_owner(metadata);
 
-		let message =
+		// @ts-expect-error
+		if (original.filename !== component.filename) {
 			// @ts-expect-error
-			original.filename !== component.filename
-				? // @ts-expect-error
-					`${component.filename} mutated a value owned by ${original.filename}. This is strongly discouraged`
-				: 'Mutating a value outside the component that created it is strongly discouraged';
-
-		// eslint-disable-next-line no-console
-		console.warn(
-			`${message}. Consider passing values to child components with \`bind:\`, or use a callback instead.`
-		);
+			w.ownership_invalid_mutation(component.filename, original.filename);
+		} else {
+			w.ownership_invalid_mutation();
+		}
 
 		// eslint-disable-next-line no-console
 		console.trace();

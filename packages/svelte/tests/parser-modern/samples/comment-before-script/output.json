@@ -11,8 +11,7 @@
 				"type": "Comment",
 				"start": 0,
 				"end": 27,
-				"data": "should not error out",
-				"ignores": []
+				"data": "should not error out"
 			},
 			{
 				"type": "Text",

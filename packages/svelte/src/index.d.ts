@@ -1,5 +1,8 @@
 // This should contain all the public interfaces (not all of them are actually importable, check current Svelte for which ones are).
 
+import './ambient.js';
+import type { RemoveBindable } from './internal/types.js';
+
 /**
  * @deprecated Svelte components were classes in Svelte 4. In Svelte 5, thy are not anymore.
  * Use `mount` or `createRoot` instead to instantiate components.
@@ -18,13 +21,37 @@ export interface ComponentConstructorOptions<
 	$$inline?: boolean;
 }
 
-// Utility type for ensuring backwards compatibility on a type level: If there's a default slot, add 'children' to the props if it doesn't exist there already
-type PropsWithChildren<Props, Slots> = Props &
-	(Props extends { children?: any }
-		? {}
-		: Slots extends { default: any }
-			? { children?: Snippet }
-			: {});
+/** Tooling for types uses this for properties are being used with `bind:` */
+export type Binding<T> = { 'bind:': T };
+/**
+ * Tooling for types uses this for properties that may be bound to.
+ * Only use this if you author Svelte component type definition files by hand (we recommend using `@sveltejs/package` instead).
+ * Example:
+ * ```ts
+ * export class MyComponent extends SvelteComponent<{ readonly: string, bindable: Bindable<string> }> {}
+ * ```
+ * means you can now do `<MyComponent {readonly} bind:bindable />`
+ */
+export type Bindable<T> = T | Binding<T>;
+
+type WithBindings<T> = {
+	[Key in keyof T]: Bindable<T[Key]>;
+};
+
+/**
+ * Utility type for ensuring backwards compatibility on a type level:
+ * - If there's a default slot, add 'children' to the props
+ * - All props are bindable
+ */
+type PropsWithChildren<Props, Slots> = WithBindings<Props> &
+	(Slots extends { default: any }
+		? // This is unfortunate because it means "accepts no props" turns into "accepts any prop"
+			// but the alternative is non-fixable type errors because of the way TypeScript index
+			// signatures work (they will always take precedence and make an impossible-to-satisfy children type).
+			Props extends Record<string, never>
+			? any
+			: { children?: any }
+		: {});
 
 /**
  * Can be used to create strongly typed Svelte components.
@@ -55,7 +82,7 @@ type PropsWithChildren<Props, Slots> = Props &
  * for more info.
  */
 export class SvelteComponent<
-	Props extends Record<string, any> = any,
+	Props extends Record<string, any> = Record<string, any>,
 	Events extends Record<string, any> = any,
 	Slots extends Record<string, any> = any
 > {
@@ -74,7 +101,7 @@ export class SvelteComponent<
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
 	 * */
-	$$prop_def: PropsWithChildren<Props, Slots>;
+	$$prop_def: RemoveBindable<Props>; // Without PropsWithChildren: unnecessary, causes type bugs
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
@@ -119,7 +146,7 @@ export class SvelteComponent<
  * @deprecated Use `SvelteComponent` instead. See TODO for more information.
  */
 export class SvelteComponentTyped<
-	Props extends Record<string, any> = any,
+	Props extends Record<string, any> = Record<string, any>,
 	Events extends Record<string, any> = any,
 	Slots extends Record<string, any> = any
 > extends SvelteComponent<Props, Events, Slots> {}
@@ -154,7 +181,7 @@ export type ComponentEvents<Comp extends SvelteComponent> =
  * ```
  */
 export type ComponentProps<Comp extends SvelteComponent> =
-	Comp extends SvelteComponent<infer Props> ? Props : never;
+	Comp extends SvelteComponent<infer Props> ? RemoveBindable<Props> : never;
 
 /**
  * Convenience type to get the type of a Svelte component. Useful for example in combination with
@@ -226,4 +253,3 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 }
 
 export * from './index-client.js';
-import './ambient.js';

@@ -1,4 +1,5 @@
 import { proxy } from '../internal/client/proxy.js';
+import { user_pre_effect } from '../internal/client/reactivity/effects.js';
 import { hydrate, mount, unmount } from '../internal/client/render.js';
 import { define_property } from '../internal/client/utils.js';
 
@@ -127,4 +128,15 @@ class Svelte4Component {
 	$destroy() {
 		this.#instance.$destroy();
 	}
+}
+
+/**
+ * Runs the given function once immediately on the server, and works like `$effect.pre` on the client.
+ *
+ * @deprecated Use this only as a temporary solution to migrate your component code to Svelte 5.
+ * @param {() => void | (() => void)} fn
+ * @returns {void}
+ */
+export function run(fn) {
+	user_pre_effect(fn);
 }

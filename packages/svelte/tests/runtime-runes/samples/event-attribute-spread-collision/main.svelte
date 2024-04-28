@@ -1,21 +1,22 @@
 <script>
+	import Button from './Button.svelte';
 	let text = $state('click me');
 	let text2 = $state('');
 	let spread = { onclick: () => text = 'click spread' };
 </script>
 
-<button onclick={() => text = 'click onclick'} {...spread}>
+<Button onclick={() => text = 'click onclick'} {...spread}>
 	{text}
-</button>
+</Button>
 
-<button {...spread} onclick={() => text = 'click onclick'}>
+<Button {...spread} onclick={() => text = 'click onclick'}>
 	{text}
-</button>
+</Button>
 
-<button onclick={() => text = 'click onclick'} {...spread} on:click={() => text2 = '!'}>
+<Button onclick={() => text = 'click onclick'} {...spread} on:click={() => text2 = '!'}>
 	{text}{text2}
-</button>
+</Button>
 
-<button on:click={() => text2 = '?'} {...spread} onclick={() => text = 'click onclick'}>
+<Button on:click={() => text2 = '?'} {...spread} onclick={() => text = 'click onclick'}>
 	{text}{text2}
-</button>
+</Button>

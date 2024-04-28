@@ -67,6 +67,24 @@ export default class Compiler {
 		});
 	}
 
+	/**
+	 * @param {import('$lib/types').File} file
+	 * @returns {Promise<import('$lib/workers/workers').MigrateMessageData>}
+	 */
+	migrate(file) {
+		return new Promise((fulfil) => {
+			const id = uid++;
+
+			this.handlers.set(id, fulfil);
+
+			this.worker.postMessage({
+				id,
+				type: 'migrate',
+				source: file.source
+			});
+		});
+	}
+
 	destroy() {
 		this.worker.terminate();
 	}
