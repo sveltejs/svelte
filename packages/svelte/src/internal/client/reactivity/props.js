@@ -136,10 +136,9 @@ const legacy_rest_props_handler = {
 /**
  * @param {Record<string, unknown>} props
  * @param {string[]} exclude
- * @param {string[]} reassigned
  * @returns {Record<string, unknown>}
  */
-export function legacy_rest_props(props, exclude, reassigned) {
+export function legacy_rest_props(props, exclude) {
 	return new Proxy({ props, exclude, special: {}, version: source(0) }, legacy_rest_props_handler);
 }
 
