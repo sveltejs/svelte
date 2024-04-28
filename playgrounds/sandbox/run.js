@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import glob from 'tiny-glob/sync.js';
 import minimist from 'minimist';
-import { compile, compileModule, parse } from 'svelte/compiler';
+import { compile, compileModule, parse, migrate } from 'svelte/compiler';
 
 const argv = minimist(process.argv.slice(2));
 
@@ -47,6 +47,13 @@ for (const generate of ['client', 'server']) {
 			});
 
 			fs.writeFileSync(`${cwd}/output/${file}.json`, JSON.stringify(ast, null, '\t'));
+
+			try {
+				const migrated = migrate(source);
+				fs.writeFileSync(`${cwd}/output/${file}.migrated.svelte`, migrated);
+			} catch (e) {
+				console.warn(`Error migrating ${file}`, e);
+			}
 		}
 
 		const compiled = compile(source, {

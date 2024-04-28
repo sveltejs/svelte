@@ -137,6 +137,7 @@
 		EDITOR_STATE_MAP,
 
 		rebundle,
+		migrate,
 		clear_state,
 		go_to_warning_pos,
 		handle_change,
@@ -154,6 +155,27 @@
 		const result = await $bundler?.bundle($files);
 		if (result && token === current_token) $bundle = result;
 		resolver();
+	}
+
+	async function migrate() {
+		if (!compiler || $selected?.type !== 'svelte') return;
+
+		const result = await compiler.migrate($selected);
+		if (result.error) {
+			// TODO show somehow
+			return;
+		}
+
+		const new_files = $files.map((file) => {
+			if (file.name === $selected?.name) {
+				return {
+					...file,
+					source: result.result.code
+				};
+			}
+			return file;
+		});
+		set({ files: new_files });
 	}
 
 	let is_select_changing = false;
