@@ -473,8 +473,20 @@ function get_hoistable_params(node, context) {
 
 		if (binding !== null && !scope.declarations.has(reference) && binding.initial !== node) {
 			if (binding.kind === 'store_sub') {
-				// We need both the subscription for getting the value and the store for updating
-				safe_push(b.id(binding.node.name.slice(1)));
+				const is_from_prop =
+					binding.declaration_kind === 'synthetic' &&
+					[...binding.scope.declarations.values()].find(
+						(declaration) => declaration.kind === 'prop' || declaration.kind === 'bindable_prop'
+					);
+				if (is_from_prop && !added_props) {
+					// if the store come from props we want $$props to be pushed rather than the name
+					// of the store since that variable doesn't exist
+					added_props = true;
+					safe_push(b.id('$$props'));
+				} else {
+					// We need both the subscription for getting the value and the store for updating
+					safe_push(b.id(binding.node.name.slice(1)));
+				}
 				safe_push(b.id(binding.node.name));
 			} else if (
 				// If it's a destructured derived binding, then we can extract the derived signal reference and use that.
