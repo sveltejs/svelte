@@ -552,6 +552,9 @@ function special(parser) {
 		parser.allow_whitespace();
 
 		const init = read_expression(parser);
+		if (init.type === 'SequenceExpression') {
+			e.const_tag_invalid_expression(init);
+		}
 		parser.allow_whitespace();
 
 		parser.eat('}', true);

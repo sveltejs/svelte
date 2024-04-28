@@ -94,7 +94,7 @@
 
 ## const_tag_invalid_expression
 
-> {@const ...} must be an assignment
+> {@const ...} must consist of a single variable declaration
 
 ## const_tag_invalid_placement
 

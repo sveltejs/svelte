@@ -734,7 +734,7 @@ export function component_invalid_directive(node) {
  * @returns {never}
  */
 export function const_tag_invalid_expression(node) {
-	e(node, "const_tag_invalid_expression", "{@const ...} must be an assignment");
+	e(node, "const_tag_invalid_expression", "{@const ...} must consist of a single variable declaration");
 }
 
 /**
