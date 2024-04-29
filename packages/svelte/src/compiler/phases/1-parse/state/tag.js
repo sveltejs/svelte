@@ -551,7 +551,15 @@ function special(parser) {
 		parser.eat('=', true);
 		parser.allow_whitespace();
 
+		const expression_start = parser.index;
 		const init = read_expression(parser);
+		if (
+			init.type === 'SequenceExpression' &&
+			!parser.template.substring(expression_start, init.start).includes('(')
+		) {
+			// const a = (b, c) is allowed but a = b, c = d is not;
+			e.const_tag_invalid_expression(init);
+		}
 		parser.allow_whitespace();
 
 		parser.eat('}', true);
