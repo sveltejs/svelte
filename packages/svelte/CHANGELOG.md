@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.118
+
+### Patch Changes
+
+- fix: ensure no data loss occurs when using reactive Set methods ([#11385](https://github.com/sveltejs/svelte/pull/11385))
+
+- fix: handle reassignment of `$props` and `$restProps` ([#11348](https://github.com/sveltejs/svelte/pull/11348))
+
+- fix: disallow sequence expressions in `@const` tags ([#11357](https://github.com/sveltejs/svelte/pull/11357))
+
 ## 5.0.0-next.117
 
 ### Patch Changes
