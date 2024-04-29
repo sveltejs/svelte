@@ -1,23 +1,26 @@
+import is_reference from 'is-reference';
 import {
 	disallowed_paragraph_contents,
 	interactive_elements,
 	is_tag_valid_with_parent
 } from '../../../constants.js';
-import { error } from '../../errors.js';
+import * as e from '../../errors.js';
 import {
 	extract_identifiers,
 	get_parent,
+	is_event_attribute,
 	is_expression_attribute,
 	is_text_attribute,
 	object,
 	unwrap_optional
 } from '../../utils/ast.js';
-import { warn } from '../../warnings.js';
+import * as w from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { binding_properties } from '../bindings.js';
 import {
 	ContentEditableBindings,
 	EventModifiers,
+	Runes,
 	SVGElements,
 	VoidElements
 } from '../constants.js';
@@ -44,14 +47,14 @@ function validate_component(node, context) {
 			attribute.type !== 'OnDirective' &&
 			attribute.type !== 'BindDirective'
 		) {
-			error(attribute, 'invalid-component-directive');
+			e.component_invalid_directive(attribute);
 		}
 
 		if (
 			attribute.type === 'OnDirective' &&
 			(attribute.modifiers.length > 1 || attribute.modifiers.some((m) => m !== 'once'))
 		) {
-			error(attribute, 'invalid-event-modifier');
+			e.event_handler_invalid_component_modifier(attribute);
 		}
 
 		if (attribute.type === 'Attribute') {
@@ -62,12 +65,12 @@ function validate_component(node, context) {
 					while (--i > 0) {
 						const char = context.state.analysis.source[i];
 						if (char === '(') break; // parenthesized sequence expressions are ok
-						if (char === '{') error(expression, 'invalid-sequence-expression');
+						if (char === '{') e.attribute_invalid_sequence_expression(expression);
 					}
 				}
 			}
 
-			validate_attribute_name(attribute, context);
+			validate_attribute_name(attribute);
 
 			if (attribute.name === 'slot') {
 				validate_slot_attribute(context, attribute);
@@ -93,8 +96,12 @@ const react_attributes = new Map([
  */
 function validate_element(node, context) {
 	let has_animate_directive = false;
-	let has_in_transition = false;
-	let has_out_transition = false;
+
+	/** @type {import('#compiler').TransitionDirective | null} */
+	let in_transition = null;
+
+	/** @type {import('#compiler').TransitionDirective | null} */
+	let out_transition = null;
 
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'Attribute') {
@@ -107,18 +114,18 @@ function validate_element(node, context) {
 					while (--i > 0) {
 						const char = context.state.analysis.source[i];
 						if (char === '(') break; // parenthesized sequence expressions are ok
-						if (char === '{') error(expression, 'invalid-sequence-expression');
+						if (char === '{') e.attribute_invalid_sequence_expression(expression);
 					}
 				}
 			}
 
 			if (regex_illegal_attribute_character.test(attribute.name)) {
-				error(attribute, 'invalid-attribute-name', attribute.name);
+				e.attribute_invalid_name(attribute, attribute.name);
 			}
 
 			if (attribute.name.startsWith('on') && attribute.name.length > 2) {
 				if (!is_expression) {
-					error(attribute, 'invalid-event-attribute-value');
+					e.attribute_invalid_event_handler(attribute);
 				}
 
 				const value = attribute.value[0].expression;
@@ -127,13 +134,7 @@ function validate_element(node, context) {
 					value.name === attribute.name &&
 					!context.state.scope.get(value.name)
 				) {
-					warn(
-						context.state.analysis.warnings,
-						attribute,
-						context.path,
-						'global-event-reference',
-						attribute.name
-					);
+					w.attribute_global_event_reference(attribute, attribute.name);
 				}
 			}
 
@@ -143,28 +144,21 @@ function validate_element(node, context) {
 			}
 
 			if (attribute.name === 'is' && context.state.options.namespace !== 'foreign') {
-				warn(context.state.analysis.warnings, attribute, context.path, 'avoid-is');
+				w.attribute_avoid_is(attribute);
 			}
 
 			const correct_name = react_attributes.get(attribute.name);
 			if (correct_name) {
-				warn(
-					context.state.analysis.warnings,
-					attribute,
-					context.path,
-					'invalid-html-attribute',
-					attribute.name,
-					correct_name
-				);
+				w.attribute_invalid_property_name(attribute, attribute.name, correct_name);
 			}
 
-			validate_attribute_name(attribute, context);
+			validate_attribute_name(attribute);
 		} else if (attribute.type === 'AnimateDirective') {
 			const parent = context.path.at(-2);
 			if (parent?.type !== 'EachBlock') {
-				error(attribute, 'invalid-animation', 'no-each');
+				e.animation_invalid_placement(attribute);
 			} else if (!parent.key) {
-				error(attribute, 'invalid-animation', 'each-key');
+				e.animation_missing_key(attribute);
 			} else if (
 				parent.body.nodes.filter(
 					(n) =>
@@ -173,34 +167,39 @@ function validate_element(node, context) {
 						(n.type !== 'Text' || n.data.trim() !== '')
 				).length > 1
 			) {
-				error(attribute, 'invalid-animation', 'child');
+				e.animation_invalid_placement(attribute);
 			}
 
 			if (has_animate_directive) {
-				error(attribute, 'duplicate-animation');
+				e.animation_duplicate(attribute);
 			} else {
 				has_animate_directive = true;
 			}
 		} else if (attribute.type === 'TransitionDirective') {
-			if ((attribute.outro && has_out_transition) || (attribute.intro && has_in_transition)) {
-				/** @param {boolean} _in @param {boolean} _out */
-				const type = (_in, _out) => (_in && _out ? 'transition' : _in ? 'in' : 'out');
-				error(
-					attribute,
-					'duplicate-transition',
-					type(has_in_transition, has_out_transition),
-					type(attribute.intro, attribute.outro)
-				);
+			const existing = /** @type {import('#compiler').TransitionDirective | null} */ (
+				(attribute.intro && in_transition) || (attribute.outro && out_transition)
+			);
+
+			if (existing) {
+				const a = existing.intro ? (existing.outro ? 'transition' : 'in') : 'out';
+				const b = attribute.intro ? (attribute.outro ? 'transition' : 'in') : 'out';
+
+				if (a === b) {
+					e.transition_duplicate(attribute, a);
+				} else {
+					e.transition_conflict(attribute, a, b);
+				}
 			}
 
-			has_in_transition = has_in_transition || attribute.intro;
-			has_out_transition = has_out_transition || attribute.outro;
+			if (attribute.intro) in_transition = attribute;
+			if (attribute.outro) out_transition = attribute;
 		} else if (attribute.type === 'OnDirective') {
 			let has_passive_modifier = false;
 			let conflicting_passive_modifier = '';
 			for (const modifier of attribute.modifiers) {
 				if (!EventModifiers.includes(modifier)) {
-					error(attribute, 'invalid-event-modifier', EventModifiers);
+					const list = `${EventModifiers.slice(0, -1).join(', ')} or ${EventModifiers.at(-1)}`;
+					e.event_handler_invalid_modifier(attribute, list);
 				}
 				if (modifier === 'passive') {
 					has_passive_modifier = true;
@@ -208,9 +207,8 @@ function validate_element(node, context) {
 					conflicting_passive_modifier = modifier;
 				}
 				if (has_passive_modifier && conflicting_passive_modifier) {
-					error(
+					e.event_handler_invalid_modifier_combination(
 						attribute,
-						'invalid-event-modifier-combination',
 						'passive',
 						conflicting_passive_modifier
 					);
@@ -222,16 +220,15 @@ function validate_element(node, context) {
 
 /**
  * @param {import('#compiler').Attribute} attribute
- * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
  */
-function validate_attribute_name(attribute, context) {
+function validate_attribute_name(attribute) {
 	if (
 		attribute.name.includes(':') &&
 		!attribute.name.startsWith('xmlns:') &&
 		!attribute.name.startsWith('xlink:') &&
 		!attribute.name.startsWith('xml:')
 	) {
-		warn(context.state.analysis.warnings, attribute, context.path, 'illegal-attribute-character');
+		w.attribute_illegal_colon(attribute);
 	}
 }
 
@@ -259,7 +256,7 @@ function validate_slot_attribute(context, attribute) {
 
 	if (owner) {
 		if (!is_text_attribute(attribute)) {
-			error(attribute, 'invalid-slot-attribute');
+			e.slot_attribute_invalid(attribute);
 		}
 
 		if (
@@ -268,13 +265,13 @@ function validate_slot_attribute(context, attribute) {
 			owner.type === 'SvelteSelf'
 		) {
 			if (owner !== context.path.at(-2)) {
-				error(attribute, 'invalid-slot-placement');
+				e.slot_attribute_invalid_placement(attribute);
 			}
 
 			const name = attribute.value[0].data;
 
 			if (context.state.component_slots.has(name)) {
-				error(attribute, 'duplicate-slot-name', name, owner.name);
+				e.slot_attribute_duplicate(attribute, name, owner.name);
 			}
 
 			context.state.component_slots.add(name);
@@ -291,12 +288,12 @@ function validate_slot_attribute(context, attribute) {
 						}
 					}
 
-					error(node, 'invalid-default-slot-content');
+					e.slot_default_duplicate(node);
 				}
 			}
 		}
 	} else {
-		error(attribute, 'invalid-slot-placement');
+		e.slot_attribute_invalid_placement(attribute);
 	}
 }
 
@@ -309,7 +306,7 @@ function validate_block_not_empty(node, context) {
 	// Assumption: If the block has zero elements, someone's in the middle of typing it out,
 	// so don't warn in that case because it would be distracting.
 	if (node.nodes.length === 1 && node.nodes[0].type === 'Text' && !node.nodes[0].raw.trim()) {
-		warn(context.state.analysis.warnings, node.nodes[0], context.path, 'empty-block');
+		w.block_empty(node.nodes[0]);
 	}
 }
 
@@ -327,7 +324,7 @@ const validation = {
 		const left = object(assignee);
 
 		if (left === null) {
-			error(node, 'invalid-binding-expression');
+			e.bind_invalid_expression(node);
 		}
 
 		const binding = context.state.scope.get(left.name);
@@ -347,36 +344,30 @@ const validation = {
 					binding.kind !== 'store_sub' &&
 					!binding.mutated)
 			) {
-				error(node.expression, 'invalid-binding-value');
+				e.bind_invalid_value(node.expression);
 			}
 
 			if (binding.kind === 'derived') {
-				error(node.expression, 'invalid-derived-binding');
+				e.constant_binding(node.expression, 'derived state');
 			}
 
 			if (context.state.analysis.runes && binding.kind === 'each') {
-				error(node, 'invalid-each-assignment');
+				e.each_item_invalid_assignment(node);
 			}
 
 			if (binding.kind === 'snippet') {
-				error(node, 'invalid-snippet-assignment');
+				e.snippet_parameter_assignment(node);
 			}
 		}
 
 		if (node.name === 'group') {
 			if (!binding) {
-				error(node, 'INTERNAL', 'Cannot find declaration for bind:group');
+				throw new Error('Cannot find declaration for bind:group');
 			}
 		}
 
 		if (binding?.kind === 'each' && binding.metadata?.inside_rest) {
-			warn(
-				context.state.analysis.warnings,
-				binding.node,
-				context.path,
-				'invalid-rest-eachblock-binding',
-				binding.node.name
-			);
+			w.bind_invalid_each_rest(binding.node, binding.node.name);
 		}
 
 		const parent = context.path.at(-1);
@@ -389,21 +380,14 @@ const validation = {
 			parent?.type === 'SvelteBody'
 		) {
 			if (context.state.options.namespace === 'foreign' && node.name !== 'this') {
-				error(
-					node,
-					'invalid-binding',
-					node.name,
-					undefined,
-					'. Foreign elements only support bind:this'
-				);
+				e.bind_invalid_name(node, node.name, 'Foreign elements only support `bind:this`');
 			}
 
 			if (node.name in binding_properties) {
 				const property = binding_properties[node.name];
 				if (property.valid_elements && !property.valid_elements.includes(parent.name)) {
-					error(
+					e.bind_invalid_target(
 						node,
-						'invalid-binding',
 						node.name,
 						property.valid_elements.map((valid_element) => `<${valid_element}>`).join(', ')
 					);
@@ -415,17 +399,17 @@ const validation = {
 					);
 					if (type && !is_text_attribute(type)) {
 						if (node.name !== 'value' || type.value === true) {
-							error(type, 'invalid-type-attribute');
+							e.attribute_invalid_type(type);
 						}
 						return; // bind:value can handle dynamic `type` attributes
 					}
 
 					if (node.name === 'checked' && type?.value[0].data !== 'checkbox') {
-						error(node, 'invalid-binding', node.name, '<input type="checkbox">');
+						e.bind_invalid_target(node, node.name, '<input type="checkbox">');
 					}
 
 					if (node.name === 'files' && type?.value[0].data !== 'file') {
-						error(node, 'invalid-binding', node.name, '<input type="file">');
+						e.bind_invalid_target(node, node.name, '<input type="file">');
 					}
 				}
 
@@ -438,14 +422,13 @@ const validation = {
 							a.value !== true
 					);
 					if (multiple) {
-						error(multiple, 'invalid-multiple-attribute');
+						e.attribute_invalid_multiple(multiple);
 					}
 				}
 
 				if (node.name === 'offsetWidth' && SVGElements.includes(parent.name)) {
-					error(
+					e.bind_invalid_target(
 						node,
-						'invalid-binding',
 						node.name,
 						`non-<svg> elements. Use 'clientWidth' for <svg> instead`
 					);
@@ -456,9 +439,9 @@ const validation = {
 						parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'contenteditable')
 					);
 					if (!contenteditable) {
-						error(node, 'missing-contenteditable-attribute');
+						e.attribute_contenteditable_missing(node);
 					} else if (!is_text_attribute(contenteditable) && contenteditable.value !== true) {
-						error(contenteditable, 'dynamic-contenteditable-attribute');
+						e.attribute_contenteditable_dynamic(contenteditable);
 					}
 				}
 			} else {
@@ -466,15 +449,15 @@ const validation = {
 				if (match) {
 					const property = binding_properties[match];
 					if (!property.valid_elements || property.valid_elements.includes(parent.name)) {
-						error(node, 'invalid-binding', node.name, undefined, ` (did you mean '${match}'?)`);
+						e.bind_invalid_name(node, node.name, `Did you mean '${match}'?`);
 					}
 				}
-				error(node, 'invalid-binding', node.name);
+				e.bind_invalid_name(node, node.name);
 			}
 		}
 	},
 	ExportDefaultDeclaration(node) {
-		error(node, 'default-export');
+		e.module_illegal_default_export(node);
 	},
 	ConstTag(node, context) {
 		const parent = context.path.at(-1);
@@ -491,7 +474,7 @@ const validation = {
 				((grand_parent?.type !== 'RegularElement' && grand_parent?.type !== 'SvelteElement') ||
 					!grand_parent.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')))
 		) {
-			error(node, 'invalid-const-placement');
+			e.const_tag_invalid_placement(node);
 		}
 	},
 	ImportDeclaration(node, context) {
@@ -502,7 +485,7 @@ const validation = {
 						specifier.imported.name === 'beforeUpdate' ||
 						specifier.imported.name === 'afterUpdate'
 					) {
-						error(specifier, 'invalid-runes-mode-import', specifier.imported.name);
+						e.runes_mode_invalid_import(specifier, specifier.imported.name);
 					}
 				}
 			}
@@ -520,14 +503,14 @@ const validation = {
 				parent.type !== 'SvelteSelf' &&
 				parent.type !== 'SvelteFragment')
 		) {
-			error(node, 'invalid-let-directive-placement');
+			e.let_directive_invalid_placement(node);
 		}
 	},
 	RegularElement(node, context) {
 		if (node.name === 'textarea' && node.fragment.nodes.length > 0) {
 			for (const attribute of node.attributes) {
 				if (attribute.type === 'Attribute' && attribute.name === 'value') {
-					error(node, 'invalid-textarea-content');
+					e.textarea_invalid_content(node);
 				}
 			}
 		}
@@ -538,20 +521,14 @@ const validation = {
 			binding.declaration_kind === 'import' &&
 			binding.references.length === 0
 		) {
-			warn(
-				context.state.analysis.warnings,
-				node,
-				context.path,
-				'component-name-lowercase',
-				node.name
-			);
+			w.component_name_lowercase(node, node.name);
 		}
 
 		validate_element(node, context);
 
 		if (context.state.parent_element) {
 			if (!is_tag_valid_with_parent(node.name, context.state.parent_element)) {
-				error(node, 'invalid-node-placement', `<${node.name}>`, context.state.parent_element);
+				e.node_invalid_placement(node, `<${node.name}>`, context.state.parent_element);
 			}
 		}
 
@@ -563,7 +540,7 @@ const validation = {
 					parent.name === node.name &&
 					interactive_elements.has(parent.name)
 				) {
-					error(node, 'invalid-node-placement', `<${node.name}>`, parent.name);
+					e.node_invalid_placement(node, `<${node.name}>`, parent.name);
 				}
 			}
 		}
@@ -572,7 +549,7 @@ const validation = {
 			const path = context.path;
 			for (let parent of path) {
 				if (parent.type === 'RegularElement' && parent.name === 'p') {
-					error(node, 'invalid-node-placement', `<${node.name}>`, parent.name);
+					e.node_invalid_placement(node, `<${node.name}>`, parent.name);
 				}
 			}
 		}
@@ -583,13 +560,7 @@ const validation = {
 			!VoidElements.includes(node.name) &&
 			!SVGElements.includes(node.name)
 		) {
-			warn(
-				context.state.analysis.warnings,
-				node,
-				context.path,
-				'invalid-self-closing-tag',
-				node.name
-			);
+			w.element_invalid_self_closing_tag(node, node.name);
 		}
 
 		context.next({
@@ -603,7 +574,7 @@ const validation = {
 		const raw_args = unwrap_optional(node.expression).arguments;
 		for (const arg of raw_args) {
 			if (arg.type === 'SpreadElement') {
-				error(arg, 'invalid-render-spread-argument');
+				e.render_tag_invalid_spread_argument(arg);
 			}
 		}
 
@@ -613,7 +584,7 @@ const validation = {
 			callee.property.type === 'Identifier' &&
 			['bind', 'apply', 'call'].includes(callee.property.name)
 		) {
-			error(node, 'invalid-render-call');
+			e.render_tag_invalid_call_expression(node);
 		}
 
 		const is_inside_textarea = context.path.find((n) => {
@@ -625,9 +596,8 @@ const validation = {
 			);
 		});
 		if (is_inside_textarea) {
-			error(
+			e.tag_invalid_placement(
 				node,
-				'invalid-tag-placement',
 				'inside <textarea> or <svelte:element this="textarea">',
 				'render'
 			);
@@ -667,19 +637,19 @@ const validation = {
 					(node) => node.type !== 'SnippetBlock' && (node.type !== 'Text' || node.data.trim())
 				)
 			) {
-				error(node, 'conflicting-children-snippet');
+				e.snippet_conflict(node);
 			}
 		}
 	},
 	StyleDirective(node) {
 		if (node.modifiers.length > 1 || (node.modifiers.length && node.modifiers[0] !== 'important')) {
-			error(node, 'invalid-style-directive-modifier');
+			e.style_directive_invalid_modifier(node);
 		}
 	},
 	SvelteHead(node) {
 		const attribute = node.attributes[0];
 		if (attribute) {
-			error(attribute, 'illegal-svelte-head-attribute');
+			e.svelte_head_illegal_attribute(attribute);
 		}
 	},
 	SvelteElement(node, context) {
@@ -692,7 +662,7 @@ const validation = {
 	SvelteFragment(node, context) {
 		const parent = context.path.at(-2);
 		if (parent?.type !== 'Component' && parent?.type !== 'SvelteComponent') {
-			error(node, 'invalid-svelte-fragment-placement');
+			e.svelte_fragment_invalid_placement(node);
 		}
 
 		for (const attribute of node.attributes) {
@@ -701,7 +671,7 @@ const validation = {
 					validate_slot_attribute(context, attribute);
 				}
 			} else if (attribute.type !== 'LetDirective') {
-				error(attribute, 'invalid-svelte-fragment-attribute');
+				e.svelte_fragment_invalid_attribute(attribute);
 			}
 		}
 	},
@@ -710,15 +680,15 @@ const validation = {
 			if (attribute.type === 'Attribute') {
 				if (attribute.name === 'name') {
 					if (!is_text_attribute(attribute)) {
-						error(attribute, 'invalid-slot-name', false);
+						e.slot_element_invalid_name(attribute);
 					}
 					const slot_name = attribute.value[0].data;
 					if (slot_name === 'default') {
-						error(attribute, 'invalid-slot-name', true);
+						e.slot_element_invalid_name_default(attribute);
 					}
 				}
 			} else if (attribute.type !== 'SpreadAttribute' && attribute.type !== 'LetDirective') {
-				error(attribute, 'invalid-slot-element-attribute');
+				e.slot_element_invalid_attribute(attribute);
 			}
 		}
 	},
@@ -729,19 +699,19 @@ const validation = {
 		if (!node.parent) return;
 		if (context.state.parent_element && regex_not_whitespace.test(node.data)) {
 			if (!is_tag_valid_with_parent('#text', context.state.parent_element)) {
-				error(node, 'invalid-node-placement', 'Text node', context.state.parent_element);
+				e.node_invalid_placement(node, 'Text node', context.state.parent_element);
 			}
 		}
 	},
 	TitleElement(node) {
 		const attribute = node.attributes[0];
 		if (attribute) {
-			error(attribute, 'illegal-title-attribute');
+			e.title_illegal_attribute(attribute);
 		}
 
 		const child = node.fragment.nodes.find((n) => n.type !== 'Text' && n.type !== 'ExpressionTag');
 		if (child) {
-			error(child, 'invalid-title-content');
+			e.title_invalid_content(child);
 		}
 	},
 	UpdateExpression(node, context) {
@@ -751,7 +721,7 @@ const validation = {
 		if (!node.parent) return;
 		if (context.state.parent_element) {
 			if (!is_tag_valid_with_parent('#text', context.state.parent_element)) {
-				error(node, 'invalid-node-placement', '{expression}', context.state.parent_element);
+				e.node_invalid_placement(node, '{expression}', context.state.parent_element);
 			}
 		}
 	}
@@ -772,7 +742,7 @@ export const validation_legacy = merge(validation, a11y_validators, {
 		}
 
 		if (state.scope.get(callee.name)?.kind !== 'store_sub') {
-			error(node.init, 'invalid-rune-usage', callee.name);
+			e.rune_invalid_usage(node.init, callee.name);
 		}
 	},
 	AssignmentExpression(node, { state, path }) {
@@ -786,7 +756,7 @@ export const validation_legacy = merge(validation, a11y_validators, {
 			(state.ast_type !== 'instance' ||
 				/** @type {import('#compiler').SvelteNode} */ (path.at(-1)).type !== 'Program')
 		) {
-			warn(state.analysis.warnings, node, path, 'no-reactive-declaration');
+			w.reactive_declaration_invalid_placement(node);
 		}
 	},
 	UpdateExpression(node, { state }) {
@@ -805,11 +775,11 @@ function validate_export(node, scope, name) {
 	if (!binding) return;
 
 	if (binding.kind === 'derived') {
-		error(node, 'invalid-derived-export');
+		e.derived_invalid_export(node);
 	}
 
 	if ((binding.kind === 'state' || binding.kind === 'frozen_state') && binding.reassigned) {
-		error(node, 'invalid-state-export');
+		e.state_invalid_export(node);
 	}
 }
 
@@ -827,7 +797,7 @@ function validate_call_expression(node, scope, path) {
 
 	if (rune === '$props') {
 		if (parent.type === 'VariableDeclarator') return;
-		error(node, 'invalid-props-location');
+		e.props_invalid_placement(node);
 	}
 
 	if (rune === '$bindable') {
@@ -840,7 +810,7 @@ function validate_call_expression(node, scope, path) {
 				return;
 			}
 		}
-		error(node, 'invalid-bindable-location');
+		e.bindable_invalid_location(node);
 	}
 
 	if (
@@ -851,46 +821,46 @@ function validate_call_expression(node, scope, path) {
 	) {
 		if (parent.type === 'VariableDeclarator') return;
 		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
-		error(node, 'invalid-state-location', rune);
+		e.state_invalid_placement(node, rune);
 	}
 
 	if (rune === '$effect' || rune === '$effect.pre') {
 		if (parent.type !== 'ExpressionStatement') {
-			error(node, 'invalid-effect-location');
+			e.effect_invalid_placement(node);
 		}
 
 		if (node.arguments.length !== 1) {
-			error(node, 'invalid-rune-args-length', rune, [1]);
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		}
 	}
 
 	if (rune === '$effect.active') {
 		if (node.arguments.length !== 0) {
-			error(node, 'invalid-rune-args-length', rune, [0]);
+			e.rune_invalid_arguments(node, rune);
 		}
 	}
 
 	if (rune === '$effect.root') {
 		if (node.arguments.length !== 1) {
-			error(node, 'invalid-rune-args-length', rune, [1]);
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		}
 	}
 
 	if (rune === '$inspect') {
 		if (node.arguments.length < 1) {
-			error(node, 'invalid-rune-args-length', rune, [1, 'more']);
+			e.rune_invalid_arguments_length(node, rune, 'one or more arguments');
 		}
 	}
 
 	if (rune === '$inspect().with') {
 		if (node.arguments.length !== 1) {
-			error(node, 'invalid-rune-args-length', rune, [1]);
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		}
 	}
 
 	if (rune === '$state.snapshot') {
 		if (node.arguments.length !== 1) {
-			error(node, 'invalid-rune-args-length', rune, [1]);
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		}
 	}
 }
@@ -906,7 +876,7 @@ function ensure_no_module_import_conflict(node, state) {
 			state.scope === state.analysis.instance.scope &&
 			state.analysis.module.scope.get(id.name)?.declaration_kind === 'import'
 		) {
-			error(node.id, 'illegal-variable-declaration');
+			e.declaration_duplicate_module_import(node.id);
 		}
 	}
 }
@@ -932,7 +902,7 @@ export const validation_runes_js = {
 	},
 	CallExpression(node, { state, path }) {
 		if (get_rune(node, state.scope) === '$host') {
-			error(node, 'invalid-host-location');
+			e.host_invalid_placement(node);
 		}
 		validate_call_expression(node, state.scope, path);
 	},
@@ -945,13 +915,13 @@ export const validation_runes_js = {
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
 		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
-			error(node, 'invalid-rune-args-length', rune, [1]);
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		} else if (rune === '$state' && args.length > 1) {
-			error(node, 'invalid-rune-args-length', rune, [0, 1]);
+			e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
 		} else if (rune === '$props') {
-			error(node, 'invalid-props-location');
+			e.props_invalid_placement(node);
 		} else if (rune === '$bindable') {
-			error(node, 'invalid-bindable-location');
+			e.bindable_invalid_location(node);
 		}
 	},
 	AssignmentExpression(node, { state }) {
@@ -989,12 +959,12 @@ export const validation_runes_js = {
 		const allowed_depth = context.state.ast_type === 'module' ? 0 : 1;
 
 		if (context.state.scope.function_depth > allowed_depth) {
-			warn(context.state.analysis.warnings, node, context.path, 'avoid-nested-class');
+			w.perf_avoid_nested_class(node);
 		}
 	},
 	NewExpression(node, context) {
 		if (node.callee.type === 'ClassExpression' && context.state.scope.function_depth > 0) {
-			warn(context.state.analysis.warnings, node, context.path, 'avoid-inline-class');
+			w.perf_avoid_inline_class(node);
 		}
 	}
 };
@@ -1021,16 +991,24 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 	} else if (argument.type === 'Identifier') {
 		const binding = scope.get(argument.name);
 		if (binding?.declaration_kind === 'const' && binding.kind !== 'each') {
-			error(
-				node,
-				'invalid-const-assignment',
-				is_binding,
-				// This takes advantage of the fact that we don't assign initial for let directives and then/catch variables.
-				// If we start doing that, we need another property on the binding to differentiate, or give up on the more precise error message.
-				binding.kind !== 'state' &&
-					binding.kind !== 'frozen_state' &&
-					(binding.kind !== 'normal' || !binding.initial)
-			);
+			// e.invalid_const_assignment(
+			// 	node,
+			// 	is_binding,
+			// 	// This takes advantage of the fact that we don't assign initial for let directives and then/catch variables.
+			// 	// If we start doing that, we need another property on the binding to differentiate, or give up on the more precise error message.
+			// 	binding.kind !== 'state' &&
+			// 		binding.kind !== 'frozen_state' &&
+			// 		(binding.kind !== 'normal' || !binding.initial)
+			// );
+
+			// TODO have a more specific error message for assignments to things like `{:then foo}`
+			const thing = 'constant';
+
+			if (is_binding) {
+				e.constant_binding(node, thing);
+			} else {
+				e.constant_assignment(node, thing);
+			}
 		}
 	}
 }
@@ -1048,16 +1026,16 @@ function validate_assignment(node, argument, state) {
 
 		if (state.analysis.runes) {
 			if (binding?.kind === 'derived') {
-				error(node, 'invalid-derived-assignment');
+				e.constant_assignment(node, 'derived state');
 			}
 
 			if (binding?.kind === 'each') {
-				error(node, 'invalid-each-assignment');
+				e.each_item_invalid_assignment(node);
 			}
 		}
 
 		if (binding?.kind === 'snippet') {
-			error(node, 'invalid-snippet-assignment');
+			e.snippet_parameter_assignment(node);
 		}
 	}
 
@@ -1073,15 +1051,46 @@ function validate_assignment(node, argument, state) {
 
 	if (object.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
 		if (state.private_derived_state.includes(property.name)) {
-			error(node, 'invalid-derived-assignment');
+			e.constant_assignment(node, 'derived state');
 		}
 	}
 }
 
 export const validation_runes = merge(validation, a11y_validators, {
+	Identifier(node, { path, state }) {
+		let i = path.length;
+		let parent = /** @type {import('estree').Expression} */ (path[--i]);
+
+		if (
+			Runes.includes(/** @type {Runes[number]} */ (node.name)) &&
+			is_reference(node, parent) &&
+			state.scope.get(node.name) === null &&
+			state.scope.get(node.name.slice(1)) === null
+		) {
+			/** @type {import('estree').Expression} */
+			let current = node;
+			let name = node.name;
+
+			while (parent.type === 'MemberExpression') {
+				if (parent.computed) e.rune_invalid_computed_property(parent);
+				name += `.${/** @type {import('estree').Identifier} */ (parent.property).name}`;
+
+				current = parent;
+				parent = /** @type {import('estree').Expression} */ (path[--i]);
+
+				if (!Runes.includes(/** @type {Runes[number]} */ (name))) {
+					e.rune_invalid_name(parent, name);
+				}
+			}
+
+			if (parent.type !== 'CallExpression') {
+				e.rune_missing_parentheses(current);
+			}
+		}
+	},
 	LabeledStatement(node, { path }) {
 		if (node.label.name !== '$' || path.at(-1)?.type !== 'Program') return;
-		error(node, 'invalid-legacy-reactive-statement');
+		e.legacy_reactive_statement_invalid(node);
 	},
 	ExportNamedDeclaration(node, { state, next }) {
 		if (state.ast_type === 'module') {
@@ -1099,7 +1108,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 			if (node.declaration?.type !== 'VariableDeclaration') return;
 			if (node.declaration.kind !== 'let') return;
 			if (state.analysis.instance.scope !== state.scope) return;
-			error(node, 'invalid-legacy-export');
+			e.legacy_export_invalid(node);
 		}
 	},
 	ExportSpecifier(node, { state }) {
@@ -1110,12 +1119,12 @@ export const validation_runes = merge(validation, a11y_validators, {
 	CallExpression(node, { state, path }) {
 		const rune = get_rune(node, state.scope);
 		if (rune === '$bindable' && node.arguments.length > 1) {
-			error(node, 'invalid-rune-args-length', '$bindable', [0, 1]);
+			e.rune_invalid_arguments_length(node, '$bindable', 'zero or one arguments');
 		} else if (rune === '$host') {
 			if (node.arguments.length > 0) {
-				error(node, 'invalid-rune-args-length', '$host', [0]);
+				e.rune_invalid_arguments(node, '$host');
 			} else if (state.ast_type === 'module' || !state.analysis.custom_element) {
-				error(node, 'invalid-host-location');
+				e.host_invalid_placement(node);
 			}
 		}
 
@@ -1127,60 +1136,55 @@ export const validation_runes = merge(validation, a11y_validators, {
 			context.type === 'Identifier' &&
 			(context.name === '$state' || context.name === '$derived')
 		) {
-			error(node, 'invalid-state-location', context.name);
+			e.state_invalid_placement(node, context.name);
 		}
 		next({ ...state });
 	},
-	VariableDeclarator(node, { state, path }) {
+	VariableDeclarator(node, { state }) {
 		ensure_no_module_import_conflict(node, state);
 
 		const init = node.init;
 		const rune = get_rune(init, state.scope);
 
-		if (rune === null) {
-			if (init?.type === 'Identifier' && init.name === '$props' && !state.scope.get('props')) {
-				warn(state.analysis.warnings, node, path, 'invalid-props-declaration');
-			}
-			return;
-		}
+		if (rune === null) return;
 
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
 		// TODO some of this is duplicated with above, seems off
 		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
-			error(node, 'invalid-rune-args-length', rune, [1]);
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		} else if (rune === '$state' && args.length > 1) {
-			error(node, 'invalid-rune-args-length', rune, [0, 1]);
+			e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
 		} else if (rune === '$props') {
 			if (state.has_props_rune) {
-				error(node, 'duplicate-props-rune');
+				e.props_duplicate(node);
 			}
 
 			state.has_props_rune = true;
 
 			if (args.length > 0) {
-				error(node, 'invalid-rune-args-length', rune, [0]);
+				e.rune_invalid_arguments(node, rune);
 			}
 
 			if (node.id.type !== 'ObjectPattern') {
-				error(node, 'invalid-props-id');
+				e.props_invalid_identifier(node);
 			}
 
 			if (state.scope !== state.analysis.instance.scope) {
-				error(node, 'invalid-props-location');
+				e.props_invalid_placement(node);
 			}
 
 			for (const property of node.id.properties) {
 				if (property.type === 'Property') {
 					if (property.computed) {
-						error(property, 'invalid-props-pattern');
+						e.props_invalid_pattern(property);
 					}
 
 					const value =
 						property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
 
 					if (value.type !== 'Identifier') {
-						error(property, 'invalid-props-pattern');
+						e.props_invalid_pattern(property);
 					}
 				}
 			}
@@ -1192,29 +1196,20 @@ export const validation_runes = merge(validation, a11y_validators, {
 				arg.type === 'CallExpression' &&
 				(arg.callee.type === 'ArrowFunctionExpression' || arg.callee.type === 'FunctionExpression')
 			) {
-				warn(state.analysis.warnings, node, path, 'derived-iife');
+				w.derived_iife(node);
 			}
 		}
 	},
-	AssignmentPattern(node, { state, path }) {
-		if (
-			node.right.type === 'Identifier' &&
-			node.right.name === '$bindable' &&
-			!state.scope.get('bindable')
-		) {
-			warn(state.analysis.warnings, node, path, 'invalid-bindable-declaration');
-		}
-	},
-	SlotElement(node, { state, path }) {
+	SlotElement(node, { state }) {
 		if (!state.analysis.custom_element) {
-			warn(state.analysis.warnings, node, path, 'deprecated-slot-element');
+			w.slot_element_deprecated(node);
 		}
 	},
-	OnDirective(node, { state, path }) {
+	OnDirective(node, { path }) {
 		const parent_type = path.at(-1)?.type;
 		// Don't warn on component events; these might not be under the author's control so the warning would be unactionable
 		if (parent_type === 'RegularElement' || parent_type === 'SvelteElement') {
-			warn(state.analysis.warnings, node, path, 'deprecated-event-handler', node.name);
+			w.event_directive_deprecated(node, node.name);
 		}
 	},
 	// TODO this is a code smell. need to refactor this stuff

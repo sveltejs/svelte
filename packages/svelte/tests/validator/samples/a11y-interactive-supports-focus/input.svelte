@@ -1,6 +1,6 @@
 <!-- VALID -->
-<div aria-hidden role="button" on:keypress={() => {}}></div>
-<div aria-disabled role="button" on:keypress={() => {}}></div>
+<div aria-hidden="true" role="button" on:keypress={() => {}}></div>
+<div aria-disabled="true" role="button" on:keypress={() => {}}></div>
 <div disabled role="button" on:keypress={() => {}}></div>
 <div role="presentation" on:keypress={() => {}}></div>
 <button on:click={() => {}}></button>

@@ -14,9 +14,11 @@ import {
  * Legacy-mode only: Call `onMount` callbacks and set up `beforeUpdate`/`afterUpdate` effects
  */
 export function init() {
-	const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
-	const callbacks = context.u;
+	const context = /** @type {import('#client').ComponentContextLegacy} */ (
+		current_component_context
+	);
 
+	const callbacks = context.l.u;
 	if (!callbacks) return;
 
 	// beforeUpdate
@@ -58,11 +60,11 @@ export function init() {
 /**
  * Invoke the getter of all signals associated with a component
  * so they can be registered to the effect this function is called in.
- * @param {import('#client').ComponentContext} context
+ * @param {import('#client').ComponentContextLegacy} context
  */
 function observe_all(context) {
-	if (context.d) {
-		for (const signal of context.d) get(signal);
+	if (context.l.s) {
+		for (const signal of context.l.s) get(signal);
 	}
 
 	deep_read_state(context.s);

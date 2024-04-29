@@ -2,6 +2,14 @@ packages/**/dist/*.js
 packages/**/build/*.js
 packages/**/npm/**/*
 packages/**/config/*.js
+packages/svelte/messages/**/*.md
+packages/svelte/src/compiler/errors.js
+packages/svelte/src/compiler/warnings.js
+packages/svelte/src/internal/client/errors.js
+packages/svelte/src/internal/client/warnings.js
+packages/svelte/src/internal/shared/errors.js
+packages/svelte/src/internal/shared/warnings.js
+packages/svelte/src/internal/server/errors.js
 packages/svelte/tests/**/*.svelte
 packages/svelte/tests/**/_expected*
 packages/svelte/tests/**/_actual*

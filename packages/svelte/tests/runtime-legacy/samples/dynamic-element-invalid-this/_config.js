@@ -11,5 +11,7 @@ export default test({
 		return { tag: 123 };
 	},
 
-	error: '<svelte:element> expects "this" attribute to be a string.'
+	error:
+		'svelte_element_invalid_this_value\n' +
+		'The `this` prop on `<svelte:element>` must be a string, if defined'
 });

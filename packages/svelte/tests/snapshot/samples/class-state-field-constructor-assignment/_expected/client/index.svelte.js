@@ -1,9 +1,7 @@
-// index.svelte (Svelte VERSION)
-// Note: compiler output will change before 5.0 is released!
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 
-function Class_state_field_constructor_assignment($$anchor, $$props) {
+export default function Class_state_field_constructor_assignment($$anchor, $$props) {
 	$.push($$props, true);
 
 	class Foo {
@@ -27,5 +25,3 @@ function Class_state_field_constructor_assignment($$anchor, $$props) {
 
 	$.pop();
 }
-
-export default Class_state_field_constructor_assignment;

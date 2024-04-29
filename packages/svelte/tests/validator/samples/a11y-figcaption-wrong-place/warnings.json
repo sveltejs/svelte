@@ -1,7 +1,7 @@
 [
 	{
-		"code": "a11y-structure",
-		"message": "A11y: <figcaption> must be first or last child of <figure>",
+		"code": "a11y_figcaption_index",
+		"message": "`<figcaption>` must be first or last child of `<figure>`",
 		"start": {
 			"line": 4,
 			"column": 1
@@ -12,8 +12,8 @@
 		}
 	},
 	{
-		"code": "a11y-structure",
-		"message": "A11y: <figcaption> must be an immediate child of <figure>",
+		"code": "a11y_figcaption_parent",
+		"message": "`<figcaption>` must be an immediate child of `<figure>`",
 		"start": {
 			"line": 15,
 			"column": 2

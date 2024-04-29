@@ -1,6 +1,8 @@
 import { current_component_context, flush_sync, untrack } from './internal/client/runtime.js';
 import { is_array } from './internal/client/utils.js';
 import { user_effect } from './internal/client/index.js';
+import * as e from './internal/client/errors.js';
+import { lifecycle_outside_component } from './internal/shared/errors.js';
 
 /**
  * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
@@ -18,16 +20,16 @@ import { user_effect } from './internal/client/index.js';
  */
 export function onMount(fn) {
 	if (current_component_context === null) {
-		throw new Error('onMount can only be used during component initialisation.');
+		lifecycle_outside_component('onMount');
 	}
 
-	if (current_component_context.r) {
+	if (current_component_context.l !== null) {
+		init_update_callbacks(current_component_context).m.push(fn);
+	} else {
 		user_effect(() => {
 			const cleanup = untrack(fn);
 			if (typeof cleanup === 'function') return /** @type {() => void} */ (cleanup);
 		});
-	} else {
-		init_update_callbacks(current_component_context).m.push(fn);
 	}
 }
 
@@ -43,7 +45,7 @@ export function onMount(fn) {
  */
 export function onDestroy(fn) {
 	if (current_component_context === null) {
-		throw new Error('onDestroy can only be used during component initialisation.');
+		lifecycle_outside_component('onDestroy');
 	}
 
 	onMount(() => () => untrack(fn));
@@ -87,7 +89,7 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
 export function createEventDispatcher() {
 	const component_context = current_component_context;
 	if (component_context === null) {
-		throw new Error('createEventDispatcher can only be used during component initialisation.');
+		lifecycle_outside_component('createEventDispatcher');
 	}
 
 	return (type, detail, options) => {
@@ -126,11 +128,11 @@ export function createEventDispatcher() {
  */
 export function beforeUpdate(fn) {
 	if (current_component_context === null) {
-		throw new Error('beforeUpdate can only be used during component initialisation');
+		lifecycle_outside_component('beforeUpdate');
 	}
 
-	if (current_component_context.r) {
-		throw new Error('beforeUpdate cannot be used in runes mode');
+	if (current_component_context.l === null) {
+		e.lifecycle_legacy_only('beforeUpdate');
 	}
 
 	init_update_callbacks(current_component_context).b.push(fn);
@@ -150,11 +152,11 @@ export function beforeUpdate(fn) {
  */
 export function afterUpdate(fn) {
 	if (current_component_context === null) {
-		throw new Error('afterUpdate can only be used during component initialisation.');
+		lifecycle_outside_component('afterUpdate');
 	}
 
-	if (current_component_context.r) {
-		throw new Error('afterUpdate cannot be used in runes mode');
+	if (current_component_context.l === null) {
+		e.lifecycle_legacy_only('afterUpdate');
 	}
 
 	init_update_callbacks(current_component_context).a.push(fn);
@@ -162,10 +164,11 @@ export function afterUpdate(fn) {
 
 /**
  * Legacy-mode: Init callbacks object for onMount/beforeUpdate/afterUpdate
- * @param {import('./internal/client/types.js').ComponentContext} context
+ * @param {import('#client').ComponentContext} context
  */
 function init_update_callbacks(context) {
-	return (context.u ??= { a: [], b: [], m: [] });
+	var l = /** @type {import('#client').ComponentContextLegacy} */ (context).l;
+	return (l.u ??= { a: [], b: [], m: [] });
 }
 
 /**

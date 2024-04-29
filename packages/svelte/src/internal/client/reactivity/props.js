@@ -11,6 +11,7 @@ import { derived } from './deriveds.js';
 import { get, is_signals_recorded, untrack } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import { inspect_fn } from '../dev/inspect.js';
+import * as e from '../errors.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -46,9 +47,8 @@ const rest_props_handler = {
 	},
 	set(target, key) {
 		if (DEV) {
-			throw new Error(
-				`Rest element properties of $props() such as ${target.name}.${String(key)} are readonly`
-			);
+			// TODO should this happen in prod too?
+			e.props_rest_readonly(`${target.name}.${String(key)}`);
 		}
 
 		return false;
@@ -169,13 +169,7 @@ export function prop(props, key, flags, fallback) {
 
 	if (prop_value === undefined && fallback !== undefined) {
 		if (setter && runes) {
-			// TODO consolidate all these random runtime errors
-			throw new Error(
-				'ERR_SVELTE_BINDING_FALLBACK' +
-					(DEV
-						? `: Cannot pass undefined to bind:${key} because the property contains a fallback value. Pass a different value than undefined to ${key}.`
-						: '')
-			);
+			e.props_invalid_value(key);
 		}
 
 		prop_value = get_fallback();

@@ -5,7 +5,6 @@ import {
 	is_simple_expression,
 	object
 } from '../../../utils/ast.js';
-import { error } from '../../../errors.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,
@@ -185,7 +184,7 @@ export function serialize_set_binding(node, context, fallback, options) {
 	}
 
 	if (assignee.type !== 'Identifier' && assignee.type !== 'MemberExpression') {
-		error(node, 'INTERNAL', `Unexpected assignment type ${assignee.type}`);
+		throw new Error(`Unexpected assignment type ${assignee.type}`);
 	}
 
 	// Handle class private/public state assignment cases
@@ -457,27 +456,30 @@ function get_hoistable_params(node, context) {
 
 	/** @type {import('estree').Identifier[]} */
 	const params = [];
-	let added_props = false;
 
 	/**
-	 * we only want to push if it's not already present to avoid name clashing
+	 * We only want to push if it's not already present to avoid name clashing
 	 * @param {import('estree').Identifier} id
 	 */
-	function safe_push(id) {
+	function push_unique(id) {
 		if (!params.find((param) => param.name === id.name)) {
 			params.push(id);
 		}
 	}
 
 	for (const [reference] of scope.references) {
-		const binding = scope.get(reference);
+		let binding = scope.get(reference);
 
 		if (binding !== null && !scope.declarations.has(reference) && binding.initial !== node) {
 			if (binding.kind === 'store_sub') {
 				// We need both the subscription for getting the value and the store for updating
-				safe_push(b.id(binding.node.name.slice(1)));
-				safe_push(b.id(binding.node.name));
-			} else if (
+				push_unique(b.id(binding.node.name));
+				binding = /** @type {import('#compiler').Binding} */ (
+					scope.get(binding.node.name.slice(1))
+				);
+			}
+
+			if (
 				// If it's a destructured derived binding, then we can extract the derived signal reference and use that.
 				binding.expression !== null &&
 				typeof binding.expression !== 'function' &&
@@ -487,7 +489,7 @@ function get_hoistable_params(node, context) {
 				binding.expression.object.callee.name === '$.get' &&
 				binding.expression.object.arguments[0].type === 'Identifier'
 			) {
-				safe_push(b.id(binding.expression.object.arguments[0].name));
+				push_unique(b.id(binding.expression.object.arguments[0].name));
 			} else if (
 				// If we are referencing a simple $$props value, then we need to reference the object property instead
 				(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
@@ -495,14 +497,10 @@ function get_hoistable_params(node, context) {
 				binding.initial === null &&
 				!context.state.analysis.accessors
 			) {
-				// Handle $$props.something use-cases
-				if (!added_props) {
-					added_props = true;
-					safe_push(b.id('$$props'));
-				}
+				push_unique(b.id('$$props'));
 			} else {
 				// create a copy to remove start/end tags which would mess up source maps
-				safe_push(b.id(binding.node.name));
+				push_unique(b.id(binding.node.name));
 			}
 		}
 	}

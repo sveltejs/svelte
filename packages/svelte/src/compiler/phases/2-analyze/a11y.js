@@ -7,11 +7,12 @@ import {
 	regex_starts_with_vowel,
 	regex_whitespaces
 } from '../patterns.js';
-import { warn } from '../../warnings.js';
+import * as w from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { is_event_attribute, is_text_attribute } from '../../utils/ast.js';
 import { ContentEditableBindings } from '../constants.js';
 import { walk } from 'zimmerframe';
+import { list } from '../../utils/string.js';
 
 const aria_roles = roles_map.keys();
 const abstract_roles = aria_roles.filter((role) => roles_map.get(role)?.abstract);
@@ -102,7 +103,7 @@ function has_disabled_attribute(attribute_map) {
 	const aria_disabled_attr = attribute_map.get('aria-disabled');
 	if (aria_disabled_attr) {
 		const aria_disabled_attr_value = get_static_value(aria_disabled_attr);
-		if (aria_disabled_attr_value === true) {
+		if (aria_disabled_attr_value === 'true') {
 			return true;
 		}
 	}
@@ -593,40 +594,52 @@ function is_parent(parent, elements) {
 }
 
 /**
+ * @param {import('#compiler').Attribute} attribute
+ * @param {import('aria-query').ARIAProperty} name
  * @param {import('aria-query').ARIAPropertyDefinition} schema
- * @param {string | boolean} value
- * @returns {boolean}
+ * @param {string | true | null} value
  */
-function is_valid_aria_attribute_value(schema, value) {
-	switch (schema.type) {
-		case 'boolean':
-			return typeof value === 'boolean';
-		case 'string':
-		case 'id':
-			return typeof value === 'string';
-		case 'tristate':
-			return typeof value === 'boolean' || value === 'mixed';
-		case 'integer':
-		case 'number':
-			return typeof value !== 'boolean' && isNaN(Number(value)) === false;
-		case 'token': // single token
-			return (
-				(schema.values || []).indexOf(typeof value === 'string' ? value.toLowerCase() : value) > -1
+function validate_aria_attribute_value(attribute, name, schema, value) {
+	const type = schema.type;
+
+	if (value === null) return;
+	if (value === true) value = '';
+
+	if (type === 'boolean' && value !== 'true' && value !== 'false') {
+		w.a11y_incorrect_aria_attribute_type_boolean(attribute, name);
+	} else if (type === 'integer' && (value === '' || !Number.isInteger(+value))) {
+		w.a11y_incorrect_aria_attribute_type_integer(attribute, name);
+	} else if (type === 'number' && (value === '' || isNaN(+value))) {
+		w.a11y_incorrect_aria_attribute_type(attribute, name, 'number');
+	} else if ((type === 'string' || type === 'id') && value === '') {
+		w.a11y_incorrect_aria_attribute_type(attribute, name, 'non-empty string');
+	} else if (type === 'idlist' && value === '') {
+		w.a11y_incorrect_aria_attribute_type_idlist(attribute, name);
+	} else if (type === 'token') {
+		const values = (schema.values ?? []).map((value) => value.toString());
+		if (!values.includes(value.toLowerCase())) {
+			w.a11y_incorrect_aria_attribute_type_token(
+				attribute,
+				name,
+				list(values.map((v) => `"${v}"`))
 			);
-		case 'idlist': // if list of ids, split each
-			return (
-				typeof value === 'string' &&
-				value.split(regex_whitespaces).every((id) => typeof id === 'string')
+		}
+	} else if (type === 'tokenlist') {
+		const values = (schema.values ?? []).map((value) => value.toString());
+		if (
+			value
+				.toLowerCase()
+				.split(regex_whitespaces)
+				.some((value) => !values.includes(value))
+		) {
+			w.a11y_incorrect_aria_attribute_type_tokenlist(
+				attribute,
+				name,
+				list(values.map((v) => `"${v}"`))
 			);
-		case 'tokenlist': // if list of tokens, split each
-			return (
-				typeof value === 'string' &&
-				value
-					.split(regex_whitespaces)
-					.every((token) => (schema.values || []).indexOf(token.toLowerCase()) > -1)
-			);
-		default:
-			return false;
+		}
+	} else if (type === 'tristate' && value !== 'true' && value !== 'false' && value !== 'mixed') {
+		w.a11y_incorrect_aria_attribute_type_tristate(attribute, name);
 	}
 }
 
@@ -642,7 +655,8 @@ function warn_missing_attribute(node, attributes, name = node.name) {
 		attributes.length > 1
 			? attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}`
 			: attributes[0];
-	return /** @type {const} */ ([node, 'a11y-missing-attribute', name, article, sequence]);
+
+	w.a11y_missing_attribute(node, name, article, sequence);
 }
 
 /**
@@ -667,21 +681,10 @@ function get_static_text_value(attribute) {
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
  * @param {import('./types.js').AnalysisState} state
- * @param {import('#compiler').SvelteNode[]} path
  */
-function check_element(node, state, path) {
+function check_element(node, state) {
 	// foreign namespace means elements can have completely different meanings, therefore we don't check them
 	if (state.options.namespace === 'foreign') return;
-
-	/**
-	 * @template {keyof import('../../warnings.js').AllWarnings} T
-	 * @param {{ start?: number, end?: number }} node
-	 * @param {T} code
-	 * @param  {Parameters<import('../../warnings.js').AllWarnings[T]>} args
-	 * @returns {void}
-	 */
-	const push_warning = (node, code, ...args) =>
-		warn(state.analysis.warnings, node, path, code, ...args);
 
 	/** @type {Map<string, import('#compiler').Attribute>} */
 	const attribute_map = new Map();
@@ -729,28 +732,30 @@ function check_element(node, state, path) {
 		if (name.startsWith('aria-')) {
 			if (invisible_elements.includes(node.name)) {
 				// aria-unsupported-elements
-				push_warning(attribute, 'a11y-aria-attributes', node.name);
+				w.a11y_aria_attributes(attribute, node.name);
 			}
 
 			const type = name.slice(5);
 			if (!aria_attributes.includes(type)) {
 				const match = fuzzymatch(type, aria_attributes);
-				push_warning(attribute, 'a11y-unknown-aria-attribute', type, match);
+				w.a11y_unknown_aria_attribute(attribute, type, match);
 			}
 
 			if (name === 'aria-hidden' && regex_heading_tags.test(node.name)) {
-				push_warning(attribute, 'a11y-hidden', node.name);
+				w.a11y_hidden(attribute, node.name);
 			}
 
 			// aria-proptypes
 			let value = get_static_value(attribute);
-			if (value === 'true') value = true;
-			if (value === 'false') value = false;
-			if (value !== null && value !== undefined) {
-				const schema = aria.get(/** @type {import('aria-query').ARIAProperty} */ (name));
-				if (schema !== undefined && !is_valid_aria_attribute_value(schema, value)) {
-					push_warning(attribute, 'a11y-incorrect-aria-attribute-type', schema, name);
-				}
+
+			const schema = aria.get(/** @type {import('aria-query').ARIAProperty} */ (name));
+			if (schema !== undefined) {
+				validate_aria_attribute_value(
+					attribute,
+					/** @type {import('aria-query').ARIAProperty} */ (name),
+					schema,
+					value
+				);
 			}
 
 			// aria-activedescendant-has-tabindex
@@ -760,7 +765,7 @@ function check_element(node, state, path) {
 				!is_interactive_element(node.name, attribute_map) &&
 				!attribute_map.has('tabindex')
 			) {
-				push_warning(attribute, 'a11y-aria-activedescendant-has-tabindex');
+				w.a11y_aria_activedescendant_has_tabindex(attribute);
 			}
 		}
 
@@ -768,7 +773,7 @@ function check_element(node, state, path) {
 		if (name === 'role') {
 			if (invisible_elements.includes(node.name)) {
 				// aria-unsupported-elements
-				push_warning(attribute, 'a11y-misplaced-role', node.name);
+				w.a11y_misplaced_role(attribute, node.name);
 			}
 
 			const value = get_static_value(attribute);
@@ -778,10 +783,10 @@ function check_element(node, state, path) {
 						/** @type {import('aria-query').ARIARoleDefinitionKey} current_role */ (c_r);
 
 					if (current_role && is_abstract_role(current_role)) {
-						push_warning(attribute, 'a11y-no-abstract-role', current_role);
+						w.a11y_no_abstract_role(attribute, current_role);
 					} else if (current_role && !aria_roles.includes(current_role)) {
 						const match = fuzzymatch(current_role, aria_roles);
-						push_warning(attribute, 'a11y-unknown-role', current_role, match);
+						w.a11y_unknown_role(attribute, current_role, match);
 					}
 
 					// no-redundant-roles
@@ -790,7 +795,7 @@ function check_element(node, state, path) {
 						// <ul role="list"> is ok because CSS list-style:none removes the semantics and this is a way to bring them back
 						!['ul', 'ol', 'li'].includes(node.name)
 					) {
-						push_warning(attribute, 'a11y-no-redundant-roles', current_role);
+						w.a11y_no_redundant_roles(attribute, current_role);
 					}
 
 					// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
@@ -799,7 +804,7 @@ function check_element(node, state, path) {
 						const has_nested_redundant_role =
 							current_role === a11y_nested_implicit_semantics.get(node.name);
 						if (has_nested_redundant_role) {
-							push_warning(attribute, 'a11y-no-redundant-roles', current_role);
+							w.a11y_no_redundant_roles(attribute, current_role);
 						}
 					}
 
@@ -815,11 +820,13 @@ function check_element(node, state, path) {
 								(prop) => !attributes.find((a) => a.name === prop)
 							);
 							if (has_missing_props) {
-								push_warning(
+								w.a11y_role_has_required_aria_props(
 									attribute,
-									'a11y-role-has-required-aria-props',
 									current_role,
-									required_role_props
+									list(
+										required_role_props.map((v) => `"${v}"`),
+										'and'
+									)
 								);
 							}
 						}
@@ -838,7 +845,7 @@ function check_element(node, state, path) {
 							a11y_interactive_handlers.includes(handler)
 						);
 						if (has_interactive_handlers) {
-							push_warning(node, 'a11y-interactive-supports-focus', current_role);
+							w.a11y_interactive_supports_focus(node, current_role);
 						}
 					}
 
@@ -847,12 +854,7 @@ function check_element(node, state, path) {
 						is_interactive_element(node.name, attribute_map) &&
 						(is_non_interactive_roles(current_role) || is_presentation_role(current_role))
 					) {
-						push_warning(
-							node,
-							'a11y-no-interactive-element-to-noninteractive-role',
-							current_role,
-							node.name
-						);
+						w.a11y_no_interactive_element_to_noninteractive_role(node, node.name, current_role);
 					}
 
 					// no-noninteractive-element-to-interactive-role
@@ -863,12 +865,7 @@ function check_element(node, state, path) {
 							current_role
 						)
 					) {
-						push_warning(
-							node,
-							'a11y-no-noninteractive-element-to-interactive-role',
-							current_role,
-							node.name
-						);
+						w.a11y_no_noninteractive_element_to_interactive_role(node, node.name, current_role);
 					}
 				}
 			}
@@ -876,17 +873,17 @@ function check_element(node, state, path) {
 
 		// no-access-key
 		if (name === 'accesskey') {
-			push_warning(attribute, 'a11y-accesskey');
+			w.a11y_accesskey(attribute);
 		}
 
 		// no-autofocus
 		if (name === 'autofocus') {
-			push_warning(attribute, 'a11y-autofocus');
+			w.a11y_autofocus(attribute);
 		}
 
 		// scope
 		if (name === 'scope' && !is_dynamic_element && node.name !== 'th') {
-			push_warning(attribute, 'a11y-misplaced-scope');
+			w.a11y_misplaced_scope(attribute);
 		}
 
 		// tabindex-no-positive
@@ -894,7 +891,7 @@ function check_element(node, state, path) {
 			const value = get_static_value(attribute);
 			// @ts-ignore todo is tabindex=true correct case?
 			if (!isNaN(value) && +value > 0) {
-				push_warning(attribute, 'a11y-positive-tabindex');
+				w.a11y_positive_tabindex(attribute);
 			}
 		}
 	}
@@ -918,7 +915,7 @@ function check_element(node, state, path) {
 			const has_key_event =
 				handlers.has('keydown') || handlers.has('keyup') || handlers.has('keypress');
 			if (!has_key_event) {
-				push_warning(node, 'a11y-click-events-have-key-events');
+				w.a11y_click_events_have_key_events(node);
 			}
 		}
 	}
@@ -936,7 +933,7 @@ function check_element(node, state, path) {
 		const tab_index = attribute_map.get('tabindex');
 		const tab_index_value = get_static_text_value(tab_index);
 		if (tab_index && (tab_index_value === null || Number(tab_index_value) >= 0)) {
-			push_warning(node, 'a11y-no-noninteractive-tabindex');
+			w.a11y_no_noninteractive_tabindex(node);
 		}
 	}
 
@@ -951,14 +948,11 @@ function check_element(node, state, path) {
 			if (
 				invalid_aria_props.includes(/** @type {import('aria-query').ARIAProperty} */ (attr.name))
 			) {
-				push_warning(
-					attr,
-					'a11y-role-supports-aria-props',
-					attr.name,
-					role_value,
-					is_implicit,
-					node.name
-				);
+				if (is_implicit) {
+					w.a11y_role_supports_aria_props_implicit(attr, attr.name, role_value, node.name);
+				} else {
+					w.a11y_role_supports_aria_props(attr, attr.name, role_value);
+				}
 			}
 		}
 	}
@@ -976,7 +970,7 @@ function check_element(node, state, path) {
 			a11y_recommended_interactive_handlers.includes(handler)
 		);
 		if (has_interactive_handlers) {
-			push_warning(node, 'a11y-no-noninteractive-element-interactions', node.name);
+			w.a11y_no_noninteractive_element_interactions(node, node.name);
 		}
 	}
 
@@ -995,16 +989,16 @@ function check_element(node, state, path) {
 			a11y_interactive_handlers.includes(handler)
 		);
 		if (interactive_handlers.length > 0) {
-			push_warning(node, 'a11y-no-static-element-interactions', node.name, interactive_handlers);
+			w.a11y_no_static_element_interactions(node, node.name, list(interactive_handlers));
 		}
 	}
 
 	if (handlers.has('mouseover') && !handlers.has('focus')) {
-		push_warning(node, 'a11y-mouse-events-have-key-events', 'mouseover', 'focus');
+		w.a11y_mouse_events_have_key_events(node, 'mouseover', 'focus');
 	}
 
 	if (handlers.has('mouseout') && !handlers.has('blur')) {
-		push_warning(node, 'a11y-mouse-events-have-key-events', 'mouseout', 'blur');
+		w.a11y_mouse_events_have_key_events(node, 'mouseout', 'blur');
 	}
 
 	// element-specific checks
@@ -1023,14 +1017,14 @@ function check_element(node, state, path) {
 			const href_value = get_static_text_value(href);
 			if (href_value !== null) {
 				if (href_value === '' || href_value === '#' || /^\W*javascript:/i.test(href_value)) {
-					push_warning(href, 'a11y-invalid-attribute', href.name, href_value);
+					w.a11y_invalid_attribute(href, href_value, href.name);
 				}
 			}
 		} else if (!has_spread) {
 			const id_attribute = get_static_value(attribute_map.get('id'));
 			const name_attribute = get_static_value(attribute_map.get('name'));
 			if (!id_attribute && !name_attribute) {
-				push_warning(...warn_missing_attribute(node, ['href']));
+				warn_missing_attribute(node, ['href']);
 			}
 		}
 	} else if (!has_spread) {
@@ -1038,7 +1032,7 @@ function check_element(node, state, path) {
 		if (required_attributes) {
 			const has_attribute = required_attributes.some((name) => attribute_map.has(name));
 			if (!has_attribute) {
-				push_warning(...warn_missing_attribute(node, required_attributes));
+				warn_missing_attribute(node, required_attributes);
 			}
 		}
 	}
@@ -1050,7 +1044,7 @@ function check_element(node, state, path) {
 			const required_attributes = ['alt', 'aria-label', 'aria-labelledby'];
 			const has_attribute = required_attributes.some((name) => attribute_map.has(name));
 			if (!has_attribute) {
-				push_warning(...warn_missing_attribute(node, required_attributes, 'input type="image"'));
+				warn_missing_attribute(node, required_attributes, 'input type="image"');
 			}
 		}
 		// autocomplete-valid
@@ -1058,7 +1052,11 @@ function check_element(node, state, path) {
 		if (type && autocomplete) {
 			const autocomplete_value = get_static_value(autocomplete);
 			if (!is_valid_autocomplete(autocomplete_value)) {
-				push_warning(autocomplete, 'a11y-autocomplete-valid', type_value, autocomplete_value);
+				w.a11y_autocomplete_valid(
+					autocomplete,
+					/** @type {string} */ (autocomplete_value),
+					type_value ?? '...'
+				);
 			}
 		}
 	}
@@ -1068,7 +1066,7 @@ function check_element(node, state, path) {
 		const aria_hidden = get_static_value(attribute_map.get('aria-hidden'));
 		if (alt_attribute && !aria_hidden) {
 			if (/\b(image|picture|photo)\b/i.test(alt_attribute)) {
-				push_warning(node, 'a11y-img-redundant-alt');
+				w.a11y_img_redundant_alt(node);
 			}
 		}
 	}
@@ -1098,7 +1096,7 @@ function check_element(node, state, path) {
 			return has;
 		};
 		if (!attribute_map.has('for') && !has_input_child(node)) {
-			push_warning(node, 'a11y-label-has-associated-control');
+			w.a11y_label_has_associated_control(node);
 		}
 	}
 
@@ -1120,13 +1118,13 @@ function check_element(node, state, path) {
 			);
 		}
 		if (!has_caption) {
-			push_warning(node, 'a11y-media-has-caption');
+			w.a11y_media_has_caption(node);
 		}
 	}
 
 	if (node.name === 'figcaption') {
 		if (!is_parent(node.parent, ['figure'])) {
-			push_warning(node, 'a11y-structure', true);
+			w.a11y_figcaption_parent(node);
 		}
 	}
 
@@ -1140,13 +1138,13 @@ function check_element(node, state, path) {
 			(child) => child.type === 'RegularElement' && child.name === 'figcaption'
 		);
 		if (index !== -1 && index !== 0 && index !== children.length - 1) {
-			push_warning(children[index], 'a11y-structure', false);
+			w.a11y_figcaption_index(children[index]);
 		}
 	}
 
 	if (a11y_distracting_elements.includes(node.name)) {
 		// no-distracting-elements
-		push_warning(node, 'a11y-distracting-elements', node.name);
+		w.a11y_distracting_elements(node, node.name);
 	}
 
 	// Check content
@@ -1156,7 +1154,7 @@ function check_element(node, state, path) {
 		a11y_required_content.includes(node.name) &&
 		node.fragment.nodes.length === 0
 	) {
-		push_warning(node, 'a11y-missing-content', node.name);
+		w.a11y_missing_content(node, node.name);
 	}
 }
 
@@ -1165,9 +1163,9 @@ function check_element(node, state, path) {
  */
 export const a11y_validators = {
 	RegularElement(node, context) {
-		check_element(node, context.state, context.path);
+		check_element(node, context.state);
 	},
 	SvelteElement(node, context) {
-		check_element(node, context.state, context.path);
+		check_element(node, context.state);
 	}
 };

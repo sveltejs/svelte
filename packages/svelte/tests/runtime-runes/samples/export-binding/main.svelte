@@ -1,5 +1,5 @@
 <script>
-    import Counter from './Counter.svelte';
+    import Counter from './counter/index.svelte';
     let increment;
 </script>
 

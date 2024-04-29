@@ -4,5 +4,5 @@ export default test({
 	compileOptions: {
 		dev: true
 	},
-	error: 'A snippet must be rendered with `{@render ...}`'
+	error: 'snippet_used_as_component\nA snippet must be rendered with `{@render ...}`'
 });

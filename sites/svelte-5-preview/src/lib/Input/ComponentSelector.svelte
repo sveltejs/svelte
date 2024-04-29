@@ -3,6 +3,7 @@
 	import { get_full_filename } from '$lib/utils.js';
 	import { createEventDispatcher, tick } from 'svelte';
 	import RunesInfo from './RunesInfo.svelte';
+	import Migrate from './Migrate.svelte';
 
 	/** @type {boolean}  */
 	export let show_modified;
@@ -296,6 +297,8 @@
 	</button>
 
 	<div class="runes-info"><RunesInfo {runes} /></div>
+
+	<div class="migrate-info"><Migrate /></div>
 </div>
 
 <style>
@@ -408,6 +411,13 @@
 
 	.runes-info {
 		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+	}
+
+	.migrate-info {
+		flex: 0 1 0;
 		display: flex;
 		align-items: center;
 		justify-content: flex-end;

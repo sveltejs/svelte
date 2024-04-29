@@ -6,6 +6,7 @@ import { delegate } from './events.js';
 import { autofocus } from './misc.js';
 import { effect } from '../../reactivity/effects.js';
 import { run } from '../../../shared/utils.js';
+import * as w from '../../warnings.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -111,7 +112,8 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 	var events = [];
 
 	for (key in next) {
-		var value = next[key];
+		// let instead of var because referenced in a closure
+		let value = next[key];
 		if (value === prev?.[key]) continue;
 
 		var prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
@@ -119,8 +121,8 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 
 		if (prefix === 'on') {
 			/** @type {{ capture?: true }} */
-			var opts = {};
-			var event_name = key.slice(2);
+			const opts = {};
+			let event_name = key.slice(2);
 			var delegated = DelegatedEvents.includes(event_name);
 
 			if (
@@ -262,13 +264,10 @@ function check_src_in_dev_hydration(element, attribute, value) {
 	if (attribute === 'srcset' && srcset_url_equal(element, value)) return;
 	if (src_url_equal(element.getAttribute(attribute) ?? '', value ?? '')) return;
 
-	// eslint-disable-next-line no-console
-	console.error(
-		`Detected a ${attribute} attribute value change during hydration. This will not be repaired during hydration, ` +
-			`the ${attribute} value that came from the server will be used. Related element:`,
-		element,
-		' Differing value:',
-		value
+	w.hydration_attribute_changed(
+		attribute,
+		element.outerHTML.replace(element.innerHTML, '...'),
+		String(value)
 	);
 }
 
