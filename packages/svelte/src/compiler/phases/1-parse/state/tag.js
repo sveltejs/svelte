@@ -543,7 +543,7 @@ function special(parser) {
 	}
 
 	if (parser.eat('const')) {
-		parser.allow_whitespace();
+		parser.require_whitespace();
 
 		const id = read_pattern(parser);
 		parser.allow_whitespace();
