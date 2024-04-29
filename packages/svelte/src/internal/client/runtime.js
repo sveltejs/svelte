@@ -780,7 +780,7 @@ export function invalidate_inner_signals(fn) {
 
 /**
  * @param {import('#client').Value} signal
- * @param {number} to_status
+ * @param {number} to_status should be DIRTY or MAYBE_DIRTY
  * @param {boolean} force_schedule
  * @returns {void}
  */
@@ -793,15 +793,15 @@ export function mark_reactions(signal, to_status, force_schedule) {
 
 	for (var i = 0; i < length; i++) {
 		var reaction = reactions[i];
+		var flags = reaction.f;
 
-		// We skip any effects that are already dirty (but not unowned). Additionally, we also
+		// We skip any effects that are already dirty. Additionally, we also
 		// skip if the reaction is the same as the current effect (except if we're not in runes or we
 		// are in force schedule mode).
-		if ((!force_schedule || !runes) && reaction === current_effect) {
+		if ((flags & DIRTY) !== 0 || ((!force_schedule || !runes) && reaction === current_effect)) {
 			continue;
 		}
 
-		var flags = reaction.f;
 		set_signal_status(reaction, to_status);
 
 		// If the signal is not clean, then skip over it – with the exception of unowned signals that
