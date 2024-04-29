@@ -1170,8 +1170,11 @@ function serialize_render_stmt(state) {
  * @param {import('../types.js').ComponentContext} context
  */
 function serialize_event_handler(node, { state, visit }) {
+	/** @type {import('estree').Expression} */
+	let handler;
+
 	if (node.expression) {
-		let handler = node.expression;
+		handler = node.expression;
 
 		// Event handlers can be dynamic (source/store/prop/conditional etc)
 		const dynamic_handler = () =>
@@ -1209,34 +1212,34 @@ function serialize_event_handler(node, { state, visit }) {
 		} else {
 			handler = /** @type {import('estree').Expression} */ (visit(handler));
 		}
-
-		if (node.modifiers.includes('stopPropagation')) {
-			handler = b.call('$.stopPropagation', handler);
-		}
-		if (node.modifiers.includes('stopImmediatePropagation')) {
-			handler = b.call('$.stopImmediatePropagation', handler);
-		}
-		if (node.modifiers.includes('preventDefault')) {
-			handler = b.call('$.preventDefault', handler);
-		}
-		if (node.modifiers.includes('self')) {
-			handler = b.call('$.self', handler);
-		}
-		if (node.modifiers.includes('trusted')) {
-			handler = b.call('$.trusted', handler);
-		}
-
-		return handler;
 	} else {
 		state.analysis.needs_props = true;
 
 		// Function + .call to preserve "this" context as much as possible
-		return b.function(
+		handler = b.function(
 			null,
 			[b.id('$$arg')],
 			b.block([b.stmt(b.call('$.bubble_event.call', b.this, b.id('$$props'), b.id('$$arg')))])
 		);
 	}
+
+	if (node.modifiers.includes('stopPropagation')) {
+		handler = b.call('$.stopPropagation', handler);
+	}
+	if (node.modifiers.includes('stopImmediatePropagation')) {
+		handler = b.call('$.stopImmediatePropagation', handler);
+	}
+	if (node.modifiers.includes('preventDefault')) {
+		handler = b.call('$.preventDefault', handler);
+	}
+	if (node.modifiers.includes('self')) {
+		handler = b.call('$.self', handler);
+	}
+	if (node.modifiers.includes('trusted')) {
+		handler = b.call('$.trusted', handler);
+	}
+
+	return handler;
 }
 
 /**
