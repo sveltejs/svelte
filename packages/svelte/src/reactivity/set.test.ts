@@ -86,3 +86,23 @@ test('set.delete(...)', () => {
 
 	assert.deepEqual(Array.from(set.values()), [1, 2]);
 });
+
+test('set.forEach()', () => {
+	const set = new ReactiveSet([1, 2, 3, 4, 5]);
+
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			set.forEach((v) => log.push(v));
+		});
+	});
+
+	flushSync(() => {
+		set.add(6);
+	});
+
+	assert.deepEqual(log, [1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 6]);
+
+	cleanup();
+});
