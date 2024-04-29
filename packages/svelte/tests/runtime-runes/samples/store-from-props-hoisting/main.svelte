@@ -1,10 +1,7 @@
 <script>
-	const { attrs } = $props();
-	function increment() {
-		$attrs.count++;
-	}
+	import { writable } from "svelte/store";
+	import Child from "./child.svelte";
+	const attrs = writable({ count: 0 });
 </script>
 
-<button onclick={increment}>
-	+
-</button>
+<Child {attrs} />

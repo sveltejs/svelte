@@ -4,6 +4,15 @@ export default test({
 	compileOptions: {
 		dev: true
 	},
-	recover: true,
-	mode: ['client']
+	async test({ assert, target }) {
+		const button = target.querySelector('button');
+		await button?.click();
+
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+			<button>1</button>
+		`
+		);
+	}
 });
