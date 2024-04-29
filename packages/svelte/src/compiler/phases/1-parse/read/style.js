@@ -182,8 +182,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 			end: -1,
 			metadata: {
 				is_global: false,
-				is_host: false,
-				is_root: false,
+				is_global_like: false,
 				scoped: false
 			}
 		};
