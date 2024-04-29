@@ -503,7 +503,7 @@ let { x } = $props();
  * @property {string} y Some documentation
  */
 
-/** @type {MyProps} */>
+/** @type {MyProps} */
 let { y } = $props();
 ```
 
