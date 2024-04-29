@@ -3,11 +3,11 @@
 		"code": "attribute_invalid_multiple",
 		"message": "'multiple' attribute must be static if select uses two-way binding",
 		"start": {
-			"line": 6,
+			"line": 14,
 			"column": 19
 		},
 		"end": {
-			"line": 6,
+			"line": 14,
 			"column": 29
 		}
 	}

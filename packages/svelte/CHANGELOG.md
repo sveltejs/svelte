@@ -1,5 +1,29 @@
 # svelte
 
+## 5.0.0-next.116
+
+### Patch Changes
+
+- fix: correctly interpret empty aria- attribute ([#11325](https://github.com/sveltejs/svelte/pull/11325))
+
+- fix: disallow mixing on:click and onclick syntax ([#11295](https://github.com/sveltejs/svelte/pull/11295))
+
+- fix: make hr, script and template valid select children ([#11344](https://github.com/sveltejs/svelte/pull/11344))
+
+- fix: apply modifiers to bubbled events ([#11369](https://github.com/sveltejs/svelte/pull/11369))
+
+- fix: allow `bind:this` on `<select>` with dynamic `multiple` attribute ([#11378](https://github.com/sveltejs/svelte/pull/11378))
+
+- feat: allow for literal property definition with state on classes ([#11326](https://github.com/sveltejs/svelte/pull/11326))
+
+- fix: disallow mounting a snippet ([#11347](https://github.com/sveltejs/svelte/pull/11347))
+
+- feat: only inject push/init/pop when necessary ([#11319](https://github.com/sveltejs/svelte/pull/11319))
+
+- feat: provide migration helper ([#11334](https://github.com/sveltejs/svelte/pull/11334))
+
+- fix: ensure store from props is hoisted correctly ([#11367](https://github.com/sveltejs/svelte/pull/11367))
+
 ## 5.0.0-next.115
 
 ### Patch Changes
