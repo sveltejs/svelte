@@ -413,7 +413,7 @@ const validation = {
 					}
 				}
 
-				if (parent.name === 'select') {
+				if (parent.name === 'select' && node.name !== 'this') {
 					const multiple = parent.attributes.find(
 						(a) =>
 							a.type === 'Attribute' &&
