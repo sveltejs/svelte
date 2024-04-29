@@ -74,6 +74,11 @@ export function serialize_get_binding(node, state) {
 		return node;
 	}
 
+	if (binding.node.name === '$$props') {
+		// Special case for $$props which only exists in the old world
+		return b.id('$$sanitized_props');
+	}
+
 	if (binding.kind === 'store_sub') {
 		return b.call(node);
 	}
@@ -83,12 +88,6 @@ export function serialize_get_binding(node, state) {
 	}
 
 	if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
-		if (binding.node.name === '$$props') {
-			// Special case for $$props which only exists in the old world
-			// TODO this probably shouldn't have a 'prop' binding kind
-			return node;
-		}
-
 		if (
 			state.analysis.accessors ||
 			(state.analysis.immutable ? binding.reassigned : binding.mutated) ||

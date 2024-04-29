@@ -6,9 +6,9 @@ import {
 	PROPS_IS_UPDATED
 } from '../../../constants.js';
 import { get_descriptor, is_function } from '../utils.js';
-import { mutable_source, set } from './sources.js';
+import { mutable_source, set, source } from './sources.js';
 import { derived } from './deriveds.js';
-import { get, is_signals_recorded, untrack } from '../runtime.js';
+import { get, is_signals_recorded, untrack, update } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import { inspect_fn } from '../dev/inspect.js';
 import * as e from '../errors.js';
@@ -79,7 +79,67 @@ const rest_props_handler = {
  * @returns {Record<string, unknown>}
  */
 export function rest_props(props, exclude, name) {
-	return new Proxy(DEV ? { props, exclude, name } : { props, exclude }, rest_props_handler);
+	return new Proxy(
+		DEV ? { props, exclude, name, other: {}, to_proxy: [] } : { props, exclude },
+		rest_props_handler
+	);
+}
+
+/**
+ * The proxy handler for legacy $$restProps and $$props
+ * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol>, special: Record<string | symbol, (v?: unknown) => unknown>, version: import('./types.js').Source<number> }>}}
+ */
+const legacy_rest_props_handler = {
+	get(target, key) {
+		if (target.exclude.includes(key)) return;
+		get(target.version);
+		return key in target.special ? target.special[key]() : target.props[key];
+	},
+	set(target, key, value) {
+		if (!(key in target.special)) {
+			// Handle props that can temporarily get out of sync with the parent
+			/** @type {Record<string, (v?: unknown) => unknown>} */
+			target.special[key] = prop(
+				{
+					get [key]() {
+						return target.props[key];
+					}
+				},
+				/** @type {string} */ (key),
+				PROPS_IS_UPDATED
+			);
+		}
+
+		target.special[key](value);
+		update(target.version); // $$props is coarse-grained: when $$props.x is updated, usages of $$props.y etc are also rerun
+		return true;
+	},
+	getOwnPropertyDescriptor(target, key) {
+		if (target.exclude.includes(key)) return;
+		if (key in target.props) {
+			return {
+				enumerable: true,
+				configurable: true,
+				value: target.props[key]
+			};
+		}
+	},
+	has(target, key) {
+		if (target.exclude.includes(key)) return false;
+		return key in target.props;
+	},
+	ownKeys(target) {
+		return Reflect.ownKeys(target.props).filter((key) => !target.exclude.includes(key));
+	}
+};
+
+/**
+ * @param {Record<string, unknown>} props
+ * @param {string[]} exclude
+ * @returns {Record<string, unknown>}
+ */
+export function legacy_rest_props(props, exclude) {
+	return new Proxy({ props, exclude, special: {}, version: source(0) }, legacy_rest_props_handler);
 }
 
 /**

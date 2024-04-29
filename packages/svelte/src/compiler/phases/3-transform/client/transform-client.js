@@ -418,7 +418,7 @@ export function client_component(source, analysis, options) {
 			b.const(
 				'$$restProps',
 				b.call(
-					'$.rest_props',
+					'$.legacy_rest_props',
 					b.id('$$sanitized_props'),
 					b.array(named_props.map((name) => b.literal(name)))
 				)
@@ -431,8 +431,12 @@ export function client_component(source, analysis, options) {
 		if (analysis.custom_element) {
 			to_remove.push(b.literal('$$host'));
 		}
+
 		component_block.body.unshift(
-			b.const('$$sanitized_props', b.call('$.rest_props', b.id('$$props'), b.array(to_remove)))
+			b.const(
+				'$$sanitized_props',
+				b.call('$.legacy_rest_props', b.id('$$props'), b.array(to_remove))
+			)
 		);
 	}
 
