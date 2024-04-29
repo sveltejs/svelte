@@ -42,7 +42,7 @@ const analysis_visitors = {
 		node.metadata.rule = context.state.rule;
 
 		node.metadata.used = node.children.every(
-			({ metadata }) => metadata.is_global || metadata.is_host || metadata.is_root
+			({ metadata }) => metadata.is_global || metadata.is_global_like
 		);
 	},
 	RelativeSelector(node, context) {
@@ -57,10 +57,19 @@ const analysis_visitors = {
 
 		if (node.selectors.length === 1) {
 			const first = node.selectors[0];
-			node.metadata.is_host = first.type === 'PseudoClassSelector' && first.name === 'host';
+			node.metadata.is_global_like ||=
+				(first.type === 'PseudoClassSelector' && first.name === 'host') ||
+				(first.type === 'PseudoElementSelector' &&
+					[
+						'view-transition',
+						'view-transition-group',
+						'view-transition-old',
+						'view-transition-new',
+						'view-transition-image-pair'
+					].includes(first.name));
 		}
 
-		node.metadata.is_root = !!node.selectors.find(
+		node.metadata.is_global_like ||= !!node.selectors.find(
 			(child) => child.type === 'PseudoClassSelector' && child.name === 'root'
 		);
 
@@ -87,7 +96,7 @@ const analysis_visitors = {
 
 		node.metadata.has_local_selectors = node.prelude.children.some((selector) => {
 			return selector.children.some(
-				({ metadata }) => !metadata.is_global && !metadata.is_host && !metadata.is_root
+				({ metadata }) => !metadata.is_global && !metadata.is_global_like
 			);
 		});
 	}
