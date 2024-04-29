@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.117
+
+### Patch Changes
+
+- fix: collect all necessary setters of html elements when spreading attributes ([#11371](https://github.com/sveltejs/svelte/pull/11371))
+
+- fix: ensure reactions are kept dirty when marking them again ([#11364](https://github.com/sveltejs/svelte/pull/11364))
+
+- feat: leave view transition pseudo selectors untouched ([#11375](https://github.com/sveltejs/svelte/pull/11375))
+
+- fix: require whitespace after `@const` tag ([#11379](https://github.com/sveltejs/svelte/pull/11379))
+
 ## 5.0.0-next.116
 
 ### Patch Changes
