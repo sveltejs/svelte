@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: store from props hoist wrong param
+fix: ensure store from props is hoisted correctly
