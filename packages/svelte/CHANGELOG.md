@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.119
+
+### Patch Changes
+
+- fix: generate correct code for arrow functions with bodies involving object expressions ([#11392](https://github.com/sveltejs/svelte/pull/11392))
+
 ## 5.0.0-next.118
 
 ### Patch Changes
