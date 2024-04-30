@@ -26,7 +26,7 @@ These will all get broken up into more sharable (and rewatchable) videos over ti
 
 ## What's new in Svelte
 
-[Svelte 5 is in officially in the Release Candidate stage](https://svelte-5-preview.vercel.app/docs/introduction) and gets closer to release every day. Below, you'll find some highlights from its pre-release [changelog](https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md):
+[Svelte 5 is officially in the Release Candidate stage](https://svelte-5-preview.vercel.app/docs/introduction) and gets closer to release every day. Below, you'll find some highlights from its pre-release [changelog](https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md):
 
 - Hot module reloading is now supported in Svelte 5 (**5.0.0-next.97 and 101**, [#11106](https://github.com/sveltejs/svelte/pull/11106), [#11132](https://github.com/sveltejs/svelte/pull/11132))
 - It is now possible to define global (or child global) styles in a block (**5.0.0-next.111**, [#11276](https://github.com/sveltejs/svelte/pull/11276))
