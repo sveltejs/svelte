@@ -908,14 +908,14 @@ function serialize_element_spread_attributes(
 		(element.type === 'RegularElement' && is_custom_element_node(element))
 			? b.false
 			: b.true;
-	const is_svg = element.metadata.svg ? b.true : b.false;
-	const is_mathml = element.metadata.mathml ? b.true : b.false;
+
+	const is_html = element.metadata.svg || element.metadata.mathml ? b.false : b.true;
+
 	/** @type {import('estree').Expression[]} */
 	const args = [
 		b.array(values),
 		lowercase_attributes,
-		is_svg,
-		is_mathml,
+		is_html,
 		b.literal(context.state.analysis.css.hash)
 	];
 
