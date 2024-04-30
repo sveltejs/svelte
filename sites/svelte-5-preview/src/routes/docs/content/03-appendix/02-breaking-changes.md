@@ -164,7 +164,7 @@ Various error and warning codes have been renamed slightly.
 
 ### Reduced number of namespaces
 
-The number of valid namespaces you can pass to the compiler option `namespace` has been reduced to `html` (the default), `svg` and `foreign`.
+The number of valid namespaces you can pass to the compiler option `namespace` has been reduced to `html` (the default), `mathml`, `svg` and `foreign`.
 
 ### beforeUpdate/afterUpdate changes
 

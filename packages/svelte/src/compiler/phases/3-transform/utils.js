@@ -219,7 +219,10 @@ export function infer_namespace(namespace, parent, nodes, path) {
 		}
 
 		if (parent_node?.type === 'RegularElement' || parent_node?.type === 'SvelteElement') {
-			return parent_node.metadata.svg ? 'svg' : 'html';
+			if (parent_node.metadata.svg) {
+				return 'svg';
+			}
+			return parent_node.metadata.mathml ? 'mathml' : 'html';
 		}
 
 		// Re-evaluate the namespace inside slot nodes that reset the namespace
@@ -254,11 +257,11 @@ function check_nodes_for_namespace(nodes, namespace) {
 	 * @param {{stop: () => void}} context
 	 */
 	const RegularElement = (node, { stop }) => {
-		if (!node.metadata.svg) {
+		if (!node.metadata.svg && !node.metadata.mathml) {
 			namespace = 'html';
 			stop();
 		} else if (namespace === 'keep') {
-			namespace = 'svg';
+			namespace = node.metadata.svg ? 'svg' : 'mathml';
 		}
 	};
 
@@ -312,7 +315,11 @@ export function determine_namespace_for_children(node, namespace) {
 		return 'html';
 	}
 
-	return node.metadata.svg ? 'svg' : 'html';
+	if (node.metadata.svg) {
+		return 'svg';
+	}
+
+	return node.metadata.mathml ? 'mathml' : 'html';
 }
 
 /**

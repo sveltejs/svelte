@@ -104,6 +104,7 @@ export const DOMBooleanAttributes = [
 ];
 
 export const namespace_svg = 'http://www.w3.org/2000/svg';
+export const namespace_mathml = 'http://www.w3.org/1998/Math/MathML';
 
 // while `input` is also an interactive element, it is never moved by the browser, so we don't need to check for it
 export const interactive_elements = new Set([

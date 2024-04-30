@@ -1,4 +1,4 @@
-import { namespace_svg } from '../../../../constants.js';
+import { namespace_mathml, namespace_svg } from '../../../../constants.js';
 import * as e from '../../../errors.js';
 
 const regex_valid_tag_name = /^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/;
@@ -155,10 +155,20 @@ export default function read_options(node) {
 
 				if (value === namespace_svg) {
 					component_options.namespace = 'svg';
-				} else if (value === 'html' || value === 'svg' || value === 'foreign') {
+				} else if (value === namespace_mathml) {
+					component_options.namespace = 'mathml';
+				} else if (
+					value === 'html' ||
+					value === 'mathml' ||
+					value === 'svg' ||
+					value === 'foreign'
+				) {
 					component_options.namespace = value;
 				} else {
-					e.svelte_options_invalid_attribute_value(attribute, `"html", "svg" or "foreign"`);
+					e.svelte_options_invalid_attribute_value(
+						attribute,
+						`"html", "mathml", "svg" or "foreign"`
+					);
 				}
 
 				break;

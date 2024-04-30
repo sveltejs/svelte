@@ -20,7 +20,7 @@ export {
 	set_dynamic_element_attributes,
 	set_xlink_attribute
 } from './dom/elements/attributes.js';
-export { set_class, set_svg_class, toggle_class } from './dom/elements/class.js';
+export { set_class, set_svg_class, set_mathml_class, toggle_class } from './dom/elements/class.js';
 export { event, delegate } from './dom/elements/events.js';
 export { autofocus, remove_textarea_child } from './dom/elements/misc.js';
 export { set_style } from './dom/elements/style.js';
@@ -70,6 +70,7 @@ export {
 	comment,
 	svg_template,
 	svg_template_with_script,
+	mathml_template,
 	template,
 	template_with_script,
 	text

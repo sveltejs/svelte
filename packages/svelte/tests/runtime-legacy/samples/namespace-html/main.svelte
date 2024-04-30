@@ -2,4 +2,8 @@
 	<text textlength=100>hellooooo</text>
 </svg>
 
+<math>
+	<mrow></mrow>
+</math>
+
 <div class="hi">hi</div>

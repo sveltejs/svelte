@@ -11,14 +11,14 @@ import {
 	object
 } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
-import { ReservedKeywords, Runes, SVGElements } from '../constants.js';
+import { MathMLElements, ReservedKeywords, Runes, SVGElements } from '../constants.js';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import { merge } from '../visitors.js';
 import { validation_legacy, validation_runes, validation_runes_js } from './validation.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
-import { DelegatedEvents, namespace_svg } from '../../../constants.js';
+import { DelegatedEvents, namespace_mathml, namespace_svg } from '../../../constants.js';
 import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
@@ -1379,8 +1379,9 @@ const common_visitors = {
 	FunctionExpression: function_visitor,
 	FunctionDeclaration: function_visitor,
 	RegularElement(node, context) {
-		if (context.state.options.namespace !== 'foreign' && SVGElements.includes(node.name)) {
-			node.metadata.svg = true;
+		if (context.state.options.namespace !== 'foreign') {
+			if (SVGElements.includes(node.name)) node.metadata.svg = true;
+			else if (MathMLElements.includes(node.name)) node.metadata.mathml = true;
 		}
 
 		determine_element_spread(node);
@@ -1438,20 +1439,29 @@ const common_visitors = {
 	SvelteElement(node, context) {
 		context.state.analysis.elements.push(node);
 
+		// TODO why are we handling the `<svelte:element this="x" />` case? there is no
+		// reason for someone to use a static value with `<svelte:element>`
 		if (
 			context.state.options.namespace !== 'foreign' &&
 			node.tag.type === 'Literal' &&
-			typeof node.tag.value === 'string' &&
-			SVGElements.includes(node.tag.value)
+			typeof node.tag.value === 'string'
 		) {
-			node.metadata.svg = true;
-			return;
+			if (SVGElements.includes(node.tag.value)) {
+				node.metadata.svg = true;
+				return;
+			}
+
+			if (MathMLElements.includes(node.tag.value)) {
+				node.metadata.mathml = true;
+				return;
+			}
 		}
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute') {
 				if (attribute.name === 'xmlns' && is_text_attribute(attribute)) {
 					node.metadata.svg = attribute.value[0].data === namespace_svg;
+					node.metadata.mathml = attribute.value[0].data === namespace_mathml;
 					return;
 				}
 			}
@@ -1467,6 +1477,7 @@ const common_visitors = {
 			) {
 				// Inside a slot or a snippet -> this resets the namespace, so assume the component namespace
 				node.metadata.svg = context.state.options.namespace === 'svg';
+				node.metadata.mathml = context.state.options.namespace === 'mathml';
 				return;
 			}
 			if (ancestor.type === 'SvelteElement' || ancestor.type === 'RegularElement') {
@@ -1474,6 +1485,10 @@ const common_visitors = {
 					ancestor.type === 'RegularElement' && ancestor.name === 'foreignObject'
 						? false
 						: ancestor.metadata.svg;
+				node.metadata.mathml =
+					ancestor.type === 'RegularElement' && ancestor.name === 'foreignObject'
+						? false
+						: ancestor.metadata.mathml;
 				return;
 			}
 		}
