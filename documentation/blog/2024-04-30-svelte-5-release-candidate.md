@@ -41,7 +41,7 @@ The highlights include:
 
 - [runes](/blog/runes), the new signal-powered reactivity API that sits at the heart of Svelte 5 and unlocks _universal reactivity_
 - overhauled event handling with less boilerplate and more flexibility
-- better component composition through _snippets_
+- better component composition through [_snippets_](https://svelte-5-preview.vercel.app/docs/snippets)
 - native TypeScript support, including inside your markup
 
 ## Will I need to rewrite everything?
