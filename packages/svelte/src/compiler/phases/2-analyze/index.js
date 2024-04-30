@@ -1379,11 +1379,9 @@ const common_visitors = {
 	FunctionExpression: function_visitor,
 	FunctionDeclaration: function_visitor,
 	RegularElement(node, context) {
-		if (context.state.options.namespace !== 'foreign' && SVGElements.includes(node.name)) {
-			node.metadata.svg = true;
-		}
-		if (context.state.options.namespace !== 'foreign' && MathMLElements.includes(node.name)) {
-			node.metadata.mathml = true;
+		if (context.state.options.namespace !== 'foreign') {
+			if (SVGElements.includes(node.name)) node.metadata.svg = true;
+			else if (MathMLElements.includes(node.name)) node.metadata.mathml = true;
 		}
 
 		determine_element_spread(node);
@@ -1444,21 +1442,17 @@ const common_visitors = {
 		if (
 			context.state.options.namespace !== 'foreign' &&
 			node.tag.type === 'Literal' &&
-			typeof node.tag.value === 'string' &&
-			SVGElements.includes(node.tag.value)
+			typeof node.tag.value === 'string'
 		) {
-			node.metadata.svg = true;
-			return;
-		}
+			if (SVGElements.includes(node.tag.value)) {
+				node.metadata.svg = true;
+				return;
+			}
 
-		if (
-			context.state.options.namespace !== 'foreign' &&
-			node.tag.type === 'Literal' &&
-			typeof node.tag.value === 'string' &&
-			MathMLElements.includes(node.tag.value)
-		) {
-			node.metadata.mathml = true;
-			return;
+			if (MathMLElements.includes(node.tag.value)) {
+				node.metadata.mathml = true;
+				return;
+			}
 		}
 
 		for (const attribute of node.attributes) {
