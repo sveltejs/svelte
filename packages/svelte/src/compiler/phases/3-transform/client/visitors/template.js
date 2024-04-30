@@ -835,10 +835,7 @@ function serialize_inline_component(node, component_name, context) {
 
 		if (slot_name === 'default') {
 			push_prop(
-				b.init(
-					'children',
-					context.state.options.dev ? b.call('$.add_snippet_symbol', slot_fn) : slot_fn
-				)
+				b.init('children', context.state.options.dev ? b.call('$.wrap_snippet', slot_fn) : slot_fn)
 			);
 		} else {
 			serialized_slots.push(b.init(slot_name, slot_fn));
@@ -2566,16 +2563,22 @@ export const template_visitors = {
 			.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body
 		]);
 
+		/** @type {import('estree').Expression} */
+		let snippet = b.arrow(args, body);
+
+		if (context.state.options.dev) {
+			snippet = b.call('$.wrap_snippet', snippet);
+		}
+
+		const declaration = b.var(node.expression, snippet);
+
 		const path = context.path;
 		// If we're top-level, then we can create a function for the snippet so that it can be referenced
 		// in the props declaration (default value pattern).
 		if (path.length === 1 && path[0].type === 'Fragment') {
-			context.state.init.push(b.function_declaration(node.expression, args, body));
+			context.state.analysis.top_level_snippets.push(declaration);
 		} else {
-			context.state.init.push(b.const(node.expression, b.arrow(args, body)));
-		}
-		if (context.state.options.dev) {
-			context.state.init.push(b.stmt(b.call('$.add_snippet_symbol', node.expression)));
+			context.state.init.push(declaration);
 		}
 	},
 	FunctionExpression: function_visitor,
