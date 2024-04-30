@@ -46,7 +46,7 @@ The highlights include:
 
 ## Will I need to rewrite everything?
 
-Components written for Svelte 4 will continue to work with Svelte 5, with a [handful of exceptions](https://svelte-5-preview.vercel.app/docs/breaking-changes). If you install Svelte 5 in an existing app, the only real change should be that things get faster. If you maintain a Svelte app, we recommend updating to Svelte 5 as soon as it's stable. (In the meantime, if you're currently on Svelte 3 then you should [update to Svelte 4](https://svelte.dev/docs/v4-migration-guide).)
+Components written for Svelte 4 will continue to work with Svelte 5, with a [handful of exceptions](https://svelte-5-preview.vercel.app/docs/breaking-changes). If you install Svelte 5 in an existing app, the only real change should be that things get faster. If you maintain a Svelte app, we recommend updating to Svelte 5 as soon as it's stable. (In the meantime, if you're currently on Svelte 3 then you should [update to Svelte 4](/docs/v4-migration-guide).)
 
 Eventually — in Svelte 6 or 7 — support for certain Svelte 4 features will be dropped in favour of their modern replacements. Because of that, we do encourage you to incrementally migrate your components (you can mix and match old and new components in the same app). We'll release a command line tool for automating much of this migration, and you can try an experimental version of that tool in the [playground](https://svelte-5-preview.vercel.app) by pasting in some Svelte 4 code and clicking the 'migrate' button.
 
