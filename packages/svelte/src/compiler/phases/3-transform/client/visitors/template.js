@@ -50,7 +50,11 @@ import { walk } from 'zimmerframe';
  */
 function get_attribute_name(element, attribute, context) {
 	let name = attribute.name;
-	if (!element.metadata.svg && context.state.metadata.namespace !== 'foreign') {
+	if (
+		!element.metadata.svg &&
+		!element.metadata.mathml &&
+		context.state.metadata.namespace !== 'foreign'
+	) {
 		name = name.toLowerCase();
 		if (name in AttributeAliases) {
 			name = AttributeAliases[name];
@@ -292,7 +296,9 @@ function serialize_element_spread_attributes(
 	}
 
 	const lowercase_attributes =
-		element.metadata.svg || is_custom_element_node(element) ? b.false : b.true;
+		element.metadata.svg || element.metadata.mathml || is_custom_element_node(element)
+			? b.false
+			: b.true;
 	const id = context.state.scope.generate('attributes');
 
 	const update = b.stmt(
@@ -465,6 +471,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 	const state = context.state;
 	const name = get_attribute_name(element, attribute, context);
 	const is_svg = context.state.metadata.namespace === 'svg';
+	const is_mathml = context.state.metadata.namespace === 'mathml';
 	let [contains_call_expression, value] = serialize_attribute_value(attribute.value, context);
 
 	// The foreign namespace doesn't have any special handling, everything goes through the attr function
@@ -490,7 +497,13 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 	let update;
 
 	if (name === 'class') {
-		update = b.stmt(b.call(is_svg ? '$.set_svg_class' : '$.set_class', node_id, value));
+		update = b.stmt(
+			b.call(
+				is_svg ? '$.set_svg_class' : is_mathml ? '$.set_mathml_class' : '$.set_class',
+				node_id,
+				value
+			)
+		);
 	} else if (DOMProperties.includes(name)) {
 		update = b.stmt(b.assignment('=', b.member(node_id, b.id(name)), value));
 	} else {
@@ -872,7 +885,9 @@ function serialize_inline_component(node, component_name, context) {
 				node_id,
 				// TODO would be great to do this at runtime instead. Svelte 4 also can't handle cases today
 				// where it's not statically determinable whether the component is used in a svg or html context
-				context.state.metadata.namespace === 'svg' ? b.false : b.true,
+				context.state.metadata.namespace === 'svg' || context.state.metadata.namespace === 'mathml'
+					? b.false
+					: b.true,
 				b.thunk(b.object(custom_css_props)),
 				b.arrow([b.id('$$node')], prev(b.id('$$node')))
 			);
@@ -1138,9 +1153,11 @@ function get_template_function(namespace, state) {
 		? contains_script_tag
 			? '$.svg_template_with_script'
 			: '$.svg_template'
-		: contains_script_tag
-			? '$.template_with_script'
-			: '$.template';
+		: namespace === 'mathml'
+			? '$.mathml_template'
+			: contains_script_tag
+				? '$.template_with_script'
+				: '$.template';
 }
 
 /**
@@ -1635,7 +1652,8 @@ export const template_visitors = {
 					'$.html',
 					context.state.node,
 					b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.expression))),
-					b.literal(context.state.metadata.namespace === 'svg')
+					b.literal(context.state.metadata.namespace === 'svg'),
+					b.literal(context.state.metadata.namespace === 'mathml')
 				)
 			)
 		);
@@ -2125,7 +2143,11 @@ export const template_visitors = {
 			})
 		);
 
-		const args = [context.state.node, get_tag, node.metadata.svg ? b.true : b.false];
+		const args = [
+			context.state.node,
+			get_tag,
+			node.metadata.svg || node.metadata.mathml ? b.true : b.false
+		];
 		if (inner.length > 0) {
 			args.push(b.arrow([element_id, b.id('$$anchor')], b.block(inner)));
 		}

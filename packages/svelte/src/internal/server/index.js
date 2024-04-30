@@ -290,11 +290,19 @@ export function css_props(payload, is_html, props, component) {
  * @param {Record<string, unknown>[]} attrs
  * @param {boolean} lowercase_attributes
  * @param {boolean} is_svg
+ * @param {boolean} is_mathml
  * @param {string} class_hash
  * @param {{ styles: Record<string, string> | null; classes: string }} [additional]
  * @returns {string}
  */
-export function spread_attributes(attrs, lowercase_attributes, is_svg, class_hash, additional) {
+export function spread_attributes(
+	attrs,
+	lowercase_attributes,
+	is_svg,
+	is_mathml,
+	class_hash,
+	additional
+) {
 	/** @type {Record<string, unknown>} */
 	const merged_attrs = {};
 	let key;
@@ -344,7 +352,7 @@ export function spread_attributes(attrs, lowercase_attributes, is_svg, class_has
 		if (lowercase_attributes) {
 			name = name.toLowerCase();
 		}
-		const is_boolean = !is_svg && DOMBooleanAttributes.includes(name);
+		const is_boolean = !is_svg && !is_mathml && DOMBooleanAttributes.includes(name);
 		attr_str += attr(name, merged_attrs[name], is_boolean);
 	}
 

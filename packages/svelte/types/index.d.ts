@@ -1321,11 +1321,12 @@ declare module 'svelte/compiler' {
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
 	 * - `svg`     — for e.g. `<svg>` or `<g>`
+	 * - `mathml`  — for e.g. `<math>` or `<mrow>`
 	 * - `foreign` — for other compilation targets than the web, e.g. Svelte Native.
 	 *               Disallows bindings other than bind:this, disables a11y checks, disables any special attribute handling
 	 *               (also see https://github.com/sveltejs/svelte/pull/5652)
 	 */
-	type Namespace = 'html' | 'svg' | 'foreign';
+	type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
 
 	interface Root extends BaseNode {
 		type: 'Root';
@@ -1569,6 +1570,8 @@ declare module 'svelte/compiler' {
 		metadata: {
 			/** `true` if this is an svg element */
 			svg: boolean;
+			/** `true` if this is a mathml element */
+			mathml: boolean;
 			/** `true` if contains a SpreadAttribute */
 			has_spread: boolean;
 			scoped: boolean;
@@ -1601,6 +1604,11 @@ declare module 'svelte/compiler' {
 			 * the tag is dynamic, but we do our best to infer it from the template.
 			 */
 			svg: boolean;
+			/**
+			 * `true` if this is a mathml element. The boolean may not be accurate because
+			 * the tag is dynamic, but we do our best to infer it from the template.
+			 */
+			mathml: boolean;
 			scoped: boolean;
 		};
 	}
@@ -2562,11 +2570,12 @@ declare module 'svelte/types/compiler/interfaces' {
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
 	 * - `svg`     — for e.g. `<svg>` or `<g>`
+	 * - `mathml`  — for e.g. `<math>` or `<mrow>`
 	 * - `foreign` — for other compilation targets than the web, e.g. Svelte Native.
 	 *               Disallows bindings other than bind:this, disables a11y checks, disables any special attribute handling
 	 *               (also see https://github.com/sveltejs/svelte/pull/5652)
 	 */
-	type Namespace = 'html' | 'svg' | 'foreign';
+	type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
 }declare module '*.svelte' {
 	export { SvelteComponent as default } from 'svelte';
 }
