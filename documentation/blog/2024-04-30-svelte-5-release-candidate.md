@@ -1,6 +1,6 @@
 ---
 title: Svelte 5 Release Candidate
-description: Light at the end of the tunnel
+description: We're almost there
 author: The Svelte team
 authorURL: https://svelte.dev/
 ---
@@ -30,12 +30,19 @@ You can learn more about the new features from the [preview documentation](https
 <div class="max">
 <figure style="max-width: 960px; margin: 0 auto">
 <div style="aspect-ratio: 1.755; position: relative; margin: 0 auto;">
-	<iframe style="position: absolute; width: 100%; height: 100%; left: 0; top: 0; margin: 0;" src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+	<iframe style="position: absolute; width: 100%; height: 100%; left: 0; top: 0; margin: 0;" src="https://www.youtube-nocookie.com/embed/xCeYmdukOKI" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 
 <figcaption>What You Can Do For Your Framework</figcaption>
 </figure>
 </div>
+
+The highlights include:
+
+- [runes](/blog/runes), the new signal-powered reactivity API that sits at the heart of Svelte 5 and unlocks _universal reactivity_
+- overhauled event handling with less boilerplate and more flexibility
+- better component composition through _snippets_
+- native TypeScript support, including inside your markup
 
 ## Will I need to rewrite everything?
 
