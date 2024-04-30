@@ -1,4 +1,3 @@
-import { DEV } from 'esm-env';
 import {
 	check_dirtiness,
 	current_component_context,
@@ -30,6 +29,7 @@ import {
 } from '../constants.js';
 import { set } from './sources.js';
 import { remove } from '../dom/reconciler.js';
+import * as e from '../errors.js';
 
 /**
  * @param {import('#client').Effect | null} effect
@@ -38,19 +38,11 @@ import { remove } from '../dom/reconciler.js';
  */
 export function validate_effect(effect, rune) {
 	if (effect === null) {
-		throw new Error(
-			'ERR_SVELTE_ORPHAN_EFFECT' +
-				(DEV
-					? `: ${rune} can only be used inside an effect (e.g. during component initialisation)`
-					: '')
-		);
+		e.effect_orphan(rune);
 	}
 
 	if (is_destroying_effect) {
-		throw new Error(
-			'ERR_SVELTE_EFFECT_IN_TEARDOWN' +
-				(DEV ? `: ${rune} cannot be used inside an effect cleanup function.` : '')
-		);
+		e.effect_in_teardown(rune);
 	}
 }
 

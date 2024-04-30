@@ -2,7 +2,7 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'invalid_element_content',
+		code: 'svelte_meta_invalid_content',
 		message: '<svelte:window> cannot have children',
 		position: [15, 15]
 	}

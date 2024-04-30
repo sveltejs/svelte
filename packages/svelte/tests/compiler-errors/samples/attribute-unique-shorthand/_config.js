@@ -2,7 +2,7 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'duplicate_attribute',
+		code: 'attribute_duplicate',
 		message: 'Attributes need to be unique',
 		position: [17, 17]
 	}

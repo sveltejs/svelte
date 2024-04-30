@@ -2,7 +2,7 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'duplicate_props_rune',
+		code: 'props_duplicate',
 		message: 'Cannot use `$props()` more than once'
 	}
 });

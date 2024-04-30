@@ -1,11 +1,12 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
-import { get_descriptors, map_get, map_set, object_assign } from '../../utils.js';
+import { get_descriptors, get_prototype_of, map_get, map_set } from '../../utils.js';
 import { AttributeAliases, DelegatedEvents, namespace_svg } from '../../../../constants.js';
 import { delegate } from './events.js';
 import { autofocus } from './misc.js';
 import { effect } from '../../reactivity/effects.js';
 import { run } from '../../../shared/utils.js';
+import * as w from '../../warnings.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -240,14 +241,20 @@ var setters_cache = new Map();
 function get_setters(element) {
 	/** @type {string[]} */
 	var setters = [];
+	var descriptors;
+	var proto = get_prototype_of(element);
 
-	// @ts-expect-error
-	var descriptors = get_descriptors(element.__proto__);
+	// Stop at Element, from there on there's only unnecessary setters we're not interested in
+	while (proto.constructor.name !== 'Element') {
+		descriptors = get_descriptors(proto);
 
-	for (var key in descriptors) {
-		if (descriptors[key].set && !always_set_through_set_attribute.includes(key)) {
-			setters.push(key);
+		for (var key in descriptors) {
+			if (descriptors[key].set && !always_set_through_set_attribute.includes(key)) {
+				setters.push(key);
+			}
 		}
+
+		proto = get_prototype_of(proto);
 	}
 
 	return setters;
@@ -263,13 +270,10 @@ function check_src_in_dev_hydration(element, attribute, value) {
 	if (attribute === 'srcset' && srcset_url_equal(element, value)) return;
 	if (src_url_equal(element.getAttribute(attribute) ?? '', value ?? '')) return;
 
-	// eslint-disable-next-line no-console
-	console.error(
-		`Detected a ${attribute} attribute value change during hydration. This will not be repaired during hydration, ` +
-			`the ${attribute} value that came from the server will be used. Related element:`,
-		element,
-		' Differing value:',
-		value
+	w.hydration_attribute_changed(
+		attribute,
+		element.outerHTML.replace(element.innerHTML, '...'),
+		String(value)
 	);
 }
 

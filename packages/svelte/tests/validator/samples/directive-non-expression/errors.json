@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid_directive_value",
+		"code": "directive_invalid_value",
 		"message": "Directive value must be a JavaScript expression enclosed in curly braces",
 		"start": {
 			"line": 1,

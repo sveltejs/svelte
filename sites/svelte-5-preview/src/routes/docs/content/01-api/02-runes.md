@@ -490,6 +490,23 @@ let { a, b, c, ...everythingElse }: MyProps = $props();
 >
 > ...TypeScript [widens the type](https://www.typescriptlang.org/play?#code/CYUwxgNghgTiAEAzArgOzAFwJYHtXwBIAHGHIgZwB4AVeAXnilQE8A+ACgEoAueagbgBQgiCAzwA3vAAe9eABYATPAC+c4qQqUp03uQwwsqAOaqOnIfCsB6a-AB6AfiA) of `x` to be `string | number`, instead of erroring.
 
+If you're using JavaScript, you can declare the prop types using JSDoc:
+
+```js
+/** @type {{ x: string }} */
+let { x } = $props();
+
+// or use @typedef if you want to document the properties:
+
+/**
+ * @typedef {Object} MyProps
+ * @property {string} y Some documentation
+ */
+
+/** @type {MyProps} */
+let { y } = $props();
+```
+
 By default props are treated as readonly, meaning reassignments will not propagate upwards and mutations will result in a warning at runtime in development mode. You will also get a runtime error when trying to `bind:` to a readonly prop in a parent component. To declare props as bindable, use [`$bindable()`](#$bindable).
 
 ### What this replaces

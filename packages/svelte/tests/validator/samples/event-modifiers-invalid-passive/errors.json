@@ -1,7 +1,7 @@
 [
 	{
 		"message": "The 'passive' and 'preventDefault' modifiers cannot be used together",
-		"code": "invalid_event_modifier_combination",
+		"code": "event_handler_invalid_modifier_combination",
 		"start": {
 			"line": 1,
 			"column": 5

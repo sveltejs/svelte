@@ -83,11 +83,11 @@
 <div role="menu"></div>
 <div role="menubar"></div>
 <div role="menuitem"></div>
-<div role="menuitemcheckbox" aria-checked></div>
-<div role="menuitemradio" aria-checked></div>
-<div role="option" aria-selected></div>
+<div role="menuitemcheckbox" aria-checked="true"></div>
+<div role="menuitemradio" aria-checked="true"></div>
+<div role="option" aria-selected="true"></div>
 <div role="progressbar"></div>
-<div role="radio" aria-checked></div>
+<div role="radio" aria-checked="true"></div>
 <div role="radiogroup"></div>
 <div role="row"></div>
 <div role="rowheader"></div>
@@ -95,7 +95,7 @@
 <div role="searchbox"></div>
 <div role="slider" aria-valuenow={0}></div>
 <div role="spinbutton"></div>
-<div role="switch" aria-checked></div>
+<div role="switch" aria-checked="true"></div>
 <div role="tab"></div>
 <div role="textbox"></div>
 <div role="treeitem" aria-selected={true}></div>

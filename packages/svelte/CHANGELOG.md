@@ -1,5 +1,57 @@
 # svelte
 
+## 5.0.0-next.119
+
+### Patch Changes
+
+- fix: generate correct code for arrow functions with bodies involving object expressions ([#11392](https://github.com/sveltejs/svelte/pull/11392))
+
+## 5.0.0-next.118
+
+### Patch Changes
+
+- fix: ensure no data loss occurs when using reactive Set methods ([#11385](https://github.com/sveltejs/svelte/pull/11385))
+
+- fix: handle reassignment of `$props` and `$restProps` ([#11348](https://github.com/sveltejs/svelte/pull/11348))
+
+- fix: disallow sequence expressions in `@const` tags ([#11357](https://github.com/sveltejs/svelte/pull/11357))
+
+## 5.0.0-next.117
+
+### Patch Changes
+
+- fix: collect all necessary setters of html elements when spreading attributes ([#11371](https://github.com/sveltejs/svelte/pull/11371))
+
+- fix: ensure reactions are kept dirty when marking them again ([#11364](https://github.com/sveltejs/svelte/pull/11364))
+
+- feat: leave view transition pseudo selectors untouched ([#11375](https://github.com/sveltejs/svelte/pull/11375))
+
+- fix: require whitespace after `@const` tag ([#11379](https://github.com/sveltejs/svelte/pull/11379))
+
+## 5.0.0-next.116
+
+### Patch Changes
+
+- fix: correctly interpret empty aria- attribute ([#11325](https://github.com/sveltejs/svelte/pull/11325))
+
+- fix: disallow mixing on:click and onclick syntax ([#11295](https://github.com/sveltejs/svelte/pull/11295))
+
+- fix: make hr, script and template valid select children ([#11344](https://github.com/sveltejs/svelte/pull/11344))
+
+- fix: apply modifiers to bubbled events ([#11369](https://github.com/sveltejs/svelte/pull/11369))
+
+- fix: allow `bind:this` on `<select>` with dynamic `multiple` attribute ([#11378](https://github.com/sveltejs/svelte/pull/11378))
+
+- feat: allow for literal property definition with state on classes ([#11326](https://github.com/sveltejs/svelte/pull/11326))
+
+- fix: disallow mounting a snippet ([#11347](https://github.com/sveltejs/svelte/pull/11347))
+
+- feat: only inject push/init/pop when necessary ([#11319](https://github.com/sveltejs/svelte/pull/11319))
+
+- feat: provide migration helper ([#11334](https://github.com/sveltejs/svelte/pull/11334))
+
+- fix: ensure store from props is hoisted correctly ([#11367](https://github.com/sveltejs/svelte/pull/11367))
+
 ## 5.0.0-next.115
 
 ### Patch Changes

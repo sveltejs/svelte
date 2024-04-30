@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid_tag_placement",
+		"code": "tag_invalid_placement",
 		"message": "{@html ...} tag cannot be in attribute value",
 		"start": {
 			"line": 1,

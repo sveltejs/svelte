@@ -23,6 +23,7 @@ import { mutate, set, source } from './reactivity/sources.js';
 import { update_derived } from './reactivity/deriveds.js';
 import { inspect_captured_signals, inspect_fn, set_inspect_fn } from './dev/inspect.js';
 import * as e from './errors.js';
+import { lifecycle_outside_component } from '../shared/errors.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -779,7 +780,7 @@ export function invalidate_inner_signals(fn) {
 
 /**
  * @param {import('#client').Value} signal
- * @param {number} to_status
+ * @param {number} to_status should be DIRTY or MAYBE_DIRTY
  * @param {boolean} force_schedule
  * @returns {void}
  */
@@ -792,15 +793,15 @@ export function mark_reactions(signal, to_status, force_schedule) {
 
 	for (var i = 0; i < length; i++) {
 		var reaction = reactions[i];
+		var flags = reaction.f;
 
-		// We skip any effects that are already dirty (but not unowned). Additionally, we also
+		// We skip any effects that are already dirty. Additionally, we also
 		// skip if the reaction is the same as the current effect (except if we're not in runes or we
 		// are in force schedule mode).
-		if ((!force_schedule || !runes) && reaction === current_effect) {
+		if ((flags & DIRTY) !== 0 || ((!force_schedule || !runes) && reaction === current_effect)) {
 			continue;
 		}
 
-		var flags = reaction.f;
 		set_signal_status(reaction, to_status);
 
 		// If the signal is not clean, then skip over it – with the exception of unowned signals that
@@ -952,7 +953,7 @@ export function getAllContexts() {
  */
 function get_or_init_context_map(name) {
 	if (current_component_context === null) {
-		e.lifecycle_outside_component(name);
+		lifecycle_outside_component(name);
 	}
 
 	return (current_component_context.c ??= new Map(
@@ -1185,13 +1186,13 @@ if (DEV) {
 			let value; // let's hope noone modifies this global, but belts and braces
 			Object.defineProperty(globalThis, rune, {
 				configurable: true,
+				// eslint-disable-next-line getter-return
 				get: () => {
 					if (value !== undefined) {
 						return value;
 					}
-					throw new Error(
-						`The ${rune} rune is only available inside .svelte and .svelte.js/ts files`
-					);
+
+					e.rune_outside_svelte(rune);
 				},
 				set: (v) => {
 					value = v;

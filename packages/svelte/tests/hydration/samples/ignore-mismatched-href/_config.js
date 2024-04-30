@@ -14,6 +14,6 @@ export default test({
 	},
 
 	errors: [
-		'Detected a href attribute value change during hydration. This will not be repaired during hydration, the href value that came from the server will be used. Related element:'
+		'The `href` attribute on `<a href="/bar">...</a>` changed its value between server and client renders. The client value, `/foo`, will be ignored in favour of the server value'
 	]
 });

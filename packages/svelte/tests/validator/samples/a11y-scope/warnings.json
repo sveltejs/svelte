@@ -1,7 +1,7 @@
 [
 	{
 		"code": "a11y_misplaced_scope",
-		"message": "The scope attribute should only be used with <th> elements",
+		"message": "The scope attribute should only be used with `<th>` elements",
 		"start": {
 			"line": 6,
 			"column": 5

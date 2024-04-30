@@ -1,7 +1,7 @@
 [
 	{
 		"code": "a11y_missing_attribute",
-		"message": "<iframe> element should have a title attribute",
+		"message": "`<iframe>` element should have a title attribute",
 		"start": {
 			"line": 5,
 			"column": 0

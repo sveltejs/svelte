@@ -20,6 +20,8 @@ import { array_from } from './utils.js';
 import { handle_event_propagation } from './dom/elements/events.js';
 import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 import * as w from './warnings.js';
+import * as e from './errors.js';
+import { validate_component } from '../shared/validate.js';
 
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
@@ -101,6 +103,10 @@ export function stringify(value) {
  * @returns {Exports}
  */
 export function mount(component, options) {
+	if (DEV) {
+		validate_component(component);
+	}
+
 	const anchor = options.anchor ?? options.target.appendChild(empty());
 	// Don't flush previous effects to ensure order of outer effects stays consistent
 	return flush_sync(() => _mount(component, { ...options, anchor }), false);
@@ -124,6 +130,10 @@ export function mount(component, options) {
  * @returns {Exports}
  */
 export function hydrate(component, options) {
+	if (DEV) {
+		validate_component(component);
+	}
+
 	const target = options.target;
 	const previous_hydrate_nodes = hydrate_nodes;
 
@@ -143,7 +153,7 @@ export function hydrate(component, options) {
 			}
 
 			if (!node) {
-				throw new Error('Missing hydration marker');
+				e.hydration_missing_marker_open();
 			}
 
 			const anchor = hydrate_anchor(node);
@@ -158,14 +168,7 @@ export function hydrate(component, options) {
 		}, false);
 	} catch (error) {
 		if (!hydrated && options.recover !== false) {
-			// eslint-disable-next-line no-console
-			console.error(
-				'ERR_SVELTE_HYDRATION_MISMATCH' +
-					(DEV
-						? ': Hydration failed because the initial UI does not match what was rendered on the server.'
-						: ''),
-				error
-			);
+			w.hydration_mismatch();
 
 			clear_text_content(target);
 

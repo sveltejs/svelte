@@ -16,13 +16,13 @@ function get_context(attributes) {
 	if (!context) return 'default';
 
 	if (context.value.length !== 1 || context.value[0].type !== 'Text') {
-		e.invalid_script_context(context.start);
+		e.script_invalid_context(context.start);
 	}
 
 	const value = context.value[0].data;
 
 	if (value !== 'module') {
-		e.invalid_script_context(context.start);
+		e.script_invalid_context(context.start);
 	}
 
 	return value;
@@ -38,7 +38,7 @@ export function read_script(parser, start, attributes) {
 	const script_start = parser.index;
 	const data = parser.read_until(regex_closing_script_tag);
 	if (parser.index >= parser.template.length) {
-		e.unclosed_element(parser.template.length, 'script');
+		e.element_unclosed(parser.template.length, 'script');
 	}
 
 	const source =

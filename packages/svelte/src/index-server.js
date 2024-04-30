@@ -1,5 +1,6 @@
 import { current_component } from './internal/server/context.js';
 import { noop } from './internal/shared/utils.js';
+import * as e from './internal/server/errors.js';
 
 /** @param {() => void} fn */
 export function onDestroy(fn) {
@@ -20,15 +21,15 @@ export function createEventDispatcher() {
 }
 
 export function mount() {
-	throw new Error('mount(...) is not available on the server');
+	e.lifecycle_function_unavailable('mount');
 }
 
 export function hydrate() {
-	throw new Error('hydrate(...) is not available on the server');
+	e.lifecycle_function_unavailable('hydrate');
 }
 
 export function unmount() {
-	throw new Error('unmount(...) is not available on the server');
+	e.lifecycle_function_unavailable('unmount');
 }
 
 export async function tick() {}

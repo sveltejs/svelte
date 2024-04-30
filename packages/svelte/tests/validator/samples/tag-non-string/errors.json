@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid_svelte_option_customElement",
+		"code": "svelte_options_invalid_customelement",
 		"message": "\"customElement\" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: \"open\" | \"none\"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }",
 		"start": {
 			"line": 1,

@@ -18,12 +18,16 @@ for (const category of fs.readdirSync('messages')) {
 			.readFileSync(`messages/${category}/${file}`, 'utf-8')
 			.replace(/\r\n/g, '\n');
 
+		const sorted = [];
+
 		for (const match of markdown.matchAll(/## ([\w]+)\n\n([^]+?)(?=$|\n\n## )/g)) {
 			const [_, code, text] = match;
 
 			if (seen.has(code)) {
 				throw new Error(`Duplicate message code ${category}/${code}`);
 			}
+
+			sorted.push({ code, _ });
 
 			const sections = text.trim().split('\n\n');
 			let details = null;
@@ -41,6 +45,12 @@ for (const category of fs.readdirSync('messages')) {
 				details
 			};
 		}
+
+		sorted.sort((a, b) => (a.code < b.code ? -1 : 1));
+		fs.writeFileSync(
+			`messages/${category}/${file}`,
+			sorted.map((x) => x._.trim()).join('\n\n') + '\n'
+		);
 	}
 }
 
@@ -289,4 +299,6 @@ transform('compile-warnings', 'src/compiler/warnings.js');
 
 transform('client-warnings', 'src/internal/client/warnings.js');
 transform('client-errors', 'src/internal/client/errors.js');
+transform('server-errors', 'src/internal/server/errors.js');
+transform('shared-errors', 'src/internal/shared/errors.js');
 transform('shared-warnings', 'src/internal/shared/warnings.js');

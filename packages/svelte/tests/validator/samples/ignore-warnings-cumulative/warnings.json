@@ -5,7 +5,7 @@
 			"column": 12,
 			"line": 7
 		},
-		"message": "Avoid <marquee> elements",
+		"message": "Avoid `<marquee>` elements",
 		"start": {
 			"column": 2,
 			"line": 5

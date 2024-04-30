@@ -133,7 +133,7 @@ export const validate_component_options =
 function removed(msg) {
 	return (input) => {
 		if (input !== undefined) {
-			e.removed_compiler_option(null, msg);
+			e.options_removed(null, msg);
 		}
 		return /** @type {any} */ (undefined);
 	};
@@ -191,10 +191,7 @@ function object(children, allow_unknown = false) {
 				if (allow_unknown) {
 					output[key] = input[key];
 				} else {
-					e.invalid_compiler_option(
-						null,
-						`Unexpected option ${keypath ? `${keypath}.${key}` : key}`
-					);
+					e.options_unrecognised(null, `${keypath ? `${keypath}.${key}` : key}`);
 				}
 			}
 		}
@@ -297,5 +294,5 @@ function fun(fallback) {
 
 /** @param {string} msg */
 function throw_error(msg) {
-	e.invalid_compiler_option(null, msg);
+	e.options_invalid_value(null, msg);
 }

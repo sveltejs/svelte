@@ -1,7 +1,7 @@
 [
 	{
 		"code": "a11y_aria_attributes",
-		"message": "<meta> should not have aria-* attributes",
+		"message": "`<meta>` should not have aria-* attributes",
 		"start": {
 			"line": 1,
 			"column": 6
@@ -13,7 +13,7 @@
 	},
 	{
 		"code": "a11y_misplaced_role",
-		"message": "<meta> should not have role attribute",
+		"message": "`<meta>` should not have role attribute",
 		"start": {
 			"line": 2,
 			"column": 6

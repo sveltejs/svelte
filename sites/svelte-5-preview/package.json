@@ -19,7 +19,7 @@
     "@sveltejs/site-kit": "6.0.0-next.59",
     "@sveltejs/vite-plugin-svelte": "^3.1.0",
     "@types/marked": "^6.0.0",
-    "esrap": "^1.2.1",
+    "esrap": "^1.2.2",
     "marked": "^9.0.0",
     "publint": "^0.2.7",
     "shiki": "^0.14.7",

@@ -1,7 +1,7 @@
 [
 	{
 		"code": "a11y_missing_attribute",
-		"message": "<a> element should have an href attribute",
+		"message": "`<a>` element should have an href attribute",
 		"start": {
 			"line": 1,
 			"column": 11
