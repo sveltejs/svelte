@@ -2572,10 +2572,8 @@ export const template_visitors = {
 
 		const declaration = b.var(node.expression, snippet);
 
-		const path = context.path;
-		// If we're top-level, then we can create a function for the snippet so that it can be referenced
-		// in the props declaration (default value pattern).
-		if (path.length === 1 && path[0].type === 'Fragment') {
+		// Top-level snippets are hoisted so they can be referenced in the `<script>`
+		if (context.path.length === 1 && context.path[0].type === 'Fragment') {
 			context.state.analysis.top_level_snippets.push(declaration);
 		} else {
 			context.state.init.push(declaration);
