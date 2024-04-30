@@ -52,6 +52,7 @@ These will all get broken up into more sharable (and rewatchable) videos over ti
 - [Collecta](https://collecta.space/) lets you collect your internet in a single space - organize images, bookmarks, inspiration, and share your vibe with friends
 - [ColdCraft](https://coldcraft.ai/) writes for you by turning bullet points and LinkedIn profiles into effective cold emails
 - [Fourplay](https://github.com/kilroyjones/fourplay) is a multiplayer word game written with Rust and Svelte 
+- [how-long-is-a-click](https://www.how-long-is-a-click.com/) is a site that measures how long *exactly* a click is on the web
 
 
 **Learning Resources**
