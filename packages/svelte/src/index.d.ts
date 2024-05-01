@@ -1,7 +1,6 @@
 // This should contain all the public interfaces (not all of them are actually importable, check current Svelte for which ones are).
 
 import './ambient.js';
-import type { RemoveBindable } from './internal/types.js';
 
 /**
  * @deprecated Svelte components were classes in Svelte 4. In Svelte 5, thy are not anymore.
@@ -21,29 +20,10 @@ export interface ComponentConstructorOptions<
 	$$inline?: boolean;
 }
 
-/** Tooling for types uses this for properties are being used with `bind:` */
-export type Binding<T> = { 'bind:': T };
 /**
- * Tooling for types uses this for properties that may be bound to.
- * Only use this if you author Svelte component type definition files by hand (we recommend using `@sveltejs/package` instead).
- * Example:
- * ```ts
- * export class MyComponent extends SvelteComponent<{ readonly: string, bindable: Bindable<string> }> {}
- * ```
- * means you can now do `<MyComponent {readonly} bind:bindable />`
+ * Utility type for ensuring backwards compatibility on a type level that if there's a default slot, add 'children' to the props
  */
-export type Bindable<T> = T | Binding<T>;
-
-type WithBindings<T> = {
-	[Key in keyof T]: Bindable<T[Key]>;
-};
-
-/**
- * Utility type for ensuring backwards compatibility on a type level:
- * - If there's a default slot, add 'children' to the props
- * - All props are bindable
- */
-type PropsWithChildren<Props, Slots> = WithBindings<Props> &
+type Properties<Props, Slots> = Props &
 	(Slots extends { default: any }
 		? // This is unfortunate because it means "accepts no props" turns into "accepts any prop"
 			// but the alternative is non-fixable type errors because of the way TypeScript index
@@ -95,13 +75,13 @@ export class SvelteComponent<
 	 * is a stop-gap solution. Migrate towards using `mount` or `createRoot` instead. See
 	 * https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more info.
 	 */
-	constructor(options: ComponentConstructorOptions<PropsWithChildren<Props, Slots>>);
+	constructor(options: ComponentConstructorOptions<Properties<Props, Slots>>);
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
 	 * */
-	$$prop_def: RemoveBindable<Props>; // Without PropsWithChildren: unnecessary, causes type bugs
+	$$prop_def: Props; // Without Properties: unnecessary, causes type bugs
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
@@ -116,6 +96,12 @@ export class SvelteComponent<
 	 *
 	 * */
 	$$slot_def: Slots;
+	/**
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
+	 * */
+	$$bindings?: string;
 
 	/**
 	 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
@@ -181,7 +167,7 @@ export type ComponentEvents<Comp extends SvelteComponent> =
  * ```
  */
 export type ComponentProps<Comp extends SvelteComponent> =
-	Comp extends SvelteComponent<infer Props> ? RemoveBindable<Props> : never;
+	Comp extends SvelteComponent<infer Props> ? Props : never;
 
 /**
  * Convenience type to get the type of a Svelte component. Useful for example in combination with
