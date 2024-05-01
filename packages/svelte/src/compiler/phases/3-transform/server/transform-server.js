@@ -1742,7 +1742,7 @@ const template_visitors = {
 			if (attribute.type === 'SpreadAttribute') {
 				spreads.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
 			} else if (attribute.type === 'Attribute') {
-				const value = serialize_attribute_value(attribute.value, context);
+				const value = serialize_attribute_value(attribute.value, context, false, true);
 				if (attribute.name === 'name') {
 					expression = b.member(b.member_id('$$props.$$slots'), value, true, true);
 				} else if (attribute.name !== 'slot') {

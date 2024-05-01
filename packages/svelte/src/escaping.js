@@ -1,4 +1,4 @@
-const ATTR_REGEX = /["<]/g;
+const ATTR_REGEX = /[&"<]/g;
 const CONTENT_REGEX = /[&<]/g;
 
 /**
