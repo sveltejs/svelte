@@ -160,14 +160,17 @@ export function batch_inspect(target, prop, receiver) {
  */
 export function check_dirtiness(reaction) {
 	var flags = reaction.f;
+	var is_dirty = (flags & DIRTY) !== 0;
+	var is_unowned = (flags & UNOWNED) !== 0;
 
-	if ((flags & DIRTY) !== 0) {
+	// If we are unowned, we still need to ensure that we update our version to that
+	// of our dependencies.
+	if (is_dirty && !is_unowned) {
 		return true;
 	}
 
-	if ((flags & MAYBE_DIRTY) !== 0) {
+	if ((flags & MAYBE_DIRTY) !== 0 || (is_dirty && is_unowned)) {
 		var dependencies = reaction.deps;
-		var is_unowned = (flags & UNOWNED) !== 0;
 
 		if (dependencies !== null) {
 			var length = dependencies.length;
@@ -175,7 +178,7 @@ export function check_dirtiness(reaction) {
 			for (var i = 0; i < length; i++) {
 				var dependency = dependencies[i];
 
-				if (check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
+				if (!is_dirty && check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
 					update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
 
 					// `signal` might now be dirty, as a result of calling `update_derived`
@@ -217,7 +220,7 @@ export function check_dirtiness(reaction) {
 		}
 	}
 
-	return false;
+	return is_dirty;
 }
 
 /**
