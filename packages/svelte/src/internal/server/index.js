@@ -6,9 +6,9 @@ import {
 	RawTextElements,
 	disallowed_paragraph_contents,
 	interactive_elements,
-	is_tag_valid_with_parent,
-	escape_html
+	is_tag_valid_with_parent
 } from '../../constants.js';
+import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';

@@ -31,9 +31,9 @@ import {
 	TEMPLATE_USE_IMPORT_NODE,
 	TRANSITION_GLOBAL,
 	TRANSITION_IN,
-	TRANSITION_OUT,
-	escape_html
+	TRANSITION_OUT
 } from '../../../../../constants.js';
+import { escape_html } from '../../../../../escaping.js';
 import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
