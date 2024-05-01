@@ -50,7 +50,7 @@ for (const generate of ['client', 'server']) {
 
 			try {
 				const migrated = migrate(source);
-				fs.writeFileSync(`${cwd}/output/${file}.migrated.svelte`, migrated);
+				fs.writeFileSync(`${cwd}/output/${file}.migrated.svelte`, migrated.code);
 			} catch (e) {
 				console.warn(`Error migrating ${file}`, e);
 			}

@@ -17,7 +17,6 @@ import {
 import {
 	clean_nodes,
 	determine_namespace_for_children,
-	escape_html,
 	infer_namespace,
 	transform_inspect_rune
 } from '../utils.js';
@@ -27,8 +26,8 @@ import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patte
 import {
 	DOMBooleanAttributes,
 	HYDRATION_END,
-	HYDRATION_END_ELSE,
-	HYDRATION_START
+	HYDRATION_START,
+	escape_html
 } from '../../../../constants.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
 import { BLOCK_CLOSE, BLOCK_CLOSE_ELSE } from '../../../../internal/server/hydration.js';
