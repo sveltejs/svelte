@@ -124,6 +124,9 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 			const opts = {};
 			let event_name = key.slice(2);
 			var delegated = DelegatedEvents.includes(event_name);
+			var event_key = `__${event_name}`;
+			// @ts-ignore
+			var existing = delegated && element[event_key];
 
 			if (
 				event_name.endsWith('capture') &&
@@ -134,8 +137,18 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 				opts.capture = true;
 			}
 
-			if (!delegated && prev?.[key]) {
-				element.removeEventListener(event_name, /** @type {any} */ (prev[key]), opts);
+			if (prev?.[key]) {
+				if (!delegated) {
+					element.removeEventListener(event_name, /** @type {any} */ (prev[key]), opts);
+				} else {
+					if (Array.isArray(existing)) {
+						// @ts-ignore
+						element[event_key] = existing.filter((fn) => fn !== prev[key]);
+					} else {
+						// @ts-ignore
+						element[event_key] = null;
+					}
+				}
 			}
 
 			if (value != null) {
@@ -146,8 +159,19 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 						element.addEventListener(event_name, value, opts);
 					}
 				} else {
+					var event_key = `__${event_name}`;
 					// @ts-ignore
-					element[`__${event_name}`] = value;
+					var existing = element[event_key];
+					if (existing != null) {
+						if (!Array.isArray(existing)) {
+							// @ts-ignore
+							element[event_key] = [existing];
+						}
+						existing.push(value);
+					} else {
+						// @ts-ignore
+						element[event_key] = value;
+					}
 					delegate([event_name]);
 				}
 			}

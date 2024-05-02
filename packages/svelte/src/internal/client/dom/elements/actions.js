@@ -1,3 +1,4 @@
+import { DelegatedEvents } from '../../../../constants.js';
 import { effect, render_effect } from '../../reactivity/effects.js';
 import { deep_read_state, untrack } from '../../runtime.js';
 
@@ -10,6 +11,66 @@ import { deep_read_state, untrack } from '../../runtime.js';
  */
 export function action(dom, action, get_value) {
 	effect(() => {
+		var addEventListener = dom.addEventListener;
+		var removeEventListener = dom.removeEventListener;
+
+		/**
+		 * @param {string} event_name
+		 * @param {EventListenerOrEventListenerObject} listener
+		 * @param {AddEventListenerOptions} options
+		 */
+		dom.addEventListener = function (event_name, listener, options) {
+			var delegated =
+				DelegatedEvents.includes(event_name) && !options?.capture && typeof listener === 'function';
+
+			if (delegated) {
+				var event_key = `__${event_name}`;
+				// @ts-ignore
+				var existing = dom[event_key];
+				if (existing != null) {
+					if (!Array.isArray(existing)) {
+						// @ts-ignore
+						dom[event_key] = [existing];
+					}
+					existing.push(listener);
+				} else {
+					// @ts-ignore
+					dom[event_key] = listener;
+				}
+			} else {
+				addEventListener.call(dom, event_name, listener, options);
+			}
+		};
+
+		/**
+		 * @param {string} event_name
+		 * @param {EventListenerOrEventListenerObject} listener
+		 * @param {AddEventListenerOptions} options
+		 */
+		dom.removeEventListener = function (event_name, listener, options) {
+			var delegated =
+				DelegatedEvents.includes(event_name) && !options?.capture && typeof listener === 'function';
+
+			if (delegated) {
+				var event_key = `__${event_name}`;
+				// @ts-ignore
+				var existing = dom[event_key];
+				if (existing != null) {
+					if (Array.isArray(existing)) {
+						var index = existing.indexOf(listener);
+						if (index !== -1) {
+							existing.splice(index, 1);
+						}
+					} else {
+						// @ts-ignore
+						dom[event_key] = null;
+					}
+				}
+			} else {
+				removeEventListener.call(dom, event_name, listener, options);
+			}
+		};
+
 		var payload = untrack(() => action(dom, get_value?.()) || {});
 
 		if (get_value && payload?.update) {
