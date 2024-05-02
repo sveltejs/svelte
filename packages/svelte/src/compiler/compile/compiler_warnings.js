@@ -306,5 +306,12 @@ export default {
 		code: 'illegal-attribute-character',
 		message:
 			"Attributes should not contain ':' characters to prevent ambiguity with Svelte directives"
-	}
+	},
+	binding_custom_element: /**
+	 * @param {string} element
+	 * @param {string} binding
+	 */ (element, binding) => ({
+		code: 'binding-custom-element',
+		message: `Binding on custom element <${element}> is not checked. You need to ensure '${binding}' is a valid property.`
+	})
 };

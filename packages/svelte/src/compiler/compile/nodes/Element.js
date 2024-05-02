@@ -1100,7 +1100,12 @@ export default class Element extends Node {
 		};
 		this.bindings.forEach((binding) => {
 			const { name } = binding;
-			if (name === 'value') {
+
+			//custom elements (i.e. web components) can be bound to any attribute, we simply emit a warning
+			//to identify a custom element, we check if the element name contains a hyphen
+			if (this.name.includes('-') && name !== 'this') {
+				return component.warn(binding, compiler_warnings.binding_custom_element(this.name, name));
+			} else if (name === 'value') {
 				if (this.name !== 'input' && this.name !== 'textarea' && this.name !== 'select') {
 					return component.error(
 						binding,
