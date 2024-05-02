@@ -17,29 +17,10 @@ declare module 'svelte' {
 		$$inline?: boolean;
 	}
 
-	/** Tooling for types uses this for properties are being used with `bind:` */
-	export type Binding<T> = { 'bind:': T };
 	/**
-	 * Tooling for types uses this for properties that may be bound to.
-	 * Only use this if you author Svelte component type definition files by hand (we recommend using `@sveltejs/package` instead).
-	 * Example:
-	 * ```ts
-	 * export class MyComponent extends SvelteComponent<{ readonly: string, bindable: Bindable<string> }> {}
-	 * ```
-	 * means you can now do `<MyComponent {readonly} bind:bindable />`
+	 * Utility type for ensuring backwards compatibility on a type level that if there's a default slot, add 'children' to the props
 	 */
-	export type Bindable<T> = T | Binding<T>;
-
-	type WithBindings<T> = {
-		[Key in keyof T]: Bindable<T[Key]>;
-	};
-
-	/**
-	 * Utility type for ensuring backwards compatibility on a type level:
-	 * - If there's a default slot, add 'children' to the props
-	 * - All props are bindable
-	 */
-	type PropsWithChildren<Props, Slots> = WithBindings<Props> &
+	type Properties<Props, Slots> = Props &
 		(Slots extends { default: any }
 			? // This is unfortunate because it means "accepts no props" turns into "accepts any prop"
 				// but the alternative is non-fixable type errors because of the way TypeScript index
@@ -91,13 +72,13 @@ declare module 'svelte' {
 		 * is a stop-gap solution. Migrate towards using `mount` or `createRoot` instead. See
 		 * https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more info.
 		 */
-		constructor(options: ComponentConstructorOptions<PropsWithChildren<Props, Slots>>);
+		constructor(options: ComponentConstructorOptions<Properties<Props, Slots>>);
 		/**
 		 * For type checking capabilities only.
 		 * Does not exist at runtime.
 		 * ### DO NOT USE!
 		 * */
-		$$prop_def: RemoveBindable<Props>; // Without PropsWithChildren: unnecessary, causes type bugs
+		$$prop_def: Props; // Without Properties: unnecessary, causes type bugs
 		/**
 		 * For type checking capabilities only.
 		 * Does not exist at runtime.
@@ -112,6 +93,12 @@ declare module 'svelte' {
 		 *
 		 * */
 		$$slot_def: Slots;
+		/**
+		 * For type checking capabilities only.
+		 * Does not exist at runtime.
+		 * ### DO NOT USE!
+		 * */
+		$$bindings?: string;
 
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
@@ -177,7 +164,7 @@ declare module 'svelte' {
 	 * ```
 	 */
 	export type ComponentProps<Comp extends SvelteComponent> =
-		Comp extends SvelteComponent<infer Props> ? RemoveBindable<Props> : never;
+		Comp extends SvelteComponent<infer Props> ? Props : never;
 
 	/**
 	 * Convenience type to get the type of a Svelte component. Useful for example in combination with
@@ -247,12 +234,6 @@ declare module 'svelte' {
 					: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
 		): boolean;
 	}
-	/** Anything except a function */
-	type NotFunction<T> = T extends Function ? never : T;
-
-	type RemoveBindable<Props extends Record<string, any>> = {
-		[Key in keyof Props]: Props[Key] extends Bindable<infer Value> ? Value : Props[Key];
-	};
 	/**
 	 * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
 	 * It must be called during the component's initialisation (but doesn't need to live *inside* the component;
@@ -323,6 +304,8 @@ declare module 'svelte' {
 	 * Synchronously flushes any pending state changes and those that result from it.
 	 * */
 	export function flushSync(fn?: (() => void) | undefined): void;
+	/** Anything except a function */
+	type NotFunction<T> = T extends Function ? never : T;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
 	 *
@@ -330,7 +313,7 @@ declare module 'svelte' {
 	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
 		target: Document | Element | ShadowRoot;
 		anchor?: Node | undefined;
-		props?: RemoveBindable<Props> | undefined;
+		props?: Props | undefined;
 		events?: { [Property in keyof Events]: (e: Events[Property]) => any; } | undefined;
 		context?: Map<any, any> | undefined;
 		intro?: boolean | undefined;
@@ -341,7 +324,7 @@ declare module 'svelte' {
 	 * */
 	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
 		target: Document | Element | ShadowRoot;
-		props?: RemoveBindable<Props> | undefined;
+		props?: Props | undefined;
 		events?: { [Property in keyof Events]: (e: Events[Property]) => any; } | undefined;
 		context?: Map<any, any> | undefined;
 		intro?: boolean | undefined;
