@@ -1,6 +1,6 @@
 import { snapshot } from '../proxy.js';
 import { render_effect, validate_effect } from '../reactivity/effects.js';
-import { current_effect, deep_read } from '../runtime.js';
+import { current_effect, deep_read, untrack } from '../runtime.js';
 import { array_prototype, get_prototype_of, object_prototype } from '../utils.js';
 
 /** @type {Function | null} */
@@ -28,7 +28,7 @@ export function inspect(get_value, inspector = console.log) {
 	// calling `inspector` directly inside the effect, so that
 	// we get useful stack traces
 	var fn = () => {
-		const value = deep_snapshot(get_value());
+		const value = untrack(() => deep_snapshot(get_value()));
 		inspector(initial ? 'init' : 'update', ...value);
 	};
 
