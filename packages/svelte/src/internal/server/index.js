@@ -8,6 +8,7 @@ import {
 	interactive_elements,
 	is_tag_valid_with_parent
 } from '../../constants.js';
+import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
@@ -39,8 +40,6 @@ import { validate_store } from '../shared/validate.js';
  * }} Payload
  */
 
-const ATTR_REGEX = /[&"]/g;
-const CONTENT_REGEX = /[&<]/g;
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
 const INVALID_ATTR_NAME_CHAR_REGEX =
@@ -215,31 +214,6 @@ export function render(component, options) {
 }
 
 /**
- * @template V
- * @param {V} value
- * @param {any} is_attr
- * @returns {string}
- */
-export function escape(value, is_attr = false) {
-	const str = String(value ?? '');
-
-	const pattern = is_attr ? ATTR_REGEX : CONTENT_REGEX;
-	pattern.lastIndex = 0;
-
-	let escaped = '';
-	let last = 0;
-
-	while (pattern.test(str)) {
-		const i = pattern.lastIndex - 1;
-		const ch = str[i];
-		escaped += str.substring(last, i) + (ch === '&' ? '&amp;' : ch === '"' ? '&quot;' : '&lt;');
-		last = i + 1;
-	}
-
-	return escaped + str.substring(last);
-}
-
-/**
  * @param {Payload} payload
  * @param {(head_payload: Payload['head']) => void} fn
  * @returns {void}
@@ -260,7 +234,7 @@ export function head(payload, fn) {
  */
 export function attr(name, value, boolean) {
 	if (value == null || (!value && boolean) || (value === '' && name === 'class')) return '';
-	const assignment = boolean ? '' : `="${escape(value, true)}"`;
+	const assignment = boolean ? '' : `="${escape_html(value, true)}"`;
 	return ` ${name}${assignment}`;
 }
 
@@ -381,7 +355,7 @@ export function stringify(value) {
 function style_object_to_string(style_object) {
 	return Object.keys(style_object)
 		.filter(/** @param {any} key */ (key) => style_object[key])
-		.map(/** @param {any} key */ (key) => `${key}: ${escape(style_object[key], true)};`)
+		.map(/** @param {any} key */ (key) => `${key}: ${escape_html(style_object[key], true)};`)
 		.join(' ');
 }
 
@@ -654,3 +628,5 @@ export {
 	validate_snippet,
 	validate_void_dynamic_element
 } from '../shared/validate.js';
+
+export { escape_html as escape };

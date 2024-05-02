@@ -7,55 +7,6 @@ import * as b from '../../utils/builders.js';
 import { walk } from 'zimmerframe';
 
 /**
- * @param {string} s
- * @param {boolean} [attr]
- */
-export function escape_html(s, attr) {
-	if (typeof s !== 'string') return s;
-	const delimiter = attr ? '"' : '<';
-	const escaped_delimiter = attr ? '&quot;' : '&lt;';
-	let i_delimiter = s.indexOf(delimiter);
-	let i_ampersand = s.indexOf('&');
-
-	if (i_delimiter < 0 && i_ampersand < 0) return s;
-
-	let left = 0,
-		out = '';
-
-	while (i_delimiter >= 0 && i_ampersand >= 0) {
-		if (i_delimiter < i_ampersand) {
-			if (left < i_delimiter) out += s.substring(left, i_delimiter);
-			out += escaped_delimiter;
-			left = i_delimiter + 1;
-			i_delimiter = s.indexOf(delimiter, left);
-		} else {
-			if (left < i_ampersand) out += s.substring(left, i_ampersand);
-			out += '&amp;';
-			left = i_ampersand + 1;
-			i_ampersand = s.indexOf('&', left);
-		}
-	}
-
-	if (i_delimiter >= 0) {
-		do {
-			if (left < i_delimiter) out += s.substring(left, i_delimiter);
-			out += escaped_delimiter;
-			left = i_delimiter + 1;
-			i_delimiter = s.indexOf(delimiter, left);
-		} while (i_delimiter >= 0);
-	} else if (!attr) {
-		while (i_ampersand >= 0) {
-			if (left < i_ampersand) out += s.substring(left, i_ampersand);
-			out += '&amp;';
-			left = i_ampersand + 1;
-			i_ampersand = s.indexOf('&', left);
-		}
-	}
-
-	return left < s.length ? out + s.substring(left) : out;
-}
-
-/**
  * @param {import('estree').Node} node
  * @returns {boolean}
  */

@@ -17,19 +17,14 @@ import {
 import {
 	clean_nodes,
 	determine_namespace_for_children,
-	escape_html,
 	infer_namespace,
 	transform_inspect_rune
 } from '../utils.js';
 import { create_attribute, is_custom_element_node, is_element_node } from '../../nodes.js';
 import { binding_properties } from '../../bindings.js';
 import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patterns.js';
-import {
-	DOMBooleanAttributes,
-	HYDRATION_END,
-	HYDRATION_END_ELSE,
-	HYDRATION_START
-} from '../../../../constants.js';
+import { DOMBooleanAttributes, HYDRATION_END, HYDRATION_START } from '../../../../constants.js';
+import { escape_html } from '../../../../escaping.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
 import { BLOCK_CLOSE, BLOCK_CLOSE_ELSE } from '../../../../internal/server/hydration.js';
 
@@ -1747,7 +1742,7 @@ const template_visitors = {
 			if (attribute.type === 'SpreadAttribute') {
 				spreads.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
 			} else if (attribute.type === 'Attribute') {
-				const value = serialize_attribute_value(attribute.value, context);
+				const value = serialize_attribute_value(attribute.value, context, false, true);
 				if (attribute.name === 'name') {
 					expression = b.member(b.member_id('$$props.$$slots'), value, true, true);
 				} else if (attribute.name !== 'slot') {

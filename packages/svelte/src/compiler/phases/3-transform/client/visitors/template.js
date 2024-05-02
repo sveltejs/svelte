@@ -7,12 +7,7 @@ import {
 	unwrap_optional
 } from '../../../../utils/ast.js';
 import { binding_properties } from '../../../bindings.js';
-import {
-	clean_nodes,
-	determine_namespace_for_children,
-	escape_html,
-	infer_namespace
-} from '../../utils.js';
+import { clean_nodes, determine_namespace_for_children, infer_namespace } from '../../utils.js';
 import { DOMProperties, PassiveEvents, VoidElements } from '../../../constants.js';
 import { is_custom_element_node, is_element_node } from '../../../nodes.js';
 import * as b from '../../../../utils/builders.js';
@@ -38,6 +33,7 @@ import {
 	TRANSITION_IN,
 	TRANSITION_OUT
 } from '../../../../../constants.js';
+import { escape_html } from '../../../../../escaping.js';
 import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
@@ -1981,7 +1977,7 @@ export const template_visitors = {
 							` ${attribute.name}${
 								DOMBooleanAttributes.includes(name) && literal_value === true
 									? ''
-									: `="${literal_value === true ? '' : escape_html(String(literal_value), true)}"`
+									: `="${literal_value === true ? '' : escape_html(literal_value, true)}"`
 							}`
 						);
 						continue;
