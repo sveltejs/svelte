@@ -384,6 +384,7 @@ export function analyze_component(root, source, options) {
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
 		slot_names: new Map(),
+		top_level_snippets: [],
 		css: {
 			ast: root.css,
 			hash: root.css

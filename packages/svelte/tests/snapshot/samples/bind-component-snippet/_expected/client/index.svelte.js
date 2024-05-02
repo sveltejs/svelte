@@ -6,16 +6,15 @@ var root_1 = $.template(`Something`, 1);
 var root = $.template(`<!> `, 1);
 
 export default function Bind_component_snippet($$anchor) {
-	let value = $.source('');
-	const _snippet = snippet;
-	var fragment_1 = root();
-
-	function snippet($$anchor) {
+	var snippet = ($$anchor) => {
 		var fragment = root_1();
 
 		$.append($$anchor, fragment);
-	}
+	};
 
+	let value = $.source('');
+	const _snippet = snippet;
+	var fragment_1 = root();
 	var node = $.first_child(fragment_1);
 
 	TextInput(node, {

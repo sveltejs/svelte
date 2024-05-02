@@ -354,6 +354,7 @@ export function client_component(source, analysis, options) {
 		...store_setup,
 		...legacy_reactive_declarations,
 		...group_binding_declarations,
+		...analysis.top_level_snippets,
 		.../** @type {import('estree').Statement[]} */ (instance.body),
 		analysis.runes || !analysis.needs_context ? b.empty : b.stmt(b.call('$.init')),
 		.../** @type {import('estree').Statement[]} */ (template.body)
