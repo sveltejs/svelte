@@ -449,6 +449,49 @@ export function analyze_component(root, source, options) {
 				merge(set_scope(scopes), validation_runes, runes_scope_tweaker, common_visitors)
 			);
 		}
+
+		// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
+		for (const scope of [module.scope, instance.scope]) {
+			outer: for (const [name, binding] of scope.declarations) {
+				if (binding.kind === 'normal' && binding.reassigned) {
+					inner: for (const { path } of binding.references) {
+						if (path[0].type !== 'Fragment') continue;
+						for (let i = 1; i < path.length; i += 1) {
+							const type = path[i].type;
+							if (
+								type === 'FunctionDeclaration' ||
+								type === 'FunctionExpression' ||
+								type === 'ArrowFunctionExpression'
+							) {
+								continue inner;
+							}
+							// bind:this doesn't need to be a state reference if it will never change
+							if (
+								type === 'BindDirective' &&
+								/** @type {import('#compiler').BindDirective} */ (path[i]).name === 'this'
+							) {
+								for (let j = i - 1; j >= 0; j -= 1) {
+									const type = path[j].type;
+									if (
+										type === 'IfBlock' ||
+										type === 'EachBlock' ||
+										type === 'AwaitBlock' ||
+										type === 'KeyBlock'
+									) {
+										w.non_reactive_update(binding.node, name);
+										continue outer;
+									}
+								}
+								continue inner;
+							}
+						}
+
+						w.non_reactive_update(binding.node, name);
+						continue outer;
+					}
+				}
+			}
+		}
 	} else {
 		instance.scope.declare(b.id('$$props'), 'rest_prop', 'synthetic');
 		instance.scope.declare(b.id('$$restProps'), 'rest_prop', 'synthetic');
@@ -506,49 +549,6 @@ export function analyze_component(root, source, options) {
 
 	if (analysis.uses_render_tags && (analysis.uses_slots || analysis.slot_names.size > 0)) {
 		e.slot_snippet_conflict(analysis.slot_names.values().next().value);
-	}
-
-	// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
-	for (const scope of [module.scope, instance.scope]) {
-		outer: for (const [name, binding] of scope.declarations) {
-			if (binding.kind === 'normal' && binding.reassigned) {
-				inner: for (const { path } of binding.references) {
-					if (path[0].type !== 'Fragment') continue;
-					for (let i = 1; i < path.length; i += 1) {
-						const type = path[i].type;
-						if (
-							type === 'FunctionDeclaration' ||
-							type === 'FunctionExpression' ||
-							type === 'ArrowFunctionExpression'
-						) {
-							continue inner;
-						}
-						// bind:this doesn't need to be a state reference if it will never change
-						if (
-							type === 'BindDirective' &&
-							/** @type {import('#compiler').BindDirective} */ (path[i]).name === 'this'
-						) {
-							for (let j = i - 1; j >= 0; j -= 1) {
-								const type = path[j].type;
-								if (
-									type === 'IfBlock' ||
-									type === 'EachBlock' ||
-									type === 'AwaitBlock' ||
-									type === 'KeyBlock'
-								) {
-									w.non_reactive_update(binding.node, name);
-									continue outer;
-								}
-							}
-							continue inner;
-						}
-					}
-
-					w.non_reactive_update(binding.node, name);
-					continue outer;
-				}
-			}
-		}
 	}
 
 	if (analysis.css.ast) {
