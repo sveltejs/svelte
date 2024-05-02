@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.121
+
+### Patch Changes
+
+- fix: set correct component context when rendering snippets ([#11401](https://github.com/sveltejs/svelte/pull/11401))
+
+- fix: detect style shorthands as stateful variables in legacy mode ([#11421](https://github.com/sveltejs/svelte/pull/11421))
+
+- fix: improve unowned derived signal behaviour ([#11408](https://github.com/sveltejs/svelte/pull/11408))
+
+- fix: rework binding type-checking strategy ([#11420](https://github.com/sveltejs/svelte/pull/11420))
+
+- fix: improve html escaping of element attributes ([#11411](https://github.com/sveltejs/svelte/pull/11411))
+
 ## 5.0.0-next.120
 
 ### Patch Changes
