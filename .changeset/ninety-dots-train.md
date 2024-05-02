@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: legacy style shorthand for a variable only declared
+fix: detect style shorthands as stateful variables in legacy mode
