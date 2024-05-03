@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.123
+
+### Patch Changes
+
+- fix: adjust order of `derived` function definition overloads ([#11426](https://github.com/sveltejs/svelte/pull/11426))
+
 ## 5.0.0-next.122
 
 ### Patch Changes
