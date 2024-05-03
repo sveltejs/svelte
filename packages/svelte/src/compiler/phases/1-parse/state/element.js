@@ -262,14 +262,16 @@ export default function tag(parser) {
 		const definition = /** @type {import('#compiler').Attribute} */ (
 			element.attributes.splice(index, 1)[0]
 		);
-		if (definition.value === true || definition.value.length !== 1) {
-			e.svelte_element_invalid_this(definition.start);
+
+		if (
+			definition.value === true ||
+			definition.value.length !== 1 ||
+			definition.value[0].type !== 'ExpressionTag'
+		) {
+			e.svelte_element_invalid_this(definition);
 		}
-		const chunk = definition.value[0];
-		element.tag =
-			chunk.type === 'Text'
-				? { type: 'Literal', value: chunk.data, raw: `'${chunk.raw}'` }
-				: chunk.expression;
+
+		element.tag = definition.value[0].expression;
 	}
 
 	if (is_top_level_script_or_style) {
