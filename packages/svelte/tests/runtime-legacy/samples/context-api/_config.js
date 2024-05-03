@@ -1,6 +1,9 @@
 import { test } from '../../test';
 
 export default test({
+	compileOptions: {
+		dev: true // to ensure dev mode does not break context in some way
+	},
 	html: `
 		<div class="tabs">
 			<div class="tab-list">

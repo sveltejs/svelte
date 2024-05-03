@@ -113,6 +113,26 @@ export let current_component_context = null;
 /** @param {import('#client').ComponentContext | null} context */
 export function set_current_component_context(context) {
 	current_component_context = context;
+	if (DEV) {
+		dev_current_component_function = context?.function;
+	}
+}
+
+/**
+ * The current component function. Different from current component context:
+ * ```html
+ * <!-- App.svelte -->
+ * <Foo>
+ *   <Bar /> <!-- context == Foo.svelte, function == App.svelte -->
+ * </Foo>
+ * ```
+ * @type {import('#client').ComponentContext['function']}
+ */
+export let dev_current_component_function = null;
+
+/** @param {import('#client').ComponentContext['function']} fn */
+export function set_dev_current_component_function(fn) {
+	dev_current_component_function = fn;
 }
 
 /** @returns {boolean} */
@@ -400,7 +420,7 @@ export function execute_effect(effect) {
 	var previous_component_context = current_component_context;
 
 	current_effect = effect;
-	current_component_context = component_context;
+	set_current_component_context(component_context);
 
 	try {
 		if ((flags & BLOCK_EFFECT) === 0) {
@@ -412,7 +432,7 @@ export function execute_effect(effect) {
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 	} finally {
 		current_effect = previous_effect;
-		current_component_context = previous_component_context;
+		set_current_component_context(previous_component_context);
 	}
 }
 
@@ -885,8 +905,8 @@ export function getContext(key) {
 	const result = /** @type {T} */ (context_map.get(key));
 
 	if (DEV) {
-		// @ts-expect-error
-		const fn = current_component_context.function;
+		const fn = /** @type {import('#client').ComponentContext} */ (current_component_context)
+			.function;
 		if (fn) {
 			add_owner(result, fn, true);
 		}
@@ -940,7 +960,6 @@ export function getAllContexts() {
 	const context_map = get_or_init_context_map('getAllContexts');
 
 	if (DEV) {
-		// @ts-expect-error
 		const fn = current_component_context?.function;
 		if (fn) {
 			for (const value of context_map.values()) {
@@ -1066,8 +1085,8 @@ export function push(props, runes = false, fn) {
 
 	if (DEV) {
 		// component function
-		// @ts-expect-error
 		current_component_context.function = fn;
+		dev_current_component_function = fn;
 	}
 }
 
@@ -1089,7 +1108,7 @@ export function pop(component) {
 				effect(effects[i]);
 			}
 		}
-		current_component_context = context_stack_item.p;
+		set_current_component_context(context_stack_item.p);
 		context_stack_item.m = true;
 	}
 	// Micro-optimization: Don't set .a above to the empty object
