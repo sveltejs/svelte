@@ -80,7 +80,7 @@ export class Scope {
 			declaration_kind !== 'rest_param' &&
 			this.function_depth <= 1
 		) {
-			e.dollar_prefix_invalid(node);
+			//e.dollar_prefix_invalid(node);
 		}
 
 		if (this.parent) {

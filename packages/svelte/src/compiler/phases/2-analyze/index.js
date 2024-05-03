@@ -925,7 +925,34 @@ const runes_scope_tweaker = {
 		const init = node.init;
 		if (!init || init.type !== 'CallExpression') return;
 		const rune = get_rune(init, state.scope);
-		if (rune === null) return;
+		if (rune === null) {
+			if (
+				init?.type === 'CallExpression' &&
+				init.callee.type === 'Identifier' &&
+				init.callee.name[0] === '$'
+			) {
+				if (node.id.type === 'ObjectPattern') {
+					for (const property of node.id.properties) {
+						if (property.type === 'Property') {
+							const name = /** @type {import('estree').Identifier} */ (property.key).name;
+							const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
+
+							binding.kind = 'state';
+						}
+					}
+				} else if (node.id.type === 'ArrayPattern') {
+					for (const element of node.id.elements) {
+						if (element?.type === 'Identifier') {
+							const name = element.name;
+							const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
+
+							binding.kind = 'state';
+						}
+					}
+				}
+			}
+			return;
+		}
 
 		const callee = init.callee;
 		if (callee.type !== 'Identifier' && callee.type !== 'MemberExpression') return;

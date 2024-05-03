@@ -211,6 +211,48 @@ export const javascript_visitors_runes = {
 				rune === '$inspect' ||
 				rune === '$state.snapshot'
 			) {
+				if (
+					init?.type === 'CallExpression' &&
+					init.callee.type === 'Identifier' &&
+					init.callee.name[0] === '$'
+				) {
+					const generated = state.scope.generate('object');
+					if (declarator.id.type === 'ObjectPattern') {
+						for (const property of declarator.id.properties) {
+							if (property.type === 'Property') {
+								const name = /** @type {import('estree').Identifier} */ (property.key).name;
+								const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
+
+								binding.expression = b.member(b.id(generated), b.id(name));
+							}
+						}
+						declarations.push(
+							b.declarator(
+								b.id(generated),
+								/** @type {import('estree').Expression} */ (visit(init))
+							)
+						);
+					} else if (declarator.id.type === 'ArrayPattern') {
+						for (let i = 0; i < declarator.id.elements.length; i++) {
+							const element = declarator.id.elements[i];
+							if (element?.type === 'Identifier') {
+								const binding = /** @type {import('#compiler').Binding} */ (
+									state.scope.get(element.name)
+								);
+
+								binding.expression = b.member(b.id(generated), b.literal(i), true);
+							}
+						}
+						declarations.push(
+							b.declarator(
+								b.id(generated),
+								/** @type {import('estree').Expression} */ (visit(init))
+							)
+						);
+					}
+					continue;
+				}
+
 				if (init != null && is_hoistable_function(init)) {
 					const hoistable_function = visit(init);
 					state.hoisted.push(
@@ -222,6 +264,7 @@ export const javascript_visitors_runes = {
 					);
 					continue;
 				}
+
 				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
 				continue;
 			}
@@ -439,6 +482,67 @@ export const javascript_visitors_runes = {
 
 		if (rune === '$inspect' || rune === '$inspect().with') {
 			return transform_inspect_rune(node, context);
+		}
+
+		context.next();
+	},
+	ReturnStatement(node, context) {
+		if (
+			context.path.some(
+				(p) =>
+					p.type === 'FunctionDeclaration' && p.id.type === 'Identifier' && p.id.name[0] === '$'
+			)
+		) {
+			const result = context.next();
+			if (result && result.type === 'ReturnStatement') {
+				if (result.argument?.type === 'ObjectExpression') {
+					const properties = result.argument.properties;
+					for (let i = 0; i < properties.length; i++) {
+						const prop = properties[i];
+						if (prop.type === 'Property') {
+							if (
+								!prop.computed &&
+								prop.key.type === 'Identifier' &&
+								prop.value.type === 'CallExpression' &&
+								prop.value.callee.type === 'Identifier' &&
+								prop.value.callee.name === '$.get'
+							) {
+								properties[i] = b.get(prop.key.name, [b.return(prop.value)]);
+							}
+						}
+					}
+					return result;
+				} else if (result.argument?.type === 'ArrayExpression') {
+					const elements = result.argument.elements;
+					const result_id = context.state.scope.generate('result');
+					let definitions = [];
+					for (let i = 0; i < elements.length; i++) {
+						const element = elements[i];
+						if (
+							element?.type === 'CallExpression' &&
+							element.callee.type === 'Identifier' &&
+							element.callee.name === '$.get'
+						) {
+							definitions.push(
+								b.stmt(
+									b.call(
+										'Object.defineProperty',
+										b.id(result_id),
+										b.literal(i),
+										b.object([b.init('get', b.function(null, [], b.block([b.return(element)])))])
+									)
+								)
+							);
+						}
+					}
+
+					return b.block([
+						b.const(result_id, result.argument),
+						...definitions,
+						b.return(b.id(result_id))
+					]);
+				}
+			}
 		}
 
 		context.next();
