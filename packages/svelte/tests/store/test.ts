@@ -272,7 +272,6 @@ describe('derived', () => {
 		const number = writable(1);
 		const evens = derived(
 			number,
-			// @ts-expect-error TODO feels like inference should work here
 			(n, set) => {
 				if (n % 2 === 0) set(n);
 			},
@@ -303,10 +302,8 @@ describe('derived', () => {
 		const number = writable(1);
 		const evensAndSquaresOf4 = derived(
 			number,
-			// @ts-expect-error TODO feels like inference should work here
 			(n, set, update) => {
 				if (n % 2 === 0) set(n);
-				// @ts-expect-error TODO feels like inference should work here
 				if (n % 4 === 0) update((n) => n * n);
 			},
 			0
@@ -442,7 +439,6 @@ describe('derived', () => {
 		const values: number[] = [];
 		const cleaned_up: number[] = [];
 
-		// @ts-expect-error TODO feels like inference should work here
 		const d = derived(num, ($num, set) => {
 			set($num * 2);
 
@@ -516,7 +512,6 @@ describe('derived', () => {
 		const a = writable(true);
 		let b_started = false;
 
-		// @ts-expect-error TODO feels like inference should work here
 		const b = derived(a, (_, __) => {
 			b_started = true;
 			return () => {
@@ -525,7 +520,6 @@ describe('derived', () => {
 			};
 		});
 
-		// @ts-expect-error TODO feels like inference should work here
 		const c = derived(a, ($a, set) => {
 			if ($a) return b.subscribe(set);
 		});
