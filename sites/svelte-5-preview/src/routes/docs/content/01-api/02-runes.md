@@ -485,7 +485,7 @@ let { a, b, c, ...everythingElse }: MyProps = $props();
 >
 > ```ts
 > // @errors: 2558
-> let { x = 42 } = $props<{ x: string }>();
+> let { x = 42 } : { x: string } = $props();
 > ```
 >
 > ...TypeScript [widens the type](https://www.typescriptlang.org/play?#code/CYUwxgNghgTiAEAzArgOzAFwJYHtXwBIAHGHIgZwB4AVeAXnilQE8A+ACgEoAueagbgBQgiCAzwA3vAAe9eABYATPAC+c4qQqUp03uQwwsqAOaqOnIfCsB6a-AB6AfiA) of `x` to be `string | number`, instead of erroring.
