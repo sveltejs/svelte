@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.122
+
+### Patch Changes
+
+- fix: mark function properties on runes as deprecated for better intellisense ([#11439](https://github.com/sveltejs/svelte/pull/11439))
+
+- fix: only warn about non-reactive state in runes mode ([#11434](https://github.com/sveltejs/svelte/pull/11434))
+
+- fix: prevent ownership validation from infering with component context ([#11438](https://github.com/sveltejs/svelte/pull/11438))
+
+- fix: ensure $inspect untracks inspected object ([#11432](https://github.com/sveltejs/svelte/pull/11432))
+
 ## 5.0.0-next.121
 
 ### Patch Changes
