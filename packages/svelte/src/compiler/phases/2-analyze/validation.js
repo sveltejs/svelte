@@ -821,7 +821,8 @@ function validate_call_expression(node, scope, path) {
 	) {
 		if (parent.type === 'VariableDeclarator') return;
 		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
-		e.state_invalid_placement(node, rune);
+		// TODO
+		// e.state_invalid_placement(node, rune);
 	}
 
 	if (rune === '$effect' || rune === '$effect.pre') {

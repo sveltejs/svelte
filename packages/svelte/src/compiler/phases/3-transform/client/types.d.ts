@@ -3,7 +3,8 @@ import type {
 	Statement,
 	LabeledStatement,
 	Identifier,
-	PrivateIdentifier
+	PrivateIdentifier,
+	Literal
 } from 'estree';
 import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
@@ -66,6 +67,8 @@ export interface ComponentClientTransformState extends ClientTransformState {
 
 export interface StateField {
 	kind: 'state' | 'frozen_state' | 'derived' | 'derived_call';
+	public_id: Identifier | Literal | null;
+	declared_in_constructor: boolean;
 	id: PrivateIdentifier;
 }
 

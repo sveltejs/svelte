@@ -11,6 +11,7 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../../../constants.js';
+import { get_rune } from '../../scope.js';
 
 /**
  * @template {import('./types').ClientTransformState} State
@@ -231,6 +232,31 @@ export function serialize_set_binding(node, context, fallback, options) {
 			state.in_constructor
 		) {
 			const public_state = context.state.public_state.get(assignee.property.name);
+			const rune = get_rune(node.right, context.state.scope);
+
+			if (
+				public_state &&
+				(rune === '$state' ||
+					rune === '$state.frozen' ||
+					rune === '$derived' ||
+					rune === '$derived.by')
+			) {
+				const args = /** @type {import('estree').CallExpression} */ (node.right).arguments;
+				let value =
+					args.length === 0
+						? b.id('undefined')
+						: /** @type {import('estree').Expression} */ (visit(args[0]));
+				if (rune === '$state' || rune === '$state.frozen') {
+					if (should_proxy_or_freeze(value, state.scope)) {
+						value = b.call(rune === '$state' ? '$.proxy' : '$.freeze', value);
+					}
+					value = b.call('$.source', value);
+				} else {
+					value = b.call('$.derived', rune === '$derived.by' ? value : b.thunk(value));
+				}
+				return b.assignment(node.operator, b.member(b.this, public_state.id), value);
+			}
+
 			const value = get_assignment_value(node, context);
 			// See if we should wrap value in $.proxy
 			if (

@@ -50,6 +50,8 @@ export const javascript_visitors_runes = {
 										: rune === '$derived.by'
 											? 'derived_call'
 											: 'derived',
+							public_id: definition.key.type === 'PrivateIdentifier' ? null : definition.key,
+							declared_in_constructor: false,
 							// @ts-expect-error this is set in the next pass
 							id: is_private ? definition.key : null
 						};
@@ -58,6 +60,61 @@ export const javascript_visitors_runes = {
 							private_state.set(name, field);
 						} else {
 							public_state.set(name, field);
+						}
+					}
+				}
+			} else if (definition.type === 'MethodDefinition' && definition.kind === 'constructor') {
+				for (const entry of definition.value.body.body) {
+					if (
+						entry.type === 'ExpressionStatement' &&
+						entry.expression.type === 'AssignmentExpression'
+					) {
+						let { left, right } = entry.expression;
+						if (
+							left.type !== 'MemberExpression' ||
+							left.object.type !== 'ThisExpression' ||
+							(left.property.type !== 'Identifier' && left.property.type !== 'PrivateIdentifier')
+						) {
+							continue;
+						}
+
+						const id = left.property;
+						const name = get_name(id);
+						if (!name) continue;
+
+						const is_private = id.type === 'PrivateIdentifier';
+						if (is_private) private_ids.push(name);
+
+						if (right.type === 'CallExpression') {
+							const rune = get_rune(right, state.scope);
+							if (
+								rune === '$state' ||
+								rune === '$state.frozen' ||
+								rune === '$derived' ||
+								rune === '$derived.by'
+							) {
+								/** @type {import('../types.js').StateField} */
+								const field = {
+									kind:
+										rune === '$state'
+											? 'state'
+											: rune === '$state.frozen'
+												? 'frozen_state'
+												: rune === '$derived.by'
+													? 'derived_call'
+													: 'derived',
+									public_id: id.type === 'PrivateIdentifier' ? null : id,
+									declared_in_constructor: true,
+									// @ts-expect-error this is set in the next pass
+									id: is_private ? id : null
+								};
+
+								if (is_private) {
+									private_state.set(name, field);
+								} else {
+									public_state.set(name, field);
+								}
+							}
 						}
 					}
 				}
@@ -78,6 +135,53 @@ export const javascript_visitors_runes = {
 		/** @type {Array<import('estree').MethodDefinition | import('estree').PropertyDefinition>} */
 		const body = [];
 
+		// create getters and setters for public fields
+		for (const [name, field] of public_state) {
+			const public_id = /** @type {import('estree').Identifier | import('estree').Literal} */ (
+				field.public_id
+			);
+			const member = b.member(b.this, field.id);
+
+			if (field.declared_in_constructor) {
+				// #foo;
+				body.push(b.prop_def(field.id, undefined));
+			}
+
+			// get foo() { return this.#foo; }
+			body.push(b.method('get', public_id, [], [b.return(b.call('$.get', member))]));
+
+			if (field.kind === 'state' || field.kind === 'frozen_state') {
+				// set foo(value) { this.#foo = value; }
+				const value = b.id('value');
+				body.push(
+					b.method(
+						'set',
+						public_id,
+						[value],
+						[
+							b.stmt(
+								b.call(
+									'$.set',
+									member,
+									b.call(field.kind === 'state' ? '$.proxy' : '$.freeze', value)
+								)
+							)
+						]
+					)
+				);
+			} else if (state.options.dev) {
+				body.push(
+					b.method(
+						'set',
+						public_id,
+						[b.id('_')],
+						[b.throw_error(`Cannot update a derived property ('${name}')`)]
+					)
+				);
+			}
+		}
+
+		/** @type {import('../types.js').ComponentClientTransformState} */
 		const child_state = { ...state, public_state, private_state };
 
 		// Replace parts of the class body
@@ -121,53 +225,8 @@ export const javascript_visitors_runes = {
 						value = b.call('$.source');
 					}
 
-					if (is_private) {
-						body.push(b.prop_def(field.id, value));
-					} else {
-						// #foo;
-						const member = b.member(b.this, field.id);
-						body.push(b.prop_def(field.id, value));
-
-						// get foo() { return this.#foo; }
-						body.push(b.method('get', definition.key, [], [b.return(b.call('$.get', member))]));
-
-						if (field.kind === 'state') {
-							// set foo(value) { this.#foo = value; }
-							const value = b.id('value');
-							body.push(
-								b.method(
-									'set',
-									definition.key,
-									[value],
-									[b.stmt(b.call('$.set', member, b.call('$.proxy', value)))]
-								)
-							);
-						}
-
-						if (field.kind === 'frozen_state') {
-							// set foo(value) { this.#foo = value; }
-							const value = b.id('value');
-							body.push(
-								b.method(
-									'set',
-									definition.key,
-									[value],
-									[b.stmt(b.call('$.set', member, b.call('$.freeze', value)))]
-								)
-							);
-						}
-
-						if ((field.kind === 'derived' || field.kind === 'derived_call') && state.options.dev) {
-							body.push(
-								b.method(
-									'set',
-									definition.key,
-									[b.id('_')],
-									[b.throw_error(`Cannot update a derived property ('${name}')`)]
-								)
-							);
-						}
-					}
+					// #foo = $state/$derived();
+					body.push(b.prop_def(field.id, value));
 					continue;
 				}
 			}

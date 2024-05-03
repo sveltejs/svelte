@@ -12,18 +12,26 @@ export const global_visitors = {
 			return serialize_get_binding(node, state);
 		}
 	},
-	MemberExpression(node, { state, next }) {
+	MemberExpression(node, { state, next, path }) {
 		if (node.object.type === 'ThisExpression') {
-			// rewrite `this.#foo` as `this.#foo.v` inside a constructor
+			const parent = path.at(-1);
+			const is_constructor_assignment =
+				parent?.type === 'AssignmentExpression' && parent.left === node;
+
+			// rewrite `this.#foo = ...` as `this.#foo.v = ...` inside a constructor
 			if (node.property.type === 'PrivateIdentifier') {
 				const field = state.private_state.get(node.property.name);
 				if (field) {
-					return state.in_constructor ? b.member(node, b.id('v')) : b.call('$.get', node);
+					if (state.in_constructor && is_constructor_assignment) {
+						return b.member(node, b.id('v'));
+					} else {
+						return b.call('$.get', node);
+					}
 				}
 			}
 
-			// rewrite `this.foo` as `this.#foo.v` inside a constructor
-			if (node.property.type === 'Identifier' && !node.computed) {
+			// rewrite `this.foo = ...` as `this.#foo.v = ...` inside a constructor
+			if (node.property.type === 'Identifier' && !node.computed && is_constructor_assignment) {
 				const field = state.public_state.get(node.property.name);
 
 				if (field && state.in_constructor) {
