@@ -471,7 +471,8 @@ export function client_component(source, analysis, options) {
 					b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
 					b.stmt(
 						b.call(
-							'import.meta.hot.accept',
+							'import.meta.hot.acceptExports',
+							b.array([b.literal('default')]),
 							b.arrow(
 								[b.id('module')],
 								b.block([

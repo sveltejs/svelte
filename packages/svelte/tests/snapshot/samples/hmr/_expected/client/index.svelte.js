@@ -14,7 +14,7 @@ if (import.meta.hot) {
 
 	Hmr = $.hmr(s);
 
-	import.meta.hot.accept((module) => {
+	import.meta.hot.acceptExports(["default"], (module) => {
 		$.set(s, module.default);
 	});
 }
