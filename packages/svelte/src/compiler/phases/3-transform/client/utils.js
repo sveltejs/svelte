@@ -639,3 +639,13 @@ export function with_loc(target, source) {
 	}
 	return target;
 }
+
+/**
+ * @param {string} filename
+ */
+export function hash_filename(filename) {
+	for (var h = 0, i = 0; i < filename.length; h &= h) {
+		h = 31 * h + filename.charCodeAt(i++);
+	}
+	return h;
+}

@@ -8,6 +8,7 @@ import type {
 import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
+import type { Location } from 'locate-character';
 
 export interface ClientTransformState extends TransformState {
 	readonly private_state: Map<string, StateField>;
@@ -28,6 +29,10 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly options: ValidatedCompileOptions;
 	readonly hoisted: Array<Statement | ModuleDeclaration>;
 	readonly events: Set<string>;
+	readonly source_locator: (
+		search: string | number,
+		index?: number | undefined
+	) => Location | undefined;
 
 	/** Stuff that happens before the render effect(s) */
 	readonly before_init: Statement[];

@@ -5,6 +5,7 @@ import { current_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
 import { effect } from '../reactivity/effects.js';
 import { is_array } from '../utils.js';
+import { DEV } from 'esm-env';
 
 /**
  * @template {import("#client").TemplateNode | import("#client").TemplateNode[]} T
@@ -31,6 +32,30 @@ export function push_template_node(
 		}
 	}
 	return dom;
+}
+
+/**
+ * @param {string} filename
+ * @param {string} filename_hash
+ */
+function attach_inspector_metadata(filename, filename_hash) {
+	const nodes = document.querySelectorAll(`*[${filename_hash}]`);
+
+	for (let i = 0; i < nodes.length; i++) {
+		const node = nodes[i];
+		const loc = node.getAttribute(filename_hash)?.split(':');
+		node.removeAttribute(filename_hash);
+		if (loc) {
+			// @ts-expect-error
+			node.__svelte_meta = {
+				loc: {
+					file: filename,
+					line: loc[0],
+					column: loc[1]
+				}
+			};
+		}
+	}
 }
 
 /**
@@ -258,9 +283,16 @@ export const comment = template('<!>', TEMPLATE_FRAGMENT);
  * and insert the elements into the dom (in client mode).
  * @param {Text | Comment | Element} anchor
  * @param {import('#client').Dom} dom
+ * @param {string} [filename]
+ * @param {string} [filename_hash]
  */
-export function append(anchor, dom) {
+export function append(anchor, dom, filename, filename_hash) {
 	if (!hydrating) {
 		anchor.before(/** @type {Node} */ (dom));
+	}
+	if (DEV && filename && filename_hash) {
+		effect(() => {
+			attach_inspector_metadata(filename, filename_hash);
+		});
 	}
 }

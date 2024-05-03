@@ -16,7 +16,8 @@ import {
 	function_visitor,
 	get_assignment_value,
 	serialize_get_binding,
-	serialize_set_binding
+	serialize_set_binding,
+	hash_filename
 } from '../utils.js';
 import {
 	AttributeAliases,
@@ -1050,7 +1051,16 @@ function create_block(parent, name, nodes, context) {
 		);
 
 		body.push(b.var(id, b.call(template_name)), ...state.before_init, ...state.init);
-		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
+
+		/** @type {import('estree').Expression[]} */
+		const anchor_args = [id];
+
+		if (state.options.dev && state.options.filename) {
+			const hash = hash_filename(state.options.filename);
+			anchor_args.push(b.literal(state.options.filename), b.literal('s' + hash));
+		}
+
+		close = b.stmt(b.call('$.append', b.id('$$anchor'), ...anchor_args));
 	} else if (is_single_child_not_needing_template) {
 		context.visit(trimmed[0], state);
 		body.push(...state.before_init, ...state.init);
@@ -1071,7 +1081,16 @@ function create_block(parent, name, nodes, context) {
 			});
 
 			body.push(b.var(id, b.call('$.text', b.id('$$anchor'))), ...state.before_init, ...state.init);
-			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
+
+			/** @type {import('estree').Expression[]} */
+			const args = [id];
+
+			if (state.options.dev && state.options.filename) {
+				const hash = hash_filename(state.options.filename);
+				args.push(b.literal(state.options.filename), b.literal('s' + hash));
+			}
+
+			close = b.stmt(b.call('$.append', b.id('$$anchor'), ...args));
 		} else {
 			/** @type {(is_text: boolean) => import('estree').Expression} */
 			const expression = (is_text) =>
@@ -1107,7 +1126,15 @@ function create_block(parent, name, nodes, context) {
 
 			body.push(...state.before_init, ...state.init);
 
-			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
+			/** @type {import('estree').Expression[]} */
+			const args = [id];
+
+			if (state.options.dev && state.options.filename) {
+				const hash = hash_filename(state.options.filename);
+				args.push(b.literal(state.options.filename), b.literal('s' + hash));
+			}
+
+			close = b.stmt(b.call('$.append', b.id('$$anchor'), ...args));
 		}
 	} else {
 		body.push(...state.before_init, ...state.init);
@@ -1990,6 +2017,15 @@ export const template_visitors = {
 		// class/style directives must be applied last since they could override class/style attributes
 		serialize_class_directives(class_directives, node_id, context, is_attributes_reactive);
 		serialize_style_directives(style_directives, node_id, context, is_attributes_reactive);
+
+		if (context.state.options.dev && context.state.options.filename) {
+			const start = context.state.source_locator(node.start);
+
+			if (start) {
+				const hash = hash_filename(context.state.options.filename);
+				context.state.template.push(` s${hash}="${start.line}:${start.column}"`);
+			}
+		}
 
 		context.state.template.push('>');
 
