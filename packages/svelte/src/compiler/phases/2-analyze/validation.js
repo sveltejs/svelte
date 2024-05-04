@@ -622,6 +622,11 @@ const validation = {
 	SnippetBlock(node, context) {
 		validate_block_not_empty(node.body, context);
 
+		const old_parent = context.state.parent_element;
+		context.state.parent_element = 'snippet';
+		context.next(context.state);
+		context.state.parent_element = old_parent;
+
 		if (node.expression.name !== 'children') return;
 
 		const { path } = context;
