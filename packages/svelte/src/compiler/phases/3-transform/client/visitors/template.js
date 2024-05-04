@@ -1838,7 +1838,10 @@ export const template_visitors = {
 		const lets = [];
 
 		const is_custom_element = is_custom_element_node(node);
-		let needs_input_reset = false;
+		/**
+		 * @type {import('estree').Expression[]}
+		 */
+		let needs_input_reset = [];
 		let needs_content_reset = false;
 
 		/** @type {import('#compiler').BindDirective | null} */
@@ -1860,11 +1863,11 @@ export const template_visitors = {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute') {
 				attributes.push(attribute);
-				if (
-					(attribute.name === 'value' || attribute.name === 'checked') &&
-					!is_text_attribute(attribute)
-				) {
-					needs_input_reset = true;
+				if (attribute.name === 'value' && !is_text_attribute(attribute)) {
+					needs_input_reset.push(b.literal('value'));
+					needs_content_reset = true;
+				} else if (attribute.name === 'checked' && !is_text_attribute(attribute)) {
+					needs_input_reset.push(b.literal('checked'));
 					needs_content_reset = true;
 				} else if (
 					attribute.name === 'contenteditable' &&
@@ -1875,7 +1878,7 @@ export const template_visitors = {
 				}
 			} else if (attribute.type === 'SpreadAttribute') {
 				attributes.push(attribute);
-				needs_input_reset = true;
+				needs_input_reset = [b.literal('value'), b.literal('checked')];
 				needs_content_reset = true;
 			} else if (attribute.type === 'ClassDirective') {
 				class_directives.push(attribute);
@@ -1887,11 +1890,11 @@ export const template_visitors = {
 				if (attribute.type === 'BindDirective') {
 					if (attribute.name === 'group' || attribute.name === 'checked') {
 						needs_special_value_handling = true;
-						needs_input_reset = true;
+						needs_input_reset.push(b.literal('checked'));
 					} else if (attribute.name === 'value') {
 						value_binding = attribute;
 						needs_content_reset = true;
-						needs_input_reset = true;
+						needs_input_reset.push(b.literal('value'));
 					} else if (
 						attribute.name === 'innerHTML' ||
 						attribute.name === 'innerText' ||
@@ -1907,7 +1910,7 @@ export const template_visitors = {
 		if (child_metadata.namespace === 'foreign') {
 			// input/select etc could mean something completely different in foreign namespace, so don't special-case them
 			needs_content_reset = false;
-			needs_input_reset = false;
+			needs_input_reset = [];
 			needs_special_value_handling = false;
 			value_binding = null;
 		}
@@ -1916,8 +1919,12 @@ export const template_visitors = {
 			child_metadata.bound_contenteditable = true;
 		}
 
-		if (needs_input_reset && (node.name === 'input' || node.name === 'select')) {
-			context.state.init.push(b.stmt(b.call('$.remove_input_attr_defaults', context.state.node)));
+		if (needs_input_reset.length > 0 && (node.name === 'input' || node.name === 'select')) {
+			context.state.init.push(
+				b.stmt(
+					b.call('$.remove_input_attr_defaults', context.state.node, b.array(needs_input_reset))
+				)
+			);
 		}
 
 		if (needs_content_reset && node.name === 'textarea') {

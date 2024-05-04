@@ -14,10 +14,11 @@ import * as w from '../../warnings.js';
  * @param {HTMLInputElement | HTMLSelectElement} dom
  * @returns {void}
  */
-export function remove_input_attr_defaults(dom) {
+export function remove_input_attr_defaults(dom, to_remove = ['value', 'checked']) {
 	if (hydrating) {
-		set_attribute(dom, 'value', null);
-		set_attribute(dom, 'checked', null);
+		for (const attr of to_remove) {
+			set_attribute(dom, attr, null);
+		}
 	}
 }
 
