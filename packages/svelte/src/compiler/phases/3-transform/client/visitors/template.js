@@ -34,7 +34,10 @@ import {
 	TRANSITION_OUT
 } from '../../../../../constants.js';
 import { escape_html } from '../../../../../escaping.js';
-import { regex_is_valid_identifier } from '../../../patterns.js';
+import {
+	regex_is_valid_identifier,
+	regex_is_valid_member_access_directive
+} from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
 import { walk } from 'zimmerframe';
@@ -118,7 +121,7 @@ function parse_directive_name(name) {
 	let expression = b.id(part);
 
 	while ((part = /** @type {string} */ (parts.shift()))) {
-		const computed = !regex_is_valid_identifier.test(part);
+		const computed = !regex_is_valid_member_access_directive.test(part);
 		expression = b.member(expression, computed ? b.literal(part) : b.id(part), computed);
 	}
 
