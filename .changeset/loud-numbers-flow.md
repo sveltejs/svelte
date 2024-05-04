@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: fine grained hydration attribute removal
+fix: restore value after attribute removal during hydration
