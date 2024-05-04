@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-use hot.acceptExports to support partial hmr
+fix: use import.meta.hot.acceptExports when available to support partial hmr in vite

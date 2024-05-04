@@ -462,6 +462,12 @@ export function client_component(source, analysis, options) {
 	);
 
 	if (options.hmr) {
+		const accept_fn = b.arrow(
+			[b.id('module')],
+			b.block([
+				b.stmt(b.call('$.set', b.id('s'), b.member(b.id('module'), b.id('default'))))
+			])
+		)
 		body.push(
 			component,
 			b.if(
@@ -469,15 +475,19 @@ export function client_component(source, analysis, options) {
 				b.block([
 					b.const(b.id('s'), b.call('$.source', b.id(analysis.name))),
 					b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
-					b.stmt(
-						b.call(
-							'import.meta.hot.acceptExports',
-							b.array([b.literal('default')]),
-							b.arrow(
-								[b.id('module')],
-								b.block([
-									b.stmt(b.call('$.set', b.id('s'), b.member(b.id('module'), b.id('default'))))
-								])
+					b.if(
+						b.id('import.meta.hot.acceptExports'),
+						b.stmt(
+							b.call(
+								'import.meta.hot.acceptExports',
+								b.array([b.literal('default')]),
+								accept_fn
+							)
+						),
+						b.stmt(
+							b.call(
+								'import.meta.hot.accept',
+								accept_fn
 							)
 						)
 					)
