@@ -16,8 +16,10 @@ import * as w from '../../warnings.js';
  */
 export function remove_input_attr_defaults(dom) {
 	if (hydrating) {
+		const value = dom.value;
 		set_attribute(dom, 'value', null);
 		set_attribute(dom, 'checked', null);
+		dom.value = value;
 	}
 }
 
