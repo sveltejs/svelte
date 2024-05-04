@@ -122,6 +122,16 @@ function parse_directive_name(name) {
 
 	while ((part = /** @type {string} */ (parts.shift()))) {
 		const computed = !regex_is_valid_member_access_directive.test(part);
+		const has_array_access = part.indexOf('[');
+		if (computed && has_array_access !== -1) {
+			const literal_part = part.substring(0, has_array_access);
+			const identifier_parts = part.substring(has_array_access).replaceAll('[', '').split(']');
+			expression = b.member(expression, b.literal(literal_part), computed);
+			for (const identifier_part of identifier_parts) {
+				if (identifier_part) expression = b.member(expression, b.id(identifier_part), computed);
+			}
+			continue;
+		}
 		expression = b.member(expression, computed ? b.literal(part) : b.id(part), computed);
 	}
 
