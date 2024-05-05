@@ -208,8 +208,9 @@ Previously, bindings did not take into account `reset` event of forms, and there
 
 In Svelte 4, `<svelte:element this="div">` is valid code. This makes little sense — you should just do `<div>`. In the vanishingly rare case that you _do_ need to use a literal value for some reason, you can do this:
 
-```svelte
-<svelte:element this="div">...</svelte:element>
+```diff
+- <svelte:element this="div">
++ <svelte:element this={"div"}>
 ```
 
 Note that whereas Svelte 4 would treat `<svelte:element this="input">` (for example) identically to `<input>` for the purposes of determining which `bind:` directives could be applied, Svelte 5 does not.
