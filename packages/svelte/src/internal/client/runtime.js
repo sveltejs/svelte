@@ -113,9 +113,6 @@ export let current_component_context = null;
 /** @param {import('#client').ComponentContext | null} context */
 export function set_current_component_context(context) {
 	current_component_context = context;
-	if (DEV) {
-		dev_current_component_function = context?.function;
-	}
 }
 
 /**
@@ -420,7 +417,12 @@ export function execute_effect(effect) {
 	var previous_component_context = current_component_context;
 
 	current_effect = effect;
-	set_current_component_context(component_context);
+	current_component_context = component_context;
+
+	if (DEV) {
+		var previous_component_fn = dev_current_component_function;
+		dev_current_component_function = effect.component_function;
+	}
 
 	try {
 		if ((flags & BLOCK_EFFECT) === 0) {
@@ -432,7 +434,11 @@ export function execute_effect(effect) {
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 	} finally {
 		current_effect = previous_effect;
-		set_current_component_context(previous_component_context);
+		current_component_context = previous_component_context;
+
+		if (DEV) {
+			dev_current_component_function = previous_component_fn;
+		}
 	}
 }
 
@@ -1108,7 +1114,10 @@ export function pop(component) {
 				effect(effects[i]);
 			}
 		}
-		set_current_component_context(context_stack_item.p);
+		current_component_context = context_stack_item.p;
+		if (DEV) {
+			dev_current_component_function = context_stack_item.p?.function ?? null;
+		}
 		context_stack_item.m = true;
 	}
 	// Micro-optimization: Don't set .a above to the empty object
