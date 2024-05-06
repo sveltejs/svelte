@@ -193,7 +193,7 @@ if (typeof HTMLElement === 'function') {
 			this.$$cn = false;
 			// In a microtask, because this could be a move within the DOM
 			Promise.resolve().then(() => {
-				if (!this.$$cn && this.$$c) { // this.$$c may be undefined if element was removed from DOM right after attaching
+				if (!this.$$cn && this.$$c) {
 					this.$$c.$destroy();
 					destroy_effect(this.$$me);
 					this.$$c = undefined;
