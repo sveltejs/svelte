@@ -16,7 +16,7 @@ import * as w from '../../warnings.js';
  */
 export function remove_input_attr_defaults(dom) {
 	if (hydrating) {
-		// using getAttribute instead of dome.value allow us to have
+		// using getAttribute instead of dom.value allows us to have
 		// null instead of "on" if the user didn't set a value
 		const value = dom.getAttribute('value');
 		set_attribute(dom, 'value', null);
