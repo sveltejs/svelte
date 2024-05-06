@@ -181,11 +181,11 @@ const instance_script = {
 		if (comments) {
 			for (const comment of comments) {
 				if (comment.type === 'Line' && extract_svelte_ignore(comment.value).length > 0) {
-					const svelteIgnore = comment.value.indexOf('svelte-ignore');
+					const svelte_ignore = comment.value.indexOf('svelte-ignore');
 					state.str.overwrite(
-						comment.start + svelteIgnore + 13 + '//'.length,
+						comment.start + svelte_ignore + 13 + '//'.length,
 						comment.end,
-						comment.value.substring(svelteIgnore + 13).replaceAll('-', '_')
+						comment.value.substring(svelte_ignore + 13).replaceAll('-', '_')
 					);
 				}
 			}
@@ -495,11 +495,11 @@ const template = {
 	},
 	Comment(node, { state }) {
 		if (extract_svelte_ignore(node.data).length > 0) {
-			const svelteIgnore = node.data.indexOf('svelte-ignore');
+			const svelte_ignore = node.data.indexOf('svelte-ignore');
 			state.str.overwrite(
-				node.start + svelteIgnore + 13 + '<!--'.length,
+				node.start + svelte_ignore + 13 + '<!--'.length,
 				node.end - '-->'.length,
-				node.data.substring(svelteIgnore + 13).replaceAll('-', '_')
+				node.data.substring(svelte_ignore + 13).replaceAll('-', '_')
 			);
 		}
 	}
