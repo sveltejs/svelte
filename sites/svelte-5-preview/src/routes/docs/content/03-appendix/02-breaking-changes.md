@@ -133,6 +133,23 @@ In Svelte 4 syntax, every property (declared via `export let`) is bindable, mean
 
 Setting the `accessors` option to `true` makes properties of a component directly accessible on the component instance. In runes mode, properties are never accessible on the component instance. You can use component exports instead if you need to expose them.
 
+### Props may update with same value
+
+Svelte 4 did safe equality checks on properties by default. That meant that even if you update a value, and part of of tha value is a primitive passed as a property, and that part did not change, it would not trigger a property update.
+
+```svelte
+<script>
+    let value = { count: 1 };
+</script>
+<button on:click={() => {
+    // updates to same value, child will not receive an update
+    value = { count: 1 };
+}}>update</button>
+<Child prop={value.count}>
+```
+
+In Svelte 5, the above would trigger an update in the child component. Note that Svelte 4 by default did always update properties if they were not primitives (i.e. objects or arrays for example).
+
 ## Other breaking changes
 
 ### Stricter `@const` assignment validation
@@ -158,9 +175,9 @@ In the event that you need to support ancient browsers that don't implement `:wh
 css = css.replace(/:where\((.+?)\)/, '$1');
 ```
 
-### Renames of various error/warning codes
+### Renames of error/warning codes
 
-Various error and warning codes have been renamed slightly.
+Error and warning codes have been renamed: Instead of using dashes they now use underscores as separators (e.g. `a11y_misplaced_scope` instead of `a11y-misplaced-scope`). Some codes have also been slightly reworded. For backwards compatibility, dash separators are still supported, but you should migrate towards underscores.
 
 ### Reduced number of namespaces
 
