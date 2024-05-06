@@ -8,12 +8,7 @@ import { regex_invalid_identifier_chars } from '../../../patterns.js';
 
 /** @type {import('../types.js').ComponentVisitors} */
 export const javascript_visitors_runes = {
-	ClassBody(node, { state, visit, path }) {
-		const parent = path.at(-1);
-
-		const needs_private_getters =
-			parent?.type === 'ClassDeclaration' && !!parent.metadata?.needs_private_getters;
-
+	ClassBody(node, { state, visit }) {
 		/** @type {Map<string, import('../types.js').StateField>} */
 		const public_state = new Map();
 
@@ -66,19 +61,6 @@ export const javascript_visitors_runes = {
 						}
 					}
 				}
-			}
-		}
-
-		if (needs_private_getters) {
-			// each `#foo = $state()` needs a backing `#_foo` field is the class needs private getters
-			for (const [name, field] of private_state) {
-				let deconflicted = name;
-				while (private_ids.includes(deconflicted)) {
-					deconflicted = '_' + deconflicted;
-				}
-
-				private_ids.push(deconflicted);
-				field.id = b.private_id(deconflicted);
 			}
 		}
 
@@ -139,7 +121,7 @@ export const javascript_visitors_runes = {
 						value = b.call('$.source');
 					}
 
-					if (is_private && !needs_private_getters) {
+					if (is_private) {
 						body.push(b.prop_def(field.id, value));
 					} else {
 						// #foo;

@@ -12,24 +12,14 @@ export const global_visitors = {
 			return serialize_get_binding(node, state);
 		}
 	},
-	MemberExpression(node, { state, next, path }) {
-		const class_declaration = path.find((path_element) => path_element.type === 'ClassDeclaration');
-		const needs_private_getters =
-			class_declaration?.type === 'ClassDeclaration' &&
-			!!class_declaration.metadata?.needs_private_getters;
-
-		if (node.object.type === 'ThisExpression') {
-			// rewrite `this.#foo` as `this.#foo.v` inside a constructor
-			if (node.property.type === 'PrivateIdentifier') {
-				const field = state.private_state.get(node.property.name);
-				if (field && needs_private_getters && state.in_constructor) {
-					return b.member(b.member(b.this, field.id), b.id('v'));
-				}
-				if (field && !needs_private_getters) {
-					return state.in_constructor ? b.member(node, b.id('v')) : b.call('$.get', node);
-				}
+	MemberExpression(node, { state, next }) {
+		// rewrite `this.#foo` as `this.#foo.v` inside a constructor
+		if (node.property.type === 'PrivateIdentifier') {
+			const field = state.private_state.get(node.property.name);
+			if (field) {
+				return state.in_constructor ? b.member(node, b.id('v')) : b.call('$.get', node);
 			}
-
+		} else if (node.object.type === 'ThisExpression') {
 			// rewrite `this.foo` as `this.#foo.v` inside a constructor
 			if (node.property.type === 'Identifier' && !node.computed) {
 				const field = state.public_state.get(node.property.name);

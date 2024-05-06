@@ -103,10 +103,4 @@ declare module 'estree' {
 			scope: Scope;
 		};
 	}
-
-	interface ClassDeclaration {
-		metadata?: {
-			needs_private_getters: boolean;
-		};
-	}
 }

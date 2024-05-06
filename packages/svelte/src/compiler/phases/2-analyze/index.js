@@ -1503,18 +1503,6 @@ const common_visitors = {
 				return;
 			}
 		}
-	},
-	ThisExpression(node, { next, path }) {
-		const parent = path.at(-1);
-		if (parent?.type === 'MemberExpression' && parent.object === node) {
-			return;
-		}
-		const class_declaration = path.find((path_element) => path_element.type === 'ClassDeclaration');
-		if (class_declaration && class_declaration.type === 'ClassDeclaration') {
-			class_declaration.metadata = {
-				needs_private_getters: true
-			};
-		}
 	}
 };
 
