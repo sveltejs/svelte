@@ -32,7 +32,7 @@ function w(node, code, message) {
 	if (node?.ignores?.has(code)) return;
 	// backwards compat: Svelte 5 changed all warnings from dash to underscore
 	// @ts-expect-error
-	if (node?.ignores?.has(code.replaceAll('-', '_'))) return;
+	if (node?.ignores?.has(code.replaceAll('_', '-'))) return;
 
 	warnings.push({
 		code,
