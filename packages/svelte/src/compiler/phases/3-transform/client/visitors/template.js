@@ -16,8 +16,7 @@ import {
 	function_visitor,
 	get_assignment_value,
 	serialize_get_binding,
-	serialize_set_binding,
-	hash_filename
+	serialize_set_binding
 } from '../utils.js';
 import {
 	AttributeAliases,
@@ -39,6 +38,7 @@ import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
 import { walk } from 'zimmerframe';
+import { hash } from '../../../../utils.js';
 
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
@@ -961,6 +961,16 @@ function serialize_bind_this(bind_this, context, node) {
 }
 
 /**
+ * @param {import("estree").Expression[]} args
+ * @param {import("../types.js").ComponentClientTransformState} state
+ */
+function push_dev_inspector_data(args, state) {
+	if (state.options.dev && state.options.filename) {
+		args.push(b.literal(state.options.filename), b.literal('sloc' + hash(state.options.filename)));
+	}
+}
+
+/**
  * Creates a new block which looks roughly like this:
  * ```js
  * // hoisted:
@@ -1055,10 +1065,7 @@ function create_block(parent, name, nodes, context) {
 		/** @type {import('estree').Expression[]} */
 		const anchor_args = [id];
 
-		if (state.options.dev && state.options.filename) {
-			const hash = hash_filename(state.options.filename);
-			anchor_args.push(b.literal(state.options.filename), b.literal('sloc' + hash));
-		}
+		push_dev_inspector_data(anchor_args, state);
 
 		close = b.stmt(b.call('$.append', b.id('$$anchor'), ...anchor_args));
 	} else if (is_single_child_not_needing_template) {
@@ -1085,10 +1092,7 @@ function create_block(parent, name, nodes, context) {
 			/** @type {import('estree').Expression[]} */
 			const args = [id];
 
-			if (state.options.dev && state.options.filename) {
-				const hash = hash_filename(state.options.filename);
-				args.push(b.literal(state.options.filename), b.literal('sloc' + hash));
-			}
+			push_dev_inspector_data(args, state);
 
 			close = b.stmt(b.call('$.append', b.id('$$anchor'), ...args));
 		} else {
@@ -1129,10 +1133,7 @@ function create_block(parent, name, nodes, context) {
 			/** @type {import('estree').Expression[]} */
 			const args = [id];
 
-			if (state.options.dev && state.options.filename) {
-				const hash = hash_filename(state.options.filename);
-				args.push(b.literal(state.options.filename), b.literal('sloc' + hash));
-			}
+			push_dev_inspector_data(args, state);
 
 			close = b.stmt(b.call('$.append', b.id('$$anchor'), ...args));
 		}
@@ -2022,8 +2023,9 @@ export const template_visitors = {
 			const start = context.state.source_locator(node.start);
 
 			if (start) {
-				const hash = hash_filename(context.state.options.filename);
-				context.state.template.push(` sloc${hash}="${start.line}:${start.column}"`);
+				context.state.template.push(
+					` sloc${hash(context.state.options.filename)}="${start.line}:${start.column}"`
+				);
 			}
 		}
 

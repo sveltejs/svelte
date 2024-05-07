@@ -22,7 +22,7 @@ import { DelegatedEvents, namespace_mathml, namespace_svg } from '../../../const
 import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
-import { hash } from './utils.js';
+import { hash } from '../../utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
 

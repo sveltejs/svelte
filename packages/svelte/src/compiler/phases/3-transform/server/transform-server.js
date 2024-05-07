@@ -27,8 +27,8 @@ import { DOMBooleanAttributes, HYDRATION_END, HYDRATION_START } from '../../../.
 import { escape_html } from '../../../../escaping.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
 import { BLOCK_CLOSE, BLOCK_CLOSE_ELSE } from '../../../../internal/server/hydration.js';
-import { hash_filename } from '../client/utils.js';
 import { getLocator } from 'locate-character';
+import { hash } from '../../../utils.js';
 
 export const block_open = t_string(`<!--${HYDRATION_START}-->`);
 export const block_close = t_string(`<!--${HYDRATION_END}-->`);
@@ -1333,8 +1333,9 @@ const template_visitors = {
 			const start = context.state.source_locator(node.start);
 
 			if (start) {
-				const hash = hash_filename(context.state.options.filename);
-				context.state.template.push(t_string(` sloc${hash}="${start.line}:${start.column}"`));
+				context.state.template.push(
+					t_string(` sloc${hash(context.state.options.filename)}="${start.line}:${start.column}"`)
+				);
 			}
 		}
 
