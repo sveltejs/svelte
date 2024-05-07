@@ -26,7 +26,8 @@ import {
 	EFFECT_RAN,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	EFFECT_TRANSPARENT
+	EFFECT_TRANSPARENT,
+	DERIVED
 } from '../constants.js';
 import { set } from './sources.js';
 import { remove } from '../dom/reconciler.js';
@@ -118,7 +119,9 @@ function create_effect(type, fn, sync) {
  * @returns {boolean}
  */
 export function effect_active() {
-	return current_effect ? (current_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 : false;
+	if (current_effect) return (current_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0;
+	if (current_reaction) return (current_reaction.f & DERIVED) !== 0;
+	return false;
 }
 
 /**
