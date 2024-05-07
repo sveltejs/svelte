@@ -37,7 +37,7 @@ function get_stack() {
  * Determines which `.svelte` component is responsible for a given state change
  * @returns {Function | null}
  */
-function get_component() {
+export function get_component() {
 	// first 4 lines are svelte internals; adjust this number if we change the internal call stack
 	const stack = get_stack()?.slice(4);
 	if (!stack) return null;

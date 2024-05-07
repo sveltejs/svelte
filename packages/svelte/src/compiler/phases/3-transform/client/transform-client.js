@@ -232,6 +232,7 @@ export function client_component(source, analysis, options) {
 		group_binding_declarations.push(b.const(group.name, b.array([])));
 	}
 
+	/** @type {Array<import('estree').Property | import('estree').SpreadElement>} */
 	const component_returned_object = analysis.exports.map(({ name, alias }) => {
 		const expression = serialize_get_binding(b.id(name), instance_state);
 
@@ -310,41 +311,7 @@ export function client_component(source, analysis, options) {
 			)
 		);
 	} else if (options.dev) {
-		component_returned_object.push(
-			b.init(
-				'$set',
-				b.thunk(
-					b.block([
-						b.throw_error(
-							`The component shape you get when doing bind:this changed. Updating its properties via $set is no longer valid in Svelte 5. ` +
-								'See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information'
-						)
-					])
-				)
-			),
-			b.init(
-				'$on',
-				b.thunk(
-					b.block([
-						b.throw_error(
-							`The component shape you get when doing bind:this changed. Listening to events via $on is no longer valid in Svelte 5. ` +
-								'See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information'
-						)
-					])
-				)
-			),
-			b.init(
-				'$destroy',
-				b.thunk(
-					b.block([
-						b.throw_error(
-							`The component shape you get when doing bind:this changed. Destroying such a component via $destroy is no longer valid in Svelte 5. ` +
-								'See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information'
-						)
-					])
-				)
-			)
-		);
+		component_returned_object.push(b.spread(b.call(b.id('$.legacy_api'))));
 	}
 
 	const push_args = [b.id('$$props'), b.literal(analysis.runes)];
