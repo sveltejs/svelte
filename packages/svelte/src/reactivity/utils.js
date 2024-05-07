@@ -41,7 +41,7 @@ function get_this() {
  * @template TEntityInstance
  * @template {(keyof TEntityInstance)[]} TMutationProperties
  * @typedef {object} Options
- * @prop {TMutationProperties} mutation_properties - an array of property names on `TEntityInstance`. when calling a property on `TEntityInstance`, if the property name exists in this array, then mentioned property is made reactive.
+ * @prop {TMutationProperties} mutation_properties - an array of property names on `TEntityInstance`. when calling a property on `TEntityInstance`, if the property name exists in this array, then mentioned property causes reactivity.
  * @prop {Interceptors<TEntityInstance, TMutationProperties>} [interceptors={}] - if the property names in `mutation_properties` shouldn't be always reactive, such calling `set.add(2)` twice, you can prevent the reactivity by returning false from these interceptors
  */
 
