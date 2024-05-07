@@ -200,11 +200,6 @@ export function check_dirtiness(reaction) {
 
 				if (!is_dirty && check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
 					update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
-
-					// `signal` might now be dirty, as a result of calling `update_derived`
-					if ((reaction.f & DIRTY) !== 0) {
-						return true;
-					}
 				}
 
 				if (is_unowned) {
@@ -230,6 +225,9 @@ export function check_dirtiness(reaction) {
 							reactions.push(reaction);
 						}
 					}
+				} else if ((reaction.f & DIRTY) !== 0) {
+					// `signal` might now be dirty, as a result of calling `check_dirtiness` and/or `update_derived`
+					return true;
 				}
 			}
 		}
