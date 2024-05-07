@@ -1,5 +1,11 @@
 # svelte
 
+## 4.2.16
+
+### Patch Changes
+
+- fix: check if svelte component exists on custom element destroy ([#11489](https://github.com/sveltejs/svelte/pull/11489))
+
 ## 4.2.15
 
 ### Patch Changes
