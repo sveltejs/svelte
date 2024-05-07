@@ -1012,7 +1012,13 @@ function get_parent_context(component_context) {
  */
 export function update(signal, d = 1) {
 	const value = get(signal);
-	set(signal, value + d);
+	let to_mutate = value;
+	if (d === 1) {
+		to_mutate++;
+	} else {
+		to_mutate--;
+	}
+	set(signal, to_mutate);
 	return value;
 }
 
@@ -1022,7 +1028,12 @@ export function update(signal, d = 1) {
  * @returns {number}
  */
 export function update_pre(signal, d = 1) {
-	const value = get(signal) + d;
+	let value = get(signal);
+	if (d === 1) {
+		++value;
+	} else {
+		--value;
+	}
 	set(signal, value);
 	return value;
 }
