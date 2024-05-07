@@ -36,12 +36,10 @@ import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 
 /**
- * @param {import('#client').Effect | null} effect
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
- * @returns {asserts effect}
  */
-export function validate_effect(effect, rune) {
-	if (effect === null && current_reaction === null) {
+export function validate_effect(rune) {
+	if (current_effect === null && current_reaction === null) {
 		e.effect_orphan(rune);
 	}
 
@@ -136,12 +134,13 @@ export function effect_active() {
  * @param {() => void | (() => void)} fn
  */
 export function user_effect(fn) {
-	validate_effect(current_effect, '$effect');
+	validate_effect('$effect');
 
 	// Non-nested `$effect(...)` in a component should be deferred
 	// until the component is mounted
 	const defer =
-		current_effect.f & RENDER_EFFECT &&
+		current_effect !== null &&
+		(current_effect.f & RENDER_EFFECT) !== 0 &&
 		// TODO do we actually need this? removing them changes nothing
 		current_component_context !== null &&
 		!current_component_context.m;
@@ -160,7 +159,7 @@ export function user_effect(fn) {
  * @returns {import('#client').Effect}
  */
 export function user_pre_effect(fn) {
-	validate_effect(current_effect, '$effect.pre');
+	validate_effect('$effect.pre');
 	return render_effect(fn);
 }
 
