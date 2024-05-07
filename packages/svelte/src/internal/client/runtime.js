@@ -1022,9 +1022,7 @@ export function update(signal, d = 1) {
  * @returns {number}
  */
 export function update_pre(signal, d = 1) {
-	var value = +get(signal) + d;
-	set(signal, value);
-	return value;
+	return set(signal, +get(signal) + d);
 }
 
 /**
