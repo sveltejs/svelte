@@ -1,38 +1,20 @@
 <script>
-	let plus = $state("0");
-	let plus_before = $state("0");
-	let minus = $state("0");
-	let minus_before = $state("0");
-	
-	function increment() {
-		console.log(plus++);
-	}
+	let a = $state("0");
+	let b = $state("0");
+	let c = $state("0");
+	let d = $state("0");
 
-	function decrement() {
-		console.log(minus--);
-	}
-
-	function increment_before() {
-		console.log(++plus_before);
-	}
-
-	function decrement_before() {
-		console.log(--minus_before);
+	function update() {
+		// @ts-expect-error
+		console.log(a++);
+		// @ts-expect-error
+		console.log(b--);
+		// @ts-expect-error
+		console.log(++c);
+		// @ts-expect-error
+		console.log(--d);
 	}
 </script>
 
-<button id="increment" onclick={increment}>
-	{plus}
-</button>
-
-<button id="decrement" onclick={decrement}>
-	{minus}
-</button>
-
-<button id="increment_before" onclick={increment_before}>
-	{plus_before}
-</button>
-
-<button id="decrement_before" onclick={decrement_before}>
-	{minus_before}
-</button>
+<button onclick={update}>update</button>
+<p>{a}, {b}, {c}, {d}</p>

@@ -1,38 +1,24 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	mode: ['client', 'hydrate'],
-	async test({ target, assert, logs }) {
-		/**
-		 * @type {HTMLButtonElement | null}
-		 */
-		const increment = target.querySelector('#increment');
-		/**
-		 * @type {HTMLButtonElement | null}
-		 */
-		const decrement = target.querySelector('#decrement');
-		/**
-		 * @type {HTMLButtonElement | null}
-		 */
-		const increment_before = target.querySelector('#increment_before');
-		/**
-		 * @type {HTMLButtonElement | null}
-		 */
-		const decrement_before = target.querySelector('#decrement_before');
+	html: `
+		<button>update</button>
+		<p>0, 0, 0, 0</p>
+	`,
 
-		increment?.click();
-		await Promise.resolve();
-		assert.equal(increment?.innerHTML.trim(), '1');
-		increment_before?.click();
-		await Promise.resolve();
-		assert.equal(increment_before?.innerHTML.trim(), '1');
-		decrement?.click();
-		await Promise.resolve();
-		assert.equal(decrement?.innerHTML.trim(), '-1');
-		decrement_before?.click();
-		await Promise.resolve();
-		assert.equal(decrement_before?.innerHTML.trim(), '-1');
+	test({ target, assert, logs }) {
+		const btn = target.querySelector('button');
+		flushSync(() => btn?.click());
 
-		assert.deepEqual(logs, ['0', 1, '0', -1]);
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<button>update</button>
+				<p>1, -1, 1, -1</p>
+			`
+		);
+
+		assert.deepEqual(logs, [0, 0, 1, -1]);
 	}
 });
