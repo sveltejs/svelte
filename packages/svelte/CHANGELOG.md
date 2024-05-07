@@ -1,5 +1,21 @@
 # svelte
 
+## 5.0.0-next.124
+
+### Patch Changes
+
+- fix: allow to access private fields after `this` reassignment ([#11487](https://github.com/sveltejs/svelte/pull/11487))
+
+- fix: only initiate scroll if scroll binding has existing value ([#11469](https://github.com/sveltejs/svelte/pull/11469))
+
+- fix: restore value after attribute removal during hydration ([#11465](https://github.com/sveltejs/svelte/pull/11465))
+
+- fix: check if svelte component exists on custom element destroy ([#11488](https://github.com/sveltejs/svelte/pull/11488))
+
+- fix: ensure derived is detected as dirty correctly ([#11496](https://github.com/sveltejs/svelte/pull/11496))
+
+- fix: prevent false positive ownership warning ([#11490](https://github.com/sveltejs/svelte/pull/11490))
+
 ## 5.0.0-next.123
 
 ### Patch Changes
