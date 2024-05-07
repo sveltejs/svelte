@@ -10,7 +10,7 @@ export const ReactiveSet = make_reactive(Set, {
 			return value.size !== 0;
 		},
 		delete: (value, property, ...params) => {
-			return !value.has(params[0]);
+			return value.has(params[0]);
 		}
 	}
 });
