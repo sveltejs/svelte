@@ -27,7 +27,8 @@ import {
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	EFFECT_TRANSPARENT,
-	DERIVED
+	DERIVED,
+	UNOWNED
 } from '../constants.js';
 import { set } from './sources.js';
 import { remove } from '../dom/reconciler.js';
@@ -40,7 +41,7 @@ import { DEV } from 'esm-env';
  * @returns {asserts effect}
  */
 export function validate_effect(effect, rune) {
-	if (effect === null) {
+	if (effect === null && current_reaction === null) {
 		e.effect_orphan(rune);
 	}
 
@@ -119,8 +120,14 @@ function create_effect(type, fn, sync) {
  * @returns {boolean}
  */
 export function effect_active() {
-	if (current_effect) return (current_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0;
-	if (current_reaction) return (current_reaction.f & DERIVED) !== 0;
+	if (current_reaction && (current_reaction.f & DERIVED) !== 0) {
+		return (current_reaction.f & UNOWNED) === 0;
+	}
+
+	if (current_effect) {
+		return (current_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0;
+	}
+
 	return false;
 }
 
