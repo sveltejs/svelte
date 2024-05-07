@@ -27,6 +27,8 @@ import { DOMBooleanAttributes, HYDRATION_END, HYDRATION_START } from '../../../.
 import { escape_html } from '../../../../escaping.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
 import { BLOCK_CLOSE, BLOCK_CLOSE_ELSE } from '../../../../internal/server/hydration.js';
+import { hash_filename } from '../client/utils.js';
+import { getLocator } from 'locate-character';
 
 export const block_open = t_string(`<!--${HYDRATION_START}-->`);
 export const block_close = t_string(`<!--${HYDRATION_END}-->`);
@@ -1326,6 +1328,16 @@ const template_visitors = {
 
 		context.state.template.push(t_string(`<${node.name}`));
 		const body_expression = serialize_element_attributes(node, context);
+
+		if (context.state.options.dev && context.state.options.filename) {
+			const start = context.state.source_locator(node.start);
+
+			if (start) {
+				const hash = hash_filename(context.state.options.filename);
+				context.state.template.push(t_string(` sloc${hash}="${start.line}:${start.column}"`));
+			}
+		}
+
 		context.state.template.push(t_string('>'));
 
 		/** @type {import('./types').ComponentServerTransformState} */
@@ -2091,11 +2103,12 @@ function serialize_style_directives(style_directives, style_attribute, context) 
 }
 
 /**
+ * @param {string} source
  * @param {import('../../types').ComponentAnalysis} analysis
  * @param {import('#compiler').ValidatedCompileOptions} options
  * @returns {import('estree').Program}
  */
-export function server_component(analysis, options) {
+export function server_component(source, analysis, options) {
 	/** @type {import('./types').ComponentServerTransformState} */
 	const state = {
 		analysis,
@@ -2103,6 +2116,7 @@ export function server_component(analysis, options) {
 		scope: analysis.module.scope,
 		scopes: analysis.template.scopes,
 		hoisted: [b.import_all('$', 'svelte/internal/server')],
+		source_locator: getLocator(source, { offsetLine: 1 }),
 		legacy_reactive_statements: new Map(),
 		// these should be set by create_block - if they're called outside, it's a bug
 		get init() {

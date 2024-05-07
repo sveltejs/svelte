@@ -27,7 +27,7 @@ export function transform_component(analysis, source, options) {
 
 	const program =
 		options.generate === 'server'
-			? server_component(analysis, options)
+			? server_component(source, analysis, options)
 			: client_component(source, analysis, options);
 
 	const js_source_name = get_source_name(options.filename, options.outputFilename, 'input.svelte');

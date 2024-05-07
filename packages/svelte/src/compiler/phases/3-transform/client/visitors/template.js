@@ -1057,7 +1057,7 @@ function create_block(parent, name, nodes, context) {
 
 		if (state.options.dev && state.options.filename) {
 			const hash = hash_filename(state.options.filename);
-			anchor_args.push(b.literal(state.options.filename), b.literal('s' + hash));
+			anchor_args.push(b.literal(state.options.filename), b.literal('sloc' + hash));
 		}
 
 		close = b.stmt(b.call('$.append', b.id('$$anchor'), ...anchor_args));
@@ -1087,7 +1087,7 @@ function create_block(parent, name, nodes, context) {
 
 			if (state.options.dev && state.options.filename) {
 				const hash = hash_filename(state.options.filename);
-				args.push(b.literal(state.options.filename), b.literal('s' + hash));
+				args.push(b.literal(state.options.filename), b.literal('sloc' + hash));
 			}
 
 			close = b.stmt(b.call('$.append', b.id('$$anchor'), ...args));
@@ -1131,7 +1131,7 @@ function create_block(parent, name, nodes, context) {
 
 			if (state.options.dev && state.options.filename) {
 				const hash = hash_filename(state.options.filename);
-				args.push(b.literal(state.options.filename), b.literal('s' + hash));
+				args.push(b.literal(state.options.filename), b.literal('sloc' + hash));
 			}
 
 			close = b.stmt(b.call('$.append', b.id('$$anchor'), ...args));
@@ -2023,7 +2023,7 @@ export const template_visitors = {
 
 			if (start) {
 				const hash = hash_filename(context.state.options.filename);
-				context.state.template.push(` s${hash}="${start.line}:${start.column}"`);
+				context.state.template.push(` sloc${hash}="${start.line}:${start.column}"`);
 			}
 		}
 

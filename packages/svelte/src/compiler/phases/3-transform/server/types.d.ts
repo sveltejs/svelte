@@ -9,6 +9,7 @@ import type { SvelteNode, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
 import type { StateField } from '../client/types.js';
+import type { Location } from 'locate-character';
 
 export type TemplateExpression = {
 	type: 'expression';
@@ -46,6 +47,11 @@ export interface ComponentServerTransformState extends ServerTransformState {
 	readonly init: Statement[];
 
 	readonly hoisted: Array<Statement | ModuleDeclaration>;
+
+	readonly source_locator: (
+		search: string | number,
+		index?: number | undefined
+	) => Location | undefined;
 
 	/** The SSR template  */
 	readonly template: Template[];
