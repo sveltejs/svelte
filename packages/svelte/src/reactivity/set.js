@@ -1,7 +1,7 @@
 import { make_reactive } from './utils.js';
 
 export const ReactiveSet = make_reactive(Set, {
-	mutation_properties: /** @type {const} */ (['add', 'clear', 'delete']),
+	mutation_properties: ['add', 'clear', 'delete'],
 	interceptors: {
 		add: (value, property, ...params) => {
 			return !value.has(params[0]);
