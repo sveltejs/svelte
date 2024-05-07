@@ -10,6 +10,10 @@
 
 > A component is attempting to bind to a non-bindable property `%key%` belonging to %component% (i.e. `<%name% bind:%key%={...}>`). To mark a property as bindable: `let { %key% = $bindable() } = $props()`
 
+## component_api_changed
+
+> %parent% called `%method%` on an instance of %component%, which is no longer valid in Svelte 5. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information
+
 ## each_key_duplicate
 
 > Keyed each block has duplicate key at indexes %a% and %b%
