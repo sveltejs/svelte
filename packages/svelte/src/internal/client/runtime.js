@@ -1011,7 +1011,7 @@ function get_parent_context(component_context) {
  * @returns {number}
  */
 export function update(signal, d = 1) {
-	const value = get(signal);
+	var value = +get(signal);
 	set(signal, value + d);
 	return value;
 }
@@ -1022,9 +1022,7 @@ export function update(signal, d = 1) {
  * @returns {number}
  */
 export function update_pre(signal, d = 1) {
-	const value = get(signal) + d;
-	set(signal, value);
-	return value;
+	return set(signal, +get(signal) + d);
 }
 
 /**
