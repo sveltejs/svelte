@@ -254,7 +254,7 @@ async function run_test_variant(
 		}
 
 		if (variant === 'ssr') {
-			const html_without_loc_attributes = target.innerHTML.replace(/\s?sloc-?\d*\=\"\d*:\d*"/g, '');
+			const html_without_loc_attributes = target.innerHTML.replace(/\s?sloc-?\S*\=\"\d*:\d*"/g, '');
 
 			if (config.ssrHtml) {
 				assert_html_equal_with_options(html_without_loc_attributes, config.ssrHtml, {
