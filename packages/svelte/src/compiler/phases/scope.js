@@ -184,7 +184,6 @@ export class Scope {
 	 * @param {import('#compiler').SvelteNode[]} path
 	 */
 	reference(node, path) {
-		debugger;
 		path = [...path]; // ensure that mutations to path afterwards don't affect this reference
 		let references = this.references.get(node.name);
 
@@ -684,7 +683,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		TSInterfaceDeclaration: skip,
 		TSTypeAliasDeclaration: skip,
 		TSTypeParameterDeclaration: skip,
-		TSEnumDeclaration: skip,
+		TSEnumDeclaration: skip
 
 		// TODO others
 	});
