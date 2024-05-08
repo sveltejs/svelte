@@ -92,8 +92,14 @@ function create_effect(type, fn, sync) {
 		effect.component_function = dev_current_component_function;
 	}
 
-	if (current_reaction !== null && !is_root) {
-		push_effect(effect, current_reaction);
+	let reaction = current_reaction;
+
+	if (reaction !== null && (reaction.f & (DERIVED | UNOWNED)) === (DERIVED | UNOWNED)) {
+		reaction = current_effect;
+	}
+
+	if (reaction !== null && !is_root) {
+		push_effect(effect, reaction);
 	}
 
 	if (sync) {
@@ -119,7 +125,7 @@ function create_effect(type, fn, sync) {
  */
 export function effect_active() {
 	if (current_reaction && (current_reaction.f & DERIVED) !== 0) {
-		return (current_reaction.f & UNOWNED) === 0;
+		if ((current_reaction.f & UNOWNED) === 0) return true;
 	}
 
 	if (current_effect) {
