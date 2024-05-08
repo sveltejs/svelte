@@ -34,7 +34,7 @@ function get_this() {
 /**
  * @template TEntityInstance
  * @template {(keyof TEntityInstance)[]} TMutationProperties
- * @typedef {Record<TMutationProperties[number], (value: TEntityInstance, property: TMutationProperties[number], ...params: any[])=>boolean>}  Interceptors - return false if you want to prevent reactivity for this call/get
+ * @typedef {Record<TMutationProperties[number], (value: TEntityInstance, property: TMutationProperties[number], ...params: unknown[])=>boolean>}  Interceptors - return false if you want to prevent reactivity for this call/get
  */
 
 /**
@@ -59,7 +59,7 @@ export const make_reactive = (Entity, options) => {
 	 * @param {import('#client').Source<number>} target
 	 * @param {TProperty} property
 	 * @param {TEntityInstance} entity_instance
-	 * @param {TEntityInstance[TProperty] extends (...args: any)=>any ? Parameters<TEntityInstance[TProperty]>: never} params
+	 * @param {unknown[]} params
 	 */
 	function notify_if_required(target, property, entity_instance, ...params) {
 		if (options.interceptors?.[property]?.(entity_instance, property, ...params) === false) {
