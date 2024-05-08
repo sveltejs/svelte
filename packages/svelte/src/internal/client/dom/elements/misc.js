@@ -1,5 +1,6 @@
 import { hydrating } from '../hydration.js';
 import { effect } from '../../reactivity/effects.js';
+import { clear_text_content } from '../operations.js';
 
 /**
  * @param {HTMLElement} dom
@@ -27,6 +28,6 @@ export function autofocus(dom, value) {
  */
 export function remove_textarea_child(dom) {
 	if (hydrating && dom.firstChild !== null) {
-		dom.textContent = '';
+		clear_text_content(dom);
 	}
 }
