@@ -4,7 +4,7 @@ import { get } from '../internal/client/runtime.js';
 /**
  * @template TEntityInstance
  * @template {(keyof TEntityInstance)[]} TMutationProperties
- * @typedef {Record<TMutationProperties[number], (value: TEntityInstance, property: TMutationProperties[number], ...params: unknown[])=>boolean>}  Interceptors - return false if you want to prevent reactivity for this call/get
+ * @typedef {Partial<Record<TMutationProperties[number], (value: TEntityInstance, property: TMutationProperties[number], ...params: unknown[])=>boolean>>}  Interceptors - return false if you want to prevent reactivity for this call/get
  */
 
 /**
