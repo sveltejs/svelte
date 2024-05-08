@@ -1,0 +1,26 @@
+[
+	{
+		"code": "a11y_missing_attribute",
+		"end": {
+			"column": 29,
+			"line": 5
+		},
+		"message": "`<img>` element should have an alt attribute (this warning was tried to silence using code a11y-missing-attribute. In runes mode, use the new code a11y_missing_attribute instead)",
+		"start": {
+			"column": 1,
+			"line": 5
+		}
+	},
+	{
+		"code": "a11y_misplaced_scope",
+		"end": {
+			"column": 10,
+			"line": 9
+		},
+		"message": "The scope attribute should only be used with `<th>` elements (this warning was tried to silence using code a11y-misplaced-scope. In runes mode, use the new code a11y_misplaced_scope instead)",
+		"start": {
+			"column": 5,
+			"line": 9
+		}
+	}
+]

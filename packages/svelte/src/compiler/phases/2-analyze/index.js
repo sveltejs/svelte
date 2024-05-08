@@ -439,8 +439,7 @@ export function analyze_component(root, source, options) {
 				component_slots: new Set(),
 				expression: null,
 				private_derived_state: [],
-				function_depth: scope.function_depth,
-				ignores: new Set()
+				function_depth: scope.function_depth
 			};
 
 			walk(
@@ -511,8 +510,7 @@ export function analyze_component(root, source, options) {
 				component_slots: new Set(),
 				expression: null,
 				private_derived_state: [],
-				function_depth: scope.function_depth,
-				ignores: new Set()
+				function_depth: scope.function_depth
 			};
 
 			walk(
@@ -1093,62 +1091,44 @@ function is_safe_identifier(expression, scope) {
 
 /** @type {import('./types').Visitors} */
 const common_visitors = {
-	_(node, context) {
-		// @ts-expect-error
-		const comments = /** @type {import('estree').Comment[]} */ (node.leadingComments);
-
-		if (comments) {
+	_(node, { next, path }) {
+		const parent = path.at(-1);
+		if (parent?.type === 'Fragment') {
+			const idx = parent.nodes.indexOf(/** @type {any} */ (node));
 			/** @type {string[]} */
 			const ignores = [];
 
-			for (const comment of comments) {
-				ignores.push(...extract_svelte_ignore(comment.value));
+			for (let i = idx - 1; i >= 0; i--) {
+				const prev = parent.nodes[i];
+				if (prev.type === 'Comment') {
+					ignores.push(...extract_svelte_ignore(prev.data));
+				} else if (prev.type !== 'Text') {
+					break;
+				}
 			}
 
 			if (ignores.length > 0) {
-				// @ts-expect-error see below
-				node.ignores = new Set([...context.state.ignores, ...ignores]);
+				w.push_ignore(ignores);
+				next();
+				w.pop_ignore();
 			}
-		}
-
-		// @ts-expect-error
-		if (node.ignores) {
-			context.next({
-				...context.state,
-				// @ts-expect-error see below
-				ignores: node.ignores
-			});
-		} else if (context.state.ignores.size > 0) {
+		} else {
 			// @ts-expect-error
-			node.ignores = context.state.ignores;
-		}
-	},
-	Fragment(node, context) {
-		/** @type {string[]} */
-		let ignores = [];
+			const comments = /** @type {import('estree').Comment[]} */ (node.leadingComments);
 
-		for (const child of node.nodes) {
-			if (child.type === 'Text' && child.data.trim() === '') {
-				continue;
-			}
+			if (comments) {
+				/** @type {string[]} */
+				const ignores = [];
 
-			if (child.type === 'Comment') {
-				ignores.push(...extract_svelte_ignore(child.data));
-			} else {
-				const combined_ignores = new Set(context.state.ignores);
-				for (const ignore of ignores) combined_ignores.add(ignore);
-
-				if (combined_ignores.size > 0) {
-					// TODO this is a grotesque hack that's made necessary by the fact that
-					// we can't call `context.visit(...)` here, because we do the convoluted
-					// visitor merging thing. I'm increasingly of the view that we should
-					// rearchitect this stuff and have a single visitor per node. It'd be
-					// more efficient and much simpler.
-					// @ts-expect-error
-					child.ignores = combined_ignores;
+				for (const comment of comments) {
+					ignores.push(...extract_svelte_ignore(comment.value));
 				}
 
-				ignores = [];
+				if (ignores.length > 0) {
+					w.push_ignore(ignores);
+					next();
+					w.pop_ignore();
+				}
 			}
 		}
 	},

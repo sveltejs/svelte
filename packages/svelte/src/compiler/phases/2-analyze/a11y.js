@@ -702,12 +702,6 @@ function check_element(node, state) {
 	let has_contenteditable_binding = false;
 
 	for (const attribute of node.attributes) {
-		// gross but necessary: the visitor that sets this isn't called in time
-		if (state.ignores.size > 0) {
-			// @ts-expect-error
-			attribute.ignores = state.ignores;
-		}
-
 		if (attribute.type === 'SpreadAttribute') {
 			has_spread = true;
 		} else if (attribute.type === 'OnDirective') {

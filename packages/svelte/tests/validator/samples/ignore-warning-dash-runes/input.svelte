@@ -1,9 +1,4 @@
-<script>
-	function foo() {
-		// svelte-ignore non-top-level-reactive-declaration
-		$: x = 1;
-	}
-</script>
+<svelte:options runes={true} />
 
 <!-- svelte-ignore a11y-missing-attribute -->
 <div>
