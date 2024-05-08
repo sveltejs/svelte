@@ -12,7 +12,7 @@ import { get } from '../internal/client/runtime.js';
  * @template {(keyof TEntityInstance)[]} TMutationProperties
  * @typedef {object} Options
  * @prop {TMutationProperties} mutation_properties - an array of property names on `TEntityInstance`. when calling a property on `TEntityInstance`, if the property name exists in this array, then mentioned property causes reactivity.
- * @prop {Interceptors<TEntityInstance, TMutationProperties>} [interceptors={}] - if the property names in `mutation_properties` shouldn't be always reactive, such calling `set.add(2)` twice, you can prevent the reactivity by returning `false` from these interceptors
+ * @prop {Interceptors<TEntityInstance, (keyof TEntityInstance)[]>} [interceptors={}] - if the property names in `mutation_properties` shouldn't cause reactivity, such calling `set.add(2)` twice or accessing a property shouldn't be reactive based on some conditions, you can prevent the reactivity by returning `false` from these interceptors
  */
 
 /**
@@ -44,15 +44,11 @@ export const make_reactive = (Entity, options) => {
 		}
 	}
 
-	/**
-	 * @template {ConstructorParameters<TEntity>} TParams
-	 */
 	// we return a class so that the caller can call it with new
 	// @ts-ignore
 	return class {
 		/**
-		 * @param {TParams}  params
-		 * @returns
+		 * @param {ConstructorParameters<TEntity>}  params
 		 */
 		constructor(...params) {
 			const sig = source(0);
