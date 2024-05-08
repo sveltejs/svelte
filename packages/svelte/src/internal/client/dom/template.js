@@ -36,11 +36,13 @@ export function push_template_node(
 
 /**
  * @param {string} filename
+ * @param {import("#client").TemplateNode} target
  * @param {string} filename_hash
  */
-function attach_inspector_metadata(filename, filename_hash) {
-	const nodes = document.querySelectorAll(`*[${filename_hash}]`);
-
+function attach_inspector_metadata(filename, target, filename_hash) {
+	const nodes = /** @type {Element} */ (target.parentElement).querySelectorAll(
+		`*[${filename_hash}]`
+	);
 	for (let i = 0; i < nodes.length; i++) {
 		const node = nodes[i];
 		const loc = node.getAttribute(filename_hash)?.split(':');
@@ -291,8 +293,10 @@ export function append(anchor, dom, filename, filename_hash) {
 		anchor.before(/** @type {Node} */ (dom));
 	}
 	if (DEV && filename && filename_hash) {
+		const target = hydrating ? (is_array(dom) ? dom[0] : dom) : anchor;
+
 		effect(() => {
-			attach_inspector_metadata(filename, filename_hash);
+			attach_inspector_metadata(filename, target, filename_hash);
 		});
 	}
 }
