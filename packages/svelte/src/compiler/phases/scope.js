@@ -184,6 +184,7 @@ export class Scope {
 	 * @param {import('#compiler').SvelteNode[]} path
 	 */
 	reference(node, path) {
+		debugger;
 		path = [...path]; // ensure that mutations to path afterwards don't affect this reference
 		let references = this.references.get(node.name);
 
@@ -279,6 +280,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		next({ scope });
 	};
+
+	const skip = () => {};
 
 	/**
 	 * @type {import('zimmerframe').Visitor<import('#compiler').ElementLike, State, import('#compiler').SvelteNode>}
@@ -674,7 +677,14 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		TransitionDirective: SvelteDirective,
 		AnimateDirective: SvelteDirective,
-		UseDirective: SvelteDirective
+		UseDirective: SvelteDirective,
+
+		// @ts-ignore
+		TSTypeAnnotation: skip,
+		TSInterfaceDeclaration: skip,
+		TSTypeAliasDeclaration: skip,
+		TSTypeParameterDeclaration: skip,
+		TSEnumDeclaration: skip,
 
 		// TODO others
 	});
