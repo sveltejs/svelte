@@ -26,21 +26,21 @@ export const make_reactive = (Entity, options) => {
 	/**
 	 * @template {InstanceType<TEntity>} TEntityInstance
 	 * @template {keyof TEntityInstance} TProperty
-	 * @param {import('#client').Source<number>} target
+	 * @param {import('#client').Source<number>} version_signal
 	 * @param {TProperty} property
 	 * @param {TEntityInstance} entity_instance
 	 * @param {unknown[]} params
 	 */
-	function notify_if_required(target, property, entity_instance, ...params) {
+	function notify_if_required(version_signal, property, entity_instance, ...params) {
 		if (options.interceptors?.[property]?.(entity_instance, property, ...params) === false) {
 			// if interceptor said to not make this call reactive then bailout
 			return;
 		}
 
 		if (options.mutation_properties.some((v) => v === property)) {
-			set(target, target.v + 1);
+			set(version_signal, version_signal.v + 1);
 		} else {
-			get(target);
+			get(version_signal);
 		}
 	}
 
@@ -51,24 +51,22 @@ export const make_reactive = (Entity, options) => {
 		 * @param {ConstructorParameters<TEntity>}  params
 		 */
 		constructor(...params) {
-			const sig = source(0);
-
+			const version_signal = source(0);
 			return new Proxy(new Entity(...params), {
 				get(target, property) {
 					const orig_property = target[property];
-
 					let result;
 
 					if (typeof orig_property === 'function') {
-						// Bind functions directly to the Set
+						// Bind functions directly to the `TEntity`
 						result = ((/** @type {any} */ ...params) => {
-							notify_if_required(sig, property, target, ...params);
+							notify_if_required(version_signal, property, target, ...params);
 							return orig_property.bind(target)(...params);
 						}).bind(target);
 					} else {
 						// Properly handle getters
+						notify_if_required(version_signal, property, target);
 						result = Reflect.get(target, property, target);
-						notify_if_required(sig, property, target);
 					}
 
 					return result;
