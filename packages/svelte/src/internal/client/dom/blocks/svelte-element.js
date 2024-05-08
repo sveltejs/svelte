@@ -116,7 +116,9 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace) {
 							: element.appendChild(empty());
 
 						if (hydrating && !element.firstChild) {
-							set_hydrate_nodes([]);
+							// if the element is a void element with content, add an empty
+							// node to avoid breaking assumptions elsewhere
+							set_hydrate_nodes([empty()]);
 						}
 
 						// `child_anchor` is undefined if this is a void element, but we still
