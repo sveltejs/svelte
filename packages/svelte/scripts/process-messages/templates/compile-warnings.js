@@ -66,6 +66,15 @@ const legacy_codes = new Map([
 	['reactive_declaration_invalid_placement', 'non-top-level-reactive-declaration']
 ]);
 
+const new_codes = new Map([...legacy_codes.entries()].map(([key, value]) => [value, key]));
+
+/**
+ * @param {string} legacy_code
+ */
+export function legacy_to_new_code(legacy_code) {
+	return new_codes.get(legacy_code) || legacy_code.replaceAll('-', '_');
+}
+
 /**
  * @param {null | NodeLike} node
  * @param {string} code
