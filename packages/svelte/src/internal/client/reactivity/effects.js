@@ -93,6 +93,10 @@ function create_effect(type, fn, sync) {
 	}
 
 	if (current_reaction !== null && !is_root) {
+		if ((current_reaction.f & (DERIVED | UNOWNED)) === (DERIVED | UNOWNED)) {
+			e.effect_in_unowned_derived();
+		}
+
 		push_effect(effect, current_reaction);
 	}
 
