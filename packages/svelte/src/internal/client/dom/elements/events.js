@@ -122,22 +122,22 @@ export function handle_event_propagation(handler_element, event) {
 		}
 	});
 
-	/** @param {Element} current_target */
-	function next(current_target) {
+	/** @param {Element} next_target */
+	function next(next_target) {
+		current_target = next_target;
 		/** @type {null | Element} */
-		var parent_element =
-			current_target.parentNode || /** @type {any} */ (current_target).host || null;
+		var parent_element = next_target.parentNode || /** @type {any} */ (next_target).host || null;
 
 		try {
 			// @ts-expect-error
-			var delegated = current_target['__' + event_name];
+			var delegated = next_target['__' + event_name];
 
-			if (delegated !== undefined && !(/** @type {any} */ (current_target).disabled)) {
+			if (delegated !== undefined && !(/** @type {any} */ (next_target).disabled)) {
 				if (is_array(delegated)) {
 					var [fn, ...data] = delegated;
-					fn.apply(current_target, [event, ...data]);
+					fn.apply(next_target, [event, ...data]);
 				} else {
-					delegated.call(current_target, event);
+					delegated.call(next_target, event);
 				}
 			}
 		} finally {
@@ -145,7 +145,7 @@ export function handle_event_propagation(handler_element, event) {
 				!event.cancelBubble &&
 				parent_element !== handler_element &&
 				parent_element !== null &&
-				current_target !== handler_element
+				next_target !== handler_element
 			) {
 				next(parent_element);
 			}

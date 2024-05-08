@@ -1,5 +1,12 @@
 export { hmr } from './dev/hmr.js';
-export { ADD_OWNER, add_owner, mark_module_start, mark_module_end } from './dev/ownership.js';
+export {
+	ADD_OWNER,
+	add_owner,
+	mark_module_start,
+	mark_module_end,
+	add_owner_effect
+} from './dev/ownership.js';
+export { legacy_api } from './dev/legacy.js';
 export { inspect } from './dev/inspect.js';
 export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
@@ -7,7 +14,7 @@ export { key_block as key } from './dom/blocks/key.js';
 export { css_props } from './dom/blocks/css-props.js';
 export { index, each } from './dom/blocks/each.js';
 export { html } from './dom/blocks/html.js';
-export { snippet } from './dom/blocks/snippet.js';
+export { snippet, wrap_snippet } from './dom/blocks/snippet.js';
 export { component } from './dom/blocks/svelte-component.js';
 export { element } from './dom/blocks/svelte-element.js';
 export { head } from './dom/blocks/svelte-head.js';
@@ -20,7 +27,7 @@ export {
 	set_dynamic_element_attributes,
 	set_xlink_attribute
 } from './dom/elements/attributes.js';
-export { set_class, set_svg_class, toggle_class } from './dom/elements/class.js';
+export { set_class, set_svg_class, set_mathml_class, toggle_class } from './dom/elements/class.js';
 export { event, delegate } from './dom/elements/events.js';
 export { autofocus, remove_textarea_child } from './dom/elements/misc.js';
 export { set_style } from './dom/elements/style.js';
@@ -70,6 +77,7 @@ export {
 	comment,
 	svg_template,
 	svg_template_with_script,
+	mathml_template,
 	template,
 	template_with_script,
 	text

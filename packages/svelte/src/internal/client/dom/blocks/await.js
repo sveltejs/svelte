@@ -4,10 +4,12 @@ import {
 	flush_sync,
 	set_current_component_context,
 	set_current_effect,
-	set_current_reaction
+	set_current_reaction,
+	set_dev_current_component_function
 } from '../../runtime.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import { INERT } from '../../constants.js';
+import { DEV } from 'esm-env';
 
 /**
  * @template V
@@ -20,6 +22,11 @@ import { INERT } from '../../constants.js';
  */
 export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 	const component_context = current_component_context;
+	/** @type {any} */
+	let component_function;
+	if (DEV) {
+		component_function = component_context?.function ?? null;
+	}
 
 	/** @type {any} */
 	let input;
@@ -41,7 +48,13 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 		set_current_effect(effect);
 		set_current_reaction(effect); // TODO do we need both?
 		set_current_component_context(component_context);
+		if (DEV) {
+			set_dev_current_component_function(component_function);
+		}
 		var e = branch(() => fn(anchor, value));
+		if (DEV) {
+			set_dev_current_component_function(null);
+		}
 		set_current_component_context(null);
 		set_current_reaction(null);
 		set_current_effect(null);

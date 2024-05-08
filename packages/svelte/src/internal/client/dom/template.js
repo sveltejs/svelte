@@ -159,6 +159,49 @@ export function svg_template_with_script(content, flags) {
 }
 
 /**
+ * @param {string} content
+ * @param {number} flags
+ * @returns {() => Node | Node[]}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function mathml_template(content, flags) {
+	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
+	var fn = template(`<math>${content}</math>`, 0); // we don't need to worry about using importNode for MathML
+
+	/** @type {Element | DocumentFragment} */
+	var node;
+
+	return () => {
+		if (hydrating) {
+			return push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
+		}
+
+		if (!node) {
+			var math = /** @type {Element} */ (fn());
+
+			if ((flags & TEMPLATE_FRAGMENT) === 0) {
+				node = /** @type {Element} */ (math.firstChild);
+			} else {
+				node = document.createDocumentFragment();
+				while (math.firstChild) {
+					node.appendChild(math.firstChild);
+				}
+			}
+		}
+
+		var clone = clone_node(node, true);
+
+		push_template_node(
+			is_fragment
+				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
+				: /** @type {import('#client').TemplateNode} */ (clone)
+		);
+
+		return clone;
+	};
+}
+
+/**
  * Creating a document fragment from HTML that contains script tags will not execute
  * the scripts. We need to replace the script tags with new ones so that they are executed.
  * @param {Element | DocumentFragment} node

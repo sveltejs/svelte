@@ -7,12 +7,7 @@ import {
 	unwrap_optional
 } from '../../../../utils/ast.js';
 import { binding_properties } from '../../../bindings.js';
-import {
-	clean_nodes,
-	determine_namespace_for_children,
-	escape_html,
-	infer_namespace
-} from '../../utils.js';
+import { clean_nodes, determine_namespace_for_children, infer_namespace } from '../../utils.js';
 import { DOMProperties, PassiveEvents, VoidElements } from '../../../constants.js';
 import { is_custom_element_node, is_element_node } from '../../../nodes.js';
 import * as b from '../../../../utils/builders.js';
@@ -38,6 +33,7 @@ import {
 	TRANSITION_IN,
 	TRANSITION_OUT
 } from '../../../../../constants.js';
+import { escape_html } from '../../../../../escaping.js';
 import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
@@ -50,7 +46,11 @@ import { walk } from 'zimmerframe';
  */
 function get_attribute_name(element, attribute, context) {
 	let name = attribute.name;
-	if (!element.metadata.svg && context.state.metadata.namespace !== 'foreign') {
+	if (
+		!element.metadata.svg &&
+		!element.metadata.mathml &&
+		context.state.metadata.namespace !== 'foreign'
+	) {
 		name = name.toLowerCase();
 		if (name in AttributeAliases) {
 			name = AttributeAliases[name];
@@ -292,7 +292,9 @@ function serialize_element_spread_attributes(
 	}
 
 	const lowercase_attributes =
-		element.metadata.svg || is_custom_element_node(element) ? b.false : b.true;
+		element.metadata.svg || element.metadata.mathml || is_custom_element_node(element)
+			? b.false
+			: b.true;
 	const id = context.state.scope.generate('attributes');
 
 	const update = b.stmt(
@@ -465,6 +467,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 	const state = context.state;
 	const name = get_attribute_name(element, attribute, context);
 	const is_svg = context.state.metadata.namespace === 'svg';
+	const is_mathml = context.state.metadata.namespace === 'mathml';
 	let [contains_call_expression, value] = serialize_attribute_value(attribute.value, context);
 
 	// The foreign namespace doesn't have any special handling, everything goes through the attr function
@@ -490,7 +493,13 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 	let update;
 
 	if (name === 'class') {
-		update = b.stmt(b.call(is_svg ? '$.set_svg_class' : '$.set_class', node_id, value));
+		update = b.stmt(
+			b.call(
+				is_svg ? '$.set_svg_class' : is_mathml ? '$.set_mathml_class' : '$.set_class',
+				node_id,
+				value
+			)
+		);
 	} else if (DOMProperties.includes(name)) {
 		update = b.stmt(b.assignment('=', b.member(node_id, b.id(name)), value));
 	} else {
@@ -737,12 +746,7 @@ function serialize_inline_component(node, component_name, context) {
 
 				if (context.state.options.dev) {
 					binding_initializers.push(
-						b.stmt(
-							b.call(
-								b.id('$.user_pre_effect'),
-								b.thunk(b.call(b.id('$.add_owner'), expression, b.id(component_name)))
-							)
-						)
+						b.stmt(b.call(b.id('$.add_owner_effect'), b.thunk(expression), b.id(component_name)))
 					);
 				}
 
@@ -822,10 +826,7 @@ function serialize_inline_component(node, component_name, context) {
 
 		if (slot_name === 'default') {
 			push_prop(
-				b.init(
-					'children',
-					context.state.options.dev ? b.call('$.add_snippet_symbol', slot_fn) : slot_fn
-				)
+				b.init('children', context.state.options.dev ? b.call('$.wrap_snippet', slot_fn) : slot_fn)
 			);
 		} else {
 			serialized_slots.push(b.init(slot_name, slot_fn));
@@ -872,7 +873,9 @@ function serialize_inline_component(node, component_name, context) {
 				node_id,
 				// TODO would be great to do this at runtime instead. Svelte 4 also can't handle cases today
 				// where it's not statically determinable whether the component is used in a svg or html context
-				context.state.metadata.namespace === 'svg' ? b.false : b.true,
+				context.state.metadata.namespace === 'svg' || context.state.metadata.namespace === 'mathml'
+					? b.false
+					: b.true,
 				b.thunk(b.object(custom_css_props)),
 				b.arrow([b.id('$$node')], prev(b.id('$$node')))
 			);
@@ -1138,9 +1141,11 @@ function get_template_function(namespace, state) {
 		? contains_script_tag
 			? '$.svg_template_with_script'
 			: '$.svg_template'
-		: contains_script_tag
-			? '$.template_with_script'
-			: '$.template';
+		: namespace === 'mathml'
+			? '$.mathml_template'
+			: contains_script_tag
+				? '$.template_with_script'
+				: '$.template';
 }
 
 /**
@@ -1635,7 +1640,8 @@ export const template_visitors = {
 					'$.html',
 					context.state.node,
 					b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.expression))),
-					b.literal(context.state.metadata.namespace === 'svg')
+					b.literal(context.state.metadata.namespace === 'svg'),
+					b.literal(context.state.metadata.namespace === 'mathml')
 				)
 			)
 		);
@@ -1966,7 +1972,7 @@ export const template_visitors = {
 							` ${attribute.name}${
 								DOMBooleanAttributes.includes(name) && literal_value === true
 									? ''
-									: `="${literal_value === true ? '' : escape_html(String(literal_value), true)}"`
+									: `="${literal_value === true ? '' : escape_html(literal_value, true)}"`
 							}`
 						);
 						continue;
@@ -2125,7 +2131,11 @@ export const template_visitors = {
 			})
 		);
 
-		const args = [context.state.node, get_tag, node.metadata.svg ? b.true : b.false];
+		const args = [
+			context.state.node,
+			get_tag,
+			node.metadata.svg || node.metadata.mathml ? b.true : b.false
+		];
 		if (inner.length > 0) {
 			args.push(b.arrow([element_id, b.id('$$anchor')], b.block(inner)));
 		}
@@ -2544,16 +2554,20 @@ export const template_visitors = {
 			.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body
 		]);
 
-		const path = context.path;
-		// If we're top-level, then we can create a function for the snippet so that it can be referenced
-		// in the props declaration (default value pattern).
-		if (path.length === 1 && path[0].type === 'Fragment') {
-			context.state.init.push(b.function_declaration(node.expression, args, body));
-		} else {
-			context.state.init.push(b.const(node.expression, b.arrow(args, body)));
-		}
+		/** @type {import('estree').Expression} */
+		let snippet = b.arrow(args, body);
+
 		if (context.state.options.dev) {
-			context.state.init.push(b.stmt(b.call('$.add_snippet_symbol', node.expression)));
+			snippet = b.call('$.wrap_snippet', snippet);
+		}
+
+		const declaration = b.var(node.expression, snippet);
+
+		// Top-level snippets are hoisted so they can be referenced in the `<script>`
+		if (context.path.length === 1 && context.path[0].type === 'Fragment') {
+			context.state.analysis.top_level_snippets.push(declaration);
+		} else {
+			context.state.init.push(declaration);
 		}
 	},
 	FunctionExpression: function_visitor,

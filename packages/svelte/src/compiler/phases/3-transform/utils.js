@@ -7,55 +7,6 @@ import * as b from '../../utils/builders.js';
 import { walk } from 'zimmerframe';
 
 /**
- * @param {string} s
- * @param {boolean} [attr]
- */
-export function escape_html(s, attr) {
-	if (typeof s !== 'string') return s;
-	const delimiter = attr ? '"' : '<';
-	const escaped_delimiter = attr ? '&quot;' : '&lt;';
-	let i_delimiter = s.indexOf(delimiter);
-	let i_ampersand = s.indexOf('&');
-
-	if (i_delimiter < 0 && i_ampersand < 0) return s;
-
-	let left = 0,
-		out = '';
-
-	while (i_delimiter >= 0 && i_ampersand >= 0) {
-		if (i_delimiter < i_ampersand) {
-			if (left < i_delimiter) out += s.substring(left, i_delimiter);
-			out += escaped_delimiter;
-			left = i_delimiter + 1;
-			i_delimiter = s.indexOf(delimiter, left);
-		} else {
-			if (left < i_ampersand) out += s.substring(left, i_ampersand);
-			out += '&amp;';
-			left = i_ampersand + 1;
-			i_ampersand = s.indexOf('&', left);
-		}
-	}
-
-	if (i_delimiter >= 0) {
-		do {
-			if (left < i_delimiter) out += s.substring(left, i_delimiter);
-			out += escaped_delimiter;
-			left = i_delimiter + 1;
-			i_delimiter = s.indexOf(delimiter, left);
-		} while (i_delimiter >= 0);
-	} else if (!attr) {
-		while (i_ampersand >= 0) {
-			if (left < i_ampersand) out += s.substring(left, i_ampersand);
-			out += '&amp;';
-			left = i_ampersand + 1;
-			i_ampersand = s.indexOf('&', left);
-		}
-	}
-
-	return left < s.length ? out + s.substring(left) : out;
-}
-
-/**
  * @param {import('estree').Node} node
  * @returns {boolean}
  */
@@ -219,7 +170,10 @@ export function infer_namespace(namespace, parent, nodes, path) {
 		}
 
 		if (parent_node?.type === 'RegularElement' || parent_node?.type === 'SvelteElement') {
-			return parent_node.metadata.svg ? 'svg' : 'html';
+			if (parent_node.metadata.svg) {
+				return 'svg';
+			}
+			return parent_node.metadata.mathml ? 'mathml' : 'html';
 		}
 
 		// Re-evaluate the namespace inside slot nodes that reset the namespace
@@ -254,11 +208,11 @@ function check_nodes_for_namespace(nodes, namespace) {
 	 * @param {{stop: () => void}} context
 	 */
 	const RegularElement = (node, { stop }) => {
-		if (!node.metadata.svg) {
+		if (!node.metadata.svg && !node.metadata.mathml) {
 			namespace = 'html';
 			stop();
 		} else if (namespace === 'keep') {
-			namespace = 'svg';
+			namespace = node.metadata.svg ? 'svg' : 'mathml';
 		}
 	};
 
@@ -312,7 +266,11 @@ export function determine_namespace_for_children(node, namespace) {
 		return 'html';
 	}
 
-	return node.metadata.svg ? 'svg' : 'html';
+	if (node.metadata.svg) {
+		return 'svg';
+	}
+
+	return node.metadata.mathml ? 'mathml' : 'html';
 }
 
 /**

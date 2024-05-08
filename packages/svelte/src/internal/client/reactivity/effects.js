@@ -4,6 +4,7 @@ import {
 	current_effect,
 	current_reaction,
 	destroy_effect_children,
+	dev_current_component_function,
 	execute_effect,
 	get,
 	is_destroying_effect,
@@ -30,6 +31,7 @@ import {
 import { set } from './sources.js';
 import { remove } from '../dom/reconciler.js';
 import * as e from '../errors.js';
+import { DEV } from 'esm-env';
 
 /**
  * @param {import('#client').Effect | null} effect
@@ -85,6 +87,10 @@ function create_effect(type, fn, sync) {
 		teardown: null,
 		transitions: null
 	};
+
+	if (DEV) {
+		effect.component_function = dev_current_component_function;
+	}
 
 	if (current_reaction !== null && !is_root) {
 		push_effect(effect, current_reaction);

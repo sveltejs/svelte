@@ -1,4 +1,3 @@
-import type { Bindable, Binding } from '../../index.js';
 import type { Store } from '#shared';
 import { STATE_SYMBOL } from './constants.js';
 import type { Effect, Source, Value } from './reactivity/types.js';
@@ -50,6 +49,10 @@ export type ComponentContext = {
 		/** This tracks whether `$:` statements have run in the current cycle, to ensure they only run once */
 		r2: Source<boolean>;
 	};
+	/**
+	 * dev mode only: the component function
+	 */
+	function?: any;
 };
 
 export type ComponentContextLegacy = ComponentContext & {
