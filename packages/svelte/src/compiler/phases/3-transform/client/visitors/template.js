@@ -964,10 +964,11 @@ function serialize_bind_this(bind_this, context, node) {
  * @param {import("estree").Expression[]} args
  * @param {import("../types.js").ComponentClientTransformState} state
  */
-function push_dev_inspector_data(args, state) {
+function construct_append_method(args, state) {
 	if (state.options.dev && state.options.filename) {
 		args.push(b.literal(state.options.filename), b.literal('sloc' + hash(state.options.filename)));
 	}
+	return b.stmt(b.call('$.append', b.id('$$anchor'), ...args));
 }
 
 /**
@@ -1065,9 +1066,7 @@ function create_block(parent, name, nodes, context) {
 		/** @type {import('estree').Expression[]} */
 		const anchor_args = [id];
 
-		push_dev_inspector_data(anchor_args, state);
-
-		close = b.stmt(b.call('$.append', b.id('$$anchor'), ...anchor_args));
+		close = construct_append_method(anchor_args, state);
 	} else if (is_single_child_not_needing_template) {
 		context.visit(trimmed[0], state);
 		body.push(...state.before_init, ...state.init);
@@ -1092,9 +1091,7 @@ function create_block(parent, name, nodes, context) {
 			/** @type {import('estree').Expression[]} */
 			const args = [id];
 
-			push_dev_inspector_data(args, state);
-
-			close = b.stmt(b.call('$.append', b.id('$$anchor'), ...args));
+			close = construct_append_method(args, state);
 		} else {
 			/** @type {(is_text: boolean) => import('estree').Expression} */
 			const expression = (is_text) =>
@@ -1133,9 +1130,7 @@ function create_block(parent, name, nodes, context) {
 			/** @type {import('estree').Expression[]} */
 			const args = [id];
 
-			push_dev_inspector_data(args, state);
-
-			close = b.stmt(b.call('$.append', b.id('$$anchor'), ...args));
+			close = construct_append_method(args, state);
 		}
 	} else {
 		body.push(...state.before_init, ...state.init);
