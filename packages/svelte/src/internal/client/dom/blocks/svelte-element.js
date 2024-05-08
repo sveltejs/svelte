@@ -1,5 +1,5 @@
 import { namespace_svg } from '../../../../constants.js';
-import { hydrate_anchor, hydrate_nodes, hydrating } from '../hydration.js';
+import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrate_nodes } from '../hydration.js';
 import { empty } from '../operations.js';
 import {
 	block,
@@ -114,6 +114,10 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace) {
 						var child_anchor = hydrating
 							? element.firstChild && hydrate_anchor(/** @type {Comment} */ (element.firstChild))
 							: element.appendChild(empty());
+
+						if (hydrating && !element.firstChild) {
+							set_hydrate_nodes([]);
+						}
 
 						// `child_anchor` is undefined if this is a void element, but we still
 						// need to call `render_fn` in order to run actions etc. If the element
