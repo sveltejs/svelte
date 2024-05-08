@@ -1,3 +1,4 @@
+export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
 export {
 	ADD_OWNER,
