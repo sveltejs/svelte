@@ -2,12 +2,40 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	html: `<button>toggle (false)</button>`,
+	html: `
+		<button>toggle outer</button>
+		<button>toggle inner</button>
+		<button>reset</button>
+	`,
 
 	test({ assert, target }) {
-		const btn = target.querySelector('button');
-		flushSync(() => btn?.click());
+		const [outer, inner, reset] = target.querySelectorAll('button');
 
-		assert.htmlEqual(target.innerHTML, `<button>toggle (true)</button><p>bar is true</p>`);
+		flushSync(() => outer?.click());
+		flushSync(() => inner?.click());
+
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<button>toggle outer</button>
+				<button>toggle inner</button>
+				<button>reset</button>
+				<p>v is true</p>
+			`
+		);
+
+		flushSync(() => reset?.click());
+		flushSync(() => inner?.click());
+		flushSync(() => outer?.click());
+
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<button>toggle outer</button>
+				<button>toggle inner</button>
+				<button>reset</button>
+				<p>v is true</p>
+			`
+		);
 	}
 });

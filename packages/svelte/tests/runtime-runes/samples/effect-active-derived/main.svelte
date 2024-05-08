@@ -1,6 +1,5 @@
 <script>
 	let value = $state(false);
-
 	const fn = () => {
 		if ($effect.active()) {
 			$effect(() => {
@@ -10,14 +9,23 @@
 		return value;
 	};
 
-	let foo = $state(false)
-	let bar = $derived(foo ? fn() : false);
+	let outer = $state(false);
+	let inner = $state(false);
+	let v = $derived(inner ? fn() : false);
 </script>
 
-<button onclick={() => foo = !foo}>
-	toggle ({foo})
+<button onclick={() => outer = !outer}>
+	toggle outer
 </button>
 
-{#if bar}
-	<p>bar is true</p>
+<button onclick={() => inner = !inner}>
+	toggle inner
+</button>
+
+<button onclick={() => outer = inner = value = false}>
+	reset
+</button>
+
+{#if outer && v}
+	<p>v is true</p>
 {/if}
