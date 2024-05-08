@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.125
+
+### Patch Changes
+
+- fix: coerce incremented/decremented sources ([#11506](https://github.com/sveltejs/svelte/pull/11506))
+
+- feat: add support for svelte inspector ([#11514](https://github.com/sveltejs/svelte/pull/11514))
+
+- fix: skip AST analysis of TypeScript AST nodes ([#11513](https://github.com/sveltejs/svelte/pull/11513))
+
+- fix: use import.meta.hot.acceptExports when available to support partial hmr in vite ([#11453](https://github.com/sveltejs/svelte/pull/11453))
+
+- feat: better error for `bind:this` legacy API usage ([#11498](https://github.com/sveltejs/svelte/pull/11498))
+
 ## 5.0.0-next.124
 
 ### Patch Changes
