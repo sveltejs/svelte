@@ -49,7 +49,7 @@ function swap_block_dom(effect, from, to) {
 export function element(anchor, get_tag, is_svg, render_fn, get_namespace, location) {
 	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
 
-	const filename = DEV && current_component_context?.function.filename;
+	const filename = DEV && location && current_component_context?.function.filename;
 
 	render_effect(() => {
 		/** @type {string | null} */
