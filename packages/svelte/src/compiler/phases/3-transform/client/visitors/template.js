@@ -2180,19 +2180,21 @@ export const template_visitors = {
 			})
 		);
 
-		const args = [
-			context.state.node,
-			get_tag,
-			node.metadata.svg || node.metadata.mathml ? b.true : b.false
-		];
-		if (inner.length > 0) {
-			args.push(b.arrow([element_id, b.id('$$anchor')], b.block(inner)));
-		}
-		if (dynamic_namespace) {
-			if (inner.length === 0) args.push(b.id('undefined'));
-			args.push(b.thunk(serialize_attribute_value(dynamic_namespace, context)[1]));
-		}
-		context.state.init.push(b.stmt(b.call('$.element', ...args)));
+		const location = context.state.options.dev && context.state.source_locator(node.start);
+
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.element',
+					context.state.node,
+					get_tag,
+					node.metadata.svg || node.metadata.mathml ? b.true : b.false,
+					inner.length > 0 && b.arrow([element_id, b.id('$$anchor')], b.block(inner)),
+					dynamic_namespace && b.thunk(serialize_attribute_value(dynamic_namespace, context)[1]),
+					location && b.array([b.literal(location.line), b.literal(location.column)])
+				)
+			)
+		);
 	},
 	EachBlock(node, context) {
 		const each_node_meta = node.metadata;

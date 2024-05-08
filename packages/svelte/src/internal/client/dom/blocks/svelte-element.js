@@ -12,8 +12,9 @@ import {
 import { is_array } from '../../utils.js';
 import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
-import { current_effect } from '../../runtime.js';
+import { current_component_context, current_effect } from '../../runtime.js';
 import { push_template_node } from '../template.js';
+import { DEV } from 'esm-env';
 
 /**
  * @param {import('#client').Effect} effect
@@ -42,10 +43,13 @@ function swap_block_dom(effect, from, to) {
  * @param {boolean} is_svg
  * @param {undefined | ((element: Element, anchor: Node | null) => void)} render_fn,
  * @param {undefined | (() => string)} get_namespace
+ * @param {undefined | [number, number]} location
  * @returns {void}
  */
-export function element(anchor, get_tag, is_svg, render_fn, get_namespace) {
+export function element(anchor, get_tag, is_svg, render_fn, get_namespace, location) {
 	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
+
+	const filename = DEV && current_component_context?.function.filename;
 
 	render_effect(() => {
 		/** @type {string | null} */
@@ -107,6 +111,17 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace) {
 						: ns
 							? document.createElementNS(ns, next_tag)
 							: document.createElement(next_tag);
+
+					if (DEV && location) {
+						// @ts-expect-error
+						element.__svelte_meta = {
+							loc: {
+								filename,
+								line: location[0],
+								column: location[1]
+							}
+						};
+					}
 
 					if (render_fn) {
 						// If hydrating, use the existing ssr comment as the anchor so that the
