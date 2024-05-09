@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.126
+
+### Patch Changes
+
+- fix: improve behaviour of unowned derived signals ([#11521](https://github.com/sveltejs/svelte/pull/11521))
+
+- fix: make `$effect.active()` true when updating deriveds ([#11500](https://github.com/sveltejs/svelte/pull/11500))
+
+- fix: skip parent element validation for snippet contents ([#11463](https://github.com/sveltejs/svelte/pull/11463))
+
 ## 5.0.0-next.125
 
 ### Patch Changes
