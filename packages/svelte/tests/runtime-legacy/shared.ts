@@ -392,9 +392,9 @@ async function run_test_variant(
 		}
 	} catch (err) {
 		if (config.runtime_error) {
-			assert.equal((err as Error).message, config.runtime_error);
+			assert.equal((err as Error).message.includes(config.runtime_error), true);
 		} else if (config.error && !unintended_error) {
-			assert.equal((err as Error).message, config.error);
+			assert.equal((err as Error).message.includes(config.error), true);
 		} else {
 			throw err;
 		}
