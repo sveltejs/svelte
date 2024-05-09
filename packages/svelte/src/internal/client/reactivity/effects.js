@@ -93,8 +93,16 @@ function create_effect(type, fn, sync) {
 	}
 
 	if (current_reaction !== null && !is_root) {
-		if ((current_reaction.f & (DERIVED | UNOWNED)) === (DERIVED | UNOWNED)) {
-			e.effect_in_unowned_derived();
+		var flags = current_reaction.f;
+		if ((flags & DERIVED) !== 0) {
+			if ((flags & UNOWNED) !== 0) {
+				e.effect_in_unowned_derived();
+			}
+			// If we are inside a derived, then we also need to attach the
+			// effect to the parent effect too.
+			if (current_effect !== null) {
+				push_effect(effect, current_effect);
+			}
 		}
 
 		push_effect(effect, current_reaction);
