@@ -178,11 +178,10 @@ export function user_effect(fn) {
  */
 export function user_pre_effect(fn) {
 	validate_effect('$effect.pre');
-	var signal = render_effect(fn);
 	if (DEV) {
-		signal.name = '$effect.pre';
+		return create_effect(RENDER_EFFECT, fn, true, '$effect.pre');
 	}
-	return signal;
+	return render_effect(fn);
 }
 
 /**
