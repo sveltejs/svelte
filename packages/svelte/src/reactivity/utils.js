@@ -93,9 +93,18 @@ export const make_reactive = (Entity, options) => {
 		 * @param {ConstructorParameters<TEntity>}  params
 		 */
 		constructor(...params) {
-			/** @type {Map<string | symbol, Map<unknown[], import("#client").Source<boolean>>>} */
-			// TODO: comment what read_methods_signals and version_signal do
+			/**
+			 * each read method can be tracked like has, size, get and etc. these props might depend on a parameter. they have to reactive based on the
+			 * parameter they depend on, if it requires a change. for instance if you call `set.has(2)` then call `set.add(5)` the former shouldn't get notified.
+			 * so what is do we need to store if this needs to be generic? function name + parameter. unfortunately for each parameter we need a new signal, why?
+			 * because arrays don't equal themselves even if they have the same value (referential equality).
+			 * fortunately current builtins that we try to make reactive only take 1 parameter for their read methods so this is fine.
+			 * @type {Map<string | symbol, Map<unknown[], import("#client").Source<boolean>>>}
+			 **/
 			const read_methods_signals = new Map();
+			/**
+			 * other props that get notified based on any change listen to version
+			 */
 			const version_signal = source(false);
 			return new Proxy(new Entity(...params), {
 				get(target, property) {
