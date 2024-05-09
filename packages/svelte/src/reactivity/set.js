@@ -1,4 +1,4 @@
-import { make_reactive } from './utils.js';
+import { make_reactive, NOTIFY_WITH_ALL_PARAMS } from './utils.js';
 
 export const ReactiveSet = make_reactive(Set, {
 	write_properties: ['add', 'clear', 'delete'],
@@ -16,7 +16,7 @@ export const ReactiveSet = make_reactive(Set, {
 			if (value.size == 0) {
 				return false;
 			}
-			notify_read_methods(['has'], params[0]);
+			notify_read_methods(['has'], NOTIFY_WITH_ALL_PARAMS);
 			notify_read_methods(['size']);
 			return true;
 		},
