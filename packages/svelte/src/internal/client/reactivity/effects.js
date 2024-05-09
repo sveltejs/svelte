@@ -67,9 +67,10 @@ export function push_effect(effect, parent_effect) {
  * @param {number} type
  * @param {(() => void | (() => void))} fn
  * @param {boolean} sync
+ * @param {string} [name]
  * @returns {import('#client').Effect}
  */
-function create_effect(type, fn, sync) {
+function create_effect(type, fn, sync, name) {
 	var is_root = (type & ROOT_EFFECT) !== 0;
 
 	/** @type {import('#client').Effect} */
@@ -90,6 +91,7 @@ function create_effect(type, fn, sync) {
 
 	if (DEV) {
 		effect.component_function = dev_current_component_function;
+		effect.name = name;
 	}
 
 	if (current_reaction !== null && !is_root) {
@@ -150,7 +152,7 @@ export function user_effect(fn) {
 
 	// Non-nested `$effect(...)` in a component should be deferred
 	// until the component is mounted
-	const defer =
+	var defer =
 		current_effect !== null &&
 		(current_effect.f & RENDER_EFFECT) !== 0 &&
 		// TODO do we actually need this? removing them changes nothing
@@ -158,10 +160,14 @@ export function user_effect(fn) {
 		!current_component_context.m;
 
 	if (defer) {
-		const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
+		var context = /** @type {import('#client').ComponentContext} */ (current_component_context);
 		(context.e ??= []).push(fn);
 	} else {
-		effect(fn);
+		var signal = effect(fn);
+		if (DEV) {
+			signal.name = '$effect';
+		}
+		return signal;
 	}
 }
 
@@ -172,7 +178,13 @@ export function user_effect(fn) {
  */
 export function user_pre_effect(fn) {
 	validate_effect('$effect.pre');
-	return render_effect(fn);
+	var signal = render_effect(fn);
+	if (DEV) {
+		if (DEV) {
+			signal.name = '$effect.pre';
+		}
+	}
+	return signal;
 }
 
 /**
@@ -247,6 +259,17 @@ export function legacy_pre_effect_reset() {
  */
 export function render_effect(fn) {
 	return create_effect(RENDER_EFFECT, fn, true);
+}
+
+/**
+ * @param {() => void | (() => void)} fn
+ * @returns {import('#client').Effect}
+ */
+export function template_effect(fn) {
+	if (DEV) {
+		return create_effect(RENDER_EFFECT, fn, true, 'Svelte template effect');
+	}
+	return render_effect(fn);
 }
 
 /**

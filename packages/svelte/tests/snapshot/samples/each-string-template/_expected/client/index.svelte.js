@@ -8,7 +8,7 @@ export default function Each_string_template($$anchor) {
 	$.each(node, 1, () => ['foo', 'bar', 'baz'], $.index, ($$anchor, thing, $$index) => {
 		var text = $.text($$anchor);
 
-		$.render_effect(() => $.set_text(text, `${$.stringify($.unwrap(thing))}, `));
+		$.template_effect(() => $.set_text(text, `${$.stringify($.unwrap(thing))}, `));
 		$.append($$anchor, text);
 	});
 

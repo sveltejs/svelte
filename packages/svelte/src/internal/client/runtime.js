@@ -28,6 +28,9 @@ import { lifecycle_outside_component } from '../shared/errors.js';
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
 
+// Used for DEV time error handling
+/** @param {WeakSet<Error>} value */
+const handled_errors = new WeakSet();
 // Used for controlling the flush of effects.
 let current_scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
@@ -240,6 +243,57 @@ export function check_dirtiness(reaction) {
 }
 
 /**
+ * @param {Error} error
+ * @param {import("#client").Effect} effect
+ * @param {import("#client").ComponentContext | null} component_context
+ */
+function trigger_error_boundary(error, effect, component_context) {
+	// Given we don't yet have error boundaries, we will just always throw.
+	if (DEV && !handled_errors.has(error)) {
+		let effect_name = effect.name;
+		if (component_context !== null) {
+			const component_stack = [];
+			/** @type {import("#client").ComponentContext | null} */
+			let current_context = component_context;
+
+			while (current_context !== null) {
+				var func = current_context.function;
+				var filename = func?.filename;
+
+				if (filename) {
+					component_stack.push(filename + (current_context === component_context ? `` : ''));
+				}
+
+				current_context = current_context.p;
+			}
+
+			let component_stack_string =
+				`Svelte caught an error thrown by <${component_stack.at(-1)}>.` +
+				` You should fix this error in your code.\n\nError: ${error.message}\n\nThe component tree when this error occured:\n`;
+
+			if (effect_name) {
+				component_stack_string += `\tin ${effect_name}\n`;
+			}
+
+			for (const name of component_stack) {
+				component_stack_string += `\tin <${name}>\n`;
+			}
+
+			if (error.stack) {
+				const stack = error.stack.split('\n');
+				stack.shift();
+				component_stack_string += `\nThe error is located at:\n${stack.join('\n')}`;
+			}
+
+			const new_error = new Error(component_stack_string);
+			handled_errors.add(new_error);
+			throw new_error;
+		}
+	}
+	throw error;
+}
+
+/**
  * @template V
  * @param {import('#client').Reaction} signal
  * @returns {V}
@@ -431,6 +485,8 @@ export function execute_effect(effect) {
 		execute_effect_teardown(effect);
 		var teardown = execute_reaction_fn(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
+	} catch (error) {
+		trigger_error_boundary(/** @type {Error} */ (error), effect, current_component_context);
 	} finally {
 		current_effect = previous_effect;
 		current_component_context = previous_component_context;
@@ -1108,7 +1164,10 @@ export function pop(component) {
 		if (effects !== null) {
 			context_stack_item.e = null;
 			for (let i = 0; i < effects.length; i++) {
-				effect(effects[i]);
+				var signal = effect(effects[i]);
+				if (DEV) {
+					signal.name = '$effect';
+				}
 			}
 		}
 		current_component_context = context_stack_item.p;
