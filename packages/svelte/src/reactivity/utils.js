@@ -4,7 +4,7 @@ import { get } from '../internal/client/runtime.js';
 /**
  * @template TEntityInstance
  * @template {(keyof TEntityInstance)[]} TMutationProperties
- * @typedef {Partial<Record<TMutationProperties[number], (value: TEntityInstance, property: TMutationProperties[number], ...params: unknown[])=>boolean>>}  Interceptors - return false if you want to prevent reactivity for this call/get
+ * @typedef {Partial<Record<TMutationProperties[number], (value: TEntityInstance, property: TMutationProperties[number], ...params: unknown[])=>boolean>>}  Interceptors - return false if you want to prevent reactivity for this call, DO NOT USE INTERCEPTORS FOR READ METHODS
  */
 
 /**
@@ -38,9 +38,9 @@ export const make_reactive = (Entity, options) => {
 		}
 
 		if (options.mutation_properties.some((v) => v === property)) {
-			set(version_signal, version_signal.v + 1);
+			set(version_signal, version_signal.v + 1); // write methods
 		} else {
-			get(version_signal);
+			get(version_signal); // read methods
 		}
 	}
 
