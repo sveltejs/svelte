@@ -191,12 +191,13 @@ export function check_dirtiness(reaction) {
 
 		if (dependencies !== null) {
 			var length = dependencies.length;
+			var is_equal;
 
 			for (var i = 0; i < length; i++) {
 				var dependency = dependencies[i];
 
 				if (!is_dirty && check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
-					update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
+					is_equal = update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
 				}
 
 				if (is_unowned) {
@@ -208,7 +209,7 @@ export function check_dirtiness(reaction) {
 
 					if (version > /** @type {import('#client').Derived} */ (reaction).version) {
 						/** @type {import('#client').Derived} */ (reaction).version = version;
-						return true;
+						return !is_equal;
 					}
 
 					if (!current_skip_reaction && !dependency?.reactions?.includes(reaction)) {
