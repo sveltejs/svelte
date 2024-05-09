@@ -180,9 +180,7 @@ export function user_pre_effect(fn) {
 	validate_effect('$effect.pre');
 	var signal = render_effect(fn);
 	if (DEV) {
-		if (DEV) {
-			signal.name = '$effect.pre';
-		}
+		signal.name = '$effect.pre';
 	}
 	return signal;
 }
