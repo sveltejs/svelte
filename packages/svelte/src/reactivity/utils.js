@@ -4,29 +4,29 @@ import { get } from '../internal/client/runtime.js';
 
 /**
  * @template TEntityInstance
- * @template {(keyof TEntityInstance)[]} TMutationProperties
+ * @template {(keyof TEntityInstance)[]} TWriteProperties
  * @template {(keyof TEntityInstance)[]} TReadProperties
- * @typedef {Partial<Record<TMutationProperties[number], (notify_read_methods: (methods: TReadProperties, ...params: unknown[])=>void ,value: TEntityInstance, property: TMutationProperties[number], ...params: unknown[])=>boolean>>}  Interceptors - return false if you want to prevent reactivity for this call, DO NOT USE INTERCEPTORS FOR READ METHODS
+ * @typedef {Partial<Record<TWriteProperties[number], (notify_read_methods: (methods: TReadProperties, ...params: unknown[])=>void ,value: TEntityInstance, property: TWriteProperties[number], ...params: unknown[])=>boolean>>}  Interceptors - return false if you want to prevent reactivity for this call, DO NOT USE INTERCEPTORS FOR READ METHODS
  */
 
 /**
  * @template TEntityInstance
- * @template {(keyof TEntityInstance)[]} TMutationProperties
+ * @template {(keyof TEntityInstance)[]} TWriteProperties
  * @template {(keyof TEntityInstance)[]} TReadProperties
  * @typedef {object} Options
- * @prop {TMutationProperties} mutation_properties - an array of property names on `TEntityInstance` that when calling a property on `TEntityInstance`, if the property name exists in this array, then mentioned property causes reactivity.
+ * @prop {TWriteProperties} write_properties - an array of property names on `TEntityInstance` that when calling a property on `TEntityInstance`, if the property name exists in this array, then mentioned property causes reactivity.
  * @prop {TReadProperties} read_properties - an array of property names on `TEntityInstance` that `mutation_properties` affects
- * @prop {Interceptors<TEntityInstance, TMutationProperties, TReadProperties>} [interceptors={}] - if the property names in `mutation_properties` shouldn't cause reactivity, such calling `set.add(2)` twice or accessing a property shouldn't be reactive based on some conditions, you can prevent the reactivity by returning `false` from these interceptors
+ * @prop {Interceptors<TEntityInstance, TWriteProperties, TReadProperties>} [interceptors={}] - if the property names in `mutation_properties` shouldn't cause reactivity, such calling `set.add(2)` twice or accessing a property shouldn't be reactive based on some conditions, you can prevent the reactivity by returning `false` from these interceptors
  */
 
 /** @typedef {Map<string | symbol | number, Map<unknown, import("#client").Source<boolean>>>} ReadMethodsSignals */
 
 /**
  * @template {new (...args: any) => any} TEntity - the entity we want to make reactive
- * @template {(keyof InstanceType<TEntity>)[]} TMutationProperties
+ * @template {(keyof InstanceType<TEntity>)[]} TWriteProperties
  * @template {(keyof InstanceType<TEntity>)[]} TReadProperties
  * @param {TEntity} Entity - the class/function we want to make reactive
- * @param {Options<InstanceType<TEntity>, TMutationProperties, TReadProperties>} options - configurations for how reactivity works for this entity
+ * @param {Options<InstanceType<TEntity>, TWriteProperties, TReadProperties>} options - configurations for how reactivity works for this entity
  * @returns {TEntity}
  */
 export const make_reactive = (Entity, options) => {
@@ -48,17 +48,19 @@ export const make_reactive = (Entity, options) => {
 	) {
 		/**
 		 * @param {TReadProperties} method_names
-		 * @param  {unknown} param
+		 * @param  {unknown[]} params
 		 */
-		function notify_read_methods(method_names, param) {
+		function notify_read_methods(method_names, ...params) {
 			method_names.forEach((name) => {
 				if (DEV && !options.read_properties.includes(name)) {
 					throw new Error(
 						`when trying to notify reactions got a read method that wasn't defined in options: ${name.toString()}`
 					);
 				}
-				const sig = get_signal_for_function(read_methods_signals, name, param);
-				increment_signal(version_signal, sig);
+				(params.length == 0 ? [null] : params).forEach((param) => {
+					const sig = get_signal_for_function(read_methods_signals, name, param);
+					increment_signal(version_signal, sig);
+				});
 			});
 		}
 
@@ -72,11 +74,11 @@ export const make_reactive = (Entity, options) => {
 		) {
 			return;
 		}
-		if (options.mutation_properties.some((v) => v === property)) {
+		if (options.write_properties.some((v) => v === property)) {
 			increment_signal(version_signal);
 		} else {
 			if (options.read_properties.includes(property)) {
-				params.forEach((param) => {
+				(params.length == 0 ? [null] : params).forEach((param) => {
 					const sig = get_signal_for_function(read_methods_signals, property, param);
 					get(sig);
 				});
