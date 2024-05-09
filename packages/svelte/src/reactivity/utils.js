@@ -2,6 +2,8 @@ import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 
+export const NOTIFY_WITH_ALL_PARAMS = `${crypto?.randomUUID?.() ?? Date.now().toString() + Date.now().toString()}`;
+
 /**
  * @template TEntityInstance
  * @template {(keyof TEntityInstance)[]} TWriteProperties
@@ -143,7 +145,7 @@ function notify_if_required(
  * @param {ReadMethodsSignals} read_methods_signals
  * @param {Options<InstanceType<TEntity>, TWriteProperties, TReadProperties>} options
  * @param {TReadProperties} method_names
- * @param {unknown[]} params
+ * @param {unknown[]} params - if you want to notify for all parameters pass NOTIFY_WITH_ALL_PARAMS constant, for instance some methods like `clear` should notify all `something.get(x)` methods; on these cases set this flag to true
  */
 function notify_read_methods(
 	options,
@@ -158,10 +160,16 @@ function notify_read_methods(
 				`when trying to notify reactions got a read method that wasn't defined in options: ${name.toString()}`
 			);
 		}
-		(params.length == 0 ? [null] : params).forEach((param) => {
-			const sig = get_signal_for_function(read_methods_signals, name, param);
-			increment_signal(version_signal, sig);
-		});
+		if (params.length == 1 && params[0] == NOTIFY_WITH_ALL_PARAMS) {
+			read_methods_signals.get(name)?.forEach((sig) => {
+				increment_signal(version_signal, sig);
+			});
+		} else {
+			(params.length == 0 ? [null] : params).forEach((param) => {
+				const sig = get_signal_for_function(read_methods_signals, name, param);
+				increment_signal(version_signal, sig);
+			});
+		}
 	});
 }
 
