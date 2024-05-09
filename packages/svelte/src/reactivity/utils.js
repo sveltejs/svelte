@@ -30,64 +30,6 @@ import { get } from '../internal/client/runtime.js';
  * @returns {TEntity}
  */
 export const make_reactive = (Entity, options) => {
-	/**
-	 * @template {InstanceType<TEntity>} TEntityInstance
-	 * @template {keyof TEntityInstance} TProperty
-	 * @param {import('#client').Source<boolean>} version_signal
-	 * @param {ReadMethodsSignals} read_methods_signals
-	 * @param {TProperty} property
-	 * @param {TEntityInstance} entity_instance
-	 * @param {unknown[]} params
-	 */
-	function notify_if_required(
-		version_signal,
-		read_methods_signals,
-		property,
-		entity_instance,
-		...params
-	) {
-		/**
-		 * @param {TReadProperties} method_names
-		 * @param  {unknown[]} params
-		 */
-		function notify_read_methods(method_names, ...params) {
-			method_names.forEach((name) => {
-				if (DEV && !options.read_properties.includes(name)) {
-					throw new Error(
-						`when trying to notify reactions got a read method that wasn't defined in options: ${name.toString()}`
-					);
-				}
-				(params.length == 0 ? [null] : params).forEach((param) => {
-					const sig = get_signal_for_function(read_methods_signals, name, param);
-					increment_signal(version_signal, sig);
-				});
-			});
-		}
-
-		if (
-			options.interceptors?.[property]?.(
-				notify_read_methods,
-				entity_instance,
-				property,
-				...params
-			) === false
-		) {
-			return;
-		}
-		if (options.write_properties.some((v) => v === property)) {
-			increment_signal(version_signal);
-		} else {
-			if (options.read_properties.includes(property)) {
-				(params.length == 0 ? [null] : params).forEach((param) => {
-					const sig = get_signal_for_function(read_methods_signals, property, param);
-					get(sig);
-				});
-			} else {
-				get(version_signal);
-			}
-		}
-	}
-
 	// we return a class so that the caller can call it with new
 	// @ts-ignore
 	return class {
@@ -116,12 +58,19 @@ export const make_reactive = (Entity, options) => {
 					if (typeof orig_property === 'function') {
 						// Bind functions directly to the `TEntity`
 						result = ((/** @type {unknown[]} */ ...params) => {
-							notify_if_required(version_signal, read_methods_signals, property, target, ...params);
+							notify_if_required(
+								version_signal,
+								read_methods_signals,
+								property,
+								target,
+								options,
+								...params
+							);
 							return orig_property.bind(target)(...params);
 						}).bind(target);
 					} else {
 						// Properly handle getters
-						notify_if_required(version_signal, read_methods_signals, property, target);
+						notify_if_required(version_signal, read_methods_signals, property, target, options);
 						result = Reflect.get(target, property, target);
 					}
 
@@ -131,6 +80,90 @@ export const make_reactive = (Entity, options) => {
 		}
 	};
 };
+
+/**
+ * @template {new (...args: any) => any} TEntity
+ * @template {(keyof TEntityInstance)[]} TWriteProperties
+ * @template {(keyof TEntityInstance)[]} TReadProperties
+ * @template {InstanceType<TEntity>} TEntityInstance
+ * @template {keyof TEntityInstance} TProperty
+ * @param {import('#client').Source<boolean>} version_signal
+ * @param {ReadMethodsSignals} read_methods_signals
+ * @param {TProperty} property
+ * @param {TEntityInstance} entity_instance
+ * @param {Options<InstanceType<TEntity>, TWriteProperties, TReadProperties>} options
+ * @param {unknown[]} params
+ */
+function notify_if_required(
+	version_signal,
+	read_methods_signals,
+	property,
+	entity_instance,
+	options,
+	...params
+) {
+	if (
+		options.interceptors?.[property]?.(
+			(methods, ...params) => {
+				return notify_read_methods(
+					options,
+					version_signal,
+					read_methods_signals,
+					methods,
+					...params
+				);
+			},
+			entity_instance,
+			property,
+			...params
+		) === false
+	) {
+		return;
+	}
+	if (options.write_properties.some((v) => v === property)) {
+		increment_signal(version_signal);
+	} else {
+		if (options.read_properties.includes(property)) {
+			(params.length == 0 ? [null] : params).forEach((param) => {
+				const sig = get_signal_for_function(read_methods_signals, property, param);
+				get(sig);
+			});
+		} else {
+			get(version_signal);
+		}
+	}
+}
+
+/**
+ * @template {new (...args: any) => any} TEntity
+ * @template {(keyof TEntityInstance)[]} TWriteProperties
+ * @template {(keyof TEntityInstance)[]} TReadProperties
+ * @template {InstanceType<TEntity>} TEntityInstance
+ * @param {import('#client').Source<boolean>} version_signal
+ * @param {ReadMethodsSignals} read_methods_signals
+ * @param {Options<InstanceType<TEntity>, TWriteProperties, TReadProperties>} options
+ * @param {TReadProperties} method_names
+ * @param {unknown[]} params
+ */
+function notify_read_methods(
+	options,
+	version_signal,
+	read_methods_signals,
+	method_names,
+	...params
+) {
+	method_names.forEach((name) => {
+		if (DEV && !options.read_properties.includes(name)) {
+			throw new Error(
+				`when trying to notify reactions got a read method that wasn't defined in options: ${name.toString()}`
+			);
+		}
+		(params.length == 0 ? [null] : params).forEach((param) => {
+			const sig = get_signal_for_function(read_methods_signals, name, param);
+			increment_signal(version_signal, sig);
+		});
+	});
+}
 
 /**
  * gets the signal for this function based on params. If the signal doesn't exist, it creates a new one and returns that
