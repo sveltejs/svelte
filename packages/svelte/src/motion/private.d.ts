@@ -1,9 +1,11 @@
-import { Spring } from './public.js';
-
 export interface TickContext<T> {
 	inv_mass: number;
 	dt: number;
-	opts: Spring<T>;
+	opts: {
+		stiffness: number;
+		damping: number;
+		precision: number;
+	};
 	settled: boolean;
 }
 
