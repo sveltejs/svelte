@@ -125,7 +125,9 @@ const spread_props_handler = {
 			});
 			const keys_function = target.keys[i];
 			if (typeof obj === 'object' && obj !== null && key in obj) {
-				if (is_function(p)) p = p();
+				if (is_function(p)) {
+					p = p();
+				}
 				return get_descriptor(p, key);
 			} else if (keys_function && is_function(keys_function)) get(keys_function());
 		}
@@ -133,9 +135,7 @@ const spread_props_handler = {
 	has(target, key) {
 		for (let p of target.props) {
 			if (is_function(p)) p = p();
-			if (key in p) {
-				return true;
-			}
+			if (key in p) return true;
 		}
 
 		return false;
