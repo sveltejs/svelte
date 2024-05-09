@@ -112,6 +112,22 @@ export function effect_in_teardown(rune) {
 }
 
 /**
+ * Effect cannot be created inside a `$derived` value that was not itself created inside an effect
+ * @returns {never}
+ */
+export function effect_in_unowned_derived() {
+	if (DEV) {
+		const error = new Error(`${"effect_in_unowned_derived"}\n${"Effect cannot be created inside a `$derived` value that was not itself created inside an effect"}`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("effect_in_unowned_derived");
+	}
+}
+
+/**
  * `%rune%` can only be used inside an effect (e.g. during component initialisation)
  * @param {string} rune
  * @returns {never}

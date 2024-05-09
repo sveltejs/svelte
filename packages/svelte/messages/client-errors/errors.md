@@ -24,6 +24,10 @@
 
 > `%rune%` cannot be used inside an effect cleanup function
 
+## effect_in_unowned_derived
+
+> Effect cannot be created inside a `$derived` value that was not itself created inside an effect
+
 ## effect_orphan
 
 > `%rune%` can only be used inside an effect (e.g. during component initialisation)

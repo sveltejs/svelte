@@ -26,7 +26,9 @@ import {
 	EFFECT_RAN,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	EFFECT_TRANSPARENT
+	EFFECT_TRANSPARENT,
+	DERIVED,
+	UNOWNED
 } from '../constants.js';
 import { set } from './sources.js';
 import { remove } from '../dom/reconciler.js';
@@ -34,12 +36,10 @@ import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 
 /**
- * @param {import('#client').Effect | null} effect
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
- * @returns {asserts effect}
  */
-export function validate_effect(effect, rune) {
-	if (effect === null) {
+export function validate_effect(rune) {
+	if (current_effect === null && current_reaction === null) {
 		e.effect_orphan(rune);
 	}
 
@@ -93,6 +93,18 @@ function create_effect(type, fn, sync) {
 	}
 
 	if (current_reaction !== null && !is_root) {
+		var flags = current_reaction.f;
+		if ((flags & DERIVED) !== 0) {
+			if ((flags & UNOWNED) !== 0) {
+				e.effect_in_unowned_derived();
+			}
+			// If we are inside a derived, then we also need to attach the
+			// effect to the parent effect too.
+			if (current_effect !== null) {
+				push_effect(effect, current_effect);
+			}
+		}
+
 		push_effect(effect, current_reaction);
 	}
 
@@ -118,7 +130,15 @@ function create_effect(type, fn, sync) {
  * @returns {boolean}
  */
 export function effect_active() {
-	return current_effect ? (current_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 : false;
+	if (current_reaction && (current_reaction.f & DERIVED) !== 0) {
+		return (current_reaction.f & UNOWNED) === 0;
+	}
+
+	if (current_effect) {
+		return (current_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0;
+	}
+
+	return false;
 }
 
 /**
@@ -126,12 +146,13 @@ export function effect_active() {
  * @param {() => void | (() => void)} fn
  */
 export function user_effect(fn) {
-	validate_effect(current_effect, '$effect');
+	validate_effect('$effect');
 
 	// Non-nested `$effect(...)` in a component should be deferred
 	// until the component is mounted
 	const defer =
-		current_effect.f & RENDER_EFFECT &&
+		current_effect !== null &&
+		(current_effect.f & RENDER_EFFECT) !== 0 &&
 		// TODO do we actually need this? removing them changes nothing
 		current_component_context !== null &&
 		!current_component_context.m;
@@ -150,7 +171,7 @@ export function user_effect(fn) {
  * @returns {import('#client').Effect}
  */
 export function user_pre_effect(fn) {
-	validate_effect(current_effect, '$effect.pre');
+	validate_effect('$effect.pre');
 	return render_effect(fn);
 }
 
