@@ -153,7 +153,7 @@ const get_signal_for_function = (signals_map, function_name, param) => {
 	}
 
 	/**
-	 * @type {import("#client").Source<boolean>>}
+	 * @type {import("#client").Source<boolean>}
 	 */
 	let signal;
 	if (!params_to_signal_map.has(param)) {
@@ -171,9 +171,9 @@ const get_signal_for_function = (signals_map, function_name, param) => {
 /**
  * toggles the signal value. this change notifies any reactions (not using number explicitly cause its not required, change from true to false or vice versa is enough).
  * @param {import("#client").Source<boolean>} version_signal
- * @param {import("#client").Source<boolean>} [function_signal]
+ * @param {import("#client").Source<boolean>} [read_method_signal]
  */
-const increment_signal = (version_signal, function_signal) => {
+const increment_signal = (version_signal, read_method_signal) => {
 	set(version_signal, !version_signal.v);
-	function_signal && set(function_signal, !function_signal.v);
+	read_method_signal && set(read_method_signal, !read_method_signal.v);
 };
