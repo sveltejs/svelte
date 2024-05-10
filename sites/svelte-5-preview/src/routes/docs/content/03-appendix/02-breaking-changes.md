@@ -133,6 +133,33 @@ In Svelte 4 syntax, every property (declared via `export let`) is bindable, mean
 
 Setting the `accessors` option to `true` makes properties of a component directly accessible on the component instance. In runes mode, properties are never accessible on the component instance. You can use component exports instead if you need to expose them.
 
+### Props may update when value is unchanged
+
+In Svelte 4, components would check whether their props had changed. For example, in this situation...
+
+```svelte
+<script>
+	import Marker from './Marker.svelte';
+
+	let coords = { x: 0, y: 0 };
+
+	function onclick(e) {
+		coords = { x: e.clientX, y: e.clientY };
+	}
+</script>
+
+<svelte:window on:click={onclick} />
+
+<button on:click={update}>update</button>
+<Marker x={coords.x} y={coords.y} />
+```
+
+...clicking twice in the same spot wouldn't cause anything inside `Marker.svelte` to react to the second click, because from its perspective `x` and `y` are unchanged.
+
+Svelte 5 uses fine-grained reactivity, and as such this check no longer happens. Most of the time this results in fewer updates because Svelte no longer needs to conservatively assume that non-primitive values changed. In this case, however, reassigning `coords` _will_ cause updates even if `coords.x` and `coords.y` are unchanged.
+
+For more complex props (namely, those involving function calls) the parent component will memoize the value.
+
 ## Other breaking changes
 
 ### Stricter `@const` assignment validation
