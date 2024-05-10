@@ -967,7 +967,7 @@ const runes_scope_tweaker = {
 				const alias =
 					property.key.type === 'Identifier'
 						? property.key.name
-						: /** @type {string} */ (/** @type {import('estree').Literal} */ (property.key).value);
+						: String(/** @type {import('estree').Literal} */ (property.key).value);
 				let initial = property.value.type === 'AssignmentPattern' ? property.value.right : null;
 
 				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
