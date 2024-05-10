@@ -1889,11 +1889,24 @@ export const template_visitors = {
 		let is_content_editable = false;
 		let has_content_editable_binding = false;
 
-		if (is_custom_element) {
+		if (
 			// cloneNode is faster, but it does not instantiate the underlying class of the
 			// custom element until the template is connected to the dom, which would
 			// cause problems when setting properties on the custom element.
 			// Therefore we need to use importNode instead, which doesn't have this caveat.
+			is_custom_element ||
+			// If we have an <img loading="lazy"> occurance, we need to use importNode for FF
+			// otherwise, the image won't be lazy.
+			(node.name === 'img' &&
+				node.attributes.some(
+					(attribute) =>
+						attribute.type === 'Attribute' &&
+						attribute.name === 'loading' &&
+						Array.isArray(attribute.value) &&
+						attribute.value[0].type === 'Text' &&
+						attribute.value[0].data === 'lazy'
+				))
+		) {
 			metadata.context.template_needs_import_node = true;
 		}
 
