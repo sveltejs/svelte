@@ -247,7 +247,7 @@ export function check_dirtiness(reaction) {
  * @param {import("#client").Effect} effect
  * @param {import("#client").ComponentContext | null} component_context
  */
-function trigger_error_boundary(error, effect, component_context) {
+function handle_error(error, effect, component_context) {
 	// Given we don't yet have error boundaries, we will just always throw.
 	if (!DEV || handled_errors.has(error) || component_context === null) {
 		throw error;
@@ -484,7 +484,7 @@ export function execute_effect(effect) {
 		var teardown = execute_reaction_fn(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 	} catch (error) {
-		trigger_error_boundary(/** @type {Error} */ (error), effect, current_component_context);
+		handle_error(/** @type {Error} */ (error), effect, current_component_context);
 	} finally {
 		current_effect = previous_effect;
 		current_component_context = previous_component_context;
