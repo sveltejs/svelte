@@ -167,8 +167,7 @@ export function hydrate(component, options) {
 			return instance;
 		}, false);
 	} catch (error) {
-		const skip_retry = DEV && '__skip_hydration_retry' in /** @type {Error} */ (error);
-		if (!hydrated && options.recover !== false && !skip_retry) {
+		if (!hydrated && options.recover !== false && /** @type {Error} */ (error).message.includes('hydration_missing_marker_close')) {
 			w.hydration_mismatch();
 
 			// If an error occured above, the operations might not yet have been initialised.

@@ -258,12 +258,6 @@ function handle_error(error, effect, component_context) {
 	const effect_name = effect.fn.name;
 
 	if (effect_name) {
-		// If we have an effect name, it means it happened in the template, $effect or $effect.pre.
-		Object.defineProperty(error, '__skip_hydration_retry', {
-			value: true,
-			enumerable: false
-		});
-
 		component_stack.push(effect_name);
 	}
 
