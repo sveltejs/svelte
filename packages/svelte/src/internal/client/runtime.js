@@ -331,7 +331,7 @@ export function execute_reaction_fn(signal) {
 	current_untracking = false;
 
 	try {
-		let res = signal.fn();
+		let res = (0, signal.fn)();
 		let dependencies = /** @type {import('#client').Value<unknown>[]} **/ (signal.deps);
 		if (current_dependencies !== null) {
 			let i;
