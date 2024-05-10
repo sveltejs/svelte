@@ -1889,11 +1889,23 @@ export const template_visitors = {
 		let is_content_editable = false;
 		let has_content_editable_binding = false;
 
-		if (is_custom_element) {
+		if (
 			// cloneNode is faster, but it does not instantiate the underlying class of the
 			// custom element until the template is connected to the dom, which would
 			// cause problems when setting properties on the custom element.
 			// Therefore we need to use importNode instead, which doesn't have this caveat.
+			is_custom_element ||
+			// If we have an <img loading="lazy"> occurance, we need to use importNode for FF
+			// otherwise, the image won't be lazy. If we detect an attribute for "loading" then
+			// just fallback to using importNode. Also if we have a spread attribute on the img,
+			// then it might contain this property, so we also need to fallback there too.
+			(node.name === 'img' &&
+				node.attributes.some(
+					(attribute) =>
+						attribute.type === 'SpreadAttribute' ||
+						(attribute.type === 'Attribute' && attribute.name === 'loading')
+				))
+		) {
 			metadata.context.template_needs_import_node = true;
 		}
 

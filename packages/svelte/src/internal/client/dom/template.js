@@ -251,7 +251,7 @@ export function text(anchor) {
 	return push_template_node(node);
 }
 
-export const comment = template('<!>', TEMPLATE_FRAGMENT);
+export const comment = template('<!>', TEMPLATE_FRAGMENT | TEMPLATE_USE_IMPORT_NODE);
 
 /**
  * Assign the created (or in hydration mode, traversed) dom elements to the current block
