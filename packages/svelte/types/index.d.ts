@@ -304,6 +304,13 @@ declare module 'svelte' {
 	 * Synchronously flushes any pending state changes and those that result from it.
 	 * */
 	export function flushSync(fn?: (() => void) | undefined): void;
+	/**
+	 * Wraps a component with a decorator that is able to modify the props of the component before it is created.
+	 * */
+	export function decorateComponent<Component extends SvelteComponent<Record<string, any>, any, any>, Props extends ComponentProps<Component> = ComponentProps<Component>>(component: Component, decorator: (args: {
+		props: Props;
+		component: (props: Props) => Component;
+	}) => Component): Component;
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
 	/**

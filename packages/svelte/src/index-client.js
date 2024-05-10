@@ -180,6 +180,26 @@ export function flushSync(fn) {
 	flush_sync(fn);
 }
 
+/**
+ * Wraps a component with a decorator that is able to modify the props of the component before it is created.
+ * @template {import('svelte').SvelteComponent} Component
+ * @template {import('svelte').ComponentProps<Component>} [Props=import('svelte').ComponentProps<Component>]
+ * @param {Component} component
+ * @param {(args: { props: Props, component: (props: Props) => Component }) => Component} decorator
+ * @returns {Component}
+ */
+export function decorateComponent(component, decorator) {
+	// @ts-expect-error shape is different under the hood
+	return (target, props) => {
+		return decorator({
+			props,
+			component: (props) =>
+				// @ts-expect-error shape is different under the hood
+				component(target, props)
+		});
+	};
+}
+
 export { hydrate, mount, unmount } from './internal/client/render.js';
 
 export {
