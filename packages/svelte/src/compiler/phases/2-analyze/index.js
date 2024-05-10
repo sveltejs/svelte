@@ -1254,7 +1254,7 @@ const common_visitors = {
 					binding.kind === 'frozen_state' ||
 					binding.kind === 'derived') &&
 				// We're only concerned with reads here
-				parent.type !== 'AssignmentExpression' &&
+				(parent.type !== 'AssignmentExpression' || parent.left !== node) &&
 				parent.type !== 'UpdateExpression'
 			) {
 				w.state_referenced_locally(node);
