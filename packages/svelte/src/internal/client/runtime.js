@@ -254,12 +254,12 @@ function trigger_error_boundary(error, effect, component_context) {
 	}
 
 	const component_stack = [];
+
 	/** @type {import("#client").ComponentContext | null} */
 	let current_context = component_context;
 
 	while (current_context !== null) {
-		var func = current_context.function;
-		var filename = func?.filename;
+		var filename = current_context.function?.filename;
 
 		if (filename) {
 			component_stack.push(filename + (current_context === component_context ? `` : ''));
