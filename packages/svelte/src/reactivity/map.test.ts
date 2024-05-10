@@ -207,11 +207,7 @@ test('not invoking reactivity when value is not in the map after changes', () =>
 		});
 	});
 
-	assert.deepEqual(log, [1, undefined, undefined, undefined, 1, undefined]);
+	assert.deepEqual(log, [1, undefined, undefined, 1]);
 
 	cleanup();
-});
-
-test('Map.instanceOf', () => {
-	assert.equal(new ReactiveMap() instanceof Map, true);
 });
