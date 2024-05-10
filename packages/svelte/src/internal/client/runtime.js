@@ -249,48 +249,46 @@ export function check_dirtiness(reaction) {
  */
 function trigger_error_boundary(error, effect, component_context) {
 	// Given we don't yet have error boundaries, we will just always throw.
-	if (DEV && !handled_errors.has(error)) {
-		let effect_name = effect.name;
-		if (component_context !== null) {
-			const component_stack = [];
-			/** @type {import("#client").ComponentContext | null} */
-			let current_context = component_context;
-
-			while (current_context !== null) {
-				var func = current_context.function;
-				var filename = func?.filename;
-
-				if (filename) {
-					component_stack.push(filename + (current_context === component_context ? `` : ''));
-				}
-
-				current_context = current_context.p;
-			}
-
-			let component_stack_string =
-				`Svelte caught an error thrown by <${component_stack.at(-1)}>.` +
-				` You should fix this error in your code.\n\nError: ${error.message}\n\nThe component tree when this error occured:\n`;
-
-			if (effect_name) {
-				component_stack_string += `\tin ${effect_name}\n`;
-			}
-
-			for (const name of component_stack) {
-				component_stack_string += `\tin <${name}>\n`;
-			}
-
-			if (error.stack) {
-				const stack = error.stack.split('\n');
-				stack.shift();
-				component_stack_string += `\nThe error is located at:\n${stack.join('\n')}`;
-			}
-
-			const new_error = new Error(component_stack_string);
-			handled_errors.add(new_error);
-			throw new_error;
-		}
+	if (!DEV || handled_errors.has(error) || component_context === null) {
+		throw error;
 	}
-	throw error;
+
+	const component_stack = [];
+	/** @type {import("#client").ComponentContext | null} */
+	let current_context = component_context;
+
+	while (current_context !== null) {
+		var func = current_context.function;
+		var filename = func?.filename;
+
+		if (filename) {
+			component_stack.push(filename + (current_context === component_context ? `` : ''));
+		}
+
+		current_context = current_context.p;
+	}
+
+	let component_stack_string =
+		`Svelte caught an error thrown by <${component_stack.at(-1)}>.` +
+		` You should fix this error in your code.\n\nError: ${error.message}\n\nThe component tree when this error occured:\n`;
+
+	if (effect.name) {
+		component_stack_string += `\tin ${effect.name}\n`;
+	}
+
+	for (const name of component_stack) {
+		component_stack_string += `\tin <${name}>\n`;
+	}
+
+	if (error.stack) {
+		const stack = error.stack.split('\n');
+		stack.shift();
+		component_stack_string += `\nThe error is located at:\n${stack.join('\n')}`;
+	}
+
+	const new_error = new Error(component_stack_string);
+	handled_errors.add(new_error);
+	throw new_error;
 }
 
 /**
