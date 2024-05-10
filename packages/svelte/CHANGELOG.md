@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.127
+
+### Patch Changes
+
+- fix: don't warn on writes to `$state` ([#11540](https://github.com/sveltejs/svelte/pull/11540))
+
+- feat: provide better error messages in DEV ([#11526](https://github.com/sveltejs/svelte/pull/11526))
+
+- fix: better support for lazy img elements ([#11545](https://github.com/sveltejs/svelte/pull/11545))
+
+- fix: handle falsy prop aliases correctly ([#11539](https://github.com/sveltejs/svelte/pull/11539))
+
+- fix: ensure spread events are added even when rerunning spread immediately ([#11535](https://github.com/sveltejs/svelte/pull/11535))
+
 ## 5.0.0-next.126
 
 ### Patch Changes
