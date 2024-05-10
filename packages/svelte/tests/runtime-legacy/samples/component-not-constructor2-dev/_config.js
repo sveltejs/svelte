@@ -15,11 +15,9 @@ export default test({
 			component.componentName = 'banana';
 			throw new Error('Expected an error');
 		} catch (err) {
-			assert.equal(
-				/** @type {Error} */ (err).message.includes(
-					'svelte_component_invalid_this_value\nThe `this={...}` property of a `<svelte:component>` must be a Svelte component, if defined'
-				),
-				true
+			assert.include(
+				/** @type {Error} */ (err).message,
+				'svelte_component_invalid_this_value\nThe `this={...}` property of a `<svelte:component>` must be a Svelte component, if defined'
 			);
 		}
 	}

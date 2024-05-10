@@ -12,10 +12,7 @@ export default test({
 			component.componentName = 'banana';
 			throw new Error('Expected an error');
 		} catch (err) {
-			assert.equal(
-				/** @type {Error} */ (err).message.includes('$$component is not a function'),
-				true
-			);
+			assert.include(/** @type {Error} */ (err).message, '$$component is not a function');
 		}
 	}
 });
