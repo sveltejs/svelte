@@ -269,7 +269,7 @@ export function render_effect(fn) {
 export function template_effect(fn) {
 	if (DEV) {
 		define_property(fn, 'name', {
-			value: 'Svelte template effect'
+			value: '{expression}'
 		});
 	}
 	return render_effect(fn);
