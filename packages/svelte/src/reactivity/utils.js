@@ -128,7 +128,8 @@ function notify_if_required(
 	} else {
 		if (options.read_properties.includes(property)) {
 			(params.length == 0 ? [null] : params).forEach((param) => {
-				const sig = get_signal_for_function(read_methods_signals, property, param);
+				// read like methods should create the signal so what on any change to them they get notified
+				const sig = get_signal_for_function(read_methods_signals, property, param, true);
 				get(sig);
 			});
 		} else {
@@ -168,24 +169,37 @@ function notify_read_methods(
 		} else {
 			(params.length == 0 ? [null] : params).forEach((param) => {
 				const sig = get_signal_for_function(read_methods_signals, name, param);
-				increment_signal(version_signal, sig);
+				sig && increment_signal(version_signal, sig);
 			});
 		}
 	});
 }
 
 /**
- * gets the signal for this function based on params. If the signal doesn't exist, it creates a new one and returns that
+ * gets the signal for this function based on params. If the signal doesn't exist and create_signal_if_doesnt_exist is not set to true, it creates a new one and returns that
+ * @template {boolean} [TCreateSignalIfDoesntExist=false]
  * @param {ReadMethodsSignals} signals_map
  * @param {string | symbol | number} function_name
  * @param {unknown} param
+ * @param {TCreateSignalIfDoesntExist} [create_signal_if_doesnt_exist=false]
+ * @returns {TCreateSignalIfDoesntExist extends true ? import("#client").Source<boolean> : import("#client").Source<boolean> | null }
  */
-const get_signal_for_function = (signals_map, function_name, param) => {
+const get_signal_for_function = (
+	signals_map,
+	function_name,
+	param,
+	// @ts-ignore: this should be supported in jsdoc based on https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html#template but doesn't?
+	create_signal_if_doesnt_exist = false
+) => {
 	/**
 	 * @type {Map<unknown, import("#client").Source<boolean>>}
 	 */
 	let params_to_signal_map;
 	if (!signals_map.has(function_name)) {
+		if (!create_signal_if_doesnt_exist) {
+			// @ts-ignore
+			return null;
+		}
 		params_to_signal_map = new Map([[param, source(false)]]);
 		signals_map.set(function_name, params_to_signal_map);
 	} else {
@@ -199,6 +213,10 @@ const get_signal_for_function = (signals_map, function_name, param) => {
 	 */
 	let signal;
 	if (!params_to_signal_map.has(param)) {
+		if (!create_signal_if_doesnt_exist) {
+			// @ts-ignore
+			return null;
+		}
 		signal = source(false);
 		params_to_signal_map.set(param, signal);
 	} else {
@@ -206,7 +224,7 @@ const get_signal_for_function = (signals_map, function_name, param) => {
 		 * @type {import("#client").Source<boolean>}
 		 */ (params_to_signal_map.get(param));
 	}
-
+	// @ts-ignore
 	return signal;
 };
 
