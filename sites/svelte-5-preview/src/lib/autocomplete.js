@@ -165,6 +165,13 @@ export function autocomplete(context, selected, files) {
 		};
 	}
 
+	if (
+		selected.type !== 'svelte' &&
+		(selected.type !== 'js' || !selected.name.endsWith('.svelte'))
+	) {
+		return false;
+	}
+
 	if (node.name === 'VariableName' || node.name === 'PropertyName' || node.name === '.') {
 		// special case — `$inspect(...).with(...)` is the only rune that 'returns'
 		// an 'object' with a 'method'
