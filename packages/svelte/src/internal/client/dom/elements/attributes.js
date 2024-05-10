@@ -4,8 +4,7 @@ import { get_descriptors, get_prototype_of, map_get, map_set } from '../../utils
 import { AttributeAliases, DelegatedEvents, namespace_svg } from '../../../../constants.js';
 import { delegate } from './events.js';
 import { autofocus } from './misc.js';
-import { effect } from '../../reactivity/effects.js';
-import { run } from '../../../shared/utils.js';
+import { effect, effect_root } from '../../reactivity/effects.js';
 import * as w from '../../warnings.js';
 
 /**
@@ -112,7 +111,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 
 	// @ts-expect-error
 	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes ??= {});
-	/** @type {Array<() => void>} */
+	/** @type {Array<[string, any, () => void]>} */
 	var events = [];
 
 	for (key in next) {
@@ -145,7 +144,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 			if (value != null) {
 				if (!delegated) {
 					if (!prev) {
-						events.push(() => element.addEventListener(event_name, value, opts));
+						events.push([key, value, () => element.addEventListener(event_name, value, opts)]);
 					} else {
 						element.addEventListener(event_name, value, opts);
 					}
@@ -193,7 +192,22 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 	// On the first run, ensure that events are added after bindings so
 	// that their listeners fire after the binding listeners
 	if (!prev) {
-		effect(() => events.forEach(run));
+		// In edge cases it may happen that set_attributes is re-run before the
+		// effect is executed. In that case the render effect which initiates this
+		// re-run will destroy the inner effect and it will never run. But because
+		// next and prev may have the same keys, the event would not get added again
+		// and it would get lost. We prevent this by using a root effect.
+		const destroy_root = effect_root(() => {
+			effect(() => {
+				if (!element.isConnected) return;
+				for (const [key, value, evt] of events) {
+					if (next[key] === value) {
+						evt();
+					}
+				}
+				destroy_root();
+			});
+		});
 	}
 
 	return next;
