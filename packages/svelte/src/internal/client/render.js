@@ -170,6 +170,8 @@ export function hydrate(component, options) {
 		if (!hydrated && options.recover !== false) {
 			w.hydration_mismatch();
 
+			// If an error occured above, the operations might not yet have been initialised.
+			init_operations();
 			clear_text_content(target);
 
 			set_hydrating(false);
