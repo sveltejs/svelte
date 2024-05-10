@@ -1897,10 +1897,13 @@ export const template_visitors = {
 			is_custom_element ||
 			// If we have an <img loading="lazy"> occurance, we need to use importNode for FF
 			// otherwise, the image won't be lazy. If we detect an attribute for "loading" then
-			// just fallback to using importNode.
+			// just fallback to using importNode. Also if we have a spread attribute on the img,
+			// then it might contain this property, so we also need to fallback there too.
 			(node.name === 'img' &&
 				node.attributes.some(
-					(attribute) => attribute.type === 'Attribute' && attribute.name === 'loading'
+					(attribute) =>
+						attribute.type === 'SpreadAttribute' ||
+						(attribute.type === 'Attribute' && attribute.name === 'loading')
 				))
 		) {
 			metadata.context.template_needs_import_node = true;
