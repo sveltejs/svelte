@@ -255,6 +255,18 @@ function handle_error(error, effect, component_context) {
 
 	const component_stack = [];
 
+	const effect_name = effect.fn.name;
+
+	if (effect_name) {
+		// If we have an effect name, it means it happened in the template, $effect or $effect.pre.
+		Object.defineProperty(error, '__skip_hydration_retry', {
+			value: true,
+			enumerable: false
+		});
+
+		component_stack.push(effect_name);
+	}
+
 	/** @type {import("#client").ComponentContext | null} */
 	let current_context = component_context;
 
@@ -268,27 +280,9 @@ function handle_error(error, effect, component_context) {
 
 		current_context = current_context.p;
 	}
-	const effect_name = effect.fn.name;
 
-	if (effect_name) {
-		// If we have an effect name, it means it happened in the template, $effect or $effect.pre.
-		Object.defineProperty(error, '__skip_hydration_retry', {
-			value: true,
-			enumerable: false
-		});
-	}
-
-	let component_stack_string =
-		`Svelte caught an error thrown by ${component_stack[0]}${effect_name ? ` during a${effect_name.startsWith('$') ? 'n' : ''} ${effect_name}` : ''}.` +
-		` You should fix this error in your code.\n\nError: ${error.message}\n\nThe component stack when this error occured:\n`;
-
-	for (const name of component_stack) {
-		component_stack_string += `\t${name}\n`;
-	}
-
-	component_stack_string += '\nThe error is located at:\n';
-
-	error.message = component_stack_string;
+	const indent = /Firefox/.test(navigator.userAgent) ? '  ' : '\t';
+	error.message += `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`;
 
 	const stack = error.stack;
 
