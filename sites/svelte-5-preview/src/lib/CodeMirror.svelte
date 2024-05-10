@@ -11,6 +11,7 @@
 	import { javascriptLanguage } from '@codemirror/lang-javascript';
 	import { createEventDispatcher, tick } from 'svelte';
 	import { writable } from 'svelte/store';
+	import { get_repl_context } from '$lib/context.js';
 	import Message from './Message.svelte';
 	import { svelteTheme } from './theme.js';
 	import { autocomplete } from './autocomplete.js';
@@ -192,12 +193,16 @@
 		}
 	});
 
+	const { files, selected } = get_repl_context();
+
 	const svelte_rune_completions = svelteLanguage.data.of({
-		autocomplete
+		/** @param {import('@codemirror/autocomplete').CompletionContext} context */
+		autocomplete: (context) => autocomplete(context, $selected, $files)
 	});
 
 	const js_rune_completions = javascriptLanguage.data.of({
-		autocomplete
+		/** @param {import('@codemirror/autocomplete').CompletionContext} context */
+		autocomplete: (context) => autocomplete(context, $selected, $files)
 	});
 </script>
 

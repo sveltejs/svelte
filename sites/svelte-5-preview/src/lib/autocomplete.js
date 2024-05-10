@@ -125,13 +125,38 @@ const options = runes.map(({ snippet, test }, i) => ({
 	test
 }));
 
-/** @param {import('@codemirror/autocomplete').CompletionContext} context */
-export function autocomplete(context) {
+/**
+ * @param {import('@codemirror/autocomplete').CompletionContext} context
+ * @param {import('./types.js').File} selected
+ * @param {import('./types.js').File[]} files
+ */
+export function autocomplete(context, selected, files) {
 	let node = syntaxTree(context.state).resolveInner(context.pos, -1);
 
 	if (node.name === 'String' && node.parent?.name === 'ImportDeclaration') {
-		// TODO autocomplete `svelte` and any files in the REPL that aren't this one
-		return;
+		const modules = [
+			'svelte',
+			'svelte/animate',
+			'svelte/easing',
+			'svelte/legacy',
+			'svelte/motion',
+			'svelte/reactivity',
+			'svelte/store',
+			'svelte/transition'
+		];
+
+		for (const file of files) {
+			if (file === selected) continue;
+			modules.push(`./${file.name}.${file.type}`);
+		}
+
+		return {
+			from: node.from + 1,
+			options: modules.map((label) => ({
+				label,
+				type: 'string'
+			}))
+		};
 	}
 
 	if (node.name === 'VariableName' || node.name === 'PropertyName' || node.name === '.') {
