@@ -262,33 +262,42 @@ function handle_error(error, effect, component_context) {
 		var filename = current_context.function?.filename;
 
 		if (filename) {
-			component_stack.push(filename + (current_context === component_context ? `` : ''));
+			const file = filename.split('/').at(-1);
+			component_stack.push(file);
 		}
 
 		current_context = current_context.p;
 	}
-
 	let component_stack_string =
-		`Svelte caught an error thrown by <${component_stack.at(-1)}>.` +
-		` You should fix this error in your code.\n\nError: ${error.message}\n\nThe component tree when this error occured:\n`;
-
-	if (effect.name) {
-		component_stack_string += `\tin ${effect.name}\n`;
-	}
+		`Svelte caught an error thrown by ${component_stack[0]}${effect.fn.name ? ` during a${effect.fn.name.startsWith('$') ? 'n' : ''} ${effect.fn.name}` : ''}.` +
+		` You should fix this error in your code.\n\nError: ${error.message}\n\nThe component stack when this error occured:\n`;
 
 	for (const name of component_stack) {
-		component_stack_string += `\tin <${name}>\n`;
+		component_stack_string += `\t${name}\n`;
 	}
 
-	if (error.stack) {
-		const stack = error.stack.split('\n');
-		stack.shift();
-		component_stack_string += `\nThe error is located at:\n${stack.join('\n')}`;
+	component_stack_string += '\nThe error is located at:\n';
+
+	error.message = component_stack_string;
+
+	const stack = error.stack;
+
+	// Filter out internal files from callstack
+	if (stack) {
+		const lines = stack.split('\n');
+		const new_lines = [];
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i];
+			if (line.includes('svelte/src/internal')) {
+				continue;
+			}
+			new_lines.push(line);
+		}
+		error.stack = new_lines.join('\n');
 	}
 
-	const new_error = new Error(component_stack_string);
-	handled_errors.add(new_error);
-	throw new_error;
+	handled_errors.add(error);
+	throw error;
 }
 
 /**
@@ -1162,10 +1171,7 @@ export function pop(component) {
 		if (effects !== null) {
 			context_stack_item.e = null;
 			for (let i = 0; i < effects.length; i++) {
-				var signal = effect(effects[i]);
-				if (DEV) {
-					signal.name = '$effect';
-				}
+				effect(effects[i]);
 			}
 		}
 		current_component_context = context_stack_item.p;

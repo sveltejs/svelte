@@ -34,6 +34,7 @@ import { set } from './sources.js';
 import { remove } from '../dom/reconciler.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
+import { define_property } from '../utils.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -67,10 +68,9 @@ export function push_effect(effect, parent_effect) {
  * @param {number} type
  * @param {(() => void | (() => void))} fn
  * @param {boolean} sync
- * @param {string} [name]
  * @returns {import('#client').Effect}
  */
-function create_effect(type, fn, sync, name) {
+function create_effect(type, fn, sync) {
 	var is_root = (type & ROOT_EFFECT) !== 0;
 
 	/** @type {import('#client').Effect} */
@@ -91,7 +91,6 @@ function create_effect(type, fn, sync, name) {
 
 	if (DEV) {
 		effect.component_function = dev_current_component_function;
-		effect.name = name;
 	}
 
 	if (current_reaction !== null && !is_root) {
@@ -159,14 +158,17 @@ export function user_effect(fn) {
 		current_component_context !== null &&
 		!current_component_context.m;
 
+	if (DEV) {
+		define_property(fn, 'name', {
+			value: '$effect'
+		});
+	}
+
 	if (defer) {
 		var context = /** @type {import('#client').ComponentContext} */ (current_component_context);
 		(context.e ??= []).push(fn);
 	} else {
 		var signal = effect(fn);
-		if (DEV) {
-			signal.name = '$effect';
-		}
 		return signal;
 	}
 }
@@ -179,7 +181,9 @@ export function user_effect(fn) {
 export function user_pre_effect(fn) {
 	validate_effect('$effect.pre');
 	if (DEV) {
-		return create_effect(RENDER_EFFECT, fn, true, '$effect.pre');
+		define_property(fn, 'name', {
+			value: '$effect.pre'
+		});
 	}
 	return render_effect(fn);
 }
@@ -264,7 +268,9 @@ export function render_effect(fn) {
  */
 export function template_effect(fn) {
 	if (DEV) {
-		return create_effect(RENDER_EFFECT, fn, true, 'Svelte template effect');
+		define_property(fn, 'name', {
+			value: 'Svelte template effect'
+		});
 	}
 	return render_effect(fn);
 }

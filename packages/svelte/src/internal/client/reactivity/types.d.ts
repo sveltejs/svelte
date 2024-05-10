@@ -51,8 +51,6 @@ export interface Effect extends Reaction {
 	next: null | Effect;
 	/** Dev only */
 	component_function?: any;
-	/** Dev only */
-	name?: string;
 }
 
 export interface ValueDebug<V = unknown> extends Value<V> {
