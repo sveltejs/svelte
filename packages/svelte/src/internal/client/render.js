@@ -167,7 +167,8 @@ export function hydrate(component, options) {
 			return instance;
 		}, false);
 	} catch (error) {
-		if (!hydrated && options.recover !== false) {
+		const skip_retry = DEV && '__skip_hydration_retry' in /** @type {Error} */ (error);
+		if (!hydrated && options.recover !== false && !skip_retry) {
 			w.hydration_mismatch();
 
 			// If an error occured above, the operations might not yet have been initialised.
