@@ -135,6 +135,28 @@ export function autocomplete(context) {
 	}
 
 	if (node.name === 'VariableName' || node.name === 'PropertyName' || node.name === '.') {
+		// special case — `$inspect(...).with(...)` is the only rune that 'returns'
+		// an 'object' with a 'method'
+		if (node.name === 'PropertyName' || node.name === '.') {
+			if (
+				node.parent?.name === 'MemberExpression' &&
+				node.parent.firstChild?.name === 'CallExpression' &&
+				node.parent.firstChild.firstChild?.name === 'VariableName' &&
+				context.state.sliceDoc(
+					node.parent.firstChild.firstChild.from,
+					node.parent.firstChild.firstChild.to
+				) === '$inspect'
+			) {
+				const open = context.matchBefore(/\.\w*/);
+				if (!open) return null;
+
+				return {
+					from: open.from,
+					options: [snippetCompletion('.with(${})', { type: 'keyword', label: '.with' })]
+				};
+			}
+		}
+
 		const open = context.matchBefore(/\$[\w\.]*/);
 		if (!open) return null;
 
