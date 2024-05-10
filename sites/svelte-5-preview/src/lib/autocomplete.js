@@ -1,7 +1,7 @@
 import { snippetCompletion } from '@codemirror/autocomplete';
 import { syntaxTree } from '@codemirror/language';
 
-/** @typedef {(node: import('@lezer/common').SyntaxNode, context: import('@codemirror/autocomplete').CompletionContext) => boolean} Test */
+/** @typedef {(node: import('@lezer/common').SyntaxNode, context: import('@codemirror/autocomplete').CompletionContext, selected: import('./types').File) => boolean} Test */
 
 /**
  * Returns `true` if `$bindable()` is valid
@@ -39,8 +39,14 @@ function is_bindable(node, context) {
  * TODO only allow in `.svelte` files, and only at the top level
  * @type {Test}
  */
-function is_props(node) {
-	return node.name === 'VariableName' && node.parent?.name === 'VariableDeclaration';
+function is_props(node, _, selected) {
+	if (selected.type !== 'svelte') return false;
+
+	return (
+		node.name === 'VariableName' &&
+		node.parent?.name === 'VariableDeclaration' &&
+		node.parent.parent?.name === 'Script'
+	);
 }
 
 /**
@@ -188,7 +194,7 @@ export function autocomplete(context, selected, files) {
 		return {
 			from: open.from,
 			options: options
-				.filter((option) => (option.test ? option.test(node, context) : true))
+				.filter((option) => (option.test ? option.test(node, context, selected) : true))
 				.map((option) => option.option)
 		};
 	}
