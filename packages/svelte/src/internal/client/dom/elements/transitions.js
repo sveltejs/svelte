@@ -350,6 +350,7 @@ function animate(element, options, counterpart, t2, callback) {
 				callback?.();
 
 				if (t2 === 1) {
+					counterpart?.abort();
 					animation.cancel();
 				}
 			})
