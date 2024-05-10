@@ -504,26 +504,26 @@ declare module 'svelte/compiler' {
 	/**
 	 * The parse function parses a component, returning only its abstract syntax tree.
 	 *
-	 * The `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
-	 * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
+	 * The `modernAst` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
+	 * `modernAst` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
 	 *
 	 * https://svelte.dev/docs/svelte-compiler#svelte-parse
 	 * */
 	export function parse(source: string, options: {
 		filename?: string;
-		modern: true;
+		modernAst: true;
 	}): Root;
 	/**
 	 * The parse function parses a component, returning only its abstract syntax tree.
 	 *
-	 * The `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
-	 * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
+	 * The `modernAst` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
+	 * `modernAst` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
 	 *
 	 * https://svelte.dev/docs/svelte-compiler#svelte-parse
 	 * */
 	export function parse(source: string, options?: {
 		filename?: string | undefined;
-		modern?: false | undefined;
+		modernAst?: false | undefined;
 	} | undefined): LegacyRoot;
 	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
