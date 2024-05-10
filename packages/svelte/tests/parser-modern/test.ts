@@ -15,7 +15,7 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 	const actual = JSON.parse(
 		JSON.stringify(
 			parse(input, {
-				modernAst: true
+				modern: true
 			})
 		)
 	);

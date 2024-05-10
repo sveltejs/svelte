@@ -504,26 +504,26 @@ declare module 'svelte/compiler' {
 	/**
 	 * The parse function parses a component, returning only its abstract syntax tree.
 	 *
-	 * The `modernAst` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
-	 * `modernAst` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
+	 * The `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
+	 * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
 	 *
 	 * https://svelte.dev/docs/svelte-compiler#svelte-parse
 	 * */
 	export function parse(source: string, options: {
 		filename?: string;
-		modernAst: true;
+		modern: true;
 	}): Root;
 	/**
 	 * The parse function parses a component, returning only its abstract syntax tree.
 	 *
-	 * The `modernAst` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
-	 * `modernAst` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
+	 * The `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
+	 * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
 	 *
 	 * https://svelte.dev/docs/svelte-compiler#svelte-parse
 	 * */
 	export function parse(source: string, options?: {
 		filename?: string | undefined;
-		modernAst?: false | undefined;
+		modern?: false | undefined;
 	} | undefined): LegacyRoot;
 	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
@@ -1051,15 +1051,15 @@ declare module 'svelte/compiler' {
 		filename?: string | undefined;
 	} | undefined): Promise<Processed>;
 	export class CompileError extends Error {
-		
+
 		constructor(code: string, message: string, position: [number, number] | undefined);
-		
+
 		filename: CompileError_1['filename'];
-		
+
 		position: CompileError_1['position'];
-		
+
 		start: CompileError_1['start'];
-		
+
 		end: CompileError_1['end'];
 		code: string;
 	}
@@ -1078,9 +1078,9 @@ declare module 'svelte/compiler' {
 		code: string;
 	};
 	class Scope {
-		
+
 		constructor(root: ScopeRoot, parent: Scope | null, porous: boolean);
-		
+
 		root: ScopeRoot;
 		/**
 		 * The immediate parent scope
@@ -1108,25 +1108,25 @@ declare module 'svelte/compiler' {
 		 * which is usually an error. Block statements do not increase this value
 		 */
 		function_depth: number;
-		
+
 		declare(node: import('estree').Identifier, kind: Binding['kind'], declaration_kind: DeclarationKind, initial?: null | import('estree').Expression | import('estree').FunctionDeclaration | import('estree').ClassDeclaration | import('estree').ImportDeclaration | EachBlock): Binding;
 		child(porous?: boolean): Scope;
-		
+
 		generate(preferred_name: string): string;
-		
+
 		get(name: string): Binding | null;
-		
+
 		get_bindings(node: import('estree').VariableDeclarator | LetDirective): Binding[];
-		
+
 		owner(name: string): Scope | null;
-		
+
 		reference(node: import('estree').Identifier, path: SvelteNode[]): void;
 		#private;
 	}
 	class ScopeRoot {
-		
+
 		conflicts: Set<string>;
-		
+
 		unique(preferred_name: string): import("estree").Identifier;
 	}
 	namespace Css {
@@ -2032,21 +2032,21 @@ declare module 'svelte/motion' {
 
 declare module 'svelte/reactivity' {
 	class ReactiveDate extends Date {
-		
+
 		constructor(...values: any[]);
 		#private;
 	}
 	class ReactiveSet<T> extends Set<T> {
-		
+
 		constructor(value?: Iterable<T> | null | undefined);
-		
+
 		add(value: T): this;
 		#private;
 	}
 	class ReactiveMap<K, V> extends Map<K, V> {
-		
+
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
-		
+
 		set(key: K, value: V): this;
 		#private;
 	}
@@ -2055,7 +2055,7 @@ declare module 'svelte/reactivity' {
 		#private;
 	}
 	class ReactiveURLSearchParams extends URLSearchParams {
-		
+
 		[REPLACE](params: URLSearchParams): void;
 		#private;
 	}
