@@ -232,7 +232,7 @@ function setup_select_synchronization(value_binding, context) {
 	context.state.init.push(
 		b.stmt(
 			b.call(
-				'$.render_effect',
+				'$.template_effect',
 				b.thunk(
 					b.block([
 						b.stmt(
@@ -448,7 +448,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
  * Resulting code for dynamic looks something like this:
  * ```js
  * let value;
- * $.render_effect(() => {
+ * $.template_effect(() => {
  * 	if (value !== (value = 'new value')) {
  * 		element.property = value;
  * 		// or
@@ -1184,7 +1184,7 @@ function serialize_update(statement) {
 	const body =
 		statement.type === 'ExpressionStatement' ? statement.expression : b.block([statement]);
 
-	return b.stmt(b.call('$.render_effect', b.thunk(body)));
+	return b.stmt(b.call('$.template_effect', b.thunk(body)));
 }
 
 /**
@@ -1194,7 +1194,7 @@ function serialize_update(statement) {
 function serialize_render_stmt(state) {
 	return state.update.length === 1
 		? serialize_update(state.update[0])
-		: b.stmt(b.call('$.render_effect', b.thunk(b.block(state.update))));
+		: b.stmt(b.call('$.template_effect', b.thunk(b.block(state.update))));
 }
 
 /**
@@ -1739,7 +1739,7 @@ export const template_visitors = {
 		state.init.push(
 			b.stmt(
 				b.call(
-					'$.render_effect',
+					'$.template_effect',
 					b.thunk(
 						b.block([
 							b.stmt(

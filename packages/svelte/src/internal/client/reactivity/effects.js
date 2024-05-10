@@ -34,6 +34,7 @@ import { set } from './sources.js';
 import { remove } from '../dom/reconciler.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
+import { define_property } from '../utils.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -150,18 +151,25 @@ export function user_effect(fn) {
 
 	// Non-nested `$effect(...)` in a component should be deferred
 	// until the component is mounted
-	const defer =
+	var defer =
 		current_effect !== null &&
 		(current_effect.f & RENDER_EFFECT) !== 0 &&
 		// TODO do we actually need this? removing them changes nothing
 		current_component_context !== null &&
 		!current_component_context.m;
 
+	if (DEV) {
+		define_property(fn, 'name', {
+			value: '$effect'
+		});
+	}
+
 	if (defer) {
-		const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
+		var context = /** @type {import('#client').ComponentContext} */ (current_component_context);
 		(context.e ??= []).push(fn);
 	} else {
-		effect(fn);
+		var signal = effect(fn);
+		return signal;
 	}
 }
 
@@ -172,6 +180,11 @@ export function user_effect(fn) {
  */
 export function user_pre_effect(fn) {
 	validate_effect('$effect.pre');
+	if (DEV) {
+		define_property(fn, 'name', {
+			value: '$effect.pre'
+		});
+	}
 	return render_effect(fn);
 }
 
@@ -247,6 +260,19 @@ export function legacy_pre_effect_reset() {
  */
 export function render_effect(fn) {
 	return create_effect(RENDER_EFFECT, fn, true);
+}
+
+/**
+ * @param {() => void | (() => void)} fn
+ * @returns {import('#client').Effect}
+ */
+export function template_effect(fn) {
+	if (DEV) {
+		define_property(fn, 'name', {
+			value: '{expression}'
+		});
+	}
+	return render_effect(fn);
 }
 
 /**

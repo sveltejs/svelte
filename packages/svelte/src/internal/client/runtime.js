@@ -28,6 +28,9 @@ import { lifecycle_outside_component } from '../shared/errors.js';
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
 
+// Used for DEV time error handling
+/** @param {WeakSet<Error>} value */
+const handled_errors = new WeakSet();
 // Used for controlling the flush of effects.
 let current_scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
@@ -240,6 +243,62 @@ export function check_dirtiness(reaction) {
 }
 
 /**
+ * @param {Error} error
+ * @param {import("#client").Effect} effect
+ * @param {import("#client").ComponentContext | null} component_context
+ */
+function handle_error(error, effect, component_context) {
+	// Given we don't yet have error boundaries, we will just always throw.
+	if (!DEV || handled_errors.has(error) || component_context === null) {
+		throw error;
+	}
+
+	const component_stack = [];
+
+	const effect_name = effect.fn.name;
+
+	if (effect_name) {
+		component_stack.push(effect_name);
+	}
+
+	/** @type {import("#client").ComponentContext | null} */
+	let current_context = component_context;
+
+	while (current_context !== null) {
+		var filename = current_context.function?.filename;
+
+		if (filename) {
+			const file = filename.split('/').at(-1);
+			component_stack.push(file);
+		}
+
+		current_context = current_context.p;
+	}
+
+	const indent = /Firefox/.test(navigator.userAgent) ? '  ' : '\t';
+	error.message += `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`;
+
+	const stack = error.stack;
+
+	// Filter out internal files from callstack
+	if (stack) {
+		const lines = stack.split('\n');
+		const new_lines = [];
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i];
+			if (line.includes('svelte/src/internal')) {
+				continue;
+			}
+			new_lines.push(line);
+		}
+		error.stack = new_lines.join('\n');
+	}
+
+	handled_errors.add(error);
+	throw error;
+}
+
+/**
  * @template V
  * @param {import('#client').Reaction} signal
  * @returns {V}
@@ -260,7 +319,7 @@ export function execute_reaction_fn(signal) {
 	current_untracking = false;
 
 	try {
-		let res = signal.fn();
+		let res = (0, signal.fn)();
 		let dependencies = /** @type {import('#client').Value<unknown>[]} **/ (signal.deps);
 		if (current_dependencies !== null) {
 			let i;
@@ -431,6 +490,8 @@ export function execute_effect(effect) {
 		execute_effect_teardown(effect);
 		var teardown = execute_reaction_fn(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
+	} catch (error) {
+		handle_error(/** @type {Error} */ (error), effect, current_component_context);
 	} finally {
 		current_effect = previous_effect;
 		current_component_context = previous_component_context;

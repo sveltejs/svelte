@@ -143,7 +143,8 @@ export const disallowed_paragraph_contents = [
 	'pre',
 	'section',
 	'table',
-	'ul'
+	'ul',
+	'p'
 ];
 
 // https://html.spec.whatwg.org/multipage/syntax.html#generate-implied-end-tags

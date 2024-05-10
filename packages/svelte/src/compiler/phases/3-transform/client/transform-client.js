@@ -449,13 +449,19 @@ export function client_component(source, analysis, options) {
 				b.id('import.meta.hot'),
 				b.block([
 					b.const(b.id('s'), b.call('$.source', b.id(analysis.name))),
+					b.const(b.id('filename'), b.member(b.id(analysis.name), b.id('filename'))),
 					b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
+					b.stmt(
+						b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.id('filename'))
+					),
 					b.if(
 						b.id('import.meta.hot.acceptExports'),
-						b.stmt(
-							b.call('import.meta.hot.acceptExports', b.array([b.literal('default')]), accept_fn)
-						),
-						b.stmt(b.call('import.meta.hot.accept', accept_fn))
+						b.block([
+							b.stmt(
+								b.call('import.meta.hot.acceptExports', b.array([b.literal('default')]), accept_fn)
+							)
+						]),
+						b.block([b.stmt(b.call('import.meta.hot.accept', accept_fn))])
 					)
 				])
 			),

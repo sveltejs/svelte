@@ -11,14 +11,20 @@ function Hmr($$anchor) {
 
 if (import.meta.hot) {
 	const s = $.source(Hmr);
+	const filename = Hmr.filename;
 
 	Hmr = $.hmr(s);
+	Hmr.filename = filename;
 
-	if (import.meta.hot.acceptExports) import.meta.hot.acceptExports(["default"], (module) => {
-		$.set(s, module.default);
-	}); else import.meta.hot.accept((module) => {
-		$.set(s, module.default);
-	});
+	if (import.meta.hot.acceptExports) {
+		import.meta.hot.acceptExports(["default"], (module) => {
+			$.set(s, module.default);
+		});
+	} else {
+		import.meta.hot.accept((module) => {
+			$.set(s, module.default);
+		});
+	}
 }
 
 export default Hmr;
