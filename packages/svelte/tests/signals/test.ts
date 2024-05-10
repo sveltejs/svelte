@@ -377,7 +377,7 @@ describe('signals', () => {
 		};
 	});
 
-	test('effect with creating an effect correctly disposes previous effects', () => {
+	test('creating effects within a derived correctly handles ownership', () => {
 		const log: Array<number | string> = [];
 		let a: Value<unknown>;
 		let inner: Value<string | number>;
