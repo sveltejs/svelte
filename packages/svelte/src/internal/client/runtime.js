@@ -550,21 +550,14 @@ function process_effects(effect, filter_flags, shallow, collected_effects) {
 			}
 
 			if ((flags & RENDER_EFFECT) !== 0) {
-				if (is_branch) {
-					if (!shallow && child !== null) {
-						current_effect = child;
-						continue;
-					}
-				} else {
-					if (check_dirtiness(current_effect)) {
-						execute_effect(current_effect);
-						// Child might have been mutated since running the effect
-						child = current_effect.first;
-					}
-					if (!shallow && child !== null) {
-						current_effect = child;
-						continue;
-					}
+				if (!is_branch && check_dirtiness(current_effect)) {
+					execute_effect(current_effect);
+					// Child might have been mutated since running the effect
+					child = current_effect.first;
+				}
+				if (!shallow && child !== null) {
+					current_effect = child;
+					continue;
 				}
 			} else if ((flags & EFFECT) !== 0) {
 				if (is_branch || is_clean) {
