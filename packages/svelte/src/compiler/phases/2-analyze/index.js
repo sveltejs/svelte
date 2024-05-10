@@ -559,11 +559,17 @@ export function analyze_component(root, source, options) {
 			prune(analysis.css.ast, element);
 		}
 
-		if (
-			!analysis.css.ast.content.comment ||
-			!extract_svelte_ignore(analysis.css.ast.content.comment.data).includes('css_unused_selector')
-		) {
-			warn_unused(analysis.css.ast);
+		const { comment } = analysis.css.ast.content;
+		if (comment) {
+			const ignores = extract_svelte_ignore(comment.start, comment.data, analysis.runes);
+
+			const should_ignore =
+				ignores.includes('css_unused_selector') ||
+				(!runes && ignores.includes('css-unused-selector'));
+
+			if (!should_ignore) {
+				warn_unused(analysis.css.ast);
+			}
 		}
 
 		outer: for (const element of analysis.elements) {
@@ -1102,7 +1108,8 @@ const common_visitors = {
 			const ignores = [];
 
 			for (const comment of comments) {
-				ignores.push(...extract_svelte_ignore(comment.value));
+				const start = /** @type {any} */ (comment).start + 2;
+				ignores.push(...extract_svelte_ignore(start, comment.value, context.state.analysis.runes));
 			}
 
 			if (ignores.length > 0) {
@@ -1133,7 +1140,11 @@ const common_visitors = {
 			}
 
 			if (child.type === 'Comment') {
-				ignores.push(...extract_svelte_ignore(child.data));
+				const start =
+					child.start +
+					(context.state.analysis.source.slice(child.start, child.start + 4) === '<!--' ? 4 : 2);
+
+				ignores.push(...extract_svelte_ignore(start, child.data, context.state.analysis.runes));
 			} else {
 				const combined_ignores = new Set(context.state.ignores);
 				for (const ignore of ignores) combined_ignores.add(ignore);
