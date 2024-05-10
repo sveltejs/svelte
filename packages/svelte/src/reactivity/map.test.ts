@@ -183,3 +183,31 @@ test('map handling of undefined values', () => {
 
 	cleanup();
 });
+
+test('not invoking reactivity when value is not in the map after changes', () => {
+	const map = new ReactiveMap([[1, 1]]);
+
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(map.get(1));
+		});
+
+		render_effect(() => {
+			log.push(map.get(2));
+		});
+
+		flushSync(() => {
+			map.delete(1);
+		});
+
+		flushSync(() => {
+			map.set(1, 1);
+		});
+	});
+
+	assert.deepEqual(log, [1, undefined, undefined, 1]);
+
+	cleanup();
+});
