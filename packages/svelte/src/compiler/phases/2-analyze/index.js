@@ -1242,6 +1242,7 @@ const common_visitors = {
 			if (
 				context.state.analysis.runes &&
 				node !== binding.node &&
+				context.state.function_depth === binding.scope.function_depth &&
 				// If we have $state that can be proxied or frozen and isn't re-assigned, then that means
 				// it's likely not using a primitive value and thus this warning isn't that helpful.
 				((binding.kind === 'state' &&
@@ -1252,7 +1253,9 @@ const common_visitors = {
 							!should_proxy_or_freeze(binding.initial.arguments[0], context.state.scope)))) ||
 					binding.kind === 'frozen_state' ||
 					binding.kind === 'derived') &&
-				context.state.function_depth === binding.scope.function_depth
+				// We're only concerned with reads here
+				(parent.type !== 'AssignmentExpression' || parent.left !== node) &&
+				parent.type !== 'UpdateExpression'
 			) {
 				w.state_referenced_locally(node);
 			}
