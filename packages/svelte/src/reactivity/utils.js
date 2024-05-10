@@ -2,7 +2,8 @@ import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 
-export const NOTIFY_WITH_ALL_PARAMS = `${crypto?.randomUUID?.() ?? Date.now().toString() + Date.now().toString()}`;
+// TODO: should this be in constants?
+export const NOTIFY_WITH_ALL_PARAMS = Symbol();
 
 /**
  * @template TEntityInstance
