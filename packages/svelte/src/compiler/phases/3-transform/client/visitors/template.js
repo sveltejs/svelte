@@ -1896,15 +1896,11 @@ export const template_visitors = {
 			// Therefore we need to use importNode instead, which doesn't have this caveat.
 			is_custom_element ||
 			// If we have an <img loading="lazy"> occurance, we need to use importNode for FF
-			// otherwise, the image won't be lazy.
+			// otherwise, the image won't be lazy. If we detect an attribute for "loading" then
+			// just fallback to using importNode.
 			(node.name === 'img' &&
 				node.attributes.some(
-					(attribute) =>
-						attribute.type === 'Attribute' &&
-						attribute.name === 'loading' &&
-						Array.isArray(attribute.value) &&
-						attribute.value[0].type === 'Text' &&
-						attribute.value[0].data === 'lazy'
+					(attribute) => attribute.type === 'Attribute' && attribute.name === 'loading'
 				))
 		) {
 			metadata.context.template_needs_import_node = true;
