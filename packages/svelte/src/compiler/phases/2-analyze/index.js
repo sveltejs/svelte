@@ -1255,10 +1255,7 @@ const common_visitors = {
 					binding.kind === 'derived') &&
 				// We're only concerned with reads here
 				parent.type !== 'AssignmentExpression' &&
-				parent.type !== 'UpdateExpression' &&
-				(parent.type !== 'MemberExpression' ||
-					(context.path.at(-2)?.type !== 'AssignmentExpression' &&
-						context.path.at(-2)?.type !== 'UpdateExpression'))
+				parent.type !== 'UpdateExpression'
 			) {
 				w.state_referenced_locally(node);
 			}
