@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.128
+
+### Patch Changes
+
+- fix: improved $inspect handling of reactive Map/Set/Date ([#11553](https://github.com/sveltejs/svelte/pull/11553))
+
+- fix: adjust heuristics for effect_update_depth_exceeded ([#11557](https://github.com/sveltejs/svelte/pull/11557))
+
 ## 5.0.0-next.127
 
 ### Patch Changes
