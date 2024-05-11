@@ -653,12 +653,13 @@ function process_effects(effect, filter_flags, shallow, collected_effects) {
 	}
 
 	if (effects.length > 0) {
-		if ((filter_flags & EFFECT) !== 0) {
-			collected_effects.push(...effects);
-		}
-
-		if (!shallow) {
-			for (var i = 0; i < effects.length; i++) {
+		// We might be dealing with many effects here, far more than can be spread into
+		// an array push call (callstack overflow). So let's deal with each effect in a loop.
+		for (var i = 0; i < effects.length; i++) {
+			if ((filter_flags & EFFECT) !== 0) {
+				collected_effects.push(effects[i]);
+			}
+			if (!shallow) {
 				process_effects(effects[i], filter_flags, false, collected_effects);
 			}
 		}
@@ -677,7 +678,6 @@ function process_effects(effect, filter_flags, shallow, collected_effects) {
  * @returns {void}
  */
 function flush_nested_effects(effect, filter_flags, shallow = false) {
-	infinite_loop_guard();
 	/** @type {import('#client').Effect[]} */
 	var collected_effects = [];
 
@@ -1163,7 +1163,7 @@ export function pop(component) {
 		const effects = context_stack_item.e;
 		if (effects !== null) {
 			context_stack_item.e = null;
-			for (let i = 0; i < effects.length; i++) {
+			for (var i = 0; i < effects.length; i++) {
 				effect(effects[i]);
 			}
 		}
