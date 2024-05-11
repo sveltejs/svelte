@@ -1,6 +1,7 @@
+import { DEV } from 'esm-env';
 import { snapshot } from '../proxy.js';
 import { render_effect, validate_effect } from '../reactivity/effects.js';
-import { current_effect, deep_read, untrack } from '../runtime.js';
+import { deep_read, untrack } from '../runtime.js';
 import { array_prototype, get_prototype_of, object_prototype } from '../utils.js';
 
 /** @type {Function | null} */
@@ -61,6 +62,16 @@ export function inspect(get_value, inspector = console.log) {
  */
 function deep_snapshot(value, visited = new Map()) {
 	if (typeof value === 'object' && value !== null && !visited.has(value)) {
+		if (DEV) {
+			// When dealing with ReactiveMap or ReactiveSet, return normal versions
+			// so that console.log provides better output versions
+			if (value instanceof Map && value.constructor !== Map) {
+				return new Map(value);
+			}
+			if (value instanceof Set && value.constructor !== Set) {
+				return new Set(value);
+			}
+		}
 		const unstated = snapshot(value);
 
 		if (unstated !== value) {
