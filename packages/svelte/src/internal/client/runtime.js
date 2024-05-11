@@ -653,14 +653,15 @@ function process_effects(effect, filter_flags, shallow, collected_effects) {
 	}
 
 	if (effects.length > 0) {
+		var i;
 		if ((filter_flags & EFFECT) !== 0) {
-			for (let i = 0; i < effects.length; i++) {
+			for (i = 0; i < effects.length; i++) {
 				collected_effects.push(effects[i]);
 			}
 		}
 
 		if (!shallow) {
-			for (var i = 0; i < effects.length; i++) {
+			for (i = 0; i < effects.length; i++) {
 				process_effects(effects[i], filter_flags, false, collected_effects);
 			}
 		}
@@ -1164,7 +1165,7 @@ export function pop(component) {
 		const effects = context_stack_item.e;
 		if (effects !== null) {
 			context_stack_item.e = null;
-			for (let i = 0; i < effects.length; i++) {
+			for (var i = 0; i < effects.length; i++) {
 				effect(effects[i]);
 			}
 		}
