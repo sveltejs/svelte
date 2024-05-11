@@ -32,7 +32,7 @@ export function action(dom, action, get_value) {
 		}
 
 		if (payload?.destroy) {
-			return () => /** @type {Function} */ (payload.destroy)();
+			return () => untrack(() => /** @type {Function} */ (payload.destroy)());
 		}
 	});
 }
