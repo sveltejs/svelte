@@ -1,3 +1,4 @@
+import fuzzymatch from '../phases/1-parse/utils/fuzzymatch.js';
 import * as w from '../warnings.js';
 
 const regex_svelte_ignore = /^\s*svelte-ignore\s/;
@@ -17,28 +18,31 @@ export function extract_svelte_ignore(offset, text, runes) {
 	const match = regex_svelte_ignore.exec(text);
 	if (!match) return [];
 
-	let start = match[0].length;
-	offset += start;
+	let length = match[0].length;
+	offset += length;
 
 	/** @type {string[]} */
 	const ignores = [];
 
-	for (const match of text.slice(start).matchAll(/\S+/gm)) {
+	for (const match of text.slice(length).matchAll(/\S+/gm)) {
 		const code = match[0];
 
-		console.log({ code, runes, codes: w.codes });
+		ignores.push(code);
 
-		if (runes && !w.codes.includes(code)) {
-			const suggestion = replacements[code] || code.replace(/-/g, '_');
+		if (!w.codes.includes(code)) {
+			const replacement = replacements[code] ?? code.replace(/-/g, '_');
 
-			if (w.codes.includes(suggestion)) {
-				w.unknown_code({ start: offset, end: offset + code.length }, code, suggestion);
-			} else {
-				w.unknown_code({ start: offset, end: offset + code.length }, code);
+			if (runes) {
+				const start = offset + match.index;
+				const end = start + code.length;
+
+				const suggestion = w.codes.includes(replacement) ? replacement : fuzzymatch(code, w.codes);
+
+				w.unknown_code({ start, end }, code, suggestion);
+			} else if (w.codes.includes(replacement)) {
+				ignores.push(replacement);
 			}
 		}
-
-		ignores.push(code);
 	}
 
 	return ignores;

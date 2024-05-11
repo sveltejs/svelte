@@ -560,16 +560,14 @@ export function analyze_component(root, source, options) {
 		}
 
 		const { comment } = analysis.css.ast.content;
-		if (comment) {
-			const ignores = extract_svelte_ignore(comment.start, comment.data, analysis.runes);
+		const should_ignore_unused =
+			comment &&
+			extract_svelte_ignore(comment.start, comment.data, analysis.runes).includes(
+				'css_unused_selector'
+			);
 
-			const should_ignore =
-				ignores.includes('css_unused_selector') ||
-				(!runes && ignores.includes('css-unused-selector'));
-
-			if (!should_ignore) {
-				warn_unused(analysis.css.ast);
-			}
+		if (!should_ignore_unused) {
+			warn_unused(analysis.css.ast);
 		}
 
 		outer: for (const element of analysis.elements) {
