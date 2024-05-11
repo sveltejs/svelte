@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.129
+
+### Patch Changes
+
+- fix: further adjust heuristics for effect_update_depth_exceeded ([#11558](https://github.com/sveltejs/svelte/pull/11558))
+
 ## 5.0.0-next.128
 
 ### Patch Changes
