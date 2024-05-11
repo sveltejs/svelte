@@ -1215,6 +1215,11 @@ export function deep_read(value, visited = new Set()) {
 		!visited.has(value)
 	) {
 		visited.add(value);
+		// When working with a possible ReactiveDate, this
+		// will ensure we capture changes to it.
+		if (value instanceof Date) {
+			value.getTime();
+		}
 		for (let key in value) {
 			try {
 				deep_read(value[key], visited);
