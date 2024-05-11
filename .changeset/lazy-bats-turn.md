@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: unesure Svelte action destroy effects are untracked
+fix: ensure Svelte action destroy effects are untracked
