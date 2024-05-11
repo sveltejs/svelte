@@ -654,7 +654,9 @@ function process_effects(effect, filter_flags, shallow, collected_effects) {
 
 	if (effects.length > 0) {
 		if ((filter_flags & EFFECT) !== 0) {
-			collected_effects.push(...effects);
+			for (let i = 0; i < effects.length; i++) {
+				collected_effects.push(effects[i]);
+			}
 		}
 
 		if (!shallow) {
