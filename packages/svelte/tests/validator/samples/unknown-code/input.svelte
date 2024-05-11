@@ -5,5 +5,10 @@
 	<img src="this-is-fine.jpg">
 </div>
 
+<!-- svelte-ignore ally_missing_attribute -->
+<div>
+	<img src="this-is-fine.jpg">
+</div>
+
 <!-- svelte-ignore a11y-misplaced-scope -->
 <div scope></div>
