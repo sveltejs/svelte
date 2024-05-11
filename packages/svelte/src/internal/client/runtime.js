@@ -515,6 +515,7 @@ function infinite_loop_guard() {
  * @returns {void}
  */
 function flush_queued_root_effects(root_effects) {
+	infinite_loop_guard();
 	for (var i = 0; i < root_effects.length; i++) {
 		var signal = root_effects[i];
 		flush_nested_effects(signal, RENDER_EFFECT | EFFECT);
@@ -676,7 +677,6 @@ function process_effects(effect, filter_flags, shallow, collected_effects) {
  * @returns {void}
  */
 function flush_nested_effects(effect, filter_flags, shallow = false) {
-	infinite_loop_guard();
 	/** @type {import('#client').Effect[]} */
 	var collected_effects = [];
 
@@ -701,6 +701,7 @@ function flush_nested_effects(effect, filter_flags, shallow = false) {
  * @returns {void}
  */
 export function flush_local_render_effects(effect) {
+	infinite_loop_guard();
 	// We are entering a new flush sequence, so ensure counter is reset.
 	flush_count = 0;
 	flush_nested_effects(effect, RENDER_EFFECT, true);
