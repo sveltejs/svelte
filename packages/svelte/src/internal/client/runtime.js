@@ -653,15 +653,11 @@ function process_effects(effect, filter_flags, shallow, collected_effects) {
 	}
 
 	if (effects.length > 0) {
-		var i;
-		if ((filter_flags & EFFECT) !== 0) {
-			for (i = 0; i < effects.length; i++) {
+		for (var i = 0; i < effects.length; i++) {
+			if ((filter_flags & EFFECT) !== 0) {
 				collected_effects.push(effects[i]);
 			}
-		}
-
-		if (!shallow) {
-			for (i = 0; i < effects.length; i++) {
+			if (!shallow) {
 				process_effects(effects[i], filter_flags, false, collected_effects);
 			}
 		}
