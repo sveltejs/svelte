@@ -15,12 +15,12 @@
 		"code": "a11y_missing_attribute",
 		"end": {
 			"column": 22,
-			"line": 7
+			"line": 10
 		},
 		"message": "`<img>` element should have an alt attribute",
 		"start": {
 			"column": 0,
-			"line": 7
+			"line": 10
 		}
 	}
 ]

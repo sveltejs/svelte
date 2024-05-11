@@ -1,0 +1,50 @@
+[
+	{
+		"code": "unknown_code",
+		"end": {
+			"column": 41,
+			"line": 3
+		},
+		"message": "`a11y-missing-attribute` is not a recognised code (did you mean `a11y_missing_attribute`?)",
+		"start": {
+			"column": 19,
+			"line": 3
+		}
+	},
+	{
+		"code": "unknown_code",
+		"end": {
+			"column": 39,
+			"line": 8
+		},
+		"message": "`a11y-misplaced-scope` is not a recognised code (did you mean `a11y_misplaced_scope`?)",
+		"start": {
+			"column": 19,
+			"line": 8
+		}
+	},
+	{
+		"code": "a11y_missing_attribute",
+		"end": {
+			"column": 29,
+			"line": 5
+		},
+		"message": "`<img>` element should have an alt attribute",
+		"start": {
+			"column": 1,
+			"line": 5
+		}
+	},
+	{
+		"code": "a11y_misplaced_scope",
+		"end": {
+			"column": 10,
+			"line": 9
+		},
+		"message": "The scope attribute should only be used with `<th>` elements",
+		"start": {
+			"column": 5,
+			"line": 9
+		}
+	}
+]
