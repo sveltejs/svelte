@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.130
+
+### Patch Changes
+
+- fix: improve internal mechanism for handling process_effects ([#11560](https://github.com/sveltejs/svelte/pull/11560))
+
 ## 5.0.0-next.129
 
 ### Patch Changes
