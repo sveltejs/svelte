@@ -653,6 +653,8 @@ function process_effects(effect, filter_flags, shallow, collected_effects) {
 	}
 
 	if (effects.length > 0) {
+		// We might be dealing with many effects here, far more than can be spread into
+		// an array push call (callstack overflow). So let's deal with each effect in a loop.
 		for (var i = 0; i < effects.length; i++) {
 			if ((filter_flags & EFFECT) !== 0) {
 				collected_effects.push(effects[i]);
