@@ -529,7 +529,6 @@ function flush_queued_effects(effects) {
 	var length = effects.length;
 	if (length === 0) return;
 
-	infinite_loop_guard();
 	for (var i = 0; i < length; i++) {
 		var effect = effects[i];
 
