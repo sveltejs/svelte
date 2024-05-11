@@ -677,6 +677,7 @@ function process_effects(effect, filter_flags, shallow, collected_effects) {
  * @returns {void}
  */
 function flush_nested_effects(effect, filter_flags, shallow = false) {
+	infinite_loop_guard();
 	/** @type {import('#client').Effect[]} */
 	var collected_effects = [];
 
