@@ -529,7 +529,6 @@ function flush_queued_effects(effects) {
 	var length = effects.length;
 	if (length === 0) return;
 
-	infinite_loop_guard();
 	for (var i = 0; i < length; i++) {
 		var effect = effects[i];
 
@@ -677,6 +676,7 @@ function process_effects(effect, filter_flags, shallow, collected_effects) {
  * @returns {void}
  */
 function flush_nested_effects(effect, filter_flags, shallow = false) {
+	infinite_loop_guard();
 	/** @type {import('#client').Effect[]} */
 	var collected_effects = [];
 
