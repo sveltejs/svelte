@@ -517,8 +517,7 @@ function infinite_loop_guard() {
 function flush_queued_root_effects(root_effects) {
 	infinite_loop_guard();
 	for (var i = 0; i < root_effects.length; i++) {
-		var signal = root_effects[i];
-		flush_nested_effects(signal);
+		flush_nested_effects(root_effects[i]);
 	}
 }
 
