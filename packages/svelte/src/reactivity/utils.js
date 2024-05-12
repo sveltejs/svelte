@@ -2,7 +2,6 @@ import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 
-// TODO: should this be in constants?
 export const NOTIFY_WITH_ALL_PARAMS = Symbol();
 
 /**
