@@ -675,9 +675,6 @@ function process_effects(effect, filter_flags, recursive, collected_effects) {
  * @returns {void}
  */
 function flush_nested_effects(effect, filter_flags, recursive = true) {
-	/** @type {import('#client').Effect[]} */
-	var collected_effects = [];
-
 	var previously_flushing_effect = is_flushing_effect;
 	is_flushing_effect = true;
 
@@ -686,6 +683,9 @@ function flush_nested_effects(effect, filter_flags, recursive = true) {
 		if (effect.first === null && (effect.f & BRANCH_EFFECT) === 0) {
 			flush_queued_effects([effect]);
 		} else {
+			/** @type {import('#client').Effect[]} */
+			var collected_effects = [];
+
 			process_effects(effect, filter_flags, recursive, collected_effects);
 			flush_queued_effects(collected_effects);
 		}
