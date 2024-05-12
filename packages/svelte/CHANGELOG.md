@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.131
+
+### Patch Changes
+
+- chore: optimise effects ([#11569](https://github.com/sveltejs/svelte/pull/11569))
+
+- fix: ensure all effect cleanup functions are untracked ([#11567](https://github.com/sveltejs/svelte/pull/11567))
+
 ## 5.0.0-next.130
 
 ### Patch Changes
