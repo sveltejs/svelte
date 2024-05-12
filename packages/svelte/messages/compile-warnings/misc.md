@@ -1,6 +1,6 @@
 ## legacy_code
 
-> `%code%` is no longer valid — please use `%suggestion%` instead
+> `%code%` is no longer valid — please use `%suggestion%` instead
 
 ## unknown_code
 

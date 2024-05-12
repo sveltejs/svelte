@@ -488,13 +488,13 @@ export function a11y_unknown_role(node, role, suggestion) {
 }
 
 /**
- * `%code%` is no longer valid — please use `%suggestion%` instead
+ * `%code%` is no longer valid — please use `%suggestion%` instead
  * @param {null | NodeLike} node
  * @param {string} code
  * @param {string} suggestion
  */
 export function legacy_code(node, code, suggestion) {
-	w(node, "legacy_code", `\`${code}\` is no longer valid — please use \`${suggestion}\` instead`);
+	w(node, "legacy_code", `\`${code}\` is no longer valid — please use \`${suggestion}\` instead`);
 }
 
 /**
