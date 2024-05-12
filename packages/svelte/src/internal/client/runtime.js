@@ -588,11 +588,11 @@ export function schedule_effect(signal) {
  *
  * @param {import('#client').Effect} effect
  * @param {number} filter_flags
- * @param {boolean} shallow
+ * @param {boolean} recursive
  * @param {import('#client').Effect[]} collected_effects
  * @returns {void}
  */
-function process_effects(effect, filter_flags, shallow, collected_effects) {
+function process_effects(effect, filter_flags, recursive, collected_effects) {
 	var current_effect = effect.first;
 	var effects = [];
 
@@ -616,13 +616,13 @@ function process_effects(effect, filter_flags, shallow, collected_effects) {
 					// Child might have been mutated since running the effect
 					child = current_effect.first;
 				}
-				if (!shallow && child !== null) {
+				if (recursive && child !== null) {
 					current_effect = child;
 					continue;
 				}
 			} else if ((flags & EFFECT) !== 0) {
 				if (is_branch || is_clean) {
-					if (!shallow && child !== null) {
+					if (recursive && child !== null) {
 						current_effect = child;
 						continue;
 					}
@@ -652,16 +652,12 @@ function process_effects(effect, filter_flags, shallow, collected_effects) {
 		current_effect = sibling;
 	}
 
-	if (effects.length > 0) {
+	if (recursive && effects.length > 0) {
 		// We might be dealing with many effects here, far more than can be spread into
 		// an array push call (callstack overflow). So let's deal with each effect in a loop.
 		for (var i = 0; i < effects.length; i++) {
-			if ((filter_flags & EFFECT) !== 0) {
-				collected_effects.push(effects[i]);
-			}
-			if (!shallow) {
-				process_effects(effects[i], filter_flags, false, collected_effects);
-			}
+			collected_effects.push(effects[i]);
+			process_effects(effects[i], filter_flags, true, collected_effects);
 		}
 	}
 }
@@ -674,10 +670,10 @@ function process_effects(effect, filter_flags, shallow, collected_effects) {
  *
  * @param {import('#client').Effect} effect
  * @param {number} filter_flags
- * @param {boolean} [shallow]
+ * @param {boolean} [recursive]
  * @returns {void}
  */
-function flush_nested_effects(effect, filter_flags, shallow = false) {
+function flush_nested_effects(effect, filter_flags, recursive = true) {
 	/** @type {import('#client').Effect[]} */
 	var collected_effects = [];
 
@@ -689,7 +685,7 @@ function flush_nested_effects(effect, filter_flags, shallow = false) {
 		if (effect.first === null && (effect.f & BRANCH_EFFECT) === 0) {
 			flush_queued_effects([effect]);
 		} else {
-			process_effects(effect, filter_flags, shallow, collected_effects);
+			process_effects(effect, filter_flags, recursive, collected_effects);
 			flush_queued_effects(collected_effects);
 		}
 	} finally {
@@ -705,7 +701,7 @@ export function flush_local_render_effects(effect) {
 	infinite_loop_guard();
 	// We are entering a new flush sequence, so ensure counter is reset.
 	flush_count = 0;
-	flush_nested_effects(effect, RENDER_EFFECT, true);
+	flush_nested_effects(effect, RENDER_EFFECT, false);
 }
 
 /**
