@@ -652,12 +652,13 @@ function process_effects(effect, filter_flags, recursive, collected_effects) {
 		current_effect = sibling;
 	}
 
-	if (recursive && effects.length > 0) {
+	if (recursive) {
 		// We might be dealing with many effects here, far more than can be spread into
 		// an array push call (callstack overflow). So let's deal with each effect in a loop.
 		for (var i = 0; i < effects.length; i++) {
-			collected_effects.push(effects[i]);
-			process_effects(effects[i], filter_flags, true, collected_effects);
+			var effect = effects[i];
+			collected_effects.push(effect);
+			process_effects(effect, filter_flags, true, collected_effects);
 		}
 	}
 }
