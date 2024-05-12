@@ -36,9 +36,12 @@ export function extract_svelte_ignore(offset, text, runes) {
 				const start = offset + match.index;
 				const end = start + code.length;
 
-				const suggestion = w.codes.includes(replacement) ? replacement : fuzzymatch(code, w.codes);
-
-				w.unknown_code({ start, end }, code, suggestion);
+				if (w.codes.includes(replacement)) {
+					w.legacy_code({ start, end }, code, replacement);
+				} else {
+					const suggestion = fuzzymatch(code, w.codes);
+					w.unknown_code({ start, end }, code, suggestion);
+				}
 			} else if (w.codes.includes(replacement)) {
 				ignores.push(replacement);
 			}

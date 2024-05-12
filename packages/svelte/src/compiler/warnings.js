@@ -82,6 +82,7 @@ export const codes = [
 	"a11y_role_supports_aria_props_implicit",
 	"a11y_unknown_aria_attribute",
 	"a11y_unknown_role",
+	"legacy_code",
 	"unknown_code",
 	"options_deprecated_accessors",
 	"options_deprecated_immutable",
@@ -484,6 +485,16 @@ export function a11y_unknown_aria_attribute(node, attribute, suggestion) {
  */
 export function a11y_unknown_role(node, role, suggestion) {
 	w(node, "a11y_unknown_role", suggestion ? `Unknown role '${role}'. Did you mean '${suggestion}'?` : `Unknown role '${role}'`);
+}
+
+/**
+ * `%code%` is no longer valid — please use `%suggestion%` instead
+ * @param {null | NodeLike} node
+ * @param {string} code
+ * @param {string} suggestion
+ */
+export function legacy_code(node, code, suggestion) {
+	w(node, "legacy_code", `\`${code}\` is no longer valid — please use \`${suggestion}\` instead`);
 }
 
 /**
