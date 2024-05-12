@@ -719,11 +719,10 @@ function serialize_inline_component(node, component_name, context) {
 				const should_wrap_in_derived =
 					Array.isArray(attribute.value) &&
 					attribute.value.some((n) => {
-						return (
-							n.type === 'ExpressionTag' &&
-							n.expression.type !== 'Identifier' &&
-							n.expression.type !== 'MemberExpression'
-						);
+						if (n.type !== 'ExpressionTag') return false;
+						return context.state.analysis.runes
+							? n.metadata.contains_call_expression
+							: n.expression.type !== 'Identifier';
 					});
 
 				if (should_wrap_in_derived) {

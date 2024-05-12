@@ -1263,8 +1263,9 @@ const common_visitors = {
 	},
 	CallExpression(node, context) {
 		if (
-			context.state.expression?.type === 'ExpressionTag' ||
-			(context.state.expression?.type === 'SpreadAttribute' && !is_known_safe_call(node, context))
+			(context.state.expression?.type === 'ExpressionTag' ||
+				context.state.expression?.type === 'SpreadAttribute') &&
+			!is_known_safe_call(node, context)
 		) {
 			context.state.expression.metadata.contains_call_expression = true;
 		}
