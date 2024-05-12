@@ -720,9 +720,14 @@ function serialize_inline_component(node, component_name, context) {
 					Array.isArray(attribute.value) &&
 					attribute.value.some((n) => {
 						if (n.type !== 'ExpressionTag') return false;
-						return context.state.analysis.runes
-							? n.metadata.contains_call_expression
-							: n.expression.type !== 'Identifier';
+						if (n.expression.type === 'Identifier' || n.expression.type === 'Literal') return false;
+
+						if (n.expression.type === 'MemberExpression' && context.state.analysis.runes) {
+							// in legacy mode, `foo={bar.baz}` is wrapped in derived to preserve old behaviour.
+							return false;
+						}
+
+						return true;
 					});
 
 				if (should_wrap_in_derived) {
