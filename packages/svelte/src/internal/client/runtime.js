@@ -518,7 +518,7 @@ function flush_queued_root_effects(root_effects) {
 	infinite_loop_guard();
 	for (var i = 0; i < root_effects.length; i++) {
 		var signal = root_effects[i];
-		flush_nested_effects(signal, RENDER_EFFECT | EFFECT);
+		flush_nested_effects(signal);
 	}
 }
 
@@ -587,12 +587,11 @@ export function schedule_effect(signal) {
  * effects to be flushed.
  *
  * @param {import('#client').Effect} effect
- * @param {number} filter_flags
  * @param {boolean} recursive
  * @param {import('#client').Effect[]} collected_effects
  * @returns {void}
  */
-function process_effects(effect, filter_flags, recursive, collected_effects) {
+function process_effects(effect, recursive, collected_effects) {
 	var current_effect = effect.first;
 	var effects = [];
 
@@ -658,7 +657,7 @@ function process_effects(effect, filter_flags, recursive, collected_effects) {
 		for (var i = 0; i < effects.length; i++) {
 			var effect = effects[i];
 			collected_effects.push(effect);
-			process_effects(effect, filter_flags, true, collected_effects);
+			process_effects(effect, true, collected_effects);
 		}
 	}
 }
@@ -670,11 +669,10 @@ function process_effects(effect, filter_flags, recursive, collected_effects) {
  * array will be populated with all the effects.
  *
  * @param {import('#client').Effect} effect
- * @param {number} filter_flags
  * @param {boolean} [recursive]
  * @returns {void}
  */
-function flush_nested_effects(effect, filter_flags, recursive = true) {
+function flush_nested_effects(effect, recursive = true) {
 	var previously_flushing_effect = is_flushing_effect;
 	is_flushing_effect = true;
 
@@ -686,7 +684,7 @@ function flush_nested_effects(effect, filter_flags, recursive = true) {
 			/** @type {import('#client').Effect[]} */
 			var collected_effects = [];
 
-			process_effects(effect, filter_flags, recursive, collected_effects);
+			process_effects(effect, recursive, collected_effects);
 			flush_queued_effects(collected_effects);
 		}
 	} finally {
@@ -702,7 +700,7 @@ export function flush_local_render_effects(effect) {
 	infinite_loop_guard();
 	// We are entering a new flush sequence, so ensure counter is reset.
 	flush_count = 0;
-	flush_nested_effects(effect, RENDER_EFFECT, false);
+	flush_nested_effects(effect, false);
 }
 
 /**
