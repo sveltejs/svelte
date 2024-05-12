@@ -521,9 +521,27 @@ function infinite_loop_guard() {
  */
 function flush_queued_root_effects(root_effects) {
 	infinite_loop_guard();
-	for (var i = 0; i < root_effects.length; i++) {
-		var signal = root_effects[i];
-		flush_nested_effects(signal, RENDER_EFFECT | EFFECT);
+
+	var previously_flushing_effect = is_flushing_effect;
+	is_flushing_effect = true;
+
+	try {
+		for (var i = 0; i < root_effects.length; i++) {
+			var effect = root_effects[i];
+
+			// When working with custom elements, the root effects might not have a root
+			if (effect.first === null && (effect.f & BRANCH_EFFECT) === 0) {
+				flush_queued_effects([effect]);
+			} else {
+				/** @type {import('#client').Effect[]} */
+				var collected_effects = [];
+
+				process_effects(effect, collected_effects);
+				flush_queued_effects(collected_effects);
+			}
+		}
+	} finally {
+		is_flushing_effect = previously_flushing_effect;
 	}
 }
 
@@ -592,12 +610,10 @@ export function schedule_effect(signal) {
  * effects to be flushed.
  *
  * @param {import('#client').Effect} effect
- * @param {number} filter_flags
- * @param {boolean} shallow
  * @param {import('#client').Effect[]} collected_effects
  * @returns {void}
  */
-function process_effects(effect, filter_flags, shallow, collected_effects) {
+function process_effects(effect, collected_effects) {
 	var current_effect = effect.first;
 	var effects = [];
 
@@ -621,13 +637,14 @@ function process_effects(effect, filter_flags, shallow, collected_effects) {
 					// Child might have been mutated since running the effect
 					child = current_effect.first;
 				}
-				if (!shallow && child !== null) {
+
+				if (child !== null) {
 					current_effect = child;
 					continue;
 				}
 			} else if ((flags & EFFECT) !== 0) {
 				if (is_branch || is_clean) {
-					if (!shallow && child !== null) {
+					if (child !== null) {
 						current_effect = child;
 						continue;
 					}
@@ -657,60 +674,13 @@ function process_effects(effect, filter_flags, shallow, collected_effects) {
 		current_effect = sibling;
 	}
 
-	if (effects.length > 0) {
-		// We might be dealing with many effects here, far more than can be spread into
-		// an array push call (callstack overflow). So let's deal with each effect in a loop.
-		for (var i = 0; i < effects.length; i++) {
-			if ((filter_flags & EFFECT) !== 0) {
-				collected_effects.push(effects[i]);
-			}
-			if (!shallow) {
-				process_effects(effects[i], filter_flags, false, collected_effects);
-			}
-		}
+	// We might be dealing with many effects here, far more than can be spread into
+	// an array push call (callstack overflow). So let's deal with each effect in a loop.
+	for (var i = 0; i < effects.length; i++) {
+		child = effects[i];
+		collected_effects.push(child);
+		process_effects(child, collected_effects);
 	}
-}
-
-/**
- *
- * This function recursively collects effects in topological order from the starting effect passed in.
- * Effects will be collected when they match the filtered bitwise flag passed in only. The collected
- * array will be populated with all the effects.
- *
- * @param {import('#client').Effect} effect
- * @param {number} filter_flags
- * @param {boolean} [shallow]
- * @returns {void}
- */
-function flush_nested_effects(effect, filter_flags, shallow = false) {
-	/** @type {import('#client').Effect[]} */
-	var collected_effects = [];
-
-	var previously_flushing_effect = is_flushing_effect;
-	is_flushing_effect = true;
-
-	try {
-		// When working with custom elements, the root effects might not have a root
-		if (effect.first === null && (effect.f & BRANCH_EFFECT) === 0) {
-			flush_queued_effects([effect]);
-		} else {
-			process_effects(effect, filter_flags, shallow, collected_effects);
-			flush_queued_effects(collected_effects);
-		}
-	} finally {
-		is_flushing_effect = previously_flushing_effect;
-	}
-}
-
-/**
- * @param {import('#client').Effect} effect
- * @returns {void}
- */
-export function flush_local_render_effects(effect) {
-	infinite_loop_guard();
-	// We are entering a new flush sequence, so ensure counter is reset.
-	flush_count = 0;
-	flush_nested_effects(effect, RENDER_EFFECT, true);
 }
 
 /**
