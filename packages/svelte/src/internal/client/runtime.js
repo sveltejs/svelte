@@ -48,6 +48,11 @@ export function set_is_destroying_effect(value) {
 	is_destroying_effect = value;
 }
 
+/** @param {boolean} value */
+export function set_untracking(value) {
+	current_untracking = value;
+}
+
 // Used for $inspect
 export let is_batching_effect = false;
 let is_inspecting_signal = false;

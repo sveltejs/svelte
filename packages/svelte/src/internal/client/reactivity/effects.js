@@ -3,6 +3,7 @@ import {
 	current_component_context,
 	current_effect,
 	current_reaction,
+	current_untracking,
 	destroy_effect_children,
 	dev_current_component_function,
 	execute_effect,
@@ -14,6 +15,7 @@ import {
 	set_is_destroying_effect,
 	set_is_flushing_effect,
 	set_signal_status,
+	set_untracking,
 	untrack
 } from '../runtime.js';
 import {
@@ -295,11 +297,14 @@ export function execute_effect_teardown(effect) {
 	var teardown = effect.teardown;
 	if (teardown !== null) {
 		const previously_destroying_effect = is_destroying_effect;
+		const previous_untracking = current_untracking;
 		set_is_destroying_effect(true);
+		set_untracking(true);
 		try {
 			teardown.call(null);
 		} finally {
 			set_is_destroying_effect(previously_destroying_effect);
+			set_untracking(previous_untracking);
 		}
 	}
 }
