@@ -1,14 +1,6 @@
-import { CLEAN } from '../../constants.js';
 import { run, run_all } from '../../../shared/utils.js';
 import { user_pre_effect, user_effect } from '../../reactivity/effects.js';
-import {
-	current_component_context,
-	current_effect,
-	deep_read_state,
-	flush_local_render_effects,
-	get,
-	untrack
-} from '../../runtime.js';
+import { current_component_context, deep_read_state, get, untrack } from '../../runtime.js';
 
 /**
  * Legacy-mode only: Call `onMount` callbacks and set up `beforeUpdate`/`afterUpdate` effects
@@ -26,13 +18,6 @@ export function init() {
 		user_pre_effect(() => {
 			observe_all(context);
 			run_all(callbacks.b);
-			// beforeUpdate might change state that affects rendering, ensure the render effects following from it
-			// are batched up with the current run. Avoids for example child components rerunning when they're
-			// now hidden because beforeUpdate did set an if block to false.
-			const parent = current_effect?.parent;
-			if (parent != null && (parent.f & CLEAN) === 0) {
-				flush_local_render_effects(parent);
-			}
 		});
 	}
 
