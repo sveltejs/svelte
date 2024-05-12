@@ -655,9 +655,9 @@ function process_effects(effect, recursive, collected_effects) {
 		// We might be dealing with many effects here, far more than can be spread into
 		// an array push call (callstack overflow). So let's deal with each effect in a loop.
 		for (var i = 0; i < effects.length; i++) {
-			var effect = effects[i];
-			collected_effects.push(effect);
-			process_effects(effect, true, collected_effects);
+			child = effects[i];
+			collected_effects.push(child);
+			process_effects(child, true, collected_effects);
 		}
 	}
 }
