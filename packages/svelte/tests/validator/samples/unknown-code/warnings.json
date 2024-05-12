@@ -1,11 +1,11 @@
 [
 	{
-		"code": "unknown_code",
+		"code": "legacy_code",
 		"end": {
 			"column": 41,
 			"line": 3
 		},
-		"message": "`a11y-missing-attribute` is not a recognised code (did you mean `a11y_missing_attribute`?)",
+		"message": "`a11y-missing-attribute` is no longer valid — please use `a11y_missing_attribute` instead",
 		"start": {
 			"column": 19,
 			"line": 3
@@ -24,12 +24,12 @@
 		}
 	},
 	{
-		"code": "unknown_code",
+		"code": "legacy_code",
 		"end": {
 			"column": 39,
 			"line": 13
 		},
-		"message": "`a11y-misplaced-scope` is not a recognised code (did you mean `a11y_misplaced_scope`?)",
+		"message": "`a11y-misplaced-scope` is no longer valid — please use `a11y_misplaced_scope` instead",
 		"start": {
 			"column": 19,
 			"line": 13
