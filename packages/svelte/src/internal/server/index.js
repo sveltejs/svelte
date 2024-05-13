@@ -354,7 +354,7 @@ export function stringify(value) {
 /** @param {Record<string, string>} style_object */
 function style_object_to_string(style_object) {
 	return Object.keys(style_object)
-		.filter(/** @param {any} key */ (key) => style_object[key])
+		.filter(/** @param {any} key */ (key) => style_object[key] != null && style_object[key] !== '')
 		.map(/** @param {any} key */ (key) => `${key}: ${escape_html(style_object[key], true)};`)
 		.join(' ');
 }
