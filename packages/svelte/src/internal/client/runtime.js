@@ -113,9 +113,6 @@ export let current_component_context = null;
 /** @param {import('#client').ComponentContext | null} context */
 export function set_current_component_context(context) {
 	current_component_context = context;
-	if (DEV) {
-		dev_current_component_function = context?.function;
-	}
 }
 
 /**
@@ -194,17 +191,13 @@ export function check_dirtiness(reaction) {
 
 		if (dependencies !== null) {
 			var length = dependencies.length;
+			var is_equal;
 
 			for (var i = 0; i < length; i++) {
 				var dependency = dependencies[i];
 
 				if (!is_dirty && check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
-					update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
-
-					// `signal` might now be dirty, as a result of calling `update_derived`
-					if ((reaction.f & DIRTY) !== 0) {
-						return true;
-					}
+					is_equal = update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
 				}
 
 				if (is_unowned) {
@@ -216,7 +209,7 @@ export function check_dirtiness(reaction) {
 
 					if (version > /** @type {import('#client').Derived} */ (reaction).version) {
 						/** @type {import('#client').Derived} */ (reaction).version = version;
-						return true;
+						return !is_equal;
 					}
 
 					if (!current_skip_reaction && !dependency?.reactions?.includes(reaction)) {
@@ -230,6 +223,9 @@ export function check_dirtiness(reaction) {
 							reactions.push(reaction);
 						}
 					}
+				} else if ((reaction.f & DIRTY) !== 0) {
+					// `signal` might now be dirty, as a result of calling `check_dirtiness` and/or `update_derived`
+					return true;
 				}
 			}
 		}
@@ -420,7 +416,12 @@ export function execute_effect(effect) {
 	var previous_component_context = current_component_context;
 
 	current_effect = effect;
-	set_current_component_context(component_context);
+	current_component_context = component_context;
+
+	if (DEV) {
+		var previous_component_fn = dev_current_component_function;
+		dev_current_component_function = effect.component_function;
+	}
 
 	try {
 		if ((flags & BLOCK_EFFECT) === 0) {
@@ -432,7 +433,11 @@ export function execute_effect(effect) {
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 	} finally {
 		current_effect = previous_effect;
-		set_current_component_context(previous_component_context);
+		current_component_context = previous_component_context;
+
+		if (DEV) {
+			dev_current_component_function = previous_component_fn;
+		}
 	}
 }
 
@@ -545,21 +550,14 @@ function process_effects(effect, filter_flags, shallow, collected_effects) {
 			}
 
 			if ((flags & RENDER_EFFECT) !== 0) {
-				if (is_branch) {
-					if (!shallow && child !== null) {
-						current_effect = child;
-						continue;
-					}
-				} else {
-					if (check_dirtiness(current_effect)) {
-						execute_effect(current_effect);
-						// Child might have been mutated since running the effect
-						child = current_effect.first;
-					}
-					if (!shallow && child !== null) {
-						current_effect = child;
-						continue;
-					}
+				if (!is_branch && check_dirtiness(current_effect)) {
+					execute_effect(current_effect);
+					// Child might have been mutated since running the effect
+					child = current_effect.first;
+				}
+				if (!shallow && child !== null) {
+					current_effect = child;
+					continue;
 				}
 			} else if ((flags & EFFECT) !== 0) {
 				if (is_branch || is_clean) {
@@ -1016,7 +1014,7 @@ function get_parent_context(component_context) {
  * @returns {number}
  */
 export function update(signal, d = 1) {
-	const value = get(signal);
+	var value = +get(signal);
 	set(signal, value + d);
 	return value;
 }
@@ -1027,9 +1025,7 @@ export function update(signal, d = 1) {
  * @returns {number}
  */
 export function update_pre(signal, d = 1) {
-	const value = get(signal) + d;
-	set(signal, value);
-	return value;
+	return set(signal, +get(signal) + d);
 }
 
 /**
@@ -1117,7 +1113,10 @@ export function pop(component) {
 				effect(effects[i]);
 			}
 		}
-		set_current_component_context(context_stack_item.p);
+		current_component_context = context_stack_item.p;
+		if (DEV) {
+			dev_current_component_function = context_stack_item.p?.function ?? null;
+		}
 		context_stack_item.m = true;
 	}
 	// Micro-optimization: Don't set .a above to the empty object

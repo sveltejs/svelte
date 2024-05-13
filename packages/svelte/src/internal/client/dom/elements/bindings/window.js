@@ -32,7 +32,9 @@ export function bind_window_scroll(type, get_value, update) {
 	};
 
 	render_effect(() => {
-		latest_value = get_value() || 0;
+		latest_value = get_value();
+		if (latest_value === undefined) return;
+
 		if (!scrolling) {
 			scrolling = true;
 			clearTimeout(timeout);

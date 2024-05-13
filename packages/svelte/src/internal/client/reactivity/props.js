@@ -169,7 +169,7 @@ const spread_props_handler = {
 	has(target, key) {
 		for (let p of target.props) {
 			if (is_function(p)) p = p();
-			if (key in p) return true;
+			if (p != null && key in p) return true;
 		}
 
 		return false;

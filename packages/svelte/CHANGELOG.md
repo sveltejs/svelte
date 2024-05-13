@@ -1,5 +1,45 @@
 # svelte
 
+## 5.0.0-next.126
+
+### Patch Changes
+
+- fix: improve behaviour of unowned derived signals ([#11521](https://github.com/sveltejs/svelte/pull/11521))
+
+- fix: make `$effect.active()` true when updating deriveds ([#11500](https://github.com/sveltejs/svelte/pull/11500))
+
+- fix: skip parent element validation for snippet contents ([#11463](https://github.com/sveltejs/svelte/pull/11463))
+
+## 5.0.0-next.125
+
+### Patch Changes
+
+- fix: coerce incremented/decremented sources ([#11506](https://github.com/sveltejs/svelte/pull/11506))
+
+- feat: add support for svelte inspector ([#11514](https://github.com/sveltejs/svelte/pull/11514))
+
+- fix: skip AST analysis of TypeScript AST nodes ([#11513](https://github.com/sveltejs/svelte/pull/11513))
+
+- fix: use import.meta.hot.acceptExports when available to support partial hmr in vite ([#11453](https://github.com/sveltejs/svelte/pull/11453))
+
+- feat: better error for `bind:this` legacy API usage ([#11498](https://github.com/sveltejs/svelte/pull/11498))
+
+## 5.0.0-next.124
+
+### Patch Changes
+
+- fix: allow to access private fields after `this` reassignment ([#11487](https://github.com/sveltejs/svelte/pull/11487))
+
+- fix: only initiate scroll if scroll binding has existing value ([#11469](https://github.com/sveltejs/svelte/pull/11469))
+
+- fix: restore value after attribute removal during hydration ([#11465](https://github.com/sveltejs/svelte/pull/11465))
+
+- fix: check if svelte component exists on custom element destroy ([#11488](https://github.com/sveltejs/svelte/pull/11488))
+
+- fix: ensure derived is detected as dirty correctly ([#11496](https://github.com/sveltejs/svelte/pull/11496))
+
+- fix: prevent false positive ownership warning ([#11490](https://github.com/sveltejs/svelte/pull/11490))
+
 ## 5.0.0-next.123
 
 ### Patch Changes

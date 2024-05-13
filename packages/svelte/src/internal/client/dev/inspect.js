@@ -20,7 +20,7 @@ export let inspect_captured_signals = [];
  */
 // eslint-disable-next-line no-console
 export function inspect(get_value, inspector = console.log) {
-	validate_effect(current_effect, '$inspect');
+	validate_effect('$inspect');
 
 	let initial = true;
 
