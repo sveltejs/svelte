@@ -12,6 +12,10 @@
 <hr>
 {@render snippets.foo()}
 <hr>
+{@render snippets?.foo()}
+<hr>
+{@render snippets?.foo?.()}
+<hr>
 {@render snippets.foo?.()}
 <hr>
 {@render (optional ?? snippets.bar)()}
