@@ -108,7 +108,7 @@ const result = render(App, {
 });
 ```
 
-## `svelte/element`
+## `svelte/elements`
 
 Svelte provides built-in [DOM types](https://github.com/sveltejs/svelte/blob/master/packages/svelte/elements.d.ts). A common use case for DOM types is forwarding props to an HTML element. To properly type your props and get full intellisense, your props interface should extend the attributes type for your HTML element:
 
@@ -117,20 +117,20 @@ Svelte provides built-in [DOM types](https://github.com/sveltejs/svelte/blob/mas
 	import { HTMLAttributes } from 'svelte/elements';
 
 	interface Props extends HTMLAttributes<HTMLDivElement> {
-		name: string;
+		username: string;
 	}
 
-	let { name, ...rest }: Props = $props();
+	let { username, ...rest }: Props = $props();
 </script>
 
 <div {...rest}>
-	Hi, {name}!
+	Hi, {username}!
 </div>
 ```
 
 > You can use `ComponentProps<ImportedComponent>`, if you wish to forward props to forward props to a Svelte component.
 
-Svelte provides a best-effort of all the HTML DOM types that exist. If an attribute is missing from our [type definitions](https://github.com/sveltejs/svelte/blob/master/packages/svelte/elements.d.ts), you are welcome to open an issue and/or a PR fixing it. For experimental attributes, you can augment the existing type locally by creating a `.d.ts` file:
+Svelte provides a best-effort of all the HTML DOM types that exist. If an attribute is missing from our [type definitions](https://github.com/sveltejs/svelte/blob/master/packages/svelte/elements.d.ts), you are welcome to open an issue and/or a PR fixing it. For experimental attributes, you can augment the existing types locally by creating a `.d.ts` file:
 
 ```ts
 import { HTMLButtonAttributes } from 'svelte/elements';
