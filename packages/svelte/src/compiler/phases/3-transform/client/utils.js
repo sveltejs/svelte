@@ -88,11 +88,7 @@ export function serialize_get_binding(node, state) {
 	}
 
 	if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
-		if (
-			state.analysis.accessors ||
-			(state.analysis.immutable ? binding.reassigned : binding.mutated) ||
-			binding.initial
-		) {
+		if (!state.analysis.runes || binding.reassigned || binding.initial) {
 			return b.call(node);
 		}
 
@@ -100,6 +96,7 @@ export function serialize_get_binding(node, state) {
 			const key = b.key(binding.prop_alias);
 			return b.member(b.id('$$props'), key, key.type === 'Literal');
 		}
+
 		return b.member(b.id('$$props'), node);
 	}
 

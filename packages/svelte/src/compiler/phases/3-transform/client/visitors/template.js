@@ -719,15 +719,12 @@ function serialize_inline_component(node, component_name, context) {
 				const should_wrap_in_derived =
 					Array.isArray(attribute.value) &&
 					attribute.value.some((n) => {
-						if (n.type !== 'ExpressionTag') return false;
-						if (n.expression.type === 'Identifier' || n.expression.type === 'Literal') return false;
-
-						if (n.expression.type === 'MemberExpression' && context.state.analysis.runes) {
-							// in legacy mode, `foo={bar.baz}` is wrapped in derived to preserve old behaviour.
-							return false;
-						}
-
-						return true;
+						return (
+							n.type === 'ExpressionTag' &&
+							n.expression.type !== 'Literal' &&
+							n.expression.type !== 'Identifier' &&
+							n.expression.type !== 'MemberExpression'
+						);
 					});
 
 				if (should_wrap_in_derived) {
