@@ -28,7 +28,6 @@ import {
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED,
 	TEMPLATE_FRAGMENT,
-	TEMPLATE_USE_IMPORT_NODE,
 	TRANSITION_GLOBAL,
 	TRANSITION_IN,
 	TRANSITION_OUT
@@ -1077,10 +1076,6 @@ function create_block(parent, name, nodes, context) {
 		/** @type {import('estree').Expression[]} */
 		const args = [b.template([b.quasi(state.template.join(''), true)], [])];
 
-		if (state.metadata.context.template_needs_import_node) {
-			args.push(b.literal(TEMPLATE_USE_IMPORT_NODE));
-		}
-
 		add_template(template_name, args);
 
 		body.push(b.var(id, b.call(template_name)), ...state.before_init, ...state.init);
@@ -1120,10 +1115,6 @@ function create_block(parent, name, nodes, context) {
 				body.push(b.var(id, b.call('$.comment')));
 			} else {
 				let flags = TEMPLATE_FRAGMENT;
-
-				if (state.metadata.context.template_needs_import_node) {
-					flags |= TEMPLATE_USE_IMPORT_NODE;
-				}
 
 				add_template(template_name, [
 					b.template([b.quasi(state.template.join(''), true)], []),

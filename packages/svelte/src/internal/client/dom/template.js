@@ -1,8 +1,8 @@
 import { hydrate_nodes, hydrating } from './hydration.js';
-import { clone_node, empty } from './operations.js';
+import { import_node, empty } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
-import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
+import { TEMPLATE_FRAGMENT } from '../../../constants.js';
 import { effect } from '../reactivity/effects.js';
 import { is_array } from '../utils.js';
 
@@ -41,7 +41,6 @@ export function push_template_node(
 /*#__NO_SIDE_EFFECTS__*/
 export function template(content, flags) {
 	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
-	var use_import_node = (flags & TEMPLATE_USE_IMPORT_NODE) !== 0;
 
 	/** @type {Node} */
 	var node;
@@ -55,7 +54,7 @@ export function template(content, flags) {
 			node = create_fragment_from_html(content);
 			if (!is_fragment) node = /** @type {Node} */ (node.firstChild);
 		}
-		var clone = use_import_node ? document.importNode(node, true) : clone_node(node, true);
+		var clone = import_node(node, true);
 
 		push_template_node(
 			is_fragment
@@ -122,7 +121,7 @@ export function svg_template(content, flags) {
 			}
 		}
 
-		var clone = clone_node(node, true);
+		var clone = import_node(node, true);
 
 		push_template_node(
 			is_fragment
@@ -189,7 +188,7 @@ export function mathml_template(content, flags) {
 			}
 		}
 
-		var clone = clone_node(node, true);
+		var clone = import_node(node, true);
 
 		push_template_node(
 			is_fragment

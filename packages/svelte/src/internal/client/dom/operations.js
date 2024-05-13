@@ -17,8 +17,8 @@ var text_prototype;
 /** @type {typeof Node.prototype.appendChild} */
 var append_child_method;
 
-/** @type {typeof Node.prototype.cloneNode} */
-var clone_node_method;
+/** @type {typeof document.importNode} */
+export var import_node;
 
 /** @type {(this: Node) => ChildNode | null} */
 var first_child_get;
@@ -56,7 +56,7 @@ export function init_operations() {
 	text_prototype = Text.prototype;
 
 	append_child_method = node_prototype.appendChild;
-	clone_node_method = node_prototype.cloneNode;
+	import_node = document.importNode;
 
 	$window = window;
 	$document = document;
@@ -106,18 +106,6 @@ export function init_operations() {
 export function append_child(element, child) {
 	append_child_method.call(element, child);
 }
-
-/**
- * @template {Node} N
- * @param {N} node
- * @param {boolean} deep
- * @returns {N}
- */
-/*#__NO_SIDE_EFFECTS__*/
-export function clone_node(node, deep) {
-	return /** @type {N} */ (clone_node_method.call(node, deep));
-}
-
 /** @returns {Text} */
 export function empty() {
 	return document.createTextNode('');
