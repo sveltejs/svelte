@@ -39,6 +39,8 @@ export function set_attribute(element, attribute, value) {
 		attributes[attribute] = element.getAttribute(attribute);
 
 		if (attribute === 'src' || attribute === 'href' || attribute === 'srcset') {
+			check_src_in_dev_hydration(element, attribute, value);
+
 			// If we reset these attributes, they would result in another network request, which we want to avoid.
 			// We assume they are the same between client and server as checking if they are equal is expensive
 			// (we can't just compare the strings as they can be different between client and server but result in the
