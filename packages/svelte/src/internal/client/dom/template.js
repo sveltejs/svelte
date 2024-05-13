@@ -252,6 +252,7 @@ export function text(anchor) {
 }
 
 export function comment() {
+	// we're not delegating to `template` here for performance reasons
 	if (hydrating) {
 		return push_template_node(hydrate_nodes);
 	}
