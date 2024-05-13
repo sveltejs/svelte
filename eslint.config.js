@@ -43,10 +43,10 @@ export default [
 			'documentation',
 			// contains a fork of the REPL which doesn't adhere to eslint rules
 			'sites/svelte-5-preview/**',
-			// wasn't checked previously, reenable at some point
-			'sites/svelte.dev/**',
 			'playgrounds/demo/src/**',
-			'tmp/**'
+			'tmp/**',
+			// wasn't checked previously, reenable at some point
+			'sites/svelte.dev/**'
 		]
 	}
 ];
