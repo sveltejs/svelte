@@ -1,5 +1,11 @@
 # svelte
 
+## 4.2.17
+
+### Patch Changes
+
+- fix: correctly handle falsy values of style directives in SSR mode ([#11584](https://github.com/sveltejs/svelte/pull/11584))
+
 ## 4.2.16
 
 ### Patch Changes
