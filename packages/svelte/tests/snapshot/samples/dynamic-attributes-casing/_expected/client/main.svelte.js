@@ -1,7 +1,7 @@
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 
-var root = $.template(`<div></div> <svg></svg> <custom-element></custom-element> <div></div> <svg></svg> <custom-element></custom-element>`, 3);
+var root = $.template(`<div></div> <svg></svg> <custom-element></custom-element> <div></div> <svg></svg> <custom-element></custom-element>`, 1);
 
 export default function Main($$anchor) {
 	// needs to be a snapshot test because jsdom does auto-correct the attribute casing

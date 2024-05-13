@@ -1,5 +1,5 @@
 import { hydrate_nodes, hydrating } from './hydration.js';
-import { import_node, empty } from './operations.js';
+import { empty } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT } from '../../../constants.js';
@@ -54,7 +54,7 @@ export function template(content, flags) {
 			node = create_fragment_from_html(content);
 			if (!is_fragment) node = /** @type {Node} */ (node.firstChild);
 		}
-		var clone = import_node(node, true);
+		var clone = document.importNode(node, true);
 
 		push_template_node(
 			is_fragment
@@ -121,7 +121,7 @@ export function svg_template(content, flags) {
 			}
 		}
 
-		var clone = import_node(node, true);
+		var clone = document.importNode(node, true);
 
 		push_template_node(
 			is_fragment
@@ -188,7 +188,7 @@ export function mathml_template(content, flags) {
 			}
 		}
 
-		var clone = import_node(node, true);
+		var clone = document.importNode(node, true);
 
 		push_template_node(
 			is_fragment

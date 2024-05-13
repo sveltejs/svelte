@@ -17,9 +17,6 @@ var text_prototype;
 /** @type {typeof Node.prototype.appendChild} */
 var append_child_method;
 
-/** @type {typeof document.importNode} */
-export var import_node;
-
 /** @type {(this: Node) => ChildNode | null} */
 var first_child_get;
 
@@ -56,7 +53,6 @@ export function init_operations() {
 	text_prototype = Text.prototype;
 
 	append_child_method = node_prototype.appendChild;
-	import_node = document.importNode;
 
 	$window = window;
 	$document = document;
@@ -106,6 +102,7 @@ export function init_operations() {
 export function append_child(element, child) {
 	append_child_method.call(element, child);
 }
+
 /** @returns {Text} */
 export function empty() {
 	return document.createTextNode('');
