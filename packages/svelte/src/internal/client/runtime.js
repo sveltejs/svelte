@@ -15,7 +15,8 @@ import {
 	BRANCH_EFFECT,
 	STATE_SYMBOL,
 	BLOCK_EFFECT,
-	ROOT_EFFECT
+	ROOT_EFFECT,
+	LEGACY_DERIVED_PROP
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -835,7 +836,16 @@ export function invalidate_inner_signals(fn) {
 		captured_signals = previous_captured_signals;
 	}
 	for (signal of captured) {
-		mutate(signal, null /* doesnt matter */);
+		// Go one level up because derived signals created as part of props in legacy mode
+		if ((signal.f & LEGACY_DERIVED_PROP) !== 0) {
+			for (const dep of /** @type {import('#client').Derived} */ (signal).deps || []) {
+				if ((dep.f & DERIVED) === 0) {
+					mutate(dep, null /* doesnt matter */);
+				}
+			}
+		} else {
+			mutate(signal, null /* doesnt matter */);
+		}
 	}
 }
 

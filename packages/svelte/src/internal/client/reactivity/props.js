@@ -7,11 +7,12 @@ import {
 } from '../../../constants.js';
 import { get_descriptor, is_function } from '../utils.js';
 import { mutable_source, set, source } from './sources.js';
-import { derived } from './deriveds.js';
+import { derived, derived_safe_equal } from './deriveds.js';
 import { get, is_signals_recorded, untrack, update } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import { inspect_fn } from '../dev/inspect.js';
 import * as e from '../errors.js';
+import { LEGACY_DERIVED_PROP } from '../constants.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -236,18 +237,28 @@ export function prop(props, key, flags, fallback) {
 		if (setter) setter(prop_value);
 	}
 
-	var getter = runes
-		? () => {
-				var value = /** @type {V} */ (props[key]);
-				if (value === undefined) return get_fallback();
-				fallback_dirty = true;
-				return value;
-			}
-		: () => {
-				var value = /** @type {V} */ (props[key]);
-				if (value !== undefined) fallback_value = /** @type {V} */ (undefined);
-				return value === undefined ? fallback_value : value;
-			};
+	/** @type {() => V} */
+	var getter;
+	if (runes) {
+		getter = () => {
+			var value = /** @type {V} */ (props[key]);
+			if (value === undefined) return get_fallback();
+			fallback_dirty = true;
+			return value;
+		};
+	} else {
+		// Svelte 4 did not trigger updates when a primitive value was updated to the same value.
+		// Replicate that behavior through using a derived
+		var derived_getter = (immutable ? derived : derived_safe_equal)(
+			() => /** @type {V} */ (props[key])
+		);
+		derived_getter.f |= LEGACY_DERIVED_PROP;
+		getter = () => {
+			var value = get(derived_getter);
+			if (value !== undefined) fallback_value = /** @type {V} */ (undefined);
+			return value === undefined ? fallback_value : value;
+		};
+	}
 
 	// easy mode — prop is never written to
 	if ((flags & PROPS_IS_UPDATED) === 0) {
