@@ -5,6 +5,6 @@
 	form;
 </script>
 
-<thisShouldWarnMe />
-<i />
-<form />
+<thisShouldWarnMe></thisShouldWarnMe>
+<i></i>
+<form></form>

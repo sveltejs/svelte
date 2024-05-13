@@ -4,6 +4,7 @@ import {
 	regex_not_whitespace,
 	regex_starts_with_whitespaces
 } from './phases/patterns.js';
+import { extract_svelte_ignore } from './utils/extract_svelte_ignore.js';
 
 /**
  * Some of the legacy Svelte AST nodes remove whitespace from the start and end of their children.
@@ -86,11 +87,15 @@ export function convert(source, ast) {
 				if (instance) {
 					// @ts-ignore
 					delete instance.parent;
+					// @ts-ignore
+					delete instance.attributes;
 				}
 
 				if (module) {
 					// @ts-ignore
 					delete module.parent;
+					// @ts-ignore
+					delete module.attributes;
 				}
 
 				return {
@@ -193,7 +198,13 @@ export function convert(source, ast) {
 			ClassDirective(node) {
 				return { ...node, type: 'Class' };
 			},
-			ComplexSelector(node, { visit }) {
+			Comment(node) {
+				return {
+					...node,
+					ignores: extract_svelte_ignore(node.data)
+				};
+			},
+			ComplexSelector(node) {
 				const children = [];
 
 				for (const child of node.children) {

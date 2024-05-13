@@ -16,7 +16,7 @@
 		<span itemprop="ratingValue">4.6</span> (
 		<span itemprop="ratingCount">8864</span> ratings )
 	</div>
-	<div itemref="offers" />
+	<div itemref="offers"></div>
 </div>
 
 <div

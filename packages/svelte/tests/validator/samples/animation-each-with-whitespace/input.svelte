@@ -3,5 +3,5 @@
 </script>
 
 <div>
-	{#each [] as n (n)} <div animate:flip /> {/each}
+	{#each [] as n (n)} <div animate:flip></div> {/each}
 </div>

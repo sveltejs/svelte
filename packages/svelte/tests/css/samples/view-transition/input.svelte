@@ -1,0 +1,17 @@
+<style>
+	::view-transition {
+		animation-duration: 0.5s;
+	}
+	::view-transition-group(foo) {
+		animation-duration: 0.5s;
+	}
+	::view-transition-old {
+		animation-duration: 0.5s;
+	}
+	::view-transition-new {
+		animation-duration: 0.5s;
+	}
+	::view-transition-image-pair {
+		animation-duration: 0.5s;
+	}
+</style>

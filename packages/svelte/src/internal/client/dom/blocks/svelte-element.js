@@ -1,5 +1,5 @@
 import { namespace_svg } from '../../../../constants.js';
-import { hydrate_anchor, hydrate_nodes, hydrating } from '../hydration.js';
+import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrate_nodes } from '../hydration.js';
 import { empty } from '../operations.js';
 import {
 	block,
@@ -12,8 +12,9 @@ import {
 import { is_array } from '../../utils.js';
 import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
-import { current_effect } from '../../runtime.js';
+import { current_component_context, current_effect } from '../../runtime.js';
 import { push_template_node } from '../template.js';
+import { DEV } from 'esm-env';
 
 /**
  * @param {import('#client').Effect} effect
@@ -39,12 +40,16 @@ function swap_block_dom(effect, from, to) {
 /**
  * @param {Comment} anchor
  * @param {() => string} get_tag
- * @param {boolean | null} is_svg `null` == not statically known
- * @param {undefined | ((element: Element, anchor: Node) => void)} render_fn
+ * @param {boolean} is_svg
+ * @param {undefined | ((element: Element, anchor: Node | null) => void)} render_fn,
+ * @param {undefined | (() => string)} get_namespace
+ * @param {undefined | [number, number]} location
  * @returns {void}
  */
-export function element(anchor, get_tag, is_svg, render_fn) {
+export function element(anchor, get_tag, is_svg, render_fn, get_namespace, location) {
 	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
+
+	const filename = DEV && location && current_component_context?.function.filename;
 
 	render_effect(() => {
 		/** @type {string | null} */
@@ -68,21 +73,17 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 
 		block(() => {
 			const next_tag = get_tag() || null;
+			const ns = get_namespace
+				? get_namespace()
+				: is_svg || next_tag === 'svg'
+					? namespace_svg
+					: null;
+			// Assumption: Noone changes the namespace but not the tag (what would that even mean?)
 			if (next_tag === tag) return;
 
 			// See explanation of `each_item_block` above
 			var previous_each_item = current_each_item;
 			set_current_each_item(each_item_block);
-
-			// We try our best infering the namespace in case it's not possible to determine statically,
-			// but on the first render on the client (without hydration) the parent will be undefined,
-			// since the anchor is not attached to its parent / the dom yet.
-			const ns =
-				is_svg || next_tag === 'svg'
-					? namespace_svg
-					: is_svg === false || anchor.parentElement?.tagName === 'foreignObject'
-						? null
-						: anchor.parentElement?.namespaceURI ?? null;
 
 			if (effect) {
 				if (next_tag === null) {
@@ -111,6 +112,17 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 							? document.createElementNS(ns, next_tag)
 							: document.createElement(next_tag);
 
+					if (DEV && location) {
+						// @ts-expect-error
+						element.__svelte_meta = {
+							loc: {
+								filename,
+								line: location[0],
+								column: location[1]
+							}
+						};
+					}
+
 					if (render_fn) {
 						// If hydrating, use the existing ssr comment as the anchor so that the
 						// inner open and close methods can pick up the existing nodes correctly
@@ -118,13 +130,17 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 							? element.firstChild && hydrate_anchor(/** @type {Comment} */ (element.firstChild))
 							: element.appendChild(empty());
 
-						if (child_anchor) {
-							// `child_anchor` can be undefined if this is a void element with children,
-							// i.e. `<svelte:element this={"hr"}>...</svelte:element>`. This is
-							// user error, but we warn on it elsewhere (in dev) so here we just
-							// silently ignore it
-							render_fn(element, child_anchor);
+						if (hydrating && !element.firstChild) {
+							// if the element is a void element with content, add an empty
+							// node to avoid breaking assumptions elsewhere
+							set_hydrate_nodes([empty()]);
 						}
+
+						// `child_anchor` is undefined if this is a void element, but we still
+						// need to call `render_fn` in order to run actions etc. If the element
+						// contains children, it's a user error (which is warned on elsewhere)
+						// and the DOM will be silently discarded
+						render_fn(element, child_anchor);
 					}
 
 					anchor.before(element);
@@ -133,7 +149,7 @@ export function element(anchor, get_tag, is_svg, render_fn) {
 						swap_block_dom(parent_effect, prev_element, element);
 						prev_element.remove();
 					} else if (!hydrating) {
-						push_template_node(parent_effect, element);
+						push_template_node(element, parent_effect);
 					}
 				});
 			}

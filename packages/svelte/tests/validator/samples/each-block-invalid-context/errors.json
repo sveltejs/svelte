@@ -1,6 +1,6 @@
 [
 	{
-		"code": "unexpected-reserved-word",
+		"code": "unexpected_reserved_word",
 		"message": "'case' is a reserved word in JavaScript and cannot be used here",
 		"start": {
 			"line": 1,

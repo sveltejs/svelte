@@ -7,19 +7,20 @@
 	import { EditorState, Range, StateEffect, StateEffectType, StateField } from '@codemirror/state';
 	import { Decoration, EditorView } from '@codemirror/view';
 	import { codemirror, withCodemirrorInstance } from '@neocodemirror/svelte';
+	import { svelteLanguage } from '@replit/codemirror-lang-svelte';
+	import { javascriptLanguage } from '@codemirror/lang-javascript';
 	import { createEventDispatcher, tick } from 'svelte';
 	import { writable } from 'svelte/store';
+	import { get_repl_context } from '$lib/context.js';
 	import Message from './Message.svelte';
 	import { svelteTheme } from './theme.js';
+	import { autocomplete } from './autocomplete.js';
 
 	/** @type {import('@codemirror/lint').LintSource | undefined} */
 	export let diagnostics = undefined;
 
 	export let readonly = false;
 	export let tab = true;
-
-	/** @type {boolean} */
-	export let autocomplete = true;
 
 	/** @type {ReturnType<typeof createEventDispatcher<{ change: { value: string } }>>} */
 	const dispatch = createEventDispatcher();
@@ -192,57 +193,16 @@
 		}
 	});
 
-	import { svelteLanguage } from '@replit/codemirror-lang-svelte';
-	import { javascriptLanguage } from '@codemirror/lang-javascript';
-	import { snippetCompletion as snip } from '@codemirror/autocomplete';
-
-	/** @param {any} context */
-	function complete_svelte_runes(context) {
-		const word = context.matchBefore(/\w*/);
-		if (word.from === word.to && context.state.sliceDoc(word.from - 1, word.to) !== '$') {
-			return null;
-		}
-		return {
-			from: word.from - 1,
-			options: [
-				{ label: '$state', type: 'keyword', boost: 12 },
-				{ label: '$props', type: 'keyword', boost: 11 },
-				{ label: '$derived', type: 'keyword', boost: 10 },
-				snip('$derived.by(() => {\n\t${}\n});', {
-					label: '$derived.by',
-					type: 'keyword',
-					boost: 9
-				}),
-				snip('$effect(() => {\n\t${}\n});', { label: '$effect', type: 'keyword', boost: 8 }),
-				snip('$effect.pre(() => {\n\t${}\n});', {
-					label: '$effect.pre',
-					type: 'keyword',
-					boost: 7
-				}),
-				{ label: '$state.frozen', type: 'keyword', boost: 6 },
-				{ label: '$bindable', type: 'keyword', boost: 5 },
-				snip('$effect.root(() => {\n\t${}\n});', {
-					label: '$effect.root',
-					type: 'keyword',
-					boost: 4
-				}),
-				{ label: '$state.snapshot', type: 'keyword', boost: 3 },
-				snip('$effect.active()', {
-					label: '$effect.active',
-					type: 'keyword',
-					boost: 2
-				}),
-				{ label: '$inspect', type: 'keyword', boost: 1 }
-			]
-		};
-	}
+	const { files, selected } = get_repl_context();
 
 	const svelte_rune_completions = svelteLanguage.data.of({
-		autocomplete: complete_svelte_runes
+		/** @param {import('@codemirror/autocomplete').CompletionContext} context */
+		autocomplete: (context) => autocomplete(context, $selected, $files)
 	});
 
 	const js_rune_completions = javascriptLanguage.data.of({
-		autocomplete: complete_svelte_runes
+		/** @param {import('@codemirror/autocomplete').CompletionContext} context */
+		autocomplete: (context) => autocomplete(context, $selected, $files)
 	});
 </script>
 
@@ -266,7 +226,7 @@
 		},
 		lint: diagnostics,
 		lintOptions: { delay: 200 },
-		autocomplete,
+		autocomplete: true,
 		extensions: [svelte_rune_completions, js_rune_completions, watcher],
 		instanceStore: cmInstance
 	}}

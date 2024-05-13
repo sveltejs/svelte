@@ -17,10 +17,7 @@ export async function run_ssr_test(
 	test_dir: string
 ) {
 	try {
-		await compile_directory(test_dir, 'server', {
-			...config.compileOptions,
-			runes: test_dir.includes('runtime-runes')
-		});
+		await compile_directory(test_dir, 'server', config.compileOptions);
 
 		const Component = (await import(`${test_dir}/_output/server/main.svelte.js`)).default;
 		const { html } = render(Component, { props: config.props || {} });

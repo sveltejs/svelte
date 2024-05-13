@@ -6,6 +6,11 @@
 	console.log(obj);
 	console.log(count);
 	console.log(doubled);
+	// these are ok because they're writes
+	count++;
+	count = 1;
+	obj.a++;
+	obj.a = 1;
 </script>
 
 <button onclick={() => count += 1}>

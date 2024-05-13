@@ -1,11 +1,9 @@
 <script>
-	import { log } from './log.js';
-
 	let x = $state(0);
 
 	const cleanup = $effect.root(() => {
-		log.push(x);
-		return () => log.push('cleanup');
+		console.log(x);
+		return () => console.log('cleanup');
 	});
 </script>
 

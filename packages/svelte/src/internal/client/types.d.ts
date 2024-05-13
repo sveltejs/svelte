@@ -10,35 +10,53 @@ export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
 // when the JS VM JITs the code.
 
 export type ComponentContext = {
-	/** local signals (needed for beforeUpdate/afterUpdate) */
-	d: null | Source[];
-	/** props */
-	s: Record<string, unknown>;
-	/** exports (and props, if `accessors: true`) */
-	x: Record<string, any> | null;
-	/** deferred effects */
-	e: null | Array<() => void | (() => void)>;
-	/** mounted */
-	m: boolean;
 	/** parent */
 	p: null | ComponentContext;
 	/** context */
 	c: null | Map<unknown, unknown>;
-	/** runes */
-	r: boolean;
-	/** legacy mode: if `$:` statements are allowed to run (ensures they only run once per render) */
-	l1: any[];
-	/** legacy mode: if `$:` statements are allowed to run (ensures they only run once per render) */
-	l2: Source<boolean>;
-	/** update_callbacks */
-	u: null | {
-		/** afterUpdate callbacks */
-		a: Array<() => void>;
-		/** beforeUpdate callbacks */
-		b: Array<() => void>;
-		/** onMount callbacks */
-		m: Array<() => any>;
+	/** deferred effects */
+	e: null | Array<() => void | (() => void)>;
+	/** mounted */
+	m: boolean;
+	/**
+	 * props — needed for legacy mode lifecycle functions, and for `createEventDispatcher`
+	 * @deprecated remove in 6.0
+	 */
+	s: Record<string, unknown>;
+	/**
+	 * exports (and props, if `accessors: true`) — needed for `createEventDispatcher`
+	 * @deprecated remove in 6.0
+	 */
+	x: Record<string, any> | null;
+	/**
+	 * legacy stuff
+	 * @deprecated remove in 6.0
+	 */
+	l: null | {
+		/** local signals (needed for beforeUpdate/afterUpdate) */
+		s: null | Source[];
+		/** update_callbacks */
+		u: null | {
+			/** afterUpdate callbacks */
+			a: Array<() => void>;
+			/** beforeUpdate callbacks */
+			b: Array<() => void>;
+			/** onMount callbacks */
+			m: Array<() => any>;
+		};
+		/** `$:` statements */
+		r1: any[];
+		/** This tracks whether `$:` statements have run in the current cycle, to ensure they only run once */
+		r2: Source<boolean>;
 	};
+	/**
+	 * dev mode only: the component function
+	 */
+	function?: any;
+};
+
+export type ComponentContextLegacy = ComponentContext & {
+	l: NonNullable<ComponentContext['l']>;
 };
 
 export type Equals = (this: Value, value: unknown) => boolean;
@@ -67,6 +85,8 @@ export type EachItem = {
 	i: number | Source<number>;
 	/** key */
 	k: unknown;
+	/** anchor for items inserted before this */
+	o: Comment | Text;
 	prev: EachItem | EachState;
 	next: EachItem | null;
 };
@@ -77,7 +97,7 @@ export interface TransitionManager {
 	/** Called inside `resume_effect` */
 	in: () => void;
 	/** Called inside `pause_effect` */
-	out: (callback?: () => void, position_absolute?: boolean) => void;
+	out: (callback?: () => void) => void;
 	/** Called inside `destroy_effect` */
 	stop: () => void;
 }
@@ -89,6 +109,10 @@ export interface AnimationManager {
 	measure: () => void;
 	/** Called during keyed each block reconciliation, after updates — this triggers the animation */
 	apply: () => void;
+	/** Fix the element position, so that siblings can move to the correct destination */
+	fix: () => void;
+	/** Unfix the element position if the outro is aborted */
+	unfix: () => void;
 }
 
 export interface Animation {

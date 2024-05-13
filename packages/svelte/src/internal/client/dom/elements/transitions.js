@@ -7,7 +7,7 @@ import { should_intro } from '../../render.js';
 import { is_function } from '../../utils.js';
 import { current_each_item } from '../blocks/each.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
-import { BLOCK_EFFECT, EFFECT_RAN } from '../../constants.js';
+import { BLOCK_EFFECT, EFFECT_RAN, EFFECT_TRANSPARENT } from '../../constants.js';
 
 /**
  * @template T
@@ -88,6 +88,9 @@ export function animation(element, get_fn, get_params) {
 	/** @type {import('#client').Animation | undefined} */
 	var animation;
 
+	/** @type {null | { position: string, width: string, height: string }} */
+	var original_styles = null;
+
 	item.a ??= {
 		element,
 		measure() {
@@ -106,10 +109,42 @@ export function animation(element, get_fn, get_params) {
 			) {
 				const options = get_fn()(this.element, { from, to }, get_params?.());
 
-				animation = animate(this.element, options, false, undefined, 1, () => {
+				animation = animate(this.element, options, undefined, 1, () => {
 					animation?.abort();
 					animation = undefined;
 				});
+			}
+		},
+		fix() {
+			var computed_style = getComputedStyle(element);
+
+			if (computed_style.position !== 'absolute' && computed_style.position !== 'fixed') {
+				var style = /** @type {HTMLElement | SVGElement} */ (element).style;
+
+				original_styles = {
+					position: style.position,
+					width: style.width,
+					height: style.height
+				};
+
+				style.position = 'absolute';
+				style.width = computed_style.width;
+				style.height = computed_style.height;
+				var to = element.getBoundingClientRect();
+
+				if (from.left !== to.left || from.top !== to.top) {
+					var transform = `translate(${from.left - to.left}px, ${from.top - to.top}px)`;
+					style.transform = style.transform ? `${style.transform} ${transform}` : transform;
+				}
+			}
+		},
+		unfix() {
+			if (original_styles) {
+				var style = /** @type {HTMLElement | SVGElement} */ (element).style;
+
+				style.position = original_styles.position;
+				style.width = original_styles.width;
+				style.height = original_styles.height;
 			}
 		}
 	};
@@ -169,7 +204,7 @@ export function transition(flags, element, get_fn, get_params) {
 
 			if (is_intro) {
 				dispatch_event(element, 'introstart');
-				intro = animate(element, get_options(), false, outro, 1, () => {
+				intro = animate(element, get_options(), outro, 1, () => {
 					dispatch_event(element, 'introend');
 					intro = current_options = undefined;
 				});
@@ -178,12 +213,12 @@ export function transition(flags, element, get_fn, get_params) {
 				reset?.();
 			}
 		},
-		out(fn, position_absolute = false) {
+		out(fn) {
 			if (is_outro) {
 				element.inert = true;
 
 				dispatch_event(element, 'outrostart');
-				outro = animate(element, get_options(), position_absolute, intro, 0, () => {
+				outro = animate(element, get_options(), intro, 0, () => {
 					dispatch_event(element, 'outroend');
 					outro = current_options = undefined;
 					fn?.();
@@ -206,18 +241,26 @@ export function transition(flags, element, get_fn, get_params) {
 
 	(e.transitions ??= []).push(transition);
 
-	// if this is a local transition, we only want to run it if the parent (block) effect's
-	// parent (branch) effect is where the state change happened. we can determine that by
-	// looking at whether the branch effect is currently initializing
+	// if this is a local transition, we only want to run it if the parent (branch) effect's
+	// parent (block) effect is where the state change happened. we can determine that by
+	// looking at whether the block effect is currently initializing
 	if (is_intro && should_intro) {
-		var parent = /** @type {import('#client').Effect} */ (e.parent);
+		let run = is_global;
 
-		// e.g snippets are implemented as render effects — keep going until we find the parent block
-		while ((parent.f & BLOCK_EFFECT) === 0 && parent.parent) {
-			parent = parent.parent;
+		if (!run) {
+			var block = /** @type {import('#client').Effect | null} */ (e.parent);
+
+			// skip over transparent blocks (e.g. snippets, else-if blocks)
+			while (block && (block.f & EFFECT_TRANSPARENT) !== 0) {
+				while ((block = block.parent)) {
+					if ((block.f & BLOCK_EFFECT) !== 0) break;
+				}
+			}
+
+			run = !block || (block.f & EFFECT_RAN) !== 0;
 		}
 
-		if (is_global || (parent.f & EFFECT_RAN) !== 0) {
+		if (run) {
 			effect(() => {
 				untrack(() => transition.in());
 			});
@@ -229,13 +272,12 @@ export function transition(flags, element, get_fn, get_params) {
  * Animates an element, according to the provided configuration
  * @param {Element} element
  * @param {import('#client').AnimationConfig | ((opts: { direction: 'in' | 'out' }) => import('#client').AnimationConfig)} options
- * @param {boolean} position_absolute
  * @param {import('#client').Animation | undefined} counterpart The corresponding intro/outro to this outro/intro
  * @param {number} t2 The target `t` value — `1` for intro, `0` for outro
  * @param {(() => void) | undefined} callback
  * @returns {import('#client').Animation}
  */
-function animate(element, options, position_absolute, counterpart, t2, callback) {
+function animate(element, options, counterpart, t2, callback) {
 	if (is_function(options)) {
 		// In the case of a deferred transition (such as `crossfade`), `option` will be
 		// a function rather than an `AnimationConfig`. We need to call this function
@@ -245,7 +287,7 @@ function animate(element, options, position_absolute, counterpart, t2, callback)
 
 		effect(() => {
 			var o = untrack(() => options({ direction: t2 === 1 ? 'in' : 'out' }));
-			a = animate(element, o, position_absolute, counterpart, t2, callback);
+			a = animate(element, o, counterpart, t2, callback);
 		});
 
 		// ...but we want to do so without using `async`/`await` everywhere, so
@@ -285,49 +327,15 @@ function animate(element, options, position_absolute, counterpart, t2, callback)
 	/** @type {import('#client').Task} */
 	var task;
 
-	/** @type {null | { position: string, width: string, height: string }} */
-	var original_styles = null;
-
 	if (css) {
 		// WAAPI
 		var keyframes = [];
-		var n = duration / (1000 / 60);
+		var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
 
 		for (var i = 0; i <= n; i += 1) {
 			var t = t1 + delta * easing(i / n);
 			var styles = css(t, 1 - t);
 			keyframes.push(css_to_keyframe(styles));
-		}
-
-		if (position_absolute) {
-			// we take the element out of the flow, so that sibling elements with an `animate:`
-			// directive can transform to the correct position
-			var computed_style = getComputedStyle(element);
-
-			if (computed_style.position !== 'absolute' && computed_style.position !== 'fixed') {
-				var style = /** @type {HTMLElement | SVGElement} */ (element).style;
-
-				original_styles = {
-					position: style.position,
-					width: style.width,
-					height: style.height
-				};
-
-				var rect_a = element.getBoundingClientRect();
-				style.position = 'absolute';
-				style.width = computed_style.width;
-				style.height = computed_style.height;
-				var rect_b = element.getBoundingClientRect();
-
-				if (rect_a.left !== rect_b.left || rect_a.top !== rect_b.top) {
-					var transform = `translate(${rect_a.left - rect_b.left}px, ${rect_a.top - rect_b.top}px)`;
-					for (var keyframe of keyframes) {
-						keyframe.transform = keyframe.transform
-							? `${keyframe.transform} ${transform}`
-							: transform;
-					}
-				}
-			}
 		}
 
 		animation = element.animate(keyframes, {
@@ -340,6 +348,10 @@ function animate(element, options, position_absolute, counterpart, t2, callback)
 		animation.finished
 			.then(() => {
 				callback?.();
+
+				if (t2 === 1) {
+					animation.cancel();
+				}
 			})
 			.catch((e) => {
 				// Error for DOMException: The user aborted a request. This results in two things:
@@ -380,15 +392,6 @@ function animate(element, options, position_absolute, counterpart, t2, callback)
 			task?.abort();
 		},
 		deactivate: () => {
-			if (original_styles) {
-				// revert `animate:` position fixing
-				var style = /** @type {HTMLElement | SVGElement} */ (element).style;
-
-				style.position = original_styles.position;
-				style.width = original_styles.width;
-				style.height = original_styles.height;
-			}
-
 			callback = undefined;
 		},
 		reset: () => {

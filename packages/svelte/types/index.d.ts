@@ -1,6 +1,4 @@
 declare module 'svelte' {
-	// This should contain all the public interfaces (not all of them are actually importable, check current Svelte for which ones are).
-
 	/**
 	 * @deprecated Svelte components were classes in Svelte 4. In Svelte 5, thy are not anymore.
 	 * Use `mount` or `createRoot` instead to instantiate components.
@@ -19,13 +17,18 @@ declare module 'svelte' {
 		$$inline?: boolean;
 	}
 
-	// Utility type for ensuring backwards compatibility on a type level: If there's a default slot, add 'children' to the props if it doesn't exist there already
-	type PropsWithChildren<Props, Slots> = Props &
-		(Props extends { children?: any }
-			? {}
-			: Slots extends { default: any }
-				? { children?: Snippet }
-				: {});
+	/**
+	 * Utility type for ensuring backwards compatibility on a type level that if there's a default slot, add 'children' to the props
+	 */
+	type Properties<Props, Slots> = Props &
+		(Slots extends { default: any }
+			? // This is unfortunate because it means "accepts no props" turns into "accepts any prop"
+				// but the alternative is non-fixable type errors because of the way TypeScript index
+				// signatures work (they will always take precedence and make an impossible-to-satisfy children type).
+				Props extends Record<string, never>
+				? any
+				: { children?: any }
+			: {});
 
 	/**
 	 * Can be used to create strongly typed Svelte components.
@@ -56,7 +59,7 @@ declare module 'svelte' {
 	 * for more info.
 	 */
 	export class SvelteComponent<
-		Props extends Record<string, any> = any,
+		Props extends Record<string, any> = Record<string, any>,
 		Events extends Record<string, any> = any,
 		Slots extends Record<string, any> = any
 	> {
@@ -69,13 +72,13 @@ declare module 'svelte' {
 		 * is a stop-gap solution. Migrate towards using `mount` or `createRoot` instead. See
 		 * https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more info.
 		 */
-		constructor(options: ComponentConstructorOptions<PropsWithChildren<Props, Slots>>);
+		constructor(options: ComponentConstructorOptions<Properties<Props, Slots>>);
 		/**
 		 * For type checking capabilities only.
 		 * Does not exist at runtime.
 		 * ### DO NOT USE!
 		 * */
-		$$prop_def: PropsWithChildren<Props, Slots>;
+		$$prop_def: Props; // Without Properties: unnecessary, causes type bugs
 		/**
 		 * For type checking capabilities only.
 		 * Does not exist at runtime.
@@ -90,6 +93,12 @@ declare module 'svelte' {
 		 *
 		 * */
 		$$slot_def: Slots;
+		/**
+		 * For type checking capabilities only.
+		 * Does not exist at runtime.
+		 * ### DO NOT USE!
+		 * */
+		$$bindings?: string;
 
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
@@ -120,7 +129,7 @@ declare module 'svelte' {
 	 * @deprecated Use `SvelteComponent` instead. See TODO for more information.
 	 */
 	export class SvelteComponentTyped<
-		Props extends Record<string, any> = any,
+		Props extends Record<string, any> = Record<string, any>,
 		Events extends Record<string, any> = any,
 		Slots extends Record<string, any> = any
 	> extends SvelteComponent<Props, Events, Slots> {}
@@ -319,7 +328,7 @@ declare module 'svelte' {
 		events?: { [Property in keyof Events]: (e: Events[Property]) => any; } | undefined;
 		context?: Map<any, any> | undefined;
 		intro?: boolean | undefined;
-		recover?: false | undefined;
+		recover?: boolean | undefined;
 	}): Exports;
 	/**
 	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
@@ -500,14 +509,26 @@ declare module 'svelte/compiler' {
 	 *
 	 * https://svelte.dev/docs/svelte-compiler#svelte-parse
 	 * */
+	export function parse(source: string, options: {
+		filename?: string;
+		modern: true;
+	}): Root;
+	/**
+	 * The parse function parses a component, returning only its abstract syntax tree.
+	 *
+	 * The `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
+	 * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
+	 *
+	 * https://svelte.dev/docs/svelte-compiler#svelte-parse
+	 * */
 	export function parse(source: string, options?: {
 		filename?: string | undefined;
-		modern?: boolean | undefined;
-	} | undefined): Root | LegacyRoot;
+		modern?: false | undefined;
+	} | undefined): LegacyRoot;
 	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
 	 * */
-	function walk(): never;
+	export function walk(): never;
 	/** The return value of `compile` from `svelte/compiler` */
 	interface CompileResult {
 		/** The compiled JavaScript */
@@ -585,6 +606,7 @@ declare module 'svelte/compiler' {
 		 * If `true`, getters and setters will be created for the component's props. If `false`, they will only be created for readonly exported values (i.e. those declared with `const`, `class` and `function`). If compiling with `customElement: true` this option defaults to `true`.
 		 *
 		 * @default false
+		 * @deprecated This will have no effect in runes mode
 		 */
 		accessors?: boolean;
 		/**
@@ -598,6 +620,7 @@ declare module 'svelte/compiler' {
 		 * This allows it to be less conservative about checking whether values have changed.
 		 *
 		 * @default false
+		 * @deprecated This will have no effect in runes mode
 		 */
 		immutable?: boolean;
 		/**
@@ -955,6 +978,14 @@ declare module 'svelte/compiler' {
 		type: 'Window';
 	}
 
+	interface LegacyComment extends BaseNode_1 {
+		type: 'Comment';
+		/** the contents of the comment */
+		data: string;
+		/** any svelte-ignore directives — <!-- svelte-ignore a b c --> would result in ['a', 'b', 'c'] */
+		ignores: string[];
+	}
+
 	type LegacyDirective =
 		| LegacyAnimation
 		| LegacyBinding
@@ -970,6 +1001,7 @@ declare module 'svelte/compiler' {
 	type LegacyElementLike =
 		| LegacyBody
 		| LegacyCatchBlock
+		| LegacyComment
 		| LegacyDocument
 		| LegacyElement
 		| LegacyHead
@@ -1037,6 +1069,14 @@ declare module 'svelte/compiler' {
 	 * https://svelte.dev/docs/svelte-compiler#svelte-version
 	 * */
 	export const VERSION: string;
+	/**
+	 * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
+	 * May throw an error if the code is too complex to migrate automatically.
+	 *
+	 * */
+	export function migrate(source: string): {
+		code: string;
+	};
 	class Scope {
 		
 		constructor(root: ScopeRoot, parent: Scope | null, porous: boolean);
@@ -1122,6 +1162,7 @@ declare module 'svelte/compiler' {
 			metadata: {
 				parent_rule: null | Rule;
 				has_local_selectors: boolean;
+				is_global_block: boolean;
 			};
 		}
 
@@ -1144,9 +1185,10 @@ declare module 'svelte/compiler' {
 			combinator: null | Combinator;
 			selectors: SimpleSelector[];
 			metadata: {
+				/** :global(..) */
 				is_global: boolean;
-				is_host: boolean;
-				is_root: boolean;
+				/** :root, :host, ::view-transition */
+				is_global_like: boolean;
 				scoped: boolean;
 			};
 		}
@@ -1262,11 +1304,12 @@ declare module 'svelte/compiler' {
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
 	 * - `svg`     — for e.g. `<svg>` or `<g>`
+	 * - `mathml`  — for e.g. `<math>` or `<mrow>`
 	 * - `foreign` — for other compilation targets than the web, e.g. Svelte Native.
 	 *               Disallows bindings other than bind:this, disables a11y checks, disables any special attribute handling
 	 *               (also see https://github.com/sveltejs/svelte/pull/5652)
 	 */
-	type Namespace = 'html' | 'svg' | 'foreign';
+	type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
 
 	interface Root extends BaseNode {
 		type: 'Root';
@@ -1316,6 +1359,7 @@ declare module 'svelte/compiler' {
 			 */
 			extend?: ArrowFunctionExpression | Identifier;
 		};
+		attributes: Attribute[];
 	}
 
 	/** Static text */
@@ -1353,8 +1397,6 @@ declare module 'svelte/compiler' {
 		type: 'Comment';
 		/** the contents of the comment */
 		data: string;
-		/** any svelte-ignore directives — <!-- svelte-ignore a b c --> would result in ['a', 'b', 'c'] */
-		ignores: string[];
 	}
 
 	/** A `{@const ...}` tag */
@@ -1511,6 +1553,8 @@ declare module 'svelte/compiler' {
 		metadata: {
 			/** `true` if this is an svg element */
 			svg: boolean;
+			/** `true` if this is a mathml element */
+			mathml: boolean;
 			/** `true` if contains a SpreadAttribute */
 			has_spread: boolean;
 			scoped: boolean;
@@ -1539,10 +1583,15 @@ declare module 'svelte/compiler' {
 		tag: Expression;
 		metadata: {
 			/**
-			 * `true`/`false` if this is definitely (not) an svg element.
-			 * `null` means we can't know statically.
+			 * `true` if this is an svg element. The boolean may not be accurate because
+			 * the tag is dynamic, but we do our best to infer it from the template.
 			 */
-			svg: boolean | null;
+			svg: boolean;
+			/**
+			 * `true` if this is a mathml element. The boolean may not be accurate because
+			 * the tag is dynamic, but we do our best to infer it from the template.
+			 */
+			mathml: boolean;
 			scoped: boolean;
 		};
 	}
@@ -1690,6 +1739,7 @@ declare module 'svelte/compiler' {
 		type: 'Script';
 		context: string;
 		content: Program;
+		attributes: Attribute[];
 	}
 	/**
 	 * The result of a preprocessor run. If the preprocessor does not return a result, it is assumed that the code is unchanged.
@@ -1760,8 +1810,6 @@ declare module 'svelte/compiler' {
 		style?: Preprocessor;
 		script?: Preprocessor;
 	}
-
-	export { walk };
 }
 
 declare module 'svelte/easing' {
@@ -1911,6 +1959,12 @@ declare module 'svelte/legacy' {
 	 *
 	 * */
 	export function asClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(component: import("svelte").SvelteComponent<Props, Events, Slots>): import("svelte").ComponentType<import("svelte").SvelteComponent<Props, Events, Slots> & Exports>;
+	/**
+	 * Runs the given function once immediately on the server, and works like `$effect.pre` on the client.
+	 *
+	 * @deprecated Use this only as a temporary solution to migrate your component code to Svelte 5.
+	 * */
+	export function run(fn: () => void | (() => void)): void;
 }
 
 declare module 'svelte/motion' {
@@ -1982,38 +2036,18 @@ declare module 'svelte/reactivity' {
 		constructor(...values: any[]);
 		#private;
 	}
-	class ReactiveSet<T> extends Set<any> {
+	class ReactiveSet<T> extends Set<T> {
 		
 		constructor(value?: Iterable<T> | null | undefined);
 		
-		has(value: T): boolean;
-		
 		add(value: T): this;
-		
-		delete(value: T): boolean;
-		keys(): IterableIterator<T>;
-		values(): IterableIterator<T>;
-		entries(): IterableIterator<[T, T]>;
-		[Symbol.iterator](): IterableIterator<T>;
 		#private;
 	}
-	class ReactiveMap<K, V> extends Map<any, any> {
+	class ReactiveMap<K, V> extends Map<K, V> {
 		
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
 		
-		has(key: K): boolean;
-		
-		forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void, this_arg?: any): void;
-		
-		get(key: K): V | undefined;
-		
 		set(key: K, value: V): this;
-		
-		delete(key: K): boolean;
-		keys(): IterableIterator<K>;
-		values(): IterableIterator<V>;
-		entries(): IterableIterator<[K, V]>;
-		[Symbol.iterator](): IterableIterator<[K, V]>;
 		#private;
 	}
 	class ReactiveURL extends URL {
@@ -2123,14 +2157,14 @@ declare module 'svelte/store' {
 	 *
 	 * https://svelte.dev/docs/svelte-store#derived
 	 * */
-	export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>) => T, initial_value?: T | undefined): Readable<T>;
+	export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>, set: (value: T) => void, update: (fn: Updater<T>) => void) => Unsubscriber | void, initial_value?: T | undefined): Readable<T>;
 	/**
 	 * Derived value store by synchronizing one or more readable stores and
 	 * applying an aggregation function over its input values.
 	 *
 	 * https://svelte.dev/docs/svelte-store#derived
 	 * */
-	export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>, set: (value: T) => void, update: (fn: Updater<T>) => void) => Unsubscriber | void, initial_value?: T | undefined): Readable<T>;
+	export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>) => T, initial_value?: T | undefined): Readable<T>;
 	/**
 	 * Takes a store and returns a new one derived from the old one that is readable.
 	 *
@@ -2393,6 +2427,7 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * If `true`, getters and setters will be created for the component's props. If `false`, they will only be created for readonly exported values (i.e. those declared with `const`, `class` and `function`). If compiling with `customElement: true` this option defaults to `true`.
 		 *
 		 * @default false
+		 * @deprecated This will have no effect in runes mode
 		 */
 		accessors?: boolean;
 		/**
@@ -2406,6 +2441,7 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * This allows it to be less conservative about checking whether values have changed.
 		 *
 		 * @default false
+		 * @deprecated This will have no effect in runes mode
 		 */
 		immutable?: boolean;
 		/**
@@ -2517,11 +2553,12 @@ declare module 'svelte/types/compiler/interfaces' {
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
 	 * - `svg`     — for e.g. `<svg>` or `<g>`
+	 * - `mathml`  — for e.g. `<math>` or `<mrow>`
 	 * - `foreign` — for other compilation targets than the web, e.g. Svelte Native.
 	 *               Disallows bindings other than bind:this, disables a11y checks, disables any special attribute handling
 	 *               (also see https://github.com/sveltejs/svelte/pull/5652)
 	 */
-	type Namespace = 'html' | 'svg' | 'foreign';
+	type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
 }declare module '*.svelte' {
 	export { SvelteComponent as default } from 'svelte';
 }
@@ -2586,6 +2623,27 @@ declare namespace $state {
 	 * @param state The value to snapshot
 	 */
 	export function snapshot<T>(state: T): T;
+
+	// prevent intellisense from being unhelpful
+	/** @deprecated */
+	export const apply: never;
+	/** @deprecated */
+	// @ts-ignore
+	export const arguments: never;
+	/** @deprecated */
+	export const bind: never;
+	/** @deprecated */
+	export const call: never;
+	/** @deprecated */
+	export const caller: never;
+	/** @deprecated */
+	export const length: never;
+	/** @deprecated */
+	export const name: never;
+	/** @deprecated */
+	export const prototype: never;
+	/** @deprecated */
+	export const toString: never;
 }
 
 /**
@@ -2622,6 +2680,27 @@ declare namespace $derived {
 	 * https://svelte-5-preview.vercel.app/docs/runes#$derived-by
 	 */
 	export function by<T>(fn: () => T): T;
+
+	// prevent intellisense from being unhelpful
+	/** @deprecated */
+	export const apply: never;
+	/** @deprecated */
+	// @ts-ignore
+	export const arguments: never;
+	/** @deprecated */
+	export const bind: never;
+	/** @deprecated */
+	export const call: never;
+	/** @deprecated */
+	export const caller: never;
+	/** @deprecated */
+	export const length: never;
+	/** @deprecated */
+	export const name: never;
+	/** @deprecated */
+	export const prototype: never;
+	/** @deprecated */
+	export const toString: never;
 }
 
 /**
@@ -2710,6 +2789,27 @@ declare namespace $effect {
 	 * https://svelte-5-preview.vercel.app/docs/runes#$effect-root
 	 */
 	export function root(fn: () => void | (() => void)): () => void;
+
+	// prevent intellisense from being unhelpful
+	/** @deprecated */
+	export const apply: never;
+	/** @deprecated */
+	// @ts-ignore
+	export const arguments: never;
+	/** @deprecated */
+	export const bind: never;
+	/** @deprecated */
+	export const call: never;
+	/** @deprecated */
+	export const caller: never;
+	/** @deprecated */
+	export const length: never;
+	/** @deprecated */
+	export const name: never;
+	/** @deprecated */
+	export const prototype: never;
+	/** @deprecated */
+	export const toString: never;
 }
 
 /**

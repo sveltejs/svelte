@@ -17,7 +17,7 @@ export function transform_component(analysis, source, options) {
 		return {
 			js: /** @type {any} */ (null),
 			css: null,
-			warnings: transform_warnings(source, options.filename, analysis.warnings),
+			warnings: /** @type {any} */ (null), // set afterwards
 			metadata: {
 				runes: analysis.runes
 			},
@@ -29,20 +29,6 @@ export function transform_component(analysis, source, options) {
 		options.generate === 'server'
 			? server_component(analysis, options)
 			: client_component(source, analysis, options);
-
-	const basename = (options.filename ?? 'Component').split(/[/\\]/).at(-1);
-	if (program.body.length > 0) {
-		program.body[0].leadingComments = [
-			{
-				type: 'Line',
-				value: ` ${basename} (Svelte v${VERSION})`
-			},
-			{
-				type: 'Line',
-				value: ' Note: compiler output will change before 5.0 is released!'
-			}
-		];
-	}
 
 	const js_source_name = get_source_name(options.filename, options.outputFilename, 'input.svelte');
 	const js = print(program, {
@@ -60,7 +46,7 @@ export function transform_component(analysis, source, options) {
 	return {
 		js,
 		css,
-		warnings: transform_warnings(source, options.filename, analysis.warnings), // TODO apply preprocessor sourcemap
+		warnings: /** @type {any} */ (null), // set afterwards. TODO apply preprocessor sourcemap
 		metadata: {
 			runes: analysis.runes
 		},
@@ -79,7 +65,7 @@ export function transform_module(analysis, source, options) {
 		return {
 			js: /** @type {any} */ (null),
 			css: null,
-			warnings: transform_warnings(source, analysis.name, analysis.warnings),
+			warnings: /** @type {any} */ (null), // set afterwards
 			metadata: {
 				runes: true
 			},
@@ -105,45 +91,10 @@ export function transform_module(analysis, source, options) {
 	return {
 		js: print(program, {}),
 		css: null,
-		warnings: transform_warnings(source, analysis.name, analysis.warnings),
 		metadata: {
 			runes: true
 		},
+		warnings: /** @type {any} */ (null), // set afterwards
 		ast: /** @type {any} */ (null) // set afterwards
 	};
-}
-
-/**
- * @param {string} source
- * @param {string | undefined} name
- * @param {import('../types').RawWarning[]} warnings
- * @returns {import('#compiler').Warning[]}
- */
-function transform_warnings(source, name, warnings) {
-	if (warnings.length === 0) return [];
-
-	const locate = getLocator(source, { offsetLine: 1 });
-
-	/** @type {import('#compiler').Warning[]} */
-	const result = [];
-
-	for (const warning of warnings) {
-		const start =
-			warning.position &&
-			/** @type {import('locate-character').Location} */ (locate(warning.position[0]));
-
-		const end =
-			warning.position &&
-			/** @type {import('locate-character').Location} */ (locate(warning.position[1]));
-
-		result.push({
-			start,
-			end,
-			filename: name,
-			message: warning.message,
-			code: warning.code
-		});
-	}
-
-	return result;
 }

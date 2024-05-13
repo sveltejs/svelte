@@ -2,7 +2,7 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'invalid-rune-args-length',
-		message: '$state.snapshot can only be called with 1 argument'
+		code: 'rune_invalid_arguments_length',
+		message: '`$state.snapshot` must be called with exactly one argument'
 	}
 });

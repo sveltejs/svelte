@@ -17,20 +17,14 @@ import {
 import {
 	clean_nodes,
 	determine_namespace_for_children,
-	escape_html,
 	infer_namespace,
 	transform_inspect_rune
 } from '../utils.js';
 import { create_attribute, is_custom_element_node, is_element_node } from '../../nodes.js';
-import { error } from '../../../errors.js';
 import { binding_properties } from '../../bindings.js';
 import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patterns.js';
-import {
-	DOMBooleanAttributes,
-	HYDRATION_END,
-	HYDRATION_END_ELSE,
-	HYDRATION_START
-} from '../../../../constants.js';
+import { DOMBooleanAttributes, HYDRATION_END, HYDRATION_START } from '../../../../constants.js';
+import { escape_html } from '../../../../escaping.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
 import { BLOCK_CLOSE, BLOCK_CLOSE_ELSE } from '../../../../internal/server/hydration.js';
 
@@ -419,7 +413,7 @@ function serialize_set_binding(node, context, fallback) {
 	}
 
 	if (node.left.type !== 'Identifier' && node.left.type !== 'MemberExpression') {
-		error(node, 'INTERNAL', `Unexpected assignment type ${node.left.type}`);
+		throw new Error(`Unexpected assignment type ${node.left.type}`);
 	}
 
 	let left = node.left;
@@ -485,7 +479,11 @@ function serialize_set_binding(node, context, fallback) {
  */
 function get_attribute_name(element, attribute, context) {
 	let name = attribute.name;
-	if (!element.metadata.svg && context.state.metadata.namespace !== 'foreign') {
+	if (
+		!element.metadata.svg &&
+		!element.metadata.mathml &&
+		context.state.metadata.namespace !== 'foreign'
+	) {
 		name = name.toLowerCase();
 		// don't lookup boolean aliases here, the server runtime function does only
 		// check for the lowercase variants of boolean attributes
@@ -692,8 +690,7 @@ const javascript_visitors_runes = {
 			}
 
 			if (rune === '$props') {
-				// remove $bindable() from props declaration and handle rest props
-				let uses_rest_props = false;
+				// remove $bindable() from props declaration
 				const id = walk(declarator.id, null, {
 					AssignmentPattern(node) {
 						if (
@@ -705,26 +702,9 @@ const javascript_visitors_runes = {
 								: b.id('undefined');
 							return b.assignment_pattern(node.left, right);
 						}
-					},
-					RestElement(node, { path }) {
-						if (path.at(-1) === declarator.id) {
-							uses_rest_props = true;
-						}
 					}
 				});
-
-				const exports = /** @type {import('../../types').ComponentAnalysis} */ (
-					state.analysis
-				).exports.map(({ name, alias }) => b.literal(alias ?? name));
-
-				declarations.push(
-					b.declarator(
-						id,
-						uses_rest_props && exports.length > 0
-							? b.call('$.rest_props', b.id('$$props'), b.array(exports))
-							: b.id('$$props')
-					)
-				);
+				declarations.push(b.declarator(id, b.id('$$props')));
 				continue;
 			}
 
@@ -918,15 +898,19 @@ function serialize_element_spread_attributes(
 	}
 
 	const lowercase_attributes =
-		element.metadata.svg || (element.type === 'RegularElement' && is_custom_element_node(element))
+		element.metadata.svg ||
+		element.metadata.mathml ||
+		(element.type === 'RegularElement' && is_custom_element_node(element))
 			? b.false
 			: b.true;
-	const is_svg = element.metadata.svg ? b.true : b.false;
+
+	const is_html = element.metadata.svg || element.metadata.mathml ? b.false : b.true;
+
 	/** @type {import('estree').Expression[]} */
 	const args = [
 		b.array(values),
 		lowercase_attributes,
-		is_svg,
+		is_html,
 		b.literal(context.state.analysis.css.hash)
 	];
 
@@ -1329,10 +1313,10 @@ const template_visitors = {
 		if (!state.optimisation_oneling) state.template.push(block_close);
 	},
 	ClassDirective(node) {
-		error(node, 'INTERNAL', 'Node should have been handled elsewhere');
+		throw new Error('Node should have been handled elsewhere');
 	},
 	StyleDirective(node) {
-		error(node, 'INTERNAL', 'Node should have been handled elsewhere');
+		throw new Error('Node should have been handled elsewhere');
 	},
 	RegularElement(node, context) {
 		const metadata = {
@@ -1775,7 +1759,7 @@ const template_visitors = {
 			if (attribute.type === 'SpreadAttribute') {
 				spreads.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
 			} else if (attribute.type === 'Attribute') {
-				const value = serialize_attribute_value(attribute.value, context);
+				const value = serialize_attribute_value(attribute.value, context, false, true);
 				if (attribute.name === 'name') {
 					expression = b.member(b.member_id('$$props.$$slots'), value, true, true);
 				} else if (attribute.name !== 'slot') {
@@ -2141,14 +2125,17 @@ export function server_component(analysis, options) {
 		get init() {
 			/** @type {any[]} */
 			const a = [];
-			a.push = () => error(null, 'INTERNAL', 'init.push should not be called outside create_block');
+			a.push = () => {
+				throw new Error('init.push should not be called outside create_block');
+			};
 			return a;
 		},
 		get template() {
 			/** @type {any[]} */
 			const a = [];
-			a.push = () =>
-				error(null, 'INTERNAL', 'template.push should not be called outside create_block');
+			a.push = () => {
+				throw new Error('template.push should not be called outside create_block');
+			};
 			return a;
 		},
 		metadata: {
@@ -2216,7 +2203,7 @@ export function server_component(analysis, options) {
 	for (const [node] of analysis.reactive_statements) {
 		const statement = [...state.legacy_reactive_statements].find(([n]) => n === node);
 		if (statement === undefined) {
-			error(node, 'INTERNAL', 'Could not find reactive statement');
+			throw new Error('Could not find reactive statement');
 		}
 
 		if (

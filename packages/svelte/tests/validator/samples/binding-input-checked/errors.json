@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-binding",
-		"message": "'checked' binding can only be used with <input type=\"checkbox\">",
+		"code": "bind_invalid_target",
+		"message": "`bind:checked` can only be used with <input type=\"checkbox\">",
 		"start": {
 			"line": 5,
 			"column": 7

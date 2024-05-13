@@ -8,6 +8,6 @@
   }
 </script>
 
-<button on:click={change} />
+<button on:click={change}></button>
 <input type="range" min="0" {max} bind:value />
 <p>{value} of {max}</p>

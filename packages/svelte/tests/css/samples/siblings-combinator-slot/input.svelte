@@ -11,14 +11,14 @@
 	.c + .f { color: green; }
 </style>
 
-<div class="a" />
+<div class="a"></div>
 <App>
-	<div class="b" slot="a" />
+	<div class="b" slot="a"></div>
 
 	<div class="c" slot="b">
-		<div class="d" />
-		<div class="e" />
+		<div class="d"></div>
+		<div class="e"></div>
 	</div>
 </App>
 
-<div class="f" />
+<div class="f"></div>

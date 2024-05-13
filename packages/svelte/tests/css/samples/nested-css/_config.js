@@ -3,7 +3,7 @@ import { test } from '../../test';
 export default test({
 	warnings: [
 		{
-			code: 'css-unused-selector',
+			code: 'css_unused_selector',
 			end: {
 				character: 239,
 				column: 13,
@@ -17,7 +17,7 @@ export default test({
 			}
 		},
 		{
-			code: 'css-unused-selector',
+			code: 'css_unused_selector',
 			end: {
 				character: 302,
 				column: 10,
@@ -31,7 +31,7 @@ export default test({
 			}
 		},
 		{
-			code: 'css-unused-selector',
+			code: 'css_unused_selector',
 			end: {
 				character: 328,
 				column: 6,
@@ -45,7 +45,7 @@ export default test({
 			}
 		},
 		{
-			code: 'css-unused-selector',
+			code: 'css_unused_selector',
 			end: {
 				character: 381,
 				column: 10,
@@ -59,7 +59,7 @@ export default test({
 			}
 		},
 		{
-			code: 'css-unused-selector',
+			code: 'css_unused_selector',
 			end: {
 				character: 471,
 				column: 7,
@@ -73,7 +73,7 @@ export default test({
 			}
 		},
 		{
-			code: 'css-unused-selector',
+			code: 'css_unused_selector',
 			end: {
 				character: 634,
 				column: 5,
@@ -87,7 +87,7 @@ export default test({
 			}
 		},
 		{
-			code: 'css-unused-selector',
+			code: 'css_unused_selector',
 			end: {
 				character: 666,
 				column: 9,

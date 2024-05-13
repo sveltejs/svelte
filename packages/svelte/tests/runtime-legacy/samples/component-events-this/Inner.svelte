@@ -5,4 +5,4 @@
   export const exists = true;
 </script>
 
-<button on:click={() => dispatch('bar')} />
+<button on:click={() => dispatch('bar')}></button>

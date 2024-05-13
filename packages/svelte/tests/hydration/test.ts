@@ -32,6 +32,7 @@ interface HydrationTest extends BaseTest {
 	) => void | Promise<void>;
 	before_test?: () => void;
 	after_test?: () => void;
+	errors?: any[];
 }
 
 function read(path: string): string | void {
@@ -64,16 +65,26 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 	try {
 		const snapshot = config.snapshot ? config.snapshot(target) : {};
 
-		const error = console.error;
+		const warn = console.warn;
+		const errors: any[] = [];
 		let got_hydration_error = false;
-		console.error = (message: any) => {
-			if (typeof message === 'string' && message.startsWith('ERR_SVELTE_HYDRATION_MISMATCH')) {
-				got_hydration_error = true;
-				if (!config.expect_hydration_error) {
-					error(message);
+		console.warn = (...args: any[]) => {
+			if (args[0].startsWith('%c[svelte]')) {
+				// TODO convert this to structured data, for more robust comparison?
+				const text = args[0];
+				const code = text.slice(11, text.indexOf('\n%c', 11));
+				const message = text.slice(text.indexOf('%c', 2) + 2);
+
+				if (typeof message === 'string' && code === 'hydration_mismatch') {
+					got_hydration_error = true;
+					if (!config.expect_hydration_error) {
+						warn(message);
+					}
+				} else {
+					errors.push(message);
 				}
 			} else {
-				error(message);
+				errors.push(...args);
 			}
 		};
 
@@ -84,11 +95,18 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 			props: config.props
 		});
 
-		console.error = error;
+		console.warn = warn;
+
 		if (config.expect_hydration_error) {
 			assert.ok(got_hydration_error, 'Expected hydration error');
 		} else {
 			assert.ok(!got_hydration_error, 'Unexpected hydration error');
+		}
+
+		if (config.errors) {
+			assert.deepEqual(errors, config.errors);
+		} else if (errors.length) {
+			throw new Error(`Unexpected errors: ${errors.join('\n')}`);
 		}
 
 		const expected = read(`${cwd}/_expected.html`) ?? rendered.html;

@@ -2,4 +2,4 @@
 	export let hidden = false;
 </script>
 
-<div {hidden} />
+<div {hidden}></div>

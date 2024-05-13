@@ -1,6 +1,4 @@
 <script>
-	import { log } from './log.js';
-
 	let count1 = 0;
 	let count2 = 0;
 
@@ -9,12 +7,12 @@
 	}
 
 	$: if (count2 < 10) {
-		log.push(1);
+		console.log(1);
 		increaseCount1();
 	}
 
 	$: if (count1 < 10) {
-		log.push(2);
+		console.log(2);
 		count2++;
 	}
 </script>

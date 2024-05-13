@@ -2,7 +2,7 @@
 	let foo;
 </script>
 
-<!-- svelte-ignore module-script-reactive-declaration -->
+<!-- svelte-ignore reactive_declaration_module_script -->
 <script>
 	$: reactive = foo;
 </script>

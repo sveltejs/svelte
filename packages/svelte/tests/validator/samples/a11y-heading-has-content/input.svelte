@@ -1,2 +1,2 @@
 <h1></h1>
-<h2 aria-hidden>invisible header</h2>
+<h2 aria-hidden="true">invisible header</h2>

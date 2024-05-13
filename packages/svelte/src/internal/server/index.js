@@ -8,9 +8,11 @@ import {
 	interactive_elements,
 	is_tag_valid_with_parent
 } from '../../constants.js';
+import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import { validate_store } from '../shared/validate.js';
 
 /**
  * @typedef {{
@@ -38,8 +40,6 @@ import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
  * }} Payload
  */
 
-const ATTR_REGEX = /[&"]/g;
-const CONTENT_REGEX = /[&<]/g;
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
 const INVALID_ATTR_NAME_CHAR_REGEX =
@@ -214,31 +214,6 @@ export function render(component, options) {
 }
 
 /**
- * @template V
- * @param {V} value
- * @param {any} is_attr
- * @returns {string}
- */
-export function escape(value, is_attr = false) {
-	const str = String(value ?? '');
-
-	const pattern = is_attr ? ATTR_REGEX : CONTENT_REGEX;
-	pattern.lastIndex = 0;
-
-	let escaped = '';
-	let last = 0;
-
-	while (pattern.test(str)) {
-		const i = pattern.lastIndex - 1;
-		const ch = str[i];
-		escaped += str.substring(last, i) + (ch === '&' ? '&amp;' : ch === '"' ? '&quot;' : '&lt;');
-		last = i + 1;
-	}
-
-	return escaped + str.substring(last);
-}
-
-/**
  * @param {Payload} payload
  * @param {(head_payload: Payload['head']) => void} fn
  * @returns {void}
@@ -259,7 +234,7 @@ export function head(payload, fn) {
  */
 export function attr(name, value, boolean) {
 	if (value == null || (!value && boolean) || (value === '' && name === 'class')) return '';
-	const assignment = boolean ? '' : `="${escape(value, true)}"`;
+	const assignment = boolean ? '' : `="${escape_html(value, true)}"`;
 	return ` ${name}${assignment}`;
 }
 
@@ -288,12 +263,12 @@ export function css_props(payload, is_html, props, component) {
 /**
  * @param {Record<string, unknown>[]} attrs
  * @param {boolean} lowercase_attributes
- * @param {boolean} is_svg
+ * @param {boolean} is_html
  * @param {string} class_hash
  * @param {{ styles: Record<string, string> | null; classes: string }} [additional]
  * @returns {string}
  */
-export function spread_attributes(attrs, lowercase_attributes, is_svg, class_hash, additional) {
+export function spread_attributes(attrs, lowercase_attributes, is_html, class_hash, additional) {
 	/** @type {Record<string, unknown>} */
 	const merged_attrs = {};
 	let key;
@@ -343,7 +318,7 @@ export function spread_attributes(attrs, lowercase_attributes, is_svg, class_has
 		if (lowercase_attributes) {
 			name = name.toLowerCase();
 		}
-		const is_boolean = !is_svg && DOMBooleanAttributes.includes(name);
+		const is_boolean = is_html && DOMBooleanAttributes.includes(name);
 		attr_str += attr(name, merged_attrs[name], is_boolean);
 	}
 
@@ -380,7 +355,7 @@ export function stringify(value) {
 function style_object_to_string(style_object) {
 	return Object.keys(style_object)
 		.filter(/** @param {any} key */ (key) => style_object[key])
-		.map(/** @param {any} key */ (key) => `${key}: ${escape(style_object[key], true)};`)
+		.map(/** @param {any} key */ (key) => `${key}: ${escape_html(style_object[key], true)};`)
 		.join(' ');
 }
 
@@ -441,16 +416,6 @@ export function store_get(store_values, store_name, store) {
 	);
 	store_values[store_name][1] = unsub;
 	return store_values[store_name][2];
-}
-
-/**
- * @param {any} store
- * @param {string} name
- */
-export function validate_store(store, name) {
-	if (store != null && typeof store.subscribe !== 'function') {
-		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
-	}
 }
 
 /**
@@ -632,19 +597,6 @@ export function ensure_array_like(array_like_or_iterator) {
 }
 
 /**
- * @param {number} timeout
- * @returns {() => void}
- * */
-export function loop_guard(timeout) {
-	const start = Date.now();
-	return () => {
-		if (Date.now() - start > timeout) {
-			throw new Error('Infinite loop detected');
-		}
-	};
-}
-
-/**
  * @param {any[]} args
  * @param {Function} [inspect]
  */
@@ -676,3 +628,5 @@ export {
 	validate_snippet,
 	validate_void_dynamic_element
 } from '../shared/validate.js';
+
+export { escape_html as escape };

@@ -3,17 +3,17 @@
 </script>
 
 <!-- valid -->
-<button on:click={() => {}} />
-<!-- svelte-ignore a11y-interactive-supports-focus -->
-<div on:keydown={() => {}} role="button" />
+<button on:click={() => {}}></button>
+<!-- svelte-ignore a11y_interactive_supports_focus -->
+<div on:keydown={() => {}} role="button"></div>
 <input type="text" on:click={() => {}} />
-<div on:copy={() => {}} />
+<div on:copy={() => {}}></div>
 <a href="/foo" on:click={() => {}}>link</a>
-<div role={dynamicRole} on:click={() => {}} />
-<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-<footer on:keydown={() => {}} />
+<div role={dynamicRole} on:click={() => {}}></div>
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<footer on:keydown={() => {}}></footer>
 
 <!-- invalid -->
-<div on:keydown={() => {}} />
-<!-- svelte-ignore a11y-missing-attribute -->
+<div on:keydown={() => {}}></div>
+<!-- svelte-ignore a11y_missing_attribute -->
 <a on:mousedown={() => {}} on:mouseup={() => {}} on:copy={() => {}}>link</a>

@@ -20,6 +20,7 @@ import { check_ownership, widen_ownership } from './dev/ownership.js';
 import { mutable_source, source, set } from './reactivity/sources.js';
 import { STATE_SYMBOL } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
+import * as e from './errors.js';
 
 /**
  * @template T
@@ -38,6 +39,9 @@ export function proxy(value, immutable = true, parent = null) {
 			// someone copied the state symbol using `Reflect.ownKeys(...)`
 			if (metadata.t === value || metadata.p === value) {
 				if (DEV) {
+					// Since original parent relationship gets lost, we need to copy over ancestor owners
+					// into current metadata. The object might still exist on both, so we need to widen it.
+					widen_ownership(metadata, metadata);
 					metadata.parent = parent;
 				}
 
@@ -71,8 +75,7 @@ export function proxy(value, immutable = true, parent = null) {
 				value[STATE_SYMBOL].owners =
 					parent === null
 						? current_component_context !== null
-							? // @ts-expect-error
-								new Set([current_component_context.function])
+							? new Set([current_component_context.function])
 							: null
 						: new Set();
 			}
@@ -331,6 +334,6 @@ const state_proxy_handler = {
 
 if (DEV) {
 	state_proxy_handler.setPrototypeOf = () => {
-		throw new Error('Cannot set prototype of $state object');
+		e.state_prototype_fixed();
 	};
 }

@@ -80,7 +80,7 @@ it.skip('check warning position', () => {
 	assert.deepEqual(warnings, [
 		{
 			code: 'a11y-missing-attribute',
-			message: 'A11y: <img> element should have an alt attribute',
+			message: 'A11y: `<img>` element should have an alt attribute',
 			start: { column: 2, line: 2, character: 3 },
 			end: { column: 15, line: 3, character: 24 }
 		}
@@ -133,7 +133,7 @@ it("does not throw error if 'this' is bound for foreign element", () => {
 		<script>
 			let whatever;
 		</script>
-		<div bind:this={whatever} />`,
+		<div bind:this={whatever}></div>`,
 			{
 				name: 'test',
 				namespace: 'foreign'

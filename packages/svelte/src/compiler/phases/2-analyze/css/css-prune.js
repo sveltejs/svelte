@@ -1,7 +1,6 @@
 import { walk } from 'zimmerframe';
 import { get_possible_values } from './utils.js';
 import { regex_ends_with_whitespace, regex_starts_with_whitespace } from '../../patterns.js';
-import { error } from '../../../errors.js';
 
 /**
  * @typedef {{
@@ -43,8 +42,7 @@ const nesting_selector = {
 	],
 	metadata: {
 		is_global: false,
-		is_host: false,
-		is_root: false,
+		is_global_like: false,
 		scoped: false
 	}
 };
@@ -60,6 +58,13 @@ export function prune(stylesheet, element) {
 
 /** @type {import('zimmerframe').Visitors<import('#compiler').Css.Node, State>} */
 const visitors = {
+	Rule(node, context) {
+		if (node.metadata.is_global_block) {
+			context.visit(node.prelude);
+		} else {
+			context.next();
+		}
+	},
 	ComplexSelector(node, context) {
 		const selectors = truncate(node);
 		const inner = selectors[selectors.length - 1];
@@ -103,7 +108,7 @@ const visitors = {
  */
 function truncate(node) {
 	const i = node.children.findLastIndex(({ metadata }) => {
-		return !metadata.is_global && !metadata.is_host && !metadata.is_root;
+		return !metadata.is_global && !metadata.is_global_like;
 	});
 
 	return node.children.slice(0, i + 1);
@@ -223,14 +228,14 @@ function mark(relative_selector, element) {
 
 /**
  * Returns `true` if the relative selector is global, meaning
- * it's a `:global(...)` or `:host` or `:root` selector, or
+ * it's a `:global(...)` or unscopeable selector, or
  * is an `:is(...)` or `:where(...)` selector that contains
  * a global selector
  * @param {import('#compiler').Css.RelativeSelector} selector
  * @param {import('#compiler').Css.Rule} rule
  */
 function is_global(selector, rule) {
-	if (selector.metadata.is_global || selector.metadata.is_host || selector.metadata.is_root) {
+	if (selector.metadata.is_global || selector.metadata.is_global_like) {
 		return true;
 	}
 

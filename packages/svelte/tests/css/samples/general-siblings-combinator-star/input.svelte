@@ -8,10 +8,10 @@
 </style>
 
 <div class="not-match">
-	<div />
+	<div></div>
 </div>
 
 <div class="match">
-	<div />
-	<div />
+	<div></div>
+	<div></div>
 </div>
