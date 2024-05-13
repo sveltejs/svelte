@@ -40,7 +40,7 @@ export function hydrate_anchor(node) {
 	var current = /** @type {Node | null} */ (node);
 
 	// TODO this could have false positives, if a user comment consisted of `[`. need to tighten that up
-	if (/** @type {Comment} */ (current)?.data !== HYDRATION_START) {
+	if (/** @type {Comment} */ (current).data !== HYDRATION_START) {
 		return node;
 	}
 

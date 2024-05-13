@@ -333,3 +333,23 @@ function srcset_url_equal(element, srcset) {
 		)
 	);
 }
+
+/**
+ * @param {HTMLImageElement} element
+ * @returns {void}
+ */
+export function handle_lazy_img(element) {
+	// If we're using an image that has a lazy loading attribute, we need to apply
+	// the loading and src after the img element has been appended to the document.
+	// Otherwise the lazy behaviour will not work due to our cloneNode heuristic for
+	// templates.
+	if (!hydrating && element.loading === 'lazy') {
+		var src = element.src;
+		element.removeAttribute('loading');
+		element.removeAttribute('src');
+		requestAnimationFrame(() => {
+			element.loading = 'lazy';
+			element.src = src;
+		});
+	}
+}
