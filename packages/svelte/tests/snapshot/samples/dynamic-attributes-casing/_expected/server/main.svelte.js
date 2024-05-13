@@ -1,7 +1,7 @@
 import * as $ from "svelte/internal/server";
 
 export default function Main($$payload, $$props) {
-	$.push(true);
+	$.push();
 
 	// needs to be a snapshot test because jsdom does auto-correct the attribute casing
 	let x = 'test';

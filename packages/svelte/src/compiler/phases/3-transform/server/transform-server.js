@@ -2279,9 +2279,12 @@ export function server_component(analysis, options) {
 		// undefined to a binding that has a default value.
 		template.body.push(b.stmt(b.call('$.bind_props', b.id('$$props'), b.object(props))));
 	}
+	/** @type {import('estree').Expression[]} */
+	const push_args = [];
+	if (options.dev) push_args.push(b.id(analysis.name));
 
 	const component_block = b.block([
-		b.stmt(b.call('$.push', b.literal(analysis.runes))),
+		b.stmt(b.call('$.push', ...push_args)),
 		.../** @type {import('estree').Statement[]} */ (instance.body),
 		.../** @type {import('estree').Statement[]} */ (template.body),
 		b.stmt(b.call('$.pop'))
@@ -2374,6 +2377,22 @@ export function server_component(analysis, options) {
 		);
 	} else {
 		body.push(b.export_default(component_function));
+	}
+
+	if (options.dev && options.filename) {
+		let filename = options.filename;
+		if (/(\/|\w:)/.test(options.filename)) {
+			// filename is absolute — truncate it
+			const parts = filename.split(/[/\\]/);
+			filename = parts.length > 3 ? ['...', ...parts.slice(-3)].join('/') : filename;
+		}
+
+		// add `App.filename = 'App.svelte'` so that we can print useful messages later
+		body.unshift(
+			b.stmt(
+				b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.literal(filename))
+			)
+		);
 	}
 
 	return {

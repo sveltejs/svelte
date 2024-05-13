@@ -32,7 +32,7 @@ export default test({
 		if (variant === 'hydrate') {
 			assert.equal(
 				log[0],
-				`Svelte SSR validation error:\n\n<h1> is invalid inside <p>\n\n` +
+				`Svelte SSR validation error:\n\n<h1> (Component.svelte) is not a valid child element of <p> (main.svelte)\n\n` +
 					'Ensure your components render valid HTML as the browser will try to repair invalid HTML, ' +
 					'which may result in content being shifted around and will likely result in a hydration mismatch.'
 			);

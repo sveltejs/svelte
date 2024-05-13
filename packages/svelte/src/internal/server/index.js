@@ -18,6 +18,7 @@ import { validate_store } from '../shared/validate.js';
  * @typedef {{
  * 	tag: string;
  * 	parent: null | Element;
+ *  file: string;
  * }} Element
  */
 
@@ -112,34 +113,60 @@ function error_on_client(payload, message) {
 }
 
 /**
+ * @param {string} file
+ */
+function print_file(file) {
+	return file ? `(${file})` : '';
+}
+
+/**
  * @param {string} tag
  * @param {Payload} payload
  */
 export function push_element(tag, payload) {
-	if (current_element !== null && !is_tag_valid_with_parent(tag, current_element.tag)) {
-		error_on_client(payload, `<${tag}> is invalid inside <${current_element.tag}>`);
-	}
-	if (interactive_elements.has(tag)) {
-		let element = current_element;
-		while (element !== null) {
-			if (interactive_elements.has(element.tag)) {
-				error_on_client(payload, `<${tag}> is invalid inside <${element.tag}>`);
+	var file;
+	if (DEV) {
+		if (current_component !== null) {
+			const filename = current_component.function.filename;
+			if (filename) {
+				file = filename.split('/').at(-1);
 			}
-			element = element.parent;
 		}
-	}
-	if (disallowed_paragraph_contents.includes(tag)) {
-		let element = current_element;
-		while (element !== null) {
-			if (element.tag === 'p') {
-				error_on_client(payload, `<${tag}> is invalid inside <p>`);
+		if (current_element !== null && !is_tag_valid_with_parent(tag, current_element.tag)) {
+			error_on_client(
+				payload,
+				`<${tag}> ${print_file(file)} is not a valid child element of <${current_element.tag}> ${print_file(current_element.file)}`
+			);
+		}
+		if (interactive_elements.has(tag)) {
+			let element = current_element;
+			while (element !== null) {
+				if (interactive_elements.has(element.tag)) {
+					error_on_client(
+						payload,
+						`<${tag}> ${print_file(file)} is not a valid child element of <${element.tag}> ${print_file(element.file)}`
+					);
+				}
+				element = element.parent;
 			}
-			element = element.parent;
+		}
+		if (disallowed_paragraph_contents.includes(tag)) {
+			let element = current_element;
+			while (element !== null) {
+				if (element.tag === 'p') {
+					error_on_client(
+						payload,
+						`<${tag}> ${print_file(file)} is not a valid child element of <p> ${print_file(element.file)}`
+					);
+				}
+				element = element.parent;
+			}
 		}
 	}
 	current_element = {
 		tag,
-		parent: current_element
+		parent: current_element,
+		file
 	};
 }
 
