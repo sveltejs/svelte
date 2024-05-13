@@ -12,6 +12,7 @@ import { get, is_signals_recorded, untrack, update } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import { inspect_fn } from '../dev/inspect.js';
 import * as e from '../errors.js';
+import { LEGACY_DERIVED_PROP } from '../constants.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -251,6 +252,7 @@ export function prop(props, key, flags, fallback) {
 		var derived_getter = (immutable ? derived : derived_safe_equal)(
 			() => /** @type {V} */ (props[key])
 		);
+		derived_getter.f |= LEGACY_DERIVED_PROP;
 		getter = () => {
 			var value = get(derived_getter);
 			if (value !== undefined) fallback_value = /** @type {V} */ (undefined);
