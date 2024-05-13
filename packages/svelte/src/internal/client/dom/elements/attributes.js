@@ -39,10 +39,6 @@ export function set_attribute(element, attribute, value) {
 		attributes[attribute] = element.getAttribute(attribute);
 
 		if (attribute === 'src' || attribute === 'href' || attribute === 'srcset') {
-			if (attribute === 'src' && /** @type {HTMLImageElement} */ (element).loading !== 'lazy') {
-				check_src_in_dev_hydration(element, attribute, value);
-			}
-
 			// If we reset these attributes, they would result in another network request, which we want to avoid.
 			// We assume they are the same between client and server as checking if they are equal is expensive
 			// (we can't just compare the strings as they can be different between client and server but result in the
@@ -345,7 +341,7 @@ export function handle_lazy_img(element) {
 	// the loading and src after the img element has been appended to the document.
 	// Otherwise the lazy behaviour will not work due to our cloneNode heuristic for
 	// templates.
-	if (element.loading === 'lazy') {
+	if (!hydrating && element.loading === 'lazy') {
 		var src = element.src;
 		element.removeAttribute('loading');
 		element.removeAttribute('src');
