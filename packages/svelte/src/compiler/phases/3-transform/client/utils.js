@@ -90,8 +90,7 @@ export function serialize_get_binding(node, state) {
 	if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
 		if (
 			!state.analysis.runes ||
-			state.analysis.accessors ||
-			(state.analysis.immutable ? binding.reassigned : binding.mutated) ||
+			binding.reassigned ||
 			binding.initial
 		) {
 			return b.call(node);
