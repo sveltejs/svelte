@@ -15,13 +15,9 @@ export let locator = getLocator('', { offsetLine: 1 });
  *   source: string;
  *   filename: string | undefined;
  * }} options
- * @returns {{ warnings: import('#compiler').Warning[] }}
  */
 export function reset(options) {
 	filename = options.filename;
 	locator = getLocator(options.source, { offsetLine: 1 });
-
-	return {
-		warnings: (warnings = [])
-	};
+	warnings = [];
 }
