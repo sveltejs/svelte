@@ -2034,9 +2034,9 @@ export const template_visitors = {
 			}
 		}
 
-		// For FF we need to apply the src and loading attributes after the element is appended to the document
+		// Apply the src and loading attributes for <img> elements after the element is appended to the document
 		if (img_might_be_lazy) {
-			context.state.after_update.push(b.stmt(b.call('$.handle_ff_lazy_img', node_id)));
+			context.state.after_update.push(b.stmt(b.call('$.handle_lazy_img', node_id)));
 		}
 
 		// class/style directives must be applied last since they could override class/style attributes

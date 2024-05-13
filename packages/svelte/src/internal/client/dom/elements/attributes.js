@@ -39,7 +39,9 @@ export function set_attribute(element, attribute, value) {
 		attributes[attribute] = element.getAttribute(attribute);
 
 		if (attribute === 'src' || attribute === 'href' || attribute === 'srcset') {
-			check_src_in_dev_hydration(element, attribute, value);
+			if (attribute === 'src' && /** @type {HTMLImageElement} */ (element).loading !== 'lazy') {
+				check_src_in_dev_hydration(element, attribute, value);
+			}
 
 			// If we reset these attributes, they would result in another network request, which we want to avoid.
 			// We assume they are the same between client and server as checking if they are equal is expensive
@@ -338,16 +340,17 @@ function srcset_url_equal(element, srcset) {
  * @param {HTMLImageElement} element
  * @returns {void}
  */
-export function handle_ff_lazy_img(element) {
-	// If we're using Firefox and the image has a lazy loading attribute, we need to
-	// apply this attribute, along with the src, after it has been appended to the document
-	// otherwise the lazy behaviour will not work due to our cloneNode heuristic for templates.
-	if (/Firefox/.test(navigator.userAgent) && element.getAttribute('loading') === 'lazy') {
+export function handle_lazy_img(element) {
+	// If we're using an image that has a lazy loading attribute, we need to apply
+	// the loading and src after the img element has been appended to the document.
+	// Otherwise the lazy behaviour will not work due to our cloneNode heuristic for
+	// templates.
+	if (element.loading === 'lazy') {
 		var src = element.src;
 		element.removeAttribute('loading');
 		element.removeAttribute('src');
-		requestIdleCallback(() => {
-			element.setAttribute('loading', 'lazy');
+		requestAnimationFrame(() => {
+			element.loading = 'lazy';
 			element.src = src;
 		});
 	}
