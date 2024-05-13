@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: improve ff handling of lazy images
+fix: improve handling of lazy image elements
