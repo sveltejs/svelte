@@ -1,5 +1,21 @@
 # svelte
 
+## 5.0.0-next.132
+
+### Patch Changes
+
+- chore: improve runtime overhead of creating comment templates ([#11591](https://github.com/sveltejs/svelte/pull/11591))
+
+- fix: replicate Svelte 4 props update detection in legacy mode ([#11577](https://github.com/sveltejs/svelte/pull/11577))
+
+- fix: allow for non optional chain call expression in render ([#11578](https://github.com/sveltejs/svelte/pull/11578))
+
+- fix: correctly handle falsy values of style directives in SSR mode ([#11583](https://github.com/sveltejs/svelte/pull/11583))
+
+- fix: improve handling of lazy image elements ([#11593](https://github.com/sveltejs/svelte/pull/11593))
+
+- fix: skip deriveds for props with known safe calls ([#11595](https://github.com/sveltejs/svelte/pull/11595))
+
 ## 5.0.0-next.131
 
 ### Patch Changes
