@@ -24,8 +24,9 @@ export function extract_svelte_ignore(offset, text, runes) {
 	/** @type {string[]} */
 	const ignores = [];
 
-	for (const match of text.slice(length).matchAll(/\S+/gm)) {
-		const code = match[0];
+	// Warnings have to be separated by commas, everything after is interpreted as prose
+	for (const match of text.slice(length).matchAll(/([\w$-]+)(,)?/gm)) {
+		const code = match[1];
 
 		ignores.push(code);
 
@@ -45,6 +46,10 @@ export function extract_svelte_ignore(offset, text, runes) {
 			} else if (w.codes.includes(replacement)) {
 				ignores.push(replacement);
 			}
+		}
+
+		if (!match[2]) {
+			break;
 		}
 	}
 
