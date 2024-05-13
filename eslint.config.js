@@ -45,6 +45,7 @@ export default [
 			'sites/svelte-5-preview/**',
 			// wasn't checked previously, reenable at some point
 			'sites/svelte.dev/**',
+			'playgrounds/demo/src/**',
 			'tmp/**'
 		]
 	}
