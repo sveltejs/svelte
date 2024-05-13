@@ -1,4 +1,3 @@
-import { getLocator } from 'locate-character';
 import { walk as zimmerframe_walk } from 'zimmerframe';
 import { CompileError } from './errors.js';
 import { convert } from './legacy.js';
@@ -8,7 +7,7 @@ import { remove_typescript_nodes } from './phases/1-parse/remove_typescript_node
 import { analyze_component, analyze_module } from './phases/2-analyze/index.js';
 import { transform_component, transform_module } from './phases/3-transform/index.js';
 import { validate_component_options, validate_module_options } from './validate-options.js';
-import { reset_warnings } from './warnings.js';
+import * as state from './state.js';
 export { default as preprocess } from './preprocess/index.js';
 
 /**
@@ -21,7 +20,8 @@ export { default as preprocess } from './preprocess/index.js';
  */
 export function compile(source, options) {
 	try {
-		const warnings = reset_warnings({ source, filename: options.filename });
+		state.reset({ source, filename: options.filename });
+
 		const validated = validate_component_options(options, '');
 		let parsed = _parse(source);
 
@@ -44,9 +44,7 @@ export function compile(source, options) {
 		}
 
 		const analysis = analyze_component(parsed, source, combined_options);
-
 		const result = transform_component(analysis, source, combined_options);
-		result.warnings = warnings;
 		result.ast = to_public_ast(source, parsed, options.modernAst);
 		return result;
 	} catch (e) {
@@ -68,11 +66,11 @@ export function compile(source, options) {
  */
 export function compileModule(source, options) {
 	try {
-		const warnings = reset_warnings({ source, filename: options.filename });
+		state.reset({ source, filename: options.filename });
+
 		const validated = validate_module_options(options, '');
 		const analysis = analyze_module(parse_acorn(source, false), validated);
 		const result = transform_module(analysis, source, validated);
-		result.warnings = warnings;
 		return result;
 	} catch (e) {
 		if (e instanceof CompileError) {
@@ -92,10 +90,8 @@ function handle_compile_error(error, filename, source) {
 	error.filename = filename;
 
 	if (error.position) {
-		// TODO this is reused with warnings — DRY out
-		const locator = getLocator(source, { offsetLine: 1 });
-		const start = locator(error.position[0]);
-		const end = locator(error.position[1]);
+		const start = state.locator(error.position[0]);
+		const end = state.locator(error.position[1]);
 
 		error.start = start;
 		error.end = end;
@@ -142,6 +138,8 @@ function handle_compile_error(error, filename, source) {
  * @returns {import('#compiler').Root | import('./types/legacy-nodes.js').LegacyRoot}
  */
 export function parse(source, options = {}) {
+	state.reset({ source, filename: options.filename });
+
 	/** @type {import('#compiler').Root} */
 	let ast;
 	try {

@@ -33,10 +33,6 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly options: ValidatedCompileOptions;
 	readonly hoisted: Array<Statement | ModuleDeclaration>;
 	readonly events: Set<string>;
-	readonly source_locator: (
-		search: string | number,
-		index?: number | undefined
-	) => Location | undefined;
 
 	/** Stuff that happens before the render effect(s) */
 	readonly before_init: Statement[];

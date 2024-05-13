@@ -4,7 +4,7 @@ import { parse } from '../phases/1-parse/index.js';
 import { analyze_component } from '../phases/2-analyze/index.js';
 import { validate_component_options } from '../validate-options.js';
 import { get_rune } from '../phases/scope.js';
-import { reset_warnings } from '../warnings.js';
+import { reset } from '../state.js';
 import { extract_identifiers } from '../utils/ast.js';
 import { regex_is_valid_identifier } from '../phases/patterns.js';
 
@@ -17,7 +17,7 @@ import { regex_is_valid_identifier } from '../phases/patterns.js';
  */
 export function migrate(source) {
 	try {
-		reset_warnings({ source, filename: 'migrate.svelte' });
+		reset({ source, filename: 'migrate.svelte' });
 
 		let parsed = parse(source);
 
