@@ -148,7 +148,7 @@ With runes, we can use `$effect.pre`, which behaves the same as `$effect` but ru
 +	let theme = $state('dark');
 +	let messages = $state([]);
 
-	let div;
+	let viewport;
 
 -	beforeUpdate(() => {
 +	$effect.pre(() => {
