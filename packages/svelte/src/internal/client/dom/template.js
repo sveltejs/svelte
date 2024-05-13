@@ -251,7 +251,17 @@ export function text(anchor) {
 	return push_template_node(node);
 }
 
-export const comment = template('<!>', TEMPLATE_FRAGMENT | TEMPLATE_USE_IMPORT_NODE);
+export function comment() {
+	if (hydrating) {
+		return push_template_node(hydrate_nodes);
+	}
+	var frag = document.createDocumentFragment();
+	var anchor = empty();
+	frag.append(anchor);
+	push_template_node([anchor]);
+
+	return frag;
+}
 
 /**
  * Assign the created (or in hydration mode, traversed) dom elements to the current block
