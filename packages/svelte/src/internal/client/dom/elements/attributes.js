@@ -333,3 +333,22 @@ function srcset_url_equal(element, srcset) {
 		)
 	);
 }
+
+/**
+ * @param {HTMLImageElement} element
+ * @returns {void}
+ */
+export function handle_ff_lazy_img(element) {
+	// If we're using Firefox and the image has a lazy loading attribute, we need to
+	// apply this attribute, along with the src, after it has been appended to the document
+	// otherwise the lazy behaviour will not work due to our cloneNode heuristic for templates.
+	if (/Firefox/.test(navigator.userAgent) && element.getAttribute('loading') === 'lazy') {
+		var src = element.src;
+		element.removeAttribute('loading');
+		element.removeAttribute('src');
+		requestIdleCallback(() => {
+			element.setAttribute('loading', 'lazy');
+			element.src = src;
+		});
+	}
+}
