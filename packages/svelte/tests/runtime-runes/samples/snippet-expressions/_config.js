@@ -10,6 +10,10 @@ export default test({
 		<hr>
 		<p>foo</p>
 		<hr>
+		<p>foo</p>
+		<hr>
+		<p>foo</p>
+		<hr>
 		<p>bar</p>
 		<hr>
 		<hr>
@@ -25,6 +29,10 @@ export default test({
 				<p>bar</p>
 				<hr>
 				<p>bar</p>
+				<hr>
+				<p>foo</p>
+				<hr>
+				<p>foo</p>
 				<hr>
 				<p>foo</p>
 				<hr>
