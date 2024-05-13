@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "4.2.16",
+  "version": "4.2.17",
   "description": "Cybernetically enhanced web apps",
   "type": "module",
   "module": "src/runtime/index.js",
