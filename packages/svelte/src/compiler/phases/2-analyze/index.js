@@ -1042,6 +1042,9 @@ function is_known_safe_call(node, context) {
 			return true;
 		}
 	}
+
+	// TODO add more cases
+
 	return false;
 }
 
@@ -1262,11 +1265,12 @@ const common_visitors = {
 		}
 	},
 	CallExpression(node, context) {
+		const { expression } = context.state;
 		if (
-			context.state.expression?.type === 'ExpressionTag' ||
-			(context.state.expression?.type === 'SpreadAttribute' && !is_known_safe_call(node, context))
+			(expression?.type === 'ExpressionTag' || expression?.type === 'SpreadAttribute') &&
+			!is_known_safe_call(node, context)
 		) {
-			context.state.expression.metadata.contains_call_expression = true;
+			expression.metadata.contains_call_expression = true;
 		}
 
 		const callee = node.callee;
