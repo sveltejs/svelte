@@ -74,12 +74,12 @@ export function ownership_invalid_mutation(component, owner) {
 }
 
 /**
- * Detected an equality check between a $state proxy and a non-$state-proxy object for %method%. This equality check will always fail because the proxy has a different object identity. To ensure both operands are of the same kind for accurate results, consider using the `$state.is(a, b)` rune.
+ * Detected an equality check between a $state proxy and a non-$state-proxy object for %method%. This equality check will always fail because the proxy has a different object identity. To ensure both operands are of the same kind for accurate results, consider using `$state.is(a, b)`.
  * @param {string} method
  */
 export function state_proxy_equality_mismatch(method) {
 	if (DEV) {
-		console.warn(`%c[svelte] ${"state_proxy_equality_mismatch"}\n%c${`Detected an equality check between a $state proxy and a non-$state-proxy object for ${method}. This equality check will always fail because the proxy has a different object identity. To ensure both operands are of the same kind for accurate results, consider using the \`$state.is(a, b)\` rune.`}`, bold, normal);
+		console.warn(`%c[svelte] ${"state_proxy_equality_mismatch"}\n%c${`Detected an equality check between a $state proxy and a non-$state-proxy object for ${method}. This equality check will always fail because the proxy has a different object identity. To ensure both operands are of the same kind for accurate results, consider using \`$state.is(a, b)\`.`}`, bold, normal);
 	} else {
 		// TODO print a link to the documentation
 		console.warn("state_proxy_equality_mismatch");

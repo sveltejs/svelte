@@ -1,6 +1,6 @@
 import { DEV } from 'esm-env';
 import * as w from '../warnings.js';
-import { get_proxied_value } from '../proxy';
+import { get_proxied_value } from '../proxy.js';
 
 export function init_array_prototype_warnings() {
 	const array_prototype = Array.prototype;
