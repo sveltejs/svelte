@@ -5,6 +5,7 @@
 
 /static/svelte-app.json
 /scripts/svelte-app/
+/scripts/previous-docs/
 /src/routes/_components/Supporters/contributors.jpg
 /src/routes/_components/Supporters/contributors.js
 /src/routes/_components/Supporters/donors.jpg
