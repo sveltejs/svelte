@@ -15,7 +15,7 @@ for (const version of versions) {
 	// Check if docs are already checked out
 	const version_dir = join(docs_dir, version.version);
 	if (!force && existsSync(version_dir)) {
-		console.log(`Docs for '${version.version}' already exist, skipping`);
+		console.log(`Docs for '${version.version}' already exists, skipping`);
 		continue;
 	}
 	// Delete dir 'previous-docs/documentation'
@@ -30,5 +30,5 @@ for (const version of versions) {
 	});
 	// Rename 'previous-docs/documentation' to 'previous-docs/<version>'
 	rmSync(version_dir, { recursive: true, force: true });
-	renameSync(new_docs_dir, join(docs_dir, version.version));
+	renameSync(new_docs_dir, version_dir);
 }

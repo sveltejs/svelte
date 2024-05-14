@@ -33,7 +33,7 @@ export async function get_parsed_docs(docs_data, slug) {
  * @param {string | null} version
  * @return {Promise<import('./types').DocsData>}
  * */
-export async function get_docs_data(version) {
+export async function get_docs_data(version = null) {
 	let base;
 	if (versions.find((v) => v.version === version)) base = `./scripts/previous-docs/${version}/docs`;
 	else base = CONTENT_BASE_PATHS.DOCS;
