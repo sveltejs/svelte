@@ -26,7 +26,8 @@ export {
 	set_attributes,
 	set_custom_element_data,
 	set_dynamic_element_attributes,
-	set_xlink_attribute
+	set_xlink_attribute,
+	handle_lazy_img
 } from './dom/elements/attributes.js';
 export { set_class, set_svg_class, set_mathml_class, toggle_class } from './dom/elements/class.js';
 export { event, delegate } from './dom/elements/events.js';

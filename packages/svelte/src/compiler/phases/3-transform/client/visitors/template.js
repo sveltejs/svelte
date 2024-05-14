@@ -38,6 +38,7 @@ import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
 import { walk } from 'zimmerframe';
+import { locator } from '../../../../state.js';
 
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
@@ -1841,7 +1842,7 @@ export const template_visitors = {
 		let location = [-1, -1];
 
 		if (context.state.options.dev) {
-			const loc = context.state.source_locator(node.start);
+			const loc = locator(node.start);
 			if (loc) {
 				location[0] = loc.line;
 				location[1] = loc.column;
@@ -1888,30 +1889,22 @@ export const template_visitors = {
 		let needs_special_value_handling = node.name === 'option' || node.name === 'select';
 		let is_content_editable = false;
 		let has_content_editable_binding = false;
+		let img_might_be_lazy = false;
 
-		if (
+		if (is_custom_element) {
 			// cloneNode is faster, but it does not instantiate the underlying class of the
 			// custom element until the template is connected to the dom, which would
 			// cause problems when setting properties on the custom element.
 			// Therefore we need to use importNode instead, which doesn't have this caveat.
-			is_custom_element ||
-			// If we have an <img loading="lazy"> occurance, we need to use importNode for FF
-			// otherwise, the image won't be lazy. If we detect an attribute for "loading" then
-			// just fallback to using importNode. Also if we have a spread attribute on the img,
-			// then it might contain this property, so we also need to fallback there too.
-			(node.name === 'img' &&
-				node.attributes.some(
-					(attribute) =>
-						attribute.type === 'SpreadAttribute' ||
-						(attribute.type === 'Attribute' && attribute.name === 'loading')
-				))
-		) {
 			metadata.context.template_needs_import_node = true;
 		}
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute') {
 				attributes.push(attribute);
+				if (node.name === 'img' && attribute.name === 'loading') {
+					img_might_be_lazy = true;
+				}
 				if (
 					(attribute.name === 'value' || attribute.name === 'checked') &&
 					!is_text_attribute(attribute)
@@ -1988,6 +1981,9 @@ export const template_visitors = {
 		// Then do attributes
 		let is_attributes_reactive = false;
 		if (node.metadata.has_spread) {
+			if (node.name === 'img') {
+				img_might_be_lazy = true;
+			}
 			serialize_element_spread_attributes(
 				attributes,
 				context,
@@ -2037,6 +2033,11 @@ export const template_visitors = {
 						: serialize_element_attribute_update_assignment(node, node_id, attribute, context);
 				if (is) is_attributes_reactive = true;
 			}
+		}
+
+		// Apply the src and loading attributes for <img> elements after the element is appended to the document
+		if (img_might_be_lazy) {
+			context.state.after_update.push(b.stmt(b.call('$.handle_lazy_img', node_id)));
 		}
 
 		// class/style directives must be applied last since they could override class/style attributes
@@ -2192,7 +2193,7 @@ export const template_visitors = {
 			})
 		);
 
-		const location = context.state.options.dev && context.state.source_locator(node.start);
+		const location = context.state.options.dev && locator(node.start);
 
 		context.state.init.push(
 			b.stmt(

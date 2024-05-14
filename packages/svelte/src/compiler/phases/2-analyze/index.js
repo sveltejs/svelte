@@ -25,6 +25,7 @@ import { prune } from './css/css-prune.js';
 import { hash } from './utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
+import { pop_ignore, push_ignore } from '../../state.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -439,8 +440,7 @@ export function analyze_component(root, source, options) {
 				component_slots: new Set(),
 				expression: null,
 				private_derived_state: [],
-				function_depth: scope.function_depth,
-				ignores: new Set()
+				function_depth: scope.function_depth
 			};
 
 			walk(
@@ -511,8 +511,7 @@ export function analyze_component(root, source, options) {
 				component_slots: new Set(),
 				expression: null,
 				private_derived_state: [],
-				function_depth: scope.function_depth,
-				ignores: new Set()
+				function_depth: scope.function_depth
 			};
 
 			walk(
@@ -559,10 +558,14 @@ export function analyze_component(root, source, options) {
 			prune(analysis.css.ast, element);
 		}
 
-		if (
-			!analysis.css.ast.content.comment ||
-			!extract_svelte_ignore(analysis.css.ast.content.comment.data).includes('css_unused_selector')
-		) {
+		const { comment } = analysis.css.ast.content;
+		const should_ignore_unused =
+			comment &&
+			extract_svelte_ignore(comment.start, comment.data, analysis.runes).includes(
+				'css_unused_selector'
+			);
+
+		if (!should_ignore_unused) {
 			warn_unused(analysis.css.ast);
 		}
 
@@ -1042,6 +1045,9 @@ function is_known_safe_call(node, context) {
 			return true;
 		}
 	}
+
+	// TODO add more cases
+
 	return false;
 }
 
@@ -1093,62 +1099,51 @@ function is_safe_identifier(expression, scope) {
 
 /** @type {import('./types').Visitors} */
 const common_visitors = {
-	_(node, context) {
-		// @ts-expect-error
-		const comments = /** @type {import('estree').Comment[]} */ (node.leadingComments);
-
-		if (comments) {
+	_(node, { state, next, path }) {
+		const parent = path.at(-1);
+		if (parent?.type === 'Fragment' && node.type !== 'Comment' && node.type !== 'Text') {
+			const idx = parent.nodes.indexOf(/** @type {any} */ (node));
 			/** @type {string[]} */
 			const ignores = [];
-
-			for (const comment of comments) {
-				ignores.push(...extract_svelte_ignore(comment.value));
+			for (let i = idx - 1; i >= 0; i--) {
+				const prev = parent.nodes[i];
+				if (prev.type === 'Comment') {
+					ignores.push(
+						...extract_svelte_ignore(
+							prev.start + 2 /* '//'.length */,
+							prev.data,
+							state.analysis.runes
+						)
+					);
+				} else if (prev.type !== 'Text') {
+					break;
+				}
 			}
 
 			if (ignores.length > 0) {
-				// @ts-expect-error see below
-				node.ignores = new Set([...context.state.ignores, ...ignores]);
+				push_ignore(ignores);
+				next();
+				pop_ignore();
 			}
-		}
-
-		// @ts-expect-error
-		if (node.ignores) {
-			context.next({
-				...context.state,
-				// @ts-expect-error see below
-				ignores: node.ignores
-			});
-		} else if (context.state.ignores.size > 0) {
-			// @ts-expect-error
-			node.ignores = context.state.ignores;
-		}
-	},
-	Fragment(node, context) {
-		/** @type {string[]} */
-		let ignores = [];
-
-		for (const child of node.nodes) {
-			if (child.type === 'Text' && child.data.trim() === '') {
-				continue;
-			}
-
-			if (child.type === 'Comment') {
-				ignores.push(...extract_svelte_ignore(child.data));
-			} else {
-				const combined_ignores = new Set(context.state.ignores);
-				for (const ignore of ignores) combined_ignores.add(ignore);
-
-				if (combined_ignores.size > 0) {
-					// TODO this is a grotesque hack that's made necessary by the fact that
-					// we can't call `context.visit(...)` here, because we do the convoluted
-					// visitor merging thing. I'm increasingly of the view that we should
-					// rearchitect this stuff and have a single visitor per node. It'd be
-					// more efficient and much simpler.
-					// @ts-expect-error
-					child.ignores = combined_ignores;
+		} else {
+			const comments = /** @type {any} */ (node).leadingComments;
+			if (comments) {
+				/** @type {string[]} */
+				const ignores = [];
+				for (const comment of comments) {
+					ignores.push(
+						...extract_svelte_ignore(
+							comment.start + 4 /* '<!--'.length */,
+							comment.value,
+							state.analysis.runes
+						)
+					);
 				}
-
-				ignores = [];
+				if (ignores.length > 0) {
+					push_ignore(ignores);
+					next();
+					pop_ignore();
+				}
 			}
 		}
 	},
@@ -1262,11 +1257,12 @@ const common_visitors = {
 		}
 	},
 	CallExpression(node, context) {
+		const { expression } = context.state;
 		if (
-			context.state.expression?.type === 'ExpressionTag' ||
-			(context.state.expression?.type === 'SpreadAttribute' && !is_known_safe_call(node, context))
+			(expression?.type === 'ExpressionTag' || expression?.type === 'SpreadAttribute') &&
+			!is_known_safe_call(node, context)
 		) {
-			context.state.expression.metadata.contains_call_expression = true;
+			expression.metadata.contains_call_expression = true;
 		}
 
 		const callee = node.callee;

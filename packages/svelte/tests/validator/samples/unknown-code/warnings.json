@@ -1,0 +1,74 @@
+[
+	{
+		"code": "legacy_code",
+		"message": "`a11y-missing-attribute` is no longer valid — please use `a11y_missing_attribute` instead",
+		"start": {
+			"line": 3,
+			"column": 17
+		},
+		"end": {
+			"line": 3,
+			"column": 39
+		}
+	},
+	{
+		"code": "a11y_missing_attribute",
+		"message": "`<img>` element should have an alt attribute",
+		"start": {
+			"line": 5,
+			"column": 1
+		},
+		"end": {
+			"line": 5,
+			"column": 29
+		}
+	},
+	{
+		"code": "unknown_code",
+		"message": "`ally_missing_attribute` is not a recognised code (did you mean `a11y_missing_attribute`?)",
+		"start": {
+			"line": 8,
+			"column": 17
+		},
+		"end": {
+			"line": 8,
+			"column": 39
+		}
+	},
+	{
+		"code": "a11y_missing_attribute",
+		"message": "`<img>` element should have an alt attribute",
+		"start": {
+			"line": 10,
+			"column": 1
+		},
+		"end": {
+			"line": 10,
+			"column": 29
+		}
+	},
+	{
+		"code": "legacy_code",
+		"message": "`a11y-misplaced-scope` is no longer valid — please use `a11y_misplaced_scope` instead",
+		"start": {
+			"line": 13,
+			"column": 17
+		},
+		"end": {
+			"line": 13,
+			"column": 37
+		}
+	},
+	{
+		"code": "a11y_misplaced_scope",
+		"message": "The scope attribute should only be used with `<th>` elements",
+		"start": {
+			"line": 14,
+			"column": 5
+		},
+		"end": {
+			"line": 14,
+			"column": 10
+		}
+	}
+]
