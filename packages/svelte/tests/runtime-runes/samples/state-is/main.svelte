@@ -1,10 +1,10 @@
 <script>
-  let state = $state({});
-	let object = {};
+	/** @type {{ bar?: any }}*/
+	let foo = $state({});
+	let bar = {};
 
-	state.object = object;
+	foo.bar = bar;
 
-	console.log(state.object === object); // false because of the $state proxy
-
-	console.log($state.is(state.object, object)); // true
+	console.log(foo.bar === bar); // false because of the $state proxy
+	console.log($state.is(foo.bar, bar)); // true
 </script>
