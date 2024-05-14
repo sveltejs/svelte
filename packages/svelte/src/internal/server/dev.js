@@ -21,19 +21,6 @@ import { current_component } from './context.js';
 let parent = null;
 
 /**
- * @param {import('#server').Payload} payload
- * @param {string} message
- */
-function error_on_client(payload, message) {
-	message =
-		`${message}\n\n` +
-		'This can cause content to shift around as the browser repairs the HTML, and will likely result in a `hydration_mismatch` warning.';
-	// eslint-disable-next-line no-console
-	console.error(message);
-	payload.head.out += `<script>console.error(${JSON.stringify(message)})</script>`;
-}
-
-/**
  * @param {Element} element
  */
 function stringify(element) {
@@ -47,7 +34,13 @@ function stringify(element) {
  * @param {Element} child
  */
 function print_error(payload, parent, child) {
-	error_on_client(payload, `${stringify(child)} cannot contain ${stringify(parent)}`);
+	var message =
+		`${stringify(child)} cannot contain ${stringify(parent)}\n\n` +
+		'This can cause content to shift around as the browser repairs the HTML, and will likely result in a `hydration_mismatch` warning.';
+
+	// eslint-disable-next-line no-console
+	console.error(message);
+	payload.head.out += `<script>console.error(${JSON.stringify(message)})</script>`;
 }
 
 /**
