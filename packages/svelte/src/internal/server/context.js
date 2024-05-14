@@ -53,8 +53,15 @@ function get_or_init_context_map(name) {
 	return (current_component.c ??= new Map(get_parent_context(current_component) || undefined));
 }
 
-export function push() {
+/**
+ * @param {Function} [fn]
+ */
+export function push(fn) {
 	current_component = { p: current_component, c: null, d: null };
+	if (DEV) {
+		// component function
+		current_component.function = fn;
+	}
 }
 
 export function pop() {
