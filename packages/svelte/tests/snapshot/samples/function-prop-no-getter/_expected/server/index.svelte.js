@@ -17,9 +17,10 @@ export default function Function_prop_no_getter($$payload, $$props) {
 		onmousedown: () => count += 1,
 		onmouseup,
 		onmouseenter: () => count = plusOne(count),
-		children: $.add_snippet_symbol(($$payload, $$slotProps) => {
+		children: ($$payload, $$slotProps) => {
 			$$payload.out += `clicks: ${$.escape(count)}`;
-		})
+		},
+		$$slots: { default: true }
 	});
 
 	$$payload.out += `<!--]-->`;

@@ -1084,7 +1084,16 @@ function serialize_inline_component(node, component_name, context) {
 		);
 
 		if (slot_name === 'default' && !has_children_prop) {
-			push_prop(b.prop('init', b.id('children'), b.call('$.add_snippet_symbol', slot_fn)));
+			push_prop(
+				b.prop(
+					'init',
+					b.id('children'),
+					context.state.options.dev ? b.call('$.add_snippet_symbol', slot_fn) : slot_fn
+				)
+			);
+			// We additionally add the default slot as a boolean, so that the slot render function on the other
+			// side knows it should get the content to render from $$props.children
+			serialized_slots.push(b.init('default', b.true));
 		} else {
 			const slot = b.prop('init', b.literal(slot_name), slot_fn);
 			serialized_slots.push(slot);
@@ -1619,7 +1628,9 @@ const template_visitors = {
 		// TODO hoist where possible
 		context.state.init.push(fn);
 
-		context.state.init.push(b.stmt(b.call('$.add_snippet_symbol', node.expression)));
+		if (context.state.options.dev) {
+			context.state.init.push(b.stmt(b.call('$.add_snippet_symbol', node.expression)));
+		}
 	},
 	Component(node, context) {
 		const state = context.state;

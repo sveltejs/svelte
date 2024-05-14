@@ -16,12 +16,13 @@ export default function Function_prop_no_getter($$anchor) {
 		onmousedown: () => $.set(count, $.get(count) + 1),
 		onmouseup,
 		onmouseenter: () => $.set(count, $.proxy(plusOne($.get(count)))),
-		children: $.add_snippet_symbol(($$anchor, $$slotProps) => {
+		children: ($$anchor, $$slotProps) => {
 			var text = $.text($$anchor);
 
 			$.template_effect(() => $.set_text(text, `clicks: ${$.stringify($.get(count))}`));
 			$.append($$anchor, text);
-		})
+		},
+		$$slots: { default: true }
 	});
 
 	$.append($$anchor, fragment);

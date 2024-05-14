@@ -840,6 +840,9 @@ function serialize_inline_component(node, component_name, context) {
 			push_prop(
 				b.init('children', context.state.options.dev ? b.call('$.wrap_snippet', slot_fn) : slot_fn)
 			);
+			// We additionally add the default slot as a boolean, so that the slot render function on the other
+			// side knows it should get the content to render from $$props.children
+			serialized_slots.push(b.init(slot_name, b.true));
 		} else {
 			serialized_slots.push(b.init(slot_name, slot_fn));
 		}

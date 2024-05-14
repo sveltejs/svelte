@@ -10,10 +10,6 @@ import {
 } from '../../constants.js';
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
-
-export * from '../client/validate.js';
-export { add_snippet_symbol } from '../client/dom/blocks/snippet.js';
-export { default_slot } from '../client/dom/legacy/misc.js';
 import { current_component, pop, push } from './context.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
@@ -280,8 +276,9 @@ export function spread_attributes(attrs, lowercase_attributes, is_html, class_ha
 	for (let i = 0; i < attrs.length; i++) {
 		const obj = attrs[i];
 		for (key in obj) {
-			// omit functions
-			if (typeof obj[key] !== 'function') {
+			// omit functions and internal svelte properties
+			const prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
+			if (typeof obj[key] !== 'function' && prefix !== '$$') {
 				merged_attrs[key] = obj[key];
 			}
 		}
@@ -626,6 +623,7 @@ export function once(get_value) {
 export { push, pop } from './context.js';
 
 export {
+	add_snippet_symbol,
 	validate_component,
 	validate_dynamic_element_tag,
 	validate_snippet,
@@ -633,3 +631,5 @@ export {
 } from '../shared/validate.js';
 
 export { escape_html as escape };
+
+export { default_slot } from '../client/dom/legacy/misc.js';
