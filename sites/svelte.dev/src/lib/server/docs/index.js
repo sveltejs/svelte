@@ -102,7 +102,8 @@ export function get_docs_list(docs_data) {
 		title: category.title,
 		pages: category.pages.map((page) => ({
 			title: page.title,
-			path: page.path
+			path: page.path,
+			slug: page.slug
 		}))
 	}));
 }

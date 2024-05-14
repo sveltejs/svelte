@@ -199,18 +199,20 @@
 	function get_url_to_redirect_to() {
 		const hash = $page.url.hash.replace(/^#/i, '');
 
-		if (!hash) return '/docs/introduction';
+		if (!hash) return 'introduction';
 
 		const old_new_map = get_old_new_ids_map();
 
 		// ID doesn't match anything, take the user to intro page only
-		if (!old_new_map.has(hash)) return '/docs/introduction';
+		if (!old_new_map.has(hash)) return 'introduction';
 
-		return `/docs/${old_new_map.get(hash)}`;
+		return old_new_map.get(hash);
 	}
 
 	onMount(() => {
 		console.log(get_old_new_ids_map()); // for debugging purposes in prod
-		goto(get_url_to_redirect_to(), { replaceState: true });
+		const url = get_url_to_redirect_to();
+		const version = $page.params.version;
+		goto(version ? `/docs/${version}/${url}` : `/docs/${url}`, { replaceState: true });
 	});
 </script>

@@ -1,8 +1,14 @@
 <script>
 	import { page } from '$app/stores';
 	import { DocsContents } from '@sveltejs/site-kit/docs';
+	import versions from '$lib/docs/versions.js';
+	import { goto } from '$app/navigation';
 
 	export let data;
+	$: param_version = $page.params.version ?? 'latest';
+	$: version = param_version;
+	$: if (version !== param_version)
+		goto(`/docs/${version === 'latest' ? '' : version + '/'}introduction`);
 
 	$: pageData = $page.data.page;
 
@@ -12,6 +18,15 @@
 
 <div class="container">
 	<div class="toc-container" style="order: 1">
+		<div class="toc-version-picker">
+			Version:
+			<select bind:value={version}>
+				<option value="latest">Latest (Svelte 5)</option>
+				{#each versions as v}
+					<option value={v.version}>{v.title}</option>
+				{/each}
+			</select>
+		</div>
 		<DocsContents contents={data.sections} />
 	</div>
 
@@ -91,6 +106,14 @@
 		.page {
 			padding-left: calc(var(--sidebar-width) + var(--sk-page-padding-side));
 		}
+	}
+
+	.toc-version-picker {
+		display: flex;
+		gap: 1rem;
+		margin: 2rem 0 -6rem 18.4rem;
+		position: relative;
+		z-index: 5;
 	}
 
 	@media (min-width: 1200px) {

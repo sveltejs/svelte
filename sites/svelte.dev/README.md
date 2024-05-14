@@ -128,7 +128,7 @@ The headings in the document must start from h2(`##`). That is, you can't have a
 
 #### Processing
 
-Docs are processed in the [`src/lib/server/docs/index.js`](./src/lib/server/docs/index.js) file. It is responsible for reading the docs from filesystem and accumulating the metadata in forms of arrays and objects and for _rendering_ the markdown files into HTML. These functions are then imported into [src/routes/docs/+layout.server.js](./src/routes/docs/+layout.server.js) and used to generate docs list, and similarly in [src/routes/docs/%5Bslug%5D/+page.server.js](./src/routes/docs/%5Bslug%5D/%2Bpage.server.js) and are rendered there.
+Docs are processed in the [`src/lib/server/docs/index.js`](./src/lib/server/docs/index.js) file. It is responsible for reading the docs from filesystem and accumulating the metadata in forms of arrays and objects and for _rendering_ the markdown files into HTML. These functions are then imported into [src/routes/docs/+layout.server.js](src/routes/docs/[[version=version]]/+layout.server.js) and used to generate docs list, and similarly in [src/routes/docs/%5Bslug%5D/+page.server.js](./src/routes/docs/%5Bslug%5D/%2Bpage.server.js) and are rendered there.
 
 ### Tutorial structure
 
