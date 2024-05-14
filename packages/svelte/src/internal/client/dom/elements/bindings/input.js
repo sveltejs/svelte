@@ -3,7 +3,6 @@ import { render_effect, effect } from '../../../reactivity/effects.js';
 import { stringify } from '../../../render.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
-import { raw } from '../../../proxy.js';
 
 /**
  * @param {HTMLInputElement} input
