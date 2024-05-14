@@ -20,6 +20,9 @@ import { current_component } from './context.js';
  */
 let parent = null;
 
+/** @type {Set<string>} */
+let seen;
+
 /**
  * @param {Element} element
  */
@@ -37,6 +40,9 @@ function print_error(payload, parent, child) {
 	var message =
 		`${stringify(child)} cannot contain ${stringify(parent)}\n\n` +
 		'This can cause content to shift around as the browser repairs the HTML, and will likely result in a `hydration_mismatch` warning.';
+
+	if ((seen ??= new Set()).has(message)) return;
+	seen.add(message);
 
 	// eslint-disable-next-line no-console
 	console.error(message);
