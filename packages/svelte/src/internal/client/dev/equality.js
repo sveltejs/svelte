@@ -17,6 +17,9 @@ export function init_array_prototype_warnings() {
 				) !== -1
 			) {
 				w.state_proxy_equality_mismatch('Array.indexOf');
+
+				// eslint-disable-next-line no-console
+				console.trace();
 			}
 		}
 		return index;
@@ -35,6 +38,9 @@ export function init_array_prototype_warnings() {
 				) !== -1
 			) {
 				w.state_proxy_equality_mismatch('Array.lastIndexOf');
+
+				// eslint-disable-next-line no-console
+				console.trace();
 			}
 		}
 		return index;
@@ -53,6 +59,9 @@ export function init_array_prototype_warnings() {
 				)
 			) {
 				w.state_proxy_equality_mismatch('Array.includes');
+
+				// eslint-disable-next-line no-console
+				console.trace();
 			}
 		}
 		return has;
@@ -67,6 +76,9 @@ export function init_array_prototype_warnings() {
 export function strict_equals(a, b) {
 	if (a !== b && get_proxied_value(a) === get_proxied_value(b)) {
 		w.state_proxy_equality_mismatch('=== operator');
+
+		// eslint-disable-next-line no-console
+		console.trace();
 	}
 
 	return a === b;
@@ -80,6 +92,9 @@ export function strict_equals(a, b) {
 export function equals(a, b) {
 	if (a != b && get_proxied_value(a) == get_proxied_value(b)) {
 		w.state_proxy_equality_mismatch('== operator');
+
+		// eslint-disable-next-line no-console
+		console.trace();
 	}
 
 	return a == b;
