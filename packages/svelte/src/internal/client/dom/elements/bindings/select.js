@@ -1,7 +1,7 @@
 import { effect } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import { untrack } from '../../../runtime.js';
-import { state_is } from '../../../dev/equality.js';
+import { state_is } from '../../../equality.js';
 
 /**
  * Selects the correct option(s) (depending on whether this is a multiple select)

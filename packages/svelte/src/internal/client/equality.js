@@ -1,6 +1,6 @@
 import { DEV } from 'esm-env';
-import { STATE_SYMBOL } from '../constants';
-import * as w from '../warnings.js';
+import { STATE_SYMBOL } from './constants';
+import * as w from './warnings.js';
 
 const object_is = Object.is;
 
