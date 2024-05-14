@@ -17,7 +17,7 @@ export function select_option(select, value, mounting) {
 
 	for (var option of select.options) {
 		var option_value = get_option_value(option);
-		if (option_value === raw(value)) {
+		if (raw(option_value) === raw(value)) {
 			option.selected = true;
 			return;
 		}

@@ -1,5 +1,4 @@
 import { DEV } from 'esm-env';
-import { STATE_SYMBOL } from '../constants';
 import * as w from '../warnings.js';
 import { raw } from '../proxy';
 
