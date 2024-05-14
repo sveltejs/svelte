@@ -1110,7 +1110,7 @@ const common_visitors = {
 				if (prev.type === 'Comment') {
 					ignores.push(
 						...extract_svelte_ignore(
-							prev.start + 2 /* '//'.length */,
+							prev.start + 4 /* '<!--'.length */,
 							prev.data,
 							state.analysis.runes
 						)
@@ -1133,7 +1133,7 @@ const common_visitors = {
 				for (const comment of comments) {
 					ignores.push(
 						...extract_svelte_ignore(
-							comment.start + 4 /* '<!--'.length */,
+							comment.start + 2 /* '//'.length */,
 							comment.value,
 							state.analysis.runes
 						)
