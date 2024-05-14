@@ -83,6 +83,8 @@ export const validate_component_options =
 
 			namespace: list(['html', 'svg', 'foreign']),
 
+			modernAst: boolean(false),
+
 			outputFilename: string(undefined),
 
 			preserveComments: boolean(false),
