@@ -3,67 +3,56 @@ import { get_proxied_value } from '../proxy.js';
 
 export function init_array_prototype_warnings() {
 	const array_prototype = Array.prototype;
+	const { indexOf, lastIndexOf, includes } = array_prototype;
 
-	const original_index_of = array_prototype.indexOf;
+	array_prototype.indexOf = function (item, from_index) {
+		const index = indexOf.call(this, item, from_index);
 
-	array_prototype.indexOf = function (search_element, from_index) {
-		const index = original_index_of.call(this, search_element, from_index);
 		if (index === -1) {
-			if (
-				original_index_of.call(
-					get_proxied_value(this),
-					get_proxied_value(search_element),
-					from_index
-				) !== -1
-			) {
+			const test = indexOf.call(get_proxied_value(this), get_proxied_value(item), from_index);
+
+			if (test !== -1) {
 				w.state_proxy_equality_mismatch('Array.indexOf');
 
 				// eslint-disable-next-line no-console
 				console.trace();
 			}
 		}
+
 		return index;
 	};
 
-	const original_last_index_of = array_prototype.lastIndexOf;
+	array_prototype.lastIndexOf = function (item, from_index) {
+		const index = lastIndexOf.call(this, item, from_index);
 
-	array_prototype.lastIndexOf = function (search_element, from_index) {
-		const index = original_last_index_of.call(this, search_element, from_index);
 		if (index === -1) {
-			if (
-				original_last_index_of.call(
-					get_proxied_value(this),
-					get_proxied_value(search_element),
-					from_index
-				) !== -1
-			) {
+			const test = lastIndexOf.call(get_proxied_value(this), get_proxied_value(item), from_index);
+
+			if (test !== -1) {
 				w.state_proxy_equality_mismatch('Array.lastIndexOf');
 
 				// eslint-disable-next-line no-console
 				console.trace();
 			}
 		}
+
 		return index;
 	};
 
-	const original_includes = array_prototype.includes;
+	array_prototype.includes = function (item, from_index) {
+		const has = includes.call(this, item, from_index);
 
-	array_prototype.includes = function (search_element, from_index) {
-		const has = original_includes.call(this, search_element, from_index);
 		if (!has) {
-			if (
-				original_includes.call(
-					get_proxied_value(this),
-					get_proxied_value(search_element),
-					from_index
-				)
-			) {
+			const test = includes.call(get_proxied_value(this), get_proxied_value(item), from_index);
+
+			if (test) {
 				w.state_proxy_equality_mismatch('Array.includes');
 
 				// eslint-disable-next-line no-console
 				console.trace();
 			}
 		}
+
 		return has;
 	};
 }
