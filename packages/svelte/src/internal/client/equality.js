@@ -20,8 +20,7 @@ if (DEV) {
 			const o = search_element[STATE_SYMBOL];
 			if (o != null) {
 				if (original_index_of.call(this, o.p, from_index) !== -1) {
-					// fire warning
-					console.warn('TODO: $state referenced non-state');
+					w.state_proxy_equality_mismatch('Array.indexOf');
 				}
 			}
 		}
@@ -41,8 +40,7 @@ if (DEV) {
 			const o = search_element[STATE_SYMBOL];
 			if (o != null) {
 				if (original_last_index_of.call(this, o.p, from_index) !== -1) {
-					// fire warning
-					console.warn('TODO: $state referenced non-state');
+					w.state_proxy_equality_mismatch('Array.lastIndexOf');
 				}
 			}
 		}
@@ -62,8 +60,7 @@ if (DEV) {
 			const o = search_element[STATE_SYMBOL];
 			if (o != null) {
 				if (original_includes.call(this, o.p, from_index)) {
-					// fire warning
-					console.warn('TODO: $state referenced non-state');
+					w.state_proxy_equality_mismatch('Array.includes');
 				}
 			}
 		}
@@ -99,8 +96,7 @@ export function state_is(a, b) {
 export function strict_equals(a, b) {
 	if (DEV) {
 		if (state_is(a, b)) {
-			// fire warning
-			console.warn('TODO: $state referenced non-state');
+			w.state_proxy_equality_mismatch('=== operator');
 		}
 	}
 	return a === b;
@@ -113,7 +109,7 @@ export function strict_equals(a, b) {
  */
 export function equals(a, b) {
 	if (DEV) {
-		check_dev_equals(a, b);
+		w.state_proxy_equality_mismatch('== operator');
 	}
 	return a == b;
 }

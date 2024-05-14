@@ -72,3 +72,16 @@ export function ownership_invalid_mutation(component, owner) {
 		console.warn("ownership_invalid_mutation");
 	}
 }
+
+/**
+ * Detected an equality check between a $state proxy and a non-$state-proxy object for %method%. This equality check will always fail because the proxy has a different object identity. Ensure both operands are of the same kind for accurate results.
+ * @param {string} method
+ */
+export function state_proxy_equality_mismatch(method) {
+	if (DEV) {
+		console.warn(`%c[svelte] ${"state_proxy_equality_mismatch"}\n%cDetected an equality check between a $state proxy and a non-$state-proxy object for ${method}. This equality check will always fail because the proxy has a different object identity. Ensure both operands are of the same kind for accurate results.`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("state_proxy_equality_mismatch");
+	}
+}
