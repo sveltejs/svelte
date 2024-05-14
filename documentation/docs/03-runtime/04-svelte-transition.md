@@ -2,7 +2,7 @@
 title: 'svelte/transition'
 ---
 
-The `svelte/transition` module exports seven functions: `fade`, `blur`, `fly`, `slide`, `scale`, `draw` and `crossfade`. They are for use with Svelte [`transitions`](/docs/element-directives#transition-fn).
+The `svelte/transition` module exports seven functions: `fade`, `blur`, `fly`, `slide`, `scale`, `draw` and `crossfade`. They are for use with Svelte [`transitions`](element-directives#transition-fn).
 
 ## `fade`
 
@@ -29,7 +29,7 @@ Animates the opacity of an element from 0 to the current opacity for `in` transi
 
 - `delay` (`number`, default 0) — milliseconds before starting
 - `duration` (`number`, default 400) — milliseconds the transition lasts
-- `easing` (`function`, default `linear`) — an [easing function](/docs/svelte-easing)
+- `easing` (`function`, default `linear`) — an [easing function](svelte-easing)
 
 You can see the `fade` transition in action in the [transition tutorial](https://learn.svelte.dev/tutorial/transition).
 
@@ -68,7 +68,7 @@ Animates a `blur` filter alongside an element's opacity.
 
 - `delay` (`number`, default 0) — milliseconds before starting
 - `duration` (`number`, default 400) — milliseconds the transition lasts
-- `easing` (`function`, default `cubicInOut`) — an [easing function](/docs/svelte-easing)
+- `easing` (`function`, default `cubicInOut`) — an [easing function](svelte-easing)
 - `opacity` (`number`, default 0) - the opacity value to animate out to and in from
 - `amount` (`number | string`, default 5) - the size of the blur. Supports css units (for example: `"4rem"`). The default unit is `px`
 
@@ -107,7 +107,7 @@ Animates the x and y positions and the opacity of an element. `in` transitions a
 
 - `delay` (`number`, default 0) — milliseconds before starting
 - `duration` (`number`, default 400) — milliseconds the transition lasts
-- `easing` (`function`, default `cubicOut`) — an [easing function](/docs/svelte-easing)
+- `easing` (`function`, default `cubicOut`) — an [easing function](svelte-easing)
 - `x` (`number | string`, default 0) - the x offset to animate out to and in from
 - `y` (`number | string`, default 0) - the y offset to animate out to and in from
 - `opacity` (`number`, default 0) - the opacity value to animate out to and in from
@@ -155,7 +155,7 @@ Slides an element in and out.
 
 - `delay` (`number`, default 0) — milliseconds before starting
 - `duration` (`number`, default 400) — milliseconds the transition lasts
-- `easing` (`function`, default `cubicOut`) — an [easing function](/docs/svelte-easing)
+- `easing` (`function`, default `cubicOut`) — an [easing function](svelte-easing)
 
 * `axis` (`x` | `y`, default `y`) — the axis of motion along which the transition occurs
 
@@ -197,7 +197,7 @@ Animates the opacity and scale of an element. `in` transitions animate from an e
 
 - `delay` (`number`, default 0) — milliseconds before starting
 - `duration` (`number`, default 400) — milliseconds the transition lasts
-- `easing` (`function`, default `cubicOut`) — an [easing function](/docs/svelte-easing)
+- `easing` (`function`, default `cubicOut`) — an [easing function](svelte-easing)
 - `start` (`number`, default 0) - the scale value to animate out to and in from
 - `opacity` (`number`, default 0) - the opacity value to animate out to and in from
 
@@ -240,7 +240,7 @@ Animates the stroke of an SVG element, like a snake in a tube. `in` transitions 
 - `delay` (`number`, default 0) — milliseconds before starting
 - `speed` (`number`, default undefined) - the speed of the animation, see below.
 - `duration` (`number` | `function`, default 800) — milliseconds the transition lasts
-- `easing` (`function`, default `cubicInOut`) — an [easing function](/docs/svelte-easing)
+- `easing` (`function`, default `cubicInOut`) — an [easing function](svelte-easing)
 
 The `speed` parameter is a means of setting the duration of the transition relative to the path's length. It is a modifier that is applied to the length of the path: `duration = length / speed`. A path that is 1000 pixels with a speed of 1 will have a duration of `1000ms`, setting the speed to `0.5` will double that duration and setting it to `2` will halve it.
 
@@ -268,14 +268,14 @@ The `speed` parameter is a means of setting the duration of the transition relat
 
 > EXPORT_SNIPPET: svelte/transition#crossfade
 
-The `crossfade` function creates a pair of [transitions](/docs/element-directives#transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
+The `crossfade` function creates a pair of [transitions](element-directives#transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
 
 `crossfade` accepts the following parameters:
 
 - `delay` (`number`, default 0) — milliseconds before starting
 - `duration` (`number` | `function`, default 800) — milliseconds the transition lasts
-- `easing` (`function`, default `cubicOut`) — an [easing function](/docs/svelte-easing)
-- `fallback` (`function`) — A fallback [transition](/docs/element-directives#transition-fn) to use for send when there is no matching element being received, and for receive when there is no element being sent.
+- `easing` (`function`, default `cubicOut`) — an [easing function](svelte-easing)
+- `fallback` (`function`) — A fallback [transition](element-directives#transition-fn) to use for send when there is no matching element being received, and for receive when there is no element being sent.
 
 ```svelte
 <script>

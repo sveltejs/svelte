@@ -9,7 +9,7 @@ title: Component directives
 on:eventname={handler}
 ```
 
-Components can emit events using [`createEventDispatcher`](/docs/svelte#createeventdispatcher) or by forwarding DOM events.
+Components can emit events using [`createEventDispatcher`](svelte#createeventdispatcher) or by forwarding DOM events.
 
 ```svelte
 <script>

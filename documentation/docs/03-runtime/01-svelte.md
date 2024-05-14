@@ -10,7 +10,7 @@ The `svelte` package exposes [lifecycle functions](https://learn.svelte.dev/tuto
 
 The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM. It must be called during the component's initialisation (but doesn't need to live _inside_ the component; it can be called from an external module).
 
-`onMount` does not run inside a [server-side component](/docs/server-side-component-api).
+`onMount` does not run inside a [server-side component](server-side-component-api).
 
 ```svelte
 <script>
@@ -178,7 +178,7 @@ Retrieves the whole context map that belongs to the closest parent component. Mu
 
 > EXPORT_SNIPPET: svelte#createEventDispatcher
 
-Creates an event dispatcher that can be used to dispatch [component events](/docs/component-directives#on-eventname). Event dispatchers are functions that can take two arguments: `name` and `detail`.
+Creates an event dispatcher that can be used to dispatch [component events](component-directives#on-eventname). Event dispatchers are functions that can take two arguments: `name` and `detail`.
 
 Component events created with `createEventDispatcher` create a [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent). These events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture). The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail) property and can contain any type of data.
 

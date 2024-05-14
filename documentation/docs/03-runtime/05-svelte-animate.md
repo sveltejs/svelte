@@ -2,7 +2,7 @@
 title: 'svelte/animate'
 ---
 
-The `svelte/animate` module exports one function for use with Svelte [animations](/docs/element-directives#animate-fn).
+The `svelte/animate` module exports one function for use with Svelte [animations](element-directives#animate-fn).
 
 ## `flip`
 
@@ -19,7 +19,7 @@ The `flip` function calculates the start and end position of an element and anim
 
 - `delay` (`number`, default 0) — milliseconds before starting
 - `duration` (`number` | `function`, default `d => Math.sqrt(d) * 120`) — see below
-- `easing` (`function`, default `cubicOut`) — an [easing function](/docs/svelte-easing)
+- `easing` (`function`, default `cubicOut`) — an [easing function](svelte-easing)
 
 `duration` can be provided as either:
 

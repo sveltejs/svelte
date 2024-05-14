@@ -258,7 +258,7 @@ All except `scrollX` and `scrollY` are readonly.
 <svelte:document bind:prop={value} />
 ```
 
-Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document`, such as `visibilitychange`, which don't fire on `window`. It also lets you use [actions](/docs/element-directives#use-action) on `document`.
+Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document`, such as `visibilitychange`, which don't fire on `window`. It also lets you use [actions](element-directives#use-action) on `document`.
 
 As with `<svelte:window>`, this element may only appear the top level of your component and must never be inside a block or element.
 
@@ -279,7 +279,7 @@ All are readonly.
 <svelte:body on:event={handler} />
 ```
 
-Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave`, which don't fire on `window`. It also lets you use [actions](/docs/element-directives#use-action) on the `<body>` element.
+Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave`, which don't fire on `window`. It also lets you use [actions](element-directives#use-action) on the `<body>` element.
 
 As with `<svelte:window>` and `<svelte:document>`, this element may only appear the top level of your component and must never be inside a block or element.
 
@@ -310,7 +310,7 @@ As with `<svelte:window>`, `<svelte:document>` and `<svelte:body>`, this element
 <svelte:options option={value} />
 ```
 
-The `<svelte:options>` element provides a place to specify per-component compiler options, which are detailed in the [compiler section](/docs/svelte-compiler#compile). The possible options are:
+The `<svelte:options>` element provides a place to specify per-component compiler options, which are detailed in the [compiler section](svelte-compiler#compile). The possible options are:
 
 - `immutable={true}` — you never use mutable data, so the compiler can do simple referential equality checks to determine if values have changed
 - `immutable={false}` — the default. Svelte will be more conservative about whether or not mutable objects have changed
@@ -325,7 +325,7 @@ The `<svelte:options>` element provides a place to specify per-component compile
 
 ## `<svelte:fragment>`
 
-The `<svelte:fragment>` element allows you to place content in a [named slot](/docs/special-elements#slot-slot-name-name) without wrapping it in a container DOM element. This keeps the flow layout of your document intact.
+The `<svelte:fragment>` element allows you to place content in a [named slot](special-elements#slot-slot-name-name) without wrapping it in a container DOM element. This keeps the flow layout of your document intact.
 
 ```svelte
 <!-- Widget.svelte -->
