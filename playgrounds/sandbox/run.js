@@ -78,6 +78,7 @@ for (const generate of ['client', 'server']) {
 		const source = fs.readFileSync(input, 'utf-8');
 
 		const compiled = compileModule(source, {
+			dev: true,
 			filename: input,
 			generate
 		});
