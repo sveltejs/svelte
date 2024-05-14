@@ -2625,19 +2625,18 @@ declare namespace $state {
 	export function snapshot<T>(state: T): T;
 
 	/**
-	 * To take a check if two reactive from `$state()` are the same, use `$state.is`:
+	 * Compare two values, one or both of which is a reactive `$state(...)` proxy.
 	 *
 	 * Example:
 	 * ```ts
 	 * <script>
-	 *	 let state = $state({});
-	 *	 let object = {};
+	 *	 let foo = $state({});
+	 *	 let bar = {};
 	 *
-	 *	 state.object = object;
+	 *	 foo.bar = bar;
 	 *
-	 *	 console.log(state.object === object); // false because of the $state proxy
-	 *
-	 *   console.log($state.is(state.object, object)); // true
+	 *	 console.log(foo.bar === bar); // false — `foo.bar` is a reactive proxy
+	 *   console.log($state.is(foo.bar, bar)); // true
 	 * </script>
 	 * ```
 	 *

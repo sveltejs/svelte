@@ -114,19 +114,17 @@ This is handy when you want to pass some state to an external library or API tha
 
 ## `$state.is`
 
-Sometimes you might need to deal with the equality of two values, where one of the objects might have been wrapped in a with a `$state` proxy,
-you can use `$state.is` to check if the two values are the same.
+Sometimes you might need to compare two values, one of which is a reactive `$state(...)` proxy. For this you can use `$state.is(a, b)`:
 
 ```svelte
 <script>
-	let state = $state({});
-	let object = {};
+	let foo = $state({});
+	let bar = {};
 
-	state.object = object;
+	foo.bar = bar;
 
-	console.log(state.object === object); // false because of the $state proxy
-
-	console.log($state.is(state.object, object)); // true
+	console.log(foo.bar === bar); // false — `foo.bar` is a reactive proxy
+	console.log($state.is(foo.bar, bar)); // true
 </script>
 ```
 
