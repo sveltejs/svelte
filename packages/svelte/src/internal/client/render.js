@@ -322,8 +322,11 @@ export function unmount(component) {
  * @returns {Record<string, any>}
  */
 export function sanitize_slots(props) {
-	const sanitized = { ...props.$$slots };
-	if (props.children) sanitized.default = props.children;
+	/** @type {Record<string, boolean>} */
+	const sanitized = {};
+	for (const key in props.$$slots) {
+		sanitized[key] = true;
+	}
 	return sanitized;
 }
 
