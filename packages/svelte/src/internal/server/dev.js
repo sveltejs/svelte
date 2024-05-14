@@ -10,6 +10,8 @@ import { current_component } from './context.js';
  * 	tag: string;
  * 	parent: null | Element;
  *  filename: null | string;
+ *  line: number;
+ *  column: number;
  * }} Element
  */
 
@@ -29,14 +31,15 @@ function error_on_client(payload, message) {
 		'which may result in content being shifted around and will likely result in a hydration mismatch.';
 	// eslint-disable-next-line no-console
 	console.error(message);
-	payload.head.out += `<script>console.error(\`${message}\`)</script>`;
+	payload.head.out += `<script>console.error(${JSON.stringify(message)})</script>`;
 }
 
 /**
- * @param {string | null} file
+ * @param {Element} element
  */
-function print_file(file) {
-	return file ? `(${file})` : '';
+function stringify(element) {
+	if (element.filename === null) return `\`<${element.tag}>\``;
+	return `\`<${element.tag}>\` (${element.filename}:${element.line}:${element.column})`;
 }
 
 /**
@@ -45,10 +48,7 @@ function print_file(file) {
  * @param {Element} child
  */
 function print_error(payload, parent, child) {
-	error_on_client(
-		payload,
-		`<${child.tag}> ${print_file(child.filename)} is not a valid child element of <${parent.tag}> ${print_file(parent.filename)}`
-	);
+	error_on_client(payload, `${stringify(child)} cannot contain ${stringify(parent)}`);
 }
 
 /**
@@ -59,7 +59,7 @@ function print_error(payload, parent, child) {
  */
 export function push_element(payload, tag, line, column) {
 	var filename = /** @type {import('#server').Component} */ (current_component).function.filename;
-	var child = { tag, parent, filename };
+	var child = { tag, parent, filename, line, column };
 
 	if (parent !== null && !is_tag_valid_with_parent(tag, parent.tag)) {
 		print_error(payload, parent, child);
