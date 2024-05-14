@@ -2,9 +2,9 @@ import { print } from 'esrap';
 import { VERSION } from '../../../version.js';
 import { server_component, server_module } from './server/transform-server.js';
 import { client_component, client_module } from './client/transform-client.js';
-import { getLocator } from 'locate-character';
 import { render_stylesheet } from './css/index.js';
 import { merge_with_preprocessor_map, get_source_name } from '../../utils/mapped_code.js';
+import * as state from '../../state.js';
 
 /**
  * @param {import('../types').ComponentAnalysis} analysis
@@ -17,7 +17,7 @@ export function transform_component(analysis, source, options) {
 		return {
 			js: /** @type {any} */ (null),
 			css: null,
-			warnings: /** @type {any} */ (null), // set afterwards
+			warnings: state.warnings, // set afterwards
 			metadata: {
 				runes: analysis.runes
 			},
@@ -46,7 +46,7 @@ export function transform_component(analysis, source, options) {
 	return {
 		js,
 		css,
-		warnings: /** @type {any} */ (null), // set afterwards. TODO apply preprocessor sourcemap
+		warnings: state.warnings, // set afterwards. TODO apply preprocessor sourcemap
 		metadata: {
 			runes: analysis.runes
 		},
@@ -65,7 +65,7 @@ export function transform_module(analysis, source, options) {
 		return {
 			js: /** @type {any} */ (null),
 			css: null,
-			warnings: /** @type {any} */ (null), // set afterwards
+			warnings: state.warnings, // set afterwards
 			metadata: {
 				runes: true
 			},
@@ -94,7 +94,7 @@ export function transform_module(analysis, source, options) {
 		metadata: {
 			runes: true
 		},
-		warnings: /** @type {any} */ (null), // set afterwards
+		warnings: state.warnings, // set afterwards
 		ast: /** @type {any} */ (null) // set afterwards
 	};
 }

@@ -8,7 +8,6 @@ import { javascript_visitors_runes } from './visitors/javascript-runes.js';
 import { javascript_visitors_legacy } from './visitors/javascript-legacy.js';
 import { serialize_get_binding } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
-import { getLocator } from 'locate-character';
 
 /**
  * This function ensures visitor sets don't accidentally clobber each other
@@ -48,7 +47,6 @@ export function client_component(source, analysis, options) {
 		scopes: analysis.template.scopes,
 		hoisted: [b.import_all('$', 'svelte/internal/client')],
 		node: /** @type {any} */ (null), // populated by the root node
-		source_locator: getLocator(source, { offsetLine: 1 }),
 		// these should be set by create_block - if they're called outside, it's a bug
 		get before_init() {
 			/** @type {any[]} */
