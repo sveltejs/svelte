@@ -274,7 +274,21 @@
 
 			function stringify(args) {
 				try {
-					return JSON.stringify(args);
+					return JSON.stringify(args, (key, value) => {
+						if (value instanceof Map) {
+							return {
+								type: 'Map',
+								value,
+							};
+						}
+						if (value instanceof Set) {
+							return {
+								type: 'Set',
+								value,
+							};
+						}
+						return value;
+					});
 				} catch (error) {
 					return null;
 				}
