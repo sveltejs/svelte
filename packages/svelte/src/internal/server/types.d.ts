@@ -10,3 +10,13 @@ export interface Component {
 	 */
 	function?: any;
 }
+
+export interface Payload {
+	out: string;
+	anchor: number;
+	head: {
+		title: string;
+		out: string;
+		anchor: number;
+	};
+}
