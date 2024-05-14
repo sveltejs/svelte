@@ -85,7 +85,7 @@ export async function get_docs_data(version = undefined) {
 				content: page_content,
 				category: category_title,
 				sections: await get_sections(page_content),
-				path: `${app_base}/docs/${page_slug}`,
+				path: `${app_base}/docs/${version ? version + '/' : ''}${page_slug}`,
 				file: `${category_dir}/${filename}`
 			});
 		}
