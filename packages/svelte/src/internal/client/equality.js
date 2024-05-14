@@ -4,7 +4,7 @@ import * as w from './warnings.js';
 
 const object_is = Object.is;
 
-if (DEV) {
+export function init_array_prototype_warnings() {
 	const array_prototype = Array.prototype;
 
 	const original_index_of = array_prototype.indexOf;
