@@ -57,3 +57,34 @@ export function wrap_snippet(fn) {
 		}
 	);
 }
+
+/**
+ * Remove this once slots are gone
+ * @param {any} snippet_fn
+ * @param {Record<string, any>} $$props
+ * @param {string} name
+ * @param {Element} node
+ * @param {any} slot_props
+ */
+export function render_snippet_or_slot(snippet_fn, $$props, name, node, slot_props) {
+	if ($$props.$$slots) {
+		const slot = $$props.$$slots[name === 'children' ? 'default' : name];
+		if (typeof slot === 'function') {
+			let props = undefined;
+			if (slot_props) {
+				props = new Proxy(
+					{},
+					{
+						get(_, key) {
+							return slot_props()?.[key];
+						}
+					}
+				);
+			}
+			slot(node, props);
+			return;
+		}
+	}
+
+	snippet(snippet_fn, node, slot_props);
+}

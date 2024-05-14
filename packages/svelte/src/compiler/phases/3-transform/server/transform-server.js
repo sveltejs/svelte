@@ -1303,6 +1303,10 @@ const template_visitors = {
 
 		const callee = unwrap_optional(node.expression).callee;
 		const raw_args = unwrap_optional(node.expression).arguments;
+		const needs_backwards_compat =
+			callee.type === 'Identifier' &&
+			raw_args.length < 2 &&
+			context.state.scope.get(callee.name)?.kind === 'prop';
 
 		const expression = /** @type {import('estree').Expression} */ (context.visit(callee));
 		const snippet_function = state.options.dev
@@ -1313,17 +1317,34 @@ const template_visitors = {
 			return /** @type {import('estree').Expression} */ (context.visit(arg));
 		});
 
-		state.template.push(
-			t_statement(
-				b.stmt(
-					(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
-						snippet_function,
-						b.id('$$payload'),
-						...snippet_args
+		if (needs_backwards_compat) {
+			state.template.push(
+				t_statement(
+					b.stmt(
+						b.call(
+							'$.render_snippet_or_slot',
+							snippet_function,
+							b.id('$$props'),
+							b.literal(callee.name),
+							b.id('$$payload'),
+							...snippet_args
+						)
 					)
 				)
-			)
-		);
+			);
+		} else {
+			state.template.push(
+				t_statement(
+					b.stmt(
+						(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
+							snippet_function,
+							b.id('$$payload'),
+							...snippet_args
+						)
+					)
+				)
+			);
+		}
 
 		state.template.push(block_close);
 	},

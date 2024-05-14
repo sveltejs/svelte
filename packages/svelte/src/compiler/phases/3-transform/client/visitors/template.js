@@ -1786,6 +1786,10 @@ export const template_visitors = {
 		const raw_args = unwrap_optional(node.expression).arguments;
 		const is_reactive =
 			callee.type !== 'Identifier' || context.state.scope.get(callee.name)?.kind !== 'normal';
+		const needs_backwards_compat =
+			callee.type === 'Identifier' &&
+			raw_args.length < 2 &&
+			context.state.scope.get(callee.name)?.kind === 'prop';
 
 		/** @type {import('estree').Expression[]} */
 		const args = [context.state.node];
@@ -1798,7 +1802,19 @@ export const template_visitors = {
 			snippet_function = b.call('$.validate_snippet', snippet_function);
 		}
 
-		if (is_reactive) {
+		if (needs_backwards_compat) {
+			context.state.init.push(
+				b.stmt(
+					b.call(
+						'$.render_snippet_or_slot',
+						b.thunk(snippet_function),
+						b.id('$$props'),
+						b.literal(callee.name),
+						...args
+					)
+				)
+			);
+		} else if (is_reactive) {
 			context.state.init.push(b.stmt(b.call('$.snippet', b.thunk(snippet_function), ...args)));
 		} else {
 			context.state.init.push(

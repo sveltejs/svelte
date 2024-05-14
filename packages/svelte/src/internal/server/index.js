@@ -564,6 +564,26 @@ export function sanitize_slots(props) {
 }
 
 /**
+ * Remove this once slots are gone
+ * @param {any} snippet_fn
+ * @param {Record<string, any>} $$props
+ * @param {string} name
+ * @param {Payload} payload
+ * @param {any} slot_props
+ */
+export function render_snippet_or_slot(snippet_fn, $$props, name, payload, slot_props) {
+	if ($$props.$$slots) {
+		const slot = $$props.$$slots[name === 'children' ? 'default' : name];
+		if (typeof slot === 'function') {
+			slot(payload, slot_props);
+			return;
+		}
+	}
+
+	snippet_fn?.(payload, slot_props);
+}
+
+/**
  * Legacy mode: If the prop has a fallback and is bound in the
  * parent component, propagate the fallback value upwards.
  * @param {Record<string, unknown>} props_parent
