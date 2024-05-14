@@ -46,6 +46,9 @@
   "pnpm": {
     "overrides": {
       "jimp>xml2js": "^0.6.0"
+    },
+    "patchedDependencies": {
+      "@sveltejs/site-kit@6.0.0-next.59": "patches/@sveltejs__site-kit@6.0.0-next.59.patch"
     }
   }
 }

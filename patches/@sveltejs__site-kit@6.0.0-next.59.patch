@@ -1,0 +1,31 @@
+diff --git a/dist/markdown/renderer.js b/dist/markdown/renderer.js
+index ae5fd2d042ac8e9000e2d746b8f135836ae45ed0..bf5d11c747c28471d4c87a923fbcca253792b777 100644
+--- a/dist/markdown/renderer.js
++++ b/dist/markdown/renderer.js
+@@ -966,7 +966,6 @@ function syntax_highlight({ source, filename, language, highlighter, twoslashBan
+ 			const twoslash = twoslash_module.runTwoSlash(source, language, {
+ 				defaultCompilerOptions: {
+ 					allowJs: true,
+-					checkJs: true,
+ 					target: ts.ScriptTarget.ES2022,
+ 					types: ['svelte', '@sveltejs/kit']
+ 				}
+@@ -975,17 +974,13 @@ function syntax_highlight({ source, filename, language, highlighter, twoslashBan
+ 			html = twoslash_module.renderCodeToHTML(
+ 				twoslash.code,
+ 				'ts',
+-				{ twoslash: true },
++				{},
+ 				// @ts-ignore Why shiki-twoslash requires a theme name?
+ 				{},
+ 				highlighter,
+ 				twoslash
+ 			);
+ 		} catch (e) {
+-			console.error(`Error compiling snippet in ${filename}`);
+-			// @ts-ignore
+-			console.error(e.code);
+-			throw e;
+ 		}
+ 
+ 		// we need to be able to inject the LSP attributes as HTML, not text, so we

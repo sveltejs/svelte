@@ -148,6 +148,7 @@ export async function get_sections(markdown) {
 		const match = line.match(/^(#{2,4})\s(.*)/);
 		if (match) {
 			const level = match[1].length - 2;
+			if (!currentNodes[level]) continue;
 			const text = await titled(match[2]);
 			const slug = normalizeSlugify(text);
 

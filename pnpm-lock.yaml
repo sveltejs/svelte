@@ -7,6 +7,11 @@ settings:
 overrides:
   jimp>xml2js: ^0.6.0
 
+patchedDependencies:
+  '@sveltejs/site-kit@6.0.0-next.59':
+    hash: ijtr6ubwlzempa4zyguqpmmcnq
+    path: patches/@sveltejs__site-kit@6.0.0-next.59.patch
+
 importers:
 
   .:
@@ -267,7 +272,7 @@ importers:
         version: 2.5.2(@sveltejs/vite-plugin-svelte@3.1.0)(svelte@packages+svelte)(vite@5.0.13)
       '@sveltejs/site-kit':
         specifier: 6.0.0-next.59
-        version: 6.0.0-next.59(@sveltejs/kit@2.5.2)(svelte@packages+svelte)
+        version: 6.0.0-next.59(patch_hash=ijtr6ubwlzempa4zyguqpmmcnq)(@sveltejs/kit@2.5.2)(svelte@packages+svelte)
       '@sveltejs/vite-plugin-svelte':
         specifier: ^3.1.0
         version: 3.1.0(svelte@packages+svelte)(vite@5.0.13)
@@ -340,7 +345,7 @@ importers:
         version: 2.4.3(@sveltejs/vite-plugin-svelte@3.1.0)(svelte@4.2.9)(vite@5.0.13)
       '@sveltejs/site-kit':
         specifier: 6.0.0-next.59
-        version: 6.0.0-next.59(@sveltejs/kit@2.4.3)(svelte@4.2.9)
+        version: 6.0.0-next.59(patch_hash=ijtr6ubwlzempa4zyguqpmmcnq)(@sveltejs/kit@2.4.3)(svelte@4.2.9)
       '@sveltejs/vite-plugin-svelte':
         specifier: ^3.1.0
         version: 3.1.0(svelte@4.2.9)(vite@5.0.13)
@@ -711,6 +716,20 @@ packages:
     dependencies:
       '@codemirror/language': 6.10.1
       '@codemirror/state': 6.4.0
+      '@codemirror/view': 6.26.3
+      '@lezer/common': 1.2.1
+    dev: false
+
+  /@codemirror/autocomplete@6.12.0(@codemirror/language@6.10.1)(@codemirror/state@6.4.1)(@codemirror/view@6.26.3)(@lezer/common@1.2.1):
+    resolution: {integrity: sha512-r4IjdYFthwbCQyvqnSlx0WBHRHi8nBvU+WjJxFUij81qsBfhNudf/XKKmmC2j3m0LaOYUQTf3qiEK1J8lO1sdg==}
+    peerDependencies:
+      '@codemirror/language': ^6.0.0
+      '@codemirror/state': ^6.0.0
+      '@codemirror/view': ^6.0.0
+      '@lezer/common': ^1.0.0
+    dependencies:
+      '@codemirror/language': 6.10.1
+      '@codemirror/state': 6.4.1
       '@codemirror/view': 6.26.3
       '@lezer/common': 1.2.1
     dev: false
@@ -2724,9 +2743,9 @@ packages:
     peerDependencies:
       svelte: ^3.54.0 || ^4.0.0-next.0 || ^4.0.0
     dependencies:
-      '@codemirror/autocomplete': 6.12.0(@codemirror/language@6.10.1)(@codemirror/state@6.4.0)(@codemirror/view@6.24.0)(@lezer/common@1.2.1)
+      '@codemirror/autocomplete': 6.12.0(@codemirror/language@6.10.1)(@codemirror/state@6.4.1)(@codemirror/view@6.26.3)(@lezer/common@1.2.1)
       '@codemirror/commands': 6.3.3
-      '@codemirror/lang-css': 6.2.1(@codemirror/view@6.24.0)
+      '@codemirror/lang-css': 6.2.1(@codemirror/view@6.26.3)
       '@codemirror/lang-javascript': 6.2.1
       '@codemirror/lang-json': 6.0.1
       '@codemirror/lang-markdown': 6.2.4
@@ -2771,7 +2790,7 @@ packages:
       svelte-local-storage-store: 0.4.0(svelte@4.2.9)
     dev: false
 
-  /@sveltejs/site-kit@6.0.0-next.59(@sveltejs/kit@2.4.3)(svelte@4.2.9):
+  /@sveltejs/site-kit@6.0.0-next.59(patch_hash=ijtr6ubwlzempa4zyguqpmmcnq)(@sveltejs/kit@2.4.3)(svelte@4.2.9):
     resolution: {integrity: sha512-nAUCuunhN0DmurQBxbsauqvdvv4mL0F/Aluxq0hFf6gB3iSn9WdaUZdPMXoujy+8cy+m6UvKuyhkgApZhmOLvw==}
     peerDependencies:
       '@sveltejs/kit': ^1.20.0
@@ -2782,8 +2801,9 @@ packages:
       svelte: 4.2.9
       svelte-local-storage-store: 0.6.4(svelte@4.2.9)
     dev: true
+    patched: true
 
-  /@sveltejs/site-kit@6.0.0-next.59(@sveltejs/kit@2.5.2)(svelte@packages+svelte):
+  /@sveltejs/site-kit@6.0.0-next.59(patch_hash=ijtr6ubwlzempa4zyguqpmmcnq)(@sveltejs/kit@2.5.2)(svelte@packages+svelte):
     resolution: {integrity: sha512-nAUCuunhN0DmurQBxbsauqvdvv4mL0F/Aluxq0hFf6gB3iSn9WdaUZdPMXoujy+8cy+m6UvKuyhkgApZhmOLvw==}
     peerDependencies:
       '@sveltejs/kit': ^1.20.0
@@ -2794,6 +2814,7 @@ packages:
       svelte: link:packages/svelte
       svelte-local-storage-store: 0.6.4(svelte@packages+svelte)
     dev: true
+    patched: true
 
   /@sveltejs/vite-plugin-svelte-inspector@2.0.0(@sveltejs/vite-plugin-svelte@3.1.0)(svelte@4.2.9)(vite@5.0.13):
     resolution: {integrity: sha512-gjr9ZFg1BSlIpfZ4PRewigrvYmHWbDrq2uvvPB1AmTWKuM+dI1JXQSUu2pIrYLb/QncyiIGkFDFKTwJ0XqQZZg==}
