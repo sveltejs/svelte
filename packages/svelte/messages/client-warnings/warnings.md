@@ -22,4 +22,4 @@
 
 ## state_proxy_equality_mismatch
 
-> Detected an equality check between a $state proxy and a non-$state-proxy object for %method%. This equality check will always fail because the proxy has a different object identity. To ensure both operands are of the same kind for accurate results, consider using `$state.is(a, b)`.
+> Reactive `$state(...)` proxies and the values they proxy have different identities. Because of this, comparisons with `%operator%` will produce unexpected results. Consider using `$state.is(a, b)` instead
