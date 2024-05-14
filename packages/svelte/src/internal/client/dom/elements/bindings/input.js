@@ -96,10 +96,10 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 		if (is_checkbox) {
 			value = value || [];
 			// @ts-ignore
-			input.checked = raw(value).includes(raw(input.__value));
+			input.checked = value.includes(input.__value);
 		} else {
 			// @ts-ignore
-			input.checked = raw(input.__value) === raw(value);
+			input.checked = input.__value === value;
 		}
 	});
 

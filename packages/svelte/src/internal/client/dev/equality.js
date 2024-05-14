@@ -10,7 +10,7 @@ export function init_array_prototype_warnings() {
 	array_prototype.indexOf = function (search_element, from_index) {
 		const index = original_index_of.call(this, search_element, from_index);
 		if (index === -1) {
-			if (original_index_of.call(raw(this), raw(search_element), from_index) !== -1) {
+			if (original_index_of.call(raw(this), search_element, from_index) !== -1) {
 				w.state_proxy_equality_mismatch('Array.indexOf');
 			}
 		}
@@ -22,7 +22,7 @@ export function init_array_prototype_warnings() {
 	array_prototype.lastIndexOf = function (search_element, from_index) {
 		const index = original_last_index_of.call(this, search_element, from_index);
 		if (index === -1) {
-			if (original_last_index_of.call(raw(this), raw(search_element), from_index) !== -1) {
+			if (original_last_index_of.call(raw(this), search_element, from_index) !== -1) {
 				w.state_proxy_equality_mismatch('Array.lastIndexOf');
 			}
 		}
@@ -34,7 +34,7 @@ export function init_array_prototype_warnings() {
 	array_prototype.includes = function (search_element, from_index) {
 		const has = original_includes.call(this, search_element, from_index);
 		if (!has) {
-			if (original_includes.call(raw(this), raw(search_element), from_index)) {
+			if (original_includes.call(raw(this), search_element, from_index)) {
 				w.state_proxy_equality_mismatch('Array.includes');
 			}
 		}
