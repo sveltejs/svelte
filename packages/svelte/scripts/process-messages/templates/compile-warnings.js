@@ -42,6 +42,8 @@ function w(node, code, message) {
 	});
 }
 
+export const codes = CODES;
+
 /**
  * MESSAGE
  * @param {null | NodeLike} node

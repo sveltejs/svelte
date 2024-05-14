@@ -61,7 +61,7 @@ function transform(name, dest) {
 
 	const comments = [];
 
-	const ast = acorn.parse(source, {
+	let ast = acorn.parse(source, {
 		ecmaVersion: 'latest',
 		sourceType: 'module',
 		onComment: (block, value, start, end) => {
@@ -80,7 +80,7 @@ function transform(name, dest) {
 		}
 	});
 
-	walk(ast, null, {
+	ast = walk(ast, null, {
 		_(node, { next }) {
 			let comment;
 
@@ -99,6 +99,18 @@ function transform(name, dest) {
 					// @ts-expect-error
 					node.trailingComments = [comments.shift()];
 				}
+			}
+		},
+		// @ts-expect-error
+		Identifier(node, context) {
+			if (node.name === 'CODES') {
+				return {
+					type: 'ArrayExpression',
+					elements: Object.keys(messages[name]).map((code) => ({
+						type: 'Literal',
+						value: code
+					}))
+				};
 			}
 		}
 	});
