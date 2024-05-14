@@ -2,6 +2,8 @@ import { DEV } from 'esm-env';
 import { STATE_SYMBOL } from '../constants';
 import * as w from '../warnings.js';
 
+const object_is = Object.is;
+
 if (DEV) {
 	const array_prototype = Array.prototype;
 
@@ -72,25 +74,21 @@ if (DEV) {
 /**
  * @param {any} a
  * @param {any} b
+ * @returns {boolean}
  */
-function check_dev_equals(a, b) {
+export function state_is(a, b) {
 	if (a != null && typeof a === 'object' && STATE_SYMBOL in a) {
 		const o = a[STATE_SYMBOL];
 		if (o != null) {
-			if (o.p === b) {
-				// fire warning
-				console.warn('TODO: $state referenced non-state');
-			}
+			return object_is(o.p, b);
 		}
 	} else if (b != null && typeof b === 'object' && STATE_SYMBOL in b) {
 		const o = b[STATE_SYMBOL];
 		if (o != null) {
-			if (o.p === a) {
-				// fire warning
-				console.warn('TODO: $state referenced non-state');
-			}
+			return object_is(o.p, a);
 		}
 	}
+	return object_is(a, b);
 }
 
 /**
@@ -100,7 +98,10 @@ function check_dev_equals(a, b) {
  */
 export function strict_equals(a, b) {
 	if (DEV) {
-		check_dev_equals(a, b);
+		if (state_is(a, b)) {
+			// fire warning
+			console.warn('TODO: $state referenced non-state');
+		}
 	}
 	return a === b;
 }
