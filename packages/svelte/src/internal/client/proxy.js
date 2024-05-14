@@ -18,7 +18,7 @@ import {
 } from './utils.js';
 import { check_ownership, widen_ownership } from './dev/ownership.js';
 import { mutable_source, source, set } from './reactivity/sources.js';
-import { RAW_SYMBOL, STATE_SYMBOL } from './constants.js';
+import { STATE_SYMBOL } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 
@@ -199,9 +199,6 @@ const state_proxy_handler = {
 		if (prop === STATE_SYMBOL) {
 			return Reflect.get(target, STATE_SYMBOL);
 		}
-		if (prop === RAW_SYMBOL) {
-			return target;
-		}
 
 		/** @type {import('#client').ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
@@ -342,14 +339,22 @@ if (DEV) {
 }
 
 /**
- * @param {any} x
+ * @param {any} value
  */
-export function raw(x) {
-	if (x !== null && typeof x === 'object' && STATE_SYMBOL in x) {
-		var raw_value = x[RAW_SYMBOL];
-		if (raw_value !== undefined) {
-			return raw_value;
+export function get_proxied_value(value) {
+	if (value !== null && typeof value === 'object' && STATE_SYMBOL in value) {
+		var metadata = value[STATE_SYMBOL];
+		if (metadata) {
+			return metadata.p;
 		}
 	}
-	return x;
+	return value;
+}
+
+/**
+ * @param {any} a
+ * @param {any} b
+ */
+export function is(a, b) {
+	return Object.is(get_proxied_value(a), get_proxied_value(b));
 }

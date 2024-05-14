@@ -22,4 +22,4 @@
 
 ## state_proxy_equality_mismatch
 
-> Detected an equality check between a $state proxy and a non-$state-proxy object for %method%. This equality check will always fail because the proxy has a different object identity. Ensure both operands are of the same kind for accurate results.
+> Detected an equality check between a $state proxy and a non-$state-proxy object for %method%. This equality check will always fail because the proxy has a different object identity. To ensure both operands are of the same kind for accurate results, consider using `$state.is(a, b)`.

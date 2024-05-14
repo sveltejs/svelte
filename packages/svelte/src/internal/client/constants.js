@@ -17,4 +17,3 @@ export const EFFECT_TRANSPARENT = 1 << 14;
 export const LEGACY_DERIVED_PROP = 1 << 15;
 
 export const STATE_SYMBOL = Symbol('$state');
-export const RAW_SYMBOL = Symbol();

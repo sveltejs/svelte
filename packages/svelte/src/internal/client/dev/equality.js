@@ -1,6 +1,6 @@
 import { DEV } from 'esm-env';
 import * as w from '../warnings.js';
-import { raw } from '../proxy';
+import { get_proxied_value } from '../proxy';
 
 export function init_array_prototype_warnings() {
 	const array_prototype = Array.prototype;
@@ -10,7 +10,13 @@ export function init_array_prototype_warnings() {
 	array_prototype.indexOf = function (search_element, from_index) {
 		const index = original_index_of.call(this, search_element, from_index);
 		if (index === -1) {
-			if (original_index_of.call(raw(this), search_element, from_index) !== -1) {
+			if (
+				original_index_of.call(
+					get_proxied_value(this),
+					get_proxied_value(search_element),
+					from_index
+				) !== -1
+			) {
 				w.state_proxy_equality_mismatch('Array.indexOf');
 			}
 		}
@@ -22,7 +28,13 @@ export function init_array_prototype_warnings() {
 	array_prototype.lastIndexOf = function (search_element, from_index) {
 		const index = original_last_index_of.call(this, search_element, from_index);
 		if (index === -1) {
-			if (original_last_index_of.call(raw(this), search_element, from_index) !== -1) {
+			if (
+				original_last_index_of.call(
+					get_proxied_value(this),
+					get_proxied_value(search_element),
+					from_index
+				) !== -1
+			) {
 				w.state_proxy_equality_mismatch('Array.lastIndexOf');
 			}
 		}
@@ -34,7 +46,13 @@ export function init_array_prototype_warnings() {
 	array_prototype.includes = function (search_element, from_index) {
 		const has = original_includes.call(this, search_element, from_index);
 		if (!has) {
-			if (original_includes.call(raw(this), search_element, from_index)) {
+			if (
+				original_includes.call(
+					get_proxied_value(this),
+					get_proxied_value(search_element),
+					from_index
+				)
+			) {
 				w.state_proxy_equality_mismatch('Array.includes');
 			}
 		}
@@ -49,7 +67,7 @@ export function init_array_prototype_warnings() {
  */
 export function strict_equals(a, b) {
 	if (DEV) {
-		if (a !== b && raw(a) === raw(b)) {
+		if (a !== b && get_proxied_value(a) === get_proxied_value(b)) {
 			w.state_proxy_equality_mismatch('=== operator');
 		}
 	}
@@ -63,7 +81,7 @@ export function strict_equals(a, b) {
  */
 export function equals(a, b) {
 	if (DEV) {
-		if (a != b && raw(a) == raw(b)) {
+		if (a != b && get_proxied_value(a) == get_proxied_value(b)) {
 			w.state_proxy_equality_mismatch('== operator');
 		}
 	}
