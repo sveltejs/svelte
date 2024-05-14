@@ -83,7 +83,7 @@ declare namespace $state {
 	 * https://svelte-5-preview.vercel.app/docs/runes#$state.is
 	 *
 	 */
-	export function is(a: unknown, b: unknown): boolean;
+	export function is(a: any, b: any): boolean;
 
 	// prevent intellisense from being unhelpful
 	/** @deprecated */
