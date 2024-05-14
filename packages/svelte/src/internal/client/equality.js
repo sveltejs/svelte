@@ -77,7 +77,7 @@ export function state_is(a, b) {
 	if (a != null && typeof a === 'object' && STATE_SYMBOL in a) {
 		const o = a[STATE_SYMBOL];
 		if (o != null && object_is(o.p, b)) {
-			return true
+			return true;
 		}
 	}
 	if (b != null && typeof b === 'object' && STATE_SYMBOL in b) {

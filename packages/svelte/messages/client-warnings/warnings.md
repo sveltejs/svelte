@@ -19,3 +19,7 @@
 > Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead
 
 > %component% mutated a value owned by %owner%. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead
+
+## state_proxy_equality_mismatch
+
+> Detected an equality check between a $state proxy and a non-$state-proxy object for %method%. This equality check will always fail because the proxy has a different object identity. Ensure both operands are of the same kind for accurate results.
