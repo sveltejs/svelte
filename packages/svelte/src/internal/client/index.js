@@ -161,4 +161,4 @@ export {
 	validate_store,
 	validate_void_dynamic_element
 } from '../shared/validate.js';
-export { strict_equals, equals } from './equality.js';
+export { strict_equals, equals } from './dev/equality.js';

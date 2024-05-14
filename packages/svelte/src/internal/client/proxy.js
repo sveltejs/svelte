@@ -18,7 +18,7 @@ import {
 } from './utils.js';
 import { check_ownership, widen_ownership } from './dev/ownership.js';
 import { mutable_source, source, set } from './reactivity/sources.js';
-import { STATE_SYMBOL } from './constants.js';
+import { RAW_SYMBOL, STATE_SYMBOL } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 
@@ -199,6 +199,9 @@ const state_proxy_handler = {
 		if (prop === STATE_SYMBOL) {
 			return Reflect.get(target, STATE_SYMBOL);
 		}
+		if (prop === RAW_SYMBOL) {
+			return target;
+		}
 
 		/** @type {import('#client').ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
@@ -336,4 +339,17 @@ if (DEV) {
 	state_proxy_handler.setPrototypeOf = () => {
 		e.state_prototype_fixed();
 	};
+}
+
+/**
+ * @param {any} x
+ */
+export function raw(x) {
+	if (x !== null && typeof x === 'object' && STATE_SYMBOL in x) {
+		var raw_value = x[RAW_SYMBOL];
+		if (raw_value !== undefined) {
+			return raw_value;
+		}
+	}
+	return x;
 }

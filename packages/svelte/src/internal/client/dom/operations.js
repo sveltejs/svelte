@@ -1,7 +1,7 @@
 import { hydrate_anchor, hydrate_nodes, hydrating } from './hydration.js';
 import { get_descriptor } from '../utils.js';
 import { DEV } from 'esm-env';
-import { init_array_prototype_warnings } from '../equality.js';
+import { init_array_prototype_warnings } from '../dev/equality.js';
 
 // We cache the Node and Element prototype methods, so that we can avoid doing
 // expensive prototype chain lookups.
