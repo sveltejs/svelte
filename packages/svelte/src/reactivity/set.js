@@ -10,6 +10,7 @@ var inited = false;
 
 /**
  * @template T
+ * @extends {Set<T>}
  */
 export class ReactiveSet extends Set {
 	/** @type {Map<T, import('#client').Source<boolean>>} */
@@ -31,7 +32,6 @@ export class ReactiveSet extends Set {
 
 			for (var element of value) {
 				sources.set(element, source(true));
-				super.add(element);
 			}
 
 			this.#size.v = sources.size;
@@ -47,25 +47,27 @@ export class ReactiveSet extends Set {
 		var proto = ReactiveSet.prototype;
 		var set_proto = Set.prototype;
 
-		/** @type {string} */
-		var method;
-
-		for (method of read_methods) {
+		for (const method of read_methods) {
 			// @ts-ignore
 			proto[method] = function (...v) {
 				get(this.#version);
+				// We don't populate the underlying Set, so we need to create a clone using
+				// our internal values and then pass that to the method.
+				var clone = new Set(this.values());
 				// @ts-ignore
-				return set_proto[method].apply(this, v);
+				return set_proto[method].apply(clone, v);
 			};
 		}
 
-		for (method of set_like_methods) {
+		for (const method of set_like_methods) {
 			// @ts-ignore
 			proto[method] = function (...v) {
 				get(this.#version);
-
+				// We don't populate the underlying Set, so we need to create a clone using
+				// our internal values and then pass that to the method.
+				var clone = new Set(this.values());
 				// @ts-ignore
-				var set = /** @type {Set<T>} */ (set_proto[method].apply(this, v));
+				var set = /** @type {Set<T>} */ (set_proto[method].apply(clone, v));
 				return new ReactiveSet(set);
 			};
 		}
@@ -100,7 +102,7 @@ export class ReactiveSet extends Set {
 			this.#increment_version();
 		}
 
-		return super.add(value);
+		return this;
 	}
 
 	/** @param {T} value */
@@ -109,13 +111,14 @@ export class ReactiveSet extends Set {
 		var s = sources.get(value);
 
 		if (s !== undefined) {
-			sources.delete(value);
+			var removed = sources.delete(value);
 			set(this.#size, sources.size);
 			set(s, false);
 			this.#increment_version();
+			return removed;
 		}
 
-		return super.delete(value);
+		return false;
 	}
 
 	clear() {
@@ -130,12 +133,11 @@ export class ReactiveSet extends Set {
 		}
 
 		sources.clear();
-		super.clear();
 	}
 
 	keys() {
 		get(this.#version);
-		return this.#sources.keys();
+		return map(this.#sources.keys(), (key) => key, 'Set Iterator');
 	}
 
 	values() {
@@ -143,7 +145,7 @@ export class ReactiveSet extends Set {
 	}
 
 	entries() {
-		return map(this.keys(), (key) => /** @type {[T, T]} */ ([key, key]));
+		return map(this.keys(), (key) => /** @type {[T, T]} */ ([key, key]), 'Set Iterator');
 	}
 
 	[Symbol.iterator]() {

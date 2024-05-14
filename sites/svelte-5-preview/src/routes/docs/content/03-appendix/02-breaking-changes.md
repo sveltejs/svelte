@@ -117,6 +117,22 @@ Svelte now use Mutation Observers instead of IFrames to measure dimensions for `
 
 Content inside component tags becomes a [snippet prop](/docs/snippets) called `children`. You cannot have a separate prop by that name.
 
+## Breaking changes in runes mode
+
+Some breaking changes only apply once your component is in runes mode.
+
+### Bindings to component exports are not allowed
+
+Exports from runes mode components cannot be bound to directly. For example, having `export const foo = ...` in component `A` and then doing `<A bind:foo />` causes an error. Use `bind:this` instead — `<A bind:this={a} />` — and access the export as `a.foo`. This change makes things easier to reason about, as it enforces a clear separation between props and exports.
+
+### Bindings need to be explicitly defined using `$bindable()`
+
+In Svelte 4 syntax, every property (declared via `export let`) is bindable, meaning you can `bind:` to it. In runes mode, properties are not bindable by default: you need to denote bindable props with the [`$bindable`](/docs/runes#$bindable) rune.
+
+### `accessors` option is ignored
+
+Setting the `accessors` option to `true` makes properties of a component directly accessible on the component instance. In runes mode, properties are never accessible on the component instance. You can use component exports instead if you need to expose them.
+
 ## Other breaking changes
 
 ### Stricter `@const` assignment validation
@@ -148,7 +164,7 @@ Various error and warning codes have been renamed slightly.
 
 ### Reduced number of namespaces
 
-The number of valid namespaces you can pass to the compiler option `namespace` has been reduced to `html` (the default), `svg` and `foreign`.
+The number of valid namespaces you can pass to the compiler option `namespace` has been reduced to `html` (the default), `mathml`, `svg` and `foreign`.
 
 ### beforeUpdate/afterUpdate changes
 
@@ -183,3 +199,7 @@ In Svelte 4, `null` and `undefined` were printed as the corresponding string. In
 ### Bindings now react to form resets
 
 Previously, bindings did not take into account `reset` event of forms, and therefore values could get out of sync with the DOM. Svelte 5 fixes this by placing a `reset` listener on the document and invoking bindings where necessary.
+
+### `walk` not longer exported
+
+`svelte/compiler` reexported `walk` from `estree-walker` for convenience. This is no longer true in Svelte 5, import it directly from that package instead in case you need it.

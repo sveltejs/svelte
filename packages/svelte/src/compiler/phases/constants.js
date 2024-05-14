@@ -31,6 +31,7 @@ export const PassiveEvents = ['wheel', 'touchstart', 'touchmove', 'touchend', 't
 export const Runes = /** @type {const} */ ([
 	'$state',
 	'$state.frozen',
+	'$state.snapshot',
 	'$props',
 	'$bindable',
 	'$derived',
@@ -40,7 +41,8 @@ export const Runes = /** @type {const} */ ([
 	'$effect.active',
 	'$effect.root',
 	'$inspect',
-	'$inspect().with'
+	'$inspect().with',
+	'$host'
 ]);
 
 /**
@@ -145,6 +147,39 @@ export const SVGElements = [
 	'use',
 	'view',
 	'vkern'
+];
+
+export const MathMLElements = [
+	'annotation',
+	'annotation-xml',
+	'maction',
+	'math',
+	'merror',
+	'mfrac',
+	'mi',
+	'mmultiscripts',
+	'mn',
+	'mo',
+	'mover',
+	'mpadded',
+	'mphantom',
+	'mprescripts',
+	'mroot',
+	'mrow',
+	'ms',
+	'mspace',
+	'msqrt',
+	'mstyle',
+	'msub',
+	'msubsup',
+	'msup',
+	'mtable',
+	'mtd',
+	'mtext',
+	'mtr',
+	'munder',
+	'munderover',
+	'semantics'
 ];
 
 export const EventModifiers = [

@@ -5,14 +5,15 @@ export default test({
 		<button type="button">Set a</button>
 		<button type="button">Set b</button>
 	`,
-	async test({ assert, target, window, component }) {
+
+	async test({ assert, target, window, logs }) {
 		const [btn1, btn2] = target.querySelectorAll('button');
 		const click = new window.MouseEvent('click', { bubbles: true });
 
 		await btn1.dispatchEvent(click);
-		assert.deepEqual(component.log, ['setKey(a, value-a)']);
+		assert.deepEqual(logs, ['setKey(a, value-a)']);
 
 		await btn2.dispatchEvent(click);
-		assert.deepEqual(component.log, ['setKey(a, value-a)', 'setKey(b, value-b)']);
+		assert.deepEqual(logs, ['setKey(a, value-a)', 'setKey(b, value-b)']);
 	}
 });

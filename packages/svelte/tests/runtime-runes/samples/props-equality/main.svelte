@@ -11,7 +11,7 @@
 {/each}
 
 {#each items as item (item.name)}
-	<Item {item} {items} onclick={() => {console.log('hello'); item.name = item.name + '+'}} />
+	<Item {item} {items} onclick={() => item.name = item.name + '+'} />
 {/each}
 
 {#each items as item}

@@ -11,8 +11,7 @@
 				"type": "Comment",
 				"start": 0,
 				"end": 27,
-				"data": "should not error out",
-				"ignores": []
+				"data": "should not error out"
 			},
 			{
 				"type": "Text",
@@ -133,6 +132,23 @@
 					"value": "should not error out"
 				}
 			]
-		}
+		},
+		"attributes": [
+			{
+				"type": "Attribute",
+				"start": 36,
+				"end": 45,
+				"name": "lang",
+				"value": [
+					{
+						"start": 42,
+						"end": 44,
+						"type": "Text",
+						"raw": "ts",
+						"data": "ts"
+					}
+				]
+			}
+		]
 	}
 }

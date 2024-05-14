@@ -198,6 +198,14 @@ export interface LegacyWindow extends BaseElement {
 	type: 'Window';
 }
 
+export interface LegacyComment extends BaseNode {
+	type: 'Comment';
+	/** the contents of the comment */
+	data: string;
+	/** any svelte-ignore directives — <!-- svelte-ignore a b c --> would result in ['a', 'b', 'c'] */
+	ignores: string[];
+}
+
 type LegacyDirective =
 	| LegacyAnimation
 	| LegacyBinding
@@ -213,6 +221,7 @@ export type LegacyAttributeLike = LegacyAttribute | LegacySpread | LegacyDirecti
 export type LegacyElementLike =
 	| LegacyBody
 	| LegacyCatchBlock
+	| LegacyComment
 	| LegacyDocument
 	| LegacyElement
 	| LegacyHead

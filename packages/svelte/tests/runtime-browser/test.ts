@@ -14,7 +14,6 @@ let browser: import('@playwright/test').Browser;
 
 beforeAll(async () => {
 	browser = await chromium.launch();
-	console.log('[runtime-browser] Launched browser');
 }, 20000);
 
 afterAll(async () => {
@@ -95,7 +94,10 @@ async function run_test(
 
 						write(`${test_dir}/_output/client/${path.basename(args.path)}.js`, compiled.js.code);
 
-						compiled.warnings.forEach((warning) => warnings.push(warning));
+						compiled.warnings.forEach((warning) => {
+							if (warning.code === 'options_deprecated_accessors') return;
+							warnings.push(warning);
+						});
 
 						if (compiled.css !== null) {
 							compiled.js.code += `document.head.innerHTML += \`<style>${compiled.css.code}</style>\``;
@@ -180,6 +182,7 @@ async function run_test(
 			);
 		} else if (warnings.length) {
 			/* eslint-disable no-unsafe-finally */
+			console.warn(warnings);
 			throw new Error('Received unexpected warnings');
 		}
 	}
@@ -194,10 +197,10 @@ async function run_test(
 		});
 
 		if (build_result_ssr) {
-			const html = await page.evaluate(
+			const result: any = await page.evaluate(
 				build_result_ssr.outputFiles[0].text + '; test_ssr.default()'
 			);
-			await page.setContent('<main>' + html + '</main>');
+			await page.setContent('<head>' + result.head + '</head><main>' + result.html + '</main>');
 		} else {
 			await page.setContent('<main></main>');
 		}

@@ -2,7 +2,7 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'unexpected-eof',
+		code: 'unexpected_eof',
 		message: 'Unexpected end of input',
 		position: [32, 32]
 	}

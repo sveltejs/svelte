@@ -4,6 +4,7 @@ import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
 import { get_prop_source, is_state_source, should_proxy_or_freeze } from '../utils.js';
 import { extract_paths } from '../../../../utils/ast.js';
+import { regex_invalid_identifier_chars } from '../../../patterns.js';
 
 /** @type {import('../types.js').ComponentVisitors} */
 export const javascript_visitors_runes = {
@@ -20,9 +21,13 @@ export const javascript_visitors_runes = {
 		for (const definition of node.body) {
 			if (
 				definition.type === 'PropertyDefinition' &&
-				(definition.key.type === 'Identifier' || definition.key.type === 'PrivateIdentifier')
+				(definition.key.type === 'Identifier' ||
+					definition.key.type === 'PrivateIdentifier' ||
+					definition.key.type === 'Literal')
 			) {
-				const { type, name } = definition.key;
+				const type = definition.key.type;
+				const name = get_name(definition.key);
+				if (!name) continue;
 
 				const is_private = type === 'PrivateIdentifier';
 				if (is_private) private_ids.push(name);
@@ -79,9 +84,12 @@ export const javascript_visitors_runes = {
 		for (const definition of node.body) {
 			if (
 				definition.type === 'PropertyDefinition' &&
-				(definition.key.type === 'Identifier' || definition.key.type === 'PrivateIdentifier')
+				(definition.key.type === 'Identifier' ||
+					definition.key.type === 'PrivateIdentifier' ||
+					definition.key.type === 'Literal')
 			) {
-				const name = definition.key.name;
+				const name = get_name(definition.key);
+				if (!name) continue;
 
 				const is_private = definition.key.type === 'PrivateIdentifier';
 				const field = (is_private ? private_state : public_state).get(name);
@@ -160,12 +168,32 @@ export const javascript_visitors_runes = {
 							);
 						}
 					}
-
 					continue;
 				}
 			}
 
 			body.push(/** @type {import('estree').MethodDefinition} **/ (visit(definition, child_state)));
+		}
+
+		if (state.options.dev && public_state.size > 0) {
+			// add an `[$.ADD_OWNER]` method so that a class with state fields can widen ownership
+			body.push(
+				b.method(
+					'method',
+					b.id('$.ADD_OWNER'),
+					[b.id('owner')],
+					Array.from(public_state.keys()).map((name) =>
+						b.stmt(
+							b.call(
+								'$.add_owner',
+								b.call('$.get', b.member(b.this, b.private_id(name))),
+								b.id('owner')
+							)
+						)
+					),
+					true
+				)
+			);
 		}
 
 		return { ...node, body };
@@ -176,7 +204,13 @@ export const javascript_visitors_runes = {
 		for (const declarator of node.declarations) {
 			const init = declarator.init;
 			const rune = get_rune(init, state.scope);
-			if (!rune || rune === '$effect.active' || rune === '$effect.root' || rune === '$inspect') {
+			if (
+				!rune ||
+				rune === '$effect.active' ||
+				rune === '$effect.root' ||
+				rune === '$inspect' ||
+				rune === '$state.snapshot'
+			) {
 				if (init != null && is_hoistable_function(init)) {
 					const hoistable_function = visit(init);
 					state.hoisted.push(
@@ -381,8 +415,19 @@ export const javascript_visitors_runes = {
 	CallExpression(node, context) {
 		const rune = get_rune(node, context.state.scope);
 
+		if (rune === '$host') {
+			return b.id('$$props.$$host');
+		}
+
 		if (rune === '$effect.active') {
 			return b.call('$.effect_active');
+		}
+
+		if (rune === '$state.snapshot') {
+			return b.call(
+				'$.snapshot',
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
+			);
 		}
 
 		if (rune === '$effect.root') {
@@ -399,3 +444,14 @@ export const javascript_visitors_runes = {
 		context.next();
 	}
 };
+
+/**
+ * @param {import('estree').Identifier | import('estree').PrivateIdentifier | import('estree').Literal} node
+ */
+function get_name(node) {
+	if (node.type === 'Literal') {
+		return node.value?.toString().replace(regex_invalid_identifier_chars, '_');
+	} else {
+		return node.name;
+	}
+}

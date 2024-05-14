@@ -1,0 +1,208 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 112,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "Text",
+				"start": 65,
+				"end": 67,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "Text",
+				"start": 112,
+				"end": 114,
+				"raw": "\n\n",
+				"data": "\n\n"
+			}
+		],
+		"transparent": false
+	},
+	"options": {
+		"start": 0,
+		"end": 65,
+		"attributes": [
+			{
+				"type": "Attribute",
+				"start": 16,
+				"end": 49,
+				"name": "customElement",
+				"value": [
+					{
+						"start": 31,
+						"end": 48,
+						"type": "Text",
+						"raw": "my-custom-element",
+						"data": "my-custom-element",
+						"parent": null
+					}
+				],
+				"parent": null,
+				"metadata": {
+					"dynamic": false,
+					"delegated": null
+				}
+			},
+			{
+				"type": "Attribute",
+				"start": 50,
+				"end": 62,
+				"name": "runes",
+				"value": [
+					{
+						"type": "ExpressionTag",
+						"start": 56,
+						"end": 62,
+						"expression": {
+							"type": "Literal",
+							"start": 57,
+							"end": 61,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 57
+								},
+								"end": {
+									"line": 1,
+									"column": 61
+								}
+							},
+							"value": true,
+							"raw": "true"
+						},
+						"parent": null,
+						"metadata": {
+							"contains_call_expression": false,
+							"dynamic": false
+						}
+					}
+				],
+				"parent": null,
+				"metadata": {
+					"dynamic": false,
+					"delegated": null
+				}
+			}
+		],
+		"customElement": {
+			"tag": "my-custom-element"
+		},
+		"runes": true
+	},
+	"module": {
+		"type": "Script",
+		"start": 67,
+		"end": 112,
+		"context": "module",
+		"content": {
+			"type": "Program",
+			"start": 102,
+			"end": 103,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 4,
+					"column": 0
+				}
+			},
+			"body": [],
+			"sourceType": "module"
+		},
+		"attributes": [
+			{
+				"type": "Attribute",
+				"start": 75,
+				"end": 91,
+				"name": "context",
+				"value": [
+					{
+						"start": 84,
+						"end": 90,
+						"type": "Text",
+						"raw": "module",
+						"data": "module"
+					}
+				]
+			},
+			{
+				"type": "Attribute",
+				"start": 92,
+				"end": 101,
+				"name": "lang",
+				"value": [
+					{
+						"start": 98,
+						"end": 100,
+						"type": "Text",
+						"raw": "ts",
+						"data": "ts"
+					}
+				]
+			}
+		]
+	},
+	"instance": {
+		"type": "Script",
+		"start": 114,
+		"end": 179,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 169,
+			"end": 170,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 7,
+					"column": 0
+				}
+			},
+			"body": [],
+			"sourceType": "module"
+		},
+		"attributes": [
+			{
+				"type": "Attribute",
+				"start": 122,
+				"end": 131,
+				"name": "lang",
+				"value": [
+					{
+						"start": 128,
+						"end": 130,
+						"type": "Text",
+						"raw": "ts",
+						"data": "ts"
+					}
+				]
+			},
+			{
+				"type": "Attribute",
+				"start": 132,
+				"end": 168,
+				"name": "generics",
+				"value": [
+					{
+						"start": 142,
+						"end": 167,
+						"type": "Text",
+						"raw": "T extends { foo: number }",
+						"data": "T extends { foo: number }"
+					}
+				]
+			}
+		]
+	}
+}

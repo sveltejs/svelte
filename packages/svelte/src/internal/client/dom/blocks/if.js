@@ -1,4 +1,4 @@
-import { IS_ELSEIF } from '../../constants.js';
+import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
 import { remove } from '../reconciler.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
@@ -20,15 +20,17 @@ export function if_block(
 	elseif = false
 ) {
 	/** @type {import('#client').Effect | null} */
-	let consequent_effect = null;
+	var consequent_effect = null;
 
 	/** @type {import('#client').Effect | null} */
-	let alternate_effect = null;
+	var alternate_effect = null;
 
 	/** @type {boolean | null} */
-	let condition = null;
+	var condition = null;
 
-	const effect = block(() => {
+	var flags = elseif ? EFFECT_TRANSPARENT : 0;
+
+	block(() => {
 		if (condition === (condition = !!get_condition())) return;
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
@@ -76,9 +78,5 @@ export function if_block(
 			// continue in hydration mode
 			set_hydrating(true);
 		}
-	});
-
-	if (elseif) {
-		effect.f |= IS_ELSEIF;
-	}
+	}, flags);
 }

@@ -17,14 +17,14 @@
 	.b ~ .d { color: green; }
 </style>
 
-<div class="a" />
+<div class="a"></div>
 
 {#await promise}
-	<div class="b" />
+	<div class="b"></div>
 {:then value}
-	<div class="c" />
+	<div class="c"></div>
 {:catch error}
-	<div class="d" />
+	<div class="d"></div>
 {/await}
 
-<div class="e" />
+<div class="e"></div>

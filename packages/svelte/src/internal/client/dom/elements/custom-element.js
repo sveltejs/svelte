@@ -139,7 +139,8 @@ if (typeof HTMLElement === 'function') {
 					target: this.shadowRoot || this,
 					props: {
 						...this.$$d,
-						$$slots
+						$$slots,
+						$$host: this
 					}
 				});
 
@@ -193,7 +194,7 @@ if (typeof HTMLElement === 'function') {
 			this.$$cn = false;
 			// In a microtask, because this could be a move within the DOM
 			Promise.resolve().then(() => {
-				if (!this.$$cn) {
+				if (!this.$$cn && this.$$c) {
 					this.$$c.$destroy();
 					destroy_effect(this.$$me);
 					this.$$c = undefined;

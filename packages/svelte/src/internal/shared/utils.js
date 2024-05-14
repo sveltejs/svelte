@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-empty-function
 export const noop = () => {};
 
 // Adapted from https://github.com/then/is-promise/blob/master/index.js

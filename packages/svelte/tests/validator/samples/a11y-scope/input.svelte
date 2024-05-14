@@ -1,6 +1,6 @@
 <!-- valid -->
-<th scope />
+<th scope></th>
 <svelte:element this={Math.random() ? 'th' : 'td'} scope />
 
 <!-- invalid -->
-<div scope/>
+<div scope></div>

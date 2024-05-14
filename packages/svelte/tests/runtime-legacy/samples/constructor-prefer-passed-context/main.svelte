@@ -12,4 +12,4 @@
 	}
 </script>
 
-<div use:render />
+<div use:render></div>

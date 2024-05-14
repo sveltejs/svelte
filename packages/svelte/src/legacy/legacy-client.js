@@ -1,4 +1,5 @@
 import { proxy } from '../internal/client/proxy.js';
+import { user_pre_effect } from '../internal/client/reactivity/effects.js';
 import { hydrate, mount, unmount } from '../internal/client/render.js';
 import { define_property } from '../internal/client/utils.js';
 
@@ -53,7 +54,7 @@ export function asClassComponent(component) {
 
 class Svelte4Component {
 	/** @type {any} */
-	#events = {};
+	#events;
 
 	/** @type {Record<string, any>} */
 	#instance;
@@ -70,7 +71,7 @@ class Svelte4Component {
 		// Using proxy state here isn't completely mirroring the Svelte 4 behavior, because mutations to a property
 		// cause fine-grained updates to only the places where that property is used, and not the entire property.
 		// Reactive statements and actions (the things where this matters) are handling this properly regardless, so it should be fine in practise.
-		const props = proxy({ ...(options.props || {}), $$events: this.#events }, false);
+		const props = proxy({ ...(options.props || {}), $$events: {} }, false);
 		this.#instance = (options.hydrate ? hydrate : mount)(options.component, {
 			target: options.target,
 			props,
@@ -78,6 +79,8 @@ class Svelte4Component {
 			intro: options.intro,
 			recover: options.recover
 		});
+
+		this.#events = props.$$events;
 
 		for (const key of Object.keys(this.#instance)) {
 			if (key === '$set' || key === '$destroy' || key === '$on') continue;
@@ -125,4 +128,15 @@ class Svelte4Component {
 	$destroy() {
 		this.#instance.$destroy();
 	}
+}
+
+/**
+ * Runs the given function once immediately on the server, and works like `$effect.pre` on the client.
+ *
+ * @deprecated Use this only as a temporary solution to migrate your component code to Svelte 5.
+ * @param {() => void | (() => void)} fn
+ * @returns {void}
+ */
+export function run(fn) {
+	user_pre_effect(fn);
 }

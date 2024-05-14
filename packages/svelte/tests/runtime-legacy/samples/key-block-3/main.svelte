@@ -3,5 +3,5 @@
 </script>
 
 {#key value}
-	<div />
+	<div></div>
 {/key}

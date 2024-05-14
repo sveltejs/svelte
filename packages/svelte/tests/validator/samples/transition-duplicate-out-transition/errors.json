@@ -1,7 +1,7 @@
 [
 	{
-		"code": "duplicate-transition",
-		"message": "An element cannot have both an 'out' directive and a 'transition' directive",
+		"code": "transition_conflict",
+		"message": "Cannot use `out:` alongside existing `transition:` directive",
 		"start": {
 			"line": 6,
 			"column": 13

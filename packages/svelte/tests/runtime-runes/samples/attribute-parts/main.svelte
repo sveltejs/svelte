@@ -4,6 +4,6 @@
 	let c = 3;
 </script>
 
-<div class="{a}{b}{c}" />
+<div class="{a}{b}{c}"></div>
 
 <img src="{a}{b} hello, world {a}{c}" />

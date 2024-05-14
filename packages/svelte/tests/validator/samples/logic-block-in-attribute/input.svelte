@@ -1,1 +1,1 @@
-<div style="{#if condition}a{/if}" />
+<div style="{#if condition}a{/if}"></div>

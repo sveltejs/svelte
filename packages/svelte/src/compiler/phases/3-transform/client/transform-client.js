@@ -1,5 +1,4 @@
 import { walk } from 'zimmerframe';
-import { error } from '../../../errors.js';
 import * as b from '../../../utils/builders.js';
 import { set_scope } from '../../scope.js';
 import { template_visitors } from './visitors/template.js';
@@ -7,7 +6,7 @@ import { global_visitors } from './visitors/global.js';
 import { javascript_visitors } from './visitors/javascript.js';
 import { javascript_visitors_runes } from './visitors/javascript-runes.js';
 import { javascript_visitors_legacy } from './visitors/javascript-legacy.js';
-import { is_state_source, serialize_get_binding } from './utils.js';
+import { serialize_get_binding } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
 
 /**
@@ -52,35 +51,49 @@ export function client_component(source, analysis, options) {
 		get before_init() {
 			/** @type {any[]} */
 			const a = [];
-			a.push = () =>
-				error(null, 'INTERNAL', 'before_init.push should not be called outside create_block');
+			a.push = () => {
+				throw new Error('before_init.push should not be called outside create_block');
+			};
 			return a;
 		},
 		get init() {
 			/** @type {any[]} */
 			const a = [];
-			a.push = () => error(null, 'INTERNAL', 'init.push should not be called outside create_block');
+			a.push = () => {
+				throw new Error('init.push should not be called outside create_block');
+			};
 			return a;
 		},
 		get update() {
 			/** @type {any[]} */
 			const a = [];
-			a.push = () =>
-				error(null, 'INTERNAL', 'update.push should not be called outside create_block');
+			a.push = () => {
+				throw new Error('update.push should not be called outside create_block');
+			};
 			return a;
 		},
 		get after_update() {
 			/** @type {any[]} */
 			const a = [];
-			a.push = () =>
-				error(null, 'INTERNAL', 'after_update.push should not be called outside create_block');
+			a.push = () => {
+				throw new Error('after_update.push should not be called outside create_block');
+			};
 			return a;
 		},
 		get template() {
 			/** @type {any[]} */
 			const a = [];
-			a.push = () =>
-				error(null, 'INTERNAL', 'template.push should not be called outside create_block');
+			a.push = () => {
+				throw new Error('template.push should not be called outside create_block');
+			};
+			return a;
+		},
+		get locations() {
+			/** @type {any[]} */
+			const a = [];
+			a.push = () => {
+				throw new Error('locations.push should not be called outside create_block');
+			};
 			return a;
 		},
 		legacy_reactive_statements: new Map(),
@@ -209,7 +222,7 @@ export function client_component(source, analysis, options) {
 	for (const [node] of analysis.reactive_statements) {
 		const statement = [...state.legacy_reactive_statements].find(([n]) => n === node);
 		if (statement === undefined) {
-			error(node, 'INTERNAL', 'Could not find reactive statement');
+			throw new Error('Could not find reactive statement');
 		}
 		instance.body.push(statement[1]);
 	}
@@ -227,18 +240,7 @@ export function client_component(source, analysis, options) {
 		group_binding_declarations.push(b.const(group.name, b.array([])));
 	}
 
-	// Bind static exports to props so that people can access them with bind:x
-	const static_bindings = analysis.exports.map(({ name, alias }) => {
-		return b.stmt(
-			b.call(
-				'$.bind_prop',
-				b.id('$$props'),
-				b.literal(alias ?? name),
-				serialize_get_binding(b.id(name), instance_state)
-			)
-		);
-	});
-
+	/** @type {Array<import('estree').Property | import('estree').SpreadElement>} */
 	const component_returned_object = analysis.exports.map(({ name, alias }) => {
 		const expression = serialize_get_binding(b.id(name), instance_state);
 
@@ -255,6 +257,7 @@ export function client_component(source, analysis, options) {
 	);
 
 	if (analysis.runes && options.dev) {
+		const exports = analysis.exports.map(({ name, alias }) => b.literal(alias ?? name));
 		/** @type {import('estree').Literal[]} */
 		const bindable = [];
 		for (const [name, binding] of properties) {
@@ -263,7 +266,15 @@ export function client_component(source, analysis, options) {
 			}
 		}
 		instance.body.unshift(
-			b.stmt(b.call('$.validate_prop_bindings', b.id('$$props'), b.array(bindable)))
+			b.stmt(
+				b.call(
+					'$.validate_prop_bindings',
+					b.id('$$props'),
+					b.array(bindable),
+					b.array(exports),
+					b.id(`${analysis.name}`)
+				)
+			)
 		);
 	}
 
@@ -308,56 +319,37 @@ export function client_component(source, analysis, options) {
 			)
 		);
 	} else if (options.dev) {
-		component_returned_object.push(
-			b.init(
-				'$set',
-				b.thunk(
-					b.block([
-						b.throw_error(
-							`The component shape you get when doing bind:this changed. Updating its properties via $set is no longer valid in Svelte 5. ` +
-								'See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information'
-						)
-					])
-				)
-			),
-			b.init(
-				'$on',
-				b.thunk(
-					b.block([
-						b.throw_error(
-							`The component shape you get when doing bind:this changed. Listening to events via $on is no longer valid in Svelte 5. ` +
-								'See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information'
-						)
-					])
-				)
-			),
-			b.init(
-				'$destroy',
-				b.thunk(
-					b.block([
-						b.throw_error(
-							`The component shape you get when doing bind:this changed. Destroying such a component via $destroy is no longer valid in Svelte 5. ` +
-								'See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information'
-						)
-					])
-				)
-			)
-		);
+		component_returned_object.push(b.spread(b.call(b.id('$.legacy_api'))));
 	}
 
 	const push_args = [b.id('$$props'), b.literal(analysis.runes)];
 	if (options.dev) push_args.push(b.id(analysis.name));
 
 	const component_block = b.block([
-		b.stmt(b.call('$.push', ...push_args)),
 		...store_setup,
 		...legacy_reactive_declarations,
 		...group_binding_declarations,
+		...analysis.top_level_snippets,
 		.../** @type {import('estree').Statement[]} */ (instance.body),
-		analysis.runes ? b.empty : b.stmt(b.call('$.init')),
-		.../** @type {import('estree').Statement[]} */ (template.body),
-		...static_bindings
+		analysis.runes || !analysis.needs_context ? b.empty : b.stmt(b.call('$.init')),
+		.../** @type {import('estree').Statement[]} */ (template.body)
 	]);
+
+	if (!analysis.runes) {
+		// Bind static exports to props so that people can access them with bind:x
+		for (const { name, alias } of analysis.exports) {
+			component_block.body.push(
+				b.stmt(
+					b.call(
+						'$.bind_prop',
+						b.id('$$props'),
+						b.literal(alias ?? name),
+						serialize_get_binding(b.id(name), instance_state)
+					)
+				)
+			);
+		}
+	}
 
 	const append_styles =
 		analysis.inject_styles && analysis.css.ast
@@ -375,14 +367,24 @@ export function client_component(source, analysis, options) {
 			: () => {};
 
 	append_styles();
-	component_block.body.push(
-		component_returned_object.length > 0
-			? b.return(b.call('$.pop', b.object(component_returned_object)))
-			: b.stmt(b.call('$.pop'))
-	);
+
+	const should_inject_context =
+		analysis.needs_context ||
+		analysis.reactive_statements.size > 0 ||
+		component_returned_object.length > 0 ||
+		options.dev;
+
+	if (should_inject_context) {
+		component_block.body.unshift(b.stmt(b.call('$.push', ...push_args)));
+
+		component_block.body.push(
+			component_returned_object.length > 0
+				? b.return(b.call('$.pop', b.object(component_returned_object)))
+				: b.stmt(b.call('$.pop'))
+		);
+	}
 
 	if (analysis.uses_rest_props) {
-		/** @type {string[]} */
 		const named_props = analysis.exports.map(({ name, alias }) => alias ?? name);
 		for (const [name, binding] of analysis.instance.scope.declarations) {
 			if (binding.kind === 'bindable_prop') named_props.push(binding.prop_alias ?? name);
@@ -392,7 +394,7 @@ export function client_component(source, analysis, options) {
 			b.const(
 				'$$restProps',
 				b.call(
-					'$.rest_props',
+					'$.legacy_rest_props',
 					b.id('$$sanitized_props'),
 					b.array(named_props.map((name) => b.literal(name)))
 				)
@@ -401,14 +403,15 @@ export function client_component(source, analysis, options) {
 	}
 
 	if (analysis.uses_props || analysis.uses_rest_props) {
+		const to_remove = [b.literal('children'), b.literal('$$slots'), b.literal('$$events')];
+		if (analysis.custom_element) {
+			to_remove.push(b.literal('$$host'));
+		}
+
 		component_block.body.unshift(
 			b.const(
 				'$$sanitized_props',
-				b.call(
-					'$.rest_props',
-					b.id('$$props'),
-					b.array([b.literal('children'), b.literal('$$slots'), b.literal('$$events')])
-				)
+				b.call('$.legacy_rest_props', b.id('$$props'), b.array(to_remove))
 			)
 		);
 	}
@@ -417,17 +420,55 @@ export function client_component(source, analysis, options) {
 		component_block.body.unshift(b.const('$$slots', b.call('$.sanitize_slots', b.id('$$props'))));
 	}
 
-	const body = [
-		...state.hoisted,
-		...module.body,
-		b.export_default(
-			b.function_declaration(
-				b.id(analysis.name),
-				[b.id('$$anchor'), b.id('$$props')],
-				component_block
-			)
-		)
-	];
+	let should_inject_props =
+		should_inject_context ||
+		analysis.needs_props ||
+		analysis.uses_props ||
+		analysis.uses_rest_props ||
+		analysis.uses_slots ||
+		analysis.slot_names.size > 0;
+
+	const body = [...state.hoisted, ...module.body];
+
+	const component = b.function_declaration(
+		b.id(analysis.name),
+		should_inject_props ? [b.id('$$anchor'), b.id('$$props')] : [b.id('$$anchor')],
+		component_block
+	);
+
+	if (options.hmr) {
+		const accept_fn = b.arrow(
+			[b.id('module')],
+			b.block([b.stmt(b.call('$.set', b.id('s'), b.member(b.id('module'), b.id('default'))))])
+		);
+		body.push(
+			component,
+			b.if(
+				b.id('import.meta.hot'),
+				b.block([
+					b.const(b.id('s'), b.call('$.source', b.id(analysis.name))),
+					b.const(b.id('filename'), b.member(b.id(analysis.name), b.id('filename'))),
+					b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
+					b.stmt(
+						b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.id('filename'))
+					),
+					b.if(
+						b.id('import.meta.hot.acceptExports'),
+						b.block([
+							b.stmt(
+								b.call('import.meta.hot.acceptExports', b.array([b.literal('default')]), accept_fn)
+							)
+						]),
+						b.block([b.stmt(b.call('import.meta.hot.accept', accept_fn))])
+					)
+				])
+			),
+
+			b.export_default(b.id(analysis.name))
+		);
+	} else {
+		body.push(b.export_default(component));
+	}
 
 	if (options.dev) {
 		if (options.filename) {
@@ -439,15 +480,15 @@ export function client_component(source, analysis, options) {
 			}
 
 			// add `App.filename = 'App.svelte'` so that we can print useful messages later
-			body.push(
+			body.unshift(
 				b.stmt(
 					b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.literal(filename))
 				)
 			);
 		}
 
-		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'), b.id(analysis.name))));
-		body.push(b.stmt(b.call(b.id('$.mark_module_end'))));
+		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'))));
+		body.push(b.stmt(b.call(b.id('$.mark_module_end'), b.id(analysis.name))));
 	}
 
 	if (options.discloseVersion) {

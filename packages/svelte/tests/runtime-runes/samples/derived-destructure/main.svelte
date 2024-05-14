@@ -1,21 +1,19 @@
 <script>
-	import { log } from './log.js';
-
 	let a = $state(0);
 	let b = $state(0);
 	let c = $state(0);
 	const {a: a1, b: b1, c: c1} = $derived({a, b, c});
 
 	$effect(() => {
-		log.push('a', a1)
+		console.log('a', a1)
 	});
 
 	$effect(() => {
-		log.push('b', b1)
+		console.log('b', b1)
 	});
 
 	$effect(() => {
-		log.push('c', c1)
+		console.log('c', c1)
 	});
 </script>
 

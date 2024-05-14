@@ -6,4 +6,4 @@
 	$: paths && logs.push('paths updated');
 </script>
 
-<div bind:this={container[paths[0]]} />
+<div bind:this={container[paths[0]]}></div>

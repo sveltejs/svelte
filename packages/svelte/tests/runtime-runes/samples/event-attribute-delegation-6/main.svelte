@@ -1,9 +1,7 @@
 <script>
-	import { log } from './log.js';
-
 	let method = $state('method');
 	function submitPay() {
-		log.push(method);
+		console.log(method);
 	}
 	let methods = [{method:1}];
 </script>

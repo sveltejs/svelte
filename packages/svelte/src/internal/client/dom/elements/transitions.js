@@ -7,7 +7,7 @@ import { should_intro } from '../../render.js';
 import { is_function } from '../../utils.js';
 import { current_each_item } from '../blocks/each.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
-import { EFFECT_RAN } from '../../constants.js';
+import { BLOCK_EFFECT, EFFECT_RAN, EFFECT_TRANSPARENT } from '../../constants.js';
 
 /**
  * @template T
@@ -88,6 +88,9 @@ export function animation(element, get_fn, get_params) {
 	/** @type {import('#client').Animation | undefined} */
 	var animation;
 
+	/** @type {null | { position: string, width: string, height: string }} */
+	var original_styles = null;
+
 	item.a ??= {
 		element,
 		measure() {
@@ -98,18 +101,50 @@ export function animation(element, get_fn, get_params) {
 
 			to = this.element.getBoundingClientRect();
 
-			const options = get_fn()(this.element, { from, to }, get_params?.());
-
 			if (
 				from.left !== to.left ||
 				from.right !== to.right ||
 				from.top !== to.top ||
 				from.bottom !== to.bottom
 			) {
+				const options = get_fn()(this.element, { from, to }, get_params?.());
+
 				animation = animate(this.element, options, undefined, 1, () => {
 					animation?.abort();
 					animation = undefined;
 				});
+			}
+		},
+		fix() {
+			var computed_style = getComputedStyle(element);
+
+			if (computed_style.position !== 'absolute' && computed_style.position !== 'fixed') {
+				var style = /** @type {HTMLElement | SVGElement} */ (element).style;
+
+				original_styles = {
+					position: style.position,
+					width: style.width,
+					height: style.height
+				};
+
+				style.position = 'absolute';
+				style.width = computed_style.width;
+				style.height = computed_style.height;
+				var to = element.getBoundingClientRect();
+
+				if (from.left !== to.left || from.top !== to.top) {
+					var transform = `translate(${from.left - to.left}px, ${from.top - to.top}px)`;
+					style.transform = style.transform ? `${style.transform} ${transform}` : transform;
+				}
+			}
+		},
+		unfix() {
+			if (original_styles) {
+				var style = /** @type {HTMLElement | SVGElement} */ (element).style;
+
+				style.position = original_styles.position;
+				style.width = original_styles.width;
+				style.height = original_styles.height;
 			}
 		}
 	};
@@ -206,13 +241,26 @@ export function transition(flags, element, get_fn, get_params) {
 
 	(e.transitions ??= []).push(transition);
 
-	// if this is a local transition, we only want to run it if the parent (block) effect's
-	// parent (branch) effect is where the state change happened. we can determine that by
-	// looking at whether the branch effect is currently initializing
+	// if this is a local transition, we only want to run it if the parent (branch) effect's
+	// parent (block) effect is where the state change happened. we can determine that by
+	// looking at whether the block effect is currently initializing
 	if (is_intro && should_intro) {
-		var parent = /** @type {import('#client').Effect} */ (e.parent);
+		let run = is_global;
 
-		if (is_global || (parent.f & EFFECT_RAN) !== 0) {
+		if (!run) {
+			var block = /** @type {import('#client').Effect | null} */ (e.parent);
+
+			// skip over transparent blocks (e.g. snippets, else-if blocks)
+			while (block && (block.f & EFFECT_TRANSPARENT) !== 0) {
+				while ((block = block.parent)) {
+					if ((block.f & BLOCK_EFFECT) !== 0) break;
+				}
+			}
+
+			run = !block || (block.f & EFFECT_RAN) !== 0;
+		}
+
+		if (run) {
 			effect(() => {
 				untrack(() => transition.in());
 			});
@@ -282,7 +330,7 @@ function animate(element, options, counterpart, t2, callback) {
 	if (css) {
 		// WAAPI
 		var keyframes = [];
-		var n = duration / (1000 / 60);
+		var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
 
 		for (var i = 0; i <= n; i += 1) {
 			var t = t1 + delta * easing(i / n);
@@ -300,6 +348,10 @@ function animate(element, options, counterpart, t2, callback) {
 		animation.finished
 			.then(() => {
 				callback?.();
+
+				if (t2 === 1) {
+					animation.cancel();
+				}
 			})
 			.catch((e) => {
 				// Error for DOMException: The user aborted a request. This results in two things:

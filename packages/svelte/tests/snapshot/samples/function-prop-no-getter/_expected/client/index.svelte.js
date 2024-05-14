@@ -1,11 +1,7 @@
-// index.svelte (Svelte VERSION)
-// Note: compiler output will change before 5.0 is released!
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 
-export default function Function_prop_no_getter($$anchor, $$props) {
-	$.push($$props, true);
-
+export default function Function_prop_no_getter($$anchor) {
 	let count = $.source(0);
 
 	function onmouseup() {
@@ -23,11 +19,10 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 		children: $.add_snippet_symbol(($$anchor, $$slotProps) => {
 			var text = $.text($$anchor);
 
-			$.render_effect(() => $.set_text(text, `clicks: ${$.stringify($.get(count))}`));
+			$.template_effect(() => $.set_text(text, `clicks: ${$.stringify($.get(count))}`));
 			$.append($$anchor, text);
 		})
 	});
 
 	$.append($$anchor, fragment);
-	$.pop();
 }

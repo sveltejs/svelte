@@ -9,4 +9,4 @@
 	}
 </script>
 
-<p style:font-size="{settings.fontSize}px" style="background-color: {settings.bg}" />
+<p style:font-size="{settings.fontSize}px" style="background-color: {settings.bg}"></p>

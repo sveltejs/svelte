@@ -27,11 +27,7 @@ export function readable(value, start) {
  * @returns {boolean}
  */
 export function safe_not_equal(a, b) {
-	// eslint-disable-next-line eqeqeq
-	return a != a
-		? // eslint-disable-next-line eqeqeq
-			b == b
-		: a !== b || (a && typeof a === 'object') || typeof a === 'function';
+	return a != a ? b == b : a !== b || (a && typeof a === 'object') || typeof a === 'function';
 }
 
 /**
@@ -115,7 +111,7 @@ export function writable(value, start = noop) {
  * @template T
  * @overload
  * @param {S} stores
- * @param {(values: import('./private.js').StoresValues<S>) => T} fn
+ * @param {(values: import('./private.js').StoresValues<S>, set: (value: T) => void, update: (fn: import('./public.js').Updater<T>) => void) => import('./public.js').Unsubscriber | void} fn
  * @param {T} [initial_value]
  * @returns {import('./public.js').Readable<T>}
  */
@@ -128,7 +124,7 @@ export function writable(value, start = noop) {
  * @template T
  * @overload
  * @param {S} stores
- * @param {(values: import('./private.js').StoresValues<S>, set: (value: T) => void, update: (fn: import('./public.js').Updater<T>) => void) => import('./public.js').Unsubscriber | void} fn
+ * @param {(values: import('./private.js').StoresValues<S>) => T} fn
  * @param {T} [initial_value]
  * @returns {import('./public.js').Readable<T>}
  */

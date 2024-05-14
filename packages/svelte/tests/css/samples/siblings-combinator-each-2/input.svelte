@@ -28,11 +28,11 @@
 	}
 </style>
 
-<div class="a" />
+<div class="a"></div>
 
 {#each array as item}
-	<div class="b" />
-	<div class="c" />
+	<div class="b"></div>
+	<div class="c"></div>
 {/each}
 
-<div class="d" />
+<div class="d"></div>

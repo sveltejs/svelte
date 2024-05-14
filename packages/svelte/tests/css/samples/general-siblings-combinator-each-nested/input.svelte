@@ -65,49 +65,49 @@
 	.g ~ .i { color: green; }
 </style>
 
-<div class="a" />
+<div class="a"></div>
 
 {#each array as item}
-	<div class="b" />
-	<div class="c" />
+	<div class="b"></div>
+	<div class="c"></div>
 {/each}
 
 {#each array as item}
 	{#each array as item}
 		{#each array as item}
-			<div class="d" />
+			<div class="d"></div>
 		{/each}
-		<div class="e" />
+		<div class="e"></div>
 	{/each}
-	<div class="f" />
+	<div class="f"></div>
 {/each}
 
 {#each array as item}
-	<div class="g" />
+	<div class="g"></div>
 	{#each array as item}
-		<div class="h" />
+		<div class="h"></div>
 		{#each array as item}
-			<div class="i" />
-		{/each}
-	{/each}
-{/each}
-
-{#each array as item}
-	<div class="j" />
-	{#each array as item}
-		<div class="k" />
-		{#each array as item}
-			<div class="l" />
+			<div class="i"></div>
 		{/each}
 	{/each}
 {/each}
 
 {#each array as item}
+	<div class="j"></div>
+	{#each array as item}
+		<div class="k"></div>
+		{#each array as item}
+			<div class="l"></div>
+		{/each}
+	{/each}
+{/each}
+
+{#each array as item}
 	{#each array as item}
 		{#each array as item}
-			<div class="m" />
+			<div class="m"></div>
 		{/each}
-		<div class="n" />
+		<div class="n"></div>
 	{/each}
-	<div class="o" />
+	<div class="o"></div>
 {/each}

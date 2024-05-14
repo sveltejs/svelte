@@ -1,15 +1,10 @@
 import { test } from '../../test';
-import { flushSync, tick } from 'svelte';
-import { log } from './log.js';
+import { flushSync } from 'svelte';
 
 export default test({
-	before_test() {
-		log.length = 0;
-	},
-
 	html: `<div class="container">{"text":"initial"}</div><button>update tracked state</button><button>Update prop</button>`,
 
-	async test({ assert, target }) {
+	async test({ assert, target, logs }) {
 		const [btn1, btn2] = target.querySelectorAll('button');
 
 		flushSync(() => {
@@ -30,7 +25,7 @@ export default test({
 			`<div class="container">{"text":"updated"}</div><button>update tracked state</button><button>Update prop</button>`
 		);
 
-		assert.deepEqual(log, [
+		assert.deepEqual(logs, [
 			'action $effect: ',
 			{ buttonClicked: 0 },
 			'action $effect: ',

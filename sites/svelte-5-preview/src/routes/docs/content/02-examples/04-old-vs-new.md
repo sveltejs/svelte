@@ -148,17 +148,17 @@ With runes, we can use `$effect.pre`, which behaves the same as `$effect` but ru
 +	let theme = $state('dark');
 +	let messages = $state([]);
 
-	let div;
+	let viewport;
 
 -	beforeUpdate(() => {
 +	$effect.pre(() => {
 -		if (!updatingMessages) return;
 +		messages;
-		const autoscroll = div && div.offsetHeight + div.scrollTop > div.scrollHeight - 50;
+		const autoscroll = viewport && viewport.offsetHeight + viewport.scrollTop > viewport.scrollHeight - 50;
 
 		if (autoscroll) {
 			tick().then(() => {
-				div.scrollTo(0, div.scrollHeight);
+				viewport.scrollTo(0, viewport.scrollHeight);
 			});
 		}
 

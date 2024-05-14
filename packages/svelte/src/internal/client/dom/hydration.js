@@ -1,4 +1,5 @@
 import { HYDRATION_END, HYDRATION_START } from '../../../constants.js';
+import * as e from '../errors.js';
 
 /**
  * Use this variable to guard everything related to hydration code so it can be treeshaken out
@@ -39,7 +40,7 @@ export function hydrate_anchor(node) {
 	var current = /** @type {Node | null} */ (node);
 
 	// TODO this could have false positives, if a user comment consisted of `[`. need to tighten that up
-	if (/** @type {Comment} */ (current)?.data !== HYDRATION_START) {
+	if (/** @type {Comment} */ (current).data !== HYDRATION_START) {
 		return node;
 	}
 
@@ -66,5 +67,5 @@ export function hydrate_anchor(node) {
 		nodes.push(current);
 	}
 
-	throw new Error('Expected a closing hydration marker');
+	e.hydration_missing_marker_close();
 }

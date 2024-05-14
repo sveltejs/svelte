@@ -2,7 +2,7 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'duplicate-slot-name',
+		code: 'slot_attribute_duplicate',
 		message: "Duplicate slot name 'foo' in <Nested>"
 	}
 });

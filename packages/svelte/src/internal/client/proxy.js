@@ -1,6 +1,11 @@
 import { DEV } from 'esm-env';
-import { get, batch_inspect, current_component_context, untrack } from './runtime.js';
-import { effect_active } from './reactivity/effects.js';
+import {
+	get,
+	batch_inspect,
+	current_component_context,
+	untrack,
+	current_effect
+} from './runtime.js';
 import {
 	array_prototype,
 	define_property,
@@ -11,36 +16,33 @@ import {
 	is_frozen,
 	object_prototype
 } from './utils.js';
-import { add_owner, check_ownership, strip_owner } from './dev/ownership.js';
+import { check_ownership, widen_ownership } from './dev/ownership.js';
 import { mutable_source, source, set } from './reactivity/sources.js';
 import { STATE_SYMBOL } from './constants.js';
-import { updating_derived } from './reactivity/deriveds.js';
 import { UNINITIALIZED } from '../../constants.js';
+import * as e from './errors.js';
 
 /**
  * @template T
  * @param {T} value
  * @param {boolean} [immutable]
- * @param {Set<Function> | null} [owners]
+ * @param {import('#client').ProxyMetadata | null} [parent]
  * @returns {import('#client').ProxyStateObject<T> | T}
  */
-export function proxy(value, immutable = true, owners) {
+export function proxy(value, immutable = true, parent = null) {
 	if (typeof value === 'object' && value != null && !is_frozen(value)) {
 		// If we have an existing proxy, return it...
 		if (STATE_SYMBOL in value) {
 			const metadata = /** @type {import('#client').ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
+
 			// ...unless the proxy belonged to a different object, because
 			// someone copied the state symbol using `Reflect.ownKeys(...)`
 			if (metadata.t === value || metadata.p === value) {
 				if (DEV) {
-					// update ownership
-					if (owners) {
-						for (const owner of owners) {
-							add_owner(value, owner);
-						}
-					} else {
-						strip_owner(value);
-					}
+					// Since original parent relationship gets lost, we need to copy over ancestor owners
+					// into current metadata. The object might still exist on both, so we need to widen it.
+					widen_ownership(metadata, metadata);
+					metadata.parent = parent;
 				}
 
 				return metadata.p;
@@ -66,16 +68,16 @@ export function proxy(value, immutable = true, owners) {
 			});
 
 			if (DEV) {
-				// set ownership — either of the parent proxy's owners (if provided) or,
-				// when calling `$.proxy(...)`, to the current component if such there be
 				// @ts-expect-error
-				value[STATE_SYMBOL].o =
-					owners === undefined
-						? current_component_context
-							? // @ts-expect-error
-								new Set([current_component_context.function])
+				value[STATE_SYMBOL].parent = parent;
+
+				// @ts-expect-error
+				value[STATE_SYMBOL].owners =
+					parent === null
+						? current_component_context !== null
+							? new Set([current_component_context.function])
 							: null
-						: owners && new Set(owners);
+						: new Set();
 			}
 
 			return proxy;
@@ -136,7 +138,7 @@ function unwrap(value, already_unwrapped) {
  * @param {T} value
  * @returns {T}
  */
-export function unstate(value) {
+export function snapshot(value) {
 	return /** @type {T} */ (
 		unwrap(/** @type {import('#client').ProxyStateObject} */ (value), new Map())
 	);
@@ -158,7 +160,7 @@ const state_proxy_handler = {
 			const metadata = target[STATE_SYMBOL];
 
 			const s = metadata.s.get(prop);
-			if (s !== undefined) set(s, proxy(descriptor.value, metadata.i, metadata.o));
+			if (s !== undefined) set(s, proxy(descriptor.value, metadata.i, metadata));
 		}
 
 		return Reflect.defineProperty(target, prop, descriptor);
@@ -202,14 +204,9 @@ const state_proxy_handler = {
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
 
-		// if we're reading a property in a reactive context, create a source,
-		// but only if it's an own property and not a prototype property
-		if (
-			s === undefined &&
-			(effect_active() || updating_derived) &&
-			(!(prop in target) || get_descriptor(target, prop)?.writable)
-		) {
-			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i, metadata.o));
+		// create a source, but only if it's an own property and not a prototype property
+		if (s === undefined && (!(prop in target) || get_descriptor(target, prop)?.writable)) {
+			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i, metadata));
 			metadata.s.set(prop, s);
 		}
 
@@ -250,10 +247,13 @@ const state_proxy_handler = {
 		const has = Reflect.has(target, prop);
 
 		let s = metadata.s.get(prop);
-		if (s !== undefined || (effect_active() && (!has || get_descriptor(target, prop)?.writable))) {
+		if (
+			s !== undefined ||
+			(current_effect !== null && (!has || get_descriptor(target, prop)?.writable))
+		) {
 			if (s === undefined) {
 				s = (metadata.i ? source : mutable_source)(
-					has ? proxy(target[prop], metadata.i, metadata.o) : UNINITIALIZED
+					has ? proxy(target[prop], metadata.i, metadata) : UNINITIALIZED
 				);
 				metadata.s.set(prop, s);
 			}
@@ -273,29 +273,24 @@ const state_proxy_handler = {
 		// we do so otherwise if we read it later, then the write won't be tracked and
 		// the heuristics of effects will be different vs if we had read the proxied
 		// object property before writing to that property.
-		if (s === undefined && effect_active()) {
+		if (s === undefined) {
 			// the read creates a signal
 			untrack(() => receiver[prop]);
 			s = metadata.s.get(prop);
 		}
 		if (s !== undefined) {
-			set(s, proxy(value, metadata.i, metadata.o));
+			set(s, proxy(value, metadata.i, metadata));
 		}
 		const is_array = metadata.a;
 		const not_has = !(prop in target);
 
 		if (DEV) {
-			// First check ownership of the object that is assigned to.
-			// Then, if the new object has owners, widen them with the ones from the current object.
-			// If it doesn't have owners that means it's ownerless, and so the assigned object should be, too.
-			if (metadata.o) {
-				check_ownership(metadata.o);
-				for (const owner in metadata.o) {
-					add_owner(value, owner);
-				}
-			} else {
-				strip_owner(value);
+			/** @type {import('#client').ProxyMetadata | undefined} */
+			const prop_metadata = value?.[STATE_SYMBOL];
+			if (prop_metadata && prop_metadata?.parent !== metadata) {
+				widen_ownership(metadata, prop_metadata);
 			}
+			check_ownership(metadata);
 		}
 
 		// variable.length = value -> clear all signals with index >= value
@@ -339,6 +334,6 @@ const state_proxy_handler = {
 
 if (DEV) {
 	state_proxy_handler.setPrototypeOf = () => {
-		throw new Error('Cannot set prototype of $state object');
+		e.state_prototype_fixed();
 	};
 }

@@ -3,6 +3,35 @@ import { clone_node, empty } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
+import { effect } from '../reactivity/effects.js';
+import { is_array } from '../utils.js';
+
+/**
+ * @template {import("#client").TemplateNode | import("#client").TemplateNode[]} T
+ * @param {T} dom
+ * @param {import("#client").Effect} effect
+ * @returns {T}
+ */
+export function push_template_node(
+	dom,
+	effect = /** @type {import('#client').Effect} */ (current_effect)
+) {
+	var current_dom = effect.dom;
+	if (current_dom === null) {
+		effect.dom = dom;
+	} else {
+		if (!is_array(current_dom)) {
+			current_dom = effect.dom = [current_dom];
+		}
+
+		if (is_array(dom)) {
+			current_dom.push(...dom);
+		} else {
+			current_dom.push(dom);
+		}
+	}
+	return dom;
+}
 
 /**
  * @param {string} content
@@ -19,15 +48,22 @@ export function template(content, flags) {
 
 	return () => {
 		if (hydrating) {
-			return is_fragment ? hydrate_nodes : /** @type {Node} */ (hydrate_nodes[0]);
+			return push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
 		}
 
 		if (!node) {
 			node = create_fragment_from_html(content);
 			if (!is_fragment) node = /** @type {Node} */ (node.firstChild);
 		}
+		var clone = use_import_node ? document.importNode(node, true) : clone_node(node, true);
 
-		return use_import_node ? document.importNode(node, true) : clone_node(node, true);
+		push_template_node(
+			is_fragment
+				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
+				: /** @type {import('#client').TemplateNode} */ (clone)
+		);
+
+		return clone;
 	};
 }
 
@@ -70,7 +106,7 @@ export function svg_template(content, flags) {
 
 	return () => {
 		if (hydrating) {
-			return is_fragment ? hydrate_nodes : /** @type {Node} */ (hydrate_nodes[0]);
+			return push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
 		}
 
 		if (!node) {
@@ -86,7 +122,15 @@ export function svg_template(content, flags) {
 			}
 		}
 
-		return clone_node(node, true);
+		var clone = clone_node(node, true);
+
+		push_template_node(
+			is_fragment
+				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
+				: /** @type {import('#client').TemplateNode} */ (clone)
+		);
+
+		return clone;
 	};
 }
 
@@ -115,19 +159,77 @@ export function svg_template_with_script(content, flags) {
 }
 
 /**
+ * @param {string} content
+ * @param {number} flags
+ * @returns {() => Node | Node[]}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function mathml_template(content, flags) {
+	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
+	var fn = template(`<math>${content}</math>`, 0); // we don't need to worry about using importNode for MathML
+
+	/** @type {Element | DocumentFragment} */
+	var node;
+
+	return () => {
+		if (hydrating) {
+			return push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
+		}
+
+		if (!node) {
+			var math = /** @type {Element} */ (fn());
+
+			if ((flags & TEMPLATE_FRAGMENT) === 0) {
+				node = /** @type {Element} */ (math.firstChild);
+			} else {
+				node = document.createDocumentFragment();
+				while (math.firstChild) {
+					node.appendChild(math.firstChild);
+				}
+			}
+		}
+
+		var clone = clone_node(node, true);
+
+		push_template_node(
+			is_fragment
+				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
+				: /** @type {import('#client').TemplateNode} */ (clone)
+		);
+
+		return clone;
+	};
+}
+
+/**
  * Creating a document fragment from HTML that contains script tags will not execute
  * the scripts. We need to replace the script tags with new ones so that they are executed.
  * @param {Element | DocumentFragment} node
  */
 function run_scripts(node) {
-	for (const script of node.querySelectorAll('script')) {
+	// scripts were SSR'd, in which case they will run
+	if (hydrating) return;
+
+	const scripts =
+		/** @type {HTMLElement} */ (node).tagName === 'SCRIPT'
+			? [/** @type {HTMLScriptElement} */ (node)]
+			: node.querySelectorAll('script');
+	for (const script of scripts) {
 		var clone = document.createElement('script');
 		for (var attribute of script.attributes) {
 			clone.setAttribute(attribute.name, attribute.value);
 		}
 
 		clone.textContent = script.textContent;
-		script.replaceWith(clone);
+		// If node === script tag, replaceWith will do nothing because there's no parent yet,
+		// waiting until that's the case using an effect solves this.
+		// Don't do it in other circumstances or we could accidentally execute scripts
+		// in an adjacent @html tag that was instantiated in the meantime.
+		if (script === node) {
+			effect(() => script.replaceWith(clone));
+		} else {
+			script.replaceWith(clone);
+		}
 	}
 }
 
@@ -136,7 +238,7 @@ function run_scripts(node) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function text(anchor) {
-	if (!hydrating) return empty();
+	if (!hydrating) return push_template_node(empty());
 
 	var node = hydrate_nodes[0];
 
@@ -146,10 +248,21 @@ export function text(anchor) {
 		anchor.before((node = empty()));
 	}
 
-	return node;
+	return push_template_node(node);
 }
 
-export const comment = template('<!>', TEMPLATE_FRAGMENT);
+export function comment() {
+	// we're not delegating to `template` here for performance reasons
+	if (hydrating) {
+		return push_template_node(hydrate_nodes);
+	}
+	var frag = document.createDocumentFragment();
+	var anchor = empty();
+	frag.append(anchor);
+	push_template_node([anchor]);
+
+	return frag;
+}
 
 /**
  * Assign the created (or in hydration mode, traversed) dom elements to the current block
@@ -158,19 +271,7 @@ export const comment = template('<!>', TEMPLATE_FRAGMENT);
  * @param {import('#client').Dom} dom
  */
 export function append(anchor, dom) {
-	var current = dom;
-
 	if (!hydrating) {
-		var node = /** @type {Node} */ (dom);
-
-		if (node.nodeType === 11) {
-			// if hydrating, `dom` is already an array of nodes, but if not then
-			// we need to create an array to store it on the current effect
-			current = /** @type {import('#client').Dom} */ ([...node.childNodes]);
-		}
-
-		anchor.before(node);
+		anchor.before(/** @type {Node} */ (dom));
 	}
-
-	/** @type {import('#client').Effect} */ (current_effect).dom = current;
 }

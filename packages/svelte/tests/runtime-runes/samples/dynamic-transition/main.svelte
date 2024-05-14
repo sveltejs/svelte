@@ -1,8 +1,6 @@
 <script>
-	import { log } from './log.js';
-
 	function transition1() {
-		log.push('transition 1')
+		console.log('transition 1')
 		return {
 			tick() {
 
@@ -11,7 +9,7 @@
 	}
 
 	function transition2() {
-		log.push('transition 2')
+		console.log('transition 2')
 		return {
 			tick() {
 

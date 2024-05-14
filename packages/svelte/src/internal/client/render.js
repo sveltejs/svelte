@@ -7,7 +7,7 @@ import {
 	init_operations
 } from './dom/operations.js';
 import { HYDRATION_START, PassiveDelegatedEvents } from '../../constants.js';
-import { flush_sync, push, pop, current_component_context, untrack } from './runtime.js';
+import { flush_sync, push, pop, current_component_context } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
 import {
 	hydrate_anchor,
@@ -18,6 +18,10 @@ import {
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
 import { handle_event_propagation } from './dom/elements/events.js';
+import { reset_head_anchor } from './dom/blocks/svelte-head.js';
+import * as w from './warnings.js';
+import * as e from './errors.js';
+import { validate_component } from '../shared/validate.js';
 
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
@@ -99,6 +103,10 @@ export function stringify(value) {
  * @returns {Exports}
  */
 export function mount(component, options) {
+	if (DEV) {
+		validate_component(component);
+	}
+
 	const anchor = options.anchor ?? options.target.appendChild(empty());
 	// Don't flush previous effects to ensure order of outer effects stays consistent
 	return flush_sync(() => _mount(component, { ...options, anchor }), false);
@@ -117,11 +125,15 @@ export function mount(component, options) {
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
- * 		recover?: false;
+ * 		recover?: boolean;
  * 	}} options
  * @returns {Exports}
  */
 export function hydrate(component, options) {
+	if (DEV) {
+		validate_component(component);
+	}
+
 	const target = options.target;
 	const previous_hydrate_nodes = hydrate_nodes;
 
@@ -141,7 +153,7 @@ export function hydrate(component, options) {
 			}
 
 			if (!node) {
-				throw new Error('Missing hydration marker');
+				e.hydration_missing_marker_open();
 			}
 
 			const anchor = hydrate_anchor(node);
@@ -155,16 +167,15 @@ export function hydrate(component, options) {
 			return instance;
 		}, false);
 	} catch (error) {
-		if (!hydrated && options.recover !== false) {
-			// eslint-disable-next-line no-console
-			console.error(
-				'ERR_SVELTE_HYDRATION_MISMATCH' +
-					(DEV
-						? ': Hydration failed because the initial UI does not match what was rendered on the server.'
-						: ''),
-				error
-			);
+		if (
+			!hydrated &&
+			options.recover !== false &&
+			/** @type {Error} */ (error).message.includes('hydration_missing_marker_close')
+		) {
+			w.hydration_mismatch();
 
+			// If an error occured above, the operations might not yet have been initialised.
+			init_operations();
 			clear_text_content(target);
 
 			set_hydrating(false);
@@ -175,28 +186,24 @@ export function hydrate(component, options) {
 	} finally {
 		set_hydrating(!!previous_hydrate_nodes);
 		set_hydrate_nodes(previous_hydrate_nodes);
+		reset_head_anchor();
 	}
 }
 
 /**
- * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
- * @template {Record<string, any>} Events
- * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} Component
+ * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<any>>} Component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
  * 		anchor: Node;
- * 		props?: Props;
- * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
+ * 		props?: any;
+ * 		events?: any;
  * 		context?: Map<any, any>;
  * 		intro?: boolean;
  * 	}} options
  * @returns {Exports}
  */
-function _mount(
-	Component,
-	{ target, anchor, props = /** @type {Props} */ ({}), events, context, intro = false }
-) {
+function _mount(Component, { target, anchor, props = {}, events, context, intro = false }) {
 	init_operations();
 
 	const registered_events = new Set();
@@ -272,6 +279,7 @@ function _mount(
 				target.removeEventListener(event_name, bound_event_listener);
 			}
 			root_event_handles.delete(event_handle);
+			mounted_components.delete(component);
 		};
 	});
 
@@ -292,8 +300,9 @@ let mounted_components = new WeakMap();
 export function unmount(component) {
 	const fn = mounted_components.get(component);
 	if (DEV && !fn) {
+		w.lifecycle_double_unmount();
 		// eslint-disable-next-line no-console
-		console.warn('Tried to unmount a component that was not mounted.');
+		console.trace('stack trace');
 	}
 	fn?.();
 }

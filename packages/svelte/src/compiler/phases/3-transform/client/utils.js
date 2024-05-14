@@ -1,6 +1,10 @@
 import * as b from '../../../utils/builders.js';
-import { extract_paths, is_simple_expression, object } from '../../../utils/ast.js';
-import { error } from '../../../errors.js';
+import {
+	extract_paths,
+	is_expression_async,
+	is_simple_expression,
+	object
+} from '../../../utils/ast.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,
@@ -70,6 +74,11 @@ export function serialize_get_binding(node, state) {
 		return node;
 	}
 
+	if (binding.node.name === '$$props') {
+		// Special case for $$props which only exists in the old world
+		return b.id('$$sanitized_props');
+	}
+
 	if (binding.kind === 'store_sub') {
 		return b.call(node);
 	}
@@ -79,17 +88,7 @@ export function serialize_get_binding(node, state) {
 	}
 
 	if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
-		if (binding.node.name === '$$props') {
-			// Special case for $$props which only exists in the old world
-			// TODO this probably shouldn't have a 'prop' binding kind
-			return node;
-		}
-
-		if (
-			state.analysis.accessors ||
-			(state.analysis.immutable ? binding.reassigned : binding.mutated) ||
-			binding.initial
-		) {
+		if (!state.analysis.runes || binding.reassigned || binding.initial) {
 			return b.call(node);
 		}
 
@@ -113,103 +112,6 @@ export function serialize_get_binding(node, state) {
 	}
 
 	return node;
-}
-
-/**
- * @param {import('estree').Expression | import('estree').Pattern} expression
- * @returns {boolean}
- */
-function is_expression_async(expression) {
-	switch (expression.type) {
-		case 'AwaitExpression': {
-			return true;
-		}
-		case 'ArrayPattern': {
-			return expression.elements.some((element) => element && is_expression_async(element));
-		}
-		case 'ArrayExpression': {
-			return expression.elements.some((element) => {
-				if (!element) {
-					return false;
-				} else if (element.type === 'SpreadElement') {
-					return is_expression_async(element.argument);
-				} else {
-					return is_expression_async(element);
-				}
-			});
-		}
-		case 'AssignmentPattern':
-		case 'AssignmentExpression':
-		case 'BinaryExpression':
-		case 'LogicalExpression': {
-			return is_expression_async(expression.left) || is_expression_async(expression.right);
-		}
-		case 'CallExpression':
-		case 'NewExpression': {
-			return (
-				(expression.callee.type !== 'Super' && is_expression_async(expression.callee)) ||
-				expression.arguments.some((element) => {
-					if (element.type === 'SpreadElement') {
-						return is_expression_async(element.argument);
-					} else {
-						return is_expression_async(element);
-					}
-				})
-			);
-		}
-		case 'ChainExpression': {
-			return is_expression_async(expression.expression);
-		}
-		case 'ConditionalExpression': {
-			return (
-				is_expression_async(expression.test) ||
-				is_expression_async(expression.alternate) ||
-				is_expression_async(expression.consequent)
-			);
-		}
-		case 'ImportExpression': {
-			return is_expression_async(expression.source);
-		}
-		case 'MemberExpression': {
-			return (
-				(expression.object.type !== 'Super' && is_expression_async(expression.object)) ||
-				(expression.property.type !== 'PrivateIdentifier' &&
-					is_expression_async(expression.property))
-			);
-		}
-		case 'ObjectPattern':
-		case 'ObjectExpression': {
-			return expression.properties.some((property) => {
-				if (property.type === 'SpreadElement') {
-					return is_expression_async(property.argument);
-				} else if (property.type === 'Property') {
-					return (
-						(property.key.type !== 'PrivateIdentifier' && is_expression_async(property.key)) ||
-						is_expression_async(property.value)
-					);
-				}
-			});
-		}
-		case 'RestElement': {
-			return is_expression_async(expression.argument);
-		}
-		case 'SequenceExpression':
-		case 'TemplateLiteral': {
-			return expression.expressions.some((subexpression) => is_expression_async(subexpression));
-		}
-		case 'TaggedTemplateExpression': {
-			return is_expression_async(expression.tag) || is_expression_async(expression.quasi);
-		}
-		case 'UnaryExpression':
-		case 'UpdateExpression': {
-			return is_expression_async(expression.argument);
-		}
-		case 'YieldExpression': {
-			return expression.argument ? is_expression_async(expression.argument) : false;
-		}
-		default:
-			return false;
-	}
 }
 
 /**
@@ -277,7 +179,7 @@ export function serialize_set_binding(node, context, fallback, options) {
 	}
 
 	if (assignee.type !== 'Identifier' && assignee.type !== 'MemberExpression') {
-		error(node, 'INTERNAL', `Unexpected assignment type ${assignee.type}`);
+		throw new Error(`Unexpected assignment type ${assignee.type}`);
 	}
 
 	// Handle class private/public state assignment cases
@@ -547,19 +449,32 @@ export const function_visitor = (node, context) => {
 function get_hoistable_params(node, context) {
 	const scope = context.state.scope;
 
-	/** @type {import('estree').Pattern[]} */
+	/** @type {import('estree').Identifier[]} */
 	const params = [];
-	let added_props = false;
+
+	/**
+	 * We only want to push if it's not already present to avoid name clashing
+	 * @param {import('estree').Identifier} id
+	 */
+	function push_unique(id) {
+		if (!params.find((param) => param.name === id.name)) {
+			params.push(id);
+		}
+	}
 
 	for (const [reference] of scope.references) {
-		const binding = scope.get(reference);
+		let binding = scope.get(reference);
 
 		if (binding !== null && !scope.declarations.has(reference) && binding.initial !== node) {
 			if (binding.kind === 'store_sub') {
 				// We need both the subscription for getting the value and the store for updating
-				params.push(b.id(binding.node.name.slice(1)));
-				params.push(b.id(binding.node.name));
-			} else if (
+				push_unique(b.id(binding.node.name));
+				binding = /** @type {import('#compiler').Binding} */ (
+					scope.get(binding.node.name.slice(1))
+				);
+			}
+
+			if (
 				// If it's a destructured derived binding, then we can extract the derived signal reference and use that.
 				binding.expression !== null &&
 				typeof binding.expression !== 'function' &&
@@ -569,7 +484,7 @@ function get_hoistable_params(node, context) {
 				binding.expression.object.callee.name === '$.get' &&
 				binding.expression.object.arguments[0].type === 'Identifier'
 			) {
-				params.push(b.id(binding.expression.object.arguments[0].name));
+				push_unique(b.id(binding.expression.object.arguments[0].name));
 			} else if (
 				// If we are referencing a simple $$props value, then we need to reference the object property instead
 				(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
@@ -577,14 +492,10 @@ function get_hoistable_params(node, context) {
 				binding.initial === null &&
 				!context.state.analysis.accessors
 			) {
-				// Handle $$props.something use-cases
-				if (!added_props) {
-					added_props = true;
-					params.push(b.id('$$props'));
-				}
+				push_unique(b.id('$$props'));
 			} else {
 				// create a copy to remove start/end tags which would mess up source maps
-				params.push(b.id(binding.node.name));
+				push_unique(b.id(binding.node.name));
 			}
 		}
 	}

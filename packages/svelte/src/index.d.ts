@@ -1,5 +1,7 @@
 // This should contain all the public interfaces (not all of them are actually importable, check current Svelte for which ones are).
 
+import './ambient.js';
+
 /**
  * @deprecated Svelte components were classes in Svelte 4. In Svelte 5, thy are not anymore.
  * Use `mount` or `createRoot` instead to instantiate components.
@@ -18,13 +20,18 @@ export interface ComponentConstructorOptions<
 	$$inline?: boolean;
 }
 
-// Utility type for ensuring backwards compatibility on a type level: If there's a default slot, add 'children' to the props if it doesn't exist there already
-type PropsWithChildren<Props, Slots> = Props &
-	(Props extends { children?: any }
-		? {}
-		: Slots extends { default: any }
-			? { children?: Snippet }
-			: {});
+/**
+ * Utility type for ensuring backwards compatibility on a type level that if there's a default slot, add 'children' to the props
+ */
+type Properties<Props, Slots> = Props &
+	(Slots extends { default: any }
+		? // This is unfortunate because it means "accepts no props" turns into "accepts any prop"
+			// but the alternative is non-fixable type errors because of the way TypeScript index
+			// signatures work (they will always take precedence and make an impossible-to-satisfy children type).
+			Props extends Record<string, never>
+			? any
+			: { children?: any }
+		: {});
 
 /**
  * Can be used to create strongly typed Svelte components.
@@ -55,23 +62,26 @@ type PropsWithChildren<Props, Slots> = Props &
  * for more info.
  */
 export class SvelteComponent<
-	Props extends Record<string, any> = any,
+	Props extends Record<string, any> = Record<string, any>,
 	Events extends Record<string, any> = any,
 	Slots extends Record<string, any> = any
 > {
+	/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
+	static element?: typeof HTMLElement;
+
 	[prop: string]: any;
 	/**
 	 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
 	 * is a stop-gap solution. Migrate towards using `mount` or `createRoot` instead. See
 	 * https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more info.
 	 */
-	constructor(options: ComponentConstructorOptions<PropsWithChildren<Props, Slots>>);
+	constructor(options: ComponentConstructorOptions<Properties<Props, Slots>>);
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
 	 * */
-	$$prop_def: PropsWithChildren<Props, Slots>;
+	$$prop_def: Props; // Without Properties: unnecessary, causes type bugs
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
@@ -86,6 +96,12 @@ export class SvelteComponent<
 	 *
 	 * */
 	$$slot_def: Slots;
+	/**
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
+	 * */
+	$$bindings?: string;
 
 	/**
 	 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
@@ -116,7 +132,7 @@ export class SvelteComponent<
  * @deprecated Use `SvelteComponent` instead. See TODO for more information.
  */
 export class SvelteComponentTyped<
-	Props extends Record<string, any> = any,
+	Props extends Record<string, any> = Record<string, any>,
 	Events extends Record<string, any> = any,
 	Slots extends Record<string, any> = any
 > extends SvelteComponent<Props, Events, Slots> {}
@@ -223,4 +239,3 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 }
 
 export * from './index-client.js';
-import './ambient.js';

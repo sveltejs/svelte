@@ -49,6 +49,8 @@ export interface Effect extends Reaction {
 	prev: null | Effect;
 	/** Next sibling child effect created inside the parent signal */
 	next: null | Effect;
+	/** Dev only */
+	component_function?: any;
 }
 
 export interface ValueDebug<V = unknown> extends Value<V> {
