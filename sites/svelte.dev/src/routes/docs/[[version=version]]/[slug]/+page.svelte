@@ -3,10 +3,8 @@
 	import { Icon } from '@sveltejs/site-kit/components';
 	import { copy_code_descendants } from '@sveltejs/site-kit/actions';
 	import { DocsOnThisPage, setupDocsHovers } from '@sveltejs/site-kit/docs';
-	import versions from '$lib/docs/versions.js';
 
 	export let data;
-	$: version = versions.find((v) => v.version === $page.params.version);
 
 	$: pages = data.sections.flatMap((section) => section.pages);
 	$: index = pages.findIndex(({ path }) => path === $page.url.pathname);
@@ -25,13 +23,14 @@
 </svelte:head>
 
 <div class="text" id="docs-content" use:copy_code_descendants>
-	<a
-		class="edit"
-		href="https://github.com/sveltejs/svelte/edit/{version?.branch ??
-			'main'}/documentation/docs/{data.page.file}"
-	>
-		<Icon size={50} name="edit" /> Edit this page on GitHub
-	</a>
+	{#if !$page.params.version}
+		<a
+			class="edit"
+			href="https://github.com/sveltejs/svelte/edit/main/documentation/docs/{data.page.file}"
+		>
+			<Icon size={50} name="edit" /> Edit this page on GitHub
+		</a>
+	{/if}
 
 	<DocsOnThisPage details={data.page} />
 

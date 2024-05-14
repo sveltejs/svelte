@@ -5,5 +5,6 @@ export const CONTENT_BASE_PATHS = {
 	BLOG: `${CONTENT_BASE}/blog`,
 	TUTORIAL: `${CONTENT_BASE}/tutorial`,
 	DOCS: `${CONTENT_BASE}/docs`,
+	PREVIOUS_DOCS: `./scripts/previous-docs`,
 	EXAMPLES: `${CONTENT_BASE}/examples`
 };

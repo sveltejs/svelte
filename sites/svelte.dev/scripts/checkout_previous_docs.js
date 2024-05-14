@@ -1,5 +1,13 @@
 import { execFile } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync } from 'node:fs';
+import {
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	renameSync,
+	rmSync,
+	writeFileSync
+} from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -17,8 +25,11 @@ try {
 		const version_path = join(docs_dir, version_dir.name);
 		const {
 			tags: { regex: tags_regex_raw, filter: tags_filter },
-			path: repo_path
-		} = JSON.parse(readFileSync(join(version_path, 'config.json'), 'utf-8'));
+			path: repo_path,
+			format
+		} = /** @type {import('src/lib/docs/types').Config} */ JSON.parse(
+			readFileSync(join(version_path, 'config.json'), 'utf-8')
+		);
 
 		// Filter list of tags
 		const tags_regex = new RegExp(tags_regex_raw);
@@ -52,7 +63,6 @@ try {
 				tags = [...map.entries()].map(([major_minor, [tag]]) => [tag, major_minor]);
 				break;
 			}
-			case '':
 			case undefined:
 				break;
 			default:
@@ -79,7 +89,7 @@ try {
 		let skipped = 0;
 		let i = 0;
 		for (const [ref, title] of tags) {
-			const dest_path = join(version_path, `${String(i++).padStart(3, '0')}_${title}`);
+			let dest_path = join(version_path, `${String(i++).padStart(3, '0')}_${title}`);
 			if (existsSync(dest_path)) {
 				if (force) rmRf(dest_path);
 				else {
@@ -87,10 +97,20 @@ try {
 					continue;
 				}
 			}
+			if (format === 'flat') {
+				mkdirSync(dest_path);
+				dest_path = join(dest_path, '01-documentation');
+			}
 			rmRf(temp_dir);
 			mkdirSync(temp_dir);
 			await run_process(['git', `--work-tree=${temp_dir}`, 'checkout', ref, '--', repo_path]);
 			await renameSync(join(temp_dir, repo_path), dest_path);
+			if (format === 'flat') {
+				writeFileSync(
+					join(dest_path, 'meta.json'),
+					JSON.stringify({ title: 'Documentation' }, undefined, 2)
+				);
+			}
 		}
 
 		if (skipped) {

@@ -8,7 +8,8 @@ import {
 } from '@sveltejs/site-kit/markdown';
 import { CONTENT_BASE_PATHS } from '../../../constants.js';
 import { render_content } from '../renderer';
-import versions from '$lib/docs/versions.js';
+import { readdir, readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
 /**
  * @param {import('./types').DocsData} docs_data
@@ -34,8 +35,15 @@ export async function get_parsed_docs(docs_data, slug) {
  * @return {Promise<import('./types').DocsData>}
  * */
 export async function get_docs_data(version = undefined) {
+	if (version?.startsWith('v-')) version = version.substring(2);
 	let base;
-	if (versions.find((v) => v.version === version)) base = `./scripts/previous-docs/${version}/docs`;
+	const version_group = (await get_versions()).find((group) => version in group.versions);
+	if (version_group)
+		base = join(
+			CONTENT_BASE_PATHS.PREVIOUS_DOCS,
+			version_group.id,
+			version_group.versions[version]
+		);
 	else base = CONTENT_BASE_PATHS.DOCS;
 
 	const { readdir, readFile } = await import('node:fs/promises');
@@ -85,7 +93,7 @@ export async function get_docs_data(version = undefined) {
 				content: page_content,
 				category: category_title,
 				sections: await get_sections(page_content),
-				path: `${app_base}/docs/${version ? version + '/' : ''}${page_slug}`,
+				path: `${app_base}/docs/${version ? `v-${version}/` : ''}${page_slug}`,
 				file: `${category_dir}/${filename}`
 			});
 		}
@@ -168,4 +176,24 @@ export async function get_sections(markdown) {
 	}
 
 	return /** @type {import('./types').Section[]} */ (root.sections);
+}
+
+/**
+ * @return {Promise<import('$lib/docs/types').VersionGroup[]>}
+ */
+export async function get_versions() {
+	const base = CONTENT_BASE_PATHS.PREVIOUS_DOCS;
+	return Promise.all(
+		(await readdir(base)).map(async (dir) => {
+			const { title } = JSON.parse(await readFile(join(base, dir, 'config.json'), 'utf-8'));
+			const versions = await readdir(join(base, dir));
+			versions.splice(versions.indexOf('config.json'), 1);
+			versions.sort();
+			return {
+				title,
+				id: dir,
+				versions: Object.fromEntries(versions.map((dir) => [dir.substring(4), dir]))
+			};
+		})
+	);
 }

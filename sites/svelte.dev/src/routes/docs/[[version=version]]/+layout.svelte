@@ -1,7 +1,6 @@
 <script>
 	import { page } from '$app/stores';
 	import { DocsContents } from '@sveltejs/site-kit/docs';
-	import versions from '$lib/docs/versions.js';
 	import { goto } from '$app/navigation';
 
 	export let data;
@@ -9,6 +8,13 @@
 	$: version = param_version;
 	$: if (version !== param_version)
 		goto(`/docs/${version === 'latest' ? '' : version + '/'}introduction`);
+	$: version_groups = data.version_groups
+		.slice()
+		.reverse()
+		.map((group) => ({
+			title: group.title,
+			versions: Object.keys(group.versions).reverse()
+		}));
 
 	$: pageData = $page.data.page;
 
@@ -21,9 +27,13 @@
 		<div class="toc-version-picker">
 			Version:
 			<select bind:value={version}>
-				<option value="latest">Latest (Svelte 5)</option>
-				{#each versions as v}
-					<option value={v.version}>{v.title}</option>
+				<option value="latest">Latest</option>
+				{#each version_groups as group}
+					<optgroup label={group.title}>
+						{#each group.versions as version}
+							<option value={'v-' + version}>{version}</option>
+						{/each}
+					</optgroup>
 				{/each}
 			</select>
 		</div>

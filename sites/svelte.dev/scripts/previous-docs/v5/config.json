@@ -1,8 +1,8 @@
 {
 	"title": "Svelte 5 (RC)",
 	"tags": {
-		"regex": "^svelte@5\\.0\\.0-(next.\\d+)$"
+		"regex": "^svelte@(5\\.0\\.0-next.\\d+)$"
 	},
-	"path": "documentation/docs",
+	"path": "sites/svelte-5-preview/src/routes/docs/content",
 	"format": "sections"
 }
