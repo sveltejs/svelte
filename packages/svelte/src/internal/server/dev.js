@@ -27,8 +27,7 @@ let parent = null;
 function error_on_client(payload, message) {
 	message =
 		`${message}\n\n` +
-		'Ensure your components render valid HTML as the browser will try to repair invalid HTML, ' +
-		'which may result in content being shifted around and will likely result in a hydration mismatch.';
+		'This can cause content to shift around as the browser repairs the HTML, and will likely result in a `hydration_mismatch` warning.';
 	// eslint-disable-next-line no-console
 	console.error(message);
 	payload.head.out += `<script>console.error(${JSON.stringify(message)})</script>`;
