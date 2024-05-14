@@ -69,11 +69,13 @@ export function set_text(dom, value) {
  * @param {null | ((anchor: Comment) => void)} fallback_fn
  */
 export function slot(anchor, $$props, slot_name, slot_props, fallback_fn) {
+	var is_snippet = false;
 	var slot_fn = $$props.$$slots?.[slot_name];
 	if (slot_fn === true) {
 		if (slot_name === 'default') {
 			slot_fn = $$props.children;
 		} else {
+			is_snippet = true;
 			slot_fn = $$props[slot_name];
 		}
 	}
@@ -83,7 +85,7 @@ export function slot(anchor, $$props, slot_name, slot_props, fallback_fn) {
 			fallback_fn(anchor);
 		}
 	} else {
-		slot_fn(anchor, slot_props);
+		slot_fn(anchor, is_snippet ? () => slot_props : slot_props);
 	}
 }
 

@@ -4,7 +4,7 @@
 
 <Child>
 	Default
-	{#snippet named()}
-		Named 
+	{#snippet named({ foo })}
+		Named {foo}
 	{/snippet}
 </Child>
