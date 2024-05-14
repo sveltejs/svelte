@@ -2624,6 +2624,28 @@ declare namespace $state {
 	 */
 	export function snapshot<T>(state: T): T;
 
+	/**
+	 * To take a check if two reactive from `$state()` are the same, use `$state.is`:
+	 *
+	 * Example:
+	 * ```ts
+	 * <script>
+	 *	 let state = $state({});
+	 *	 let object = {};
+	 *
+	 *	 state.object = object;
+	 *
+	 *	 console.log(state.object === object); // false because of the $state proxy
+	 *
+	 *   console.log($state.is(state.object, object)); // true
+	 * </script>
+	 * ```
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$state.is
+	 *
+	 */
+	export function is(a: unknown, b: unknown): boolean;
+
 	// prevent intellisense from being unhelpful
 	/** @deprecated */
 	export const apply: never;

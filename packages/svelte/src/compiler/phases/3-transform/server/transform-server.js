@@ -778,6 +778,13 @@ const javascript_visitors_runes = {
 			return /** @type {import('estree').Expression} */ (context.visit(node.arguments[0]));
 		}
 
+		if (rune === '$state.is') {
+			return b.call(
+				'Object.is',
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
+			);
+		}
+
 		if (rune === '$inspect' || rune === '$inspect().with') {
 			return transform_inspect_rune(node, context);
 		}

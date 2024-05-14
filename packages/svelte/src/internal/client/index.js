@@ -143,7 +143,7 @@ export {
 	validate_prop_bindings
 } from './validate.js';
 export { raf } from './timing.js';
-export { proxy, snapshot } from './proxy.js';
+export { proxy, snapshot, is } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
 export {
 	child,

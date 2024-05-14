@@ -865,6 +865,12 @@ function validate_call_expression(node, scope, path) {
 			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 		}
 	}
+
+	if (rune === '$state.is') {
+		if (node.arguments.length !== 2) {
+			e.rune_invalid_arguments_length(node, rune, 'exactly two arguments');
+		}
+	}
 }
 
 /**
