@@ -72,3 +72,16 @@ export function ownership_invalid_mutation(component, owner) {
 		console.warn("ownership_invalid_mutation");
 	}
 }
+
+/**
+ * Reactive `$state(...)` proxies and the values they proxy have different identities. Because of this, comparisons with `%operator%` will produce unexpected results. Consider using `$state.is(a, b)` instead
+ * @param {string} operator
+ */
+export function state_proxy_equality_mismatch(operator) {
+	if (DEV) {
+		console.warn(`%c[svelte] ${"state_proxy_equality_mismatch"}\n%c${`Reactive \`$state(...)\` proxies and the values they proxy have different identities. Because of this, comparisons with \`${operator}\` will produce unexpected results. Consider using \`$state.is(a, b)\` instead`}`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("state_proxy_equality_mismatch");
+	}
+}

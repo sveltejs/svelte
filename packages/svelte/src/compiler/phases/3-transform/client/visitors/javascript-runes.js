@@ -451,6 +451,31 @@ export const javascript_visitors_runes = {
 		}
 
 		context.next();
+	},
+	BinaryExpression(node, { state, visit, next }) {
+		const operator = node.operator;
+
+		if (state.options.dev) {
+			if (operator === '===' || operator === '!==') {
+				return b.call(
+					'$.strict_equals',
+					/** @type {import('estree').Expression} */ (visit(node.left)),
+					/** @type {import('estree').Expression} */ (visit(node.right)),
+					operator === '!==' && b.literal(false)
+				);
+			}
+
+			if (operator === '==' || operator === '!=') {
+				return b.call(
+					'$.equals',
+					/** @type {import('estree').Expression} */ (visit(node.left)),
+					/** @type {import('estree').Expression} */ (visit(node.right)),
+					operator === '!=' && b.literal(false)
+				);
+			}
+		}
+
+		next();
 	}
 };
 
