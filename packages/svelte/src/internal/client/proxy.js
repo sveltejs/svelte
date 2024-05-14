@@ -337,3 +337,24 @@ if (DEV) {
 		e.state_prototype_fixed();
 	};
 }
+
+/**
+ * @param {any} value
+ */
+export function get_proxied_value(value) {
+	if (value !== null && typeof value === 'object' && STATE_SYMBOL in value) {
+		var metadata = value[STATE_SYMBOL];
+		if (metadata) {
+			return metadata.p;
+		}
+	}
+	return value;
+}
+
+/**
+ * @param {any} a
+ * @param {any} b
+ */
+export function is(a, b) {
+	return Object.is(get_proxied_value(a), get_proxied_value(b));
+}

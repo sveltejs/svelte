@@ -3,6 +3,7 @@ import { render_effect, effect } from '../../../reactivity/effects.js';
 import { stringify } from '../../../render.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
+import { get_proxied_value, is } from '../../../proxy.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -95,10 +96,10 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 		if (is_checkbox) {
 			value = value || [];
 			// @ts-ignore
-			input.checked = value.includes(input.__value);
+			input.checked = get_proxied_value(value).includes(get_proxied_value(input.__value));
 		} else {
 			// @ts-ignore
-			input.checked = input.__value === value;
+			input.checked = is(input.__value, value);
 		}
 	});
 
