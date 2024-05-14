@@ -9,7 +9,7 @@ import { current_component } from './context.js';
  * @typedef {{
  * 	tag: string;
  * 	parent: null | Element;
- *  file: string;
+ *  filename: string;
  * }} Element
  */
 
@@ -46,19 +46,12 @@ function print_file(file) {
  * @param {number} column
  */
 export function push_element(payload, tag, line, column) {
-	var file;
-
-	if (current_component !== null) {
-		const filename = current_component.function.filename;
-		if (filename) {
-			file = filename.split('/').at(-1);
-		}
-	}
+	var filename = /** @type {import('#server').Component} */ (current_component).function.filename;
 
 	if (current_element !== null && !is_tag_valid_with_parent(tag, current_element.tag)) {
 		error_on_client(
 			payload,
-			`<${tag}> ${print_file(file)} is not a valid child element of <${current_element.tag}> ${print_file(current_element.file)}`
+			`<${tag}> ${print_file(filename)} is not a valid child element of <${current_element.tag}> ${print_file(current_element.filename)}`
 		);
 	}
 
@@ -68,7 +61,7 @@ export function push_element(payload, tag, line, column) {
 			if (interactive_elements.has(element.tag)) {
 				error_on_client(
 					payload,
-					`<${tag}> ${print_file(file)} is not a valid child element of <${element.tag}> ${print_file(element.file)}`
+					`<${tag}> ${print_file(filename)} is not a valid child element of <${element.tag}> ${print_file(element.filename)}`
 				);
 			}
 			element = element.parent;
@@ -81,7 +74,7 @@ export function push_element(payload, tag, line, column) {
 			if (element.tag === 'p') {
 				error_on_client(
 					payload,
-					`<${tag}> ${print_file(file)} is not a valid child element of <p> ${print_file(element.file)}`
+					`<${tag}> ${print_file(filename)} is not a valid child element of <p> ${print_file(element.filename)}`
 				);
 			}
 			element = element.parent;
@@ -91,7 +84,7 @@ export function push_element(payload, tag, line, column) {
 	current_element = {
 		tag,
 		parent: current_element,
-		file
+		filename
 	};
 }
 
