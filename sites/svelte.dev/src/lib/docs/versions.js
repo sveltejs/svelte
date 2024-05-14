@@ -3,7 +3,7 @@
  */
 const versions = [
 	{
-		git_ref: 'origin/svelte-4',
+		branch: 'svelte-4',
 		version: 'v4',
 		title: 'Svelte 4',
 		description: 'TODO'

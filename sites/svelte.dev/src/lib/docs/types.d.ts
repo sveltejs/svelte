@@ -1,5 +1,5 @@
 export interface DocsVersion {
-	git_ref: string;
+	branch: string;
 	version: string;
 	title: string;
 	description: string;

@@ -21,7 +21,13 @@ for (const version of versions) {
 	// Delete dir 'previous-docs/documentation'
 	rmSync(new_docs_dir, { recursive: true, force: true });
 	// Checkout docs to 'previous-docs/documentation'
-	const args = [`--work-tree=${docs_dir}`, 'checkout', version.git_ref, '--', 'documentation'];
+	const args = [
+		`--work-tree=${docs_dir}`,
+		'checkout',
+		`origin/${version.branch}`,
+		'--',
+		'documentation'
+	];
 	await new Promise((resolve, reject) => {
 		execFile('git', args, (error) => {
 			if (error) reject(error);
