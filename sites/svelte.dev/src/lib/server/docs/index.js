@@ -8,6 +8,7 @@ import {
 } from '@sveltejs/site-kit/markdown';
 import { CONTENT_BASE_PATHS } from '../../../constants.js';
 import { render_content } from '../renderer';
+import versions from '$lib/server/docs/versions.js';
 
 /**
  * @param {import('./types').DocsData} docs_data
@@ -28,8 +29,15 @@ export async function get_parsed_docs(docs_data, slug) {
 	return null;
 }
 
-/** @return {Promise<import('./types').DocsData>} */
-export async function get_docs_data(base = CONTENT_BASE_PATHS.DOCS) {
+/**
+ * @param {string | null} version
+ * @return {Promise<import('./types').DocsData>}
+ * */
+export async function get_docs_data(version) {
+	let base;
+	if (versions.find((v) => v.version === version)) base = `./scripts/previous-docs/${version}/docs`;
+	else base = CONTENT_BASE_PATHS.DOCS;
+
 	const { readdir, readFile } = await import('node:fs/promises');
 
 	/** @type {import('./types').DocsData} */
