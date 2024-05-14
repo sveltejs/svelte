@@ -1,4 +1,3 @@
-import { DEV } from 'esm-env';
 import * as w from '../warnings.js';
 import { get_proxied_value } from '../proxy.js';
 
@@ -66,11 +65,10 @@ export function init_array_prototype_warnings() {
  * @returns {boolean}
  */
 export function strict_equals(a, b) {
-	if (DEV) {
-		if (a !== b && get_proxied_value(a) === get_proxied_value(b)) {
-			w.state_proxy_equality_mismatch('=== operator');
-		}
+	if (a !== b && get_proxied_value(a) === get_proxied_value(b)) {
+		w.state_proxy_equality_mismatch('=== operator');
 	}
+
 	return a === b;
 }
 
@@ -80,10 +78,9 @@ export function strict_equals(a, b) {
  * @returns {boolean}
  */
 export function equals(a, b) {
-	if (DEV) {
-		if (a != b && get_proxied_value(a) == get_proxied_value(b)) {
-			w.state_proxy_equality_mismatch('== operator');
-		}
+	if (a != b && get_proxied_value(a) == get_proxied_value(b)) {
+		w.state_proxy_equality_mismatch('== operator');
 	}
+
 	return a == b;
 }
