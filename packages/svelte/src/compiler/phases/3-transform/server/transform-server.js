@@ -27,6 +27,7 @@ import { DOMBooleanAttributes, HYDRATION_END, HYDRATION_START } from '../../../.
 import { escape_html } from '../../../../escaping.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
 import { BLOCK_CLOSE, BLOCK_CLOSE_ELSE } from '../../../../internal/server/hydration.js';
+import { locator } from '../../../state.js';
 
 export const block_open = t_string(`<!--${HYDRATION_START}-->`);
 export const block_close = t_string(`<!--${HYDRATION_END}-->`);
@@ -778,6 +779,13 @@ const javascript_visitors_runes = {
 			return /** @type {import('estree').Expression} */ (context.visit(node.arguments[0]));
 		}
 
+		if (rune === '$state.is') {
+			return b.call(
+				'Object.is',
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
+			);
+		}
+
 		if (rune === '$inspect' || rune === '$inspect().with') {
 			return transform_inspect_rune(node, context);
 		}
@@ -1364,8 +1372,19 @@ const template_visitors = {
 		}
 
 		if (context.state.options.dev) {
+			const location = /** @type {import('locate-character').Location} */ (locator(node.start));
 			context.state.template.push(
-				t_statement(b.stmt(b.call('$.push_element', b.literal(node.name), b.id('$$payload'))))
+				t_statement(
+					b.stmt(
+						b.call(
+							'$.push_element',
+							b.id('$$payload'),
+							b.literal(node.name),
+							b.literal(location.line),
+							b.literal(location.column)
+						)
+					)
+				)
 			);
 		}
 
@@ -2279,9 +2298,12 @@ export function server_component(analysis, options) {
 		// undefined to a binding that has a default value.
 		template.body.push(b.stmt(b.call('$.bind_props', b.id('$$props'), b.object(props))));
 	}
+	/** @type {import('estree').Expression[]} */
+	const push_args = [];
+	if (options.dev) push_args.push(b.id(analysis.name));
 
 	const component_block = b.block([
-		b.stmt(b.call('$.push', b.literal(analysis.runes))),
+		b.stmt(b.call('$.push', ...push_args)),
 		.../** @type {import('estree').Statement[]} */ (instance.body),
 		.../** @type {import('estree').Statement[]} */ (template.body),
 		b.stmt(b.call('$.pop'))
@@ -2374,6 +2396,22 @@ export function server_component(analysis, options) {
 		);
 	} else {
 		body.push(b.export_default(component_function));
+	}
+
+	if (options.dev && options.filename) {
+		let filename = options.filename;
+		if (/(\/|\w:)/.test(options.filename)) {
+			// filename is absolute — truncate it
+			const parts = filename.split(/[/\\]/);
+			filename = parts.length > 3 ? ['...', ...parts.slice(-3)].join('/') : filename;
+		}
+
+		// add `App.filename = 'App.svelte'` so that we can print useful messages later
+		body.unshift(
+			b.stmt(
+				b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.literal(filename))
+			)
+		);
 	}
 
 	return {

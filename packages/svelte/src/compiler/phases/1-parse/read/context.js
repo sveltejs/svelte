@@ -10,6 +10,7 @@ import {
 import { parse_expression_at } from '../acorn.js';
 import { regex_not_newline_characters } from '../../patterns.js';
 import * as e from '../../../errors.js';
+import { locator } from '../../../state.js';
 
 /**
  * @param {import('../index.js').Parser} parser
@@ -29,7 +30,10 @@ export default function read_pattern(parser, optional_allowed = false) {
 			type: 'Identifier',
 			name,
 			start,
-			loc: parser.get_location(start, parser.index),
+			loc: {
+				start: /** @type {import('locate-character').Location} */ (locator(start)),
+				end: /** @type {import('locate-character').Location} */ (locator(parser.index))
+			},
 			end: parser.index,
 			typeAnnotation: annotation
 		};

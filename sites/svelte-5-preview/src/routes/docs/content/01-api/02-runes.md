@@ -112,6 +112,24 @@ This is handy when you want to pass some state to an external library or API tha
 
 > Note that `$state.snapshot` will clone the data when removing reactivity. If the value passed isn't a `$state` proxy, it will be returned as-is.
 
+## `$state.is`
+
+Sometimes you might need to compare two values, one of which is a reactive `$state(...)` proxy. For this you can use `$state.is(a, b)`:
+
+```svelte
+<script>
+	let foo = $state({});
+	let bar = {};
+
+	foo.bar = bar;
+
+	console.log(foo.bar === bar); // false — `foo.bar` is a reactive proxy
+	console.log($state.is(foo.bar, bar)); // true
+</script>
+```
+
+This is handy when you might want to check if the object exists within a deeply reactive object/array.
+
 ## `$derived`
 
 Derived state is declared with the `$derived` rune:

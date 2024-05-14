@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.133
+
+### Patch Changes
+
+- fix: add backwards-compat for old warning codes in legacy mode ([#11607](https://github.com/sveltejs/svelte/pull/11607))
+
 ## 5.0.0-next.132
 
 ### Patch Changes

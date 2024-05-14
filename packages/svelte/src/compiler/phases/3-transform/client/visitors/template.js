@@ -38,6 +38,7 @@ import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
 import { walk } from 'zimmerframe';
+import { locator } from '../../../../state.js';
 
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
@@ -1841,7 +1842,7 @@ export const template_visitors = {
 		let location = [-1, -1];
 
 		if (context.state.options.dev) {
-			const loc = context.state.source_locator(node.start);
+			const loc = locator(node.start);
 			if (loc) {
 				location[0] = loc.line;
 				location[1] = loc.column;
@@ -2192,7 +2193,7 @@ export const template_visitors = {
 			})
 		);
 
-		const location = context.state.options.dev && context.state.source_locator(node.start);
+		const location = context.state.options.dev && locator(node.start);
 
 		context.state.init.push(
 			b.stmt(

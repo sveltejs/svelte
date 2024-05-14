@@ -1,4 +1,4 @@
-<!-- svelte-ignore a11y_figcaption_parent a11y_missing_attribute -->
+<!-- svelte-ignore a11y_figcaption_parent, a11y_missing_attribute -->
 <div>
 	<figure>
 		<img src="potato.jpg">

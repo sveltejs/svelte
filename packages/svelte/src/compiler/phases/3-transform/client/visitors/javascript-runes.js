@@ -209,7 +209,8 @@ export const javascript_visitors_runes = {
 				rune === '$effect.active' ||
 				rune === '$effect.root' ||
 				rune === '$inspect' ||
-				rune === '$state.snapshot'
+				rune === '$state.snapshot' ||
+				rune === '$state.is'
 			) {
 				if (init != null && is_hoistable_function(init)) {
 					const hoistable_function = visit(init);
@@ -427,6 +428,14 @@ export const javascript_visitors_runes = {
 			return b.call(
 				'$.snapshot',
 				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
+			);
+		}
+
+		if (rune === '$state.is') {
+			return b.call(
+				'$.is',
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0])),
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[1]))
 			);
 		}
 

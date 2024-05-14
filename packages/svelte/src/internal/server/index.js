@@ -1,13 +1,6 @@
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
-import {
-	UNINITIALIZED,
-	DOMBooleanAttributes,
-	RawTextElements,
-	disallowed_paragraph_contents,
-	interactive_elements,
-	is_tag_valid_with_parent
-} from '../../constants.js';
+import { UNINITIALIZED, DOMBooleanAttributes, RawTextElements } from '../../constants.js';
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
@@ -16,28 +9,9 @@ import { validate_store } from '../shared/validate.js';
 
 /**
  * @typedef {{
- * 	tag: string;
- * 	parent: null | Element;
- * }} Element
- */
-
-/**
- * @typedef {{
  * 	head: string;
  * 	html: string;
  * }} RenderOutput
- */
-
-/**
- * @typedef {{
- * 	out: string;
- * 	anchor: number;
- * 	head: {
- * 		title: string;
- * 		out: string;
- * 		anchor: number;
- * 	};
- * }} Payload
  */
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
@@ -64,19 +38,14 @@ export const VoidElements = new Set([
 	'wbr'
 ]);
 
-/**
- * @type {Element | null}
- */
-let current_element = null;
-
-/** @returns {Payload} */
+/** @returns {import('#server').Payload} */
 function create_payload() {
 	return { out: '', head: { title: '', out: '', anchor: 0 }, anchor: 0 };
 }
 
 /**
- * @param {Payload} to_copy
- * @returns {Payload}
+ * @param {import('#server').Payload} to_copy
+ * @returns {import('#server').Payload}
  */
 export function copy_payload(to_copy) {
 	return {
@@ -87,8 +56,8 @@ export function copy_payload(to_copy) {
 
 /**
  * Assigns second payload to first
- * @param {Payload} p1
- * @param {Payload} p2
+ * @param {import('#server').Payload} p1
+ * @param {import('#server').Payload} p2
  * @returns {void}
  */
 export function assign_payload(p1, p2) {
@@ -98,59 +67,7 @@ export function assign_payload(p1, p2) {
 }
 
 /**
- * @param {Payload} payload
- * @param {string} message
- */
-function error_on_client(payload, message) {
-	message =
-		`Svelte SSR validation error:\n\n${message}\n\n` +
-		'Ensure your components render valid HTML as the browser will try to repair invalid HTML, ' +
-		'which may result in content being shifted around and will likely result in a hydration mismatch.';
-	// eslint-disable-next-line no-console
-	console.error(message);
-	payload.head.out += `<script>console.error(\`${message}\`)</script>`;
-}
-
-/**
- * @param {string} tag
- * @param {Payload} payload
- */
-export function push_element(tag, payload) {
-	if (current_element !== null && !is_tag_valid_with_parent(tag, current_element.tag)) {
-		error_on_client(payload, `<${tag}> is invalid inside <${current_element.tag}>`);
-	}
-	if (interactive_elements.has(tag)) {
-		let element = current_element;
-		while (element !== null) {
-			if (interactive_elements.has(element.tag)) {
-				error_on_client(payload, `<${tag}> is invalid inside <${element.tag}>`);
-			}
-			element = element.parent;
-		}
-	}
-	if (disallowed_paragraph_contents.includes(tag)) {
-		let element = current_element;
-		while (element !== null) {
-			if (element.tag === 'p') {
-				error_on_client(payload, `<${tag}> is invalid inside <p>`);
-			}
-			element = element.parent;
-		}
-	}
-	current_element = {
-		tag,
-		parent: current_element
-	};
-}
-
-export function pop_element() {
-	if (current_element !== null) {
-		current_element = current_element.parent;
-	}
-}
-
-/**
- * @param {Payload} payload
+ * @param {import('#server').Payload} payload
  * @param {string} tag
  * @param {() => void} attributes_fn
  * @param {() => void} children_fn
@@ -214,8 +131,8 @@ export function render(component, options) {
 }
 
 /**
- * @param {Payload} payload
- * @param {(head_payload: Payload['head']) => void} fn
+ * @param {import('#server').Payload} payload
+ * @param {(head_payload: import('#server').Payload['head']) => void} fn
  * @returns {void}
  */
 export function head(payload, fn) {
@@ -239,7 +156,7 @@ export function attr(name, value, boolean) {
 }
 
 /**
- * @param {Payload} payload
+ * @param {import('#server').Payload} payload
  * @param {boolean} is_html
  * @param {Record<string, string>} props
  * @param {() => void} component
@@ -497,8 +414,8 @@ export async function value_or_fallback_async(value, fallback) {
 }
 
 /**
- * @param {Payload} payload
- * @param {void | ((payload: Payload, props: Record<string, unknown>) => void)} slot_fn
+ * @param {import('#server').Payload} payload
+ * @param {void | ((payload: import('#server').Payload, props: Record<string, unknown>) => void)} slot_fn
  * @param {Record<string, unknown>} slot_props
  * @param {null | (() => void)} fallback_fn
  * @returns {void}
@@ -620,6 +537,8 @@ export function once(get_value) {
 }
 
 export { push, pop } from './context.js';
+
+export { push_element, pop_element } from './dev.js';
 
 export {
 	add_snippet_symbol,
