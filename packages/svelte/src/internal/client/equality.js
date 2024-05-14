@@ -76,10 +76,11 @@ export function init_array_prototype_warnings() {
 export function state_is(a, b) {
 	if (a != null && typeof a === 'object' && STATE_SYMBOL in a) {
 		const o = a[STATE_SYMBOL];
-		if (o != null) {
-			return object_is(o.p, b);
+		if (o != null && object_is(o.p, b)) {
+			return true
 		}
-	} else if (b != null && typeof b === 'object' && STATE_SYMBOL in b) {
+	}
+	if (b != null && typeof b === 'object' && STATE_SYMBOL in b) {
 		const o = b[STATE_SYMBOL];
 		if (o != null) {
 			return object_is(o.p, a);
@@ -109,7 +110,9 @@ export function strict_equals(a, b) {
  */
 export function equals(a, b) {
 	if (DEV) {
-		w.state_proxy_equality_mismatch('== operator');
+		if (state_is(a, b)) {
+			w.state_proxy_equality_mismatch('== operator');
+		}
 	}
 	return a == b;
 }
