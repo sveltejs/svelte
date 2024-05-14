@@ -3,9 +3,16 @@ import * as w from '../warnings.js';
 
 const regex_svelte_ignore = /^\s*svelte-ignore\s/;
 
-/** @type {Record<string, string>} */
+/** @type {Record<string, string>} Map of legacy code -> new code */
 const replacements = {
-	'non-top-level-reactive-declaration': 'reactive_declaration_invalid_placement'
+	'non-top-level-reactive-declaration': 'reactive_declaration_invalid_placement',
+	'module-script-reactive-declaration': 'reactive_declaration_module_script',
+	'empty-block': 'block_empty',
+	'avoid-is': 'attribute_avoid_is',
+	'invalid-html-attribute': 'attribute_invalid_property_name',
+	'a11y-structure': 'a11y_figcaption_parent',
+	'illegal-attribute-character': 'attribute_illegal_colon',
+	'invalid-rest-eachblock-binding': 'bind_invalid_each_rest'
 };
 
 /**
@@ -55,4 +62,22 @@ export function extract_svelte_ignore(offset, text, runes) {
 	}
 
 	return ignores;
+}
+
+/**
+ * Replaces legacy svelte-ignore codes with new codes.
+ * @param {string} text
+ * @returns {string}
+ */
+export function migrate_svelte_ignore(text) {
+	const match = regex_svelte_ignore.exec(text);
+	if (!match) return text;
+
+	const length = match[0].length;
+	return (
+		text.substring(0, length) +
+		text
+			.substring(length)
+			.replace(/\w+-\w+(-\w+)*/g, (code) => replacements[code] ?? code.replace(/-/g, '_'))
+	);
 }

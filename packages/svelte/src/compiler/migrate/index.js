@@ -7,6 +7,7 @@ import { get_rune } from '../phases/scope.js';
 import { reset } from '../state.js';
 import { extract_identifiers } from '../utils/ast.js';
 import { regex_is_valid_identifier } from '../phases/patterns.js';
+import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
 
 /**
  * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
@@ -174,6 +175,21 @@ export function migrate(source) {
 
 /** @type {import('zimmerframe').Visitors<import('../types/template.js').SvelteNode, State>} */
 const instance_script = {
+	_(node, { state, next }) {
+		// @ts-expect-error
+		const comments = node.leadingComments;
+		if (comments) {
+			for (const comment of comments) {
+				if (comment.type === 'Line') {
+					const migrated = migrate_svelte_ignore(comment.value);
+					if (migrated !== comment.value) {
+						state.str.overwrite(comment.start + '//'.length, comment.end, migrated);
+					}
+				}
+			}
+		}
+		next();
+	},
 	Identifier(node, { state }) {
 		handle_identifier(node, state);
 	},
@@ -473,6 +489,12 @@ const template = {
 			state.str.update(node.fragment.nodes[node.fragment.nodes.length - 1].end, node.end, '{/if}');
 		} else {
 			state.str.update(node.start, node.end, `{@render ${name}?.(${slot_props})}`);
+		}
+	},
+	Comment(node, { state }) {
+		const migrated = migrate_svelte_ignore(node.data);
+		if (migrated !== node.data) {
+			state.str.overwrite(node.start + '<!--'.length, node.end - '-->'.length, migrated);
 		}
 	}
 };
