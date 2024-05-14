@@ -27,7 +27,6 @@ export function extract_svelte_ignore(offset, text, runes) {
 	// Warnings have to be separated by commas, everything after is interpreted as prose
 	for (const match of text.slice(length).matchAll(/([\w$-]+)(,)?/gm)) {
 		const code = match[1];
-		const x = match.index + 1; // ???
 
 		ignores.push(code);
 
@@ -35,7 +34,8 @@ export function extract_svelte_ignore(offset, text, runes) {
 			const replacement = replacements[code] ?? code.replace(/-/g, '_');
 
 			if (runes) {
-				const start = offset + match.index;
+				// The type cast is for some reason necessary to pass the type check in CI
+				const start = offset + /** @type {number} */ (match.index);
 				const end = start + code.length;
 
 				if (w.codes.includes(replacement)) {
