@@ -727,9 +727,6 @@ function check_element(node, state) {
 	for (const attribute of node.attributes) {
 		if (attribute.type !== 'Attribute') continue;
 
-		// @ts-expect-error gross hack
-		attribute.ignores = node.ignores;
-
 		const name = attribute.name.toLowerCase();
 		// aria-props
 		if (name.startsWith('aria-')) {
