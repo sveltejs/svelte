@@ -1,0 +1,8 @@
+{
+	"title": "Svelte 5 (RC)",
+	"tags": {
+		"regex": "^svelte@5\\.0\\.0-(next.\\d+)$"
+	},
+	"path": "documentation/docs",
+	"format": "sections"
+}

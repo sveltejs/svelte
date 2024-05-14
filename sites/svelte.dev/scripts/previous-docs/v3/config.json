@@ -1,0 +1,9 @@
+{
+	"title": "Svelte 3",
+	"tags": {
+		"regex": "^v(3\\.\\d+\\.\\d+)$",
+		"filter": "minor"
+	},
+	"path": "site/content/docs",
+	"format": "flat"
+}

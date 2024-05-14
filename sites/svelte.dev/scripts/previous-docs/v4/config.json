@@ -1,0 +1,9 @@
+{
+	"title": "Svelte 4",
+	"tags": {
+		"regex": "^svelte@(4\\.\\d+\\.\\d+)$",
+		"filter": "minor"
+	},
+	"path": "documentation/docs",
+	"format": "sections"
+}
