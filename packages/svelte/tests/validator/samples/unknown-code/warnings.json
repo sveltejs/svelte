@@ -4,11 +4,11 @@
 		"message": "`a11y-missing-attribute` is no longer valid — please use `a11y_missing_attribute` instead",
 		"start": {
 			"line": 3,
-			"column": 17
+			"column": 19
 		},
 		"end": {
 			"line": 3,
-			"column": 39
+			"column": 41
 		}
 	},
 	{
@@ -28,11 +28,11 @@
 		"message": "`ally_missing_attribute` is not a recognised code (did you mean `a11y_missing_attribute`?)",
 		"start": {
 			"line": 8,
-			"column": 17
+			"column": 19
 		},
 		"end": {
 			"line": 8,
-			"column": 39
+			"column": 41
 		}
 	},
 	{
@@ -52,11 +52,11 @@
 		"message": "`a11y-misplaced-scope` is no longer valid — please use `a11y_misplaced_scope` instead",
 		"start": {
 			"line": 13,
-			"column": 17
+			"column": 19
 		},
 		"end": {
 			"line": 13,
-			"column": 37
+			"column": 39
 		}
 	},
 	{
