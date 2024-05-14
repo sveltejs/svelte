@@ -1,10 +1,10 @@
 import { execFile } from 'node:child_process';
-import versions from '../src/lib/server/docs/versions.js';
+import versions from '../src/lib/docs/versions.js';
 import { existsSync, mkdirSync, renameSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const force = process.env.FORCE_UPDATE === 'true';
+const force = true; //process.env.FORCE_UPDATE === 'true';
 
 const docs_dir = fileURLToPath(new URL('./previous-docs', import.meta.url));
 const new_docs_dir = join(docs_dir, 'documentation');
@@ -15,7 +15,7 @@ for (const version of versions) {
 	// Check if docs are already checked out
 	const version_dir = join(docs_dir, version.version);
 	if (!force && existsSync(version_dir)) {
-		console.log(`Docs for '${version.version}' already exists, skipping`);
+		console.log(`Docs for '${version.version}' already exist, skipping`);
 		continue;
 	}
 	// Delete dir 'previous-docs/documentation'

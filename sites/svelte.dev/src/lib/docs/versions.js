@@ -1,5 +1,5 @@
 /**
- * @type {import("./types").DocsVersion[]}
+ * @type {import("./types.js").DocsVersion[]}
  */
 const versions = [
 	{

@@ -8,7 +8,7 @@ import {
 } from '@sveltejs/site-kit/markdown';
 import { CONTENT_BASE_PATHS } from '../../../constants.js';
 import { render_content } from '../renderer';
-import versions from '$lib/server/docs/versions.js';
+import versions from '$lib/docs/versions.js';
 
 /**
  * @param {import('./types').DocsData} docs_data
@@ -30,10 +30,10 @@ export async function get_parsed_docs(docs_data, slug) {
 }
 
 /**
- * @param {string | null} version
+ * @param {string} version
  * @return {Promise<import('./types').DocsData>}
  * */
-export async function get_docs_data(version = null) {
+export async function get_docs_data(version = undefined) {
 	let base;
 	if (versions.find((v) => v.version === version)) base = `./scripts/previous-docs/${version}/docs`;
 	else base = CONTENT_BASE_PATHS.DOCS;
@@ -65,10 +65,10 @@ export async function get_docs_data(version = null) {
 
 		for (const filename of await readdir(`${base}/${category_dir}`)) {
 			if (filename === 'meta.json') continue;
-			const match = /\d{2}-(.+)/.exec(filename);
+			const match = /\d{2}-(.+)\.md/.exec(filename);
 			if (!match) continue;
 
-			const page_slug = match[1].replace('.md', '');
+			const page_slug = match[1];
 
 			const page_data = extractFrontmatter(
 				await readFile(`${base}/${category_dir}/${filename}`, 'utf-8')
