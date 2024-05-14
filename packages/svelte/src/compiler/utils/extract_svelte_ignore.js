@@ -34,6 +34,7 @@ export function extract_svelte_ignore(offset, text, runes) {
 			const replacement = replacements[code] ?? code.replace(/-/g, '_');
 
 			if (runes) {
+				// github are you stuck?
 				const start = offset + match.index;
 				const end = start + code.length;
 
