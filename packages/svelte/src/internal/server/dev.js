@@ -24,7 +24,7 @@ let parent = null;
  */
 function error_on_client(payload, message) {
 	message =
-		`Svelte SSR validation error:\n\n${message}\n\n` +
+		`${message}\n\n` +
 		'Ensure your components render valid HTML as the browser will try to repair invalid HTML, ' +
 		'which may result in content being shifted around and will likely result in a hydration mismatch.';
 	// eslint-disable-next-line no-console
