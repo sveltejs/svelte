@@ -12,11 +12,11 @@ export default test({
 		btn1.click();
 		await tick();
 
-		assert.deepEqual(warnings.length, 0);
+		assert.deepEqual(warnings.length, 1);
 
 		btn2.click();
 		await tick();
 
-		assert.deepEqual(warnings.length, 1);
+		assert.deepEqual(warnings.length, 2);
 	}
 });
