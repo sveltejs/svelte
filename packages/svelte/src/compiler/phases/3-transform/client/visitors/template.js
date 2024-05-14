@@ -789,6 +789,8 @@ function serialize_inline_component(node, component_name, context) {
 
 	/** @type {import('estree').Statement[]} */
 	const snippet_declarations = [];
+	/** @type {import('estree').Property[]} */
+	const serialized_slots = [];
 
 	// Group children by slot
 	for (const child of node.fragment.nodes) {
@@ -802,6 +804,8 @@ function serialize_inline_component(node, component_name, context) {
 			});
 
 			push_prop(b.prop('init', child.expression, child.expression));
+			// Back/forward compatibility: allows people to pass snippets when component still uses slots
+			serialized_slots.push(b.init(child.expression.name, b.true));
 
 			continue;
 		}
@@ -825,8 +829,6 @@ function serialize_inline_component(node, component_name, context) {
 	}
 
 	// Serialize each slot
-	/** @type {import('estree').Property[]} */
-	const serialized_slots = [];
 	for (const slot_name of Object.keys(children)) {
 		const body = create_block(node, `${node.name}_${slot_name}`, children[slot_name], context);
 		if (body.length === 0) continue;
@@ -3070,11 +3072,14 @@ export const template_visitors = {
 						b.block(create_block(node, 'fallback', node.fragment.nodes, context))
 					);
 
-		const expression = is_default
-			? b.call('$.default_slot', b.id('$$props'))
-			: b.member(b.member(b.id('$$props'), b.id('$$slots')), name, true, true);
-
-		const slot = b.call('$.slot', context.state.node, expression, props_expression, fallback);
+		const slot = b.call(
+			'$.slot',
+			context.state.node,
+			b.id('$$props'),
+			name,
+			props_expression,
+			fallback
+		);
 		context.state.init.push(b.stmt(slot));
 	},
 	SvelteHead(node, context) {
