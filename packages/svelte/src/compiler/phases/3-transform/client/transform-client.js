@@ -473,10 +473,12 @@ export function client_component(source, analysis, options) {
 	if (options.dev) {
 		if (options.filename) {
 			let filename = options.filename;
-			if (/(\/|\w:)/.test(options.filename)) {
-				// filename is absolute — truncate it
-				const parts = filename.split(/[/\\]/);
-				filename = parts.length > 3 ? ['...', ...parts.slice(-3)].join('/') : filename;
+			if(options.rootDir && filename.startsWith(options.rootDir)) {
+				filename = filename.replace(options.rootDir,'');
+				if(filename !== options.filename) {
+					// if after remove of rootDir first char is a path separator, remove that too
+					filename = filename.replace(/^[/\\]/,'')
+				}
 			}
 
 			// add `App.filename = 'App.svelte'` so that we can print useful messages later

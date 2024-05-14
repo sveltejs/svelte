@@ -8,6 +8,6 @@ export default test({
 	},
 
 	warnings: [
-		'.../samples/non-local-mutation-with-binding-2/Intermediate.svelte passed a value to .../samples/non-local-mutation-with-binding-2/Counter.svelte with `bind:`, but the value is owned by .../samples/non-local-mutation-with-binding-2/main.svelte. Consider creating a binding between .../samples/non-local-mutation-with-binding-2/main.svelte and .../samples/non-local-mutation-with-binding-2/Intermediate.svelte'
+		'packages/svelte/tests/runtime-runes/samples/non-local-mutation-with-binding-2/Intermediate.svelte passed a value to packages/svelte/tests/runtime-runes/samples/non-local-mutation-with-binding-2/Counter.svelte with `bind:`, but the value is owned by packages/svelte/tests/runtime-runes/samples/non-local-mutation-with-binding-2/main.svelte. Consider creating a binding between packages/svelte/tests/runtime-runes/samples/non-local-mutation-with-binding-2/main.svelte and packages/svelte/tests/runtime-runes/samples/non-local-mutation-with-binding-2/Intermediate.svelte'
 	]
 });

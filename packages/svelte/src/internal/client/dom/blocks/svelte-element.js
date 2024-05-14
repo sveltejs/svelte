@@ -116,7 +116,7 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 						// @ts-expect-error
 						element.__svelte_meta = {
 							loc: {
-								filename,
+								file: filename,
 								line: location[0],
 								column: location[1]
 							}
