@@ -1,3 +1,5 @@
+import * as state from './state.js';
+
 /** @typedef {{ start?: number, end?: number }} NodeLike */
 
 // interface is duplicated between here (used internally) and ./interfaces.js
@@ -5,8 +7,7 @@
 export class CompileError extends Error {
 	name = 'CompileError';
 
-	/** @type {import('#compiler').CompileError['filename']} */
-	filename = undefined;
+	filename = state.filename;
 
 	/** @type {import('#compiler').CompileError['position']} */
 	position = undefined;
@@ -25,8 +26,14 @@ export class CompileError extends Error {
 	 */
 	constructor(code, message, position) {
 		super(message);
+
 		this.code = code;
 		this.position = position;
+
+		if (position) {
+			this.start = state.locator(position[0]);
+			this.end = state.locator(position[1]);
+		}
 	}
 
 	toString() {
