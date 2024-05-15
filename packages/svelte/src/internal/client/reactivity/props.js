@@ -152,47 +152,43 @@ export function legacy_rest_props(props, exclude) {
  */
 const spread_props_handler = {
 	get(target, key) {
-		let i = target.props.length;
+		var i = target.props.length;
+
 		while (i--) {
-			let p = target.props[i];
-			let obj = p;
-			// in case the prop is the spread prop calling the function
-			// will track that state as a dep even if the requested key
-			// is not in it. to avoid that we call the function in untrack
-			// and check on the object. If it's there we call the function again
-			// to track and then access the key
-			untrack(() => {
-				if (is_function(p)) obj = p();
-			});
-			const keys_function = target.keys[i];
-			if (typeof obj === 'object' && obj !== null && key in obj) {
-				if (is_function(p)) {
-					p = p();
+			var p = target.props[i];
+
+			if (is_function(p)) {
+				// untrack, so we don't update `key` unnecessarily
+				var value = untrack(p);
+
+				if (value && typeof value === 'object' && key in value) {
+					return p()[key]; // start tracking
+				} else {
+					get(/** @type {import('#client').Value} */ (target.keys[i]));
 				}
+			} else if (key in p) {
 				return p[key];
-			} else if (keys_function) get(keys_function);
+			}
 		}
 	},
 	getOwnPropertyDescriptor(target, key) {
-		let i = target.props.length;
+		var i = target.props.length;
+
 		while (i--) {
-			let p = target.props[i];
-			let obj = p;
-			// in case the prop is the spread prop calling the function
-			// will track that state as a dep even if the requested key
-			// is not in it. to avoid that we call the function in untrack
-			// and check on the object. If it's there we call the function again
-			// to track and then access the key
-			untrack(() => {
-				if (is_function(p)) obj = p();
-			});
-			const keys_function = target.keys[i];
-			if (typeof obj === 'object' && obj !== null && key in obj) {
-				if (is_function(p)) {
-					p = p();
+			var p = target.props[i];
+
+			if (is_function(p)) {
+				// untrack, so we don't update `key` unnecessarily
+				var value = untrack(p);
+
+				if (value && typeof value === 'object' && key in value) {
+					return get_descriptor(p(), key); // start tracking
+				} else {
+					get(/** @type {import('#client').Value} */ (target.keys[i]));
 				}
+			} else if (key in p) {
 				return get_descriptor(p, key);
-			} else if (keys_function) get(keys_function);
+			}
 		}
 	},
 	has(target, key) {
@@ -225,7 +221,7 @@ const spread_props_handler = {
 export function spread_props(...props) {
 	const keys = props.map((p) => {
 		if (is_function(p)) {
-			return derived(() => Object.keys(p()).join(','));
+			return derived(() => Object.keys(p() ?? {}).join(','));
 		}
 
 		return null;
