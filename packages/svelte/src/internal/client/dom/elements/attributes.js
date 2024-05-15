@@ -348,7 +348,9 @@ export function handle_lazy_img(element) {
 		element.removeAttribute('loading');
 		element.removeAttribute('src');
 		requestAnimationFrame(() => {
-			element.loading = 'lazy';
+			if (element.loading !== 'eager') {
+				element.loading = 'lazy';
+			}
 			element.src = src;
 		});
 	}
