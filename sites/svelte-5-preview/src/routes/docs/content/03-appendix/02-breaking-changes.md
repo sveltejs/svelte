@@ -150,7 +150,7 @@ In Svelte 4, doing the following triggered reactivity:
 >
 ```
 
-The reason is that Svelte statically saw the reassignment and used is a hint to trigger a rerender. In runes mode, just wrapping the class with `$state` doesn't make it reactive. The reason is that reactivity is now runtime-based, and classes are left untouched. To make that code reactive, you instead need to make the `value` on `Foo` `$state`.
+This is because the Svelte compiler treated the assignment to `foo.value` as an instruction to update anything that referenced `foo`. In Svelte 5, reactivity is determined at runtime rather than compile time, so you should define `value` as a reactive `$state` field on the `Foo` class. Wrapping `new Foo()` with `$state(...)` will have no effect — only vanilla objects and arrays are made deeply reactive.
 
 ## Other breaking changes
 
