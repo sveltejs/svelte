@@ -5,7 +5,11 @@ import { getLocator } from 'locate-character';
 /** @type {import('#compiler').Warning[]} */
 export let warnings = [];
 
-/** @type {string | undefined} */
+/**
+ * The filename (if specified in the compiler options) relative to the rootDir (if specified).
+ * This should not be used in the compiler output except in dev mode
+ * @type {string | undefined}
+ */
 export let filename;
 
 export let locator = getLocator('', { offsetLine: 1 });
