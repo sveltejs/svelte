@@ -1,7 +1,7 @@
 [
 	{
 		"code": "mixed_event_handler_syntaxes",
-		"message": "Mixing old (on:click) and new syntaxes for event handling is not allowed. Use only the onclick syntax.",
+		"message": "Mixing old (on:click) and new syntaxes for event handling is not allowed. Use only the onclick syntax",
 		"start": {
 			"line": 11,
 			"column": 8
