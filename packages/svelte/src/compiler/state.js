@@ -34,15 +34,16 @@ export function pop_ignore() {
  * @param {{ filename?: string, rootDir?: string }} options
  */
 export function reset(source, options) {
+	const root_dir = options.rootDir?.replace(/\\/g, '/');
+	filename = options.filename?.replace(/\\/g, '/');
+
 	if (
-		typeof options.filename === 'string' &&
-		typeof options.rootDir === 'string' &&
-		options.filename.startsWith(options.rootDir)
+		typeof filename === 'string' &&
+		typeof root_dir === 'string' &&
+		filename.startsWith(root_dir)
 	) {
 		// make filename relative to rootDir
-		filename = options.filename.replace(options.rootDir, '').replace(/^[/\\]/, '');
-	} else {
-		filename = options.filename;
+		filename = filename.replace(root_dir, '').replace(/^[/\\]/, '');
 	}
 
 	locator = getLocator(source, { offsetLine: 1 });
