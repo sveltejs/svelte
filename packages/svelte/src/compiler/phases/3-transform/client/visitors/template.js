@@ -637,9 +637,6 @@ function serialize_inline_component(node, component_name, context) {
 	/** @type {Array<import('estree').Property[] | import('estree').Expression>} */
 	const props_and_spreads = [];
 
-	/** @type {(import('estree').Expression | null)[]} */
-	const spreads_keys = [];
-
 	/** @type {import('estree').ExpressionStatement[]} */
 	const lets = [];
 
@@ -680,7 +677,6 @@ function serialize_inline_component(node, component_name, context) {
 		props.push(prop);
 		if (!current_is_props) {
 			props_and_spreads.push(props);
-			spreads_keys.push(null);
 		}
 	}
 	for (const attribute of node.attributes) {
@@ -705,19 +701,8 @@ function serialize_inline_component(node, component_name, context) {
 				}
 
 				props_and_spreads.push(b.thunk(value));
-				const keys = b.call(
-					'$.derived',
-					b.thunk(
-						b.call(
-							b.member(b.call('Object.keys', b.logical('??', value, b.object([]))), b.id('join')),
-							b.literal(',')
-						)
-					)
-				);
-				spreads_keys.push(b.thunk(keys));
 			} else {
 				props_and_spreads.push(expression);
-				spreads_keys.push(null);
 			}
 		} else if (attribute.type === 'Attribute') {
 			if (attribute.name.startsWith('--')) {
@@ -873,8 +858,7 @@ function serialize_inline_component(node, component_name, context) {
 			? b.object(/** @type {import('estree').Property[]} */ (props_and_spreads[0]) || [])
 			: b.call(
 					'$.spread_props',
-					b.array(props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p))),
-					b.array(spreads_keys)
+					...props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p))
 				);
 	/** @param {import('estree').Identifier} node_id */
 	let fn = (node_id) =>
@@ -3041,9 +3025,6 @@ export const template_visitors = {
 		/** @type {import('estree').Expression[]} */
 		const spreads = [];
 
-		/** @type {(import('estree').Expression | null)[]} */
-		const spreads_keys = [];
-
 		/** @type {import('estree').ExpressionStatement[]} */
 		const lets = [];
 
@@ -3054,18 +3035,9 @@ export const template_visitors = {
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'SpreadAttribute') {
-				const value = /** @type {import('estree').Expression} */ (context.visit(attribute));
-				const keys = b.call(
-					'$.derived',
-					b.thunk(
-						b.call(
-							b.member(b.call('Object.keys', b.logical('??', value, b.object([]))), b.id('join')),
-							b.literal(',')
-						)
-					)
+				spreads.push(
+					b.thunk(/** @type {import('estree').Expression} */ (context.visit(attribute)))
 				);
-				spreads.push(b.thunk(value));
-				spreads_keys.push(b.thunk(keys));
 			} else if (attribute.type === 'Attribute') {
 				const [, value] = serialize_attribute_value(attribute.value, context);
 				if (attribute.name === 'name') {
@@ -3074,10 +3046,8 @@ export const template_visitors = {
 				} else if (attribute.name !== 'slot') {
 					if (attribute.metadata.dynamic) {
 						props.push(b.get(attribute.name, [b.return(value)]));
-						spreads_keys.push(null);
 					} else {
 						props.push(b.init(attribute.name, value));
-						spreads_keys.push(null);
 					}
 				}
 			} else if (attribute.type === 'LetDirective') {
@@ -3091,7 +3061,7 @@ export const template_visitors = {
 		const props_expression =
 			spreads.length === 0
 				? b.object(props)
-				: b.call('$.spread_props', b.array([b.object(props), ...spreads]), b.array(spreads_keys));
+				: b.call('$.spread_props', b.object(props), ...spreads);
 		const fallback =
 			node.fragment.nodes.length === 0
 				? b.literal(null)

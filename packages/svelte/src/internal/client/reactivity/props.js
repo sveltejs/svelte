@@ -148,7 +148,7 @@ export function legacy_rest_props(props, exclude) {
  * that looks like `() => { dynamic: props }, { static: prop }, ..` and wraps
  * them so that the whole thing is passed to the component as the `$$props` argument.
  * @template {Record<string | symbol, unknown>} T
- * @type {ProxyHandler<{ props: (Array<T | (() => T)>), keys: (Array<(() => import('./types.js').Value<string>) | undefined>) }>}}
+ * @type {ProxyHandler<{ props: Array<T | (() => T)>, keys: Array<import('#client').Value<string> | null> }>}}
  */
 const spread_props_handler = {
 	get(target, key) {
@@ -170,7 +170,7 @@ const spread_props_handler = {
 					p = p();
 				}
 				return p[key];
-			} else if (keys_function && is_function(keys_function)) get(keys_function());
+			} else if (keys_function) get(keys_function);
 		}
 	},
 	getOwnPropertyDescriptor(target, key) {
@@ -192,7 +192,7 @@ const spread_props_handler = {
 					p = p();
 				}
 				return get_descriptor(p, key);
-			} else if (keys_function && is_function(keys_function)) get(keys_function());
+			} else if (keys_function) get(keys_function);
 		}
 	},
 	has(target, key) {
@@ -220,10 +220,17 @@ const spread_props_handler = {
 
 /**
  * @param {Array<Record<string, unknown> | (() => Record<string, unknown>)>} props
- * @param {(Array<(() => import('./types.js').Value<string>) | undefined>)} keys
  * @returns {any}
  */
-export function spread_props(props, keys) {
+export function spread_props(...props) {
+	const keys = props.map((p) => {
+		if (is_function(p)) {
+			return derived(() => Object.keys(p()).join(','));
+		}
+
+		return null;
+	});
+
 	return new Proxy({ props, keys }, spread_props_handler);
 }
 
