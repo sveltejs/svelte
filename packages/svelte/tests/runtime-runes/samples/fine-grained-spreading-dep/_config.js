@@ -2,70 +2,36 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	// The component context class instance gets shared between tests, strangely, causing hydration to fail?
-
+	html: `
+		<button>reset</button>
+		<button>add foo</button>
+		<button>update foo</button>
+		<button>update bar</button>
+		<button>update rest</button>
+		<button>update x</button>
+	`,
 	async test({ assert, target, logs }) {
-		/**
-		 * @type {HTMLButtonElement | null}
-		 */
-		const no_keys_change = target.querySelector('#no-keys-change');
-		/**
-		 * @type {HTMLButtonElement | null}
-		 */
-		const keys_change = target.querySelector('#keys-change');
-		/**
-		 * @type {HTMLButtonElement | null}
-		 */
-		const no_keys_change_assign = target.querySelector('#no-keys-change-assign');
-		/**
-		 * @type {HTMLButtonElement | null}
-		 */
-		const keys_change_assign = target.querySelector('#keys-change-assign');
-		/**
-		 * @type {HTMLButtonElement | null}
-		 */
-		const keys_change_override = target.querySelector('#keys-change-override');
-		/**
-		 * @type {HTMLButtonElement | null}
-		 */
-		const change_override_assign = target.querySelector('#change-override-assign');
+		const [reset, add_foo, update_foo, update_bar, update_rest, update_x] =
+			target.querySelectorAll('button');
 
 		assert.deepEqual(logs, ['something']);
 
-		flushSync(() => {
-			no_keys_change?.click();
-		});
-
+		flushSync(() => reset.click());
 		assert.deepEqual(logs, ['something']);
 
-		flushSync(() => {
-			keys_change?.click();
-		});
-
+		flushSync(() => add_foo.click());
 		assert.deepEqual(logs, ['something', 'something']);
 
-		flushSync(() => {
-			no_keys_change_assign?.click();
-		});
-
+		flushSync(() => update_foo.click());
 		assert.deepEqual(logs, ['something', 'something']);
 
-		flushSync(() => {
-			keys_change_assign?.click();
-		});
-
+		flushSync(() => update_bar.click());
 		assert.deepEqual(logs, ['something', 'something', 'something']);
 
-		flushSync(() => {
-			keys_change_override?.click();
-		});
-
+		flushSync(() => update_rest.click());
 		assert.deepEqual(logs, ['something', 'something', 'something', 'else']);
 
-		flushSync(() => {
-			change_override_assign?.click();
-		});
-
+		flushSync(() => update_x.click());
 		assert.deepEqual(logs, ['something', 'something', 'something', 'else', 'another']);
 	}
 });

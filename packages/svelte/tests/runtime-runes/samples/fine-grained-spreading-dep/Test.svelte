@@ -1,7 +1,7 @@
 <script>
-  let { about, ...rest } = $props();
+	let { x } = $props();
 
-  $effect(()=>{
-	console.log(about);
-  })
+	$effect(()=>{
+		console.log(x);
+	});
 </script>
