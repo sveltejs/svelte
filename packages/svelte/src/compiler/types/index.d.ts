@@ -226,7 +226,10 @@ export interface ModuleCompileOptions {
 
 // The following two somewhat scary looking types ensure that certain types are required but can be undefined still
 
-export type ValidatedModuleCompileOptions = Omit<Required<ModuleCompileOptions>, 'filename' | 'rootDir'> & {
+export type ValidatedModuleCompileOptions = Omit<
+	Required<ModuleCompileOptions>,
+	'filename' | 'rootDir'
+> & {
 	filename: ModuleCompileOptions['filename'];
 	rootDir: ModuleCompileOptions['rootDir'];
 };
