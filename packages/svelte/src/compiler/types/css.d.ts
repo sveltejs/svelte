@@ -33,6 +33,7 @@ export namespace Css {
 		metadata: {
 			parent_rule: null | Rule;
 			has_local_selectors: boolean;
+			is_global_block: boolean;
 		};
 	}
 
@@ -55,9 +56,10 @@ export namespace Css {
 		combinator: null | Combinator;
 		selectors: SimpleSelector[];
 		metadata: {
+			/** :global(..) */
 			is_global: boolean;
-			is_host: boolean;
-			is_root: boolean;
+			/** :root, :host, ::view-transition */
+			is_global_like: boolean;
 			scoped: boolean;
 		};
 	}

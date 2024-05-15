@@ -104,6 +104,7 @@ export const DOMBooleanAttributes = [
 ];
 
 export const namespace_svg = 'http://www.w3.org/2000/svg';
+export const namespace_mathml = 'http://www.w3.org/1998/Math/MathML';
 
 // while `input` is also an interactive element, it is never moved by the browser, so we don't need to check for it
 export const interactive_elements = new Set([
@@ -142,7 +143,8 @@ export const disallowed_paragraph_contents = [
 	'pre',
 	'section',
 	'table',
-	'ul'
+	'ul',
+	'p'
 ];
 
 // https://html.spec.whatwg.org/multipage/syntax.html#generate-implied-end-tags
@@ -158,7 +160,14 @@ export function is_tag_valid_with_parent(tag, parent_tag) {
 	switch (parent_tag) {
 		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inselect
 		case 'select':
-			return tag === 'option' || tag === 'optgroup' || tag === '#text';
+			return (
+				tag === 'option' ||
+				tag === 'optgroup' ||
+				tag === '#text' ||
+				tag === 'hr' ||
+				tag === 'script' ||
+				tag === 'template'
+			);
 		case 'optgroup':
 			return tag === 'option' || tag === '#text';
 		// Strictly speaking, seeing an <option> doesn't mean we're in a <select>

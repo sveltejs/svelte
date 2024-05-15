@@ -39,11 +39,12 @@ export interface Fragment {
 /**
  * - `html`    — the default, for e.g. `<div>` or `<span>`
  * - `svg`     — for e.g. `<svg>` or `<g>`
+ * - `mathml`  — for e.g. `<math>` or `<mrow>`
  * - `foreign` — for other compilation targets than the web, e.g. Svelte Native.
  *               Disallows bindings other than bind:this, disables a11y checks, disables any special attribute handling
  *               (also see https://github.com/sveltejs/svelte/pull/5652)
  */
-export type Namespace = 'html' | 'svg' | 'foreign';
+export type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
 
 export interface Root extends BaseNode {
 	type: 'Root';
@@ -93,6 +94,7 @@ export interface SvelteOptions {
 		 */
 		extend?: ArrowFunctionExpression | Identifier;
 	};
+	attributes: Attribute[];
 }
 
 /** Static text */
@@ -130,8 +132,6 @@ export interface Comment extends BaseNode {
 	type: 'Comment';
 	/** the contents of the comment */
 	data: string;
-	/** any svelte-ignore directives — <!-- svelte-ignore a b c --> would result in ['a', 'b', 'c'] */
-	ignores: string[];
 }
 
 /** A `{@const ...}` tag */
@@ -288,6 +288,8 @@ export interface RegularElement extends BaseElement {
 	metadata: {
 		/** `true` if this is an svg element */
 		svg: boolean;
+		/** `true` if this is a mathml element */
+		mathml: boolean;
 		/** `true` if contains a SpreadAttribute */
 		has_spread: boolean;
 		scoped: boolean;
@@ -320,6 +322,11 @@ export interface SvelteElement extends BaseElement {
 		 * the tag is dynamic, but we do our best to infer it from the template.
 		 */
 		svg: boolean;
+		/**
+		 * `true` if this is a mathml element. The boolean may not be accurate because
+		 * the tag is dynamic, but we do our best to infer it from the template.
+		 */
+		mathml: boolean;
 		scoped: boolean;
 	};
 }
@@ -467,6 +474,7 @@ export interface Script extends BaseNode {
 	type: 'Script';
 	context: string;
 	content: Program;
+	attributes: Attribute[];
 }
 
 declare module 'estree' {

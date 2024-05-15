@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid-component-directive",
+		"code": "component_invalid_directive",
 		"message": "This type of directive is not valid on components",
 		"start": {
 			"line": 7,

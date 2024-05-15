@@ -9,39 +9,39 @@
 <dir role="menu"></dir>
 <dl role="menubar"></dl>
 <dfn role="menuitem"></dfn>
-<dt role="menuitemcheckbox" aria-checked></dt>
-<fieldset role="menuitemradio" aria-checked></fieldset>
+<dt role="menuitemcheckbox" aria-checked="true"></dt>
+<fieldset role="menuitemradio" aria-checked="true"></fieldset>
 <figure>
-	<figcaption role="menuitemradio" aria-checked></figcaption>
+	<figcaption role="menuitemradio" aria-checked="true"></figcaption>
 </figure>
-<figure role="option" aria-selected></figure>
-<footer role="radio" aria-checked></footer>
+<figure role="option" aria-selected="true"></figure>
+<footer role="radio" aria-checked="true"></footer>
 <form role="radiogroup"></form>
 <h1 role="rowheader">Button</h1>
 <h2 role="scrollbar" aria-controls={[]} aria-valuenow={0}>Button</h2>
 <h3 role="searchbox">Button</h3>
 <h4 role="slider" aria-valuenow={0}>Button</h4>
 <h5 role="spinbutton">Button</h5>
-<h6 role="switch" aria-checked>Button</h6>
+<h6 role="switch" aria-checked="true">Button</h6>
 <hr role="tab" />
 <img role="tabpanel" alt="tabpanel" />
 <label role="textbox"></label>
 <legend role="toolbar"></legend>
 <li role="tree"></li>
 <main role="treegrid"></main>
-<mark role="treeitem" aria-selected></mark>
+<mark role="treeitem" aria-selected="true"></mark>
 <marquee role="doc-backlink"></marquee>
 <menu role="doc-biblioref"></menu>
 <meter role="doc-glossref"></meter>
 <nav role="doc-noteref"></nav>
 <ol role="button"></ol>
-<optgroup role="treeitem" aria-selected></optgroup>
+<optgroup role="treeitem" aria-selected="true"></optgroup>
 <output role="treegrid"></output>
 <p role="columnheader"></p>
 <pre role="tree"></pre>
-<progress role="combobox" aria-controls={[]} aria-expanded></progress>
+<progress role="combobox" aria-controls={[]} aria-expanded="true"></progress>
 <ruby role="toolbar"></ruby>
-<section role="radio" aria-label="radio" aria-checked></section>
+<section role="radio" aria-label="radio" aria-checked="true"></section>
 <table role="menu"></table>
 <tbody role="searchbox"></tbody>
 <tfoot role="listbox"></tfoot>
@@ -82,11 +82,11 @@
 <div role="menu"></div>
 <div role="menubar"></div>
 <div role="menuitem"></div>
-<div role="menuitemcheckbox" aria-checked></div>
-<div role="menuitemradio" aria-checked></div>
-<div role="option" aria-selected></div>
+<div role="menuitemcheckbox" aria-checked="true"></div>
+<div role="menuitemradio" aria-checked="true"></div>
+<div role="option" aria-selected="true"></div>
 <div role="progressbar"></div>
-<div role="radio" aria-checked></div>
+<div role="radio" aria-checked="true"></div>
 <div role="radiogroup"></div>
 <div role="row"></div>
 <div role="rowheader"></div>
@@ -94,11 +94,11 @@
 <div role="searchbox"></div>
 <div role="slider" aria-valuenow={0}></div>
 <div role="spinbutton"></div>
-<div role="switch" aria-checked></div>
+<div role="switch" aria-checked="true"></div>
 <div role="tab"></div>
 <div role="textbox"></div>
 <div role="treeitem" aria-selected={true}></div>
-<body role="combobox" aria-controls={[]} aria-expanded></body>
+<body role="combobox" aria-controls={[]} aria-expanded="true"></body>
 <td role="button"></td>
 
 <!-- VALID: HTML elements attributed with a non-interactive role -->

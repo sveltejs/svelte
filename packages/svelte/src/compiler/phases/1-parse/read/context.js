@@ -9,7 +9,8 @@ import {
 } from '../utils/bracket.js';
 import { parse_expression_at } from '../acorn.js';
 import { regex_not_newline_characters } from '../../patterns.js';
-import { error } from '../../../errors.js';
+import * as e from '../../../errors.js';
+import { locator } from '../../../state.js';
 
 /**
  * @param {import('../index.js').Parser} parser
@@ -29,14 +30,17 @@ export default function read_pattern(parser, optional_allowed = false) {
 			type: 'Identifier',
 			name,
 			start,
-			loc: parser.get_location(start, parser.index),
+			loc: {
+				start: /** @type {import('locate-character').Location} */ (locator(start)),
+				end: /** @type {import('locate-character').Location} */ (locator(parser.index))
+			},
 			end: parser.index,
 			typeAnnotation: annotation
 		};
 	}
 
 	if (!is_bracket_open(code)) {
-		error(i, 'expected-pattern');
+		e.expected_pattern(i);
 	}
 
 	const bracket_stack = [code];
@@ -49,11 +53,7 @@ export default function read_pattern(parser, optional_allowed = false) {
 		} else if (is_bracket_close(code)) {
 			const popped = /** @type {number} */ (bracket_stack.pop());
 			if (!is_bracket_pair(popped, code)) {
-				error(
-					i,
-					'expected-token',
-					String.fromCharCode(/** @type {number} */ (get_bracket_close(popped)))
-				);
+				e.expected_token(i, String.fromCharCode(/** @type {number} */ (get_bracket_close(popped))));
 			}
 			if (bracket_stack.length === 0) {
 				i += code <= 0xffff ? 1 : 2;

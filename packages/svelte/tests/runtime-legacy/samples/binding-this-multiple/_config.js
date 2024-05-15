@@ -2,11 +2,11 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	test({ assert, component, target }) {
+	test({ assert, target, logs }) {
 		const [b1, b2, b3] = target.querySelectorAll('button');
 		const first_h1 = target.querySelector('h1');
 
-		assert.deepEqual(component.log, [undefined, first_h1]);
+		assert.deepEqual(logs, [undefined, first_h1]);
 
 		flushSync(() => {
 			b3.click();
@@ -14,12 +14,12 @@ export default test({
 
 		const third_h1 = target.querySelector('h1');
 
-		assert.deepEqual(component.log, [undefined, first_h1, third_h1]);
+		assert.deepEqual(logs, [undefined, first_h1, third_h1]);
 
 		flushSync(() => {
 			b1.click();
 		});
 
-		assert.deepEqual(component.log, [undefined, first_h1, third_h1, target.querySelector('h1')]);
+		assert.deepEqual(logs, [undefined, first_h1, third_h1, target.querySelector('h1')]);
 	}
 });

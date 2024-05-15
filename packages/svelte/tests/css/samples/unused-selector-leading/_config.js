@@ -4,7 +4,7 @@ export default test({
 	warnings: [
 		{
 			filename: 'SvelteComponent.svelte',
-			code: 'css-unused-selector',
+			code: 'css_unused_selector',
 			message: 'Unused CSS selector ".foo"',
 			start: {
 				line: 4,
@@ -20,7 +20,7 @@ export default test({
 
 		{
 			filename: 'SvelteComponent.svelte',
-			code: 'css-unused-selector',
+			code: 'css_unused_selector',
 			message: 'Unused CSS selector ".baz"',
 			start: {
 				line: 4,

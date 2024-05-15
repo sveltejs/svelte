@@ -9,7 +9,7 @@ import {
 	HYDRATION_START
 } from '../../../../constants.js';
 import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
-import { empty } from '../operations.js';
+import { clear_text_content, empty } from '../operations.js';
 import { remove } from '../reconciler.js';
 import { untrack } from '../../runtime.js';
 import {
@@ -67,7 +67,7 @@ function pause_effects(items, controlled_anchor, callback) {
 	// DOM element, so we can apply a fast-path for clearing the contents of the element.
 	if (length > 0 && transitions.length === 0 && controlled_anchor !== null) {
 		var parent_node = /** @type {Element} */ (controlled_anchor.parentNode);
-		parent_node.textContent = '';
+		clear_text_content(parent_node);
 		parent_node.append(controlled_anchor);
 	}
 

@@ -1,6 +1,7 @@
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
-import { error } from '../../errors.js';
+import * as e from '../../errors.js';
+import * as w from '../../warnings.js';
 import {
 	extract_identifiers,
 	extract_all_identifiers_from_expression,
@@ -10,20 +11,21 @@ import {
 	object
 } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
-import { ReservedKeywords, Runes, SVGElements } from '../constants.js';
+import { MathMLElements, ReservedKeywords, Runes, SVGElements } from '../constants.js';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import { merge } from '../visitors.js';
 import { validation_legacy, validation_runes, validation_runes_js } from './validation.js';
-import { warn } from '../../warnings.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
-import { DelegatedEvents, namespace_svg } from '../../../constants.js';
+import { DelegatedEvents, namespace_mathml, namespace_svg } from '../../../constants.js';
 import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
 import { hash } from './utils.js';
 import { warn_unused } from './css/css-warn.js';
+import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
+import { pop_ignore, push_ignore } from '../../state.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -229,20 +231,13 @@ export function analyze_module(ast, options) {
 	for (const [name, references] of scope.references) {
 		if (name[0] !== '$' || ReservedKeywords.includes(name)) continue;
 		if (name === '$' || name[1] === '$') {
-			error(references[0].node, 'illegal-global', name);
+			e.global_reference_invalid(references[0].node, name);
 		}
 	}
 
-	/** @type {import('../types').RawWarning[]} */
-	const warnings = [];
-
-	const analysis = {
-		warnings
-	};
-
 	walk(
 		/** @type {import('estree').Node} */ (ast),
-		{ scope, analysis },
+		{ scope, analysis: { runes: true } },
 		// @ts-expect-error TODO clean this mess up
 		merge(set_scope(scopes), validation_runes_js, runes_scope_js_tweaker)
 	);
@@ -250,7 +245,6 @@ export function analyze_module(ast, options) {
 	return {
 		module: { ast, scope, scopes },
 		name: options.filename || 'module',
-		warnings,
 		accessors: false,
 		runes: true,
 		immutable: true
@@ -274,14 +268,11 @@ export function analyze_component(root, source, options) {
 	/** @type {import('../types.js').Template} */
 	const template = { ast: root.fragment, scope, scopes };
 
-	/** @type {import('../types').RawWarning[]} */
-	const warnings = [];
-
 	// create synthetic bindings for store subscriptions
 	for (const [name, references] of module.scope.references) {
 		if (name[0] !== '$' || ReservedKeywords.includes(name)) continue;
 		if (name === '$' || name[1] === '$') {
-			error(references[0].node, 'illegal-global', name);
+			e.global_reference_invalid(references[0].node, name);
 		}
 
 		const store_name = name.slice(1);
@@ -321,16 +312,16 @@ export function analyze_component(root, source, options) {
 			}
 
 			if (is_nested_store_subscription_node) {
-				error(is_nested_store_subscription_node, 'illegal-store-subscription');
+				e.store_invalid_scoped_subscription(is_nested_store_subscription_node);
 			}
 
 			if (options.runes !== false) {
 				if (declaration === null && /[a-z]/.test(store_name[0])) {
-					error(references[0].node, 'illegal-global', name);
+					e.global_reference_invalid(references[0].node, name);
 				} else if (declaration !== null && Runes.includes(/** @type {any} */ (name))) {
 					for (const { node, path } of references) {
 						if (path.at(-1)?.type === 'CallExpression') {
-							warn(warnings, node, [], 'store-with-rune-name', store_name);
+							w.store_rune_conflict(node, store_name);
 						}
 					}
 				}
@@ -345,7 +336,7 @@ export function analyze_component(root, source, options) {
 						// const state = $state(0) is valid
 						get_rune(/** @type {import('estree').Node} */ (path.at(-1)), module.scope) === null
 					) {
-						error(node, 'illegal-subscription');
+						e.store_invalid_subscription(node);
 					}
 				}
 			}
@@ -380,17 +371,21 @@ export function analyze_component(root, source, options) {
 		uses_slots: false,
 		uses_component_bindings: false,
 		uses_render_tags: false,
+		needs_context: false,
+		needs_props: false,
+		event_directive_node: null,
+		uses_event_attributes: false,
 		custom_element: options.customElementOptions ?? options.customElement,
 		inject_styles: options.css === 'injected' || options.customElement,
 		accessors: options.customElement
 			? true
-			: !!options.accessors ||
+			: (runes ? false : !!options.accessors) ||
 				// because $set method needs accessors
 				!!options.legacy?.componentApi,
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
 		slot_names: new Map(),
-		warnings,
+		top_level_snippets: [],
 		css: {
 			ast: root.css,
 			hash: root.css
@@ -406,19 +401,31 @@ export function analyze_component(root, source, options) {
 		source
 	};
 
-	if (!options.customElement && root.options?.customElement) {
-		warn(analysis.warnings, root.options, [], 'missing-custom-element-compile-option');
+	if (root.options) {
+		for (const attribute of root.options.attributes) {
+			if (attribute.name === 'accessors') {
+				w.options_deprecated_accessors(attribute);
+			}
+
+			if (attribute.name === 'customElement' && !options.customElement) {
+				w.options_missing_custom_element(attribute);
+			}
+
+			if (attribute.name === 'immutable') {
+				w.options_deprecated_immutable(attribute);
+			}
+		}
 	}
 
 	if (analysis.runes) {
 		const props_refs = module.scope.references.get('$$props');
 		if (props_refs) {
-			error(props_refs[0].node, 'invalid-legacy-props');
+			e.legacy_props_invalid(props_refs[0].node);
 		}
 
 		const rest_props_refs = module.scope.references.get('$$restProps');
 		if (rest_props_refs) {
-			error(rest_props_refs[0].node, 'invalid-legacy-rest-props');
+			e.legacy_rest_props_invalid(rest_props_refs[0].node);
 		}
 
 		for (const { ast, scope, scopes } of [module, instance, template]) {
@@ -443,21 +450,50 @@ export function analyze_component(root, source, options) {
 			);
 		}
 
-		if (analysis.exports.length > 0) {
-			for (const [_, binding] of instance.scope.declarations) {
-				if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
-					if (
-						analysis.exports.some(
-							({ alias, name }) => (binding.prop_alias ?? binding.node.name) === (alias ?? name)
-						)
-					) {
-						error(binding.node, 'conflicting-property-name');
+		// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
+		for (const scope of [module.scope, instance.scope]) {
+			outer: for (const [name, binding] of scope.declarations) {
+				if (binding.kind === 'normal' && binding.reassigned) {
+					inner: for (const { path } of binding.references) {
+						if (path[0].type !== 'Fragment') continue;
+						for (let i = 1; i < path.length; i += 1) {
+							const type = path[i].type;
+							if (
+								type === 'FunctionDeclaration' ||
+								type === 'FunctionExpression' ||
+								type === 'ArrowFunctionExpression'
+							) {
+								continue inner;
+							}
+							// bind:this doesn't need to be a state reference if it will never change
+							if (
+								type === 'BindDirective' &&
+								/** @type {import('#compiler').BindDirective} */ (path[i]).name === 'this'
+							) {
+								for (let j = i - 1; j >= 0; j -= 1) {
+									const type = path[j].type;
+									if (
+										type === 'IfBlock' ||
+										type === 'EachBlock' ||
+										type === 'AwaitBlock' ||
+										type === 'KeyBlock'
+									) {
+										w.non_reactive_update(binding.node, name);
+										continue outer;
+									}
+								}
+								continue inner;
+							}
+						}
+
+						w.non_reactive_update(binding.node, name);
+						continue outer;
 					}
 				}
 			}
 		}
 	} else {
-		instance.scope.declare(b.id('$$props'), 'bindable_prop', 'synthetic');
+		instance.scope.declare(b.id('$$props'), 'rest_prop', 'synthetic');
 		instance.scope.declare(b.id('$$restProps'), 'rest_prop', 'synthetic');
 
 		for (const { ast, scope, scopes } of [module, instance, template]) {
@@ -495,7 +531,7 @@ export function analyze_component(root, source, options) {
 					(r) => r.node !== binding.node && r.path.at(-1)?.type !== 'ExportSpecifier'
 				);
 				if (!references.length && !instance.scope.declarations.has(`$${name}`)) {
-					warn(warnings, binding.node, [], 'unused-export-let', name);
+					w.export_let_unused(binding.node, name);
 				}
 			}
 		}
@@ -503,51 +539,15 @@ export function analyze_component(root, source, options) {
 		analysis.reactive_statements = order_reactive_statements(analysis.reactive_statements);
 	}
 
-	if (analysis.uses_render_tags && (analysis.uses_slots || analysis.slot_names.size > 0)) {
-		error(analysis.slot_names.values().next().value, 'conflicting-slot-usage');
+	if (analysis.event_directive_node && analysis.uses_event_attributes) {
+		e.mixed_event_handler_syntaxes(
+			analysis.event_directive_node,
+			analysis.event_directive_node.name
+		);
 	}
 
-	// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
-	for (const scope of [module.scope, instance.scope]) {
-		outer: for (const [name, binding] of scope.declarations) {
-			if (binding.kind === 'normal' && binding.reassigned) {
-				inner: for (const { path } of binding.references) {
-					if (path[0].type !== 'Fragment') continue;
-					for (let i = 1; i < path.length; i += 1) {
-						const type = path[i].type;
-						if (
-							type === 'FunctionDeclaration' ||
-							type === 'FunctionExpression' ||
-							type === 'ArrowFunctionExpression'
-						) {
-							continue inner;
-						}
-						// bind:this doesn't need to be a state reference if it will never change
-						if (
-							type === 'BindDirective' &&
-							/** @type {import('#compiler').BindDirective} */ (path[i]).name === 'this'
-						) {
-							for (let j = i - 1; j >= 0; j -= 1) {
-								const type = path[j].type;
-								if (
-									type === 'IfBlock' ||
-									type === 'EachBlock' ||
-									type === 'AwaitBlock' ||
-									type === 'KeyBlock'
-								) {
-									warn(warnings, binding.node, [], 'non-state-reference', name);
-									continue outer;
-								}
-							}
-							continue inner;
-						}
-					}
-
-					warn(warnings, binding.node, [], 'non-state-reference', name);
-					continue outer;
-				}
-			}
-		}
+	if (analysis.uses_render_tags && (analysis.uses_slots || analysis.slot_names.size > 0)) {
+		e.slot_snippet_conflict(analysis.slot_names.values().next().value);
 	}
 
 	if (analysis.css.ast) {
@@ -557,7 +557,17 @@ export function analyze_component(root, source, options) {
 		for (const element of analysis.elements) {
 			prune(analysis.css.ast, element);
 		}
-		warn_unused(analysis.css.ast, analysis.warnings);
+
+		const { comment } = analysis.css.ast.content;
+		const should_ignore_unused =
+			comment &&
+			extract_svelte_ignore(comment.start, comment.data, analysis.runes).includes(
+				'css_unused_selector'
+			);
+
+		if (!should_ignore_unused) {
+			warn_unused(analysis.css.ast);
+		}
 
 		outer: for (const element of analysis.elements) {
 			if (element.metadata.scoped) {
@@ -679,7 +689,7 @@ const legacy_scope_tweaker = {
 				(d) => d.scope === state.analysis.module.scope && d.declaration_kind !== 'const'
 			)
 		) {
-			warn(state.analysis.warnings, node, path, 'module-script-reactive-declaration');
+			w.reactive_declaration_module_script(node);
 		}
 
 		if (
@@ -808,6 +818,8 @@ const legacy_scope_tweaker = {
 			return next();
 		}
 
+		state.analysis.needs_props = true;
+
 		if (!node.declaration) {
 			for (const specifier of node.specifiers) {
 				const binding = /** @type {import('#compiler').Binding} */ (
@@ -862,10 +874,20 @@ const legacy_scope_tweaker = {
 				}
 			}
 		}
+	},
+	StyleDirective(node, { state }) {
+		// the case for node.value different from true is already covered by the Identifier visitor
+		if (node.value === true) {
+			// get the binding for node.name and change the binding to state
+			let binding = state.scope.get(node.name);
+			if (binding?.mutated && binding.kind === 'normal') {
+				binding.kind = 'state';
+			}
+		}
 	}
 };
 
-/** @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, { scope: Scope, analysis: { warnings: import('../types').RawWarning[] } }>} */
+/** @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, { scope: Scope, analysis: { runes: true } }>} */
 const runes_scope_js_tweaker = {
 	VariableDeclarator(node, { state }) {
 		if (node.init?.type !== 'CallExpression') return;
@@ -936,6 +958,8 @@ const runes_scope_tweaker = {
 		}
 
 		if (rune === '$props') {
+			state.analysis.needs_props = true;
+
 			for (const property of /** @type {import('estree').ObjectPattern} */ (node.id).properties) {
 				if (property.type !== 'Property') continue;
 
@@ -946,7 +970,7 @@ const runes_scope_tweaker = {
 				const alias =
 					property.key.type === 'Identifier'
 						? property.key.name
-						: /** @type {string} */ (/** @type {import('estree').Literal} */ (property.key).value);
+						: String(/** @type {import('estree').Literal} */ (property.key).value);
 				let initial = property.value.type === 'AssignmentPattern' ? property.value.right : null;
 
 				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
@@ -1021,6 +1045,9 @@ function is_known_safe_call(node, context) {
 			return true;
 		}
 	}
+
+	// TODO add more cases
+
 	return false;
 }
 
@@ -1043,8 +1070,83 @@ const function_visitor = (node, context) => {
 	});
 };
 
+/**
+ * A 'safe' identifier means that the `foo` in `foo.bar` or `foo()` will not
+ * call functions that require component context to exist
+ * @param {import('estree').Expression | import('estree').Super} expression
+ * @param {Scope} scope
+ */
+function is_safe_identifier(expression, scope) {
+	let node = expression;
+	while (node.type === 'MemberExpression') node = node.object;
+
+	if (node.type !== 'Identifier') return false;
+
+	const binding = scope.get(node.name);
+	if (!binding) return true;
+
+	if (binding.kind === 'store_sub') {
+		return is_safe_identifier({ name: node.name.slice(1), type: 'Identifier' }, scope);
+	}
+
+	return (
+		binding.declaration_kind !== 'import' &&
+		binding.kind !== 'prop' &&
+		binding.kind !== 'bindable_prop' &&
+		binding.kind !== 'rest_prop'
+	);
+}
+
 /** @type {import('./types').Visitors} */
 const common_visitors = {
+	_(node, { state, next, path }) {
+		const parent = path.at(-1);
+		if (parent?.type === 'Fragment' && node.type !== 'Comment' && node.type !== 'Text') {
+			const idx = parent.nodes.indexOf(/** @type {any} */ (node));
+			/** @type {string[]} */
+			const ignores = [];
+			for (let i = idx - 1; i >= 0; i--) {
+				const prev = parent.nodes[i];
+				if (prev.type === 'Comment') {
+					ignores.push(
+						...extract_svelte_ignore(
+							prev.start + 4 /* '<!--'.length */,
+							prev.data,
+							state.analysis.runes
+						)
+					);
+				} else if (prev.type !== 'Text') {
+					break;
+				}
+			}
+
+			if (ignores.length > 0) {
+				push_ignore(ignores);
+				next();
+				pop_ignore();
+			}
+		} else {
+			const comments = /** @type {any} */ (node).leadingComments;
+			if (comments) {
+				/** @type {string[]} */
+				const ignores = [];
+				for (const comment of comments) {
+					ignores.push(
+						...extract_svelte_ignore(
+							comment.start + 2 /* '//'.length */,
+							comment.value,
+							state.analysis.runes
+						)
+					);
+				}
+				if (ignores.length > 0) {
+					push_ignore(ignores);
+					next();
+					pop_ignore();
+				}
+			}
+		}
+	},
 	Attribute(node, context) {
 		if (node.value === true) return;
 
@@ -1066,6 +1168,11 @@ const common_visitors = {
 		});
 
 		if (is_event_attribute(node)) {
+			const parent = context.path.at(-1);
+			if (parent?.type === 'RegularElement' || parent?.type === 'SvelteElement') {
+				context.state.analysis.uses_event_attributes = true;
+			}
+
 			const expression = node.value[0].expression;
 
 			const delegated_event = get_delegated_event(node.name.slice(2), expression, context);
@@ -1130,6 +1237,7 @@ const common_visitors = {
 			if (
 				context.state.analysis.runes &&
 				node !== binding.node &&
+				context.state.function_depth === binding.scope.function_depth &&
 				// If we have $state that can be proxied or frozen and isn't re-assigned, then that means
 				// it's likely not using a primitive value and thus this warning isn't that helpful.
 				((binding.kind === 'state' &&
@@ -1140,21 +1248,26 @@ const common_visitors = {
 							!should_proxy_or_freeze(binding.initial.arguments[0], context.state.scope)))) ||
 					binding.kind === 'frozen_state' ||
 					binding.kind === 'derived') &&
-				context.state.function_depth === binding.scope.function_depth
+				// We're only concerned with reads here
+				(parent.type !== 'AssignmentExpression' || parent.left !== node) &&
+				parent.type !== 'UpdateExpression'
 			) {
-				warn(context.state.analysis.warnings, node, context.path, 'static-state-reference');
+				w.state_referenced_locally(node);
 			}
 		}
 	},
 	CallExpression(node, context) {
+		const { expression } = context.state;
 		if (
-			context.state.expression?.type === 'ExpressionTag' ||
-			(context.state.expression?.type === 'SpreadAttribute' && !is_known_safe_call(node, context))
+			(expression?.type === 'ExpressionTag' || expression?.type === 'SpreadAttribute') &&
+			!is_known_safe_call(node, context)
 		) {
-			context.state.expression.metadata.contains_call_expression = true;
+			expression.metadata.contains_call_expression = true;
 		}
 
 		const callee = node.callee;
+		const rune = get_rune(node, context.state.scope);
+
 		if (callee.type === 'Identifier') {
 			const binding = context.state.scope.get(callee.name);
 
@@ -1162,7 +1275,7 @@ const common_visitors = {
 				binding.is_called = true;
 			}
 
-			if (get_rune(node, context.state.scope) === '$derived') {
+			if (rune === '$derived') {
 				// special case — `$derived(foo)` is treated as `$derived(() => foo)`
 				// for the purposes of identifying static state references
 				context.next({
@@ -1174,6 +1287,16 @@ const common_visitors = {
 			}
 		}
 
+		if (rune === '$effect' || rune === '$effect.pre') {
+			// `$effect` needs context because Svelte needs to know whether it should re-run
+			// effects that invalidate themselves, and that's determined by whether we're in runes mode
+			context.state.analysis.needs_context = true;
+		} else if (rune === null) {
+			if (!is_safe_identifier(callee, context.state.scope)) {
+				context.state.analysis.needs_context = true;
+			}
+		}
+
 		context.next();
 	},
 	MemberExpression(node, context) {
@@ -1181,7 +1304,18 @@ const common_visitors = {
 			context.state.expression.metadata.dynamic = true;
 		}
 
+		if (!is_safe_identifier(node, context.state.scope)) {
+			context.state.analysis.needs_context = true;
+		}
+
 		context.next();
+	},
+	OnDirective(node, { state, path, next }) {
+		const parent = path.at(-1);
+		if (parent?.type === 'SvelteElement' || parent?.type === 'RegularElement') {
+			state.analysis.event_directive_node ??= node;
+		}
+		next();
 	},
 	BindDirective(node, context) {
 		let i = context.path.length;
@@ -1255,8 +1389,9 @@ const common_visitors = {
 	FunctionExpression: function_visitor,
 	FunctionDeclaration: function_visitor,
 	RegularElement(node, context) {
-		if (context.state.options.namespace !== 'foreign' && SVGElements.includes(node.name)) {
-			node.metadata.svg = true;
+		if (context.state.options.namespace !== 'foreign') {
+			if (SVGElements.includes(node.name)) node.metadata.svg = true;
+			else if (MathMLElements.includes(node.name)) node.metadata.mathml = true;
 		}
 
 		determine_element_spread(node);
@@ -1314,20 +1449,29 @@ const common_visitors = {
 	SvelteElement(node, context) {
 		context.state.analysis.elements.push(node);
 
+		// TODO why are we handling the `<svelte:element this="x" />` case? there is no
+		// reason for someone to use a static value with `<svelte:element>`
 		if (
 			context.state.options.namespace !== 'foreign' &&
 			node.tag.type === 'Literal' &&
-			typeof node.tag.value === 'string' &&
-			SVGElements.includes(node.tag.value)
+			typeof node.tag.value === 'string'
 		) {
-			node.metadata.svg = true;
-			return;
+			if (SVGElements.includes(node.tag.value)) {
+				node.metadata.svg = true;
+				return;
+			}
+
+			if (MathMLElements.includes(node.tag.value)) {
+				node.metadata.mathml = true;
+				return;
+			}
 		}
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute') {
 				if (attribute.name === 'xmlns' && is_text_attribute(attribute)) {
 					node.metadata.svg = attribute.value[0].data === namespace_svg;
+					node.metadata.mathml = attribute.value[0].data === namespace_mathml;
 					return;
 				}
 			}
@@ -1343,6 +1487,7 @@ const common_visitors = {
 			) {
 				// Inside a slot or a snippet -> this resets the namespace, so assume the component namespace
 				node.metadata.svg = context.state.options.namespace === 'svg';
+				node.metadata.mathml = context.state.options.namespace === 'mathml';
 				return;
 			}
 			if (ancestor.type === 'SvelteElement' || ancestor.type === 'RegularElement') {
@@ -1350,6 +1495,10 @@ const common_visitors = {
 					ancestor.type === 'RegularElement' && ancestor.name === 'foreignObject'
 						? false
 						: ancestor.metadata.svg;
+				node.metadata.mathml =
+					ancestor.type === 'RegularElement' && ancestor.name === 'foreignObject'
+						? false
+						: ancestor.metadata.mathml;
 				return;
 			}
 		}
@@ -1425,7 +1574,7 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	const cycle = check_graph_for_cycles(edges);
 	if (cycle?.length) {
 		const declaration = /** @type {Tuple[]} */ (lookup.get(cycle[0]))[0];
-		error(declaration[0], 'cyclical-reactive-declaration', cycle);
+		e.reactive_declaration_cycle(declaration[0], cycle.join(' → '));
 	}
 
 	// We use a map and take advantage of the fact that the spec says insertion order is preserved when iterating

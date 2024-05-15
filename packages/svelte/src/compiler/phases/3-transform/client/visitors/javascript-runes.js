@@ -4,6 +4,7 @@ import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
 import { get_prop_source, is_state_source, should_proxy_or_freeze } from '../utils.js';
 import { extract_paths } from '../../../../utils/ast.js';
+import { regex_invalid_identifier_chars } from '../../../patterns.js';
 
 /** @type {import('../types.js').ComponentVisitors} */
 export const javascript_visitors_runes = {
@@ -20,9 +21,13 @@ export const javascript_visitors_runes = {
 		for (const definition of node.body) {
 			if (
 				definition.type === 'PropertyDefinition' &&
-				(definition.key.type === 'Identifier' || definition.key.type === 'PrivateIdentifier')
+				(definition.key.type === 'Identifier' ||
+					definition.key.type === 'PrivateIdentifier' ||
+					definition.key.type === 'Literal')
 			) {
-				const { type, name } = definition.key;
+				const type = definition.key.type;
+				const name = get_name(definition.key);
+				if (!name) continue;
 
 				const is_private = type === 'PrivateIdentifier';
 				if (is_private) private_ids.push(name);
@@ -79,9 +84,12 @@ export const javascript_visitors_runes = {
 		for (const definition of node.body) {
 			if (
 				definition.type === 'PropertyDefinition' &&
-				(definition.key.type === 'Identifier' || definition.key.type === 'PrivateIdentifier')
+				(definition.key.type === 'Identifier' ||
+					definition.key.type === 'PrivateIdentifier' ||
+					definition.key.type === 'Literal')
 			) {
-				const name = definition.key.name;
+				const name = get_name(definition.key);
+				if (!name) continue;
 
 				const is_private = definition.key.type === 'PrivateIdentifier';
 				const field = (is_private ? private_state : public_state).get(name);
@@ -160,7 +168,6 @@ export const javascript_visitors_runes = {
 							);
 						}
 					}
-
 					continue;
 				}
 			}
@@ -202,7 +209,8 @@ export const javascript_visitors_runes = {
 				rune === '$effect.active' ||
 				rune === '$effect.root' ||
 				rune === '$inspect' ||
-				rune === '$state.snapshot'
+				rune === '$state.snapshot' ||
+				rune === '$state.is'
 			) {
 				if (init != null && is_hoistable_function(init)) {
 					const hoistable_function = visit(init);
@@ -222,7 +230,8 @@ export const javascript_visitors_runes = {
 			if (rune === '$props') {
 				assert.equal(declarator.id.type, 'ObjectPattern');
 
-				const seen = state.analysis.exports.map(({ name, alias }) => alias ?? name);
+				/** @type {string[]} */
+				const seen = [];
 
 				for (const property of declarator.id.properties) {
 					if (property.type === 'Property') {
@@ -422,6 +431,14 @@ export const javascript_visitors_runes = {
 			);
 		}
 
+		if (rune === '$state.is') {
+			return b.call(
+				'$.is',
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0])),
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[1]))
+			);
+		}
+
 		if (rune === '$effect.root') {
 			const args = /** @type {import('estree').Expression[]} */ (
 				node.arguments.map((arg) => context.visit(arg))
@@ -434,5 +451,41 @@ export const javascript_visitors_runes = {
 		}
 
 		context.next();
+	},
+	BinaryExpression(node, { state, visit, next }) {
+		const operator = node.operator;
+
+		if (state.options.dev) {
+			if (operator === '===' || operator === '!==') {
+				return b.call(
+					'$.strict_equals',
+					/** @type {import('estree').Expression} */ (visit(node.left)),
+					/** @type {import('estree').Expression} */ (visit(node.right)),
+					operator === '!==' && b.literal(false)
+				);
+			}
+
+			if (operator === '==' || operator === '!=') {
+				return b.call(
+					'$.equals',
+					/** @type {import('estree').Expression} */ (visit(node.left)),
+					/** @type {import('estree').Expression} */ (visit(node.right)),
+					operator === '!=' && b.literal(false)
+				);
+			}
+		}
+
+		next();
 	}
 };
+
+/**
+ * @param {import('estree').Identifier | import('estree').PrivateIdentifier | import('estree').Literal} node
+ */
+function get_name(node) {
+	if (node.type === 'Literal') {
+		return node.value?.toString().replace(regex_invalid_identifier_chars, '_');
+	} else {
+		return node.name;
+	}
+}

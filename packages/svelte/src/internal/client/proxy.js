@@ -20,6 +20,7 @@ import { check_ownership, widen_ownership } from './dev/ownership.js';
 import { mutable_source, source, set } from './reactivity/sources.js';
 import { STATE_SYMBOL } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
+import * as e from './errors.js';
 
 /**
  * @template T
@@ -74,8 +75,7 @@ export function proxy(value, immutable = true, parent = null) {
 				value[STATE_SYMBOL].owners =
 					parent === null
 						? current_component_context !== null
-							? // @ts-expect-error
-								new Set([current_component_context.function])
+							? new Set([current_component_context.function])
 							: null
 						: new Set();
 			}
@@ -334,6 +334,27 @@ const state_proxy_handler = {
 
 if (DEV) {
 	state_proxy_handler.setPrototypeOf = () => {
-		throw new Error('Cannot set prototype of $state object');
+		e.state_prototype_fixed();
 	};
+}
+
+/**
+ * @param {any} value
+ */
+export function get_proxied_value(value) {
+	if (value !== null && typeof value === 'object' && STATE_SYMBOL in value) {
+		var metadata = value[STATE_SYMBOL];
+		if (metadata) {
+			return metadata.p;
+		}
+	}
+	return value;
+}
+
+/**
+ * @param {any} a
+ * @param {any} b
+ */
+export function is(a, b) {
+	return Object.is(get_proxied_value(a), get_proxied_value(b));
 }

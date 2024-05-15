@@ -1,24 +1,23 @@
 <script>
 	import { beforeUpdate, afterUpdate } from "svelte";
-	import { log } from './log.js';
 
 	export let a;
 	export let b;
 
 	beforeUpdate(() => {
-		log.push('before');
+		console.log('before');
 	});
 
 	beforeUpdate(()=>{
-		log.push(`before ${a}, ${b}`);
+		console.log(`before ${a}, ${b}`);
 	});
 
 	afterUpdate(() => {
-		log.push('after');
+		console.log('after');
 	});
 
 	afterUpdate(()=>{
-		log.push(`after ${a}, ${b}`);
+		console.log(`after ${a}, ${b}`);
 	});
 </script>
 

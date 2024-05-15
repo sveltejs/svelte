@@ -1,23 +1,23 @@
 [
 	{
-		"code": "a11y-label-has-associated-control",
+		"code": "a11y_label_has_associated_control",
 		"end": {
 			"column": 16,
 			"line": 5
 		},
-		"message": "A11y: A form label must be associated with a control.",
+		"message": "A form label must be associated with a control.",
 		"start": {
 			"column": 0,
 			"line": 5
 		}
 	},
 	{
-		"code": "a11y-label-has-associated-control",
+		"code": "a11y_label_has_associated_control",
 		"end": {
 			"column": 30,
 			"line": 10
 		},
-		"message": "A11y: A form label must be associated with a control.",
+		"message": "A form label must be associated with a control.",
 		"start": {
 			"column": 0,
 			"line": 10

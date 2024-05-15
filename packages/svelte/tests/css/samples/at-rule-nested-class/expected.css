@@ -1,0 +1,9 @@
+
+	@starting-style {
+		.card.svelte-xyz{
+			height: 0;
+		}
+	}	
+	.card.svelte-xyz {
+		color: red;
+	}

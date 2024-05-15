@@ -2,6 +2,8 @@ import { DEV } from 'esm-env';
 import { render_effect, effect } from '../../../reactivity/effects.js';
 import { stringify } from '../../../render.js';
 import { listen_to_event_and_reset_event } from './shared.js';
+import * as e from '../../../errors.js';
+import { get_proxied_value, is } from '../../../proxy.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -12,9 +14,8 @@ import { listen_to_event_and_reset_event } from './shared.js';
 export function bind_value(input, get_value, update) {
 	listen_to_event_and_reset_event(input, 'input', () => {
 		if (DEV && input.type === 'checkbox') {
-			throw new Error(
-				'Using bind:value together with a checkbox input is not allowed. Use bind:checked instead'
-			);
+			// TODO should this happen in prod too?
+			e.bind_invalid_checkbox_value();
 		}
 
 		update(is_numberlike_input(input) ? to_number(input.value) : input.value);
@@ -22,9 +23,8 @@ export function bind_value(input, get_value, update) {
 
 	render_effect(() => {
 		if (DEV && input.type === 'checkbox') {
-			throw new Error(
-				'Using bind:value together with a checkbox input is not allowed. Use bind:checked instead'
-			);
+			// TODO should this happen in prod too?
+			e.bind_invalid_checkbox_value();
 		}
 
 		var value = get_value();
@@ -112,10 +112,10 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 		if (is_checkbox) {
 			value = value || [];
 			// @ts-ignore
-			input.checked = value.includes(input.__value);
+			input.checked = get_proxied_value(value).includes(get_proxied_value(input.__value));
 		} else {
 			// @ts-ignore
-			input.checked = input.__value === value;
+			input.checked = is(input.__value, value);
 		}
 	});
 

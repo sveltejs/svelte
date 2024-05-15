@@ -2,11 +2,11 @@ import { test } from '../../test';
 import { flushSync } from 'svelte';
 
 export default test({
-	async test({ assert, target, component }) {
+	async test({ assert, target, logs }) {
 		const input = /** @type {HTMLInputElement} */ (target.querySelector('input'));
 		assert.equal(input?.value, 'rich');
 
-		assert.deepEqual(component.log, []);
+		assert.deepEqual(logs, []);
 
 		const inputEvent = new window.InputEvent('input');
 		input.value = 'dan';
@@ -14,15 +14,15 @@ export default test({
 
 		flushSync();
 
-		assert.deepEqual(component.log, ['name in child: dan']);
+		assert.deepEqual(logs, ['name in child: dan']);
 
-		component.log.length = 0;
+		logs.length = 0;
 
 		input.value = 'da';
 		await input.dispatchEvent(inputEvent);
 
 		flushSync();
 
-		assert.deepEqual(component.log, []);
+		assert.deepEqual(logs, []);
 	}
 });

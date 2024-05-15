@@ -33,11 +33,18 @@ export default [
 		ignores: [
 			'**/*.d.ts',
 			'**/tests',
+			'packages/svelte/scripts/process-messages/templates/*.js',
+			'packages/svelte/src/compiler/errors.js',
+			'packages/svelte/src/internal/client/errors.js',
+			'packages/svelte/src/internal/client/warnings.js',
+			'packages/svelte/src/internal/shared/warnings.js',
 			'packages/svelte/compiler/index.js',
 			// documentation can contain invalid examples
 			'documentation',
 			// contains a fork of the REPL which doesn't adhere to eslint rules
 			'sites/svelte-5-preview/**',
+			'playgrounds/demo/src/**',
+			'tmp/**',
 			// wasn't checked previously, reenable at some point
 			'sites/svelte.dev/**'
 		]

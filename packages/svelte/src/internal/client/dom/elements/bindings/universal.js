@@ -1,4 +1,5 @@
 import { render_effect } from '../../../reactivity/effects.js';
+import { listen } from './shared.js';
 
 /**
  * @param {'innerHTML' | 'textContent' | 'innerText'} property
@@ -65,5 +66,16 @@ export function bind_property(property, event_name, type, element, get_value, up
 				element.removeEventListener(event_name, target_handler);
 			};
 		}
+	});
+}
+
+/**
+ * @param {HTMLElement} element
+ * @param {(value: unknown) => void} update
+ * @returns {void}
+ */
+export function bind_focused(element, update) {
+	listen(element, ['focus', 'blur'], () => {
+		update(element === document.activeElement);
 	});
 }

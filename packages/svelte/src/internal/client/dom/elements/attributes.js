@@ -1,11 +1,12 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
-import { get_descriptors, map_get, map_set, object_assign } from '../../utils.js';
+import { get_descriptors, get_prototype_of, map_get, map_set } from '../../utils.js';
 import { AttributeAliases, DelegatedEvents, namespace_svg } from '../../../../constants.js';
-import { delegate } from './events.js';
+import { create_event, delegate } from './events.js';
 import { autofocus } from './misc.js';
-import { effect } from '../../reactivity/effects.js';
-import { run } from '../../../shared/utils.js';
+import { effect, effect_root } from '../../reactivity/effects.js';
+import * as w from '../../warnings.js';
+import { LOADING_ATTR_SYMBOL } from '../../constants.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -15,8 +16,12 @@ import { run } from '../../../shared/utils.js';
  */
 export function remove_input_attr_defaults(dom) {
 	if (hydrating) {
+		// using getAttribute instead of dom.value allows us to have
+		// null instead of "on" if the user didn't set a value
+		const value = dom.getAttribute('value');
 		set_attribute(dom, 'value', null);
 		set_attribute(dom, 'checked', null);
+		if (value) dom.value = value;
 	}
 }
 
@@ -46,6 +51,11 @@ export function set_attribute(element, attribute, value) {
 	}
 
 	if (attributes[attribute] === (attributes[attribute] = value)) return;
+
+	if (attribute === 'loading') {
+		// @ts-expect-error
+		element[LOADING_ATTR_SYMBOL] = value;
+	}
 
 	if (value === null) {
 		element.removeAttribute(attribute);
@@ -107,11 +117,12 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 
 	// @ts-expect-error
 	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes ??= {});
-	/** @type {Array<() => void>} */
+	/** @type {Array<[string, any, () => void]>} */
 	var events = [];
 
 	for (key in next) {
-		var value = next[key];
+		// let instead of var because referenced in a closure
+		let value = next[key];
 		if (value === prev?.[key]) continue;
 
 		var prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
@@ -119,8 +130,8 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 
 		if (prefix === 'on') {
 			/** @type {{ capture?: true }} */
-			var opts = {};
-			var event_name = key.slice(2);
+			const opts = {};
+			let event_name = key.slice(2);
 			var delegated = DelegatedEvents.includes(event_name);
 
 			if (
@@ -139,9 +150,13 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 			if (value != null) {
 				if (!delegated) {
 					if (!prev) {
-						events.push(() => element.addEventListener(event_name, value, opts));
+						events.push([
+							key,
+							value,
+							() => (next[key] = create_event(event_name, element, value, opts))
+						]);
 					} else {
-						element.addEventListener(event_name, value, opts);
+						next[key] = create_event(event_name, element, value, opts);
 					}
 				} else {
 					// @ts-ignore
@@ -187,7 +202,22 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 	// On the first run, ensure that events are added after bindings so
 	// that their listeners fire after the binding listeners
 	if (!prev) {
-		effect(() => events.forEach(run));
+		// In edge cases it may happen that set_attributes is re-run before the
+		// effect is executed. In that case the render effect which initiates this
+		// re-run will destroy the inner effect and it will never run. But because
+		// next and prev may have the same keys, the event would not get added again
+		// and it would get lost. We prevent this by using a root effect.
+		const destroy_root = effect_root(() => {
+			effect(() => {
+				if (!element.isConnected) return;
+				for (const [key, value, evt] of events) {
+					if (next[key] === value) {
+						evt();
+					}
+				}
+				destroy_root();
+			});
+		});
 	}
 
 	return next;
@@ -239,14 +269,20 @@ var setters_cache = new Map();
 function get_setters(element) {
 	/** @type {string[]} */
 	var setters = [];
+	var descriptors;
+	var proto = get_prototype_of(element);
 
-	// @ts-expect-error
-	var descriptors = get_descriptors(element.__proto__);
+	// Stop at Element, from there on there's only unnecessary setters we're not interested in
+	while (proto.constructor.name !== 'Element') {
+		descriptors = get_descriptors(proto);
 
-	for (var key in descriptors) {
-		if (descriptors[key].set && !always_set_through_set_attribute.includes(key)) {
-			setters.push(key);
+		for (var key in descriptors) {
+			if (descriptors[key].set && !always_set_through_set_attribute.includes(key)) {
+				setters.push(key);
+			}
 		}
+
+		proto = get_prototype_of(proto);
 	}
 
 	return setters;
@@ -262,13 +298,10 @@ function check_src_in_dev_hydration(element, attribute, value) {
 	if (attribute === 'srcset' && srcset_url_equal(element, value)) return;
 	if (src_url_equal(element.getAttribute(attribute) ?? '', value ?? '')) return;
 
-	// eslint-disable-next-line no-console
-	console.error(
-		`Detected a ${attribute} attribute value change during hydration. This will not be repaired during hydration, ` +
-			`the ${attribute} value that came from the server will be used. Related element:`,
-		element,
-		' Differing value:',
-		value
+	w.hydration_attribute_changed(
+		attribute,
+		element.outerHTML.replace(element.innerHTML, '...'),
+		String(value)
 	);
 }
 
@@ -309,4 +342,29 @@ function srcset_url_equal(element, srcset) {
 				(src_url_equal(element_urls[i][0], url) || src_url_equal(url, element_urls[i][0]))
 		)
 	);
+}
+
+/**
+ * @param {HTMLImageElement} element
+ * @returns {void}
+ */
+export function handle_lazy_img(element) {
+	// If we're using an image that has a lazy loading attribute, we need to apply
+	// the loading and src after the img element has been appended to the document.
+	// Otherwise the lazy behaviour will not work due to our cloneNode heuristic for
+	// templates.
+	if (!hydrating && element.loading === 'lazy') {
+		var src = element.src;
+		// @ts-expect-error
+		element[LOADING_ATTR_SYMBOL] = null;
+		element.loading = 'eager';
+		element.removeAttribute('src');
+		requestAnimationFrame(() => {
+			// @ts-expect-error
+			if (element[LOADING_ATTR_SYMBOL] !== 'eager') {
+				element.loading = 'lazy';
+			}
+			element.src = src;
+		});
+	}
 }

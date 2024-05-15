@@ -1,8 +1,14 @@
 [
 	{
-		"code": "invalid-block-placement",
+		"code": "block_invalid_placement",
 		"message": "{#each ...} block cannot be inside <textarea>",
-		"start": { "line": 2, "column": 1 },
-		"end": { "line": 2, "column": 1 }
+		"start": {
+			"line": 2,
+			"column": 1
+		},
+		"end": {
+			"line": 2,
+			"column": 1
+		}
 	}
 ]

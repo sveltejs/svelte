@@ -3,7 +3,7 @@ import { test } from '../../test';
 export default test({
 	warnings: [
 		{
-			code: 'css-unused-selector',
+			code: 'css_unused_selector',
 			message: 'Unused CSS selector ":global(input) + span"',
 			start: {
 				character: 239,
@@ -17,7 +17,7 @@ export default test({
 			}
 		},
 		{
-			code: 'css-unused-selector',
+			code: 'css_unused_selector',
 			message: 'Unused CSS selector ":global(input) ~ span"',
 			start: {
 				character: 279,

@@ -80,7 +80,7 @@ it.skip('check warning position', () => {
 	assert.deepEqual(warnings, [
 		{
 			code: 'a11y-missing-attribute',
-			message: 'A11y: <img> element should have an alt attribute',
+			message: 'A11y: `<img>` element should have an alt attribute',
 			start: { column: 2, line: 2, character: 3 },
 			end: { column: 15, line: 3, character: 24 }
 		}

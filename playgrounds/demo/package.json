@@ -15,6 +15,7 @@
     "express": "^4.19.2",
     "nodemon": "^3.0.3",
     "svelte": "workspace:*",
-    "vite": "^5.0.13"
+    "vite": "^5.0.13",
+    "vite-plugin-inspect": "^0.8.4"
   }
 }

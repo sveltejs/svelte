@@ -1,23 +1,11 @@
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
-import {
-	UNINITIALIZED,
-	DOMBooleanAttributes,
-	RawTextElements,
-	disallowed_paragraph_contents,
-	interactive_elements,
-	is_tag_valid_with_parent
-} from '../../constants.js';
+import { UNINITIALIZED, DOMBooleanAttributes, RawTextElements } from '../../constants.js';
+import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
-
-/**
- * @typedef {{
- * 	tag: string;
- * 	parent: null | Element;
- * }} Element
- */
+import { validate_store } from '../shared/validate.js';
 
 /**
  * @typedef {{
@@ -26,20 +14,6 @@ import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
  * }} RenderOutput
  */
 
-/**
- * @typedef {{
- * 	out: string;
- * 	anchor: number;
- * 	head: {
- * 		title: string;
- * 		out: string;
- * 		anchor: number;
- * 	};
- * }} Payload
- */
-
-const ATTR_REGEX = /[&"]/g;
-const CONTENT_REGEX = /[&<]/g;
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
 const INVALID_ATTR_NAME_CHAR_REGEX =
@@ -64,19 +38,14 @@ export const VoidElements = new Set([
 	'wbr'
 ]);
 
-/**
- * @type {Element | null}
- */
-let current_element = null;
-
-/** @returns {Payload} */
+/** @returns {import('#server').Payload} */
 function create_payload() {
 	return { out: '', head: { title: '', out: '', anchor: 0 }, anchor: 0 };
 }
 
 /**
- * @param {Payload} to_copy
- * @returns {Payload}
+ * @param {import('#server').Payload} to_copy
+ * @returns {import('#server').Payload}
  */
 export function copy_payload(to_copy) {
 	return {
@@ -87,8 +56,8 @@ export function copy_payload(to_copy) {
 
 /**
  * Assigns second payload to first
- * @param {Payload} p1
- * @param {Payload} p2
+ * @param {import('#server').Payload} p1
+ * @param {import('#server').Payload} p2
  * @returns {void}
  */
 export function assign_payload(p1, p2) {
@@ -98,59 +67,7 @@ export function assign_payload(p1, p2) {
 }
 
 /**
- * @param {Payload} payload
- * @param {string} message
- */
-function error_on_client(payload, message) {
-	message =
-		`Svelte SSR validation error:\n\n${message}\n\n` +
-		'Ensure your components render valid HTML as the browser will try to repair invalid HTML, ' +
-		'which may result in content being shifted around and will likely result in a hydration mismatch.';
-	// eslint-disable-next-line no-console
-	console.error(message);
-	payload.head.out += `<script>console.error(\`${message}\`)</script>`;
-}
-
-/**
- * @param {string} tag
- * @param {Payload} payload
- */
-export function push_element(tag, payload) {
-	if (current_element !== null && !is_tag_valid_with_parent(tag, current_element.tag)) {
-		error_on_client(payload, `<${tag}> is invalid inside <${current_element.tag}>`);
-	}
-	if (interactive_elements.has(tag)) {
-		let element = current_element;
-		while (element !== null) {
-			if (interactive_elements.has(element.tag)) {
-				error_on_client(payload, `<${tag}> is invalid inside <${element.tag}>`);
-			}
-			element = element.parent;
-		}
-	}
-	if (disallowed_paragraph_contents.includes(tag)) {
-		let element = current_element;
-		while (element !== null) {
-			if (element.tag === 'p') {
-				error_on_client(payload, `<${tag}> is invalid inside <p>`);
-			}
-			element = element.parent;
-		}
-	}
-	current_element = {
-		tag,
-		parent: current_element
-	};
-}
-
-export function pop_element() {
-	if (current_element !== null) {
-		current_element = current_element.parent;
-	}
-}
-
-/**
- * @param {Payload} payload
+ * @param {import('#server').Payload} payload
  * @param {string} tag
  * @param {() => void} attributes_fn
  * @param {() => void} children_fn
@@ -214,33 +131,8 @@ export function render(component, options) {
 }
 
 /**
- * @template V
- * @param {V} value
- * @param {any} is_attr
- * @returns {string}
- */
-export function escape(value, is_attr = false) {
-	const str = String(value ?? '');
-
-	const pattern = is_attr ? ATTR_REGEX : CONTENT_REGEX;
-	pattern.lastIndex = 0;
-
-	let escaped = '';
-	let last = 0;
-
-	while (pattern.test(str)) {
-		const i = pattern.lastIndex - 1;
-		const ch = str[i];
-		escaped += str.substring(last, i) + (ch === '&' ? '&amp;' : ch === '"' ? '&quot;' : '&lt;');
-		last = i + 1;
-	}
-
-	return escaped + str.substring(last);
-}
-
-/**
- * @param {Payload} payload
- * @param {(head_payload: Payload['head']) => void} fn
+ * @param {import('#server').Payload} payload
+ * @param {(head_payload: import('#server').Payload['head']) => void} fn
  * @returns {void}
  */
 export function head(payload, fn) {
@@ -259,12 +151,12 @@ export function head(payload, fn) {
  */
 export function attr(name, value, boolean) {
 	if (value == null || (!value && boolean) || (value === '' && name === 'class')) return '';
-	const assignment = boolean ? '' : `="${escape(value, true)}"`;
+	const assignment = boolean ? '' : `="${escape_html(value, true)}"`;
 	return ` ${name}${assignment}`;
 }
 
 /**
- * @param {Payload} payload
+ * @param {import('#server').Payload} payload
  * @param {boolean} is_html
  * @param {Record<string, string>} props
  * @param {() => void} component
@@ -288,12 +180,12 @@ export function css_props(payload, is_html, props, component) {
 /**
  * @param {Record<string, unknown>[]} attrs
  * @param {boolean} lowercase_attributes
- * @param {boolean} is_svg
+ * @param {boolean} is_html
  * @param {string} class_hash
  * @param {{ styles: Record<string, string> | null; classes: string }} [additional]
  * @returns {string}
  */
-export function spread_attributes(attrs, lowercase_attributes, is_svg, class_hash, additional) {
+export function spread_attributes(attrs, lowercase_attributes, is_html, class_hash, additional) {
 	/** @type {Record<string, unknown>} */
 	const merged_attrs = {};
 	let key;
@@ -301,8 +193,9 @@ export function spread_attributes(attrs, lowercase_attributes, is_svg, class_has
 	for (let i = 0; i < attrs.length; i++) {
 		const obj = attrs[i];
 		for (key in obj) {
-			// omit functions
-			if (typeof obj[key] !== 'function') {
+			// omit functions and internal svelte properties
+			const prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
+			if (typeof obj[key] !== 'function' && prefix !== '$$') {
 				merged_attrs[key] = obj[key];
 			}
 		}
@@ -343,7 +236,7 @@ export function spread_attributes(attrs, lowercase_attributes, is_svg, class_has
 		if (lowercase_attributes) {
 			name = name.toLowerCase();
 		}
-		const is_boolean = !is_svg && DOMBooleanAttributes.includes(name);
+		const is_boolean = is_html && DOMBooleanAttributes.includes(name);
 		attr_str += attr(name, merged_attrs[name], is_boolean);
 	}
 
@@ -379,8 +272,8 @@ export function stringify(value) {
 /** @param {Record<string, string>} style_object */
 function style_object_to_string(style_object) {
 	return Object.keys(style_object)
-		.filter(/** @param {any} key */ (key) => style_object[key])
-		.map(/** @param {any} key */ (key) => `${key}: ${escape(style_object[key], true)};`)
+		.filter(/** @param {any} key */ (key) => style_object[key] != null && style_object[key] !== '')
+		.map(/** @param {any} key */ (key) => `${key}: ${escape_html(style_object[key], true)};`)
 		.join(' ');
 }
 
@@ -441,16 +334,6 @@ export function store_get(store_values, store_name, store) {
 	);
 	store_values[store_name][1] = unsub;
 	return store_values[store_name][2];
-}
-
-/**
- * @param {any} store
- * @param {string} name
- */
-export function validate_store(store, name) {
-	if (store != null && typeof store.subscribe !== 'function') {
-		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
-	}
 }
 
 /**
@@ -532,8 +415,8 @@ export async function value_or_fallback_async(value, fallback) {
 }
 
 /**
- * @param {Payload} payload
- * @param {void | ((payload: Payload, props: Record<string, unknown>) => void)} slot_fn
+ * @param {import('#server').Payload} payload
+ * @param {void | ((payload: import('#server').Payload, props: Record<string, unknown>) => void)} slot_fn
  * @param {Record<string, unknown>} slot_props
  * @param {null | (() => void)} fallback_fn
  * @returns {void}
@@ -632,19 +515,6 @@ export function ensure_array_like(array_like_or_iterator) {
 }
 
 /**
- * @param {number} timeout
- * @returns {() => void}
- * */
-export function loop_guard(timeout) {
-	const start = Date.now();
-	return () => {
-		if (Date.now() - start > timeout) {
-			throw new Error('Infinite loop detected');
-		}
-	};
-}
-
-/**
  * @param {any[]} args
  * @param {Function} [inspect]
  */
@@ -669,6 +539,8 @@ export function once(get_value) {
 
 export { push, pop } from './context.js';
 
+export { push_element, pop_element } from './dev.js';
+
 export {
 	add_snippet_symbol,
 	validate_component,
@@ -676,3 +548,7 @@ export {
 	validate_snippet,
 	validate_void_dynamic_element
 } from '../shared/validate.js';
+
+export { escape_html as escape };
+
+export { default_slot } from '../client/dom/legacy/misc.js';
