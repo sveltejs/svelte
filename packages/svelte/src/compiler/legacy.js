@@ -201,7 +201,7 @@ export function convert(source, ast) {
 			Comment(node) {
 				return {
 					...node,
-					ignores: extract_svelte_ignore(node.data)
+					ignores: extract_svelte_ignore(node.start, node.data, false)
 				};
 			},
 			ComplexSelector(node) {

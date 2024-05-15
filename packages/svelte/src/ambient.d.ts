@@ -63,6 +63,27 @@ declare namespace $state {
 	 */
 	export function snapshot<T>(state: T): T;
 
+	/**
+	 * Compare two values, one or both of which is a reactive `$state(...)` proxy.
+	 *
+	 * Example:
+	 * ```ts
+	 * <script>
+	 *	 let foo = $state({});
+	 *	 let bar = {};
+	 *
+	 *	 foo.bar = bar;
+	 *
+	 *	 console.log(foo.bar === bar); // false — `foo.bar` is a reactive proxy
+	 *   console.log($state.is(foo.bar, bar)); // true
+	 * </script>
+	 * ```
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$state.is
+	 *
+	 */
+	export function is(a: any, b: any): boolean;
+
 	// prevent intellisense from being unhelpful
 	/** @deprecated */
 	export const apply: never;

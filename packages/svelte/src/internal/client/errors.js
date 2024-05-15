@@ -57,6 +57,25 @@ export function bind_not_bindable(key, component, name) {
 }
 
 /**
+ * %parent% called `%method%` on an instance of %component%, which is no longer valid in Svelte 5. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information
+ * @param {string} parent
+ * @param {string} method
+ * @param {string} component
+ * @returns {never}
+ */
+export function component_api_changed(parent, method, component) {
+	if (DEV) {
+		const error = new Error(`${"component_api_changed"}\n${`${parent} called \`${method}\` on an instance of ${component}, which is no longer valid in Svelte 5. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information`}`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("component_api_changed");
+	}
+}
+
+/**
  * Keyed each block has duplicate key `%value%` at indexes %a% and %b%
  * @param {string} a
  * @param {string} b
@@ -89,6 +108,22 @@ export function effect_in_teardown(rune) {
 	} else {
 		// TODO print a link to the documentation
 		throw new Error("effect_in_teardown");
+	}
+}
+
+/**
+ * Effect cannot be created inside a `$derived` value that was not itself created inside an effect
+ * @returns {never}
+ */
+export function effect_in_unowned_derived() {
+	if (DEV) {
+		const error = new Error(`${"effect_in_unowned_derived"}\n${"Effect cannot be created inside a `$derived` value that was not itself created inside an effect"}`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("effect_in_unowned_derived");
 	}
 }
 

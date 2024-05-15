@@ -199,6 +199,15 @@ export function host_invalid_placement(node) {
 }
 
 /**
+ * Imports of `svelte/internal/*` are forbidden. It contains private runtime code which is subject to change without notice. If you're importing from `svelte/internal/*` to work around a limitation of Svelte, please open an issue at https://github.com/sveltejs/svelte and explain your use case
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function import_svelte_internal_forbidden(node) {
+	e(node, "import_svelte_internal_forbidden", "Imports of `svelte/internal/*` are forbidden. It contains private runtime code which is subject to change without notice. If you're importing from `svelte/internal/*` to work around a limitation of Svelte, please open an issue at https://github.com/sveltejs/svelte and explain your use case");
+}
+
+/**
  * Cannot use `export let` in runes mode — use `$props()` instead
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -1074,6 +1083,16 @@ export function snippet_conflict(node) {
  */
 export function snippet_invalid_rest_parameter(node) {
 	e(node, "snippet_invalid_rest_parameter", "snippets do not support rest parameters; use an array instead");
+}
+
+/**
+ * This snippet is shadowing the prop `%prop%` with the same name
+ * @param {null | number | NodeLike} node
+ * @param {string} prop
+ * @returns {never}
+ */
+export function snippet_shadowing_prop(node, prop) {
+	e(node, "snippet_shadowing_prop", `This snippet is shadowing the prop \`${prop}\` with the same name`);
 }
 
 /**

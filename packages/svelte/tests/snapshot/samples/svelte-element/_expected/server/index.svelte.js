@@ -1,7 +1,7 @@
 import * as $ from "svelte/internal/server";
 
 export default function Svelte_element($$payload, $$props) {
-	$.push(true);
+	$.push();
 
 	let { tag = 'hr' } = $$props;
 

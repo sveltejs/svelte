@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@fontsource/fira-mono": "^5.0.8",
+    "@lezer/common": "^1.2.1",
     "@sveltejs/adapter-static": "^3.0.1",
     "@sveltejs/adapter-vercel": "^5.0.0",
     "@sveltejs/kit": "^2.5.0",

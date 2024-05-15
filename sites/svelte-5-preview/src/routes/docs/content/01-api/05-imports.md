@@ -107,3 +107,46 @@ const result = render(App, {
 	props: { some: 'property' }
 });
 ```
+
+## `svelte/elements`
+
+Svelte provides built-in [DOM types](https://github.com/sveltejs/svelte/blob/master/packages/svelte/elements.d.ts). A common use case for DOM types is forwarding props to an HTML element. To properly type your props and get full intellisense, your props interface should extend the attributes type for your HTML element:
+
+```svelte
+<script lang="ts">
+	import { HTMLAttributes } from 'svelte/elements';
+
+	interface Props extends HTMLAttributes<HTMLDivElement> {
+		username: string;
+	}
+
+	let { username, ...rest }: Props = $props();
+</script>
+
+<div {...rest}>
+	Hi, {username}!
+</div>
+```
+
+> You can use `ComponentProps<ImportedComponent>`, if you wish to forward props to forward props to a Svelte component.
+
+Svelte provides a best-effort of all the HTML DOM types that exist. If an attribute is missing from our [type definitions](https://github.com/sveltejs/svelte/blob/master/packages/svelte/elements.d.ts), you are welcome to open an issue and/or a PR fixing it. For experimental attributes, you can augment the existing types locally by creating a `.d.ts` file:
+
+```ts
+import { HTMLButtonAttributes } from 'svelte/elements';
+
+declare module 'svelte/elements' {
+	export interface SvelteHTMLElements {
+		'custom-button': HTMLButtonAttributes;
+	}
+
+	// allows for more granular control over what element to add the typings to
+	export interface HTMLButtonAttributes {
+		veryexperimentalattribute?: string;
+	}
+}
+
+export {}; // ensure this is not an ambient module, else types will be overridden instead of augmented
+```
+
+The `.d.ts` file must be included in your `tsconfig.json` file. If you are using the standard `"include": ["src/**/*"]`, this just means the file should be placed in the `src` directory.

@@ -587,9 +587,7 @@ function special(parser) {
 
 		if (
 			expression.type !== 'CallExpression' &&
-			(expression.type !== 'ChainExpression' ||
-				expression.expression.type !== 'CallExpression' ||
-				!expression.expression.optional)
+			(expression.type !== 'ChainExpression' || expression.expression.type !== 'CallExpression')
 		) {
 			e.render_tag_invalid_expression(expression);
 		}

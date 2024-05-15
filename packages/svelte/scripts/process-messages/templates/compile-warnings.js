@@ -1,28 +1,6 @@
-import { getLocator } from 'locate-character';
+import { filename, locator, warnings, ignore_stack } from './state.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
-
-/** @type {import('#compiler').Warning[]} */
-let warnings = [];
-
-/** @type {string | undefined} */
-let filename;
-
-let locator = getLocator('', { offsetLine: 1 });
-
-/**
- * @param {{
- *   source: string;
- *   filename: string | undefined;
- * }} options
- * @returns {import('#compiler').Warning[]}
- */
-export function reset_warnings(options) {
-	filename = options.filename;
-	locator = getLocator(options.source, { offsetLine: 1 });
-
-	return (warnings = []);
-}
 
 /**
  * @param {null | NodeLike} node
@@ -30,8 +8,7 @@ export function reset_warnings(options) {
  * @param {string} message
  */
 function w(node, code, message) {
-	// @ts-expect-error
-	if (node?.ignores?.has(code)) return;
+	if (ignore_stack.at(-1)?.has(code)) return;
 
 	warnings.push({
 		code,
@@ -41,6 +18,8 @@ function w(node, code, message) {
 		end: node?.end !== undefined ? locator(node.end) : undefined
 	});
 }
+
+export const codes = CODES;
 
 /**
  * MESSAGE

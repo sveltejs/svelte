@@ -10,25 +10,12 @@ import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../co
 import { BLOCK_EFFECT, EFFECT_RAN, EFFECT_TRANSPARENT } from '../../constants.js';
 
 /**
- * @template T
- * @param {string} type
- * @param {T} [detail]
- * @param {any}params_0
- * @returns {Event}
- */
-function custom_event(type, detail, { bubbles = false, cancelable = false } = {}) {
-	const e = document.createEvent('CustomEvent');
-	e.initCustomEvent(type, bubbles, cancelable, detail);
-	return e;
-}
-
-/**
- * @param {Element} dom
+ * @param {Element} element
  * @param {'introstart' | 'introend' | 'outrostart' | 'outroend'} type
  * @returns {void}
  */
-function dispatch_event(dom, type) {
-	dom.dispatchEvent(custom_event(type));
+function dispatch_event(element, type) {
+	element.dispatchEvent(new CustomEvent(type));
 }
 
 /**

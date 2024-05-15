@@ -13,15 +13,13 @@ export const global_visitors = {
 		}
 	},
 	MemberExpression(node, { state, next }) {
-		if (node.object.type === 'ThisExpression') {
-			// rewrite `this.#foo` as `this.#foo.v` inside a constructor
-			if (node.property.type === 'PrivateIdentifier') {
-				const field = state.private_state.get(node.property.name);
-				if (field) {
-					return state.in_constructor ? b.member(node, b.id('v')) : b.call('$.get', node);
-				}
+		// rewrite `this.#foo` as `this.#foo.v` inside a constructor
+		if (node.property.type === 'PrivateIdentifier') {
+			const field = state.private_state.get(node.property.name);
+			if (field) {
+				return state.in_constructor ? b.member(node, b.id('v')) : b.call('$.get', node);
 			}
-
+		} else if (node.object.type === 'ThisExpression') {
 			// rewrite `this.foo` as `this.#foo.v` inside a constructor
 			if (node.property.type === 'Identifier' && !node.computed) {
 				const field = state.public_state.get(node.property.name);

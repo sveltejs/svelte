@@ -7,7 +7,7 @@ import full_char_code_at from './utils/full_char_code_at.js';
 import * as e from '../../errors.js';
 import { create_fragment } from './utils/create.js';
 import read_options from './read/options.js';
-import { getLocator } from 'locate-character';
+import { locator } from '../../state.js';
 
 const regex_position_indicator = / \(\d+:\d+\)$/;
 
@@ -42,8 +42,6 @@ export class Parser {
 	/** @type {LastAutoClosedTag | undefined} */
 	last_auto_closed_tag;
 
-	locate;
-
 	/** @param {string} template */
 	constructor(template) {
 		if (typeof template !== 'string') {
@@ -51,7 +49,6 @@ export class Parser {
 		}
 
 		this.template = template.trimEnd();
-		this.locate = getLocator(this.template, { offsetLine: 1 });
 
 		let match_lang;
 
@@ -135,18 +132,6 @@ export class Parser {
 				enumerable: false
 			});
 		}
-	}
-
-	/**
-	 * offset -> line/column
-	 * @param {number} start
-	 * @param {number} end
-	 */
-	get_location(start, end) {
-		return {
-			start: /** @type {import('locate-character').Location_1} */ (this.locate(start)),
-			end: /** @type {import('locate-character').Location_1} */ (this.locate(end))
-		};
 	}
 
 	current() {

@@ -1,5 +1,129 @@
 # svelte
 
+## 5.0.0-next.134
+
+### Patch Changes
+
+- chore: improve SSR invalid element error message ([#11585](https://github.com/sveltejs/svelte/pull/11585))
+
+- fix: deduplicate children prop and default slot ([#10800](https://github.com/sveltejs/svelte/pull/10800))
+
+- feat: error on imports to `svelte/internal/*` ([#11632](https://github.com/sveltejs/svelte/pull/11632))
+
+- fix: better handle img loading attribute ([#11635](https://github.com/sveltejs/svelte/pull/11635))
+
+- feat: add $state.is rune ([#11613](https://github.com/sveltejs/svelte/pull/11613))
+
+- feat: provide $state warnings for accidental equality ([#11610](https://github.com/sveltejs/svelte/pull/11610))
+
+- feat: error when snippet shadow a prop ([#11631](https://github.com/sveltejs/svelte/pull/11631))
+
+- chore: use `new CustomEvent` instead of deprecated `initCustomEvent` ([#11629](https://github.com/sveltejs/svelte/pull/11629))
+
+## 5.0.0-next.133
+
+### Patch Changes
+
+- fix: add backwards-compat for old warning codes in legacy mode ([#11607](https://github.com/sveltejs/svelte/pull/11607))
+
+## 5.0.0-next.132
+
+### Patch Changes
+
+- chore: improve runtime overhead of creating comment templates ([#11591](https://github.com/sveltejs/svelte/pull/11591))
+
+- fix: replicate Svelte 4 props update detection in legacy mode ([#11577](https://github.com/sveltejs/svelte/pull/11577))
+
+- fix: allow for non optional chain call expression in render ([#11578](https://github.com/sveltejs/svelte/pull/11578))
+
+- fix: correctly handle falsy values of style directives in SSR mode ([#11583](https://github.com/sveltejs/svelte/pull/11583))
+
+- fix: improve handling of lazy image elements ([#11593](https://github.com/sveltejs/svelte/pull/11593))
+
+- fix: skip deriveds for props with known safe calls ([#11595](https://github.com/sveltejs/svelte/pull/11595))
+
+## 5.0.0-next.131
+
+### Patch Changes
+
+- chore: optimise effects ([#11569](https://github.com/sveltejs/svelte/pull/11569))
+
+- fix: ensure all effect cleanup functions are untracked ([#11567](https://github.com/sveltejs/svelte/pull/11567))
+
+## 5.0.0-next.130
+
+### Patch Changes
+
+- fix: improve internal mechanism for handling process_effects ([#11560](https://github.com/sveltejs/svelte/pull/11560))
+
+## 5.0.0-next.129
+
+### Patch Changes
+
+- fix: further adjust heuristics for effect_update_depth_exceeded ([#11558](https://github.com/sveltejs/svelte/pull/11558))
+
+## 5.0.0-next.128
+
+### Patch Changes
+
+- fix: improved $inspect handling of reactive Map/Set/Date ([#11553](https://github.com/sveltejs/svelte/pull/11553))
+
+- fix: adjust heuristics for effect_update_depth_exceeded ([#11557](https://github.com/sveltejs/svelte/pull/11557))
+
+## 5.0.0-next.127
+
+### Patch Changes
+
+- fix: don't warn on writes to `$state` ([#11540](https://github.com/sveltejs/svelte/pull/11540))
+
+- feat: provide better error messages in DEV ([#11526](https://github.com/sveltejs/svelte/pull/11526))
+
+- fix: better support for lazy img elements ([#11545](https://github.com/sveltejs/svelte/pull/11545))
+
+- fix: handle falsy prop aliases correctly ([#11539](https://github.com/sveltejs/svelte/pull/11539))
+
+- fix: ensure spread events are added even when rerunning spread immediately ([#11535](https://github.com/sveltejs/svelte/pull/11535))
+
+## 5.0.0-next.126
+
+### Patch Changes
+
+- fix: improve behaviour of unowned derived signals ([#11521](https://github.com/sveltejs/svelte/pull/11521))
+
+- fix: make `$effect.active()` true when updating deriveds ([#11500](https://github.com/sveltejs/svelte/pull/11500))
+
+- fix: skip parent element validation for snippet contents ([#11463](https://github.com/sveltejs/svelte/pull/11463))
+
+## 5.0.0-next.125
+
+### Patch Changes
+
+- fix: coerce incremented/decremented sources ([#11506](https://github.com/sveltejs/svelte/pull/11506))
+
+- feat: add support for svelte inspector ([#11514](https://github.com/sveltejs/svelte/pull/11514))
+
+- fix: skip AST analysis of TypeScript AST nodes ([#11513](https://github.com/sveltejs/svelte/pull/11513))
+
+- fix: use import.meta.hot.acceptExports when available to support partial hmr in vite ([#11453](https://github.com/sveltejs/svelte/pull/11453))
+
+- feat: better error for `bind:this` legacy API usage ([#11498](https://github.com/sveltejs/svelte/pull/11498))
+
+## 5.0.0-next.124
+
+### Patch Changes
+
+- fix: allow to access private fields after `this` reassignment ([#11487](https://github.com/sveltejs/svelte/pull/11487))
+
+- fix: only initiate scroll if scroll binding has existing value ([#11469](https://github.com/sveltejs/svelte/pull/11469))
+
+- fix: restore value after attribute removal during hydration ([#11465](https://github.com/sveltejs/svelte/pull/11465))
+
+- fix: check if svelte component exists on custom element destroy ([#11488](https://github.com/sveltejs/svelte/pull/11488))
+
+- fix: ensure derived is detected as dirty correctly ([#11496](https://github.com/sveltejs/svelte/pull/11496))
+
+- fix: prevent false positive ownership warning ([#11490](https://github.com/sveltejs/svelte/pull/11490))
+
 ## 5.0.0-next.123
 
 ### Patch Changes
