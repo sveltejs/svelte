@@ -6,14 +6,18 @@ import { define_property, is_array } from '../../utils.js';
  * @param {string} event_name
  * @param {Element} dom
  * @param {EventListener} handler
- * @param {AddEventListenerOptions} options
+ * @param {boolean} capture
+ * @param {boolean} [passive]
+ * @returns {void}
  */
-export function create_event(event_name, dom, handler, options) {
+export function event(event_name, dom, handler, capture, passive) {
+	var options = { capture, passive };
+
 	/**
 	 * @this {EventTarget}
 	 */
 	function target_handler(/** @type {Event} */ event) {
-		if (!options.capture) {
+		if (!capture) {
 			// Only call in the bubble phase, else delegated events would be called before the capturing events
 			handle_event_propagation(dom, event);
 		}
@@ -23,21 +27,6 @@ export function create_event(event_name, dom, handler, options) {
 	}
 
 	dom.addEventListener(event_name, target_handler, options);
-
-	return target_handler;
-}
-
-/**
- * @param {string} event_name
- * @param {Element} dom
- * @param {EventListener} handler
- * @param {boolean} capture
- * @param {boolean} [passive]
- * @returns {void}
- */
-export function event(event_name, dom, handler, capture, passive) {
-	var options = { capture, passive };
-	var target_handler = create_event(event_name, dom, handler, options);
 
 	// @ts-ignore
 	if (dom === document.body || dom === window || dom === document) {
