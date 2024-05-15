@@ -6,6 +6,7 @@ import { delegate } from './events.js';
 import { autofocus } from './misc.js';
 import { effect, effect_root } from '../../reactivity/effects.js';
 import * as w from '../../warnings.js';
+import { LOADING_ATTR_SYMBOL } from '../../constants.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -50,6 +51,11 @@ export function set_attribute(element, attribute, value) {
 	}
 
 	if (attributes[attribute] === (attributes[attribute] = value)) return;
+
+	if (attribute === 'loading') {
+		// @ts-expect-error
+		element[LOADING_ATTR_SYMBOL] = value;
+	}
 
 	if (value === null) {
 		element.removeAttribute(attribute);
@@ -345,10 +351,15 @@ export function handle_lazy_img(element) {
 	// templates.
 	if (!hydrating && element.loading === 'lazy') {
 		var src = element.src;
-		element.removeAttribute('loading');
+		// @ts-expect-error
+		element[LOADING_ATTR_SYMBOL] = null;
+		element.loading = 'eager';
 		element.removeAttribute('src');
 		requestAnimationFrame(() => {
-			element.loading = 'lazy';
+			// @ts-expect-error
+			if (element[LOADING_ATTR_SYMBOL] !== 'eager') {
+				element.loading = 'lazy';
+			}
 			element.src = src;
 		});
 	}
