@@ -106,6 +106,33 @@ export function render(component, options) {
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
+
+	// Capture load and error events for the entire page during startup of the document.
+	// Once we capture an event, we replay it whe the document in fully loaded to ensure the app
+	// event listners for these events are triggered correctly. We need to do this in the head so
+	// we can register the event listeners as soon as possible.
+	payload.head.out += `<script svelte="">(() => {
+		const events = [];
+		const handle_event = e => {
+			e.stopPropagation();
+			e.__target = e.target;
+			events.push(e);
+		}
+		document.addEventListener('load', handle_event, true);
+		document.addEventListener('error', handle_event, true);
+
+		document.addEventListener('DOMContentLoaded', () => {
+			document.removeEventListener('load', handle_event, true);
+			document.removeEventListener('error', handle_event, true);
+			for (const event of events) {
+				const elem = event.__target;
+				if (elem?.isConnected) {
+					elem.dispatchEvent(event);
+				}
+			}
+		});
+	})()</script>`;
+
 	payload.out += BLOCK_OPEN;
 
 	if (options.context) {
@@ -193,9 +220,8 @@ export function spread_attributes(attrs, lowercase_attributes, is_html, class_ha
 	for (let i = 0; i < attrs.length; i++) {
 		const obj = attrs[i];
 		for (key in obj) {
-			// omit functions and internal svelte properties
-			const prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
-			if (typeof obj[key] !== 'function' && prefix !== '$$') {
+			// omit functions
+			if (typeof obj[key] !== 'function') {
 				merged_attrs[key] = obj[key];
 			}
 		}
@@ -550,5 +576,3 @@ export {
 } from '../shared/validate.js';
 
 export { escape_html as escape };
-
-export { default_slot } from '../client/dom/legacy/misc.js';
