@@ -90,7 +90,8 @@ export const codes = [
 	"component_name_lowercase",
 	"element_invalid_self_closing_tag",
 	"event_directive_deprecated",
-	"slot_element_deprecated"
+	"slot_element_deprecated",
+	"snippet_shadowing_prop"
 ];
 
 /**
@@ -712,4 +713,13 @@ export function event_directive_deprecated(node, name) {
  */
 export function slot_element_deprecated(node) {
 	w(node, "slot_element_deprecated", "Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead.");
+}
+
+/**
+ * This snippet is shadowing the prop `%prop%` with the same name
+ * @param {null | NodeLike} node
+ * @param {string} prop
+ */
+export function snippet_shadowing_prop(node, prop) {
+	w(node, "snippet_shadowing_prop", `This snippet is shadowing the prop \`${prop}\` with the same name`);
 }

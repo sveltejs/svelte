@@ -624,11 +624,23 @@ const validation = {
 
 		context.next({ ...context.state, parent_element: null });
 
-		if (node.expression.name !== 'children') return;
-
 		const { path } = context;
 		const parent = path.at(-2);
 		if (!parent) return;
+
+		if (
+			parent.type === 'Component' &&
+			parent.attributes.some(
+				(attribute) =>
+					(attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
+					attribute.name === node.expression.name
+			)
+		) {
+			w.snippet_shadowing_prop(node, node.expression.name);
+		}
+
+		if (node.expression.name !== 'children') return;
+
 		if (
 			parent.type === 'Component' ||
 			parent.type === 'SvelteComponent' ||

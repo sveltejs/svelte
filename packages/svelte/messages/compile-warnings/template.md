@@ -37,3 +37,7 @@
 ## slot_element_deprecated
 
 > Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead.
+
+## snippet_shadowing_prop
+
+> This snippet is shadowing the prop `%prop%` with the same name
