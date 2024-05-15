@@ -1248,8 +1248,6 @@ const common_visitors = {
 							!should_proxy_or_freeze(binding.initial.arguments[0], context.state.scope)))) ||
 					binding.kind === 'frozen_state' ||
 					binding.kind === 'derived') &&
-				// Avoid identifiers within type annotatons
-				!context.path.some((n) => /** @type {any} */ (n).type === 'TSTypeAnnotation') &&
 				// We're only concerned with reads here
 				(parent.type !== 'AssignmentExpression' || parent.left !== node) &&
 				parent.type !== 'UpdateExpression'

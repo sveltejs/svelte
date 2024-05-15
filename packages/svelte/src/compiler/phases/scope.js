@@ -678,13 +678,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		AnimateDirective: SvelteDirective,
 		UseDirective: SvelteDirective,
 
-		// @ts-ignore
-		TSTypeAnnotation: skip,
-		TSInterfaceDeclaration: skip,
-		TSTypeAliasDeclaration: skip,
-		TSTypeParameterDeclaration: skip,
-		TSEnumDeclaration: skip
-
 		// TODO others
 	});
 
