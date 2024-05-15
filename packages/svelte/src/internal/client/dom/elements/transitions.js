@@ -10,12 +10,12 @@ import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../co
 import { BLOCK_EFFECT, EFFECT_RAN, EFFECT_TRANSPARENT } from '../../constants.js';
 
 /**
- * @param {Element} dom
+ * @param {Element} element
  * @param {'introstart' | 'introend' | 'outrostart' | 'outroend'} type
  * @returns {void}
  */
-function dispatch_event(dom, type) {
-	dom.dispatchEvent(new CustomEvent(type));
+function dispatch_event(element, type) {
+	element.dispatchEvent(new CustomEvent(type));
 }
 
 /**
