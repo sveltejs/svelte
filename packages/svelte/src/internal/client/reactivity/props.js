@@ -215,7 +215,7 @@ const spread_props_handler = {
 };
 
 /**
- * @param {Array<Record<string, unknown> | (() => Record<string, unknown>)>} props
+ * @param {any[]} props
  * @returns {any}
  */
 export function spread_props(...props) {
