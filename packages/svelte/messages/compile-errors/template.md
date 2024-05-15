@@ -260,13 +260,9 @@
 
 > `<svelte:component>` must have a 'this' attribute
 
-## svelte_element_invalid_this
-
-> Invalid element definition — must be an `{expression}`
-
 ## svelte_element_missing_this
 
-> `<svelte:element>` must have a 'this' attribute
+> `<svelte:element>` must have a 'this' attribute with a value
 
 ## svelte_fragment_invalid_attribute
 
