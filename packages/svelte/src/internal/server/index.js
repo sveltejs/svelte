@@ -111,7 +111,7 @@ export function render(component, options) {
 	// Once we capture an event, we replay it whe the document in fully loaded to ensure the app
 	// event listners for these events are triggered correctly. We need to do this in the head so
 	// we can register the event listeners as soon as possible.
-	payload.head.out += `<script svelte="">(() => {
+	payload.head.out += `<script>(() => {
 		const events = [];
 		const handle_event = e => {
 			e.stopPropagation();
