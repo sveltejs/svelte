@@ -906,7 +906,7 @@ function ensure_no_module_import_conflict(node, state) {
  */
 export const validation_runes_js = {
 	ImportDeclaration(node) {
-		if (typeof node.source.value === 'string' && node.source.value.startsWith('svelte/internal/')) {
+		if (typeof node.source.value === 'string' && node.source.value.startsWith('svelte/internal')) {
 			e.import_svelte_internal_forbidden(node);
 		}
 	},
@@ -1083,7 +1083,7 @@ function validate_assignment(node, argument, state) {
 
 export const validation_runes = merge(validation, a11y_validators, {
 	ImportDeclaration(node) {
-		if (typeof node.source.value === 'string' && node.source.value.startsWith('svelte/internal/')) {
+		if (typeof node.source.value === 'string' && node.source.value.startsWith('svelte/internal')) {
 			e.import_svelte_internal_forbidden(node);
 		}
 	},
