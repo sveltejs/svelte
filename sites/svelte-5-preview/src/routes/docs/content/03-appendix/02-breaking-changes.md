@@ -227,6 +227,6 @@ Previously, bindings did not take into account `reset` event of forms, and there
 
 In Svelte 4 you could have content inside a `<svelte:options />` tag. It was ignored, but you could write something in there. In Svelte 5, content inside that tag is a compiler error.
 
-### Slots inside templates are preserved
+### `<slot>` elements in declarative shadow roots are preserved
 
 Svelte 4 replaced the `<slot />` tag in all places with its own version of slots. Svelte 5 preserves them in the case they are a child of a `<template shadowrootmode="...">` element.
