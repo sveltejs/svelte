@@ -1,0 +1,14 @@
+[
+	{
+		"code": "snippet_shadowing_prop",
+		"message": "This snippet is shadowing the prop `children` with the same name",
+		"start": {
+			"column": 0,
+			"line": 5
+		},
+		"end": {
+			"column": 12,
+			"line": 7
+		}
+	}
+]

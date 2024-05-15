@@ -39,6 +39,17 @@ import { a11y_validators } from './a11y.js';
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
  */
 function validate_component(node, context) {
+	const has_implicit_children = node.fragment.nodes.length > 0;
+	if (
+		has_implicit_children &&
+		node.attributes.some(
+			(attribute) =>
+				(attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
+				attribute.name === 'children'
+		)
+	) {
+		e.snippet_shadowing_prop(node, 'children');
+	}
 	for (const attribute of node.attributes) {
 		if (
 			attribute.type !== 'Attribute' &&
