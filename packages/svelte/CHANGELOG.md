@@ -1,5 +1,25 @@
 # svelte
 
+## 5.0.0-next.134
+
+### Patch Changes
+
+- chore: improve SSR invalid element error message ([#11585](https://github.com/sveltejs/svelte/pull/11585))
+
+- fix: deduplicate children prop and default slot ([#10800](https://github.com/sveltejs/svelte/pull/10800))
+
+- feat: error on imports to `svelte/internal/*` ([#11632](https://github.com/sveltejs/svelte/pull/11632))
+
+- fix: better handle img loading attribute ([#11635](https://github.com/sveltejs/svelte/pull/11635))
+
+- feat: add $state.is rune ([#11613](https://github.com/sveltejs/svelte/pull/11613))
+
+- feat: provide $state warnings for accidental equality ([#11610](https://github.com/sveltejs/svelte/pull/11610))
+
+- feat: error when snippet shadow a prop ([#11631](https://github.com/sveltejs/svelte/pull/11631))
+
+- chore: use `new CustomEvent` instead of deprecated `initCustomEvent` ([#11629](https://github.com/sveltejs/svelte/pull/11629))
+
 ## 5.0.0-next.133
 
 ### Patch Changes
