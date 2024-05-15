@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: rename **svelte_meta.filename to **svelte_meta.file to align with svelte4
+fix: rename `__svelte_meta.filename` to `__svelte_meta.file` to align with svelte 4
