@@ -48,7 +48,7 @@ function validate_component(node, context) {
 				attribute.name === 'children'
 		)
 	) {
-		e.snippet_shadowing_prop(node, 'children');
+		e.snippet_shadowing_children_prop(node);
 	}
 	for (const attribute of node.attributes) {
 		if (

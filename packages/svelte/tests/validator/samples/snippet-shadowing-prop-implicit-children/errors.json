@@ -1,7 +1,7 @@
 [
 	{
-		"code": "snippet_shadowing_prop",
-		"message": "This snippet is shadowing the prop `children` with the same name",
+		"code": "snippet_shadowing_children_prop",
+		"message": "The component content is implicitly passed as a `children` snippet which conflicts with the `children` prop set as an attribute.",
 		"start": {
 			"column": 0,
 			"line": 5

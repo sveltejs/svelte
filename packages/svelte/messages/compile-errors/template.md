@@ -240,9 +240,13 @@
 
 > snippets do not support rest parameters; use an array instead
 
+## snippet_shadowing_children_prop
+
+> The component content is implicitly passed as a `children` snippet which conflicts with the `children` prop set as an attribute.
+
 ## snippet_shadowing_prop
 
-> This snippet is shadowing the prop `%prop%` with the same name
+> This snippet is conflicting with the prop `%prop%` with the same name
 
 ## style_directive_invalid_modifier
 

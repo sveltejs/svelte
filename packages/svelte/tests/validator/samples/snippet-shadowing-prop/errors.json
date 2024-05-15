@@ -1,7 +1,7 @@
 [
 	{
 		"code": "snippet_shadowing_prop",
-		"message": "This snippet is shadowing the prop `title` with the same name",
+		"message": "This snippet is conflicting with the prop `title` with the same name",
 		"start": {
 			"column": 1,
 			"line": 6
