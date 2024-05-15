@@ -51,8 +51,11 @@ export class ReactiveSet extends Set {
 			// @ts-ignore
 			proto[method] = function (...v) {
 				get(this.#version);
+				// We don't populate the underlying Set, so we need to create a clone using
+				// our internal values and then pass that to the method.
+				var clone = new Set(this.values());
 				// @ts-ignore
-				return set_proto[method].apply(this, v);
+				return set_proto[method].apply(clone, v);
 			};
 		}
 
@@ -60,9 +63,11 @@ export class ReactiveSet extends Set {
 			// @ts-ignore
 			proto[method] = function (...v) {
 				get(this.#version);
-
+				// We don't populate the underlying Set, so we need to create a clone using
+				// our internal values and then pass that to the method.
+				var clone = new Set(this.values());
 				// @ts-ignore
-				var set = /** @type {Set<T>} */ (set_proto[method].apply(this, v));
+				var set = /** @type {Set<T>} */ (set_proto[method].apply(clone, v));
 				return new ReactiveSet(set);
 			};
 		}

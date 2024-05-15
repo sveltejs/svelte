@@ -543,7 +543,7 @@ function special(parser) {
 	}
 
 	if (parser.eat('const')) {
-		parser.allow_whitespace();
+		parser.require_whitespace();
 
 		const id = read_pattern(parser);
 		parser.allow_whitespace();
@@ -551,7 +551,15 @@ function special(parser) {
 		parser.eat('=', true);
 		parser.allow_whitespace();
 
+		const expression_start = parser.index;
 		const init = read_expression(parser);
+		if (
+			init.type === 'SequenceExpression' &&
+			!parser.template.substring(expression_start, init.start).includes('(')
+		) {
+			// const a = (b, c) is allowed but a = b, c = d is not;
+			e.const_tag_invalid_expression(init);
+		}
 		parser.allow_whitespace();
 
 		parser.eat('}', true);
@@ -579,9 +587,7 @@ function special(parser) {
 
 		if (
 			expression.type !== 'CallExpression' &&
-			(expression.type !== 'ChainExpression' ||
-				expression.expression.type !== 'CallExpression' ||
-				!expression.expression.optional)
+			(expression.type !== 'ChainExpression' || expression.expression.type !== 'CallExpression')
 		) {
 			e.render_tag_invalid_expression(expression);
 		}

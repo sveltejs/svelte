@@ -1,5 +1,7 @@
 import { hydrate_anchor, hydrate_nodes, hydrating } from './hydration.js';
 import { get_descriptor } from '../utils.js';
+import { DEV } from 'esm-env';
+import { init_array_prototype_warnings } from '../dev/equality.js';
 
 // We cache the Node and Element prototype methods, so that we can avoid doing
 // expensive prototype chain lookups.
@@ -69,6 +71,13 @@ export function init_operations() {
 	element_prototype.__className = '';
 	// @ts-expect-error
 	element_prototype.__attributes = null;
+
+	if (DEV) {
+		// @ts-expect-error
+		element_prototype.__svelte_meta = null;
+
+		init_array_prototype_warnings();
+	}
 
 	first_child_get = /** @type {(this: Node) => ChildNode | null} */ (
 		// @ts-ignore

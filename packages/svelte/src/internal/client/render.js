@@ -95,7 +95,7 @@ export function stringify(value) {
  * @param {{
  * 		target: Document | Element | ShadowRoot;
  * 		anchor?: Node;
- * 		props?: import('../types.js').RemoveBindable<Props>;
+ * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  * 		context?: Map<any, any>;
  * 		intro?: boolean;
@@ -121,7 +121,7 @@ export function mount(component, options) {
  * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
- * 		props?: import('../types.js').RemoveBindable<Props>;
+ * 		props?: Props;
  * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
@@ -167,9 +167,15 @@ export function hydrate(component, options) {
 			return instance;
 		}, false);
 	} catch (error) {
-		if (!hydrated && options.recover !== false) {
+		if (
+			!hydrated &&
+			options.recover !== false &&
+			/** @type {Error} */ (error).message.includes('hydration_missing_marker_close')
+		) {
 			w.hydration_mismatch();
 
+			// If an error occured above, the operations might not yet have been initialised.
+			init_operations();
 			clear_text_content(target);
 
 			set_hydrating(false);

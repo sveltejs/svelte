@@ -4,4 +4,7 @@
 	<marquee>but this is still discouraged</marquee>
 </div>
 
+<!-- svelte-ignore a11y_misplaced_scope -->
+<div scope></div>
+
 <img src="potato.jpg">

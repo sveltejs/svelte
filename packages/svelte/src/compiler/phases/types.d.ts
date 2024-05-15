@@ -7,10 +7,9 @@ import type {
 	SlotElement,
 	SvelteElement,
 	SvelteNode,
-	SvelteOptions,
-	Warning
+	SvelteOptions
 } from '#compiler';
-import type { Identifier, LabeledStatement, Program } from 'estree';
+import type { Identifier, LabeledStatement, Program, Statement, VariableDeclaration } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
 
 export interface Js {
@@ -68,6 +67,7 @@ export interface ComponentAnalysis extends Analysis {
 	/** If `true`, should append styles through JavaScript */
 	inject_styles: boolean;
 	reactive_statements: Map<LabeledStatement, ReactiveStatement>;
+	top_level_snippets: VariableDeclaration[];
 	/** Identifiers that make up the `bind:group` expression -> internal group binding name */
 	binding_groups: Map<[key: string, bindings: Array<Binding | null>], Identifier>;
 	slot_names: Map<string, SlotElement>;

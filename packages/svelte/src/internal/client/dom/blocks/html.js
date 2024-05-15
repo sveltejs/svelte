@@ -30,14 +30,15 @@ function remove_from_parent_effect(effect, to_remove) {
  * @param {Element | Text | Comment} anchor
  * @param {() => string} get_value
  * @param {boolean} svg
+ * @param {boolean} mathml
  * @returns {void}
  */
-export function html(anchor, get_value, svg) {
+export function html(anchor, get_value, svg, mathml) {
 	const parent_effect = anchor.parentNode !== current_effect?.dom ? current_effect : null;
 	let value = derived(get_value);
 
 	render_effect(() => {
-		var dom = html_to_dom(anchor, parent_effect, get(value), svg);
+		var dom = html_to_dom(anchor, parent_effect, get(value), svg, mathml);
 
 		if (dom) {
 			return () => {
@@ -58,20 +59,22 @@ export function html(anchor, get_value, svg) {
  * @param {import('#client').Effect | null} effect
  * @param {V} value
  * @param {boolean} svg
+ * @param {boolean} mathml
  * @returns {Element | Comment | (Element | Comment | Text)[]}
  */
-function html_to_dom(target, effect, value, svg) {
+function html_to_dom(target, effect, value, svg, mathml) {
 	if (hydrating) return hydrate_nodes;
 
 	var html = value + '';
 	if (svg) html = `<svg>${html}</svg>`;
+	else if (mathml) html = `<math>${html}</math>`;
 
 	// Don't use create_fragment_with_script_from_html here because that would mean script tags are executed.
 	// @html is basically `.innerHTML = ...` and that doesn't execute scripts either due to security reasons.
 	/** @type {DocumentFragment | Element} */
 	var node = create_fragment_from_html(html);
 
-	if (svg) {
+	if (svg || mathml) {
 		node = /** @type {Element} */ (node.firstChild);
 	}
 
@@ -86,7 +89,7 @@ function html_to_dom(target, effect, value, svg) {
 
 	var nodes = /** @type {Array<Text | Element | Comment>} */ ([...node.childNodes]);
 
-	if (svg) {
+	if (svg || mathml) {
 		while (node.firstChild) {
 			target.before(node.firstChild);
 		}

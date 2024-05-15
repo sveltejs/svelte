@@ -94,7 +94,7 @@
 
 ## const_tag_invalid_expression
 
-> {@const ...} must be an assignment
+> {@const ...} must consist of a single variable declaration
 
 ## const_tag_invalid_placement
 
@@ -239,6 +239,10 @@
 ## snippet_invalid_rest_parameter
 
 > snippets do not support rest parameters; use an array instead
+
+## snippet_shadowing_prop
+
+> This snippet is shadowing the prop `%prop%` with the same name
 
 ## style_directive_invalid_modifier
 

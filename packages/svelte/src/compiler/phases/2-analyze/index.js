@@ -11,20 +11,21 @@ import {
 	object
 } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
-import { ReservedKeywords, Runes, SVGElements } from '../constants.js';
+import { MathMLElements, ReservedKeywords, Runes, SVGElements } from '../constants.js';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import { merge } from '../visitors.js';
 import { validation_legacy, validation_runes, validation_runes_js } from './validation.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
-import { DelegatedEvents, namespace_svg } from '../../../constants.js';
+import { DelegatedEvents, namespace_mathml, namespace_svg } from '../../../constants.js';
 import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
 import { hash } from './utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
+import { pop_ignore, push_ignore } from '../../state.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -384,6 +385,7 @@ export function analyze_component(root, source, options) {
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
 		slot_names: new Map(),
+		top_level_snippets: [],
 		css: {
 			ast: root.css,
 			hash: root.css
@@ -438,8 +440,7 @@ export function analyze_component(root, source, options) {
 				component_slots: new Set(),
 				expression: null,
 				private_derived_state: [],
-				function_depth: scope.function_depth,
-				ignores: new Set()
+				function_depth: scope.function_depth
 			};
 
 			walk(
@@ -448,8 +449,51 @@ export function analyze_component(root, source, options) {
 				merge(set_scope(scopes), validation_runes, runes_scope_tweaker, common_visitors)
 			);
 		}
+
+		// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
+		for (const scope of [module.scope, instance.scope]) {
+			outer: for (const [name, binding] of scope.declarations) {
+				if (binding.kind === 'normal' && binding.reassigned) {
+					inner: for (const { path } of binding.references) {
+						if (path[0].type !== 'Fragment') continue;
+						for (let i = 1; i < path.length; i += 1) {
+							const type = path[i].type;
+							if (
+								type === 'FunctionDeclaration' ||
+								type === 'FunctionExpression' ||
+								type === 'ArrowFunctionExpression'
+							) {
+								continue inner;
+							}
+							// bind:this doesn't need to be a state reference if it will never change
+							if (
+								type === 'BindDirective' &&
+								/** @type {import('#compiler').BindDirective} */ (path[i]).name === 'this'
+							) {
+								for (let j = i - 1; j >= 0; j -= 1) {
+									const type = path[j].type;
+									if (
+										type === 'IfBlock' ||
+										type === 'EachBlock' ||
+										type === 'AwaitBlock' ||
+										type === 'KeyBlock'
+									) {
+										w.non_reactive_update(binding.node, name);
+										continue outer;
+									}
+								}
+								continue inner;
+							}
+						}
+
+						w.non_reactive_update(binding.node, name);
+						continue outer;
+					}
+				}
+			}
+		}
 	} else {
-		instance.scope.declare(b.id('$$props'), 'bindable_prop', 'synthetic');
+		instance.scope.declare(b.id('$$props'), 'rest_prop', 'synthetic');
 		instance.scope.declare(b.id('$$restProps'), 'rest_prop', 'synthetic');
 
 		for (const { ast, scope, scopes } of [module, instance, template]) {
@@ -467,8 +511,7 @@ export function analyze_component(root, source, options) {
 				component_slots: new Set(),
 				expression: null,
 				private_derived_state: [],
-				function_depth: scope.function_depth,
-				ignores: new Set()
+				function_depth: scope.function_depth
 			};
 
 			walk(
@@ -507,49 +550,6 @@ export function analyze_component(root, source, options) {
 		e.slot_snippet_conflict(analysis.slot_names.values().next().value);
 	}
 
-	// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
-	for (const scope of [module.scope, instance.scope]) {
-		outer: for (const [name, binding] of scope.declarations) {
-			if (binding.kind === 'normal' && binding.reassigned) {
-				inner: for (const { path } of binding.references) {
-					if (path[0].type !== 'Fragment') continue;
-					for (let i = 1; i < path.length; i += 1) {
-						const type = path[i].type;
-						if (
-							type === 'FunctionDeclaration' ||
-							type === 'FunctionExpression' ||
-							type === 'ArrowFunctionExpression'
-						) {
-							continue inner;
-						}
-						// bind:this doesn't need to be a state reference if it will never change
-						if (
-							type === 'BindDirective' &&
-							/** @type {import('#compiler').BindDirective} */ (path[i]).name === 'this'
-						) {
-							for (let j = i - 1; j >= 0; j -= 1) {
-								const type = path[j].type;
-								if (
-									type === 'IfBlock' ||
-									type === 'EachBlock' ||
-									type === 'AwaitBlock' ||
-									type === 'KeyBlock'
-								) {
-									w.non_reactive_update(binding.node, name);
-									continue outer;
-								}
-							}
-							continue inner;
-						}
-					}
-
-					w.non_reactive_update(binding.node, name);
-					continue outer;
-				}
-			}
-		}
-	}
-
 	if (analysis.css.ast) {
 		analyze_css(analysis.css.ast, analysis);
 
@@ -558,10 +558,14 @@ export function analyze_component(root, source, options) {
 			prune(analysis.css.ast, element);
 		}
 
-		if (
-			!analysis.css.ast.content.comment ||
-			!extract_svelte_ignore(analysis.css.ast.content.comment.data).includes('css_unused_selector')
-		) {
+		const { comment } = analysis.css.ast.content;
+		const should_ignore_unused =
+			comment &&
+			extract_svelte_ignore(comment.start, comment.data, analysis.runes).includes(
+				'css_unused_selector'
+			);
+
+		if (!should_ignore_unused) {
 			warn_unused(analysis.css.ast);
 		}
 
@@ -870,6 +874,16 @@ const legacy_scope_tweaker = {
 				}
 			}
 		}
+	},
+	StyleDirective(node, { state }) {
+		// the case for node.value different from true is already covered by the Identifier visitor
+		if (node.value === true) {
+			// get the binding for node.name and change the binding to state
+			let binding = state.scope.get(node.name);
+			if (binding?.mutated && binding.kind === 'normal') {
+				binding.kind = 'state';
+			}
+		}
 	}
 };
 
@@ -956,7 +970,7 @@ const runes_scope_tweaker = {
 				const alias =
 					property.key.type === 'Identifier'
 						? property.key.name
-						: /** @type {string} */ (/** @type {import('estree').Literal} */ (property.key).value);
+						: String(/** @type {import('estree').Literal} */ (property.key).value);
 				let initial = property.value.type === 'AssignmentPattern' ? property.value.right : null;
 
 				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
@@ -1031,6 +1045,9 @@ function is_known_safe_call(node, context) {
 			return true;
 		}
 	}
+
+	// TODO add more cases
+
 	return false;
 }
 
@@ -1082,62 +1099,51 @@ function is_safe_identifier(expression, scope) {
 
 /** @type {import('./types').Visitors} */
 const common_visitors = {
-	_(node, context) {
-		// @ts-expect-error
-		const comments = /** @type {import('estree').Comment[]} */ (node.leadingComments);
-
-		if (comments) {
+	_(node, { state, next, path }) {
+		const parent = path.at(-1);
+		if (parent?.type === 'Fragment' && node.type !== 'Comment' && node.type !== 'Text') {
+			const idx = parent.nodes.indexOf(/** @type {any} */ (node));
 			/** @type {string[]} */
 			const ignores = [];
-
-			for (const comment of comments) {
-				ignores.push(...extract_svelte_ignore(comment.value));
+			for (let i = idx - 1; i >= 0; i--) {
+				const prev = parent.nodes[i];
+				if (prev.type === 'Comment') {
+					ignores.push(
+						...extract_svelte_ignore(
+							prev.start + 4 /* '<!--'.length */,
+							prev.data,
+							state.analysis.runes
+						)
+					);
+				} else if (prev.type !== 'Text') {
+					break;
+				}
 			}
 
 			if (ignores.length > 0) {
-				// @ts-expect-error see below
-				node.ignores = new Set([...context.state.ignores, ...ignores]);
+				push_ignore(ignores);
+				next();
+				pop_ignore();
 			}
-		}
-
-		// @ts-expect-error
-		if (node.ignores) {
-			context.next({
-				...context.state,
-				// @ts-expect-error see below
-				ignores: node.ignores
-			});
-		} else if (context.state.ignores.size > 0) {
-			// @ts-expect-error
-			node.ignores = context.state.ignores;
-		}
-	},
-	Fragment(node, context) {
-		/** @type {string[]} */
-		let ignores = [];
-
-		for (const child of node.nodes) {
-			if (child.type === 'Text' && child.data.trim() === '') {
-				continue;
-			}
-
-			if (child.type === 'Comment') {
-				ignores.push(...extract_svelte_ignore(child.data));
-			} else {
-				const combined_ignores = new Set(context.state.ignores);
-				for (const ignore of ignores) combined_ignores.add(ignore);
-
-				if (combined_ignores.size > 0) {
-					// TODO this is a grotesque hack that's made necessary by the fact that
-					// we can't call `context.visit(...)` here, because we do the convoluted
-					// visitor merging thing. I'm increasingly of the view that we should
-					// rearchitect this stuff and have a single visitor per node. It'd be
-					// more efficient and much simpler.
-					// @ts-expect-error
-					child.ignores = combined_ignores;
+		} else {
+			const comments = /** @type {any} */ (node).leadingComments;
+			if (comments) {
+				/** @type {string[]} */
+				const ignores = [];
+				for (const comment of comments) {
+					ignores.push(
+						...extract_svelte_ignore(
+							comment.start + 2 /* '//'.length */,
+							comment.value,
+							state.analysis.runes
+						)
+					);
 				}
-
-				ignores = [];
+				if (ignores.length > 0) {
+					push_ignore(ignores);
+					next();
+					pop_ignore();
+				}
 			}
 		}
 	},
@@ -1231,6 +1237,7 @@ const common_visitors = {
 			if (
 				context.state.analysis.runes &&
 				node !== binding.node &&
+				context.state.function_depth === binding.scope.function_depth &&
 				// If we have $state that can be proxied or frozen and isn't re-assigned, then that means
 				// it's likely not using a primitive value and thus this warning isn't that helpful.
 				((binding.kind === 'state' &&
@@ -1241,18 +1248,21 @@ const common_visitors = {
 							!should_proxy_or_freeze(binding.initial.arguments[0], context.state.scope)))) ||
 					binding.kind === 'frozen_state' ||
 					binding.kind === 'derived') &&
-				context.state.function_depth === binding.scope.function_depth
+				// We're only concerned with reads here
+				(parent.type !== 'AssignmentExpression' || parent.left !== node) &&
+				parent.type !== 'UpdateExpression'
 			) {
 				w.state_referenced_locally(node);
 			}
 		}
 	},
 	CallExpression(node, context) {
+		const { expression } = context.state;
 		if (
-			context.state.expression?.type === 'ExpressionTag' ||
-			(context.state.expression?.type === 'SpreadAttribute' && !is_known_safe_call(node, context))
+			(expression?.type === 'ExpressionTag' || expression?.type === 'SpreadAttribute') &&
+			!is_known_safe_call(node, context)
 		) {
-			context.state.expression.metadata.contains_call_expression = true;
+			expression.metadata.contains_call_expression = true;
 		}
 
 		const callee = node.callee;
@@ -1379,8 +1389,9 @@ const common_visitors = {
 	FunctionExpression: function_visitor,
 	FunctionDeclaration: function_visitor,
 	RegularElement(node, context) {
-		if (context.state.options.namespace !== 'foreign' && SVGElements.includes(node.name)) {
-			node.metadata.svg = true;
+		if (context.state.options.namespace !== 'foreign') {
+			if (SVGElements.includes(node.name)) node.metadata.svg = true;
+			else if (MathMLElements.includes(node.name)) node.metadata.mathml = true;
 		}
 
 		determine_element_spread(node);
@@ -1438,20 +1449,29 @@ const common_visitors = {
 	SvelteElement(node, context) {
 		context.state.analysis.elements.push(node);
 
+		// TODO why are we handling the `<svelte:element this="x" />` case? there is no
+		// reason for someone to use a static value with `<svelte:element>`
 		if (
 			context.state.options.namespace !== 'foreign' &&
 			node.tag.type === 'Literal' &&
-			typeof node.tag.value === 'string' &&
-			SVGElements.includes(node.tag.value)
+			typeof node.tag.value === 'string'
 		) {
-			node.metadata.svg = true;
-			return;
+			if (SVGElements.includes(node.tag.value)) {
+				node.metadata.svg = true;
+				return;
+			}
+
+			if (MathMLElements.includes(node.tag.value)) {
+				node.metadata.mathml = true;
+				return;
+			}
 		}
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute') {
 				if (attribute.name === 'xmlns' && is_text_attribute(attribute)) {
 					node.metadata.svg = attribute.value[0].data === namespace_svg;
+					node.metadata.mathml = attribute.value[0].data === namespace_mathml;
 					return;
 				}
 			}
@@ -1467,6 +1487,7 @@ const common_visitors = {
 			) {
 				// Inside a slot or a snippet -> this resets the namespace, so assume the component namespace
 				node.metadata.svg = context.state.options.namespace === 'svg';
+				node.metadata.mathml = context.state.options.namespace === 'mathml';
 				return;
 			}
 			if (ancestor.type === 'SvelteElement' || ancestor.type === 'RegularElement') {
@@ -1474,6 +1495,10 @@ const common_visitors = {
 					ancestor.type === 'RegularElement' && ancestor.name === 'foreignObject'
 						? false
 						: ancestor.metadata.svg;
+				node.metadata.mathml =
+					ancestor.type === 'RegularElement' && ancestor.name === 'foreignObject'
+						? false
+						: ancestor.metadata.mathml;
 				return;
 			}
 		}

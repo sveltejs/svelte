@@ -6,18 +6,14 @@ import { define_property, is_array } from '../../utils.js';
  * @param {string} event_name
  * @param {Element} dom
  * @param {EventListener} handler
- * @param {boolean} capture
- * @param {boolean} [passive]
- * @returns {void}
+ * @param {AddEventListenerOptions} options
  */
-export function event(event_name, dom, handler, capture, passive) {
-	var options = { capture, passive };
-
+export function create_event(event_name, dom, handler, options) {
 	/**
 	 * @this {EventTarget}
 	 */
 	function target_handler(/** @type {Event} */ event) {
-		if (!capture) {
+		if (!options.capture) {
 			// Only call in the bubble phase, else delegated events would be called before the capturing events
 			handle_event_propagation(dom, event);
 		}
@@ -27,6 +23,21 @@ export function event(event_name, dom, handler, capture, passive) {
 	}
 
 	dom.addEventListener(event_name, target_handler, options);
+
+	return target_handler;
+}
+
+/**
+ * @param {string} event_name
+ * @param {Element} dom
+ * @param {EventListener} handler
+ * @param {boolean} capture
+ * @param {boolean} [passive]
+ * @returns {void}
+ */
+export function event(event_name, dom, handler, capture, passive) {
+	var options = { capture, passive };
+	var target_handler = create_event(event_name, dom, handler, options);
 
 	// @ts-ignore
 	if (dom === document.body || dom === window || dom === document) {
@@ -122,22 +133,22 @@ export function handle_event_propagation(handler_element, event) {
 		}
 	});
 
-	/** @param {Element} current_target */
-	function next(current_target) {
+	/** @param {Element} next_target */
+	function next(next_target) {
+		current_target = next_target;
 		/** @type {null | Element} */
-		var parent_element =
-			current_target.parentNode || /** @type {any} */ (current_target).host || null;
+		var parent_element = next_target.parentNode || /** @type {any} */ (next_target).host || null;
 
 		try {
 			// @ts-expect-error
-			var delegated = current_target['__' + event_name];
+			var delegated = next_target['__' + event_name];
 
-			if (delegated !== undefined && !(/** @type {any} */ (current_target).disabled)) {
+			if (delegated !== undefined && !(/** @type {any} */ (next_target).disabled)) {
 				if (is_array(delegated)) {
 					var [fn, ...data] = delegated;
-					fn.apply(current_target, [event, ...data]);
+					fn.apply(next_target, [event, ...data]);
 				} else {
-					delegated.call(current_target, event);
+					delegated.call(next_target, event);
 				}
 			}
 		} finally {
@@ -145,7 +156,7 @@ export function handle_event_propagation(handler_element, event) {
 				!event.cancelBubble &&
 				parent_element !== handler_element &&
 				parent_element !== null &&
-				current_target !== handler_element
+				next_target !== handler_element
 			) {
 				next(parent_element);
 			}

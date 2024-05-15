@@ -17,29 +17,10 @@ declare module 'svelte' {
 		$$inline?: boolean;
 	}
 
-	/** Tooling for types uses this for properties are being used with `bind:` */
-	export type Binding<T> = { 'bind:': T };
 	/**
-	 * Tooling for types uses this for properties that may be bound to.
-	 * Only use this if you author Svelte component type definition files by hand (we recommend using `@sveltejs/package` instead).
-	 * Example:
-	 * ```ts
-	 * export class MyComponent extends SvelteComponent<{ readonly: string, bindable: Bindable<string> }> {}
-	 * ```
-	 * means you can now do `<MyComponent {readonly} bind:bindable />`
+	 * Utility type for ensuring backwards compatibility on a type level that if there's a default slot, add 'children' to the props
 	 */
-	export type Bindable<T> = T | Binding<T>;
-
-	type WithBindings<T> = {
-		[Key in keyof T]: Bindable<T[Key]>;
-	};
-
-	/**
-	 * Utility type for ensuring backwards compatibility on a type level:
-	 * - If there's a default slot, add 'children' to the props
-	 * - All props are bindable
-	 */
-	type PropsWithChildren<Props, Slots> = WithBindings<Props> &
+	type Properties<Props, Slots> = Props &
 		(Slots extends { default: any }
 			? // This is unfortunate because it means "accepts no props" turns into "accepts any prop"
 				// but the alternative is non-fixable type errors because of the way TypeScript index
@@ -91,13 +72,13 @@ declare module 'svelte' {
 		 * is a stop-gap solution. Migrate towards using `mount` or `createRoot` instead. See
 		 * https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more info.
 		 */
-		constructor(options: ComponentConstructorOptions<PropsWithChildren<Props, Slots>>);
+		constructor(options: ComponentConstructorOptions<Properties<Props, Slots>>);
 		/**
 		 * For type checking capabilities only.
 		 * Does not exist at runtime.
 		 * ### DO NOT USE!
 		 * */
-		$$prop_def: RemoveBindable<Props>; // Without PropsWithChildren: unnecessary, causes type bugs
+		$$prop_def: Props; // Without Properties: unnecessary, causes type bugs
 		/**
 		 * For type checking capabilities only.
 		 * Does not exist at runtime.
@@ -112,6 +93,12 @@ declare module 'svelte' {
 		 *
 		 * */
 		$$slot_def: Slots;
+		/**
+		 * For type checking capabilities only.
+		 * Does not exist at runtime.
+		 * ### DO NOT USE!
+		 * */
+		$$bindings?: string;
 
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
@@ -177,7 +164,7 @@ declare module 'svelte' {
 	 * ```
 	 */
 	export type ComponentProps<Comp extends SvelteComponent> =
-		Comp extends SvelteComponent<infer Props> ? RemoveBindable<Props> : never;
+		Comp extends SvelteComponent<infer Props> ? Props : never;
 
 	/**
 	 * Convenience type to get the type of a Svelte component. Useful for example in combination with
@@ -247,12 +234,6 @@ declare module 'svelte' {
 					: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
 		): boolean;
 	}
-	/** Anything except a function */
-	type NotFunction<T> = T extends Function ? never : T;
-
-	type RemoveBindable<Props extends Record<string, any>> = {
-		[Key in keyof Props]: Props[Key] extends Bindable<infer Value> ? Value : Props[Key];
-	};
 	/**
 	 * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
 	 * It must be called during the component's initialisation (but doesn't need to live *inside* the component;
@@ -323,6 +304,8 @@ declare module 'svelte' {
 	 * Synchronously flushes any pending state changes and those that result from it.
 	 * */
 	export function flushSync(fn?: (() => void) | undefined): void;
+	/** Anything except a function */
+	type NotFunction<T> = T extends Function ? never : T;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
 	 *
@@ -330,7 +313,7 @@ declare module 'svelte' {
 	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
 		target: Document | Element | ShadowRoot;
 		anchor?: Node | undefined;
-		props?: RemoveBindable<Props> | undefined;
+		props?: Props | undefined;
 		events?: { [Property in keyof Events]: (e: Events[Property]) => any; } | undefined;
 		context?: Map<any, any> | undefined;
 		intro?: boolean | undefined;
@@ -341,7 +324,7 @@ declare module 'svelte' {
 	 * */
 	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, Events, any>>, options: {
 		target: Document | Element | ShadowRoot;
-		props?: RemoveBindable<Props> | undefined;
+		props?: Props | undefined;
 		events?: { [Property in keyof Events]: (e: Events[Property]) => any; } | undefined;
 		context?: Map<any, any> | undefined;
 		intro?: boolean | undefined;
@@ -1321,11 +1304,12 @@ declare module 'svelte/compiler' {
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
 	 * - `svg`     — for e.g. `<svg>` or `<g>`
+	 * - `mathml`  — for e.g. `<math>` or `<mrow>`
 	 * - `foreign` — for other compilation targets than the web, e.g. Svelte Native.
 	 *               Disallows bindings other than bind:this, disables a11y checks, disables any special attribute handling
 	 *               (also see https://github.com/sveltejs/svelte/pull/5652)
 	 */
-	type Namespace = 'html' | 'svg' | 'foreign';
+	type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
 
 	interface Root extends BaseNode {
 		type: 'Root';
@@ -1569,6 +1553,8 @@ declare module 'svelte/compiler' {
 		metadata: {
 			/** `true` if this is an svg element */
 			svg: boolean;
+			/** `true` if this is a mathml element */
+			mathml: boolean;
 			/** `true` if contains a SpreadAttribute */
 			has_spread: boolean;
 			scoped: boolean;
@@ -1601,6 +1587,11 @@ declare module 'svelte/compiler' {
 			 * the tag is dynamic, but we do our best to infer it from the template.
 			 */
 			svg: boolean;
+			/**
+			 * `true` if this is a mathml element. The boolean may not be accurate because
+			 * the tag is dynamic, but we do our best to infer it from the template.
+			 */
+			mathml: boolean;
 			scoped: boolean;
 		};
 	}
@@ -2166,14 +2157,14 @@ declare module 'svelte/store' {
 	 *
 	 * https://svelte.dev/docs/svelte-store#derived
 	 * */
-	export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>) => T, initial_value?: T | undefined): Readable<T>;
+	export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>, set: (value: T) => void, update: (fn: Updater<T>) => void) => Unsubscriber | void, initial_value?: T | undefined): Readable<T>;
 	/**
 	 * Derived value store by synchronizing one or more readable stores and
 	 * applying an aggregation function over its input values.
 	 *
 	 * https://svelte.dev/docs/svelte-store#derived
 	 * */
-	export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>, set: (value: T) => void, update: (fn: Updater<T>) => void) => Unsubscriber | void, initial_value?: T | undefined): Readable<T>;
+	export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>) => T, initial_value?: T | undefined): Readable<T>;
 	/**
 	 * Takes a store and returns a new one derived from the old one that is readable.
 	 *
@@ -2562,11 +2553,12 @@ declare module 'svelte/types/compiler/interfaces' {
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
 	 * - `svg`     — for e.g. `<svg>` or `<g>`
+	 * - `mathml`  — for e.g. `<math>` or `<mrow>`
 	 * - `foreign` — for other compilation targets than the web, e.g. Svelte Native.
 	 *               Disallows bindings other than bind:this, disables a11y checks, disables any special attribute handling
 	 *               (also see https://github.com/sveltejs/svelte/pull/5652)
 	 */
-	type Namespace = 'html' | 'svg' | 'foreign';
+	type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
 }declare module '*.svelte' {
 	export { SvelteComponent as default } from 'svelte';
 }
@@ -2631,6 +2623,48 @@ declare namespace $state {
 	 * @param state The value to snapshot
 	 */
 	export function snapshot<T>(state: T): T;
+
+	/**
+	 * Compare two values, one or both of which is a reactive `$state(...)` proxy.
+	 *
+	 * Example:
+	 * ```ts
+	 * <script>
+	 *	 let foo = $state({});
+	 *	 let bar = {};
+	 *
+	 *	 foo.bar = bar;
+	 *
+	 *	 console.log(foo.bar === bar); // false — `foo.bar` is a reactive proxy
+	 *   console.log($state.is(foo.bar, bar)); // true
+	 * </script>
+	 * ```
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$state.is
+	 *
+	 */
+	export function is(a: any, b: any): boolean;
+
+	// prevent intellisense from being unhelpful
+	/** @deprecated */
+	export const apply: never;
+	/** @deprecated */
+	// @ts-ignore
+	export const arguments: never;
+	/** @deprecated */
+	export const bind: never;
+	/** @deprecated */
+	export const call: never;
+	/** @deprecated */
+	export const caller: never;
+	/** @deprecated */
+	export const length: never;
+	/** @deprecated */
+	export const name: never;
+	/** @deprecated */
+	export const prototype: never;
+	/** @deprecated */
+	export const toString: never;
 }
 
 /**
@@ -2667,6 +2701,27 @@ declare namespace $derived {
 	 * https://svelte-5-preview.vercel.app/docs/runes#$derived-by
 	 */
 	export function by<T>(fn: () => T): T;
+
+	// prevent intellisense from being unhelpful
+	/** @deprecated */
+	export const apply: never;
+	/** @deprecated */
+	// @ts-ignore
+	export const arguments: never;
+	/** @deprecated */
+	export const bind: never;
+	/** @deprecated */
+	export const call: never;
+	/** @deprecated */
+	export const caller: never;
+	/** @deprecated */
+	export const length: never;
+	/** @deprecated */
+	export const name: never;
+	/** @deprecated */
+	export const prototype: never;
+	/** @deprecated */
+	export const toString: never;
 }
 
 /**
@@ -2755,6 +2810,27 @@ declare namespace $effect {
 	 * https://svelte-5-preview.vercel.app/docs/runes#$effect-root
 	 */
 	export function root(fn: () => void | (() => void)): () => void;
+
+	// prevent intellisense from being unhelpful
+	/** @deprecated */
+	export const apply: never;
+	/** @deprecated */
+	// @ts-ignore
+	export const arguments: never;
+	/** @deprecated */
+	export const bind: never;
+	/** @deprecated */
+	export const call: never;
+	/** @deprecated */
+	export const caller: never;
+	/** @deprecated */
+	export const length: never;
+	/** @deprecated */
+	export const name: never;
+	/** @deprecated */
+	export const prototype: never;
+	/** @deprecated */
+	export const toString: never;
 }
 
 /**
