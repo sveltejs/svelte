@@ -114,7 +114,6 @@ export function render(component, options) {
 	payload.head.out += `<script>(() => {
 		const events = [];
 		const handle_event = e => {
-			e.stopPropagation();
 			e.__target = e.target;
 			events.push(e);
 		}
