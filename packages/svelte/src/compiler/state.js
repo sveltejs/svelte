@@ -26,14 +26,22 @@ export function pop_ignore() {
 }
 
 /**
- * @param {{
- *   source: string;
- *   filename: string | undefined;
- * }} options
+ * @param {string} source
+ * @param {{ filename?: string, rootDir?: string }} options
  */
-export function reset(options) {
-	filename = options.filename;
-	locator = getLocator(options.source, { offsetLine: 1 });
+export function reset(source, options) {
+	if (
+		typeof options.filename === 'string' &&
+		typeof options.rootDir === 'string' &&
+		options.filename.startsWith(options.rootDir)
+	) {
+		// make filename relative to rootDir
+		filename = options.filename.replace(options.rootDir, '').replace(/^[/\\]/, '');
+	} else {
+		filename = options.filename;
+	}
+
+	locator = getLocator(source, { offsetLine: 1 });
 	warnings = [];
 	ignore_stack = [];
 }
