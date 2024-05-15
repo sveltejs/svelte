@@ -1077,6 +1077,16 @@ export function snippet_invalid_rest_parameter(node) {
 }
 
 /**
+ * This snippet is shadowing the prop `%prop%` with the same name
+ * @param {null | number | NodeLike} node
+ * @param {string} prop
+ * @returns {never}
+ */
+export function snippet_shadowing_prop(node, prop) {
+	e(node, "snippet_shadowing_prop", `This snippet is shadowing the prop \`${prop}\` with the same name`);
+}
+
+/**
  * `style:` directive can only use the `important` modifier
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -1374,14 +1384,4 @@ export function unexpected_reserved_word(node, word) {
  */
 export function void_element_invalid_content(node) {
 	e(node, "void_element_invalid_content", "Void elements cannot have children or closing tags");
-}
-
-/**
- * This snippet is shadowing the prop `%prop%` with the same name
- * @param {null | number | NodeLike} node
- * @param {string} prop
- * @returns {never}
- */
-export function snippet_shadowing_prop(node, prop) {
-	e(node, "snippet_shadowing_prop", `This snippet is shadowing the prop \`${prop}\` with the same name`);
 }
