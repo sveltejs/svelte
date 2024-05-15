@@ -22,7 +22,6 @@ export interface AnalysisState {
 	expression: ExpressionTag | ClassDirective | SpreadAttribute | null;
 	private_derived_state: string[];
 	function_depth: number;
-	ignores: Set<string>;
 }
 
 export interface LegacyAnalysisState extends AnalysisState {

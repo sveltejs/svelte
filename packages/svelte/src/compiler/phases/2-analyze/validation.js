@@ -622,11 +622,25 @@ const validation = {
 	SnippetBlock(node, context) {
 		validate_block_not_empty(node.body, context);
 
-		if (node.expression.name !== 'children') return;
+		context.next({ ...context.state, parent_element: null });
 
 		const { path } = context;
 		const parent = path.at(-2);
 		if (!parent) return;
+
+		if (
+			parent.type === 'Component' &&
+			parent.attributes.some(
+				(attribute) =>
+					(attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
+					attribute.name === node.expression.name
+			)
+		) {
+			e.snippet_shadowing_prop(node, node.expression.name);
+		}
+
+		if (node.expression.name !== 'children') return;
+
 		if (
 			parent.type === 'Component' ||
 			parent.type === 'SvelteComponent' ||
@@ -861,6 +875,12 @@ function validate_call_expression(node, scope, path) {
 	if (rune === '$state.snapshot') {
 		if (node.arguments.length !== 1) {
 			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+		}
+	}
+
+	if (rune === '$state.is') {
+		if (node.arguments.length !== 2) {
+			e.rune_invalid_arguments_length(node, rune, 'exactly two arguments');
 		}
 	}
 }

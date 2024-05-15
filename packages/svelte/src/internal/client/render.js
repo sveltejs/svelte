@@ -167,9 +167,15 @@ export function hydrate(component, options) {
 			return instance;
 		}, false);
 	} catch (error) {
-		if (!hydrated && options.recover !== false) {
+		if (
+			!hydrated &&
+			options.recover !== false &&
+			/** @type {Error} */ (error).message.includes('hydration_missing_marker_close')
+		) {
 			w.hydration_mismatch();
 
+			// If an error occured above, the operations might not yet have been initialised.
+			init_operations();
 			clear_text_content(target);
 
 			set_hydrating(false);

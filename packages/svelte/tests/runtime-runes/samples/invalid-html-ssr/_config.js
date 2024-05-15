@@ -32,9 +32,8 @@ export default test({
 		if (variant === 'hydrate') {
 			assert.equal(
 				log[0],
-				`Svelte SSR validation error:\n\n<h1> is invalid inside <p>\n\n` +
-					'Ensure your components render valid HTML as the browser will try to repair invalid HTML, ' +
-					'which may result in content being shifted around and will likely result in a hydration mismatch.'
+				'`<h1>` (.../samples/invalid-html-ssr/Component.svelte:1:0) cannot contain `<p>` (.../samples/invalid-html-ssr/main.svelte:5:0)\n\n' +
+					'This can cause content to shift around as the browser repairs the HTML, and will likely result in a `hydration_mismatch` warning.'
 			);
 		}
 	}

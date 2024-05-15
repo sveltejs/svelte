@@ -93,24 +93,17 @@ export const javascript_visitors_legacy = {
 					state.scope.get(declarator.id.name)
 				);
 
-				if (
-					state.analysis.accessors ||
-					(state.analysis.immutable ? binding.reassigned : binding.mutated) ||
-					declarator.init
-				) {
-					declarations.push(
-						b.declarator(
-							declarator.id,
-							get_prop_source(
-								binding,
-								state,
-								binding.prop_alias ?? declarator.id.name,
-								declarator.init &&
-									/** @type {import('estree').Expression} */ (visit(declarator.init))
-							)
+				declarations.push(
+					b.declarator(
+						declarator.id,
+						get_prop_source(
+							binding,
+							state,
+							binding.prop_alias ?? declarator.id.name,
+							declarator.init && /** @type {import('estree').Expression} */ (visit(declarator.init))
 						)
-					);
-				}
+					)
+				);
 
 				continue;
 			}

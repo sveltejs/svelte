@@ -1,0 +1,14 @@
+[
+	{
+		"code": "snippet_shadowing_prop",
+		"message": "This snippet is shadowing the prop `title` with the same name",
+		"start": {
+			"column": 1,
+			"line": 6
+		},
+		"end": {
+			"column": 11,
+			"line": 8
+		}
+	}
+]

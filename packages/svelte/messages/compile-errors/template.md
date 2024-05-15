@@ -240,6 +240,10 @@
 
 > snippets do not support rest parameters; use an array instead
 
+## snippet_shadowing_prop
+
+> This snippet is shadowing the prop `%prop%` with the same name
+
 ## style_directive_invalid_modifier
 
 > `style:` directive can only use the `important` modifier

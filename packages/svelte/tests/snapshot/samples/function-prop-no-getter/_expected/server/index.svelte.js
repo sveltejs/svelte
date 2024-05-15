@@ -1,7 +1,7 @@
 import * as $ from "svelte/internal/server";
 
 export default function Function_prop_no_getter($$payload, $$props) {
-	$.push(true);
+	$.push();
 
 	let count = 0;
 

@@ -13,17 +13,17 @@ export default function Main($$anchor) {
 	var custom_element = $.sibling($.sibling(svg, true));
 	var div_1 = $.sibling($.sibling(custom_element, true));
 
-	$.render_effect(() => $.set_attribute(div_1, "foobar", y()));
+	$.template_effect(() => $.set_attribute(div_1, "foobar", y()));
 
 	var svg_1 = $.sibling($.sibling(div_1, true));
 
-	$.render_effect(() => $.set_attribute(svg_1, "viewBox", y()));
+	$.template_effect(() => $.set_attribute(svg_1, "viewBox", y()));
 
 	var custom_element_1 = $.sibling($.sibling(svg_1, true));
 
-	$.render_effect(() => $.set_custom_element_data(custom_element_1, "fooBar", y()));
+	$.template_effect(() => $.set_custom_element_data(custom_element_1, "fooBar", y()));
 
-	$.render_effect(() => {
+	$.template_effect(() => {
 		$.set_attribute(div, "foobar", x);
 		$.set_attribute(svg, "viewBox", x);
 		$.set_custom_element_data(custom_element, "fooBar", x);

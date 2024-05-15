@@ -88,6 +88,14 @@ export function client_component(source, analysis, options) {
 			};
 			return a;
 		},
+		get locations() {
+			/** @type {any[]} */
+			const a = [];
+			a.push = () => {
+				throw new Error('locations.push should not be called outside create_block');
+			};
+			return a;
+		},
 		legacy_reactive_statements: new Map(),
 		metadata: {
 			context: {
@@ -232,6 +240,7 @@ export function client_component(source, analysis, options) {
 		group_binding_declarations.push(b.const(group.name, b.array([])));
 	}
 
+	/** @type {Array<import('estree').Property | import('estree').SpreadElement>} */
 	const component_returned_object = analysis.exports.map(({ name, alias }) => {
 		const expression = serialize_get_binding(b.id(name), instance_state);
 
@@ -310,41 +319,7 @@ export function client_component(source, analysis, options) {
 			)
 		);
 	} else if (options.dev) {
-		component_returned_object.push(
-			b.init(
-				'$set',
-				b.thunk(
-					b.block([
-						b.throw_error(
-							`The component shape you get when doing bind:this changed. Updating its properties via $set is no longer valid in Svelte 5. ` +
-								'See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information'
-						)
-					])
-				)
-			),
-			b.init(
-				'$on',
-				b.thunk(
-					b.block([
-						b.throw_error(
-							`The component shape you get when doing bind:this changed. Listening to events via $on is no longer valid in Svelte 5. ` +
-								'See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information'
-						)
-					])
-				)
-			),
-			b.init(
-				'$destroy',
-				b.thunk(
-					b.block([
-						b.throw_error(
-							`The component shape you get when doing bind:this changed. Destroying such a component via $destroy is no longer valid in Svelte 5. ` +
-								'See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information'
-						)
-					])
-				)
-			)
-		);
+		component_returned_object.push(b.spread(b.call(b.id('$.legacy_api'))));
 	}
 
 	const push_args = [b.id('$$props'), b.literal(analysis.runes)];
@@ -462,23 +437,29 @@ export function client_component(source, analysis, options) {
 	);
 
 	if (options.hmr) {
+		const accept_fn = b.arrow(
+			[b.id('module')],
+			b.block([b.stmt(b.call('$.set', b.id('s'), b.member(b.id('module'), b.id('default'))))])
+		);
 		body.push(
 			component,
 			b.if(
 				b.id('import.meta.hot'),
 				b.block([
 					b.const(b.id('s'), b.call('$.source', b.id(analysis.name))),
+					b.const(b.id('filename'), b.member(b.id(analysis.name), b.id('filename'))),
 					b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
 					b.stmt(
-						b.call(
-							'import.meta.hot.accept',
-							b.arrow(
-								[b.id('module')],
-								b.block([
-									b.stmt(b.call('$.set', b.id('s'), b.member(b.id('module'), b.id('default'))))
-								])
+						b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.id('filename'))
+					),
+					b.if(
+						b.id('import.meta.hot.acceptExports'),
+						b.block([
+							b.stmt(
+								b.call('import.meta.hot.acceptExports', b.array([b.literal('default')]), accept_fn)
 							)
-						)
+						]),
+						b.block([b.stmt(b.call('import.meta.hot.accept', accept_fn))])
 					)
 				])
 			),
@@ -499,7 +480,7 @@ export function client_component(source, analysis, options) {
 			}
 
 			// add `App.filename = 'App.svelte'` so that we can print useful messages later
-			body.push(
+			body.unshift(
 				b.stmt(
 					b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.literal(filename))
 				)

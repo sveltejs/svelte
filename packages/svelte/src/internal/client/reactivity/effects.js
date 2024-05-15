@@ -3,7 +3,9 @@ import {
 	current_component_context,
 	current_effect,
 	current_reaction,
+	current_untracking,
 	destroy_effect_children,
+	dev_current_component_function,
 	execute_effect,
 	get,
 	is_destroying_effect,
@@ -13,6 +15,7 @@ import {
 	set_is_destroying_effect,
 	set_is_flushing_effect,
 	set_signal_status,
+	set_untracking,
 	untrack
 } from '../runtime.js';
 import {
@@ -25,19 +28,21 @@ import {
 	EFFECT_RAN,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	EFFECT_TRANSPARENT
+	EFFECT_TRANSPARENT,
+	DERIVED,
+	UNOWNED
 } from '../constants.js';
 import { set } from './sources.js';
 import { remove } from '../dom/reconciler.js';
 import * as e from '../errors.js';
+import { DEV } from 'esm-env';
+import { define_property } from '../utils.js';
 
 /**
- * @param {import('#client').Effect | null} effect
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
- * @returns {asserts effect}
  */
-export function validate_effect(effect, rune) {
-	if (effect === null) {
+export function validate_effect(rune) {
+	if (current_effect === null && current_reaction === null) {
 		e.effect_orphan(rune);
 	}
 
@@ -86,7 +91,23 @@ function create_effect(type, fn, sync) {
 		transitions: null
 	};
 
+	if (DEV) {
+		effect.component_function = dev_current_component_function;
+	}
+
 	if (current_reaction !== null && !is_root) {
+		var flags = current_reaction.f;
+		if ((flags & DERIVED) !== 0) {
+			if ((flags & UNOWNED) !== 0) {
+				e.effect_in_unowned_derived();
+			}
+			// If we are inside a derived, then we also need to attach the
+			// effect to the parent effect too.
+			if (current_effect !== null) {
+				push_effect(effect, current_effect);
+			}
+		}
+
 		push_effect(effect, current_reaction);
 	}
 
@@ -112,7 +133,15 @@ function create_effect(type, fn, sync) {
  * @returns {boolean}
  */
 export function effect_active() {
-	return current_effect ? (current_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 : false;
+	if (current_reaction && (current_reaction.f & DERIVED) !== 0) {
+		return (current_reaction.f & UNOWNED) === 0;
+	}
+
+	if (current_effect) {
+		return (current_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0;
+	}
+
+	return false;
 }
 
 /**
@@ -120,21 +149,29 @@ export function effect_active() {
  * @param {() => void | (() => void)} fn
  */
 export function user_effect(fn) {
-	validate_effect(current_effect, '$effect');
+	validate_effect('$effect');
 
 	// Non-nested `$effect(...)` in a component should be deferred
 	// until the component is mounted
-	const defer =
-		current_effect.f & RENDER_EFFECT &&
+	var defer =
+		current_effect !== null &&
+		(current_effect.f & RENDER_EFFECT) !== 0 &&
 		// TODO do we actually need this? removing them changes nothing
 		current_component_context !== null &&
 		!current_component_context.m;
 
+	if (DEV) {
+		define_property(fn, 'name', {
+			value: '$effect'
+		});
+	}
+
 	if (defer) {
-		const context = /** @type {import('#client').ComponentContext} */ (current_component_context);
+		var context = /** @type {import('#client').ComponentContext} */ (current_component_context);
 		(context.e ??= []).push(fn);
 	} else {
-		effect(fn);
+		var signal = effect(fn);
+		return signal;
 	}
 }
 
@@ -144,7 +181,12 @@ export function user_effect(fn) {
  * @returns {import('#client').Effect}
  */
 export function user_pre_effect(fn) {
-	validate_effect(current_effect, '$effect.pre');
+	validate_effect('$effect.pre');
+	if (DEV) {
+		define_property(fn, 'name', {
+			value: '$effect.pre'
+		});
+	}
 	return render_effect(fn);
 }
 
@@ -223,6 +265,19 @@ export function render_effect(fn) {
 }
 
 /**
+ * @param {() => void | (() => void)} fn
+ * @returns {import('#client').Effect}
+ */
+export function template_effect(fn) {
+	if (DEV) {
+		define_property(fn, 'name', {
+			value: '{expression}'
+		});
+	}
+	return render_effect(fn);
+}
+
+/**
  * @param {(() => void)} fn
  * @param {number} flags
  */
@@ -242,11 +297,14 @@ export function execute_effect_teardown(effect) {
 	var teardown = effect.teardown;
 	if (teardown !== null) {
 		const previously_destroying_effect = is_destroying_effect;
+		const previous_untracking = current_untracking;
 		set_is_destroying_effect(true);
+		set_untracking(true);
 		try {
 			teardown.call(null);
 		} finally {
 			set_is_destroying_effect(previously_destroying_effect);
+			set_untracking(previous_untracking);
 		}
 	}
 }

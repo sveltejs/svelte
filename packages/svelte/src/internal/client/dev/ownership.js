@@ -2,7 +2,7 @@
 
 import { STATE_SYMBOL } from '../constants.js';
 import { render_effect, user_pre_effect } from '../reactivity/effects.js';
-import { dev_current_component_function, set_dev_current_component_function } from '../runtime.js';
+import { dev_current_component_function } from '../runtime.js';
 import { get_prototype_of } from '../utils.js';
 import * as w from '../warnings.js';
 
@@ -37,7 +37,7 @@ function get_stack() {
  * Determines which `.svelte` component is responsible for a given state change
  * @returns {Function | null}
  */
-function get_component() {
+export function get_component() {
 	// first 4 lines are svelte internals; adjust this number if we change the internal call stack
 	const stack = get_stack()?.slice(4);
 	if (!stack) return null;
@@ -128,12 +128,8 @@ export function add_owner(object, owner, global = false) {
  * @param {any} Component
  */
 export function add_owner_effect(get_object, Component) {
-	var component = dev_current_component_function;
 	user_pre_effect(() => {
-		var prev = dev_current_component_function;
-		set_dev_current_component_function(component);
 		add_owner(get_object(), Component);
-		set_dev_current_component_function(prev);
 	});
 }
 

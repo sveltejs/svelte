@@ -1,6 +1,7 @@
 import { effect } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import { untrack } from '../../../runtime.js';
+import { is } from '../../../proxy.js';
 
 /**
  * Selects the correct option(s) (depending on whether this is a multiple select)
@@ -16,7 +17,7 @@ export function select_option(select, value, mounting) {
 
 	for (var option of select.options) {
 		var option_value = get_option_value(option);
-		if (option_value === value) {
+		if (is(option_value, value)) {
 			option.selected = true;
 			return;
 		}

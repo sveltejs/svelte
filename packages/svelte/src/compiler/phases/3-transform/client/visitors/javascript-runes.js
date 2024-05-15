@@ -209,7 +209,8 @@ export const javascript_visitors_runes = {
 				rune === '$effect.active' ||
 				rune === '$effect.root' ||
 				rune === '$inspect' ||
-				rune === '$state.snapshot'
+				rune === '$state.snapshot' ||
+				rune === '$state.is'
 			) {
 				if (init != null && is_hoistable_function(init)) {
 					const hoistable_function = visit(init);
@@ -430,6 +431,14 @@ export const javascript_visitors_runes = {
 			);
 		}
 
+		if (rune === '$state.is') {
+			return b.call(
+				'$.is',
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0])),
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[1]))
+			);
+		}
+
 		if (rune === '$effect.root') {
 			const args = /** @type {import('estree').Expression[]} */ (
 				node.arguments.map((arg) => context.visit(arg))
@@ -442,6 +451,31 @@ export const javascript_visitors_runes = {
 		}
 
 		context.next();
+	},
+	BinaryExpression(node, { state, visit, next }) {
+		const operator = node.operator;
+
+		if (state.options.dev) {
+			if (operator === '===' || operator === '!==') {
+				return b.call(
+					'$.strict_equals',
+					/** @type {import('estree').Expression} */ (visit(node.left)),
+					/** @type {import('estree').Expression} */ (visit(node.right)),
+					operator === '!==' && b.literal(false)
+				);
+			}
+
+			if (operator === '==' || operator === '!=') {
+				return b.call(
+					'$.equals',
+					/** @type {import('estree').Expression} */ (visit(node.left)),
+					/** @type {import('estree').Expression} */ (visit(node.right)),
+					operator === '!=' && b.literal(false)
+				);
+			}
+		}
+
+		next();
 	}
 };
 

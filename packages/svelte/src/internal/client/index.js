@@ -1,3 +1,4 @@
+export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
 export {
 	ADD_OWNER,
@@ -6,6 +7,7 @@ export {
 	mark_module_end,
 	add_owner_effect
 } from './dev/ownership.js';
+export { legacy_api } from './dev/legacy.js';
 export { inspect } from './dev/inspect.js';
 export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
@@ -24,7 +26,8 @@ export {
 	set_attributes,
 	set_custom_element_data,
 	set_dynamic_element_attributes,
-	set_xlink_attribute
+	set_xlink_attribute,
+	handle_lazy_img
 } from './dom/elements/attributes.js';
 export { set_class, set_svg_class, set_mathml_class, toggle_class } from './dom/elements/class.js';
 export { event, delegate } from './dom/elements/events.js';
@@ -88,6 +91,7 @@ export {
 	legacy_pre_effect,
 	legacy_pre_effect_reset,
 	render_effect,
+	template_effect,
 	user_effect,
 	user_pre_effect
 } from './reactivity/effects.js';
@@ -139,7 +143,7 @@ export {
 	validate_prop_bindings
 } from './validate.js';
 export { raf } from './timing.js';
-export { proxy, snapshot } from './proxy.js';
+export { proxy, snapshot, is } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
 export {
 	child,
@@ -157,3 +161,4 @@ export {
 	validate_store,
 	validate_void_dynamic_element
 } from '../shared/validate.js';
+export { strict_equals, equals } from './dev/equality.js';

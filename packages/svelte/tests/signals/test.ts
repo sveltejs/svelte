@@ -8,7 +8,7 @@ import {
 	user_effect
 } from '../../src/internal/client/reactivity/effects';
 import { source, set } from '../../src/internal/client/reactivity/sources';
-import type { Derived } from '../../src/internal/client/types';
+import type { Derived, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
 
@@ -374,6 +374,53 @@ describe('signals', () => {
 			flushSync(() => set(count, 1));
 			flushSync(() => set(count, 2));
 			assert.equal(teardown, 1);
+		};
+	});
+
+	test('creating effects within a derived correctly handles ownership', () => {
+		const log: Array<number | string> = [];
+		let a: Value<unknown>;
+		let inner: Value<string | number>;
+		let outer: Value<string | number>;
+
+		const destroy = effect_root(() => {
+			inner = source(0);
+			outer = source(0);
+
+			render_effect(() => {
+				a = derived(() => {
+					log.push('outer', $.get(outer));
+					effect(() => {
+						log.push('inner', $.get(inner));
+					});
+				});
+			});
+		});
+
+		return () => {
+			flushSync(() => {
+				$.get(a);
+			});
+			assert.deepEqual(log, ['outer', 0, 'inner', 0]);
+			log.length = 0;
+			flushSync(() => {
+				set(inner, 1);
+				$.get(a);
+			});
+			assert.deepEqual(log, ['inner', 1]);
+			log.length = 0;
+			flushSync(() => {
+				set(outer, 1);
+				$.get(a);
+			});
+			assert.deepEqual(log, ['outer', 1, 'inner', 1]);
+			log.length = 0;
+			flushSync(() => {
+				set(inner, 2);
+				$.get(a);
+			});
+			assert.deepEqual(log, ['inner', 2]);
+			destroy();
 		};
 	});
 });

@@ -28,6 +28,6 @@ export default function Bind_component_snippet($$anchor) {
 
 	var text = $.sibling(node, true);
 
-	$.render_effect(() => $.set_text(text, ` value: ${$.stringify($.get(value))}`));
+	$.template_effect(() => $.set_text(text, ` value: ${$.stringify($.get(value))}`));
 	$.append($$anchor, fragment_1);
 }
