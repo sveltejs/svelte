@@ -67,8 +67,8 @@ const visitors = {
 		if (node.typeAnnotation) {
 			return {
 				...node,
-				typeAnnotation: null,
-			}
+				typeAnnotation: null
+			};
 		}
 		return node;
 	}
