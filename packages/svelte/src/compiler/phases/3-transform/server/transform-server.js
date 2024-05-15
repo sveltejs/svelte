@@ -979,6 +979,13 @@ function serialize_inline_component(node, component_name, context) {
 	let slot_scope_applies_to_itself = false;
 
 	/**
+	 * Components may have a children prop and also have child nodes. In this case, we assume
+	 * that the child component isn't using render tags yet and pass the slot as $$slots.default.
+	 * We're not doing it for spread attributes, as this would result in too many false positives.
+	 */
+	let has_children_prop = false;
+
+	/**
 	 * @param {import('estree').Property} prop
 	 */
 	function push_prop(prop) {
@@ -1004,6 +1011,10 @@ function serialize_inline_component(node, component_name, context) {
 
 			if (attribute.name === 'slot') {
 				slot_scope_applies_to_itself = true;
+			}
+
+			if (attribute.name === 'children') {
+				has_children_prop = true;
 			}
 
 			const value = serialize_attribute_value(attribute.value, context, false, true);
@@ -1080,7 +1091,7 @@ function serialize_inline_component(node, component_name, context) {
 			b.block([...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []), ...body])
 		);
 
-		if (slot_name === 'default') {
+		if (slot_name === 'default' && !has_children_prop) {
 			push_prop(
 				b.prop(
 					'init',
@@ -1088,6 +1099,9 @@ function serialize_inline_component(node, component_name, context) {
 					context.state.options.dev ? b.call('$.add_snippet_symbol', slot_fn) : slot_fn
 				)
 			);
+			// We additionally add the default slot as a boolean, so that the slot render function on the other
+			// side knows it should get the content to render from $$props.children
+			serialized_slots.push(b.init('default', b.true));
 		} else {
 			const slot = b.prop('init', b.literal(slot_name), slot_fn);
 			serialized_slots.push(slot);
@@ -1755,7 +1769,7 @@ const template_visitors = {
 		const lets = [];
 
 		/** @type {import('estree').Expression} */
-		let expression = b.member_id('$$props.children');
+		let expression = b.call('$.default_slot', b.id('$$props'));
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'SpreadAttribute') {

@@ -661,6 +661,13 @@ function serialize_inline_component(node, component_name, context) {
 	let slot_scope_applies_to_itself = false;
 
 	/**
+	 * Components may have a children prop and also have child nodes. In this case, we assume
+	 * that the child component isn't using render tags yet and pass the slot as $$slots.default.
+	 * We're not doing it for spread attributes, as this would result in too many false positives.
+	 */
+	let has_children_prop = false;
+
+	/**
 	 * @param {import('estree').Property} prop
 	 */
 	function push_prop(prop) {
@@ -707,6 +714,10 @@ function serialize_inline_component(node, component_name, context) {
 
 			if (attribute.name === 'slot') {
 				slot_scope_applies_to_itself = true;
+			}
+
+			if (attribute.name === 'children') {
+				has_children_prop = true;
 			}
 
 			const [, value] = serialize_attribute_value(attribute.value, context);
@@ -825,10 +836,13 @@ function serialize_inline_component(node, component_name, context) {
 			b.block([...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []), ...body])
 		);
 
-		if (slot_name === 'default') {
+		if (slot_name === 'default' && !has_children_prop) {
 			push_prop(
 				b.init('children', context.state.options.dev ? b.call('$.wrap_snippet', slot_fn) : slot_fn)
 			);
+			// We additionally add the default slot as a boolean, so that the slot render function on the other
+			// side knows it should get the content to render from $$props.children
+			serialized_slots.push(b.init(slot_name, b.true));
 		} else {
 			serialized_slots.push(b.init(slot_name, slot_fn));
 		}
@@ -3057,7 +3071,7 @@ export const template_visitors = {
 					);
 
 		const expression = is_default
-			? b.member(b.id('$$props'), b.id('children'))
+			? b.call('$.default_slot', b.id('$$props'))
 			: b.member(b.member(b.id('$$props'), b.id('$$slots')), name, true, true);
 
 		const slot = b.call('$.slot', context.state.node, expression, props_expression, fallback);

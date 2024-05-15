@@ -19,7 +19,8 @@ export default function Function_prop_no_getter($$payload, $$props) {
 		onmouseenter: () => count = plusOne(count),
 		children: ($$payload, $$slotProps) => {
 			$$payload.out += `clicks: ${$.escape(count)}`;
-		}
+		},
+		$$slots: { default: true }
 	});
 
 	$$payload.out += `<!--]-->`;
