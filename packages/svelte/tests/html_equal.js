@@ -80,6 +80,7 @@ export function normalize_html(
 			.replace(/(<!(--)?.*?\2>)/g, preserveComments ? '$1' : '')
 			.replace(/(data-svelte-h="[^"]+")/g, removeDataSvelte ? '' : '$1')
 			.replace(/>[ \t\n\r\f]+</g, '><')
+			.replace(/<script svelte="">[\S\s]*<\/script>/, '')
 			.trim();
 		clean_children(node);
 		return node.innerHTML.replace(/<\/?noscript\/?>/g, '');
