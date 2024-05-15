@@ -60,6 +60,9 @@ const visitors = {
 	TSTypeParameterDeclaration() {
 		return b.empty;
 	},
+	TSTypeParameterInstantiation() {
+		return b.empty;
+	},
 	TSEnumDeclaration() {
 		return b.empty;
 	}

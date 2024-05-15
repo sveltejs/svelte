@@ -8,6 +8,7 @@ import { reset } from '../state.js';
 import { extract_identifiers } from '../utils/ast.js';
 import { regex_is_valid_identifier } from '../phases/patterns.js';
 import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
+import { remove_typescript_nodes } from '../phases/1-parse/remove_typescript_nodes.js';
 
 /**
  * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
@@ -21,6 +22,15 @@ export function migrate(source) {
 		reset({ source, filename: 'migrate.svelte' });
 
 		let parsed = parse(source);
+
+		if (parsed.metadata.ts) {
+			parsed = {
+				...parsed,
+				fragment: parsed.fragment && remove_typescript_nodes(parsed.fragment),
+				instance: parsed.instance && remove_typescript_nodes(parsed.instance),
+				module: parsed.module && remove_typescript_nodes(parsed.module)
+			};
+		}
 
 		const { customElement: customElementOptions, ...parsed_options } = parsed.options || {};
 
