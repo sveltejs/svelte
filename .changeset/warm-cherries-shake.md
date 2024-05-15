@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-feat: warn when snippet shadow a prop
+feat: error when snippet shadow a prop

@@ -636,7 +636,7 @@ const validation = {
 					attribute.name === node.expression.name
 			)
 		) {
-			w.snippet_shadowing_prop(node, node.expression.name);
+			e.snippet_shadowing_prop(node, node.expression.name);
 		}
 
 		if (node.expression.name !== 'children') return;
