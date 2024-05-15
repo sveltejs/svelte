@@ -51,6 +51,11 @@ export function set_attribute(element, attribute, value) {
 
 	if (attributes[attribute] === (attributes[attribute] = value)) return;
 
+	if (attribute === 'loading') {
+		// @ts-expect-error
+		element.__loading = value;
+	}
+
 	if (value === null) {
 		element.removeAttribute(attribute);
 	} else {
@@ -345,10 +350,13 @@ export function handle_lazy_img(element) {
 	// templates.
 	if (!hydrating && element.loading === 'lazy') {
 		var src = element.src;
-		element.removeAttribute('loading');
+		// @ts-expect-error
+		element.__loading = null;
+		element.loading = 'eager';
 		element.removeAttribute('src');
 		requestAnimationFrame(() => {
-			if (element.loading !== 'eager') {
+			// @ts-expect-error
+			if (element.__loading !== 'eager') {
 				element.loading = 'lazy';
 			}
 			element.src = src;
