@@ -54,9 +54,6 @@ const visitors = {
 	TSTypeAliasDeclaration() {
 		return b.empty;
 	},
-	TSTypeAnnotation() {
-		return b.empty;
-	},
 	TSTypeParameterDeclaration() {
 		return b.empty;
 	},
@@ -65,6 +62,15 @@ const visitors = {
 	},
 	TSEnumDeclaration() {
 		return b.empty;
+	},
+	Identifier(node) {
+		if (node.typeAnnotation) {
+			return {
+				...node,
+				typeAnnotation: null,
+			}
+		}
+		return node;
 	}
 };
 

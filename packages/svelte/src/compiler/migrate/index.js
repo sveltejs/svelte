@@ -23,15 +23,6 @@ export function migrate(source) {
 
 		let parsed = parse(source);
 
-		if (parsed.metadata.ts) {
-			parsed = {
-				...parsed,
-				fragment: parsed.fragment && remove_typescript_nodes(parsed.fragment),
-				instance: parsed.instance && remove_typescript_nodes(parsed.instance),
-				module: parsed.module && remove_typescript_nodes(parsed.module)
-			};
-		}
-
 		const { customElement: customElementOptions, ...parsed_options } = parsed.options || {};
 
 		/** @type {import('#compiler').ValidatedCompileOptions} */
