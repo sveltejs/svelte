@@ -676,7 +676,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		TransitionDirective: SvelteDirective,
 		AnimateDirective: SvelteDirective,
-		UseDirective: SvelteDirective,
+		UseDirective: SvelteDirective
 
 		// TODO others
 	});
