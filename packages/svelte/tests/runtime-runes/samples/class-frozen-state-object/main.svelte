@@ -1,6 +1,4 @@
 <script>
-	import { log } from './log.js';
-
 	class Counter {
 		count = $state.frozen({ a: 0 });
 	}
@@ -11,6 +9,6 @@
 	try {
 		counter.count.a++
 	} catch (e) {
-		log.push('read only')
+		console.log('read only')
 	}
 }}>{counter.count.a}</button>

@@ -18,7 +18,7 @@
 
 		node.addEventListener('mouseenter', onMouseEnter);
 		node.addEventListener('mouseleave', onMouseLeave);
-		
+
 		return {
 			destroy() {
 				node.removeEventListener('mouseenter', onMouseEnter);
@@ -29,4 +29,4 @@
 </script>
 
 <svelte:body use:tooltip="{'Perform an Action'}" />
-<div bind:this={container} />
+<div bind:this={container}></div>

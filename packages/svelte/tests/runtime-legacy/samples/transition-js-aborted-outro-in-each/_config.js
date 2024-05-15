@@ -23,8 +23,6 @@ export default test({
 		assert.equal(spans[1].foo, 0.25);
 		assert.equal(spans[2].foo, 0.75);
 
-		raf.tick(7);
-
 		component.things = things;
 
 		raf.tick(225);
@@ -42,8 +40,8 @@ export default test({
 			target.querySelectorAll('span')
 		);
 
-		assert.equal(spans[0].foo, undefined);
-		assert.equal(spans[1].foo, undefined);
-		assert.equal(spans[2].foo, undefined);
+		assert.equal(spans[0].foo, 1);
+		assert.equal(spans[1].foo, 1);
+		assert.equal(spans[2].foo, 1);
 	}
 });

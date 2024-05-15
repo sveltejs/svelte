@@ -274,7 +274,22 @@
 
 			function stringify(args) {
 				try {
-					return JSON.stringify(args);
+					return JSON.stringify(args, (key, value) => {
+						// if we don't do this, our Set/Map from svelte/reactivity would show up wrong in the console
+						if (value instanceof Map) {
+							return {
+								type: 'Map',
+								value
+							};
+						}
+						if (value instanceof Set) {
+							return {
+								type: 'Set',
+								value
+							};
+						}
+						return value;
+					});
 				} catch (error) {
 					return null;
 				}

@@ -18,24 +18,24 @@
 	.c ~ .g { color: green; }
 </style>
 
-<div class="a" />
+<div class="a"></div>
 
 {#await promise then value}
-	<div class="b" />
+	<div class="b"></div>
 {:catch error}
-	<div class="c" />
+	<div class="c"></div>
 {/await}
 
 {#await promise}
-	<div class="d" />
+	<div class="d"></div>
 {:catch error}
-	<div class="e" />
+	<div class="e"></div>
 {/await}
 
 {#await promise}
-	<div class="f" />
+	<div class="f"></div>
 {:then error}
-	<div class="g" />
+	<div class="g"></div>
 {/await}
 
-<div class="h" />
+<div class="h"></div>

@@ -1,4 +1,4 @@
-import { noop, run } from '../internal/common.js';
+import { noop, run_all } from '../internal/shared/utils.js';
 import { subscribe_to_store } from './utils.js';
 
 /**
@@ -27,11 +27,7 @@ export function readable(value, start) {
  * @returns {boolean}
  */
 export function safe_not_equal(a, b) {
-	// eslint-disable-next-line eqeqeq
-	return a != a
-		? // eslint-disable-next-line eqeqeq
-			b == b
-		: a !== b || (a && typeof a === 'object') || typeof a === 'function';
+	return a != a ? b == b : a !== b || (a && typeof a === 'object') || typeof a === 'function';
 }
 
 /**
@@ -107,14 +103,6 @@ export function writable(value, start = noop) {
 }
 
 /**
- * @param {Function[]} fns
- * @returns {void}
- */
-function run_all(fns) {
-	fns.forEach(run);
-}
-
-/**
  * Derived value store by synchronizing one or more readable stores and
  * applying an aggregation function over its input values.
  *
@@ -123,7 +111,7 @@ function run_all(fns) {
  * @template T
  * @overload
  * @param {S} stores
- * @param {(values: import('./private.js').StoresValues<S>) => T} fn
+ * @param {(values: import('./private.js').StoresValues<S>, set: (value: T) => void, update: (fn: import('./public.js').Updater<T>) => void) => import('./public.js').Unsubscriber | void} fn
  * @param {T} [initial_value]
  * @returns {import('./public.js').Readable<T>}
  */
@@ -136,7 +124,7 @@ function run_all(fns) {
  * @template T
  * @overload
  * @param {S} stores
- * @param {(values: import('./private.js').StoresValues<S>, set: (value: T) => void, update: (fn: import('./public.js').Updater<T>) => void) => import('./public.js').Unsubscriber | void} fn
+ * @param {(values: import('./private.js').StoresValues<S>) => T} fn
  * @param {T} [initial_value]
  * @returns {import('./public.js').Readable<T>}
  */

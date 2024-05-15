@@ -2,9 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
-import { createServer as createViteServer, build } from 'vite';
+import { createServer as createViteServer } from 'vite';
 
-const PORT = process.env.PORT || '3000';
+const PORT = process.env.PORT || '5173';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -26,30 +26,13 @@ async function createServer() {
 			return;
 		}
 
-		// Uncomment the line below to enable optimizer.
-		// process.env.SVELTE_ENV = 'hydrate';
+		const template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
+		const transformed_template = await vite.transformIndexHtml(req.originalUrl, template);
+		const { html: appHtml, head: headHtml } = await vite.ssrLoadModule('./src/entry-server.ts');
 
-		await build({
-			root: path.resolve(__dirname, './'),
-			build: {
-				minify: false,
-				rollupOptions: {
-					output: {
-						manualChunks(id) {
-							if (id.includes('svelte/src')) {
-								return 'vendor';
-							}
-						}
-					}
-				}
-			}
-		});
-
-		const template = fs.readFileSync(path.resolve(__dirname, 'dist', 'index.html'), 'utf-8');
-
-		const { html: appHtml, head: headHtml } = await vite.ssrLoadModule('/src/entry-server.ts');
-
-		const html = template.replace(`<!--ssr-html-->`, appHtml).replace(`<!--ssr-head-->`, headHtml);
+		const html = transformed_template
+			.replace(`<!--ssr-html-->`, appHtml)
+			.replace(`<!--ssr-head-->`, headHtml);
 
 		res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
 	});
@@ -60,12 +43,10 @@ async function createServer() {
 createServer()
 	.then(({ app }) =>
 		app.listen(PORT, () => {
-			// eslint-disable-next-line no-console
 			console.log(`http://localhost:${PORT}`);
 		})
 	)
 	.catch((err) => {
-		// eslint-disable-next-line no-console
 		console.error('Error Starting Server:\n', err);
 		process.exit(1);
 	});

@@ -67,7 +67,7 @@ export type ToggleEventHandler<T extends EventTarget> = EventHandler<ToggleEvent
 
 export interface DOMAttributes<T extends EventTarget> {
 	// Implicit children prop every element has
-	// Add this here so that libraries doing `$props<HTMLButtonAttributes>()` don't need a separate interface
+	// Add this here so that libraries doing `let { ...props }: HTMLButtonAttributes = $props()` don't need a separate interface
 	children?: import('svelte').Snippet;
 
 	// Clipboard Events
@@ -712,6 +712,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	contextmenu?: string | undefined | null;
 	dir?: string | undefined | null;
 	draggable?: Booleanish | undefined | null;
+	elementtiming?: string | undefined | null;
 	enterkeyhint?:
 		| 'enter'
 		| 'done'
@@ -905,6 +906,7 @@ export interface HTMLDataAttributes extends HTMLAttributes<HTMLDataElement> {
 
 export interface HTMLDetailsAttributes extends HTMLAttributes<HTMLDetailsElement> {
 	open?: boolean | undefined | null;
+	name?: string | undefined | null;
 
 	'bind:open'?: boolean | undefined | null;
 
@@ -1029,7 +1031,7 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	autocomplete?: string | undefined | null;
 	capture?: boolean | 'user' | 'environment' | undefined | null; // https://www.w3.org/TR/html-media-capture/#the-capture-attribute
 	checked?: boolean | undefined | null;
-	crossorigin?: string | undefined | null;
+	dirname?: string | undefined | null;
 	disabled?: boolean | undefined | null;
 	form?: string | undefined | null;
 	formaction?: string | undefined | null;
@@ -1056,6 +1058,7 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	type?: HTMLInputTypeAttribute | undefined | null;
 	value?: any;
 	width?: number | string | undefined | null;
+	webkitdirectory?: boolean | undefined | null;
 
 	'on:change'?: ChangeEventHandler<HTMLInputElement> | undefined | null;
 	onchange?: ChangeEventHandler<HTMLInputElement> | undefined | null;

@@ -12,7 +12,7 @@
 	let bool = true;
 </script>
 
-<button on:click={() => (bool = !bool)} />
+<button on:click={() => (bool = !bool)}></button>
 {#if bool}
-	<div out:foo />
+	<div out:foo></div>
 {/if}

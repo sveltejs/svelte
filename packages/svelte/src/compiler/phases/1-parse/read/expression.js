@@ -1,6 +1,6 @@
 import { parse_expression_at } from '../acorn.js';
 import { regex_whitespace } from '../../patterns.js';
-import { error } from '../../../errors.js';
+import * as e from '../../../errors.js';
 
 /**
  * @param {import('../index.js').Parser} parser
@@ -23,7 +23,7 @@ export default function read_expression(parser) {
 			if (char === ')') {
 				num_parens -= 1;
 			} else if (!regex_whitespace.test(char)) {
-				error(index, 'expected-token', ')');
+				e.expected_token(index, ')');
 			}
 
 			index += 1;

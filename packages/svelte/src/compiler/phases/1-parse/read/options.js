@@ -1,5 +1,5 @@
-import { namespace_svg } from '../../../../constants.js';
-import { error } from '../../../errors.js';
+import { namespace_mathml, namespace_svg } from '../../../../constants.js';
+import * as e from '../../../errors.js';
 
 const regex_valid_tag_name = /^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/;
 
@@ -11,7 +11,9 @@ export default function read_options(node) {
 	/** @type {import('#compiler').SvelteOptions} */
 	const component_options = {
 		start: node.start,
-		end: node.end
+		end: node.end,
+		// @ts-ignore
+		attributes: node.attributes
 	};
 
 	if (!node) {
@@ -20,24 +22,18 @@ export default function read_options(node) {
 
 	for (const attribute of node.attributes) {
 		if (attribute.type !== 'Attribute') {
-			error(attribute, 'invalid-svelte-option-attribute');
+			e.svelte_options_invalid_attribute(attribute);
 		}
 
 		const { name } = attribute;
 
 		switch (name) {
 			case 'runes': {
-				const value = get_static_value(attribute, () =>
-					error(attribute, 'invalid-svelte-option-runes')
-				);
-				if (typeof value !== 'boolean') {
-					error(attribute, 'invalid-svelte-option-runes');
-				}
-				component_options.runes = value;
+				component_options.runes = get_boolean_value(attribute);
 				break;
 			}
 			case 'tag': {
-				error(attribute, 'tag-option-deprecated');
+				e.svelte_options_deprecated_tag(attribute);
 				break; // eslint doesn't know this is unnecessary
 			}
 			case 'customElement': {
@@ -46,9 +42,9 @@ export default function read_options(node) {
 
 				const { value } = attribute;
 				if (value === true) {
-					error(attribute, 'invalid-svelte-option-customElement');
+					e.svelte_options_invalid_customelement(attribute);
 				} else if (value[0].type === 'Text') {
-					const tag = get_static_value(attribute, () => error(attribute, 'invalid-tag-property'));
+					const tag = get_static_value(attribute);
 					validate_tag(attribute, tag);
 					ce.tag = tag;
 					component_options.customElement = ce;
@@ -59,7 +55,7 @@ export default function read_options(node) {
 					if (value[0].expression.type === 'Literal' && value[0].expression.value === null) {
 						break;
 					}
-					error(attribute, 'invalid-svelte-option-customElement');
+					e.svelte_options_invalid_customelement(attribute);
 				}
 
 				/** @type {Array<[string, any]>} */
@@ -70,7 +66,7 @@ export default function read_options(node) {
 						property.computed ||
 						property.key.type !== 'Identifier'
 					) {
-						error(attribute, 'invalid-svelte-option-customElement');
+						e.svelte_options_invalid_customelement(attribute);
 					}
 					properties.push([property.key.name, property.value]);
 				}
@@ -81,13 +77,13 @@ export default function read_options(node) {
 					validate_tag(tag, tag_value);
 					ce.tag = tag_value;
 				} else {
-					error(attribute, 'invalid-svelte-option-customElement');
+					e.svelte_options_invalid_customelement(attribute);
 				}
 
 				const props = properties.find(([name]) => name === 'props')?.[1];
 				if (props) {
 					if (props.type !== 'ObjectExpression') {
-						error(attribute, 'invalid-customElement-props-attribute');
+						e.svelte_options_invalid_customelement_props(attribute);
 					}
 					ce.props = {};
 					for (const property of /** @type {import('estree').ObjectExpression} */ (props)
@@ -98,7 +94,7 @@ export default function read_options(node) {
 							property.key.type !== 'Identifier' ||
 							property.value.type !== 'ObjectExpression'
 						) {
-							error(attribute, 'invalid-customElement-props-attribute');
+							e.svelte_options_invalid_customelement_props(attribute);
 						}
 						ce.props[property.key.name] = {};
 						for (const prop of property.value.properties) {
@@ -108,7 +104,7 @@ export default function read_options(node) {
 								prop.key.type !== 'Identifier' ||
 								prop.value.type !== 'Literal'
 							) {
-								error(attribute, 'invalid-customElement-props-attribute');
+								e.svelte_options_invalid_customelement_props(attribute);
 							}
 
 							if (prop.key.name === 'type') {
@@ -117,21 +113,21 @@ export default function read_options(node) {
 										/** @type {string} */ (prop.value.value)
 									) === -1
 								) {
-									error(attribute, 'invalid-customElement-props-attribute');
+									e.svelte_options_invalid_customelement_props(attribute);
 								}
 								ce.props[property.key.name].type = /** @type {any} */ (prop.value.value);
 							} else if (prop.key.name === 'reflect') {
 								if (typeof prop.value.value !== 'boolean') {
-									error(attribute, 'invalid-customElement-props-attribute');
+									e.svelte_options_invalid_customelement_props(attribute);
 								}
 								ce.props[property.key.name].reflect = prop.value.value;
 							} else if (prop.key.name === 'attribute') {
 								if (typeof prop.value.value !== 'string') {
-									error(attribute, 'invalid-customElement-props-attribute');
+									e.svelte_options_invalid_customelement_props(attribute);
 								}
 								ce.props[property.key.name].attribute = prop.value.value;
 							} else {
-								error(attribute, 'invalid-customElement-props-attribute');
+								e.svelte_options_invalid_customelement_props(attribute);
 							}
 						}
 					}
@@ -141,7 +137,7 @@ export default function read_options(node) {
 				if (shadow) {
 					const shadowdom = shadow?.value;
 					if (shadowdom !== 'open' && shadowdom !== 'none') {
-						error(shadow, 'invalid-customElement-shadow-attribute');
+						e.svelte_options_invalid_customelement_shadow(shadow);
 					}
 					ce.shadow = shadowdom;
 				}
@@ -155,55 +151,42 @@ export default function read_options(node) {
 				break;
 			}
 			case 'namespace': {
-				const value = get_static_value(attribute, () =>
-					error(attribute, 'invalid-svelte-option-namespace')
-				);
-				if (typeof value !== 'string') {
-					error(attribute, 'invalid-svelte-option-namespace');
-				}
+				const value = get_static_value(attribute);
 
 				if (value === namespace_svg) {
 					component_options.namespace = 'svg';
-				} else if (value === 'html' || value === 'svg' || value === 'foreign') {
+				} else if (value === namespace_mathml) {
+					component_options.namespace = 'mathml';
+				} else if (
+					value === 'html' ||
+					value === 'mathml' ||
+					value === 'svg' ||
+					value === 'foreign'
+				) {
 					component_options.namespace = value;
 				} else {
-					error(attribute, 'invalid-svelte-option-namespace');
+					e.svelte_options_invalid_attribute_value(
+						attribute,
+						`"html", "mathml", "svg" or "foreign"`
+					);
 				}
 
 				break;
 			}
 			case 'immutable': {
-				const value = get_static_value(attribute, () =>
-					error(attribute, 'invalid-svelte-option-immutable')
-				);
-				if (typeof value !== 'boolean') {
-					error(attribute, 'invalid-svelte-option-immutable');
-				}
-				component_options.immutable = value;
+				component_options.immutable = get_boolean_value(attribute);
 				break;
 			}
 			case 'preserveWhitespace': {
-				const value = get_static_value(attribute, () =>
-					error(attribute, 'invalid-svelte-option-preserveWhitespace')
-				);
-				if (typeof value !== 'boolean') {
-					error(attribute, 'invalid-svelte-option-preserveWhitespace');
-				}
-				component_options.preserveWhitespace = value;
+				component_options.preserveWhitespace = get_boolean_value(attribute);
 				break;
 			}
 			case 'accessors': {
-				const value = get_static_value(attribute, () =>
-					error(attribute, 'invalid-svelte-option-accessors')
-				);
-				if (typeof value !== 'boolean') {
-					error(attribute, 'invalid-svelte-option-accessors');
-				}
-				component_options.accessors = value;
+				component_options.accessors = get_boolean_value(attribute);
 				break;
 			}
 			default:
-				error(attribute, 'unknown-svelte-option-attribute', name);
+				e.svelte_options_unknown_attribute(attribute, name);
 		}
 	}
 
@@ -212,33 +195,43 @@ export default function read_options(node) {
 
 /**
  * @param {any} attribute
- * @param {(attribute: any) => never} error
  */
-function get_static_value(attribute, error) {
+function get_static_value(attribute) {
 	const { value } = attribute;
 	const chunk = value[0];
 	if (!chunk) return true;
 	if (value.length > 1) {
-		error(attribute);
+		return null;
 	}
 	if (chunk.type === 'Text') return chunk.data;
 	if (chunk.expression.type !== 'Literal') {
-		error(attribute);
+		return null;
 	}
 	return chunk.expression.value;
 }
 
 /**
  * @param {any} attribute
- * @param {string} tag
+ */
+function get_boolean_value(attribute) {
+	const value = get_static_value(attribute);
+	if (typeof value !== 'boolean') {
+		e.svelte_options_invalid_attribute_value(attribute, 'true or false');
+	}
+	return value;
+}
+
+/**
+ * @param {any} attribute
+ * @param {string | null} tag
  * @returns {asserts tag is string}
  */
 function validate_tag(attribute, tag) {
-	if (typeof tag !== 'string' && tag !== null) {
-		error(attribute, 'invalid-tag-property');
+	if (typeof tag !== 'string') {
+		e.svelte_options_invalid_tagname(attribute);
 	}
 	if (tag && !regex_valid_tag_name.test(tag)) {
-		error(attribute, 'invalid-tag-property');
+		e.svelte_options_invalid_tagname(attribute);
 	}
 	// TODO do we still need this?
 	// if (tag && !component.compile_options.customElement) {

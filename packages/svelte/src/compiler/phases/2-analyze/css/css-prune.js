@@ -1,7 +1,6 @@
 import { walk } from 'zimmerframe';
 import { get_possible_values } from './utils.js';
 import { regex_ends_with_whitespace, regex_starts_with_whitespace } from '../../patterns.js';
-import { error } from '../../../errors.js';
 
 /**
  * @typedef {{
@@ -43,8 +42,7 @@ const nesting_selector = {
 	],
 	metadata: {
 		is_global: false,
-		is_host: false,
-		is_root: false,
+		is_global_like: false,
 		scoped: false
 	}
 };
@@ -60,6 +58,13 @@ export function prune(stylesheet, element) {
 
 /** @type {import('zimmerframe').Visitors<import('#compiler').Css.Node, State>} */
 const visitors = {
+	Rule(node, context) {
+		if (node.metadata.is_global_block) {
+			context.visit(node.prelude);
+		} else {
+			context.next();
+		}
+	},
 	ComplexSelector(node, context) {
 		const selectors = truncate(node);
 		const inner = selectors[selectors.length - 1];
@@ -103,7 +108,7 @@ const visitors = {
  */
 function truncate(node) {
 	const i = node.children.findLastIndex(({ metadata }) => {
-		return !metadata.is_global && !metadata.is_host && !metadata.is_root;
+		return !metadata.is_global && !metadata.is_global_like;
 	});
 
 	return node.children.slice(0, i + 1);
@@ -175,7 +180,13 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 				let sibling_matched = false;
 
 				for (const possible_sibling of siblings.keys()) {
-					if (apply_selector(parent_selectors, rule, possible_sibling, stylesheet)) {
+					if (possible_sibling.type === 'RenderTag' || possible_sibling.type === 'SlotElement') {
+						// `{@render foo()}<p>foo</p>` with `:global(.x) + p` is a match
+						if (parent_selectors.length === 1 && parent_selectors[0].metadata.is_global) {
+							mark(relative_selector, element);
+							sibling_matched = true;
+						}
+					} else if (apply_selector(parent_selectors, rule, possible_sibling, stylesheet)) {
 						mark(relative_selector, element);
 						sibling_matched = true;
 					}
@@ -217,14 +228,14 @@ function mark(relative_selector, element) {
 
 /**
  * Returns `true` if the relative selector is global, meaning
- * it's a `:global(...)` or `:host` or `:root` selector, or
+ * it's a `:global(...)` or unscopeable selector, or
  * is an `:is(...)` or `:where(...)` selector that contains
  * a global selector
  * @param {import('#compiler').Css.RelativeSelector} selector
  * @param {import('#compiler').Css.Rule} rule
  */
 function is_global(selector, rule) {
-	if (selector.metadata.is_global || selector.metadata.is_host || selector.metadata.is_root) {
+	if (selector.metadata.is_global || selector.metadata.is_global_like) {
 		return true;
 	}
 
@@ -564,38 +575,39 @@ function get_element_parent(node) {
 function find_previous_sibling(node) {
 	/** @type {import('#compiler').SvelteNode} */
 	let current_node = node;
-	do {
-		if (current_node.type === 'SlotElement') {
-			const slot_children = current_node.fragment.nodes;
-			if (slot_children.length > 0) {
-				current_node = slot_children.slice(-1)[0]; // go to its last child first
-				continue;
-			}
+
+	while (
+		// @ts-expect-error TODO
+		!current_node.prev &&
+		// @ts-expect-error TODO
+		current_node.parent?.type === 'SlotElement'
+	) {
+		// @ts-expect-error TODO
+		current_node = current_node.parent;
+	}
+
+	// @ts-expect-error
+	current_node = current_node.prev;
+
+	while (current_node?.type === 'SlotElement') {
+		const slot_children = current_node.fragment.nodes;
+		if (slot_children.length > 0) {
+			current_node = slot_children.slice(-1)[0];
+		} else {
+			break;
 		}
-		while (
-			// @ts-expect-error TODO
-			!current_node.prev &&
-			// @ts-expect-error TODO
-			current_node.parent &&
-			// @ts-expect-error TODO
-			current_node.parent.type === 'SlotElement'
-		) {
-			// @ts-expect-error TODO
-			current_node = current_node.parent;
-		}
-		// @ts-expect-error
-		current_node = current_node.prev;
-	} while (current_node && current_node.type === 'SlotElement');
+	}
+
 	return current_node;
 }
 
 /**
  * @param {import('#compiler').SvelteNode} node
  * @param {boolean} adjacent_only
- * @returns {Map<import('#compiler').RegularElement, NodeExistsValue>}
+ * @returns {Map<import('#compiler').RegularElement | import('#compiler').SvelteElement | import('#compiler').SlotElement | import('#compiler').RenderTag, NodeExistsValue>}
  */
 function get_possible_element_siblings(node, adjacent_only) {
-	/** @type {Map<import('#compiler').RegularElement, NodeExistsValue>} */
+	/** @type {Map<import('#compiler').RegularElement | import('#compiler').SvelteElement | import('#compiler').SlotElement | import('#compiler').RenderTag, NodeExistsValue>} */
 	const result = new Map();
 
 	/** @type {import('#compiler').SvelteNode} */
@@ -618,6 +630,14 @@ function get_possible_element_siblings(node, adjacent_only) {
 			if (adjacent_only && has_definite_elements(possible_last_child)) {
 				return result;
 			}
+		} else if (
+			prev.type === 'SlotElement' ||
+			prev.type === 'RenderTag' ||
+			prev.type === 'SvelteElement'
+		) {
+			result.set(prev, NODE_PROBABLY_EXISTS);
+			// Special case: slots, render tags and svelte:element tags could resolve to no siblings,
+			// so we want to continue until we find a definite sibling even with the adjacent-only combinator
 		}
 	}
 
@@ -720,7 +740,7 @@ function get_possible_last_child(relative_selector, adjacent_only) {
 }
 
 /**
- * @param {Map<import('#compiler').RegularElement, NodeExistsValue>} result
+ * @param {Map<unknown, NodeExistsValue>} result
  * @returns {boolean}
  */
 function has_definite_elements(result) {
@@ -734,8 +754,9 @@ function has_definite_elements(result) {
 }
 
 /**
- * @param {Map<import('#compiler').RegularElement, NodeExistsValue>} from
- * @param {Map<import('#compiler').RegularElement, NodeExistsValue>} to
+ * @template T
+ * @param {Map<T, NodeExistsValue>} from
+ * @param {Map<T, NodeExistsValue>} to
  * @returns {void}
  */
 function add_to_map(from, to) {

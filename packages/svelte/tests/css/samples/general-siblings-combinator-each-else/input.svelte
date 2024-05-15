@@ -13,12 +13,12 @@
 	.b ~ .c { color: green; }
 </style>
 
-<div class="a" />
+<div class="a"></div>
 
 {#each array as item}
-	<div class="b" />
+	<div class="b"></div>
 {:else}
-	<div class="c" />
+	<div class="c"></div>
 {/each}
 
-<div class="d" />
+<div class="d"></div>

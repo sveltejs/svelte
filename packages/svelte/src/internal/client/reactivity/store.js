@@ -1,8 +1,8 @@
 import { subscribe_to_store } from '../../../store/utils.js';
-import { noop } from '../../common.js';
-import { UNINITIALIZED } from '../constants.js';
-import { get, set_ignore_mutation_validation, untrack } from '../runtime.js';
-import { user_effect } from './effects.js';
+import { noop } from '../../shared/utils.js';
+import { UNINITIALIZED } from '../../../constants.js';
+import { get, untrack } from '../runtime.js';
+import { effect } from './effects.js';
 import { mutable_source, set } from './sources.js';
 
 /**
@@ -10,7 +10,7 @@ import { mutable_source, set } from './sources.js';
  * signal that will be updated when the store is. The store references container is needed to
  * track reassignments to stores and to track the correct component context.
  * @template V
- * @param {import('#client').Store<V> | null | undefined} store
+ * @param {import('#shared').Store<V> | null | undefined} store
  * @param {string} store_name
  * @param {import('#client').StoreReferencesContainer} stores
  * @returns {V}
@@ -27,11 +27,6 @@ export function store_get(store, store_name, stores) {
 			value: mutable_source(UNINITIALIZED),
 			unsubscribe: noop
 		};
-		// TODO: can we remove this code? it was refactored out when we split up source/comptued signals
-		// push_destroy_fn(entry.value, () => {
-		// 	/** @type {import('#client').StoreReferencesContainer['']} */ (entry).last_value =
-		// 		/** @type {import('#client').StoreReferencesContainer['']} */ (entry).value.value;
-		// });
 		stores[store_name] = entry;
 	}
 
@@ -51,7 +46,7 @@ export function store_get(store, store_name, stores) {
  * Unsubscribe from a store if it's not the same as the one in the store references container.
  * We need this in addition to `store_get` because someone could unsubscribe from a store but
  * then never subscribe to the new one (if any), causing the subscription to stay open wrongfully.
- * @param {import('#client').Store<any> | null | undefined} store
+ * @param {import('#shared').Store<any> | null | undefined} store
  * @param {string} store_name
  * @param {import('#client').StoreReferencesContainer} stores
  */
@@ -70,7 +65,7 @@ export function store_unsub(store, store_name, stores) {
 
 /**
  * @template V
- * @param {import('#client').Store<V> | null | undefined} store
+ * @param {import('#shared').Store<V> | null | undefined} store
  * @param {import('#client').Source<V>} source
  */
 function connect_store_to_signal(store, source) {
@@ -79,25 +74,30 @@ function connect_store_to_signal(store, source) {
 		return noop;
 	}
 
-	/** @param {V} v */
-	const run = (v) => {
-		set_ignore_mutation_validation(true);
-		set(source, v);
-		set_ignore_mutation_validation(false);
-	};
-	return subscribe_to_store(store, run);
+	return subscribe_to_store(store, (v) => set(source, v));
 }
 
 /**
  * Sets the new value of a store and returns that value.
  * @template V
- * @param {import('#client').Store<V>} store
+ * @param {import('#shared').Store<V>} store
  * @param {V} value
  * @returns {V}
  */
 export function store_set(store, value) {
 	store.set(value);
 	return value;
+}
+
+/**
+ * @param {import('#client').StoreReferencesContainer} stores
+ * @param {string} store_name
+ */
+export function invalidate_store(stores, store_name) {
+	const store = stores[store_name];
+	if (store.store) {
+		store_set(store.store, store.value.v);
+	}
 }
 
 /**
@@ -110,15 +110,13 @@ export function unsubscribe_on_destroy(stores) {
 		for (store_name in stores) {
 			const ref = stores[store_name];
 			ref.unsubscribe();
-			// TODO: can we remove this code? it was refactored out when we split up source/comptued signals
-			// destroy_signal(ref.value);
 		}
 	});
 }
 
 /**
  * Updates a store with a new value.
- * @param {import('#client').Store<V>} store  the store to update
+ * @param {import('#shared').Store<V>} store  the store to update
  * @param {any} expression  the expression that mutates the store
  * @param {V} new_value  the new store value
  * @template V
@@ -129,20 +127,7 @@ export function mutate_store(store, expression, new_value) {
 }
 
 /**
- * @template V
- * @param {unknown} val
- * @returns {val is import('#client').Store<V>}
- */
-export function is_store(val) {
-	return (
-		typeof val === 'object' &&
-		val !== null &&
-		typeof (/** @type {import('#client').Store<V>} */ (val).subscribe) === 'function'
-	);
-}
-
-/**
- * @param {import('#client').Store<number>} store
+ * @param {import('#shared').Store<number>} store
  * @param {number} store_value
  * @param {1 | -1} [d]
  * @returns {number}
@@ -153,7 +138,7 @@ export function update_store(store, store_value, d = 1) {
 }
 
 /**
- * @param {import('#client').Store<number>} store
+ * @param {import('#shared').Store<number>} store
  * @param {number} store_value
  * @param {1 | -1} [d]
  * @returns {number}
@@ -170,5 +155,5 @@ export function update_pre_store(store, store_value, d = 1) {
  * @returns {void}
  */
 function on_destroy(fn) {
-	user_effect(() => () => untrack(fn));
+	effect(() => () => untrack(fn));
 }

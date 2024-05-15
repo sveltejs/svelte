@@ -14,7 +14,6 @@ let browser: import('@playwright/test').Browser;
 
 beforeAll(async () => {
 	browser = await chromium.launch();
-	console.log('[runtime-browser] Launched browser');
 }, 20000);
 
 afterAll(async () => {
@@ -28,7 +27,11 @@ const { run: run_browser_tests } = suite_with_variants<
 >(
 	['dom', 'hydrate'],
 	(variant, config) => {
-		if (variant === 'hydrate' && config.skip_if_hydrate) return true;
+		if (variant === 'hydrate') {
+			if (config.mode && !config.mode.includes('hydrate')) return 'no-test';
+			if (config.skip_mode?.includes('hydrate')) return true;
+		}
+
 		return false;
 	},
 	() => {},
@@ -91,7 +94,10 @@ async function run_test(
 
 						write(`${test_dir}/_output/client/${path.basename(args.path)}.js`, compiled.js.code);
 
-						compiled.warnings.forEach((warning) => warnings.push(warning));
+						compiled.warnings.forEach((warning) => {
+							if (warning.code === 'options_deprecated_accessors') return;
+							warnings.push(warning);
+						});
 
 						if (compiled.css !== null) {
 							compiled.js.code += `document.head.innerHTML += \`<style>${compiled.css.code}</style>\``;
@@ -116,7 +122,7 @@ async function run_test(
 
 	let build_result_ssr;
 	if (hydrate) {
-		const ssr_entry = path.resolve(__dirname, '../../src/main/main-server.js');
+		const ssr_entry = path.resolve(__dirname, '../../src/index-server.js');
 
 		build_result_ssr = await build({
 			entryPoints: [`${__dirname}/driver-ssr.js`],
@@ -176,6 +182,7 @@ async function run_test(
 			);
 		} else if (warnings.length) {
 			/* eslint-disable no-unsafe-finally */
+			console.warn(warnings);
 			throw new Error('Received unexpected warnings');
 		}
 	}
@@ -190,10 +197,10 @@ async function run_test(
 		});
 
 		if (build_result_ssr) {
-			const html = await page.evaluate(
+			const result: any = await page.evaluate(
 				build_result_ssr.outputFiles[0].text + '; test_ssr.default()'
 			);
-			await page.setContent('<main>' + html + '</main>');
+			await page.setContent('<head>' + result.head + '</head><main>' + result.html + '</main>');
 		} else {
 			await page.setContent('<main></main>');
 		}

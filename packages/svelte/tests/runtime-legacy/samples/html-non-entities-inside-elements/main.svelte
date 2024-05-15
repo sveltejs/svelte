@@ -1,1 +1,1 @@
-<div>'foo'<span/></div>
+<div>'foo'<span></span></div>

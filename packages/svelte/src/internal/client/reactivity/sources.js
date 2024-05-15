@@ -1,25 +1,25 @@
 import { DEV } from 'esm-env';
 import {
 	current_component_context,
-	current_consumer,
+	current_reaction,
 	current_dependencies,
 	current_effect,
 	current_untracked_writes,
 	current_untracking,
-	flushSync,
 	get,
-	ignore_mutation_validation,
 	is_batching_effect,
 	is_runes,
-	mark_signal_consumers,
+	mark_reactions,
 	schedule_effect,
 	set_current_untracked_writes,
 	set_last_inspected_signal,
 	set_signal_status,
 	untrack
 } from '../runtime.js';
-import { default_equals, safe_equal } from './equality.js';
-import { CLEAN, DERIVED, DIRTY, MANAGED, SOURCE } from '../constants.js';
+import { equals, safe_equals } from './equality.js';
+import { CLEAN, DERIVED, DIRTY, BRANCH_EFFECT } from '../constants.js';
+import { UNINITIALIZED } from '../../../constants.js';
+import * as e from '../errors.js';
 
 /**
  * @template V
@@ -30,15 +30,15 @@ import { CLEAN, DERIVED, DIRTY, MANAGED, SOURCE } from '../constants.js';
 export function source(value) {
 	/** @type {import('#client').Source<V>} */
 	const source = {
-		c: null,
-		e: default_equals,
-		f: SOURCE | CLEAN,
+		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
+		reactions: null,
+		equals: equals,
 		v: value,
-		w: 0
+		version: 0
 	};
 
 	if (DEV) {
-		/** @type {import('#client').SourceDebug<V>} */ (source).inspect = new Set();
+		/** @type {import('#client').ValueDebug<V>} */ (source).inspect = new Set();
 	}
 
 	return source;
@@ -52,25 +52,15 @@ export function source(value) {
 /*#__NO_SIDE_EFFECTS__*/
 export function mutable_source(initial_value) {
 	const s = source(initial_value);
-	s.e = safe_equal;
+	s.equals = safe_equals;
 
 	// bind the signal to the component context, in case we need to
 	// track updates to trigger beforeUpdate/afterUpdate callbacks
-	if (current_component_context) {
-		(current_component_context.d ??= []).push(s);
+	if (current_component_context !== null && current_component_context.l !== null) {
+		(current_component_context.l.s ??= []).push(s);
 	}
 
 	return s;
-}
-
-/**
- * @template V
- * @param {import('#client').Source<V>} signal
- * @param {V} value
- * @returns {void}
- */
-export function set_sync(signal, value) {
-	flushSync(() => set(signal, value));
 }
 
 /**
@@ -93,50 +83,43 @@ export function mutate(source, value) {
  * @returns {V}
  */
 export function set(signal, value) {
+	var initialized = signal.v !== UNINITIALIZED;
+
 	if (
 		!current_untracking &&
-		!ignore_mutation_validation &&
-		current_consumer !== null &&
-		is_runes(null) &&
-		(current_consumer.f & DERIVED) !== 0
+		initialized &&
+		current_reaction !== null &&
+		is_runes() &&
+		(current_reaction.f & DERIVED) !== 0
 	) {
-		throw new Error(
-			'ERR_SVELTE_UNSAFE_MUTATION' +
-				(DEV
-					? ": Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. " +
-						'This can lead to unexpected errors and possibly cause infinite loops.\n\nIf this mutation is not meant ' +
-						'to be reactive do not use the "$state" rune for that declaration.'
-					: '')
-		);
+		e.state_unsafe_mutation();
 	}
-	if (
-		(signal.f & SOURCE) !== 0 &&
-		!(/** @type {import('#client').EqualsFunctions} */ (signal.e)(value, signal.v))
-	) {
+
+	if (!signal.equals(value)) {
 		signal.v = value;
-		// Increment write version so that unowned signals can properly track dirtyness
-		signal.w++;
+
+		// Increment write version so that unowned signals can properly track dirtiness
+		signal.version++;
+
 		// If the current signal is running for the first time, it won't have any
-		// consumers as we only allocate and assign the consumers after the signal
-		// has fully executed. So in the case of ensuring it registers the consumer
+		// reactions as we only allocate and assign the reactions after the signal
+		// has fully executed. So in the case of ensuring it registers the reaction
 		// properly for itself, we need to ensure the current effect actually gets
 		// scheduled. i.e:
 		//
 		// $effect(() => x++)
 		//
-		// We additionally want to skip this logic for when ignore_mutation_validation is
-		// true, as stores write to source signal on initialisation.
+		// We additionally want to skip this logic when initialising store sources
 		if (
-			is_runes(null) &&
-			!ignore_mutation_validation &&
+			is_runes() &&
+			initialized &&
 			current_effect !== null &&
-			current_effect.c === null &&
 			(current_effect.f & CLEAN) !== 0 &&
-			(current_effect.f & MANAGED) === 0
+			(current_effect.f & BRANCH_EFFECT) === 0
 		) {
 			if (current_dependencies !== null && current_dependencies.includes(signal)) {
 				set_signal_status(current_effect, DIRTY);
-				schedule_effect(current_effect, false);
+				schedule_effect(current_effect);
 			} else {
 				if (current_untracked_writes === null) {
 					set_current_untracked_writes([signal]);
@@ -145,10 +128,10 @@ export function set(signal, value) {
 				}
 			}
 		}
-		mark_signal_consumers(signal, DIRTY, true);
 
-		// @ts-expect-error
-		if (DEV && signal.inspect) {
+		mark_reactions(signal, DIRTY, true);
+
+		if (DEV) {
 			if (is_batching_effect) {
 				set_last_inspected_signal(/** @type {import('#client').ValueDebug} */ (signal));
 			} else {

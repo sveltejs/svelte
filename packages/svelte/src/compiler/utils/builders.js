@@ -18,6 +18,15 @@ export function array_pattern(elements) {
 }
 
 /**
+ * @param {import('estree').Pattern} left
+ * @param {import('estree').Expression} right
+ * @returns {import('estree').AssignmentPattern}
+ */
+export function assignment_pattern(left, right) {
+	return { type: 'AssignmentPattern', left, right };
+}
+
+/**
  * @param {Array<import('estree').Pattern>} params
  * @param {import('estree').BlockStatement | import('estree').Expression} body
  * @returns {import('estree').ArrowFunctionExpression}
@@ -90,19 +99,34 @@ export function labeled(name, body) {
 
 /**
  * @param {string | import('estree').Expression} callee
- * @param {...(import('estree').Expression | import('estree').SpreadElement)} args
+ * @param {...(import('estree').Expression | import('estree').SpreadElement | false | undefined)} args
  * @returns {import('estree').CallExpression}
  */
 export function call(callee, ...args) {
 	if (typeof callee === 'string') callee = id(callee);
 	args = args.slice();
 
-	while (args.length > 0 && !args.at(-1)) args.pop();
+	// replacing missing arguments with `undefined`, unless they're at the end in which case remove them
+	let i = args.length;
+	let popping = true;
+	while (i--) {
+		if (!args[i]) {
+			if (popping) {
+				args.pop();
+			} else {
+				args[i] = id('undefined');
+			}
+		} else {
+			popping = false;
+		}
+	}
 
 	return {
 		type: 'CallExpression',
 		callee,
-		arguments: args,
+		arguments: /** @type {Array<import('estree').Expression | import('estree').SpreadElement>} */ (
+			args
+		),
 		optional: false
 	};
 }
@@ -210,7 +234,7 @@ export function function_declaration(id, params, body) {
 /**
  * @param {string} name
  * @param {import('estree').Statement[]} body
- * @returns {import('estree').Property}
+ * @returns {import('estree').Property & { value: import('estree').FunctionExpression}}}
  */
 export function get(name, body) {
 	return prop('get', key(name), function_builder(null, [], block(body)));
@@ -305,11 +329,12 @@ export function object_pattern(properties) {
 }
 
 /**
+ * @template {import('estree').Expression} Value
  * @param {'init' | 'get' | 'set'} kind
  * @param {import('estree').Expression} key
- * @param {import('estree').Expression} value
+ * @param {Value} value
  * @param {boolean} computed
- * @returns {import('estree').Property}
+ * @returns {import('estree').Property & { value: Value }}
  */
 export function prop(kind, key, value, computed = false) {
 	return { type: 'Property', kind, key, value, method: false, shorthand: false, computed };
@@ -355,7 +380,7 @@ export function sequence(expressions) {
 /**
  * @param {string} name
  * @param {import('estree').Statement[]} body
- * @returns {import('estree').Property}
+ * @returns {import('estree').Property & { value: import('estree').FunctionExpression}}
  */
 export function set(name, body) {
 	return prop('set', key(name), function_builder(null, [id('$$value')], block(body)));
@@ -388,9 +413,10 @@ export function template(elements, expressions) {
 
 /**
  * @param {import('estree').Expression | import('estree').BlockStatement} expression
+ * @param {boolean} [async]
  * @returns {import('estree').Expression}
  */
-export function thunk(expression) {
+export function thunk(expression, async = false) {
 	if (
 		expression.type === 'CallExpression' &&
 		expression.callee.type !== 'Super' &&
@@ -401,7 +427,9 @@ export function thunk(expression) {
 		return expression.callee;
 	}
 
-	return arrow([], expression);
+	const fn = arrow([], expression);
+	if (async) fn.async = true;
+	return fn;
 }
 
 /**

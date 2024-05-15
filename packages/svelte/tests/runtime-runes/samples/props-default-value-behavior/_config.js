@@ -1,6 +1,6 @@
 import { test } from '../../test';
 
-// Tests that default values apply only initially and that they propagate back correctly for bindings
+// Tests that default values apply every time and that they propagate back correctly for bindings
 export default test({
 	// set accessors to false so that $.prop() is also created
 	accessors: false,
@@ -267,7 +267,7 @@ export default test({
 			<p>props undefined:</p>
 			<p>
 				readonly:
-				readonlyWithDefault:
+				readonlyWithDefault: 1
 				binding:
 			</p>
 			<button>set bindings to 5</button>
@@ -276,7 +276,7 @@ export default test({
 			<p>props defined:</p>
 			<p>
 				readonly:
-				readonlyWithDefault:
+				readonlyWithDefault: 1
 				binding:
 			</p>
 			<button>set bindings to 5</button>
@@ -285,7 +285,7 @@ export default test({
 			<p>bindings undefined:</p>
 			<p>
 				readonly:
-				readonlyWithDefault:
+				readonlyWithDefault: 1
 				binding:
 			</p>
 			<button>set bindings to 5</button>
@@ -294,7 +294,7 @@ export default test({
 			<p>bindings defined:</p>
 			<p>
 				readonly:
-				readonlyWithDefault:
+				readonlyWithDefault: 1
 				binding:
 			</p>
 			<button>set bindings to 5</button>

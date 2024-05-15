@@ -18,13 +18,13 @@
 <svelte:component this={Let} />
 
 <!-- Here, we test to see if svelte-ignore works with reactive-component -->
-<!-- svelte-ignore reactive-component -->
+<!-- svelte-ignore reactive_component -->
 <Let />
 <div>
-  <!-- svelte-ignore reactive-component -->
+  <!-- svelte-ignore reactive_component -->
   <ExportLet />
   <div>
-    <!-- svelte-ignore reactive-component -->
+    <!-- svelte-ignore reactive_component -->
     <Reactive />
   </div>
 </div>

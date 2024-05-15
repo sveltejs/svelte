@@ -1,5 +1,5 @@
 <script>
-	let { checked, ...rest } = $props();
+	let { checked = $bindable(), ...rest } = $props();
 </script>
 
 <input type="checkbox" bind:checked {...rest} />

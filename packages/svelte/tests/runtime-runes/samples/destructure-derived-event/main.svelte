@@ -1,9 +1,7 @@
 <script>
-	import { log } from './log.js';
-
 	let structured = $state({
 		handler() {
-			log.push('works!')
+			console.log('works!')
 		}
 	});
 </script>

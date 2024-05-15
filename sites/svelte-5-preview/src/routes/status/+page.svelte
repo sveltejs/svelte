@@ -11,7 +11,8 @@
 		<p class="details">
 			{data.results.total} tests ({data.results.suites.length} suites) – {data.results.passed} passed,
 			{data.results.failed}
-			failed, {data.results.skipped} skipped
+			failed, {data.results.skipped} skipped.
+			<a href="/coverage/index.html">See coverage report.</a>
 		</p>
 	</div>
 

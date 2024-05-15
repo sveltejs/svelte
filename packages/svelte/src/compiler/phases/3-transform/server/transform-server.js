@@ -4,6 +4,7 @@ import {
 	extract_identifiers,
 	extract_paths,
 	is_event_attribute,
+	is_expression_async,
 	unwrap_optional
 } from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
@@ -16,16 +17,20 @@ import {
 import {
 	clean_nodes,
 	determine_namespace_for_children,
-	escape_html,
 	infer_namespace,
 	transform_inspect_rune
 } from '../utils.js';
 import { create_attribute, is_custom_element_node, is_element_node } from '../../nodes.js';
-import { error } from '../../../errors.js';
 import { binding_properties } from '../../bindings.js';
 import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patterns.js';
-import { DOMBooleanAttributes } from '../../../../constants.js';
+import { DOMBooleanAttributes, HYDRATION_END, HYDRATION_START } from '../../../../constants.js';
+import { escape_html } from '../../../../escaping.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
+import { BLOCK_CLOSE, BLOCK_CLOSE_ELSE } from '../../../../internal/server/hydration.js';
+import { locator } from '../../../state.js';
+
+export const block_open = t_string(`<!--${HYDRATION_START}-->`);
+export const block_close = t_string(`<!--${HYDRATION_END}-->`);
 
 /**
  * @param {string} value
@@ -50,15 +55,6 @@ function t_expression(value, needs_escaping = false) {
  */
 function t_statement(value) {
 	return { type: 'statement', value };
-}
-
-/**
- * @param {import('./types').ServerTransformState} state
- * @returns {[import('estree').VariableDeclaration, import('estree').Identifier]}
- */
-function serialize_anchor(state) {
-	const id = state.scope.root.unique('anchor');
-	return [b.const(id, b.call('$.create_anchor', b.id('$$payload'))), id];
 }
 
 /**
@@ -418,7 +414,7 @@ function serialize_set_binding(node, context, fallback) {
 	}
 
 	if (node.left.type !== 'Identifier' && node.left.type !== 'MemberExpression') {
-		error(node, 'INTERNAL', `Unexpected assignment type ${node.left.type}`);
+		throw new Error(`Unexpected assignment type ${node.left.type}`);
 	}
 
 	let left = node.left;
@@ -446,6 +442,7 @@ function serialize_set_binding(node, context, fallback) {
 		binding.kind !== 'state' &&
 		binding.kind !== 'frozen_state' &&
 		binding.kind !== 'prop' &&
+		binding.kind !== 'bindable_prop' &&
 		binding.kind !== 'each' &&
 		binding.kind !== 'legacy_reactive' &&
 		!is_store
@@ -483,7 +480,11 @@ function serialize_set_binding(node, context, fallback) {
  */
 function get_attribute_name(element, attribute, context) {
 	let name = attribute.name;
-	if (!element.metadata.svg && context.state.metadata.namespace !== 'foreign') {
+	if (
+		!element.metadata.svg &&
+		!element.metadata.mathml &&
+		context.state.metadata.namespace !== 'foreign'
+	) {
 		name = name.toLowerCase();
 		// don't lookup boolean aliases here, the server runtime function does only
 		// check for the lowercase variants of boolean attributes
@@ -546,82 +547,112 @@ const javascript_visitors = {
 
 /** @type {import('./types').Visitors} */
 const javascript_visitors_runes = {
-	ClassBody(node, { state, visit, next }) {
-		if (!state.analysis.runes) {
-			next();
-		}
-		/** @type {import('estree').PropertyDefinition[]} */
-		const deriveds = [];
-		/** @type {import('estree').MethodDefinition | null} */
-		let constructor = null;
-		// Get the constructor
+	ClassBody(node, { state, visit }) {
+		/** @type {Map<string, import('../../3-transform/client/types.js').StateField>} */
+		const public_derived = new Map();
+
+		/** @type {Map<string, import('../../3-transform/client/types.js').StateField>} */
+		const private_derived = new Map();
+
+		/** @type {string[]} */
+		const private_ids = [];
+
 		for (const definition of node.body) {
-			if (definition.type === 'MethodDefinition' && definition.kind === 'constructor') {
-				constructor = /** @type {import('estree').MethodDefinition} */ (visit(definition));
-			}
-		}
-		// Move $derived() runes to the end of the body if there is a constructor
-		if (constructor !== null) {
-			const body = [];
-			for (const definition of node.body) {
-				if (
-					definition.type === 'PropertyDefinition' &&
-					(definition.key.type === 'Identifier' || definition.key.type === 'PrivateIdentifier')
-				) {
-					const is_private = definition.key.type === 'PrivateIdentifier';
+			if (
+				definition.type === 'PropertyDefinition' &&
+				(definition.key.type === 'Identifier' || definition.key.type === 'PrivateIdentifier')
+			) {
+				const { type, name } = definition.key;
 
-					if (definition.value?.type === 'CallExpression') {
-						const rune = get_rune(definition.value, state.scope);
+				const is_private = type === 'PrivateIdentifier';
+				if (is_private) private_ids.push(name);
 
-						if (rune === '$derived') {
-							deriveds.push(/** @type {import('estree').PropertyDefinition} */ (visit(definition)));
-							if (is_private) {
-								// Keep the private #name initializer if private, but remove initial value
-								body.push({
-									...definition,
-									value: null
-								});
-							}
-							continue;
+				if (definition.value?.type === 'CallExpression') {
+					const rune = get_rune(definition.value, state.scope);
+					if (rune === '$derived' || rune === '$derived.by') {
+						/** @type {import('../../3-transform/client/types.js').StateField} */
+						const field = {
+							kind: rune === '$derived.by' ? 'derived_call' : 'derived',
+							// @ts-expect-error this is set in the next pass
+							id: is_private ? definition.key : null
+						};
+
+						if (is_private) {
+							private_derived.set(name, field);
+						} else {
+							public_derived.set(name, field);
 						}
 					}
 				}
-				if (definition.type !== 'MethodDefinition' || definition.kind !== 'constructor') {
-					body.push(
-						/** @type {import('estree').PropertyDefinition | import('estree').MethodDefinition | import('estree').StaticBlock} */ (
-							visit(definition)
-						)
+			}
+		}
+
+		// each `foo = $derived()` needs a backing `#foo` field
+		for (const [name, field] of public_derived) {
+			let deconflicted = name;
+			while (private_ids.includes(deconflicted)) {
+				deconflicted = '_' + deconflicted;
+			}
+
+			private_ids.push(deconflicted);
+			field.id = b.private_id(deconflicted);
+		}
+
+		/** @type {Array<import('estree').MethodDefinition | import('estree').PropertyDefinition>} */
+		const body = [];
+
+		const child_state = { ...state, private_derived };
+
+		// Replace parts of the class body
+		for (const definition of node.body) {
+			if (
+				definition.type === 'PropertyDefinition' &&
+				(definition.key.type === 'Identifier' || definition.key.type === 'PrivateIdentifier')
+			) {
+				const name = definition.key.name;
+
+				const is_private = definition.key.type === 'PrivateIdentifier';
+				const field = (is_private ? private_derived : public_derived).get(name);
+
+				if (definition.value?.type === 'CallExpression' && field !== undefined) {
+					const init = /** @type {import('estree').Expression} **/ (
+						visit(definition.value.arguments[0], child_state)
 					);
+					const value =
+						field.kind === 'derived_call'
+							? b.call('$.once', init)
+							: b.call('$.once', b.thunk(init));
+
+					if (is_private) {
+						body.push(b.prop_def(field.id, value));
+					} else {
+						// #foo;
+						const member = b.member(b.this, field.id);
+						body.push(b.prop_def(field.id, value));
+
+						// get foo() { return this.#foo; }
+						body.push(b.method('get', definition.key, [], [b.return(b.call(member))]));
+
+						if ((field.kind === 'derived' || field.kind === 'derived_call') && state.options.dev) {
+							body.push(
+								b.method(
+									'set',
+									definition.key,
+									[b.id('_')],
+									[b.throw_error(`Cannot update a derived property ('${name}')`)]
+								)
+							);
+						}
+					}
+
+					continue;
 				}
 			}
-			if (deriveds.length > 0) {
-				body.push({
-					...constructor,
-					value: {
-						...constructor.value,
-						body: b.block([
-							...constructor.value.body.body,
-							...deriveds.map((d) => {
-								return b.stmt(
-									b.assignment(
-										'=',
-										b.member(b.this, d.key),
-										/** @type {import('estree').Expression} */ (d.value)
-									)
-								);
-							})
-						])
-					}
-				});
-			} else {
-				body.push(constructor);
-			}
-			return {
-				...node,
-				body
-			};
+
+			body.push(/** @type {import('estree').MethodDefinition} **/ (visit(definition, child_state)));
 		}
-		next();
+
+		return { ...node, body };
 	},
 	PropertyDefinition(node, { state, next, visit }) {
 		if (node.value != null && node.value.type === 'CallExpression') {
@@ -660,7 +691,21 @@ const javascript_visitors_runes = {
 			}
 
 			if (rune === '$props') {
-				declarations.push(b.declarator(declarator.id, b.id('$$props')));
+				// remove $bindable() from props declaration
+				const id = walk(declarator.id, null, {
+					AssignmentPattern(node) {
+						if (
+							node.right.type === 'CallExpression' &&
+							get_rune(node.right, state.scope) === '$bindable'
+						) {
+							const right = node.right.arguments.length
+								? /** @type {import('estree').Expression} */ (visit(node.right.arguments[0]))
+								: b.id('undefined');
+							return b.assignment_pattern(node.left, right);
+						}
+					}
+				});
+				declarations.push(b.declarator(id, b.id('$$props')));
 				continue;
 			}
 
@@ -722,12 +767,37 @@ const javascript_visitors_runes = {
 	CallExpression(node, context) {
 		const rune = get_rune(node, context.state.scope);
 
+		if (rune === '$host') {
+			return b.id('undefined');
+		}
+
 		if (rune === '$effect.active') {
 			return b.literal(false);
 		}
 
+		if (rune === '$state.snapshot') {
+			return /** @type {import('estree').Expression} */ (context.visit(node.arguments[0]));
+		}
+
+		if (rune === '$state.is') {
+			return b.call(
+				'Object.is',
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
+			);
+		}
+
 		if (rune === '$inspect' || rune === '$inspect().with') {
 			return transform_inspect_rune(node, context);
+		}
+
+		context.next();
+	},
+	MemberExpression(node, context) {
+		if (node.object.type === 'ThisExpression' && node.property.type === 'PrivateIdentifier') {
+			const field = context.state.private_derived.get(node.property.name);
+			if (field) {
+				return b.call(node);
+			}
 		}
 
 		context.next();
@@ -776,9 +846,7 @@ function serialize_attribute_value(
 	/** @type {import('estree').Expression[]} */
 	const expressions = [];
 
-	if (attribute_value[0].type !== 'Text') {
-		quasis.push(b.quasi('', false));
-	}
+	quasis.push(b.quasi('', false));
 
 	let i = 0;
 	for (const node of attribute_value) {
@@ -789,7 +857,8 @@ function serialize_attribute_value(
 				// don't trim, space could be important to separate from expression tag
 				data = data.replace(regex_whitespaces_strict, ' ');
 			}
-			quasis.push(b.quasi(data, i === attribute_value.length));
+			const last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
+			last.value.raw += data;
 		} else {
 			expressions.push(
 				b.call(
@@ -797,9 +866,7 @@ function serialize_attribute_value(
 					/** @type {import('estree').Expression} */ (context.visit(node.expression))
 				)
 			);
-			if (i === attribute_value.length || attribute_value[i]?.type !== 'Text') {
-				quasis.push(b.quasi('', true));
-			}
+			quasis.push(b.quasi('', i + 1 === attribute_value.length));
 		}
 	}
 
@@ -839,15 +906,19 @@ function serialize_element_spread_attributes(
 	}
 
 	const lowercase_attributes =
-		element.metadata.svg || (element.type === 'RegularElement' && is_custom_element_node(element))
+		element.metadata.svg ||
+		element.metadata.mathml ||
+		(element.type === 'RegularElement' && is_custom_element_node(element))
 			? b.false
 			: b.true;
-	const is_svg = element.metadata.svg ? b.true : b.false;
+
+	const is_html = element.metadata.svg || element.metadata.mathml ? b.false : b.true;
+
 	/** @type {import('estree').Expression[]} */
 	const args = [
 		b.array(values),
 		lowercase_attributes,
-		is_svg,
+		is_html,
 		b.literal(context.state.analysis.css.hash)
 	];
 
@@ -908,6 +979,13 @@ function serialize_inline_component(node, component_name, context) {
 	let slot_scope_applies_to_itself = false;
 
 	/**
+	 * Components may have a children prop and also have child nodes. In this case, we assume
+	 * that the child component isn't using render tags yet and pass the slot as $$slots.default.
+	 * We're not doing it for spread attributes, as this would result in too many false positives.
+	 */
+	let has_children_prop = false;
+
+	/**
 	 * @param {import('estree').Property} prop
 	 */
 	function push_prop(prop) {
@@ -933,6 +1011,10 @@ function serialize_inline_component(node, component_name, context) {
 
 			if (attribute.name === 'slot') {
 				slot_scope_applies_to_itself = true;
+			}
+
+			if (attribute.name === 'children') {
+				has_children_prop = true;
 			}
 
 			const value = serialize_attribute_value(attribute.value, context, false, true);
@@ -1009,7 +1091,7 @@ function serialize_inline_component(node, component_name, context) {
 			b.block([...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []), ...body])
 		);
 
-		if (slot_name === 'default') {
+		if (slot_name === 'default' && !has_children_prop) {
 			push_prop(
 				b.prop(
 					'init',
@@ -1017,6 +1099,9 @@ function serialize_inline_component(node, component_name, context) {
 					context.state.options.dev ? b.call('$.add_snippet_symbol', slot_fn) : slot_fn
 				)
 			);
+			// We additionally add the default slot as a boolean, so that the slot render function on the other
+			// side knows it should get the content to render from $$props.children
+			serialized_slots.push(b.init('default', b.true));
 		} else {
 			const slot = b.prop('init', b.literal(slot_name), slot_fn);
 			serialized_slots.push(slot);
@@ -1091,7 +1176,7 @@ const javascript_visitors_legacy = {
 				state.scope.get_bindings(declarator)
 			);
 			const has_state = bindings.some((binding) => binding.kind === 'state');
-			const has_props = bindings.some((binding) => binding.kind === 'prop');
+			const has_props = bindings.some((binding) => binding.kind === 'bindable_prop');
 
 			if (!has_state && !has_props) {
 				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
@@ -1117,7 +1202,9 @@ const javascript_visitors_legacy = {
 						const name = /** @type {import('estree').Identifier} */ (path.node).name;
 						const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
 						const prop = b.member(b.id('$$props'), b.literal(binding.prop_alias ?? name), true);
-						declarations.push(b.declarator(path.node, b.call('$.value_or_fallback', prop, value)));
+						declarations.push(
+							b.declarator(path.node, b.call('$.value_or_fallback', prop, b.thunk(value)))
+						);
 					}
 					continue;
 				}
@@ -1130,13 +1217,15 @@ const javascript_visitors_legacy = {
 					b.literal(binding.prop_alias ?? declarator.id.name),
 					true
 				);
-				const init = declarator.init
-					? b.call(
-							'$.value_or_fallback',
-							prop,
-							/** @type {import('estree').Expression} */ (visit(declarator.init))
-						)
-					: prop;
+
+				/** @type {import('estree').Expression} */
+				let init = prop;
+				if (declarator.init) {
+					const default_value = /** @type {import('estree').Expression} */ (visit(declarator.init));
+					init = is_expression_async(default_value)
+						? b.await(b.call('$.value_or_fallback_async', prop, b.thunk(default_value, true)))
+						: b.call('$.value_or_fallback', prop, b.thunk(default_value));
+				}
 
 				declarations.push(b.declarator(declarator.id, init));
 
@@ -1182,12 +1271,10 @@ const template_visitors = {
 	},
 	HtmlTag(node, context) {
 		const state = context.state;
-		const [dec, id] = serialize_anchor(state);
-		state.init.push(dec);
-		state.template.push(t_expression(id));
+		state.template.push(block_open);
 		const raw = /** @type {import('estree').Expression} */ (context.visit(node.expression));
 		context.state.template.push(t_expression(raw));
-		state.template.push(t_expression(id));
+		state.template.push(block_close);
 	},
 	ConstTag(node, { state, visit }) {
 		const declaration = node.declaration.declarations[0];
@@ -1218,10 +1305,8 @@ const template_visitors = {
 	},
 	RenderTag(node, context) {
 		const state = context.state;
-		const [anchor, anchor_id] = serialize_anchor(state);
 
-		state.init.push(anchor);
-		state.template.push(t_expression(anchor_id));
+		state.template.push(block_open);
 
 		const callee = unwrap_optional(node.expression).callee;
 		const raw_args = unwrap_optional(node.expression).arguments;
@@ -1247,13 +1332,13 @@ const template_visitors = {
 			)
 		);
 
-		state.template.push(t_expression(anchor_id));
+		state.template.push(block_close);
 	},
 	ClassDirective(node) {
-		error(node, 'INTERNAL', 'Node should have been handled elsewhere');
+		throw new Error('Node should have been handled elsewhere');
 	},
 	StyleDirective(node) {
-		error(node, 'INTERNAL', 'Node should have been handled elsewhere');
+		throw new Error('Node should have been handled elsewhere');
 	},
 	RegularElement(node, context) {
 		const metadata = {
@@ -1301,8 +1386,19 @@ const template_visitors = {
 		}
 
 		if (context.state.options.dev) {
+			const location = /** @type {import('locate-character').Location} */ (locator(node.start));
 			context.state.template.push(
-				t_statement(b.stmt(b.call('$.push_element', b.literal(node.name), b.id('$$payload'))))
+				t_statement(
+					b.stmt(
+						b.call(
+							'$.push_element',
+							b.id('$$payload'),
+							b.literal(node.name),
+							b.literal(location.line),
+							b.literal(location.column)
+						)
+					)
+				)
 			);
 		}
 
@@ -1372,9 +1468,7 @@ const template_visitors = {
 			}
 		};
 
-		const [el_anchor, anchor_id] = serialize_anchor(context.state);
-		context.state.init.push(el_anchor);
-		context.state.template.push(t_expression(anchor_id));
+		context.state.template.push(block_open);
 
 		const main = create_block(node, node.fragment.nodes, {
 			...context,
@@ -1410,7 +1504,7 @@ const template_visitors = {
 					)
 				)
 			),
-			t_expression(anchor_id)
+			block_close
 		);
 		if (context.state.options.dev) {
 			context.state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));
@@ -1418,9 +1512,7 @@ const template_visitors = {
 	},
 	EachBlock(node, context) {
 		const state = context.state;
-		const [dec, id] = serialize_anchor(state);
-		state.init.push(dec);
-		state.template.push(t_expression(id));
+		state.template.push(block_open);
 
 		const each_node_meta = node.metadata;
 		const collection = /** @type {import('estree').Expression} */ (context.visit(node.expression));
@@ -1430,14 +1522,6 @@ const template_visitors = {
 				? each_node_meta.index
 				: b.id(node.index);
 		const children = node.body.nodes;
-
-		const [each_dec, each_id] = serialize_anchor(state);
-
-		/** @type {import('./types').Anchor} */
-		const anchor = {
-			type: 'Anchor',
-			id: each_id
-		};
 
 		const array_id = state.scope.root.unique('each_array');
 		state.init.push(b.const(array_id, b.call('$.ensure_array_like', collection)));
@@ -1452,10 +1536,13 @@ const template_visitors = {
 			each.push(b.let(node.index, index));
 		}
 
+		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(block_open.value))));
+
 		each.push(
-			each_dec,
-			.../** @type {import('estree').Statement[]} */ (create_block(node, children, context, anchor))
+			.../** @type {import('estree').Statement[]} */ (create_block(node, children, context))
 		);
+
+		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(block_close.value))));
 
 		const for_loop = b.for(
 			b.let(index, b.literal(0)),
@@ -1463,63 +1550,50 @@ const template_visitors = {
 			b.update('++', index, false),
 			b.block(each)
 		);
+
+		const close = b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE)));
+
 		if (node.fallback) {
-			const fallback_stmts = create_block(node, node.fallback.nodes, context);
-			fallback_stmts.unshift(
-				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--ssr:each_else-->')))
-			);
+			const fallback = create_block(node, node.fallback.nodes, context);
+
+			fallback.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE))));
+
 			state.template.push(
 				t_statement(
 					b.if(
 						b.binary('!==', b.member(array_id, b.id('length')), b.literal(0)),
-						for_loop,
-						b.block(fallback_stmts)
+						b.block([for_loop, close]),
+						b.block(fallback)
 					)
 				)
 			);
 		} else {
-			state.template.push(t_statement(for_loop));
+			state.template.push(t_statement(for_loop), t_statement(close));
 		}
-		state.template.push(t_expression(id));
 	},
 	IfBlock(node, context) {
 		const state = context.state;
-		const [dec, id] = serialize_anchor(state);
-		state.init.push(dec);
-		state.template.push(t_expression(id));
-
-		// Insert ssr:if:true/false anchors in addition to the other anchors so that
-		// the if block can catch hydration mismatches (false on the server, true on the client and vice versa)
-		// and continue hydration without having to re-render everything from scratch.
+		state.template.push(block_open);
 
 		const consequent = create_block(node, node.consequent.nodes, context);
-		consequent.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--ssr:if:true-->')))
-		);
+		const alternate = node.alternate ? create_block(node, node.alternate.nodes, context) : [];
 
-		const alternate = node.alternate
-			? /** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
-			: b.block([]);
-		alternate.body.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--ssr:if:false-->')))
-		);
+		consequent.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE))));
+		alternate.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE))));
 
 		state.template.push(
 			t_statement(
 				b.if(
 					/** @type {import('estree').Expression} */ (context.visit(node.test)),
-					b.block(/** @type {import('estree').Statement[]} */ (consequent)),
-					alternate
+					b.block(consequent),
+					b.block(alternate)
 				)
 			)
 		);
-		state.template.push(t_expression(id));
 	},
 	AwaitBlock(node, context) {
 		const state = context.state;
-		const [dec, id] = serialize_anchor(state);
-		state.init.push(dec);
-		state.template.push(t_expression(id));
+		state.template.push(block_open);
 
 		state.template.push(
 			t_statement(
@@ -1553,26 +1627,25 @@ const template_visitors = {
 			)
 		);
 
-		state.template.push(t_expression(id));
+		state.template.push(block_close);
 	},
 	KeyBlock(node, context) {
 		const state = context.state;
-		const [dec, id] = serialize_anchor(state);
-		state.init.push(dec);
-		state.template.push(t_expression(id));
+		state.template.push(block_open);
 		const body = create_block(node, node.fragment.nodes, context);
 		state.template.push(t_statement(b.block(body)));
-		state.template.push(t_expression(id));
+		state.template.push(block_close);
 	},
 	SnippetBlock(node, context) {
-		// TODO hoist where possible
-		context.state.init.push(
-			b.function_declaration(
-				node.expression,
-				[b.id('$$payload'), ...node.parameters],
-				/** @type {import('estree').BlockStatement} */ (context.visit(node.body))
-			)
+		const fn = b.function_declaration(
+			node.expression,
+			[b.id('$$payload'), ...node.parameters],
+			/** @type {import('estree').BlockStatement} */ (context.visit(node.body))
 		);
+		// @ts-expect-error - TODO remove this hack once $$render_inner for legacy bindings is gone
+		fn.___snippet = true;
+		// TODO hoist where possible
+		context.state.init.push(fn);
 
 		if (context.state.options.dev) {
 			context.state.init.push(b.stmt(b.call('$.add_snippet_symbol', node.expression)));
@@ -1580,34 +1653,28 @@ const template_visitors = {
 	},
 	Component(node, context) {
 		const state = context.state;
-		const [dec, id] = serialize_anchor(state);
-		state.init.push(dec);
-		state.template.push(t_expression(id));
+		state.template.push(block_open);
 		const call = serialize_inline_component(node, node.name, context);
 		state.template.push(t_statement(call));
-		state.template.push(t_expression(id));
+		state.template.push(block_close);
 	},
 	SvelteSelf(node, context) {
 		const state = context.state;
-		const [dec, id] = serialize_anchor(state);
-		state.init.push(dec);
-		state.template.push(t_expression(id));
+		state.template.push(block_open);
 		const call = serialize_inline_component(node, context.state.analysis.name, context);
 		state.template.push(t_statement(call));
-		state.template.push(t_expression(id));
+		state.template.push(block_close);
 	},
 	SvelteComponent(node, context) {
 		const state = context.state;
-		const [dec, id] = serialize_anchor(state);
-		state.init.push(dec);
-		state.template.push(t_expression(id));
+		state.template.push(block_open);
 		const call = serialize_inline_component(
 			node,
 			/** @type {import('estree').Expression} */ (context.visit(node.expression)),
 			context
 		);
 		state.template.push(t_statement(call));
-		state.template.push(t_expression(id));
+		state.template.push(block_close);
 	},
 	LetDirective(node, { state }) {
 		if (node.expression && node.expression.type !== 'Identifier') {
@@ -1690,9 +1757,7 @@ const template_visitors = {
 	},
 	SlotElement(node, context) {
 		const state = context.state;
-		const [dec, id] = serialize_anchor(state);
-		state.init.push(dec);
-		state.template.push(t_expression(id));
+		state.template.push(block_open);
 
 		/** @type {import('estree').Property[]} */
 		const props = [];
@@ -1704,13 +1769,13 @@ const template_visitors = {
 		const lets = [];
 
 		/** @type {import('estree').Expression} */
-		let expression = b.member_id('$$props.children');
+		let expression = b.call('$.default_slot', b.id('$$props'));
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'SpreadAttribute') {
 				spreads.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
 			} else if (attribute.type === 'Attribute') {
-				const value = serialize_attribute_value(attribute.value, context);
+				const value = serialize_attribute_value(attribute.value, context, false, true);
 				if (attribute.name === 'name') {
 					expression = b.member(b.member_id('$$props.$$slots'), value, true, true);
 				} else if (attribute.name !== 'slot') {
@@ -1739,7 +1804,7 @@ const template_visitors = {
 		const slot = b.call('$.slot', b.id('$$payload'), expression, props_expression, fallback);
 
 		state.template.push(t_statement(b.stmt(slot)));
-		state.template.push(t_expression(id));
+		state.template.push(block_close);
 	},
 	SvelteHead(node, context) {
 		const state = context.state;
@@ -2076,20 +2141,24 @@ export function server_component(analysis, options) {
 		get init() {
 			/** @type {any[]} */
 			const a = [];
-			a.push = () => error(null, 'INTERNAL', 'init.push should not be called outside create_block');
+			a.push = () => {
+				throw new Error('init.push should not be called outside create_block');
+			};
 			return a;
 		},
 		get template() {
 			/** @type {any[]} */
 			const a = [];
-			a.push = () =>
-				error(null, 'INTERNAL', 'template.push should not be called outside create_block');
+			a.push = () => {
+				throw new Error('template.push should not be called outside create_block');
+			};
 			return a;
 		},
 		metadata: {
 			namespace: options.namespace
 		},
-		preserve_whitespace: options.preserveWhitespace
+		preserve_whitespace: options.preserveWhitespace,
+		private_derived: new Map()
 	};
 
 	const module = /** @type {import('estree').Program} */ (
@@ -2150,7 +2219,7 @@ export function server_component(analysis, options) {
 	for (const [node] of analysis.reactive_statements) {
 		const statement = [...state.legacy_reactive_statements].find(([n]) => n === node);
 		if (statement === undefined) {
-			error(node, 'INTERNAL', 'Could not find reactive statement');
+			throw new Error('Could not find reactive statement');
 		}
 
 		if (
@@ -2176,16 +2245,30 @@ export function server_component(analysis, options) {
 		});
 	}
 
-	// If the component binds to a child, we need to put the template in a loop and repeat until bindings are stable
+	// If the component binds to a child, we need to put the template in a loop and repeat until legacy bindings are stable.
+	// We can remove this once the legacy syntax is gone.
 	if (analysis.uses_component_bindings) {
+		const snippets = template.body.filter(
+			(node) =>
+				node.type === 'FunctionDeclaration' &&
+				// @ts-expect-error
+				node.___snippet
+		);
+		const rest = template.body.filter(
+			(node) =>
+				node.type !== 'FunctionDeclaration' ||
+				// @ts-expect-error
+				!node.___snippet
+		);
 		template.body = [
+			...snippets,
 			b.let('$$settled', b.true),
 			b.let('$$inner_payload'),
 			b.stmt(
 				b.function(
 					b.id('$$render_inner'),
 					[b.id('$$payload')],
-					b.block(/** @type {import('estree').Statement[]} */ (template.body))
+					b.block(/** @type {import('estree').Statement[]} */ (rest))
 				)
 			),
 			b.do_while(
@@ -2217,7 +2300,7 @@ export function server_component(analysis, options) {
 	/** @type {import('estree').Property[]} */
 	const props = [];
 	for (const [name, binding] of analysis.instance.scope.declarations) {
-		if (binding.kind === 'prop' && !name.startsWith('$$')) {
+		if (binding.kind === 'bindable_prop' && !name.startsWith('$$')) {
 			props.push(b.init(binding.prop_alias ?? name, b.id(name)));
 		}
 	}
@@ -2225,11 +2308,16 @@ export function server_component(analysis, options) {
 		props.push(b.init(alias ?? name, b.id(name)));
 	}
 	if (props.length > 0) {
+		// This has no effect in runes mode other than throwing an error when someone passes
+		// undefined to a binding that has a default value.
 		template.body.push(b.stmt(b.call('$.bind_props', b.id('$$props'), b.object(props))));
 	}
+	/** @type {import('estree').Expression[]} */
+	const push_args = [];
+	if (options.dev) push_args.push(b.id(analysis.name));
 
 	const component_block = b.block([
-		b.stmt(b.call('$.push', b.literal(analysis.runes))),
+		b.stmt(b.call('$.push', ...push_args)),
 		.../** @type {import('estree').Statement[]} */ (instance.body),
 		.../** @type {import('estree').Statement[]} */ (template.body),
 		b.stmt(b.call('$.pop'))
@@ -2239,7 +2327,7 @@ export function server_component(analysis, options) {
 		/** @type {string[]} */
 		const named_props = analysis.exports.map(({ name, alias }) => alias ?? name);
 		for (const [name, binding] of analysis.instance.scope.declarations) {
-			if (binding.kind === 'prop') named_props.push(binding.prop_alias ?? name);
+			if (binding.kind === 'bindable_prop') named_props.push(binding.prop_alias ?? name);
 		}
 
 		component_block.body.unshift(
@@ -2324,6 +2412,22 @@ export function server_component(analysis, options) {
 		body.push(b.export_default(component_function));
 	}
 
+	if (options.dev && options.filename) {
+		let filename = options.filename;
+		if (/(\/|\w:)/.test(options.filename)) {
+			// filename is absolute — truncate it
+			const parts = filename.split(/[/\\]/);
+			filename = parts.length > 3 ? ['...', ...parts.slice(-3)].join('/') : filename;
+		}
+
+		// add `App.filename = 'App.svelte'` so that we can print useful messages later
+		body.unshift(
+			b.stmt(
+				b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.literal(filename))
+			)
+		);
+	}
+
 	return {
 		type: 'Program',
 		sourceType: 'module',
@@ -2346,7 +2450,8 @@ export function server_module(analysis, options) {
 		// this is an anomaly — it can only be used in components, but it needs
 		// to be present for `javascript_visitors` and so is included in module
 		// transform state as well as component transform state
-		legacy_reactive_statements: new Map()
+		legacy_reactive_statements: new Map(),
+		private_derived: new Map()
 	};
 
 	const module = /** @type {import('estree').Program} */ (

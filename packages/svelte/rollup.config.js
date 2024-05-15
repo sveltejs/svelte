@@ -9,7 +9,7 @@ import './scripts/generate-version.js';
 export default defineConfig({
 	input: 'src/compiler/index.js',
 	output: {
-		file: 'compiler.cjs',
+		file: 'compiler/index.js',
 		format: 'umd',
 		name: 'svelte'
 	},

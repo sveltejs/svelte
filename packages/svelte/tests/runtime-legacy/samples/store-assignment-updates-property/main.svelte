@@ -21,4 +21,4 @@
 	$b = { foo: $b.foo + 1, baz: 0 };
 }} />
 
-<button on:click={update} />
+<button on:click={update}></button>

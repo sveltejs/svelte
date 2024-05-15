@@ -1,17 +1,10 @@
-// index.svelte (Svelte VERSION)
-// Note: compiler output will change before 5.0 is released!
 import "svelte/internal/disclose-version";
-import * as $ from "svelte/internal";
+import * as $ from "svelte/internal/client";
 
-var frag = $.template(`<h1>hello world</h1>`);
+var root = $.template(`<h1>hello world</h1>`);
 
-export default function Hello_world($$anchor, $$props) {
-	$.push($$props, false);
-	$.init();
+export default function Hello_world($$anchor) {
+	var h1 = root();
 
-	/* Init */
-	var h1 = $.open($$anchor, true, frag);
-
-	$.close($$anchor, h1);
-	$.pop();
+	$.append($$anchor, h1);
 }

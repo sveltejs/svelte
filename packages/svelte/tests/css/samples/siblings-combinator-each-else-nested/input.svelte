@@ -32,43 +32,43 @@
 	.g + .h + .i + .j { color: green; }
 </style>
 
-<div class="a" />
+<div class="a"></div>
 
 {#each array as a}
-	<div class="b" />
+	<div class="b"></div>
 	{#each array as b}
-		<div class="c" />
+		<div class="c"></div>
 	{:else}
-		<div class="d" />
+		<div class="d"></div>
 	{/each}
 {/each}
 
 {#each array as c}
 	{#each array as d}
-		<div class="e" />
+		<div class="e"></div>
 	{/each}
 {:else}
-	<div class="f" />
+	<div class="f"></div>
 {/each}
 
 {#each array as item}
-	<div class="g" />
+	<div class="g"></div>
 	{#each array as item}
 		{#each array as item}
-			<div class="h" />
+			<div class="h"></div>
 		{/each}
 	{:else}
-		<div class="i" />
+		<div class="i"></div>
 	{/each}
-	<div class="j" />
+	<div class="j"></div>
 {/each}
 
-<div class="k" />
+<div class="k"></div>
 
 {#each array as item}
 	{#each array as item}
-		<div class="l" />
+		<div class="l"></div>
 	{:else}
-		<div class="m" />
+		<div class="m"></div>
 	{/each}
 {/each}

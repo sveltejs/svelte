@@ -1,4 +1,4 @@
-import { flushSync } from '../../../../src/main/main-client';
+import { flushSync } from '../../../../src/index-client';
 import { test } from '../../test';
 
 export default test({

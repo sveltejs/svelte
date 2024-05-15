@@ -1,6 +1,5 @@
 <script>
-	let { value, ...props } = $props();
-	
+	let { value = $bindable(), ...properties } = $props();
 </script>
 
-<button {...props} onclick={() => value++}>{value}</button>
+<button {...properties} onclick={() => value++}>{value}</button>

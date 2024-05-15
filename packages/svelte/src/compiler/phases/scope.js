@@ -2,7 +2,7 @@ import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import { is_element_node } from './nodes.js';
 import * as b from '../utils/builders.js';
-import { error } from '../errors.js';
+import * as e from '../errors.js';
 import { extract_identifiers, extract_identifiers_from_destructuring } from '../utils/ast.js';
 import { JsKeywords, Runes } from './constants.js';
 
@@ -70,7 +70,7 @@ export class Scope {
 	 */
 	declare(node, kind, declaration_kind, initial = null) {
 		if (node.name === '$') {
-			error(node, 'invalid-dollar-binding');
+			e.dollar_binding_invalid(node);
 		}
 
 		if (
@@ -80,7 +80,7 @@ export class Scope {
 			declaration_kind !== 'rest_param' &&
 			this.function_depth <= 1
 		) {
-			error(node, 'invalid-dollar-prefix');
+			e.dollar_prefix_invalid(node);
 		}
 
 		if (this.parent) {
@@ -95,7 +95,7 @@ export class Scope {
 
 		if (this.declarations.has(node.name)) {
 			// This also errors on var/function types, but that's arguably a good thing
-			error(node, 'duplicate-declaration', node.name);
+			e.declaration_duplicate(node, node.name);
 		}
 
 		/** @type {import('#compiler').Binding} */
@@ -166,7 +166,7 @@ export class Scope {
 	get_bindings(node) {
 		const bindings = this.declarators.get(node);
 		if (!bindings) {
-			error(node, 'INTERNAL', 'No binding found for declarator');
+			throw new Error('No binding found for declarator');
 		}
 		return bindings;
 	}
@@ -279,6 +279,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		next({ scope });
 	};
+
+	const skip = () => {};
 
 	/**
 	 * @type {import('zimmerframe').Visitor<import('#compiler').ElementLike, State, import('#compiler').SvelteNode>}
@@ -400,9 +402,9 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 						(attribute) => attribute.type === 'Attribute' && attribute.name === 'slot'
 					)
 				) {
-					// <div slot="..."> inherits the scope above the component, because slots are hella weird
-					scopes.set(child, state.scope);
-					visit(child);
+					// <div slot="..."> inherits the scope above the component unless the component is a named slot itself, because slots are hella weird
+					scopes.set(child, is_default_slot ? state.scope : scope);
+					visit(child, { scope: is_default_slot ? state.scope : scope });
 				} else {
 					if (child.type === 'ExpressionTag') {
 						// expression tag is a special case — we don't visit it directly, but via process_children,
@@ -506,7 +508,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				scopes.set(node, scope);
 
 				for (const id of extract_identifiers(node.param)) {
-					state.scope.declare(id, 'normal', 'let');
+					scope.declare(id, 'normal', 'let');
 				}
 
 				next({ scope });
@@ -599,26 +601,38 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		AwaitBlock(node, context) {
-			context.next();
+			context.visit(node.expression);
 
-			if (node.then && node.value !== null) {
-				const then_scope = /** @type {Scope} */ (scopes.get(node.then));
-				const value_scope = context.state.scope.child();
-				for (const id of extract_identifiers(node.value)) {
-					then_scope.declare(id, 'normal', 'const');
-					value_scope.declare(id, 'normal', 'const');
-				}
-				scopes.set(node.value, value_scope);
+			if (node.pending) {
+				context.visit(node.pending);
 			}
 
-			if (node.catch && node.error !== null) {
-				const catch_scope = /** @type {Scope} */ (scopes.get(node.catch));
-				const error_scope = context.state.scope.child();
-				for (const id of extract_identifiers(node.error)) {
-					catch_scope.declare(id, 'normal', 'const');
-					error_scope.declare(id, 'normal', 'const');
+			if (node.then) {
+				context.visit(node.then);
+				if (node.value) {
+					const then_scope = /** @type {Scope} */ (scopes.get(node.then));
+					const value_scope = context.state.scope.child();
+					scopes.set(node.value, value_scope);
+					context.visit(node.value, { scope: value_scope });
+					for (const id of extract_identifiers(node.value)) {
+						then_scope.declare(id, 'normal', 'const');
+						value_scope.declare(id, 'normal', 'const');
+					}
 				}
-				scopes.set(node.error, error_scope);
+			}
+
+			if (node.catch) {
+				context.visit(node.catch);
+				if (node.error) {
+					const catch_scope = /** @type {Scope} */ (scopes.get(node.catch));
+					const error_scope = context.state.scope.child();
+					scopes.set(node.error, error_scope);
+					context.visit(node.error, { scope: error_scope });
+					for (const id of extract_identifiers(node.error)) {
+						catch_scope.declare(id, 'normal', 'const');
+						error_scope.declare(id, 'normal', 'const');
+					}
+				}
 			}
 		},
 
@@ -637,7 +651,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 			for (const param of node.parameters) {
 				for (const id of extract_identifiers(param)) {
-					child_scope.declare(id, 'each', 'let');
+					child_scope.declare(id, 'snippet', 'let');
 				}
 			}
 
@@ -662,7 +676,14 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		TransitionDirective: SvelteDirective,
 		AnimateDirective: SvelteDirective,
-		UseDirective: SvelteDirective
+		UseDirective: SvelteDirective,
+
+		// @ts-ignore
+		TSTypeAnnotation: skip,
+		TSInterfaceDeclaration: skip,
+		TSTypeAliasDeclaration: skip,
+		TSTypeParameterDeclaration: skip,
+		TSEnumDeclaration: skip
 
 		// TODO others
 	});
@@ -692,7 +713,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		} else {
 			extract_identifiers(node).forEach((identifier) => {
 				const binding = scope.get(identifier.name);
-				if (binding) {
+				if (binding && identifier !== binding.node) {
 					binding.mutated = true;
 					binding.reassigned = true;
 				}
@@ -755,7 +776,6 @@ export function get_rune(node, scope) {
 
 	joined = n.name + joined;
 
-	if (joined === '$derived.call') error(node, 'invalid-derived-call');
 	if (!Runes.includes(/** @type {any} */ (joined))) return null;
 
 	const binding = scope.get(n.name);

@@ -1,10 +1,10 @@
 <script>
 	let keys = ['a', 'b'];
 	let items = ['c', 'd'];
-  export let log;
+
 	function setKey(key, value, item) {
-		log.push(`setKey(${key}, ${value}, ${item})`);
-  }
+		console.log(`setKey(${key}, ${value}, ${item})`);
+	}
 </script>
 
 {#each items as item (item)}

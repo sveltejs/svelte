@@ -5,7 +5,7 @@ import { flushSync } from 'svelte';
 let tasks = [];
 
 export default test({
-	skip_if_ssr: 'permanent', // unnecessary to test this in ssr mode
+	mode: ['client', 'hydrate'], // unnecessary to test this in ssr mode
 
 	get props() {
 		tasks = [

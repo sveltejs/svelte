@@ -37,7 +37,10 @@ export default defineConfig({
 		exclude: [...configDefaults.exclude, '**/samples/**'],
 		coverage: {
 			provider: 'v8',
-			reporter: ['lcov', 'html']
+			reporter: ['lcov', 'html'],
+			include: ['packages/svelte/src/**'],
+			reportsDirectory: 'sites/svelte-5-preview/static/coverage',
+			reportOnFailure: true
 		}
 	}
 });

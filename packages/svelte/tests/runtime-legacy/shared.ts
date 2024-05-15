@@ -1,9 +1,9 @@
 import * as fs from 'node:fs';
 import { setImmediate } from 'node:timers/promises';
 import glob from 'tiny-glob/sync.js';
-// import { clear_loops, flush, set_now, set_raf } from 'svelte/internal';
-import * as $ from 'svelte/internal';
 import { createClassComponent } from 'svelte/legacy';
+import { proxy } from 'svelte/internal/client';
+import { flushSync, hydrate, mount, unmount } from 'svelte';
 import { render } from 'svelte/server';
 import { afterAll, assert, beforeAll } from 'vitest';
 import { compile_directory } from '../helpers.js';
@@ -27,10 +27,10 @@ type Assert = typeof import('vitest').assert & {
 
 export interface RuntimeTest<Props extends Record<string, any> = Record<string, any>>
 	extends BaseTest {
-	/** Use `true` to signal a temporary skip, and `"permanent"` to signal that this test is never intended to run in ssr mode */
-	skip_if_ssr?: boolean | 'permanent';
-	/** Use `true` to signal a temporary skip, and `"permanent"` to signal that this test is never intended to run in hydration mode */
-	skip_if_hydrate?: boolean | 'permanent';
+	/** Use e.g. `mode: ['client']` to indicate that this test should never run in server/hydrate modes */
+	mode?: Array<'server' | 'client' | 'hydrate'>;
+	/** Temporarily skip specific modes, without skipping the entire test */
+	skip_mode?: Array<'server' | 'client' | 'hydrate'>;
 	html?: string;
 	ssrHtml?: string;
 	compileOptions?: Partial<CompileOptions>;
@@ -44,6 +44,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 		component: Props & {
 			[key: string]: any;
 		};
+		instance: Record<string, any>;
 		mod: any;
 		ok: typeof ok;
 		raf: {
@@ -56,6 +57,8 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 			KeyboardEvent: typeof KeyboardEvent;
 			MouseEvent: typeof MouseEvent;
 		};
+		logs: any[];
+		warnings: any[];
 	}) => void | Promise<void>;
 	test_ssr?: (args: { assert: Assert }) => void | Promise<void>;
 	accessors?: boolean;
@@ -96,12 +99,13 @@ export function runtime_suite(runes: boolean) {
 		['dom', 'hydrate', 'ssr'],
 		(variant, config) => {
 			if (variant === 'hydrate') {
-				if (config.skip_if_hydrate === 'permanent') return 'no-test';
-				if (config.skip_if_hydrate) return true;
+				if (config.mode && !config.mode.includes('hydrate')) return 'no-test';
+				if (config.skip_mode?.includes('hydrate')) return true;
 			}
+
 			if (variant === 'ssr') {
 				if (
-					config.skip_if_ssr === 'permanent' ||
+					(config.mode && !config.mode.includes('server')) ||
 					(!config.test_ssr &&
 						config.html === undefined &&
 						config.ssrHtml === undefined &&
@@ -109,7 +113,7 @@ export function runtime_suite(runes: boolean) {
 				) {
 					return 'no-test';
 				}
-				if (config.skip_if_ssr) return true;
+				if (config.skip_mode?.includes('server')) return true;
 			}
 
 			return false;
@@ -118,7 +122,7 @@ export function runtime_suite(runes: boolean) {
 			return common_setup(cwd, runes, config);
 		},
 		async (config, cwd, variant, common) => {
-			await run_test_variant(cwd, config, variant, common);
+			await run_test_variant(cwd, config, variant, common, runes);
 		}
 	);
 }
@@ -146,9 +150,48 @@ async function run_test_variant(
 	cwd: string,
 	config: RuntimeTest,
 	variant: 'dom' | 'hydrate' | 'ssr',
-	compileOptions: CompileOptions
+	compileOptions: CompileOptions,
+	runes: boolean
 ) {
 	let unintended_error = false;
+
+	// eslint-disable-next-line no-console
+	const { log, warn } = console;
+
+	let logs: string[] = [];
+	let warnings: string[] = [];
+
+	{
+		// use some crude static analysis to determine if logs/warnings are intercepted.
+		// we do this instead of using getters on the `test` parameters so that we can
+		// squelch logs in SSR tests while printing temporary logs in other cases
+		let str = config.test?.toString() ?? '';
+		let n = 0;
+		let i = 0;
+		while (i < str.length) {
+			if (str[i] === '(') n++;
+			if (str[i] === ')' && --n === 0) break;
+			i++;
+		}
+
+		if (str.slice(0, i).includes('logs')) {
+			// eslint-disable-next-line no-console
+			console.log = (...args) => logs.push(...args);
+		}
+
+		if (str.slice(0, i).includes('warnings') || config.warnings) {
+			// eslint-disable-next-line no-console
+			console.warn = (...args) => {
+				if (args[0].startsWith('%c[svelte]')) {
+					// TODO convert this to structured data, for more robust comparison?
+					const message = args[0];
+					warnings.push(message.slice(message.indexOf('%c', 2) + 2));
+				} else {
+					warnings.push(...args);
+				}
+			};
+		}
+	}
 
 	try {
 		unhandled_rejection = null;
@@ -236,15 +279,9 @@ async function run_test_variant(
 				});
 			}
 		} else {
-			config.before_test?.();
+			logs.length = warnings.length = 0;
 
-			const warnings: string[] = [];
-			// eslint-disable-next-line no-console
-			const warn = console.warn;
-			// eslint-disable-next-line no-console
-			console.warn = (warning) => {
-				warnings.push(warning);
-			};
+			config.before_test?.();
 
 			// eslint-disable-next-line no-console
 			const error = console.error;
@@ -255,18 +292,31 @@ async function run_test_variant(
 				}
 			};
 
-			const instance = createClassComponent({
-				component: mod.default,
-				props: config.props,
-				target,
-				immutable: config.immutable,
-				intro: config.intro,
-				recover: config.recover === undefined ? false : config.recover,
-				hydrate: variant === 'hydrate'
-			});
+			let instance: any;
+			let props: any;
 
-			// eslint-disable-next-line no-console
-			console.warn = warn;
+			if (runes) {
+				props = proxy({ ...(config.props || {}) });
+
+				const render = variant === 'hydrate' ? hydrate : mount;
+				instance = render(mod.default, {
+					target,
+					props,
+					intro: config.intro,
+					recover: config.recover ?? false
+				});
+			} else {
+				instance = createClassComponent({
+					component: mod.default,
+					props: config.props,
+					target,
+					immutable: config.immutable,
+					intro: config.intro,
+					recover: config.recover ?? false,
+					hydrate: variant === 'hydrate'
+				});
+			}
+
 			// eslint-disable-next-line no-console
 			console.error = error;
 
@@ -275,15 +325,8 @@ async function run_test_variant(
 				assert.fail('Expected a runtime error');
 			}
 
-			if (config.warnings) {
-				assert.deepEqual(warnings, config.warnings);
-			} else if (warnings.length) {
-				unintended_error = true;
-				assert.fail('Received unexpected warnings');
-			}
-
 			if (config.html) {
-				$.flushSync();
+				flushSync();
 				assert_html_equal_with_options(target.innerHTML, config.html, {
 					preserveComments:
 						config.withoutNormalizeHtml === 'only-strip-comments' ? false : undefined,
@@ -293,7 +336,7 @@ async function run_test_variant(
 
 			try {
 				if (config.test) {
-					$.flushSync();
+					flushSync();
 					await config.test({
 						// @ts-expect-error TS doesn't get it
 						assert: {
@@ -302,13 +345,16 @@ async function run_test_variant(
 							htmlEqualWithOptions: assert_html_equal_with_options
 						},
 						variant,
-						component: instance,
+						component: runes ? props : instance,
+						instance,
 						mod,
 						target,
 						snapshot,
 						window,
 						raf,
-						compileOptions
+						compileOptions,
+						logs,
+						warnings
 					});
 				}
 
@@ -317,7 +363,20 @@ async function run_test_variant(
 					assert.fail('Expected a runtime error');
 				}
 			} finally {
-				instance.$destroy();
+				if (runes) {
+					unmount(instance);
+				} else {
+					instance.$destroy();
+				}
+
+				if (config.warnings) {
+					assert.deepEqual(warnings, config.warnings);
+				} else if (warnings.length && console.warn === warn) {
+					unintended_error = true;
+					warn.apply(console, warnings);
+					assert.fail('Received unexpected warnings');
+				}
+
 				assert_html_equal(
 					target.innerHTML,
 					'',
@@ -333,13 +392,16 @@ async function run_test_variant(
 		}
 	} catch (err) {
 		if (config.runtime_error) {
-			assert.equal((err as Error).message, config.runtime_error);
+			assert.include((err as Error).message, config.runtime_error);
 		} else if (config.error && !unintended_error) {
-			assert.equal((err as Error).message, config.error);
+			assert.include((err as Error).message, config.error);
 		} else {
 			throw err;
 		}
 	} finally {
+		console.log = log;
+		console.warn = warn;
+
 		config.after_test?.();
 
 		// Free up the microtask queue

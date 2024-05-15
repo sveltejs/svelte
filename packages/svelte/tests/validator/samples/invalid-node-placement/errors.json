@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid-node-placement",
+		"code": "node_invalid_placement",
 		"message": "<a> is invalid inside <a>",
 		"start": {
 			"line": 4,

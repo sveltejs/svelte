@@ -17,10 +17,7 @@ export async function run_ssr_test(
 	test_dir: string
 ) {
 	try {
-		await compile_directory(test_dir, 'server', {
-			...config.compileOptions,
-			runes: test_dir.includes('runtime-runes')
-		});
+		await compile_directory(test_dir, 'server', config.compileOptions);
 
 		const Component = (await import(`${test_dir}/_output/server/main.svelte.js`)).default;
 		const { html } = render(Component, { props: config.props || {} });
@@ -46,7 +43,8 @@ export async function run_ssr_test(
 }
 
 const { run } = suite<ReturnType<typeof import('./assert').test>>(async (config, test_dir) => {
-	if (config.skip_if_ssr) return;
+	if (config.mode && !config.mode.includes('server')) return;
+	if (config.skip_mode?.includes('server')) return;
 	await run_ssr_test(config, test_dir);
 });
 

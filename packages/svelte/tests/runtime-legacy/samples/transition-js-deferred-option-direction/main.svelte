@@ -15,11 +15,11 @@
 </script>
 
 {#if visible}
-	<div id="both-in" transition:foo />
-	<div id="in" in:foo />
+	<div id="both-in" transition:foo></div>
+	<div id="in" in:foo></div>
 {/if}
 
 {#if !visible}
-	<div id="out" out:foo />
-	<div id="both-out" transition:foo={{ duration: 500 }} />
+	<div id="out" out:foo></div>
+	<div id="both-out" transition:foo={{ duration: 500 }}></div>
 {/if}

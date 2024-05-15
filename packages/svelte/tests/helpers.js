@@ -71,7 +71,7 @@ export async function compile_directory(
 	for (const file of glob('**', { cwd, filesOnly: true })) {
 		if (file.startsWith('_')) continue;
 
-		let text = fs.readFileSync(`${cwd}/${file}`, 'utf-8');
+		let text = fs.readFileSync(`${cwd}/${file}`, 'utf-8').replace(/\r\n/g, '\n');
 		let opts = {
 			filename: path.join(cwd, file),
 			...compileOptions,
@@ -137,6 +137,10 @@ export async function compile_directory(
 				if (output_map) {
 					write(`${output_dir}/${file}.css.map`, JSON.stringify(compiled.css.map, null, '\t'));
 				}
+			}
+
+			if (compiled.warnings.length > 0) {
+				write(`${output_dir}/${file}.warnings.json`, JSON.stringify(compiled.warnings, null, '\t'));
 			}
 		}
 	}

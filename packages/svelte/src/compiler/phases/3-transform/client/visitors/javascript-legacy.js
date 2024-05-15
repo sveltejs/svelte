@@ -40,7 +40,7 @@ export const javascript_visitors_legacy = {
 				state.scope.get_bindings(declarator)
 			);
 			const has_state = bindings.some((binding) => binding.kind === 'state');
-			const has_props = bindings.some((binding) => binding.kind === 'prop');
+			const has_props = bindings.some((binding) => binding.kind === 'bindable_prop');
 
 			if (!has_state && !has_props) {
 				const init = declarator.init;
@@ -80,7 +80,7 @@ export const javascript_visitors_legacy = {
 						declarations.push(
 							b.declarator(
 								path.node,
-								binding.kind === 'prop'
+								binding.kind === 'bindable_prop'
 									? get_prop_source(binding, state, binding.prop_alias ?? name, value)
 									: value
 							)
@@ -93,24 +93,17 @@ export const javascript_visitors_legacy = {
 					state.scope.get(declarator.id.name)
 				);
 
-				if (
-					state.analysis.accessors ||
-					(state.analysis.immutable ? binding.reassigned : binding.mutated) ||
-					declarator.init
-				) {
-					declarations.push(
-						b.declarator(
-							declarator.id,
-							get_prop_source(
-								binding,
-								state,
-								binding.prop_alias ?? declarator.id.name,
-								declarator.init &&
-									/** @type {import('estree').Expression} */ (visit(declarator.init))
-							)
+				declarations.push(
+					b.declarator(
+						declarator.id,
+						get_prop_source(
+							binding,
+							state,
+							binding.prop_alias ?? declarator.id.name,
+							declarator.init && /** @type {import('estree').Expression} */ (visit(declarator.init))
 						)
-					);
-				}
+					)
+				);
 
 				continue;
 			}
@@ -168,7 +161,7 @@ export const javascript_visitors_legacy = {
 
 			// If the binding is a prop, we need to deep read it because it could be fine-grained $state
 			// from a runes-component, where mutations don't trigger an update on the prop as a whole.
-			if (name === '$$props' || name === '$$restProps' || binding.kind === 'prop') {
+			if (name === '$$props' || name === '$$restProps' || binding.kind === 'bindable_prop') {
 				serialized = b.call('$.deep_read_state', serialized);
 			}
 

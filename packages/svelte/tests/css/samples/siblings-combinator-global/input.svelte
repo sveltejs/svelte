@@ -17,5 +17,5 @@
 </div>
 
 {#each [] as _}
-  <p />
+  <p></p>
 {/each}

@@ -117,6 +117,41 @@ Svelte now use Mutation Observers instead of IFrames to measure dimensions for `
 
 Content inside component tags becomes a [snippet prop](/docs/snippets) called `children`. You cannot have a separate prop by that name.
 
+## Breaking changes in runes mode
+
+Some breaking changes only apply once your component is in runes mode.
+
+### Bindings to component exports are not allowed
+
+Exports from runes mode components cannot be bound to directly. For example, having `export const foo = ...` in component `A` and then doing `<A bind:foo />` causes an error. Use `bind:this` instead — `<A bind:this={a} />` — and access the export as `a.foo`. This change makes things easier to reason about, as it enforces a clear separation between props and exports.
+
+### Bindings need to be explicitly defined using `$bindable()`
+
+In Svelte 4 syntax, every property (declared via `export let`) is bindable, meaning you can `bind:` to it. In runes mode, properties are not bindable by default: you need to denote bindable props with the [`$bindable`](/docs/runes#$bindable) rune.
+
+### `accessors` option is ignored
+
+Setting the `accessors` option to `true` makes properties of a component directly accessible on the component instance. In runes mode, properties are never accessible on the component instance. You can use component exports instead if you need to expose them.
+
+### `immutable` option is ignored
+
+Setting the `immutable` option has no effect in runes mode. This concept is replaced by how `$state` and its variations work.
+
+### Classes are no longer "auto-reactive"
+
+In Svelte 4, doing the following triggered reactivity:
+
+```svelte
+<script>
+	let foo = new Foo();
+</script>
+
+<button on:click={() => (foo.value = 1)}>{foo.value}</button
+>
+```
+
+This is because the Svelte compiler treated the assignment to `foo.value` as an instruction to update anything that referenced `foo`. In Svelte 5, reactivity is determined at runtime rather than compile time, so you should define `value` as a reactive `$state` field on the `Foo` class. Wrapping `new Foo()` with `$state(...)` will have no effect — only vanilla objects and arrays are made deeply reactive.
+
 ## Other breaking changes
 
 ### Stricter `@const` assignment validation
@@ -142,13 +177,13 @@ In the event that you need to support ancient browsers that don't implement `:wh
 css = css.replace(/:where\((.+?)\)/, '$1');
 ```
 
-### Renames of various error/warning codes
+### Error/warning codes have been renamed
 
-Various error and warning codes have been renamed slightly.
+Error and warning codes have been renamed. Previously they used dashes to separate the words, they now use underscores (e.g. foo-bar becomes foo_bar). Additionally, a handful of codes have been reworded slightly.
 
 ### Reduced number of namespaces
 
-The number of valid namespaces you can pass to the compiler option `namespace` has been reduced to `html` (the default), `svg` and `foreign`.
+The number of valid namespaces you can pass to the compiler option `namespace` has been reduced to `html` (the default), `mathml`, `svg` and `foreign`.
 
 ### beforeUpdate/afterUpdate changes
 
@@ -179,3 +214,19 @@ In Svelte 4, `null` and `undefined` were printed as the corresponding string. In
 ### `bind:files` values can only be `null`, `undefined` or `FileList`
 
 `bind:files` is now a two-way binding. As such, when setting a value, it needs to be either falsy (`null` or `undefined`) or of type `FileList`.
+
+### Bindings now react to form resets
+
+Previously, bindings did not take into account `reset` event of forms, and therefore values could get out of sync with the DOM. Svelte 5 fixes this by placing a `reset` listener on the document and invoking bindings where necessary.
+
+### `walk` not longer exported
+
+`svelte/compiler` reexported `walk` from `estree-walker` for convenience. This is no longer true in Svelte 5, import it directly from that package instead in case you need it.
+
+### Content inside `svelte:options` is forbidden
+
+In Svelte 4 you could have content inside a `<svelte:options />` tag. It was ignored, but you could write something in there. In Svelte 5, content inside that tag is a compiler error.
+
+### `<slot>` elements in declarative shadow roots are preserved
+
+Svelte 4 replaced the `<slot />` tag in all places with its own version of slots. Svelte 5 preserves them in the case they are a child of a `<template shadowrootmode="...">` element.

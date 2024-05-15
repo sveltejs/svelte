@@ -1,7 +1,7 @@
 [
 	{
-		"code": "duplicate-transition",
-		"message": "An element can only have one 'in' directive",
+		"code": "transition_duplicate",
+		"message": "Cannot use multiple `in:` directives on a single element",
 		"start": {
 			"line": 6,
 			"column": 12

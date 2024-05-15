@@ -1,12 +1,16 @@
-import { tick } from 'svelte';
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
 	html: '<button>1 / 1</button>',
-	async test({ assert, target }) {
+
+	test({ assert, target, logs }) {
+		assert.deepEqual(logs, [2, 1]);
+
 		const button = target.querySelector('button');
-		button?.click();
-		await tick();
+
+		flushSync(() => button?.click());
+		assert.deepEqual(logs, [2, 1, 2, 1]);
 
 		assert.htmlEqual(target.innerHTML, '<button>3 / 2</button>');
 	}

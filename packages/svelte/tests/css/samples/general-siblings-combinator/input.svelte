@@ -16,8 +16,8 @@
 </style>
 
 <div class="a">
-	<span />
-	<b />
+	<span></span>
+	<b></b>
 </div>
 <article class="b"></article>
 <p class="c"></p>

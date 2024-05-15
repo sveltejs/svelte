@@ -14,5 +14,5 @@ export default test({
 		assert.htmlEqual(target.innerHTML, `<button>1</button><span>1</span>`);
 	},
 
-	error: `ERR_SVELTE_BINDING_FALLBACK: Cannot pass undefined to bind:count because the property contains a fallback value. Pass a different value than undefined to count.`
+	error: 'props_invalid_value\nCannot do `bind:count={undefined}` when `count` has a fallback value'
 });

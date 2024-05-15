@@ -1,5 +1,5 @@
 <script>
-	let { count, inc } = $props();
+	let { inc, count = $bindable() } = $props();
 </script>
 
 <button onclick={inc}>{count.a} (ok)</button>

@@ -1,143 +1,143 @@
 [
 	{
-		"code": "a11y-no-abstract-role",
+		"code": "a11y_no_abstract_role",
 		"end": {
 			"column": 19,
 			"line": 1
 		},
-		"message": "A11y: Abstract role 'command' is forbidden",
+		"message": "Abstract role 'command' is forbidden",
 		"start": {
 			"column": 5,
 			"line": 1
 		}
 	},
 	{
-		"code": "a11y-no-abstract-role",
+		"code": "a11y_no_abstract_role",
 		"end": {
 			"column": 21,
 			"line": 2
 		},
-		"message": "A11y: Abstract role 'composite' is forbidden",
+		"message": "Abstract role 'composite' is forbidden",
 		"start": {
 			"column": 5,
 			"line": 2
 		}
 	},
 	{
-		"code": "a11y-no-abstract-role",
+		"code": "a11y_no_abstract_role",
 		"end": {
 			"column": 17,
 			"line": 3
 		},
-		"message": "A11y: Abstract role 'input' is forbidden",
+		"message": "Abstract role 'input' is forbidden",
 		"start": {
 			"column": 5,
 			"line": 3
 		}
 	},
 	{
-		"code": "a11y-no-abstract-role",
+		"code": "a11y_no_abstract_role",
 		"end": {
 			"column": 20,
 			"line": 4
 		},
-		"message": "A11y: Abstract role 'landmark' is forbidden",
+		"message": "Abstract role 'landmark' is forbidden",
 		"start": {
 			"column": 5,
 			"line": 4
 		}
 	},
 	{
-		"code": "a11y-no-abstract-role",
+		"code": "a11y_no_abstract_role",
 		"end": {
 			"column": 17,
 			"line": 5
 		},
-		"message": "A11y: Abstract role 'range' is forbidden",
+		"message": "Abstract role 'range' is forbidden",
 		"start": {
 			"column": 5,
 			"line": 5
 		}
 	},
 	{
-		"code": "a11y-no-abstract-role",
+		"code": "a11y_no_abstract_role",
 		"end": {
 			"column": 20,
 			"line": 6
 		},
-		"message": "A11y: Abstract role 'roletype' is forbidden",
+		"message": "Abstract role 'roletype' is forbidden",
 		"start": {
 			"column": 5,
 			"line": 6
 		}
 	},
 	{
-		"code": "a11y-no-abstract-role",
+		"code": "a11y_no_abstract_role",
 		"end": {
 			"column": 19,
 			"line": 7
 		},
-		"message": "A11y: Abstract role 'section' is forbidden",
+		"message": "Abstract role 'section' is forbidden",
 		"start": {
 			"column": 5,
 			"line": 7
 		}
 	},
 	{
-		"code": "a11y-no-abstract-role",
+		"code": "a11y_no_abstract_role",
 		"end": {
 			"column": 23,
 			"line": 8
 		},
-		"message": "A11y: Abstract role 'sectionhead' is forbidden",
+		"message": "Abstract role 'sectionhead' is forbidden",
 		"start": {
 			"column": 5,
 			"line": 8
 		}
 	},
 	{
-		"code": "a11y-no-abstract-role",
+		"code": "a11y_no_abstract_role",
 		"end": {
 			"column": 18,
 			"line": 9
 		},
-		"message": "A11y: Abstract role 'select' is forbidden",
+		"message": "Abstract role 'select' is forbidden",
 		"start": {
 			"column": 5,
 			"line": 9
 		}
 	},
 	{
-		"code": "a11y-no-abstract-role",
+		"code": "a11y_no_abstract_role",
 		"end": {
 			"column": 21,
 			"line": 10
 		},
-		"message": "A11y: Abstract role 'structure' is forbidden",
+		"message": "Abstract role 'structure' is forbidden",
 		"start": {
 			"column": 5,
 			"line": 10
 		}
 	},
 	{
-		"code": "a11y-no-abstract-role",
+		"code": "a11y_no_abstract_role",
 		"end": {
 			"column": 18,
 			"line": 11
 		},
-		"message": "A11y: Abstract role 'widget' is forbidden",
+		"message": "Abstract role 'widget' is forbidden",
 		"start": {
 			"column": 5,
 			"line": 11
 		}
 	},
 	{
-		"code": "a11y-no-abstract-role",
+		"code": "a11y_no_abstract_role",
 		"end": {
 			"column": 18,
 			"line": 12
 		},
-		"message": "A11y: Abstract role 'window' is forbidden",
+		"message": "Abstract role 'window' is forbidden",
 		"start": {
 			"column": 5,
 			"line": 12

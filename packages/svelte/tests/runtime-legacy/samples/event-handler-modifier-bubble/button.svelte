@@ -1,0 +1,1 @@
+<button on:click|preventDefault>click me</button>

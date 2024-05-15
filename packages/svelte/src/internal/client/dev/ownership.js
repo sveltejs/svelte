@@ -1,7 +1,10 @@
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
 import { STATE_SYMBOL } from '../constants.js';
-import { untrack } from '../runtime.js';
+import { render_effect, user_pre_effect } from '../reactivity/effects.js';
+import { dev_current_component_function } from '../runtime.js';
+import { get_prototype_of } from '../utils.js';
+import * as w from '../warnings.js';
 
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
 const boundaries = {};
@@ -9,7 +12,7 @@ const boundaries = {};
 const chrome_pattern = /at (?:.+ \()?(.+):(\d+):(\d+)\)?$/;
 const firefox_pattern = /@(.+):(\d+):(\d+)$/;
 
-export function get_stack() {
+function get_stack() {
 	const stack = new Error().stack;
 	if (!stack) return null;
 
@@ -34,7 +37,7 @@ export function get_stack() {
  * Determines which `.svelte` component is responsible for a given state change
  * @returns {Function | null}
  */
-function get_component() {
+export function get_component() {
 	// first 4 lines are svelte internals; adjust this number if we change the internal call stack
 	const stack = get_stack()?.slice(4);
 	if (!stack) return null;
@@ -63,13 +66,14 @@ function get_component() {
 	return null;
 }
 
+export const ADD_OWNER = Symbol('ADD_OWNER');
+
 /**
  * Together with `mark_module_end`, this function establishes the boundaries of a `.svelte` file,
  * such that subsequent calls to `get_component` can tell us which component is responsible
  * for a given state change
- * @param {Function} component
  */
-export function mark_module_start(component) {
+export function mark_module_start() {
 	const start = get_stack()?.[2];
 
 	if (start) {
@@ -77,87 +81,166 @@ export function mark_module_start(component) {
 			start,
 			// @ts-expect-error
 			end: null,
-			component
+			// @ts-expect-error we add the component at the end, since HMR will overwrite the function
+			component: null
 		});
 	}
 }
 
-export function mark_module_end() {
+/**
+ * @param {Function} component
+ */
+export function mark_module_end(component) {
 	const end = get_stack()?.[2];
 
 	if (end) {
 		const boundaries_file = boundaries[end.file];
-		boundaries_file[boundaries_file.length - 1].end = end;
+		const boundary = boundaries_file[boundaries_file.length - 1];
+
+		boundary.end = end;
+		boundary.component = component;
 	}
 }
 
 /**
- *
  * @param {any} object
  * @param {any} owner
+ * @param {boolean} [global]
  */
-export function add_owner(object, owner) {
-	untrack(() => {
-		add_owner_to_object(object, owner);
+export function add_owner(object, owner, global = false) {
+	if (object && !global) {
+		const component = dev_current_component_function;
+		const metadata = object[STATE_SYMBOL];
+		if (metadata && !has_owner(metadata, component)) {
+			let original = get_owner(metadata);
+
+			if (owner.filename !== component.filename) {
+				w.ownership_invalid_binding(component.filename, owner.filename, original.filename);
+			}
+		}
+	}
+
+	add_owner_to_object(object, owner, new Set());
+}
+
+/**
+ * @param {() => unknown} get_object
+ * @param {any} Component
+ */
+export function add_owner_effect(get_object, Component) {
+	user_pre_effect(() => {
+		add_owner(get_object(), Component);
 	});
+}
+
+/**
+ * @param {import('#client').ProxyMetadata<any> | null} from
+ * @param {import('#client').ProxyMetadata<any>} to
+ */
+export function widen_ownership(from, to) {
+	if (to.owners === null) {
+		return;
+	}
+
+	while (from) {
+		if (from.owners === null) {
+			to.owners = null;
+			break;
+		}
+
+		for (const owner of from.owners) {
+			to.owners.add(owner);
+		}
+
+		from = from.parent;
+	}
 }
 
 /**
  * @param {any} object
  * @param {Function} owner
+ * @param {Set<any>} seen
  */
-function add_owner_to_object(object, owner) {
-	if (object?.[STATE_SYMBOL]?.o && !object[STATE_SYMBOL].o.has(owner)) {
-		object[STATE_SYMBOL].o.add(owner);
+function add_owner_to_object(object, owner, seen) {
+	const metadata = /** @type {import('#client').ProxyMetadata} */ (object?.[STATE_SYMBOL]);
 
-		for (const key in object) {
-			add_owner_to_object(object[key], owner);
+	if (metadata) {
+		// this is a state proxy, add owner directly, if not globally shared
+		if (metadata.owners !== null) {
+			metadata.owners.add(owner);
+		}
+	} else if (object && typeof object === 'object') {
+		if (seen.has(object)) return;
+		seen.add(object);
+
+		if (object[ADD_OWNER]) {
+			// this is a class with state fields. we put this in a render effect
+			// so that if state is replaced (e.g. `instance.name = { first, last }`)
+			// the new state is also co-owned by the caller of `getContext`
+			render_effect(() => {
+				object[ADD_OWNER](owner);
+			});
+		} else {
+			var proto = get_prototype_of(object);
+
+			if (proto === Object.prototype) {
+				// recurse until we find a state proxy
+				for (const key in object) {
+					add_owner_to_object(object[key], owner, seen);
+				}
+			} else if (proto === Array.prototype) {
+				// recurse until we find a state proxy
+				for (let i = 0; i < object.length; i += 1) {
+					add_owner_to_object(object[i], owner, seen);
+				}
+			}
 		}
 	}
 }
 
 /**
- * @param {any} object
+ * @param {import('#client').ProxyMetadata} metadata
+ * @param {Function} component
+ * @returns {boolean}
  */
-export function strip_owner(object) {
-	untrack(() => {
-		strip_owner_from_object(object);
-	});
-}
-
-/**
- * @param {any} object
- */
-function strip_owner_from_object(object) {
-	if (object?.[STATE_SYMBOL]?.o) {
-		object[STATE_SYMBOL].o = null;
-
-		for (const key in object) {
-			strip_owner(object[key]);
-		}
+function has_owner(metadata, component) {
+	if (metadata.owners === null) {
+		return true;
 	}
+
+	return (
+		metadata.owners.has(component) ||
+		(metadata.parent !== null && has_owner(metadata.parent, component))
+	);
 }
 
 /**
- * @param {Set<Function>} owners
+ * @param {import('#client').ProxyMetadata} metadata
+ * @returns {any}
  */
-export function check_ownership(owners) {
+function get_owner(metadata) {
+	return (
+		metadata?.owners?.values().next().value ??
+		get_owner(/** @type {import('#client').ProxyMetadata} */ (metadata.parent))
+	);
+}
+
+/**
+ * @param {import('#client').ProxyMetadata} metadata
+ */
+export function check_ownership(metadata) {
 	const component = get_component();
 
-	if (component && !owners.has(component)) {
-		let original = [...owners][0];
+	if (component && !has_owner(metadata, component)) {
+		let original = get_owner(metadata);
 
-		let message =
+		// @ts-expect-error
+		if (original.filename !== component.filename) {
 			// @ts-expect-error
-			original.filename !== component.filename
-				? // @ts-expect-error
-					`${component.filename} mutated a value owned by ${original.filename}. This is strongly discouraged`
-				: 'Mutating a value outside the component that created it is strongly discouraged';
-
-		// eslint-disable-next-line no-console
-		console.warn(
-			`${message}. Consider passing values to child components with \`bind:\`, or use a callback instead.`
-		);
+			w.ownership_invalid_mutation(component.filename, original.filename);
+		} else {
+			w.ownership_invalid_mutation();
+		}
 
 		// eslint-disable-next-line no-console
 		console.trace();

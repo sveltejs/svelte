@@ -8,6 +8,7 @@ import type {
 import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
+import type { Location } from 'locate-character';
 
 export interface ClientTransformState extends TransformState {
 	readonly private_state: Map<string, StateField>;
@@ -23,6 +24,10 @@ export interface ClientTransformState extends TransformState {
 	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
 }
 
+export type SourceLocation =
+	| [line: number, column: number]
+	| [line: number, column: number, SourceLocation[]];
+
 export interface ComponentClientTransformState extends ClientTransformState {
 	readonly analysis: ComponentAnalysis;
 	readonly options: ValidatedCompileOptions;
@@ -30,21 +35,16 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly events: Set<string>;
 
 	/** Stuff that happens before the render effect(s) */
+	readonly before_init: Statement[];
+	/** Stuff that happens before the render effect(s) */
 	readonly init: Statement[];
-	/** Stuff that happens inside separate render effects (due to call expressions) */
-	readonly update_effects: Statement[];
 	/** Stuff that happens inside the render effect */
-	readonly update: {
-		init?: Statement;
-		/** If the update array only contains a single entry, this singular entry will be used, if present */
-		singular?: Statement;
-		/** Used if condition for singular prop is false (see comment above) */
-		grouped: Statement;
-	}[];
+	readonly update: Statement[];
 	/** Stuff that happens after the render effect (control blocks, dynamic elements, bindings, actions, etc) */
 	readonly after_update: Statement[];
 	/** The HTML template string */
 	readonly template: string[];
+	readonly locations: SourceLocation[];
 	readonly metadata: {
 		namespace: Namespace;
 		bound_contenteditable: boolean;

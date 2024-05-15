@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 import { reset_numbers } from './data';
 
@@ -18,7 +19,9 @@ export default test({
 
 		const clickEvent = new window.MouseEvent('click', { bubbles: true });
 
-		await btn.dispatchEvent(clickEvent);
+		flushSync(() => {
+			btn.dispatchEvent(clickEvent);
+		});
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -31,7 +34,9 @@ export default test({
 		`
 		);
 
-		await btn.dispatchEvent(clickEvent);
+		flushSync(() => {
+			btn.dispatchEvent(clickEvent);
+		});
 
 		assert.htmlEqual(
 			target.innerHTML,

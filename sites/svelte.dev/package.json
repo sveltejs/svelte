@@ -31,7 +31,7 @@
     "@sveltejs/adapter-vercel": "^4.0.0",
     "@sveltejs/kit": "^2.4.3",
     "@sveltejs/site-kit": "6.0.0-next.59",
-    "@sveltejs/vite-plugin-svelte": "^3.0.1",
+    "@sveltejs/vite-plugin-svelte": "^3.1.0",
     "@types/cookie": "^0.6.0",
     "@types/node": "^20.11.5",
     "browserslist": "^4.22.2",
@@ -54,7 +54,7 @@
     "svelte-preprocess": "^5.1.3",
     "tiny-glob": "^0.2.9",
     "typescript": "^5.3.3",
-    "vite": "^5.0.12",
+    "vite": "^5.0.13",
     "vite-imagetools": "^6.2.9"
   }
 }

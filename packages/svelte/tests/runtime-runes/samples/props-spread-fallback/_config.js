@@ -48,7 +48,7 @@ export default test({
 			`
 				<button>change propA</button>
 				<button>change propB</button>
-				<p>true</p>
+				<p>true fallback</p>
 			`
 		);
 	}

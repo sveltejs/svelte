@@ -1,5 +1,6 @@
 import { untrack } from './runtime.js';
-import { is_array } from './utils.js';
+import { get_descriptor, is_array } from './utils.js';
+import * as e from './errors.js';
 
 /** regex of all html void element names */
 const void_element_names =
@@ -11,55 +12,26 @@ function is_void(tag) {
 }
 
 /**
- * @param {any} store
- * @param {string} name
- */
-export function validate_store(store, name) {
-	if (store != null && typeof store.subscribe !== 'function') {
-		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
-	}
-}
-
-/**
  * @param {() => any} component_fn
  * @returns {any}
  */
 export function validate_dynamic_component(component_fn) {
-	const error_message = 'this={...} of <svelte:component> should specify a Svelte component.';
 	try {
 		const instance = component_fn();
+
 		if (instance !== undefined && typeof instance !== 'object') {
-			throw new Error(error_message);
+			e.svelte_component_invalid_this_value();
 		}
+
 		return instance;
 	} catch (err) {
 		const { message } = /** @type {Error} */ (err);
+
 		if (typeof message === 'string' && message.indexOf('is not a function') !== -1) {
-			throw new Error(error_message);
-		} else {
-			throw err;
+			e.svelte_component_invalid_this_value();
 		}
-	}
-}
 
-/**
- * @param {() => string} tag_fn
- * @returns {void}
- */
-export function validate_void_dynamic_element(tag_fn) {
-	const tag = tag_fn();
-	if (tag && is_void(tag)) {
-		// eslint-disable-next-line no-console
-		console.warn(`<svelte:element this="${tag}"> is self-closing and cannot have content.`);
-	}
-}
-
-/** @param {() => unknown} tag_fn */
-export function validate_dynamic_element_tag(tag_fn) {
-	const tag = tag_fn();
-	const is_string = typeof tag === 'string';
-	if (tag && !is_string) {
-		throw new Error('<svelte:element> expects "this" attribute to be a string.');
+		throw err;
 	}
 }
 
@@ -80,60 +52,38 @@ export function validate_each_keys(collection, key_fn) {
 	for (let i = 0; i < length; i++) {
 		const key = key_fn(array[i], i);
 		if (keys.has(key)) {
-			throw new Error(
-				`Cannot have duplicate keys in a keyed each: Keys at index ${keys.get(
-					key
-				)} and ${i} with value '${array[i]}' are duplicates`
-			);
+			const a = String(keys.get(key));
+			const b = String(i);
+
+			/** @type {string | null} */
+			let k = String(array[i]);
+			if (k.startsWith('[object ')) k = null;
+
+			e.each_key_duplicate(a, b, k);
 		}
 		keys.set(key, i);
 	}
 }
 
 /**
- * @param {number} timeout
- * @returns {() => void}
- * */
-export function loop_guard(timeout) {
-	const start = Date.now();
-	return () => {
-		if (Date.now() - start > timeout) {
-			throw new Error('Infinite loop detected');
+ * @param {Record<string, any>} $$props
+ * @param {string[]} bindable
+ * @param {string[]} exports
+ * @param {Function & { filename: string }} component
+ */
+export function validate_prop_bindings($$props, bindable, exports, component) {
+	for (const key in $$props) {
+		var setter = get_descriptor($$props, key)?.set;
+		var name = component.name;
+
+		if (setter) {
+			if (exports.includes(key)) {
+				e.bind_invalid_export(component.filename, key, name);
+			}
+
+			if (!bindable.includes(key)) {
+				e.bind_not_bindable(key, component.filename, name);
+			}
 		}
-	};
-}
-
-const snippet_symbol = Symbol.for('svelte.snippet');
-
-/**
- * @param {any} fn
- */
-export function add_snippet_symbol(fn) {
-	fn[snippet_symbol] = true;
-	return fn;
-}
-
-/**
- * Validate that the function handed to `{@render ...}` is a snippet function, and not some other kind of function.
- * @param {any} snippet_fn
- */
-export function validate_snippet(snippet_fn) {
-	if (snippet_fn && snippet_fn[snippet_symbol] !== true) {
-		throw new Error(
-			'The argument to `{@render ...}` must be a snippet function, not a component or some other kind of function. ' +
-				'If you want to dynamically render one snippet or another, use `$derived` and pass its result to `{@render ...}`.'
-		);
 	}
-	return snippet_fn;
-}
-
-/**
- * Validate that the function behind `<Component />` isn't a snippet.
- * @param {any} component_fn
- */
-export function validate_component(component_fn) {
-	if (component_fn?.[snippet_symbol] === true) {
-		throw new Error('A snippet must be rendered with `{@render ...}`');
-	}
-	return component_fn;
 }

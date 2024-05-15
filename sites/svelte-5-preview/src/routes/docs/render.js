@@ -166,7 +166,7 @@ const render_content = (filename, body) =>
 		twoslashBanner: (filename, source) => {
 			const injected = [
 				`// @filename: runes.d.ts`,
-				`declare function $props<T>(): T`,
+				`declare function $props(): any`,
 				`declare function $state<T>(initial: T): T`,
 				`declare function $derived<T>(value: T): T`,
 				`declare const $effect: ((callback: () => void | (() => void)) => void) & { pre: (callback: () => void | (() => void)) => void };`
