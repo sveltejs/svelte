@@ -72,7 +72,8 @@ export {
 	add_legacy_event_listener,
 	bubble_event,
 	reactive_import,
-	update_legacy_props
+	update_legacy_props,
+	default_slot
 } from './dom/legacy/misc.js';
 export {
 	append,
@@ -154,7 +155,6 @@ export {
 } from './dom/operations.js';
 export { noop } from '../shared/utils.js';
 export {
-	add_snippet_symbol,
 	validate_component,
 	validate_dynamic_element_tag,
 	validate_snippet,

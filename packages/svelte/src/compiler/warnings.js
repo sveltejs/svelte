@@ -137,11 +137,11 @@ export function a11y_autofocus(node) {
 }
 
 /**
- * Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.
+ * Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details
  * @param {null | NodeLike} node
  */
 export function a11y_click_events_have_key_events(node) {
-	w(node, "a11y_click_events_have_key_events", "Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type=\"button\">` or `<a>` might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.");
+	w(node, "a11y_click_events_have_key_events", "Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type=\"button\">` or `<a>` might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details");
 }
 
 /**
@@ -179,11 +179,11 @@ export function a11y_hidden(node, name) {
 }
 
 /**
- * Screenreaders already announce `<img>` elements as an image.
+ * Screenreaders already announce `<img>` elements as an image
  * @param {null | NodeLike} node
  */
 export function a11y_img_redundant_alt(node) {
-	w(node, "a11y_img_redundant_alt", "Screenreaders already announce `<img>` elements as an image.");
+	w(node, "a11y_img_redundant_alt", "Screenreaders already announce `<img>` elements as an image");
 }
 
 /**
@@ -262,12 +262,12 @@ export function a11y_incorrect_aria_attribute_type_tristate(node, attribute) {
 }
 
 /**
- * Elements with the '%role%' interactive role must have a tabindex value.
+ * Elements with the '%role%' interactive role must have a tabindex value
  * @param {null | NodeLike} node
  * @param {string} role
  */
 export function a11y_interactive_supports_focus(node, role) {
-	w(node, "a11y_interactive_supports_focus", `Elements with the '${role}' interactive role must have a tabindex value.`);
+	w(node, "a11y_interactive_supports_focus", `Elements with the '${role}' interactive role must have a tabindex value`);
 }
 
 /**
@@ -281,11 +281,11 @@ export function a11y_invalid_attribute(node, href_value, href_attribute) {
 }
 
 /**
- * A form label must be associated with a control.
+ * A form label must be associated with a control
  * @param {null | NodeLike} node
  */
 export function a11y_label_has_associated_control(node) {
-	w(node, "a11y_label_has_associated_control", "A form label must be associated with a control.");
+	w(node, "a11y_label_has_associated_control", "A form label must be associated with a control");
 }
 
 /**
@@ -363,12 +363,12 @@ export function a11y_no_interactive_element_to_noninteractive_role(node, element
 }
 
 /**
- * Non-interactive element `<%element%>` should not be assigned mouse or keyboard event listeners.
+ * Non-interactive element `<%element%>` should not be assigned mouse or keyboard event listeners
  * @param {null | NodeLike} node
  * @param {string} element
  */
 export function a11y_no_noninteractive_element_interactions(node, element) {
-	w(node, "a11y_no_noninteractive_element_interactions", `Non-interactive element \`<${element}>\` should not be assigned mouse or keyboard event listeners.`);
+	w(node, "a11y_no_noninteractive_element_interactions", `Non-interactive element \`<${element}>\` should not be assigned mouse or keyboard event listeners`);
 }
 
 /**
@@ -698,18 +698,18 @@ export function element_invalid_self_closing_tag(node, name) {
 }
 
 /**
- * Using `on:%name%` to listen to the %name% event is deprecated. Use the event attribute `on%name%` instead.
+ * Using `on:%name%` to listen to the %name% event is deprecated. Use the event attribute `on%name%` instead
  * @param {null | NodeLike} node
  * @param {string} name
  */
 export function event_directive_deprecated(node, name) {
-	w(node, "event_directive_deprecated", `Using \`on:${name}\` to listen to the ${name} event is deprecated. Use the event attribute \`on${name}\` instead.`);
+	w(node, "event_directive_deprecated", `Using \`on:${name}\` to listen to the ${name} event is deprecated. Use the event attribute \`on${name}\` instead`);
 }
 
 /**
- * Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead.
+ * Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead
  * @param {null | NodeLike} node
  */
 export function slot_element_deprecated(node) {
-	w(node, "slot_element_deprecated", "Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead.");
+	w(node, "slot_element_deprecated", "Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead");
 }

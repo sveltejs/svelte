@@ -216,12 +216,22 @@ export interface ModuleCompileOptions {
 	 * Used for debugging hints and sourcemaps. Your bundler plugin will set it automatically.
 	 */
 	filename?: string;
+
+	/**
+	 * Used for ensuring filenames don't leak filesystem information. Your bundler plugin will set it automatically.
+	 * @default process.cwd() on node-like environments, undefined elsewhere
+	 */
+	rootDir?: string;
 }
 
 // The following two somewhat scary looking types ensure that certain types are required but can be undefined still
 
-export type ValidatedModuleCompileOptions = Omit<Required<ModuleCompileOptions>, 'filename'> & {
+export type ValidatedModuleCompileOptions = Omit<
+	Required<ModuleCompileOptions>,
+	'filename' | 'rootDir'
+> & {
 	filename: ModuleCompileOptions['filename'];
+	rootDir: ModuleCompileOptions['rootDir'];
 };
 
 export type ValidatedCompileOptions = ValidatedModuleCompileOptions &

@@ -130,6 +130,7 @@ export function runtime_suite(runes: boolean) {
 async function common_setup(cwd: string, runes: boolean | undefined, config: RuntimeTest) {
 	const compileOptions: CompileOptions = {
 		generate: 'client',
+		rootDir: cwd,
 		...config.compileOptions,
 		immutable: config.immutable,
 		accessors: 'accessors' in config ? config.accessors : true,

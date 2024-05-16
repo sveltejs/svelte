@@ -193,8 +193,9 @@ export function spread_attributes(attrs, lowercase_attributes, is_html, class_ha
 	for (let i = 0; i < attrs.length; i++) {
 		const obj = attrs[i];
 		for (key in obj) {
-			// omit functions
-			if (typeof obj[key] !== 'function') {
+			// omit functions and internal svelte properties
+			const prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
+			if (typeof obj[key] !== 'function' && prefix !== '$$') {
 				merged_attrs[key] = obj[key];
 			}
 		}
@@ -549,3 +550,5 @@ export {
 } from '../shared/validate.js';
 
 export { escape_html as escape };
+
+export { default_slot } from '../client/dom/legacy/misc.js';

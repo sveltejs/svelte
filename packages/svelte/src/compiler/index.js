@@ -19,10 +19,10 @@ export { default as preprocess } from './preprocess/index.js';
  * @returns {import('#compiler').CompileResult}
  */
 export function compile(source, options) {
-	try {
-		state.reset({ source, filename: options.filename });
+	const validated = validate_component_options(options, '');
+	state.reset(source, validated);
 
-		const validated = validate_component_options(options, '');
+	try {
 		let parsed = _parse(source);
 
 		const { customElement: customElementOptions, ...parsed_options } = parsed.options || {};
@@ -49,7 +49,7 @@ export function compile(source, options) {
 		return result;
 	} catch (e) {
 		if (e instanceof CompileError) {
-			handle_compile_error(e, options.filename, source);
+			handle_compile_error(e);
 		}
 
 		throw e;
@@ -65,16 +65,16 @@ export function compile(source, options) {
  * @returns {import('#compiler').CompileResult}
  */
 export function compileModule(source, options) {
-	try {
-		state.reset({ source, filename: options.filename });
+	const validated = validate_module_options(options, '');
+	state.reset(source, validated);
 
-		const validated = validate_module_options(options, '');
+	try {
 		const analysis = analyze_module(parse_acorn(source, false), validated);
 		const result = transform_module(analysis, source, validated);
 		return result;
 	} catch (e) {
 		if (e instanceof CompileError) {
-			handle_compile_error(e, options.filename, source);
+			handle_compile_error(e);
 		}
 
 		throw e;
@@ -83,11 +83,9 @@ export function compileModule(source, options) {
 
 /**
  * @param {import('#compiler').CompileError} error
- * @param {string | undefined} filename
- * @param {string} source
  */
-function handle_compile_error(error, filename, source) {
-	error.filename = filename;
+function handle_compile_error(error) {
+	error.filename = state.filename;
 
 	if (error.position) {
 		const start = state.locator(error.position[0]);
@@ -134,11 +132,11 @@ function handle_compile_error(error, filename, source) {
  *
  * https://svelte.dev/docs/svelte-compiler#svelte-parse
  * @param {string} source
- * @param {{ filename?: string; modern?: boolean }} [options]
+ * @param {{ filename?: string; rootDir?: string; modern?: boolean }} [options]
  * @returns {import('#compiler').Root | import('./types/legacy-nodes.js').LegacyRoot}
  */
-export function parse(source, options = {}) {
-	state.reset({ source, filename: options.filename });
+export function parse(source, { filename, rootDir, modern } = {}) {
+	state.reset(source, { filename, rootDir }); // TODO it's weird to require filename/rootDir here. reconsider the API
 
 	/** @type {import('#compiler').Root} */
 	let ast;
@@ -146,13 +144,13 @@ export function parse(source, options = {}) {
 		ast = _parse(source);
 	} catch (e) {
 		if (e instanceof CompileError) {
-			handle_compile_error(e, options.filename, source);
+			handle_compile_error(e);
 		}
 
 		throw e;
 	}
 
-	return to_public_ast(source, ast, options.modern);
+	return to_public_ast(source, ast, modern);
 }
 
 /**

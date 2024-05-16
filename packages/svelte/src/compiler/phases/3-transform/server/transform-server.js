@@ -27,7 +27,7 @@ import { DOMBooleanAttributes, HYDRATION_END, HYDRATION_START } from '../../../.
 import { escape_html } from '../../../../escaping.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
 import { BLOCK_CLOSE, BLOCK_CLOSE_ELSE } from '../../../../internal/server/hydration.js';
-import { locator } from '../../../state.js';
+import { filename, locator } from '../../../state.js';
 
 export const block_open = t_string(`<!--${HYDRATION_START}-->`);
 export const block_close = t_string(`<!--${HYDRATION_END}-->`);
@@ -979,6 +979,13 @@ function serialize_inline_component(node, component_name, context) {
 	let slot_scope_applies_to_itself = false;
 
 	/**
+	 * Components may have a children prop and also have child nodes. In this case, we assume
+	 * that the child component isn't using render tags yet and pass the slot as $$slots.default.
+	 * We're not doing it for spread attributes, as this would result in too many false positives.
+	 */
+	let has_children_prop = false;
+
+	/**
 	 * @param {import('estree').Property} prop
 	 */
 	function push_prop(prop) {
@@ -1004,6 +1011,10 @@ function serialize_inline_component(node, component_name, context) {
 
 			if (attribute.name === 'slot') {
 				slot_scope_applies_to_itself = true;
+			}
+
+			if (attribute.name === 'children') {
+				has_children_prop = true;
 			}
 
 			const value = serialize_attribute_value(attribute.value, context, false, true);
@@ -1080,7 +1091,7 @@ function serialize_inline_component(node, component_name, context) {
 			b.block([...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []), ...body])
 		);
 
-		if (slot_name === 'default') {
+		if (slot_name === 'default' && !has_children_prop) {
 			push_prop(
 				b.prop(
 					'init',
@@ -1088,6 +1099,9 @@ function serialize_inline_component(node, component_name, context) {
 					context.state.options.dev ? b.call('$.add_snippet_symbol', slot_fn) : slot_fn
 				)
 			);
+			// We additionally add the default slot as a boolean, so that the slot render function on the other
+			// side knows it should get the content to render from $$props.children
+			serialized_slots.push(b.init('default', b.true));
 		} else {
 			const slot = b.prop('init', b.literal(slot_name), slot_fn);
 			serialized_slots.push(slot);
@@ -1755,7 +1769,7 @@ const template_visitors = {
 		const lets = [];
 
 		/** @type {import('estree').Expression} */
-		let expression = b.member_id('$$props.children');
+		let expression = b.call('$.default_slot', b.id('$$props'));
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'SpreadAttribute') {
@@ -2398,14 +2412,7 @@ export function server_component(analysis, options) {
 		body.push(b.export_default(component_function));
 	}
 
-	if (options.dev && options.filename) {
-		let filename = options.filename;
-		if (/(\/|\w:)/.test(options.filename)) {
-			// filename is absolute — truncate it
-			const parts = filename.split(/[/\\]/);
-			filename = parts.length > 3 ? ['...', ...parts.slice(-3)].join('/') : filename;
-		}
-
+	if (options.dev && filename) {
 		// add `App.filename = 'App.svelte'` so that we can print useful messages later
 		body.unshift(
 			b.stmt(
