@@ -4,6 +4,7 @@ import { read_script } from '../read/script.js';
 import read_style from '../read/style.js';
 import { closing_tag_omitted, decode_character_references } from '../utils/html.js';
 import * as e from '../../../errors.js';
+import * as w from '../../../warnings.js';
 import { create_fragment } from '../utils/create.js';
 import { create_attribute } from '../../nodes.js';
 
@@ -262,14 +263,28 @@ export default function tag(parser) {
 		const definition = /** @type {import('#compiler').Attribute} */ (
 			element.attributes.splice(index, 1)[0]
 		);
-		if (definition.value === true || definition.value.length !== 1) {
-			e.svelte_element_invalid_this(definition.start);
+
+		if (definition.value === true) {
+			e.svelte_element_missing_this(definition);
 		}
+
 		const chunk = definition.value[0];
-		element.tag =
-			chunk.type === 'Text'
-				? { type: 'Literal', value: chunk.data, raw: `'${chunk.raw}'` }
-				: chunk.expression;
+
+		if (definition.value.length !== 1 || chunk.type !== 'ExpressionTag') {
+			chunk.type;
+			w.svelte_element_invalid_this(definition);
+
+			// note that this is wrong, in the case of e.g. `this="h{n}"` — it will result in `<h>`.
+			// it would be much better to just error here, but we are preserving the existing buggy
+			// Svelte 4 behaviour out of an overabundance of caution regarding breaking changes.
+			// TODO in 6.0, error
+			element.tag =
+				chunk.type === 'Text'
+					? { type: 'Literal', value: chunk.data, raw: `'${chunk.raw}'` }
+					: chunk.expression;
+		} else {
+			element.tag = chunk.expression;
+		}
 	}
 
 	if (is_top_level_script_or_style) {

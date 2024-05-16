@@ -2,40 +2,40 @@
 	"html": {
 		"type": "Fragment",
 		"start": 0,
-		"end": 101,
+		"end": 105,
 		"children": [
 			{
 				"type": "Element",
 				"name": "svelte:element",
 				"start": 0,
-				"end": 44,
+				"end": 46,
 				"tag": "div",
 				"attributes": [],
 				"children": []
 			},
 			{
 				"type": "Text",
-				"start": 44,
-				"end": 45,
+				"start": 46,
+				"end": 47,
 				"raw": "\n",
 				"data": "\n"
 			},
 			{
 				"type": "Element",
 				"name": "svelte:element",
-				"start": 45,
-				"end": 101,
+				"start": 47,
+				"end": 105,
 				"tag": "div",
 				"attributes": [
 					{
 						"type": "Attribute",
-						"start": 72,
-						"end": 83,
+						"start": 76,
+						"end": 87,
 						"name": "class",
 						"value": [
 							{
-								"start": 79,
-								"end": 82,
+								"start": 83,
+								"end": 86,
 								"type": "Text",
 								"raw": "foo",
 								"data": "foo"

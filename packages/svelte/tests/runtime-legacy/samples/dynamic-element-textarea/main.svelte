@@ -1,1 +1,1 @@
-<svelte:element this="textarea"></svelte:element>
+<svelte:element this={"textarea"}></svelte:element>

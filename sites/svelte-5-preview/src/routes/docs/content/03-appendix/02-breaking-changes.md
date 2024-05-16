@@ -230,3 +230,14 @@ In Svelte 4 you could have content inside a `<svelte:options />` tag. It was ign
 ### `<slot>` elements in declarative shadow roots are preserved
 
 Svelte 4 replaced the `<slot />` tag in all places with its own version of slots. Svelte 5 preserves them in the case they are a child of a `<template shadowrootmode="...">` element.
+
+### `<svelte:element>` tag must be an expression
+
+In Svelte 4, `<svelte:element this="div">` is valid code. This makes little sense — you should just do `<div>`. In the vanishingly rare case that you _do_ need to use a literal value for some reason, you can do this:
+
+```diff
+- <svelte:element this="div">
++ <svelte:element this={"div"}>
+```
+
+Note that whereas Svelte 4 would treat `<svelte:element this="input">` (for example) identically to `<input>` for the purposes of determining which `bind:` directives could be applied, Svelte 5 does not.

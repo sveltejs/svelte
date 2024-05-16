@@ -9,13 +9,13 @@
 </svg>
 
 <svg>
-	<svelte:element this="path">
+	<svelte:element this={"path"}>
 		<foreignObject>
-			<svelte:element this="span">ok</svelte:element>
+			<svelte:element this={"span"}>ok</svelte:element>
 		</foreignObject>
 		<foreignObject>
 			{#if true}
-				<svelte:element this="span">ok</svelte:element>
+				<svelte:element this={"span"}>ok</svelte:element>
 			{/if}
 		</foreignObject>
 	</svelte:element>

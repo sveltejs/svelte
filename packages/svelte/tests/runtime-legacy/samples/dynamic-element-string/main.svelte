@@ -1,1 +1,1 @@
-<svelte:element this="div">Foo</svelte:element>
+<svelte:element this={"div"}>Foo</svelte:element>

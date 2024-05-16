@@ -1,4 +1,4 @@
-<svelte:element this="div" class="used" />
+<svelte:element this={"div"} class="used" />
 
 <style>
 	.used {
