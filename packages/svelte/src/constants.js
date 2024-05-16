@@ -24,6 +24,9 @@ export const HYDRATION_END = ']';
 export const HYDRATION_END_ELSE = `${HYDRATION_END}!`; // used to indicate that an `{:else}...` block was rendered
 export const HYDRATION_ERROR = {};
 
+export const ELEMENT_IS_NAMESPACED = 1;
+export const ELEMENT_PRESERVE_ATTRIBUTE_CASE = 1 << 1;
+
 export const UNINITIALIZED = Symbol();
 
 /** List of elements that require raw contents and should not have SSR comments put in them */

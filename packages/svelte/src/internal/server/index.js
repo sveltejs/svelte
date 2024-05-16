@@ -1,6 +1,12 @@
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
-import { UNINITIALIZED, DOMBooleanAttributes, RawTextElements } from '../../constants.js';
+import {
+	UNINITIALIZED,
+	DOMBooleanAttributes,
+	RawTextElements,
+	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
+	ELEMENT_IS_NAMESPACED
+} from '../../constants.js';
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
@@ -179,43 +185,35 @@ export function css_props(payload, is_html, props, component) {
 
 /**
  * @param {Record<string, unknown>} attrs
- * @param {boolean} lowercase_attributes
- * @param {boolean} is_html
- * @param {string} class_hash
- * @param {{ styles: Record<string, string> | null; classes: string }} [additional]
+ * @param {Record<string, string>} [classes]
+ * @param {Record<string, string>} [styles]
+ * @param {number} [flags]
  * @returns {string}
  */
-export function spread_attributes(attrs, lowercase_attributes, is_html, class_hash, additional) {
-	const styles = additional?.styles;
+export function spread_attributes(attrs, classes, styles, flags = 0) {
 	if (styles) {
-		if ('style' in attrs) {
-			attrs.style = style_object_to_string(
-				merge_styles(/** @type {string} */ (attrs.style), styles)
-			);
-		} else {
-			attrs.style = style_object_to_string(styles);
-		}
+		attrs.style = attrs.style
+			? style_object_to_string(merge_styles(/** @type {string} */ (attrs.style), styles))
+			: style_object_to_string(styles);
 	}
 
-	if (class_hash) {
-		if ('class' in attrs) {
-			attrs.class += ` ${class_hash}`;
-		} else {
-			attrs.class = class_hash;
-		}
-	}
-
-	const classes = additional?.classes;
 	if (classes) {
-		if ('class' in attrs) {
-			attrs.class += ` ${classes}`;
-		} else {
-			attrs.class = classes;
+		const classlist = attrs.class ? [attrs.class] : [];
+
+		for (const key in classes) {
+			if (classes[key]) {
+				classlist.push(key);
+			}
 		}
+
+		attrs.class = classlist.join(' ');
 	}
 
 	let attr_str = '';
 	let name;
+
+	const is_html = (flags & ELEMENT_IS_NAMESPACED) === 0;
+	const lowercase = (flags & ELEMENT_PRESERVE_ATTRIBUTE_CASE) === 0;
 
 	for (name in attrs) {
 		// omit functions, internal svelte properties and invalid attribute names
@@ -223,7 +221,7 @@ export function spread_attributes(attrs, lowercase_attributes, is_html, class_ha
 		if (name[0] === '$' && name[1] === '$') continue; // faster than name.startsWith('$$')
 		if (INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
 
-		if (lowercase_attributes) {
+		if (lowercase) {
 			name = name.toLowerCase();
 		}
 
