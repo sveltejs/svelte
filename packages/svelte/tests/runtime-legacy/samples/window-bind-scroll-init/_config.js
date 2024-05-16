@@ -21,9 +21,8 @@ export default test({
 		vi.useRealTimers();
 	},
 
-	async test({ assert, component, window }) {
-		assert.equal(window.pageYOffset, 0);
-
+	async test({ assert, component, logs }) {
 		assert.equal(component.scrollY, 0);
+		assert.deepEqual(logs, [undefined, 0]);
 	}
 });
