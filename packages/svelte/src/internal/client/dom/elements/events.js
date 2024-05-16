@@ -4,6 +4,8 @@ import { define_property, is_array } from '../../utils.js';
 import { hydrating } from '../hydration.js';
 
 /**
+ * SSR adds onload and onerror attributes to catch those events before the hydration.
+ * This function detects those cases, removes the attributes and replays the events.
  * @param {HTMLElement} dom
  */
 export function hydrate_event_replay(dom) {
