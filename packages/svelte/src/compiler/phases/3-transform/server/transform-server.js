@@ -1846,7 +1846,7 @@ function serialize_element_attributes(node, context) {
 	// Use the index to keep the attributes order which is important for spreading
 	let class_attribute_idx = -1;
 	let style_attribute_idx = -1;
-	let events_to_capture = [];
+	let events_to_capture = new Set();
 
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'Attribute') {
@@ -1869,7 +1869,7 @@ function serialize_element_attributes(node, context) {
 					(attribute.name === 'onload' || attribute.name === 'onerror') &&
 					LoadErrorElements.includes(node.name)
 				) {
-					events_to_capture.push(attribute.name);
+					events_to_capture.add(attribute.name);
 				}
 			} else {
 				if (attribute.name === 'class') {
@@ -1970,11 +1970,13 @@ function serialize_element_attributes(node, context) {
 			attributes.push(attribute);
 			has_spread = true;
 			if (LoadErrorElements.includes(node.name)) {
-				events_to_capture.push('onload', 'onerror');
+				events_to_capture.add('onload');
+				events_to_capture.add('onerror');
 			}
 		} else if (attribute.type === 'UseDirective') {
 			if (LoadErrorElements.includes(node.name)) {
-				events_to_capture.push('onload', 'onerror');
+				events_to_capture.add('onload');
+				events_to_capture.add('onerror');
 			}
 		} else if (attribute.type === 'ClassDirective') {
 			class_directives.push(attribute);
@@ -2058,7 +2060,7 @@ function serialize_element_attributes(node, context) {
 		}
 	}
 
-	if (events_to_capture.length !== 0) {
+	if (events_to_capture.size !== 0) {
 		for (const event of events_to_capture) {
 			context.state.template.push(t_string(` ${event}="this.__e=event"`));
 		}

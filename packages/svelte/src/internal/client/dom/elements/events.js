@@ -9,24 +9,24 @@ import { hydrating } from '../hydration.js';
  * @param {HTMLElement} dom
  */
 export function replay_events(dom) {
-	if (hydrating) {
-		if (dom.onload) {
-			dom.removeAttribute('onload');
-		}
-		if (dom.onerror) {
-			dom.removeAttribute('onerror');
-		}
+	if (!hydrating) return;
+
+	if (dom.onload) {
+		dom.removeAttribute('onload');
+	}
+	if (dom.onerror) {
+		dom.removeAttribute('onerror');
+	}
+	// @ts-expect-error
+	const event = dom.__e;
+	if (event !== undefined) {
 		// @ts-expect-error
-		const event = dom.__e;
-		if (event !== undefined) {
-			// @ts-expect-error
-			dom.__e = undefined;
-			queueMicrotask(() => {
-				if (dom.isConnected) {
-					dom.dispatchEvent(event);
-				}
-			});
-		}
+		dom.__e = undefined;
+		queueMicrotask(() => {
+			if (dom.isConnected) {
+				dom.dispatchEvent(event);
+			}
+		});
 	}
 }
 
