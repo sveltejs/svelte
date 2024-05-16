@@ -71,6 +71,8 @@ export function init_operations() {
 	element_prototype.__className = '';
 	// @ts-expect-error
 	element_prototype.__attributes = null;
+	// @ts-expect-error
+	element_prototype.__e = undefined;
 
 	if (DEV) {
 		// @ts-expect-error

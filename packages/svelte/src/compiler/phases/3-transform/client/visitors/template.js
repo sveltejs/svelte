@@ -8,7 +8,12 @@ import {
 } from '../../../../utils/ast.js';
 import { binding_properties } from '../../../bindings.js';
 import { clean_nodes, determine_namespace_for_children, infer_namespace } from '../../utils.js';
-import { DOMProperties, PassiveEvents, VoidElements } from '../../../constants.js';
+import {
+	DOMProperties,
+	LoadErrorElements,
+	PassiveEvents,
+	VoidElements
+} from '../../../constants.js';
 import { is_custom_element_node, is_element_node } from '../../../nodes.js';
 import * as b from '../../../../utils/builders.js';
 import {
@@ -1904,6 +1909,7 @@ export const template_visitors = {
 		let is_content_editable = false;
 		let has_content_editable_binding = false;
 		let img_might_be_lazy = false;
+		let might_need_event_replaying = false;
 
 		if (is_custom_element) {
 			// cloneNode is faster, but it does not instantiate the underlying class of the
@@ -1936,6 +1942,9 @@ export const template_visitors = {
 				attributes.push(attribute);
 				needs_input_reset = true;
 				needs_content_reset = true;
+				if (LoadErrorElements.includes(node.name)) {
+					might_need_event_replaying = true;
+				}
 			} else if (attribute.type === 'ClassDirective') {
 				class_directives.push(attribute);
 			} else if (attribute.type === 'StyleDirective') {
@@ -1958,6 +1967,8 @@ export const template_visitors = {
 					) {
 						has_content_editable_binding = true;
 					}
+				} else if (attribute.type === 'UseDirective' && LoadErrorElements.includes(node.name)) {
+					might_need_event_replaying = true;
 				}
 				context.visit(attribute);
 			}
@@ -2010,6 +2021,12 @@ export const template_visitors = {
 		} else {
 			for (const attribute of /** @type {import('#compiler').Attribute[]} */ (attributes)) {
 				if (is_event_attribute(attribute)) {
+					if (
+						(attribute.name === 'onload' || attribute.name === 'onerror') &&
+						LoadErrorElements.includes(node.name)
+					) {
+						might_need_event_replaying = true;
+					}
 					serialize_event_attribute(attribute, context);
 					continue;
 				}
@@ -2057,6 +2074,10 @@ export const template_visitors = {
 		// class/style directives must be applied last since they could override class/style attributes
 		serialize_class_directives(class_directives, node_id, context, is_attributes_reactive);
 		serialize_style_directives(style_directives, node_id, context, is_attributes_reactive);
+
+		if (might_need_event_replaying) {
+			context.state.after_update.push(b.stmt(b.call('$.replay_events', node_id)));
+		}
 
 		context.state.template.push('>');
 

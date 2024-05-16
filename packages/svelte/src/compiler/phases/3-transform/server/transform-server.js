@@ -11,6 +11,7 @@ import * as b from '../../../utils/builders.js';
 import is_reference from 'is-reference';
 import {
 	ContentEditableBindings,
+	LoadErrorElements,
 	VoidElements,
 	WhitespaceInsensitiveAttributes
 } from '../../constants.js';
@@ -1845,6 +1846,7 @@ function serialize_element_attributes(node, context) {
 	// Use the index to keep the attributes order which is important for spreading
 	let class_attribute_idx = -1;
 	let style_attribute_idx = -1;
+	let events_to_capture = new Set();
 
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'Attribute') {
@@ -1861,8 +1863,15 @@ function serialize_element_attributes(node, context) {
 				}
 				content = { escape: true, expression: serialize_attribute_value(attribute.value, context) };
 
-				// omit event handlers
-			} else if (!is_event_attribute(attribute)) {
+				// omit event handlers except for special cases
+			} else if (is_event_attribute(attribute)) {
+				if (
+					(attribute.name === 'onload' || attribute.name === 'onerror') &&
+					LoadErrorElements.includes(node.name)
+				) {
+					events_to_capture.add(attribute.name);
+				}
+			} else {
 				if (attribute.name === 'class') {
 					class_attribute_idx = attributes.length;
 				} else if (attribute.name === 'style') {
@@ -1960,6 +1969,15 @@ function serialize_element_attributes(node, context) {
 		} else if (attribute.type === 'SpreadAttribute') {
 			attributes.push(attribute);
 			has_spread = true;
+			if (LoadErrorElements.includes(node.name)) {
+				events_to_capture.add('onload');
+				events_to_capture.add('onerror');
+			}
+		} else if (attribute.type === 'UseDirective') {
+			if (LoadErrorElements.includes(node.name)) {
+				events_to_capture.add('onload');
+				events_to_capture.add('onerror');
+			}
 		} else if (attribute.type === 'ClassDirective') {
 			class_directives.push(attribute);
 		} else if (attribute.type === 'StyleDirective') {
@@ -2039,6 +2057,12 @@ function serialize_element_attributes(node, context) {
 			context.state.template.push(
 				t_expression(b.call('$.attr', b.literal(name), value, b.literal(is_boolean)))
 			);
+		}
+	}
+
+	if (events_to_capture.size !== 0) {
+		for (const event of events_to_capture) {
+			context.state.template.push(t_string(` ${event}="this.__e=event"`));
 		}
 	}
 
