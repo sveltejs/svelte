@@ -161,6 +161,22 @@ export function effect_update_depth_exceeded() {
 }
 
 /**
+ * Failed to hydrate the application
+ * @returns {never}
+ */
+export function hydration_failed() {
+	if (DEV) {
+		const error = new Error(`${"hydration_failed"}\n${"Failed to hydrate the application"}`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("hydration_failed");
+	}
+}
+
+/**
  * `%name%(...)` cannot be used in runes mode
  * @param {string} name
  * @returns {never}
@@ -275,21 +291,5 @@ export function svelte_component_invalid_this_value() {
 	} else {
 		// TODO print a link to the documentation
 		throw new Error("svelte_component_invalid_this_value");
-	}
-}
-
-/**
- * Failed to hydrate the application
- * @returns {never}
- */
-export function hydration_failed() {
-	if (DEV) {
-		const error = new Error(`${"hydration_failed"}\n${"Failed to hydrate the application"}`);
-
-		error.name = 'Svelte error';
-		throw error;
-	} else {
-		// TODO print a link to the documentation
-		throw new Error("hydration_failed");
 	}
 }
