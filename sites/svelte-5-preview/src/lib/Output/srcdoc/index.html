@@ -67,13 +67,6 @@
 
 		<script>
 			(function () {
-				function indirectEval(script) {
-					// we have to use indirect eval to prevent compiled repl output to have access to local/captured variables
-					// for instance calling `eval("console.log(send_message)") would have resulted in logging the function
-					// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#direct_and_indirect_eval
-					return window.eval(`"use strict";${script}`);
-				}
-
 				function handle_message(ev) {
 					let { action, cmd_id } = ev.data;
 					const send_message = (payload) => parent.postMessage({ ...payload }, ev.origin);
@@ -92,7 +85,7 @@
 					if (action === 'eval') {
 						try {
 							const { script } = ev.data.args;
-							indirectEval(script);
+							(0, eval)(script);
 							send_ok();
 						} catch (e) {
 							send_error(e.message, e.stack);
@@ -147,9 +140,7 @@
 				window.addEventListener('unhandledrejection', (event) => {
 					parent.postMessage({ action: 'unhandledrejection', value: event.reason }, '*');
 				});
-			}).call(this);
 
-			(function () {
 				let previous = { level: null, args: null };
 
 				['clear', 'log', 'info', 'dir', 'warn', 'error', 'table'].forEach((level) => {
@@ -295,7 +286,7 @@
 						return null;
 					}
 				}
-			})(this);
+			})();
 		</script>
 	</head>
 	<body></body>
