@@ -1,5 +1,23 @@
 # svelte
 
+## 5.0.0-next.136
+
+### Patch Changes
+
+- chore: remove `handle_compile_error` ([#11639](https://github.com/sveltejs/svelte/pull/11639))
+
+- breaking: disallow string literal values in `<svelte:element this="...">` ([#11454](https://github.com/sveltejs/svelte/pull/11454))
+
+- fix: use coarse-grained updates for derived expressions passed to props in legacy mode ([#11652](https://github.com/sveltejs/svelte/pull/11652))
+
+- fix: robustify `bind:scrollX/Y` binding ([#11655](https://github.com/sveltejs/svelte/pull/11655))
+
+- feat: migrate `<svelte:element this="div">` ([#11659](https://github.com/sveltejs/svelte/pull/11659))
+
+- feat: more information when hydration fails ([#11649](https://github.com/sveltejs/svelte/pull/11649))
+
+- fix: replay load and error events on load during hydration ([#11642](https://github.com/sveltejs/svelte/pull/11642))
+
 ## 5.0.0-next.135
 
 ### Patch Changes
