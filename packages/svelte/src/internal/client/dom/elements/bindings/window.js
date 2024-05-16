@@ -42,6 +42,8 @@ export function bind_window_scroll(type, get_value, update) {
 				scrollTo(window.scrollX, latest_value);
 			}
 			timeout = setTimeout(clear, 100);
+		} else if (latest_value == null) {
+			update(window[is_scrolling_x ? 'scrollX' : 'scrollY']);
 		}
 	});
 
