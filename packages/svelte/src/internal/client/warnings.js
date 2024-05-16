@@ -21,11 +21,12 @@ export function hydration_attribute_changed(attribute, html, value) {
 }
 
 /**
- * Hydration failed because the initial UI does not match what was rendered on the server
+ * Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near %location%
+ * @param {string | undefined | null} [location]
  */
-export function hydration_mismatch() {
+export function hydration_mismatch(location) {
 	if (DEV) {
-		console.warn(`%c[svelte] ${"hydration_mismatch"}\n%c${"Hydration failed because the initial UI does not match what was rendered on the server"}`, bold, normal);
+		console.warn(`%c[svelte] ${"hydration_mismatch"}\n%c${`Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near ${location}`}`, bold, normal);
 	} else {
 		// TODO print a link to the documentation
 		console.warn("hydration_mismatch");
