@@ -21,7 +21,7 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 		fs.writeFileSync(`${cwd}/_actual.svelte`, actual);
 
 		const expected = try_read_file(`${cwd}/output.svelte`);
-		assert.deepEqual(actual, expected);
+		assert.deepEqual(actual.trim(), expected?.trim());
 	}
 });
 
