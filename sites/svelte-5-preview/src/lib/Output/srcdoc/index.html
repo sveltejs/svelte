@@ -199,7 +199,11 @@
 						);
 					} else {
 						parent.postMessage(
-							{ action: 'console', level: 'system-warn', args: [`Timer '${label}' does not exist`] },
+							{
+								action: 'console',
+								level: 'system-warn',
+								args: [`Timer '${label}' does not exist`]
+							},
 							'*'
 						);
 					}
@@ -218,7 +222,11 @@
 						);
 					} else {
 						parent.postMessage(
-							{ action: 'console', level: 'system-warn', args: [`Timer '${label}' does not exist`] },
+							{
+								action: 'console',
+								level: 'system-warn',
+								args: [`Timer '${label}' does not exist`]
+							},
 							'*'
 						);
 					}
