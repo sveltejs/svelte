@@ -85,7 +85,7 @@
 					if (action === 'eval') {
 						try {
 							const { script } = ev.data.args;
-							eval(script);
+							(0, eval)(script);
 							send_ok();
 						} catch (e) {
 							send_error(e.message, e.stack);
@@ -140,160 +140,168 @@
 				window.addEventListener('unhandledrejection', (event) => {
 					parent.postMessage({ action: 'unhandledrejection', value: event.reason }, '*');
 				});
-			}).call(this);
 
-			let previous = { level: null, args: null };
+				let previous = { level: null, args: null };
 
-			['clear', 'log', 'info', 'dir', 'warn', 'error', 'table'].forEach((level) => {
-				const original = console[level];
-				console[level] = (...args) => {
-					const stringifiedArgs = stringify(args);
-					if (previous.level === level && previous.args && previous.args === stringifiedArgs) {
-						parent.postMessage({ action: 'console', level, duplicate: true }, '*');
+				['clear', 'log', 'info', 'dir', 'warn', 'error', 'table'].forEach((level) => {
+					const original = console[level];
+					console[level] = (...args) => {
+						const stringifiedArgs = stringify(args);
+						if (previous.level === level && previous.args && previous.args === stringifiedArgs) {
+							parent.postMessage({ action: 'console', level, duplicate: true }, '*');
+						} else {
+							previous = { level, args: stringifiedArgs };
+
+							try {
+								parent.postMessage({ action: 'console', level, args }, '*');
+							} catch (err) {
+								parent.postMessage({ action: 'console', level: 'unclonable' }, '*');
+							}
+						}
+
+						original(...args);
+					};
+				});
+
+				[
+					{ method: 'group', action: 'console_group' },
+					{ method: 'groupEnd', action: 'console_group_end' },
+					{ method: 'groupCollapsed', action: 'console_group_collapsed' }
+				].forEach((group_action) => {
+					const original = console[group_action.method];
+					console[group_action.method] = (label) => {
+						parent.postMessage({ action: group_action.action, label }, '*');
+
+						original(label);
+					};
+				});
+
+				const timers = new Map();
+				const original_time = console.time;
+				const original_timelog = console.timeLog;
+				const original_timeend = console.timeEnd;
+
+				console.time = (label = 'default') => {
+					original_time(label);
+					timers.set(label, performance.now());
+				};
+				console.timeLog = (label = 'default') => {
+					original_timelog(label);
+					const now = performance.now();
+					if (timers.has(label)) {
+						parent.postMessage(
+							{
+								action: 'console',
+								level: 'system-log',
+								args: [`${label}: ${now - timers.get(label)}ms`]
+							},
+							'*'
+						);
 					} else {
-						previous = { level, args: stringifiedArgs };
-
-						try {
-							parent.postMessage({ action: 'console', level, args }, '*');
-						} catch (err) {
-							parent.postMessage({ action: 'console', level: 'unclonable' }, '*');
-						}
+						parent.postMessage(
+							{
+								action: 'console',
+								level: 'system-warn',
+								args: [`Timer '${label}' does not exist`]
+							},
+							'*'
+						);
 					}
-
-					original(...args);
 				};
-			});
-
-			[
-				{ method: 'group', action: 'console_group' },
-				{ method: 'groupEnd', action: 'console_group_end' },
-				{ method: 'groupCollapsed', action: 'console_group_collapsed' }
-			].forEach((group_action) => {
-				const original = console[group_action.method];
-				console[group_action.method] = (label) => {
-					parent.postMessage({ action: group_action.action, label }, '*');
-
-					original(label);
+				console.timeEnd = (label = 'default') => {
+					original_timeend(label);
+					const now = performance.now();
+					if (timers.has(label)) {
+						parent.postMessage(
+							{
+								action: 'console',
+								level: 'system-log',
+								args: [`${label}: ${now - timers.get(label)}ms`]
+							},
+							'*'
+						);
+					} else {
+						parent.postMessage(
+							{
+								action: 'console',
+								level: 'system-warn',
+								args: [`Timer '${label}' does not exist`]
+							},
+							'*'
+						);
+					}
+					timers.delete(label);
 				};
-			});
 
-			const timers = new Map();
-			const original_time = console.time;
-			const original_timelog = console.timeLog;
-			const original_timeend = console.timeEnd;
+				const original_assert = console.assert;
+				console.assert = (condition, ...args) => {
+					if (condition) {
+						const stack = new Error().stack;
+						parent.postMessage({ action: 'console', level: 'assert', args, stack }, '*');
+					}
+					original_assert(condition, ...args);
+				};
 
-			console.time = (label = 'default') => {
-				original_time(label);
-				timers.set(label, performance.now());
-			};
-			console.timeLog = (label = 'default') => {
-				original_timelog(label);
-				const now = performance.now();
-				if (timers.has(label)) {
-					parent.postMessage(
-						{
-							action: 'console',
-							level: 'system-log',
-							args: [`${label}: ${now - timers.get(label)}ms`]
-						},
-						'*'
-					);
-				} else {
-					parent.postMessage(
-						{ action: 'console', level: 'system-warn', args: [`Timer '${label}' does not exist`] },
-						'*'
-					);
-				}
-			};
-			console.timeEnd = (label = 'default') => {
-				original_timeend(label);
-				const now = performance.now();
-				if (timers.has(label)) {
-					parent.postMessage(
-						{
-							action: 'console',
-							level: 'system-log',
-							args: [`${label}: ${now - timers.get(label)}ms`]
-						},
-						'*'
-					);
-				} else {
-					parent.postMessage(
-						{ action: 'console', level: 'system-warn', args: [`Timer '${label}' does not exist`] },
-						'*'
-					);
-				}
-				timers.delete(label);
-			};
+				const counter = new Map();
+				const original_count = console.count;
+				const original_countreset = console.countReset;
 
-			const original_assert = console.assert;
-			console.assert = (condition, ...args) => {
-				if (condition) {
+				console.count = (label = 'default') => {
+					counter.set(label, (counter.get(label) || 0) + 1);
+					parent.postMessage(
+						{ action: 'console', level: 'system-log', args: `${label}: ${counter.get(label)}` },
+						'*'
+					);
+					original_count(label);
+				};
+
+				console.countReset = (label = 'default') => {
+					if (counter.has(label)) {
+						counter.set(label, 0);
+					} else {
+						parent.postMessage(
+							{
+								action: 'console',
+								level: 'system-warn',
+								args: `Count for '${label}' does not exist`
+							},
+							'*'
+						);
+					}
+					original_countreset(label);
+				};
+
+				const original_trace = console.trace;
+
+				console.trace = (...args) => {
 					const stack = new Error().stack;
-					parent.postMessage({ action: 'console', level: 'assert', args, stack }, '*');
+					parent.postMessage({ action: 'console', level: 'trace', args, stack }, '*');
+					original_trace(...args);
+				};
+
+				function stringify(args) {
+					try {
+						return JSON.stringify(args, (key, value) => {
+							// if we don't do this, our Set/Map from svelte/reactivity would show up wrong in the console
+							if (value instanceof Map) {
+								return {
+									type: 'Map',
+									value
+								};
+							}
+							if (value instanceof Set) {
+								return {
+									type: 'Set',
+									value
+								};
+							}
+							return value;
+						});
+					} catch (error) {
+						return null;
+					}
 				}
-				original_assert(condition, ...args);
-			};
-
-			const counter = new Map();
-			const original_count = console.count;
-			const original_countreset = console.countReset;
-
-			console.count = (label = 'default') => {
-				counter.set(label, (counter.get(label) || 0) + 1);
-				parent.postMessage(
-					{ action: 'console', level: 'system-log', args: `${label}: ${counter.get(label)}` },
-					'*'
-				);
-				original_count(label);
-			};
-
-			console.countReset = (label = 'default') => {
-				if (counter.has(label)) {
-					counter.set(label, 0);
-				} else {
-					parent.postMessage(
-						{
-							action: 'console',
-							level: 'system-warn',
-							args: `Count for '${label}' does not exist`
-						},
-						'*'
-					);
-				}
-				original_countreset(label);
-			};
-
-			const original_trace = console.trace;
-
-			console.trace = (...args) => {
-				const stack = new Error().stack;
-				parent.postMessage({ action: 'console', level: 'trace', args, stack }, '*');
-				original_trace(...args);
-			};
-
-			function stringify(args) {
-				try {
-					return JSON.stringify(args, (key, value) => {
-						// if we don't do this, our Set/Map from svelte/reactivity would show up wrong in the console
-						if (value instanceof Map) {
-							return {
-								type: 'Map',
-								value
-							};
-						}
-						if (value instanceof Set) {
-							return {
-								type: 'Set',
-								value
-							};
-						}
-						return value;
-					});
-				} catch (error) {
-					return null;
-				}
-			}
+			})();
 		</script>
 	</head>
 	<body></body>
