@@ -280,7 +280,13 @@ export default function tag(parser) {
 			// TODO in 6.0, error
 			element.tag =
 				chunk.type === 'Text'
-					? { type: 'Literal', value: chunk.data, raw: `'${chunk.raw}'` }
+					? {
+							type: 'Literal',
+							value: chunk.data,
+							raw: `'${chunk.raw}'`,
+							start: chunk.start,
+							end: chunk.end
+						}
 					: chunk.expression;
 		} else {
 			element.tag = chunk.expression;

@@ -427,6 +427,26 @@ const template = {
 		next();
 	},
 	SvelteElement(node, { state, next }) {
+		if (node.tag.type === 'Literal') {
+			let is_static = true;
+
+			let a = /** @type {number} */ (node.tag.start);
+			let b = /** @type {number} */ (node.tag.end);
+			let quote_mark = state.str.original[a - 1];
+
+			while (state.str.original[--a] !== '=') {
+				if (state.str.original[a] === '{') {
+					is_static = false;
+					break;
+				}
+			}
+
+			if (is_static && state.str.original[b] === quote_mark) {
+				state.str.prependLeft(a + 1, '{');
+				state.str.appendRight(/** @type {number} */ (node.tag.end) + 1, '}');
+			}
+		}
+
 		handle_events(node, state);
 		next();
 	},
