@@ -7,6 +7,7 @@ export default test({
 		const [input1, input2, input3] = els;
 		const event = new window.Event('change');
 
+    // I don't know why this is needed to set the checkboxes back to default (unchecked)
 		for (const input of els) {
   		input.checked = false;
 		  await input.dispatchEvent(event);
