@@ -1972,6 +1972,10 @@ function serialize_element_attributes(node, context) {
 			if (LoadErrorElements.includes(node.name)) {
 				events_to_capture.push('onload', 'onerror');
 			}
+		} else if (attribute.type === 'UseDirective') {
+			if (LoadErrorElements.includes(node.name)) {
+				events_to_capture.push('onload', 'onerror');
+			}
 		} else if (attribute.type === 'ClassDirective') {
 			class_directives.push(attribute);
 		} else if (attribute.type === 'StyleDirective') {
