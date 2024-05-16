@@ -628,6 +628,15 @@ function collect_parent_each_blocks(context) {
 }
 
 /**
+ * Svelte legacy mode should use safe equals in most places, runes mode shouldn't
+ * @param {import('../types.js').ComponentClientTransformState} state
+ * @param {import('estree').Expression} arg
+ */
+function create_derived(state, arg) {
+	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
+}
+
+/**
  * @param {import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf} node
  * @param {string} component_name
  * @param {import('../types.js').ComponentContext} context
@@ -740,7 +749,7 @@ function serialize_inline_component(node, component_name, context) {
 
 				if (should_wrap_in_derived) {
 					const id = b.id(context.state.scope.generate(attribute.name));
-					context.state.init.push(b.var(id, b.call('$.derived', b.thunk(value))));
+					context.state.init.push(b.var(id, create_derived(context.state, b.thunk(value))));
 					arg = b.call('$.get', id);
 				}
 
@@ -1644,9 +1653,8 @@ function serialize_template_literal(values, visit, state) {
 				state.init.push(
 					b.const(
 						id,
-						b.call(
-							// In runes mode, we want things to be fine-grained - but not in legacy mode
-							state.analysis.runes ? '$.derived' : '$.derived_safe_equal',
+						create_derived(
+							state,
 							b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression)))
 						)
 					)
@@ -1696,9 +1704,8 @@ export const template_visitors = {
 			state.init.push(
 				b.const(
 					declaration.id,
-					b.call(
-						// In runes mode, we want things to be fine-grained - but not in legacy mode
-						state.analysis.runes ? '$.derived' : '$.derived_safe_equal',
+					create_derived(
+						state,
 						b.thunk(/** @type {import('estree').Expression} */ (visit(declaration.init)))
 					)
 				)
@@ -1733,10 +1740,7 @@ export const template_visitors = {
 				])
 			);
 
-			state.init.push(
-				// In runes mode, we want things to be fine-grained - but not in legacy mode
-				b.const(tmp, b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', fn))
-			);
+			state.init.push(b.const(tmp, create_derived(state, fn)));
 
 			// we need to eagerly evaluate the expression in order to hit any
 			// 'Cannot access x before initialization' errors
@@ -2974,12 +2978,7 @@ export const template_visitors = {
 			const name = node.expression === null ? node.name : node.expression.name;
 			return b.const(
 				name,
-				b.call(
-					// in legacy mode, sources can be mutated but they're not fine-grained.
-					// Using the safe-equal derived version ensures the slot is still updated
-					state.analysis.runes ? '$.derived' : '$.derived_safe_equal',
-					b.thunk(b.member(b.id('$$slotProps'), b.id(node.name)))
-				)
+				create_derived(state, b.thunk(b.member(b.id('$$slotProps'), b.id(node.name))))
 			);
 		}
 	},
