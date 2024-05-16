@@ -150,7 +150,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 			if (value != null) {
 				if (!delegated) {
 					// we use `addEventListener` here because these events are not delegated
-					const was_hyrating = hydrating;
+					const was_hydrating = hydrating;
 					const handle_event = () => {
 						element.addEventListener(event_name, value, opts);
 						if (was_hyrating) {
