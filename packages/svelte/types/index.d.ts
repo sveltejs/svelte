@@ -1059,8 +1059,7 @@ declare module 'svelte/compiler' {
 	export class CompileError extends Error {
 		
 		constructor(code: string, message: string, position: [number, number] | undefined);
-		
-		filename: CompileError_1['filename'];
+		filename: string | undefined;
 		
 		position: CompileError_1['position'];
 		
