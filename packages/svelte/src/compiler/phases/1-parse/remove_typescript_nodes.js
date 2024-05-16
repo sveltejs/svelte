@@ -53,6 +53,24 @@ const visitors = {
 	},
 	TSTypeAliasDeclaration() {
 		return b.empty;
+	},
+	TSTypeParameterDeclaration() {
+		return b.empty;
+	},
+	TSTypeParameterInstantiation() {
+		return b.empty;
+	},
+	TSEnumDeclaration() {
+		return b.empty;
+	},
+	Identifier(node) {
+		if (node.typeAnnotation) {
+			return {
+				...node,
+				typeAnnotation: null
+			};
+		}
+		return node;
 	}
 };
 

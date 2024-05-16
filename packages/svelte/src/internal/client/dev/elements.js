@@ -34,7 +34,7 @@ export function add_locations(fn, filename, locations) {
 function assign_location(element, filename, location) {
 	// @ts-expect-error
 	element.__svelte_meta = {
-		loc: { filename, line: location[0], column: location[1] }
+		loc: { file: filename, line: location[0], column: location[1] }
 	};
 
 	if (location[2]) {

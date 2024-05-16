@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.135
+
+### Patch Changes
+
+- fix: make messages more consistent ([#11643](https://github.com/sveltejs/svelte/pull/11643))
+
+- feat: introduce `rootDir` compiler option, make `filename` relative to it ([#11627](https://github.com/sveltejs/svelte/pull/11627))
+
+- fix: rename `__svelte_meta.filename` to `__svelte_meta.file` to align with svelte 4 ([#11627](https://github.com/sveltejs/svelte/pull/11627))
+
+- fix: avoid state_referenced_locally warning within type annotations ([#11638](https://github.com/sveltejs/svelte/pull/11638))
+
 ## 5.0.0-next.134
 
 ### Patch Changes
