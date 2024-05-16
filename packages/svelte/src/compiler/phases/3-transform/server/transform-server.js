@@ -889,23 +889,6 @@ function serialize_element_spread_attributes(
 	class_directives,
 	context
 ) {
-	/** @type {import('estree').Expression[]} */
-	const values = [];
-
-	for (const attribute of attributes) {
-		if (attribute.type === 'Attribute') {
-			const name = get_attribute_name(element, attribute, context);
-			const value = serialize_attribute_value(
-				attribute.value,
-				context,
-				WhitespaceInsensitiveAttributes.includes(name)
-			);
-			values.push(b.object([b.prop('init', b.literal(name), value)]));
-		} else {
-			values.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
-		}
-	}
-
 	const lowercase_attributes =
 		element.metadata.svg ||
 		element.metadata.mathml ||
@@ -917,7 +900,21 @@ function serialize_element_spread_attributes(
 
 	/** @type {import('estree').Expression[]} */
 	const args = [
-		b.array(values),
+		b.object(
+			attributes.map((attribute) => {
+				if (attribute.type === 'Attribute') {
+					const name = get_attribute_name(element, attribute, context);
+					const value = serialize_attribute_value(
+						attribute.value,
+						context,
+						WhitespaceInsensitiveAttributes.includes(name)
+					);
+					return b.prop('init', b.key(name), value);
+				}
+
+				return b.spread(/** @type {import('estree').Expression} */ (context.visit(attribute)));
+			})
+		),
 		lowercase_attributes,
 		is_html,
 		b.literal(context.state.analysis.css.hash)
