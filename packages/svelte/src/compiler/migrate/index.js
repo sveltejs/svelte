@@ -18,7 +18,7 @@ import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
  */
 export function migrate(source) {
 	try {
-		reset({ source, filename: 'migrate.svelte' });
+		reset(source, { filename: 'migrate.svelte' });
 
 		let parsed = parse(source);
 

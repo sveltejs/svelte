@@ -5,7 +5,11 @@ import { getLocator } from 'locate-character';
 /** @type {import('#compiler').Warning[]} */
 export let warnings = [];
 
-/** @type {string | undefined} */
+/**
+ * The filename (if specified in the compiler options) relative to the rootDir (if specified).
+ * This should not be used in the compiler output except in dev mode
+ * @type {string | undefined}
+ */
 export let filename;
 
 export let locator = getLocator('', { offsetLine: 1 });
@@ -26,14 +30,23 @@ export function pop_ignore() {
 }
 
 /**
- * @param {{
- *   source: string;
- *   filename: string | undefined;
- * }} options
+ * @param {string} source
+ * @param {{ filename?: string, rootDir?: string }} options
  */
-export function reset(options) {
-	filename = options.filename;
-	locator = getLocator(options.source, { offsetLine: 1 });
+export function reset(source, options) {
+	const root_dir = options.rootDir?.replace(/\\/g, '/');
+	filename = options.filename?.replace(/\\/g, '/');
+
+	if (
+		typeof filename === 'string' &&
+		typeof root_dir === 'string' &&
+		filename.startsWith(root_dir)
+	) {
+		// make filename relative to rootDir
+		filename = filename.replace(root_dir, '').replace(/^[/\\]/, '');
+	}
+
+	locator = getLocator(source, { offsetLine: 1 });
 	warnings = [];
 	ignore_stack = [];
 }

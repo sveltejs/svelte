@@ -8,6 +8,7 @@ import { javascript_visitors_runes } from './visitors/javascript-runes.js';
 import { javascript_visitors_legacy } from './visitors/javascript-legacy.js';
 import { serialize_get_binding } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
+import { filename } from '../../../state.js';
 
 /**
  * This function ensures visitor sets don't accidentally clobber each other
@@ -471,14 +472,7 @@ export function client_component(source, analysis, options) {
 	}
 
 	if (options.dev) {
-		if (options.filename) {
-			let filename = options.filename;
-			if (/(\/|\w:)/.test(options.filename)) {
-				// filename is absolute — truncate it
-				const parts = filename.split(/[/\\]/);
-				filename = parts.length > 3 ? ['...', ...parts.slice(-3)].join('/') : filename;
-			}
-
+		if (filename) {
 			// add `App.filename = 'App.svelte'` so that we can print useful messages later
 			body.unshift(
 				b.stmt(
