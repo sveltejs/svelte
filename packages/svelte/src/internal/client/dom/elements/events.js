@@ -1,6 +1,30 @@
 import { render_effect } from '../../reactivity/effects.js';
 import { all_registered_events, root_event_handles } from '../../render.js';
 import { define_property, is_array } from '../../utils.js';
+import { hydrating } from '../hydration.js';
+
+/**
+ * @param {HTMLElement} dom
+ */
+export function hydrate_event_replay(dom) {
+	if (dom.onload) {
+		dom.removeAttribute('onload');
+	}
+	if (dom.onerror) {
+		dom.removeAttribute('onerror');
+	}
+	// @ts-expect-error
+	const event = dom.__e;
+	if (event !== undefined) {
+		// @ts-expect-error
+		dom.__e = undefined;
+		queueMicrotask(() => {
+			if (dom.isConnected) {
+				dom.dispatchEvent(event);
+			}
+		});
+	}
+}
 
 /**
  * @param {string} event_name
@@ -27,6 +51,10 @@ export function event(event_name, dom, handler, capture, passive) {
 	}
 
 	dom.addEventListener(event_name, target_handler, options);
+
+	if (hydrating) {
+		hydrate_event_replay(/** @type {HTMLElement} */ (dom));
+	}
 
 	// @ts-ignore
 	if (dom === document.body || dom === window || dom === document) {

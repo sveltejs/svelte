@@ -61,6 +61,18 @@ export const WhitespaceInsensitiveAttributes = ['class', 'style'];
 
 export const ContentEditableBindings = ['textContent', 'innerHTML', 'innerText'];
 
+export const LoadErrorElements = [
+	'body',
+	'embed',
+	'iframe',
+	'img',
+	'link',
+	'object',
+	'script',
+	'style',
+	'track'
+];
+
 export const SVGElements = [
 	'altGlyph',
 	'altGlyphDef',

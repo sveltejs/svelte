@@ -2,7 +2,7 @@ import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of, map_get, map_set } from '../../utils.js';
 import { AttributeAliases, DelegatedEvents, namespace_svg } from '../../../../constants.js';
-import { delegate } from './events.js';
+import { delegate, hydrate_event_replay } from './events.js';
 import { autofocus } from './misc.js';
 import { effect, effect_root } from '../../reactivity/effects.js';
 import * as w from '../../warnings.js';
@@ -149,10 +149,17 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 
 			if (value != null) {
 				if (!delegated) {
-					if (!prev) {
-						events.push([key, value, () => element.addEventListener(event_name, value, opts)]);
-					} else {
+					const was_hyrating = hydrating;
+					const handle_event = () => {
 						element.addEventListener(event_name, value, opts);
+						if (was_hyrating) {
+							hydrate_event_replay(/** @type {HTMLElement} */ (element));
+						}
+					};
+					if (!prev) {
+						events.push([key, value, handle_event]);
+					} else {
+						handle_event();
 					}
 				} else {
 					// @ts-ignore
