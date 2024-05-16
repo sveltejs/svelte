@@ -106,7 +106,6 @@ export function render(component, options) {
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
-
 	payload.out += BLOCK_OPEN;
 
 	if (options.context) {

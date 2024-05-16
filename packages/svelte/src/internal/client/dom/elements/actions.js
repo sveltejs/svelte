@@ -1,5 +1,7 @@
 import { effect, render_effect } from '../../reactivity/effects.js';
 import { deep_read_state, untrack } from '../../runtime.js';
+import { hydrating } from '../hydration.js';
+import { hydrate_event_replay } from './events.js';
 
 /**
  * @template P
@@ -29,6 +31,9 @@ export function action(dom, action, get_value) {
 			});
 
 			inited = true;
+			if (hydrating) {
+				hydrate_event_replay(/** @type {HTMLElement} */ (dom));
+			}
 		}
 
 		if (payload?.destroy) {
