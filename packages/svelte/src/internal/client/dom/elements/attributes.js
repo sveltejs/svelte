@@ -153,7 +153,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 					const was_hydrating = hydrating;
 					const handle_event = () => {
 						element.addEventListener(event_name, value, opts);
-						if (was_hyrating) {
+						if (was_hydrating) {
 							hydrate_event_replay(/** @type {HTMLElement} */ (element));
 						}
 					};
