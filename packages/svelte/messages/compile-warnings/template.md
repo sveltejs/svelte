@@ -32,11 +32,11 @@
 
 ## event_directive_deprecated
 
-> Using `on:%name%` to listen to the %name% event is deprecated. Use the event attribute `on%name%` instead.
+> Using `on:%name%` to listen to the %name% event is deprecated. Use the event attribute `on%name%` instead
 
 ## slot_element_deprecated
 
-> Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead.
+> Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead
 
 ## svelte_element_invalid_this
 

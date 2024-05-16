@@ -174,7 +174,7 @@
 
 ## mixed_event_handler_syntaxes
 
-> Mixing old (on:%name%) and new syntaxes for event handling is not allowed. Use only the on%name% syntax.
+> Mixing old (on:%name%) and new syntaxes for event handling is not allowed. Use only the on%name% syntax
 
 ## node_invalid_placement
 
@@ -230,7 +230,7 @@
 
 ## slot_snippet_conflict
 
-> Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.
+> Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely
 
 ## snippet_conflict
 

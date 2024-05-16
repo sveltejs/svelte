@@ -149,6 +149,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 
 			if (value != null) {
 				if (!delegated) {
+					// we use `addEventListener` here because these events are not delegated
 					if (!prev) {
 						events.push([key, value, () => element.addEventListener(event_name, value, opts)]);
 					} else {

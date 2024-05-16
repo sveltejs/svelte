@@ -27,7 +27,7 @@ import { DOMBooleanAttributes, HYDRATION_END, HYDRATION_START } from '../../../.
 import { escape_html } from '../../../../escaping.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
 import { BLOCK_CLOSE, BLOCK_CLOSE_ELSE } from '../../../../internal/server/hydration.js';
-import { locator } from '../../../state.js';
+import { filename, locator } from '../../../state.js';
 
 export const block_open = t_string(`<!--${HYDRATION_START}-->`);
 export const block_close = t_string(`<!--${HYDRATION_END}-->`);
@@ -2412,14 +2412,7 @@ export function server_component(analysis, options) {
 		body.push(b.export_default(component_function));
 	}
 
-	if (options.dev && options.filename) {
-		let filename = options.filename;
-		if (/(\/|\w:)/.test(options.filename)) {
-			// filename is absolute — truncate it
-			const parts = filename.split(/[/\\]/);
-			filename = parts.length > 3 ? ['...', ...parts.slice(-3)].join('/') : filename;
-		}
-
+	if (options.dev && filename) {
 		// add `App.filename = 'App.svelte'` so that we can print useful messages later
 		body.unshift(
 			b.stmt(

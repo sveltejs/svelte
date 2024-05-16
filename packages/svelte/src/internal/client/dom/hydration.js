@@ -1,5 +1,6 @@
-import { HYDRATION_END, HYDRATION_START } from '../../../constants.js';
-import * as e from '../errors.js';
+import { DEV } from 'esm-env';
+import { HYDRATION_END, HYDRATION_START, HYDRATION_ERROR } from '../../../constants.js';
+import * as w from '../warnings.js';
 
 /**
  * Use this variable to guard everything related to hydration code so it can be treeshaken out
@@ -67,5 +68,16 @@ export function hydrate_anchor(node) {
 		nodes.push(current);
 	}
 
-	e.hydration_missing_marker_close();
+	let location;
+
+	if (DEV) {
+		// @ts-expect-error
+		const loc = node.parentNode?.__svelte_meta?.loc;
+		if (loc) {
+			location = `${loc.file}:${loc.line}:${loc.column}`;
+		}
+	}
+
+	w.hydration_mismatch(location);
+	throw HYDRATION_ERROR;
 }

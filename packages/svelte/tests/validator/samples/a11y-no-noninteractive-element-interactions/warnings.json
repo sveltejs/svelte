@@ -5,7 +5,7 @@
 			"column": 51,
 			"line": 10
 		},
-		"message": "Non-interactive element `<div>` should not be assigned mouse or keyboard event listeners.",
+		"message": "Non-interactive element `<div>` should not be assigned mouse or keyboard event listeners",
 		"start": {
 			"column": 0,
 			"line": 10
@@ -17,7 +17,7 @@
 			"column": 58,
 			"line": 11
 		},
-		"message": "Non-interactive element `<h1>` should not be assigned mouse or keyboard event listeners.",
+		"message": "Non-interactive element `<h1>` should not be assigned mouse or keyboard event listeners",
 		"start": {
 			"column": 0,
 			"line": 11
@@ -29,7 +29,7 @@
 			"column": 50,
 			"line": 12
 		},
-		"message": "Non-interactive element `<h1>` should not be assigned mouse or keyboard event listeners.",
+		"message": "Non-interactive element `<h1>` should not be assigned mouse or keyboard event listeners",
 		"start": {
 			"column": 0,
 			"line": 12
@@ -41,7 +41,7 @@
 			"column": 30,
 			"line": 13
 		},
-		"message": "Non-interactive element `<p>` should not be assigned mouse or keyboard event listeners.",
+		"message": "Non-interactive element `<p>` should not be assigned mouse or keyboard event listeners",
 		"start": {
 			"column": 0,
 			"line": 13
@@ -53,7 +53,7 @@
 			"column": 50,
 			"line": 14
 		},
-		"message": "Non-interactive element `<div>` should not be assigned mouse or keyboard event listeners.",
+		"message": "Non-interactive element `<div>` should not be assigned mouse or keyboard event listeners",
 		"start": {
 			"column": 0,
 			"line": 14
