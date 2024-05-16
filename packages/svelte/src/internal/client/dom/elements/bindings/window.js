@@ -1,4 +1,4 @@
-import { render_effect } from '../../../reactivity/effects.js';
+import { effect, render_effect } from '../../../reactivity/effects.js';
 import { listen } from './shared.js';
 
 /**
@@ -22,7 +22,6 @@ export function bind_window_scroll(type, get_value, update) {
 		passive: true
 	});
 
-	var latest_value = 0;
 	var scrolling = false;
 
 	/** @type {ReturnType<typeof setTimeout>} */
@@ -30,10 +29,14 @@ export function bind_window_scroll(type, get_value, update) {
 	var clear = () => {
 		scrolling = false;
 	};
+	var first = true;
 
 	render_effect(() => {
-		latest_value = get_value();
-		if (!scrolling && latest_value != null) {
+		var latest_value = get_value();
+		// Don't scroll to the initial value for accessibility reasons
+		if (first) {
+			first = false;
+		} else if (!scrolling && latest_value != null) {
 			scrolling = true;
 			clearTimeout(timeout);
 			if (is_scrolling_x) {
@@ -42,6 +45,15 @@ export function bind_window_scroll(type, get_value, update) {
 				scrollTo(window.scrollX, latest_value);
 			}
 			timeout = setTimeout(clear, 100);
+		}
+	});
+
+	// Browsers fire the scroll event only if the scroll position is not 0.
+	// This effect is (almost) guaranteed to run after the scroll event would've fired.
+	effect(() => {
+		var value = window[is_scrolling_x ? 'scrollX' : 'scrollY'];
+		if (value === 0) {
+			update(value);
 		}
 	});
 
