@@ -1,6 +1,12 @@
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
-import { UNINITIALIZED, DOMBooleanAttributes, RawTextElements } from '../../constants.js';
+import {
+	UNINITIALIZED,
+	DOMBooleanAttributes,
+	RawTextElements,
+	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
+	ELEMENT_IS_NAMESPACED
+} from '../../constants.js';
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
@@ -178,66 +184,49 @@ export function css_props(payload, is_html, props, component) {
 }
 
 /**
- * @param {Record<string, unknown>[]} attrs
- * @param {boolean} lowercase_attributes
- * @param {boolean} is_html
- * @param {string} class_hash
- * @param {{ styles: Record<string, string> | null; classes: string }} [additional]
+ * @param {Record<string, unknown>} attrs
+ * @param {Record<string, string>} [classes]
+ * @param {Record<string, string>} [styles]
+ * @param {number} [flags]
  * @returns {string}
  */
-export function spread_attributes(attrs, lowercase_attributes, is_html, class_hash, additional) {
-	/** @type {Record<string, unknown>} */
-	const merged_attrs = {};
-	let key;
+export function spread_attributes(attrs, classes, styles, flags = 0) {
+	if (styles) {
+		attrs.style = attrs.style
+			? style_object_to_string(merge_styles(/** @type {string} */ (attrs.style), styles))
+			: style_object_to_string(styles);
+	}
 
-	for (let i = 0; i < attrs.length; i++) {
-		const obj = attrs[i];
-		for (key in obj) {
-			// omit functions and internal svelte properties
-			const prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
-			if (typeof obj[key] !== 'function' && prefix !== '$$') {
-				merged_attrs[key] = obj[key];
+	if (classes) {
+		const classlist = attrs.class ? [attrs.class] : [];
+
+		for (const key in classes) {
+			if (classes[key]) {
+				classlist.push(key);
 			}
 		}
-	}
 
-	const styles = additional?.styles;
-	if (styles) {
-		if ('style' in merged_attrs) {
-			merged_attrs.style = style_object_to_string(
-				merge_styles(/** @type {string} */ (merged_attrs.style), styles)
-			);
-		} else {
-			merged_attrs.style = style_object_to_string(styles);
-		}
-	}
-
-	if (class_hash) {
-		if ('class' in merged_attrs) {
-			merged_attrs.class += ` ${class_hash}`;
-		} else {
-			merged_attrs.class = class_hash;
-		}
-	}
-	const classes = additional?.classes;
-	if (classes) {
-		if ('class' in merged_attrs) {
-			merged_attrs.class += ` ${classes}`;
-		} else {
-			merged_attrs.class = classes;
-		}
+		attrs.class = classlist.join(' ');
 	}
 
 	let attr_str = '';
 	let name;
 
-	for (name in merged_attrs) {
+	const is_html = (flags & ELEMENT_IS_NAMESPACED) === 0;
+	const lowercase = (flags & ELEMENT_PRESERVE_ATTRIBUTE_CASE) === 0;
+
+	for (name in attrs) {
+		// omit functions, internal svelte properties and invalid attribute names
+		if (typeof attrs[name] === 'function') continue;
+		if (name[0] === '$' && name[1] === '$') continue; // faster than name.startsWith('$$')
 		if (INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
-		if (lowercase_attributes) {
+
+		if (lowercase) {
 			name = name.toLowerCase();
 		}
+
 		const is_boolean = is_html && DOMBooleanAttributes.includes(name);
-		attr_str += attr(name, merged_attrs[name], is_boolean);
+		attr_str += attr(name, attrs[name], is_boolean);
 	}
 
 	return attr_str;

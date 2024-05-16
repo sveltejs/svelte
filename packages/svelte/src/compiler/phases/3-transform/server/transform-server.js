@@ -24,7 +24,13 @@ import {
 import { create_attribute, is_custom_element_node, is_element_node } from '../../nodes.js';
 import { binding_properties } from '../../bindings.js';
 import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patterns.js';
-import { DOMBooleanAttributes, HYDRATION_END, HYDRATION_START } from '../../../../constants.js';
+import {
+	DOMBooleanAttributes,
+	ELEMENT_IS_NAMESPACED,
+	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
+	HYDRATION_END,
+	HYDRATION_START
+} from '../../../../constants.js';
 import { escape_html } from '../../../../escaping.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
 import { BLOCK_CLOSE, BLOCK_CLOSE_ELSE } from '../../../../internal/server/hydration.js';
@@ -889,42 +895,29 @@ function serialize_element_spread_attributes(
 	class_directives,
 	context
 ) {
-	/** @type {import('estree').Expression[]} */
-	const values = [];
+	let classes;
+	let styles;
+	let flags = 0;
 
-	for (const attribute of attributes) {
-		if (attribute.type === 'Attribute') {
-			const name = get_attribute_name(element, attribute, context);
-			const value = serialize_attribute_value(
-				attribute.value,
-				context,
-				WhitespaceInsensitiveAttributes.includes(name)
-			);
-			values.push(b.object([b.prop('init', b.literal(name), value)]));
-		} else {
-			values.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
+	if (class_directives.length > 0 || context.state.analysis.css.hash) {
+		const properties = class_directives.map((directive) =>
+			b.init(
+				directive.name,
+				directive.expression.type === 'Identifier' && directive.expression.name === directive.name
+					? b.id(directive.name)
+					: /** @type {import('estree').Expression} */ (context.visit(directive.expression))
+			)
+		);
+
+		if (context.state.analysis.css.hash) {
+			properties.unshift(b.init(context.state.analysis.css.hash, b.literal(true)));
 		}
+
+		classes = b.object(properties);
 	}
 
-	const lowercase_attributes =
-		element.metadata.svg ||
-		element.metadata.mathml ||
-		(element.type === 'RegularElement' && is_custom_element_node(element))
-			? b.false
-			: b.true;
-
-	const is_html = element.metadata.svg || element.metadata.mathml ? b.false : b.true;
-
-	/** @type {import('estree').Expression[]} */
-	const args = [
-		b.array(values),
-		lowercase_attributes,
-		is_html,
-		b.literal(context.state.analysis.css.hash)
-	];
-
-	if (style_directives.length > 0 || class_directives.length > 0) {
-		const styles = style_directives.map((directive) =>
+	if (style_directives.length > 0) {
+		const properties = style_directives.map((directive) =>
 			b.init(
 				directive.name,
 				directive.value === true
@@ -932,25 +925,33 @@ function serialize_element_spread_attributes(
 					: serialize_attribute_value(directive.value, context, true)
 			)
 		);
-		const expressions = class_directives.map((directive) =>
-			b.conditional(directive.expression, b.literal(directive.name), b.literal(''))
-		);
-		const classes = expressions.length
-			? b.call(
-					b.member(
-						b.call(b.member(b.array(expressions), b.id('filter')), b.id('Boolean')),
-						b.id('join')
-					),
-					b.literal(' ')
-				)
-			: b.literal('');
-		args.push(
-			b.object([
-				b.init('styles', styles.length === 0 ? b.literal(null) : b.object(styles)),
-				b.init('classes', classes)
-			])
-		);
+
+		styles = b.object(properties);
 	}
+
+	if (element.metadata.svg || element.metadata.mathml) {
+		flags |= ELEMENT_IS_NAMESPACED | ELEMENT_PRESERVE_ATTRIBUTE_CASE;
+	} else if (is_custom_element_node(element)) {
+		flags |= ELEMENT_PRESERVE_ATTRIBUTE_CASE;
+	}
+
+	const object = b.object(
+		attributes.map((attribute) => {
+			if (attribute.type === 'Attribute') {
+				const name = get_attribute_name(element, attribute, context);
+				const value = serialize_attribute_value(
+					attribute.value,
+					context,
+					WhitespaceInsensitiveAttributes.includes(name)
+				);
+				return b.prop('init', b.key(name), value);
+			}
+
+			return b.spread(/** @type {import('estree').Expression} */ (context.visit(attribute)));
+		})
+	);
+
+	const args = [object, classes, styles, flags ? b.literal(flags) : undefined];
 	context.state.template.push(t_expression(b.call('$.spread_attributes', ...args)));
 }
 
