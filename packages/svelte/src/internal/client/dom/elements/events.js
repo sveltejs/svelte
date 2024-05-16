@@ -8,23 +8,25 @@ import { hydrating } from '../hydration.js';
  * This function detects those cases, removes the attributes and replays the events.
  * @param {HTMLElement} dom
  */
-export function hydrate_event_replay(dom) {
-	if (dom.onload) {
-		dom.removeAttribute('onload');
-	}
-	if (dom.onerror) {
-		dom.removeAttribute('onerror');
-	}
-	// @ts-expect-error
-	const event = dom.__e;
-	if (event !== undefined) {
+export function replay_events(dom) {
+	if (hydrating) {
+		if (dom.onload) {
+			dom.removeAttribute('onload');
+		}
+		if (dom.onerror) {
+			dom.removeAttribute('onerror');
+		}
 		// @ts-expect-error
-		dom.__e = undefined;
-		queueMicrotask(() => {
-			if (dom.isConnected) {
-				dom.dispatchEvent(event);
-			}
-		});
+		const event = dom.__e;
+		if (event !== undefined) {
+			// @ts-expect-error
+			dom.__e = undefined;
+			queueMicrotask(() => {
+				if (dom.isConnected) {
+					dom.dispatchEvent(event);
+				}
+			});
+		}
 	}
 }
 
@@ -53,10 +55,6 @@ export function event(event_name, dom, handler, capture, passive) {
 	}
 
 	dom.addEventListener(event_name, target_handler, options);
-
-	if (hydrating) {
-		hydrate_event_replay(/** @type {HTMLElement} */ (dom));
-	}
 
 	// @ts-ignore
 	if (dom === document.body || dom === window || dom === document) {
