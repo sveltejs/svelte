@@ -6,7 +6,7 @@ import {
 	empty,
 	init_operations
 } from './dom/operations.js';
-import { HYDRATION_START, PassiveDelegatedEvents } from '../../constants.js';
+import { HYDRATION_ERROR, HYDRATION_START, PassiveDelegatedEvents } from '../../constants.js';
 import { flush_sync, push, pop, current_component_context } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
 import {
@@ -153,7 +153,7 @@ export function hydrate(component, options) {
 			}
 
 			if (!node) {
-				e.hydration_missing_marker_open();
+				throw HYDRATION_ERROR;
 			}
 
 			const anchor = hydrate_anchor(node);
@@ -167,12 +167,10 @@ export function hydrate(component, options) {
 			return instance;
 		}, false);
 	} catch (error) {
-		if (
-			!hydrated &&
-			options.recover !== false &&
-			/** @type {Error} */ (error).message.includes('hydration_missing_marker_close')
-		) {
-			w.hydration_mismatch();
+		if (error === HYDRATION_ERROR) {
+			if (options.recover === false) {
+				e.hydration_failed();
+			}
 
 			// If an error occured above, the operations might not yet have been initialised.
 			init_operations();
@@ -180,9 +178,9 @@ export function hydrate(component, options) {
 
 			set_hydrating(false);
 			return mount(component, options);
-		} else {
-			throw error;
 		}
+
+		throw error;
 	} finally {
 		set_hydrating(!!previous_hydrate_nodes);
 		set_hydrate_nodes(previous_hydrate_nodes);

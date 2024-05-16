@@ -21,11 +21,12 @@ export function hydration_attribute_changed(attribute, html, value) {
 }
 
 /**
- * Hydration failed because the initial UI does not match what was rendered on the server
+ * Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near %location%
+ * @param {string | undefined | null} [location]
  */
-export function hydration_mismatch() {
+export function hydration_mismatch(location) {
 	if (DEV) {
-		console.warn(`%c[svelte] ${"hydration_mismatch"}\n%c${"Hydration failed because the initial UI does not match what was rendered on the server"}`, bold, normal);
+		console.warn(`%c[svelte] ${"hydration_mismatch"}\n%c${location ? `Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near ${location}` : "Hydration failed because the initial UI does not match what was rendered on the server"}`, bold, normal);
 	} else {
 		// TODO print a link to the documentation
 		console.warn("hydration_mismatch");
@@ -66,7 +67,7 @@ export function ownership_invalid_binding(parent, child, owner) {
  */
 export function ownership_invalid_mutation(component, owner) {
 	if (DEV) {
-		console.warn(`%c[svelte] ${"ownership_invalid_mutation"}\n%c${`${component} mutated a value owned by ${owner}. This is strongly discouraged. Consider passing values to child components with \`bind:\`, or use a callback instead`}`, bold, normal);
+		console.warn(`%c[svelte] ${"ownership_invalid_mutation"}\n%c${component ? `${component} mutated a value owned by ${owner}. This is strongly discouraged. Consider passing values to child components with \`bind:\`, or use a callback instead` : "Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead"}`, bold, normal);
 	} else {
 		// TODO print a link to the documentation
 		console.warn("ownership_invalid_mutation");
