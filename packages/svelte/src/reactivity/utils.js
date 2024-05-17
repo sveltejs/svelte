@@ -8,7 +8,7 @@ export const NOTIFY_WITH_ALL_PARAMS = Symbol();
  * @template TEntityInstance
  * @template {(keyof TEntityInstance)[]} TWriteProperties
  * @template {(keyof TEntityInstance)[]} TReadProperties
- * @typedef {Partial<Record<TWriteProperties[number], (notify_read_methods: (methods: TReadProperties, ...params: unknown[])=>void ,value: TEntityInstance, property: TWriteProperties[number], ...params: unknown[])=>boolean>>}  Interceptors - return false if you want to prevent reactivity for this call, DO NOT USE INTERCEPTORS FOR READ METHODS
+ * @typedef {Partial<Record<TWriteProperties[number], (notify_read_methods: (methods: TReadProperties, ...params: unknown[])=>void ,value: TEntityInstance, property: TWriteProperties[number], ...params: unknown[])=>boolean>>}  Interceptors - return false if you want to prevent reactivity for this call, DO NOT USE INTERCEPTORS FOR READ PROPERTIES
  */
 
 /**
@@ -16,18 +16,18 @@ export const NOTIFY_WITH_ALL_PARAMS = Symbol();
  * @template {(keyof TEntityInstance)[]} TWriteProperties
  * @template {(keyof TEntityInstance)[]} TReadProperties
  * @typedef {object} Options
- * @prop {TWriteProperties} write_properties - an array of property names on `TEntityInstance` that when calling a property on `TEntityInstance`, if the property name exists in this array, then mentioned property causes reactivity.
- * @prop {TReadProperties} read_properties - an array of property names on `TEntityInstance` that `mutation_properties` affects
- * @prop {Interceptors<TEntityInstance, TWriteProperties, TReadProperties>} [interceptors={}] - if the property names in `mutation_properties` shouldn't cause reactivity, such calling `set.add(2)` twice or accessing a property shouldn't be reactive based on some conditions, you can prevent the reactivity by returning `false` from these interceptors
+ * @prop {TWriteProperties} write_properties - an array of property names on `TEntityInstance`, could cause reactivity.
+ * @prop {TReadProperties} read_properties - an array of property names on `TEntityInstance` that `write_properties` affect. typically used for methods. for instance `size` doesn't need to be here because it takes no parameters and is reactive based on the `version` signal.
+ * @prop {Interceptors<TEntityInstance, TWriteProperties, TReadProperties>} [interceptors={}] - if the property names in `write_properties` shouldn't cause reactivity, such as calling `set.add(2)` twice or accessing a property shouldn't be reactive based on some conditions, you can prevent the reactivity by returning `false` from these interceptors
  */
 
 /** @typedef {Map<string | symbol | number, Map<unknown, import("#client").Source<boolean>>>} ReadMethodsSignals */
 
 /**
- * @template {new (...args: any) => any} TEntity - the entity we want to make reactive
+ * @template {new (...args: any) => any} TEntity
  * @template {(keyof InstanceType<TEntity>)[]} TWriteProperties
  * @template {(keyof InstanceType<TEntity>)[]} TReadProperties
- * @param {TEntity} Entity - the class/function we want to make reactive
+ * @param {TEntity} Entity - the entity we want to make reactive
  * @param {Options<InstanceType<TEntity>, TWriteProperties, TReadProperties>} options - configurations for how reactivity works for this entity
  * @returns {TEntity}
  */
@@ -40,11 +40,9 @@ export const make_reactive = (Entity, options) => {
 		 */
 		constructor(...params) {
 			/**
-			 * each read method can be tracked like has, size, get and etc. these props might depend on a parameter. they have to reactive based on the
-			 * parameter they depend on, if it requires a change. for instance if you call `set.has(2)` then call `set.add(5)` the former shouldn't get notified.
-			 * so what is do we need to store if this needs to be generic? function name + parameter. unfortunately for each parameter we need a new signal, why?
-			 * because arrays don't equal themselves even if they have the same value (referential equality).
-			 * fortunately current builtins that we try to make reactive only take 1 parameter for their read methods so this is fine.
+			 * each read method can be tracked like has, get, has and etc. these props might depend on a parameter. they have to reactive based on the
+			 * parameter they depend on. for instance if you have `set.has(2)` and then call `set.add(5)` the former shouldn't get notified.
+			 * based on that we need to store the function_name + parameter(s).
 			 * @type {Map<string | symbol, Map<unknown[], import("#client").Source<boolean>>>}
 			 **/
 			const read_methods_signals = new Map();
@@ -58,7 +56,7 @@ export const make_reactive = (Entity, options) => {
 					let result;
 
 					if (typeof orig_property === 'function') {
-						// Bind functions directly to the `TEntity`
+						// bind functions directly to the `TEntity`
 						result = ((/** @type {unknown[]} */ ...params) => {
 							notify_if_required(
 								version_signal,
@@ -71,7 +69,7 @@ export const make_reactive = (Entity, options) => {
 							return orig_property.bind(target)(...params);
 						}).bind(target);
 					} else {
-						// Properly handle getters
+						// handle getters/props
 						notify_if_required(version_signal, read_methods_signals, property, target, options);
 						result = Reflect.get(target, property, target);
 					}
@@ -127,7 +125,7 @@ function notify_if_required(
 	} else {
 		if (options.read_properties.includes(property)) {
 			(params.length == 0 ? [null] : params).forEach((param) => {
-				// read like methods should create the signal so what on any change to them they get notified
+				// read like methods should create the signal (if not already created) so they can be reactive when notified based on their param
 				const sig = get_signal_for_function(read_methods_signals, property, param, true);
 				get(sig);
 			});
@@ -146,7 +144,7 @@ function notify_if_required(
  * @param {ReadMethodsSignals} read_methods_signals
  * @param {Options<InstanceType<TEntity>, TWriteProperties, TReadProperties>} options
  * @param {TReadProperties} method_names
- * @param {unknown[]} params - if you want to notify for all parameters pass NOTIFY_WITH_ALL_PARAMS constant, for instance some methods like `clear` should notify all `something.get(x)` methods; on these cases set this flag to true
+ * @param {unknown[]} params - if you want to notify for all parameters pass the `NOTIFY_WITH_ALL_PARAMS` constant, for instance some methods like `clear` should notify all `something.get(x)` methods; on these cases set this flag to true
  */
 function notify_read_methods(
 	options,
@@ -175,7 +173,7 @@ function notify_read_methods(
 }
 
 /**
- * gets the signal for this function based on params. If the signal doesn't exist and create_signal_if_doesnt_exist is not set to true, it creates a new one and returns that
+ * gets the signal for this function based on params. If the signal doesn't exist and `create_signal_if_doesnt_exist` is not set to true, it creates a new one and returns that
  * @template {boolean} [TCreateSignalIfDoesntExist=false]
  * @param {ReadMethodsSignals} signals_map
  * @param {string | symbol | number} function_name
@@ -187,7 +185,7 @@ const get_signal_for_function = (
 	signals_map,
 	function_name,
 	param,
-	// @ts-ignore: this should be supported in jsdoc based on https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html#template but doesn't?
+	// @ts-ignore: this should be supported in jsdoc based on https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html#template but isn't?
 	create_signal_if_doesnt_exist = false
 ) => {
 	/**
