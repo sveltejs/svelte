@@ -12,3 +12,9 @@
 
 <!-- svelte-ignore a11y-misplaced-scope -->
 <div scope></div>
+
+<!-- svelte-ignore a11y-missing-attribute a11y-misplaced-scope -->
+<div>
+	<img src="this-is-fine.jpg">
+	<div scope></div>
+</div>
