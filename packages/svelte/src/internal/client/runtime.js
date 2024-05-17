@@ -1,5 +1,11 @@
 import { DEV } from 'esm-env';
-import { get_descriptors, get_prototype_of, is_frozen, object_freeze } from './utils.js';
+import {
+	get_descriptor,
+	get_descriptors,
+	get_prototype_of,
+	is_frozen,
+	object_freeze
+} from './utils.js';
 import { snapshot } from './proxy.js';
 import { destroy_effect, effect, execute_effect_teardown } from './reactivity/effects.js';
 import {
@@ -255,7 +261,13 @@ export function check_dirtiness(reaction) {
  */
 function handle_error(error, effect, component_context) {
 	// Given we don't yet have error boundaries, we will just always throw.
-	if (!DEV || handled_errors.has(error) || component_context === null) {
+	if (
+		!DEV ||
+		handled_errors.has(error) ||
+		component_context === null ||
+		// If we're in a worker, errors aren't writable
+		!get_descriptor(error, 'message')?.writable
+	) {
 		throw error;
 	}
 
