@@ -1,0 +1,14 @@
+[
+	{
+		"code": "bind_invalid_name",
+		"message": "`bind:clientWidth` is not a valid binding. Possible bindings for <svelte:window> are focused, clientWidth, clientHeight, offsetWidth, offsetHeight, contentRect, contentBoxSize, borderBoxSize, devicePixelContentBoxSize, this, innerText, innerHTML, textContent",
+		"start": {
+			"line": 5,
+			"column": 15
+		},
+		"end": {
+			"line": 5,
+			"column": 37
+		}
+	}
+]
