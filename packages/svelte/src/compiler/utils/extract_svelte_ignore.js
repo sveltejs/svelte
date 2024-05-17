@@ -31,16 +31,16 @@ export function extract_svelte_ignore(offset, text, runes) {
 	/** @type {string[]} */
 	const ignores = [];
 
-	// Warnings have to be separated by commas, everything after is interpreted as prose
-	for (const match of text.slice(length).matchAll(/([\w$-]+)(,)?/gm)) {
-		const code = match[1];
+	if (runes) {
+		// Warnings have to be separated by commas, everything after is interpreted as prose
+		for (const match of text.slice(length).matchAll(/([\w$-]+)(,)?/gm)) {
+			const code = match[1];
 
-		ignores.push(code);
+			if (w.codes.includes(code)) {
+				ignores.push(code);
+			} else {
+				const replacement = replacements[code] ?? code.replace(/-/g, '_');
 
-		if (!w.codes.includes(code)) {
-			const replacement = replacements[code] ?? code.replace(/-/g, '_');
-
-			if (runes) {
 				// The type cast is for some reason necessary to pass the type check in CI
 				const start = offset + /** @type {number} */ (match.index);
 				const end = start + code.length;
@@ -51,13 +51,26 @@ export function extract_svelte_ignore(offset, text, runes) {
 					const suggestion = fuzzymatch(code, w.codes);
 					w.unknown_code({ start, end }, code, suggestion);
 				}
-			} else if (w.codes.includes(replacement)) {
-				ignores.push(replacement);
+			}
+
+			if (!match[2]) {
+				break;
 			}
 		}
+	} else {
+		// Non-runes mode: lax parsing, backwards compat with old codes
+		for (const match of text.slice(length).matchAll(/[\w$-]+/gm)) {
+			const code = match[0];
 
-		if (!match[2]) {
-			break;
+			ignores.push(code);
+
+			if (!w.codes.includes(code)) {
+				const replacement = replacements[code] ?? code.replace(/-/g, '_');
+
+				if (w.codes.includes(replacement)) {
+					ignores.push(replacement);
+				}
+			}
 		}
 	}
 
@@ -76,8 +89,12 @@ export function migrate_svelte_ignore(text) {
 	const length = match[0].length;
 	return (
 		text.substring(0, length) +
-		text
-			.substring(length)
-			.replace(/\w+-\w+(-\w+)*/g, (code) => replacements[code] ?? code.replace(/-/g, '_'))
+		text.substring(length).replace(/\w+-\w+(-\w+)*/g, (code, _, idx) => {
+			let replacement = replacements[code] ?? code.replace(/-/g, '_');
+			if (/\w+-\w+/.test(text.substring(length + idx + code.length))) {
+				replacement += ',';
+			}
+			return replacement;
+		})
 	);
 }

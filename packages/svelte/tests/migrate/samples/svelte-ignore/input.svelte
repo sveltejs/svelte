@@ -7,3 +7,6 @@
 
 <!-- svelte-ignore a11y-something-something -->
 <div></div>
+
+<!-- svelte-ignore a11y-something-something a11y-something-something2 -->
+<div></div>
