@@ -180,9 +180,15 @@ export const binding_properties = {
 	this: {
 		omit_in_ssr: true
 	},
-	innerText: {},
-	innerHTML: {},
-	textContent: {},
+	innerText: {
+		invalid_elements: ['svelte:window', 'svelte:document']
+	},
+	innerHTML: {
+		invalid_elements: ['svelte:window', 'svelte:document']
+	},
+	textContent: {
+		invalid_elements: ['svelte:window', 'svelte:document']
+	},
 	open: {
 		event: 'toggle',
 		type: 'set',

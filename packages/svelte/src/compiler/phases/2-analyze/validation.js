@@ -397,9 +397,9 @@ const validation = {
 					const valid_bindings = Object.entries(binding_properties)
 						.filter(([_, binding_property]) => {
 							return (
-								binding_property.valid_elements?.includes(node.name) ||
+								binding_property.valid_elements?.includes(parent.name) ||
 								(!binding_property.valid_elements &&
-									!binding_property.invalid_elements?.includes(node.name))
+									!binding_property.invalid_elements?.includes(parent.name))
 							);
 						})
 						.map(([property_name]) => property_name);
