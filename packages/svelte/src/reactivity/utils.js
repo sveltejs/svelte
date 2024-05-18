@@ -58,7 +58,7 @@ export const make_reactive = (Entity, options) => {
 					if (typeof orig_property === 'function') {
 						// bind functions directly to the `TEntity`
 						result = ((/** @type {unknown[]} */ ...params) => {
-							notify_if_required(
+							const notifiers = create_notifiers(
 								version_signal,
 								read_methods_signals,
 								property,
@@ -66,12 +66,21 @@ export const make_reactive = (Entity, options) => {
 								options,
 								...params
 							);
-							return orig_property.bind(target)(...params);
+							const result = orig_property.bind(target)(...params);
+							notifiers.forEach((notifier) => notifier());
+							return result;
 						}).bind(target);
 					} else {
 						// handle getters/props
-						notify_if_required(version_signal, read_methods_signals, property, target, options);
+						const notifiers = create_notifiers(
+							version_signal,
+							read_methods_signals,
+							property,
+							target,
+							options
+						);
 						result = Reflect.get(target, property, target);
+						notifiers.forEach((notifier) => notifier());
 					}
 
 					return result;
@@ -82,6 +91,7 @@ export const make_reactive = (Entity, options) => {
 };
 
 /**
+ * creates an array of functions that notify other signals based on the changes, you need to run these functions to invoke reactivity
  * @template {new (...args: any) => any} TEntity
  * @template {(keyof TEntityInstance)[]} TWriteProperties
  * @template {(keyof TEntityInstance)[]} TReadProperties
@@ -93,8 +103,9 @@ export const make_reactive = (Entity, options) => {
  * @param {TEntityInstance} entity_instance
  * @param {Options<InstanceType<TEntity>, TWriteProperties, TReadProperties>} options
  * @param {unknown[]} params
+ * @returns {Function[]}
  */
-function notify_if_required(
+function create_notifiers(
 	version_signal,
 	read_methods_signals,
 	property,
@@ -102,37 +113,42 @@ function notify_if_required(
 	options,
 	...params
 ) {
+	/**
+	 * @type {Function[]}
+	 */
+	const notifiers = [];
 	if (
 		options.interceptors?.[property]?.(
 			(methods, ...params) => {
-				return notify_read_methods(
-					options,
-					version_signal,
-					read_methods_signals,
-					methods,
-					...params
-				);
+				notifiers.push(() => {
+					notify_read_methods(options, version_signal, read_methods_signals, methods, ...params);
+				});
 			},
 			entity_instance,
 			property,
 			...params
 		) === false
 	) {
-		return;
+		return notifiers;
 	}
-	if (options.write_properties.some((v) => v === property)) {
-		increment_signal(version_signal);
-	} else {
-		if (options.read_properties.includes(property)) {
-			(params.length == 0 ? [null] : params).forEach((param) => {
-				// read like methods should create the signal (if not already created) so they can be reactive when notified based on their param
-				const sig = get_signal_for_function(read_methods_signals, property, param, true);
-				get(sig);
-			});
+
+	notifiers.push(() => {
+		if (options.write_properties.some((v) => v === property)) {
+			increment_signal(version_signal);
 		} else {
-			get(version_signal);
+			if (options.read_properties.includes(property)) {
+				(params.length == 0 ? [null] : params).forEach((param) => {
+					// read like methods should create the signal (if not already created) so they can be reactive when notified based on their param
+					const sig = get_signal_for_function(read_methods_signals, property, param, true);
+					get(sig);
+				});
+			} else {
+				get(version_signal);
+			}
 		}
-	}
+	});
+
+	return notifiers;
 }
 
 /**
