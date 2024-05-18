@@ -118,28 +118,39 @@ function create_notifiers(
 	options,
 	...params
 ) {
+	// the `version_signal_incremented` flag helps to update the `version_signal` only once
+	const options_with_version_flag = { ...options, is_version_signal_incremented: false };
+
 	/**
 	 * @type {Function[]}
 	 */
 	const notifiers = [];
-	if (
+
+	const is_property_reactive =
 		options.interceptors?.[property]?.(
 			(methods, ...params) => {
 				notifiers.push(() => {
-					notify_read_methods(options, version_signal, read_methods_signals, methods, ...params);
+					notify_read_methods(
+						options_with_version_flag,
+						version_signal,
+						read_methods_signals,
+						methods,
+						...params
+					);
 				});
 			},
 			entity_instance,
 			property,
 			...params
-		) === false
-	) {
+		) === true;
+
+	if (!is_property_reactive) {
 		return notifiers;
 	}
 
 	notifiers.push(() => {
 		if (options.write_properties.some((v) => v === property)) {
-			increment_signal(version_signal);
+			increment_signal(options_with_version_flag, version_signal);
 		} else {
 			if (options.read_properties.includes(property)) {
 				(params.length == 0 ? [null] : params).forEach((param) => {
@@ -163,7 +174,7 @@ function create_notifiers(
  * @template {InstanceType<TEntity>} TEntityInstance
  * @param {import('#client').Source<boolean>} version_signal
  * @param {ReadMethodsSignals} read_methods_signals
- * @param {Options<InstanceType<TEntity>, TWriteProperties, TReadProperties>} options
+ * @param {Options<InstanceType<TEntity>, TWriteProperties, TReadProperties> & {is_version_signal_incremented: boolean}} options
  * @param {TReadProperties} method_names
  * @param {unknown[]} params - if you want to notify for all parameters pass the `NOTIFY_WITH_ALL_PARAMS` constant, for instance some methods like `clear` should notify all `something.get(x)` methods; on these cases set this flag to true
  */
@@ -182,12 +193,12 @@ function notify_read_methods(
 		}
 		if (params.length == 1 && params[0] == NOTIFY_WITH_ALL_PARAMS) {
 			read_methods_signals.get(name)?.forEach((sig) => {
-				increment_signal(version_signal, sig);
+				increment_signal(options, version_signal, sig);
 			});
 		} else {
 			(params.length == 0 ? [null] : params).forEach((param) => {
 				const sig = get_signal_for_function(read_methods_signals, name, param);
-				sig && increment_signal(version_signal, sig);
+				sig && increment_signal(options, version_signal, sig);
 			});
 		}
 	});
@@ -248,10 +259,14 @@ const get_signal_for_function = (
 
 /**
  * toggles the signal value. this change notifies any reactions (not using number explicitly cause its not required, change from true to false or vice versa is enough).
+ * @param {{is_version_signal_incremented: boolean}} options  - this prevents changing the version signal multiple times in a single changeset
  * @param {import("#client").Source<boolean>} version_signal
  * @param {import("#client").Source<boolean>} [read_method_signal]
  */
-const increment_signal = (version_signal, read_method_signal) => {
-	set(version_signal, !version_signal.v);
+const increment_signal = (options, version_signal, read_method_signal) => {
+	if (!options.is_version_signal_incremented) {
+		options.is_version_signal_incremented = true;
+		set(version_signal, !version_signal.v);
+	}
 	read_method_signal && set(read_method_signal, !read_method_signal.v);
 };
