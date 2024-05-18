@@ -142,7 +142,7 @@ function create_notifiers(
 			entity_instance,
 			property,
 			...params
-		) === true;
+		) !== false; // not saying `===true` because not returning anything is considered true for this scenario as well.
 
 	if (!is_property_reactive) {
 		return notifiers;
