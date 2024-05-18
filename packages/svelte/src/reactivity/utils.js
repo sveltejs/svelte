@@ -84,6 +84,11 @@ export const make_reactive = (Entity, options) => {
 					}
 
 					return result;
+				},
+				ownKeys: (target) => {
+					// to make it work with $inspect
+					get(version_signal);
+					return Reflect.ownKeys(target);
 				}
 			});
 		}
