@@ -29,6 +29,12 @@ export function push_template_node(
 	dom,
 	effect = /** @type {import('#client').Effect} */ (current_effect)
 ) {
+	if (hydrating && effect.d1 === null) {
+		effect.d1 = is_array(dom) ? dom[0] : dom;
+		effect.d2 = is_array(dom) ? dom[dom.length - 1] : dom;
+	}
+
+	// TODO remove
 	var current_dom = effect.dom;
 	if (current_dom === null) {
 		effect.dom = dom;
@@ -43,6 +49,7 @@ export function push_template_node(
 			current_dom.push(dom);
 		}
 	}
+
 	return dom;
 }
 
@@ -281,10 +288,47 @@ export function comment() {
  * Assign the created (or in hydration mode, traversed) dom elements to the current block
  * and insert the elements into the dom (in client mode).
  * @param {Text | Comment | Element} anchor
- * @param {import('#client').Dom} dom
+ * @param {DocumentFragment | Element} dom
  */
 export function append(anchor, dom) {
 	if (!hydrating) {
+		const effect = /** @type {import('#client').Effect} */ (current_effect);
+
+		// TODO handle component case, where effect.d1/d2 already exist
+		if (dom.nodeType === 11) {
+			effect.d1 = /** @type {import('#client').TemplateNode} */ (dom.firstChild);
+			effect.d2 = /** @type {import('#client').TemplateNode} */ (dom.lastChild);
+		} else {
+			effect.d1 = effect.d2 = /** @type {Element} */ (dom);
+		}
+
 		anchor.before(/** @type {Node} */ (dom));
+	}
+}
+
+/**
+ *
+ * @param {import('#client').Effect} effect
+ * @param {import('#client').TemplateNode} d1
+ * @param {import('#client').TemplateNode} d2
+ */
+export function replace_bookends(effect, d1, d2) {
+	/** @type {import('#client').Effect | null} */
+	var parent = effect;
+
+	// TODO i'm pretty sure we don't need to actually loop here,
+	// this should only apply to html/snippet tags
+
+	while ((parent = parent.parent)) {
+		if (parent.d1 === null) {
+			continue;
+		}
+
+		if (parent.d1 !== d1 && parent.d2 !== d2) {
+			break;
+		}
+
+		if (parent.d1 === d1) parent.d1 = effect.d1;
+		if (parent.d2 === d2) parent.d2 = effect.d2;
 	}
 }

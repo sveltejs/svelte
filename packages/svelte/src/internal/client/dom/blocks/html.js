@@ -4,27 +4,7 @@ import { current_effect, get } from '../../runtime.js';
 import { is_array } from '../../utils.js';
 import { hydrate_nodes, hydrating } from '../hydration.js';
 import { create_fragment_from_html, remove } from '../reconciler.js';
-import { push_template_node } from '../template.js';
-
-/**
- * @param {import('#client').Effect} effect
- * @param {(Element | Comment | Text)[]} to_remove
- * @returns {void}
- */
-function remove_from_parent_effect(effect, to_remove) {
-	const dom = effect.dom;
-
-	if (is_array(dom)) {
-		for (let i = dom.length - 1; i >= 0; i--) {
-			if (to_remove.includes(dom[i])) {
-				dom.splice(i, 1);
-				break;
-			}
-		}
-	} else if (dom !== null && to_remove.includes(dom)) {
-		effect.dom = null;
-	}
-}
+import { push_template_node, replace_bookends } from '../template.js';
 
 /**
  * @param {Element | Text | Comment} anchor
@@ -34,17 +14,19 @@ function remove_from_parent_effect(effect, to_remove) {
  * @returns {void}
  */
 export function html(anchor, get_value, svg, mathml) {
-	const parent_effect = anchor.parentNode !== current_effect?.dom ? current_effect : null;
+	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
 	let value = derived(get_value);
 
 	render_effect(() => {
 		var dom = html_to_dom(anchor, parent_effect, get(value), svg, mathml);
 
 		if (dom) {
+			var d1 = is_array(dom) ? dom[0] : dom;
+			var d2 = is_array(dom) ? dom[dom.length - 1] : dom;
+
+			replace_bookends(parent_effect, d1, d2);
+
 			return () => {
-				if (parent_effect !== null) {
-					remove_from_parent_effect(parent_effect, is_array(dom) ? dom : [dom]);
-				}
 				remove(dom);
 			};
 		}

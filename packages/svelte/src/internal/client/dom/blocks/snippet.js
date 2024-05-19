@@ -6,6 +6,7 @@ import {
 	dev_current_component_function,
 	set_dev_current_component_function
 } from '../../runtime.js';
+import { replace_bookends } from '../template.js';
 
 /**
  * @template {(node: import('#client').TemplateNode, ...args: any[]) => import('#client').Dom} SnippetFn
@@ -24,13 +25,26 @@ export function snippet(get_snippet, node, ...args) {
 	block(() => {
 		if (snippet === (snippet = get_snippet())) return;
 
+		/** @type {import('#client').TemplateNode | null} */
+		let d1 = null;
+
+		/** @type {import('#client').TemplateNode | null} */
+		let d2 = null;
+
 		if (snippet_effect) {
+			d1 = snippet_effect.d1;
+			d2 = snippet_effect.d2;
+
 			destroy_effect(snippet_effect);
 			snippet_effect = null;
 		}
 
 		if (snippet) {
 			snippet_effect = branch(() => /** @type {SnippetFn} */ (snippet)(node, ...args));
+
+			if (d1 !== null && d2 !== null) {
+				replace_bookends(snippet_effect, d1, d2);
+			}
 		}
 	}, EFFECT_TRANSPARENT);
 }

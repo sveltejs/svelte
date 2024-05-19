@@ -36,7 +36,8 @@ import { set } from './sources.js';
 import { remove } from '../dom/reconciler.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
-import { define_property } from '../utils.js';
+import { define_property, is_array } from '../utils.js';
+import { remove_nodes } from '../dom/operations.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -66,6 +67,8 @@ export function push_effect(effect, parent_effect) {
 	}
 }
 
+let uid = 1;
+
 /**
  * @param {number} type
  * @param {(() => void | (() => void))} fn
@@ -77,6 +80,7 @@ function create_effect(type, fn, sync) {
 
 	/** @type {import('#client').Effect} */
 	var effect = {
+		id: uid++,
 		ctx: current_component_context,
 		deps: null,
 		dom: null,
@@ -317,10 +321,16 @@ export function execute_effect_teardown(effect) {
  */
 export function destroy_effect(effect) {
 	var dom = effect.dom;
+	var d1 = effect.d1;
+	var d2 = effect.d2;
 
-	if (dom !== null) {
-		remove(dom);
+	if (d1 !== null && d2 !== null) {
+		remove_nodes(d1, d2);
 	}
+
+	// if (dom !== null) {
+	// 	remove(dom);
+	// }
 
 	destroy_effect_children(effect);
 	remove_reactions(effect, 0);

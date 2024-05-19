@@ -9,7 +9,6 @@ import {
 	render_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
-import { is_array } from '../../utils.js';
 import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
 import { current_component_context, current_effect } from '../../runtime.js';
@@ -23,18 +22,9 @@ import { DEV } from 'esm-env';
  * @returns {void}
  */
 function swap_block_dom(effect, from, to) {
-	const dom = effect.dom;
-
-	if (is_array(dom)) {
-		for (let i = 0; i < dom.length; i++) {
-			if (dom[i] === from) {
-				dom[i] = to;
-				break;
-			}
-		}
-	} else if (dom === from) {
-		effect.dom = to;
-	}
+	// TODO should this use `replace_bookends`?
+	if (effect.d1 === from) effect.d1 = to;
+	if (effect.d2 === from) effect.d2 = to;
 }
 
 /**
@@ -51,6 +41,7 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 
 	const filename = DEV && location && current_component_context?.function.filename;
 
+	// TODO `render_effect` wrapper should be unnecessary?
 	render_effect(() => {
 		/** @type {string | null} */
 		let tag;
@@ -162,7 +153,7 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 		});
 
 		return () => {
-			element?.remove();
+			// element?.remove();
 		};
 	});
 }
