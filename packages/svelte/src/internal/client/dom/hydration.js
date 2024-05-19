@@ -21,9 +21,19 @@ export function set_hydrating(value) {
  */
 export let hydrate_nodes = /** @type {any} */ (null);
 
-/** @param {import('#client').TemplateNode[]} nodes */
+/** @type {import('#client').TemplateNode} */
+export let hydrate_start = /** @type {any} */ (null);
+
+/** @type {import('#client').TemplateNode} */
+export let hydrate_end = /** @type {any} */ (null);
+
+/**
+ * @param {import('#client').TemplateNode[]} nodes
+ */
 export function set_hydrate_nodes(nodes) {
 	hydrate_nodes = nodes;
+	hydrate_start = nodes && nodes[0];
+	hydrate_end = nodes && nodes[nodes.length - 1];
 }
 
 /**
@@ -58,6 +68,10 @@ export function hydrate_anchor(node) {
 			} else if (data[0] === HYDRATION_END) {
 				if (depth === 0) {
 					hydrate_nodes = /** @type {import('#client').TemplateNode[]} */ (nodes);
+
+					hydrate_start = hydrate_nodes[0];
+					hydrate_end = hydrate_nodes[hydrate_nodes.length - 1];
+
 					return current;
 				}
 
