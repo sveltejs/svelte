@@ -1,10 +1,23 @@
-import { hydrate_nodes, hydrate_start, hydrating } from './hydration.js';
+import { hydrate_nodes, hydrate_nodes_to_array, hydrate_start, hydrating } from './hydration.js';
 import { clone_node, empty } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
 import { effect } from '../reactivity/effects.js';
 import { is_array } from '../utils.js';
+
+/**
+ * @deprecated
+ * @param {boolean} is_fragment
+ */
+function get_hydrate_nodes(is_fragment) {
+	// TODO get rid of this, just have start/end on effects
+	if (is_fragment) {
+		return hydrate_nodes_to_array();
+	}
+
+	return hydrate_start;
+}
 
 /**
  * @template {import("#client").TemplateNode | import("#client").TemplateNode[]} T
