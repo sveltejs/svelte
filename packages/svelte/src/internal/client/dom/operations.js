@@ -229,3 +229,20 @@ export function clear_text_content(node) {
 export function create_element(name) {
 	return document.createElement(name);
 }
+
+/**
+ * @param {import('#client').TemplateNode} from
+ * @param {import('#client').TemplateNode} to
+ */
+export function remove_nodes(from, to) {
+	let node = from;
+
+	while (node) {
+		const next = node.nextSibling;
+
+		node.remove();
+		if (node === to) break;
+
+		node = /** @type {import('#client').TemplateNode} */ (next);
+	}
+}
