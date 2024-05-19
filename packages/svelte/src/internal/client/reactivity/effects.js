@@ -80,6 +80,8 @@ function create_effect(type, fn, sync) {
 		ctx: current_component_context,
 		deps: null,
 		dom: null,
+		d1: null,
+		d2: null,
 		f: type | DIRTY,
 		first: null,
 		fn,
@@ -361,6 +363,8 @@ export function destroy_effect(effect) {
 		effect.teardown =
 		effect.ctx =
 		effect.dom =
+		effect.d1 =
+		effect.d2 =
 		effect.deps =
 		effect.parent =
 		// @ts-expect-error
