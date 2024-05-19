@@ -1,11 +1,5 @@
 import { namespace_svg } from '../../../../constants.js';
-import {
-	hydrate_anchor,
-	hydrate_nodes,
-	hydrate_start,
-	hydrating,
-	set_hydrate_nodes
-} from '../hydration.js';
+import { hydrate_anchor, hydrate_start, hydrating, set_hydrate_nodes } from '../hydration.js';
 import { empty } from '../operations.js';
 import {
 	block,
