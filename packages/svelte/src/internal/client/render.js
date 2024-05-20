@@ -4,7 +4,8 @@ import {
 	clear_text_content,
 	create_element,
 	empty,
-	init_operations
+	init_operations,
+	internal_next_sibling
 } from './dom/operations.js';
 import { HYDRATION_ERROR, HYDRATION_START, PassiveDelegatedEvents } from '../../constants.js';
 import { flush_sync, push, pop, current_component_context } from './runtime.js';
@@ -106,6 +107,7 @@ export function mount(component, options) {
 	if (DEV) {
 		validate_component(component);
 	}
+	init_operations();
 
 	const anchor = options.anchor ?? options.target.appendChild(empty());
 	// Don't flush previous effects to ensure order of outer effects stays consistent
@@ -133,6 +135,7 @@ export function hydrate(component, options) {
 	if (DEV) {
 		validate_component(component);
 	}
+	init_operations();
 
 	const target = options.target;
 	const previous_hydrate_nodes = hydrate_nodes;
@@ -144,12 +147,13 @@ export function hydrate(component, options) {
 		return flush_sync(() => {
 			set_hydrating(true);
 
+			/** @type {Node | null} */
 			var node = target.firstChild;
 			while (
 				node &&
 				(node.nodeType !== 8 || /** @type {Comment} */ (node).data !== HYDRATION_START)
 			) {
-				node = node.nextSibling;
+				node = internal_next_sibling(node);
 			}
 
 			if (!node) {
@@ -172,8 +176,6 @@ export function hydrate(component, options) {
 				e.hydration_failed();
 			}
 
-			// If an error occured above, the operations might not yet have been initialised.
-			init_operations();
 			clear_text_content(target);
 
 			set_hydrating(false);
@@ -202,8 +204,6 @@ export function hydrate(component, options) {
  * @returns {Exports}
  */
 function _mount(Component, { target, anchor, props = {}, events, context, intro = false }) {
-	init_operations();
-
 	const registered_events = new Set();
 
 	const bound_event_listener = handle_event_propagation.bind(null, target);

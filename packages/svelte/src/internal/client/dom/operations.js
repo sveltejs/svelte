@@ -176,6 +176,16 @@ export function first_child(fragment, is_text) {
 /**
  * @template {Node} N
  * @param {N} node
+ * @returns {Node | null}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function internal_next_sibling(node) {
+	return next_sibling_get.call(node);
+}
+
+/**
+ * @template {Node} N
+ * @param {N} node
  * @param {boolean} is_text
  * @returns {Node | null}
  */
