@@ -66,8 +66,6 @@ export function push_effect(effect, parent_effect) {
 	}
 }
 
-let uid = 1;
-
 /**
  * @param {number} type
  * @param {(() => void | (() => void))} fn
