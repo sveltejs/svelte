@@ -59,9 +59,8 @@ export function template(content, flags) {
 			node = create_fragment_from_html(content);
 			if (!is_fragment) node = /** @type {Node} */ (node.firstChild);
 		}
-		var clone = use_import_node ? document.importNode(node, true) : clone_node(node, true);
 
-		return clone;
+		return use_import_node ? document.importNode(node, true) : clone_node(node, true);
 	};
 }
 
@@ -120,9 +119,7 @@ export function svg_template(content, flags) {
 			}
 		}
 
-		var clone = clone_node(node, true);
-
-		return clone;
+		return clone_node(node, true);
 	};
 }
 
@@ -181,9 +178,7 @@ export function mathml_template(content, flags) {
 			}
 		}
 
-		var clone = clone_node(node, true);
-
-		return clone;
+		return clone_node(node, true);
 	};
 }
 
