@@ -9,7 +9,7 @@ import {
 	HYDRATION_START
 } from '../../../../constants.js';
 import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
-import { clear_text_content, empty } from '../operations.js';
+import { clear_text_content, empty, next_sibling } from '../operations.js';
 import { remove } from '../reconciler.js';
 import { untrack } from '../../runtime.js';
 import {
@@ -175,7 +175,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 				var key = get_key(value, i);
 				item = create_item(child_open, child_anchor, prev, null, value, key, i, render_fn, flags);
 				state.items.set(key, item);
-				child_anchor = /** @type {Comment} */ (child_anchor.nextSibling);
+				child_anchor = /** @type {Comment} */ (next_sibling(child_anchor));
 
 				prev = item;
 			}
@@ -183,7 +183,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 			// remove excess nodes
 			if (length > 0) {
 				while (child_anchor !== anchor) {
-					var next = /** @type {import('#client').TemplateNode} */ (child_anchor.nextSibling);
+					var next = /** @type {import('#client').TemplateNode} */ (next_sibling(child_anchor));
 					/** @type {import('#client').TemplateNode} */ (child_anchor).remove();
 					child_anchor = next;
 				}
@@ -501,7 +501,7 @@ function move(item, next, anchor) {
 	var node = /** @type {import('#client').TemplateNode} */ (item.o);
 
 	while (node !== end) {
-		var next_node = /** @type {import('#client').TemplateNode} */ (node.nextSibling);
+		var next_node = /** @type {import('#client').TemplateNode} */ (next_sibling(node));
 		dest.before(node);
 		node = next_node;
 	}
