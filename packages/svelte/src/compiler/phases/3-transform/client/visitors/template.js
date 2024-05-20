@@ -1197,7 +1197,7 @@ function get_template_function(namespace, state) {
 	return namespace === 'svg'
 		? contains_script_tag
 			? '$.svg_template_with_script'
-			: '$.svg_template'
+			: '$.ns_template'
 		: namespace === 'mathml'
 			? '$.mathml_template'
 			: contains_script_tag
