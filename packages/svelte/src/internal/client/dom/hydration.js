@@ -13,14 +13,6 @@ export function set_hydrating(value) {
 	hydrating = value;
 }
 
-/**
- * Array of nodes to traverse for hydration. This will be null if we're not hydrating, but for
- * the sake of simplicity we're not going to use `null` checks everywhere and instead rely on
- * the `hydrating` flag to tell whether or not we're in hydration mode at which point this is set.
- * @type {import('#client').TemplateNode[]}
- */
-let hydrate_nodes = /** @type {any} */ (null);
-
 /** @type {import('#client').TemplateNode} */
 export let hydrate_start = /** @type {any} */ (null);
 
@@ -38,8 +30,8 @@ export function set_hydrate_nodes(start, end) {
 
 /**
  * This function is only called when `hydrating` is true. If passed a `<!--[-->` opening
- * hydration marker, it finds the corresponding closing marker and sets `hydrate_nodes`
- * to everything between the markers, before returning the closing marker.
+ * hydration marker, it finds the corresponding closing marker and sets `hydrate_start`
+ * and `hydrate_end` to the content inside, before returning the closing marker.
  * @param {Node} node
  * @returns {Node}
  */
@@ -55,8 +47,8 @@ export function hydrate_anchor(node) {
 		return node;
 	}
 
-	/** @type {Node[]} */
-	var nodes = [];
+	/** @type {import('#client').TemplateNode} */
+	var start = /** @type {any} */ (null);
 	var depth = 0;
 
 	while ((current = /** @type {Node} */ (current).nextSibling) !== null) {
@@ -67,10 +59,8 @@ export function hydrate_anchor(node) {
 				depth += 1;
 			} else if (data[0] === HYDRATION_END) {
 				if (depth === 0) {
-					hydrate_nodes = /** @type {import('#client').TemplateNode[]} */ (nodes);
-
-					hydrate_start = hydrate_nodes[0];
-					hydrate_end = hydrate_nodes[hydrate_nodes.length - 1];
+					hydrate_start = start;
+					// hydrate_end = nodes[nodes.length - 1];
 
 					return current;
 				}
@@ -79,7 +69,8 @@ export function hydrate_anchor(node) {
 			}
 		}
 
-		nodes.push(current);
+		start ??= /** @type {import('#client').TemplateNode} */ (current);
+		hydrate_end = /** @type {import('#client').TemplateNode} */ (current);
 	}
 
 	let location;
