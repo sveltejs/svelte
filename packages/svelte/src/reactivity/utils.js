@@ -14,14 +14,14 @@ export const NOTIFY_WITH_ALL_PARAMS = Symbol();
  * - DO NOT USE INTERCEPTORS FOR READ PROPERTIES
  * @template TEntityInstance
  * @template {(keyof TEntityInstance)[]} TWriteProperties
- * @template {(keyof TEntityInstance)[]} TReadProperties
+ * @template {(keyof TEntityInstance)[] | undefined} TReadProperties
  * @typedef {Partial<Record<TWriteProperties[number], (notify_read_methods: (methods: TReadProperties, ...params: unknown[])=>void ,value: TEntityInstance, property: TWriteProperties[number], ...params: unknown[])=>boolean>>} Interceptors
  */
 
 /**
  * @template TEntityInstance
  * @template {(keyof TEntityInstance)[]} TWriteProperties
- * @template {(keyof TEntityInstance)[]} TReadProperties
+ * @template {(keyof TEntityInstance)[] | undefined} TReadProperties
  * @typedef {object} Options
  * @prop {TWriteProperties} write_properties - an array of property names on `TEntityInstance`, could cause reactivity.
  * @prop {TReadProperties} [read_properties] - an array of property names on `TEntityInstance` that `write_properties` affect, typically used for methods. for instance `size` doesn't need to be here because it takes no parameters and is reactive based on the `version` signal.
@@ -33,7 +33,7 @@ export const NOTIFY_WITH_ALL_PARAMS = Symbol();
 /**
  * @template {new (...args: any) => any} TEntity
  * @template {(keyof InstanceType<TEntity>)[]} TWriteProperties
- * @template {(keyof InstanceType<TEntity>)[]} TReadProperties
+ * @template {(keyof InstanceType<TEntity>)[] | undefined} TReadProperties
  * @param {TEntity} Entity - the entity we want to make reactive
  * @param {Options<InstanceType<TEntity>, TWriteProperties, TReadProperties>} options - configurations for how reactivity works for this entity
  * @returns {TEntity}
@@ -50,7 +50,7 @@ export const make_reactive = (Entity, options) => {
 			 * each read method can be tracked like has, get, has and etc. these props might depend on a parameter. they have to reactive based on the
 			 * parameter they depend on. for instance if you have `set.has(2)` and then call `set.add(5)` the former shouldn't get notified.
 			 * based on that we need to store the function_name + parameter(s).
-			 * @type {Map<string | symbol, Map<unknown[], import("#client").Source<boolean>>>}
+			 * @type {ReadMethodsSignals}
 			 **/
 			const read_methods_signals = new Map();
 			/**
@@ -73,23 +73,31 @@ export const make_reactive = (Entity, options) => {
 								options,
 								...params
 							);
-							const result = orig_property.bind(target)(...params);
+							const function_result = orig_property.bind(target)(...params);
+							// causing reactivity after the function is actually called and performed its changes
+							get_read_signals(version_signal, read_methods_signals, property, options, ...params);
 							notifiers.forEach((notifier) => notifier());
-							return result;
+							return function_result;
 						}).bind(target);
 					} else {
 						// handle getters/props
-						const notifiers = create_notifiers(
-							version_signal,
-							read_methods_signals,
-							property,
-							target,
-							options
-						);
 						result = Reflect.get(target, property, target);
-						notifiers.forEach((notifier) => notifier());
+						get_read_signals(version_signal, read_methods_signals, property, options, ...params);
 					}
 
+					return result;
+				},
+				set(target, property, value) {
+					const notifiers = create_notifiers(
+						version_signal,
+						read_methods_signals,
+						property,
+						target,
+						options,
+						value
+					);
+					const result = Reflect.set(target, property, value, target);
+					notifiers.forEach((notifier) => notifier());
 					return result;
 				},
 				ownKeys: (target) => {
@@ -106,7 +114,7 @@ export const make_reactive = (Entity, options) => {
  * creates an array of functions that notify other signals based on the changes, you need to run these functions to invoke reactivity
  * @template {new (...args: any) => any} TEntity
  * @template {(keyof TEntityInstance)[]} TWriteProperties
- * @template {(keyof TEntityInstance)[]} TReadProperties
+ * @template {(keyof TEntityInstance)[] | undefined} TReadProperties
  * @template {InstanceType<TEntity>} TEntityInstance
  * @template {keyof TEntityInstance} TProperty
  * @param {import('#client').Source<boolean>} version_signal
@@ -133,7 +141,11 @@ function create_notifiers(
 	 */
 	const notifiers = [];
 
-	const interceptor = options.interceptors?.[property];
+	const interceptor =
+		options.interceptors &&
+		Object.hasOwn(options.interceptors, property) &&
+		options.interceptors?.[property];
+
 	if (interceptor) {
 		const increment_version_signal =
 			interceptor(
@@ -161,16 +173,6 @@ function create_notifiers(
 	notifiers.push(() => {
 		if (options.write_properties.some((v) => v === property)) {
 			increment_signal(options_with_version_flag, version_signal);
-		} else {
-			if (options.read_properties?.includes(property)) {
-				(params.length == 0 ? [null] : params).forEach((param) => {
-					// read like methods should create the signal (if not already created) so they can be reactive when notified based on their param
-					const sig = get_signal_for_function(read_methods_signals, property, param, true);
-					get(sig);
-				});
-			} else {
-				get(version_signal);
-			}
 		}
 	});
 
@@ -180,7 +182,33 @@ function create_notifiers(
 /**
  * @template {new (...args: any) => any} TEntity
  * @template {(keyof TEntityInstance)[]} TWriteProperties
- * @template {(keyof TEntityInstance)[]} TReadProperties
+ * @template {(keyof TEntityInstance)[] | undefined} TReadProperties
+ * @template {InstanceType<TEntity>} TEntityInstance
+ * @template {keyof TEntityInstance} TProperty
+ * @param {import('#client').Source<boolean>} version_signal
+ * @param {ReadMethodsSignals} read_methods_signals
+ * @param {TProperty} property
+ * @param {Options<InstanceType<TEntity>, TWriteProperties, TReadProperties>} options
+ * @param {unknown[]} params
+ */
+
+function get_read_signals(version_signal, read_methods_signals, property, options, ...params) {
+	if (options.read_properties?.includes(property)) {
+		(params.length == 0 ? [null] : params).forEach((param) => {
+			// read like methods that are reactive conditionally should create the signal (if not already created) so they can be reactive when notified based on their param
+			const sig = get_signal_for_function(read_methods_signals, property, param, true);
+			get(sig);
+		});
+	} else {
+		// other read like methods that are not reactive conditionally based their params and are just notified based on the version signal are here
+		get(version_signal);
+	}
+}
+
+/**
+ * @template {new (...args: any) => any} TEntity
+ * @template {(keyof TEntityInstance)[]} TWriteProperties
+ * @template {(keyof TEntityInstance)[] | undefined} TReadProperties
  * @template {InstanceType<TEntity>} TEntityInstance
  * @param {import('#client').Source<boolean>} version_signal
  * @param {ReadMethodsSignals} read_methods_signals
@@ -195,7 +223,7 @@ function notify_read_methods(
 	method_names,
 	...params
 ) {
-	method_names.forEach((name) => {
+	method_names?.forEach((name) => {
 		if (DEV && !options.read_properties?.includes(name)) {
 			throw new Error(
 				`when trying to notify reactions got a read method that wasn't defined in options: ${name.toString()}`
