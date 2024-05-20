@@ -13,19 +13,6 @@ import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
 import { current_component_context, current_effect } from '../../runtime.js';
 import { DEV } from 'esm-env';
-
-/**
- * @param {import('#client').Effect} effect
- * @param {Element} from
- * @param {Element} to
- * @returns {void}
- */
-function swap_block_dom(effect, from, to) {
-	// TODO this should be unnecessary...
-	if (effect.d1 === from) effect.d1 = to;
-	if (effect.d2 === from) effect.d2 = to;
-}
-
 /**
  * @param {Comment} anchor
  * @param {() => string} get_tag
@@ -135,10 +122,7 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 
 					anchor.before(element);
 
-					if (prev_element) {
-						swap_block_dom(parent_effect, prev_element, element);
-						prev_element.remove();
-					}
+					prev_element?.remove();
 				});
 			}
 
