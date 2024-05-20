@@ -84,7 +84,7 @@ export function normalize_html(
 			.replace(/\s?onerror="this.__e=event"|\s?onload="this.__e=event"/g, '')
 			.trim();
 		clean_children(node);
-		return node.innerHTML.replace(/<\/?noscript\/?>/g, '');
+		return node.innerHTML;
 	} catch (err) {
 		throw new Error(`Failed to normalize HTML:\n${html}`);
 	}

@@ -296,7 +296,9 @@ export function append(anchor, dom) {
 
 		// TODO handle component case, where effect.d1/d2 already exist
 		if (dom.nodeType === 11) {
-			effect.d1 = /** @type {import('#client').TemplateNode} */ (dom.firstChild);
+			const d1 = empty(); // TODO do this in template creation. should d2 be an empty as well? or should we be storing the anchor?
+			/** @type {import('#client').TemplateNode} */ (dom.firstChild).before(d1);
+			effect.d1 = d1;
 			effect.d2 = /** @type {import('#client').TemplateNode} */ (dom.lastChild);
 		} else {
 			effect.d1 = effect.d2 = /** @type {Element} */ (dom);
