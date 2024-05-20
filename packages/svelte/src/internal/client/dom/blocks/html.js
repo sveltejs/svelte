@@ -3,7 +3,6 @@ import { render_effect } from '../../reactivity/effects.js';
 import { current_effect, get } from '../../runtime.js';
 import { hydrate_nodes, hydrating } from '../hydration.js';
 import { create_fragment_from_html, remove } from '../reconciler.js';
-import { push_template_node } from '../template.js';
 
 /**
  * @param {Element | Text | Comment} anchor
@@ -57,9 +56,6 @@ function html_to_dom(target, effect, value, svg, mathml) {
 	if (node.childNodes.length === 1) {
 		var child = /** @type {Text | Element | Comment} */ (node.firstChild);
 		target.before(child);
-		if (effect !== null) {
-			push_template_node(child, effect);
-		}
 		return child;
 	}
 
@@ -71,10 +67,6 @@ function html_to_dom(target, effect, value, svg, mathml) {
 		}
 	} else {
 		target.before(node);
-	}
-
-	if (effect !== null) {
-		push_template_node(nodes, effect);
 	}
 
 	return nodes;

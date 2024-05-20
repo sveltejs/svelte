@@ -25,7 +25,7 @@ function get_hydrate_nodes(is_fragment) {
  * @param {import("#client").Effect} effect
  * @returns {T}
  */
-export function push_template_node(
+function push_template_node(
 	dom,
 	effect = /** @type {import('#client').Effect} */ (current_effect)
 ) {
@@ -60,12 +60,6 @@ export function template(content, flags) {
 			if (!is_fragment) node = /** @type {Node} */ (node.firstChild);
 		}
 		var clone = use_import_node ? document.importNode(node, true) : clone_node(node, true);
-
-		push_template_node(
-			is_fragment
-				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
-				: /** @type {import('#client').TemplateNode} */ (clone)
-		);
 
 		return clone;
 	};
@@ -128,12 +122,6 @@ export function svg_template(content, flags) {
 
 		var clone = clone_node(node, true);
 
-		push_template_node(
-			is_fragment
-				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
-				: /** @type {import('#client').TemplateNode} */ (clone)
-		);
-
 		return clone;
 	};
 }
@@ -195,12 +183,6 @@ export function mathml_template(content, flags) {
 
 		var clone = clone_node(node, true);
 
-		push_template_node(
-			is_fragment
-				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
-				: /** @type {import('#client').TemplateNode} */ (clone)
-		);
-
 		return clone;
 	};
 }
@@ -242,7 +224,7 @@ function run_scripts(node) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function text(anchor) {
-	if (!hydrating) return push_template_node(empty());
+	if (!hydrating) return empty();
 
 	var node = hydrate_start;
 
@@ -260,10 +242,10 @@ export function comment() {
 	if (hydrating) {
 		return push_template_node(hydrate_nodes);
 	}
+
 	var frag = document.createDocumentFragment();
 	var anchor = empty();
 	frag.append(anchor);
-	push_template_node([anchor]);
 
 	return frag;
 }

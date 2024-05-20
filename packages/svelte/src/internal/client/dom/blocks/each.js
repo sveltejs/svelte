@@ -31,7 +31,6 @@ import {
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen } from '../../utils.js';
 import { INERT, STATE_SYMBOL } from '../../constants.js';
-import { push_template_node } from '../template.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -286,7 +285,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		item = items.get(key);
 
 		if (item === undefined) {
-			var child_open = push_template_node(empty());
+			var child_open = empty();
 			var child_anchor = current ? current.o : anchor;
 
 			child_anchor.before(child_open);
