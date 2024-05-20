@@ -49,7 +49,7 @@
 		{/each}
 	{/if}
 	{#each new Array(level - 1) as _, idx}
-		<div class="outline" style="left: {idx * 15 + 15}px" />
+		<div class="outline" style="left: {idx * 15 + 15}px"></div>
 	{/each}
 </span>
 
