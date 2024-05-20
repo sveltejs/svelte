@@ -266,8 +266,8 @@ importers:
         specifier: ^2.5.0
         version: 2.5.2(@sveltejs/vite-plugin-svelte@3.1.0)(svelte@packages+svelte)(vite@5.0.13)
       '@sveltejs/site-kit':
-        specifier: 6.0.0-next.59
-        version: 6.0.0-next.59(@sveltejs/kit@2.5.2)(svelte@packages+svelte)
+        specifier: 6.0.0-next.62
+        version: 6.0.0-next.62(@sveltejs/kit@2.5.2)(svelte@packages+svelte)
       '@sveltejs/vite-plugin-svelte':
         specifier: ^3.1.0
         version: 3.1.0(svelte@packages+svelte)(vite@5.0.13)
@@ -2783,8 +2783,8 @@ packages:
       svelte-local-storage-store: 0.6.4(svelte@4.2.9)
     dev: true
 
-  /@sveltejs/site-kit@6.0.0-next.59(@sveltejs/kit@2.5.2)(svelte@packages+svelte):
-    resolution: {integrity: sha512-nAUCuunhN0DmurQBxbsauqvdvv4mL0F/Aluxq0hFf6gB3iSn9WdaUZdPMXoujy+8cy+m6UvKuyhkgApZhmOLvw==}
+  /@sveltejs/site-kit@6.0.0-next.62(@sveltejs/kit@2.5.2)(svelte@packages+svelte):
+    resolution: {integrity: sha512-1nG1daUKqQkxDekEMCiyCu/6mV8RNVrGsf9vgVjBU44p93pW3k8f/30oKJzsREKgHqPL7HPzJ1vPFaacBoPLDQ==}
     peerDependencies:
       '@sveltejs/kit': ^1.20.0
       svelte: ^4.0.0
@@ -2792,7 +2792,7 @@ packages:
       '@sveltejs/kit': 2.5.2(@sveltejs/vite-plugin-svelte@3.1.0)(svelte@packages+svelte)(vite@5.0.13)
       esm-env: 1.0.0
       svelte: link:packages/svelte
-      svelte-local-storage-store: 0.6.4(svelte@packages+svelte)
+      svelte-persisted-store: 0.9.2(svelte@packages+svelte)
     dev: true
 
   /@sveltejs/vite-plugin-svelte-inspector@2.0.0(@sveltejs/vite-plugin-svelte@3.1.0)(svelte@4.2.9)(vite@5.0.13):
@@ -8133,11 +8133,11 @@ packages:
       svelte: 4.2.9
     dev: true
 
-  /svelte-local-storage-store@0.6.4(svelte@packages+svelte):
-    resolution: {integrity: sha512-45WoY2vSGPQM1sIQJ9jTkPPj20hYeqm+af6mUGRFSPP5WglZf36YYoZqwmZZ8Dt/2SU8lem+BTA8/Z/8TkqNLg==}
+  /svelte-persisted-store@0.9.2(svelte@packages+svelte):
+    resolution: {integrity: sha512-jp7W98yMgBhgz5fWnjZBCmCX89Rse13iqVpjK+1ByS6iYkvW9WT+F2vwsep3f0Zy/tnGYbb8MI+9Vx7W0NQsPg==}
     engines: {node: '>=0.14'}
     peerDependencies:
-      svelte: ^3.48.0 || >4.0.0
+      svelte: ^3.48.0 || ^4.0.0 || ^5.0.0-next.0
     dependencies:
       svelte: link:packages/svelte
     dev: true
