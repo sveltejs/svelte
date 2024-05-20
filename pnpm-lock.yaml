@@ -223,8 +223,8 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0(@codemirror/autocomplete@6.12.0)(@codemirror/lang-css@6.2.1)(@codemirror/lang-html@6.4.9)(@codemirror/lang-javascript@6.2.1)(@codemirror/language@6.10.1)(@codemirror/state@6.4.0)(@codemirror/view@6.24.0)(@lezer/common@1.2.1)(@lezer/highlight@1.2.0)(@lezer/javascript@1.4.15)(@lezer/lr@1.4.0)
       '@rich_harris/svelte-split-pane':
-        specifier: ^1.1.1
-        version: 1.1.1(svelte@packages+svelte)
+        specifier: ^1.1.2
+        version: 1.1.2(svelte@packages+svelte)
       '@rollup/browser':
         specifier: ^3.28.0
         version: 3.29.4
@@ -266,8 +266,8 @@ importers:
         specifier: ^2.5.0
         version: 2.5.2(@sveltejs/vite-plugin-svelte@3.1.0)(svelte@packages+svelte)(vite@5.0.13)
       '@sveltejs/site-kit':
-        specifier: 6.0.0-next.63
-        version: 6.0.0-next.63(@sveltejs/kit@2.5.2)(svelte@packages+svelte)
+        specifier: 6.0.0-next.64
+        version: 6.0.0-next.64(@sveltejs/kit@2.5.2)(svelte@packages+svelte)
       '@sveltejs/vite-plugin-svelte':
         specifier: ^3.1.0
         version: 3.1.0(svelte@packages+svelte)(vite@5.0.13)
@@ -2328,10 +2328,10 @@ packages:
       svelte: 4.2.9
     dev: false
 
-  /@rich_harris/svelte-split-pane@1.1.1(svelte@packages+svelte):
-    resolution: {integrity: sha512-y2RRLyrN6DCeIgwA423aAIv/T5JqQeOl2XogBQ/21DvA2IF7oyrLUtXMxmQL2va2NFdeJO6MDx6nDX5X7kau7A==}
+  /@rich_harris/svelte-split-pane@1.1.2(svelte@packages+svelte):
+    resolution: {integrity: sha512-O601UlgGzrn6Nva7uLAF25h63wvrI2rxDh5KTEXd0pdTP7LetHR/rqgi8jyPIgRDCL86eoopEdC3ejOOQoWGWQ==}
     peerDependencies:
-      svelte: ^3.54.0
+      svelte: ^3.54.0 || ^4.0.0 || ^5.0.0-next.0
     dependencies:
       svelte: link:packages/svelte
     dev: false
@@ -2783,8 +2783,8 @@ packages:
       svelte-local-storage-store: 0.6.4(svelte@4.2.9)
     dev: true
 
-  /@sveltejs/site-kit@6.0.0-next.63(@sveltejs/kit@2.5.2)(svelte@packages+svelte):
-    resolution: {integrity: sha512-8yw7UCafgo8UdM5+jcHI6RD5wHpM1WBuzJnv5/qhix8NgyCiCtDk+EVNuwHoaEiwRo4NCxfexVSZ0lbeL5Dy5A==}
+  /@sveltejs/site-kit@6.0.0-next.64(@sveltejs/kit@2.5.2)(svelte@packages+svelte):
+    resolution: {integrity: sha512-SosLY07DBA79yJhRR9vQpk9eXlSc3VjzOlIJQFvPzgsbu727rq5u3dudFEsm0NeQFoAF+NNgDYi5D85v5Yc+vQ==}
     peerDependencies:
       '@sveltejs/kit': ^1.20.0
       svelte: ^4.0.0

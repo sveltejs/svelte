@@ -52,7 +52,7 @@
 						{:else if column in data[key]}
 							<td><JSONNode value={data[key][column]} /></td>
 						{:else}
-							<td />
+							<td></td>
 						{/if}
 					{/each}
 				</tr>

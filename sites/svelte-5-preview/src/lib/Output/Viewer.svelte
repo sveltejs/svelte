@@ -267,7 +267,7 @@
 				].join(' ')}
 				class={error || pending || pending_imports ? 'greyed-out' : ''}
 				srcdoc={BROWSER ? srcdoc : ''}
-			/>
+			></iframe>
 
 			{#if $bundle?.error}
 				<ErrorOverlay error={$bundle.error} />
