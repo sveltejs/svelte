@@ -28,16 +28,26 @@ import { lifecycle_outside_component } from '../shared/errors.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
+export const FLUSH_YIELD = 2;
 
 // Used for DEV time error handling
 /** @param {WeakSet<Error>} value */
 const handled_errors = new WeakSet();
 // Used for controlling the flush of effects.
-let current_scheduler_mode = FLUSH_MICROTASK;
+export let current_scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
+let is_yield_task_queued = false;
+
 export let is_flushing_effect = false;
 export let is_destroying_effect = false;
+
+/**
+ * @param {number} value
+ */
+export function set_schedule_mode(value) {
+	current_scheduler_mode = value;
+}
 
 /** @param {boolean} value */
 export function set_is_flushing_effect(value) {
@@ -521,13 +531,17 @@ function infinite_loop_guard() {
  * @returns {void}
  */
 function flush_queued_root_effects(root_effects) {
+	const length = root_effects.length;
+	if (length === 0) {
+		return;
+	}
 	infinite_loop_guard();
 
 	var previously_flushing_effect = is_flushing_effect;
 	is_flushing_effect = true;
 
 	try {
-		for (var i = 0; i < root_effects.length; i++) {
+		for (var i = 0; i < length; i++) {
 			var effect = root_effects[i];
 
 			// When working with custom elements, the root effects might not have a root
@@ -565,6 +579,7 @@ function flush_queued_effects(effects) {
 
 function process_microtask() {
 	is_micro_task_queued = false;
+	is_yield_task_queued = false;
 	if (flush_count > 101) {
 		return;
 	}
@@ -572,6 +587,31 @@ function process_microtask() {
 	current_queued_root_effects = [];
 	flush_queued_root_effects(previous_queued_root_effects);
 	if (!is_micro_task_queued) {
+		flush_count = 0;
+	}
+}
+
+const yield_task =
+	typeof requestAnimationFrame === 'undefined' ? setTimeout : requestAnimationFrame;
+
+async function process_yieldtask() {
+	// TODO: replace this with scheduler.yield when it becomes standard
+	await new Promise((fulfil) => {
+		yield_task(() => {
+			setTimeout(fulfil, 0);
+		});
+		// In case of background task
+		setTimeout(fulfil, 100);
+	});
+	is_yield_task_queued = false;
+	is_micro_task_queued = false;
+	if (flush_count > 101) {
+		return;
+	}
+	const previous_queued_root_effects = current_queued_root_effects;
+	current_queued_root_effects = [];
+	flush_queued_root_effects(previous_queued_root_effects);
+	if (!is_yield_task_queued) {
 		flush_count = 0;
 	}
 }
@@ -585,6 +625,11 @@ export function schedule_effect(signal) {
 		if (!is_micro_task_queued) {
 			is_micro_task_queued = true;
 			queueMicrotask(process_microtask);
+		}
+	} else if (current_scheduler_mode === FLUSH_YIELD) {
+		if (!is_yield_task_queued) {
+			is_yield_task_queued = true;
+			process_yieldtask();
 		}
 	}
 

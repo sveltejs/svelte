@@ -1,5 +1,6 @@
 import { render_effect } from '../../reactivity/effects.js';
 import { all_registered_events, root_event_handles } from '../../render.js';
+import { FLUSH_YIELD, current_scheduler_mode, set_schedule_mode } from '../../runtime.js';
 import { define_property, is_array } from '../../utils.js';
 import { hydrating } from '../hydration.js';
 
@@ -180,9 +181,12 @@ export function handle_event_propagation(handler_element, event) {
 		}
 	}
 
+	const previous_scheduler_mode = current_scheduler_mode;
 	try {
+		set_schedule_mode(FLUSH_YIELD);
 		next(current_target);
 	} finally {
+		set_schedule_mode(previous_scheduler_mode);
 		// @ts-expect-error is used above
 		event.__root = handler_element;
 		// @ts-expect-error is used above
