@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 /** @type {typeof console.trace} */
@@ -19,9 +20,12 @@ export default test({
 		console.trace = trace;
 	},
 
-	async test({ assert, target, warnings }) {
+	test({ assert, target, warnings }) {
 		const btn = target.querySelector('button');
-		await btn?.click();
+
+		flushSync(() => {
+			btn?.click();
+		});
 
 		assert.htmlEqual(target.innerHTML, `<button>clicks: 1</button>`);
 
