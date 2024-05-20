@@ -96,20 +96,3 @@ export function hydrate_anchor(node) {
 	w.hydration_mismatch(location);
 	throw HYDRATION_ERROR;
 }
-
-/** @deprecated */
-export function remove_hydrate_nodes() {
-	remove_nodes(hydrate_start, hydrate_end);
-}
-
-/** @deprecated */
-export function hydrate_nodes_to_array() {
-	// TODO get rid of this, just have start/end on effects
-	let node = hydrate_start;
-	const nodes = [node];
-	while (node.nextSibling) {
-		nodes.push((node = /** @type {import('#client').TemplateNode} */ (node.nextSibling)));
-		if (node === hydrate_end) break;
-	}
-	return nodes;
-}
