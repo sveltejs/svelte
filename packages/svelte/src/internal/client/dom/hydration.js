@@ -60,8 +60,6 @@ export function hydrate_anchor(node) {
 			} else if (data[0] === HYDRATION_END) {
 				if (depth === 0) {
 					hydrate_start = start;
-					// hydrate_end = nodes[nodes.length - 1];
-
 					return current;
 				}
 
