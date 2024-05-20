@@ -1,8 +1,9 @@
 import { derived } from '../../reactivity/deriveds.js';
 import { render_effect } from '../../reactivity/effects.js';
 import { get } from '../../runtime.js';
-import { hydrate_nodes, hydrating } from '../hydration.js';
-import { create_fragment_from_html, remove } from '../reconciler.js';
+import { hydrate_start, hydrating } from '../hydration.js';
+import { remove_nodes } from '../operations.js';
+import { create_fragment_from_html } from '../reconciler.js';
 
 /**
  * @param {Element | Text | Comment} anchor
@@ -15,13 +16,11 @@ export function html(anchor, get_value, svg, mathml) {
 	let value = derived(get_value);
 
 	render_effect(() => {
-		var dom = html_to_dom(anchor, get(value), svg, mathml);
+		var [start, end] = html_to_dom(anchor, get(value), svg, mathml);
 
-		if (dom) {
-			return () => {
-				remove(dom);
-			};
-		}
+		return () => {
+			remove_nodes(start, end);
+		};
 	});
 }
 
@@ -33,10 +32,12 @@ export function html(anchor, get_value, svg, mathml) {
  * @param {V} value
  * @param {boolean} svg
  * @param {boolean} mathml
- * @returns {Element | Comment | (Element | Comment | Text)[]}
+ * @returns {[import('#client').TemplateNode, import('#client').TemplateNode]}
  */
 function html_to_dom(target, value, svg, mathml) {
-	if (hydrating) return hydrate_nodes;
+	if (hydrating) {
+		return [hydrate_start, hydrate_start];
+	}
 
 	var html = value + '';
 	if (svg) html = `<svg>${html}</svg>`;
@@ -54,10 +55,11 @@ function html_to_dom(target, value, svg, mathml) {
 	if (node.childNodes.length === 1) {
 		var child = /** @type {Text | Element | Comment} */ (node.firstChild);
 		target.before(child);
-		return child;
+		return [child, child];
 	}
 
-	var nodes = /** @type {Array<Text | Element | Comment>} */ ([...node.childNodes]);
+	var first = /** @type {import('#client').TemplateNode} */ (node.firstChild);
+	var last = /** @type {import('#client').TemplateNode} */ (node.lastChild);
 
 	if (svg || mathml) {
 		while (node.firstChild) {
@@ -67,5 +69,5 @@ function html_to_dom(target, value, svg, mathml) {
 		target.before(node);
 	}
 
-	return nodes;
+	return [first, last];
 }
