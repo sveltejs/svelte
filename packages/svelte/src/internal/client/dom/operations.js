@@ -229,3 +229,21 @@ export function clear_text_content(node) {
 export function create_element(name) {
 	return document.createElement(name);
 }
+
+/**
+ * Remove all nodes between `from` and `to`, inclusive
+ * @param {import('#client').TemplateNode} from
+ * @param {import('#client').TemplateNode} to
+ */
+export function remove_nodes(from, to) {
+	var node = from;
+
+	while (node) {
+		var next = node.nextSibling;
+
+		node.remove();
+		if (node === to) break;
+
+		node = /** @type {import('#client').TemplateNode} */ (next);
+	}
+}

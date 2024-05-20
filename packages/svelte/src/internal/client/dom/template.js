@@ -16,7 +16,7 @@ function push_template_node(
 	dom,
 	effect = /** @type {import('#client').Effect} */ (current_effect)
 ) {
-	if (hydrating && effect.d1 === null) {
+	if (effect.d1 === null) {
 		effect.d1 = is_array(dom) ? dom[0] : dom;
 		effect.d2 = is_array(dom) ? dom[dom.length - 1] : dom;
 	}
@@ -215,19 +215,20 @@ export function comment() {
  * @param {DocumentFragment | Element} dom
  */
 export function append(anchor, dom) {
-	if (!hydrating) {
-		const effect = /** @type {import('#client').Effect} */ (current_effect);
+	if (hydrating) return;
 
-		// TODO handle component case, where effect.d1/d2 already exist
-		if (dom.nodeType === 11) {
-			const d1 = empty(); // TODO do this in template creation. should d2 be an empty as well? or should we be storing the anchor?
-			/** @type {import('#client').TemplateNode} */ (dom.firstChild).before(d1);
-			effect.d1 = d1;
-			effect.d2 = /** @type {import('#client').TemplateNode} */ (dom.lastChild);
-		} else {
-			effect.d1 = effect.d2 = /** @type {Element} */ (dom);
-		}
+	var effect = /** @type {import('#client').Effect} */ (current_effect);
 
-		anchor.before(/** @type {Node} */ (dom));
+	if (dom.nodeType === 11) {
+		// prepend an empty text node
+		var d1 = empty();
+
+		/** @type {import('#client').TemplateNode} */ (dom.firstChild).before(d1);
+		effect.d1 = d1;
+		effect.d2 = /** @type {import('#client').TemplateNode} */ (dom.lastChild);
+	} else {
+		effect.d1 = effect.d2 = /** @type {Element} */ (dom);
 	}
+
+	anchor.before(/** @type {Node} */ (dom));
 }

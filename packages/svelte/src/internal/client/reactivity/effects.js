@@ -36,6 +36,7 @@ import { set } from './sources.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../utils.js';
+import { remove_nodes } from '../dom/operations.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -320,16 +321,7 @@ export function destroy_effect(effect) {
 	var d2 = effect.d2;
 
 	if (d1 !== null && d2 !== null) {
-		var node = d1;
-
-		while (node) {
-			var n = node.nextSibling;
-
-			node.remove();
-			if (node === d2) break;
-
-			node = /** @type {import('#client').TemplateNode} */ (n);
-		}
+		remove_nodes(d1, d2);
 	}
 
 	destroy_effect_children(effect);
