@@ -1,6 +1,20 @@
 import { HYDRATION_END, HYDRATION_START } from '../../../constants.js';
-import { hydrating } from '../dom/hydration.js';
-import { is_array } from '../utils.js';
+import { hydrate_end, hydrate_start, hydrating } from '../dom/hydration.js';
+
+/**
+ * @param {import('#client').TemplateNode} from
+ * @param {import('#client').TemplateNode} to
+ */
+function find_nodes_between(from, to) {
+	var node = from;
+	var nodes = [node];
+
+	while (node !== to) {
+		nodes.push((node = /** @type {import('#client').TemplateNode} */ (node.nextSibling)));
+	}
+
+	return nodes;
+}
 
 /**
  * @param {any} fn
@@ -13,9 +27,7 @@ export function add_locations(fn, filename, locations) {
 		const dom = fn(...args);
 
 		const nodes = hydrating
-			? is_array(dom)
-				? dom
-				: [dom]
+			? find_nodes_between(hydrate_start, hydrate_end)
 			: dom.nodeType === 11
 				? Array.from(dom.childNodes)
 				: [dom];
@@ -64,7 +76,7 @@ function assign_locations(nodes, filename, locations) {
 			if (comment.data.startsWith(HYDRATION_END)) depth -= 1;
 		}
 
-		if (depth === 0 && node.nodeType === 1) {
+		if (depth === 0 && node.nodeType === 1 && locations[j]) {
 			assign_location(/** @type {Element} */ (node), filename, locations[j++]);
 		}
 	}

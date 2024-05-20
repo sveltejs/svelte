@@ -19,7 +19,7 @@ export function set_hydrating(value) {
  * the `hydrating` flag to tell whether or not we're in hydration mode at which point this is set.
  * @type {import('#client').TemplateNode[]}
  */
-export let hydrate_nodes = /** @type {any} */ (null);
+let hydrate_nodes = /** @type {any} */ (null);
 
 /** @type {import('#client').TemplateNode} */
 export let hydrate_start = /** @type {any} */ (null);
@@ -32,7 +32,6 @@ export let hydrate_end = /** @type {any} */ (null);
  * @param {import('#client').TemplateNode} end
  */
 export function set_hydrate_nodes(start, end) {
-	hydrate_nodes = [start, end]; // TODO get rid
 	hydrate_start = start;
 	hydrate_end = end;
 }
