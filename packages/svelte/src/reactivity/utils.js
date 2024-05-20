@@ -43,7 +43,7 @@ export const make_reactive = (Entity, options) => {
 	// @ts-ignore
 	return class {
 		/**
-		 * @param {ConstructorParameters<TEntity>}  params
+		 * @param  {...unknown[]} params
 		 */
 		constructor(...params) {
 			/**
