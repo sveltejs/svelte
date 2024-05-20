@@ -17,7 +17,7 @@
     "@sveltejs/adapter-static": "^3.0.1",
     "@sveltejs/adapter-vercel": "^5.0.0",
     "@sveltejs/kit": "^2.5.0",
-    "@sveltejs/site-kit": "6.0.0-next.59",
+    "@sveltejs/site-kit": "6.0.0-next.63",
     "@sveltejs/vite-plugin-svelte": "^3.1.0",
     "@types/marked": "^6.0.0",
     "esrap": "^1.2.2",
