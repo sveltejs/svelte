@@ -12,10 +12,13 @@ export default test({
 		<strong>array[1]: 2</strong>
 	`,
 
-	async test({ assert, target }) {
+	test({ assert, target }) {
 		const [add, clear, reverse] = target.querySelectorAll('button');
 
-		await add?.click();
+		flushSync(() => {
+			add?.click();
+		});
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`

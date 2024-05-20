@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -7,7 +8,10 @@ export default test({
 
 		assert.equal(div?.hidden, true);
 
-		await btn?.click();
+		flushSync(() => {
+			btn?.click();
+		});
+
 		assert.equal(div?.hidden, false);
 	}
 });

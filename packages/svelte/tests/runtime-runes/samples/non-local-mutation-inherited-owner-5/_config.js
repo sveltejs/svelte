@@ -1,4 +1,4 @@
-import { tick } from 'svelte';
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -6,15 +6,19 @@ export default test({
 		dev: true
 	},
 
-	async test({ assert, target, warnings }) {
+	test({ assert, target, warnings }) {
 		const [btn1, btn2] = target.querySelectorAll('button');
 
-		await btn1.click();
-		await tick();
+		flushSync(() => {
+			btn1.click();
+		});
+
 		assert.deepEqual(warnings.length, 0);
 
-		await btn2.click();
-		await tick();
+		flushSync(() => {
+			btn2.click();
+		});
+
 		assert.deepEqual(warnings.length, 1);
 	}
 });

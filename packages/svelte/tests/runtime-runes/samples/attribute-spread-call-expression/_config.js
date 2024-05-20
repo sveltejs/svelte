@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -8,11 +9,13 @@ export default test({
 		<button class="red">red</button>
 	`,
 
-	async test({ assert, target }) {
+	test({ assert, target }) {
 		const [b1, b2, b3, b4] = target.querySelectorAll('button');
 
-		b1?.click();
-		await Promise.resolve();
+		flushSync(() => {
+			b1?.click();
+		});
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -23,8 +26,10 @@ export default test({
 			`
 		);
 
-		b2?.click();
-		await Promise.resolve();
+		flushSync(() => {
+			b2?.click();
+		});
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -35,8 +40,10 @@ export default test({
 			`
 		);
 
-		b3?.click();
-		await Promise.resolve();
+		flushSync(() => {
+			b3?.click();
+		});
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -47,8 +54,10 @@ export default test({
 			`
 		);
 
-		b4?.click();
-		await Promise.resolve();
+		flushSync(() => {
+			b4?.click();
+		});
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
