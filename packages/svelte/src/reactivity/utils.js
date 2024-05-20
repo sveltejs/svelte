@@ -24,7 +24,7 @@ export const NOTIFY_WITH_ALL_PARAMS = Symbol();
  * @template {(keyof TEntityInstance)[]} TReadProperties
  * @typedef {object} Options
  * @prop {TWriteProperties} write_properties - an array of property names on `TEntityInstance`, could cause reactivity.
- * @prop {TReadProperties} read_properties - an array of property names on `TEntityInstance` that `write_properties` affect, typically used for methods. for instance `size` doesn't need to be here because it takes no parameters and is reactive based on the `version` signal.
+ * @prop {TReadProperties} [read_properties] - an array of property names on `TEntityInstance` that `write_properties` affect, typically used for methods. for instance `size` doesn't need to be here because it takes no parameters and is reactive based on the `version` signal.
  * @prop {Interceptors<TEntityInstance, TWriteProperties, TReadProperties>} [interceptors={}] - an object of interceptors for `write_properties` that can customize how/when a `read_properties` should be notified of a change.
  */
 
@@ -162,7 +162,7 @@ function create_notifiers(
 		if (options.write_properties.some((v) => v === property)) {
 			increment_signal(options_with_version_flag, version_signal);
 		} else {
-			if (options.read_properties.includes(property)) {
+			if (options.read_properties?.includes(property)) {
 				(params.length == 0 ? [null] : params).forEach((param) => {
 					// read like methods should create the signal (if not already created) so they can be reactive when notified based on their param
 					const sig = get_signal_for_function(read_methods_signals, property, param, true);
@@ -196,7 +196,7 @@ function notify_read_methods(
 	...params
 ) {
 	method_names.forEach((name) => {
-		if (DEV && !options.read_properties.includes(name)) {
+		if (DEV && !options.read_properties?.includes(name)) {
 			throw new Error(
 				`when trying to notify reactions got a read method that wasn't defined in options: ${name.toString()}`
 			);
