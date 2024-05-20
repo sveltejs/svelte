@@ -2079,20 +2079,8 @@ declare module 'svelte/reactivity' {
 		constructor(...values: any[]);
 		#private;
 	}
-	class ReactiveSet<T> extends Set<T> {
-		
-		constructor(value?: Iterable<T> | null | undefined);
-		
-		add(value: T): this;
-		#private;
-	}
-	class ReactiveMap<K, V> extends Map<K, V> {
-		
-		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
-		
-		set(key: K, value: V): this;
-		#private;
-	}
+	export const Set: SetConstructor;
+	export const Map: MapConstructor;
 	class ReactiveURL extends URL {
 		get searchParams(): ReactiveURLSearchParams;
 		#private;
@@ -2104,7 +2092,7 @@ declare module 'svelte/reactivity' {
 	}
 	const REPLACE: unique symbol;
 
-	export { ReactiveDate as Date, ReactiveSet as Set, ReactiveMap as Map, ReactiveURL as URL, ReactiveURLSearchParams as URLSearchParams };
+	export { ReactiveDate as Date, ReactiveURL as URL, ReactiveURLSearchParams as URLSearchParams };
 }
 
 declare module 'svelte/server' {
