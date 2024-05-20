@@ -46,7 +46,7 @@
     "@lezer/highlight": "^1.1.6",
     "@neocodemirror/svelte": "0.0.15",
     "@replit/codemirror-lang-svelte": "^6.0.0",
-    "@rich_harris/svelte-split-pane": "^1.1.2",
+    "@rich_harris/svelte-split-pane": "^1.1.3",
     "@rollup/browser": "^3.28.0",
     "acorn": "^8.10.0",
     "codemirror": "^6.0.1",

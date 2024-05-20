@@ -246,6 +246,8 @@
 
 <style>
 	.codemirror-container {
+		--warning: hsl(40 100% 70%);
+		--error: hsl(0 100% 90%);
 		position: relative;
 		width: 100%;
 		height: 100%;
@@ -254,26 +256,129 @@
 		overflow: hidden;
 	}
 
-	.codemirror-container :global(.mark-text) {
-		background-color: var(--sk-selection-color);
-		backdrop-filter: opacity(40%);
+	:global(.dark) .codemirror-container {
+		--warning: hsl(40 100% 50%);
+		--error: hsl(0 100% 70%);
 	}
 
-	.codemirror-container :global(.cm-editor) {
-		height: 100%;
-	}
+	.codemirror-container :global {
+		* {
+			font: 400 var(--sk-text-xs) / 1.7 var(--sk-font-mono);
+		}
 
-	.codemirror-container :global(*) {
-		font: 400 var(--sk-text-xs) / 1.7 var(--sk-font-mono) !important;
-	}
+		.mark-text {
+			background-color: var(--sk-selection-color);
+			backdrop-filter: opacity(40%);
+		}
 
-	.codemirror-container :global(.error-loc) {
-		position: relative;
-		border-bottom: 2px solid #da106e;
-	}
+		.cm-editor {
+			height: 100%;
+		}
 
-	.codemirror-container :global(.error-line) {
-		background-color: rgba(200, 0, 0, 0.05);
+		.error-loc {
+			position: relative;
+			border-bottom: 2px solid #da106e;
+		}
+
+		.error-line {
+			background-color: rgba(200, 0, 0, 0.05);
+		}
+
+		.cm-tooltip {
+			border: none;
+			background-color: transparent;
+			font-family: var(--sk-font);
+			max-width: calc(100vw - 10em);
+			position: relative;
+		}
+
+		.cm-tooltip-section {
+			position: relative;
+			padding: 0.5em;
+			/* width: calc(100vw - 10em); */
+			filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.1));
+			background: var(--bg);
+			border-radius: 2px;
+		}
+
+		.cm-tooltip-section::before {
+			content: '';
+			position: absolute;
+			left: 20px;
+			width: 8px;
+			height: 8px;
+			transform: rotate(45deg);
+			background-color: var(--bg);
+			border-radius: 2px;
+		}
+
+		.cm-tooltip-below .cm-tooltip-section {
+			top: 10px;
+		}
+
+		.cm-tooltip-above .cm-tooltip-section {
+			bottom: 10px;
+		}
+
+		.cm-tooltip-below .cm-tooltip-section::before {
+			top: -4px;
+		}
+
+		.cm-tooltip-above .cm-tooltip-section::before {
+			bottom: -4px;
+		}
+
+		.cm-tooltip:has(.cm-diagnostic-warning) {
+			--bg: var(--warning);
+			--fg: #222;
+		}
+
+		.cm-tooltip:has(.cm-diagnostic-error) {
+			--bg: var(--error);
+			--fg: #222;
+		}
+
+		.cm-diagnostic {
+			padding: 0.2em 0.4em;
+			position: relative;
+			border: none;
+			border-radius: 2px;
+		}
+
+		.cm-diagnostic:not(:last-child) {
+			border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+		}
+
+		.cm-diagnostic-error {
+			border: none;
+			filter: drop-shadow(0px 0px 6px var(--error-bg));
+		}
+
+		.cm-diagnostic :not(code) {
+			font-family: var(--sk-font);
+		}
+
+		.cm-diagnosticText {
+			color: var(--fg);
+			position: relative;
+			z-index: 2;
+		}
+
+		.cm-diagnosticText code {
+			color: inherit;
+			background-color: rgba(0, 0, 0, 0.05);
+			border-radius: 2px;
+			top: 0;
+			padding: 0.2em;
+			font-size: 0.9em;
+		}
+
+		.cm-diagnosticText strong {
+			font-size: 0.9em;
+			/* font-weight: 700; */
+			font-family: var(--sk-font-mono);
+			opacity: 0.7;
+		}
 	}
 
 	pre {
