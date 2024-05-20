@@ -28,12 +28,13 @@ export let hydrate_start = /** @type {any} */ (null);
 export let hydrate_end = /** @type {any} */ (null);
 
 /**
- * @param {import('#client').TemplateNode[]} nodes
+ * @param {import('#client').TemplateNode} start
+ * @param {import('#client').TemplateNode} end
  */
-export function set_hydrate_nodes(nodes) {
-	hydrate_nodes = nodes;
-	hydrate_start = nodes && nodes[0];
-	hydrate_end = nodes && nodes[nodes.length - 1];
+export function set_hydrate_nodes(start, end) {
+	hydrate_nodes = [start, end]; // TODO get rid
+	hydrate_start = start;
+	hydrate_end = end;
 }
 
 /**

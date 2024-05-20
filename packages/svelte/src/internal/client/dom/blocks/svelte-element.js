@@ -110,7 +110,9 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 						if (hydrating && !element.firstChild) {
 							// if the element is a void element with content, add an empty
 							// node to avoid breaking assumptions elsewhere
-							set_hydrate_nodes([empty()]);
+							// TODO is this still necessary?
+							var child = empty();
+							set_hydrate_nodes(child, child);
 						}
 
 						// `child_anchor` is undefined if this is a void element, but we still
