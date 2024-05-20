@@ -5,10 +5,17 @@ import { get } from '../internal/client/runtime.js';
 export const NOTIFY_WITH_ALL_PARAMS = Symbol();
 
 /**
+ * some `write_properties` require a custom logic to notify a change for read properties.
+ * for instance calling `set.add(2)` two times should not cause reactivity the second time.
+ * interceptor is called before the call is proxied to the actual object, so we can decide wether a change
+ * is actually going to happen or not.
+ * - if a `write_property` shouldn't increment the `version` signal return false from the interceptor. note that calling `notify_read_methods` WILL increase the `version` in all cases.
+ * returning false is only useful if do it before calling `notify_read_methods` like an if-guard that returns false early because no change has happened.
+ * - DO NOT USE INTERCEPTORS FOR READ PROPERTIES
  * @template TEntityInstance
  * @template {(keyof TEntityInstance)[]} TWriteProperties
  * @template {(keyof TEntityInstance)[]} TReadProperties
- * @typedef {Partial<Record<TWriteProperties[number], (notify_read_methods: (methods: TReadProperties, ...params: unknown[])=>void ,value: TEntityInstance, property: TWriteProperties[number], ...params: unknown[])=>boolean>>}  Interceptors - return false if you want to prevent reactivity for this call, DO NOT USE INTERCEPTORS FOR READ PROPERTIES
+ * @typedef {Partial<Record<TWriteProperties[number], (notify_read_methods: (methods: TReadProperties, ...params: unknown[])=>void ,value: TEntityInstance, property: TWriteProperties[number], ...params: unknown[])=>boolean>>} Interceptors
  */
 
 /**
@@ -17,8 +24,8 @@ export const NOTIFY_WITH_ALL_PARAMS = Symbol();
  * @template {(keyof TEntityInstance)[]} TReadProperties
  * @typedef {object} Options
  * @prop {TWriteProperties} write_properties - an array of property names on `TEntityInstance`, could cause reactivity.
- * @prop {TReadProperties} read_properties - an array of property names on `TEntityInstance` that `write_properties` affect. typically used for methods. for instance `size` doesn't need to be here because it takes no parameters and is reactive based on the `version` signal.
- * @prop {Interceptors<TEntityInstance, TWriteProperties, TReadProperties>} [interceptors={}] - if the property names in `write_properties` shouldn't cause reactivity, such as calling `set.add(2)` twice or accessing a property shouldn't be reactive based on some conditions, you can prevent the reactivity by returning `false` from these interceptors
+ * @prop {TReadProperties} read_properties - an array of property names on `TEntityInstance` that `write_properties` affect, typically used for methods. for instance `size` doesn't need to be here because it takes no parameters and is reactive based on the `version` signal.
+ * @prop {Interceptors<TEntityInstance, TWriteProperties, TReadProperties>} [interceptors={}] - an object of interceptors for `write_properties` that can customize how/when a `read_properties` should be notified of a change.
  */
 
 /** @typedef {Map<string | symbol | number, Map<unknown, import("#client").Source<boolean>>>} ReadMethodsSignals */
@@ -126,26 +133,29 @@ function create_notifiers(
 	 */
 	const notifiers = [];
 
-	const is_property_reactive =
-		options.interceptors?.[property]?.(
-			(methods, ...params) => {
-				notifiers.push(() => {
-					notify_read_methods(
-						options_with_version_flag,
-						version_signal,
-						read_methods_signals,
-						methods,
-						...params
-					);
-				});
-			},
-			entity_instance,
-			property,
-			...params
-		) !== false; // not saying `===true` because not returning anything is considered true for this scenario as well.
+	const interceptor = options.interceptors?.[property];
+	if (interceptor) {
+		const increment_version_signal =
+			interceptor(
+				(methods, ...params) => {
+					notifiers.push(() => {
+						notify_read_methods(
+							options_with_version_flag,
+							version_signal,
+							read_methods_signals,
+							methods,
+							...params
+						);
+					});
+				},
+				entity_instance,
+				property,
+				...params
+			) === true;
 
-	if (!is_property_reactive) {
-		return notifiers;
+		if (!increment_version_signal) {
+			return notifiers;
+		}
 	}
 
 	notifiers.push(() => {

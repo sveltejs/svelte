@@ -18,7 +18,7 @@ export const ReactiveMap = make_reactive(Map, {
 			if (value.size === 0) {
 				return false;
 			}
-			notify_read_methods(['keys', 'has'], NOTIFY_WITH_ALL_PARAMS);
+			notify_read_methods(['get', 'keys', 'has'], NOTIFY_WITH_ALL_PARAMS);
 			return true;
 		},
 		delete: (notify_read_methods, value, property, ...params) => {
