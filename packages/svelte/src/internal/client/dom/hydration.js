@@ -1,7 +1,6 @@
 import { DEV } from 'esm-env';
 import { HYDRATION_END, HYDRATION_START, HYDRATION_ERROR } from '../../../constants.js';
 import * as w from '../warnings.js';
-import { remove_nodes } from './operations.js';
 
 /**
  * Use this variable to guard everything related to hydration code so it can be treeshaken out

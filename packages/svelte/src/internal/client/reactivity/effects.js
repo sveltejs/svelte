@@ -33,11 +33,9 @@ import {
 	UNOWNED
 } from '../constants.js';
 import { set } from './sources.js';
-import { remove } from '../dom/reconciler.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
-import { define_property, is_array } from '../utils.js';
-import { remove_nodes } from '../dom/operations.js';
+import { define_property } from '../utils.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -322,7 +320,16 @@ export function destroy_effect(effect) {
 	var d2 = effect.d2;
 
 	if (d1 !== null && d2 !== null) {
-		remove_nodes(d1, d2);
+		var node = d1;
+
+		while (node) {
+			var n = node.nextSibling;
+
+			node.remove();
+			if (node === d2) break;
+
+			node = /** @type {import('#client').TemplateNode} */ (n);
+		}
 	}
 
 	destroy_effect_children(effect);
