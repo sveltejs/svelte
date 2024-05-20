@@ -591,16 +591,16 @@ function process_microtask() {
 	}
 }
 
-const yield_task =
+const request_animation_frame =
 	typeof requestAnimationFrame === 'undefined' ? setTimeout : requestAnimationFrame;
 
 async function process_yieldtask() {
 	// TODO: replace this with scheduler.yield when it becomes standard
 	await new Promise((fulfil) => {
-		yield_task(() => {
+		request_animation_frame(() => {
 			setTimeout(fulfil, 0);
 		});
-		// In case of background task
+		// In case of being within background tab, the rAF won't fire
 		setTimeout(fulfil, 100);
 	});
 	is_yield_task_queued = false;
