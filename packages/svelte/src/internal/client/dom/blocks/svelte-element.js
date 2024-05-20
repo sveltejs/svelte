@@ -22,7 +22,7 @@ import { DEV } from 'esm-env';
  * @returns {void}
  */
 function swap_block_dom(effect, from, to) {
-	// TODO should this use `replace_bookends`?
+	// TODO this should be unnecessary...
 	if (effect.d1 === from) effect.d1 = to;
 	if (effect.d2 === from) effect.d2 = to;
 }

@@ -36,8 +36,6 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 
 export interface Effect extends Reaction {
 	parent: Effect | null;
-	/** @deprecated */
-	dom: Dom | null;
 	d1: TemplateNode | null;
 	d2: TemplateNode | null;
 	/** The associated component context */

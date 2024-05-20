@@ -80,10 +80,8 @@ function create_effect(type, fn, sync) {
 
 	/** @type {import('#client').Effect} */
 	var effect = {
-		id: uid++,
 		ctx: current_component_context,
 		deps: null,
-		dom: null,
 		d1: null,
 		d2: null,
 		f: type | DIRTY,
@@ -320,17 +318,12 @@ export function execute_effect_teardown(effect) {
  * @returns {void}
  */
 export function destroy_effect(effect) {
-	var dom = effect.dom;
 	var d1 = effect.d1;
 	var d2 = effect.d2;
 
 	if (d1 !== null && d2 !== null) {
 		remove_nodes(d1, d2);
 	}
-
-	// if (dom !== null) {
-	// 	remove(dom);
-	// }
 
 	destroy_effect_children(effect);
 	remove_reactions(effect, 0);
@@ -372,7 +365,6 @@ export function destroy_effect(effect) {
 		effect.prev =
 		effect.teardown =
 		effect.ctx =
-		effect.dom =
 		effect.d1 =
 		effect.d2 =
 		effect.deps =

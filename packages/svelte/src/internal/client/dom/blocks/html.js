@@ -1,10 +1,9 @@
 import { derived } from '../../reactivity/deriveds.js';
 import { render_effect } from '../../reactivity/effects.js';
 import { current_effect, get } from '../../runtime.js';
-import { is_array } from '../../utils.js';
 import { hydrate_nodes, hydrating } from '../hydration.js';
 import { create_fragment_from_html, remove } from '../reconciler.js';
-import { push_template_node, replace_bookends } from '../template.js';
+import { push_template_node } from '../template.js';
 
 /**
  * @param {Element | Text | Comment} anchor
@@ -21,11 +20,6 @@ export function html(anchor, get_value, svg, mathml) {
 		var dom = html_to_dom(anchor, parent_effect, get(value), svg, mathml);
 
 		if (dom) {
-			var d1 = is_array(dom) ? dom[0] : dom;
-			var d2 = is_array(dom) ? dom[dom.length - 1] : dom;
-
-			replace_bookends(parent_effect, d1, d2);
-
 			return () => {
 				remove(dom);
 			};

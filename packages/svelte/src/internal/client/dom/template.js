@@ -34,22 +34,6 @@ export function push_template_node(
 		effect.d2 = is_array(dom) ? dom[dom.length - 1] : dom;
 	}
 
-	// TODO remove
-	var current_dom = effect.dom;
-	if (current_dom === null) {
-		effect.dom = dom;
-	} else {
-		if (!is_array(current_dom)) {
-			current_dom = effect.dom = [current_dom];
-		}
-
-		if (is_array(dom)) {
-			current_dom.push(...dom);
-		} else {
-			current_dom.push(dom);
-		}
-	}
-
 	return dom;
 }
 
@@ -305,32 +289,5 @@ export function append(anchor, dom) {
 		}
 
 		anchor.before(/** @type {Node} */ (dom));
-	}
-}
-
-/**
- *
- * @param {import('#client').Effect} effect
- * @param {import('#client').TemplateNode} d1
- * @param {import('#client').TemplateNode} d2
- */
-export function replace_bookends(effect, d1, d2) {
-	/** @type {import('#client').Effect | null} */
-	var parent = effect;
-
-	// TODO i'm pretty sure we don't need to actually loop here,
-	// this should only apply to html/snippet tags
-
-	while ((parent = parent.parent)) {
-		if (parent.d1 === null) {
-			continue;
-		}
-
-		if (parent.d1 !== d1 && parent.d2 !== d2) {
-			break;
-		}
-
-		if (parent.d1 === d1) parent.d1 = effect.d1;
-		if (parent.d2 === d2) parent.d2 = effect.d2;
 	}
 }
