@@ -1,4 +1,4 @@
-import { hydrate_anchor, hydrate_nodes, hydrating } from './hydration.js';
+import { hydrate_anchor, hydrating } from './hydration.js';
 import { get_descriptor } from '../utils.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
@@ -165,7 +165,6 @@ export function first_child(fragment, is_text) {
 	// text node to hydrate — we must therefore create one
 	if (is_text && first_node?.nodeType !== 3) {
 		const text = empty();
-		hydrate_nodes.unshift(text);
 		first_node?.before(text);
 		return text;
 	}
@@ -191,14 +190,7 @@ export function sibling(node, is_text = false) {
 	// text node to hydrate — we must therefore create one
 	if (is_text && next_sibling?.nodeType !== 3) {
 		const text = empty();
-		if (next_sibling) {
-			const index = hydrate_nodes.indexOf(/** @type {Text | Comment | Element} */ (next_sibling));
-			hydrate_nodes.splice(index, 0, text);
-			next_sibling.before(text);
-		} else {
-			hydrate_nodes.push(text);
-		}
-
+		next_sibling?.before(text);
 		return text;
 	}
 

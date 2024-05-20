@@ -9,13 +9,10 @@ import { is_array } from '../utils.js';
 /**
  * @template {import("#client").TemplateNode | import("#client").TemplateNode[]} T
  * @param {T} dom
- * @param {import("#client").Effect} effect
  * @returns {T}
  */
-function push_template_node(
-	dom,
-	effect = /** @type {import('#client').Effect} */ (current_effect)
-) {
+function push_template_node(dom) {
+	var effect = /** @type {import('#client').Effect} */ (current_effect);
 	if (effect.d1 === null) {
 		effect.d1 = is_array(dom) ? dom[0] : dom;
 		effect.d2 = is_array(dom) ? dom[dom.length - 1] : dom;
