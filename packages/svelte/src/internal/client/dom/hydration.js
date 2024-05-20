@@ -1,7 +1,7 @@
 import { DEV } from 'esm-env';
 import { HYDRATION_END, HYDRATION_START, HYDRATION_ERROR } from '../../../constants.js';
 import * as w from '../warnings.js';
-import { internal_next_sibling } from './operations.js';
+import { next_sibling } from './operations.js';
 
 /**
  * Use this variable to guard everything related to hydration code so it can be treeshaken out
@@ -50,7 +50,7 @@ export function hydrate_anchor(node) {
 	var nodes = [];
 	var depth = 0;
 
-	while ((current = internal_next_sibling(/** @type {Node} */ (current))) !== null) {
+	while ((current = next_sibling(/** @type {Node} */ (current))) !== null) {
 		if (current.nodeType === 8) {
 			var data = /** @type {Comment} */ (current).data;
 

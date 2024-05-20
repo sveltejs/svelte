@@ -5,7 +5,7 @@ import {
 	create_element,
 	empty,
 	init_operations,
-	internal_next_sibling
+	next_sibling
 } from './dom/operations.js';
 import { HYDRATION_ERROR, HYDRATION_START, PassiveDelegatedEvents } from '../../constants.js';
 import { flush_sync, push, pop, current_component_context } from './runtime.js';
@@ -153,7 +153,7 @@ export function hydrate(component, options) {
 				node &&
 				(node.nodeType !== 8 || /** @type {Comment} */ (node).data !== HYDRATION_START)
 			) {
-				node = internal_next_sibling(node);
+				node = next_sibling(node);
 			}
 
 			if (!node) {

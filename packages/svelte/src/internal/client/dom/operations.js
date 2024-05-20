@@ -179,7 +179,7 @@ export function first_child(fragment, is_text) {
  * @returns {Node | null}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function internal_next_sibling(node) {
+export function next_sibling(node) {
 	return next_sibling_get.call(node);
 }
 
