@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.137
+
+### Patch Changes
+
+- fix: migrate derivations without semicolons ([#11704](https://github.com/sveltejs/svelte/pull/11704))
+
+- fix: check for invalid bindings on window and document ([#11676](https://github.com/sveltejs/svelte/pull/11676))
+
+- fix: more efficient spread attributes in SSR output ([#11660](https://github.com/sveltejs/svelte/pull/11660))
+
+- fix: inline pointer events now correctly work in Chrome ([#11695](https://github.com/sveltejs/svelte/pull/11695))
+
+- fix: don't require warning codes to be separated by commas in non-runes mode ([#11669](https://github.com/sveltejs/svelte/pull/11669))
+
 ## 5.0.0-next.136
 
 ### Patch Changes
