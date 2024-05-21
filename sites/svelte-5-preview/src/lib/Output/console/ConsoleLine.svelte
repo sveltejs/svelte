@@ -22,7 +22,7 @@
 
 	{#if log.level === 'trace' || log.level === 'assert' || log.level === 'group'}
 		<button on:click={toggle_group_collapse}>
-			<span class="arrow" class:expand={!log.collapsed}> ▶️ </span>
+			<span class="arrow" class:expand={!log.collapsed}>{'\u25B6'}</span>
 			{#if log.level === 'group'}
 				<span class="title">{log.label}</span>
 			{/if}
@@ -70,7 +70,7 @@
 <style>
 	.log {
 		border-bottom: 0.5px solid var(--sk-back-4);
-		padding: 5px 10px 0px;
+		padding: 5px 10px 5px;
 		display: flex;
 		position: relative;
 		font-size: 12px;
@@ -146,14 +146,14 @@
 
 	.arrow {
 		position: absolute;
-		font-size: 0.6em;
+		font-size: 0.9rem;
 		transition: 150ms;
 		transform-origin: 50% 50%;
-		transform: translateY(1px) translateX(-50%);
+		transform: translateY(1px);
 	}
 
 	.arrow.expand {
-		transform: translateY(1px) translateX(-50%) rotateZ(90deg);
+		transform: translateY(1px) rotateZ(90deg);
 	}
 
 	.title {
