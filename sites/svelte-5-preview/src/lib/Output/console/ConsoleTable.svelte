@@ -98,37 +98,47 @@
 
 <style>
 	.table {
+		--json-tree-font-size: 1.2rem;
+		--json-tree-font-family: var(--sk-font-mono);
 		margin: 8px;
 		overflow: auto;
 		max-height: 200px;
+		border: 1px solid var(--sk-back-3);
+		border-radius: 2px;
+		overscroll-behavior: none;
 	}
 
 	table {
-		font-size: 12px;
-		font-family: var(--sk-font-mono);
 		border-collapse: collapse;
 		line-height: 1;
-		border: 1px solid #aaa;
 	}
 
 	th {
-		background: #f3f3f3;
-		padding: 4px 8px;
-		border: 1px solid #aaa;
+		background: var(--sk-back-3);
+		padding: 0.5rem 1rem;
+		border: none;
 		position: sticky;
+		font-weight: normal;
+		font-size: 1.4rem;
 		top: 0;
 	}
 
 	td {
-		padding: 2px 8px;
+		font-family: var(--sk-font-mono);
+		padding: 0.5rem 1rem;
+		border-bottom: none;
+	}
+
+	tr {
+		background: var(--sk-back-1);
 	}
 
 	tr:nth-child(2n) {
-		background: #f2f7fd;
+		background: var(--sk-back-3);
 	}
 
 	th,
 	td {
-		border-right: 1px solid #aaa;
+		border-right: 1px solid var(--sk-back-3);
 	}
 </style>
