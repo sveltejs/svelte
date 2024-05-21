@@ -288,7 +288,7 @@ function handle_error(error, effect, component_context) {
 	}
 
 	const indent = /Firefox/.test(navigator.userAgent) ? '  ' : '\t';
-	Object.defineProperty(error, 'message', {
+	define_property(error, 'message', {
 		value: error.message + `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`
 	});
 
