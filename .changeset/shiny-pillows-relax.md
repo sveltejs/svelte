@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: avoid writing to not writable error object in handle_error
+fix: assign message to error object in handle_error using Object.assign
