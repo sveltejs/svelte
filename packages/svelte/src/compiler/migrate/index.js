@@ -369,11 +369,15 @@ const instance_script = {
 					/** @type {number} */ (node.body.expression.right.start),
 					'$derived('
 				);
-				state.str.update(
-					/** @type {number} */ (node.body.expression.right.end),
-					/** @type {number} */ (node.end),
-					');'
-				);
+				if (node.body.expression.right.end !== node.end) {
+					state.str.update(
+						/** @type {number} */ (node.body.expression.right.end),
+						/** @type {number} */ (node.end),
+						');'
+					);
+				} else {
+					state.str.appendRight(/** @type {number} */ (node.end), ');');
+				}
 				return;
 			} else {
 				for (const binding of reassigned_bindings) {
