@@ -19,13 +19,19 @@
 	 */
 	function get_columns_to_render(data, keys) {
 		const columns = new Set([INDEX_KEY]);
+		let has_non_object = false;
+
 		for (const key of keys) {
 			const value = data[key];
 			if (typeof value === 'object') {
 				Object.keys(value).forEach((key) => columns.add(key));
 			} else {
-				columns.add(VALUE_KEY);
+				has_non_object = true;
 			}
+		}
+
+		if (has_non_object) {
+			columns.add(VALUE_KEY);
 		}
 
 		return [...columns];
@@ -47,9 +53,9 @@
 					{#each columns_to_render as column}
 						{#if column === INDEX_KEY}
 							<td>{key}</td>
-						{:else if column === VALUE_KEY}
+						{:else if column === VALUE_KEY && (columns_to_render.length === 2 || typeof data[key] !== 'object')}
 							<td><JSONNode value={data[key]} /></td>
-						{:else if column in data[key]}
+						{:else if typeof data[key] === 'object' && column in data[key]}
 							<td><JSONNode value={data[key][column]} /></td>
 						{:else}
 							<td></td>
