@@ -305,7 +305,7 @@ function handle_error(error, effect, component_context) {
 			}
 			new_lines.push(line);
 		}
-		Object.defineProperty(error, 'stack', {
+		define_property(error, 'stack', {
 			value: error.stack + new_lines.join('\n')
 		});
 	}
