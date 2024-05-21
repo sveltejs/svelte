@@ -143,7 +143,7 @@
 				const counters = new Map();
 
 				const simple = ['log', 'info', 'dir', 'warn', 'error'];
-				const commands = [...simple, 'clear', 'table', 'group', 'groupEnd', 'groupCollapsed'];
+				const commands = [...simple, 'clear', 'group', 'groupEnd', 'groupCollapsed'];
 
 				let previous = '';
 
@@ -166,6 +166,15 @@
 						}
 					});
 				}
+
+				intercept('table', (...args) => {
+					const value = args[0];
+					if (value && typeof value === 'object') {
+						send({ action: 'console', level: 'table', args });
+					} else {
+						send({ action: 'console', level: 'log', args });
+					}
+				});
 
 				intercept('time', (label = 'default') => {
 					timers.set(label, performance.now());
@@ -243,17 +252,13 @@
 						return JSON.stringify(args, (key, value) => {
 							// if we don't do this, our Set/Map from svelte/reactivity would show up wrong in the console
 							if (value instanceof Map) {
-								return {
-									type: 'Map',
-									value
-								};
+								return { type: 'Map', value };
 							}
+
 							if (value instanceof Set) {
-								return {
-									type: 'Set',
-									value
-								};
+								return { type: 'Set', value };
 							}
+
 							return value;
 						});
 					} catch (error) {
