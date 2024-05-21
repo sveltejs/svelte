@@ -3,7 +3,7 @@ import { hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of, map_get, map_set } from '../../utils.js';
 import { AttributeAliases, DelegatedEvents, namespace_svg } from '../../../../constants.js';
 import { create_event, delegate } from './events.js';
-import { autofocus } from './misc.js';
+import { add_form_reset_listener, autofocus } from './misc.js';
 import { effect, effect_root } from '../../reactivity/effects.js';
 import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '../../constants.js';
@@ -16,12 +16,17 @@ import { LOADING_ATTR_SYMBOL } from '../../constants.js';
  */
 export function remove_input_attr_defaults(dom) {
 	if (hydrating) {
-		// using getAttribute instead of dom.value allows us to have
-		// null instead of "on" if the user didn't set a value
-		const value = dom.getAttribute('value');
-		set_attribute(dom, 'value', null);
-		set_attribute(dom, 'checked', null);
-		if (value) dom.value = value;
+		// @ts-expect-error
+		dom.__on_r = () => {
+			// TODO: do we really need to apply this for selects? the value attribute has no effect on the reset behavior
+			if (dom.tagName === 'INPUT') {
+				/** @type {HTMLInputElement} */ (dom).defaultValue = '';
+				/** @type {HTMLInputElement} */ (dom).defaultChecked = false;
+			} else {
+				dom.value = '';
+			}
+		};
+		add_form_reset_listener();
 	}
 }
 
