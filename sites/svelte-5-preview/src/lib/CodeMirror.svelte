@@ -286,25 +286,26 @@
 
 		.cm-tooltip {
 			border: none;
-			background-color: transparent;
+			background: var(--sk-back-3);
 			font-family: var(--sk-font);
 			max-width: calc(100vw - 10em);
 			position: relative;
+			filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.1));
 		}
 
 		.cm-tooltip-section {
 			position: relative;
 			padding: 0.5em;
-			/* width: calc(100vw - 10em); */
-			filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.1));
+			left: -13px;
 			background: var(--bg);
 			border-radius: 2px;
+			max-width: 64em;
 		}
 
 		.cm-tooltip-section::before {
 			content: '';
 			position: absolute;
-			left: 20px;
+			left: 10px;
 			width: 8px;
 			height: 8px;
 			transform: rotate(45deg);
@@ -326,6 +327,10 @@
 
 		.cm-tooltip-above .cm-tooltip-section::before {
 			bottom: -4px;
+		}
+
+		.cm-tooltip:has(.cm-diagnostic) {
+			background: transparent;
 		}
 
 		.cm-tooltip:has(.cm-diagnostic-warning) {
