@@ -1,4 +1,4 @@
-export const default_files = [
+export const default_files = () => [
 	{
 		name: 'App',
 		type: 'svelte',
