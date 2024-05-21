@@ -67,34 +67,21 @@
 
 		<script>
 			(function () {
-				function handle_message(ev) {
-					let { action, cmd_id } = ev.data;
-					const send_message = (payload) => parent.postMessage({ ...payload }, ev.origin);
-					const send_reply = (payload) => send_message({ ...payload, cmd_id });
-					const send_ok = () => send_reply({ action: 'cmd_ok' });
-					const send_error = (message, stack) =>
-						send_reply({ action: 'cmd_error', message, stack });
+				window.addEventListener('message', ({ origin, data }) => {
+					let { action, cmd_id } = data;
 
-					if (action === 'set_theme') {
-						const { theme } = ev.data.args;
+					const reply = (payload) => parent.postMessage({ ...payload, cmd_id }, origin);
 
-						document.body.classList.toggle('dark', theme === 'dark');
-						send_ok();
-					}
-
-					if (action === 'eval') {
-						try {
-							const { script } = ev.data.args;
-							(0, eval)(script);
-							send_ok();
-						} catch (e) {
-							send_error(e.message, e.stack);
+					try {
+						if (action === 'set_theme') {
+							document.body.classList.toggle('dark', data.args.theme === 'dark');
 						}
-					}
 
-					if (action === 'catch_clicks') {
-						try {
-							const top_origin = ev.origin;
+						if (action === 'eval') {
+							(0, eval)(data.args.script);
+						}
+
+						if (action === 'catch_clicks') {
 							document.body.addEventListener('click', (event) => {
 								if (event.which !== 1) return;
 								if (event.metaKey || event.ctrlKey || event.shiftKey) return;
@@ -114,7 +101,7 @@
 
 								event.preventDefault();
 
-								if (el.href.startsWith(top_origin)) {
+								if (el.href.startsWith(origin)) {
 									const url = new URL(el.href);
 									if (url.hash[0] === '#') {
 										window.location.hash = url.hash;
@@ -124,14 +111,13 @@
 
 								window.open(el.href, '_blank');
 							});
-							send_ok();
-						} catch (e) {
-							send_error(e.message, e.stack);
 						}
-					}
-				}
 
-				window.addEventListener('message', handle_message, false);
+						reply({ action: 'cmd_ok' });
+					} catch ({ message, stack }) {
+						reply({ action: 'cmd_error', message, stack });
+					}
+				});
 
 				window.onerror = function (msg, url, lineNo, columnNo, error) {
 					parent.postMessage({ action: 'error', value: error }, '*');
@@ -142,14 +128,34 @@
 				});
 
 				let hash = '';
+				const commands = [
+					'clear',
+					'log',
+					'info',
+					'dir',
+					'warn',
+					'error',
+					'table',
+					'group',
+					'groupEnd',
+					'groupCollapsed'
+				];
 
-				['clear', 'log', 'info', 'dir', 'warn', 'error', 'table', 'group', 'groupEnd', 'groupCollapsed'].forEach((level) => {
+				commands.forEach((level) => {
 					const original = console[level];
 
 					console[level] = (...args) => {
-						const can_duplicate = level === 'log' || level === 'info' || level === 'dir' || level === 'warn' || level === 'error' && args.every(arg => arg === null || (typeof arg !== 'object' && typeof arg !== 'function'));
+						const can_duplicate =
+							level === 'log' ||
+							level === 'info' ||
+							level === 'dir' ||
+							level === 'warn' ||
+							(level === 'error' &&
+								args.every(
+									(arg) => arg === null || (typeof arg !== 'object' && typeof arg !== 'function')
+								));
 
-						if ((hash === (hash = stringify({ level, args }))) && can_duplicate) {
+						if (hash === (hash = stringify({ level, args })) && can_duplicate) {
 							parent.postMessage({ action: 'console', level, duplicate: true }, '*');
 						} else {
 							try {
