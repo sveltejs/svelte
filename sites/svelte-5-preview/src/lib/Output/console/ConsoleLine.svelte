@@ -11,37 +11,37 @@
 	}
 </script>
 
-{#if log.args && log.level === 'table'}
+{#if log.args && log.command === 'table'}
 	<ConsoleTable data={log.args[0]} columns={log.args[1]} />
 {/if}
 
-<span class="log console-{log.level}" style="padding-left: {depth * 15}px">
+<span class="log console-{log.command}" style="padding-left: {depth * 15}px">
 	{#if log.count && log.count > 1}
 		<span class="count">{log.count}x</span>
 	{/if}
 
-	{#if log.level === 'trace' || log.level === 'assert' || log.level === 'group'}
+	{#if log.command === 'trace' || log.command === 'assert' || log.command === 'group'}
 		<button on:click={toggle_group_collapse}>
 			<span class="arrow" class:expand={!log.collapsed}>{'\u25B6'}</span>
-			{#if log.level === 'group'}
+			{#if log.command === 'group'}
 				<span class="title">{log.label}</span>
 			{/if}
 		</button>
 	{/if}
 
-	{#if log.level === 'assert'}
+	{#if log.command === 'assert'}
 		<span class="assert">Assertion failed:</span>
 	{/if}
 
-	{#if log.level === 'clear'}
+	{#if log.command === 'clear'}
 		<span class="info">Console was cleared</span>
-	{:else if log.level === 'unclonable'}
+	{:else if log.command === 'unclonable'}
 		<span class="info error">Message could not be cloned. Open devtools to see it</span>
-	{:else if log.level.startsWith('system')}
+	{:else if log.command.startsWith('system')}
 		{#each log.args ?? [] as arg}
 			{arg}
 		{/each}
-	{:else if log.args && log.level === 'table'}
+	{:else if log.args && log.command === 'table'}
 		<JSONNode value={log.args[0]} />
 	{:else}
 		{#each log.args ?? [] as arg}
@@ -53,13 +53,13 @@
 	{/each}
 </span>
 
-{#if log.level === 'group' && !log.collapsed}
+{#if log.command === 'group' && !log.collapsed}
 	{#each log.logs ?? [] as childLog}
 		<svelte:self log={childLog} depth={depth + 1} />
 	{/each}
 {/if}
 
-{#if (log.level === 'trace' || log.level === 'assert') && !log.collapsed}
+{#if (log.command === 'trace' || log.command === 'assert') && !log.collapsed}
 	<div class="trace">
 		{#each log.stack?.split('\n').slice(2) ?? '' as stack}
 			<div>{stack.replace(/^\s*at\s+/, '')}</div>

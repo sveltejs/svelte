@@ -1,5 +1,5 @@
 export type Log = {
-	level:
+	command:
 		| 'info'
 		| 'warn'
 		| 'error'

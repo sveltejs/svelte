@@ -55,16 +55,16 @@
 				pending_imports = progress;
 			},
 			on_error: (event) => {
-				push_logs({ level: 'error', args: [event.value] });
+				push_logs({ command: 'error', args: [event.value] });
 			},
 			on_unhandled_rejection: (event) => {
 				let error = event.value;
 				if (typeof error === 'string') error = { message: error };
 				error.message = 'Uncaught (in promise): ' + error.message;
-				push_logs({ level: 'error', args: [error] });
+				push_logs({ command: 'error', args: [error] });
 			},
 			on_console: (log) => {
-				switch (log.level) {
+				switch (log.command) {
 					case 'clear':
 						clear_logs();
 						push_logs(log);
@@ -72,7 +72,7 @@
 
 					case 'group':
 					case 'groupCollapsed':
-						group_logs(log.args[0], log.level === 'groupCollapsed');
+						group_logs(log.args[0], log.command === 'groupCollapsed');
 						break;
 
 					case 'groupEnd':
@@ -213,7 +213,7 @@
 	 */
 	function group_logs(label, collapsed) {
 		/** @type {import('./console/console').Log} */
-		const group_log = { level: 'group', label, collapsed, logs: [] };
+		const group_log = { command: 'group', label, collapsed, logs: [] };
 		current_log_group.push(group_log);
 		// TODO: Investigate
 		log_group_stack.push(current_log_group);

@@ -147,21 +147,21 @@
 
 				let previous = '';
 
-				for (const level of commands) {
-					intercept(level, (...args) => {
+				for (const command of commands) {
+					intercept(command, (...args) => {
 						const can_duplicate =
-							simple.includes(level) &&
+							simple.includes(command) &&
 							args.every(
 								(arg) => arg === null || (typeof arg !== 'object' && typeof arg !== 'function')
 							);
 
-						if (previous === (previous = stringify({ level, args })) && can_duplicate) {
-							send({ action: 'console', level, duplicate: true });
+						if (previous === (previous = stringify({ command, args })) && can_duplicate) {
+							send({ action: 'console', command, duplicate: true });
 						} else {
 							try {
-								send({ action: 'console', level, args });
+								send({ action: 'console', command, args });
 							} catch (err) {
-								send({ action: 'console', level: 'unclonable' });
+								send({ action: 'console', command: 'unclonable' });
 							}
 						}
 					});
@@ -170,9 +170,9 @@
 				intercept('table', (...args) => {
 					const value = args[0];
 					if (value && typeof value === 'object') {
-						send({ action: 'console', level: 'table', args });
+						send({ action: 'console', command: 'table', args });
 					} else {
-						send({ action: 'console', level: 'log', args });
+						send({ action: 'console', command: 'log', args });
 					}
 				});
 
@@ -185,13 +185,13 @@
 					if (timers.has(label)) {
 						send({
 							action: 'console',
-							level: 'system-log',
+							command: 'system-log',
 							args: [`${label}: ${now - timers.get(label)}ms`]
 						});
 					} else {
 						send({
 							action: 'console',
-							level: 'system-warn',
+							command: 'system-warn',
 							args: [`Timer '${label}' does not exist`]
 						});
 					}
@@ -202,13 +202,13 @@
 					if (timers.has(label)) {
 						send({
 							action: 'console',
-							level: 'system-log',
+							command: 'system-log',
 							args: [`${label}: ${now - timers.get(label)}ms`]
 						});
 					} else {
 						send({
 							action: 'console',
-							level: 'system-warn',
+							command: 'system-warn',
 							args: [`Timer '${label}' does not exist`]
 						});
 					}
@@ -218,14 +218,14 @@
 				intercept('assert', (condition, ...args) => {
 					if (condition) return;
 					const stack = new Error().stack;
-					send({ action: 'console', level: 'assert', args, stack });
+					send({ action: 'console', command: 'assert', args, stack });
 				});
 
 				intercept('count', (label = 'default') => {
 					counters.set(label, (counters.get(label) || 0) + 1);
 					send({
 						action: 'console',
-						level: 'system-log',
+						command: 'system-log',
 						args: [`${label}: ${counters.get(label)}`]
 					});
 				});
@@ -236,7 +236,7 @@
 					} else {
 						send({
 							action: 'console',
-							level: 'system-warn',
+							command: 'system-warn',
 							args: [`Count for '${label}' does not exist`]
 						});
 					}
@@ -244,7 +244,7 @@
 
 				intercept('trace', (...args) => {
 					const stack = new Error().stack;
-					send({ action: 'console', level: 'trace', args, stack });
+					send({ action: 'console', command: 'trace', args, stack });
 				});
 
 				function stringify(args) {
