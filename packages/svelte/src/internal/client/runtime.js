@@ -261,13 +261,7 @@ export function check_dirtiness(reaction) {
  */
 function handle_error(error, effect, component_context) {
 	// Given we don't yet have error boundaries, we will just always throw.
-	if (
-		!DEV ||
-		handled_errors.has(error) ||
-		component_context === null ||
-		// If we're in a worker, errors aren't writable
-		!get_descriptor(error, 'message')?.writable
-	) {
+	if (!DEV || handled_errors.has(error) || component_context === null) {
 		throw error;
 	}
 
@@ -294,7 +288,9 @@ function handle_error(error, effect, component_context) {
 	}
 
 	const indent = /Firefox/.test(navigator.userAgent) ? '  ' : '\t';
-	error.message += `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`;
+	Object.defineProperty(error, 'message', {
+		value: error.message + `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`
+	});
 
 	const stack = error.stack;
 
@@ -309,7 +305,9 @@ function handle_error(error, effect, component_context) {
 			}
 			new_lines.push(line);
 		}
-		error.stack = new_lines.join('\n');
+		Object.defineProperty(error, 'stack', {
+			value: error.stack + new_lines.join('\n')
+		});
 	}
 
 	handled_errors.add(error);
