@@ -286,7 +286,6 @@
 
 		.cm-tooltip {
 			border: none;
-			background-color: transparent;
 			font-family: var(--sk-font);
 			max-width: calc(100vw - 10em);
 			position: relative;
@@ -327,6 +326,10 @@
 
 		.cm-tooltip-above .cm-tooltip-section::before {
 			bottom: -4px;
+		}
+
+		.cm-tooltip:has(.cm-diagnostic) {
+			background: transparent;
 		}
 
 		.cm-tooltip:has(.cm-diagnostic-warning) {
