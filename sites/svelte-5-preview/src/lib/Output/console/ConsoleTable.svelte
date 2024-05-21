@@ -125,6 +125,7 @@
 
 	td {
 		font-family: var(--sk-font-mono);
+		font-size: 1.2rem;
 		padding: 0.5rem 1rem;
 		border-bottom: none;
 	}

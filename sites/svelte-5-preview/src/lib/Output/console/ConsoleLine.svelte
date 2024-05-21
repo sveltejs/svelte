@@ -4,7 +4,7 @@
 
 	/** @type {import('./console').Log} */
 	export let log;
-	export let level = 1;
+	export let depth = 1;
 
 	function toggle_group_collapse() {
 		log.collapsed = !log.collapsed;
@@ -15,7 +15,7 @@
 	<ConsoleTable data={log.args[0]} columns={log.args[1]} />
 {/if}
 
-<span class="log console-{log.level}" style="padding-left: {level * 15}px">
+<span class="log console-{log.level}" style="padding-left: {depth * 15}px">
 	{#if log.count && log.count > 1}
 		<span class="count">{log.count}x</span>
 	{/if}
@@ -48,14 +48,14 @@
 			<JSONNode value={arg} />
 		{/each}
 	{/if}
-	{#each new Array(level - 1) as _, idx}
+	{#each new Array(depth - 1) as _, idx}
 		<div class="outline" style="left: {idx * 15 + 15}px"></div>
 	{/each}
 </span>
 
 {#if log.level === 'group' && !log.collapsed}
 	{#each log.logs ?? [] as childLog}
-		<svelte:self log={childLog} level={level + 1} />
+		<svelte:self log={childLog} depth={depth + 1} />
 	{/each}
 {/if}
 
