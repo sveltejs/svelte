@@ -53,7 +53,7 @@
     "esm-env": "^1.0.0",
     "marked": "^7.0.2",
     "resolve.exports": "^2.0.2",
-    "svelte-json-tree": "^2.1.0",
+    "svelte-json-tree": "^2.2.0",
     "zimmerframe": "^1.1.1"
   }
 }
