@@ -1,5 +1,6 @@
 import { DEV } from 'esm-env';
 import {
+	define_property,
 	get_descriptor,
 	get_descriptors,
 	get_prototype_of,
