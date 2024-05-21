@@ -67,10 +67,14 @@
 
 		<script>
 			(function () {
+				function send(payload, origin = '*') {
+					parent.postMessage(payload, origin);
+				}
+
 				window.addEventListener('message', ({ origin, data }) => {
 					let { action, cmd_id } = data;
 
-					const reply = (payload) => parent.postMessage({ ...payload, cmd_id }, origin);
+					const reply = (payload) => send({ ...payload, cmd_id }, origin);
 
 					try {
 						if (action === 'set_theme') {
@@ -120,14 +124,23 @@
 				});
 
 				window.onerror = function (msg, url, lineNo, columnNo, error) {
-					parent.postMessage({ action: 'error', value: error }, '*');
+					send({ action: 'error', value: error });
 				};
 
 				window.addEventListener('unhandledrejection', (event) => {
-					parent.postMessage({ action: 'unhandledrejection', value: event.reason }, '*');
+					send({ action: 'unhandledrejection', value: event.reason });
 				});
 
-				let hash = '';
+				function intercept(method, fn) {
+					const original = console[method];
+					console[method] = (...args) => {
+						fn(...args);
+						original(...args);
+					};
+				}
+
+				const timers = new Map();
+				const counters = new Map();
 				const commands = [
 					'clear',
 					'log',
@@ -141,10 +154,10 @@
 					'groupCollapsed'
 				];
 
-				commands.forEach((level) => {
-					const original = console[level];
+				let previous = '';
 
-					console[level] = (...args) => {
+				for (const level of commands) {
+					intercept(level, (...args) => {
 						const can_duplicate =
 							level === 'log' ||
 							level === 'info' ||
@@ -155,122 +168,90 @@
 									(arg) => arg === null || (typeof arg !== 'object' && typeof arg !== 'function')
 								));
 
-						if (hash === (hash = stringify({ level, args })) && can_duplicate) {
-							parent.postMessage({ action: 'console', level, duplicate: true }, '*');
+						if (previous === (previous = stringify({ level, args })) && can_duplicate) {
+							send({ action: 'console', level, duplicate: true });
 						} else {
 							try {
-								parent.postMessage({ action: 'console', level, args }, '*');
+								send({ action: 'console', level, args });
 							} catch (err) {
-								parent.postMessage({ action: 'console', level: 'unclonable' }, '*');
+								send({ action: 'console', level: 'unclonable' });
 							}
 						}
 
 						original(...args);
-					};
+					});
+				}
+
+				intercept('time', (label = 'default') => {
+					timers.set(label, performance.now());
 				});
 
-				const timers = new Map();
-				const original_time = console.time;
-				const original_timelog = console.timeLog;
-				const original_timeend = console.timeEnd;
-
-				console.time = (label = 'default') => {
-					original_time(label);
-					timers.set(label, performance.now());
-				};
-				console.timeLog = (label = 'default') => {
-					original_timelog(label);
+				intercept('timeLog', (label = 'default') => {
 					const now = performance.now();
 					if (timers.has(label)) {
-						parent.postMessage(
-							{
-								action: 'console',
-								level: 'system-log',
-								args: [`${label}: ${now - timers.get(label)}ms`]
-							},
-							'*'
-						);
+						send({
+							action: 'console',
+							level: 'system-log',
+							args: [`${label}: ${now - timers.get(label)}ms`]
+						});
 					} else {
-						parent.postMessage(
-							{
-								action: 'console',
-								level: 'system-warn',
-								args: [`Timer '${label}' does not exist`]
-							},
-							'*'
-						);
+						send({
+							action: 'console',
+							level: 'system-warn',
+							args: [`Timer '${label}' does not exist`]
+						});
 					}
-				};
-				console.timeEnd = (label = 'default') => {
-					original_timeend(label);
+				});
+
+				intercept('timeEnd', (label = 'default') => {
 					const now = performance.now();
 					if (timers.has(label)) {
-						parent.postMessage(
-							{
-								action: 'console',
-								level: 'system-log',
-								args: [`${label}: ${now - timers.get(label)}ms`]
-							},
-							'*'
-						);
+						send({
+							action: 'console',
+							level: 'system-log',
+							args: [`${label}: ${now - timers.get(label)}ms`]
+						});
 					} else {
-						parent.postMessage(
-							{
-								action: 'console',
-								level: 'system-warn',
-								args: [`Timer '${label}' does not exist`]
-							},
-							'*'
-						);
+						send({
+							action: 'console',
+							level: 'system-warn',
+							args: [`Timer '${label}' does not exist`]
+						});
 					}
 					timers.delete(label);
-				};
+				});
 
-				const original_assert = console.assert;
-				console.assert = (condition, ...args) => {
-					if (condition) {
-						const stack = new Error().stack;
-						parent.postMessage({ action: 'console', level: 'assert', args, stack }, '*');
-					}
-					original_assert(condition, ...args);
-				};
-
-				const counter = new Map();
-				const original_count = console.count;
-				const original_countreset = console.countReset;
-
-				console.count = (label = 'default') => {
-					counter.set(label, (counter.get(label) || 0) + 1);
-					parent.postMessage(
-						{ action: 'console', level: 'system-log', args: `${label}: ${counter.get(label)}` },
-						'*'
-					);
-					original_count(label);
-				};
-
-				console.countReset = (label = 'default') => {
-					if (counter.has(label)) {
-						counter.set(label, 0);
-					} else {
-						parent.postMessage(
-							{
-								action: 'console',
-								level: 'system-warn',
-								args: `Count for '${label}' does not exist`
-							},
-							'*'
-						);
-					}
-					original_countreset(label);
-				};
-
-				const original_trace = console.trace;
-
-				console.trace = (...args) => {
+				intercept('assert', (condition, ...args) => {
+					if (condition) return;
 					const stack = new Error().stack;
-					parent.postMessage({ action: 'console', level: 'trace', args, stack }, '*');
-					original_trace(...args);
-				};
+					send({ action: 'console', level: 'assert', args, stack });
+				});
+
+				intercept('count', (label = 'default') => {
+					counters.set(label, (counters.get(label) || 0) + 1);
+					send({
+						action: 'console',
+						level: 'system-log',
+						args: [`${label}: ${counters.get(label)}`]
+					});
+				});
+
+				intercept('countReset', (label = 'default') => {
+					if (counters.has(label)) {
+						counters.set(label, 0);
+					} else {
+						send({
+							action: 'console',
+							level: 'system-warn',
+							args: [`Count for '${label}' does not exist`]
+						});
+					}
+				});
+
+				intercept('trace', (...args) => {
+					const stack = new Error().stack;
+					send({ action: 'console', level: 'trace', args, stack });
+				});
 
 				function stringify(args) {
 					try {
