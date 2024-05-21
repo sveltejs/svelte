@@ -141,17 +141,17 @@
 					parent.postMessage({ action: 'unhandledrejection', value: event.reason }, '*');
 				});
 
-				let previous = { level: null, args: null };
+				let hash = '';
 
-				['clear', 'log', 'info', 'dir', 'warn', 'error', 'table'].forEach((level) => {
+				['clear', 'log', 'info', 'dir', 'warn', 'error', 'table', 'group', 'groupEnd', 'groupCollapsed'].forEach((level) => {
 					const original = console[level];
+
 					console[level] = (...args) => {
-						const stringifiedArgs = stringify(args);
-						if (previous.level === level && previous.args && previous.args === stringifiedArgs) {
+						const can_duplicate = level === 'log' || level === 'info' || level === 'dir' || level === 'warn' || level === 'error' && args.every(arg => arg === null || (typeof arg !== 'object' && typeof arg !== 'function'));
+
+						if ((hash === (hash = stringify({ level, args }))) && can_duplicate) {
 							parent.postMessage({ action: 'console', level, duplicate: true }, '*');
 						} else {
-							previous = { level, args: stringifiedArgs };
-
 							try {
 								parent.postMessage({ action: 'console', level, args }, '*');
 							} catch (err) {
@@ -160,19 +160,6 @@
 						}
 
 						original(...args);
-					};
-				});
-
-				[
-					{ method: 'group', action: 'console_group' },
-					{ method: 'groupEnd', action: 'console_group_end' },
-					{ method: 'groupCollapsed', action: 'console_group_collapsed' }
-				].forEach((group_action) => {
-					const original = console[group_action.method];
-					console[group_action.method] = (label) => {
-						parent.postMessage({ action: group_action.action, label }, '*');
-
-						original(label);
 					};
 				});
 

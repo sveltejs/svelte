@@ -64,23 +64,28 @@
 				push_logs({ level: 'error', args: [error] });
 			},
 			on_console: (log) => {
-				if (log.level === 'clear') {
-					clear_logs();
-					push_logs(log);
-				} else if (log.duplicate) {
-					increment_duplicate_log();
-				} else {
-					push_logs(log);
+				switch (log.level) {
+					case 'clear':
+						clear_logs();
+						push_logs(log);
+						break;
+
+					case 'group':
+					case 'groupCollapsed':
+						group_logs(log.args[0], log.level === 'groupCollapsed');
+						break;
+
+					case 'groupEnd':
+						ungroup_logs();
+						break;
+
+					default:
+						if (log.duplicate) {
+							increment_duplicate_log();
+						} else {
+							push_logs(log);
+						}
 				}
-			},
-			on_console_group: (action) => {
-				group_logs(action.label, false);
-			},
-			on_console_group_end: () => {
-				ungroup_logs();
-			},
-			on_console_group_collapsed: (action) => {
-				group_logs(action.label, true);
 			}
 		});
 
@@ -209,7 +214,7 @@
 	function group_logs(label, collapsed) {
 		/** @type {import('./console/console').Log} */
 		const group_log = { level: 'group', label, collapsed, logs: [] };
-		current_log_group.push({ level: 'group', label, collapsed, logs: [] });
+		current_log_group.push(group_log);
 		// TODO: Investigate
 		log_group_stack.push(current_log_group);
 		current_log_group = group_log.logs ?? [];
