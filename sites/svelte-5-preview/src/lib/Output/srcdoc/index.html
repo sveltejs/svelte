@@ -141,32 +141,19 @@
 
 				const timers = new Map();
 				const counters = new Map();
-				const commands = [
-					'clear',
-					'log',
-					'info',
-					'dir',
-					'warn',
-					'error',
-					'table',
-					'group',
-					'groupEnd',
-					'groupCollapsed'
-				];
+
+				const simple = ['log', 'info', 'dir', 'warn', 'error'];
+				const commands = [...simple, 'clear', 'table', 'group', 'groupEnd', 'groupCollapsed'];
 
 				let previous = '';
 
 				for (const level of commands) {
 					intercept(level, (...args) => {
 						const can_duplicate =
-							level === 'log' ||
-							level === 'info' ||
-							level === 'dir' ||
-							level === 'warn' ||
-							(level === 'error' &&
-								args.every(
-									(arg) => arg === null || (typeof arg !== 'object' && typeof arg !== 'function')
-								));
+							simple.includes(level) &&
+							args.every(
+								(arg) => arg === null || (typeof arg !== 'object' && typeof arg !== 'function')
+							);
 
 						if (previous === (previous = stringify({ level, args })) && can_duplicate) {
 							send({ action: 'console', level, duplicate: true });
