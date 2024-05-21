@@ -217,8 +217,7 @@
 
 				intercept('assert', (condition, ...args) => {
 					if (condition) return;
-					const stack = new Error().stack;
-					send({ action: 'console', command: 'assert', args, stack });
+					send({ action: 'console', command: 'assert', args });
 				});
 
 				intercept('count', (label = 'default') => {

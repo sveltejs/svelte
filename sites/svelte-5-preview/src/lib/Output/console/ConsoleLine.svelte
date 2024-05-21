@@ -20,7 +20,7 @@
 		<span class="count">{log.count}x</span>
 	{/if}
 
-	{#if log.command === 'trace' || log.command === 'assert' || log.command === 'group'}
+	{#if log.command === 'trace' || log.command === 'group'}
 		<button on:click={toggle_group_collapse}>
 			<span class="arrow" class:expand={!log.collapsed}>{'\u25B6'}</span>
 			{#if log.command === 'group'}
@@ -59,7 +59,7 @@
 	{/each}
 {/if}
 
-{#if (log.command === 'trace' || log.command === 'assert') && !log.collapsed}
+{#if log.command === 'trace' && !log.collapsed}
 	<div class="trace">
 		{#each log.stack?.split('\n').slice(2) ?? '' as stack}
 			<div>{stack.replace(/^\s*at\s+/, '')}</div>
@@ -165,8 +165,6 @@
 	}
 
 	.assert {
-		padding-left: 11px;
-		font-weight: bold;
 		color: #da106e;
 	}
 </style>
