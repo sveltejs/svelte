@@ -286,16 +286,17 @@
 
 		.cm-tooltip {
 			border: none;
+			background: var(--sk-back-3);
 			font-family: var(--sk-font);
 			max-width: calc(100vw - 10em);
 			position: relative;
+			filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.1));
 		}
 
 		.cm-tooltip-section {
 			position: relative;
 			padding: 0.5em;
 			left: -13px;
-			filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.1));
 			background: var(--bg);
 			border-radius: 2px;
 			max-width: 64em;
