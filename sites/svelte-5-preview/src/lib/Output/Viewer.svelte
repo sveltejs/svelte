@@ -284,7 +284,7 @@
 		</div>
 
 		<section slot="panel-body">
-			<Console {logs} {theme} on:clear={clear_logs} />
+			<Console {logs} />
 		</section>
 	</PaneWithPanel>
 
