@@ -34,20 +34,13 @@ export const FLUSH_YIELD = 2;
 /** @param {WeakSet<Error>} value */
 const handled_errors = new WeakSet();
 // Used for controlling the flush of effects.
-export let current_scheduler_mode = FLUSH_MICROTASK;
+let current_scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
 let is_yield_task_queued = false;
 
 export let is_flushing_effect = false;
 export let is_destroying_effect = false;
-
-/**
- * @param {number} value
- */
-export function set_schedule_mode(value) {
-	current_scheduler_mode = value;
-}
 
 /** @param {boolean} value */
 export function set_is_flushing_effect(value) {
@@ -726,6 +719,19 @@ function process_effects(effect, collected_effects) {
 		child = effects[i];
 		collected_effects.push(child);
 		process_effects(child, collected_effects);
+	}
+}
+
+/**
+ * @param {{ (): void; (): any; }} fn
+ */
+export function yield_updates(fn) {
+	const previous_scheduler_mode = current_scheduler_mode;
+	try {
+		current_scheduler_mode = FLUSH_YIELD;
+		return fn();
+	} finally {
+		current_scheduler_mode = previous_scheduler_mode;
 	}
 }
 
