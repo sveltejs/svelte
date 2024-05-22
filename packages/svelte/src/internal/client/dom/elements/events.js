@@ -2,7 +2,7 @@ import { render_effect } from '../../reactivity/effects.js';
 import { all_registered_events, root_event_handles } from '../../render.js';
 import { define_property, is_array } from '../../utils.js';
 import { hydrating } from '../hydration.js';
-import { queue_task } from '../task.js';
+import { queue_micro_task } from '../task.js';
 
 /**
  * SSR adds onload and onerror attributes to catch those events before the hydration.
@@ -56,7 +56,7 @@ export function create_event(event_name, dom, handler, options) {
 	// defer the attachment till after it's been appended to the document. TODO: remove this once Chrome fixes
 	// this bug.
 	if (event_name.startsWith('pointer')) {
-		queue_task(() => {
+		queue_micro_task(() => {
 			dom.addEventListener(event_name, target_handler, options);
 		});
 	} else {
