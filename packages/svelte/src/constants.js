@@ -36,11 +36,12 @@ export const RawTextElements = ['textarea', 'script', 'style', 'title'];
 export const DelegatedEvents = [
 	'beforeinput',
 	'click',
+	'change',
 	'dblclick',
 	'contextmenu',
 	'focusin',
 	'focusout',
-	// 'input', This conflicts with bind:input
+	// 'input',
 	'keydown',
 	'keyup',
 	'mousedown',

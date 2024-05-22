@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 /** @type {string[]} */
@@ -9,14 +10,15 @@ export default test({
 		return { value };
 	},
 
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		const inputs = target.querySelectorAll('input');
 
-		const event = new window.Event('input');
+		const event = new window.Event('input', { bubbles: true });
 
 		for (const input of inputs) {
 			input.value = 'h';
-			await input.dispatchEvent(event);
+			input.dispatchEvent(event);
+			flushSync();
 		}
 
 		// Svelte 5 breaking change, use:action now fires

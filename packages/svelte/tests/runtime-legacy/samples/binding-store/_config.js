@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -15,7 +16,7 @@ export default test({
 		<div contenteditable="true">world</div>
 	`,
 
-	async test({ assert, component, target, window }) {
+	test({ assert, component, target, window }) {
 		const input = target.querySelector('input');
 		ok(input);
 		assert.equal(input.value, 'world');
@@ -31,7 +32,8 @@ export default test({
 		});
 
 		input.value = 'everybody';
-		await input.dispatchEvent(event);
+		input.dispatchEvent(event);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -43,7 +45,8 @@ export default test({
 		`
 		);
 
-		await component.name.set('goodbye');
+		component.name.set('goodbye');
+		flushSync();
 		assert.equal(input.value, 'goodbye');
 		assert.htmlEqual(
 			target.innerHTML,

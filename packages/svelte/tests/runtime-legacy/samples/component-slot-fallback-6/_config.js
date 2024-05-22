@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 // $$props reactivity in slot fallback
@@ -11,12 +12,13 @@ export default test({
 		{"value":""}
 	`,
 
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		const input = target.querySelector('input');
 		ok(input);
 
 		input.value = 'abc';
-		await input.dispatchEvent(new window.Event('input'));
+		input.dispatchEvent(new window.Event('input'));
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

@@ -19,7 +19,7 @@ export function bind_value(input, get_value, update) {
 			e.bind_invalid_checkbox_value();
 		}
 
-		update(is_numberlike_input(input) ? to_number(input.value) : input.value);
+		yield_updates(() => update(is_numberlike_input(input) ? to_number(input.value) : input.value));
 	});
 
 	render_effect(() => {
@@ -90,7 +90,7 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 			});
 		},
 		// TODO better default value handling
-		() => update(is_checkbox ? [] : null)
+		() => yield_updates(() => update(is_checkbox ? [] : null))
 	);
 
 	render_effect(() => {
