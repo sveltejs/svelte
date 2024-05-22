@@ -7,7 +7,6 @@ import { autofocus } from './misc.js';
 import { effect, effect_root } from '../../reactivity/effects.js';
 import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '../../constants.js';
-import { queue_idle_task } from '../task.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -17,7 +16,6 @@ import { queue_idle_task } from '../task.js';
  */
 export function remove_input_attr_defaults(dom) {
 	if (hydrating) {
-		queue_idle_task(() => {});
 		// using getAttribute instead of dom.value allows us to have
 		// null instead of "on" if the user didn't set a value
 		const value = dom.getAttribute('value');
