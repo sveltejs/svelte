@@ -47,8 +47,9 @@
 
 	{#if log.stack && !log.collapsed}
 		<div class="stack">
-			{#each log.stack?.split('\n').slice(2) ?? '' as stack}
-				<div>{stack.replace(/^\s*at\s+/, '')}</div>
+			{#each log.stack as line}
+				<span>{line.label}</span>
+				<span class="location">{line.location}</span>
 			{/each}
 		</div>
 	{/if}
@@ -66,22 +67,26 @@
 
 <style>
 	.line {
+		--bg: var(--sk-back-1);
+		--border: var(--sk-back-3);
 		display: block;
 		position: relative;
 		width: 100%;
 		text-align: left;
 		border-width: 1px;
-		border-top: 1px solid var(--sk-back-3);
+		border-style: solid none none none;
+		border-color: var(--border);
+		background: var(--bg);
 	}
 
 	.warn {
-		background: var(--warning-bg);
-		border-color: var(--warning-border);
+		--bg: var(--warning-bg);
+		--border: var(--warning-border);
 	}
 
 	.error {
-		background: var(--error-bg);
-		border-color: var(--error-border);
+		--bg: var(--error-bg);
+		--border: var(--error-border);
 	}
 
 	.warn,
@@ -112,9 +117,27 @@
 	}
 
 	.stack {
+		display: grid;
+		grid-template-columns: minmax(0, auto) minmax(auto, 1fr);
+		grid-gap: 0 2rem;
 		font-size: 12px;
 		font-family: var(--sk-font-mono);
-		padding: 0 0 0.4rem calc(1em + var(--indent));
+		margin: 0 1rem 0.4rem calc(1em + var(--indent));
+		overflow: hidden;
+
+		.location {
+			position: relative;
+			background: var(--bg);
+			&::before {
+				content: '';
+				position: absolute;
+				width: 1rem;
+				height: 100%;
+				left: -1rem;
+				top: 0;
+				background: linear-gradient(to right, transparent, var(--bg));
+			}
+		}
 	}
 
 	.count {

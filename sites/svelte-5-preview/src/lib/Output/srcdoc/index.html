@@ -162,6 +162,35 @@
 					}
 				}
 
+				/** @param {string} method */
+				function stack(method) {
+					return new Error().stack
+						.split('\n')
+						.filter((line) => {
+							if (/[(@]about:srcdoc/.test(line)) return false;
+							return true;
+						})
+						.slice(1)
+						.map((line) => {
+							line = line
+								.replace('console[method]', `console.${method}`)
+								.replace(/console\.<computed> \[as \w+\]/, `console.${method}`);
+
+							let match =
+								/^\s+at (.+) \((.+:\d+:\d+)\)/.exec(line) || /^(.+)@(.+:\d+:\d+)?/.exec(line);
+
+							if (match) {
+								return {
+									label: match[1],
+									location: match[2]
+								};
+							}
+
+							return null;
+						})
+						.filter((x) => x);
+				}
+
 				const can_dedupe = ['log', 'info', 'dir', 'warn', 'error', 'assert', 'trace'];
 
 				const methods = {
@@ -170,13 +199,13 @@
 					log: (...args) => log('info', { args }),
 					info: (...args) => log('info', { args }),
 					dir: (...args) => log('info', { args: [args[0]], expanded: true }),
-					warn: (...args) => log('warn', { args, stack: new Error().stack, collapsed: true }),
-					error: (...args) => log('error', { args, stack: new Error().stack, collapsed: true }),
+					warn: (...args) => log('warn', { args, stack: stack('warn'), collapsed: true }),
+					error: (...args) => log('error', { args, stack: stack('error'), collapsed: true }),
 					assert: (condition, ...args) => {
 						if (condition) return;
 						log('error', {
 							args: ['Assertion failed:', ...args],
-							stack: new Error().stack,
+							stack: stack('assert'),
 							collapsed: true
 						});
 					},
@@ -223,7 +252,7 @@
 					trace: (...args) => {
 						log('info', {
 							args: args.length === 0 ? 'console.trace' : args,
-							stack: new Error().stack,
+							stack: stack('trace'),
 							collapsed: false
 						});
 					}
