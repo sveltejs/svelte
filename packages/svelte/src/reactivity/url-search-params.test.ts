@@ -22,6 +22,7 @@ test('URLSearchParams.set', () => {
 	});
 
 	flushSync(() => {
+		// nothing should happen here
 		params.set('a', 'c');
 	});
 
@@ -45,6 +46,7 @@ test('URLSearchParams.append', () => {
 	});
 
 	flushSync(() => {
+		// nothing should happen here
 		params.set('a', 'b');
 	});
 
@@ -72,6 +74,7 @@ test('URLSearchParams.delete', () => {
 	});
 
 	flushSync(() => {
+		// nothing should happen here
 		params.delete('a');
 	});
 
@@ -123,6 +126,7 @@ test('URLSearchParams.getAll', () => {
 			log.push(params.get('a'));
 		});
 		render_effect(() => {
+			// this should only logged once because other changes shouldn't affect this
 			log.push(params.get('c'));
 		});
 		render_effect(() => {
