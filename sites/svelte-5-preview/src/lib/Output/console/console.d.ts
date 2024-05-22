@@ -6,7 +6,10 @@ export type Log = {
 	expanded?: boolean;
 	count?: number;
 	logs?: Log[];
-	stack?: string;
+	stack?: Array<{
+		label?: string;
+		location?: string;
+	}>;
 	data?: any;
 	columns?: string[];
 };
