@@ -33,9 +33,9 @@
 		{/if}
 
 		{#if log.command === 'clear'}
-			<span class="info">Console was cleared</span>
+			<span class="meta">Console was cleared</span>
 		{:else if log.command === 'unclonable'}
-			<span class="info error">Message could not be cloned. Open devtools to see it</span>
+			<span class="meta meta-error">Message could not be cloned. Open devtools to see it</span>
 		{:else if log.command === 'table'}
 			<JSONNode value={log.data} />
 		{:else}
@@ -46,7 +46,7 @@
 	</div>
 
 	{#if log.stack && !log.collapsed}
-		<div class="trace">
+		<div class="stack">
 			{#each log.stack?.split('\n').slice(2) ?? '' as stack}
 				<div>{stack.replace(/^\s*at\s+/, '')}</div>
 			{/each}
@@ -70,6 +70,31 @@
 		position: relative;
 		width: 100%;
 		text-align: left;
+		border-width: 1px;
+		border-top: 1px solid var(--sk-back-3);
+	}
+
+	.warn {
+		background: var(--warning-bg);
+		border-color: var(--warning-border);
+	}
+
+	.error {
+		background: var(--error-bg);
+		border-color: var(--error-border);
+	}
+
+	.warn,
+	.error {
+		border-style: solid none;
+
+		& + :global(&) {
+			border-top: none;
+		}
+	}
+
+	.group {
+		font-weight: 700;
 	}
 
 	.log {
@@ -86,39 +111,7 @@
 		padding-left: calc(var(--indent) + 1em);
 	}
 
-	.log > :global(*) {
-		margin-right: 10px;
-		font-family: var(--sk-font-mono);
-	}
-
-	.warn {
-		background: hsla(50, 100%, 95%, 0.4);
-		border-color: #fff4c4;
-	}
-
-	.error {
-		background: var(--error-bg);
-		border-width: 1px;
-		border-color: var(--error-border);
-		border-style: solid none;
-
-		& + :global(&) {
-			border-top: none;
-		}
-	}
-
-	.group {
-		font-weight: 700;
-	}
-
-	.group,
-	.arrow {
-		cursor: pointer;
-		user-select: none;
-	}
-
-	.trace {
-		border-bottom: 1px solid #eee;
+	.stack {
 		font-size: 12px;
 		font-family: var(--sk-font-mono);
 		padding: 0 0 0.4rem calc(1em + var(--indent));
@@ -138,13 +131,13 @@
 		font-size: 1rem;
 	}
 
-	.info {
+	.meta {
 		color: var(--sk-text-2, #666);
 		font-family: var(--sk-font) !important;
 		font-size: 12px;
 	}
 
-	.error {
+	.meta-error {
 		color: var(--error-fg);
 	}
 
@@ -165,13 +158,5 @@
 
 	.arrow.expand {
 		transform: translateX(-1.2rem) translateY(0px) rotateZ(90deg);
-	}
-
-	.title {
-		font-family: var(--sk-font-mono);
-		font-size: 13px;
-		font-weight: bold;
-		padding-left: 11px;
-		height: 19px;
 	}
 </style>

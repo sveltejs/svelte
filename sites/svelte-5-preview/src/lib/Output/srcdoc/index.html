@@ -136,7 +136,11 @@
 				const counters = new Map();
 
 				function log(command, opts) {
-					send({ action: 'console', command, ...opts });
+					try {
+						send({ action: 'console', command, ...opts });
+					} catch {
+						send({ action: 'console', command: 'unclonable' });
+					}
 				}
 
 				function stringify(args) {

@@ -16,12 +16,17 @@
 		--error-fg: #da106e;
 		--error-bg: #fff0f0;
 		--error-border: rgb(242, 214, 219);
+		--warning-bg: rgb(254, 251, 218);
+		--warning-border: rgb(242, 232, 163);
 		--json-tree-string-color: var(--sk-code-string);
+		--json-tree-font-family: var(--sk-font-mono);
 
 		:global(.dark) & {
 			--error-fg: rgb(235, 78, 109);
 			--error-bg: rgb(71, 48, 54);
 			--error-border: rgb(109, 65, 76);
+			--warning-bg: rgb(64, 56, 34);
+			--warning-border: rgb(86, 86, 51);
 
 			--json-tree-property-color: #72a2d3;
 			--json-tree-string-color: #6cd1c7;
