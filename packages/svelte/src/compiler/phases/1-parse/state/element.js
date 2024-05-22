@@ -680,6 +680,15 @@ function read_attribute_value(parser) {
 		];
 	}
 
+	/**
+	 * we need this because if we are not inside a mustache we treat
+	 * the whole thing as a string
+	 * eg.
+	 *
+	 * <input foo=cool{variable} /> it's equal to <input foo="cool{variable}" />
+	 */
+	const mustached = !quote_mark && parser.match('{');
+
 	let value;
 	try {
 		value = read_sequence(
@@ -691,6 +700,16 @@ function read_attribute_value(parser) {
 			},
 			'in attribute value'
 		);
+
+		/**
+		 * if we are in a mustache tag and the value returned is more than one
+		 * expression there's a mismatch in the expression
+		 *
+		 * <input foo={true}} /> or even <input foo={true}something />
+		 */
+		if (mustached && value.length > 1) {
+			e.attribute_invalid_expression(parser.index);
+		}
 	} catch (/** @type {any} */ error) {
 		if (error.code === 'js_parse_error') {
 			// if the attribute value didn't close + self-closing tag

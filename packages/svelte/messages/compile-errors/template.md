@@ -30,6 +30,10 @@
 
 > Event attribute must be a JavaScript expression, not a string
 
+## attribute_invalid_expression
+
+> Invalid attribute expression
+
 ## attribute_invalid_multiple
 
 > 'multiple' attribute must be static if select uses two-way binding
