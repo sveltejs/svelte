@@ -139,6 +139,8 @@ function read_selector_list(parser, inside_pseudo_class = false) {
 
 		const end = parser.index;
 
+		allow_comment_or_whitespace(parser);
+
 		parser.allow_whitespace();
 
 		if (inside_pseudo_class ? parser.match(')') : parser.match('{')) {
@@ -324,7 +326,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 		}
 
 		const index = parser.index;
-		parser.allow_whitespace();
+		allow_comment_or_whitespace(parser);
 
 		if (parser.match(',') || (inside_pseudo_class ? parser.match(')') : parser.match('{'))) {
 			// rewind, so we know whether to continue building the selector list
