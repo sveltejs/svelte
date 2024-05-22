@@ -113,3 +113,39 @@ test('URLSearchParams.get', () => {
 
 	cleanup();
 });
+
+test('URLSearchParams.getAll', () => {
+	const params = new ReactiveURLSearchParams('a=b&c=d');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(params.get('a'));
+		});
+		render_effect(() => {
+			log.push(params.get('c'));
+		});
+		render_effect(() => {
+			log.push(params.get('q'));
+		});
+		render_effect(() => {
+			log.push(params.getAll('a'));
+		});
+		render_effect(() => {
+			log.push(params.getAll('q'));
+		});
+	});
+
+	flushSync(() => {
+		// this shouldn't affect params.get(a) because it already exists
+		params.append('a', 'b1');
+	});
+
+	flushSync(() => {
+		params.append('q', 'z');
+	});
+
+	assert.deepEqual(log, ['b', 'd', null, ['b'], [], ['b', 'b1'], 'z', ['z']]);
+
+	cleanup();
+});
