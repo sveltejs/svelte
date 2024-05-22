@@ -4,6 +4,7 @@ import { stringify } from '../../../render.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
 import { get_proxied_value, is } from '../../../proxy.js';
+import { yield_updates } from '../../../runtime.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -84,7 +85,9 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 				value = get_binding_group_value(binding_group, value, input.checked);
 			}
 
-			update(value);
+			yield_updates(() => {
+				update(value);
+			});
 		},
 		// TODO better default value handling
 		() => update(is_checkbox ? [] : null)
