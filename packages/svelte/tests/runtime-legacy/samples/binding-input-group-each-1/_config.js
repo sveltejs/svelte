@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 /** @type {Array<{ name: string }>} */
@@ -112,7 +113,7 @@ export default test({
 		</div>
 	`,
 
-	async test({ assert, component, target, window }) {
+	test({ assert, component, target, window }) {
 		const inputs = target.querySelectorAll('input');
 		assert.equal(inputs[0].checked, false);
 		assert.equal(inputs[1].checked, true);
@@ -127,8 +128,8 @@ export default test({
 		const event = new window.Event('change');
 
 		inputs[0].checked = true;
-		await inputs[0].dispatchEvent(event);
-		await Promise.resolve();
+		inputs[0].dispatchEvent(event);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -181,8 +182,8 @@ export default test({
 		`
 		);
 		inputs[3].checked = true;
-		await inputs[3].dispatchEvent(event);
-		await Promise.resolve();
+		inputs[3].dispatchEvent(event);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -236,8 +237,8 @@ export default test({
 		);
 
 		inputs[8].checked = false;
-		await inputs[8].dispatchEvent(event);
-		await Promise.resolve();
+		inputs[8].dispatchEvent(event);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -7,7 +8,7 @@ export default test({
 		<button></button>
 	`,
 
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		const [p1, p2] = target.querySelectorAll('p');
 
 		assert.equal(window.getComputedStyle(p1).color, 'red');
@@ -16,7 +17,7 @@ export default test({
 		const btn = target.querySelector('button');
 		console.log(btn);
 		btn?.click();
-		await Promise.resolve();
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

@@ -1,8 +1,9 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 // https://github.com/sveltejs/svelte/issues/6112
 export default test({
-	async test({ assert, target, component, window }) {
+	test({ assert, target, component, window }) {
 		let inputs = target.querySelectorAll('input');
 
 		/** @param {Set<number>} set */
@@ -45,8 +46,8 @@ export default test({
 
 		// dom to value
 		inputs[3].checked = true;
-		await inputs[3].dispatchEvent(event);
-		await Promise.resolve();
+		inputs[3].dispatchEvent(event);
+		flushSync();
 
 		check(new Set([0, 3, 5, 6]));
 		assert.equal(component.pipelineOperations[1].operation.args[1].value, 'd');
@@ -84,8 +85,8 @@ export default test({
 		check(new Set([0, 3, 5, 6]));
 
 		inputs[2].checked = true;
-		await inputs[2].dispatchEvent(event);
-		await Promise.resolve();
+		inputs[2].dispatchEvent(event);
+		flushSync();
 
 		check(new Set([0, 2, 5, 6]));
 	}

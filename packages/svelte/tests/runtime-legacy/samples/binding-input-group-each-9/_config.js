@@ -1,18 +1,19 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 // https://github.com/sveltejs/svelte/issues/7633
 export default test({
-	async test({ assert, target, component }) {
+	test({ assert, target, component }) {
 		let inputs = target.querySelectorAll('input');
 
 		assert.equal(inputs[0].checked, true);
 		assert.equal(inputs[1].checked, false);
 		assert.equal(inputs[2].checked, false);
 
-		await component.moveDown(0);
-		await component.moveDown(1);
-
-		await Promise.resolve();
+		component.moveDown(0);
+		flushSync();
+		component.moveDown(1);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -34,13 +35,15 @@ export default test({
 		assert.equal(inputs[1].checked, false);
 		assert.equal(inputs[2].checked, true);
 
-		await (component.current = 'b');
+		component.current = 'b';
+		flushSync();
 
 		assert.equal(inputs[0].checked, true);
 		assert.equal(inputs[1].checked, false);
 		assert.equal(inputs[2].checked, false);
 
-		await component.moveDown(1);
+		component.moveDown(1);
+		flushSync();
 
 		// after shifting order, should still keep the correct radio checked
 		inputs = target.querySelectorAll('input');

@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -51,14 +52,15 @@ export default test({
 		};
 	},
 
-	async test({ assert, component, target, window }) {
+	test({ assert, component, target, window }) {
 		const input = /** @type {HTMLInputElement} */ (
 			document.querySelectorAll('input[type="checkbox"]')[2]
 		);
 		const change = new window.Event('change');
 
 		input.checked = true;
-		await input.dispatchEvent(change);
+		input.dispatchEvent(change);
+		flushSync();
 
 		assert.ok(component.todos.third.done);
 		assert.htmlEqual(

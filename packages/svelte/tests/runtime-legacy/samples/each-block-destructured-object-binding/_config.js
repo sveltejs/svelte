@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -19,12 +20,12 @@ export default test({
 		<p>Doctor Who</p>
 	`,
 
-	async test({ assert, component, target, window }) {
+	test({ assert, component, target, window }) {
 		const inputs = target.querySelectorAll('input');
 
 		inputs[1].value = 'Oz';
-		await inputs[1].dispatchEvent(new window.Event('input'));
-		await Promise.resolve();
+		inputs[1].dispatchEvent(new window.Event('input'));
+		flushSync();
 
 		const { people } = component;
 
