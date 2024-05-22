@@ -73,3 +73,40 @@ test('url.searchParams', () => {
 
 	cleanup();
 });
+
+test('url.href', () => {
+	const url = new ReactiveURL('https://svelte.dev?foo=bar&t=123');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(url.href);
+		});
+	});
+
+	flushSync(() => {
+		url.search = '?q=kit&foo=baz';
+	});
+
+	flushSync(() => {
+		url.searchParams.append('foo', 'qux');
+	});
+
+	flushSync(() => {
+		url.searchParams.delete('foo');
+	});
+
+	flushSync(() => {
+		url.searchParams.set('love', 'svelte5');
+	});
+
+	assert.deepEqual(log, [
+		'https://svelte.dev/?foo=bar&t=123',
+		'https://svelte.dev/?q=kit&foo=baz',
+		'https://svelte.dev/?q=kit&foo=baz&foo=qux',
+		'https://svelte.dev/?q=kit',
+		'https://svelte.dev/?q=kit&love=svelte5'
+	]);
+
+	cleanup();
+});
