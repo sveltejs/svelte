@@ -103,7 +103,7 @@
 		margin: 8px;
 		overflow: auto;
 		max-height: 200px;
-		border: 1px solid var(--sk-back-3);
+		border: 1px solid var(--sk-back-4);
 		border-radius: 2px;
 		overscroll-behavior: none;
 	}

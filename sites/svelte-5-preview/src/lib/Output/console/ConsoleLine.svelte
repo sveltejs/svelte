@@ -15,7 +15,7 @@
 	<ConsoleTable data={log.data} columns={log.columns} />
 {/if}
 
-<div class="line console-{log.command}" style="--indent: {depth * 15}px">
+<div class="{log.command} line" style="--indent: {depth * 15}px">
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<div
 		role="button"
@@ -91,12 +91,12 @@
 		font-family: var(--sk-font-mono);
 	}
 
-	.console-warn {
+	.warn {
 		background: hsla(50, 100%, 95%, 0.4);
 		border-color: #fff4c4;
 	}
 
-	.console-error {
+	.error {
 		background: var(--error-bg);
 		border-width: 1px;
 		border-color: var(--error-border);
@@ -107,11 +107,11 @@
 		}
 	}
 
-	.console-group {
+	.group {
 		font-weight: 700;
 	}
 
-	.console-group,
+	.group,
 	.arrow {
 		cursor: pointer;
 		user-select: none;
@@ -121,11 +121,7 @@
 		border-bottom: 1px solid #eee;
 		font-size: 12px;
 		font-family: var(--sk-font-mono);
-		padding: 4px 0 2px var(--indent);
-	}
-
-	.trace > :global(div) {
-		margin-left: 15px;
+		padding: 0 0 0.4rem calc(1em + var(--indent));
 	}
 
 	.count {
