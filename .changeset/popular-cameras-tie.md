@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-breaking: delegated event handlers now yield effect updates
+breaking: event handlers + bindings now yield effect updates
