@@ -14,11 +14,6 @@ export default test({
 		<p>selected: two</p>
 	`,
 
-	ssrHtml: `
-		<select value="two"></select>
-		<p>selected: two</p>
-	`,
-
 	async test({ assert, component, target }) {
 		component.items = ['one', 'two', 'three'];
 
