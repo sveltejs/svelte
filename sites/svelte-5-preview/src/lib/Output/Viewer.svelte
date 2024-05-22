@@ -71,20 +71,19 @@
 						break;
 
 					case 'group':
-					case 'groupCollapsed':
-						group_logs(log.args[0], log.command === 'groupCollapsed');
+						group_logs(log);
 						break;
 
 					case 'groupEnd':
 						ungroup_logs();
 						break;
 
+					case 'duplicate':
+						increment_duplicate_log();
+						break;
+
 					default:
-						if (log.duplicate) {
-							increment_duplicate_log();
-						} else {
-							push_logs(log);
-						}
+						push_logs(log);
 				}
 			}
 		});
@@ -207,17 +206,13 @@
 		logs = logs;
 	}
 
-	/**
-	 * @param {string} label
-	 * @param {boolean} collapsed
-	 */
-	function group_logs(label, collapsed) {
-		/** @type {import('./console/console').Log} */
-		const group_log = { command: 'group', label, collapsed, logs: [] };
-		current_log_group.push(group_log);
+	/** @param {import('./console/console').Log} log */
+	function group_logs(log) {
+		log.logs = [];
+		current_log_group.push(log);
 		// TODO: Investigate
 		log_group_stack.push(current_log_group);
-		current_log_group = group_log.logs ?? [];
+		current_log_group = log.logs;
 		logs = logs;
 	}
 

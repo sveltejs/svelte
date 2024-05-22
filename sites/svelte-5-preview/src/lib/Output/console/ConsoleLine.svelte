@@ -11,47 +11,52 @@
 	}
 </script>
 
-{#if log.args && log.command === 'table'}
-	<ConsoleTable data={log.args[0]} columns={log.args[1]} />
+{#if log.command === 'table'}
+	<ConsoleTable data={log.data} columns={log.columns} />
 {/if}
 
-<span class="log console-{log.command}" style="padding-left: {depth * 15}px">
-	{#if log.count && log.count > 1}
-		<span class="count">{log.count}</span>
-	{/if}
+<div class="line console-{log.command}" style="--indent: {depth * 15}px">
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<div
+		role="button"
+		tabindex="0"
+		on:click={toggle_group_collapse}
+		class="log"
+		class:expandable={log.stack || log.command === 'group'}
+	>
+		{#if log.count && log.count > 1}
+			<span class="count">{log.count}</span>
+		{/if}
 
-	{#if log.command === 'trace' || log.command === 'group'}
-		<button on:click={toggle_group_collapse}>
+		{#if log.stack || log.command === 'group'}
 			<span class="arrow" class:expand={!log.collapsed}>{'\u25B6'}</span>
-			{#if log.command === 'group'}
-				<span class="title">{log.label}</span>
-			{/if}
-		</button>
+		{/if}
+
+		{#if log.command === 'clear'}
+			<span class="info">Console was cleared</span>
+		{:else if log.command === 'unclonable'}
+			<span class="info error">Message could not be cloned. Open devtools to see it</span>
+		{:else if log.command === 'table'}
+			<JSONNode value={log.data} />
+		{:else}
+			{#each log.args ?? [] as arg}
+				<JSONNode value={arg} defaultExpandedLevel={log.expanded ? 1 : 0} />
+			{/each}
+		{/if}
+	</div>
+
+	{#if log.stack && !log.collapsed}
+		<div class="trace">
+			{#each log.stack?.split('\n').slice(2) ?? '' as stack}
+				<div>{stack.replace(/^\s*at\s+/, '')}</div>
+			{/each}
+		</div>
 	{/if}
 
-	{#if log.command === 'assert'}
-		<span class="assert">Assertion failed:</span>
-	{/if}
-
-	{#if log.command === 'clear'}
-		<span class="info">Console was cleared</span>
-	{:else if log.command === 'unclonable'}
-		<span class="info error">Message could not be cloned. Open devtools to see it</span>
-	{:else if log.command.startsWith('system')}
-		{#each log.args ?? [] as arg}
-			{arg}
-		{/each}
-	{:else if log.args && log.command === 'table'}
-		<JSONNode value={log.args[0]} />
-	{:else}
-		{#each log.args ?? [] as arg}
-			<JSONNode value={arg} />
-		{/each}
-	{/if}
 	{#each new Array(depth - 1) as _, idx}
 		<div class="outline" style="left: {idx * 15 + 15}px"></div>
 	{/each}
-</span>
+</div>
 
 {#if log.command === 'group' && !log.collapsed}
 	{#each log.logs ?? [] as childLog}
@@ -59,22 +64,25 @@
 	{/each}
 {/if}
 
-{#if log.command === 'trace' && !log.collapsed}
-	<div class="trace">
-		{#each log.stack?.split('\n').slice(2) ?? '' as stack}
-			<div>{stack.replace(/^\s*at\s+/, '')}</div>
-		{/each}
-	</div>
-{/if}
-
 <style>
+	.line {
+		display: block;
+		position: relative;
+		width: 100%;
+		text-align: left;
+	}
+
 	.log {
 		/* border-bottom: 0.5px solid var(--sk-back-4); */
-		padding: 5px 10px 5px;
+		padding: 5px 10px 5px var(--indent);
 		display: flex;
-		position: relative;
+		width: 100%;
 		font-size: 12px;
 		font-family: var(--sk-font-mono);
+	}
+
+	.log.expandable {
+		cursor: pointer;
 	}
 
 	.log > :global(*) {
@@ -82,14 +90,12 @@
 		font-family: var(--sk-font-mono);
 	}
 
-	.console-warn,
-	.console-system-warn {
+	.console-warn {
 		background: hsla(50, 100%, 95%, 0.4);
 		border-color: #fff4c4;
 	}
 
-	.console-error,
-	.console-assert {
+	.console-error {
 		background: var(--error-bg);
 		border-width: 1px;
 		border-color: var(--error-border);
@@ -110,7 +116,7 @@
 		border-bottom: 1px solid #eee;
 		font-size: 12px;
 		font-family: var(--sk-font-mono);
-		padding: 4px 0 2px;
+		padding: 4px 0 2px var(--indent);
 	}
 
 	.trace > :global(div) {
@@ -129,8 +135,6 @@
 		background-color: var(--sk-text-3, #777);
 		color: var(--sk-back-1);
 		font-size: 1rem;
-		top: 0.2rem;
-		line-height: 1;
 	}
 
 	.info {
@@ -168,9 +172,5 @@
 		font-weight: bold;
 		padding-left: 11px;
 		height: 19px;
-	}
-
-	.assert {
-		color: #da106e;
 	}
 </style>

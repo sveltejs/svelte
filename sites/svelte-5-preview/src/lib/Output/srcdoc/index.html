@@ -131,120 +131,13 @@
 					send({ action: 'unhandledrejection', value: event.reason });
 				});
 
-				function intercept(method, fn) {
-					const original = console[method];
-					console[method] = (...args) => {
-						fn(...args);
-						original(...args);
-					};
-				}
-
+				// Intercept console methods
 				const timers = new Map();
 				const counters = new Map();
 
-				const simple = ['log', 'info', 'dir', 'warn', 'error'];
-				const commands = [...simple, 'clear', 'group', 'groupEnd', 'groupCollapsed'];
-
-				let previous = '';
-
-				for (const command of commands) {
-					intercept(command, (...args) => {
-						const can_duplicate =
-							simple.includes(command) &&
-							args.every(
-								(arg) => arg === null || (typeof arg !== 'object' && typeof arg !== 'function')
-							);
-
-						if (previous === (previous = stringify({ command, args })) && can_duplicate) {
-							send({ action: 'console', command, duplicate: true });
-						} else {
-							try {
-								send({ action: 'console', command, args });
-							} catch (err) {
-								send({ action: 'console', command: 'unclonable' });
-							}
-						}
-					});
+				function log(command, opts) {
+					send({ action: 'console', command, ...opts });
 				}
-
-				intercept('table', (...args) => {
-					const value = args[0];
-					if (value && typeof value === 'object') {
-						send({ action: 'console', command: 'table', args });
-					} else {
-						send({ action: 'console', command: 'log', args });
-					}
-				});
-
-				intercept('time', (label = 'default') => {
-					timers.set(label, performance.now());
-				});
-
-				intercept('timeLog', (label = 'default') => {
-					const now = performance.now();
-					if (timers.has(label)) {
-						send({
-							action: 'console',
-							command: 'system-log',
-							args: [`${label}: ${now - timers.get(label)}ms`]
-						});
-					} else {
-						send({
-							action: 'console',
-							command: 'system-warn',
-							args: [`Timer '${label}' does not exist`]
-						});
-					}
-				});
-
-				intercept('timeEnd', (label = 'default') => {
-					const now = performance.now();
-					if (timers.has(label)) {
-						send({
-							action: 'console',
-							command: 'system-log',
-							args: [`${label}: ${now - timers.get(label)}ms`]
-						});
-					} else {
-						send({
-							action: 'console',
-							command: 'system-warn',
-							args: [`Timer '${label}' does not exist`]
-						});
-					}
-					timers.delete(label);
-				});
-
-				intercept('assert', (condition, ...args) => {
-					if (condition) return;
-					send({ action: 'console', command: 'assert', args });
-				});
-
-				intercept('count', (label = 'default') => {
-					counters.set(label, (counters.get(label) || 0) + 1);
-					send({
-						action: 'console',
-						command: 'system-log',
-						args: [`${label}: ${counters.get(label)}`]
-					});
-				});
-
-				intercept('countReset', (label = 'default') => {
-					if (counters.has(label)) {
-						counters.set(label, 0);
-					} else {
-						send({
-							action: 'console',
-							command: 'system-warn',
-							args: [`Count for '${label}' does not exist`]
-						});
-					}
-				});
-
-				intercept('trace', (...args) => {
-					const stack = new Error().stack;
-					send({ action: 'console', command: 'trace', args, stack });
-				});
 
 				function stringify(args) {
 					try {
@@ -263,6 +156,95 @@
 					} catch (error) {
 						return null;
 					}
+				}
+
+				const can_dedupe = ['log', 'info', 'dir', 'warn', 'error', 'assert', 'trace'];
+
+				const methods = {
+					clear: () => log('clear'),
+					// TODO make the command 'push' and the level/type 'info'
+					log: (...args) => log('info', { args }),
+					info: (...args) => log('info', { args }),
+					dir: (...args) => log('info', { args: [args[0]], expanded: true }),
+					warn: (...args) => log('warn', { args, stack: new Error().stack, collapsed: true }),
+					error: (...args) => log('error', { args, stack: new Error().stack, collapsed: true }),
+					assert: (condition, ...args) => {
+						if (condition) return;
+						log('error', {
+							args: ['Assertion failed:', ...args],
+							stack: new Error().stack,
+							collapsed: true
+						});
+					},
+					group: (...args) => log('group', { args, collapsed: false }),
+					groupCollapsed: (...args) => log('group', { args, collapsed: true }),
+					groupEnd: () => log('groupEnd'),
+					table: (...args) => {
+						const data = args[0];
+						if (data && typeof data === 'object') {
+							log('table', { data, columns: args[1] });
+						} else {
+							log('info', { args });
+						}
+					},
+					time: (label = 'default') => timers.set(label, performance.now()),
+					timeLog: (label = 'default') => {
+						const now = performance.now();
+						if (timers.has(label)) {
+							log('info', { args: [`${label}: ${now - timers.get(label)}ms`] });
+						} else {
+							log('warn', { args: [`Timer '${label}' does not exist`] });
+						}
+					},
+					timeEnd: (label = 'default') => {
+						const now = performance.now();
+						if (timers.has(label)) {
+							log('info', { args: [`${label}: ${now - timers.get(label)}ms`] });
+						} else {
+							log('warn', { args: [`Timer '${label}' does not exist`] });
+						}
+						timers.delete(label);
+					},
+					count: (label = 'default') => {
+						counters.set(label, (counters.get(label) || 0) + 1);
+						log('info', { args: [`${label}: ${counters.get(label)}`] });
+					},
+					countReset: (label = 'default') => {
+						if (counters.has(label)) {
+							counters.set(label, 0);
+						} else {
+							log('warn', { args: [`Count for '${label}' does not exist`] });
+						}
+					},
+					trace: (...args) => {
+						log('info', {
+							args: args.length === 0 ? 'console.trace' : args,
+							stack: new Error().stack,
+							collapsed: false
+						});
+					}
+				};
+
+				let previous = '';
+
+				for (const method in methods) {
+					const original = console[method];
+
+					console[method] = (...args) => {
+						const stack = new Error().stack;
+
+						if (
+							previous === (previous = stringify({ method, args, stack })) &&
+							can_dedupe.includes(method) &&
+							args.every((arg) => !arg || typeof arg !== 'object')
+						) {
+							send({ action: 'console', command: 'duplicate' });
+						} else {
+							methods[method](...args);
+						}
+
+						original(...args);
+					};
 				}
 			})();
 		</script>
