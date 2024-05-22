@@ -204,7 +204,7 @@ export function handle_event_propagation(handler_element, event) {
 	}
 
 	try {
-		yield_updates(() => next(/** @type {Element} */ (current_target)))
+		yield_updates(() => next(/** @type {Element} */ (current_target)));
 	} finally {
 		// @ts-expect-error is used above
 		event.__root = handler_element;
