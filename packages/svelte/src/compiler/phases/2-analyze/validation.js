@@ -393,6 +393,23 @@ const validation = {
 					);
 				}
 
+				if (property.invalid_elements && property.invalid_elements.includes(parent.name)) {
+					const valid_bindings = Object.entries(binding_properties)
+						.filter(([_, binding_property]) => {
+							return (
+								binding_property.valid_elements?.includes(parent.name) ||
+								(!binding_property.valid_elements &&
+									!binding_property.invalid_elements?.includes(parent.name))
+							);
+						})
+						.map(([property_name]) => property_name);
+					e.bind_invalid_name(
+						node,
+						node.name,
+						`Possible bindings for <${parent.name}> are ${valid_bindings.join(', ')}`
+					);
+				}
+
 				if (parent.name === 'input' && node.name !== 'this') {
 					const type = /** @type {import('#compiler').Attribute | undefined} */ (
 						parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'type')

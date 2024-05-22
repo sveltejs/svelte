@@ -2,26 +2,38 @@ import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of, map_get, map_set } from '../../utils.js';
 import { AttributeAliases, DelegatedEvents, namespace_svg } from '../../../../constants.js';
-import { delegate } from './events.js';
-import { autofocus } from './misc.js';
+import { create_event, delegate } from './events.js';
+import { add_form_reset_listener, autofocus } from './misc.js';
 import { effect, effect_root } from '../../reactivity/effects.js';
 import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '../../constants.js';
+import { queue_idle_task } from '../task.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
  * to remove it upon hydration to avoid a bug when someone resets the form value.
- * @param {HTMLInputElement | HTMLSelectElement} dom
+ * @param {HTMLInputElement} dom
  * @returns {void}
  */
 export function remove_input_attr_defaults(dom) {
 	if (hydrating) {
-		// using getAttribute instead of dom.value allows us to have
-		// null instead of "on" if the user didn't set a value
-		const value = dom.getAttribute('value');
-		set_attribute(dom, 'value', null);
-		set_attribute(dom, 'checked', null);
-		if (value) dom.value = value;
+		let already_removed = false;
+		// We try and remove the default attributes later, rather than sync during hydration.
+		// Doing it sync during hydration has a negative impact on performance, but deferring the
+		// work in an idle task alleviates this greatly. If a form reset event comes in before
+		// the idle callback, then we ensure the input defaults are cleared just before.
+		const remove_defaults = () => {
+			if (already_removed) return;
+			already_removed = true;
+			const value = dom.getAttribute('value');
+			set_attribute(dom, 'value', null);
+			set_attribute(dom, 'checked', null);
+			if (value) dom.value = value;
+		};
+		// @ts-expect-error
+		dom.__on_r = remove_defaults;
+		queue_idle_task(remove_defaults);
+		add_form_reset_listener();
 	}
 }
 
@@ -151,9 +163,13 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 				if (!delegated) {
 					// we use `addEventListener` here because these events are not delegated
 					if (!prev) {
-						events.push([key, value, () => element.addEventListener(event_name, value, opts)]);
+						events.push([
+							key,
+							value,
+							() => (next[key] = create_event(event_name, element, value, opts))
+						]);
 					} else {
-						element.addEventListener(event_name, value, opts);
+						next[key] = create_event(event_name, element, value, opts);
 					}
 				} else {
 					// @ts-ignore

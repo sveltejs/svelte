@@ -16,7 +16,6 @@ coverage
 .env.test
 
 # build output
-dist
 .vercel
 
 # OS-specific

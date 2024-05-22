@@ -1,4 +1,5 @@
 import { render_effect } from '../../../reactivity/effects.js';
+import { add_form_reset_listener } from '../misc.js';
 
 /**
  * Fires the handler once immediately (unless corresponding arg is set to `false`),
@@ -26,8 +27,6 @@ export function listen(target, events, handler, call_handler_immediately = true)
 	});
 }
 
-let listening_to_form_reset = false;
-
 /**
  * Listen to the given event, and then instantiate a global form reset listener if not already done,
  * to notify all bindings when the form is reset
@@ -52,24 +51,5 @@ export function listen_to_event_and_reset_event(element, event, handler, on_rese
 		element.__on_r = on_reset;
 	}
 
-	if (!listening_to_form_reset) {
-		listening_to_form_reset = true;
-		document.addEventListener(
-			'reset',
-			(evt) => {
-				// Needs to happen one tick later or else the dom properties of the form
-				// elements have not updated to their reset values yet
-				Promise.resolve().then(() => {
-					if (!evt.defaultPrevented) {
-						for (const e of /**@type {HTMLFormElement} */ (evt.target).elements) {
-							// @ts-expect-error
-							e.__on_r?.();
-						}
-					}
-				});
-			},
-			// In the capture phase to guarantee we get noticed of it (no possiblity of stopPropagation)
-			{ capture: true }
-		);
-	}
+	add_form_reset_listener();
 }

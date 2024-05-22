@@ -3,6 +3,7 @@ import { all_registered_events, root_event_handles } from '../../render.js';
 import { yield_updates } from '../../runtime.js';
 import { define_property, is_array } from '../../utils.js';
 import { hydrating } from '../hydration.js';
+import { queue_micro_task } from '../task.js';
 
 /**
  * SSR adds onload and onerror attributes to catch those events before the hydration.
@@ -35,18 +36,14 @@ export function replay_events(dom) {
  * @param {string} event_name
  * @param {Element} dom
  * @param {EventListener} handler
- * @param {boolean} capture
- * @param {boolean} [passive]
- * @returns {void}
+ * @param {AddEventListenerOptions} options
  */
-export function event(event_name, dom, handler, capture, passive) {
-	var options = { capture, passive };
-
+export function create_event(event_name, dom, handler, options) {
 	/**
 	 * @this {EventTarget}
 	 */
 	function target_handler(/** @type {Event} */ event) {
-		if (!capture) {
+		if (!options.capture) {
 			// Only call in the bubble phase, else delegated events would be called before the capturing events
 			handle_event_propagation(dom, event);
 		}
@@ -55,7 +52,32 @@ export function event(event_name, dom, handler, capture, passive) {
 		}
 	}
 
-	dom.addEventListener(event_name, target_handler, options);
+	// Chrome has a bug where pointer events don't work when attached to a DOM element that has been cloned
+	// with cloneNode() and the DOM element is disconnected from the document. To ensure the event works, we
+	// defer the attachment till after it's been appended to the document. TODO: remove this once Chrome fixes
+	// this bug.
+	if (event_name.startsWith('pointer')) {
+		queue_micro_task(() => {
+			dom.addEventListener(event_name, target_handler, options);
+		});
+	} else {
+		dom.addEventListener(event_name, target_handler, options);
+	}
+
+	return target_handler;
+}
+
+/**
+ * @param {string} event_name
+ * @param {Element} dom
+ * @param {EventListener} handler
+ * @param {boolean} capture
+ * @param {boolean} [passive]
+ * @returns {void}
+ */
+export function event(event_name, dom, handler, capture, passive) {
+	var options = { capture, passive };
+	var target_handler = create_event(event_name, dom, handler, options);
 
 	// @ts-ignore
 	if (dom === document.body || dom === window || dom === document) {

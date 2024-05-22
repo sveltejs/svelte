@@ -467,9 +467,16 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
  * @param {import('estree').Identifier} node_id
  * @param {import('#compiler').Attribute} attribute
  * @param {import('../types.js').ComponentContext} context
+ * @param {boolean} needs_isolation
  * @returns {boolean}
  */
-function serialize_element_attribute_update_assignment(element, node_id, attribute, context) {
+function serialize_element_attribute_update_assignment(
+	element,
+	node_id,
+	attribute,
+	context,
+	needs_isolation
+) {
 	const state = context.state;
 	const name = get_attribute_name(element, attribute, context);
 	const is_svg = context.state.metadata.namespace === 'svg';
@@ -514,7 +521,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 	}
 
 	if (attribute.metadata.dynamic) {
-		if (contains_call_expression) {
+		if (contains_call_expression || needs_isolation) {
 			state.init.push(serialize_update(update));
 		} else {
 			state.update.push(update);
@@ -1990,7 +1997,7 @@ export const template_visitors = {
 			child_metadata.bound_contenteditable = true;
 		}
 
-		if (needs_input_reset && (node.name === 'input' || node.name === 'select')) {
+		if (needs_input_reset && node.name === 'input') {
 			context.state.init.push(b.stmt(b.call('$.remove_input_attr_defaults', context.state.node)));
 		}
 
@@ -2065,7 +2072,24 @@ export const template_visitors = {
 				const is =
 					is_custom_element && child_metadata.namespace !== 'foreign'
 						? serialize_custom_element_attribute_update_assignment(node_id, attribute, context)
-						: serialize_element_attribute_update_assignment(node, node_id, attribute, context);
+						: serialize_element_attribute_update_assignment(
+								node,
+								node_id,
+								attribute,
+								context,
+								/**
+								 * if the input needs input or content reset we also
+								 * want to isolate the template effect or else every
+								 * unrelated change will reset the value (and the user could)
+								 * change the value outside of the reactivity
+								 *
+								 * <input value={val} />
+								 *
+								 * should only be updated when val changes and not when another
+								 * unrelated variable changes.
+								 * */
+								needs_content_reset || needs_input_reset
+							);
 				if (is) is_attributes_reactive = true;
 			}
 		}
