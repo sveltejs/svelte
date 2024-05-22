@@ -132,7 +132,7 @@ test('fine grained tests', () => {
 	};
 
 	const reset_change = () => {
-		for (const key of Object.keys(changes) as (keyof typeof url)[]) {
+		for (const key of Object.keys(changes) as Array<keyof typeof url>) {
 			changes[key] = false;
 		}
 	};
