@@ -25,7 +25,7 @@ export default test({
 
 		assert.equal(inputs[0].value, 'one');
 
-		const event = new window.Event('input');
+		const event = new window.Event('input', { bubbles: true });
 
 		inputs[1].value = 'four';
 		inputs[1].dispatchEvent(event);

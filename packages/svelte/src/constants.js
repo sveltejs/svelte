@@ -41,7 +41,7 @@ export const DelegatedEvents = [
 	'contextmenu',
 	'focusin',
 	'focusout',
-	// 'input',
+	'input',
 	'keydown',
 	'keyup',
 	'mousedown',

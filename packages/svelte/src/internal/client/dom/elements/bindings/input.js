@@ -85,9 +85,7 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 				value = get_binding_group_value(binding_group, value, input.checked);
 			}
 
-			yield_updates(() => {
-				update(value);
-			});
+			yield_updates(() => update(value));
 		},
 		// TODO better default value handling
 		() => yield_updates(() => update(is_checkbox ? [] : null))
@@ -131,7 +129,7 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 export function bind_checked(input, get_value, update) {
 	listen_to_event_and_reset_event(input, 'change', () => {
 		var value = input.checked;
-		update(value);
+		yield_updates(() => update(value));
 	});
 
 	if (get_value() == undefined) {
@@ -190,7 +188,7 @@ function to_number(value) {
  */
 export function bind_files(input, get_value, update) {
 	listen_to_event_and_reset_event(input, 'change', () => {
-		update(input.files);
+		yield_updates(() => update(input.files));
 	});
 	render_effect(() => {
 		input.files = get_value();
