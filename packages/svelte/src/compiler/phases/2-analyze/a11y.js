@@ -1023,7 +1023,8 @@ function check_element(node, state) {
 		} else if (!has_spread) {
 			const id_attribute = get_static_value(attribute_map.get('id'));
 			const name_attribute = get_static_value(attribute_map.get('name'));
-			if (!id_attribute && !name_attribute) {
+			const aria_disabled_attribute = get_static_value(attribute_map.get('aria-disabled'));
+			if (!id_attribute && !name_attribute && aria_disabled_attribute !== 'true') {
 				warn_missing_attribute(node, ['href']);
 			}
 		}
