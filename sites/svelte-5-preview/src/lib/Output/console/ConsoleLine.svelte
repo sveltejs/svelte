@@ -83,6 +83,7 @@
 
 	.log.expandable {
 		cursor: pointer;
+		padding-left: calc(var(--indent) + 1em);
 	}
 
 	.log > :global(*) {
@@ -163,11 +164,11 @@
 		font-size: 0.9rem;
 		transition: 150ms;
 		transform-origin: 50% 50%;
-		transform: translateY(-1px);
+		transform: translateX(-1.2rem) translateY(-1px);
 	}
 
 	.arrow.expand {
-		transform: translateY(0px) rotateZ(90deg);
+		transform: translateX(-1.2rem) translateY(0px) rotateZ(90deg);
 	}
 
 	.title {
