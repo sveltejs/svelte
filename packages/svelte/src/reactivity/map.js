@@ -4,29 +4,29 @@ export const ReactiveMap = make_reactive(Map, {
 	write_properties: ['clear', 'delete', 'set'],
 	read_properties: ['get', 'keys', 'has'],
 	interceptors: {
-		set: (notify_read_methods, value, property, ...params) => {
+		set: (notify_read_properties, value, property, ...params) => {
 			if (value.get(params[0]) === params[1]) {
 				return false;
 			}
 			if (!value.has(params[0])) {
-				notify_read_methods(['keys']);
+				notify_read_properties(['keys']);
 			}
-			notify_read_methods(['get', 'has'], params[0]);
+			notify_read_properties(['get', 'has'], params[0]);
 			return true;
 		},
-		clear: (notify_read_methods, value, property, ...params) => {
+		clear: (notify_read_properties, value, property, ...params) => {
 			if (value.size === 0) {
 				return false;
 			}
-			notify_read_methods(['get', 'keys', 'has'], NOTIFY_WITH_ALL_PARAMS);
+			notify_read_properties(['get', 'keys', 'has'], NOTIFY_WITH_ALL_PARAMS);
 			return true;
 		},
-		delete: (notify_read_methods, value, property, ...params) => {
+		delete: (notify_read_properties, value, property, ...params) => {
 			if (!value.has(params[0])) {
 				return false;
 			}
-			notify_read_methods(['get', 'has'], params[0]);
-			notify_read_methods(['keys']);
+			notify_read_properties(['get', 'has'], params[0]);
+			notify_read_properties(['keys']);
 			return true;
 		}
 	}
