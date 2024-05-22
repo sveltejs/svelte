@@ -1851,18 +1851,27 @@ function serialize_element_attributes(node, context) {
 
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'Attribute') {
-			if (attribute.name === 'value' && node.name === 'textarea') {
-				if (
-					attribute.value !== true &&
-					attribute.value[0].type === 'Text' &&
-					regex_starts_with_newline.test(attribute.value[0].data)
-				) {
-					// Two or more leading newlines are required to restore the leading newline immediately after `<textarea>`.
-					// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
-					// also see related code in analysis phase
-					attribute.value[0].data = '\n' + attribute.value[0].data;
+			if (attribute.name === 'value') {
+				if (node.name === 'textarea') {
+					if (
+						attribute.value !== true &&
+						attribute.value[0].type === 'Text' &&
+						regex_starts_with_newline.test(attribute.value[0].data)
+					) {
+						// Two or more leading newlines are required to restore the leading newline immediately after `<textarea>`.
+						// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+						// also see related code in analysis phase
+						attribute.value[0].data = '\n' + attribute.value[0].data;
+					}
+					content = {
+						escape: true,
+						expression: serialize_attribute_value(attribute.value, context)
+					};
+				} else if (node.name !== 'select') {
+					// omit value attribute for select elements, it's irrelevant for the initially selected value and has no
+					// effect on the selected value after the user interacts with the select element (the value _property_ does, but not the attribute)
+					attributes.push(attribute);
 				}
-				content = { escape: true, expression: serialize_attribute_value(attribute.value, context) };
 
 				// omit event handlers except for special cases
 			} else if (is_event_attribute(attribute)) {

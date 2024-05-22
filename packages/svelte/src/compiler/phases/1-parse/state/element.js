@@ -217,7 +217,7 @@ export default function tag(parser) {
 	while ((attribute = read(parser))) {
 		if (attribute.type === 'Attribute' || attribute.type === 'BindDirective') {
 			if (unique_names.includes(attribute.name)) {
-				e.attribute_duplicate(attribute.start);
+				e.attribute_duplicate(attribute);
 				// <svelte:element bind:this this=..> is allowed
 			} else if (attribute.name !== 'this') {
 				unique_names.push(attribute.name);

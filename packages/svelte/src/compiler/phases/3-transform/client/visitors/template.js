@@ -506,6 +506,10 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 				value
 			)
 		);
+	} else if (name === 'value') {
+		update = b.stmt(b.call('$.set_value', node_id, value));
+	} else if (name === 'checked') {
+		update = b.stmt(b.call('$.set_checked', node_id, value));
 	} else if (DOMProperties.includes(name)) {
 		update = b.stmt(b.assignment('=', b.member(node_id, b.id(name)), value));
 	} else {
@@ -1990,7 +1994,7 @@ export const template_visitors = {
 			child_metadata.bound_contenteditable = true;
 		}
 
-		if (needs_input_reset && (node.name === 'input' || node.name === 'select')) {
+		if (needs_input_reset && node.name === 'input') {
 			context.state.init.push(b.stmt(b.call('$.remove_input_attr_defaults', context.state.node)));
 		}
 

@@ -50,6 +50,10 @@
 			}
 		}
 
+		&:hover {
+			color: green;
+		}
+
 		& & {
 			color: green;
 		}
