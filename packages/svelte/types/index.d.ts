@@ -2081,16 +2081,14 @@ declare module 'svelte/reactivity' {
 	}
 	export const Set: SetConstructor;
 	export const Map: MapConstructor;
-	class ReactiveURL extends URL {
-		get searchParams(): ReactiveURLSearchParams;
+	const ReactiveURL: typeof URLWithReactiveSearchParams;
+	class URLWithReactiveSearchParams extends URL {
 		#private;
 	}
-	class ReactiveURLSearchParams extends URLSearchParams {
-		
-		[REPLACE](params: URLSearchParams): void;
-		#private;
-	}
-	const REPLACE: unique symbol;
+	const ReactiveURLSearchParams: {
+		new (init?: string | Record<string, string> | URLSearchParams | string[][] | undefined): URLSearchParams;
+		prototype: URLSearchParams;
+	};
 
 	export { ReactiveDate as Date, ReactiveURL as URL, ReactiveURLSearchParams as URLSearchParams };
 }
