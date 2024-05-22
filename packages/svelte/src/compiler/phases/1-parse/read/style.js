@@ -141,8 +141,6 @@ function read_selector_list(parser, inside_pseudo_class = false) {
 
 		allow_comment_or_whitespace(parser);
 
-		parser.allow_whitespace();
-
 		if (inside_pseudo_class ? parser.match(')') : parser.match('{')) {
 			return {
 				type: 'SelectorList',
