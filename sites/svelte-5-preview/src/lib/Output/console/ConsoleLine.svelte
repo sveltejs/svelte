@@ -73,12 +73,12 @@
 	}
 
 	.log {
-		/* border-bottom: 0.5px solid var(--sk-back-4); */
 		padding: 5px 10px 5px var(--indent);
 		display: flex;
 		width: 100%;
 		font-size: 12px;
 		font-family: var(--sk-font-mono);
+		align-items: center;
 	}
 
 	.log.expandable {
@@ -104,6 +104,10 @@
 		& + :global(&) {
 			border-top: none;
 		}
+	}
+
+	.console-group {
+		font-weight: 700;
 	}
 
 	.console-group,
@@ -159,11 +163,11 @@
 		font-size: 0.9rem;
 		transition: 150ms;
 		transform-origin: 50% 50%;
-		transform: translateY(1px);
+		transform: translateY(-1px);
 	}
 
 	.arrow.expand {
-		transform: translateY(1px) rotateZ(90deg);
+		transform: translateY(0px) rotateZ(90deg);
 	}
 
 	.title {
