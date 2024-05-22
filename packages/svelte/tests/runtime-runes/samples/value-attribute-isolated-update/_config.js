@@ -26,8 +26,6 @@ export default test({
 			textarea.innerHTML = 'bar';
 			button.click();
 		});
-		// flushSync(() => {
-		// });
 
 		assert.equal(input.value, 'foo');
 		assert.equal(checkbox.checked, true);
