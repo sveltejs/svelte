@@ -17,7 +17,7 @@
 
 <span class="log console-{log.command}" style="padding-left: {depth * 15}px">
 	{#if log.count && log.count > 1}
-		<span class="count">{log.count}x</span>
+		<span class="count">{log.count}</span>
 	{/if}
 
 	{#if log.command === 'trace' || log.command === 'group'}
@@ -122,9 +122,19 @@
 	}
 
 	.count {
-		color: var(--sk-text-3, #999);
-		font-size: 12px;
-		line-height: 1.2;
+		position: relative;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		min-width: 1.5em;
+		height: 1.4em;
+		padding: 0.5em;
+		border-radius: 0.4rem;
+		background-color: var(--sk-text-3, #777);
+		color: var(--sk-back-1);
+		font-size: 1rem;
+		top: 0.2rem;
+		line-height: 1;
 	}
 
 	.info {
