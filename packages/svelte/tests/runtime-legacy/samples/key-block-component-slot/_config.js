@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 /** @type {string[]} */
@@ -13,14 +14,14 @@ export default test({
 		logs = [];
 	},
 
-	async test({ assert, target }) {
+	test({ assert, target }) {
 		assert.deepEqual(logs, ['mount']);
 
 		const button = target.querySelector('button');
 
 		const click = new window.MouseEvent('click', { bubbles: true });
-		await button?.dispatchEvent(click);
-		await Promise.resolve();
+		button?.dispatchEvent(click);
+		flushSync();
 
 		assert.deepEqual(logs, ['mount', 'unmount', 'mount']);
 	}

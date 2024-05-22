@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -12,11 +13,13 @@ export default test({
 	async test({ assert, component, target, window }) {
 		const event = new window.Event('click');
 
-		await window.dispatchEvent(event);
+		window.dispatchEvent(event);
+		flushSync();
 		assert.equal(component.foo, false);
 		assert.htmlEqual(target.innerHTML, 'false');
 
-		await window.dispatchEvent(event);
+		window.dispatchEvent(event);
+		flushSync();
 		assert.equal(component.foo, true);
 		assert.htmlEqual(target.innerHTML, 'true');
 	}

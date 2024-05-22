@@ -48,7 +48,7 @@ export function create_event(event_name, dom, handler, options) {
 			handle_event_propagation(dom, event);
 		}
 		if (!event.cancelBubble) {
-			return handler.call(this, event);
+			return yield_updates(() => handler.call(this, event));
 		}
 	}
 

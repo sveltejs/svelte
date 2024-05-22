@@ -587,7 +587,7 @@ function process_microtask() {
 const request_animation_frame =
 	typeof requestAnimationFrame === 'undefined' ? setTimeout : requestAnimationFrame;
 
-async function process_yieldtask() {
+async function yield_tick() {
 	// TODO: replace this with scheduler.yield when it becomes standard
 	await new Promise((fulfil) => {
 		request_animation_frame(() => {
@@ -596,6 +596,10 @@ async function process_yieldtask() {
 		// In case of being within background tab, the rAF won't fire
 		setTimeout(fulfil, 100);
 	});
+}
+
+async function process_yieldtask() {
+	await yield_tick();
 	is_yield_task_queued = false;
 	is_micro_task_queued = false;
 	if (flush_count > 101) {
@@ -780,7 +784,7 @@ export function flush_sync(fn, flush_previous = true) {
  * @returns {Promise<void>}
  */
 export async function tick() {
-	await Promise.resolve();
+	await yield_tick();
 	// By calling flush_sync we guarantee that any pending state changes are applied after one tick.
 	// TODO look into whether we can make flushing subsequent updates synchronously in the future.
 	flush_sync();

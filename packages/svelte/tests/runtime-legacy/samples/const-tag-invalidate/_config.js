@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -6,11 +7,11 @@ export default test({
 		<div>[N] B <button>Toggle</button></div>
 		<div>[N] C <button>Toggle</button></div>
 	`,
-	async test({ target, assert, window }) {
+	test({ target, assert, window }) {
 		const [btn1, btn2, btn3] = target.querySelectorAll('button');
-		await btn1.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-		await btn2.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-		await Promise.resolve();
+		btn1.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+		btn2.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -21,8 +22,8 @@ export default test({
 		`
 		);
 
-		await btn2.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-		await Promise.resolve();
+		btn2.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -33,8 +34,8 @@ export default test({
 		`
 		);
 
-		await btn3.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-		await Promise.resolve();
+		btn3.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
