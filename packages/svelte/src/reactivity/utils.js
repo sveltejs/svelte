@@ -96,8 +96,7 @@ export const make_reactive = (Entity, options) => {
 							target.#version_signal,
 							target.#read_methods_signals,
 							property,
-							options,
-							...params
+							options
 						);
 					}
 
