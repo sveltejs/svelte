@@ -11,7 +11,7 @@ import { LOADING_ATTR_SYMBOL } from '../../constants.js';
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
  * to remove it upon hydration to avoid a bug when someone resets the form value.
- * @param {HTMLInputElement | HTMLSelectElement} dom
+ * @param {HTMLInputElement} dom
  * @returns {void}
  */
 export function remove_input_attr_defaults(dom) {

@@ -1990,7 +1990,7 @@ export const template_visitors = {
 			child_metadata.bound_contenteditable = true;
 		}
 
-		if (needs_input_reset && (node.name === 'input' || node.name === 'select')) {
+		if (needs_input_reset && node.name === 'input') {
 			context.state.init.push(b.stmt(b.call('$.remove_input_attr_defaults', context.state.node)));
 		}
 
