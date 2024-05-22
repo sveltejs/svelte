@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.138
+
+### Patch Changes
+
+- fix: allow comments after last selector in css ([#11723](https://github.com/sveltejs/svelte/pull/11723))
+
+- fix: don't add scoping modifier to nesting selectors ([#11713](https://github.com/sveltejs/svelte/pull/11713))
+
+- chore: speedup hydration around input and select values ([#11717](https://github.com/sveltejs/svelte/pull/11717))
+
+- fix: update value like attributes in a separate template_effect ([#11720](https://github.com/sveltejs/svelte/pull/11720))
+
+- fix: improve handling of unowned derived signal ([#11712](https://github.com/sveltejs/svelte/pull/11712))
+
 ## 5.0.0-next.137
 
 ### Patch Changes
