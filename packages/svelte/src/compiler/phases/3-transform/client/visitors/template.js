@@ -467,16 +467,9 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
  * @param {import('estree').Identifier} node_id
  * @param {import('#compiler').Attribute} attribute
  * @param {import('../types.js').ComponentContext} context
- * @param {boolean} needs_isolation
  * @returns {boolean}
  */
-function serialize_element_attribute_update_assignment(
-	element,
-	node_id,
-	attribute,
-	context,
-	needs_isolation
-) {
+function serialize_element_attribute_update_assignment(element, node_id, attribute, context) {
 	const state = context.state;
 	const name = get_attribute_name(element, attribute, context);
 	const is_svg = context.state.metadata.namespace === 'svg';
@@ -513,6 +506,10 @@ function serialize_element_attribute_update_assignment(
 				value
 			)
 		);
+	} else if (name === 'value') {
+		update = b.stmt(b.call('$.set_value', node_id, value));
+	} else if (name === 'checked') {
+		update = b.stmt(b.call('$.set_checked', node_id, value));
 	} else if (DOMProperties.includes(name)) {
 		update = b.stmt(b.assignment('=', b.member(node_id, b.id(name)), value));
 	} else {
@@ -521,7 +518,7 @@ function serialize_element_attribute_update_assignment(
 	}
 
 	if (attribute.metadata.dynamic) {
-		if (contains_call_expression || needs_isolation) {
+		if (contains_call_expression) {
 			state.init.push(serialize_update(update));
 		} else {
 			state.update.push(update);
@@ -2072,24 +2069,7 @@ export const template_visitors = {
 				const is =
 					is_custom_element && child_metadata.namespace !== 'foreign'
 						? serialize_custom_element_attribute_update_assignment(node_id, attribute, context)
-						: serialize_element_attribute_update_assignment(
-								node,
-								node_id,
-								attribute,
-								context,
-								/**
-								 * if the input needs input or content reset we also
-								 * want to isolate the template effect or else every
-								 * unrelated change will reset the value (and the user could)
-								 * change the value outside of the reactivity
-								 *
-								 * <input value={val} />
-								 *
-								 * should only be updated when val changes and not when another
-								 * unrelated variable changes.
-								 * */
-								needs_content_reset || needs_input_reset
-							);
+						: serialize_element_attribute_update_assignment(node, node_id, attribute, context);
 				if (is) is_attributes_reactive = true;
 			}
 		}
