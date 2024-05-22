@@ -1,3 +1,4 @@
+import { untrack } from '../index-client.js';
 import { ReactiveURLSearchParams } from './url-search-params.js';
 import { make_reactive } from './utils.js';
 
@@ -71,18 +72,41 @@ class URLWithReactiveSearchParams extends URL {
 		}
 
 		if (url_updated) {
-			Array.from(this.searchParams.keys()).forEach((key) => {
-				// remove keys that don't exist anymore
-				if (!super.searchParams.has(key)) {
-					this.searchParams.delete(key);
-				}
-			});
-			for (const key of super.searchParams.keys()) {
-				// set/update keys
-				this.searchParams.set(key, /** @type {string} */ (super.searchParams.get(key)));
-			}
+			this.#update_search_params_from_url();
 		} else if (search_params_updated) {
+			// updating url from params
 			this.search = this.searchParams.toString();
+		}
+	}
+
+	#update_search_params_from_url() {
+		/**
+		 * keeping track of this is required because we have to keep the order in which they are updated
+		 * @type {string[]}
+		 */
+		const keys_with_no_change = [];
+
+		// remove keys that don't exist anymore and notify others
+		for (const [key, value] of Array.from(this.searchParams.entries())) {
+			if (!super.searchParams.has(key) || value == super.searchParams.get(key)) {
+				keys_with_no_change.push(key);
+				untrack(() => {
+					this.searchParams.delete(key);
+				});
+				continue;
+			}
+			this.searchParams.delete(key);
+		}
+
+		// set or update keys based on the params
+		for (const [key, value] of super.searchParams.entries()) {
+			if (keys_with_no_change.includes(key)) {
+				untrack(() => {
+					this.searchParams.set(key, value);
+				});
+				continue;
+			}
+			this.searchParams.set(key, value);
 		}
 	}
 
