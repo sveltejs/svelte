@@ -13,9 +13,16 @@
 
 <style>
 	.container {
+		--error-fg: #da106e;
+		--error-bg: #fff0f0;
+		--error-border: rgb(242, 214, 219);
 		--json-tree-string-color: var(--sk-code-string);
 
 		:global(.dark) & {
+			--error-fg: rgb(235, 78, 109);
+			--error-bg: rgb(71, 48, 54);
+			--error-border: rgb(109, 65, 76);
+
 			--json-tree-property-color: #72a2d3;
 			--json-tree-string-color: #6cd1c7;
 			--json-tree-symbol-color: #6cd1c7;

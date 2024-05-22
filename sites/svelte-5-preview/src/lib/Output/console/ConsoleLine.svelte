@@ -69,7 +69,7 @@
 
 <style>
 	.log {
-		border-bottom: 0.5px solid var(--sk-back-4);
+		/* border-bottom: 0.5px solid var(--sk-back-4); */
 		padding: 5px 10px 5px;
 		display: flex;
 		position: relative;
@@ -90,24 +90,20 @@
 
 	.console-error,
 	.console-assert {
-		background: #fff0f0;
-		border-color: #fed6d7;
+		background: var(--error-bg);
+		border-width: 1px;
+		border-color: var(--error-border);
+		border-style: solid none;
+
+		& + :global(&) {
+			border-top: none;
+		}
 	}
 
 	.console-group,
 	.arrow {
 		cursor: pointer;
 		user-select: none;
-	}
-
-	.console-trace,
-	.console-assert {
-		border-bottom: none;
-	}
-
-	.console-assert + .trace {
-		background: #fff0f0;
-		border-color: #fed6d7;
 	}
 
 	.trace {
@@ -144,7 +140,7 @@
 	}
 
 	.error {
-		color: #da106e; /* todo make this a var */
+		color: var(--error-fg);
 	}
 
 	.outline {
