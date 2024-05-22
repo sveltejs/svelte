@@ -34,7 +34,7 @@ class URLWithReactiveSearchParams extends URL {
 	 */
 	get search() {
 		this.searchParams.toString();
-		this.#sync_params_with_url({ search_params_updated: true });
+		this.#sync_params_with_url('search_params');
 		return super.search;
 	}
 
@@ -43,7 +43,7 @@ class URLWithReactiveSearchParams extends URL {
 	 */
 	set search(value) {
 		super.search = value;
-		this.#sync_params_with_url({ url_updated: true });
+		this.#sync_params_with_url('url');
 	}
 
 	/**
@@ -51,7 +51,7 @@ class URLWithReactiveSearchParams extends URL {
 	 */
 	get href() {
 		this.searchParams.toString();
-		this.#sync_params_with_url({ search_params_updated: true });
+		this.#sync_params_with_url('search_params');
 		return super.href;
 	}
 
@@ -60,20 +60,20 @@ class URLWithReactiveSearchParams extends URL {
 	 */
 	set href(value) {
 		super.href = value;
-		this.#sync_params_with_url({ url_updated: true });
+		this.#sync_params_with_url('url');
 	}
 
 	/**
-	 * @param {{url_updated?: boolean, search_params_updated?: boolean}} param0
+	 * @param {"url" | "search_params"} changed_value
 	 */
-	#sync_params_with_url({ url_updated = false, search_params_updated = false }) {
+	#sync_params_with_url(changed_value) {
 		if (super.searchParams.toString() === this.searchParams.toString()) {
 			return;
 		}
 
-		if (url_updated) {
+		if (changed_value == 'url') {
 			this.#update_search_params_from_url();
-		} else if (search_params_updated) {
+		} else {
 			// updating url from params
 			this.search = this.searchParams.toString();
 		}
@@ -115,9 +115,27 @@ class URLWithReactiveSearchParams extends URL {
 	 */
 	toString() {
 		this.searchParams.toString();
-		this.#sync_params_with_url({ search_params_updated: true });
+		this.#sync_params_with_url('search_params');
 		return super.toString();
 	}
+}
+
+/**
+ * @param {unknown} value
+ * @param {string} character
+ * @param {"append" | "prepend"} mode
+ * @returns {unknown}
+ */
+function add_character_if_not_exists(value, character, mode) {
+	if (!value || typeof value !== 'string') {
+		return value;
+	}
+
+	if (mode == 'append') {
+		return value.endsWith(character) ? value : `${value}${character}`;
+	}
+
+	return value.startsWith(character) ? value : `${character}${value}`;
 }
 
 export const ReactiveURL = make_reactive(URLWithReactiveSearchParams, {
@@ -131,7 +149,8 @@ export const ReactiveURL = make_reactive(URLWithReactiveSearchParams, {
 		'hash',
 		'search',
 		'href',
-		'host'
+		'host',
+		'searchParams'
 	],
 	read_properties: [
 		'protocol',
@@ -144,42 +163,40 @@ export const ReactiveURL = make_reactive(URLWithReactiveSearchParams, {
 		'search',
 		'href',
 		'host',
-		'origin'
+		'origin',
+		'searchParams'
 	],
 	interceptors: {
 		protocol: (notify_read_properties, value, property, ...params) => {
-			if (
-				typeof params[0] == 'string' &&
-				value.protocol.split(':')[0] === params[0].split(':')[0]
-			) {
+			if (value.protocol == add_character_if_not_exists(params[0], ':', 'append')) {
 				return false;
 			}
 			notify_read_properties(['href', 'origin', 'protocol']);
 			return true;
 		},
 		username: (notify_read_properties, value, property, ...params) => {
-			if (value.protocol === params[0]) {
+			if (value.username === params[0]) {
 				return false;
 			}
 			notify_read_properties(['href', 'username']);
 			return true;
 		},
 		password: (notify_read_properties, value, property, ...params) => {
-			if (value.protocol === params[0]) {
+			if (value.password === params[0]) {
 				return false;
 			}
 			notify_read_properties(['href', 'password']);
 			return true;
 		},
 		hostname: (notify_read_properties, value, property, ...params) => {
-			if (value.protocol === params[0]) {
+			if (value.hostname === params[0]) {
 				return false;
 			}
 			notify_read_properties(['href', 'host', 'hostname']);
 			return true;
 		},
 		port: (notify_read_properties, value, property, ...params) => {
-			if (value.protocol === params[0]) {
+			if (value.port === params[0]?.toString()) {
 				return false;
 			}
 			notify_read_properties(['href', 'origin', 'host', 'port']);
@@ -187,21 +204,21 @@ export const ReactiveURL = make_reactive(URLWithReactiveSearchParams, {
 		},
 
 		pathname: (notify_read_properties, value, property, ...params) => {
-			if (value.protocol === params[0]) {
+			if (value.pathname === add_character_if_not_exists(params[0], '/', 'prepend')) {
 				return false;
 			}
 			notify_read_properties(['href', 'pathname']);
 			return true;
 		},
 		hash: (notify_read_properties, value, property, ...params) => {
-			if (value.protocol === params[0]) {
+			if (value.hash === add_character_if_not_exists(params[0], '#', 'prepend')) {
 				return false;
 			}
 			notify_read_properties(['href', 'hash']);
 			return true;
 		},
 		search: (notify_read_properties, value, property, ...params) => {
-			if (value.search === params[0]) {
+			if (value.search === add_character_if_not_exists(params[0], '?', 'prepend')) {
 				return false;
 			}
 			notify_read_properties(['href', 'hash', 'search']);
