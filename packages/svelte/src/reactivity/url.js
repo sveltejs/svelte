@@ -77,7 +77,6 @@ class URLWithReactiveSearchParams extends URL {
 					this.searchParams.delete(key);
 				}
 			});
-
 			for (const key of super.searchParams.keys()) {
 				// set/update keys
 				this.searchParams.set(key, /** @type {string} */ (super.searchParams.get(key)));
@@ -107,9 +106,22 @@ export const ReactiveURL = make_reactive(URLWithReactiveSearchParams, {
 		'pathname',
 		'hash',
 		'search',
-		'href'
+		'href',
+		'host'
 	],
-	read_properties: ['href', 'origin', 'host', 'hash', 'pathname'],
+	read_properties: [
+		'protocol',
+		'username',
+		'password',
+		'hostname',
+		'port',
+		'pathname',
+		'hash',
+		'search',
+		'href',
+		'host',
+		'origin'
+	],
 	interceptors: {
 		protocol: (notify_read_properties, value, property, ...params) => {
 			if (
@@ -118,36 +130,35 @@ export const ReactiveURL = make_reactive(URLWithReactiveSearchParams, {
 			) {
 				return false;
 			}
-			notify_read_properties(['href', 'origin']);
+			notify_read_properties(['href', 'origin', 'protocol']);
 			return true;
 		},
 		username: (notify_read_properties, value, property, ...params) => {
 			if (value.protocol === params[0]) {
 				return false;
 			}
-			notify_read_properties(['href']);
+			notify_read_properties(['href', 'username']);
 			return true;
 		},
 		password: (notify_read_properties, value, property, ...params) => {
 			if (value.protocol === params[0]) {
 				return false;
 			}
-			notify_read_properties(['href']);
+			notify_read_properties(['href', 'password']);
 			return true;
 		},
 		hostname: (notify_read_properties, value, property, ...params) => {
 			if (value.protocol === params[0]) {
 				return false;
 			}
-			notify_read_properties(['href', 'host']);
+			notify_read_properties(['href', 'host', 'hostname']);
 			return true;
 		},
-
 		port: (notify_read_properties, value, property, ...params) => {
 			if (value.protocol === params[0]) {
 				return false;
 			}
-			notify_read_properties(['href', 'origin', 'host']);
+			notify_read_properties(['href', 'origin', 'host', 'port']);
 			return true;
 		},
 
@@ -155,28 +166,28 @@ export const ReactiveURL = make_reactive(URLWithReactiveSearchParams, {
 			if (value.protocol === params[0]) {
 				return false;
 			}
-			notify_read_properties(['href']);
+			notify_read_properties(['href', 'pathname']);
 			return true;
 		},
 		hash: (notify_read_properties, value, property, ...params) => {
 			if (value.protocol === params[0]) {
 				return false;
 			}
-			notify_read_properties(['href']);
+			notify_read_properties(['href', 'hash']);
 			return true;
 		},
 		search: (notify_read_properties, value, property, ...params) => {
 			if (value.search === params[0]) {
 				return false;
 			}
-			notify_read_properties(['href', 'hash']);
+			notify_read_properties(['href', 'hash', 'search']);
 			return true;
 		},
 		href: (notify_read_properties, value, property, ...params) => {
 			if (value.href === params[0]) {
 				return false;
 			}
-			notify_read_properties(['origin', 'host', 'hash', 'pathname']);
+			notify_read_properties(['origin', 'host', 'hash', 'pathname', 'href']);
 			return true;
 		}
 	}

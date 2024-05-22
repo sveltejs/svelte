@@ -68,10 +68,8 @@ test('url.searchParams', () => {
 		'q: true',
 		'search: ?q=kit&foo=baz&foo=qux',
 		'foo: baz',
-		'q: true',
 		'search: ?q=kit',
-		'foo: null',
-		'q: true'
+		'foo: null'
 	]);
 
 	cleanup();
