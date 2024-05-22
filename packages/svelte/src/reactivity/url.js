@@ -228,7 +228,26 @@ export const ReactiveURL = make_reactive(URLWithReactiveSearchParams, {
 			if (value.href === params[0]) {
 				return false;
 			}
-			notify_read_properties(['origin', 'host', 'hash', 'pathname', 'href']);
+			const new_url = new URL(value);
+			new_url.href = /**@type {string}*/ (params[0]);
+			if (new_url.origin !== value.origin) {
+				notify_read_properties(['origin']);
+			}
+			if (new_url.host !== value.host) {
+				notify_read_properties(['host']);
+			}
+			if (new_url.hash !== value.hash) {
+				notify_read_properties(['hash']);
+			}
+			if (new_url.pathname !== value.pathname) {
+				notify_read_properties(['pathname']);
+			}
+			if (new_url.protocol !== value.protocol) {
+				notify_read_properties(['protocol']);
+			}
+			if (new_url.href !== value.href) {
+				notify_read_properties(['href']);
+			}
 			return true;
 		}
 	}

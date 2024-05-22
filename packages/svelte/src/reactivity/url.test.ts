@@ -110,3 +110,125 @@ test('url.href', () => {
 
 	cleanup();
 });
+
+test('fine grained tests', () => {
+	const url = new ReactiveURL('https://svelte.dev/');
+
+	let changes: Record<keyof typeof url, boolean> = {
+		hash: true,
+		host: true,
+		hostname: true,
+		href: true,
+		origin: true,
+		username: true,
+		password: true,
+		pathname: true,
+		port: true,
+		protocol: true,
+		search: true,
+		searchParams: true,
+		toJSON: true,
+		toString: true
+	};
+
+	const reset_change = () => {
+		for (const key of Object.keys(changes) as (keyof typeof url)[]) {
+			changes[key] = false;
+		}
+	};
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			url.hash;
+			assert.equal(changes.hash, true);
+		});
+
+		render_effect(() => {
+			url.host;
+			assert.equal(changes.host, true);
+		});
+
+		render_effect(() => {
+			url.hostname;
+			assert.equal(changes.hostname, true);
+		});
+
+		render_effect(() => {
+			url.href;
+			assert.equal(changes.href, true);
+		});
+
+		render_effect(() => {
+			url.origin;
+			assert.equal(changes.origin, true);
+		});
+
+		render_effect(() => {
+			url.search;
+			assert.equal(changes.search, true);
+		});
+
+		render_effect(() => {
+			url.searchParams.get('fohoov');
+			assert.equal(changes.searchParams, true);
+		});
+
+		render_effect(() => {
+			url;
+			reset_change();
+		});
+	});
+
+	flushSync(() => {
+		changes = { ...changes, origin: true, host: true, pathname: true, href: true };
+		url.href = 'https://www.google.com/test';
+	});
+
+	flushSync(() => {
+		changes = { ...changes, origin: true, href: true };
+		url.protocol = 'http';
+	});
+
+	flushSync(() => {
+		url.protocol = 'http';
+	});
+
+	flushSync(() => {
+		changes = { ...changes, hash: true, href: true };
+		url.hash = 'new-hash';
+	});
+
+	flushSync(() => {
+		url.hash = 'new-hash';
+	});
+
+	flushSync(() => {
+		changes = { ...changes, hostname: true, href: true };
+		url.hostname = 'fohoov';
+	});
+
+	flushSync(() => {
+		changes = { ...changes, search: true, searchParams: true };
+		url.search = 'fohoov=true';
+	});
+
+	flushSync(() => {
+		url.search = 'fohoov=true';
+	});
+
+	flushSync(() => {
+		changes = { ...changes, search: true, searchParams: true };
+		url.search = 'fohoov=false';
+	});
+
+	flushSync(() => {
+		changes = { ...changes, search: true, searchParams: true };
+		url.search = '';
+	});
+
+	flushSync(() => {
+		url.search = '';
+	});
+
+	cleanup();
+});
