@@ -52,15 +52,15 @@ export function set_value(element, value) {
 
 /**
  * @param {Element} element
- * @param {boolean} value
+ * @param {boolean} checked
  */
-export function set_checked(element, value) {
+export function set_checked(element, checked) {
 	// @ts-expect-error
 	var attributes = (element.__attributes ??= {});
 
-	if (attributes.value === (attributes.value = value)) return;
+	if (attributes.checked === (attributes.checked = checked)) return;
 	// @ts-expect-error
-	element.value = value;
+	element.checked = checked;
 }
 
 /**
