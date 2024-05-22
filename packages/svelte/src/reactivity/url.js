@@ -149,8 +149,7 @@ export const ReactiveURL = make_reactive(URLWithReactiveSearchParams, {
 		'hash',
 		'search',
 		'href',
-		'host',
-		'searchParams'
+		'host'
 	],
 	read_properties: [
 		'protocol',
