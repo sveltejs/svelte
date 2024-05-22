@@ -40,7 +40,7 @@ export const DelegatedEvents = [
 	'contextmenu',
 	'focusin',
 	'focusout',
-	// 'input', This conflicts with bind:input
+	'input',
 	'keydown',
 	'keyup',
 	'mousedown',
