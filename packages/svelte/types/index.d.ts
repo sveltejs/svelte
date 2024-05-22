@@ -2074,14 +2074,15 @@ declare module 'svelte/motion' {
 }
 
 declare module 'svelte/reactivity' {
-	class ReactiveDate extends Date {
-		
-		constructor(...values: any[]);
-		#private;
-	}
+	export const Date: DateConstructor;
 	export const Set: SetConstructor;
 	export const Map: MapConstructor;
 	const ReactiveURL: typeof URLWithReactiveSearchParams;
+	/**
+	 * had to create a subclass for URLWithReactiveSearchParams
+	 * because we cannot change the internal `searchParams` reference (which links to the web api implementation) so it requires
+	 * some custom logic
+	 */
 	class URLWithReactiveSearchParams extends URL {
 		#private;
 	}
@@ -2090,7 +2091,7 @@ declare module 'svelte/reactivity' {
 		prototype: URLSearchParams;
 	};
 
-	export { ReactiveDate as Date, ReactiveURL as URL, ReactiveURLSearchParams as URLSearchParams };
+	export { ReactiveURL as URL, ReactiveURLSearchParams as URLSearchParams };
 }
 
 declare module 'svelte/server' {
