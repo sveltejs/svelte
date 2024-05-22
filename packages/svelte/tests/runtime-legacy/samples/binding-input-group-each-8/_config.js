@@ -1,4 +1,4 @@
-import { flushSync } from '../../../../src/index-client';
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 // https://github.com/sveltejs/svelte/issues/7884
