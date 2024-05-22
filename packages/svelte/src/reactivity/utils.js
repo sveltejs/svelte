@@ -9,13 +9,13 @@ export const NOTIFY_WITH_ALL_PARAMS = Symbol();
  * for instance calling `set.add(2)` two times should not cause reactivity the second time.
  * interceptor is called before the call is proxied to the actual object, so we can decide wether a change
  * is actually going to happen or not.
- * - if a `write_property` shouldn't increment the `version` signal return false from the interceptor. note that calling `notify_read_methods` WILL increase the `version` in all cases.
- * returning false is only useful if do it before calling `notify_read_methods` like an if-guard that returns false early because no change has happened.
+ * - if a `write_property` shouldn't increment the `version` signal return false from the interceptor. note that calling `notify_read_properties` WILL increase the `version` in all cases.
+ * returning false is only useful if do it before calling `notify_read_properties` like an if-guard that returns false early because no change has happened.
  * - DO NOT USE INTERCEPTORS FOR READ PROPERTIES
  * @template TEntityInstance
  * @template {(keyof TEntityInstance)[]} TWriteProperties
  * @template {(keyof TEntityInstance)[]} TReadProperties
- * @typedef {Partial<Record<TWriteProperties[number], (notify_read_methods: (methods: TReadProperties, ...params: unknown[])=>void ,value: TEntityInstance, property: TWriteProperties[number], ...params: unknown[])=>boolean>>} Interceptors
+ * @typedef {Partial<Record<TWriteProperties[number], (notify_read_properties: (methods: TReadProperties, ...params: unknown[])=>void ,value: TEntityInstance, property: TWriteProperties[number], ...params: unknown[])=>boolean>>} Interceptors
  */
 
 /**
@@ -167,7 +167,7 @@ function create_notifiers(
 			interceptor(
 				(methods, ...params) => {
 					notifiers.push(() => {
-						notify_read_methods(
+						notify_read_properties(
 							options_with_version_flag,
 							version_signal,
 							read_methods_signals,
@@ -232,7 +232,7 @@ function get_read_signals(version_signal, read_methods_signals, property, option
  * @param {TReadProperties | undefined} method_names
  * @param {unknown[]} params - if you want to notify for all parameters pass the `NOTIFY_WITH_ALL_PARAMS` constant, for instance some methods like `clear` should notify all `something.get(x)` methods; on these cases set this flag to true
  */
-function notify_read_methods(
+function notify_read_properties(
 	options,
 	version_signal,
 	read_methods_signals,

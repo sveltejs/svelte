@@ -1,6 +1,10 @@
 import { ReactiveURLSearchParams } from './url-search-params.js';
 import { make_reactive } from './utils.js';
 
+/**
+ * had to create a subclass for URLWithReactiveSearchParams
+ * because we cannot change the internal `searchParams` reference (which links to the web api implementation) so it requires modifications
+ */
 class URLWithReactiveSearchParams extends URL {
 	/**
 	 * @type {InstanceType<ReactiveURLSearchParams>}
@@ -106,72 +110,72 @@ export const ReactiveURL = make_reactive(URLWithReactiveSearchParams, {
 	],
 	read_properties: ['href', 'origin', 'host', 'hash', 'pathname'],
 	interceptors: {
-		protocol: (notify_read_methods, value, property, ...params) => {
+		protocol: (notify_read_properties, value, property, ...params) => {
 			if (
 				typeof params[0] == 'string' &&
 				value.protocol.split(':')[0] === params[0].split(':')[0]
 			) {
 				return false;
 			}
-			notify_read_methods(['href', 'origin']);
+			notify_read_properties(['href', 'origin']);
 			return true;
 		},
-		username: (notify_read_methods, value, property, ...params) => {
+		username: (notify_read_properties, value, property, ...params) => {
 			if (value.protocol === params[0]) {
 				return false;
 			}
-			notify_read_methods(['href']);
+			notify_read_properties(['href']);
 			return true;
 		},
-		password: (notify_read_methods, value, property, ...params) => {
+		password: (notify_read_properties, value, property, ...params) => {
 			if (value.protocol === params[0]) {
 				return false;
 			}
-			notify_read_methods(['href']);
+			notify_read_properties(['href']);
 			return true;
 		},
-		hostname: (notify_read_methods, value, property, ...params) => {
+		hostname: (notify_read_properties, value, property, ...params) => {
 			if (value.protocol === params[0]) {
 				return false;
 			}
-			notify_read_methods(['href', 'host']);
+			notify_read_properties(['href', 'host']);
 			return true;
 		},
 
-		port: (notify_read_methods, value, property, ...params) => {
+		port: (notify_read_properties, value, property, ...params) => {
 			if (value.protocol === params[0]) {
 				return false;
 			}
-			notify_read_methods(['href', 'origin', 'host']);
+			notify_read_properties(['href', 'origin', 'host']);
 			return true;
 		},
 
-		pathname: (notify_read_methods, value, property, ...params) => {
+		pathname: (notify_read_properties, value, property, ...params) => {
 			if (value.protocol === params[0]) {
 				return false;
 			}
-			notify_read_methods(['href']);
+			notify_read_properties(['href']);
 			return true;
 		},
-		hash: (notify_read_methods, value, property, ...params) => {
+		hash: (notify_read_properties, value, property, ...params) => {
 			if (value.protocol === params[0]) {
 				return false;
 			}
-			notify_read_methods(['href']);
+			notify_read_properties(['href']);
 			return true;
 		},
-		search: (notify_read_methods, value, property, ...params) => {
+		search: (notify_read_properties, value, property, ...params) => {
 			if (value.search === params[0]) {
 				return false;
 			}
-			notify_read_methods(['href', 'hash']);
+			notify_read_properties(['href', 'hash']);
 			return true;
 		},
-		href: (notify_read_methods, value, property, ...params) => {
+		href: (notify_read_properties, value, property, ...params) => {
 			if (value.href === params[0]) {
 				return false;
 			}
-			notify_read_methods(['origin', 'host', 'hash', 'pathname']);
+			notify_read_properties(['origin', 'host', 'hash', 'pathname']);
 			return true;
 		}
 	}
