@@ -8,7 +8,6 @@ import { effect } from '../reactivity/effects.js';
 /**
  * @template {import("#client").TemplateNode | import("#client").TemplateNode[]} T
  * @param {T} dom
- * @returns {T}
  */
 function push_template_node(dom) {
 	var effect = /** @type {import('#client').Effect} */ (current_effect);
@@ -16,8 +15,6 @@ function push_template_node(dom) {
 	if (effect.dom === null) {
 		effect.dom = dom;
 	}
-
-	return dom;
 }
 
 /**
@@ -35,7 +32,8 @@ export function template(content, flags) {
 
 	return () => {
 		if (hydrating) {
-			return push_template_node(is_fragment ? hydrate_nodes : hydrate_start);
+			push_template_node(is_fragment ? hydrate_nodes : hydrate_start);
+			return hydrate_start;
 		}
 
 		if (!node) {
@@ -87,7 +85,8 @@ export function ns_template(content, flags, ns = 'svg') {
 
 	return () => {
 		if (hydrating) {
-			return push_template_node(is_fragment ? hydrate_nodes : hydrate_start);
+			push_template_node(is_fragment ? hydrate_nodes : hydrate_start);
+			return hydrate_start;
 		}
 
 		if (!node) {
@@ -188,14 +187,17 @@ export function text(anchor) {
 		anchor.before((node = empty()));
 	}
 
-	return push_template_node(node);
+	push_template_node(node);
+	return node;
 }
 
 export function comment() {
 	// we're not delegating to `template` here for performance reasons
 	if (hydrating) {
-		return push_template_node(hydrate_nodes);
+		push_template_node(hydrate_nodes);
+		return hydrate_start;
 	}
+
 	var frag = document.createDocumentFragment();
 	var anchor = empty();
 	frag.append(anchor);

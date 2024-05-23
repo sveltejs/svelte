@@ -1,4 +1,4 @@
-import { hydrate_anchor, hydrating } from './hydration.js';
+import { hydrate_anchor, hydrate_start, hydrating } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
 import { current_effect } from '../runtime.js';
@@ -96,24 +96,21 @@ export function first_child(fragment, is_text) {
 		return /** @type {DocumentFragment} */ (fragment).firstChild;
 	}
 
-	// when we _are_ hydrating, `fragment` is an array of nodes
-	var first_node = /** @type {import('#client').TemplateNode[]} */ (fragment)[0];
-
 	// if an {expression} is empty during SSR, there might be no
 	// text node to hydrate — we must therefore create one
-	if (is_text && first_node?.nodeType !== 3) {
+	if (is_text && hydrate_start?.nodeType !== 3) {
 		var text = empty();
 		var dom = /** @type {import('#client').TemplateNode[]} */ (
 			/** @type {import('#client').Effect} */ (current_effect).dom
 		);
 
 		dom.unshift(text);
-		first_node?.before(text);
+		hydrate_start?.before(text);
 
 		return text;
 	}
 
-	return hydrate_anchor(first_node);
+	return hydrate_anchor(hydrate_start);
 }
 
 /**
