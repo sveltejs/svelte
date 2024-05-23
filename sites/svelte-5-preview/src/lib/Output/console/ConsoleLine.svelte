@@ -10,6 +10,24 @@
 		log.collapsed = !log.collapsed;
 	}
 
+	let style;
+
+	/** @param {string} text */
+	function sanitize_css(text) {
+		style ??= document.createElement('span').style;
+		style.cssText = text;
+
+		for (const key in style) {
+			const value = style[key];
+			if (typeof value === 'string' && value.includes('url(')) {
+				style[key] = value.replace(/url\([^)]+\)/g, '');
+			}
+		}
+
+		style.position = 'static';
+		return style.cssText;
+	}
+
 	/** @param {any[]} [args] */
 	function format_args(args = []) {
 		if (args.length === 0) return args;
@@ -61,7 +79,12 @@
 					break;
 
 				case '%c':
-					formatted.push({ type: 'style', style: value, value: next, formatted: true });
+					formatted.push({
+						type: 'style',
+						style: sanitize_css(String(value)),
+						value: next,
+						formatted: true
+					});
 					break;
 			}
 
