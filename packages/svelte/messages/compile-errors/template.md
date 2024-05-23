@@ -48,7 +48,7 @@
 
 ## attribute_unquoted_sequence
 
-> Attribute values containing `{...}` alongside static content must be enclosed in quote marks
+> Attribute values containing `{...}` must be enclosed in quote marks, unless the value only contains the expression
 
 ## bind_invalid_expression
 
