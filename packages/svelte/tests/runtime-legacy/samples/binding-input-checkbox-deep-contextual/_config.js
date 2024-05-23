@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -37,7 +38,7 @@ export default test({
 		<p>1 completed</p>
 	`,
 
-	async test({ assert, component, target, window }) {
+	test({ assert, component, target, window }) {
 		const inputs = [...target.querySelectorAll('input')];
 
 		assert.ok(inputs[0].checked);
@@ -47,9 +48,8 @@ export default test({
 		const event = new window.Event('change');
 
 		inputs[1].checked = true;
-		await inputs[1].dispatchEvent(event);
-		// Wait for the DOM to update
-		await Promise.resolve();
+		inputs[1].dispatchEvent(event);
+		flushSync();
 
 		assert.equal(component.numCompleted, 2);
 		assert.htmlEqual(

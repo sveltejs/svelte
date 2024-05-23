@@ -1,7 +1,8 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	async test({ assert, target }) {
+	test({ assert, target }) {
 		const checkboxes = /** @type {NodeListOf<HTMLInputElement>} */ (
 			target.querySelectorAll('input[type="checkbox"]')
 		);
@@ -10,12 +11,14 @@ export default test({
 		assert.isTrue(checkboxes[1].checked);
 		assert.isFalse(checkboxes[2].checked);
 
-		await checkboxes[1].click();
+		checkboxes[1].click();
+		flushSync();
 
 		const noChecked = target.querySelector('#output')?.innerHTML;
 		assert.equal(noChecked, '');
 
-		await checkboxes[1].click();
+		checkboxes[1].click();
+		flushSync();
 
 		const oneChecked = target.querySelector('#output')?.innerHTML;
 		assert.equal(oneChecked, 'Mint choc chip');

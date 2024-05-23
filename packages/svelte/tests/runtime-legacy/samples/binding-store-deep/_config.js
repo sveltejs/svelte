@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -11,7 +12,7 @@ export default test({
 		<p>hello world</p>
 	`,
 
-	async test({ assert, component, target, window }) {
+	test({ assert, component, target, window }) {
 		const input = target.querySelector('input');
 		ok(input);
 
@@ -30,7 +31,8 @@ export default test({
 		});
 
 		input.value = 'everybody';
-		await input.dispatchEvent(event);
+		input.dispatchEvent(event);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -40,7 +42,8 @@ export default test({
 		`
 		);
 
-		await component.user.set({ name: 'goodbye' });
+		component.user.set({ name: 'goodbye' });
+		flushSync();
 		assert.equal(input.value, 'goodbye');
 		assert.htmlEqual(
 			target.innerHTML,

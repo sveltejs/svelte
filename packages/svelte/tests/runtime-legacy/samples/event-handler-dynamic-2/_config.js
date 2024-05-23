@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -8,29 +9,37 @@ export default test({
 		<button>handler_b</button>
 	`,
 
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		const [toggle, handler_a, handler_b] = target.querySelectorAll('button');
 		const p = target.querySelector('p');
 		ok(p);
 
 		const event = new window.MouseEvent('click', { bubbles: true });
 
-		await handler_a.dispatchEvent(event);
+		handler_a.dispatchEvent(event);
+		flushSync();
 		assert.equal(p.innerHTML, '1');
 
-		await toggle.dispatchEvent(event);
+		toggle.dispatchEvent(event);
+		flushSync();
 
-		await handler_a.dispatchEvent(event);
+		handler_a.dispatchEvent(event);
+		flushSync();
 		assert.equal(p.innerHTML, '2');
 
-		await toggle.dispatchEvent(event);
+		toggle.dispatchEvent(event);
+		flushSync();
 
-		await handler_b.dispatchEvent(event);
+		handler_b.dispatchEvent(event);
+		flushSync();
 		assert.equal(p.innerHTML, '1');
 
-		await toggle.dispatchEvent(event);
+		toggle.dispatchEvent(event);
+		flushSync();
 
-		await handler_b.dispatchEvent(event);
+		handler_b.dispatchEvent(event);
+		flushSync();
+
 		assert.equal(p.innerHTML, '2');
 	}
 });

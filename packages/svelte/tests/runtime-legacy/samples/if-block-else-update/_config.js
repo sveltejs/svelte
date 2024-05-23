@@ -1,12 +1,15 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		const [btn1, btn2] = target.querySelectorAll('button');
 
 		const clickEvent = new window.Event('click', { bubbles: true });
 
-		await btn2.dispatchEvent(clickEvent);
+		btn2.dispatchEvent(clickEvent);
+		flushSync();
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -19,7 +22,9 @@ export default test({
 		`
 		);
 
-		await btn1.dispatchEvent(clickEvent);
+		btn1.dispatchEvent(clickEvent);
+		flushSync();
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -32,7 +37,9 @@ export default test({
 		`
 		);
 
-		await btn2.dispatchEvent(clickEvent);
+		btn2.dispatchEvent(clickEvent);
+		flushSync();
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -45,7 +52,9 @@ export default test({
 		`
 		);
 
-		await btn1.dispatchEvent(clickEvent);
+		btn1.dispatchEvent(clickEvent);
+		flushSync();
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
