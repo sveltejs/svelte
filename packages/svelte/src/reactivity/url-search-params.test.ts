@@ -153,3 +153,7 @@ test('URLSearchParams.getAll', () => {
 
 	cleanup();
 });
+
+test('URLSearchParams.instanceOf', () => {
+	assert.equal(new ReactiveURLSearchParams() instanceof URLSearchParams, true);
+});

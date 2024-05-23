@@ -149,3 +149,7 @@ test('not invoking reactivity when value is not in the set after changes', () =>
 
 	cleanup();
 });
+
+test('Set.instanceOf', () => {
+	assert.equal(new ReactiveSet() instanceof Set, true);
+});
