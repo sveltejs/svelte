@@ -1,10 +1,9 @@
-import { hydrate_nodes, hydrating } from './hydration.js';
+import { hydrate_nodes, hydrate_start, hydrating } from './hydration.js';
 import { empty } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
 import { effect } from '../reactivity/effects.js';
-import { is_array } from '../utils.js';
 
 /**
  * @template {import("#client").TemplateNode | import("#client").TemplateNode[]} T
@@ -36,7 +35,7 @@ export function template(content, flags) {
 
 	return () => {
 		if (hydrating) {
-			return push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
+			return push_template_node(is_fragment ? hydrate_nodes : hydrate_start);
 		}
 
 		if (!node) {
@@ -88,7 +87,7 @@ export function ns_template(content, flags, ns = 'svg') {
 
 	return () => {
 		if (hydrating) {
-			return push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
+			return push_template_node(is_fragment ? hydrate_nodes : hydrate_start);
 		}
 
 		if (!node) {
@@ -181,7 +180,7 @@ function run_scripts(node) {
 export function text(anchor) {
 	if (!hydrating) return empty();
 
-	var node = hydrate_nodes[0];
+	var node = hydrate_start;
 
 	if (!node) {
 		// if an {expression} is empty during SSR, `hydrate_nodes` will be empty.

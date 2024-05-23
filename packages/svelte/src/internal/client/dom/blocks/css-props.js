@@ -1,5 +1,5 @@
 import { namespace_svg } from '../../../../constants.js';
-import { hydrate_anchor, hydrate_nodes, hydrating } from '../hydration.js';
+import { hydrate_anchor, hydrate_start, hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import { render_effect } from '../../reactivity/effects.js';
 
@@ -19,7 +19,7 @@ export function css_props(anchor, is_html, props, component) {
 
 	if (hydrating) {
 		// Hydration: css props element is surrounded by a ssr comment ...
-		element = /** @type {HTMLElement | SVGElement} */ (hydrate_nodes[0]);
+		element = /** @type {HTMLElement | SVGElement} */ (hydrate_start);
 		// ... and the child(ren) of the css props element is also surround by a ssr comment
 		component_anchor = /** @type {Comment} */ (
 			hydrate_anchor(/** @type {Comment} */ (element.firstChild))

@@ -8,7 +8,13 @@ import {
 	HYDRATION_END_ELSE,
 	HYDRATION_START
 } from '../../../../constants.js';
-import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
+import {
+	hydrate_anchor,
+	hydrate_nodes,
+	hydrate_start,
+	hydrating,
+	set_hydrating
+} from '../hydration.js';
 import { clear_text_content, empty } from '../operations.js';
 import { remove } from '../reconciler.js';
 import { untrack } from '../../runtime.js';
@@ -148,7 +154,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 		// this is separate to the previous block because `hydrating` might change
 		if (hydrating) {
 			/** @type {Node} */
-			var child_anchor = hydrate_nodes[0];
+			var child_anchor = hydrate_start;
 
 			/** @type {import('#client').EachItem | import('#client').EachState} */
 			var prev = state;
