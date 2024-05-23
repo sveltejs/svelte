@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.140
+
+### Patch Changes
+
+- breaking: event handlers + bindings now yield effect updates ([#11706](https://github.com/sveltejs/svelte/pull/11706))
+
 ## 5.0.0-next.139
 
 ### Patch Changes
