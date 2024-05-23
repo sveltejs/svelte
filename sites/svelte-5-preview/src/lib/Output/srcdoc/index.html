@@ -67,34 +67,25 @@
 
 		<script>
 			(function () {
-				function handle_message(ev) {
-					let { action, cmd_id } = ev.data;
-					const send_message = (payload) => parent.postMessage({ ...payload }, ev.origin);
-					const send_reply = (payload) => send_message({ ...payload, cmd_id });
-					const send_ok = () => send_reply({ action: 'cmd_ok' });
-					const send_error = (message, stack) =>
-						send_reply({ action: 'cmd_error', message, stack });
+				function send(payload, origin = '*') {
+					parent.postMessage(payload, origin);
+				}
 
-					if (action === 'set_theme') {
-						const { theme } = ev.data.args;
+				window.addEventListener('message', ({ origin, data }) => {
+					let { action, cmd_id } = data;
 
-						document.body.classList.toggle('dark', theme === 'dark');
-						send_ok();
-					}
+					const reply = (payload) => send({ ...payload, cmd_id }, origin);
 
-					if (action === 'eval') {
-						try {
-							const { script } = ev.data.args;
-							(0, eval)(script);
-							send_ok();
-						} catch (e) {
-							send_error(e.message, e.stack);
+					try {
+						if (action === 'set_theme') {
+							document.body.classList.toggle('dark', data.args.theme === 'dark');
 						}
-					}
 
-					if (action === 'catch_clicks') {
-						try {
-							const top_origin = ev.origin;
+						if (action === 'eval') {
+							(0, eval)(data.args.script);
+						}
+
+						if (action === 'catch_clicks') {
 							document.body.addEventListener('click', (event) => {
 								if (event.which !== 1) return;
 								if (event.metaKey || event.ctrlKey || event.shiftKey) return;
@@ -114,7 +105,7 @@
 
 								event.preventDefault();
 
-								if (el.href.startsWith(top_origin)) {
+								if (el.href.startsWith(origin)) {
 									const url = new URL(el.href);
 									if (url.hash[0] === '#') {
 										window.location.hash = url.hash;
@@ -124,182 +115,169 @@
 
 								window.open(el.href, '_blank');
 							});
-							send_ok();
-						} catch (e) {
-							send_error(e.message, e.stack);
 						}
-					}
-				}
 
-				window.addEventListener('message', handle_message, false);
+						reply({ action: 'cmd_ok' });
+					} catch ({ message, stack }) {
+						reply({ action: 'cmd_error', message, stack });
+					}
+				});
 
 				window.onerror = function (msg, url, lineNo, columnNo, error) {
-					parent.postMessage({ action: 'error', value: error }, '*');
+					send({ action: 'error', value: error });
 				};
 
 				window.addEventListener('unhandledrejection', (event) => {
-					parent.postMessage({ action: 'unhandledrejection', value: event.reason }, '*');
+					send({ action: 'unhandledrejection', value: event.reason });
 				});
 
-				let previous = { level: null, args: null };
-
-				['clear', 'log', 'info', 'dir', 'warn', 'error', 'table'].forEach((level) => {
-					const original = console[level];
-					console[level] = (...args) => {
-						const stringifiedArgs = stringify(args);
-						if (previous.level === level && previous.args && previous.args === stringifiedArgs) {
-							parent.postMessage({ action: 'console', level, duplicate: true }, '*');
-						} else {
-							previous = { level, args: stringifiedArgs };
-
-							try {
-								parent.postMessage({ action: 'console', level, args }, '*');
-							} catch (err) {
-								parent.postMessage({ action: 'console', level: 'unclonable' }, '*');
-							}
-						}
-
-						original(...args);
-					};
-				});
-
-				[
-					{ method: 'group', action: 'console_group' },
-					{ method: 'groupEnd', action: 'console_group_end' },
-					{ method: 'groupCollapsed', action: 'console_group_collapsed' }
-				].forEach((group_action) => {
-					const original = console[group_action.method];
-					console[group_action.method] = (label) => {
-						parent.postMessage({ action: group_action.action, label }, '*');
-
-						original(label);
-					};
-				});
-
+				// Intercept console methods
 				const timers = new Map();
-				const original_time = console.time;
-				const original_timelog = console.timeLog;
-				const original_timeend = console.timeEnd;
+				const counters = new Map();
 
-				console.time = (label = 'default') => {
-					original_time(label);
-					timers.set(label, performance.now());
-				};
-				console.timeLog = (label = 'default') => {
-					original_timelog(label);
-					const now = performance.now();
-					if (timers.has(label)) {
-						parent.postMessage(
-							{
-								action: 'console',
-								level: 'system-log',
-								args: [`${label}: ${now - timers.get(label)}ms`]
-							},
-							'*'
-						);
-					} else {
-						parent.postMessage(
-							{
-								action: 'console',
-								level: 'system-warn',
-								args: [`Timer '${label}' does not exist`]
-							},
-							'*'
-						);
+				function log(command, opts) {
+					try {
+						send({ action: 'console', command, ...opts });
+					} catch {
+						send({ action: 'console', command: 'unclonable' });
 					}
-				};
-				console.timeEnd = (label = 'default') => {
-					original_timeend(label);
-					const now = performance.now();
-					if (timers.has(label)) {
-						parent.postMessage(
-							{
-								action: 'console',
-								level: 'system-log',
-								args: [`${label}: ${now - timers.get(label)}ms`]
-							},
-							'*'
-						);
-					} else {
-						parent.postMessage(
-							{
-								action: 'console',
-								level: 'system-warn',
-								args: [`Timer '${label}' does not exist`]
-							},
-							'*'
-						);
-					}
-					timers.delete(label);
-				};
-
-				const original_assert = console.assert;
-				console.assert = (condition, ...args) => {
-					if (condition) {
-						const stack = new Error().stack;
-						parent.postMessage({ action: 'console', level: 'assert', args, stack }, '*');
-					}
-					original_assert(condition, ...args);
-				};
-
-				const counter = new Map();
-				const original_count = console.count;
-				const original_countreset = console.countReset;
-
-				console.count = (label = 'default') => {
-					counter.set(label, (counter.get(label) || 0) + 1);
-					parent.postMessage(
-						{ action: 'console', level: 'system-log', args: `${label}: ${counter.get(label)}` },
-						'*'
-					);
-					original_count(label);
-				};
-
-				console.countReset = (label = 'default') => {
-					if (counter.has(label)) {
-						counter.set(label, 0);
-					} else {
-						parent.postMessage(
-							{
-								action: 'console',
-								level: 'system-warn',
-								args: `Count for '${label}' does not exist`
-							},
-							'*'
-						);
-					}
-					original_countreset(label);
-				};
-
-				const original_trace = console.trace;
-
-				console.trace = (...args) => {
-					const stack = new Error().stack;
-					parent.postMessage({ action: 'console', level: 'trace', args, stack }, '*');
-					original_trace(...args);
-				};
+				}
 
 				function stringify(args) {
 					try {
 						return JSON.stringify(args, (key, value) => {
 							// if we don't do this, our Set/Map from svelte/reactivity would show up wrong in the console
 							if (value instanceof Map) {
-								return {
-									type: 'Map',
-									value
-								};
+								return { type: 'Map', value };
 							}
+
 							if (value instanceof Set) {
-								return {
-									type: 'Set',
-									value
-								};
+								return { type: 'Set', value };
 							}
+
 							return value;
 						});
 					} catch (error) {
 						return null;
 					}
+				}
+
+				/** @param {string} method */
+				function stack(method) {
+					return new Error().stack
+						.split('\n')
+						.filter((line) => {
+							if (/[(@]about:srcdoc/.test(line)) return false;
+							return true;
+						})
+						.slice(1)
+						.map((line) => {
+							line = line
+								.replace('console[method]', `console.${method}`)
+								.replace(/console\.<computed> \[as \w+\]/, `console.${method}`);
+
+							let match =
+								/^\s+at (.+) \((.+:\d+:\d+)\)/.exec(line) || /^(.+)@(.+:\d+:\d+)?/.exec(line);
+
+							if (match) {
+								return {
+									label: match[1],
+									location: match[2]
+								};
+							}
+
+							return null;
+						})
+						.filter((x) => x);
+				}
+
+				const can_dedupe = ['log', 'info', 'dir', 'warn', 'error', 'assert', 'trace'];
+
+				const methods = {
+					clear: () => log('clear'),
+					// TODO make the command 'push' and the level/type 'info'
+					log: (...args) => log('info', { args }),
+					info: (...args) => log('info', { args }),
+					dir: (...args) => log('info', { args: [args[0]], expanded: true }),
+					warn: (...args) => log('warn', { args, stack: stack('warn'), collapsed: true }),
+					error: (...args) => log('error', { args, stack: stack('error'), collapsed: true }),
+					assert: (condition, ...args) => {
+						if (condition) return;
+						log('error', {
+							args: ['Assertion failed:', ...args],
+							stack: stack('assert'),
+							collapsed: true
+						});
+					},
+					group: (...args) => log('group', { args, collapsed: false }),
+					groupCollapsed: (...args) => log('group', { args, collapsed: true }),
+					groupEnd: () => log('groupEnd'),
+					table: (...args) => {
+						const data = args[0];
+						if (data && typeof data === 'object') {
+							log('table', { data, columns: args[1] });
+						} else {
+							log('info', { args });
+						}
+					},
+					time: (label = 'default') => timers.set(label, performance.now()),
+					timeLog: (label = 'default') => {
+						const now = performance.now();
+						if (timers.has(label)) {
+							log('info', { args: [`${label}: ${now - timers.get(label)}ms`] });
+						} else {
+							log('warn', { args: [`Timer '${label}' does not exist`] });
+						}
+					},
+					timeEnd: (label = 'default') => {
+						const now = performance.now();
+						if (timers.has(label)) {
+							log('info', { args: [`${label}: ${now - timers.get(label)}ms`] });
+						} else {
+							log('warn', { args: [`Timer '${label}' does not exist`] });
+						}
+						timers.delete(label);
+					},
+					count: (label = 'default') => {
+						counters.set(label, (counters.get(label) || 0) + 1);
+						log('info', { args: [`${label}: ${counters.get(label)}`] });
+					},
+					countReset: (label = 'default') => {
+						if (counters.has(label)) {
+							counters.set(label, 0);
+						} else {
+							log('warn', { args: [`Count for '${label}' does not exist`] });
+						}
+					},
+					trace: (...args) => {
+						log('info', {
+							args: args.length === 0 ? 'console.trace' : args,
+							stack: stack('trace'),
+							collapsed: false
+						});
+					}
+				};
+
+				let previous = '';
+
+				for (const method in methods) {
+					const original = console[method];
+
+					console[method] = (...args) => {
+						const stack = new Error().stack;
+
+						if (
+							previous === (previous = stringify({ method, args, stack })) &&
+							can_dedupe.includes(method) &&
+							args.every((arg) => !arg || typeof arg !== 'object')
+						) {
+							send({ action: 'console', command: 'duplicate' });
+						} else {
+							methods[method](...args);
+						}
+
+						original(...args);
+					};
 				}
 			})();
 		</script>

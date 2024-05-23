@@ -4,137 +4,164 @@
 
 	/** @type {import('./console').Log} */
 	export let log;
-	export let level = 1;
+	export let depth = 1;
 
 	function toggle_group_collapse() {
 		log.collapsed = !log.collapsed;
 	}
 </script>
 
-{#if log.args && log.level === 'table'}
-	<ConsoleTable data={log.args[0]} columns={log.args[1]} />
+{#if log.command === 'table'}
+	<ConsoleTable data={log.data} columns={log.columns} />
 {/if}
 
-<span class="log console-{log.level}" style="padding-left: {level * 15}px">
-	{#if log.count && log.count > 1}
-		<span class="count">{log.count}x</span>
+<div class="{log.command} line" style="--indent: {depth * 15}px">
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<div
+		role="button"
+		tabindex="0"
+		on:click={toggle_group_collapse}
+		class="log"
+		class:expandable={log.stack || log.command === 'group'}
+	>
+		{#if log.count && log.count > 1}
+			<span class="count">{log.count}</span>
+		{/if}
+
+		{#if log.stack || log.command === 'group'}
+			<span class="arrow" class:expand={!log.collapsed}>{'\u25B6'}</span>
+		{/if}
+
+		{#if log.command === 'clear'}
+			<span class="meta">Console was cleared</span>
+		{:else if log.command === 'unclonable'}
+			<span class="meta meta-error">Message could not be cloned. Open devtools to see it</span>
+		{:else if log.command === 'table'}
+			<JSONNode value={log.data} />
+		{:else}
+			{#each log.args ?? [] as arg}
+				<JSONNode value={arg} defaultExpandedLevel={log.expanded ? 1 : 0} />
+			{/each}
+		{/if}
+	</div>
+
+	{#if log.stack && !log.collapsed}
+		<div class="stack">
+			{#each log.stack as line}
+				<span>{line.label}</span>
+				<span class="location">{line.location}</span>
+			{/each}
+		</div>
 	{/if}
 
-	{#if log.level === 'trace' || log.level === 'assert' || log.level === 'group'}
-		<button on:click={toggle_group_collapse}>
-			<span class="arrow" class:expand={!log.collapsed}> ▶️ </span>
-			{#if log.level === 'group'}
-				<span class="title">{log.label}</span>
-			{/if}
-		</button>
-	{/if}
-
-	{#if log.level === 'assert'}
-		<span class="assert">Assertion failed:</span>
-	{/if}
-
-	{#if log.level === 'clear'}
-		<span class="info">Console was cleared</span>
-	{:else if log.level === 'unclonable'}
-		<span class="info error">Message could not be cloned. Open devtools to see it</span>
-	{:else if log.level.startsWith('system')}
-		{#each log.args ?? [] as arg}
-			{arg}
-		{/each}
-	{:else if log.args && log.level === 'table'}
-		<JSONNode value={log.args[0]} />
-	{:else}
-		{#each log.args ?? [] as arg}
-			<JSONNode value={arg} />
-		{/each}
-	{/if}
-	{#each new Array(level - 1) as _, idx}
+	{#each new Array(depth - 1) as _, idx}
 		<div class="outline" style="left: {idx * 15 + 15}px"></div>
 	{/each}
-</span>
+</div>
 
-{#if log.level === 'group' && !log.collapsed}
+{#if log.command === 'group' && !log.collapsed}
 	{#each log.logs ?? [] as childLog}
-		<svelte:self log={childLog} level={level + 1} />
+		<svelte:self log={childLog} depth={depth + 1} />
 	{/each}
-{/if}
-
-{#if (log.level === 'trace' || log.level === 'assert') && !log.collapsed}
-	<div class="trace">
-		{#each log.stack?.split('\n').slice(2) ?? '' as stack}
-			<div>{stack.replace(/^\s*at\s+/, '')}</div>
-		{/each}
-	</div>
 {/if}
 
 <style>
-	.log {
-		border-bottom: 0.5px solid var(--sk-back-4);
-		padding: 5px 10px 0px;
-		display: flex;
+	.line {
+		--bg: var(--sk-back-1);
+		--border: var(--sk-back-3);
+		display: block;
 		position: relative;
+		width: 100%;
+		text-align: left;
+		border-width: 1px;
+		border-style: solid none none none;
+		border-color: var(--border);
+		background: var(--bg);
+	}
+
+	.warn {
+		--bg: var(--warning-bg);
+		--border: var(--warning-border);
+	}
+
+	.error {
+		--bg: var(--error-bg);
+		--border: var(--error-border);
+	}
+
+	.warn,
+	.error {
+		border-style: solid none;
+
+		& + :global(&) {
+			border-top: none;
+		}
+	}
+
+	.group {
+		font-weight: 700;
+	}
+
+	.log {
+		padding: 5px 10px 5px var(--indent);
+		display: flex;
+		width: 100%;
 		font-size: 12px;
 		font-family: var(--sk-font-mono);
+		align-items: center;
 	}
 
-	.log > :global(*) {
-		margin-right: 10px;
-		font-family: var(--sk-font-mono);
-	}
-
-	.console-warn,
-	.console-system-warn {
-		background: hsla(50, 100%, 95%, 0.4);
-		border-color: #fff4c4;
-	}
-
-	.console-error,
-	.console-assert {
-		background: #fff0f0;
-		border-color: #fed6d7;
-	}
-
-	.console-group,
-	.arrow {
+	.log.expandable {
 		cursor: pointer;
-		user-select: none;
+		padding-left: calc(var(--indent) + 1em);
 	}
 
-	.console-trace,
-	.console-assert {
-		border-bottom: none;
-	}
-
-	.console-assert + .trace {
-		background: #fff0f0;
-		border-color: #fed6d7;
-	}
-
-	.trace {
-		border-bottom: 1px solid #eee;
+	.stack {
+		display: grid;
+		grid-template-columns: minmax(0, auto) minmax(auto, 1fr);
+		grid-gap: 0 2rem;
 		font-size: 12px;
 		font-family: var(--sk-font-mono);
-		padding: 4px 0 2px;
-	}
+		margin: 0 1rem 0.4rem calc(1em + var(--indent));
+		overflow: hidden;
 
-	.trace > :global(div) {
-		margin-left: 15px;
+		.location {
+			position: relative;
+			background: var(--bg);
+			&::before {
+				content: '';
+				position: absolute;
+				width: 1rem;
+				height: 100%;
+				left: -1rem;
+				top: 0;
+				background: linear-gradient(to right, transparent, var(--bg));
+			}
+		}
 	}
 
 	.count {
-		color: var(--sk-text-3, #999);
-		font-size: 12px;
-		line-height: 1.2;
+		position: relative;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		min-width: 1.5em;
+		height: 1.4em;
+		padding: 0.5em;
+		border-radius: 0.4rem;
+		background-color: var(--sk-text-3, #777);
+		color: var(--sk-back-1);
+		font-size: 1rem;
 	}
 
-	.info {
+	.meta {
 		color: var(--sk-text-2, #666);
 		font-family: var(--sk-font) !important;
 		font-size: 12px;
 	}
 
-	.error {
-		color: #da106e; /* todo make this a var */
+	.meta-error {
+		color: var(--error-fg);
 	}
 
 	.outline {
@@ -146,27 +173,13 @@
 
 	.arrow {
 		position: absolute;
-		font-size: 0.6em;
+		font-size: 0.9rem;
 		transition: 150ms;
 		transform-origin: 50% 50%;
-		transform: translateY(1px) translateX(-50%);
+		transform: translateX(-1.2rem) translateY(-1px);
 	}
 
 	.arrow.expand {
-		transform: translateY(1px) translateX(-50%) rotateZ(90deg);
-	}
-
-	.title {
-		font-family: var(--sk-font-mono);
-		font-size: 13px;
-		font-weight: bold;
-		padding-left: 11px;
-		height: 19px;
-	}
-
-	.assert {
-		padding-left: 11px;
-		font-weight: bold;
-		color: #da106e;
+		transform: translateX(-1.2rem) translateY(0px) rotateZ(90deg);
 	}
 </style>

@@ -55,32 +55,36 @@
 				pending_imports = progress;
 			},
 			on_error: (event) => {
-				push_logs({ level: 'error', args: [event.value] });
+				push_logs({ command: 'error', args: [event.value] });
 			},
 			on_unhandled_rejection: (event) => {
 				let error = event.value;
 				if (typeof error === 'string') error = { message: error };
 				error.message = 'Uncaught (in promise): ' + error.message;
-				push_logs({ level: 'error', args: [error] });
+				push_logs({ command: 'error', args: [error] });
 			},
 			on_console: (log) => {
-				if (log.level === 'clear') {
-					clear_logs();
-					push_logs(log);
-				} else if (log.duplicate) {
-					increment_duplicate_log();
-				} else {
-					push_logs(log);
+				switch (log.command) {
+					case 'clear':
+						clear_logs();
+						push_logs(log);
+						break;
+
+					case 'group':
+						group_logs(log);
+						break;
+
+					case 'groupEnd':
+						ungroup_logs();
+						break;
+
+					case 'duplicate':
+						increment_duplicate_log();
+						break;
+
+					default:
+						push_logs(log);
 				}
-			},
-			on_console_group: (action) => {
-				group_logs(action.label, false);
-			},
-			on_console_group_end: () => {
-				ungroup_logs();
-			},
-			on_console_group_collapsed: (action) => {
-				group_logs(action.label, true);
 			}
 		});
 
@@ -202,17 +206,13 @@
 		logs = logs;
 	}
 
-	/**
-	 * @param {string} label
-	 * @param {boolean} collapsed
-	 */
-	function group_logs(label, collapsed) {
-		/** @type {import('./console/console').Log} */
-		const group_log = { level: 'group', label, collapsed, logs: [] };
-		current_log_group.push({ level: 'group', label, collapsed, logs: [] });
+	/** @param {import('./console/console').Log} log */
+	function group_logs(log) {
+		log.logs = [];
+		current_log_group.push(log);
 		// TODO: Investigate
 		log_group_stack.push(current_log_group);
-		current_log_group = group_log.logs ?? [];
+		current_log_group = log.logs;
 		logs = logs;
 	}
 
@@ -284,7 +284,7 @@
 		</div>
 
 		<section slot="panel-body">
-			<Console {logs} {theme} on:clear={clear_logs} />
+			<Console {logs} />
 		</section>
 	</PaneWithPanel>
 
