@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.139
+
+### Patch Changes
+
+- fix: ensure we clear down each block opening anchors from document ([#11740](https://github.com/sveltejs/svelte/pull/11740))
+
 ## 5.0.0-next.138
 
 ### Patch Changes
