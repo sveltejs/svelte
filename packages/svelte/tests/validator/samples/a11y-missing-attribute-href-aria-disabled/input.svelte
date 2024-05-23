@@ -1,1 +1,1 @@
-<a aria-disabled="true" tabindex="-1" aria-label="Back">←</a>
+<a role="link" aria-disabled="true">Back</a>
