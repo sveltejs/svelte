@@ -100,7 +100,7 @@ export function template_with_script(content, flags) {
 /*#__NO_SIDE_EFFECTS__*/
 export function ns_template(content, flags, ns = 'svg') {
 	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
-	var fn = template(`<${ns}>${content}</${ns}>`, 0); // we don't need to worry about using importNode for SVGs
+	var fn = template(`<${ns}>${content}</${ns}>`, 0); // we don't need to worry about using importNode for namespaced elements
 
 	/** @type {Element | DocumentFragment} */
 	var node;
