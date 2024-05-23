@@ -8,8 +8,8 @@ import * as e from '../../errors.js';
 import {
 	extract_identifiers,
 	get_parent,
-	is_event_attribute,
 	is_expression_attribute,
+	is_quoted_attribute,
 	is_text_attribute,
 	object,
 	unwrap_optional
@@ -58,6 +58,15 @@ function validate_component(node, context) {
 		}
 
 		if (attribute.type === 'Attribute') {
+			if (
+				context.state.analysis.runes &&
+				!is_quoted_attribute(attribute) &&
+				Array.isArray(attribute.value) &&
+				attribute.value.length > 1
+			) {
+				e.attribute_invalid_expression(attribute);
+			}
+
 			if (context.state.analysis.runes && is_expression_attribute(attribute)) {
 				const expression = attribute.value[0].expression;
 				if (expression.type === 'SequenceExpression') {
@@ -106,6 +115,15 @@ function validate_element(node, context) {
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'Attribute') {
 			const is_expression = is_expression_attribute(attribute);
+
+			if (
+				context.state.analysis.runes &&
+				!is_quoted_attribute(attribute) &&
+				Array.isArray(attribute.value) &&
+				attribute.value.length > 1
+			) {
+				e.attribute_invalid_expression(attribute);
+			}
 
 			if (context.state.analysis.runes && is_expression) {
 				const expression = attribute.value[0].expression;
