@@ -7,13 +7,11 @@ var normal = 'font-weight: normal';
 
 /**
  * `<svelte:element this="%tag%">` is a void element — it cannot have content
- * @param {boolean} trace
  * @param {string} tag
  */
-export function dynamic_void_element_content(trace, tag) {
+export function dynamic_void_element_content(tag) {
 	if (DEV) {
 		console.warn(`%c[svelte] ${"dynamic_void_element_content"}\n%c${`\`<svelte:element this="${tag}">\` is a void element — it cannot have content`}`, bold, normal);
-		if (trace) console.trace('stack trace');
 	} else {
 		// TODO print a link to the documentation
 		console.warn("dynamic_void_element_content");
