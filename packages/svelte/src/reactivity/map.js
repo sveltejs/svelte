@@ -1,4 +1,4 @@
-import { make_reactive, NOTIFY_WITH_ALL_PARAMS } from './utils.js';
+import { make_reactive, NOTIFY_WITH_ALL_REGISTERED_PARAMS } from './utils.js';
 
 export const ReactiveMap = make_reactive(Map, {
 	write_properties: ['clear', 'delete', 'set'],
@@ -18,7 +18,7 @@ export const ReactiveMap = make_reactive(Map, {
 			if (value.size === 0) {
 				return false;
 			}
-			notify_read_properties(['get', 'keys', 'has'], NOTIFY_WITH_ALL_PARAMS);
+			notify_read_properties(['get', 'keys', 'has'], NOTIFY_WITH_ALL_REGISTERED_PARAMS);
 			return true;
 		},
 		delete: (notify_read_properties, value, property, ...params) => {
