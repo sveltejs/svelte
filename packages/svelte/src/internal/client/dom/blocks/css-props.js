@@ -2,7 +2,6 @@ import { namespace_svg } from '../../../../constants.js';
 import { hydrate_anchor, hydrate_nodes, hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import { render_effect } from '../../reactivity/effects.js';
-import { remove } from '../reconciler.js';
 
 /**
  * @param {Element | Text | Comment} anchor
@@ -60,7 +59,7 @@ export function css_props(anchor, is_html, props, component) {
 		});
 
 		return () => {
-			remove(element);
+			element.remove();
 		};
 	});
 }
