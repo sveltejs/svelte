@@ -4,10 +4,100 @@
 
 	/** @type {import('./console').Log} */
 	export let log;
-	export let depth = 1;
+	export let depth = 0;
 
 	function toggle_group_collapse() {
 		log.collapsed = !log.collapsed;
+	}
+
+	let style;
+
+	/** @param {string} text */
+	function sanitize_css(text) {
+		style ??= document.createElement('span').style;
+		style.cssText = text;
+
+		for (const key in style) {
+			const value = style[key];
+			if (typeof value === 'string' && value.includes('url(')) {
+				style[key] = value.replace(/url\([^)]+\)/g, '');
+			}
+		}
+
+		style.position = 'static';
+		return style.cssText;
+	}
+
+	/** @param {any[]} [args] */
+	function format_args(args = []) {
+		if (args.length === 0) return args;
+
+		if (typeof args[0] !== 'string') {
+			return args.map((value) => ({ type: 'value', value }));
+		}
+
+		args = args.slice();
+
+		const parts = args.shift().split(/(%[sdifoOc])/g);
+
+		const formatted = [];
+
+		if (parts[0] !== '') {
+			formatted.push({ type: 'value', value: parts[0] });
+		}
+
+		for (let i = 1; i < parts.length; i += 2) {
+			const type = parts[i];
+			const next = parts[i + 1];
+			const value = args.shift();
+
+			switch (type) {
+				case '%s':
+					formatted.push({ type: 'value', value: String(value), formatted: true });
+					break;
+
+				case '%d':
+				case '%i':
+					formatted.push({
+						type: 'value',
+						value: typeof value === 'symbol' ? NaN : parseInt(value, 10),
+						formatted: true
+					});
+					break;
+
+				case '%f':
+					formatted.push({
+						type: 'value',
+						value: typeof value === 'symbol' ? NaN : parseFloat(value),
+						formatted: true
+					});
+					break;
+
+				case '%o':
+				case '%O':
+					formatted.push({ type: 'value', value, formatted: true });
+					break;
+
+				case '%c':
+					formatted.push({
+						type: 'style',
+						style: sanitize_css(String(value)),
+						value: next,
+						formatted: true
+					});
+					break;
+			}
+
+			if (type !== '%c' && next !== '') {
+				formatted.push({ type: 'value', value: next, formatted: true });
+			}
+		}
+
+		for (const value of args) {
+			formatted.push({ type: 'value', value });
+		}
+
+		return formatted;
 	}
 </script>
 
@@ -39,9 +129,18 @@
 		{:else if log.command === 'table'}
 			<JSONNode value={log.data} />
 		{:else}
-			{#each log.args ?? [] as arg}
-				<JSONNode value={arg} defaultExpandedLevel={log.expanded ? 1 : 0} />
-			{/each}
+			<span class="values">
+				{#each format_args(log.args) as part}
+					<!-- we need to do some funky stuff to make whitespace behave as it does in devtools -->
+					{#if !part.formatted}
+						{' '}
+					{/if}{#if part.type === 'value'}
+						<JSONNode value={part.value} defaultExpandedLevel={log.expanded ? 1 : 0} />
+					{:else}
+						<span class="styled" style={part.style}>{part.value}</span>
+					{/if}
+				{/each}
+			</span>
 		{/if}
 	</div>
 
@@ -54,7 +153,7 @@
 		</div>
 	{/if}
 
-	{#each new Array(depth - 1) as _, idx}
+	{#each new Array(depth) as _, idx}
 		<div class="outline" style="left: {idx * 15 + 15}px"></div>
 	{/each}
 </div>
@@ -103,24 +202,29 @@
 	}
 
 	.log {
-		padding: 5px 10px 5px var(--indent);
+		padding: 0.5rem 1rem 0.5rem calc(1rem + var(--indent));
 		display: flex;
+		gap: 1rem;
 		width: 100%;
-		font-size: 12px;
+		font-size: 1.2rem;
 		font-family: var(--sk-font-mono);
 		align-items: center;
 	}
 
 	.log.expandable {
 		cursor: pointer;
-		padding-left: calc(var(--indent) + 1em);
+	}
+
+	.values {
+		display: block;
+		flex: 1;
 	}
 
 	.stack {
 		display: grid;
 		grid-template-columns: minmax(0, auto) minmax(auto, 1fr);
 		grid-gap: 0 2rem;
-		font-size: 12px;
+		font-size: 1.2rem;
 		font-family: var(--sk-font-mono);
 		margin: 0 1rem 0.4rem calc(1em + var(--indent));
 		overflow: hidden;
@@ -172,14 +276,17 @@
 	}
 
 	.arrow {
-		position: absolute;
 		font-size: 0.9rem;
 		transition: 150ms;
 		transform-origin: 50% 50%;
-		transform: translateX(-1.2rem) translateY(-1px);
+		transform: translateY(-1px);
 	}
 
 	.arrow.expand {
-		transform: translateX(-1.2rem) translateY(0px) rotateZ(90deg);
+		transform: translateY(0px) rotateZ(90deg);
+	}
+
+	.styled {
+		white-space: pre-wrap;
 	}
 </style>

@@ -251,7 +251,7 @@
 					},
 					trace: (...args) => {
 						log('info', {
-							args: args.length === 0 ? 'console.trace' : args,
+							args: args.length === 0 ? ['console.trace'] : args,
 							stack: stack('trace'),
 							collapsed: false
 						});
