@@ -601,15 +601,6 @@ export function attribute_invalid_event_handler(node) {
 }
 
 /**
- * Invalid attribute expression
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function attribute_invalid_expression(node) {
-	e(node, "attribute_invalid_expression", "Invalid attribute expression");
-}
-
-/**
  * 'multiple' attribute must be static if select uses two-way binding
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -644,6 +635,15 @@ export function attribute_invalid_sequence_expression(node) {
  */
 export function attribute_invalid_type(node) {
 	e(node, "attribute_invalid_type", "'type' attribute must be a static text value if input uses two-way binding");
+}
+
+/**
+ * Attribute values containing `{...}` must be enclosed in quote marks, unless the value only contains the expression
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function attribute_unquoted_sequence(node) {
+	e(node, "attribute_unquoted_sequence", "Attribute values containing `{...}` must be enclosed in quote marks, unless the value only contains the expression");
 }
 
 /**
