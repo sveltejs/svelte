@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.141
+
+### Patch Changes
+
+- fix: throw on invalid attribute expressions ([#11736](https://github.com/sveltejs/svelte/pull/11736))
+
+- fix: use svg methods for updating svg attributes too ([#11755](https://github.com/sveltejs/svelte/pull/11755))
+
+- fix: don't warn on link without href if aria-disabled ([#11737](https://github.com/sveltejs/svelte/pull/11737))
+
+- fix: don't use console.trace inside dev warnings ([#11744](https://github.com/sveltejs/svelte/pull/11744))
+
 ## 5.0.0-next.140
 
 ### Patch Changes
