@@ -3,6 +3,7 @@ import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 
 export const NOTIFY_WITH_ALL_PARAMS = Symbol();
+export const INTERNAL_OBJECT = Symbol();
 
 /**
  * some `write_properties` require a custom logic to notify a change for read properties.
@@ -41,6 +42,8 @@ export const NOTIFY_WITH_ALL_PARAMS = Symbol();
  * @returns {TEntity}
  */
 export const make_reactive = (Entity, options) => {
+	override_console();
+
 	// we return a class so that the caller can call it with new
 	// @ts-ignore
 	return class extends Entity {
@@ -57,10 +60,11 @@ export const make_reactive = (Entity, options) => {
 		 */
 		#version_signal = source(false);
 
+		[INTERNAL_OBJECT] = this;
+
 		/**
 		 * @param  {...unknown[]} params
 		 */
-
 		constructor(...params) {
 			super(...params);
 			return new Proxy(this, {
@@ -271,13 +275,13 @@ function notify_read_properties(
  * @param {TCreateSignalIfDoesntExist} [create_signal_if_doesnt_exist=false]
  * @returns {TCreateSignalIfDoesntExist extends true ? import("#client").Source<boolean> : import("#client").Source<boolean> | null }
  */
-const get_signal_for_function = (
+function get_signal_for_function(
 	signals_map,
 	function_name,
 	param,
 	// @ts-ignore: this should be supported in jsdoc based on https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html#template but isn't?
 	create_signal_if_doesnt_exist = false
-) => {
+) {
 	/**
 	 * @type {Map<unknown, import("#client").Source<boolean>>}
 	 */
@@ -313,7 +317,7 @@ const get_signal_for_function = (
 	}
 	// @ts-ignore
 	return signal;
-};
+}
 
 /**
  * toggles the signal value. this change notifies any reactions (not using number explicitly cause its not required, change from true to false or vice versa is enough).
@@ -321,9 +325,50 @@ const get_signal_for_function = (
  * @param {import("#client").Source<boolean>} version_signal
  * @param {import("#client").Source<boolean>} [read_method_signal]
  */
-const increment_signal = (initial_version_signal_v, version_signal, read_method_signal) => {
+function increment_signal(initial_version_signal_v, version_signal, read_method_signal) {
 	if (initial_version_signal_v === version_signal.v) {
 		set(version_signal, !version_signal.v);
 	}
 	read_method_signal && set(read_method_signal, !read_method_signal.v);
-};
+}
+
+let is_console_overridden = false;
+function override_console() {
+	if (!DEV || is_console_overridden) {
+		return;
+	}
+	is_console_overridden = true;
+
+	const methods = /** @type {const} */ (['log', 'error', 'warn', 'debug', 'dir', 'table']);
+
+	/**
+	 * @param {any} value
+	 * @returns {any}
+	 */
+	function get_internal_obj(value) {
+		if (typeof value === 'object' && value !== null && INTERNAL_OBJECT in value) {
+			return value[INTERNAL_OBJECT];
+		}
+		return value;
+	}
+
+	/**
+	 * @param {typeof methods[number]} method
+	 */
+	function override(method) {
+		// eslint-disable-next-line no-console
+		const original_method = console[method];
+
+		/**
+		 * @type {any[]}
+		 **/
+		// eslint-disable-next-line no-console
+		console[method] = (...params) => {
+			return original_method(...params.map((value) => get_internal_obj(value)));
+		};
+	}
+
+	methods.forEach((method) => {
+		override(method);
+	});
+}
