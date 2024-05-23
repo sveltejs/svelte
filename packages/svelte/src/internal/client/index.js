@@ -80,7 +80,7 @@ export {
 export {
 	append,
 	comment,
-	svg_template,
+	ns_template,
 	svg_template_with_script,
 	mathml_template,
 	template,

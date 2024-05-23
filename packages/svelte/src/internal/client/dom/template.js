@@ -94,12 +94,13 @@ export function template_with_script(content, flags) {
 /**
  * @param {string} content
  * @param {number} flags
+ * @param {'svg' | 'math'} ns
  * @returns {() => Node | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function svg_template(content, flags) {
+export function ns_template(content, flags, ns = 'svg') {
 	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
-	var fn = template(`<svg>${content}</svg>`, 0); // we don't need to worry about using importNode for SVGs
+	var fn = template(`<${ns}>${content}</${ns}>`, 0); // we don't need to worry about using importNode for SVGs
 
 	/** @type {Element | DocumentFragment} */
 	var node;
@@ -110,14 +111,14 @@ export function svg_template(content, flags) {
 		}
 
 		if (!node) {
-			var svg = /** @type {Element} */ (fn());
+			var wrapper = /** @type {Element} */ (fn());
 
 			if ((flags & TEMPLATE_FRAGMENT) === 0) {
-				node = /** @type {Element} */ (svg.firstChild);
+				node = /** @type {Element} */ (wrapper.firstChild);
 			} else {
 				node = document.createDocumentFragment();
-				while (svg.firstChild) {
-					node.appendChild(svg.firstChild);
+				while (wrapper.firstChild) {
+					node.appendChild(wrapper.firstChild);
 				}
 			}
 		}
@@ -142,7 +143,7 @@ export function svg_template(content, flags) {
 /*#__NO_SIDE_EFFECTS__*/
 export function svg_template_with_script(content, flags) {
 	var first = true;
-	var fn = svg_template(content, flags);
+	var fn = ns_template(content, flags);
 
 	return () => {
 		if (hydrating) return fn();
@@ -165,40 +166,7 @@ export function svg_template_with_script(content, flags) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function mathml_template(content, flags) {
-	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
-	var fn = template(`<math>${content}</math>`, 0); // we don't need to worry about using importNode for MathML
-
-	/** @type {Element | DocumentFragment} */
-	var node;
-
-	return () => {
-		if (hydrating) {
-			return push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
-		}
-
-		if (!node) {
-			var math = /** @type {Element} */ (fn());
-
-			if ((flags & TEMPLATE_FRAGMENT) === 0) {
-				node = /** @type {Element} */ (math.firstChild);
-			} else {
-				node = document.createDocumentFragment();
-				while (math.firstChild) {
-					node.appendChild(math.firstChild);
-				}
-			}
-		}
-
-		var clone = node.cloneNode(true);
-
-		push_template_node(
-			is_fragment
-				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
-				: /** @type {import('#client').TemplateNode} */ (clone)
-		);
-
-		return clone;
-	};
+	return ns_template(content, flags, 'math');
 }
 
 /**
