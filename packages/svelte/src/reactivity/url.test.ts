@@ -232,3 +232,7 @@ test('fine grained tests', () => {
 
 	cleanup();
 });
+
+test('URL.instanceOf', () => {
+	assert.equal(new ReactiveURL('https://svelte.dev') instanceof URL, true);
+});
