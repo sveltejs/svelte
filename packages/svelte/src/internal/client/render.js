@@ -324,7 +324,7 @@ export async function append_styles(target, style_sheet_id, styles) {
 		const style = create_element('style');
 		style.id = style_sheet_id;
 		style.textContent = styles;
-		/** @type {Document} */ ((append_styles_to).head || append_styles_to).appendChild(style);
+		/** @type {Document} */ (append_styles_to.head || append_styles_to).appendChild(style);
 	}
 }
 
