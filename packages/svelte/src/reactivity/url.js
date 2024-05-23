@@ -2,11 +2,11 @@ import { untrack } from '../index-client.js';
 import { ReactiveURLSearchParams } from './url-search-params.js';
 import { make_reactive } from './utils.js';
 
-/**
- * had to create a subclass for URLWithReactiveSearchParams
- * because we cannot change the internal `searchParams` reference (which links to the web api implementation) so it requires
- * some custom logic
- */
+//
+// had to create a subclass for URLWithReactiveSearchParams
+// because we cannot change the internal `searchParams` reference (which links to the web api implementation) so it requires
+// some custom logic
+//
 class URLWithReactiveSearchParams extends URL {
 	/**
 	 * @type {InstanceType<ReactiveURLSearchParams>}
