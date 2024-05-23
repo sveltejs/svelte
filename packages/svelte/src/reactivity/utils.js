@@ -2,7 +2,7 @@ import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 
-export const NOTIFY_WITH_ALL_PARAMS = Symbol();
+export const NOTIFY_WITH_ALL_REGISTERED_PARAMS = Symbol();
 export const INTERNAL_OBJECT = Symbol();
 
 /**
@@ -253,7 +253,7 @@ function notify_read_properties(
 				`when trying to notify reactions got a read method that wasn't defined in options: ${name.toString()}`
 			);
 		}
-		if (params.length == 1 && params[0] == NOTIFY_WITH_ALL_PARAMS) {
+		if (params.length == 1 && params[0] == NOTIFY_WITH_ALL_REGISTERED_PARAMS) {
 			read_methods_signals.get(name)?.forEach((sig) => {
 				increment_signal(initial_version_signal_v, version_signal, sig);
 			});
