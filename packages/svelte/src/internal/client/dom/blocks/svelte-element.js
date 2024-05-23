@@ -12,6 +12,7 @@ import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
 import { current_component_context } from '../../runtime.js';
 import { DEV } from 'esm-env';
+
 /**
  * @param {Comment} anchor
  * @param {() => string} get_tag
@@ -77,7 +78,6 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 
 		if (next_tag && next_tag !== current_tag) {
 			effect = branch(() => {
-				const prev_element = element;
 				element = hydrating
 					? /** @type {Element} */ (hydrate_start)
 					: ns
@@ -119,7 +119,9 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 
 				anchor.before(element);
 
-				prev_element?.remove();
+				return () => {
+					element?.remove();
+				};
 			});
 		}
 

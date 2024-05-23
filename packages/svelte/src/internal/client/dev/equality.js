@@ -21,9 +21,6 @@ export function init_array_prototype_warnings() {
 
 			if (test !== -1) {
 				w.state_proxy_equality_mismatch('array.indexOf(...)');
-
-				// eslint-disable-next-line no-console
-				console.trace();
 			}
 		}
 
@@ -38,9 +35,6 @@ export function init_array_prototype_warnings() {
 
 			if (test !== -1) {
 				w.state_proxy_equality_mismatch('array.lastIndexOf(...)');
-
-				// eslint-disable-next-line no-console
-				console.trace();
 			}
 		}
 
@@ -55,9 +49,6 @@ export function init_array_prototype_warnings() {
 
 			if (test) {
 				w.state_proxy_equality_mismatch('array.includes(...)');
-
-				// eslint-disable-next-line no-console
-				console.trace();
 			}
 		}
 
@@ -81,9 +72,6 @@ export function init_array_prototype_warnings() {
 export function strict_equals(a, b, equal = true) {
 	if ((a === b) !== (get_proxied_value(a) === get_proxied_value(b))) {
 		w.state_proxy_equality_mismatch(equal ? '===' : '!==');
-
-		// eslint-disable-next-line no-console
-		console.trace();
 	}
 
 	return (a === b) === equal;
@@ -98,9 +86,6 @@ export function strict_equals(a, b, equal = true) {
 export function equals(a, b, equal = true) {
 	if ((a == b) !== (get_proxied_value(a) == get_proxied_value(b))) {
 		w.state_proxy_equality_mismatch(equal ? '==' : '!=');
-
-		// eslint-disable-next-line no-console
-		console.trace();
 	}
 
 	return (a == b) === equal;

@@ -45,6 +45,16 @@ export function is_expression_attribute(attribute) {
 }
 
 /**
+ * Returns true if the attribute is quoted.
+ * @param {import('#compiler').Attribute} attribute
+ * @returns {attribute is import('#compiler').Attribute & { value: [import('#compiler').ExpressionTag] }}
+ */
+export function is_quoted_attribute(attribute) {
+	if (attribute.value === true) return false;
+	return attribute.value.at(-1)?.end !== attribute.end;
+}
+
+/**
  * Returns true if the attribute starts with `on` and contains a single expression node.
  * @param {import('#compiler').Attribute} attribute
  * @returns {attribute is import('#compiler').Attribute & { value: [import('#compiler').ExpressionTag] }}

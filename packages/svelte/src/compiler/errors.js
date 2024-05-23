@@ -601,6 +601,15 @@ export function attribute_invalid_event_handler(node) {
 }
 
 /**
+ * Invalid attribute expression
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function attribute_invalid_expression(node) {
+	e(node, "attribute_invalid_expression", "Invalid attribute expression");
+}
+
+/**
  * 'multiple' attribute must be static if select uses two-way binding
  * @param {null | number | NodeLike} node
  * @returns {never}
