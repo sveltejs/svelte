@@ -1,4 +1,4 @@
-import { flushSync } from '../../../../src/index-client';
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
