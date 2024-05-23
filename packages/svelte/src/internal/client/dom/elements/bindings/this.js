@@ -1,7 +1,7 @@
 import { STATE_SYMBOL } from '../../../constants.js';
 import { effect, render_effect } from '../../../reactivity/effects.js';
-import { untrack } from '../../../runtime.js';
-import { queue_task } from '../../task.js';
+import { untrack, yield_updates } from '../../../runtime.js';
+import { queue_micro_task } from '../../task.js';
 
 /**
  * @param {any} bound_value
@@ -37,19 +37,21 @@ export function bind_this(element_or_component, update, get_value, get_parts) {
 
 			untrack(() => {
 				if (element_or_component !== get_value(...parts)) {
-					update(element_or_component, ...parts);
-					// If this is an effect rerun (cause: each block context changes), then nullfiy the binding at
-					// the previous position if it isn't already taken over by a different effect.
-					if (old_parts && is_bound_this(get_value(...old_parts), element_or_component)) {
-						update(null, ...old_parts);
-					}
+					yield_updates(() => {
+						update(element_or_component, ...parts);
+						// If this is an effect rerun (cause: each block context changes), then nullfiy the binding at
+						// the previous position if it isn't already taken over by a different effect.
+						if (old_parts && is_bound_this(get_value(...old_parts), element_or_component)) {
+							update(null, ...old_parts);
+						}
+					});
 				}
 			});
 		});
 
 		return () => {
 			// We cannot use effects in the teardown phase, we we use a microtask instead.
-			queue_task(() => {
+			queue_micro_task(() => {
 				if (parts && is_bound_this(get_value(...parts), element_or_component)) {
 					update(null, ...parts);
 				}

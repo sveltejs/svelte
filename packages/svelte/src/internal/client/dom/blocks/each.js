@@ -411,6 +411,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		for (var i = 0; i < to_destroy.length; i += 1) {
 			var item = to_destroy[i];
 			items.delete(item.k);
+			remove(item.o);
 			link(item.prev, item.next);
 		}
 	});

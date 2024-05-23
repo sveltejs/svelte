@@ -120,7 +120,7 @@
 
 <!-- markdown output -->
 <div class="tab-content" class:visible={selected?.type === 'md'}>
-	<iframe title="Markdown" srcdoc={markdown} />
+	<iframe title="Markdown" srcdoc={markdown}></iframe>
 </div>
 
 <style>

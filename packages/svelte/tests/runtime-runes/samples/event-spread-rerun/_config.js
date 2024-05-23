@@ -1,14 +1,16 @@
+import { flushSync } from 'svelte';
 import { test, ok } from '../../test';
 
 export default test({
 	mode: ['client'],
 
-	async test({ assert, logs, target }) {
+	test({ assert, logs, target }) {
 		const input = target.querySelector('input');
 		ok(input);
 
 		input.value = 'foo';
-		await input.dispatchEvent(new Event('input'));
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+		flushSync();
 
 		assert.deepEqual(logs, ['hi']);
 	}

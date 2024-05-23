@@ -1,12 +1,12 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	async test({ assert, target }) {
+	test({ assert, target }) {
 		const input = target.querySelector('input');
 
 		input?.dispatchEvent(new Event('input', { bubbles: true }));
-
-		await Promise.resolve();
+		flushSync();
 
 		assert.htmlEqual(target.innerHTML, 'true <input class="hello">');
 	}

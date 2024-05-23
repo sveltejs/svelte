@@ -1,5 +1,45 @@
 # svelte
 
+## 5.0.0-next.140
+
+### Patch Changes
+
+- breaking: event handlers + bindings now yield effect updates ([#11706](https://github.com/sveltejs/svelte/pull/11706))
+
+## 5.0.0-next.139
+
+### Patch Changes
+
+- fix: ensure we clear down each block opening anchors from document ([#11740](https://github.com/sveltejs/svelte/pull/11740))
+
+## 5.0.0-next.138
+
+### Patch Changes
+
+- fix: allow comments after last selector in css ([#11723](https://github.com/sveltejs/svelte/pull/11723))
+
+- fix: don't add scoping modifier to nesting selectors ([#11713](https://github.com/sveltejs/svelte/pull/11713))
+
+- chore: speedup hydration around input and select values ([#11717](https://github.com/sveltejs/svelte/pull/11717))
+
+- fix: update value like attributes in a separate template_effect ([#11720](https://github.com/sveltejs/svelte/pull/11720))
+
+- fix: improve handling of unowned derived signal ([#11712](https://github.com/sveltejs/svelte/pull/11712))
+
+## 5.0.0-next.137
+
+### Patch Changes
+
+- fix: migrate derivations without semicolons ([#11704](https://github.com/sveltejs/svelte/pull/11704))
+
+- fix: check for invalid bindings on window and document ([#11676](https://github.com/sveltejs/svelte/pull/11676))
+
+- fix: more efficient spread attributes in SSR output ([#11660](https://github.com/sveltejs/svelte/pull/11660))
+
+- fix: inline pointer events now correctly work in Chrome ([#11695](https://github.com/sveltejs/svelte/pull/11695))
+
+- fix: don't require warning codes to be separated by commas in non-runes mode ([#11669](https://github.com/sveltejs/svelte/pull/11669))
+
 ## 5.0.0-next.136
 
 ### Patch Changes

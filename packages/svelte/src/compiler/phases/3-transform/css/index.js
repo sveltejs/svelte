@@ -238,7 +238,7 @@ const visitors = {
 					}
 				}
 
-				if (relative_selector.selectors.every((s) => s.type === 'NestingSelector')) {
+				if (relative_selector.selectors.some((s) => s.type === 'NestingSelector')) {
 					continue;
 				}
 

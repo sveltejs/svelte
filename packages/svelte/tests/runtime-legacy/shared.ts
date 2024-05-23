@@ -223,6 +223,8 @@ async function run_test_variant(
 			e.preventDefault();
 		});
 
+		globalThis.requestAnimationFrame = globalThis.setTimeout;
+
 		let mod = await import(`${cwd}/_output/client/main.svelte.js`);
 
 		const target = window.document.querySelector('main') as HTMLElement;

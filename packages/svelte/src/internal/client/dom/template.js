@@ -1,5 +1,5 @@
 import { hydrate_end, hydrate_start, hydrating } from './hydration.js';
-import { clone_node, empty } from './operations.js';
+import { empty } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
@@ -43,7 +43,7 @@ export function template(content, flags) {
 			if (!is_fragment) node = /** @type {Node} */ (node.firstChild);
 		}
 
-		return use_import_node ? document.importNode(node, true) : clone_node(node, true);
+		return use_import_node ? document.importNode(node, true) : node.cloneNode(true);
 	};
 }
 
@@ -103,7 +103,7 @@ export function ns_template(content, flags, ns = 'svg') {
 			}
 		}
 
-		return clone_node(node, true);
+		return node.cloneNode(true);
 	};
 }
 

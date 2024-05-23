@@ -1,19 +1,15 @@
 export type Log = {
-	level:
-		| 'info'
-		| 'warn'
-		| 'error'
-		| 'table'
-		| 'group'
-		| 'trace'
-		| 'assert'
-		| 'clear'
-		| 'unclonable';
+	command: 'info' | 'warn' | 'error' | 'table' | 'group' | 'clear' | 'unclonable';
 	action?: 'console';
 	args?: any[];
 	collapsed?: boolean;
+	expanded?: boolean;
 	count?: number;
 	logs?: Log[];
-	stack?: string;
-	label?: string;
+	stack?: Array<{
+		label?: string;
+		location?: string;
+	}>;
+	data?: any;
+	columns?: string[];
 };
