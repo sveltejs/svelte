@@ -1,5 +1,5 @@
 import { namespace_svg } from '../../../../constants.js';
-import { hydrate_anchor, hydrate_start, hydrating, set_hydrate_nodes } from '../hydration.js';
+import { hydrate_anchor, hydrate_start, hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import {
 	block,
@@ -101,14 +101,6 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 					var child_anchor = hydrating
 						? element.firstChild && hydrate_anchor(/** @type {Comment} */ (element.firstChild))
 						: element.appendChild(empty());
-
-					if (hydrating && !element.firstChild) {
-						// if the element is a void element with content, add an empty
-						// node to avoid breaking assumptions elsewhere
-						// TODO is this still necessary?
-						var child = empty();
-						set_hydrate_nodes(child, child);
-					}
 
 					// `child_anchor` is undefined if this is a void element, but we still
 					// need to call `render_fn` in order to run actions etc. If the element
