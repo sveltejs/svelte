@@ -2078,11 +2078,6 @@ declare module 'svelte/reactivity' {
 	export const Set: SetConstructor;
 	export const Map: MapConstructor;
 	const ReactiveURL: typeof URLWithReactiveSearchParams;
-	/**
-	 * had to create a subclass for URLWithReactiveSearchParams
-	 * because we cannot change the internal `searchParams` reference (which links to the web api implementation) so it requires
-	 * some custom logic
-	 */
 	class URLWithReactiveSearchParams extends URL {
 		#private;
 	}
