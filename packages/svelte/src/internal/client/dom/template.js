@@ -4,7 +4,6 @@ import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
 import { effect } from '../reactivity/effects.js';
-import { is_array } from '../utils.js';
 
 /**
  * @template {import("#client").TemplateNode | import("#client").TemplateNode[]} T

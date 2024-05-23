@@ -1,4 +1,4 @@
-import { hydrate_anchor, hydrate_nodes, hydrating } from './hydration.js';
+import { hydrate_anchor, hydrating } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
 import { current_effect } from '../runtime.js';
