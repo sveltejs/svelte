@@ -48,7 +48,7 @@ function assign_locations(node, filename, locations) {
 		if (hydrating && node.nodeType === 8) {
 			var comment = /** @type {Comment} */ (node);
 			if (comment.data === HYDRATION_START) depth += 1;
-			if (comment.data[0] === HYDRATION_END) depth -= 1;
+			else if (comment.data[0] === HYDRATION_END) depth -= 1;
 		}
 
 		if (depth === 0 && node.nodeType === 1) {
