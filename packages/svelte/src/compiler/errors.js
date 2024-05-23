@@ -601,12 +601,12 @@ export function attribute_invalid_event_handler(node) {
 }
 
 /**
- * Invalid attribute expression
+ * Attribute values containing `{...}` alongside static content must be enclosed in quote marks
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function attribute_invalid_expression(node) {
-	e(node, "attribute_invalid_expression", "Invalid attribute expression");
+export function attribute_unquoted_sequence(node) {
+	e(node, "attribute_unquoted_sequence", "Attribute values containing `{...}` alongside static content must be enclosed in quote marks");
 }
 
 /**

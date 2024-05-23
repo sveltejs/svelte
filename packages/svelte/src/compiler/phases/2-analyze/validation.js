@@ -40,7 +40,7 @@ function validate_attribute(attribute) {
 	const is_quoted = attribute.value.at(-1)?.end !== attribute.end;
 
 	if (!is_quoted) {
-		e.attribute_invalid_expression(attribute);
+		e.attribute_unquoted_sequence(attribute);
 	}
 }
 
