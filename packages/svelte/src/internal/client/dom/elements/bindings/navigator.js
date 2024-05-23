@@ -1,3 +1,4 @@
+import { yield_updates } from '../../../runtime.js';
 import { listen } from './shared.js';
 
 /**
@@ -6,6 +7,6 @@ import { listen } from './shared.js';
  */
 export function bind_online(update) {
 	listen(window, ['online', 'offline'], () => {
-		update(navigator.onLine);
+		yield_updates(() => update(navigator.onLine));
 	});
 }

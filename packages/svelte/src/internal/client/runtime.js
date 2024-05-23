@@ -28,6 +28,7 @@ import { lifecycle_outside_component } from '../shared/errors.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
+export const FLUSH_YIELD = 2;
 
 // Used for DEV time error handling
 /** @param {WeakSet<Error>} value */
@@ -36,6 +37,8 @@ const handled_errors = new WeakSet();
 let current_scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
+let is_yield_task_queued = false;
+
 export let is_flushing_effect = false;
 export let is_destroying_effect = false;
 
@@ -521,13 +524,17 @@ function infinite_loop_guard() {
  * @returns {void}
  */
 function flush_queued_root_effects(root_effects) {
+	const length = root_effects.length;
+	if (length === 0) {
+		return;
+	}
 	infinite_loop_guard();
 
 	var previously_flushing_effect = is_flushing_effect;
 	is_flushing_effect = true;
 
 	try {
-		for (var i = 0; i < root_effects.length; i++) {
+		for (var i = 0; i < length; i++) {
 			var effect = root_effects[i];
 
 			// When working with custom elements, the root effects might not have a root
@@ -563,17 +570,29 @@ function flush_queued_effects(effects) {
 	}
 }
 
-function process_microtask() {
+function process_deferred() {
 	is_micro_task_queued = false;
+	is_yield_task_queued = false;
 	if (flush_count > 101) {
 		return;
 	}
 	const previous_queued_root_effects = current_queued_root_effects;
 	current_queued_root_effects = [];
 	flush_queued_root_effects(previous_queued_root_effects);
-	if (!is_micro_task_queued) {
+	if (!is_micro_task_queued && !is_yield_task_queued) {
 		flush_count = 0;
 	}
+}
+
+async function yield_tick() {
+	// TODO: replace this with scheduler.yield when it becomes standard
+	await new Promise((fulfil) => {
+		requestAnimationFrame(() => {
+			setTimeout(fulfil, 0);
+		});
+		// In case of being within background tab, the rAF won't fire
+		setTimeout(fulfil, 100);
+	});
 }
 
 /**
@@ -584,7 +603,12 @@ export function schedule_effect(signal) {
 	if (current_scheduler_mode === FLUSH_MICROTASK) {
 		if (!is_micro_task_queued) {
 			is_micro_task_queued = true;
-			queueMicrotask(process_microtask);
+			queueMicrotask(process_deferred);
+		}
+	} else if (current_scheduler_mode === FLUSH_YIELD) {
+		if (!is_yield_task_queued) {
+			is_yield_task_queued = true;
+			yield_tick().then(process_deferred);
 		}
 	}
 
@@ -685,6 +709,19 @@ function process_effects(effect, collected_effects) {
 }
 
 /**
+ * @param {{ (): void; (): any; }} fn
+ */
+export function yield_updates(fn) {
+	const previous_scheduler_mode = current_scheduler_mode;
+	try {
+		current_scheduler_mode = FLUSH_YIELD;
+		return fn();
+	} finally {
+		current_scheduler_mode = previous_scheduler_mode;
+	}
+}
+
+/**
  * Internal version of `flushSync` with the option to not flush previous effects.
  * Returns the result of the passed function, if given.
  * @param {() => any} [fn]
@@ -729,7 +766,7 @@ export function flush_sync(fn, flush_previous = true) {
  * @returns {Promise<void>}
  */
 export async function tick() {
-	await Promise.resolve();
+	await yield_tick();
 	// By calling flush_sync we guarantee that any pending state changes are applied after one tick.
 	// TODO look into whether we can make flushing subsequent updates synchronously in the future.
 	flush_sync();

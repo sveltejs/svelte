@@ -1,5 +1,6 @@
 import { render_effect } from '../../reactivity/effects.js';
 import { all_registered_events, root_event_handles } from '../../render.js';
+import { yield_updates } from '../../runtime.js';
 import { define_property, is_array } from '../../utils.js';
 import { hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
@@ -47,7 +48,7 @@ export function create_event(event_name, dom, handler, options) {
 			handle_event_propagation(dom, event);
 		}
 		if (!event.cancelBubble) {
-			return handler.call(this, event);
+			return yield_updates(() => handler.call(this, event));
 		}
 	}
 
@@ -203,7 +204,7 @@ export function handle_event_propagation(handler_element, event) {
 	}
 
 	try {
-		next(current_target);
+		yield_updates(() => next(/** @type {Element} */ (current_target)));
 	} finally {
 		// @ts-expect-error is used above
 		event.__root = handler_element;
