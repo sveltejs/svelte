@@ -280,7 +280,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		item = items.get(key);
 
 		if (item === undefined) {
-			var child_open = push_template_node(empty());
+			var child_open = empty();
 			var child_anchor = current ? current.o : anchor;
 
 			child_anchor.before(child_open);
@@ -407,6 +407,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		for (var i = 0; i < to_destroy.length; i += 1) {
 			var item = to_destroy[i];
 			items.delete(item.k);
+			remove(item.o);
 			link(item.prev, item.next);
 		}
 	});
