@@ -570,7 +570,7 @@ function flush_queued_effects(effects) {
 	}
 }
 
-function process_microtask() {
+function process_deferred() {
 	is_micro_task_queued = false;
 	is_yield_task_queued = false;
 	if (flush_count > 101) {
@@ -579,7 +579,7 @@ function process_microtask() {
 	const previous_queued_root_effects = current_queued_root_effects;
 	current_queued_root_effects = [];
 	flush_queued_root_effects(previous_queued_root_effects);
-	if (!is_micro_task_queued) {
+	if (!is_micro_task_queued && !is_yield_task_queued) {
 		flush_count = 0;
 	}
 }
@@ -595,21 +595,6 @@ async function yield_tick() {
 	});
 }
 
-async function process_yieldtask() {
-	await yield_tick();
-	is_yield_task_queued = false;
-	is_micro_task_queued = false;
-	if (flush_count > 101) {
-		return;
-	}
-	const previous_queued_root_effects = current_queued_root_effects;
-	current_queued_root_effects = [];
-	flush_queued_root_effects(previous_queued_root_effects);
-	if (!is_yield_task_queued) {
-		flush_count = 0;
-	}
-}
-
 /**
  * @param {import('#client').Effect} signal
  * @returns {void}
@@ -618,12 +603,12 @@ export function schedule_effect(signal) {
 	if (current_scheduler_mode === FLUSH_MICROTASK) {
 		if (!is_micro_task_queued) {
 			is_micro_task_queued = true;
-			queueMicrotask(process_microtask);
+			queueMicrotask(process_deferred);
 		}
 	} else if (current_scheduler_mode === FLUSH_YIELD) {
 		if (!is_yield_task_queued) {
 			is_yield_task_queued = true;
-			process_yieldtask();
+			yield_tick().then(process_deferred);
 		}
 	}
 
