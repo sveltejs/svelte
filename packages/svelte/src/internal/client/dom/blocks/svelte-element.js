@@ -1,5 +1,11 @@
 import { namespace_svg } from '../../../../constants.js';
-import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrate_nodes } from '../hydration.js';
+import {
+	hydrate_anchor,
+	hydrate_nodes,
+	hydrate_start,
+	hydrating,
+	set_hydrate_nodes
+} from '../hydration.js';
 import { empty } from '../operations.js';
 import {
 	block,
@@ -79,7 +85,7 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 		if (next_tag && next_tag !== current_tag) {
 			effect = branch(() => {
 				element = hydrating
-					? /** @type {Element} */ (hydrate_nodes[0])
+					? /** @type {Element} */ (hydrate_start)
 					: ns
 						? document.createElementNS(ns, next_tag)
 						: document.createElement(next_tag);
