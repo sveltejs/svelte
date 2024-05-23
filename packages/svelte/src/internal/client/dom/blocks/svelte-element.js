@@ -6,36 +6,12 @@ import {
 	branch,
 	destroy_effect,
 	pause_effect,
-	render_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
-import { is_array } from '../../utils.js';
 import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
-import { current_component_context, current_effect } from '../../runtime.js';
-import { push_template_node } from '../template.js';
+import { current_component_context } from '../../runtime.js';
 import { DEV } from 'esm-env';
-
-/**
- * @param {import('#client').Effect} effect
- * @param {Element} from
- * @param {Element} to
- * @returns {void}
- */
-function swap_block_dom(effect, from, to) {
-	const dom = effect.dom;
-
-	if (is_array(dom)) {
-		for (let i = 0; i < dom.length; i++) {
-			if (dom[i] === from) {
-				dom[i] = to;
-				break;
-			}
-		}
-	} else if (dom === from) {
-		effect.dom = to;
-	}
-}
 
 /**
  * @param {Comment} anchor
@@ -47,8 +23,6 @@ function swap_block_dom(effect, from, to) {
  * @returns {void}
  */
 export function element(anchor, get_tag, is_svg, render_fn, get_namespace, location) {
-	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
-
 	const filename = DEV && location && current_component_context?.function.filename;
 
 	/** @type {string | null} */
@@ -104,7 +78,6 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 
 		if (next_tag && next_tag !== current_tag) {
 			effect = branch(() => {
-				const prev_element = element;
 				element = hydrating
 					? /** @type {Element} */ (hydrate_nodes[0])
 					: ns
@@ -144,12 +117,9 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 
 				anchor.before(element);
 
-				if (prev_element) {
-					swap_block_dom(parent_effect, prev_element, element);
-					prev_element.remove();
-				} else if (!hydrating) {
-					push_template_node(element, parent_effect);
-				}
+				return () => {
+					element?.remove();
+				};
 			});
 		}
 

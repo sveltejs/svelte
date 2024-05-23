@@ -9,27 +9,15 @@ import { is_array } from '../utils.js';
 /**
  * @template {import("#client").TemplateNode | import("#client").TemplateNode[]} T
  * @param {T} dom
- * @param {import("#client").Effect} effect
  * @returns {T}
  */
-export function push_template_node(
-	dom,
-	effect = /** @type {import('#client').Effect} */ (current_effect)
-) {
-	var current_dom = effect.dom;
-	if (current_dom === null) {
-		effect.dom = dom;
-	} else {
-		if (!is_array(current_dom)) {
-			current_dom = effect.dom = [current_dom];
-		}
+function push_template_node(dom) {
+	var effect = /** @type {import('#client').Effect} */ (current_effect);
 
-		if (is_array(dom)) {
-			current_dom.push(...dom);
-		} else {
-			current_dom.push(dom);
-		}
+	if (effect.dom === null) {
+		effect.dom = dom;
 	}
+
 	return dom;
 }
 
@@ -55,15 +43,8 @@ export function template(content, flags) {
 			node = create_fragment_from_html(content);
 			if (!is_fragment) node = /** @type {Node} */ (node.firstChild);
 		}
-		var clone = use_import_node ? document.importNode(node, true) : node.cloneNode(true);
 
-		push_template_node(
-			is_fragment
-				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
-				: /** @type {import('#client').TemplateNode} */ (clone)
-		);
-
-		return clone;
+		return use_import_node ? document.importNode(node, true) : node.cloneNode(true);
 	};
 }
 
@@ -123,15 +104,7 @@ export function ns_template(content, flags, ns = 'svg') {
 			}
 		}
 
-		var clone = node.cloneNode(true);
-
-		push_template_node(
-			is_fragment
-				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
-				: /** @type {import('#client').TemplateNode} */ (clone)
-		);
-
-		return clone;
+		return node.cloneNode(true);
 	};
 }
 
@@ -206,7 +179,7 @@ function run_scripts(node) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function text(anchor) {
-	if (!hydrating) return push_template_node(empty());
+	if (!hydrating) return empty();
 
 	var node = hydrate_nodes[0];
 
@@ -227,7 +200,6 @@ export function comment() {
 	var frag = document.createDocumentFragment();
 	var anchor = empty();
 	frag.append(anchor);
-	push_template_node([anchor]);
 
 	return frag;
 }
@@ -236,10 +208,18 @@ export function comment() {
  * Assign the created (or in hydration mode, traversed) dom elements to the current block
  * and insert the elements into the dom (in client mode).
  * @param {Text | Comment | Element} anchor
- * @param {import('#client').Dom} dom
+ * @param {DocumentFragment | Element | Comment} node
  */
-export function append(anchor, dom) {
+export function append(anchor, node) {
 	if (!hydrating) {
-		anchor.before(/** @type {Node} */ (dom));
+		/** @type {import('#client').Dom} */
+		const dom =
+			node.nodeType === 11
+				? /** @type {import('#client').TemplateNode[]} */ ([...node.childNodes])
+				: /** @type {Element | Comment} */ (node);
+
+		/** @type {import('#client').Effect} */ (current_effect).dom = dom;
+
+		anchor.before(/** @type {Node} */ (node));
 	}
 }
