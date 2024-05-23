@@ -30,10 +30,6 @@
 
 > Event attribute must be a JavaScript expression, not a string
 
-## attribute_invalid_expression
-
-> Invalid attribute expression
-
 ## attribute_invalid_multiple
 
 > 'multiple' attribute must be static if select uses two-way binding
@@ -49,6 +45,10 @@
 ## attribute_invalid_type
 
 > 'type' attribute must be a static text value if input uses two-way binding
+
+## attribute_unquoted_sequence
+
+> Attribute values containing `{...}` must be enclosed in quote marks, unless the value only contains the expression
 
 ## bind_invalid_expression
 
