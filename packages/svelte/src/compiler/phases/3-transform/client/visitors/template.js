@@ -472,7 +472,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 function serialize_element_attribute_update_assignment(element, node_id, attribute, context) {
 	const state = context.state;
 	const name = get_attribute_name(element, attribute, context);
-	const is_svg = context.state.metadata.namespace === 'svg';
+	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
 	let [contains_call_expression, value] = serialize_attribute_value(attribute.value, context);
 
