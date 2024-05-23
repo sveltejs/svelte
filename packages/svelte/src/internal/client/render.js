@@ -1,11 +1,5 @@
 import { DEV } from 'esm-env';
-import {
-	append_child,
-	clear_text_content,
-	create_element,
-	empty,
-	init_operations
-} from './dom/operations.js';
+import { clear_text_content, create_element, empty, init_operations } from './dom/operations.js';
 import { HYDRATION_ERROR, HYDRATION_START, PassiveDelegatedEvents } from '../../constants.js';
 import { flush_sync, push, pop, current_component_context } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
@@ -330,7 +324,8 @@ export async function append_styles(target, style_sheet_id, styles) {
 		const style = create_element('style');
 		style.id = style_sheet_id;
 		style.textContent = styles;
-		append_child(/** @type {Document} */ (append_styles_to).head || append_styles_to, style);
+		const target = /** @type {Document} */ (append_styles_to).head || append_styles_to;
+		target.appendChild(style);
 	}
 }
 
