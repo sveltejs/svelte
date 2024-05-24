@@ -22,9 +22,7 @@ export const INTERNAL_OBJECT = Symbol();
  * interceptor is called before the call is proxied to the actual object, so we can decide wether a change
  * is actually going to happen or not.
  * - if a `write_property` shouldn't increment the `version` signal return false from the interceptor.
- *   note that calling `notify_read_properties` WILL increase the `version` in all cases.
- * returning false is only useful if do it before calling `notify_read_properties` like an if-guard
- * that returns false early because no change has happened.
+ * - if a `write_property` should increment the `version` signal return true from the interceptor
  * - DO NOT USE INTERCEPTORS FOR READ PROPERTIES
  * @template TEntityInstance
  * @template {(keyof TEntityInstance)[]} TWriteProperties
@@ -214,7 +212,7 @@ function create_notifiers(
 
 	notifiers.push(() => {
 		if (config.write_properties.some((v) => v === property)) {
-			increment_signal(initial_version_signal_v, version_signal);
+			increment_version_signal(initial_version_signal_v, version_signal);
 		}
 	});
 
@@ -278,12 +276,14 @@ function notify_read_properties(
 		}
 		if (params.length == 1 && params[0] == NOTIFY_WITH_ALL_REGISTERED_PARAMS) {
 			read_methods_signals.get(name)?.forEach((sig) => {
-				increment_signal(initial_version_signal_v, version_signal, sig);
+				increment_signal(sig);
+				increment_version_signal(initial_version_signal_v, version_signal);
 			});
 		} else {
 			(params.length == 0 ? [null] : params).forEach((param) => {
 				const sig = get_signal_for_function(read_methods_signals, name, param);
-				sig && increment_signal(initial_version_signal_v, version_signal, sig);
+				sig && increment_signal(sig);
+				increment_version_signal(initial_version_signal_v, version_signal);
 			});
 		}
 	});
@@ -330,15 +330,21 @@ function get_signal_for_function(
 
 /**
  * toggles the signal value. this change notifies any reactions (not using number explicitly cause its not required, change from true to false or vice versa is enough).
+ * @param {import("#client").Source<boolean>} signal
+ */
+function increment_signal(signal) {
+	signal && set(signal, !signal.v);
+}
+
+/**
  * @param {boolean} initial_version_signal_v  - this prevents changing the version signal multiple times in a single changeset
  * @param {import("#client").Source<boolean>} version_signal
- * @param {import("#client").Source<boolean>} [read_method_signal]
  */
-function increment_signal(initial_version_signal_v, version_signal, read_method_signal) {
-	if (initial_version_signal_v === version_signal.v) {
-		set(version_signal, !version_signal.v);
+function increment_version_signal(initial_version_signal_v, version_signal) {
+	if (initial_version_signal_v !== version_signal.v) {
+		return;
 	}
-	read_method_signal && set(read_method_signal, !read_method_signal.v);
+	set(version_signal, !version_signal.v);
 }
 
 let is_console_overridden = false;
