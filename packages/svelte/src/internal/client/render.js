@@ -131,8 +131,6 @@ export function hydrate(component, options) {
 	const target = options.target;
 	const previous_hydrate_nodes = hydrate_nodes;
 
-	let hydrated = false;
-
 	try {
 		// Don't flush previous effects to ensure order of outer effects stays consistent
 		return flush_sync(() => {
@@ -156,7 +154,6 @@ export function hydrate(component, options) {
 			// flush_sync will run this callback and then synchronously run any pending effects,
 			// which don't belong to the hydration phase anymore - therefore reset it here
 			set_hydrating(false);
-			hydrated = true;
 
 			return instance;
 		}, false);

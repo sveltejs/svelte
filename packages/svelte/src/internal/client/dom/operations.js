@@ -6,9 +6,6 @@ import { current_effect } from '../runtime.js';
 // We cache the Node and Element prototype methods, so that we can avoid doing
 // expensive prototype chain lookups.
 
-/** @type {Node} */
-var node_prototype;
-
 /** @type {Element} */
 var element_prototype;
 
@@ -30,11 +27,10 @@ export var $document;
  * where these globals are not available while avoiding a separate server entry point
  */
 export function init_operations() {
-	if (node_prototype !== undefined) {
+	if (element_prototype !== undefined) {
 		return;
 	}
 
-	node_prototype = Node.prototype;
 	element_prototype = Element.prototype;
 	text_prototype = Text.prototype;
 
@@ -45,13 +41,14 @@ export function init_operations() {
 	// @ts-expect-error
 	element_prototype.__click = undefined;
 	// @ts-expect-error
-	text_prototype.__nodeValue = ' ';
-	// @ts-expect-error
 	element_prototype.__className = '';
 	// @ts-expect-error
 	element_prototype.__attributes = null;
 	// @ts-expect-error
 	element_prototype.__e = undefined;
+
+	// @ts-expect-error
+	text_prototype.__nodeValue = ' ';
 
 	if (DEV) {
 		// @ts-expect-error
