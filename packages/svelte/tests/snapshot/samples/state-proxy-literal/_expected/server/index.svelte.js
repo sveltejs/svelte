@@ -1,6 +1,6 @@
 import * as $ from "svelte/internal/server";
 
-export default function State_proxy_literal($$payload, $$props) {
+export default function State_proxy_literal($$payload) {
 	let str = '';
 	let tpl = ``;
 

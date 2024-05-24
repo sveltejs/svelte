@@ -2355,7 +2355,9 @@ export function server_component(analysis, options) {
 		.../** @type {import('estree').Statement[]} */ (template.body)
 	]);
 
-	if (analysis.needs_context || options.dev) {
+	let should_inject_context = analysis.needs_context || options.dev;
+
+	if (should_inject_context) {
 		component_block.body.unshift(b.stmt(b.call('$.push', ...push_args)));
 		component_block.body.push(b.stmt(b.call('$.pop')));
 	}
@@ -2391,9 +2393,18 @@ export function server_component(analysis, options) {
 
 	const body = [...state.hoisted, ...module.body];
 
+	let should_inject_props =
+		should_inject_context ||
+		props.length > 0 ||
+		analysis.needs_props ||
+		analysis.uses_props ||
+		analysis.uses_rest_props ||
+		analysis.uses_slots ||
+		analysis.slot_names.size > 0;
+
 	const component_function = b.function_declaration(
 		b.id(analysis.name),
-		[b.id('$$payload'), b.id('$$props')],
+		should_inject_props ? [b.id('$$payload'), b.id('$$props')] : [b.id('$$payload')],
 		component_block
 	);
 	if (options.legacy.componentApi) {
