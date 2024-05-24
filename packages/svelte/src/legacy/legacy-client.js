@@ -14,7 +14,7 @@ import { define_property } from '../internal/client/utils.js';
  * @template {Record<string, any>} Slots
  *
  * @param {import('svelte').ComponentConstructorOptions<Props> & {
- * 	component: import('svelte').ComponentType<import('svelte').SvelteComponent<Props, Events, Slots>>;
+ * 	component: import('svelte').ComponentType<import('svelte').SvelteComponent<Props, Events, Slots>> | import('svelte').Component<Props>;
  * 	immutable?: boolean;
  * 	hydrate?: boolean;
  * 	recover?: boolean;
@@ -36,7 +36,7 @@ export function createClassComponent(options) {
  * @template {Record<string, any>} Events
  * @template {Record<string, any>} Slots
  *
- * @param {import('svelte').SvelteComponent<Props, Events, Slots>} component
+ * @param {import('svelte').SvelteComponent<Props, Events, Slots> | import('svelte').Component<Props>} component
  * @returns {import('svelte').ComponentType<import('svelte').SvelteComponent<Props, Events, Slots> & Exports>}
  */
 export function asClassComponent(component) {
