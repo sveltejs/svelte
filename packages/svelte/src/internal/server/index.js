@@ -171,15 +171,15 @@ export function attr(name, value, boolean) {
 export function css_props(payload, is_html, props, component) {
 	const styles = style_object_to_string(props);
 	if (is_html) {
-		payload.out += `<div style="display: contents; ${styles}"><!--[-->`;
+		payload.out += `<div style="display: contents; ${styles}">`;
 	} else {
-		payload.out += `<g style="${styles}"><!--[-->`;
+		payload.out += `<g style="${styles}">`;
 	}
 	component();
 	if (is_html) {
-		payload.out += `<!--]--></div>`;
+		payload.out += `<!----></div>`;
 	} else {
-		payload.out += `<!--]--></g>`;
+		payload.out += `<!----></g>`;
 	}
 }
 
