@@ -1,6 +1,5 @@
 import { HYDRATION_END, HYDRATION_START } from '../../../constants.js';
 import { hydrating } from '../dom/hydration.js';
-import { is_array } from '../utils.js';
 
 /**
  * @param {any} fn
@@ -12,7 +11,7 @@ export function add_locations(fn, filename, locations) {
 	return (/** @type {any[]} */ ...args) => {
 		const dom = fn(...args);
 
-		var node = hydrating && is_array(dom) ? dom[0] : dom.nodeType === 11 ? dom.firstChild : dom;
+		var node = hydrating ? dom : dom.nodeType === 11 ? dom.firstChild : dom;
 		assign_locations(node, filename, locations);
 
 		return dom;
