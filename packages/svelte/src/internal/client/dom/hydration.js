@@ -35,18 +35,19 @@ export function hydrate_anchor(node) {
 		return node;
 	}
 
-	var current = /** @type {Node | null} */ (node);
-
 	// TODO this could have false positives, if a user comment consisted of `[`. need to tighten that up
-	if (/** @type {Comment} */ (current).data !== HYDRATION_START) {
+	if (/** @type {Comment} */ (node).data !== HYDRATION_START) {
 		return node;
 	}
 
-	/** @type {import('#client').TemplateNode} */
-	var start = /** @type {any} */ (null);
+	hydrate_start = /** @type {import('#client').TemplateNode} */ (
+		/** @type {Comment} */ (node).nextSibling
+	);
+
+	var current = hydrate_start;
 	var depth = 0;
 
-	while ((current = /** @type {Node} */ (current).nextSibling) !== null) {
+	while (current !== null) {
 		if (current.nodeType === 8) {
 			var data = /** @type {Comment} */ (current).data;
 
@@ -54,7 +55,6 @@ export function hydrate_anchor(node) {
 				depth += 1;
 			} else if (data[0] === HYDRATION_END) {
 				if (depth === 0) {
-					hydrate_start = start;
 					return current;
 				}
 
@@ -62,7 +62,7 @@ export function hydrate_anchor(node) {
 			}
 		}
 
-		start ??= /** @type {import('#client').TemplateNode} */ (current);
+		current = current.nextSibling;
 	}
 
 	let location;
