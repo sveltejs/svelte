@@ -166,86 +166,86 @@ export const ReactiveURL = make_reactive(URLWithReactiveSearchParams, {
 		'searchParams'
 	],
 	interceptors: {
-		protocol: (notify_read_properties, value, property, ...params) => {
-			if (value.protocol == add_character_if_not_exists(params[0], ':', 'append')) {
+		protocol: (options, ...params) => {
+			if (options.value.protocol == add_character_if_not_exists(params[0], ':', 'append')) {
 				return false;
 			}
-			notify_read_properties(['href', 'origin', 'protocol']);
+			options.notify_read_properties(['href', 'origin', 'protocol']);
 			return true;
 		},
-		username: (notify_read_properties, value, property, ...params) => {
-			if (value.username === params[0]) {
+		username: (options, ...params) => {
+			if (options.value.username === params[0]) {
 				return false;
 			}
-			notify_read_properties(['href', 'username']);
+			options.notify_read_properties(['href', 'username']);
 			return true;
 		},
-		password: (notify_read_properties, value, property, ...params) => {
-			if (value.password === params[0]) {
+		password: (options, ...params) => {
+			if (options.value.password === params[0]) {
 				return false;
 			}
-			notify_read_properties(['href', 'password']);
+			options.notify_read_properties(['href', 'password']);
 			return true;
 		},
-		hostname: (notify_read_properties, value, property, ...params) => {
-			if (value.hostname === params[0]) {
+		hostname: (options, ...params) => {
+			if (options.value.hostname === params[0]) {
 				return false;
 			}
-			notify_read_properties(['href', 'host', 'hostname']);
+			options.notify_read_properties(['href', 'host', 'hostname']);
 			return true;
 		},
-		port: (notify_read_properties, value, property, ...params) => {
-			if (value.port === params[0]?.toString()) {
+		port: (options, ...params) => {
+			if (options.value.port === params[0]?.toString()) {
 				return false;
 			}
-			notify_read_properties(['href', 'origin', 'host', 'port']);
+			options.notify_read_properties(['href', 'origin', 'host', 'port']);
 			return true;
 		},
 
-		pathname: (notify_read_properties, value, property, ...params) => {
-			if (value.pathname === add_character_if_not_exists(params[0], '/', 'prepend')) {
+		pathname: (options, ...params) => {
+			if (options.value.pathname === add_character_if_not_exists(params[0], '/', 'prepend')) {
 				return false;
 			}
-			notify_read_properties(['href', 'pathname']);
+			options.notify_read_properties(['href', 'pathname']);
 			return true;
 		},
-		hash: (notify_read_properties, value, property, ...params) => {
-			if (value.hash === add_character_if_not_exists(params[0], '#', 'prepend')) {
+		hash: (options, ...params) => {
+			if (options.value.hash === add_character_if_not_exists(params[0], '#', 'prepend')) {
 				return false;
 			}
-			notify_read_properties(['href', 'hash']);
+			options.notify_read_properties(['href', 'hash']);
 			return true;
 		},
-		search: (notify_read_properties, value, property, ...params) => {
-			if (value.search === add_character_if_not_exists(params[0], '?', 'prepend')) {
+		search: (options, ...params) => {
+			if (options.value.search === add_character_if_not_exists(params[0], '?', 'prepend')) {
 				return false;
 			}
-			notify_read_properties(['href', 'hash', 'search']);
+			options.notify_read_properties(['href', 'hash', 'search']);
 			return true;
 		},
-		href: (notify_read_properties, value, property, ...params) => {
-			if (value.href === params[0]) {
+		href: (options, ...params) => {
+			if (options.value.href === params[0]) {
 				return false;
 			}
-			const new_url = new URL(value);
+			const new_url = new URL(options.value);
 			new_url.href = /**@type {string}*/ (params[0]);
-			if (new_url.origin !== value.origin) {
-				notify_read_properties(['origin']);
+			if (new_url.origin !== options.value.origin) {
+				options.notify_read_properties(['origin']);
 			}
-			if (new_url.host !== value.host) {
-				notify_read_properties(['host']);
+			if (new_url.host !== options.value.host) {
+				options.notify_read_properties(['host']);
 			}
-			if (new_url.hash !== value.hash) {
-				notify_read_properties(['hash']);
+			if (new_url.hash !== options.value.hash) {
+				options.notify_read_properties(['hash']);
 			}
-			if (new_url.pathname !== value.pathname) {
-				notify_read_properties(['pathname']);
+			if (new_url.pathname !== options.value.pathname) {
+				options.notify_read_properties(['pathname']);
 			}
-			if (new_url.protocol !== value.protocol) {
-				notify_read_properties(['protocol']);
+			if (new_url.protocol !== options.value.protocol) {
+				options.notify_read_properties(['protocol']);
 			}
-			if (new_url.href !== value.href) {
-				notify_read_properties(['href']);
+			if (new_url.href !== options.value.href) {
+				options.notify_read_properties(['href']);
 			}
 			return true;
 		}
