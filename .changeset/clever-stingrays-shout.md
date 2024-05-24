@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: `array.lastIndexOf` without second argument
+fix: support `array.lastIndexOf` without second argument
