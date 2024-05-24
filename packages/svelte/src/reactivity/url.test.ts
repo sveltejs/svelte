@@ -114,7 +114,7 @@ test('url.href', () => {
 test('url fine grained tests', () => {
 	const url = new ReactiveURL('https://svelte.dev/');
 
-	let changes: Record<keyof typeof url, boolean> = {
+	let changes: Record<string, boolean> = {
 		hash: true,
 		host: true,
 		hostname: true,
@@ -126,9 +126,7 @@ test('url fine grained tests', () => {
 		port: true,
 		protocol: true,
 		search: true,
-		searchParams: true,
-		toJSON: true,
-		toString: true
+		searchParams: true
 	};
 	let test_description: string = '';
 
@@ -139,39 +137,19 @@ test('url fine grained tests', () => {
 	};
 
 	const cleanup = effect_root(() => {
-		render_effect(() => {
-			url.hash;
-			assert.equal(changes.hash, true, test_description);
-		});
-
-		render_effect(() => {
-			url.host;
-			assert.equal(changes.host, true, test_description);
-		});
-
-		render_effect(() => {
-			url.hostname;
-			assert.equal(changes.hostname, true, test_description);
-		});
-
-		render_effect(() => {
-			url.href;
-			assert.equal(changes.href, true, test_description);
-		});
-
-		render_effect(() => {
-			url.origin;
-			assert.equal(changes.origin, true, test_description);
-		});
-
-		render_effect(() => {
-			url.search;
-			assert.equal(changes.search, true, test_description);
-		});
+		for (const key of Object.keys(changes) as Array<keyof typeof url>) {
+			if (key === 'searchParams') {
+				continue;
+			}
+			render_effect(() => {
+				url[key];
+				assert.equal(changes[key], true, `${test_description}: for ${key}`);
+			});
+		}
 
 		render_effect(() => {
 			url.searchParams.get('fohoov');
-			assert.equal(changes.searchParams, true, test_description);
+			assert.equal(changes.searchParams, true, `${test_description}: for searchParams`);
 		});
 	});
 
@@ -184,7 +162,7 @@ test('url fine grained tests', () => {
 
 	flushSync(() => {
 		reset_change();
-		changes = { ...changes, origin: true, href: true };
+		changes = { ...changes, protocol: true, origin: true, href: true };
 		test_description = 'changing protocol';
 		url.protocol = 'http';
 	});
