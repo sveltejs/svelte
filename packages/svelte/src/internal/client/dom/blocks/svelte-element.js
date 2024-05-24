@@ -1,5 +1,5 @@
 import { namespace_svg } from '../../../../constants.js';
-import { hydrate_anchor, hydrating } from '../hydration.js';
+import { hydrating, set_hydrate_nodes } from '../hydration.js';
 import { empty } from '../operations.js';
 import {
 	block,
@@ -101,9 +101,13 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				if (render_fn) {
 					// If hydrating, use the existing ssr comment as the anchor so that the
 					// inner open and close methods can pick up the existing nodes correctly
-					var child_anchor = hydrating
-						? element.firstChild && hydrate_anchor(/** @type {Comment} */ (element.firstChild))
-						: element.appendChild(empty());
+					var child_anchor = hydrating ? element.lastChild : element.appendChild(empty());
+
+					if (hydrating && element.lastChild) {
+						set_hydrate_nodes(
+							/** @type {import('#client').TemplateNode[]} */ ([...element.childNodes]).slice(0, -1)
+						);
+					}
 
 					// `child_anchor` is undefined if this is a void element, but we still
 					// need to call `render_fn` in order to run actions etc. If the element
