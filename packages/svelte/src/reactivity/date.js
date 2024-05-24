@@ -7,66 +7,70 @@ import { make_reactive } from './utils.js';
  * we could check all of these edge-cases but I think that might become complicated very soon and introduce more bugs
  * also there is the possibility of these behaviors to change as well,
  * so creating a new date and applying the change is a better idea I guess
- * @param {Date} current_datetime
- * @param {Date} new_datetime
- * @param {import("./utils.js").InterceptorOptions<Date, (keyof Date)[], (keyof Date)[]>["notify_read_properties"]} notify_read_properties
+ * @param {import("./utils.js").InterceptorOptions<Date, (keyof Date)[], (keyof Date)[]>} options
+ * @param {unknown[]} params
  * @return {boolean} - returns true if any changes happened
  */
-const notify_datetime_changes = (current_datetime, new_datetime, notify_read_properties) => {
-	let had_time_changes = false;
-	let had_date_changes = false;
+const notify_datetime_changes = (options, ...params) => {
+	let is_time_changed = false;
+	let is_date_changed = false;
 
-	if (current_datetime.getFullYear() !== new_datetime.getFullYear()) {
-		notify_read_properties(['getFullYear', 'getUTCFullYear']);
-		had_date_changes = true;
+	const new_datetime = new Date(options.value);
+
+	// @ts-ignore
+	new_datetime[options.property](...params);
+
+	if (options.value.getFullYear() !== new_datetime.getFullYear()) {
+		options.notify_read_properties(['getFullYear', 'getUTCFullYear']);
+		is_date_changed = true;
 	}
 
 	// @ts-expect-error
-	if (current_datetime.getYear && current_datetime.getYear() !== new_datetime.getYear()) {
+	if (options.value.getYear && options.value.getYear() !== new_datetime.getYear()) {
 		// @ts-expect-error
-		notify_read_properties(['getYear']);
-		had_date_changes = true;
+		options.notify_read_properties(['getYear']);
+		is_date_changed = true;
 	}
 
-	if (current_datetime.getMonth() !== new_datetime.getMonth()) {
-		notify_read_properties(['getMonth', 'getUTCMonth']);
-		had_date_changes = true;
+	if (options.value.getMonth() !== new_datetime.getMonth()) {
+		options.notify_read_properties(['getMonth', 'getUTCMonth']);
+		is_date_changed = true;
 	}
 
-	if (current_datetime.getDay() !== new_datetime.getDay()) {
-		notify_read_properties(['getDay', 'getUTCDay']);
-		had_date_changes = true;
+	if (options.value.getDay() !== new_datetime.getDay()) {
+		options.notify_read_properties(['getDay', 'getUTCDay']);
+		is_date_changed = true;
 	}
 
-	if (current_datetime.getHours() !== new_datetime.getHours()) {
-		notify_read_properties(['getHours', 'getUTCHours']);
-		had_time_changes = true;
+	if (options.value.getHours() !== new_datetime.getHours()) {
+		options.notify_read_properties(['getHours', 'getUTCHours']);
+		is_time_changed = true;
 	}
 
-	if (current_datetime.getMinutes() !== new_datetime.getMinutes()) {
-		notify_read_properties(['getMinutes', 'getUTCMinutes']);
-		had_time_changes = true;
+	if (options.value.getMinutes() !== new_datetime.getMinutes()) {
+		options.notify_read_properties(['getMinutes', 'getUTCMinutes']);
+		is_time_changed = true;
 	}
 
-	if (current_datetime.getSeconds() !== new_datetime.getSeconds()) {
-		notify_read_properties(['getSeconds', 'getUTCSeconds']);
-		had_time_changes = true;
+	if (options.value.getSeconds() !== new_datetime.getSeconds()) {
+		options.notify_read_properties(['getSeconds', 'getUTCSeconds']);
+		is_time_changed = true;
 	}
 
-	if (current_datetime.getMilliseconds() !== new_datetime.getMilliseconds()) {
-		notify_read_properties(['getMilliseconds', 'getUTCMilliseconds']);
-		had_time_changes = true;
+	if (options.value.getMilliseconds() !== new_datetime.getMilliseconds()) {
+		options.notify_read_properties(['getMilliseconds', 'getUTCMilliseconds']);
+		is_time_changed = true;
 	}
 
-	if (had_time_changes) {
-		notify_read_properties(['toTimeString', 'toLocaleTimeString']);
+	if (is_time_changed) {
+		options.notify_read_properties(['toTimeString', 'toLocaleTimeString']);
 	}
 
-	if (had_date_changes) {
-		notify_read_properties(['toDateString', 'toLocaleDateString']);
+	if (is_date_changed) {
+		options.notify_read_properties(['toDateString', 'toLocaleDateString']);
 	}
 
-	return had_date_changes || had_time_changes;
+	return is_date_changed || is_time_changed;
 };
 
 export const ReactiveDate = make_reactive(Date, {
@@ -116,108 +120,49 @@ export const ReactiveDate = make_reactive(Date, {
 	],
 	interceptors: {
 		setDate: (options, ...params) => {
-			const tmp = new Date(options.value);
-			tmp.setDate(/**@type {number}*/ (params[0]));
-			return notify_datetime_changes(options.value, tmp, options.notify_read_properties);
+			return notify_datetime_changes(options, ...params);
 		},
 		setFullYear: (options, ...params) => {
-			const tmp = new Date(options.value);
-			tmp.setFullYear(
-				/**@type {number}*/ (params[0]),
-				/**@type {number | undefined}*/ (params[1]),
-				/**@type {number | undefined}*/ (params[2])
-			);
-			return notify_datetime_changes(options.value, tmp, options.notify_read_properties);
+			return notify_datetime_changes(options, ...params);
 		},
 		setHours: (options, ...params) => {
-			const tmp = new Date(options.value);
-			tmp.setHours(
-				/**@type {number}*/ (params[0]),
-				/**@type {number | undefined}*/ (params[1]),
-				/**@type {number | undefined}*/ (params[2]),
-				/**@type {number | undefined}*/ (params[3])
-			);
-			return notify_datetime_changes(options.value, tmp, options.notify_read_properties);
+			return notify_datetime_changes(options, ...params);
 		},
 		setMilliseconds: (options, ...params) => {
-			const tmp = new Date(options.value);
-			tmp.setMilliseconds(/**@type {number}*/ (params[0]));
-			return notify_datetime_changes(options.value, tmp, options.notify_read_properties);
+			return notify_datetime_changes(options, ...params);
 		},
 		setMinutes: (options, ...params) => {
-			const tmp = new Date(options.value);
-			tmp.setMinutes(
-				/**@type {number}*/ (params[0]),
-				/**@type {number | undefined}*/ (params[1]),
-				/**@type {number | undefined}*/ (params[2])
-			);
-			return notify_datetime_changes(options.value, tmp, options.notify_read_properties);
+			return notify_datetime_changes(options, ...params);
 		},
 		setMonth: (options, ...params) => {
-			const tmp = new Date(options.value);
-			tmp.setMonth(/**@type {number}*/ (params[0]), /**@type {number | undefined}*/ (params[1]));
-			return notify_datetime_changes(options.value, tmp, options.notify_read_properties);
+			return notify_datetime_changes(options, ...params);
 		},
 		setSeconds: (options, ...params) => {
-			const tmp = new Date(options.value);
-			tmp.setSeconds(/**@type {number}*/ (params[0]), /**@type {number | undefined}*/ (params[1]));
-			return notify_datetime_changes(options.value, tmp, options.notify_read_properties);
+			return notify_datetime_changes(options, ...params);
 		},
 		setTime: (options, ...params) => {
-			const tmp = new Date(options.value);
-			tmp.setTime(/**@type {number}*/ (params[0]));
-			return notify_datetime_changes(options.value, tmp, options.notify_read_properties);
+			return notify_datetime_changes(options, ...params);
 		},
 		setUTCDate: (options, ...params) => {
-			const tmp = new Date(options.value);
-			tmp.setUTCDate(/**@type {number}*/ (params[0]));
-			return notify_datetime_changes(options.value, tmp, options.notify_read_properties);
+			return notify_datetime_changes(options, ...params);
 		},
 		setUTCFullYear: (options, ...params) => {
-			const tmp = new Date(options.value);
-			tmp.setUTCFullYear(
-				/**@type {number}*/ (params[0]),
-				/**@type {number | undefined}*/ (params[1]),
-				/**@type {number | undefined}*/ (params[2])
-			);
-			return notify_datetime_changes(options.value, tmp, options.notify_read_properties);
+			return notify_datetime_changes(options, ...params);
 		},
 		setUTCHours: (options, ...params) => {
-			const tmp = new Date(options.value);
-			tmp.setUTCHours(
-				/**@type {number}*/ (params[0]),
-				/**@type {number | undefined}*/ (params[1]),
-				/**@type {number | undefined}*/ (params[2]),
-				/**@type {number | undefined}*/ (params[3])
-			);
-			return notify_datetime_changes(options.value, tmp, options.notify_read_properties);
+			return notify_datetime_changes(options, ...params);
 		},
 		setUTCMilliseconds: (options, ...params) => {
-			const tmp = new Date(options.value);
-			tmp.setUTCMilliseconds(/**@type {number}*/ (params[0]));
-			return notify_datetime_changes(options.value, tmp, options.notify_read_properties);
+			return notify_datetime_changes(options, ...params);
 		},
 		setUTCMinutes: (options, ...params) => {
-			const tmp = new Date(options.value);
-			tmp.setUTCMinutes(
-				/**@type {number}*/ (params[0]),
-				/**@type {number | undefined}*/ (params[1]),
-				/**@type {number | undefined}*/ (params[2])
-			);
-			return notify_datetime_changes(options.value, tmp, options.notify_read_properties);
+			return notify_datetime_changes(options, ...params);
 		},
 		setUTCMonth: (options, ...params) => {
-			const tmp = new Date(options.value);
-			tmp.setUTCMonth(/**@type {number}*/ (params[0]), /**@type {number | undefined}*/ (params[1]));
-			return notify_datetime_changes(options.value, tmp, options.notify_read_properties);
+			return notify_datetime_changes(options, ...params);
 		},
 		setUTCSeconds: (options, ...params) => {
-			const tmp = new Date(options.value);
-			tmp.setUTCSeconds(
-				/**@type {number}*/ (params[0]),
-				/**@type {number | undefined}*/ (params[1])
-			);
-			return notify_datetime_changes(options.value, tmp, options.notify_read_properties);
+			return notify_datetime_changes(options, ...params);
 		},
 		// @ts-expect-error - deprecated method
 		setYear: (options, ...params) => {
@@ -225,10 +170,7 @@ export const ReactiveDate = make_reactive(Date, {
 			if (!options.value.getYear) {
 				return false;
 			}
-			const tmp = new Date(options.value);
-			// @ts-expect-error
-			tmp.setYear(/**@type {number}*/ (params[0]));
-			return notify_datetime_changes(options.value, tmp, options.notify_read_properties);
+			return notify_datetime_changes(options, ...params);
 		}
 	}
 });
