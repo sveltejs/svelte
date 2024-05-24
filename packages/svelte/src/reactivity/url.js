@@ -220,7 +220,7 @@ export const ReactiveURL = make_reactive(URLWithReactiveSearchParams, {
 			if (options.value.search === add_character_if_not_exists(params[0], '?', 'prepend')) {
 				return false;
 			}
-			options.notify_read_properties(['href', 'hash', 'search']);
+			options.notify_read_properties(['href', 'search']);
 			return true;
 		},
 		href: (options, ...params) => {
