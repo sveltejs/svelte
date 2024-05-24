@@ -1,6 +1,7 @@
 import { DEV } from 'esm-env';
 import { HYDRATION_END, HYDRATION_START, HYDRATION_ERROR } from '../../../constants.js';
 import * as w from '../warnings.js';
+import { remove_nodes } from './operations.js';
 
 /**
  * Use this variable to guard everything related to hydration code so it can be treeshaken out
@@ -83,4 +84,8 @@ export function hydrate_anchor(node) {
 
 	w.hydration_mismatch(location);
 	throw HYDRATION_ERROR;
+}
+
+export function remove_hydrate_nodes() {
+	remove_nodes(hydrate_start, hydrate_end);
 }

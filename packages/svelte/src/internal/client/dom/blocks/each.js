@@ -10,12 +10,12 @@ import {
 } from '../../../../constants.js';
 import {
 	hydrate_anchor,
-	hydrate_end,
 	hydrate_start,
 	hydrating,
+	remove_hydrate_nodes,
 	set_hydrating
 } from '../hydration.js';
-import { clear_text_content, empty, remove_nodes } from '../operations.js';
+import { clear_text_content, empty } from '../operations.js';
 import { untrack } from '../../runtime.js';
 import {
 	block,
@@ -144,7 +144,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 
 			if (is_else !== (length === 0)) {
 				// hydration mismatch — remove the server-rendered DOM and start over
-				remove_nodes(hydrate_start, hydrate_end);
+				remove_hydrate_nodes();
 				set_hydrating(false);
 				mismatch = true;
 			}
