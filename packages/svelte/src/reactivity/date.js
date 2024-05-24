@@ -37,6 +37,11 @@ const notify_datetime_changes = (options, ...params) => {
 		is_date_changed = true;
 	}
 
+	if (options.value.getDate() !== new_datetime.getDate()) {
+		options.notify_read_properties(['getDate', 'getUTCDate']);
+		is_date_changed = true;
+	}
+
 	if (options.value.getDay() !== new_datetime.getDay()) {
 		options.notify_read_properties(['getDay', 'getUTCDay']);
 		is_date_changed = true;
