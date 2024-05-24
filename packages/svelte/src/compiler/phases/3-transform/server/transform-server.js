@@ -38,6 +38,7 @@ import { filename, locator } from '../../../state.js';
 
 export const block_open = t_string(`<!--${HYDRATION_START}-->`);
 export const block_close = t_string(`<!--${HYDRATION_END}-->`);
+export const block_anchor = t_string(`<!---->`);
 
 /**
  * @param {string} value
@@ -1470,8 +1471,6 @@ const template_visitors = {
 			}
 		};
 
-		context.state.template.push(block_open);
-
 		const main = create_block(node, node.fragment.nodes, {
 			...context,
 			state: { ...context.state, metadata }
@@ -1506,7 +1505,7 @@ const template_visitors = {
 					)
 				)
 			),
-			block_close
+			block_anchor
 		);
 		if (context.state.options.dev) {
 			context.state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));

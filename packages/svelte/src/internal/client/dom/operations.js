@@ -1,6 +1,7 @@
 import { hydrate_anchor, hydrate_start, hydrating } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
+import { HYDRATION_END } from '../../../constants.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */
@@ -98,10 +99,14 @@ export function first_child(fragment, is_text) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function sibling(node, is_text = false) {
-	const next_sibling = node.nextSibling;
+	var next_sibling = /** @type {import('#client').TemplateNode} */ (node.nextSibling);
 
 	if (!hydrating) {
 		return next_sibling;
+	}
+
+	if (next_sibling.nodeType === 8 && /** @type {Comment} */ (next_sibling).data === '') {
+		return sibling(next_sibling, is_text);
 	}
 
 	// if a sibling {expression} is empty during SSR, there might be no
