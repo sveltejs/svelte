@@ -612,6 +612,7 @@ test('date fine grained tests', () => {
 	const cleanup = effect_root(() => {
 		for (const key of Object.keys(changes)) {
 			render_effect(() => {
+				// @ts-ignore
 				date[key]();
 				assert.equal(changes[key], true, `${test_description}: for ${key}`);
 			});
