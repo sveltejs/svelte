@@ -285,7 +285,9 @@ export function analyze_component(root, source, options) {
 			!Runes.includes(/** @type {any} */ (name)) ||
 			(declaration !== null &&
 				// const state = $state(0) is valid
-				get_rune(declaration.initial, instance.scope) === null &&
+				(get_rune(declaration.initial, instance.scope) === null ||
+					// rune-line names received as props are valid too (but we have to protect against $props as store)
+					(store_name !== 'props' && get_rune(declaration.initial, instance.scope) === '$props')) &&
 				// allow `import { derived } from 'svelte/store'` in the same file as `const x = $derived(..)` because one is not a subscription to the other
 				!(
 					name === '$derived' &&
