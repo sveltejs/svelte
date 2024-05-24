@@ -2,26 +2,11 @@ import { hydrate_anchor, hydrate_start, hydrating } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
 
-// We cache the Node and Element prototype methods, so that we can avoid doing
-// expensive prototype chain lookups.
-
-/** @type {Node} */
-var node_prototype;
-
-/** @type {Element} */
-var element_prototype;
-
-/** @type {Text} */
-var text_prototype;
-
 // export these for reference in the compiled code, making global name deduplication unnecessary
-/**
- * @type {Window}
- */
+/** @type {Window} */
 export var $window;
-/**
- * @type {Document}
- */
+
+/** @type {Document} */
 export var $document;
 
 /**
@@ -29,28 +14,27 @@ export var $document;
  * where these globals are not available while avoiding a separate server entry point
  */
 export function init_operations() {
-	if (node_prototype !== undefined) {
+	if ($window !== undefined) {
 		return;
 	}
-
-	node_prototype = Node.prototype;
-	element_prototype = Element.prototype;
-	text_prototype = Text.prototype;
 
 	$window = window;
 	$document = document;
 
+	var element_prototype = Element.prototype;
+
 	// the following assignments improve perf of lookups on DOM nodes
 	// @ts-expect-error
 	element_prototype.__click = undefined;
-	// @ts-expect-error
-	text_prototype.__nodeValue = ' ';
 	// @ts-expect-error
 	element_prototype.__className = '';
 	// @ts-expect-error
 	element_prototype.__attributes = null;
 	// @ts-expect-error
 	element_prototype.__e = undefined;
+
+	// @ts-expect-error
+	Text.prototype.__nodeValue = ' ';
 
 	if (DEV) {
 		// @ts-expect-error
