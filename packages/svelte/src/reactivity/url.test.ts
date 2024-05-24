@@ -111,7 +111,7 @@ test('url.href', () => {
 	cleanup();
 });
 
-test('fine grained tests', () => {
+test('url fine grained tests', () => {
 	const url = new ReactiveURL('https://svelte.dev/');
 
 	let changes: Record<keyof typeof url, boolean> = {
