@@ -1,4 +1,4 @@
-import { make_reactive, NOTIFY_WITH_ALL_REGISTERED_PARAMS } from './utils.js';
+import { make_reactive } from './utils.js';
 
 export const ReactiveSet = make_reactive(Set, {
 	write_properties: ['add', 'clear', 'delete'],
@@ -15,10 +15,12 @@ export const ReactiveSet = make_reactive(Set, {
 			if (options.value.size == 0) {
 				return false;
 			}
-			// get_registered_params('has').forEach((param) => {
-			// 	notify_read_properties(['has'], param);
-			// });
-			options.notify_read_properties(['has'], NOTIFY_WITH_ALL_REGISTERED_PARAMS);
+			options.get_registered_params('has')?.forEach((value, param) => {
+				if (!options.value.has(param)) {
+					return;
+				}
+				options.notify_read_properties(['has'], param);
+			});
 			return true;
 		},
 		delete: (options, ...params) => {

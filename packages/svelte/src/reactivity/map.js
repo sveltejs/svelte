@@ -1,4 +1,4 @@
-import { make_reactive, NOTIFY_WITH_ALL_REGISTERED_PARAMS } from './utils.js';
+import { make_reactive } from './utils.js';
 
 export const ReactiveMap = make_reactive(Map, {
 	write_properties: ['clear', 'delete', 'set'],
@@ -18,7 +18,22 @@ export const ReactiveMap = make_reactive(Map, {
 			if (options.value.size === 0) {
 				return false;
 			}
-			options.notify_read_properties(['get', 'keys', 'has'], NOTIFY_WITH_ALL_REGISTERED_PARAMS);
+
+			options.get_registered_params('has')?.forEach((value, param) => {
+				if (!options.value.has(param)) {
+					return;
+				}
+				options.notify_read_properties(['has'], param);
+			});
+
+			options.get_registered_params('get')?.forEach((value, param) => {
+				if (!options.value.has(param)) {
+					return;
+				}
+				options.notify_read_properties(['get'], param);
+			});
+
+			options.notify_read_properties(['keys']);
 			return true;
 		},
 		delete: (options, ...params) => {
