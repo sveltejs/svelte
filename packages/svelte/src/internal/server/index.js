@@ -177,9 +177,9 @@ export function css_props(payload, is_html, props, component) {
 	}
 	component();
 	if (is_html) {
-		payload.out += `<!----></div>`;
+		payload.out += `</div>`;
 	} else {
-		payload.out += `<!----></g>`;
+		payload.out += `</g>`;
 	}
 }
 

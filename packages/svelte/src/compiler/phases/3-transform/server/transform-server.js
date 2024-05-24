@@ -1160,7 +1160,7 @@ function serialize_inline_component(node, component_name, context) {
 	}
 
 	if (snippet_declarations.length > 0) {
-		statements.unshift(...snippet_declarations);
+		statements = [b.block([...snippet_declarations, ...statements])];
 	}
 
 	return statements;
