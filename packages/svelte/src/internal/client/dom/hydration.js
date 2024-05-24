@@ -17,22 +17,16 @@ export function set_hydrating(value) {
 /** @type {import('#client').TemplateNode} */
 export let hydrate_start = /** @type {any} */ (null);
 
-/** @type {import('#client').TemplateNode} */
-export let hydrate_end = /** @type {any} */ (null);
-
 /**
  * @param {import('#client').TemplateNode} start
- * @param {import('#client').TemplateNode} end
  */
-export function set_hydrate_nodes(start, end) {
+export function set_hydrate_nodes(start) {
 	hydrate_start = start;
-	hydrate_end = end;
 }
 
 /**
  * This function is only called when `hydrating` is true. If passed a `<!--[-->` opening
- * hydration marker, it finds the corresponding closing marker and sets `hydrate_start`
- * and `hydrate_end` to the content inside, before returning the closing marker.
+ * hydration marker, it sets `hydrate_start` to be the next node and returns the closing marker
  * @param {Node} node
  * @returns {Node}
  */
@@ -69,7 +63,6 @@ export function hydrate_anchor(node) {
 		}
 
 		start ??= /** @type {import('#client').TemplateNode} */ (current);
-		hydrate_end = /** @type {import('#client').TemplateNode} */ (current);
 	}
 
 	let location;
@@ -87,5 +80,24 @@ export function hydrate_anchor(node) {
 }
 
 export function remove_hydrate_nodes() {
-	remove_nodes(hydrate_start, hydrate_end);
+	/** @type {import('#client').TemplateNode | null} */
+	var node = hydrate_start;
+	var depth = 0;
+
+	while (node) {
+		if (node.nodeType === 8) {
+			var data = /** @type {Comment} */ (node).data;
+
+			if (data === HYDRATION_START) {
+				depth += 1;
+			} else if (data[0] === HYDRATION_END) {
+				if (depth === 0) return;
+				depth -= 1;
+			}
+		}
+
+		var next = /** @type {import('#client').TemplateNode | null} */ (node.nextSibling);
+		node.remove();
+		node = next;
+	}
 }
