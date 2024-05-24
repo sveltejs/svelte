@@ -15,7 +15,7 @@ export default function Bind_component_snippet($$payload, $$props) {
 	let $$inner_payload;
 
 	function $$render_inner($$payload) {
-		$$payload.out += `<!--[-->`;
+		$$payload.out += "<!--[-->";
 
 		TextInput($$payload, {
 			get value() {
@@ -27,7 +27,8 @@ export default function Bind_component_snippet($$payload, $$props) {
 			}
 		});
 
-		$$payload.out += `<!--]--> value: ${$.escape(value)}`;
+		$$payload.out += "<!--]-->";
+		$$payload.out += ` value: ${$.escape(value)}`;
 	};
 
 	do {
