@@ -28,10 +28,18 @@ export function init_array_prototype_warnings() {
 	};
 
 	array_prototype.lastIndexOf = function (item, from_index) {
-		const index = lastIndexOf.call(this, item, from_index);
+		// we need to specify this.length - 1 because it's probably using something like
+		// `arguments` inside so passing undefined is different from not passing anything
+		const index = lastIndexOf.call(this, item, from_index ?? this.length - 1);
 
 		if (index === -1) {
-			const test = lastIndexOf.call(get_proxied_value(this), get_proxied_value(item), from_index);
+			// we need to specify this.length - 1 because it's probably using something like
+			// `arguments` inside so passing undefined is different from not passing anything
+			const test = lastIndexOf.call(
+				get_proxied_value(this),
+				get_proxied_value(item),
+				from_index ?? this.length - 1
+			);
 
 			if (test !== -1) {
 				w.state_proxy_equality_mismatch('array.lastIndexOf(...)');
