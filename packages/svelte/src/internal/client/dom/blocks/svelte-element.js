@@ -1,5 +1,5 @@
 import { namespace_svg } from '../../../../constants.js';
-import { hydrate_anchor, hydrate_start, hydrating } from '../hydration.js';
+import { hydrate_anchor, hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import {
 	block,
@@ -14,7 +14,7 @@ import { current_component_context } from '../../runtime.js';
 import { DEV } from 'esm-env';
 
 /**
- * @param {Comment} anchor
+ * @param {Comment | Element} node
  * @param {() => string} get_tag
  * @param {boolean} is_svg
  * @param {undefined | ((element: Element, anchor: Node | null) => void)} render_fn,
@@ -22,7 +22,7 @@ import { DEV } from 'esm-env';
  * @param {undefined | [number, number]} location
  * @returns {void}
  */
-export function element(anchor, get_tag, is_svg, render_fn, get_namespace, location) {
+export function element(node, get_tag, is_svg, render_fn, get_namespace, location) {
 	const filename = DEV && location && current_component_context?.function.filename;
 
 	/** @type {string | null} */
@@ -32,7 +32,9 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 	let current_tag;
 
 	/** @type {null | Element} */
-	let element = null;
+	let element = hydrating && node.nodeType === 1 ? /** @type {Element} */ (node) : null;
+
+	let anchor = /** @type {Comment} */ (hydrating && element ? element.nextSibling : node);
 
 	/** @type {import('#client').Effect | null} */
 	let effect;
@@ -51,6 +53,7 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 			: is_svg || next_tag === 'svg'
 				? namespace_svg
 				: null;
+
 		// Assumption: Noone changes the namespace but not the tag (what would that even mean?)
 		if (next_tag === tag) return;
 
@@ -79,7 +82,7 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 		if (next_tag && next_tag !== current_tag) {
 			effect = branch(() => {
 				element = hydrating
-					? /** @type {Element} */ (hydrate_start)
+					? /** @type {Element} */ (element)
 					: ns
 						? document.createElementNS(ns, next_tag)
 						: document.createElement(next_tag);
