@@ -551,7 +551,7 @@ test('date.setSeconds - edge cases', () => {
 	cleanup();
 });
 
-test('ReactiveDate propagated changes', () => {
+test('Date propagated changes', () => {
 	const date = new ReactiveDate(initial_date);
 	const log: any = [];
 
@@ -578,6 +578,92 @@ test('ReactiveDate propagated changes', () => {
 		1,
 		2024
 	]);
+
+	cleanup();
+});
+
+test('date fine grained tests', () => {
+	const date = new ReactiveDate(initial_date);
+
+	let changes: Record<string, boolean> = {
+		getFullYear: true,
+		getUTCFullYear: true,
+		getMonth: true,
+		getUTCMonth: true,
+		getDate: true,
+		getUTCDate: true,
+		getDay: true,
+		getUTCDay: true,
+		getHours: true,
+		getUTCHours: true,
+		getMinutes: true,
+		getUTCMinutes: true,
+		getMilliseconds: true,
+		getUTCMilliseconds: true
+	};
+	let test_description: string = '';
+
+	const reset_change = () => {
+		for (const key of Object.keys(changes)) {
+			changes[key] = false;
+		}
+	};
+
+	const cleanup = effect_root(() => {
+		for (const key of Object.keys(date)) {
+			render_effect(() => {
+				date[key]();
+				assert.equal(changes[key], true, test_description);
+			});
+		}
+	});
+
+	flushSync(() => {
+		reset_change();
+		changes = {
+			...changes,
+			getFullYear: true,
+			getUTCFullYear: true,
+			getDate: true,
+			getUTCDate: true
+		};
+		test_description = 'changing full that will cause month change as well';
+		date.setFullYear(initial_date.getFullYear() + 1, initial_date.getMonth() + 1);
+	});
+
+	flushSync(() => {
+		reset_change();
+		changes = {
+			...changes,
+			getDate: true,
+			getUTCDate: true,
+			getDay: true,
+			getUTCDay: true,
+			getHours: true,
+			getUTCHours: true,
+			getMinutes: true,
+			getUTCMinutes: true,
+			getSeconds: true,
+			getUTCSeconds: true,
+			getMilliSeconds: true,
+			getUTCMilliSeconds: true
+		};
+		test_description = 'changing seconds that will change day/hour/minutes/seconds/milliseconds';
+		date.setSeconds(60 * 60 * 25, 10);
+	});
+
+	flushSync(() => {
+		reset_change();
+		changes = {
+			...changes,
+			getMonth: true,
+			getUTCMonth: true,
+			getMilliSeconds: true,
+			getUTCMilliSeconds: true
+		};
+		test_description = 'changing month';
+		date.setMonth(date.getMonth() + 1);
+	});
 
 	cleanup();
 });
