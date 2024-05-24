@@ -2351,11 +2351,14 @@ export function server_component(analysis, options) {
 	if (options.dev) push_args.push(b.id(analysis.name));
 
 	const component_block = b.block([
-		b.stmt(b.call('$.push', ...push_args)),
 		.../** @type {import('estree').Statement[]} */ (instance.body),
-		.../** @type {import('estree').Statement[]} */ (template.body),
-		b.stmt(b.call('$.pop'))
+		.../** @type {import('estree').Statement[]} */ (template.body)
 	]);
+
+	if (analysis.needs_context || options.dev) {
+		component_block.body.unshift(b.stmt(b.call('$.push', ...push_args)));
+		component_block.body.push(b.stmt(b.call('$.pop')));
+	}
 
 	if (analysis.uses_rest_props) {
 		/** @type {string[]} */
