@@ -1,4 +1,4 @@
-import { hydrate_end, hydrate_start, hydrating } from './hydration.js';
+import { hydrate_start, hydrating } from './hydration.js';
 import { empty } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
@@ -8,14 +8,12 @@ import { effect } from '../reactivity/effects.js';
 /**
  * @template {import("#client").TemplateNode} T
  * @param {T} d1
- * @param {T} d2
  */
-function push_template_node(d1, d2) {
+function push_template_node(d1) {
 	var effect = /** @type {import('#client').Effect} */ (current_effect);
 
 	if (effect.d1 === null) {
 		effect.d1 = d1;
-		effect.d2 = d2;
 	}
 }
 
@@ -34,7 +32,7 @@ export function template(content, flags) {
 
 	return () => {
 		if (hydrating) {
-			push_template_node(hydrate_start, hydrate_end);
+			push_template_node(hydrate_start);
 			return hydrate_start;
 		}
 
@@ -86,7 +84,7 @@ export function ns_template(content, flags, ns = 'svg') {
 
 	return () => {
 		if (hydrating) {
-			push_template_node(hydrate_start, hydrate_end);
+			push_template_node(hydrate_start);
 			return hydrate_start;
 		}
 
@@ -188,14 +186,14 @@ export function text(anchor) {
 		anchor.before((node = empty()));
 	}
 
-	push_template_node(node, node);
+	push_template_node(node);
 	return node;
 }
 
 export function comment() {
 	// we're not delegating to `template` here for performance reasons
 	if (hydrating) {
-		push_template_node(hydrate_start, hydrate_end);
+		push_template_node(hydrate_start);
 		return hydrate_start;
 	}
 
@@ -213,20 +211,21 @@ export function comment() {
  * @param {DocumentFragment | Element} dom
  */
 export function append(anchor, dom) {
-	if (hydrating) return;
-
 	var effect = /** @type {import('#client').Effect} */ (current_effect);
 
-	if (dom.nodeType === 11) {
-		// prepend an empty text node
-		var d1 = empty();
+	if (!hydrating) {
+		if (dom.nodeType === 11) {
+			// prepend an empty text node
+			var d1 = empty();
 
-		/** @type {import('#client').TemplateNode} */ (dom.firstChild).before(d1);
-		effect.d1 = d1;
-		effect.d2 = /** @type {import('#client').TemplateNode} */ (dom.lastChild);
-	} else {
-		effect.d1 = effect.d2 = /** @type {Element} */ (dom);
+			/** @type {import('#client').TemplateNode} */ (dom.firstChild).before(d1);
+			effect.d1 = d1;
+		} else {
+			effect.d1 = /** @type {Element} */ (dom);
+		}
+
+		anchor.before(/** @type {Node} */ (dom));
 	}
 
-	anchor.before(/** @type {Node} */ (dom));
+	effect.d2 = anchor?.previousSibling;
 }
