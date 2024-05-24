@@ -11,6 +11,7 @@ export const INTERNAL_OBJECT = Symbol();
  * @template {(keyof TEntityInstance)[]} TReadProperties
  * @typedef InterceptorOptions
  * @property {(methods: TReadProperties, ...params: unknown[])=>void} notify_read_properties
+ * @property {(method: TReadProperties[number]) => Map<unknown, import("#client").Source<boolean>> | undefined} get_registered_params
  * @property {TEntityInstance} value
  * @property {TWriteProperties[number]} property
  */
@@ -197,6 +198,9 @@ function create_notifiers(
 						...params
 					);
 				});
+			},
+			get_registered_params: (method) => {
+				return read_methods_signals.get(method);
 			},
 			value: entity_instance,
 			property: property
