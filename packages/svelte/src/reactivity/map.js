@@ -20,6 +20,7 @@ export const ReactiveMap = make_reactive(Map, {
 			}
 
 			options.get_registered_params('has')?.forEach((value, param) => {
+				// because we don't want to notify `has` for items that are currently not in the map
 				if (!options.value.has(param)) {
 					return;
 				}
@@ -27,6 +28,7 @@ export const ReactiveMap = make_reactive(Map, {
 			});
 
 			options.get_registered_params('get')?.forEach((value, param) => {
+				// because we don't want to notify `get` for items that are currently not in the map
 				if (!options.value.has(param)) {
 					return;
 				}

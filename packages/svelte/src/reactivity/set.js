@@ -16,6 +16,7 @@ export const ReactiveSet = make_reactive(Set, {
 				return false;
 			}
 			options.get_registered_params('has')?.forEach((value, param) => {
+				// because we don't want to notify `has` for items that are currently not in the set
 				if (!options.value.has(param)) {
 					return;
 				}
