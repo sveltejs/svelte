@@ -209,18 +209,17 @@ export function comment() {
  * Assign the created (or in hydration mode, traversed) dom elements to the current block
  * and insert the elements into the dom (in client mode).
  * @param {Text | Comment | Element} anchor
- * @param {DocumentFragment | Element | Comment} node
+ * @param {DocumentFragment | Element} dom
  */
-export function append(anchor, node) {
-	if (!hydrating) {
-		/** @type {import('#client').Dom} */
-		const dom =
-			node.nodeType === 11
-				? /** @type {import('#client').TemplateNode[]} */ ([...node.childNodes])
-				: /** @type {Element | Comment} */ (node);
+export function append(anchor, dom) {
+	if (hydrating) return;
 
-		/** @type {import('#client').Effect} */ (current_effect).dom = dom;
+	var effect = /** @type {import('#client').Effect} */ (current_effect);
 
-		anchor.before(/** @type {Node} */ (node));
-	}
+	effect.dom =
+		dom.nodeType === 11
+			? /** @type {import('#client').TemplateNode[]} */ ([...dom.childNodes])
+			: /** @type {Element | Comment} */ (dom);
+
+	anchor.before(/** @type {Node} */ (dom));
 }
