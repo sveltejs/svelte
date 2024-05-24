@@ -130,6 +130,7 @@ test('url fine grained tests', () => {
 		toJSON: true,
 		toString: true
 	};
+	let test_description: string = '';
 
 	const reset_change = () => {
 		for (const key of Object.keys(changes) as Array<keyof typeof url>) {
@@ -140,93 +141,110 @@ test('url fine grained tests', () => {
 	const cleanup = effect_root(() => {
 		render_effect(() => {
 			url.hash;
-			assert.equal(changes.hash, true);
+			assert.equal(changes.hash, true, test_description);
 		});
 
 		render_effect(() => {
 			url.host;
-			assert.equal(changes.host, true);
+			assert.equal(changes.host, true, test_description);
 		});
 
 		render_effect(() => {
 			url.hostname;
-			assert.equal(changes.hostname, true);
+			assert.equal(changes.hostname, true, test_description);
 		});
 
 		render_effect(() => {
 			url.href;
-			assert.equal(changes.href, true);
+			assert.equal(changes.href, true, test_description);
 		});
 
 		render_effect(() => {
 			url.origin;
-			assert.equal(changes.origin, true);
+			assert.equal(changes.origin, true, test_description);
 		});
 
 		render_effect(() => {
 			url.search;
-			assert.equal(changes.search, true);
+			assert.equal(changes.search, true, test_description);
 		});
 
 		render_effect(() => {
 			url.searchParams.get('fohoov');
-			assert.equal(changes.searchParams, true);
-		});
-
-		render_effect(() => {
-			url;
-			reset_change();
+			assert.equal(changes.searchParams, true, test_description);
 		});
 	});
 
 	flushSync(() => {
+		reset_change();
 		changes = { ...changes, origin: true, host: true, pathname: true, href: true };
+		test_description = 'changing href';
 		url.href = 'https://www.google.com/test';
 	});
 
 	flushSync(() => {
+		reset_change();
 		changes = { ...changes, origin: true, href: true };
+		test_description = 'changing protocol';
 		url.protocol = 'http';
 	});
 
 	flushSync(() => {
+		reset_change();
+		test_description = 'changing protocol to same thing';
 		url.protocol = 'http';
 	});
 
 	flushSync(() => {
+		reset_change();
 		changes = { ...changes, hash: true, href: true };
+		test_description = 'changing hash';
 		url.hash = 'new-hash';
 	});
 
 	flushSync(() => {
+		reset_change();
+		test_description = 'changing hash to same thing';
 		url.hash = 'new-hash';
 	});
 
 	flushSync(() => {
-		changes = { ...changes, hostname: true, href: true };
+		reset_change();
+		changes = { ...changes, hostname: true, host: true, href: true };
+		test_description = 'changing hostname';
 		url.hostname = 'fohoov';
 	});
 
 	flushSync(() => {
-		changes = { ...changes, search: true, searchParams: true };
+		reset_change();
+		changes = { ...changes, href: true, search: true, searchParams: true };
+		test_description = 'changing search';
 		url.search = 'fohoov=true';
 	});
 
 	flushSync(() => {
+		reset_change();
+		test_description = 'changing search to same thing';
 		url.search = 'fohoov=true';
 	});
 
 	flushSync(() => {
-		changes = { ...changes, search: true, searchParams: true };
+		reset_change();
+		changes = { ...changes, href: true, search: true, searchParams: true };
+		test_description = 'changing search param to false';
 		url.search = 'fohoov=false';
 	});
 
 	flushSync(() => {
-		changes = { ...changes, search: true, searchParams: true };
+		reset_change();
+		changes = { ...changes, href: true, search: true, searchParams: true };
+		test_description = 'clearing search';
 		url.search = '';
 	});
 
 	flushSync(() => {
+		reset_change();
+		test_description = 'clearing search again (expects no change)';
 		url.search = '';
 	});
 
