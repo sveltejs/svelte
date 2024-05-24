@@ -1,5 +1,6 @@
 import { make_reactive } from './utils.js';
 
+const modified_date_to_compare = new Date();
 /**
  * we have to create a new Date to compare, because setting `X` might or might not affect `Y`
  * for instance calling `date.setMonth(55)` will also change the `date.getYear()`
@@ -12,57 +13,57 @@ import { make_reactive } from './utils.js';
  * @return {boolean} - returns true if any changes happened
  */
 const notify_datetime_changes = (options, ...params) => {
+	modified_date_to_compare.setTime(options.value.getTime());
+
 	let is_time_changed = false;
 	let is_date_changed = false;
 
-	const new_datetime = new Date(options.value);
-
 	// @ts-ignore
-	new_datetime[options.property](...params);
+	modified_date_to_compare[options.property](...params);
 
-	if (options.value.getFullYear() !== new_datetime.getFullYear()) {
+	if (options.value.getFullYear() !== modified_date_to_compare.getFullYear()) {
 		options.notify_read_properties(['getFullYear', 'getUTCFullYear']);
 		is_date_changed = true;
 	}
 
 	// @ts-expect-error
-	if (options.value.getYear && options.value.getYear() !== new_datetime.getYear()) {
+	if (options.value.getYear && options.value.getYear() !== modified_date_to_compare.getYear()) {
 		// @ts-expect-error
 		options.notify_read_properties(['getYear']);
 		is_date_changed = true;
 	}
 
-	if (options.value.getMonth() !== new_datetime.getMonth()) {
+	if (options.value.getMonth() !== modified_date_to_compare.getMonth()) {
 		options.notify_read_properties(['getMonth', 'getUTCMonth']);
 		is_date_changed = true;
 	}
 
-	if (options.value.getDate() !== new_datetime.getDate()) {
+	if (options.value.getDate() !== modified_date_to_compare.getDate()) {
 		options.notify_read_properties(['getDate', 'getUTCDate']);
 		is_date_changed = true;
 	}
 
-	if (options.value.getDay() !== new_datetime.getDay()) {
+	if (options.value.getDay() !== modified_date_to_compare.getDay()) {
 		options.notify_read_properties(['getDay', 'getUTCDay']);
 		is_date_changed = true;
 	}
 
-	if (options.value.getHours() !== new_datetime.getHours()) {
+	if (options.value.getHours() !== modified_date_to_compare.getHours()) {
 		options.notify_read_properties(['getHours', 'getUTCHours']);
 		is_time_changed = true;
 	}
 
-	if (options.value.getMinutes() !== new_datetime.getMinutes()) {
+	if (options.value.getMinutes() !== modified_date_to_compare.getMinutes()) {
 		options.notify_read_properties(['getMinutes', 'getUTCMinutes']);
 		is_time_changed = true;
 	}
 
-	if (options.value.getSeconds() !== new_datetime.getSeconds()) {
+	if (options.value.getSeconds() !== modified_date_to_compare.getSeconds()) {
 		options.notify_read_properties(['getSeconds', 'getUTCSeconds']);
 		is_time_changed = true;
 	}
 
-	if (options.value.getMilliseconds() !== new_datetime.getMilliseconds()) {
+	if (options.value.getMilliseconds() !== modified_date_to_compare.getMilliseconds()) {
 		options.notify_read_properties(['getMilliseconds', 'getUTCMilliseconds']);
 		is_time_changed = true;
 	}
