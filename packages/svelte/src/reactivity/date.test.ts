@@ -610,10 +610,10 @@ test('date fine grained tests', () => {
 	};
 
 	const cleanup = effect_root(() => {
-		for (const key of Object.keys(date)) {
+		for (const key of Object.keys(changes)) {
 			render_effect(() => {
 				date[key]();
-				assert.equal(changes[key], true, test_description);
+				assert.equal(changes[key], true, `${test_description}: for ${key}`);
 			});
 		}
 	});
@@ -625,9 +625,13 @@ test('date fine grained tests', () => {
 			getFullYear: true,
 			getUTCFullYear: true,
 			getDate: true,
-			getUTCDate: true
+			getUTCDate: true,
+			getMonth: true,
+			getUTCMonth: true,
+			getDay: true,
+			getUTCDay: true
 		};
-		test_description = 'changing full that will cause month change as well';
+		test_description = 'changing setFullYear that will cause month/day change as well';
 		date.setFullYear(initial_date.getFullYear() + 1, initial_date.getMonth() + 1);
 	});
 
@@ -645,11 +649,11 @@ test('date fine grained tests', () => {
 			getUTCMinutes: true,
 			getSeconds: true,
 			getUTCSeconds: true,
-			getMilliSeconds: true,
-			getUTCMilliSeconds: true
+			getMilliseconds: true,
+			getUTCMilliseconds: true
 		};
 		test_description = 'changing seconds that will change day/hour/minutes/seconds/milliseconds';
-		date.setSeconds(60 * 60 * 25, 10);
+		date.setSeconds(60 * 60 * 25 + 1, 10);
 	});
 
 	flushSync(() => {
@@ -658,8 +662,10 @@ test('date fine grained tests', () => {
 			...changes,
 			getMonth: true,
 			getUTCMonth: true,
-			getMilliSeconds: true,
-			getUTCMilliSeconds: true
+			getDay: true,
+			getUTCDay: true,
+			getMilliseconds: true,
+			getUTCMilliseconds: true
 		};
 		test_description = 'changing month';
 		date.setMonth(date.getMonth() + 1);
