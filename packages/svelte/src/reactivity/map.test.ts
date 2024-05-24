@@ -212,6 +212,33 @@ test('not invoking reactivity when value is not in the map after changes', () =>
 	cleanup();
 });
 
+test('map.clear()', () => {
+	const map = new ReactiveMap([
+		[1, 1],
+		[2, 2]
+	]);
+
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(map.has(1));
+		});
+
+		render_effect(() => {
+			log.push(map.has(2));
+		});
+	});
+
+	flushSync(() => {
+		map.clear();
+	});
+
+	assert.deepEqual(log, [true, true, false, false]);
+
+	cleanup();
+});
+
 test('Map.instanceOf', () => {
 	assert.equal(new ReactiveMap() instanceof Map, true);
 });
