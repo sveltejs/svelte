@@ -9,9 +9,6 @@ import { current_effect } from '../runtime.js';
 /** @type {Element} */
 var element_prototype;
 
-/** @type {Text} */
-var text_prototype;
-
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /**
  * @type {Window}
@@ -32,7 +29,6 @@ export function init_operations() {
 	}
 
 	element_prototype = Element.prototype;
-	text_prototype = Text.prototype;
 
 	$window = window;
 	$document = document;
@@ -48,7 +44,7 @@ export function init_operations() {
 	element_prototype.__e = undefined;
 
 	// @ts-expect-error
-	text_prototype.__nodeValue = ' ';
+	Text.prototype.__nodeValue = ' ';
 
 	if (DEV) {
 		// @ts-expect-error
