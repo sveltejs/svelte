@@ -1,8 +1,6 @@
 import * as $ from "svelte/internal/server";
 
-export default function Function_prop_no_getter($$payload, $$props) {
-	$.push();
-
+export default function Function_prop_no_getter($$payload) {
 	let count = 0;
 
 	function onmouseup() {
@@ -24,5 +22,4 @@ export default function Function_prop_no_getter($$payload, $$props) {
 	});
 
 	$$payload.out += `<!--]-->`;
-	$.pop();
 }
