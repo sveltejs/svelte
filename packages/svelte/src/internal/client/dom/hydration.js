@@ -31,12 +31,8 @@ export function set_hydrate_nodes(start) {
  * @returns {Node}
  */
 export function hydrate_anchor(node) {
-	if (node.nodeType !== 8) {
-		return node;
-	}
-
 	// TODO this could have false positives, if a user comment consisted of `[`. need to tighten that up
-	if (/** @type {Comment} */ (node).data !== HYDRATION_START) {
+	if (node.nodeType !== 8 || /** @type {Comment} */ (node).data !== HYDRATION_START) {
 		return node;
 	}
 
@@ -62,7 +58,7 @@ export function hydrate_anchor(node) {
 			}
 		}
 
-		current = current.nextSibling;
+		current = /** @type {import('#client').TemplateNode} */ (current.nextSibling);
 	}
 
 	let location;
