@@ -14,17 +14,12 @@ export function css_props(node, is_html, props, component) {
 	/** @type {HTMLElement | SVGElement} */
 	let element;
 
-	/** @type {Comment} */
-	let anchor;
-
 	/** @type {Text | Comment} */
 	let component_anchor;
 
 	if (hydrating) {
 		// Hydration: css props element is surrounded by a ssr comment ...
 		element = /** @type {HTMLElement | SVGElement} */ (node);
-
-		anchor = /** @type {Comment} */ (element.nextSibling);
 
 		// ... and the child(ren) of the css props element is also surround by a ssr comment
 		component_anchor = /** @type {Comment} */ (
@@ -38,9 +33,7 @@ export function css_props(node, is_html, props, component) {
 			element = document.createElementNS(namespace_svg, 'g');
 		}
 
-		anchor = /** @type {Comment} */ (node);
-
-		anchor.before(element);
+		node.before(element); // TODO do we even need an anchor? Can we just pass in the correct element directly from the template?
 		component_anchor = element.appendChild(empty());
 	}
 
