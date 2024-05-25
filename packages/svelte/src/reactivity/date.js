@@ -125,51 +125,21 @@ export const ReactiveDate = make_reactive(Date, {
 		'toLocaleTimeString'
 	],
 	interceptors: {
-		setDate: (options, ...params) => {
-			return notify_datetime_changes(options, ...params);
-		},
-		setFullYear: (options, ...params) => {
-			return notify_datetime_changes(options, ...params);
-		},
-		setHours: (options, ...params) => {
-			return notify_datetime_changes(options, ...params);
-		},
-		setMilliseconds: (options, ...params) => {
-			return notify_datetime_changes(options, ...params);
-		},
-		setMinutes: (options, ...params) => {
-			return notify_datetime_changes(options, ...params);
-		},
-		setMonth: (options, ...params) => {
-			return notify_datetime_changes(options, ...params);
-		},
-		setSeconds: (options, ...params) => {
-			return notify_datetime_changes(options, ...params);
-		},
-		setTime: (options, ...params) => {
-			return notify_datetime_changes(options, ...params);
-		},
-		setUTCDate: (options, ...params) => {
-			return notify_datetime_changes(options, ...params);
-		},
-		setUTCFullYear: (options, ...params) => {
-			return notify_datetime_changes(options, ...params);
-		},
-		setUTCHours: (options, ...params) => {
-			return notify_datetime_changes(options, ...params);
-		},
-		setUTCMilliseconds: (options, ...params) => {
-			return notify_datetime_changes(options, ...params);
-		},
-		setUTCMinutes: (options, ...params) => {
-			return notify_datetime_changes(options, ...params);
-		},
-		setUTCMonth: (options, ...params) => {
-			return notify_datetime_changes(options, ...params);
-		},
-		setUTCSeconds: (options, ...params) => {
-			return notify_datetime_changes(options, ...params);
-		},
+		setDate: (options, ...params) => notify_datetime_changes(options, ...params),
+		setFullYear: (options, ...params) => notify_datetime_changes(options, ...params),
+		setHours: (options, ...params) => notify_datetime_changes(options, ...params),
+		setMilliseconds: (options, ...params) => notify_datetime_changes(options, ...params),
+		setMinutes: (options, ...params) => notify_datetime_changes(options, ...params),
+		setMonth: (options, ...params) => notify_datetime_changes(options, ...params),
+		setSeconds: (options, ...params) => notify_datetime_changes(options, ...params),
+		setTime: (options, ...params) => notify_datetime_changes(options, ...params),
+		setUTCDate: (options, ...params) => notify_datetime_changes(options, ...params),
+		setUTCFullYear: (options, ...params) => notify_datetime_changes(options, ...params),
+		setUTCHours: (options, ...params) => notify_datetime_changes(options, ...params),
+		setUTCMilliseconds: (options, ...params) => notify_datetime_changes(options, ...params),
+		setUTCMinutes: (options, ...params) => notify_datetime_changes(options, ...params),
+		setUTCMonth: (options, ...params) => notify_datetime_changes(options, ...params),
+		setUTCSeconds: (options, ...params) => notify_datetime_changes(options, ...params),
 		// @ts-expect-error - deprecated method
 		setYear: (options, ...params) => {
 			// it might be removed from browsers
