@@ -1,14 +1,17 @@
 import { test } from '../../assert';
-const tick = () => Promise.resolve();
+import { tick } from 'svelte';
 
 export default test({
 	async test({ assert, target }) {
 		await tick();
-		/** @type {HTMLElement} */
-		const el = target.querySelector('.test');
-		el.addEventListener('animationend', async () => {
-			await tick();
-			assert.exists(document.querySelector('.result'));
-		});
+		/** @type {HTMLDivElement} */
+		const el = target.querySelector('div');
+		const animation_end = new window.AnimationEvent('animationend');
+
+		await el.dispatchEvent(animation_end);
+
+		await tick();
+
+		assert.htmlEqual(target.innerHTML, '<div></div> <span>animation ended</span>');
 	}
 });
