@@ -239,6 +239,12 @@ const visitors = {
 				}
 
 				if (relative_selector.selectors.some((s) => s.type === 'NestingSelector')) {
+					// clean every global selector attached to Nesting before bailing out
+					for (const selector of relative_selector.selectors) {
+						if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
+							remove_global_pseudo_class(selector);
+						}
+					}
 					continue;
 				}
 
