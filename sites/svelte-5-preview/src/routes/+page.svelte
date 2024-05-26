@@ -1,6 +1,7 @@
 <script>
 	import { theme } from '@sveltejs/site-kit/stores';
 	import '@sveltejs/site-kit/styles/index.css';
+	import { replaceState } from '$app/navigation';
 
 	import Repl from '$lib/Repl.svelte';
 	import { default_files } from './defaults.js';
@@ -69,10 +70,9 @@
 
 		setting_hash = true;
 
-		history.replaceState(
-			history.state,
-			'',
-			`${location.pathname}${location.search}#${await compress_and_encode_text(json)}`
+		replaceState(
+			`${location.pathname}${location.search}#${await compress_and_encode_text(json)}`,
+			{}
 		);
 	}
 </script>
