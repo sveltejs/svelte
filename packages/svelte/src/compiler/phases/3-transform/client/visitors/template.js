@@ -903,7 +903,6 @@ function serialize_inline_component(node, component_name, context) {
 		fn = (node_id) => {
 			let component = b.call(
 				'$.component',
-				node_id,
 				b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.expression))),
 				b.arrow(
 					[b.id(component_name)],
@@ -2947,7 +2946,6 @@ export const template_visitors = {
 				b.stmt(
 					b.call(
 						'$.component',
-						context.state.node,
 						// TODO use untrack here to not update when binding changes?
 						// Would align with Svelte 4 behavior, but it's arguably nicer/expected to update this
 						b.thunk(
