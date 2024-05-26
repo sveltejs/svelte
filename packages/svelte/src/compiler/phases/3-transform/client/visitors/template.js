@@ -898,6 +898,17 @@ function serialize_inline_component(node, component_name, context) {
 			);
 	}
 
+	if (node.type === 'SvelteComponent') {
+		const prev = fn;
+		fn = (node_id) =>
+			b.call(
+				'$.component',
+				node_id,
+				b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.expression))),
+				b.arrow([b.id(component_name)], prev(node_id))
+			);
+	}
+
 	if (Object.keys(custom_css_props).length > 0) {
 		const prev = fn;
 		fn = (node_id) =>
@@ -2952,16 +2963,7 @@ export const template_visitors = {
 		if (context.state.options.dev) {
 			component = b.stmt(b.call('$.validate_dynamic_component', b.thunk(b.block([component]))));
 		}
-		context.state.init.push(
-			b.stmt(
-				b.call(
-					'$.component',
-					context.state.node,
-					b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.expression))),
-					b.arrow([b.id('$$component')], b.block([component]))
-				)
-			)
-		);
+		context.state.init.push(component);
 	},
 	Attribute(node, context) {
 		if (is_event_attribute(node)) {
