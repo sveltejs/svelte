@@ -158,7 +158,8 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 	/** @type {Array<[string, any, () => void]>} */
 	var events = [];
 
-	for (key in next) {
+	// since key is captured we use const
+	for (const key in next) {
 		// let instead of var because referenced in a closure
 		let value = next[key];
 		if (value === prev?.[key]) continue;
@@ -192,9 +193,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 						events.push([
 							key,
 							value,
-							// since key is a var, when calling this in a later point, it will point the last value it had
-							// hence we can't do that and we have to do this instead
-							() => (next[`on${event_name}`] = create_event(event_name, element, value, opts))
+							() => (next[key] = create_event(event_name, element, value, opts))
 						]);
 					} else {
 						next[key] = create_event(event_name, element, value, opts);
