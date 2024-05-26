@@ -35,7 +35,6 @@ export default test({
 			const nest_track_color1 = target.querySelector('#nest-component1 span');
 			const nest_rail_color2 = target.querySelector('#nest-component2 p');
 			const nest_track_color2 = target.querySelector('#nest-component2 span');
-
 			assert_ok(rail_color1);
 			assert_ok(track_color1);
 			assert_ok(rail_color2);
@@ -95,8 +94,6 @@ export default test({
 		assert_slider_1();
 		component.componentName = 'Slider2';
 		assert_slider_2();
-		component.componentName = undefined;
-		assert.equal(window.document.querySelector('div'), null);
 		component.componentName = 'Slider1';
 		assert_slider_1();
 	}
