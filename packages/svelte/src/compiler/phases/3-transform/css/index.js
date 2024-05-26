@@ -238,13 +238,14 @@ const visitors = {
 					}
 				}
 
-				if (relative_selector.selectors.some((s) => s.type === 'NestingSelector')) {
-					// clean every global selector attached to Nesting before bailing out
-					for (const selector of relative_selector.selectors) {
-						if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-							remove_global_pseudo_class(selector);
-						}
+				// for any :global() at the middle of compound selector
+				for (const selector of relative_selector.selectors) {
+					if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
+						remove_global_pseudo_class(selector);
 					}
+				}
+
+				if (relative_selector.selectors.some((s) => s.type === 'NestingSelector')) {
 					continue;
 				}
 
@@ -255,13 +256,6 @@ const visitors = {
 				if (context.state.specificity.bumped) modifier = `:where(${modifier})`;
 
 				context.state.specificity.bumped = true;
-
-				// for any :global() at the middle of compound selector
-				for (const selector of relative_selector.selectors) {
-					if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-						remove_global_pseudo_class(selector);
-					}
-				}
 
 				let i = relative_selector.selectors.length;
 				while (i--) {
