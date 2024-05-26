@@ -279,3 +279,16 @@ export function is_tag_valid_with_parent(tag, parent_tag) {
 
 	return true;
 }
+
+/**
+ * @param {string} name
+ * @param {"include-on" | "exclude-on"} [mode] - wether if name starts with `on` or `on` is excluded at this point
+ */
+export function is_capture_event(name, mode = 'exclude-on') {
+	if (!name.endsWith('capture')) {
+		return false;
+	}
+	return mode == 'exclude-on'
+		? name !== 'gotpointercapture' && name !== 'lostpointercapture'
+		: name !== 'ongotpointercapture' && name !== 'onlostpointercapture';
+}
