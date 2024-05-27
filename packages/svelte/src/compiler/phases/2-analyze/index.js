@@ -18,7 +18,12 @@ import { validation_legacy, validation_runes, validation_runes_js } from './vali
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
-import { DelegatedEvents, namespace_mathml, namespace_svg } from '../../../constants.js';
+import {
+	DelegatedEvents,
+	is_capture_event,
+	namespace_mathml,
+	namespace_svg
+} from '../../../constants.js';
 import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
@@ -1508,21 +1513,11 @@ function determine_element_spread(node) {
  * @param {string} event_name
  */
 function get_attribute_event_name(event_name) {
-	if (is_capture_event(event_name)) {
+	if (is_capture_event(event_name, 'include-on')) {
 		event_name = event_name.slice(0, -7);
 	}
 	event_name = event_name.slice(2);
 	return event_name;
-}
-
-/**
- * @param {string} name
- * @returns boolean
- */
-function is_capture_event(name) {
-	return (
-		name.endsWith('capture') && name !== 'ongotpointercapture' && name !== 'onlostpointercapture'
-	);
 }
 
 /**

@@ -32,6 +32,7 @@ import {
 	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED,
+	is_capture_event,
 	TEMPLATE_FRAGMENT,
 	TEMPLATE_USE_IMPORT_NODE,
 	TRANSITION_GLOBAL,
@@ -1410,11 +1411,7 @@ function serialize_event_attribute(node, context) {
 	const modifiers = [];
 
 	let event_name = node.name.slice(2);
-	if (
-		event_name.endsWith('capture') &&
-		event_name !== 'ongotpointercapture' &&
-		event_name !== 'onlostpointercapture'
-	) {
+	if (is_capture_event(event_name)) {
 		event_name = event_name.slice(0, -7);
 		modifiers.push('capture');
 	}
