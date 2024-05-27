@@ -1,6 +1,17 @@
 import { walk } from 'zimmerframe';
 import * as b from '../../utils/builders.js';
 
+/**
+ * @param {import('estree').FunctionExpression | import('estree').FunctionDeclaration} node
+ * @param {import('zimmerframe').Context<any, any>} context
+ */
+function remove_this_param(node, context) {
+	if (node.params[0]?.type === 'Identifier' && node.params[0].name === 'this') {
+		node.params.shift();
+	}
+	return context.next();
+}
+
 /** @type {import('zimmerframe').Visitors<any, null>} */
 const visitors = {
 	ImportDeclaration(node) {
@@ -71,7 +82,9 @@ const visitors = {
 			};
 		}
 		return node;
-	}
+	},
+	FunctionExpression: remove_this_param,
+	FunctionDeclaration: remove_this_param
 };
 
 /**
