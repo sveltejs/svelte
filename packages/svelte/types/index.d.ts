@@ -1,6 +1,6 @@
 declare module 'svelte' {
 	/**
-	 * @deprecated Svelte components were classes in Svelte 4. In Svelte 5, they are not anymore.
+	 * @deprecated In Svelte 4, components are classes. In Svelte 5, they are functions.
 	 * Use `mount` or `createRoot` instead to instantiate components.
 	 * See [breaking changes](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes)
 	 * for more info.
