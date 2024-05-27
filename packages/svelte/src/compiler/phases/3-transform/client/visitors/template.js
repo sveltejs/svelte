@@ -1060,6 +1060,7 @@ function create_block(parent, name, nodes, context) {
 	/** @type {import('../types').ComponentClientTransformState} */
 	const state = {
 		...context.state,
+		scope: context.state.scopes.get(parent) ?? context.state.scope,
 		before_init: [],
 		init: [],
 		update: [],
@@ -1616,7 +1617,7 @@ function serialize_attribute_value(attribute_value, context) {
 
 /**
  * @param {Array<import('#compiler').Text | import('#compiler').ExpressionTag>} values
- * @param {(node: import('#compiler').SvelteNode) => any} visit
+ * @param {(node: import('#compiler').SvelteNode, state: any) => any} visit
  * @param {import("../types.js").ComponentClientTransformState} state
  * @returns {[boolean, import('estree').TemplateLiteral]}
  */
@@ -1661,13 +1662,13 @@ function serialize_template_literal(values, visit, state) {
 						id,
 						create_derived(
 							state,
-							b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression)))
+							b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression, state)))
 						)
 					)
 				);
 				expressions.push(b.call('$.get', id));
 			} else {
-				expressions.push(b.call('$.stringify', visit(node.expression)));
+				expressions.push(b.call('$.stringify', visit(node.expression, state)));
 			}
 			quasis.push(b.quasi('', i + 1 === values.length));
 		}
