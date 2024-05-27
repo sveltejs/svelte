@@ -8,3 +8,7 @@
 
 <div>
 </div>
+
+<div class="class">
+	foo
+</div>
