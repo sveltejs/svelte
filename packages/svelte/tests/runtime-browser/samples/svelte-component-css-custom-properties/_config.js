@@ -60,6 +60,8 @@ export default test({
 		assert_slider_1();
 		component.componentName = 'Slider2';
 		assert_slider_2();
+		component.componentName = undefined;
+		assert.equal(window.document.querySelector('div')?.firstElementChild, null);
 		component.componentName = 'Slider1';
 		assert_slider_1();
 	}
