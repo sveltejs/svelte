@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: capturing the correct event names in set_attributes
+fix: capture the correct event names when spreading attributes
