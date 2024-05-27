@@ -5,8 +5,8 @@ export default test({
 	async test({ assert, window }) {
 		const div = window.document.querySelector('div');
 
-		div.dispatchEvent(new PointerEvent('gotpointercapture'));
-		div.dispatchEvent(new PointerEvent('lostpointercapture'));
+		div?.dispatchEvent(new PointerEvent('gotpointercapture'));
+		div?.dispatchEvent(new PointerEvent('lostpointercapture'));
 
 		await tick();
 
