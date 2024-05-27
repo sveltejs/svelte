@@ -1,5 +1,25 @@
 # svelte
 
+## 5.0.0-next.142
+
+### Patch Changes
+
+- fix: allow runelike writable as prop ([#11768](https://github.com/sveltejs/svelte/pull/11768))
+
+- fix: support `array.lastIndexOf` without second argument ([#11766](https://github.com/sveltejs/svelte/pull/11766))
+
+- fix: handle `this` parameter in TypeScript-annotated functions ([#11795](https://github.com/sveltejs/svelte/pull/11795))
+
+- fix: allow classes to be reassigned ([#11794](https://github.com/sveltejs/svelte/pull/11794))
+
+- fix: capture the correct event names when spreading attributes ([#11783](https://github.com/sveltejs/svelte/pull/11783))
+
+- fix: allow global next to `&` for nesting ([#11784](https://github.com/sveltejs/svelte/pull/11784))
+
+- fix: parse ongotpointercapture and onlostpointercapture events correctly ([#11790](https://github.com/sveltejs/svelte/pull/11790))
+
+- fix: only inject push/pop in SSR components when necessary ([#11771](https://github.com/sveltejs/svelte/pull/11771))
+
 ## 5.0.0-next.141
 
 ### Patch Changes
