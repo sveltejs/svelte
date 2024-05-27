@@ -163,7 +163,8 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 	/** @type {Array<[string, any, () => void]>} */
 	var events = [];
 
-	for (key in next) {
+	// since key is captured we use const
+	for (const key in next) {
 		// let instead of var because referenced in a closure
 		let value = next[key];
 		if (value === prev?.[key]) continue;
