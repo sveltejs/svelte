@@ -2,6 +2,10 @@
 	interface Hello { message: 'hello' }
 	type Goodbye = { message: 'goodbye' };
 
+	function this_fn(this: any) {
+		console.log(this);
+	}
+
 	export type { Hello };
 </script>
 
