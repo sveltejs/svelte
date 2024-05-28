@@ -49,14 +49,8 @@ export function bind_window_scroll(type, get_value, update) {
 		}
 	});
 
-	// Browsers fire the scroll event only if the scroll position is not 0.
-	// This effect is (almost) guaranteed to run after the scroll event would've fired.
-	effect(() => {
-		var value = window[is_scrolling_x ? 'scrollX' : 'scrollY'];
-		if (value === 0) {
-			yield_updates(() => update(value));
-		}
-	});
+	// Browsers don't fire the scroll event for the initial scroll position when scroll style isn't set to smooth
+	effect(target_handler);
 
 	render_effect(() => {
 		return () => {
