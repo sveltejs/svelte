@@ -1730,15 +1730,7 @@ const template_visitors = {
 			}
 		}
 
-		const state = {
-			...context.state,
-			// TODO this logic eventually belongs in create_block, when fragments are used everywhere
-			scope: /** @type {import('../../scope').Scope} */ (context.state.scopes.get(node.fragment))
-		};
-		const body = create_block(node, node.fragment, node.fragment.nodes, {
-			...context,
-			state
-		});
+		const body = create_block(node, node.fragment, node.fragment.nodes, context);
 
 		context.state.template.push(t_statement(b.block(body)));
 	},
