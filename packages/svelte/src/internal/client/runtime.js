@@ -39,6 +39,7 @@ let current_scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
 let is_yield_task_queued = false;
+let is_yield_task_active = false;
 
 export let is_flushing_effect = false;
 export let is_destroying_effect = false;
@@ -574,6 +575,7 @@ function flush_queued_effects(effects) {
 function process_deferred() {
 	is_micro_task_queued = false;
 	is_yield_task_queued = false;
+	is_yield_task_active = false;
 	if (flush_count > 101) {
 		return;
 	}
@@ -588,8 +590,11 @@ function process_deferred() {
 async function yield_tick() {
 	// TODO: replace this with scheduler.yield when it becomes standard
 	await new Promise((fulfil) => {
-		requestAnimationFrame(() => {
-			setTimeout(fulfil, 0);
+		queueMicrotask(() => {
+			is_yield_task_active = true;
+			requestAnimationFrame(() => {
+				setTimeout(fulfil, 0);
+			});
 		});
 		// In case of being within background tab, the rAF won't fire
 		setTimeout(fulfil, 100);
@@ -722,11 +727,14 @@ function process_effects(effect, collected_effects) {
  */
 export function yield_updates(fn) {
 	const previous_scheduler_mode = current_scheduler_mode;
-	// If we're calling yield_updates, and we've already yielded some updates – then it's likely
-	// that the event might might try and read from the UI. In order for this to be glitch free,
-	// we can flush any changes, forcing the UI to be up-to-date, so any reads from the UI work as
-	// expected.
-	if (previous_scheduler_mode !== FLUSH_YIELD && is_yield_task_queued && !is_micro_task_queued) {
+	// If we're calling yield_updates and there is already an active yield in progress (is_yield_task_active)
+	// then it's likely that the event might might try and read from the UI. Additionally, we might be dealing with
+	// event that was sync called from another event flow, thus isTrusted() will be true – such as a submit event from
+	// a subsequent click event. In either case, the UI needs to be up-to-date, so we flush any pending changes.
+	if (
+		previous_scheduler_mode !== FLUSH_YIELD &&
+		(is_yield_task_active || (is_yield_task_queued && window.event?.isTrusted))
+	) {
 		flush_sync();
 	}
 	try {
@@ -758,6 +766,7 @@ export function flush_sync(fn, flush_previous = true) {
 		current_queued_root_effects = root_effects;
 		is_yield_task_queued = false;
 		is_micro_task_queued = false;
+		is_yield_task_active = false;
 
 		if (flush_previous) {
 			flush_queued_root_effects(previous_queued_root_effects);

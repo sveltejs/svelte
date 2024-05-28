@@ -36,6 +36,7 @@ export const RawTextElements = ['textarea', 'script', 'style', 'title'];
 export const DelegatedEvents = [
 	'beforeinput',
 	'click',
+	'submit',
 	'change',
 	'dblclick',
 	'contextmenu',
