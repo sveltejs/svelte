@@ -1,3 +1,4 @@
+import { ACTION_EFFECT } from '../../constants.js';
 import { effect, render_effect } from '../../reactivity/effects.js';
 import { deep_read_state, untrack } from '../../runtime.js';
 
@@ -15,7 +16,7 @@ export function action(dom, action, get_value) {
 		if (get_value && payload?.update) {
 			var inited = false;
 
-			render_effect(() => {
+			var signal = render_effect(() => {
 				var value = get_value();
 
 				// Action's update method is coarse-grained, i.e. when anything in the passed value changes, update.
@@ -27,6 +28,7 @@ export function action(dom, action, get_value) {
 					/** @type {Function} */ (payload.update)(value);
 				}
 			});
+			signal.f |= ACTION_EFFECT;
 
 			inited = true;
 		}

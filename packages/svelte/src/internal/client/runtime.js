@@ -16,7 +16,8 @@ import {
 	STATE_SYMBOL,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	LEGACY_DERIVED_PROP
+	LEGACY_DERIVED_PROP,
+	ACTION_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -600,7 +601,11 @@ async function yield_tick() {
  * @returns {void}
  */
 export function schedule_effect(signal) {
-	if (current_scheduler_mode === FLUSH_MICROTASK) {
+	// If we have an action effect then we need to dispatch a standard microtask update,
+	// that's because actions might need to update the UI or attach/remove event listeners
+	// and deferring this can lead to hard-to-find bugs. If there are any deferred updates
+	// already, they'll be handled by the microtask instead.
+	if (current_scheduler_mode === FLUSH_MICROTASK || (signal.f & ACTION_EFFECT) !== 0) {
 		if (!is_micro_task_queued) {
 			is_micro_task_queued = true;
 			queueMicrotask(process_deferred);
@@ -713,6 +718,13 @@ function process_effects(effect, collected_effects) {
  */
 export function yield_updates(fn) {
 	const previous_scheduler_mode = current_scheduler_mode;
+	// If we're calling yield_updates, and we've already yielded some updates – then it's likely
+	// that the event might might try and read from the UI. In order for this to be glitch free,
+	// we can flush any changes, forcing the UI to be up-to-date, so any reads from the UI work as
+	// expected.
+	if (previous_scheduler_mode !== FLUSH_YIELD && is_yield_task_queued && !is_micro_task_queued) {
+		flush_sync();
+	}
 	try {
 		current_scheduler_mode = FLUSH_YIELD;
 		return fn();
@@ -740,6 +752,8 @@ export function flush_sync(fn, flush_previous = true) {
 
 		current_scheduler_mode = FLUSH_SYNC;
 		current_queued_root_effects = root_effects;
+		is_yield_task_queued = false;
+		is_micro_task_queued = false;
 
 		if (flush_previous) {
 			flush_queued_root_effects(previous_queued_root_effects);
