@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../assert';
 const tick = () => Promise.resolve();
 
@@ -23,6 +24,7 @@ export default test({
 		assert.equal(getComputedStyle(inner_p).color, 'rgb(255, 255, 255)');
 
 		button.click();
+		flushSync();
 		await tick();
 		await tick();
 

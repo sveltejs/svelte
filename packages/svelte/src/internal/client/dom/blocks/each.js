@@ -8,7 +8,13 @@ import {
 	HYDRATION_END_ELSE,
 	HYDRATION_START
 } from '../../../../constants.js';
-import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
+import {
+	hydrate_anchor,
+	hydrate_nodes,
+	hydrate_start,
+	hydrating,
+	set_hydrating
+} from '../hydration.js';
 import { clear_text_content, empty } from '../operations.js';
 import { remove } from '../reconciler.js';
 import { untrack } from '../../runtime.js';
@@ -25,7 +31,6 @@ import {
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen } from '../../utils.js';
 import { INERT, STATE_SYMBOL } from '../../constants.js';
-import { push_template_node } from '../template.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -149,7 +154,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 		// this is separate to the previous block because `hydrating` might change
 		if (hydrating) {
 			/** @type {Node} */
-			var child_anchor = hydrate_nodes[0];
+			var child_anchor = hydrate_start;
 
 			/** @type {import('#client').EachItem | import('#client').EachState} */
 			var prev = state;
@@ -280,7 +285,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		item = items.get(key);
 
 		if (item === undefined) {
-			var child_open = push_template_node(empty());
+			var child_open = empty();
 			var child_anchor = current ? current.o : anchor;
 
 			child_anchor.before(child_open);
@@ -407,6 +412,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		for (var i = 0; i < to_destroy.length; i += 1) {
 			var item = to_destroy[i];
 			items.delete(item.k);
+			item.o.remove();
 			link(item.prev, item.next);
 		}
 	});

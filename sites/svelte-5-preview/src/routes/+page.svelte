@@ -3,24 +3,26 @@
 	import '@sveltejs/site-kit/styles/index.css';
 
 	import Repl from '$lib/Repl.svelte';
-	import { onMount } from 'svelte';
 	import { default_files } from './defaults.js';
 	import { compress_and_encode_text, decode_and_decompress_text } from './gzip.js';
+	import { afterNavigate } from '$app/navigation';
 
 	/** @type {Repl} */
 	let repl;
 
 	let setting_hash = false;
-	let started = false;
+	let navigating = false;
 
-	onMount(change_from_hash);
+	afterNavigate(change_from_hash);
 
 	async function change_from_hash() {
+		navigating = true;
+
 		const hash = location.hash.slice(1);
 
 		if (!hash) {
 			repl.set({
-				files: default_files
+				files: default_files()
 			});
 
 			return;
@@ -56,8 +58,8 @@
 
 	/** @param {CustomEvent<any>} e*/
 	async function change_from_editor(e) {
-		if (!started) {
-			started = true; // ignore initial change caused by the repl.set in change_from_hash
+		if (navigating) {
+			navigating = false;
 			return;
 		}
 
@@ -76,7 +78,7 @@
 </script>
 
 <svelte:window
-	on:hashchange={(e) => {
+	on:hashchange={() => {
 		if (!setting_hash) {
 			change_from_hash();
 		}

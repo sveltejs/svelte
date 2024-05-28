@@ -80,9 +80,11 @@ export function normalize_html(
 			.replace(/(<!(--)?.*?\2>)/g, preserveComments ? '$1' : '')
 			.replace(/(data-svelte-h="[^"]+")/g, removeDataSvelte ? '' : '$1')
 			.replace(/>[ \t\n\r\f]+</g, '><')
+			// Strip out the special onload/onerror hydration events from the test output
+			.replace(/\s?onerror="this.__e=event"|\s?onload="this.__e=event"/g, '')
 			.trim();
 		clean_children(node);
-		return node.innerHTML.replace(/<\/?noscript\/?>/g, '');
+		return node.innerHTML;
 	} catch (err) {
 		throw new Error(`Failed to normalize HTML:\n${html}`);
 	}

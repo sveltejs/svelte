@@ -22,6 +22,10 @@ export const TEMPLATE_USE_IMPORT_NODE = 1 << 1;
 export const HYDRATION_START = '[';
 export const HYDRATION_END = ']';
 export const HYDRATION_END_ELSE = `${HYDRATION_END}!`; // used to indicate that an `{:else}...` block was rendered
+export const HYDRATION_ERROR = {};
+
+export const ELEMENT_IS_NAMESPACED = 1;
+export const ELEMENT_PRESERVE_ATTRIBUTE_CASE = 1 << 1;
 
 export const UNINITIALIZED = Symbol();
 
@@ -32,11 +36,12 @@ export const RawTextElements = ['textarea', 'script', 'style', 'title'];
 export const DelegatedEvents = [
 	'beforeinput',
 	'click',
+	'change',
 	'dblclick',
 	'contextmenu',
 	'focusin',
 	'focusout',
-	// 'input', This conflicts with bind:input
+	'input',
 	'keydown',
 	'keyup',
 	'mousedown',

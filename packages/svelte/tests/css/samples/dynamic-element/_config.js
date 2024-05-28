@@ -6,12 +6,12 @@ export default test({
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector ".unused"',
 			start: {
-				character: 79,
+				character: 81,
 				column: 1,
 				line: 7
 			},
 			end: {
-				character: 86,
+				character: 88,
 				column: 8,
 				line: 7
 			}

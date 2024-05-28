@@ -66,3 +66,15 @@ export function update_legacy_props($$new_props) {
 		}
 	}
 }
+
+/**
+ * @param {Record<string, any>} $$props
+ */
+export function default_slot($$props) {
+	var children = $$props.$$slots?.default;
+	if (children === true) {
+		return $$props.children;
+	} else {
+		return children;
+	}
+}

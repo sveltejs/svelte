@@ -161,34 +161,18 @@ export function effect_update_depth_exceeded() {
 }
 
 /**
- * Missing hydration closing marker
+ * Failed to hydrate the application
  * @returns {never}
  */
-export function hydration_missing_marker_close() {
+export function hydration_failed() {
 	if (DEV) {
-		const error = new Error(`${"hydration_missing_marker_close"}\n${"Missing hydration closing marker"}`);
+		const error = new Error(`${"hydration_failed"}\n${"Failed to hydrate the application"}`);
 
 		error.name = 'Svelte error';
 		throw error;
 	} else {
 		// TODO print a link to the documentation
-		throw new Error("hydration_missing_marker_close");
-	}
-}
-
-/**
- * Missing hydration opening marker
- * @returns {never}
- */
-export function hydration_missing_marker_open() {
-	if (DEV) {
-		const error = new Error(`${"hydration_missing_marker_open"}\n${"Missing hydration opening marker"}`);
-
-		error.name = 'Svelte error';
-		throw error;
-	} else {
-		// TODO print a link to the documentation
-		throw new Error("hydration_missing_marker_open");
+		throw new Error("hydration_failed");
 	}
 }
 

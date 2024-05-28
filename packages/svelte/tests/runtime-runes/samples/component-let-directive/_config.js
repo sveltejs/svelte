@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -6,9 +7,10 @@ export default test({
 		<p slot="named">named slot count is not state</p>
 	`,
 
-	test: async ({ assert, target }) => {
+	test: ({ assert, target }) => {
 		const button = target.querySelector('button');
-		await button?.click();
+		button?.click();
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

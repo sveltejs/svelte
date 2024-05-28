@@ -285,7 +285,9 @@ export function analyze_component(root, source, options) {
 			!Runes.includes(/** @type {any} */ (name)) ||
 			(declaration !== null &&
 				// const state = $state(0) is valid
-				get_rune(declaration.initial, instance.scope) === null &&
+				(get_rune(declaration.initial, instance.scope) === null ||
+					// rune-line names received as props are valid too (but we have to protect against $props as store)
+					(store_name !== 'props' && get_rune(declaration.initial, instance.scope) === '$props')) &&
 				// allow `import { derived } from 'svelte/store'` in the same file as `const x = $derived(..)` because one is not a subscription to the other
 				!(
 					name === '$derived' &&
@@ -1448,24 +1450,6 @@ const common_visitors = {
 	},
 	SvelteElement(node, context) {
 		context.state.analysis.elements.push(node);
-
-		// TODO why are we handling the `<svelte:element this="x" />` case? there is no
-		// reason for someone to use a static value with `<svelte:element>`
-		if (
-			context.state.options.namespace !== 'foreign' &&
-			node.tag.type === 'Literal' &&
-			typeof node.tag.value === 'string'
-		) {
-			if (SVGElements.includes(node.tag.value)) {
-				node.metadata.svg = true;
-				return;
-			}
-
-			if (MathMLElements.includes(node.tag.value)) {
-				node.metadata.mathml = true;
-				return;
-			}
-		}
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute') {

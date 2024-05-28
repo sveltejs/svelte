@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -14,17 +15,22 @@ export default test({
 		assert.htmlEqual(count?.innerHTML ?? '', 'Count: 0');
 		assert.htmlEqual(fallback_count?.innerHTML ?? '', 'Fallback count: 0');
 
-		await increment?.click();
+		increment?.click();
+		flushSync();
 		assert.htmlEqual(count?.innerHTML ?? '', 'Count: 1');
 		assert.htmlEqual(fallback_count?.innerHTML ?? '', 'Fallback count: 0');
 
-		await change_ref?.click();
-		await increment?.click();
+		change_ref?.click();
+		flushSync();
+		increment?.click();
+		flushSync();
 		assert.htmlEqual(count?.innerHTML ?? '', 'Count: 1');
 		assert.htmlEqual(fallback_count?.innerHTML ?? '', 'Fallback count: 1');
 
-		await change_ref?.click();
-		await increment?.click();
+		change_ref?.click();
+		flushSync();
+		increment?.click();
+		flushSync();
 		assert.htmlEqual(count?.innerHTML ?? '', 'Count: 2');
 		assert.htmlEqual(fallback_count?.innerHTML ?? '', 'Fallback count: 1');
 	}

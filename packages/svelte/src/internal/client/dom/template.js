@@ -1,36 +1,20 @@
-import { hydrate_nodes, hydrating } from './hydration.js';
-import { clone_node, empty } from './operations.js';
+import { hydrate_nodes, hydrate_start, hydrating } from './hydration.js';
+import { empty } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
 import { effect } from '../reactivity/effects.js';
-import { is_array } from '../utils.js';
 
 /**
  * @template {import("#client").TemplateNode | import("#client").TemplateNode[]} T
  * @param {T} dom
- * @param {import("#client").Effect} effect
- * @returns {T}
  */
-export function push_template_node(
-	dom,
-	effect = /** @type {import('#client').Effect} */ (current_effect)
-) {
-	var current_dom = effect.dom;
-	if (current_dom === null) {
-		effect.dom = dom;
-	} else {
-		if (!is_array(current_dom)) {
-			current_dom = effect.dom = [current_dom];
-		}
+function push_template_node(dom) {
+	var effect = /** @type {import('#client').Effect} */ (current_effect);
 
-		if (is_array(dom)) {
-			current_dom.push(...dom);
-		} else {
-			current_dom.push(dom);
-		}
+	if (effect.dom === null) {
+		effect.dom = dom;
 	}
-	return dom;
 }
 
 /**
@@ -48,22 +32,16 @@ export function template(content, flags) {
 
 	return () => {
 		if (hydrating) {
-			return push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
+			push_template_node(is_fragment ? hydrate_nodes : hydrate_start);
+			return hydrate_start;
 		}
 
 		if (!node) {
 			node = create_fragment_from_html(content);
 			if (!is_fragment) node = /** @type {Node} */ (node.firstChild);
 		}
-		var clone = use_import_node ? document.importNode(node, true) : clone_node(node, true);
 
-		push_template_node(
-			is_fragment
-				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
-				: /** @type {import('#client').TemplateNode} */ (clone)
-		);
-
-		return clone;
+		return use_import_node ? document.importNode(node, true) : node.cloneNode(true);
 	};
 }
 
@@ -94,43 +72,37 @@ export function template_with_script(content, flags) {
 /**
  * @param {string} content
  * @param {number} flags
+ * @param {'svg' | 'math'} ns
  * @returns {() => Node | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function svg_template(content, flags) {
+export function ns_template(content, flags, ns = 'svg') {
 	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
-	var fn = template(`<svg>${content}</svg>`, 0); // we don't need to worry about using importNode for SVGs
+	var fn = template(`<${ns}>${content}</${ns}>`, 0); // we don't need to worry about using importNode for namespaced elements
 
 	/** @type {Element | DocumentFragment} */
 	var node;
 
 	return () => {
 		if (hydrating) {
-			return push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
+			push_template_node(is_fragment ? hydrate_nodes : hydrate_start);
+			return hydrate_start;
 		}
 
 		if (!node) {
-			var svg = /** @type {Element} */ (fn());
+			var wrapper = /** @type {Element} */ (fn());
 
 			if ((flags & TEMPLATE_FRAGMENT) === 0) {
-				node = /** @type {Element} */ (svg.firstChild);
+				node = /** @type {Element} */ (wrapper.firstChild);
 			} else {
 				node = document.createDocumentFragment();
-				while (svg.firstChild) {
-					node.appendChild(svg.firstChild);
+				while (wrapper.firstChild) {
+					node.appendChild(wrapper.firstChild);
 				}
 			}
 		}
 
-		var clone = clone_node(node, true);
-
-		push_template_node(
-			is_fragment
-				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
-				: /** @type {import('#client').TemplateNode} */ (clone)
-		);
-
-		return clone;
+		return node.cloneNode(true);
 	};
 }
 
@@ -142,7 +114,7 @@ export function svg_template(content, flags) {
 /*#__NO_SIDE_EFFECTS__*/
 export function svg_template_with_script(content, flags) {
 	var first = true;
-	var fn = svg_template(content, flags);
+	var fn = ns_template(content, flags);
 
 	return () => {
 		if (hydrating) return fn();
@@ -165,40 +137,7 @@ export function svg_template_with_script(content, flags) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function mathml_template(content, flags) {
-	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
-	var fn = template(`<math>${content}</math>`, 0); // we don't need to worry about using importNode for MathML
-
-	/** @type {Element | DocumentFragment} */
-	var node;
-
-	return () => {
-		if (hydrating) {
-			return push_template_node(is_fragment ? hydrate_nodes : hydrate_nodes[0]);
-		}
-
-		if (!node) {
-			var math = /** @type {Element} */ (fn());
-
-			if ((flags & TEMPLATE_FRAGMENT) === 0) {
-				node = /** @type {Element} */ (math.firstChild);
-			} else {
-				node = document.createDocumentFragment();
-				while (math.firstChild) {
-					node.appendChild(math.firstChild);
-				}
-			}
-		}
-
-		var clone = clone_node(node, true);
-
-		push_template_node(
-			is_fragment
-				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
-				: /** @type {import('#client').TemplateNode} */ (clone)
-		);
-
-		return clone;
-	};
+	return ns_template(content, flags, 'math');
 }
 
 /**
@@ -238,9 +177,9 @@ function run_scripts(node) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function text(anchor) {
-	if (!hydrating) return push_template_node(empty());
+	if (!hydrating) return empty();
 
-	var node = hydrate_nodes[0];
+	var node = hydrate_start;
 
 	if (!node) {
 		// if an {expression} is empty during SSR, `hydrate_nodes` will be empty.
@@ -248,18 +187,20 @@ export function text(anchor) {
 		anchor.before((node = empty()));
 	}
 
-	return push_template_node(node);
+	push_template_node(node);
+	return node;
 }
 
 export function comment() {
 	// we're not delegating to `template` here for performance reasons
 	if (hydrating) {
-		return push_template_node(hydrate_nodes);
+		push_template_node(hydrate_nodes);
+		return hydrate_start;
 	}
+
 	var frag = document.createDocumentFragment();
 	var anchor = empty();
 	frag.append(anchor);
-	push_template_node([anchor]);
 
 	return frag;
 }
@@ -268,10 +209,17 @@ export function comment() {
  * Assign the created (or in hydration mode, traversed) dom elements to the current block
  * and insert the elements into the dom (in client mode).
  * @param {Text | Comment | Element} anchor
- * @param {import('#client').Dom} dom
+ * @param {DocumentFragment | Element} dom
  */
 export function append(anchor, dom) {
-	if (!hydrating) {
-		anchor.before(/** @type {Node} */ (dom));
-	}
+	if (hydrating) return;
+
+	var effect = /** @type {import('#client').Effect} */ (current_effect);
+
+	effect.dom =
+		dom.nodeType === 11
+			? /** @type {import('#client').TemplateNode[]} */ ([...dom.childNodes])
+			: /** @type {Element | Comment} */ (dom);
+
+	anchor.before(/** @type {Node} */ (dom));
 }

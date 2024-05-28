@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -17,8 +18,8 @@ export default test({
 		const change = new window.Event('change');
 
 		options[1].selected = true;
-		await select.dispatchEvent(change);
-		await Promise.resolve();
+		select.dispatchEvent(change);
+		flushSync();
 
 		assert.equal(span.textContent, 'b');
 	}

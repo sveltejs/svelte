@@ -1,5 +1,6 @@
-import { HYDRATION_END, HYDRATION_START } from '../../../constants.js';
-import * as e from '../errors.js';
+import { DEV } from 'esm-env';
+import { HYDRATION_END, HYDRATION_START, HYDRATION_ERROR } from '../../../constants.js';
+import * as w from '../warnings.js';
 
 /**
  * Use this variable to guard everything related to hydration code so it can be treeshaken out
@@ -20,9 +21,13 @@ export function set_hydrating(value) {
  */
 export let hydrate_nodes = /** @type {any} */ (null);
 
+/** @type {import('#client').TemplateNode} */
+export let hydrate_start;
+
 /** @param {import('#client').TemplateNode[]} nodes */
 export function set_hydrate_nodes(nodes) {
 	hydrate_nodes = nodes;
+	hydrate_start = nodes && nodes[0];
 }
 
 /**
@@ -57,6 +62,7 @@ export function hydrate_anchor(node) {
 			} else if (data[0] === HYDRATION_END) {
 				if (depth === 0) {
 					hydrate_nodes = /** @type {import('#client').TemplateNode[]} */ (nodes);
+					hydrate_start = /** @type {import('#client').TemplateNode} */ (nodes[0]);
 					return current;
 				}
 
@@ -67,5 +73,16 @@ export function hydrate_anchor(node) {
 		nodes.push(current);
 	}
 
-	e.hydration_missing_marker_close();
+	let location;
+
+	if (DEV) {
+		// @ts-expect-error
+		const loc = node.parentNode?.__svelte_meta?.loc;
+		if (loc) {
+			location = `${loc.file}:${loc.line}:${loc.column}`;
+		}
+	}
+
+	w.hydration_mismatch(location);
+	throw HYDRATION_ERROR;
 }

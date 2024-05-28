@@ -1,7 +1,7 @@
 [
 	{
 		"code": "svelte_element_missing_this",
-		"message": "`<svelte:element>` must have a 'this' attribute",
+		"message": "`<svelte:element>` must have a 'this' attribute with a value",
 		"start": {
 			"line": 2,
 			"column": 1

@@ -21,7 +21,8 @@ export default function Function_prop_no_getter($$anchor) {
 
 			$.template_effect(() => $.set_text(text, `clicks: ${$.stringify($.get(count))}`));
 			$.append($$anchor, text);
-		}
+		},
+		$$slots: { default: true }
 	});
 
 	$.append($$anchor, fragment);

@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -15,7 +16,7 @@ export default test({
 		<p>some text</p>
 	`,
 
-	async test({ assert, component, target, window }) {
+	test({ assert, component, target, window }) {
 		const textarea = target.querySelector('textarea');
 		ok(textarea);
 		assert.equal(textarea.value, 'some text');
@@ -23,7 +24,8 @@ export default test({
 		const event = new window.Event('input');
 
 		textarea.value = 'hello';
-		await textarea.dispatchEvent(event);
+		textarea.dispatchEvent(event);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

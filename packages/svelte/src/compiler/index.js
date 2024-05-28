@@ -1,5 +1,4 @@
 import { walk as zimmerframe_walk } from 'zimmerframe';
-import { CompileError } from './errors.js';
 import { convert } from './legacy.js';
 import { parse as parse_acorn } from './phases/1-parse/acorn.js';
 import { parse as _parse } from './phases/1-parse/index.js';
@@ -19,41 +18,33 @@ export { default as preprocess } from './preprocess/index.js';
  * @returns {import('#compiler').CompileResult}
  */
 export function compile(source, options) {
-	try {
-		state.reset({ source, filename: options.filename });
+	const validated = validate_component_options(options, '');
+	state.reset(source, validated);
 
-		const validated = validate_component_options(options, '');
-		let parsed = _parse(source);
+	let parsed = _parse(source);
 
-		const { customElement: customElementOptions, ...parsed_options } = parsed.options || {};
+	const { customElement: customElementOptions, ...parsed_options } = parsed.options || {};
 
-		/** @type {import('#compiler').ValidatedCompileOptions} */
-		const combined_options = {
-			...validated,
-			...parsed_options,
-			customElementOptions
+	/** @type {import('#compiler').ValidatedCompileOptions} */
+	const combined_options = {
+		...validated,
+		...parsed_options,
+		customElementOptions
+	};
+
+	if (parsed.metadata.ts) {
+		parsed = {
+			...parsed,
+			fragment: parsed.fragment && remove_typescript_nodes(parsed.fragment),
+			instance: parsed.instance && remove_typescript_nodes(parsed.instance),
+			module: parsed.module && remove_typescript_nodes(parsed.module)
 		};
-
-		if (parsed.metadata.ts) {
-			parsed = {
-				...parsed,
-				fragment: parsed.fragment && remove_typescript_nodes(parsed.fragment),
-				instance: parsed.instance && remove_typescript_nodes(parsed.instance),
-				module: parsed.module && remove_typescript_nodes(parsed.module)
-			};
-		}
-
-		const analysis = analyze_component(parsed, source, combined_options);
-		const result = transform_component(analysis, source, combined_options);
-		result.ast = to_public_ast(source, parsed, options.modernAst);
-		return result;
-	} catch (e) {
-		if (e instanceof CompileError) {
-			handle_compile_error(e, options.filename, source);
-		}
-
-		throw e;
 	}
+
+	const analysis = analyze_component(parsed, source, combined_options);
+	const result = transform_component(analysis, source, combined_options);
+	result.ast = to_public_ast(source, parsed, options.modernAst);
+	return result;
 }
 
 /**
@@ -65,39 +56,11 @@ export function compile(source, options) {
  * @returns {import('#compiler').CompileResult}
  */
 export function compileModule(source, options) {
-	try {
-		state.reset({ source, filename: options.filename });
+	const validated = validate_module_options(options, '');
+	state.reset(source, validated);
 
-		const validated = validate_module_options(options, '');
-		const analysis = analyze_module(parse_acorn(source, false), validated);
-		const result = transform_module(analysis, source, validated);
-		return result;
-	} catch (e) {
-		if (e instanceof CompileError) {
-			handle_compile_error(e, options.filename, source);
-		}
-
-		throw e;
-	}
-}
-
-/**
- * @param {import('#compiler').CompileError} error
- * @param {string | undefined} filename
- * @param {string} source
- */
-function handle_compile_error(error, filename, source) {
-	error.filename = filename;
-
-	if (error.position) {
-		const start = state.locator(error.position[0]);
-		const end = state.locator(error.position[1]);
-
-		error.start = start;
-		error.end = end;
-	}
-
-	throw error;
+	const analysis = analyze_module(parse_acorn(source, false), validated);
+	return transform_module(analysis, source, validated);
 }
 
 /**
@@ -134,25 +97,14 @@ function handle_compile_error(error, filename, source) {
  *
  * https://svelte.dev/docs/svelte-compiler#svelte-parse
  * @param {string} source
- * @param {{ filename?: string; modern?: boolean }} [options]
+ * @param {{ filename?: string; rootDir?: string; modern?: boolean }} [options]
  * @returns {import('#compiler').Root | import('./types/legacy-nodes.js').LegacyRoot}
  */
-export function parse(source, options = {}) {
-	state.reset({ source, filename: options.filename });
+export function parse(source, { filename, rootDir, modern } = {}) {
+	state.reset(source, { filename, rootDir }); // TODO it's weird to require filename/rootDir here. reconsider the API
 
-	/** @type {import('#compiler').Root} */
-	let ast;
-	try {
-		ast = _parse(source);
-	} catch (e) {
-		if (e instanceof CompileError) {
-			handle_compile_error(e, options.filename, source);
-		}
-
-		throw e;
-	}
-
-	return to_public_ast(source, ast, options.modern);
+	const ast = _parse(source);
+	return to_public_ast(source, ast, modern);
 }
 
 /**

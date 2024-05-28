@@ -4,6 +4,7 @@ import { stringify } from '../../../render.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
 import { get_proxied_value, is } from '../../../proxy.js';
+import { yield_updates } from '../../../runtime.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -18,7 +19,7 @@ export function bind_value(input, get_value, update) {
 			e.bind_invalid_checkbox_value();
 		}
 
-		update(is_numberlike_input(input) ? to_number(input.value) : input.value);
+		yield_updates(() => update(is_numberlike_input(input) ? to_number(input.value) : input.value));
 	});
 
 	render_effect(() => {
@@ -84,10 +85,10 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 				value = get_binding_group_value(binding_group, value, input.checked);
 			}
 
-			update(value);
+			yield_updates(() => update(value));
 		},
 		// TODO better default value handling
-		() => update(is_checkbox ? [] : null)
+		() => yield_updates(() => update(is_checkbox ? [] : null))
 	);
 
 	render_effect(() => {
@@ -128,7 +129,7 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 export function bind_checked(input, get_value, update) {
 	listen_to_event_and_reset_event(input, 'change', () => {
 		var value = input.checked;
-		update(value);
+		yield_updates(() => update(value));
 	});
 
 	if (get_value() == undefined) {
@@ -187,7 +188,7 @@ function to_number(value) {
  */
 export function bind_files(input, get_value, update) {
 	listen_to_event_and_reset_event(input, 'change', () => {
-		update(input.files);
+		yield_updates(() => update(input.files));
 	});
 	render_effect(() => {
 		input.files = get_value();

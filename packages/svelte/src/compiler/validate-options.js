@@ -10,6 +10,10 @@ import * as w from './warnings.js';
 const common = {
 	filename: string(undefined),
 
+	// default to process.cwd() where it exists to replicate svelte4 behavior
+	// see https://github.com/sveltejs/svelte/blob/b62fc8c8fd2640c9b99168f01b9d958cb2f7574f/packages/svelte/src/compiler/compile/Component.js#L211
+	rootDir: string(typeof process !== 'undefined' ? process.cwd?.() : undefined),
+
 	dev: boolean(false),
 
 	generate: validator('client', (input, keypath) => {

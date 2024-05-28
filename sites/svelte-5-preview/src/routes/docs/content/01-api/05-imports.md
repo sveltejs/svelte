@@ -6,6 +6,29 @@ As well as runes, Svelte 5 introduces a handful of new things you can import, al
 
 ## `svelte`
 
+### `flushSync`
+
+Forces any pending effects (including DOM updates) to be applied immediately, rather than in the future. This is mainly useful in a testing context — you'll rarely need it in application code.
+
+```svelte
+<script>
+	import { flushSync } from 'svelte';
+
+	let count = $state(0);
+	let element;
+
+	function onclick() {
+		flushSync(() => (count += 1));
+
+		// without `flushSync`, the DOM would be updated in the future
+		console.log(element.textContent === String(count));
+	}
+</script>
+
+<span bind:this={element}>{count}</span>
+<button {onclick}>update</button>
+```
+
 ### `mount`
 
 Instantiates a component and mounts it to the given target:

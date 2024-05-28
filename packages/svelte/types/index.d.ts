@@ -728,6 +728,12 @@ declare module 'svelte/compiler' {
 		 * Used for debugging hints and sourcemaps. Your bundler plugin will set it automatically.
 		 */
 		filename?: string;
+
+		/**
+		 * Used for ensuring filenames don't leak filesystem information. Your bundler plugin will set it automatically.
+		 * @default process.cwd() on node-like environments, undefined elsewhere
+		 */
+		rootDir?: string;
 	}
 
 	type DeclarationKind =
@@ -1053,8 +1059,7 @@ declare module 'svelte/compiler' {
 	export class CompileError extends Error {
 		
 		constructor(code: string, message: string, position: [number, number] | undefined);
-		
-		filename: CompileError_1['filename'];
+		filename: string | undefined;
 		
 		position: CompileError_1['position'];
 		
@@ -2549,6 +2554,12 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * Used for debugging hints and sourcemaps. Your bundler plugin will set it automatically.
 		 */
 		filename?: string;
+
+		/**
+		 * Used for ensuring filenames don't leak filesystem information. Your bundler plugin will set it automatically.
+		 * @default process.cwd() on node-like environments, undefined elsewhere
+		 */
+		rootDir?: string;
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`

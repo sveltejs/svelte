@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 /** @type {typeof console.trace} */
@@ -19,14 +20,17 @@ export default test({
 		console.trace = trace;
 	},
 
-	async test({ assert, target, warnings }) {
+	test({ assert, target, warnings }) {
 		const btn = target.querySelector('button');
-		await btn?.click();
+
+		flushSync(() => {
+			btn?.click();
+		});
 
 		assert.htmlEqual(target.innerHTML, `<button>clicks: 1</button>`);
 
 		assert.deepEqual(warnings, [
-			'.../samples/non-local-mutation-discouraged/Counter.svelte mutated a value owned by .../samples/non-local-mutation-discouraged/main.svelte. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead'
+			'Counter.svelte mutated a value owned by main.svelte. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead'
 		]);
 	}
 });

@@ -46,6 +46,10 @@
 
 > 'type' attribute must be a static text value if input uses two-way binding
 
+## attribute_unquoted_sequence
+
+> Attribute values containing `{...}` must be enclosed in quote marks, unless the value only contains the expression
+
 ## bind_invalid_expression
 
 > Can only bind to an Identifier or MemberExpression
@@ -174,7 +178,7 @@
 
 ## mixed_event_handler_syntaxes
 
-> Mixing old (on:%name%) and new syntaxes for event handling is not allowed. Use only the on%name% syntax.
+> Mixing old (on:%name%) and new syntaxes for event handling is not allowed. Use only the on%name% syntax
 
 ## node_invalid_placement
 
@@ -230,7 +234,7 @@
 
 ## slot_snippet_conflict
 
-> Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.
+> Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely
 
 ## snippet_conflict
 
@@ -260,13 +264,9 @@
 
 > `<svelte:component>` must have a 'this' attribute
 
-## svelte_element_invalid_this
-
-> Invalid element definition — must be an `{expression}`
-
 ## svelte_element_missing_this
 
-> `<svelte:element>` must have a 'this' attribute
+> `<svelte:element>` must have a 'this' attribute with a value
 
 ## svelte_fragment_invalid_attribute
 

@@ -21,11 +21,11 @@ export function is_element_node(node) {
 }
 
 /**
- * @param {import('#compiler').RegularElement} node
+ * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
  * @returns {boolean}
  */
 export function is_custom_element_node(node) {
-	return node.name.includes('-');
+	return node.type === 'RegularElement' && node.name.includes('-');
 }
 
 /**

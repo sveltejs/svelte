@@ -1,12 +1,6 @@
 import { DEV } from 'esm-env';
-import {
-	append_child,
-	clear_text_content,
-	create_element,
-	empty,
-	init_operations
-} from './dom/operations.js';
-import { HYDRATION_START, PassiveDelegatedEvents } from '../../constants.js';
+import { clear_text_content, create_element, empty, init_operations } from './dom/operations.js';
+import { HYDRATION_ERROR, HYDRATION_START, PassiveDelegatedEvents } from '../../constants.js';
 import { flush_sync, push, pop, current_component_context } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
 import {
@@ -137,8 +131,6 @@ export function hydrate(component, options) {
 	const target = options.target;
 	const previous_hydrate_nodes = hydrate_nodes;
 
-	let hydrated = false;
-
 	try {
 		// Don't flush previous effects to ensure order of outer effects stays consistent
 		return flush_sync(() => {
@@ -153,7 +145,7 @@ export function hydrate(component, options) {
 			}
 
 			if (!node) {
-				e.hydration_missing_marker_open();
+				throw HYDRATION_ERROR;
 			}
 
 			const anchor = hydrate_anchor(node);
@@ -162,17 +154,14 @@ export function hydrate(component, options) {
 			// flush_sync will run this callback and then synchronously run any pending effects,
 			// which don't belong to the hydration phase anymore - therefore reset it here
 			set_hydrating(false);
-			hydrated = true;
 
 			return instance;
 		}, false);
 	} catch (error) {
-		if (
-			!hydrated &&
-			options.recover !== false &&
-			/** @type {Error} */ (error).message.includes('hydration_missing_marker_close')
-		) {
-			w.hydration_mismatch();
+		if (error === HYDRATION_ERROR) {
+			if (options.recover === false) {
+				e.hydration_failed();
+			}
 
 			// If an error occured above, the operations might not yet have been initialised.
 			init_operations();
@@ -180,9 +169,9 @@ export function hydrate(component, options) {
 
 			set_hydrating(false);
 			return mount(component, options);
-		} else {
-			throw error;
 		}
+
+		throw error;
 	} finally {
 		set_hydrating(!!previous_hydrate_nodes);
 		set_hydrate_nodes(previous_hydrate_nodes);
@@ -332,7 +321,8 @@ export async function append_styles(target, style_sheet_id, styles) {
 		const style = create_element('style');
 		style.id = style_sheet_id;
 		style.textContent = styles;
-		append_child(/** @type {Document} */ (append_styles_to).head || append_styles_to, style);
+		const target = /** @type {Document} */ (append_styles_to).head || append_styles_to;
+		target.appendChild(style);
 	}
 }
 

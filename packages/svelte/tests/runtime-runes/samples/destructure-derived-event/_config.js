@@ -1,9 +1,11 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	async test({ assert, target, logs }) {
+	test({ assert, target, logs }) {
 		const btn = target.querySelector('button');
-		await btn?.click();
+		btn?.click();
+		flushSync();
 
 		assert.deepEqual(logs, ['works!']);
 	}

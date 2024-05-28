@@ -8,7 +8,12 @@ import {
 } from '../../../../utils/ast.js';
 import { binding_properties } from '../../../bindings.js';
 import { clean_nodes, determine_namespace_for_children, infer_namespace } from '../../utils.js';
-import { DOMProperties, PassiveEvents, VoidElements } from '../../../constants.js';
+import {
+	DOMProperties,
+	LoadErrorElements,
+	PassiveEvents,
+	VoidElements
+} from '../../../constants.js';
 import { is_custom_element_node, is_element_node } from '../../../nodes.js';
 import * as b from '../../../../utils/builders.js';
 import {
@@ -467,7 +472,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 function serialize_element_attribute_update_assignment(element, node_id, attribute, context) {
 	const state = context.state;
 	const name = get_attribute_name(element, attribute, context);
-	const is_svg = context.state.metadata.namespace === 'svg';
+	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
 	let [contains_call_expression, value] = serialize_attribute_value(attribute.value, context);
 
@@ -501,6 +506,10 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 				value
 			)
 		);
+	} else if (name === 'value') {
+		update = b.stmt(b.call('$.set_value', node_id, value));
+	} else if (name === 'checked') {
+		update = b.stmt(b.call('$.set_checked', node_id, value));
 	} else if (DOMProperties.includes(name)) {
 		update = b.stmt(b.assignment('=', b.member(node_id, b.id(name)), value));
 	} else {
@@ -628,6 +637,15 @@ function collect_parent_each_blocks(context) {
 }
 
 /**
+ * Svelte legacy mode should use safe equals in most places, runes mode shouldn't
+ * @param {import('../types.js').ComponentClientTransformState} state
+ * @param {import('estree').Expression} arg
+ */
+function create_derived(state, arg) {
+	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
+}
+
+/**
  * @param {import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf} node
  * @param {string} component_name
  * @param {import('../types.js').ComponentContext} context
@@ -659,6 +677,13 @@ function serialize_inline_component(node, component_name, context) {
 	 * the slot scope applies to the component itself, too, and not just its children.
 	 */
 	let slot_scope_applies_to_itself = false;
+
+	/**
+	 * Components may have a children prop and also have child nodes. In this case, we assume
+	 * that the child component isn't using render tags yet and pass the slot as $$slots.default.
+	 * We're not doing it for spread attributes, as this would result in too many false positives.
+	 */
+	let has_children_prop = false;
 
 	/**
 	 * @param {import('estree').Property} prop
@@ -709,6 +734,10 @@ function serialize_inline_component(node, component_name, context) {
 				slot_scope_applies_to_itself = true;
 			}
 
+			if (attribute.name === 'children') {
+				has_children_prop = true;
+			}
+
 			const [, value] = serialize_attribute_value(attribute.value, context);
 
 			if (attribute.metadata.dynamic) {
@@ -729,7 +758,7 @@ function serialize_inline_component(node, component_name, context) {
 
 				if (should_wrap_in_derived) {
 					const id = b.id(context.state.scope.generate(attribute.name));
-					context.state.init.push(b.var(id, b.call('$.derived', b.thunk(value))));
+					context.state.init.push(b.var(id, create_derived(context.state, b.thunk(value))));
 					arg = b.call('$.get', id);
 				}
 
@@ -825,10 +854,13 @@ function serialize_inline_component(node, component_name, context) {
 			b.block([...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []), ...body])
 		);
 
-		if (slot_name === 'default') {
+		if (slot_name === 'default' && !has_children_prop) {
 			push_prop(
 				b.init('children', context.state.options.dev ? b.call('$.wrap_snippet', slot_fn) : slot_fn)
 			);
+			// We additionally add the default slot as a boolean, so that the slot render function on the other
+			// side knows it should get the content to render from $$props.children
+			serialized_slots.push(b.init(slot_name, b.true));
 		} else {
 			serialized_slots.push(b.init(slot_name, slot_fn));
 		}
@@ -1169,7 +1201,7 @@ function get_template_function(namespace, state) {
 	return namespace === 'svg'
 		? contains_script_tag
 			? '$.svg_template_with_script'
-			: '$.svg_template'
+			: '$.ns_template'
 		: namespace === 'mathml'
 			? '$.mathml_template'
 			: contains_script_tag
@@ -1630,9 +1662,8 @@ function serialize_template_literal(values, visit, state) {
 				state.init.push(
 					b.const(
 						id,
-						b.call(
-							// In runes mode, we want things to be fine-grained - but not in legacy mode
-							state.analysis.runes ? '$.derived' : '$.derived_safe_equal',
+						create_derived(
+							state,
 							b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression)))
 						)
 					)
@@ -1682,9 +1713,8 @@ export const template_visitors = {
 			state.init.push(
 				b.const(
 					declaration.id,
-					b.call(
-						// In runes mode, we want things to be fine-grained - but not in legacy mode
-						state.analysis.runes ? '$.derived' : '$.derived_safe_equal',
+					create_derived(
+						state,
 						b.thunk(/** @type {import('estree').Expression} */ (visit(declaration.init)))
 					)
 				)
@@ -1719,10 +1749,7 @@ export const template_visitors = {
 				])
 			);
 
-			state.init.push(
-				// In runes mode, we want things to be fine-grained - but not in legacy mode
-				b.const(tmp, b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', fn))
-			);
+			state.init.push(b.const(tmp, create_derived(state, fn)));
 
 			// we need to eagerly evaluate the expression in order to hit any
 			// 'Cannot access x before initialization' errors
@@ -1890,6 +1917,7 @@ export const template_visitors = {
 		let is_content_editable = false;
 		let has_content_editable_binding = false;
 		let img_might_be_lazy = false;
+		let might_need_event_replaying = false;
 
 		if (is_custom_element) {
 			// cloneNode is faster, but it does not instantiate the underlying class of the
@@ -1922,6 +1950,9 @@ export const template_visitors = {
 				attributes.push(attribute);
 				needs_input_reset = true;
 				needs_content_reset = true;
+				if (LoadErrorElements.includes(node.name)) {
+					might_need_event_replaying = true;
+				}
 			} else if (attribute.type === 'ClassDirective') {
 				class_directives.push(attribute);
 			} else if (attribute.type === 'StyleDirective') {
@@ -1944,6 +1975,8 @@ export const template_visitors = {
 					) {
 						has_content_editable_binding = true;
 					}
+				} else if (attribute.type === 'UseDirective' && LoadErrorElements.includes(node.name)) {
+					might_need_event_replaying = true;
 				}
 				context.visit(attribute);
 			}
@@ -1961,7 +1994,7 @@ export const template_visitors = {
 			child_metadata.bound_contenteditable = true;
 		}
 
-		if (needs_input_reset && (node.name === 'input' || node.name === 'select')) {
+		if (needs_input_reset && node.name === 'input') {
 			context.state.init.push(b.stmt(b.call('$.remove_input_attr_defaults', context.state.node)));
 		}
 
@@ -1996,6 +2029,12 @@ export const template_visitors = {
 		} else {
 			for (const attribute of /** @type {import('#compiler').Attribute[]} */ (attributes)) {
 				if (is_event_attribute(attribute)) {
+					if (
+						(attribute.name === 'onload' || attribute.name === 'onerror') &&
+						LoadErrorElements.includes(node.name)
+					) {
+						might_need_event_replaying = true;
+					}
 					serialize_event_attribute(attribute, context);
 					continue;
 				}
@@ -2043,6 +2082,10 @@ export const template_visitors = {
 		// class/style directives must be applied last since they could override class/style attributes
 		serialize_class_directives(class_directives, node_id, context, is_attributes_reactive);
 		serialize_style_directives(style_directives, node_id, context, is_attributes_reactive);
+
+		if (might_need_event_replaying) {
+			context.state.after_update.push(b.stmt(b.call('$.replay_events', node_id)));
+		}
 
 		context.state.template.push('>');
 
@@ -2960,12 +3003,7 @@ export const template_visitors = {
 			const name = node.expression === null ? node.name : node.expression.name;
 			return b.const(
 				name,
-				b.call(
-					// in legacy mode, sources can be mutated but they're not fine-grained.
-					// Using the safe-equal derived version ensures the slot is still updated
-					state.analysis.runes ? '$.derived' : '$.derived_safe_equal',
-					b.thunk(b.member(b.id('$$slotProps'), b.id(node.name)))
-				)
+				create_derived(state, b.thunk(b.member(b.id('$$slotProps'), b.id(node.name))))
 			);
 		}
 	},
@@ -3057,7 +3095,7 @@ export const template_visitors = {
 					);
 
 		const expression = is_default
-			? b.member(b.id('$$props'), b.id('children'))
+			? b.call('$.default_slot', b.id('$$props'))
 			: b.member(b.member(b.id('$$props'), b.id('$$slots')), name, true, true);
 
 		const slot = b.call('$.slot', context.state.node, expression, props_expression, fallback);

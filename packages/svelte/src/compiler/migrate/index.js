@@ -18,7 +18,7 @@ import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
  */
 export function migrate(source) {
 	try {
-		reset({ source, filename: 'migrate.svelte' });
+		reset(source, { filename: 'migrate.svelte' });
 
 		let parsed = parse(source);
 
@@ -369,11 +369,15 @@ const instance_script = {
 					/** @type {number} */ (node.body.expression.right.start),
 					'$derived('
 				);
-				state.str.update(
-					/** @type {number} */ (node.body.expression.right.end),
-					/** @type {number} */ (node.end),
-					');'
-				);
+				if (node.body.expression.right.end !== node.end) {
+					state.str.update(
+						/** @type {number} */ (node.body.expression.right.end),
+						/** @type {number} */ (node.end),
+						');'
+					);
+				} else {
+					state.str.appendRight(/** @type {number} */ (node.end), ');');
+				}
 				return;
 			} else {
 				for (const binding of reassigned_bindings) {
@@ -427,6 +431,26 @@ const template = {
 		next();
 	},
 	SvelteElement(node, { state, next }) {
+		if (node.tag.type === 'Literal') {
+			let is_static = true;
+
+			let a = /** @type {number} */ (node.tag.start);
+			let b = /** @type {number} */ (node.tag.end);
+			let quote_mark = state.str.original[a - 1];
+
+			while (state.str.original[--a] !== '=') {
+				if (state.str.original[a] === '{') {
+					is_static = false;
+					break;
+				}
+			}
+
+			if (is_static && state.str.original[b] === quote_mark) {
+				state.str.prependLeft(a + 1, '{');
+				state.str.appendRight(/** @type {number} */ (node.tag.end) + 1, '}');
+			}
+		}
+
 		handle_events(node, state);
 		next();
 	},

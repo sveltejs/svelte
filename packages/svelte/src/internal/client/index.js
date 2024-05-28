@@ -27,10 +27,12 @@ export {
 	set_custom_element_data,
 	set_dynamic_element_attributes,
 	set_xlink_attribute,
-	handle_lazy_img
+	handle_lazy_img,
+	set_value,
+	set_checked
 } from './dom/elements/attributes.js';
 export { set_class, set_svg_class, set_mathml_class, toggle_class } from './dom/elements/class.js';
-export { event, delegate } from './dom/elements/events.js';
+export { event, delegate, replay_events } from './dom/elements/events.js';
 export { autofocus, remove_textarea_child } from './dom/elements/misc.js';
 export { set_style } from './dom/elements/style.js';
 export { animation, transition } from './dom/elements/transitions.js';
@@ -72,12 +74,13 @@ export {
 	add_legacy_event_listener,
 	bubble_event,
 	reactive_import,
-	update_legacy_props
+	update_legacy_props,
+	default_slot
 } from './dom/legacy/misc.js';
 export {
 	append,
 	comment,
-	svg_template,
+	ns_template,
 	svg_template_with_script,
 	mathml_template,
 	template,
@@ -154,7 +157,6 @@ export {
 } from './dom/operations.js';
 export { noop } from '../shared/utils.js';
 export {
-	add_snippet_symbol,
 	validate_component,
 	validate_dynamic_element_tag,
 	validate_snippet,

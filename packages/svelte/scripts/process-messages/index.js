@@ -163,6 +163,7 @@ function transform(name, dest) {
 					type: 'Literal',
 					value: text
 				};
+				prev_vars = vars;
 				continue;
 			}
 

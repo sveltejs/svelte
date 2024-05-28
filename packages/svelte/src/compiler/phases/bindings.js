@@ -5,6 +5,7 @@
  * @property {string} [type] Set this to `set` if updates are written to the dom property
  * @property {boolean} [omit_in_ssr] Set this to true if the binding should not be included in SSR
  * @property {string[]} [valid_elements] If this is set, the binding is only valid on the given elements
+ * @property {string[]} [invalid_elements] If this is set, the binding is invalid on the given elements
  */
 
 /**
@@ -131,28 +132,36 @@ export const binding_properties = {
 	},
 	// dimensions
 	clientWidth: {
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		invalid_elements: ['svelte:window', 'svelte:document']
 	},
 	clientHeight: {
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		invalid_elements: ['svelte:window', 'svelte:document']
 	},
 	offsetWidth: {
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		invalid_elements: ['svelte:window', 'svelte:document']
 	},
 	offsetHeight: {
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		invalid_elements: ['svelte:window', 'svelte:document']
 	},
 	contentRect: {
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		invalid_elements: ['svelte:window', 'svelte:document']
 	},
 	contentBoxSize: {
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		invalid_elements: ['svelte:window', 'svelte:document']
 	},
 	borderBoxSize: {
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		invalid_elements: ['svelte:window', 'svelte:document']
 	},
 	devicePixelContentBoxSize: {
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		invalid_elements: ['svelte:window', 'svelte:document']
 	},
 	// checkbox/radio
 	indeterminate: {
@@ -171,9 +180,15 @@ export const binding_properties = {
 	this: {
 		omit_in_ssr: true
 	},
-	innerText: {},
-	innerHTML: {},
-	textContent: {},
+	innerText: {
+		invalid_elements: ['svelte:window', 'svelte:document']
+	},
+	innerHTML: {
+		invalid_elements: ['svelte:window', 'svelte:document']
+	},
+	textContent: {
+		invalid_elements: ['svelte:window', 'svelte:document']
+	},
 	open: {
 		event: 'toggle',
 		type: 'set',
