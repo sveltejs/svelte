@@ -246,9 +246,14 @@ export const javascript_visitors_runes = {
 							property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
 						assert.equal(id.type, 'Identifier');
 						const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
-						const initial =
+						let initial =
 							binding.initial &&
 							/** @type {import('estree').Expression} */ (visit(binding.initial));
+						// We're adding proxy here on demand and not within the prop runtime function so that
+						// people not using proxied state anywhere in their code don't have to pay the additional bundle size cost
+						if (initial && binding.mutated && should_proxy_or_freeze(initial, state.scope)) {
+							initial = b.call('$.proxy', initial);
+						}
 
 						if (binding.reassigned || state.analysis.accessors || initial) {
 							declarations.push(b.declarator(id, get_prop_source(binding, state, name, initial)));

@@ -17,8 +17,8 @@ export default test({
 		assert.htmlEqual(
 			target.innerHTML,
 			`
-				<button>mutate: 0</button>
-				<button>reassign: 0</button>
+				<button>mutate: 1</button>
+				<button>reassign: 1</button>
 			`
 		);
 
