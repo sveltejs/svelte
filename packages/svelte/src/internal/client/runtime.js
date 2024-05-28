@@ -601,16 +601,20 @@ async function yield_tick() {
  * @returns {void}
  */
 export function schedule_effect(signal) {
+	var is_flush_yield = current_scheduler_mode === FLUSH_YIELD;
 	// If we have an action effect then we need to dispatch a standard microtask update,
 	// that's because actions might need to update the UI or attach/remove event listeners
 	// and deferring this can lead to hard-to-find bugs. If there are any deferred updates
 	// already, they'll be handled by the microtask instead.
-	if (current_scheduler_mode === FLUSH_MICROTASK || (signal.f & ACTION_EFFECT) !== 0) {
+	if (
+		current_scheduler_mode === FLUSH_MICROTASK ||
+		(is_flush_yield && (signal.f & ACTION_EFFECT) !== 0)
+	) {
 		if (!is_micro_task_queued) {
 			is_micro_task_queued = true;
 			queueMicrotask(process_deferred);
 		}
-	} else if (current_scheduler_mode === FLUSH_YIELD) {
+	} else if (is_flush_yield) {
 		if (!is_yield_task_queued) {
 			is_yield_task_queued = true;
 			yield_tick().then(process_deferred);
