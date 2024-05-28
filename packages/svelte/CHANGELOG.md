@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.143
+
+### Patch Changes
+
+- feat: provide `Component` type that represents the new shape of Svelte components ([#11775](https://github.com/sveltejs/svelte/pull/11775))
+
 ## 5.0.0-next.142
 
 ### Patch Changes
