@@ -1,6 +1,6 @@
 import { render_effect } from '../../reactivity/effects.js';
 import { all_registered_events, root_event_handles } from '../../render.js';
-import { yield_updates } from '../../runtime.js';
+import { yield_event_updates } from '../../runtime.js';
 import { define_property, is_array } from '../../utils.js';
 import { hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
@@ -48,7 +48,7 @@ export function create_event(event_name, dom, handler, options) {
 			handle_event_propagation(dom, event);
 		}
 		if (!event.cancelBubble) {
-			return yield_updates(() => handler.call(this, event));
+			return yield_event_updates(() => handler.call(this, event), event.isTrusted);
 		}
 	}
 
@@ -101,6 +101,18 @@ export function delegate(events) {
 	for (var fn of root_event_handles) {
 		fn(events);
 	}
+}
+
+/**
+ * @param {Element} element
+ * @param {string} event_name
+ */
+function get_delegated(element, event_name) {
+	if (/** @type {any} */ (element).disabled) {
+		return undefined;
+	}
+	// @ts-expect-error
+	return element['__' + event_name];
 }
 
 /**
@@ -173,6 +185,10 @@ export function handle_event_propagation(handler_element, event) {
 		}
 	});
 
+	// We use the trusted status on the first event we encounter, if we encounter
+	// more from bubbling we trust those events as we've already yielded.
+	var is_trusted = event.isTrusted;
+
 	/** @param {Element} next_target */
 	function next(next_target) {
 		current_target = next_target;
@@ -180,16 +196,24 @@ export function handle_event_propagation(handler_element, event) {
 		var parent_element = next_target.parentNode || /** @type {any} */ (next_target).host || null;
 
 		try {
-			// @ts-expect-error
-			var delegated = next_target['__' + event_name];
+			var delegated = get_delegated(next_target, event_name);
 
-			if (delegated !== undefined && !(/** @type {any} */ (next_target).disabled)) {
-				if (is_array(delegated)) {
-					var [fn, ...data] = delegated;
-					fn.apply(next_target, [event, ...data]);
-				} else {
-					delegated.call(next_target, event);
-				}
+			if (delegated !== undefined) {
+				yield_event_updates(() => {
+					// The event handler might have changed from yield_updates
+					var delegated = get_delegated(next_target, event_name);
+					if (!delegated) {
+						return;
+					}
+					if (is_array(delegated)) {
+						var [fn, ...data] = delegated;
+						fn.apply(next_target, [event, ...data]);
+					} else {
+						delegated.call(next_target, event);
+					}
+					// Further propagation will be trusted.
+					is_trusted = true;
+				}, is_trusted);
 			}
 		} finally {
 			if (
@@ -204,7 +228,7 @@ export function handle_event_propagation(handler_element, event) {
 	}
 
 	try {
-		yield_updates(() => next(/** @type {Element} */ (current_target)));
+		next(/** @type {Element} */ (current_target));
 	} finally {
 		// @ts-expect-error is used above
 		event.__root = handler_element;

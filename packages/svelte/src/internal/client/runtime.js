@@ -723,17 +723,18 @@ function process_effects(effect, collected_effects) {
 }
 
 /**
- * @param {{ (): void; (): any; }} fn
+ * @param {{(): void;(): any;}} fn
+ * @param {boolean} [is_trusted]
  */
-export function yield_updates(fn) {
+export function yield_event_updates(fn, is_trusted = false) {
 	const previous_scheduler_mode = current_scheduler_mode;
 	// If we're calling yield_updates and there is already an active yield in progress (is_yield_task_active)
 	// then it's likely that the event might might try and read from the UI. Additionally, we might be dealing with
-	// event that was sync called from another event flow, thus isTrusted() will be true – such as a submit event from
+	// event that was sync called from another event flow, thus is_trusted will be true – such as a submit event from
 	// a subsequent click event. In either case, the UI needs to be up-to-date, so we flush any pending changes.
 	if (
 		previous_scheduler_mode !== FLUSH_YIELD &&
-		(is_yield_task_active || (is_yield_task_queued && window.event?.isTrusted))
+		(is_yield_task_active || (is_yield_task_queued && is_trusted))
 	) {
 		flush_sync();
 	}
