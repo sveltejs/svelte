@@ -5,7 +5,8 @@ import {
 	type ComponentProps,
 	type ComponentType,
 	mount,
-	hydrate
+	hydrate,
+	type Component
 } from 'svelte';
 
 SvelteComponent.element === HTMLElement;
@@ -48,6 +49,15 @@ const legacyComponentEvents2: ComponentEvents<LegacyComponent> = {
 	// @ts-expect-error
 	event: new KeyboardEvent('click')
 };
+
+const legacyComponentInstance: SvelteComponent<{ prop: string }> = new LegacyComponent({
+	target: null as any as Document | Element | ShadowRoot,
+	props: {
+		prop: 'foo'
+	}
+});
+
+const legacyComponentClass: typeof SvelteComponent<{ prop: string }> = LegacyComponent;
 
 // --------------------------------------------------------------------------- new: functions
 
@@ -130,7 +140,7 @@ hydrate(NewComponent, {
 	},
 	events: {
 		event: (e) =>
-			// @ts-expect-error
+			// we're not type checking this as it's an edge case and removing the generic later would be an annoying mini breaking change
 			e.doesNotExist
 	},
 	immutable: true,
@@ -173,4 +183,74 @@ const x: typeof asLegacyComponent = createClassComponent({
 	target: null as any,
 	hydrate: true,
 	component: NewComponent
+});
+
+// --------------------------------------------------------------------------- function component
+
+const functionComponent: Component<
+	{ binding: boolean; readonly: string },
+	{ foo: 'bar' },
+	'binding'
+> = (a, props) => {
+	props.binding === true;
+	props.readonly === 'foo';
+	// @ts-expect-error
+	props.readonly = true;
+	// @ts-expect-error
+	props.binding = '';
+	return {
+		foo: 'bar'
+	};
+};
+functionComponent.element === HTMLElement;
+
+functionComponent(null as any, {
+	binding: true,
+	// @ts-expect-error
+	readonly: true
+});
+
+const functionComponentInstance = functionComponent(null as any, {
+	binding: true,
+	readonly: 'foo',
+	// @ts-expect-error
+	x: ''
+});
+functionComponentInstance.foo === 'bar';
+// @ts-expect-error
+functionComponentInstance.foo = 'foo';
+
+mount(functionComponent, {
+	target: null as any as Document | Element | ShadowRoot,
+	props: {
+		binding: true,
+		readonly: 'foo',
+		// would be nice to error here, probably needs NoInfer type helper in upcoming TS 5.5
+		x: ''
+	}
+});
+mount(functionComponent, {
+	target: null as any as Document | Element | ShadowRoot,
+	props: {
+		binding: true,
+		// @ts-expect-error wrong type
+		readonly: 1
+	}
+});
+
+hydrate(functionComponent, {
+	target: null as any as Document | Element | ShadowRoot,
+	props: {
+		binding: true,
+		readonly: 'foo',
+		// would be nice to error here, probably needs NoInfer type helper in upcoming TS 5.5
+		x: ''
+	}
+});
+hydrate(functionComponent, {
+	target: null as any as Document | Element | ShadowRoot,
+	// @ts-expect-error missing prop
+	props: {
+		binding: true
+	}
 });

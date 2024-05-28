@@ -86,6 +86,37 @@ import App from './App.svelte';
 
 `render` also no longer returns CSS; it should be served separately from a CSS file.
 
+### Component typing changes
+
+The change from classes towards functions is also reflected in the typings: `SvelteComponent`, the base class from Svelte 4, is deprecated in favor of the new `Component` type which defines the function shape of a Svelte component. To manually define a component shape in a `d.ts` file:
+
+```ts
+import type { Component } from 'svelte';
+export declare const MyComponent: Component<{
+	foo: string;
+}>;
+```
+
+To declare that a component of a certain type is required:
+
+```svelte
+<script lang="ts">
+	import type { Component } from 'svelte';
+	import {
+		ComponentA,
+		ComponentB
+	} from 'component-library';
+
+	let component: Component<{ foo: string }> = $state(
+		Math.random() ? ComponentA : ComponentB
+	);
+</script>
+
+<svelte:component this={component} foo="bar" />
+```
+
+The two utility types `ComponentEvents` and `ComponentType` are also deprecated. `ComponentEvents` is obsolete because events are defined as callback props now, and `ComponentType` is obsolete because the new `Component` type is the component type already (e.g. `ComponentType<SvelteComponent<{ prop: string }>>` == `Component<{ prop: string }>`).
+
 ### bind:this changes
 
 Because components are no longer classes, using `bind:this` no longer returns a class instance with `$set`, `$on` and `$destroy` methods on it. It only returns the instance exports (`export function/const`) and, if you're using the `accessors` option, a getter/setter-pair for each property.

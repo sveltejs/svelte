@@ -84,13 +84,12 @@ export function stringify(value) {
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
- * @template {Record<string, any>} Events
- * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} component
+ * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props>> | import('../../index.js').Component<Props, Exports, any>} component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
  * 		anchor?: Node;
  * 		props?: Props;
- * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
+ * 		events?: Record<string, (e: any) => any>;
  * 		context?: Map<any, any>;
  * 		intro?: boolean;
  * 	}} options
@@ -111,12 +110,11 @@ export function mount(component, options) {
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
- * @template {Record<string, any>} Events
- * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} component
+ * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props>> | import('../../index.js').Component<Props, Exports, any>} component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
  * 		props?: Props;
- * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
+ * 		events?: Record<string, (e: any) => any>;
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: boolean;
@@ -181,7 +179,7 @@ export function hydrate(component, options) {
 
 /**
  * @template {Record<string, any>} Exports
- * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<any>>} Component
+ * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<any>> | import('../../index.js').Component<any>} Component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
  * 		anchor: Node;
