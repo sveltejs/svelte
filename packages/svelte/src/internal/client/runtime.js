@@ -248,12 +248,10 @@ export function check_dirtiness(reaction) {
 						is_dirty = true;
 					}
 					reactions = dependency.reactions;
-					if (reactions === null || !reactions.includes(reaction)) {
-						if (reactions === null) {
-							dependency.reactions = [reaction];
-						} else {
-							reactions.push(reaction);
-						}
+					if (reactions === null) {
+						dependency.reactions = [reaction];
+					} else if (!reactions.includes(reaction)) {
+						reactions.push(reaction);
 					}
 				}
 			}
