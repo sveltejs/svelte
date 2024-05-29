@@ -1,7 +1,7 @@
 import { hydrating } from '../../hydration.js';
 import { render_effect, effect } from '../../../reactivity/effects.js';
 import { listen } from './shared.js';
-import { yield_updates } from '../../../runtime.js';
+import { yield_event_updates } from '../../../runtime.js';
 
 /** @param {TimeRanges} ranges */
 function time_ranges_to_array(ranges) {
@@ -36,7 +36,7 @@ export function bind_current_time(media, get_value, update) {
 		}
 
 		updating = true;
-		yield_updates(() => update(media.currentTime));
+		yield_event_updates(() => update(media.currentTime));
 	};
 
 	raf_id = requestAnimationFrame(callback);
@@ -62,7 +62,7 @@ export function bind_current_time(media, get_value, update) {
  */
 export function bind_buffered(media, update) {
 	listen(media, ['loadedmetadata', 'progress'], () =>
-		yield_updates(() => update(time_ranges_to_array(media.buffered)))
+		yield_event_updates(() => update(time_ranges_to_array(media.buffered)))
 	);
 }
 
@@ -80,7 +80,7 @@ export function bind_seekable(media, update) {
  */
 export function bind_played(media, update) {
 	listen(media, ['timeupdate'], () =>
-		yield_updates(() => update(time_ranges_to_array(media.played)))
+		yield_event_updates(() => update(time_ranges_to_array(media.played)))
 	);
 }
 
@@ -89,7 +89,7 @@ export function bind_played(media, update) {
  * @param {(seeking: boolean) => void} update
  */
 export function bind_seeking(media, update) {
-	listen(media, ['seeking', 'seeked'], () => yield_updates(() => update(media.seeking)));
+	listen(media, ['seeking', 'seeked'], () => yield_event_updates(() => update(media.seeking)));
 }
 
 /**
@@ -97,7 +97,7 @@ export function bind_seeking(media, update) {
  * @param {(seeking: boolean) => void} update
  */
 export function bind_ended(media, update) {
-	listen(media, ['timeupdate', 'ended'], () => yield_updates(() => update(media.ended)));
+	listen(media, ['timeupdate', 'ended'], () => yield_event_updates(() => update(media.ended)));
 }
 
 /**
@@ -108,7 +108,7 @@ export function bind_ready_state(media, update) {
 	listen(
 		media,
 		['loadedmetadata', 'loadeddata', 'canplay', 'canplaythrough', 'playing', 'waiting', 'emptied'],
-		() => yield_updates(() => update(media.readyState))
+		() => yield_event_updates(() => update(media.readyState))
 	);
 }
 
@@ -132,7 +132,7 @@ export function bind_playback_rate(media, get_value, update) {
 		}
 
 		listen(media, ['ratechange'], () => {
-			if (!updating) yield_updates(() => update(media.playbackRate));
+			if (!updating) yield_event_updates(() => update(media.playbackRate));
 			updating = false;
 		});
 	});
@@ -150,7 +150,7 @@ export function bind_paused(media, get_value, update) {
 	var callback = () => {
 		if (paused !== media.paused) {
 			paused = media.paused;
-			yield_updates(() => update((paused = media.paused)));
+			yield_event_updates(() => update((paused = media.paused)));
 		}
 	};
 
@@ -175,7 +175,7 @@ export function bind_paused(media, get_value, update) {
 					media.pause();
 				} else {
 					media.play().catch(() => {
-						yield_updates(() => update((paused = true)));
+						yield_event_updates(() => update((paused = true)));
 					});
 				}
 			};
@@ -239,7 +239,7 @@ export function bind_muted(media, get_value, update) {
 
 	var callback = () => {
 		updating = true;
-		yield_updates(() => update(media.muted));
+		yield_event_updates(() => update(media.muted));
 	};
 
 	if (get_value() == null) {
