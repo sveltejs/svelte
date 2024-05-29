@@ -104,18 +104,6 @@ export function delegate(events) {
 }
 
 /**
- * @param {Element} element
- * @param {string} event_name
- */
-function get_delegated(element, event_name) {
-	if (/** @type {any} */ (element).disabled) {
-		return undefined;
-	}
-	// @ts-expect-error
-	return element['__' + event_name];
-}
-
-/**
  * @param {Node} handler_element
  * @param {Event} event
  * @returns {void}
@@ -185,10 +173,6 @@ export function handle_event_propagation(handler_element, event) {
 		}
 	});
 
-	// We use the trusted status on the first event we encounter, if we encounter
-	// more from bubbling we trust those events as we've already yielded.
-	var is_trusted = event.isTrusted;
-
 	/** @param {Element} next_target */
 	function next(next_target) {
 		current_target = next_target;
@@ -196,24 +180,16 @@ export function handle_event_propagation(handler_element, event) {
 		var parent_element = next_target.parentNode || /** @type {any} */ (next_target).host || null;
 
 		try {
-			var delegated = get_delegated(next_target, event_name);
+			// @ts-expect-error
+			var delegated = next_target['__' + event_name];
 
-			if (delegated !== undefined) {
-				yield_event_updates(() => {
-					// The event handler might have changed from yield_updates
-					var delegated = get_delegated(next_target, event_name);
-					if (!delegated) {
-						return;
-					}
-					if (is_array(delegated)) {
-						var [fn, ...data] = delegated;
-						fn.apply(next_target, [event, ...data]);
-					} else {
-						delegated.call(next_target, event);
-					}
-					// Further propagation will be trusted.
-					is_trusted = true;
-				}, is_trusted);
+			if (delegated !== undefined && !(/** @type {any} */ (next_target).disabled)) {
+				if (is_array(delegated)) {
+					var [fn, ...data] = delegated;
+					fn.apply(next_target, [event, ...data]);
+				} else {
+					delegated.call(next_target, event);
+				}
 			}
 		} finally {
 			if (
@@ -228,7 +204,7 @@ export function handle_event_propagation(handler_element, event) {
 	}
 
 	try {
-		next(/** @type {Element} */ (current_target));
+		yield_event_updates(() => next(/** @type {Element} */ (current_target)), event.isTrusted);
 	} finally {
 		// @ts-expect-error is used above
 		event.__root = handler_element;
