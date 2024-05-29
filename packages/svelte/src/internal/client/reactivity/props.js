@@ -323,6 +323,7 @@ export function prop(props, key, flags, fallback) {
 				from_child = true;
 				set(inner_current_value, value);
 				get(current_value); // force a synchronisation immediately
+				current_value.version++;
 			}
 
 			return value;
