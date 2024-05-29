@@ -1,11 +1,14 @@
 <script>
 	import '@sveltejs/site-kit/styles/index.css';
 
+	import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { Icon, Shell, Banners } from '@sveltejs/site-kit/components';
 	import { Nav, Separator } from '@sveltejs/site-kit/nav';
 	import { Search, SearchBox } from '@sveltejs/site-kit/search';
+
+	injectSpeedInsights();
 
 	export let data;
 
