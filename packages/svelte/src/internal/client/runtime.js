@@ -19,7 +19,7 @@ import {
 	LEGACY_DERIVED_PROP,
 	ACTION_EFFECT
 } from './constants.js';
-import { flush_tasks } from './dom/task.js';
+import { flush_tasks, queue_micro_task } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { mutate, set, source } from './reactivity/sources.js';
 import { update_derived } from './reactivity/deriveds.js';
@@ -40,6 +40,8 @@ let current_scheduler_mode = FLUSH_MICROTASK;
 let is_micro_task_queued = false;
 let is_yield_task_queued = false;
 let is_yield_task_active = false;
+/** @type {Event | null} */
+let currently_yielded_event = null;
 
 export let is_flushing_effect = false;
 export let is_destroying_effect = false;
@@ -576,6 +578,7 @@ function process_deferred() {
 	is_micro_task_queued = false;
 	is_yield_task_queued = false;
 	is_yield_task_active = false;
+	currently_yielded_event = null;
 	if (flush_count > 1001) {
 		return;
 	}
@@ -590,7 +593,7 @@ function process_deferred() {
 async function yield_tick() {
 	// TODO: replace this with scheduler.yield when it becomes standard
 	await new Promise((fulfil) => {
-		queueMicrotask(() => {
+		queue_micro_task(() => {
 			is_yield_task_active = true;
 			requestAnimationFrame(() => {
 				setTimeout(fulfil, 0);
@@ -724,20 +727,21 @@ function process_effects(effect, collected_effects) {
 
 /**
  * @param {{(): void;(): any;}} fn
- * @param {boolean} [flush_queued]
+ * @param {any} [event]
  */
-export function yield_event_updates(fn, flush_queued = false) {
+export function yield_event_updates(fn, event) {
 	const previous_scheduler_mode = current_scheduler_mode;
 	// If we're calling yield_updates and there is already an active yield in progress (`is_yield_task_active`)
-	// then it's likely that the event might might try and read from the UI. Additionally, we might be dealing with
-	// a case where we explicitly want to flush if `flush_queued` is true and `is_yield_task_queued`, for example
-	// if we had an event like `submit`, that occured because of a `click`.
+	// and a different event is dispatched then it's likely that the event might might try and read from the UI,
+	// for example if we had an event like `submit`, that occured because of a `click`.
 	if (
 		previous_scheduler_mode !== FLUSH_YIELD &&
-		(is_yield_task_active || (is_yield_task_queued && flush_queued))
+		is_yield_task_active &&
+		currently_yielded_event !== event
 	) {
 		flush_sync();
 	}
+	currently_yielded_event = event;
 	try {
 		current_scheduler_mode = FLUSH_YIELD;
 		return fn();

@@ -13,14 +13,15 @@ import { yield_event_updates } from '../../../runtime.js';
  * @returns {void}
  */
 export function bind_value(input, get_value, update) {
-	listen_to_event_and_reset_event(input, 'input', () => {
+	listen_to_event_and_reset_event(input, 'input', (evt) => {
 		if (DEV && input.type === 'checkbox') {
 			// TODO should this happen in prod too?
 			e.bind_invalid_checkbox_value();
 		}
 
-		yield_event_updates(() =>
-			update(is_numberlike_input(input) ? to_number(input.value) : input.value)
+		yield_event_updates(
+			() => update(is_numberlike_input(input) ? to_number(input.value) : input.value),
+			evt
 		);
 	});
 
@@ -79,7 +80,7 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 	listen_to_event_and_reset_event(
 		input,
 		'change',
-		() => {
+		(evt) => {
 			// @ts-ignore
 			var value = input.__value;
 
@@ -87,7 +88,7 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 				value = get_binding_group_value(binding_group, value, input.checked);
 			}
 
-			yield_event_updates(() => update(value));
+			yield_event_updates(() => update(value), evt);
 		},
 		// TODO better default value handling
 		() => yield_event_updates(() => update(is_checkbox ? [] : null))
@@ -129,9 +130,9 @@ export function bind_group(inputs, group_index, input, get_value, update) {
  * @returns {void}
  */
 export function bind_checked(input, get_value, update) {
-	listen_to_event_and_reset_event(input, 'change', () => {
+	listen_to_event_and_reset_event(input, 'change', (evt) => {
 		var value = input.checked;
-		yield_event_updates(() => update(value));
+		yield_event_updates(() => update(value), evt);
 	});
 
 	if (get_value() == undefined) {
@@ -189,8 +190,8 @@ function to_number(value) {
  * @param {(value: FileList | null) => void} update
  */
 export function bind_files(input, get_value, update) {
-	listen_to_event_and_reset_event(input, 'change', () => {
-		yield_event_updates(() => update(input.files));
+	listen_to_event_and_reset_event(input, 'change', (evt) => {
+		yield_event_updates(() => update(input.files), evt);
 	});
 	render_effect(() => {
 		input.files = get_value();

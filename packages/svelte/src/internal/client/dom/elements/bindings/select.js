@@ -78,7 +78,7 @@ export function init_select(select, get_value) {
 export function bind_select_value(select, get_value, update) {
 	var mounting = true;
 
-	listen_to_event_and_reset_event(select, 'change', () => {
+	listen_to_event_and_reset_event(select, 'change', (evt) => {
 		/** @type {unknown} */
 		var value;
 
@@ -90,7 +90,7 @@ export function bind_select_value(select, get_value, update) {
 			value = selected_option && get_option_value(selected_option);
 		}
 
-		yield_event_updates(() => update(value));
+		yield_event_updates(() => update(value), evt);
 	});
 
 	// Needs to be an effect, not a render_effect, so that in case of each loops the logic runs after the each block has updated

@@ -6,7 +6,7 @@ import { add_form_reset_listener } from '../misc.js';
  * then listens to the given events until the render effect context is destroyed
  * @param {Element | Window} target
  * @param {Array<string>} events
- * @param {() => void} handler
+ * @param {(evt?: Event) => void} handler
  * @param {any} call_handler_immediately
  */
 export function listen(target, events, handler, call_handler_immediately = true) {
@@ -32,7 +32,7 @@ export function listen(target, events, handler, call_handler_immediately = true)
  * to notify all bindings when the form is reset
  * @param {HTMLElement} element
  * @param {string} event
- * @param {() => void} handler
+ * @param {(evt?: Event) => void} handler
  * @param {() => void} [on_reset]
  */
 export function listen_to_event_and_reset_event(element, event, handler, on_reset = handler) {
