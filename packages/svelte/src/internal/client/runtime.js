@@ -239,7 +239,7 @@ export function check_dirtiness(reaction) {
 				} else if ((reaction.f & DIRTY) !== 0) {
 					// `signal` might now be dirty, as a result of calling `check_dirtiness` and/or `update_derived`
 					return true;
-				} else {
+				} else if ((reaction.f & DERIVED) !== 0) {
 					// It might be that the derived was was dereferenced from its dependencies but has now come alive again.
 					// In thise case, we need to re-attach it to the graph and mark it dirty if any of its dependencies have
 					// changed since.
