@@ -198,7 +198,8 @@ export function check_dirtiness(reaction) {
 	if (is_dirty && !is_unowned) {
 		return true;
 	}
-	var is_disconnected = (reaction.f & DISCONNECTED) !== 0;
+
+	var is_disconnected = (flags & DISCONNECTED) !== 0;
 
 	if ((flags & MAYBE_DIRTY) !== 0 || (is_dirty && is_unowned)) {
 		var dependencies = reaction.deps;
