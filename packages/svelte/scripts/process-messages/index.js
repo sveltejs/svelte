@@ -54,11 +54,23 @@ for (const category of fs.readdirSync('messages')) {
 	}
 }
 
+/**
+ * @param {string} name
+ * @param {string} dest
+ */
 function transform(name, dest) {
 	const source = fs
 		.readFileSync(new URL(`./templates/${name}.js`, import.meta.url), 'utf-8')
 		.replace(/\r\n/g, '\n');
 
+	/**
+	 * @type {Array<{
+	 * 	type: string;
+	 * 	value: string;
+	 * 	start: number;
+	 * 	end: number
+	 * }>}
+	 */
 	const comments = [];
 
 	let ast = acorn.parse(source, {
@@ -135,6 +147,7 @@ function transform(name, dest) {
 
 	for (const code in category) {
 		const { messages } = category[code];
+		/** @type {string[]} */
 		const vars = [];
 
 		const group = messages.map((text, i) => {
@@ -227,29 +240,31 @@ function transform(name, dest) {
 
 				const value = node.value
 					.split('\n')
-					.map((line) => {
-						if (line === ' * MESSAGE') {
-							return messages[messages.length - 1]
-								.split('\n')
-								.map((line) => ` * ${line}`)
-								.join('\n');
+					.map(
+						/** @param {string} line */ (line) => {
+							if (line === ' * MESSAGE') {
+								return messages[messages.length - 1]
+									.split('\n')
+									.map((line) => ` * ${line}`)
+									.join('\n');
+							}
+
+							if (line.includes('PARAMETER')) {
+								return vars
+									.map((name, i) => {
+										const optional = i >= group[0].vars.length;
+
+										return optional
+											? ` * @param {string | undefined | null} [${name}]`
+											: ` * @param {string} ${name}`;
+									})
+									.join('\n');
+							}
+
+							return line;
 						}
-
-						if (line.includes('PARAMETER')) {
-							return vars
-								.map((name, i) => {
-									const optional = i >= group[0].vars.length;
-
-									return optional
-										? ` * @param {string | undefined | null} [${name}]`
-										: ` * @param {string} ${name}`;
-								})
-								.join('\n');
-						}
-
-						return line;
-					})
-					.filter((x) => x !== '')
+					)
+					.filter(/** @param {string} x */ (x) => x !== '')
 					.join('\n');
 
 				if (value !== node.value) {
