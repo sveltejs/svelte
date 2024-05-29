@@ -439,9 +439,9 @@ function remove_reaction(signal, dependency) {
 			}
 		}
 	}
-	debugger;
+	// If the derived has no reactions, then we can disconnect it from the graph,
+	// allowing it to either reconnect in the future, or be GC'd by the VM.
 	if (reactions_length === 0 && (dependency.f & DERIVED) !== 0) {
-		// If the signal is unowned then we need to make sure to change it to maybe dirty.
 		set_signal_status(dependency, MAYBE_DIRTY);
 		remove_reactions(/** @type {import('#client').Derived} **/ (dependency), 0);
 	}
