@@ -791,7 +791,8 @@ const javascript_visitors_runes = {
 		if (rune === '$state.is') {
 			return b.call(
 				'Object.is',
-				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0])),
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[1]))
 			);
 		}
 
