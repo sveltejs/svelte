@@ -2,7 +2,6 @@ import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { UNINITIALIZED } from '../constants.js';
-import { map } from './utils.js';
 
 /**
  * @template K
@@ -10,7 +9,7 @@ import { map } from './utils.js';
  * @extends {Map<K, V>}
  */
 export class ReactiveMap extends Map {
-	/** @type {Map<K, import('#client').Source<V>>} */
+	/** @type {Map<K, import('#client').Source<symbol>>} */
 	#sources = new Map();
 	#version = source(0);
 	#size = source(0);
@@ -28,7 +27,8 @@ export class ReactiveMap extends Map {
 			var sources = this.#sources;
 
 			for (var [key, v] of value) {
-				sources.set(key, source(v));
+				sources.set(key, source(Symbol()));
+				super.set(key, v);
 			}
 
 			this.#size.v = sources.size;
@@ -41,18 +41,24 @@ export class ReactiveMap extends Map {
 
 	/** @param {K} key */
 	has(key) {
-		var s = this.#sources.get(key);
+		var sources = this.#sources;
+		var s = sources.get(key);
 
 		if (s === undefined) {
-			// We should always track the version in case
-			// the Set ever gets this value in the future.
-			get(this.#version);
-
-			return false;
+			// If we're working with a non-primitive then we can generate a signal for it
+			if (typeof key !== 'object' || key === null) {
+				s = source(UNINITIALIZED);
+				sources.set(key, s);
+			} else {
+				// We should always track the version in case
+				// the Set ever gets this value in the future.
+				get(this.#version);
+				return false;
+			}
 		}
 
 		get(s);
-		return true;
+		return super.has(key);
 	}
 
 	/**
@@ -62,8 +68,7 @@ export class ReactiveMap extends Map {
 	forEach(callbackfn, this_arg) {
 		get(this.#version);
 
-		var bound_callbackfn = callbackfn.bind(this_arg);
-		this.#sources.forEach((s, key) => bound_callbackfn(s.v, key, this));
+		return super.forEach(callbackfn, this_arg);
 	}
 
 	/** @param {K} key */
@@ -78,7 +83,8 @@ export class ReactiveMap extends Map {
 			return undefined;
 		}
 
-		return get(s);
+		get(s);
+		return super.get(key);
 	}
 
 	/**
@@ -88,32 +94,37 @@ export class ReactiveMap extends Map {
 	set(key, value) {
 		var sources = this.#sources;
 		var s = sources.get(key);
+		var prev_res = super.get(key);
+		var res = super.set(key, value);
 
 		if (s === undefined) {
-			sources.set(key, source(value));
-			set(this.#size, sources.size);
+			sources.set(key, source(Symbol()));
+			set(this.#size, super.size);
 			this.#increment_version();
-		} else {
-			set(s, value);
+		} else if (prev_res !== value) {
+			set(s, Symbol());
 		}
 
-		return this;
+		return res;
 	}
 
 	/** @param {K} key */
 	delete(key) {
 		var sources = this.#sources;
 		var s = sources.get(key);
+		var res = super.delete(key);
 
 		if (s !== undefined) {
-			var removed = sources.delete(key);
-			set(this.#size, sources.size);
-			set(s, /** @type {V} */ (UNINITIALIZED));
+			// Remove non-primitive keys
+			if (typeof key === 'object' && key !== null) {
+				sources.delete(key);
+			}
+			set(this.#size, super.size);
+			set(s, UNINITIALIZED);
 			this.#increment_version();
-			return removed;
 		}
 
-		return false;
+		return res;
 	}
 
 	clear() {
@@ -122,31 +133,28 @@ export class ReactiveMap extends Map {
 		if (sources.size !== 0) {
 			set(this.#size, 0);
 			for (var s of sources.values()) {
-				set(s, /** @type {V} */ (UNINITIALIZED));
+				set(s, UNINITIALIZED);
 			}
 			this.#increment_version();
 		}
 
 		sources.clear();
+		super.clear();
 	}
 
 	keys() {
 		get(this.#version);
-		return this.#sources.keys();
+		return super.keys();
 	}
 
 	values() {
 		get(this.#version);
-		return map(this.#sources.values(), get, 'Map Iterator');
+		return super.values();
 	}
 
 	entries() {
 		get(this.#version);
-		return map(
-			this.#sources.entries(),
-			([key, source]) => /** @type {[K, V]} */ ([key, get(source)]),
-			'Map Iterator'
-		);
+		return super.entries();
 	}
 
 	[Symbol.iterator]() {
