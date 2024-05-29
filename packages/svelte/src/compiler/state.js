@@ -18,6 +18,11 @@ export let locator = getLocator('', { offsetLine: 1 });
 export let ignore_stack = [];
 
 /**
+ * @type {WeakMap<import("./types").SvelteNode | NodeLike, Set<string>[]>}
+ */
+export let ignore_map = new WeakMap();
+
+/**
  * @param {string[]} ignores
  */
 export function push_ignore(ignores) {

@@ -30,7 +30,7 @@ import { prune } from './css/css-prune.js';
 import { hash } from './utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
-import { pop_ignore, push_ignore } from '../../state.js';
+import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -1107,6 +1107,7 @@ function is_safe_identifier(expression, scope) {
 /** @type {import('./types').Visitors} */
 const common_visitors = {
 	_(node, { state, next, path }) {
+		ignore_map.set(node, structuredClone(ignore_stack));
 		const parent = path.at(-1);
 		if (parent?.type === 'Fragment' && node.type !== 'Comment' && node.type !== 'Text') {
 			const idx = parent.nodes.indexOf(/** @type {any} */ (node));
@@ -1129,6 +1130,7 @@ const common_visitors = {
 
 			if (ignores.length > 0) {
 				push_ignore(ignores);
+				ignore_map.set(node, structuredClone(ignore_stack));
 				next();
 				pop_ignore();
 			}
@@ -1148,6 +1150,7 @@ const common_visitors = {
 				}
 				if (ignores.length > 0) {
 					push_ignore(ignores);
+					ignore_map.set(node, structuredClone(ignore_stack));
 					next();
 					pop_ignore();
 				}
