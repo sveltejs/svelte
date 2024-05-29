@@ -323,6 +323,8 @@ export function prop(props, key, flags, fallback) {
 				from_child = true;
 				set(inner_current_value, value);
 				get(current_value); // force a synchronisation immediately
+				// Increment the value so that unowned/disconnected nodes can validate dirtiness again.
+				current_value.version++;
 			}
 
 			return value;
