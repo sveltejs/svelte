@@ -76,11 +76,13 @@ export class ReactiveMap extends Map {
 		var s = this.#sources.get(key);
 
 		if (s === undefined) {
-			// We should always track the version in case
-			// the Set ever gets this value in the future.
-			get(this.#version);
-
-			return undefined;
+			// Re-use the has code-path to init the signal if needed and also
+			// register to the version if needed.
+			this.has(key);
+			s = this.#sources.get(key);
+			if (s === undefined) {
+				return undefined;
+			}
 		}
 
 		get(s);
