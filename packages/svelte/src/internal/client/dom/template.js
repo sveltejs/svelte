@@ -245,6 +245,9 @@ export function comment() {
  */
 export function append(anchor, dom) {
 	if (hydrating) return;
+	// We intentionally do not assign the `dom` property of the effect here because it's far too
+	// late. If we try, we will capture additional DOM elements that we cannot control the lifecycle
+	// for and will inevitably cause memory leaks. See https://github.com/sveltejs/svelte/pull/11832
 
 	anchor.before(/** @type {Node} */ (dom));
 }
