@@ -271,7 +271,6 @@ export default function tag(parser) {
 		const chunk = definition.value[0];
 
 		if (definition.value.length !== 1 || chunk.type !== 'ExpressionTag') {
-			chunk.type;
 			w.svelte_element_invalid_this(definition);
 
 			// note that this is wrong, in the case of e.g. `this="h{n}"` — it will result in `<h>`.
