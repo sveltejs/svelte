@@ -280,8 +280,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		next({ scope });
 	};
 
-	const skip = () => {};
-
 	/**
 	 * @type {import('zimmerframe').Visitor<import('#compiler').ElementLike, State, import('#compiler').SvelteNode>}
 	 */
