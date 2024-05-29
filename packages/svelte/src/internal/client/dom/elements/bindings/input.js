@@ -19,7 +19,9 @@ export function bind_value(input, get_value, update) {
 			e.bind_invalid_checkbox_value();
 		}
 
-		yield_event_updates(() => update(is_numberlike_input(input) ? to_number(input.value) : input.value));
+		yield_event_updates(() =>
+			update(is_numberlike_input(input) ? to_number(input.value) : input.value)
+		);
 	});
 
 	render_effect(() => {
