@@ -9,7 +9,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "check-disable-tmp": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
-    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch"
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
+    "format": "prettier --check --write .",
+    "lint": "prettier --check ."
   },
   "devDependencies": {
     "@fontsource/fira-mono": "^5.0.8",
