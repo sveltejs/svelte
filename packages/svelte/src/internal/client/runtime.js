@@ -16,7 +16,8 @@ import {
 	STATE_SYMBOL,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	LEGACY_DERIVED_PROP
+	LEGACY_DERIVED_PROP,
+	DISCONNECTED
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -197,6 +198,7 @@ export function check_dirtiness(reaction) {
 	if (is_dirty && !is_unowned) {
 		return true;
 	}
+	var is_disconnected = (reaction.f & DISCONNECTED) !== 0;
 
 	if ((flags & MAYBE_DIRTY) !== 0 || (is_dirty && is_unowned)) {
 		var dependencies = reaction.deps;
@@ -239,7 +241,7 @@ export function check_dirtiness(reaction) {
 				} else if ((reaction.f & DIRTY) !== 0) {
 					// `signal` might now be dirty, as a result of calling `check_dirtiness` and/or `update_derived`
 					return true;
-				} else if ((reaction.f & DERIVED) !== 0) {
+				} else if (is_disconnected) {
 					// It might be that the derived was was dereferenced from its dependencies but has now come alive again.
 					// In thise case, we need to re-attach it to the graph and mark it dirty if any of its dependencies have
 					// changed since.
@@ -260,6 +262,9 @@ export function check_dirtiness(reaction) {
 		// Unowned signals are always maybe dirty, as we instead check their dependency versions.
 		if (!is_unowned) {
 			set_signal_status(reaction, CLEAN);
+		}
+		if (is_disconnected) {
+			reaction.f ^= DISCONNECTED;
 		}
 	}
 
@@ -441,6 +446,11 @@ function remove_reaction(signal, dependency) {
 	// allowing it to either reconnect in the future, or be GC'd by the VM.
 	if (reactions_length === 0 && (dependency.f & DERIVED) !== 0) {
 		set_signal_status(dependency, MAYBE_DIRTY);
+		// If we are working with a derived that is owned by an effect, then mark it as being
+		// disconnected.
+		if ((dependency.f & (UNOWNED | DISCONNECTED)) === 0) {
+			dependency.f ^= DISCONNECTED;
+		}
 		remove_reactions(/** @type {import('#client').Derived} **/ (dependency), 0);
 	}
 }
