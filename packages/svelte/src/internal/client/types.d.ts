@@ -85,8 +85,6 @@ export type EachItem = {
 	i: number | Source<number>;
 	/** key */
 	k: unknown;
-	/** anchor for items inserted before this */
-	o: Comment | Text;
 	prev: EachItem | EachState;
 	next: EachItem | null;
 };
