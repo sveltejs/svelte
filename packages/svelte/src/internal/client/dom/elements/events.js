@@ -173,38 +173,60 @@ export function handle_event_propagation(handler_element, event) {
 		}
 	});
 
-	/** @param {Element} next_target */
-	function next(next_target) {
-		current_target = next_target;
-		/** @type {null | Element} */
-		var parent_element = next_target.parentNode || /** @type {any} */ (next_target).host || null;
-
-		try {
-			// @ts-expect-error
-			var delegated = next_target['__' + event_name];
-
-			if (delegated !== undefined && !(/** @type {any} */ (next_target).disabled)) {
-				if (is_array(delegated)) {
-					var [fn, ...data] = delegated;
-					fn.apply(next_target, [event, ...data]);
-				} else {
-					delegated.call(next_target, event);
-				}
-			}
-		} finally {
-			if (
-				!event.cancelBubble &&
-				parent_element !== handler_element &&
-				parent_element !== null &&
-				next_target !== handler_element
-			) {
-				next(parent_element);
-			}
-		}
-	}
-
 	try {
-		yield_event_updates(() => next(/** @type {Element} */ (current_target)));
+		/**
+		 * @type {unknown}
+		 */
+		var throw_error;
+		/**
+		 * @type {unknown[]}
+		 */
+		var other_errors = [];
+		yield_event_updates(() => {
+			while (current_target !== null) {
+				/** @type {null | Element} */
+				var parent_element =
+					current_target.parentNode || /** @type {any} */ (current_target).host || null;
+
+				try {
+					// @ts-expect-error
+					var delegated = current_target['__' + event_name];
+
+					if (delegated !== undefined && !(/** @type {any} */ (current_target).disabled)) {
+						if (is_array(delegated)) {
+							var [fn, ...data] = delegated;
+							fn.apply(current_target, [event, ...data]);
+						} else {
+							delegated.call(current_target, event);
+						}
+					}
+				} catch (error) {
+					if (throw_error) {
+						other_errors.push(error);
+					} else {
+						throw_error = error;
+					}
+				}
+				if (
+					event.cancelBubble ||
+					parent_element === handler_element ||
+					parent_element === null ||
+					current_target === handler_element
+				) {
+					break;
+				}
+				current_target = parent_element;
+			}
+		});
+		if (throw_error) {
+			for (let error of other_errors) {
+				// Throw the rest of the errors, one-by-one on a microtask
+				queueMicrotask(() => {
+					throw error;
+				});
+			}
+			throw throw_error;
+		}
 	} finally {
 		// @ts-expect-error is used above
 		event.__root = handler_element;
