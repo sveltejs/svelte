@@ -238,33 +238,31 @@ function transform(name, dest) {
 			Block(node, context) {
 				if (!node.value.includes('PARAMETER')) return;
 
-				const value = node.value
+				const value = /** @type {string} */ (node.value)
 					.split('\n')
-					.map(
-						/** @param {string} line */ (line) => {
-							if (line === ' * MESSAGE') {
-								return messages[messages.length - 1]
-									.split('\n')
-									.map((line) => ` * ${line}`)
-									.join('\n');
-							}
-
-							if (line.includes('PARAMETER')) {
-								return vars
-									.map((name, i) => {
-										const optional = i >= group[0].vars.length;
-
-										return optional
-											? ` * @param {string | undefined | null} [${name}]`
-											: ` * @param {string} ${name}`;
-									})
-									.join('\n');
-							}
-
-							return line;
+					.map((line) => {
+						if (line === ' * MESSAGE') {
+							return messages[messages.length - 1]
+								.split('\n')
+								.map((line) => ` * ${line}`)
+								.join('\n');
 						}
-					)
-					.filter(/** @param {string} x */ (x) => x !== '')
+
+						if (line.includes('PARAMETER')) {
+							return vars
+								.map((name, i) => {
+									const optional = i >= group[0].vars.length;
+
+									return optional
+										? ` * @param {string | undefined | null} [${name}]`
+										: ` * @param {string} ${name}`;
+								})
+								.join('\n');
+						}
+
+						return line;
+					})
+					.filter((x) => x !== '')
 					.join('\n');
 
 				if (value !== node.value) {
