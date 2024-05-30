@@ -598,14 +598,16 @@ test('date fine grained tests', () => {
 		getUTCHours: true,
 		getMinutes: true,
 		getUTCMinutes: true,
+		getSeconds: true,
+		getUTCSeconds: true,
 		getMilliseconds: true,
 		getUTCMilliseconds: true
 	};
 	let test_description: string = '';
 
-	const reset_change = () => {
-		for (const key of Object.keys(changes)) {
-			changes[key] = false;
+	const expect_all_changes_to_be_false = () => {
+		for (const key of Object.keys(changes) as Array<keyof typeof Date>) {
+			assert.equal(changes[key], false, `${test_description}: effect for ${key} was not fired`);
 		}
 	};
 
@@ -615,18 +617,17 @@ test('date fine grained tests', () => {
 				// @ts-ignore
 				date[key]();
 				assert.equal(changes[key], true, `${test_description}: for ${key}`);
+				changes[key] = false;
 			});
 		}
 	});
 
 	flushSync(() => {
-		reset_change();
+		expect_all_changes_to_be_false();
 		changes = {
 			...changes,
 			getFullYear: true,
 			getUTCFullYear: true,
-			getDate: true,
-			getUTCDate: true,
 			getMonth: true,
 			getUTCMonth: true,
 			getDay: true,
@@ -637,7 +638,7 @@ test('date fine grained tests', () => {
 	});
 
 	flushSync(() => {
-		reset_change();
+		expect_all_changes_to_be_false();
 		changes = {
 			...changes,
 			getDate: true,
@@ -654,11 +655,11 @@ test('date fine grained tests', () => {
 			getUTCMilliseconds: true
 		};
 		test_description = 'changing seconds that will change day/hour/minutes/seconds/milliseconds';
-		date.setSeconds(60 * 60 * 25 + 1, 10);
+		date.setSeconds(61 * 60 * 25 + 1, 10);
 	});
 
 	flushSync(() => {
-		reset_change();
+		expect_all_changes_to_be_false();
 		changes = {
 			...changes,
 			getMonth: true,
