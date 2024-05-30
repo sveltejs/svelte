@@ -74,7 +74,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 
 			if (pending_fn) {
 				if (pending_effect && (pending_effect.f & INERT) === 0) {
-					destroy_effect(pending_effect);
+					destroy_effect(pending_effect, false);
 				}
 
 				pending_effect = branch(() => pending_fn(anchor));
@@ -107,7 +107,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 
 			if (then_fn) {
 				if (then_effect) {
-					destroy_effect(then_effect);
+					destroy_effect(then_effect, false);
 				}
 
 				then_effect = branch(() => then_fn(anchor, input));
