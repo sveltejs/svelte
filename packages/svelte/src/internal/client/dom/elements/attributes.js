@@ -1,7 +1,12 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of, map_get, map_set } from '../../utils.js';
-import { AttributeAliases, DelegatedEvents, namespace_svg } from '../../../../constants.js';
+import {
+	AttributeAliases,
+	DelegatedEvents,
+	is_capture_event,
+	namespace_svg
+} from '../../../../constants.js';
 import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import { effect, effect_root } from '../../reactivity/effects.js';
@@ -158,7 +163,8 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 	/** @type {Array<[string, any, () => void]>} */
 	var events = [];
 
-	for (key in next) {
+	// since key is captured we use const
+	for (const key in next) {
 		// let instead of var because referenced in a closure
 		let value = next[key];
 		if (value === prev?.[key]) continue;
@@ -172,11 +178,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 			let event_name = key.slice(2);
 			var delegated = DelegatedEvents.includes(event_name);
 
-			if (
-				event_name.endsWith('capture') &&
-				event_name !== 'ongotpointercapture' &&
-				event_name !== 'onlostpointercapture'
-			) {
+			if (is_capture_event(event_name)) {
 				event_name = event_name.slice(0, -7);
 				opts.capture = true;
 			}

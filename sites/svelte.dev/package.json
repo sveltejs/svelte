@@ -13,8 +13,9 @@
     "start": "node build",
     "check": "node scripts/update.js && pnpm generate && svelte-kit sync && svelte-check",
     "check:watch": "svelte-kit sync && svelte-check --watch",
-    "format": "prettier --check . --write",
-    "check:format": "prettier --check ."
+    "check:format": "prettier --check .",
+    "format": "prettier --check --write .",
+    "lint": "prettier --check ."
   },
   "dependencies": {
     "@jridgewell/sourcemap-codec": "^1.4.15",

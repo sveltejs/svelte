@@ -10,8 +10,31 @@ import {
 } from '../../reactivity/effects.js';
 import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
-import { current_component_context } from '../../runtime.js';
+import { current_component_context, current_effect } from '../../runtime.js';
 import { DEV } from 'esm-env';
+import { is_array } from '../../utils.js';
+import { push_template_node } from '../template.js';
+
+/**
+ * @param {import('#client').Effect} effect
+ * @param {Element} from
+ * @param {Element} to
+ * @returns {void}
+ */
+function swap_block_dom(effect, from, to) {
+	const dom = effect.dom;
+
+	if (is_array(dom)) {
+		for (let i = 0; i < dom.length; i++) {
+			if (dom[i] === from) {
+				dom[i] = to;
+				break;
+			}
+		}
+	} else if (dom === from) {
+		effect.dom = to;
+	}
+}
 
 /**
  * @param {Comment | Element} node
@@ -23,6 +46,7 @@ import { DEV } from 'esm-env';
  * @returns {void}
  */
 export function element(node, get_tag, is_svg, render_fn, get_namespace, location) {
+	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
 	const filename = DEV && location && current_component_context?.function.filename;
 
 	/** @type {string | null} */
@@ -81,6 +105,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 		if (next_tag && next_tag !== current_tag) {
 			effect = branch(() => {
+				const prev_element = element;
 				element = hydrating
 					? /** @type {Element} */ (element)
 					: ns
@@ -118,9 +143,12 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 				anchor.before(element);
 
-				return () => {
-					element?.remove();
-				};
+				if (prev_element) {
+					swap_block_dom(parent_effect, prev_element, element);
+					prev_element.remove();
+				} else if (!hydrating) {
+					push_template_node(element, parent_effect);
+				}
 			});
 		}
 

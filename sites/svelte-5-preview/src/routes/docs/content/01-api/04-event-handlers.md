@@ -39,7 +39,7 @@ Traditional `on:` event handlers will continue to work, but are deprecated in Sv
 
 In Svelte 4, components could emit events by creating a dispatcher with [`createEventDispatcher`](https://svelte.dev/docs/svelte#createeventdispatcher).
 
-This function is deprecated in Svelte 5. Instead, components should accept _callback props_ ([demo](/#H4sIAAAAAAAAE41TS27bMBC9ykBtELu1ZTmAG0C2hPYG3dddyPIwJkKRAjmy4wrad9VFL5BV75cjlKQof5osutCHb968-XCmjRgXaKL0WxvJosIojb7UdTSJ6Fi7g9mjILRnoxpdOmRlSs1rytdyTbyqlSb42lQ1MK0quI1n7hD3brdLR3KPQALDfyBk8N5QQTiaL8bLwbJptKGziRXCoLdaO2tkSVxJ0GiQRmNovSYFtfmij0GDhnf2WLeWq9k5WblymfmsJRM2TtZatSy_EvyYwSDIGYw8lsP9YnzKkXQT5Dv33uJbWhe-ybgvfDooO7-ZT6h9Z3le10utNg2RLVTJUvDyMWt9xV0u8QCbQgilbD09xzd_ZepCQikKY7J1tFGqWkf5y_PvP7Zqa7GcNkXbjO4Nci-3jsDQUaBFTFkITKFN4mQOH3zKnZXry3l5_vXTi5yEZ5x1vqfe39N8gFB_rQx3l5YC40-4DR0VyCiFJJxI1efDgW9pl8I8SW4CskP-sKMriClJU5eZR_eHQQifaFoI_mDDlSgJ9RCPS5yedJZDatxRpri3VJOCVPI0Lu4Th94MpZAu5FCMbxIk8Z259rCtH-iF5FXRsz2cxAsDTOlDobdXXp8f8ci03TgDl_7JDbQQLiOJP0HXw3eLK_x-MRhcey4sPdxPfrgZu7uV2nLGcRulbnq7yWnV3Ub87667RW0h7M4EwuBD5_a21qo2I7ey1xv370QH7y4PPxfz_IobAnR5-DlxXxf0vfsLb_4Z08cEAAA=)):
+This function is deprecated in Svelte 5. Instead, components should accept _callback props_ - which means you then pass functions as properties to these components ([demo](/#H4sIAAAAAAAACo1US27bMBC9yoBtELu2ZDmAG0CRhPYG3VddyPIwIUKRgjiOkwrcd9VFL5BV75cjFKQo2e5_IQnzeW-GM3zqGRcSDUs_9kxVDbKUvW9btmT01DrDPKAkZEtm9L6rnSczdSdaKkpVkmha3RF82Dct8E43cBmvnBEPsMsbl-QeiQRGfEbI4bWhinC23sxvxsh23xk6hnglDfqoKonvVU1CK-jQIM3m0HtOCmzrzVCDRg4P9j5bqmx1bFZlrjPfteKyIsz7WasP2M0hL85YFzn4QGAWHGbeX8D1Zj41S90-1LHuvcM_kp4QJPNhDNFpCUew8i32rwQfCnjObLsn0gq0qqWo7_Pez8AWCg-wraTUWmWrIcevIzNtpaCWlTF5ybZaNyUrXp6_fc9WLlKUqk9RGrS_SR7oSgaGniTmJTN1JTGFPomTNbzxbduSFcORXp6_fvEkE_FKcOun7PE-zRcIM2i1EW6NKXDxiLswWomcUkiCRbo9Ggexo7sU1klyETx3KG7v6MzFtaLIdea9D4eRCB8pqqS4VSnUqGhapRQKo4nnZmxNuJQIH1CRSUFpNV0g94nDbMajUFep8TB-SJDEV-YcoXUzpldKNNWQ7d1JvDHAdXeout0Z6t09PvGuatDAKT65gB7CMpL4LdjBfbU5819vxoAbz0lkcA9aCJthS9boneACdyx119guJ_E7jfyv-p10ewhqWkJQAFin5LbTrZkdJe5v-1HiXvzn6vz5rs-8hAJ7EJUtgn1y7f8ADN1MwGD_G-gBUWSLaModfnA-kELvvxb-Bl8sbLGY4L_O-5P9ATwVcA54BQAA)):
 
 ```svelte
 <script>
@@ -55,12 +55,12 @@ This function is deprecated in Svelte 5. Instead, components should accept _call
 </script>
 
 <Pump
-	inflate={() => {
-		size += 5;
+	inflate={(power) => {
+		size += power;
 		if (size > 75) burst = true;
 	}}
-	deflate={() => {
-		if (size > 0) size -= 5;
+	deflate={(power) => {
+		if (size > 0) size -= power;
 	}}
 />
 
@@ -77,10 +77,14 @@ This function is deprecated in Svelte 5. Instead, components should accept _call
 ```svelte
 <script>
 	let { inflate, deflate } = $props();
+	let power = $state(5);
 </script>
 
-<button onclick={inflate}>inflate</button>
-<button onclick={deflate}>deflate</button>
+<button onclick={() => inflate(power)}>inflate</button>
+<button onclick={() => deflate(power)}>deflate</button>
+<button onclick={() => power--}>-</button>
+Pump power: {power}
+<button onclick={() => power++}>+</button>
 ```
 
 ## Bubbling events

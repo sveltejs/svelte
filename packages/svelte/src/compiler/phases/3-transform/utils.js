@@ -155,35 +155,28 @@ export function clean_nodes(
  * @param {import('#compiler').Namespace} namespace
  * @param {import('#compiler').SvelteNode} parent
  * @param {import('#compiler').SvelteNode[]} nodes
- * @param {import('#compiler').SvelteNode[]} path
  */
-export function infer_namespace(namespace, parent, nodes, path) {
-	const parent_node =
-		parent.type === 'Fragment'
-			? // Messy: We know that Fragment calls create_block directly, so we can do this here
-				path.at(-1)
-			: parent;
-
+export function infer_namespace(namespace, parent, nodes) {
 	if (namespace !== 'foreign') {
-		if (parent_node?.type === 'RegularElement' && parent_node.name === 'foreignObject') {
+		if (parent.type === 'RegularElement' && parent.name === 'foreignObject') {
 			return 'html';
 		}
 
-		if (parent_node?.type === 'RegularElement' || parent_node?.type === 'SvelteElement') {
-			if (parent_node.metadata.svg) {
+		if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
+			if (parent.metadata.svg) {
 				return 'svg';
 			}
-			return parent_node.metadata.mathml ? 'mathml' : 'html';
+			return parent.metadata.mathml ? 'mathml' : 'html';
 		}
 
 		// Re-evaluate the namespace inside slot nodes that reset the namespace
 		if (
-			parent_node === undefined ||
-			parent_node.type === 'Root' ||
-			parent_node.type === 'Component' ||
-			parent_node.type === 'SvelteComponent' ||
-			parent_node.type === 'SvelteFragment' ||
-			parent_node.type === 'SnippetBlock'
+			parent.type === 'Fragment' ||
+			parent.type === 'Root' ||
+			parent.type === 'Component' ||
+			parent.type === 'SvelteComponent' ||
+			parent.type === 'SvelteFragment' ||
+			parent.type === 'SnippetBlock'
 		) {
 			const new_namespace = check_nodes_for_namespace(nodes, 'keep');
 			if (new_namespace !== 'keep' && new_namespace !== 'maybe_html') {

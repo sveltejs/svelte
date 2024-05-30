@@ -16,7 +16,8 @@ import {
 	STATE_SYMBOL,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	LEGACY_DERIVED_PROP
+	LEGACY_DERIVED_PROP,
+	DISCONNECTED
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -198,12 +199,15 @@ export function check_dirtiness(reaction) {
 		return true;
 	}
 
+	var is_disconnected = (flags & DISCONNECTED) !== 0;
+
 	if ((flags & MAYBE_DIRTY) !== 0 || (is_dirty && is_unowned)) {
 		var dependencies = reaction.deps;
 
 		if (dependencies !== null) {
 			var length = dependencies.length;
 			var is_equal;
+			var reactions;
 
 			for (var i = 0; i < length; i++) {
 				var dependency = dependencies[i];
@@ -211,13 +215,13 @@ export function check_dirtiness(reaction) {
 				if (!is_dirty && check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
 					is_equal = update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
 				}
+				var version = dependency.version;
 
 				if (is_unowned) {
 					// If we're working with an unowned derived signal, then we need to check
 					// if our dependency write version is higher. If it is then we can assume
 					// that state has changed to a newer version and thus this unowned signal
 					// is also dirty.
-					var version = dependency.version;
 
 					if (version > /** @type {import('#client').Derived} */ (reaction).version) {
 						/** @type {import('#client').Derived} */ (reaction).version = version;
@@ -228,7 +232,7 @@ export function check_dirtiness(reaction) {
 						// If we are working with an unowned signal as part of an effect (due to !current_skip_reaction)
 						// and the version hasn't changed, we still need to check that this reaction
 						// if linked to the dependency source – otherwise future updates will not be caught.
-						var reactions = dependency.reactions;
+						reactions = dependency.reactions;
 						if (reactions === null) {
 							dependency.reactions = [reaction];
 						} else {
@@ -238,6 +242,20 @@ export function check_dirtiness(reaction) {
 				} else if ((reaction.f & DIRTY) !== 0) {
 					// `signal` might now be dirty, as a result of calling `check_dirtiness` and/or `update_derived`
 					return true;
+				} else if (is_disconnected) {
+					// It might be that the derived was was dereferenced from its dependencies but has now come alive again.
+					// In thise case, we need to re-attach it to the graph and mark it dirty if any of its dependencies have
+					// changed since.
+					if (version > /** @type {import('#client').Derived} */ (reaction).version) {
+						/** @type {import('#client').Derived} */ (reaction).version = version;
+						is_dirty = true;
+					}
+					reactions = dependency.reactions;
+					if (reactions === null) {
+						dependency.reactions = [reaction];
+					} else if (!reactions.includes(reaction)) {
+						reactions.push(reaction);
+					}
 				}
 			}
 		}
@@ -245,6 +263,9 @@ export function check_dirtiness(reaction) {
 		// Unowned signals are always maybe dirty, as we instead check their dependency versions.
 		if (!is_unowned) {
 			set_signal_status(reaction, CLEAN);
+		}
+		if (is_disconnected) {
+			reaction.f ^= DISCONNECTED;
 		}
 	}
 
@@ -422,9 +443,15 @@ function remove_reaction(signal, dependency) {
 			}
 		}
 	}
-	if (reactions_length === 0 && (dependency.f & UNOWNED) !== 0) {
-		// If the signal is unowned then we need to make sure to change it to maybe dirty.
+	// If the derived has no reactions, then we can disconnect it from the graph,
+	// allowing it to either reconnect in the future, or be GC'd by the VM.
+	if (reactions_length === 0 && (dependency.f & DERIVED) !== 0) {
 		set_signal_status(dependency, MAYBE_DIRTY);
+		// If we are working with a derived that is owned by an effect, then mark it as being
+		// disconnected.
+		if ((dependency.f & (UNOWNED | DISCONNECTED)) === 0) {
+			dependency.f ^= DISCONNECTED;
+		}
 		remove_reactions(/** @type {import('#client').Derived} **/ (dependency), 0);
 	}
 }
@@ -573,7 +600,7 @@ function flush_queued_effects(effects) {
 function process_deferred() {
 	is_micro_task_queued = false;
 	is_yield_task_queued = false;
-	if (flush_count > 101) {
+	if (flush_count > 1001) {
 		return;
 	}
 	const previous_queued_root_effects = current_queued_root_effects;
@@ -711,7 +738,7 @@ function process_effects(effect, collected_effects) {
 /**
  * @param {{ (): void; (): any; }} fn
  */
-export function yield_updates(fn) {
+export function yield_event_updates(fn) {
 	const previous_scheduler_mode = current_scheduler_mode;
 	try {
 		current_scheduler_mode = FLUSH_YIELD;
@@ -740,6 +767,8 @@ export function flush_sync(fn, flush_previous = true) {
 
 		current_scheduler_mode = FLUSH_SYNC;
 		current_queued_root_effects = root_effects;
+		is_yield_task_queued = false;
+		is_micro_task_queued = false;
 
 		if (flush_previous) {
 			flush_queued_root_effects(previous_queued_root_effects);
@@ -815,7 +844,7 @@ export function get(signal) {
 		) {
 			if (current_dependencies === null) {
 				current_dependencies = [signal];
-			} else {
+			} else if (current_dependencies[current_dependencies.length - 1] !== signal) {
 				current_dependencies.push(signal);
 			}
 		}

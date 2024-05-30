@@ -242,13 +242,14 @@ function process_children(nodes, parent, { visit, state }) {
 
 /**
  * @param {import('#compiler').SvelteNode} parent
+ * @param {import('#compiler').Fragment} fragment
  * @param {import('#compiler').SvelteNode[]} nodes
  * @param {import('./types').ComponentContext} context
  * @param {import('./types').Anchor} [anchor]
  * @returns {import('estree').Statement[]}
  */
-function create_block(parent, nodes, context, anchor) {
-	const namespace = infer_namespace(context.state.metadata.namespace, parent, nodes, context.path);
+function create_block(parent, fragment, nodes, context, anchor) {
+	const namespace = infer_namespace(context.state.metadata.namespace, parent, nodes);
 
 	const { hoisted, trimmed } = clean_nodes(
 		parent,
@@ -266,6 +267,7 @@ function create_block(parent, nodes, context, anchor) {
 	/** @type {import('./types').ComponentServerTransformState} */
 	const state = {
 		...context.state,
+		scope: context.state.scopes.get(fragment) ?? context.state.scope,
 		init: [],
 		template: [],
 		metadata: {
@@ -791,7 +793,8 @@ const javascript_visitors_runes = {
 		if (rune === '$state.is') {
 			return b.call(
 				'Object.is',
-				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0])),
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[1]))
 			);
 		}
 
@@ -1087,7 +1090,7 @@ function serialize_inline_component(node, component_name, context) {
 	const serialized_slots = [];
 
 	for (const slot_name of Object.keys(children)) {
-		const body = create_block(node, children[slot_name], context);
+		const body = create_block(node, node.fragment, children[slot_name], context);
 		if (body.length === 0) continue;
 
 		const slot_fn = b.arrow(
@@ -1270,7 +1273,7 @@ const javascript_visitors_legacy = {
 /** @type {import('./types').ComponentVisitors} */
 const template_visitors = {
 	Fragment(node, context) {
-		const body = create_block(node, node.nodes, context);
+		const body = create_block(context.path.at(-1) ?? node, node, node.nodes, context);
 		return b.block(body);
 	},
 	HtmlTag(node, context) {
@@ -1472,7 +1475,7 @@ const template_visitors = {
 			}
 		};
 
-		const main = create_block(node, node.fragment.nodes, {
+		const main = create_block(node, node.fragment, node.fragment.nodes, {
 			...context,
 			state: { ...context.state, metadata }
 		});
@@ -1541,7 +1544,9 @@ const template_visitors = {
 		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(block_open.value))));
 
 		each.push(
-			.../** @type {import('estree').Statement[]} */ (create_block(node, children, context))
+			.../** @type {import('estree').Statement[]} */ (
+				create_block(node, node.body, children, context)
+			)
 		);
 
 		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(block_close.value))));
@@ -1556,7 +1561,7 @@ const template_visitors = {
 		const close = b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE)));
 
 		if (node.fallback) {
-			const fallback = create_block(node, node.fallback.nodes, context);
+			const fallback = create_block(node, node.fallback, node.fallback.nodes, context);
 
 			fallback.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE))));
 
@@ -1577,8 +1582,10 @@ const template_visitors = {
 		const state = context.state;
 		state.template.push(block_open);
 
-		const consequent = create_block(node, node.consequent.nodes, context);
-		const alternate = node.alternate ? create_block(node, node.alternate.nodes, context) : [];
+		const consequent = create_block(node, node.consequent, node.consequent.nodes, context);
+		const alternate = node.alternate
+			? create_block(node, node.alternate, node.alternate.nodes, context)
+			: [];
 
 		consequent.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE))));
 		alternate.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE))));
@@ -1634,7 +1641,7 @@ const template_visitors = {
 	KeyBlock(node, context) {
 		const state = context.state;
 		state.template.push(block_open);
-		const body = create_block(node, node.fragment.nodes, context);
+		const body = create_block(node, node.fragment, node.fragment.nodes, context);
 		state.template.push(t_statement(b.block(body)));
 		state.template.push(block_close);
 	},
@@ -1724,15 +1731,7 @@ const template_visitors = {
 			}
 		}
 
-		const state = {
-			...context.state,
-			// TODO this logic eventually belongs in create_block, when fragments are used everywhere
-			scope: /** @type {import('../../scope').Scope} */ (context.state.scopes.get(node.fragment))
-		};
-		const body = create_block(node, node.fragment.nodes, {
-			...context,
-			state
-		});
+		const body = create_block(node, node.fragment, node.fragment.nodes, context);
 
 		context.state.template.push(t_statement(b.block(body)));
 	},
@@ -1802,7 +1801,7 @@ const template_visitors = {
 		const fallback =
 			node.fragment.nodes.length === 0
 				? b.literal(null)
-				: b.thunk(b.block(create_block(node, node.fragment.nodes, context)));
+				: b.thunk(b.block(create_block(node, node.fragment, node.fragment.nodes, context)));
 		const slot = b.call('$.slot', b.id('$$payload'), expression, props_expression, fallback);
 
 		state.template.push(t_statement(b.stmt(slot)));
@@ -1810,7 +1809,7 @@ const template_visitors = {
 	},
 	SvelteHead(node, context) {
 		const state = context.state;
-		const body = create_block(node, node.fragment.nodes, context);
+		const body = create_block(node, node.fragment, node.fragment.nodes, context);
 		state.template.push(
 			t_statement(
 				b.stmt(b.call('$.head', b.id('$$payload'), b.arrow([b.id('$$payload')], b.block(body))))

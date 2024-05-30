@@ -280,8 +280,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		next({ scope });
 	};
 
-	const skip = () => {};
-
 	/**
 	 * @type {import('zimmerframe').Visitor<import('#compiler').ElementLike, State, import('#compiler').SvelteNode>}
 	 */
@@ -476,7 +474,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		SwitchStatement: create_block_scope,
 
 		ClassDeclaration(node, { state, next }) {
-			if (node.id) state.scope.declare(node.id, 'normal', 'const', node);
+			if (node.id) state.scope.declare(node.id, 'normal', 'let', node);
 			next();
 		},
 

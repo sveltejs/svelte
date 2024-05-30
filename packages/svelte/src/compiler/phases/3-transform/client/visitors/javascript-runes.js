@@ -2,7 +2,12 @@ import { get_rune } from '../../../scope.js';
 import { is_hoistable_function, transform_inspect_rune } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
-import { get_prop_source, is_state_source, should_proxy_or_freeze } from '../utils.js';
+import {
+	get_prop_source,
+	is_state_source,
+	serialize_proxy_reassignment,
+	should_proxy_or_freeze
+} from '../utils.js';
 import { extract_paths } from '../../../../utils/ast.js';
 import { regex_invalid_identifier_chars } from '../../../patterns.js';
 
@@ -139,7 +144,11 @@ export const javascript_visitors_runes = {
 									'set',
 									definition.key,
 									[value],
-									[b.stmt(b.call('$.set', member, b.call('$.proxy', value)))]
+									[
+										b.stmt(
+											b.call('$.set', member, serialize_proxy_reassignment(value, field.id, state))
+										)
+									]
 								)
 							);
 						}
@@ -246,9 +255,14 @@ export const javascript_visitors_runes = {
 							property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
 						assert.equal(id.type, 'Identifier');
 						const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
-						const initial =
+						let initial =
 							binding.initial &&
 							/** @type {import('estree').Expression} */ (visit(binding.initial));
+						// We're adding proxy here on demand and not within the prop runtime function so that
+						// people not using proxied state anywhere in their code don't have to pay the additional bundle size cost
+						if (initial && binding.mutated && should_proxy_or_freeze(initial, state.scope)) {
+							initial = b.call('$.proxy', initial);
+						}
 
 						if (binding.reassigned || state.analysis.accessors || initial) {
 							declarations.push(b.declarator(id, get_prop_source(binding, state, name, initial)));

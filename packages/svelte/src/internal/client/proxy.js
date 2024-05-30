@@ -27,9 +27,10 @@ import * as e from './errors.js';
  * @param {T} value
  * @param {boolean} [immutable]
  * @param {import('#client').ProxyMetadata | null} [parent]
+ * @param {import('#client').Source<T>} [prev] dev mode only
  * @returns {import('#client').ProxyStateObject<T> | T}
  */
-export function proxy(value, immutable = true, parent = null) {
+export function proxy(value, immutable = true, parent = null, prev) {
 	if (typeof value === 'object' && value != null && !is_frozen(value)) {
 		// If we have an existing proxy, return it...
 		if (STATE_SYMBOL in value) {
@@ -71,13 +72,22 @@ export function proxy(value, immutable = true, parent = null) {
 				// @ts-expect-error
 				value[STATE_SYMBOL].parent = parent;
 
-				// @ts-expect-error
-				value[STATE_SYMBOL].owners =
-					parent === null
-						? current_component_context !== null
-							? new Set([current_component_context.function])
-							: null
-						: new Set();
+				if (prev) {
+					// Reuse owners from previous state; necessary because reassignment is not guaranteed to have correct component context.
+					// If no previous proxy exists we play it safe and assume ownerless state
+					// @ts-expect-error
+					const prev_owners = prev?.v?.[STATE_SYMBOL]?.owners;
+					// @ts-expect-error
+					value[STATE_SYMBOL].owners = prev_owners ? new Set(prev_owners) : null;
+				} else {
+					// @ts-expect-error
+					value[STATE_SYMBOL].owners =
+						parent === null
+							? current_component_context !== null
+								? new Set([current_component_context.function])
+								: null
+							: new Set();
+				}
 			}
 
 			return proxy;

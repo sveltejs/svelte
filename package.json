@@ -5,9 +5,8 @@
   "private": true,
   "type": "module",
   "license": "MIT",
-  "packageManager": "pnpm@8.6.12",
   "engines": {
-    "pnpm": "^8.0.0"
+    "pnpm": "^9.0.0"
   },
   "repository": {
     "type": "git",
@@ -18,8 +17,8 @@
     "build:sites": "pnpm -r --filter=./sites/* build",
     "preview-site": "npm run build --prefix sites/svelte-5-preview",
     "check": "cd packages/svelte && pnpm build && cd ../../ && pnpm -r check",
-    "format": "prettier --write .",
-    "lint": "prettier --check . && eslint",
+    "lint": "pnpm -r lint && prettier --check documentation",
+    "format": "pnpm -r format && prettier --check --write documentation",
     "test": "vitest run",
     "test-output": "vitest run --coverage --reporter=json --outputFile=sites/svelte-5-preview/src/routes/status/results.json",
     "changeset:version": "changeset version && pnpm -r generate:version && git add --all",
@@ -40,7 +39,7 @@
     "prettier": "^3.2.4",
     "prettier-plugin-svelte": "^3.1.2",
     "typescript": "^5.3.3",
-    "typescript-eslint": "^7.6.0",
+    "typescript-eslint": "^8.0.0-alpha.20",
     "vitest": "^1.2.1"
   },
   "pnpm": {

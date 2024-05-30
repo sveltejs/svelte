@@ -203,7 +203,7 @@ export function serialize_set_binding(node, context, fallback, options) {
 							assignment.right =
 								private_state.kind === 'frozen_state'
 									? b.call('$.freeze', value)
-									: b.call('$.proxy', value);
+									: serialize_proxy_reassignment(value, private_state.id, state);
 							return assignment;
 						}
 					}
@@ -216,7 +216,7 @@ export function serialize_set_binding(node, context, fallback, options) {
 							should_proxy_or_freeze(value, context.state.scope)
 							? private_state.kind === 'frozen_state'
 								? b.call('$.freeze', value)
-								: b.call('$.proxy', value)
+								: serialize_proxy_reassignment(value, private_state.id, state)
 							: value
 					);
 				}
@@ -240,7 +240,7 @@ export function serialize_set_binding(node, context, fallback, options) {
 					assignment.right =
 						public_state.kind === 'frozen_state'
 							? b.call('$.freeze', value)
-							: b.call('$.proxy', value);
+							: serialize_proxy_reassignment(value, public_state.id, state);
 					return assignment;
 				}
 			}
@@ -305,7 +305,7 @@ export function serialize_set_binding(node, context, fallback, options) {
 						context.state.analysis.runes &&
 							!options?.skip_proxy_and_freeze &&
 							should_proxy_or_freeze(value, context.state.scope)
-							? b.call('$.proxy', value)
+							? serialize_proxy_reassignment(value, left_name, state)
 							: value
 					);
 				} else if (binding.kind === 'frozen_state') {
@@ -408,6 +408,25 @@ export function serialize_set_binding(node, context, fallback, options) {
 	}
 
 	return serialize();
+}
+
+/**
+ * @param {import('estree').Expression} value
+ * @param {import('estree').PrivateIdentifier | string} proxy_reference
+ * @param {import('./types').ClientTransformState} state
+ */
+export function serialize_proxy_reassignment(value, proxy_reference, state) {
+	return state.options.dev
+		? b.call(
+				'$.proxy',
+				value,
+				b.true,
+				b.null,
+				typeof proxy_reference === 'string'
+					? b.id(proxy_reference)
+					: b.member(b.this, proxy_reference)
+			)
+		: b.call('$.proxy', value);
 }
 
 /**

@@ -1,6 +1,6 @@
 import { render_effect } from '../../reactivity/effects.js';
 import { all_registered_events, root_event_handles } from '../../render.js';
-import { yield_updates } from '../../runtime.js';
+import { yield_event_updates } from '../../runtime.js';
 import { define_property, is_array } from '../../utils.js';
 import { hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
@@ -48,15 +48,15 @@ export function create_event(event_name, dom, handler, options) {
 			handle_event_propagation(dom, event);
 		}
 		if (!event.cancelBubble) {
-			return yield_updates(() => handler.call(this, event));
+			return yield_event_updates(() => handler.call(this, event));
 		}
 	}
 
 	// Chrome has a bug where pointer events don't work when attached to a DOM element that has been cloned
 	// with cloneNode() and the DOM element is disconnected from the document. To ensure the event works, we
 	// defer the attachment till after it's been appended to the document. TODO: remove this once Chrome fixes
-	// this bug.
-	if (event_name.startsWith('pointer')) {
+	// this bug. The same applies to wheel events.
+	if (event_name.startsWith('pointer') || event_name === 'wheel') {
 		queue_micro_task(() => {
 			dom.addEventListener(event_name, target_handler, options);
 		});
@@ -204,7 +204,7 @@ export function handle_event_propagation(handler_element, event) {
 	}
 
 	try {
-		yield_updates(() => next(/** @type {Element} */ (current_target)));
+		yield_event_updates(() => next(/** @type {Element} */ (current_target)));
 	} finally {
 		// @ts-expect-error is used above
 		event.__root = handler_element;
