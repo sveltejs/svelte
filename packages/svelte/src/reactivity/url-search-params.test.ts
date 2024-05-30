@@ -98,6 +98,9 @@ test('URLSearchParams.get', () => {
 		render_effect(() => {
 			log.push(params.get('c'));
 		});
+		render_effect(() => {
+			log.push(params.get('e'));
+		});
 	});
 
 	flushSync(() => {
@@ -112,7 +115,11 @@ test('URLSearchParams.get', () => {
 		params.delete('a');
 	});
 
-	assert.deepEqual(log, ['b', 'd', 'new-b', null]);
+	flushSync(() => {
+		params.set('q', 'f');
+	});
+
+	assert.deepEqual(log, ['b', 'd', null, 'new-b', null]);
 
 	cleanup();
 });

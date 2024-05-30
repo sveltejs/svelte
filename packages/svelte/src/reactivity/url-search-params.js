@@ -5,22 +5,33 @@ export const ReactiveURLSearchParams = make_reactive(URLSearchParams, {
 	read_properties: ['get', 'has', 'getAll'],
 	interceptors: {
 		set: (options, ...params) => {
-			if (typeof params[0] == 'string' && options.value.get(params[0]) === params[1]) {
+			const value = options.value.get(/**@type {string} */ (params[0]));
+			const value_has_changed = value !== /**@type {string} */ (params[1]).toString();
+			if (value && !value_has_changed) {
 				return false;
 			}
-			options.notify_read_properties(['get', 'has', 'getAll'], params[0]);
+
+			if (!value) {
+				options.notify_read_properties(['has'], params[0]);
+			}
+
+			if (value_has_changed) {
+				options.notify_read_properties(['get'], params[0]);
+			}
+
+			options.notify_read_properties(['getAll'], params[0]);
 			return true;
 		},
 		append: (options, ...params) => {
 			options.notify_read_properties(['getAll'], params[0]);
 
-			if (typeof params[0] == 'string' && !options.value.has(params[0])) {
+			if (!options.value.has(/**@type {string} */ (params[0]))) {
 				options.notify_read_properties(['get', 'has'], params[0]);
 			}
 			return true;
 		},
 		delete: (options, ...params) => {
-			if (typeof params[0] == 'string' && !options.value.has(params[0])) {
+			if (!options.value.has(/**@type {string} */ (params[0]))) {
 				return false;
 			}
 			options.notify_read_properties(['get', 'has', 'getAll'], params[0]);
