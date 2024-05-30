@@ -4,6 +4,10 @@
   "type": "module",
   "license": "MIT",
   "version": "0.0.1",
+  "scripts": {
+    "format": "prettier --check --write .",
+    "lint": "prettier --check . && eslint"
+  },
   "dependencies": {
     "@types/minimist": "^1.2.5",
     "minimist": "^1.2.8",

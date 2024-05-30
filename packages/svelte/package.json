@@ -106,6 +106,8 @@
     "generate:version": "node ./scripts/generate-version.js",
     "generate:types": "node ./scripts/generate-types.js && tsc -p tsconfig.generated.json",
     "prepublishOnly": "pnpm build",
+    "format": "prettier --check --write .",
+    "lint": "prettier --check . && eslint",
     "knip": "knip"
   },
   "devDependencies": {
