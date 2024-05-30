@@ -5,6 +5,9 @@ import virtual from '@rollup/plugin-virtual';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import { compile } from 'svelte/compiler';
 
+/**
+ * @param {string} entry
+ */
 async function bundle_code(entry) {
 	const bundle = await rollup({
 		input: '__entry__',
