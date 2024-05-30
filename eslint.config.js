@@ -5,10 +5,19 @@ import lube from 'eslint-plugin-lube';
 export default [
 	...svelte_config,
 	{
+		languageOptions: {
+			parserOptions: {
+				project: true
+			}
+		},
 		plugins: {
 			lube
 		},
 		rules: {
+			'@typescript-eslint/await-thenable': 'error',
+			'@typescript-eslint/no-floating-promises': 'error',
+			'@typescript-eslint/no-misused-promises': 'error',
+			'@typescript-eslint/require-await': 'error',
 			'no-console': 'error',
 			'lube/svelte-naming-convention': ['error', { fixSameNames: true }],
 			// eslint isn't that well-versed with JSDoc to know that `foo: /** @type{..} */ (foo)` isn't a violation of this rule, so turn it off
@@ -43,7 +52,6 @@ export default [
 			'documentation',
 			// contains a fork of the REPL which doesn't adhere to eslint rules
 			'sites/svelte-5-preview/**',
-			'playgrounds/demo/src/**',
 			'tmp/**',
 			// wasn't checked previously, reenable at some point
 			'sites/svelte.dev/**'

@@ -635,7 +635,12 @@ export function schedule_effect(signal) {
 	} else if (current_scheduler_mode === FLUSH_YIELD) {
 		if (!is_yield_task_queued) {
 			is_yield_task_queued = true;
-			yield_tick().then(process_deferred);
+			yield_tick()
+				.then(process_deferred)
+				.catch((err) => {
+					// eslint-disable-next-line no-console
+					console.error(err);
+				});
 		}
 	}
 

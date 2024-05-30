@@ -120,9 +120,14 @@ export function spring(value, opts = {}) {
 			});
 		}
 		return new Promise((fulfil) => {
-			/** @type {import('../internal/client/types').Task} */ (task).promise.then(() => {
-				if (token === current_token) fulfil();
-			});
+			/** @type {import('../internal/client/types').Task} */ (task).promise
+				.then(() => {
+					if (token === current_token) fulfil();
+				})
+				.catch((err) => {
+					// eslint-disable-next-line no-console
+					console.error(err);
+				});
 		});
 	}
 	/** @type {import('./public.js').Spring<T>} */
