@@ -29,6 +29,7 @@ export function parse(source, typescript) {
  * @param {string} source
  * @param {boolean} typescript
  * @param {number} index
+ * @returns {acorn.Expression & { leadingComments?: CommentWithLocation[]; trailingComments?: CommentWithLocation[]; }}
  */
 export function parse_expression_at(source, typescript, index) {
 	const parser = typescript ? ParserWithTS : acorn.Parser;
@@ -110,6 +111,9 @@ function get_comment_handlers(source) {
 					}
 				}
 			});
+			if (comments.length > 0) {
+				(ast.trailingComments ||= []).push(...comments.splice(0))
+			}
 		}
 	};
 }

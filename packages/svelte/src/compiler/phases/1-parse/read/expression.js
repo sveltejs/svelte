@@ -17,6 +17,10 @@ export default function read_expression(parser) {
 		}
 
 		let index = /** @type {number} */ (node.end);
+		if (node.trailingComments !== undefined && node.trailingComments.length > 0) {
+			index = node.trailingComments.at(-1).end;
+		}
+
 		while (num_parens > 0) {
 			const char = parser.template[index];
 
