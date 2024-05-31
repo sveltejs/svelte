@@ -33,5 +33,17 @@ export default test({
 				<button>reassign: 2</button>
 			`
 		);
+
+		flushSync(() => {
+			btn1?.click();
+		});
+
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<button>mutate: 3</button>
+				<button>reassign: 3</button>
+			`
+		);
 	}
 });
