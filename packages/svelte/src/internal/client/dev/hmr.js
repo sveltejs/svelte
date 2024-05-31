@@ -23,7 +23,7 @@ export function hmr(source) {
 			if (effect) {
 				// @ts-ignore
 				for (var k in instance) delete instance[k];
-				destroy_effect(effect, false);
+				destroy_effect(effect);
 			}
 
 			effect = branch(() => {

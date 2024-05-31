@@ -25,7 +25,7 @@ export function snippet(get_snippet, node, ...args) {
 		if (snippet === (snippet = get_snippet())) return;
 
 		if (snippet_effect) {
-			destroy_effect(snippet_effect, false);
+			destroy_effect(snippet_effect);
 			snippet_effect = null;
 		}
 

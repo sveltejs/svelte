@@ -478,17 +478,17 @@ export function remove_reactions(signal, start_index) {
 
 /**
  * @param {import('#client').Reaction} signal
- * @param {boolean} skip_remove_dom
+ * @param {boolean} [remove_dom]
  * @returns {void}
  */
-export function destroy_effect_children(signal, skip_remove_dom) {
+export function destroy_effect_children(signal, remove_dom = true) {
 	let effect = signal.first;
 	signal.first = null;
 	signal.last = null;
 	var sibling;
 	while (effect !== null) {
 		sibling = effect.next;
-		destroy_effect(effect, skip_remove_dom);
+		destroy_effect(effect, remove_dom);
 		effect = sibling;
 	}
 }
@@ -521,7 +521,7 @@ export function execute_effect(effect) {
 
 	try {
 		if ((flags & BLOCK_EFFECT) === 0) {
-			destroy_effect_children(effect, false);
+			destroy_effect_children(effect);
 		}
 
 		execute_effect_teardown(effect);

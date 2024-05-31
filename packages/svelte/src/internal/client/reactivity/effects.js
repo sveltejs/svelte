@@ -198,7 +198,7 @@ export function user_pre_effect(fn) {
 export function effect_root(fn) {
 	const effect = create_effect(ROOT_EFFECT, fn, true);
 	return () => {
-		destroy_effect(effect, false);
+		destroy_effect(effect);
 	};
 }
 
@@ -311,17 +311,17 @@ export function execute_effect_teardown(effect) {
 
 /**
  * @param {import('#client').Effect} effect
- * @param {boolean} skip_remove_dom
+ * @param {boolean} [remove_dom]
  * @returns {void}
  */
-export function destroy_effect(effect, skip_remove_dom) {
+export function destroy_effect(effect, remove_dom = true) {
 	var dom = effect.dom;
 
-	if (dom !== null && !skip_remove_dom) {
+	if (dom !== null && remove_dom) {
 		remove(dom);
 	}
 
-	destroy_effect_children(effect, skip_remove_dom);
+	destroy_effect_children(effect, remove_dom);
 	remove_reactions(effect, 0);
 	set_signal_status(effect, DESTROYED);
 

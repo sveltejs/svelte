@@ -95,7 +95,7 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 				resume_effect(effect);
 			} else {
 				// tag is changing — destroy immediately, render contents without intro transitions
-				destroy_effect(effect, false);
+				destroy_effect(effect);
 				set_should_intro(false);
 			}
 		}

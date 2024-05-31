@@ -71,7 +71,7 @@ export function derived_safe_equal(fn) {
  * @returns {void}
  */
 function destroy_derived_children(signal) {
-	destroy_effect_children(signal, false);
+	destroy_effect_children(signal);
 	var deriveds = signal.deriveds;
 
 	if (deriveds !== null) {

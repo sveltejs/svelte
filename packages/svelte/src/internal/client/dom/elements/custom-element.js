@@ -196,7 +196,7 @@ if (typeof HTMLElement === 'function') {
 			Promise.resolve().then(() => {
 				if (!this.$$cn && this.$$c) {
 					this.$$c.$destroy();
-					destroy_effect(this.$$me, false);
+					destroy_effect(this.$$me);
 					this.$$c = undefined;
 				}
 			});
