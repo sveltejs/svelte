@@ -761,9 +761,9 @@ export function yield_event_updates(fn) {
 	const event = window.event;
 	const previous_scheduler_mode = current_scheduler_mode;
 	// If we're calling yield_updates and there is already an active yield in progress (`is_yield_task_active`)
-	// then it's likely that the event might might try and read from the UI. Additionally, we might be dealing with
-	// a case where we explicitly want to flush if `event.isTrusted` is true and `is_yield_task_queued`, for example
-	// if we had an event like `submit`, that occured because of a `click`.
+	// and it has a different event type, then it's likely that a new event is about to occur that might try and read from the UI.
+	// Additionally, we might be dealing with a case where we explicitly want to flush if `event.isTrusted` is true and
+	// `is_yield_task_queued`, for example if we had an event like `submit`, that occured because of a `click`.
 	if (
 		previous_scheduler_mode !== FLUSH_YIELD &&
 		((is_yield_task_active && prev_event_type !== event?.type) ||
