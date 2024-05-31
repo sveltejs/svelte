@@ -294,11 +294,10 @@ export function serialize_set_binding(node, context, fallback, options) {
 		if (left === node.left) {
 			const initial_bindable_proxy =
 				binding.initial &&
-				binding.initial.type !== 'ClassDeclaration' &&
-				binding.initial.type !== 'FunctionDeclaration' &&
-				binding.initial.type !== 'ImportDeclaration' &&
-				binding.initial.type !== 'EachBlock' &&
-				should_proxy_or_freeze(binding.initial, context.state.scope);
+				should_proxy_or_freeze(
+					/**@type {import("estree").Expression}*/ (binding.initial),
+					context.state.scope
+				);
 			if (
 				(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
 				!initial_bindable_proxy
