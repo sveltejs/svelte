@@ -57,8 +57,9 @@ export function index(_, i) {
  * subsequent destruction. Used in each blocks
  * @param {import('#client').EachItem[]} items
  * @param {null | Node} controlled_anchor
+ * @param {Map<any, import("#client").EachItem>} items_map
  */
-function pause_effects(items, controlled_anchor) {
+function pause_effects(items, controlled_anchor, items_map) {
 	/** @type {import('#client').TransitionManager[]} */
 	var transitions = [];
 	var length = items.length;
@@ -81,6 +82,7 @@ function pause_effects(items, controlled_anchor) {
 	run_out_transitions(transitions, () => {
 		for (var i = 0; i < length; i++) {
 			var item = items[i];
+			items_map.delete(item.k);
 			link(item.prev, item.next);
 			destroy_effect(item.e, !is_controlled);
 		}
@@ -398,7 +400,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			}
 		}
 
-		pause_effects(to_destroy, controlled_anchor);
+		pause_effects(to_destroy, controlled_anchor, items);
 	}
 
 	if (is_animated) {
