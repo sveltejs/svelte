@@ -1,5 +1,11 @@
 import { DEV } from 'esm-env';
-import { get_descriptors, get_prototype_of, is_frozen, object_freeze } from './utils.js';
+import {
+	define_property,
+	get_descriptors,
+	get_prototype_of,
+	is_frozen,
+	object_freeze
+} from './utils.js';
 import { snapshot } from './proxy.js';
 import { destroy_effect, effect, execute_effect_teardown } from './reactivity/effects.js';
 import {
@@ -17,7 +23,8 @@ import {
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
-	DISCONNECTED
+	DISCONNECTED,
+	STATE_FROZEN_SYMBOL
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -1353,19 +1360,26 @@ if (DEV) {
 }
 
 /**
- * Expects a value that was wrapped with `freeze` and makes it frozen.
+ * Expects a value that was wrapped with `freeze` and makes it frozen in DEV.
  * @template T
  * @param {T} value
  * @returns {Readonly<T>}
  */
 export function freeze(value) {
-	if (typeof value === 'object' && value != null && !is_frozen(value)) {
+	if (typeof value === 'object' && value != null && !(STATE_FROZEN_SYMBOL in value)) {
 		// If the object is already proxified, then snapshot the value
-		if (STATE_SYMBOL in value) {
-			return object_freeze(snapshot(value));
+		if (STATE_SYMBOL in value || is_frozen(value)) {
+			value = snapshot(value);
 		}
-		// Otherwise freeze the object
-		object_freeze(value);
+		define_property(value, STATE_FROZEN_SYMBOL, {
+			value: true,
+			writable: true,
+			enumerable: false
+		});
+		// Freeze the object in DEV
+		if (DEV) {
+			object_freeze(value);
+		}
 	}
 	return value;
 }
