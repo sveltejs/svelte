@@ -398,22 +398,23 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		to_destroy.push(current);
 		current = current.next;
 	}
+	var destroy_length = to_destroy.length;
 
-	if (to_destroy.length > 0) {
+	if (destroy_length > 0) {
 		var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
 
 		if (is_animated) {
-			for (i = 0; i < to_destroy.length; i += 1) {
+			for (i = 0; i < destroy_length; i += 1) {
 				to_destroy[i].a?.measure();
 			}
 
-			for (i = 0; i < to_destroy.length; i += 1) {
+			for (i = 0; i < destroy_length; i += 1) {
 				to_destroy[i].a?.fix();
 			}
 		}
 
 		pause_effects(to_destroy, controlled_anchor, () => {
-			for (var i = 0; i < to_destroy.length; i += 1) {
+			for (var i = 0; i < destroy_length; i += 1) {
 				var item = to_destroy[i];
 				items.delete(item.k);
 				item.o.remove();
