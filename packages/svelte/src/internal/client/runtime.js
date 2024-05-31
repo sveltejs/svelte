@@ -738,7 +738,7 @@ function process_effects(effect, collected_effects) {
 /**
  * @param {{ (): void; (): any; }} fn
  */
-export function yield_updates(fn) {
+export function yield_event_updates(fn) {
 	const previous_scheduler_mode = current_scheduler_mode;
 	try {
 		current_scheduler_mode = FLUSH_YIELD;
@@ -767,6 +767,8 @@ export function flush_sync(fn, flush_previous = true) {
 
 		current_scheduler_mode = FLUSH_SYNC;
 		current_queued_root_effects = root_effects;
+		is_yield_task_queued = false;
+		is_micro_task_queued = false;
 
 		if (flush_previous) {
 			flush_queued_root_effects(previous_queued_root_effects);

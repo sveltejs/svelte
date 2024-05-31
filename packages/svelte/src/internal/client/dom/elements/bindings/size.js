@@ -1,5 +1,5 @@
 import { effect, render_effect } from '../../../reactivity/effects.js';
-import { untrack, yield_updates } from '../../../runtime.js';
+import { untrack, yield_event_updates } from '../../../runtime.js';
 
 /**
  * Resize observer singleton.
@@ -90,7 +90,7 @@ export function bind_resize_observer(element, type, update) {
 
 	var unsub = observer.observe(
 		element,
-		/** @param {any} entry */ (entry) => yield_updates(() => update(entry[type]))
+		/** @param {any} entry */ (entry) => yield_event_updates(() => update(entry[type]))
 	);
 	render_effect(() => unsub);
 }
@@ -104,7 +104,7 @@ export function bind_element_size(element, type, update) {
 	var unsub = resize_observer_border_box.observe(element, () => update(element[type]));
 
 	effect(() => {
-		yield_updates(() => untrack(() => update(element[type])));
+		yield_event_updates(() => untrack(() => update(element[type])));
 		return unsub;
 	});
 }

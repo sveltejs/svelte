@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.145
+
+### Patch Changes
+
+- fix: `$state.is` missing second argument on the server ([#11835](https://github.com/sveltejs/svelte/pull/11835))
+
+- fix: prevent buggy ownership warning when reassigning state ([#11812](https://github.com/sveltejs/svelte/pull/11812))
+
+- fix: address regressed memory leak ([#11832](https://github.com/sveltejs/svelte/pull/11832))
+
 ## 5.0.0-next.144
 
 ### Patch Changes

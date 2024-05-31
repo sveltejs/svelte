@@ -469,6 +469,7 @@ export function do_while(test, body) {
 
 const true_instance = literal(true);
 const false_instance = literal(false);
+const null_instane = literal(null);
 
 /** @type {import('estree').DebuggerStatement} */
 const debugger_builder = {
@@ -630,6 +631,7 @@ export {
 	return_builder as return,
 	if_builder as if,
 	this_instance as this,
+	null_instane as null,
 	debugger_builder as debugger
 };
 
