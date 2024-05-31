@@ -1359,26 +1359,25 @@ if (DEV) {
 }
 
 /**
- * Expects a value that was wrapped with `freeze` and makes it frozen in DEV or adds a symbol in prod.
+ * Expects a value that was wrapped with `freeze` and makes it frozen in DEV.
  * @template T
  * @param {T} value
  * @returns {Readonly<T>}
  */
 export function freeze(value) {
-	if (typeof value === 'object' && value != null && !is_frozen(value)) {
+	if (typeof value === 'object' && value != null && !(STATE_FROZEN_SYMBOL in value)) {
 		// If the object is already proxified, then snapshot the value
-		if (STATE_SYMBOL in value) {
+		if (STATE_SYMBOL in value || is_frozen(value)) {
 			value = snapshot(value);
 		}
-		// Freeze the object in DEV, add the symbol in prod
+		define_property(value, STATE_FROZEN_SYMBOL, {
+			value: true,
+			writable: true,
+			enumerable: false
+		});
+		// Freeze the object in DEV
 		if (DEV) {
 			object_freeze(value);
-		} else {
-			define_property(value, STATE_FROZEN_SYMBOL, {
-				value: true,
-				writable: true,
-				enumerable: false
-			});
 		}
 	}
 	return value;
