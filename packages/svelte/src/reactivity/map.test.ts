@@ -36,7 +36,7 @@ test('map.values()', () => {
 		map.clear();
 	});
 
-	assert.deepEqual(log, [5, true, [1, 2, 3, 4, 5], 4, false, [1, 2, 4, 5], 0, []]);
+	assert.deepEqual(log, [5, true, [1, 2, 3, 4, 5], 4, false, [1, 2, 4, 5], 0, false, []]);
 
 	cleanup();
 });
@@ -207,7 +207,7 @@ test('not invoking reactivity when value is not in the map after changes', () =>
 		});
 	});
 
-	assert.deepEqual(log, [1, undefined, undefined, 1]);
+	assert.deepEqual(log, [1, undefined, undefined, undefined, 1, undefined]);
 
 	cleanup();
 });

@@ -30,7 +30,7 @@ test('set.values()', () => {
 		set.clear();
 	});
 
-	assert.deepEqual(log, [5, true, [1, 2, 3, 4, 5], 4, false, [1, 2, 4, 5], 0, []]);
+	assert.deepEqual(log, [5, true, [1, 2, 3, 4, 5], 4, false, [1, 2, 4, 5], 0, false, []]);
 
 	cleanup();
 });
@@ -143,8 +143,12 @@ test('not invoking reactivity when value is not in the set after changes', () =>
 		false,
 		'has 2',
 		false,
+		'has 3',
+		false,
 		'has 2',
-		true
+		true,
+		'has 3',
+		false
 	]);
 
 	cleanup();

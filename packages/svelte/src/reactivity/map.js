@@ -24,14 +24,10 @@ export class ReactiveMap extends Map {
 		if (DEV) new Map(value);
 
 		if (value) {
-			var sources = this.#sources;
-
 			for (var [key, v] of value) {
-				sources.set(key, source(Symbol()));
 				super.set(key, v);
 			}
-
-			this.#size.v = sources.size;
+			this.#size.v = super.size;
 		}
 	}
 
@@ -45,9 +41,9 @@ export class ReactiveMap extends Map {
 		var s = sources.get(key);
 
 		if (s === undefined) {
-			// If we're working with a non-primitive then we can generate a signal for it
-			if (typeof key !== 'object' || key === null) {
-				s = source(UNINITIALIZED);
+			var ret = super.get(key);
+			if (ret !== undefined) {
+				s = source(Symbol());
 				sources.set(key, s);
 			} else {
 				// We should always track the version in case
@@ -58,7 +54,7 @@ export class ReactiveMap extends Map {
 		}
 
 		get(s);
-		return super.has(key);
+		return true;
 	}
 
 	/**
@@ -73,14 +69,18 @@ export class ReactiveMap extends Map {
 
 	/** @param {K} key */
 	get(key) {
-		var s = this.#sources.get(key);
+		var sources = this.#sources;
+		var s = sources.get(key);
 
 		if (s === undefined) {
-			// Re-use the has code-path to init the signal if needed and also
-			// register to the version if needed.
-			this.has(key);
-			s = this.#sources.get(key);
-			if (s === undefined) {
+			var ret = super.get(key);
+			if (ret !== undefined) {
+				s = source(Symbol());
+				sources.set(key, s);
+			} else {
+				// We should always track the version in case
+				// the Set ever gets this value in the future.
+				get(this.#version);
 				return undefined;
 			}
 		}
@@ -117,10 +117,7 @@ export class ReactiveMap extends Map {
 		var res = super.delete(key);
 
 		if (s !== undefined) {
-			// Remove non-primitive keys
-			if (typeof key === 'object' && key !== null) {
-				sources.delete(key);
-			}
+			sources.delete(key);
 			set(this.#size, super.size);
 			set(s, UNINITIALIZED);
 			this.#increment_version();
@@ -132,15 +129,14 @@ export class ReactiveMap extends Map {
 	clear() {
 		var sources = this.#sources;
 
-		if (sources.size !== 0) {
+		if (super.size !== 0) {
 			set(this.#size, 0);
 			for (var s of sources.values()) {
 				set(s, UNINITIALIZED);
 			}
 			this.#increment_version();
+			sources.clear();
 		}
-
-		sources.clear();
 		super.clear();
 	}
 
@@ -164,6 +160,7 @@ export class ReactiveMap extends Map {
 	}
 
 	get size() {
-		return get(this.#size);
+		get(this.#size);
+		return super.size;
 	}
 }

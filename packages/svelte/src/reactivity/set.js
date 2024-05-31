@@ -27,14 +27,10 @@ export class ReactiveSet extends Set {
 		if (DEV) new Set(value);
 
 		if (value) {
-			var sources = this.#sources;
-
 			for (var element of value) {
-				sources.set(element, source(true));
 				super.add(element);
 			}
-
-			this.#size.v = sources.size;
+			this.#size.v = super.size;
 		}
 
 		if (!inited) this.#init();
@@ -77,9 +73,9 @@ export class ReactiveSet extends Set {
 		var s = sources.get(value);
 
 		if (s === undefined) {
-			// If we're working with a non-primitive then we can generate a signal for it
-			if (typeof value !== 'object' || value === null) {
-				s = source(false);
+			var ret = super.has(value);
+			if (ret) {
+				s = source(true);
 				sources.set(value, s);
 			} else {
 				// We should always track the version in case
@@ -129,15 +125,14 @@ export class ReactiveSet extends Set {
 	clear() {
 		var sources = this.#sources;
 
-		if (sources.size !== 0) {
+		if (super.size !== 0) {
 			set(this.#size, 0);
 			for (var s of sources.values()) {
 				set(s, false);
 			}
 			this.#increment_version();
+			sources.clear();
 		}
-
-		sources.clear();
 		super.clear();
 	}
 
