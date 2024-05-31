@@ -757,17 +757,18 @@ let prev_event_type;
 /**
  * @param {{(): void;(): any;}} fn
  */
-export function yield_event_updates(fn, flush_between_events = false) {
+export function yield_event_updates(fn, can_flush_sync = false) {
 	const event = window.event;
 	const previous_scheduler_mode = current_scheduler_mode;
 	// If we're calling yield_updates and there is already an active yield in progress (`is_yield_task_active`)
 	// and it has a different event type, then it's likely that a new event is about to occur that might try and read from the UI.
 	// Additionally, we might be dealing with a case where we explicitly want to flush if `event.isTrusted` is true and
-	// `flush_between_events` is enabled, for example if we had an event like `submit`, that occured because of a `click`.
+	// `is_yield_task_queued` is enabled, for example if we had an event like `submit`, that occured because of a `click`.
 	if (
+		can_flush_sync &&
 		previous_scheduler_mode !== FLUSH_YIELD &&
 		((is_yield_task_active && prev_event_type !== event?.type) ||
-			(is_yield_task_queued && flush_between_events && event?.isTrusted))
+			(is_yield_task_queued && event?.isTrusted))
 	) {
 		flush_sync();
 	}
