@@ -1,6 +1,5 @@
 import { render_effect } from '../../reactivity/effects.js';
 import { all_registered_events, root_event_handles } from '../../render.js';
-import { yield_event_updates } from '../../runtime.js';
 import { define_property, is_array } from '../../utils.js';
 import { hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
@@ -48,7 +47,7 @@ export function create_event(event_name, dom, handler, options) {
 			handle_event_propagation(dom, event);
 		}
 		if (!event.cancelBubble) {
-			return yield_event_updates(() => handler.call(this, event));
+			return handler.call(this, event);
 		}
 	}
 
@@ -182,42 +181,41 @@ export function handle_event_propagation(handler_element, event) {
 		 * @type {unknown[]}
 		 */
 		var other_errors = [];
-		yield_event_updates(() => {
-			while (current_target !== null) {
-				/** @type {null | Element} */
-				var parent_element =
-					current_target.parentNode || /** @type {any} */ (current_target).host || null;
+		while (current_target !== null) {
+			/** @type {null | Element} */
+			var parent_element =
+				current_target.parentNode || /** @type {any} */ (current_target).host || null;
 
-				try {
-					// @ts-expect-error
-					var delegated = current_target['__' + event_name];
+			try {
+				// @ts-expect-error
+				var delegated = current_target['__' + event_name];
 
-					if (delegated !== undefined && !(/** @type {any} */ (current_target).disabled)) {
-						if (is_array(delegated)) {
-							var [fn, ...data] = delegated;
-							fn.apply(current_target, [event, ...data]);
-						} else {
-							delegated.call(current_target, event);
-						}
-					}
-				} catch (error) {
-					if (throw_error) {
-						other_errors.push(error);
+				if (delegated !== undefined && !(/** @type {any} */ (current_target).disabled)) {
+					if (is_array(delegated)) {
+						var [fn, ...data] = delegated;
+						fn.apply(current_target, [event, ...data]);
 					} else {
-						throw_error = error;
+						delegated.call(current_target, event);
 					}
 				}
-				if (
-					event.cancelBubble ||
-					parent_element === handler_element ||
-					parent_element === null ||
-					current_target === handler_element
-				) {
-					break;
+			} catch (error) {
+				if (throw_error) {
+					other_errors.push(error);
+				} else {
+					throw_error = error;
 				}
-				current_target = parent_element;
 			}
-		});
+			if (
+				event.cancelBubble ||
+				parent_element === handler_element ||
+				parent_element === null ||
+				current_target === handler_element
+			) {
+				break;
+			}
+			current_target = parent_element;
+		}
+
 		if (throw_error) {
 			for (let error of other_errors) {
 				// Throw the rest of the errors, one-by-one on a microtask
