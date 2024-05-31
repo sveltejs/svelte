@@ -4,17 +4,32 @@ import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
 import { effect } from '../reactivity/effects.js';
+import { is_array } from '../utils.js';
 
 /**
  * @template {import("#client").TemplateNode | import("#client").TemplateNode[]} T
  * @param {T} dom
+ * @param {import("#client").Effect} effect
  */
-function push_template_node(dom) {
-	var effect = /** @type {import('#client').Effect} */ (current_effect);
-
-	if (effect.dom === null) {
+export function push_template_node(
+	dom,
+	effect = /** @type {import('#client').Effect} */ (current_effect)
+) {
+	var current_dom = effect.dom;
+	if (current_dom === null) {
 		effect.dom = dom;
+	} else {
+		if (!is_array(current_dom)) {
+			current_dom = effect.dom = [current_dom];
+		}
+
+		if (is_array(dom)) {
+			current_dom.push(...dom);
+		} else {
+			current_dom.push(dom);
+		}
 	}
+	return dom;
 }
 
 /**
@@ -41,7 +56,15 @@ export function template(content, flags) {
 			if (!is_fragment) node = /** @type {Node} */ (node.firstChild);
 		}
 
-		return use_import_node ? document.importNode(node, true) : node.cloneNode(true);
+		var clone = use_import_node ? document.importNode(node, true) : node.cloneNode(true);
+
+		push_template_node(
+			is_fragment
+				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
+				: /** @type {import('#client').TemplateNode} */ (clone)
+		);
+
+		return clone;
 	};
 }
 
@@ -102,7 +125,15 @@ export function ns_template(content, flags, ns = 'svg') {
 			}
 		}
 
-		return node.cloneNode(true);
+		var clone = node.cloneNode(true);
+
+		push_template_node(
+			is_fragment
+				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
+				: /** @type {import('#client').TemplateNode} */ (clone)
+		);
+
+		return clone;
 	};
 }
 
@@ -177,7 +208,7 @@ function run_scripts(node) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function text(anchor) {
-	if (!hydrating) return empty();
+	if (!hydrating) return push_template_node(empty());
 
 	var node = hydrate_start;
 
@@ -201,6 +232,7 @@ export function comment() {
 	var frag = document.createDocumentFragment();
 	var anchor = empty();
 	frag.append(anchor);
+	push_template_node([anchor]);
 
 	return frag;
 }
@@ -213,13 +245,9 @@ export function comment() {
  */
 export function append(anchor, dom) {
 	if (hydrating) return;
-
-	var effect = /** @type {import('#client').Effect} */ (current_effect);
-
-	effect.dom =
-		dom.nodeType === 11
-			? /** @type {import('#client').TemplateNode[]} */ ([...dom.childNodes])
-			: /** @type {Element | Comment} */ (dom);
+	// We intentionally do not assign the `dom` property of the effect here because it's far too
+	// late. If we try, we will capture additional DOM elements that we cannot control the lifecycle
+	// for and will inevitably cause memory leaks. See https://github.com/sveltejs/svelte/pull/11832
 
 	anchor.before(/** @type {Node} */ (dom));
 }

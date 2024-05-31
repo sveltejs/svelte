@@ -1,7 +1,7 @@
 <script>
 	import Counter from './Counter.svelte';
 
-	const object = $state({ count: 0 });
+	let object = $state({ count: 0 });
 </script>
 
-<Counter {object} />
+<Counter {object} reset={() => object = {count: 0}} />

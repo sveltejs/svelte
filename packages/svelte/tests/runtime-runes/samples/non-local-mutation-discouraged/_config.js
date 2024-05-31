@@ -1,36 +1,30 @@
 import { flushSync } from 'svelte';
 import { test } from '../../test';
 
-/** @type {typeof console.trace} */
-let trace;
-
 export default test({
-	html: `<button>clicks: 0</button>`,
+	html: `<button>clicks: 0</button> <button>reset</button>`,
 
 	compileOptions: {
 		dev: true
 	},
 
-	before_test: () => {
-		trace = console.trace;
-		console.trace = () => {};
-	},
-
-	after_test: () => {
-		console.trace = trace;
-	},
-
 	test({ assert, target, warnings }) {
-		const btn = target.querySelector('button');
+		const warning =
+			'Counter.svelte mutated a value owned by main.svelte. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead';
+		const [btn1, btn2] = target.querySelectorAll('button');
 
-		flushSync(() => {
-			btn?.click();
-		});
+		btn1.click();
+		flushSync();
+		assert.htmlEqual(target.innerHTML, `<button>clicks: 1</button> <button>reset</button>`);
+		assert.deepEqual(warnings, [warning]);
 
-		assert.htmlEqual(target.innerHTML, `<button>clicks: 1</button>`);
+		btn2.click();
+		flushSync();
+		assert.htmlEqual(target.innerHTML, `<button>clicks: 0</button> <button>reset</button>`);
 
-		assert.deepEqual(warnings, [
-			'Counter.svelte mutated a value owned by main.svelte. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead'
-		]);
+		btn1.click();
+		flushSync();
+		assert.htmlEqual(target.innerHTML, `<button>clicks: 1</button> <button>reset</button>`);
+		assert.deepEqual(warnings, [warning, warning]);
 	}
 });
