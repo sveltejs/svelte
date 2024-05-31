@@ -385,7 +385,7 @@ export function pause_effect(effect, callback) {
 	pause_children(effect, transitions, true);
 
 	run_out_transitions(transitions, () => {
-		destroy_effect(effect, false);
+		destroy_effect(effect);
 		if (callback) callback();
 	});
 }
