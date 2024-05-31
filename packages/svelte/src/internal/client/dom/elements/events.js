@@ -48,7 +48,7 @@ export function create_event(event_name, dom, handler, options) {
 			handle_event_propagation(dom, event);
 		}
 		if (!event.cancelBubble) {
-			return yield_event_updates(() => handler.call(this, event), event.isTrusted);
+			return yield_event_updates(() => handler.call(this, event));
 		}
 	}
 
@@ -204,7 +204,7 @@ export function handle_event_propagation(handler_element, event) {
 	}
 
 	try {
-		yield_event_updates(() => next(/** @type {Element} */ (current_target)), event.isTrusted);
+		yield_event_updates(() => next(/** @type {Element} */ (current_target)));
 	} finally {
 		// @ts-expect-error is used above
 		event.__root = handler_element;
