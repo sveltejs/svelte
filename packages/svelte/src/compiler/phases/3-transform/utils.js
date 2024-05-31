@@ -176,7 +176,8 @@ export function infer_namespace(namespace, parent, nodes) {
 			parent.type === 'Component' ||
 			parent.type === 'SvelteComponent' ||
 			parent.type === 'SvelteFragment' ||
-			parent.type === 'SnippetBlock'
+			parent.type === 'SnippetBlock' ||
+			parent.type === 'SlotElement'
 		) {
 			const new_namespace = check_nodes_for_namespace(nodes, 'keep');
 			if (new_namespace !== 'keep' && new_namespace !== 'maybe_html') {
