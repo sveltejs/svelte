@@ -18,20 +18,25 @@ import {
 } from './utils.js';
 import { check_ownership, widen_ownership } from './dev/ownership.js';
 import { mutable_source, source, set } from './reactivity/sources.js';
-import { STATE_SYMBOL } from './constants.js';
+import { STATE_FROZEN_SYMBOL, STATE_SYMBOL } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 
 /**
  * @template T
- * @param {T} value
+ * @param {T} initial_value
  * @param {boolean} [immutable]
  * @param {import('#client').ProxyMetadata | null} [parent]
  * @param {import('#client').Source<T>} [prev] dev mode only
  * @returns {import('#client').ProxyStateObject<T> | T}
  */
-export function proxy(value, immutable = true, parent = null, prev) {
-	if (typeof value === 'object' && value != null && !is_frozen(value)) {
+export function proxy(initial_value, immutable = true, parent = null, prev) {
+	if (typeof initial_value === 'object' && initial_value != null) {
+		let value = initial_value;
+		// If the object is frozen then snapshot the value
+		if (is_frozen(value) || STATE_FROZEN_SYMBOL in value) {
+			value = snapshot(value);
+		}
 		// If we have an existing proxy, return it...
 		if (STATE_SYMBOL in value) {
 			const metadata = /** @type {import('#client').ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
@@ -94,7 +99,7 @@ export function proxy(value, immutable = true, parent = null, prev) {
 		}
 	}
 
-	return value;
+	return initial_value;
 }
 
 /**
