@@ -62,16 +62,6 @@ export function inspect(get_value, inspector = console.log) {
  */
 function deep_snapshot(value, visited = new Map()) {
 	if (typeof value === 'object' && value !== null && !visited.has(value)) {
-		if (DEV) {
-			// When dealing with ReactiveMap or ReactiveSet, return normal versions
-			// so that console.log provides better output versions
-			if (value instanceof Map && value.constructor !== Map) {
-				return new Map(value);
-			}
-			if (value instanceof Set && value.constructor !== Set) {
-				return new Set(value);
-			}
-		}
 		const unstated = snapshot(value);
 
 		if (unstated !== value) {

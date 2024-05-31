@@ -1,7 +1,6 @@
 import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
-import { map } from './utils.js';
 
 var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
 var set_like_methods = ['difference', 'intersection', 'symmetricDifference', 'union'];
@@ -28,13 +27,10 @@ export class ReactiveSet extends Set {
 		if (DEV) new Set(value);
 
 		if (value) {
-			var sources = this.#sources;
-
 			for (var element of value) {
-				sources.set(element, source(true));
+				super.add(element);
 			}
-
-			this.#size.v = sources.size;
+			this.#size.v = super.size;
 		}
 
 		if (!inited) this.#init();
@@ -51,11 +47,8 @@ export class ReactiveSet extends Set {
 			// @ts-ignore
 			proto[method] = function (...v) {
 				get(this.#version);
-				// We don't populate the underlying Set, so we need to create a clone using
-				// our internal values and then pass that to the method.
-				var clone = new Set(this.values());
 				// @ts-ignore
-				return set_proto[method].apply(clone, v);
+				return set_proto[method].apply(this, v);
 			};
 		}
 
@@ -63,11 +56,8 @@ export class ReactiveSet extends Set {
 			// @ts-ignore
 			proto[method] = function (...v) {
 				get(this.#version);
-				// We don't populate the underlying Set, so we need to create a clone using
-				// our internal values and then pass that to the method.
-				var clone = new Set(this.values());
 				// @ts-ignore
-				var set = /** @type {Set<T>} */ (set_proto[method].apply(clone, v));
+				var set = /** @type {Set<T>} */ (set_proto[method].apply(this, v));
 				return new ReactiveSet(set);
 			};
 		}
@@ -79,73 +69,86 @@ export class ReactiveSet extends Set {
 
 	/** @param {T} value */
 	has(value) {
-		var s = this.#sources.get(value);
+		var sources = this.#sources;
+		var s = sources.get(value);
 
 		if (s === undefined) {
-			// We should always track the version in case
-			// the Set ever gets this value in the future.
-			get(this.#version);
-
-			return false;
+			var ret = super.has(value);
+			if (ret) {
+				s = source(true);
+				sources.set(value, s);
+			} else {
+				// We should always track the version in case
+				// the Set ever gets this value in the future.
+				get(this.#version);
+				return false;
+			}
 		}
 
-		return get(s);
+		get(s);
+		return super.has(value);
 	}
 
 	/** @param {T} value */
 	add(value) {
 		var sources = this.#sources;
+		var res = super.add(value);
+		var s = sources.get(value);
 
-		if (!sources.has(value)) {
+		if (s === undefined) {
 			sources.set(value, source(true));
-			set(this.#size, sources.size);
+			set(this.#size, super.size);
 			this.#increment_version();
+		} else {
+			set(s, true);
 		}
 
-		return this;
+		return res;
 	}
 
 	/** @param {T} value */
 	delete(value) {
 		var sources = this.#sources;
 		var s = sources.get(value);
+		var res = super.delete(value);
 
 		if (s !== undefined) {
-			var removed = sources.delete(value);
-			set(this.#size, sources.size);
+			sources.delete(value);
+			set(this.#size, super.size);
 			set(s, false);
 			this.#increment_version();
-			return removed;
 		}
 
-		return false;
+		return res;
 	}
 
 	clear() {
 		var sources = this.#sources;
 
-		if (sources.size !== 0) {
+		if (super.size !== 0) {
 			set(this.#size, 0);
 			for (var s of sources.values()) {
 				set(s, false);
 			}
 			this.#increment_version();
+			sources.clear();
 		}
-
-		sources.clear();
+		super.clear();
 	}
 
 	keys() {
 		get(this.#version);
-		return map(this.#sources.keys(), (key) => key, 'Set Iterator');
+		return super.keys();
 	}
 
 	values() {
-		return this.keys();
+		get(this.#version);
+		return super.values();
 	}
 
 	entries() {
-		return map(this.keys(), (key) => /** @type {[T, T]} */ ([key, key]), 'Set Iterator');
+		get(this.#version);
+		return super.entries();
 	}
 
 	[Symbol.iterator]() {
