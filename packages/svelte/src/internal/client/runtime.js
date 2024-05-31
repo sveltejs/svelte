@@ -1,5 +1,11 @@
 import { DEV } from 'esm-env';
-import { define_property, get_descriptors, get_prototype_of, is_frozen, object_freeze } from './utils.js';
+import {
+	define_property,
+	get_descriptors,
+	get_prototype_of,
+	is_frozen,
+	object_freeze
+} from './utils.js';
 import { snapshot } from './proxy.js';
 import { destroy_effect, effect, execute_effect_teardown } from './reactivity/effects.js';
 import {
@@ -18,7 +24,7 @@ import {
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	STATE_FROZEN_SYMBOL,
+	STATE_FROZEN_SYMBOL
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -1377,4 +1383,3 @@ export function freeze(value) {
 	}
 	return value;
 }
-
