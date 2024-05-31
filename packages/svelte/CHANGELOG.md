@@ -1,5 +1,31 @@
 # svelte
 
+## 5.0.0-next.147
+
+### Patch Changes
+
+- fix: improve reactive Map and Set implementations ([#11827](https://github.com/sveltejs/svelte/pull/11827))
+
+- fix: improve controlled each block cleanup performance ([#11839](https://github.com/sveltejs/svelte/pull/11839))
+
+## 5.0.0-next.146
+
+### Patch Changes
+
+- fix: allow for more svelte-ignore to work ([#11833](https://github.com/sveltejs/svelte/pull/11833))
+
+- fix: reevaluate namespace in slots ([#11849](https://github.com/sveltejs/svelte/pull/11849))
+
+## 5.0.0-next.145
+
+### Patch Changes
+
+- fix: `$state.is` missing second argument on the server ([#11835](https://github.com/sveltejs/svelte/pull/11835))
+
+- fix: prevent buggy ownership warning when reassigning state ([#11812](https://github.com/sveltejs/svelte/pull/11812))
+
+- fix: address regressed memory leak ([#11832](https://github.com/sveltejs/svelte/pull/11832))
+
 ## 5.0.0-next.144
 
 ### Patch Changes

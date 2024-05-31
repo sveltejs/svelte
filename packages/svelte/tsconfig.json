@@ -31,10 +31,12 @@
 		}
 	},
 	"include": [
-		"./src",
+		"./*.js",
+		"./scripts/",
+		"./src/",
 		"./tests/*/test.ts",
 		"./tests/runtime-browser/test-ssr.ts",
 		"./tests/*/samples/*/_config.js"
 	],
-	"exclude": ["./src/compiler/optimizer"]
+	"exclude": ["./scripts/process-messages/templates/", "./src/compiler/optimizer/"]
 }

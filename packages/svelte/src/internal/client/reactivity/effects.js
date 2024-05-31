@@ -311,16 +311,17 @@ export function execute_effect_teardown(effect) {
 
 /**
  * @param {import('#client').Effect} effect
+ * @param {boolean} [remove_dom]
  * @returns {void}
  */
-export function destroy_effect(effect) {
+export function destroy_effect(effect, remove_dom = true) {
 	var dom = effect.dom;
 
-	if (dom !== null) {
+	if (dom !== null && remove_dom) {
 		remove(dom);
 	}
 
-	destroy_effect_children(effect);
+	destroy_effect_children(effect, remove_dom);
 	remove_reactions(effect, 0);
 	set_signal_status(effect, DESTROYED);
 

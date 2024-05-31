@@ -1,5 +1,4 @@
 import { effect, render_effect } from '../../../reactivity/effects.js';
-import { yield_event_updates } from '../../../runtime.js';
 import { listen } from './shared.js';
 
 /**
@@ -16,7 +15,7 @@ export function bind_window_scroll(type, get_value, update) {
 		clearTimeout(timeout);
 		timeout = setTimeout(clear, 100); // TODO use scrollend event if supported (or when supported everywhere?)
 
-		yield_event_updates(() => update(window[is_scrolling_x ? 'scrollX' : 'scrollY']));
+		update(window[is_scrolling_x ? 'scrollX' : 'scrollY']);
 	};
 
 	addEventListener('scroll', target_handler, {
@@ -64,5 +63,5 @@ export function bind_window_scroll(type, get_value, update) {
  * @param {(size: number) => void} update
  */
 export function bind_window_size(type, update) {
-	listen(window, ['resize'], () => yield_event_updates(() => update(window[type])));
+	listen(window, ['resize'], () => update(window[type]));
 }

@@ -1,4 +1,4 @@
-import { filename, locator, warnings, ignore_stack } from './state.js';
+import { filename, locator, warnings, ignore_stack, ignore_map } from './state.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
 
@@ -8,7 +8,11 @@ import { filename, locator, warnings, ignore_stack } from './state.js';
  * @param {string} message
  */
 function w(node, code, message) {
-	if (ignore_stack.at(-1)?.has(code)) return;
+	let stack = ignore_stack;
+	if (node) {
+		stack = ignore_map.get(node) ?? ignore_stack;
+	}
+	if (stack && stack.at(-1)?.has(code)) return;
 
 	warnings.push({
 		code,
