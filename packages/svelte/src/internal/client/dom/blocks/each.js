@@ -77,14 +77,17 @@ function pause_effects(items, controlled_anchor, items_map) {
 		);
 		clear_text_content(parent_node);
 		parent_node.append(/** @type {Element} */ (controlled_anchor));
+		items_map.clear();
 	}
 
 	run_out_transitions(transitions, () => {
 		for (var i = 0; i < length; i++) {
 			var item = items[i];
-			items_map.delete(item.k);
-			item.o.remove();
-			link(item.prev, item.next);
+			if (!is_controlled) {
+				items_map.delete(item.k);
+				item.o.remove();
+				link(item.prev, item.next);
+			}
 			destroy_effect(item.e, !is_controlled);
 		}
 	});
