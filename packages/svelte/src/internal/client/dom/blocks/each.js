@@ -83,6 +83,7 @@ function pause_effects(items, controlled_anchor, items_map) {
 		for (var i = 0; i < length; i++) {
 			var item = items[i];
 			items_map.delete(item.k);
+			item.o.remove();
 			link(item.prev, item.next);
 			destroy_effect(item.e, !is_controlled);
 		}
