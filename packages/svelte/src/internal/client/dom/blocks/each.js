@@ -394,31 +394,34 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 
 	const to_destroy = Array.from(seen);
 
-	while (current) {
+	while (current !== null) {
 		to_destroy.push(current);
 		current = current.next;
 	}
+	var destroy_length = to_destroy.length;
 
-	var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
+	if (destroy_length > 0) {
+		var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
 
-	if (is_animated) {
-		for (i = 0; i < to_destroy.length; i += 1) {
-			to_destroy[i].a?.measure();
+		if (is_animated) {
+			for (i = 0; i < destroy_length; i += 1) {
+				to_destroy[i].a?.measure();
+			}
+
+			for (i = 0; i < destroy_length; i += 1) {
+				to_destroy[i].a?.fix();
+			}
 		}
 
-		for (i = 0; i < to_destroy.length; i += 1) {
-			to_destroy[i].a?.fix();
-		}
+		pause_effects(to_destroy, controlled_anchor, () => {
+			for (var i = 0; i < destroy_length; i += 1) {
+				var item = to_destroy[i];
+				items.delete(item.k);
+				item.o.remove();
+				link(item.prev, item.next);
+			}
+		});
 	}
-
-	pause_effects(to_destroy, controlled_anchor, () => {
-		for (var i = 0; i < to_destroy.length; i += 1) {
-			var item = to_destroy[i];
-			items.delete(item.k);
-			item.o.remove();
-			link(item.prev, item.next);
-		}
-	});
 
 	if (is_animated) {
 		effect(() => {
