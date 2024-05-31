@@ -81,7 +81,7 @@ function pause_effects(items, controlled_anchor, callback) {
 
 	run_out_transitions(transitions, () => {
 		for (var i = 0; i < length; i++) {
-			destroy_effect(items[i].e, is_controlled);
+			destroy_effect(items[i].e, !is_controlled);
 		}
 
 		if (callback !== undefined) callback();
