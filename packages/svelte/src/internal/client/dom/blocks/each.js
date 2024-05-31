@@ -78,6 +78,7 @@ function pause_effects(items, controlled_anchor, items_map) {
 		clear_text_content(parent_node);
 		parent_node.append(/** @type {Element} */ (controlled_anchor));
 		items_map.clear();
+		link(items[0].prev, items[length - 1].next);
 	}
 
 	run_out_transitions(transitions, () => {
