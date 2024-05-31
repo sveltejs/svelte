@@ -414,18 +414,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			}
 		}
 
-<<<<<<< Updated upstream
-		pause_effects(to_destroy, controlled_anchor, () => {
-			for (var i = 0; i < destroy_length; i += 1) {
-				var item = to_destroy[i];
-				items.delete(item.k);
-				item.o.remove();
-				link(item.prev, item.next);
-			}
-		});
-=======
 		pause_effects(to_destroy, controlled_anchor, items);
->>>>>>> Stashed changes
 	}
 
 	if (is_animated) {
