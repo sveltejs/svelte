@@ -300,8 +300,8 @@ export function serialize_set_binding(node, context, fallback, options) {
 				binding.initial.type !== 'EachBlock' &&
 				should_proxy_or_freeze(binding.initial, context.state.scope);
 			if (
-				binding.kind === 'prop' ||
-				(binding.kind === 'bindable_prop' && !initial_bindable_proxy)
+				(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
+				!initial_bindable_proxy
 			) {
 				return b.call(left, value);
 			} else if (is_store) {
@@ -328,7 +328,10 @@ export function serialize_set_binding(node, context, fallback, options) {
 							? b.call('$.freeze', value)
 							: value
 					);
-				} else if (initial_bindable_proxy) {
+				} else if (
+					(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
+					initial_bindable_proxy
+				) {
 					call = b.call(
 						left,
 						context.state.analysis.runes &&
