@@ -282,7 +282,10 @@ function notify_read_properties(
 		} else {
 			(params.length == 0 ? [null] : params).forEach((param) => {
 				const sig = get_signal_for_function(read_methods_signals, name, param);
-				sig && increment_signal(sig);
+				if (sig) {
+					// I did want to use short-circuit like sig && increment_signal(sig) but linter didn't allow me to :(
+					increment_signal(sig);
+				}
 				increment_version_signal(initial_version_signal_v, version_signal);
 			});
 		}
@@ -333,7 +336,7 @@ function get_signal_for_function(
  * @param {import("#client").Source<boolean>} signal
  */
 function increment_signal(signal) {
-	signal && set(signal, !signal.v);
+	set(signal, !signal.v);
 }
 
 /**

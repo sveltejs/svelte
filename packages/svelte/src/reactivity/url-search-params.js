@@ -7,6 +7,7 @@ export const ReactiveURLSearchParams = make_reactive(URLSearchParams, {
 		set: (options, ...params) => {
 			const value = options.value.get(/**@type {string} */ (params[0]));
 			const value_has_changed = value !== /**@type {string} */ (params[1]).toString();
+
 			if (value && !value_has_changed) {
 				return false;
 			}
@@ -20,6 +21,7 @@ export const ReactiveURLSearchParams = make_reactive(URLSearchParams, {
 			}
 
 			options.notify_read_properties(['getAll'], params[0]);
+
 			return true;
 		},
 		append: (options, ...params) => {

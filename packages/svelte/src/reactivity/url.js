@@ -2,11 +2,9 @@ import { untrack } from '../index-client.js';
 import { ReactiveURLSearchParams } from './url-search-params.js';
 import { make_reactive } from './utils.js';
 
-//
 // had to create a subclass for URLWithReactiveSearchParams
 // because we cannot change the internal `searchParams` reference (which links to the web api implementation) so it requires
 // some custom logic
-//
 class URLWithReactiveSearchParams extends URL {
 	/**
 	 * @type {InstanceType<ReactiveURLSearchParams>}
@@ -14,12 +12,16 @@ class URLWithReactiveSearchParams extends URL {
 	#reactive_search_params;
 
 	/**
+	 * @type {boolean}
+	 */
+	#is_in_middle_of_update = false;
+
+	/**
 	 * @param {ConstructorParameters<typeof URL>} params
 	 */
 	constructor(...params) {
 		super(...params);
-
-		this.#reactive_search_params = new ReactiveURLSearchParams(super.searchParams);
+		this.#reactive_search_params = new ReactiveURLSearchParams(super.search);
 	}
 
 	/**
@@ -34,7 +36,7 @@ class URLWithReactiveSearchParams extends URL {
 	 */
 	get search() {
 		this.searchParams.toString();
-		this.#sync_params_with_url('search_params');
+		this.#sync_params_with_url_if_not_blocked();
 		return super.search;
 	}
 
@@ -42,8 +44,10 @@ class URLWithReactiveSearchParams extends URL {
 	 * @override
 	 */
 	set search(value) {
+		this.#is_in_middle_of_update = true;
 		super.search = value;
 		this.#sync_params_with_url('url');
+		this.#is_in_middle_of_update = false;
 	}
 
 	/**
@@ -51,7 +55,7 @@ class URLWithReactiveSearchParams extends URL {
 	 */
 	get href() {
 		this.searchParams.toString();
-		this.#sync_params_with_url('search_params');
+		this.#sync_params_with_url_if_not_blocked();
 		return super.href;
 	}
 
@@ -59,54 +63,51 @@ class URLWithReactiveSearchParams extends URL {
 	 * @override
 	 */
 	set href(value) {
+		this.#is_in_middle_of_update = true;
 		super.href = value;
 		this.#sync_params_with_url('url');
+		this.#is_in_middle_of_update = false;
 	}
 
 	/**
 	 * @param {"url" | "search_params"} changed_value
 	 */
 	#sync_params_with_url(changed_value) {
-		if (super.searchParams.toString() === this.searchParams.toString()) {
-			return;
-		}
+		untrack(() => {
+			if (
+				super.search.length === 0
+					? this.searchParams.size === 0
+					: super.search === `?${this.searchParams}`
+			) {
+				return;
+			}
 
-		if (changed_value == 'url') {
-			this.#update_search_params_from_url();
-		} else {
-			// updating url from params
-			this.search = this.searchParams.toString();
-		}
+			if (changed_value == 'url') {
+				this.#update_search_params_from_url();
+			} else {
+				// updating url from params
+				this.search = this.searchParams.toString();
+			}
+		});
 	}
 
 	#update_search_params_from_url() {
-		/**
-		 * keeping track of this is required because we have to keep the order in which they are updated
-		 * @type {string[]}
-		 */
-		const keys_with_no_change = [];
-
 		// remove keys that don't exist anymore and notify others
 		for (const [key, value] of Array.from(this.searchParams.entries())) {
-			if (!super.searchParams.has(key) || value == super.searchParams.get(key)) {
-				keys_with_no_change.push(key);
-				untrack(() => {
-					this.searchParams.delete(key);
-				});
-				continue;
-			}
 			this.searchParams.delete(key);
 		}
 
 		// set or update keys based on the params
 		for (const [key, value] of super.searchParams.entries()) {
-			if (keys_with_no_change.includes(key)) {
-				untrack(() => {
-					this.searchParams.set(key, value);
-				});
-				continue;
-			}
 			this.searchParams.set(key, value);
+		}
+	}
+
+	#sync_params_with_url_if_not_blocked() {
+		if (!this.#is_in_middle_of_update) {
+			this.#is_in_middle_of_update = true;
+			this.#sync_params_with_url('search_params');
+			this.#is_in_middle_of_update = false;
 		}
 	}
 
@@ -115,7 +116,7 @@ class URLWithReactiveSearchParams extends URL {
 	 */
 	toString() {
 		this.searchParams.toString();
-		this.#sync_params_with_url('search_params');
+		this.#sync_params_with_url_if_not_blocked();
 		return super.toString();
 	}
 }
@@ -201,7 +202,6 @@ export const ReactiveURL = make_reactive(URLWithReactiveSearchParams, {
 			options.notify_read_properties(['href', 'origin', 'host', 'port']);
 			return true;
 		},
-
 		pathname: (options, ...params) => {
 			if (options.value.pathname === add_character_if_not_exists(params[0], '/', 'prepend')) {
 				return false;
