@@ -193,18 +193,14 @@ if (typeof HTMLElement === 'function') {
 		disconnectedCallback() {
 			this.$$cn = false;
 			// In a microtask, because this could be a move within the DOM
-			Promise.resolve()
-				.then(() => {
-					if (!this.$$cn && this.$$c) {
-						this.$$c.$destroy();
-						destroy_effect(this.$$me);
-						this.$$c = undefined;
-					}
-				})
-				.catch((err) => {
-					// eslint-disable-next-line no-console
-					console.error(err);
-				});
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			Promise.resolve().then(() => {
+				if (!this.$$cn && this.$$c) {
+					this.$$c.$destroy();
+					destroy_effect(this.$$me);
+					this.$$c = undefined;
+				}
+			});
 		}
 
 		/**

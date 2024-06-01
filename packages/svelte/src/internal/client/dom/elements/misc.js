@@ -42,19 +42,15 @@ export function add_form_reset_listener() {
 			(evt) => {
 				// Needs to happen one tick later or else the dom properties of the form
 				// elements have not updated to their reset values yet
-				Promise.resolve()
-					.then(() => {
-						if (!evt.defaultPrevented) {
-							for (const e of /**@type {HTMLFormElement} */ (evt.target).elements) {
-								// @ts-expect-error
-								e.__on_r?.();
-							}
+				// eslint-disable-next-line @typescript-eslint/no-floating-promises
+				Promise.resolve().then(() => {
+					if (!evt.defaultPrevented) {
+						for (const e of /**@type {HTMLFormElement} */ (evt.target).elements) {
+							// @ts-expect-error
+							e.__on_r?.();
 						}
-					})
-					.catch((err) => {
-						// eslint-disable-next-line no-console
-						console.error(err);
-					});
+					}
+				});
 			},
 			// In the capture phase to guarantee we get noticed of it (no possiblity of stopPropagation)
 			{ capture: true }

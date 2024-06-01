@@ -88,7 +88,7 @@ export function tweened(value, defaults = {}) {
 	 * @param {T} new_value
 	 * @param {import('./private').TweenedOptions<T>} [opts]
 	 */
-	function set(new_value, opts) {
+	async function set(new_value, opts) {
 		target_value = new_value;
 
 		if (value == null) {
@@ -145,7 +145,7 @@ export function tweened(value, defaults = {}) {
 	}
 	return {
 		set,
-		update: (fn, opts) =>
+		update: async (fn, opts) =>
 			set(fn(/** @type {any} */ (target_value), /** @type {any} */ (value)), opts),
 		subscribe: store.subscribe
 	};

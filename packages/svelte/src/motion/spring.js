@@ -77,7 +77,7 @@ export function spring(value, opts = {}) {
 	 * @param {import('./private').SpringUpdateOpts} opts
 	 * @returns {Promise<void>}
 	 */
-	function set(new_value, opts = {}) {
+	async function set(new_value, opts = {}) {
 		target_value = new_value;
 		const token = (current_token = {});
 		if (value == null || opts.hard || (spring.stiffness >= 1 && spring.damping >= 1)) {
@@ -120,20 +120,17 @@ export function spring(value, opts = {}) {
 			});
 		}
 		return new Promise((fulfil) => {
-			/** @type {import('../internal/client/types').Task} */ (task).promise
-				.then(() => {
-					if (token === current_token) fulfil();
-				})
-				.catch((err) => {
-					// eslint-disable-next-line no-console
-					console.error(err);
-				});
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			/** @type {import('../internal/client/types').Task} */ (task).promise.then(() => {
+				if (token === current_token) fulfil();
+			});
 		});
 	}
 	/** @type {import('./public.js').Spring<T>} */
 	const spring = {
 		set,
-		update: (fn, opts) => set(fn(/** @type {T} */ (target_value), /** @type {T} */ (value)), opts),
+		update: async (fn, opts) =>
+			set(fn(/** @type {T} */ (target_value), /** @type {T} */ (value)), opts),
 		subscribe: store.subscribe,
 		stiffness,
 		damping,
