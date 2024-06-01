@@ -17,7 +17,6 @@ Let's dive in!
 - The Svelte Inspector is now supported (**5.0.0-next.125**, [Docs](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/inspector.md), [#11514](https://github.com/sveltejs/svelte/pull/11514))
 - The `$state.is` rune lets you compare values or check if an object exists within a deeply reactive object/array (**5.0.0-next.134**, [Docs](https://svelte-5-preview.vercel.app/docs/runes#state-is), [#11613](https://github.com/sveltejs/svelte/pull/11613))
 - The `rootDir` compiler option makes filenames relative to simplify development in monorepos or complex folder structures (**5.0.0-next.135**, [#11627](https://github.com/sveltejs/svelte/pull/11627))
-- Event handlers and bindings will now now yield effect updates - improving performance (**5.0.0-next.140**, [#11706](https://github.com/sveltejs/svelte/pull/11706))
 
 
 ---
