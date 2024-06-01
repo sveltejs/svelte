@@ -1,5 +1,11 @@
 import { DEV } from 'esm-env';
-import { get_descriptors, get_prototype_of, is_frozen, object_freeze } from './utils.js';
+import {
+	define_property,
+	get_descriptors,
+	get_prototype_of,
+	is_frozen,
+	object_freeze
+} from './utils.js';
 import { snapshot } from './proxy.js';
 import { destroy_effect, effect, execute_effect_teardown } from './reactivity/effects.js';
 import {
@@ -17,7 +23,8 @@ import {
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
-	DISCONNECTED
+	DISCONNECTED,
+	STATE_FROZEN_SYMBOL
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -29,7 +36,6 @@ import { lifecycle_outside_component } from '../shared/errors.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
-export const FLUSH_YIELD = 2;
 
 // Used for DEV time error handling
 /** @param {WeakSet<Error>} value */
@@ -38,7 +44,6 @@ const handled_errors = new WeakSet();
 let current_scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
-let is_yield_task_queued = false;
 
 export let is_flushing_effect = false;
 export let is_destroying_effect = false;
@@ -478,16 +483,17 @@ export function remove_reactions(signal, start_index) {
 
 /**
  * @param {import('#client').Reaction} signal
+ * @param {boolean} [remove_dom]
  * @returns {void}
  */
-export function destroy_effect_children(signal) {
+export function destroy_effect_children(signal, remove_dom = true) {
 	let effect = signal.first;
 	signal.first = null;
 	signal.last = null;
 	var sibling;
 	while (effect !== null) {
 		sibling = effect.next;
-		destroy_effect(effect);
+		destroy_effect(effect, remove_dom);
 		effect = sibling;
 	}
 }
@@ -599,27 +605,15 @@ function flush_queued_effects(effects) {
 
 function process_deferred() {
 	is_micro_task_queued = false;
-	is_yield_task_queued = false;
 	if (flush_count > 1001) {
 		return;
 	}
 	const previous_queued_root_effects = current_queued_root_effects;
 	current_queued_root_effects = [];
 	flush_queued_root_effects(previous_queued_root_effects);
-	if (!is_micro_task_queued && !is_yield_task_queued) {
+	if (!is_micro_task_queued) {
 		flush_count = 0;
 	}
-}
-
-async function yield_tick() {
-	// TODO: replace this with scheduler.yield when it becomes standard
-	await new Promise((fulfil) => {
-		requestAnimationFrame(() => {
-			setTimeout(fulfil, 0);
-		});
-		// In case of being within background tab, the rAF won't fire
-		setTimeout(fulfil, 100);
-	});
 }
 
 /**
@@ -631,16 +625,6 @@ export function schedule_effect(signal) {
 		if (!is_micro_task_queued) {
 			is_micro_task_queued = true;
 			queueMicrotask(process_deferred);
-		}
-	} else if (current_scheduler_mode === FLUSH_YIELD) {
-		if (!is_yield_task_queued) {
-			is_yield_task_queued = true;
-			yield_tick()
-				.then(process_deferred)
-				.catch((err) => {
-					// eslint-disable-next-line no-console
-					console.error(err);
-				});
 		}
 	}
 
@@ -741,19 +725,6 @@ function process_effects(effect, collected_effects) {
 }
 
 /**
- * @param {{ (): void; (): any; }} fn
- */
-export function yield_event_updates(fn) {
-	const previous_scheduler_mode = current_scheduler_mode;
-	try {
-		current_scheduler_mode = FLUSH_YIELD;
-		return fn();
-	} finally {
-		current_scheduler_mode = previous_scheduler_mode;
-	}
-}
-
-/**
  * Internal version of `flushSync` with the option to not flush previous effects.
  * Returns the result of the passed function, if given.
  * @param {() => any} [fn]
@@ -772,7 +743,6 @@ export function flush_sync(fn, flush_previous = true) {
 
 		current_scheduler_mode = FLUSH_SYNC;
 		current_queued_root_effects = root_effects;
-		is_yield_task_queued = false;
 		is_micro_task_queued = false;
 
 		if (flush_previous) {
@@ -800,7 +770,7 @@ export function flush_sync(fn, flush_previous = true) {
  * @returns {Promise<void>}
  */
 export async function tick() {
-	await yield_tick();
+	await Promise.resolve();
 	// By calling flush_sync we guarantee that any pending state changes are applied after one tick.
 	// TODO look into whether we can make flushing subsequent updates synchronously in the future.
 	flush_sync();
@@ -1357,19 +1327,26 @@ if (DEV) {
 }
 
 /**
- * Expects a value that was wrapped with `freeze` and makes it frozen.
+ * Expects a value that was wrapped with `freeze` and makes it frozen in DEV.
  * @template T
  * @param {T} value
  * @returns {Readonly<T>}
  */
 export function freeze(value) {
-	if (typeof value === 'object' && value != null && !is_frozen(value)) {
+	if (typeof value === 'object' && value != null && !(STATE_FROZEN_SYMBOL in value)) {
 		// If the object is already proxified, then snapshot the value
-		if (STATE_SYMBOL in value) {
-			return object_freeze(snapshot(value));
+		if (STATE_SYMBOL in value || is_frozen(value)) {
+			value = snapshot(value);
 		}
-		// Otherwise freeze the object
-		object_freeze(value);
+		define_property(value, STATE_FROZEN_SYMBOL, {
+			value: true,
+			writable: true,
+			enumerable: false
+		});
+		// Freeze the object in DEV
+		if (DEV) {
+			object_freeze(value);
+		}
 	}
 	return value;
 }

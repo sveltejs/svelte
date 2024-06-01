@@ -18,4 +18,5 @@ export const EFFECT_TRANSPARENT = 1 << 15;
 export const LEGACY_DERIVED_PROP = 1 << 16;
 
 export const STATE_SYMBOL = Symbol('$state');
+export const STATE_FROZEN_SYMBOL = Symbol('$state.frozen');
 export const LOADING_ATTR_SYMBOL = Symbol('');

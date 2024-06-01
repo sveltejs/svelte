@@ -1,5 +1,29 @@
 # svelte
 
+## 5.0.0-next.148
+
+### Patch Changes
+
+- chore: improve $state.frozen performance in prod ([#11852](https://github.com/sveltejs/svelte/pull/11852))
+
+- breaking: removed deferred event updates ([#11855](https://github.com/sveltejs/svelte/pull/11855))
+
+## 5.0.0-next.147
+
+### Patch Changes
+
+- fix: improve reactive Map and Set implementations ([#11827](https://github.com/sveltejs/svelte/pull/11827))
+
+- fix: improve controlled each block cleanup performance ([#11839](https://github.com/sveltejs/svelte/pull/11839))
+
+## 5.0.0-next.146
+
+### Patch Changes
+
+- fix: allow for more svelte-ignore to work ([#11833](https://github.com/sveltejs/svelte/pull/11833))
+
+- fix: reevaluate namespace in slots ([#11849](https://github.com/sveltejs/svelte/pull/11849))
+
 ## 5.0.0-next.145
 
 ### Patch Changes
