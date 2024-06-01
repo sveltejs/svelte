@@ -127,6 +127,11 @@ function transform(name, dest) {
 		}
 	});
 
+	if (comments.length > 0) {
+		// @ts-expect-error
+		(ast.trailingComments ||= []).push(...comments);
+	}
+
 	const category = messages[name];
 
 	// find the `export function CODE` node
