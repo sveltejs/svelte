@@ -10,7 +10,7 @@ const seen = new Set();
 
 for (const category of fs.readdirSync('messages')) {
 	if (category.startsWith('.')) continue;
-	
+
 	messages[category] = {};
 
 	for (const file of fs.readdirSync(`messages/${category}`)) {
