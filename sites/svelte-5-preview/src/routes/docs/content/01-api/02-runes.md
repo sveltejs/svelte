@@ -19,7 +19,7 @@ Reactive state is declared with the `$state` rune:
 	let count = $state(0);
 </script>
 
-<button on:click={() => count++}>
+<button onclick={() => count++}>
 	clicks: {count}
 </button>
 ```
