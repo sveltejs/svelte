@@ -21,9 +21,6 @@ export function init_array_prototype_warnings() {
 
 			if (test !== -1) {
 				w.state_proxy_equality_mismatch('array.indexOf(...)');
-
-				// eslint-disable-next-line no-console
-				console.trace();
 			}
 		}
 
@@ -31,16 +28,21 @@ export function init_array_prototype_warnings() {
 	};
 
 	array_prototype.lastIndexOf = function (item, from_index) {
-		const index = lastIndexOf.call(this, item, from_index);
+		// we need to specify this.length - 1 because it's probably using something like
+		// `arguments` inside so passing undefined is different from not passing anything
+		const index = lastIndexOf.call(this, item, from_index ?? this.length - 1);
 
 		if (index === -1) {
-			const test = lastIndexOf.call(get_proxied_value(this), get_proxied_value(item), from_index);
+			// we need to specify this.length - 1 because it's probably using something like
+			// `arguments` inside so passing undefined is different from not passing anything
+			const test = lastIndexOf.call(
+				get_proxied_value(this),
+				get_proxied_value(item),
+				from_index ?? this.length - 1
+			);
 
 			if (test !== -1) {
 				w.state_proxy_equality_mismatch('array.lastIndexOf(...)');
-
-				// eslint-disable-next-line no-console
-				console.trace();
 			}
 		}
 
@@ -55,9 +57,6 @@ export function init_array_prototype_warnings() {
 
 			if (test) {
 				w.state_proxy_equality_mismatch('array.includes(...)');
-
-				// eslint-disable-next-line no-console
-				console.trace();
 			}
 		}
 
@@ -81,9 +80,6 @@ export function init_array_prototype_warnings() {
 export function strict_equals(a, b, equal = true) {
 	if ((a === b) !== (get_proxied_value(a) === get_proxied_value(b))) {
 		w.state_proxy_equality_mismatch(equal ? '===' : '!==');
-
-		// eslint-disable-next-line no-console
-		console.trace();
 	}
 
 	return (a === b) === equal;
@@ -98,9 +94,6 @@ export function strict_equals(a, b, equal = true) {
 export function equals(a, b, equal = true) {
 	if ((a == b) !== (get_proxied_value(a) == get_proxied_value(b))) {
 		w.state_proxy_equality_mismatch(equal ? '==' : '!=');
-
-		// eslint-disable-next-line no-console
-		console.trace();
 	}
 
 	return (a == b) === equal;

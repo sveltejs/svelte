@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -26,11 +27,11 @@ export default test({
 			<input value="App"/>
 		</div>
 	`,
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		const [input1, input2, input3, input4] = target.querySelectorAll('input');
 		input1.value = 'Awesome';
-		await input1.dispatchEvent(new window.Event('input'));
-		await Promise.resolve();
+		input1.dispatchEvent(new window.Event('input'));
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -49,8 +50,8 @@ export default test({
 		);
 
 		input2.value = 'Svelte';
-		await input2.dispatchEvent(new window.Event('input'));
-		await Promise.resolve();
+		input2.dispatchEvent(new window.Event('input'));
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -69,8 +70,8 @@ export default test({
 		);
 
 		input3.value = 'Foo';
-		await input3.dispatchEvent(new window.Event('input'));
-		await Promise.resolve();
+		input3.dispatchEvent(new window.Event('input'));
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -89,8 +90,8 @@ export default test({
 		);
 
 		input4.value = 'Bar';
-		await input4.dispatchEvent(new window.Event('input'));
-		await Promise.resolve();
+		input4.dispatchEvent(new window.Event('input'));
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

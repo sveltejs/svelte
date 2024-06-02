@@ -1,11 +1,5 @@
 import { DEV } from 'esm-env';
-import {
-	append_child,
-	clear_text_content,
-	create_element,
-	empty,
-	init_operations
-} from './dom/operations.js';
+import { clear_text_content, create_element, empty, init_operations } from './dom/operations.js';
 import { HYDRATION_ERROR, HYDRATION_START, PassiveDelegatedEvents } from '../../constants.js';
 import { flush_sync, push, pop, current_component_context } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
@@ -90,13 +84,12 @@ export function stringify(value) {
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
- * @template {Record<string, any>} Events
- * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} component
+ * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props>> | import('../../index.js').Component<Props, Exports, any>} component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
  * 		anchor?: Node;
  * 		props?: Props;
- * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
+ * 		events?: Record<string, (e: any) => any>;
  * 		context?: Map<any, any>;
  * 		intro?: boolean;
  * 	}} options
@@ -117,12 +110,11 @@ export function mount(component, options) {
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
- * @template {Record<string, any>} Events
- * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props, Events>>} component
+ * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props>> | import('../../index.js').Component<Props, Exports, any>} component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
  * 		props?: Props;
- * 		events?: { [Property in keyof Events]: (e: Events[Property]) => any };
+ * 		events?: Record<string, (e: any) => any>;
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: boolean;
@@ -136,8 +128,6 @@ export function hydrate(component, options) {
 
 	const target = options.target;
 	const previous_hydrate_nodes = hydrate_nodes;
-
-	let hydrated = false;
 
 	try {
 		// Don't flush previous effects to ensure order of outer effects stays consistent
@@ -162,7 +152,6 @@ export function hydrate(component, options) {
 			// flush_sync will run this callback and then synchronously run any pending effects,
 			// which don't belong to the hydration phase anymore - therefore reset it here
 			set_hydrating(false);
-			hydrated = true;
 
 			return instance;
 		}, false);
@@ -190,7 +179,7 @@ export function hydrate(component, options) {
 
 /**
  * @template {Record<string, any>} Exports
- * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<any>>} Component
+ * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<any>> | import('../../index.js').Component<any>} Component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
  * 		anchor: Node;
@@ -330,7 +319,8 @@ export async function append_styles(target, style_sheet_id, styles) {
 		const style = create_element('style');
 		style.id = style_sheet_id;
 		style.textContent = styles;
-		append_child(/** @type {Document} */ (append_styles_to).head || append_styles_to, style);
+		const target = /** @type {Document} */ (append_styles_to).head || append_styles_to;
+		target.appendChild(style);
 	}
 }
 

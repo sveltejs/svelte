@@ -101,7 +101,7 @@ export function bind_element_size(element, type, update) {
 	var unsub = resize_observer_border_box.observe(element, () => update(element[type]));
 
 	effect(() => {
-		untrack(() => update(element[type]));
+		update(element[type]);
 		return unsub;
 	});
 }

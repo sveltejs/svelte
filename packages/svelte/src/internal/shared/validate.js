@@ -43,7 +43,7 @@ export function validate_component(component_fn) {
 export function validate_void_dynamic_element(tag_fn) {
 	const tag = tag_fn();
 	if (tag && is_void(tag)) {
-		w.dynamic_void_element_content(false, tag);
+		w.dynamic_void_element_content(tag);
 	}
 }
 

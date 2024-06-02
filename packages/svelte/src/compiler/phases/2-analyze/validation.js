@@ -8,7 +8,6 @@ import * as e from '../../errors.js';
 import {
 	extract_identifiers,
 	get_parent,
-	is_event_attribute,
 	is_expression_attribute,
 	is_text_attribute,
 	object,
@@ -34,6 +33,17 @@ import { Scope, get_rune } from '../scope.js';
 import { merge } from '../visitors.js';
 import { a11y_validators } from './a11y.js';
 
+/** @param {import('#compiler').Attribute} attribute */
+function validate_attribute(attribute) {
+	if (attribute.value === true || attribute.value.length === 1) return;
+
+	const is_quoted = attribute.value.at(-1)?.end !== attribute.end;
+
+	if (!is_quoted) {
+		e.attribute_unquoted_sequence(attribute);
+	}
+}
+
 /**
  * @param {import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf} node
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
@@ -58,14 +68,18 @@ function validate_component(node, context) {
 		}
 
 		if (attribute.type === 'Attribute') {
-			if (context.state.analysis.runes && is_expression_attribute(attribute)) {
-				const expression = attribute.value[0].expression;
-				if (expression.type === 'SequenceExpression') {
-					let i = /** @type {number} */ (expression.start);
-					while (--i > 0) {
-						const char = context.state.analysis.source[i];
-						if (char === '(') break; // parenthesized sequence expressions are ok
-						if (char === '{') e.attribute_invalid_sequence_expression(expression);
+			if (context.state.analysis.runes) {
+				validate_attribute(attribute);
+
+				if (is_expression_attribute(attribute)) {
+					const expression = attribute.value[0].expression;
+					if (expression.type === 'SequenceExpression') {
+						let i = /** @type {number} */ (expression.start);
+						while (--i > 0) {
+							const char = context.state.analysis.source[i];
+							if (char === '(') break; // parenthesized sequence expressions are ok
+							if (char === '{') e.attribute_invalid_sequence_expression(expression);
+						}
 					}
 				}
 			}
@@ -107,14 +121,18 @@ function validate_element(node, context) {
 		if (attribute.type === 'Attribute') {
 			const is_expression = is_expression_attribute(attribute);
 
-			if (context.state.analysis.runes && is_expression) {
-				const expression = attribute.value[0].expression;
-				if (expression.type === 'SequenceExpression') {
-					let i = /** @type {number} */ (expression.start);
-					while (--i > 0) {
-						const char = context.state.analysis.source[i];
-						if (char === '(') break; // parenthesized sequence expressions are ok
-						if (char === '{') e.attribute_invalid_sequence_expression(expression);
+			if (context.state.analysis.runes) {
+				validate_attribute(attribute);
+
+				if (is_expression) {
+					const expression = attribute.value[0].expression;
+					if (expression.type === 'SequenceExpression') {
+						let i = /** @type {number} */ (expression.start);
+						while (--i > 0) {
+							const char = context.state.analysis.source[i];
+							if (char === '(') break; // parenthesized sequence expressions are ok
+							if (char === '{') e.attribute_invalid_sequence_expression(expression);
+						}
 					}
 				}
 			}
@@ -390,6 +408,23 @@ const validation = {
 						node,
 						node.name,
 						property.valid_elements.map((valid_element) => `<${valid_element}>`).join(', ')
+					);
+				}
+
+				if (property.invalid_elements && property.invalid_elements.includes(parent.name)) {
+					const valid_bindings = Object.entries(binding_properties)
+						.filter(([_, binding_property]) => {
+							return (
+								binding_property.valid_elements?.includes(parent.name) ||
+								(!binding_property.valid_elements &&
+									!binding_property.invalid_elements?.includes(parent.name))
+							);
+						})
+						.map(([property_name]) => property_name);
+					e.bind_invalid_name(
+						node,
+						node.name,
+						`Possible bindings for <${parent.name}> are ${valid_bindings.join(', ')}`
 					);
 				}
 

@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -35,6 +36,8 @@ export default test({
 
 		await raf.tick(100);
 		assert.equal(component.intro_count, 0);
+
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

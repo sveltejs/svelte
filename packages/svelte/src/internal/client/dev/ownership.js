@@ -241,8 +241,5 @@ export function check_ownership(metadata) {
 		} else {
 			w.ownership_invalid_mutation();
 		}
-
-		// eslint-disable-next-line no-console
-		console.trace();
 	}
 }

@@ -1,6 +1,5 @@
 import { HYDRATION_END, HYDRATION_START } from '../../../constants.js';
 import { hydrating } from '../dom/hydration.js';
-import { is_array } from '../utils.js';
 
 /**
  * @param {any} fn
@@ -12,15 +11,8 @@ export function add_locations(fn, filename, locations) {
 	return (/** @type {any[]} */ ...args) => {
 		const dom = fn(...args);
 
-		const nodes = hydrating
-			? is_array(dom)
-				? dom
-				: [dom]
-			: dom.nodeType === 11
-				? Array.from(dom.childNodes)
-				: [dom];
-
-		assign_locations(nodes, filename, locations);
+		var node = hydrating ? dom : dom.nodeType === 11 ? dom.firstChild : dom;
+		assign_locations(node, filename, locations);
 
 		return dom;
 	};
@@ -38,34 +30,30 @@ function assign_location(element, filename, location) {
 	};
 
 	if (location[2]) {
-		assign_locations(
-			/** @type {import('#client').TemplateNode[]} */ (Array.from(element.childNodes)),
-			filename,
-			location[2]
-		);
+		assign_locations(element.firstChild, filename, location[2]);
 	}
 }
 
 /**
- * @param {import('#client').TemplateNode[]} nodes
+ * @param {Node | null} node
  * @param {string} filename
  * @param {import('../../../compiler/phases/3-transform/client/types.js').SourceLocation[]} locations
  */
-function assign_locations(nodes, filename, locations) {
-	var j = 0;
+function assign_locations(node, filename, locations) {
+	var i = 0;
 	var depth = 0;
 
-	for (var i = 0; i < nodes.length; i += 1) {
-		var node = nodes[i];
-
+	while (node && i < locations.length) {
 		if (hydrating && node.nodeType === 8) {
 			var comment = /** @type {Comment} */ (node);
 			if (comment.data === HYDRATION_START) depth += 1;
-			if (comment.data.startsWith(HYDRATION_END)) depth -= 1;
+			else if (comment.data[0] === HYDRATION_END) depth -= 1;
 		}
 
 		if (depth === 0 && node.nodeType === 1) {
-			assign_location(/** @type {Element} */ (node), filename, locations[j++]);
+			assign_location(/** @type {Element} */ (node), filename, locations[i++]);
 		}
+
+		node = node.nextSibling;
 	}
 }

@@ -18,14 +18,19 @@ import { validation_legacy, validation_runes, validation_runes_js } from './vali
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
-import { DelegatedEvents, namespace_mathml, namespace_svg } from '../../../constants.js';
+import {
+	DelegatedEvents,
+	is_capture_event,
+	namespace_mathml,
+	namespace_svg
+} from '../../../constants.js';
 import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
 import { hash } from './utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
-import { pop_ignore, push_ignore } from '../../state.js';
+import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -285,7 +290,9 @@ export function analyze_component(root, source, options) {
 			!Runes.includes(/** @type {any} */ (name)) ||
 			(declaration !== null &&
 				// const state = $state(0) is valid
-				get_rune(declaration.initial, instance.scope) === null &&
+				(get_rune(declaration.initial, instance.scope) === null ||
+					// rune-line names received as props are valid too (but we have to protect against $props as store)
+					(store_name !== 'props' && get_rune(declaration.initial, instance.scope) === '$props')) &&
 				// allow `import { derived } from 'svelte/store'` in the same file as `const x = $derived(..)` because one is not a subscription to the other
 				!(
 					name === '$derived' &&
@@ -1100,6 +1107,7 @@ function is_safe_identifier(expression, scope) {
 /** @type {import('./types').Visitors} */
 const common_visitors = {
 	_(node, { state, next, path }) {
+		ignore_map.set(node, structuredClone(ignore_stack));
 		const parent = path.at(-1);
 		if (parent?.type === 'Fragment' && node.type !== 'Comment' && node.type !== 'Text') {
 			const idx = parent.nodes.indexOf(/** @type {any} */ (node));
@@ -1122,6 +1130,7 @@ const common_visitors = {
 
 			if (ignores.length > 0) {
 				push_ignore(ignores);
+				ignore_map.set(node, structuredClone(ignore_stack));
 				next();
 				pop_ignore();
 			}
@@ -1141,6 +1150,7 @@ const common_visitors = {
 				}
 				if (ignores.length > 0) {
 					push_ignore(ignores);
+					ignore_map.set(node, structuredClone(ignore_stack));
 					next();
 					pop_ignore();
 				}
@@ -1506,21 +1516,11 @@ function determine_element_spread(node) {
  * @param {string} event_name
  */
 function get_attribute_event_name(event_name) {
-	if (is_capture_event(event_name)) {
+	if (is_capture_event(event_name, 'include-on')) {
 		event_name = event_name.slice(0, -7);
 	}
 	event_name = event_name.slice(2);
 	return event_name;
-}
-
-/**
- * @param {string} name
- * @returns boolean
- */
-function is_capture_event(name) {
-	return (
-		name.endsWith('capture') && name !== 'ongotpointercapture' && name !== 'onlostpointercapture'
-	);
 }
 
 /**

@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -7,11 +8,11 @@ export default test({
 		<button>toggle</button
 	`,
 
-	async test({ assert, target }) {
+	test({ assert, target }) {
 		const [b1] = target.querySelectorAll('button');
 
 		b1?.click();
-		await Promise.resolve();
+		flushSync();
 		assert.htmlEqual(
 			target.innerHTML,
 			`

@@ -638,6 +638,15 @@ export function attribute_invalid_type(node) {
 }
 
 /**
+ * Attribute values containing `{...}` must be enclosed in quote marks, unless the value only contains the expression
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function attribute_unquoted_sequence(node) {
+	e(node, "attribute_unquoted_sequence", "Attribute values containing `{...}` must be enclosed in quote marks, unless the value only contains the expression");
+}
+
+/**
  * Can only bind to an Identifier or MemberExpression
  * @param {null | number | NodeLike} node
  * @returns {never}

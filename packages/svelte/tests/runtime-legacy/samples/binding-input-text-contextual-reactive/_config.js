@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -45,7 +46,7 @@ export default test({
 		<p>remaining:one / done:two / remaining:three</p>
 	`,
 
-	async test({ assert, component, target, window }) {
+	test({ assert, component, target, window }) {
 		/**
 		 * @param {number} i
 		 * @param {string} text
@@ -88,8 +89,8 @@ export default test({
 		`
 		);
 
-		await set_text(1, 'four');
-		await Promise.resolve();
+		set_text(1, 'four');
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -113,8 +114,8 @@ export default test({
 			{ done: false, text: 'four' }
 		]);
 
-		await set_done(0, true);
-		await Promise.resolve();
+		set_done(0, true);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

@@ -217,7 +217,7 @@ export default function tag(parser) {
 	while ((attribute = read(parser))) {
 		if (attribute.type === 'Attribute' || attribute.type === 'BindDirective') {
 			if (unique_names.includes(attribute.name)) {
-				e.attribute_duplicate(attribute.start);
+				e.attribute_duplicate(attribute);
 				// <svelte:element bind:this this=..> is allowed
 			} else if (attribute.name !== 'this') {
 				unique_names.push(attribute.name);
@@ -271,7 +271,6 @@ export default function tag(parser) {
 		const chunk = definition.value[0];
 
 		if (definition.value.length !== 1 || chunk.type !== 'ExpressionTag') {
-			chunk.type;
 			w.svelte_element_invalid_this(definition);
 
 			// note that this is wrong, in the case of e.g. `this="h{n}"` — it will result in `<h>`.

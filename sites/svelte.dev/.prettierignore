@@ -1,0 +1,7 @@
+static/svelte-app.json
+scripts/svelte-app/
+src/routes/_components/Supporters/contributors.jpg
+src/routes/_components/Supporters/contributors.js
+src/routes/_components/Supporters/donors.jpg
+src/routes/_components/Supporters/donors.js
+src/lib/generated

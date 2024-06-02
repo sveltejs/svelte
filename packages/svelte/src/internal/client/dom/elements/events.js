@@ -2,6 +2,7 @@ import { render_effect } from '../../reactivity/effects.js';
 import { all_registered_events, root_event_handles } from '../../render.js';
 import { define_property, is_array } from '../../utils.js';
 import { hydrating } from '../hydration.js';
+import { queue_micro_task } from '../task.js';
 
 /**
  * SSR adds onload and onerror attributes to catch those events before the hydration.
@@ -34,18 +35,14 @@ export function replay_events(dom) {
  * @param {string} event_name
  * @param {Element} dom
  * @param {EventListener} handler
- * @param {boolean} capture
- * @param {boolean} [passive]
- * @returns {void}
+ * @param {AddEventListenerOptions} options
  */
-export function event(event_name, dom, handler, capture, passive) {
-	var options = { capture, passive };
-
+export function create_event(event_name, dom, handler, options) {
 	/**
 	 * @this {EventTarget}
 	 */
 	function target_handler(/** @type {Event} */ event) {
-		if (!capture) {
+		if (!options.capture) {
 			// Only call in the bubble phase, else delegated events would be called before the capturing events
 			handle_event_propagation(dom, event);
 		}
@@ -54,7 +51,32 @@ export function event(event_name, dom, handler, capture, passive) {
 		}
 	}
 
-	dom.addEventListener(event_name, target_handler, options);
+	// Chrome has a bug where pointer events don't work when attached to a DOM element that has been cloned
+	// with cloneNode() and the DOM element is disconnected from the document. To ensure the event works, we
+	// defer the attachment till after it's been appended to the document. TODO: remove this once Chrome fixes
+	// this bug. The same applies to wheel events.
+	if (event_name.startsWith('pointer') || event_name === 'wheel') {
+		queue_micro_task(() => {
+			dom.addEventListener(event_name, target_handler, options);
+		});
+	} else {
+		dom.addEventListener(event_name, target_handler, options);
+	}
+
+	return target_handler;
+}
+
+/**
+ * @param {string} event_name
+ * @param {Element} dom
+ * @param {EventListener} handler
+ * @param {boolean} capture
+ * @param {boolean} [passive]
+ * @returns {void}
+ */
+export function event(event_name, dom, handler, capture, passive) {
+	var options = { capture, passive };
+	var target_handler = create_event(event_name, dom, handler, options);
 
 	// @ts-ignore
 	if (dom === document.body || dom === window || dom === document) {
@@ -150,38 +172,59 @@ export function handle_event_propagation(handler_element, event) {
 		}
 	});
 
-	/** @param {Element} next_target */
-	function next(next_target) {
-		current_target = next_target;
-		/** @type {null | Element} */
-		var parent_element = next_target.parentNode || /** @type {any} */ (next_target).host || null;
+	try {
+		/**
+		 * @type {unknown}
+		 */
+		var throw_error;
+		/**
+		 * @type {unknown[]}
+		 */
+		var other_errors = [];
+		while (current_target !== null) {
+			/** @type {null | Element} */
+			var parent_element =
+				current_target.parentNode || /** @type {any} */ (current_target).host || null;
 
-		try {
-			// @ts-expect-error
-			var delegated = next_target['__' + event_name];
+			try {
+				// @ts-expect-error
+				var delegated = current_target['__' + event_name];
 
-			if (delegated !== undefined && !(/** @type {any} */ (next_target).disabled)) {
-				if (is_array(delegated)) {
-					var [fn, ...data] = delegated;
-					fn.apply(next_target, [event, ...data]);
+				if (delegated !== undefined && !(/** @type {any} */ (current_target).disabled)) {
+					if (is_array(delegated)) {
+						var [fn, ...data] = delegated;
+						fn.apply(current_target, [event, ...data]);
+					} else {
+						delegated.call(current_target, event);
+					}
+				}
+			} catch (error) {
+				if (throw_error) {
+					other_errors.push(error);
 				} else {
-					delegated.call(next_target, event);
+					throw_error = error;
 				}
 			}
-		} finally {
 			if (
-				!event.cancelBubble &&
-				parent_element !== handler_element &&
-				parent_element !== null &&
-				next_target !== handler_element
+				event.cancelBubble ||
+				parent_element === handler_element ||
+				parent_element === null ||
+				current_target === handler_element
 			) {
-				next(parent_element);
+				break;
 			}
+			current_target = parent_element;
 		}
-	}
 
-	try {
-		next(current_target);
+		if (throw_error) {
+			for (let error of other_errors) {
+				// Throw the rest of the errors, one-by-one on a microtask
+				queueMicrotask(() => {
+					throw error;
+				});
+			}
+			throw throw_error;
+		}
 	} finally {
 		// @ts-expect-error is used above
 		event.__root = handler_element;

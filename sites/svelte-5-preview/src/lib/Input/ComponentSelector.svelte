@@ -231,7 +231,7 @@
 				on:dragleave={dragLeave}
 				on:drop|preventDefault={dragEnd}
 			>
-				<i class="drag-handle" />
+				<i class="drag-handle"></i>
 				{#if file.name === 'App' && filename !== editing_name}
 					<div class="uneditable">
 						App.svelte{#if show_modified && file.modified}*{/if}

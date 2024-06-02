@@ -27,7 +27,9 @@ export {
 	set_custom_element_data,
 	set_dynamic_element_attributes,
 	set_xlink_attribute,
-	handle_lazy_img
+	handle_lazy_img,
+	set_value,
+	set_checked
 } from './dom/elements/attributes.js';
 export { set_class, set_svg_class, set_mathml_class, toggle_class } from './dom/elements/class.js';
 export { event, delegate, replay_events } from './dom/elements/events.js';
@@ -78,7 +80,7 @@ export {
 export {
 	append,
 	comment,
-	svg_template,
+	ns_template,
 	svg_template_with_script,
 	mathml_template,
 	template,

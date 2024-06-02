@@ -3,7 +3,7 @@
 import './ambient.js';
 
 /**
- * @deprecated Svelte components were classes in Svelte 4. In Svelte 5, thy are not anymore.
+ * @deprecated In Svelte 4, components are classes. In Svelte 5, they are functions.
  * Use `mount` or `createRoot` instead to instantiate components.
  * See [breaking changes](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes)
  * for more info.
@@ -34,32 +34,10 @@ type Properties<Props, Slots> = Props &
 		: {});
 
 /**
- * Can be used to create strongly typed Svelte components.
- *
- * #### Example:
- *
- * You have component library on npm called `component-library`, from which
- * you export a component called `MyComponent`. For Svelte+TypeScript users,
- * you want to provide typings. Therefore you create a `index.d.ts`:
- * ```ts
- * import { SvelteComponent } from "svelte";
- * export class MyComponent extends SvelteComponent<{foo: string}> {}
- * ```
- * Typing this makes it possible for IDEs like VS Code with the Svelte extension
- * to provide intellisense and to use the component like this in a Svelte file
- * with TypeScript:
- * ```svelte
- * <script lang="ts">
- * 	import { MyComponent } from "component-library";
- * </script>
- * <MyComponent foo={'bar'} />
- * ```
- *
  * This was the base class for Svelte components in Svelte 4. Svelte 5+ components
- * are completely different under the hood. You should only use this type for typing,
- * not actually instantiate components with `new` - use `mount` or `createRoot` instead.
- * See [breaking changes](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes)
- * for more info.
+ * are completely different under the hood. For typing, use `Component` instead.
+ * To instantiate components, use `mount` or `createRoot`.
+ * See [breaking changes documentation](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes) for more info.
  */
 export class SvelteComponent<
 	Props extends Record<string, any> = Record<string, any>,
@@ -80,27 +58,25 @@ export class SvelteComponent<
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
-	 * */
+	 */
 	$$prop_def: Props; // Without Properties: unnecessary, causes type bugs
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
-	 *
-	 * */
+	 */
 	$$events_def: Events;
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
-	 *
-	 * */
+	 */
 	$$slot_def: Slots;
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
-	 * */
+	 */
 	$$bindings?: string;
 
 	/**
@@ -129,7 +105,61 @@ export class SvelteComponent<
 }
 
 /**
- * @deprecated Use `SvelteComponent` instead. See TODO for more information.
+ * Can be used to create strongly typed Svelte components.
+ *
+ * #### Example:
+ *
+ * You have component library on npm called `component-library`, from which
+ * you export a component called `MyComponent`. For Svelte+TypeScript users,
+ * you want to provide typings. Therefore you create a `index.d.ts`:
+ * ```ts
+ * import { Component } from "svelte";
+ * export declare const MyComponent: Component<{ foo: string }> {}
+ * ```
+ * Typing this makes it possible for IDEs like VS Code with the Svelte extension
+ * to provide intellisense and to use the component like this in a Svelte file
+ * with TypeScript:
+ * ```svelte
+ * <script lang="ts">
+ * 	import { MyComponent } from "component-library";
+ * </script>
+ * <MyComponent foo={'bar'} />
+ * ```
+ */
+export interface Component<
+	Props extends Record<string, any> = {},
+	Exports extends Record<string, any> = {},
+	Bindings extends keyof Props | '' = ''
+> {
+	/**
+	 * @param internal An internal object used by Svelte. Do not use or modify.
+	 * @param props The props passed to the component.
+	 */
+	(
+		internal: unknown,
+		props: Props
+	): {
+		/**
+		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
+		 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
+		 * for more info.
+		 */
+		$on?(type: string, callback: (e: any) => void): () => void;
+		/**
+		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
+		 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
+		 * for more info.
+		 */
+		$set?(props: Partial<Props>): void;
+	} & Exports;
+	/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
+	element?: typeof HTMLElement;
+	/** Does not exist at runtime, for typing capabilities only. DO NOT USE */
+	z_$$bindings?: Bindings;
+}
+
+/**
+ * @deprecated Use `Component` instead. See [breaking changes documentation](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes) for more information.
  */
 export class SvelteComponentTyped<
 	Props extends Record<string, any> = Record<string, any>,
@@ -138,6 +168,8 @@ export class SvelteComponentTyped<
 > extends SvelteComponent<Props, Events, Slots> {}
 
 /**
+ * @deprecated The new `Component` type does not have a dedicated Events type. Use `ComponentProps` instead.
+ *
  * Convenience type to get the events the given component expects. Example:
  * ```html
  * <script lang="ts">
@@ -166,10 +198,16 @@ export type ComponentEvents<Comp extends SvelteComponent> =
  * </script>
  * ```
  */
-export type ComponentProps<Comp extends SvelteComponent> =
-	Comp extends SvelteComponent<infer Props> ? Props : never;
+export type ComponentProps<Comp extends SvelteComponent | Component> =
+	Comp extends SvelteComponent<infer Props>
+		? Props
+		: Comp extends Component<infer Props>
+			? Props
+			: never;
 
 /**
+ * @deprecated This type is obsolete when working with the new `Component` type.
+ *
  * Convenience type to get the type of a Svelte component. Useful for example in combination with
  * dynamic components using `<svelte:component>`.
  *

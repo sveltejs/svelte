@@ -32,6 +32,7 @@ import {
 	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED,
+	is_capture_event,
 	TEMPLATE_FRAGMENT,
 	TEMPLATE_USE_IMPORT_NODE,
 	TRANSITION_GLOBAL,
@@ -472,7 +473,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 function serialize_element_attribute_update_assignment(element, node_id, attribute, context) {
 	const state = context.state;
 	const name = get_attribute_name(element, attribute, context);
-	const is_svg = context.state.metadata.namespace === 'svg';
+	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
 	let [contains_call_expression, value] = serialize_attribute_value(attribute.value, context);
 
@@ -506,6 +507,10 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 				value
 			)
 		);
+	} else if (name === 'value') {
+		update = b.stmt(b.call('$.set_value', node_id, value));
+	} else if (name === 'checked') {
+		update = b.stmt(b.call('$.set_checked', node_id, value));
 	} else if (DOMProperties.includes(name)) {
 		update = b.stmt(b.assignment('=', b.member(node_id, b.id(name)), value));
 	} else {
@@ -842,7 +847,13 @@ function serialize_inline_component(node, component_name, context) {
 	/** @type {import('estree').Property[]} */
 	const serialized_slots = [];
 	for (const slot_name of Object.keys(children)) {
-		const body = create_block(node, `${node.name}_${slot_name}`, children[slot_name], context);
+		const body = create_block(
+			node,
+			node.fragment,
+			`${node.name}_${slot_name}`,
+			children[slot_name],
+			context
+		);
 		if (body.length === 0) continue;
 
 		const slot_fn = b.arrow(
@@ -1018,13 +1029,14 @@ function serialize_locations(locations) {
  * ```
  * Adds the hoisted parts to `context.state.hoisted` and returns the statements of the main block.
  * @param {import('#compiler').SvelteNode} parent
+ * @param {import('#compiler').Fragment} fragment
  * @param {string} name
  * @param {import('#compiler').SvelteNode[]} nodes
  * @param {import('../types.js').ComponentContext} context
  * @returns {import('estree').Statement[]}
  */
-function create_block(parent, name, nodes, context) {
-	const namespace = infer_namespace(context.state.metadata.namespace, parent, nodes, context.path);
+function create_block(parent, fragment, name, nodes, context) {
+	const namespace = infer_namespace(context.state.metadata.namespace, parent, nodes);
 
 	const { hoisted, trimmed } = clean_nodes(
 		parent,
@@ -1055,6 +1067,7 @@ function create_block(parent, name, nodes, context) {
 	/** @type {import('../types').ComponentClientTransformState} */
 	const state = {
 		...context.state,
+		scope: context.state.scopes.get(fragment) ?? context.state.scope,
 		before_init: [],
 		init: [],
 		update: [],
@@ -1197,7 +1210,7 @@ function get_template_function(namespace, state) {
 	return namespace === 'svg'
 		? contains_script_tag
 			? '$.svg_template_with_script'
-			: '$.svg_template'
+			: '$.ns_template'
 		: namespace === 'mathml'
 			? '$.mathml_template'
 			: contains_script_tag
@@ -1406,11 +1419,7 @@ function serialize_event_attribute(node, context) {
 	const modifiers = [];
 
 	let event_name = node.name.slice(2);
-	if (
-		event_name.endsWith('capture') &&
-		event_name !== 'ongotpointercapture' &&
-		event_name !== 'onlostpointercapture'
-	) {
+	if (is_capture_event(event_name)) {
 		event_name = event_name.slice(0, -7);
 		modifiers.push('capture');
 	}
@@ -1615,7 +1624,7 @@ function serialize_attribute_value(attribute_value, context) {
 
 /**
  * @param {Array<import('#compiler').Text | import('#compiler').ExpressionTag>} values
- * @param {(node: import('#compiler').SvelteNode) => any} visit
+ * @param {(node: import('#compiler').SvelteNode, state: any) => any} visit
  * @param {import("../types.js").ComponentClientTransformState} state
  * @returns {[boolean, import('estree').TemplateLiteral]}
  */
@@ -1660,13 +1669,13 @@ function serialize_template_literal(values, visit, state) {
 						id,
 						create_derived(
 							state,
-							b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression)))
+							b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression, state)))
 						)
 					)
 				);
 				expressions.push(b.call('$.get', id));
 			} else {
-				expressions.push(b.call('$.stringify', visit(node.expression)));
+				expressions.push(b.call('$.stringify', visit(node.expression, state)));
 			}
 			quasis.push(b.quasi('', i + 1 === values.length));
 		}
@@ -1679,7 +1688,7 @@ function serialize_template_literal(values, visit, state) {
 /** @type {import('../types').ComponentVisitors} */
 export const template_visitors = {
 	Fragment(node, context) {
-		const body = create_block(node, 'root', node.nodes, context);
+		const body = create_block(context.path.at(-1) ?? node, node, 'root', node.nodes, context);
 		return b.block(body);
 	},
 	Comment(node, context) {
@@ -1990,7 +1999,7 @@ export const template_visitors = {
 			child_metadata.bound_contenteditable = true;
 		}
 
-		if (needs_input_reset && (node.name === 'input' || node.name === 'select')) {
+		if (needs_input_reset && node.name === 'input') {
 			context.state.init.push(b.stmt(b.call('$.remove_input_attr_defaults', context.state.node)));
 		}
 
@@ -2220,7 +2229,7 @@ export const template_visitors = {
 		}
 		inner.push(...inner_context.state.after_update);
 		inner.push(
-			...create_block(node, 'dynamic_element', node.fragment.nodes, {
+			...create_block(node, node.fragment, 'dynamic_element', node.fragment.nodes, {
 				...context,
 				state: {
 					...context.state,
@@ -2448,7 +2457,7 @@ export const template_visitors = {
 		}
 
 		// TODO should use context.visit?
-		const children = create_block(node, 'each_block', node.body.nodes, context);
+		const children = create_block(node, node.body, 'each_block', node.body.nodes, context);
 
 		const key_function = node.key
 			? b.arrow(
@@ -3016,22 +3025,14 @@ export const template_visitors = {
 			}
 		}
 
-		const state = {
-			...context.state,
-			// TODO this logic eventually belongs in create_block, when fragments are used everywhere
-			scope: /** @type {import('../../../scope').Scope} */ (context.state.scopes.get(node.fragment))
-		};
-
 		context.state.init.push(...lets);
 		context.state.init.push(
 			...create_block(
 				node,
+				node.fragment,
 				'slot_template',
 				/** @type {import('#compiler').SvelteNode[]} */ (node.fragment.nodes),
-				{
-					...context,
-					state
-				}
+				context
 			)
 		);
 	},
@@ -3087,7 +3088,7 @@ export const template_visitors = {
 				? b.literal(null)
 				: b.arrow(
 						[b.id('$$anchor')],
-						b.block(create_block(node, 'fallback', node.fragment.nodes, context))
+						b.block(create_block(node, node.fragment, 'fallback', node.fragment.nodes, context))
 					);
 
 		const expression = is_default
@@ -3105,7 +3106,7 @@ export const template_visitors = {
 					'$.head',
 					b.arrow(
 						[b.id('$$anchor')],
-						b.block(create_block(node, 'head', node.fragment.nodes, context))
+						b.block(create_block(node, node.fragment, 'head', node.fragment.nodes, context))
 					)
 				)
 			)

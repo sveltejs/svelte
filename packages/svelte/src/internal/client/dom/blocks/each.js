@@ -8,7 +8,13 @@ import {
 	HYDRATION_END_ELSE,
 	HYDRATION_START
 } from '../../../../constants.js';
-import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
+import {
+	hydrate_anchor,
+	hydrate_nodes,
+	hydrate_start,
+	hydrating,
+	set_hydrating
+} from '../hydration.js';
 import { clear_text_content, empty } from '../operations.js';
 import { remove } from '../reconciler.js';
 import { untrack } from '../../runtime.js';
@@ -25,7 +31,6 @@ import {
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen } from '../../utils.js';
 import { INERT, STATE_SYMBOL } from '../../constants.js';
-import { push_template_node } from '../template.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -52,9 +57,9 @@ export function index(_, i) {
  * subsequent destruction. Used in each blocks
  * @param {import('#client').EachItem[]} items
  * @param {null | Node} controlled_anchor
- * @param {() => void} [callback]
+ * @param {Map<any, import("#client").EachItem>} items_map
  */
-function pause_effects(items, controlled_anchor, callback) {
+function pause_effects(items, controlled_anchor, items_map) {
 	/** @type {import('#client').TransitionManager[]} */
 	var transitions = [];
 	var length = items.length;
@@ -63,20 +68,29 @@ function pause_effects(items, controlled_anchor, callback) {
 		pause_children(items[i].e, transitions, true);
 	}
 
+	var is_controlled = length > 0 && transitions.length === 0 && controlled_anchor !== null;
 	// If we have a controlled anchor, it means that the each block is inside a single
 	// DOM element, so we can apply a fast-path for clearing the contents of the element.
-	if (length > 0 && transitions.length === 0 && controlled_anchor !== null) {
-		var parent_node = /** @type {Element} */ (controlled_anchor.parentNode);
+	if (is_controlled) {
+		var parent_node = /** @type {Element} */ (
+			/** @type {Element} */ (controlled_anchor).parentNode
+		);
 		clear_text_content(parent_node);
-		parent_node.append(controlled_anchor);
+		parent_node.append(/** @type {Element} */ (controlled_anchor));
+		items_map.clear();
+		link(items[0].prev, items[length - 1].next);
 	}
 
 	run_out_transitions(transitions, () => {
 		for (var i = 0; i < length; i++) {
-			destroy_effect(items[i].e);
+			var item = items[i];
+			if (!is_controlled) {
+				items_map.delete(item.k);
+				item.o.remove();
+				link(item.prev, item.next);
+			}
+			destroy_effect(item.e, !is_controlled);
 		}
-
-		if (callback !== undefined) callback();
 	});
 }
 
@@ -149,7 +163,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 		// this is separate to the previous block because `hydrating` might change
 		if (hydrating) {
 			/** @type {Node} */
-			var child_anchor = hydrate_nodes[0];
+			var child_anchor = hydrate_start;
 
 			/** @type {import('#client').EachItem | import('#client').EachState} */
 			var prev = state;
@@ -280,7 +294,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		item = items.get(key);
 
 		if (item === undefined) {
-			var child_open = push_template_node(empty());
+			var child_open = empty();
 			var child_anchor = current ? current.o : anchor;
 
 			child_anchor.before(child_open);
@@ -386,30 +400,27 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 
 	const to_destroy = Array.from(seen);
 
-	while (current) {
+	while (current !== null) {
 		to_destroy.push(current);
 		current = current.next;
 	}
+	var destroy_length = to_destroy.length;
 
-	var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
+	if (destroy_length > 0) {
+		var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
 
-	if (is_animated) {
-		for (i = 0; i < to_destroy.length; i += 1) {
-			to_destroy[i].a?.measure();
+		if (is_animated) {
+			for (i = 0; i < destroy_length; i += 1) {
+				to_destroy[i].a?.measure();
+			}
+
+			for (i = 0; i < destroy_length; i += 1) {
+				to_destroy[i].a?.fix();
+			}
 		}
 
-		for (i = 0; i < to_destroy.length; i += 1) {
-			to_destroy[i].a?.fix();
-		}
+		pause_effects(to_destroy, controlled_anchor, items);
 	}
-
-	pause_effects(to_destroy, controlled_anchor, () => {
-		for (var i = 0; i < to_destroy.length; i += 1) {
-			var item = to_destroy[i];
-			items.delete(item.k);
-			link(item.prev, item.next);
-		}
-	});
 
 	if (is_animated) {
 		effect(() => {

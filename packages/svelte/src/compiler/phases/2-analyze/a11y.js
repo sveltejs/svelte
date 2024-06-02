@@ -793,7 +793,9 @@ function check_element(node, state) {
 					if (
 						current_role === get_implicit_role(node.name, attribute_map) &&
 						// <ul role="list"> is ok because CSS list-style:none removes the semantics and this is a way to bring them back
-						!['ul', 'ol', 'li'].includes(node.name)
+						!['ul', 'ol', 'li'].includes(node.name) &&
+						// <a role="link" /> is ok because without href the a tag doesn't have a role of link
+						!(node.name === 'a' && !attribute_map.has('href'))
 					) {
 						w.a11y_no_redundant_roles(attribute, current_role);
 					}
@@ -1023,7 +1025,8 @@ function check_element(node, state) {
 		} else if (!has_spread) {
 			const id_attribute = get_static_value(attribute_map.get('id'));
 			const name_attribute = get_static_value(attribute_map.get('name'));
-			if (!id_attribute && !name_attribute) {
+			const aria_disabled_attribute = get_static_value(attribute_map.get('aria-disabled'));
+			if (!id_attribute && !name_attribute && aria_disabled_attribute !== 'true') {
 				warn_missing_attribute(node, ['href']);
 			}
 		}

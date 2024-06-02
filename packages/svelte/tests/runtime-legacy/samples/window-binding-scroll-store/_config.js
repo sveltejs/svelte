@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 /** @type {Window['scrollTo']} */
@@ -21,7 +22,7 @@ export default test({
 		window.scrollTo = original_scrollTo;
 	},
 
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		assert.equal(window.scrollY, 0);
 
 		const event = new window.Event('scroll');
@@ -32,7 +33,8 @@ export default test({
 			}
 		});
 
-		await window.dispatchEvent(event);
+		window.dispatchEvent(event);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

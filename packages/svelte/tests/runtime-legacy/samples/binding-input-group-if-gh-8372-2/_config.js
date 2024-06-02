@@ -1,7 +1,8 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
-	async test({ assert, target, component, window }) {
+	test({ assert, target, component, window }) {
 		const button = target.querySelector('button');
 		ok(button);
 		const clickEvent = new window.Event('click', { bubbles: true });
@@ -27,18 +28,22 @@ export default test({
 		validate_inputs(false, true);
 
 		input1.checked = true;
-		await input1.dispatchEvent(changeEvent);
+		input1.dispatchEvent(changeEvent);
+		flushSync();
 		assert.deepEqual(component.test, 'a');
 
 		input2.checked = true;
-		await input2.dispatchEvent(changeEvent);
+		input2.dispatchEvent(changeEvent);
+		flushSync();
 		assert.deepEqual(component.test, 'b');
 
-		await button.dispatchEvent(clickEvent);
+		button.dispatchEvent(clickEvent);
+		flushSync();
 		assert.deepEqual(component.test, 'b'); // should it be undefined? valid arguments for both outcomes
 
 		input1.checked = true;
-		await input1.dispatchEvent(changeEvent);
+		input1.dispatchEvent(changeEvent);
+		flushSync();
 		assert.deepEqual(component.test, 'a');
 	}
 });

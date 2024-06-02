@@ -46,6 +46,10 @@
 
 > 'type' attribute must be a static text value if input uses two-way binding
 
+## attribute_unquoted_sequence
+
+> Attribute values containing `{...}` must be enclosed in quote marks, unless the value only contains the expression
+
 ## bind_invalid_expression
 
 > Can only bind to an Identifier or MemberExpression
