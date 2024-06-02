@@ -311,7 +311,9 @@ function handle_error(error, effect, component_context) {
 	}
 
 	const indent = /Firefox/.test(navigator.userAgent) ? '  ' : '\t';
-	error.message += `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`;
+	define_property(error, 'message', {
+		value: error.message + `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`
+	});
 
 	const stack = error.stack;
 
@@ -326,7 +328,9 @@ function handle_error(error, effect, component_context) {
 			}
 			new_lines.push(line);
 		}
-		error.stack = new_lines.join('\n');
+		define_property(error, 'stack', {
+			value: error.stack + new_lines.join('\n')
+		});
 	}
 
 	handled_errors.add(error);
