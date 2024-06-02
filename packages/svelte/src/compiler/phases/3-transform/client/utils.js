@@ -292,15 +292,15 @@ export function serialize_set_binding(node, context, fallback, options) {
 
 	const serialize = () => {
 		if (left === node.left) {
-			const initial_bindable_proxy =
-				binding.initial &&
+			const is_initial_proxy =
+				binding.initial !== null &&
 				should_proxy_or_freeze(
 					/**@type {import("estree").Expression}*/ (binding.initial),
 					context.state.scope
 				);
 			if (
 				(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
-				!initial_bindable_proxy
+				!is_initial_proxy
 			) {
 				return b.call(left, value);
 			} else if (is_store) {
@@ -329,7 +329,7 @@ export function serialize_set_binding(node, context, fallback, options) {
 					);
 				} else if (
 					(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
-					initial_bindable_proxy
+					is_initial_proxy
 				) {
 					call = b.call(
 						left,
