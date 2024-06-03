@@ -1337,9 +1337,14 @@ if (DEV) {
  * @returns {Readonly<T>}
  */
 export function freeze(value) {
-	if (typeof value === 'object' && value != null && !(STATE_FROZEN_SYMBOL in value)) {
+	if (
+		typeof value === 'object' &&
+		value != null &&
+		!is_frozen(value) &&
+		!(STATE_FROZEN_SYMBOL in value)
+	) {
 		// If the object is already proxified, then snapshot the value
-		if (STATE_SYMBOL in value || is_frozen(value)) {
+		if (STATE_SYMBOL in value) {
 			value = snapshot(value);
 		}
 		define_property(value, STATE_FROZEN_SYMBOL, {

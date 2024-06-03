@@ -24,19 +24,19 @@ import * as e from './errors.js';
 
 /**
  * @template T
- * @param {T} initial_value
+ * @param {T} value
  * @param {boolean} [immutable]
  * @param {import('#client').ProxyMetadata | null} [parent]
  * @param {import('#client').Source<T>} [prev] dev mode only
  * @returns {import('#client').ProxyStateObject<T> | T}
  */
-export function proxy(initial_value, immutable = true, parent = null, prev) {
-	if (typeof initial_value === 'object' && initial_value != null) {
-		let value = initial_value;
-		// If the object is frozen then snapshot the value
-		if (is_frozen(value) || STATE_FROZEN_SYMBOL in value) {
-			value = snapshot(value);
-		}
+export function proxy(value, immutable = true, parent = null, prev) {
+	if (
+		typeof value === 'object' &&
+		value != null &&
+		!is_frozen(value) &&
+		!(STATE_FROZEN_SYMBOL in value)
+	) {
 		// If we have an existing proxy, return it...
 		if (STATE_SYMBOL in value) {
 			const metadata = /** @type {import('#client').ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
@@ -99,7 +99,7 @@ export function proxy(initial_value, immutable = true, parent = null, prev) {
 		}
 	}
 
-	return initial_value;
+	return value;
 }
 
 /**
