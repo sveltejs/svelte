@@ -77,7 +77,7 @@ export function spring(value, opts = {}) {
 	 * @param {import('./private').SpringUpdateOpts} opts
 	 * @returns {Promise<void>}
 	 */
-	async function set(new_value, opts = {}) {
+	function set(new_value, opts = {}) {
 		target_value = new_value;
 		const token = (current_token = {});
 		if (value == null || opts.hard || (spring.stiffness >= 1 && spring.damping >= 1)) {
@@ -129,8 +129,7 @@ export function spring(value, opts = {}) {
 	/** @type {import('./public.js').Spring<T>} */
 	const spring = {
 		set,
-		update: async (fn, opts) =>
-			set(fn(/** @type {T} */ (target_value), /** @type {T} */ (value)), opts),
+		update: (fn, opts) => set(fn(/** @type {T} */ (target_value), /** @type {T} */ (value)), opts),
 		subscribe: store.subscribe,
 		stiffness,
 		damping,

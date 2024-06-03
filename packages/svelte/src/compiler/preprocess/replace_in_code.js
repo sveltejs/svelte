@@ -20,7 +20,7 @@ export function slice_source(code_slice, offset, { file_basename, filename, get_
  * @param {(...match: any[]) => Promise<MappedCode>} get_replacement
  * @param {string} source
  */
-async function calculate_replacements(re, get_replacement, source) {
+function calculate_replacements(re, get_replacement, source) {
 	/**
 	 * @type {Array<Promise<import('./private.js').Replacement>>}
 	 */
