@@ -140,18 +140,25 @@ export class ReactiveMap extends Map {
 		super.clear();
 	}
 
+	#read_all() {
+		get(this.#version);
+		for (var [, s] of this.#sources) {
+			get(s);
+		}
+	}
+
 	keys() {
 		get(this.#version);
 		return super.keys();
 	}
 
 	values() {
-		get(this.#version);
+		this.#read_all();
 		return super.values();
 	}
 
 	entries() {
-		get(this.#version);
+		this.#read_all();
 		return super.entries();
 	}
 
