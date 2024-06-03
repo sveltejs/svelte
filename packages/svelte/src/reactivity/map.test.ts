@@ -36,7 +36,30 @@ test('map.values()', () => {
 		map.clear();
 	});
 
-	assert.deepEqual(log, [5, true, [1, 2, 3, 4, 5], 4, false, [1, 2, 4, 5], 0, false, []]);
+	flushSync(() => {
+		map.set(3, 3);
+	});
+
+	flushSync(() => {
+		map.set(3, 4);
+	});
+
+	assert.deepEqual(log, [
+		5,
+		true,
+		[1, 2, 3, 4, 5],
+		4,
+		false,
+		[1, 2, 4, 5],
+		0,
+		false,
+		[],
+		1,
+		true,
+		[3],
+		true,
+		[4]
+	]);
 
 	cleanup();
 });
