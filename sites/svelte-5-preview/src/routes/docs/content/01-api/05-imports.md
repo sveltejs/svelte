@@ -151,7 +151,7 @@ Svelte provides built-in [DOM types](https://github.com/sveltejs/svelte/blob/mas
 </div>
 ```
 
-> You can use `ComponentProps<ImportedComponent>`, if you wish to forward props to forward props to a Svelte component.
+> You can use `ComponentProps<ImportedComponent>`, if you wish to forward props to a Svelte component.
 
 Svelte provides a best-effort of all the HTML DOM types that exist. If an attribute is missing from our [type definitions](https://github.com/sveltejs/svelte/blob/master/packages/svelte/elements.d.ts), you are welcome to open an issue and/or a PR fixing it. For experimental attributes, you can augment the existing types locally by creating a `.d.ts` file:
 
