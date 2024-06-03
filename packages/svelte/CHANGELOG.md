@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.149
+
+### Patch Changes
+
+- fix: keep default values of props a proxy after reassignment ([#11860](https://github.com/sveltejs/svelte/pull/11860))
+
+- fix: address map reactivity regression ([#11882](https://github.com/sveltejs/svelte/pull/11882))
+
+- fix: assign message to error object in `handle_error` using `Object.defineProperty` ([#11675](https://github.com/sveltejs/svelte/pull/11675))
+
+- fix: ensure frozen objects in state are correctly skipped ([#11889](https://github.com/sveltejs/svelte/pull/11889))
+
 ## 5.0.0-next.148
 
 ### Patch Changes
