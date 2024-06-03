@@ -120,7 +120,6 @@ export function spring(value, opts = {}) {
 			});
 		}
 		return new Promise((fulfil) => {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			/** @type {import('../internal/client/types').Task} */ (task).promise.then(() => {
 				if (token === current_token) fulfil();
 			});

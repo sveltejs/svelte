@@ -193,7 +193,6 @@ if (typeof HTMLElement === 'function') {
 		disconnectedCallback() {
 			this.$$cn = false;
 			// In a microtask, because this could be a move within the DOM
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			Promise.resolve().then(() => {
 				if (!this.$$cn && this.$$c) {
 					this.$$c.$destroy();

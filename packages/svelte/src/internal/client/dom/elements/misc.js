@@ -42,7 +42,6 @@ export function add_form_reset_listener() {
 			(evt) => {
 				// Needs to happen one tick later or else the dom properties of the form
 				// elements have not updated to their reset values yet
-				// eslint-disable-next-line @typescript-eslint/no-floating-promises
 				Promise.resolve().then(() => {
 					if (!evt.defaultPrevented) {
 						for (const e of /**@type {HTMLFormElement} */ (evt.target).elements) {

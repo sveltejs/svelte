@@ -15,7 +15,6 @@ export default [
 		},
 		rules: {
 			'@typescript-eslint/await-thenable': 'error',
-			'@typescript-eslint/no-floating-promises': 'error',
 			'@typescript-eslint/no-misused-promises': 'error',
 			'@typescript-eslint/prefer-promise-reject-errors': 'error',
 			'@typescript-eslint/require-await': 'error',
