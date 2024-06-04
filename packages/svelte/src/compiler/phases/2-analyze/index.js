@@ -1244,11 +1244,9 @@ const common_visitors = {
 				context.state.expression.metadata.dynamic = true;
 			}
 
-			const is_exported =
-				binding.references.find(
-					(reference) =>
-						reference.path.find((path_item) => path_item.type === 'ExportSpecifier') !== undefined
-				) !== undefined;
+			const is_exported = binding.references.some((reference) =>
+				reference.path.some((path_item) => path_item.type === 'ExportSpecifier')
+			);
 
 			if (
 				context.state.analysis.runes &&
