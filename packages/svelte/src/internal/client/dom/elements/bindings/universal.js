@@ -40,12 +40,12 @@ export function bind_content_editable(property, element, get_value, update) {
  * @returns {void}
  */
 export function bind_property(property, event_name, type, element, get_value, update) {
-	var target_handler = () => {
+	var handler = () => {
 		// @ts-ignore
 		update(element[property]);
 	};
 
-	element.addEventListener(event_name, target_handler);
+	element.addEventListener(event_name, handler);
 
 	if (type === 'set') {
 		render_effect(() => {
@@ -55,18 +55,17 @@ export function bind_property(property, event_name, type, element, get_value, up
 	}
 
 	if (type === 'get') {
-		// @ts-ignore
-		update(element[property]);
+		handler();
 	}
 
-	render_effect(() => {
-		// @ts-ignore
-		if (element === document.body || element === window || element === document) {
+	// @ts-ignore
+	if (element === document.body || element === window || element === document) {
+		render_effect(() => {
 			return () => {
-				element.removeEventListener(event_name, target_handler);
+				element.removeEventListener(event_name, handler);
 			};
-		}
-	});
+		});
+	}
 }
 
 /**
