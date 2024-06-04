@@ -1246,7 +1246,9 @@ const common_visitors = {
 
 			// TODO it would be better to just bail out when we hit the ExportSpecifier node but that's
 			// not currently possibly because of our visitor merging, which I desperately want to nuke
-			const is_export_specifier = /** @type {import('#compiler').SvelteNode} */ (context.path.at(-1)).type === 'ExportSpecifier';
+			const is_export_specifier =
+				/** @type {import('#compiler').SvelteNode} */ (context.path.at(-1)).type ===
+				'ExportSpecifier';
 
 			if (
 				context.state.analysis.runes &&
