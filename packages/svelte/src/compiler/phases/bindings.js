@@ -86,9 +86,18 @@ export const binding_properties = {
 		omit_in_ssr: true
 	},
 	// document
+	activeElement: {
+		valid_elements: ['svelte:document'],
+		omit_in_ssr: true
+	},
 	fullscreenElement: {
 		valid_elements: ['svelte:document'],
 		event: 'fullscreenchange',
+		omit_in_ssr: true
+	},
+	pointerLockElement: {
+		valid_elements: ['svelte:document'],
+		event: 'pointerlockchange',
 		omit_in_ssr: true
 	},
 	visibilityState: {

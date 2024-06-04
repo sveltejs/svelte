@@ -2773,6 +2773,11 @@ export const template_visitors = {
 					call_expr = b.call('$.bind_window_size', b.literal(node.name), setter);
 					break;
 
+				// document
+				case 'activeElement':
+					call_expr = b.call('$.bind_active_element', setter);
+					break;
+
 				// media
 				case 'muted':
 					call_expr = b.call(`$.bind_muted`, state.node, getter, setter);
