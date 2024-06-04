@@ -1244,9 +1244,9 @@ const common_visitors = {
 				context.state.expression.metadata.dynamic = true;
 			}
 
-			const is_exported = binding.references.some((reference) =>
-				reference.path.some((path_item) => path_item.type === 'ExportSpecifier')
-			);
+			// TODO it would be better to just bail out when we hit the ExportSpecifier node but that's
+			// not currently possibly because of our visitor merging, which I desperately want to nuke
+			const is_exported = context.path.some((node) => node.type === 'ExportSpecifier');
 
 			if (
 				context.state.analysis.runes &&
