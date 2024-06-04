@@ -753,6 +753,16 @@ export function component_invalid_directive(node) {
 }
 
 /**
+ * Cyclical dependency detected: %cycle%
+ * @param {null | number | NodeLike} node
+ * @param {string} cycle
+ * @returns {never}
+ */
+export function const_tag_cycle(node, cycle) {
+	e(node, "const_tag_cycle", `Cyclical dependency detected: ${cycle}`);
+}
+
+/**
  * {@const ...} must consist of a single variable declaration
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -1399,14 +1409,4 @@ export function unexpected_reserved_word(node, word) {
  */
 export function void_element_invalid_content(node) {
 	e(node, "void_element_invalid_content", "Void elements cannot have children or closing tags");
-}
-
-/**
- * Cyclical dependency detected: %cycle%
- * @param {null | number | NodeLike} node
- * @param {string} cycle
- * @returns {never}
- */
-export function const_tag_cycle(node, cycle) {
-	e(node, "const_tag_cycle", `Cyclical dependency detected: ${cycle}`);
 }
