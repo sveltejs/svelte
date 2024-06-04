@@ -100,7 +100,7 @@ npm i --save-dev prettier-plugin-svelte prettier
 ```
 
 ```json
-// .prettierrc
+/// file: .prettierrc
 {
 	"plugins": ["prettier-plugin-svelte"],
 	"overrides": [
