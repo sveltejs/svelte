@@ -25,7 +25,7 @@ export function is_hoistable_function(node) {
 /**
  * @param {import("#compiler").SvelteNode[]} nodes
  */
-function order_fragment_const_tags(nodes) {
+function sort_const_tags(nodes) {
 	// If we are in a legacy component, attempt to re-order any ConstTag template nodes
 	// so that they're in topological order given their dependencies.
 	const const_tags = [];
@@ -103,7 +103,7 @@ export function clean_nodes(
 	preserve_comments
 ) {
 	if (!runes) {
-		nodes = order_fragment_const_tags(nodes);
+		nodes = sort_const_tags(nodes);
 	}
 	/** @type {import('#compiler').SvelteNode[]} */
 	const hoisted = [];
