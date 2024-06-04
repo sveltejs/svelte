@@ -6,7 +6,7 @@ import { add_form_reset_listener } from '../misc.js';
  * then listens to the given events until the render effect context is destroyed
  * @param {EventTarget} target
  * @param {Array<string>} events
- * @param {() => void} handler
+ * @param {(event?: Event) => void} handler
  * @param {any} call_handler_immediately
  */
 export function listen(target, events, handler, call_handler_immediately = true) {

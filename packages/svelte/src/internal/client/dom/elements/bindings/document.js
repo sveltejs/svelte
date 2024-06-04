@@ -1,23 +1,17 @@
-import { render_effect } from '../../../reactivity/effects.js';
+import { listen } from './shared.js';
 
 /**
  * @param {(activeElement: Element | null) => void} update
  * @returns {void}
  */
 export function bind_active_element(update) {
-	var handler = () => {
+	listen(document, ['focusin', 'focusout'], (event) => {
+		if (event && event.type === 'focusout' && /** @type {FocusEvent} */ (event).relatedTarget) {
+			// The tests still pass if we remove this, because of JSDOM limitations, but it is necessary
+			// to avoid temporarily resetting to `document.body`
+			return;
+		}
+
 		update(document.activeElement);
-	};
-
-	handler();
-
-	document.addEventListener('focus', handler, true);
-	document.addEventListener('blur', handler, true);
-
-	render_effect(() => {
-		return () => {
-			document.removeEventListener('focus', handler);
-			document.removeEventListener('blur', handler);
-		};
 	});
 }
