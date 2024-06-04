@@ -113,13 +113,6 @@ export function handle_event_propagation(handler_element, event) {
 	var path = event.composedPath?.() || [];
 	var current_target = /** @type {null | Element} */ (path[0] || event.target);
 
-	if (event.target !== current_target) {
-		define_property(event, 'target', {
-			configurable: true,
-			value: current_target
-		});
-	}
-
 	// composedPath contains list of nodes the event has propagated through.
 	// We check __root to skip all nodes below it in case this is a
 	// parent of the __root node, which indicates that there's nested
