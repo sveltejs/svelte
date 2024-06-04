@@ -12,9 +12,11 @@
 	obj.a++;
 	obj.a = 1;
 	// @ts-ignore
-	let typed: {count: number} | null = null;
+	let typed: { count: number } | null = null;
+
+	export { count };
 </script>
 
-<button onclick={() => count += 1}>
+<button onclick={() => (count += 1)}>
 	clicks: {count}
 </button>
