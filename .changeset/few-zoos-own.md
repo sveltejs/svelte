@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: silence `state_referenced_locally` when state is exported
+fix: omit `state_referenced_locally` warning for component exports
