@@ -14,6 +14,7 @@ export default [
 			lube
 		},
 		rules: {
+			'@typescript-eslint/await-thenable': 'error',
 			'@typescript-eslint/prefer-promise-reject-errors': 'error',
 			'@typescript-eslint/require-await': 'error',
 			'no-console': 'error',
