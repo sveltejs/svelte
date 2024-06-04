@@ -103,7 +103,7 @@ npm i --save-dev prettier-plugin-svelte prettier
 // .prettierrc
 {
 	"plugins": ["prettier-plugin-svelte"],
-	"overrids": [
+	"overrides": [
 		{
 			"files": "*.svelte",
 			"options": { "parser": "svelte" }
