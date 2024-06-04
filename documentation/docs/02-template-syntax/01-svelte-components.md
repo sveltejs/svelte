@@ -11,7 +11,10 @@ All three sections — script, styles and markup — are optional.
 	// logic goes here
 </script>
 
-<!-- markup (zero or more items) goes here -->
+<!-- any HTML markup (zero or more items) goes here, such as this example markup -->
+<div>
+	<Widget />
+</div>
 
 <style>
 	/* styles go here */
