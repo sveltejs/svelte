@@ -161,6 +161,7 @@ export function clean_nodes(
 	if (!state.analysis.runes) {
 		nodes = sort_const_tags(nodes, state);
 	}
+
 	/** @type {import('#compiler').SvelteNode[]} */
 	const hoisted = [];
 
