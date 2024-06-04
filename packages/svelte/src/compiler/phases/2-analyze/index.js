@@ -1246,7 +1246,7 @@ const common_visitors = {
 
 			// TODO it would be better to just bail out when we hit the ExportSpecifier node but that's
 			// not currently possibly because of our visitor merging, which I desperately want to nuke
-			const is_exported = context.path.some((node) => node.type === 'ExportSpecifier');
+			const is_export_specifier = /** @type {import('#compiler').SvelteNode} */ (context.path.at(-1)).type === 'ExportSpecifier';
 
 			if (
 				context.state.analysis.runes &&
@@ -1262,7 +1262,7 @@ const common_visitors = {
 							!should_proxy_or_freeze(binding.initial.arguments[0], context.state.scope)))) ||
 					binding.kind === 'frozen_state' ||
 					binding.kind === 'derived') &&
-				!is_exported &&
+				!is_export_specifier &&
 				// We're only concerned with reads here
 				(parent.type !== 'AssignmentExpression' || parent.left !== node) &&
 				parent.type !== 'UpdateExpression'
