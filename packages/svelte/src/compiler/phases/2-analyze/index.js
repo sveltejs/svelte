@@ -1244,6 +1244,12 @@ const common_visitors = {
 				context.state.expression.metadata.dynamic = true;
 			}
 
+			const is_exported =
+				binding.references.find(
+					(reference) =>
+						reference.path.find((path_item) => path_item.type === 'ExportSpecifier') !== undefined
+				) !== undefined;
+
 			if (
 				context.state.analysis.runes &&
 				node !== binding.node &&
@@ -1258,6 +1264,7 @@ const common_visitors = {
 							!should_proxy_or_freeze(binding.initial.arguments[0], context.state.scope)))) ||
 					binding.kind === 'frozen_state' ||
 					binding.kind === 'derived') &&
+				!is_exported &&
 				// We're only concerned with reads here
 				(parent.type !== 'AssignmentExpression' || parent.left !== node) &&
 				parent.type !== 'UpdateExpression'
