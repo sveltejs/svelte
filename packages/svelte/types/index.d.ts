@@ -1448,6 +1448,9 @@ declare module 'svelte/compiler' {
 		declaration: VariableDeclaration & {
 			declarations: [VariableDeclarator & { id: Pattern; init: Expression }];
 		};
+		metadata?: {
+			dependencies: Set<string>;
+		};
 	}
 
 	/** A `{@debug ...}` tag */

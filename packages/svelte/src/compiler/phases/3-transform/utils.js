@@ -5,6 +5,7 @@ import {
 } from '../patterns.js';
 import * as b from '../../utils/builders.js';
 import { walk } from 'zimmerframe';
+import { extract_identifiers } from '../../utils/ast.js';
 
 /**
  * @param {import('estree').Node} node
@@ -22,6 +23,62 @@ export function is_hoistable_function(node) {
 }
 
 /**
+ * @param {import("#compiler").SvelteNode[]} nodes
+ */
+function order_fragment_const_tags(nodes) {
+	// If we are in a legacy component, attempt to re-order any ConstTag template nodes
+	// so that they're in topological order given their dependencies.
+	const const_tags = [];
+	const deps = new Set();
+	const tag_ids = new Map();
+	const other = [];
+	for (const node of nodes) {
+		if (node.type === 'ConstTag') {
+			const ids = extract_identifiers(node.declaration.declarations[0].id);
+			for (const id of ids) {
+				deps.add(id.name);
+			}
+			tag_ids.set(node, ids);
+			const_tags.push(node);
+		} else {
+			other.push(node);
+		}
+	}
+
+	if (const_tags.length > 1) {
+		let attempts = 0;
+		const new_nodes = [];
+		while (const_tags.length > 0) {
+			// Worst case-scenario we prevent an infinite loop
+			if (attempts > 100) {
+				new_nodes.push(...const_tags);
+				break;
+			}
+			attempts++;
+			const_loop: for (let i = const_tags.length - 1; i >= 0; i--) {
+				const node = const_tags[i];
+				const dependencies = node.metadata?.dependencies;
+				if (dependencies) {
+					for (const dep of dependencies) {
+						if (deps.has(dep)) {
+							continue const_loop;
+						}
+					}
+				}
+				const ids = tag_ids.get(node);
+				for (const id of ids) {
+					deps.delete(id.name);
+				}
+				const_tags.splice(i, 1);
+				new_nodes.push(node);
+			}
+		}
+		return [...new_nodes, ...other];
+	}
+	return nodes;
+}
+
+/**
  * Extract nodes that are hoisted and trim whitespace according to the following rules:
  * - trim leading and trailing whitespace, regardless of surroundings
  * - keep leading / trailing whitespace of inbetween text nodes,
@@ -32,6 +89,7 @@ export function is_hoistable_function(node) {
  * @param {import('#compiler').SvelteNode[]} nodes
  * @param {import('#compiler').SvelteNode[]} path
  * @param {import('#compiler').Namespace} namespace
+ * @param {boolean} runes
  * @param {boolean} preserve_whitespace
  * @param {boolean} preserve_comments
  */
@@ -40,9 +98,13 @@ export function clean_nodes(
 	nodes,
 	path,
 	namespace = 'html',
+	runes = false,
 	preserve_whitespace,
 	preserve_comments
 ) {
+	if (!runes) {
+		nodes = order_fragment_const_tags(nodes);
+	}
 	/** @type {import('#compiler').SvelteNode[]} */
 	const hoisted = [];
 

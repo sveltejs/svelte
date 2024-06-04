@@ -254,6 +254,7 @@ function create_block(parent, fragment, nodes, context, anchor) {
 		nodes,
 		context.path,
 		namespace,
+		context.state.options.runes,
 		context.state.preserve_whitespace,
 		context.state.options.preserveComments
 	);
@@ -1382,6 +1383,7 @@ const template_visitors = {
 			node.fragment.nodes,
 			inner_context.path,
 			metadata.namespace,
+			context.state.options.runes,
 			state.preserve_whitespace,
 			state.options.preserveComments
 		);
