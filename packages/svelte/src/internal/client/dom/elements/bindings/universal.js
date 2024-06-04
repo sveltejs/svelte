@@ -33,28 +33,25 @@ export function bind_content_editable(property, element, get_value, update) {
 /**
  * @param {string} property
  * @param {string} event_name
- * @param {'get' | 'set'} type
  * @param {Element} element
- * @param {() => unknown} get_value
- * @param {(value: unknown) => void} update
+ * @param {(value: unknown) => void} set
+ * @param {() => unknown} [get]
  * @returns {void}
  */
-export function bind_property(property, event_name, type, element, get_value, update) {
+export function bind_property(property, event_name, element, set, get) {
 	var handler = () => {
 		// @ts-ignore
-		update(element[property]);
+		set(element[property]);
 	};
 
 	element.addEventListener(event_name, handler);
 
-	if (type === 'set') {
+	if (get) {
 		render_effect(() => {
 			// @ts-ignore
-			element[property] = get_value();
+			element[property] = get();
 		});
-	}
-
-	if (type === 'get') {
+	} else {
 		handler();
 	}
 

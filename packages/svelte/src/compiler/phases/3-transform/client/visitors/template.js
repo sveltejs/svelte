@@ -2743,10 +2743,9 @@ export const template_visitors = {
 				'$.bind_property',
 				b.literal(node.name),
 				b.literal(property.event),
-				b.literal(property.bidirectional ? 'set' : 'get'),
 				state.node,
-				getter,
-				setter
+				setter,
+				property.bidirectional && getter
 			);
 		} else {
 			// special cases
