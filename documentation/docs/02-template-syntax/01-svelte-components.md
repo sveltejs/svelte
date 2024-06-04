@@ -12,6 +12,14 @@ All three sections — script, styles and markup — are optional.
 </script>
 
 <!-- markup (zero or more items) goes here -->
+<div>
+  Some `<div>` or `<span>` or any HTML markup
+</div>
+
+<!-- markup can even be another component ! -->
+<Widget>
+  My Widget
+</Widget>
 
 <style>
 	/* styles go here */
