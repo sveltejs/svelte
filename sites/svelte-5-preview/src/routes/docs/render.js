@@ -28,7 +28,7 @@ export async function get_parsed_docs(docs_data, slug) {
 }
 
 /** @return {Promise<import('./types').DocsData>} */
-export async function get_docs_data(base = './src/routes/docs/content') {
+export async function get_docs_data(base = './src/routes/docs/content', path = '/docs') {
 	const { readdir, readFile } = await import('node:fs/promises');
 
 	/** @type {import('./types').DocsData} */
@@ -76,7 +76,7 @@ export async function get_docs_data(base = './src/routes/docs/content') {
 				content: page_content,
 				category: category_title,
 				sections: await get_sections(page_content),
-				path: `${app_base}/docs/${page_slug}`,
+				path: `${app_base}/${path}/${page_slug}`,
 				file: `${category_dir}/${filename}`
 			});
 		}

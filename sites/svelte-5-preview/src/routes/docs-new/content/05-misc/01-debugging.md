@@ -1,0 +1,6 @@
+---
+title: Debugging
+---
+
+- `@debug`
+- `$inspect`
