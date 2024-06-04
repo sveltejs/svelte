@@ -773,20 +773,6 @@ const legacy_scope_tweaker = {
 			}
 
 			if (
-				binding?.kind === 'derived' &&
-				binding.declaration_kind === 'const' &&
-				binding.node !== node
-			) {
-				const const_tag = /** @type {import('../../types/template.js').ConstTag} */ (
-					path.findLast((n) => n.type === 'ConstTag')
-				);
-				if (const_tag !== undefined) {
-					const_tag.metadata ||= { dependencies: new Set() };
-					const_tag.metadata.dependencies.add(node.name);
-				}
-			}
-
-			if (
 				binding !== null &&
 				binding.kind === 'normal' &&
 				((binding.scope === state.instance_scope && binding.declaration_kind !== 'function') ||

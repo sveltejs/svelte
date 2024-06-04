@@ -1043,7 +1043,7 @@ function create_block(parent, fragment, name, nodes, context) {
 		nodes,
 		context.path,
 		namespace,
-		context.state.options.runes,
+		context.state,
 		context.state.preserve_whitespace,
 		context.state.options.preserveComments
 	);
@@ -2117,7 +2117,7 @@ export const template_visitors = {
 			node.fragment.nodes,
 			context.path,
 			child_metadata.namespace,
-			context.state.options.runes,
+			context.state,
 			node.name === 'script' || state.preserve_whitespace,
 			state.options.preserveComments
 		);

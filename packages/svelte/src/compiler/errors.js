@@ -1400,3 +1400,13 @@ export function unexpected_reserved_word(node, word) {
 export function void_element_invalid_content(node) {
 	e(node, "void_element_invalid_content", "Void elements cannot have children or closing tags");
 }
+
+/**
+ * Cyclical dependency detected: %cycle%
+ * @param {null | number | NodeLike} node
+ * @param {string} cycle
+ * @returns {never}
+ */
+export function const_tag_cycle(node, cycle) {
+	e(node, "const_tag_cycle", `Cyclical dependency detected: ${cycle}`);
+}

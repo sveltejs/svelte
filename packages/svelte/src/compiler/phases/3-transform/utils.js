@@ -4,8 +4,11 @@ import {
 	regex_starts_with_whitespaces
 } from '../patterns.js';
 import * as b from '../../utils/builders.js';
+import * as e from '../../errors.js';
 import { walk } from 'zimmerframe';
 import { extract_identifiers } from '../../utils/ast.js';
+import check_graph_for_cycles from '../2-analyze/utils/check_graph_for_cycles.js';
+import is_reference from 'is-reference';
 
 /**
  * @param {import('estree').Node} node
@@ -23,59 +26,109 @@ export function is_hoistable_function(node) {
 }
 
 /**
+ * Match Svelte 4 behaviour by sorting ConstTag nodes in topological order
  * @param {import("#compiler").SvelteNode[]} nodes
+ * @param {import('./types.js').TransformState} state
  */
-function sort_const_tags(nodes) {
-	// If we are in a legacy component, attempt to re-order any ConstTag template nodes
-	// so that they're in topological order given their dependencies.
+function sort_const_tags(nodes, state) {
+	/**
+	 * @typedef {{
+	 *   node: import('#compiler').ConstTag;
+	 *   ids: import('#compiler').Binding[];
+	 *   deps: Set<import('#compiler').Binding>;
+	 * }} Tag
+	 */
+
 	const const_tags = [];
-	const deps = new Set();
-	const tag_ids = new Map();
 	const other = [];
+
+	/** @type {Map<import('#compiler').Binding, Tag>} */
+	const tags = new Map();
+
 	for (const node of nodes) {
 		if (node.type === 'ConstTag') {
-			const ids = extract_identifiers(node.declaration.declarations[0].id);
-			for (const id of ids) {
-				deps.add(id.name);
+			const declaration = node.declaration.declarations[0];
+
+			/** @type {Tag} */
+			const tag = {
+				node,
+				ids: extract_identifiers(declaration.id).map((id) => {
+					return /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
+				}),
+				/** @type {Set<import('#compiler').Binding>} */
+				deps: new Set()
+			};
+
+			for (const id of tag.ids) {
+				tags.set(id, tag);
 			}
-			tag_ids.set(node, ids);
-			const_tags.push(node);
+
+			walk(declaration.init, state, {
+				_(node, context) {
+					const scope = state.scopes.get(node) ?? context.state.scope;
+					context.next({ ...state, scope });
+				},
+				Identifier(node, context) {
+					const parent = /** @type {import('estree').Expression} */ (context.path.at(-1));
+
+					if (is_reference(node, parent)) {
+						const binding = context.state.scope.get(node.name);
+						if (binding) tag.deps.add(binding);
+					}
+				}
+			});
+
+			const_tags.push(tag);
 		} else {
 			other.push(node);
 		}
 	}
 
-	if (const_tags.length > 1) {
-		let attempts = 0;
-		const new_nodes = [];
-		while (const_tags.length > 0) {
-			// Worst case-scenario we prevent an infinite loop
-			if (attempts > 100) {
-				new_nodes.push(...const_tags);
-				break;
-			}
-			attempts++;
-			const_loop: for (let i = const_tags.length - 1; i >= 0; i--) {
-				const node = const_tags[i];
-				const dependencies = node.metadata?.dependencies;
-				if (dependencies) {
-					for (const dep of dependencies) {
-						if (deps.has(dep)) {
-							continue const_loop;
-						}
-					}
+	if (const_tags.length === 0) {
+		return nodes;
+	}
+
+	/** @type {Array<[import('#compiler').Binding, import('#compiler').Binding]>} */
+	const edges = [];
+
+	for (const tag of const_tags) {
+		for (const id of tag.ids) {
+			for (const dep of tag.deps) {
+				if (tags.has(dep)) {
+					edges.push([id, dep]);
 				}
-				const ids = tag_ids.get(node);
-				for (const id of ids) {
-					deps.delete(id.name);
-				}
-				const_tags.splice(i, 1);
-				new_nodes.push(node);
 			}
 		}
-		return [...new_nodes, ...other];
 	}
-	return nodes;
+
+	const cycle = check_graph_for_cycles(edges);
+	if (cycle?.length) {
+		const tag = /** @type {Tag} */ (tags.get(cycle[0]));
+		e.const_tag_cycle(tag.node, cycle.map((binding) => binding.node.name).join(' → '));
+	}
+
+	/** @type {import('#compiler').ConstTag[]} */
+	const sorted = [];
+
+	/** @param {Tag} tag */
+	function add(tag) {
+		if (sorted.includes(tag.node)) {
+			return;
+		}
+
+		for (const dep of tag.deps) {
+			const dep_tag = tags.get(dep);
+			if (dep_tag) add(dep_tag);
+		}
+
+		sorted.push(tag.node);
+	}
+
+	for (const tag of const_tags) {
+		add(tag);
+	}
+
+	return [...sorted, ...other];
 }
 
 /**
@@ -89,7 +142,7 @@ function sort_const_tags(nodes) {
  * @param {import('#compiler').SvelteNode[]} nodes
  * @param {import('#compiler').SvelteNode[]} path
  * @param {import('#compiler').Namespace} namespace
- * @param {boolean} runes
+ * @param {import('./types.js').TransformState} state
  * @param {boolean} preserve_whitespace
  * @param {boolean} preserve_comments
  */
@@ -98,12 +151,15 @@ export function clean_nodes(
 	nodes,
 	path,
 	namespace = 'html',
-	runes = false,
+	state,
+	// TODO give these defaults (state.options.preserveWhitespace and state.options.preserveComments).
+	// first, we need to make `Component(Client|Server)TransformState` inherit from a new `ComponentTransformState`
+	// rather than from `ClientTransformState` and `ServerTransformState`
 	preserve_whitespace,
 	preserve_comments
 ) {
-	if (!runes) {
-		nodes = sort_const_tags(nodes);
+	if (!state.analysis.runes) {
+		nodes = sort_const_tags(nodes, state);
 	}
 	/** @type {import('#compiler').SvelteNode[]} */
 	const hoisted = [];
