@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-feat: add svelete/events package and export attach function
+feat: add svelte/events package and export attach function
