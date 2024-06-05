@@ -24,9 +24,7 @@ export class ReactiveMap extends Map {
 		if (DEV) new Map(value);
 
 		if (value) {
-			var sources = this.#sources;
 			for (var [key, v] of value) {
-				sources.set(key, source(Symbol()));
 				super.set(key, v);
 			}
 			this.#size.v = super.size;
@@ -144,6 +142,16 @@ export class ReactiveMap extends Map {
 
 	#read_all() {
 		get(this.#version);
+
+		var sources = this.#sources;
+		if (this.#size.v !== sources.size) {
+			for (var key of super.keys()) {
+				if (!sources.has(key)) {
+					sources.set(key, source(Symbol()));
+				}
+			}
+		}
+
 		for (var [, s] of this.#sources) {
 			get(s);
 		}
