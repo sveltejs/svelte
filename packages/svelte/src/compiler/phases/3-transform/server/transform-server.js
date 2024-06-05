@@ -1806,7 +1806,7 @@ const template_visitors = {
 		const fallback =
 			node.fragment.nodes.length === 0
 				? b.literal(null)
-				: b.thunk(b.block(create_block(node, node.fragment, node.fragment.nodes, context)));
+				: b.thunk(/** @type {import('estree').BlockStatement} */ (context.visit(node.fragment)));
 		const slot = b.call('$.slot', b.id('$$payload'), expression, props_expression, fallback);
 
 		state.template.push(t_statement(b.stmt(slot)));
@@ -1814,11 +1814,10 @@ const template_visitors = {
 	},
 	SvelteHead(node, context) {
 		const state = context.state;
-		const body = create_block(node, node.fragment, node.fragment.nodes, context);
+		const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.fragment));
+
 		state.template.push(
-			t_statement(
-				b.stmt(b.call('$.head', b.id('$$payload'), b.arrow([b.id('$$payload')], b.block(body))))
-			)
+			t_statement(b.stmt(b.call('$.head', b.id('$$payload'), b.arrow([b.id('$$payload')], block))))
 		);
 	},
 	// @ts-ignore: need to extract this out somehow
