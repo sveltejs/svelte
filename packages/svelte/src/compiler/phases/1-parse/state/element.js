@@ -14,7 +14,7 @@ const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 /** Invalid attribute characters if the attribute is not surrounded by quotes */
 const regex_starts_with_invalid_attr_value = /^(\/>|[\s"'=<>`])/;
 
-/** @type {Map<string, import('#compiler').SvelteNode['type']>} */
+/** @type {Map<string, import('#compiler').ElementLike['type']>} */
 const root_only_meta_tags = new Map([
 	['svelte:head', 'SvelteHead'],
 	['svelte:options', 'SvelteOptions'],
@@ -23,7 +23,7 @@ const root_only_meta_tags = new Map([
 	['svelte:body', 'SvelteBody']
 ]);
 
-/** @type {Map<string, import('#compiler').SvelteNode['type']>} */
+/** @type {Map<string, import('#compiler').ElementLike['type']>} */
 const meta_tags = new Map([
 	...root_only_meta_tags,
 	['svelte:element', 'SvelteElement'],
@@ -132,11 +132,10 @@ export default function tag(parser) {
 					: 'RegularElement';
 
 	/** @type {import('#compiler').ElementLike} */
-	// @ts-expect-error TODO can't figure out this error
 	const element =
 		type === 'RegularElement'
 			? {
-					type: /** @type {import('#compiler').ElementLike['type']} */ (type),
+					type: type,
 					start,
 					end: -1,
 					name,
@@ -144,12 +143,14 @@ export default function tag(parser) {
 					fragment: create_fragment(true),
 					metadata: {
 						svg: false,
+						mathml: false,
+						scoped: false,
 						has_spread: false
 					},
 					parent: null
 				}
-			: {
-					type: /** @type {import('#compiler').ElementLike['type']} */ (type),
+			: /** @type {import('#compiler').ElementLike} */ ({
+					type,
 					start,
 					end: -1,
 					name,
@@ -159,7 +160,7 @@ export default function tag(parser) {
 					metadata: {
 						svg: false
 					}
-				};
+				});
 
 	parser.allow_whitespace();
 

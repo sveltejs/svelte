@@ -1,5 +1,6 @@
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
+import { increment } from './utils.js';
 
 const REPLACE = Symbol();
 
@@ -155,10 +156,6 @@ export class ReactiveURL extends URL {
 export class ReactiveURLSearchParams extends URLSearchParams {
 	#version = source(0);
 
-	#increment_version() {
-		set(this.#version, this.#version.v + 1);
-	}
-
 	/**
 	 * @param {URLSearchParams} params
 	 */
@@ -171,7 +168,7 @@ export class ReactiveURLSearchParams extends URLSearchParams {
 			super.append(key, value);
 		}
 
-		this.#increment_version();
+		increment(this.#version);
 	}
 
 	/**
@@ -180,7 +177,7 @@ export class ReactiveURLSearchParams extends URLSearchParams {
 	 * @returns {void}
 	 */
 	append(name, value) {
-		this.#increment_version();
+		increment(this.#version);
 		return super.append(name, value);
 	}
 
@@ -190,7 +187,7 @@ export class ReactiveURLSearchParams extends URLSearchParams {
 	 * @returns {void}
 	 */
 	delete(name, value) {
-		this.#increment_version();
+		increment(this.#version);
 		return super.delete(name, value);
 	}
 
@@ -233,12 +230,12 @@ export class ReactiveURLSearchParams extends URLSearchParams {
 	 * @returns {void}
 	 */
 	set(name, value) {
-		this.#increment_version();
+		increment(this.#version);
 		return super.set(name, value);
 	}
 
 	sort() {
-		this.#increment_version();
+		increment(this.#version);
 		return super.sort();
 	}
 
