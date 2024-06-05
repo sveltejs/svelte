@@ -123,7 +123,7 @@ imperatively doing `element.addEventListener`, with that benefit that `attach` w
 ```js
 import { attach } from 'svelte/events';
 
-let element;
+const element = document.getElementById('el');
 
 attach(element, 'click', () => {
 	console.log('click the element!');
@@ -135,7 +135,7 @@ Additionally, `attach` returns a function that easily allows for removal of the 
 ```js
 import { attach } from 'svelte/events';
 
-let element;
+const element = document.getElementById('el');
 
 const remove = attach(element, 'click', () => {
 	console.log('click the element!');
