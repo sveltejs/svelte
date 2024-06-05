@@ -2,6 +2,7 @@ import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { UNINITIALIZED } from '../constants.js';
+import { increment } from './utils.js';
 
 /**
  * @template K
@@ -102,7 +103,7 @@ export class ReactiveMap extends Map {
 		if (s === undefined) {
 			sources.set(key, source(Symbol()));
 			set(this.#size, super.size);
-			this.#increment_version();
+			increment(this.#version);
 		} else if (prev_res !== value) {
 			set(s, Symbol());
 		}
@@ -120,7 +121,7 @@ export class ReactiveMap extends Map {
 			sources.delete(key);
 			set(this.#size, super.size);
 			set(s, UNINITIALIZED);
-			this.#increment_version();
+			increment(this.#version);
 		}
 
 		return res;
@@ -134,7 +135,7 @@ export class ReactiveMap extends Map {
 			for (var s of sources.values()) {
 				set(s, UNINITIALIZED);
 			}
-			this.#increment_version();
+			increment(this.#version);
 			sources.clear();
 		}
 		super.clear();

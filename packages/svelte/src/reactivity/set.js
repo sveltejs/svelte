@@ -1,6 +1,7 @@
 import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
+import { increment } from './utils.js';
 
 var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
 var set_like_methods = ['difference', 'intersection', 'symmetricDifference', 'union'];
@@ -63,10 +64,6 @@ export class ReactiveSet extends Set {
 		}
 	}
 
-	#increment_version() {
-		set(this.#version, this.#version.v + 1);
-	}
-
 	/** @param {T} value */
 	has(value) {
 		var sources = this.#sources;
@@ -98,7 +95,7 @@ export class ReactiveSet extends Set {
 		if (s === undefined) {
 			sources.set(value, source(true));
 			set(this.#size, super.size);
-			this.#increment_version();
+			increment(this.#version);
 		} else {
 			set(s, true);
 		}
@@ -116,7 +113,7 @@ export class ReactiveSet extends Set {
 			sources.delete(value);
 			set(this.#size, super.size);
 			set(s, false);
-			this.#increment_version();
+			increment(this.#version);
 		}
 
 		return res;
@@ -130,7 +127,7 @@ export class ReactiveSet extends Set {
 			for (var s of sources.values()) {
 				set(s, false);
 			}
-			this.#increment_version();
+			increment(this.#version);
 			sources.clear();
 		}
 		super.clear();
