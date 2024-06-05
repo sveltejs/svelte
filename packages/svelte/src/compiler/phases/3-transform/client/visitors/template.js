@@ -3088,12 +3088,13 @@ export const template_visitors = {
 			spreads.length === 0
 				? b.object(props)
 				: b.call('$.spread_props', b.object(props), ...spreads);
+
 		const fallback =
 			node.fragment.nodes.length === 0
 				? b.literal(null)
 				: b.arrow(
 						[b.id('$$anchor')],
-						b.block(create_block(node, node.fragment, 'fallback', node.fragment.nodes, context))
+						/** @type {import('estree').BlockStatement} */ (context.visit(node.fragment))
 					);
 
 		const expression = is_default
@@ -3111,7 +3112,7 @@ export const template_visitors = {
 					'$.head',
 					b.arrow(
 						[b.id('$$anchor')],
-						b.block(create_block(node, node.fragment, 'head', node.fragment.nodes, context))
+						/** @type {import('estree').BlockStatement} */ (context.visit(node.fragment))
 					)
 				)
 			)
