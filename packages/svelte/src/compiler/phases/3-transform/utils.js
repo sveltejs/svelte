@@ -9,6 +9,7 @@ import { walk } from 'zimmerframe';
 import { extract_identifiers } from '../../utils/ast.js';
 import check_graph_for_cycles from '../2-analyze/utils/check_graph_for_cycles.js';
 import is_reference from 'is-reference';
+import { set_scope } from '../scope.js';
 
 /**
  * @param {import('estree').Node} node
@@ -45,6 +46,8 @@ function sort_const_tags(nodes, state) {
 	/** @type {Map<import('#compiler').Binding, Tag>} */
 	const tags = new Map();
 
+	const { _ } = set_scope(state.scopes);
+
 	for (const node of nodes) {
 		if (node.type === 'ConstTag') {
 			const declaration = node.declaration.declarations[0];
@@ -64,10 +67,7 @@ function sort_const_tags(nodes, state) {
 			}
 
 			walk(declaration.init, state, {
-				_(node, context) {
-					const scope = state.scopes.get(node) ?? context.state.scope;
-					context.next({ ...state, scope });
-				},
+				_,
 				Identifier(node, context) {
 					const parent = /** @type {import('estree').Expression} */ (context.path.at(-1));
 
