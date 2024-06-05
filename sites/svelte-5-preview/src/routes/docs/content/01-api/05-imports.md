@@ -120,6 +120,10 @@ Svelte provides reactive `Map`, `Set`, `Date` and `URL` classes. These can be im
 Svelte provides a way of imperatively attaching DOM event listeners to elements using the `attach` export from `svelte/events`. This can be used in place of
 imperatively doing `element.addEventListener`, with that benefit that `attach` will allow Svelte to co-ordinate the event through its own event delegation system.
 
+> Svelte 5 has its own internal event delegation system that it uses for certain types of events. Rather than creating hundreds or thousands of invidivual
+event handlers on each element, Svelte creates a single delegated event handler on the root DOM element and manages the bookkeeping itself. This can have a significant impact
+on performance and memory usage.
+
 ```js
 // @filename: index.ts
 const element: Element = null as any;
