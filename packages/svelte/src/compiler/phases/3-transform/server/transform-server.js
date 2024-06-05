@@ -1584,23 +1584,22 @@ const template_visitors = {
 		const state = context.state;
 		state.template.push(block_open);
 
-		const consequent = create_block(node, node.consequent, node.consequent.nodes, context);
-		const alternate = node.alternate
-			? create_block(node, node.alternate, node.alternate.nodes, context)
-			: [];
+		const test = /** @type {import('estree').Expression} */ (context.visit(node.test));
 
-		consequent.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE))));
-		alternate.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE))));
-
-		state.template.push(
-			t_statement(
-				b.if(
-					/** @type {import('estree').Expression} */ (context.visit(node.test)),
-					b.block(consequent),
-					b.block(alternate)
-				)
-			)
+		const consequent = /** @type {import('estree').BlockStatement} */ (
+			context.visit(node.consequent)
 		);
+
+		const alternate = node.alternate
+			? /** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
+			: b.block([]);
+
+		consequent.body.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE))));
+		alternate.body.push(
+			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE)))
+		);
+
+		state.template.push(t_statement(b.if(test, consequent, alternate)));
 	},
 	AwaitBlock(node, context) {
 		const state = context.state;
