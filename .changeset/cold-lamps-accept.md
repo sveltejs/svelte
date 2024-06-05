@@ -1,5 +1,5 @@
 ---
-"svelte": patch
+'svelte': patch
 ---
 
-fix: improve consttag ordering in non-runes mode
+fix: sort `{@const ...}` tags topologically in legacy mode
