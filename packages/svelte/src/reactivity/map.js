@@ -45,6 +45,7 @@ export class ReactiveMap extends Map {
 			if (ret !== undefined) {
 				s = source(Symbol());
 				sources.set(key, s);
+				this.#increment_version();
 			} else {
 				// We should always track the version in case
 				// the Set ever gets this value in the future.
@@ -77,6 +78,7 @@ export class ReactiveMap extends Map {
 			if (ret !== undefined) {
 				s = source(Symbol());
 				sources.set(key, s);
+				this.#increment_version();
 			} else {
 				// We should always track the version in case
 				// the Set ever gets this value in the future.
