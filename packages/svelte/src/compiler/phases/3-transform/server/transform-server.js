@@ -1477,10 +1477,12 @@ const template_visitors = {
 
 		context.state.template.push(block_open);
 
-		const main = create_block(node, node.fragment, node.fragment.nodes, {
-			...context,
-			state: { ...context.state, metadata }
-		});
+		const main = /** @type {import('estree').BlockStatement} */ (
+			context.visit(node.fragment, {
+				...context.state,
+				metadata
+			})
+		);
 
 		serialize_element_attributes(node, inner_context);
 
@@ -1506,7 +1508,7 @@ const template_visitors = {
 									...serialize_template(inner_context.state.template)
 								])
 							),
-							b.thunk(b.block(main))
+							b.thunk(main)
 						)
 					)
 				)
@@ -1545,11 +1547,7 @@ const template_visitors = {
 
 		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(block_open.value))));
 
-		each.push(
-			.../** @type {import('estree').Statement[]} */ (
-				create_block(node, node.body, children, context)
-			)
-		);
+		each.push(.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body);
 
 		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(block_close.value))));
 
