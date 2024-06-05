@@ -1089,12 +1089,30 @@ function serialize_inline_component(node, component_name, context) {
 	const serialized_slots = [];
 
 	for (const slot_name of Object.keys(children)) {
-		const body = create_block(node, node.fragment, children[slot_name], context);
-		if (body.length === 0) continue;
+		const block = /** @type {import('estree').BlockStatement} */ (
+			context.visit(
+				{
+					...node.fragment,
+					// @ts-expect-error
+					nodes: children[slot_name]
+				},
+				{
+					...context.state,
+					scope:
+						context.state.scopes.get(slot_name === 'default' ? children[slot_name][0] : node) ??
+						context.state.scope
+				}
+			)
+		);
+
+		if (block.body.length === 0) continue;
 
 		const slot_fn = b.arrow(
 			[b.id('$$payload'), b.id('$$slotProps')],
-			b.block([...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []), ...body])
+			b.block([
+				...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []),
+				...block.body
+			])
 		);
 
 		if (slot_name === 'default' && !has_children_prop) {
