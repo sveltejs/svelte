@@ -847,18 +847,30 @@ function serialize_inline_component(node, component_name, context) {
 	/** @type {import('estree').Property[]} */
 	const serialized_slots = [];
 	for (const slot_name of Object.keys(children)) {
-		const body = create_block(
-			node,
-			node.fragment,
-			`${node.name}_${slot_name}`,
-			children[slot_name],
-			context
+		const block = /** @type {import('estree').BlockStatement} */ (
+			context.visit(
+				{
+					...node.fragment,
+					// @ts-expect-error
+					nodes: children[slot_name]
+				},
+				{
+					...context.state,
+					scope:
+						context.state.scopes.get(slot_name === 'default' ? children[slot_name][0] : node) ??
+						context.state.scope
+				}
+			)
 		);
-		if (body.length === 0) continue;
+
+		if (block.body.length === 0) continue;
 
 		const slot_fn = b.arrow(
 			[b.id('$$anchor'), b.id('$$slotProps')],
-			b.block([...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []), ...body])
+			b.block([
+				...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []),
+				...block.body
+			])
 		);
 
 		if (slot_name === 'default' && !has_children_prop) {
@@ -3032,13 +3044,7 @@ export const template_visitors = {
 
 		context.state.init.push(...lets);
 		context.state.init.push(
-			...create_block(
-				node,
-				node.fragment,
-				'slot_template',
-				/** @type {import('#compiler').SvelteNode[]} */ (node.fragment.nodes),
-				context
-			)
+			.../** @type {import('estree').BlockStatement} */ (context.visit(node.fragment)).body
 		);
 	},
 	SlotElement(node, context) {
