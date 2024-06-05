@@ -1,5 +1,23 @@
 # svelte
 
+## 5.0.0-next.150
+
+### Patch Changes
+
+- fix: populate `this.#sources` when constructing reactive map ([#11913](https://github.com/sveltejs/svelte/pull/11913))
+
+- fix: omit `state_referenced_locally` warning for component exports ([#11905](https://github.com/sveltejs/svelte/pull/11905))
+
+- fix: ensure event.target is correct for delegation ([#11900](https://github.com/sveltejs/svelte/pull/11900))
+
+- chore: speed up regex ([#11918](https://github.com/sveltejs/svelte/pull/11918))
+
+- feat: bind `activeElement` and `pointerLockElement` in `<svelte:document>` ([#11879](https://github.com/sveltejs/svelte/pull/11879))
+
+- fix: correctly backport `svelte:element` to old AST ([#11917](https://github.com/sveltejs/svelte/pull/11917))
+
+- fix: add `unused-export-let` to legacy lint replacements ([#11896](https://github.com/sveltejs/svelte/pull/11896))
+
 ## 5.0.0-next.149
 
 ### Patch Changes
