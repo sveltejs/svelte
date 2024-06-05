@@ -81,6 +81,10 @@
     "./transition": {
       "types": "./types/index.d.ts",
       "default": "./src/transition/index.js"
+    },
+    "./events": {
+      "types": "./types/index.d.ts",
+      "default": "./src/events/index.js"
     }
   },
   "repository": {

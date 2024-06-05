@@ -115,6 +115,33 @@ Svelte provides reactive `Map`, `Set`, `Date` and `URL` classes. These can be im
 <input bind:value={url.href} />
 ```
 
+## `svelte/events`
+
+Svelte provides a way of imperatively attaching DOM event listeners to elements using the `attach` export from `svelte/events`. This can be used in place of
+imperatively doing `element.addEventListener`, with that benefit that `attach` will allow Svelte to co-ordinate the event through its own event delegation system.
+
+```js
+import { attach } from 'svelte/events';
+
+attach(element, 'click', () => {
+	console.log('click the element!');
+});
+```
+
+Additionally, `attach` returns a function that easily allows for removal of the attached event handler:
+
+```js
+import { attach } from 'svelte/events';
+
+const remove = attach(element, 'click', () => {
+	console.log('click the element!');
+});
+// ...
+remove();
+```
+
+> Note: `attach` also accepts 4th optional argument for defining the options for the event handler. This matches that of the options argument (`EventListenerOptions`) for `addEventListener`.
+
 ## `svelte/server`
 
 ### `render`

@@ -67,6 +67,20 @@ export function create_event(event_name, dom, handler, options) {
 }
 
 /**
+ * @param {Element} dom
+ * @param {string} event_name
+ * @param {EventListener} handler
+ * @param {AddEventListenerOptions} [options]
+ */
+export function attach(dom, event_name, handler, options = {}) {
+	var target_handler = create_event(event_name, dom, handler, options);
+
+	return () => {
+		dom.removeEventListener(event_name, target_handler, options);
+	};
+}
+
+/**
  * @param {string} event_name
  * @param {Element} dom
  * @param {EventListener} handler

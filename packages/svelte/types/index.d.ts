@@ -2336,6 +2336,10 @@ declare module 'svelte/transition' {
 	}) => () => TransitionConfig];
 }
 
+declare module 'svelte/events' {
+	export function attach(dom: Element, event_name: string, handler: EventListener, options?: AddEventListenerOptions | undefined): () => void;
+}
+
 declare module 'svelte/types/compiler/preprocess' {
 	/** @deprecated import this from 'svelte/preprocess' instead */
 	export type MarkupPreprocessor = MarkupPreprocessor_1;
