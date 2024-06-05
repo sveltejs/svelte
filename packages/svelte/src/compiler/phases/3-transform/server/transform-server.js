@@ -1563,16 +1563,20 @@ const template_visitors = {
 		const close = b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE)));
 
 		if (node.fallback) {
-			const fallback = create_block(node, node.fallback, node.fallback.nodes, context);
+			const fallback = /** @type {import('estree').BlockStatement} */ (
+				context.visit(node.fallback)
+			);
 
-			fallback.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE))));
+			fallback.body.push(
+				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE)))
+			);
 
 			state.template.push(
 				t_statement(
 					b.if(
 						b.binary('!==', b.member(array_id, b.id('length')), b.literal(0)),
 						b.block([for_loop, close]),
-						b.block(fallback)
+						fallback
 					)
 				)
 			);
@@ -1642,8 +1646,8 @@ const template_visitors = {
 	KeyBlock(node, context) {
 		const state = context.state;
 		state.template.push(block_open);
-		const body = create_block(node, node.fragment, node.fragment.nodes, context);
-		state.template.push(t_statement(b.block(body)));
+		const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.fragment));
+		state.template.push(t_statement(block));
 		state.template.push(block_close);
 	},
 	SnippetBlock(node, context) {
@@ -1732,9 +1736,9 @@ const template_visitors = {
 			}
 		}
 
-		const body = create_block(node, node.fragment, node.fragment.nodes, context);
+		const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.fragment));
 
-		context.state.template.push(t_statement(b.block(body)));
+		context.state.template.push(t_statement(block));
 	},
 	TitleElement(node, context) {
 		const state = context.state;
