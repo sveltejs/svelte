@@ -7,7 +7,6 @@ import full_char_code_at from './utils/full_char_code_at.js';
 import * as e from '../../errors.js';
 import { create_fragment } from './utils/create.js';
 import read_options from './read/options.js';
-import { locator } from '../../state.js';
 
 const regex_position_indicator = / \(\d+:\d+\)$/;
 

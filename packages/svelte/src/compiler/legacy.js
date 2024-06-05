@@ -478,7 +478,11 @@ export function convert(source, ast) {
 			SvelteElement(node, { visit }) {
 				/** @type {import('estree').Expression | string} */
 				let tag = node.tag;
-				if (tag.type === 'Literal' && typeof tag.value === 'string') {
+				if (
+					tag.type === 'Literal' &&
+					typeof tag.value === 'string' &&
+					source[/** @type {number} */ (node.tag.start) - 1] !== '{'
+				) {
 					tag = tag.value;
 				}
 
