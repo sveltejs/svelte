@@ -1,5 +1,5 @@
 <script>
-	import {attach} from 'svelte/events';
+	import { on } from 'svelte/events';
 
 	let count = $state(0);
 
@@ -10,7 +10,7 @@
 
 	let sectionEl
 	$effect(() => {
-		return attach(sectionEl, 'click', () => {
+		return on(sectionEl, 'click', () => {
 			console.log('logged from addEventListener');
 		});
 	});

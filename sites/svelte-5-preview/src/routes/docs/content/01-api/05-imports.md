@@ -117,8 +117,8 @@ Svelte provides reactive `Map`, `Set`, `Date` and `URL` classes. These can be im
 
 ## `svelte/events`
 
-Svelte provides a way of imperatively attaching DOM event listeners to elements using the `attach` export from `svelte/events`. This can be used in place of
-imperatively doing `element.addEventListener`, with that benefit that `attach` will allow Svelte to co-ordinate the event through its own event delegation system.
+Svelte provides a way of imperatively attaching DOM event listeners to elements using the `on` export from `svelte/events`. This can be used in place of
+imperatively doing `element.addEventListener`, with that benefit that `on` will allow Svelte to co-ordinate the event through its own event delegation system.
 
 > Svelte 5 has its own internal event delegation system that it uses for certain types of events. Rather than creating hundreds or thousands of invidivual
 > event handlers on each element, Svelte creates a single delegated event handler on the root DOM element and manages the bookkeeping itself. This can have a significant impact
@@ -128,29 +128,29 @@ imperatively doing `element.addEventListener`, with that benefit that `attach` w
 // @filename: index.ts
 const element: Element = null as any;
 // ---cut---
-import { attach } from 'svelte/events';
+import { on } from 'svelte/events';
 
-attach(element, 'click', () => {
+on(element, 'click', () => {
 	console.log('element was clicked');
 });
 ```
 
-Additionally, `attach` returns a function that easily allows for removal of the attached event handler:
+Additionally, `on` returns a function that easily allows for removal of the attached event handler:
 
 ```js
 // @filename: index.ts
 const element: Element = null as any;
 // ---cut---
-import { attach } from 'svelte/events';
+import { on } from 'svelte/events';
 
-const remove = attach(element, 'click', () => {
+const remove = on(element, 'click', () => {
 	console.log('element was clicked');
 });
 // ...
 remove();
 ```
 
-> Note: `attach` also accepts 4th optional argument for defining the options for the event handler. This matches that of the options argument (`EventListenerOptions`) for `addEventListener`.
+> Note: `on` also accepts 4th optional argument for defining the options for the event handler. This matches that of the options argument (`EventListenerOptions`) for `addEventListener`.
 
 ## `svelte/server`
 

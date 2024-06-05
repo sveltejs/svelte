@@ -76,7 +76,7 @@ export function create_event(event_name, dom, handler, options) {
  * @param {EventListener} handler
  * @param {AddEventListenerOptions} [options]
  */
-export function attach(dom, event_name, handler, options = {}) {
+export function on(dom, event_name, handler, options = {}) {
 	var target_handler = create_event(event_name, dom, handler, options);
 
 	return () => {

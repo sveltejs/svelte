@@ -2344,7 +2344,7 @@ declare module 'svelte/events' {
 	 *
 	 * 
 	 */
-	export function attach(dom: Element, event_name: string, handler: EventListener, options?: AddEventListenerOptions | undefined): () => void;
+	export function on(dom: Element, event_name: string, handler: EventListener, options?: AddEventListenerOptions | undefined): () => void;
 }
 
 declare module 'svelte/types/compiler/preprocess' {
