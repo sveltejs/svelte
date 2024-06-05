@@ -1,7 +1,7 @@
 import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
-import { UNINITIALIZED } from '../constants.js';
+import { increment } from './utils.js';
 
 /**
  * @template K
@@ -9,7 +9,7 @@ import { UNINITIALIZED } from '../constants.js';
  * @extends {Map<K, V>}
  */
 export class ReactiveMap extends Map {
-	/** @type {Map<K, import('#client').Source<symbol>>} */
+	/** @type {Map<K, import('#client').Source<number>>} */
 	#sources = new Map();
 	#version = source(0);
 	#size = source(0);
@@ -31,10 +31,6 @@ export class ReactiveMap extends Map {
 		}
 	}
 
-	#increment_version() {
-		set(this.#version, this.#version.v + 1);
-	}
-
 	/** @param {K} key */
 	has(key) {
 		var sources = this.#sources;
@@ -43,9 +39,8 @@ export class ReactiveMap extends Map {
 		if (s === undefined) {
 			var ret = super.get(key);
 			if (ret !== undefined) {
-				s = source(Symbol());
+				s = source(0);
 				sources.set(key, s);
-				this.#increment_version();
 			} else {
 				// We should always track the version in case
 				// the Set ever gets this value in the future.
@@ -63,9 +58,8 @@ export class ReactiveMap extends Map {
 	 * @param {any} [this_arg]
 	 */
 	forEach(callbackfn, this_arg) {
-		get(this.#version);
-
-		return super.forEach(callbackfn, this_arg);
+		this.#read_all();
+		super.forEach(callbackfn, this_arg);
 	}
 
 	/** @param {K} key */
@@ -76,9 +70,8 @@ export class ReactiveMap extends Map {
 		if (s === undefined) {
 			var ret = super.get(key);
 			if (ret !== undefined) {
-				s = source(Symbol());
+				s = source(0);
 				sources.set(key, s);
-				this.#increment_version();
 			} else {
 				// We should always track the version in case
 				// the Set ever gets this value in the future.
@@ -102,11 +95,11 @@ export class ReactiveMap extends Map {
 		var res = super.set(key, value);
 
 		if (s === undefined) {
-			sources.set(key, source(Symbol()));
+			sources.set(key, source(0));
 			set(this.#size, super.size);
-			this.#increment_version();
+			increment(this.#version);
 		} else if (prev_res !== value) {
-			set(s, Symbol());
+			increment(s);
 		}
 
 		return res;
@@ -121,8 +114,8 @@ export class ReactiveMap extends Map {
 		if (s !== undefined) {
 			sources.delete(key);
 			set(this.#size, super.size);
-			set(s, UNINITIALIZED);
-			this.#increment_version();
+			set(s, -1);
+			increment(this.#version);
 		}
 
 		return res;
@@ -134,9 +127,9 @@ export class ReactiveMap extends Map {
 		if (super.size !== 0) {
 			set(this.#size, 0);
 			for (var s of sources.values()) {
-				set(s, UNINITIALIZED);
+				set(s, -1);
 			}
-			this.#increment_version();
+			increment(this.#version);
 			sources.clear();
 		}
 		super.clear();
@@ -144,6 +137,16 @@ export class ReactiveMap extends Map {
 
 	#read_all() {
 		get(this.#version);
+
+		var sources = this.#sources;
+		if (this.#size.v !== sources.size) {
+			for (var key of super.keys()) {
+				if (!sources.has(key)) {
+					sources.set(key, source(0));
+				}
+			}
+		}
+
 		for (var [, s] of this.#sources) {
 			get(s);
 		}
