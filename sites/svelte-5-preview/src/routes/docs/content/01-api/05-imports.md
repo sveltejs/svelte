@@ -127,7 +127,7 @@ const element: Element = null as any;
 import { attach } from 'svelte/events';
 
 attach(element, 'click', () => {
-	console.log('click the element!');
+	console.log('element was clicked');
 });
 ```
 
@@ -140,7 +140,7 @@ const element: Element = null as any;
 import { attach } from 'svelte/events';
 
 const remove = attach(element, 'click', () => {
-	console.log('click the element!');
+	console.log('element was clicked');
 });
 // ...
 remove();
