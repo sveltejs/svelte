@@ -58,9 +58,8 @@ export class ReactiveMap extends Map {
 	 * @param {any} [this_arg]
 	 */
 	forEach(callbackfn, this_arg) {
-		get(this.#version);
-
-		return super.forEach(callbackfn, this_arg);
+		this.#read_all();
+		super.forEach(callbackfn, this_arg);
 	}
 
 	/** @param {K} key */
