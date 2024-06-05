@@ -2231,16 +2231,15 @@ export const template_visitors = {
 		}
 		inner.push(...inner_context.state.after_update);
 		inner.push(
-			...create_block(node, node.fragment, 'dynamic_element', node.fragment.nodes, {
-				...context,
-				state: {
+			.../** @type {import('estree').BlockStatement} */ (
+				context.visit(node.fragment, {
 					...context.state,
 					metadata: {
 						...context.state.metadata,
 						namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
 					}
-				}
-			})
+				})
+			).body
 		);
 
 		const location = context.state.options.dev && locator(node.start);
