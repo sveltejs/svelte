@@ -2457,8 +2457,7 @@ export const template_visitors = {
 			}
 		}
 
-		// TODO should use context.visit?
-		const children = /** @type {import('estree').BlockStatement} */ (context.visit(node.body));
+		const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.body));
 
 		const key_function = node.key
 			? b.arrow(
@@ -2491,7 +2490,7 @@ export const template_visitors = {
 			b.literal(each_type),
 			each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
 			key_function,
-			b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children.body)))
+			b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(block.body)))
 		];
 
 		if (node.fallback) {
