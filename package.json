@@ -5,6 +5,7 @@
   "private": true,
   "type": "module",
   "license": "MIT",
+  "packageManager": "pnpm@9.2.0",
   "engines": {
     "pnpm": "^9.0.0"
   },
