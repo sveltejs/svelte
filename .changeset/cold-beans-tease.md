@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: increment version when creating new source in Map.get or Map.has
+fix: populate `this.#sources` when constructing reactive map

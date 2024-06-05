@@ -24,7 +24,9 @@ export class ReactiveMap extends Map {
 		if (DEV) new Map(value);
 
 		if (value) {
+			var sources = this.#sources;
 			for (var [key, v] of value) {
+				sources.set(key, source(Symbol()));
 				super.set(key, v);
 			}
 			this.#size.v = super.size;
@@ -45,7 +47,6 @@ export class ReactiveMap extends Map {
 			if (ret !== undefined) {
 				s = source(Symbol());
 				sources.set(key, s);
-				this.#increment_version();
 			} else {
 				// We should always track the version in case
 				// the Set ever gets this value in the future.
@@ -78,7 +79,6 @@ export class ReactiveMap extends Map {
 			if (ret !== undefined) {
 				s = source(Symbol());
 				sources.set(key, s);
-				this.#increment_version();
 			} else {
 				// We should always track the version in case
 				// the Set ever gets this value in the future.
