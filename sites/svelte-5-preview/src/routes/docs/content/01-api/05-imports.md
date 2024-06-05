@@ -121,9 +121,10 @@ Svelte provides a way of imperatively attaching DOM event listeners to elements 
 imperatively doing `element.addEventListener`, with that benefit that `attach` will allow Svelte to co-ordinate the event through its own event delegation system.
 
 ```js
+// @filename: index.ts
+const element: Element = null as any;
+// ---cut---
 import { attach } from 'svelte/events';
-
-const element = document.getElementById('el');
 
 attach(element, 'click', () => {
 	console.log('click the element!');
@@ -133,9 +134,10 @@ attach(element, 'click', () => {
 Additionally, `attach` returns a function that easily allows for removal of the attached event handler:
 
 ```js
+// @filename: index.ts
+const element: Element = null as any;
+// ---cut---
 import { attach } from 'svelte/events';
-
-const element = document.getElementById('el');
 
 const remove = attach(element, 'click', () => {
 	console.log('click the element!');
