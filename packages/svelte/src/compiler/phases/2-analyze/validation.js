@@ -87,7 +87,7 @@ function validate_component(node, context) {
 			validate_attribute_name(attribute);
 
 			if (attribute.name === 'slot') {
-				validate_slot_attribute(context, attribute);
+				validate_slot_attribute(context, attribute, true);
 			}
 		}
 	}
@@ -253,8 +253,9 @@ function validate_attribute_name(attribute) {
 /**
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
  * @param {import('#compiler').Attribute} attribute
+ * @param {boolean} is_component
  */
-function validate_slot_attribute(context, attribute) {
+function validate_slot_attribute(context, attribute, is_component = false) {
 	let owner = undefined;
 
 	let i = context.path.length;
@@ -310,7 +311,7 @@ function validate_slot_attribute(context, attribute) {
 				}
 			}
 		}
-	} else {
+	} else if (!is_component) {
 		e.slot_attribute_invalid_placement(attribute);
 	}
 }
