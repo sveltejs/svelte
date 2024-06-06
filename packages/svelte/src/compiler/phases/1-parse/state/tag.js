@@ -281,10 +281,13 @@ function open(parser) {
 			parser.allow_whitespace();
 			if (parser.eat('=')) {
 				parser.allow_whitespace();
+				const right = read_expression(parser);
 				pattern = {
 					type: 'AssignmentPattern',
 					left: pattern,
-					right: read_expression(parser)
+					right: right,
+					start: pattern.start,
+					end: right.end
 				};
 			}
 
@@ -572,7 +575,7 @@ function special(parser) {
 			declaration: {
 				type: 'VariableDeclaration',
 				kind: 'const',
-				declarations: [{ type: 'VariableDeclarator', id, init }],
+				declarations: [{ type: 'VariableDeclarator', id, init, start: id.start, end: init.end }],
 				start: start + 2, // start at const, not at @const
 				end: parser.index - 1
 			}
