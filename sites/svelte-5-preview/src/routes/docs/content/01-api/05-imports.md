@@ -117,25 +117,11 @@ Svelte provides reactive `Map`, `Set`, `Date` and `URL` classes. These can be im
 
 ## `svelte/events`
 
-Svelte provides a way of imperatively attaching DOM event listeners to elements using the `on` export from `svelte/events`. This can be used in place of
-imperatively doing `element.addEventListener`, with that benefit that `on` will allow Svelte to co-ordinate the event through its own event delegation system.
+Where possible, event handlers added with [attributes like `onclick`](/docs/event-handlers) use a technique called _event delegation_. It works by creating a single handler for each event type on the root DOM element, rather than creating a handler for each element, resulting in better performance and memory usage.
 
-> Svelte 5 has its own internal event delegation system that it uses for certain types of events. Rather than creating hundreds or thousands of invidivual
-> event handlers on each element, Svelte creates a single delegated event handler on the root DOM element and manages the bookkeeping itself. This can have a significant impact
-> on performance and memory usage.
+Delegated event handlers run after other event handlers. In other words, a handler added programmatically with [`addEventListener`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener) will run _before_ a handler added declaratively with `onclick`, regardless of their relative position in the DOM ([demo](/#H4sIAAAAAAAAE41Sy2rDMBD8lUUXJxDiu-sYeugt_YK6h8RaN6LyykgrQzH6965shxJooQc_RhrNzA6aVW8sBlW9zYouA6pKPY-jOij-GjMIE1pGwcFF3-WVOnTejNy01LIZRucZZnD06iIxJOi9G6BYjxVPmZQfiwzaTBkL2ti73R5ODcwLiftIHRtHcLuQtuhlc9tpuSyBbyZAuLloNfhIELBzpO8E-Q_O4tG6j13hIqO_y0BvPOpiv0bhtJ1Y3pLoeNH6ZULiswmMJLZFZ033WRzuAvstdMseOXqCh9SriMfBTfgPnZxg-aYM6_KnS6pFCK6GdJVHPc0C01JyfY0slUnHi-JpfgjwSzUycdgmfOjFEP3RS1qdhJ8dYMDFt1yNmxxU0jRyCwanTW9Qq4p9xPSevgHI3m43QAIAAA==)). It also means that calling `event.stopPropagation()` inside a declarative handler _won't_ prevent the programmatic handler (created inside an action, for example) from running.
 
-```js
-// @filename: index.ts
-const element: Element = null as any;
-// ---cut---
-import { on } from 'svelte/events';
-
-on(element, 'click', () => {
-	console.log('element was clicked');
-});
-```
-
-Additionally, `on` returns a function that easily allows for removal of the attached event handler:
+To preserve the relative order, use `on` rather than `addEventListener` ([demo](/#H4sIAAAAAAAAE3VRy26DMBD8lZUvECkqdwpI_YB-QdJDgpfGqlkjex2pQv73rnmoStQeMB52dnZmmdVgLAZVn2ZFlxFVrd6mSR0Vf08ZhDtaRsHBRd_nL03ovZm4O9OZzTg5zzCDo3cXiSHB4N0IxdpWvD6RnuoV3pE4rLT8WGTQ5p6xoE20LA_QdjAvJB4i9WxE6nYhbdFLcaucuaqAbyZAuLloNfhIELB3pHeC3IOz-GLdZ1m4yOh3GRiMR10cViucto7l9MjRk9gvxdsRit6a_qs47q1rT8qvpvpdDjXChqshXWdT7SwwLVtrrpElnAguSu38EPCPEOItbF4eEhiifxKkdZLw8wQYcZlbrYO7bFTcdPJbR6fNYFCrmn3E9JF-AJZOg9MRAgAA)):
 
 ```js
 // @filename: index.ts
@@ -143,14 +129,15 @@ const element: Element = null as any;
 // ---cut---
 import { on } from 'svelte/events';
 
-const remove = on(element, 'click', () => {
+const off = on(element, 'click', () => {
 	console.log('element was clicked');
 });
-// ...
-remove();
+
+// later, if we need to remove the event listener:
+off();
 ```
 
-> Note: `on` also accepts 4th optional argument for defining the options for the event handler. This matches that of the options argument (`EventListenerOptions`) for `addEventListener`.
+`on` also accepts an optional fourth argument which matches the options argument for `addEventListener`.
 
 ## `svelte/server`
 
