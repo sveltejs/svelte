@@ -204,6 +204,8 @@ const functionComponent: Component<
 };
 functionComponent.element === HTMLElement;
 
+const bindingIsOkayToWiden: Component<any> = functionComponent;
+
 functionComponent(null as any, {
 	binding: true,
 	// @ts-expect-error

@@ -129,7 +129,7 @@ export class SvelteComponent<
 export interface Component<
 	Props extends Record<string, any> = {},
 	Exports extends Record<string, any> = {},
-	Bindings extends keyof Props | '' = ''
+	Bindings extends keyof Props | '' = string
 > {
 	/**
 	 * @param internal An internal object used by Svelte. Do not use or modify.
