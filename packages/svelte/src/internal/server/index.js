@@ -399,8 +399,8 @@ export function value_or_fallback(value, fallback) {
  * @param {() => Promise<V>} fallback lazy because could contain side effects
  * @returns {Promise<V>}
  */
-export async function value_or_fallback_async(value, fallback) {
-	return value === undefined ? fallback() : value;
+export function value_or_fallback_async(value, fallback) {
+	return value === undefined ? fallback() : Promise.resolve(value);
 }
 
 /**
