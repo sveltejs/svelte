@@ -1,6 +1,7 @@
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { set_should_intro } from '../render.js';
 import { get } from '../runtime.js';
+import { check_target } from './legacy.js';
 
 /**
  * @template {(anchor: Comment, props: any) => any} Component
@@ -11,7 +12,7 @@ export function hmr(source) {
 	 * @param {Comment} anchor
 	 * @param {any} props
 	 */
-	return (anchor, props) => {
+	return function (anchor, props) {
 		let instance = {};
 
 		/** @type {import("#client").Effect} */
@@ -19,6 +20,9 @@ export function hmr(source) {
 
 		block(() => {
 			const component = get(source);
+
+			// @ts-expect-error
+			check_target(new.target && component);
 
 			if (effect) {
 				// @ts-ignore
