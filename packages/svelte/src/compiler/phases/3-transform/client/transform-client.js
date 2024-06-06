@@ -452,7 +452,7 @@ export function client_component(source, analysis, options) {
 		body.unshift(b.imports([['createClassComponent', '$$_createClassComponent']], 'svelte/legacy'));
 		component_block.body.unshift(
 			b.if(
-				b.binary('===', b.id('new.target'), b.id(analysis.name)),
+				b.id('new.target'),
 				b.return(
 					b.call(
 						'$$_createClassComponent',
@@ -463,15 +463,7 @@ export function client_component(source, analysis, options) {
 			)
 		);
 	} else if (options.dev) {
-		component_block.body.unshift(
-			b.if(
-				b.binary('===', b.id('new.target'), b.id(analysis.name)),
-				b.throw_error(
-					`Instantiating a component with \`new\` is no longer valid in Svelte 5. ` +
-						'See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information'
-				)
-			)
-		);
+		component_block.body.unshift(b.stmt(b.call('$.check_target', b.id('new.target'))));
 	}
 
 	if (state.events.size > 0) {
