@@ -493,7 +493,7 @@ export function client_component(source, analysis, options) {
 		body.unshift(b.imports([['createClassComponent', '$$_createClassComponent']], 'svelte/legacy'));
 		component_block.body.unshift(
 			b.if(
-				b.binary('===', b.id('new.target'), b.id(analysis.name)),
+				b.id('new.target'),
 				b.return(
 					b.call(
 						'$$_createClassComponent',
