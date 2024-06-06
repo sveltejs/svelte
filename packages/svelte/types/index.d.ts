@@ -2112,10 +2112,14 @@ declare module 'svelte/server' {
 		props: Record<string, any>;
 		context?: Map<any, any>;
 	}): RenderOutput;
-	type RenderOutput = {
+	interface RenderOutput {
+		/** HTML that goes into the `<head>` */
 		head: string;
+		/** @deprecated use `body` instead */
 		html: string;
-	};
+		/** HTML that goes somewhere into the `<body>` */
+		body: string;
+	}
 }
 
 declare module 'svelte/store' {

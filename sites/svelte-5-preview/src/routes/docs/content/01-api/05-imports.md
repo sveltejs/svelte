@@ -119,7 +119,7 @@ Svelte provides reactive `Map`, `Set`, `Date` and `URL` classes. These can be im
 
 ### `render`
 
-Only available on the server and when compiling with the `server` option. Takes a component and returns an object with `html` and `head` properties on it, which you can use to populate the HTML when server-rendering your app:
+Only available on the server and when compiling with the `server` option. Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app:
 
 ```js
 // @errors: 2724 2305 2307
