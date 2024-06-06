@@ -508,7 +508,7 @@ export function client_component(source, analysis, options) {
 			b.if(
 				b.binary('===', b.id('new.target'), b.id(analysis.name)),
 				b.throw_error(
-					`Instantiating a component with \`new\` is no longer valid in Svelte 5. ` +
+					`Instantiating a component with \`new\` is no longer valid in Svelte 5. If this component is not under your control, set the legacy.componentApi compiler option. ` +
 						'See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information'
 				)
 			)
