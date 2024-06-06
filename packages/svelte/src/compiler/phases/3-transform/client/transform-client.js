@@ -48,55 +48,6 @@ export function client_component(source, analysis, options) {
 		scopes: analysis.template.scopes,
 		hoisted: [b.import_all('$', 'svelte/internal/client')],
 		node: /** @type {any} */ (null), // populated by the root node
-		// these should be set by create_block - if they're called outside, it's a bug
-		get before_init() {
-			/** @type {any[]} */
-			const a = [];
-			a.push = () => {
-				throw new Error('before_init.push should not be called outside create_block');
-			};
-			return a;
-		},
-		get init() {
-			/** @type {any[]} */
-			const a = [];
-			a.push = () => {
-				throw new Error('init.push should not be called outside create_block');
-			};
-			return a;
-		},
-		get update() {
-			/** @type {any[]} */
-			const a = [];
-			a.push = () => {
-				throw new Error('update.push should not be called outside create_block');
-			};
-			return a;
-		},
-		get after_update() {
-			/** @type {any[]} */
-			const a = [];
-			a.push = () => {
-				throw new Error('after_update.push should not be called outside create_block');
-			};
-			return a;
-		},
-		get template() {
-			/** @type {any[]} */
-			const a = [];
-			a.push = () => {
-				throw new Error('template.push should not be called outside create_block');
-			};
-			return a;
-		},
-		get locations() {
-			/** @type {any[]} */
-			const a = [];
-			a.push = () => {
-				throw new Error('locations.push should not be called outside create_block');
-			};
-			return a;
-		},
 		legacy_reactive_statements: new Map(),
 		metadata: {
 			context: {
@@ -110,7 +61,15 @@ export function client_component(source, analysis, options) {
 		preserve_whitespace: options.preserveWhitespace,
 		public_state: new Map(),
 		private_state: new Map(),
-		in_constructor: false
+		in_constructor: false,
+
+		// these are set inside the `Fragment` visitor, and cannot be used until then
+		before_init: /** @type {any} */ (null),
+		init: /** @type {any} */ (null),
+		update: /** @type {any} */ (null),
+		after_update: /** @type {any} */ (null),
+		template: /** @type {any} */ (null),
+		locations: /** @type {any} */ (null)
 	};
 
 	const module = /** @type {import('estree').Program} */ (

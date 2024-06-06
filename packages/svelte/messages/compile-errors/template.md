@@ -96,6 +96,10 @@
 
 > This type of directive is not valid on components
 
+## const_tag_cycle
+
+> Cyclical dependency detected: %cycle%
+
 ## const_tag_invalid_expression
 
 > {@const ...} must consist of a single variable declaration
