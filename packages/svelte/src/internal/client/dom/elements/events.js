@@ -67,6 +67,24 @@ export function create_event(event_name, dom, handler, options) {
 }
 
 /**
+ * Attaches an event handler to an element and returns a function that removes the handler. Using this
+ * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
+ * (with attributes like `onclick`), which use event delegation for performance reasons
+ *
+ * @param {Element} element
+ * @param {string} type
+ * @param {EventListener} handler
+ * @param {AddEventListenerOptions} [options]
+ */
+export function on(element, type, handler, options = {}) {
+	var target_handler = create_event(type, element, handler, options);
+
+	return () => {
+		element.removeEventListener(type, target_handler, options);
+	};
+}
+
+/**
  * @param {string} event_name
  * @param {Element} dom
  * @param {EventListener} handler
