@@ -1,1 +1,1 @@
-export { on } from '../internal/client/dom/elements/events';
+export { on } from '../internal/client/dom/elements/events.js';
