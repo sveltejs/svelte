@@ -2,7 +2,7 @@
  * @typedef BindingProperty
  * @property {string} [event] This is set if the binding corresponds to the property name on the dom element it's bound to
  * 							  and there's an event that notifies of a change to that property
- * @property {string} [type] Set this to `set` if updates are written to the dom property
+ * @property {boolean} [bidirectional] Set this to `true` if updates are written to the dom property
  * @property {boolean} [omit_in_ssr] Set this to true if the binding should not be included in SSR
  * @property {string[]} [valid_elements] If this is set, the binding is only valid on the given elements
  * @property {string[]} [invalid_elements] If this is set, the binding is invalid on the given elements
@@ -175,7 +175,7 @@ export const binding_properties = {
 	// checkbox/radio
 	indeterminate: {
 		event: 'change',
-		type: 'set',
+		bidirectional: true,
 		valid_elements: ['input'],
 		omit_in_ssr: true // no corresponding attribute
 	},
@@ -200,7 +200,7 @@ export const binding_properties = {
 	},
 	open: {
 		event: 'toggle',
-		type: 'set',
+		bidirectional: true,
 		valid_elements: ['details']
 	},
 	value: {

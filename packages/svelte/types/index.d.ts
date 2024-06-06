@@ -2340,6 +2340,17 @@ declare module 'svelte/transition' {
 	}) => () => TransitionConfig];
 }
 
+declare module 'svelte/events' {
+	/**
+	 * Attaches an event handler to an element and returns a function that removes the handler. Using this
+	 * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
+	 * (with attributes like `onclick`), which use event delegation for performance reasons
+	 *
+	 * 
+	 */
+	export function on(element: Element, type: string, handler: EventListener, options?: AddEventListenerOptions | undefined): () => void;
+}
+
 declare module 'svelte/types/compiler/preprocess' {
 	/** @deprecated import this from 'svelte/preprocess' instead */
 	export type MarkupPreprocessor = MarkupPreprocessor_1;

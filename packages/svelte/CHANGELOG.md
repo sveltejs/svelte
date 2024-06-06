@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.151
+
+### Patch Changes
+
+- fix: relax `Component` type ([#11929](https://github.com/sveltejs/svelte/pull/11929))
+
+- fix: sort `{@const ...}` tags topologically in legacy mode ([#11908](https://github.com/sveltejs/svelte/pull/11908))
+
+- chore: deprecate html in favour of body for render() ([#11927](https://github.com/sveltejs/svelte/pull/11927))
+
+- fix: append start/end info to `AssignmentPattern` and `VariableDeclarator` ([#11930](https://github.com/sveltejs/svelte/pull/11930))
+
+- fix: relax slot prop validation on components ([#11923](https://github.com/sveltejs/svelte/pull/11923))
+
 ## 5.0.0-next.150
 
 ### Patch Changes
