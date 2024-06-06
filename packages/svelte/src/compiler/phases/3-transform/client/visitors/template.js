@@ -916,6 +916,27 @@ function serialize_inline_component(node, component_name, context) {
 			);
 	}
 
+	if (node.type === 'SvelteComponent') {
+		const prev = fn;
+		fn = (node_id) => {
+			let component = b.call(
+				'$.component',
+				b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.expression))),
+				b.arrow(
+					[b.id(component_name)],
+					b.block([
+						b.stmt(
+							context.state.options.dev
+								? b.call('$.validate_dynamic_component', b.thunk(prev(node_id)))
+								: prev(node_id)
+						)
+					])
+				)
+			);
+			return component;
+		};
+	}
+
 	if (Object.keys(custom_css_props).length > 0) {
 		const prev = fn;
 		fn = (node_id) =>
@@ -2938,7 +2959,6 @@ export const template_visitors = {
 				b.stmt(
 					b.call(
 						'$.component',
-						context.state.node,
 						// TODO use untrack here to not update when binding changes?
 						// Would align with Svelte 4 behavior, but it's arguably nicer/expected to update this
 						b.thunk(
@@ -2962,19 +2982,8 @@ export const template_visitors = {
 		context.state.template.push('<!>');
 
 		let component = serialize_inline_component(node, '$$component', context);
-		if (context.state.options.dev) {
-			component = b.stmt(b.call('$.validate_dynamic_component', b.thunk(b.block([component]))));
-		}
-		context.state.init.push(
-			b.stmt(
-				b.call(
-					'$.component',
-					context.state.node,
-					b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.expression))),
-					b.arrow([b.id('$$component')], b.block([component]))
-				)
-			)
-		);
+
+		context.state.init.push(component);
 	},
 	Attribute(node, context) {
 		if (is_event_attribute(node)) {
