@@ -1119,7 +1119,9 @@ function serialize_inline_component(node, component_name, context) {
 		statement = b.block([...snippet_declarations, statement]);
 	}
 
-	return statement;
+	context.state.template.push(block_open);
+	context.state.template.push(t_statement(statement));
+	context.state.template.push(block_close);
 }
 
 /**
@@ -1666,29 +1668,17 @@ const template_visitors = {
 		}
 	},
 	Component(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
-		const call = serialize_inline_component(node, node.name, context);
-		state.template.push(t_statement(call));
-		state.template.push(block_close);
+		serialize_inline_component(node, node.name, context);
 	},
 	SvelteSelf(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
-		const call = serialize_inline_component(node, context.state.analysis.name, context);
-		state.template.push(t_statement(call));
-		state.template.push(block_close);
+		serialize_inline_component(node, context.state.analysis.name, context);
 	},
 	SvelteComponent(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
-		const call = serialize_inline_component(
+		serialize_inline_component(
 			node,
 			/** @type {import('estree').Expression} */ (context.visit(node.expression)),
 			context
 		);
-		state.template.push(t_statement(call));
-		state.template.push(block_close);
 	},
 	LetDirective(node, { state }) {
 		if (node.expression && node.expression.type !== 'Identifier') {
