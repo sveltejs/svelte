@@ -28,6 +28,7 @@ import {
 	DOMBooleanAttributes,
 	ELEMENT_IS_NAMESPACED,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
+	HYDRATION_ANCHOR,
 	HYDRATION_END,
 	HYDRATION_START
 } from '../../../../constants.js';
@@ -38,6 +39,7 @@ import { filename, locator } from '../../../state.js';
 
 export const block_open = t_string(`<!--${HYDRATION_START}-->`);
 export const block_close = t_string(`<!--${HYDRATION_END}-->`);
+export const block_anchor = t_string(`<!--${HYDRATION_ANCHOR}-->`);
 
 /**
  * @param {string} value
@@ -1477,8 +1479,6 @@ const template_visitors = {
 			}
 		};
 
-		context.state.template.push(block_open);
-
 		const main = /** @type {import('estree').BlockStatement} */ (
 			context.visit(node.fragment, {
 				...context.state,
@@ -1515,7 +1515,7 @@ const template_visitors = {
 					)
 				)
 			),
-			block_close
+			block_anchor
 		);
 		if (context.state.options.dev) {
 			context.state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));

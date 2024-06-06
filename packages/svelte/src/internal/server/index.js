@@ -10,7 +10,7 @@ import {
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
-import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import { BLOCK_ANCHOR, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
@@ -78,12 +78,9 @@ export function element(payload, tag, attributes_fn, children_fn) {
 	payload.out += `>`;
 
 	if (!VoidElements.has(tag)) {
-		if (!RawTextElements.includes(tag)) {
-			payload.out += BLOCK_OPEN;
-		}
 		children_fn();
 		if (!RawTextElements.includes(tag)) {
-			payload.out += BLOCK_CLOSE;
+			payload.out += BLOCK_ANCHOR;
 		}
 		payload.out += `</${tag}>`;
 	}
