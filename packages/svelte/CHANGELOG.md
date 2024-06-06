@@ -1,5 +1,11 @@
 # svelte
 
+## 4.2.18
+
+### Patch Changes
+
+- chore: speed up regex ([#11922](https://github.com/sveltejs/svelte/pull/11922))
+
 ## 4.2.17
 
 ### Patch Changes
