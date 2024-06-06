@@ -2113,9 +2113,11 @@ declare module 'svelte/server' {
 		context?: Map<any, any>;
 	}): RenderOutput;
 	interface RenderOutput {
+		/** HTML that goes into the `<head>` */
 		head: string;
-		/** @deprecated */
+		/** @deprecated use `body` instead */
 		html: string;
+		/** HTML that goes somewhere into the `<body>` */
 		body: string;
 	}
 }
