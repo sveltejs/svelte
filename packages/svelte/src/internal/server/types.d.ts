@@ -20,3 +20,10 @@ export interface Payload {
 		anchor: number;
 	};
 }
+
+export interface RenderOutput {
+	head: string;
+	/** @deprecated */
+	html: string;
+	body: string;
+}

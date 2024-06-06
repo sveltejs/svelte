@@ -4,4 +4,4 @@ import { render } from 'svelte/server';
 import App from './App.svelte';
 
 // @ts-ignore
-export const { head, html, css } = render(App, { props: { initialCount: 0 } });
+export const { head, body, css } = render(App, { props: { initialCount: 0 } });

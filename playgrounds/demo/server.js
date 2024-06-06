@@ -28,7 +28,7 @@ async function createServer() {
 
 		const template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
 		const transformed_template = await vite.transformIndexHtml(req.originalUrl, template);
-		const { html: appHtml, head: headHtml } = await vite.ssrLoadModule('./src/entry-server.ts');
+		const { body: appHtml, head: headHtml } = await vite.ssrLoadModule('./src/entry-server.ts');
 
 		const html = transformed_template
 			.replace(`<!--ssr-html-->`, appHtml)

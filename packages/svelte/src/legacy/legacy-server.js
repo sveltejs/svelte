@@ -27,7 +27,7 @@ export function asClassComponent(component) {
 		return {
 			css: { code: '', map: null },
 			head: result.head,
-			html: result.html
+			html: result.body
 		};
 	};
 	// @ts-expect-error this is present for SSR

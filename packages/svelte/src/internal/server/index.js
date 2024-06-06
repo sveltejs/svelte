@@ -13,13 +13,6 @@ import { current_component, pop, push } from './context.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
 
-/**
- * @typedef {{
- * 	head: string;
- * 	html: string;
- * }} RenderOutput
- */
-
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
 const INVALID_ATTR_NAME_CHAR_REGEX =
@@ -105,7 +98,7 @@ export let on_destroy = [];
 /**
  * @param {typeof import('svelte').SvelteComponent} component
  * @param {{ props: Record<string, any>; context?: Map<any, any> }} options
- * @returns {RenderOutput}
+ * @returns {import('#server').RenderOutput}
  */
 export function render(component, options) {
 	const payload = create_payload();
@@ -132,7 +125,8 @@ export function render(component, options) {
 
 	return {
 		head: payload.head.out || payload.head.title ? payload.head.out + payload.head.title : '',
-		html: payload.out
+		html: payload.out,
+		body: payload.out
 	};
 }
 
