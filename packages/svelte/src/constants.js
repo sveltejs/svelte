@@ -118,8 +118,7 @@ export const interactive_elements = new Set([
 	'iframe',
 	'embed',
 	'select',
-	'textarea',
-	'form'
+	'textarea'
 ]);
 
 export const disallowed_paragraph_contents = [
