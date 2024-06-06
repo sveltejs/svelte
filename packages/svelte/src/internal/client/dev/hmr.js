@@ -21,9 +21,6 @@ export function hmr(source) {
 		block(() => {
 			const component = get(source);
 
-			// @ts-expect-error
-			check_target(new.target && component);
-
 			if (effect) {
 				// @ts-ignore
 				for (var k in instance) delete instance[k];
@@ -35,7 +32,10 @@ export function hmr(source) {
 				// preserve getters/setters
 				Object.defineProperties(
 					instance,
-					Object.getOwnPropertyDescriptors(component(anchor, props))
+					Object.getOwnPropertyDescriptors(
+						// @ts-expect-error
+						new.target ? new component(anchor, props) : component(anchor, props)
+					)
 				);
 				set_should_intro(true);
 			});
