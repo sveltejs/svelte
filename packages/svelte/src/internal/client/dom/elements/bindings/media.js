@@ -1,5 +1,5 @@
 import { hydrating } from '../../hydration.js';
-import { render_effect, effect } from '../../../reactivity/effects.js';
+import { render_effect, effect, teardown } from '../../../reactivity/effects.js';
 import { listen } from './shared.js';
 
 /** @param {TimeRanges} ranges */
@@ -52,7 +52,7 @@ export function bind_current_time(media, get_value, update) {
 		updating = false;
 	});
 
-	render_effect(() => () => cancelAnimationFrame(raf_id));
+	teardown(() => cancelAnimationFrame(raf_id));
 }
 
 /**

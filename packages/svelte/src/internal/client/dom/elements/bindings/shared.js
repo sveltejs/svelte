@@ -1,4 +1,4 @@
-import { render_effect } from '../../../reactivity/effects.js';
+import { teardown } from '../../../reactivity/effects.js';
 import { add_form_reset_listener } from '../misc.js';
 
 /**
@@ -18,12 +18,10 @@ export function listen(target, events, handler, call_handler_immediately = true)
 		target.addEventListener(name, handler);
 	}
 
-	render_effect(() => {
-		return () => {
-			for (var name of events) {
-				target.removeEventListener(name, handler);
-			}
-		};
+	teardown(() => {
+		for (var name of events) {
+			target.removeEventListener(name, handler);
+		}
 	});
 }
 

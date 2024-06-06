@@ -1,5 +1,4 @@
-import { effect, render_effect } from '../../../reactivity/effects.js';
-import { untrack } from '../../../runtime.js';
+import { effect, teardown } from '../../../reactivity/effects.js';
 
 /**
  * Resize observer singleton.
@@ -89,7 +88,7 @@ export function bind_resize_observer(element, type, update) {
 				: resize_observer_device_pixel_content_box;
 
 	var unsub = observer.observe(element, /** @param {any} entry */ (entry) => update(entry[type]));
-	render_effect(() => unsub);
+	teardown(unsub);
 }
 
 /**

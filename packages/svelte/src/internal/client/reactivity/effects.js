@@ -145,6 +145,13 @@ export function effect_active() {
 }
 
 /**
+ * @param {() => void} fn
+ */
+export function teardown(fn) {
+	return render_effect(() => fn);
+}
+
+/**
  * Internal representation of `$effect(...)`
  * @param {() => void | (() => void)} fn
  */

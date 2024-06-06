@@ -1,5 +1,5 @@
 import { DEV } from 'esm-env';
-import { render_effect, effect } from '../../../reactivity/effects.js';
+import { render_effect, effect, teardown } from '../../../reactivity/effects.js';
 import { stringify } from '../../../render.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
@@ -103,14 +103,12 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 		}
 	});
 
-	render_effect(() => {
-		return () => {
-			var index = binding_group.indexOf(input);
+	teardown(() => {
+		var index = binding_group.indexOf(input);
 
-			if (index !== -1) {
-				binding_group.splice(index, 1);
-			}
-		};
+		if (index !== -1) {
+			binding_group.splice(index, 1);
+		}
 	});
 
 	effect(() => {
@@ -189,6 +187,7 @@ export function bind_files(input, get_value, update) {
 	listen_to_event_and_reset_event(input, 'change', () => {
 		update(input.files);
 	});
+
 	render_effect(() => {
 		input.files = get_value();
 	});
