@@ -67,9 +67,9 @@ export function create_event(event_name, dom, handler, options) {
 }
 
 /**
- * Attaches a DOM event handler to an element and returns a function that detaches the event. The event handler
- * will be processed through Svelte's internal event delegation system and is the preferred way to imperatively
- * attach event handlers instead of using `addEventListener`.
+ * Attaches an event handler to an element and returns a function that removes the handler. Using this
+ * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
+ * (with attributes like `onclick`), which use event delegation for performance reasons
  *
  * @param {Element} element
  * @param {string} type

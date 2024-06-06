@@ -2338,13 +2338,13 @@ declare module 'svelte/transition' {
 
 declare module 'svelte/events' {
 	/**
-	 * Attaches a DOM event handler to an element and returns a function that detaches the event. The event handler
-	 * will be processed through Svelte's internal event delegation system and is the preferred way to imperatively
-	 * attach event handlers instead of using `addEventListener`.
+	 * Attaches an event handler to an element and returns a function that removes the handler. Using this
+	 * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
+	 * (with attributes like `onclick`), which use event delegation for performance reasons
 	 *
 	 * 
 	 */
-	export function on(dom: Element, event_name: string, handler: EventListener, options?: AddEventListenerOptions | undefined): () => void;
+	export function on(element: Element, type: string, handler: EventListener, options?: AddEventListenerOptions | undefined): () => void;
 }
 
 declare module 'svelte/types/compiler/preprocess' {
