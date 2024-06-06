@@ -20,3 +20,12 @@ export interface Payload {
 		anchor: number;
 	};
 }
+
+export interface RenderOutput {
+	/** HTML that goes into the `<head>` */
+	head: string;
+	/** @deprecated use `body` instead */
+	html: string;
+	/** HTML that goes somewhere into the `<body>` */
+	body: string;
+}

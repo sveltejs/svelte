@@ -126,7 +126,7 @@ declare module 'svelte' {
 	export interface Component<
 		Props extends Record<string, any> = {},
 		Exports extends Record<string, any> = {},
-		Bindings extends keyof Props | '' = ''
+		Bindings extends keyof Props | '' = string
 	> {
 		/**
 		 * @param internal An internal object used by Svelte. Do not use or modify.
@@ -1990,7 +1990,7 @@ declare module 'svelte/legacy' {
 	 *
 	 * */
 	export function createClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(options: import("svelte").ComponentConstructorOptions<Props> & {
-		component: import("svelte").ComponentType<import("svelte").SvelteComponent<Props, Events, Slots>> | import("svelte").Component<Props, any, "">;
+		component: import("svelte").ComponentType<import("svelte").SvelteComponent<Props, Events, Slots>> | import("svelte").Component<Props, any, string>;
 		immutable?: boolean | undefined;
 		hydrate?: boolean | undefined;
 		recover?: boolean | undefined;
@@ -2001,7 +2001,7 @@ declare module 'svelte/legacy' {
 	 * @deprecated Use this only as a temporary solution to migrate your imperative component code to Svelte 5.
 	 *
 	 * */
-	export function asClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(component: import("svelte").SvelteComponent<Props, Events, Slots> | import("svelte").Component<Props, any, "">): import("svelte").ComponentType<import("svelte").SvelteComponent<Props, Events, Slots> & Exports>;
+	export function asClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(component: import("svelte").SvelteComponent<Props, Events, Slots> | import("svelte").Component<Props, any, string>): import("svelte").ComponentType<import("svelte").SvelteComponent<Props, Events, Slots> & Exports>;
 	/**
 	 * Runs the given function once immediately on the server, and works like `$effect.pre` on the client.
 	 *
@@ -2112,10 +2112,14 @@ declare module 'svelte/server' {
 		props: Record<string, any>;
 		context?: Map<any, any>;
 	}): RenderOutput;
-	type RenderOutput = {
+	interface RenderOutput {
+		/** HTML that goes into the `<head>` */
 		head: string;
+		/** @deprecated use `body` instead */
 		html: string;
-	};
+		/** HTML that goes somewhere into the `<body>` */
+		body: string;
+	}
 }
 
 declare module 'svelte/store' {
@@ -2334,6 +2338,17 @@ declare module 'svelte/transition' {
 	}) => () => TransitionConfig, (node: any, params: CrossfadeParams & {
 		key: any;
 	}) => () => TransitionConfig];
+}
+
+declare module 'svelte/events' {
+	/**
+	 * Attaches an event handler to an element and returns a function that removes the handler. Using this
+	 * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
+	 * (with attributes like `onclick`), which use event delegation for performance reasons
+	 *
+	 * 
+	 */
+	export function on(element: Element, type: string, handler: EventListener, options?: AddEventListenerOptions | undefined): () => void;
 }
 
 declare module 'svelte/types/compiler/preprocess' {

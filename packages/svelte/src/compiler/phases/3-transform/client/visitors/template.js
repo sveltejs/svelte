@@ -839,26 +839,37 @@ function serialize_inline_component(node, component_name, context) {
 			}
 		}
 
-		children[slot_name] = children[slot_name] || [];
-		children[slot_name].push(child);
+		(children[slot_name] ||= []).push(child);
 	}
 
 	// Serialize each slot
 	/** @type {import('estree').Property[]} */
 	const serialized_slots = [];
 	for (const slot_name of Object.keys(children)) {
-		const body = create_block(
-			node,
-			node.fragment,
-			`${node.name}_${slot_name}`,
-			children[slot_name],
-			context
+		const block = /** @type {import('estree').BlockStatement} */ (
+			context.visit(
+				{
+					...node.fragment,
+					// @ts-expect-error
+					nodes: children[slot_name]
+				},
+				{
+					...context.state,
+					scope:
+						context.state.scopes.get(slot_name === 'default' ? children[slot_name][0] : node) ??
+						context.state.scope
+				}
+			)
 		);
-		if (body.length === 0) continue;
+
+		if (block.body.length === 0) continue;
 
 		const slot_fn = b.arrow(
 			[b.id('$$anchor'), b.id('$$slotProps')],
-			b.block([...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []), ...body])
+			b.block([
+				...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []),
+				...block.body
+			])
 		);
 
 		if (slot_name === 'default' && !has_children_prop) {
@@ -903,6 +914,27 @@ function serialize_inline_component(node, component_name, context) {
 				context,
 				prev(node_id)
 			);
+	}
+
+	if (node.type === 'SvelteComponent') {
+		const prev = fn;
+		fn = (node_id) => {
+			let component = b.call(
+				'$.component',
+				b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.expression))),
+				b.arrow(
+					[b.id(component_name)],
+					b.block([
+						b.stmt(
+							context.state.options.dev
+								? b.call('$.validate_dynamic_component', b.thunk(prev(node_id)))
+								: prev(node_id)
+						)
+					])
+				)
+			);
+			return component;
+		};
 	}
 
 	if (Object.keys(custom_css_props).length > 0) {
@@ -1014,189 +1046,6 @@ function serialize_locations(locations) {
 			return expression;
 		})
 	);
-}
-
-/**
- * Creates a new block which looks roughly like this:
- * ```js
- * // hoisted:
- * const block_name = $.template(`...`);
- *
- * // for the main block:
- * const id = block_name();
- * // init stuff and possibly render effect
- * $.append($$anchor, id);
- * ```
- * Adds the hoisted parts to `context.state.hoisted` and returns the statements of the main block.
- * @param {import('#compiler').SvelteNode} parent
- * @param {import('#compiler').Fragment} fragment
- * @param {string} name
- * @param {import('#compiler').SvelteNode[]} nodes
- * @param {import('../types.js').ComponentContext} context
- * @returns {import('estree').Statement[]}
- */
-function create_block(parent, fragment, name, nodes, context) {
-	const namespace = infer_namespace(context.state.metadata.namespace, parent, nodes);
-
-	const { hoisted, trimmed } = clean_nodes(
-		parent,
-		nodes,
-		context.path,
-		namespace,
-		context.state.preserve_whitespace,
-		context.state.options.preserveComments
-	);
-
-	if (hoisted.length === 0 && trimmed.length === 0) {
-		return [];
-	}
-
-	const is_single_element = trimmed.length === 1 && trimmed[0].type === 'RegularElement';
-	const is_single_child_not_needing_template =
-		trimmed.length === 1 &&
-		(trimmed[0].type === 'SvelteFragment' || trimmed[0].type === 'TitleElement');
-
-	const template_name = context.state.scope.root.unique(name);
-
-	/** @type {import('estree').Statement[]} */
-	const body = [];
-
-	/** @type {import('estree').Statement | undefined} */
-	let close = undefined;
-
-	/** @type {import('../types').ComponentClientTransformState} */
-	const state = {
-		...context.state,
-		scope: context.state.scopes.get(fragment) ?? context.state.scope,
-		before_init: [],
-		init: [],
-		update: [],
-		after_update: [],
-		template: [],
-		locations: [],
-		metadata: {
-			context: {
-				template_needs_import_node: false,
-				template_contains_script_tag: false
-			},
-			namespace,
-			bound_contenteditable: context.state.metadata.bound_contenteditable
-		}
-	};
-
-	for (const node of hoisted) {
-		context.visit(node, state);
-	}
-
-	/**
-	 * @param {import('estree').Identifier} template_name
-	 * @param {import('estree').Expression[]} args
-	 */
-	const add_template = (template_name, args) => {
-		let call = b.call(get_template_function(namespace, state), ...args);
-		if (context.state.options.dev) {
-			call = b.call(
-				'$.add_locations',
-				call,
-				b.member(b.id(context.state.analysis.name), b.id('filename')),
-				serialize_locations(state.locations)
-			);
-		}
-
-		context.state.hoisted.push(b.var(template_name, call));
-	};
-
-	if (is_single_element) {
-		const element = /** @type {import('#compiler').RegularElement} */ (trimmed[0]);
-
-		const id = b.id(context.state.scope.generate(element.name));
-
-		context.visit(element, {
-			...state,
-			node: id
-		});
-
-		/** @type {import('estree').Expression[]} */
-		const args = [b.template([b.quasi(state.template.join(''), true)], [])];
-
-		if (state.metadata.context.template_needs_import_node) {
-			args.push(b.literal(TEMPLATE_USE_IMPORT_NODE));
-		}
-
-		add_template(template_name, args);
-
-		body.push(b.var(id, b.call(template_name)), ...state.before_init, ...state.init);
-		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
-	} else if (is_single_child_not_needing_template) {
-		context.visit(trimmed[0], state);
-		body.push(...state.before_init, ...state.init);
-	} else if (trimmed.length > 0) {
-		const id = b.id(context.state.scope.generate('fragment'));
-
-		const use_space_template =
-			trimmed.some((node) => node.type === 'ExpressionTag') &&
-			trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag');
-
-		if (use_space_template) {
-			// special case — we can use `$.text` instead of creating a unique template
-			const id = b.id(context.state.scope.generate('text'));
-
-			process_children(trimmed, () => id, false, {
-				...context,
-				state
-			});
-
-			body.push(b.var(id, b.call('$.text', b.id('$$anchor'))), ...state.before_init, ...state.init);
-			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
-		} else {
-			/** @type {(is_text: boolean) => import('estree').Expression} */
-			const expression = (is_text) =>
-				is_text ? b.call('$.first_child', id, b.true) : b.call('$.first_child', id);
-
-			process_children(trimmed, expression, false, { ...context, state });
-
-			const use_comment_template = state.template.length === 1 && state.template[0] === '<!>';
-
-			if (use_comment_template) {
-				// special case — we can use `$.comment` instead of creating a unique template
-				body.push(b.var(id, b.call('$.comment')));
-			} else {
-				let flags = TEMPLATE_FRAGMENT;
-
-				if (state.metadata.context.template_needs_import_node) {
-					flags |= TEMPLATE_USE_IMPORT_NODE;
-				}
-
-				add_template(template_name, [
-					b.template([b.quasi(state.template.join(''), true)], []),
-					b.literal(flags)
-				]);
-
-				body.push(b.var(id, b.call(template_name)));
-			}
-
-			body.push(...state.before_init, ...state.init);
-
-			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
-		}
-	} else {
-		body.push(...state.before_init, ...state.init);
-	}
-
-	if (state.update.length > 0) {
-		body.push(serialize_render_stmt(state));
-	}
-
-	body.push(...state.after_update);
-
-	if (close !== undefined) {
-		// It's important that close is the last statement in the block, as any previous statements
-		// could contain element insertions into the template, which the close statement needs to
-		// know of when constructing the list of current inner elements.
-		body.push(close);
-	}
-
-	return body;
 }
 
 /**
@@ -1688,7 +1537,184 @@ function serialize_template_literal(values, visit, state) {
 /** @type {import('../types').ComponentVisitors} */
 export const template_visitors = {
 	Fragment(node, context) {
-		const body = create_block(context.path.at(-1) ?? node, node, 'root', node.nodes, context);
+		// Creates a new block which looks roughly like this:
+		// ```js
+		// // hoisted:
+		// const block_name = $.template(`...`);
+		//
+		// // for the main block:
+		// const id = block_name();
+		// // init stuff and possibly render effect
+		// $.append($$anchor, id);
+		// ```
+		// Adds the hoisted parts to `context.state.hoisted` and returns the statements of the main block.
+
+		const parent = context.path.at(-1) ?? node;
+
+		const namespace = infer_namespace(context.state.metadata.namespace, parent, node.nodes);
+
+		const { hoisted, trimmed } = clean_nodes(
+			parent,
+			node.nodes,
+			context.path,
+			namespace,
+			context.state,
+			context.state.preserve_whitespace,
+			context.state.options.preserveComments
+		);
+
+		if (hoisted.length === 0 && trimmed.length === 0) {
+			return b.block([]);
+		}
+
+		const is_single_element = trimmed.length === 1 && trimmed[0].type === 'RegularElement';
+		const is_single_child_not_needing_template =
+			trimmed.length === 1 &&
+			(trimmed[0].type === 'SvelteFragment' || trimmed[0].type === 'TitleElement');
+
+		const template_name = context.state.scope.root.unique('root'); // TODO infer name from parent
+
+		/** @type {import('estree').Statement[]} */
+		const body = [];
+
+		/** @type {import('estree').Statement | undefined} */
+		let close = undefined;
+
+		/** @type {import('../types').ComponentClientTransformState} */
+		const state = {
+			...context.state,
+			before_init: [],
+			init: [],
+			update: [],
+			after_update: [],
+			template: [],
+			locations: [],
+			metadata: {
+				context: {
+					template_needs_import_node: false,
+					template_contains_script_tag: false
+				},
+				namespace,
+				bound_contenteditable: context.state.metadata.bound_contenteditable
+			}
+		};
+
+		for (const node of hoisted) {
+			context.visit(node, state);
+		}
+
+		/**
+		 * @param {import('estree').Identifier} template_name
+		 * @param {import('estree').Expression[]} args
+		 */
+		const add_template = (template_name, args) => {
+			let call = b.call(get_template_function(namespace, state), ...args);
+			if (context.state.options.dev) {
+				call = b.call(
+					'$.add_locations',
+					call,
+					b.member(b.id(context.state.analysis.name), b.id('filename')),
+					serialize_locations(state.locations)
+				);
+			}
+
+			context.state.hoisted.push(b.var(template_name, call));
+		};
+
+		if (is_single_element) {
+			const element = /** @type {import('#compiler').RegularElement} */ (trimmed[0]);
+
+			const id = b.id(context.state.scope.generate(element.name));
+
+			context.visit(element, {
+				...state,
+				node: id
+			});
+
+			/** @type {import('estree').Expression[]} */
+			const args = [b.template([b.quasi(state.template.join(''), true)], [])];
+
+			if (state.metadata.context.template_needs_import_node) {
+				args.push(b.literal(TEMPLATE_USE_IMPORT_NODE));
+			}
+
+			add_template(template_name, args);
+
+			body.push(b.var(id, b.call(template_name)), ...state.before_init, ...state.init);
+			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
+		} else if (is_single_child_not_needing_template) {
+			context.visit(trimmed[0], state);
+			body.push(...state.before_init, ...state.init);
+		} else if (trimmed.length > 0) {
+			const id = b.id(context.state.scope.generate('fragment'));
+
+			const use_space_template =
+				trimmed.some((node) => node.type === 'ExpressionTag') &&
+				trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag');
+
+			if (use_space_template) {
+				// special case — we can use `$.text` instead of creating a unique template
+				const id = b.id(context.state.scope.generate('text'));
+
+				process_children(trimmed, () => id, false, {
+					...context,
+					state
+				});
+
+				body.push(
+					b.var(id, b.call('$.text', b.id('$$anchor'))),
+					...state.before_init,
+					...state.init
+				);
+				close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
+			} else {
+				/** @type {(is_text: boolean) => import('estree').Expression} */
+				const expression = (is_text) =>
+					is_text ? b.call('$.first_child', id, b.true) : b.call('$.first_child', id);
+
+				process_children(trimmed, expression, false, { ...context, state });
+
+				const use_comment_template = state.template.length === 1 && state.template[0] === '<!>';
+
+				if (use_comment_template) {
+					// special case — we can use `$.comment` instead of creating a unique template
+					body.push(b.var(id, b.call('$.comment')));
+				} else {
+					let flags = TEMPLATE_FRAGMENT;
+
+					if (state.metadata.context.template_needs_import_node) {
+						flags |= TEMPLATE_USE_IMPORT_NODE;
+					}
+
+					add_template(template_name, [
+						b.template([b.quasi(state.template.join(''), true)], []),
+						b.literal(flags)
+					]);
+
+					body.push(b.var(id, b.call(template_name)));
+				}
+
+				body.push(...state.before_init, ...state.init);
+
+				close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
+			}
+		} else {
+			body.push(...state.before_init, ...state.init);
+		}
+
+		if (state.update.length > 0) {
+			body.push(serialize_render_stmt(state));
+		}
+
+		body.push(...state.after_update);
+
+		if (close !== undefined) {
+			// It's important that close is the last statement in the block, as any previous statements
+			// could contain element insertions into the template, which the close statement needs to
+			// know of when constructing the list of current inner elements.
+			body.push(close);
+		}
+
 		return b.block(body);
 	},
 	Comment(node, context) {
@@ -2116,6 +2142,7 @@ export const template_visitors = {
 			node.fragment.nodes,
 			context.path,
 			child_metadata.namespace,
+			state,
 			node.name === 'script' || state.preserve_whitespace,
 			state.options.preserveComments
 		);
@@ -2229,16 +2256,15 @@ export const template_visitors = {
 		}
 		inner.push(...inner_context.state.after_update);
 		inner.push(
-			...create_block(node, node.fragment, 'dynamic_element', node.fragment.nodes, {
-				...context,
-				state: {
+			.../** @type {import('estree').BlockStatement} */ (
+				context.visit(node.fragment, {
 					...context.state,
 					metadata: {
 						...context.state.metadata,
 						namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
 					}
-				}
-			})
+				})
+			).body
 		);
 
 		const location = context.state.options.dev && locator(node.start);
@@ -2456,8 +2482,7 @@ export const template_visitors = {
 			}
 		}
 
-		// TODO should use context.visit?
-		const children = create_block(node, node.body, 'each_block', node.body.nodes, context);
+		const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.body));
 
 		const key_function = node.key
 			? b.arrow(
@@ -2490,7 +2515,7 @@ export const template_visitors = {
 			b.literal(each_type),
 			each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
 			key_function,
-			b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children)))
+			b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(block.body)))
 		];
 
 		if (node.fallback) {
@@ -2743,10 +2768,9 @@ export const template_visitors = {
 				'$.bind_property',
 				b.literal(node.name),
 				b.literal(property.event),
-				b.literal(property.type ?? 'get'),
 				state.node,
-				getter,
-				setter
+				setter,
+				property.bidirectional && getter
 			);
 		} else {
 			// special cases
@@ -2771,6 +2795,11 @@ export const template_visitors = {
 				case 'outerWidth':
 				case 'outerHeight':
 					call_expr = b.call('$.bind_window_size', b.literal(node.name), setter);
+					break;
+
+				// document
+				case 'activeElement':
+					call_expr = b.call('$.bind_active_element', setter);
 					break;
 
 				// media
@@ -2930,7 +2959,6 @@ export const template_visitors = {
 				b.stmt(
 					b.call(
 						'$.component',
-						context.state.node,
 						// TODO use untrack here to not update when binding changes?
 						// Would align with Svelte 4 behavior, but it's arguably nicer/expected to update this
 						b.thunk(
@@ -2954,19 +2982,8 @@ export const template_visitors = {
 		context.state.template.push('<!>');
 
 		let component = serialize_inline_component(node, '$$component', context);
-		if (context.state.options.dev) {
-			component = b.stmt(b.call('$.validate_dynamic_component', b.thunk(b.block([component]))));
-		}
-		context.state.init.push(
-			b.stmt(
-				b.call(
-					'$.component',
-					context.state.node,
-					b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.expression))),
-					b.arrow([b.id('$$component')], b.block([component]))
-				)
-			)
-		);
+
+		context.state.init.push(component);
 	},
 	Attribute(node, context) {
 		if (is_event_attribute(node)) {
@@ -3027,13 +3044,7 @@ export const template_visitors = {
 
 		context.state.init.push(...lets);
 		context.state.init.push(
-			...create_block(
-				node,
-				node.fragment,
-				'slot_template',
-				/** @type {import('#compiler').SvelteNode[]} */ (node.fragment.nodes),
-				context
-			)
+			.../** @type {import('estree').BlockStatement} */ (context.visit(node.fragment)).body
 		);
 	},
 	SlotElement(node, context) {
@@ -3083,12 +3094,13 @@ export const template_visitors = {
 			spreads.length === 0
 				? b.object(props)
 				: b.call('$.spread_props', b.object(props), ...spreads);
+
 		const fallback =
 			node.fragment.nodes.length === 0
 				? b.literal(null)
 				: b.arrow(
 						[b.id('$$anchor')],
-						b.block(create_block(node, node.fragment, 'fallback', node.fragment.nodes, context))
+						/** @type {import('estree').BlockStatement} */ (context.visit(node.fragment))
 					);
 
 		const expression = is_default
@@ -3106,7 +3118,7 @@ export const template_visitors = {
 					'$.head',
 					b.arrow(
 						[b.id('$$anchor')],
-						b.block(create_block(node, node.fragment, 'head', node.fragment.nodes, context))
+						/** @type {import('estree').BlockStatement} */ (context.visit(node.fragment))
 					)
 				)
 			)

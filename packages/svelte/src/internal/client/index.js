@@ -7,7 +7,7 @@ export {
 	mark_module_end,
 	add_owner_effect
 } from './dev/ownership.js';
-export { legacy_api } from './dev/legacy.js';
+export { check_target, legacy_api } from './dev/legacy.js';
 export { inspect } from './dev/inspect.js';
 export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
@@ -36,6 +36,7 @@ export { event, delegate, replay_events } from './dom/elements/events.js';
 export { autofocus, remove_textarea_child } from './dom/elements/misc.js';
 export { set_style } from './dom/elements/style.js';
 export { animation, transition } from './dom/elements/transitions.js';
+export { bind_active_element } from './dom/elements/bindings/document.js';
 export { bind_checked, bind_files, bind_group, bind_value } from './dom/elements/bindings/input.js';
 export {
 	bind_buffered,

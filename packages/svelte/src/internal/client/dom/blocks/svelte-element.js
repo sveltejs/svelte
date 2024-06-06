@@ -143,11 +143,13 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 				anchor.before(element);
 
-				if (prev_element) {
-					swap_block_dom(parent_effect, prev_element, element);
-					prev_element.remove();
-				} else if (!hydrating) {
-					push_template_node(element, parent_effect);
+				if (!hydrating) {
+					if (prev_element) {
+						swap_block_dom(parent_effect, prev_element, element);
+						prev_element.remove();
+					} else {
+						push_template_node(element, parent_effect);
+					}
 				}
 			});
 		}

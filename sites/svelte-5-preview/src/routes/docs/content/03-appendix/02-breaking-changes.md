@@ -70,7 +70,16 @@ import App from './App.svelte'
 export default app;
 ```
 
-If this component is not under your control, you can use the `legacy.componentApi` compiler option for auto-applied backwards compatibility (note that this adds a bit of overhead to each component). This will also add `$set` and `$on` methods for all component instances you get through `bind:this`.
+If this component is not under your control, you can use the `legacy.componentApi` compiler option for auto-applied backwards compatibility, which means code using `new Component(...)` keeps working without adjustments (note that this adds a bit of overhead to each component). This will also add `$set` and `$on` methods for all component instances you get through `bind:this`.
+
+```js
+/// svelte.config.js
+export default {
+	compilerOptions: {
+		legacy: { componentApi: true }
+	}
+};
+```
 
 ### Server API changes
 
@@ -182,25 +191,6 @@ In Svelte 4, doing the following triggered reactivity:
 ```
 
 This is because the Svelte compiler treated the assignment to `foo.value` as an instruction to update anything that referenced `foo`. In Svelte 5, reactivity is determined at runtime rather than compile time, so you should define `value` as a reactive `$state` field on the `Foo` class. Wrapping `new Foo()` with `$state(...)` will have no effect — only vanilla objects and arrays are made deeply reactive.
-
-### Events and bindings use delegated handlers
-
-Event handlers added to elements with things like `onclick={...}` or `bind:value={...}` use _delegated_ handlers where possible. This means that Svelte attaches a single event handler to a root node rather than using `addEventListener` on each individual node, resulting in better performance and memory usage.
-
-Additionally, updates that happen inside event handlers will not be reflected in the DOM (or in `$effect(...)`) until the browser has had a chance to repaint. This ensures that your app stays responsive, and your Core Web Vitals (CWV) aren't penalised.
-
-In very rare cases you may need to force updates to happen immediately. You can do this with `flushSync`:
-
-```diff
-<script>
-+	import { flushSync } from 'svelte';
-
-	function onclick() {
--		update_something();
-+		flushSync(() => update_something());
-	}
-</script>
-```
 
 ## Other breaking changes
 

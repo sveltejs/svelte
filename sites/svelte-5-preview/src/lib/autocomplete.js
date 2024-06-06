@@ -145,6 +145,7 @@ export function autocomplete(context, selected, files) {
 			'svelte',
 			'svelte/animate',
 			'svelte/easing',
+			'svelte/events',
 			'svelte/legacy',
 			'svelte/motion',
 			'svelte/reactivity',

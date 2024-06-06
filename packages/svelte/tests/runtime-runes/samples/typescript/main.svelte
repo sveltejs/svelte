@@ -1,9 +1,15 @@
 <script context="module" lang="ts">
-	interface Hello { message: 'hello' }
+	interface Hello {
+		message: 'hello';
+	}
 	type Goodbye = { message: 'goodbye' };
 
 	function this_fn(this: any) {
 		console.log(this);
+	}
+
+	class Foo {
+		constructor(public readonly name: string) {}
 	}
 
 	export type { Hello };
@@ -19,9 +25,9 @@
 	} satisfies Goodbye;
 </script>
 
-<button
-	on:click={(e: MouseEvent) => {
+<button on:click={(e: MouseEvent) => {
 		const next: number = count + 1;
 		count = next! as number;
 	}}
->clicks: {count}</button>
+	>clicks: {count}</button
+>

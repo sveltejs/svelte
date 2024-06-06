@@ -1,5 +1,73 @@
 # svelte
 
+## 5.0.0-next.151
+
+### Patch Changes
+
+- fix: relax `Component` type ([#11929](https://github.com/sveltejs/svelte/pull/11929))
+
+- fix: sort `{@const ...}` tags topologically in legacy mode ([#11908](https://github.com/sveltejs/svelte/pull/11908))
+
+- chore: deprecate html in favour of body for render() ([#11927](https://github.com/sveltejs/svelte/pull/11927))
+
+- fix: append start/end info to `AssignmentPattern` and `VariableDeclarator` ([#11930](https://github.com/sveltejs/svelte/pull/11930))
+
+- fix: relax slot prop validation on components ([#11923](https://github.com/sveltejs/svelte/pull/11923))
+
+## 5.0.0-next.150
+
+### Patch Changes
+
+- fix: populate `this.#sources` when constructing reactive map ([#11913](https://github.com/sveltejs/svelte/pull/11913))
+
+- fix: omit `state_referenced_locally` warning for component exports ([#11905](https://github.com/sveltejs/svelte/pull/11905))
+
+- fix: ensure event.target is correct for delegation ([#11900](https://github.com/sveltejs/svelte/pull/11900))
+
+- chore: speed up regex ([#11918](https://github.com/sveltejs/svelte/pull/11918))
+
+- feat: bind `activeElement` and `pointerLockElement` in `<svelte:document>` ([#11879](https://github.com/sveltejs/svelte/pull/11879))
+
+- fix: correctly backport `svelte:element` to old AST ([#11917](https://github.com/sveltejs/svelte/pull/11917))
+
+- fix: add `unused-export-let` to legacy lint replacements ([#11896](https://github.com/sveltejs/svelte/pull/11896))
+
+## 5.0.0-next.149
+
+### Patch Changes
+
+- fix: keep default values of props a proxy after reassignment ([#11860](https://github.com/sveltejs/svelte/pull/11860))
+
+- fix: address map reactivity regression ([#11882](https://github.com/sveltejs/svelte/pull/11882))
+
+- fix: assign message to error object in `handle_error` using `Object.defineProperty` ([#11675](https://github.com/sveltejs/svelte/pull/11675))
+
+- fix: ensure frozen objects in state are correctly skipped ([#11889](https://github.com/sveltejs/svelte/pull/11889))
+
+## 5.0.0-next.148
+
+### Patch Changes
+
+- chore: improve $state.frozen performance in prod ([#11852](https://github.com/sveltejs/svelte/pull/11852))
+
+- breaking: removed deferred event updates ([#11855](https://github.com/sveltejs/svelte/pull/11855))
+
+## 5.0.0-next.147
+
+### Patch Changes
+
+- fix: improve reactive Map and Set implementations ([#11827](https://github.com/sveltejs/svelte/pull/11827))
+
+- fix: improve controlled each block cleanup performance ([#11839](https://github.com/sveltejs/svelte/pull/11839))
+
+## 5.0.0-next.146
+
+### Patch Changes
+
+- fix: allow for more svelte-ignore to work ([#11833](https://github.com/sveltejs/svelte/pull/11833))
+
+- fix: reevaluate namespace in slots ([#11849](https://github.com/sveltejs/svelte/pull/11849))
+
 ## 5.0.0-next.145
 
 ### Patch Changes

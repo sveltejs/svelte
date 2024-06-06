@@ -36,7 +36,30 @@ test('map.values()', () => {
 		map.clear();
 	});
 
-	assert.deepEqual(log, [5, true, [1, 2, 3, 4, 5], 4, false, [1, 2, 4, 5], 0, false, []]);
+	flushSync(() => {
+		map.set(3, 3);
+	});
+
+	flushSync(() => {
+		map.set(3, 4);
+	});
+
+	assert.deepEqual(log, [
+		5,
+		true,
+		[1, 2, 3, 4, 5],
+		4,
+		false,
+		[1, 2, 4, 5],
+		0,
+		false,
+		[],
+		1,
+		true,
+		[3],
+		true,
+		[4]
+	]);
 
 	cleanup();
 });
@@ -182,4 +205,36 @@ test('map handling of undefined values', () => {
 	assert.deepEqual(log, [undefined, undefined, 1]);
 
 	cleanup();
+});
+
+test('not invoking reactivity when value is not in the map after changes', () => {
+	const map = new ReactiveMap([[1, 1]]);
+
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(map.get(1));
+		});
+
+		render_effect(() => {
+			log.push(map.get(2));
+		});
+
+		flushSync(() => {
+			map.delete(1);
+		});
+
+		flushSync(() => {
+			map.set(1, 1);
+		});
+	});
+
+	assert.deepEqual(log, [1, undefined, undefined, undefined, 1, undefined]);
+
+	cleanup();
+});
+
+test('Map.instanceOf', () => {
+	assert.equal(new ReactiveMap() instanceof Map, true);
 });

@@ -74,6 +74,9 @@ const visitors = {
 	TSEnumDeclaration() {
 		return b.empty;
 	},
+	TSParameterProperty(node) {
+		return node.parameter;
+	},
 	Identifier(node) {
 		if (node.typeAnnotation) {
 			return {

@@ -19,7 +19,7 @@ Reactive state is declared with the `$state` rune:
 	let count = $state(0);
 </script>
 
-<button on:click={() => count++}>
+<button onclick={() => count++}>
 	clicks: {count}
 </button>
 ```
@@ -140,7 +140,7 @@ Derived state is declared with the `$derived` rune:
 +	let doubled = $derived(count * 2);
 </script>
 
-<button on:click={() => count++}>
+<button onclick={() => count++}>
 	{doubled}
 </button>
 
@@ -187,7 +187,7 @@ Sometimes you need to create complex derivations that don't fit inside a short e
 	});
 </script>
 
-<button on:click={() => numbers.push(numbers.length + 1)}>
+<button onclick={() => numbers.push(numbers.length + 1)}>
 	{numbers.join(' + ')} = {total}
 </button>
 ```
@@ -279,7 +279,7 @@ An effect only reruns when the object it reads changes, not when a property insi
 	});
 </script>
 
-<button on:click={() => object.count++}>
+<button onclick={() => object.count++}>
 	{derived_object.doubled}
 </button>
 
