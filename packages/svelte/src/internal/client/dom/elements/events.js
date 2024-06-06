@@ -71,16 +71,16 @@ export function create_event(event_name, dom, handler, options) {
  * will be processed through Svelte's internal event delegation system and is the preferred way to imperatively
  * attach event handlers instead of using `addEventListener`.
  *
- * @param {Element} dom
- * @param {string} event_name
+ * @param {Element} element
+ * @param {string} type
  * @param {EventListener} handler
  * @param {AddEventListenerOptions} [options]
  */
-export function on(dom, event_name, handler, options = {}) {
-	var target_handler = create_event(event_name, dom, handler, options);
+export function on(element, type, handler, options = {}) {
+	var target_handler = create_event(type, element, handler, options);
 
 	return () => {
-		dom.removeEventListener(event_name, target_handler, options);
+		element.removeEventListener(type, target_handler, options);
 	};
 }
 
