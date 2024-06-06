@@ -35,12 +35,10 @@ function sort_const_tags(nodes, state) {
 	/**
 	 * @typedef {{
 	 *   node: import('#compiler').ConstTag;
-	 *   ids: import('#compiler').Binding[];
 	 *   deps: Set<import('#compiler').Binding>;
 	 * }} Tag
 	 */
 
-	const const_tags = [];
 	const other = [];
 
 	/** @type {Map<import('#compiler').Binding, Tag>} */
@@ -52,19 +50,12 @@ function sort_const_tags(nodes, state) {
 		if (node.type === 'ConstTag') {
 			const declaration = node.declaration.declarations[0];
 
-			/** @type {Tag} */
-			const tag = {
-				node,
-				ids: extract_identifiers(declaration.id).map((id) => {
-					return /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
-				}),
-				/** @type {Set<import('#compiler').Binding>} */
-				deps: new Set()
-			};
+			const bindings = extract_identifiers(declaration.id).map((id) => {
+				return /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
+			});
 
-			for (const id of tag.ids) {
-				tags.set(id, tag);
-			}
+			/** @type {Set<import('#compiler').Binding>} */
+			const deps = new Set();
 
 			walk(declaration.init, state, {
 				_,
@@ -73,30 +64,30 @@ function sort_const_tags(nodes, state) {
 
 					if (is_reference(node, parent)) {
 						const binding = context.state.scope.get(node.name);
-						if (binding) tag.deps.add(binding);
+						if (binding) deps.add(binding);
 					}
 				}
 			});
 
-			const_tags.push(tag);
+			for (const binding of bindings) {
+				tags.set(binding, { node, deps });
+			}
 		} else {
 			other.push(node);
 		}
 	}
 
-	if (const_tags.length === 0) {
+	if (tags.size === 0) {
 		return nodes;
 	}
 
 	/** @type {Array<[import('#compiler').Binding, import('#compiler').Binding]>} */
 	const edges = [];
 
-	for (const tag of const_tags) {
-		for (const id of tag.ids) {
-			for (const dep of tag.deps) {
-				if (tags.has(dep)) {
-					edges.push([id, dep]);
-				}
+	for (const [id, tag] of tags) {
+		for (const dep of tag.deps) {
+			if (tags.has(dep)) {
+				edges.push([id, dep]);
 			}
 		}
 	}
@@ -124,7 +115,7 @@ function sort_const_tags(nodes, state) {
 		sorted.push(tag.node);
 	}
 
-	for (const tag of const_tags) {
+	for (const tag of tags.values()) {
 		add(tag);
 	}
 

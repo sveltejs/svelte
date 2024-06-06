@@ -1382,7 +1382,10 @@ const template_visitors = {
 			node.fragment.nodes,
 			inner_context.path,
 			metadata.namespace,
-			context.state,
+			{
+				...context.state,
+				scope: /** @type {import('../../scope').Scope} */ (context.state.scopes.get(node.fragment))
+			},
 			state.preserve_whitespace,
 			state.options.preserveComments
 		);
