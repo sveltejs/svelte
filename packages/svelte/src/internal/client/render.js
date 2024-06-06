@@ -41,8 +41,12 @@ export function set_should_intro(value) {
  * @returns {void}
  */
 export function set_text(dom, value) {
+	// __nodeValue is ' ' by default...this means that if we are trying to set the value of a node
+	// that has never been updated but is already ' ' that node will never be set and it will remain
+	// an empty text node.
+
 	// @ts-expect-error need to add __value to patched prototype
-	const prev_node_value = dom.__nodeValue;
+	const prev_node_value = dom.nodeValue === dom.__nodeValue ? dom.__nodeValue : dom.nodeValue;
 	const next_node_value = stringify(value);
 	if (hydrating && dom.nodeValue === next_node_value) {
 		// In case of hydration don't reset the nodeValue as it's already correct.
