@@ -839,8 +839,7 @@ function serialize_inline_component(node, component_name, context) {
 			}
 		}
 
-		children[slot_name] = children[slot_name] || [];
-		children[slot_name].push(child);
+		(children[slot_name] ||= []).push(child);
 	}
 
 	// Serialize each slot

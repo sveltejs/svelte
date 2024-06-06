@@ -40,7 +40,6 @@ function sort_const_tags(nodes, state) {
 	 * }} Tag
 	 */
 
-	const const_tags = [];
 	const other = [];
 
 	/** @type {Map<import('#compiler').Binding, Tag>} */
@@ -77,26 +76,22 @@ function sort_const_tags(nodes, state) {
 					}
 				}
 			});
-
-			const_tags.push(tag);
 		} else {
 			other.push(node);
 		}
 	}
 
-	if (const_tags.length === 0) {
+	if (tags.size === 0) {
 		return nodes;
 	}
 
 	/** @type {Array<[import('#compiler').Binding, import('#compiler').Binding]>} */
 	const edges = [];
 
-	for (const tag of const_tags) {
-		for (const id of tag.ids) {
-			for (const dep of tag.deps) {
-				if (tags.has(dep)) {
-					edges.push([id, dep]);
-				}
+	for (const [id, tag] of tags) {
+		for (const dep of tag.deps) {
+			if (tags.has(dep)) {
+				edges.push([id, dep]);
 			}
 		}
 	}
@@ -124,7 +119,7 @@ function sort_const_tags(nodes, state) {
 		sorted.push(tag.node);
 	}
 
-	for (const tag of const_tags) {
+	for (const tag of tags.values()) {
 		add(tag);
 	}
 
