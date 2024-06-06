@@ -40,7 +40,7 @@ export interface Effect extends Reaction {
 	/** The associated component context */
 	ctx: null | ComponentContext;
 	/** The effect function */
-	fn: null | (() => void) | (() => void);
+	fn: null | (() => void | (() => void));
 	/** The teardown function returned from the effect function */
 	teardown: null | (() => void);
 	/** Transition managers created with `$.transition` */
