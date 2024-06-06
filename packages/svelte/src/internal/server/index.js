@@ -400,7 +400,7 @@ export function value_or_fallback(value, fallback) {
  * @returns {Promise<V>}
  */
 export function value_or_fallback_async(value, fallback) {
-	return value === undefined ? fallback() : Promise.resolve(value);
+	return value === undefined ? fallback() : value;
 }
 
 /**
