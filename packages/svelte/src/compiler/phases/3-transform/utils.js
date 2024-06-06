@@ -35,7 +35,6 @@ function sort_const_tags(nodes, state) {
 	/**
 	 * @typedef {{
 	 *   node: import('#compiler').ConstTag;
-	 *   ids: import('#compiler').Binding[];
 	 *   deps: Set<import('#compiler').Binding>;
 	 * }} Tag
 	 */
@@ -51,19 +50,12 @@ function sort_const_tags(nodes, state) {
 		if (node.type === 'ConstTag') {
 			const declaration = node.declaration.declarations[0];
 
-			/** @type {Tag} */
-			const tag = {
-				node,
-				ids: extract_identifiers(declaration.id).map((id) => {
-					return /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
-				}),
-				/** @type {Set<import('#compiler').Binding>} */
-				deps: new Set()
-			};
+			const bindings = extract_identifiers(declaration.id).map((id) => {
+				return /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
+			});
 
-			for (const id of tag.ids) {
-				tags.set(id, tag);
-			}
+			/** @type {Set<import('#compiler').Binding>} */
+			const deps = new Set();
 
 			walk(declaration.init, state, {
 				_,
@@ -72,10 +64,14 @@ function sort_const_tags(nodes, state) {
 
 					if (is_reference(node, parent)) {
 						const binding = context.state.scope.get(node.name);
-						if (binding) tag.deps.add(binding);
+						if (binding) deps.add(binding);
 					}
 				}
 			});
+
+			for (const binding of bindings) {
+				tags.set(binding, { node, deps });
+			}
 		} else {
 			other.push(node);
 		}
