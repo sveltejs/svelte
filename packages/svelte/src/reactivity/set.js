@@ -28,8 +28,10 @@ export class ReactiveSet extends Set {
 		if (DEV) new Set(value);
 
 		if (value) {
+			var sources = this.#sources;
 			for (var element of value) {
 				super.add(element);
+				sources.set(element, source(true));
 			}
 			this.#size.v = super.size;
 		}
