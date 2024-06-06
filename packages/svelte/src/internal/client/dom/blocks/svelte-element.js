@@ -128,7 +128,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					// inner open and close methods can pick up the existing nodes correctly
 					var child_anchor = hydrating ? element.lastChild : element.appendChild(empty());
 
-					if (hydrating && element.lastChild) {
+					if (hydrating && child_anchor) {
 						set_hydrate_nodes(
 							/** @type {import('#client').TemplateNode[]} */ ([...element.childNodes]).slice(0, -1)
 						);
