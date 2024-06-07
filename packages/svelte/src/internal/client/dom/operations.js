@@ -34,6 +34,9 @@ export function init_operations() {
 	// @ts-expect-error
 	element_prototype.__e = undefined;
 
+	// @ts-expect-error
+	Text.prototype.__t = undefined;
+
 	if (DEV) {
 		// @ts-expect-error
 		element_prototype.__svelte_meta = null;

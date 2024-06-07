@@ -41,8 +41,12 @@ export function set_should_intro(value) {
  * @returns {void}
  */
 export function set_text(text, value) {
-	if (text.nodeValue != value) {
-		text.nodeValue = value;
+	// @ts-expect-error
+	const prev = (text.__t ??= text.nodeValue);
+
+	if (prev !== value) {
+		// @ts-expect-error
+		text.nodeValue = text.__t = value;
 	}
 }
 
