@@ -3,11 +3,11 @@ import { render_effect } from '../../reactivity/effects.js';
 
 /**
  * @param {HTMLDivElement | SVGGElement} element
- * @param {() => Record<string, string>} props
+ * @param {() => Record<string, string>} get_styles
  * @param {(anchor: Element | Text | Comment) => any} component
  * @returns {void}
  */
-export function css_props(element, props, component) {
+export function css_props(element, get_styles, component) {
 	if (hydrating) {
 		set_hydrate_nodes(
 			/** @type {import('#client').TemplateNode[]} */ ([...element.childNodes]).slice(0, -1)
@@ -17,23 +17,23 @@ export function css_props(element, props, component) {
 	component(/** @type {Comment} */ (element.lastChild));
 
 	/** @type {Record<string, string>} */
-	let current_props = {};
+	let styles = {};
 
 	render_effect(() => {
 		render_effect(() => {
-			const next_props = props();
+			const next = get_styles();
 
-			for (const key in current_props) {
-				if (!(key in next_props)) {
+			for (const key in styles) {
+				if (!(key in next)) {
 					element.style.removeProperty(key);
 				}
 			}
 
-			for (const key in next_props) {
-				element.style.setProperty(key, next_props[key]);
+			for (const key in next) {
+				element.style.setProperty(key, next[key]);
 			}
 
-			current_props = next_props;
+			styles = next;
 		});
 
 		return () => {
