@@ -28,6 +28,8 @@
 	}}>clear</button
 >
 
+<p>{state.size}</p>
+
 {#each state as item}
 	<div>{item}</div>
 {/each}

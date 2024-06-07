@@ -2,7 +2,7 @@ import { flushSync } from '../../../../src/index-client';
 import { test } from '../../test';
 
 export default test({
-	html: `<button>delete initial</button><button>add</button><button>delete</button><button>clear</button><div>0</div>`,
+	html: `<button>delete initial</button><button>add</button><button>delete</button><button>clear</button><p>1</p><div>0</div>`,
 
 	test({ assert, target }) {
 		const [btn, btn2, btn3, btn4] = target.querySelectorAll('button');
@@ -13,7 +13,7 @@ export default test({
 
 		assert.htmlEqual(
 			target.innerHTML,
-			`<button>delete initial</button><button>add</button><button>delete</button><button>clear</button>`
+			`<button>delete initial</button><button>add</button><button>delete</button><button>clear</button><p>0</p>`
 		);
 
 		flushSync(() => {
@@ -22,7 +22,7 @@ export default test({
 
 		assert.htmlEqual(
 			target.innerHTML,
-			`<button>delete initial</button><button>add</button><button>delete</button><button>clear</button><div>1</div>`
+			`<button>delete initial</button><button>add</button><button>delete</button><button>clear</button><p>1</p><div>1</div>`
 		);
 
 		flushSync(() => {
@@ -35,7 +35,7 @@ export default test({
 
 		assert.htmlEqual(
 			target.innerHTML,
-			`<button>delete initial</button><button>add</button><button>delete</button><button>clear</button><div>1</div><div>2</div><div>3</div>`
+			`<button>delete initial</button><button>add</button><button>delete</button><button>clear</button><p>3</p><div>1</div><div>2</div><div>3</div>`
 		);
 
 		flushSync(() => {
@@ -44,7 +44,7 @@ export default test({
 
 		assert.htmlEqual(
 			target.innerHTML,
-			`<button>delete initial</button><button>add</button><button>delete</button><button>clear</button><div>1</div><div>2</div>`
+			`<button>delete initial</button><button>add</button><button>delete</button><button>clear</button><p>2</p><div>1</div><div>2</div>`
 		);
 
 		flushSync(() => {
@@ -53,7 +53,7 @@ export default test({
 
 		assert.htmlEqual(
 			target.innerHTML,
-			`<button>delete initial</button><button>add</button><button>delete</button><button>clear</button>`
+			`<button>delete initial</button><button>add</button><button>delete</button><button>clear</button><p>0</p>`
 		);
 	}
 });
