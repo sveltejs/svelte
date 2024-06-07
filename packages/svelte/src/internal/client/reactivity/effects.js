@@ -96,7 +96,25 @@ function create_effect(type, fn, sync) {
 		effect.component_function = dev_current_component_function;
 	}
 
-	if (current_reaction !== null && !is_root) {
+	if (sync) {
+		var previously_flushing_effect = is_flushing_effect;
+
+		try {
+			set_is_flushing_effect(true);
+			execute_effect(effect);
+			effect.f |= EFFECT_RAN;
+		} finally {
+			set_is_flushing_effect(previously_flushing_effect);
+		}
+	} else if (fn !== null) {
+		schedule_effect(effect);
+	}
+
+	// if an effect has no dependencies, no DOM and no teardown function,
+	// don't bother adding it to the effect tree
+	const inert = sync && effect.deps === null && effect.first === null && effect.dom === null;
+
+	if (!inert && current_reaction !== null && !is_root) {
 		var flags = current_reaction.f;
 		if ((flags & DERIVED) !== 0) {
 			if ((flags & UNOWNED) !== 0) {
@@ -110,20 +128,6 @@ function create_effect(type, fn, sync) {
 		}
 
 		push_effect(effect, current_reaction);
-	}
-
-	if (sync) {
-		var previously_flushing_effect = is_flushing_effect;
-
-		try {
-			set_is_flushing_effect(true);
-			execute_effect(effect);
-			effect.f |= EFFECT_RAN;
-		} finally {
-			set_is_flushing_effect(previously_flushing_effect);
-		}
-	} else if (fn !== null) {
-		schedule_effect(effect);
 	}
 
 	return effect;
