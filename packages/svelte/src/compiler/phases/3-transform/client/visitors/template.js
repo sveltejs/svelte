@@ -937,6 +937,9 @@ function serialize_inline_component(node, component_name, context) {
 		};
 	}
 
+	// TODO for CSS prop wrappers, push `<div><!></div>` instead
+	context.state.template.push('<!>');
+
 	if (Object.keys(custom_css_props).length > 0) {
 		const prev = fn;
 		fn = (node_id) =>
@@ -2947,8 +2950,6 @@ export const template_visitors = {
 		}
 	},
 	Component(node, context) {
-		context.state.template.push('<!>');
-
 		const binding = context.state.scope.get(
 			node.name.includes('.') ? node.name.slice(0, node.name.indexOf('.')) : node.name
 		);
@@ -2974,13 +2975,10 @@ export const template_visitors = {
 		context.state.init.push(component);
 	},
 	SvelteSelf(node, context) {
-		context.state.template.push('<!>');
 		const component = serialize_inline_component(node, context.state.analysis.name, context);
 		context.state.init.push(component);
 	},
 	SvelteComponent(node, context) {
-		context.state.template.push('<!>');
-
 		let component = serialize_inline_component(node, '$$component', context);
 
 		context.state.init.push(component);
