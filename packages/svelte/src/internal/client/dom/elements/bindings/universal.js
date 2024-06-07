@@ -1,4 +1,4 @@
-import { render_effect } from '../../../reactivity/effects.js';
+import { render_effect, teardown } from '../../../reactivity/effects.js';
 import { listen } from './shared.js';
 
 /**
@@ -57,10 +57,8 @@ export function bind_property(property, event_name, element, set, get) {
 
 	// @ts-ignore
 	if (element === document.body || element === window || element === document) {
-		render_effect(() => {
-			return () => {
-				element.removeEventListener(event_name, handler);
-			};
+		teardown(() => {
+			element.removeEventListener(event_name, handler);
 		});
 	}
 }

@@ -18,7 +18,7 @@ export interface Value<V = unknown> extends Signal {
 
 export interface Reaction extends Signal {
 	/** The reaction function */
-	fn: Function;
+	fn: null | Function;
 	/** Signals that this signal reads from */
 	deps: null | Value[];
 	/** First child effect created inside this signal */
@@ -40,7 +40,7 @@ export interface Effect extends Reaction {
 	/** The associated component context */
 	ctx: null | ComponentContext;
 	/** The effect function */
-	fn: () => void | (() => void);
+	fn: null | (() => void | (() => void));
 	/** The teardown function returned from the effect function */
 	teardown: null | (() => void);
 	/** Transition managers created with `$.transition` */

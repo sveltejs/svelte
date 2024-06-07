@@ -1,4 +1,4 @@
-import { render_effect } from '../../reactivity/effects.js';
+import { render_effect, teardown } from '../../reactivity/effects.js';
 import { all_registered_events, root_event_handles } from '../../render.js';
 import { define_property, is_array } from '../../utils.js';
 import { hydrating } from '../hydration.js';
@@ -98,10 +98,8 @@ export function event(event_name, dom, handler, capture, passive) {
 
 	// @ts-ignore
 	if (dom === document.body || dom === window || dom === document) {
-		render_effect(() => {
-			return () => {
-				dom.removeEventListener(event_name, target_handler, options);
-			};
+		teardown(() => {
+			dom.removeEventListener(event_name, target_handler, options);
 		});
 	}
 }

@@ -30,7 +30,8 @@ import {
 	ROOT_EFFECT,
 	EFFECT_TRANSPARENT,
 	DERIVED,
-	UNOWNED
+	UNOWNED,
+	CLEAN
 } from '../constants.js';
 import { set } from './sources.js';
 import { remove } from '../dom/reconciler.js';
@@ -68,7 +69,7 @@ export function push_effect(effect, parent_effect) {
 
 /**
  * @param {number} type
- * @param {(() => void | (() => void))} fn
+ * @param {null | (() => void | (() => void))} fn
  * @param {boolean} sync
  * @returns {import('#client').Effect}
  */
@@ -121,7 +122,7 @@ function create_effect(type, fn, sync) {
 		} finally {
 			set_is_flushing_effect(previously_flushing_effect);
 		}
-	} else {
+	} else if (fn !== null) {
 		schedule_effect(effect);
 	}
 
@@ -142,6 +143,16 @@ export function effect_active() {
 	}
 
 	return false;
+}
+
+/**
+ * @param {() => void} fn
+ */
+export function teardown(fn) {
+	const effect = create_effect(RENDER_EFFECT, null, false);
+	set_signal_status(effect, CLEAN);
+	effect.teardown = fn;
+	return effect;
 }
 
 /**
@@ -364,7 +375,6 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.dom =
 		effect.deps =
 		effect.parent =
-		// @ts-expect-error
 		effect.fn =
 			null;
 }
