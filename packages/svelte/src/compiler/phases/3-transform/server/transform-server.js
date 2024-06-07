@@ -2068,7 +2068,7 @@ function serialize_element_attributes(node, context) {
 			);
 
 			context.state.template.push(
-				t_expression(b.call('$.attr', b.literal(name), value, b.literal(is_boolean)))
+				t_expression(b.call('$.attr', b.literal(name), value, is_boolean && b.literal(is_boolean)))
 			);
 		}
 	}

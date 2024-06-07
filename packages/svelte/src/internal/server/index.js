@@ -143,10 +143,10 @@ export function head(payload, fn) {
  * @template V
  * @param {string} name
  * @param {V} value
- * @param {boolean} boolean
+ * @param {boolean} [boolean]
  * @returns {string}
  */
-export function attr(name, value, boolean) {
+export function attr(name, value, boolean = false) {
 	if (value == null || (!value && boolean) || (value === '' && name === 'class')) return '';
 	const assignment = boolean ? '' : `="${escape_html(value, true)}"`;
 	return ` ${name}${assignment}`;
