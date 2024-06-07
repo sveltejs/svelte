@@ -153,6 +153,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					}
 				}
 
+				// See below
 				return noop;
 			});
 		}
@@ -163,6 +164,8 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 		set_current_each_item(previous_each_item);
 
+		// Inert effects are proactively detached from the effect tree. Returning a noop
+		// teardown function is an easy way to ensure that this is not discarded
 		return noop;
 	});
 }

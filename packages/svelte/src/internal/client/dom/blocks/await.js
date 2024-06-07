@@ -114,6 +114,8 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 			}
 		}
 
+		// Inert effects are proactively detached from the effect tree. Returning a noop
+		// teardown function is an easy way to ensure that this is not discarded
 		return noop;
 	});
 }
