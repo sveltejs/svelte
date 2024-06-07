@@ -537,11 +537,7 @@ export function execute_effect(effect) {
 		var teardown = execute_reaction_fn(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 
-		if (
-			(effect.deps === null || effect.deps.length === 0) &&
-			effect.first === null &&
-			effect.dom === null
-		) {
+		if (effect.deps === null && effect.first === null && effect.dom === null) {
 			if (effect.teardown === null) {
 				// remove this effect from the graph
 				var parent = effect.parent;
