@@ -1521,7 +1521,7 @@ function serialize_template_literal(values, visit, state) {
 				);
 				expressions.push(b.call('$.get', id));
 			} else {
-				expressions.push(b.call('$.normalize', visit(node.expression, state)));
+				expressions.push(b.logical('??', visit(node.expression, state), b.literal('')));
 			}
 			quasis.push(b.quasi('', i + 1 === values.length));
 		}

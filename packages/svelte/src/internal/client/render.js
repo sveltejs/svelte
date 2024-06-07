@@ -67,15 +67,6 @@ export function slot(anchor, slot_fn, slot_props, fallback_fn) {
 }
 
 /**
- * Replaces `null` or `undefined` with an empty string, but otherwise does
- * no coercion since it will happen automatically in all the places it's used
- * @param {unknown} value
- */
-export function normalize(value) {
-	return value ?? '';
-}
-
-/**
  * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
  *
  * @template {Record<string, any>} Props
