@@ -13,7 +13,7 @@ In a text expression, characters like `<` and `>` are escaped; however, with HTM
 
 The expression should be valid standalone HTML — `{@html "<div>"}content{@html "</div>"}` will _not_ work, because `</div>` is not valid HTML. It also will _not_ compile Svelte code.
 
-> Svelte does not sanitize expressions before injecting HTML. If the data comes from an untrusted source, you must sanitize it, or you are exposing your users to an XSS vulnerability.
+> Svelte does not sanitize expressions before injecting HTML. If the data comes from an untrusted source, you must sanitize it, or you are exposing your users to an [XSS vulnerability](https://owasp.org/www-community/attacks/xss/)
 
 ```svelte
 <div class="blog-post">
