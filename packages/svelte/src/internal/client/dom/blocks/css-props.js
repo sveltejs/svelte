@@ -4,17 +4,14 @@ import { render_effect } from '../../reactivity/effects.js';
 /**
  * @param {HTMLDivElement | SVGGElement} element
  * @param {() => Record<string, string>} get_styles
- * @param {(anchor: Element | Text | Comment) => any} component
  * @returns {void}
  */
-export function css_props(element, get_styles, component) {
+export function css_props(element, get_styles) {
 	if (hydrating) {
 		set_hydrate_nodes(
 			/** @type {import('#client').TemplateNode[]} */ ([...element.childNodes]).slice(0, -1)
 		);
 	}
-
-	component(/** @type {Comment} */ (element.lastChild));
 
 	render_effect(() => {
 		render_effect(() => {

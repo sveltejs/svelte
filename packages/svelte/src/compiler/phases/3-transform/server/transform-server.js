@@ -907,7 +907,6 @@ function serialize_element_spread_attributes(
  * @param {import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf} node
  * @param {string | import('estree').Expression} component_name
  * @param {import('./types').ComponentContext} context
- * @returns {import('estree').Statement}
  */
 function serialize_inline_component(node, component_name, context) {
 	/** @type {Array<import('estree').Property[] | import('estree').Expression>} */

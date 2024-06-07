@@ -896,7 +896,7 @@ function serialize_inline_component(node, component_name, context) {
 					'$.spread_props',
 					...props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p))
 				);
-	/** @param {import('estree').Identifier} node_id */
+	/** @param {import('estree').Expression} node_id */
 	let fn = (node_id) =>
 		b.call(
 			context.state.options.dev
@@ -937,6 +937,8 @@ function serialize_inline_component(node, component_name, context) {
 		};
 	}
 
+	const statements = [...snippet_declarations, ...binding_initializers];
+
 	if (Object.keys(custom_css_props).length > 0) {
 		context.state.template.push(
 			context.state.metadata.namespace === 'svg'
@@ -944,26 +946,14 @@ function serialize_inline_component(node, component_name, context) {
 				: '<div style="display: contents"><!></div>'
 		);
 
-		return b.stmt(
-			b.call(
-				'$.css_props',
-				context.state.node,
-				b.thunk(b.object(custom_css_props)),
-				b.arrow(
-					[b.id('$$node')],
-					b.block([...snippet_declarations, ...binding_initializers, b.stmt(fn(b.id('$$node')))])
-				)
-			)
+		statements.push(
+			b.stmt(b.call('$.css_props', context.state.node, b.thunk(b.object(custom_css_props)))),
+			b.stmt(fn(b.member(context.state.node, b.id('lastChild'))))
 		);
+	} else {
+		context.state.template.push('<!>');
+		statements.push(b.stmt(fn(context.state.node)));
 	}
-
-	context.state.template.push('<!>');
-
-	const statements = [
-		...snippet_declarations,
-		...binding_initializers,
-		b.stmt(fn(context.state.node))
-	];
 
 	return statements.length > 1 ? b.block(statements) : statements[0];
 }
