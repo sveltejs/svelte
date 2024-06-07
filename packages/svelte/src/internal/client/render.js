@@ -72,11 +72,12 @@ export function slot(anchor, slot_fn, slot_props, fallback_fn) {
 }
 
 /**
+ * Replaces `null` or `undefined` with an empty string, but otherwise does
+ * no coercion since it will happen automatically in all the places it's used
  * @param {unknown} value
- * @returns {string}
  */
-export function stringify(value) {
-	return typeof value === 'string' ? value : value == null ? '' : value + '';
+export function normalize(value) {
+	return value ?? '';
 }
 
 /**

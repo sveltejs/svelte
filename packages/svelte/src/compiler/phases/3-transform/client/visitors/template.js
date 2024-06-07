@@ -1337,10 +1337,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 						b.assignment(
 							'=',
 							b.member(text_id, b.id('nodeValue')),
-							b.call(
-								'$.stringify',
-								/** @type {import('estree').Expression} */ (visit(node.expression))
-							)
+							/** @type {import('estree').Expression} */ (visit(node.expression))
 						)
 					)
 				);
@@ -1524,7 +1521,7 @@ function serialize_template_literal(values, visit, state) {
 				);
 				expressions.push(b.call('$.get', id));
 			} else {
-				expressions.push(b.call('$.stringify', visit(node.expression, state)));
+				expressions.push(b.call('$.normalize', visit(node.expression, state)));
 			}
 			quasis.push(b.quasi('', i + 1 === values.length));
 		}
