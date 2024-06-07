@@ -112,7 +112,12 @@ function create_effect(type, fn, sync) {
 
 	// if an effect has no dependencies, no DOM and no teardown function,
 	// don't bother adding it to the effect tree
-	const inert = sync && effect.deps === null && effect.first === null && effect.dom === null;
+	const inert =
+		sync &&
+		effect.deps === null &&
+		effect.first === null &&
+		effect.dom === null &&
+		effect.teardown === null;
 
 	if (!inert && current_reaction !== null && !is_root) {
 		var flags = current_reaction.f;
