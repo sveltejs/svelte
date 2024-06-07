@@ -541,16 +541,6 @@ export function execute_effect(effect) {
 		execute_effect_teardown(effect);
 		var teardown = execute_reaction_fn(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
-
-		if (effect.deps === null && effect.first === null && effect.dom === null) {
-			if (effect.teardown === null) {
-				// remove this effect from the graph
-				unlink_effect(effect);
-			} else {
-				// keep the effect in the graph, but free up some memory
-				effect.fn = null;
-			}
-		}
 	} catch (error) {
 		handle_error(/** @type {Error} */ (error), effect, current_component_context);
 	} finally {
@@ -618,6 +608,21 @@ function flush_queued_effects(effects) {
 
 		if ((effect.f & (DESTROYED | INERT)) === 0 && check_dirtiness(effect)) {
 			execute_effect(effect);
+
+			// Effects with no dependencies or teardown do not get added to the effect tree.
+			// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
+			// don't know if we need to keep them until they are executed. Doing the check
+			// here (rather than in `execute_effect`) allows us to skip the work for
+			// immediate effects.
+			if (effect.deps === null && effect.first === null && effect.dom === null) {
+				if (effect.teardown === null) {
+					// remove this effect from the graph
+					unlink_effect(effect);
+				} else {
+					// keep the effect in the graph, but free up some memory
+					effect.fn = null;
+				}
+			}
 		}
 	}
 }
