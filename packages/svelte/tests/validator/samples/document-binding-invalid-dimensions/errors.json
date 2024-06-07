@@ -1,7 +1,7 @@
 [
 	{
 		"code": "bind_invalid_name",
-		"message": "`bind:clientWidth` is not a valid binding. Possible bindings for <svelte:document> are focused, activeElement, fullscreenElement, pointerLockElement, visibilityState, this",
+		"message": "`bind:clientWidth` is not a valid binding. Possible bindings for <svelte:document> are activeElement, focused, fullscreenElement, pointerLockElement, this, visibilityState",
 		"start": {
 			"line": 5,
 			"column": 17
