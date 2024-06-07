@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import express from 'express';
-import { head, html } from './server/entry-server.js';
+import { head, body } from './server/entry-server.js';
 
 const rendered = fs
 	.readFileSync(path.resolve('./dist/client/index.html'), 'utf-8')
-	.replace(`<!--ssr-html-->`, html)
+	.replace(`<!--ssr-html-->`, body)
 	.replace(`<!--ssr-head-->`, head);
 
 express()
