@@ -896,30 +896,35 @@ function serialize_inline_component(node, component_name, context) {
 					'$.spread_props',
 					...props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p))
 				);
+
 	/** @param {import('estree').Expression} node_id */
-	let fn = (node_id) =>
-		b.call(
+	let fn = (node_id) => {
+		return b.call(
 			context.state.options.dev
 				? b.call('$.validate_component', b.id(component_name))
 				: component_name,
 			node_id,
 			props_expression
 		);
+	};
 
 	if (bind_this !== null) {
 		const prev = fn;
-		fn = (node_id) =>
-			serialize_bind_this(
+
+		fn = (node_id) => {
+			return serialize_bind_this(
 				/** @type {import('estree').Identifier | import('estree').MemberExpression} */ (bind_this),
 				context,
 				prev(node_id)
 			);
+		};
 	}
 
 	if (node.type === 'SvelteComponent') {
 		const prev = fn;
+
 		fn = (node_id) => {
-			let component = b.call(
+			return b.call(
 				'$.component',
 				b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.expression))),
 				b.arrow(
@@ -933,7 +938,6 @@ function serialize_inline_component(node, component_name, context) {
 					])
 				)
 			);
-			return component;
 		};
 	}
 
