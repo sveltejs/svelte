@@ -28,7 +28,6 @@ export class ReactiveSet extends Set {
 		if (DEV) new Set(value);
 
 		if (value) {
-			var sources = this.#sources;
 			for (var element of value) {
 				super.add(element);
 			}
@@ -91,15 +90,17 @@ export class ReactiveSet extends Set {
 	#read_all() {
 		var sources = this.#sources;
 		var values = super.values();
-		for (let value of values) {
-			var s = sources.get(value);
+		if (sources.size !== super.size) {
+			for (let value of values) {
+				var s = sources.get(value);
 
-			if (s === undefined) {
-				s = source(true);
-				sources.set(value, s);
+				if (s === undefined) {
+					s = source(true);
+					sources.set(value, s);
+				}
+
+				get(s);
 			}
-
-			get(s);
 		}
 	}
 
