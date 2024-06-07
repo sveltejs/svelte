@@ -290,7 +290,7 @@ function handle_error(error, effect, component_context) {
 
 	const component_stack = [];
 
-	const effect_name = effect.fn.name;
+	const effect_name = effect.fn?.name;
 
 	if (effect_name) {
 		component_stack.push(effect_name);
@@ -358,7 +358,7 @@ export function execute_reaction_fn(signal) {
 	current_untracking = false;
 
 	try {
-		let res = (0, signal.fn)();
+		let res = /** @type {Function} */ (0, signal.fn)();
 		let dependencies = /** @type {import('#client').Value<unknown>[]} **/ (signal.deps);
 		if (current_dependencies !== null) {
 			let i;
