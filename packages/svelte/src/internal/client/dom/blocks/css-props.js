@@ -16,24 +16,19 @@ export function css_props(element, get_styles, component) {
 
 	component(/** @type {Comment} */ (element.lastChild));
 
-	/** @type {Record<string, string>} */
-	let styles = {};
-
 	render_effect(() => {
 		render_effect(() => {
-			const next = get_styles();
+			var styles = get_styles();
 
-			for (const key in styles) {
-				if (!(key in next)) {
+			for (var key in styles) {
+				var value = styles[key];
+
+				if (value) {
+					element.style.setProperty(key, value);
+				} else {
 					element.style.removeProperty(key);
 				}
 			}
-
-			for (const key in next) {
-				element.style.setProperty(key, next[key]);
-			}
-
-			styles = next;
 		});
 
 		return () => {
