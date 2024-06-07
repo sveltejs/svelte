@@ -112,7 +112,7 @@ function create_effect(type, fn, sync) {
 
 	// if an effect has no dependencies, no DOM and no teardown function,
 	// don't bother adding it to the effect tree
-	const inert =
+	var inert =
 		sync &&
 		effect.deps === null &&
 		effect.first === null &&
@@ -357,23 +357,14 @@ export function destroy_effect(effect, remove_dom = true) {
 
 	// If the parent doesn't have any children, then skip this work altogether
 	if (parent !== null && (effect.f & BRANCH_EFFECT) !== 0 && parent.first !== null) {
-		var previous = effect.prev;
+		var parent = effect.parent;
+		var prev = effect.prev;
 		var next = effect.next;
-		if (previous !== null) {
-			if (next !== null) {
-				previous.next = next;
-				next.prev = previous;
-			} else {
-				previous.next = null;
-				parent.last = previous;
-			}
-		} else if (next !== null) {
-			next.prev = null;
-			parent.first = next;
-		} else {
-			parent.first = null;
-			parent.last = null;
-		}
+
+		if (prev) prev.next = next;
+		if (next) next.prev = prev;
+		if (parent && parent.first === effect) parent.first = next;
+		if (parent && parent.last === effect) parent.last = prev;
 	}
 
 	// `first` and `child` are nulled out in destroy_effect_children
