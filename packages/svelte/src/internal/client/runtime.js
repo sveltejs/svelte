@@ -7,7 +7,12 @@ import {
 	object_freeze
 } from './utils.js';
 import { snapshot } from './proxy.js';
-import { destroy_effect, effect, execute_effect_teardown } from './reactivity/effects.js';
+import {
+	destroy_effect,
+	effect,
+	execute_effect_teardown,
+	unlink_effect
+} from './reactivity/effects.js';
 import {
 	EFFECT,
 	RENDER_EFFECT,
@@ -540,14 +545,7 @@ export function execute_effect(effect) {
 		if (effect.deps === null && effect.first === null && effect.dom === null) {
 			if (effect.teardown === null) {
 				// remove this effect from the graph
-				var parent = effect.parent;
-				var prev = effect.prev;
-				var next = effect.next;
-
-				if (prev) prev.next = next;
-				if (next) next.prev = prev;
-				if (parent && parent.first === effect) parent.first = next;
-				if (parent && parent.last === effect) parent.last = prev;
+				unlink_effect(effect);
 			} else {
 				// keep the effect in the graph, but free up some memory
 				effect.fn = null;
