@@ -14,6 +14,7 @@ import { current_component_context, current_effect } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { is_array } from '../../utils.js';
 import { push_template_node } from '../template.js';
+import { noop } from '../../../shared/utils.js';
 
 /**
  * @param {import('#client').Effect} effect
@@ -151,6 +152,8 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 						push_template_node(element, parent_effect);
 					}
 				}
+
+				return noop;
 			});
 		}
 
@@ -159,5 +162,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 		set_should_intro(true);
 
 		set_current_each_item(previous_each_item);
+
+		return noop;
 	});
 }

@@ -536,6 +536,27 @@ export function execute_effect(effect) {
 		execute_effect_teardown(effect);
 		var teardown = execute_reaction_fn(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
+
+		if (
+			(effect.deps === null || effect.deps.length === 0) &&
+			effect.first === null &&
+			effect.dom === null
+		) {
+			if (effect.teardown === null) {
+				// remove this effect from the graph
+				var parent = effect.parent;
+				var prev = effect.prev;
+				var next = effect.next;
+
+				if (prev) prev.next = next;
+				if (next) next.prev = prev;
+				if (parent && parent.first === effect) parent.first = next;
+				if (parent && parent.last === effect) parent.last = prev;
+			} else {
+				// keep the effect in the graph, but free up some memory
+				effect.fn = null;
+			}
+		}
 	} catch (error) {
 		handle_error(/** @type {Error} */ (error), effect, current_component_context);
 	} finally {

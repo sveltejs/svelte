@@ -1,4 +1,4 @@
-import { is_promise } from '../../../shared/utils.js';
+import { is_promise, noop } from '../../../shared/utils.js';
 import {
 	current_component_context,
 	flush_sync,
@@ -113,5 +113,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 				then_effect = branch(() => then_fn(anchor, input));
 			}
 		}
+
+		return noop;
 	});
 }
