@@ -143,12 +143,12 @@ export function head(payload, fn) {
  * @template V
  * @param {string} name
  * @param {V} value
- * @param {boolean} [boolean]
+ * @param {boolean} [is_boolean]
  * @returns {string}
  */
-export function attr(name, value, boolean = false) {
-	if (value == null || (!value && boolean) || (value === '' && name === 'class')) return '';
-	const assignment = boolean ? '' : `="${escape_html(value, true)}"`;
+export function attr(name, value, is_boolean = false) {
+	if (value == null || (!value && is_boolean) || (value === '' && name === 'class')) return '';
+	const assignment = is_boolean ? '' : `="${escape_html(value, true)}"`;
 	return ` ${name}${assignment}`;
 }
 
