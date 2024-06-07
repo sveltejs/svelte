@@ -1103,6 +1103,10 @@ function serialize_inline_component(node, component_name, context) {
 		)
 	);
 
+	if (snippet_declarations.length > 0) {
+		statement = b.block([...snippet_declarations, statement]);
+	}
+
 	if (custom_css_props.length > 0) {
 		statement = b.stmt(
 			b.call(
@@ -1113,15 +1117,13 @@ function serialize_inline_component(node, component_name, context) {
 				b.thunk(b.block([statement]))
 			)
 		);
-	}
 
-	if (snippet_declarations.length > 0) {
-		statement = b.block([...snippet_declarations, statement]);
+		context.state.template.push(t_statement(statement));
+	} else {
+		context.state.template.push(block_open);
+		context.state.template.push(t_statement(statement));
+		context.state.template.push(block_close);
 	}
-
-	context.state.template.push(block_open);
-	context.state.template.push(t_statement(statement));
-	context.state.template.push(block_close);
 }
 
 /**

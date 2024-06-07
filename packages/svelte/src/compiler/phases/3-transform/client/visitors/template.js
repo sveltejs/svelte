@@ -937,24 +937,27 @@ function serialize_inline_component(node, component_name, context) {
 		};
 	}
 
-	// TODO for CSS prop wrappers, push `<div><!></div>` instead
-	context.state.template.push('<!>');
-
 	if (Object.keys(custom_css_props).length > 0) {
-		const prev = fn;
-		fn = (node_id) =>
+		context.state.template.push(
+			context.state.metadata.namespace === 'svg'
+				? '<g><!></g>'
+				: '<div style="display: contents"><!></div>'
+		);
+
+		return b.stmt(
 			b.call(
 				'$.css_props',
-				node_id,
-				// TODO would be great to do this at runtime instead. Svelte 4 also can't handle cases today
-				// where it's not statically determinable whether the component is used in a svg or html context
-				context.state.metadata.namespace === 'svg' || context.state.metadata.namespace === 'mathml'
-					? b.false
-					: b.true,
+				context.state.node,
 				b.thunk(b.object(custom_css_props)),
-				b.arrow([b.id('$$node')], prev(b.id('$$node')))
-			);
+				b.arrow(
+					[b.id('$$node')],
+					b.block([...snippet_declarations, ...binding_initializers, b.stmt(fn(b.id('$$node')))])
+				)
+			)
+		);
 	}
+
+	context.state.template.push('<!>');
 
 	const statements = [
 		...snippet_declarations,
