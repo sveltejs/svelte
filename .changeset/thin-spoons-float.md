@@ -1,5 +1,5 @@
 ---
-"svelte": patch
+'svelte': patch
 ---
 
-fix: create sources for initial values of Set
+fix: create sources on read for Set
