@@ -41,7 +41,9 @@ export function set_should_intro(value) {
  * @returns {void}
  */
 export function set_text(text, value) {
-	text.nodeValue = value;
+	if (text.nodeValue != value) {
+		text.nodeValue = value;
+	}
 }
 
 /**
