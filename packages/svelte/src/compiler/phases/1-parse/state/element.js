@@ -72,7 +72,7 @@ const regex_closing_comment = /-->/;
 const regex_capital_letter = /[A-Z]/;
 
 /** @param {import('../index.js').Parser} parser */
-export default function tag(parser) {
+export default function element(parser) {
 	const start = parser.index++;
 
 	let parent = parser.current();
