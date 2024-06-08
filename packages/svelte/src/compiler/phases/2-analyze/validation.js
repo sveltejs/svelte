@@ -568,6 +568,17 @@ const validation = {
 			}
 		}
 
+		// can't add form to interactive elements because those are also used by the parser
+		// to check for the last auto-closing parent.
+		if (node.name === 'form') {
+			const path = context.path;
+			for (let parent of path) {
+				if (parent.type === 'RegularElement' && parent.name === 'form') {
+					e.node_invalid_placement(node, `<${node.name}>`, parent.name);
+				}
+			}
+		}
+
 		if (interactive_elements.has(node.name)) {
 			const path = context.path;
 			for (let parent of path) {
