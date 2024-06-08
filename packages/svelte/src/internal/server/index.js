@@ -270,7 +270,7 @@ export function add_styles(style_object) {
 export function merge_styles(style_attribute, style_directive) {
 	/** @type {Record<string, string>} */
 	const style_object = {};
-	for (const individual_style of style_attribute.split(';')) {
+	for (const individual_style of (style_attribute ?? '').split(';')) {
 		const colon_index = individual_style.indexOf(':');
 		const name = individual_style.slice(0, colon_index).trim();
 		const value = individual_style.slice(colon_index + 1).trim();
