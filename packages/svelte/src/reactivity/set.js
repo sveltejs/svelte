@@ -47,7 +47,6 @@ export class ReactiveSet extends Set {
 		for (const method of read_methods) {
 			// @ts-ignore
 			proto[method] = function (...v) {
-				this.#read_all();
 				get(this.#version);
 				// @ts-ignore
 				return set_proto[method].apply(this, v);
@@ -87,23 +86,6 @@ export class ReactiveSet extends Set {
 		return super.has(value);
 	}
 
-	#read_all() {
-		var sources = this.#sources;
-
-		if (sources.size !== super.size) {
-			for (let value of super.values()) {
-				var s = sources.get(value);
-
-				if (s === undefined) {
-					s = source(true);
-					sources.set(value, s);
-				}
-
-				get(s);
-			}
-		}
-	}
-
 	/** @param {T} value */
 	add(value) {
 		var sources = this.#sources;
@@ -111,6 +93,7 @@ export class ReactiveSet extends Set {
 		var s = sources.get(value);
 
 		if (s === undefined) {
+			sources.set(value, source(true));
 			set(this.#size, super.size);
 			increment(this.#version);
 		} else {
@@ -151,19 +134,16 @@ export class ReactiveSet extends Set {
 	}
 
 	keys() {
-		this.#read_all();
 		get(this.#version);
 		return super.keys();
 	}
 
 	values() {
-		this.#read_all();
 		get(this.#version);
 		return super.values();
 	}
 
 	entries() {
-		this.#read_all();
 		get(this.#version);
 		return super.entries();
 	}
