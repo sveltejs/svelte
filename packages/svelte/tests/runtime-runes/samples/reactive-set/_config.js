@@ -2,7 +2,7 @@ import { flushSync } from '../../../../src/index-client';
 import { ok, test } from '../../test';
 
 export default test({
-	html: `<button>delete initial</button><button>add</button><button>delete</button><button>clear</button><p>1</p><div>0</div>`,
+	html: `<button>delete initial</button><button>add</button><button>delete</button><button>clear</button><div id="output"><p>1</p><div>0</div></div>`,
 
 	test({ assert, target }) {
 		const [btn, btn2, btn3, btn4] = target.querySelectorAll('button');
