@@ -1,5 +1,5 @@
 import { DEV } from 'esm-env';
-import { render_effect, effect, teardown } from '../../../reactivity/effects.js';
+import { render_effect, teardown } from '../../../reactivity/effects.js';
 import { stringify } from '../../../render.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
