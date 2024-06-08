@@ -382,10 +382,13 @@ export function unlink_effect(effect) {
 	var prev = effect.prev;
 	var next = effect.next;
 
-	if (prev) prev.next = next;
-	if (next) next.prev = prev;
-	if (parent && parent.first === effect) parent.first = next;
-	if (parent && parent.last === effect) parent.last = prev;
+	if (prev !== null) prev.next = next;
+	if (next !== null) next.prev = prev;
+
+	if (parent !== null) {
+		if (parent.first === effect) parent.first = next;
+		if (parent.last === effect) parent.last = prev;
+	}
 }
 
 /**
