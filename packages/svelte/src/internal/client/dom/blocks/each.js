@@ -17,12 +17,10 @@ import {
 } from '../hydration.js';
 import { clear_text_content, empty } from '../operations.js';
 import { remove } from '../reconciler.js';
-import { untrack } from '../../runtime.js';
 import {
 	block,
 	branch,
 	destroy_effect,
-	effect,
 	run_out_transitions,
 	pause_children,
 	pause_effect,
@@ -31,6 +29,7 @@ import {
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen } from '../../utils.js';
 import { INERT, STATE_SYMBOL } from '../../constants.js';
+import { queue_micro_task } from '../task.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -423,12 +422,10 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	}
 
 	if (is_animated) {
-		effect(() => {
-			untrack(() => {
-				for (item of to_animate) {
-					item.a?.apply();
-				}
-			});
+		queue_micro_task(() => {
+			for (item of to_animate) {
+				item.a?.apply();
+			}
 		});
 	}
 }
