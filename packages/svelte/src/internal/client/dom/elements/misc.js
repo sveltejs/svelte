@@ -1,6 +1,6 @@
 import { hydrating } from '../hydration.js';
-import { effect } from '../../reactivity/effects.js';
 import { clear_text_content } from '../operations.js';
+import { queue_micro_task } from '../task.js';
 
 /**
  * @param {HTMLElement} dom
@@ -12,7 +12,7 @@ export function autofocus(dom, value) {
 		const body = document.body;
 		dom.autofocus = true;
 
-		effect(() => {
+		queue_micro_task(() => {
 			if (document.activeElement === body) {
 				dom.focus();
 			}
