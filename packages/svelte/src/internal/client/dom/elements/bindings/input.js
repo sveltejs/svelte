@@ -1,6 +1,5 @@
 import { DEV } from 'esm-env';
 import { render_effect, effect, teardown } from '../../../reactivity/effects.js';
-import { stringify } from '../../../render.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
 import { get_proxied_value, is } from '../../../proxy.js';
@@ -43,7 +42,8 @@ export function bind_value(input, get_value, update) {
 			return;
 		}
 
-		input.value = stringify(value);
+		// @ts-expect-error the value is coerced on assignment
+		input.value = value ?? '';
 	});
 }
 
