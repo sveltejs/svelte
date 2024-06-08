@@ -112,47 +112,6 @@ export const DOMBooleanAttributes = [
 export const namespace_svg = 'http://www.w3.org/2000/svg';
 export const namespace_mathml = 'http://www.w3.org/1998/Math/MathML';
 
-// while `input` is also an interactive element, it is never moved by the browser, so we don't need to check for it
-export const interactive_elements = new Set([
-	'a',
-	'button',
-	'iframe',
-	'embed',
-	'select',
-	'textarea'
-]);
-
-export const disallowed_paragraph_contents = [
-	'address',
-	'article',
-	'aside',
-	'blockquote',
-	'details',
-	'div',
-	'dl',
-	'fieldset',
-	'figcapture',
-	'figure',
-	'footer',
-	'form',
-	'h1',
-	'h2',
-	'h3',
-	'h4',
-	'h5',
-	'h6',
-	'header',
-	'hr',
-	'menu',
-	'nav',
-	'ol',
-	'pre',
-	'section',
-	'table',
-	'ul',
-	'p'
-];
-
 // https://html.spec.whatwg.org/multipage/syntax.html#generate-implied-end-tags
 const implied_end_tags = ['dd', 'dt', 'li', 'option', 'optgroup', 'p', 'rp', 'rt'];
 

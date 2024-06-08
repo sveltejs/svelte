@@ -1,9 +1,5 @@
 import is_reference from 'is-reference';
-import {
-	disallowed_paragraph_contents,
-	interactive_elements,
-	is_tag_valid_with_parent
-} from '../../../constants.js';
+import { is_tag_valid_with_parent } from '../../../constants.js';
 import * as e from '../../errors.js';
 import {
 	extract_identifiers,
@@ -32,6 +28,7 @@ import {
 import { Scope, get_rune } from '../scope.js';
 import { merge } from '../visitors.js';
 import { a11y_validators } from './a11y.js';
+import { disallowed_parents } from '../../utils/html.js';
 
 /** @param {import('#compiler').Attribute} attribute */
 function validate_attribute(attribute) {
@@ -568,34 +565,12 @@ const validation = {
 			}
 		}
 
-		// can't add form to interactive elements because those are also used by the parser
-		// to check for the last auto-closing parent.
-		if (node.name === 'form') {
-			const path = context.path;
-			for (let parent of path) {
-				if (parent.type === 'RegularElement' && parent.name === 'form') {
-					e.node_invalid_placement(node, `<${node.name}>`, parent.name);
-				}
-			}
-		}
+		if (node.name in disallowed_parents) {
+			const parents = disallowed_parents[node.name];
 
-		if (interactive_elements.has(node.name)) {
 			const path = context.path;
 			for (let parent of path) {
-				if (
-					parent.type === 'RegularElement' &&
-					parent.name === node.name &&
-					interactive_elements.has(parent.name)
-				) {
-					e.node_invalid_placement(node, `<${node.name}>`, parent.name);
-				}
-			}
-		}
-
-		if (disallowed_paragraph_contents.includes(node.name)) {
-			const path = context.path;
-			for (let parent of path) {
-				if (parent.type === 'RegularElement' && parent.name === 'p') {
+				if (parent.type === 'RegularElement' && parents.includes(parent.name)) {
 					e.node_invalid_placement(node, `<${node.name}>`, parent.name);
 				}
 			}
