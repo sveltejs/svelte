@@ -133,6 +133,14 @@ export function set_current_component_context(context) {
 	current_component_context = context;
 }
 
+/** @type {Function[]} */
+export let deferred_tasks = [];
+
+/** @param {Function} task */
+export function defer(task) {
+	deferred_tasks.push(task);
+}
+
 /**
  * The current component function. Different from current component context:
  * ```html
@@ -561,7 +569,7 @@ function infinite_loop_guard() {
  * @returns {void}
  */
 function flush_queued_root_effects(root_effects) {
-	const length = root_effects.length;
+	var length = root_effects.length;
 	if (length === 0) {
 		return;
 	}
@@ -584,6 +592,10 @@ function flush_queued_root_effects(root_effects) {
 				process_effects(effect, collected_effects);
 				flush_queued_effects(collected_effects);
 			}
+		}
+
+		for (i = 0; i < deferred_tasks.length; i++) {
+			deferred_tasks[i]();
 		}
 	} finally {
 		is_flushing_effect = previously_flushing_effect;
