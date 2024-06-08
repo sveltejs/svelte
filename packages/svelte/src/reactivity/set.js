@@ -89,9 +89,9 @@ export class ReactiveSet extends Set {
 
 	#read_all() {
 		var sources = this.#sources;
-		var values = super.values();
+
 		if (sources.size !== super.size) {
-			for (let value of values) {
+			for (let value of super.values()) {
 				var s = sources.get(value);
 
 				if (s === undefined) {
