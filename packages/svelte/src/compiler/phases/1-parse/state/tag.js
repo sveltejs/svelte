@@ -7,7 +7,7 @@ import { walk } from 'zimmerframe';
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
 /** @param {import('../index.js').Parser} parser */
-export default function mustache(parser) {
+export default function tag(parser) {
 	const start = parser.index;
 	parser.index += 1;
 
