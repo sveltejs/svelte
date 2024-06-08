@@ -1,5 +1,33 @@
 # svelte
 
+## 5.0.0-next.152
+
+### Patch Changes
+
+- fix: validate form inside a form ([#11947](https://github.com/sveltejs/svelte/pull/11947))
+
+- fix: more robust handling of events in spread attributes ([#11942](https://github.com/sveltejs/svelte/pull/11942))
+
+- feat: simpler `<svelte:element> hydration ([#11773](https://github.com/sveltejs/svelte/pull/11773))
+
+- fix: make `legacy.componentApi` option more visible ([#11924](https://github.com/sveltejs/svelte/pull/11924))
+
+- feat: simpler hydration of CSS custom property wrappers ([#11948](https://github.com/sveltejs/svelte/pull/11948))
+
+- chore: optimise effects that only exist to return a teardown ([#11936](https://github.com/sveltejs/svelte/pull/11936))
+
+- feat: always create wrapper `<div>` for `<svelte:component>` with CSS custom properties ([#11792](https://github.com/sveltejs/svelte/pull/11792))
+
+- feat: add svelte/events package and export `on` function ([#11912](https://github.com/sveltejs/svelte/pull/11912))
+
+- feat: more efficient output for attributes in SSR ([#11949](https://github.com/sveltejs/svelte/pull/11949))
+
+- fix: update reactive set when deleting initial values ([#11967](https://github.com/sveltejs/svelte/pull/11967))
+
+- feat: simpler string normalization ([#11954](https://github.com/sveltejs/svelte/pull/11954))
+
+- fix: always assign text.nodeValue ([#11944](https://github.com/sveltejs/svelte/pull/11944))
+
 ## 5.0.0-next.151
 
 ### Patch Changes
