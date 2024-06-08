@@ -489,7 +489,7 @@ function create_item(anchor, prev, next, value, key, index, render_fn, flags) {
  * @returns {import('#client').TemplateNode}
  */
 function get_adjusted_first_node(dom, effect) {
-	if (dom.nodeType === 3 && /** @type {Text} */ (dom).data === '') {
+	if ((dom.nodeType === 3 && /** @type {Text} */ (dom).data === '') || dom.nodeType === 8) {
 		var adjusted = effect.first;
 		var next;
 		while (adjusted !== null) {

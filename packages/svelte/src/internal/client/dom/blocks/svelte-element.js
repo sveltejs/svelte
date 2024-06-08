@@ -62,6 +62,18 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 	/** @type {import('#client').Effect | null} */
 	let effect;
 
+	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
+
+	// Remove the the hydrated effect dom entry for our dynamic element
+	if (hydrating && is_array(parent_effect.dom)) {
+		var remove_index = parent_effect.dom.indexOf(
+			/** @type {import('#client').TemplateNode} */ (element)
+		);
+		if (remove_index !== -1) {
+			parent_effect.dom.splice(remove_index, 1);
+		}
+	}
+
 	/**
 	 * The keyed `{#each ...}` item block, if any, that this element is inside.
 	 * We track this so we can set it when changing the element, allowing any
@@ -123,11 +135,10 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					};
 				}
 
-				if (prev_element) {
+				if (prev_element && !hydrating) {
 					swap_block_dom(element_effect, prev_element, element);
 					prev_element.remove();
-				}
-				if (!hydrating) {
+				} else {
 					push_template_node(element, element_effect);
 				}
 
