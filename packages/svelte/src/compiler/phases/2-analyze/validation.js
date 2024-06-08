@@ -421,7 +421,8 @@ const validation = {
 									!binding_property.invalid_elements?.includes(parent.name))
 							);
 						})
-						.map(([property_name]) => property_name);
+						.map(([property_name]) => property_name)
+						.sort();
 					e.bind_invalid_name(
 						node,
 						node.name,
