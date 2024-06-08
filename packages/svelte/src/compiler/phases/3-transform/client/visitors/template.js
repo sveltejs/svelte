@@ -896,30 +896,35 @@ function serialize_inline_component(node, component_name, context) {
 					'$.spread_props',
 					...props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p))
 				);
-	/** @param {import('estree').Identifier} node_id */
-	let fn = (node_id) =>
-		b.call(
+
+	/** @param {import('estree').Expression} node_id */
+	let fn = (node_id) => {
+		return b.call(
 			context.state.options.dev
 				? b.call('$.validate_component', b.id(component_name))
 				: component_name,
 			node_id,
 			props_expression
 		);
+	};
 
 	if (bind_this !== null) {
 		const prev = fn;
-		fn = (node_id) =>
-			serialize_bind_this(
+
+		fn = (node_id) => {
+			return serialize_bind_this(
 				/** @type {import('estree').Identifier | import('estree').MemberExpression} */ (bind_this),
 				context,
 				prev(node_id)
 			);
+		};
 	}
 
 	if (node.type === 'SvelteComponent') {
 		const prev = fn;
+
 		fn = (node_id) => {
-			let component = b.call(
+			return b.call(
 				'$.component',
 				b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.expression))),
 				b.arrow(
@@ -933,31 +938,26 @@ function serialize_inline_component(node, component_name, context) {
 					])
 				)
 			);
-			return component;
 		};
 	}
 
-	if (Object.keys(custom_css_props).length > 0) {
-		const prev = fn;
-		fn = (node_id) =>
-			b.call(
-				'$.css_props',
-				node_id,
-				// TODO would be great to do this at runtime instead. Svelte 4 also can't handle cases today
-				// where it's not statically determinable whether the component is used in a svg or html context
-				context.state.metadata.namespace === 'svg' || context.state.metadata.namespace === 'mathml'
-					? b.false
-					: b.true,
-				b.thunk(b.object(custom_css_props)),
-				b.arrow([b.id('$$node')], prev(b.id('$$node')))
-			);
-	}
+	const statements = [...snippet_declarations, ...binding_initializers];
 
-	const statements = [
-		...snippet_declarations,
-		...binding_initializers,
-		b.stmt(fn(context.state.node))
-	];
+	if (Object.keys(custom_css_props).length > 0) {
+		context.state.template.push(
+			context.state.metadata.namespace === 'svg'
+				? '<g><!></g>'
+				: '<div style="display: contents"><!></div>'
+		);
+
+		statements.push(
+			b.stmt(b.call('$.css_props', context.state.node, b.thunk(b.object(custom_css_props)))),
+			b.stmt(fn(b.member(context.state.node, b.id('lastChild'))))
+		);
+	} else {
+		context.state.template.push('<!>');
+		statements.push(b.stmt(fn(context.state.node)));
+	}
 
 	return statements.length > 1 ? b.block(statements) : statements[0];
 }
@@ -1337,10 +1337,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 						b.assignment(
 							'=',
 							b.member(text_id, b.id('nodeValue')),
-							b.call(
-								'$.stringify',
-								/** @type {import('estree').Expression} */ (visit(node.expression))
-							)
+							/** @type {import('estree').Expression} */ (visit(node.expression))
 						)
 					)
 				);
@@ -1524,7 +1521,7 @@ function serialize_template_literal(values, visit, state) {
 				);
 				expressions.push(b.call('$.get', id));
 			} else {
-				expressions.push(b.call('$.stringify', visit(node.expression, state)));
+				expressions.push(b.logical('??', visit(node.expression, state), b.literal('')));
 			}
 			quasis.push(b.quasi('', i + 1 === values.length));
 		}
@@ -2947,8 +2944,6 @@ export const template_visitors = {
 		}
 	},
 	Component(node, context) {
-		context.state.template.push('<!>');
-
 		const binding = context.state.scope.get(
 			node.name.includes('.') ? node.name.slice(0, node.name.indexOf('.')) : node.name
 		);
@@ -2974,13 +2969,10 @@ export const template_visitors = {
 		context.state.init.push(component);
 	},
 	SvelteSelf(node, context) {
-		context.state.template.push('<!>');
 		const component = serialize_inline_component(node, context.state.analysis.name, context);
 		context.state.init.push(component);
 	},
 	SvelteComponent(node, context) {
-		context.state.template.push('<!>');
-
 		let component = serialize_inline_component(node, '$$component', context);
 
 		context.state.init.push(component);

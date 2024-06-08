@@ -143,12 +143,12 @@ export function head(payload, fn) {
  * @template V
  * @param {string} name
  * @param {V} value
- * @param {boolean} boolean
+ * @param {boolean} [is_boolean]
  * @returns {string}
  */
-export function attr(name, value, boolean) {
-	if (value == null || (!value && boolean) || (value === '' && name === 'class')) return '';
-	const assignment = boolean ? '' : `="${escape_html(value, true)}"`;
+export function attr(name, value, is_boolean = false) {
+	if (value == null || (!value && is_boolean) || (value === '' && name === 'class')) return '';
+	const assignment = is_boolean ? '' : `="${escape_html(value, true)}"`;
 	return ` ${name}${assignment}`;
 }
 
@@ -162,15 +162,15 @@ export function attr(name, value, boolean) {
 export function css_props(payload, is_html, props, component) {
 	const styles = style_object_to_string(props);
 	if (is_html) {
-		payload.out += `<div style="display: contents; ${styles}"><!--[-->`;
+		payload.out += `<div style="display: contents; ${styles}">`;
 	} else {
-		payload.out += `<g style="${styles}"><!--[-->`;
+		payload.out += `<g style="${styles}">`;
 	}
 	component();
 	if (is_html) {
-		payload.out += `<!--]--></div>`;
+		payload.out += `<!----></div>`;
 	} else {
-		payload.out += `<!--]--></g>`;
+		payload.out += `<!----></g>`;
 	}
 }
 

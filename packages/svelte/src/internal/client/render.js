@@ -67,14 +67,6 @@ export function slot(anchor, slot_fn, slot_props, fallback_fn) {
 }
 
 /**
- * @param {unknown} value
- * @returns {string}
- */
-export function stringify(value) {
-	return typeof value === 'string' ? value : value == null ? '' : value + '';
-}
-
-/**
  * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
  *
  * @template {Record<string, any>} Props

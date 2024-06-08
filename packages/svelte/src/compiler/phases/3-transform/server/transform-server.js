@@ -907,7 +907,6 @@ function serialize_element_spread_attributes(
  * @param {import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf} node
  * @param {string | import('estree').Expression} component_name
  * @param {import('./types').ComponentContext} context
- * @returns {import('estree').Statement}
  */
 function serialize_inline_component(node, component_name, context) {
 	/** @type {Array<import('estree').Property[] | import('estree').Expression>} */
@@ -1103,6 +1102,10 @@ function serialize_inline_component(node, component_name, context) {
 		)
 	);
 
+	if (snippet_declarations.length > 0) {
+		statement = b.block([...snippet_declarations, statement]);
+	}
+
 	if (custom_css_props.length > 0) {
 		statement = b.stmt(
 			b.call(
@@ -1113,13 +1116,13 @@ function serialize_inline_component(node, component_name, context) {
 				b.thunk(b.block([statement]))
 			)
 		);
-	}
 
-	if (snippet_declarations.length > 0) {
-		statement = b.block([...snippet_declarations, statement]);
+		context.state.template.push(t_statement(statement));
+	} else {
+		context.state.template.push(block_open);
+		context.state.template.push(t_statement(statement));
+		context.state.template.push(block_close);
 	}
-
-	return statement;
 }
 
 /**
@@ -1666,29 +1669,17 @@ const template_visitors = {
 		}
 	},
 	Component(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
-		const call = serialize_inline_component(node, node.name, context);
-		state.template.push(t_statement(call));
-		state.template.push(block_close);
+		serialize_inline_component(node, node.name, context);
 	},
 	SvelteSelf(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
-		const call = serialize_inline_component(node, context.state.analysis.name, context);
-		state.template.push(t_statement(call));
-		state.template.push(block_close);
+		serialize_inline_component(node, context.state.analysis.name, context);
 	},
 	SvelteComponent(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
-		const call = serialize_inline_component(
+		serialize_inline_component(
 			node,
 			/** @type {import('estree').Expression} */ (context.visit(node.expression)),
 			context
 		);
-		state.template.push(t_statement(call));
-		state.template.push(block_close);
 	},
 	LetDirective(node, { state }) {
 		if (node.expression && node.expression.type !== 'Identifier') {
@@ -2068,7 +2059,7 @@ function serialize_element_attributes(node, context) {
 			);
 
 			context.state.template.push(
-				t_expression(b.call('$.attr', b.literal(name), value, b.literal(is_boolean)))
+				t_expression(b.call('$.attr', b.literal(name), value, is_boolean && b.literal(is_boolean)))
 			);
 		}
 	}

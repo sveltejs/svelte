@@ -1,21 +1,18 @@
 <script>
-	import {Set} from 'svelte/reactivity';
+	import { Set } from 'svelte/reactivity';
 
-	let state = new Set();
+	let state = new Set([0]);
 </script>
 
-<button onclick={() => {
-	state.add(state.size + 1);
-}}>add</button>
+<button onclick={() => state.delete(0)}>delete initial</button>
+<button onclick={() => state.add(state.size + 1)}>add</button>
+<button onclick={() => state.delete(state.size)}>delete</button>
+<button onclick={() => state.clear()}>clear</button>
 
-<button onclick={() => {
-	state.delete(state.size);
-}}>delete</button>
+<div id="output">
+	<p>{state.size}</p>
 
-<button onclick={() => {
-	state.clear();
-}}>clear</button>
-
-{#each state as item}
-	<div>{item}</div>
-{/each}
+	{#each state as item}
+		<div>{item}</div>
+	{/each}
+</div>
