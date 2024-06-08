@@ -87,7 +87,7 @@ function validate_component(node, context) {
 			validate_attribute_name(attribute);
 
 			if (attribute.name === 'slot') {
-				validate_slot_attribute(context, attribute);
+				validate_slot_attribute(context, attribute, true);
 			}
 		}
 	}
@@ -253,8 +253,9 @@ function validate_attribute_name(attribute) {
 /**
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
  * @param {import('#compiler').Attribute} attribute
+ * @param {boolean} is_component
  */
-function validate_slot_attribute(context, attribute) {
+function validate_slot_attribute(context, attribute, is_component = false) {
 	let owner = undefined;
 
 	let i = context.path.length;
@@ -310,7 +311,7 @@ function validate_slot_attribute(context, attribute) {
 				}
 			}
 		}
-	} else {
+	} else if (!is_component) {
 		e.slot_attribute_invalid_placement(attribute);
 	}
 }
@@ -564,6 +565,17 @@ const validation = {
 		if (context.state.parent_element) {
 			if (!is_tag_valid_with_parent(node.name, context.state.parent_element)) {
 				e.node_invalid_placement(node, `<${node.name}>`, context.state.parent_element);
+			}
+		}
+
+		// can't add form to interactive elements because those are also used by the parser
+		// to check for the last auto-closing parent.
+		if (node.name === 'form') {
+			const path = context.path;
+			for (let parent of path) {
+				if (parent.type === 'RegularElement' && parent.name === 'form') {
+					e.node_invalid_placement(node, `<${node.name}>`, parent.name);
+				}
 			}
 		}
 

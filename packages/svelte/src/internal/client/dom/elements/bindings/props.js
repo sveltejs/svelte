@@ -1,4 +1,4 @@
-import { render_effect } from '../../../reactivity/effects.js';
+import { teardown } from '../../../reactivity/effects.js';
 import { get_descriptor } from '../../../utils.js';
 
 /**
@@ -15,7 +15,7 @@ export function bind_prop(props, prop, value) {
 
 	if (desc && desc.set) {
 		props[prop] = value;
-		render_effect(() => () => {
+		teardown(() => {
 			props[prop] = null;
 		});
 	}

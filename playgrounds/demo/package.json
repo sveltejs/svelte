@@ -9,9 +9,7 @@
     "ssr": "node ./server.js",
     "build": "vite build --outDir dist/client && vite build --outDir dist/server --ssr src/entry-server.ts",
     "prod": "npm run build && node dist",
-    "preview": "vite preview",
-    "format": "prettier --check --write .",
-    "lint": "prettier --check . && eslint"
+    "preview": "vite preview"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.1.0",

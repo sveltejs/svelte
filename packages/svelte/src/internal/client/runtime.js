@@ -290,7 +290,7 @@ function handle_error(error, effect, component_context) {
 
 	const component_stack = [];
 
-	const effect_name = effect.fn.name;
+	const effect_name = effect.fn?.name;
 
 	if (effect_name) {
 		component_stack.push(effect_name);
@@ -311,7 +311,9 @@ function handle_error(error, effect, component_context) {
 	}
 
 	const indent = /Firefox/.test(navigator.userAgent) ? '  ' : '\t';
-	error.message += `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`;
+	define_property(error, 'message', {
+		value: error.message + `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`
+	});
 
 	const stack = error.stack;
 
@@ -326,7 +328,9 @@ function handle_error(error, effect, component_context) {
 			}
 			new_lines.push(line);
 		}
-		error.stack = new_lines.join('\n');
+		define_property(error, 'stack', {
+			value: error.stack + new_lines.join('\n')
+		});
 	}
 
 	handled_errors.add(error);
@@ -354,7 +358,7 @@ export function execute_reaction_fn(signal) {
 	current_untracking = false;
 
 	try {
-		let res = (0, signal.fn)();
+		let res = /** @type {Function} */ (0, signal.fn)();
 		let dependencies = /** @type {import('#client').Value<unknown>[]} **/ (signal.deps);
 		if (current_dependencies !== null) {
 			let i;
@@ -1333,9 +1337,14 @@ if (DEV) {
  * @returns {Readonly<T>}
  */
 export function freeze(value) {
-	if (typeof value === 'object' && value != null && !(STATE_FROZEN_SYMBOL in value)) {
+	if (
+		typeof value === 'object' &&
+		value != null &&
+		!is_frozen(value) &&
+		!(STATE_FROZEN_SYMBOL in value)
+	) {
 		// If the object is already proxified, then snapshot the value
-		if (STATE_SYMBOL in value || is_frozen(value)) {
+		if (STATE_SYMBOL in value) {
 			value = snapshot(value);
 		}
 		define_property(value, STATE_FROZEN_SYMBOL, {

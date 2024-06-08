@@ -144,6 +144,7 @@ export function set_custom_element_data(node, prop, value) {
  */
 export function set_attributes(element, prev, next, lowercase_attributes, css_hash) {
 	var has_hash = css_hash.length !== 0;
+	var current = prev || {};
 
 	for (var key in prev) {
 		if (!(key in next)) {
@@ -167,7 +168,10 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 	for (const key in next) {
 		// let instead of var because referenced in a closure
 		let value = next[key];
-		if (value === prev?.[key]) continue;
+		var prev_value = current[key];
+		if (value === prev_value) continue;
+
+		current[key] = value;
 
 		var prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
 		if (prefix === '$$') continue;
@@ -175,6 +179,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 		if (prefix === 'on') {
 			/** @type {{ capture?: true }} */
 			const opts = {};
+			const event_handle_key = '$$' + key;
 			let event_name = key.slice(2);
 			var delegated = DelegatedEvents.includes(event_name);
 
@@ -183,21 +188,35 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 				opts.capture = true;
 			}
 
-			if (!delegated && prev?.[key]) {
-				element.removeEventListener(event_name, /** @type {any} */ (prev[key]), opts);
+			if (!delegated && prev_value) {
+				// Listening to same event but different handler -> our handle function below takes care of this
+				// If we were to remove and add listeners in this case, it could happen that the event is "swallowed"
+				// (the browser seems to not know yet that a new one exists now) and doesn't reach the handler
+				// https://github.com/sveltejs/svelte/issues/11903
+				if (value != null) continue;
+
+				element.removeEventListener(event_name, current[event_handle_key], opts);
+				current[event_handle_key] = null;
 			}
 
 			if (value != null) {
 				if (!delegated) {
-					// we use `addEventListener` here because these events are not delegated
+					/**
+					 * @this {any}
+					 * @param {Event} evt
+					 */
+					function handle(evt) {
+						current[key].call(this, evt);
+					}
+
 					if (!prev) {
 						events.push([
 							key,
 							value,
-							() => (next[key] = create_event(event_name, element, value, opts))
+							() => (current[event_handle_key] = create_event(event_name, element, handle, opts))
 						]);
 					} else {
-						next[key] = create_event(event_name, element, value, opts);
+						current[event_handle_key] = create_event(event_name, element, handle, opts);
 					}
 				} else {
 					// @ts-ignore
@@ -252,7 +271,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 			effect(() => {
 				if (!element.isConnected) return;
 				for (const [key, value, evt] of events) {
-					if (next[key] === value) {
+					if (current[key] === value) {
 						evt();
 					}
 				}
@@ -261,7 +280,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 		});
 	}
 
-	return next;
+	return current;
 }
 
 /**

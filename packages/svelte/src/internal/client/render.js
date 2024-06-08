@@ -36,22 +36,17 @@ export function set_should_intro(value) {
 }
 
 /**
- * @param {Element} dom
+ * @param {Element} text
  * @param {string} value
  * @returns {void}
  */
-export function set_text(dom, value) {
-	// @ts-expect-error need to add __value to patched prototype
-	const prev_node_value = dom.__nodeValue;
-	const next_node_value = stringify(value);
-	if (hydrating && dom.nodeValue === next_node_value) {
-		// In case of hydration don't reset the nodeValue as it's already correct.
-		// @ts-expect-error need to add __nodeValue to patched prototype
-		dom.__nodeValue = next_node_value;
-	} else if (prev_node_value !== next_node_value) {
-		dom.nodeValue = next_node_value;
-		// @ts-expect-error need to add __className to patched prototype
-		dom.__nodeValue = next_node_value;
+export function set_text(text, value) {
+	// @ts-expect-error
+	const prev = (text.__t ??= text.nodeValue);
+
+	if (prev !== value) {
+		// @ts-expect-error
+		text.nodeValue = text.__t = value;
 	}
 }
 

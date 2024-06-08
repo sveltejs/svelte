@@ -292,7 +292,13 @@ export function serialize_set_binding(node, context, fallback, options) {
 
 	const serialize = () => {
 		if (left === node.left) {
-			if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
+			const is_initial_proxy =
+				binding.initial !== null &&
+				should_proxy_or_freeze(
+					/**@type {import("estree").Expression}*/ (binding.initial),
+					context.state.scope
+				);
+			if ((binding.kind === 'prop' || binding.kind === 'bindable_prop') && !is_initial_proxy) {
 				return b.call(left, value);
 			} else if (is_store) {
 				return b.call('$.store_set', serialize_get_binding(b.id(left_name), state), value);
@@ -316,6 +322,18 @@ export function serialize_set_binding(node, context, fallback, options) {
 							!options?.skip_proxy_and_freeze &&
 							should_proxy_or_freeze(value, context.state.scope)
 							? b.call('$.freeze', value)
+							: value
+					);
+				} else if (
+					(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
+					is_initial_proxy
+				) {
+					call = b.call(
+						left,
+						context.state.analysis.runes &&
+							!options?.skip_proxy_and_freeze &&
+							should_proxy_or_freeze(value, context.state.scope)
+							? serialize_proxy_reassignment(value, left_name, state)
 							: value
 					);
 				} else {

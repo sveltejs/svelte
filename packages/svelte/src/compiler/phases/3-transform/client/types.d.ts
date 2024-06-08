@@ -49,9 +49,9 @@ export interface ComponentClientTransformState extends ClientTransformState {
 		namespace: Namespace;
 		bound_contenteditable: boolean;
 		/**
-		 * Stuff that is set within the children of one `create_block` that is relevant
-		 * to said `create_block`. Shouldn't be destructured or otherwise spread unless
-		 * inside `create_block` to keep the object reference intact (it's also nested
+		 * Stuff that is set within the children of one `Fragment` visitor that is relevant
+		 * to said fragment. Shouldn't be destructured or otherwise spread unless inside the
+		 * `Fragment` visitor to keep the object reference intact (it's also nested
 		 * within `metadata` for this reason).
 		 */
 		context: {

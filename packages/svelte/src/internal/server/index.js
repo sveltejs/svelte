@@ -10,15 +10,8 @@ import {
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
-import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import { BLOCK_ANCHOR, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
-
-/**
- * @typedef {{
- * 	head: string;
- * 	html: string;
- * }} RenderOutput
- */
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
@@ -85,12 +78,9 @@ export function element(payload, tag, attributes_fn, children_fn) {
 	payload.out += `>`;
 
 	if (!VoidElements.has(tag)) {
-		if (!RawTextElements.includes(tag)) {
-			payload.out += BLOCK_OPEN;
-		}
 		children_fn();
 		if (!RawTextElements.includes(tag)) {
-			payload.out += BLOCK_CLOSE;
+			payload.out += BLOCK_ANCHOR;
 		}
 		payload.out += `</${tag}>`;
 	}
@@ -105,7 +95,7 @@ export let on_destroy = [];
 /**
  * @param {typeof import('svelte').SvelteComponent} component
  * @param {{ props: Record<string, any>; context?: Map<any, any> }} options
- * @returns {RenderOutput}
+ * @returns {import('#server').RenderOutput}
  */
 export function render(component, options) {
 	const payload = create_payload();
@@ -132,7 +122,8 @@ export function render(component, options) {
 
 	return {
 		head: payload.head.out || payload.head.title ? payload.head.out + payload.head.title : '',
-		html: payload.out
+		html: payload.out,
+		body: payload.out
 	};
 }
 
@@ -171,15 +162,15 @@ export function attr(name, value, boolean) {
 export function css_props(payload, is_html, props, component) {
 	const styles = style_object_to_string(props);
 	if (is_html) {
-		payload.out += `<div style="display: contents; ${styles}"><!--[-->`;
+		payload.out += `<div style="display: contents; ${styles}">`;
 	} else {
-		payload.out += `<g style="${styles}"><!--[-->`;
+		payload.out += `<g style="${styles}">`;
 	}
 	component();
 	if (is_html) {
-		payload.out += `<!--]--></div>`;
+		payload.out += `<!----></div>`;
 	} else {
-		payload.out += `<!--]--></g>`;
+		payload.out += `<!----></g>`;
 	}
 }
 

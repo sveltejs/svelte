@@ -1,3 +1,5 @@
+import { set } from '../internal/client/reactivity/sources.js';
+
 /**
  * @template T
  * @template U
@@ -26,4 +28,9 @@ export function map(iterable, fn, name) {
 /** @this {any} */
 function get_this() {
 	return this;
+}
+
+/** @param {import('#client').Source<number>} source */
+export function increment(source) {
+	set(source, source.v + 1);
 }

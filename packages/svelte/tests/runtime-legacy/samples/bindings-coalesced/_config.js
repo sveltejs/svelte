@@ -9,7 +9,7 @@ export default test({
 
 		Object.defineProperty(p.childNodes[0], 'nodeValue', {
 			set(value) {
-				values.push(value);
+				values.push('' + value);
 			}
 		});
 

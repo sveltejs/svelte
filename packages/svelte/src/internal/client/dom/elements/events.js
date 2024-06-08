@@ -1,4 +1,4 @@
-import { render_effect } from '../../reactivity/effects.js';
+import { render_effect, teardown } from '../../reactivity/effects.js';
 import { all_registered_events, root_event_handles } from '../../render.js';
 import { define_property, is_array } from '../../utils.js';
 import { hydrating } from '../hydration.js';
@@ -67,6 +67,24 @@ export function create_event(event_name, dom, handler, options) {
 }
 
 /**
+ * Attaches an event handler to an element and returns a function that removes the handler. Using this
+ * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
+ * (with attributes like `onclick`), which use event delegation for performance reasons
+ *
+ * @param {Element} element
+ * @param {string} type
+ * @param {EventListener} handler
+ * @param {AddEventListenerOptions} [options]
+ */
+export function on(element, type, handler, options = {}) {
+	var target_handler = create_event(type, element, handler, options);
+
+	return () => {
+		element.removeEventListener(type, target_handler, options);
+	};
+}
+
+/**
  * @param {string} event_name
  * @param {Element} dom
  * @param {EventListener} handler
@@ -80,10 +98,8 @@ export function event(event_name, dom, handler, capture, passive) {
 
 	// @ts-ignore
 	if (dom === document.body || dom === window || dom === document) {
-		render_effect(() => {
-			return () => {
-				dom.removeEventListener(event_name, target_handler, options);
-			};
+		teardown(() => {
+			dom.removeEventListener(event_name, target_handler, options);
 		});
 	}
 }
@@ -112,13 +128,6 @@ export function handle_event_propagation(handler_element, event) {
 	var event_name = event.type;
 	var path = event.composedPath?.() || [];
 	var current_target = /** @type {null | Element} */ (path[0] || event.target);
-
-	if (event.target !== current_target) {
-		define_property(event, 'target', {
-			configurable: true,
-			value: current_target
-		});
-	}
 
 	// composedPath contains list of nodes the event has propagated through.
 	// We check __root to skip all nodes below it in case this is a

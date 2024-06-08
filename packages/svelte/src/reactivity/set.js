@@ -1,6 +1,7 @@
 import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
+import { increment } from './utils.js';
 
 var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
 var set_like_methods = ['difference', 'intersection', 'symmetricDifference', 'union'];
@@ -46,6 +47,7 @@ export class ReactiveSet extends Set {
 		for (const method of read_methods) {
 			// @ts-ignore
 			proto[method] = function (...v) {
+				this.#read_all();
 				get(this.#version);
 				// @ts-ignore
 				return set_proto[method].apply(this, v);
@@ -61,10 +63,6 @@ export class ReactiveSet extends Set {
 				return new ReactiveSet(set);
 			};
 		}
-	}
-
-	#increment_version() {
-		set(this.#version, this.#version.v + 1);
 	}
 
 	/** @param {T} value */
@@ -89,6 +87,23 @@ export class ReactiveSet extends Set {
 		return super.has(value);
 	}
 
+	#read_all() {
+		var sources = this.#sources;
+
+		if (sources.size !== super.size) {
+			for (let value of super.values()) {
+				var s = sources.get(value);
+
+				if (s === undefined) {
+					s = source(true);
+					sources.set(value, s);
+				}
+
+				get(s);
+			}
+		}
+	}
+
 	/** @param {T} value */
 	add(value) {
 		var sources = this.#sources;
@@ -96,9 +111,8 @@ export class ReactiveSet extends Set {
 		var s = sources.get(value);
 
 		if (s === undefined) {
-			sources.set(value, source(true));
 			set(this.#size, super.size);
-			this.#increment_version();
+			increment(this.#version);
 		} else {
 			set(s, true);
 		}
@@ -116,7 +130,7 @@ export class ReactiveSet extends Set {
 			sources.delete(value);
 			set(this.#size, super.size);
 			set(s, false);
-			this.#increment_version();
+			increment(this.#version);
 		}
 
 		return res;
@@ -130,23 +144,26 @@ export class ReactiveSet extends Set {
 			for (var s of sources.values()) {
 				set(s, false);
 			}
-			this.#increment_version();
+			increment(this.#version);
 			sources.clear();
 		}
 		super.clear();
 	}
 
 	keys() {
+		this.#read_all();
 		get(this.#version);
 		return super.keys();
 	}
 
 	values() {
+		this.#read_all();
 		get(this.#version);
 		return super.values();
 	}
 
 	entries() {
+		this.#read_all();
 		get(this.#version);
 		return super.entries();
 	}
