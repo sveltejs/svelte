@@ -1446,10 +1446,6 @@ function serialize_attribute_value(attribute_value, context) {
 		return [contains_call_expression, b.literal(true)];
 	}
 
-	if (attribute_value.length === 0) {
-		return [contains_call_expression, b.literal('')]; // is this even possible?
-	}
-
 	if (attribute_value.length === 1) {
 		const value = attribute_value[0];
 		if (value.type === 'Text') {
