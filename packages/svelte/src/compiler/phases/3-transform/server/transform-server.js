@@ -407,22 +407,6 @@ const global_visitors = {
 };
 
 /** @type {import('./types').Visitors} */
-const javascript_visitors = {
-	Program(node, { visit }) {
-		return /** @type {import('estree').Program} */ ({
-			...node,
-			body: node.body.map((node) => /** @type {import('estree').Node} */ (visit(node)))
-		});
-	},
-	BlockStatement(node, { visit }) {
-		return /** @type {import('estree').BlockStatement} */ ({
-			...node,
-			body: node.body.map((node) => /** @type {import('estree').Node} */ (visit(node)))
-		});
-	}
-};
-
-/** @type {import('./types').Visitors} */
 const javascript_visitors_runes = {
 	ClassBody(node, { state, visit }) {
 		/** @type {Map<string, import('../../3-transform/client/types.js').StateField>} */
@@ -1979,7 +1963,6 @@ export function server_component(analysis, options) {
 			{
 				...set_scope(analysis.module.scopes),
 				...global_visitors,
-				...javascript_visitors,
 				...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy)
 			}
 		)
@@ -1993,7 +1976,6 @@ export function server_component(analysis, options) {
 			{
 				...set_scope(analysis.instance.scopes),
 				...global_visitors,
-				...javascript_visitors,
 				...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy),
 				ImportDeclaration(node) {
 					state.hoisted.push(node);
@@ -2265,7 +2247,7 @@ export function server_module(analysis, options) {
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
 		// this is an anomaly — it can only be used in components, but it needs
-		// to be present for `javascript_visitors` and so is included in module
+		// to be present for `javascript_visitors_legacy` and so is included in module
 		// transform state as well as component transform state
 		legacy_reactive_statements: new Map(),
 		private_derived: new Map()
@@ -2275,7 +2257,6 @@ export function server_module(analysis, options) {
 		walk(/** @type {import('#compiler').SvelteNode} */ (analysis.module.ast), state, {
 			...set_scope(analysis.module.scopes),
 			...global_visitors,
-			...javascript_visitors,
 			...javascript_visitors_runes
 		})
 	);
