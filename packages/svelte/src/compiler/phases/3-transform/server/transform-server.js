@@ -710,10 +710,6 @@ function serialize_attribute_value(
 		return b.true;
 	}
 
-	if (attribute_value.length === 0) {
-		return b.literal(''); // is this even possible?
-	}
-
 	if (attribute_value.length === 1) {
 		const value = attribute_value[0];
 		if (value.type === 'Text') {
@@ -728,25 +724,18 @@ function serialize_attribute_value(
 		}
 	}
 
-	/** @type {import('estree').TemplateElement[]} */
-	const quasis = [];
+	let quasi = b.quasi('', false);
+	const quasis = [quasi];
 
 	/** @type {import('estree').Expression[]} */
 	const expressions = [];
 
-	quasis.push(b.quasi('', false));
-
-	let i = 0;
-	for (const node of attribute_value) {
-		i++;
+	for (let i = 0; i < attribute_value.length; i++) {
+		const node = attribute_value[i];
 		if (node.type === 'Text') {
-			let data = node.data;
-			if (trim_whitespace) {
-				// don't trim, space could be important to separate from expression tag
-				data = data.replace(regex_whitespaces_strict, ' ');
-			}
-			const last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
-			last.value.raw += data;
+			quasi.value.raw += trim_whitespace
+				? node.data.replace(regex_whitespaces_strict, ' ')
+				: node.data;
 		} else {
 			expressions.push(
 				b.call(
@@ -754,7 +743,9 @@ function serialize_attribute_value(
 					/** @type {import('estree').Expression} */ (context.visit(node.expression))
 				)
 			);
-			quasis.push(b.quasi('', i + 1 === attribute_value.length));
+
+			quasi = b.quasi('', i + 1 === attribute_value.length);
+			quasis.push(quasi);
 		}
 	}
 
