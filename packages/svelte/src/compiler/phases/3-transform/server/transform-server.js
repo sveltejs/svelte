@@ -403,6 +403,35 @@ const global_visitors = {
 		}
 
 		return next();
+	},
+	CallExpression(node, context) {
+		const rune = get_rune(node, context.state.scope);
+
+		if (rune === '$host') {
+			return b.id('undefined');
+		}
+
+		if (rune === '$effect.active') {
+			return b.literal(false);
+		}
+
+		if (rune === '$state.snapshot') {
+			return /** @type {import('estree').Expression} */ (context.visit(node.arguments[0]));
+		}
+
+		if (rune === '$state.is') {
+			return b.call(
+				'Object.is',
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0])),
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[1]))
+			);
+		}
+
+		if (rune === '$inspect' || rune === '$inspect().with') {
+			return transform_inspect_rune(node, context);
+		}
+
+		context.next();
 	}
 };
 
@@ -623,35 +652,6 @@ const javascript_visitors_runes = {
 				return b.empty;
 			}
 		}
-		context.next();
-	},
-	CallExpression(node, context) {
-		const rune = get_rune(node, context.state.scope);
-
-		if (rune === '$host') {
-			return b.id('undefined');
-		}
-
-		if (rune === '$effect.active') {
-			return b.literal(false);
-		}
-
-		if (rune === '$state.snapshot') {
-			return /** @type {import('estree').Expression} */ (context.visit(node.arguments[0]));
-		}
-
-		if (rune === '$state.is') {
-			return b.call(
-				'Object.is',
-				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0])),
-				/** @type {import('estree').Expression} */ (context.visit(node.arguments[1]))
-			);
-		}
-
-		if (rune === '$inspect' || rune === '$inspect().with') {
-			return transform_inspect_rune(node, context);
-		}
-
 		context.next();
 	},
 	MemberExpression(node, context) {
@@ -1548,6 +1548,7 @@ const template_visitors = {
 				spreads.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
 			} else if (attribute.type === 'Attribute') {
 				const value = serialize_attribute_value(attribute.value, context, false, true);
+
 				if (attribute.name === 'name') {
 					expression = b.member(b.member_id('$$props.$$slots'), value, true, true);
 				} else if (attribute.name !== 'slot') {
@@ -1585,9 +1586,7 @@ const template_visitors = {
 		context.state.template.push(
 			b.stmt(b.call('$.head', b.id('$$payload'), b.arrow([b.id('$$payload')], block)))
 		);
-	},
-	// @ts-ignore: need to extract this out somehow
-	CallExpression: javascript_visitors_runes.CallExpression
+	}
 };
 
 /**
@@ -1614,8 +1613,8 @@ function serialize_element_attributes(node, context) {
 
 	let has_spread = false;
 	// Use the index to keep the attributes order which is important for spreading
-	let class_attribute_idx = -1;
-	let style_attribute_idx = -1;
+	let class_index = -1;
+	let style_index = -1;
 	let events_to_capture = new Set();
 
 	for (const attribute of node.attributes) {
@@ -1649,9 +1648,9 @@ function serialize_element_attributes(node, context) {
 				}
 			} else {
 				if (attribute.name === 'class') {
-					class_attribute_idx = attributes.length;
+					class_index = attributes.length;
 				} else if (attribute.name === 'style') {
-					style_attribute_idx = attributes.length;
+					style_index = attributes.length;
 				}
 				attributes.push(attribute);
 			}
@@ -1761,9 +1760,9 @@ function serialize_element_attributes(node, context) {
 	if (class_directives.length > 0 && !has_spread) {
 		const class_attribute = serialize_class_directives(
 			class_directives,
-			/** @type {import('#compiler').Attribute | null} */ (attributes[class_attribute_idx] ?? null)
+			/** @type {import('#compiler').Attribute | null} */ (attributes[class_index] ?? null)
 		);
-		if (class_attribute_idx === -1) {
+		if (class_index === -1) {
 			attributes.push(class_attribute);
 		}
 	}
@@ -1771,11 +1770,11 @@ function serialize_element_attributes(node, context) {
 	if (style_directives.length > 0 && !has_spread) {
 		serialize_style_directives(
 			style_directives,
-			/** @type {import('#compiler').Attribute | null} */ (attributes[style_attribute_idx] ?? null),
+			/** @type {import('#compiler').Attribute | null} */ (attributes[style_index] ?? null),
 			context
 		);
-		if (style_attribute_idx > -1) {
-			attributes.splice(style_attribute_idx, 1);
+		if (style_index > -1) {
+			attributes.splice(style_index, 1);
 		}
 	}
 
