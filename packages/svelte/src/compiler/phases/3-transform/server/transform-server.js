@@ -51,11 +51,10 @@ function t_string(value) {
 
 /**
  * @param {import('estree').Expression} value
- * @param {boolean} [needs_escaping]
  * @returns {import('./types').TemplateExpression}
  */
-function t_expression(value, needs_escaping = false) {
-	return { type: 'expression', value, needs_escaping };
+function t_expression(value) {
+	return { type: 'expression', value };
 }
 
 /**
@@ -105,8 +104,7 @@ function serialize_template(template, out = b.id('out')) {
 			} else if (template_item.type === 'expression') {
 				const value = template_item.value;
 				if (value.type === 'TemplateLiteral') {
-					const raw = value.quasis[0].value.raw;
-					last.value.raw += template_item.needs_escaping ? sanitize_template_string(raw) : raw;
+					last.value.raw += value.quasis[0].value.raw;
 					quasis.push(...value.quasis.slice(1));
 					expressions.push(...value.expressions);
 					continue;
@@ -193,11 +191,13 @@ function process_children(nodes, parent, { visit, state }) {
 			const node = sequence[i];
 			if (node.type === 'Text' || node.type === 'Comment') {
 				let last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
-				last.value.raw += node.type === 'Comment' ? `<!--${node.data}-->` : escape_html(node.data);
+				last.value.raw += sanitize_template_string(
+					node.type === 'Comment' ? `<!--${node.data}-->` : escape_html(node.data)
+				);
 			} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
 				let last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
 				if (node.expression.value != null) {
-					last.value.raw += escape_html(node.expression.value + '');
+					last.value.raw += sanitize_template_string(escape_html(node.expression.value + ''));
 				}
 			} else if (node.type === 'Anchor') {
 				expressions.push(node.id);
@@ -210,7 +210,7 @@ function process_children(nodes, parent, { visit, state }) {
 			}
 		}
 
-		state.template.push(t_expression(b.template(quasis, expressions), true));
+		state.template.push(t_expression(b.template(quasis, expressions)));
 	}
 
 	for (let i = 0; i < nodes.length; i += 1) {
