@@ -1181,10 +1181,6 @@ const template_visitors = {
 			context.state.options.preserveComments
 		);
 
-		if (hoisted.length === 0 && trimmed.length === 0) {
-			return b.block([]);
-		}
-
 		/** @type {import('./types').ComponentServerTransformState} */
 		const state = {
 			...context.state,
@@ -1199,14 +1195,7 @@ const template_visitors = {
 
 		process_children(trimmed, parent, { ...context, state });
 
-		/** @type {import('estree').Statement[]} */
-		const body = [...state.init];
-
-		if (state.template.length > 0) {
-			body.push(...serialize_template(state.template));
-		}
-
-		return b.block(body);
+		return b.block([...state.init, ...serialize_template(state.template)]);
 	},
 	HtmlTag(node, context) {
 		const expression = /** @type {import('estree').Expression} */ (context.visit(node.expression));
