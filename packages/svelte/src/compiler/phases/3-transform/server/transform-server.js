@@ -1344,64 +1344,48 @@ const template_visitors = {
 
 		state.template.push(block_close);
 	},
-	ClassDirective(node) {
+	ClassDirective() {
 		throw new Error('Node should have been handled elsewhere');
 	},
-	StyleDirective(node) {
+	StyleDirective() {
 		throw new Error('Node should have been handled elsewhere');
 	},
 	RegularElement(node, context) {
-		const metadata = {
-			...context.state.metadata,
-			namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
-		};
-
 		context.state.template.push(t_string(`<${node.name}`));
-		const body_expression = serialize_element_attributes(node, context);
+		const body = serialize_element_attributes(node, context);
 		context.state.template.push(t_string('>'));
+
+		const namespace = determine_namespace_for_children(node, context.state.metadata.namespace);
 
 		/** @type {import('./types').ComponentServerTransformState} */
 		const state = {
 			...context.state,
-			metadata,
+			metadata: { ...context.state.metadata, namespace },
 			preserve_whitespace:
 				context.state.preserve_whitespace ||
-				((node.name === 'pre' || node.name === 'textarea') && metadata.namespace !== 'foreign')
+				((node.name === 'pre' || node.name === 'textarea') && namespace !== 'foreign')
 		};
-
-		/** @type {import('./types').ComponentContext} */
-		const inner_context =
-			body_expression !== null
-				? {
-						...context,
-						state: {
-							...state,
-							template: [],
-							init: []
-						}
-					}
-				: { ...context, state };
 
 		const { hoisted, trimmed } = clean_nodes(
 			node,
 			node.fragment.nodes,
-			inner_context.path,
-			metadata.namespace,
+			context.path,
+			namespace,
 			{
-				...context.state,
-				scope: /** @type {import('../../scope').Scope} */ (context.state.scopes.get(node.fragment))
+				...state,
+				scope: /** @type {import('../../scope').Scope} */ (state.scopes.get(node.fragment))
 			},
 			state.preserve_whitespace,
 			state.options.preserveComments
 		);
 
 		for (const node of hoisted) {
-			inner_context.visit(node, state);
+			context.visit(node, state);
 		}
 
-		if (context.state.options.dev) {
+		if (state.options.dev) {
 			const location = /** @type {import('locate-character').Location} */ (locator(node.start));
-			context.state.template.push(
+			state.template.push(
 				t_statement(
 					b.stmt(
 						b.call(
@@ -1416,40 +1400,39 @@ const template_visitors = {
 			);
 		}
 
-		process_children(trimmed, node, inner_context);
+		if (body === null) {
+			process_children(trimmed, node, { ...context, state });
+		} else {
+			let id = body;
 
-		if (body_expression !== null) {
-			let body_id;
-			const expression = body_expression.escape
-				? b.call('$.escape', body_expression.expression)
-				: body_expression.expression;
-			if (expression.type === 'Identifier') {
-				body_id = expression;
-			} else {
-				body_id = b.id(context.state.scope.generate('$$body'));
-				context.state.template.push(t_statement(b.const(body_id, expression)));
+			if (body.type !== 'Identifier') {
+				id = b.id(state.scope.generate('$$body'));
+				state.template.push(t_statement(b.const(id, body)));
 			}
 
+			// if this is a `<textarea>` value or a contenteditable binding, we only add
+			// the body if the attribute/binding is falsy
+			const inner_state = { ...state, template: [], init: [] };
+			process_children(trimmed, node, { ...context, state: inner_state });
+
 			// Use the body expression as the body if it's truthy, otherwise use the inner template
-			context.state.template.push(
+			state.template.push(
 				t_statement(
 					b.if(
-						body_id,
-						b.block(serialize_template([t_expression(body_id)])),
-						b.block([
-							...inner_context.state.init,
-							...serialize_template(inner_context.state.template)
-						])
+						id,
+						b.block(serialize_template([t_expression(id)])),
+						b.block([...inner_state.init, ...serialize_template(inner_state.template)])
 					)
 				)
 			);
 		}
 
-		if (!VoidElements.includes(node.name) && metadata.namespace !== 'foreign') {
-			context.state.template.push(t_string(`</${node.name}>`));
+		if (!VoidElements.includes(node.name) && namespace !== 'foreign') {
+			state.template.push(t_string(`</${node.name}>`));
 		}
-		if (context.state.options.dev) {
-			context.state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));
+
+		if (state.options.dev) {
+			state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));
 		}
 	},
 	SvelteElement(node, context) {
@@ -1467,29 +1450,17 @@ const template_visitors = {
 			context.state.init.push(b.stmt(b.call('$.validate_dynamic_element_tag', b.thunk(tag))));
 		}
 
-		const metadata = {
-			...context.state.metadata,
-			namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
-		};
-		/** @type {import('./types').ComponentContext} */
-		const inner_context = {
-			...context,
-			state: {
-				...context.state,
-				metadata,
-				template: [],
-				init: []
-			}
+		const state = {
+			...context.state,
+			metadata: {
+				...context.state.metadata,
+				namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
+			},
+			template: [],
+			init: []
 		};
 
-		const main = /** @type {import('estree').BlockStatement} */ (
-			context.visit(node.fragment, {
-				...context.state,
-				metadata
-			})
-		);
-
-		serialize_element_attributes(node, inner_context);
+		serialize_element_attributes(node, { ...context, state });
 
 		if (context.state.options.dev) {
 			context.state.template.push(
@@ -1497,29 +1468,17 @@ const template_visitors = {
 			);
 		}
 
-		context.state.template.push(
-			t_statement(
-				b.if(
-					tag,
-
-					b.stmt(
-						b.call(
-							'$.element',
-							b.id('$$payload'),
-							tag,
-							b.thunk(
-								b.block([
-									...inner_context.state.init,
-									...serialize_template(inner_context.state.template)
-								])
-							),
-							b.thunk(main)
-						)
-					)
-				)
-			),
-			block_anchor
+		const attributes = b.block([...state.init, ...serialize_template(state.template)]);
+		const children = /** @type {import('estree').BlockStatement} */ (
+			context.visit(node.fragment, state)
 		);
+
+		const body = b.stmt(
+			b.call('$.element', b.id('$$payload'), tag, b.thunk(attributes), b.thunk(children))
+		);
+
+		context.state.template.push(t_statement(b.if(tag, body)), block_anchor);
+
 		if (context.state.options.dev) {
 			context.state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));
 		}
@@ -1834,7 +1793,7 @@ function serialize_element_attributes(node, context) {
 	/** @type {import('estree').ExpressionStatement[]} */
 	const lets = [];
 
-	/** @type {{ escape: boolean; expression: import('estree').Expression } | null} */
+	/** @type {import('estree').Expression | null} */
 	let content = null;
 
 	let has_spread = false;
@@ -1857,10 +1816,7 @@ function serialize_element_attributes(node, context) {
 						// also see related code in analysis phase
 						attribute.value[0].data = '\n' + attribute.value[0].data;
 					}
-					content = {
-						escape: true,
-						expression: serialize_attribute_value(attribute.value, context)
-					};
+					content = b.call('$.escape', serialize_attribute_value(attribute.value, context));
 				} else if (node.name !== 'select') {
 					// omit value attribute for select elements, it's irrelevant for the initially selected value and has no
 					// effect on the selected value after the user interacts with the select element (the value _property_ does, but not the attribute)
@@ -1903,19 +1859,12 @@ function serialize_element_attributes(node, context) {
 			if (binding?.omit_in_ssr) continue;
 
 			if (ContentEditableBindings.includes(attribute.name)) {
-				content = {
-					escape: false,
-					expression: /** @type {import('estree').Expression} */ (
-						context.visit(attribute.expression)
-					)
-				};
+				content = /** @type {import('estree').Expression} */ (context.visit(attribute.expression));
 			} else if (attribute.name === 'value' && node.name === 'textarea') {
-				content = {
-					escape: true,
-					expression: /** @type {import('estree').Expression} */ (
-						context.visit(attribute.expression)
-					)
-				};
+				content = b.call(
+					'$.escape',
+					/** @type {import('estree').Expression} */ (context.visit(attribute.expression))
+				);
 			} else if (attribute.name === 'group') {
 				const value_attribute = /** @type {import('#compiler').Attribute | undefined} */ (
 					node.attributes.find((attr) => attr.type === 'Attribute' && attr.name === 'value')
