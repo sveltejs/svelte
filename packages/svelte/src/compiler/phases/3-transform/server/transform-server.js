@@ -152,7 +152,8 @@ function process_children(nodes, parent, { visit, state }) {
 			return;
 		}
 
-		const quasis = [b.quasi('', false)];
+		let quasi = b.quasi('', false);
+		const quasis = [quasi];
 
 		/** @type {import('estree').Expression[]} */
 		const expressions = [];
@@ -161,20 +162,20 @@ function process_children(nodes, parent, { visit, state }) {
 			const node = sequence[i];
 
 			if (node.type === 'Text' || node.type === 'Comment') {
-				let last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
-				last.value.raw += sanitize_template_string(
+				quasi.value.raw += sanitize_template_string(
 					node.type === 'Comment' ? `<!--${node.data}-->` : escape_html(node.data)
 				);
 			} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
-				let last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
 				if (node.expression.value != null) {
-					last.value.raw += sanitize_template_string(escape_html(node.expression.value + ''));
+					quasi.value.raw += sanitize_template_string(escape_html(node.expression.value + ''));
 				}
 			} else {
 				expressions.push(
 					b.call('$.escape', /** @type {import('estree').Expression} */ (visit(node.expression)))
 				);
-				quasis.push(b.quasi('', i + 1 === sequence.length));
+
+				quasi = b.quasi('', i + 1 === sequence.length);
+				quasis.push(quasi);
 			}
 		}
 
