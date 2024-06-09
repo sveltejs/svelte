@@ -1450,29 +1450,21 @@ const template_visitors = {
 			context.state.init.push(b.stmt(b.call('$.validate_dynamic_element_tag', b.thunk(tag))));
 		}
 
-		const metadata = {
-			...context.state.metadata,
-			namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
-		};
-		/** @type {import('./types').ComponentContext} */
-		const inner_context = {
-			...context,
-			state: {
-				...context.state,
-				metadata,
-				template: [],
-				init: []
-			}
+		const state = {
+			...context.state,
+			metadata: {
+				...context.state.metadata,
+				namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
+			},
+			template: [],
+			init: []
 		};
 
 		const main = /** @type {import('estree').BlockStatement} */ (
-			context.visit(node.fragment, {
-				...context.state,
-				metadata
-			})
+			context.visit(node.fragment, state)
 		);
 
-		serialize_element_attributes(node, inner_context);
+		serialize_element_attributes(node, { ...context, state });
 
 		if (context.state.options.dev) {
 			context.state.template.push(
@@ -1484,18 +1476,12 @@ const template_visitors = {
 			t_statement(
 				b.if(
 					tag,
-
 					b.stmt(
 						b.call(
 							'$.element',
 							b.id('$$payload'),
 							tag,
-							b.thunk(
-								b.block([
-									...inner_context.state.init,
-									...serialize_template(inner_context.state.template)
-								])
-							),
+							b.thunk(b.block([...state.init, ...serialize_template(state.template)])),
 							b.thunk(main)
 						)
 					)
@@ -1503,6 +1489,7 @@ const template_visitors = {
 			),
 			block_anchor
 		);
+
 		if (context.state.options.dev) {
 			context.state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));
 		}
