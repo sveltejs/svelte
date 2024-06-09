@@ -147,20 +147,11 @@ function process_children(nodes, parent, { visit, state }) {
 				} else {
 					state.template.push(string(escape_html(node.data)));
 				}
-				return;
-			}
-
-			if (node.type === 'Comment') {
+			} else if (node.type === 'Comment') {
 				state.template.push(string(`<!--${escape_html(node.data)}-->`));
-				return;
-			}
-
-			if (node.type === 'Anchor') {
+			} else if (node.type === 'Anchor') {
 				state.template.push(node.id);
-				return;
-			}
-
-			if (node.expression.type === 'Literal') {
+			} else if (node.expression.type === 'Literal') {
 				state.template.push(string(escape_html(node.expression.value + '')));
 			} else {
 				state.template.push(
@@ -2044,20 +2035,16 @@ function serialize_style_directives(style_directives, style_attribute, context) 
 		return b.init(directive.name, value);
 	});
 
-	if (style_attribute === null) {
-		context.state.template.push(b.call('$.add_styles', b.object(styles)));
-	} else {
-		context.state.template.push(
-			b.call(
-				'$.add_styles',
-				b.call(
+	const arg =
+		style_attribute === null
+			? b.object(styles)
+			: b.call(
 					'$.merge_styles',
 					serialize_attribute_value(style_attribute.value, context, true),
 					b.object(styles)
-				)
-			)
-		);
-	}
+				);
+
+	context.state.template.push(b.call('$.add_styles', arg));
 }
 
 /**
