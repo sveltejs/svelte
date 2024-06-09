@@ -10,18 +10,6 @@ import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
 import type { StateField } from '../client/types.js';
 
-export type TemplateExpression = {
-	type: 'expression';
-	value: Expression;
-};
-
-export type TemplateStatement = {
-	type: 'statement';
-	value: Statement;
-};
-
-export type Template = TemplateExpression | TemplateStatement;
-
 export interface Anchor {
 	type: 'Anchor';
 	id: Identifier;
