@@ -269,23 +269,27 @@ export function add_styles(style_object) {
  */
 export function merge_styles(style_attribute, style_directive) {
 	/** @type {Record<string, string>} */
-	const style_object = {};
-	for (const individual_style of (style_attribute ?? '').split(';')) {
-		const colon_index = individual_style.indexOf(':');
-		const name = individual_style.slice(0, colon_index).trim();
-		const value = individual_style.slice(colon_index + 1).trim();
-		if (!name) continue;
-		style_object[name] = value;
-	}
-	for (const name in style_directive) {
-		const value = style_directive[name];
-		if (value) {
-			style_object[name] = value;
-		} else {
-			delete style_object[name];
+	var merged = {};
+
+	if (style_attribute) {
+		for (var individual_style of style_attribute.split(';')) {
+			var colon_index = individual_style.indexOf(':');
+			var name = individual_style.slice(0, colon_index).trim();
+			var value = individual_style.slice(colon_index + 1).trim();
+			if (name) merged[name] = value;
 		}
 	}
-	return style_object;
+
+	for (var name in style_directive) {
+		var value = style_directive[name];
+		if (value) {
+			merged[name] = value;
+		} else {
+			delete merged[name];
+		}
+	}
+
+	return merged;
 }
 
 /**
