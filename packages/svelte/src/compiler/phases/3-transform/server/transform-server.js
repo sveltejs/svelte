@@ -116,10 +116,9 @@ function serialize_template(template, out = b.id('out')) {
  * Processes an array of template nodes, joining sibling text/expression nodes and
  * recursing into child nodes.
  * @param {Array<import('#compiler').SvelteNode>} nodes
- * @param {import('#compiler').SvelteNode} parent
  * @param {import('./types').ComponentContext} context
  */
-function process_children(nodes, parent, { visit, state }) {
+function process_children(nodes, { visit, state }) {
 	/** @typedef {Array<import('#compiler').Text | import('#compiler').Comment | import('#compiler').ExpressionTag>} Sequence */
 
 	/** @type {Sequence} */
@@ -1180,7 +1179,7 @@ const template_visitors = {
 			context.visit(node, state);
 		}
 
-		process_children(trimmed, parent, { ...context, state });
+		process_children(trimmed, { ...context, state });
 
 		return b.block([...state.init, ...serialize_template(state.template)]);
 	},
@@ -1302,7 +1301,7 @@ const template_visitors = {
 		}
 
 		if (body === null) {
-			process_children(trimmed, node, { ...context, state });
+			process_children(trimmed, { ...context, state });
 		} else {
 			let id = body;
 
@@ -1314,7 +1313,7 @@ const template_visitors = {
 			// if this is a `<textarea>` value or a contenteditable binding, we only add
 			// the body if the attribute/binding is falsy
 			const inner_state = { ...state, template: [], init: [] };
-			process_children(trimmed, node, { ...context, state: inner_state });
+			process_children(trimmed, { ...context, state: inner_state });
 
 			// Use the body expression as the body if it's truthy, otherwise use the inner template
 			state.template.push(
@@ -1574,10 +1573,7 @@ const template_visitors = {
 			template: []
 		};
 
-		process_children(node.fragment.nodes, node, {
-			...context,
-			state: inner_state
-		});
+		process_children(node.fragment.nodes, { ...context, state: inner_state });
 
 		// Use `=` so that later title changes override earlier ones
 		state.init.push(b.stmt(b.assignment('=', b.id('$$payload.title'), b.literal('<title>'))));
