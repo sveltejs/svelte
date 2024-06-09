@@ -5,6 +5,7 @@ import {
 	extract_paths,
 	is_event_attribute,
 	is_expression_async,
+	is_text_attribute,
 	unwrap_optional
 } from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
@@ -799,10 +800,10 @@ function serialize_element_spread_attributes(
 
 /**
  * @param {import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf} node
- * @param {string | import('estree').Expression} component_name
+ * @param {import('estree').Expression} expression
  * @param {import('./types').ComponentContext} context
  */
-function serialize_inline_component(node, component_name, context) {
+function serialize_inline_component(node, expression, context) {
 	/** @type {Array<import('estree').Property[] | import('estree').Expression>} */
 	const props_and_spreads = [];
 
@@ -984,13 +985,8 @@ function serialize_inline_component(node, component_name, context) {
 
 	/** @type {import('estree').Statement} */
 	let statement = b.stmt(
-		(typeof component_name === 'string' ? b.call : b.maybe_call)(
-			context.state.options.dev
-				? b.call(
-						'$.validate_component',
-						typeof component_name === 'string' ? b.id(component_name) : component_name
-					)
-				: component_name,
+		(node.type === 'SvelteComponent' ? b.maybe_call : b.call)(
+			context.state.options.dev ? b.call('$.validate_component', expression) : expression,
 			b.id('$$payload'),
 			props_expression
 		)
@@ -1015,17 +1011,6 @@ function serialize_inline_component(node, component_name, context) {
 	} else {
 		context.state.template.push(block_open, statement, block_close);
 	}
-}
-
-/**
- * Returns true if the attribute contains a single static text node.
- * @param {import('#compiler').Attribute} attribute
- * @returns {attribute is import('#compiler').Attribute & { value: [import('#compiler').Text] }}
- */
-function is_text_attribute(attribute) {
-	return (
-		attribute.value !== true && attribute.value.length === 1 && attribute.value[0].type === 'Text'
-	);
 }
 
 /** @type {import('./types').Visitors} */
@@ -1478,10 +1463,10 @@ const template_visitors = {
 		}
 	},
 	Component(node, context) {
-		serialize_inline_component(node, node.name, context);
+		serialize_inline_component(node, b.id(node.name), context);
 	},
 	SvelteSelf(node, context) {
-		serialize_inline_component(node, context.state.analysis.name, context);
+		serialize_inline_component(node, b.id(context.state.analysis.name), context);
 	},
 	SvelteComponent(node, context) {
 		serialize_inline_component(
@@ -1491,36 +1476,36 @@ const template_visitors = {
 		);
 	},
 	LetDirective(node, { state }) {
-		if (node.expression && node.expression.type !== 'Identifier') {
-			const name = state.scope.generate(node.name);
-			const bindings = state.scope.get_bindings(node);
-
-			for (const binding of bindings) {
-				binding.expression = b.member(b.id(name), b.id(binding.node.name));
-			}
-
-			return b.const(
-				name,
-				b.call(
-					b.thunk(
-						b.block([
-							b.let(
-								node.expression.type === 'ObjectExpression'
-									? // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
-										b.object_pattern(node.expression.properties)
-									: // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
-										b.array_pattern(node.expression.elements),
-								b.member(b.id('$$slotProps'), b.id(node.name))
-							),
-							b.return(b.object(bindings.map((binding) => b.init(binding.node.name, binding.node))))
-						])
-					)
-				)
-			);
-		} else {
+		if (node.expression === null || node.expression.type === 'Identifier') {
 			const name = node.expression === null ? node.name : node.expression.name;
 			return b.const(name, b.member(b.id('$$slotProps'), b.id(node.name)));
 		}
+
+		const name = state.scope.generate(node.name);
+		const bindings = state.scope.get_bindings(node);
+
+		for (const binding of bindings) {
+			binding.expression = b.member(b.id(name), b.id(binding.node.name));
+		}
+
+		return b.const(
+			name,
+			b.call(
+				b.thunk(
+					b.block([
+						b.let(
+							node.expression.type === 'ObjectExpression'
+								? // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
+									b.object_pattern(node.expression.properties)
+								: // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
+									b.array_pattern(node.expression.elements),
+							b.member(b.id('$$slotProps'), b.id(node.name))
+						),
+						b.return(b.object(bindings.map((binding) => b.init(binding.node.name, binding.node))))
+					])
+				)
+			)
+		);
 	},
 	SpreadAttribute(node, { visit }) {
 		return visit(node.expression);
