@@ -1056,9 +1056,7 @@ function serialize_inline_component(node, component_name, context) {
 
 		context.state.template.push(statement);
 	} else {
-		context.state.template.push(block_open);
-		context.state.template.push(statement);
-		context.state.template.push(block_close);
+		context.state.template.push(block_open, statement, block_close);
 	}
 }
 
@@ -1217,11 +1215,8 @@ const template_visitors = {
 		return b.block(body);
 	},
 	HtmlTag(node, context) {
-		context.state.template.push(
-			block_open,
-			/** @type {import('estree').Expression} */ (context.visit(node.expression)),
-			block_close
-		);
+		const expression = /** @type {import('estree').Expression} */ (context.visit(node.expression));
+		context.state.template.push(block_open, expression, block_close);
 	},
 	ConstTag(node, { state, visit }) {
 		const declaration = node.declaration.declarations[0];
@@ -1249,15 +1244,11 @@ const template_visitors = {
 		);
 	},
 	RenderTag(node, context) {
-		const state = context.state;
-
-		state.template.push(block_open);
-
 		const callee = unwrap_optional(node.expression).callee;
 		const raw_args = unwrap_optional(node.expression).arguments;
 
 		const expression = /** @type {import('estree').Expression} */ (context.visit(callee));
-		const snippet_function = state.options.dev
+		const snippet_function = context.state.options.dev
 			? b.call('$.validate_snippet', expression)
 			: expression;
 
@@ -1265,17 +1256,17 @@ const template_visitors = {
 			return /** @type {import('estree').Expression} */ (context.visit(arg));
 		});
 
-		state.template.push(
+		context.state.template.push(
+			block_open,
 			b.stmt(
 				(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
 					snippet_function,
 					b.id('$$payload'),
 					...snippet_args
 				)
-			)
+			),
+			block_close
 		);
-
-		state.template.push(block_close);
 	},
 	ClassDirective() {
 		throw new Error('Node should have been handled elsewhere');
@@ -1430,7 +1421,6 @@ const template_visitors = {
 			each_node_meta.contains_group_binding || !node.index
 				? each_node_meta.index
 				: b.id(node.index);
-		const children = node.body.nodes;
 
 		const array_id = state.scope.root.unique('each_array');
 		state.init.push(b.const(array_id, b.call('$.ensure_array_like', collection)));
@@ -1528,11 +1518,8 @@ const template_visitors = {
 		);
 	},
 	KeyBlock(node, context) {
-		context.state.template.push(
-			block_open,
-			/** @type {import('estree').BlockStatement} */ (context.visit(node.fragment)),
-			block_close
-		);
+		const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.fragment));
+		context.state.template.push(block_open, block, block_close);
 	},
 	SnippetBlock(node, context) {
 		const fn = b.function_declaration(
