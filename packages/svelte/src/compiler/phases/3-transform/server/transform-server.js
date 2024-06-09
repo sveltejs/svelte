@@ -1460,10 +1460,6 @@ const template_visitors = {
 			init: []
 		};
 
-		const main = /** @type {import('estree').BlockStatement} */ (
-			context.visit(node.fragment, state)
-		);
-
 		serialize_element_attributes(node, { ...context, state });
 
 		if (context.state.options.dev) {
@@ -1472,23 +1468,16 @@ const template_visitors = {
 			);
 		}
 
-		context.state.template.push(
-			t_statement(
-				b.if(
-					tag,
-					b.stmt(
-						b.call(
-							'$.element',
-							b.id('$$payload'),
-							tag,
-							b.thunk(b.block([...state.init, ...serialize_template(state.template)])),
-							b.thunk(main)
-						)
-					)
-				)
-			),
-			block_anchor
+		const attributes = b.block([...state.init, ...serialize_template(state.template)]);
+		const children = /** @type {import('estree').BlockStatement} */ (
+			context.visit(node.fragment, state)
 		);
+
+		const body = b.stmt(
+			b.call('$.element', b.id('$$payload'), tag, b.thunk(attributes), b.thunk(children))
+		);
+
+		context.state.template.push(t_statement(b.if(tag, body)), block_anchor);
 
 		if (context.state.options.dev) {
 			context.state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));
