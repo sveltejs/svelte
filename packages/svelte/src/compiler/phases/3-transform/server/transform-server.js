@@ -34,7 +34,11 @@ import {
 } from '../../../../constants.js';
 import { escape_html } from '../../../../escaping.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
-import { BLOCK_CLOSE, BLOCK_CLOSE_ELSE } from '../../../../internal/server/hydration.js';
+import {
+	BLOCK_CLOSE,
+	BLOCK_CLOSE_ELSE,
+	BLOCK_OPEN
+} from '../../../../internal/server/hydration.js';
 import { filename, locator } from '../../../state.js';
 
 export const block_open = t_string(`<!--${HYDRATION_START}-->`);
@@ -43,10 +47,10 @@ export const block_anchor = t_string(`<!--${HYDRATION_ANCHOR}-->`);
 
 /**
  * @param {string} value
- * @returns {import('./types').TemplateString}
+ * @returns {import('./types').TemplateExpression}
  */
 function t_string(value) {
-	return { type: 'string', value };
+	return { type: 'expression', value: b.literal(sanitize_template_string(value)) };
 }
 
 /**
@@ -99,8 +103,8 @@ function serialize_template(template, out = b.id('out')) {
 			let last = quasis.at(-1);
 			if (!last) quasis.push((last = b.quasi('', false)));
 
-			if (template_item.type === 'string') {
-				last.value.raw += sanitize_template_string(template_item.value);
+			if (template_item.value.type === 'Literal') {
+				last.value.raw += template_item.value.value;
 			} else if (template_item.type === 'expression') {
 				const value = template_item.value;
 				if (value.type === 'TemplateLiteral') {
@@ -170,11 +174,15 @@ function process_children(nodes, parent, { visit, state }) {
 				return;
 			}
 
-			const expression = b.call(
-				'$.escape',
-				/** @type {import('estree').Expression} */ (visit(node.expression))
-			);
-			state.template.push(t_expression(expression));
+			if (node.expression.type === 'Literal') {
+				state.template.push(t_string(escape_html(node.expression.value + '')));
+			} else {
+				state.template.push(
+					t_expression(
+						b.call('$.escape', /** @type {import('estree').Expression} */ (visit(node.expression)))
+					)
+				);
+			}
 
 			return;
 		}
@@ -1509,11 +1517,11 @@ const template_visitors = {
 			each.push(b.let(node.index, index));
 		}
 
-		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(block_open.value))));
+		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN))));
 
 		each.push(.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body);
 
-		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(block_close.value))));
+		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE))));
 
 		const for_loop = b.for(
 			b.let(index, b.literal(0)),

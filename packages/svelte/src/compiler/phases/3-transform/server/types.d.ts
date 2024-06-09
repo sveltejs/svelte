@@ -15,17 +15,12 @@ export type TemplateExpression = {
 	value: Expression;
 };
 
-export type TemplateString = {
-	type: 'string';
-	value: string;
-};
-
 export type TemplateStatement = {
 	type: 'statement';
 	value: Statement;
 };
 
-export type Template = TemplateExpression | TemplateString | TemplateStatement;
+export type Template = TemplateExpression | TemplateStatement;
 
 export interface Anchor {
 	type: 'Anchor';
