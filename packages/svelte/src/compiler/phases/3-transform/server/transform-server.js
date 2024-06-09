@@ -71,7 +71,7 @@ function serialize_template(template, out = b.id('out')) {
 	/** @type {import('estree').Statement[]} */
 	const statements = [];
 
-	const flush_payload = () => {
+	const flush = () => {
 		statements.push(
 			b.stmt(b.assignment('+=', b.member(b.id('$$payload'), out), b.template(quasis, expressions)))
 		);
@@ -80,35 +80,33 @@ function serialize_template(template, out = b.id('out')) {
 	};
 
 	for (let i = 0; i < template.length; i++) {
-		const template_item = template[i];
+		const node = template[i];
 
-		if (is_statement(template_item)) {
+		if (is_statement(node)) {
 			if (quasis.length !== 0) {
-				flush_payload();
+				flush();
 			}
-			statements.push(template_item);
+
+			statements.push(node);
 		} else {
 			let last = quasis.at(-1);
 			if (!last) quasis.push((last = b.quasi('', false)));
 
-			if (template_item.type === 'Literal') {
-				last.value.raw += template_item.value;
+			if (node.type === 'Literal') {
+				last.value.raw += node.value;
+			} else if (node.type === 'TemplateLiteral') {
+				last.value.raw += node.quasis[0].value.raw;
+				quasis.push(...node.quasis.slice(1));
+				expressions.push(...node.expressions);
 			} else {
-				const value = template_item;
-				if (value.type === 'TemplateLiteral') {
-					last.value.raw += value.quasis[0].value.raw;
-					quasis.push(...value.quasis.slice(1));
-					expressions.push(...value.expressions);
-					continue;
-				}
-				expressions.push(value);
+				expressions.push(node);
 				quasis.push(b.quasi('', i + 1 === template.length || is_statement(template[i + 1])));
 			}
 		}
 	}
 
 	if (quasis.length !== 0) {
-		flush_payload();
+		flush();
 	}
 
 	return statements;
