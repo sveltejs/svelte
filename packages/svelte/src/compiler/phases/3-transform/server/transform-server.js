@@ -694,34 +694,29 @@ const javascript_visitors_runes = {
 
 /**
  *
- * @param {true | Array<import('#compiler').Text | import('#compiler').ExpressionTag>} attribute_value
+ * @param {true | Array<import('#compiler').Text | import('#compiler').ExpressionTag>} value
  * @param {import('./types').ComponentContext} context
  * @param {boolean} trim_whitespace
  * @param {boolean} is_component
  * @returns {import('estree').Expression}
  */
-function serialize_attribute_value(
-	attribute_value,
-	context,
-	trim_whitespace = false,
-	is_component = false
-) {
-	if (attribute_value === true) {
+function serialize_attribute_value(value, context, trim_whitespace = false, is_component = false) {
+	if (value === true) {
 		return b.true;
 	}
 
-	if (attribute_value.length === 1) {
-		const value = attribute_value[0];
-		if (value.type === 'Text') {
-			let data = value.data;
-			if (trim_whitespace) {
-				data = data.replace(regex_whitespaces_strict, ' ').trim();
-			}
+	if (value.length === 1) {
+		const chunk = value[0];
+
+		if (chunk.type === 'Text') {
+			const data = trim_whitespace
+				? chunk.data.replace(regex_whitespaces_strict, ' ').trim()
+				: chunk.data;
 
 			return b.literal(is_component ? data : escape_html(data, true));
-		} else {
-			return /** @type {import('estree').Expression} */ (context.visit(value.expression));
 		}
+
+		return /** @type {import('estree').Expression} */ (context.visit(chunk.expression));
 	}
 
 	let quasi = b.quasi('', false);
@@ -730,8 +725,9 @@ function serialize_attribute_value(
 	/** @type {import('estree').Expression[]} */
 	const expressions = [];
 
-	for (let i = 0; i < attribute_value.length; i++) {
-		const node = attribute_value[i];
+	for (let i = 0; i < value.length; i++) {
+		const node = value[i];
+
 		if (node.type === 'Text') {
 			quasi.value.raw += trim_whitespace
 				? node.data.replace(regex_whitespaces_strict, ' ')
@@ -744,7 +740,7 @@ function serialize_attribute_value(
 				)
 			);
 
-			quasi = b.quasi('', i + 1 === attribute_value.length);
+			quasi = b.quasi('', i + 1 === value.length);
 			quasis.push(quasi);
 		}
 	}
