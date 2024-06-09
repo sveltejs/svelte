@@ -3,18 +3,6 @@ import { function_visitor, serialize_hoistable_params } from '../utils.js';
 
 /** @type {import('../types.js').ComponentVisitors} */
 export const javascript_visitors = {
-	Program(node, { visit }) {
-		return /** @type {import('estree').Program} */ ({
-			...node,
-			body: node.body.map((node) => /** @type {import('estree').Node} */ (visit(node)))
-		});
-	},
-	BlockStatement(node, { visit }) {
-		return /** @type {import('estree').BlockStatement} */ ({
-			...node,
-			body: node.body.map((node) => /** @type {import('estree').Node} */ (visit(node)))
-		});
-	},
 	FunctionExpression: function_visitor,
 	ArrowFunctionExpression: function_visitor,
 	FunctionDeclaration(node, context) {
