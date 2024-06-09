@@ -124,22 +124,14 @@ function process_children(nodes, parent, { visit, state }) {
 
 	/** @type {Sequence} */
 	let sequence = [];
-	let did_flush = false;
 
-	/**
-	 * @param {Sequence} sequence
-	 * @param {boolean} final
-	 */
-	function flush_sequence(sequence, final) {
-		const is_single_flush = !did_flush && final;
-		did_flush = true;
-
+	/** @param {Sequence} sequence */
+	function flush_sequence(sequence) {
 		if (sequence.length === 1) {
 			const node = sequence[0];
 
 			if (node.type === 'Text') {
 				if (
-					is_single_flush &&
 					parent.type === 'RegularElement' &&
 					(parent.name === 'script' || parent.name === 'style')
 				) {
@@ -208,7 +200,7 @@ function process_children(nodes, parent, { visit, state }) {
 			sequence.push(node);
 		} else {
 			if (sequence.length > 0) {
-				flush_sequence(sequence, false);
+				flush_sequence(sequence);
 				sequence = [];
 			}
 
@@ -219,7 +211,7 @@ function process_children(nodes, parent, { visit, state }) {
 	}
 
 	if (sequence.length > 0) {
-		flush_sequence(sequence, true);
+		flush_sequence(sequence);
 	}
 }
 
