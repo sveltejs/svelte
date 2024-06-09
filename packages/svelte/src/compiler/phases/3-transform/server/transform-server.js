@@ -39,14 +39,12 @@ import {
 } from '../../../../internal/server/hydration.js';
 import { filename, locator } from '../../../state.js';
 
-export const block_open = t_string(BLOCK_OPEN);
-export const block_close = t_string(BLOCK_CLOSE);
-export const block_anchor = t_string(BLOCK_ANCHOR);
+export const block_open = string(BLOCK_OPEN);
+export const block_close = string(BLOCK_CLOSE);
+export const block_anchor = string(BLOCK_ANCHOR);
 
-/**
- * @param {string} value
- */
-function t_string(value) {
+/** @param {string} value */
+function string(value) {
 	return b.literal(sanitize_template_string(value));
 }
 
@@ -147,15 +145,15 @@ function process_children(nodes, parent, { visit, state }) {
 					parent.type === 'RegularElement' &&
 					(parent.name === 'script' || parent.name === 'style')
 				) {
-					state.template.push(t_string(node.data));
+					state.template.push(string(node.data));
 				} else {
-					state.template.push(t_string(escape_html(node.data)));
+					state.template.push(string(escape_html(node.data)));
 				}
 				return;
 			}
 
 			if (node.type === 'Comment') {
-				state.template.push(t_string(`<!--${escape_html(node.data)}-->`));
+				state.template.push(string(`<!--${escape_html(node.data)}-->`));
 				return;
 			}
 
@@ -165,7 +163,7 @@ function process_children(nodes, parent, { visit, state }) {
 			}
 
 			if (node.expression.type === 'Literal') {
-				state.template.push(t_string(escape_html(node.expression.value + '')));
+				state.template.push(string(escape_html(node.expression.value + '')));
 			} else {
 				state.template.push(
 					b.call('$.escape', /** @type {import('estree').Expression} */ (visit(node.expression)))
@@ -1343,9 +1341,9 @@ const template_visitors = {
 		throw new Error('Node should have been handled elsewhere');
 	},
 	RegularElement(node, context) {
-		context.state.template.push(t_string(`<${node.name}`));
+		context.state.template.push(string(`<${node.name}`));
 		const body = serialize_element_attributes(node, context);
-		context.state.template.push(t_string('>'));
+		context.state.template.push(string('>'));
 
 		const namespace = determine_namespace_for_children(node, context.state.metadata.namespace);
 
@@ -1416,7 +1414,7 @@ const template_visitors = {
 		}
 
 		if (!VoidElements.includes(node.name) && namespace !== 'foreign') {
-			state.template.push(t_string(`</${node.name}>`));
+			state.template.push(string(`</${node.name}>`));
 		}
 
 		if (state.options.dev) {
@@ -1677,7 +1675,7 @@ const template_visitors = {
 
 		// Use `=` so that later title changes override earlier ones
 		state.init.push(b.stmt(b.assignment('=', b.id('$$payload.title'), b.literal('<title>'))));
-		inner_state.template.push(t_string('</title>'));
+		inner_state.template.push(string('</title>'));
 		// title is guaranteed to contain only text/expression tag children
 		state.init.push(...serialize_template(inner_state.template, b.id('title')));
 	},
@@ -1952,7 +1950,7 @@ function serialize_element_attributes(node, context) {
 				).value;
 				if (name !== 'class' || literal_value) {
 					context.state.template.push(
-						t_string(
+						string(
 							` ${attribute.name}${
 								DOMBooleanAttributes.includes(name) && literal_value === true
 									? ''
@@ -1980,7 +1978,7 @@ function serialize_element_attributes(node, context) {
 
 	if (events_to_capture.size !== 0) {
 		for (const event of events_to_capture) {
-			context.state.template.push(t_string(` ${event}="this.__e=event"`));
+			context.state.template.push(string(` ${event}="this.__e=event"`));
 		}
 	}
 
