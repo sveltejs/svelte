@@ -268,17 +268,24 @@ export function add_styles(style_object) {
  * @param {Record<string, string>} styles
  */
 export function merge_styles(attribute, styles) {
+	/** @type {Record<string, string>} */
+	var merged = {};
+
 	if (attribute) {
 		for (var declaration of attribute.split(';')) {
 			var i = declaration.indexOf(':');
 			var name = declaration.slice(0, i).trim();
 			var value = declaration.slice(i + 1).trim();
 
-			if (name !== '' && !(name in styles)) styles[name] = value;
+			if (name !== '') merged[name] = value;
 		}
 	}
 
-	return styles;
+	for (name in styles) {
+		merged[name] = styles[name];
+	}
+
+	return merged;
 }
 
 /**
