@@ -1,19 +1,8 @@
-import type {
-	Expression,
-	Identifier,
-	Statement,
-	ModuleDeclaration,
-	LabeledStatement
-} from 'estree';
+import type { Expression, Statement, ModuleDeclaration, LabeledStatement } from 'estree';
 import type { SvelteNode, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
 import type { StateField } from '../client/types.js';
-
-export interface Anchor {
-	type: 'Anchor';
-	id: Identifier;
-}
 
 export interface ServerTransformState extends TransformState {
 	/** The $: calls, which will be ordered in the end */

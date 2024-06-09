@@ -115,12 +115,12 @@ function serialize_template(template, out = b.id('out')) {
 /**
  * Processes an array of template nodes, joining sibling text/expression nodes and
  * recursing into child nodes.
- * @param {Array<import('#compiler').SvelteNode | import('./types').Anchor>} nodes
+ * @param {Array<import('#compiler').SvelteNode>} nodes
  * @param {import('#compiler').SvelteNode} parent
  * @param {import('./types').ComponentContext} context
  */
 function process_children(nodes, parent, { visit, state }) {
-	/** @typedef {Array<import('#compiler').Text | import('#compiler').Comment | import('#compiler').ExpressionTag | import('./types').Anchor>} Sequence */
+	/** @typedef {Array<import('#compiler').Text | import('#compiler').Comment | import('#compiler').ExpressionTag>} Sequence */
 
 	/** @type {Sequence} */
 	let sequence = [];
@@ -141,8 +141,6 @@ function process_children(nodes, parent, { visit, state }) {
 				}
 			} else if (node.type === 'Comment') {
 				state.template.push(string(`<!--${escape_html(node.data)}-->`));
-			} else if (node.type === 'Anchor') {
-				state.template.push(node.id);
 			} else if (node.expression.type === 'Literal') {
 				state.template.push(string(escape_html(node.expression.value + '')));
 			} else {
@@ -174,9 +172,6 @@ function process_children(nodes, parent, { visit, state }) {
 				if (node.expression.value != null) {
 					last.value.raw += sanitize_template_string(escape_html(node.expression.value + ''));
 				}
-			} else if (node.type === 'Anchor') {
-				expressions.push(node.id);
-				quasis.push(b.quasi('', i + 1 === sequence.length));
 			} else {
 				expressions.push(
 					b.call('$.escape', /** @type {import('estree').Expression} */ (visit(node.expression)))
@@ -191,12 +186,7 @@ function process_children(nodes, parent, { visit, state }) {
 	for (let i = 0; i < nodes.length; i += 1) {
 		const node = nodes[i];
 
-		if (
-			node.type === 'Text' ||
-			node.type === 'Comment' ||
-			node.type === 'ExpressionTag' ||
-			node.type === 'Anchor'
-		) {
+		if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
 			sequence.push(node);
 		} else {
 			if (sequence.length > 0) {
