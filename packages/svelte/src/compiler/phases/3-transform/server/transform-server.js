@@ -127,31 +127,6 @@ function process_children(nodes, parent, { visit, state }) {
 
 	/** @param {Sequence} sequence */
 	function flush_sequence(sequence) {
-		if (sequence.length === 1) {
-			const node = sequence[0];
-
-			if (node.type === 'Text') {
-				if (
-					parent.type === 'RegularElement' &&
-					(parent.name === 'script' || parent.name === 'style')
-				) {
-					state.template.push(string(node.data));
-				} else {
-					state.template.push(string(escape_html(node.data)));
-				}
-			} else if (node.type === 'Comment') {
-				state.template.push(string(`<!--${escape_html(node.data)}-->`));
-			} else if (node.expression.type === 'Literal') {
-				state.template.push(string(escape_html(node.expression.value + '')));
-			} else {
-				state.template.push(
-					b.call('$.escape', /** @type {import('estree').Expression} */ (visit(node.expression)))
-				);
-			}
-
-			return;
-		}
-
 		let quasi = b.quasi('', false);
 		const quasis = [quasi];
 
@@ -1312,6 +1287,15 @@ const template_visitors = {
 		context.state.template.push(string(`<${node.name}`));
 		const body = serialize_element_attributes(node, context);
 		context.state.template.push(string('>'));
+
+		if ((node.name === 'script' || node.name === 'style') && node.fragment.nodes.length === 1) {
+			context.state.template.push(
+				string(/** @type {import('#compiler').Text} */ (node.fragment.nodes[0]).data),
+				string(`</${node.name}>`)
+			);
+
+			return;
+		}
 
 		const namespace = determine_namespace_for_children(node, context.state.metadata.namespace);
 
