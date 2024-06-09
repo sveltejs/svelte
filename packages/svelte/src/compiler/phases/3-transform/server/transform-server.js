@@ -27,36 +27,27 @@ import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patte
 import {
 	DOMBooleanAttributes,
 	ELEMENT_IS_NAMESPACED,
-	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
-	HYDRATION_ANCHOR,
-	HYDRATION_END,
-	HYDRATION_START
+	ELEMENT_PRESERVE_ATTRIBUTE_CASE
 } from '../../../../constants.js';
 import { escape_html } from '../../../../escaping.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
 import {
+	BLOCK_ANCHOR,
 	BLOCK_CLOSE,
 	BLOCK_CLOSE_ELSE,
 	BLOCK_OPEN
 } from '../../../../internal/server/hydration.js';
 import { filename, locator } from '../../../state.js';
 
-export const block_open = t_string(`<!--${HYDRATION_START}-->`);
-export const block_close = t_string(`<!--${HYDRATION_END}-->`);
-export const block_anchor = t_string(`<!--${HYDRATION_ANCHOR}-->`);
+export const block_open = t_string(BLOCK_OPEN);
+export const block_close = t_string(BLOCK_CLOSE);
+export const block_anchor = t_string(BLOCK_ANCHOR);
 
 /**
  * @param {string} value
  */
 function t_string(value) {
-	return t_expression(b.literal(sanitize_template_string(value)));
-}
-
-/**
- * @param {import('estree').Expression} value
- */
-function t_expression(value) {
-	return value;
+	return b.literal(sanitize_template_string(value));
 }
 
 /**
@@ -169,7 +160,7 @@ function process_children(nodes, parent, { visit, state }) {
 			}
 
 			if (node.type === 'Anchor') {
-				state.template.push(t_expression(node.id));
+				state.template.push(node.id);
 				return;
 			}
 
@@ -177,9 +168,7 @@ function process_children(nodes, parent, { visit, state }) {
 				state.template.push(t_string(escape_html(node.expression.value + '')));
 			} else {
 				state.template.push(
-					t_expression(
-						b.call('$.escape', /** @type {import('estree').Expression} */ (visit(node.expression)))
-					)
+					b.call('$.escape', /** @type {import('estree').Expression} */ (visit(node.expression)))
 				);
 			}
 
@@ -217,7 +206,7 @@ function process_children(nodes, parent, { visit, state }) {
 			}
 		}
 
-		state.template.push(t_expression(b.template(quasis, expressions)));
+		state.template.push(b.template(quasis, expressions));
 	}
 
 	for (let i = 0; i < nodes.length; i += 1) {
@@ -907,7 +896,7 @@ function serialize_element_spread_attributes(
 	);
 
 	const args = [object, classes, styles, flags ? b.literal(flags) : undefined];
-	context.state.template.push(t_expression(b.call('$.spread_attributes', ...args)));
+	context.state.template.push(b.call('$.spread_attributes', ...args));
 }
 
 /**
@@ -1287,11 +1276,11 @@ const template_visitors = {
 		return b.block(body);
 	},
 	HtmlTag(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
-		const raw = /** @type {import('estree').Expression} */ (context.visit(node.expression));
-		context.state.template.push(t_expression(raw));
-		state.template.push(block_close);
+		context.state.template.push(
+			block_open,
+			/** @type {import('estree').Expression} */ (context.visit(node.expression)),
+			block_close
+		);
 	},
 	ConstTag(node, { state, visit }) {
 		const declaration = node.declaration.declarations[0];
@@ -1420,7 +1409,7 @@ const template_visitors = {
 			state.template.push(
 				b.if(
 					id,
-					b.block(serialize_template([t_expression(id)])),
+					b.block(serialize_template([id])),
 					b.block([...inner_state.init, ...serialize_template(inner_state.template)])
 				)
 			);
@@ -1984,7 +1973,7 @@ function serialize_element_attributes(node, context) {
 			);
 
 			context.state.template.push(
-				t_expression(b.call('$.attr', b.literal(name), value, is_boolean && b.literal(is_boolean)))
+				b.call('$.attr', b.literal(name), value, is_boolean && b.literal(is_boolean))
 			);
 		}
 	}
@@ -2058,18 +2047,17 @@ function serialize_style_directives(style_directives, style_attribute, context) 
 		}
 		return b.init(directive.name, value);
 	});
+
 	if (style_attribute === null) {
-		context.state.template.push(t_expression(b.call('$.add_styles', b.object(styles))));
+		context.state.template.push(b.call('$.add_styles', b.object(styles)));
 	} else {
 		context.state.template.push(
-			t_expression(
+			b.call(
+				'$.add_styles',
 				b.call(
-					'$.add_styles',
-					b.call(
-						'$.merge_styles',
-						serialize_attribute_value(style_attribute.value, context, true),
-						b.object(styles)
-					)
+					'$.merge_styles',
+					serialize_attribute_value(style_attribute.value, context, true),
+					b.object(styles)
 				)
 			)
 		);
