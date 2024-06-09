@@ -152,16 +152,14 @@ function process_children(nodes, parent, { visit, state }) {
 			return;
 		}
 
-		/** @type {import('estree').TemplateElement[]} */
-		const quasis = [];
+		const quasis = [b.quasi('', false)];
 
 		/** @type {import('estree').Expression[]} */
 		const expressions = [];
 
-		quasis.push(b.quasi('', false));
-
 		for (let i = 0; i < sequence.length; i++) {
 			const node = sequence[i];
+
 			if (node.type === 'Text' || node.type === 'Comment') {
 				let last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
 				last.value.raw += sanitize_template_string(
