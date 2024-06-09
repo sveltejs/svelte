@@ -280,8 +280,8 @@ export function merge_styles(style_attribute, style_directive) {
 		}
 	}
 
-	for (var name in style_directive) {
-		var value = style_directive[name];
+	for (name in style_directive) {
+		value = style_directive[name];
 		if (value) {
 			merged[name] = value;
 		} else {
