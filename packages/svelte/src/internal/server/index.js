@@ -264,32 +264,21 @@ export function add_styles(style_object) {
 }
 
 /**
- * @param {string} style_attribute
- * @param {Record<string, string>} style_directive
+ * @param {string} attribute
+ * @param {Record<string, string>} styles
  */
-export function merge_styles(style_attribute, style_directive) {
-	/** @type {Record<string, string>} */
-	var merged = {};
+export function merge_styles(attribute, styles) {
+	if (attribute) {
+		for (var declaration of attribute.split(';')) {
+			var i = declaration.indexOf(':');
+			var name = declaration.slice(0, i).trim();
+			var value = declaration.slice(i + 1).trim();
 
-	if (style_attribute) {
-		for (var individual_style of style_attribute.split(';')) {
-			var colon_index = individual_style.indexOf(':');
-			var name = individual_style.slice(0, colon_index).trim();
-			var value = individual_style.slice(colon_index + 1).trim();
-			if (name) merged[name] = value;
+			if (name !== '' && !(name in styles)) styles[name] = value;
 		}
 	}
 
-	for (name in style_directive) {
-		value = style_directive[name];
-		if (value) {
-			merged[name] = value;
-		} else {
-			delete merged[name];
-		}
-	}
-
-	return merged;
+	return styles;
 }
 
 /**
