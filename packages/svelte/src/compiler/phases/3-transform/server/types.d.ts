@@ -20,9 +20,7 @@ export interface ComponentServerTransformState extends ServerTransformState {
 
 	/** The SSR template  */
 	readonly template: Array<Statement | Expression>;
-	readonly metadata: {
-		namespace: Namespace;
-	};
+	readonly namespace: Namespace;
 	readonly preserve_whitespace: boolean;
 }
 

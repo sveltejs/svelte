@@ -367,15 +367,11 @@ function serialize_set_binding(node, context, fallback) {
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
  * @param {import('#compiler').Attribute} attribute
- * @param {{ state: { metadata: { namespace: import('#compiler').Namespace }}}} context
+ * @param {{ state: { namespace: import('#compiler').Namespace }}} context
  */
 function get_attribute_name(element, attribute, context) {
 	let name = attribute.name;
-	if (
-		!element.metadata.svg &&
-		!element.metadata.mathml &&
-		context.state.metadata.namespace !== 'foreign'
-	) {
+	if (!element.metadata.svg && !element.metadata.mathml && context.state.namespace !== 'foreign') {
 		name = name.toLowerCase();
 		// don't lookup boolean aliases here, the server runtime function does only
 		// check for the lowercase variants of boolean attributes
@@ -1048,7 +1044,7 @@ function serialize_inline_component(node, component_name, context) {
 			b.call(
 				'$.css_props',
 				b.id('$$payload'),
-				b.literal(context.state.metadata.namespace === 'svg' ? false : true),
+				b.literal(context.state.namespace === 'svg' ? false : true),
 				b.object(custom_css_props),
 				b.thunk(b.block([statement]))
 			)
@@ -1173,7 +1169,7 @@ const javascript_visitors_legacy = {
 const template_visitors = {
 	Fragment(node, context) {
 		const parent = context.path.at(-1) ?? node;
-		const namespace = infer_namespace(context.state.metadata.namespace, parent, node.nodes);
+		const namespace = infer_namespace(context.state.namespace, parent, node.nodes);
 
 		const { hoisted, trimmed } = clean_nodes(
 			parent,
@@ -1194,9 +1190,7 @@ const template_visitors = {
 			...context.state,
 			init: [],
 			template: [],
-			metadata: {
-				namespace
-			}
+			namespace
 		};
 
 		for (const node of hoisted) {
@@ -1288,12 +1282,12 @@ const template_visitors = {
 			return;
 		}
 
-		const namespace = determine_namespace_for_children(node, context.state.metadata.namespace);
+		const namespace = determine_namespace_for_children(node, context.state.namespace);
 
 		/** @type {import('./types').ComponentServerTransformState} */
 		const state = {
 			...context.state,
-			metadata: { ...context.state.metadata, namespace },
+			namespace,
 			preserve_whitespace:
 				context.state.preserve_whitespace ||
 				((node.name === 'pre' || node.name === 'textarea') && namespace !== 'foreign')
@@ -1381,10 +1375,7 @@ const template_visitors = {
 
 		const state = {
 			...context.state,
-			metadata: {
-				...context.state.metadata,
-				namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
-			},
+			namespace: determine_namespace_for_children(node, context.state.namespace),
 			template: [],
 			init: []
 		};
@@ -2014,9 +2005,7 @@ export function server_component(analysis, options) {
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		init: /** @type {any} */ (null),
 		template: /** @type {any} */ (null),
-		metadata: {
-			namespace: options.namespace
-		},
+		namespace: options.namespace,
 		preserve_whitespace: options.preserveWhitespace,
 		private_derived: new Map()
 	};
