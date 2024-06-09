@@ -60,9 +60,10 @@ function is_statement(node) {
 /**
  * @param {Array<import('estree').Statement | import('estree').Expression>} template
  * @param {import('estree').Identifier} out
+ * @param {import('estree').AssignmentOperator} operator
  * @returns {import('estree').Statement[]}
  */
-function serialize_template(template, out = b.id('out')) {
+function serialize_template(template, out = b.id('$$payload.out'), operator = '+=') {
 	/** @type {import('estree').TemplateElement[]} */
 	let quasis = [];
 
@@ -73,9 +74,7 @@ function serialize_template(template, out = b.id('out')) {
 	const statements = [];
 
 	const flush = () => {
-		statements.push(
-			b.stmt(b.assignment('+=', b.member(b.id('$$payload'), out), b.template(quasis, expressions)))
-		);
+		statements.push(b.stmt(b.assignment(operator, out, b.template(quasis, expressions))));
 		quasis = [];
 		expressions = [];
 	};
@@ -1524,18 +1523,12 @@ const template_visitors = {
 		context.state.template.push(block);
 	},
 	TitleElement(node, context) {
-		const state = context.state;
-
-		/** @type {import('./types').ComponentServerTransformState} */
-		const inner_state = { ...state, init: [], template: [] };
-
-		process_children(node.fragment.nodes, { ...context, state: inner_state });
-
-		// Use `=` so that later title changes override earlier ones
-		state.init.push(b.stmt(b.assignment('=', b.id('$$payload.title'), b.literal('<title>'))));
-		inner_state.template.push(string('</title>'));
 		// title is guaranteed to contain only text/expression tag children
-		state.init.push(...serialize_template(inner_state.template, b.id('title')));
+		const template = [string('<title>')];
+		process_children(node.fragment.nodes, { ...context, state: { ...context.state, template } });
+		template.push(string('</title>'));
+
+		context.state.init.push(...serialize_template(template, b.id('$$payload.title'), '='));
 	},
 	SlotElement(node, context) {
 		/** @type {import('estree').Property[]} */
