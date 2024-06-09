@@ -204,9 +204,7 @@ function process_children(nodes, parent, { visit, state }) {
 				sequence = [];
 			}
 
-			visit(node, {
-				...state
-			});
+			visit(node, { ...state });
 		}
 	}
 
