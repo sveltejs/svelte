@@ -119,13 +119,10 @@ function serialize_template(template, out = b.id('out')) {
  * @param {import('./types').ComponentContext} context
  */
 function process_children(nodes, { visit, state }) {
-	/** @typedef {Array<import('#compiler').Text | import('#compiler').Comment | import('#compiler').ExpressionTag>} Sequence */
-
-	/** @type {Sequence} */
+	/** @type {Array<import('#compiler').Text | import('#compiler').Comment | import('#compiler').ExpressionTag>} */
 	let sequence = [];
 
-	/** @param {Sequence} sequence */
-	function flush_sequence(sequence) {
+	function flush() {
 		let quasi = b.quasi('', false);
 		const quasis = [quasi];
 
@@ -163,7 +160,7 @@ function process_children(nodes, { visit, state }) {
 			sequence.push(node);
 		} else {
 			if (sequence.length > 0) {
-				flush_sequence(sequence);
+				flush();
 				sequence = [];
 			}
 
@@ -172,7 +169,7 @@ function process_children(nodes, { visit, state }) {
 	}
 
 	if (sequence.length > 0) {
-		flush_sequence(sequence);
+		flush();
 	}
 }
 
@@ -243,9 +240,9 @@ function get_assignment_value(node, { state, visit }) {
 					serialize_get_binding(node.left, state),
 					/** @type {import('estree').Expression} */ (visit(node.right))
 				);
-	} else {
-		return /** @type {import('estree').Expression} */ (visit(node.right));
 	}
+
+	return /** @type {import('estree').Expression} */ (visit(node.right));
 }
 
 /**
@@ -396,21 +393,15 @@ const global_visitors = {
 		const argument = node.argument;
 
 		if (argument.type === 'Identifier' && state.scope.get(argument.name)?.kind === 'store_sub') {
-			let fn = '$.update_store';
-			if (node.prefix) fn += '_pre';
-
-			/** @type {import('estree').Expression[]} */
-			const args = [
+			return b.call(
+				node.prefix ? '$.update_store_pre' : '$.update_store',
 				b.assignment('??=', b.id('$$store_subs'), b.object([])),
 				b.literal(argument.name),
-				b.id(argument.name.slice(1))
-			];
-			if (node.operator === '--') {
-				args.push(b.literal(-1));
-			}
-
-			return b.call(fn, ...args);
+				b.id(argument.name.slice(1)),
+				node.operator === '--' && b.literal(-1)
+			);
 		}
+
 		return next();
 	}
 };
@@ -1567,11 +1558,7 @@ const template_visitors = {
 		const state = context.state;
 
 		/** @type {import('./types').ComponentServerTransformState} */
-		const inner_state = {
-			...state,
-			init: [],
-			template: []
-		};
+		const inner_state = { ...state, init: [], template: [] };
 
 		process_children(node.fragment.nodes, { ...context, state: inner_state });
 
@@ -1620,10 +1607,12 @@ const template_visitors = {
 			spreads.length === 0
 				? b.object(props)
 				: b.call('$.spread_props', b.array([b.object(props), ...spreads]));
+
 		const fallback =
 			node.fragment.nodes.length === 0
 				? b.literal(null)
 				: b.thunk(/** @type {import('estree').BlockStatement} */ (context.visit(node.fragment)));
+
 		const slot = b.call('$.slot', b.id('$$payload'), expression, props_expression, fallback);
 
 		context.state.template.push(block_open, b.stmt(slot), block_close);
