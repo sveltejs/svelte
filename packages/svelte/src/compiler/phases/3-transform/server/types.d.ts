@@ -42,7 +42,7 @@ export interface ComponentServerTransformState extends ServerTransformState {
 	readonly hoisted: Array<Statement | ModuleDeclaration>;
 
 	/** The SSR template  */
-	readonly template: Template[];
+	readonly template: Array<Statement | Expression>;
 	readonly metadata: {
 		namespace: Namespace;
 	};

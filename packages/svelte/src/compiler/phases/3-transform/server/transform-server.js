@@ -47,30 +47,28 @@ export const block_anchor = t_string(`<!--${HYDRATION_ANCHOR}-->`);
 
 /**
  * @param {string} value
- * @returns {import('./types').TemplateExpression}
  */
 function t_string(value) {
-	return { type: 'expression', value: b.literal(sanitize_template_string(value)) };
+	return t_expression(b.literal(sanitize_template_string(value)));
 }
 
 /**
  * @param {import('estree').Expression} value
- * @returns {import('./types').TemplateExpression}
  */
 function t_expression(value) {
-	return { type: 'expression', value };
+	return value;
 }
 
 /**
- * @param {import('estree').Statement} value
- * @returns {import('./types').TemplateStatement}
+ * @param {import('estree').Node} node
+ * @returns {node is import('estree').Statement}
  */
-function t_statement(value) {
-	return { type: 'statement', value };
+function is_statement(node) {
+	return node.type.endsWith('Statement') || node.type.endsWith('Declaration');
 }
 
 /**
- * @param {import('./types').Template[]} template
+ * @param {Array<import('estree').Statement | import('estree').Expression>} template
  * @param {import('estree').Identifier} out
  * @returns {import('estree').Statement[]}
  */
@@ -94,19 +92,20 @@ function serialize_template(template, out = b.id('out')) {
 
 	for (let i = 0; i < template.length; i++) {
 		const template_item = template[i];
-		if (template_item.type === 'statement') {
+
+		if (is_statement(template_item)) {
 			if (quasis.length !== 0) {
 				flush_payload();
 			}
-			statements.push(template_item.value);
+			statements.push(template_item);
 		} else {
 			let last = quasis.at(-1);
 			if (!last) quasis.push((last = b.quasi('', false)));
 
-			if (template_item.value.type === 'Literal') {
-				last.value.raw += template_item.value.value;
-			} else if (template_item.type === 'expression') {
-				const value = template_item.value;
+			if (template_item.type === 'Literal') {
+				last.value.raw += template_item.value;
+			} else {
+				const value = template_item;
 				if (value.type === 'TemplateLiteral') {
 					last.value.raw += value.quasis[0].value.raw;
 					quasis.push(...value.quasis.slice(1));
@@ -114,7 +113,7 @@ function serialize_template(template, out = b.id('out')) {
 					continue;
 				}
 				expressions.push(value);
-				quasis.push(b.quasi('', i + 1 === template.length || template[i + 1].type === 'statement'));
+				quasis.push(b.quasi('', i + 1 === template.length || is_statement(template[i + 1])));
 			}
 		}
 	}
@@ -1125,10 +1124,10 @@ function serialize_inline_component(node, component_name, context) {
 			)
 		);
 
-		context.state.template.push(t_statement(statement));
+		context.state.template.push(statement);
 	} else {
 		context.state.template.push(block_open);
-		context.state.template.push(t_statement(statement));
+		context.state.template.push(statement);
 		context.state.template.push(block_close);
 	}
 }
@@ -1302,23 +1301,21 @@ const template_visitors = {
 	},
 	DebugTag(node, { state, visit }) {
 		state.template.push(
-			t_statement(
-				b.stmt(
-					b.call(
-						'console.log',
-						b.object(
-							node.identifiers.map((identifier) =>
-								b.prop(
-									'init',
-									identifier,
-									/** @type {import('estree').Expression} */ (visit(identifier))
-								)
+			b.stmt(
+				b.call(
+					'console.log',
+					b.object(
+						node.identifiers.map((identifier) =>
+							b.prop(
+								'init',
+								identifier,
+								/** @type {import('estree').Expression} */ (visit(identifier))
 							)
 						)
 					)
 				)
 			),
-			t_statement(b.debugger)
+			b.debugger
 		);
 	},
 	RenderTag(node, context) {
@@ -1339,13 +1336,11 @@ const template_visitors = {
 		});
 
 		state.template.push(
-			t_statement(
-				b.stmt(
-					(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
-						snippet_function,
-						b.id('$$payload'),
-						...snippet_args
-					)
+			b.stmt(
+				(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
+					snippet_function,
+					b.id('$$payload'),
+					...snippet_args
 				)
 			)
 		);
@@ -1394,15 +1389,13 @@ const template_visitors = {
 		if (state.options.dev) {
 			const location = /** @type {import('locate-character').Location} */ (locator(node.start));
 			state.template.push(
-				t_statement(
-					b.stmt(
-						b.call(
-							'$.push_element',
-							b.id('$$payload'),
-							b.literal(node.name),
-							b.literal(location.line),
-							b.literal(location.column)
-						)
+				b.stmt(
+					b.call(
+						'$.push_element',
+						b.id('$$payload'),
+						b.literal(node.name),
+						b.literal(location.line),
+						b.literal(location.column)
 					)
 				)
 			);
@@ -1415,7 +1408,7 @@ const template_visitors = {
 
 			if (body.type !== 'Identifier') {
 				id = b.id(state.scope.generate('$$body'));
-				state.template.push(t_statement(b.const(id, body)));
+				state.template.push(b.const(id, body));
 			}
 
 			// if this is a `<textarea>` value or a contenteditable binding, we only add
@@ -1425,12 +1418,10 @@ const template_visitors = {
 
 			// Use the body expression as the body if it's truthy, otherwise use the inner template
 			state.template.push(
-				t_statement(
-					b.if(
-						id,
-						b.block(serialize_template([t_expression(id)])),
-						b.block([...inner_state.init, ...serialize_template(inner_state.template)])
-					)
+				b.if(
+					id,
+					b.block(serialize_template([t_expression(id)])),
+					b.block([...inner_state.init, ...serialize_template(inner_state.template)])
 				)
 			);
 		}
@@ -1440,7 +1431,7 @@ const template_visitors = {
 		}
 
 		if (state.options.dev) {
-			state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));
+			state.template.push(b.stmt(b.call('$.pop_element')));
 		}
 	},
 	SvelteElement(node, context) {
@@ -1471,9 +1462,7 @@ const template_visitors = {
 		serialize_element_attributes(node, { ...context, state });
 
 		if (context.state.options.dev) {
-			context.state.template.push(
-				t_statement(b.stmt(b.call('$.push_element', tag, b.id('$$payload'))))
-			);
+			context.state.template.push(b.stmt(b.call('$.push_element', tag, b.id('$$payload'))));
 		}
 
 		const attributes = b.block([...state.init, ...serialize_template(state.template)]);
@@ -1485,10 +1474,10 @@ const template_visitors = {
 			b.call('$.element', b.id('$$payload'), tag, b.thunk(attributes), b.thunk(children))
 		);
 
-		context.state.template.push(t_statement(b.if(tag, body)), block_anchor);
+		context.state.template.push(b.if(tag, body), block_anchor);
 
 		if (context.state.options.dev) {
-			context.state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));
+			context.state.template.push(b.stmt(b.call('$.pop_element')));
 		}
 	},
 	EachBlock(node, context) {
@@ -1542,22 +1531,17 @@ const template_visitors = {
 			);
 
 			state.template.push(
-				t_statement(
-					b.if(
-						b.binary('!==', b.member(array_id, b.id('length')), b.literal(0)),
-						b.block([for_loop, close]),
-						fallback
-					)
+				b.if(
+					b.binary('!==', b.member(array_id, b.id('length')), b.literal(0)),
+					b.block([for_loop, close]),
+					fallback
 				)
 			);
 		} else {
-			state.template.push(t_statement(for_loop), t_statement(close));
+			state.template.push(for_loop, close);
 		}
 	},
 	IfBlock(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
-
 		const test = /** @type {import('estree').Expression} */ (context.visit(node.test));
 
 		const consequent = /** @type {import('estree').BlockStatement} */ (
@@ -1573,52 +1557,43 @@ const template_visitors = {
 			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE)))
 		);
 
-		state.template.push(t_statement(b.if(test, consequent, alternate)));
+		context.state.template.push(block_open, b.if(test, consequent, alternate));
 	},
 	AwaitBlock(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
-
-		state.template.push(
-			t_statement(
-				b.stmt(
-					b.call(
-						'$.await',
-						/** @type {import('estree').Expression} */ (context.visit(node.expression)),
-						b.thunk(
-							node.pending
-								? /** @type {import('estree').BlockStatement} */ (context.visit(node.pending))
-								: b.block([])
-						),
-						b.arrow(
-							node.value
-								? [/** @type {import('estree').Pattern} */ (context.visit(node.value))]
-								: [],
-							node.then
-								? /** @type {import('estree').BlockStatement} */ (context.visit(node.then))
-								: b.block([])
-						),
-						b.arrow(
-							node.error
-								? [/** @type {import('estree').Pattern} */ (context.visit(node.error))]
-								: [],
-							node.catch
-								? /** @type {import('estree').BlockStatement} */ (context.visit(node.catch))
-								: b.block([])
-						)
+		context.state.template.push(
+			block_open,
+			b.stmt(
+				b.call(
+					'$.await',
+					/** @type {import('estree').Expression} */ (context.visit(node.expression)),
+					b.thunk(
+						node.pending
+							? /** @type {import('estree').BlockStatement} */ (context.visit(node.pending))
+							: b.block([])
+					),
+					b.arrow(
+						node.value ? [/** @type {import('estree').Pattern} */ (context.visit(node.value))] : [],
+						node.then
+							? /** @type {import('estree').BlockStatement} */ (context.visit(node.then))
+							: b.block([])
+					),
+					b.arrow(
+						node.error ? [/** @type {import('estree').Pattern} */ (context.visit(node.error))] : [],
+						node.catch
+							? /** @type {import('estree').BlockStatement} */ (context.visit(node.catch))
+							: b.block([])
 					)
 				)
-			)
+			),
+			block_close
 		);
-
-		state.template.push(block_close);
 	},
 	KeyBlock(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
-		const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.fragment));
-		state.template.push(t_statement(block));
-		state.template.push(block_close);
+		context.state.template.push(
+			block_open,
+			/** @type {import('estree').BlockStatement} */ (context.visit(node.fragment)),
+			block_close
+		);
 	},
 	SnippetBlock(node, context) {
 		const fn = b.function_declaration(
@@ -1687,16 +1662,14 @@ const template_visitors = {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'LetDirective') {
 				context.state.template.push(
-					t_statement(
-						/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute))
-					)
+					/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute))
 				);
 			}
 		}
 
 		const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.fragment));
 
-		context.state.template.push(t_statement(block));
+		context.state.template.push(block);
 	},
 	TitleElement(node, context) {
 		const state = context.state;
@@ -1720,9 +1693,6 @@ const template_visitors = {
 		state.init.push(...serialize_template(inner_state.template, b.id('title')));
 	},
 	SlotElement(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
-
 		/** @type {import('estree').Property[]} */
 		const props = [];
 
@@ -1767,15 +1737,13 @@ const template_visitors = {
 				: b.thunk(/** @type {import('estree').BlockStatement} */ (context.visit(node.fragment)));
 		const slot = b.call('$.slot', b.id('$$payload'), expression, props_expression, fallback);
 
-		state.template.push(t_statement(b.stmt(slot)));
-		state.template.push(block_close);
+		context.state.template.push(block_open, b.stmt(slot), block_close);
 	},
 	SvelteHead(node, context) {
-		const state = context.state;
 		const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.fragment));
 
-		state.template.push(
-			t_statement(b.stmt(b.call('$.head', b.id('$$payload'), b.arrow([b.id('$$payload')], block))))
+		context.state.template.push(
+			b.stmt(b.call('$.head', b.id('$$payload'), b.arrow([b.id('$$payload')], block)))
 		);
 	},
 	// @ts-ignore: need to extract this out somehow
