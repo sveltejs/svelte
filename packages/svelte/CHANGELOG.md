@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.153
+
+### Patch Changes
+
+- feat: defer tasks without creating effects ([#11960](https://github.com/sveltejs/svelte/pull/11960))
+
+- fix: enusre dev validation in dynamic component works as intended ([#11985](https://github.com/sveltejs/svelte/pull/11985))
+
+- feat: detach inert effects ([#11955](https://github.com/sveltejs/svelte/pull/11955))
+
+- feat: sort possible bindings in invalid binding error ([#11950](https://github.com/sveltejs/svelte/pull/11950))
+
+- fix: apply style directives to element with empty style attribute ([#11971](https://github.com/sveltejs/svelte/pull/11971))
+
 ## 5.0.0-next.152
 
 ### Patch Changes
