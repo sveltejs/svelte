@@ -1,6 +1,8 @@
 import { is_promise, noop } from '../../../shared/utils.js';
 import {
 	current_component_context,
+	current_effect,
+	current_reaction,
 	flush_sync,
 	set_current_component_context,
 	set_current_effect,
@@ -10,6 +12,8 @@ import {
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import { INERT } from '../../constants.js';
 import { DEV } from 'esm-env';
+import { queue_micro_task } from '../task.js';
+import { hydrating } from '../hydration.js';
 
 /**
  * @template V
@@ -71,13 +75,34 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 
 		if (is_promise(input)) {
 			const promise = /** @type {Promise<any>} */ (input);
+			var resolved = false;
 
 			if (pending_fn) {
-				if (pending_effect && (pending_effect.f & INERT) === 0) {
-					destroy_effect(pending_effect);
+				var parent_effect = current_effect;
+				var parent_reaction = current_reaction;
+				var show_pending = () => {
+					if (resolved) return;
+					if (pending_effect && (pending_effect.f & INERT) === 0) {
+						destroy_effect(pending_effect);
+					}
+					var previous_effect = current_effect;
+					var previous_reaction = current_reaction;
+					try {
+						set_current_effect(parent_effect);
+						set_current_reaction(parent_reaction);
+						pending_effect = branch(() => pending_fn(anchor));
+					} finally {
+						set_current_effect(previous_effect);
+						set_current_reaction(previous_reaction);
+					}
+				};
+				if (hydrating) {
+					show_pending();
+				} else {
+					// Wait a microtask before checking if we should the pending state as
+					// the promise might have resolved by the next microtask.
+					queue_micro_task(show_pending);
 				}
-
-				pending_effect = branch(() => pending_fn(anchor));
 			}
 
 			if (then_effect) pause_effect(then_effect);
@@ -86,6 +111,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 			promise.then(
 				(value) => {
 					if (promise !== input) return;
+					resolved = true;
 					if (pending_effect) pause_effect(pending_effect);
 
 					if (then_fn) {
