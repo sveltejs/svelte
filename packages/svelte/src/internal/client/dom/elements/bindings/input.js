@@ -35,9 +35,6 @@ export function bind_value(input, get_value, update) {
 			return;
 		}
 
-		// @ts-ignore
-		input.__value = value;
-
 		if (is_numberlike_input(input) && value === to_number(input.value)) {
 			// handles 0 vs 00 case (see https://github.com/sveltejs/svelte/issues/9959)
 			return;
@@ -65,6 +62,7 @@ export function bind_value(input, get_value, update) {
 export function bind_group(inputs, group_index, input, get_value, update) {
 	var is_checkbox = input.getAttribute('type') === 'checkbox';
 	var binding_group = inputs;
+	var hydration_mismatch = false;
 
 	if (group_index !== null) {
 		for (var index of group_index) {
@@ -100,6 +98,13 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 	render_effect(() => {
 		var value = get_value();
 
+		// If we are hydrating and the value has since changed, then use the update value
+		// from the input instead.
+		if (hydrating && input.defaultChecked !== input.checked) {
+			hydration_mismatch = true;
+			return;
+		}
+
 		if (is_checkbox) {
 			value = value || [];
 			// @ts-ignore
@@ -121,6 +126,19 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 	queue_micro_task(() => {
 		// necessary to maintain binding group order in all insertion scenarios. TODO optimise
 		binding_group.sort((a, b) => (a.compareDocumentPosition(b) === 4 ? -1 : 1));
+		if (hydration_mismatch) {
+			var value;
+			if (is_checkbox) {
+				value = get_binding_group_value(binding_group, value, input.checked);
+			} else {
+				var hydration_input = binding_group.find((input) => input.checked);
+				if (hydration_input !== undefined) {
+					// @ts-ignore
+					value = hydration_input.__value;
+				}
+			}
+			update(value);
+		}
 	});
 }
 
