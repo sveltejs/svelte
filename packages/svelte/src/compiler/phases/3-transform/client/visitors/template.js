@@ -671,6 +671,9 @@ function serialize_inline_component(node, component_name, context) {
 	/** @type {import('estree').Identifier | import('estree').MemberExpression | null} */
 	let bind_this = null;
 
+	/**
+	 * @type {import("estree").ExpressionStatement[]}
+	 */
 	const binding_initializers = [];
 
 	/**
@@ -920,6 +923,8 @@ function serialize_inline_component(node, component_name, context) {
 		};
 	}
 
+	const statements = [...snippet_declarations];
+
 	if (node.type === 'SvelteComponent') {
 		const prev = fn;
 
@@ -930,6 +935,7 @@ function serialize_inline_component(node, component_name, context) {
 				b.arrow(
 					[b.id(component_name)],
 					b.block([
+						...binding_initializers,
 						b.stmt(
 							context.state.options.dev
 								? b.call('$.validate_dynamic_component', b.thunk(prev(node_id)))
@@ -939,9 +945,9 @@ function serialize_inline_component(node, component_name, context) {
 				)
 			);
 		};
+	} else {
+		statements.push(...binding_initializers);
 	}
-
-	const statements = [...snippet_declarations, ...binding_initializers];
 
 	if (Object.keys(custom_css_props).length > 0) {
 		context.state.template.push(
