@@ -1,4 +1,4 @@
-import { render_effect, teardown } from '../../reactivity/effects.js';
+import { teardown } from '../../reactivity/effects.js';
 import { all_registered_events, root_event_handles } from '../../render.js';
 import { define_property, is_array } from '../../utils.js';
 import { hydrating } from '../hydration.js';

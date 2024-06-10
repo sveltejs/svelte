@@ -1,8 +1,9 @@
 import { DEV } from 'esm-env';
-import { render_effect, effect, teardown } from '../../../reactivity/effects.js';
+import { render_effect, teardown } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
 import { get_proxied_value, is } from '../../../proxy.js';
+import { queue_micro_task } from '../../task.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -111,7 +112,7 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 		}
 	});
 
-	effect(() => {
+	queue_micro_task(() => {
 		// necessary to maintain binding group order in all insertion scenarios. TODO optimise
 		binding_group.sort((a, b) => (a.compareDocumentPosition(b) === 4 ? -1 : 1));
 	});

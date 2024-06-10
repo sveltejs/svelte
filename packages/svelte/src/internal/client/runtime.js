@@ -561,7 +561,7 @@ function infinite_loop_guard() {
  * @returns {void}
  */
 function flush_queued_root_effects(root_effects) {
-	const length = root_effects.length;
+	var length = root_effects.length;
 	if (length === 0) {
 		return;
 	}
