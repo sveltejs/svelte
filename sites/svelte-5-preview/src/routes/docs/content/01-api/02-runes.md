@@ -341,49 +341,32 @@ In general, `$effect` is best considered something of an escape hatch — useful
 
 > For things that are more complicated than a simple expression like `count * 2`, you can also use [`$derived.by`](#$derived-by).
 
-When reacting to a state change and writing to a different state as a result, think about if it's possible to use callback props instead.
-
-```svelte
-<!-- Don't do this -->
-<script>
-	let value = $state();
-	let value_uppercase = $state();
-	$effect(() => {
-		value_uppercase = value.toUpperCase();
-	});
-</script>
-
-<Text bind:value />
-
-<!-- Do this instead: -->
-<script>
-	let value = $state();
-	let value_uppercase = $state();
-	function onValueChange(new_text) {
-		value = new_text;
-		value_uppercase = new_text.toUpperCase();
-	}
-</script>
-
-<Text {value} {onValueChange}>
-```
-
-If you want to have something update from above but also modify it from below (i.e. you want some kind of "writable `$derived`"), and events aren't an option, you can also use an object with getters and setters.
+If you find yourself using effects to synchronise state with bindings, for example, consider using this pattern instead ([demo](/#H4sIAAAAAAAAE5VRQW7DIBD8CkI9JFIau4deiB2p7yg9kHhtIWGMYG3Fsvh7ARs3qnrpCWZGM8MuC22lAkfZ50K16IEy-mEMPVGcTQRuAoUQsBtGe49M5e5WGrxyzVEBEhxQKFKTt7K8ZM4Z0Bi4F4cC4VAeo7JpCtooLRFz7AIzCTXC4ZgpjhZwtHpLfl3TLqvoT-vpdt_0ZMy92TllVzx8AFXx83pdKXEDlQappDZjmCUMXXNqhe6AU3KTumGppV5StCe9eNRLivekSNZNKTKbYGza0_9XFPdzTvc_257kvTJyvxodzgrWP4pkXlEjnVFiZqRV8NiW0wnDSHl-hz4RPm0p2cO390MjWwkNZWhD5Zf_BkCCa6AxAgAA)):
 
 ```svelte
 <script>
-	let { value } = $props();
-	let facade = {
+	let total = 100;
+	let spent = $state(0);
+
+	let left = {
 		get value() {
-			return value.toUpperCase();
+			return total - spent;
 		},
-		set value(val) {
-			value = val.toLowerCase();
+		set value(v) {
+			spent = total - v;
 		}
 	};
 </script>
 
-<input bind:value={facade.value} />
+<label>
+	<input type="range" bind:value={spent} max={total} />
+	{spent}/{total} spent
+</label>
+
+<label>
+	<input type="range" bind:value={left.value} max={total} />
+	{left.value}/{total} left
+</label>
 ```
 
 If you absolutely have to update `$state` within an effect and run into an infinite loop because you read and write to the same `$state`, use [untrack](functions#untrack).
