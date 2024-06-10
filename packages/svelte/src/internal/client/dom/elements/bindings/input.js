@@ -27,12 +27,13 @@ export function bind_value(input, get_value, update) {
 			// TODO should this happen in prod too?
 			e.bind_invalid_checkbox_value();
 		}
+		var value = get_value();
 		// If we are hydrating and the value has since changed, then use the update value
 		// from the input instead.
 		if (hydrating && input.defaultValue !== input.value) {
 			update(input.value);
+			return;
 		}
-		var value = get_value();
 
 		// @ts-ignore
 		input.__value = value;
