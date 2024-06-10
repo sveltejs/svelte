@@ -90,8 +90,6 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 					try {
 						set_current_effect(parent_effect);
 						set_current_reaction(parent_reaction);
-						if (then_effect) pause_effect(then_effect);
-						if (catch_effect) pause_effect(catch_effect);
 						pending_effect = branch(() => pending_fn(anchor));
 					} finally {
 						set_current_effect(previous_effect);
@@ -106,6 +104,9 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 					queue_micro_task(show_pending);
 				}
 			}
+
+			if (then_effect) pause_effect(then_effect);
+			if (catch_effect) pause_effect(catch_effect);
 
 			promise.then(
 				(value) => {
