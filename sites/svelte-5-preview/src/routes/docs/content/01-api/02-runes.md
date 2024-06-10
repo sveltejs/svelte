@@ -254,30 +254,30 @@ An effect only reruns when the object it reads changes, not when a property insi
 
 ```svelte
 <script>
-	let a = $state({ value: 0 });
-	let b = $derived({ value: a.value * 2 });
+	let state = $state({ value: 0 });
+	let derived = $derived({ value: state.value * 2 });
 
-	// this will run once, because `a` is never reassigned (only mutated)
+	// this will run once, because `state` is never reassigned (only mutated)
 	$effect(() => {
-		a;
+		state;
 	});
 
-	// this will run whenever `a.value` changes...
+	// this will run whenever `state.value` changes...
 	$effect(() => {
-		a.value;
+		state.value;
 	});
 
-	// ...and so will this, because `b` is a new object each time
+	// ...and so will this, because `derived` is a new object each time
 	$effect(() => {
-		b;
+		derived;
 	});
 </script>
 
-<button onclick={() => (a.value += 1)}>
-	{a.value}
+<button onclick={() => (state.value += 1)}>
+	{state.value}
 </button>
 
-<p>{a.value} doubled is {b.value}</p>
+<p>{state.value} doubled is {derived.value}</p>
 ```
 
 You can return a function from `$effect`, which will run immediately before the effect re-runs, and before it is destroyed ([demo](/#H4sIAAAAAAAAE42SzW6DMBCEX2Vl5RDaVCQ9JoDUY--9lUox9lKsGBvZC1GEePcaKPnpqSe86_m0M2t6ViqNnu0_e2Z4jWzP3pqGbRhdmrHwHWrCUHvbOjF2Ei-caijLTU4aCYRtDUEKK0-ccL2NDstNrbRWHoU10t8Eu-121gTVCssSBa3XEaQZ9GMrpziGj0p5OAccCgSHwmEgJZwrNNihg6MyhK7j-gii4uYb_YyGUZ5guQwzPdL7b_U4ZNSOvp9T2B3m1rB5cLx4zMkhtc7AHz7YVCVwEFzrgosTBMuNs52SKDegaPbvWnMH8AhUXaNUIY6-hHCldQhUIcyLCFlfAuHvkCKaYk8iYevGGgy2wyyJnpy9oLwG0sjdNe2yhGhJN32HsUzi2xOapNpl_bSLIYnDeeoVLZE1YI3QSpzSfo7-8J5PKbwOmdf2jC6JZyD7HxpPaMk93aHhF6utVKVCyfbkWhy-hh9Z3o_2nQIAAA==)).
