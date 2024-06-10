@@ -1435,37 +1435,29 @@ function get_node_id(expression, state, name) {
 }
 
 /**
- * @param {true | Array<import('#compiler').Text | import('#compiler').ExpressionTag>} attribute_value
+ * @param {true | Array<import('#compiler').Text | import('#compiler').ExpressionTag>} value
  * @param {import('../types').ComponentContext} context
- * @returns {[boolean, import('estree').Expression]}
+ * @returns {[contains_call_expression: boolean, import('estree').Expression]}
  */
-function serialize_attribute_value(attribute_value, context) {
-	let contains_call_expression = false;
-
-	if (attribute_value === true) {
-		return [contains_call_expression, b.literal(true)];
+function serialize_attribute_value(value, context) {
+	if (value === true) {
+		return [false, b.literal(true)];
 	}
 
-	if (attribute_value.length === 0) {
-		return [contains_call_expression, b.literal('')]; // is this even possible?
-	}
+	if (value.length === 1) {
+		const chunk = value[0];
 
-	if (attribute_value.length === 1) {
-		const value = attribute_value[0];
-		if (value.type === 'Text') {
-			return [contains_call_expression, b.literal(value.data)];
-		} else {
-			if (value.type === 'ExpressionTag') {
-				contains_call_expression = value.metadata.contains_call_expression;
-			}
-			return [
-				contains_call_expression,
-				/** @type {import('estree').Expression} */ (context.visit(value.expression))
-			];
+		if (chunk.type === 'Text') {
+			return [false, b.literal(chunk.data)];
 		}
+
+		return [
+			chunk.metadata.contains_call_expression,
+			/** @type {import('estree').Expression} */ (context.visit(chunk.expression))
+		];
 	}
 
-	return serialize_template_literal(attribute_value, context.visit, context.state);
+	return serialize_template_literal(value, context.visit, context.state);
 }
 
 /**
