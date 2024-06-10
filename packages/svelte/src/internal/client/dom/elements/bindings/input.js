@@ -62,7 +62,8 @@ export function bind_value(input, get_value, update) {
 export function bind_group(inputs, group_index, input, get_value, update) {
 	var is_checkbox = input.getAttribute('type') === 'checkbox';
 	var binding_group = inputs;
-	var hydration_mismatch = false;
+	// needs to be let or related code isn't treeshaken out if it's always false
+	let hydration_mismatch = false;
 
 	if (group_index !== null) {
 		for (var index of group_index) {
