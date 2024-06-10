@@ -59,7 +59,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 		};
 		logs: any[];
 		warnings: any[];
-		hydrate: () => void;
+		hydrate: Function;
 	}) => void | Promise<void>;
 	test_ssr?: (args: { assert: Assert }) => void | Promise<void>;
 	accessors?: boolean;
@@ -307,7 +307,9 @@ async function run_test_variant(
 
 			let instance: any;
 			let props: any;
-			let hydrate_fn;
+			let hydrate_fn: Function = () => {
+				throw new Error('Ensure dom mode is skipped');
+			}
 
 			if (runes) {
 				props = proxy({ ...(config.props || {}) });
