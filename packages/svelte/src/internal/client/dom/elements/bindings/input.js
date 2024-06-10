@@ -4,6 +4,7 @@ import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
 import { get_proxied_value, is } from '../../../proxy.js';
 import { queue_micro_task } from '../../task.js';
+import { hydrating } from '../../hydration.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -26,7 +27,11 @@ export function bind_value(input, get_value, update) {
 			// TODO should this happen in prod too?
 			e.bind_invalid_checkbox_value();
 		}
-
+		// If we are hydrating and the value has since changed, then use the update value
+		// from the input instead.
+		if (hydrating && input.defaultValue !== input.value) {
+			update(input.value);
+		}
 		var value = get_value();
 
 		// @ts-ignore
