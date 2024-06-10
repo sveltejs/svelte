@@ -309,7 +309,7 @@ async function run_test_variant(
 			let props: any;
 			let hydrate_fn: Function = () => {
 				throw new Error('Ensure dom mode is skipped');
-			}
+			};
 
 			if (runes) {
 				props = proxy({ ...(config.props || {}) });
