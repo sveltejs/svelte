@@ -4,11 +4,8 @@ import App from './App.svelte';
 const root = document.getElementById('root')!;
 const render = root.firstChild?.nextSibling ? hydrate : mount;
 
-setTimeout(() => {
-	const component = render(App, {
-		target: document.getElementById('root')!
-	});
-	// @ts-ignore
-	window.unmount = () => unmount(component);
-}, 1000)
-
+const component = render(App, {
+	target: document.getElementById('root')!
+});
+// @ts-ignore
+window.unmount = () => unmount(component);
