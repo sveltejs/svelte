@@ -22,6 +22,7 @@ export default test({
 			prop3: { prop7: 'seven' },
 			prop4: { prop10: 'ten' }
 		}));
+		await Promise.resolve();
 		assert.htmlEqual(
 			target.innerHTML,
 			`

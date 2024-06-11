@@ -2577,6 +2577,64 @@ export const template_visitors = {
 	},
 	AwaitBlock(node, context) {
 		context.state.template.push('<!>');
+		let then_block;
+
+		if (node.then) {
+			const block_statement = /** @type {import('estree').BlockStatement} */ (
+				context.visit(node.then)
+			);
+			/** @type {import('estree').Pattern[]} */
+			const args = [b.id('$$anchor')];
+
+			if (node.value) {
+				let value_arg = /** @type {import('estree').Pattern} */ (context.visit(node.value));
+				if (node.value.type === 'Identifier') {
+					args.push(value_arg);
+				} else {
+					const identifiers = extract_identifiers(node.value);
+					const then_scope = /** @type {import('../../../scope.js').Scope} */ (
+						context.state.scopes.get(node.then)
+					);
+					const value_arg_name = then_scope.generate('$$value');
+					const derived_name = then_scope.generate('derived_arg');
+					const body = [
+						b.var(
+							derived_name,
+							create_derived(
+								context.state,
+								b.thunk(
+									b.block([
+										b.var(value_arg, b.call('$.get', b.id(value_arg_name))),
+										b.return(
+											b.object(
+												identifiers.map((identifier) => b.prop('init', identifier, identifier))
+											)
+										)
+									])
+								)
+							)
+						)
+					];
+					args.push(b.id(value_arg_name));
+
+					for (const identifier of identifiers) {
+						body.push(
+							b.var(
+								identifier,
+								create_derived(
+									context.state,
+									b.thunk(b.member(b.call('$.get', b.id(derived_name)), identifier))
+								)
+							)
+						);
+					}
+					block_statement.body.unshift(...body);
+				}
+			}
+			then_block = b.arrow(args, block_statement);
+		} else {
+			then_block = b.literal(null);
+		}
 
 		context.state.init.push(
 			b.stmt(
@@ -2590,17 +2648,7 @@ export const template_visitors = {
 								/** @type {import('estree').BlockStatement} */ (context.visit(node.pending))
 							)
 						: b.literal(null),
-					node.then
-						? b.arrow(
-								node.value
-									? [
-											b.id('$$anchor'),
-											/** @type {import('estree').Pattern} */ (context.visit(node.value))
-										]
-									: [b.id('$$anchor')],
-								/** @type {import('estree').BlockStatement} */ (context.visit(node.then))
-							)
-						: b.literal(null),
+					then_block,
 					node.catch
 						? b.arrow(
 								node.error

@@ -14,6 +14,7 @@ import { INERT } from '../../constants.js';
 import { DEV } from 'esm-env';
 import { queue_micro_task } from '../task.js';
 import { hydrating } from '../hydration.js';
+import { set, source } from '../../reactivity/sources.js';
 
 /**
  * @template V
@@ -35,6 +36,8 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 	/** @type {any} */
 	let input;
 
+	let input_source = source(undefined);
+
 	/** @type {import('#client').Effect | null} */
 	let pending_effect;
 
@@ -43,6 +46,8 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 
 	/** @type {import('#client').Effect | null} */
 	let catch_effect;
+
+	let pending = false;
 
 	/**
 	 * @param {(anchor: Comment, value: any) => void} fn
@@ -84,12 +89,17 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 					if (pending_effect) pause_effect(pending_effect);
 
 					if (then_fn) {
-						then_effect = create_effect(then_fn, value);
+						set(input_source, value);
+						if (pending || then_effect === undefined) {
+							then_effect = create_effect(then_fn, input_source);
+						}
 					}
 				},
 				(error) => {
 					if (promise !== input) return;
 					if (pending_effect) pause_effect(pending_effect);
+					if (then_effect) pause_effect(then_effect);
+					resolved = true;
 
 					if (catch_fn) {
 						catch_effect = create_effect(catch_fn, error);
@@ -102,6 +112,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 				var parent_reaction = current_reaction;
 				var show_pending = () => {
 					if (resolved) return;
+					pending = true;
 					if (pending_effect && (pending_effect.f & INERT) === 0) {
 						destroy_effect(pending_effect);
 					}
@@ -111,21 +122,26 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 						set_current_effect(parent_effect);
 						set_current_reaction(parent_reaction);
 						pending_effect = branch(() => pending_fn(anchor));
+						if (then_effect) pause_effect(then_effect);
 					} finally {
 						set_current_effect(previous_effect);
 						set_current_reaction(previous_reaction);
 					}
 				};
+
 				if (hydrating) {
 					show_pending();
 				} else {
+					pending = false;
 					// Wait a microtask before checking if we should the pending state as
 					// the promise might have resolved by the next microtask.
 					queue_micro_task(show_pending);
 				}
+			} else if (then_effect) {
+				pending = true;
+				pause_effect(then_effect);
 			}
 
-			if (then_effect) pause_effect(then_effect);
 			if (catch_effect) pause_effect(catch_effect);
 		} else {
 			if (pending_effect) pause_effect(pending_effect);
@@ -136,7 +152,8 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 					destroy_effect(then_effect);
 				}
 
-				then_effect = branch(() => then_fn(anchor, input));
+				set(input_source, input);
+				then_effect = branch(() => then_fn(anchor, /** @type {V} */ (input_source)));
 			}
 		}
 
