@@ -77,9 +77,10 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 		if (input === (input = get_input())) return;
 
 		if (is_promise(input)) {
+			let was_hydrating = hydrating;
+
 			if (hydrating && pending_fn) {
 				pending_effect = branch(() => pending_fn(anchor));
-				return;
 			}
 
 			var promise = /** @type {Promise<any>} */ (input);
@@ -111,7 +112,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 				// if the promise was already resolved, avoid thrash
 				if (settled) return;
 
-				if (pending_fn) {
+				if (pending_fn && !was_hydrating) {
 					if (pending_effect && (pending_effect.f & INERT) === 0) {
 						destroy_effect(pending_effect);
 					}
