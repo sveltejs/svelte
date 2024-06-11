@@ -133,10 +133,8 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 				value = get_binding_group_value(binding_group, value, input.checked);
 			} else {
 				var hydration_input = binding_group.find((input) => input.checked);
-				if (hydration_input !== undefined) {
-					// @ts-ignore
-					value = hydration_input.__value;
-				}
+				// @ts-ignore
+				value = hydration_input?.__value;
 			}
 			update(value);
 		}
