@@ -12,7 +12,7 @@ export default test({
 
 		assert.htmlEqual(
 			target.innerHTML,
-			'<input type="radio" value="1"><input type="radio" value="2"><input type="radio" value="3">\n2'
+			'<input name="foo" type="radio" value="1"><input name="foo" type="radio" value="2"><input name="foo" type="radio" value="3">\n2'
 		);
 	}
 });
