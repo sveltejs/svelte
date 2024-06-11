@@ -27,7 +27,9 @@ export function bind_value(input, get_value, update) {
 			// TODO should this happen in prod too?
 			e.bind_invalid_checkbox_value();
 		}
+
 		var value = get_value();
+
 		// If we are hydrating and the value has since changed, then use the update value
 		// from the input instead.
 		if (hydrating && input.defaultValue !== input.value) {
@@ -62,6 +64,7 @@ export function bind_value(input, get_value, update) {
 export function bind_group(inputs, group_index, input, get_value, update) {
 	var is_checkbox = input.getAttribute('type') === 'checkbox';
 	var binding_group = inputs;
+
 	// needs to be let or related code isn't treeshaken out if it's always false
 	let hydration_mismatch = false;
 
@@ -127,8 +130,10 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 	queue_micro_task(() => {
 		// necessary to maintain binding group order in all insertion scenarios. TODO optimise
 		binding_group.sort((a, b) => (a.compareDocumentPosition(b) === 4 ? -1 : 1));
+
 		if (hydration_mismatch) {
 			var value;
+
 			if (is_checkbox) {
 				value = get_binding_group_value(binding_group, value, input.checked);
 			} else {
@@ -136,6 +141,7 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 				// @ts-ignore
 				value = hydration_input?.__value;
 			}
+
 			update(value);
 		}
 	});
