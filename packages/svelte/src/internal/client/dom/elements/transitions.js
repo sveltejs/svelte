@@ -8,6 +8,7 @@ import { is_function } from '../../utils.js';
 import { current_each_item } from '../blocks/each.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
 import { BLOCK_EFFECT, EFFECT_RAN, EFFECT_TRANSPARENT } from '../../constants.js';
+import { queue_micro_task } from '../task.js';
 
 /**
  * @param {Element} element
@@ -272,8 +273,8 @@ function animate(element, options, counterpart, t2, callback) {
 		/** @type {import('#client').Animation} */
 		var a;
 
-		effect(() => {
-			var o = untrack(() => options({ direction: t2 === 1 ? 'in' : 'out' }));
+		queue_micro_task(() => {
+			var o = options({ direction: t2 === 1 ? 'in' : 'out' });
 			a = animate(element, o, counterpart, t2, callback);
 		});
 

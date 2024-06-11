@@ -19,7 +19,7 @@ export default function Function_prop_no_getter($$anchor) {
 		children: ($$anchor, $$slotProps) => {
 			var text = $.text($$anchor);
 
-			$.template_effect(() => $.set_text(text, `clicks: ${$.stringify($.get(count))}`));
+			$.template_effect(() => $.set_text(text, `clicks: ${$.get(count) ?? ""}`));
 			$.append($$anchor, text);
 		},
 		$$slots: { default: true }

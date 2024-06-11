@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: create sources on read for Set
+fix: update reactive set when deleting initial values

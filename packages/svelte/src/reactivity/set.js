@@ -47,7 +47,6 @@ export class ReactiveSet extends Set {
 		for (const method of read_methods) {
 			// @ts-ignore
 			proto[method] = function (...v) {
-				this.#read_all();
 				get(this.#version);
 				// @ts-ignore
 				return set_proto[method].apply(this, v);
@@ -67,103 +66,82 @@ export class ReactiveSet extends Set {
 
 	/** @param {T} value */
 	has(value) {
+		var has = super.has(value);
 		var sources = this.#sources;
 		var s = sources.get(value);
 
 		if (s === undefined) {
-			var ret = super.has(value);
-			if (ret) {
-				s = source(true);
-				sources.set(value, s);
-			} else {
-				// We should always track the version in case
-				// the Set ever gets this value in the future.
+			if (!has) {
+				// If the value doesn't exist, track the version in case it's added later
+				// but don't create sources willy-nilly to track all possible values
 				get(this.#version);
 				return false;
 			}
+
+			s = source(true);
+			sources.set(value, s);
 		}
 
 		get(s);
-		return super.has(value);
-	}
-
-	#read_all() {
-		var sources = this.#sources;
-
-		if (sources.size !== super.size) {
-			for (let value of super.values()) {
-				var s = sources.get(value);
-
-				if (s === undefined) {
-					s = source(true);
-					sources.set(value, s);
-				}
-
-				get(s);
-			}
-		}
+		return has;
 	}
 
 	/** @param {T} value */
 	add(value) {
-		var sources = this.#sources;
-		var res = super.add(value);
-		var s = sources.get(value);
-
-		if (s === undefined) {
+		if (!super.has(value)) {
+			super.add(value);
 			set(this.#size, super.size);
 			increment(this.#version);
-		} else {
-			set(s, true);
 		}
 
-		return res;
+		return this;
 	}
 
 	/** @param {T} value */
 	delete(value) {
+		var deleted = super.delete(value);
 		var sources = this.#sources;
 		var s = sources.get(value);
-		var res = super.delete(value);
 
 		if (s !== undefined) {
 			sources.delete(value);
-			set(this.#size, super.size);
 			set(s, false);
+		}
+
+		if (deleted) {
+			set(this.#size, super.size);
 			increment(this.#version);
 		}
 
-		return res;
+		return deleted;
 	}
 
 	clear() {
-		var sources = this.#sources;
-
 		if (super.size !== 0) {
-			set(this.#size, 0);
+			var sources = this.#sources;
+
 			for (var s of sources.values()) {
 				set(s, false);
 			}
-			increment(this.#version);
+
 			sources.clear();
+			set(this.#size, 0);
+			increment(this.#version);
 		}
+
 		super.clear();
 	}
 
 	keys() {
-		this.#read_all();
-		get(this.#version);
-		return super.keys();
+		return this.values();
 	}
 
 	values() {
-		this.#read_all();
 		get(this.#version);
 		return super.values();
 	}
 
 	entries() {
-		this.#read_all();
 		get(this.#version);
 		return super.entries();
 	}

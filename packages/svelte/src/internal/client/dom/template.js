@@ -3,8 +3,8 @@ import { empty } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
-import { effect } from '../reactivity/effects.js';
 import { is_array } from '../utils.js';
+import { queue_micro_task } from './task.js';
 
 /**
  * @template {import("#client").TemplateNode | import("#client").TemplateNode[]} T
@@ -196,7 +196,7 @@ function run_scripts(node) {
 		// Don't do it in other circumstances or we could accidentally execute scripts
 		// in an adjacent @html tag that was instantiated in the meantime.
 		if (script === node) {
-			effect(() => script.replaceWith(clone));
+			queue_micro_task(() => script.replaceWith(clone));
 		} else {
 			script.replaceWith(clone);
 		}

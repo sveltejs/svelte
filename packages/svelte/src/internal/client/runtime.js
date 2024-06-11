@@ -7,7 +7,12 @@ import {
 	object_freeze
 } from './utils.js';
 import { snapshot } from './proxy.js';
-import { destroy_effect, effect, execute_effect_teardown } from './reactivity/effects.js';
+import {
+	destroy_effect,
+	effect,
+	execute_effect_teardown,
+	unlink_effect
+} from './reactivity/effects.js';
 import {
 	EFFECT,
 	RENDER_EFFECT,
@@ -561,7 +566,7 @@ function infinite_loop_guard() {
  * @returns {void}
  */
 function flush_queued_root_effects(root_effects) {
-	const length = root_effects.length;
+	var length = root_effects.length;
 	if (length === 0) {
 		return;
 	}
@@ -603,6 +608,21 @@ function flush_queued_effects(effects) {
 
 		if ((effect.f & (DESTROYED | INERT)) === 0 && check_dirtiness(effect)) {
 			execute_effect(effect);
+
+			// Effects with no dependencies or teardown do not get added to the effect tree.
+			// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
+			// don't know if we need to keep them until they are executed. Doing the check
+			// here (rather than in `execute_effect`) allows us to skip the work for
+			// immediate effects.
+			if (effect.deps === null && effect.first === null && effect.dom === null) {
+				if (effect.teardown === null) {
+					// remove this effect from the graph
+					unlink_effect(effect);
+				} else {
+					// keep the effect in the graph, but free up some memory
+					effect.fn = null;
+				}
+			}
 		}
 	}
 }

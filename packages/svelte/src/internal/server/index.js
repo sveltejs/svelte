@@ -143,12 +143,12 @@ export function head(payload, fn) {
  * @template V
  * @param {string} name
  * @param {V} value
- * @param {boolean} boolean
+ * @param {boolean} [is_boolean]
  * @returns {string}
  */
-export function attr(name, value, boolean) {
-	if (value == null || (!value && boolean) || (value === '' && name === 'class')) return '';
-	const assignment = boolean ? '' : `="${escape_html(value, true)}"`;
+export function attr(name, value, is_boolean = false) {
+	if (value == null || (!value && is_boolean) || (value === '' && name === 'class')) return '';
+	const assignment = is_boolean ? '' : `="${escape_html(value, true)}"`;
 	return ` ${name}${assignment}`;
 }
 
@@ -264,28 +264,28 @@ export function add_styles(style_object) {
 }
 
 /**
- * @param {string} style_attribute
- * @param {Record<string, string>} style_directive
+ * @param {string} attribute
+ * @param {Record<string, string>} styles
  */
-export function merge_styles(style_attribute, style_directive) {
+export function merge_styles(attribute, styles) {
 	/** @type {Record<string, string>} */
-	const style_object = {};
-	for (const individual_style of style_attribute.split(';')) {
-		const colon_index = individual_style.indexOf(':');
-		const name = individual_style.slice(0, colon_index).trim();
-		const value = individual_style.slice(colon_index + 1).trim();
-		if (!name) continue;
-		style_object[name] = value;
-	}
-	for (const name in style_directive) {
-		const value = style_directive[name];
-		if (value) {
-			style_object[name] = value;
-		} else {
-			delete style_object[name];
+	var merged = {};
+
+	if (attribute) {
+		for (var declaration of attribute.split(';')) {
+			var i = declaration.indexOf(':');
+			var name = declaration.slice(0, i).trim();
+			var value = declaration.slice(i + 1).trim();
+
+			if (name !== '') merged[name] = value;
 		}
 	}
-	return style_object;
+
+	for (name in styles) {
+		merged[name] = styles[name];
+	}
+
+	return merged;
 }
 
 /**

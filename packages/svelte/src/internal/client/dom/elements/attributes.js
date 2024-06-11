@@ -9,10 +9,9 @@ import {
 } from '../../../../constants.js';
 import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
-import { effect, effect_root } from '../../reactivity/effects.js';
 import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '../../constants.js';
-import { queue_idle_task } from '../task.js';
+import { queue_idle_task, queue_micro_task } from '../task.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -262,21 +261,13 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 	// On the first run, ensure that events are added after bindings so
 	// that their listeners fire after the binding listeners
 	if (!prev) {
-		// In edge cases it may happen that set_attributes is re-run before the
-		// effect is executed. In that case the render effect which initiates this
-		// re-run will destroy the inner effect and it will never run. But because
-		// next and prev may have the same keys, the event would not get added again
-		// and it would get lost. We prevent this by using a root effect.
-		const destroy_root = effect_root(() => {
-			effect(() => {
-				if (!element.isConnected) return;
-				for (const [key, value, evt] of events) {
-					if (current[key] === value) {
-						evt();
-					}
+		queue_micro_task(() => {
+			if (!element.isConnected) return;
+			for (const [key, value, evt] of events) {
+				if (current[key] === value) {
+					evt();
 				}
-				destroy_root();
-			});
+			}
 		});
 	}
 

@@ -59,6 +59,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 		};
 		logs: any[];
 		warnings: any[];
+		hydrate: Function;
 	}) => void | Promise<void>;
 	test_ssr?: (args: { assert: Assert }) => void | Promise<void>;
 	accessors?: boolean;
@@ -101,6 +102,10 @@ export function runtime_suite(runes: boolean) {
 			if (variant === 'hydrate') {
 				if (config.mode && !config.mode.includes('hydrate')) return 'no-test';
 				if (config.skip_mode?.includes('hydrate')) return true;
+			}
+
+			if (variant === 'dom' && config.skip_mode?.includes('client')) {
+				return 'no-test';
 			}
 
 			if (variant === 'ssr') {
@@ -161,6 +166,7 @@ async function run_test_variant(
 
 	let logs: string[] = [];
 	let warnings: string[] = [];
+	let manual_hydrate = false;
 
 	{
 		// use some crude static analysis to determine if logs/warnings are intercepted.
@@ -178,6 +184,10 @@ async function run_test_variant(
 		if (str.slice(0, i).includes('logs')) {
 			// eslint-disable-next-line no-console
 			console.log = (...args) => logs.push(...args);
+		}
+
+		if (str.slice(0, i).includes('hydrate')) {
+			manual_hydrate = true;
 		}
 
 		if (str.slice(0, i).includes('warnings') || config.warnings) {
@@ -297,17 +307,30 @@ async function run_test_variant(
 
 			let instance: any;
 			let props: any;
+			let hydrate_fn: Function = () => {
+				throw new Error('Ensure dom mode is skipped');
+			};
 
 			if (runes) {
 				props = proxy({ ...(config.props || {}) });
-
-				const render = variant === 'hydrate' ? hydrate : mount;
-				instance = render(mod.default, {
-					target,
-					props,
-					intro: config.intro,
-					recover: config.recover ?? false
-				});
+				if (manual_hydrate) {
+					hydrate_fn = () => {
+						instance = hydrate(mod.default, {
+							target,
+							props,
+							intro: config.intro,
+							recover: config.recover ?? false
+						});
+					};
+				} else {
+					const render = variant === 'hydrate' ? hydrate : mount;
+					instance = render(mod.default, {
+						target,
+						props,
+						intro: config.intro,
+						recover: config.recover ?? false
+					});
+				}
 			} else {
 				instance = createClassComponent({
 					component: mod.default,
@@ -357,7 +380,8 @@ async function run_test_variant(
 						raf,
 						compileOptions,
 						logs,
-						warnings
+						warnings,
+						hydrate: hydrate_fn
 					});
 				}
 

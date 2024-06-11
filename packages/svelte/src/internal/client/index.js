@@ -118,7 +118,7 @@ export {
 	update_pre_store,
 	update_store
 } from './reactivity/store.js';
-export { append_styles, sanitize_slots, set_text, slot, stringify } from './render.js';
+export { append_styles, sanitize_slots, set_text, slot } from './render.js';
 export {
 	get,
 	invalidate_inner_signals,

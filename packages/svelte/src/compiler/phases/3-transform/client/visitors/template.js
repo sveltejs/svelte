@@ -671,6 +671,9 @@ function serialize_inline_component(node, component_name, context) {
 	/** @type {import('estree').Identifier | import('estree').MemberExpression | null} */
 	let bind_this = null;
 
+	/**
+	 * @type {import("estree").ExpressionStatement[]}
+	 */
 	const binding_initializers = [];
 
 	/**
@@ -920,6 +923,8 @@ function serialize_inline_component(node, component_name, context) {
 		};
 	}
 
+	const statements = [...snippet_declarations];
+
 	if (node.type === 'SvelteComponent') {
 		const prev = fn;
 
@@ -930,6 +935,7 @@ function serialize_inline_component(node, component_name, context) {
 				b.arrow(
 					[b.id(component_name)],
 					b.block([
+						...binding_initializers,
 						b.stmt(
 							context.state.options.dev
 								? b.call('$.validate_dynamic_component', b.thunk(prev(node_id)))
@@ -939,9 +945,9 @@ function serialize_inline_component(node, component_name, context) {
 				)
 			);
 		};
+	} else {
+		statements.push(...binding_initializers);
 	}
-
-	const statements = [...snippet_declarations, ...binding_initializers];
 
 	if (Object.keys(custom_css_props).length > 0) {
 		context.state.template.push(
@@ -1337,10 +1343,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 						b.assignment(
 							'=',
 							b.member(text_id, b.id('nodeValue')),
-							b.call(
-								'$.stringify',
-								/** @type {import('estree').Expression} */ (visit(node.expression))
-							)
+							/** @type {import('estree').Expression} */ (visit(node.expression))
 						)
 					)
 				);
@@ -1438,37 +1441,29 @@ function get_node_id(expression, state, name) {
 }
 
 /**
- * @param {true | Array<import('#compiler').Text | import('#compiler').ExpressionTag>} attribute_value
+ * @param {true | Array<import('#compiler').Text | import('#compiler').ExpressionTag>} value
  * @param {import('../types').ComponentContext} context
- * @returns {[boolean, import('estree').Expression]}
+ * @returns {[contains_call_expression: boolean, import('estree').Expression]}
  */
-function serialize_attribute_value(attribute_value, context) {
-	let contains_call_expression = false;
-
-	if (attribute_value === true) {
-		return [contains_call_expression, b.literal(true)];
+function serialize_attribute_value(value, context) {
+	if (value === true) {
+		return [false, b.literal(true)];
 	}
 
-	if (attribute_value.length === 0) {
-		return [contains_call_expression, b.literal('')]; // is this even possible?
-	}
+	if (value.length === 1) {
+		const chunk = value[0];
 
-	if (attribute_value.length === 1) {
-		const value = attribute_value[0];
-		if (value.type === 'Text') {
-			return [contains_call_expression, b.literal(value.data)];
-		} else {
-			if (value.type === 'ExpressionTag') {
-				contains_call_expression = value.metadata.contains_call_expression;
-			}
-			return [
-				contains_call_expression,
-				/** @type {import('estree').Expression} */ (context.visit(value.expression))
-			];
+		if (chunk.type === 'Text') {
+			return [false, b.literal(chunk.data)];
 		}
+
+		return [
+			chunk.metadata.contains_call_expression,
+			/** @type {import('estree').Expression} */ (context.visit(chunk.expression))
+		];
 	}
 
-	return serialize_template_literal(attribute_value, context.visit, context.state);
+	return serialize_template_literal(value, context.visit, context.state);
 }
 
 /**
@@ -1524,7 +1519,7 @@ function serialize_template_literal(values, visit, state) {
 				);
 				expressions.push(b.call('$.get', id));
 			} else {
-				expressions.push(b.call('$.stringify', visit(node.expression, state)));
+				expressions.push(b.logical('??', visit(node.expression, state), b.literal('')));
 			}
 			quasis.push(b.quasi('', i + 1 === values.length));
 		}

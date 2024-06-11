@@ -2,14 +2,13 @@ import { describe, assert, it } from 'vitest';
 import { flushSync } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
 import {
-	destroy_effect,
 	effect,
 	effect_root,
 	render_effect,
 	user_effect
 } from '../../src/internal/client/reactivity/effects';
 import { source, set } from '../../src/internal/client/reactivity/sources';
-import type { Derived, Effect, Value } from '../../src/internal/client/types';
+import type { Derived, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
 

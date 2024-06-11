@@ -1,7 +1,7 @@
 [
 	{
 		"code": "bind_invalid_name",
-		"message": "`bind:clientWidth` is not a valid binding. Possible bindings for <svelte:window> are focused, innerWidth, innerHeight, outerWidth, outerHeight, scrollX, scrollY, online, devicePixelRatio, this",
+		"message": "`bind:clientWidth` is not a valid binding. Possible bindings for <svelte:window> are devicePixelRatio, focused, innerHeight, innerWidth, online, outerHeight, outerWidth, scrollX, scrollY, this",
 		"start": {
 			"line": 5,
 			"column": 15

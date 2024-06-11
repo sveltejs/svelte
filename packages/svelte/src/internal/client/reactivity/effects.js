@@ -96,7 +96,30 @@ function create_effect(type, fn, sync) {
 		effect.component_function = dev_current_component_function;
 	}
 
-	if (current_reaction !== null && !is_root) {
+	if (sync) {
+		var previously_flushing_effect = is_flushing_effect;
+
+		try {
+			set_is_flushing_effect(true);
+			execute_effect(effect);
+			effect.f |= EFFECT_RAN;
+		} finally {
+			set_is_flushing_effect(previously_flushing_effect);
+		}
+	} else if (fn !== null) {
+		schedule_effect(effect);
+	}
+
+	// if an effect has no dependencies, no DOM and no teardown function,
+	// don't bother adding it to the effect tree
+	var inert =
+		sync &&
+		effect.deps === null &&
+		effect.first === null &&
+		effect.dom === null &&
+		effect.teardown === null;
+
+	if (!inert && current_reaction !== null && !is_root) {
 		var flags = current_reaction.f;
 		if ((flags & DERIVED) !== 0) {
 			if ((flags & UNOWNED) !== 0) {
@@ -110,20 +133,6 @@ function create_effect(type, fn, sync) {
 		}
 
 		push_effect(effect, current_reaction);
-	}
-
-	if (sync) {
-		var previously_flushing_effect = is_flushing_effect;
-
-		try {
-			set_is_flushing_effect(true);
-			execute_effect(effect);
-			effect.f |= EFFECT_RAN;
-		} finally {
-			set_is_flushing_effect(previously_flushing_effect);
-		}
-	} else if (fn !== null) {
-		schedule_effect(effect);
 	}
 
 	return effect;
@@ -348,23 +357,7 @@ export function destroy_effect(effect, remove_dom = true) {
 
 	// If the parent doesn't have any children, then skip this work altogether
 	if (parent !== null && (effect.f & BRANCH_EFFECT) !== 0 && parent.first !== null) {
-		var previous = effect.prev;
-		var next = effect.next;
-		if (previous !== null) {
-			if (next !== null) {
-				previous.next = next;
-				next.prev = previous;
-			} else {
-				previous.next = null;
-				parent.last = previous;
-			}
-		} else if (next !== null) {
-			next.prev = null;
-			parent.first = next;
-		} else {
-			parent.first = null;
-			parent.last = null;
-		}
+		unlink_effect(effect);
 	}
 
 	// `first` and `child` are nulled out in destroy_effect_children
@@ -377,6 +370,25 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.parent =
 		effect.fn =
 			null;
+}
+
+/**
+ * Detach an effect from the effect tree, freeing up memory and
+ * reducing the amount of work that happens on subsequent traversals
+ * @param {import('#client').Effect} effect
+ */
+export function unlink_effect(effect) {
+	var parent = effect.parent;
+	var prev = effect.prev;
+	var next = effect.next;
+
+	if (prev !== null) prev.next = next;
+	if (next !== null) next.prev = prev;
+
+	if (parent !== null) {
+		if (parent.first === effect) parent.first = next;
+		if (parent.last === effect) parent.last = prev;
+	}
 }
 
 /**

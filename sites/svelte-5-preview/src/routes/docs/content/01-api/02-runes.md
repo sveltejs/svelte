@@ -250,40 +250,34 @@ $effect(() => {
 });
 ```
 
-An effect only reruns when the object it reads changes, not when a property inside it changes. If you want to react to _any_ change inside an object for inspection purposes at dev time, you may want to use [`inspect`](#$inspect).
+An effect only reruns when the object it reads changes, not when a property inside it changes. (If you want to observe changes _inside_ an object at dev time, you can use [`$inspect`](#$inspect).)
 
 ```svelte
 <script>
-	let object = $state({ count: 0 });
-	let derived_object = $derived({
-		doubled: object.count * 2
+	let state = $state({ value: 0 });
+	let derived = $derived({ value: state.value * 2 });
+
+	// this will run once, because `state` is never reassigned (only mutated)
+	$effect(() => {
+		state;
 	});
 
+	// this will run whenever `state.value` changes...
 	$effect(() => {
-		// never reruns, because object does not change,
-		// only its property changes
-		object;
-		console.log('object');
+		state.value;
 	});
 
+	// ...and so will this, because `derived` is a new object each time
 	$effect(() => {
-		// reruns, because object.count changes
-		object.count;
-		console.log('object.count');
-	});
-
-	$effect(() => {
-		// reruns, because $derived produces a new object on each rerun
-		derived_object;
-		console.log('derived_object');
+		derived;
 	});
 </script>
 
-<button onclick={() => object.count++}>
-	{derived_object.doubled}
+<button onclick={() => (state.value += 1)}>
+	{state.value}
 </button>
 
-<p>{object.count} doubled is {derived_object.doubled}</p>
+<p>{state.value} doubled is {derived.value}</p>
 ```
 
 You can return a function from `$effect`, which will run immediately before the effect re-runs, and before it is destroyed ([demo](/#H4sIAAAAAAAAE42SzW6DMBCEX2Vl5RDaVCQ9JoDUY--9lUox9lKsGBvZC1GEePcaKPnpqSe86_m0M2t6ViqNnu0_e2Z4jWzP3pqGbRhdmrHwHWrCUHvbOjF2Ei-caijLTU4aCYRtDUEKK0-ccL2NDstNrbRWHoU10t8Eu-121gTVCssSBa3XEaQZ9GMrpziGj0p5OAccCgSHwmEgJZwrNNihg6MyhK7j-gii4uYb_YyGUZ5guQwzPdL7b_U4ZNSOvp9T2B3m1rB5cLx4zMkhtc7AHz7YVCVwEFzrgosTBMuNs52SKDegaPbvWnMH8AhUXaNUIY6-hHCldQhUIcyLCFlfAuHvkCKaYk8iYevGGgy2wyyJnpy9oLwG0sjdNe2yhGhJN32HsUzi2xOapNpl_bSLIYnDeeoVLZE1YI3QSpzSfo7-8J5PKbwOmdf2jC6JZyD7HxpPaMk93aHhF6utVKVCyfbkWhy-hh9Z3o_2nQIAAA==)).
