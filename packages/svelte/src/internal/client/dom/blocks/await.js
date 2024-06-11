@@ -10,6 +10,7 @@ import {
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import { INERT } from '../../constants.js';
 import { DEV } from 'esm-env';
+import { hydrating } from '../hydration.js';
 
 /**
  * @template V
@@ -66,41 +67,61 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 		return e;
 	}
 
+	function pause() {
+		if (pending_effect) pause_effect(pending_effect);
+		if (then_effect) pause_effect(then_effect);
+		if (catch_effect) pause_effect(catch_effect);
+	}
+
 	const effect = block(() => {
 		if (input === (input = get_input())) return;
 
 		if (is_promise(input)) {
-			const promise = /** @type {Promise<any>} */ (input);
-
-			if (pending_fn) {
-				if (pending_effect && (pending_effect.f & INERT) === 0) {
-					destroy_effect(pending_effect);
-				}
-
+			if (hydrating && pending_fn) {
 				pending_effect = branch(() => pending_fn(anchor));
+				return;
 			}
 
-			if (then_effect) pause_effect(then_effect);
-			if (catch_effect) pause_effect(catch_effect);
+			var promise = /** @type {Promise<any>} */ (input);
+
+			var settled = false;
 
 			promise.then(
 				(value) => {
+					settled = true;
 					if (promise !== input) return;
-					if (pending_effect) pause_effect(pending_effect);
+					pause();
 
 					if (then_fn) {
 						then_effect = create_effect(then_fn, value);
 					}
 				},
 				(error) => {
+					settled = true;
 					if (promise !== input) return;
-					if (pending_effect) pause_effect(pending_effect);
+					pause();
 
 					if (catch_fn) {
 						catch_effect = create_effect(catch_fn, error);
 					}
 				}
 			);
+
+			Promise.resolve().then(() => {
+				// if the promise was already resolved, avoid thrash
+				if (settled) return;
+
+				if (pending_fn) {
+					if (pending_effect && (pending_effect.f & INERT) === 0) {
+						destroy_effect(pending_effect);
+					}
+
+					pending_effect = branch(() => pending_fn(anchor));
+				}
+
+				if (then_effect) pause_effect(then_effect);
+				if (catch_effect) pause_effect(catch_effect);
+			});
 		} else {
 			if (pending_effect) pause_effect(pending_effect);
 			if (catch_effect) pause_effect(catch_effect);
