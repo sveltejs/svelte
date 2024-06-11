@@ -77,6 +77,26 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 			const promise = /** @type {Promise<any>} */ (input);
 			var resolved = false;
 
+			promise.then(
+				(value) => {
+					if (promise !== input) return;
+					resolved = true;
+					if (pending_effect) pause_effect(pending_effect);
+
+					if (then_fn) {
+						then_effect = create_effect(then_fn, value);
+					}
+				},
+				(error) => {
+					if (promise !== input) return;
+					if (pending_effect) pause_effect(pending_effect);
+
+					if (catch_fn) {
+						catch_effect = create_effect(catch_fn, error);
+					}
+				}
+			);
+
 			if (pending_fn) {
 				var parent_effect = current_effect;
 				var parent_reaction = current_reaction;
@@ -107,26 +127,6 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 
 			if (then_effect) pause_effect(then_effect);
 			if (catch_effect) pause_effect(catch_effect);
-
-			promise.then(
-				(value) => {
-					if (promise !== input) return;
-					resolved = true;
-					if (pending_effect) pause_effect(pending_effect);
-
-					if (then_fn) {
-						then_effect = create_effect(then_fn, value);
-					}
-				},
-				(error) => {
-					if (promise !== input) return;
-					if (pending_effect) pause_effect(pending_effect);
-
-					if (catch_fn) {
-						catch_effect = create_effect(catch_fn, error);
-					}
-				}
-			);
 		} else {
 			if (pending_effect) pause_effect(pending_effect);
 			if (catch_effect) pause_effect(catch_effect);
