@@ -96,8 +96,10 @@ export function element(payload, tag, attributes_fn, children_fn) {
 export let on_destroy = [];
 
 /**
- * @param {typeof import('svelte').SvelteComponent} component
- * @param {{ props: Record<string, any>; context?: Map<any, any> }} options
+ * @template {Record<string, any>} TProps
+ *
+ * @param {import('svelte').Component<TProps> | import('svelte').ComponentType<import('svelte').SvelteComponent<TProps>>} component
+ * @param {{ props: Omit<TProps, '$$slots' | '$$events'>; context?: Map<any, any> }} options
  * @returns {import('#server').RenderOutput}
  */
 export function render(component, options) {

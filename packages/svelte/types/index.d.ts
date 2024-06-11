@@ -2108,9 +2108,9 @@ declare module 'svelte/reactivity' {
 }
 
 declare module 'svelte/server' {
-	export function render(component: typeof import('svelte').SvelteComponent, options: {
-		props: Record<string, any>;
-		context?: Map<any, any>;
+	export function render<TProps extends Record<string, any>>(component: import("svelte").Component<TProps, any, string> | import("svelte").ComponentType<import("svelte").SvelteComponent<TProps, any, any>>, options: {
+		props: Omit<TProps, "$$slots" | "$$events">;
+		context?: Map<any, any> | undefined;
 	}): RenderOutput;
 	interface RenderOutput {
 		/** HTML that goes into the `<head>` */
