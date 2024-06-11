@@ -110,7 +110,7 @@ declare module 'svelte' {
 	 * you export a component called `MyComponent`. For Svelte+TypeScript users,
 	 * you want to provide typings. Therefore you create a `index.d.ts`:
 	 * ```ts
-	 * import { Component } from "svelte";
+	 * import type { Component } from 'svelte';
 	 * export declare const MyComponent: Component<{ foo: string }> {}
 	 * ```
 	 * Typing this makes it possible for IDEs like VS Code with the Svelte extension
