@@ -2108,8 +2108,12 @@ declare module 'svelte/reactivity' {
 }
 
 declare module 'svelte/server' {
-	export function render<TProps extends Record<string, any>>(component: import("svelte").Component<TProps, any, string> | import("svelte").ComponentType<import("svelte").SvelteComponent<TProps, any, any>>, options: {
-		props: Omit<TProps, "$$slots" | "$$events">;
+	/**
+	 * Only available on the server and when compiling with the `server` option.
+	 * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
+	 * */
+	export function render<Props extends Record<string, any>>(component: import("svelte").Component<Props, any, string> | import("svelte").ComponentType<import("svelte").SvelteComponent<Props, any, any>>, options: {
+		props: Omit<Props, "$$slots" | "$$events">;
 		context?: Map<any, any> | undefined;
 	}): RenderOutput;
 	interface RenderOutput {
