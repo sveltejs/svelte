@@ -32,6 +32,7 @@ import {
 import { Scope, get_rune } from '../scope.js';
 import { merge } from '../visitors.js';
 import { a11y_validators } from './a11y.js';
+import { can_hoist_inline_class_expression } from '../3-transform/utils.js';
 
 /** @param {import('#compiler').Attribute} attribute */
 function validate_attribute(attribute) {
@@ -328,6 +329,102 @@ function validate_block_not_empty(node, context) {
 		w.block_empty(node.nodes[0]);
 	}
 }
+
+/**
+ * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
+ */
+export const validation_runes_js = {
+	ImportDeclaration(node) {
+		if (typeof node.source.value === 'string' && node.source.value.startsWith('svelte/internal')) {
+			e.import_svelte_internal_forbidden(node);
+		}
+	},
+	ExportSpecifier(node, { state }) {
+		validate_export(node, state.scope, node.local.name);
+	},
+	ExportNamedDeclaration(node, { state, next }) {
+		if (node.declaration?.type !== 'VariableDeclaration') return;
+
+		// visit children, so bindings are correctly initialised
+		next();
+
+		for (const declarator of node.declaration.declarations) {
+			for (const id of extract_identifiers(declarator.id)) {
+				validate_export(node, state.scope, id.name);
+			}
+		}
+	},
+	CallExpression(node, { state, path }) {
+		if (get_rune(node, state.scope) === '$host') {
+			e.host_invalid_placement(node);
+		}
+		validate_call_expression(node, state.scope, path);
+	},
+	VariableDeclarator(node, { state }) {
+		const init = node.init;
+		const rune = get_rune(init, state.scope);
+
+		if (rune === null) return;
+
+		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
+
+		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
+			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+		} else if (rune === '$state' && args.length > 1) {
+			e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
+		} else if (rune === '$props') {
+			e.props_invalid_placement(node);
+		} else if (rune === '$bindable') {
+			e.bindable_invalid_location(node);
+		}
+	},
+	AssignmentExpression(node, { state }) {
+		validate_assignment(node, node.left, state);
+	},
+	UpdateExpression(node, { state }) {
+		validate_assignment(node, node.argument, state);
+	},
+	ClassBody(node, context) {
+		/** @type {string[]} */
+		const private_derived_state = [];
+
+		for (const definition of node.body) {
+			if (
+				definition.type === 'PropertyDefinition' &&
+				definition.key.type === 'PrivateIdentifier' &&
+				definition.value?.type === 'CallExpression'
+			) {
+				const rune = get_rune(definition.value, context.state.scope);
+				if (rune === '$derived' || rune === '$derived.by') {
+					private_derived_state.push(definition.key.name);
+				}
+			}
+		}
+
+		context.next({
+			...context.state,
+			private_derived_state
+		});
+	},
+	ClassDeclaration(node, context) {
+		// In modules, we allow top-level module scope only, in components, we allow the component scope,
+		// which is function_depth of 1. With the exception of `new class` which is also not allowed at
+		// component scope level either.
+		const allowed_depth = context.state.ast_type === 'module' ? 0 : 1;
+
+		if (context.state.scope.function_depth > allowed_depth) {
+			w.perf_avoid_nested_class(node);
+		}
+	},
+	NewExpression(node, context) {
+		if (
+			node.callee.type === 'ClassExpression' &&
+			!can_hoist_inline_class_expression(node, context.state.ast_type, context.state.scope)
+		) {
+			w.perf_avoid_inline_class(node);
+		}
+	}
+};
 
 /**
  * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
@@ -807,7 +904,8 @@ export const validation_legacy = merge(validation, a11y_validators, {
 	},
 	UpdateExpression(node, { state }) {
 		validate_assignment(node, node.argument, state);
-	}
+	},
+	NewExpression: validation_runes_js.NewExpression
 });
 
 /**
@@ -932,99 +1030,6 @@ function ensure_no_module_import_conflict(node, state) {
 		}
 	}
 }
-
-/**
- * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
- */
-export const validation_runes_js = {
-	ImportDeclaration(node) {
-		if (typeof node.source.value === 'string' && node.source.value.startsWith('svelte/internal')) {
-			e.import_svelte_internal_forbidden(node);
-		}
-	},
-	ExportSpecifier(node, { state }) {
-		validate_export(node, state.scope, node.local.name);
-	},
-	ExportNamedDeclaration(node, { state, next }) {
-		if (node.declaration?.type !== 'VariableDeclaration') return;
-
-		// visit children, so bindings are correctly initialised
-		next();
-
-		for (const declarator of node.declaration.declarations) {
-			for (const id of extract_identifiers(declarator.id)) {
-				validate_export(node, state.scope, id.name);
-			}
-		}
-	},
-	CallExpression(node, { state, path }) {
-		if (get_rune(node, state.scope) === '$host') {
-			e.host_invalid_placement(node);
-		}
-		validate_call_expression(node, state.scope, path);
-	},
-	VariableDeclarator(node, { state }) {
-		const init = node.init;
-		const rune = get_rune(init, state.scope);
-
-		if (rune === null) return;
-
-		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
-
-		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
-			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
-		} else if (rune === '$state' && args.length > 1) {
-			e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
-		} else if (rune === '$props') {
-			e.props_invalid_placement(node);
-		} else if (rune === '$bindable') {
-			e.bindable_invalid_location(node);
-		}
-	},
-	AssignmentExpression(node, { state }) {
-		validate_assignment(node, node.left, state);
-	},
-	UpdateExpression(node, { state }) {
-		validate_assignment(node, node.argument, state);
-	},
-	ClassBody(node, context) {
-		/** @type {string[]} */
-		const private_derived_state = [];
-
-		for (const definition of node.body) {
-			if (
-				definition.type === 'PropertyDefinition' &&
-				definition.key.type === 'PrivateIdentifier' &&
-				definition.value?.type === 'CallExpression'
-			) {
-				const rune = get_rune(definition.value, context.state.scope);
-				if (rune === '$derived' || rune === '$derived.by') {
-					private_derived_state.push(definition.key.name);
-				}
-			}
-		}
-
-		context.next({
-			...context.state,
-			private_derived_state
-		});
-	},
-	ClassDeclaration(node, context) {
-		// In modules, we allow top-level module scope only, in components, we allow the component scope,
-		// which is function_depth of 1. With the exception of `new class` which is also not allowed at
-		// component scope level either.
-		const allowed_depth = context.state.ast_type === 'module' ? 0 : 1;
-
-		if (context.state.scope.function_depth > allowed_depth) {
-			w.perf_avoid_nested_class(node);
-		}
-	},
-	NewExpression(node, context) {
-		if (node.callee.type === 'ClassExpression' && context.state.scope.function_depth > 0) {
-			w.perf_avoid_inline_class(node);
-		}
-	}
-};
 
 /**
  * @param {import('../../errors.js').NodeLike} node

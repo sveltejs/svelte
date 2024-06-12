@@ -44,6 +44,7 @@ export function client_component(source, analysis, options) {
 	const state = {
 		analysis,
 		options,
+		ast_type: 'template',
 		scope: analysis.module.scope,
 		scopes: analysis.template.scopes,
 		hoisted: [b.import_all('$', 'svelte/internal/client')],
@@ -543,8 +544,10 @@ export function client_module(analysis, options) {
 	const state = {
 		analysis,
 		options,
+		ast_type: 'module',
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
+		hoisted: [b.import_all('$', 'svelte/internal/client')],
 		legacy_reactive_statements: new Map(),
 		public_state: new Map(),
 		private_state: new Map(),
@@ -568,6 +571,6 @@ export function client_module(analysis, options) {
 	return {
 		type: 'Program',
 		sourceType: 'module',
-		body: [b.import_all('$', 'svelte/internal/client'), ...module.body]
+		body: [...state.hoisted, ...module.body]
 	};
 }

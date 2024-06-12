@@ -1,5 +1,9 @@
-import { get_rune } from '../../../scope.js';
-import { is_hoistable_function, transform_inspect_rune } from '../../utils.js';
+import { get_rune, set_scope } from '../../../scope.js';
+import {
+	can_hoist_inline_class_expression,
+	is_hoistable_function,
+	transform_inspect_rune
+} from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
 import {
@@ -10,6 +14,8 @@ import {
 } from '../utils.js';
 import { extract_paths } from '../../../../utils/ast.js';
 import { regex_invalid_identifier_chars } from '../../../patterns.js';
+import { walk } from 'zimmerframe';
+import is_reference from 'is-reference';
 
 /** @type {import('../types.js').ComponentVisitors} */
 export const javascript_visitors_runes = {
@@ -490,6 +496,139 @@ export const javascript_visitors_runes = {
 		}
 
 		next();
+	},
+	NewExpression(node, context) {
+		const state = context.state;
+		if (
+			node.callee.type === 'ClassExpression' &&
+			can_hoist_inline_class_expression(node, state.ast_type, state.scope)
+		) {
+			const id = node.callee.id?.name || state.scope.generate('hoisted_inline_class');
+
+			const { _ } = set_scope(state.scopes);
+			const closure_identifiers = new Map();
+
+			let class_expression = /** @type {import('estree').ClassExpression} */ (
+				context.visit(node.callee)
+			);
+
+			class_expression = /** @type {import('estree').ClassExpression} */ (
+				walk(class_expression, state, {
+					_,
+					Identifier(node, context) {
+						const parent = /** @type {import('estree').Expression} */ (context.path.at(-1));
+
+						if (
+							is_reference(node, parent) &&
+							!get_rune(parent, state.scope) &&
+							parent.type !== 'ClassExpression'
+						) {
+							const binding = context.state.scope.get(node.name);
+							if (binding !== null && binding.scope.function_depth !== 0) {
+								let closure_identifier = closure_identifiers.get(node.name);
+
+								if (closure_identifier === undefined) {
+									// We define the kind as being something that is either reactive, in which case we leave the binding
+									// alone and simply pass the identiifer. If it's mutated, we box it, otherwise we keep it as standard.
+									closure_identifier = {
+										id: state.scope.generate('closure_' + node.name),
+										kind: binding.kind !== 'normal' ? 'ref' : binding.mutated ? 'boxed' : 'normal'
+									};
+									closure_identifiers.set(node.name, closure_identifier);
+								}
+								const member = b.member(b.this, b.private_id(closure_identifier.id));
+								return closure_identifier.kind === 'boxed' ? b.member(member, b.id('v')) : member;
+							}
+						}
+
+						context.next();
+					}
+				})
+			);
+
+			const class_body = class_expression.body.body;
+
+			/** @type {Array<import('estree').PropertyDefinition | import('estree').MethodDefinition>} */
+			const body_entries = [...closure_identifiers.values()].map(({ id }) =>
+				b.prop_def(b.private_id(id), null)
+			);
+			const class_definitions = [];
+
+			for (let i = 0; i < class_body.length; i++) {
+				const entry = class_body[i];
+				if (entry.type === 'PropertyDefinition') {
+					if (entry.value) {
+						class_definitions.push(entry);
+					}
+					if (entry.key.type === 'PrivateIdentifier') {
+						class_body.splice(i, 1, b.prop_def(entry.key, null));
+					} else {
+						class_body.splice(i, 1);
+						i--;
+					}
+				}
+			}
+
+			let constructor = /** @type {import('estree').MethodDefinition | undefined} */ (
+				class_body.find((e) => e.type === 'MethodDefinition' && e.kind === 'constructor')
+			);
+
+			if (!constructor) {
+				constructor = b.method('constructor', b.id('constructor'), [], []);
+				body_entries.push(constructor);
+			}
+
+			constructor.value.params.push(...[...closure_identifiers.values()].map(({ id }) => b.id(id)));
+
+			const constructor_body = constructor.value.body.body;
+			const assignments = [...closure_identifiers.values()].map(({ id }) =>
+				b.stmt(b.assignment('=', b.member(b.this, b.private_id(id)), b.id(id)))
+			);
+			for (const entry of class_definitions) {
+				assignments.push(
+					b.stmt(
+						b.assignment(
+							'=',
+							b.member(b.this, entry.key),
+							/** @type {import('estree').Expression} */ (entry.value)
+						)
+					)
+				);
+			}
+			constructor_body.unshift(...assignments);
+
+			class_body.unshift(...body_entries);
+
+			context.state.hoisted.push(b.class(b.id(id), class_expression));
+
+			return {
+				...node,
+				arguments: [...closure_identifiers.entries()].map(([name, { kind }]) => {
+					if (kind === 'ref') {
+						return b.id(name);
+					}
+					const visited = /** @type {import('estree').Identifier} */ (context.visit(b.id(name)));
+					if (kind === 'boxed') {
+						return b.object([
+							b.prop('get', b.id('v'), b.function(null, [], b.block([b.return(visited)]))),
+							b.prop(
+								'set',
+								b.id('v'),
+								b.function(
+									null,
+									[b.id('v')],
+									b.block([b.stmt(b.assignment('=', b.id(name), b.id('v')))])
+								)
+							)
+						]);
+					}
+					return visited;
+				}),
+				callee: b.id(id)
+			};
+		}
+
+		context.next();
 	}
 };
 

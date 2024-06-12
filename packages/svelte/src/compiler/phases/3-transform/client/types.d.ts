@@ -8,11 +8,11 @@ import type {
 import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
-import type { Location } from 'locate-character';
 
 export interface ClientTransformState extends TransformState {
 	readonly private_state: Map<string, StateField>;
 	readonly public_state: Map<string, StateField>;
+	readonly hoisted: Array<Statement | ModuleDeclaration>;
 
 	/**
 	 * `true` if the current lexical scope belongs to a class constructor. this allows
@@ -22,6 +22,8 @@ export interface ClientTransformState extends TransformState {
 
 	/** The $: calls, which will be ordered in the end */
 	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
+
+	readonly ast_type: 'module' | 'template';
 }
 
 export type SourceLocation =

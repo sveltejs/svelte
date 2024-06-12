@@ -12,7 +12,7 @@
 
 ## perf_avoid_inline_class
 
-> Avoid 'new class' — instead, declare the class at the top level scope
+> Avoid complex 'new class' expressions that extend other classes or contain arguemtns within their constructor — instead, declare the class at the top level scope or simplify the `new class` expression
 
 ## perf_avoid_nested_class
 

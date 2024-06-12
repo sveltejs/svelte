@@ -408,3 +408,58 @@ export function transform_inspect_rune(node, context) {
 		return b.call('$.inspect', as_fn ? b.thunk(b.array(arg)) : b.array(arg));
 	}
 }
+
+/**
+ * @param {import("estree").NewExpression} node
+ * @param {string} ast_type
+ * @param {import("../scope.js").Scope} scope
+ */
+export function can_hoist_inline_class_expression(node, ast_type, scope) {
+	const allowed_depth = ast_type === 'module' ? 0 : 1;
+
+	if (node.callee.type !== 'ClassExpression') {
+		return false;
+	}
+	// If the new expression has arguments, skip hoisting it.
+	if (node.arguments.length > 0) {
+		return false;
+	}
+	const super_class = node.callee.superClass;
+	if (super_class) {
+		// We don't support hoisting a class that extends another class
+		return false;
+	}
+	// If the class is top level, do not bother inlining it.
+	if (scope.function_depth < allowed_depth) {
+		return false;
+	}
+	const body = node.callee.body.body;
+
+	for (const body_entry of body) {
+		if (body_entry.type === 'MethodDefinition' && body_entry.kind === 'constructor') {
+			const func = body_entry.value;
+			// If the constructor has arguments we can't hoist the class as we need to rewrite the arguments.
+			if (func.params.length > 0) {
+				return false;
+			}
+			let has_arguments_reference = false;
+
+			// If the constructor contains a reference to `arguments` we also can't hoist.
+			walk(func, null, {
+				// @ts-ignore
+				Identifier(node, context) {
+					const parent = /** @type {import('estree').Expression} */ (context.path.at(-1));
+
+					if (is_reference(node, parent) && node.name === 'arguments') {
+						has_arguments_reference = true;
+					}
+				}
+			});
+			if (has_arguments_reference) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}

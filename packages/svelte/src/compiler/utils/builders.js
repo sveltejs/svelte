@@ -509,6 +509,19 @@ function var_builder(pattern, init) {
 }
 
 /**
+ * @returns {import('estree').ClassDeclaration}
+ * @param {import("estree").Identifier} id
+ * @param {import("estree").ClassExpression} entries
+ */
+function class_builder(id, entries) {
+	return {
+		...entries,
+		id,
+		type: 'ClassDeclaration'
+	};
+}
+
+/**
  *
  * @param {import('estree').VariableDeclaration | import('estree').Expression | null} init
  * @param {import('estree').Expression} test
@@ -624,6 +637,7 @@ export {
 	let_builder as let,
 	const_builder as const,
 	var_builder as var,
+	class_builder as class,
 	true_instance as true,
 	false_instance as false,
 	for_builder as for,
