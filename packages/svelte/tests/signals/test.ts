@@ -11,6 +11,7 @@ import { source, set } from '../../src/internal/client/reactivity/sources';
 import type { Derived, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
+import { DIRTY } from '../../src/internal/client/constants';
 
 /**
  * @param runes runes mode
@@ -444,6 +445,38 @@ describe('signals', () => {
 			destroy();
 			assert.equal(a?.deps?.length, 1);
 			assert.equal(state?.reactions, null);
+		};
+	});
+
+	test('disconnected and reconnected deriveds work as intended', () => {
+		let a: Derived<unknown>;
+		let state = source(0);
+		let b = derived(() => $.get(state));
+		let c = derived(() => $.get(b));
+		let destroy: () => void;
+
+		function connect() {
+			destroy = effect_root(() => {
+				render_effect(() => {
+					a = derived(() => {
+						return $.get(c);
+					});
+					$.get(a);
+				});
+			});
+		}
+
+		return () => {
+			connect();
+			flushSync();
+			destroy();
+			set(state, 1);
+			$.set_signal_status(c, DIRTY);
+			assert.equal($.get(c), 1);
+			connect();
+			flushSync();
+			set(state, 2);
+			assert.equal($.get(a), 2);
 		};
 	});
 });

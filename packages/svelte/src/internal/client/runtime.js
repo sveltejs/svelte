@@ -202,16 +202,14 @@ export function check_dirtiness(reaction) {
 	var flags = reaction.f;
 	var is_dirty = (flags & DIRTY) !== 0;
 	var is_unowned = (flags & UNOWNED) !== 0;
+	var is_disconnected = (flags & DISCONNECTED) !== 0;
+	var is_derived = (flags & DERIVED) !== 0;
 
-	// If we are unowned, we still need to ensure that we update our version to that
-	// of our dependencies.
-	if (is_dirty && !is_unowned) {
+	if (is_dirty && !is_derived) {
 		return true;
 	}
 
-	var is_disconnected = (flags & DISCONNECTED) !== 0;
-
-	if ((flags & MAYBE_DIRTY) !== 0 || (is_dirty && is_unowned)) {
+	if (is_dirty || (flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
 
 		if (dependencies !== null) {
@@ -227,32 +225,7 @@ export function check_dirtiness(reaction) {
 				}
 				var version = dependency.version;
 
-				if (is_unowned) {
-					// If we're working with an unowned derived signal, then we need to check
-					// if our dependency write version is higher. If it is then we can assume
-					// that state has changed to a newer version and thus this unowned signal
-					// is also dirty.
-
-					if (version > /** @type {import('#client').Derived} */ (reaction).version) {
-						/** @type {import('#client').Derived} */ (reaction).version = version;
-						return !is_equal;
-					}
-
-					if (!current_skip_reaction && !dependency?.reactions?.includes(reaction)) {
-						// If we are working with an unowned signal as part of an effect (due to !current_skip_reaction)
-						// and the version hasn't changed, we still need to check that this reaction
-						// if linked to the dependency source – otherwise future updates will not be caught.
-						reactions = dependency.reactions;
-						if (reactions === null) {
-							dependency.reactions = [reaction];
-						} else {
-							reactions.push(reaction);
-						}
-					}
-				} else if ((reaction.f & DIRTY) !== 0) {
-					// `signal` might now be dirty, as a result of calling `check_dirtiness` and/or `update_derived`
-					return true;
-				} else if (is_disconnected) {
+				if (is_disconnected) {
 					// It might be that the derived was was dereferenced from its dependencies but has now come alive again.
 					// In thise case, we need to re-attach it to the graph and mark it dirty if any of its dependencies have
 					// changed since.
@@ -265,6 +238,39 @@ export function check_dirtiness(reaction) {
 						dependency.reactions = [reaction];
 					} else if (!reactions.includes(reaction)) {
 						reactions.push(reaction);
+					}
+				} else {
+					if (is_derived) {
+						// Ensure we update the version to match that of our reactions, as we might have other dependencies that
+						// rely on this reaction that become disconnected.
+						if (version > /** @type {import('#client').Derived} */ (reaction).version) {
+							/** @type {import('#client').Derived} */ (reaction).version = version;
+							if (is_unowned) {
+								return !is_equal;
+							}
+						}
+						if (
+							is_unowned &&
+							!current_skip_reaction &&
+							!dependency?.reactions?.includes(reaction)
+						) {
+							// If we are working with an unowned signal as part of an effect (due to !current_skip_reaction)
+							// and the version hasn't changed, we still need to check that this reaction
+							// if linked to the dependency source – otherwise future updates will not be caught.
+							reactions = dependency.reactions;
+							if (reactions === null) {
+								dependency.reactions = [reaction];
+							} else {
+								reactions.push(reaction);
+							}
+						}
+					}
+					if ((reaction.f & DIRTY) !== 0) {
+						// `signal` might now be dirty, as a result of calling `check_dirtiness` and/or `update_derived`
+						if (!is_derived) {
+							return true;
+						}
+						is_dirty = true;
 					}
 				}
 			}
