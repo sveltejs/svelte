@@ -40,14 +40,9 @@ import {
 } from '../../../../internal/server/hydration.js';
 import { filename, locator } from '../../../state.js';
 
-export const block_open = string(BLOCK_OPEN);
-export const block_close = string(BLOCK_CLOSE);
-export const block_anchor = string(BLOCK_ANCHOR);
-
-/** @param {string} value */
-function string(value) {
-	return b.literal(sanitize_template_string(value));
-}
+export const block_open = b.literal(BLOCK_OPEN);
+export const block_close = b.literal(BLOCK_CLOSE);
+export const block_anchor = b.literal(BLOCK_ANCHOR);
 
 /**
  * @param {import('estree').Node} node
@@ -93,7 +88,8 @@ function serialize_template(template, out = b.id('$$payload.out'), operator = '+
 			if (!last) quasis.push((last = b.quasi('', false)));
 
 			if (node.type === 'Literal') {
-				last.value.raw += node.value;
+				last.value.raw +=
+					typeof node.value === 'string' ? sanitize_template_string(node.value) : node.value;
 			} else if (node.type === 'TemplateLiteral') {
 				last.value.raw += node.quasis[0].value.raw;
 				quasis.push(...node.quasis.slice(1));
@@ -1203,14 +1199,14 @@ const template_visitors = {
 		throw new Error('Node should have been handled elsewhere');
 	},
 	RegularElement(node, context) {
-		context.state.template.push(string(`<${node.name}`));
+		context.state.template.push(b.literal(`<${node.name}`));
 		const body = serialize_element_attributes(node, context);
-		context.state.template.push(string('>'));
+		context.state.template.push(b.literal('>'));
 
 		if ((node.name === 'script' || node.name === 'style') && node.fragment.nodes.length === 1) {
 			context.state.template.push(
-				string(/** @type {import('#compiler').Text} */ (node.fragment.nodes[0]).data),
-				string(`</${node.name}>`)
+				b.literal(/** @type {import('#compiler').Text} */ (node.fragment.nodes[0]).data),
+				b.literal(`</${node.name}>`)
 			);
 
 			return;
@@ -1285,7 +1281,7 @@ const template_visitors = {
 		}
 
 		if (!VoidElements.includes(node.name) && namespace !== 'foreign') {
-			state.template.push(string(`</${node.name}>`));
+			state.template.push(b.literal(`</${node.name}>`));
 		}
 
 		if (state.options.dev) {
@@ -1524,9 +1520,9 @@ const template_visitors = {
 	},
 	TitleElement(node, context) {
 		// title is guaranteed to contain only text/expression tag children
-		const template = [string('<title>')];
+		const template = [b.literal('<title>')];
 		process_children(node.fragment.nodes, { ...context, state: { ...context.state, template } });
-		template.push(string('</title>'));
+		template.push(b.literal('</title>'));
 
 		context.state.init.push(...serialize_template(template, b.id('$$payload.title'), '='));
 	},
@@ -1802,7 +1798,7 @@ function serialize_element_attributes(node, context) {
 				).value;
 				if (name !== 'class' || literal_value) {
 					context.state.template.push(
-						string(
+						b.literal(
 							` ${attribute.name}${
 								DOMBooleanAttributes.includes(name) && literal_value === true
 									? ''
@@ -1830,7 +1826,7 @@ function serialize_element_attributes(node, context) {
 
 	if (events_to_capture.size !== 0) {
 		for (const event of events_to_capture) {
-			context.state.template.push(string(` ${event}="this.__e=event"`));
+			context.state.template.push(b.literal(` ${event}="this.__e=event"`));
 		}
 	}
 
