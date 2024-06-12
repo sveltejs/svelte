@@ -96,10 +96,11 @@ export function element(payload, tag, attributes_fn, children_fn) {
 export let on_destroy = [];
 
 /**
- * @template {Record<string, any>} TProps
- *
- * @param {import('svelte').Component<TProps> | import('svelte').ComponentType<import('svelte').SvelteComponent<TProps>>} component
- * @param {{ props: Omit<TProps, '$$slots' | '$$events'>; context?: Map<any, any> }} options
+ * Only available on the server and when compiling with the `server` option.
+ * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
+ * @template {Record<string, any>} Props
+ * @param {import('svelte').Component<Props> | import('svelte').ComponentType<import('svelte').SvelteComponent<Props>>} component
+ * @param {{ props: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }} options
  * @returns {import('#server').RenderOutput}
  */
 export function render(component, options) {
