@@ -265,8 +265,8 @@ export function check_dirtiness(reaction) {
 							}
 						}
 					}
-					if ((reaction.f & DIRTY) !== 0) {
-						// `signal` might now be dirty, as a result of calling `check_dirtiness` and/or `update_derived`
+					// `signal` might now be dirty, as a result of calling `check_dirtiness` and/or `update_derived`
+					if (!is_dirty && (reaction.f & DIRTY) !== 0) {
 						if (!is_derived) {
 							return true;
 						}
