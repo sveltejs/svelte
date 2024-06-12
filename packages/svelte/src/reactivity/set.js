@@ -118,6 +118,7 @@ export class ReactiveSet extends Set {
 
 	clear() {
 		var size = super.size;
+		// Clear first, so we get nice console.log outputs with $inspect
 		super.clear();
 
 		if (size !== 0) {

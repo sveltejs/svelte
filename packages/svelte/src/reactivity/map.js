@@ -123,6 +123,7 @@ export class ReactiveMap extends Map {
 
 	clear() {
 		var size = super.size;
+		// Clear first, so we get nice console.log outputs with $inspect
 		super.clear();
 
 		if (size !== 0) {
