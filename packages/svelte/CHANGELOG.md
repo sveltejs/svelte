@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.154
+
+### Patch Changes
+
+- fix: ensure bound input content is resumed on hydration ([#11986](https://github.com/sveltejs/svelte/pull/11986))
+
+- fix: better `render` type ([#11997](https://github.com/sveltejs/svelte/pull/11997))
+
+- fix: SSR template escaping ([#12007](https://github.com/sveltejs/svelte/pull/12007))
+
 ## 5.0.0-next.153
 
 ### Patch Changes
