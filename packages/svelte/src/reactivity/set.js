@@ -122,10 +122,8 @@ export class ReactiveSet extends Set {
 
 		if (size !== 0) {
 			var sources = this.#sources;
-			var values = sources.values();
-			sources.clear();
 
-			for (var s of values) {
+			for (var s of sources.values()) {
 				set(s, false);
 			}
 
