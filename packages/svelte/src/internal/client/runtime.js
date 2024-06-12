@@ -249,14 +249,14 @@ export function check_dirtiness(reaction) {
 								return !is_equal;
 							}
 						}
+						// If we are working with an unowned signal as part of an effect (due to !current_skip_reaction)
+						// and the version hasn't changed, we still need to check that this reaction
+						// if linked to the dependency source – otherwise future updates will not be caught.
 						if (
 							is_unowned &&
 							!current_skip_reaction &&
 							!dependency?.reactions?.includes(reaction)
 						) {
-							// If we are working with an unowned signal as part of an effect (due to !current_skip_reaction)
-							// and the version hasn't changed, we still need to check that this reaction
-							// if linked to the dependency source – otherwise future updates will not be caught.
 							reactions = dependency.reactions;
 							if (reactions === null) {
 								dependency.reactions = [reaction];
