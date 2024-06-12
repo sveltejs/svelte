@@ -122,9 +122,11 @@ export class ReactiveMap extends Map {
 	}
 
 	clear() {
-		var sources = this.#sources;
+		var size = super.size;
+		super.clear();
 
-		if (super.size !== 0) {
+		if (size !== 0) {
+			var sources = this.#sources;
 			set(this.#size, 0);
 			for (var s of sources.values()) {
 				set(s, -1);
@@ -132,7 +134,6 @@ export class ReactiveMap extends Map {
 			increment(this.#version);
 			sources.clear();
 		}
-		super.clear();
 	}
 
 	#read_all() {

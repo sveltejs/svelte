@@ -117,10 +117,14 @@ export class ReactiveSet extends Set {
 	}
 
 	clear() {
-		if (super.size !== 0) {
+		var size = super.size;
+		super.clear();
+		if (size !== 0) {
 			var sources = this.#sources;
+			var values = sources.values();
+			sources.clear();
 
-			for (var s of sources.values()) {
+			for (var s of values) {
 				set(s, false);
 			}
 
@@ -128,8 +132,6 @@ export class ReactiveSet extends Set {
 			set(this.#size, 0);
 			increment(this.#version);
 		}
-
-		super.clear();
 	}
 
 	keys() {
