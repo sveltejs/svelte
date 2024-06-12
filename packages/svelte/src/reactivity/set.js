@@ -119,6 +119,7 @@ export class ReactiveSet extends Set {
 	clear() {
 		var size = super.size;
 		super.clear();
+
 		if (size !== 0) {
 			var sources = this.#sources;
 			var values = sources.values();
