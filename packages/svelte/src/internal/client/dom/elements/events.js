@@ -42,7 +42,7 @@ export function create_event(event_name, dom, handler, options) {
 	 * @this {EventTarget}
 	 */
 	function target_handler(/** @type {Event} */ event) {
-		if (!options.capture) {
+		if (!options.capture && /** @type {Event & {__root: any}} */ (event).__root === undefined) {
 			// Only call in the bubble phase, else delegated events would be called before the capturing events
 			handle_event_propagation(dom, event);
 		}
