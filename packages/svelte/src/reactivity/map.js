@@ -122,19 +122,18 @@ export class ReactiveMap extends Map {
 	}
 
 	clear() {
-		var size = super.size;
+		if (super.size === 0) {
+			return;
+		}
 		// Clear first, so we get nice console.log outputs with $inspect
 		super.clear();
-
-		if (size !== 0) {
-			var sources = this.#sources;
-			set(this.#size, 0);
-			for (var s of sources.values()) {
-				set(s, -1);
-			}
-			increment(this.#version);
-			sources.clear();
+		var sources = this.#sources;
+		set(this.#size, 0);
+		for (var s of sources.values()) {
+			set(s, -1);
 		}
+		increment(this.#version);
+		sources.clear();
 	}
 
 	#read_all() {
