@@ -8,6 +8,7 @@ import {
 	hydrate,
 	type Component
 } from 'svelte';
+import { render } from 'svelte/server';
 
 SvelteComponent.element === HTMLElement;
 
@@ -148,6 +149,14 @@ hydrate(NewComponent, {
 	recover: false
 });
 
+render(NewComponent, {
+	props: {
+		prop: 'foo',
+		// @ts-expect-error
+		x: ''
+	}
+});
+
 // --------------------------------------------------------------------------- interop
 
 const AsLegacyComponent = asClassComponent(newComponent);
@@ -254,5 +263,14 @@ hydrate(functionComponent, {
 	// @ts-expect-error missing prop
 	props: {
 		binding: true
+	}
+});
+
+render(functionComponent, {
+	props: {
+		binding: true,
+		readonly: 'foo',
+		// @ts-expect-error
+		x: ''
 	}
 });
