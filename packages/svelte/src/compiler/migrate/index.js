@@ -162,7 +162,7 @@ export function migrate(source) {
  *  str: MagicString;
  *  analysis: import('../phases/types.js').ComponentAnalysis;
  *  indent: string;
- *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; optional: boolean; type: string }>;
+ *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string }>;
  *  props_insertion_point: number;
  *  has_props_rune: boolean;
  * 	props_name: string;
@@ -468,6 +468,7 @@ const template = {
 	},
 	SlotElement(node, { state, next }) {
 		let name = 'children';
+		let slot_name = 'default';
 		let slot_props = '{ ';
 
 		for (const attr of node.attributes) {
@@ -475,7 +476,7 @@ const template = {
 				slot_props += `...${state.str.original.substring(/** @type {number} */ (attr.expression.start), attr.expression.end)}, `;
 			} else if (attr.type === 'Attribute') {
 				if (attr.name === 'name') {
-					name = state.scope.generate(/** @type {any} */ (attr.value)[0].data);
+					slot_name = /** @type {any} */ (attr.value)[0].data;
 				} else {
 					const value =
 						attr.value !== true
@@ -494,14 +495,24 @@ const template = {
 			slot_props = '';
 		}
 
-		state.props.push({
-			local: name,
-			exported: name,
-			init: '',
-			bindable: false,
-			optional: true,
-			type: `import('svelte').${slot_props ? 'Snippet<[any]>' : 'Snippet'}`
-		});
+		const existing_prop = state.props.find((prop) => prop.slot_name === slot_name);
+		if (existing_prop) {
+			name = existing_prop.local;
+		} else if (slot_name !== 'default') {
+			name = state.scope.generate(slot_name);
+		}
+
+		if (!existing_prop) {
+			state.props.push({
+				local: name,
+				exported: name,
+				init: '',
+				bindable: false,
+				optional: true,
+				slot_name,
+				type: `import('svelte').${slot_props ? 'Snippet<[any]>' : 'Snippet'}`
+			});
+		}
 
 		if (node.fragment.nodes.length > 0) {
 			next();
