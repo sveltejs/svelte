@@ -11,6 +11,13 @@ Some warnings may be incorrect in your concrete use case. You can disable such f
 <input autofocus />
 ```
 
+You can list multiple rules in a single comment, and add an explanatory note alongside them:
+
+```svelte
+<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions (because of reasons) -->
+<div on:click>...</div>
+```
+
 Here is a list of accessibility checks Svelte will do for you.
 
 ## `a11y-accesskey`
