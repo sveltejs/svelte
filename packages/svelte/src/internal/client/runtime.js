@@ -822,6 +822,8 @@ export function get(signal) {
 	if (current_reaction !== null) {
 		var version = signal.version;
 		var current_flags = current_reaction.f;
+		// If the version is higher, ensure we keep our current derived up-to-date to avoid
+		// over-firing.
 		if (
 			(current_flags & DERIVED) !== 0 &&
 			version > /** @type {import('#client').Derived} */ (current_reaction).version
