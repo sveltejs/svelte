@@ -193,6 +193,9 @@ const instance_script = {
 	Identifier(node, { state }) {
 		handle_identifier(node, state);
 	},
+	ImportDeclaration(node, { state }) {
+		state.props_insertion_point = node.end ?? state.props_insertion_point;
+	},
 	ExportNamedDeclaration(node, { state, next }) {
 		if (node.declaration) {
 			next();
