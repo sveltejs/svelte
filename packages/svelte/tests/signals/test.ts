@@ -232,7 +232,7 @@ describe('signals', () => {
 
 			// Ensure we're not leaking dependencies
 			assert.deepEqual(
-				nested.slice(0, -2).map((s) => s.deps),
+				nested.slice(2, -2).map((s) => s.deps),
 				[null, null]
 			);
 		};
@@ -510,19 +510,17 @@ describe('signals', () => {
 			destroy();
 
 			// Check versioning works as expected
+			const version = b.version;
 			assert.equal($.get(b), 3);
-			assert.equal(b.version, 3);
 			assert.equal($.get(c), 3);
-			assert.equal(c.version, 3);
 			assert.equal($.get(a), 3);
-			assert.equal(a.version, 3);
 			set(state, 4);
 			assert.equal($.get(b), 4);
-			assert.equal(b.version, 4);
+			assert.equal(b.version, version + 1);
 			assert.equal($.get(c), 4);
-			assert.equal(c.version, 4);
+			assert.equal(c.version, version + 1);
 			assert.equal($.get(a), 4);
-			assert.equal(a.version, 4);
+			assert.equal(a.version, version + 1);
 			assert.deepEqual(log, ['a', 'b', 'c', 'a']);
 		};
 	});

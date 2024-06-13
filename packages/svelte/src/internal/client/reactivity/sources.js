@@ -14,7 +14,8 @@ import {
 	set_current_untracked_writes,
 	set_last_inspected_signal,
 	set_signal_status,
-	untrack
+	untrack,
+	increment_version
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import { CLEAN, DERIVED, DIRTY, BRANCH_EFFECT } from '../constants.js';
@@ -99,7 +100,7 @@ export function set(signal, value) {
 		signal.v = value;
 
 		// Increment write version so that unowned signals can properly track dirtiness
-		signal.version++;
+		signal.version = increment_version();
 
 		// If the current signal is running for the first time, it won't have any
 		// reactions as we only allocate and assign the reactions after the signal
