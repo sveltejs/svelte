@@ -11,6 +11,6 @@ export default test({
 
 		b1?.dispatchEvent(keydown);
 		flushSync();
-		assert.deepEqual(logs, ['parent keydown']);
+		assert.deepEqual(logs, ['one', 'two', 'three', 'parent keydown', 'wrapper']);
 	}
 });
