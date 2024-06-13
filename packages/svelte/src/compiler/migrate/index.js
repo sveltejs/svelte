@@ -63,7 +63,8 @@ export function migrate(source) {
 
 		if (state.props.length > 0 || analysis.uses_rest_props || analysis.uses_props) {
 			const has_many_props = state.props.length > 3;
-			const props_separator = has_many_props ? `\n${indent}${indent}` : ' ';
+			const newline_separator = `\n${indent}${indent}`;
+			const props_separator = has_many_props ? newline_separator : ' ';
 			let props = '';
 			if (analysis.uses_props) {
 				props = `...${state.props_name}`;
@@ -99,11 +100,12 @@ export function migrate(source) {
 					if (analysis.uses_props || analysis.uses_rest_props) {
 						type = `interface ${type_name} { [key: string]: any }`;
 					} else {
-						type = `interface ${type_name} {${props_separator}${state.props
+						type = `interface ${type_name} {${newline_separator}${state.props
 							.map((prop) => {
-								return `${prop.exported}${prop.optional ? '?' : ''}: ${prop.type}`;
+								const comment = prop.comment ? `${prop.comment}${newline_separator}` : '';
+								return `${comment}${prop.exported}${prop.optional ? '?' : ''}: ${prop.type};`;
 							})
-							.join(`,${props_separator}`)}${has_many_props ? `\n${indent}` : ' '}}`;
+							.join(newline_separator)}\n${indent}}`;
 					}
 				} else {
 					if (analysis.uses_props || analysis.uses_rest_props) {
@@ -162,7 +164,7 @@ export function migrate(source) {
  *  str: MagicString;
  *  analysis: import('../phases/types.js').ComponentAnalysis;
  *  indent: string;
- *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string }>;
+ *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string }>;
  *  props_insertion_point: number;
  *  has_props_rune: boolean;
  * 	props_name: string;
@@ -302,8 +304,8 @@ const instance_script = {
 							)
 						: '',
 					optional: !!declarator.init,
-					type: extract_type(declarator, state.str, path),
-					bindable: binding.mutated || binding.reassigned
+					bindable: binding.mutated || binding.reassigned,
+					...extract_type_and_comment(declarator, state.str, path)
 				});
 				state.props_insertion_point = /** @type {number} */ (declarator.end);
 				state.str.update(
@@ -542,25 +544,34 @@ const template = {
  * @param {MagicString} str
  * @param {import('#compiler').SvelteNode[]} path
  */
-function extract_type(declarator, str, path) {
+function extract_type_and_comment(declarator, str, path) {
+	const parent = path.at(-1);
+
+	// Try to find jsdoc above the declaration
+	let comment_node = /** @type {import('estree').Node} */ (parent)?.leadingComments?.at(-1);
+	if (comment_node?.type !== 'Block') comment_node = undefined;
+
+	const comment_start = /** @type {any} */ (comment_node)?.start;
+	const comment_end = /** @type {any} */ (comment_node)?.end;
+	const comment = comment_node && str.original.substring(comment_start, comment_end);
+
+	if (comment_node) {
+		str.update(comment_start, comment_end, '');
+	}
+
 	if (declarator.id.typeAnnotation) {
 		let start = declarator.id.typeAnnotation.start + 1; // skip the colon
 		while (str.original[start] === ' ') {
 			start++;
 		}
-		return str.original.substring(start, declarator.id.typeAnnotation.end);
+		return { type: str.original.substring(start, declarator.id.typeAnnotation.end), comment };
 	}
 
 	// try to find a comment with a type annotation, hinting at jsdoc
-	const parent = path.at(-1);
-	if (parent?.type === 'ExportNamedDeclaration' && parent.leadingComments) {
-		const last = parent.leadingComments[parent.leadingComments.length - 1];
-		if (last.type === 'Block') {
-			const match = /@type {(.+)}/.exec(last.value);
-			if (match) {
-				str.update(/** @type {any} */ (last).start, /** @type {any} */ (last).end, '');
-				return match[1];
-			}
+	if (parent?.type === 'ExportNamedDeclaration' && comment_node) {
+		const match = /@type {(.+)}/.exec(comment_node.value);
+		if (match) {
+			return { type: match[1] };
 		}
 	}
 
@@ -568,11 +579,11 @@ function extract_type(declarator, str, path) {
 	if (declarator.init?.type === 'Literal') {
 		const type = typeof declarator.init.value;
 		if (type === 'string' || type === 'number' || type === 'boolean') {
-			return type;
+			return { type, comment };
 		}
 	}
 
-	return 'any';
+	return { type: 'any', comment };
 }
 
 /**
