@@ -63,7 +63,8 @@ export function migrate(source) {
 
 		if (state.props.length > 0 || analysis.uses_rest_props || analysis.uses_props) {
 			const has_many_props = state.props.length > 3;
-			const props_separator = has_many_props ? `\n${indent}${indent}` : ' ';
+			const newline_separator = `\n${indent}${indent}`;
+			const props_separator = has_many_props ? newline_separator : ' ';
 			let props = '';
 			if (analysis.uses_props) {
 				props = `...${state.props_name}`;
@@ -99,11 +100,12 @@ export function migrate(source) {
 					if (analysis.uses_props || analysis.uses_rest_props) {
 						type = `interface ${type_name} { [key: string]: any }`;
 					} else {
-						type = `interface ${type_name} {${props_separator}${state.props
+						type = `interface ${type_name} {${newline_separator}${state.props
 							.map((prop) => {
-								return `${prop.exported}${prop.optional ? '?' : ''}: ${prop.type}`;
+								const comment = prop.comment ? `${prop.comment}${newline_separator}` : '';
+								return `${comment}${prop.exported}${prop.optional ? '?' : ''}: ${prop.type};`;
 							})
-							.join(`,${props_separator}`)}${has_many_props ? `\n${indent}` : ' '}}`;
+							.join(newline_separator)}\n${indent}}`;
 					}
 				} else {
 					if (analysis.uses_props || analysis.uses_rest_props) {
@@ -162,7 +164,7 @@ export function migrate(source) {
  *  str: MagicString;
  *  analysis: import('../phases/types.js').ComponentAnalysis;
  *  indent: string;
- *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; optional: boolean; type: string }>;
+ *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string }>;
  *  props_insertion_point: number;
  *  has_props_rune: boolean;
  * 	props_name: string;
@@ -190,8 +192,11 @@ const instance_script = {
 		}
 		next();
 	},
-	Identifier(node, { state }) {
-		handle_identifier(node, state);
+	Identifier(node, { state, path }) {
+		handle_identifier(node, state, path);
+	},
+	ImportDeclaration(node, { state }) {
+		state.props_insertion_point = node.end ?? state.props_insertion_point;
 	},
 	ExportNamedDeclaration(node, { state, next }) {
 		if (node.declaration) {
@@ -299,8 +304,8 @@ const instance_script = {
 							)
 						: '',
 					optional: !!declarator.init,
-					type: extract_type(declarator, state.str, path),
-					bindable: binding.mutated || binding.reassigned
+					bindable: binding.mutated || binding.reassigned,
+					...extract_type_and_comment(declarator, state.str, path)
 				});
 				state.props_insertion_point = /** @type {number} */ (declarator.end);
 				state.str.update(
@@ -423,8 +428,8 @@ const instance_script = {
 
 /** @type {import('zimmerframe').Visitors<import('../types/template.js').SvelteNode, State>} */
 const template = {
-	Identifier(node, { state }) {
-		handle_identifier(node, state);
+	Identifier(node, { state, path }) {
+		handle_identifier(node, state, path);
 	},
 	RegularElement(node, { state, next }) {
 		handle_events(node, state);
@@ -468,6 +473,7 @@ const template = {
 	},
 	SlotElement(node, { state, next }) {
 		let name = 'children';
+		let slot_name = 'default';
 		let slot_props = '{ ';
 
 		for (const attr of node.attributes) {
@@ -475,7 +481,7 @@ const template = {
 				slot_props += `...${state.str.original.substring(/** @type {number} */ (attr.expression.start), attr.expression.end)}, `;
 			} else if (attr.type === 'Attribute') {
 				if (attr.name === 'name') {
-					name = state.scope.generate(/** @type {any} */ (attr.value)[0].data);
+					slot_name = /** @type {any} */ (attr.value)[0].data;
 				} else {
 					const value =
 						attr.value !== true
@@ -494,14 +500,24 @@ const template = {
 			slot_props = '';
 		}
 
-		state.props.push({
-			local: name,
-			exported: name,
-			init: '',
-			bindable: false,
-			optional: true,
-			type: `import('svelte').${slot_props ? 'Snippet<[any]>' : 'Snippet'}`
-		});
+		const existing_prop = state.props.find((prop) => prop.slot_name === slot_name);
+		if (existing_prop) {
+			name = existing_prop.local;
+		} else if (slot_name !== 'default') {
+			name = state.scope.generate(slot_name);
+		}
+
+		if (!existing_prop) {
+			state.props.push({
+				local: name,
+				exported: name,
+				init: '',
+				bindable: false,
+				optional: true,
+				slot_name,
+				type: `import('svelte').${slot_props ? 'Snippet<[any]>' : 'Snippet'}`
+			});
+		}
 
 		if (node.fragment.nodes.length > 0) {
 			next();
@@ -528,25 +544,34 @@ const template = {
  * @param {MagicString} str
  * @param {import('#compiler').SvelteNode[]} path
  */
-function extract_type(declarator, str, path) {
+function extract_type_and_comment(declarator, str, path) {
+	const parent = path.at(-1);
+
+	// Try to find jsdoc above the declaration
+	let comment_node = /** @type {import('estree').Node} */ (parent)?.leadingComments?.at(-1);
+	if (comment_node?.type !== 'Block') comment_node = undefined;
+
+	const comment_start = /** @type {any} */ (comment_node)?.start;
+	const comment_end = /** @type {any} */ (comment_node)?.end;
+	const comment = comment_node && str.original.substring(comment_start, comment_end);
+
+	if (comment_node) {
+		str.update(comment_start, comment_end, '');
+	}
+
 	if (declarator.id.typeAnnotation) {
 		let start = declarator.id.typeAnnotation.start + 1; // skip the colon
 		while (str.original[start] === ' ') {
 			start++;
 		}
-		return str.original.substring(start, declarator.id.typeAnnotation.end);
+		return { type: str.original.substring(start, declarator.id.typeAnnotation.end), comment };
 	}
 
 	// try to find a comment with a type annotation, hinting at jsdoc
-	const parent = path.at(-1);
-	if (parent?.type === 'ExportNamedDeclaration' && parent.leadingComments) {
-		const last = parent.leadingComments[parent.leadingComments.length - 1];
-		if (last.type === 'Block') {
-			const match = /@type {([^}]+)}/.exec(last.value);
-			if (match) {
-				str.update(/** @type {any} */ (last).start, /** @type {any} */ (last).end, '');
-				return match[1];
-			}
+	if (parent?.type === 'ExportNamedDeclaration' && comment_node) {
+		const match = /@type {(.+)}/.exec(comment_node.value);
+		if (match) {
+			return { type: match[1] };
 		}
 	}
 
@@ -554,11 +579,11 @@ function extract_type(declarator, str, path) {
 	if (declarator.init?.type === 'Literal') {
 		const type = typeof declarator.init.value;
 		if (type === 'string' || type === 'number' || type === 'boolean') {
-			return type;
+			return { type, comment };
 		}
 	}
 
-	return 'any';
+	return { type: 'any', comment };
 }
 
 /**
@@ -694,14 +719,16 @@ function handle_events(node, state) {
 					}
 
 					const needs_curlies = last.expression.body.type !== 'BlockStatement';
-					state.str.prependRight(
-						/** @type {number} */ (pos) + (needs_curlies ? 0 : 1),
-						`${needs_curlies ? '{' : ''}${prepend}${state.indent}`
-					);
-					state.str.appendRight(
-						/** @type {number} */ (last.expression.body.end) - (needs_curlies ? 0 : 1),
-						`\n${needs_curlies ? '}' : ''}`
-					);
+					const end = /** @type {number} */ (last.expression.body.end) - (needs_curlies ? 0 : 1);
+					pos = /** @type {number} */ (pos) + (needs_curlies ? 0 : 1);
+					if (needs_curlies && state.str.original[pos - 1] === '(') {
+						// Prettier does something like on:click={() => (foo = true)}, we need to remove the braces in this case
+						state.str.update(pos - 1, pos, `{${prepend}${state.indent}`);
+						state.str.update(end, end + 1, '\n}');
+					} else {
+						state.str.prependRight(pos, `${needs_curlies ? '{' : ''}${prepend}${state.indent}`);
+						state.str.appendRight(end, `\n${needs_curlies ? '}' : ''}`);
+					}
 				} else {
 					state.str.update(
 						/** @type {number} */ (last.expression.start),
@@ -763,8 +790,12 @@ function generate_event_name(last, state) {
 /**
  * @param {import('estree').Identifier} node
  * @param {State} state
+ * @param {any[]} path
  */
-function handle_identifier(node, state) {
+function handle_identifier(node, state, path) {
+	const parent = path.at(-1);
+	if (parent?.type === 'MemberExpression' && parent.property === node) return;
+
 	if (state.analysis.uses_props) {
 		if (node.name === '$$props' || node.name === '$$restProps') {
 			// not 100% correct for $$restProps but it'll do
@@ -785,6 +816,11 @@ function handle_identifier(node, state) {
 			/** @type {number} */ (node.end),
 			state.rest_props_name
 		);
+	} else if (node.name === '$$slots' && state.analysis.uses_slots) {
+		if (parent?.type === 'MemberExpression') {
+			state.str.update(/** @type {number} */ (node.start), parent.property.start, '');
+		}
+		// else passed as identifier, we don't know what to do here, so let it error
 	}
 }
 

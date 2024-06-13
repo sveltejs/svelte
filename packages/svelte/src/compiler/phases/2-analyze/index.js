@@ -554,7 +554,8 @@ export function analyze_component(root, source, options) {
 	}
 
 	if (analysis.uses_render_tags && (analysis.uses_slots || analysis.slot_names.size > 0)) {
-		e.slot_snippet_conflict(analysis.slot_names.values().next().value);
+		const pos = analysis.slot_names.values().next().value ?? analysis.source.indexOf('$$slot');
+		e.slot_snippet_conflict(pos);
 	}
 
 	if (analysis.css.ast) {
