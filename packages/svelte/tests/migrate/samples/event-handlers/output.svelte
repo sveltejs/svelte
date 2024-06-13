@@ -13,7 +13,9 @@
 
 	onclick?.(event);
 	console.log('after')
-}}>click me</button>
+}}
+	>click me</button
+>
 <button  onclick={(event) => {
 	onclick?.(event);
 
@@ -29,6 +31,10 @@
 <button onclick={(event) => {
 	event.preventDefault();
 	''
+}}>click me</button>
+<button onclick={(event) => {
+	event.preventDefault();
+	searching = true
 }}>click me</button>
 <button onclick={(event) => {
 	event.stopPropagation();

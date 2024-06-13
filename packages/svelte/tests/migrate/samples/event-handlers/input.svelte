@@ -1,5 +1,7 @@
 <button on:click={() => console.log('hi')} on:click>click me</button>
-<button on:click={() => console.log('before')} on:click on:click={() => console.log('after')}>click me</button>
+<button on:click={() => console.log('before')} on:click on:click={() => console.log('after')}
+	>click me</button
+>
 <button on:click on:click={foo}>click me</button>
 <button on:click>click me</button>
 
@@ -9,6 +11,7 @@
 <button on:custom-event-bubble>click me</button>
 
 <button on:click|preventDefault={() => ''}>click me</button>
+<button on:click|preventDefault={() => (searching = true)}>click me</button>
 <button on:click|stopPropagation={() => {}}>click me</button>
 <button on:click|stopImmediatePropagation={() => ''}>click me</button>
 <button on:click|capture={() => ''}>click me</button>

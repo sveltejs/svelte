@@ -708,14 +708,16 @@ function handle_events(node, state) {
 					}
 
 					const needs_curlies = last.expression.body.type !== 'BlockStatement';
-					state.str.prependRight(
-						/** @type {number} */ (pos) + (needs_curlies ? 0 : 1),
-						`${needs_curlies ? '{' : ''}${prepend}${state.indent}`
-					);
-					state.str.appendRight(
-						/** @type {number} */ (last.expression.body.end) - (needs_curlies ? 0 : 1),
-						`\n${needs_curlies ? '}' : ''}`
-					);
+					const end = /** @type {number} */ (last.expression.body.end) - (needs_curlies ? 0 : 1);
+					pos = /** @type {number} */ (pos) + (needs_curlies ? 0 : 1);
+					if (needs_curlies && state.str.original[pos - 1] === '(') {
+						// Prettier does something like on:click={() => (foo = true)}, we need to remove the braces in this case
+						state.str.update(pos - 1, pos, `{${prepend}${state.indent}`);
+						state.str.update(end, end + 1, '\n}');
+					} else {
+						state.str.prependRight(pos, `${needs_curlies ? '{' : ''}${prepend}${state.indent}`);
+						state.str.appendRight(end, `\n${needs_curlies ? '}' : ''}`);
+					}
 				} else {
 					state.str.update(
 						/** @type {number} */ (last.expression.start),

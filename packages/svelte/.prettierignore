@@ -18,5 +18,6 @@ tests/**/_output
 tests/**/shards/*.test.js
 tests/hydration/samples/*/_expected.html
 tests/hydration/samples/*/_override.html
+tests/migrate/samples/*/output.svelte
 types
 compiler/index.js
