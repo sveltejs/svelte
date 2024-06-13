@@ -880,7 +880,7 @@ function validate_call_expression(node, scope, path) {
 		}
 	}
 
-	if (rune === '$effect.active') {
+	if (rune === '$effect.tracking') {
 		if (node.arguments.length !== 0) {
 			e.rune_invalid_arguments(node, rune);
 		}
