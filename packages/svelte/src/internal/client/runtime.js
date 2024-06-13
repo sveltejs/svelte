@@ -202,7 +202,6 @@ export function check_dirtiness(reaction) {
 	var flags = reaction.f;
 	var is_dirty = (flags & DIRTY) !== 0;
 	var is_unowned = (flags & UNOWNED) !== 0;
-	var is_disconnected = (flags & DISCONNECTED) !== 0;
 
 	// If we are unowned, we still need to ensure that we update our version to that
 	// of our dependencies.
@@ -210,7 +209,9 @@ export function check_dirtiness(reaction) {
 		return true;
 	}
 
-	if ((flags & MAYBE_DIRTY) !== 0 && is_dirty && is_unowned) {
+	var is_disconnected = (flags & DISCONNECTED) !== 0;
+
+	if ((flags & MAYBE_DIRTY) !== 0 || (is_dirty && is_unowned)) {
 		var dependencies = reaction.deps;
 
 		if (dependencies !== null) {
@@ -247,10 +248,8 @@ export function check_dirtiness(reaction) {
 						}
 					}
 				} else if ((reaction.f & DIRTY) !== 0) {
-					{
-						// `signal` might now be dirty, as a result of calling `check_dirtiness` and/or `update_derived`
-						return true;
-					}
+					// `signal` might now be dirty, as a result of calling `check_dirtiness` and/or `update_derived`
+					return true;
 				} else if (is_disconnected) {
 					// It might be that the derived was was dereferenced from its dependencies but has now come alive again.
 					// In thise case, we need to re-attach it to the graph and mark it dirty if any of its dependencies have
