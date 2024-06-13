@@ -190,8 +190,8 @@ const instance_script = {
 		}
 		next();
 	},
-	Identifier(node, { state }) {
-		handle_identifier(node, state);
+	Identifier(node, { state, path }) {
+		handle_identifier(node, state, path);
 	},
 	ImportDeclaration(node, { state }) {
 		state.props_insertion_point = node.end ?? state.props_insertion_point;
@@ -426,8 +426,8 @@ const instance_script = {
 
 /** @type {import('zimmerframe').Visitors<import('../types/template.js').SvelteNode, State>} */
 const template = {
-	Identifier(node, { state }) {
-		handle_identifier(node, state);
+	Identifier(node, { state, path }) {
+		handle_identifier(node, state, path);
 	},
 	RegularElement(node, { state, next }) {
 		handle_events(node, state);
@@ -777,8 +777,12 @@ function generate_event_name(last, state) {
 /**
  * @param {import('estree').Identifier} node
  * @param {State} state
+ * @param {any[]} path
  */
-function handle_identifier(node, state) {
+function handle_identifier(node, state, path) {
+	const parent = path.at(-1);
+	if (parent?.type === 'MemberExpression' && parent.property === node) return;
+
 	if (state.analysis.uses_props) {
 		if (node.name === '$$props' || node.name === '$$restProps') {
 			// not 100% correct for $$restProps but it'll do
@@ -799,6 +803,11 @@ function handle_identifier(node, state) {
 			/** @type {number} */ (node.end),
 			state.rest_props_name
 		);
+	} else if (node.name === '$$slots' && state.analysis.uses_slots) {
+		if (parent?.type === 'MemberExpression') {
+			state.str.update(/** @type {number} */ (node.start), parent.property.start, '');
+		}
+		// else passed as identifier, we don't know what to do here, so let it error
 	}
 }
 
