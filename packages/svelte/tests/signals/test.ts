@@ -451,8 +451,15 @@ describe('signals', () => {
 	test('disconnected and reconnected deriveds work as intended', () => {
 		let a: Derived<unknown>;
 		let state = source(0);
-		let b = derived(() => $.get(state));
-		let c = derived(() => $.get(b));
+		let log: any[] = [];
+		let b = derived(() => {
+			log.push('b');
+			return $.get(state);
+		});
+		let c = derived(() => {
+			log.push('c');
+			return $.get(b);
+		});
 		let destroy: () => void;
 
 		function connect() {
@@ -469,14 +476,19 @@ describe('signals', () => {
 		return () => {
 			connect();
 			flushSync();
+			assert.deepEqual(log, ['c', 'b']);
+			log.length = 0;
 			destroy();
 			set(state, 1);
 			$.set_signal_status(c, DIRTY);
 			assert.equal($.get(c), 1);
+			assert.deepEqual(log, ['c', 'b']);
+			log.length = 0;
 			connect();
 			flushSync();
 			set(state, 2);
 			assert.equal($.get(a), 2);
+			assert.deepEqual(log, ['b', 'c']);
 		};
 	});
 });
