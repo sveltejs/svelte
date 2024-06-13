@@ -117,19 +117,20 @@ export class ReactiveSet extends Set {
 	}
 
 	clear() {
-		if (super.size !== 0) {
-			var sources = this.#sources;
+		if (super.size === 0) {
+			return;
+		}
+		// Clear first, so we get nice console.log outputs with $inspect
+		super.clear();
+		var sources = this.#sources;
 
-			for (var s of sources.values()) {
-				set(s, false);
-			}
-
-			sources.clear();
-			set(this.#size, 0);
-			increment(this.#version);
+		for (var s of sources.values()) {
+			set(s, false);
 		}
 
-		super.clear();
+		sources.clear();
+		set(this.#size, 0);
+		increment(this.#version);
 	}
 
 	keys() {
