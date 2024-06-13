@@ -1,20 +1,23 @@
 <script>
-  import { on } from "svelte/events";
+	import { on } from 'svelte/events';
+	import Wrapper from './wrapper.svelte';
 
-  function handleParentKeyDown() {
-    console.log("parent keydown");
-  }
-  function keydownOne(node) {
-    on(node, "keydown", (e) => {});
-  }
-  function keydownTwo(node) {
-    on(node, "keydown", (e) => {});
-  }
-  function keydownThree(node) {
-    on(node, "keydown", (e) => {});
-  }
+	function handleParentKeyDown() {
+		console.log('parent keydown');
+	}
+	function keydownOne(node) {
+		on(node, 'keydown', (e) => console.log('one'));
+	}
+	function keydownTwo(node) {
+		on(node, 'keydown', (e) => console.log('two'));
+	}
+	function keydownThree(node) {
+		on(node, 'keydown', (e) => console.log('three'));
+	}
 </script>
 
-<div onkeydown={handleParentKeyDown}>
-  <button use:keydownOne use:keydownTwo use:keydownThree>button</button>
-</div>
+<Wrapper>
+	<div onkeydown={handleParentKeyDown}>
+		<button use:keydownOne use:keydownTwo use:keydownThree>button</button>
+	</div>
+</Wrapper>
