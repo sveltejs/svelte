@@ -114,7 +114,8 @@ export class SvelteComponent<
  * you want to provide typings. Therefore you create a `index.d.ts`:
  * ```ts
  * import type { Component } from 'svelte';
- * export declare const MyComponent: Component<{ foo: string }> {}
+ * declare const MyComponent: Component<{ foo: string }>;
+ * export default MyComponent;
  * ```
  * Typing this makes it possible for IDEs like VS Code with the Svelte extension
  * to provide intellisense and to use the component like this in a Svelte file

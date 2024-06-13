@@ -101,9 +101,10 @@ The change from classes towards functions is also reflected in the typings: `Sve
 
 ```ts
 import type { Component } from 'svelte';
-export declare const MyComponent: Component<{
+declare const MyComponent: Component<{
 	foo: string;
 }>;
+export default MyComponent;
 ```
 
 To declare that a component of a certain type is required:
