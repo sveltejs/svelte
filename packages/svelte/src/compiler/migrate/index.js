@@ -556,7 +556,7 @@ function extract_type(declarator, str, path) {
 	if (parent?.type === 'ExportNamedDeclaration' && parent.leadingComments) {
 		const last = parent.leadingComments[parent.leadingComments.length - 1];
 		if (last.type === 'Block') {
-			const match = /@type {([^}]+)}/.exec(last.value);
+			const match = /@type {(.+)}/.exec(last.value);
 			if (match) {
 				str.update(/** @type {any} */ (last).start, /** @type {any} */ (last).end, '');
 				return match[1];
