@@ -195,7 +195,7 @@ declare module 'svelte' {
 	 * </script>
 	 * ```
 	 */
-	export type ComponentProps<Comp extends SvelteComponent | Component> =
+	export type ComponentProps<Comp extends SvelteComponent | Component<any>> =
 		Comp extends SvelteComponent<infer Props>
 			? Props
 			: Comp extends Component<infer Props>
