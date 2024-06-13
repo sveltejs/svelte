@@ -451,6 +451,7 @@ describe('signals', () => {
 	test('disconnected and reconnected deriveds work as intended', () => {
 		let a: Derived<unknown>;
 		let state = source(0);
+		let state_b = source(0);
 		let log: any[] = [];
 		let b = derived(() => {
 			log.push('b');
@@ -458,6 +459,7 @@ describe('signals', () => {
 		});
 		let c = derived(() => {
 			log.push('c');
+			$.get(state_b);
 			return $.get(b);
 		});
 		let destroy: () => void;
@@ -480,8 +482,14 @@ describe('signals', () => {
 			assert.deepEqual(log, ['a', 'c', 'b']);
 			log.length = 0;
 			destroy();
+			destroy = effect_root(() => {
+				render_effect(() => {
+					$.get(c);
+					set(state_b, 1);
+				});
+			});
+			destroy();
 			set(state, 1);
-			$.set_signal_status(c, DIRTY);
 			assert.equal($.get(c), 1);
 			assert.deepEqual(log, ['c', 'b']);
 			log.length = 0;

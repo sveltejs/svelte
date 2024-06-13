@@ -454,13 +454,16 @@ function remove_reaction(signal, dependency) {
 			}
 		}
 	}
+	var flags = dependency.f;
 	// If the derived has no reactions, then we can disconnect it from the graph,
 	// allowing it to either reconnect in the future, or be GC'd by the VM.
-	if (reactions_length === 0 && (dependency.f & DERIVED) !== 0) {
-		set_signal_status(dependency, MAYBE_DIRTY);
+	if (reactions_length === 0 && (flags & DERIVED) !== 0) {
+		if ((flags & CLEAN) !== 0) {
+			set_signal_status(dependency, MAYBE_DIRTY);
+		}
 		// If we are working with a derived that is owned by an effect, then mark it as being
 		// disconnected.
-		if ((dependency.f & (UNOWNED | DISCONNECTED)) === 0) {
+		if ((flags & (UNOWNED | DISCONNECTED)) === 0) {
 			dependency.f ^= DISCONNECTED;
 		}
 		remove_reactions(/** @type {import('#client').Derived} **/ (dependency), 0);
