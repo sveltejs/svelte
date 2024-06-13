@@ -133,7 +133,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 					show_pending();
 				} else {
 					pending = false;
-					// Wait a microtask before checking if we should the pending state as
+					// Wait a microtask before checking if we should show the pending state as
 					// the promise might have resolved by the next microtask.
 					queue_micro_task(show_pending);
 				}
