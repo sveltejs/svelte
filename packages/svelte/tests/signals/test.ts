@@ -466,6 +466,7 @@ describe('signals', () => {
 			destroy = effect_root(() => {
 				render_effect(() => {
 					a = derived(() => {
+						log.push('a');
 						return $.get(c);
 					});
 					$.get(a);
@@ -476,7 +477,7 @@ describe('signals', () => {
 		return () => {
 			connect();
 			flushSync();
-			assert.deepEqual(log, ['c', 'b']);
+			assert.deepEqual(log, ['a', 'c', 'b']);
 			log.length = 0;
 			destroy();
 			set(state, 1);
@@ -488,7 +489,33 @@ describe('signals', () => {
 			flushSync();
 			set(state, 2);
 			assert.equal($.get(a), 2);
-			assert.deepEqual(log, ['b', 'c']);
+			assert.deepEqual(log, ['a', 'b', 'c', 'a']);
+			log.length = 0;
+			destroy();
+			set(state, 3);
+			assert.deepEqual(log, []);
+			log.length = 0;
+			connect();
+			flushSync();
+			assert.deepEqual(log, ['a', 'b', 'c']);
+			log.length = 0;
+			destroy();
+
+			// Check versioning works as expected
+			assert.equal($.get(b), 3);
+			assert.equal(b.version, 3);
+			assert.equal($.get(c), 3);
+			assert.equal(c.version, 3);
+			assert.equal($.get(a), 3);
+			assert.equal(a.version, 3);
+			set(state, 4);
+			assert.equal($.get(b), 4);
+			assert.equal(b.version, 4);
+			assert.equal($.get(c), 4);
+			assert.equal(c.version, 4);
+			assert.equal($.get(a), 4);
+			assert.equal(a.version, 4);
+			assert.deepEqual(log, ['a', 'b', 'c', 'a']);
 		};
 	});
 });
