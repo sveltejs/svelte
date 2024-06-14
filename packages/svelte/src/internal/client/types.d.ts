@@ -5,6 +5,20 @@ import type { Effect, Source, Value } from './reactivity/types.js';
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
 
+/**
+ * utility for typing the `on` function in svelte/events.
+ * Essentially this mirror `.addEventListener` type from upstream typescript to
+ * allow extracting the applicable event types from the more-specific function signature
+ */
+export type AddEventListenerParams<AddEventListenerFn> = AddEventListenerFn extends {
+	(type: infer EventType, listener: (this: infer EventTarget, ev: infer Event) => void, options?: boolean | AddEventListenerOptions): void;
+	(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+} ? {
+	target: EventTarget;
+	type: EventType;
+	event: Event;
+} : never;
+
 // For all the core internal objects, we use single-character property strings.
 // This not only reduces code-size and parsing, but it also improves the performance
 // when the JS VM JITs the code.

@@ -71,10 +71,13 @@ export function create_event(event_name, dom, handler, options) {
  * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
  * (with attributes like `onclick`), which use event delegation for performance reasons
  *
- * @template {keyof ElementEventMap} K
- * @param {Element} element
- * @param {K} type
- * @param {(this: Element, ev: ElementEventMap[K]) => any} handler
+ * @template {EventTarget} El
+ * @template {import('#client').AddEventListenerParams<El['addEventListener']>} P
+ * @template {P['type']} T
+ * @template {P['event']} E
+ * @param {El} element
+ * @param {T} type
+ * @param {(this: El, ev: E) => void} handler
  * @param {AddEventListenerOptions | boolean} [options]
  * @returns {() => void}
  */
@@ -83,7 +86,7 @@ export function on(element, type, handler, options = {}) {
 		? { capture: options }
 		: options;
 
-	var target_handler = create_event(type, element, handler, resolved_options);
+	var target_handler = create_event(type, /** @type {any} */(element), /** @type {EventListener} */(handler), resolved_options);
 
 	return () => {
 		element.removeEventListener(type, target_handler, options);
