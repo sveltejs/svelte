@@ -1,5 +1,21 @@
 # svelte
 
+## 5.0.0-next.155
+
+### Patch Changes
+
+- fix: robustify migration script ([#12019](https://github.com/sveltejs/svelte/pull/12019))
+
+- fix: relax constraint for `ComponentProps` ([#12026](https://github.com/sveltejs/svelte/pull/12026))
+
+- fix: address event delegation duplication behaviour ([#12014](https://github.com/sveltejs/svelte/pull/12014))
+
+- chore: remove `createRoot` references ([#12018](https://github.com/sveltejs/svelte/pull/12018))
+
+- chore: clear `Map`/`Set` before triggering `$inspect` callbacks ([#12013](https://github.com/sveltejs/svelte/pull/12013))
+
+- breaking: rename `$effect.active` to `$effect.tracking` ([#12022](https://github.com/sveltejs/svelte/pull/12022))
+
 ## 5.0.0-next.154
 
 ### Patch Changes
