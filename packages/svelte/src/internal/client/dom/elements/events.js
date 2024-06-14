@@ -42,7 +42,7 @@ export function create_event(event_name, dom, handler, options) {
 	 * @this {EventTarget}
 	 */
 	function target_handler(/** @type {Event} */ event) {
-		if (!options.capture && /** @type {Event & {__root: any}} */ (event).__root === undefined) {
+		if (!options.capture) {
 			// Only call in the bubble phase, else delegated events would be called before the capturing events
 			handle_event_propagation(dom, event);
 		}
@@ -165,13 +165,15 @@ export function handle_event_propagation(handler_element, event) {
 		}
 
 		if (at_idx <= handler_idx) {
-			// +1 because at_idx is the element which was already handled, and there can only be one delegated event per element.
-			// Avoids on:click and onclick on the same event resulting in onclick being fired twice.
-			path_idx = at_idx + 1;
+			path_idx = at_idx;
 		}
 	}
 
 	current_target = /** @type {Element} */ (path[path_idx] || event.target);
+	// there can only be one delegated event per element, and we either already handled the current target,
+	// or this is the very first target in the chain which has a non-delegated listener, in which case it's safe
+	// to handle a possible delegated event on it later (through the root delegation listener for example).
+	if (current_target === handler_element) return;
 
 	// Proxy currentTarget to correct target
 	define_property(event, 'currentTarget', {
@@ -190,6 +192,7 @@ export function handle_event_propagation(handler_element, event) {
 		 * @type {unknown[]}
 		 */
 		var other_errors = [];
+
 		while (current_target !== null) {
 			/** @type {null | Element} */
 			var parent_element =
@@ -214,12 +217,7 @@ export function handle_event_propagation(handler_element, event) {
 					throw_error = error;
 				}
 			}
-			if (
-				event.cancelBubble ||
-				parent_element === handler_element ||
-				parent_element === null ||
-				current_target === handler_element
-			) {
+			if (event.cancelBubble || parent_element === handler_element || parent_element === null) {
 				break;
 			}
 			current_target = parent_element;

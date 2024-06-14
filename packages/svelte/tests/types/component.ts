@@ -231,6 +231,13 @@ functionComponentInstance.foo === 'bar';
 // @ts-expect-error
 functionComponentInstance.foo = 'foo';
 
+const functionComponentProps: ComponentProps<typeof functionComponent> = {
+	binding: true,
+	readonly: 'foo',
+	// @ts-expect-error
+	prop: 1
+};
+
 mount(functionComponent, {
 	target: null as any as Document | Element | ShadowRoot,
 	props: {
