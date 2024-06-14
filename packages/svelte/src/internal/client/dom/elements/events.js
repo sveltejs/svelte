@@ -35,14 +35,15 @@ export function replay_events(dom) {
  * @param {string} event_name
  * @param {Element} dom
  * @param {EventListener} handler
- * @param {AddEventListenerOptions} options
+ * @param {AddEventListenerOptions | boolean} options
  */
 export function create_event(event_name, dom, handler, options) {
+	const capture = typeof options === 'boolean' ? options : options.capture;
 	/**
 	 * @this {EventTarget}
 	 */
 	function target_handler(/** @type {Event} */ event) {
-		if (!options.capture) {
+		if (!capture) {
 			// Only call in the bubble phase, else delegated events would be called before the capturing events
 			handle_event_propagation(dom, event);
 		}
@@ -75,7 +76,7 @@ export function create_event(event_name, dom, handler, options) {
  * @param {Element} element
  * @param {K} type
  * @param {(this: Element, ev: ElementEventMap[K]) => any} handler
- * @param {AddEventListenerOptions} [options]
+ * @param {AddEventListenerOptions | boolean} [options]
  * @returns {() => void}
  */
 export function on(element, type, handler, options = {}) {
