@@ -35,15 +35,14 @@ export function replay_events(dom) {
  * @param {string} event_name
  * @param {Element} dom
  * @param {EventListener} handler
- * @param {AddEventListenerOptions | boolean} options
+ * @param {AddEventListenerOptions} options
  */
 export function create_event(event_name, dom, handler, options) {
-	const capture = typeof options === 'boolean' ? options : options.capture;
 	/**
 	 * @this {EventTarget}
 	 */
 	function target_handler(/** @type {Event} */ event) {
-		if (!capture) {
+		if (!options.capture) {
 			// Only call in the bubble phase, else delegated events would be called before the capturing events
 			handle_event_propagation(dom, event);
 		}
@@ -80,7 +79,11 @@ export function create_event(event_name, dom, handler, options) {
  * @returns {() => void}
  */
 export function on(element, type, handler, options = {}) {
-	var target_handler = create_event(type, element, handler, options);
+	const resolved_options = typeof options === 'boolean'
+		? { capture: options }
+		: options;
+
+	var target_handler = create_event(type, element, handler, resolved_options);
 
 	return () => {
 		element.removeEventListener(type, target_handler, options);
