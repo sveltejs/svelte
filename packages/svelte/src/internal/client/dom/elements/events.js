@@ -78,15 +78,11 @@ export function create_event(event_name, dom, handler, options) {
  * @param {El} element
  * @param {T} type
  * @param {(this: El, ev: E) => void} handler
- * @param {AddEventListenerOptions | boolean} [options]
+ * @param {AddEventListenerOptions} [options]
  * @returns {() => void}
  */
 export function on(element, type, handler, options = {}) {
-	const resolved_options = typeof options === 'boolean'
-		? { capture: options }
-		: options;
-
-	var target_handler = create_event(type, /** @type {any} */(element), /** @type {EventListener} */(handler), resolved_options);
+	var target_handler = create_event(type, /** @type {any} */(element), /** @type {EventListener} */(handler), options);
 
 	return () => {
 		element.removeEventListener(type, target_handler, options);
