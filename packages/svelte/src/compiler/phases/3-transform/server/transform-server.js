@@ -407,7 +407,7 @@ const global_visitors = {
 			return b.id('undefined');
 		}
 
-		if (rune === '$effect.active') {
+		if (rune === '$effect.tracking') {
 			return b.literal(false);
 		}
 
@@ -571,7 +571,7 @@ const javascript_visitors_runes = {
 		for (const declarator of node.declarations) {
 			const init = declarator.init;
 			const rune = get_rune(init, state.scope);
-			if (!rune || rune === '$effect.active' || rune === '$inspect') {
+			if (!rune || rune === '$effect.tracking' || rune === '$inspect') {
 				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
 				continue;
 			}

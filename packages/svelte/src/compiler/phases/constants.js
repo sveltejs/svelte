@@ -39,7 +39,7 @@ export const Runes = /** @type {const} */ ([
 	'$derived.by',
 	'$effect',
 	'$effect.pre',
-	'$effect.active',
+	'$effect.tracking',
 	'$effect.root',
 	'$inspect',
 	'$inspect().with',

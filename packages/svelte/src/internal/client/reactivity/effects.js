@@ -139,10 +139,13 @@ function create_effect(type, fn, sync) {
 }
 
 /**
- * Internal representation of `$effect.active()`
+ * Internal representation of `$effect.tracking()`
  * @returns {boolean}
  */
-export function effect_active() {
+export function effect_tracking() {
+	if (current_untracking) {
+		return false;
+	}
 	if (current_reaction && (current_reaction.f & DERIVED) !== 0) {
 		return (current_reaction.f & UNOWNED) === 0;
 	}
