@@ -1,5 +1,5 @@
 ---
-'svelte': patch
+"svelte": patch
 ---
 
 breaking: rename `$effect.active` to `$effect.tracking`
