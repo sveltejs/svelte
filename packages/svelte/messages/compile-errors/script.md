@@ -114,6 +114,10 @@
 
 > Cannot use rune without parentheses
 
+## rune_renamed
+
+> `%name%` is now `%replacement%`
+
 ## runes_mode_invalid_import
 
 > %name% cannot be used in runes mode
