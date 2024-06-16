@@ -82,7 +82,7 @@
 					"children": [
 						{
 							"type": "IfBlock",
-							"start": 58,
+							"start": 42,
 							"end": 89,
 							"expression": {
 								"type": "BinaryExpression",
