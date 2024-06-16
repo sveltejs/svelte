@@ -208,31 +208,27 @@ export function batch_inspect(target, prop, receiver) {
 export function check_dirtiness(reaction) {
 	var flags = reaction.f;
 	var is_dirty = (flags & DIRTY) !== 0;
-	var is_unowned = (flags & UNOWNED) !== 0;
 
-	// If we are unowned, we still need to ensure that we update our version to that
-	// of our dependencies.
-	if (is_dirty && !is_unowned) {
+	if (is_dirty) {
 		return true;
 	}
 
+	var is_unowned = (flags & UNOWNED) !== 0;
 	var is_disconnected = (flags & DISCONNECTED) !== 0;
 
-	if ((flags & MAYBE_DIRTY) !== 0 || (is_dirty && is_unowned)) {
+	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
 
 		if (dependencies !== null) {
 			var length = dependencies.length;
-			var is_equal;
 			var reactions;
 
 			for (var i = 0; i < length; i++) {
 				var dependency = dependencies[i];
 
 				if (!is_dirty && check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
-					is_equal = update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
+					update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
 				}
-				var version = dependency.version;
 
 				if (is_unowned) {
 					// If we're working with an unowned derived signal, then we need to check
@@ -240,8 +236,8 @@ export function check_dirtiness(reaction) {
 					// that state has changed to a newer version and thus this unowned signal
 					// is also dirty.
 
-					if (version > /** @type {import('#client').Derived} */ (reaction).version) {
-						return !is_equal;
+					if (dependency.version > /** @type {import('#client').Derived} */ (reaction).version) {
+						return true;
 					}
 
 					if (!current_skip_reaction && !dependency?.reactions?.includes(reaction)) {
@@ -262,7 +258,7 @@ export function check_dirtiness(reaction) {
 					// It might be that the derived was was dereferenced from its dependencies but has now come alive again.
 					// In thise case, we need to re-attach it to the graph and mark it dirty if any of its dependencies have
 					// changed since.
-					if (version > /** @type {import('#client').Derived} */ (reaction).version) {
+					if (dependency.version > /** @type {import('#client').Derived} */ (reaction).version) {
 						is_dirty = true;
 					}
 
