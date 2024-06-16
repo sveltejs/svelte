@@ -232,7 +232,7 @@ describe('signals', () => {
 			// Ensure we're not leaking dependencies
 			assert.deepEqual(
 				nested.slice(0, -2).map((s) => s.deps),
-				[null, null]
+				[null, null, null, null]
 			);
 		};
 	});
@@ -444,6 +444,41 @@ describe('signals', () => {
 			destroy();
 			assert.equal(a?.deps?.length, 1);
 			assert.equal(state?.reactions, null);
+		};
+	});
+
+	test('deriveds update upon reconnection', () => {
+		let a = source(false);
+		let b = source(false);
+
+		let c = derived(() => $.get(a));
+		let d = derived(() => $.get(c));
+
+		let last: Record<string, boolean | null> = {};
+
+		render_effect(() => {
+			last = {
+				a: $.get(a),
+				b: $.get(b),
+				c: $.get(c),
+				d: $.get(a) || $.get(b) ? $.get(d) : null
+			};
+		});
+
+		return () => {
+			assert.deepEqual(last, { a: false, b: false, c: false, d: null });
+
+			flushSync(() => set(a, true));
+			flushSync(() => set(b, true));
+			assert.deepEqual(last, { a: true, b: true, c: true, d: true });
+
+			flushSync(() => set(a, false));
+			flushSync(() => set(b, false));
+			assert.deepEqual(last, { a: false, b: false, c: false, d: null });
+
+			flushSync(() => set(a, true));
+			flushSync(() => set(b, true));
+			assert.deepEqual(last, { a: true, b: true, c: true, d: true });
 		};
 	});
 });
