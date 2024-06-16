@@ -8,7 +8,7 @@ import {
 import { get_descriptor, is_function } from '../utils.js';
 import { mutable_source, set, source } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
-import { get, increment_version, is_signals_recorded, untrack, update } from '../runtime.js';
+import { get, is_signals_recorded, untrack, update } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import { inspect_fn } from '../dev/inspect.js';
 import * as e from '../errors.js';
@@ -323,8 +323,6 @@ export function prop(props, key, flags, fallback) {
 				from_child = true;
 				set(inner_current_value, value);
 				get(current_value); // force a synchronisation immediately
-				// Increment the value so that unowned/disconnected nodes can validate dirtiness again.
-				current_value.version = increment_version();
 			}
 
 			return value;

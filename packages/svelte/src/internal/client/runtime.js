@@ -241,7 +241,6 @@ export function check_dirtiness(reaction) {
 					// is also dirty.
 
 					if (version > /** @type {import('#client').Derived} */ (reaction).version) {
-						/** @type {import('#client').Derived} */ (reaction).version = increment_version();
 						return !is_equal;
 					}
 
@@ -264,7 +263,6 @@ export function check_dirtiness(reaction) {
 					// In thise case, we need to re-attach it to the graph and mark it dirty if any of its dependencies have
 					// changed since.
 					if (version > /** @type {import('#client').Derived} */ (reaction).version) {
-						/** @type {import('#client').Derived} */ (reaction).version = increment_version();
 						is_dirty = true;
 					}
 
