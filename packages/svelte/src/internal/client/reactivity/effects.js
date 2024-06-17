@@ -119,7 +119,6 @@ function create_effect(type, fn, sync) {
 		effect.teardown === null;
 
 	if (!inert && !is_root) {
-		// TODO we only need this `if` check because of a contrived test case in signals.ts — we should rewrite the test
 		if (current_effect !== null) {
 			push_effect(effect, current_effect);
 		}
