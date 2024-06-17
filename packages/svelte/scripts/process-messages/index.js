@@ -43,7 +43,7 @@ for (const category of fs.readdirSync('messages')) {
 
 			seen.add(code);
 			messages[category][code] = {
-				messages: sections.map((section) => section.replace(/^> /gm, '')),
+				messages: sections.map((section) => section.replace(/^> /gm, '').replace(/^>\n/gm, '\n')),
 				details
 			};
 		}

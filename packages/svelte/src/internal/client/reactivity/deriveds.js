@@ -103,8 +103,9 @@ export function update_derived(derived, force_schedule) {
 	set_signal_status(derived, status);
 
 	if (!derived.equals(value)) {
-		derived.version = increment_version();
 		derived.v = value;
+		derived.version = increment_version();
+
 		mark_reactions(derived, DIRTY, force_schedule);
 
 		if (DEV && force_schedule) {
