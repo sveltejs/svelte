@@ -151,15 +151,7 @@ export function effect_tracking() {
 		return false;
 	}
 
-	if ((current_reaction.f & DERIVED) !== 0) {
-		return (current_reaction.f & UNOWNED) === 0;
-	}
-
-	if (current_effect) {
-		return (current_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0;
-	}
-
-	return false;
+	return (current_reaction.f & UNOWNED) === 0;
 }
 
 /**

@@ -349,7 +349,7 @@ export function execute_reaction_fn(signal) {
 	current_dependencies = /** @type {null | import('#client').Value[]} */ (null);
 	current_dependencies_index = 0;
 	current_untracked_writes = null;
-	current_reaction = signal;
+	current_reaction = (signal.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? signal : null;
 	current_skip_reaction = !is_flushing_effect && (signal.f & UNOWNED) !== 0;
 
 	try {
@@ -811,7 +811,7 @@ export function get(signal) {
 	}
 
 	// Register the dependency on the current reaction signal.
-	if (current_reaction !== null && (current_reaction.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0) {
+	if (current_reaction !== null) {
 		const unowned = (current_reaction.f & UNOWNED) !== 0;
 		const dependencies = current_reaction.deps;
 		if (
