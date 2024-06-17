@@ -886,12 +886,8 @@ export function mark_reactions(signal, force_schedule) {
 
 		if ((flags & CLEAN) !== 0 || (maybe_dirty && unowned)) {
 			if ((reaction.f & DERIVED) !== 0) {
-				// Push the derived reaction's reactions onto the stack with MAYBE_DIRTY status
 				var children = /** @type {import('#client').Derived} */ (reaction).reactions;
-
-				if (children !== null) {
-					stack.push(...children);
-				}
+				if (children !== null) stack.push(...children);
 			} else {
 				schedule_effect(/** @type {import('#client').Effect} */ (reaction));
 			}
