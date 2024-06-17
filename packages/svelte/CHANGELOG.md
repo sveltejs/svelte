@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.156
+
+### Patch Changes
+
+- fix: increment derived versions when updating ([#12047](https://github.com/sveltejs/svelte/pull/12047))
+
 ## 5.0.0-next.155
 
 ### Patch Changes
