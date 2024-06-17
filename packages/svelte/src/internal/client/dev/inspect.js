@@ -13,8 +13,7 @@ export function inspect(get_value, inspector = console.log) {
 	let initial = true;
 
 	inspect_effect(() => {
-		const value = deep_snapshot(get_value());
-		inspector(initial ? 'init' : 'update', ...value);
+		inspector(initial ? 'init' : 'update', ...deep_snapshot(get_value()));
 		initial = false;
 	});
 }

@@ -104,14 +104,6 @@ export function set_current_untracked_writes(value) {
 	current_untracked_writes = value;
 }
 
-/** @type {null | import('#client').ValueDebug} */
-export let last_inspected_signal = null;
-
-/** @param {null | import('#client').ValueDebug} signal */
-export function set_last_inspected_signal(signal) {
-	last_inspected_signal = signal;
-}
-
 /** @type {number} Used by sources and deriveds for handling updates to unowned deriveds */
 let current_version = 0;
 
