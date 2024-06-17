@@ -281,3 +281,13 @@ render(functionComponent, {
 		x: ''
 	}
 });
+
+// --------------------------------------------------------------------------- *.svelte components
+
+// import from a nonexistent file to trigger the declare module '*.svelte' in ambient.d.ts
+// this could show an error in the future in the editor (because language tools intercepts and knows this is an error)
+// but should always pass in tsc (because it will never know about this fact)
+import Foo from './doesntexist.svelte';
+
+Foo(null, { a: true });
+const f: Foo = new Foo({ target: document.body, props: { a: true } });
