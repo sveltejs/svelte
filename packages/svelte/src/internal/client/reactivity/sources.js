@@ -78,12 +78,12 @@ export function mutate(source, value) {
 
 /**
  * @template V
- * @param {import('#client').Source<V>} signal
+ * @param {import('#client').Source<V>} source
  * @param {V} value
  * @returns {V}
  */
-export function set(signal, value) {
-	var initialized = signal.v !== UNINITIALIZED;
+export function set(source, value) {
+	var initialized = source.v !== UNINITIALIZED;
 
 	if (
 		initialized &&
@@ -94,11 +94,11 @@ export function set(signal, value) {
 		e.state_unsafe_mutation();
 	}
 
-	if (!signal.equals(value)) {
-		signal.v = value;
+	if (!source.equals(value)) {
+		source.v = value;
+		source.version = increment_version();
 
-		// Increment write version so that unowned signals can properly track dirtiness
-		signal.version = increment_version();
+		mark_reactions(source, DIRTY, true);
 
 		// If the current signal is running for the first time, it won't have any
 		// reactions as we only allocate and assign the reactions after the signal
@@ -116,25 +116,23 @@ export function set(signal, value) {
 			(current_effect.f & CLEAN) !== 0 &&
 			(current_effect.f & BRANCH_EFFECT) === 0
 		) {
-			if (current_dependencies !== null && current_dependencies.includes(signal)) {
+			if (current_dependencies !== null && current_dependencies.includes(source)) {
 				set_signal_status(current_effect, DIRTY);
 				schedule_effect(current_effect);
 			} else {
 				if (current_untracked_writes === null) {
-					set_current_untracked_writes([signal]);
+					set_current_untracked_writes([source]);
 				} else {
-					current_untracked_writes.push(signal);
+					current_untracked_writes.push(source);
 				}
 			}
 		}
 
-		mark_reactions(signal, DIRTY, true);
-
 		if (DEV) {
 			if (is_batching_effect) {
-				set_last_inspected_signal(/** @type {import('#client').ValueDebug} */ (signal));
+				set_last_inspected_signal(/** @type {import('#client').ValueDebug} */ (source));
 			} else {
-				for (const fn of /** @type {import('#client').ValueDebug} */ (signal).inspect) fn();
+				for (const fn of /** @type {import('#client').ValueDebug} */ (source).inspect) fn();
 			}
 		}
 	}
