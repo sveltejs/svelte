@@ -127,7 +127,7 @@ function create_effect(type, fn, sync) {
 			push_effect(effect, current_effect);
 		}
 
-		// if we're in a derived, add the effect there too...
+		// if we're in a derived, add the effect there too
 		if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
 			push_effect(effect, current_reaction);
 		}
