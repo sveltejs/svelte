@@ -279,6 +279,15 @@ function serialize_element_spread_attributes(
 			const [, value] = serialize_attribute_value(attribute.value, context);
 
 			if (
+				name === 'is' &&
+				value.type === 'Literal' &&
+				context.state.metadata.namespace === 'html'
+			) {
+				context.state.template.push(` is="${escape_html(value.value, true)}"`);
+				continue;
+			}
+
+			if (
 				is_event_attribute(attribute) &&
 				(attribute.value[0].expression.type === 'ArrowFunctionExpression' ||
 					attribute.value[0].expression.type === 'FunctionExpression')
