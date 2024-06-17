@@ -336,31 +336,26 @@ function remove_reaction(signal, dependency) {
 			}
 		}
 	}
+
 	// If the derived has no reactions, then we can disconnect it from the graph,
 	// allowing it to either reconnect in the future, or be GC'd by the VM.
 	if (reactions_length === 0 && (dependency.f & DERIVED) !== 0) {
 		set_signal_status(dependency, MAYBE_DIRTY);
-		remove_reactions(/** @type {import('#client').Derived} **/ (dependency), 0);
+		remove_reactions(/** @type {import('#client').Derived} **/ (dependency));
 	}
 }
 
 /**
  * @param {import('#client').Reaction} signal
- * @param {number} start_index
  * @returns {void}
  */
-export function remove_reactions(signal, start_index) {
-	const dependencies = signal.deps;
-	if (dependencies !== null) {
-		const active_dependencies = start_index === 0 ? null : dependencies.slice(0, start_index);
-		let i;
-		for (i = start_index; i < dependencies.length; i++) {
-			const dependency = dependencies[i];
-			// Avoid removing a reaction if we know that it is active (start_index will not be 0)
-			if (active_dependencies === null || !active_dependencies.includes(dependency)) {
-				remove_reaction(signal, dependency);
-			}
-		}
+export function remove_reactions(signal) {
+	var dependencies = signal.deps;
+	if (dependencies === null) return;
+
+	for (var i = 0; i < dependencies.length; i++) {
+		var dependency = dependencies[i];
+		remove_reaction(signal, dependency);
 	}
 }
 

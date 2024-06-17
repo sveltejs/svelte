@@ -103,7 +103,7 @@ export function update_derived(derived) {
  */
 export function destroy_derived(signal) {
 	destroy_derived_children(signal);
-	remove_reactions(signal, 0);
+	remove_reactions(signal);
 	set_signal_status(signal, DESTROYED);
 
 	// TODO we need to ensure we remove the derived from any parent derives
