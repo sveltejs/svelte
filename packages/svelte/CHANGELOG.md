@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.158
+
+### Patch Changes
+
+- fix: adjust module declaration to work around language tools bug ([#12071](https://github.com/sveltejs/svelte/pull/12071))
+
 ## 5.0.0-next.157
 
 ### Patch Changes
