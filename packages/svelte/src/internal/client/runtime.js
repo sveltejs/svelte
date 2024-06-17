@@ -90,7 +90,7 @@ export function set_current_effect(effect) {
 
 /** @type {null | import('#client').Value[]} */
 export let current_dependencies = null;
-let current_dependencies_index = 0;
+
 /**
  * Tracks writes that the effect it's executed in doesn't listen to yet,
  * so that the dependency can be added to the effect later on if it then reads it
@@ -261,79 +261,58 @@ function handle_error(error, effect, component_context) {
  */
 export function execute_reaction_fn(signal) {
 	const previous_dependencies = current_dependencies;
-	const previous_dependencies_index = current_dependencies_index;
 	const previous_untracked_writes = current_untracked_writes;
 	const previous_reaction = current_reaction;
 
 	current_dependencies = /** @type {null | import('#client').Value[]} */ (null);
-	current_dependencies_index = 0;
 	current_untracked_writes = null;
 	current_reaction = (signal.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? signal : null;
 
 	try {
 		let res = /** @type {Function} */ (0, signal.fn)();
-		let dependencies = /** @type {import('#client').Value<unknown>[]} **/ (signal.deps);
+		let old_deps = signal.deps;
+
+		var start = 0;
+		var i;
+		var dependency;
+
+		// very often, dependencies stay the same between runs — optimise for that case
+		// by skipping the first n identical dependencies
+		if (current_dependencies !== null && old_deps !== null) {
+			var min = Math.min(current_dependencies.length, old_deps.length);
+
+			for (; start < min; start += 1) {
+				if (current_dependencies[start] !== old_deps[start]) break;
+			}
+		}
+
+		if (old_deps !== null) {
+			for (i = start; i < old_deps.length; i += 1) {
+				dependency = old_deps[i];
+				if (current_dependencies === null || !current_dependencies.includes(dependency)) {
+					remove_reaction(signal, dependency);
+				}
+			}
+		}
+
 		if (current_dependencies !== null) {
-			let i;
-			if (dependencies !== null) {
-				const deps_length = dependencies.length;
-				// Include any dependencies up until the current_dependencies_index.
-				const full_current_dependencies =
-					current_dependencies_index === 0
-						? current_dependencies
-						: dependencies.slice(0, current_dependencies_index).concat(current_dependencies);
-				const current_dep_length = full_current_dependencies.length;
-				// If we have more than 16 elements in the array then use a Set for faster performance
-				// TODO: evaluate if we should always just use a Set or not here?
-				const full_current_dependencies_set =
-					current_dep_length > 16 && deps_length - current_dependencies_index > 1
-						? new Set(full_current_dependencies)
-						: null;
-				for (i = current_dependencies_index; i < deps_length; i++) {
-					const dependency = dependencies[i];
-					if (
-						full_current_dependencies_set !== null
-							? !full_current_dependencies_set.has(dependency)
-							: !full_current_dependencies.includes(dependency)
-					) {
-						remove_reaction(signal, dependency);
+			for (i = start; i < current_dependencies.length; i += 1) {
+				dependency = current_dependencies[i];
+				if (old_deps === null || !old_deps.includes(dependency)) {
+					if (dependency.reactions === null) {
+						dependency.reactions = [signal];
+					} else if (!dependency.reactions.includes(signal)) {
+						dependency.reactions.push(signal);
 					}
 				}
 			}
-
-			if (dependencies !== null && current_dependencies_index > 0) {
-				dependencies.length = current_dependencies_index + current_dependencies.length;
-				for (i = 0; i < current_dependencies.length; i++) {
-					dependencies[current_dependencies_index + i] = current_dependencies[i];
-				}
-			} else {
-				signal.deps = /** @type {import('#client').Value<V>[]} **/ (
-					dependencies = current_dependencies
-				);
-			}
-
-			for (i = current_dependencies_index; i < dependencies.length; i++) {
-				const dependency = dependencies[i];
-				const reactions = dependency.reactions;
-
-				if (reactions === null) {
-					dependency.reactions = [signal];
-				} else if (reactions[reactions.length - 1] !== signal) {
-					// TODO: should this be:
-					//
-					// } else if (!reactions.includes(signal)) {
-					//
-					reactions.push(signal);
-				}
-			}
-		} else if (dependencies !== null && current_dependencies_index < dependencies.length) {
-			remove_reactions(signal, current_dependencies_index);
-			dependencies.length = current_dependencies_index;
 		}
+
+		signal.deps = current_dependencies;
+
 		return res;
 	} finally {
 		current_dependencies = previous_dependencies;
-		current_dependencies_index = previous_dependencies_index;
 		current_untracked_writes = previous_untracked_writes;
 		current_reaction = previous_reaction;
 	}
@@ -718,26 +697,10 @@ export function get(signal) {
 
 	// Register the dependency on the current reaction signal.
 	if (current_reaction !== null) {
-		const unowned = (current_reaction.f & UNOWNED) !== 0;
-		const dependencies = current_reaction.deps;
-		if (
-			current_dependencies === null &&
-			dependencies !== null &&
-			dependencies[current_dependencies_index] === signal &&
-			!(unowned && current_effect !== null)
-		) {
-			current_dependencies_index++;
-		} else if (
-			dependencies === null ||
-			current_dependencies_index === 0 ||
-			dependencies[current_dependencies_index - 1] !== signal
-		) {
-			if (current_dependencies === null) {
-				current_dependencies = [signal];
-			} else if (current_dependencies[current_dependencies.length - 1] !== signal) {
-				current_dependencies.push(signal);
-			}
+		if (!current_dependencies?.includes(signal)) {
+			(current_dependencies ??= []).push(signal);
 		}
+
 		if (
 			current_untracked_writes !== null &&
 			current_effect !== null &&
