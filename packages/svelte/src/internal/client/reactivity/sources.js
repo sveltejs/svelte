@@ -13,7 +13,7 @@ import {
 	set_signal_status,
 	untrack,
 	increment_version,
-	execute_effect,
+	update_effect,
 	inspect_effects
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
@@ -123,7 +123,7 @@ export function set(source, value) {
 
 		if (DEV) {
 			for (const effect of inspect_effects) {
-				execute_effect(effect);
+				update_effect(effect);
 			}
 
 			inspect_effects.clear();

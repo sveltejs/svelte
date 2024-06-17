@@ -5,7 +5,7 @@ import {
 	current_reaction,
 	destroy_effect_children,
 	dev_current_component_function,
-	execute_effect,
+	update_effect,
 	get,
 	is_destroying_effect,
 	is_flushing_effect,
@@ -106,7 +106,7 @@ function create_effect(type, fn, sync) {
 
 		try {
 			set_is_flushing_effect(true);
-			execute_effect(effect);
+			update_effect(effect);
 			effect.f |= EFFECT_RAN;
 		} finally {
 			set_is_flushing_effect(previously_flushing_effect);
@@ -267,7 +267,7 @@ export function legacy_pre_effect_reset() {
 			var effect = token.effect;
 
 			if (check_dirtiness(effect)) {
-				execute_effect(effect);
+				update_effect(effect);
 			}
 
 			token.ran = false;
@@ -479,7 +479,7 @@ function resume_children(effect, local) {
 	// If a dependency of this effect changed while it was paused,
 	// apply the change now
 	if (check_dirtiness(effect)) {
-		execute_effect(effect);
+		update_effect(effect);
 	}
 
 	var child = effect.first;
