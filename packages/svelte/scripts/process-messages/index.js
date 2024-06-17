@@ -321,7 +321,7 @@ function transform(name, dest) {
 
 					if (e.type === 'Identifier' && e.name === 'MESSAGE') {
 						if (message.type === 'Literal') {
-							const str = /** @type {string} */ (message.value).replace(/([`$])/g, '\\$1');
+							const str = /** @type {string} */ (message.value).replace(/(`|\${)/g, '\\$1');
 							quasi.value.raw += str + q.value.raw;
 							continue;
 						}

@@ -25,7 +25,7 @@ export function lifecycle_outside_component(name) {
  */
 export function render_tag_invalid_argument() {
 	if (DEV) {
-		const error = new Error(`render_tag_invalid_argument\nThe argument to \`{@render ...}\` must be a snippet function, not a component or some other kind of function. If you want to dynamically render one snippet or another, use \`\$derived\` and pass its result to \`{@render ...}\``);
+		const error = new Error(`render_tag_invalid_argument\nThe argument to \`{@render ...}\` must be a snippet function, not a component or some other kind of function. If you want to dynamically render one snippet or another, use \`$derived\` and pass its result to \`{@render ...}\``);
 
 		error.name = 'Svelte error';
 		throw error;

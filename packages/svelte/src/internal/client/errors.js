@@ -135,7 +135,7 @@ export function effect_in_teardown(rune) {
  */
 export function effect_in_unowned_derived() {
 	if (DEV) {
-		const error = new Error(`effect_in_unowned_derived\nEffect cannot be created inside a \`\$derived\` value that was not itself created inside an effect`);
+		const error = new Error(`effect_in_unowned_derived\nEffect cannot be created inside a \`$derived\` value that was not itself created inside an effect`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -268,7 +268,7 @@ export function rune_outside_svelte(rune) {
  */
 export function state_prototype_fixed() {
 	if (DEV) {
-		const error = new Error(`state_prototype_fixed\nCannot set prototype of \`\$state\` object`);
+		const error = new Error(`state_prototype_fixed\nCannot set prototype of \`$state\` object`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -284,7 +284,7 @@ export function state_prototype_fixed() {
  */
 export function state_unsafe_mutation() {
 	if (DEV) {
-		const error = new Error(`state_unsafe_mutation\nUpdating state inside a derived is forbidden. If the value should not be reactive, declare it without \`\$state\``);
+		const error = new Error(`state_unsafe_mutation\nUpdating state inside a derived is forbidden. If the value should not be reactive, declare it without \`$state\``);
 
 		error.name = 'Svelte error';
 		throw error;
