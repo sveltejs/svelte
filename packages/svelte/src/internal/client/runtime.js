@@ -114,6 +114,9 @@ export function set_last_inspected_signal(signal) {
 	last_inspected_signal = signal;
 }
 
+/** @type {number} Used by sources and deriveds for handling updates to unowned deriveds */
+let current_version = 0;
+
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the reaction.
 export let current_skip_reaction = false;
@@ -145,6 +148,10 @@ export let dev_current_component_function = null;
 /** @param {import('#client').ComponentContext['function']} fn */
 export function set_dev_current_component_function(fn) {
 	dev_current_component_function = fn;
+}
+
+export function increment_version() {
+	return current_version++;
 }
 
 /** @returns {boolean} */
@@ -226,7 +233,6 @@ export function check_dirtiness(reaction) {
 					// is also dirty.
 
 					if (version > /** @type {import('#client').Derived} */ (reaction).version) {
-						/** @type {import('#client').Derived} */ (reaction).version = version;
 						return !is_equal;
 					}
 
@@ -249,9 +255,9 @@ export function check_dirtiness(reaction) {
 					// In thise case, we need to re-attach it to the graph and mark it dirty if any of its dependencies have
 					// changed since.
 					if (version > /** @type {import('#client').Derived} */ (reaction).version) {
-						/** @type {import('#client').Derived} */ (reaction).version = version;
 						is_dirty = true;
 					}
+
 					reactions = dependency.reactions;
 					if (reactions === null) {
 						dependency.reactions = [reaction];
