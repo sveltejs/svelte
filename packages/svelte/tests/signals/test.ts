@@ -479,6 +479,13 @@ describe('signals', () => {
 			flushSync(() => set(a, true));
 			flushSync(() => set(b, true));
 			assert.deepEqual(last, { a: true, b: true, c: true, d: true });
+
+			flushSync(() => set(a, false));
+			flushSync(() => set(b, false));
+			assert.deepEqual(last, { a: false, b: false, c: false, d: null });
+
+			flushSync(() => set(b, true));
+			assert.deepEqual(last, { a: false, b: true, c: false, d: false });
 		};
 	});
 });
