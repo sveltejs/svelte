@@ -279,14 +279,12 @@ export function state_prototype_fixed() {
 }
 
 /**
- * Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. This can lead to unexpected errors and possibly cause infinite loops.
- * >
- * If the object is not meant to be reactive, declare it without `$state`
+ * Updating state inside a derived is forbidden. If the value should not be reactive, declare it without `$state`
  * @returns {never}
  */
 export function state_unsafe_mutation() {
 	if (DEV) {
-		const error = new Error(`${"state_unsafe_mutation"}\n${"Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. This can lead to unexpected errors and possibly cause infinite loops.\n>\nIf the object is not meant to be reactive, declare it without `$state`"}`);
+		const error = new Error(`${"state_unsafe_mutation"}\n${"Updating state inside a derived is forbidden. If the value should not be reactive, declare it without `$state`"}`);
 
 		error.name = 'Svelte error';
 		throw error;
