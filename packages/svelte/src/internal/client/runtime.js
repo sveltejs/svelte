@@ -230,13 +230,15 @@ export function check_dirtiness(reaction) {
 					update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
 				}
 
+				var version = dependency.version;
+
 				if (is_unowned) {
 					// If we're working with an unowned derived signal, then we need to check
 					// if our dependency write version is higher. If it is then we can assume
 					// that state has changed to a newer version and thus this unowned signal
 					// is also dirty.
 
-					if (dependency.version > /** @type {import('#client').Derived} */ (reaction).version) {
+					if (version > /** @type {import('#client').Derived} */ (reaction).version) {
 						return true;
 					}
 
@@ -258,7 +260,7 @@ export function check_dirtiness(reaction) {
 					// It might be that the derived was was dereferenced from its dependencies but has now come alive again.
 					// In thise case, we need to re-attach it to the graph and mark it dirty if any of its dependencies have
 					// changed since.
-					if (dependency.version > /** @type {import('#client').Derived} */ (reaction).version) {
+					if (version > /** @type {import('#client').Derived} */ (reaction).version) {
 						is_dirty = true;
 					}
 
