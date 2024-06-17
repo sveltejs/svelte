@@ -269,9 +269,9 @@ export function execute_reaction_fn(reaction) {
 	current_reaction = (reaction.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 
 	try {
-		let res = /** @type {Function} */ (0, reaction.fn)();
-		let old_deps = reaction.deps;
+		let result = /** @type {Function} */ (0, reaction.fn)();
 
+		let old_deps = reaction.deps;
 		var start = 0;
 		var i;
 		var dependency;
@@ -306,7 +306,7 @@ export function execute_reaction_fn(reaction) {
 
 		reaction.deps = current_dependencies;
 
-		return res;
+		return result;
 	} finally {
 		current_dependencies = previous_dependencies;
 		current_untracked_writes = previous_untracked_writes;
