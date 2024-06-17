@@ -6,7 +6,6 @@ import {
 	current_effect,
 	current_untracked_writes,
 	get,
-	is_batching_effect,
 	is_runes,
 	mark_reactions,
 	schedule_effect,
@@ -14,7 +13,9 @@ import {
 	set_last_inspected_signal,
 	set_signal_status,
 	untrack,
-	increment_version
+	increment_version,
+	execute_effect,
+	inspect_effects
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import { CLEAN, DERIVED, DIRTY, BRANCH_EFFECT } from '../constants.js';
@@ -36,10 +37,6 @@ export function source(value) {
 		v: value,
 		version: 0
 	};
-
-	if (DEV) {
-		/** @type {import('#client').ValueDebug<V>} */ (source).inspect = new Set();
-	}
 
 	return source;
 }
@@ -129,11 +126,11 @@ export function set(source, value) {
 		}
 
 		if (DEV) {
-			if (is_batching_effect) {
-				set_last_inspected_signal(/** @type {import('#client').ValueDebug} */ (source));
-			} else {
-				for (const fn of /** @type {import('#client').ValueDebug} */ (source).inspect) fn();
+			for (const effect of inspect_effects) {
+				execute_effect(effect);
 			}
+
+			inspect_effects.clear();
 		}
 	}
 

@@ -30,7 +30,8 @@ import {
 	EFFECT_TRANSPARENT,
 	DERIVED,
 	UNOWNED,
-	CLEAN
+	CLEAN,
+	INSPECT_EFFECT
 } from '../constants.js';
 import { set } from './sources.js';
 import { remove } from '../dom/reconciler.js';
@@ -202,6 +203,11 @@ export function user_pre_effect(fn) {
 		});
 	}
 	return render_effect(fn);
+}
+
+/** @param {() => void | (() => void)} fn */
+export function inspect_effect(fn) {
+	return create_effect(INSPECT_EFFECT, fn, true);
 }
 
 /**

@@ -39,10 +39,6 @@ export function derived(fn) {
 		version: 0
 	};
 
-	if (DEV) {
-		/** @type {import('#client').DerivedDebug} */ (signal).inspect = new Set();
-	}
-
 	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
 		var current_derived = /** @type {import('#client').Derived<V>} */ (current_reaction);
 		if (current_derived.deriveds === null) {
@@ -107,10 +103,6 @@ export function update_derived(derived, force_schedule) {
 		derived.version = increment_version();
 
 		mark_reactions(derived, DIRTY, force_schedule);
-
-		if (DEV && force_schedule) {
-			for (var fn of /** @type {import('#client').DerivedDebug} */ (derived).inspect) fn();
-		}
 	}
 }
 
