@@ -181,7 +181,7 @@ export function check_dirtiness(reaction) {
 
 				if (is_unowned || is_disconnected) {
 					// TODO why is this happening here rather than in `update_derived`?
-					if (!dependency?.reactions?.includes(reaction)) {
+					if (!dependency.reactions?.includes(reaction)) {
 						(dependency.reactions ??= []).push(reaction);
 					}
 
