@@ -100,8 +100,6 @@ export function update_derived(derived, force_schedule) {
 	if (!derived.equals(value)) {
 		derived.v = value;
 		derived.version = increment_version();
-
-		mark_reactions(derived, force_schedule);
 	}
 }
 
