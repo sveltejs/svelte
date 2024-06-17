@@ -447,7 +447,7 @@ describe('signals', () => {
 		};
 	});
 
-	test('deriveds update upon reconnection', () => {
+	test('deriveds update upon reconnection #1', () => {
 		let a = source(false);
 		let b = source(false);
 
@@ -486,6 +486,55 @@ describe('signals', () => {
 
 			flushSync(() => set(b, true));
 			assert.deepEqual(last, { a: false, b: true, c: false, d: false });
+		};
+	});
+
+	test('deriveds update upon reconnection #2', () => {
+		let a = source(false);
+		let b = source(false);
+		let c = source(false);
+
+		let d = derived(() => $.get(a) || $.get(b));
+
+		let branch = '';
+
+		render_effect(() => {
+			if ($.get(c) && !$.get(d)) {
+				branch = 'if';
+			} else {
+				branch = 'else';
+			}
+		});
+
+		return () => {
+			assert.deepEqual(branch, 'else');
+
+			flushSync(() => set(c, true));
+			assert.deepEqual(branch, 'if');
+
+			flushSync(() => set(a, true));
+			assert.deepEqual(branch, 'else');
+
+			set(a, false);
+			set(b, false);
+			set(c, false);
+			flushSync();
+			assert.deepEqual(branch, 'else');
+
+			flushSync(() => set(c, true));
+			assert.deepEqual(branch, 'if');
+
+			flushSync(() => set(b, true));
+			assert.deepEqual(branch, 'else');
+
+			set(a, false);
+			set(b, false);
+			set(c, false);
+			flushSync();
+			assert.deepEqual(branch, 'else');
+
+			flushSync(() => set(c, true));
+			assert.deepEqual(branch, 'if');
 		};
 	});
 });
