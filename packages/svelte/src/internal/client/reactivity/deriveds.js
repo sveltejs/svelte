@@ -8,7 +8,8 @@ import {
 	mark_reactions,
 	current_skip_reaction,
 	execute_reaction_fn,
-	destroy_effect_children
+	destroy_effect_children,
+	increment_version
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 
@@ -104,6 +105,7 @@ export function update_derived(derived, force_schedule) {
 	var is_equal = derived.equals(value);
 
 	if (!is_equal) {
+		derived.version = increment_version();
 		derived.v = value;
 		mark_reactions(derived, DIRTY, force_schedule);
 
