@@ -28,7 +28,6 @@ import {
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
-	DISCONNECTED,
 	STATE_FROZEN_SYMBOL,
 	INSPECT_EFFECT
 } from './constants.js';
@@ -157,14 +156,11 @@ export function is_runes() {
  */
 export function check_dirtiness(reaction) {
 	var flags = reaction.f;
+
 	var is_dirty = (flags & DIRTY) !== 0;
+	if (is_dirty) return true;
 
-	if (is_dirty) {
-		return true;
-	}
-
-	var is_unowned = (flags & UNOWNED) !== 0;
-	var is_disconnected = (flags & DISCONNECTED) !== 0;
+	var is_derived = (flags & DERIVED) !== 0;
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
@@ -179,7 +175,7 @@ export function check_dirtiness(reaction) {
 					update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
 				}
 
-				if (is_unowned || is_disconnected) {
+				if (is_derived) {
 					// TODO why is this happening here rather than in `update_derived`?
 					if (!dependency.reactions?.includes(reaction)) {
 						(dependency.reactions ??= []).push(reaction);
@@ -196,12 +192,8 @@ export function check_dirtiness(reaction) {
 		}
 
 		// Unowned signals are always maybe dirty, as we instead check their dependency versions.
-		if (!is_unowned) {
+		if ((flags & UNOWNED) === 0) {
 			set_signal_status(reaction, CLEAN);
-		}
-
-		if (is_disconnected) {
-			reaction.f ^= DISCONNECTED;
 		}
 	}
 
@@ -384,11 +376,6 @@ function remove_reaction(signal, dependency) {
 	// allowing it to either reconnect in the future, or be GC'd by the VM.
 	if (reactions_length === 0 && (dependency.f & DERIVED) !== 0) {
 		set_signal_status(dependency, MAYBE_DIRTY);
-		// If we are working with a derived that is owned by an effect, then mark it as being
-		// disconnected.
-		if ((dependency.f & (UNOWNED | DISCONNECTED)) === 0) {
-			dependency.f ^= DISCONNECTED;
-		}
 		remove_reactions(/** @type {import('#client').Derived} **/ (dependency), 0);
 	}
 }
