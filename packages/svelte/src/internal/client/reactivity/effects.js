@@ -46,6 +46,10 @@ export function validate_effect(rune) {
 		e.effect_orphan(rune);
 	}
 
+	if (current_reaction !== null && (current_reaction.f & UNOWNED) !== 0) {
+		e.effect_in_unowned_derived();
+	}
+
 	if (is_destroying_effect) {
 		e.effect_in_teardown(rune);
 	}
@@ -124,17 +128,8 @@ function create_effect(type, fn, sync) {
 		}
 
 		// if we're in a derived, add the effect there too...
-		if (current_reaction !== null) {
-			var flags = current_reaction.f;
-
-			if ((flags & DERIVED) !== 0) {
-				// ...unless it's unowned
-				if ((flags & UNOWNED) !== 0) {
-					e.effect_in_unowned_derived();
-				}
-
-				push_effect(effect, current_reaction);
-			}
+		if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
+			push_effect(effect, current_reaction);
 		}
 	}
 
