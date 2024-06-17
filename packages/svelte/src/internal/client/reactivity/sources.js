@@ -91,7 +91,7 @@ export function set(source, value) {
 		source.v = value;
 		source.version = increment_version();
 
-		mark_reactions(source, true);
+		mark_reactions(source);
 
 		// If the current signal is running for the first time, it won't have any
 		// reactions as we only allocate and assign the reactions after the signal

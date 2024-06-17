@@ -172,7 +172,7 @@ export function check_dirtiness(reaction) {
 				var dependency = dependencies[i];
 
 				if (!is_dirty && check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
-					update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
+					update_derived(/** @type {import('#client').Derived} **/ (dependency));
 				}
 
 				if (is_derived) {
@@ -762,7 +762,7 @@ export function get(signal) {
 		(flags & DERIVED) !== 0 &&
 		check_dirtiness(/** @type {import('#client').Derived} */ (signal))
 	) {
-		update_derived(/** @type {import('#client').Derived} **/ (signal), false);
+		update_derived(/** @type {import('#client').Derived} **/ (signal));
 	}
 
 	return signal.v;
@@ -807,10 +807,9 @@ export function invalidate_inner_signals(fn) {
 
 /**
  * @param {import('#client').Value} signal
- * @param {boolean} force_schedule
  * @returns {void}
  */
-export function mark_reactions(signal, force_schedule) {
+export function mark_reactions(signal) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -836,7 +835,7 @@ export function mark_reactions(signal, force_schedule) {
 		// We skip any effects that are already dirty. Additionally, we also
 		// skip if the reaction is the same as the current effect (except if we're not in runes or we
 		// are in force schedule mode).
-		if ((flags & DIRTY) !== 0 || ((!force_schedule || !runes) && reaction === current_effect)) {
+		if ((flags & DIRTY) !== 0 || (!runes && reaction === current_effect)) {
 			continue;
 		}
 

@@ -4,7 +4,6 @@ import {
 	current_effect,
 	remove_reactions,
 	set_signal_status,
-	mark_reactions,
 	current_skip_reaction,
 	execute_reaction_fn,
 	destroy_effect_children,
@@ -80,10 +79,9 @@ function destroy_derived_children(signal) {
 
 /**
  * @param {import('#client').Derived} derived
- * @param {boolean} force_schedule
  * @returns {void}
  */
-export function update_derived(derived, force_schedule) {
+export function update_derived(derived) {
 	var previous_updating_derived = updating_derived;
 	updating_derived = true;
 	destroy_derived_children(derived);
