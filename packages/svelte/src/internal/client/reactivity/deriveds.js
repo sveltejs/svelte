@@ -1,4 +1,3 @@
-import { DEV } from 'esm-env';
 import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../constants.js';
 import {
 	current_reaction,
@@ -102,7 +101,7 @@ export function update_derived(derived, force_schedule) {
 		derived.v = value;
 		derived.version = increment_version();
 
-		mark_reactions(derived, DIRTY, force_schedule);
+		mark_reactions(derived, force_schedule);
 	}
 }
 
