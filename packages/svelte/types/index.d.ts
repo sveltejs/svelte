@@ -2350,9 +2350,15 @@ declare module 'svelte/events' {
 	 * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
 	 * (with attributes like `onclick`), which use event delegation for performance reasons
 	 *
-	 * 
-	 */
-	export function on(element: Element, type: string, handler: EventListener, options?: AddEventListenerOptions | undefined): () => void;
+	 * */
+	export function on<Element extends HTMLElement, Type extends keyof HTMLElementEventMap>(element: Element, type: Type, handler: (this: Element, event: HTMLElementEventMap[Type]) => any, options?: AddEventListenerOptions | undefined): () => void;
+	/**
+	 * Attaches an event handler to an element and returns a function that removes the handler. Using this
+	 * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
+	 * (with attributes like `onclick`), which use event delegation for performance reasons
+	 *
+	 * */
+	export function on(element: EventTarget, type: string, handler: EventListener, options?: AddEventListenerOptions | undefined): () => void;
 }
 
 declare module 'svelte/types/compiler/preprocess' {

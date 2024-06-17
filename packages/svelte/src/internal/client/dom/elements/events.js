@@ -33,7 +33,7 @@ export function replay_events(dom) {
 
 /**
  * @param {string} event_name
- * @param {Element} dom
+ * @param {EventTarget} dom
  * @param {EventListener} handler
  * @param {AddEventListenerOptions} options
  */
@@ -71,7 +71,31 @@ export function create_event(event_name, dom, handler, options) {
  * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
  * (with attributes like `onclick`), which use event delegation for performance reasons
  *
+ * @template {HTMLElement} Element
+ * @template {keyof HTMLElementEventMap} Type
+ * @overload
  * @param {Element} element
+ * @param {Type} type
+ * @param {(this: Element, event: HTMLElementEventMap[Type]) => any} handler
+ * @param {AddEventListenerOptions} [options]
+ * @returns {() => void}
+ */
+
+/**
+ * Attaches an event handler to an element and returns a function that removes the handler. Using this
+ * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
+ * (with attributes like `onclick`), which use event delegation for performance reasons
+ *
+ * @overload
+ * @param {EventTarget} element
+ * @param {string} type
+ * @param {EventListener} handler
+ * @param {AddEventListenerOptions} [options]
+ * @returns {() => void}
+ */
+
+/**
+ * @param {EventTarget} element
  * @param {string} type
  * @param {EventListener} handler
  * @param {AddEventListenerOptions} [options]
@@ -119,12 +143,12 @@ export function delegate(events) {
 }
 
 /**
- * @param {Node} handler_element
+ * @param {EventTarget} handler_element
  * @param {Event} event
  * @returns {void}
  */
 export function handle_event_propagation(handler_element, event) {
-	var owner_document = handler_element.ownerDocument;
+	var owner_document = /** @type {Node} */ (handler_element).ownerDocument;
 	var event_name = event.type;
 	var path = event.composedPath?.() || [];
 	var current_target = /** @type {null | Element} */ (path[0] || event.target);
