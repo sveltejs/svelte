@@ -824,9 +824,7 @@ export function mark_reactions(signal) {
 			continue;
 		}
 
-		// We skip any effects that are already dirty. Additionally, we also
-		// skip if the reaction is the same as the current effect (except if we're not in runes or we
-		// are in force schedule mode).
+		// Skip already-dirty effects, and (in legacy mode) effects that invalidate themselves
 		if ((flags & DIRTY) !== 0 || (!runes && reaction === current_effect)) {
 			continue;
 		}
