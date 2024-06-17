@@ -180,13 +180,10 @@ export function check_dirtiness(reaction) {
 					if (!dependency.reactions?.includes(reaction)) {
 						(dependency.reactions ??= []).push(reaction);
 					}
+				}
 
-					if (dependency.version > /** @type {import('#client').Derived} */ (reaction).version) {
-						is_dirty = true;
-					}
-				} else if ((reaction.f & DIRTY) !== 0) {
-					// `signal` might now be dirty, as a result of calling `check_dirtiness` and/or `update_derived`
-					return true;
+				if (dependency.version > reaction.version) {
+					is_dirty = true;
 				}
 			}
 		}
@@ -451,6 +448,8 @@ export function execute_effect(effect) {
 		execute_effect_teardown(effect);
 		var teardown = execute_reaction_fn(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
+
+		effect.version = increment_version();
 	} catch (error) {
 		handle_error(/** @type {Error} */ (error), effect, current_component_context);
 	} finally {
