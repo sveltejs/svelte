@@ -321,19 +321,20 @@ export function execute_reaction_fn(reaction) {
  * @returns {void}
  */
 function remove_reaction(signal, dependency) {
-	const reactions = dependency.reactions;
-	let reactions_length = 0;
+	var reactions = dependency.reactions;
+	var reactions_length = 0;
+
 	if (reactions !== null) {
 		reactions_length = reactions.length - 1;
-		const index = reactions.indexOf(signal);
-		if (index !== -1) {
-			if (reactions_length === 0) {
-				dependency.reactions = null;
-			} else {
-				// Swap with last element and then remove.
-				reactions[index] = reactions[reactions_length];
-				reactions.pop();
-			}
+
+		if (reactions_length === 0) {
+			dependency.reactions = null;
+		} else {
+			// Swap with last element and then remove.
+			var index = reactions.indexOf(signal);
+
+			reactions[index] = reactions[reactions_length];
+			reactions.pop();
 		}
 	}
 
