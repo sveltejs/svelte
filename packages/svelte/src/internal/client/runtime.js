@@ -237,7 +237,6 @@ export function check_dirtiness(reaction) {
 					// if our dependency write version is higher. If it is then we can assume
 					// that state has changed to a newer version and thus this unowned signal
 					// is also dirty.
-
 					if (version > /** @type {import('#client').Derived} */ (reaction).version) {
 						return true;
 					}
@@ -246,12 +245,7 @@ export function check_dirtiness(reaction) {
 						// If we are working with an unowned signal as part of an effect (due to !current_skip_reaction)
 						// and the version hasn't changed, we still need to check that this reaction
 						// if linked to the dependency source – otherwise future updates will not be caught.
-						reactions = dependency.reactions;
-						if (reactions === null) {
-							dependency.reactions = [reaction];
-						} else {
-							reactions.push(reaction);
-						}
+						(dependency.reactions ??= []).push(reaction);
 					}
 				} else if ((reaction.f & DIRTY) !== 0) {
 					// `signal` might now be dirty, as a result of calling `check_dirtiness` and/or `update_derived`
