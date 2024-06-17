@@ -4,7 +4,6 @@ import {
 	current_effect,
 	remove_reactions,
 	set_signal_status,
-	current_skip_reaction,
 	execute_reaction_fn,
 	destroy_effect_children,
 	increment_version
@@ -88,10 +87,7 @@ export function update_derived(derived) {
 	var value = execute_reaction_fn(derived);
 	updating_derived = previous_updating_derived;
 
-	var status =
-		(current_skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null
-			? MAYBE_DIRTY
-			: CLEAN;
+	var status = (derived.f & UNOWNED) !== 0 && derived.deps !== null ? MAYBE_DIRTY : CLEAN;
 
 	set_signal_status(derived, status);
 

@@ -106,9 +106,6 @@ export function set_current_untracked_writes(value) {
 /** @type {number} Used by sources and deriveds for handling updates to unowned deriveds */
 let current_version = 0;
 
-// If we are working with a get() chain that has no active container,
-// to prevent memory leaks, we skip adding the reaction.
-export let current_skip_reaction = false;
 // Handle collecting all signals which are read during a specific time frame
 export let is_signals_recorded = false;
 let captured_signals = new Set();
@@ -267,13 +264,11 @@ export function execute_reaction_fn(signal) {
 	const previous_dependencies_index = current_dependencies_index;
 	const previous_untracked_writes = current_untracked_writes;
 	const previous_reaction = current_reaction;
-	const previous_skip_reaction = current_skip_reaction;
 
 	current_dependencies = /** @type {null | import('#client').Value[]} */ (null);
 	current_dependencies_index = 0;
 	current_untracked_writes = null;
 	current_reaction = (signal.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? signal : null;
-	current_skip_reaction = !is_flushing_effect && (signal.f & UNOWNED) !== 0;
 
 	try {
 		let res = /** @type {Function} */ (0, signal.fn)();
@@ -317,20 +312,18 @@ export function execute_reaction_fn(signal) {
 				);
 			}
 
-			if (!current_skip_reaction) {
-				for (i = current_dependencies_index; i < dependencies.length; i++) {
-					const dependency = dependencies[i];
-					const reactions = dependency.reactions;
+			for (i = current_dependencies_index; i < dependencies.length; i++) {
+				const dependency = dependencies[i];
+				const reactions = dependency.reactions;
 
-					if (reactions === null) {
-						dependency.reactions = [signal];
-					} else if (reactions[reactions.length - 1] !== signal) {
-						// TODO: should this be:
-						//
-						// } else if (!reactions.includes(signal)) {
-						//
-						reactions.push(signal);
-					}
+				if (reactions === null) {
+					dependency.reactions = [signal];
+				} else if (reactions[reactions.length - 1] !== signal) {
+					// TODO: should this be:
+					//
+					// } else if (!reactions.includes(signal)) {
+					//
+					reactions.push(signal);
 				}
 			}
 		} else if (dependencies !== null && current_dependencies_index < dependencies.length) {
@@ -343,7 +336,6 @@ export function execute_reaction_fn(signal) {
 		current_dependencies_index = previous_dependencies_index;
 		current_untracked_writes = previous_untracked_writes;
 		current_reaction = previous_reaction;
-		current_skip_reaction = previous_skip_reaction;
 	}
 }
 
