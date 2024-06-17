@@ -63,11 +63,6 @@ export function set_is_destroying_effect(value) {
 	is_destroying_effect = value;
 }
 
-/** @param {boolean} value */
-export function set_untracking(value) {
-	current_untracking = value;
-}
-
 // Used for $inspect
 export let is_batching_effect = false;
 let is_inspecting_signal = false;
@@ -118,9 +113,6 @@ export let last_inspected_signal = null;
 export function set_last_inspected_signal(signal) {
 	last_inspected_signal = signal;
 }
-
-/** If `true`, `get`ting the signal should not register it as a dependency */
-export let current_untracking = false;
 
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the reaction.
@@ -353,14 +345,12 @@ export function execute_reaction_fn(signal) {
 	const previous_untracked_writes = current_untracked_writes;
 	const previous_reaction = current_reaction;
 	const previous_skip_reaction = current_skip_reaction;
-	const previous_untracking = current_untracking;
 
 	current_dependencies = /** @type {null | import('#client').Value[]} */ (null);
 	current_dependencies_index = 0;
 	current_untracked_writes = null;
 	current_reaction = signal;
 	current_skip_reaction = !is_flushing_effect && (signal.f & UNOWNED) !== 0;
-	current_untracking = false;
 
 	try {
 		let res = /** @type {Function} */ (0, signal.fn)();
@@ -431,7 +421,6 @@ export function execute_reaction_fn(signal) {
 		current_untracked_writes = previous_untracked_writes;
 		current_reaction = previous_reaction;
 		current_skip_reaction = previous_skip_reaction;
-		current_untracking = previous_untracking;
 	}
 }
 
@@ -822,11 +811,7 @@ export function get(signal) {
 	}
 
 	// Register the dependency on the current reaction signal.
-	if (
-		current_reaction !== null &&
-		(current_reaction.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 &&
-		!current_untracking
-	) {
+	if (current_reaction !== null && (current_reaction.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0) {
 		const unowned = (current_reaction.f & UNOWNED) !== 0;
 		const dependencies = current_reaction.deps;
 		if (
@@ -969,12 +954,12 @@ export function mark_reactions(signal, to_status, force_schedule) {
  * @returns {T}
  */
 export function untrack(fn) {
-	const previous_untracking = current_untracking;
+	const previous_reaction = current_reaction;
 	try {
-		current_untracking = true;
+		current_reaction = null;
 		return fn();
 	} finally {
-		current_untracking = previous_untracking;
+		current_reaction = previous_reaction;
 	}
 }
 

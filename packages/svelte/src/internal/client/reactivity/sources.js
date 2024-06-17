@@ -5,7 +5,6 @@ import {
 	current_dependencies,
 	current_effect,
 	current_untracked_writes,
-	current_untracking,
 	get,
 	is_batching_effect,
 	is_runes,
@@ -86,7 +85,6 @@ export function set(signal, value) {
 	var initialized = signal.v !== UNINITIALIZED;
 
 	if (
-		!current_untracking &&
 		initialized &&
 		current_reaction !== null &&
 		is_runes() &&
