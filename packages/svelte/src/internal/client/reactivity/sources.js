@@ -10,7 +10,6 @@ import {
 	mark_reactions,
 	schedule_effect,
 	set_current_untracked_writes,
-	set_last_inspected_signal,
 	set_signal_status,
 	untrack,
 	increment_version,
@@ -24,21 +23,18 @@ import * as e from '../errors.js';
 
 /**
  * @template V
- * @param {V} value
+ * @param {V} v
  * @returns {import('#client').Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function source(value) {
-	/** @type {import('#client').Source<V>} */
-	const source = {
+export function source(v) {
+	return {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
+		v,
 		reactions: null,
-		equals: equals,
-		v: value,
+		equals,
 		version: 0
 	};
-
-	return source;
 }
 
 /**
