@@ -256,21 +256,21 @@ function handle_error(error, effect, component_context) {
 
 /**
  * @template V
- * @param {import('#client').Reaction} signal
+ * @param {import('#client').Reaction} reaction
  * @returns {V}
  */
-export function execute_reaction_fn(signal) {
+export function execute_reaction_fn(reaction) {
 	const previous_dependencies = current_dependencies;
 	const previous_untracked_writes = current_untracked_writes;
 	const previous_reaction = current_reaction;
 
 	current_dependencies = /** @type {null | import('#client').Value[]} */ (null);
 	current_untracked_writes = null;
-	current_reaction = (signal.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? signal : null;
+	current_reaction = (reaction.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 
 	try {
-		let res = /** @type {Function} */ (0, signal.fn)();
-		let old_deps = signal.deps;
+		let res = /** @type {Function} */ (0, reaction.fn)();
+		let old_deps = reaction.deps;
 
 		var start = 0;
 		var i;
@@ -290,7 +290,7 @@ export function execute_reaction_fn(signal) {
 			for (i = start; i < old_deps.length; i += 1) {
 				dependency = old_deps[i];
 				if (current_dependencies === null || !current_dependencies.includes(dependency)) {
-					remove_reaction(signal, dependency);
+					remove_reaction(reaction, dependency);
 				}
 			}
 		}
@@ -299,16 +299,12 @@ export function execute_reaction_fn(signal) {
 			for (i = start; i < current_dependencies.length; i += 1) {
 				dependency = current_dependencies[i];
 				if (old_deps === null || !old_deps.includes(dependency)) {
-					if (dependency.reactions === null) {
-						dependency.reactions = [signal];
-					} else if (!dependency.reactions.includes(signal)) {
-						dependency.reactions.push(signal);
-					}
+					(dependency.reactions ??= []).push(reaction);
 				}
 			}
 		}
 
-		signal.deps = current_dependencies;
+		reaction.deps = current_dependencies;
 
 		return res;
 	} finally {
