@@ -3,7 +3,6 @@ import {
 	current_component_context,
 	current_effect,
 	current_reaction,
-	current_untracking,
 	destroy_effect_children,
 	dev_current_component_function,
 	execute_effect,
@@ -12,10 +11,10 @@ import {
 	is_flushing_effect,
 	remove_reactions,
 	schedule_effect,
+	set_current_reaction,
 	set_is_destroying_effect,
 	set_is_flushing_effect,
 	set_signal_status,
-	set_untracking,
 	untrack
 } from '../runtime.js';
 import {
@@ -45,6 +44,10 @@ import { define_property } from '../utils.js';
 export function validate_effect(rune) {
 	if (current_effect === null && current_reaction === null) {
 		e.effect_orphan(rune);
+	}
+
+	if (current_reaction !== null && (current_reaction.f & UNOWNED) !== 0) {
+		e.effect_in_unowned_derived();
 	}
 
 	if (is_destroying_effect) {
@@ -119,20 +122,15 @@ function create_effect(type, fn, sync) {
 		effect.dom === null &&
 		effect.teardown === null;
 
-	if (!inert && current_reaction !== null && !is_root) {
-		var flags = current_reaction.f;
-		if ((flags & DERIVED) !== 0) {
-			if ((flags & UNOWNED) !== 0) {
-				e.effect_in_unowned_derived();
-			}
-			// If we are inside a derived, then we also need to attach the
-			// effect to the parent effect too.
-			if (current_effect !== null) {
-				push_effect(effect, current_effect);
-			}
+	if (!inert && !is_root) {
+		if (current_effect !== null) {
+			push_effect(effect, current_effect);
 		}
 
-		push_effect(effect, current_reaction);
+		// if we're in a derived, add the effect there too
+		if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
+			push_effect(effect, current_reaction);
+		}
 	}
 
 	return effect;
@@ -143,18 +141,11 @@ function create_effect(type, fn, sync) {
  * @returns {boolean}
  */
 export function effect_tracking() {
-	if (current_untracking) {
+	if (current_reaction === null) {
 		return false;
 	}
-	if (current_reaction && (current_reaction.f & DERIVED) !== 0) {
-		return (current_reaction.f & UNOWNED) === 0;
-	}
 
-	if (current_effect) {
-		return (current_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0;
-	}
-
-	return false;
+	return (current_reaction.f & UNOWNED) === 0;
 }
 
 /**
@@ -320,14 +311,14 @@ export function execute_effect_teardown(effect) {
 	var teardown = effect.teardown;
 	if (teardown !== null) {
 		const previously_destroying_effect = is_destroying_effect;
-		const previous_untracking = current_untracking;
+		const previous_reaction = current_reaction;
 		set_is_destroying_effect(true);
-		set_untracking(true);
+		set_current_reaction(null);
 		try {
 			teardown.call(null);
 		} finally {
 			set_is_destroying_effect(previously_destroying_effect);
-			set_untracking(previous_untracking);
+			set_current_reaction(previous_reaction);
 		}
 	}
 }
