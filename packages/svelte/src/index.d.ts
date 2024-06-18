@@ -170,6 +170,7 @@ export class SvelteComponentTyped<
 /**
  * @deprecated The new `Component` type does not have a dedicated Events type. Use `ComponentProps` instead.
  *
+ * @description
  * Convenience type to get the events the given component expects. Example:
  * ```html
  * <script lang="ts">
@@ -208,6 +209,7 @@ export type ComponentProps<Comp extends SvelteComponent | Component<any>> =
 /**
  * @deprecated This type is obsolete when working with the new `Component` type.
  *
+ * @description
  * Convenience type to get the type of a Svelte component. Useful for example in combination with
  * dynamic components using `<svelte:component>`.
  *

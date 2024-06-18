@@ -9,7 +9,7 @@ import { DEV } from 'esm-env';
  */
 export function lifecycle_outside_component(name) {
 	if (DEV) {
-		const error = new Error(`${"lifecycle_outside_component"}\n${`\`${name}(...)\` can only be used during component initialisation`}`);
+		const error = new Error(`lifecycle_outside_component\n\`${name}(...)\` can only be used during component initialisation`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -25,7 +25,7 @@ export function lifecycle_outside_component(name) {
  */
 export function render_tag_invalid_argument() {
 	if (DEV) {
-		const error = new Error(`${"render_tag_invalid_argument"}\n${"The argument to `{@render ...}` must be a snippet function, not a component or some other kind of function. If you want to dynamically render one snippet or another, use `$derived` and pass its result to `{@render ...}`"}`);
+		const error = new Error(`render_tag_invalid_argument\nThe argument to \`{@render ...}\` must be a snippet function, not a component or some other kind of function. If you want to dynamically render one snippet or another, use \`$derived\` and pass its result to \`{@render ...}\``);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -41,7 +41,7 @@ export function render_tag_invalid_argument() {
  */
 export function snippet_used_as_component() {
 	if (DEV) {
-		const error = new Error(`${"snippet_used_as_component"}\n${"A snippet must be rendered with `{@render ...}`"}`);
+		const error = new Error(`snippet_used_as_component\nA snippet must be rendered with \`{@render ...}\``);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -58,7 +58,7 @@ export function snippet_used_as_component() {
  */
 export function store_invalid_shape(name) {
 	if (DEV) {
-		const error = new Error(`${"store_invalid_shape"}\n${`\`${name}\` is not a store with a \`subscribe\` method`}`);
+		const error = new Error(`store_invalid_shape\n\`${name}\` is not a store with a \`subscribe\` method`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -74,7 +74,7 @@ export function store_invalid_shape(name) {
  */
 export function svelte_element_invalid_this_value() {
 	if (DEV) {
-		const error = new Error(`${"svelte_element_invalid_this_value"}\n${"The `this` prop on `<svelte:element>` must be a string, if defined"}`);
+		const error = new Error(`svelte_element_invalid_this_value\nThe \`this\` prop on \`<svelte:element>\` must be a string, if defined`);
 
 		error.name = 'Svelte error';
 		throw error;
