@@ -402,11 +402,13 @@ export function execute_reaction_fn(reaction) {
  * @returns {void}
  */
 function remove_reaction(signal, dependency) {
-	const reactions = dependency.reactions;
-	let reactions_length = 0;
+	var reactions = dependency.reactions;
+	var reactions_length = 0;
+
 	if (reactions !== null) {
 		reactions_length = reactions.length - 1;
-		const index = reactions.indexOf(signal);
+		var index = reactions.indexOf(signal);
+
 		if (index !== -1) {
 			if (reactions_length === 0) {
 				dependency.reactions = null;
@@ -417,6 +419,7 @@ function remove_reaction(signal, dependency) {
 			}
 		}
 	}
+
 	// If the derived has no reactions, then we can disconnect it from the graph,
 	// allowing it to either reconnect in the future, or be GC'd by the VM.
 	if (reactions_length === 0 && (dependency.f & DERIVED) !== 0) {
