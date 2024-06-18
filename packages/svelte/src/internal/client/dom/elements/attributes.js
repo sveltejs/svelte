@@ -16,10 +16,10 @@ import { queue_idle_task, queue_micro_task } from '../task.js';
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
  * to remove it upon hydration to avoid a bug when someone resets the form value.
- * @param {HTMLInputElement} dom
+ * @param {HTMLInputElement} input
  * @returns {void}
  */
-export function remove_input_attr_defaults(dom) {
+export function remove_input_defaults(input) {
 	if (!hydrating) return;
 
 	var already_removed = false;
@@ -33,21 +33,21 @@ export function remove_input_attr_defaults(dom) {
 		already_removed = true;
 
 		// Remove the attributes but preserve the values
-		if (dom.hasAttribute('value')) {
-			var value = dom.value;
-			set_attribute(dom, 'value', null);
-			dom.value = value;
+		if (input.hasAttribute('value')) {
+			var value = input.value;
+			set_attribute(input, 'value', null);
+			input.value = value;
 		}
 
-		if (dom.hasAttribute('checked')) {
-			var checked = dom.checked;
-			set_attribute(dom, 'checked', null);
-			dom.checked = checked;
+		if (input.hasAttribute('checked')) {
+			var checked = input.checked;
+			set_attribute(input, 'checked', null);
+			input.checked = checked;
 		}
 	};
 
 	// @ts-expect-error
-	dom.__on_r = remove_defaults;
+	input.__on_r = remove_defaults;
 	queue_idle_task(remove_defaults);
 	add_form_reset_listener();
 }
