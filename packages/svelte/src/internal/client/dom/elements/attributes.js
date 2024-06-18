@@ -20,28 +20,32 @@ import { queue_idle_task, queue_micro_task } from '../task.js';
  * @returns {void}
  */
 export function remove_input_attr_defaults(dom) {
-	if (hydrating) {
-		let already_removed = false;
-		// We try and remove the default attributes later, rather than sync during hydration.
-		// Doing it sync during hydration has a negative impact on performance, but deferring the
-		// work in an idle task alleviates this greatly. If a form reset event comes in before
-		// the idle callback, then we ensure the input defaults are cleared just before.
-		const remove_defaults = () => {
-			if (already_removed) return;
-			already_removed = true;
-			const value_attribute = dom.getAttribute('value');
-			const value = dom.value;
-			set_attribute(dom, 'value', null);
-			set_attribute(dom, 'checked', null);
-			// We want to set the value back to the latest actual input value, rather than the attribute as
-			// this might have been changed during hydration.
-			if (value_attribute) dom.value = value;
-		};
-		// @ts-expect-error
-		dom.__on_r = remove_defaults;
-		queue_idle_task(remove_defaults);
-		add_form_reset_listener();
-	}
+	if (!hydrating) return;
+
+	var already_removed = false;
+
+	// We try and remove the default attributes later, rather than sync during hydration.
+	// Doing it sync during hydration has a negative impact on performance, but deferring the
+	// work in an idle task alleviates this greatly. If a form reset event comes in before
+	// the idle callback, then we ensure the input defaults are cleared just before.
+	var remove_defaults = () => {
+		if (already_removed) return;
+		already_removed = true;
+
+		var value_attribute = dom.getAttribute('value');
+		var value = dom.value;
+		set_attribute(dom, 'value', null);
+		set_attribute(dom, 'checked', null);
+
+		// We want to set the value back to the latest actual input value, rather than the attribute as
+		// this might have been changed during hydration.
+		if (value_attribute) dom.value = value;
+	};
+
+	// @ts-expect-error
+	dom.__on_r = remove_defaults;
+	queue_idle_task(remove_defaults);
+	add_form_reset_listener();
 }
 
 /**
