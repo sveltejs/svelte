@@ -281,18 +281,24 @@ function open(parser) {
 			parser.allow_whitespace();
 			if (parser.eat('=')) {
 				parser.allow_whitespace();
+
+				let index = parser.index;
 				let right = read_expression(parser);
+
+				parser.allow_whitespace();
+
 				// multiple assignment expression will be confused by the parser for a sequence expression
 				// so if the returned value is a sequence expression we use the first expression as the
 				// right and we reset the parser.index
-				if (right.type === 'SequenceExpression') {
+				if (right.type === 'SequenceExpression' && parser.template[index] !== '(') {
 					right = right.expressions[0];
-					parser.index = right.end ?? parser.index;
+					parser.index = /** @type {number} */ (right.end);
 				}
+
 				pattern = {
 					type: 'AssignmentPattern',
 					left: pattern,
-					right: right,
+					right,
 					start: pattern.start,
 					end: right.end
 				};
