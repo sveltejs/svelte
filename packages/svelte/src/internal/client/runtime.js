@@ -259,7 +259,7 @@ function handle_error(error, effect, component_context) {
  * @param {import('#client').Reaction} reaction
  * @returns {V}
  */
-export function update_reaction(reaction) {
+export function execute_reaction_fn(reaction) {
 	const previous_dependencies = current_dependencies;
 	const previous_untracked_writes = current_untracked_writes;
 	const previous_reaction = current_reaction;
@@ -381,7 +381,7 @@ export function destroy_effect_children(signal, remove_dom = true) {
  * @param {import('#client').Effect} effect
  * @returns {void}
  */
-export function update_effect(effect) {
+export function execute_effect(effect) {
 	var flags = effect.f;
 
 	if ((flags & DESTROYED) !== 0) {
@@ -409,7 +409,7 @@ export function update_effect(effect) {
 		}
 
 		execute_effect_teardown(effect);
-		var teardown = update_reaction(effect);
+		var teardown = execute_reaction_fn(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 
 		effect.version = increment_version();
@@ -479,12 +479,12 @@ function flush_queued_effects(effects) {
 		var effect = effects[i];
 
 		if ((effect.f & (DESTROYED | INERT)) === 0 && check_dirtiness(effect)) {
-			update_effect(effect);
+			execute_effect(effect);
 
 			// Effects with no dependencies or teardown do not get added to the effect tree.
 			// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
 			// don't know if we need to keep them until they are executed. Doing the check
-			// here (rather than in `update_effect`) allows us to skip the work for
+			// here (rather than in `execute_effect`) allows us to skip the work for
 			// immediate effects.
 			if (effect.deps === null && effect.first === null && effect.dom === null) {
 				if (effect.teardown === null) {
@@ -570,7 +570,7 @@ function process_effects(effect, collected_effects) {
 
 			if ((flags & RENDER_EFFECT) !== 0) {
 				if (!is_branch && check_dirtiness(current_effect)) {
-					update_effect(current_effect);
+					execute_effect(current_effect);
 					// Child might have been mutated since running the effect
 					child = current_effect.first;
 				}
