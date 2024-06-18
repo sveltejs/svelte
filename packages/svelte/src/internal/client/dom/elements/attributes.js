@@ -29,7 +29,6 @@ export function remove_input_attr_defaults(dom) {
 		const remove_defaults = () => {
 			if (already_removed) return;
 			already_removed = true;
-			debugger;
 			const value_attribute = dom.getAttribute('value');
 			const value = dom.value;
 			set_attribute(dom, 'value', null);
@@ -52,7 +51,6 @@ export function set_value(element, value) {
 	var attributes = (element.__attributes ??= {});
 
 	if (attributes.value === (attributes.value = value)) return;
-	debugger;
 	// @ts-expect-error
 	element.value = value;
 }
