@@ -2030,7 +2030,7 @@ export const template_visitors = {
 		}
 
 		if (needs_input_reset && node.name === 'input') {
-			context.state.init.push(b.stmt(b.call('$.remove_input_attr_defaults', context.state.node)));
+			context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
 		}
 
 		if (needs_content_reset && node.name === 'textarea') {
