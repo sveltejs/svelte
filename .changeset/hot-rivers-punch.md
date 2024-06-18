@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: improve compiler attribute validation logic
+fix: prevent misidentification of bindings as delegatable event handlers if used outside event attribute
