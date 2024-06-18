@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: ensure input value is correctly set during hydration
+fix: preserve current input values when removing defaults
