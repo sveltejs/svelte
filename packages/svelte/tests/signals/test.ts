@@ -215,7 +215,7 @@ describe('signals', () => {
 		};
 	});
 
-	test('correctly cleanup onowned nested derived values', () => {
+	test('correctly cleanup unowned nested derived values', () => {
 		return () => {
 			const nested: Derived<string>[] = [];
 
@@ -284,7 +284,7 @@ describe('signals', () => {
 		return [];
 	});
 
-	test('two effects with an unowned derived that has no depedencies', () => {
+	test('two effects with an unowned derived that has no dependencies', () => {
 		const log: Array<Array<any>> = [];
 
 		render_effect(() => {
@@ -306,7 +306,7 @@ describe('signals', () => {
 		return [$.get(some_state)];
 	});
 
-	test('two effects with an unowned derived that has some depedencies', () => {
+	test('two effects with an unowned derived that has some dependencies', () => {
 		const log: Array<Array<any>> = [];
 
 		render_effect(() => {
