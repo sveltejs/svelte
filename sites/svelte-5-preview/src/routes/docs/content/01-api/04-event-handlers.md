@@ -123,23 +123,11 @@ In Svelte 4, you can add event modifiers to handlers:
 
 Modifiers are specific to `on:` and as such do not work with modern event handlers. Adding things like `event.preventDefault()` inside the handler itself is preferable, since all the logic lives in one place rather than being split between handler and modifiers.
 
-Since event handlers are just functions, you can create your own wrappers as necessary:
+Since event handlers are just functions, you can import wrappers from svelte/events, or create own:
 
 ```svelte
 <script>
-	function once(fn) {
-		return function (event) {
-			if (fn) fn.call(this, event);
-			fn = null;
-		};
-	}
-
-	function preventDefault(fn) {
-		return function (event) {
-			event.preventDefault();
-			fn.call(this, event);
-		};
-	}
+	import { once, preventDefault } from 'svelte/events';
 </script>
 
 <button onclick={once(preventDefault(handler))}>...</button>
