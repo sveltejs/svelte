@@ -37,6 +37,16 @@ function test(text: string, fn: (runes: boolean) => any) {
 	it(`${text} (runes mode)`, run_test(true, fn));
 }
 
+test.only = (text: string, fn: (runes: boolean) => any) => {
+	it.only(`${text} (legacy mode)`, run_test(false, fn));
+	it.only(`${text} (runes mode)`, run_test(true, fn));
+};
+
+test.skip = (text: string, fn: (runes: boolean) => any) => {
+	it.skip(`${text} (legacy mode)`, run_test(false, fn));
+	it.skip(`${text} (runes mode)`, run_test(true, fn));
+};
+
 describe('signals', () => {
 	test('effect with state and derived in it', () => {
 		const log: string[] = [];
@@ -535,6 +545,31 @@ describe('signals', () => {
 
 			flushSync(() => set(c, true));
 			assert.deepEqual(branch, 'if');
+		};
+	});
+
+	test('unowned deriveds are not added as reactions', () => {
+		var count = source(0);
+
+		function create_derived() {
+			return derived(() => $.get(count) * 2);
+		}
+
+		return () => {
+			let d = create_derived();
+			assert.equal($.get(d), 0);
+			assert.equal(count.reactions, null);
+			assert.equal(d.deps?.length, 1);
+
+			set(count, 1);
+			assert.equal($.get(d), 2);
+			assert.equal(count.reactions, null);
+			assert.equal(d.deps?.length, 1);
+
+			d = create_derived();
+			assert.equal($.get(d), 2);
+			assert.equal(count.reactions, null);
+			assert.equal(d.deps?.length, 1);
 		};
 	});
 });
