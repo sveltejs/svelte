@@ -33,6 +33,8 @@ export function remove_input_attr_defaults(dom) {
 			const value = dom.value;
 			set_attribute(dom, 'value', null);
 			set_attribute(dom, 'checked', null);
+			// We want to set the value back to the latest actual input value, rather than the attribute as
+			// this might have been changed during hydration.
 			if (value_attribute) dom.value = value;
 		};
 		// @ts-expect-error
