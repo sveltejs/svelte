@@ -48,6 +48,7 @@ export type CompositionEventHandler<T extends EventTarget> = EventHandler<Compos
 export type DragEventHandler<T extends EventTarget> = EventHandler<DragEvent, T>;
 export type FocusEventHandler<T extends EventTarget> = EventHandler<FocusEvent, T>;
 export type FormEventHandler<T extends EventTarget> = EventHandler<Event, T>;
+export type InputEventHandler<T extends EventTarget> = EventHandler<InputEvent, T>;
 export type ChangeEventHandler<T extends EventTarget> = EventHandler<Event, T>;
 export type KeyboardEventHandler<T extends EventTarget> = EventHandler<KeyboardEvent, T>;
 export type MouseEventHandler<T extends EventTarget> = EventHandler<MouseEvent, T>;
@@ -110,12 +111,12 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:change'?: FormEventHandler<T> | undefined | null;
 	onchange?: FormEventHandler<T> | undefined | null;
 	onchangecapture?: FormEventHandler<T> | undefined | null;
-	'on:beforeinput'?: EventHandler<InputEvent, T> | undefined | null;
-	onbeforeinput?: EventHandler<InputEvent, T> | undefined | null;
-	onbeforeinputcapture?: EventHandler<InputEvent, T> | undefined | null;
-	'on:input'?: FormEventHandler<T> | undefined | null;
-	oninput?: FormEventHandler<T> | undefined | null;
-	oninputcapture?: FormEventHandler<T> | undefined | null;
+	'on:beforeinput'?: InputEventHandler<T> | undefined | null;
+	onbeforeinput?: InputEventHandler<T> | undefined | null;
+	onbeforeinputcapture?: InputEventHandler<T> | undefined | null;
+	'on:input'?: InputEventHandler<T> | undefined | null;
+	oninput?: InputEventHandler<T> | undefined | null;
+	oninputcapture?: InputEventHandler<T> | undefined | null;
 	'on:reset'?: FormEventHandler<T> | undefined | null;
 	onreset?: FormEventHandler<T> | undefined | null;
 	onresetcapture?: FormEventHandler<T> | undefined | null;
