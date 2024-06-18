@@ -80,10 +80,9 @@ function destroy_derived_children(signal) {
 
 /**
  * @param {import('#client').Derived} derived
- * @param {boolean} force_schedule
  * @returns {void}
  */
-export function update_derived(derived, force_schedule) {
+export function update_derived(derived) {
 	var previous_updating_derived = updating_derived;
 	updating_derived = true;
 	destroy_derived_children(derived);
@@ -100,8 +99,7 @@ export function update_derived(derived, force_schedule) {
 	if (!derived.equals(value)) {
 		derived.v = value;
 		derived.version = increment_version();
-
-		mark_reactions(derived, DIRTY, force_schedule);
+		mark_reactions(derived, DIRTY, false);
 	}
 }
 
