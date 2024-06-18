@@ -106,7 +106,7 @@ export function update_derived(derived, force_schedule) {
 		derived.v = value;
 		derived.version = increment_version();
 
-		mark_reactions(derived, DIRTY, force_schedule);
+		mark_reactions(derived, force_schedule);
 
 		if (DEV && force_schedule) {
 			for (var fn of /** @type {import('#client').DerivedDebug} */ (derived).inspect) fn();

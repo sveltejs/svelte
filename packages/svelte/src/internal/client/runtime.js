@@ -899,19 +899,25 @@ export function invalidate_inner_signals(fn) {
 
 /**
  * @param {import('#client').Value} signal
- * @param {number} to_status should be DIRTY or MAYBE_DIRTY
  * @param {boolean} force_schedule
  * @returns {void}
  */
-export function mark_reactions(signal, to_status, force_schedule) {
+export function mark_reactions(signal, force_schedule) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
 	var runes = is_runes();
-	var length = reactions.length;
+	var stack = reactions.slice();
 
-	for (var i = 0; i < length; i++) {
-		var reaction = reactions[i];
+	var n = stack.length;
+
+	while (stack.length > 0) {
+		// top-level reactions are DIRTY, others are MAYBE_DIRTY
+		var status = n < stack.length ? MAYBE_DIRTY : DIRTY;
+
+		var reaction = /** @type {import('#client').Reaction} */ (stack.pop());
+		if (stack.length < n) n = stack.length;
+
 		var flags = reaction.f;
 
 		// We skip any effects that are already dirty. Additionally, we also
@@ -921,7 +927,7 @@ export function mark_reactions(signal, to_status, force_schedule) {
 			continue;
 		}
 
-		set_signal_status(reaction, to_status);
+		set_signal_status(reaction, status);
 
 		// If the signal is not clean, then skip over it – with the exception of unowned signals that
 		// are already maybe dirty. Unowned signals might be dirty because they are not captured as part of an
@@ -931,11 +937,8 @@ export function mark_reactions(signal, to_status, force_schedule) {
 
 		if ((flags & CLEAN) !== 0 || (maybe_dirty && unowned)) {
 			if ((reaction.f & DERIVED) !== 0) {
-				mark_reactions(
-					/** @type {import('#client').Derived} */ (reaction),
-					MAYBE_DIRTY,
-					force_schedule
-				);
+				var children = /** @type {import('#client').Derived} */ (reaction).reactions;
+				if (children !== null) stack.push(...children);
 			} else {
 				schedule_effect(/** @type {import('#client').Effect} */ (reaction));
 			}
