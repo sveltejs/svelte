@@ -13,7 +13,7 @@ export default test({
 		const input = target.querySelector('input');
 
 		return {
-			vakue: input?.value
+			value: input?.value
 		};
 	}
 });
