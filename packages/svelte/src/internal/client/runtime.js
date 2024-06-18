@@ -177,7 +177,7 @@ export function check_dirtiness(reaction) {
 				var dependency = dependencies[i];
 
 				if (!is_dirty && check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
-					update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
+					update_derived(/** @type {import('#client').Derived} **/ (dependency));
 				}
 
 				var version = dependency.version;
@@ -798,7 +798,7 @@ export function get(signal) {
 		(flags & DERIVED) !== 0 &&
 		check_dirtiness(/** @type {import('#client').Derived} */ (signal))
 	) {
-		update_derived(/** @type {import('#client').Derived} **/ (signal), false);
+		update_derived(/** @type {import('#client').Derived} **/ (signal));
 	}
 
 	return signal.v;
