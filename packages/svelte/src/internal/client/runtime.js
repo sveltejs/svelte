@@ -426,27 +426,22 @@ function remove_reaction(signal, dependency) {
 		if ((dependency.f & (UNOWNED | DISCONNECTED)) === 0) {
 			dependency.f ^= DISCONNECTED;
 		}
-		remove_reactions(/** @type {import('#client').Derived} **/ (dependency), 0);
+		remove_reactions(/** @type {import('#client').Derived} **/ (dependency));
 	}
 }
 
 /**
  * @param {import('#client').Reaction} signal
- * @param {number} start_index
  * @returns {void}
  */
-export function remove_reactions(signal, start_index) {
+export function remove_reactions(signal) {
 	const dependencies = signal.deps;
-	if (dependencies !== null) {
-		const active_dependencies = start_index === 0 ? null : dependencies.slice(0, start_index);
-		let i;
-		for (i = start_index; i < dependencies.length; i++) {
-			const dependency = dependencies[i];
-			// Avoid removing a reaction if we know that it is active (start_index will not be 0)
-			if (active_dependencies === null || !active_dependencies.includes(dependency)) {
-				remove_reaction(signal, dependency);
-			}
-		}
+	if (dependencies === null) return;
+
+	for (var i = 0; i < dependencies.length; i++) {
+		const dependency = dependencies[i];
+		// Avoid removing a reaction if we know that it is active (start_index will not be 0)
+		remove_reaction(signal, dependency);
 	}
 }
 
