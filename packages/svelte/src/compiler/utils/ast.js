@@ -50,7 +50,11 @@ export function is_expression_attribute(attribute) {
  * @returns {attribute is import('#compiler').Attribute & { value: [import('#compiler').ExpressionTag] }}
  */
 export function is_event_attribute(attribute) {
-	return is_expression_attribute(attribute) && attribute.name.startsWith('on');
+	return (
+		attribute.type === 'Attribute' &&
+		is_expression_attribute(attribute) &&
+		attribute.name.startsWith('on')
+	);
 }
 
 /**
