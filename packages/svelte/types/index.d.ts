@@ -167,6 +167,7 @@ declare module 'svelte' {
 	/**
 	 * @deprecated The new `Component` type does not have a dedicated Events type. Use `ComponentProps` instead.
 	 *
+	 * @description
 	 * Convenience type to get the events the given component expects. Example:
 	 * ```html
 	 * <script lang="ts">
@@ -205,6 +206,7 @@ declare module 'svelte' {
 	/**
 	 * @deprecated This type is obsolete when working with the new `Component` type.
 	 *
+	 * @description
 	 * Convenience type to get the type of a Svelte component. Useful for example in combination with
 	 * dynamic components using `<svelte:component>`.
 	 *
@@ -2634,7 +2636,21 @@ declare module 'svelte/types/compiler/interfaces' {
 	 */
 	type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
 }declare module '*.svelte' {
-	export { SvelteComponent as default } from 'svelte';
+	// use prettier-ignore for a while because of https://github.com/sveltejs/language-tools/commit/026111228b5814a9109cc4d779d37fb02955fb8b
+	// prettier-ignore
+	import { SvelteComponent, Component, type ComponentConstructorOptions } from 'svelte'
+
+	// Support using the component as both a class and function during the transition period
+	// prettier-ignore
+	interface ComponentType {
+		(
+			...args: Parameters<Component<Record<string, any>>>
+		): ReturnType<Component<Record<string, any>, Record<string, any>>>
+		new (o: ComponentConstructorOptions): SvelteComponent
+	}
+	const Comp: ComponentType;
+	type Comp = SvelteComponent;
+	export default Comp;
 }
 
 /**
