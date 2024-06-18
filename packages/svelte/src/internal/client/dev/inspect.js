@@ -1,19 +1,6 @@
-import { DEV } from 'esm-env';
 import { snapshot } from '../proxy.js';
-import { render_effect, validate_effect } from '../reactivity/effects.js';
-import { deep_read, untrack } from '../runtime.js';
+import { inspect_effect, validate_effect } from '../reactivity/effects.js';
 import { array_prototype, get_prototype_of, object_prototype } from '../utils.js';
-
-/** @type {Function | null} */
-export let inspect_fn = null;
-
-/** @param {Function | null} fn */
-export function set_inspect_fn(fn) {
-	inspect_fn = fn;
-}
-
-/** @type {Array<import('#client').ValueDebug>} */
-export let inspect_captured_signals = [];
 
 /**
  * @param {() => any[]} get_value
@@ -25,32 +12,9 @@ export function inspect(get_value, inspector = console.log) {
 
 	let initial = true;
 
-	// we assign the function directly to signals, rather than just
-	// calling `inspector` directly inside the effect, so that
-	// we get useful stack traces
-	var fn = () => {
-		const value = untrack(() => deep_snapshot(get_value()));
-		inspector(initial ? 'init' : 'update', ...value);
-	};
-
-	render_effect(() => {
-		inspect_fn = fn;
-		deep_read(get_value());
-		inspect_fn = null;
-
-		const signals = inspect_captured_signals.slice();
-		inspect_captured_signals = [];
-
-		if (initial) {
-			fn();
-			initial = false;
-		}
-
-		return () => {
-			for (const s of signals) {
-				s.inspect.delete(fn);
-			}
-		};
+	inspect_effect(() => {
+		inspector(initial ? 'init' : 'update', ...deep_snapshot(get_value()));
+		initial = false;
 	});
 }
 

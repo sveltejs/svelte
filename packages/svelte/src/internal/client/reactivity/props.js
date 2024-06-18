@@ -10,7 +10,6 @@ import { mutable_source, set, source } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
 import { get, is_signals_recorded, untrack, update } from '../runtime.js';
 import { safe_equals } from './equality.js';
-import { inspect_fn } from '../dev/inspect.js';
 import * as e from '../errors.js';
 import { LEGACY_DERIVED_PROP } from '../constants.js';
 
@@ -308,7 +307,7 @@ export function prop(props, key, flags, fallback) {
 
 		// legacy nonsense — need to ensure the source is invalidated when necessary
 		// also needed for when handling inspect logic so we can inspect the correct source signal
-		if (is_signals_recorded || (DEV && inspect_fn)) {
+		if (is_signals_recorded) {
 			// set this so that we don't reset to the parent value if `d`
 			// is invalidated because of `invalidate_inner_signals` (rather
 			// than because the parent or child value changed)
