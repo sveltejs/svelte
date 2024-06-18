@@ -29,10 +29,12 @@ export function remove_input_attr_defaults(dom) {
 		const remove_defaults = () => {
 			if (already_removed) return;
 			already_removed = true;
-			const value = dom.getAttribute('value');
+			debugger;
+			const value_attribute = dom.getAttribute('value');
+			const value = dom.value;
 			set_attribute(dom, 'value', null);
 			set_attribute(dom, 'checked', null);
-			if (value) dom.value = value;
+			if (value_attribute) dom.value = value;
 		};
 		// @ts-expect-error
 		dom.__on_r = remove_defaults;
@@ -50,6 +52,7 @@ export function set_value(element, value) {
 	var attributes = (element.__attributes ??= {});
 
 	if (attributes.value === (attributes.value = value)) return;
+	debugger;
 	// @ts-expect-error
 	element.value = value;
 }
