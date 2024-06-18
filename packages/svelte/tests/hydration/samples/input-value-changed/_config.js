@@ -9,11 +9,8 @@ export default test({
 		name: 'browser'
 	},
 
-	snapshot(target) {
+	test(assert, target) {
 		const input = target.querySelector('input');
-
-		return {
-			value: input?.value
-		};
+		assert.equal(input?.value, 'browser');
 	}
 });

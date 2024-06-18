@@ -1,6 +1,5 @@
 <script>
-	const { browser } = $props();
-	let value = browser ? 'browser' : 'server';
+	const { name } = $props();
 </script>
 
-<input type="text" {value} />
+<input type="text" value={name} />
