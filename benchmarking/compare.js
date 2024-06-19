@@ -3,9 +3,13 @@ import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { benchmarks } from './benchmarks.js';
 
-const results = fileURLToPath(new URL('./.results', import.meta.url));
+if (execSync('git status --porcelain').toString().trim()) {
+	console.error('Working directory is not clean');
+	process.exit(1);
+}
 
-console.log(results);
+const results = fileURLToPath(new URL('./.results', import.meta.url));
+if (!fs.existsSync(results)) fs.mkdirSync(results);
 
 const [
 	a = execSync('git symbolic-ref --short -q HEAD || git rev-parse --short HEAD').toString().trim(),
@@ -30,7 +34,7 @@ async function run() {
 	const results = [];
 	for (const benchmark of benchmarks) {
 		const result = await benchmark();
-		console.log(result.name);
+		console.log(result.benchmark);
 		results.push(result);
 	}
 	return results;
@@ -46,6 +50,8 @@ async function run() {
 
 // step 2 — run the benchmark on the comparison branch (usually main)
 {
+	execSync(`git checkout ${b_hash}`);
+
 	b_results = await run();
 	console.log(b_results);
 
@@ -54,5 +60,6 @@ async function run() {
 
 // step 3 — compare the results
 {
+	execSync(`git checkout ${a_hash}`);
 	// TODO
 }
