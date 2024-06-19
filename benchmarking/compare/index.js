@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { benchmarks } from './benchmarks.js';
+import { benchmarks } from '../benchmarks.js';
 
 if (execSync('git status --porcelain').toString().trim()) {
 	console.error('Working directory is not clean');
@@ -42,7 +42,7 @@ for (const branch of branches) {
 		results.push(result);
 	}
 
-	fs.writeFileSync(`${results}/${branch}.json`, JSON.stringify(a_results, null, '  '));
+	fs.writeFileSync(`${results}/${branch}.json`, JSON.stringify(results, null, '  '));
 }
 
 // TODO compare the results
