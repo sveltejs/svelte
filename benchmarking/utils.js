@@ -1,6 +1,8 @@
 import { performance, PerformanceObserver } from 'node:perf_hooks';
 import v8 from 'v8-natives';
 
+// Credit to https://github.com/milomg/js-reactivity-benchmark for the logic for timing + GC tracking.
+
 class GarbageTrack {
 	track_id = 0;
 	observer = new PerformanceObserver((list) => this.perf_entries.push(...list.getEntries()));
