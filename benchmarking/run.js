@@ -47,12 +47,12 @@ async function run_benchmarks() {
 	}
 	$.pop();
 	// eslint-disable-next-line no-console
+	console.log(`-- Benchmarking Complete --`);
+	// eslint-disable-next-line no-console
 	console.log({
 		total_time: total_time.toFixed(2),
 		total_gc_time: total_gc_time.toFixed(2)
 	});
-	// eslint-disable-next-line no-console
-	console.log(`-- Benchmarking Complete --`);
 }
 
 run_benchmarks();
