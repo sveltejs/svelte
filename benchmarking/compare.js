@@ -50,7 +50,7 @@ async function run() {
 
 // step 2 — run the benchmark on the comparison branch (usually main)
 {
-	execSync(`git checkout ${b_hash}`);
+	execSync(`git checkout ${b}`);
 
 	b_results = await run();
 	console.log(b_results);
@@ -60,6 +60,6 @@ async function run() {
 
 // step 3 — compare the results
 {
-	execSync(`git checkout ${a_hash}`);
+	execSync(`git checkout ${a}`);
 	// TODO
 }
