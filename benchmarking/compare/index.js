@@ -65,9 +65,8 @@ const results = branches.map((branch) => {
 for (let i = 0; i < results[0].length; i += 1) {
 	console.group(`${results[0][i].benchmark}`);
 
-	// time
-	{
-		const times = results.map((result) => +result[i].time);
+	for (const metric of ['time', 'gc_time']) {
+		const times = results.map((result) => +result[i][metric]);
 		let min = Infinity;
 		let min_index = -1;
 
@@ -78,29 +77,11 @@ for (let i = 0; i < results[0].length; i += 1) {
 			}
 		}
 
-		console.log(`fastest is ${branches[min_index]}`);
+		console.group(`${metric}: fastest is ${branches[min_index]}`);
 		times.forEach((time, b) => {
 			console.log(`${branches[b]}: ${time.toFixed(2)}ms (${((time / min) * 100).toFixed(2)}%)`);
 		});
-	}
-
-	// gc_time
-	{
-		const gc_times = results.map((result) => +result[i].gc_time);
-		let min = Infinity;
-		let min_index = -1;
-
-		for (let b = 0; b < gc_times.length; b += 1) {
-			if (gc_times[b] < min) {
-				min = gc_times[b];
-				min_index = b;
-			}
-		}
-
-		console.log(`fastest is ${branches[min_index]}`);
-		gc_times.forEach((time, b) => {
-			console.log(`${branches[b]}: ${time.toFixed(2)}ms (${((time / min) * 100).toFixed(2)}%)`);
-		});
+		console.groupEnd();
 	}
 
 	console.groupEnd();
