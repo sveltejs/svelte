@@ -67,7 +67,7 @@ for (let i = 0; i < results[0].length; i += 1) {
 
 	// time
 	{
-		const times = results.map((result) => result[i].time);
+		const times = results.map((result) => +result[i].time);
 		let min = Infinity;
 		let min_index = -1;
 
@@ -86,7 +86,7 @@ for (let i = 0; i < results[0].length; i += 1) {
 
 	// gc_time
 	{
-		const gc_times = results.map((result) => result[i].gc_time);
+		const gc_times = results.map((result) => +result[i].gc_time);
 		let min = Infinity;
 		let min_index = -1;
 
