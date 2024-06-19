@@ -23,7 +23,9 @@
     "test": "vitest run",
     "test-output": "vitest run --coverage --reporter=json --outputFile=sites/svelte-5-preview/src/routes/status/results.json",
     "changeset:version": "changeset version && pnpm -r generate:version && git add --all",
-    "changeset:publish": "changeset publish"
+    "changeset:publish": "changeset publish",
+    "bench": "node --allow-natives-syntax ./benchmarking/run.js",
+    "bench:debug": "node --allow-natives-syntax --inspect-brk ./benchmarking/run.js"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
@@ -41,6 +43,7 @@
     "prettier-plugin-svelte": "^3.1.2",
     "typescript": "^5.3.3",
     "typescript-eslint": "^8.0.0-alpha.20",
+    "v8-natives": "^1.2.5",
     "vitest": "^1.2.1"
   },
   "pnpm": {

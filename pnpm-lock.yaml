@@ -16,7 +16,7 @@ importers:
         version: 2.27.1
       '@sveltejs/eslint-config':
         specifier: ^7.0.1
-        version: 7.0.1(@stylistic/eslint-plugin-js@1.8.0(eslint@9.0.0))(eslint-config-prettier@9.1.0(eslint@9.0.0))(eslint-plugin-svelte@2.38.0(eslint@9.0.0)(svelte@5.0.0-next.144))(eslint-plugin-unicorn@52.0.0(eslint@9.0.0))(eslint@9.0.0)(typescript-eslint@8.0.0-alpha.20(eslint@9.0.0)(typescript@5.3.3))(typescript@5.3.3)
+        version: 7.0.1(@stylistic/eslint-plugin-js@1.8.0(eslint@9.0.0))(eslint-config-prettier@9.1.0(eslint@9.0.0))(eslint-plugin-svelte@2.38.0(eslint@9.0.0)(svelte@5.0.0-next.158))(eslint-plugin-unicorn@52.0.0(eslint@9.0.0))(eslint@9.0.0)(typescript-eslint@8.0.0-alpha.20(eslint@9.0.0)(typescript@5.3.3))(typescript@5.3.3)
       '@svitejs/changesets-changelog-github-compact':
         specifier: ^1.1.0
         version: 1.1.0
@@ -49,13 +49,16 @@ importers:
         version: 3.2.4
       prettier-plugin-svelte:
         specifier: ^3.1.2
-        version: 3.1.2(prettier@3.2.4)(svelte@5.0.0-next.144)
+        version: 3.1.2(prettier@3.2.4)(svelte@5.0.0-next.158)
       typescript:
         specifier: ^5.3.3
         version: 5.3.3
       typescript-eslint:
         specifier: ^8.0.0-alpha.20
         version: 8.0.0-alpha.20(eslint@9.0.0)(typescript@5.3.3)
+      v8-natives:
+        specifier: ^1.2.5
+        version: 1.2.5
       vitest:
         specifier: ^1.2.1
         version: 1.2.1(@types/node@20.11.5)(jsdom@22.0.0)(lightningcss@1.23.0)(sass@1.70.0)(terser@5.27.0)
@@ -4575,8 +4578,8 @@ packages:
     resolution: {integrity: sha512-hsoB/WZGEPFXeRRLPhPrbRz67PhP6sqYgvwcAs+gWdSQSvNDw+/lTeUJSWe5h2xC97Fz/8QxAOqItwBzNJPU8w==}
     engines: {node: '>=16'}
 
-  svelte@5.0.0-next.144:
-    resolution: {integrity: sha512-akjtRBHzaLa1XdMv9tBGkXE5N2JaRc3gL+ZIctjc9Gew9DF7NxGTlxXq+HR9yUV7Lsg4o9ltMfkxz8H3K7piNQ==}
+  svelte@5.0.0-next.158:
+    resolution: {integrity: sha512-QRmXxHByWntyWqLtzjNsBbNT89F2yA7aWPp9M9l9a6/PAE3gmQh6+qoVPgrxMR7iiFgpwh5ZU9Bm25j3IhGicQ==}
     engines: {node: '>=18'}
 
   symbol-tree@3.2.4:
@@ -4828,6 +4831,10 @@ packages:
   utils-merge@1.0.1:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
+
+  v8-natives@1.2.5:
+    resolution: {integrity: sha512-CVNliz6KF2yet3HBIkbFJKZmjlt95C8dsNZDnwoS6X98+QJRpsSz9uxo3TziBqdyJQkWwfD3VG9lRzsQNvF24Q==}
+    engines: {node: '>= 0.6.0'}
 
   v8-to-istanbul@9.2.0:
     resolution: {integrity: sha512-/EH/sDgxU2eGxajKdwLCDmQ4FWq+kpi3uCmBGpw1xJtnAxEjlD8j8PEiGWpCIMIs3ciNAgH0d3TTJiUkYzyZjA==}
@@ -6453,12 +6460,12 @@ snapshots:
       - encoding
       - supports-color
 
-  '@sveltejs/eslint-config@7.0.1(@stylistic/eslint-plugin-js@1.8.0(eslint@9.0.0))(eslint-config-prettier@9.1.0(eslint@9.0.0))(eslint-plugin-svelte@2.38.0(eslint@9.0.0)(svelte@5.0.0-next.144))(eslint-plugin-unicorn@52.0.0(eslint@9.0.0))(eslint@9.0.0)(typescript-eslint@8.0.0-alpha.20(eslint@9.0.0)(typescript@5.3.3))(typescript@5.3.3)':
+  '@sveltejs/eslint-config@7.0.1(@stylistic/eslint-plugin-js@1.8.0(eslint@9.0.0))(eslint-config-prettier@9.1.0(eslint@9.0.0))(eslint-plugin-svelte@2.38.0(eslint@9.0.0)(svelte@5.0.0-next.158))(eslint-plugin-unicorn@52.0.0(eslint@9.0.0))(eslint@9.0.0)(typescript-eslint@8.0.0-alpha.20(eslint@9.0.0)(typescript@5.3.3))(typescript@5.3.3)':
     dependencies:
       '@stylistic/eslint-plugin-js': 1.8.0(eslint@9.0.0)
       eslint: 9.0.0
       eslint-config-prettier: 9.1.0(eslint@9.0.0)
-      eslint-plugin-svelte: 2.38.0(eslint@9.0.0)(svelte@5.0.0-next.144)
+      eslint-plugin-svelte: 2.38.0(eslint@9.0.0)(svelte@5.0.0-next.158)
       eslint-plugin-unicorn: 52.0.0(eslint@9.0.0)
       globals: 15.0.0
       typescript: 5.3.3
@@ -7570,7 +7577,7 @@ snapshots:
 
   eslint-plugin-lube@0.4.3: {}
 
-  eslint-plugin-svelte@2.38.0(eslint@9.0.0)(svelte@5.0.0-next.144):
+  eslint-plugin-svelte@2.38.0(eslint@9.0.0)(svelte@5.0.0-next.158):
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0(eslint@9.0.0)
       '@jridgewell/sourcemap-codec': 1.4.15
@@ -7584,9 +7591,9 @@ snapshots:
       postcss-safe-parser: 6.0.0(postcss@8.4.38)
       postcss-selector-parser: 6.0.16
       semver: 7.6.0
-      svelte-eslint-parser: 0.35.0(svelte@5.0.0-next.144)
+      svelte-eslint-parser: 0.35.0(svelte@5.0.0-next.158)
     optionalDependencies:
-      svelte: 5.0.0-next.144
+      svelte: 5.0.0-next.158
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -9094,10 +9101,10 @@ snapshots:
       prettier: 3.2.4
       svelte: 4.2.9
 
-  prettier-plugin-svelte@3.1.2(prettier@3.2.4)(svelte@5.0.0-next.144):
+  prettier-plugin-svelte@3.1.2(prettier@3.2.4)(svelte@5.0.0-next.158):
     dependencies:
       prettier: 3.2.4
-      svelte: 5.0.0-next.144
+      svelte: 5.0.0-next.158
 
   prettier@2.8.8: {}
 
@@ -9726,7 +9733,7 @@ snapshots:
       - stylus
       - sugarss
 
-  svelte-eslint-parser@0.35.0(svelte@5.0.0-next.144):
+  svelte-eslint-parser@0.35.0(svelte@5.0.0-next.158):
     dependencies:
       eslint-scope: 7.2.2
       eslint-visitor-keys: 3.4.3
@@ -9734,7 +9741,7 @@ snapshots:
       postcss: 8.4.38
       postcss-scss: 4.0.9(postcss@8.4.38)
     optionalDependencies:
-      svelte: 5.0.0-next.144
+      svelte: 5.0.0-next.158
 
   svelte-hmr@0.16.0(svelte@4.2.9):
     dependencies:
@@ -9809,7 +9816,7 @@ snapshots:
       magic-string: 0.30.5
       periscopic: 3.1.0
 
-  svelte@5.0.0-next.144:
+  svelte@5.0.0-next.158:
     dependencies:
       '@ampproject/remapping': 2.2.1
       '@jridgewell/sourcemap-codec': 1.4.15
@@ -10069,6 +10076,8 @@ snapshots:
   util-deprecate@1.0.2: {}
 
   utils-merge@1.0.1: {}
+
+  v8-natives@1.2.5: {}
 
   v8-to-istanbul@9.2.0:
     dependencies:
