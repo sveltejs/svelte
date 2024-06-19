@@ -149,9 +149,13 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 		let mismatch = false;
 
 		if (hydrating) {
+			// if the server has 0 elements it will either render an else or have 0 hydrate_nodes
 			var is_else = /** @type {Comment} */ (anchor).data === HYDRATION_END_ELSE;
+			var empty_hydrate_nodes = hydrate_nodes.length === 0;
 
-			if (is_else !== (length === 0)) {
+			// so if is an else or has 0 hydrate_nodes and the it's false that lenght is 0 we remove
+			// hydrate_nodes and set hydrating to false
+			if ((is_else || empty_hydrate_nodes) !== (length === 0)) {
 				// hydration mismatch — remove the server-rendered DOM and start over
 				remove(hydrate_nodes);
 				set_hydrating(false);
