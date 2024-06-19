@@ -14,11 +14,11 @@ import { mol_bench } from './benchmarks/mol_bench.js';
 export const benchmarks = [
 	kairo_avoidable,
 	kairo_broad,
-	kairo_deep
-	// kairo_diamond,
-	// kairo_triangle,
-	// kairo_mux,
-	// kairo_repeated,
-	// kairo_unstable,
-	// mol_bench
+	kairo_deep,
+	kairo_diamond,
+	kairo_triangle,
+	kairo_mux,
+	kairo_repeated,
+	kairo_unstable,
+	mol_bench
 ];
