@@ -34,6 +34,7 @@ if (branches.length === 1) {
 	branches.push('main');
 }
 
+// TODO run the benchmarks in a child process
 for (const branch of branches) {
 	const results = [];
 	for (const benchmark of benchmarks) {
