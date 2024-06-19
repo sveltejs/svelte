@@ -10,7 +10,7 @@ import { benchmarks } from '../benchmarks.js';
 // }
 
 const filename = fileURLToPath(import.meta.url);
-const runner = new URL('./runner.js', import.meta.url);
+const runner = path.resolve(filename, '../runner.js');
 const outdir = path.resolve(filename, '../.results');
 
 if (fs.existsSync(outdir)) fs.rmSync(outdir, { recursive: true });
