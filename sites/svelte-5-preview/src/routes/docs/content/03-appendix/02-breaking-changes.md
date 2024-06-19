@@ -142,12 +142,12 @@ As before, you can disable whitespace trimming by setting the `preserveWhitespac
 
 ## More recent browser required
 
-Svelte now use Mutation Observers instead of IFrames to measure dimensions for `bind:clientWidth/clientHeight/offsetWidth/offsetHeight`. It also no longer listens to the `change` event on range inputs. Lastly, the `legacy` option was removed (or rather, replaced with a different set of settings).
+Svelte now use Mutation Observers instead of IFrames to measure dimensions for `bind:clientWidth/clientHeight/offsetWidth/offsetHeight`. It also no longer listens to the `change` event on range inputs. Lastly, the `legacy` option can no longer be used to generate output compatible with IE 9 and 10.
 
 ## Changes to compiler options
 
 - The `false`/`true` (already deprecated previously) and the `"none"` values were removed as valid values from the `css` option
-- The `legacy` option was repurposed
+- The `legacy` option no longer controls support for legacy browsers, but now instead controls generating output with backwards compatibility for prior versions of Svelte
 - The `hydratable` option has been removed. Svelte components are always hydratable now
 - The `enableSourcemap` option has been removed. Source maps are always generated now, tooling can choose to ignore it
 - The `tag` option was removed. Use `<svelte:options customElement="tag-name" />` inside the component instead
