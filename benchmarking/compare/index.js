@@ -77,11 +77,13 @@ for (let i = 0; i < results[0].length; i += 1) {
 			}
 		}
 
-		console.group(`${metric}: fastest is ${branches[min_index]}`);
-		times.forEach((time, b) => {
-			console.log(`${branches[b]}: ${time.toFixed(2)}ms (${((time / min) * 100).toFixed(2)}%)`);
-		});
-		console.groupEnd();
+		if (min !== 0) {
+			console.group(`${metric}: fastest is ${branches[min_index]}`);
+			times.forEach((time, b) => {
+				console.log(`${branches[b]}: ${time.toFixed(2)}ms (${((time / min) * 100).toFixed(2)}%)`);
+			});
+			console.groupEnd();
+		}
 	}
 
 	console.groupEnd();
