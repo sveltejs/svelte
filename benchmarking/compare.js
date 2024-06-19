@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { benchmarks } from './benchmarks.js';
@@ -8,58 +9,40 @@ if (execSync('git status --porcelain').toString().trim()) {
 	process.exit(1);
 }
 
-const results = fileURLToPath(new URL('./.results', import.meta.url));
-if (!fs.existsSync(results)) fs.mkdirSync(results);
+const filename = fileURLToPath(import.meta.url);
+const results = path.resolve(filename, './.results');
 
-const [
-	a = execSync('git symbolic-ref --short -q HEAD || git rev-parse --short HEAD').toString().trim(),
-	b = 'main'
-] = process.argv.slice(2);
+if (fs.existsSync(results)) fs.rmSync(results, { recursive: true });
+fs.mkdirSync(results);
 
-const a_hash = execSync(`git rev-parse ${a}`).toString().trim();
-const b_hash = execSync(`git rev-parse ${b}`).toString().trim();
+const branches = [];
 
-if (a_hash === b_hash) {
-	console.log('Branches are the same');
-	process.exit(0);
+for (const arg of process.argv.slice(2)) {
+	if (arg.startsWith('--')) continue;
+	if (arg === filename) continue;
+
+	branches.push(arg);
 }
 
-/** @type {TODO[]} */
-let a_results;
+if (branches.length === 0) {
+	branches.push(
+		execSync('git symbolic-ref --short -q HEAD || git rev-parse --short HEAD').toString().trim()
+	);
+}
 
-/** @type {TODO[]} */
-let b_results;
+if (branches.length === 1) {
+	branches.push('main');
+}
 
-async function run() {
+for (const branch of branches) {
 	const results = [];
 	for (const benchmark of benchmarks) {
 		const result = await benchmark();
 		console.log(result.benchmark);
 		results.push(result);
 	}
-	return results;
+
+	fs.writeFileSync(`${results}/${branch}.json`, JSON.stringify(a_results, null, '  '));
 }
 
-// step 1 — run the benchmark on the current branch
-{
-	a_results = await run();
-	console.log(a_results);
-
-	fs.writeFileSync(`${results}/${a_hash.slice(0, 8)}.json`, JSON.stringify(a_results, null, '  '));
-}
-
-// step 2 — run the benchmark on the comparison branch (usually main)
-{
-	execSync(`git checkout ${b}`);
-
-	b_results = await run();
-	console.log(b_results);
-
-	fs.writeFileSync(`${results}/${b_hash.slice(0, 8)}.json`, JSON.stringify(b_results, null, '  '));
-}
-
-// step 3 — compare the results
-{
-	execSync(`git checkout ${a}`);
-	// TODO
-}
+// TODO compare the results
