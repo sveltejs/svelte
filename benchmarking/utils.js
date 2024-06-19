@@ -20,8 +20,8 @@ class GarbageTrack {
 	}
 
 	/**
-     * @param {number} track_id
-     */
+	 * @param {number} track_id
+	 */
 	async gcDuration(track_id) {
 		await promise_delay(10);
 
@@ -86,4 +86,13 @@ export async function fastest_test(times, fn) {
 	const fastest = results.reduce((a, b) => (a.timing.time < b.timing.time ? a : b));
 
 	return fastest;
+}
+
+/**
+ * @param {boolean} a
+ */
+export function assert(a) {
+	if (!a) {
+		throw new Error('Assertion failed');
+	}
 }
