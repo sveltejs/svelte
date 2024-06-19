@@ -886,7 +886,12 @@ function serialize_inline_component(node, component_name, context) {
 
 		if (slot_name === 'default' && !has_children_prop) {
 			push_prop(
-				b.init('children', context.state.options.dev ? b.call('$.wrap_snippet', slot_fn) : slot_fn)
+				b.init(
+					'children',
+					context.state.options.dev
+						? b.call('$.wrap_snippet', slot_fn, b.id(context.state.analysis.name))
+						: slot_fn
+				)
 			);
 			// We additionally add the default slot as a boolean, so that the slot render function on the other
 			// side knows it should get the content to render from $$props.children
@@ -2699,7 +2704,7 @@ export const template_visitors = {
 		let snippet = b.arrow(args, body);
 
 		if (context.state.options.dev) {
-			snippet = b.call('$.wrap_snippet', snippet);
+			snippet = b.call('$.wrap_snippet', snippet, b.id(context.state.analysis.name));
 		}
 
 		const declaration = b.var(node.expression, snippet);
