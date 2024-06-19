@@ -10,10 +10,10 @@ if (execSync('git status --porcelain').toString().trim()) {
 }
 
 const filename = fileURLToPath(import.meta.url);
-const results = path.resolve(filename, '../.results');
+const outdir = path.resolve(filename, '../.outdir');
 
-if (fs.existsSync(results)) fs.rmSync(results, { recursive: true });
-fs.mkdirSync(results);
+if (fs.existsSync(outdir)) fs.rmSync(outdir, { recursive: true });
+fs.mkdirSync(outdir);
 
 const branches = [];
 
@@ -42,7 +42,7 @@ for (const branch of branches) {
 		results.push(result);
 	}
 
-	fs.writeFileSync(`${results}/${branch}.json`, JSON.stringify(results, null, '  '));
+	fs.writeFileSync(`${outdir}/${branch}.json`, JSON.stringify(results, null, '  '));
 }
 
 // TODO compare the results
