@@ -70,7 +70,7 @@ export async function mol_bench() {
 	const { run, destroy } = setup();
 
 	const { timing } = await fastest_test(10, () => {
-		for (let i = 0; i < 1000; i++) {
+		for (let i = 0; i < 1e4; i++) {
 			run(i);
 		}
 	});
