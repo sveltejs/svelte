@@ -10,7 +10,7 @@ if (execSync('git status --porcelain').toString().trim()) {
 }
 
 const filename = fileURLToPath(import.meta.url);
-const outdir = path.resolve(filename, '../.outdir');
+const outdir = path.resolve(filename, '../.results');
 
 if (fs.existsSync(outdir)) fs.rmSync(outdir, { recursive: true });
 fs.mkdirSync(outdir);
