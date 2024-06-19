@@ -1,4 +1,4 @@
-import { fastest_test } from '../utils.js';
+import { assert, fastest_test } from '../utils.js';
 import * as $ from '../../packages/svelte/src/internal/client/index.js';
 
 /**
@@ -23,10 +23,14 @@ function setup() {
 	const A = $.source(0);
 	const B = $.source(0);
 	const C = $.derived(() => ($.get(A) % 2) + ($.get(B) % 2));
-	const D = $.derived(() => numbers.map((i) => ({ x: i + ($.get(A) % 2) - ($.get(B) % 2) })));
-	const E = $.derived(() => hard($.get(C) + $.get(A) + $.get(D)[0].x));
-	const F = $.derived(() => hard($.get(D)[2].x || $.get(B)));
-	const G = $.derived(() => $.get(C) + ($.get(C) || $.get(E) % 2) + $.get(D)[4].x + $.get(F));
+	const D = $.derived(() => numbers.map((i) => i + ($.get(A) % 2) - ($.get(B) % 2)));
+	D.equals = function (/** @type {number[]} */ l) {
+		var r = this.v;
+		return r !== null && l.length === r.length && l.every((v, i) => v === r[i]);
+	};
+	const E = $.derived(() => hard($.get(C) + $.get(A) + $.get(D)[0]));
+	const F = $.derived(() => hard($.get(D)[0] && $.get(B)));
+	const G = $.derived(() => $.get(C) + ($.get(C) || $.get(E) % 2) + $.get(D)[0] + $.get(F));
 
 	const destroy = $.effect_root(() => {
 		$.render_effect(() => {
@@ -55,6 +59,7 @@ function setup() {
 				$.set(A, 2 + i * 2);
 				$.set(B, 2);
 			});
+			assert(res[0] === 3198 && res[1] === 1601 && res[2] === 3195 && res[3] === 1598);
 		}
 	};
 }
