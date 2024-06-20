@@ -28,7 +28,7 @@ function setup() {
 			$.flush_sync(() => {
 				$.set(head, 1);
 			});
-			counter = 0
+			counter = 0;
 			for (let i = 0; i < 50; i++) {
 				$.flush_sync(() => {
 					$.set(head, i);
@@ -66,17 +66,16 @@ export async function kairo_broad_unowned() {
 }
 
 export async function kairo_broad_owned() {
-	// Do 10 loops to warm up JIT
-	for (let i = 0; i < 10; i++) {
-		const { run, destroy } = setup();
-		run();
-		destroy();
-	}
-
-
 	let run, destroy;
 
 	const destroy_owned = $.effect_root(() => {
+		// Do 10 loops to warm up JIT
+		for (let i = 0; i < 10; i++) {
+			const { run, destroy } = setup();
+			run();
+			destroy();
+		}
+
 		({ run, destroy } = setup());
 	});
 

@@ -8,12 +8,12 @@ function setup() {
 	let head = $.source(0);
 	let current = head;
 	for (let i = 0; i < len; i++) {
-    let c = current;
-    current = $.derived(() => {
-      return $.get(c) + 1;
-    });
-  }
-  let counter = 0;
+		let c = current;
+		current = $.derived(() => {
+			return $.get(c) + 1;
+		});
+	}
+	let counter = 0;
 
 	const destroy = $.effect_root(() => {
 		$.render_effect(() => {
@@ -28,7 +28,7 @@ function setup() {
 			$.flush_sync(() => {
 				$.set(head, 1);
 			});
-			counter = 0
+			counter = 0;
 			for (let i = 0; i < iter; i++) {
 				$.flush_sync(() => {
 					$.set(head, i);
@@ -66,16 +66,16 @@ export async function kairo_deep_unowned() {
 }
 
 export async function kairo_deep_owned() {
-	// Do 10 loops to warm up JIT
-	for (let i = 0; i < 10; i++) {
-		const { run, destroy } = setup();
-		run();
-		destroy();
-	}
-
 	let run, destroy;
 
 	const destroy_owned = $.effect_root(() => {
+		// Do 10 loops to warm up JIT
+		for (let i = 0; i < 10; i++) {
+			const { run, destroy } = setup();
+			run();
+			destroy();
+		}
+
 		({ run, destroy } = setup());
 	});
 
@@ -95,4 +95,3 @@ export async function kairo_deep_owned() {
 		gc_time: timing.gc_time.toFixed(2)
 	};
 }
-

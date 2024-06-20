@@ -4,14 +4,14 @@ import * as $ from '../../../packages/svelte/src/internal/client/index.js';
 let size = 30;
 
 function setup() {
-  let head = $.source(0);
-  let current = $.derived(() => {
-    let result = 0;
-    for (let i = 0; i < size; i++) {
-      result += $.get(head);
-    }
-    return result;
-  });
+	let head = $.source(0);
+	let current = $.derived(() => {
+		let result = 0;
+		for (let i = 0; i < size; i++) {
+			result += $.get(head);
+		}
+		return result;
+	});
 
 	let counter = 0;
 
@@ -67,16 +67,16 @@ export async function kairo_repeated_unowned() {
 }
 
 export async function kairo_repeated_owned() {
-	// Do 10 loops to warm up JIT
-	for (let i = 0; i < 10; i++) {
-		const { run, destroy } = setup();
-		run();
-		destroy();
-	}
-
 	let run, destroy;
 
 	const destroy_owned = $.effect_root(() => {
+		// Do 10 loops to warm up JIT
+		for (let i = 0; i < 10; i++) {
+			const { run, destroy } = setup();
+			run();
+			destroy();
+		}
+
 		({ run, destroy } = setup());
 	});
 

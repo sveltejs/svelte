@@ -5,17 +5,17 @@ let width = 5;
 
 function setup() {
 	let head = $.source(0);
-  let current = [];
-  for (let i = 0; i < width; i++) {
-    current.push(
-      $.derived(() => {
-        return $.get(head) + 1;
-      })
-    );
-  }
-  let sum = $.derived(() => {
-    return current.map((x) => $.get(x)).reduce((a, b) => a + b, 0);
-  });
+	let current = [];
+	for (let i = 0; i < width; i++) {
+		current.push(
+			$.derived(() => {
+				return $.get(head) + 1;
+			})
+		);
+	}
+	let sum = $.derived(() => {
+		return current.map((x) => $.get(x)).reduce((a, b) => a + b, 0);
+	});
 	let counter = 0;
 
 	const destroy = $.effect_root(() => {
@@ -70,16 +70,16 @@ export async function kairo_diamond_unowned() {
 }
 
 export async function kairo_diamond_owned() {
-	// Do 10 loops to warm up JIT
-	for (let i = 0; i < 10; i++) {
-		const { run, destroy } = setup();
-		run();
-		destroy();
-	}
-
 	let run, destroy;
 
 	const destroy_owned = $.effect_root(() => {
+		// Do 10 loops to warm up JIT
+		for (let i = 0; i < 10; i++) {
+			const { run, destroy } = setup();
+			run();
+			destroy();
+		}
+
 		({ run, destroy } = setup());
 	});
 
