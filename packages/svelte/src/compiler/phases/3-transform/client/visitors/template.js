@@ -2586,15 +2586,14 @@ export const template_visitors = {
 	},
 	AwaitBlock(node, context) {
 		context.state.template.push('<!>');
+
 		let then_block;
 		let catch_block;
 
 		if (node.then) {
-			const block_statement = /** @type {import('estree').BlockStatement} */ (
-				context.visit(node.then)
-			);
 			/** @type {import('estree').Pattern[]} */
 			const args = [b.id('$$anchor')];
+			const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.then));
 
 			if (node.value) {
 				const argument = create_derived_block_argument(node.value, context);
@@ -2602,18 +2601,17 @@ export const template_visitors = {
 				args.push(argument.id);
 
 				if (argument.declarations !== null) {
-					block_statement.body.unshift(...argument.declarations);
+					block.body.unshift(...argument.declarations);
 				}
 			}
-			then_block = b.arrow(args, block_statement);
+
+			then_block = b.arrow(args, block);
 		}
 
 		if (node.catch) {
-			const block_statement = /** @type {import('estree').BlockStatement} */ (
-				context.visit(node.catch)
-			);
 			/** @type {import('estree').Pattern[]} */
 			const args = [b.id('$$anchor')];
+			const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.catch));
 
 			if (node.error) {
 				const argument = create_derived_block_argument(node.error, context);
@@ -2621,10 +2619,11 @@ export const template_visitors = {
 				args.push(argument.id);
 
 				if (argument.declarations !== null) {
-					block_statement.body.unshift(...argument.declarations);
+					block.body.unshift(...argument.declarations);
 				}
 			}
-			catch_block = b.arrow(args, block_statement);
+
+			catch_block = b.arrow(args, block);
 		}
 
 		context.state.init.push(
