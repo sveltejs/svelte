@@ -95,27 +95,30 @@ export let on_destroy = [];
 /**
  * Only available on the server and when compiling with the `server` option.
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
- * @template {Record<string, any>} Props
- * @param {import('svelte').Component<Props> | import('svelte').ComponentType<import('svelte').SvelteComponent<Props>>} component
- * @param {{ props: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }} options
+ * @template {import('svelte').Component | import('svelte').ComponentType<import('svelte').SvelteComponent<any>>} Component
+ * @template {import("svelte").ComponentProps<import('../types.js').ComponentOrSvelteComponent<Component>>} [Props=import("svelte").ComponentProps<import('../types.js').ComponentOrSvelteComponent<Component>>]
+ *
+ * @param {Component} component
+ * @param {import('../types.js').AllOptionalProps<NoInfer<Props>> extends true ? [{ props: Omit<NoInfer<Props>, '$$slots' | '$$events'>; context?: Map<any, any> }] | [] : [{ props: Omit<NoInfer<Props>, '$$slots' | '$$events'>; context?: Map<any, any> }]} options
  * @returns {import('#server').RenderOutput}
  */
-export function render(component, options) {
+export function render(component, ...options) {
+	const option = options[0];
 	const payload = create_payload();
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
 	payload.out += BLOCK_OPEN;
 
-	if (options.context) {
+	if (option?.context) {
 		push();
-		/** @type {import('#server').Component} */ (current_component).c = options.context;
+		/** @type {import('#server').Component} */ (current_component).c = option.context;
 	}
 
 	// @ts-expect-error
 	component(payload, options.props, {}, {});
 
-	if (options.context) {
+	if (option?.context) {
 		pop();
 	}
 

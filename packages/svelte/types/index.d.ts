@@ -2110,14 +2110,18 @@ declare module 'svelte/reactivity' {
 }
 
 declare module 'svelte/server' {
+	import type { Component as Component_1, ComponentType, SvelteComponent } from 'svelte';
 	/**
 	 * Only available on the server and when compiling with the `server` option.
 	 * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
 	 * */
-	export function render<Props extends Record<string, any>>(component: import("svelte").Component<Props, any, string> | import("svelte").ComponentType<import("svelte").SvelteComponent<Props, any, any>>, options: {
-		props: Omit<Props, "$$slots" | "$$events">;
+	export function render<Component extends import("svelte").ComponentType<import("svelte").SvelteComponent<any, any, any>> | import("svelte").Component<any, any, string>, Props extends import("svelte").ComponentProps<ComponentOrSvelteComponent<Component>> = import("svelte").ComponentProps<ComponentOrSvelteComponent<Component>>>(component: Component, ...options: AllOptionalProps<NoInfer<Props>> extends true ? [] | [{
+		props: Omit<NoInfer<Props>, "$$slots" | "$$events">;
 		context?: Map<any, any> | undefined;
-	}): RenderOutput;
+	}] : [{
+		props: Omit<NoInfer<Props>, "$$slots" | "$$events">;
+		context?: Map<any, any> | undefined;
+	}]): RenderOutput;
 	interface RenderOutput {
 		/** HTML that goes into the `<head>` */
 		head: string;
@@ -2126,6 +2130,29 @@ declare module 'svelte/server' {
 		/** HTML that goes somewhere into the `<body>` */
 		body: string;
 	}
+	type RemoveRequired<T> = {
+		[K in keyof T]-?: T[K];
+	};
+
+	type MapRequired<T, Plain = RemoveRequired<T>> = {
+		[K in keyof T]-?: K extends keyof Plain ? ([T[K]] extends [Plain[K]] ? true : false) : false;
+	};
+
+	type IsEmpty<T> = [{}] extends [T] ? true : false;
+
+	/**
+	 * Check if a component has all optional props
+	 */
+	type AllOptionalProps<TProps> =
+		MapRequired<TProps> extends Record<keyof TProps, false>
+			? true
+			: IsEmpty<TProps> extends true
+				? true
+				: false;
+
+	type ComponentOrSvelteComponent<
+		TComponent extends Component_1 | ComponentType<SvelteComponent>
+	> = TComponent extends ComponentType<infer SvelteComponent> ? SvelteComponent : TComponent;
 }
 
 declare module 'svelte/store' {

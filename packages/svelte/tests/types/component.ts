@@ -157,6 +157,26 @@ render(NewComponent, {
 	}
 });
 
+render(NewComponent, {
+	// @ts-expect-error
+	props: {}
+});
+
+// @ts-expect-error
+render(NewComponent);
+
+class AllOptionalNewComponent extends SvelteComponent<
+	{ prop?: string },
+	{ event: MouseEvent },
+	{ slot: { slotProps: boolean } }
+> {
+	anExport: string = '';
+}
+
+render(AllOptionalNewComponent);
+
+render(AllOptionalNewComponent, { props: { prop: '' } });
+
 // --------------------------------------------------------------------------- interop
 
 const AsLegacyComponent = asClassComponent(newComponent);
@@ -281,6 +301,30 @@ render(functionComponent, {
 		x: ''
 	}
 });
+
+render(functionComponent, {
+	// @ts-expect-error
+	props: {
+		binding: true
+	}
+});
+
+// @ts-expect-error
+render(functionComponent);
+
+const allOptionalFunctionComponent: Component<
+	{ binding?: boolean; readonly?: string },
+	{ foo: 'bar' },
+	'binding'
+> = (a, props) => {
+	return {
+		foo: 'bar'
+	};
+};
+
+render(allOptionalFunctionComponent);
+
+render(allOptionalFunctionComponent, { props: { binding: true } });
 
 // --------------------------------------------------------------------------- *.svelte components
 
