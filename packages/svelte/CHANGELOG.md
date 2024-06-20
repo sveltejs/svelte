@@ -1,5 +1,75 @@
 # svelte
 
+## 5.0.0-next.160
+
+### Patch Changes
+
+- chore: improve runtime performance of capturing reactive signals ([#12093](https://github.com/sveltejs/svelte/pull/12093))
+
+## 5.0.0-next.159
+
+### Patch Changes
+
+- fix: ensure element size bindings don't unsubscribe multiple times from the resize observer ([#12091](https://github.com/sveltejs/svelte/pull/12091))
+
+- fix: prevent misidentification of bindings as delegatable event handlers if used outside event attribute ([#12081](https://github.com/sveltejs/svelte/pull/12081))
+
+- fix: preserve current input values when removing defaults ([#12083](https://github.com/sveltejs/svelte/pull/12083))
+
+- fix: preserve component function context for nested components ([#12089](https://github.com/sveltejs/svelte/pull/12089))
+
+## 5.0.0-next.158
+
+### Patch Changes
+
+- fix: adjust module declaration to work around language tools bug ([#12071](https://github.com/sveltejs/svelte/pull/12071))
+
+## 5.0.0-next.157
+
+### Patch Changes
+
+- fix: handle `is` attribute on elements with spread ([#12056](https://github.com/sveltejs/svelte/pull/12056))
+
+- fix: correctly process empty lines in messages ([#12057](https://github.com/sveltejs/svelte/pull/12057))
+
+- fix: rewrite state_unsafe_mutation message ([#12059](https://github.com/sveltejs/svelte/pull/12059))
+
+- fix: support function invocation from imported `*.svelte` components ([#12061](https://github.com/sveltejs/svelte/pull/12061))
+
+- fix: better types for `on` ([#12053](https://github.com/sveltejs/svelte/pull/12053))
+
+## 5.0.0-next.156
+
+### Patch Changes
+
+- fix: increment derived versions when updating ([#12047](https://github.com/sveltejs/svelte/pull/12047))
+
+## 5.0.0-next.155
+
+### Patch Changes
+
+- fix: robustify migration script ([#12019](https://github.com/sveltejs/svelte/pull/12019))
+
+- fix: relax constraint for `ComponentProps` ([#12026](https://github.com/sveltejs/svelte/pull/12026))
+
+- fix: address event delegation duplication behaviour ([#12014](https://github.com/sveltejs/svelte/pull/12014))
+
+- chore: remove `createRoot` references ([#12018](https://github.com/sveltejs/svelte/pull/12018))
+
+- chore: clear `Map`/`Set` before triggering `$inspect` callbacks ([#12013](https://github.com/sveltejs/svelte/pull/12013))
+
+- breaking: rename `$effect.active` to `$effect.tracking` ([#12022](https://github.com/sveltejs/svelte/pull/12022))
+
+## 5.0.0-next.154
+
+### Patch Changes
+
+- fix: ensure bound input content is resumed on hydration ([#11986](https://github.com/sveltejs/svelte/pull/11986))
+
+- fix: better `render` type ([#11997](https://github.com/sveltejs/svelte/pull/11997))
+
+- fix: SSR template escaping ([#12007](https://github.com/sveltejs/svelte/pull/12007))
+
 ## 5.0.0-next.153
 
 ### Patch Changes

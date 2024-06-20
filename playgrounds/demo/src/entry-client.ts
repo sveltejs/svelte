@@ -9,3 +9,4 @@ const component = render(App, {
 });
 // @ts-ignore
 window.unmount = () => unmount(component);
+

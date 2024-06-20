@@ -1,5 +1,19 @@
 declare module '*.svelte' {
-	export { SvelteComponent as default } from 'svelte';
+	// use prettier-ignore for a while because of https://github.com/sveltejs/language-tools/commit/026111228b5814a9109cc4d779d37fb02955fb8b
+	// prettier-ignore
+	import { SvelteComponent, Component, type ComponentConstructorOptions } from 'svelte'
+
+	// Support using the component as both a class and function during the transition period
+	// prettier-ignore
+	interface ComponentType {
+		(
+			...args: Parameters<Component<Record<string, any>>>
+		): ReturnType<Component<Record<string, any>, Record<string, any>>>
+		new (o: ComponentConstructorOptions): SvelteComponent
+	}
+	const Comp: ComponentType;
+	type Comp = SvelteComponent;
+	export default Comp;
 }
 
 /**
@@ -201,26 +215,26 @@ declare namespace $effect {
 	export function pre(fn: () => void | (() => void)): void;
 
 	/**
-	 * The `$effect.active` rune is an advanced feature that tells you whether or not the code is running inside an effect or inside your template.
+	 * The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template.
 	 *
 	 * Example:
 	 * ```svelte
 	 * <script>
-	 *   console.log('in component setup:', $effect.active()); // false
+	 *   console.log('in component setup:', $effect.tracking()); // false
 	 *
 	 *   $effect(() => {
-	 *     console.log('in effect:', $effect.active()); // true
+	 *     console.log('in effect:', $effect.tracking()); // true
 	 *   });
 	 * </script>
 	 *
-	 * <p>in template: {$effect.active()}</p> <!-- true -->
+	 * <p>in template: {$effect.tracking()}</p> <!-- true -->
 	 * ```
 	 *
 	 * This allows you to (for example) add things like subscriptions without causing memory leaks, by putting them in child effects.
 	 *
-	 * https://svelte-5-preview.vercel.app/docs/runes#$effect-active
+	 * https://svelte-5-preview.vercel.app/docs/runes#$effect-tracking
 	 */
-	export function active(): boolean;
+	export function tracking(): boolean;
 
 	/**
 	 * The `$effect.root` rune is an advanced feature that creates a non-tracked scope that doesn't auto-cleanup. This is useful for

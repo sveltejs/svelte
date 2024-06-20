@@ -279,6 +279,15 @@ function serialize_element_spread_attributes(
 			const [, value] = serialize_attribute_value(attribute.value, context);
 
 			if (
+				name === 'is' &&
+				value.type === 'Literal' &&
+				context.state.metadata.namespace === 'html'
+			) {
+				context.state.template.push(` is="${escape_html(value.value, true)}"`);
+				continue;
+			}
+
+			if (
 				is_event_attribute(attribute) &&
 				(attribute.value[0].expression.type === 'ArrowFunctionExpression' ||
 					attribute.value[0].expression.type === 'FunctionExpression')
@@ -789,7 +798,9 @@ function serialize_inline_component(node, component_name, context) {
 				const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
 				push_prop(
 					b.set(attribute.name, [
-						b.stmt(serialize_set_binding(assignment, context, () => context.visit(assignment)))
+						b.stmt(
+							serialize_set_binding(assignment, context, () => context.visit(assignment), false)
+						)
 					])
 				);
 			}
@@ -877,7 +888,12 @@ function serialize_inline_component(node, component_name, context) {
 
 		if (slot_name === 'default' && !has_children_prop) {
 			push_prop(
-				b.init('children', context.state.options.dev ? b.call('$.wrap_snippet', slot_fn) : slot_fn)
+				b.init(
+					'children',
+					context.state.options.dev
+						? b.call('$.wrap_snippet', slot_fn, b.id(context.state.analysis.name))
+						: slot_fn
+				)
 			);
 			// We additionally add the default slot as a boolean, so that the slot render function on the other
 			// side knows it should get the content to render from $$props.children
@@ -1012,7 +1028,7 @@ function serialize_bind_this(bind_this, context, node) {
 	const bind_this_id = /** @type {import('estree').Expression} */ (context.visit(bind_this));
 	const ids = Array.from(each_ids.values()).map((id) => b.id('$$value_' + id[0]));
 	const assignment = b.assignment('=', bind_this, b.id('$$value'));
-	const update = serialize_set_binding(assignment, context, () => context.visit(assignment));
+	const update = serialize_set_binding(assignment, context, () => context.visit(assignment), false);
 
 	for (const [binding, [, , expression]] of each_ids) {
 		// reset expressions to what they were before
@@ -2021,7 +2037,7 @@ export const template_visitors = {
 		}
 
 		if (needs_input_reset && node.name === 'input') {
-			context.state.init.push(b.stmt(b.call('$.remove_input_attr_defaults', context.state.node)));
+			context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
 		}
 
 		if (needs_content_reset && node.name === 'textarea') {
@@ -2386,7 +2402,7 @@ export const template_visitors = {
 				if (assignment.left.type !== 'Identifier' && assignment.left.type !== 'MemberExpression') {
 					// serialize_set_binding turns other patterns into IIFEs and separates the assignments
 					// into separate expressions, at which point this is called again with an identifier or member expression
-					return serialize_set_binding(assignment, context, () => assignment);
+					return serialize_set_binding(assignment, context, () => assignment, false);
 				}
 				const left = object(assignment.left);
 				const value = get_assignment_value(assignment, context);
@@ -2424,7 +2440,7 @@ export const template_visitors = {
 				: b.id(node.index);
 		const item = each_node_meta.item;
 		const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(item.name));
-		binding.expression = (id) => {
+		binding.expression = (/** @type {import("estree").Identifier} */ id) => {
 			const item_with_loc = with_loc(item, id);
 			return b.call('$.unwrap', item_with_loc);
 		};
@@ -2738,7 +2754,7 @@ export const template_visitors = {
 		let snippet = b.arrow(args, body);
 
 		if (context.state.options.dev) {
-			snippet = b.call('$.wrap_snippet', snippet);
+			snippet = b.call('$.wrap_snippet', snippet, b.id(context.state.analysis.name));
 		}
 
 		const declaration = b.var(node.expression, snippet);
@@ -2796,6 +2812,7 @@ export const template_visitors = {
 				assignment,
 				context,
 				() => /** @type {import('estree').Expression} */ (visit(assignment)),
+				false,
 				{
 					skip_proxy_and_freeze: true
 				}

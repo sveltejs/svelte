@@ -1,11 +1,5 @@
 import { DEV } from 'esm-env';
-import {
-	get,
-	batch_inspect,
-	current_component_context,
-	untrack,
-	current_effect
-} from './runtime.js';
+import { get, current_component_context, untrack, current_effect } from './runtime.js';
 import {
 	array_prototype,
 	define_property,
@@ -230,11 +224,6 @@ const state_proxy_handler = {
 			return value === UNINITIALIZED ? undefined : value;
 		}
 
-		if (DEV) {
-			if (typeof target[prop] === 'function' && prop !== Symbol.iterator) {
-				return batch_inspect(target, prop, receiver);
-			}
-		}
 		return Reflect.get(target, prop, receiver);
 	},
 

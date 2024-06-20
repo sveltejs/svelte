@@ -8,7 +8,7 @@ import { DEV } from 'esm-env';
  */
 export function bind_invalid_checkbox_value() {
 	if (DEV) {
-		const error = new Error(`${"bind_invalid_checkbox_value"}\n${"Using `bind:value` together with a checkbox input is not allowed. Use `bind:checked` instead"}`);
+		const error = new Error(`bind_invalid_checkbox_value\nUsing \`bind:value\` together with a checkbox input is not allowed. Use \`bind:checked\` instead`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -27,7 +27,7 @@ export function bind_invalid_checkbox_value() {
  */
 export function bind_invalid_export(component, key, name) {
 	if (DEV) {
-		const error = new Error(`${"bind_invalid_export"}\n${`Component ${component} has an export named \`${key}\` that a consumer component is trying to access using \`bind:${key}\`, which is disallowed. Instead, use \`bind:this\` (e.g. \`<${name} bind:this={component} />\`) and then access the property on the bound component instance (e.g. \`component.${key}\`)`}`);
+		const error = new Error(`bind_invalid_export\nComponent ${component} has an export named \`${key}\` that a consumer component is trying to access using \`bind:${key}\`, which is disallowed. Instead, use \`bind:this\` (e.g. \`<${name} bind:this={component} />\`) and then access the property on the bound component instance (e.g. \`component.${key}\`)`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -46,7 +46,7 @@ export function bind_invalid_export(component, key, name) {
  */
 export function bind_not_bindable(key, component, name) {
 	if (DEV) {
-		const error = new Error(`${"bind_not_bindable"}\n${`A component is attempting to bind to a non-bindable property \`${key}\` belonging to ${component} (i.e. \`<${name} bind:${key}={...}>\`). To mark a property as bindable: \`let { ${key} = $bindable() } = $props()\``}`);
+		const error = new Error(`bind_not_bindable\nA component is attempting to bind to a non-bindable property \`${key}\` belonging to ${component} (i.e. \`<${name} bind:${key}={...}>\`). To mark a property as bindable: \`let { ${key} = $bindable() } = $props()\``);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -65,7 +65,7 @@ export function bind_not_bindable(key, component, name) {
  */
 export function component_api_changed(parent, method, component) {
 	if (DEV) {
-		const error = new Error(`${"component_api_changed"}\n${`${parent} called \`${method}\` on an instance of ${component}, which is no longer valid in Svelte 5. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information`}`);
+		const error = new Error(`component_api_changed\n${parent} called \`${method}\` on an instance of ${component}, which is no longer valid in Svelte 5. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -83,7 +83,7 @@ export function component_api_changed(parent, method, component) {
  */
 export function component_api_invalid_new(component, name) {
 	if (DEV) {
-		const error = new Error(`${"component_api_invalid_new"}\n${`Attempted to instantiate ${component} with \`new ${name}\`, which is no longer valid in Svelte 5. If this component is not under your control, set the \`legacy.componentApi\` compiler option to keep it working. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information`}`);
+		const error = new Error(`component_api_invalid_new\nAttempted to instantiate ${component} with \`new ${name}\`, which is no longer valid in Svelte 5. If this component is not under your control, set the \`legacy.componentApi\` compiler option to keep it working. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -102,7 +102,7 @@ export function component_api_invalid_new(component, name) {
  */
 export function each_key_duplicate(a, b, value) {
 	if (DEV) {
-		const error = new Error(`${"each_key_duplicate"}\n${value ? `Keyed each block has duplicate key \`${value}\` at indexes ${a} and ${b}` : `Keyed each block has duplicate key at indexes ${a} and ${b}`}`);
+		const error = new Error(`each_key_duplicate\n${value ? `Keyed each block has duplicate key \`${value}\` at indexes ${a} and ${b}` : `Keyed each block has duplicate key at indexes ${a} and ${b}`}`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -119,7 +119,7 @@ export function each_key_duplicate(a, b, value) {
  */
 export function effect_in_teardown(rune) {
 	if (DEV) {
-		const error = new Error(`${"effect_in_teardown"}\n${`\`${rune}\` cannot be used inside an effect cleanup function`}`);
+		const error = new Error(`effect_in_teardown\n\`${rune}\` cannot be used inside an effect cleanup function`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -135,7 +135,7 @@ export function effect_in_teardown(rune) {
  */
 export function effect_in_unowned_derived() {
 	if (DEV) {
-		const error = new Error(`${"effect_in_unowned_derived"}\n${"Effect cannot be created inside a `$derived` value that was not itself created inside an effect"}`);
+		const error = new Error(`effect_in_unowned_derived\nEffect cannot be created inside a \`$derived\` value that was not itself created inside an effect`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -152,7 +152,7 @@ export function effect_in_unowned_derived() {
  */
 export function effect_orphan(rune) {
 	if (DEV) {
-		const error = new Error(`${"effect_orphan"}\n${`\`${rune}\` can only be used inside an effect (e.g. during component initialisation)`}`);
+		const error = new Error(`effect_orphan\n\`${rune}\` can only be used inside an effect (e.g. during component initialisation)`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -168,7 +168,7 @@ export function effect_orphan(rune) {
  */
 export function effect_update_depth_exceeded() {
 	if (DEV) {
-		const error = new Error(`${"effect_update_depth_exceeded"}\n${"Maximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops"}`);
+		const error = new Error(`effect_update_depth_exceeded\nMaximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -184,7 +184,7 @@ export function effect_update_depth_exceeded() {
  */
 export function hydration_failed() {
 	if (DEV) {
-		const error = new Error(`${"hydration_failed"}\n${"Failed to hydrate the application"}`);
+		const error = new Error(`hydration_failed\nFailed to hydrate the application`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -201,7 +201,7 @@ export function hydration_failed() {
  */
 export function lifecycle_legacy_only(name) {
 	if (DEV) {
-		const error = new Error(`${"lifecycle_legacy_only"}\n${`\`${name}(...)\` cannot be used in runes mode`}`);
+		const error = new Error(`lifecycle_legacy_only\n\`${name}(...)\` cannot be used in runes mode`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -218,7 +218,7 @@ export function lifecycle_legacy_only(name) {
  */
 export function props_invalid_value(key) {
 	if (DEV) {
-		const error = new Error(`${"props_invalid_value"}\n${`Cannot do \`bind:${key}={undefined}\` when \`${key}\` has a fallback value`}`);
+		const error = new Error(`props_invalid_value\nCannot do \`bind:${key}={undefined}\` when \`${key}\` has a fallback value`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -235,7 +235,7 @@ export function props_invalid_value(key) {
  */
 export function props_rest_readonly(property) {
 	if (DEV) {
-		const error = new Error(`${"props_rest_readonly"}\n${`Rest element properties of \`$props()\` such as \`${property}\` are readonly`}`);
+		const error = new Error(`props_rest_readonly\nRest element properties of \`$props()\` such as \`${property}\` are readonly`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -252,7 +252,7 @@ export function props_rest_readonly(property) {
  */
 export function rune_outside_svelte(rune) {
 	if (DEV) {
-		const error = new Error(`${"rune_outside_svelte"}\n${`The \`${rune}\` rune is only available inside \`.svelte\` and \`.svelte.js/ts\` files`}`);
+		const error = new Error(`rune_outside_svelte\nThe \`${rune}\` rune is only available inside \`.svelte\` and \`.svelte.js/ts\` files`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -268,7 +268,7 @@ export function rune_outside_svelte(rune) {
  */
 export function state_prototype_fixed() {
 	if (DEV) {
-		const error = new Error(`${"state_prototype_fixed"}\n${"Cannot set prototype of `$state` object"}`);
+		const error = new Error(`state_prototype_fixed\nCannot set prototype of \`$state\` object`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -279,14 +279,12 @@ export function state_prototype_fixed() {
 }
 
 /**
- * Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. This can lead to unexpected errors and possibly cause infinite loops.
- * >
- * If the object is not meant to be reactive, declare it without `$state`
+ * Updating state inside a derived is forbidden. If the value should not be reactive, declare it without `$state`
  * @returns {never}
  */
 export function state_unsafe_mutation() {
 	if (DEV) {
-		const error = new Error(`${"state_unsafe_mutation"}\n${"Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. This can lead to unexpected errors and possibly cause infinite loops.\n>\nIf the object is not meant to be reactive, declare it without `$state`"}`);
+		const error = new Error(`state_unsafe_mutation\nUpdating state inside a derived is forbidden. If the value should not be reactive, declare it without \`$state\``);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -302,7 +300,7 @@ export function state_unsafe_mutation() {
  */
 export function svelte_component_invalid_this_value() {
 	if (DEV) {
-		const error = new Error(`${"svelte_component_invalid_this_value"}\n${"The `this={...}` property of a `<svelte:component>` must be a Svelte component, if defined"}`);
+		const error = new Error(`svelte_component_invalid_this_value\nThe \`this={...}\` property of a \`<svelte:component>\` must be a Svelte component, if defined`);
 
 		error.name = 'Svelte error';
 		throw error;

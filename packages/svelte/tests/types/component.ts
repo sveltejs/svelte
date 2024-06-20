@@ -8,6 +8,7 @@ import {
 	hydrate,
 	type Component
 } from 'svelte';
+import { render } from 'svelte/server';
 
 SvelteComponent.element === HTMLElement;
 
@@ -148,6 +149,14 @@ hydrate(NewComponent, {
 	recover: false
 });
 
+render(NewComponent, {
+	props: {
+		prop: 'foo',
+		// @ts-expect-error
+		x: ''
+	}
+});
+
 // --------------------------------------------------------------------------- interop
 
 const AsLegacyComponent = asClassComponent(newComponent);
@@ -222,6 +231,13 @@ functionComponentInstance.foo === 'bar';
 // @ts-expect-error
 functionComponentInstance.foo = 'foo';
 
+const functionComponentProps: ComponentProps<typeof functionComponent> = {
+	binding: true,
+	readonly: 'foo',
+	// @ts-expect-error
+	prop: 1
+};
+
 mount(functionComponent, {
 	target: null as any as Document | Element | ShadowRoot,
 	props: {
@@ -256,3 +272,22 @@ hydrate(functionComponent, {
 		binding: true
 	}
 });
+
+render(functionComponent, {
+	props: {
+		binding: true,
+		readonly: 'foo',
+		// @ts-expect-error
+		x: ''
+	}
+});
+
+// --------------------------------------------------------------------------- *.svelte components
+
+// import from a nonexistent file to trigger the declare module '*.svelte' in ambient.d.ts
+// this could show an error in the future in the editor (because language tools intercepts and knows this is an error)
+// but should always pass in tsc (because it will never know about this fact)
+import Foo from './doesntexist.svelte';
+
+Foo(null, { a: true });
+const f: Foo = new Foo({ target: document.body, props: { a: true } });

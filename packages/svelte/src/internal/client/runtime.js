@@ -29,13 +29,13 @@ import {
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	STATE_FROZEN_SYMBOL
+	STATE_FROZEN_SYMBOL,
+	INSPECT_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { mutate, set, source } from './reactivity/sources.js';
 import { update_derived } from './reactivity/deriveds.js';
-import { inspect_captured_signals, inspect_fn, set_inspect_fn } from './dev/inspect.js';
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 
@@ -63,14 +63,7 @@ export function set_is_destroying_effect(value) {
 	is_destroying_effect = value;
 }
 
-/** @param {boolean} value */
-export function set_untracking(value) {
-	current_untracking = value;
-}
-
-// Used for $inspect
-export let is_batching_effect = false;
-let is_inspecting_signal = false;
+export let inspect_effects = new Set();
 
 // Handle effect queues
 
@@ -111,16 +104,8 @@ export function set_current_untracked_writes(value) {
 	current_untracked_writes = value;
 }
 
-/** @type {null | import('#client').ValueDebug} */
-export let last_inspected_signal = null;
-
-/** @param {null | import('#client').ValueDebug} signal */
-export function set_last_inspected_signal(signal) {
-	last_inspected_signal = signal;
-}
-
-/** If `true`, `get`ting the signal should not register it as a dependency */
-export let current_untracking = false;
+/** @type {number} Used by sources and deriveds for handling updates to unowned deriveds */
+let current_version = 0;
 
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the reaction.
@@ -155,41 +140,13 @@ export function set_dev_current_component_function(fn) {
 	dev_current_component_function = fn;
 }
 
+export function increment_version() {
+	return current_version++;
+}
+
 /** @returns {boolean} */
 export function is_runes() {
 	return current_component_context !== null && current_component_context.l === null;
-}
-
-/**
- * @param {import('#client').ProxyStateObject} target
- * @param {string | symbol} prop
- * @param {any} receiver
- */
-export function batch_inspect(target, prop, receiver) {
-	const value = Reflect.get(target, prop, receiver);
-	/**
-	 * @this {any}
-	 */
-	return function () {
-		const previously_batching_effect = is_batching_effect;
-		is_batching_effect = true;
-		try {
-			return Reflect.apply(value, this, arguments);
-		} finally {
-			is_batching_effect = previously_batching_effect;
-			if (last_inspected_signal !== null && !is_inspecting_signal) {
-				is_inspecting_signal = true;
-				try {
-					for (const fn of last_inspected_signal.inspect) {
-						fn();
-					}
-				} finally {
-					is_inspecting_signal = false;
-				}
-				last_inspected_signal = null;
-			}
-		}
-	};
 }
 
 /**
@@ -201,30 +158,28 @@ export function batch_inspect(target, prop, receiver) {
 export function check_dirtiness(reaction) {
 	var flags = reaction.f;
 	var is_dirty = (flags & DIRTY) !== 0;
-	var is_unowned = (flags & UNOWNED) !== 0;
 
-	// If we are unowned, we still need to ensure that we update our version to that
-	// of our dependencies.
-	if (is_dirty && !is_unowned) {
+	if (is_dirty) {
 		return true;
 	}
 
+	var is_unowned = (flags & UNOWNED) !== 0;
 	var is_disconnected = (flags & DISCONNECTED) !== 0;
 
-	if ((flags & MAYBE_DIRTY) !== 0 || (is_dirty && is_unowned)) {
+	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
 
 		if (dependencies !== null) {
 			var length = dependencies.length;
-			var is_equal;
 			var reactions;
 
 			for (var i = 0; i < length; i++) {
 				var dependency = dependencies[i];
 
 				if (!is_dirty && check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
-					is_equal = update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
+					update_derived(/** @type {import('#client').Derived} **/ (dependency));
 				}
+
 				var version = dependency.version;
 
 				if (is_unowned) {
@@ -232,22 +187,15 @@ export function check_dirtiness(reaction) {
 					// if our dependency write version is higher. If it is then we can assume
 					// that state has changed to a newer version and thus this unowned signal
 					// is also dirty.
-
 					if (version > /** @type {import('#client').Derived} */ (reaction).version) {
-						/** @type {import('#client').Derived} */ (reaction).version = version;
-						return !is_equal;
+						return true;
 					}
 
 					if (!current_skip_reaction && !dependency?.reactions?.includes(reaction)) {
 						// If we are working with an unowned signal as part of an effect (due to !current_skip_reaction)
 						// and the version hasn't changed, we still need to check that this reaction
 						// if linked to the dependency source – otherwise future updates will not be caught.
-						reactions = dependency.reactions;
-						if (reactions === null) {
-							dependency.reactions = [reaction];
-						} else {
-							reactions.push(reaction);
-						}
+						(dependency.reactions ??= []).push(reaction);
 					}
 				} else if ((reaction.f & DIRTY) !== 0) {
 					// `signal` might now be dirty, as a result of calling `check_dirtiness` and/or `update_derived`
@@ -257,9 +205,9 @@ export function check_dirtiness(reaction) {
 					// In thise case, we need to re-attach it to the graph and mark it dirty if any of its dependencies have
 					// changed since.
 					if (version > /** @type {import('#client').Derived} */ (reaction).version) {
-						/** @type {import('#client').Derived} */ (reaction).version = version;
 						is_dirty = true;
 					}
+
 					reactions = dependency.reactions;
 					if (reactions === null) {
 						dependency.reactions = [reaction];
@@ -353,14 +301,12 @@ export function execute_reaction_fn(signal) {
 	const previous_untracked_writes = current_untracked_writes;
 	const previous_reaction = current_reaction;
 	const previous_skip_reaction = current_skip_reaction;
-	const previous_untracking = current_untracking;
 
 	current_dependencies = /** @type {null | import('#client').Value[]} */ (null);
 	current_dependencies_index = 0;
 	current_untracked_writes = null;
-	current_reaction = signal;
+	current_reaction = (signal.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? signal : null;
 	current_skip_reaction = !is_flushing_effect && (signal.f & UNOWNED) !== 0;
-	current_untracking = false;
 
 	try {
 		let res = /** @type {Function} */ (0, signal.fn)();
@@ -411,11 +357,7 @@ export function execute_reaction_fn(signal) {
 
 					if (reactions === null) {
 						dependency.reactions = [signal];
-					} else if (reactions[reactions.length - 1] !== signal) {
-						// TODO: should this be:
-						//
-						// } else if (!reactions.includes(signal)) {
-						//
+					} else if (reactions[reactions.length - 1] !== signal && !reactions.includes(signal)) {
 						reactions.push(signal);
 					}
 				}
@@ -431,7 +373,6 @@ export function execute_reaction_fn(signal) {
 		current_untracked_writes = previous_untracked_writes;
 		current_reaction = previous_reaction;
 		current_skip_reaction = previous_skip_reaction;
-		current_untracking = previous_untracking;
 	}
 }
 
@@ -806,12 +747,6 @@ export async function tick() {
  * @returns {V}
  */
 export function get(signal) {
-	if (DEV && inspect_fn) {
-		var s = /** @type {import('#client').ValueDebug} */ (signal);
-		s.inspect.add(inspect_fn);
-		inspect_captured_signals.push(s);
-	}
-
 	const flags = signal.f;
 	if ((flags & DESTROYED) !== 0) {
 		return signal.v;
@@ -822,11 +757,7 @@ export function get(signal) {
 	}
 
 	// Register the dependency on the current reaction signal.
-	if (
-		current_reaction !== null &&
-		(current_reaction.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 &&
-		!current_untracking
-	) {
+	if (current_reaction !== null) {
 		const unowned = (current_reaction.f & UNOWNED) !== 0;
 		const dependencies = current_reaction.deps;
 		if (
@@ -863,15 +794,7 @@ export function get(signal) {
 		(flags & DERIVED) !== 0 &&
 		check_dirtiness(/** @type {import('#client').Derived} */ (signal))
 	) {
-		if (DEV) {
-			// we want to avoid tracking indirect dependencies
-			const previous_inspect_fn = inspect_fn;
-			set_inspect_fn(null);
-			update_derived(/** @type {import('#client').Derived} **/ (signal), false);
-			set_inspect_fn(previous_inspect_fn);
-		} else {
-			update_derived(/** @type {import('#client').Derived} **/ (signal), false);
-		}
+		update_derived(/** @type {import('#client').Derived} **/ (signal));
 	}
 
 	return signal.v;
@@ -931,6 +854,11 @@ export function mark_reactions(signal, to_status, force_schedule) {
 		var reaction = reactions[i];
 		var flags = reaction.f;
 
+		if (DEV && (flags & INSPECT_EFFECT) !== 0) {
+			inspect_effects.add(reaction);
+			continue;
+		}
+
 		// We skip any effects that are already dirty. Additionally, we also
 		// skip if the reaction is the same as the current effect (except if we're not in runes or we
 		// are in force schedule mode).
@@ -969,12 +897,12 @@ export function mark_reactions(signal, to_status, force_schedule) {
  * @returns {T}
  */
 export function untrack(fn) {
-	const previous_untracking = current_untracking;
+	const previous_reaction = current_reaction;
 	try {
-		current_untracking = true;
+		current_reaction = null;
 		return fn();
 	} finally {
-		current_untracking = previous_untracking;
+		current_reaction = previous_reaction;
 	}
 }
 

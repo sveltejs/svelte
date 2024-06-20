@@ -436,20 +436,20 @@ Apart from the timing, `$effect.pre` works exactly like [`$effect`](#$effect) �
 
 Previously, you would have used `beforeUpdate`, which — like `afterUpdate` — is deprecated in Svelte 5.
 
-## `$effect.active`
+## `$effect.tracking`
 
-The `$effect.active` rune is an advanced feature that tells you whether or not the code is running inside an effect or inside your template ([demo](/#H4sIAAAAAAAAE3XP0QrCMAwF0F-JRXAD595rLfgdzodRUyl0bVgzQcb-3VYFQfExl5tDMgvrPCYhT7MI_YBCiiOR2Aq-UxnSDT1jnlOcRlMSlczoiHUXOjYxpOhx5-O12rgAJg4UAwaGhDyR3Gxhjdai4V1v2N2wqus9tC3Y3ifMQjbehaqq4aBhLtEv_Or893icCsdLve-Caj8nBkU67zMO5HtGCfM3sKiWNKhV0zwVaBqd3x3ixVmHFyFLuJyXB-moOe8pAQAA)):
+The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template ([demo](/#H4sIAAAAAAAAE3XP0QrCMAwF0F-JRXAD595rLfgdzodRUyl0bVgzQcb-3VYFQfExl5tDMgvrPCYhT7MI_YBCiiOR2Aq-UxnSDT1jnlOcRlMSlczoiHUXOjYxpOhx5-O12rgAJg4UAwaGhDyR3Gxhjdai4V1v2N2wqus9tC3Y3ifMQjbehaqq4aBhLtEv_Or893icCsdLve-Caj8nBkU67zMO5HtGCfM3sKiWNKhV0zwVaBqd3x3ixVmHFyFLuJyXB-moOe8pAQAA)):
 
 ```svelte
 <script>
-	console.log('in component setup:', $effect.active()); // false
+	console.log('in component setup:', $effect.tracking()); // false
 
 	$effect(() => {
-		console.log('in effect:', $effect.active()); // true
+		console.log('in effect:', $effect.tracking()); // true
 	});
 </script>
 
-<p>in template: {$effect.active()}</p> <!-- true -->
+<p>in template: {$effect.tracking()}</p> <!-- true -->
 ```
 
 This allows you to (for example) add things like subscriptions without causing memory leaks, by putting them in child effects.

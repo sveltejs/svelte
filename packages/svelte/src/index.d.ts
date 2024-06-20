@@ -4,7 +4,7 @@ import './ambient.js';
 
 /**
  * @deprecated In Svelte 4, components are classes. In Svelte 5, they are functions.
- * Use `mount` or `createRoot` instead to instantiate components.
+ * Use `mount` instead to instantiate components.
  * See [breaking changes](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes)
  * for more info.
  */
@@ -36,7 +36,7 @@ type Properties<Props, Slots> = Props &
 /**
  * This was the base class for Svelte components in Svelte 4. Svelte 5+ components
  * are completely different under the hood. For typing, use `Component` instead.
- * To instantiate components, use `mount` or `createRoot`.
+ * To instantiate components, use `mount` instead`.
  * See [breaking changes documentation](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes) for more info.
  */
 export class SvelteComponent<
@@ -50,7 +50,7 @@ export class SvelteComponent<
 	[prop: string]: any;
 	/**
 	 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
-	 * is a stop-gap solution. Migrate towards using `mount` or `createRoot` instead. See
+	 * is a stop-gap solution. Migrate towards using `mount` instead. See
 	 * https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more info.
 	 */
 	constructor(options: ComponentConstructorOptions<Properties<Props, Slots>>);
@@ -113,7 +113,7 @@ export class SvelteComponent<
  * you export a component called `MyComponent`. For Svelte+TypeScript users,
  * you want to provide typings. Therefore you create a `index.d.ts`:
  * ```ts
- * import { Component } from "svelte";
+ * import type { Component } from 'svelte';
  * export declare const MyComponent: Component<{ foo: string }> {}
  * ```
  * Typing this makes it possible for IDEs like VS Code with the Svelte extension
@@ -170,6 +170,7 @@ export class SvelteComponentTyped<
 /**
  * @deprecated The new `Component` type does not have a dedicated Events type. Use `ComponentProps` instead.
  *
+ * @description
  * Convenience type to get the events the given component expects. Example:
  * ```html
  * <script lang="ts">
@@ -198,7 +199,7 @@ export type ComponentEvents<Comp extends SvelteComponent> =
  * </script>
  * ```
  */
-export type ComponentProps<Comp extends SvelteComponent | Component> =
+export type ComponentProps<Comp extends SvelteComponent | Component<any>> =
 	Comp extends SvelteComponent<infer Props>
 		? Props
 		: Comp extends Component<infer Props>
@@ -208,6 +209,7 @@ export type ComponentProps<Comp extends SvelteComponent | Component> =
 /**
  * @deprecated This type is obsolete when working with the new `Component` type.
  *
+ * @description
  * Convenience type to get the type of a Svelte component. Useful for example in combination with
  * dynamic components using `<svelte:component>`.
  *

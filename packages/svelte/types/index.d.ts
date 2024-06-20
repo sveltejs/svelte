@@ -1,7 +1,7 @@
 declare module 'svelte' {
 	/**
 	 * @deprecated In Svelte 4, components are classes. In Svelte 5, they are functions.
-	 * Use `mount` or `createRoot` instead to instantiate components.
+	 * Use `mount` instead to instantiate components.
 	 * See [breaking changes](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes)
 	 * for more info.
 	 */
@@ -33,7 +33,7 @@ declare module 'svelte' {
 	/**
 	 * This was the base class for Svelte components in Svelte 4. Svelte 5+ components
 	 * are completely different under the hood. For typing, use `Component` instead.
-	 * To instantiate components, use `mount` or `createRoot`.
+	 * To instantiate components, use `mount` instead`.
 	 * See [breaking changes documentation](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes) for more info.
 	 */
 	export class SvelteComponent<
@@ -47,7 +47,7 @@ declare module 'svelte' {
 		[prop: string]: any;
 		/**
 		 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
-		 * is a stop-gap solution. Migrate towards using `mount` or `createRoot` instead. See
+		 * is a stop-gap solution. Migrate towards using `mount` instead. See
 		 * https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more info.
 		 */
 		constructor(options: ComponentConstructorOptions<Properties<Props, Slots>>);
@@ -110,7 +110,7 @@ declare module 'svelte' {
 	 * you export a component called `MyComponent`. For Svelte+TypeScript users,
 	 * you want to provide typings. Therefore you create a `index.d.ts`:
 	 * ```ts
-	 * import { Component } from "svelte";
+	 * import type { Component } from 'svelte';
 	 * export declare const MyComponent: Component<{ foo: string }> {}
 	 * ```
 	 * Typing this makes it possible for IDEs like VS Code with the Svelte extension
@@ -167,6 +167,7 @@ declare module 'svelte' {
 	/**
 	 * @deprecated The new `Component` type does not have a dedicated Events type. Use `ComponentProps` instead.
 	 *
+	 * @description
 	 * Convenience type to get the events the given component expects. Example:
 	 * ```html
 	 * <script lang="ts">
@@ -195,7 +196,7 @@ declare module 'svelte' {
 	 * </script>
 	 * ```
 	 */
-	export type ComponentProps<Comp extends SvelteComponent | Component> =
+	export type ComponentProps<Comp extends SvelteComponent | Component<any>> =
 		Comp extends SvelteComponent<infer Props>
 			? Props
 			: Comp extends Component<infer Props>
@@ -205,6 +206,7 @@ declare module 'svelte' {
 	/**
 	 * @deprecated This type is obsolete when working with the new `Component` type.
 	 *
+	 * @description
 	 * Convenience type to get the type of a Svelte component. Useful for example in combination with
 	 * dynamic components using `<svelte:component>`.
 	 *
@@ -2108,9 +2110,13 @@ declare module 'svelte/reactivity' {
 }
 
 declare module 'svelte/server' {
-	export function render(component: typeof import('svelte').SvelteComponent, options: {
-		props: Record<string, any>;
-		context?: Map<any, any>;
+	/**
+	 * Only available on the server and when compiling with the `server` option.
+	 * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
+	 * */
+	export function render<Props extends Record<string, any>>(component: import("svelte").Component<Props, any, string> | import("svelte").ComponentType<import("svelte").SvelteComponent<Props, any, any>>, options: {
+		props: Omit<Props, "$$slots" | "$$events">;
+		context?: Map<any, any> | undefined;
 	}): RenderOutput;
 	interface RenderOutput {
 		/** HTML that goes into the `<head>` */
@@ -2346,9 +2352,15 @@ declare module 'svelte/events' {
 	 * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
 	 * (with attributes like `onclick`), which use event delegation for performance reasons
 	 *
-	 * 
-	 */
-	export function on(element: Element, type: string, handler: EventListener, options?: AddEventListenerOptions | undefined): () => void;
+	 * */
+	export function on<Element extends HTMLElement, Type extends keyof HTMLElementEventMap>(element: Element, type: Type, handler: (this: Element, event: HTMLElementEventMap[Type]) => any, options?: AddEventListenerOptions | undefined): () => void;
+	/**
+	 * Attaches an event handler to an element and returns a function that removes the handler. Using this
+	 * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
+	 * (with attributes like `onclick`), which use event delegation for performance reasons
+	 *
+	 * */
+	export function on(element: EventTarget, type: string, handler: EventListener, options?: AddEventListenerOptions | undefined): () => void;
 }
 
 declare module 'svelte/types/compiler/preprocess' {
@@ -2624,7 +2636,21 @@ declare module 'svelte/types/compiler/interfaces' {
 	 */
 	type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
 }declare module '*.svelte' {
-	export { SvelteComponent as default } from 'svelte';
+	// use prettier-ignore for a while because of https://github.com/sveltejs/language-tools/commit/026111228b5814a9109cc4d779d37fb02955fb8b
+	// prettier-ignore
+	import { SvelteComponent, Component, type ComponentConstructorOptions } from 'svelte'
+
+	// Support using the component as both a class and function during the transition period
+	// prettier-ignore
+	interface ComponentType {
+		(
+			...args: Parameters<Component<Record<string, any>>>
+		): ReturnType<Component<Record<string, any>, Record<string, any>>>
+		new (o: ComponentConstructorOptions): SvelteComponent
+	}
+	const Comp: ComponentType;
+	type Comp = SvelteComponent;
+	export default Comp;
 }
 
 /**
@@ -2826,26 +2852,26 @@ declare namespace $effect {
 	export function pre(fn: () => void | (() => void)): void;
 
 	/**
-	 * The `$effect.active` rune is an advanced feature that tells you whether or not the code is running inside an effect or inside your template.
+	 * The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template.
 	 *
 	 * Example:
 	 * ```svelte
 	 * <script>
-	 *   console.log('in component setup:', $effect.active()); // false
+	 *   console.log('in component setup:', $effect.tracking()); // false
 	 *
 	 *   $effect(() => {
-	 *     console.log('in effect:', $effect.active()); // true
+	 *     console.log('in effect:', $effect.tracking()); // true
 	 *   });
 	 * </script>
 	 *
-	 * <p>in template: {$effect.active()}</p> <!-- true -->
+	 * <p>in template: {$effect.tracking()}</p> <!-- true -->
 	 * ```
 	 *
 	 * This allows you to (for example) add things like subscriptions without causing memory leaks, by putting them in child effects.
 	 *
-	 * https://svelte-5-preview.vercel.app/docs/runes#$effect-active
+	 * https://svelte-5-preview.vercel.app/docs/runes#$effect-tracking
 	 */
-	export function active(): boolean;
+	export function tracking(): boolean;
 
 	/**
 	 * The `$effect.root` rune is an advanced feature that creates a non-tracked scope that doesn't auto-cleanup. This is useful for

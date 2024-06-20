@@ -1,17 +1,19 @@
 <script lang="ts">
-    interface Props {
-        readonly: number,
-        optional?: string,
-        binding: string,
-        bindingOptional?: string | undefined
-    }
+	
+	interface Props {
+		/** some comment */
+		readonly: number;
+		optional?: string;
+		binding: string;
+		bindingOptional?: string | undefined;
+	}
 
-    let {
-        readonly,
-        optional = 'foo',
-        binding = $bindable(),
-        bindingOptional = $bindable('bar')
-    }: Props = $props();
+	let {
+		readonly,
+		optional = 'foo',
+		binding = $bindable(),
+		bindingOptional = $bindable('bar')
+	}: Props = $props();
 </script>
 
 {readonly}

@@ -215,7 +215,7 @@ export const javascript_visitors_runes = {
 			const rune = get_rune(init, state.scope);
 			if (
 				!rune ||
-				rune === '$effect.active' ||
+				rune === '$effect.tracking' ||
 				rune === '$effect.root' ||
 				rune === '$inspect' ||
 				rune === '$state.snapshot' ||
@@ -434,8 +434,8 @@ export const javascript_visitors_runes = {
 			return b.id('$$props.$$host');
 		}
 
-		if (rune === '$effect.active') {
-			return b.call('$.effect_active');
+		if (rune === '$effect.tracking') {
+			return b.call('$.effect_tracking');
 		}
 
 		if (rune === '$state.snapshot') {

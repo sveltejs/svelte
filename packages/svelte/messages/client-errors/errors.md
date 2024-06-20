@@ -66,9 +66,7 @@
 
 ## state_unsafe_mutation
 
-> Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. This can lead to unexpected errors and possibly cause infinite loops.
->
-> If the object is not meant to be reactive, declare it without `$state`
+> Updating state inside a derived is forbidden. If the value should not be reactive, declare it without `$state`
 
 ## svelte_component_invalid_this_value
 

@@ -53,12 +53,6 @@ export interface Effect extends Reaction {
 	component_function?: any;
 }
 
-export interface ValueDebug<V = unknown> extends Value<V> {
-	inspect: Set<Function>;
-}
-
-export interface DerivedDebug<V = unknown> extends Derived<V>, ValueDebug<V> {}
-
 export type Source<V = unknown> = Value<V>;
 
 export type MaybeSource<T = unknown> = T | Source<T>;

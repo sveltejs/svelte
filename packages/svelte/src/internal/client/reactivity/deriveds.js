@@ -1,4 +1,3 @@
-import { DEV } from 'esm-env';
 import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../constants.js';
 import {
 	current_reaction,
@@ -8,7 +7,8 @@ import {
 	mark_reactions,
 	current_skip_reaction,
 	execute_reaction_fn,
-	destroy_effect_children
+	destroy_effect_children,
+	increment_version
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 
@@ -37,10 +37,6 @@ export function derived(fn) {
 		v: /** @type {V} */ (null),
 		version: 0
 	};
-
-	if (DEV) {
-		/** @type {import('#client').DerivedDebug} */ (signal).inspect = new Set();
-	}
 
 	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
 		var current_derived = /** @type {import('#client').Derived<V>} */ (current_reaction);
@@ -84,10 +80,9 @@ function destroy_derived_children(signal) {
 
 /**
  * @param {import('#client').Derived} derived
- * @param {boolean} force_schedule
- * @returns {boolean}
+ * @returns {void}
  */
-export function update_derived(derived, force_schedule) {
+export function update_derived(derived) {
 	var previous_updating_derived = updating_derived;
 	updating_derived = true;
 	destroy_derived_children(derived);
@@ -101,18 +96,11 @@ export function update_derived(derived, force_schedule) {
 
 	set_signal_status(derived, status);
 
-	var is_equal = derived.equals(value);
-
-	if (!is_equal) {
+	if (!derived.equals(value)) {
 		derived.v = value;
-		mark_reactions(derived, DIRTY, force_schedule);
-
-		if (DEV && force_schedule) {
-			for (var fn of /** @type {import('#client').DerivedDebug} */ (derived).inspect) fn();
-		}
+		derived.version = increment_version();
+		mark_reactions(derived, DIRTY, false);
 	}
-
-	return is_equal;
 }
 
 /**

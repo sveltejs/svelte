@@ -43,7 +43,7 @@ for (const category of fs.readdirSync('messages')) {
 
 			seen.add(code);
 			messages[category][code] = {
-				messages: sections.map((section) => section.replace(/^> /gm, '')),
+				messages: sections.map((section) => section.replace(/^> /gm, '').replace(/^>\n/gm, '\n')),
 				details
 			};
 		}
@@ -292,6 +292,54 @@ function transform(name, dest) {
 						name: code
 					}
 				});
+			},
+			TemplateLiteral(node, context) {
+				/** @type {import('estree').TemplateElement} */
+				let quasi = {
+					type: 'TemplateElement',
+					value: {
+						...node.quasis[0].value
+					},
+					tail: node.quasis[0].tail
+				};
+
+				/** @type {import('estree').TemplateLiteral} */
+				let out = {
+					type: 'TemplateLiteral',
+					quasis: [quasi],
+					expressions: []
+				};
+
+				for (let i = 0; i < node.expressions.length; i += 1) {
+					const q = node.quasis[i + 1];
+					const e = node.expressions[i];
+
+					if (e.type === 'Literal' && e.value === 'CODE') {
+						quasi.value.raw += code + q.value.raw;
+						continue;
+					}
+
+					if (e.type === 'Identifier' && e.name === 'MESSAGE') {
+						if (message.type === 'Literal') {
+							const str = /** @type {string} */ (message.value).replace(/(`|\${)/g, '\\$1');
+							quasi.value.raw += str + q.value.raw;
+							continue;
+						}
+
+						if (message.type === 'TemplateLiteral') {
+							quasi.value.raw += message.quasis[0].value.raw + q.value.raw;
+							out.quasis.push(...message.quasis.slice(1));
+							out.expressions.push(...message.expressions);
+							quasi = message.quasis[message.quasis.length - 1];
+							continue;
+						}
+					}
+
+					out.quasis.push((quasi = q));
+					out.expressions.push(/** @type {import('estree').Expression} */ (context.visit(e)));
+				}
+
+				return out;
 			},
 			Literal(node) {
 				if (node.value === 'CODE') {

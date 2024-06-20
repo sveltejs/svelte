@@ -364,6 +364,17 @@ export function rune_missing_parentheses(node) {
 }
 
 /**
+ * `%name%` is now `%replacement%`
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @param {string} replacement
+ * @returns {never}
+ */
+export function rune_renamed(node, name, replacement) {
+	e(node, "rune_renamed", `\`${name}\` is now \`${replacement}\``);
+}
+
+/**
  * %name% cannot be used in runes mode
  * @param {null | number | NodeLike} node
  * @param {string} name
