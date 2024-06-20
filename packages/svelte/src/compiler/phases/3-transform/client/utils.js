@@ -1,5 +1,6 @@
 import * as b from '../../../utils/builders.js';
 import {
+	extract_identifiers,
 	extract_paths,
 	is_expression_async,
 	is_simple_expression,
@@ -683,4 +684,60 @@ export function with_loc(target, source) {
 		return { ...target, loc: source.loc };
 	}
 	return target;
+}
+
+/**
+ * @param {import("estree").Pattern} node
+ * @param {import("#compiler").Fragment} scope_node
+ * @param {import("zimmerframe").Context<import("#compiler").SvelteNode, import("./types").ComponentClientTransformState>} context
+ */
+export function create_derived_block_argument(node, scope_node, context) {
+	let value_arg = /** @type {import('estree').Pattern} */ (context.visit(node));
+	if (node.type === 'Identifier') {
+		return { arg: value_arg, body: [] };
+	}
+	const identifiers = extract_identifiers(node);
+	const scope = /** @type {import('../../scope.js').Scope} */ (
+		context.state.scopes.get(scope_node)
+	);
+	const value_arg_name = scope.generate('$$value');
+	const derived_name = scope.generate('derived_arg');
+	const body = [
+		b.var(
+			derived_name,
+			create_derived(
+				context.state,
+				b.thunk(
+					b.block([
+						b.var(value_arg, b.call('$.get', b.id(value_arg_name))),
+						b.return(
+							b.object(identifiers.map((identifier) => b.prop('init', identifier, identifier)))
+						)
+					])
+				)
+			)
+		)
+	];
+
+	for (const identifier of identifiers) {
+		body.push(
+			b.var(
+				identifier,
+				create_derived(
+					context.state,
+					b.thunk(b.member(b.call('$.get', b.id(derived_name)), identifier))
+				)
+			)
+		);
+	}
+	return { arg: b.id(value_arg_name), body };
+}
+
+/**
+ * Svelte legacy mode should use safe equals in most places, runes mode shouldn't
+ * @param {import('./types.js').ComponentClientTransformState} state
+ * @param {import('estree').Expression} arg
+ */
+export function create_derived(state, arg) {
+	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
 }

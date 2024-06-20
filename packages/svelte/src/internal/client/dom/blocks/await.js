@@ -38,6 +38,8 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 
 	let input_source = source(undefined);
 
+	let error_source = source(undefined);
+
 	/** @type {import('#client').Effect | null} */
 	let pending_effect;
 
@@ -102,7 +104,10 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 					resolved = true;
 
 					if (catch_fn) {
-						catch_effect = create_effect(catch_fn, error);
+						set(error_source, error);
+						if (pending || catch_effect === undefined) {
+							catch_effect = create_effect(catch_fn, error_source);
+						}
 					}
 				}
 			);
@@ -123,6 +128,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 						set_current_reaction(parent_reaction);
 						pending_effect = branch(() => pending_fn(anchor));
 						if (then_effect) pause_effect(then_effect);
+						if (catch_effect) pause_effect(catch_effect);
 					} finally {
 						set_current_effect(previous_effect);
 						set_current_reaction(previous_reaction);
@@ -137,12 +143,31 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 					// the promise might have resolved by the next microtask.
 					queue_micro_task(show_pending);
 				}
-			} else if (then_effect) {
-				pending = true;
-				pause_effect(then_effect);
-			}
+			} else if (catch_fn) {
+				var show_catch = () => {
+					if (resolved) return;
+					pending = true;
+					if (pending_effect) pause_effect(pending_effect);
+					if (catch_effect) pause_effect(catch_effect);
+					if (then_effect) pause_effect(then_effect);
+				};
 
-			if (catch_effect) pause_effect(catch_effect);
+				if (!hydrating) {
+					pending = false;
+					// Wait a microtask before checking if we should show the pending state as
+					// the promise might have resolved by the next microtask.
+					queue_micro_task(show_catch);
+				}
+			} else {
+				if (then_effect) {
+					pending = true;
+					pause_effect(then_effect);
+				}
+				if (catch_effect) {
+					pending = true;
+					pause_effect(catch_effect);
+				}
+			}
 		} else {
 			if (pending_effect) pause_effect(pending_effect);
 			if (catch_effect) pause_effect(catch_effect);

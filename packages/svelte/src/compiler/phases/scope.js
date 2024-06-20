@@ -627,7 +627,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					scopes.set(node.error, error_scope);
 					context.visit(node.error, { scope: error_scope });
 					for (const id of extract_identifiers(node.error)) {
-						catch_scope.declare(id, 'normal', 'const');
+						catch_scope.declare(id, 'derived', 'const');
 						error_scope.declare(id, 'normal', 'const');
 					}
 				}
