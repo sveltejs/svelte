@@ -21,7 +21,9 @@ import {
 	function_visitor,
 	get_assignment_value,
 	serialize_get_binding,
-	serialize_set_binding
+	serialize_set_binding,
+	create_derived,
+	create_derived_block_argument
 } from '../utils.js';
 import {
 	AttributeAliases,
@@ -644,15 +646,6 @@ function collect_parent_each_blocks(context) {
 	return /** @type {import('#compiler').EachBlock[]} */ (
 		context.path.filter((node) => node.type === 'EachBlock')
 	);
-}
-
-/**
- * Svelte legacy mode should use safe equals in most places, runes mode shouldn't
- * @param {import('../types.js').ComponentClientTransformState} state
- * @param {import('estree').Expression} arg
- */
-function create_derived(state, arg) {
-	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
 }
 
 /**
@@ -2594,6 +2587,45 @@ export const template_visitors = {
 	AwaitBlock(node, context) {
 		context.state.template.push('<!>');
 
+		let then_block;
+		let catch_block;
+
+		if (node.then) {
+			/** @type {import('estree').Pattern[]} */
+			const args = [b.id('$$anchor')];
+			const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.then));
+
+			if (node.value) {
+				const argument = create_derived_block_argument(node.value, context);
+
+				args.push(argument.id);
+
+				if (argument.declarations !== null) {
+					block.body.unshift(...argument.declarations);
+				}
+			}
+
+			then_block = b.arrow(args, block);
+		}
+
+		if (node.catch) {
+			/** @type {import('estree').Pattern[]} */
+			const args = [b.id('$$anchor')];
+			const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.catch));
+
+			if (node.error) {
+				const argument = create_derived_block_argument(node.error, context);
+
+				args.push(argument.id);
+
+				if (argument.declarations !== null) {
+					block.body.unshift(...argument.declarations);
+				}
+			}
+
+			catch_block = b.arrow(args, block);
+		}
+
 		context.state.init.push(
 			b.stmt(
 				b.call(
@@ -2606,28 +2638,8 @@ export const template_visitors = {
 								/** @type {import('estree').BlockStatement} */ (context.visit(node.pending))
 							)
 						: b.literal(null),
-					node.then
-						? b.arrow(
-								node.value
-									? [
-											b.id('$$anchor'),
-											/** @type {import('estree').Pattern} */ (context.visit(node.value))
-										]
-									: [b.id('$$anchor')],
-								/** @type {import('estree').BlockStatement} */ (context.visit(node.then))
-							)
-						: b.literal(null),
-					node.catch
-						? b.arrow(
-								node.error
-									? [
-											b.id('$$anchor'),
-											/** @type {import('estree').Pattern} */ (context.visit(node.error))
-										]
-									: [b.id('$$anchor')],
-								/** @type {import('estree').BlockStatement} */ (context.visit(node.catch))
-							)
-						: b.literal(null)
+					then_block,
+					catch_block
 				)
 			)
 		);

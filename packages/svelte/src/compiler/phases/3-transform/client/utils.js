@@ -1,5 +1,6 @@
 import * as b from '../../../utils/builders.js';
 import {
+	extract_identifiers,
 	extract_paths,
 	is_expression_async,
 	is_simple_expression,
@@ -683,4 +684,45 @@ export function with_loc(target, source) {
 		return { ...target, loc: source.loc };
 	}
 	return target;
+}
+
+/**
+ * @param {import("estree").Pattern} node
+ * @param {import("zimmerframe").Context<import("#compiler").SvelteNode, import("./types").ComponentClientTransformState>} context
+ * @returns {{ id: import("estree").Pattern, declarations: null | import("estree").Statement[] }}
+ */
+export function create_derived_block_argument(node, context) {
+	if (node.type === 'Identifier') {
+		return { id: node, declarations: null };
+	}
+
+	const pattern = /** @type {import('estree').Pattern} */ (context.visit(node));
+	const identifiers = extract_identifiers(node);
+
+	const id = b.id('$$source');
+	const value = b.id('$$value');
+
+	const block = b.block([
+		b.var(pattern, b.call('$.get', id)),
+		b.return(b.object(identifiers.map((identifier) => b.prop('init', identifier, identifier))))
+	]);
+
+	const declarations = [b.var(value, create_derived(context.state, b.thunk(block)))];
+
+	for (const id of identifiers) {
+		declarations.push(
+			b.var(id, create_derived(context.state, b.thunk(b.member(b.call('$.get', value), id))))
+		);
+	}
+
+	return { id, declarations };
+}
+
+/**
+ * Svelte legacy mode should use safe equals in most places, runes mode shouldn't
+ * @param {import('./types.js').ComponentClientTransformState} state
+ * @param {import('estree').Expression} arg
+ */
+export function create_derived(state, arg) {
+	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
 }
