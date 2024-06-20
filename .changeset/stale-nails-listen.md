@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-chore: improve each block runtime heuristics be removing anchor text node
+chore: remove anchor node from each block items
