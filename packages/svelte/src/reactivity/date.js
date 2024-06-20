@@ -14,10 +14,12 @@ export class ReactiveDate extends Date {
 	#signals = new Map();
 
 	/**
-	 * @param {ConstructorParameters<typeof Date>} params
+	 * @param {any[]} params
 	 */
 	constructor(...params) {
+		// @ts-ignore
 		super(...params);
+		// @ts-ignore
 		this.#modified_date_to_compare = new Date(...params);
 		this.#init();
 	}
@@ -140,7 +142,16 @@ export class ReactiveDate extends Date {
 		}
 
 		if (is_time_changed || is_date_changed) {
-			this.#increment_signal('getTimezoneOffset', 'getTime');
+			this.#increment_signal(
+				'getTimezoneOffset',
+				'getTime',
+				'toDateString',
+				'toISOString',
+				'toLocaleString',
+				'toJSON',
+				'toUTCString',
+				'toString'
+			);
 		}
 	}
 

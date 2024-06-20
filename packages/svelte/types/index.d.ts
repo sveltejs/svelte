@@ -2123,7 +2123,7 @@ declare module 'svelte/motion' {
 declare module 'svelte/reactivity' {
 	class ReactiveDate extends Date {
 		
-		constructor(...values: any[]);
+		constructor(...params: any[]);
 		#private;
 	}
 	class ReactiveSet<T> extends Set<T> {

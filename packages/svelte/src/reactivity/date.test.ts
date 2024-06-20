@@ -582,7 +582,7 @@ test('Date propagated changes', () => {
 	cleanup();
 });
 
-test('date fine grained tests', () => {
+test('Date fine grained tests', () => {
 	const date = new ReactiveDate(initial_date);
 
 	let changes: Record<string, boolean> = {
@@ -601,7 +601,13 @@ test('date fine grained tests', () => {
 		getSeconds: true,
 		getUTCSeconds: true,
 		getMilliseconds: true,
-		getUTCMilliseconds: true
+		getUTCMilliseconds: true,
+		getTime: true,
+		toISOString: true,
+		toJSON: true,
+		toUTCString: true,
+		toString: true,
+		toLocaleString: true
 	};
 	let test_description: string = '';
 
@@ -631,7 +637,13 @@ test('date fine grained tests', () => {
 			getMonth: true,
 			getUTCMonth: true,
 			getDay: true,
-			getUTCDay: true
+			getUTCDay: true,
+			getTime: true,
+			toISOString: true,
+			toJSON: true,
+			toUTCString: true,
+			toString: true,
+			toLocaleString: true
 		};
 		test_description = 'changing setFullYear that will cause month/day change as well';
 		date.setFullYear(initial_date.getFullYear() + 1, initial_date.getMonth() + 1);
@@ -652,7 +664,13 @@ test('date fine grained tests', () => {
 			getSeconds: true,
 			getUTCSeconds: true,
 			getMilliseconds: true,
-			getUTCMilliseconds: true
+			getUTCMilliseconds: true,
+			getTime: true,
+			toISOString: true,
+			toJSON: true,
+			toUTCString: true,
+			toString: true,
+			toLocaleString: true
 		};
 		test_description = 'changing seconds that will change day/hour/minutes/seconds/milliseconds';
 		date.setSeconds(61 * 60 * 25 + 1, 10);
@@ -667,7 +685,13 @@ test('date fine grained tests', () => {
 			getDay: true,
 			getUTCDay: true,
 			getMilliseconds: true,
-			getUTCMilliseconds: true
+			getUTCMilliseconds: true,
+			getTime: true,
+			toISOString: true,
+			toJSON: true,
+			toUTCString: true,
+			toString: true,
+			toLocaleString: true
 		};
 		test_description = 'changing month';
 		date.setMonth(date.getMonth() + 1);
