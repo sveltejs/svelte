@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.161
+
+### Patch Changes
+
+- fix: wait a microtask for await blocks to reduce UI churn ([#11989](https://github.com/sveltejs/svelte/pull/11989))
+
+- fix: ensure state update expressions are serialised correctly ([#12109](https://github.com/sveltejs/svelte/pull/12109))
+
+- fix: repair each block length even without an else ([#12098](https://github.com/sveltejs/svelte/pull/12098))
+
+- fix: remove document event listeners on unmount ([#12105](https://github.com/sveltejs/svelte/pull/12105))
+
 ## 5.0.0-next.160
 
 ### Patch Changes
