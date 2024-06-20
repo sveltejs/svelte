@@ -119,10 +119,11 @@ export function serialize_get_binding(node, state) {
  * @param {import('estree').AssignmentExpression} node
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, State>} context
  * @param {() => any} fallback
+ * @param {boolean} prefix
  * @param {{skip_proxy_and_freeze?: boolean}} [options]
  * @returns {import('estree').Expression}
  */
-export function serialize_set_binding(node, context, fallback, options) {
+export function serialize_set_binding(node, context, fallback, prefix, options) {
 	const { state, visit } = context;
 
 	const assignee = node.left;
@@ -146,7 +147,9 @@ export function serialize_set_binding(node, context, fallback, options) {
 			const value = path.expression?.(b.id(tmp_id));
 			const assignment = b.assignment('=', path.node, value);
 			original_assignments.push(assignment);
-			assignments.push(serialize_set_binding(assignment, context, () => assignment, options));
+			assignments.push(
+				serialize_set_binding(assignment, context, () => assignment, prefix, options)
+			);
 		}
 
 		if (assignments.every((assignment, i) => assignment === original_assignments[i])) {
@@ -411,6 +414,15 @@ export function serialize_set_binding(node, context, fallback, options) {
 						)
 					);
 				}
+			} else if (
+				node.right.type === 'Literal' &&
+				(node.operator === '+=' || node.operator === '-=')
+			) {
+				return b.update(
+					node.operator === '+=' ? '++' : '--',
+					/** @type {import('estree').Expression} */ (visit(node.left)),
+					prefix
+				);
 			} else {
 				return b.assignment(
 					node.operator,
