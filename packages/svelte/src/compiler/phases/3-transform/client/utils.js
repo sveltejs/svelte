@@ -702,22 +702,12 @@ export function create_derived_block_argument(node, context) {
 	const id = b.id('$$source');
 	const value = b.id('$$value');
 
-	const declarations = [
-		b.var(
-			value,
-			create_derived(
-				context.state,
-				b.thunk(
-					b.block([
-						b.var(pattern, b.call('$.get', id)),
-						b.return(
-							b.object(identifiers.map((identifier) => b.prop('init', identifier, identifier)))
-						)
-					])
-				)
-			)
-		)
-	];
+	const block = b.block([
+		b.var(pattern, b.call('$.get', id)),
+		b.return(b.object(identifiers.map((identifier) => b.prop('init', identifier, identifier))))
+	]);
+
+	const declarations = [b.var(value, create_derived(context.state, b.thunk(block)))];
 
 	for (const id of identifiers) {
 		declarations.push(
