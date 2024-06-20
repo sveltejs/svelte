@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.162
+
+### Patch Changes
+
+- chore: remove anchor node from each block items ([#11836](https://github.com/sveltejs/svelte/pull/11836))
+
 ## 5.0.0-next.161
 
 ### Patch Changes
