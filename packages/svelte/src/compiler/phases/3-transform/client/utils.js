@@ -688,33 +688,28 @@ export function with_loc(target, source) {
 
 /**
  * @param {import("estree").Pattern} node
- * @param {import("#compiler").Fragment} scope_node
  * @param {import("zimmerframe").Context<import("#compiler").SvelteNode, import("./types").ComponentClientTransformState>} context
- * @returns {{ id: import("estree").Pattern, declarations: import("estree").Statement[] }}
+ * @returns {{ id: import("estree").Pattern, declarations: null | import("estree").Statement[] }}
  */
-export function create_derived_block_argument(node, scope_node, context) {
+export function create_derived_block_argument(node, context) {
 	if (node.type === 'Identifier') {
-		return {
-			id: node,
-			declarations: []
-		};
+		return { id: node, declarations: null };
 	}
 
-	let value_arg = /** @type {import('estree').Pattern} */ (context.visit(node));
+	const pattern = /** @type {import('estree').Pattern} */ (context.visit(node));
 	const identifiers = extract_identifiers(node);
-	const scope = /** @type {import('../../scope.js').Scope} */ (
-		context.state.scopes.get(scope_node)
-	);
-	const value_arg_name = scope.generate('$$value');
-	const derived_name = scope.generate('derived_arg');
+
+	const id = b.id('$$source');
+	const value = b.id('$$value');
+
 	const declarations = [
 		b.var(
-			derived_name,
+			value,
 			create_derived(
 				context.state,
 				b.thunk(
 					b.block([
-						b.var(value_arg, b.call('$.get', b.id(value_arg_name))),
+						b.var(pattern, b.call('$.get', id)),
 						b.return(
 							b.object(identifiers.map((identifier) => b.prop('init', identifier, identifier)))
 						)
@@ -724,21 +719,13 @@ export function create_derived_block_argument(node, scope_node, context) {
 		)
 	];
 
-	for (const identifier of identifiers) {
+	for (const id of identifiers) {
 		declarations.push(
-			b.var(
-				identifier,
-				create_derived(
-					context.state,
-					b.thunk(b.member(b.call('$.get', b.id(derived_name)), identifier))
-				)
-			)
+			b.var(id, create_derived(context.state, b.thunk(b.member(b.call('$.get', value), id))))
 		);
 	}
-	return {
-		id: b.id(value_arg_name),
-		declarations
-	};
+
+	return { id, declarations };
 }
 
 /**
