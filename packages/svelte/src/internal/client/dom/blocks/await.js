@@ -107,8 +107,8 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 			set_current_reaction(null);
 			set_current_effect(null);
 
-			// without this, the DOM does not update until two ticks after the promise,
-			// resolves which is unexpected behaviour (and somewhat irksome to test)
+			// without this, the DOM does not update until two ticks after the promise
+			// resolves, which is unexpected behaviour (and somewhat irksome to test)
 			flush_sync();
 		}
 	}
