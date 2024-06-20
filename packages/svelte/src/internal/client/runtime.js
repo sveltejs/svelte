@@ -357,11 +357,7 @@ export function execute_reaction_fn(signal) {
 
 					if (reactions === null) {
 						dependency.reactions = [signal];
-					} else if (reactions[reactions.length - 1] !== signal) {
-						// TODO: should this be:
-						//
-						// } else if (!reactions.includes(signal)) {
-						//
+					} else if (reactions[reactions.length - 1] !== signal && !reactions.includes(signal)) {
 						reactions.push(signal);
 					}
 				}

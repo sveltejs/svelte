@@ -251,6 +251,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 		return () => {
 			for (const event_name of registered_events) {
 				target.removeEventListener(event_name, bound_event_listener);
+				document.removeEventListener(event_name, bound_event_listener);
 			}
 			root_event_handles.delete(event_handle);
 			mounted_components.delete(component);

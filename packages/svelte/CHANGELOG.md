@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.160
+
+### Patch Changes
+
+- chore: improve runtime performance of capturing reactive signals ([#12093](https://github.com/sveltejs/svelte/pull/12093))
+
 ## 5.0.0-next.159
 
 ### Patch Changes
