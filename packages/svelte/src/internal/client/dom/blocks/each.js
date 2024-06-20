@@ -151,7 +151,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 		if (hydrating) {
 			var is_else = /** @type {Comment} */ (anchor).data === HYDRATION_END_ELSE;
 
-			if (is_else !== (length === 0)) {
+			if (is_else !== (length === 0) || hydrate_start === undefined) {
 				// hydration mismatch — remove the server-rendered DOM and start over
 				remove(hydrate_nodes);
 				set_hydrating(false);

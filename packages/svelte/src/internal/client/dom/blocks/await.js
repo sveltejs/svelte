@@ -7,111 +7,135 @@ import {
 	set_current_reaction,
 	set_dev_current_component_function
 } from '../../runtime.js';
-import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
-import { INERT } from '../../constants.js';
+import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { DEV } from 'esm-env';
+import { queue_micro_task } from '../task.js';
+import { hydrating } from '../hydration.js';
+import { set, source } from '../../reactivity/sources.js';
+
+const PENDING = 0;
+const THEN = 1;
+const CATCH = 2;
 
 /**
  * @template V
  * @param {Comment} anchor
  * @param {(() => Promise<V>)} get_input
  * @param {null | ((anchor: Node) => void)} pending_fn
- * @param {null | ((anchor: Node, value: V) => void)} then_fn
+ * @param {null | ((anchor: Node, value: import('#client').Source<V>) => void)} then_fn
  * @param {null | ((anchor: Node, error: unknown) => void)} catch_fn
  * @returns {void}
  */
 export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
-	const component_context = current_component_context;
-	/** @type {any} */
-	let component_function;
-	if (DEV) {
-		component_function = component_context?.function ?? null;
-	}
+	var component_context = current_component_context;
 
 	/** @type {any} */
-	let input;
+	var component_function = DEV ? component_context?.function : null;
+
+	/** @type {V | Promise<V>} */
+	var input;
 
 	/** @type {import('#client').Effect | null} */
-	let pending_effect;
+	var pending_effect;
 
 	/** @type {import('#client').Effect | null} */
-	let then_effect;
+	var then_effect;
 
 	/** @type {import('#client').Effect | null} */
-	let catch_effect;
+	var catch_effect;
+
+	var input_source = source(/** @type {V} */ (undefined));
+	var error_source = source(undefined);
+	var resolved = false;
 
 	/**
-	 * @param {(anchor: Comment, value: any) => void} fn
-	 * @param {any} value
+	 * @param {PENDING | THEN | CATCH} state
+	 * @param {boolean} restore
 	 */
-	function create_effect(fn, value) {
-		set_current_effect(effect);
-		set_current_reaction(effect); // TODO do we need both?
-		set_current_component_context(component_context);
-		if (DEV) {
-			set_dev_current_component_function(component_function);
-		}
-		var e = branch(() => fn(anchor, value));
-		if (DEV) {
-			set_dev_current_component_function(null);
-		}
-		set_current_component_context(null);
-		set_current_reaction(null);
-		set_current_effect(null);
+	function update(state, restore) {
+		resolved = true;
 
-		// without this, the DOM does not update until two ticks after the promise,
-		// resolves which is unexpected behaviour (and somewhat irksome to test)
-		flush_sync();
+		if (restore) {
+			set_current_effect(effect);
+			set_current_reaction(effect); // TODO do we need both?
+			set_current_component_context(component_context);
+			if (DEV) set_dev_current_component_function(component_function);
+		}
 
-		return e;
+		if (state === PENDING && pending_fn) {
+			if (pending_effect) resume_effect(pending_effect);
+			else pending_effect = branch(() => pending_fn(anchor));
+		}
+
+		if (state === THEN && then_fn) {
+			if (then_effect) resume_effect(then_effect);
+			else then_effect = branch(() => then_fn(anchor, input_source));
+		}
+
+		if (state === CATCH && catch_fn) {
+			if (catch_effect) resume_effect(catch_effect);
+			else catch_effect = branch(() => catch_fn(anchor, error_source));
+		}
+
+		if (state !== PENDING && pending_effect) {
+			pause_effect(pending_effect, () => (pending_effect = null));
+		}
+
+		if (state !== THEN && then_effect) {
+			pause_effect(then_effect, () => (then_effect = null));
+		}
+
+		if (state !== CATCH && catch_effect) {
+			pause_effect(catch_effect, () => (catch_effect = null));
+		}
+
+		if (restore) {
+			if (DEV) set_dev_current_component_function(null);
+			set_current_component_context(null);
+			set_current_reaction(null);
+			set_current_effect(null);
+
+			// without this, the DOM does not update until two ticks after the promise
+			// resolves, which is unexpected behaviour (and somewhat irksome to test)
+			flush_sync();
+		}
 	}
 
-	const effect = block(() => {
+	var effect = block(() => {
 		if (input === (input = get_input())) return;
 
 		if (is_promise(input)) {
-			const promise = /** @type {Promise<any>} */ (input);
+			var promise = input;
 
-			if (pending_fn) {
-				if (pending_effect && (pending_effect.f & INERT) === 0) {
-					destroy_effect(pending_effect);
-				}
-
-				pending_effect = branch(() => pending_fn(anchor));
-			}
-
-			if (then_effect) pause_effect(then_effect);
-			if (catch_effect) pause_effect(catch_effect);
+			resolved = false;
 
 			promise.then(
 				(value) => {
 					if (promise !== input) return;
-					if (pending_effect) pause_effect(pending_effect);
-
-					if (then_fn) {
-						then_effect = create_effect(then_fn, value);
-					}
+					set(input_source, value);
+					update(THEN, true);
 				},
 				(error) => {
 					if (promise !== input) return;
-					if (pending_effect) pause_effect(pending_effect);
-
-					if (catch_fn) {
-						catch_effect = create_effect(catch_fn, error);
-					}
+					set(error_source, error);
+					update(CATCH, true);
 				}
 			);
-		} else {
-			if (pending_effect) pause_effect(pending_effect);
-			if (catch_effect) pause_effect(catch_effect);
 
-			if (then_fn) {
-				if (then_effect) {
-					destroy_effect(then_effect);
+			if (hydrating) {
+				if (pending_fn) {
+					pending_effect = branch(() => pending_fn(anchor));
 				}
-
-				then_effect = branch(() => then_fn(anchor, input));
+			} else {
+				// Wait a microtask before checking if we should show the pending state as
+				// the promise might have resolved by the next microtask.
+				queue_micro_task(() => {
+					if (!resolved) update(PENDING, true);
+				});
 			}
+		} else {
+			set(input_source, input);
+			update(THEN, false);
 		}
 
 		// Inert effects are proactively detached from the effect tree. Returning a noop
