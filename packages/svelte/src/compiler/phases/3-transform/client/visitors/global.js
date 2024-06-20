@@ -32,7 +32,7 @@ export const global_visitors = {
 		next();
 	},
 	AssignmentExpression(node, context) {
-		return serialize_set_binding(node, context, context.next);
+		return serialize_set_binding(node, context, context.next, false);
 	},
 	UpdateExpression(node, context) {
 		const { state, next, visit } = context;
@@ -98,7 +98,12 @@ export const global_visitors = {
 				/** @type {import('estree').Pattern} */ (argument),
 				b.literal(1)
 			);
-			const serialized_assignment = serialize_set_binding(assignment, context, () => assignment);
+			const serialized_assignment = serialize_set_binding(
+				assignment,
+				context,
+				() => assignment,
+				node.prefix
+			);
 			const value = /** @type {import('estree').Expression} */ (visit(argument));
 			if (serialized_assignment === assignment) {
 				// No change to output -> nothing to transform -> we can keep the original update expression
