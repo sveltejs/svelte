@@ -47,7 +47,6 @@ function swap_block_dom(effect, from, to) {
  * @returns {void}
  */
 export function element(node, get_tag, is_svg, render_fn, get_namespace, location) {
-	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
 	const filename = DEV && location && current_component_context?.function.filename;
 
 	/** @type {string | null} */
@@ -64,6 +63,18 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 	/** @type {import('#client').Effect | null} */
 	let effect;
 
+	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
+
+	// Remove the the hydrated effect dom entry for our dynamic element
+	if (hydrating && is_array(parent_effect.dom)) {
+		var remove_index = parent_effect.dom.indexOf(
+			/** @type {import('#client').TemplateNode} */ (element)
+		);
+		if (remove_index !== -1) {
+			parent_effect.dom.splice(remove_index, 1);
+		}
+	}
+
 	/**
 	 * The keyed `{#each ...}` item block, if any, that this element is inside.
 	 * We track this so we can set it when changing the element, allowing any
@@ -72,6 +83,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 	let each_item_block = current_each_item;
 
 	block(() => {
+		const element_effect = /** @type {import('#client').Effect} */ (current_effect);
 		const next_tag = get_tag() || null;
 		const ns = get_namespace
 			? get_namespace()
@@ -124,6 +136,13 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					};
 				}
 
+				if (prev_element && !hydrating) {
+					swap_block_dom(element_effect, prev_element, element);
+					prev_element.remove();
+				} else {
+					push_template_node(element, element_effect);
+				}
+
 				if (render_fn) {
 					// If hydrating, use the existing ssr comment as the anchor so that the
 					// inner open and close methods can pick up the existing nodes correctly
@@ -143,15 +162,6 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				}
 
 				anchor.before(element);
-
-				if (!hydrating) {
-					if (prev_element) {
-						swap_block_dom(parent_effect, prev_element, element);
-						prev_element.remove();
-					} else {
-						push_template_node(element, parent_effect);
-					}
-				}
 
 				// See below
 				return noop;
