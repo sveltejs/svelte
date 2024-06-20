@@ -1,22 +1,13 @@
 import { is_promise, noop } from '../../../shared/utils.js';
 import {
 	current_component_context,
-	current_effect,
-	current_reaction,
 	flush_sync,
 	set_current_component_context,
 	set_current_effect,
 	set_current_reaction,
 	set_dev_current_component_function
 } from '../../runtime.js';
-import {
-	block,
-	branch,
-	destroy_effect,
-	pause_effect,
-	resume_effect
-} from '../../reactivity/effects.js';
-import { INERT } from '../../constants.js';
+import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { DEV } from 'esm-env';
 import { queue_micro_task } from '../task.js';
 import { hydrating } from '../hydration.js';
@@ -36,28 +27,25 @@ const CATCH = 2;
  * @returns {void}
  */
 export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
-	const component_context = current_component_context;
-	/** @type {any} */
-	let component_function;
-	if (DEV) {
-		component_function = component_context?.function ?? null;
-	}
+	var component_context = current_component_context;
 
 	/** @type {any} */
-	let input;
+	var component_function = DEV ? component_context?.function : null;
 
-	let input_source = source(/** @type {V} */ (undefined));
-	let error_source = source(undefined);
-
-	/** @type {import('#client').Effect | null} */
-	let pending_effect;
+	/** @type {V | Promise<V>} */
+	var input;
 
 	/** @type {import('#client').Effect | null} */
-	let then_effect;
+	var pending_effect;
 
 	/** @type {import('#client').Effect | null} */
-	let catch_effect;
+	var then_effect;
 
+	/** @type {import('#client').Effect | null} */
+	var catch_effect;
+
+	var input_source = source(/** @type {V} */ (undefined));
+	var error_source = source(undefined);
 	var resolved = false;
 
 	/**
@@ -113,11 +101,11 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 		}
 	}
 
-	const effect = block(() => {
+	var effect = block(() => {
 		if (input === (input = get_input())) return;
 
 		if (is_promise(input)) {
-			const promise = input;
+			var promise = input;
 
 			resolved = false;
 
