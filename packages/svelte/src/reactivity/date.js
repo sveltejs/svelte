@@ -13,6 +13,8 @@ export class ReactiveDate extends Date {
 	 */
 	#signals = new Map();
 
+	#version = source(false);
+
 	/**
 	 * @param {any[]} params
 	 */
@@ -33,17 +35,33 @@ export class ReactiveDate extends Date {
 		var proto = ReactiveDate.prototype;
 		var date_proto = Date.prototype;
 
-		var read = /** @type {Array<keyof Date>} */ (
+		/**
+		 * @type {(keyof Date)[]}
+		 */
+		var versioned_read_props = [
+			'getTimezoneOffset',
+			'getTime',
+			'toDateString',
+			'toISOString',
+			'toLocaleString',
+			'toJSON',
+			'toUTCString',
+			'toString'
+		];
+
+		var fine_grained_read_props = /** @type {Array<keyof Date>} */ (
 			Object.getOwnPropertyNames(Date.prototype).filter(
-				(prop) => prop.startsWith('get') || prop.startsWith('to')
+				(prop) =>
+					(prop.startsWith('get') || prop.startsWith('to')) &&
+					!versioned_read_props.includes(/** @type {keyof Date} */ (prop))
 			)
 		);
 
-		var write = /** @type {Array<keyof Date>} */ (
+		var write_props = /** @type {Array<keyof Date>} */ (
 			Object.getOwnPropertyNames(Date.prototype).filter((prop) => prop.startsWith('set'))
 		);
 
-		for (const method of read) {
+		for (const method of fine_grained_read_props) {
 			// @ts-ignore
 			proto[method] = function (...args) {
 				var sig = this.#signals.get(method);
@@ -57,7 +75,16 @@ export class ReactiveDate extends Date {
 			};
 		}
 
-		for (const method of write) {
+		for (const method of versioned_read_props) {
+			// @ts-ignore
+			proto[method] = function (...args) {
+				get(this.#version);
+				// @ts-ignore
+				return date_proto[method].apply(this, args);
+			};
+		}
+
+		for (const method of write_props) {
 			// @ts-ignore
 			proto[method] = function (...args) {
 				// @ts-ignore
@@ -142,16 +169,7 @@ export class ReactiveDate extends Date {
 		}
 
 		if (is_time_changed || is_date_changed) {
-			this.#increment_signal(
-				'getTimezoneOffset',
-				'getTime',
-				'toDateString',
-				'toISOString',
-				'toLocaleString',
-				'toJSON',
-				'toUTCString',
-				'toString'
-			);
+			set(this.#version, !this.#version.v);
 		}
 	}
 
