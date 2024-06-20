@@ -690,19 +690,24 @@ export function with_loc(target, source) {
  * @param {import("estree").Pattern} node
  * @param {import("#compiler").Fragment} scope_node
  * @param {import("zimmerframe").Context<import("#compiler").SvelteNode, import("./types").ComponentClientTransformState>} context
+ * @returns {{ id: import("estree").Pattern, declarations: import("estree").Statement[] }}
  */
 export function create_derived_block_argument(node, scope_node, context) {
-	let value_arg = /** @type {import('estree').Pattern} */ (context.visit(node));
 	if (node.type === 'Identifier') {
-		return { arg: value_arg, body: [] };
+		return {
+			id: node,
+			declarations: []
+		};
 	}
+
+	let value_arg = /** @type {import('estree').Pattern} */ (context.visit(node));
 	const identifiers = extract_identifiers(node);
 	const scope = /** @type {import('../../scope.js').Scope} */ (
 		context.state.scopes.get(scope_node)
 	);
 	const value_arg_name = scope.generate('$$value');
 	const derived_name = scope.generate('derived_arg');
-	const body = [
+	const declarations = [
 		b.var(
 			derived_name,
 			create_derived(
@@ -720,7 +725,7 @@ export function create_derived_block_argument(node, scope_node, context) {
 	];
 
 	for (const identifier of identifiers) {
-		body.push(
+		declarations.push(
 			b.var(
 				identifier,
 				create_derived(
@@ -730,7 +735,10 @@ export function create_derived_block_argument(node, scope_node, context) {
 			)
 		);
 	}
-	return { arg: b.id(value_arg_name), body };
+	return {
+		id: b.id(value_arg_name),
+		declarations
+	};
 }
 
 /**

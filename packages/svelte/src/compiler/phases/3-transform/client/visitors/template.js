@@ -2597,13 +2597,10 @@ export const template_visitors = {
 			const args = [b.id('$$anchor')];
 
 			if (node.value) {
-				const { arg, body } = create_derived_block_argument(node.value, node.then, context);
+				const argument = create_derived_block_argument(node.value, node.then, context);
 
-				args.push(arg);
-
-				if (node.value.type !== 'Identifier') {
-					block_statement.body.unshift(...body);
-				}
+				args.push(argument.id);
+				block_statement.body.unshift(...argument.declarations);
 			}
 			then_block = b.arrow(args, block_statement);
 		} else {
@@ -2618,13 +2615,10 @@ export const template_visitors = {
 			const args = [b.id('$$anchor')];
 
 			if (node.error) {
-				const { arg, body } = create_derived_block_argument(node.error, node.catch, context);
+				const argument = create_derived_block_argument(node.error, node.catch, context);
 
-				args.push(arg);
-
-				if (node.error.type !== 'Identifier') {
-					block_statement.body.unshift(...body);
-				}
+				args.push(argument.id);
+				block_statement.body.unshift(...argument.declarations);
 			}
 			catch_block = b.arrow(args, block_statement);
 		} else {
