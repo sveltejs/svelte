@@ -1,5 +1,23 @@
 # svelte
 
+## 5.0.0-next.160
+
+### Patch Changes
+
+- chore: improve runtime performance of capturing reactive signals ([#12093](https://github.com/sveltejs/svelte/pull/12093))
+
+## 5.0.0-next.159
+
+### Patch Changes
+
+- fix: ensure element size bindings don't unsubscribe multiple times from the resize observer ([#12091](https://github.com/sveltejs/svelte/pull/12091))
+
+- fix: prevent misidentification of bindings as delegatable event handlers if used outside event attribute ([#12081](https://github.com/sveltejs/svelte/pull/12081))
+
+- fix: preserve current input values when removing defaults ([#12083](https://github.com/sveltejs/svelte/pull/12083))
+
+- fix: preserve component function context for nested components ([#12089](https://github.com/sveltejs/svelte/pull/12089))
+
 ## 5.0.0-next.158
 
 ### Patch Changes
