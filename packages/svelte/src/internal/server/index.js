@@ -116,7 +116,7 @@ export function render(component, ...options) {
 	}
 
 	// @ts-expect-error
-	component(payload, options.props, {}, {});
+	component(payload, option?.props ?? {}, {}, {});
 
 	if (option?.context) {
 		pop();
