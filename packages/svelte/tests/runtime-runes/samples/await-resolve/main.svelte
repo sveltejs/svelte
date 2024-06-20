@@ -1,18 +1,17 @@
 <script>
-	import Pending from "./Pending.svelte"
-	import Then from './Then.svelte';
+	const a = Promise.resolve('a');
+	const b = Promise.resolve('b');
 
-	const promise_a = Promise.resolve('a')
-	const promise_b = Promise.resolve('b')
-
-	let current_promise = $state(promise_a);
+	let promise = $state(a);
 </script>
 
-{#await current_promise}
-	<Pending />
+{#await promise}
+	{console.log('rendering pending block')}
+	<p>pending</p>
 {:then value}
-	<Then {value} />
+	{console.log('rendering then block')}
+	<p>then {value}</p>
 {/await}
 
-<button onclick={()=>{current_promise = promise_a}}>Show Promise A</button>
-<button onclick={()=>{current_promise = promise_b}}>Show Promise B</button>
+<button onclick={() => (promise = a)}>Show Promise A</button>
+<button onclick={() => (promise = b)}>Show Promise B</button>

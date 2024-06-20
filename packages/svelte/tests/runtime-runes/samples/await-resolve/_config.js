@@ -22,6 +22,6 @@ export default test({
 			`<p>then b</p><button>Show Promise A</button><button>Show Promise B</button>`
 		);
 
-		assert.deepEqual(logs, ['mounting Pending.svelte', 'mounting Then.svelte']);
+		assert.deepEqual(logs, ['rendering pending block', 'rendering then block']);
 	}
 });

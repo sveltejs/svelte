@@ -183,7 +183,9 @@ async function run_test_variant(
 
 		if (str.slice(0, i).includes('logs')) {
 			// eslint-disable-next-line no-console
-			console.log = (...args) => logs.push(...args);
+			console.log = (...args) => {
+				logs.push(...args);
+			};
 		}
 
 		if (str.slice(0, i).includes('hydrate')) {
