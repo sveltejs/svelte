@@ -1,0 +1,17 @@
+[
+  {
+    "benchmark": "kairo_avoidable",
+    "time": "39.19",
+    "gc_time": "0.51"
+  },
+  {
+    "benchmark": "kairo_broad",
+    "time": "103.27",
+    "gc_time": "0.32"
+  },
+  {
+    "benchmark": "kairo_deep",
+    "time": "172.36",
+    "gc_time": "0.00"
+  }
+]
