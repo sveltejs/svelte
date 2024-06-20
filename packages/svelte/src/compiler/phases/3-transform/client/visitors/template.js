@@ -2606,8 +2606,6 @@ export const template_visitors = {
 				}
 			}
 			then_block = b.arrow(args, block_statement);
-		} else {
-			then_block = b.literal(null);
 		}
 
 		if (node.catch) {
@@ -2627,8 +2625,6 @@ export const template_visitors = {
 				}
 			}
 			catch_block = b.arrow(args, block_statement);
-		} else {
-			catch_block = b.literal(null);
 		}
 
 		context.state.init.push(
