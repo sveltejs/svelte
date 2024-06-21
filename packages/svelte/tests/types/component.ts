@@ -131,6 +131,13 @@ mount(NewComponent, {
 	intro: false,
 	recover: false
 });
+mount(
+	NewComponent,
+	// @ts-expect-error props missing
+	{ target: null as any }
+);
+// if component receives no args, props can be omitted
+mount(null as any as typeof SvelteComponent<{}>, { target: null as any });
 
 hydrate(NewComponent, {
 	target: null as any as Document | Element | ShadowRoot,
@@ -148,12 +155,27 @@ hydrate(NewComponent, {
 	intro: false,
 	recover: false
 });
+hydrate(
+	NewComponent,
+	// @ts-expect-error props missing
+	{ target: null as any }
+);
+// if component receives no args, props can be omitted
+hydrate(null as any as typeof SvelteComponent<{}>, { target: null as any });
 
 render(NewComponent, {
 	props: {
 		prop: 'foo',
 		// @ts-expect-error
 		x: ''
+	}
+});
+// @ts-expect-error
+render(NewComponent);
+render(NewComponent, {
+	props: {
+		// @ts-expect-error
+		prop: 1
 	}
 });
 
@@ -255,6 +277,13 @@ mount(functionComponent, {
 		readonly: 1
 	}
 });
+mount(
+	functionComponent,
+	// @ts-expect-error props missing
+	{ target: null as any }
+);
+// if component receives no args, props can be omitted
+mount(null as any as Component<{}>, { target: null as any });
 
 hydrate(functionComponent, {
 	target: null as any as Document | Element | ShadowRoot,
@@ -272,13 +301,33 @@ hydrate(functionComponent, {
 		binding: true
 	}
 });
+hydrate(
+	functionComponent,
+	// @ts-expect-error props missing
+	{ target: null as any }
+);
+// if component receives no args, props can be omitted
+hydrate(null as any as Component<{}>, { target: null as any });
 
 render(functionComponent, {
 	props: {
 		binding: true,
-		readonly: 'foo',
+		readonly: 'foo'
+	}
+});
+// @ts-expect-error
+render(functionComponent);
+render(functionComponent, {
+	// @ts-expect-error
+	props: {
+		binding: true
+	}
+});
+render(functionComponent, {
+	props: {
+		binding: true,
 		// @ts-expect-error
-		x: ''
+		readonly: 1
 	}
 });
 
