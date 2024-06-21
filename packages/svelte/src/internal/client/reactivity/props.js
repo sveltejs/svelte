@@ -267,9 +267,16 @@ export function prop(props, key, flags, fallback) {
 	// intermediate mode — prop is written to, but the parent component had
 	// `bind:foo` which means we can just call `$$props.foo = value` directly
 	if (setter) {
-		return function (/** @type {V} */ value) {
-			if (arguments.length === 1) {
-				/** @type {Function} */ (setter)(value);
+		var legacy_parent = props.$$legacy;
+		return function (/** @type {V} */ value, /** @type {boolean} */ mutation) {
+			if (arguments.length > 0) {
+				// We don't want to notify if the value was mutated and the parent is in runes mode.
+				// In that case the state proxy (if it exists) should take care of the notification.
+				// If the parent is not in runes mode, we need to notify on mutation, too, that the prop
+				// has changed because the parent will not be able to detect the change otherwise.
+				if (!runes || !mutation || legacy_parent) {
+					/** @type {Function} */ (setter)(value);
+				}
 				return value;
 			} else {
 				return getter();

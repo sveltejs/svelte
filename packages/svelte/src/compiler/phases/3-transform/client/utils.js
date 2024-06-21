@@ -89,7 +89,7 @@ export function serialize_get_binding(node, state) {
 	}
 
 	if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
-		if (!state.analysis.runes || binding.reassigned || binding.initial) {
+		if (!state.analysis.runes || binding.reassigned || binding.initial || binding.mutated) {
 			return b.call(node);
 		}
 
@@ -391,7 +391,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 					),
 					b.call('$.untrack', b.id('$' + left_name))
 				);
-			} else if (!state.analysis.runes) {
+			} else if (!state.analysis.runes || (binding.mutated && binding.kind === 'bindable_prop')) {
 				if (binding.kind === 'bindable_prop') {
 					return b.call(
 						left,
@@ -402,7 +402,8 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 								value
 							),
 							b.call(left)
-						])
+						]),
+						b.true
 					);
 				} else {
 					return b.call(
@@ -539,6 +540,7 @@ function get_hoistable_params(node, context) {
 				// If we are referencing a simple $$props value, then we need to reference the object property instead
 				(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
 				!binding.reassigned &&
+				!binding.mutated && // this can be removed once legacy mode is gone
 				binding.initial === null &&
 				!context.state.analysis.accessors
 			) {
@@ -602,7 +604,9 @@ export function get_prop_source(binding, state, name, initial) {
 
 	if (
 		state.analysis.accessors ||
-		(state.analysis.immutable ? binding.reassigned : binding.mutated)
+		(state.analysis.immutable
+			? binding.reassigned || (state.analysis.runes && binding.mutated)
+			: binding.mutated)
 	) {
 		flags |= PROPS_IS_UPDATED;
 	}

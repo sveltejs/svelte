@@ -240,7 +240,11 @@ export const javascript_visitors_runes = {
 				assert.equal(declarator.id.type, 'ObjectPattern');
 
 				/** @type {string[]} */
-				const seen = [];
+				const seen = ['$$slots', '$$events', '$$legacy'];
+
+				if (state.analysis.custom_element) {
+					seen.push('$$host');
+				}
 
 				for (const property of declarator.id.properties) {
 					if (property.type === 'Property') {
@@ -264,7 +268,9 @@ export const javascript_visitors_runes = {
 							initial = b.call('$.proxy', initial);
 						}
 
-						if (binding.reassigned || state.analysis.accessors || initial) {
+						// Until legacy mode is gone, we also need to use the prop source when only mutated is true,
+						// because the parent could be a legacy component which needs coarse-grained reactivity
+						if (binding.reassigned || binding.mutated || state.analysis.accessors || initial) {
 							declarations.push(b.declarator(id, get_prop_source(binding, state, name, initial)));
 						}
 					} else {
