@@ -350,10 +350,17 @@ declare module 'svelte' {
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
 	 *
 	 * */
-	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, any, any>> | Component<Props, Exports, any>, options: {
+	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, any, any>> | Component<Props, Exports, any>, options: {} extends Props ? {
 		target: Document | Element | ShadowRoot;
 		anchor?: Node | undefined;
 		props?: Props | undefined;
+		events?: Record<string, (e: any) => any> | undefined;
+		context?: Map<any, any> | undefined;
+		intro?: boolean | undefined;
+	} : {
+		target: Document | Element | ShadowRoot;
+		props: Props;
+		anchor?: Node | undefined;
 		events?: Record<string, (e: any) => any> | undefined;
 		context?: Map<any, any> | undefined;
 		intro?: boolean | undefined;
@@ -362,9 +369,16 @@ declare module 'svelte' {
 	 * Hydrates a component on the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
 	 *
 	 * */
-	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, any, any>> | Component<Props, Exports, any>, options: {
+	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, any, any>> | Component<Props, Exports, any>, options: {} extends Props ? {
 		target: Document | Element | ShadowRoot;
 		props?: Props | undefined;
+		events?: Record<string, (e: any) => any> | undefined;
+		context?: Map<any, any> | undefined;
+		intro?: boolean | undefined;
+		recover?: boolean | undefined;
+	} : {
+		target: Document | Element | ShadowRoot;
+		props: Props;
 		events?: Record<string, (e: any) => any> | undefined;
 		context?: Map<any, any> | undefined;
 		intro?: boolean | undefined;
