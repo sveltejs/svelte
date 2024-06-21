@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.163
+
+### Patch Changes
+
+- feat: more accurate `render`/`mount`/`hydrate` options ([#12111](https://github.com/sveltejs/svelte/pull/12111))
+
+- fix: better binding interop between runes/non-runes components ([#12123](https://github.com/sveltejs/svelte/pull/12123))
+
 ## 5.0.0-next.162
 
 ### Patch Changes
