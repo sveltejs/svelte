@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-feat: make `render` options optional
+feat: more accurate `render`/`mount`/`hydrate` options
