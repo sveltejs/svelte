@@ -1,6 +1,10 @@
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 
+/**
+ * @typedef {Exclude<{[Key in keyof Date]: Date[Key] extends Function ? Key : never}[keyof Date], symbol>} DateMethodNames
+ */
+
 var inited = false;
 export class ReactiveDate extends Date {
 	/**
@@ -9,7 +13,7 @@ export class ReactiveDate extends Date {
 	#modified_date_to_compare;
 
 	/**
-	 * @type {Map<keyof Date, import("#client").Source<boolean>>}
+	 * @type {Map<DateMethodNames, import("#client").Source<boolean>>}
 	 */
 	#signals = new Map();
 
@@ -36,7 +40,7 @@ export class ReactiveDate extends Date {
 		var date_proto = Date.prototype;
 
 		/**
-		 * @type {Array<keyof Date>}
+		 * @type {Array<DateMethodNames>}
 		 */
 		var versioned_read_props = [
 			'getTimezoneOffset',
@@ -49,22 +53,23 @@ export class ReactiveDate extends Date {
 			'toString'
 		];
 
-		var fine_grained_read_props = /** @type {Array<keyof Date>} */ (
+		var fine_grained_read_props = /** @type {Array<DateMethodNames>} */ (
 			Object.getOwnPropertyNames(Date.prototype).filter(
 				(prop) =>
 					(prop.startsWith('get') || prop.startsWith('to')) &&
-					!versioned_read_props.includes(/** @type {keyof Date} */ (prop))
+					!versioned_read_props.includes(/** @type {DateMethodNames} */ (prop))
 			)
 		);
 
-		var write_props = /** @type {Array<keyof Date>} */ (
+		var write_props = /** @type {Array<DateMethodNames>} */ (
 			Object.getOwnPropertyNames(Date.prototype).filter((prop) => prop.startsWith('set'))
 		);
 
 		for (const method of fine_grained_read_props) {
 			// @ts-ignore
 			proto[method] = function (...args) {
-				var merged_method_name = get_merged_method_name(fine_grained_read_props, method);
+				// methods like getMinutes and getUTCMinutes can use the same signal
+				var merged_method_name = strip_local_and_utc(fine_grained_read_props, method);
 				var sig = this.#signals.get(merged_method_name);
 				if (!sig) {
 					sig = source(false);
@@ -175,35 +180,35 @@ export class ReactiveDate extends Date {
 	}
 
 	/**
-	 * @param  {...keyof Date} methods
+	 * @param  {DateMethodNames} method_name
 	 */
-	#increment_signal(...methods) {
-		methods.forEach((method) => {
-			var signal = this.#signals.get(method);
-			if (!signal) {
-				return;
-			}
-			// not using a number intentionally because its enough (it will increment the internal signal's version)
-			set(signal, !signal.v);
-		});
+	#increment_signal(method_name) {
+		var signal = this.#signals.get(method_name);
+		if (!signal) {
+			return;
+		}
+		// not using a number intentionally because its enough (it will increment the internal signal's version)
+		set(signal, !signal.v);
 	}
 }
 
 /**
- * if there is a method with exactly the same shape but without the `UTC` or `Locale` string in its name,
+ * if there is a method with exactly the same name but without `UTC` or `Locale`,
  * it will return that one otherwise returns the original `method_name`.
  * for instance for `getUTCMonth` we will get `getMonth` and for `toLocaleDateString` we will get `toDateString`
- * @param {Array<keyof Date>} all_method_names
- * @param {keyof Date} method_name
- * @return {keyof Date}
+ * @param {Array<DateMethodNames>} all_method_names
+ * @param {DateMethodNames} method_name
+ * @return {DateMethodNames}
  */
-function get_merged_method_name(all_method_names, method_name) {
+function strip_local_and_utc(all_method_names, method_name) {
 	var modified_method_name = method_name;
 
 	if (method_name.includes('UTC')) {
-		modified_method_name = /**@type {keyof Date}*/ (modified_method_name.replace('UTC', ''));
+		modified_method_name = /**@type {DateMethodNames}*/ (modified_method_name.replace('UTC', ''));
 	} else if (method_name.includes('Locale')) {
-		modified_method_name = /**@type {keyof Date}*/ (modified_method_name.replace('Locale', ''));
+		modified_method_name = /**@type {DateMethodNames}*/ (
+			modified_method_name.replace('Locale', '')
+		);
 	}
 
 	return all_method_names.includes(modified_method_name) ? modified_method_name : method_name;
