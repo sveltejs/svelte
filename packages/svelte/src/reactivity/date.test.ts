@@ -10,13 +10,16 @@ const new_dates = [
 	new Date('2026-04-04T03:03:03.003Z')
 ];
 
-test('date.setDate', () => {
+test('date.setDate and date.setUTCDate', () => {
 	const date = new ReactiveDate(initial_date);
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
 		render_effect(() => {
 			log.push(date.getDate());
+		});
+		render_effect(() => {
+			log.push(date.getUTCDate());
 		});
 	});
 
@@ -29,22 +32,37 @@ test('date.setDate', () => {
 	});
 
 	flushSync(() => {
-		// nothing should happen here
-		date.setDate(new_dates[1].getDate());
+		date.setDate(new_dates[1].getDate()); // no change expected
 	});
 
-	assert.deepEqual(log, [initial_date.getDate(), new_dates[0].getDate(), new_dates[1].getDate()]);
+	flushSync(() => {
+		date.setUTCDate(new_dates[2].getUTCDate());
+	});
+
+	assert.deepEqual(log, [
+		initial_date.getDate(),
+		initial_date.getUTCDate(),
+		new_dates[0].getDate(),
+		new_dates[0].getUTCDate(),
+		new_dates[1].getDate(),
+		new_dates[1].getUTCDate(),
+		new_dates[2].getDate(),
+		new_dates[2].getUTCDate()
+	]);
 
 	cleanup();
 });
 
-test('date.setFullYear', () => {
+test('date.setFullYear and date.setUTCFullYear', () => {
 	const date = new ReactiveDate(initial_date);
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
 		render_effect(() => {
 			log.push(date.getFullYear());
+		});
+		render_effect(() => {
+			log.push(date.getUTCFullYear());
 		});
 	});
 
@@ -57,26 +75,37 @@ test('date.setFullYear', () => {
 	});
 
 	flushSync(() => {
-		// nothing should happen here
-		date.setFullYear(new_dates[1].getFullYear());
+		date.setFullYear(new_dates[1].getFullYear()); // no change expected
+	});
+
+	flushSync(() => {
+		date.setUTCFullYear(new_dates[2].getUTCFullYear());
 	});
 
 	assert.deepEqual(log, [
 		initial_date.getFullYear(),
+		initial_date.getUTCFullYear(),
 		new_dates[0].getFullYear(),
-		new_dates[1].getFullYear()
+		new_dates[0].getUTCFullYear(),
+		new_dates[1].getFullYear(),
+		new_dates[1].getUTCFullYear(),
+		new_dates[2].getFullYear(),
+		new_dates[2].getUTCFullYear()
 	]);
 
 	cleanup();
 });
 
-test('date.setHours', () => {
+test('date.setHours and date.setUTCHours', () => {
 	const date = new ReactiveDate(initial_date);
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
 		render_effect(() => {
 			log.push(date.getHours());
+		});
+		render_effect(() => {
+			log.push(date.getUTCHours());
 		});
 	});
 
@@ -89,26 +118,37 @@ test('date.setHours', () => {
 	});
 
 	flushSync(() => {
-		// nothing should happen here
-		date.setHours(new_dates[1].getHours());
+		date.setHours(new_dates[1].getHours()); // no change expected
+	});
+
+	flushSync(() => {
+		date.setUTCHours(new_dates[2].getUTCHours());
 	});
 
 	assert.deepEqual(log, [
 		initial_date.getHours(),
+		initial_date.getUTCHours(),
 		new_dates[0].getHours(),
-		new_dates[1].getHours()
+		new_dates[0].getUTCHours(),
+		new_dates[1].getHours(),
+		new_dates[1].getUTCHours(),
+		new_dates[2].getHours(),
+		new_dates[2].getUTCHours()
 	]);
 
 	cleanup();
 });
 
-test('date.setMilliseconds', () => {
+test('date.setMilliseconds and date.setUTCMilliseconds', () => {
 	const date = new ReactiveDate(initial_date);
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
 		render_effect(() => {
 			log.push(date.getMilliseconds());
+		});
+		render_effect(() => {
+			log.push(date.getUTCMilliseconds());
 		});
 	});
 
@@ -121,26 +161,37 @@ test('date.setMilliseconds', () => {
 	});
 
 	flushSync(() => {
-		// nothing should happen here
-		date.setMilliseconds(new_dates[1].getMilliseconds());
+		date.setMilliseconds(new_dates[1].getMilliseconds()); // no change expected
+	});
+
+	flushSync(() => {
+		date.setUTCMilliseconds(new_dates[2].getUTCMilliseconds());
 	});
 
 	assert.deepEqual(log, [
 		initial_date.getMilliseconds(),
+		initial_date.getUTCMilliseconds(),
 		new_dates[0].getMilliseconds(),
-		new_dates[1].getMilliseconds()
+		new_dates[0].getUTCMilliseconds(),
+		new_dates[1].getMilliseconds(),
+		new_dates[1].getUTCMilliseconds(),
+		new_dates[2].getMilliseconds(),
+		new_dates[2].getUTCMilliseconds()
 	]);
 
 	cleanup();
 });
 
-test('date.setMinutes', () => {
+test('date.setMinutes and date.setUTCMinutes', () => {
 	const date = new ReactiveDate(initial_date);
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
 		render_effect(() => {
 			log.push(date.getMinutes());
+		});
+		render_effect(() => {
+			log.push(date.getUTCMinutes());
 		});
 	});
 
@@ -153,26 +204,37 @@ test('date.setMinutes', () => {
 	});
 
 	flushSync(() => {
-		// nothing should happen here
-		date.setMinutes(new_dates[1].getMinutes());
+		date.setMinutes(new_dates[1].getMinutes()); // no change expected
+	});
+
+	flushSync(() => {
+		date.setUTCMinutes(new_dates[2].getUTCMinutes());
 	});
 
 	assert.deepEqual(log, [
 		initial_date.getMinutes(),
+		initial_date.getUTCMinutes(),
 		new_dates[0].getMinutes(),
-		new_dates[1].getMinutes()
+		new_dates[0].getUTCMinutes(),
+		new_dates[1].getMinutes(),
+		new_dates[1].getUTCMinutes(),
+		new_dates[2].getMinutes(),
+		new_dates[2].getUTCMinutes()
 	]);
 
 	cleanup();
 });
 
-test('date.setMonth', () => {
+test('date.setMonth and date.setUTCMonth', () => {
 	const date = new ReactiveDate(initial_date);
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
 		render_effect(() => {
 			log.push(date.getMonth());
+		});
+		render_effect(() => {
+			log.push(date.getUTCMonth());
 		});
 	});
 
@@ -185,26 +247,37 @@ test('date.setMonth', () => {
 	});
 
 	flushSync(() => {
-		// nothing should happen here
-		date.setMonth(new_dates[1].getMonth());
+		date.setMonth(new_dates[1].getMonth()); // no change expected
+	});
+
+	flushSync(() => {
+		date.setUTCMonth(new_dates[2].getUTCMonth());
 	});
 
 	assert.deepEqual(log, [
 		initial_date.getMonth(),
+		initial_date.getUTCMonth(),
 		new_dates[0].getMonth(),
-		new_dates[1].getMonth()
+		new_dates[0].getUTCMonth(),
+		new_dates[1].getMonth(),
+		new_dates[1].getUTCMonth(),
+		new_dates[2].getMonth(),
+		new_dates[2].getUTCMonth()
 	]);
 
 	cleanup();
 });
 
-test('date.setSeconds', () => {
+test('date.setSeconds and date.setUTCSeconds', () => {
 	const date = new ReactiveDate(initial_date);
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
 		render_effect(() => {
 			log.push(date.getSeconds());
+		});
+		render_effect(() => {
+			log.push(date.getUTCSeconds());
 		});
 	});
 
@@ -217,14 +290,22 @@ test('date.setSeconds', () => {
 	});
 
 	flushSync(() => {
-		// nothing should happen here
-		date.setSeconds(new_dates[1].getSeconds());
+		date.setSeconds(new_dates[1].getSeconds()); // no change expected
+	});
+
+	flushSync(() => {
+		date.setUTCSeconds(new_dates[2].getUTCSeconds());
 	});
 
 	assert.deepEqual(log, [
 		initial_date.getSeconds(),
+		initial_date.getUTCSeconds(),
 		new_dates[0].getSeconds(),
-		new_dates[1].getSeconds()
+		new_dates[0].getUTCSeconds(),
+		new_dates[1].getSeconds(),
+		new_dates[1].getUTCSeconds(),
+		new_dates[2].getSeconds(),
+		new_dates[2].getUTCSeconds()
 	]);
 
 	cleanup();
@@ -254,230 +335,6 @@ test('date.setTime', () => {
 	});
 
 	assert.deepEqual(log, [initial_date.getTime(), new_dates[0].getTime(), new_dates[1].getTime()]);
-
-	cleanup();
-});
-
-test('date.setUTCDate', () => {
-	const date = new ReactiveDate(initial_date);
-	const log: any = [];
-
-	const cleanup = effect_root(() => {
-		render_effect(() => {
-			log.push(date.getUTCDate());
-		});
-	});
-
-	flushSync(() => {
-		date.setUTCDate(new_dates[0].getUTCDate());
-	});
-
-	flushSync(() => {
-		date.setUTCDate(new_dates[1].getUTCDate());
-	});
-
-	flushSync(() => {
-		// nothing should happen here
-		date.setUTCDate(new_dates[1].getUTCDate());
-	});
-
-	assert.deepEqual(log, [
-		initial_date.getUTCDate(),
-		new_dates[0].getUTCDate(),
-		new_dates[1].getUTCDate()
-	]);
-
-	cleanup();
-});
-
-test('date.setUTCFullYear', () => {
-	const date = new ReactiveDate(initial_date);
-	const log: any = [];
-
-	const cleanup = effect_root(() => {
-		render_effect(() => {
-			log.push(date.getUTCFullYear());
-		});
-	});
-
-	flushSync(() => {
-		date.setUTCFullYear(new_dates[0].getUTCFullYear());
-	});
-
-	flushSync(() => {
-		date.setUTCFullYear(new_dates[1].getUTCFullYear());
-	});
-
-	flushSync(() => {
-		// nothing should happen here
-		date.setUTCFullYear(new_dates[1].getUTCFullYear());
-	});
-
-	assert.deepEqual(log, [
-		initial_date.getUTCFullYear(),
-		new_dates[0].getUTCFullYear(),
-		new_dates[1].getUTCFullYear()
-	]);
-
-	cleanup();
-});
-
-test('date.setUTCHours', () => {
-	const date = new ReactiveDate(initial_date);
-	const log: any = [];
-
-	const cleanup = effect_root(() => {
-		render_effect(() => {
-			log.push(date.getUTCHours());
-		});
-	});
-
-	flushSync(() => {
-		date.setUTCHours(new_dates[0].getUTCHours());
-	});
-
-	flushSync(() => {
-		date.setUTCHours(new_dates[1].getUTCHours());
-	});
-
-	flushSync(() => {
-		// nothing should happen here
-		date.setUTCHours(new_dates[1].getUTCHours());
-	});
-
-	assert.deepEqual(log, [
-		initial_date.getUTCHours(),
-		new_dates[0].getUTCHours(),
-		new_dates[1].getUTCHours()
-	]);
-
-	cleanup();
-});
-
-test('date.setUTCMilliseconds', () => {
-	const date = new ReactiveDate(initial_date);
-	const log: any = [];
-
-	const cleanup = effect_root(() => {
-		render_effect(() => {
-			log.push(date.getUTCMilliseconds());
-		});
-	});
-
-	flushSync(() => {
-		date.setUTCMilliseconds(new_dates[0].getUTCMilliseconds());
-	});
-
-	flushSync(() => {
-		date.setUTCMilliseconds(new_dates[1].getUTCMilliseconds());
-	});
-
-	flushSync(() => {
-		// nothing should happen here
-		date.setUTCMilliseconds(new_dates[1].getUTCMilliseconds());
-	});
-
-	assert.deepEqual(log, [
-		initial_date.getUTCMilliseconds(),
-		new_dates[0].getUTCMilliseconds(),
-		new_dates[1].getUTCMilliseconds()
-	]);
-
-	cleanup();
-});
-
-test('date.setUTCMinutes', () => {
-	const date = new ReactiveDate(initial_date);
-	const log: any = [];
-
-	const cleanup = effect_root(() => {
-		render_effect(() => {
-			log.push(date.getUTCMinutes());
-		});
-	});
-
-	flushSync(() => {
-		date.setUTCMinutes(new_dates[0].getUTCMinutes());
-	});
-
-	flushSync(() => {
-		date.setUTCMinutes(new_dates[1].getUTCMinutes());
-	});
-
-	flushSync(() => {
-		// nothing should happen here
-		date.setUTCMinutes(new_dates[1].getUTCMinutes());
-	});
-
-	assert.deepEqual(log, [
-		initial_date.getUTCMinutes(),
-		new_dates[0].getUTCMinutes(),
-		new_dates[1].getUTCMinutes()
-	]);
-
-	cleanup();
-});
-
-test('date.setUTCMonth', () => {
-	const date = new ReactiveDate(initial_date);
-	const log: any = [];
-
-	const cleanup = effect_root(() => {
-		render_effect(() => {
-			log.push(date.getUTCMonth());
-		});
-	});
-
-	flushSync(() => {
-		date.setUTCMonth(new_dates[0].getUTCMonth());
-	});
-
-	flushSync(() => {
-		date.setUTCMonth(new_dates[1].getUTCMonth());
-	});
-
-	flushSync(() => {
-		// nothing should happen here
-		date.setUTCMonth(new_dates[1].getUTCMonth());
-	});
-
-	assert.deepEqual(log, [
-		initial_date.getUTCMonth(),
-		new_dates[0].getUTCMonth(),
-		new_dates[1].getUTCMonth()
-	]);
-
-	cleanup();
-});
-
-test('date.setUTCSeconds', () => {
-	const date = new ReactiveDate(initial_date);
-	const log: any = [];
-
-	const cleanup = effect_root(() => {
-		render_effect(() => {
-			log.push(date.getUTCSeconds());
-		});
-	});
-
-	flushSync(() => {
-		date.setUTCSeconds(new_dates[0].getUTCSeconds());
-	});
-
-	flushSync(() => {
-		date.setUTCSeconds(new_dates[1].getUTCSeconds());
-	});
-
-	flushSync(() => {
-		// nothing should happen here
-		date.setUTCSeconds(new_dates[1].getUTCSeconds());
-	});
-
-	assert.deepEqual(log, [
-		initial_date.getUTCSeconds(),
-		new_dates[0].getUTCSeconds(),
-		new_dates[1].getUTCSeconds()
-	]);
 
 	cleanup();
 });
