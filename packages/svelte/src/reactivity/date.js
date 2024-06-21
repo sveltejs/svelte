@@ -36,7 +36,7 @@ export class ReactiveDate extends Date {
 		var date_proto = Date.prototype;
 
 		/**
-		 * @type {(keyof Date)[]}
+		 * @type {Array<keyof Date>}
 		 */
 		var versioned_read_props = [
 			'getTimezoneOffset',
@@ -64,10 +64,11 @@ export class ReactiveDate extends Date {
 		for (const method of fine_grained_read_props) {
 			// @ts-ignore
 			proto[method] = function (...args) {
-				var sig = this.#signals.get(method);
+				var merged_method_name = get_merged_method_name(fine_grained_read_props, method);
+				var sig = this.#signals.get(merged_method_name);
 				if (!sig) {
 					sig = source(false);
-					this.#signals.set(method, sig);
+					this.#signals.set(merged_method_name, sig);
 				}
 				get(sig);
 				// @ts-ignore
@@ -114,7 +115,7 @@ export class ReactiveDate extends Date {
 		var is_time_changed = false;
 
 		if (super.getFullYear() !== this.#modified_date_to_compare.getFullYear()) {
-			this.#increment_signal('getFullYear', 'getUTCFullYear');
+			this.#increment_signal('getFullYear');
 			is_date_changed = true;
 		}
 
@@ -126,46 +127,46 @@ export class ReactiveDate extends Date {
 		}
 
 		if (super.getMonth() !== this.#modified_date_to_compare.getMonth()) {
-			this.#increment_signal('getMonth', 'getUTCMonth');
+			this.#increment_signal('getMonth');
 			is_date_changed = true;
 		}
 
 		if (super.getDate() !== this.#modified_date_to_compare.getDate()) {
-			this.#increment_signal('getDate', 'getUTCDate');
+			this.#increment_signal('getDate');
 			is_date_changed = true;
 		}
 
 		if (super.getDay() !== this.#modified_date_to_compare.getDay()) {
-			this.#increment_signal('getDay', 'getUTCDay');
+			this.#increment_signal('getDay');
 			is_date_changed = true;
 		}
 
 		if (super.getHours() !== this.#modified_date_to_compare.getHours()) {
-			this.#increment_signal('getHours', 'getUTCHours');
+			this.#increment_signal('getHours');
 			is_time_changed = true;
 		}
 
 		if (super.getMinutes() !== this.#modified_date_to_compare.getMinutes()) {
-			this.#increment_signal('getMinutes', 'getUTCMinutes');
+			this.#increment_signal('getMinutes');
 			is_time_changed = true;
 		}
 
 		if (super.getSeconds() !== this.#modified_date_to_compare.getSeconds()) {
-			this.#increment_signal('getSeconds', 'getUTCSeconds');
+			this.#increment_signal('getSeconds');
 			is_time_changed = true;
 		}
 
 		if (super.getMilliseconds() !== this.#modified_date_to_compare.getMilliseconds()) {
-			this.#increment_signal('getMilliseconds', 'getUTCMilliseconds');
+			this.#increment_signal('getMilliseconds');
 			is_time_changed = true;
 		}
 
 		if (is_time_changed) {
-			this.#increment_signal('toTimeString', 'toLocaleTimeString');
+			this.#increment_signal('toTimeString');
 		}
 
 		if (is_date_changed) {
-			this.#increment_signal('toDateString', 'toLocaleDateString');
+			this.#increment_signal('toDateString');
 		}
 
 		if (is_time_changed || is_date_changed) {
@@ -186,4 +187,24 @@ export class ReactiveDate extends Date {
 			set(signal, !signal.v);
 		});
 	}
+}
+
+/**
+ * if there is a method with exactly the same shape but without the `UTC` or `Locale` string in its name,
+ * it will return that one otherwise returns the original `method_name`.
+ * for instance for `getUTCMonth` we will get `getMonth` and for `toLocaleDateString` we will get `toDateString`
+ * @param {Array<keyof Date>} all_method_names
+ * @param {keyof Date} method_name
+ * @return {keyof Date}
+ */
+function get_merged_method_name(all_method_names, method_name) {
+	var modified_method_name = method_name;
+
+	if (method_name.includes('UTC')) {
+		modified_method_name = /**@type {keyof Date}*/ (modified_method_name.replace('UTC', ''));
+	} else if (method_name.includes('Locale')) {
+		modified_method_name = /**@type {keyof Date}*/ (modified_method_name.replace('Locale', ''));
+	}
+
+	return all_method_names.includes(modified_method_name) ? modified_method_name : method_name;
 }
