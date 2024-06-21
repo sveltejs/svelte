@@ -1086,6 +1086,7 @@ function check_element(node, state) {
 						if (
 							node.type === 'SvelteElement' ||
 							node.type === 'SlotElement' ||
+							node.type === 'Component' ||
 							(node.type === 'RegularElement' &&
 								(a11y_labelable.includes(node.name) || node.name === 'slot'))
 						) {
