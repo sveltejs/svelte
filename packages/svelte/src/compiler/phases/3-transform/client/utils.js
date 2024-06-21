@@ -391,19 +391,20 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 					),
 					b.call('$.untrack', b.id('$' + left_name))
 				);
-			} else if (!state.analysis.runes || (binding.mutated && binding.kind === 'bindable_prop')) {
+			} else if (
+				!state.analysis.runes ||
+				// this condition can go away once legacy mode is gone; only necessary for interop with legacy parent bindings
+				(binding.mutated && binding.kind === 'bindable_prop')
+			) {
 				if (binding.kind === 'bindable_prop') {
 					return b.call(
 						left,
-						b.sequence([
-							b.assignment(
-								node.operator,
-								/** @type {import('estree').Pattern} */ (visit(node.left)),
-								value
-							),
-							b.call(left)
-						]),
-						b.true
+						b.assignment(
+							node.operator,
+							/** @type {import('estree').Pattern} */ (visit(node.left)),
+							value
+						),
+						b.call(left)
 					);
 				} else {
 					return b.call(
