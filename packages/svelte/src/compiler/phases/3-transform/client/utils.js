@@ -404,7 +404,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 							/** @type {import('estree').Pattern} */ (visit(node.left)),
 							value
 						),
-						b.call(left)
+						b.true
 					);
 				} else {
 					return b.call(

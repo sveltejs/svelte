@@ -268,16 +268,14 @@ export function prop(props, key, flags, fallback) {
 	// `bind:foo` which means we can just call `$$props.foo = value` directly
 	if (setter) {
 		var legacy_parent = props.$$legacy;
-		return function (/** @type {any} */ assigned_value, /** @type {V} */ new_value) {
+		return function (/** @type {any} */ assigned_value, /** @type {boolean} */ mutation) {
 			if (arguments.length > 0) {
 				// We don't want to notify if the value was mutated and the parent is in runes mode.
 				// In that case the state proxy (if it exists) should take care of the notification.
 				// If the parent is not in runes mode, we need to notify on mutation, too, that the prop
 				// has changed because the parent will not be able to detect the change otherwise.
-				let mutation = arguments.length === 2;
 				if (!runes || !mutation || legacy_parent) {
-					// upon reassignment only the first argument is used
-					/** @type {Function} */ (setter)(!mutation ? assigned_value : new_value);
+					/** @type {Function} */ (setter)(mutation ? getter() : assigned_value);
 				}
 				return assigned_value;
 			} else {
@@ -311,7 +309,7 @@ export function prop(props, key, flags, fallback) {
 
 	if (!immutable) current_value.equals = safe_equals;
 
-	return function (/** @type {any} */ reassigned_value, /** @type {V} */ new_value) {
+	return function (/** @type {any} */ reassigned_value, /** @type {boolean} */ mutation) {
 		var current = get(current_value);
 
 		// legacy nonsense — need to ensure the source is invalidated when necessary
@@ -327,8 +325,7 @@ export function prop(props, key, flags, fallback) {
 		}
 
 		if (arguments.length > 0) {
-			// upon reassignment only the first argument is used
-			const value = arguments.length === 1 ? reassigned_value : new_value;
+			const value = mutation ? get(current_value) : reassigned_value;
 			if (!current_value.equals(value)) {
 				from_child = true;
 				set(inner_current_value, value);
