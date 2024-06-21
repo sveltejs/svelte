@@ -652,6 +652,8 @@ export function is_prop_source(binding, state) {
 			state.analysis.accessors ||
 			binding.reassigned ||
 			binding.initial ||
+			// Until legacy mode is gone, we also need to use the prop source when only mutated is true,
+			// because the parent could be a legacy component which needs coarse-grained reactivity
 			binding.mutated)
 	);
 }

@@ -269,8 +269,6 @@ export const javascript_visitors_runes = {
 							initial = b.call('$.proxy', initial);
 						}
 
-						// Until legacy mode is gone, we also need to use the prop source when only mutated is true,
-						// because the parent could be a legacy component which needs coarse-grained reactivity
 						if (is_prop_source(binding, state)) {
 							declarations.push(b.declarator(id, get_prop_source(binding, state, name, initial)));
 						}
