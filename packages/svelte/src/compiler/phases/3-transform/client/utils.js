@@ -89,7 +89,7 @@ export function serialize_get_binding(node, state) {
 	}
 
 	if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
-		if (!state.analysis.runes || binding.reassigned || binding.initial || binding.mutated) {
+		if (is_prop_source(binding, state)) {
 			return b.call(node);
 		}
 
@@ -540,10 +540,7 @@ function get_hoistable_params(node, context) {
 			} else if (
 				// If we are referencing a simple $$props value, then we need to reference the object property instead
 				(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
-				!binding.reassigned &&
-				!binding.mutated && // this can be removed once legacy mode is gone
-				binding.initial === null &&
-				!context.state.analysis.accessors
+				!is_prop_source(binding, context.state)
 			) {
 				push_unique(b.id('$$props'));
 			} else {
@@ -640,6 +637,23 @@ export function get_prop_source(binding, state, name, initial) {
 	}
 
 	return b.call('$.prop', ...args);
+}
+
+/**
+ *
+ * @param {import('#compiler').Binding} binding
+ * @param {import('./types').ClientTransformState} state
+ * @returns
+ */
+export function is_prop_source(binding, state) {
+	return (
+		(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
+		(!state.analysis.runes ||
+			state.analysis.accessors ||
+			binding.reassigned ||
+			binding.initial ||
+			binding.mutated)
+	);
 }
 
 /**

@@ -4,6 +4,7 @@ import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
 import {
 	get_prop_source,
+	is_prop_source,
 	is_state_source,
 	serialize_proxy_reassignment,
 	should_proxy_or_freeze
@@ -270,7 +271,7 @@ export const javascript_visitors_runes = {
 
 						// Until legacy mode is gone, we also need to use the prop source when only mutated is true,
 						// because the parent could be a legacy component which needs coarse-grained reactivity
-						if (binding.reassigned || binding.mutated || state.analysis.accessors || initial) {
+						if (is_prop_source(binding, state)) {
 							declarations.push(b.declarator(id, get_prop_source(binding, state, name, initial)));
 						}
 					} else {
