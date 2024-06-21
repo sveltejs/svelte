@@ -269,6 +269,8 @@ function open(parser) {
 			e.expected_identifier(parser.index);
 		}
 
+		let slice_end = parser.index;
+
 		parser.eat('(', true);
 
 		let parentheses = 1;
@@ -280,32 +282,32 @@ function open(parser) {
 			params += parser.read(/^./);
 		}
 
-		const function_expression = parse_expression_at(`function ${name}(${params}){}`, parser.ts, 0);
+		let function_expression = /** @type {import('estree').ArrowFunctionExpression} */ (
+			parse_expression_at(
+				parser.template.slice(0, slice_end).replace(/\S/g, ' ') + `(${params}) => {}`,
+				parser.ts,
+				0
+			)
+		);
 
 		parser.index += 2;
 
-		if (function_expression.type === 'FunctionExpression') {
-			/** @type {ReturnType<typeof parser.append<import('#compiler').SnippetBlock>>} */
-			const block = parser.append({
-				type: 'SnippetBlock',
-				start,
-				end: -1,
-				expression: {
-					type: 'Identifier',
-					start: name_start,
-					end: name_end,
-					name
-				},
-				parameters: function_expression.params.map((param) => {
-					param.start += start + 1;
-					param.end += start + 1;
-					return param;
-				}),
-				body: create_fragment()
-			});
-			parser.stack.push(block);
-			parser.fragments.push(block.body);
-		}
+		/** @type {ReturnType<typeof parser.append<import('#compiler').SnippetBlock>>} */
+		const block = parser.append({
+			type: 'SnippetBlock',
+			start,
+			end: -1,
+			expression: {
+				type: 'Identifier',
+				start: name_start,
+				end: name_end,
+				name
+			},
+			parameters: function_expression.params,
+			body: create_fragment()
+		});
+		parser.stack.push(block);
+		parser.fragments.push(block.body);
 
 		return;
 	}
