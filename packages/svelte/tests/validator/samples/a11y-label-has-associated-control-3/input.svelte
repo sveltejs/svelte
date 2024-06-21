@@ -3,9 +3,5 @@
 </script>
 
 <label>
-  <slot />
-</label>
-
-<label>
-  <Component />
+  {@render x()}
 </label>
