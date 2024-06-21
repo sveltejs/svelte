@@ -3,6 +3,7 @@ import read_expression from '../read/expression.js';
 import * as e from '../../../errors.js';
 import { create_fragment } from '../utils/create.js';
 import { walk } from 'zimmerframe';
+import { parse_expression_at } from '../acorn.js';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
@@ -268,39 +269,28 @@ function open(parser) {
 			e.expected_identifier(parser.index);
 		}
 
+		let slice_end = parser.index;
+
 		parser.eat('(', true);
 
-		parser.allow_whitespace();
+		let parentheses = 1;
+		let params = '';
 
-		/** @type {import('estree').Pattern[]} */
-		const parameters = [];
-
-		while (!parser.match(')')) {
-			let pattern = read_pattern(parser, true);
-
-			parser.allow_whitespace();
-			if (parser.eat('=')) {
-				parser.allow_whitespace();
-				const right = read_expression(parser);
-				pattern = {
-					type: 'AssignmentPattern',
-					left: pattern,
-					right: right,
-					start: pattern.start,
-					end: right.end
-				};
-			}
-
-			parameters.push(pattern);
-
-			if (!parser.eat(',')) break;
-			parser.allow_whitespace();
+		while (!parser.match(')') || parentheses !== 1) {
+			if (parser.match('(')) parentheses++;
+			if (parser.match(')')) parentheses--;
+			params += parser.read(/^./);
 		}
 
-		parser.eat(')', true);
+		let function_expression = /** @type {import('estree').ArrowFunctionExpression} */ (
+			parse_expression_at(
+				parser.template.slice(0, slice_end).replace(/\S/g, ' ') + `(${params}) => {}`,
+				parser.ts,
+				0
+			)
+		);
 
-		parser.allow_whitespace();
-		parser.eat('}', true);
+		parser.index += 2;
 
 		/** @type {ReturnType<typeof parser.append<import('#compiler').SnippetBlock>>} */
 		const block = parser.append({
@@ -313,10 +303,9 @@ function open(parser) {
 				end: name_end,
 				name
 			},
-			parameters,
+			parameters: function_expression.params,
 			body: create_fragment()
 		});
-
 		parser.stack.push(block);
 		parser.fragments.push(block.body);
 
