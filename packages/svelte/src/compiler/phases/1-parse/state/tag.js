@@ -3,6 +3,7 @@ import read_expression from '../read/expression.js';
 import * as e from '../../../errors.js';
 import { create_fragment } from '../utils/create.js';
 import { walk } from 'zimmerframe';
+import { parse_expression_at } from '../acorn.js';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
@@ -270,68 +271,41 @@ function open(parser) {
 
 		parser.eat('(', true);
 
-		parser.allow_whitespace();
+		let parentheses = 1;
+		let params = '';
 
-		/** @type {import('estree').Pattern[]} */
-		const parameters = [];
-
-		while (!parser.match(')')) {
-			let pattern = read_pattern(parser, true);
-
-			parser.allow_whitespace();
-			if (parser.eat('=')) {
-				parser.allow_whitespace();
-
-				let index = parser.index;
-				let right = read_expression(parser);
-
-				parser.allow_whitespace();
-
-				// multiple assignment expression will be confused by the parser for a sequence expression
-				// so if the returned value is a sequence expression we use the first expression as the
-				// right and we reset the parser.index
-				if (right.type === 'SequenceExpression' && parser.template[index] !== '(') {
-					right = right.expressions[0];
-					parser.index = /** @type {number} */ (right.end);
-				}
-
-				pattern = {
-					type: 'AssignmentPattern',
-					left: pattern,
-					right,
-					start: pattern.start,
-					end: right.end
-				};
-			}
-
-			parameters.push(pattern);
-
-			if (!parser.eat(',')) break;
-			parser.allow_whitespace();
+		while (!parser.match(')') || parentheses !== 1) {
+			if (parser.match('(')) parentheses++;
+			if (parser.match(')')) parentheses--;
+			params += parser.read(/^./);
 		}
 
-		parser.eat(')', true);
+		const function_expression = parse_expression_at(`function ${name}(${params}){}`, parser.ts, 0);
 
-		parser.allow_whitespace();
-		parser.eat('}', true);
+		parser.index += 2;
 
-		/** @type {ReturnType<typeof parser.append<import('#compiler').SnippetBlock>>} */
-		const block = parser.append({
-			type: 'SnippetBlock',
-			start,
-			end: -1,
-			expression: {
-				type: 'Identifier',
-				start: name_start,
-				end: name_end,
-				name
-			},
-			parameters,
-			body: create_fragment()
-		});
-
-		parser.stack.push(block);
-		parser.fragments.push(block.body);
+		if (function_expression.type === 'FunctionExpression') {
+			/** @type {ReturnType<typeof parser.append<import('#compiler').SnippetBlock>>} */
+			const block = parser.append({
+				type: 'SnippetBlock',
+				start,
+				end: -1,
+				expression: {
+					type: 'Identifier',
+					start: name_start,
+					end: name_end,
+					name
+				},
+				parameters: function_expression.params.map((param) => {
+					param.start += start + 1;
+					param.end += start + 1;
+					return param;
+				}),
+				body: create_fragment()
+			});
+			parser.stack.push(block);
+			parser.fragments.push(block.body);
+		}
 
 		return;
 	}
