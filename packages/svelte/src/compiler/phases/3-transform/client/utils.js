@@ -89,7 +89,7 @@ export function serialize_get_binding(node, state) {
 	}
 
 	if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
-		if (!state.analysis.runes || binding.reassigned || binding.initial) {
+		if (is_prop_source(binding, state)) {
 			return b.call(node);
 		}
 
@@ -391,18 +391,20 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 					),
 					b.call('$.untrack', b.id('$' + left_name))
 				);
-			} else if (!state.analysis.runes) {
+			} else if (
+				!state.analysis.runes ||
+				// this condition can go away once legacy mode is gone; only necessary for interop with legacy parent bindings
+				(binding.mutated && binding.kind === 'bindable_prop')
+			) {
 				if (binding.kind === 'bindable_prop') {
 					return b.call(
 						left,
-						b.sequence([
-							b.assignment(
-								node.operator,
-								/** @type {import('estree').Pattern} */ (visit(node.left)),
-								value
-							),
-							b.call(left)
-						])
+						b.assignment(
+							node.operator,
+							/** @type {import('estree').Pattern} */ (visit(node.left)),
+							value
+						),
+						b.true
 					);
 				} else {
 					return b.call(
@@ -538,9 +540,7 @@ function get_hoistable_params(node, context) {
 			} else if (
 				// If we are referencing a simple $$props value, then we need to reference the object property instead
 				(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
-				!binding.reassigned &&
-				binding.initial === null &&
-				!context.state.analysis.accessors
+				!is_prop_source(binding, context.state)
 			) {
 				push_unique(b.id('$$props'));
 			} else {
@@ -602,7 +602,9 @@ export function get_prop_source(binding, state, name, initial) {
 
 	if (
 		state.analysis.accessors ||
-		(state.analysis.immutable ? binding.reassigned : binding.mutated)
+		(state.analysis.immutable
+			? binding.reassigned || (state.analysis.runes && binding.mutated)
+			: binding.mutated)
 	) {
 		flags |= PROPS_IS_UPDATED;
 	}
@@ -635,6 +637,25 @@ export function get_prop_source(binding, state, name, initial) {
 	}
 
 	return b.call('$.prop', ...args);
+}
+
+/**
+ *
+ * @param {import('#compiler').Binding} binding
+ * @param {import('./types').ClientTransformState} state
+ * @returns
+ */
+export function is_prop_source(binding, state) {
+	return (
+		(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
+		(!state.analysis.runes ||
+			state.analysis.accessors ||
+			binding.reassigned ||
+			binding.initial ||
+			// Until legacy mode is gone, we also need to use the prop source when only mutated is true,
+			// because the parent could be a legacy component which needs coarse-grained reactivity
+			binding.mutated)
+	);
 }
 
 /**

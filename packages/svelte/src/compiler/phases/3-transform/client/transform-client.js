@@ -363,7 +363,12 @@ export function client_component(source, analysis, options) {
 	}
 
 	if (analysis.uses_props || analysis.uses_rest_props) {
-		const to_remove = [b.literal('children'), b.literal('$$slots'), b.literal('$$events')];
+		const to_remove = [
+			b.literal('children'),
+			b.literal('$$slots'),
+			b.literal('$$events'),
+			b.literal('$$legacy')
+		];
 		if (analysis.custom_element) {
 			to_remove.push(b.literal('$$host'));
 		}

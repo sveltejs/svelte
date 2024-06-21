@@ -900,6 +900,10 @@ function serialize_inline_component(node, component_name, context) {
 		push_prop(b.init('$$slots', b.object(serialized_slots)));
 	}
 
+	if (!context.state.analysis.runes) {
+		push_prop(b.init('$$legacy', b.true));
+	}
+
 	const props_expression =
 		props_and_spreads.length === 0 ||
 		(props_and_spreads.length === 1 && Array.isArray(props_and_spreads[0]))

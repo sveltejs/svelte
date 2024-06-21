@@ -267,9 +267,16 @@ export function prop(props, key, flags, fallback) {
 	// intermediate mode — prop is written to, but the parent component had
 	// `bind:foo` which means we can just call `$$props.foo = value` directly
 	if (setter) {
-		return function (/** @type {V} */ value) {
-			if (arguments.length === 1) {
-				/** @type {Function} */ (setter)(value);
+		var legacy_parent = props.$$legacy;
+		return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
+			if (arguments.length > 0) {
+				// We don't want to notify if the value was mutated and the parent is in runes mode.
+				// In that case the state proxy (if it exists) should take care of the notification.
+				// If the parent is not in runes mode, we need to notify on mutation, too, that the prop
+				// has changed because the parent will not be able to detect the change otherwise.
+				if (!runes || !mutation || legacy_parent) {
+					/** @type {Function} */ (setter)(mutation ? getter() : value);
+				}
 				return value;
 			} else {
 				return getter();
@@ -302,7 +309,7 @@ export function prop(props, key, flags, fallback) {
 
 	if (!immutable) current_value.equals = safe_equals;
 
-	return function (/** @type {V} */ value) {
+	return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
 		var current = get(current_value);
 
 		// legacy nonsense — need to ensure the source is invalidated when necessary
@@ -318,9 +325,11 @@ export function prop(props, key, flags, fallback) {
 		}
 
 		if (arguments.length > 0) {
-			if (!current_value.equals(value)) {
+			const new_value = mutation ? get(current_value) : value;
+
+			if (!current_value.equals(new_value)) {
 				from_child = true;
-				set(inner_current_value, value);
+				set(inner_current_value, new_value);
 				get(current_value); // force a synchronisation immediately
 			}
 
