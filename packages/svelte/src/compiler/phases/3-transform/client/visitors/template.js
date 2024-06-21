@@ -21,7 +21,9 @@ import {
 	function_visitor,
 	get_assignment_value,
 	serialize_get_binding,
-	serialize_set_binding
+	serialize_set_binding,
+	create_derived,
+	create_derived_block_argument
 } from '../utils.js';
 import {
 	AttributeAliases,
@@ -647,15 +649,6 @@ function collect_parent_each_blocks(context) {
 }
 
 /**
- * Svelte legacy mode should use safe equals in most places, runes mode shouldn't
- * @param {import('../types.js').ComponentClientTransformState} state
- * @param {import('estree').Expression} arg
- */
-function create_derived(state, arg) {
-	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
-}
-
-/**
  * @param {import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf} node
  * @param {string} component_name
  * @param {import('../types.js').ComponentContext} context
@@ -798,7 +791,9 @@ function serialize_inline_component(node, component_name, context) {
 				const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
 				push_prop(
 					b.set(attribute.name, [
-						b.stmt(serialize_set_binding(assignment, context, () => context.visit(assignment)))
+						b.stmt(
+							serialize_set_binding(assignment, context, () => context.visit(assignment), false)
+						)
 					])
 				);
 			}
@@ -886,7 +881,12 @@ function serialize_inline_component(node, component_name, context) {
 
 		if (slot_name === 'default' && !has_children_prop) {
 			push_prop(
-				b.init('children', context.state.options.dev ? b.call('$.wrap_snippet', slot_fn) : slot_fn)
+				b.init(
+					'children',
+					context.state.options.dev
+						? b.call('$.wrap_snippet', slot_fn, b.id(context.state.analysis.name))
+						: slot_fn
+				)
 			);
 			// We additionally add the default slot as a boolean, so that the slot render function on the other
 			// side knows it should get the content to render from $$props.children
@@ -1021,7 +1021,7 @@ function serialize_bind_this(bind_this, context, node) {
 	const bind_this_id = /** @type {import('estree').Expression} */ (context.visit(bind_this));
 	const ids = Array.from(each_ids.values()).map((id) => b.id('$$value_' + id[0]));
 	const assignment = b.assignment('=', bind_this, b.id('$$value'));
-	const update = serialize_set_binding(assignment, context, () => context.visit(assignment));
+	const update = serialize_set_binding(assignment, context, () => context.visit(assignment), false);
 
 	for (const [binding, [, , expression]] of each_ids) {
 		// reset expressions to what they were before
@@ -2030,7 +2030,7 @@ export const template_visitors = {
 		}
 
 		if (needs_input_reset && node.name === 'input') {
-			context.state.init.push(b.stmt(b.call('$.remove_input_attr_defaults', context.state.node)));
+			context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
 		}
 
 		if (needs_content_reset && node.name === 'textarea') {
@@ -2395,7 +2395,7 @@ export const template_visitors = {
 				if (assignment.left.type !== 'Identifier' && assignment.left.type !== 'MemberExpression') {
 					// serialize_set_binding turns other patterns into IIFEs and separates the assignments
 					// into separate expressions, at which point this is called again with an identifier or member expression
-					return serialize_set_binding(assignment, context, () => assignment);
+					return serialize_set_binding(assignment, context, () => assignment, false);
 				}
 				const left = object(assignment.left);
 				const value = get_assignment_value(assignment, context);
@@ -2433,7 +2433,7 @@ export const template_visitors = {
 				: b.id(node.index);
 		const item = each_node_meta.item;
 		const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(item.name));
-		binding.expression = (id) => {
+		binding.expression = (/** @type {import("estree").Identifier} */ id) => {
 			const item_with_loc = with_loc(item, id);
 			return b.call('$.unwrap', item_with_loc);
 		};
@@ -2587,6 +2587,45 @@ export const template_visitors = {
 	AwaitBlock(node, context) {
 		context.state.template.push('<!>');
 
+		let then_block;
+		let catch_block;
+
+		if (node.then) {
+			/** @type {import('estree').Pattern[]} */
+			const args = [b.id('$$anchor')];
+			const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.then));
+
+			if (node.value) {
+				const argument = create_derived_block_argument(node.value, context);
+
+				args.push(argument.id);
+
+				if (argument.declarations !== null) {
+					block.body.unshift(...argument.declarations);
+				}
+			}
+
+			then_block = b.arrow(args, block);
+		}
+
+		if (node.catch) {
+			/** @type {import('estree').Pattern[]} */
+			const args = [b.id('$$anchor')];
+			const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.catch));
+
+			if (node.error) {
+				const argument = create_derived_block_argument(node.error, context);
+
+				args.push(argument.id);
+
+				if (argument.declarations !== null) {
+					block.body.unshift(...argument.declarations);
+				}
+			}
+
+			catch_block = b.arrow(args, block);
+		}
+
 		context.state.init.push(
 			b.stmt(
 				b.call(
@@ -2599,28 +2638,8 @@ export const template_visitors = {
 								/** @type {import('estree').BlockStatement} */ (context.visit(node.pending))
 							)
 						: b.literal(null),
-					node.then
-						? b.arrow(
-								node.value
-									? [
-											b.id('$$anchor'),
-											/** @type {import('estree').Pattern} */ (context.visit(node.value))
-										]
-									: [b.id('$$anchor')],
-								/** @type {import('estree').BlockStatement} */ (context.visit(node.then))
-							)
-						: b.literal(null),
-					node.catch
-						? b.arrow(
-								node.error
-									? [
-											b.id('$$anchor'),
-											/** @type {import('estree').Pattern} */ (context.visit(node.error))
-										]
-									: [b.id('$$anchor')],
-								/** @type {import('estree').BlockStatement} */ (context.visit(node.catch))
-							)
-						: b.literal(null)
+					then_block,
+					catch_block
 				)
 			)
 		);
@@ -2699,7 +2718,7 @@ export const template_visitors = {
 		let snippet = b.arrow(args, body);
 
 		if (context.state.options.dev) {
-			snippet = b.call('$.wrap_snippet', snippet);
+			snippet = b.call('$.wrap_snippet', snippet, b.id(context.state.analysis.name));
 		}
 
 		const declaration = b.var(node.expression, snippet);
@@ -2757,6 +2776,7 @@ export const template_visitors = {
 				assignment,
 				context,
 				() => /** @type {import('estree').Expression} */ (visit(assignment)),
+				false,
 				{
 					skip_proxy_and_freeze: true
 				}

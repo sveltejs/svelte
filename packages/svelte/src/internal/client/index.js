@@ -21,7 +21,7 @@ export { element } from './dom/blocks/svelte-element.js';
 export { head } from './dom/blocks/svelte-head.js';
 export { action } from './dom/elements/actions.js';
 export {
-	remove_input_attr_defaults,
+	remove_input_defaults,
 	set_attribute,
 	set_attributes,
 	set_custom_element_data,

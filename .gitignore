@@ -22,3 +22,5 @@ coverage
 .DS_Store
 
 tmp
+
+benchmarking/compare/.results

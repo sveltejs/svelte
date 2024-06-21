@@ -93,7 +93,8 @@ function create_effect(type, fn, sync) {
 		parent: is_root ? null : current_effect,
 		prev: null,
 		teardown: null,
-		transitions: null
+		transitions: null,
+		version: 0
 	};
 
 	if (DEV) {
@@ -342,7 +343,7 @@ export function destroy_effect(effect, remove_dom = true) {
 	}
 
 	destroy_effect_children(effect, remove_dom);
-	remove_reactions(effect, 0);
+	remove_reactions(effect);
 	set_signal_status(effect, DESTROYED);
 
 	if (effect.transitions) {

@@ -16,11 +16,11 @@ export default function State_proxy_literal($$anchor) {
 	var fragment = root();
 	var input = $.first_child(fragment);
 
-	$.remove_input_attr_defaults(input);
+	$.remove_input_defaults(input);
 
 	var input_1 = $.sibling($.sibling(input, true));
 
-	$.remove_input_attr_defaults(input_1);
+	$.remove_input_defaults(input_1);
 
 	var button = $.sibling($.sibling(input_1, true));
 

@@ -60,3 +60,17 @@ jobs:
       - name: build and check generated types
         if: (${{ success() }} || ${{ failure() }}) # ensures this step runs even if previous steps fail
         run: pnpm build && { [ "`git status --porcelain=v1`" == "" ] || (echo "Generated types have changed — please regenerate types locally and commit the changes after you have reviewed them"; git diff; exit 1); }
+  Benchmarks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm bench
+        env:
+          CI: true

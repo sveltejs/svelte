@@ -4,8 +4,6 @@ import {
 	current_effect,
 	remove_reactions,
 	set_signal_status,
-	mark_reactions,
-	current_skip_reaction,
 	execute_reaction_fn,
 	destroy_effect_children,
 	increment_version
@@ -80,28 +78,21 @@ function destroy_derived_children(signal) {
 
 /**
  * @param {import('#client').Derived} derived
- * @param {boolean} force_schedule
  * @returns {void}
  */
-export function update_derived(derived, force_schedule) {
+export function update_derived(derived) {
 	var previous_updating_derived = updating_derived;
 	updating_derived = true;
 	destroy_derived_children(derived);
 	var value = execute_reaction_fn(derived);
 	updating_derived = previous_updating_derived;
 
-	var status =
-		(current_skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null
-			? MAYBE_DIRTY
-			: CLEAN;
-
+	var status = (derived.f & UNOWNED) !== 0 && derived.deps !== null ? MAYBE_DIRTY : CLEAN;
 	set_signal_status(derived, status);
 
 	if (!derived.equals(value)) {
 		derived.v = value;
 		derived.version = increment_version();
-
-		mark_reactions(derived, force_schedule);
 	}
 }
 
@@ -111,7 +102,7 @@ export function update_derived(derived, force_schedule) {
  */
 export function destroy_derived(signal) {
 	destroy_derived_children(signal);
-	remove_reactions(signal, 0);
+	remove_reactions(signal);
 	set_signal_status(signal, DESTROYED);
 
 	// TODO we need to ensure we remove the derived from any parent derives

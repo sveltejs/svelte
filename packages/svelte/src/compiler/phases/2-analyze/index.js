@@ -111,23 +111,24 @@ function get_delegated_event(event_name, handler, context) {
 		if (binding != null) {
 			for (const { path } of binding.references) {
 				const parent = path.at(-1);
-				if (parent == null) {
-					return non_hoistable;
-				}
+				if (parent == null) return non_hoistable;
+
+				const grandparent = path.at(-2);
 
 				/** @type {import('#compiler').RegularElement | null} */
 				let element = null;
 				/** @type {string | null} */
 				let event_name = null;
 				if (parent.type === 'OnDirective') {
-					element = /** @type {import('#compiler').RegularElement} */ (path.at(-2));
+					element = /** @type {import('#compiler').RegularElement} */ (grandparent);
 					event_name = parent.name;
 				} else if (
 					parent.type === 'ExpressionTag' &&
-					is_event_attribute(/** @type {import('#compiler').Attribute} */ (path.at(-2)))
+					grandparent?.type === 'Attribute' &&
+					is_event_attribute(grandparent)
 				) {
 					element = /** @type {import('#compiler').RegularElement} */ (path.at(-3));
-					const attribute = /** @type {import('#compiler').Attribute} */ (path.at(-2));
+					const attribute = /** @type {import('#compiler').Attribute} */ (grandparent);
 					event_name = get_attribute_event_name(attribute.name);
 				}
 
