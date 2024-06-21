@@ -156,6 +156,14 @@ render(NewComponent, {
 		x: ''
 	}
 });
+// @ts-expect-error
+render(NewComponent);
+render(NewComponent, {
+	props: {
+		// @ts-expect-error
+		prop: 1
+	}
+});
 
 // --------------------------------------------------------------------------- interop
 
@@ -276,9 +284,22 @@ hydrate(functionComponent, {
 render(functionComponent, {
 	props: {
 		binding: true,
-		readonly: 'foo',
+		readonly: 'foo'
+	}
+});
+// @ts-expect-error
+render(functionComponent);
+render(functionComponent, {
+	// @ts-expect-error
+	props: {
+		binding: true
+	}
+});
+render(functionComponent, {
+	props: {
+		binding: true,
 		// @ts-expect-error
-		x: ''
+		readonly: 1
 	}
 });
 
