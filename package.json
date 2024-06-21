@@ -49,7 +49,12 @@
   },
   "pnpm": {
     "overrides": {
-      "jimp>xml2js": "^0.6.0"
+      "jimp>xml2js": "^0.6.0",
+      "abab": "npm:@nolyfill/abab@latest",
+      "array.prototype.flat": "npm:@nolyfill/array.prototype.flat@latest",
+      "hasown": "npm:@nolyfill/hasown@latest",
+      "side-channel": "npm:@nolyfill/side-channel@latest",
+      "string.prototype.codepointat": "npm:@nolyfill/string.prototype.codepointat@latest"
     }
   }
 }
