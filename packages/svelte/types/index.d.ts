@@ -350,39 +350,39 @@ declare module 'svelte' {
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
 	 *
 	 * */
-	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, any, any>> | Component<Props, Exports, any>, options: {} extends Props ? {
+	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
 		target: Document | Element | ShadowRoot;
-		anchor?: Node | undefined;
-		props?: Props | undefined;
-		events?: Record<string, (e: any) => any> | undefined;
-		context?: Map<any, any> | undefined;
-		intro?: boolean | undefined;
+		anchor?: Node;
+		props?: Props;
+		events?: Record<string, (e: any) => any>;
+		context?: Map<any, any>;
+		intro?: boolean;
 	} : {
 		target: Document | Element | ShadowRoot;
 		props: Props;
-		anchor?: Node | undefined;
-		events?: Record<string, (e: any) => any> | undefined;
-		context?: Map<any, any> | undefined;
-		intro?: boolean | undefined;
+		anchor?: Node;
+		events?: Record<string, (e: any) => any>;
+		context?: Map<any, any>;
+		intro?: boolean;
 	}): Exports;
 	/**
 	 * Hydrates a component on the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
 	 *
 	 * */
-	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, any, any>> | Component<Props, Exports, any>, options: {} extends Props ? {
+	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
 		target: Document | Element | ShadowRoot;
-		props?: Props | undefined;
-		events?: Record<string, (e: any) => any> | undefined;
-		context?: Map<any, any> | undefined;
-		intro?: boolean | undefined;
-		recover?: boolean | undefined;
+		props?: Props;
+		events?: Record<string, (e: any) => any>;
+		context?: Map<any, any>;
+		intro?: boolean;
+		recover?: boolean;
 	} : {
 		target: Document | Element | ShadowRoot;
 		props: Props;
-		events?: Record<string, (e: any) => any> | undefined;
-		context?: Map<any, any> | undefined;
-		intro?: boolean | undefined;
-		recover?: boolean | undefined;
+		events?: Record<string, (e: any) => any>;
+		context?: Map<any, any>;
+		intro?: boolean;
+		recover?: boolean;
 	}): Exports;
 	/**
 	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
@@ -576,8 +576,8 @@ declare module 'svelte/compiler' {
 	 * https://svelte.dev/docs/svelte-compiler#svelte-parse
 	 * */
 	export function parse(source: string, options?: {
-		filename?: string | undefined;
-		modern?: false | undefined;
+		filename?: string;
+		modern?: false;
 	} | undefined): LegacyRoot;
 	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
@@ -1108,18 +1108,18 @@ declare module 'svelte/compiler' {
 	 * https://svelte.dev/docs/svelte-compiler#svelte-preprocess
 	 * */
 	export function preprocess(source: string, preprocessor: PreprocessorGroup | PreprocessorGroup[], options?: {
-		filename?: string | undefined;
+		filename?: string;
 	} | undefined): Promise<Processed>;
 	export class CompileError extends Error {
 		
 		constructor(code: string, message: string, position: [number, number] | undefined);
 		filename: string | undefined;
 		
-		position: CompileError_1['position'];
+		position: CompileError_1["position"];
 		
-		start: CompileError_1['start'];
+		start: CompileError_1["start"];
 		
-		end: CompileError_1['end'];
+		end: CompileError_1["end"];
 		code: string;
 	}
 	/**
@@ -1153,13 +1153,13 @@ declare module 'svelte/compiler' {
 		/**
 		 * A map of declarators to the bindings they declare
 		 * */
-		declarators: Map<import('estree').VariableDeclarator | LetDirective, Binding[]>;
+		declarators: Map<import("estree").VariableDeclarator | LetDirective, Binding[]>;
 		/**
 		 * A set of all the names referenced with this scope
 		 * — useful for generating unique names
 		 * */
 		references: Map<string, {
-			node: import('estree').Identifier;
+			node: import("estree").Identifier;
 			path: SvelteNode[];
 		}[]>;
 		/**
@@ -1168,18 +1168,18 @@ declare module 'svelte/compiler' {
 		 */
 		function_depth: number;
 		
-		declare(node: import('estree').Identifier, kind: Binding['kind'], declaration_kind: DeclarationKind, initial?: null | import('estree').Expression | import('estree').FunctionDeclaration | import('estree').ClassDeclaration | import('estree').ImportDeclaration | EachBlock): Binding;
+		declare(node: import("estree").Identifier, kind: Binding["kind"], declaration_kind: DeclarationKind, initial?: null | import("estree").Expression | import("estree").FunctionDeclaration | import("estree").ClassDeclaration | import("estree").ImportDeclaration | EachBlock): Binding;
 		child(porous?: boolean): Scope;
 		
 		generate(preferred_name: string): string;
 		
 		get(name: string): Binding | null;
 		
-		get_bindings(node: import('estree').VariableDeclarator | LetDirective): Binding[];
+		get_bindings(node: import("estree").VariableDeclarator | LetDirective): Binding[];
 		
 		owner(name: string): Scope | null;
 		
-		reference(node: import('estree').Identifier, path: SvelteNode[]): void;
+		reference(node: import("estree").Identifier, path: SvelteNode[]): void;
 		#private;
 	}
 	class ScopeRoot {
@@ -2006,10 +2006,10 @@ declare module 'svelte/legacy' {
 	 *
 	 * */
 	export function createClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(options: import("svelte").ComponentConstructorOptions<Props> & {
-		component: import("svelte").ComponentType<import("svelte").SvelteComponent<Props, Events, Slots>> | import("svelte").Component<Props, any, string>;
-		immutable?: boolean | undefined;
-		hydrate?: boolean | undefined;
-		recover?: boolean | undefined;
+		component: import("svelte").ComponentType<import("svelte").SvelteComponent<Props, Events, Slots>> | import("svelte").Component<Props>;
+		immutable?: boolean;
+		hydrate?: boolean;
+		recover?: boolean;
 	}): import("svelte").SvelteComponent<Props, Events, Slots> & Exports;
 	/**
 	 * Takes the component function and returns a Svelte 4 compatible component constructor.
@@ -2017,7 +2017,7 @@ declare module 'svelte/legacy' {
 	 * @deprecated Use this only as a temporary solution to migrate your imperative component code to Svelte 5.
 	 *
 	 * */
-	export function asClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(component: import("svelte").SvelteComponent<Props, Events, Slots> | import("svelte").Component<Props, any, string>): import("svelte").ComponentType<import("svelte").SvelteComponent<Props, Events, Slots> & Exports>;
+	export function asClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(component: import("svelte").SvelteComponent<Props, Events, Slots> | import("svelte").Component<Props>): import("svelte").ComponentType<import("svelte").SvelteComponent<Props, Events, Slots> & Exports>;
 	/**
 	 * Runs the given function once immediately on the server, and works like `$effect.pre` on the client.
 	 *
