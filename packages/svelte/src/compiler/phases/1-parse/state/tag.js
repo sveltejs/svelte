@@ -280,7 +280,7 @@ function open(parser) {
 			if (parser.match('(')) parentheses++;
 			if (parser.match(')')) parentheses--;
 
-			var next_char = parser.read(/^./);
+			var next_char = parser.read(/^(.|[\r\n])/);
 			if (next_char == null) break; // end of template
 			params += next_char;
 		}
