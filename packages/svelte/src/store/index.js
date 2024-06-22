@@ -213,11 +213,9 @@ export function readonly(store) {
  * @param {import('../store/public').Readable<T>} store
  * @returns {T}
  */
-export function get_store_value(store) {
+export function get(store) {
 	let value;
 	subscribe_to_store(store, (_) => (value = _))();
 	// @ts-expect-error
 	return value;
 }
-
-export { get_store_value as get };
