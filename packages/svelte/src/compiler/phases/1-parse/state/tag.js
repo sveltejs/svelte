@@ -279,8 +279,14 @@ function open(parser) {
 		while (!parser.match(')') || parentheses !== 1) {
 			if (parser.match('(')) parentheses++;
 			if (parser.match(')')) parentheses--;
-			params += parser.read(/^./);
+
+			var next_char = parser.read(/^./);
+			if (next_char == null) break; // end of template
+			params += next_char;
 		}
+
+		parser.eat(')', true);
+		parser.eat('}', true);
 
 		let function_expression = /** @type {import('estree').ArrowFunctionExpression} */ (
 			parse_expression_at(
@@ -289,8 +295,6 @@ function open(parser) {
 				0
 			)
 		);
-
-		parser.index += 2;
 
 		/** @type {ReturnType<typeof parser.append<import('#compiler').SnippetBlock>>} */
 		const block = parser.append({
