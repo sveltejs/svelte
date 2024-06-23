@@ -34,4 +34,23 @@ export function unmount() {
 
 export async function tick() {}
 
+/**
+ * @template {import('svelte').SvelteComponent} Component
+ * @template {import('svelte').ComponentProps<Component>} [Props=import('svelte').ComponentProps<Component>]
+ * @param {Component} component
+ * @param {(args: { props: Props, component: (props: Props) => Component }) => Component} decorator
+ * @returns {Component}
+ */
+export function decorateComponent(component, decorator) {
+	// @ts-expect-error shape is different under the hood
+	return (payload, props) => {
+		return decorator({
+			props,
+			component: (props) =>
+				// @ts-expect-error shape is different under the hood
+				component(payload, props)
+		});
+	};
+}
+
 export { getAllContexts, getContext, hasContext, setContext } from './internal/server/context.js';
