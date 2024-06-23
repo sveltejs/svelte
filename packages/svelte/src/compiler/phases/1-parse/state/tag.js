@@ -269,32 +269,27 @@ function open(parser) {
 			e.expected_identifier(parser.index);
 		}
 
-		let slice_end = parser.index;
+		const params_start = parser.index;
 
 		parser.eat('(', true);
-
 		let parentheses = 1;
-		let params = '';
 
-		while (!parser.match(')') || parentheses !== 1) {
+		while (parser.index < parser.template.length && (!parser.match(')') || parentheses !== 1)) {
 			if (parser.match('(')) parentheses++;
 			if (parser.match(')')) parentheses--;
-
-			var next_char = parser.read(/^(.|[\r\n])/);
-			if (next_char == null) break; // end of template
-			params += next_char;
+			parser.index += 1;
 		}
 
 		parser.eat(')', true);
-		parser.eat('}', true);
+
+		const prelude = parser.template.slice(0, params_start).replace(/\S/g, ' ');
+		const params = parser.template.slice(params_start, parser.index);
 
 		let function_expression = /** @type {import('estree').ArrowFunctionExpression} */ (
-			parse_expression_at(
-				parser.template.slice(0, slice_end).replace(/\S/g, ' ') + `(${params}) => {}`,
-				parser.ts,
-				0
-			)
+			parse_expression_at(prelude + `${params} => {}`, parser.ts, params_start)
 		);
+
+		parser.eat('}', true);
 
 		/** @type {ReturnType<typeof parser.append<import('#compiler').SnippetBlock>>} */
 		const block = parser.append({
