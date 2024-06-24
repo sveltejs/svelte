@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.164
+
+### Patch Changes
+
+- fix: prevent `a11y_label_has_associated_control` false positive for component or render tag in `<label>` ([#12119](https://github.com/sveltejs/svelte/pull/12119))
+
+- fix: allow multiple optional parameters with defaults in snippets ([#12070](https://github.com/sveltejs/svelte/pull/12070))
+
 ## 5.0.0-next.163
 
 ### Patch Changes
