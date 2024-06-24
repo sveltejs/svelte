@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.165
+
+### Patch Changes
+
+- breaking: bump dts-buddy ([#12134](https://github.com/sveltejs/svelte/pull/12134))
+
+- fix: throw compilation error for malformed snippets ([#12144](https://github.com/sveltejs/svelte/pull/12144))
+
 ## 5.0.0-next.164
 
 ### Patch Changes
