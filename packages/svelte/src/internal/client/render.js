@@ -196,38 +196,23 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 
 	const registered_events = new Set();
 
-	const bound_event_listener = handle_event_propagation.bind(null, target);
-	const bound_document_event_listener = handle_event_propagation.bind(null, document);
-
 	/** @param {Array<string>} events */
 	const event_handle = (events) => {
 		for (let i = 0; i < events.length; i++) {
 			const event_name = events[i];
+			const passive = PassiveDelegatedEvents.includes(event_name);
+
 			if (!registered_events.has(event_name)) {
 				registered_events.add(event_name);
+
 				// Add the event listener to both the container and the document.
 				// The container listener ensures we catch events from within in case
 				// the outer content stops propagation of the event.
-				target.addEventListener(
-					event_name,
-					bound_event_listener,
-					PassiveDelegatedEvents.includes(event_name)
-						? {
-								passive: true
-							}
-						: undefined
-				);
+				target.addEventListener(event_name, handle_event_propagation, { passive });
+
 				// The document listener ensures we catch events that originate from elements that were
 				// manually moved outside of the container (e.g. via manual portals).
-				document.addEventListener(
-					event_name,
-					bound_document_event_listener,
-					PassiveDelegatedEvents.includes(event_name)
-						? {
-								passive: true
-							}
-						: undefined
-				);
+				document.addEventListener(event_name, handle_event_propagation, { passive });
 			}
 		}
 	};
@@ -264,9 +249,10 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 
 		return () => {
 			for (const event_name of registered_events) {
-				target.removeEventListener(event_name, bound_event_listener);
-				document.removeEventListener(event_name, bound_document_event_listener);
+				target.removeEventListener(event_name, handle_event_propagation);
+				document.removeEventListener(event_name, handle_event_propagation);
 			}
+
 			root_event_handles.delete(event_handle);
 			mounted_components.delete(component);
 		};

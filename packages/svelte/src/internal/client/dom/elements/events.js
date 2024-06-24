@@ -44,7 +44,7 @@ export function create_event(event_name, dom, handler, options) {
 	function target_handler(/** @type {Event} */ event) {
 		if (!options.capture) {
 			// Only call in the bubble phase, else delegated events would be called before the capturing events
-			handle_event_propagation(dom, event);
+			handle_event_propagation.call(dom, event);
 		}
 		if (!event.cancelBubble) {
 			return handler.call(this, event);
@@ -143,11 +143,12 @@ export function delegate(events) {
 }
 
 /**
- * @param {EventTarget} handler_element
+ * @this {EventTarget}
  * @param {Event} event
  * @returns {void}
  */
-export function handle_event_propagation(handler_element, event) {
+export function handle_event_propagation(event) {
+	var handler_element = this;
 	var owner_document = /** @type {Node} */ (handler_element).ownerDocument;
 	var event_name = event.type;
 	var path = event.composedPath?.() || [];
