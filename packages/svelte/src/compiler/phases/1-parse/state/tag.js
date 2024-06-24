@@ -269,6 +269,8 @@ function open(parser) {
 			e.expected_identifier(parser.index);
 		}
 
+		parser.allow_whitespace();
+
 		const params_start = parser.index;
 
 		parser.eat('(', true);
@@ -289,6 +291,7 @@ function open(parser) {
 			parse_expression_at(prelude + `${params} => {}`, parser.ts, params_start)
 		);
 
+		parser.allow_whitespace();
 		parser.eat('}', true);
 
 		/** @type {ReturnType<typeof parser.append<import('#compiler').SnippetBlock>>} */
