@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  jimp>xml2js: ^0.6.0
+  xml2js: ^0.6.0
 
 importers:
 
@@ -4013,8 +4013,8 @@ packages:
   xml-parse-from-string@1.0.1:
     resolution: {integrity: sha512-ErcKwJTF54uRzzNMXq2X5sMIy88zJvfN2DmdoQvy7PAFJ+tPRU6ydWuOKNMyfmOjdyBQTFREi60s0Y0SyI0G0g==}
 
-  xml2js@0.4.23:
-    resolution: {integrity: sha512-ySPiMjM0+pLDftHgXY4By0uswI3SPKLDw/i3UXbnO8M/p28zqexCUoPmQFrYD+/1BzhGJSs2i1ERWKJAtiLrug==}
+  xml2js@0.6.2:
+    resolution: {integrity: sha512-T4rieHaC1EXcES0Kxxj4JWgaUQHDk+qwHcYOCFHfiwKz7tOVPLq7Hjq9dM1WCMhylqMEfP7hMcOIChvotiZegA==}
     engines: {node: '>=4.0.0'}
 
   xmlbuilder@11.0.1:
@@ -7000,7 +7000,7 @@ snapshots:
   parse-bmfont-xml@1.1.4:
     dependencies:
       xml-parse-from-string: 1.0.1
-      xml2js: 0.4.23
+      xml2js: 0.6.2
 
   parse-css-color@0.2.1:
     dependencies:
@@ -8020,7 +8020,7 @@ snapshots:
 
   xml-parse-from-string@1.0.1: {}
 
-  xml2js@0.4.23:
+  xml2js@0.6.2:
     dependencies:
       sax: 1.3.0
       xmlbuilder: 11.0.1
