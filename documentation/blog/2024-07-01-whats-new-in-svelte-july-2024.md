@@ -19,6 +19,14 @@ Below, you'll find the highlights from the Svelte 5 release notes (now in [Relea
 - `<svelte:element>`, CSS custom property wrappers and string normalization have all been simplified and made more performant (**5.0.0-next.152**, [#11773](https://github.com/sveltejs/svelte/pull/11773), [#11948](https://github.com/sveltejs/svelte/pull/11948), [#11954](https://github.com/sveltejs/svelte/pull/11954), [#11792](https://github.com/sveltejs/svelte/pull/11792), [#11949](https://github.com/sveltejs/svelte/pull/11949))
 - `render`, `mount` and `hydrate` options are now actually optional (**5.0.0-next.163**, [Docs](https://svelte-5-preview.vercel.app/docs/imports#svelte), [#12111](https://github.com/sveltejs/svelte/pull/12111))
 
+
+## What's new in SvelteKit
+The node and Cloudflare adapters got a few upgrades this month:
+
+- The `BODY_SIZE_LIMIT` environment variable adds unit suffixes support to the adapter-node - making it easier to write and comprehend large byte values (**adapter-node@5.2.0**, [Docs](https://kit.svelte.dev/docs/adapter-node#environment-variables-bodysizelimit), [#11680](https://github.com/sveltejs/kit/pull/11680))
+- Node servers can now listen to the `sveltekit:shutdown` event (replacing the more abrupt `exit`) that is emitted after the HTTP server has closed all connections (**adapter-node@5.1.0**, [Docs](https://kit.svelte.dev/docs/adapter-node#graceful-shutdown), [#12153](https://github.com/sveltejs/kit/pull/12153))
+- The Cloudflare adapter will now only throw a `_routes.json` error when the file exists but there are no configured routes in svelte.config (**adapter-cloudflare@4.5.0**, [#12360](https://github.com/sveltejs/kit/pull/12360))
+
 ---
 
 ## Community Showcase
