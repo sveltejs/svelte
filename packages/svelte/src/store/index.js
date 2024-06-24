@@ -26,7 +26,7 @@ export function readable(value, start) {
  * @param {any} b
  * @returns {boolean}
  */
-export function safe_not_equal(a, b) {
+function safe_not_equal(a, b) {
 	return a != a ? b == b : a !== b || (a && typeof a === 'object') || typeof a === 'function';
 }
 

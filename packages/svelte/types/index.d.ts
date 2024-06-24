@@ -2236,8 +2236,6 @@ declare module 'svelte/store' {
 	 * @param value initial value
 	 * */
 	function readable<T>(value?: T | undefined, start?: StartStopNotifier<T> | undefined): Readable<T>;
-
-	function safe_not_equal(a: any, b: any): boolean;
 	/**
 	 * Create a `Writable` store that allows both updating and reading by subscription.
 	 *
@@ -2273,7 +2271,7 @@ declare module 'svelte/store' {
 	 * */
 	function get<T>(store: Readable<T>): T;
 
-	export { Subscriber, Unsubscriber, Updater, StartStopNotifier, Readable, Writable, readable, safe_not_equal, writable, derived, readonly, get };
+	export { Subscriber, Unsubscriber, Updater, StartStopNotifier, Readable, Writable, readable, writable, derived, readonly, get };
 }
 
 declare module 'svelte/transition' {
