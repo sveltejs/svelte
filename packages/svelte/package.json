@@ -112,7 +112,7 @@
     "prepublishOnly": "pnpm build",
     "format": "prettier --check --write .",
     "lint": "prettier --check . && eslint",
-    "knip": "knip"
+    "knip": "pnpm dlx knip"
   },
   "devDependencies": {
     "@jridgewell/trace-mapping": "^0.3.22",
@@ -124,7 +124,6 @@
     "@types/aria-query": "^5.0.4",
     "dts-buddy": "^0.5.0",
     "esbuild": "^0.19.11",
-    "knip": "^4.2.1",
     "rollup": "^4.9.5",
     "source-map": "^0.7.4",
     "tiny-glob": "^0.2.9"
