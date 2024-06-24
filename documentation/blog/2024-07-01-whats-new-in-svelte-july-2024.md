@@ -16,7 +16,7 @@ Below, you'll find the highlights from the Svelte 5 release notes (now in [Relea
 - Event handlers and bindings will now yield effect updates (Breaking Change, **5.0.0-next.140**, [#11706](https://github.com/sveltejs/svelte/pull/11706))
 - The `Component` type now represents the new shape of Svelte components (**5.0.0-next.143**, [#11775](https://github.com/sveltejs/svelte/pull/11775))
 - `<svelte:document>` now has both `activeElement` and `pointerLockElement` binds (**5.0.0-next.150**, [#11879](https://github.com/sveltejs/svelte/pull/11879))
-- `svelte:element`, CSS custom property wrappers and string normalization have all been simplified and made more performant (**5.0.0-next.152**, [#11773](https://github.com/sveltejs/svelte/pull/11773), [#11948](https://github.com/sveltejs/svelte/pull/11948), [#11954](https://github.com/sveltejs/svelte/pull/11954), [#11792](https://github.com/sveltejs/svelte/pull/11792), [#11949](https://github.com/sveltejs/svelte/pull/11949))
+- `<svelte:element>`, CSS custom property wrappers and string normalization have all been simplified and made more performant (**5.0.0-next.152**, [#11773](https://github.com/sveltejs/svelte/pull/11773), [#11948](https://github.com/sveltejs/svelte/pull/11948), [#11954](https://github.com/sveltejs/svelte/pull/11954), [#11792](https://github.com/sveltejs/svelte/pull/11792), [#11949](https://github.com/sveltejs/svelte/pull/11949))
 - `render`, `mount` and `hydrate` options are now actually optional (**5.0.0-next.163**, [Docs](https://svelte-5-preview.vercel.app/docs/imports#svelte), [#12111](https://github.com/sveltejs/svelte/pull/12111))
 
 ---
@@ -69,7 +69,7 @@ _To Watch_
 
 **Libraries, Tools & Components**
 
-- [svelte5-commenter](https://github.com/cardgraph22/svelte5-commenter) is component demonstration for the common comments section
+- [svelte5-commenter](https://github.com/cardgraph22/svelte5-commenter) is a component demonstration for the common comments section
 - [SSC](https://github.com/ssc-project/ssc) (Speedy Svelte Compiler) is a super-fast Svelte compiler written in Rust
 
 
