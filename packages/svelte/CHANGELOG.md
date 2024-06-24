@@ -1,5 +1,47 @@
 # svelte
 
+## 5.0.0-next.165
+
+### Patch Changes
+
+- breaking: bump dts-buddy ([#12134](https://github.com/sveltejs/svelte/pull/12134))
+
+- fix: throw compilation error for malformed snippets ([#12144](https://github.com/sveltejs/svelte/pull/12144))
+
+## 5.0.0-next.164
+
+### Patch Changes
+
+- fix: prevent `a11y_label_has_associated_control` false positive for component or render tag in `<label>` ([#12119](https://github.com/sveltejs/svelte/pull/12119))
+
+- fix: allow multiple optional parameters with defaults in snippets ([#12070](https://github.com/sveltejs/svelte/pull/12070))
+
+## 5.0.0-next.163
+
+### Patch Changes
+
+- feat: more accurate `render`/`mount`/`hydrate` options ([#12111](https://github.com/sveltejs/svelte/pull/12111))
+
+- fix: better binding interop between runes/non-runes components ([#12123](https://github.com/sveltejs/svelte/pull/12123))
+
+## 5.0.0-next.162
+
+### Patch Changes
+
+- chore: remove anchor node from each block items ([#11836](https://github.com/sveltejs/svelte/pull/11836))
+
+## 5.0.0-next.161
+
+### Patch Changes
+
+- fix: wait a microtask for await blocks to reduce UI churn ([#11989](https://github.com/sveltejs/svelte/pull/11989))
+
+- fix: ensure state update expressions are serialised correctly ([#12109](https://github.com/sveltejs/svelte/pull/12109))
+
+- fix: repair each block length even without an else ([#12098](https://github.com/sveltejs/svelte/pull/12098))
+
+- fix: remove document event listeners on unmount ([#12105](https://github.com/sveltejs/svelte/pull/12105))
+
 ## 5.0.0-next.160
 
 ### Patch Changes

@@ -85,7 +85,6 @@ function pause_effects(items, controlled_anchor, items_map) {
 			var item = items[i];
 			if (!is_controlled) {
 				items_map.delete(item.k);
-				item.o.remove();
 				link(item.prev, item.next);
 			}
 			destroy_effect(item.e, !is_controlled);
@@ -151,7 +150,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 		if (hydrating) {
 			var is_else = /** @type {Comment} */ (anchor).data === HYDRATION_END_ELSE;
 
-			if (is_else !== (length === 0)) {
+			if (is_else !== (length === 0) || hydrate_start === undefined) {
 				// hydration mismatch — remove the server-rendered DOM and start over
 				remove(hydrate_nodes);
 				set_hydrating(false);
@@ -182,11 +181,10 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 					break;
 				}
 
-				var child_open = /** @type {Comment} */ (child_anchor);
 				child_anchor = hydrate_anchor(child_anchor);
 				var value = array[i];
 				var key = get_key(value, i);
-				item = create_item(child_open, child_anchor, prev, null, value, key, i, render_fn, flags);
+				item = create_item(child_anchor, prev, null, value, key, i, render_fn, flags);
 				state.items.set(key, item);
 				child_anchor = /** @type {Comment} */ (child_anchor.nextSibling);
 
@@ -293,22 +291,9 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		item = items.get(key);
 
 		if (item === undefined) {
-			var child_open = empty();
-			var child_anchor = current ? current.o : anchor;
+			var child_anchor = current ? get_first_node(current.e) : anchor;
 
-			child_anchor.before(child_open);
-
-			prev = create_item(
-				child_open,
-				child_anchor,
-				prev,
-				prev.next,
-				value,
-				key,
-				i,
-				render_fn,
-				flags
-			);
+			prev = create_item(child_anchor, prev, prev.next, value, key, i, render_fn, flags);
 
 			items.set(key, prev);
 
@@ -451,7 +436,6 @@ function update_item(item, value, index, type) {
 
 /**
  * @template V
- * @param {Comment | Text} open
  * @param {Node} anchor
  * @param {import('#client').EachItem | import('#client').EachState} prev
  * @param {import('#client').EachItem | null} next
@@ -462,7 +446,7 @@ function update_item(item, value, index, type) {
  * @param {number} flags
  * @returns {import('#client').EachItem}
  */
-function create_item(open, anchor, prev, next, value, key, index, render_fn, flags) {
+function create_item(anchor, prev, next, value, key, index, render_fn, flags) {
 	var previous_each_item = current_each_item;
 
 	try {
@@ -480,7 +464,6 @@ function create_item(open, anchor, prev, next, value, key, index, render_fn, fla
 			a: null,
 			// @ts-expect-error
 			e: null,
-			o: open,
 			prev,
 			next
 		};
@@ -498,15 +481,51 @@ function create_item(open, anchor, prev, next, value, key, index, render_fn, fla
 }
 
 /**
+ * @param {import('#client').TemplateNode} dom
+ * @param {import("#client").Effect} effect
+ * @returns {import('#client').TemplateNode}
+ */
+function get_adjusted_first_node(dom, effect) {
+	if ((dom.nodeType === 3 && /** @type {Text} */ (dom).data === '') || dom.nodeType === 8) {
+		var adjusted = effect.first;
+		var next;
+		while (adjusted !== null) {
+			next = adjusted.first;
+			if (adjusted.dom !== null) {
+				break;
+			} else if (next === null) {
+				return /** @type {import('#client').TemplateNode} */ (dom.previousSibling);
+			}
+			adjusted = next;
+		}
+		return get_first_node(/** @type {import("#client").Effect} */ (adjusted));
+	}
+	return dom;
+}
+
+/**
+ *
+ * @param {import('#client').Effect} effect
+ * @returns {import('#client').TemplateNode}
+ */
+function get_first_node(effect) {
+	var dom = effect.dom;
+	if (is_array(dom)) {
+		return get_adjusted_first_node(dom[0], effect);
+	}
+	return get_adjusted_first_node(/** @type {import('#client').TemplateNode} **/ (dom), effect);
+}
+
+/**
  * @param {import('#client').EachItem} item
  * @param {import('#client').EachItem | null} next
  * @param {Text | Element | Comment} anchor
  */
 function move(item, next, anchor) {
-	var end = item.next ? item.next.o : anchor;
-	var dest = next ? next.o : anchor;
+	var end = item.next ? get_first_node(item.next.e) : anchor;
+	var dest = next ? get_first_node(next.e) : anchor;
 
-	var node = /** @type {import('#client').TemplateNode} */ (item.o);
+	var node = get_first_node(item.e);
 
 	while (node !== end) {
 		var next_node = /** @type {import('#client').TemplateNode} */ (node.nextSibling);

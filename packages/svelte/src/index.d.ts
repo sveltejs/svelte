@@ -189,14 +189,31 @@ export type ComponentEvents<Comp extends SvelteComponent> =
 	Comp extends SvelteComponent<any, infer Events> ? Events : never;
 
 /**
- * Convenience type to get the props the given component expects. Example:
- * ```html
- * <script lang="ts">
- * 	import type { ComponentProps } from 'svelte';
- * 	import Component from './Component.svelte';
+ * Convenience type to get the props the given component expects.
  *
- * 	const props: ComponentProps<Component> = { foo: 'bar' }; // Errors if these aren't the correct props
- * </script>
+ * Example: Ensure a variable contains the props expected by `MyComponent`:
+ *
+ * ```ts
+ * import type { ComponentProps } from 'svelte';
+ * import MyComponent from './MyComponent.svelte';
+ *
+ * // Errors if these aren't the correct props expected by MyComponent.
+ * const props: ComponentProps<MyComponent> = { foo: 'bar' };
+ * ```
+ *
+ * Example: A generic function that accepts some component and infers the type of its props:
+ *
+ * ```ts
+ * import type { Component, ComponentProps } from 'svelte';
+ * import MyComponent from './MyComponent.svelte';
+ *
+ * function withProps<TComponent extends Component<any>>(
+ * 	component: TComponent,
+ * 	props: ComponentProps<TComponent>
+ * ) {};
+ *
+ * // Errors if the second argument is not the correct props expected by the component in the first argument.
+ * withProps(MyComponent, { foo: 'bar' });
  * ```
  */
 export type ComponentProps<Comp extends SvelteComponent | Component<any>> =

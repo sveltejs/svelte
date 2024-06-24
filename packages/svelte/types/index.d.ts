@@ -5,7 +5,7 @@ declare module 'svelte' {
 	 * See [breaking changes](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes)
 	 * for more info.
 	 */
-	export interface ComponentConstructorOptions<
+	interface ComponentConstructorOptions<
 		Props extends Record<string, any> = Record<string, any>
 	> {
 		target: Element | Document | ShadowRoot;
@@ -36,7 +36,7 @@ declare module 'svelte' {
 	 * To instantiate components, use `mount` instead`.
 	 * See [breaking changes documentation](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes) for more info.
 	 */
-	export class SvelteComponent<
+	class SvelteComponent<
 		Props extends Record<string, any> = Record<string, any>,
 		Events extends Record<string, any> = any,
 		Slots extends Record<string, any> = any
@@ -123,7 +123,7 @@ declare module 'svelte' {
 	 * <MyComponent foo={'bar'} />
 	 * ```
 	 */
-	export interface Component<
+	interface Component<
 		Props extends Record<string, any> = {},
 		Exports extends Record<string, any> = {},
 		Bindings extends keyof Props | '' = string
@@ -158,7 +158,7 @@ declare module 'svelte' {
 	/**
 	 * @deprecated Use `Component` instead. See [breaking changes documentation](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes) for more information.
 	 */
-	export class SvelteComponentTyped<
+	class SvelteComponentTyped<
 		Props extends Record<string, any> = Record<string, any>,
 		Events extends Record<string, any> = any,
 		Slots extends Record<string, any> = any
@@ -182,21 +182,38 @@ declare module 'svelte' {
 	 * <Component on:close={handleCloseEvent} />
 	 * ```
 	 */
-	export type ComponentEvents<Comp extends SvelteComponent> =
+	type ComponentEvents<Comp extends SvelteComponent> =
 		Comp extends SvelteComponent<any, infer Events> ? Events : never;
 
 	/**
-	 * Convenience type to get the props the given component expects. Example:
-	 * ```html
-	 * <script lang="ts">
-	 * 	import type { ComponentProps } from 'svelte';
-	 * 	import Component from './Component.svelte';
+	 * Convenience type to get the props the given component expects.
 	 *
-	 * 	const props: ComponentProps<Component> = { foo: 'bar' }; // Errors if these aren't the correct props
-	 * </script>
+	 * Example: Ensure a variable contains the props expected by `MyComponent`:
+	 *
+	 * ```ts
+	 * import type { ComponentProps } from 'svelte';
+	 * import MyComponent from './MyComponent.svelte';
+	 *
+	 * // Errors if these aren't the correct props expected by MyComponent.
+	 * const props: ComponentProps<MyComponent> = { foo: 'bar' };
+	 * ```
+	 *
+	 * Example: A generic function that accepts some component and infers the type of its props:
+	 *
+	 * ```ts
+	 * import type { Component, ComponentProps } from 'svelte';
+	 * import MyComponent from './MyComponent.svelte';
+	 *
+	 * function withProps<TComponent extends Component<any>>(
+	 * 	component: TComponent,
+	 * 	props: ComponentProps<TComponent>
+	 * ) {};
+	 *
+	 * // Errors if the second argument is not the correct props expected by the component in the first argument.
+	 * withProps(MyComponent, { foo: 'bar' });
 	 * ```
 	 */
-	export type ComponentProps<Comp extends SvelteComponent | Component<any>> =
+	type ComponentProps<Comp extends SvelteComponent | Component<any>> =
 		Comp extends SvelteComponent<infer Props>
 			? Props
 			: Comp extends Component<infer Props>
@@ -225,7 +242,7 @@ declare module 'svelte' {
 	 * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
 	 * ```
 	 */
-	export type ComponentType<Comp extends SvelteComponent = SvelteComponent> = (new (
+	type ComponentType<Comp extends SvelteComponent = SvelteComponent> = (new (
 		options: ComponentConstructorOptions<
 			Comp extends SvelteComponent<infer Props> ? Props : Record<string, any>
 		>
@@ -243,7 +260,7 @@ declare module 'svelte' {
 	 * ```
 	 * You can only call a snippet through the `{@render ...}` tag.
 	 */
-	export type Snippet<T extends unknown[] = []> =
+	type Snippet<T extends unknown[] = []> =
 		// this conditional allows tuples but not arrays. Arrays would indicate a
 		// rest parameter type, which is not supported. If rest parameters are added
 		// in the future, the condition can be removed.
@@ -262,7 +279,7 @@ declare module 'svelte' {
 		cancelable?: boolean;
 	}
 
-	export interface EventDispatcher<EventMap extends Record<string, any>> {
+	interface EventDispatcher<EventMap extends Record<string, any>> {
 		// Implementation notes:
 		// - undefined extends X instead of X extends undefined makes this work better with both strict and nonstrict mode
 		// - | null | undefined is added for convenience, as they are equivalent for the custom event constructor (both result in a null detail)
@@ -285,7 +302,7 @@ declare module 'svelte' {
 	 *
 	 * https://svelte.dev/docs/svelte#onmount
 	 * */
-	export function onMount<T>(fn: () => NotFunction<T> | Promise<NotFunction<T>> | (() => any)): void;
+	function onMount<T>(fn: () => NotFunction<T> | Promise<NotFunction<T>> | (() => any)): void;
 	/**
 	 * Schedules a callback to run immediately before the component is unmounted.
 	 *
@@ -294,7 +311,7 @@ declare module 'svelte' {
 	 *
 	 * https://svelte.dev/docs/svelte#ondestroy
 	 * */
-	export function onDestroy(fn: () => any): void;
+	function onDestroy(fn: () => any): void;
 	/**
 	 * Creates an event dispatcher that can be used to dispatch [component events](https://svelte.dev/docs#template-syntax-component-directives-on-eventname).
 	 * Event dispatchers are functions that can take two arguments: `name` and `detail`.
@@ -317,7 +334,7 @@ declare module 'svelte' {
 	 * https://svelte.dev/docs/svelte#createeventdispatcher
 	 * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte-5-preview.vercel.app/docs/deprecations#createeventdispatcher
 	 * */
-	export function createEventDispatcher<EventMap extends Record<string, any> = any>(): EventDispatcher<EventMap>;
+	function createEventDispatcher<EventMap extends Record<string, any> = any>(): EventDispatcher<EventMap>;
 	/**
 	 * Schedules a callback to run immediately before the component is updated after any state change.
 	 *
@@ -328,7 +345,7 @@ declare module 'svelte' {
 	 * https://svelte.dev/docs/svelte#beforeupdate
 	 * @deprecated Use `$effect.pre` instead — see https://svelte-5-preview.vercel.app/docs/deprecations#beforeupdate-and-afterupdate
 	 * */
-	export function beforeUpdate(fn: () => void): void;
+	function beforeUpdate(fn: () => void): void;
 	/**
 	 * Schedules a callback to run immediately after the component has been updated.
 	 *
@@ -339,58 +356,72 @@ declare module 'svelte' {
 	 * https://svelte.dev/docs/svelte#afterupdate
 	 * @deprecated Use `$effect` instead — see https://svelte-5-preview.vercel.app/docs/deprecations#beforeupdate-and-afterupdate
 	 * */
-	export function afterUpdate(fn: () => void): void;
+	function afterUpdate(fn: () => void): void;
 	/**
 	 * Synchronously flushes any pending state changes and those that result from it.
 	 * */
-	export function flushSync(fn?: (() => void) | undefined): void;
+	function flushSync(fn?: (() => void) | undefined): void;
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
 	 *
 	 * */
-	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, any, any>> | Component<Props, Exports, any>, options: {
+	function mount<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
 		target: Document | Element | ShadowRoot;
-		anchor?: Node | undefined;
-		props?: Props | undefined;
-		events?: Record<string, (e: any) => any> | undefined;
-		context?: Map<any, any> | undefined;
-		intro?: boolean | undefined;
+		anchor?: Node;
+		props?: Props;
+		events?: Record<string, (e: any) => any>;
+		context?: Map<any, any>;
+		intro?: boolean;
+	} : {
+		target: Document | Element | ShadowRoot;
+		props: Props;
+		anchor?: Node;
+		events?: Record<string, (e: any) => any>;
+		context?: Map<any, any>;
+		intro?: boolean;
 	}): Exports;
 	/**
 	 * Hydrates a component on the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
 	 *
 	 * */
-	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props, any, any>> | Component<Props, Exports, any>, options: {
+	function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
 		target: Document | Element | ShadowRoot;
-		props?: Props | undefined;
-		events?: Record<string, (e: any) => any> | undefined;
-		context?: Map<any, any> | undefined;
-		intro?: boolean | undefined;
-		recover?: boolean | undefined;
+		props?: Props;
+		events?: Record<string, (e: any) => any>;
+		context?: Map<any, any>;
+		intro?: boolean;
+		recover?: boolean;
+	} : {
+		target: Document | Element | ShadowRoot;
+		props: Props;
+		events?: Record<string, (e: any) => any>;
+		context?: Map<any, any>;
+		intro?: boolean;
+		recover?: boolean;
 	}): Exports;
 	/**
 	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
 	 * */
-	export function unmount(component: Record<string, any>): void;
+	function unmount(component: Record<string, any>): void;
 	/**
 	 * Returns a promise that resolves once any pending state changes have been applied.
 	 * */
-	export function tick(): Promise<void>;
+	function tick(): Promise<void>;
 	/**
 	 * Use `untrack` to prevent something from being treated as an `$effect`/`$derived` dependency.
 	 *
 	 * https://svelte-5-preview.vercel.app/docs/functions#untrack
 	 * */
-	export function untrack<T>(fn: () => T): T;
+	function untrack<T>(fn: () => T): T;
 	/**
 	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
 	 * Must be called during component initialisation.
 	 *
 	 * https://svelte.dev/docs/svelte#getcontext
 	 * */
-	export function getContext<T>(key: any): T;
+	function getContext<T>(key: any): T;
 	/**
 	 * Associates an arbitrary `context` object with the current component and the specified `key`
 	 * and returns that object. The context is then available to children of the component
@@ -400,14 +431,14 @@ declare module 'svelte' {
 	 *
 	 * https://svelte.dev/docs/svelte#setcontext
 	 * */
-	export function setContext<T>(key: any, context: T): T;
+	function setContext<T>(key: any, context: T): T;
 	/**
 	 * Checks whether a given `key` has been set in the context of a parent component.
 	 * Must be called during component initialisation.
 	 *
 	 * https://svelte.dev/docs/svelte#hascontext
 	 * */
-	export function hasContext(key: any): boolean;
+	function hasContext(key: any): boolean;
 	/**
 	 * Retrieves the whole context map that belongs to the closest parent component.
 	 * Must be called during component initialisation. Useful, for example, if you
@@ -415,7 +446,9 @@ declare module 'svelte' {
 	 *
 	 * https://svelte.dev/docs/svelte#getallcontexts
 	 * */
-	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
+	function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
+
+	export { ComponentConstructorOptions, SvelteComponent, Component, SvelteComponentTyped, ComponentEvents, ComponentProps, ComponentType, Snippet, EventDispatcher, onMount, onDestroy, createEventDispatcher, beforeUpdate, afterUpdate, flushSync, hydrate, mount, unmount, getContext, getAllContexts, hasContext, setContext, tick, untrack };
 }
 
 declare module 'svelte/action' {
@@ -447,7 +480,7 @@ declare module 'svelte/action' {
 	 *
 	 * Docs: https://svelte.dev/docs/svelte-action
 	 */
-	export interface ActionReturn<
+	interface ActionReturn<
 		Parameter = undefined,
 		Attributes extends Record<string, any> = Record<never, any>
 	> {
@@ -478,7 +511,7 @@ declare module 'svelte/action' {
 	 *
 	 * Docs: https://svelte.dev/docs/svelte-action
 	 */
-	export interface Action<
+	interface Action<
 		Element = HTMLElement,
 		Parameter = undefined,
 		Attributes extends Record<string, any> = Record<never, any>
@@ -492,11 +525,13 @@ declare module 'svelte/action' {
 
 	// Implementation notes:
 	// - undefined extends X instead of X extends undefined makes this work better with both strict and nonstrict mode
+
+	export { ActionReturn, Action };
 }
 
 declare module 'svelte/animate' {
 	// todo: same as Transition, should it be shared?
-	export interface AnimationConfig {
+	interface AnimationConfig {
 		delay?: number;
 		duration?: number;
 		easing?: (t: number) => number;
@@ -504,7 +539,7 @@ declare module 'svelte/animate' {
 		tick?: (t: number, u: number) => void;
 	}
 
-	export interface FlipParams {
+	interface FlipParams {
 		delay?: number;
 		duration?: number | ((len: number) => number);
 		easing?: (t: number) => number;
@@ -515,10 +550,12 @@ declare module 'svelte/animate' {
 	 *
 	 * https://svelte.dev/docs/svelte-animate#flip
 	 * */
-	export function flip(node: Element, { from, to }: {
+	function flip(node: Element, { from, to }: {
 		from: DOMRect;
 		to: DOMRect;
 	}, params?: FlipParams): AnimationConfig;
+
+	export { AnimationConfig, FlipParams, flip };
 }
 
 declare module 'svelte/compiler' {
@@ -533,14 +570,14 @@ declare module 'svelte/compiler' {
 	 * @param source The component source code
 	 * @param options The compiler options
 	 * */
-	export function compile(source: string, options: CompileOptions): CompileResult;
+	function compile(source: string, options: CompileOptions): CompileResult;
 	/**
 	 * `compileModule` takes your JavaScript source code containing runes, and turns it into a JavaScript module.
 	 *
 	 * https://svelte.dev/docs/svelte-compiler#svelte-compile
 	 * @param source The component source code
 	 * */
-	export function compileModule(source: string, options: ModuleCompileOptions): CompileResult;
+	function compileModule(source: string, options: ModuleCompileOptions): CompileResult;
 	/**
 	 * The parse function parses a component, returning only its abstract syntax tree.
 	 *
@@ -549,7 +586,7 @@ declare module 'svelte/compiler' {
 	 *
 	 * https://svelte.dev/docs/svelte-compiler#svelte-parse
 	 * */
-	export function parse(source: string, options: {
+	function parse(source: string, options: {
 		filename?: string;
 		modern: true;
 	}): Root;
@@ -561,14 +598,14 @@ declare module 'svelte/compiler' {
 	 *
 	 * https://svelte.dev/docs/svelte-compiler#svelte-parse
 	 * */
-	export function parse(source: string, options?: {
-		filename?: string | undefined;
-		modern?: false | undefined;
+	function parse(source: string, options?: {
+		filename?: string;
+		modern?: false;
 	} | undefined): LegacyRoot;
 	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
 	 * */
-	export function walk(): never;
+	function walk(): never;
 	/** The return value of `compile` from `svelte/compiler` */
 	interface CompileResult {
 		/** The compiled JavaScript */
@@ -1093,19 +1130,19 @@ declare module 'svelte/compiler' {
 	 *
 	 * https://svelte.dev/docs/svelte-compiler#svelte-preprocess
 	 * */
-	export function preprocess(source: string, preprocessor: PreprocessorGroup | PreprocessorGroup[], options?: {
-		filename?: string | undefined;
+	function preprocess(source: string, preprocessor: PreprocessorGroup | PreprocessorGroup[], options?: {
+		filename?: string;
 	} | undefined): Promise<Processed>;
-	export class CompileError extends Error {
+	class CompileError extends Error {
 		
 		constructor(code: string, message: string, position: [number, number] | undefined);
 		filename: string | undefined;
 		
-		position: CompileError_1['position'];
+		position: CompileError_1["position"];
 		
-		start: CompileError_1['start'];
+		start: CompileError_1["start"];
 		
-		end: CompileError_1['end'];
+		end: CompileError_1["end"];
 		code: string;
 	}
 	/**
@@ -1113,13 +1150,13 @@ declare module 'svelte/compiler' {
 	 *
 	 * https://svelte.dev/docs/svelte-compiler#svelte-version
 	 * */
-	export const VERSION: string;
+	const VERSION: string;
 	/**
 	 * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
 	 * May throw an error if the code is too complex to migrate automatically.
 	 *
 	 * */
-	export function migrate(source: string): {
+	function migrate(source: string): {
 		code: string;
 	};
 	class Scope {
@@ -1139,13 +1176,13 @@ declare module 'svelte/compiler' {
 		/**
 		 * A map of declarators to the bindings they declare
 		 * */
-		declarators: Map<import('estree').VariableDeclarator | LetDirective, Binding[]>;
+		declarators: Map<import("estree").VariableDeclarator | LetDirective, Binding[]>;
 		/**
 		 * A set of all the names referenced with this scope
 		 * — useful for generating unique names
 		 * */
 		references: Map<string, {
-			node: import('estree').Identifier;
+			node: import("estree").Identifier;
 			path: SvelteNode[];
 		}[]>;
 		/**
@@ -1154,18 +1191,18 @@ declare module 'svelte/compiler' {
 		 */
 		function_depth: number;
 		
-		declare(node: import('estree').Identifier, kind: Binding['kind'], declaration_kind: DeclarationKind, initial?: null | import('estree').Expression | import('estree').FunctionDeclaration | import('estree').ClassDeclaration | import('estree').ImportDeclaration | EachBlock): Binding;
+		declare(node: import("estree").Identifier, kind: Binding["kind"], declaration_kind: DeclarationKind, initial?: null | import("estree").Expression | import("estree").FunctionDeclaration | import("estree").ClassDeclaration | import("estree").ImportDeclaration | EachBlock): Binding;
 		child(porous?: boolean): Scope;
 		
 		generate(preferred_name: string): string;
 		
 		get(name: string): Binding | null;
 		
-		get_bindings(node: import('estree').VariableDeclarator | LetDirective): Binding[];
+		get_bindings(node: import("estree").VariableDeclarator | LetDirective): Binding[];
 		
 		owner(name: string): Scope | null;
 		
-		reference(node: import('estree').Identifier, path: SvelteNode[]): void;
+		reference(node: import("estree").Identifier, path: SvelteNode[]): void;
 		#private;
 	}
 	class ScopeRoot {
@@ -1855,133 +1892,137 @@ declare module 'svelte/compiler' {
 		style?: Preprocessor;
 		script?: Preprocessor;
 	}
+
+	export { compile, compileModule, parse, walk, preprocess, CompileError, VERSION, migrate };
 }
 
 declare module 'svelte/easing' {
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function linear(t: number): number;
+	function linear(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function backInOut(t: number): number;
+	function backInOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function backIn(t: number): number;
+	function backIn(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function backOut(t: number): number;
+	function backOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function bounceOut(t: number): number;
+	function bounceOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function bounceInOut(t: number): number;
+	function bounceInOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function bounceIn(t: number): number;
+	function bounceIn(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function circInOut(t: number): number;
+	function circInOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function circIn(t: number): number;
+	function circIn(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function circOut(t: number): number;
+	function circOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function cubicInOut(t: number): number;
+	function cubicInOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function cubicIn(t: number): number;
+	function cubicIn(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function cubicOut(t: number): number;
+	function cubicOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function elasticInOut(t: number): number;
+	function elasticInOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function elasticIn(t: number): number;
+	function elasticIn(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function elasticOut(t: number): number;
+	function elasticOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function expoInOut(t: number): number;
+	function expoInOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function expoIn(t: number): number;
+	function expoIn(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function expoOut(t: number): number;
+	function expoOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function quadInOut(t: number): number;
+	function quadInOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function quadIn(t: number): number;
+	function quadIn(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function quadOut(t: number): number;
+	function quadOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function quartInOut(t: number): number;
+	function quartInOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function quartIn(t: number): number;
+	function quartIn(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function quartOut(t: number): number;
+	function quartOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function quintInOut(t: number): number;
+	function quintInOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function quintIn(t: number): number;
+	function quintIn(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function quintOut(t: number): number;
+	function quintOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function sineInOut(t: number): number;
+	function sineInOut(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function sineIn(t: number): number;
+	function sineIn(t: number): number;
 	/**
 	 * https://svelte.dev/docs/svelte-easing
 	 * */
-	export function sineOut(t: number): number;
+	function sineOut(t: number): number;
+
+	export { linear, backInOut, backIn, backOut, bounceOut, bounceInOut, bounceIn, circInOut, circIn, circOut, cubicInOut, cubicIn, cubicOut, elasticInOut, elasticIn, elasticOut, expoInOut, expoIn, expoOut, quadInOut, quadIn, quadOut, quartInOut, quartIn, quartOut, quintInOut, quintIn, quintOut, sineInOut, sineIn, sineOut };
 }
 
 declare module 'svelte/legacy' {
@@ -1991,11 +2032,11 @@ declare module 'svelte/legacy' {
 	 * @deprecated Use this only as a temporary solution to migrate your imperative component code to Svelte 5.
 	 *
 	 * */
-	export function createClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(options: import("svelte").ComponentConstructorOptions<Props> & {
-		component: import("svelte").ComponentType<import("svelte").SvelteComponent<Props, Events, Slots>> | import("svelte").Component<Props, any, string>;
-		immutable?: boolean | undefined;
-		hydrate?: boolean | undefined;
-		recover?: boolean | undefined;
+	function createClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(options: import("svelte").ComponentConstructorOptions<Props> & {
+		component: import("svelte").ComponentType<import("svelte").SvelteComponent<Props, Events, Slots>> | import("svelte").Component<Props>;
+		immutable?: boolean;
+		hydrate?: boolean;
+		recover?: boolean;
 	}): import("svelte").SvelteComponent<Props, Events, Slots> & Exports;
 	/**
 	 * Takes the component function and returns a Svelte 4 compatible component constructor.
@@ -2003,17 +2044,19 @@ declare module 'svelte/legacy' {
 	 * @deprecated Use this only as a temporary solution to migrate your imperative component code to Svelte 5.
 	 *
 	 * */
-	export function asClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(component: import("svelte").SvelteComponent<Props, Events, Slots> | import("svelte").Component<Props, any, string>): import("svelte").ComponentType<import("svelte").SvelteComponent<Props, Events, Slots> & Exports>;
+	function asClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(component: import("svelte").SvelteComponent<Props, Events, Slots> | import("svelte").Component<Props>): import("svelte").ComponentType<import("svelte").SvelteComponent<Props, Events, Slots> & Exports>;
 	/**
 	 * Runs the given function once immediately on the server, and works like `$effect.pre` on the client.
 	 *
 	 * @deprecated Use this only as a temporary solution to migrate your component code to Svelte 5.
 	 * */
-	export function run(fn: () => void | (() => void)): void;
+	function run(fn: () => void | (() => void)): void;
+
+	export { createClassComponent, asClassComponent, run };
 }
 
 declare module 'svelte/motion' {
-	export interface Spring<T> extends Readable<T> {
+	interface Spring<T> extends Readable<T> {
 		set: (new_value: T, opts?: SpringUpdateOpts) => Promise<void>;
 		update: (fn: Updater<T>, opts?: SpringUpdateOpts) => Promise<void>;
 		precision: number;
@@ -2021,7 +2064,7 @@ declare module 'svelte/motion' {
 		stiffness: number;
 	}
 
-	export interface Tweened<T> extends Readable<T> {
+	interface Tweened<T> extends Readable<T> {
 		set(value: T, opts?: TweenedOptions<T>): Promise<void>;
 		update(updater: Updater<T>, opts?: TweenedOptions<T>): Promise<void>;
 	}
@@ -2066,13 +2109,15 @@ declare module 'svelte/motion' {
 	 *
 	 * https://svelte.dev/docs/svelte-motion#spring
 	 * */
-	export function spring<T = any>(value?: T | undefined, opts?: SpringOpts | undefined): Spring<T>;
+	function spring<T = any>(value?: T | undefined, opts?: SpringOpts | undefined): Spring<T>;
 	/**
 	 * A tweened store in Svelte is a special type of store that provides smooth transitions between state values over time.
 	 *
 	 * https://svelte.dev/docs/svelte-motion#tweened
 	 * */
-	export function tweened<T>(value?: T | undefined, defaults?: TweenedOptions<T> | undefined): Tweened<T>;
+	function tweened<T>(value?: T | undefined, defaults?: TweenedOptions<T> | undefined): Tweened<T>;
+
+	export { Spring, Tweened, spring, tweened };
 }
 
 declare module 'svelte/reactivity' {
@@ -2110,14 +2155,25 @@ declare module 'svelte/reactivity' {
 }
 
 declare module 'svelte/server' {
+	import type { ComponentProps, Component, SvelteComponent, ComponentType } from 'svelte';
 	/**
 	 * Only available on the server and when compiling with the `server` option.
 	 * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
-	 * */
-	export function render<Props extends Record<string, any>>(component: import("svelte").Component<Props, any, string> | import("svelte").ComponentType<import("svelte").SvelteComponent<Props, any, any>>, options: {
-		props: Omit<Props, "$$slots" | "$$events">;
-		context?: Map<any, any> | undefined;
-	}): RenderOutput;
+	 */
+	function render<
+		Comp extends SvelteComponent<any> | Component<any>,
+		Props extends ComponentProps<Comp> = ComponentProps<Comp>
+	>(
+		...args: {} extends Props
+			? [
+					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
+					options?: { props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }
+				]
+			: [
+					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
+					options: { props: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }
+				]
+	): RenderOutput;
 	interface RenderOutput {
 		/** HTML that goes into the `<head>` */
 		head: string;
@@ -2126,17 +2182,19 @@ declare module 'svelte/server' {
 		/** HTML that goes somewhere into the `<body>` */
 		body: string;
 	}
+
+	export { render };
 }
 
 declare module 'svelte/store' {
 	/** Callback to inform of a value updates. */
-	export type Subscriber<T> = (value: T) => void;
+	type Subscriber<T> = (value: T) => void;
 
 	/** Unsubscribes from value updates. */
-	export type Unsubscriber = () => void;
+	type Unsubscriber = () => void;
 
 	/** Callback to update a value. */
-	export type Updater<T> = (value: T) => T;
+	type Updater<T> = (value: T) => T;
 
 	/**
 	 * Start and stop notification callbacks.
@@ -2147,13 +2205,13 @@ declare module 'svelte/store' {
 	 * @returns Optionally, a cleanup function that is called when the last remaining
 	 * subscriber unsubscribes.
 	 */
-	export type StartStopNotifier<T> = (
+	type StartStopNotifier<T> = (
 		set: (value: T) => void,
 		update: (fn: Updater<T>) => void
 	) => void | (() => void);
 
 	/** Readable interface for subscribing. */
-	export interface Readable<T> {
+	interface Readable<T> {
 		/**
 		 * Subscribe on value changes.
 		 * @param run subscription callback
@@ -2163,7 +2221,7 @@ declare module 'svelte/store' {
 	}
 
 	/** Writable interface for both updating and subscribing. */
-	export interface Writable<T> extends Readable<T> {
+	interface Writable<T> extends Readable<T> {
 		/**
 		 * Set value and inform subscribers.
 		 * @param value to set
@@ -2194,49 +2252,49 @@ declare module 'svelte/store' {
 	 * https://svelte.dev/docs/svelte-store#readable
 	 * @param value initial value
 	 * */
-	export function readable<T>(value?: T | undefined, start?: StartStopNotifier<T> | undefined): Readable<T>;
-
-	export function safe_not_equal(a: any, b: any): boolean;
+	function readable<T>(value?: T | undefined, start?: StartStopNotifier<T> | undefined): Readable<T>;
 	/**
 	 * Create a `Writable` store that allows both updating and reading by subscription.
 	 *
 	 * https://svelte.dev/docs/svelte-store#writable
 	 * @param value initial value
 	 * */
-	export function writable<T>(value?: T | undefined, start?: StartStopNotifier<T> | undefined): Writable<T>;
+	function writable<T>(value?: T | undefined, start?: StartStopNotifier<T> | undefined): Writable<T>;
 	/**
 	 * Derived value store by synchronizing one or more readable stores and
 	 * applying an aggregation function over its input values.
 	 *
 	 * https://svelte.dev/docs/svelte-store#derived
 	 * */
-	export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>, set: (value: T) => void, update: (fn: Updater<T>) => void) => Unsubscriber | void, initial_value?: T | undefined): Readable<T>;
+	function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>, set: (value: T) => void, update: (fn: Updater<T>) => void) => Unsubscriber | void, initial_value?: T | undefined): Readable<T>;
 	/**
 	 * Derived value store by synchronizing one or more readable stores and
 	 * applying an aggregation function over its input values.
 	 *
 	 * https://svelte.dev/docs/svelte-store#derived
 	 * */
-	export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>) => T, initial_value?: T | undefined): Readable<T>;
+	function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>) => T, initial_value?: T | undefined): Readable<T>;
 	/**
 	 * Takes a store and returns a new one derived from the old one that is readable.
 	 *
 	 * https://svelte.dev/docs/svelte-store#readonly
 	 * @param store  - store to make readonly
 	 * */
-	export function readonly<T>(store: Readable<T>): Readable<T>;
+	function readonly<T>(store: Readable<T>): Readable<T>;
 	/**
 	 * Get the current value from a store by subscribing and immediately unsubscribing.
 	 *
 	 * https://svelte.dev/docs/svelte-store#get
 	 * */
-	export function get<T>(store: Readable<T>): T;
+	function get<T>(store: Readable<T>): T;
+
+	export { Subscriber, Unsubscriber, Updater, StartStopNotifier, Readable, Writable, readable, writable, derived, readonly, get };
 }
 
 declare module 'svelte/transition' {
-	export type EasingFunction = (t: number) => number;
+	type EasingFunction = (t: number) => number;
 
-	export interface TransitionConfig {
+	interface TransitionConfig {
 		delay?: number;
 		duration?: number;
 		easing?: EasingFunction;
@@ -2244,7 +2302,7 @@ declare module 'svelte/transition' {
 		tick?: (t: number, u: number) => void;
 	}
 
-	export interface BlurParams {
+	interface BlurParams {
 		delay?: number;
 		duration?: number;
 		easing?: EasingFunction;
@@ -2252,13 +2310,13 @@ declare module 'svelte/transition' {
 		opacity?: number;
 	}
 
-	export interface FadeParams {
+	interface FadeParams {
 		delay?: number;
 		duration?: number;
 		easing?: EasingFunction;
 	}
 
-	export interface FlyParams {
+	interface FlyParams {
 		delay?: number;
 		duration?: number;
 		easing?: EasingFunction;
@@ -2267,14 +2325,14 @@ declare module 'svelte/transition' {
 		opacity?: number;
 	}
 
-	export interface SlideParams {
+	interface SlideParams {
 		delay?: number;
 		duration?: number;
 		easing?: EasingFunction;
 		axis?: 'x' | 'y';
 	}
 
-	export interface ScaleParams {
+	interface ScaleParams {
 		delay?: number;
 		duration?: number;
 		easing?: EasingFunction;
@@ -2282,14 +2340,14 @@ declare module 'svelte/transition' {
 		opacity?: number;
 	}
 
-	export interface DrawParams {
+	interface DrawParams {
 		delay?: number;
 		speed?: number;
 		duration?: number | ((len: number) => number);
 		easing?: EasingFunction;
 	}
 
-	export interface CrossfadeParams {
+	interface CrossfadeParams {
 		delay?: number;
 		duration?: number | ((len: number) => number);
 		easing?: EasingFunction;
@@ -2299,37 +2357,37 @@ declare module 'svelte/transition' {
 	 *
 	 * https://svelte.dev/docs/svelte-transition#blur
 	 * */
-	export function blur(node: Element, { delay, duration, easing, amount, opacity }?: BlurParams | undefined): TransitionConfig;
+	function blur(node: Element, { delay, duration, easing, amount, opacity }?: BlurParams | undefined): TransitionConfig;
 	/**
 	 * Animates the opacity of an element from 0 to the current opacity for `in` transitions and from the current opacity to 0 for `out` transitions.
 	 *
 	 * https://svelte.dev/docs/svelte-transition#fade
 	 * */
-	export function fade(node: Element, { delay, duration, easing }?: FadeParams | undefined): TransitionConfig;
+	function fade(node: Element, { delay, duration, easing }?: FadeParams | undefined): TransitionConfig;
 	/**
 	 * Animates the x and y positions and the opacity of an element. `in` transitions animate from the provided values, passed as parameters to the element's default values. `out` transitions animate from the element's default values to the provided values.
 	 *
 	 * https://svelte.dev/docs/svelte-transition#fly
 	 * */
-	export function fly(node: Element, { delay, duration, easing, x, y, opacity }?: FlyParams | undefined): TransitionConfig;
+	function fly(node: Element, { delay, duration, easing, x, y, opacity }?: FlyParams | undefined): TransitionConfig;
 	/**
 	 * Slides an element in and out.
 	 *
 	 * https://svelte.dev/docs/svelte-transition#slide
 	 * */
-	export function slide(node: Element, { delay, duration, easing, axis }?: SlideParams | undefined): TransitionConfig;
+	function slide(node: Element, { delay, duration, easing, axis }?: SlideParams | undefined): TransitionConfig;
 	/**
 	 * Animates the opacity and scale of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.
 	 *
 	 * https://svelte.dev/docs/svelte-transition#scale
 	 * */
-	export function scale(node: Element, { delay, duration, easing, start, opacity }?: ScaleParams | undefined): TransitionConfig;
+	function scale(node: Element, { delay, duration, easing, start, opacity }?: ScaleParams | undefined): TransitionConfig;
 	/**
 	 * Animates the stroke of an SVG element, like a snake in a tube. `in` transitions begin with the path invisible and draw the path to the screen over time. `out` transitions start in a visible state and gradually erase the path. `draw` only works with elements that have a `getTotalLength` method, like `<path>` and `<polyline>`.
 	 *
 	 * https://svelte.dev/docs/svelte-transition#draw
 	 * */
-	export function draw(node: SVGElement & {
+	function draw(node: SVGElement & {
 		getTotalLength(): number;
 	}, { delay, speed, duration, easing }?: DrawParams | undefined): TransitionConfig;
 	/**
@@ -2337,13 +2395,15 @@ declare module 'svelte/transition' {
 	 *
 	 * https://svelte.dev/docs/svelte-transition#crossfade
 	 * */
-	export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
+	function crossfade({ fallback, ...defaults }: CrossfadeParams & {
 		fallback?: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
 	}): [(node: any, params: CrossfadeParams & {
 		key: any;
 	}) => () => TransitionConfig, (node: any, params: CrossfadeParams & {
 		key: any;
 	}) => () => TransitionConfig];
+
+	export { EasingFunction, TransitionConfig, BlurParams, FadeParams, FlyParams, SlideParams, ScaleParams, DrawParams, CrossfadeParams, blur, fade, fly, slide, scale, draw, crossfade };
 }
 
 declare module 'svelte/events' {
@@ -2353,27 +2413,29 @@ declare module 'svelte/events' {
 	 * (with attributes like `onclick`), which use event delegation for performance reasons
 	 *
 	 * */
-	export function on<Element extends HTMLElement, Type extends keyof HTMLElementEventMap>(element: Element, type: Type, handler: (this: Element, event: HTMLElementEventMap[Type]) => any, options?: AddEventListenerOptions | undefined): () => void;
+	function on<Element extends HTMLElement, Type extends keyof HTMLElementEventMap>(element: Element, type: Type, handler: (this: Element, event: HTMLElementEventMap[Type]) => any, options?: AddEventListenerOptions | undefined): () => void;
 	/**
 	 * Attaches an event handler to an element and returns a function that removes the handler. Using this
 	 * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
 	 * (with attributes like `onclick`), which use event delegation for performance reasons
 	 *
 	 * */
-	export function on(element: EventTarget, type: string, handler: EventListener, options?: AddEventListenerOptions | undefined): () => void;
+	function on(element: EventTarget, type: string, handler: EventListener, options?: AddEventListenerOptions | undefined): () => void;
+
+	export { on };
 }
 
 declare module 'svelte/types/compiler/preprocess' {
 	/** @deprecated import this from 'svelte/preprocess' instead */
-	export type MarkupPreprocessor = MarkupPreprocessor_1;
+	type MarkupPreprocessor = MarkupPreprocessor_1;
 	/** @deprecated import this from 'svelte/preprocess' instead */
-	export type Preprocessor = Preprocessor_1;
+	type Preprocessor = Preprocessor_1;
 	/** @deprecated import this from 'svelte/preprocess' instead */
-	export type PreprocessorGroup = PreprocessorGroup_1;
+	type PreprocessorGroup = PreprocessorGroup_1;
 	/** @deprecated import this from 'svelte/preprocess' instead */
-	export type Processed = Processed_1;
+	type Processed = Processed_1;
 	/** @deprecated import this from 'svelte/preprocess' instead */
-	export type SveltePreprocessor<PreprocessorType extends keyof PreprocessorGroup_1, Options = any> = SveltePreprocessor_1<
+	type SveltePreprocessor<PreprocessorType extends keyof PreprocessorGroup_1, Options = any> = SveltePreprocessor_1<
 		PreprocessorType,
 		Options
 	>;
@@ -2457,14 +2519,16 @@ declare module 'svelte/types/compiler/preprocess' {
 	> {
 		(options?: Options): Required<Pick<PreprocessorGroup_1, PreprocessorType>>;
 	}
+
+	export { MarkupPreprocessor, Preprocessor, PreprocessorGroup, Processed, SveltePreprocessor };
 }
 
 declare module 'svelte/types/compiler/interfaces' {
 	import type { Location } from 'locate-character';
 	/** @deprecated import this from 'svelte' instead */
-	export type CompileOptions = CompileOptions_1;
+	type CompileOptions = CompileOptions_1;
 	/** @deprecated import this from 'svelte' instead */
-	export type Warning = Warning_1;
+	type Warning = Warning_1;
 	interface Warning_1 {
 		start?: Location;
 		end?: Location;
@@ -2635,6 +2699,8 @@ declare module 'svelte/types/compiler/interfaces' {
 	 *               (also see https://github.com/sveltejs/svelte/pull/5652)
 	 */
 	type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
+
+	export { CompileOptions, Warning };
 }declare module '*.svelte' {
 	// use prettier-ignore for a while because of https://github.com/sveltejs/language-tools/commit/026111228b5814a9109cc4d779d37fb02955fb8b
 	// prettier-ignore

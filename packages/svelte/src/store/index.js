@@ -1,4 +1,5 @@
 import { noop, run_all } from '../internal/shared/utils.js';
+import { safe_not_equal } from '../internal/client/reactivity/equality.js';
 import { subscribe_to_store } from './utils.js';
 
 /**
@@ -19,15 +20,6 @@ export function readable(value, start) {
 	return {
 		subscribe: writable(value, start).subscribe
 	};
-}
-
-/**
- * @param {any} a
- * @param {any} b
- * @returns {boolean}
- */
-export function safe_not_equal(a, b) {
-	return a != a ? b == b : a !== b || (a && typeof a === 'object') || typeof a === 'function';
 }
 
 /**
@@ -213,11 +205,9 @@ export function readonly(store) {
  * @param {import('../store/public').Readable<T>} store
  * @returns {T}
  */
-export function get_store_value(store) {
+export function get(store) {
 	let value;
 	subscribe_to_store(store, (_) => (value = _))();
 	// @ts-expect-error
 	return value;
 }
-
-export { get_store_value as get };

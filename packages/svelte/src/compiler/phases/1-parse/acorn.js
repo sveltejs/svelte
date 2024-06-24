@@ -1,6 +1,7 @@
 import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import { tsPlugin } from 'acorn-typescript';
+import { locator } from '../../state.js';
 
 const ParserWithTS = acorn.Parser.extend(tsPlugin({ allowSatisfies: true }));
 
@@ -126,6 +127,16 @@ function amend(source, node) {
 			delete node.loc.start.index;
 			// @ts-expect-error
 			delete node.loc.end.index;
+
+			if (typeof node.loc?.end === 'number') {
+				const loc = locator(node.loc.end);
+				if (loc) {
+					node.loc.end = {
+						line: loc.line,
+						column: loc.column
+					};
+				}
+			}
 
 			if (/** @type {any} */ (node).typeAnnotation && node.end === undefined) {
 				// i think there might be a bug in acorn-typescript that prevents

@@ -4,6 +4,7 @@ import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
 import {
 	get_prop_source,
+	is_prop_source,
 	is_state_source,
 	serialize_proxy_reassignment,
 	should_proxy_or_freeze
@@ -240,7 +241,11 @@ export const javascript_visitors_runes = {
 				assert.equal(declarator.id.type, 'ObjectPattern');
 
 				/** @type {string[]} */
-				const seen = [];
+				const seen = ['$$slots', '$$events', '$$legacy'];
+
+				if (state.analysis.custom_element) {
+					seen.push('$$host');
+				}
 
 				for (const property of declarator.id.properties) {
 					if (property.type === 'Property') {
@@ -264,7 +269,7 @@ export const javascript_visitors_runes = {
 							initial = b.call('$.proxy', initial);
 						}
 
-						if (binding.reassigned || state.analysis.accessors || initial) {
+						if (is_prop_source(binding, state)) {
 							declarations.push(b.declarator(id, get_prop_source(binding, state, name, initial)));
 						}
 					} else {
