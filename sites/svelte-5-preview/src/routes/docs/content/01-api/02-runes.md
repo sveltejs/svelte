@@ -389,12 +389,22 @@ Instead, use callbacks where possible ([demo](/#H4sIAAAAAAAACo2SP2-DMBDFv8rp1CFR
 </script>
 
 <label>
-	<input type="range" value={spent} oninput={updateSpent} max={total} />
+	<input
+		type="range"
+		value={spent}
+		oninput={updateSpent}
+		max={total}
+	/>
 	{spent}/{total} spent
 </label>
 
 <label>
-	<input type="range" value={left} oninput={updateLeft} max={total} />
+	<input
+		type="range"
+		value={left}
+		oninput={updateLeft}
+		max={total}
+	/>
 	{left.value}/{total} left
 </label>
 ```
