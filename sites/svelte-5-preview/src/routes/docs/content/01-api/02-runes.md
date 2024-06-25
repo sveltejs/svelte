@@ -335,49 +335,100 @@ In general, `$effect` is best considered something of an escape hatch — useful
 
 > For things that are more complicated than a simple expression like `count * 2`, you can also use [`$derived.by`](#$derived-by).
 
-When reacting to a state change and writing to a different state as a result, think about if it's possible to use callback props instead.
+You might be tempted to do something convoluted with effects to link one value to another. The following example shows two inputs for "money spent" and "money left" that are connected to each other. If you update one, the other should update accordingly. Don't use effects for this ([demo](/#H4sIAAAAAAAACpVRy2rDMBD8lWXJwYE0dg-9KFYg31H3oNirIJBlYa1DjPG_F8l1XEop9LgzOzP7mFAbSwHF-4ROtYQCL97jAXn0sQh3skx4wNANfR2RMtS98XyuXMWWGLhjZUHCa1GcVix4cgwSdoEVU1bsn4wl_Y1I2kS6inekNdWcZXuQZ5giFDWpfwl5WYyT2fynbB1g1UWbTVbm2w6utOpKNq1TGucHhri6rLBX7kYVwtW4RtyVHUhOyXeGVj3klLxnyJP0i8lXNJUx6en-v6A48K85kTimpi0sYj-yAo-Wlh9FcL1LY4K3ahSgLT1OC3ZTXkBxfKN2uVC6T5LjAduuMdpQg4L7geaP-RNHPuClMQIAAA==)):
 
 ```svelte
-<!-- Don't do this -->
 <script>
-	let value = $state();
-	let value_uppercase = $state();
+	let total = 100;
+	let spent = $state(0);
+	let left = $state(total);
+
 	$effect(() => {
-		value_uppercase = value.toUpperCase();
+		left = total - spent;
+	});
+
+	$effect(() => {
+		spent = total - left;
 	});
 </script>
 
-<Text bind:value />
+<label>
+	<input type="range" bind:value={spent} max={total} />
+	{spent}/{total} spent
+</label>
 
-<!-- Do this instead: -->
-<script>
-	let value = $state();
-	let value_uppercase = $state();
-	function onValueChange(new_text) {
-		value = new_text;
-		value_uppercase = new_text.toUpperCase();
-	}
-</script>
-
-<Text {value} {onValueChange}>
+<label>
+	<input type="range" bind:value={left} max={total} />
+	{left.value}/{total} left
+</label>
 ```
 
-If you want to have something update from above but also modify it from below (i.e. you want some kind of "writable `$derived`"), and events aren't an option, you can also use an object with getters and setters.
+Instead, use callbacks where possible ([demo](/#H4sIAAAAAAAACo2SP2-DMBDFv8rp1CFR84cOXQhU6p6tY-ngwoEsGWPhI0pk8d0rG5yglqGj37v7veMJh7VUZDH9dKhFS5jiuzG4Q74Z_7AXUky4Q9sNfemVzJa9NPxW6IIVMXDHQkEOL0lyipo1pBlyeLIsmDbJ9u4oqhdG2A2mLrgedMmy0zCYSjB9eMaGtuC8WXBkPtOBRd8QHy5CDXSa3Jk7HbOfDgjWuAo_U71kz9vr6Bgc2X44orPjow2dKfFNKhSTSW0GBl9iXmAvdEMFQqDmLgBH6HQYyt3ie0doxTV3IWqEY2DN88eohqePvsf9O9mf_if4HMSVXD89NfEI99qvbMs3RdPv4MXYaSWtUeKWQq3oOlfZCJNCcnildlFgWMcdtl0la0kVptwPNH6NP_uzV0acAgAA)):
 
 ```svelte
 <script>
-	let { value } = $props();
-	let facade = {
+	let total = 100;
+	let spent = $state(0);
+	let left = $state(total);
+
+	function updateSpent(e) {
+		spent = +e.target.value;
+		left = total - spent;
+	}
+
+	function updateLeft(e) {
+		left = +e.target.value;
+		spent = total - left;
+	}
+</script>
+
+<label>
+	<input
+		type="range"
+		value={spent}
+		oninput={updateSpent}
+		max={total}
+	/>
+	{spent}/{total} spent
+</label>
+
+<label>
+	<input
+		type="range"
+		value={left}
+		oninput={updateLeft}
+		max={total}
+	/>
+	{left}/{total} left
+</label>
+```
+
+If you need to use bindings, for whatever reason (for example when you want some kind of "writable `$derived`"), consider using getters and setters to synchronise state ([demo](/#H4sIAAAAAAAACo2SQW-DMAyF_4pl7dBqXcsOu1CYtHtvO44dsmKqSCFExFRFiP8-xRCGth52tJ_9PecpA1bakMf0Y0CrasIU35zDHXLvQuGvZJhwh77p2nPoZP7casevhS3YEAM3rAzk8Jwkx9jzjixDDg-eFdMm2S6KoWolyK6ItuCqs2fWjYXOlYrpPTA2tIUhiAVH5iPtWbUX4v1VmY6Okzpzp2OepgNEGu_CT1St2fP2fXQ0juwwHNHZ4ScNmxn1RUaCybR1HUMIMS-wVfZCBYJQ80GAIzRWhvJh9d4RanXLB7Ea4SCsef4Qu1IG68Xu387h9D_GJ2ne8ZXpxTZUv1w994amjxCaMc1Se2dUn0Jl6DaHeFEuhWT_QvUqOlnHHdZNqStNJabcdjR-jt8IbC-7lgIAAA==)):
+
+```svelte
+<script>
+	let total = 100;
+	let spent = $state(0);
+
+	let left = {
 		get value() {
-			return value.toUpperCase();
+			return total - spent;
 		},
-		set value(val) {
-			value = val.toLowerCase();
+		set value(v) {
+			spent = total - v;
 		}
 	};
 </script>
 
-<input bind:value={facade.value} />
+<label>
+	<input type="range" bind:value={spent} max={total} />
+	{spent}/{total} spent
+</label>
+
+<label>
+	<input type="range" bind:value={left.value} max={total} />
+	{left.value}/{total} left
+</label>
 ```
 
 If you absolutely have to update `$state` within an effect and run into an infinite loop because you read and write to the same `$state`, use [untrack](functions#untrack).
