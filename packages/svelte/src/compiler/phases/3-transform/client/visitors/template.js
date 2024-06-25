@@ -791,9 +791,7 @@ function serialize_inline_component(node, component_name, context) {
 				const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
 				push_prop(
 					b.set(attribute.name, [
-						b.stmt(
-							serialize_set_binding(assignment, context, () => context.visit(assignment), false)
-						)
+						b.stmt(serialize_set_binding(assignment, context, () => context.visit(assignment)))
 					])
 				);
 			}
@@ -1025,7 +1023,7 @@ function serialize_bind_this(bind_this, context, node) {
 	const bind_this_id = /** @type {import('estree').Expression} */ (context.visit(bind_this));
 	const ids = Array.from(each_ids.values()).map((id) => b.id('$$value_' + id[0]));
 	const assignment = b.assignment('=', bind_this, b.id('$$value'));
-	const update = serialize_set_binding(assignment, context, () => context.visit(assignment), false);
+	const update = serialize_set_binding(assignment, context, () => context.visit(assignment));
 
 	for (const [binding, [, , expression]] of each_ids) {
 		// reset expressions to what they were before
@@ -2399,7 +2397,7 @@ export const template_visitors = {
 				if (assignment.left.type !== 'Identifier' && assignment.left.type !== 'MemberExpression') {
 					// serialize_set_binding turns other patterns into IIFEs and separates the assignments
 					// into separate expressions, at which point this is called again with an identifier or member expression
-					return serialize_set_binding(assignment, context, () => assignment, false);
+					return serialize_set_binding(assignment, context, () => assignment);
 				}
 				const left = object(assignment.left);
 				const value = get_assignment_value(assignment, context);
@@ -2780,7 +2778,7 @@ export const template_visitors = {
 				assignment,
 				context,
 				() => /** @type {import('estree').Expression} */ (visit(assignment)),
-				false,
+				null,
 				{
 					skip_proxy_and_freeze: true
 				}
