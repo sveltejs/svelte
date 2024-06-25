@@ -482,10 +482,11 @@ function create_item(anchor, prev, next, value, key, index, render_fn, flags) {
 
 /**
  * @param {import('#client').TemplateNode} dom
+ * @param {import('#client').TemplateNode | null} sibling
  * @param {import("#client").Effect} effect
  * @returns {import('#client').TemplateNode}
  */
-function get_adjusted_first_node(dom, effect) {
+function get_adjusted_first_node(dom, sibling, effect) {
 	if ((dom.nodeType === 3 && /** @type {Text} */ (dom).data === '') || dom.nodeType === 8) {
 		var adjusted = effect.first;
 		var next;
@@ -498,7 +499,11 @@ function get_adjusted_first_node(dom, effect) {
 			}
 			adjusted = next;
 		}
-		return get_first_node(/** @type {import("#client").Effect} */ (adjusted));
+		var adjusted_dom = get_first_node(/** @type {import("#client").Effect} */ (adjusted));
+		// If we have a sibling that contains the adjusted_dom, then use that instead.
+		if (sibling?.contains(adjusted_dom)) {
+			return sibling;
+		}
 	}
 	return dom;
 }
@@ -511,9 +516,13 @@ function get_adjusted_first_node(dom, effect) {
 function get_first_node(effect) {
 	var dom = effect.dom;
 	if (is_array(dom)) {
-		return get_adjusted_first_node(dom[0], effect);
+		return get_adjusted_first_node(dom[0], dom[1], effect);
 	}
-	return get_adjusted_first_node(/** @type {import('#client').TemplateNode} **/ (dom), effect);
+	return get_adjusted_first_node(
+		/** @type {import('#client').TemplateNode} **/ (dom),
+		null,
+		effect
+	);
 }
 
 /**
