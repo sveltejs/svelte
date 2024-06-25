@@ -47,7 +47,7 @@
   },
   "pnpm": {
     "overrides": {
-      "jimp>xml2js": "^0.6.0"
+      "xml2js": "^0.6.0"
     }
   }
 }
