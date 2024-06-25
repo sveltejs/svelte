@@ -22,13 +22,13 @@
 
 {#await p_cards then cards}
 	{#if show}
-	{#each cards.filter((card) => !card.fav) as card}
-	<Card {card} onfav={() => {card.fav = !card.fav}}></Card>
-	{/each}
--------
-	{#each  cards.filter((card) => card.fav) as card}
-		<Card {card} onfav={() => {card.fav = !card.fav}}></Card>
-	{/each}
+		{#each cards.filter((card) => !card.fav) as card}
+			<Card {card} onfav={() => {card.fav = !card.fav}}></Card>
+		{/each}
+		-------
+		{#each  cards.filter((card) => card.fav) as card}
+			<Card {card} onfav={() => {card.fav = !card.fav}}></Card>
+		{/each}
 	{/if}
 {/await}
 
