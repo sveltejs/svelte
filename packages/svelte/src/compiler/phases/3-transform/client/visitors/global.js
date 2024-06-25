@@ -32,7 +32,7 @@ export const global_visitors = {
 		next();
 	},
 	AssignmentExpression(node, context) {
-		return serialize_set_binding(node, context, context.next, false);
+		return serialize_set_binding(node, context, context.next);
 	},
 	UpdateExpression(node, context) {
 		const { state, next, visit } = context;

@@ -120,7 +120,7 @@ export function serialize_get_binding(node, state) {
  * @param {import('estree').AssignmentExpression} node
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, State>} context
  * @param {() => any} fallback
- * @param {boolean} prefix
+ * @param {boolean | null} [prefix] - If the assignment is a transformed update expression, set this. Else `null`
  * @param {{skip_proxy_and_freeze?: boolean}} [options]
  * @returns {import('estree').Expression}
  */
@@ -419,6 +419,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 				}
 			} else if (
 				node.right.type === 'Literal' &&
+				prefix != null &&
 				(node.operator === '+=' || node.operator === '-=')
 			) {
 				return b.update(
