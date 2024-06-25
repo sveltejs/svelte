@@ -322,7 +322,10 @@ const instance_script = {
 				state.str.prependLeft(/** @type {number} */ (declarator.init.start), '$state(');
 				state.str.appendRight(/** @type {number} */ (declarator.init.end), ')');
 			} else {
-				state.str.prependLeft(/** @type {number} */ (declarator.id.end), ' = $state()');
+				state.str.prependLeft(
+					/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+					' = $state()'
+				);
 			}
 		}
 
