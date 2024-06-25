@@ -341,68 +341,65 @@ In general, `$effect` is best considered something of an escape hatch — useful
 
 > For things that are more complicated than a simple expression like `count * 2`, you can also use [`$derived.by`](#$derived-by).
 
-You might be tempted to do something convoluted with effects to link one value to another. Don't do this ([demo](/#H4sIAAAAAAAAE5WS8UrDMBDGX-UI-yN1ujlFkG4dyKAvYf2jSy8YaNOSXKej9J18Bp_MJG1xThElULgvX-77Hb2OSVWiZfFjx3ReIYvZQ9OwS0bHxhf2gCWhq23dGuGVjRVGNbTNdEYlEghIYGYpJ-TX0XpS5bk66aaudu5O5qXF9amanqpOn6GUKIjzCJItdF7KSNTaEhzyskVnv72BOXABF7Ba3A_Z7oSvksBDVjQ9zeh7tj8GqTV6LPvTHhMVmXay-7HmIX5BdapeseCrIbiP_s7NJVw5-AiWHvxH7vSMO_0n9-4rt_ide7P8_Kl6o3TTEvgFSDKm22qPJmOwV7qIQ4ukEz0st_D-5lL-5JejPw39LR1LDPszvBwHfVEFPcdwh9UAFrBGq1vAqi6UVFiw2M_VP_UfNJIG1bsCAAA=)):
+You might be tempted to do something convoluted with effects to link one value to another. The following example shows two inputs for "money spent" and "money left" that are connected to each other. If you update one, the other should update accordingly. Don't use effects for this ([demo](/#H4sIAAAAAAAACpVRy2rDMBD8lWXJwYE0dg-9KFYg31H3oNirIJBlYa1DjPG_F8l1XEop9LgzOzP7mFAbSwHF-4ROtYQCL97jAXn0sQh3skx4wNANfR2RMtS98XyuXMWWGLhjZUHCa1GcVix4cgwSdoEVU1bsn4wl_Y1I2kS6inekNdWcZXuQZ5giFDWpfwl5WYyT2fynbB1g1UWbTVbm2w6utOpKNq1TGucHhri6rLBX7kYVwtW4RtyVHUhOyXeGVj3klLxnyJP0i8lXNJUx6en-v6A48K85kTimpi0sYj-yAo-Wlh9FcL1LY4K3ahSgLT1OC3ZTXkBxfKN2uVC6T5LjAduuMdpQg4L7geaP-RNHPuClMQIAAA==)):
 
 ```svelte
 <script>
-	let c = $state(0);
-	let f = $state(0);
-
-	let fromC = false;
-	let fromF = false;
+	let total = 100;
+	let spent = $state(0);
+	let left = $state(total);
 
 	$effect(() => {
-		const value = 32 + c * 1.8;
-
-		if (fromC) {
-			fromC = false;
-			return;
-		}
-
-		fromF = true;
-		f = +value.toFixed(1);
+		left = total - spent;
 	});
 
 	$effect(() => {
-		const value = (f - 32) / 1.8;
-
-		if (fromF) {
-			fromF = false;
-			return;
-		}
-
-		fromC = true;
-		c = +value.toFixed(1);
+		spent = total - left;
 	});
 </script>
 
-<input type="number" bind:value={c} /> °C =
-<input type="number" bind:value={f} /> °F
+<label>
+	<input type="range" bind:value={spent} max={total} />
+	{spent}/{total} spent
+</label>
+
+<label>
+	<input type="range" bind:value={left} max={total} />
+	{left.value}/{total} left
+</label>
 ```
 
-Instead, use callbacks where possible ([demo](/#H4sIAAAAAAAAE4WRUUrEMBCGrzIEH1JXW1cRpNsuyEIvYX2o7UQDbRqayepSeifP4MlM0souuOJj_n_m_2YmIxOyRcPSp5GpqkOWsket2RWjg_YPs8eW0L1Nb4faK5mpB6lpW6qSWiSoIYcLQxUhv4k2P6o4qne3QXaGsKom2SuwunHOjmMEozdK8ikrjKkaXpHifdVa3MyOT1q5EFgBr-ES1vFDFMXUF_IDG76ekdNZQHECEH8CAppzAdfgRoUkEM4AsuS4ucqk0pbAXykvmbLdCw4lg5Cbj_UEvQoV-bjsOkGyha_PHeT_NYtfzcXSXASyoUOL4fxzzLLgu2zoLYV77E4GXkrd_3V9I4XEhqU0WJyep2_WKjbd-gEAAA==)):
+Instead, use callbacks where possible ([demo](/#H4sIAAAAAAAACo2SP2-DMBDFv8rp1CFR84cOXQhU6p6tY-ngwoEsGWPhI0pk8d0rG5yglqGj37v7veMJh7VUZDH9dKhFS5jiuzG4Q74Z_7AXUky4Q9sNfemVzJa9NPxW6IIVMXDHQkEOL0lyipo1pBlyeLIsmDbJ9u4oqhdG2A2mLrgedMmy0zCYSjB9eMaGtuC8WXBkPtOBRd8QHy5CDXSa3Jk7HbOfDgjWuAo_U71kz9vr6Bgc2X44orPjow2dKfFNKhSTSW0GBl9iXmAvdEMFQqDmLgBH6HQYyt3ie0doxTV3IWqEY2DN88eohqePvsf9O9mf_if4HMSVXD89NfEI99qvbMs3RdPv4MXYaSWtUeKWQq3oOlfZCJNCcnildlFgWMcdtl0la0kVptwPNH6NP_uzV0acAgAA)):
 
 ```svelte
 <script>
-	let c = $state(0);
-	let f = $state(32);
+	let total = 100;
+	let spent = $state(0);
+	let left = $state(total);
 
-	function updateC(e) {
-		c = +e.target.value;
-		f = +(32 + c * 1.8).toFixed(1);
+	function updateSpent(e) {
+		spent = +e.target.value;
+		left = total - spent;
 	}
 
-	function updateF(e) {
-		f = +e.target.value;
-		c = +((f - 32) / 1.8).toFixed(1);
+	function updateLeft(e) {
+		left = +e.target.value;
+		spent = total - left;
 	}
 </script>
 
-<input type="number" value={c} oninput={updateC} /> °C =
-<input type="number" value={f} oninput={updateF} /> °F
+<label>
+	<input type="range" value={spent} oninput={updateSpent} max={total} />
+	{spent}/{total} spent
+</label>
+
+<label>
+	<input type="range" value={left} oninput={updateLeft} max={total} />
+	{left.value}/{total} left
+</label>
 ```
 
-If you need to use bindings, for whatever reason, consider using this pattern to synchronise state ([demo](/#H4sIAAAAAAAAE5VRQW7DIBD8CkI9JFIau4deiB2p7yg9kHhtIWGMYG3Fsvh7ARs3qnrpCWZGM8MuC22lAkfZ50K16IEy-mEMPVGcTQRuAoUQsBtGe49M5e5WGrxyzVEBEhxQKFKTt7K8ZM4Z0Bi4F4cC4VAeo7JpCtooLRFz7AIzCTXC4ZgpjhZwtHpLfl3TLqvoT-vpdt_0ZMy92TllVzx8AFXx83pdKXEDlQappDZjmCUMXXNqhe6AU3KTumGppV5StCe9eNRLivekSNZNKTKbYGza0_9XFPdzTvc_257kvTJyvxodzgrWP4pkXlEjnVFiZqRV8NiW0wnDSHl-hz4RPm0p2cO390MjWwkNZWhD5Zf_BkCCa6AxAgAA)):
+If you need to use bindings, for whatever reason (for example when you want some kind of "writable `$derived`"), consider using getters and setters to synchronise state ([demo](/#H4sIAAAAAAAAE5VRQW7DIBD8CkI9JFIau4deiB2p7yg9kHhtIWGMYG3Fsvh7ARs3qnrpCWZGM8MuC22lAkfZ50K16IEy-mEMPVGcTQRuAoUQsBtGe49M5e5WGrxyzVEBEhxQKFKTt7K8ZM4Z0Bi4F4cC4VAeo7JpCtooLRFz7AIzCTXC4ZgpjhZwtHpLfl3TLqvoT-vpdt_0ZMy92TllVzx8AFXx83pdKXEDlQappDZjmCUMXXNqhe6AU3KTumGppV5StCe9eNRLivekSNZNKTKbYGza0_9XFPdzTvc_257kvTJyvxodzgrWP4pkXlEjnVFiZqRV8NiW0wnDSHl-hz4RPm0p2cO390MjWwkNZWhD5Zf_BkCCa6AxAgAA)):
 
 ```svelte
 <script>
