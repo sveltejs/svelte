@@ -51,3 +51,23 @@
 }}>click me</button>
 
 <Button on:click={() => 'leave untouched'} on:click>click me</Button>
+
+<div>
+	<button
+		onclick={() => {
+			console.log('hi');
+		}}>click me</button
+	>
+	<button
+		onclick={(event) => {
+			event.preventDefault();
+			
+			console.log('hi');
+		
+		}}>click me</button
+	>
+	<button onclick={(event) => {
+		event.preventDefault();
+		count += 1
+	}}>click me</button>
+</div>
