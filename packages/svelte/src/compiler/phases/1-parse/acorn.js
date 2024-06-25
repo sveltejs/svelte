@@ -138,7 +138,10 @@ function amend(source, node) {
 				}
 			}
 
-			if (/** @type {any} */ (node).typeAnnotation && node.end === undefined) {
+			if (
+				/** @type {any} */ (node).typeAnnotation &&
+				(node.end === undefined || node.end < node.start)
+			) {
 				// i think there might be a bug in acorn-typescript that prevents
 				// `end` from being assigned when there's a type annotation
 				let end = /** @type {any} */ (node).typeAnnotation.start;
