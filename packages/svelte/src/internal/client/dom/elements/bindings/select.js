@@ -39,10 +39,12 @@ export function select_option(select, value, mounting) {
  * @param {() => V} [get_value]
  */
 export function init_select(select, get_value) {
+	let mounting = true;
 	effect(() => {
 		if (get_value) {
-			select_option(select, untrack(get_value));
+			select_option(select, untrack(get_value), mounting);
 		}
+		mounting = false;
 
 		var observer = new MutationObserver(() => {
 			// @ts-ignore
