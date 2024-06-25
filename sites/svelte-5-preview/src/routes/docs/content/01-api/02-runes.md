@@ -405,11 +405,11 @@ Instead, use callbacks where possible ([demo](/#H4sIAAAAAAAACo2SP2-DMBDFv8rp1CFR
 		oninput={updateLeft}
 		max={total}
 	/>
-	{left.value}/{total} left
+	{left}/{total} left
 </label>
 ```
 
-If you need to use bindings, for whatever reason (for example when you want some kind of "writable `$derived`"), consider using getters and setters to synchronise state ([demo](/#H4sIAAAAAAAAE5VRQW7DIBD8CkI9JFIau4deiB2p7yg9kHhtIWGMYG3Fsvh7ARs3qnrpCWZGM8MuC22lAkfZ50K16IEy-mEMPVGcTQRuAoUQsBtGe49M5e5WGrxyzVEBEhxQKFKTt7K8ZM4Z0Bi4F4cC4VAeo7JpCtooLRFz7AIzCTXC4ZgpjhZwtHpLfl3TLqvoT-vpdt_0ZMy92TllVzx8AFXx83pdKXEDlQappDZjmCUMXXNqhe6AU3KTumGppV5StCe9eNRLivekSNZNKTKbYGza0_9XFPdzTvc_257kvTJyvxodzgrWP4pkXlEjnVFiZqRV8NiW0wnDSHl-hz4RPm0p2cO390MjWwkNZWhD5Zf_BkCCa6AxAgAA)):
+If you need to use bindings, for whatever reason (for example when you want some kind of "writable `$derived`"), consider using getters and setters to synchronise state ([demo](/#H4sIAAAAAAAACo2SQW-DMAyF_4pl7dBqXcsOu1CYtHtvO44dsmKqSCFExFRFiP8-xRCGth52tJ_9PecpA1bakMf0Y0CrasIU35zDHXLvQuGvZJhwh77p2nPoZP7casevhS3YEAM3rAzk8Jwkx9jzjixDDg-eFdMm2S6KoWolyK6ItuCqs2fWjYXOlYrpPTA2tIUhiAVH5iPtWbUX4v1VmY6Okzpzp2OepgNEGu_CT1St2fP2fXQ0juwwHNHZ4ScNmxn1RUaCybR1HUMIMS-wVfZCBYJQ80GAIzRWhvJh9d4RanXLB7Ea4SCsef4Qu1IG68Xu387h9D_GJ2ne8ZXpxTZUv1w994amjxCaMc1Se2dUn0Jl6DaHeFEuhWT_QvUqOlnHHdZNqStNJabcdjR-jt8IbC-7lgIAAA==)):
 
 ```svelte
 <script>
