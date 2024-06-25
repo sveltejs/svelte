@@ -130,6 +130,8 @@ Sometimes you might need to compare two values, one of which is a reactive `$sta
 
 This is handy when you might want to check if the object exists within a deeply reactive object/array.
 
+> `$state.is` uses `Object.is` to check if two values are the same value.
+
 ## `$derived`
 
 Derived state is declared with the `$derived` rune:
