@@ -2,6 +2,7 @@ import { is_promise, noop } from '../../../shared/utils.js';
 import {
 	current_component_context,
 	flush_sync,
+	is_runes,
 	set_current_component_context,
 	set_current_effect,
 	set_current_reaction,
@@ -11,7 +12,7 @@ import { block, branch, pause_effect, resume_effect } from '../../reactivity/eff
 import { DEV } from 'esm-env';
 import { queue_micro_task } from '../task.js';
 import { hydrating } from '../hydration.js';
-import { set, source } from '../../reactivity/sources.js';
+import { mutable_source, set, source } from '../../reactivity/sources.js';
 
 const PENDING = 0;
 const THEN = 1;
@@ -27,6 +28,7 @@ const CATCH = 2;
  * @returns {void}
  */
 export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
+	var runes = is_runes();
 	var component_context = current_component_context;
 
 	/** @type {any} */
@@ -44,8 +46,10 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 	/** @type {import('#client').Effect | null} */
 	var catch_effect;
 
-	var input_source = source(/** @type {V} */ (undefined));
-	var error_source = source(undefined);
+	var input_source = runes
+		? source(/** @type {V} */ (undefined))
+		: mutable_source(/** @type {V} */ (undefined));
+	var error_source = runes ? source(undefined) : mutable_source(undefined);
 	var resolved = false;
 
 	/**
