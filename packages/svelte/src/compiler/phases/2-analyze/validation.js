@@ -256,7 +256,15 @@ function validate_attribute_name(attribute) {
  * @param {boolean} is_component
  */
 function validate_slot_attribute(context, attribute, is_component = false) {
+	const parent = context.path.at(-2);
 	let owner = undefined;
+
+	if (parent?.type === 'SnippetBlock') {
+		if (!is_text_attribute(attribute)) {
+			e.slot_attribute_invalid(attribute);
+		}
+		return;
+	}
 
 	let i = context.path.length;
 	while (i--) {
@@ -283,7 +291,7 @@ function validate_slot_attribute(context, attribute, is_component = false) {
 			owner.type === 'SvelteComponent' ||
 			owner.type === 'SvelteSelf'
 		) {
-			if (owner !== context.path.at(-2)) {
+			if (owner !== parent) {
 				e.slot_attribute_invalid_placement(attribute);
 			}
 
