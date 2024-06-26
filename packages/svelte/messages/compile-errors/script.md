@@ -50,6 +50,10 @@
 
 > Imports of `svelte/internal/*` are forbidden. It contains private runtime code which is subject to change without notice. If you're importing from `svelte/internal/*` to work around a limitation of Svelte, please open an issue at https://github.com/sveltejs/svelte and explain your use case
 
+## invalid_arguments_usage
+
+> The arguments keyword cannot be used within the template or at the top level of a component
+
 ## legacy_export_invalid
 
 > Cannot use `export let` in runes mode — use `$props()` instead
