@@ -85,6 +85,7 @@ function create_effect(type, fn, sync) {
 		ctx: current_component_context,
 		deps: null,
 		dom: null,
+		nodes: null,
 		f: type | DIRTY,
 		first: null,
 		fn,
@@ -337,11 +338,21 @@ export function execute_effect_teardown(effect) {
 export function destroy_effect(effect, remove_dom = true) {
 	var dom = effect.dom;
 
-	if (dom !== null && remove_dom) {
-		remove(dom);
+	var removed = false;
+
+	if (remove_dom) {
+		var start = get_first_node(effect);
+		var end = get_last_node(effect);
+
+		remove_nodes(start, end);
+		removed = true;
 	}
 
-	destroy_effect_children(effect, remove_dom);
+	if (dom !== null && remove_dom) {
+		// remove(dom);
+	}
+
+	destroy_effect_children(effect, remove_dom && !removed);
 	remove_reactions(effect, 0);
 	set_signal_status(effect, DESTROYED);
 
@@ -370,6 +381,56 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.parent =
 		effect.fn =
 			null;
+}
+
+/**
+ * @param {import('#client').Effect} effect
+ */
+function get_first_node(effect) {
+	if (effect.nodes !== null) {
+		if (effect.nodes.start !== null) {
+			return effect.nodes.start;
+		}
+	}
+
+	if (effect.first !== null) {
+		return get_first_node(effect.first);
+	}
+
+	return null;
+}
+
+/**
+ * @param {import('#client').Effect} effect
+ */
+function get_last_node(effect) {
+	if (effect.nodes !== null) {
+		return effect.nodes.end;
+	}
+
+	if (effect.last !== null) {
+		return get_last_node(effect.last);
+	}
+
+	return null;
+}
+
+/**
+ * @param {import('#client').TemplateNode} start
+ * @param {import('#client').TemplateNode} end
+ */
+function remove_nodes(start, end) {
+	/** @type {import('#client').TemplateNode | null} */
+	var node = start;
+
+	while (node !== null) {
+		/** @type {import('#client').TemplateNode | null} */
+		var next =
+			node === end ? null : /** @type {import('#client').TemplateNode} */ (node.nextSibling);
+
+		node.remove();
+		node = next;
+	}
 }
 
 /**

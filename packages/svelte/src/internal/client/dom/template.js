@@ -33,6 +33,21 @@ export function push_template_node(
 }
 
 /**
+ *
+ * @param {import('#client').TemplateNode | null} start
+ * @param {import('#client').TemplateNode} end
+ */
+function assign_nodes(start, end) {
+	const effect = /** @type {import('#client').Effect} */ (current_effect);
+
+	if (effect.nodes === null) {
+		effect.nodes = { start, end };
+	} else {
+		effect.nodes.end = end;
+	}
+}
+
+/**
  * @param {string} content
  * @param {number} flags
  * @returns {() => Node | Node[]}
@@ -45,8 +60,12 @@ export function template(content, flags) {
 	/** @type {Node} */
 	var node;
 
+	var has_start = !content.startsWith('<!>');
+
 	return () => {
 		if (hydrating) {
+			assign_nodes(has_start ? hydrate_nodes[0] : null, hydrate_nodes[hydrate_nodes.length - 1]);
+
 			push_template_node(is_fragment ? hydrate_nodes : hydrate_start);
 			return hydrate_start;
 		}
@@ -57,6 +76,16 @@ export function template(content, flags) {
 		}
 
 		var clone = use_import_node ? document.importNode(node, true) : node.cloneNode(true);
+
+		var start = is_fragment
+			? has_start
+				? /** @type {import('#client').TemplateNode} */ (clone.firstChild)
+				: null
+			: /** @type {import('#client').TemplateNode} */ (clone);
+
+		var end = /** @type {import('#client').TemplateNode} */ (is_fragment ? clone.lastChild : clone);
+
+		assign_nodes(start, end);
 
 		push_template_node(
 			is_fragment
@@ -101,31 +130,46 @@ export function template_with_script(content, flags) {
 /*#__NO_SIDE_EFFECTS__*/
 export function ns_template(content, flags, ns = 'svg') {
 	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
-	var fn = template(`<${ns}>${content}</${ns}>`, 0); // we don't need to worry about using importNode for namespaced elements
+	var wrapped = `<${ns}>${content}</${ns}>`;
 
 	/** @type {Element | DocumentFragment} */
 	var node;
 
+	var has_start = !content.startsWith('<!>');
+
 	return () => {
 		if (hydrating) {
+			assign_nodes(has_start ? hydrate_nodes[0] : null, hydrate_nodes[hydrate_nodes.length - 1]);
+
 			push_template_node(is_fragment ? hydrate_nodes : hydrate_start);
 			return hydrate_start;
 		}
 
 		if (!node) {
-			var wrapper = /** @type {Element} */ (fn());
+			var fragment = /** @type {Element} */ (create_fragment_from_html(wrapped));
+			var root = fragment.firstChild;
 
-			if ((flags & TEMPLATE_FRAGMENT) === 0) {
-				node = /** @type {Element} */ (wrapper.firstChild);
-			} else {
+			if (is_fragment) {
 				node = document.createDocumentFragment();
-				while (wrapper.firstChild) {
-					node.appendChild(wrapper.firstChild);
+				while (root.firstChild) {
+					node.appendChild(root.firstChild);
 				}
+			} else {
+				node = /** @type {Element} */ (root.firstChild);
 			}
 		}
 
 		var clone = node.cloneNode(true);
+
+		var start = is_fragment
+			? has_start
+				? /** @type {import('#client').TemplateNode} */ (clone.firstChild)
+				: null
+			: /** @type {import('#client').TemplateNode} */ (clone);
+
+		var end = /** @type {import('#client').TemplateNode} */ (is_fragment ? clone.lastChild : clone);
+
+		assign_nodes(start, end);
 
 		push_template_node(
 			is_fragment
@@ -208,7 +252,11 @@ function run_scripts(node) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function text(anchor) {
-	if (!hydrating) return push_template_node(empty());
+	if (!hydrating) {
+		var t = empty();
+		assign_nodes(t, t);
+		return push_template_node(t);
+	}
 
 	var node = hydrate_start;
 
@@ -218,6 +266,7 @@ export function text(anchor) {
 		anchor.before((node = empty()));
 	}
 
+	assign_nodes(node, node);
 	push_template_node(node);
 	return node;
 }
