@@ -52,7 +52,7 @@
 
 ## invalid_arguments_usage
 
-> The arguments keyword cannot be used within the template or at the top-level of a component
+> The arguments keyword cannot be used within the template or at the top level of a component
 
 ## legacy_export_invalid
 
