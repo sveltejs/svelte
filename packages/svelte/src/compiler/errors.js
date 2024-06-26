@@ -431,7 +431,7 @@ export function store_invalid_subscription(node) {
 }
 
 /**
- * Invalid arguments keyword usage
+ * The arguments keyword cannot be used within the template or at the top-level of a component
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
