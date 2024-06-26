@@ -24,6 +24,9 @@ export function push_template_node(
 		if (!is_array(current_dom)) {
 			current_dom = effect.dom = [current_dom];
 		}
+		// If we have an existing anchor, then we should ensure that we insert the DOM contents
+		// before that anchor position. This ensures we match what is reflected on the document to
+		// as what is reflected in the effect.dom (we always insert before the anchor).
 		const anchor_index = anchor !== null ? current_dom.indexOf(anchor) : null;
 
 		if (is_array(dom)) {

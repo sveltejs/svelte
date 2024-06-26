@@ -9,7 +9,7 @@ export default function Function_prop_no_getter($$anchor) {
 	}
 
 	const plusOne = (num) => num + 1;
-	var fragment = $.comment();
+	var fragment = $.comment($$anchor);
 	var node = $.first_child(fragment);
 
 	Button(node, {

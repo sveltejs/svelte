@@ -13,7 +13,7 @@ var root = $.template(`<input> <input> <button>reset</button>`, 1);
 export default function State_proxy_literal($$anchor) {
 	let str = $.source('');
 	let tpl = $.source(``);
-	var fragment = root();
+	var fragment = root($$anchor);
 	var input = $.first_child(fragment);
 
 	$.remove_input_defaults(input);
