@@ -431,6 +431,15 @@ export function store_invalid_subscription(node) {
 }
 
 /**
+ * Invalid arguments keyword usage
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_arguments_usage(node) {
+	e(node, "invalid_arguments_usage", "The arguments keyword cannot be used within the template or at the top-level of a component");
+}
+
+/**
  * Declaration cannot be empty
  * @param {null | number | NodeLike} node
  * @returns {never}
