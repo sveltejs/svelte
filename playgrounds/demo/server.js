@@ -34,7 +34,7 @@ async function createServer() {
 			.replace(`<!--ssr-html-->`, appHtml)
 			.replace(`<!--ssr-head-->`, headHtml);
 
-		res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+		res.end(html);
 	});
 
 	return { app, vite };

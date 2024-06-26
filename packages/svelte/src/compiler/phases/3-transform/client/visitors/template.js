@@ -1646,7 +1646,11 @@ export const template_visitors = {
 
 			add_template(template_name, args);
 
-			body.push(b.var(id, b.call(template_name)), ...state.before_init, ...state.init);
+			body.push(
+				b.var(id, b.call(template_name, b.id('$$anchor'))),
+				...state.before_init,
+				...state.init
+			);
 			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 		} else if (is_single_child_not_needing_template) {
 			context.visit(trimmed[0], state);
@@ -1684,7 +1688,7 @@ export const template_visitors = {
 
 				if (use_comment_template) {
 					// special case — we can use `$.comment` instead of creating a unique template
-					body.push(b.var(id, b.call('$.comment')));
+					body.push(b.var(id, b.call('$.comment', b.id('$$anchor'))));
 				} else {
 					let flags = TEMPLATE_FRAGMENT;
 
@@ -1697,7 +1701,7 @@ export const template_visitors = {
 						b.literal(flags)
 					]);
 
-					body.push(b.var(id, b.call(template_name)));
+					body.push(b.var(id, b.call(template_name, b.id('$$anchor'))));
 				}
 
 				body.push(...state.before_init, ...state.init);

@@ -9,10 +9,12 @@ import { queue_micro_task } from './task.js';
 /**
  * @template {import("#client").TemplateNode | import("#client").TemplateNode[]} T
  * @param {T} dom
+ * @param {import("#client").TemplateNode | null} anchor
  * @param {import("#client").Effect} effect
  */
 export function push_template_node(
 	dom,
+	anchor,
 	effect = /** @type {import('#client').Effect} */ (current_effect)
 ) {
 	var current_dom = effect.dom;
@@ -22,11 +24,20 @@ export function push_template_node(
 		if (!is_array(current_dom)) {
 			current_dom = effect.dom = [current_dom];
 		}
+		const anchor_index = anchor !== null ? current_dom.indexOf(anchor) : null;
 
 		if (is_array(dom)) {
-			current_dom.push(...dom);
+			if (anchor_index !== null) {
+				current_dom.splice(anchor_index, 0, ...dom);
+			} else {
+				current_dom.push(...dom);
+			}
 		} else {
-			current_dom.push(dom);
+			if (anchor_index !== null) {
+				current_dom.splice(anchor_index, 0, dom);
+			} else {
+				current_dom.push(dom);
+			}
 		}
 	}
 	return dom;
@@ -45,9 +56,9 @@ export function template(content, flags) {
 	/** @type {Node} */
 	var node;
 
-	return () => {
+	return (/** @type {Element | Comment | null} */ prev_anchor) => {
 		if (hydrating) {
-			push_template_node(is_fragment ? hydrate_nodes : hydrate_start);
+			push_template_node(is_fragment ? hydrate_nodes : hydrate_start, prev_anchor);
 			return hydrate_start;
 		}
 
@@ -61,7 +72,8 @@ export function template(content, flags) {
 		push_template_node(
 			is_fragment
 				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
-				: /** @type {import('#client').TemplateNode} */ (clone)
+				: /** @type {import('#client').TemplateNode} */ (clone),
+			prev_anchor
 		);
 
 		return clone;
@@ -106,9 +118,9 @@ export function ns_template(content, flags, ns = 'svg') {
 	/** @type {Element | DocumentFragment} */
 	var node;
 
-	return () => {
+	return (/** @type {Element | Comment | null} */ prev_anchor) => {
 		if (hydrating) {
-			push_template_node(is_fragment ? hydrate_nodes : hydrate_start);
+			push_template_node(is_fragment ? hydrate_nodes : hydrate_start, prev_anchor);
 			return hydrate_start;
 		}
 
@@ -130,7 +142,8 @@ export function ns_template(content, flags, ns = 'svg') {
 		push_template_node(
 			is_fragment
 				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
-				: /** @type {import('#client').TemplateNode} */ (clone)
+				: /** @type {import('#client').TemplateNode} */ (clone),
+			prev_anchor
 		);
 
 		return clone;
@@ -208,7 +221,7 @@ function run_scripts(node) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function text(anchor) {
-	if (!hydrating) return push_template_node(empty());
+	if (!hydrating) return push_template_node(empty(), null);
 
 	var node = hydrate_start;
 
@@ -218,21 +231,24 @@ export function text(anchor) {
 		anchor.before((node = empty()));
 	}
 
-	push_template_node(node);
+	push_template_node(node, null);
 	return node;
 }
 
-export function comment() {
+/**
+ * @param {Element | Comment | null} prev_anchor
+ */
+export function comment(prev_anchor) {
 	// we're not delegating to `template` here for performance reasons
 	if (hydrating) {
-		push_template_node(hydrate_nodes);
+		push_template_node(hydrate_nodes, prev_anchor);
 		return hydrate_start;
 	}
 
 	var frag = document.createDocumentFragment();
 	var anchor = empty();
 	frag.append(anchor);
-	push_template_node([anchor]);
+	push_template_node([anchor], prev_anchor);
 
 	return frag;
 }

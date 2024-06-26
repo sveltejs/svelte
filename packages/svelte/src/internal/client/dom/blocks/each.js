@@ -486,7 +486,10 @@ function create_item(anchor, prev, next, value, key, index, render_fn, flags) {
  * @returns {import('#client').TemplateNode}
  */
 function get_adjusted_first_node(dom, effect) {
-	if ((dom.nodeType === 3 && /** @type {Text} */ (dom).data === '') || dom.nodeType === 8) {
+	if (
+		(dom.nodeType === 3 && /** @type {Text} */ (dom).data === '') ||
+		(dom.nodeType === 8 && /** @type {Comment} */ (dom).data !== '[')
+	) {
 		var adjusted = effect.first;
 		var next;
 		while (adjusted !== null) {
@@ -511,10 +514,7 @@ function get_adjusted_first_node(dom, effect) {
 function get_first_node(effect) {
 	var dom = effect.dom;
 	if (is_array(dom)) {
-		var adjusted_dom = get_adjusted_first_node(dom[0], effect);
-		// If we have a sibling that contains the adjusted_dom, then use that instead.
-		var sibling = dom[1];
-		return sibling?.contains(adjusted_dom) ? sibling : adjusted_dom;
+		return get_adjusted_first_node(dom[0], effect);
 	}
 	return get_adjusted_first_node(/** @type {import('#client').TemplateNode} **/ (dom), effect);
 }

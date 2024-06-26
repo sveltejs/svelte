@@ -140,7 +140,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					swap_block_dom(element_effect, prev_element, element);
 					prev_element.remove();
 				} else {
-					push_template_node(element, element_effect);
+					push_template_node(element, null, element_effect);
 				}
 
 				if (render_fn) {
