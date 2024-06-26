@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.166
+
+### Patch Changes
+
+- fix: remove correct event listener from document ([#12101](https://github.com/sveltejs/svelte/pull/12101))
+
+- fix: correctly serialize object assignment expressions ([#12175](https://github.com/sveltejs/svelte/pull/12175))
+
+- fix: robustify migration script around indentation and comments ([#12176](https://github.com/sveltejs/svelte/pull/12176))
+
+- fix: improve await block behaviour in non-runes mode ([#12179](https://github.com/sveltejs/svelte/pull/12179))
+
+- fix: improve select handling of dynamic value with placeholders ([#12181](https://github.com/sveltejs/svelte/pull/12181))
+
 ## 5.0.0-next.165
 
 ### Patch Changes
