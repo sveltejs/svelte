@@ -44,6 +44,7 @@ export function equal(a, b, message) {
 /**
  * @param {any} condition
  * @param {string} [message]
+ * @returns {asserts condition}
  */
 export function ok(condition, message) {
 	if (!condition) throw new Error(message || `Expected ${condition} to be truthy`);
