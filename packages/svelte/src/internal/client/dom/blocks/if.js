@@ -3,7 +3,6 @@ import { hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
 import { remove } from '../reconciler.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { HYDRATION_END_ELSE } from '../../../../constants.js';
-import { assign_nodes } from '../template.js';
 
 /**
  * @param {Comment} anchor

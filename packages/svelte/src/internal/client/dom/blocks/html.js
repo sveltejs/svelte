@@ -2,7 +2,7 @@ import { derived } from '../../reactivity/deriveds.js';
 import { block, branch, destroy_effect, render_effect } from '../../reactivity/effects.js';
 import { get } from '../../runtime.js';
 import { is_array } from '../../utils.js';
-import { hydrate_nodes, hydrating } from '../hydration.js';
+import { hydrate_nodes, hydrate_start, hydrating } from '../hydration.js';
 import { create_fragment_from_html, remove } from '../reconciler.js';
 import { assign_nodes } from '../template.js';
 
@@ -31,7 +31,10 @@ export function html(anchor, get_value, svg, mathml) {
 
 		effect = branch(() => {
 			if (hydrating) {
-				assign_nodes(hydrate_nodes[0], hydrate_nodes[hydrate_nodes.length - 1]);
+				assign_nodes(
+					hydrate_start.previousSibling ?? hydrate_start,
+					hydrate_nodes[hydrate_nodes.length - 1]
+				);
 				return;
 			}
 

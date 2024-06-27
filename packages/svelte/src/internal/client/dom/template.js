@@ -45,7 +45,7 @@ export function template(content, flags) {
 	return () => {
 		if (hydrating) {
 			assign_nodes(
-				has_start ? hydrate_start : unset ? undefined : null,
+				hydrate_start.previousSibling ?? hydrate_start,
 				hydrate_nodes[hydrate_nodes.length - 1]
 			);
 
@@ -117,7 +117,10 @@ export function ns_template(content, flags, ns = 'svg') {
 
 	return () => {
 		if (hydrating) {
-			assign_nodes(has_start ? hydrate_start : null, hydrate_nodes[hydrate_nodes.length - 1]);
+			assign_nodes(
+				hydrate_start.previousSibling ?? hydrate_start,
+				hydrate_nodes[hydrate_nodes.length - 1]
+			);
 
 			return hydrate_start;
 		}
@@ -248,7 +251,7 @@ export function comment(flags = 0) {
 	// we're not delegating to `template` here for performance reasons
 	if (hydrating) {
 		assign_nodes(
-			(flags & TEMPLATE_UNSET_START) !== 0 ? undefined : null,
+			hydrate_start.previousSibling ?? hydrate_start,
 			hydrate_nodes[hydrate_nodes.length - 1]
 		);
 
