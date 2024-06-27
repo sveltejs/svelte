@@ -1,4 +1,4 @@
-import { hydrate_nodes, hydrate_start, hydrating } from './hydration.js';
+import { get_start, hydrate_nodes, hydrate_start, hydrating } from './hydration.js';
 import { empty } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
@@ -11,18 +11,16 @@ import { queue_micro_task } from './task.js';
 
 /**
  *
- * @param {import('#client').TemplateNode | null | undefined} start
+ * @param {import('#client').TemplateNode | undefined | null} start
  * @param {import('#client').TemplateNode} end
  */
 export function assign_nodes(start, end) {
 	const effect = /** @type {import('#client').Effect} */ (current_effect);
 
 	if (effect.nodes === null) {
-		effect.nodes = { start, end };
-	} else {
-		if (effect.nodes.start === undefined) {
-			effect.nodes.start = start;
-		}
+		effect.nodes = { start, anchor: null, end };
+	} else if (effect.nodes.start === undefined) {
+		effect.nodes.start = start;
 	}
 }
 
@@ -44,10 +42,7 @@ export function template(content, flags) {
 
 	return () => {
 		if (hydrating) {
-			assign_nodes(
-				hydrate_start.previousSibling ?? hydrate_start,
-				hydrate_nodes[hydrate_nodes.length - 1]
-			);
+			assign_nodes(get_start(), hydrate_nodes[hydrate_nodes.length - 1]);
 
 			return hydrate_start;
 		}
@@ -121,10 +116,7 @@ export function ns_template(content, flags, ns = 'svg') {
 
 	return () => {
 		if (hydrating) {
-			assign_nodes(
-				hydrate_start.previousSibling ?? hydrate_start,
-				hydrate_nodes[hydrate_nodes.length - 1]
-			);
+			assign_nodes(get_start(), hydrate_nodes[hydrate_nodes.length - 1]);
 
 			return hydrate_start;
 		}
@@ -254,10 +246,7 @@ export function text(anchor) {
 export function comment(flags = 0) {
 	// we're not delegating to `template` here for performance reasons
 	if (hydrating) {
-		assign_nodes(
-			hydrate_start.previousSibling ?? hydrate_start,
-			hydrate_nodes[hydrate_nodes.length - 1]
-		);
+		assign_nodes(get_start(), hydrate_nodes[hydrate_nodes.length - 1]);
 
 		return hydrate_start;
 	}

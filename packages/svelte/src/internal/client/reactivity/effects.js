@@ -305,7 +305,7 @@ export function template_effect(fn) {
  */
 export function block(anchor, flags, fn) {
 	const effect = create_effect(RENDER_EFFECT | BLOCK_EFFECT | flags, fn, true);
-	if (anchor !== null) effect.nodes = { start: null, end: anchor };
+	if (anchor !== null) effect.nodes = { start: null, anchor: null, end: anchor };
 	return effect;
 }
 
