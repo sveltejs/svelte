@@ -12,7 +12,6 @@ import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
 import { current_component_context, current_effect } from '../../runtime.js';
 import { DEV } from 'esm-env';
-import { is_array } from '../../utils.js';
 import { assign_nodes, push_template_node } from '../template.js';
 import { noop } from '../../../shared/utils.js';
 
@@ -41,18 +40,6 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 	/** @type {import('#client').Effect | null} */
 	let effect;
-
-	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
-
-	// Remove the the hydrated effect dom entry for our dynamic element
-	if (hydrating && is_array(parent_effect.dom)) {
-		var remove_index = parent_effect.dom.indexOf(
-			/** @type {import('#client').TemplateNode} */ (element)
-		);
-		if (remove_index !== -1) {
-			parent_effect.dom.splice(remove_index, 1);
-		}
-	}
 
 	/**
 	 * The keyed `{#each ...}` item block, if any, that this element is inside.
