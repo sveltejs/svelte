@@ -1,30 +1,10 @@
 import { derived } from '../../reactivity/deriveds.js';
 import { render_effect } from '../../reactivity/effects.js';
-import { current_effect, get } from '../../runtime.js';
+import { get } from '../../runtime.js';
 import { is_array } from '../../utils.js';
 import { hydrate_nodes, hydrating } from '../hydration.js';
 import { create_fragment_from_html, remove } from '../reconciler.js';
-import { push_template_node } from '../template.js';
-
-/**
- * @param {import('#client').Effect} effect
- * @param {(Element | Comment | Text)[]} to_remove
- * @returns {void}
- */
-function remove_from_parent_effect(effect, to_remove) {
-	const dom = effect.dom;
-
-	if (is_array(dom)) {
-		for (let i = dom.length - 1; i >= 0; i--) {
-			if (to_remove.includes(dom[i])) {
-				dom.splice(i, 1);
-				break;
-			}
-		}
-	} else if (dom !== null && to_remove.includes(dom)) {
-		effect.dom = null;
-	}
-}
+import { assign_nodes } from '../template.js';
 
 /**
  * @param {Element | Text | Comment} anchor
@@ -34,17 +14,19 @@ function remove_from_parent_effect(effect, to_remove) {
  * @returns {void}
  */
 export function html(anchor, get_value, svg, mathml) {
-	const parent_effect = anchor.parentNode !== current_effect?.dom ? current_effect : null;
 	let value = derived(get_value);
 
 	render_effect(() => {
-		var dom = html_to_dom(anchor, parent_effect, get(value), svg, mathml);
+		var dom = html_to_dom(anchor, get(value), svg, mathml);
 
 		if (dom) {
+			if (is_array(dom)) {
+				assign_nodes(dom[0], dom[dom.length - 1]);
+			} else {
+				assign_nodes(dom, dom);
+			}
+
 			return () => {
-				if (parent_effect !== null) {
-					remove_from_parent_effect(parent_effect, is_array(dom) ? dom : [dom]);
-				}
 				remove(dom);
 			};
 		}
@@ -56,13 +38,12 @@ export function html(anchor, get_value, svg, mathml) {
  * inserts it before the target anchor and returns the new nodes.
  * @template V
  * @param {Element | Text | Comment} target
- * @param {import('#client').Effect | null} effect
  * @param {V} value
  * @param {boolean} svg
  * @param {boolean} mathml
  * @returns {Element | Comment | (Element | Comment | Text)[]}
  */
-function html_to_dom(target, effect, value, svg, mathml) {
+function html_to_dom(target, value, svg, mathml) {
 	if (hydrating) return hydrate_nodes;
 
 	var html = value + '';
@@ -81,9 +62,6 @@ function html_to_dom(target, effect, value, svg, mathml) {
 	if (node.childNodes.length === 1) {
 		var child = /** @type {Text | Element | Comment} */ (node.firstChild);
 		target.before(child);
-		if (effect !== null) {
-			push_template_node(child, effect);
-		}
 		return child;
 	}
 
@@ -95,10 +73,6 @@ function html_to_dom(target, effect, value, svg, mathml) {
 		}
 	} else {
 		target.before(node);
-	}
-
-	if (effect !== null) {
-		push_template_node(nodes, effect);
 	}
 
 	return nodes;
