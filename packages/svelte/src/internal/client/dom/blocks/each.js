@@ -437,6 +437,8 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	if (effect !== null) {
 		effect.next = null;
 	}
+
+	/** @type {import('#client').Effect} */ (current_effect).last = effect;
 }
 
 /**
