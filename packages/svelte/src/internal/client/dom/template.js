@@ -13,12 +13,13 @@ import { queue_micro_task } from './task.js';
  *
  * @param {import('#client').TemplateNode | undefined | null} start
  * @param {import('#client').TemplateNode} end
+ * @param {import('#client').TemplateNode | null} anchor
  */
-export function assign_nodes(start, end) {
+export function assign_nodes(start, end, anchor = null) {
 	const effect = /** @type {import('#client').Effect} */ (current_effect);
 
 	if (effect.nodes === null) {
-		effect.nodes = { start, anchor: null, end };
+		effect.nodes = { start, anchor, end };
 	} else if (effect.nodes.start === undefined) {
 		effect.nodes.start = start;
 	}
@@ -64,11 +65,7 @@ export function template(content, flags) {
 
 		var end = /** @type {import('#client').TemplateNode} */ (is_fragment ? clone.lastChild : clone);
 
-		assign_nodes(start, end);
-
-		if (unset) {
-			current_effect.nodes.anchor = clone.firstChild;
-		}
+		assign_nodes(start, end, /** @type {import('#client').TemplateNode} */ (clone.firstChild));
 
 		return clone;
 	};
@@ -251,16 +248,11 @@ export function comment(flags = 0) {
 		return hydrate_start;
 	}
 
-	var unset = (flags & TEMPLATE_UNSET_START) !== 0;
 	var frag = document.createDocumentFragment();
 	var anchor = empty();
 	frag.append(anchor);
 
-	assign_nodes(unset ? undefined : null, anchor);
-
-	if (unset) {
-		current_effect.nodes.anchor = anchor;
-	}
+	assign_nodes((flags & TEMPLATE_UNSET_START) !== 0 ? undefined : null, anchor, anchor);
 
 	return frag;
 }
