@@ -85,11 +85,15 @@ export function first_child(fragment, is_text) {
 	// text node to hydrate — we must therefore create one
 	if (is_text && hydrate_start?.nodeType !== 3) {
 		var text = empty();
-		var dom = /** @type {import('#client').TemplateNode[]} */ (
-			/** @type {import('#client').Effect} */ (current_effect).dom
-		);
+		// var dom = /** @type {import('#client').TemplateNode[]} */ (
+		// 	/** @type {import('#client').Effect} */ (current_effect).dom
+		// );
 
-		dom.unshift(text);
+		if (current_effect.nodes.start === hydrate_start) {
+			current_effect.nodes.start = text;
+		}
+
+		// dom.unshift(text);
 		hydrate_start?.before(text);
 
 		return text;
@@ -125,6 +129,8 @@ export function sibling(node, is_text = false) {
 		var dom = /** @type {import('#client').TemplateNode[]} */ (
 			/** @type {import('#client').Effect} */ (current_effect).dom
 		);
+
+		// TODO something needs to happen here but i'm not quite sure what
 
 		dom.unshift(text);
 		next_sibling?.before(text);
