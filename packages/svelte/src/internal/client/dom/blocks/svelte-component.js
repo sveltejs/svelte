@@ -1,10 +1,9 @@
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
 
-// TODO seems weird that `anchor` is unused here — possible bug?
-
 /**
  * @template P
  * @template {(props: P) => void} C
+ * @param {import('#client').TemplateNode} anchor
  * @param {() => C} get_component
  * @param {(component: C) => import('#client').Dom | void} render_fn
  * @returns {void}
