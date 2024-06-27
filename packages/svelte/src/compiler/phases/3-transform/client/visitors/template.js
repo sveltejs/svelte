@@ -2175,7 +2175,11 @@ export const template_visitors = {
 		);
 
 		if (has_direction_attribute) {
-			context.state.update.push(b.stmt(b.call('$.set_direction', node_id)));
+			// This fixes an issue with Chromium where updates to text content within an element
+			// does not update the direction when set to auto. If we just re-assign the dir, this fixes it.
+			context.state.update.push(
+				b.stmt(b.assignment('=', b.member(node_id, b.id('dir')), b.member(node_id, b.id('dir'))))
+			);
 		}
 
 		if (child_locations.length > 0) {
