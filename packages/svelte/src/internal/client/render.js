@@ -54,8 +54,10 @@ export function set_text(text, value) {
  * @param {HTMLElement} element
  */
 export function set_direction(element) {
-	var dir = element.dir;
-	element.setAttribute('dir', dir);
+	// This fixes an issue with Chromium where updates to text content within an element
+	// does not update the direction when set to auto. If we just re-assign the dir, this fixes it.
+	// eslint-disable-next-line no-self-assign
+	element.dir = element.dir;
 }
 
 /**
