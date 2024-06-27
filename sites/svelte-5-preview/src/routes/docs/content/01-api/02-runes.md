@@ -548,6 +548,12 @@ To get all properties, use rest syntax:
 let { a, b, c, ...everythingElse } = $props();
 ```
 
+You can also use an identifier:
+
+```js
+let props = $props();
+```
+
 If you're using TypeScript, you can declare the prop types:
 
 ```ts
