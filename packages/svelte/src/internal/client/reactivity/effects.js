@@ -423,7 +423,7 @@ function get_last_node(effect) {
 		return get_last_node(effect.last);
 	}
 
-	return null;
+	return /** @type {import('#client').TemplateNode} */ (/** @type {unknown} */ (null));
 }
 
 /**
