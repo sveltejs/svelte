@@ -71,8 +71,6 @@ export function push_effect(effect, parent_effect) {
 	}
 }
 
-var uid = 1;
-
 /**
  * @param {number} type
  * @param {null | (() => void | (() => void))} fn
@@ -84,7 +82,6 @@ function create_effect(type, fn, sync) {
 
 	/** @type {import('#client').Effect} */
 	var effect = {
-		id: uid++,
 		ctx: current_component_context,
 		deps: null,
 		dom: null,
@@ -388,8 +385,9 @@ export function destroy_effect(effect, remove_dom = true) {
 
 /**
  * @param {import('#client').Effect} effect
+ * @returns {import('#client').TemplateNode}
  */
-function get_first_node(effect) {
+export function get_first_node(effect) {
 	if (effect.nodes !== null) {
 		if (effect.nodes.start != null) {
 			return effect.nodes.start;
@@ -411,6 +409,7 @@ function get_first_node(effect) {
 
 /**
  * @param {import('#client').Effect} effect
+ * @returns {import('#client').TemplateNode}
  */
 function get_last_node(effect) {
 	if (effect.nodes !== null) {

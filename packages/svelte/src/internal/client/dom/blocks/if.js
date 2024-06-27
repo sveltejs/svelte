@@ -3,6 +3,7 @@ import { hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
 import { remove } from '../reconciler.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { HYDRATION_END_ELSE } from '../../../../constants.js';
+import { assign_nodes } from '../template.js';
 
 /**
  * @param {Comment} anchor
@@ -31,6 +32,8 @@ export function if_block(
 	var flags = elseif ? EFFECT_TRANSPARENT : 0;
 
 	block(() => {
+		assign_nodes(null, anchor); // TODO `block(anchor, () => {...})`
+
 		if (condition === (condition = !!get_condition())) return;
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */

@@ -24,7 +24,8 @@ import {
 	run_out_transitions,
 	pause_children,
 	pause_effect,
-	resume_effect
+	resume_effect,
+	get_first_node
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen } from '../../utils.js';
@@ -478,42 +479,6 @@ function create_item(anchor, prev, next, value, key, index, render_fn, flags) {
 	} finally {
 		current_each_item = previous_each_item;
 	}
-}
-
-/**
- * @param {import('#client').TemplateNode} dom
- * @param {import("#client").Effect} effect
- * @returns {import('#client').TemplateNode}
- */
-function get_adjusted_first_node(dom, effect) {
-	if ((dom.nodeType === 3 && /** @type {Text} */ (dom).data === '') || dom.nodeType === 8) {
-		var adjusted = effect.first;
-		var next;
-		while (adjusted !== null) {
-			next = adjusted.first;
-			if (adjusted.dom !== null) {
-				break;
-			} else if (next === null) {
-				return /** @type {import('#client').TemplateNode} */ (dom.previousSibling);
-			}
-			adjusted = next;
-		}
-		return get_first_node(/** @type {import("#client").Effect} */ (adjusted));
-	}
-	return dom;
-}
-
-/**
- *
- * @param {import('#client').Effect} effect
- * @returns {import('#client').TemplateNode}
- */
-function get_first_node(effect) {
-	var dom = effect.dom;
-	if (is_array(dom)) {
-		return get_adjusted_first_node(dom[0], effect);
-	}
-	return get_adjusted_first_node(/** @type {import('#client').TemplateNode} **/ (dom), effect);
 }
 
 /**

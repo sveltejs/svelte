@@ -15,7 +15,7 @@ import { queue_micro_task } from './task.js';
  * @param {T} dom
  * @param {import("#client").Effect} effect
  */
-export function push_template_node(
+function push_template_node(
 	dom,
 	effect = /** @type {import('#client').Effect} */ (current_effect)
 ) {
