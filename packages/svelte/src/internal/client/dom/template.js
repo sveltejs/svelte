@@ -53,19 +53,19 @@ export function template(content, flags) {
 			if (!is_fragment) node = /** @type {Node} */ (node.firstChild);
 		}
 
-		var clone = use_import_node ? document.importNode(node, true) : node.cloneNode(true);
+		var clone = /** @type {import('#client').TemplateNode} */ (
+			use_import_node ? document.importNode(node, true) : node.cloneNode(true)
+		);
 
-		var start = is_fragment
-			? has_start
-				? /** @type {import('#client').TemplateNode} */ (clone.firstChild)
-				: unset
-					? undefined
-					: null
-			: /** @type {import('#client').TemplateNode} */ (clone);
+		if (is_fragment) {
+			var first = /** @type {import('#client').TemplateNode} */ (clone.firstChild);
+			var start = has_start ? first : unset ? undefined : null;
+			var end = /** @type {import('#client').TemplateNode} */ (clone.lastChild);
 
-		var end = /** @type {import('#client').TemplateNode} */ (is_fragment ? clone.lastChild : clone);
-
-		assign_nodes(start, end, /** @type {import('#client').TemplateNode} */ (clone.firstChild));
+			assign_nodes(start, end, first);
+		} else {
+			assign_nodes(clone, clone);
+		}
 
 		return clone;
 	};
@@ -110,6 +110,7 @@ export function ns_template(content, flags, ns = 'svg') {
 	var node;
 
 	var has_start = !content.startsWith('<!>');
+	var unset = (flags & TEMPLATE_UNSET_START) !== 0;
 
 	return () => {
 		if (hydrating) {
@@ -132,17 +133,17 @@ export function ns_template(content, flags, ns = 'svg') {
 			}
 		}
 
-		var clone = node.cloneNode(true);
+		var clone = /** @type {import('#client').TemplateNode} */ (node.cloneNode(true));
 
-		var start = is_fragment
-			? has_start
-				? /** @type {import('#client').TemplateNode} */ (clone.firstChild)
-				: null
-			: /** @type {import('#client').TemplateNode} */ (clone);
+		if (is_fragment) {
+			var first = /** @type {import('#client').TemplateNode} */ (clone.firstChild);
+			var start = has_start ? first : unset ? undefined : null;
+			var end = /** @type {import('#client').TemplateNode} */ (clone.lastChild);
 
-		var end = /** @type {import('#client').TemplateNode} */ (is_fragment ? clone.lastChild : clone);
-
-		assign_nodes(start, end);
+			assign_nodes(start, end, first);
+		} else {
+			assign_nodes(clone, clone);
+		}
 
 		return clone;
 	};
