@@ -16,11 +16,17 @@ export default test({
 			btn1.click();
 		});
 
-		assert.htmlEqual(target.innerHTML, `<button>Add new message</button><p>first</p><p>message 1</p><p>message 2</p>`);
+		assert.htmlEqual(
+			target.innerHTML,
+			`<button>Add new message</button><p>first</p><p>message 1</p><p>message 2</p>`
+		);
 
 		await Promise.resolve();
 
-		assert.htmlEqual(target.innerHTML, `<button>Add new message</button><p>first</p><p>message 1</p><p>message 2</p>`);
+		assert.htmlEqual(
+			target.innerHTML,
+			`<button>Add new message</button><p>first</p><p>message 1</p><p>message 2</p>`
+		);
 
 		flushSync(() => {
 			btn1.click();
@@ -28,6 +34,9 @@ export default test({
 
 		await Promise.resolve();
 
-		assert.htmlEqual(target.innerHTML, `<button>Add new message</button><p>first</p><p>message 1</p><p>message 2</p><p>message 3</p>`);
+		assert.htmlEqual(
+			target.innerHTML,
+			`<button>Add new message</button><p>first</p><p>message 1</p><p>message 2</p><p>message 3</p>`
+		);
 	}
 });
