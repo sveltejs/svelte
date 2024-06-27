@@ -385,7 +385,11 @@ export function destroy_effect(effect, remove_dom = true) {
  */
 export function get_first_node(effect) {
 	if (effect.nodes !== null) {
-		if (effect.nodes.start != null) {
+		if (effect.nodes.start === undefined) {
+			return effect.nodes.anchor;
+		}
+
+		if (effect.nodes.start !== null) {
 			return effect.nodes.start;
 		}
 	}

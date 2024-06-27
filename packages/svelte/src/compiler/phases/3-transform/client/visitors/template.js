@@ -943,6 +943,7 @@ function serialize_inline_component(node, component_name, context) {
 		fn = (node_id) => {
 			return b.call(
 				'$.component',
+				node_id,
 				b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.expression))),
 				b.arrow(
 					[b.id(component_name)],
@@ -1687,12 +1688,24 @@ export const template_visitors = {
 					flags |= TEMPLATE_USE_IMPORT_NODE;
 				}
 
-				if (trimmed[0].type === 'Component' || trimmed[0].type === 'SlotElement') {
+				var first = trimmed[0];
+
+				if (first.type === 'SlotElement') {
 					flags |= TEMPLATE_UNSET_START;
 				}
 
-				if (trimmed[0].type === 'RenderTag') {
-					const callee = unwrap_optional(trimmed[0].expression).callee;
+				if (first.type === 'Component') {
+					// if it's not a `$.component`, mark as unset
+					const binding = context.state.scope.get(
+						first.name.includes('.') ? first.name.slice(0, first.name.indexOf('.')) : first.name
+					);
+					if (binding === null || binding.kind === 'normal') {
+						flags |= TEMPLATE_UNSET_START;
+					}
+				}
+
+				if (first.type === 'RenderTag') {
+					const callee = unwrap_optional(first.expression).callee;
 					const is_reactive =
 						callee.type !== 'Identifier' || context.state.scope.get(callee.name)?.kind !== 'normal';
 
@@ -2998,6 +3011,7 @@ export const template_visitors = {
 				b.stmt(
 					b.call(
 						'$.component',
+						context.state.node,
 						// TODO use untrack here to not update when binding changes?
 						// Would align with Svelte 4 behavior, but it's arguably nicer/expected to update this
 						b.thunk(

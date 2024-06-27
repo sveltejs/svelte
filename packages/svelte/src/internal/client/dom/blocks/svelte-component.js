@@ -9,14 +9,14 @@ import { block, branch, pause_effect } from '../../reactivity/effects.js';
  * @param {(component: C) => import('#client').Dom | void} render_fn
  * @returns {void}
  */
-export function component(get_component, render_fn) {
+export function component(anchor, get_component, render_fn) {
 	/** @type {C} */
 	let component;
 
 	/** @type {import('#client').Effect | null} */
 	let effect;
 
-	block(null, 0, () => {
+	block(anchor, 0, () => {
 		if (component === (component = get_component())) return;
 
 		if (effect) {

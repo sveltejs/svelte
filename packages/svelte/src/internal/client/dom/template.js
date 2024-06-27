@@ -71,6 +71,10 @@ export function template(content, flags) {
 
 		assign_nodes(start, end);
 
+		if (unset) {
+			current_effect.nodes.anchor = clone.firstChild;
+		}
+
 		return clone;
 	};
 }
@@ -258,11 +262,16 @@ export function comment(flags = 0) {
 		return hydrate_start;
 	}
 
+	var unset = (flags & TEMPLATE_UNSET_START) !== 0;
 	var frag = document.createDocumentFragment();
 	var anchor = empty();
 	frag.append(anchor);
 
-	assign_nodes((flags & TEMPLATE_UNSET_START) !== 0 ? undefined : null, anchor);
+	assign_nodes(unset ? undefined : null, anchor);
+
+	if (unset) {
+		current_effect.nodes.anchor = anchor;
+	}
 
 	return frag;
 }
