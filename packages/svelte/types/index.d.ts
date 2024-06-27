@@ -1893,7 +1893,7 @@ declare module 'svelte/compiler' {
 		attributes: Attribute[];
 	}
 
-	export { MarkupPreprocessor, Preprocessor, PreprocessorGroup, Processed, CompileOptions, ModuleCompileOptions, compile, compileModule, parse, walk, preprocess, CompileError, VERSION, migrate };
+	export { MarkupPreprocessor, Preprocessor, PreprocessorGroup, Processed, CompileOptions, ModuleCompileOptions, CompileResult, Warning, compile, compileModule, parse, walk, preprocess, CompileError, VERSION, migrate };
 }
 
 declare module 'svelte/easing' {
