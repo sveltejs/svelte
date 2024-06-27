@@ -51,6 +51,14 @@ export function set_text(text, value) {
 }
 
 /**
+ * @param {HTMLElement} element
+ */
+export function set_direction(element) {
+	var dir = element.dir;
+	element.setAttribute('dir', dir);
+}
+
+/**
  * @param {Comment} anchor
  * @param {void | ((anchor: Comment, slot_props: Record<string, unknown>) => void)} slot_fn
  * @param {Record<string, unknown>} slot_props
