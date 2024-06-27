@@ -12,7 +12,7 @@ import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
 import { current_component_context, current_effect } from '../../runtime.js';
 import { DEV } from 'esm-env';
-import { assign_nodes, push_template_node } from '../template.js';
+import { assign_nodes } from '../template.js';
 import { noop } from '../../../shared/utils.js';
 
 /**
@@ -106,8 +106,6 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 				if (prev_element && !hydrating) {
 					prev_element.remove();
-				} else {
-					push_template_node(element, element_effect);
 				}
 
 				if (render_fn) {
