@@ -342,9 +342,19 @@ export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
 	if ((remove_dom || (effect.f & HEAD_EFFECT) !== 0) && effect.nodes !== null) {
-		var start = get_first_node(effect);
+		/** @type {import('#client').TemplateNode | null} */
+		var node = get_first_node(effect);
+		var end = effect.nodes.end;
 
-		remove_nodes(start, effect.nodes.end);
+		while (node !== null) {
+			/** @type {import('#client').TemplateNode | null} */
+			var next =
+				node === end ? null : /** @type {import('#client').TemplateNode} */ (node.nextSibling);
+
+			node.remove();
+			node = next;
+		}
+
 		removed = true;
 	}
 
@@ -407,24 +417,6 @@ export function get_first_node(effect) {
 
 	// in the case that there's no DOM, return the first anchor
 	return nodes.end;
-}
-
-/**
- * @param {import('#client').TemplateNode} start
- * @param {import('#client').TemplateNode} end
- */
-function remove_nodes(start, end) {
-	/** @type {import('#client').TemplateNode | null} */
-	var node = start;
-
-	while (node !== null) {
-		/** @type {import('#client').TemplateNode | null} */
-		var next =
-			node === end ? null : /** @type {import('#client').TemplateNode} */ (node.nextSibling);
-
-		node.remove();
-		node = next;
-	}
 }
 
 /**
