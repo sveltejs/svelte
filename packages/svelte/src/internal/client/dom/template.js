@@ -45,7 +45,7 @@ export function template(content, flags) {
 	return () => {
 		if (hydrating) {
 			assign_nodes(
-				has_start ? hydrate_nodes[0] : unset ? undefined : null,
+				has_start ? hydrate_start : unset ? undefined : null,
 				hydrate_nodes[hydrate_nodes.length - 1]
 			);
 
@@ -117,7 +117,7 @@ export function ns_template(content, flags, ns = 'svg') {
 
 	return () => {
 		if (hydrating) {
-			assign_nodes(has_start ? hydrate_nodes[0] : null, hydrate_nodes[hydrate_nodes.length - 1]);
+			assign_nodes(has_start ? hydrate_start : null, hydrate_nodes[hydrate_nodes.length - 1]);
 
 			return hydrate_start;
 		}
