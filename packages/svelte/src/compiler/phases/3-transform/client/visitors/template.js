@@ -1863,11 +1863,9 @@ export const template_visitors = {
 		const is_reactive =
 			callee.type !== 'Identifier' || context.state.scope.get(callee.name)?.kind !== 'normal';
 
-		/** @type {import('estree').Expression[]} */
-		const args = [context.state.node];
-		for (const arg of raw_args) {
-			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg))));
-		}
+		const args = raw_args.map((arg) =>
+			b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg)))
+		);
 
 		let snippet_function = /** @type {import('estree').Expression} */ (context.visit(callee));
 		if (context.state.options.dev) {
@@ -1875,12 +1873,15 @@ export const template_visitors = {
 		}
 
 		if (is_reactive) {
-			context.state.init.push(b.stmt(b.call('$.snippet', b.thunk(snippet_function), ...args)));
+			context.state.init.push(
+				b.stmt(b.call('$.snippet', context.state.node, b.thunk(snippet_function), ...args))
+			);
 		} else {
 			context.state.init.push(
 				b.stmt(
 					(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
 						snippet_function,
+						context.state.node,
 						...args
 					)
 				)

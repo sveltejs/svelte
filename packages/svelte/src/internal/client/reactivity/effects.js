@@ -341,7 +341,7 @@ export function execute_effect_teardown(effect) {
 export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
-	if (remove_dom || (effect.f & HEAD_EFFECT) !== 0) {
+	if ((remove_dom || (effect.f & HEAD_EFFECT) !== 0) && effect.nodes !== null) {
 		var start = get_first_node(effect);
 		var end = get_last_node(effect);
 
