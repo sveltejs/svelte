@@ -1687,7 +1687,7 @@ export const template_visitors = {
 					flags |= TEMPLATE_USE_IMPORT_NODE;
 				}
 
-				if (trimmed[0].type === 'Component') {
+				if (trimmed[0].type === 'Component' || trimmed[0].type === 'SlotElement') {
 					flags |= TEMPLATE_UNSET_START;
 				}
 
