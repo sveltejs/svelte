@@ -7,34 +7,7 @@ import {
 	TEMPLATE_UNSET_START,
 	TEMPLATE_USE_IMPORT_NODE
 } from '../../../constants.js';
-import { is_array } from '../utils.js';
 import { queue_micro_task } from './task.js';
-
-/**
- * @template {import("#client").TemplateNode | import("#client").TemplateNode[]} T
- * @param {T} dom
- * @param {import("#client").Effect} effect
- */
-function push_template_node(
-	dom,
-	effect = /** @type {import('#client').Effect} */ (current_effect)
-) {
-	var current_dom = effect.dom;
-	if (current_dom === null) {
-		effect.dom = dom;
-	} else {
-		if (!is_array(current_dom)) {
-			current_dom = effect.dom = [current_dom];
-		}
-
-		if (is_array(dom)) {
-			current_dom.push(...dom);
-		} else {
-			current_dom.push(dom);
-		}
-	}
-	return dom;
-}
 
 /**
  *
@@ -76,7 +49,6 @@ export function template(content, flags) {
 				hydrate_nodes[hydrate_nodes.length - 1]
 			);
 
-			push_template_node(is_fragment ? hydrate_nodes : hydrate_start);
 			return hydrate_start;
 		}
 
@@ -98,12 +70,6 @@ export function template(content, flags) {
 		var end = /** @type {import('#client').TemplateNode} */ (is_fragment ? clone.lastChild : clone);
 
 		assign_nodes(start, end);
-
-		push_template_node(
-			is_fragment
-				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
-				: /** @type {import('#client').TemplateNode} */ (clone)
-		);
 
 		return clone;
 	};
@@ -153,7 +119,6 @@ export function ns_template(content, flags, ns = 'svg') {
 		if (hydrating) {
 			assign_nodes(has_start ? hydrate_nodes[0] : null, hydrate_nodes[hydrate_nodes.length - 1]);
 
-			push_template_node(is_fragment ? hydrate_nodes : hydrate_start);
 			return hydrate_start;
 		}
 
@@ -182,12 +147,6 @@ export function ns_template(content, flags, ns = 'svg') {
 		var end = /** @type {import('#client').TemplateNode} */ (is_fragment ? clone.lastChild : clone);
 
 		assign_nodes(start, end);
-
-		push_template_node(
-			is_fragment
-				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
-				: /** @type {import('#client').TemplateNode} */ (clone)
-		);
 
 		return clone;
 	};
@@ -267,7 +226,7 @@ export function text(anchor) {
 	if (!hydrating) {
 		var t = empty();
 		assign_nodes(t, t);
-		return push_template_node(t);
+		return t;
 	}
 
 	var node = hydrate_start;
@@ -279,7 +238,6 @@ export function text(anchor) {
 	}
 
 	assign_nodes(node, node);
-	push_template_node(node);
 	return node;
 }
 
@@ -294,7 +252,6 @@ export function comment(flags = 0) {
 			hydrate_nodes[hydrate_nodes.length - 1]
 		);
 
-		push_template_node(hydrate_nodes);
 		return hydrate_start;
 	}
 
@@ -303,7 +260,6 @@ export function comment(flags = 0) {
 	frag.append(anchor);
 
 	assign_nodes((flags & TEMPLATE_UNSET_START) !== 0 ? undefined : null, anchor);
-	push_template_node([anchor]);
 
 	return frag;
 }

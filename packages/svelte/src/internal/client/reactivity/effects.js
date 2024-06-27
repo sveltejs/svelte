@@ -85,7 +85,6 @@ function create_effect(type, fn, sync) {
 	var effect = {
 		ctx: current_component_context,
 		deps: null,
-		dom: null,
 		nodes: null,
 		f: type | DIRTY,
 		first: null,

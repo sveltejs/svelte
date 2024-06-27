@@ -126,15 +126,7 @@ export function sibling(node, is_text = false) {
 	// text node to hydrate — we must therefore create one
 	if (is_text && type !== 3) {
 		var text = empty();
-		var dom = /** @type {import('#client').TemplateNode[]} */ (
-			/** @type {import('#client').Effect} */ (current_effect).dom
-		);
-
-		// TODO something needs to happen here but i'm not quite sure what
-
-		dom.unshift(text);
 		next_sibling?.before(text);
-
 		return text;
 	}
 
