@@ -41,7 +41,7 @@ export function push_template_node(
  * @param {import('#client').TemplateNode | null | undefined} start
  * @param {import('#client').TemplateNode} end
  */
-function assign_nodes(start, end) {
+export function assign_nodes(start, end) {
 	const effect = /** @type {import('#client').Effect} */ (current_effect);
 
 	if (effect.nodes === null) {

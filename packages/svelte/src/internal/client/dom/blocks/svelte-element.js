@@ -13,29 +13,8 @@ import { current_each_item, set_current_each_item } from './each.js';
 import { current_component_context, current_effect } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { is_array } from '../../utils.js';
-import { push_template_node } from '../template.js';
+import { assign_nodes, push_template_node } from '../template.js';
 import { noop } from '../../../shared/utils.js';
-
-/**
- * @param {import('#client').Effect} effect
- * @param {Element} from
- * @param {Element} to
- * @returns {void}
- */
-function swap_block_dom(effect, from, to) {
-	const dom = effect.dom;
-
-	if (is_array(dom)) {
-		for (let i = 0; i < dom.length; i++) {
-			if (dom[i] === from) {
-				dom[i] = to;
-				break;
-			}
-		}
-	} else if (dom === from) {
-		effect.dom = to;
-	}
-}
 
 /**
  * @param {Comment | Element} node
@@ -125,6 +104,8 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 						? document.createElementNS(ns, next_tag)
 						: document.createElement(next_tag);
 
+				assign_nodes(element, element);
+
 				if (DEV && location) {
 					// @ts-expect-error
 					element.__svelte_meta = {
@@ -137,7 +118,6 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				}
 
 				if (prev_element && !hydrating) {
-					swap_block_dom(element_effect, prev_element, element);
 					prev_element.remove();
 				} else {
 					push_template_node(element, element_effect);
