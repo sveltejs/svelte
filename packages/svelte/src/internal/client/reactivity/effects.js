@@ -31,7 +31,8 @@ import {
 	DERIVED,
 	UNOWNED,
 	CLEAN,
-	INSPECT_EFFECT
+	INSPECT_EFFECT,
+	HEAD_EFFECT
 } from '../constants.js';
 import { set } from './sources.js';
 import { remove } from '../dom/reconciler.js';
@@ -341,7 +342,7 @@ export function execute_effect_teardown(effect) {
 export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
-	if (remove_dom) {
+	if (remove_dom || (effect.f & HEAD_EFFECT) !== 0) {
 		var start = get_first_node(effect);
 		var end = get_last_node(effect);
 
@@ -391,7 +392,10 @@ export function get_first_node(effect) {
 	}
 
 	var child = effect.first;
-	while (child && (child.f & (BLOCK_EFFECT | BRANCH_EFFECT)) === 0) {
+	while (
+		child &&
+		((child.f & (BLOCK_EFFECT | BRANCH_EFFECT)) === 0 || (child.f & HEAD_EFFECT) !== 0)
+	) {
 		child = child.next;
 	}
 
