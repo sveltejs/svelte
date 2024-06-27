@@ -31,6 +31,7 @@ import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen } from '../../utils.js';
 import { INERT, STATE_SYMBOL } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
+import { current_effect } from '../../runtime.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -413,6 +414,28 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 				item.a?.apply();
 			}
 		});
+	}
+
+	// TODO this is inefficient, this should happen during linking, but that's currently tricky
+	/** @type {import('#client').Effect | null} */
+	var effect = null;
+	var next = state.next;
+
+	/** @type {import('#client').Effect} */ (current_effect).first = next && next.e;
+
+	while (next) {
+		if (effect !== null) {
+			effect.next = next.e;
+		}
+
+		next.e.prev = effect;
+
+		effect = next.e;
+		next = next.next;
+	}
+
+	if (effect !== null) {
+		effect.next = null;
 	}
 }
 
