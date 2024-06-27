@@ -491,7 +491,7 @@ Previously, you would have used `beforeUpdate`, which — like `afterUpdate` —
 
 ## `$effect.tracking`
 
-The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template ([demo](/#H4sIAAAAAAAAE3XP0QrCMAwF0F-JRXAD595rLfgdzodRUyl0bVgzQcb-3VYFQfExl5tDMgvrPCYhT7MI_YBCiiOR2Aq-UxnSDT1jnlOcRlMSlczoiHUXOjYxpOhx5-O12rgAJg4UAwaGhDyR3Gxhjdai4V1v2N2wqus9tC3Y3ifMQjbehaqq4aBhLtEv_Or893icCsdLve-Caj8nBkU67zMO5HtGCfM3sKiWNKhV0zwVaBqd3x3ixVmHFyFLuJyXB-moOe8pAQAA)):
+The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template ([demo](/#H4sIAAAAAAAACn3PQWrDMBAF0KtMRSA2xPFeUQU5R92FUUZBVB4N1rgQjO9eKSlkEcjyfz6PmVX5EDEr_bUqGidUWp2Z1UHJjWvIvxgFS85pmV1tTHZzYLEDDeIS5RTxGNO12QcClyZOhCSQURbW-wPs0Ht0cpR5dD-Brk3bnqDvwY8xYzGK8j9pmhY-Lay1eqUfm3eizEsFZWtPA5n-eSYZtkUQnDiOghrWV2IzPVswH113d6DrbHl6SpfgA16UruX2vf0BWo7W2y8BAAA=)):
 
 ```svelte
 <script>
