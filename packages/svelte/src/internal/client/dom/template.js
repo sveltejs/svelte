@@ -238,9 +238,9 @@ export function text(anchor) {
 }
 
 /**
- * @param {number} [flags]
+ * @param {boolean} unset
  */
-export function comment(flags = 0) {
+export function comment(unset = false) {
 	// we're not delegating to `template` here for performance reasons
 	if (hydrating) {
 		assign_nodes(get_start(), hydrate_nodes[hydrate_nodes.length - 1]);
@@ -252,7 +252,7 @@ export function comment(flags = 0) {
 	var anchor = empty();
 	frag.append(anchor);
 
-	assign_nodes((flags & TEMPLATE_UNSET_START) !== 0 ? undefined : null, anchor, anchor);
+	assign_nodes(unset ? undefined : null, anchor, anchor);
 
 	return frag;
 }

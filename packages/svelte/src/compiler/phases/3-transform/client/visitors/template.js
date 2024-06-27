@@ -1682,16 +1682,18 @@ export const template_visitors = {
 
 				process_children(trimmed, expression, false, { ...context, state });
 
-				let flags = TEMPLATE_FRAGMENT;
-
-				if (state.metadata.context.template_needs_import_node) {
-					flags |= TEMPLATE_USE_IMPORT_NODE;
-				}
-
+				/**
+				 * If the first item in an effect is a static slot or render tag, it will clone
+				 * a template but without creating a child effect. In these cases, we need to keep
+				 * the current `effect.nodes.start` undefined, so that it can be populated by
+				 * the item in question
+				 * TODO come up with a better name than `unset`
+				 */
+				var unset = false;
 				var first = trimmed[0];
 
 				if (first.type === 'SlotElement') {
-					flags |= TEMPLATE_UNSET_START;
+					unset = true;
 				}
 
 				if (first.type === 'Component') {
@@ -1700,7 +1702,7 @@ export const template_visitors = {
 						first.name.includes('.') ? first.name.slice(0, first.name.indexOf('.')) : first.name
 					);
 					if (binding === null || binding.kind === 'normal') {
-						flags |= TEMPLATE_UNSET_START;
+						unset = true;
 					}
 				}
 
@@ -1710,7 +1712,7 @@ export const template_visitors = {
 						callee.type !== 'Identifier' || context.state.scope.get(callee.name)?.kind !== 'normal';
 
 					if (!is_reactive) {
-						flags |= TEMPLATE_UNSET_START;
+						unset = true;
 					}
 				}
 
@@ -1718,8 +1720,18 @@ export const template_visitors = {
 
 				if (use_comment_template) {
 					// special case — we can use `$.comment` instead of creating a unique template
-					body.push(b.var(id, b.call('$.comment', flags !== 0 && b.literal(flags))));
+					body.push(b.var(id, b.call('$.comment', unset && b.literal(unset))));
 				} else {
+					let flags = TEMPLATE_FRAGMENT;
+
+					if (unset) {
+						flags |= TEMPLATE_UNSET_START;
+					}
+
+					if (state.metadata.context.template_needs_import_node) {
+						flags |= TEMPLATE_USE_IMPORT_NODE;
+					}
+
 					add_template(template_name, [
 						b.template([b.quasi(state.template.join(''), true)], []),
 						b.literal(flags)
