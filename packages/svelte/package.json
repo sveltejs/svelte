@@ -115,7 +115,7 @@
     "knip": "pnpm dlx knip"
   },
   "devDependencies": {
-    "@jridgewell/trace-mapping": "^0.3.22",
+    "@jridgewell/trace-mapping": "^0.3.25",
     "@playwright/test": "^1.35.1",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
@@ -129,7 +129,7 @@
     "tiny-glob": "^0.2.9"
   },
   "dependencies": {
-    "@ampproject/remapping": "^2.2.1",
+    "@ampproject/remapping": "^2.3.0",
     "@jridgewell/sourcemap-codec": "^1.4.15",
     "@types/estree": "^1.0.5",
     "acorn": "^8.11.3",
@@ -140,7 +140,7 @@
     "esrap": "^1.2.2",
     "is-reference": "^3.0.2",
     "locate-character": "^3.0.0",
-    "magic-string": "^0.30.5",
+    "magic-string": "^0.30.10",
     "zimmerframe": "^1.1.2"
   },
   "knip": {
