@@ -5,4 +5,4 @@ export type {
 	PreprocessorGroup,
 	Processed
 } from './preprocess/public';
-export type { CompileOptions, ModuleCompileOptions } from './types/index';
+export type { CompileOptions, ModuleCompileOptions, CompileResult, Warning } from './types/index';
