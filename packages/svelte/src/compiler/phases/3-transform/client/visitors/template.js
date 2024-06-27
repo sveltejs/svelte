@@ -36,6 +36,7 @@ import {
 	EACH_KEYED,
 	is_capture_event,
 	TEMPLATE_FRAGMENT,
+	TEMPLATE_UNSET_START,
 	TEMPLATE_USE_IMPORT_NODE,
 	TRANSITION_GLOBAL,
 	TRANSITION_IN,
@@ -1680,18 +1681,32 @@ export const template_visitors = {
 
 				process_children(trimmed, expression, false, { ...context, state });
 
+				let flags = TEMPLATE_FRAGMENT;
+
+				if (state.metadata.context.template_needs_import_node) {
+					flags |= TEMPLATE_USE_IMPORT_NODE;
+				}
+
+				if (trimmed[0].type === 'Component') {
+					flags |= TEMPLATE_UNSET_START;
+				}
+
+				if (trimmed[0].type === 'RenderTag') {
+					const callee = unwrap_optional(trimmed[0].expression).callee;
+					const is_reactive =
+						callee.type !== 'Identifier' || context.state.scope.get(callee.name)?.kind !== 'normal';
+
+					if (!is_reactive) {
+						flags |= TEMPLATE_UNSET_START;
+					}
+				}
+
 				const use_comment_template = state.template.length === 1 && state.template[0] === '<!>';
 
 				if (use_comment_template) {
 					// special case — we can use `$.comment` instead of creating a unique template
-					body.push(b.var(id, b.call('$.comment')));
+					body.push(b.var(id, b.call('$.comment', flags !== 0 && b.literal(flags))));
 				} else {
-					let flags = TEMPLATE_FRAGMENT;
-
-					if (state.metadata.context.template_needs_import_node) {
-						flags |= TEMPLATE_USE_IMPORT_NODE;
-					}
-
 					add_template(template_name, [
 						b.template([b.quasi(state.template.join(''), true)], []),
 						b.literal(flags)

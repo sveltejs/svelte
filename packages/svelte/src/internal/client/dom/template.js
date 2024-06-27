@@ -2,7 +2,11 @@ import { hydrate_nodes, hydrate_start, hydrating } from './hydration.js';
 import { empty } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
-import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
+import {
+	TEMPLATE_FRAGMENT,
+	TEMPLATE_UNSET_START,
+	TEMPLATE_USE_IMPORT_NODE
+} from '../../../constants.js';
 import { is_array } from '../utils.js';
 import { queue_micro_task } from './task.js';
 
@@ -34,7 +38,7 @@ export function push_template_node(
 
 /**
  *
- * @param {import('#client').TemplateNode | null} start
+ * @param {import('#client').TemplateNode | null | undefined} start
  * @param {import('#client').TemplateNode} end
  */
 function assign_nodes(start, end) {
@@ -43,7 +47,9 @@ function assign_nodes(start, end) {
 	if (effect.nodes === null) {
 		effect.nodes = { start, end };
 	} else {
-		effect.nodes.end = end;
+		if (effect.nodes.start === undefined) {
+			effect.nodes.start = start;
+		}
 	}
 }
 
@@ -61,10 +67,14 @@ export function template(content, flags) {
 	var node;
 
 	var has_start = !content.startsWith('<!>');
+	var unset = (flags & TEMPLATE_UNSET_START) !== 0;
 
 	return () => {
 		if (hydrating) {
-			assign_nodes(has_start ? hydrate_nodes[0] : null, hydrate_nodes[hydrate_nodes.length - 1]);
+			assign_nodes(
+				has_start ? hydrate_nodes[0] : unset ? undefined : null,
+				hydrate_nodes[hydrate_nodes.length - 1]
+			);
 
 			push_template_node(is_fragment ? hydrate_nodes : hydrate_start);
 			return hydrate_start;
@@ -80,7 +90,9 @@ export function template(content, flags) {
 		var start = is_fragment
 			? has_start
 				? /** @type {import('#client').TemplateNode} */ (clone.firstChild)
-				: null
+				: unset
+					? undefined
+					: null
 			: /** @type {import('#client').TemplateNode} */ (clone);
 
 		var end = /** @type {import('#client').TemplateNode} */ (is_fragment ? clone.lastChild : clone);
@@ -146,8 +158,8 @@ export function ns_template(content, flags, ns = 'svg') {
 		}
 
 		if (!node) {
-			var fragment = /** @type {Element} */ (create_fragment_from_html(wrapped));
-			var root = fragment.firstChild;
+			var fragment = /** @type {DocumentFragment} */ (create_fragment_from_html(wrapped));
+			var root = /** @type {Element} */ (fragment.firstChild);
 
 			if (is_fragment) {
 				node = document.createDocumentFragment();
@@ -271,9 +283,17 @@ export function text(anchor) {
 	return node;
 }
 
-export function comment() {
+/**
+ * @param {number} [flags]
+ */
+export function comment(flags = 0) {
 	// we're not delegating to `template` here for performance reasons
 	if (hydrating) {
+		assign_nodes(
+			(flags & TEMPLATE_UNSET_START) !== 0 ? undefined : null,
+			hydrate_nodes[hydrate_nodes.length - 1]
+		);
+
 		push_template_node(hydrate_nodes);
 		return hydrate_start;
 	}
@@ -281,6 +301,8 @@ export function comment() {
 	var frag = document.createDocumentFragment();
 	var anchor = empty();
 	frag.append(anchor);
+
+	assign_nodes((flags & TEMPLATE_UNSET_START) !== 0 ? undefined : null, anchor);
 	push_template_node([anchor]);
 
 	return frag;

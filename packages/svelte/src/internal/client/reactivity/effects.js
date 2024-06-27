@@ -71,6 +71,8 @@ export function push_effect(effect, parent_effect) {
 	}
 }
 
+var uid = 1;
+
 /**
  * @param {number} type
  * @param {null | (() => void | (() => void))} fn
@@ -82,6 +84,7 @@ function create_effect(type, fn, sync) {
 
 	/** @type {import('#client').Effect} */
 	var effect = {
+		id: uid++,
 		ctx: current_component_context,
 		deps: null,
 		dom: null,
@@ -388,13 +391,18 @@ export function destroy_effect(effect, remove_dom = true) {
  */
 function get_first_node(effect) {
 	if (effect.nodes !== null) {
-		if (effect.nodes.start !== null) {
+		if (effect.nodes.start != null) {
 			return effect.nodes.start;
 		}
 	}
 
-	if (effect.first !== null) {
-		return get_first_node(effect.first);
+	var child = effect.first;
+	while (child && (child.f & (BLOCK_EFFECT | BRANCH_EFFECT)) === 0) {
+		child = child.next;
+	}
+
+	if (child !== null) {
+		return get_first_node(child);
 	}
 
 	return null;
