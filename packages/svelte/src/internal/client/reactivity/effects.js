@@ -343,9 +343,8 @@ export function destroy_effect(effect, remove_dom = true) {
 
 	if ((remove_dom || (effect.f & HEAD_EFFECT) !== 0) && effect.nodes !== null) {
 		var start = get_first_node(effect);
-		var end = get_last_node(effect);
 
-		remove_nodes(start, end);
+		remove_nodes(start, effect.nodes.end);
 		removed = true;
 	}
 
@@ -384,46 +383,30 @@ export function destroy_effect(effect, remove_dom = true) {
  * @returns {import('#client').TemplateNode}
  */
 export function get_first_node(effect) {
-	if (effect.nodes !== null) {
-		if (effect.nodes.start === undefined) {
-			return /** @type {import('#client').TemplateNode} */ (effect.nodes.anchor);
-		}
+	var nodes = /** @type {NonNullable<typeof effect.nodes>} */ (effect.nodes);
+	var start = nodes.start;
 
-		if (effect.nodes.start !== null) {
-			return effect.nodes.start;
-		}
+	if (start === undefined) {
+		// edge case — a snippet or component was the first item inside the effect,
+		// but it didn't render any DOM. in this case, we return the item's anchor
+		return /** @type {import('#client').TemplateNode} */ (nodes.anchor);
+	}
+
+	if (start !== null) {
+		return start;
 	}
 
 	var child = effect.first;
-	while (
-		child &&
-		((child.f & (BLOCK_EFFECT | BRANCH_EFFECT)) === 0 || (child.f & HEAD_EFFECT) !== 0)
-	) {
+	while (child && (child.nodes === null || (child.f & HEAD_EFFECT) !== 0)) {
 		child = child.next;
 	}
 
-	if (child !== null) {
+	if (child !== null && child.nodes !== null) {
 		return get_first_node(child);
 	}
 
 	// in the case that there's no DOM, return the first anchor
-	return get_last_node(effect);
-}
-
-/**
- * @param {import('#client').Effect} effect
- * @returns {import('#client').TemplateNode}
- */
-function get_last_node(effect) {
-	if (effect.nodes !== null) {
-		return effect.nodes.end;
-	}
-
-	if (effect.last !== null) {
-		return get_last_node(effect.last);
-	}
-
-	return /** @type {import('#client').TemplateNode} */ (/** @type {unknown} */ (null));
+	return nodes.end;
 }
 
 /**
