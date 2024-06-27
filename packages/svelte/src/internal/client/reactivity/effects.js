@@ -405,7 +405,8 @@ function get_first_node(effect) {
 		return get_first_node(child);
 	}
 
-	return null;
+	// in the case that there's no DOM, return the first anchor
+	return get_last_node(effect);
 }
 
 /**
