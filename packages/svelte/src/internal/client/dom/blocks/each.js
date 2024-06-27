@@ -291,7 +291,10 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		item = items.get(key);
 
 		if (item === undefined) {
-			var child_anchor = current ? get_first_node(current.e) : anchor;
+			var effect_dom = current?.e.dom;
+			var child_anchor = /** @type {Node} */ (
+				effect_dom ? (is_array(effect_dom) ? effect_dom[0] : effect_dom) : anchor
+			);
 
 			prev = create_item(child_anchor, prev, prev.next, value, key, i, render_fn, flags);
 
