@@ -48,8 +48,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 	 */
 	let each_item_block = current_each_item;
 
-	block(() => {
-		const element_effect = /** @type {import('#client').Effect} */ (current_effect);
+	block(anchor, 0, () => {
 		const next_tag = get_tag() || null;
 		const ns = get_namespace
 			? get_namespace()

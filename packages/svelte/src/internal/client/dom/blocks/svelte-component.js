@@ -16,7 +16,7 @@ export function component(get_component, render_fn) {
 	/** @type {import('#client').Effect | null} */
 	let effect;
 
-	block(() => {
+	block(null, 0, () => {
 		if (component === (component = get_component())) return;
 
 		if (effect) {

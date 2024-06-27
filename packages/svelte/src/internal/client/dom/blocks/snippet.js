@@ -21,7 +21,7 @@ export function snippet(get_snippet, node, ...args) {
 	/** @type {import('#client').Effect | null} */
 	var snippet_effect;
 
-	block(() => {
+	block(null, EFFECT_TRANSPARENT, () => {
 		if (snippet === (snippet = get_snippet())) return;
 
 		if (snippet_effect) {
@@ -32,7 +32,7 @@ export function snippet(get_snippet, node, ...args) {
 		if (snippet) {
 			snippet_effect = branch(() => /** @type {SnippetFn} */ (snippet)(node, ...args));
 		}
-	}, EFFECT_TRANSPARENT);
+	});
 }
 
 /**

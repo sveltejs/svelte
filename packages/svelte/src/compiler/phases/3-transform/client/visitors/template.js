@@ -1930,7 +1930,7 @@ export const template_visitors = {
 		}
 
 		if (node.name === 'noscript') {
-			context.state.template.push('<!>');
+			context.state.template.push('<noscript></noscript>');
 			return;
 		}
 		if (node.name === 'script') {

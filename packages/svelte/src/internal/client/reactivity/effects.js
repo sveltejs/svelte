@@ -299,11 +299,14 @@ export function template_effect(fn) {
 }
 
 /**
- * @param {(() => void)} fn
+ * @param {import('#client').TemplateNode | null} anchor
  * @param {number} flags
+ * @param {(() => void)} fn
  */
-export function block(fn, flags = 0) {
-	return create_effect(RENDER_EFFECT | BLOCK_EFFECT | flags, fn, true);
+export function block(anchor, flags, fn) {
+	const effect = create_effect(RENDER_EFFECT | BLOCK_EFFECT | flags, fn, true);
+	if (anchor !== null) effect.nodes = { start: null, end: anchor };
+	return effect;
 }
 
 /** @param {(() => void)} fn */
