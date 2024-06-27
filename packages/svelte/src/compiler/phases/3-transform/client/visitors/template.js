@@ -1682,6 +1682,8 @@ export const template_visitors = {
 
 				process_children(trimmed, expression, false, { ...context, state });
 
+				var first = trimmed[0];
+
 				/**
 				 * If the first item in an effect is a static slot or render tag, it will clone
 				 * a template but without creating a child effect. In these cases, we need to keep
@@ -1689,32 +1691,9 @@ export const template_visitors = {
 				 * the item in question
 				 * TODO come up with a better name than `unset`
 				 */
-				var unset = false;
-				var first = trimmed[0];
-
-				if (first.type === 'SlotElement') {
-					unset = true;
-				}
-
-				if (first.type === 'Component') {
-					// if it's not a `$.component`, mark as unset
-					const binding = context.state.scope.get(
-						first.name.includes('.') ? first.name.slice(0, first.name.indexOf('.')) : first.name
-					);
-					if (binding === null || binding.kind === 'normal') {
-						unset = true;
-					}
-				}
-
-				if (first.type === 'RenderTag') {
-					const callee = unwrap_optional(first.expression).callee;
-					const is_reactive =
-						callee.type !== 'Identifier' || context.state.scope.get(callee.name)?.kind !== 'normal';
-
-					if (!is_reactive) {
-						unset = true;
-					}
-				}
+				var unset =
+					first.type === 'SlotElement' ||
+					((first.type === 'Component' || first.type === 'RenderTag') && !first.metadata.dynamic);
 
 				const use_comment_template = state.template.length === 1 && state.template[0] === '<!>';
 
@@ -1872,8 +1851,6 @@ export const template_visitors = {
 		context.state.template.push('<!>');
 		const callee = unwrap_optional(node.expression).callee;
 		const raw_args = unwrap_optional(node.expression).arguments;
-		const is_reactive =
-			callee.type !== 'Identifier' || context.state.scope.get(callee.name)?.kind !== 'normal';
 
 		const args = raw_args.map((arg) =>
 			b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg)))
@@ -1884,7 +1861,7 @@ export const template_visitors = {
 			snippet_function = b.call('$.validate_snippet', snippet_function);
 		}
 
-		if (is_reactive) {
+		if (node.metadata.dynamic) {
 			context.state.init.push(
 				b.stmt(b.call('$.snippet', context.state.node, b.thunk(snippet_function), ...args))
 			);
@@ -3014,10 +2991,7 @@ export const template_visitors = {
 		}
 	},
 	Component(node, context) {
-		const binding = context.state.scope.get(
-			node.name.includes('.') ? node.name.slice(0, node.name.indexOf('.')) : node.name
-		);
-		if (binding !== null && binding.kind !== 'normal') {
+		if (node.metadata.dynamic) {
 			// Handle dynamic references to what seems like static inline components
 			const component = serialize_inline_component(node, '$$component', context);
 			context.state.init.push(
@@ -3036,6 +3010,7 @@ export const template_visitors = {
 			);
 			return;
 		}
+
 		const component = serialize_inline_component(node, node.name, context);
 		context.state.init.push(component);
 	},
