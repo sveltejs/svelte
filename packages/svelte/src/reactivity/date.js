@@ -101,7 +101,7 @@ export class ReactiveDate extends Date {
 				var result = date_proto[method].apply(this, args);
 				var new_time = date_proto.getTime.call(this);
 				if (this.#raw_time.v !== new_time) {
-					set(this.#raw_time, date_proto.getTime.call(this));
+					set(this.#raw_time, new_time);
 				}
 				return result;
 			};
