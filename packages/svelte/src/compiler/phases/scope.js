@@ -632,6 +632,10 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					}
 				}
 			}
+
+			if (node.finally) {
+				context.visit(node.finally);
+			}
 		},
 
 		SnippetBlock(node, context) {

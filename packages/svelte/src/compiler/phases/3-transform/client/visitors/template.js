@@ -2653,7 +2653,13 @@ export const template_visitors = {
 							)
 						: b.literal(null),
 					then_block,
-					catch_block
+					catch_block,
+					node.finally
+						? b.arrow(
+								[b.id('$$anchor')],
+								/** @type {import('estree').BlockStatement} */ (context.visit(node.finally))
+							)
+						: b.literal(null)
 				)
 			)
 		);

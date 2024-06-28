@@ -17,6 +17,7 @@ import { mutable_source, set, source } from '../../reactivity/sources.js';
 const PENDING = 0;
 const THEN = 1;
 const CATCH = 2;
+const FINALLY = 3;
 
 /**
  * @template V
@@ -25,9 +26,10 @@ const CATCH = 2;
  * @param {null | ((anchor: Node) => void)} pending_fn
  * @param {null | ((anchor: Node, value: import('#client').Source<V>) => void)} then_fn
  * @param {null | ((anchor: Node, error: unknown) => void)} catch_fn
+ * @param {null | ((anchor: Node) => void)} finally_fn
  * @returns {void}
  */
-export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
+export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn, finally_fn) {
 	var runes = is_runes();
 	var component_context = current_component_context;
 
@@ -46,6 +48,9 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 	/** @type {import('#client').Effect | null} */
 	var catch_effect;
 
+	/** @type {import('#client').Effect | null} */
+	var finally_effect;
+
 	var input_source = runes
 		? source(/** @type {V} */ (undefined))
 		: mutable_source(/** @type {V} */ (undefined));
@@ -53,7 +58,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 	var resolved = false;
 
 	/**
-	 * @param {PENDING | THEN | CATCH} state
+	 * @param {PENDING | THEN | CATCH | FINALLY} state
 	 * @param {boolean} restore
 	 */
 	function update(state, restore) {
@@ -81,16 +86,25 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 			else catch_effect = branch(() => catch_fn(anchor, error_source));
 		}
 
+		if (state === FINALLY && finally_fn) {
+			if (finally_effect) resume_effect(finally_effect);
+			else finally_effect = branch(() => finally_fn(anchor));
+		}
+
 		if (state !== PENDING && pending_effect) {
 			pause_effect(pending_effect, () => (pending_effect = null));
 		}
 
-		if (state !== THEN && then_effect) {
+		if (state !== THEN && state !== FINALLY && then_effect) {
 			pause_effect(then_effect, () => (then_effect = null));
 		}
 
-		if (state !== CATCH && catch_effect) {
+		if (state !== CATCH && state !== FINALLY && catch_effect) {
 			pause_effect(catch_effect, () => (catch_effect = null));
+		}
+
+		if (state === PENDING && finally_effect) {
+			pause_effect(finally_effect, () => (finally_effect = null));
 		}
 
 		if (restore) {
@@ -113,18 +127,23 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 
 			resolved = false;
 
-			promise.then(
-				(value) => {
+			promise
+				.then(
+					(value) => {
+						if (promise !== input) return;
+						set(input_source, value);
+						update(THEN, true);
+					},
+					(error) => {
+						if (promise !== input) return;
+						set(error_source, error);
+						update(CATCH, true);
+					}
+				)
+				.finally(() => {
 					if (promise !== input) return;
-					set(input_source, value);
-					update(THEN, true);
-				},
-				(error) => {
-					if (promise !== input) return;
-					set(error_source, error);
-					update(CATCH, true);
-				}
-			);
+					update(FINALLY, true);
+				});
 
 			if (hydrating) {
 				if (pending_fn) {
@@ -140,6 +159,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 		} else {
 			set(input_source, input);
 			update(THEN, false);
+			update(FINALLY, false);
 		}
 
 		// Inert effects are proactively detached from the effect tree. Returning a noop

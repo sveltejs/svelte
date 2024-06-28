@@ -1836,6 +1836,7 @@ declare module 'svelte/compiler' {
 		pending: Fragment | null;
 		then: Fragment | null;
 		catch: Fragment | null;
+		finally: Fragment | null;
 	}
 
 	interface KeyBlock extends BaseNode {

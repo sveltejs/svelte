@@ -420,6 +420,7 @@ export interface AwaitBlock extends BaseNode {
 	pending: Fragment | null;
 	then: Fragment | null;
 	catch: Fragment | null;
+	finally: Fragment | null;
 }
 
 export interface KeyBlock extends BaseNode {

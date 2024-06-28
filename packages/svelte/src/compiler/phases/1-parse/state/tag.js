@@ -199,7 +199,8 @@ function open(parser) {
 			error: null,
 			pending: null,
 			then: null,
-			catch: null
+			catch: null,
+			finally: null
 		});
 
 		if (parser.eat('then')) {
@@ -224,6 +225,12 @@ function open(parser) {
 
 			block.catch = create_fragment();
 			parser.fragments.push(block.catch);
+		} else if (parser.eat('finally')) {
+			if (parser.match_regex(regex_whitespace_with_closing_curly_brace)) {
+				parser.allow_whitespace();
+			}
+			block.finally = create_fragment();
+			parser.fragments.push(block.finally);
 		} else {
 			block.pending = create_fragment();
 			parser.fragments.push(block.pending);
@@ -415,6 +422,18 @@ function next(parser) {
 			block.catch = create_fragment();
 			parser.fragments.pop();
 			parser.fragments.push(block.catch);
+
+			return;
+		}
+
+		if (parser.eat('finally')) {
+			if (block.finally) {
+				e.block_duplicate_clause(start, '{:finally}');
+			}
+			parser.eat('}', true);
+			block.finally = create_fragment();
+			parser.fragments.pop();
+			parser.fragments.push(block.finally);
 
 			return;
 		}
