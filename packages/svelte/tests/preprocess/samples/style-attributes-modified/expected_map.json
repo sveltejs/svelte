@@ -4,5 +4,6 @@
   "names": [],
   "sources": [
     "input.svelte"
-  ]
+  ],
+  "ignoreList": []
 }
