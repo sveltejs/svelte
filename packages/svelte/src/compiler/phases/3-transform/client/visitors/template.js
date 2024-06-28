@@ -1691,9 +1691,13 @@ export const template_visitors = {
 				 * the item in question
 				 * TODO come up with a better name than `unset`
 				 */
-				var unset =
-					first.type === 'SlotElement' ||
-					((first.type === 'Component' || first.type === 'RenderTag') && !first.metadata.dynamic);
+				var unset = false;
+
+				if (first.type === 'SlotElement') unset = true;
+				if (first.type === 'RenderTag' && !first.metadata.dynamic) unset = true;
+				if (first.type === 'Component' && !first.metadata.dynamic && !context.state.options.hmr) {
+					unset = true;
+				}
 
 				const use_comment_template = state.template.length === 1 && state.template[0] === '<!>';
 
