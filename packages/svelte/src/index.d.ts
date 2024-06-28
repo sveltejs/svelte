@@ -259,20 +259,24 @@ declare const SnippetReturn: unique symbol;
 /**
  * The type of a `#snippet` block. You can use it to (for example) express that your component expects a snippet of a certain type:
  * ```ts
- * let { banner }: { banner: Snippet<{ text: string }> } = $props();
+ * let { banner }: { banner: Snippet<[{ text: string }]> } = $props();
  * ```
  * You can only call a snippet through the `{@render ...}` tag.
+ *
+ * https://svelte-5-preview.vercel.app/docs/snippets
+ *
+ * @template Arguments Parameters that the snippet expects (if any) as a tuple. The default type is no parameters.
  */
-export type Snippet<T extends unknown[] = []> =
+export type Snippet<Arguments extends unknown[] = []> =
 	// this conditional allows tuples but not arrays. Arrays would indicate a
 	// rest parameter type, which is not supported. If rest parameters are added
 	// in the future, the condition can be removed.
-	number extends T['length']
+	number extends Arguments['length']
 		? never
 		: {
 				(
 					this: void,
-					...args: T
+					...args: Arguments
 				): typeof SnippetReturn & {
 					_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
 				};

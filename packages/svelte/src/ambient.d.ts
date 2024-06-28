@@ -306,7 +306,7 @@ declare function $props(): any;
  *
  * https://svelte-5-preview.vercel.app/docs/runes#$bindable
  */
-declare function $bindable<T>(t?: T): T;
+declare function $bindable<T>(fallback?: T): T;
 
 /**
  * Inspects one or more values whenever they, or the properties they contain, change. Example:
