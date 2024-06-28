@@ -1096,13 +1096,12 @@ function serialize_update(statement) {
 }
 
 /**
- *
- * @param {import('../types.js').ComponentClientTransformState} state
+ * @param {import('estree').Statement[]} update
  */
-function serialize_render_stmt(state) {
-	return state.update.length === 1
-		? serialize_update(state.update[0])
-		: b.stmt(b.call('$.template_effect', b.thunk(b.block(state.update))));
+function serialize_render_stmt(update) {
+	return update.length === 1
+		? serialize_update(update[0])
+		: b.stmt(b.call('$.template_effect', b.thunk(b.block(update))));
 }
 
 /**
@@ -1709,7 +1708,7 @@ export const template_visitors = {
 		}
 
 		if (state.update.length > 0) {
-			body.push(serialize_render_stmt(state));
+			body.push(serialize_render_stmt(state.update));
 		}
 
 		body.push(...state.after_update);
@@ -2157,8 +2156,21 @@ export const template_visitors = {
 			state.options.preserveComments
 		);
 
+		/**
+		 * @type {import("estree").Statement[]}
+		 */
+		const init = [];
+		/**
+		 * @type {never[]}
+		 */
+		const update = [];
+		/**
+		 * @type {never[]}
+		 */
+		const after_update = [];
+
 		for (const node of hoisted) {
-			context.visit(node, state);
+			context.visit(node, { ...state, init, update, after_update });
 		}
 
 		process_children(
@@ -2171,8 +2183,12 @@ export const template_visitors = {
 						: context.state.node
 				),
 			true,
-			{ ...context, state }
+			{ ...context, state: { ...state, init, update, after_update } }
 		);
+
+		if (init.length !== 0 || update.length !== 0 || after_update.length !== 0) {
+			context.state.init.push(b.block([...init, serialize_render_stmt(update), ...after_update]));
+		}
 
 		if (has_direction_attribute) {
 			// This fixes an issue with Chromium where updates to text content within an element
@@ -2270,7 +2286,7 @@ export const template_visitors = {
 		/** @type {import('estree').Statement[]} */
 		const inner = inner_context.state.init;
 		if (inner_context.state.update.length > 0) {
-			inner.push(serialize_render_stmt(inner_context.state));
+			inner.push(serialize_render_stmt(inner_context.state.update));
 		}
 		inner.push(...inner_context.state.after_update);
 		inner.push(
@@ -2735,7 +2751,7 @@ export const template_visitors = {
 			snippet = b.call('$.wrap_snippet', snippet, b.id(context.state.analysis.name));
 		}
 
-		const declaration = b.var(node.expression, snippet);
+		const declaration = b.const(node.expression, snippet);
 
 		// Top-level snippets are hoisted so they can be referenced in the `<script>`
 		if (context.path.length === 1 && context.path[0].type === 'Fragment') {
