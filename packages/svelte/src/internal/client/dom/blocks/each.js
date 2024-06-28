@@ -56,11 +56,12 @@ export function index(_, i) {
 /**
  * Pause multiple effects simultaneously, and coordinate their
  * subsequent destruction. Used in each blocks
+ * @param {import('#client').EachState} state
  * @param {import('#client').EachItem[]} items
  * @param {null | Node} controlled_anchor
  * @param {Map<any, import("#client").EachItem>} items_map
  */
-function pause_effects(items, controlled_anchor, items_map) {
+function pause_effects(state, items, controlled_anchor, items_map) {
 	/** @type {import('#client').TransitionManager[]} */
 	var transitions = [];
 	var length = items.length;
@@ -79,7 +80,7 @@ function pause_effects(items, controlled_anchor, items_map) {
 		clear_text_content(parent_node);
 		parent_node.append(/** @type {Element} */ (controlled_anchor));
 		items_map.clear();
-		link(items[0].prev, items[length - 1].next);
+		link(state, items[0].prev, items[length - 1].next);
 	}
 
 	run_out_transitions(transitions, () => {
@@ -87,7 +88,7 @@ function pause_effects(items, controlled_anchor, items_map) {
 			var item = items[i];
 			if (!is_controlled) {
 				items_map.delete(item.k);
-				link(item.prev, item.next);
+				link(state, item.prev, item.next);
 			}
 			destroy_effect(item.e, !is_controlled);
 		}
@@ -106,7 +107,7 @@ function pause_effects(items, controlled_anchor, items_map) {
  */
 export function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn = null) {
 	/** @type {import('#client').EachState} */
-	var state = { flags, items: new Map(), next: null };
+	var state = { flags, items: new Map(), first: null };
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
@@ -165,8 +166,8 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 			/** @type {Node} */
 			var child_anchor = hydrate_start;
 
-			/** @type {import('#client').EachItem | import('#client').EachState} */
-			var prev = state;
+			/** @type {import('#client').EachItem | null} */
+			var prev = null;
 
 			/** @type {import('#client').EachItem} */
 			var item;
@@ -186,7 +187,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 				child_anchor = hydrate_anchor(child_anchor);
 				var value = array[i];
 				var key = get_key(value, i);
-				item = create_item(child_anchor, prev, null, value, key, i, render_fn, flags);
+				item = create_item(child_anchor, state, prev, null, value, key, i, render_fn, flags);
 				state.items.set(key, item);
 				child_anchor = /** @type {Comment} */ (child_anchor.nextSibling);
 
@@ -244,14 +245,14 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 
 	var length = array.length;
 	var items = state.items;
-	var first = state.next;
+	var first = state.first;
 	var current = first;
 
 	/** @type {Set<import('#client').EachItem>} */
 	var seen = new Set();
 
-	/** @type {import('#client').EachState | import('#client').EachItem} */
-	var prev = state;
+	/** @type {import('#client').EachItem | null} */
+	var prev = null;
 
 	/** @type {Set<import('#client').EachItem>} */
 	var to_animate = new Set();
@@ -295,7 +296,17 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		if (item === undefined) {
 			var child_anchor = current ? get_first_node(current.e) : anchor;
 
-			prev = create_item(child_anchor, prev, prev.next, value, key, i, render_fn, flags);
+			prev = create_item(
+				child_anchor,
+				state,
+				prev,
+				prev === null ? state.first : prev.next,
+				value,
+				key,
+				i,
+				render_fn,
+				flags
+			);
 
 			items.set(key, prev);
 
@@ -338,9 +349,9 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 						seen.delete(stashed[j]);
 					}
 
-					link(a.prev, b.next);
-					link(prev, a);
-					link(b, start);
+					link(state, a.prev, b.next);
+					link(state, prev, a);
+					link(state, b, start);
 
 					current = start;
 					prev = b;
@@ -353,9 +364,9 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 					seen.delete(item);
 					move(item, current, anchor);
 
-					link(item.prev, item.next);
-					link(item, prev.next);
-					link(prev, item);
+					link(state, item.prev, item.next);
+					link(state, item, prev === null ? state.first : prev.next);
+					link(state, prev, item);
 
 					prev = item;
 				}
@@ -405,7 +416,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			}
 		}
 
-		pause_effects(to_destroy, controlled_anchor, items);
+		pause_effects(state, to_destroy, controlled_anchor, items);
 	}
 
 	if (is_animated) {
@@ -419,7 +430,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	// TODO this is inefficient, this should happen during linking, but that's currently tricky
 	/** @type {import('#client').Effect | null} */
 	var effect = null;
-	var next = state.next;
+	var next = state.first;
 
 	/** @type {import('#client').Effect} */ (current_effect).first = next && next.e;
 
@@ -463,7 +474,8 @@ function update_item(item, value, index, type) {
 /**
  * @template V
  * @param {Node} anchor
- * @param {import('#client').EachItem | import('#client').EachState} prev
+ * @param {import('#client').EachState} state
+ * @param {import('#client').EachItem | null} prev
  * @param {import('#client').EachItem | null} next
  * @param {V} value
  * @param {unknown} key
@@ -472,7 +484,7 @@ function update_item(item, value, index, type) {
  * @param {number} flags
  * @returns {import('#client').EachItem}
  */
-function create_item(anchor, prev, next, value, key, index, render_fn, flags) {
+function create_item(anchor, state, prev, next, value, key, index, render_fn, flags) {
 	var previous_each_item = current_each_item;
 
 	try {
@@ -494,8 +506,15 @@ function create_item(anchor, prev, next, value, key, index, render_fn, flags) {
 			next
 		};
 
-		prev.next = item;
-		if (next !== null) next.prev = item;
+		if (prev === null) {
+			state.first = item;
+		} else {
+			prev.next = item;
+		}
+
+		if (next !== null) {
+			next.prev = item;
+		}
 
 		current_each_item = item;
 		item.e = branch(() => render_fn(anchor, v, i));
@@ -525,11 +544,18 @@ function move(item, next, anchor) {
 }
 
 /**
- *
- * @param {import('#client').EachItem | import('#client').EachState} prev
+ * @param {import('#client').EachState} state
+ * @param {import('#client').EachItem | null} prev
  * @param {import('#client').EachItem | null} next
  */
-function link(prev, next) {
-	prev.next = next;
-	if (next !== null) next.prev = prev;
+function link(state, prev, next) {
+	if (prev === null) {
+		state.first = next;
+	} else {
+		prev.next = next;
+	}
+
+	if (next !== null) {
+		next.prev = prev;
+	}
 }
