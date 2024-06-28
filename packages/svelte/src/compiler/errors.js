@@ -304,12 +304,12 @@ export function props_invalid_placement(node) {
 }
 
 /**
- * Declaring or accessing a property starting with `$$` is illegal (they are reserved for Svelte internals)
+ * Declaring or accessing a prop starting with `$$` is illegal (they are reserved for Svelte internals)
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function props_illegal_name(node) {
-	e(node, "props_illegal_name", "Declaring or accessing a property starting with `$$` is illegal (they are reserved for Svelte internals)");
+	e(node, "props_illegal_name", "Declaring or accessing a prop starting with `$$` is illegal (they are reserved for Svelte internals)");
 }
 
 /**

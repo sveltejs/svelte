@@ -80,7 +80,7 @@
 
 ## props_illegal_name
 
-> Declaring or accessing a property starting with `$$` is illegal (they are reserved for Svelte internals)
+> Declaring or accessing a prop starting with `$$` is illegal (they are reserved for Svelte internals)
 
 ## props_invalid_identifier
 
