@@ -9,6 +9,27 @@ export const global_visitors = {
 			if (node.name === '$$props') {
 				return b.id('$$sanitized_props');
 			}
+
+			// Optimize prop access: If it's a member read access, we can use the $$props object directly
+			const binding = state.scope.get(node.name);
+			if (
+				state.analysis.runes && // can't do this in legacy mode because the proxy does more than just read/write
+				binding !== null &&
+				node !== binding.node &&
+				binding.kind === 'rest_prop'
+			) {
+				const parent = path.at(-1);
+				const grand_parent = path.at(-2);
+				if (
+					parent?.type === 'MemberExpression' &&
+					!parent.computed &&
+					grand_parent?.type !== 'AssignmentExpression' &&
+					grand_parent?.type !== 'UpdateExpression'
+				) {
+					return b.id('$$props');
+				}
+			}
+
 			return serialize_get_binding(node, state);
 		}
 	},

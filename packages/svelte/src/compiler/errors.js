@@ -277,6 +277,15 @@ export function props_duplicate(node) {
 }
 
 /**
+ * Declaring or accessing a prop starting with `$$` is illegal (they are reserved for Svelte internals)
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function props_illegal_name(node) {
+	e(node, "props_illegal_name", "Declaring or accessing a prop starting with `$$` is illegal (they are reserved for Svelte internals)");
+}
+
+/**
  * `$props()` can only be used with an object destructuring pattern
  * @param {null | number | NodeLike} node
  * @returns {never}

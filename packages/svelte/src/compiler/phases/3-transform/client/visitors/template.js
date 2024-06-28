@@ -1973,6 +1973,7 @@ export const template_visitors = {
 		let has_content_editable_binding = false;
 		let img_might_be_lazy = false;
 		let might_need_event_replaying = false;
+		let has_direction_attribute = false;
 
 		if (is_custom_element) {
 			// cloneNode is faster, but it does not instantiate the underlying class of the
@@ -1987,6 +1988,9 @@ export const template_visitors = {
 				attributes.push(attribute);
 				if (node.name === 'img' && attribute.name === 'loading') {
 					img_might_be_lazy = true;
+				}
+				if (attribute.name === 'dir') {
+					has_direction_attribute = true;
 				}
 				if (
 					(attribute.name === 'value' || attribute.name === 'checked') &&
@@ -2187,6 +2191,14 @@ export const template_visitors = {
 			true,
 			{ ...context, state }
 		);
+
+		if (has_direction_attribute) {
+			// This fixes an issue with Chromium where updates to text content within an element
+			// does not update the direction when set to auto. If we just re-assign the dir, this fixes it.
+			context.state.update.push(
+				b.stmt(b.assignment('=', b.member(node_id, b.id('dir')), b.member(node_id, b.id('dir'))))
+			);
+		}
 
 		if (child_locations.length > 0) {
 			// @ts-expect-error

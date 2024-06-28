@@ -31,6 +31,7 @@ import { hash } from './utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
 import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.js';
+import { equal } from '../../utils/assert.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -969,34 +970,42 @@ const runes_scope_tweaker = {
 		if (rune === '$props') {
 			state.analysis.needs_props = true;
 
-			for (const property of /** @type {import('estree').ObjectPattern} */ (node.id).properties) {
-				if (property.type !== 'Property') continue;
+			if (node.id.type === 'Identifier') {
+				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(node.id.name));
+				binding.initial = null; // else would be $props()
+				binding.kind = 'rest_prop';
+			} else {
+				equal(node.id.type, 'ObjectPattern');
 
-				const name =
-					property.value.type === 'AssignmentPattern'
-						? /** @type {import('estree').Identifier} */ (property.value.left).name
-						: /** @type {import('estree').Identifier} */ (property.value).name;
-				const alias =
-					property.key.type === 'Identifier'
-						? property.key.name
-						: String(/** @type {import('estree').Literal} */ (property.key).value);
-				let initial = property.value.type === 'AssignmentPattern' ? property.value.right : null;
+				for (const property of node.id.properties) {
+					if (property.type !== 'Property') continue;
 
-				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
-				binding.prop_alias = alias;
+					const name =
+						property.value.type === 'AssignmentPattern'
+							? /** @type {import('estree').Identifier} */ (property.value.left).name
+							: /** @type {import('estree').Identifier} */ (property.value).name;
+					const alias =
+						property.key.type === 'Identifier'
+							? property.key.name
+							: String(/** @type {import('estree').Literal} */ (property.key).value);
+					let initial = property.value.type === 'AssignmentPattern' ? property.value.right : null;
 
-				// rewire initial from $props() to the actual initial value, stripping $bindable() if necessary
-				if (
-					initial?.type === 'CallExpression' &&
-					initial.callee.type === 'Identifier' &&
-					initial.callee.name === '$bindable'
-				) {
-					binding.initial = /** @type {import('estree').Expression | null} */ (
-						initial.arguments[0] ?? null
-					);
-					binding.kind = 'bindable_prop';
-				} else {
-					binding.initial = initial;
+					const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
+					binding.prop_alias = alias;
+
+					// rewire initial from $props() to the actual initial value, stripping $bindable() if necessary
+					if (
+						initial?.type === 'CallExpression' &&
+						initial.callee.type === 'Identifier' &&
+						initial.callee.name === '$bindable'
+					) {
+						binding.initial = /** @type {import('estree').Expression | null} */ (
+							initial.arguments[0] ?? null
+						);
+						binding.kind = 'bindable_prop';
+					} else {
+						binding.initial = initial;
+					}
 				}
 			}
 		}

@@ -78,6 +78,7 @@ const rest_props_handler = {
  * @param {string} [name]
  * @returns {Record<string, unknown>}
  */
+/*#__NO_SIDE_EFFECTS__*/
 export function rest_props(props, exclude, name) {
 	return new Proxy(
 		DEV ? { props, exclude, name, other: {}, to_proxy: [] } : { props, exclude },

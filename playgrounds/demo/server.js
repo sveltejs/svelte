@@ -1,3 +1,4 @@
+// @ts-check
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,7 +23,10 @@ async function createServer() {
 
 	app.use('*', async (req, res) => {
 		if (req.originalUrl !== '/') {
-			res.sendFile(path.resolve('./dist' + req.originalUrl));
+			res.writeHead(200, {
+				'Content-Type': 'application/javascript'
+			});
+			res.end(fs.createReadStream(path.resolve('./dist' + req.originalUrl)));
 			return;
 		}
 
@@ -34,7 +38,7 @@ async function createServer() {
 			.replace(`<!--ssr-html-->`, appHtml)
 			.replace(`<!--ssr-head-->`, headHtml);
 
-		res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+		res.writeHead(200, { 'Content-Type': 'text/html' }).end(html);
 	});
 
 	return { app, vite };
