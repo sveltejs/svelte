@@ -16,7 +16,7 @@ importers:
         version: 2.27.6
       '@sveltejs/eslint-config':
         specifier: ^7.0.1
-        version: 7.0.1(@stylistic/eslint-plugin-js@1.8.0(eslint@9.0.0))(eslint-config-prettier@9.1.0(eslint@9.0.0))(eslint-plugin-svelte@2.38.0(eslint@9.0.0)(svelte@5.0.0-next.165))(eslint-plugin-unicorn@52.0.0(eslint@9.0.0))(eslint@9.0.0)(typescript-eslint@8.0.0-alpha.20(eslint@9.0.0)(typescript@5.5.2))(typescript@5.5.2)
+        version: 7.0.1(@stylistic/eslint-plugin-js@1.8.0(eslint@9.0.0))(eslint-config-prettier@9.1.0(eslint@9.0.0))(eslint-plugin-svelte@2.38.0(eslint@9.0.0)(svelte@5.0.0-next.166))(eslint-plugin-unicorn@52.0.0(eslint@9.0.0))(eslint@9.0.0)(typescript-eslint@8.0.0-alpha.20(eslint@9.0.0)(typescript@5.5.2))(typescript@5.5.2)
       '@svitejs/changesets-changelog-github-compact':
         specifier: ^1.1.0
         version: 1.1.0
@@ -43,7 +43,7 @@ importers:
         version: 3.2.4
       prettier-plugin-svelte:
         specifier: ^3.1.2
-        version: 3.1.2(prettier@3.2.4)(svelte@5.0.0-next.165)
+        version: 3.1.2(prettier@3.2.4)(svelte@5.0.0-next.166)
       typescript:
         specifier: ^5.5.2
         version: 5.5.2
@@ -60,8 +60,8 @@ importers:
   packages/svelte:
     dependencies:
       '@ampproject/remapping':
-        specifier: ^2.2.1
-        version: 2.2.1
+        specifier: ^2.3.0
+        version: 2.3.0
       '@jridgewell/sourcemap-codec':
         specifier: ^1.4.15
         version: 1.4.15
@@ -417,8 +417,8 @@ packages:
     resolution: {integrity: sha512-1Yjs2SvM8TflER/OD3cOjhWWOZb58A2t7wpE2S9XfBYTiIl+XFhQG2bjy4Pu1I+EAlCNUzRDYDdFwFYUKvXcIA==}
     engines: {node: '>=0.10.0'}
 
-  '@ampproject/remapping@2.2.1':
-    resolution: {integrity: sha512-lFMjJTrFL3j7L9yBxwYfCq2k6qqwHyzuUl/XBnif78PWTJYyL/dfowQHWE3sp6U6ZzqWiiIZnpTMO96zhkjwtg==}
+  '@ampproject/remapping@2.3.0':
+    resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
 
   '@antfu/utils@0.7.8':
@@ -1049,12 +1049,20 @@ packages:
     resolution: {integrity: sha512-HLhSWOLRi875zjjMG/r+Nv0oCW8umGb0BgEhyX3dDX3egwZtB8PqLnjz3yedt8R5StBrzcg4aBpnh8UA9D1BoQ==}
     engines: {node: '>=6.0.0'}
 
+  '@jridgewell/gen-mapping@0.3.5':
+    resolution: {integrity: sha512-IzL8ZoEDIBRWEzlCcRhOaCupYyN5gdIK+Q6fbFdPDg6HqX6jpkItn7DFIpW9LQzXG6Df9sA7+OKnq0qlz/GaQg==}
+    engines: {node: '>=6.0.0'}
+
   '@jridgewell/resolve-uri@3.1.1':
     resolution: {integrity: sha512-dSYZh7HhCDtCKm4QakX0xFpsRDqjjtZf/kjI/v3T3Nwt5r8/qz/M19F9ySyOqU94SXBmeG9ttTul+YnR4LOxFA==}
     engines: {node: '>=6.0.0'}
 
   '@jridgewell/set-array@1.1.2':
     resolution: {integrity: sha512-xnkseuNADM0gt2bs+BvhO0p78Mk762YnZdsuzFV018NoG1Sj1SCQvpSqa7XUaTam5vAGasABV9qXASMKnFMwMw==}
+    engines: {node: '>=6.0.0'}
+
+  '@jridgewell/set-array@1.2.1':
+    resolution: {integrity: sha512-R8gLRTZeyp03ymzP/6Lil/28tGeGEzhx1q2k703KGWRAI1VdvPIXdG70VJc2pAMw3NA6JKL5hhFu1sJX0Mnn/A==}
     engines: {node: '>=6.0.0'}
 
   '@jridgewell/source-map@0.3.5':
@@ -1065,6 +1073,9 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.22':
     resolution: {integrity: sha512-Wf963MzWtA2sjrNt+g18IAln9lKnlRp+K2eH4jjIoF1wYeq3aMREpG09xhlhdzS0EjwU7qmUJYangWa+151vZw==}
+
+  '@jridgewell/trace-mapping@0.3.25':
+    resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
 
   '@lezer/common@1.2.1':
     resolution: {integrity: sha512-yemX0ZD2xS/73llMZIK6KplkjIjf2EvAHcinDi/TfJ9hS25G0388+ClHt6/3but0oOxinTcQHJLDXh6w1crzFQ==}
@@ -3658,8 +3669,8 @@ packages:
     resolution: {integrity: sha512-hsoB/WZGEPFXeRRLPhPrbRz67PhP6sqYgvwcAs+gWdSQSvNDw+/lTeUJSWe5h2xC97Fz/8QxAOqItwBzNJPU8w==}
     engines: {node: '>=16'}
 
-  svelte@5.0.0-next.165:
-    resolution: {integrity: sha512-r/dr89AAzIsT/tpIJsenhkWjJ7j2Q1Q3tdPu2qgi/8Vc42dtvHPr1XHn9qJhjXIGVE/cS1BxEuwG+Qwp7YUqkw==}
+  svelte@5.0.0-next.166:
+    resolution: {integrity: sha512-s1anY8eTprp42QyHGdbfIT7pO+gYgwnS6hkMmvd8ayW5krV9HLYjbQcVUb8/GyQSIlWtewvmZVZ58rpKjRmdTg==}
     engines: {node: '>=18'}
 
   symbol-tree@3.2.4:
@@ -4059,10 +4070,10 @@ snapshots:
 
   '@aashutoshrathi/word-wrap@1.2.6': {}
 
-  '@ampproject/remapping@2.2.1':
+  '@ampproject/remapping@2.3.0':
     dependencies:
-      '@jridgewell/gen-mapping': 0.3.3
-      '@jridgewell/trace-mapping': 0.3.22
+      '@jridgewell/gen-mapping': 0.3.5
+      '@jridgewell/trace-mapping': 0.3.25
 
   '@antfu/utils@0.7.8': {}
 
@@ -4836,9 +4847,17 @@ snapshots:
       '@jridgewell/sourcemap-codec': 1.4.15
       '@jridgewell/trace-mapping': 0.3.22
 
+  '@jridgewell/gen-mapping@0.3.5':
+    dependencies:
+      '@jridgewell/set-array': 1.2.1
+      '@jridgewell/sourcemap-codec': 1.4.15
+      '@jridgewell/trace-mapping': 0.3.25
+
   '@jridgewell/resolve-uri@3.1.1': {}
 
   '@jridgewell/set-array@1.1.2': {}
+
+  '@jridgewell/set-array@1.2.1': {}
 
   '@jridgewell/source-map@0.3.5':
     dependencies:
@@ -4848,6 +4867,11 @@ snapshots:
   '@jridgewell/sourcemap-codec@1.4.15': {}
 
   '@jridgewell/trace-mapping@0.3.22':
+    dependencies:
+      '@jridgewell/resolve-uri': 3.1.1
+      '@jridgewell/sourcemap-codec': 1.4.15
+
+  '@jridgewell/trace-mapping@0.3.25':
     dependencies:
       '@jridgewell/resolve-uri': 3.1.1
       '@jridgewell/sourcemap-codec': 1.4.15
@@ -5219,12 +5243,12 @@ snapshots:
       - encoding
       - supports-color
 
-  '@sveltejs/eslint-config@7.0.1(@stylistic/eslint-plugin-js@1.8.0(eslint@9.0.0))(eslint-config-prettier@9.1.0(eslint@9.0.0))(eslint-plugin-svelte@2.38.0(eslint@9.0.0)(svelte@5.0.0-next.165))(eslint-plugin-unicorn@52.0.0(eslint@9.0.0))(eslint@9.0.0)(typescript-eslint@8.0.0-alpha.20(eslint@9.0.0)(typescript@5.5.2))(typescript@5.5.2)':
+  '@sveltejs/eslint-config@7.0.1(@stylistic/eslint-plugin-js@1.8.0(eslint@9.0.0))(eslint-config-prettier@9.1.0(eslint@9.0.0))(eslint-plugin-svelte@2.38.0(eslint@9.0.0)(svelte@5.0.0-next.166))(eslint-plugin-unicorn@52.0.0(eslint@9.0.0))(eslint@9.0.0)(typescript-eslint@8.0.0-alpha.20(eslint@9.0.0)(typescript@5.5.2))(typescript@5.5.2)':
     dependencies:
       '@stylistic/eslint-plugin-js': 1.8.0(eslint@9.0.0)
       eslint: 9.0.0
       eslint-config-prettier: 9.1.0(eslint@9.0.0)
-      eslint-plugin-svelte: 2.38.0(eslint@9.0.0)(svelte@5.0.0-next.165)
+      eslint-plugin-svelte: 2.38.0(eslint@9.0.0)(svelte@5.0.0-next.166)
       eslint-plugin-unicorn: 52.0.0(eslint@9.0.0)
       globals: 15.0.0
       typescript: 5.5.2
@@ -5550,7 +5574,7 @@ snapshots:
 
   '@vitest/coverage-v8@1.2.1(vitest@1.2.1(@types/node@20.11.5)(jsdom@22.0.0)(lightningcss@1.23.0)(sass@1.70.0)(terser@5.27.0))':
     dependencies:
-      '@ampproject/remapping': 2.2.1
+      '@ampproject/remapping': 2.3.0
       '@bcoe/v8-coverage': 0.2.3
       debug: 4.3.4(supports-color@5.5.0)
       istanbul-lib-coverage: 3.2.2
@@ -6051,7 +6075,7 @@ snapshots:
 
   eslint-plugin-lube@0.4.3: {}
 
-  eslint-plugin-svelte@2.38.0(eslint@9.0.0)(svelte@5.0.0-next.165):
+  eslint-plugin-svelte@2.38.0(eslint@9.0.0)(svelte@5.0.0-next.166):
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0(eslint@9.0.0)
       '@jridgewell/sourcemap-codec': 1.4.15
@@ -6065,9 +6089,9 @@ snapshots:
       postcss-safe-parser: 6.0.0(postcss@8.4.38)
       postcss-selector-parser: 6.0.16
       semver: 7.6.0
-      svelte-eslint-parser: 0.35.0(svelte@5.0.0-next.165)
+      svelte-eslint-parser: 0.35.0(svelte@5.0.0-next.166)
     optionalDependencies:
-      svelte: 5.0.0-next.165
+      svelte: 5.0.0-next.166
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -7135,10 +7159,10 @@ snapshots:
       prettier: 3.2.4
       svelte: 4.2.9
 
-  prettier-plugin-svelte@3.1.2(prettier@3.2.4)(svelte@5.0.0-next.165):
+  prettier-plugin-svelte@3.1.2(prettier@3.2.4)(svelte@5.0.0-next.166):
     dependencies:
       prettier: 3.2.4
-      svelte: 5.0.0-next.165
+      svelte: 5.0.0-next.166
 
   prettier@2.8.8: {}
 
@@ -7570,7 +7594,7 @@ snapshots:
       - stylus
       - sugarss
 
-  svelte-eslint-parser@0.35.0(svelte@5.0.0-next.165):
+  svelte-eslint-parser@0.35.0(svelte@5.0.0-next.166):
     dependencies:
       eslint-scope: 7.2.2
       eslint-visitor-keys: 3.4.3
@@ -7578,7 +7602,7 @@ snapshots:
       postcss: 8.4.38
       postcss-scss: 4.0.9(postcss@8.4.38)
     optionalDependencies:
-      svelte: 5.0.0-next.165
+      svelte: 5.0.0-next.166
 
   svelte-hmr@0.16.0(svelte@4.2.9):
     dependencies:
@@ -7638,7 +7662,7 @@ snapshots:
 
   svelte@4.2.9:
     dependencies:
-      '@ampproject/remapping': 2.2.1
+      '@ampproject/remapping': 2.3.0
       '@jridgewell/sourcemap-codec': 1.4.15
       '@jridgewell/trace-mapping': 0.3.22
       '@types/estree': 1.0.5
@@ -7653,9 +7677,9 @@ snapshots:
       magic-string: 0.30.5
       periscopic: 3.1.0
 
-  svelte@5.0.0-next.165:
+  svelte@5.0.0-next.166:
     dependencies:
-      '@ampproject/remapping': 2.2.1
+      '@ampproject/remapping': 2.3.0
       '@jridgewell/sourcemap-codec': 1.4.15
       '@types/estree': 1.0.5
       acorn: 8.11.3

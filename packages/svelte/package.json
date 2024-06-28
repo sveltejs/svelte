@@ -129,7 +129,7 @@
     "tiny-glob": "^0.2.9"
   },
   "dependencies": {
-    "@ampproject/remapping": "^2.2.1",
+    "@ampproject/remapping": "^2.3.0",
     "@jridgewell/sourcemap-codec": "^1.4.15",
     "@types/estree": "^1.0.5",
     "acorn": "^8.11.3",
