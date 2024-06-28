@@ -341,6 +341,14 @@ function validate_block_not_empty(node, context) {
  * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
  */
 const validation = {
+	MemberExpression(node, context) {
+		if (node.object.type === 'Identifier' && node.property.type === 'Identifier') {
+			const binding = context.state.scope.get(node.object.name);
+			if (binding?.kind === 'rest_prop' && node.property.name.startsWith('$$')) {
+				e.props_illegal_name(node.property);
+			}
+		}
+	},
 	AssignmentExpression(node, context) {
 		validate_assignment(node, node.left, context.state);
 	},
@@ -1253,6 +1261,10 @@ export const validation_runes = merge(validation, a11y_validators, {
 					if (property.type === 'Property') {
 						if (property.computed) {
 							e.props_invalid_pattern(property);
+						}
+
+						if (property.key.type === 'Identifier' && property.key.name.startsWith('$$')) {
+							e.props_illegal_name(property);
 						}
 
 						const value =
