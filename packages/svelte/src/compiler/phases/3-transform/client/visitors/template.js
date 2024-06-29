@@ -2209,7 +2209,12 @@ export const template_visitors = {
 		);
 
 		if (init.length !== 0 || update.length !== 0 || after_update.length !== 0) {
-			context.state.init.push(b.block([...init, serialize_render_stmt(update), ...after_update]));
+			const block = b.block([...init]);
+			if (update.length > 0) {
+				block.body.push(serialize_render_stmt(update));
+			}
+			block.body.push(...after_update);
+			context.state.init.push(block);
 		}
 
 		if (has_direction_attribute) {
