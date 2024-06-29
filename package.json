@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "license": "MIT",
-  "packageManager": "pnpm@9.2.0",
+  "packageManager": "pnpm@9.4.0",
   "engines": {
     "pnpm": "^9.0.0"
   },
@@ -30,11 +30,11 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.6",
-    "@sveltejs/eslint-config": "^7.0.1",
+    "@sveltejs/eslint-config": "^8.0.1",
     "@svitejs/changesets-changelog-github-compact": "^1.1.0",
     "@types/node": "^20.11.5",
     "@vitest/coverage-v8": "^1.2.1",
-    "eslint": "^9.0.0",
+    "eslint": "^9.6.0",
     "eslint-plugin-lube": "^0.4.3",
     "jsdom": "22.0.0",
     "playwright": "^1.41.1",
