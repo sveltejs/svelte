@@ -23,6 +23,12 @@
 		<Checkbox bind:checked={$compile_options.dev} />
 		<span class="boolean">{$compile_options.dev}</span>,
 	</label>
+
+	<label class="option">
+		<span class="key">modernAst:</span>
+		<Checkbox bind:checked={$compile_options.modernAst} />
+		<span class="boolean">{$compile_options.modernAst}</span>,
+	</label>
 	});
 </div>
 
