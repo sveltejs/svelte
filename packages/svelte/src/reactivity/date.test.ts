@@ -4,11 +4,9 @@ import { ReactiveDate } from './date.js';
 import { assert, test } from 'vitest';
 
 const initial_date = new ReactiveDate('2023-01-01T00:00:00.000Z');
-const new_dates = [
-	new Date('2024-02-02T01:01:01.001Z'),
-	new Date('2025-03-03T02:02:02.002Z'),
-	new Date('2026-04-04T03:03:03.003Z')
-];
+const a = new Date('2024-02-02T01:01:01.001Z');
+const b = new Date('2025-03-03T02:02:02.002Z');
+const c = new Date('2026-04-04T03:03:03.003Z');
 
 test('date.setDate and date.setUTCDate', () => {
 	const date = new ReactiveDate(initial_date);
@@ -24,30 +22,30 @@ test('date.setDate and date.setUTCDate', () => {
 	});
 
 	flushSync(() => {
-		date.setDate(new_dates[0].getDate());
+		date.setDate(a.getDate());
 	});
 
 	flushSync(() => {
-		date.setDate(new_dates[1].getDate());
+		date.setDate(b.getDate());
 	});
 
 	flushSync(() => {
-		date.setDate(new_dates[1].getDate()); // no change expected
+		date.setDate(b.getDate()); // no change expected
 	});
 
 	flushSync(() => {
-		date.setUTCDate(new_dates[2].getUTCDate());
+		date.setUTCDate(c.getUTCDate());
 	});
 
 	assert.deepEqual(log, [
 		initial_date.getDate(),
 		initial_date.getUTCDate(),
-		new_dates[0].getDate(),
-		new_dates[0].getUTCDate(),
-		new_dates[1].getDate(),
-		new_dates[1].getUTCDate(),
-		new_dates[2].getDate(),
-		new_dates[2].getUTCDate()
+		a.getDate(),
+		a.getUTCDate(),
+		b.getDate(),
+		b.getUTCDate(),
+		c.getDate(),
+		c.getUTCDate()
 	]);
 
 	cleanup();
@@ -67,30 +65,30 @@ test('date.setFullYear and date.setUTCFullYear', () => {
 	});
 
 	flushSync(() => {
-		date.setFullYear(new_dates[0].getFullYear());
+		date.setFullYear(a.getFullYear());
 	});
 
 	flushSync(() => {
-		date.setFullYear(new_dates[1].getFullYear());
+		date.setFullYear(b.getFullYear());
 	});
 
 	flushSync(() => {
-		date.setFullYear(new_dates[1].getFullYear()); // no change expected
+		date.setFullYear(b.getFullYear()); // no change expected
 	});
 
 	flushSync(() => {
-		date.setUTCFullYear(new_dates[2].getUTCFullYear());
+		date.setUTCFullYear(c.getUTCFullYear());
 	});
 
 	assert.deepEqual(log, [
 		initial_date.getFullYear(),
 		initial_date.getUTCFullYear(),
-		new_dates[0].getFullYear(),
-		new_dates[0].getUTCFullYear(),
-		new_dates[1].getFullYear(),
-		new_dates[1].getUTCFullYear(),
-		new_dates[2].getFullYear(),
-		new_dates[2].getUTCFullYear()
+		a.getFullYear(),
+		a.getUTCFullYear(),
+		b.getFullYear(),
+		b.getUTCFullYear(),
+		c.getFullYear(),
+		c.getUTCFullYear()
 	]);
 
 	cleanup();
@@ -110,30 +108,30 @@ test('date.setHours and date.setUTCHours', () => {
 	});
 
 	flushSync(() => {
-		date.setHours(new_dates[0].getHours());
+		date.setHours(a.getHours());
 	});
 
 	flushSync(() => {
-		date.setHours(new_dates[1].getHours());
+		date.setHours(b.getHours());
 	});
 
 	flushSync(() => {
-		date.setHours(new_dates[1].getHours()); // no change expected
+		date.setHours(b.getHours()); // no change expected
 	});
 
 	flushSync(() => {
-		date.setUTCHours(new_dates[2].getUTCHours());
+		date.setUTCHours(c.getUTCHours());
 	});
 
 	assert.deepEqual(log, [
 		initial_date.getHours(),
 		initial_date.getUTCHours(),
-		new_dates[0].getHours(),
-		new_dates[0].getUTCHours(),
-		new_dates[1].getHours(),
-		new_dates[1].getUTCHours(),
-		new_dates[2].getHours(),
-		new_dates[2].getUTCHours()
+		a.getHours(),
+		a.getUTCHours(),
+		b.getHours(),
+		b.getUTCHours(),
+		c.getHours(),
+		c.getUTCHours()
 	]);
 
 	cleanup();
@@ -153,30 +151,30 @@ test('date.setMilliseconds and date.setUTCMilliseconds', () => {
 	});
 
 	flushSync(() => {
-		date.setMilliseconds(new_dates[0].getMilliseconds());
+		date.setMilliseconds(a.getMilliseconds());
 	});
 
 	flushSync(() => {
-		date.setMilliseconds(new_dates[1].getMilliseconds());
+		date.setMilliseconds(b.getMilliseconds());
 	});
 
 	flushSync(() => {
-		date.setMilliseconds(new_dates[1].getMilliseconds()); // no change expected
+		date.setMilliseconds(b.getMilliseconds()); // no change expected
 	});
 
 	flushSync(() => {
-		date.setUTCMilliseconds(new_dates[2].getUTCMilliseconds());
+		date.setUTCMilliseconds(c.getUTCMilliseconds());
 	});
 
 	assert.deepEqual(log, [
 		initial_date.getMilliseconds(),
 		initial_date.getUTCMilliseconds(),
-		new_dates[0].getMilliseconds(),
-		new_dates[0].getUTCMilliseconds(),
-		new_dates[1].getMilliseconds(),
-		new_dates[1].getUTCMilliseconds(),
-		new_dates[2].getMilliseconds(),
-		new_dates[2].getUTCMilliseconds()
+		a.getMilliseconds(),
+		a.getUTCMilliseconds(),
+		b.getMilliseconds(),
+		b.getUTCMilliseconds(),
+		c.getMilliseconds(),
+		c.getUTCMilliseconds()
 	]);
 
 	cleanup();
@@ -196,30 +194,30 @@ test('date.setMinutes and date.setUTCMinutes', () => {
 	});
 
 	flushSync(() => {
-		date.setMinutes(new_dates[0].getMinutes());
+		date.setMinutes(a.getMinutes());
 	});
 
 	flushSync(() => {
-		date.setMinutes(new_dates[1].getMinutes());
+		date.setMinutes(b.getMinutes());
 	});
 
 	flushSync(() => {
-		date.setMinutes(new_dates[1].getMinutes()); // no change expected
+		date.setMinutes(b.getMinutes()); // no change expected
 	});
 
 	flushSync(() => {
-		date.setUTCMinutes(new_dates[2].getUTCMinutes());
+		date.setUTCMinutes(c.getUTCMinutes());
 	});
 
 	assert.deepEqual(log, [
 		initial_date.getMinutes(),
 		initial_date.getUTCMinutes(),
-		new_dates[0].getMinutes(),
-		new_dates[0].getUTCMinutes(),
-		new_dates[1].getMinutes(),
-		new_dates[1].getUTCMinutes(),
-		new_dates[2].getMinutes(),
-		new_dates[2].getUTCMinutes()
+		a.getMinutes(),
+		a.getUTCMinutes(),
+		b.getMinutes(),
+		b.getUTCMinutes(),
+		c.getMinutes(),
+		c.getUTCMinutes()
 	]);
 
 	cleanup();
@@ -239,30 +237,30 @@ test('date.setMonth and date.setUTCMonth', () => {
 	});
 
 	flushSync(() => {
-		date.setMonth(new_dates[0].getMonth());
+		date.setMonth(a.getMonth());
 	});
 
 	flushSync(() => {
-		date.setMonth(new_dates[1].getMonth());
+		date.setMonth(b.getMonth());
 	});
 
 	flushSync(() => {
-		date.setMonth(new_dates[1].getMonth()); // no change expected
+		date.setMonth(b.getMonth()); // no change expected
 	});
 
 	flushSync(() => {
-		date.setUTCMonth(new_dates[2].getUTCMonth());
+		date.setUTCMonth(c.getUTCMonth());
 	});
 
 	assert.deepEqual(log, [
 		initial_date.getMonth(),
 		initial_date.getUTCMonth(),
-		new_dates[0].getMonth(),
-		new_dates[0].getUTCMonth(),
-		new_dates[1].getMonth(),
-		new_dates[1].getUTCMonth(),
-		new_dates[2].getMonth(),
-		new_dates[2].getUTCMonth()
+		a.getMonth(),
+		a.getUTCMonth(),
+		b.getMonth(),
+		b.getUTCMonth(),
+		c.getMonth(),
+		c.getUTCMonth()
 	]);
 
 	cleanup();
@@ -282,30 +280,30 @@ test('date.setSeconds and date.setUTCSeconds', () => {
 	});
 
 	flushSync(() => {
-		date.setSeconds(new_dates[0].getSeconds());
+		date.setSeconds(a.getSeconds());
 	});
 
 	flushSync(() => {
-		date.setSeconds(new_dates[1].getSeconds());
+		date.setSeconds(b.getSeconds());
 	});
 
 	flushSync(() => {
-		date.setSeconds(new_dates[1].getSeconds()); // no change expected
+		date.setSeconds(b.getSeconds()); // no change expected
 	});
 
 	flushSync(() => {
-		date.setUTCSeconds(new_dates[2].getUTCSeconds());
+		date.setUTCSeconds(c.getUTCSeconds());
 	});
 
 	assert.deepEqual(log, [
 		initial_date.getSeconds(),
 		initial_date.getUTCSeconds(),
-		new_dates[0].getSeconds(),
-		new_dates[0].getUTCSeconds(),
-		new_dates[1].getSeconds(),
-		new_dates[1].getUTCSeconds(),
-		new_dates[2].getSeconds(),
-		new_dates[2].getUTCSeconds()
+		a.getSeconds(),
+		a.getUTCSeconds(),
+		b.getSeconds(),
+		b.getUTCSeconds(),
+		c.getSeconds(),
+		c.getUTCSeconds()
 	]);
 
 	cleanup();
@@ -322,19 +320,19 @@ test('date.setTime', () => {
 	});
 
 	flushSync(() => {
-		date.setTime(new_dates[0].getTime());
+		date.setTime(a.getTime());
 	});
 
 	flushSync(() => {
-		date.setTime(new_dates[1].getTime());
+		date.setTime(b.getTime());
 	});
 
 	flushSync(() => {
 		// nothing should happen here
-		date.setTime(new_dates[1].getTime());
+		date.setTime(b.getTime());
 	});
 
-	assert.deepEqual(log, [initial_date.getTime(), new_dates[0].getTime(), new_dates[1].getTime()]);
+	assert.deepEqual(log, [initial_date.getTime(), a.getTime(), b.getTime()]);
 
 	cleanup();
 });
