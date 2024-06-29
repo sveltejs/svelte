@@ -3,10 +3,10 @@ import { flushSync } from '../index-client.js';
 import { ReactiveDate } from './date.js';
 import { assert, test } from 'vitest';
 
-const initial_date = new ReactiveDate('2023-01-01T00:00:00.000Z');
-const a = new Date('2024-02-02T01:01:01.001Z');
-const b = new Date('2025-03-03T02:02:02.002Z');
-const c = new Date('2026-04-04T03:03:03.003Z');
+const initial_date = new Date(2023, 0, 1, 0, 0, 0, 0);
+const a = new Date(2024, 1, 2, 1, 1, 1, 1);
+const b = new Date(2025, 2, 3, 2, 2, 2, 2);
+const c = new Date(2026, 3, 4, 3, 3, 3, 3);
 
 test('date.setDate and date.setUTCDate', () => {
 	const date = new ReactiveDate(initial_date);
