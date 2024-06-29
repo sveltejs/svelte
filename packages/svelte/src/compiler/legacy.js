@@ -357,7 +357,7 @@ export function convert(source, ast) {
 
 				return {
 					type: 'IfBlock',
-					start: node.start,
+					start: node.elseif ? node.consequent.nodes[0].start : node.start,
 					end: node.end,
 					expression: node.test,
 					children: node.consequent.nodes.map(
