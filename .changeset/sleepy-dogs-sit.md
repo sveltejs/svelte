@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: improved fine-grainability of ReactiveDate
+fix: lazily create a derived for each read method on `ReactiveDate.prototype`
