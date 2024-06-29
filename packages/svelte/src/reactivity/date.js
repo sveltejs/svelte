@@ -1,6 +1,4 @@
-/**
- * @import { Source } from "#client"
- */
+/** @import { Source } from '#client' */
 import { derived } from '../internal/client/index.js';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
