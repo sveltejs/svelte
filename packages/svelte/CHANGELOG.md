@@ -1,5 +1,29 @@
 # svelte
 
+## 5.0.0-next.167
+
+### Patch Changes
+
+- fix: make more types from `svelte/compiler` public ([#12189](https://github.com/sveltejs/svelte/pull/12189))
+
+- fix: support contenteditable binding undefined fallback ([#12210](https://github.com/sveltejs/svelte/pull/12210))
+
+- breaking: prevent usage of arguments keyword in certain places ([#12191](https://github.com/sveltejs/svelte/pull/12191))
+
+- fix(types): export CompileResult and Warning ([#12212](https://github.com/sveltejs/svelte/pull/12212))
+
+- fix: ensure element dir properties persist with text changes ([#12204](https://github.com/sveltejs/svelte/pull/12204))
+
+- fix: disallow accessing internal Svelte props ([#12207](https://github.com/sveltejs/svelte/pull/12207))
+
+- fix: make media bindings more robust ([#12206](https://github.com/sveltejs/svelte/pull/12206))
+
+- fix: allow slot attribute inside snippets ([#12188](https://github.com/sveltejs/svelte/pull/12188))
+
+- feat: allow `let props = $props()` and optimize prop read access ([#12201](https://github.com/sveltejs/svelte/pull/12201))
+
+- feat: improve type arguments for Snippet and $bindable ([#12197](https://github.com/sveltejs/svelte/pull/12197))
+
 ## 5.0.0-next.166
 
 ### Patch Changes
