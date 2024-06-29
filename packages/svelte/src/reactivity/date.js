@@ -4,8 +4,9 @@ import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 
 var inited = false;
+
 export class ReactiveDate extends Date {
-	#raw_time = source(super.getTime());
+	#time = source(super.getTime());
 
 	/** @type {Map<keyof Date, Source<unknown>>} */
 	#deriveds = new Map();
@@ -18,11 +19,9 @@ export class ReactiveDate extends Date {
 	}
 
 	#init() {
-		if (inited) {
-			return;
-		}
-
+		if (inited) return;
 		inited = true;
+
 		var reactive_date_proto = ReactiveDate.prototype;
 		var date_proto = Date.prototype;
 
@@ -39,16 +38,19 @@ export class ReactiveDate extends Date {
 		for (const method of read_props) {
 			// @ts-ignore
 			reactive_date_proto[method] = function (...args) {
-				var sig = this.#deriveds.get(method);
-				if (!sig) {
-					sig = derived(() => {
-						get(this.#raw_time);
+				var d = this.#deriveds.get(method);
+
+				if (!d) {
+					d = derived(() => {
+						get(this.#time);
 						// @ts-ignore
 						return date_proto[method].apply(this, args);
 					});
-					this.#deriveds.set(method, sig);
+
+					this.#deriveds.set(method, d);
 				}
-				return get(sig);
+
+				return get(d);
 			};
 		}
 
@@ -57,10 +59,7 @@ export class ReactiveDate extends Date {
 			reactive_date_proto[method] = function (...args) {
 				// @ts-ignore
 				var result = date_proto[method].apply(this, args);
-				var new_time = date_proto.getTime.call(this);
-				if (this.#raw_time.v !== new_time) {
-					set(this.#raw_time, new_time);
-				}
+				set(this.#time, date_proto.getTime.call(this));
 				return result;
 			};
 		}
