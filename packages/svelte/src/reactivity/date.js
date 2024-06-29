@@ -7,19 +7,12 @@ import { get } from '../internal/client/runtime.js';
 
 var inited = false;
 export class ReactiveDate extends Date {
-	/**
-	 * @type {Source<number>}
-	 */
 	#raw_time = source(super.getTime());
 
-	/**
-	 * @type {Map<keyof Date, Source<unknown>>}
-	 */
+	/** @type {Map<keyof Date, Source<unknown>>} */
 	#deriveds = new Map();
 
-	/**
-	 * @param {any[]} params
-	 */
+	/** @param {any[]} params */
 	constructor(...params) {
 		// @ts-ignore
 		super(...params);
