@@ -105,7 +105,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 		}
 	}
 
-	var effect = block(() => {
+	var effect = block(anchor, 0, () => {
 		if (input === (input = get_input())) return;
 
 		if (is_promise(input)) {

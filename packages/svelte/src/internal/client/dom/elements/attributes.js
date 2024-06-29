@@ -1,6 +1,6 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
-import { get_descriptors, get_prototype_of, map_get, map_set } from '../../utils.js';
+import { get_descriptors, get_prototype_of } from '../../utils.js';
 import {
 	AttributeAliases,
 	DelegatedEvents,
@@ -166,8 +166,8 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 		next.class = '';
 	}
 
-	var setters = map_get(setters_cache, element.nodeName);
-	if (!setters) map_set(setters_cache, element.nodeName, (setters = get_setters(element)));
+	var setters = setters_cache.get(element.nodeName);
+	if (!setters) setters_cache.set(element.nodeName, (setters = get_setters(element)));
 
 	// @ts-expect-error
 	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes ??= {});

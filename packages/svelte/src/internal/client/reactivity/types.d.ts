@@ -1,4 +1,4 @@
-import type { ComponentContext, Dom, Equals, TransitionManager } from '#client';
+import type { ComponentContext, Dom, Equals, TemplateNode, TransitionManager } from '#client';
 
 export interface Signal {
 	/** Flags bitmask */
@@ -36,7 +36,11 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 
 export interface Effect extends Reaction {
 	parent: Effect | null;
-	dom: Dom | null;
+	nodes: null | {
+		start: undefined | null | TemplateNode;
+		anchor: null | TemplateNode;
+		end: TemplateNode;
+	};
 	/** The associated component context */
 	ctx: null | ComponentContext;
 	/** The effect function */
