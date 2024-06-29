@@ -15,53 +15,48 @@ export class ReactiveDate extends Date {
 	constructor(...params) {
 		// @ts-ignore
 		super(...params);
-		this.#init();
+		if (!inited) this.#init();
 	}
 
 	#init() {
-		if (inited) return;
 		inited = true;
 
-		var reactive_date_proto = ReactiveDate.prototype;
+		var proto = ReactiveDate.prototype;
 		var date_proto = Date.prototype;
 
-		var read_props = /** @type {Array<keyof Date>} */ (
-			Object.getOwnPropertyNames(Date.prototype).filter(
-				(prop) => prop.startsWith('get') || prop.startsWith('to')
-			)
+		var methods = /** @type {Array<keyof Date & string>} */ (
+			Object.getOwnPropertyNames(date_proto)
 		);
 
-		var write_props = /** @type {Array<keyof Date>} */ (
-			Object.getOwnPropertyNames(Date.prototype).filter((prop) => prop.startsWith('set'))
-		);
-
-		for (const method of read_props) {
-			// @ts-ignore
-			reactive_date_proto[method] = function (...args) {
-				var d = this.#deriveds.get(method);
-
-				if (!d) {
-					d = derived(() => {
-						get(this.#time);
-						// @ts-ignore
-						return date_proto[method].apply(this, args);
-					});
-
-					this.#deriveds.set(method, d);
-				}
-
-				return get(d);
-			};
-		}
-
-		for (const method of write_props) {
-			// @ts-ignore
-			reactive_date_proto[method] = function (...args) {
+		for (const method of methods) {
+			if (method.startsWith('get') || method.startsWith('to')) {
 				// @ts-ignore
-				var result = date_proto[method].apply(this, args);
-				set(this.#time, date_proto.getTime.call(this));
-				return result;
-			};
+				proto[method] = function (...args) {
+					var d = this.#deriveds.get(method);
+
+					if (d === undefined) {
+						d = derived(() => {
+							get(this.#time);
+							// @ts-ignore
+							return date_proto[method].apply(this, args);
+						});
+
+						this.#deriveds.set(method, d);
+					}
+
+					return get(d);
+				};
+			}
+
+			if (method.startsWith('set')) {
+				// @ts-ignore
+				proto[method] = function (...args) {
+					// @ts-ignore
+					var result = date_proto[method].apply(this, args);
+					set(this.#time, date_proto.getTime.call(this));
+					return result;
+				};
+			}
 		}
 	}
 }
