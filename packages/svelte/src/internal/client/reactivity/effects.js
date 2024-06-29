@@ -75,9 +75,10 @@ export function push_effect(effect, parent_effect) {
  * @param {number} type
  * @param {null | (() => void | (() => void))} fn
  * @param {boolean} sync
+ * @param {boolean} push
  * @returns {import('#client').Effect}
  */
-function create_effect(type, fn, sync) {
+function create_effect(type, fn, sync, push = true) {
 	var is_root = (type & ROOT_EFFECT) !== 0;
 
 	/** @type {import('#client').Effect} */
@@ -123,7 +124,7 @@ function create_effect(type, fn, sync) {
 		effect.nodes === null &&
 		effect.teardown === null;
 
-	if (!inert && !is_root) {
+	if (!inert && !is_root && push) {
 		if (current_effect !== null) {
 			push_effect(effect, current_effect);
 		}
@@ -308,9 +309,12 @@ export function block(anchor, flags, fn) {
 	return effect;
 }
 
-/** @param {(() => void)} fn */
-export function branch(fn) {
-	return create_effect(RENDER_EFFECT | BRANCH_EFFECT, fn, true);
+/**
+ * @param {(() => void)} fn
+ * @param {boolean} [push]
+ */
+export function branch(fn, push = true) {
+	return create_effect(RENDER_EFFECT | BRANCH_EFFECT, fn, true, push);
 }
 
 /**

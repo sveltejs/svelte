@@ -427,28 +427,8 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		});
 	}
 
-	// TODO this is inefficient, this should happen during linking, but that's currently tricky
-	/** @type {import('#client').Effect | null} */
-	var effect = null;
-	var next = state.first;
-
-	/** @type {import('#client').Effect} */ (current_effect).first = next && next.e;
+	/** @type {import('#client').Effect} */ (current_effect).first = state.first && state.first.e;
 	/** @type {import('#client').Effect} */ (current_effect).last = prev && prev.e;
-
-	while (next) {
-		if (effect !== null) {
-			effect.next = next.e;
-		}
-
-		next.e.prev = effect;
-
-		effect = next.e;
-		next = next.next;
-	}
-
-	if (effect !== null) {
-		effect.next = null;
-	}
 }
 
 /**
@@ -506,7 +486,10 @@ function create_item(anchor, state, prev, next, value, key, index, render_fn, fl
 		};
 
 		current_each_item = item;
-		item.e = branch(() => render_fn(anchor, v, i));
+		item.e = branch(() => render_fn(anchor, v, i), hydrating);
+
+		item.e.prev = prev && prev.e;
+		item.e.next = next && next.e;
 
 		if (prev === null) {
 			state.first = item;
