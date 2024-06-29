@@ -1520,6 +1520,13 @@ const common_visitors = {
 				return;
 			}
 		}
+	},
+	Component(node, context) {
+		const binding = context.state.scope.get(
+			node.name.includes('.') ? node.name.slice(0, node.name.indexOf('.')) : node.name
+		);
+
+		node.metadata.dynamic = binding !== null && binding.kind !== 'normal';
 	}
 };
 

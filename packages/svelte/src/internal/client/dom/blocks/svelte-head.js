@@ -2,6 +2,7 @@ import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrate_nodes } from '../
 import { empty } from '../operations.js';
 import { block } from '../../reactivity/effects.js';
 import { HYDRATION_END, HYDRATION_START } from '../../../../constants.js';
+import { HEAD_EFFECT } from '../../constants.js';
 
 /**
  * @type {Node | undefined}
@@ -47,7 +48,7 @@ export function head(render_fn) {
 	}
 
 	try {
-		block(() => render_fn(anchor));
+		block(null, HEAD_EFFECT, () => render_fn(anchor));
 	} finally {
 		if (was_hydrating) {
 			set_hydrate_nodes(/** @type {import('#client').TemplateNode[]} */ (previous_hydrate_nodes));

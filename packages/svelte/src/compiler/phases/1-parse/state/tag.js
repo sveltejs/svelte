@@ -594,7 +594,10 @@ function special(parser) {
 			type: 'RenderTag',
 			start,
 			end: parser.index,
-			expression: expression
+			expression: expression,
+			metadata: {
+				dynamic: false
+			}
 		});
 	}
 }

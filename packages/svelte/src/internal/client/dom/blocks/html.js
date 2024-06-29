@@ -1,30 +1,7 @@
-import { derived } from '../../reactivity/deriveds.js';
-import { render_effect } from '../../reactivity/effects.js';
-import { current_effect, get } from '../../runtime.js';
-import { is_array } from '../../utils.js';
-import { hydrate_nodes, hydrating } from '../hydration.js';
-import { create_fragment_from_html, remove } from '../reconciler.js';
-import { push_template_node } from '../template.js';
-
-/**
- * @param {import('#client').Effect} effect
- * @param {(Element | Comment | Text)[]} to_remove
- * @returns {void}
- */
-function remove_from_parent_effect(effect, to_remove) {
-	const dom = effect.dom;
-
-	if (is_array(dom)) {
-		for (let i = dom.length - 1; i >= 0; i--) {
-			if (to_remove.includes(dom[i])) {
-				dom.splice(i, 1);
-				break;
-			}
-		}
-	} else if (dom !== null && to_remove.includes(dom)) {
-		effect.dom = null;
-	}
-}
+import { block, branch, destroy_effect } from '../../reactivity/effects.js';
+import { get_start, hydrate_nodes, hydrating } from '../hydration.js';
+import { create_fragment_from_html } from '../reconciler.js';
+import { assign_nodes } from '../template.js';
 
 /**
  * @param {Element | Text | Comment} anchor
@@ -34,72 +11,52 @@ function remove_from_parent_effect(effect, to_remove) {
  * @returns {void}
  */
 export function html(anchor, get_value, svg, mathml) {
-	const parent_effect = anchor.parentNode !== current_effect?.dom ? current_effect : null;
-	let value = derived(get_value);
+	var value = '';
 
-	render_effect(() => {
-		var dom = html_to_dom(anchor, parent_effect, get(value), svg, mathml);
+	/** @type {import('#client').Effect | null} */
+	var effect;
 
-		if (dom) {
-			return () => {
-				if (parent_effect !== null) {
-					remove_from_parent_effect(parent_effect, is_array(dom) ? dom : [dom]);
+	block(anchor, 0, () => {
+		if (value === (value = get_value())) return;
+
+		if (effect) {
+			destroy_effect(effect);
+			effect = null;
+		}
+
+		if (value === '') return;
+
+		effect = branch(() => {
+			if (hydrating) {
+				assign_nodes(get_start(), hydrate_nodes[hydrate_nodes.length - 1]);
+				return;
+			}
+
+			var html = value + '';
+			if (svg) html = `<svg>${html}</svg>`;
+			else if (mathml) html = `<math>${html}</math>`;
+
+			// Don't use create_fragment_with_script_from_html here because that would mean script tags are executed.
+			// @html is basically `.innerHTML = ...` and that doesn't execute scripts either due to security reasons.
+			/** @type {DocumentFragment | Element} */
+			var node = create_fragment_from_html(html);
+
+			if (svg || mathml) {
+				node = /** @type {Element} */ (node.firstChild);
+			}
+
+			assign_nodes(
+				/** @type {import('#client').TemplateNode} */ (node.firstChild),
+				/** @type {import('#client').TemplateNode} */ (node.lastChild)
+			);
+
+			if (svg || mathml) {
+				while (node.firstChild) {
+					anchor.before(node.firstChild);
 				}
-				remove(dom);
-			};
-		}
+			} else {
+				anchor.before(node);
+			}
+		});
 	});
-}
-
-/**
- * Creates the content for a `@html` tag from its string value,
- * inserts it before the target anchor and returns the new nodes.
- * @template V
- * @param {Element | Text | Comment} target
- * @param {import('#client').Effect | null} effect
- * @param {V} value
- * @param {boolean} svg
- * @param {boolean} mathml
- * @returns {Element | Comment | (Element | Comment | Text)[]}
- */
-function html_to_dom(target, effect, value, svg, mathml) {
-	if (hydrating) return hydrate_nodes;
-
-	var html = value + '';
-	if (svg) html = `<svg>${html}</svg>`;
-	else if (mathml) html = `<math>${html}</math>`;
-
-	// Don't use create_fragment_with_script_from_html here because that would mean script tags are executed.
-	// @html is basically `.innerHTML = ...` and that doesn't execute scripts either due to security reasons.
-	/** @type {DocumentFragment | Element} */
-	var node = create_fragment_from_html(html);
-
-	if (svg || mathml) {
-		node = /** @type {Element} */ (node.firstChild);
-	}
-
-	if (node.childNodes.length === 1) {
-		var child = /** @type {Text | Element | Comment} */ (node.firstChild);
-		target.before(child);
-		if (effect !== null) {
-			push_template_node(child, effect);
-		}
-		return child;
-	}
-
-	var nodes = /** @type {Array<Text | Element | Comment>} */ ([...node.childNodes]);
-
-	if (svg || mathml) {
-		while (node.firstChild) {
-			target.before(node.firstChild);
-		}
-	} else {
-		target.before(node);
-	}
-
-	if (effect !== null) {
-		push_template_node(nodes, effect);
-	}
-
-	return nodes;
 }

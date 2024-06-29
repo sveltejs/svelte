@@ -633,6 +633,11 @@ const validation = {
 		});
 	},
 	RenderTag(node, context) {
+		const callee = unwrap_optional(node.expression).callee;
+
+		node.metadata.dynamic =
+			callee.type !== 'Identifier' || context.state.scope.get(callee.name)?.kind !== 'normal';
+
 		context.state.analysis.uses_render_tags = true;
 
 		const raw_args = unwrap_optional(node.expression).arguments;
@@ -642,7 +647,6 @@ const validation = {
 			}
 		}
 
-		const callee = unwrap_optional(node.expression).callee;
 		if (
 			callee.type === 'MemberExpression' &&
 			callee.property.type === 'Identifier' &&

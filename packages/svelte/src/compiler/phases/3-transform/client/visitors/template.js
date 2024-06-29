@@ -36,6 +36,7 @@ import {
 	EACH_KEYED,
 	is_capture_event,
 	TEMPLATE_FRAGMENT,
+	TEMPLATE_UNSET_START,
 	TEMPLATE_USE_IMPORT_NODE,
 	TRANSITION_GLOBAL,
 	TRANSITION_IN,
@@ -942,6 +943,7 @@ function serialize_inline_component(node, component_name, context) {
 		fn = (node_id) => {
 			return b.call(
 				'$.component',
+				node_id,
 				b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.expression))),
 				b.arrow(
 					[b.id(component_name)],
@@ -1680,13 +1682,34 @@ export const template_visitors = {
 
 				process_children(trimmed, expression, false, { ...context, state });
 
+				var first = trimmed[0];
+
+				/**
+				 * If the first item in an effect is a static slot or render tag, it will clone
+				 * a template but without creating a child effect. In these cases, we need to keep
+				 * the current `effect.nodes.start` undefined, so that it can be populated by
+				 * the item in question
+				 * TODO come up with a better name than `unset`
+				 */
+				var unset = false;
+
+				if (first.type === 'SlotElement') unset = true;
+				if (first.type === 'RenderTag' && !first.metadata.dynamic) unset = true;
+				if (first.type === 'Component' && !first.metadata.dynamic && !context.state.options.hmr) {
+					unset = true;
+				}
+
 				const use_comment_template = state.template.length === 1 && state.template[0] === '<!>';
 
 				if (use_comment_template) {
 					// special case — we can use `$.comment` instead of creating a unique template
-					body.push(b.var(id, b.call('$.comment')));
+					body.push(b.var(id, b.call('$.comment', unset && b.literal(unset))));
 				} else {
 					let flags = TEMPLATE_FRAGMENT;
+
+					if (unset) {
+						flags |= TEMPLATE_UNSET_START;
+					}
 
 					if (state.metadata.context.template_needs_import_node) {
 						flags |= TEMPLATE_USE_IMPORT_NODE;
@@ -1832,27 +1855,26 @@ export const template_visitors = {
 		context.state.template.push('<!>');
 		const callee = unwrap_optional(node.expression).callee;
 		const raw_args = unwrap_optional(node.expression).arguments;
-		const is_reactive =
-			callee.type !== 'Identifier' || context.state.scope.get(callee.name)?.kind !== 'normal';
 
-		/** @type {import('estree').Expression[]} */
-		const args = [context.state.node];
-		for (const arg of raw_args) {
-			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg))));
-		}
+		const args = raw_args.map((arg) =>
+			b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg)))
+		);
 
 		let snippet_function = /** @type {import('estree').Expression} */ (context.visit(callee));
 		if (context.state.options.dev) {
 			snippet_function = b.call('$.validate_snippet', snippet_function);
 		}
 
-		if (is_reactive) {
-			context.state.init.push(b.stmt(b.call('$.snippet', b.thunk(snippet_function), ...args)));
+		if (node.metadata.dynamic) {
+			context.state.init.push(
+				b.stmt(b.call('$.snippet', context.state.node, b.thunk(snippet_function), ...args))
+			);
 		} else {
 			context.state.init.push(
 				b.stmt(
 					(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
 						snippet_function,
+						context.state.node,
 						...args
 					)
 				)
@@ -1915,7 +1937,7 @@ export const template_visitors = {
 		}
 
 		if (node.name === 'noscript') {
-			context.state.template.push('<!>');
+			context.state.template.push('<noscript></noscript>');
 			return;
 		}
 		if (node.name === 'script') {
@@ -2985,16 +3007,14 @@ export const template_visitors = {
 		}
 	},
 	Component(node, context) {
-		const binding = context.state.scope.get(
-			node.name.includes('.') ? node.name.slice(0, node.name.indexOf('.')) : node.name
-		);
-		if (binding !== null && binding.kind !== 'normal') {
+		if (node.metadata.dynamic) {
 			// Handle dynamic references to what seems like static inline components
 			const component = serialize_inline_component(node, '$$component', context);
 			context.state.init.push(
 				b.stmt(
 					b.call(
 						'$.component',
+						context.state.node,
 						// TODO use untrack here to not update when binding changes?
 						// Would align with Svelte 4 behavior, but it's arguably nicer/expected to update this
 						b.thunk(
@@ -3006,6 +3026,7 @@ export const template_visitors = {
 			);
 			return;
 		}
+
 		const component = serialize_inline_component(node, node.name, context);
 		context.state.init.push(component);
 	},
