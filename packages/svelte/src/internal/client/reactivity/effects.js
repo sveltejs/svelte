@@ -35,7 +35,6 @@ import {
 	HEAD_EFFECT
 } from '../constants.js';
 import { set } from './sources.js';
-import { remove } from '../dom/reconciler.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../utils.js';

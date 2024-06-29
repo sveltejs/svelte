@@ -433,6 +433,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	var next = state.first;
 
 	/** @type {import('#client').Effect} */ (current_effect).first = next && next.e;
+	/** @type {import('#client').Effect} */ (current_effect).last = prev && prev.e;
 
 	while (next) {
 		if (effect !== null) {
@@ -448,8 +449,6 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	if (effect !== null) {
 		effect.next = null;
 	}
-
-	/** @type {import('#client').Effect} */ (current_effect).last = effect;
 }
 
 /**
@@ -506,18 +505,20 @@ function create_item(anchor, state, prev, next, value, key, index, render_fn, fl
 			next
 		};
 
+		current_each_item = item;
+		item.e = branch(() => render_fn(anchor, v, i));
+
 		if (prev === null) {
 			state.first = item;
 		} else {
 			prev.next = item;
+			prev.e.next = item.e;
 		}
 
 		if (next !== null) {
 			next.prev = item;
+			next.e.prev = item.e;
 		}
-
-		current_each_item = item;
-		item.e = branch(() => render_fn(anchor, v, i));
 
 		return item;
 	} finally {
@@ -553,9 +554,11 @@ function link(state, prev, next) {
 		state.first = next;
 	} else {
 		prev.next = next;
+		prev.e.next = next && next.e;
 	}
 
 	if (next !== null) {
 		next.prev = prev;
+		next.e.prev = prev && prev.e;
 	}
 }
