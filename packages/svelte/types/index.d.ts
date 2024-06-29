@@ -262,18 +262,18 @@ declare module 'svelte' {
 	 *
 	 * https://svelte-5-preview.vercel.app/docs/snippets
 	 *
-	 * @template Arguments Parameters that the snippet expects (if any) as a tuple. The default type is no parameters.
+	 * @template Parameters the parameters that the snippet expects (if any) as a tuple.
 	 */
-	type Snippet<Arguments extends unknown[] = []> =
+	type Snippet<Parameters extends unknown[] = []> =
 		// this conditional allows tuples but not arrays. Arrays would indicate a
 		// rest parameter type, which is not supported. If rest parameters are added
 		// in the future, the condition can be removed.
-		number extends Arguments['length']
+		number extends Parameters['length']
 			? never
 			: {
 					(
 						this: void,
-						...args: Arguments
+						...args: Parameters
 					): typeof SnippetReturn & {
 						_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
 					};
