@@ -2178,21 +2178,15 @@ export const template_visitors = {
 			state.options.preserveComments
 		);
 
-		/**
-		 * @type {import("estree").Statement[]}
-		 */
-		const init = [];
-		/**
-		 * @type {never[]}
-		 */
-		const update = [];
-		/**
-		 * @type {never[]}
-		 */
-		const after_update = [];
+		/** Whether or not we need to wrap the children in `{...}` to avoid declaration conflicts */
+		const has_declaration = node.fragment.nodes.some((node) => node.type === 'SnippetBlock');
+
+		const child_state = has_declaration
+			? { ...state, init: [], update: [], after_update: [] }
+			: state;
 
 		for (const node of hoisted) {
-			context.visit(node, { ...state, init, update, after_update });
+			context.visit(node, child_state);
 		}
 
 		process_children(
@@ -2205,16 +2199,17 @@ export const template_visitors = {
 						: context.state.node
 				),
 			true,
-			{ ...context, state: { ...state, init, update, after_update } }
+			{ ...context, state: child_state }
 		);
 
-		if (init.length !== 0 || update.length !== 0 || after_update.length !== 0) {
-			const block = b.block([...init]);
-			if (update.length > 0) {
-				block.body.push(serialize_render_stmt(update));
-			}
-			block.body.push(...after_update);
-			context.state.init.push(block);
+		if (has_declaration) {
+			context.state.init.push(
+				b.block([
+					...child_state.init,
+					child_state.update.length > 0 ? serialize_render_stmt(child_state.update) : b.empty,
+					...child_state.after_update
+				])
+			);
 		}
 
 		if (has_direction_attribute) {
