@@ -1,5 +1,103 @@
 # svelte
 
+## 5.0.0-next.167
+
+### Patch Changes
+
+- fix: make more types from `svelte/compiler` public ([#12189](https://github.com/sveltejs/svelte/pull/12189))
+
+- fix: support contenteditable binding undefined fallback ([#12210](https://github.com/sveltejs/svelte/pull/12210))
+
+- breaking: prevent usage of arguments keyword in certain places ([#12191](https://github.com/sveltejs/svelte/pull/12191))
+
+- fix(types): export CompileResult and Warning ([#12212](https://github.com/sveltejs/svelte/pull/12212))
+
+- fix: ensure element dir properties persist with text changes ([#12204](https://github.com/sveltejs/svelte/pull/12204))
+
+- fix: disallow accessing internal Svelte props ([#12207](https://github.com/sveltejs/svelte/pull/12207))
+
+- fix: make media bindings more robust ([#12206](https://github.com/sveltejs/svelte/pull/12206))
+
+- fix: allow slot attribute inside snippets ([#12188](https://github.com/sveltejs/svelte/pull/12188))
+
+- feat: allow `let props = $props()` and optimize prop read access ([#12201](https://github.com/sveltejs/svelte/pull/12201))
+
+- feat: improve type arguments for Snippet and $bindable ([#12197](https://github.com/sveltejs/svelte/pull/12197))
+
+## 5.0.0-next.166
+
+### Patch Changes
+
+- fix: remove correct event listener from document ([#12101](https://github.com/sveltejs/svelte/pull/12101))
+
+- fix: correctly serialize object assignment expressions ([#12175](https://github.com/sveltejs/svelte/pull/12175))
+
+- fix: robustify migration script around indentation and comments ([#12176](https://github.com/sveltejs/svelte/pull/12176))
+
+- fix: improve await block behaviour in non-runes mode ([#12179](https://github.com/sveltejs/svelte/pull/12179))
+
+- fix: improve select handling of dynamic value with placeholders ([#12181](https://github.com/sveltejs/svelte/pull/12181))
+
+## 5.0.0-next.165
+
+### Patch Changes
+
+- breaking: bump dts-buddy ([#12134](https://github.com/sveltejs/svelte/pull/12134))
+
+- fix: throw compilation error for malformed snippets ([#12144](https://github.com/sveltejs/svelte/pull/12144))
+
+## 5.0.0-next.164
+
+### Patch Changes
+
+- fix: prevent `a11y_label_has_associated_control` false positive for component or render tag in `<label>` ([#12119](https://github.com/sveltejs/svelte/pull/12119))
+
+- fix: allow multiple optional parameters with defaults in snippets ([#12070](https://github.com/sveltejs/svelte/pull/12070))
+
+## 5.0.0-next.163
+
+### Patch Changes
+
+- feat: more accurate `render`/`mount`/`hydrate` options ([#12111](https://github.com/sveltejs/svelte/pull/12111))
+
+- fix: better binding interop between runes/non-runes components ([#12123](https://github.com/sveltejs/svelte/pull/12123))
+
+## 5.0.0-next.162
+
+### Patch Changes
+
+- chore: remove anchor node from each block items ([#11836](https://github.com/sveltejs/svelte/pull/11836))
+
+## 5.0.0-next.161
+
+### Patch Changes
+
+- fix: wait a microtask for await blocks to reduce UI churn ([#11989](https://github.com/sveltejs/svelte/pull/11989))
+
+- fix: ensure state update expressions are serialised correctly ([#12109](https://github.com/sveltejs/svelte/pull/12109))
+
+- fix: repair each block length even without an else ([#12098](https://github.com/sveltejs/svelte/pull/12098))
+
+- fix: remove document event listeners on unmount ([#12105](https://github.com/sveltejs/svelte/pull/12105))
+
+## 5.0.0-next.160
+
+### Patch Changes
+
+- chore: improve runtime performance of capturing reactive signals ([#12093](https://github.com/sveltejs/svelte/pull/12093))
+
+## 5.0.0-next.159
+
+### Patch Changes
+
+- fix: ensure element size bindings don't unsubscribe multiple times from the resize observer ([#12091](https://github.com/sveltejs/svelte/pull/12091))
+
+- fix: prevent misidentification of bindings as delegatable event handlers if used outside event attribute ([#12081](https://github.com/sveltejs/svelte/pull/12081))
+
+- fix: preserve current input values when removing defaults ([#12083](https://github.com/sveltejs/svelte/pull/12083))
+
+- fix: preserve component function context for nested components ([#12089](https://github.com/sveltejs/svelte/pull/12089))
+
 ## 5.0.0-next.158
 
 ### Patch Changes

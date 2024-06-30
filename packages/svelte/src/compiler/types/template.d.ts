@@ -152,6 +152,9 @@ export interface DebugTag extends BaseNode {
 export interface RenderTag extends BaseNode {
 	type: 'RenderTag';
 	expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
+	metadata: {
+		dynamic: boolean;
+	};
 }
 
 type Tag = ExpressionTag | HtmlTag | ConstTag | DebugTag | RenderTag;
@@ -271,6 +274,9 @@ interface BaseElement extends BaseNode {
 
 export interface Component extends BaseElement {
 	type: 'Component';
+	metadata: {
+		dynamic: boolean;
+	};
 }
 
 interface TitleElement extends BaseElement {

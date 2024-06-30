@@ -1,7 +1,8 @@
+// @ts-check
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import express from 'express';
+import polka from 'polka';
 import { createServer as createViteServer } from 'vite';
 
 const PORT = process.env.PORT || '5173';
@@ -11,7 +12,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 process.env.NODE_ENV = 'development';
 
 async function createServer() {
-	const app = express();
+	const app = polka();
 
 	const vite = await createViteServer({
 		server: { middlewareMode: true },
@@ -22,7 +23,10 @@ async function createServer() {
 
 	app.use('*', async (req, res) => {
 		if (req.originalUrl !== '/') {
-			res.sendFile(path.resolve('./dist' + req.originalUrl));
+			res.writeHead(200, {
+				'Content-Type': 'application/javascript'
+			});
+			res.end(fs.createReadStream(path.resolve('./dist' + req.originalUrl)));
 			return;
 		}
 
@@ -34,7 +38,7 @@ async function createServer() {
 			.replace(`<!--ssr-html-->`, appHtml)
 			.replace(`<!--ssr-head-->`, headHtml);
 
-		res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+		res.writeHead(200, { 'Content-Type': 'text/html' }).end(html);
 	});
 
 	return { app, vite };

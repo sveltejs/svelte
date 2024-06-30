@@ -3,21 +3,24 @@ import { browserslistToTargets } from 'lightningcss';
 import { readFile } from 'node:fs/promises';
 import browserslist from 'browserslist';
 
+/** @type {import('vite').PluginOption[]} */
 const plugins = [raw(['.ttf']), sveltekit()];
 
 // Only enable sharp if we're not in a webcontainer env
 if (!process.versions.webcontainer) {
-	plugins.push(
-		(await import('vite-imagetools')).imagetools({
-			defaultDirectives: (url) => {
-				if (url.searchParams.has('big-image')) {
-					return new URLSearchParams('w=640;1280;2560;3840&format=avif;webp;png&as=picture');
-				}
+	const { imagetools } = await import('vite-imagetools');
 
-				return new URLSearchParams();
+	const plugin = imagetools({
+		defaultDirectives: (url) => {
+			if (url.searchParams.has('big-image')) {
+				return new URLSearchParams('w=640;1280;2560;3840&format=avif;webp;png&as=picture');
 			}
-		})
-	);
+
+			return new URLSearchParams();
+		}
+	});
+
+	plugins.push(/** @type {import('vite').PluginOption} */ (/** @type {unknown} */ (plugin)));
 }
 
 /**

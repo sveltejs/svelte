@@ -189,14 +189,31 @@ export type ComponentEvents<Comp extends SvelteComponent> =
 	Comp extends SvelteComponent<any, infer Events> ? Events : never;
 
 /**
- * Convenience type to get the props the given component expects. Example:
- * ```html
- * <script lang="ts">
- * 	import type { ComponentProps } from 'svelte';
- * 	import Component from './Component.svelte';
+ * Convenience type to get the props the given component expects.
  *
- * 	const props: ComponentProps<Component> = { foo: 'bar' }; // Errors if these aren't the correct props
- * </script>
+ * Example: Ensure a variable contains the props expected by `MyComponent`:
+ *
+ * ```ts
+ * import type { ComponentProps } from 'svelte';
+ * import MyComponent from './MyComponent.svelte';
+ *
+ * // Errors if these aren't the correct props expected by MyComponent.
+ * const props: ComponentProps<MyComponent> = { foo: 'bar' };
+ * ```
+ *
+ * Example: A generic function that accepts some component and infers the type of its props:
+ *
+ * ```ts
+ * import type { Component, ComponentProps } from 'svelte';
+ * import MyComponent from './MyComponent.svelte';
+ *
+ * function withProps<TComponent extends Component<any>>(
+ * 	component: TComponent,
+ * 	props: ComponentProps<TComponent>
+ * ) {};
+ *
+ * // Errors if the second argument is not the correct props expected by the component in the first argument.
+ * withProps(MyComponent, { foo: 'bar' });
  * ```
  */
 export type ComponentProps<Comp extends SvelteComponent | Component<any>> =
@@ -242,20 +259,24 @@ declare const SnippetReturn: unique symbol;
 /**
  * The type of a `#snippet` block. You can use it to (for example) express that your component expects a snippet of a certain type:
  * ```ts
- * let { banner }: { banner: Snippet<{ text: string }> } = $props();
+ * let { banner }: { banner: Snippet<[{ text: string }]> } = $props();
  * ```
  * You can only call a snippet through the `{@render ...}` tag.
+ *
+ * https://svelte-5-preview.vercel.app/docs/snippets
+ *
+ * @template Parameters the parameters that the snippet expects (if any) as a tuple.
  */
-export type Snippet<T extends unknown[] = []> =
+export type Snippet<Parameters extends unknown[] = []> =
 	// this conditional allows tuples but not arrays. Arrays would indicate a
 	// rest parameter type, which is not supported. If rest parameters are added
 	// in the future, the condition can be removed.
-	number extends T['length']
+	number extends Parameters['length']
 		? never
 		: {
 				(
 					this: void,
-					...args: T
+					...args: Parameters
 				): typeof SnippetReturn & {
 					_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
 				};

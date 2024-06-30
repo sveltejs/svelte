@@ -3,6 +3,7 @@ import read_expression from '../read/expression.js';
 import * as e from '../../../errors.js';
 import { create_fragment } from '../utils/create.js';
 import { walk } from 'zimmerframe';
+import { parse_expression_at } from '../acorn.js';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
@@ -268,36 +269,27 @@ function open(parser) {
 			e.expected_identifier(parser.index);
 		}
 
-		parser.eat('(', true);
-
 		parser.allow_whitespace();
 
-		/** @type {import('estree').Pattern[]} */
-		const parameters = [];
+		const params_start = parser.index;
 
-		while (!parser.match(')')) {
-			let pattern = read_pattern(parser, true);
+		parser.eat('(', true);
+		let parentheses = 1;
 
-			parser.allow_whitespace();
-			if (parser.eat('=')) {
-				parser.allow_whitespace();
-				const right = read_expression(parser);
-				pattern = {
-					type: 'AssignmentPattern',
-					left: pattern,
-					right: right,
-					start: pattern.start,
-					end: right.end
-				};
-			}
-
-			parameters.push(pattern);
-
-			if (!parser.eat(',')) break;
-			parser.allow_whitespace();
+		while (parser.index < parser.template.length && (!parser.match(')') || parentheses !== 1)) {
+			if (parser.match('(')) parentheses++;
+			if (parser.match(')')) parentheses--;
+			parser.index += 1;
 		}
 
 		parser.eat(')', true);
+
+		const prelude = parser.template.slice(0, params_start).replace(/\S/g, ' ');
+		const params = parser.template.slice(params_start, parser.index);
+
+		let function_expression = /** @type {import('estree').ArrowFunctionExpression} */ (
+			parse_expression_at(prelude + `${params} => {}`, parser.ts, params_start)
+		);
 
 		parser.allow_whitespace();
 		parser.eat('}', true);
@@ -313,10 +305,9 @@ function open(parser) {
 				end: name_end,
 				name
 			},
-			parameters,
+			parameters: function_expression.params,
 			body: create_fragment()
 		});
-
 		parser.stack.push(block);
 		parser.fragments.push(block.body);
 
@@ -603,7 +594,10 @@ function special(parser) {
 			type: 'RenderTag',
 			start,
 			end: parser.index,
-			expression: expression
+			expression: expression,
+			metadata: {
+				dynamic: false
+			}
 		});
 	}
 }

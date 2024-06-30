@@ -1,6 +1,6 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
-import { get_descriptors, get_prototype_of, map_get, map_set } from '../../utils.js';
+import { get_descriptors, get_prototype_of } from '../../utils.js';
 import {
 	AttributeAliases,
 	DelegatedEvents,
@@ -16,29 +16,40 @@ import { queue_idle_task, queue_micro_task } from '../task.js';
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
  * to remove it upon hydration to avoid a bug when someone resets the form value.
- * @param {HTMLInputElement} dom
+ * @param {HTMLInputElement} input
  * @returns {void}
  */
-export function remove_input_attr_defaults(dom) {
-	if (hydrating) {
-		let already_removed = false;
-		// We try and remove the default attributes later, rather than sync during hydration.
-		// Doing it sync during hydration has a negative impact on performance, but deferring the
-		// work in an idle task alleviates this greatly. If a form reset event comes in before
-		// the idle callback, then we ensure the input defaults are cleared just before.
-		const remove_defaults = () => {
-			if (already_removed) return;
-			already_removed = true;
-			const value = dom.getAttribute('value');
-			set_attribute(dom, 'value', null);
-			set_attribute(dom, 'checked', null);
-			if (value) dom.value = value;
-		};
-		// @ts-expect-error
-		dom.__on_r = remove_defaults;
-		queue_idle_task(remove_defaults);
-		add_form_reset_listener();
-	}
+export function remove_input_defaults(input) {
+	if (!hydrating) return;
+
+	var already_removed = false;
+
+	// We try and remove the default attributes later, rather than sync during hydration.
+	// Doing it sync during hydration has a negative impact on performance, but deferring the
+	// work in an idle task alleviates this greatly. If a form reset event comes in before
+	// the idle callback, then we ensure the input defaults are cleared just before.
+	var remove_defaults = () => {
+		if (already_removed) return;
+		already_removed = true;
+
+		// Remove the attributes but preserve the values
+		if (input.hasAttribute('value')) {
+			var value = input.value;
+			set_attribute(input, 'value', null);
+			input.value = value;
+		}
+
+		if (input.hasAttribute('checked')) {
+			var checked = input.checked;
+			set_attribute(input, 'checked', null);
+			input.checked = checked;
+		}
+	};
+
+	// @ts-expect-error
+	input.__on_r = remove_defaults;
+	queue_idle_task(remove_defaults);
+	add_form_reset_listener();
 }
 
 /**
@@ -155,8 +166,8 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 		next.class = '';
 	}
 
-	var setters = map_get(setters_cache, element.nodeName);
-	if (!setters) map_set(setters_cache, element.nodeName, (setters = get_setters(element)));
+	var setters = setters_cache.get(element.nodeName);
+	if (!setters) setters_cache.set(element.nodeName, (setters = get_setters(element)));
 
 	// @ts-expect-error
 	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes ??= {});

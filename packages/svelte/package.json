@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.0.0-next.158",
+  "version": "5.0.0-next.167",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -112,7 +112,7 @@
     "prepublishOnly": "pnpm build",
     "format": "prettier --check --write .",
     "lint": "prettier --check . && eslint",
-    "knip": "knip"
+    "knip": "pnpm dlx knip"
   },
   "devDependencies": {
     "@jridgewell/trace-mapping": "^0.3.22",
@@ -122,9 +122,8 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/aria-query": "^5.0.4",
-    "dts-buddy": "^0.4.7",
+    "dts-buddy": "^0.5.0",
     "esbuild": "^0.19.11",
-    "knip": "^4.2.1",
     "rollup": "^4.9.5",
     "source-map": "^0.7.4",
     "tiny-glob": "^0.2.9"

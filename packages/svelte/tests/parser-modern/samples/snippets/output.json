@@ -27,25 +27,33 @@
 				"parameters": [
 					{
 						"type": "Identifier",
-						"name": "msg",
 						"start": 43,
+						"end": 46,
 						"loc": {
 							"start": {
 								"line": 3,
-								"column": 14,
-								"character": 43
+								"column": 14
 							},
 							"end": {
 								"line": 3,
-								"column": 25,
-								"character": 54
+								"column": 25
 							}
 						},
-						"end": 54,
+						"name": "msg",
 						"typeAnnotation": {
 							"type": "TSTypeAnnotation",
 							"start": 46,
 							"end": 54,
+							"loc": {
+								"start": {
+									"line": 3,
+									"column": 17
+								},
+								"end": {
+									"line": 3,
+									"column": 25
+								}
+							},
 							"typeAnnotation": {
 								"type": "TSStringKeyword",
 								"start": 48,

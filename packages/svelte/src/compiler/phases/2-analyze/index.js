@@ -31,6 +31,7 @@ import { hash } from './utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
 import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.js';
+import { equal } from '../../utils/assert.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -111,23 +112,24 @@ function get_delegated_event(event_name, handler, context) {
 		if (binding != null) {
 			for (const { path } of binding.references) {
 				const parent = path.at(-1);
-				if (parent == null) {
-					return non_hoistable;
-				}
+				if (parent == null) return non_hoistable;
+
+				const grandparent = path.at(-2);
 
 				/** @type {import('#compiler').RegularElement | null} */
 				let element = null;
 				/** @type {string | null} */
 				let event_name = null;
 				if (parent.type === 'OnDirective') {
-					element = /** @type {import('#compiler').RegularElement} */ (path.at(-2));
+					element = /** @type {import('#compiler').RegularElement} */ (grandparent);
 					event_name = parent.name;
 				} else if (
 					parent.type === 'ExpressionTag' &&
-					is_event_attribute(/** @type {import('#compiler').Attribute} */ (path.at(-2)))
+					grandparent?.type === 'Attribute' &&
+					is_event_attribute(grandparent)
 				) {
 					element = /** @type {import('#compiler').RegularElement} */ (path.at(-3));
-					const attribute = /** @type {import('#compiler').Attribute} */ (path.at(-2));
+					const attribute = /** @type {import('#compiler').Attribute} */ (grandparent);
 					event_name = get_attribute_event_name(attribute.name);
 				}
 
@@ -968,34 +970,42 @@ const runes_scope_tweaker = {
 		if (rune === '$props') {
 			state.analysis.needs_props = true;
 
-			for (const property of /** @type {import('estree').ObjectPattern} */ (node.id).properties) {
-				if (property.type !== 'Property') continue;
+			if (node.id.type === 'Identifier') {
+				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(node.id.name));
+				binding.initial = null; // else would be $props()
+				binding.kind = 'rest_prop';
+			} else {
+				equal(node.id.type, 'ObjectPattern');
 
-				const name =
-					property.value.type === 'AssignmentPattern'
-						? /** @type {import('estree').Identifier} */ (property.value.left).name
-						: /** @type {import('estree').Identifier} */ (property.value).name;
-				const alias =
-					property.key.type === 'Identifier'
-						? property.key.name
-						: String(/** @type {import('estree').Literal} */ (property.key).value);
-				let initial = property.value.type === 'AssignmentPattern' ? property.value.right : null;
+				for (const property of node.id.properties) {
+					if (property.type !== 'Property') continue;
 
-				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
-				binding.prop_alias = alias;
+					const name =
+						property.value.type === 'AssignmentPattern'
+							? /** @type {import('estree').Identifier} */ (property.value.left).name
+							: /** @type {import('estree').Identifier} */ (property.value).name;
+					const alias =
+						property.key.type === 'Identifier'
+							? property.key.name
+							: String(/** @type {import('estree').Literal} */ (property.key).value);
+					let initial = property.value.type === 'AssignmentPattern' ? property.value.right : null;
 
-				// rewire initial from $props() to the actual initial value, stripping $bindable() if necessary
-				if (
-					initial?.type === 'CallExpression' &&
-					initial.callee.type === 'Identifier' &&
-					initial.callee.name === '$bindable'
-				) {
-					binding.initial = /** @type {import('estree').Expression | null} */ (
-						initial.arguments[0] ?? null
-					);
-					binding.kind = 'bindable_prop';
-				} else {
-					binding.initial = initial;
+					const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
+					binding.prop_alias = alias;
+
+					// rewire initial from $props() to the actual initial value, stripping $bindable() if necessary
+					if (
+						initial?.type === 'CallExpression' &&
+						initial.callee.type === 'Identifier' &&
+						initial.callee.name === '$bindable'
+					) {
+						binding.initial = /** @type {import('estree').Expression | null} */ (
+							initial.arguments[0] ?? null
+						);
+						binding.kind = 'bindable_prop';
+					} else {
+						binding.initial = initial;
+					}
 				}
 			}
 		}
@@ -1235,6 +1245,14 @@ const common_visitors = {
 		if (node.name === '$$slots') {
 			context.state.analysis.uses_slots = true;
 			return;
+		}
+
+		// If we are using arguments outside of a function, then throw an error
+		if (
+			node.name === 'arguments' &&
+			context.path.every((n) => n.type !== 'FunctionDeclaration' && n.type !== 'FunctionExpression')
+		) {
+			e.invalid_arguments_usage(node);
 		}
 
 		const binding = context.state.scope.get(node.name);
@@ -1502,6 +1520,13 @@ const common_visitors = {
 				return;
 			}
 		}
+	},
+	Component(node, context) {
+		const binding = context.state.scope.get(
+			node.name.includes('.') ? node.name.slice(0, node.name.indexOf('.')) : node.name
+		);
+
+		node.metadata.dynamic = binding !== null && binding.kind !== 'normal';
 	}
 };
 

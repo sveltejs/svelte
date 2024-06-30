@@ -71,7 +71,7 @@ export type EachState = {
 	/** a key -> item lookup */
 	items: Map<any, EachItem>;
 	/** head of the linked list of items */
-	next: EachItem | null;
+	first: EachItem | null;
 };
 
 export type EachItem = {
@@ -85,9 +85,7 @@ export type EachItem = {
 	i: number | Source<number>;
 	/** key */
 	k: unknown;
-	/** anchor for items inserted before this */
-	o: Comment | Text;
-	prev: EachItem | EachState;
+	prev: EachItem | null;
 	next: EachItem | null;
 };
 

@@ -3,10 +3,10 @@ import * as $ from "svelte/internal/client";
 import TextInput from './Child.svelte';
 
 var root_1 = $.template(`Something`, 1);
-var root = $.template(`<!> `, 1);
+var root = $.template(`<!> `, 5);
 
 export default function Bind_component_snippet($$anchor) {
-	var snippet = ($$anchor) => {
+	const snippet = ($$anchor) => {
 		var fragment = root_1();
 
 		$.append($$anchor, fragment);

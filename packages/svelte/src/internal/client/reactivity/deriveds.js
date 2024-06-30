@@ -1,4 +1,3 @@
-import { DEV } from 'esm-env';
 import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../constants.js';
 import {
 	current_reaction,
@@ -38,10 +37,6 @@ export function derived(fn) {
 		v: /** @type {V} */ (null),
 		version: 0
 	};
-
-	if (DEV) {
-		/** @type {import('#client').DerivedDebug} */ (signal).inspect = new Set();
-	}
 
 	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
 		var current_derived = /** @type {import('#client').Derived<V>} */ (current_reaction);
@@ -85,10 +80,9 @@ function destroy_derived_children(signal) {
 
 /**
  * @param {import('#client').Derived} derived
- * @param {boolean} force_schedule
  * @returns {void}
  */
-export function update_derived(derived, force_schedule) {
+export function update_derived(derived) {
 	var previous_updating_derived = updating_derived;
 	updating_derived = true;
 	destroy_derived_children(derived);
@@ -107,10 +101,6 @@ export function update_derived(derived, force_schedule) {
 		derived.version = increment_version();
 
 		mark_reactions(derived, force_schedule);
-
-		if (DEV && force_schedule) {
-			for (var fn of /** @type {import('#client').DerivedDebug} */ (derived).inspect) fn();
-		}
 	}
 }
 

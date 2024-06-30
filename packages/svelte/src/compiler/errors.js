@@ -214,6 +214,15 @@ export function import_svelte_internal_forbidden(node) {
 }
 
 /**
+ * The arguments keyword cannot be used within the template or at the top level of a component
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_arguments_usage(node) {
+	e(node, "invalid_arguments_usage", "The arguments keyword cannot be used within the template or at the top level of a component");
+}
+
+/**
  * Cannot use `export let` in runes mode — use `$props()` instead
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -265,6 +274,15 @@ export function module_illegal_default_export(node) {
  */
 export function props_duplicate(node) {
 	e(node, "props_duplicate", "Cannot use `$props()` more than once");
+}
+
+/**
+ * Declaring or accessing a prop starting with `$$` is illegal (they are reserved for Svelte internals)
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function props_illegal_name(node) {
+	e(node, "props_illegal_name", "Declaring or accessing a prop starting with `$$` is illegal (they are reserved for Svelte internals)");
 }
 
 /**

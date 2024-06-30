@@ -1,6 +1,7 @@
 import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import { tsPlugin } from 'acorn-typescript';
+import { locator } from '../../state.js';
 
 const ParserWithTS = acorn.Parser.extend(tsPlugin({ allowSatisfies: true }));
 
@@ -127,7 +128,20 @@ function amend(source, node) {
 			// @ts-expect-error
 			delete node.loc.end.index;
 
-			if (/** @type {any} */ (node).typeAnnotation && node.end === undefined) {
+			if (typeof node.loc?.end === 'number') {
+				const loc = locator(node.loc.end);
+				if (loc) {
+					node.loc.end = {
+						line: loc.line,
+						column: loc.column
+					};
+				}
+			}
+
+			if (
+				/** @type {any} */ (node).typeAnnotation &&
+				(node.end === undefined || node.end < node.start)
+			) {
 				// i think there might be a bug in acorn-typescript that prevents
 				// `end` from being assigned when there's a type annotation
 				let end = /** @type {any} */ (node).typeAnnotation.start;

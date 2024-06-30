@@ -256,7 +256,15 @@ function validate_attribute_name(attribute) {
  * @param {boolean} is_component
  */
 function validate_slot_attribute(context, attribute, is_component = false) {
+	const parent = context.path.at(-2);
 	let owner = undefined;
+
+	if (parent?.type === 'SnippetBlock') {
+		if (!is_text_attribute(attribute)) {
+			e.slot_attribute_invalid(attribute);
+		}
+		return;
+	}
 
 	let i = context.path.length;
 	while (i--) {
@@ -283,7 +291,7 @@ function validate_slot_attribute(context, attribute, is_component = false) {
 			owner.type === 'SvelteComponent' ||
 			owner.type === 'SvelteSelf'
 		) {
-			if (owner !== context.path.at(-2)) {
+			if (owner !== parent) {
 				e.slot_attribute_invalid_placement(attribute);
 			}
 
@@ -333,6 +341,14 @@ function validate_block_not_empty(node, context) {
  * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
  */
 const validation = {
+	MemberExpression(node, context) {
+		if (node.object.type === 'Identifier' && node.property.type === 'Identifier') {
+			const binding = context.state.scope.get(node.object.name);
+			if (binding?.kind === 'rest_prop' && node.property.name.startsWith('$$')) {
+				e.props_illegal_name(node.property);
+			}
+		}
+	},
 	AssignmentExpression(node, context) {
 		validate_assignment(node, node.left, context.state);
 	},
@@ -617,6 +633,11 @@ const validation = {
 		});
 	},
 	RenderTag(node, context) {
+		const callee = unwrap_optional(node.expression).callee;
+
+		node.metadata.dynamic =
+			callee.type !== 'Identifier' || context.state.scope.get(callee.name)?.kind !== 'normal';
+
 		context.state.analysis.uses_render_tags = true;
 
 		const raw_args = unwrap_optional(node.expression).arguments;
@@ -626,7 +647,6 @@ const validation = {
 			}
 		}
 
-		const callee = unwrap_optional(node.expression).callee;
 		if (
 			callee.type === 'MemberExpression' &&
 			callee.property.type === 'Identifier' &&
@@ -1232,7 +1252,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 				e.rune_invalid_arguments(node, rune);
 			}
 
-			if (node.id.type !== 'ObjectPattern') {
+			if (node.id.type !== 'ObjectPattern' && node.id.type !== 'Identifier') {
 				e.props_invalid_identifier(node);
 			}
 
@@ -1240,17 +1260,23 @@ export const validation_runes = merge(validation, a11y_validators, {
 				e.props_invalid_placement(node);
 			}
 
-			for (const property of node.id.properties) {
-				if (property.type === 'Property') {
-					if (property.computed) {
-						e.props_invalid_pattern(property);
-					}
+			if (node.id.type === 'ObjectPattern') {
+				for (const property of node.id.properties) {
+					if (property.type === 'Property') {
+						if (property.computed) {
+							e.props_invalid_pattern(property);
+						}
 
-					const value =
-						property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
+						if (property.key.type === 'Identifier' && property.key.name.startsWith('$$')) {
+							e.props_illegal_name(property);
+						}
 
-					if (value.type !== 'Identifier') {
-						e.props_invalid_pattern(property);
+						const value =
+							property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
+
+						if (value.type !== 'Identifier') {
+							e.props_invalid_pattern(property);
+						}
 					}
 				}
 			}

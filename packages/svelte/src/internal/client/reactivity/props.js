@@ -10,7 +10,6 @@ import { mutable_source, set, source } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
 import { get, is_signals_recorded, untrack, update } from '../runtime.js';
 import { safe_equals } from './equality.js';
-import { inspect_fn } from '../dev/inspect.js';
 import * as e from '../errors.js';
 import { LEGACY_DERIVED_PROP } from '../constants.js';
 
@@ -79,6 +78,7 @@ const rest_props_handler = {
  * @param {string} [name]
  * @returns {Record<string, unknown>}
  */
+/*#__NO_SIDE_EFFECTS__*/
 export function rest_props(props, exclude, name) {
 	return new Proxy(
 		DEV ? { props, exclude, name, other: {}, to_proxy: [] } : { props, exclude },
@@ -268,9 +268,16 @@ export function prop(props, key, flags, fallback) {
 	// intermediate mode — prop is written to, but the parent component had
 	// `bind:foo` which means we can just call `$$props.foo = value` directly
 	if (setter) {
-		return function (/** @type {V} */ value) {
-			if (arguments.length === 1) {
-				/** @type {Function} */ (setter)(value);
+		var legacy_parent = props.$$legacy;
+		return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
+			if (arguments.length > 0) {
+				// We don't want to notify if the value was mutated and the parent is in runes mode.
+				// In that case the state proxy (if it exists) should take care of the notification.
+				// If the parent is not in runes mode, we need to notify on mutation, too, that the prop
+				// has changed because the parent will not be able to detect the change otherwise.
+				if (!runes || !mutation || legacy_parent) {
+					/** @type {Function} */ (setter)(mutation ? getter() : value);
+				}
 				return value;
 			} else {
 				return getter();
@@ -303,12 +310,12 @@ export function prop(props, key, flags, fallback) {
 
 	if (!immutable) current_value.equals = safe_equals;
 
-	return function (/** @type {V} */ value) {
+	return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
 		var current = get(current_value);
 
 		// legacy nonsense — need to ensure the source is invalidated when necessary
 		// also needed for when handling inspect logic so we can inspect the correct source signal
-		if (is_signals_recorded || (DEV && inspect_fn)) {
+		if (is_signals_recorded) {
 			// set this so that we don't reset to the parent value if `d`
 			// is invalidated because of `invalidate_inner_signals` (rather
 			// than because the parent or child value changed)
@@ -319,9 +326,11 @@ export function prop(props, key, flags, fallback) {
 		}
 
 		if (arguments.length > 0) {
-			if (!current_value.equals(value)) {
+			const new_value = mutation ? get(current_value) : value;
+
+			if (!current_value.equals(new_value)) {
 				from_child = true;
-				set(inner_current_value, value);
+				set(inner_current_value, new_value);
 				get(current_value); // force a synchronisation immediately
 			}
 

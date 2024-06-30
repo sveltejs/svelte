@@ -72,10 +72,17 @@ export function slot(anchor, slot_fn, slot_props, fallback_fn) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
  * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props>> | import('../../index.js').Component<Props, Exports, any>} component
- * @param {{
+ * @param {{} extends Props ? {
  * 		target: Document | Element | ShadowRoot;
  * 		anchor?: Node;
  * 		props?: Props;
+ * 		events?: Record<string, (e: any) => any>;
+ * 		context?: Map<any, any>;
+ * 		intro?: boolean;
+ * 	}: {
+ * 		target: Document | Element | ShadowRoot;
+ * 		props: Props;
+ * 		anchor?: Node;
  * 		events?: Record<string, (e: any) => any>;
  * 		context?: Map<any, any>;
  * 		intro?: boolean;
@@ -98,9 +105,16 @@ export function mount(component, options) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
  * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props>> | import('../../index.js').Component<Props, Exports, any>} component
- * @param {{
+ * @param {{} extends Props ? {
  * 		target: Document | Element | ShadowRoot;
  * 		props?: Props;
+ * 		events?: Record<string, (e: any) => any>;
+ *  	context?: Map<any, any>;
+ * 		intro?: boolean;
+ * 		recover?: boolean;
+ * 	} : {
+ * 		target: Document | Element | ShadowRoot;
+ * 		props: Props;
  * 		events?: Record<string, (e: any) => any>;
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
@@ -182,38 +196,23 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 
 	const registered_events = new Set();
 
-	const bound_event_listener = handle_event_propagation.bind(null, target);
-	const bound_document_event_listener = handle_event_propagation.bind(null, document);
-
 	/** @param {Array<string>} events */
 	const event_handle = (events) => {
 		for (let i = 0; i < events.length; i++) {
 			const event_name = events[i];
+			const passive = PassiveDelegatedEvents.includes(event_name);
+
 			if (!registered_events.has(event_name)) {
 				registered_events.add(event_name);
+
 				// Add the event listener to both the container and the document.
 				// The container listener ensures we catch events from within in case
 				// the outer content stops propagation of the event.
-				target.addEventListener(
-					event_name,
-					bound_event_listener,
-					PassiveDelegatedEvents.includes(event_name)
-						? {
-								passive: true
-							}
-						: undefined
-				);
+				target.addEventListener(event_name, handle_event_propagation, { passive });
+
 				// The document listener ensures we catch events that originate from elements that were
 				// manually moved outside of the container (e.g. via manual portals).
-				document.addEventListener(
-					event_name,
-					bound_document_event_listener,
-					PassiveDelegatedEvents.includes(event_name)
-						? {
-								passive: true
-							}
-						: undefined
-				);
+				document.addEventListener(event_name, handle_event_propagation, { passive });
 			}
 		}
 	};
@@ -250,8 +249,10 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 
 		return () => {
 			for (const event_name of registered_events) {
-				target.removeEventListener(event_name, bound_event_listener);
+				target.removeEventListener(event_name, handle_event_propagation);
+				document.removeEventListener(event_name, handle_event_propagation);
 			}
+
 			root_event_handles.delete(event_handle);
 			mounted_components.delete(component);
 		};

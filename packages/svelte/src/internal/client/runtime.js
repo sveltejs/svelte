@@ -29,13 +29,13 @@ import {
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	STATE_FROZEN_SYMBOL
+	STATE_FROZEN_SYMBOL,
+	INSPECT_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { mutate, set, source } from './reactivity/sources.js';
 import { update_derived } from './reactivity/deriveds.js';
-import { inspect_captured_signals, inspect_fn, set_inspect_fn } from './dev/inspect.js';
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 
@@ -63,9 +63,7 @@ export function set_is_destroying_effect(value) {
 	is_destroying_effect = value;
 }
 
-// Used for $inspect
-export let is_batching_effect = false;
-let is_inspecting_signal = false;
+export let inspect_effects = new Set();
 
 // Handle effect queues
 
@@ -104,14 +102,6 @@ export let current_untracked_writes = null;
 /** @param {null | import('#client').Source[]} value */
 export function set_current_untracked_writes(value) {
 	current_untracked_writes = value;
-}
-
-/** @type {null | import('#client').ValueDebug} */
-export let last_inspected_signal = null;
-
-/** @param {null | import('#client').ValueDebug} signal */
-export function set_last_inspected_signal(signal) {
-	last_inspected_signal = signal;
 }
 
 /** @type {number} Used by sources and deriveds for handling updates to unowned deriveds */
@@ -160,38 +150,6 @@ export function is_runes() {
 }
 
 /**
- * @param {import('#client').ProxyStateObject} target
- * @param {string | symbol} prop
- * @param {any} receiver
- */
-export function batch_inspect(target, prop, receiver) {
-	const value = Reflect.get(target, prop, receiver);
-	/**
-	 * @this {any}
-	 */
-	return function () {
-		const previously_batching_effect = is_batching_effect;
-		is_batching_effect = true;
-		try {
-			return Reflect.apply(value, this, arguments);
-		} finally {
-			is_batching_effect = previously_batching_effect;
-			if (last_inspected_signal !== null && !is_inspecting_signal) {
-				is_inspecting_signal = true;
-				try {
-					for (const fn of last_inspected_signal.inspect) {
-						fn();
-					}
-				} finally {
-					is_inspecting_signal = false;
-				}
-				last_inspected_signal = null;
-			}
-		}
-	};
-}
-
-/**
  * Determines whether a derived or effect is dirty.
  * If it is MAYBE_DIRTY, will set the status to CLEAN
  * @param {import('#client').Reaction} reaction
@@ -219,7 +177,7 @@ export function check_dirtiness(reaction) {
 				var dependency = dependencies[i];
 
 				if (!is_dirty && check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
-					update_derived(/** @type {import('#client').Derived} **/ (dependency), true);
+					update_derived(/** @type {import('#client').Derived} **/ (dependency));
 				}
 
 				var version = dependency.version;
@@ -399,11 +357,7 @@ export function execute_reaction_fn(signal) {
 
 					if (reactions === null) {
 						dependency.reactions = [signal];
-					} else if (reactions[reactions.length - 1] !== signal) {
-						// TODO: should this be:
-						//
-						// } else if (!reactions.includes(signal)) {
-						//
+					} else if (reactions[reactions.length - 1] !== signal && !reactions.includes(signal)) {
 						reactions.push(signal);
 					}
 				}
@@ -601,7 +555,7 @@ function flush_queued_effects(effects) {
 			// don't know if we need to keep them until they are executed. Doing the check
 			// here (rather than in `execute_effect`) allows us to skip the work for
 			// immediate effects.
-			if (effect.deps === null && effect.first === null && effect.dom === null) {
+			if (effect.deps === null && effect.first === null && effect.nodes === null) {
 				if (effect.teardown === null) {
 					// remove this effect from the graph
 					unlink_effect(effect);
@@ -793,12 +747,6 @@ export async function tick() {
  * @returns {V}
  */
 export function get(signal) {
-	if (DEV && inspect_fn) {
-		var s = /** @type {import('#client').ValueDebug} */ (signal);
-		s.inspect.add(inspect_fn);
-		inspect_captured_signals.push(s);
-	}
-
 	const flags = signal.f;
 	if ((flags & DESTROYED) !== 0) {
 		return signal.v;
@@ -846,15 +794,7 @@ export function get(signal) {
 		(flags & DERIVED) !== 0 &&
 		check_dirtiness(/** @type {import('#client').Derived} */ (signal))
 	) {
-		if (DEV) {
-			// we want to avoid tracking indirect dependencies
-			const previous_inspect_fn = inspect_fn;
-			set_inspect_fn(null);
-			update_derived(/** @type {import('#client').Derived} **/ (signal), false);
-			set_inspect_fn(previous_inspect_fn);
-		} else {
-			update_derived(/** @type {import('#client').Derived} **/ (signal), false);
-		}
+		update_derived(/** @type {import('#client').Derived} **/ (signal));
 	}
 
 	return signal.v;
@@ -919,6 +859,11 @@ export function mark_reactions(signal, force_schedule) {
 		if (stack.length < n) n = stack.length;
 
 		var flags = reaction.f;
+
+		if (DEV && (flags & INSPECT_EFFECT) !== 0) {
+			inspect_effects.add(reaction);
+			continue;
+		}
 
 		// We skip any effects that are already dirty. Additionally, we also
 		// skip if the reaction is the same as the current effect (except if we're not in runes or we

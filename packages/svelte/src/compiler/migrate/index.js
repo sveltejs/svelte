@@ -322,7 +322,10 @@ const instance_script = {
 				state.str.prependLeft(/** @type {number} */ (declarator.init.start), '$state(');
 				state.str.appendRight(/** @type {number} */ (declarator.init.end), ')');
 			} else {
-				state.str.prependLeft(/** @type {number} */ (declarator.id.end), ' = $state()');
+				state.str.prependLeft(
+					/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+					' = $state()'
+				);
 			}
 		}
 
@@ -587,13 +590,13 @@ function extract_type_and_comment(declarator, str, path) {
 }
 
 /**
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement | import('#compiler').SvelteWindow | import('#compiler').SvelteDocument | import('#compiler').SvelteBody} node
+ * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement | import('#compiler').SvelteWindow | import('#compiler').SvelteDocument | import('#compiler').SvelteBody} element
  * @param {State} state
  */
-function handle_events(node, state) {
+function handle_events(element, state) {
 	/** @type {Map<string, import('#compiler').OnDirective[]>} */
 	const handlers = new Map();
-	for (const attribute of node.attributes) {
+	for (const attribute of element.attributes) {
 		if (attribute.type !== 'OnDirective') continue;
 
 		let name = `on${attribute.name}`;
@@ -625,6 +628,7 @@ function handle_events(node, state) {
 
 		for (let i = 0; i < nodes.length - 1; i += 1) {
 			const node = nodes[i];
+			const indent = get_indent(state, node, element);
 			if (node.expression) {
 				let body = '';
 				if (node.expression.type === 'ArrowFunctionExpression') {
@@ -638,19 +642,20 @@ function handle_events(node, state) {
 						/** @type {number} */ (node.expression.end)
 					)}();`;
 				}
-				// TODO check how many indents needed
+
 				for (const modifier of node.modifiers) {
 					if (modifier === 'stopPropagation') {
-						body = `\n${state.indent}${payload_name}.stopPropagation();\n${body}`;
+						body = `\n${indent}${payload_name}.stopPropagation();\n${body}`;
 					} else if (modifier === 'preventDefault') {
-						body = `\n${state.indent}${payload_name}.preventDefault();\n${body}`;
+						body = `\n${indent}${payload_name}.preventDefault();\n${body}`;
 					} else if (modifier === 'stopImmediatePropagation') {
-						body = `\n${state.indent}${payload_name}.stopImmediatePropagation();\n${body}`;
+						body = `\n${indent}${payload_name}.stopImmediatePropagation();\n${body}`;
 					} else {
-						body = `\n${state.indent}// @migration-task: incorporate ${modifier} modifier\n${body}`;
+						body = `\n${indent}// @migration-task: incorporate ${modifier} modifier\n${body}`;
 					}
 				}
-				prepend += `\n${state.indent}${body}\n`;
+
+				prepend += `\n${indent}${body}\n`;
 			} else {
 				if (!local) {
 					local = state.scope.generate(`on${node.name}`);
@@ -663,7 +668,7 @@ function handle_events(node, state) {
 						type: '(event: any) => void'
 					});
 				}
-				prepend += `\n${state.indent}${local}?.(${payload_name});\n`;
+				prepend += `\n${indent}${local}?.(${payload_name});\n`;
 			}
 
 			state.str.remove(node.start, node.end);
@@ -683,15 +688,17 @@ function handle_events(node, state) {
 				state.str.appendRight(last.start + last.name.length + 3, 'capture');
 			}
 
+			const indent = get_indent(state, last, element);
+
 			for (const modifier of last.modifiers) {
 				if (modifier === 'stopPropagation') {
-					prepend += `\n${state.indent}${payload_name}.stopPropagation();\n`;
+					prepend += `\n${indent}${payload_name}.stopPropagation();\n`;
 				} else if (modifier === 'preventDefault') {
-					prepend += `\n${state.indent}${payload_name}.preventDefault();\n`;
+					prepend += `\n${indent}${payload_name}.preventDefault();\n`;
 				} else if (modifier === 'stopImmediatePropagation') {
-					prepend += `\n${state.indent}${payload_name}.stopImmediatePropagation();\n`;
+					prepend += `\n${indent}${payload_name}.stopImmediatePropagation();\n`;
 				} else if (modifier !== 'capture') {
-					prepend += `\n${state.indent}// @migration-task: incorporate ${modifier} modifier\n`;
+					prepend += `\n${indent}// @migration-task: incorporate ${modifier} modifier\n`;
 				}
 			}
 
@@ -723,17 +730,20 @@ function handle_events(node, state) {
 					pos = /** @type {number} */ (pos) + (needs_curlies ? 0 : 1);
 					if (needs_curlies && state.str.original[pos - 1] === '(') {
 						// Prettier does something like on:click={() => (foo = true)}, we need to remove the braces in this case
-						state.str.update(pos - 1, pos, `{${prepend}${state.indent}`);
-						state.str.update(end, end + 1, '\n}');
+						state.str.update(pos - 1, pos, `{${prepend}${indent}`);
+						state.str.update(end, end + 1, `\n${indent.slice(state.indent.length)}}`);
 					} else {
-						state.str.prependRight(pos, `${needs_curlies ? '{' : ''}${prepend}${state.indent}`);
-						state.str.appendRight(end, `\n${needs_curlies ? '}' : ''}`);
+						state.str.prependRight(pos, `${needs_curlies ? '{' : ''}${prepend}${indent}`);
+						state.str.appendRight(
+							end,
+							`\n${indent.slice(state.indent.length)}${needs_curlies ? '}' : ''}`
+						);
 					}
 				} else {
 					state.str.update(
 						/** @type {number} */ (last.expression.start),
 						/** @type {number} */ (last.expression.end),
-						`(${payload_name}) => {${prepend}\n${state.indent}${state.str.original.substring(
+						`(${payload_name}) => {${prepend}\n${indent}${state.str.original.substring(
 							/** @type {number} */ (last.expression.start),
 							/** @type {number} */ (last.expression.end)
 						)}?.(${payload_name});\n}`
@@ -769,6 +779,29 @@ function handle_events(node, state) {
 			state.str.update(last.start, last.end, replacement);
 		}
 	}
+}
+
+/**
+ * Returns the next indentation level of the first node that has all-whitespace before it
+ * @param {State} state
+ * @param {Array<{start: number; end: number}>} nodes
+ */
+function get_indent(state, ...nodes) {
+	let indent = state.indent;
+
+	for (const node of nodes) {
+		const line_start = state.str.original.lastIndexOf('\n', node.start);
+		indent = state.str.original.substring(line_start + 1, node.start);
+
+		if (indent.trim() === '') {
+			indent = state.indent + indent;
+			return indent;
+		} else {
+			indent = state.indent;
+		}
+	}
+
+	return indent;
 }
 
 /**
