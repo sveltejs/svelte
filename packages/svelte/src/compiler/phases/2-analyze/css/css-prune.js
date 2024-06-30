@@ -1,11 +1,13 @@
+/** @import { Visitors } from 'zimmerframe' */
+/** @import * as Compiler from '#compiler' */
 import { walk } from 'zimmerframe';
 import { get_possible_values } from './utils.js';
 import { regex_ends_with_whitespace, regex_starts_with_whitespace } from '../../patterns.js';
 
 /**
  * @typedef {{
- *   stylesheet: import('#compiler').Css.StyleSheet;
- *   element: import('#compiler').RegularElement | import('#compiler').SvelteElement;
+ *   stylesheet: Compiler.Css.StyleSheet;
+ *   element: Compiler.RegularElement | Compiler.SvelteElement;
  * }} State
  */
 /** @typedef {NODE_PROBABLY_EXISTS | NODE_DEFINITELY_EXISTS} NodeExistsValue */
@@ -18,7 +20,7 @@ const whitelist_attribute_selector = new Map([
 	['dialog', ['open']]
 ]);
 
-/** @type {import('#compiler').Css.Combinator} */
+/** @type {Compiler.Css.Combinator} */
 const descendant_combinator = {
 	type: 'Combinator',
 	name: ' ',
@@ -26,7 +28,7 @@ const descendant_combinator = {
 	end: -1
 };
 
-/** @type {import('#compiler').Css.RelativeSelector} */
+/** @type {Compiler.Css.RelativeSelector} */
 const nesting_selector = {
 	type: 'RelativeSelector',
 	start: -1,
@@ -49,14 +51,14 @@ const nesting_selector = {
 
 /**
  *
- * @param {import('#compiler').Css.StyleSheet} stylesheet
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
+ * @param {Compiler.Css.StyleSheet} stylesheet
+ * @param {Compiler.RegularElement | Compiler.SvelteElement} element
  */
 export function prune(stylesheet, element) {
 	walk(stylesheet, { stylesheet, element }, visitors);
 }
 
-/** @type {import('zimmerframe').Visitors<import('#compiler').Css.Node, State>} */
+/** @type {Visitors<Compiler.Css.Node, State>} */
 const visitors = {
 	Rule(node, context) {
 		if (node.metadata.is_global_block) {
@@ -87,7 +89,7 @@ const visitors = {
 		if (
 			apply_selector(
 				selectors,
-				/** @type {import('#compiler').Css.Rule} */ (node.metadata.rule),
+				/** @type {Compiler.Css.Rule} */ (node.metadata.rule),
 				context.state.element,
 				context.state.stylesheet
 			)
@@ -104,7 +106,7 @@ const visitors = {
 
 /**
  * Discard trailing `:global(...)` selectors, these are unused for scoping purposes
- * @param {import('#compiler').Css.ComplexSelector} node
+ * @param {Compiler.Css.ComplexSelector} node
  */
 function truncate(node) {
 	const i = node.children.findLastIndex(({ metadata }) => {
@@ -115,10 +117,10 @@ function truncate(node) {
 }
 
 /**
- * @param {import('#compiler').Css.RelativeSelector[]} relative_selectors
- * @param {import('#compiler').Css.Rule} rule
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
- * @param {import('#compiler').Css.StyleSheet} stylesheet
+ * @param {Compiler.Css.RelativeSelector[]} relative_selectors
+ * @param {Compiler.Css.Rule} rule
+ * @param {Compiler.RegularElement | Compiler.SvelteElement} element
+ * @param {Compiler.Css.StyleSheet} stylesheet
  * @returns {boolean}
  */
 function apply_selector(relative_selectors, rule, element, stylesheet) {
@@ -144,7 +146,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 		switch (name) {
 			case ' ':
 			case '>': {
-				let parent = /** @type {import('#compiler').TemplateNode | null} */ (element.parent);
+				let parent = /** @type {Compiler.TemplateNode | null} */ (element.parent);
 
 				let parent_matched = false;
 				let crossed_component_boundary = false;
@@ -167,7 +169,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 						if (name === '>') return parent_matched;
 					}
 
-					parent = /** @type {import('#compiler').TemplateNode | null} */ (parent.parent);
+					parent = /** @type {Compiler.TemplateNode | null} */ (parent.parent);
 				}
 
 				return parent_matched || parent_selectors.every((selector) => is_global(selector, rule));
@@ -218,8 +220,8 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 /**
  * Mark both the compound selector and the node it selects as encapsulated,
  * for transformation in a later step
- * @param {import('#compiler').Css.RelativeSelector} relative_selector
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
+ * @param {Compiler.Css.RelativeSelector} relative_selector
+ * @param {Compiler.RegularElement | Compiler.SvelteElement} element
  */
 function mark(relative_selector, element) {
 	relative_selector.metadata.scoped = true;
@@ -231,8 +233,8 @@ function mark(relative_selector, element) {
  * it's a `:global(...)` or unscopeable selector, or
  * is an `:is(...)` or `:where(...)` selector that contains
  * a global selector
- * @param {import('#compiler').Css.RelativeSelector} selector
- * @param {import('#compiler').Css.Rule} rule
+ * @param {Compiler.Css.RelativeSelector} selector
+ * @param {Compiler.Css.Rule} rule
  */
 function is_global(selector, rule) {
 	if (selector.metadata.is_global || selector.metadata.is_global_like) {
@@ -240,7 +242,7 @@ function is_global(selector, rule) {
 	}
 
 	for (const s of selector.selectors) {
-		/** @type {import('#compiler').Css.SelectorList | null} */
+		/** @type {Compiler.Css.SelectorList | null} */
 		let selector_list = null;
 		let owner = rule;
 
@@ -251,7 +253,7 @@ function is_global(selector, rule) {
 		}
 
 		if (s.type === 'NestingSelector') {
-			owner = /** @type {import('#compiler').Css.Rule} */ (rule.metadata.parent_rule);
+			owner = /** @type {Compiler.Css.Rule} */ (rule.metadata.parent_rule);
 			selector_list = owner.prelude;
 		}
 
@@ -274,10 +276,10 @@ const regex_backslash_and_following_character = /\\(.)/g;
 /**
  * Ensure that `element` satisfies each simple selector in `relative_selector`
  *
- * @param {import('#compiler').Css.RelativeSelector} relative_selector
- * @param {import('#compiler').Css.Rule} rule
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
- * @param {import('#compiler').Css.StyleSheet} stylesheet
+ * @param {Compiler.Css.RelativeSelector} relative_selector
+ * @param {Compiler.Css.Rule} rule
+ * @param {Compiler.RegularElement | Compiler.SvelteElement} element
+ * @param {Compiler.Css.StyleSheet} stylesheet
  * @returns {boolean}
  */
 function relative_selector_might_apply_to_node(relative_selector, rule, element, stylesheet) {
@@ -293,7 +295,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				}
 
 				if (name === 'global' && relative_selector.selectors.length === 1) {
-					const args = /** @type {import('#compiler').Css.SelectorList} */ (selector.args);
+					const args = /** @type {Compiler.Css.SelectorList} */ (selector.args);
 					const complex_selector = args.children[0];
 					return apply_selector(complex_selector.children, rule, element, stylesheet);
 				}
@@ -373,7 +375,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 			case 'NestingSelector': {
 				let matched = false;
 
-				const parent = /** @type {import('#compiler').Css.Rule} */ (rule.metadata.parent_rule);
+				const parent = /** @type {Compiler.Css.Rule} */ (rule.metadata.parent_rule);
 
 				for (const complex_selector of parent.prelude.children) {
 					if (apply_selector(truncate(complex_selector), parent, element, stylesheet)) {
@@ -425,7 +427,7 @@ function test_attribute(operator, expected_value, case_insensitive, value) {
 }
 
 /**
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
+ * @param {Compiler.RegularElement | Compiler.SvelteElement} node
  * @param {string} name
  * @param {string | null} expected_value
  * @param {string | null} operator
@@ -535,11 +537,11 @@ function unquote(str) {
 }
 
 /**
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
- * @returns {import('#compiler').RegularElement | import('#compiler').SvelteElement | null}
+ * @param {Compiler.RegularElement | Compiler.SvelteElement} node
+ * @returns {Compiler.RegularElement | Compiler.SvelteElement | null}
  */
 function get_element_parent(node) {
-	/** @type {import('#compiler').SvelteNode | null} */
+	/** @type {Compiler.SvelteNode | null} */
 	let parent = node;
 	while (
 		// @ts-expect-error TODO figure out a more elegant solution
@@ -569,11 +571,11 @@ function get_element_parent(node) {
  * <h1>Heading 1</h1>
  * <h2>Heading 2</h2>
  * ```
- * @param {import('#compiler').SvelteNode} node
- * @returns {import('#compiler').SvelteNode}
+ * @param {Compiler.SvelteNode} node
+ * @returns {Compiler.SvelteNode}
  */
 function find_previous_sibling(node) {
-	/** @type {import('#compiler').SvelteNode} */
+	/** @type {Compiler.SvelteNode} */
 	let current_node = node;
 
 	while (
@@ -602,15 +604,15 @@ function find_previous_sibling(node) {
 }
 
 /**
- * @param {import('#compiler').SvelteNode} node
+ * @param {Compiler.SvelteNode} node
  * @param {boolean} adjacent_only
- * @returns {Map<import('#compiler').RegularElement | import('#compiler').SvelteElement | import('#compiler').SlotElement | import('#compiler').RenderTag, NodeExistsValue>}
+ * @returns {Map<Compiler.RegularElement | Compiler.SvelteElement | Compiler.SlotElement | Compiler.RenderTag, NodeExistsValue>}
  */
 function get_possible_element_siblings(node, adjacent_only) {
-	/** @type {Map<import('#compiler').RegularElement | import('#compiler').SvelteElement | import('#compiler').SlotElement | import('#compiler').RenderTag, NodeExistsValue>} */
+	/** @type {Map<Compiler.RegularElement | Compiler.SvelteElement | Compiler.SlotElement | Compiler.RenderTag, NodeExistsValue>} */
 	const result = new Map();
 
-	/** @type {import('#compiler').SvelteNode} */
+	/** @type {Compiler.SvelteNode} */
 	let prev = node;
 	while ((prev = find_previous_sibling(prev))) {
 		if (prev.type === 'RegularElement') {
@@ -642,7 +644,7 @@ function get_possible_element_siblings(node, adjacent_only) {
 	}
 
 	if (!prev || !adjacent_only) {
-		/** @type {import('#compiler').SvelteNode | null} */
+		/** @type {Compiler.SvelteNode | null} */
 		let parent = node;
 
 		while (
@@ -669,12 +671,12 @@ function get_possible_element_siblings(node, adjacent_only) {
 }
 
 /**
- * @param {import('#compiler').EachBlock | import('#compiler').IfBlock | import('#compiler').AwaitBlock} relative_selector
+ * @param {Compiler.EachBlock | Compiler.IfBlock | Compiler.AwaitBlock} relative_selector
  * @param {boolean} adjacent_only
- * @returns {Map<import('#compiler').RegularElement, NodeExistsValue>}
+ * @returns {Map<Compiler.RegularElement, NodeExistsValue>}
  */
 function get_possible_last_child(relative_selector, adjacent_only) {
-	/** @typedef {Map<import('#compiler').RegularElement, NodeExistsValue>} NodeMap */
+	/** @typedef {Map<Compiler.RegularElement, NodeExistsValue>} NodeMap */
 
 	/** @type {NodeMap} */
 	const result = new Map();
@@ -776,7 +778,7 @@ function higher_existence(exist1, exist2) {
 	return exist1 > exist2 ? exist1 : exist2;
 }
 
-/** @param {Map<import('#compiler').RegularElement, NodeExistsValue>} result */
+/** @param {Map<Compiler.RegularElement, NodeExistsValue>} result */
 function mark_as_probably(result) {
 	for (const key of result.keys()) {
 		result.set(key, NODE_PROBABLY_EXISTS);
@@ -784,11 +786,11 @@ function mark_as_probably(result) {
 }
 
 /**
- * @param {import('#compiler').SvelteNode[]} children
+ * @param {Compiler.SvelteNode[]} children
  * @param {boolean} adjacent_only
  */
 function loop_child(children, adjacent_only) {
-	/** @type {Map<import('#compiler').RegularElement, NodeExistsValue>} */
+	/** @type {Map<Compiler.RegularElement, NodeExistsValue>} */
 	const result = new Map();
 	for (let i = children.length - 1; i >= 0; i--) {
 		const child = children[i];

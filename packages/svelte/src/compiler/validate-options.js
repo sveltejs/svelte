@@ -1,3 +1,4 @@
+/** @import { ModuleCompileOptions, ValidatedModuleCompileOptions, CompileOptions, ValidatedCompileOptions } from '#compiler' */
 import * as e from './errors.js';
 import * as w from './warnings.js';
 
@@ -32,14 +33,14 @@ const common = {
 };
 
 export const validate_module_options =
-	/** @type {Validator<import('#compiler').ModuleCompileOptions, import('#compiler').ValidatedModuleCompileOptions>} */ (
+	/** @type {Validator<ModuleCompileOptions, ValidatedModuleCompileOptions>} */ (
 		object({
 			...common
 		})
 	);
 
 export const validate_component_options =
-	/** @type {Validator<import('#compiler').CompileOptions, import('#compiler').ValidatedCompileOptions>} */ (
+	/** @type {Validator<CompileOptions, ValidatedCompileOptions>} */ (
 		object({
 			...common,
 

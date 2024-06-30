@@ -1,3 +1,4 @@
+/** @import { CompileError } from '#compiler' */
 import * as state from './state.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
@@ -9,13 +10,13 @@ export class CompileError extends Error {
 
 	filename = state.filename;
 
-	/** @type {import('#compiler').CompileError['position']} */
+	/** @type {CompileError['position']} */
 	position = undefined;
 
-	/** @type {import('#compiler').CompileError['start']} */
+	/** @type {CompileError['start']} */
 	start = undefined;
 
-	/** @type {import('#compiler').CompileError['end']} */
+	/** @type {CompileError['end']} */
 	end = undefined;
 
 	/**

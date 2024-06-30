@@ -1,3 +1,4 @@
+/** @import { TaskCallback, Task, TaskEntry } from '#client' */
 import { raf } from './timing.js';
 
 // TODO move this into timing.js where it probably belongs
@@ -22,11 +23,11 @@ function run_tasks(now) {
 /**
  * Creates a new task that runs on each raf frame
  * until it returns a falsy value or is aborted
- * @param {import('#client').TaskCallback} callback
- * @returns {import('#client').Task}
+ * @param {TaskCallback} callback
+ * @returns {Task}
  */
 export function loop(callback) {
-	/** @type {import('#client').TaskEntry} */
+	/** @type {TaskEntry} */
 	let task;
 
 	if (raf.tasks.size === 0) {

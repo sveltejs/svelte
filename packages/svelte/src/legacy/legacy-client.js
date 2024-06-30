@@ -1,3 +1,4 @@
+/** @import { ComponentConstructorOptions, ComponentType, SvelteComponent, Component } from 'svelte' */
 import { proxy } from '../internal/client/proxy.js';
 import { user_pre_effect } from '../internal/client/reactivity/effects.js';
 import { hydrate, mount, unmount } from '../internal/client/render.js';
@@ -13,13 +14,13 @@ import { define_property } from '../internal/client/utils.js';
  * @template {Record<string, any>} Events
  * @template {Record<string, any>} Slots
  *
- * @param {import('svelte').ComponentConstructorOptions<Props> & {
- * 	component: import('svelte').ComponentType<import('svelte').SvelteComponent<Props, Events, Slots>> | import('svelte').Component<Props>;
+ * @param {ComponentConstructorOptions<Props> & {
+ * 	component: ComponentType<SvelteComponent<Props, Events, Slots>> | Component<Props>;
  * 	immutable?: boolean;
  * 	hydrate?: boolean;
  * 	recover?: boolean;
  * }} options
- * @returns {import('svelte').SvelteComponent<Props, Events, Slots> & Exports}
+ * @returns {SvelteComponent<Props, Events, Slots> & Exports}
  */
 export function createClassComponent(options) {
 	// @ts-expect-error $$prop_def etc are not actually defined
@@ -36,8 +37,8 @@ export function createClassComponent(options) {
  * @template {Record<string, any>} Events
  * @template {Record<string, any>} Slots
  *
- * @param {import('svelte').SvelteComponent<Props, Events, Slots> | import('svelte').Component<Props>} component
- * @returns {import('svelte').ComponentType<import('svelte').SvelteComponent<Props, Events, Slots> & Exports>}
+ * @param {SvelteComponent<Props, Events, Slots> | Component<Props>} component
+ * @returns {ComponentType<SvelteComponent<Props, Events, Slots> & Exports>}
  */
 export function asClassComponent(component) {
 	// @ts-expect-error $$prop_def etc are not actually defined
@@ -60,7 +61,7 @@ class Svelte4Component {
 	#instance;
 
 	/**
-	 * @param {import('svelte').ComponentConstructorOptions & {
+	 * @param {ComponentConstructorOptions & {
 	 *  component: any;
 	 * 	immutable?: boolean;
 	 * 	hydrate?: boolean;

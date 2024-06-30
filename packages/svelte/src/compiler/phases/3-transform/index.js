@@ -1,3 +1,5 @@
+/** @import { ValidatedCompileOptions, CompileResult, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { ComponentAnalysis, Analysis } from '../types' */
 import { print } from 'esrap';
 import { VERSION } from '../../../version.js';
 import { server_component, server_module } from './server/transform-server.js';
@@ -7,10 +9,10 @@ import { merge_with_preprocessor_map, get_source_name } from '../../utils/mapped
 import * as state from '../../state.js';
 
 /**
- * @param {import('../types').ComponentAnalysis} analysis
+ * @param {ComponentAnalysis} analysis
  * @param {string} source
- * @param {import('#compiler').ValidatedCompileOptions} options
- * @returns {import('#compiler').CompileResult}
+ * @param {ValidatedCompileOptions} options
+ * @returns {CompileResult}
  */
 export function transform_component(analysis, source, options) {
 	if (options.generate === false) {
@@ -55,10 +57,10 @@ export function transform_component(analysis, source, options) {
 }
 
 /**
- * @param {import('../types').Analysis} analysis
+ * @param {Analysis} analysis
  * @param {string} source
- * @param {import('#compiler').ValidatedModuleCompileOptions} options
- * @returns {import('#compiler').CompileResult}
+ * @param {ValidatedModuleCompileOptions} options
+ * @returns {CompileResult}
  */
 export function transform_module(analysis, source, options) {
 	if (options.generate === false) {

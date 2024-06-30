@@ -1,3 +1,4 @@
+/** @import { CompileOptions } from '#compiler' */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import glob from 'tiny-glob/sync.js';
@@ -53,7 +54,7 @@ export function create_deferred() {
  *
  * @param {string} cwd
  * @param {'client' | 'server'} generate
- * @param {Partial<import('#compiler').CompileOptions>} compileOptions
+ * @param {Partial<CompileOptions>} compileOptions
  * @param {boolean} [output_map]
  * @param {any} [preprocessor]
  */

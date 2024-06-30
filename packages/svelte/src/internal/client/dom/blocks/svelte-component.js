@@ -1,18 +1,19 @@
+/** @import { TemplateNode, Dom, Effect } from '#client' */
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
 
 /**
  * @template P
  * @template {(props: P) => void} C
- * @param {import('#client').TemplateNode} anchor
+ * @param {TemplateNode} anchor
  * @param {() => C} get_component
- * @param {(component: C) => import('#client').Dom | void} render_fn
+ * @param {(component: C) => Dom | void} render_fn
  * @returns {void}
  */
 export function component(anchor, get_component, render_fn) {
 	/** @type {C} */
 	let component;
 
-	/** @type {import('#client').Effect | null} */
+	/** @type {Effect | null} */
 	let effect;
 
 	block(anchor, 0, () => {

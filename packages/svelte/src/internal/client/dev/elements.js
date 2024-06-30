@@ -1,10 +1,11 @@
+/** @import { SourceLocation } from '../../../compiler/phases/3-transform/client/types.js' */
 import { HYDRATION_END, HYDRATION_START } from '../../../constants.js';
 import { hydrating } from '../dom/hydration.js';
 
 /**
  * @param {any} fn
  * @param {string} filename
- * @param {import('../../../compiler/phases/3-transform/client/types.js').SourceLocation[]} locations
+ * @param {SourceLocation[]} locations
  * @returns {any}
  */
 export function add_locations(fn, filename, locations) {
@@ -21,7 +22,7 @@ export function add_locations(fn, filename, locations) {
 /**
  * @param {Element} element
  * @param {string} filename
- * @param {import('../../../compiler/phases/3-transform/client/types.js').SourceLocation} location
+ * @param {SourceLocation} location
  */
 function assign_location(element, filename, location) {
 	// @ts-expect-error
@@ -37,7 +38,7 @@ function assign_location(element, filename, location) {
 /**
  * @param {Node | null} node
  * @param {string} filename
- * @param {import('../../../compiler/phases/3-transform/client/types.js').SourceLocation[]} locations
+ * @param {SourceLocation[]} locations
  */
 function assign_locations(node, filename, locations) {
 	var i = 0;

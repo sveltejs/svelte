@@ -1,3 +1,4 @@
+/** @import * as Public from './public' */
 /** @param {number} x */
 const linear = (x) => x;
 
@@ -29,8 +30,8 @@ function split_css_unit(value) {
  *
  * https://svelte.dev/docs/svelte-transition#blur
  * @param {Element} node
- * @param {import('./public').BlurParams} [params]
- * @returns {import('./public').TransitionConfig}
+ * @param {Public.BlurParams} [params]
+ * @returns {Public.TransitionConfig}
  */
 export function blur(
 	node,
@@ -54,8 +55,8 @@ export function blur(
  *
  * https://svelte.dev/docs/svelte-transition#fade
  * @param {Element} node
- * @param {import('./public').FadeParams} [params]
- * @returns {import('./public').TransitionConfig}
+ * @param {Public.FadeParams} [params]
+ * @returns {Public.TransitionConfig}
  */
 export function fade(node, { delay = 0, duration = 400, easing = linear } = {}) {
 	const o = +getComputedStyle(node).opacity;
@@ -72,8 +73,8 @@ export function fade(node, { delay = 0, duration = 400, easing = linear } = {}) 
  *
  * https://svelte.dev/docs/svelte-transition#fly
  * @param {Element} node
- * @param {import('./public').FlyParams} [params]
- * @returns {import('./public').TransitionConfig}
+ * @param {Public.FlyParams} [params]
+ * @returns {Public.TransitionConfig}
  */
 export function fly(
 	node,
@@ -100,8 +101,8 @@ export function fly(
  *
  * https://svelte.dev/docs/svelte-transition#slide
  * @param {Element} node
- * @param {import('./public').SlideParams} [params]
- * @returns {import('./public').TransitionConfig}
+ * @param {Public.SlideParams} [params]
+ * @returns {Public.TransitionConfig}
  */
 export function slide(node, { delay = 0, duration = 400, easing = cubic_out, axis = 'y' } = {}) {
 	const style = getComputedStyle(node);
@@ -144,8 +145,8 @@ export function slide(node, { delay = 0, duration = 400, easing = cubic_out, axi
  *
  * https://svelte.dev/docs/svelte-transition#scale
  * @param {Element} node
- * @param {import('./public').ScaleParams} [params]
- * @returns {import('./public').TransitionConfig}
+ * @param {Public.ScaleParams} [params]
+ * @returns {Public.TransitionConfig}
  */
 export function scale(
 	node,
@@ -172,8 +173,8 @@ export function scale(
  *
  * https://svelte.dev/docs/svelte-transition#draw
  * @param {SVGElement & { getTotalLength(): number }} node
- * @param {import('./public').DrawParams} [params]
- * @returns {import('./public').TransitionConfig}
+ * @param {Public.DrawParams} [params]
+ * @returns {Public.TransitionConfig}
  */
 export function draw(node, { delay = 0, speed, duration, easing = cubic_in_out } = {}) {
 	let len = node.getTotalLength();
@@ -218,10 +219,10 @@ function assign(tar, src) {
  * The `crossfade` function creates a pair of [transitions](https://svelte.dev/docs#template-syntax-element-directives-transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
  *
  * https://svelte.dev/docs/svelte-transition#crossfade
- * @param {import('./public').CrossfadeParams & {
- * 	fallback?: (node: Element, params: import('./public').CrossfadeParams, intro: boolean) => import('./public').TransitionConfig;
+ * @param {Public.CrossfadeParams & {
+ * 	fallback?: (node: Element, params: Public.CrossfadeParams, intro: boolean) => Public.TransitionConfig;
  * }} params
- * @returns {[(node: any, params: import('./public').CrossfadeParams & { key: any; }) => () => import('./public').TransitionConfig, (node: any, params: import('./public').CrossfadeParams & { key: any; }) => () => import('./public').TransitionConfig]}
+ * @returns {[(node: any, params: Public.CrossfadeParams & { key: any; }) => () => Public.TransitionConfig, (node: any, params: Public.CrossfadeParams & { key: any; }) => () => Public.TransitionConfig]}
  */
 export function crossfade({ fallback, ...defaults }) {
 	/** @type {Map<any, Element>} */
@@ -232,8 +233,8 @@ export function crossfade({ fallback, ...defaults }) {
 	/**
 	 * @param {Element} from_node
 	 * @param {Element} node
-	 * @param {import('./public').CrossfadeParams} params
-	 * @returns {import('./public').TransitionConfig}
+	 * @param {Public.CrossfadeParams} params
+	 * @returns {Public.TransitionConfig}
 	 */
 	function crossfade(from_node, node, params) {
 		const {
@@ -269,7 +270,7 @@ export function crossfade({ fallback, ...defaults }) {
 	 * @param {Map<any, Element>} items
 	 * @param {Map<any, Element>} counterparts
 	 * @param {boolean} intro
-	 * @returns {(node: any, params: import('./public').CrossfadeParams & { key: any; }) => () => import('./public').TransitionConfig}
+	 * @returns {(node: any, params: Public.CrossfadeParams & { key: any; }) => () => Public.TransitionConfig}
 	 */
 	function transition(items, counterparts, intro) {
 		// @ts-expect-error TODO improve typings (are the public types wrong?)

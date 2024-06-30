@@ -1,3 +1,4 @@
+/** @import { Source, Effect } from '#client' */
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { set_should_intro } from '../render.js';
 import { get } from '../runtime.js';
@@ -5,7 +6,7 @@ import { check_target } from './legacy.js';
 
 /**
  * @template {(anchor: Comment, props: any) => any} Component
- * @param {import("#client").Source<Component>} source
+ * @param {Source<Component>} source
  */
 export function hmr(source) {
 	/**
@@ -15,7 +16,7 @@ export function hmr(source) {
 	return function (anchor, props) {
 		let instance = {};
 
-		/** @type {import("#client").Effect} */
+		/** @type {Effect} */
 		let effect;
 
 		block(anchor, 0, () => {
