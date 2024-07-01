@@ -1,21 +1,20 @@
+/** @import { Location } from 'locate-character' */
 import * as state from './state.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
 
-// interface is duplicated between here (used internally) and ./interfaces.js
-// (exposed publicly), and I'm not sure how to avoid that
-export class CompileError extends Error {
+export class InternalCompileError extends Error {
 	name = 'CompileError';
 
 	filename = state.filename;
 
-	/** @type {import('#compiler').CompileError['position']} */
+	/** @type {[number, number] | undefined} */
 	position = undefined;
 
-	/** @type {import('#compiler').CompileError['start']} */
+	/** @type {Location | undefined} */
 	start = undefined;
 
-	/** @type {import('#compiler').CompileError['end']} */
+	/** @type {Location | undefined} */
 	end = undefined;
 
 	/**
@@ -63,7 +62,7 @@ function e(node, code, message) {
 	const start = typeof node === 'number' ? node : node?.start;
 	const end = typeof node === 'number' ? node : node?.end;
 
-	throw new CompileError(
+	throw new InternalCompileError(
 		code,
 		message,
 		start !== undefined && end !== undefined ? [start, end] : undefined
