@@ -2131,37 +2131,37 @@ declare module 'svelte/motion' {
 }
 
 declare module 'svelte/reactivity' {
-	class SvelteDate extends Date {
+	class SvelteDate_1 extends Date {
 		
 		constructor(...values: any[]);
 		#private;
 	}
-	class SvelteSet<T> extends Set<T> {
+	class SvelteSet_1<T> extends Set<T> {
 		
 		constructor(value?: Iterable<T> | null | undefined);
 		
 		add(value: T): this;
 		#private;
 	}
-	class SvelteMap<K, V> extends Map<K, V> {
+	class SvelteMap_1<K, V> extends Map<K, V> {
 		
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
 		
 		set(key: K, value: V): this;
 		#private;
 	}
-	class SvelteURL extends URL {
-		get searchParams(): SvelteURLSearchParams;
+	class SvelteURL_1 extends URL {
+		get searchParams(): SvelteURLSearchParams_1;
 		#private;
 	}
-	class SvelteURLSearchParams extends URLSearchParams {
+	class SvelteURLSearchParams_1 extends URLSearchParams {
 		
 		[REPLACE](params: URLSearchParams): void;
 		#private;
 	}
 	const REPLACE: unique symbol;
 
-	export { SvelteDate, SvelteSet, SvelteMap, SvelteURL, SvelteURLSearchParams };
+	export { SvelteDate, SvelteDate_1 as Date, SvelteSet, SvelteSet_1 as Set, SvelteMap, SvelteMap_1 as Map, SvelteURL, SvelteURLSearchParams, SvelteURL_1 as URL, SvelteURLSearchParams_1 as URLSearchParams };
 }
 
 declare module 'svelte/server' {
