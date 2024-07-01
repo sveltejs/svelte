@@ -15,12 +15,12 @@ export function Set() {
 
 /** @deprecated Use `SvelteMap` instead */
 export function Map() {
-	throw new Error('Map has been removed, use DeprecatedMap instead.');
+	throw new Error('Map has been removed, use SvelteMap instead.');
 }
 
 /** @deprecated Use `SvelteURL` instead */
 export function URL() {
-	throw new Error('URL has been removed, use DeprecatedURL instead.');
+	throw new Error('URL has been removed, use SvelteURL instead.');
 }
 
 /** @deprecated Use `SvelteURLSearchParams` instead */

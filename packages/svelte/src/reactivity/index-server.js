@@ -5,4 +5,4 @@ export const SvelteURL = globalThis.URL;
 export const SvelteURLSearchParams = globalThis.URLSearchParams;
 
 // Deprecated
-export { Date, Set, Map, URL, URLSearchParams } from './index-client';
+export { Date, Set, Map, URL, URLSearchParams } from './index-client.js';
