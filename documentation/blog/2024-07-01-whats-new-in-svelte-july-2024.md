@@ -12,12 +12,11 @@ Let's jump in!
 ## What's new in Svelte
 Below, you'll find the highlights from the Svelte 5 release notes (now in [Release Candidate](https://www.npmjs.com/package/svelte?activeTab=versions)):
 
-- The new `on` import from `svelte/events` allows you to preserve the event order of a handler (**5.0.0-next.152**, [Docs](https://svelte-5-preview.vercel.app/docs/imports#svelte-events), [#11912](https://github.com/sveltejs/svelte/pull/11912))
-- Event handlers and bindings will now yield effect updates (Breaking Change, **5.0.0-next.140**, [#11706](https://github.com/sveltejs/svelte/pull/11706))
+- The new `on` import from `svelte/events` allows you to preserve the order in which event handlers are called in more situations (**5.0.0-next.152**, [Docs](https://svelte-5-preview.vercel.app/docs/imports#svelte-events), [#11912](https://github.com/sveltejs/svelte/pull/11912))
 - The `Component` type now represents the new shape of Svelte components (**5.0.0-next.143**, [#11775](https://github.com/sveltejs/svelte/pull/11775))
-- `<svelte:document>` now has both `activeElement` and `pointerLockElement` binds (**5.0.0-next.150**, [#11879](https://github.com/sveltejs/svelte/pull/11879))
+- `<svelte:document>` has new `activeElement` and `pointerLockElement` bindings (**5.0.0-next.150**, [#11879](https://github.com/sveltejs/svelte/pull/11879))
 - `<svelte:element>`, CSS custom property wrappers and string normalization have all been simplified and made more performant (**5.0.0-next.152**, [#11773](https://github.com/sveltejs/svelte/pull/11773), [#11948](https://github.com/sveltejs/svelte/pull/11948), [#11954](https://github.com/sveltejs/svelte/pull/11954), [#11792](https://github.com/sveltejs/svelte/pull/11792), [#11949](https://github.com/sveltejs/svelte/pull/11949))
-- `render`, `mount` and `hydrate` options are now actually optional (**5.0.0-next.163**, [Docs](https://svelte-5-preview.vercel.app/docs/imports#svelte), [#12111](https://github.com/sveltejs/svelte/pull/12111))
+- `render`, `mount` and `hydrate` options are now actually optional if no properties are required (**5.0.0-next.163**, [Docs](https://svelte-5-preview.vercel.app/docs/imports#svelte), [#12111](https://github.com/sveltejs/svelte/pull/12111))
 
 
 ## What's new in SvelteKit
