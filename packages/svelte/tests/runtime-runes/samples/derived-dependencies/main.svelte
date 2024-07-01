@@ -14,7 +14,7 @@
 {/if}
 
 <button onclick={() => {
-	data = data = {}
+	data = {}
 }}>hide</button>
 
 <button onclick={() => {
