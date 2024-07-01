@@ -653,9 +653,10 @@ function collect_parent_each_blocks(context) {
  * @param {import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf} node
  * @param {string} component_name
  * @param {import('../types.js').ComponentContext} context
+ * @param {import('estree').Expression} anchor
  * @returns {import('estree').Statement}
  */
-function serialize_inline_component(node, component_name, context) {
+function serialize_inline_component(node, component_name, context, anchor = context.state.node) {
 	/** @type {Array<import('estree').Property[] | import('estree').Expression>} */
 	const props_and_spreads = [];
 
@@ -946,13 +947,13 @@ function serialize_inline_component(node, component_name, context) {
 				node_id,
 				b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.expression))),
 				b.arrow(
-					[b.id(component_name)],
+					[b.id('$$anchor'), b.id(component_name)],
 					b.block([
 						...binding_initializers,
 						b.stmt(
 							context.state.options.dev
-								? b.call('$.validate_dynamic_component', b.thunk(prev(node_id)))
-								: prev(node_id)
+								? b.call('$.validate_dynamic_component', b.thunk(prev(b.id('$$anchor'))))
+								: prev(b.id('$$anchor'))
 						)
 					])
 				)
@@ -970,12 +971,12 @@ function serialize_inline_component(node, component_name, context) {
 		);
 
 		statements.push(
-			b.stmt(b.call('$.css_props', context.state.node, b.thunk(b.object(custom_css_props)))),
-			b.stmt(fn(b.member(context.state.node, b.id('lastChild'))))
+			b.stmt(b.call('$.css_props', anchor, b.thunk(b.object(custom_css_props)))),
+			b.stmt(fn(b.member(anchor, b.id('lastChild'))))
 		);
 	} else {
 		context.state.template.push('<!>');
-		statements.push(b.stmt(fn(context.state.node)));
+		statements.push(b.stmt(fn(anchor)));
 	}
 
 	return statements.length > 1 ? b.block(statements) : statements[0];
@@ -3025,7 +3026,7 @@ export const template_visitors = {
 	Component(node, context) {
 		if (node.metadata.dynamic) {
 			// Handle dynamic references to what seems like static inline components
-			const component = serialize_inline_component(node, '$$component', context);
+			const component = serialize_inline_component(node, '$$component', context, b.id('$$anchor'));
 			context.state.init.push(
 				b.stmt(
 					b.call(
@@ -3036,7 +3037,7 @@ export const template_visitors = {
 						b.thunk(
 							/** @type {import('estree').Expression} */ (context.visit(b.member_id(node.name)))
 						),
-						b.arrow([b.id('$$component')], b.block([component]))
+						b.arrow([b.id('$$anchor'), b.id('$$component')], b.block([component]))
 					)
 				)
 			);

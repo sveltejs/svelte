@@ -18,7 +18,7 @@ export function hmr(source) {
 		/** @type {import("#client").Effect} */
 		let effect;
 
-		block(null, 0, () => {
+		block(anchor, 0, () => {
 			const component = get(source);
 
 			if (effect) {
