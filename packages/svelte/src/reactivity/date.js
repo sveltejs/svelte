@@ -57,14 +57,14 @@ const write = [
 
 var inited = false;
 
-export class ReactiveDate extends Date {
+export class SvelteDate extends Date {
 	#raw_time = source(super.getTime());
 
 	// We init as part of the first instance so that we can treeshake this class
 	#init() {
 		if (!inited) {
 			inited = true;
-			const proto = ReactiveDate.prototype;
+			const proto = SvelteDate.prototype;
 			const date_proto = Date.prototype;
 
 			for (const method of read) {

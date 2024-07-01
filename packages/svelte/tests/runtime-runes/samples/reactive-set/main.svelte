@@ -1,7 +1,7 @@
 <script>
-	import { Set } from 'svelte/reactivity';
+	import { SvelteSet } from 'svelte/reactivity';
 
-	let state = new Set([0]);
+	let state = new SvelteSet([0]);
 </script>
 
 <button onclick={() => state.delete(0)}>delete initial</button>

@@ -4,7 +4,7 @@ import { increment } from './utils.js';
 
 const REPLACE = Symbol();
 
-export class ReactiveURL extends URL {
+export class SvelteURL extends URL {
 	#protocol = source(super.protocol);
 	#username = source(super.username);
 	#password = source(super.password);
@@ -12,7 +12,7 @@ export class ReactiveURL extends URL {
 	#port = source(super.port);
 	#pathname = source(super.pathname);
 	#hash = source(super.hash);
-	#searchParams = new ReactiveURLSearchParams();
+	#searchParams = new SvelteURLSearchParams();
 
 	/**
 	 * @param {string | URL} url
@@ -153,7 +153,7 @@ export class ReactiveURL extends URL {
 	}
 }
 
-export class ReactiveURLSearchParams extends URLSearchParams {
+export class SvelteURLSearchParams extends URLSearchParams {
 	#version = source(0);
 
 	/**

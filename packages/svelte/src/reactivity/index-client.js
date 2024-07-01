@@ -1,4 +1,4 @@
-export { ReactiveDate as Date } from './date.js';
-export { ReactiveSet as Set } from './set.js';
-export { ReactiveMap as Map } from './map.js';
-export { ReactiveURL as URL, ReactiveURLSearchParams as URLSearchParams } from './url.js';
+export { SvelteDate } from './date.js';
+export { SvelteSet } from './set.js';
+export { SvelteMap } from './map.js';
+export { SvelteURL, SvelteURLSearchParams } from './url.js';

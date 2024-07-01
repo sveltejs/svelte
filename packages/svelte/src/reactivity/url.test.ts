@@ -1,10 +1,10 @@
 import { render_effect, effect_root } from '../internal/client/reactivity/effects.js';
 import { flushSync } from '../index-client.js';
-import { ReactiveURL, ReactiveURLSearchParams } from './url.js';
+import { SvelteURL, SvelteURLSearchParams } from './url.js';
 import { assert, test } from 'vitest';
 
 test('url.hash', () => {
-	const url = new ReactiveURL('http://google.com');
+	const url = new SvelteURL('http://google.com');
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
@@ -32,7 +32,7 @@ test('url.hash', () => {
 });
 
 test('url.searchParams', () => {
-	const url = new ReactiveURL('https://svelte.dev?foo=bar&t=123');
+	const url = new SvelteURL('https://svelte.dev?foo=bar&t=123');
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
@@ -78,7 +78,7 @@ test('url.searchParams', () => {
 });
 
 test('URLSearchParams', () => {
-	const params = new ReactiveURLSearchParams();
+	const params = new SvelteURLSearchParams();
 	const log: any = [];
 
 	const cleanup = effect_root(() => {

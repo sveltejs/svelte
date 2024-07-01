@@ -1,5 +1,5 @@
-export const Date = globalThis.Date;
-export const Set = globalThis.Set;
-export const Map = globalThis.Map;
-export const URL = globalThis.URL;
-export const URLSearchParams = globalThis.URLSearchParams;
+export const SvelteDate = globalThis.Date;
+export const SvelteSet = globalThis.Set;
+export const SvelteMap = globalThis.Map;
+export const SvelteURL = globalThis.URL;
+export const SvelteURLSearchParams = globalThis.URLSearchParams;
