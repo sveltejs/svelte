@@ -1,7 +1,7 @@
 <script>
-	import { Map } from 'svelte/reactivity';
+	import { SvelteMap } from 'svelte/reactivity';
 
-	let state = new Map([[0, 0]]);
+	let state = new SvelteMap([[0, 0]]);
 </script>
 
 <button
