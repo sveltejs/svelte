@@ -1,0 +1,14 @@
+[
+	{
+		"code": "binding-custom-element",
+		"message": "Binding on custom element <my-element> is not checked. You need to ensure 'value' is a valid property.",
+		"start": {
+			"line": 6,
+			"column": 12
+		},
+		"end": {
+			"line": 6,
+			"column": 32
+		}
+	}
+]
