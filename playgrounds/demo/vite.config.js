@@ -2,8 +2,6 @@ import { defineConfig } from 'vite';
 import inspect from 'vite-plugin-inspect';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 
-const hmr = true;
-
 export default defineConfig({
 	build: {
 		minify: false
@@ -13,7 +11,7 @@ export default defineConfig({
 		inspect(),
 		svelte({
 			compilerOptions: {
-				hmr
+				hmr: true
 			}
 		})
 	],
