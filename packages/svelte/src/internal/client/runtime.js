@@ -774,7 +774,10 @@ export function get(signal) {
 		) {
 			if (current_dependencies === null) {
 				current_dependencies = [signal];
-			} else if (current_dependencies[current_dependencies.length - 1] !== signal) {
+			} else if (
+				current_dependencies[current_dependencies.length - 1] !== signal &&
+				!current_dependencies.includes(signal)
+			) {
 				current_dependencies.push(signal);
 			}
 		}
