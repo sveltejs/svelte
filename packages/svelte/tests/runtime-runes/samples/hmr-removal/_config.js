@@ -12,10 +12,10 @@ export default test({
 	test({ assert, target }) {
 		const button = target.querySelector('button');
 
-		flushSync(() => button.click());
+		flushSync(() => button?.click());
 		assert.htmlEqual(target.innerHTML, `<button>toggle</button><p>hello</p>`);
 
-		flushSync(() => button.click());
+		flushSync(() => button?.click());
 		assert.htmlEqual(target.innerHTML, `<button>toggle</button>`);
 	}
 });
