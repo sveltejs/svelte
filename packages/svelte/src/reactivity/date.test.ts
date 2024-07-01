@@ -1,6 +1,6 @@
 import { render_effect, effect_root } from '../internal/client/reactivity/effects.js';
 import { flushSync } from '../index-client.js';
-import { ReactiveDate } from './date.js';
+import { SvelteDate } from './date.js';
 import { assert, test } from 'vitest';
 
 const initial_date = new Date(2023, 0, 1, 0, 0, 0, 0);
@@ -9,7 +9,7 @@ const b = new Date(2025, 2, 3, 2, 2, 2, 2);
 const c = new Date(2026, 3, 4, 3, 3, 3, 3);
 
 test('date.setDate and date.setUTCDate', () => {
-	const date = new ReactiveDate(initial_date);
+	const date = new SvelteDate(initial_date);
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
@@ -52,7 +52,7 @@ test('date.setDate and date.setUTCDate', () => {
 });
 
 test('date.setFullYear and date.setUTCFullYear', () => {
-	const date = new ReactiveDate(initial_date);
+	const date = new SvelteDate(initial_date);
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
@@ -95,7 +95,7 @@ test('date.setFullYear and date.setUTCFullYear', () => {
 });
 
 test('date.setHours and date.setUTCHours', () => {
-	const date = new ReactiveDate(initial_date);
+	const date = new SvelteDate(initial_date);
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
@@ -138,7 +138,7 @@ test('date.setHours and date.setUTCHours', () => {
 });
 
 test('date.setMilliseconds and date.setUTCMilliseconds', () => {
-	const date = new ReactiveDate(initial_date);
+	const date = new SvelteDate(initial_date);
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
@@ -181,7 +181,7 @@ test('date.setMilliseconds and date.setUTCMilliseconds', () => {
 });
 
 test('date.setMinutes and date.setUTCMinutes', () => {
-	const date = new ReactiveDate(initial_date);
+	const date = new SvelteDate(initial_date);
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
@@ -224,7 +224,7 @@ test('date.setMinutes and date.setUTCMinutes', () => {
 });
 
 test('date.setMonth and date.setUTCMonth', () => {
-	const date = new ReactiveDate(initial_date);
+	const date = new SvelteDate(initial_date);
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
@@ -267,7 +267,7 @@ test('date.setMonth and date.setUTCMonth', () => {
 });
 
 test('date.setSeconds and date.setUTCSeconds', () => {
-	const date = new ReactiveDate(initial_date);
+	const date = new SvelteDate(initial_date);
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
@@ -310,7 +310,7 @@ test('date.setSeconds and date.setUTCSeconds', () => {
 });
 
 test('date.setTime', () => {
-	const date = new ReactiveDate(initial_date);
+	const date = new SvelteDate(initial_date);
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
@@ -338,7 +338,7 @@ test('date.setTime', () => {
 });
 
 test('date.setYear', () => {
-	const date = new ReactiveDate(initial_date);
+	const date = new SvelteDate(initial_date);
 	const log: any = [];
 
 	// @ts-expect-error
@@ -375,7 +375,7 @@ test('date.setYear', () => {
 });
 
 test('date.setSeconds - edge cases', () => {
-	const date = new ReactiveDate(initial_date);
+	const date = new SvelteDate(initial_date);
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
@@ -407,7 +407,7 @@ test('date.setSeconds - edge cases', () => {
 });
 
 test('Date propagated changes', () => {
-	const date = new ReactiveDate(initial_date);
+	const date = new SvelteDate(initial_date);
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
@@ -438,7 +438,7 @@ test('Date propagated changes', () => {
 });
 
 test('Date fine grained tests', () => {
-	const date = new ReactiveDate(initial_date);
+	const date = new SvelteDate(initial_date);
 
 	let changes: Record<string, boolean> = {
 		getFullYear: true,
@@ -556,5 +556,5 @@ test('Date fine grained tests', () => {
 });
 
 test('Date.instanceOf', () => {
-	assert.equal(new ReactiveDate() instanceof Date, true);
+	assert.equal(new SvelteDate() instanceof Date, true);
 });
