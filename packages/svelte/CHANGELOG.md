@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.169
+
+### Patch Changes
+
+- breaking: rename `svelte/reactivity` helpers to include `Svelte` prefix ([#12248](https://github.com/sveltejs/svelte/pull/12248))
+
+- fix: avoid duplicate signal dependencies ([#12245](https://github.com/sveltejs/svelte/pull/12245))
+
 ## 5.0.0-next.168
 
 ### Patch Changes
