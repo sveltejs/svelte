@@ -2132,15 +2132,15 @@ declare module 'svelte/motion' {
 
 declare module 'svelte/reactivity' {
 	/** @deprecated Use `SvelteDate` instead */
-	function DeprecatedDate(): void;
+	function Date_1(): void;
 	/** @deprecated Use `SvelteSet` instead */
-	function DeprecatedSet(): void;
+	function Set_1(): void;
 	/** @deprecated Use `SvelteMap` instead */
-	function DeprecatedMap(): void;
+	function Map_1(): void;
 	/** @deprecated Use `SvelteURL` instead */
-	function DeprecatedURL(): void;
+	function URL_1(): void;
 	/** @deprecated Use `SvelteURLSearchParams` instead */
-	function DeprecatedURLSearchParams(): void;
+	function URLSearchParams_1(): void;
 	class SvelteDate extends Date {
 		
 		constructor(...values: any[]);
@@ -2171,7 +2171,7 @@ declare module 'svelte/reactivity' {
 	}
 	const REPLACE: unique symbol;
 
-	export { DeprecatedDate as Date, DeprecatedSet as Set, DeprecatedMap as Map, DeprecatedURL as URL, DeprecatedURLSearchParams as URLSearchParams, SvelteDate, SvelteSet, SvelteMap, SvelteURL, SvelteURLSearchParams };
+	export { Date_1 as Date, Set_1 as Set, Map_1 as Map, URL_1 as URL, URLSearchParams_1 as URLSearchParams, SvelteDate, SvelteSet, SvelteMap, SvelteURL, SvelteURLSearchParams };
 }
 
 declare module 'svelte/server' {

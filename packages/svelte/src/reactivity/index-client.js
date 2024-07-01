@@ -4,33 +4,26 @@ export { SvelteMap } from './map.js';
 export { SvelteURL, SvelteURLSearchParams } from './url.js';
 
 /** @deprecated Use `SvelteDate` instead */
-function DeprecatedDate() {
-	throw new Error('Date is deprecated, use SvelteDate instead.');
+export function Date() {
+	throw new Error('Date has been removed, use SvelteDate instead.');
 }
 
 /** @deprecated Use `SvelteSet` instead */
-function DeprecatedSet() {
-	throw new Error('Set is deprecated, use SvelteSet instead.');
+export function Set() {
+	throw new Error('Set has been removed, use SvelteSet instead.');
 }
 
 /** @deprecated Use `SvelteMap` instead */
-function DeprecatedMap() {
-	throw new Error('Map is deprecated, use DeprecatedMap instead.');
+export function Map() {
+	throw new Error('Map has been removed, use DeprecatedMap instead.');
 }
 
 /** @deprecated Use `SvelteURL` instead */
-function DeprecatedURL() {
-	throw new Error('URL is deprecated, use DeprecatedURL instead.');
+export function URL() {
+	throw new Error('URL has been removed, use DeprecatedURL instead.');
 }
 
 /** @deprecated Use `SvelteURLSearchParams` instead */
-function DeprecatedURLSearchParams() {
-	throw new Error('URLSearchParams is deprecated, use SvelteURLSearchParams instead.');
+export function URLSearchParams() {
+	throw new Error('URLSearchParams has been removed, use SvelteURLSearchParams instead.');
 }
-
-// Deprecated
-export { DeprecatedDate as Date };
-export { DeprecatedSet as Set };
-export { DeprecatedMap as Map };
-export { DeprecatedURL as URL };
-export { DeprecatedURLSearchParams as URLSearchParams };
