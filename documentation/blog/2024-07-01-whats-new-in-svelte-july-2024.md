@@ -12,6 +12,7 @@ Let's jump in!
 ## What's new in Svelte
 Below, you'll find the highlights from the Svelte 5 release notes (now in [Release Candidate](https://www.npmjs.com/package/svelte?activeTab=versions)):
 
+- You can now declare props in runes mode more succinctly using `let props = $props()` (**5.0.0-next.167**, [#12201](https://github.com/sveltejs/svelte/pull/12201))
 - The new `on` import from `svelte/events` allows you to preserve the order in which event handlers are called in more situations (**5.0.0-next.152**, [Docs](https://svelte-5-preview.vercel.app/docs/imports#svelte-events), [#11912](https://github.com/sveltejs/svelte/pull/11912))
 - The `Component` type now represents the new shape of Svelte components (**5.0.0-next.143**, [#11775](https://github.com/sveltejs/svelte/pull/11775))
 - `<svelte:document>` has new `activeElement` and `pointerLockElement` bindings (**5.0.0-next.150**, [#11879](https://github.com/sveltejs/svelte/pull/11879))
