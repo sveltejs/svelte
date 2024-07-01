@@ -1,10 +1,10 @@
 <script>
-	import { Set as ReactiveSet, Map as ReactiveMap } from 'svelte/reactivity';
+	import { SvelteSet, SvelteMap } from 'svelte/reactivity';
 
 	let map = new Map();
 	let set = new Set();
-	let rmap = new ReactiveMap();
-	let rset = new ReactiveSet();
+	let rmap = new SvelteMap();
+	let rset = new SvelteSet();
 </script>
 
 <div>{rset.entries()} {rset.keys()} {rset.values()}</div>

@@ -2131,37 +2131,47 @@ declare module 'svelte/motion' {
 }
 
 declare module 'svelte/reactivity' {
-	class ReactiveDate extends Date {
+	/** @deprecated Use `SvelteDate` instead */
+	function Date_1(): void;
+	/** @deprecated Use `SvelteSet` instead */
+	function Set_1(): void;
+	/** @deprecated Use `SvelteMap` instead */
+	function Map_1(): void;
+	/** @deprecated Use `SvelteURL` instead */
+	function URL_1(): void;
+	/** @deprecated Use `SvelteURLSearchParams` instead */
+	function URLSearchParams_1(): void;
+	class SvelteDate extends Date {
 		
 		constructor(...values: any[]);
 		#private;
 	}
-	class ReactiveSet<T> extends Set<T> {
+	class SvelteSet<T> extends Set<T> {
 		
 		constructor(value?: Iterable<T> | null | undefined);
 		
 		add(value: T): this;
 		#private;
 	}
-	class ReactiveMap<K, V> extends Map<K, V> {
+	class SvelteMap<K, V> extends Map<K, V> {
 		
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
 		
 		set(key: K, value: V): this;
 		#private;
 	}
-	class ReactiveURL extends URL {
-		get searchParams(): ReactiveURLSearchParams;
+	class SvelteURL extends URL {
+		get searchParams(): SvelteURLSearchParams;
 		#private;
 	}
-	class ReactiveURLSearchParams extends URLSearchParams {
+	class SvelteURLSearchParams extends URLSearchParams {
 		
 		[REPLACE](params: URLSearchParams): void;
 		#private;
 	}
 	const REPLACE: unique symbol;
 
-	export { ReactiveDate as Date, ReactiveSet as Set, ReactiveMap as Map, ReactiveURL as URL, ReactiveURLSearchParams as URLSearchParams };
+	export { Date_1 as Date, Set_1 as Set, Map_1 as Map, URL_1 as URL, URLSearchParams_1 as URLSearchParams, SvelteDate, SvelteSet, SvelteMap, SvelteURL, SvelteURLSearchParams };
 }
 
 declare module 'svelte/server' {

@@ -8,7 +8,7 @@ import { increment } from './utils.js';
  * @template V
  * @extends {Map<K, V>}
  */
-export class ReactiveMap extends Map {
+export class SvelteMap extends Map {
 	/** @type {Map<K, import('#client').Source<number>>} */
 	#sources = new Map();
 	#version = source(0);
