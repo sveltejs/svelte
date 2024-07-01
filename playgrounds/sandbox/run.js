@@ -1,11 +1,11 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseArgs } from 'node:util';
 import glob from 'tiny-glob/sync.js';
-import minimist from 'minimist';
 import { compile, compileModule, parse, migrate } from 'svelte/compiler';
 
-const argv = minimist(process.argv.slice(2));
+const argv = parseArgs({ options: { runes: { type: 'boolean' } }, args: process.argv.slice(2) });
 
 const cwd = fileURLToPath(new URL('.', import.meta.url)).slice(0, -1);
 
@@ -60,7 +60,7 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 			dev: true,
 			filename: input,
 			generate,
-			runes: argv.runes
+			runes: argv.values.runes
 		});
 
 		fs.writeFileSync(

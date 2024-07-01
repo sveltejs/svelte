@@ -238,8 +238,6 @@ export const javascript_visitors_runes = {
 			}
 
 			if (rune === '$props') {
-				assert.equal(declarator.id.type, 'ObjectPattern');
-
 				/** @type {string[]} */
 				const seen = ['$$slots', '$$events', '$$legacy'];
 
@@ -247,44 +245,58 @@ export const javascript_visitors_runes = {
 					seen.push('$$host');
 				}
 
-				for (const property of declarator.id.properties) {
-					if (property.type === 'Property') {
-						const key = /** @type {import('estree').Identifier | import('estree').Literal} */ (
-							property.key
-						);
-						const name = key.type === 'Identifier' ? key.name : /** @type {string} */ (key.value);
+				if (declarator.id.type === 'Identifier') {
+					/** @type {import('estree').Expression[]} */
+					const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
 
-						seen.push(name);
+					if (state.options.dev) {
+						// include rest name, so we can provide informative error messages
+						args.push(b.literal(declarator.id.name));
+					}
 
-						let id =
-							property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
-						assert.equal(id.type, 'Identifier');
-						const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
-						let initial =
-							binding.initial &&
-							/** @type {import('estree').Expression} */ (visit(binding.initial));
-						// We're adding proxy here on demand and not within the prop runtime function so that
-						// people not using proxied state anywhere in their code don't have to pay the additional bundle size cost
-						if (initial && binding.mutated && should_proxy_or_freeze(initial, state.scope)) {
-							initial = b.call('$.proxy', initial);
-						}
+					declarations.push(b.declarator(declarator.id, b.call('$.rest_props', ...args)));
+				} else {
+					assert.equal(declarator.id.type, 'ObjectPattern');
 
-						if (is_prop_source(binding, state)) {
-							declarations.push(b.declarator(id, get_prop_source(binding, state, name, initial)));
-						}
-					} else {
-						// RestElement
-						/** @type {import('estree').Expression[]} */
-						const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
-
-						if (state.options.dev) {
-							// include rest name, so we can provide informative error messages
-							args.push(
-								b.literal(/** @type {import('estree').Identifier} */ (property.argument).name)
+					for (const property of declarator.id.properties) {
+						if (property.type === 'Property') {
+							const key = /** @type {import('estree').Identifier | import('estree').Literal} */ (
+								property.key
 							);
-						}
+							const name = key.type === 'Identifier' ? key.name : /** @type {string} */ (key.value);
 
-						declarations.push(b.declarator(property.argument, b.call('$.rest_props', ...args)));
+							seen.push(name);
+
+							let id =
+								property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
+							assert.equal(id.type, 'Identifier');
+							const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
+							let initial =
+								binding.initial &&
+								/** @type {import('estree').Expression} */ (visit(binding.initial));
+							// We're adding proxy here on demand and not within the prop runtime function so that
+							// people not using proxied state anywhere in their code don't have to pay the additional bundle size cost
+							if (initial && binding.mutated && should_proxy_or_freeze(initial, state.scope)) {
+								initial = b.call('$.proxy', initial);
+							}
+
+							if (is_prop_source(binding, state)) {
+								declarations.push(b.declarator(id, get_prop_source(binding, state, name, initial)));
+							}
+						} else {
+							// RestElement
+							/** @type {import('estree').Expression[]} */
+							const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
+
+							if (state.options.dev) {
+								// include rest name, so we can provide informative error messages
+								args.push(
+									b.literal(/** @type {import('estree').Identifier} */ (property.argument).name)
+								);
+							}
+
+							declarations.push(b.declarator(property.argument, b.call('$.rest_props', ...args)));
+						}
 					}
 				}
 

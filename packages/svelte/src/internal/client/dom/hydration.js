@@ -31,6 +31,17 @@ export function set_hydrate_nodes(nodes) {
 }
 
 /**
+ * When assigning nodes to an effect during hydration, we typically want the hydration boundary comment node
+ * immediately before `hydrate_start`. In some cases, this comment doesn't exist because we optimized it away.
+ * TODO it might be worth storing this value separately rather than retrieving it with `previousSibling`
+ */
+export function get_start() {
+	return /** @type {import('#client').TemplateNode} */ (
+		hydrate_start.previousSibling ?? hydrate_start
+	);
+}
+
+/**
  * This function is only called when `hydrating` is true. If passed a `<!--[-->` opening
  * hydration marker, it finds the corresponding closing marker and sets `hydrate_nodes`
  * to everything between the markers, before returning the closing marker.

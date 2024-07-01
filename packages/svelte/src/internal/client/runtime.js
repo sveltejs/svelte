@@ -555,7 +555,7 @@ function flush_queued_effects(effects) {
 			// don't know if we need to keep them until they are executed. Doing the check
 			// here (rather than in `execute_effect`) allows us to skip the work for
 			// immediate effects.
-			if (effect.deps === null && effect.first === null && effect.dom === null) {
+			if (effect.deps === null && effect.first === null && effect.nodes === null) {
 				if (effect.teardown === null) {
 					// remove this effect from the graph
 					unlink_effect(effect);
@@ -774,7 +774,10 @@ export function get(signal) {
 		) {
 			if (current_dependencies === null) {
 				current_dependencies = [signal];
-			} else if (current_dependencies[current_dependencies.length - 1] !== signal) {
+			} else if (
+				current_dependencies[current_dependencies.length - 1] !== signal &&
+				!current_dependencies.includes(signal)
+			) {
 				current_dependencies.push(signal);
 			}
 		}

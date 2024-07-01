@@ -78,6 +78,10 @@
 
 > Cannot use `$props()` more than once
 
+## props_illegal_name
+
+> Declaring or accessing a prop starting with `$$` is illegal (they are reserved for Svelte internals)
+
 ## props_invalid_identifier
 
 > `$props()` can only be used with an object destructuring pattern

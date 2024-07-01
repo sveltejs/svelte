@@ -1,10 +1,10 @@
 import { render_effect, effect_root } from '../internal/client/reactivity/effects.js';
 import { flushSync } from '../index-client.js';
-import { ReactiveMap } from './map.js';
+import { SvelteMap } from './map.js';
 import { assert, test } from 'vitest';
 
 test('map.values()', () => {
-	const map = new ReactiveMap([
+	const map = new SvelteMap([
 		[1, 1],
 		[2, 2],
 		[3, 3],
@@ -65,7 +65,7 @@ test('map.values()', () => {
 });
 
 test('map.get(...)', () => {
-	const map = new ReactiveMap([
+	const map = new SvelteMap([
 		[1, 1],
 		[2, 2],
 		[3, 3]
@@ -101,7 +101,7 @@ test('map.get(...)', () => {
 });
 
 test('map.has(...)', () => {
-	const map = new ReactiveMap([
+	const map = new SvelteMap([
 		[1, 1],
 		[2, 2],
 		[3, 3]
@@ -148,7 +148,7 @@ test('map.has(...)', () => {
 });
 
 test('map.forEach(...)', () => {
-	const map = new ReactiveMap([
+	const map = new SvelteMap([
 		[1, 1],
 		[2, 2],
 		[3, 3]
@@ -169,7 +169,7 @@ test('map.forEach(...)', () => {
 });
 
 test('map.delete(...)', () => {
-	const map = new ReactiveMap([
+	const map = new SvelteMap([
 		[1, 1],
 		[2, 2],
 		[3, 3]
@@ -182,7 +182,7 @@ test('map.delete(...)', () => {
 });
 
 test('map handling of undefined values', () => {
-	const map = new ReactiveMap();
+	const map = new SvelteMap();
 
 	const log: any = [];
 
@@ -208,7 +208,7 @@ test('map handling of undefined values', () => {
 });
 
 test('not invoking reactivity when value is not in the map after changes', () => {
-	const map = new ReactiveMap([[1, 1]]);
+	const map = new SvelteMap([[1, 1]]);
 
 	const log: any = [];
 
@@ -236,5 +236,5 @@ test('not invoking reactivity when value is not in the map after changes', () =>
 });
 
 test('Map.instanceOf', () => {
-	assert.equal(new ReactiveMap() instanceof Map, true);
+	assert.equal(new SvelteMap() instanceof Map, true);
 });

@@ -1,7 +1,7 @@
 <script>
-	import { URL } from 'svelte/reactivity';
+	import { SvelteURL } from 'svelte/reactivity';
 
-	let url = new URL('https://svelte.dev/repl/hello-world?version=5.0');
+	let url = new SvelteURL('https://svelte.dev/repl/hello-world?version=5.0');
 </script>
 
 <div>href: {url.href}</div>

@@ -256,20 +256,24 @@ declare module 'svelte' {
 	/**
 	 * The type of a `#snippet` block. You can use it to (for example) express that your component expects a snippet of a certain type:
 	 * ```ts
-	 * let { banner }: { banner: Snippet<{ text: string }> } = $props();
+	 * let { banner }: { banner: Snippet<[{ text: string }]> } = $props();
 	 * ```
 	 * You can only call a snippet through the `{@render ...}` tag.
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/snippets
+	 *
+	 * @template Parameters the parameters that the snippet expects (if any) as a tuple.
 	 */
-	type Snippet<T extends unknown[] = []> =
+	type Snippet<Parameters extends unknown[] = []> =
 		// this conditional allows tuples but not arrays. Arrays would indicate a
 		// rest parameter type, which is not supported. If rest parameters are added
 		// in the future, the condition can be removed.
-		number extends T['length']
+		number extends Parameters['length']
 			? never
 			: {
 					(
 						this: void,
-						...args: T
+						...args: Parameters
 					): typeof SnippetReturn & {
 						_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
 					};
@@ -1568,6 +1572,9 @@ declare module 'svelte/compiler' {
 	interface RenderTag extends BaseNode {
 		type: 'RenderTag';
 		expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
+		metadata: {
+			dynamic: boolean;
+		};
 	}
 
 	type Tag = ExpressionTag | HtmlTag | ConstTag | DebugTag | RenderTag;
@@ -1687,6 +1694,9 @@ declare module 'svelte/compiler' {
 
 	interface Component extends BaseElement {
 		type: 'Component';
+		metadata: {
+			dynamic: boolean;
+		};
 	}
 
 	interface TitleElement extends BaseElement {
@@ -1893,7 +1903,7 @@ declare module 'svelte/compiler' {
 		attributes: Attribute[];
 	}
 
-	export { MarkupPreprocessor, Preprocessor, PreprocessorGroup, Processed, CompileOptions, ModuleCompileOptions, compile, compileModule, parse, walk, preprocess, CompileError, VERSION, migrate };
+	export { MarkupPreprocessor, Preprocessor, PreprocessorGroup, Processed, CompileOptions, ModuleCompileOptions, CompileResult, Warning, compile, compileModule, parse, walk, preprocess, CompileError, VERSION, migrate };
 }
 
 declare module 'svelte/easing' {
@@ -2121,37 +2131,47 @@ declare module 'svelte/motion' {
 }
 
 declare module 'svelte/reactivity' {
-	class ReactiveDate extends Date {
+	/** @deprecated Use `SvelteDate` instead */
+	function Date_1(): void;
+	/** @deprecated Use `SvelteSet` instead */
+	function Set_1(): void;
+	/** @deprecated Use `SvelteMap` instead */
+	function Map_1(): void;
+	/** @deprecated Use `SvelteURL` instead */
+	function URL_1(): void;
+	/** @deprecated Use `SvelteURLSearchParams` instead */
+	function URLSearchParams_1(): void;
+	class SvelteDate extends Date {
 		
 		constructor(...params: any[]);
 		#private;
 	}
-	class ReactiveSet<T> extends Set<T> {
+	class SvelteSet<T> extends Set<T> {
 		
 		constructor(value?: Iterable<T> | null | undefined);
 		
 		add(value: T): this;
 		#private;
 	}
-	class ReactiveMap<K, V> extends Map<K, V> {
+	class SvelteMap<K, V> extends Map<K, V> {
 		
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
 		
 		set(key: K, value: V): this;
 		#private;
 	}
-	class ReactiveURL extends URL {
-		get searchParams(): ReactiveURLSearchParams;
+	class SvelteURL extends URL {
+		get searchParams(): SvelteURLSearchParams;
 		#private;
 	}
-	class ReactiveURLSearchParams extends URLSearchParams {
+	class SvelteURLSearchParams extends URLSearchParams {
 		
 		[REPLACE](params: URLSearchParams): void;
 		#private;
 	}
 	const REPLACE: unique symbol;
 
-	export { ReactiveDate as Date, ReactiveSet as Set, ReactiveMap as Map, ReactiveURL as URL, ReactiveURLSearchParams as URLSearchParams };
+	export { Date_1 as Date, Set_1 as Set, Map_1 as Map, URL_1 as URL, URLSearchParams_1 as URLSearchParams, SvelteDate, SvelteSet, SvelteMap, SvelteURL, SvelteURLSearchParams };
 }
 
 declare module 'svelte/server' {
@@ -3009,7 +3029,7 @@ declare function $props(): any;
  *
  * https://svelte-5-preview.vercel.app/docs/runes#$bindable
  */
-declare function $bindable<T>(t?: T): T;
+declare function $bindable<T>(fallback?: T): T;
 
 /**
  * Inspects one or more values whenever they, or the properties they contain, change. Example:

@@ -5,7 +5,7 @@ import { get } from '../internal/client/runtime.js';
 
 var inited = false;
 
-export class ReactiveDate extends Date {
+export class SvelteDate extends Date {
 	#time = source(super.getTime());
 
 	/** @type {Map<keyof Date, Source<unknown>>} */
@@ -21,7 +21,7 @@ export class ReactiveDate extends Date {
 	#init() {
 		inited = true;
 
-		var proto = ReactiveDate.prototype;
+		var proto = SvelteDate.prototype;
 		var date_proto = Date.prototype;
 
 		var methods = /** @type {Array<keyof Date & string>} */ (

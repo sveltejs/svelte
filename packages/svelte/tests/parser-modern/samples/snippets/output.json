@@ -27,8 +27,8 @@
 				"parameters": [
 					{
 						"type": "Identifier",
-						"name": "msg",
 						"start": 43,
+						"end": 46,
 						"loc": {
 							"start": {
 								"line": 3,
@@ -39,7 +39,7 @@
 								"column": 25
 							}
 						},
-						"end": 46,
+						"name": "msg",
 						"typeAnnotation": {
 							"type": "TSTypeAnnotation",
 							"start": 46,
