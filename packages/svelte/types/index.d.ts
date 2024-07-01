@@ -2131,37 +2131,47 @@ declare module 'svelte/motion' {
 }
 
 declare module 'svelte/reactivity' {
-	class SvelteDate_1 extends Date {
+	/** @deprecated Use `SvelteDate` instead */
+	function DeprecatedDate(): void;
+	/** @deprecated Use `SvelteSet` instead */
+	function DeprecatedSet(): void;
+	/** @deprecated Use `SvelteMap` instead */
+	function DeprecatedMap(): void;
+	/** @deprecated Use `SvelteURL` instead */
+	function DeprecatedURL(): void;
+	/** @deprecated Use `SvelteURLSearchParams` instead */
+	function DeprecatedURLSearchParams(): void;
+	class SvelteDate extends Date {
 		
 		constructor(...values: any[]);
 		#private;
 	}
-	class SvelteSet_1<T> extends Set<T> {
+	class SvelteSet<T> extends Set<T> {
 		
 		constructor(value?: Iterable<T> | null | undefined);
 		
 		add(value: T): this;
 		#private;
 	}
-	class SvelteMap_1<K, V> extends Map<K, V> {
+	class SvelteMap<K, V> extends Map<K, V> {
 		
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
 		
 		set(key: K, value: V): this;
 		#private;
 	}
-	class SvelteURL_1 extends URL {
-		get searchParams(): SvelteURLSearchParams_1;
+	class SvelteURL extends URL {
+		get searchParams(): SvelteURLSearchParams;
 		#private;
 	}
-	class SvelteURLSearchParams_1 extends URLSearchParams {
+	class SvelteURLSearchParams extends URLSearchParams {
 		
 		[REPLACE](params: URLSearchParams): void;
 		#private;
 	}
 	const REPLACE: unique symbol;
 
-	export { SvelteDate, SvelteDate_1 as Date, SvelteSet, SvelteSet_1 as Set, SvelteMap, SvelteMap_1 as Map, SvelteURL, SvelteURLSearchParams, SvelteURL_1 as URL, SvelteURLSearchParams_1 as URLSearchParams };
+	export { DeprecatedDate as Date, DeprecatedSet as Set, DeprecatedMap as Map, DeprecatedURL as URL, DeprecatedURLSearchParams as URLSearchParams, SvelteDate, SvelteSet, SvelteMap, SvelteURL, SvelteURLSearchParams };
 }
 
 declare module 'svelte/server' {
