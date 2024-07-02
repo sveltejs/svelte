@@ -41,6 +41,12 @@ export interface EffectNodes {
 
 export interface Effect extends Reaction {
 	parent: Effect | null;
+	/**
+	 * Branch effects store their start/end nodes so that they can be
+	 * removed when the effect is destroyed, or moved when an `each`
+	 * block is reconciled. In the case of a single text/element node,
+	 * `start` and `end` will be the same.
+	 */
 	nodes: null | EffectNodes;
 	/** The associated component context */
 	ctx: null | ComponentContext;

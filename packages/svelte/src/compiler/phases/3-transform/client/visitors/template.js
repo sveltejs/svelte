@@ -1676,6 +1676,7 @@ export const template_visitors = {
 				close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 			} else {
 				if (is_standalone) {
+					// no need to create a template, we can just use the existing block's anchor
 					process_children(trimmed, () => b.id('$$anchor'), false, { ...context, state });
 				} else {
 					/** @type {(is_text: boolean) => import('estree').Expression} */
@@ -1691,6 +1692,7 @@ export const template_visitors = {
 					}
 
 					if (state.template.length === 1 && state.template[0] === '<!>') {
+						// special case — we can use `$.comment` instead of creating a unique template
 						body.push(b.var(id, b.call('$.comment')));
 					} else {
 						add_template(template_name, [
