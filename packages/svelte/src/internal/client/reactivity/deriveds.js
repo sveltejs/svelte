@@ -4,7 +4,6 @@ import {
 	current_effect,
 	remove_reactions,
 	set_signal_status,
-	mark_reactions,
 	current_skip_reaction,
 	update_reaction,
 	destroy_effect_children,
@@ -100,7 +99,6 @@ export function update_derived(derived) {
 	if (!derived.equals(value)) {
 		derived.v = value;
 		derived.version = increment_version();
-		mark_reactions(derived, DIRTY, false);
 	}
 }
 

@@ -163,6 +163,7 @@ export function check_dirtiness(reaction) {
 		return true;
 	}
 
+	var is_effect = (flags & EFFECT) !== 0;
 	var is_unowned = (flags & UNOWNED) !== 0;
 	var is_disconnected = (flags & DISCONNECTED) !== 0;
 
@@ -180,8 +181,11 @@ export function check_dirtiness(reaction) {
 					update_derived(/** @type {import('#client').Derived} **/ (dependency));
 				}
 
-				if ((reaction.f & DIRTY) !== 0) {
-					// `reaction` might now be dirty, as a result of calling `update_derived`
+				if (dependency.version > reaction.version) {
+					is_dirty = true;
+				}
+
+				if (is_effect && is_dirty) {
 					return true;
 				}
 
@@ -190,7 +194,7 @@ export function check_dirtiness(reaction) {
 					// if our dependency write version is higher. If it is then we can assume
 					// that state has changed to a newer version and thus this unowned signal
 					// is also dirty.
-					if (dependency.version > /** @type {import('#client').Derived} */ (reaction).version) {
+					if (is_dirty) {
 						return true;
 					}
 
@@ -204,10 +208,6 @@ export function check_dirtiness(reaction) {
 					// It might be that the derived was was dereferenced from its dependencies but has now come alive again.
 					// In thise case, we need to re-attach it to the graph and mark it dirty if any of its dependencies have
 					// changed since.
-					if (dependency.version > /** @type {import('#client').Derived} */ (reaction).version) {
-						is_dirty = true;
-					}
-
 					reactions = dependency.reactions;
 					if (reactions === null) {
 						dependency.reactions = [reaction];
@@ -490,6 +490,8 @@ export function update_effect(effect) {
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
+
+		effect.version = current_version;
 	} catch (error) {
 		handle_error(/** @type {Error} */ (error), effect, current_component_context);
 	} finally {
