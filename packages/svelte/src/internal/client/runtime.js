@@ -296,11 +296,11 @@ function handle_error(error, effect, component_context) {
  * @returns {V}
  */
 export function update_reaction(reaction) {
-	const previous_dependencies = current_dependencies;
-	const previous_dependencies_index = current_dependencies_index;
-	const previous_untracked_writes = current_untracked_writes;
-	const previous_reaction = current_reaction;
-	const previous_skip_reaction = current_skip_reaction;
+	var previous_dependencies = current_dependencies;
+	var previous_dependencies_index = current_dependencies_index;
+	var previous_untracked_writes = current_untracked_writes;
+	var previous_reaction = current_reaction;
+	var previous_skip_reaction = current_skip_reaction;
 
 	current_dependencies = /** @type {null | import('#client').Value[]} */ (null);
 	current_dependencies_index = 0;
@@ -309,31 +309,30 @@ export function update_reaction(reaction) {
 	current_skip_reaction = !is_flushing_effect && (reaction.f & UNOWNED) !== 0;
 
 	try {
-		let res = /** @type {Function} */ (0, reaction.fn)();
-		let dependencies = /** @type {import('#client').Value<unknown>[]} **/ (reaction.deps);
+		var result = /** @type {Function} */ (0, reaction.fn)();
+		var dependencies = /** @type {import('#client').Value<unknown>[]} **/ (reaction.deps);
+
 		if (current_dependencies !== null) {
-			let i;
+			var i;
+
 			if (dependencies !== null) {
-				const deps_length = dependencies.length;
-				// Include any dependencies up until the current_dependencies_index.
-				const full_current_dependencies =
+				var deps_length = dependencies.length;
+
+				/** All dependencies of the reaction, including those tracked on the previous run */
+				var array =
 					current_dependencies_index === 0
 						? current_dependencies
 						: dependencies.slice(0, current_dependencies_index).concat(current_dependencies);
-				const current_dep_length = full_current_dependencies.length;
+
 				// If we have more than 16 elements in the array then use a Set for faster performance
 				// TODO: evaluate if we should always just use a Set or not here?
-				const full_current_dependencies_set =
-					current_dep_length > 16 && deps_length - current_dependencies_index > 1
-						? new Set(full_current_dependencies)
-						: null;
+				var set =
+					array.length > 16 && deps_length - current_dependencies_index > 1 ? new Set(array) : null;
+
 				for (i = current_dependencies_index; i < deps_length; i++) {
-					const dependency = dependencies[i];
-					if (
-						full_current_dependencies_set !== null
-							? !full_current_dependencies_set.has(dependency)
-							: !full_current_dependencies.includes(dependency)
-					) {
+					var dependency = dependencies[i];
+
+					if (set !== null ? !set.has(dependency) : !array.includes(dependency)) {
 						remove_reaction(reaction, dependency);
 					}
 				}
@@ -352,8 +351,8 @@ export function update_reaction(reaction) {
 
 			if (!current_skip_reaction) {
 				for (i = current_dependencies_index; i < dependencies.length; i++) {
-					const dependency = dependencies[i];
-					const reactions = dependency.reactions;
+					var dependency = dependencies[i];
+					var reactions = dependency.reactions;
 
 					if (reactions === null) {
 						dependency.reactions = [reaction];
@@ -369,7 +368,8 @@ export function update_reaction(reaction) {
 			remove_reactions(reaction, current_dependencies_index);
 			dependencies.length = current_dependencies_index;
 		}
-		return res;
+
+		return result;
 	} finally {
 		current_dependencies = previous_dependencies;
 		current_dependencies_index = previous_dependencies_index;
