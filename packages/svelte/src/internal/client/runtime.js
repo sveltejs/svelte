@@ -303,8 +303,8 @@ function handle_error(error, effect, component_context) {
  * @returns {V}
  */
 export function update_reaction(reaction) {
-	var previous_dependencies = new_deps;
-	var previous_dependencies_index = skipped_deps;
+	var previous_deps = new_deps;
+	var previous_skipped_deps = skipped_deps;
 	var previous_untracked_writes = current_untracked_writes;
 	var previous_reaction = current_reaction;
 	var previous_skip_reaction = current_skip_reaction;
@@ -317,25 +317,24 @@ export function update_reaction(reaction) {
 
 	try {
 		var result = /** @type {Function} */ (0, reaction.fn)();
-		var dependencies = /** @type {import('#client').Value<unknown>[]} **/ (reaction.deps);
+		var deps = /** @type {import('#client').Value<unknown>[]} **/ (reaction.deps);
 
 		if (new_deps !== null) {
 			var dependency;
 			var i;
 
-			if (dependencies !== null) {
-				var deps_length = dependencies.length;
+			if (deps !== null) {
+				var deps_length = deps.length;
 
 				/** All dependencies of the reaction, including those tracked on the previous run */
-				var array =
-					skipped_deps === 0 ? new_deps : dependencies.slice(0, skipped_deps).concat(new_deps);
+				var array = skipped_deps === 0 ? new_deps : deps.slice(0, skipped_deps).concat(new_deps);
 
 				// If we have more than 16 elements in the array then use a Set for faster performance
 				// TODO: evaluate if we should always just use a Set or not here?
 				var set = array.length > 16 && deps_length - skipped_deps > 1 ? new Set(array) : null;
 
 				for (i = skipped_deps; i < deps_length; i++) {
-					dependency = dependencies[i];
+					dependency = deps[i];
 
 					if (set !== null ? !set.has(dependency) : !array.includes(dependency)) {
 						remove_reaction(reaction, dependency);
@@ -343,18 +342,18 @@ export function update_reaction(reaction) {
 				}
 			}
 
-			if (dependencies !== null && skipped_deps > 0) {
-				dependencies.length = skipped_deps + new_deps.length;
+			if (deps !== null && skipped_deps > 0) {
+				deps.length = skipped_deps + new_deps.length;
 				for (i = 0; i < new_deps.length; i++) {
-					dependencies[skipped_deps + i] = new_deps[i];
+					deps[skipped_deps + i] = new_deps[i];
 				}
 			} else {
-				reaction.deps = /** @type {import('#client').Value<V>[]} **/ (dependencies = new_deps);
+				reaction.deps = /** @type {import('#client').Value<V>[]} **/ (deps = new_deps);
 			}
 
 			if (!current_skip_reaction) {
-				for (i = skipped_deps; i < dependencies.length; i++) {
-					dependency = dependencies[i];
+				for (i = skipped_deps; i < deps.length; i++) {
+					dependency = deps[i];
 					var reactions = dependency.reactions;
 
 					if (reactions === null) {
@@ -367,15 +366,15 @@ export function update_reaction(reaction) {
 					}
 				}
 			}
-		} else if (dependencies !== null && skipped_deps < dependencies.length) {
+		} else if (deps !== null && skipped_deps < deps.length) {
 			remove_reactions(reaction, skipped_deps);
-			dependencies.length = skipped_deps;
+			deps.length = skipped_deps;
 		}
 
 		return result;
 	} finally {
-		new_deps = previous_dependencies;
-		skipped_deps = previous_dependencies_index;
+		new_deps = previous_deps;
+		skipped_deps = previous_skipped_deps;
 		current_untracked_writes = previous_untracked_writes;
 		current_reaction = previous_reaction;
 		current_skip_reaction = previous_skip_reaction;
