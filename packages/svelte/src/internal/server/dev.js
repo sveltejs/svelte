@@ -1,8 +1,5 @@
-import {
-	disallowed_paragraph_contents,
-	interactive_elements,
-	is_tag_valid_with_parent
-} from '../../constants.js';
+import { disallowed_parents } from '../../compiler/utils/html.js';
+import { is_tag_valid_with_parent } from '../../constants.js';
 import { current_component } from './context.js';
 
 /**
@@ -63,21 +60,12 @@ export function push_element(payload, tag, line, column) {
 		print_error(payload, parent, child);
 	}
 
-	if (interactive_elements.has(tag)) {
-		let element = parent;
-		while (element !== null) {
-			if (interactive_elements.has(element.tag)) {
-				print_error(payload, element, child);
-				break;
-			}
-			element = element.parent;
-		}
-	}
+	if (tag in disallowed_parents) {
+		const parents = disallowed_parents[tag];
 
-	if (disallowed_paragraph_contents.includes(tag)) {
 		let element = parent;
 		while (element !== null) {
-			if (element.tag === 'p') {
+			if (parents.includes(element.tag)) {
 				print_error(payload, element, child);
 				break;
 			}

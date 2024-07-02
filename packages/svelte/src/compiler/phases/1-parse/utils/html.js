@@ -1,4 +1,4 @@
-import { interactive_elements } from '../../../../constants.js';
+import { disallowed_children } from '../../../utils/html.js';
 import entities from './entities.js';
 
 const windows_1252 = [
@@ -120,34 +120,6 @@ function validate_code(code) {
 	return NUL;
 }
 
-// based on http://developers.whatwg.org/syntax.html#syntax-tag-omission
-
-/** @type {Record<string, Set<string>>} */
-const disallowed_contents = {
-	li: new Set(['li']),
-	dt: new Set(['dt', 'dd']),
-	dd: new Set(['dt', 'dd']),
-	p: new Set(
-		'address article aside blockquote div dl fieldset footer form h1 h2 h3 h4 h5 h6 header hgroup hr main menu nav ol p pre section table ul'.split(
-			' '
-		)
-	),
-	rt: new Set(['rt', 'rp']),
-	rp: new Set(['rt', 'rp']),
-	optgroup: new Set(['optgroup']),
-	option: new Set(['option', 'optgroup']),
-	thead: new Set(['tbody', 'tfoot']),
-	tbody: new Set(['tbody', 'tfoot']),
-	tfoot: new Set(['tbody']),
-	tr: new Set(['tr', 'tbody']),
-	td: new Set(['td', 'th', 'tr']),
-	th: new Set(['td', 'th', 'tr'])
-};
-
-for (const interactive_element of interactive_elements) {
-	disallowed_contents[interactive_element] = interactive_elements;
-}
-
 // can this be a child of the parent element, or does it implicitly
 // close it, like `<li>one<li>two`?
 
@@ -156,8 +128,8 @@ for (const interactive_element of interactive_elements) {
  * @param {string} [next]
  */
 export function closing_tag_omitted(current, next) {
-	if (disallowed_contents[current]) {
-		if (!next || disallowed_contents[current].has(next)) {
+	if (disallowed_children[current]) {
+		if (!next || disallowed_children[current].includes(next)) {
 			return true;
 		}
 	}
