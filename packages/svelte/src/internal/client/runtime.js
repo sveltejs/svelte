@@ -417,21 +417,21 @@ function remove_reaction(signal, dependency) {
  * @returns {void}
  */
 export function remove_reactions(signal, start_index) {
-	const dependencies = signal.deps;
-	if (dependencies !== null) {
-		var active_dependencies = start_index === 0 ? null : dependencies.slice(0, start_index);
-		var visited = new Set();
-		let i;
-		for (i = start_index; i < dependencies.length; i++) {
-			const dependency = dependencies[i];
-			if (visited.has(dependency)) {
-				continue;
-			}
-			visited.add(dependency);
-			// Avoid removing a reaction if we know that it is active (start_index will not be 0)
-			if (active_dependencies === null || !active_dependencies.includes(dependency)) {
-				remove_reaction(signal, dependency);
-			}
+	var dependencies = signal.deps;
+	if (dependencies === null) return;
+
+	var active_dependencies = start_index === 0 ? null : dependencies.slice(0, start_index);
+	var seen = new Set();
+
+	for (var i = start_index; i < dependencies.length; i++) {
+		var dependency = dependencies[i];
+
+		if (seen.has(dependency)) continue;
+		seen.add(dependency);
+
+		// Avoid removing a reaction if we know that it is active (start_index will not be 0)
+		if (active_dependencies === null || !active_dependencies.includes(dependency)) {
+			remove_reaction(signal, dependency);
 		}
 	}
 }
