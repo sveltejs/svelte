@@ -269,13 +269,19 @@ export function clean_nodes(
 	}
 
 	var first = trimmed[0];
+
+	/**
+	 * In a case like `{#if x}<Foo />{/if}`, we don't need to wrap the child in
+	 * comments — we can just use the parent block's anchor for the component.
+	 * TODO extend this optimisation to other cases
+	 */
 	const is_standalone =
 		trimmed.length === 1 &&
 		((first.type === 'RenderTag' && !first.metadata.dynamic) ||
 			(first.type === 'Component' &&
 				!first.attributes.some(
 					(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
-				))); // TODO others
+				)));
 
 	return { hoisted, trimmed, is_standalone };
 }
