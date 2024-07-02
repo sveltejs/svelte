@@ -16,7 +16,7 @@ importers:
         version: 2.27.6
       '@sveltejs/eslint-config':
         specifier: ^8.0.1
-        version: 8.0.1(@stylistic/eslint-plugin-js@1.8.0(eslint@9.6.0))(eslint-config-prettier@9.1.0(eslint@9.6.0))(eslint-plugin-n@17.9.0(eslint@9.6.0))(eslint-plugin-svelte@2.38.0(eslint@9.6.0)(svelte@5.0.0-next.168))(eslint@9.6.0)(typescript-eslint@8.0.0-alpha.34(eslint@9.6.0)(typescript@5.5.2))(typescript@5.5.2)
+        version: 8.0.1(@stylistic/eslint-plugin-js@1.8.0(eslint@9.6.0))(eslint-config-prettier@9.1.0(eslint@9.6.0))(eslint-plugin-n@17.9.0(eslint@9.6.0))(eslint-plugin-svelte@2.38.0(eslint@9.6.0)(svelte@5.0.0-next.169))(eslint@9.6.0)(typescript-eslint@8.0.0-alpha.34(eslint@9.6.0)(typescript@5.5.2))(typescript@5.5.2)
       '@svitejs/changesets-changelog-github-compact':
         specifier: ^1.1.0
         version: 1.1.0
@@ -43,7 +43,7 @@ importers:
         version: 3.2.4
       prettier-plugin-svelte:
         specifier: ^3.1.2
-        version: 3.1.2(prettier@3.2.4)(svelte@5.0.0-next.168)
+        version: 3.1.2(prettier@3.2.4)(svelte@5.0.0-next.169)
       typescript:
         specifier: ^5.5.2
         version: 5.5.2
@@ -121,8 +121,8 @@ importers:
         specifier: ^5.0.4
         version: 5.0.4
       dts-buddy:
-        specifier: ^0.5.0
-        version: 0.5.0(typescript@5.5.2)
+        specifier: ^0.5.1
+        version: 0.5.1(typescript@5.5.2)
       esbuild:
         specifier: ^0.19.11
         version: 0.19.11
@@ -2036,11 +2036,11 @@ packages:
     resolution: {integrity: sha512-HTlk5nmhkm8F6JcdXvHIzaorzCoziNQT9mGxLPVXW8wJF1TiGSL60ZGB4gHWabHOaMmWmhvk2/lPHfnBiT78AQ==}
     engines: {node: '>=12'}
 
-  dts-buddy@0.5.0:
-    resolution: {integrity: sha512-bKyWCdyt8Yd2bjZX6hKldUFt3SpLPjxw6lQwWHKY1szGxEfRUPWMc76SHtNT+m2aTCI3Zqw3CXhtjw2vKadFnQ==}
+  dts-buddy@0.5.1:
+    resolution: {integrity: sha512-naiM3F8hSlBIrMl+WyU9KQsC+Vd0i9jVBeksQ5IsH9Rfzpqx27TmSCftlsY9UxFxAWxoGcf5EB3p1xi0JxWzPw==}
     hasBin: true
     peerDependencies:
-      typescript: '>=5.0.4 <5.5'
+      typescript: '>=5.0.4 <5.6'
 
   electron-to-chromium@1.4.666:
     resolution: {integrity: sha512-q4lkcbQrUdlzWCUOxk6fwEza6bNCfV12oi4AJph5UibguD1aTfL4uD0nuzFv9hbPANXQMuUS0MxPSHQ1gqq5dg==}
@@ -3556,8 +3556,8 @@ packages:
     resolution: {integrity: sha512-hsoB/WZGEPFXeRRLPhPrbRz67PhP6sqYgvwcAs+gWdSQSvNDw+/lTeUJSWe5h2xC97Fz/8QxAOqItwBzNJPU8w==}
     engines: {node: '>=16'}
 
-  svelte@5.0.0-next.168:
-    resolution: {integrity: sha512-uOtEGeop8bsGOsH/duogEzFkR1DE8IRjSf/kSsKPYt9JLdrlIBTbhE2FSEXsUKWybrtTCV8bwBuBQRoR2ld90g==}
+  svelte@5.0.0-next.169:
+    resolution: {integrity: sha512-8VD4/adoVW5Oo4Kub+jnWnuexAtskjbLuAhy3IGMkSKcQ6RVKEQPo4j+8Xr58epow6ccA7S5zp+PsiTv4eW5Zg==}
     engines: {node: '>=18'}
 
   symbol-tree@3.2.4:
@@ -5081,13 +5081,13 @@ snapshots:
       - encoding
       - supports-color
 
-  '@sveltejs/eslint-config@8.0.1(@stylistic/eslint-plugin-js@1.8.0(eslint@9.6.0))(eslint-config-prettier@9.1.0(eslint@9.6.0))(eslint-plugin-n@17.9.0(eslint@9.6.0))(eslint-plugin-svelte@2.38.0(eslint@9.6.0)(svelte@5.0.0-next.168))(eslint@9.6.0)(typescript-eslint@8.0.0-alpha.34(eslint@9.6.0)(typescript@5.5.2))(typescript@5.5.2)':
+  '@sveltejs/eslint-config@8.0.1(@stylistic/eslint-plugin-js@1.8.0(eslint@9.6.0))(eslint-config-prettier@9.1.0(eslint@9.6.0))(eslint-plugin-n@17.9.0(eslint@9.6.0))(eslint-plugin-svelte@2.38.0(eslint@9.6.0)(svelte@5.0.0-next.169))(eslint@9.6.0)(typescript-eslint@8.0.0-alpha.34(eslint@9.6.0)(typescript@5.5.2))(typescript@5.5.2)':
     dependencies:
       '@stylistic/eslint-plugin-js': 1.8.0(eslint@9.6.0)
       eslint: 9.6.0
       eslint-config-prettier: 9.1.0(eslint@9.6.0)
       eslint-plugin-n: 17.9.0(eslint@9.6.0)
-      eslint-plugin-svelte: 2.38.0(eslint@9.6.0)(svelte@5.0.0-next.168)
+      eslint-plugin-svelte: 2.38.0(eslint@9.6.0)(svelte@5.0.0-next.169)
       globals: 15.6.0
       typescript: 5.5.2
       typescript-eslint: 8.0.0-alpha.34(eslint@9.6.0)(typescript@5.5.2)
@@ -5439,7 +5439,7 @@ snapshots:
 
   '@vitest/snapshot@1.2.1':
     dependencies:
-      magic-string: 0.30.5
+      magic-string: 0.30.9
       pathe: 1.1.2
       pretty-format: 29.7.0
 
@@ -5815,7 +5815,7 @@ snapshots:
 
   dotenv@16.3.2: {}
 
-  dts-buddy@0.5.0(typescript@5.5.2):
+  dts-buddy@0.5.1(typescript@5.5.2):
     dependencies:
       '@jridgewell/source-map': 0.3.5
       '@jridgewell/sourcemap-codec': 1.4.15
@@ -5914,7 +5914,7 @@ snapshots:
       minimatch: 9.0.4
       semver: 7.6.0
 
-  eslint-plugin-svelte@2.38.0(eslint@9.6.0)(svelte@5.0.0-next.168):
+  eslint-plugin-svelte@2.38.0(eslint@9.6.0)(svelte@5.0.0-next.169):
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0(eslint@9.6.0)
       '@jridgewell/sourcemap-codec': 1.4.15
@@ -5928,9 +5928,9 @@ snapshots:
       postcss-safe-parser: 6.0.0(postcss@8.4.38)
       postcss-selector-parser: 6.0.16
       semver: 7.6.0
-      svelte-eslint-parser: 0.35.0(svelte@5.0.0-next.168)
+      svelte-eslint-parser: 0.35.0(svelte@5.0.0-next.169)
     optionalDependencies:
-      svelte: 5.0.0-next.168
+      svelte: 5.0.0-next.169
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -6944,10 +6944,10 @@ snapshots:
       prettier: 3.2.4
       svelte: 4.2.9
 
-  prettier-plugin-svelte@3.1.2(prettier@3.2.4)(svelte@5.0.0-next.168):
+  prettier-plugin-svelte@3.1.2(prettier@3.2.4)(svelte@5.0.0-next.169):
     dependencies:
       prettier: 3.2.4
-      svelte: 5.0.0-next.168
+      svelte: 5.0.0-next.169
 
   prettier@2.8.8: {}
 
@@ -7346,7 +7346,7 @@ snapshots:
       - stylus
       - sugarss
 
-  svelte-eslint-parser@0.35.0(svelte@5.0.0-next.168):
+  svelte-eslint-parser@0.35.0(svelte@5.0.0-next.169):
     dependencies:
       eslint-scope: 7.2.2
       eslint-visitor-keys: 3.4.3
@@ -7354,7 +7354,7 @@ snapshots:
       postcss: 8.4.38
       postcss-scss: 4.0.9(postcss@8.4.38)
     optionalDependencies:
-      svelte: 5.0.0-next.168
+      svelte: 5.0.0-next.169
 
   svelte-hmr@0.16.0(svelte@4.2.9):
     dependencies:
@@ -7429,7 +7429,7 @@ snapshots:
       magic-string: 0.30.5
       periscopic: 3.1.0
 
-  svelte@5.0.0-next.168:
+  svelte@5.0.0-next.169:
     dependencies:
       '@ampproject/remapping': 2.2.1
       '@jridgewell/sourcemap-codec': 1.4.15

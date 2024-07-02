@@ -256,6 +256,7 @@ export type ComponentType<Comp extends SvelteComponent = SvelteComponent> = (new
 
 declare const SnippetReturn: unique symbol;
 
+// Use an interface instead of a type, makes for better intellisense info because the type is named in more situations.
 /**
  * The type of a `#snippet` block. You can use it to (for example) express that your component expects a snippet of a certain type:
  * ```ts
@@ -267,20 +268,17 @@ declare const SnippetReturn: unique symbol;
  *
  * @template Parameters the parameters that the snippet expects (if any) as a tuple.
  */
-export type Snippet<Parameters extends unknown[] = []> =
-	// this conditional allows tuples but not arrays. Arrays would indicate a
-	// rest parameter type, which is not supported. If rest parameters are added
-	// in the future, the condition can be removed.
-	number extends Parameters['length']
-		? never
-		: {
-				(
-					this: void,
-					...args: Parameters
-				): typeof SnippetReturn & {
-					_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
-				};
-			};
+export interface Snippet<Parameters extends unknown[] = []> {
+	(
+		this: void,
+		// this conditional allows tuples but not arrays. Arrays would indicate a
+		// rest parameter type, which is not supported. If rest parameters are added
+		// in the future, the condition can be removed.
+		...args: number extends Parameters['length'] ? never : Parameters
+	): typeof SnippetReturn & {
+		_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
+	};
+}
 
 interface DispatchOptions {
 	cancelable?: boolean;
