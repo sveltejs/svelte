@@ -36,7 +36,6 @@ import {
 	EACH_KEYED,
 	is_capture_event,
 	TEMPLATE_FRAGMENT,
-	TEMPLATE_UNSET_START,
 	TEMPLATE_USE_IMPORT_NODE,
 	TRANSITION_GLOBAL,
 	TRANSITION_IN,
@@ -1561,7 +1560,7 @@ export const template_visitors = {
 
 		const namespace = infer_namespace(context.state.metadata.namespace, parent, node.nodes);
 
-		const { hoisted, trimmed } = clean_nodes(
+		const { hoisted, trimmed, is_standalone } = clean_nodes(
 			parent,
 			node.nodes,
 			context.path,
@@ -1676,56 +1675,38 @@ export const template_visitors = {
 				);
 				close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 			} else {
-				/** @type {(is_text: boolean) => import('estree').Expression} */
-				const expression = (is_text) =>
-					is_text ? b.call('$.first_child', id, b.true) : b.call('$.first_child', id);
-
-				process_children(trimmed, expression, false, { ...context, state });
-
-				var first = trimmed[0];
-
-				/**
-				 * If the first item in an effect is a static slot or render tag, it will clone
-				 * a template but without creating a child effect. In these cases, we need to keep
-				 * the current `effect.nodes.start` undefined, so that it can be populated by
-				 * the item in question
-				 * TODO come up with a better name than `unset`
-				 */
-				var unset = false;
-
-				if (first.type === 'SlotElement') unset = true;
-				if (first.type === 'RenderTag' && !first.metadata.dynamic) unset = true;
-				if (first.type === 'Component' && !first.metadata.dynamic && !context.state.options.hmr) {
-					unset = true;
-				}
-
-				const use_comment_template = state.template.length === 1 && state.template[0] === '<!>';
-
-				if (use_comment_template) {
-					// special case — we can use `$.comment` instead of creating a unique template
-					body.push(b.var(id, b.call('$.comment', unset && b.literal(unset))));
+				if (is_standalone) {
+					// no need to create a template, we can just use the existing block's anchor
+					process_children(trimmed, () => b.id('$$anchor'), false, { ...context, state });
 				} else {
-					let flags = TEMPLATE_FRAGMENT;
+					/** @type {(is_text: boolean) => import('estree').Expression} */
+					const expression = (is_text) =>
+						is_text ? b.call('$.first_child', id, b.true) : b.call('$.first_child', id);
 
-					if (unset) {
-						flags |= TEMPLATE_UNSET_START;
-					}
+					process_children(trimmed, expression, false, { ...context, state });
+
+					let flags = TEMPLATE_FRAGMENT;
 
 					if (state.metadata.context.template_needs_import_node) {
 						flags |= TEMPLATE_USE_IMPORT_NODE;
 					}
 
-					add_template(template_name, [
-						b.template([b.quasi(state.template.join(''), true)], []),
-						b.literal(flags)
-					]);
+					if (state.template.length === 1 && state.template[0] === '<!>') {
+						// special case — we can use `$.comment` instead of creating a unique template
+						body.push(b.var(id, b.call('$.comment')));
+					} else {
+						add_template(template_name, [
+							b.template([b.quasi(state.template.join(''), true)], []),
+							b.literal(flags)
+						]);
 
-					body.push(b.var(id, b.call(template_name)));
+						body.push(b.var(id, b.call(template_name)));
+					}
+
+					close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 				}
 
 				body.push(...state.before_init, ...state.init);
-
-				close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 			}
 		} else {
 			body.push(...state.before_init, ...state.init);

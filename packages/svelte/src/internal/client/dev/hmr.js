@@ -1,4 +1,5 @@
 /** @import { Source, Effect } from '#client' */
+import { empty } from '../dom/operations.js';
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { set_should_intro } from '../render.js';
 import { get } from '../runtime.js';
@@ -19,7 +20,7 @@ export function hmr(source) {
 		/** @type {Effect} */
 		let effect;
 
-		block(anchor, 0, () => {
+		block(() => {
 			const component = get(source);
 
 			if (effect) {

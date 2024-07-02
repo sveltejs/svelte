@@ -2,27 +2,15 @@ import { get_start, hydrate_nodes, hydrate_start, hydrating } from './hydration.
 import { empty } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
-import {
-	TEMPLATE_FRAGMENT,
-	TEMPLATE_UNSET_START,
-	TEMPLATE_USE_IMPORT_NODE
-} from '../../../constants.js';
+import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
 import { queue_micro_task } from './task.js';
 
 /**
- *
- * @param {import('#client').TemplateNode | undefined | null} start
+ * @param {import('#client').TemplateNode} start
  * @param {import('#client').TemplateNode} end
- * @param {import('#client').TemplateNode | null} anchor
  */
-export function assign_nodes(start, end, anchor = null) {
-	const effect = /** @type {import('#client').Effect} */ (current_effect);
-
-	if (effect.nodes === null) {
-		effect.nodes = { start, anchor, end };
-	} else if (effect.nodes.start === undefined) {
-		effect.nodes.start = start;
-	}
+export function assign_nodes(start, end) {
+	/** @type {import('#client').Effect} */ (current_effect).nodes ??= { start, end };
 }
 
 /**
@@ -38,8 +26,11 @@ export function template(content, flags) {
 	/** @type {Node} */
 	var node;
 
+	/**
+	 * Whether or not the first item is a text/element node. If not, we need to
+	 * create an additional comment node to act as `effect.nodes.start`
+	 */
 	var has_start = !content.startsWith('<!>');
-	var unset = (flags & TEMPLATE_UNSET_START) !== 0;
 
 	return () => {
 		if (hydrating) {
@@ -49,7 +40,7 @@ export function template(content, flags) {
 		}
 
 		if (!node) {
-			node = create_fragment_from_html(content);
+			node = create_fragment_from_html(has_start ? content : '<!>' + content);
 			if (!is_fragment) node = /** @type {Node} */ (node.firstChild);
 		}
 
@@ -58,11 +49,10 @@ export function template(content, flags) {
 		);
 
 		if (is_fragment) {
-			var first = /** @type {import('#client').TemplateNode} */ (clone.firstChild);
-			var start = has_start ? first : unset ? undefined : null;
+			var start = /** @type {import('#client').TemplateNode} */ (clone.firstChild);
 			var end = /** @type {import('#client').TemplateNode} */ (clone.lastChild);
 
-			assign_nodes(start, end, first);
+			assign_nodes(start, end);
 		} else {
 			assign_nodes(clone, clone);
 		}
@@ -103,14 +93,17 @@ export function template_with_script(content, flags) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function ns_template(content, flags, ns = 'svg') {
+	/**
+	 * Whether or not the first item is a text/element node. If not, we need to
+	 * create an additional comment node to act as `effect.nodes.start`
+	 */
+	var has_start = !content.startsWith('<!>');
+
 	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
-	var wrapped = `<${ns}>${content}</${ns}>`;
+	var wrapped = `<${ns}>${has_start ? content : '<!>' + content}</${ns}>`;
 
 	/** @type {Element | DocumentFragment} */
 	var node;
-
-	var has_start = !content.startsWith('<!>');
-	var unset = (flags & TEMPLATE_UNSET_START) !== 0;
 
 	return () => {
 		if (hydrating) {
@@ -136,11 +129,10 @@ export function ns_template(content, flags, ns = 'svg') {
 		var clone = /** @type {import('#client').TemplateNode} */ (node.cloneNode(true));
 
 		if (is_fragment) {
-			var first = /** @type {import('#client').TemplateNode} */ (clone.firstChild);
-			var start = has_start ? first : unset ? undefined : null;
+			var start = /** @type {import('#client').TemplateNode} */ (clone.firstChild);
 			var end = /** @type {import('#client').TemplateNode} */ (clone.lastChild);
 
-			assign_nodes(start, end, first);
+			assign_nodes(start, end);
 		} else {
 			assign_nodes(clone, clone);
 		}
@@ -238,10 +230,7 @@ export function text(anchor) {
 	return node;
 }
 
-/**
- * @param {boolean} unset
- */
-export function comment(unset = false) {
+export function comment() {
 	// we're not delegating to `template` here for performance reasons
 	if (hydrating) {
 		assign_nodes(get_start(), hydrate_nodes[hydrate_nodes.length - 1]);
@@ -250,10 +239,11 @@ export function comment(unset = false) {
 	}
 
 	var frag = document.createDocumentFragment();
+	var start = document.createComment('');
 	var anchor = empty();
-	frag.append(anchor);
+	frag.append(start, anchor);
 
-	assign_nodes(unset ? undefined : null, anchor, anchor);
+	assign_nodes(start, anchor);
 
 	return frag;
 }

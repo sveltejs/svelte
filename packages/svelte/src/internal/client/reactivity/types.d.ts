@@ -34,13 +34,20 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 	deriveds: null | Derived[];
 }
 
+export interface EffectNodes {
+	start: TemplateNode;
+	end: TemplateNode;
+}
+
 export interface Effect extends Reaction {
 	parent: Effect | null;
-	nodes: null | {
-		start: undefined | null | TemplateNode;
-		anchor: null | TemplateNode;
-		end: TemplateNode;
-	};
+	/**
+	 * Branch effects store their start/end nodes so that they can be
+	 * removed when the effect is destroyed, or moved when an `each`
+	 * block is reconciled. In the case of a single text/element node,
+	 * `start` and `end` will be the same.
+	 */
+	nodes: null | EffectNodes;
 	/** The associated component context */
 	ctx: null | ComponentContext;
 	/** The effect function */

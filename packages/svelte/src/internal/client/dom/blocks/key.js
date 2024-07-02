@@ -17,7 +17,7 @@ export function key_block(anchor, get_key, render_fn) {
 	/** @type {Effect} */
 	let effect;
 
-	block(anchor, 0, () => {
+	block(() => {
 		if (safe_not_equal(key, (key = get_key()))) {
 			if (effect) {
 				pause_effect(effect);

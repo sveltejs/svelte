@@ -48,7 +48,7 @@ export function head(render_fn) {
 	}
 
 	try {
-		block(null, HEAD_EFFECT, () => render_fn(anchor));
+		block(() => render_fn(anchor), HEAD_EFFECT);
 	} finally {
 		if (was_hydrating) {
 			set_hydrate_nodes(/** @type {import('#client').TemplateNode[]} */ (previous_hydrate_nodes));

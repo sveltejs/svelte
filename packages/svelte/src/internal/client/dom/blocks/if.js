@@ -30,7 +30,7 @@ export function if_block(
 
 	var flags = elseif ? EFFECT_TRANSPARENT : 0;
 
-	block(anchor, flags, () => {
+	block(() => {
 		if (condition === (condition = !!get_condition())) return;
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
@@ -78,5 +78,5 @@ export function if_block(
 			// continue in hydration mode
 			set_hydrating(true);
 		}
-	});
+	}, flags);
 }

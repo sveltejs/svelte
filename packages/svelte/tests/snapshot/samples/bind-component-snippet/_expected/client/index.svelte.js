@@ -3,7 +3,7 @@ import * as $ from "svelte/internal/client";
 import TextInput from './Child.svelte';
 
 var root_1 = $.template(`Something`, 1);
-var root = $.template(`<!> `, 5);
+var root = $.template(`<!> `, 1);
 
 export default function Bind_component_snippet($$anchor) {
 	const snippet = ($$anchor) => {

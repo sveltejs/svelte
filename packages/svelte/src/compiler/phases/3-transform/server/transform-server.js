@@ -1003,6 +1003,8 @@ function serialize_inline_component(node, expression, context) {
 		);
 
 		context.state.template.push(statement);
+	} else if (context.state.skip_hydration_boundaries) {
+		context.state.template.push(statement);
 	} else {
 		context.state.template.push(block_open, statement, block_close);
 	}
@@ -1112,7 +1114,7 @@ const template_visitors = {
 		const parent = context.path.at(-1) ?? node;
 		const namespace = infer_namespace(context.state.namespace, parent, node.nodes);
 
-		const { hoisted, trimmed } = clean_nodes(
+		const { hoisted, trimmed, is_standalone } = clean_nodes(
 			parent,
 			node.nodes,
 			context.path,
@@ -1127,7 +1129,8 @@ const template_visitors = {
 			...context.state,
 			init: [],
 			template: [],
-			namespace
+			namespace,
+			skip_hydration_boundaries: is_standalone
 		};
 
 		for (const node of hoisted) {
@@ -1180,17 +1183,23 @@ const template_visitors = {
 			return /** @type {import('estree').Expression} */ (context.visit(arg));
 		});
 
+		if (!context.state.skip_hydration_boundaries) {
+			context.state.template.push(block_open);
+		}
+
 		context.state.template.push(
-			block_open,
 			b.stmt(
 				(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
 					snippet_function,
 					b.id('$$payload'),
 					...snippet_args
 				)
-			),
-			block_close
+			)
 		);
+
+		if (!context.state.skip_hydration_boundaries) {
+			context.state.template.push(block_close);
+		}
 	},
 	ClassDirective() {
 		throw new Error('Node should have been handled elsewhere');
@@ -1925,7 +1934,8 @@ export function server_component(analysis, options) {
 		template: /** @type {any} */ (null),
 		namespace: options.namespace,
 		preserve_whitespace: options.preserveWhitespace,
-		private_derived: new Map()
+		private_derived: new Map(),
+		skip_hydration_boundaries: false
 	};
 
 	const module = /** @type {import('estree').Program} */ (

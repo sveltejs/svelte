@@ -24,8 +24,7 @@ import {
 	run_out_transitions,
 	pause_children,
 	pause_effect,
-	resume_effect,
-	get_first_node
+	resume_effect
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen } from '../../utils.js';
@@ -124,7 +123,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 	/** @type {import('#client').Effect | null} */
 	var fallback = null;
 
-	block(anchor, 0, () => {
+	block(() => {
 		var collection = get_collection();
 
 		var array = is_array(collection)
@@ -294,7 +293,9 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		item = items.get(key);
 
 		if (item === undefined) {
-			var child_anchor = current ? get_first_node(current.e) : anchor;
+			var child_anchor = current
+				? /** @type {import('#client').EffectNodes} */ (current.e.nodes).start
+				: anchor;
 
 			prev = create_item(
 				child_anchor,
@@ -515,10 +516,12 @@ function create_item(anchor, state, prev, next, value, key, index, render_fn, fl
  * @param {Text | Element | Comment} anchor
  */
 function move(item, next, anchor) {
-	var end = item.next ? get_first_node(item.next.e) : anchor;
-	var dest = next ? get_first_node(next.e) : anchor;
+	var end = item.next
+		? /** @type {import('#client').EffectNodes} */ (item.next.e.nodes).start
+		: anchor;
 
-	var node = get_first_node(item.e);
+	var dest = next ? /** @type {import('#client').EffectNodes} */ (next.e.nodes).start : anchor;
+	var node = /** @type {import('#client').EffectNodes} */ (item.e.nodes).start;
 
 	while (node !== end) {
 		var next_node = /** @type {import('#client').TemplateNode} */ (node.nextSibling);

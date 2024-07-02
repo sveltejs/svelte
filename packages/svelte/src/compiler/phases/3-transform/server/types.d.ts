@@ -22,6 +22,7 @@ export interface ComponentServerTransformState extends ServerTransformState {
 	readonly template: Array<Statement | Expression>;
 	readonly namespace: Namespace;
 	readonly preserve_whitespace: boolean;
+	readonly skip_hydration_boundaries: boolean;
 }
 
 export type Context = import('zimmerframe').Context<SvelteNode, ServerTransformState>;

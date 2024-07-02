@@ -185,83 +185,105 @@ export function clean_nodes(
 		}
 	}
 
-	if (preserve_whitespace) {
-		return { hoisted, trimmed: regular };
-	}
+	let trimmed = regular;
 
-	let first, last;
+	if (!preserve_whitespace) {
+		trimmed = [];
 
-	while ((first = regular[0]) && first.type === 'Text' && !regex_not_whitespace.test(first.data)) {
-		regular.shift();
-	}
+		let first, last;
 
-	if (first?.type === 'Text') {
-		first.raw = first.raw.replace(regex_starts_with_whitespaces, '');
-		first.data = first.data.replace(regex_starts_with_whitespaces, '');
-	}
+		while (
+			(first = regular[0]) &&
+			first.type === 'Text' &&
+			!regex_not_whitespace.test(first.data)
+		) {
+			regular.shift();
+		}
 
-	while ((last = regular.at(-1)) && last.type === 'Text' && !regex_not_whitespace.test(last.data)) {
-		regular.pop();
-	}
+		if (first?.type === 'Text') {
+			first.raw = first.raw.replace(regex_starts_with_whitespaces, '');
+			first.data = first.data.replace(regex_starts_with_whitespaces, '');
+		}
 
-	if (last?.type === 'Text') {
-		last.raw = last.raw.replace(regex_ends_with_whitespaces, '');
-		last.data = last.data.replace(regex_ends_with_whitespaces, '');
-	}
+		while (
+			(last = regular.at(-1)) &&
+			last.type === 'Text' &&
+			!regex_not_whitespace.test(last.data)
+		) {
+			regular.pop();
+		}
 
-	const can_remove_entirely =
-		(namespace === 'svg' &&
-			(parent.type !== 'RegularElement' || parent.name !== 'text') &&
-			!path.some((n) => n.type === 'RegularElement' && n.name === 'text')) ||
-		(parent.type === 'RegularElement' &&
-			// TODO others?
-			(parent.name === 'select' ||
-				parent.name === 'tr' ||
-				parent.name === 'table' ||
-				parent.name === 'tbody' ||
-				parent.name === 'thead' ||
-				parent.name === 'tfoot' ||
-				parent.name === 'colgroup' ||
-				parent.name === 'datalist'));
+		if (last?.type === 'Text') {
+			last.raw = last.raw.replace(regex_ends_with_whitespaces, '');
+			last.data = last.data.replace(regex_ends_with_whitespaces, '');
+		}
 
-	/** @type {Compiler.SvelteNode[]} */
-	const trimmed = [];
+		const can_remove_entirely =
+			(namespace === 'svg' &&
+				(parent.type !== 'RegularElement' || parent.name !== 'text') &&
+				!path.some((n) => n.type === 'RegularElement' && n.name === 'text')) ||
+			(parent.type === 'RegularElement' &&
+				// TODO others?
+				(parent.name === 'select' ||
+					parent.name === 'tr' ||
+					parent.name === 'table' ||
+					parent.name === 'tbody' ||
+					parent.name === 'thead' ||
+					parent.name === 'tfoot' ||
+					parent.name === 'colgroup' ||
+					parent.name === 'datalist'));
 
-	// Replace any whitespace between a text and non-text node with a single spaceand keep whitespace
-	// as-is within text nodes, or between text nodes and expression tags (because in the end they count
-	// as one text). This way whitespace is mostly preserved when using CSS with `white-space: pre-line`
-	// and default slot content going into a pre tag (which we can't see).
-	for (let i = 0; i < regular.length; i++) {
-		const prev = regular[i - 1];
-		const node = regular[i];
-		const next = regular[i + 1];
+		// Replace any whitespace between a text and non-text node with a single spaceand keep whitespace
+		// as-is within text nodes, or between text nodes and expression tags (because in the end they count
+		// as one text). This way whitespace is mostly preserved when using CSS with `white-space: pre-line`
+		// and default slot content going into a pre tag (which we can't see).
+		for (let i = 0; i < regular.length; i++) {
+			const prev = regular[i - 1];
+			const node = regular[i];
+			const next = regular[i + 1];
 
-		if (node.type === 'Text') {
-			if (prev?.type !== 'ExpressionTag') {
-				const prev_is_text_ending_with_whitespace =
-					prev?.type === 'Text' && regex_ends_with_whitespaces.test(prev.data);
-				node.data = node.data.replace(
-					regex_starts_with_whitespaces,
-					prev_is_text_ending_with_whitespace ? '' : ' '
-				);
-				node.raw = node.raw.replace(
-					regex_starts_with_whitespaces,
-					prev_is_text_ending_with_whitespace ? '' : ' '
-				);
-			}
-			if (next?.type !== 'ExpressionTag') {
-				node.data = node.data.replace(regex_ends_with_whitespaces, ' ');
-				node.raw = node.raw.replace(regex_ends_with_whitespaces, ' ');
-			}
-			if (node.data && (node.data !== ' ' || !can_remove_entirely)) {
+			if (node.type === 'Text') {
+				if (prev?.type !== 'ExpressionTag') {
+					const prev_is_text_ending_with_whitespace =
+						prev?.type === 'Text' && regex_ends_with_whitespaces.test(prev.data);
+					node.data = node.data.replace(
+						regex_starts_with_whitespaces,
+						prev_is_text_ending_with_whitespace ? '' : ' '
+					);
+					node.raw = node.raw.replace(
+						regex_starts_with_whitespaces,
+						prev_is_text_ending_with_whitespace ? '' : ' '
+					);
+				}
+				if (next?.type !== 'ExpressionTag') {
+					node.data = node.data.replace(regex_ends_with_whitespaces, ' ');
+					node.raw = node.raw.replace(regex_ends_with_whitespaces, ' ');
+				}
+				if (node.data && (node.data !== ' ' || !can_remove_entirely)) {
+					trimmed.push(node);
+				}
+			} else {
 				trimmed.push(node);
 			}
-		} else {
-			trimmed.push(node);
 		}
 	}
 
-	return { hoisted, trimmed };
+	var first = trimmed[0];
+
+	/**
+	 * In a case like `{#if x}<Foo />{/if}`, we don't need to wrap the child in
+	 * comments — we can just use the parent block's anchor for the component.
+	 * TODO extend this optimisation to other cases
+	 */
+	const is_standalone =
+		trimmed.length === 1 &&
+		((first.type === 'RenderTag' && !first.metadata.dynamic) ||
+			(first.type === 'Component' &&
+				!first.attributes.some(
+					(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
+				)));
+
+	return { hoisted, trimmed, is_standalone };
 }
 
 /**

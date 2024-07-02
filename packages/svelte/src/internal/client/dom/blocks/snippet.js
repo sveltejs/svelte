@@ -20,7 +20,7 @@ export function snippet(anchor, get_snippet, ...args) {
 	/** @type {import('#client').Effect | null} */
 	var snippet_effect;
 
-	block(anchor, EFFECT_TRANSPARENT, () => {
+	block(() => {
 		if (snippet === (snippet = get_snippet())) return;
 
 		if (snippet_effect) {
@@ -31,7 +31,7 @@ export function snippet(anchor, get_snippet, ...args) {
 		if (snippet) {
 			snippet_effect = branch(() => /** @type {SnippetFn} */ (snippet)(anchor, ...args));
 		}
-	});
+	}, EFFECT_TRANSPARENT);
 }
 
 /**

@@ -9,10 +9,8 @@ export default function Function_prop_no_getter($$anchor) {
 	}
 
 	const plusOne = (num) => num + 1;
-	var fragment = $.comment(true);
-	var node = $.first_child(fragment);
 
-	Button(node, {
+	Button($$anchor, {
 		onmousedown: () => $.set(count, $.get(count) + 1),
 		onmouseup,
 		onmouseenter: () => $.set(count, $.proxy(plusOne($.get(count)))),
@@ -24,6 +22,4 @@ export default function Function_prop_no_getter($$anchor) {
 		},
 		$$slots: { default: true }
 	});
-
-	$.append($$anchor, fragment);
 }

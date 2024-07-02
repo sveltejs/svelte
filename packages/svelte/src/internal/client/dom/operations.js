@@ -78,7 +78,12 @@ export function child(node) {
 export function first_child(fragment, is_text) {
 	if (!hydrating) {
 		// when not hydrating, `fragment` is a `DocumentFragment` (the result of calling `open_frag`)
-		return /** @type {DocumentFragment} */ (fragment).firstChild;
+		var first = /** @type {DocumentFragment} */ (fragment).firstChild;
+
+		// TODO prevent user comments with the empty string when preserveComments is true
+		if (first instanceof Comment && first.data === '') return first.nextSibling;
+
+		return first;
 	}
 
 	// if an {expression} is empty during SSR, there might be no
