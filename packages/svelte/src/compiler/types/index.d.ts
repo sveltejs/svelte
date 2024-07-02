@@ -12,6 +12,7 @@ import type { Context } from 'zimmerframe';
 import type { Scope } from '../phases/scope.js';
 import type { Css } from './css.js';
 import type { EachBlock, Namespace, SvelteNode, SvelteOptions } from './template.js';
+import type { InternalCompileError } from '../errors.js';
 
 /** The return value of `compile` from `svelte/compiler` */
 export interface CompileResult {
@@ -59,13 +60,7 @@ export interface Warning {
 	filename?: string;
 }
 
-export interface CompileError extends Error {
-	code: string;
-	filename?: string;
-	position?: [number, number];
-	start?: Location;
-	end?: Location;
-}
+export interface CompileError extends InternalCompileError {}
 
 export type CssHashGetter = (args: {
 	name: string;

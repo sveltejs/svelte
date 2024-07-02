@@ -725,13 +725,7 @@ declare module 'svelte/compiler' {
 		filename?: string;
 	}
 
-	interface CompileError_1 extends Error {
-		code: string;
-		filename?: string;
-		position?: [number, number];
-		start?: Location;
-		end?: Location;
-	}
+	interface CompileError extends InternalCompileError {}
 
 	type CssHashGetter = (args: {
 		name: string;
@@ -1206,18 +1200,6 @@ declare module 'svelte/compiler' {
 	function preprocess(source: string, preprocessor: PreprocessorGroup | PreprocessorGroup[], options?: {
 		filename?: string;
 	} | undefined): Promise<Processed>;
-	class CompileError extends Error {
-		
-		constructor(code: string, message: string, position: [number, number] | undefined);
-		filename: string | undefined;
-		
-		position: CompileError_1["position"];
-		
-		start: CompileError_1["start"];
-		
-		end: CompileError_1["end"];
-		code: string;
-	}
 	/**
 	 * The current version, as set in package.json.
 	 *
@@ -1902,8 +1884,20 @@ declare module 'svelte/compiler' {
 		content: Program;
 		attributes: Attribute[];
 	}
+	class InternalCompileError extends Error {
+		
+		constructor(code: string, message: string, position: [number, number] | undefined);
+		filename: string | undefined;
+		
+		position: [number, number] | undefined;
+		
+		start: Location | undefined;
+		
+		end: Location | undefined;
+		code: string;
+	}
 
-	export { MarkupPreprocessor, Preprocessor, PreprocessorGroup, Processed, CompileOptions, ModuleCompileOptions, CompileResult, Warning, compile, compileModule, parse, walk, preprocess, CompileError, VERSION, migrate };
+	export { MarkupPreprocessor, Preprocessor, PreprocessorGroup, Processed, CompileError, CompileOptions, ModuleCompileOptions, CompileResult, Warning, compile, compileModule, parse, walk, preprocess, VERSION, migrate };
 }
 
 declare module 'svelte/easing' {
