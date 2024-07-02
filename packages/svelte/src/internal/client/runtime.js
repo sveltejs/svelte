@@ -292,10 +292,10 @@ function handle_error(error, effect, component_context) {
 
 /**
  * @template V
- * @param {import('#client').Reaction} signal
+ * @param {import('#client').Reaction} reaction
  * @returns {V}
  */
-export function execute_reaction_fn(signal) {
+export function update_reaction(reaction) {
 	const previous_dependencies = current_dependencies;
 	const previous_dependencies_index = current_dependencies_index;
 	const previous_untracked_writes = current_untracked_writes;
@@ -305,12 +305,12 @@ export function execute_reaction_fn(signal) {
 	current_dependencies = /** @type {null | import('#client').Value[]} */ (null);
 	current_dependencies_index = 0;
 	current_untracked_writes = null;
-	current_reaction = (signal.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? signal : null;
-	current_skip_reaction = !is_flushing_effect && (signal.f & UNOWNED) !== 0;
+	current_reaction = (reaction.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
+	current_skip_reaction = !is_flushing_effect && (reaction.f & UNOWNED) !== 0;
 
 	try {
-		let res = /** @type {Function} */ (0, signal.fn)();
-		let dependencies = /** @type {import('#client').Value<unknown>[]} **/ (signal.deps);
+		let res = /** @type {Function} */ (0, reaction.fn)();
+		let dependencies = /** @type {import('#client').Value<unknown>[]} **/ (reaction.deps);
 		if (current_dependencies !== null) {
 			let i;
 			if (dependencies !== null) {
@@ -334,7 +334,7 @@ export function execute_reaction_fn(signal) {
 							? !full_current_dependencies_set.has(dependency)
 							: !full_current_dependencies.includes(dependency)
 					) {
-						remove_reaction(signal, dependency);
+						remove_reaction(reaction, dependency);
 					}
 				}
 			}
@@ -345,7 +345,7 @@ export function execute_reaction_fn(signal) {
 					dependencies[current_dependencies_index + i] = current_dependencies[i];
 				}
 			} else {
-				signal.deps = /** @type {import('#client').Value<V>[]} **/ (
+				reaction.deps = /** @type {import('#client').Value<V>[]} **/ (
 					dependencies = current_dependencies
 				);
 			}
@@ -356,14 +356,17 @@ export function execute_reaction_fn(signal) {
 					const reactions = dependency.reactions;
 
 					if (reactions === null) {
-						dependency.reactions = [signal];
-					} else if (reactions[reactions.length - 1] !== signal && !reactions.includes(signal)) {
-						reactions.push(signal);
+						dependency.reactions = [reaction];
+					} else if (
+						reactions[reactions.length - 1] !== reaction &&
+						!reactions.includes(reaction)
+					) {
+						reactions.push(reaction);
 					}
 				}
 			}
 		} else if (dependencies !== null && current_dependencies_index < dependencies.length) {
-			remove_reactions(signal, current_dependencies_index);
+			remove_reactions(reaction, current_dependencies_index);
 			dependencies.length = current_dependencies_index;
 		}
 		return res;
@@ -452,7 +455,7 @@ export function destroy_effect_children(signal, remove_dom = true) {
  * @param {import('#client').Effect} effect
  * @returns {void}
  */
-export function execute_effect(effect) {
+export function update_effect(effect) {
 	var flags = effect.f;
 
 	if ((flags & DESTROYED) !== 0) {
@@ -480,7 +483,7 @@ export function execute_effect(effect) {
 		}
 
 		execute_effect_teardown(effect);
-		var teardown = execute_reaction_fn(effect);
+		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 	} catch (error) {
 		handle_error(/** @type {Error} */ (error), effect, current_component_context);
@@ -548,12 +551,12 @@ function flush_queued_effects(effects) {
 		var effect = effects[i];
 
 		if ((effect.f & (DESTROYED | INERT)) === 0 && check_dirtiness(effect)) {
-			execute_effect(effect);
+			update_effect(effect);
 
 			// Effects with no dependencies or teardown do not get added to the effect tree.
 			// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
 			// don't know if we need to keep them until they are executed. Doing the check
-			// here (rather than in `execute_effect`) allows us to skip the work for
+			// here (rather than in `update_effect`) allows us to skip the work for
 			// immediate effects.
 			if (effect.deps === null && effect.first === null && effect.nodes === null) {
 				if (effect.teardown === null) {
@@ -639,7 +642,7 @@ function process_effects(effect, collected_effects) {
 
 			if ((flags & RENDER_EFFECT) !== 0) {
 				if (!is_branch && check_dirtiness(current_effect)) {
-					execute_effect(current_effect);
+					update_effect(current_effect);
 					// Child might have been mutated since running the effect
 					child = current_effect.first;
 				}
