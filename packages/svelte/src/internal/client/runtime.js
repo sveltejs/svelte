@@ -438,18 +438,17 @@ export function remove_reactions(signal, start_index) {
 
 /**
  * @param {import('#client').Reaction} signal
- * @param {boolean} [remove_dom]
+ * @param {boolean} remove_dom
  * @returns {void}
  */
-export function destroy_effect_children(signal, remove_dom = true) {
-	let effect = signal.first;
-	signal.first = null;
-	signal.last = null;
-	var sibling;
+export function destroy_effect_children(signal, remove_dom = false) {
+	var effect = signal.first;
+	signal.first = signal.last = null;
+
 	while (effect !== null) {
-		sibling = effect.next;
+		var next = effect.next;
 		destroy_effect(effect, remove_dom);
-		effect = sibling;
+		effect = next;
 	}
 }
 

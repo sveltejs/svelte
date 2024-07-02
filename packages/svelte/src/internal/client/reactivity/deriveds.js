@@ -63,15 +63,16 @@ export function derived_safe_equal(fn) {
 }
 
 /**
- * @param {import('#client').Derived} signal
+ * @param {import('#client').Derived} derived
  * @returns {void}
  */
-function destroy_derived_children(signal) {
-	destroy_effect_children(signal);
-	var deriveds = signal.deriveds;
+function destroy_derived_children(derived) {
+	destroy_effect_children(derived);
+	var deriveds = derived.deriveds;
 
 	if (deriveds !== null) {
-		signal.deriveds = null;
+		derived.deriveds = null;
+
 		for (var i = 0; i < deriveds.length; i += 1) {
 			destroy_derived(deriveds[i]);
 		}
