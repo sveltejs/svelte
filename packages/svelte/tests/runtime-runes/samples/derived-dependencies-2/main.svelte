@@ -1,49 +1,13 @@
 <script>
-	import { writable } from "svelte/store";
+	let a = $state(true);
+	let b = $state({ c: true });
 
-	const store = writable({
-		url: {
-			pathname: '123'
-		}
-	})
-	const page = {
-		subscribe(fn) {
-			return store.subscribe(fn);
-		}
-	}
-
-	let data = $state({
-		event: {
-			author: 'John Doe',
-			body: 'Body',
-			foo: '123'
-		},
-	});
-
-	const { event } = $derived(data);
+	const x = $derived(b);
 </script>
 
-{#if event}
-	<h1>{event.author}</h1>
-	<p>{event.body}</p>
-	<div>{$page.url.pathname}</div>
+<button onclick={() => (a = !a)}>toggle a</button>
+<button onclick={() => (b = b ? null : { c: true })}>toggle b</button>
+
+{#if x}
+	{a}/{x.c}/{x.c}
 {/if}
-
-<button onclick={() => {
-	data = {}
-	store.update(v => ({...v}));
-}}>hide</button>
-
-<button onclick={() => {
-	data = {
-		event: {
-			author: 'John Doe',
-			body: 'Body',
-			foo: '123'
-		},
-	}
-	queueMicrotask(() => {
-		store.update(v => ({...v}));
-	})
-}}>show</button>
-
