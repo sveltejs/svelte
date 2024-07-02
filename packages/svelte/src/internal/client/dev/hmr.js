@@ -1,4 +1,5 @@
 /** @import { Source, Effect } from '#client' */
+import { empty } from '../dom/operations.js';
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { set_should_intro } from '../render.js';
 import { get } from '../runtime.js';

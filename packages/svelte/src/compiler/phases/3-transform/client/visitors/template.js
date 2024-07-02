@@ -36,7 +36,6 @@ import {
 	EACH_KEYED,
 	is_capture_event,
 	TEMPLATE_FRAGMENT,
-	TEMPLATE_UNSET_START,
 	TEMPLATE_USE_IMPORT_NODE,
 	TRANSITION_GLOBAL,
 	TRANSITION_IN,
@@ -1684,32 +1683,13 @@ export const template_visitors = {
 
 				var first = trimmed[0];
 
-				/**
-				 * If the first item in an effect is a static slot or render tag, it will clone
-				 * a template but without creating a child effect. In these cases, we need to keep
-				 * the current `effect.nodes.start` undefined, so that it can be populated by
-				 * the item in question
-				 * TODO come up with a better name than `unset`
-				 */
-				var unset = false;
-
-				if (first.type === 'SlotElement') unset = true;
-				if (first.type === 'RenderTag' && !first.metadata.dynamic) unset = true;
-				if (first.type === 'Component' && !first.metadata.dynamic && !context.state.options.hmr) {
-					unset = true;
-				}
-
 				const use_comment_template = state.template.length === 1 && state.template[0] === '<!>';
 
 				if (use_comment_template) {
 					// special case — we can use `$.comment` instead of creating a unique template
-					body.push(b.var(id, b.call('$.comment', unset && b.literal(unset))));
+					body.push(b.var(id, b.call('$.comment')));
 				} else {
 					let flags = TEMPLATE_FRAGMENT;
-
-					if (unset) {
-						flags |= TEMPLATE_UNSET_START;
-					}
 
 					if (state.metadata.context.template_needs_import_node) {
 						flags |= TEMPLATE_USE_IMPORT_NODE;
