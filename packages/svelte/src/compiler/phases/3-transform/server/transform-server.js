@@ -1003,6 +1003,8 @@ function serialize_inline_component(node, expression, context) {
 		);
 
 		context.state.template.push(statement);
+	} else if (context.state.skip_hydration_boundaries) {
+		context.state.template.push(statement);
 	} else {
 		context.state.template.push(block_open, statement, block_close);
 	}
@@ -1122,12 +1124,20 @@ const template_visitors = {
 			context.state.options.preserveComments
 		);
 
+		const first = trimmed[0];
+
 		/** @type {import('./types').ComponentServerTransformState} */
 		const state = {
 			...context.state,
 			init: [],
 			template: [],
-			namespace
+			namespace,
+			skip_hydration_boundaries:
+				trimmed.length === 1 &&
+				first.type === 'Component' &&
+				!first.attributes.some(
+					(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
+				) // TODO others
 		};
 
 		for (const node of hoisted) {
@@ -1925,7 +1935,8 @@ export function server_component(analysis, options) {
 		template: /** @type {any} */ (null),
 		namespace: options.namespace,
 		preserve_whitespace: options.preserveWhitespace,
-		private_derived: new Map()
+		private_derived: new Map(),
+		skip_hydration_boundaries: false
 	};
 
 	const module = /** @type {import('estree').Program} */ (

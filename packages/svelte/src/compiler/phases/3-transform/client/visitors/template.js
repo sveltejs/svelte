@@ -1675,20 +1675,23 @@ export const template_visitors = {
 				);
 				close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 			} else {
-				/** @type {(is_text: boolean) => import('estree').Expression} */
-				const expression = (is_text) =>
-					is_text ? b.call('$.first_child', id, b.true) : b.call('$.first_child', id);
-
-				process_children(trimmed, expression, false, { ...context, state });
-
 				var first = trimmed[0];
+				const skip_template =
+					trimmed.length === 1 &&
+					first.type === 'Component' &&
+					!first.attributes.some(
+						(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
+					); // TODO others
 
-				const use_comment_template = state.template.length === 1 && state.template[0] === '<!>';
-
-				if (use_comment_template) {
-					// special case — we can use `$.comment` instead of creating a unique template
-					body.push(b.var(id, b.call('$.comment')));
+				if (skip_template) {
+					process_children(trimmed, () => b.id('$$anchor'), false, { ...context, state });
 				} else {
+					/** @type {(is_text: boolean) => import('estree').Expression} */
+					const expression = (is_text) =>
+						is_text ? b.call('$.first_child', id, b.true) : b.call('$.first_child', id);
+
+					process_children(trimmed, expression, false, { ...context, state });
+
 					let flags = TEMPLATE_FRAGMENT;
 
 					if (state.metadata.context.template_needs_import_node) {
@@ -1701,11 +1704,11 @@ export const template_visitors = {
 					]);
 
 					body.push(b.var(id, b.call(template_name)));
+
+					close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 				}
 
 				body.push(...state.before_init, ...state.init);
-
-				close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 			}
 		} else {
 			body.push(...state.before_init, ...state.init);

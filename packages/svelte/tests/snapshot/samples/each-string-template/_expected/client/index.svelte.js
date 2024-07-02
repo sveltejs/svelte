@@ -1,8 +1,10 @@
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 
+var root = $.template(`<!>`, 1);
+
 export default function Each_string_template($$anchor) {
-	var fragment = $.comment();
+	var fragment = root();
 	var node = $.first_child(fragment);
 
 	$.each(node, 1, () => ['foo', 'bar', 'baz'], $.index, ($$anchor, thing, $$index) => {
