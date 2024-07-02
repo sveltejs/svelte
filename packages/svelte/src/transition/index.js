@@ -1,16 +1,4 @@
-/**
- * @import {
- *   BlurParams,
- *   CrossfadeParams,
- *   DrawParams,
- *   FadeParams,
- *   FlyParams,
- *   ScaleParams,
- *   SlideParams,
- *   TransitionConfig
- * } from './public'
- */
-
+/** @import { BlurParams, CrossfadeParams, DrawParams, FadeParams, FlyParams, ScaleParams, SlideParams, TransitionConfig } from './public' */
 /** @param {number} x */
 const linear = (x) => x;
 
