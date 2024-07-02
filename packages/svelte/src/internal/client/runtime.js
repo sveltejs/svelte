@@ -29,8 +29,7 @@ import {
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	STATE_FROZEN_SYMBOL,
-	INSPECT_EFFECT
+	STATE_FROZEN_SYMBOL
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -843,52 +842,6 @@ export function invalidate_inner_signals(fn) {
 			}
 		} else {
 			mutate(signal, null /* doesnt matter */);
-		}
-	}
-}
-
-/**
- * @param {import('#client').Value} signal
- * @param {number} status should be DIRTY or MAYBE_DIRTY
- * @param {boolean} force_schedule
- * @returns {void}
- */
-export function mark_reactions(signal, status, force_schedule) {
-	var reactions = signal.reactions;
-	if (reactions === null) return;
-
-	var runes = is_runes();
-	var length = reactions.length;
-
-	for (var i = 0; i < length; i++) {
-		var reaction = reactions[i];
-		var flags = reaction.f;
-
-		if (DEV && (flags & INSPECT_EFFECT) !== 0) {
-			inspect_effects.add(reaction);
-			continue;
-		}
-
-		// We skip any effects that are already dirty. Additionally, we also
-		// skip if the reaction is the same as the current effect (except if we're not in runes or we
-		// are in force schedule mode).
-		if ((flags & DIRTY) !== 0 || ((!force_schedule || !runes) && reaction === current_effect)) {
-			continue;
-		}
-
-		set_signal_status(reaction, status);
-
-		// If the signal a) was previously clean or b) is an unowned derived, then mark it
-		if ((flags & (CLEAN | UNOWNED)) !== 0) {
-			if ((flags & DERIVED) !== 0) {
-				mark_reactions(
-					/** @type {import('#client').Derived} */ (reaction),
-					MAYBE_DIRTY,
-					force_schedule
-				);
-			} else {
-				schedule_effect(/** @type {import('#client').Effect} */ (reaction));
-			}
 		}
 	}
 }
