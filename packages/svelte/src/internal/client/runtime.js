@@ -769,18 +769,12 @@ export function get(signal) {
 
 	// Register the dependency on the current reaction signal.
 	if (current_reaction !== null) {
-		var unowned = (current_reaction.f & UNOWNED) !== 0;
 		var deps = current_reaction.deps;
 
 		// If the signal is accessing the same dependencies in the same
 		// order as it did last time, increment `skipped_deps`
 		// rather than updating `new_deps`, which creates GC cost
-		if (
-			new_deps === null &&
-			deps !== null &&
-			deps[skipped_deps] === signal &&
-			!(unowned && current_effect !== null)
-		) {
+		if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
 			skipped_deps++;
 		}
 
