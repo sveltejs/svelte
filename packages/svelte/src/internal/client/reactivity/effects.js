@@ -299,10 +299,10 @@ export function template_effect(fn) {
 }
 
 /**
- * @param {number} flags
  * @param {(() => void)} fn
+ * @param {number} flags
  */
-export function block(flags, fn) {
+export function block(fn, flags = 0) {
 	return create_effect(RENDER_EFFECT | BLOCK_EFFECT | flags, fn, true);
 }
 

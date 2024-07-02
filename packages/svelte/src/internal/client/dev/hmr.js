@@ -20,7 +20,7 @@ export function hmr(source) {
 		/** @type {Effect} */
 		let effect;
 
-		block(0, () => {
+		block(() => {
 			const component = get(source);
 
 			if (effect) {

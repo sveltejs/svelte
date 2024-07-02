@@ -123,7 +123,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 	/** @type {import('#client').Effect | null} */
 	var fallback = null;
 
-	block(0, () => {
+	block(() => {
 		var collection = get_collection();
 
 		var array = is_array(collection)
