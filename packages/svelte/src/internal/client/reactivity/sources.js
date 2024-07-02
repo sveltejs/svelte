@@ -12,8 +12,7 @@ import {
 	set_signal_status,
 	untrack,
 	increment_version,
-	update_effect,
-	inspect_effects
+	update_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -27,6 +26,8 @@ import {
 } from '../constants.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import * as e from '../errors.js';
+
+let inspect_effects = new Set();
 
 /**
  * @template V

@@ -62,8 +62,6 @@ export function set_is_destroying_effect(value) {
 	is_destroying_effect = value;
 }
 
-export let inspect_effects = new Set();
-
 // Handle effect queues
 
 /** @type {import('#client').Effect[]} */
