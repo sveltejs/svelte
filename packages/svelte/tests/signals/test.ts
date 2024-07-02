@@ -273,10 +273,12 @@ describe('signals', () => {
 			flushSync(() => set(count, 0));
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.reactions?.length, 1);
+			assert.deepEqual(calc.reactions?.length, 1);
 			assert.deepEqual(log, [0, 2, 'limit', 0]);
 			destroy();
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.reactions, null);
+			assert.deepEqual(calc.reactions, null);
 		};
 	});
 
