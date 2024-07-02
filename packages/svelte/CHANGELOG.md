@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.171
+
+### Patch Changes
+
+- feat: simpler effect DOM boundaries ([#12258](https://github.com/sveltejs/svelte/pull/12258))
+
 ## 5.0.0-next.170
 
 ### Patch Changes
