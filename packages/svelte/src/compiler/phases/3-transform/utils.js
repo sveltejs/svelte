@@ -1,3 +1,7 @@
+/** @import { Context } from 'zimmerframe' */
+/** @import { TransformState } from './types.js' */
+/** @import * as Compiler from '#compiler' */
+/** @import { Node, Expression, CallExpression } from 'estree' */
 import {
 	regex_ends_with_whitespaces,
 	regex_not_whitespace,
@@ -12,7 +16,7 @@ import is_reference from 'is-reference';
 import { set_scope } from '../scope.js';
 
 /**
- * @param {import('estree').Node} node
+ * @param {Node} node
  * @returns {boolean}
  */
 export function is_hoistable_function(node) {
@@ -28,20 +32,20 @@ export function is_hoistable_function(node) {
 
 /**
  * Match Svelte 4 behaviour by sorting ConstTag nodes in topological order
- * @param {import("#compiler").SvelteNode[]} nodes
- * @param {import('./types.js').TransformState} state
+ * @param {Compiler.SvelteNode[]} nodes
+ * @param {TransformState} state
  */
 function sort_const_tags(nodes, state) {
 	/**
 	 * @typedef {{
-	 *   node: import('#compiler').ConstTag;
-	 *   deps: Set<import('#compiler').Binding>;
+	 *   node: Compiler.ConstTag;
+	 *   deps: Set<Compiler.Binding>;
 	 * }} Tag
 	 */
 
 	const other = [];
 
-	/** @type {Map<import('#compiler').Binding, Tag>} */
+	/** @type {Map<Compiler.Binding, Tag>} */
 	const tags = new Map();
 
 	const { _ } = set_scope(state.scopes);
@@ -51,16 +55,16 @@ function sort_const_tags(nodes, state) {
 			const declaration = node.declaration.declarations[0];
 
 			const bindings = extract_identifiers(declaration.id).map((id) => {
-				return /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
+				return /** @type {Compiler.Binding} */ (state.scope.get(id.name));
 			});
 
-			/** @type {Set<import('#compiler').Binding>} */
+			/** @type {Set<Compiler.Binding>} */
 			const deps = new Set();
 
 			walk(declaration.init, state, {
 				_,
 				Identifier(node, context) {
-					const parent = /** @type {import('estree').Expression} */ (context.path.at(-1));
+					const parent = /** @type {Expression} */ (context.path.at(-1));
 
 					if (is_reference(node, parent)) {
 						const binding = context.state.scope.get(node.name);
@@ -81,7 +85,7 @@ function sort_const_tags(nodes, state) {
 		return nodes;
 	}
 
-	/** @type {Array<[import('#compiler').Binding, import('#compiler').Binding]>} */
+	/** @type {Array<[Compiler.Binding, Compiler.Binding]>} */
 	const edges = [];
 
 	for (const [id, tag] of tags) {
@@ -98,7 +102,7 @@ function sort_const_tags(nodes, state) {
 		e.const_tag_cycle(tag.node, cycle.map((binding) => binding.node.name).join(' → '));
 	}
 
-	/** @type {import('#compiler').ConstTag[]} */
+	/** @type {Compiler.ConstTag[]} */
 	const sorted = [];
 
 	/** @param {Tag} tag */
@@ -129,11 +133,11 @@ function sort_const_tags(nodes, state) {
  *   unless it's whitespace-only, in which case collapse to a single whitespace for all cases
  *   except when it's children of certain elements where we know ignore whitespace (like td/option/head),
  *   in which case we remove it entirely
- * @param {import('#compiler').SvelteNode} parent
- * @param {import('#compiler').SvelteNode[]} nodes
- * @param {import('#compiler').SvelteNode[]} path
- * @param {import('#compiler').Namespace} namespace
- * @param {import('./types.js').TransformState} state
+ * @param {Compiler.SvelteNode} parent
+ * @param {Compiler.SvelteNode[]} nodes
+ * @param {Compiler.SvelteNode[]} path
+ * @param {Compiler.Namespace} namespace
+ * @param {TransformState} state
  * @param {boolean} preserve_whitespace
  * @param {boolean} preserve_comments
  */
@@ -153,10 +157,10 @@ export function clean_nodes(
 		nodes = sort_const_tags(nodes, state);
 	}
 
-	/** @type {import('#compiler').SvelteNode[]} */
+	/** @type {Compiler.SvelteNode[]} */
 	const hoisted = [];
 
-	/** @type {import('#compiler').SvelteNode[]} */
+	/** @type {Compiler.SvelteNode[]} */
 	const regular = [];
 
 	for (const node of nodes) {
@@ -220,7 +224,7 @@ export function clean_nodes(
 				parent.name === 'colgroup' ||
 				parent.name === 'datalist'));
 
-	/** @type {import('#compiler').SvelteNode[]} */
+	/** @type {Compiler.SvelteNode[]} */
 	const trimmed = [];
 
 	// Replace any whitespace between a text and non-text node with a single spaceand keep whitespace
@@ -262,9 +266,9 @@ export function clean_nodes(
 
 /**
  * Infers the namespace for the children of a node that should be used when creating the `$.template(...)`.
- * @param {import('#compiler').Namespace} namespace
- * @param {import('#compiler').SvelteNode} parent
- * @param {import('#compiler').SvelteNode[]} nodes
+ * @param {Compiler.Namespace} namespace
+ * @param {Compiler.SvelteNode} parent
+ * @param {Compiler.SvelteNode[]} nodes
  */
 export function infer_namespace(namespace, parent, nodes) {
 	if (namespace !== 'foreign') {
@@ -303,12 +307,12 @@ export function infer_namespace(namespace, parent, nodes) {
  * Heuristic: Keep current namespace, unless we find a regular element,
  * in which case we always want html, or we only find svg nodes,
  * in which case we assume svg.
- * @param {import('#compiler').SvelteNode[]} nodes
- * @param {import('#compiler').Namespace | 'keep' | 'maybe_html'} namespace
+ * @param {Compiler.SvelteNode[]} nodes
+ * @param {Compiler.Namespace | 'keep' | 'maybe_html'} namespace
  */
 function check_nodes_for_namespace(nodes, namespace) {
 	/**
-	 * @param {import('#compiler').SvelteElement | import('#compiler').RegularElement} node}
+	 * @param {Compiler.SvelteElement | Compiler.RegularElement} node}
 	 * @param {{stop: () => void}} context
 	 */
 	const RegularElement = (node, { stop }) => {
@@ -357,9 +361,9 @@ function check_nodes_for_namespace(nodes, namespace) {
 
 /**
  * Determines the namespace the children of this node are in.
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
- * @param {import('#compiler').Namespace} namespace
- * @returns {import('#compiler').Namespace}
+ * @param {Compiler.RegularElement | Compiler.SvelteElement} node
+ * @param {Compiler.Namespace} namespace
+ * @returns {Compiler.Namespace}
  */
 export function determine_namespace_for_children(node, namespace) {
 	if (namespace === 'foreign') {
@@ -378,9 +382,9 @@ export function determine_namespace_for_children(node, namespace) {
 }
 
 /**
- * @template {import('./types.js').TransformState} T
- * @param {import('estree').CallExpression} node
- * @param {import('zimmerframe').Context<any, T>} context
+ * @template {TransformState} T
+ * @param {CallExpression} node
+ * @param {Context<any, T>} context
  */
 export function transform_inspect_rune(node, context) {
 	const { state, visit } = context;
@@ -389,12 +393,11 @@ export function transform_inspect_rune(node, context) {
 	if (!state.options.dev) return b.unary('void', b.literal(0));
 
 	if (node.callee.type === 'MemberExpression') {
-		const raw_inspect_args = /** @type {import('estree').CallExpression} */ (node.callee.object)
-			.arguments;
+		const raw_inspect_args = /** @type {CallExpression} */ (node.callee.object).arguments;
 		const inspect_args =
-			/** @type {Array<import('estree').Expression>} */
+			/** @type {Array<Expression>} */
 			(raw_inspect_args.map((arg) => visit(arg)));
-		const with_arg = /** @type {import('estree').Expression} */ (visit(node.arguments[0]));
+		const with_arg = /** @type {Expression} */ (visit(node.arguments[0]));
 
 		return b.call(
 			'$.inspect',
@@ -402,9 +405,7 @@ export function transform_inspect_rune(node, context) {
 			with_arg
 		);
 	} else {
-		const arg = node.arguments.map(
-			(arg) => /** @type {import('estree').Expression} */ (visit(arg))
-		);
+		const arg = node.arguments.map((arg) => /** @type {Expression} */ (visit(arg)));
 		return b.call('$.inspect', as_fn ? b.thunk(b.array(arg)) : b.array(arg));
 	}
 }

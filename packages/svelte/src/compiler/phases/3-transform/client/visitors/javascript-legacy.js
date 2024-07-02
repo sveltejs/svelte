@@ -1,3 +1,7 @@
+/** @import { Binding, ReactiveStatement } from '#compiler' */
+/** @import { ComponentVisitors } from '../types.js' */
+/** @import { Scope } from '../../../scope.js' */
+/** @import { VariableDeclarator, Expression, Identifier, Statement } from 'estree' */
 import { is_hoistable_function } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import { extract_paths } from '../../../../utils/ast.js';
@@ -5,9 +9,9 @@ import { get_prop_source, serialize_get_binding } from '../utils.js';
 
 /**
  * Creates the output for a state declaration.
- * @param {import('estree').VariableDeclarator} declarator
- * @param {import('../../../scope.js').Scope} scope
- * @param {import('estree').Expression} value
+ * @param {VariableDeclarator} declarator
+ * @param {Scope} scope
+ * @param {Expression} value
  */
 function create_state_declarators(declarator, scope, value) {
 	if (declarator.id.type === 'Identifier') {
@@ -20,7 +24,7 @@ function create_state_declarators(declarator, scope, value) {
 		b.declarator(b.id(tmp), value),
 		...paths.map((path) => {
 			const value = path.expression?.(b.id(tmp));
-			const binding = scope.get(/** @type {import('estree').Identifier} */ (path.node).name);
+			const binding = scope.get(/** @type {Identifier} */ (path.node).name);
 			return b.declarator(
 				path.node,
 				binding?.kind === 'state' ? b.call('$.mutable_source', value) : value
@@ -29,16 +33,14 @@ function create_state_declarators(declarator, scope, value) {
 	];
 }
 
-/** @type {import('../types.js').ComponentVisitors} */
+/** @type {ComponentVisitors} */
 export const javascript_visitors_legacy = {
 	VariableDeclaration(node, { state, visit }) {
-		/** @type {import('estree').VariableDeclarator[]} */
+		/** @type {VariableDeclarator[]} */
 		const declarations = [];
 
 		for (const declarator of node.declarations) {
-			const bindings = /** @type {import('#compiler').Binding[]} */ (
-				state.scope.get_bindings(declarator)
-			);
+			const bindings = /** @type {Binding[]} */ (state.scope.get_bindings(declarator));
 			const has_state = bindings.some((binding) => binding.kind === 'state');
 			const has_props = bindings.some((binding) => binding.kind === 'bindable_prop');
 
@@ -47,15 +49,11 @@ export const javascript_visitors_legacy = {
 				if (init != null && is_hoistable_function(init)) {
 					const hoistable_function = visit(init);
 					state.hoisted.push(
-						b.declaration(
-							'const',
-							declarator.id,
-							/** @type {import('estree').Expression} */ (hoistable_function)
-						)
+						b.declaration('const', declarator.id, /** @type {Expression} */ (hoistable_function))
 					);
 					continue;
 				}
-				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
+				declarations.push(/** @type {VariableDeclarator} */ (visit(declarator)));
 				continue;
 			}
 
@@ -68,14 +66,12 @@ export const javascript_visitors_legacy = {
 					declarations.push(
 						b.declarator(
 							b.id(tmp),
-							/** @type {import('estree').Expression} */ (
-								visit(/** @type {import('estree').Expression} */ (declarator.init))
-							)
+							/** @type {Expression} */ (visit(/** @type {Expression} */ (declarator.init)))
 						)
 					);
 					for (const path of paths) {
-						const name = /** @type {import('estree').Identifier} */ (path.node).name;
-						const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
+						const name = /** @type {Identifier} */ (path.node).name;
+						const binding = /** @type {Binding} */ (state.scope.get(name));
 						const value = path.expression?.(b.id(tmp));
 						declarations.push(
 							b.declarator(
@@ -89,9 +85,7 @@ export const javascript_visitors_legacy = {
 					continue;
 				}
 
-				const binding = /** @type {import('#compiler').Binding} */ (
-					state.scope.get(declarator.id.name)
-				);
+				const binding = /** @type {Binding} */ (state.scope.get(declarator.id.name));
 
 				declarations.push(
 					b.declarator(
@@ -100,7 +94,7 @@ export const javascript_visitors_legacy = {
 							binding,
 							state,
 							binding.prop_alias ?? declarator.id.name,
-							declarator.init && /** @type {import('estree').Expression} */ (visit(declarator.init))
+							declarator.init && /** @type {Expression} */ (visit(declarator.init))
 						)
 					)
 				);
@@ -112,7 +106,7 @@ export const javascript_visitors_legacy = {
 				...create_state_declarators(
 					declarator,
 					state.scope,
-					/** @type {import('estree').Expression} */ (declarator.init && visit(declarator.init))
+					/** @type {Expression} */ (declarator.init && visit(declarator.init))
 				)
 			);
 		}
@@ -135,7 +129,7 @@ export const javascript_visitors_legacy = {
 		const state = context.state;
 		// To recreate Svelte 4 behaviour, we track the dependencies
 		// the compiler can 'see', but we untrack the effect itself
-		const reactive_stmt = /** @type {import('#compiler').ReactiveStatement} */ (
+		const reactive_stmt = /** @type {ReactiveStatement} */ (
 			state.analysis.reactive_statements.get(node)
 		);
 
@@ -143,7 +137,7 @@ export const javascript_visitors_legacy = {
 
 		const { dependencies } = reactive_stmt;
 
-		let serialized_body = /** @type {import('estree').Statement} */ (context.visit(node.body));
+		let serialized_body = /** @type {Statement} */ (context.visit(node.body));
 
 		if (serialized_body.type !== 'BlockStatement') {
 			serialized_body = b.block([serialized_body]);
@@ -151,7 +145,7 @@ export const javascript_visitors_legacy = {
 
 		const body = serialized_body.body;
 
-		/** @type {import('estree').Expression[]} */
+		/** @type {Expression[]} */
 		const sequence = [];
 		for (const binding of dependencies) {
 			if (binding.kind === 'normal') continue;

@@ -1,3 +1,4 @@
+/** @import { ProxyMetadata } from '#client' */
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
 import { STATE_SYMBOL } from '../constants.js';
@@ -134,8 +135,8 @@ export function add_owner_effect(get_object, Component) {
 }
 
 /**
- * @param {import('#client').ProxyMetadata<any> | null} from
- * @param {import('#client').ProxyMetadata<any>} to
+ * @param {ProxyMetadata<any> | null} from
+ * @param {ProxyMetadata<any>} to
  */
 export function widen_ownership(from, to) {
 	if (to.owners === null) {
@@ -162,7 +163,7 @@ export function widen_ownership(from, to) {
  * @param {Set<any>} seen
  */
 function add_owner_to_object(object, owner, seen) {
-	const metadata = /** @type {import('#client').ProxyMetadata} */ (object?.[STATE_SYMBOL]);
+	const metadata = /** @type {ProxyMetadata} */ (object?.[STATE_SYMBOL]);
 
 	if (metadata) {
 		// this is a state proxy, add owner directly, if not globally shared
@@ -199,7 +200,7 @@ function add_owner_to_object(object, owner, seen) {
 }
 
 /**
- * @param {import('#client').ProxyMetadata} metadata
+ * @param {ProxyMetadata} metadata
  * @param {Function} component
  * @returns {boolean}
  */
@@ -215,18 +216,18 @@ function has_owner(metadata, component) {
 }
 
 /**
- * @param {import('#client').ProxyMetadata} metadata
+ * @param {ProxyMetadata} metadata
  * @returns {any}
  */
 function get_owner(metadata) {
 	return (
 		metadata?.owners?.values().next().value ??
-		get_owner(/** @type {import('#client').ProxyMetadata} */ (metadata.parent))
+		get_owner(/** @type {ProxyMetadata} */ (metadata.parent))
 	);
 }
 
 /**
- * @param {import('#client').ProxyMetadata} metadata
+ * @param {ProxyMetadata} metadata
  */
 export function check_ownership(metadata) {
 	const component = get_component();

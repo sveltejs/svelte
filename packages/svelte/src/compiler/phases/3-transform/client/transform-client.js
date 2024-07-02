@@ -1,3 +1,7 @@
+/** @import * as ESTree from 'estree' */
+/** @import { ValidatedCompileOptions, SvelteNode, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { ComponentAnalysis, Analysis } from '../../types' */
+/** @import { Visitors, ComponentClientTransformState, ClientTransformState } from './types' */
 import { walk } from 'zimmerframe';
 import * as b from '../../../utils/builders.js';
 import { set_scope } from '../../scope.js';
@@ -12,8 +16,8 @@ import { filename } from '../../../state.js';
 
 /**
  * This function ensures visitor sets don't accidentally clobber each other
- * @param  {...import('./types').Visitors} array
- * @returns {import('./types').Visitors}
+ * @param  {...Visitors} array
+ * @returns {Visitors}
  */
 function combine_visitors(...array) {
 	/** @type {Record<string, any>} */
@@ -35,12 +39,12 @@ function combine_visitors(...array) {
 
 /**
  * @param {string} source
- * @param {import('../../types').ComponentAnalysis} analysis
- * @param {import('#compiler').ValidatedCompileOptions} options
- * @returns {import('estree').Program}
+ * @param {ComponentAnalysis} analysis
+ * @param {ValidatedCompileOptions} options
+ * @returns {ESTree.Program}
  */
 export function client_component(source, analysis, options) {
-	/** @type {import('./types').ComponentClientTransformState} */
+	/** @type {ComponentClientTransformState} */
 	const state = {
 		analysis,
 		options,
@@ -72,9 +76,9 @@ export function client_component(source, analysis, options) {
 		locations: /** @type {any} */ (null)
 	};
 
-	const module = /** @type {import('estree').Program} */ (
+	const module = /** @type {ESTree.Program} */ (
 		walk(
-			/** @type {import('#compiler').SvelteNode} */ (analysis.module.ast),
+			/** @type {SvelteNode} */ (analysis.module.ast),
 			state,
 			combine_visitors(
 				set_scope(analysis.module.scopes),
@@ -87,9 +91,9 @@ export function client_component(source, analysis, options) {
 	);
 
 	const instance_state = { ...state, scope: analysis.instance.scope };
-	const instance = /** @type {import('estree').Program} */ (
+	const instance = /** @type {ESTree.Program} */ (
 		walk(
-			/** @type {import('#compiler').SvelteNode} */ (analysis.instance.ast),
+			/** @type {SvelteNode} */ (analysis.instance.ast),
 			instance_state,
 			combine_visitors(
 				set_scope(analysis.instance.scopes),
@@ -114,9 +118,9 @@ export function client_component(source, analysis, options) {
 		)
 	);
 
-	const template = /** @type {import('estree').Program} */ (
+	const template = /** @type {ESTree.Program} */ (
 		walk(
-			/** @type {import('#compiler').SvelteNode} */ (analysis.template.ast),
+			/** @type {SvelteNode} */ (analysis.template.ast),
 			{ ...state, scope: analysis.instance.scope },
 			combine_visitors(
 				set_scope(analysis.template.scopes),
@@ -138,10 +142,10 @@ export function client_component(source, analysis, options) {
 		}
 	}
 
-	/** @type {import('estree').Statement[]} */
+	/** @type {ESTree.Statement[]} */
 	const store_setup = [];
 
-	/** @type {import('estree').VariableDeclaration[]} */
+	/** @type {ESTree.VariableDeclaration[]} */
 	const legacy_reactive_declarations = [];
 
 	for (const [name, binding] of analysis.instance.scope.declarations) {
@@ -193,14 +197,14 @@ export function client_component(source, analysis, options) {
 
 	/**
 	 * Used to store the group nodes
-	 * @type {import('estree').VariableDeclaration[]}
+	 * @type {ESTree.VariableDeclaration[]}
 	 */
 	const group_binding_declarations = [];
 	for (const group of analysis.binding_groups.values()) {
 		group_binding_declarations.push(b.const(group.name, b.array([])));
 	}
 
-	/** @type {Array<import('estree').Property | import('estree').SpreadElement>} */
+	/** @type {Array<ESTree.Property | ESTree.SpreadElement>} */
 	const component_returned_object = analysis.exports.map(({ name, alias }) => {
 		const expression = serialize_get_binding(b.id(name), instance_state);
 
@@ -218,7 +222,7 @@ export function client_component(source, analysis, options) {
 
 	if (analysis.runes && options.dev) {
 		const exports = analysis.exports.map(({ name, alias }) => b.literal(alias ?? name));
-		/** @type {import('estree').Literal[]} */
+		/** @type {ESTree.Literal[]} */
 		const bindable = [];
 		for (const [name, binding] of properties) {
 			if (binding.kind === 'bindable_prop') {
@@ -254,7 +258,7 @@ export function client_component(source, analysis, options) {
 				setter.value.params[0] = {
 					type: 'AssignmentPattern',
 					left: b.id('$$value'),
-					right: /** @type {import('estree').Expression} */ (binding.initial)
+					right: /** @type {ESTree.Expression} */ (binding.initial)
 				};
 			}
 
@@ -290,9 +294,9 @@ export function client_component(source, analysis, options) {
 		...legacy_reactive_declarations,
 		...group_binding_declarations,
 		...analysis.top_level_snippets,
-		.../** @type {import('estree').Statement[]} */ (instance.body),
+		.../** @type {ESTree.Statement[]} */ (instance.body),
 		analysis.runes || !analysis.needs_context ? b.empty : b.stmt(b.call('$.init')),
-		.../** @type {import('estree').Statement[]} */ (template.body)
+		.../** @type {ESTree.Statement[]} */ (template.body)
 	]);
 
 	if (!analysis.runes) {
@@ -480,7 +484,7 @@ export function client_component(source, analysis, options) {
 	if (analysis.custom_element) {
 		const ce = analysis.custom_element;
 
-		/** @type {import('estree').Property[]} */
+		/** @type {ESTree.Property[]} */
 		const props_str = [];
 
 		for (const [name, binding] of properties) {
@@ -495,7 +499,7 @@ export function client_component(source, analysis, options) {
 			}
 
 			const value = b.object(
-				/** @type {import('estree').Property[]} */ (
+				/** @type {ESTree.Property[]} */ (
 					[
 						prop_def.attribute ? b.init('attribute', b.literal(prop_def.attribute)) : undefined,
 						prop_def.reflect ? b.init('reflect', b.literal(true)) : undefined,
@@ -539,12 +543,12 @@ export function client_component(source, analysis, options) {
 }
 
 /**
- * @param {import('../../types').Analysis} analysis
- * @param {import('#compiler').ValidatedModuleCompileOptions} options
- * @returns {import('estree').Program}
+ * @param {Analysis} analysis
+ * @param {ValidatedModuleCompileOptions} options
+ * @returns {ESTree.Program}
  */
 export function client_module(analysis, options) {
-	/** @type {import('./types').ClientTransformState} */
+	/** @type {ClientTransformState} */
 	const state = {
 		analysis,
 		options,
@@ -556,9 +560,9 @@ export function client_module(analysis, options) {
 		in_constructor: false
 	};
 
-	const module = /** @type {import('estree').Program} */ (
+	const module = /** @type {ESTree.Program} */ (
 		walk(
-			/** @type {import('#compiler').SvelteNode} */ (analysis.module.ast),
+			/** @type {SvelteNode} */ (analysis.module.ast),
 			state,
 			combine_visitors(
 				set_scope(analysis.module.scopes),

@@ -1,3 +1,4 @@
+/** @import { TemplateNode, Dom, Effect } from '#client' */
 import { DEV } from 'esm-env';
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
 import { empty } from '../operations.js';
@@ -5,16 +6,16 @@ import { empty } from '../operations.js';
 /**
  * @template P
  * @template {(props: P) => void} C
- * @param {import('#client').TemplateNode} anchor
+ * @param {TemplateNode} anchor
  * @param {() => C} get_component
- * @param {(anchor: import('#client').TemplateNode, component: C) => import('#client').Dom | void} render_fn
+ * @param {(anchor: TemplateNode, component: C) => Dom | void} render_fn
  * @returns {void}
  */
 export function component(anchor, get_component, render_fn) {
 	/** @type {C} */
 	let component;
 
-	/** @type {import('#client').Effect | null} */
+	/** @type {Effect | null} */
 	let effect;
 
 	var component_anchor = anchor;

@@ -1,3 +1,9 @@
+/** @import { VariableDeclarator, Node, Identifier } from 'estree' */
+/** @import { SvelteNode } from '../types/template.js' */
+/** @import { Visitors } from 'zimmerframe' */
+/** @import { ComponentAnalysis } from '../phases/types.js' */
+/** @import { Scope } from '../phases/scope.js' */
+/** @import * as Compiler from '#compiler' */
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
 import { parse } from '../phases/1-parse/index.js';
@@ -24,7 +30,7 @@ export function migrate(source) {
 
 		const { customElement: customElementOptions, ...parsed_options } = parsed.options || {};
 
-		/** @type {import('#compiler').ValidatedCompileOptions} */
+		/** @type {Compiler.ValidatedCompileOptions} */
 		const combined_options = {
 			...validate_component_options({}, ''),
 			...parsed_options,
@@ -160,9 +166,9 @@ export function migrate(source) {
 
 /**
  * @typedef {{
- *  scope: import('../phases/scope.js').Scope;
+ *  scope: Scope;
  *  str: MagicString;
- *  analysis: import('../phases/types.js').ComponentAnalysis;
+ *  analysis: ComponentAnalysis;
  *  indent: string;
  *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string }>;
  *  props_insertion_point: number;
@@ -175,7 +181,7 @@ export function migrate(source) {
  * }} State
  */
 
-/** @type {import('zimmerframe').Visitors<import('../types/template.js').SvelteNode, State>} */
+/** @type {Visitors<SvelteNode, State>} */
 const instance_script = {
 	_(node, { state, next }) {
 		// @ts-expect-error
@@ -281,9 +287,7 @@ const instance_script = {
 					// }
 				}
 
-				const binding = /** @type {import('#compiler').Binding} */ (
-					state.scope.get(declarator.id.name)
-				);
+				const binding = /** @type {Compiler.Binding} */ (state.scope.get(declarator.id.name));
 
 				if (
 					state.analysis.uses_props &&
@@ -429,7 +433,7 @@ const instance_script = {
 	}
 };
 
-/** @type {import('zimmerframe').Visitors<import('../types/template.js').SvelteNode, State>} */
+/** @type {Visitors<SvelteNode, State>} */
 const template = {
 	Identifier(node, { state, path }) {
 		handle_identifier(node, state, path);
@@ -543,15 +547,15 @@ const template = {
 };
 
 /**
- * @param {import('estree').VariableDeclarator} declarator
+ * @param {VariableDeclarator} declarator
  * @param {MagicString} str
- * @param {import('#compiler').SvelteNode[]} path
+ * @param {Compiler.SvelteNode[]} path
  */
 function extract_type_and_comment(declarator, str, path) {
 	const parent = path.at(-1);
 
 	// Try to find jsdoc above the declaration
-	let comment_node = /** @type {import('estree').Node} */ (parent)?.leadingComments?.at(-1);
+	let comment_node = /** @type {Node} */ (parent)?.leadingComments?.at(-1);
 	if (comment_node?.type !== 'Block') comment_node = undefined;
 
 	const comment_start = /** @type {any} */ (comment_node)?.start;
@@ -590,11 +594,11 @@ function extract_type_and_comment(declarator, str, path) {
 }
 
 /**
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement | import('#compiler').SvelteWindow | import('#compiler').SvelteDocument | import('#compiler').SvelteBody} element
+ * @param {Compiler.RegularElement | Compiler.SvelteElement | Compiler.SvelteWindow | Compiler.SvelteDocument | Compiler.SvelteBody} element
  * @param {State} state
  */
 function handle_events(element, state) {
-	/** @type {Map<string, import('#compiler').OnDirective[]>} */
+	/** @type {Map<string, Compiler.OnDirective[]>} */
 	const handlers = new Map();
 	for (const attribute of element.attributes) {
 		if (attribute.type !== 'OnDirective') continue;
@@ -805,7 +809,7 @@ function get_indent(state, ...nodes) {
 }
 
 /**
- * @param {import('#compiler').OnDirective} last
+ * @param {Compiler.OnDirective} last
  * @param {State} state
  */
 function generate_event_name(last, state) {
@@ -821,7 +825,7 @@ function generate_event_name(last, state) {
 }
 
 /**
- * @param {import('estree').Identifier} node
+ * @param {Identifier} node
  * @param {State} state
  * @param {any[]} path
  */

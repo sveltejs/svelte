@@ -1,7 +1,9 @@
+/** @import { FunctionDeclaration } from 'estree' */
+/** @import { ComponentVisitors } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
 import { function_visitor, serialize_hoistable_params } from '../utils.js';
 
-/** @type {import('../types.js').ComponentVisitors} */
+/** @type {ComponentVisitors} */
 export const javascript_visitors = {
 	FunctionExpression: function_visitor,
 	ArrowFunctionExpression: function_visitor,
@@ -14,7 +16,7 @@ export const javascript_visitors = {
 			const params = serialize_hoistable_params(node, context);
 
 			context.state.hoisted.push(
-				/** @type {import('estree').FunctionDeclaration} */ ({
+				/** @type {FunctionDeclaration} */ ({
 					...node,
 					id: node.id !== null ? context.visit(node.id, state) : null,
 					params,

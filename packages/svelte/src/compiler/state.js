@@ -1,8 +1,10 @@
+/** @import { SvelteNode } from './types' */
+/** @import { Warning } from '#compiler' */
 import { getLocator } from 'locate-character';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
 
-/** @type {import('#compiler').Warning[]} */
+/** @type {Warning[]} */
 export let warnings = [];
 
 /**
@@ -24,7 +26,7 @@ export let ignore_stack = [];
  * For each node the list of warnings that should be ignored for that node.
  * Exists in addition to `ignore_stack` because not all warnings are emitted
  * while the stack is being built.
- * @type {Map<import("./types").SvelteNode | NodeLike, Set<string>[]>}
+ * @type {Map<SvelteNode | NodeLike, Set<string>[]>}
  */
 export let ignore_map = new Map();
 

@@ -1,8 +1,9 @@
+/** @import { Readable } from './public' */
 import { noop } from '../internal/shared/utils.js';
 
 /**
  * @template T
- * @param {import('./public').Readable<T> | null | undefined} store
+ * @param {Readable<T> | null | undefined} store
  * @param {(value: T) => void} run
  * @param {(value: T) => void} [invalidate]
  * @returns {() => void}

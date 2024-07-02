@@ -1,3 +1,7 @@
+/** @import { Visitors } from 'zimmerframe' */
+/** @import { AnalysisState } from './types.js' */
+/** @import { Attribute, SvelteNode, TemplateNode, RegularElement, SvelteElement } from '#compiler' */
+/** @import { ARIARoleDefinitionKey, ARIARoleRelationConcept, ARIAProperty, ARIAPropertyDefinition, ARIARoleDefinition } from 'aria-query' */
 import { roles as roles_map, aria, elementRoles } from 'aria-query';
 // @ts-expect-error package doesn't provide typings
 import { AXObjects, AXObjectRoles, elementAXObjects } from 'axobject-query';
@@ -43,21 +47,21 @@ const interactive_roles = non_abstract_roles.filter(
 );
 
 /**
- * @param {import('aria-query').ARIARoleDefinitionKey} role
+ * @param {ARIARoleDefinitionKey} role
  */
 function is_non_interactive_roles(role) {
 	return non_interactive_roles.includes(role);
 }
 
 /**
- * @param {import('aria-query').ARIARoleDefinitionKey} role
+ * @param {ARIARoleDefinitionKey} role
  */
 function is_interactive_roles(role) {
 	return interactive_roles.includes(role);
 }
 
 /**
- * @param {import('aria-query').ARIARoleDefinitionKey} role
+ * @param {ARIARoleDefinitionKey} role
  */
 function is_abstract_role(role) {
 	return abstract_roles.includes(role);
@@ -66,7 +70,7 @@ function is_abstract_role(role) {
 const presentation_roles = ['presentation', 'none'];
 
 /**
- * @param {import('aria-query').ARIARoleDefinitionKey} role
+ * @param {ARIARoleDefinitionKey} role
  */
 function is_presentation_role(role) {
 	return presentation_roles.includes(role);
@@ -74,7 +78,7 @@ function is_presentation_role(role) {
 
 /**
  * @param {string} tag_name
- * @param {Map<string, import('#compiler').Attribute>} attribute_map
+ * @param {Map<string, Attribute>} attribute_map
  */
 function is_hidden_from_screen_reader(tag_name, attribute_map) {
 	if (tag_name === 'input') {
@@ -92,7 +96,7 @@ function is_hidden_from_screen_reader(tag_name, attribute_map) {
 }
 
 /**
- * @param {Map<string, import('#compiler').Attribute>} attribute_map
+ * @param {Map<string, Attribute>} attribute_map
  */
 function has_disabled_attribute(attribute_map) {
 	const disabled_attr_value = get_static_value(attribute_map.get('disabled'));
@@ -111,7 +115,7 @@ function has_disabled_attribute(attribute_map) {
 }
 
 /**
- * @type {import('aria-query').ARIARoleRelationConcept[]}
+ * @type {ARIARoleRelationConcept[]}
  */
 const non_interactive_element_role_schemas = [];
 elementRoles.entries().forEach(([schema, roles]) => {
@@ -121,7 +125,7 @@ elementRoles.entries().forEach(([schema, roles]) => {
 });
 
 /**
- * @type {import('aria-query').ARIARoleRelationConcept[]}
+ * @type {ARIARoleRelationConcept[]}
  */
 const interactive_element_role_schemas = [];
 elementRoles.entries().forEach(([schema, roles]) => {
@@ -137,7 +141,7 @@ const non_interactive_ax_objects = [...AXObjects.keys()].filter((name) =>
 );
 
 /**
- * @type {import('aria-query').ARIARoleRelationConcept[]}
+ * @type {ARIARoleRelationConcept[]}
  */
 const interactive_element_ax_object_schemas = [];
 elementAXObjects.entries().forEach(
@@ -152,7 +156,7 @@ elementAXObjects.entries().forEach(
 );
 
 /**
- * @type {import('aria-query').ARIARoleRelationConcept[]}
+ * @type {ARIARoleRelationConcept[]}
  */
 const non_interactive_element_ax_object_schemas = [];
 elementAXObjects.entries().forEach(
@@ -167,9 +171,9 @@ elementAXObjects.entries().forEach(
 );
 
 /**
- * @param {import('aria-query').ARIARoleRelationConcept} schema
+ * @param {ARIARoleRelationConcept} schema
  * @param {string} tag_name
- * @param {Map<string, import('#compiler').Attribute>} attribute_map
+ * @param {Map<string, Attribute>} attribute_map
  */
 function match_schema(schema, tag_name, attribute_map) {
 	if (schema.name !== tag_name) return false;
@@ -192,7 +196,7 @@ const ElementInteractivity = /** @type {const} */ ({
 
 /**
  * @param {string} tag_name
- * @param {Map<string, import('#compiler').Attribute>} attribute_map
+ * @param {Map<string, Attribute>} attribute_map
  * @returns {ElementInteractivity[keyof ElementInteractivity]}
  */
 function element_interactivity(tag_name, attribute_map) {
@@ -228,7 +232,7 @@ function element_interactivity(tag_name, attribute_map) {
 
 /**
  * @param {string} tag_name
- * @param {Map<string, import('#compiler').Attribute>} attribute_map
+ * @param {Map<string, Attribute>} attribute_map
  * @returns {boolean}
  */
 function is_interactive_element(tag_name, attribute_map) {
@@ -237,7 +241,7 @@ function is_interactive_element(tag_name, attribute_map) {
 
 /**
  * @param {string} tag_name
- * @param {Map<string, import('#compiler').Attribute>} attribute_map
+ * @param {Map<string, Attribute>} attribute_map
  * @returns {boolean}
  */
 function is_non_interactive_element(tag_name, attribute_map) {
@@ -246,7 +250,7 @@ function is_non_interactive_element(tag_name, attribute_map) {
 
 /**
  * @param {string} tag_name
- * @param {Map<string, import('#compiler').Attribute>} attribute_map
+ * @param {Map<string, Attribute>} attribute_map
  * @returns {boolean}
  */
 function is_static_element(tag_name, attribute_map) {
@@ -254,9 +258,9 @@ function is_static_element(tag_name, attribute_map) {
 }
 
 /**
- * @param {import('aria-query').ARIARoleDefinitionKey} role
+ * @param {ARIARoleDefinitionKey} role
  * @param {string} tag_name
- * @param {Map<string, import('#compiler').Attribute>} attribute_map
+ * @param {Map<string, Attribute>} attribute_map
  */
 function is_semantic_role_element(role, tag_name, attribute_map) {
 	for (const [schema, ax_object] of elementAXObjects.entries()) {
@@ -540,7 +544,7 @@ const a11y_non_interactive_element_to_interactive_role_exceptions = {
 
 const combobox_if_list = ['email', 'search', 'tel', 'text', 'url'];
 
-/** @param {Map<string, import('#compiler').Attribute>} attribute_map */
+/** @param {Map<string, Attribute>} attribute_map */
 function input_implicit_role(attribute_map) {
 	const type_attribute = attribute_map.get('type');
 	if (!type_attribute) return;
@@ -553,7 +557,7 @@ function input_implicit_role(attribute_map) {
 	return input_type_to_implicit_role.get(type);
 }
 
-/** @param {Map<string, import('#compiler').Attribute>} attribute_map */
+/** @param {Map<string, Attribute>} attribute_map */
 function menuitem_implicit_role(attribute_map) {
 	const type_attribute = attribute_map.get('type');
 	if (!type_attribute) return;
@@ -564,7 +568,7 @@ function menuitem_implicit_role(attribute_map) {
 
 /**
  * @param {string} name
- * @param {Map<string, import('#compiler').Attribute>} attribute_map
+ * @param {Map<string, Attribute>} attribute_map
  */
 function get_implicit_role(name, attribute_map) {
 	if (name === 'menuitem') {
@@ -579,7 +583,7 @@ function get_implicit_role(name, attribute_map) {
 const invisible_elements = ['meta', 'html', 'script', 'style'];
 
 /**
- * @param {import('#compiler').SvelteNode | null} parent
+ * @param {SvelteNode | null} parent
  * @param {string[]} elements
  */
 function is_parent(parent, elements) {
@@ -588,15 +592,15 @@ function is_parent(parent, elements) {
 		if (parent.type === 'RegularElement') {
 			return elements.includes(parent.name);
 		}
-		parent = /** @type {import('#compiler').TemplateNode} */ (parent).parent;
+		parent = /** @type {TemplateNode} */ (parent).parent;
 	}
 	return false;
 }
 
 /**
- * @param {import('#compiler').Attribute} attribute
- * @param {import('aria-query').ARIAProperty} name
- * @param {import('aria-query').ARIAPropertyDefinition} schema
+ * @param {Attribute} attribute
+ * @param {ARIAProperty} name
+ * @param {ARIAPropertyDefinition} schema
  * @param {string | true | null} value
  */
 function validate_aria_attribute_value(attribute, name, schema, value) {
@@ -644,7 +648,7 @@ function validate_aria_attribute_value(attribute, name, schema, value) {
 }
 
 /**
- * @param {import('#compiler').RegularElement |import('#compiler').SvelteElement} node
+ * @param {RegularElement |SvelteElement} node
  * @param {string[]} attributes
  * @param {string} name
  */
@@ -660,7 +664,7 @@ function warn_missing_attribute(node, attributes, name = node.name) {
 }
 
 /**
- * @param {import('#compiler').Attribute | undefined} attribute
+ * @param {Attribute | undefined} attribute
  */
 function get_static_value(attribute) {
 	if (!attribute) return null;
@@ -670,7 +674,7 @@ function get_static_value(attribute) {
 }
 
 /**
- * @param {import('#compiler').Attribute | undefined} attribute
+ * @param {Attribute | undefined} attribute
  */
 function get_static_text_value(attribute) {
 	const value = get_static_value(attribute);
@@ -679,20 +683,20 @@ function get_static_text_value(attribute) {
 }
 
 /**
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
- * @param {import('./types.js').AnalysisState} state
+ * @param {RegularElement | SvelteElement} node
+ * @param {AnalysisState} state
  */
 function check_element(node, state) {
 	// foreign namespace means elements can have completely different meanings, therefore we don't check them
 	if (state.options.namespace === 'foreign') return;
 
-	/** @type {Map<string, import('#compiler').Attribute>} */
+	/** @type {Map<string, Attribute>} */
 	const attribute_map = new Map();
 
 	/** @type {Set<string>} */
 	const handlers = new Set();
 
-	/** @type {import('#compiler').Attribute[]} */
+	/** @type {Attribute[]} */
 	const attributes = [];
 
 	const is_dynamic_element = node.type === 'SvelteElement';
@@ -748,14 +752,9 @@ function check_element(node, state) {
 			// aria-proptypes
 			let value = get_static_value(attribute);
 
-			const schema = aria.get(/** @type {import('aria-query').ARIAProperty} */ (name));
+			const schema = aria.get(/** @type {ARIAProperty} */ (name));
 			if (schema !== undefined) {
-				validate_aria_attribute_value(
-					attribute,
-					/** @type {import('aria-query').ARIAProperty} */ (name),
-					schema,
-					value
-				);
+				validate_aria_attribute_value(attribute, /** @type {ARIAProperty} */ (name), schema, value);
 			}
 
 			// aria-activedescendant-has-tabindex
@@ -779,8 +778,7 @@ function check_element(node, state) {
 			const value = get_static_value(attribute);
 			if (typeof value === 'string') {
 				for (const c_r of value.split(regex_whitespaces)) {
-					const current_role =
-						/** @type {import('aria-query').ARIARoleDefinitionKey} current_role */ (c_r);
+					const current_role = /** @type {ARIARoleDefinitionKey} current_role */ (c_r);
 
 					if (current_role && is_abstract_role(current_role)) {
 						w.a11y_no_abstract_role(attribute, current_role);
@@ -899,9 +897,7 @@ function check_element(node, state) {
 	}
 
 	const role = attribute_map.get('role');
-	const role_static_value = /** @type {import('aria-query').ARIARoleDefinitionKey} */ (
-		get_static_text_value(role)
-	);
+	const role_static_value = /** @type {ARIARoleDefinitionKey} */ (get_static_text_value(role));
 
 	// click-events-have-key-events
 	if (handlers.has('click')) {
@@ -922,7 +918,7 @@ function check_element(node, state) {
 		}
 	}
 
-	const role_value = /** @type {import('aria-query').ARIARoleDefinitionKey} */ (
+	const role_value = /** @type {ARIARoleDefinitionKey} */ (
 		role ? role_static_value : get_implicit_role(node.name, attribute_map)
 	);
 
@@ -941,15 +937,11 @@ function check_element(node, state) {
 
 	// role-supports-aria-props
 	if (typeof role_value === 'string' && roles_map.has(role_value)) {
-		const { props } = /** @type {import('aria-query').ARIARoleDefinition} */ (
-			roles_map.get(role_value)
-		);
+		const { props } = /** @type {ARIARoleDefinition} */ (roles_map.get(role_value));
 		const invalid_aria_props = aria.keys().filter((attribute) => !(attribute in props));
 		const is_implicit = role_value && role === undefined;
 		for (const attr of attributes) {
-			if (
-				invalid_aria_props.includes(/** @type {import('aria-query').ARIAProperty} */ (attr.name))
-			) {
+			if (invalid_aria_props.includes(/** @type {ARIAProperty} */ (attr.name))) {
 				if (is_implicit) {
 					w.a11y_role_supports_aria_props_implicit(attr, attr.name, role_value, node.name);
 				} else {
@@ -1075,7 +1067,7 @@ function check_element(node, state) {
 	}
 
 	if (node.name === 'label') {
-		/** @param {import('#compiler').TemplateNode} node */
+		/** @param {TemplateNode} node */
 		const has_input_child = (node) => {
 			let has = false;
 			walk(
@@ -1112,7 +1104,7 @@ function check_element(node, state) {
 			return;
 		}
 		let has_caption = false;
-		const track = /** @type {import('#compiler').RegularElement | undefined} */ (
+		const track = /** @type {RegularElement | undefined} */ (
 			node.fragment.nodes.find((i) => i.type === 'RegularElement' && i.name === 'track')
 		);
 		if (track) {
@@ -1164,7 +1156,7 @@ function check_element(node, state) {
 }
 
 /**
- * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
+ * @type {Visitors<SvelteNode, AnalysisState>}
  */
 export const a11y_validators = {
 	RegularElement(node, context) {
