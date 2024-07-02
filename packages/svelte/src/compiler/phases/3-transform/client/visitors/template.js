@@ -1560,7 +1560,7 @@ export const template_visitors = {
 
 		const namespace = infer_namespace(context.state.metadata.namespace, parent, node.nodes);
 
-		const { hoisted, trimmed } = clean_nodes(
+		const { hoisted, trimmed, is_standalone } = clean_nodes(
 			parent,
 			node.nodes,
 			context.path,
@@ -1675,16 +1675,7 @@ export const template_visitors = {
 				);
 				close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 			} else {
-				var first = trimmed[0];
-				const skip_template =
-					trimmed.length === 1 &&
-					((first.type === 'RenderTag' && !first.metadata.dynamic) ||
-						(first.type === 'Component' &&
-							!first.attributes.some(
-								(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
-							))); // TODO others
-
-				if (skip_template) {
+				if (is_standalone) {
 					process_children(trimmed, () => b.id('$$anchor'), false, { ...context, state });
 				} else {
 					/** @type {(is_text: boolean) => import('estree').Expression} */

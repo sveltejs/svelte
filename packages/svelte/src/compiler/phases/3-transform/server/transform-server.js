@@ -1114,7 +1114,7 @@ const template_visitors = {
 		const parent = context.path.at(-1) ?? node;
 		const namespace = infer_namespace(context.state.namespace, parent, node.nodes);
 
-		const { hoisted, trimmed } = clean_nodes(
+		const { hoisted, trimmed, is_standalone } = clean_nodes(
 			parent,
 			node.nodes,
 			context.path,
@@ -1124,21 +1124,13 @@ const template_visitors = {
 			context.state.options.preserveComments
 		);
 
-		const first = trimmed[0];
-
 		/** @type {import('./types').ComponentServerTransformState} */
 		const state = {
 			...context.state,
 			init: [],
 			template: [],
 			namespace,
-			skip_hydration_boundaries:
-				trimmed.length === 1 &&
-				((first.type === 'RenderTag' && !first.metadata.dynamic) ||
-					(first.type === 'Component' &&
-						!first.attributes.some(
-							(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
-						))) // TODO others
+			skip_hydration_boundaries: is_standalone
 		};
 
 		for (const node of hoisted) {
