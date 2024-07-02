@@ -757,7 +757,8 @@ export async function tick() {
  * @returns {V}
  */
 export function get(signal) {
-	const flags = signal.f;
+	var flags = signal.f;
+
 	if ((flags & DESTROYED) !== 0) {
 		return signal.v;
 	}
@@ -768,8 +769,8 @@ export function get(signal) {
 
 	// Register the dependency on the current reaction signal.
 	if (current_reaction !== null) {
-		const unowned = (current_reaction.f & UNOWNED) !== 0;
-		const deps = current_reaction.deps;
+		var unowned = (current_reaction.f & UNOWNED) !== 0;
+		var deps = current_reaction.deps;
 
 		// If the signal is accessing the same dependencies in the same
 		// order as it did last time, increment `skipped_deps`
