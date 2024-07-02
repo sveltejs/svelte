@@ -317,7 +317,7 @@ export function update_reaction(reaction) {
 
 	try {
 		var result = /** @type {Function} */ (0, reaction.fn)();
-		var deps = /** @type {import('#client').Value<unknown>[]} **/ (reaction.deps);
+		var deps = reaction.deps;
 
 		if (new_deps !== null) {
 			var dependency;
