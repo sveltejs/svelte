@@ -331,6 +331,7 @@ export function update_reaction(reaction) {
 				// TODO: evaluate if we should always just use a Set or not here?
 				var set = array.length > 16 ? new Set(array) : null;
 
+				// Remove dependencies that should no longer be tracked
 				for (i = skipped_deps; i < deps.length; i++) {
 					dependency = deps[i];
 
