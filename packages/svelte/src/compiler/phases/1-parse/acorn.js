@@ -30,6 +30,7 @@ export function parse(source, typescript) {
  * @param {string} source
  * @param {boolean} typescript
  * @param {number} index
+ * @returns {acorn.Expression & { leadingComments?: CommentWithLocation[]; trailingComments?: CommentWithLocation[]; }}
  */
 export function parse_expression_at(source, typescript, index) {
 	const parser = typescript ? ParserWithTS : acorn.Parser;
@@ -92,7 +93,7 @@ function get_comment_handlers(source) {
 			if (comments.length === 0) return;
 
 			walk(ast, null, {
-				_(node, { next }) {
+				_(node, { next, path }) {
 					let comment;
 
 					while (comments[0] && comments[0].start < node.start) {
@@ -103,14 +104,20 @@ function get_comment_handlers(source) {
 					next();
 
 					if (comments[0]) {
-						const slice = source.slice(node.end, comments[0].start);
+						const parent = path.at(-1);
+						if (parent === undefined || node.end !== parent.end) {
+							const slice = source.slice(node.end, comments[0].start);
 
-						if (/^[,) \t]*$/.test(slice)) {
-							node.trailingComments = [/** @type {CommentWithLocation} */ (comments.shift())];
+							if (/^[,) \t]*$/.test(slice)) {
+								node.trailingComments = [/** @type {CommentWithLocation} */ (comments.shift())];
+							}
 						}
 					}
 				}
 			});
+			if (comments.length > 0) {
+				(ast.trailingComments ||= []).push(...comments.splice(0));
+			}
 		}
 	};
 }
