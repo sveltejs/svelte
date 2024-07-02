@@ -331,7 +331,7 @@ export function update_reaction(reaction) {
 
 				// If we have more than 16 elements in the array then use a Set for faster performance
 				// TODO: evaluate if we should always just use a Set or not here?
-				var set = array.length > 16 && deps_length - skipped_deps > 1 ? new Set(array) : null;
+				var set = array.length > 16 ? new Set(array) : null;
 
 				for (i = skipped_deps; i < deps_length; i++) {
 					dependency = deps[i];
