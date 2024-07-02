@@ -23,3 +23,25 @@ export function run_all(arr) {
 		arr[i]();
 	}
 }
+
+/**
+ * TODO replace with Promise.withResolvers once supported widely enough
+ * @template T
+ * @returns {PromiseWithResolvers<T>}
+ */
+export function deferred() {
+	/** @type {(value: T) => void} */
+	var resolve;
+
+	/** @type {(reason: any) => void} */
+	var reject;
+
+	/** @type {Promise<T>} */
+	var promise = new Promise((res, rej) => {
+		resolve = res;
+		reject = rej;
+	});
+
+	// @ts-expect-error
+	return { promise, resolve, reject };
+}

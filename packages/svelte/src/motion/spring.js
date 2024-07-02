@@ -2,6 +2,10 @@ import { writable } from '../store/index.js';
 import { loop } from '../internal/client/loop.js';
 import { raf } from '../internal/client/timing.js';
 import { is_date } from './utils.js';
+import { set, source } from '../internal/client/reactivity/sources.js';
+import { render_effect } from '../internal/client/reactivity/effects.js';
+import { get } from '../internal/client/runtime.js';
+import { deferred, noop } from '../internal/shared/utils.js';
 
 /**
  * @template T
@@ -135,4 +139,156 @@ export function spring(value, opts = {}) {
 		precision
 	};
 	return spring;
+}
+
+/**
+ * @template T
+ */
+export class Spring {
+	#stiffness = source(0.15);
+	#damping = source(0.8);
+	#precision = source(0.01);
+
+	#current = source(/** @type {T} */ (undefined));
+
+	#target_value = /** @type {T} */ (undefined);
+	#last_value = /** @type {T} */ (undefined);
+	#last_time = 0;
+
+	#inverse_mass = 1;
+	#momentum = 0;
+
+	/** @type {import('../internal/client/types').Task | null} */
+	#task = null;
+
+	/** @type {PromiseWithResolvers<any> | null} */
+	#deferred = null;
+
+	/**
+	 * @param {T | (() => T)} value
+	 * @param {{ stiffness?: number, damping?: number, precision?: number }} [options]
+	 */
+	constructor(value, options = {}) {
+		if (typeof value === 'function') {
+			render_effect(() => {
+				this.#update(/** @type {() => T} */ (value)());
+			});
+		} else {
+			this.#current.v = this.#target_value = value;
+		}
+
+		if (typeof options.stiffness === 'number') this.#stiffness.v = clamp(options.stiffness, 0, 1);
+		if (typeof options.damping === 'number') this.#damping.v = clamp(options.damping, 0, 1);
+		if (typeof options.precision === 'number') this.#precision.v = options.precision;
+	}
+
+	/** @param {T} value */
+	#update(value) {
+		this.#target_value = value;
+
+		this.#current.v ??= value;
+		this.#last_value ??= this.#current.v;
+
+		if (!this.#task) {
+			this.#last_time = raf.now();
+
+			var inv_mass_recovery_rate = 1 / (this.#momentum * 60);
+
+			this.#task ??= loop((now) => {
+				this.#inverse_mass = Math.min(this.#inverse_mass + inv_mass_recovery_rate, 1);
+
+				/** @type {import('./private').TickContext<T>} */
+				const ctx = {
+					inv_mass: this.#inverse_mass,
+					opts: {
+						stiffness: this.#stiffness.v,
+						damping: this.#damping.v,
+						precision: this.#precision.v
+					},
+					settled: true,
+					dt: ((now - this.#last_time) * 60) / 1000
+				};
+
+				var next = tick_spring(ctx, this.#last_value, this.#current.v, this.#target_value);
+				this.#last_value = this.#current.v;
+				this.#last_time = now;
+				set(this.#current, next);
+
+				if (ctx.settled) {
+					this.#task = null;
+				}
+
+				return !ctx.settled;
+			});
+		}
+
+		return this.#task.promise;
+	}
+
+	/**
+	 * @param {T} value
+	 * @param {{ instant?: boolean; preserveMomentum?: number }} [options]
+	 */
+	set(value, options) {
+		this.#deferred?.reject(new Error('Aborted'));
+
+		if (options?.instant || this.#current.v === undefined) {
+			this.#task?.abort();
+			this.#task = null;
+			set(this.#current, (this.#target_value = value));
+			return Promise.resolve();
+		}
+
+		if (options?.preserveMomentum) {
+			this.#inverse_mass = 0;
+			this.#momentum = options.preserveMomentum;
+		}
+
+		var d = (this.#deferred = deferred());
+		d.promise.catch(noop);
+
+		this.#update(value).then(() => {
+			if (d !== this.#deferred) return;
+			d.resolve(undefined);
+		});
+
+		return d.promise;
+	}
+
+	get current() {
+		return get(this.#current);
+	}
+
+	get damping() {
+		return get(this.#damping);
+	}
+
+	set damping(v) {
+		set(this.#damping, clamp(v, 0, 1));
+	}
+
+	get precision() {
+		return get(this.#precision);
+	}
+
+	set precision(v) {
+		set(this.#precision, v);
+	}
+
+	get stiffness() {
+		return get(this.#stiffness);
+	}
+
+	set stiffness(v) {
+		set(this.#stiffness, clamp(v, 0, 1));
+	}
+}
+
+/**
+ * @param {number} n
+ * @param {number} min
+ * @param {number} max
+ */
+function clamp(n, min, max) {
+	return Math.max(min, Math.min(max, n));
 }
