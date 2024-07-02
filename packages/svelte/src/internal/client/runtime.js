@@ -324,8 +324,6 @@ export function update_reaction(reaction) {
 			var i;
 
 			if (deps !== null) {
-				var deps_length = deps.length;
-
 				/** All dependencies of the reaction, including those tracked on the previous run */
 				var array = skipped_deps === 0 ? new_deps : deps.slice(0, skipped_deps).concat(new_deps);
 
@@ -333,7 +331,7 @@ export function update_reaction(reaction) {
 				// TODO: evaluate if we should always just use a Set or not here?
 				var set = array.length > 16 ? new Set(array) : null;
 
-				for (i = skipped_deps; i < deps_length; i++) {
+				for (i = skipped_deps; i < deps.length; i++) {
 					dependency = deps[i];
 
 					if (set !== null ? !set.has(dependency) : !array.includes(dependency)) {
