@@ -952,6 +952,29 @@ declare module 'svelte/compiler' {
 			inside_rest?: boolean;
 		} | null;
 	}
+	/**
+	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
+	 * For example, it can be used to convert a <style lang="sass"> block into vanilla CSS.
+	 *
+	 * https://svelte.dev/docs/svelte-compiler#svelte-preprocess
+	 * */
+	function preprocess(source: string, preprocessor: PreprocessorGroup | PreprocessorGroup[], options?: {
+		filename?: string;
+	} | undefined): Promise<Processed>;
+	/**
+	 * The current version, as set in package.json.
+	 *
+	 * https://svelte.dev/docs/svelte-compiler#svelte-version
+	 * */
+	const VERSION: string;
+	/**
+	 * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
+	 * May throw an error if the code is too complex to migrate automatically.
+	 *
+	 * */
+	function migrate(source: string): {
+		code: string;
+	};
 	interface BaseNode_1 {
 		type: string;
 		start: number;
@@ -1191,29 +1214,6 @@ declare module 'svelte/compiler' {
 		| LegacyAttributeShorthand
 		| LegacyCssNode
 		| Text;
-	/**
-	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
-	 * For example, it can be used to convert a <style lang="sass"> block into vanilla CSS.
-	 *
-	 * https://svelte.dev/docs/svelte-compiler#svelte-preprocess
-	 * */
-	function preprocess(source: string, preprocessor: PreprocessorGroup | PreprocessorGroup[], options?: {
-		filename?: string;
-	} | undefined): Promise<Processed>;
-	/**
-	 * The current version, as set in package.json.
-	 *
-	 * https://svelte.dev/docs/svelte-compiler#svelte-version
-	 * */
-	const VERSION: string;
-	/**
-	 * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
-	 * May throw an error if the code is too complex to migrate automatically.
-	 *
-	 * */
-	function migrate(source: string): {
-		code: string;
-	};
 	class Scope {
 		
 		constructor(root: ScopeRoot, parent: Scope | null, porous: boolean);
@@ -2030,25 +2030,26 @@ declare module 'svelte/easing' {
 }
 
 declare module 'svelte/legacy' {
+	import type { ComponentConstructorOptions, SvelteComponent, ComponentType, Component } from 'svelte';
 	/**
 	 * Takes the same options as a Svelte 4 component and the component function and returns a Svelte 4 compatible component.
 	 *
 	 * @deprecated Use this only as a temporary solution to migrate your imperative component code to Svelte 5.
 	 *
 	 * */
-	function createClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(options: import("svelte").ComponentConstructorOptions<Props> & {
-		component: import("svelte").ComponentType<import("svelte").SvelteComponent<Props, Events, Slots>> | import("svelte").Component<Props>;
+	function createClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(options: ComponentConstructorOptions<Props> & {
+		component: ComponentType<SvelteComponent<Props, Events, Slots>> | Component<Props>;
 		immutable?: boolean;
 		hydrate?: boolean;
 		recover?: boolean;
-	}): import("svelte").SvelteComponent<Props, Events, Slots> & Exports;
+	}): SvelteComponent<Props, Events, Slots> & Exports;
 	/**
 	 * Takes the component function and returns a Svelte 4 compatible component constructor.
 	 *
 	 * @deprecated Use this only as a temporary solution to migrate your imperative component code to Svelte 5.
 	 *
 	 * */
-	function asClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(component: import("svelte").SvelteComponent<Props, Events, Slots> | import("svelte").Component<Props>): import("svelte").ComponentType<import("svelte").SvelteComponent<Props, Events, Slots> & Exports>;
+	function asClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(component: SvelteComponent<Props, Events, Slots> | Component<Props>): ComponentType<SvelteComponent<Props, Events, Slots> & Exports>;
 	/**
 	 * Runs the given function once immediately on the server, and works like `$effect.pre` on the client.
 	 *
@@ -2252,10 +2253,7 @@ declare module 'svelte/store' {
 	type Invalidator<T> = (value?: T) => void;
 
 	/** One or more `Readable`s. */
-	type Stores =
-		| Readable<any>
-		| [Readable<any>, ...Array<Readable<any>>]
-		| Array<Readable<any>>;
+	type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;
 
 	/** One or more values from `Readable` stores. */
 	type StoresValues<T> =
@@ -2302,7 +2300,7 @@ declare module 'svelte/store' {
 	 * */
 	function get<T>(store: Readable<T>): T;
 
-	export { Subscriber, Unsubscriber, Updater, StartStopNotifier, Readable, Writable, readable, writable, derived, readonly, get };
+	export { Readable, StartStopNotifier, Subscriber, Unsubscriber, Updater, Writable, readable, writable, derived, readonly, get };
 }
 
 declare module 'svelte/transition' {

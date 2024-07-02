@@ -1,6 +1,6 @@
-export type EasingFunction = (t: number) => number;
+type EasingFunction = (t: number) => number;
 
-export interface TransitionConfig {
+interface TransitionConfig {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
@@ -8,7 +8,7 @@ export interface TransitionConfig {
 	tick?: (t: number, u: number) => void;
 }
 
-export interface BlurParams {
+interface BlurParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
@@ -16,13 +16,13 @@ export interface BlurParams {
 	opacity?: number;
 }
 
-export interface FadeParams {
+interface FadeParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
 }
 
-export interface FlyParams {
+interface FlyParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
@@ -31,14 +31,14 @@ export interface FlyParams {
 	opacity?: number;
 }
 
-export interface SlideParams {
+interface SlideParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
 	axis?: 'x' | 'y';
 }
 
-export interface ScaleParams {
+interface ScaleParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
@@ -46,17 +46,29 @@ export interface ScaleParams {
 	opacity?: number;
 }
 
-export interface DrawParams {
+interface DrawParams {
 	delay?: number;
 	speed?: number;
 	duration?: number | ((len: number) => number);
 	easing?: EasingFunction;
 }
 
-export interface CrossfadeParams {
+interface CrossfadeParams {
 	delay?: number;
 	duration?: number | ((len: number) => number);
 	easing?: EasingFunction;
 }
+
+export {
+	EasingFunction,
+	TransitionConfig,
+	BlurParams,
+	FadeParams,
+	FlyParams,
+	SlideParams,
+	ScaleParams,
+	DrawParams,
+	CrossfadeParams
+};
 
 export * from './index.js';
