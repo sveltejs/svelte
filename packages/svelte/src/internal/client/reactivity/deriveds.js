@@ -6,7 +6,7 @@ import {
 	set_signal_status,
 	mark_reactions,
 	current_skip_reaction,
-	execute_reaction_fn,
+	update_reaction,
 	destroy_effect_children,
 	increment_version
 } from '../runtime.js';
@@ -87,7 +87,7 @@ export function update_derived(derived) {
 	var previous_updating_derived = updating_derived;
 	updating_derived = true;
 	destroy_derived_children(derived);
-	var value = execute_reaction_fn(derived);
+	var value = update_reaction(derived);
 	updating_derived = previous_updating_derived;
 
 	var status =
