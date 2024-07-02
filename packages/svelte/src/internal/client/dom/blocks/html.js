@@ -16,7 +16,7 @@ export function html(anchor, get_value, svg, mathml) {
 	/** @type {import('#client').Effect | null} */
 	var effect;
 
-	block(anchor, 0, () => {
+	block(0, () => {
 		if (value === (value = get_value())) return;
 
 		if (effect) {

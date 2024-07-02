@@ -299,11 +299,10 @@ export function template_effect(fn) {
 }
 
 /**
- * @param {import('#client').TemplateNode | null} anchor
  * @param {number} flags
  * @param {(() => void)} fn
  */
-export function block(anchor, flags, fn) {
+export function block(flags, fn) {
 	return create_effect(RENDER_EFFECT | BLOCK_EFFECT | flags, fn, true);
 }
 

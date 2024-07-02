@@ -23,7 +23,7 @@ export function component(anchor, get_component, render_fn) {
 	// create a dummy anchor for the HMR wrapper, if such there be
 	if (DEV) component_anchor = empty();
 
-	block(anchor, 0, () => {
+	block(0, () => {
 		if (component === (component = get_component())) return;
 
 		if (effect) {

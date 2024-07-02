@@ -20,7 +20,7 @@ export function snippet(anchor, get_snippet, ...args) {
 	/** @type {import('#client').Effect | null} */
 	var snippet_effect;
 
-	block(anchor, EFFECT_TRANSPARENT, () => {
+	block(EFFECT_TRANSPARENT, () => {
 		if (snippet === (snippet = get_snippet())) return;
 
 		if (snippet_effect) {
