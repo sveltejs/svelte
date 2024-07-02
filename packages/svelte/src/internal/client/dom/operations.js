@@ -79,7 +79,10 @@ export function first_child(fragment, is_text) {
 	if (!hydrating) {
 		// when not hydrating, `fragment` is a `DocumentFragment` (the result of calling `open_frag`)
 		var first = /** @type {DocumentFragment} */ (fragment).firstChild;
-		if (first instanceof Comment) return first.nextSibling;
+
+		// TODO prevent user comments with the empty string when preserveComments is true
+		if (first instanceof Comment && first.data === '') return first.nextSibling;
+
 		return first;
 	}
 
