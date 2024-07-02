@@ -313,6 +313,7 @@ export function update_reaction(reaction) {
 		var dependencies = /** @type {import('#client').Value<unknown>[]} **/ (reaction.deps);
 
 		if (current_dependencies !== null) {
+			var dependency;
 			var i;
 
 			if (dependencies !== null) {
@@ -330,7 +331,7 @@ export function update_reaction(reaction) {
 					array.length > 16 && deps_length - current_dependencies_index > 1 ? new Set(array) : null;
 
 				for (i = current_dependencies_index; i < deps_length; i++) {
-					var dependency = dependencies[i];
+					dependency = dependencies[i];
 
 					if (set !== null ? !set.has(dependency) : !array.includes(dependency)) {
 						remove_reaction(reaction, dependency);
@@ -351,7 +352,7 @@ export function update_reaction(reaction) {
 
 			if (!current_skip_reaction) {
 				for (i = current_dependencies_index; i < dependencies.length; i++) {
-					var dependency = dependencies[i];
+					dependency = dependencies[i];
 					var reactions = dependency.reactions;
 
 					if (reactions === null) {
