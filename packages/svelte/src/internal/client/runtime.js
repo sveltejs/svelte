@@ -89,9 +89,16 @@ export function set_current_effect(effect) {
 	current_effect = effect;
 }
 
-/** @type {null | import('#client').Value[]} */
+/**
+ * The dependencies of the reaction that is currently being executed. In many cases,
+ * the dependencies are unchanged between runs, and so this will be `null` unless
+ * and until a new dependency is accessed — we track this via `current_dependencies_index`
+ * @type {null | import('#client').Value[]}
+ */
 export let current_dependencies = null;
+
 let current_dependencies_index = 0;
+
 /**
  * Tracks writes that the effect it's executed in doesn't listen to yet,
  * so that the dependency can be added to the effect later on if it then reads it
@@ -768,6 +775,10 @@ export function get(signal) {
 	if (current_reaction !== null) {
 		const unowned = (current_reaction.f & UNOWNED) !== 0;
 		const dependencies = current_reaction.deps;
+
+		// If the signal is accessing the same dependencies in the same
+		// order as it did last time, increment `current_dependencies_index`
+		// rather than updating `current_dependencies`, which creates GC cost
 		if (
 			current_dependencies === null &&
 			dependencies !== null &&
@@ -775,7 +786,11 @@ export function get(signal) {
 			!(unowned && current_effect !== null)
 		) {
 			current_dependencies_index++;
-		} else if (
+		}
+
+		// Otherwise, create or push to `current_dependencies`, but only if this
+		// dependency wasn't the last one that was accessed
+		else if (
 			dependencies === null ||
 			current_dependencies_index === 0 ||
 			dependencies[current_dependencies_index - 1] !== signal
