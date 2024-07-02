@@ -26,6 +26,10 @@ export function template(content, flags) {
 	/** @type {Node} */
 	var node;
 
+	/**
+	 * Whether or not the first item is a text/element node. If not, we need to
+	 * create an additional comment node to act as `effect.nodes.start`
+	 */
 	var has_start = !content.startsWith('<!>');
 
 	return () => {
@@ -89,6 +93,10 @@ export function template_with_script(content, flags) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function ns_template(content, flags, ns = 'svg') {
+	/**
+	 * Whether or not the first item is a text/element node. If not, we need to
+	 * create an additional comment node to act as `effect.nodes.start`
+	 */
 	var has_start = !content.startsWith('<!>');
 
 	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;

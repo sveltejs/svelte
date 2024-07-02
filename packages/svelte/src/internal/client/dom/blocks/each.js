@@ -293,7 +293,9 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		item = items.get(key);
 
 		if (item === undefined) {
-			var child_anchor = current ? current.e.nodes.start : anchor;
+			var child_anchor = current
+				? /** @type {import('#client').EffectNodes} */ (current.e.nodes).start
+				: anchor;
 
 			prev = create_item(
 				child_anchor,
@@ -514,10 +516,12 @@ function create_item(anchor, state, prev, next, value, key, index, render_fn, fl
  * @param {Text | Element | Comment} anchor
  */
 function move(item, next, anchor) {
-	var end = item.next ? item.next.e.nodes.start : anchor;
-	var dest = next ? next.e.nodes.start : anchor;
+	var end = item.next
+		? /** @type {import('#client').EffectNodes} */ (item.next.e.nodes).start
+		: anchor;
 
-	var node = item.e.nodes.start;
+	var dest = next ? /** @type {import('#client').EffectNodes} */ (next.e.nodes).start : anchor;
+	var node = /** @type {import('#client').EffectNodes} */ (item.e.nodes).start;
 
 	while (node !== end) {
 		var next_node = /** @type {import('#client').TemplateNode} */ (node.nextSibling);

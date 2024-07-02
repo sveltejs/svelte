@@ -34,12 +34,14 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 	deriveds: null | Derived[];
 }
 
+export interface EffectNodes {
+	start: TemplateNode;
+	end: TemplateNode;
+}
+
 export interface Effect extends Reaction {
 	parent: Effect | null;
-	nodes: null | {
-		start: TemplateNode;
-		end: TemplateNode;
-	};
+	nodes: null | EffectNodes;
 	/** The associated component context */
 	ctx: null | ComponentContext;
 	/** The effect function */
