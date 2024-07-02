@@ -2136,7 +2136,7 @@ declare module 'svelte/reactivity' {
 	function URLSearchParams_1(): void;
 	export class SvelteDate extends Date {
 		
-		constructor(...values: any[]);
+		constructor(...params: any[]);
 		#private;
 	}
 	export class SvelteSet<T> extends Set<T> {

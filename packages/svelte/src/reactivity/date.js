@@ -1,102 +1,62 @@
+/** @import { Source } from '#client' */
+import { derived } from '../internal/client/index.js';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
-
-/** @type {Array<keyof Date>} */
-const read = [
-	'getDate',
-	'getDay',
-	'getFullYear',
-	'getHours',
-	'getMilliseconds',
-	'getMinutes',
-	'getMonth',
-	'getSeconds',
-	'getTime',
-	'getTimezoneOffset',
-	'getUTCDate',
-	'getUTCDay',
-	'getUTCFullYear',
-	'getUTCHours',
-	'getUTCMilliseconds',
-	'getUTCMinutes',
-	'getUTCMonth',
-	'getUTCSeconds',
-	// @ts-expect-error this is deprecated
-	'getYear',
-	'toDateString',
-	'toISOString',
-	'toJSON',
-	'toLocaleDateString',
-	'toLocaleString',
-	'toLocaleTimeString',
-	'toString',
-	'toTimeString',
-	'toUTCString'
-];
-
-/** @type {Array<keyof Date>} */
-const write = [
-	'setDate',
-	'setFullYear',
-	'setHours',
-	'setMilliseconds',
-	'setMinutes',
-	'setMonth',
-	'setSeconds',
-	'setTime',
-	'setUTCDate',
-	'setUTCFullYear',
-	'setUTCHours',
-	'setUTCMilliseconds',
-	'setUTCMinutes',
-	'setUTCMonth',
-	'setUTCSeconds',
-	// @ts-expect-error this is deprecated
-	'setYear'
-];
 
 var inited = false;
 
 export class SvelteDate extends Date {
-	#raw_time = source(super.getTime());
+	#time = source(super.getTime());
 
-	// We init as part of the first instance so that we can treeshake this class
+	/** @type {Map<keyof Date, Source<unknown>>} */
+	#deriveds = new Map();
+
+	/** @param {any[]} params */
+	constructor(...params) {
+		// @ts-ignore
+		super(...params);
+		if (!inited) this.#init();
+	}
+
 	#init() {
-		if (!inited) {
-			inited = true;
-			const proto = SvelteDate.prototype;
-			const date_proto = Date.prototype;
+		inited = true;
 
-			for (const method of read) {
+		var proto = SvelteDate.prototype;
+		var date_proto = Date.prototype;
+
+		var methods = /** @type {Array<keyof Date & string>} */ (
+			Object.getOwnPropertyNames(date_proto)
+		);
+
+		for (const method of methods) {
+			if (method.startsWith('get') || method.startsWith('to')) {
 				// @ts-ignore
 				proto[method] = function (...args) {
-					get(this.#raw_time);
-					// @ts-ignore
-					return date_proto[method].apply(this, args);
+					var d = this.#deriveds.get(method);
+
+					if (d === undefined) {
+						d = derived(() => {
+							get(this.#time);
+							// @ts-ignore
+							return date_proto[method].apply(this, args);
+						});
+
+						this.#deriveds.set(method, d);
+					}
+
+					return get(d);
 				};
 			}
 
-			for (const method of write) {
+			if (method.startsWith('set')) {
 				// @ts-ignore
 				proto[method] = function (...args) {
 					// @ts-ignore
-					const v = date_proto[method].apply(this, args);
-					const time = date_proto.getTime.call(this);
-					if (time !== this.#raw_time.v) {
-						set(this.#raw_time, time);
-					}
-					return v;
+					var result = date_proto[method].apply(this, args);
+					set(this.#time, date_proto.getTime.call(this));
+					return result;
 				};
 			}
 		}
-	}
-
-	/**
-	 * @param {any[]} values
-	 */
-	constructor(...values) {
-		// @ts-ignore
-		super(...values);
-		this.#init();
 	}
 }
