@@ -347,7 +347,7 @@ export function update_reaction(reaction) {
 					deps[skipped_deps + i] = new_deps[i];
 				}
 			} else {
-				reaction.deps = /** @type {import('#client').Value<V>[]} **/ (deps = new_deps);
+				reaction.deps = deps = new_deps;
 			}
 
 			if (!current_skip_reaction) {
