@@ -1678,10 +1678,11 @@ export const template_visitors = {
 				var first = trimmed[0];
 				const skip_template =
 					trimmed.length === 1 &&
-					first.type === 'Component' &&
-					!first.attributes.some(
-						(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
-					); // TODO others
+					((first.type === 'RenderTag' && !first.metadata.dynamic) ||
+						(first.type === 'Component' &&
+							!first.attributes.some(
+								(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
+							))); // TODO others
 
 				if (skip_template) {
 					process_children(trimmed, () => b.id('$$anchor'), false, { ...context, state });

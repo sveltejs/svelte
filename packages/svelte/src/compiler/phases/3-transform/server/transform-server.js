@@ -1134,10 +1134,11 @@ const template_visitors = {
 			namespace,
 			skip_hydration_boundaries:
 				trimmed.length === 1 &&
-				first.type === 'Component' &&
-				!first.attributes.some(
-					(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
-				) // TODO others
+				((first.type === 'RenderTag' && !first.metadata.dynamic) ||
+					(first.type === 'Component' &&
+						!first.attributes.some(
+							(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
+						))) // TODO others
 		};
 
 		for (const node of hoisted) {
@@ -1190,17 +1191,23 @@ const template_visitors = {
 			return /** @type {import('estree').Expression} */ (context.visit(arg));
 		});
 
+		if (!context.state.skip_hydration_boundaries) {
+			context.state.template.push(block_open);
+		}
+
 		context.state.template.push(
-			block_open,
 			b.stmt(
 				(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
 					snippet_function,
 					b.id('$$payload'),
 					...snippet_args
 				)
-			),
-			block_close
+			)
 		);
+
+		if (!context.state.skip_hydration_boundaries) {
+			context.state.template.push(block_close);
+		}
 	},
 	ClassDirective() {
 		throw new Error('Node should have been handled elsewhere');
