@@ -13,7 +13,7 @@ import { merge } from '../../visitors.js';
  *     keyframes: string[];
  *     rule: Css.Rule | null;
  *   }
- * >} Visitors
+ * >} CssVisitors
  */
 
 /** @param {Css.RelativeSelector} relative_selector */
@@ -30,7 +30,7 @@ function is_global(relative_selector) {
 	);
 }
 
-/** @type {Visitors} */
+/** @type {CssVisitors} */
 const analysis_visitors = {
 	Atrule(node, context) {
 		if (is_keyframes_node(node)) {
@@ -105,7 +105,7 @@ const analysis_visitors = {
 	}
 };
 
-/** @type {Visitors} */
+/** @type {CssVisitors} */
 const validation_visitors = {
 	Rule(node, context) {
 		if (node.metadata.is_global_block) {
