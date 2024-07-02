@@ -156,15 +156,15 @@ function mark_reactions(signal, status) {
 		var reaction = reactions[i];
 		var flags = reaction.f;
 
+		// Skip any effects that are already dirty
+		if ((flags & DIRTY) !== 0) continue;
+
+		// In legacy mode, skip the current effect to prevent infinite loops
+		if (!runes && reaction === current_effect) continue;
+
+		// Inspect effects need to run immediately, so that the stack trace makes sense
 		if (DEV && (flags & INSPECT_EFFECT) !== 0) {
 			inspect_effects.add(reaction);
-			continue;
-		}
-
-		// We skip any effects that are already dirty. Additionally, we also
-		// skip if the reaction is the same as the current effect (except if we're not in runes or we
-		// are in force schedule mode).
-		if ((flags & DIRTY) !== 0 || (!runes && reaction === current_effect)) {
 			continue;
 		}
 
