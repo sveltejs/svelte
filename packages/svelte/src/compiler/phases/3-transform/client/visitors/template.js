@@ -1690,12 +1690,16 @@ export const template_visitors = {
 						flags |= TEMPLATE_USE_IMPORT_NODE;
 					}
 
-					add_template(template_name, [
-						b.template([b.quasi(state.template.join(''), true)], []),
-						b.literal(flags)
-					]);
+					if (state.template.length === 1 && state.template[0] === '<!>') {
+						body.push(b.var(id, b.call('$.comment')));
+					} else {
+						add_template(template_name, [
+							b.template([b.quasi(state.template.join(''), true)], []),
+							b.literal(flags)
+						]);
 
-					body.push(b.var(id, b.call(template_name)));
+						body.push(b.var(id, b.call(template_name)));
+					}
 
 					close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 				}
