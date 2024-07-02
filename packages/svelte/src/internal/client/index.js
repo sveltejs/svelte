@@ -158,6 +158,7 @@ export {
 } from './dom/operations.js';
 export { noop } from '../shared/utils.js';
 export {
+	add_snippet_symbol,
 	validate_component,
 	validate_dynamic_element_tag,
 	validate_snippet,
