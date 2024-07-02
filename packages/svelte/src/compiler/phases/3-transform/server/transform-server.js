@@ -1347,7 +1347,7 @@ const template_visitors = {
 		state.init.push(b.const(array_id, b.call('$.ensure_array_like', collection)));
 
 		/** @type {import('estree').Statement[]} */
-		const each = [b.const(item, b.member(array_id, index, true))];
+		const each = [b.let(item, b.member(array_id, index, true))];
 
 		if (node.context.type !== 'Identifier') {
 			each.push(b.const(/** @type {import('estree').Pattern} */ (node.context), item));
