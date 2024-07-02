@@ -70,7 +70,7 @@ function compile({ id, source, options, return_ast }) {
 
 			const { js, css, warnings, metadata } = compiled;
 
-			const ast = return_ast ? svelte.parse(source, { modern: true }) : undefined;
+			const ast = return_ast ? svelte.parse(source, { modern: options.modernAst }) : undefined;
 
 			return {
 				id,
