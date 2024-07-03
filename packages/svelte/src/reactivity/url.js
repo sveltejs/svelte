@@ -28,7 +28,7 @@ export class SvelteURL extends URL {
 				return;
 			}
 			// by doing this, we sync SvelteSearchParams with internal implementation of URL.searchParams
-			// @ts-ignore
+			// @ts-expect-error
 			super.searchParams[command](...args);
 		};
 	}
