@@ -10,7 +10,6 @@ import {
 } from '../../runtime.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { DEV } from 'esm-env';
-import { queue_micro_task } from '../task.js';
 import { hydrating } from '../hydration.js';
 import { mutable_source, set, source } from '../../reactivity/sources.js';
 
@@ -133,7 +132,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 			} else {
 				// Wait a microtask before checking if we should show the pending state as
 				// the promise might have resolved by the next microtask.
-				queue_micro_task(() => {
+				Promise.resolve().then(() => {
 					if (!resolved) update(PENDING, true);
 				});
 			}
