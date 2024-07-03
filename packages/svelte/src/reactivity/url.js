@@ -1,6 +1,6 @@
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
-import { REPLACE, SvelteURLSearchParams } from './url-search-params.js';
+import { onChange, REPLACE, SvelteURLSearchParams } from './url-search-params.js';
 
 export class SvelteURL extends URL {
 	#protocol = source(super.protocol);
@@ -20,6 +20,11 @@ export class SvelteURL extends URL {
 		url = new URL(url, base);
 		super(url);
 		this.#searchParams[REPLACE](url.searchParams);
+		this.#searchParams[onChange] = (command, ...args) => {
+			// by doing this, we sync SvelteSearchParams with internal implementation of URL.searchParams
+			// @ts-ignore
+			super.searchParams[command](...args);
+		};
 	}
 
 	get hash() {

@@ -3,9 +3,14 @@ import { get } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
 
 export const REPLACE = Symbol();
+export const onChange = Symbol();
 
 export class SvelteURLSearchParams extends URLSearchParams {
 	#version = source(0);
+	/**
+	 * @type {((command: "set" | "append" | "delete" | "sort", ...args: any[])=>void ) | null}
+	 */
+	[onChange] = null;
 
 	/**
 	 * @param {URLSearchParams} params
@@ -28,8 +33,10 @@ export class SvelteURLSearchParams extends URLSearchParams {
 	 * @returns {void}
 	 */
 	append(name, value) {
+		var res = super.append(name, value);
 		increment(this.#version);
-		return super.append(name, value);
+		this[onChange]?.('append', name, value);
+		return res;
 	}
 
 	/**
@@ -42,6 +49,7 @@ export class SvelteURLSearchParams extends URLSearchParams {
 		var res = super.delete(name, value);
 		if (has_value) {
 			increment(this.#version);
+			this[onChange]?.('delete', name, value);
 		}
 		return res;
 	}
@@ -91,12 +99,14 @@ export class SvelteURLSearchParams extends URLSearchParams {
 		// if you set `foo` to 1, then foo=3 gets deleted whilst `has("foo", "1")` returns true
 		if (value_before_change !== super.getAll(name).join('')) {
 			increment(this.#version);
+			this[onChange]?.('set', name, value);
 		}
 	}
 
 	sort() {
 		var res = super.sort();
 		increment(this.#version);
+		this[onChange]?.('sort');
 		return res;
 	}
 
