@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.172
+
+### Patch Changes
+
+- fix: handle duplicate signal dependencies gracefully ([#12261](https://github.com/sveltejs/svelte/pull/12261))
+
 ## 5.0.0-next.171
 
 ### Patch Changes
