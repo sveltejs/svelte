@@ -24,7 +24,6 @@ import {
 	UNOWNED,
 	MAYBE_DIRTY
 } from '../constants.js';
-import { UNINITIALIZED } from '../../../constants.js';
 import * as e from '../errors.js';
 
 let inspect_effects = new Set();
@@ -84,14 +83,7 @@ export function mutate(source, value) {
  * @returns {V}
  */
 export function set(source, value) {
-	var initialized = source.v !== UNINITIALIZED;
-
-	if (
-		initialized &&
-		current_reaction !== null &&
-		is_runes() &&
-		(current_reaction.f & DERIVED) !== 0
-	) {
+	if (current_reaction !== null && is_runes() && (current_reaction.f & DERIVED) !== 0) {
 		e.state_unsafe_mutation();
 	}
 
@@ -112,7 +104,6 @@ export function set(source, value) {
 		// We additionally want to skip this logic when initialising store sources
 		if (
 			is_runes() &&
-			initialized &&
 			current_effect !== null &&
 			(current_effect.f & CLEAN) !== 0 &&
 			(current_effect.f & BRANCH_EFFECT) === 0

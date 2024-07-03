@@ -2,7 +2,6 @@
 /** @import { Store } from '#shared' */
 import { subscribe_to_store } from '../../../store/utils.js';
 import { noop } from '../../shared/utils.js';
-import { UNINITIALIZED } from '../../../constants.js';
 import { get } from '../runtime.js';
 import { teardown } from './effects.js';
 import { mutable_source, set } from './sources.js';
@@ -20,7 +19,7 @@ import { mutable_source, set } from './sources.js';
 export function store_get(store, store_name, stores) {
 	const entry = (stores[store_name] ??= {
 		store: null,
-		source: mutable_source(UNINITIALIZED),
+		source: mutable_source(undefined),
 		unsubscribe: noop
 	});
 
@@ -32,7 +31,18 @@ export function store_get(store, store_name, stores) {
 			set(entry.source, undefined);
 			entry.unsubscribe = noop;
 		} else {
-			entry.unsubscribe = subscribe_to_store(store, (v) => set(entry.source, v));
+			var initial = true;
+
+			entry.unsubscribe = subscribe_to_store(store, (v) => {
+				if (initial) {
+					// if the first time the store value is read is inside a derived,
+					// we will hit the `state_unsafe_mutation` error if we `set` the value
+					entry.source.v = v;
+					initial = false;
+				} else {
+					set(entry.source, v);
+				}
+			});
 		}
 	}
 
