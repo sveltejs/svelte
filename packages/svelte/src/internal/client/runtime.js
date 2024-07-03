@@ -164,9 +164,8 @@ export function check_dirtiness(reaction) {
 
 		if (dependencies !== null) {
 			var is_unowned = (flags & UNOWNED) !== 0;
-			var length = dependencies.length;
 
-			for (var i = 0; i < length; i++) {
+			for (var i = 0; i < dependencies.length; i++) {
 				var dependency = dependencies[i];
 
 				if (check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
