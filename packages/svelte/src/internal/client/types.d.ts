@@ -149,7 +149,7 @@ export type StoreReferencesContainer = Record<
 	{
 		store: Store<any> | null;
 		unsubscribe: Function;
-		value: Source<any>;
+		source: Source<any>;
 	}
 >;
 

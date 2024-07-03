@@ -20,17 +20,17 @@ import { mutable_source, set } from './sources.js';
 export function store_get(store, store_name, stores) {
 	const entry = (stores[store_name] ??= {
 		store: null,
-		value: mutable_source(UNINITIALIZED),
+		source: mutable_source(UNINITIALIZED),
 		unsubscribe: noop
 	});
 
 	if (entry.store !== store) {
 		entry.unsubscribe();
 		entry.store = store ?? null;
-		entry.unsubscribe = connect_store_to_signal(store, entry.value);
+		entry.unsubscribe = connect_store_to_signal(store, entry.source);
 	}
 
-	return get(entry.value);
+	return get(entry.source);
 }
 
 /**
@@ -85,9 +85,9 @@ export function store_set(store, value) {
  * @param {string} store_name
  */
 export function invalidate_store(stores, store_name) {
-	const store = stores[store_name];
-	if (store.store) {
-		store_set(store.store, store.value.v);
+	var entry = stores[store_name];
+	if (entry.store !== null) {
+		store_set(entry.store, entry.source.v);
 	}
 }
 
@@ -95,7 +95,7 @@ export function invalidate_store(stores, store_name) {
  * Unsubscribes from all auto-subscribed stores on destroy
  * @returns {StoreReferencesContainer}
  */
-export function create_stores() {
+export function setup_stores() {
 	/** @type {StoreReferencesContainer} */
 	const stores = {};
 
