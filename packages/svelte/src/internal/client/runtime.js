@@ -154,30 +154,27 @@ export function is_runes() {
  */
 export function check_dirtiness(reaction) {
 	var flags = reaction.f;
-	var is_dirty = (flags & DIRTY) !== 0;
 
-	if (is_dirty) return true;
+	if ((flags & DIRTY) !== 0) {
+		return true;
+	}
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
 
 		if (dependencies !== null) {
-			var is_effect = (flags & EFFECT) !== 0;
 			var is_unowned = (flags & UNOWNED) !== 0;
 			var length = dependencies.length;
 
 			for (var i = 0; i < length; i++) {
 				var dependency = dependencies[i];
 
-				if (!is_dirty && check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
+				if (check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
 					update_derived(/** @type {import('#client').Derived} **/ (dependency));
 				}
 
 				if (dependency.version > reaction.version) {
-					// we don't need to update the status of these signals
-					if (is_effect || is_unowned) return true;
-
-					is_dirty = true;
+					return true;
 				}
 
 				if (is_unowned) {
@@ -195,7 +192,7 @@ export function check_dirtiness(reaction) {
 		set_signal_status(reaction, CLEAN);
 	}
 
-	return is_dirty;
+	return false;
 }
 
 /**
