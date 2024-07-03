@@ -111,10 +111,10 @@ export {
 export {
 	invalidate_store,
 	mutate_store,
+	setup_stores,
 	store_get,
 	store_set,
 	store_unsub,
-	unsubscribe_on_destroy,
 	update_pre_store,
 	update_store
 } from './reactivity/store.js';

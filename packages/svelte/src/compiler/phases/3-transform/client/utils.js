@@ -345,7 +345,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 				}
 
 				if (state.scope.get(`$${left.name}`)?.kind === 'store_sub') {
-					return b.call('$.store_unsub', call, b.literal(`$${left.name}`), b.id('$$subscriptions'));
+					return b.call('$.store_unsub', call, b.literal(`$${left.name}`), b.id('$$stores'));
 				} else {
 					return call;
 				}

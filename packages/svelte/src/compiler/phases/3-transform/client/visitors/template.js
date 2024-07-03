@@ -2438,7 +2438,7 @@ export const template_visitors = {
 					b.thunk(b.sequence(indirect_dependencies))
 				);
 				const invalidate_store = store_to_invalidate
-					? b.call('$.invalidate_store', b.id('$$subscriptions'), b.literal(store_to_invalidate))
+					? b.call('$.invalidate_store', b.id('$$stores'), b.literal(store_to_invalidate))
 					: undefined;
 
 				const sequence = [];
