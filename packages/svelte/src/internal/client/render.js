@@ -1,12 +1,11 @@
 import { DEV } from 'esm-env';
-import { clear_text_content, create_element, empty, init_operations } from './dom/operations.js';
+import { clear_text_content, empty, init_operations } from './dom/operations.js';
 import { HYDRATION_ERROR, HYDRATION_START, PassiveDelegatedEvents } from '../../constants.js';
-import { flush_sync, push, pop, current_component_context, current_effect } from './runtime.js';
+import { flush_sync, push, pop, current_component_context } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
 import {
 	hydrate_anchor,
 	hydrate_nodes,
-	hydrating,
 	set_hydrate_nodes,
 	set_hydrating
 } from './dom/hydration.js';
@@ -304,7 +303,7 @@ export async function append_styles(target, style_sheet_id, styles) {
 	await Promise.resolve();
 	const append_styles_to = get_root_for_style(target);
 	if (!append_styles_to.getElementById(style_sheet_id)) {
-		const style = create_element('style');
+		const style = document.createElement('style');
 		style.id = style_sheet_id;
 		style.textContent = styles;
 		const target = /** @type {Document} */ (append_styles_to).head || append_styles_to;

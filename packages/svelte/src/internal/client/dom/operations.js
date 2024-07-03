@@ -142,9 +142,3 @@ export function sibling(node, is_text = false) {
 export function clear_text_content(node) {
 	node.textContent = '';
 }
-
-/** @param {string} name */
-/*#__NO_SIDE_EFFECTS__*/
-export function create_element(name) {
-	return document.createElement(name);
-}
