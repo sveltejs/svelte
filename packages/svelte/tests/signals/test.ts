@@ -574,4 +574,40 @@ describe('signals', () => {
 			assert.equal(d.deps?.length, 1);
 		};
 	});
+
+	test('unowned deriveds are correctly connected and disconnected from the graph', () => {
+		var count = source(0);
+
+		function create_derived() {
+			return derived(() => $.get(count) * 2);
+		}
+
+		return () => {
+			let d = create_derived();
+
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					assert.equal($.get(d), 0);
+				});
+			});
+
+			assert.equal($.get(d), 0);
+			assert.equal(count.reactions?.length, 1);
+			assert.equal(d.deps?.length, 1);
+
+			set(count, 1);
+			assert.equal($.get(d), 2);
+			assert.equal(count.reactions?.length, 1);
+			assert.equal(d.deps?.length, 1);
+
+			destroy();
+
+			assert.equal(count.reactions, null);
+
+			set(count, 2);
+			assert.equal($.get(d), 4);
+			assert.equal(count.reactions, null);
+			assert.equal(d.deps?.length, 1);
+		};
+	});
 });
