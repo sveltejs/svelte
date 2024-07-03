@@ -6,8 +6,8 @@
   "scripts": {
     "prepare": "node scripts/create-app-svelte.js",
     "dev": "vite --host",
-    "ssr": "node ./server.js",
-    "build": "vite build --outDir dist/client && vite build --outDir dist/server --ssr src/entry-server.ts",
+    "ssr": "node ./demo-server.js",
+    "build": "vite build --outDir dist/client && vite build --outDir dist/server --ssr demo-server.ts",
     "prod": "npm run build && node dist",
     "preview": "vite preview"
   },

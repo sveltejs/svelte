@@ -32,11 +32,13 @@ async function createServer() {
 
 		const template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
 		const transformed_template = await vite.transformIndexHtml(req.originalUrl, template);
-		const { body: appHtml, head: headHtml } = await vite.ssrLoadModule('./src/entry-server.ts');
+		const { render } = await vite.ssrLoadModule('svelte/server');
+		const { default: App } = await vite.ssrLoadModule('./src/main.svelte');
+		const { head, body } = render(App);
 
 		const html = transformed_template
-			.replace(`<!--ssr-html-->`, appHtml)
-			.replace(`<!--ssr-head-->`, headHtml);
+			.replace(`<!--ssr-head-->`, head)
+			.replace(`<!--ssr-body-->`, body);
 
 		res.writeHead(200, { 'Content-Type': 'text/html' }).end(html);
 	});
