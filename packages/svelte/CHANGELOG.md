@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.173
+
+### Patch Changes
+
+- chore: tidy up store logic ([#12277](https://github.com/sveltejs/svelte/pull/12277))
+
 ## 5.0.0-next.172
 
 ### Patch Changes
