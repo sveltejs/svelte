@@ -35,6 +35,8 @@ export function store_get(store, store_name, stores) {
 
 			entry.unsubscribe = subscribe_to_store(store, (v) => {
 				if (initial) {
+					// if the first time the store value is read is inside a derived,
+					// we will hit the `state_unsafe_mutation` error if we `set` the value
 					entry.source.v = v;
 					initial = false;
 				} else {
