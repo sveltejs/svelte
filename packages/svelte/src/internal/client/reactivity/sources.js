@@ -2,7 +2,7 @@ import { DEV } from 'esm-env';
 import {
 	current_component_context,
 	current_reaction,
-	current_dependencies,
+	new_deps,
 	current_effect,
 	current_untracked_writes,
 	get,
@@ -117,7 +117,7 @@ export function set(source, value) {
 			(current_effect.f & CLEAN) !== 0 &&
 			(current_effect.f & BRANCH_EFFECT) === 0
 		) {
-			if (current_dependencies !== null && current_dependencies.includes(source)) {
+			if (new_deps !== null && new_deps.includes(source)) {
 				set_signal_status(current_effect, DIRTY);
 				schedule_effect(current_effect);
 			} else {
