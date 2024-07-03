@@ -18,20 +18,13 @@ import { mutable_source, set } from './sources.js';
  * @returns {V}
  */
 export function store_get(store, store_name, stores) {
-	/** @type {StoreReferencesContainer[''] | undefined} */
-	let entry = stores[store_name];
-	const is_new = entry === undefined;
+	const entry = (stores[store_name] ??= {
+		store: null,
+		value: mutable_source(UNINITIALIZED),
+		unsubscribe: noop
+	});
 
-	if (is_new) {
-		entry = {
-			store: null,
-			value: mutable_source(UNINITIALIZED),
-			unsubscribe: noop
-		};
-		stores[store_name] = entry;
-	}
-
-	if (is_new || entry.store !== store) {
+	if (entry.store !== store) {
 		entry.unsubscribe();
 		entry.store = store ?? null;
 		entry.unsubscribe = connect_store_to_signal(store, entry.value);
