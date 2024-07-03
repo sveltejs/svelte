@@ -3,10 +3,10 @@ import { flushSync } from '../index-client.js';
 import { SvelteDate } from './date.js';
 import { assert, test } from 'vitest';
 
-const initial_date = new Date(2023, 0, 1, 0, 0, 0, 0);
-const a = new Date(2024, 1, 2, 1, 1, 1, 1);
-const b = new Date(2025, 2, 3, 2, 2, 2, 2);
-const c = new Date(2026, 3, 4, 3, 3, 3, 3);
+const initial_date = new Date(2023, 0, 2, 0, 0, 0, 0);
+const a = new Date(2024, 1, 3, 1, 1, 1, 1);
+const b = new Date(2025, 2, 4, 2, 2, 2, 2);
+const c = new Date(2026, 3, 5, 3, 3, 3, 3);
 
 test('date.setDate and date.setUTCDate', () => {
 	const date = new SvelteDate(initial_date);
@@ -26,15 +26,15 @@ test('date.setDate and date.setUTCDate', () => {
 	});
 
 	flushSync(() => {
-		date.setDate(b.getDate());
+		date.setDate(date.getDate() + 1);
 	});
 
 	flushSync(() => {
-		date.setDate(b.getDate()); // no change expected
+		date.setDate(date.getDate()); // no change expected
 	});
 
 	flushSync(() => {
-		date.setUTCDate(c.getUTCDate());
+		date.setUTCDate(date.getUTCDate() + 1);
 	});
 
 	assert.deepEqual(log, [
@@ -42,10 +42,10 @@ test('date.setDate and date.setUTCDate', () => {
 		initial_date.getUTCDate(),
 		a.getDate(),
 		a.getUTCDate(),
-		b.getDate(),
-		b.getUTCDate(),
-		c.getDate(),
-		c.getUTCDate()
+		a.getDate() + 1,
+		a.getUTCDate() + 1,
+		a.getDate() + 2,
+		a.getUTCDate() + 2
 	]);
 
 	cleanup();
@@ -100,10 +100,10 @@ test('date.setHours and date.setUTCHours', () => {
 
 	const cleanup = effect_root(() => {
 		render_effect(() => {
-			log.push(date.getHours());
+			log.push(date.getHours() % 24);
 		});
 		render_effect(() => {
-			log.push(date.getUTCHours());
+			log.push(date.getUTCHours() % 24);
 		});
 	});
 
@@ -126,12 +126,12 @@ test('date.setHours and date.setUTCHours', () => {
 	assert.deepEqual(log, [
 		initial_date.getHours(),
 		initial_date.getUTCHours(),
-		a.getHours(),
-		a.getUTCHours(),
-		a.getHours() + 1,
-		a.getUTCHours() + 1,
-		a.getHours() + 2,
-		a.getUTCHours() + 2
+		a.getHours() % 24,
+		a.getUTCHours() % 24,
+		(a.getHours() + 1) % 24,
+		(a.getUTCHours() + 1) % 24,
+		(a.getHours() + 2) % 24,
+		(a.getUTCHours() + 2) % 24
 	]);
 
 	cleanup();
