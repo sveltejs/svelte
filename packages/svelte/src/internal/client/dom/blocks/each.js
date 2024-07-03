@@ -8,13 +8,7 @@ import {
 	HYDRATION_END_ELSE,
 	HYDRATION_START
 } from '../../../../constants.js';
-import {
-	hydrate_anchor,
-	hydrate_nodes,
-	hydrate_start,
-	hydrating,
-	set_hydrating
-} from '../hydration.js';
+import { hydrate_nodes, hydrate_start, hydrating, set_hydrating } from '../hydration.js';
 import { clear_text_content, empty } from '../operations.js';
 import { remove } from '../reconciler.js';
 import {
@@ -114,9 +108,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 		var parent_node = /** @type {Element} */ (anchor);
 
 		anchor = hydrating
-			? /** @type {Comment | Text} */ (
-					hydrate_anchor(/** @type {Comment | Text} */ (parent_node.firstChild))
-				)
+			? /** @type {Comment | Text} */ (parent_node.firstChild)
 			: parent_node.appendChild(empty());
 	}
 
@@ -183,7 +175,6 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 					break;
 				}
 
-				child_anchor = hydrate_anchor(child_anchor);
 				var value = array[i];
 				var key = get_key(value, i);
 				item = create_item(child_anchor, state, prev, null, value, key, i, render_fn, flags);

@@ -1,7 +1,7 @@
-import { hydrate_anchor, hydrate_nodes, hydrating, set_hydrate_nodes } from '../hydration.js';
+import { hydrate_nodes, hydrating, set_hydrate_nodes } from '../hydration.js';
 import { empty } from '../operations.js';
 import { block } from '../../reactivity/effects.js';
-import { HYDRATION_END, HYDRATION_START } from '../../../../constants.js';
+import { HYDRATION_START } from '../../../../constants.js';
 import { HEAD_EFFECT } from '../../constants.js';
 
 /**
@@ -41,7 +41,6 @@ export function head(render_fn) {
 			head_anchor = /** @type {import('#client').TemplateNode} */ (head_anchor.nextSibling);
 		}
 
-		head_anchor = /** @type {import('#client').TemplateNode} */ (hydrate_anchor(head_anchor));
 		head_anchor = /** @type {import('#client').TemplateNode} */ (head_anchor.nextSibling);
 	} else {
 		anchor = document.head.appendChild(empty());

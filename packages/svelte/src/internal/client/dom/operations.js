@@ -1,4 +1,5 @@
-import { hydrate_anchor, hydrate_start, hydrating } from './hydration.js';
+/** @import { Effect, TemplateNode } from '#client' */
+import { hydrate_anchor, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
 import { current_effect } from '../runtime.js';
@@ -66,11 +67,11 @@ export function child(node) {
 		return node.appendChild(empty());
 	}
 
-	return hydrate_anchor(child);
+	return child;
 }
 
 /**
- * @param {DocumentFragment | import('#client').TemplateNode[]} fragment
+ * @param {DocumentFragment | TemplateNode[]} fragment
  * @param {boolean} is_text
  * @returns {Node | null}
  */
@@ -88,19 +89,19 @@ export function first_child(fragment, is_text) {
 
 	// if an {expression} is empty during SSR, there might be no
 	// text node to hydrate — we must therefore create one
-	if (is_text && hydrate_start?.nodeType !== 3) {
+	if (is_text && hydrate_node?.nodeType !== 3) {
 		var text = empty();
-		var effect = /** @type {import('#client').Effect} */ (current_effect);
+		var effect = /** @type {Effect} */ (current_effect);
 
-		if (effect.nodes?.start === hydrate_start) {
+		if (effect.nodes?.start === hydrate_node) {
 			effect.nodes.start = text;
 		}
 
-		hydrate_start?.before(text);
+		hydrate_node?.before(text);
 		return text;
 	}
 
-	return hydrate_anchor(hydrate_start);
+	return hydrate_anchor(hydrate_node);
 }
 
 /**
@@ -111,11 +112,11 @@ export function first_child(fragment, is_text) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function sibling(node, is_text = false) {
-	var next_sibling = /** @type {import('#client').TemplateNode} */ (node.nextSibling);
-
 	if (!hydrating) {
-		return next_sibling;
+		return /** @type {TemplateNode} */ (node.nextSibling);
 	}
+
+	var next_sibling = /** @type {TemplateNode} */ (hydrate_node.nextSibling);
 
 	var type = next_sibling.nodeType;
 
@@ -128,10 +129,12 @@ export function sibling(node, is_text = false) {
 	if (is_text && type !== 3) {
 		var text = empty();
 		next_sibling?.before(text);
+		set_hydrate_node(text);
 		return text;
 	}
 
-	return hydrate_anchor(/** @type {Node} */ (next_sibling));
+	set_hydrate_node(next_sibling);
+	return hydrate_anchor(/** @type {TemplateNode} */ (next_sibling));
 }
 
 /**

@@ -1,5 +1,5 @@
 import { namespace_svg } from '../../../../constants.js';
-import { hydrating, set_hydrate_nodes } from '../hydration.js';
+import { hydrating, set_hydrate_node, set_hydrate_nodes } from '../hydration.js';
 import { empty } from '../operations.js';
 import {
 	block,
@@ -10,7 +10,7 @@ import {
 } from '../../reactivity/effects.js';
 import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
-import { current_component_context, current_effect } from '../../runtime.js';
+import { current_component_context } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { assign_nodes } from '../template.js';
 import { noop } from '../../../shared/utils.js';
@@ -110,12 +110,12 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				if (render_fn) {
 					// If hydrating, use the existing ssr comment as the anchor so that the
 					// inner open and close methods can pick up the existing nodes correctly
-					var child_anchor = hydrating ? element.lastChild : element.appendChild(empty());
+					var child_anchor = /** @type {import('#client').TemplateNode} */ (
+						hydrating ? element.firstChild : element.appendChild(empty())
+					);
 
 					if (hydrating && child_anchor) {
-						set_hydrate_nodes(
-							/** @type {import('#client').TemplateNode[]} */ ([...element.childNodes]).slice(0, -1)
-						);
+						set_hydrate_node(child_anchor);
 					}
 
 					// `child_anchor` is undefined if this is a void element, but we still
@@ -142,4 +142,8 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 		// teardown function is an easy way to ensure that this is not discarded
 		return noop;
 	});
+
+	if (hydrating) {
+		set_hydrate_node(anchor);
+	}
 }

@@ -4,9 +4,9 @@ import { HYDRATION_ERROR, HYDRATION_START, PassiveDelegatedEvents } from '../../
 import { flush_sync, push, pop, current_component_context } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
 import {
-	hydrate_anchor,
 	hydrate_nodes,
 	set_hydrate_nodes,
+	set_hydrate_open,
 	set_hydrating
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
@@ -134,19 +134,20 @@ export function hydrate(component, options) {
 		return flush_sync(() => {
 			set_hydrating(true);
 
-			var node = target.firstChild;
+			var anchor = target.firstChild;
 			while (
-				node &&
-				(node.nodeType !== 8 || /** @type {Comment} */ (node).data !== HYDRATION_START)
+				anchor &&
+				(anchor.nodeType !== 8 || /** @type {Comment} */ (anchor).data !== HYDRATION_START)
 			) {
-				node = node.nextSibling;
+				anchor = anchor.nextSibling;
 			}
 
-			if (!node) {
+			if (!anchor) {
 				throw HYDRATION_ERROR;
 			}
 
-			const anchor = hydrate_anchor(node);
+			set_hydrate_open(/** @type {Comment} */ (anchor));
+
 			const instance = _mount(component, { ...options, anchor });
 
 			// flush_sync will run this callback and then synchronously run any pending effects,

@@ -1,8 +1,9 @@
 import { EFFECT_TRANSPARENT } from '../../constants.js';
-import { hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
+import { hydrate_node, hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
 import { remove } from '../reconciler.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { HYDRATION_END_ELSE } from '../../../../constants.js';
+import { current_effect } from '../../runtime.js';
 
 /**
  * @param {Comment} anchor
@@ -79,4 +80,8 @@ export function if_block(
 			set_hydrating(true);
 		}
 	}, flags);
+
+	if (hydrating) {
+		anchor = hydrate_node.nextSibling;
+	}
 }

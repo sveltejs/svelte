@@ -1,16 +1,24 @@
-import { get_start, hydrate_nodes, hydrate_start, hydrating } from './hydration.js';
+/** @import { Effect, EffectNodes, TemplateNode } from '#client' */
+import {
+	get_start,
+	hydrate_node,
+	hydrate_nodes,
+	hydrate_start,
+	hydrating,
+	set_hydrate_node
+} from './hydration.js';
 import { empty } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
-import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
+import { HYDRATION_END, TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
 import { queue_micro_task } from './task.js';
 
 /**
- * @param {import('#client').TemplateNode} start
- * @param {import('#client').TemplateNode} end
+ * @param {TemplateNode} start
+ * @param {TemplateNode} end
  */
 export function assign_nodes(start, end) {
-	/** @type {import('#client').Effect} */ (current_effect).nodes ??= { start, end };
+	/** @type {Effect} */ (current_effect).nodes ??= { start, end };
 }
 
 /**
@@ -34,9 +42,9 @@ export function template(content, flags) {
 
 	return () => {
 		if (hydrating) {
-			assign_nodes(get_start(), hydrate_nodes[hydrate_nodes.length - 1]);
+			assign_nodes(get_start(), null);
 
-			return hydrate_start;
+			return hydrate_node;
 		}
 
 		if (!node) {
@@ -44,13 +52,13 @@ export function template(content, flags) {
 			if (!is_fragment) node = /** @type {Node} */ (node.firstChild);
 		}
 
-		var clone = /** @type {import('#client').TemplateNode} */ (
+		var clone = /** @type {TemplateNode} */ (
 			use_import_node ? document.importNode(node, true) : node.cloneNode(true)
 		);
 
 		if (is_fragment) {
-			var start = /** @type {import('#client').TemplateNode} */ (clone.firstChild);
-			var end = /** @type {import('#client').TemplateNode} */ (clone.lastChild);
+			var start = /** @type {TemplateNode} */ (clone.firstChild);
+			var end = /** @type {TemplateNode} */ (clone.lastChild);
 
 			assign_nodes(start, end);
 		} else {
@@ -107,7 +115,7 @@ export function ns_template(content, flags, ns = 'svg') {
 
 	return () => {
 		if (hydrating) {
-			assign_nodes(get_start(), hydrate_nodes[hydrate_nodes.length - 1]);
+			assign_nodes(get_start(), null);
 
 			return hydrate_start;
 		}
@@ -126,11 +134,11 @@ export function ns_template(content, flags, ns = 'svg') {
 			}
 		}
 
-		var clone = /** @type {import('#client').TemplateNode} */ (node.cloneNode(true));
+		var clone = /** @type {TemplateNode} */ (node.cloneNode(true));
 
 		if (is_fragment) {
-			var start = /** @type {import('#client').TemplateNode} */ (clone.firstChild);
-			var end = /** @type {import('#client').TemplateNode} */ (clone.lastChild);
+			var start = /** @type {TemplateNode} */ (clone.firstChild);
+			var end = /** @type {TemplateNode} */ (clone.lastChild);
 
 			assign_nodes(start, end);
 		} else {
@@ -218,7 +226,7 @@ export function text(anchor) {
 		return t;
 	}
 
-	var node = hydrate_start;
+	var node = hydrate_node;
 
 	if (!node) {
 		// if an {expression} is empty during SSR, `hydrate_nodes` will be empty.
@@ -233,7 +241,7 @@ export function text(anchor) {
 export function comment() {
 	// we're not delegating to `template` here for performance reasons
 	if (hydrating) {
-		assign_nodes(get_start(), hydrate_nodes[hydrate_nodes.length - 1]);
+		assign_nodes(get_start(), null);
 
 		return hydrate_start;
 	}
@@ -255,10 +263,21 @@ export function comment() {
  * @param {DocumentFragment | Element} dom
  */
 export function append(anchor, dom) {
-	if (hydrating) return;
-	// We intentionally do not assign the `dom` property of the effect here because it's far too
-	// late. If we try, we will capture additional DOM elements that we cannot control the lifecycle
-	// for and will inevitably cause memory leaks. See https://github.com/sveltejs/svelte/pull/11832
+	if (hydrating) {
+		/** @type {Effect & { nodes: EffectNodes }} */ (current_effect).nodes.end = hydrate_node;
+
+		// console.log('append', hydrate_node);
+
+		// next node should be a <!--]-->
+		var next = hydrate_node.nextSibling;
+		if (next === null || next.nodeType !== 8) {
+			throw new Error('TODO');
+		}
+
+		set_hydrate_node(/** @type {Comment} */ (next));
+
+		return;
+	}
 
 	anchor.before(/** @type {Node} */ (dom));
 }
