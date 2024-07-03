@@ -1,4 +1,4 @@
-/** @import { StoreReferencesContainer, Source } from '#client' */
+/** @import { StoreReferencesContainer } from '#client' */
 /** @import { Store } from '#shared' */
 import { subscribe_to_store } from '../../../store/utils.js';
 import { noop } from '../../shared/utils.js';
@@ -27,7 +27,13 @@ export function store_get(store, store_name, stores) {
 	if (entry.store !== store) {
 		entry.unsubscribe();
 		entry.store = store ?? null;
-		entry.unsubscribe = connect_store_to_signal(store, entry.source);
+
+		if (store == null) {
+			set(entry.source, undefined);
+			entry.unsubscribe = noop;
+		} else {
+			entry.unsubscribe = subscribe_to_store(store, (v) => set(entry.source, v));
+		}
 	}
 
 	return get(entry.source);
@@ -52,20 +58,6 @@ export function store_unsub(store, store_name, stores) {
 	}
 
 	return store;
-}
-
-/**
- * @template V
- * @param {Store<V> | null | undefined} store
- * @param {Source<V>} source
- */
-function connect_store_to_signal(store, source) {
-	if (store == null) {
-		set(source, undefined);
-		return noop;
-	}
-
-	return subscribe_to_store(store, (v) => set(source, v));
 }
 
 /**
