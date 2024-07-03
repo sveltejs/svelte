@@ -32,7 +32,13 @@ export function store_get(store, store_name, stores) {
 			set(entry.source, undefined);
 			entry.unsubscribe = noop;
 		} else {
-			entry.unsubscribe = subscribe_to_store(store, (v) => set(entry.source, v));
+			entry.unsubscribe = subscribe_to_store(store, (v) => {
+				if (entry.source.v === UNINITIALIZED) {
+					entry.source.v = v;
+				} else {
+					set(entry.source, v);
+				}
+			});
 		}
 	}
 
