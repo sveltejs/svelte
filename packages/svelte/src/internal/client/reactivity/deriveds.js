@@ -38,7 +38,7 @@ export function derived(fn) {
 	};
 
 	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
-		var current_derived = /** @type {import('#client').Derived<V>} */ (current_reaction);
+		var current_derived = /** @type {import('#client').Derived} */ (current_reaction);
 		if (current_derived.deriveds === null) {
 			current_derived.deriveds = [signal];
 		} else {
