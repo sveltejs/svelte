@@ -148,7 +148,6 @@ export type StoreReferencesContainer = Record<
 	string,
 	{
 		store: Store<any> | null;
-		last_value: any;
 		unsubscribe: Function;
 		value: Source<any>;
 	}

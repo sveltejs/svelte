@@ -25,7 +25,6 @@ export function store_get(store, store_name, stores) {
 	if (is_new) {
 		entry = {
 			store: null,
-			last_value: null,
 			value: mutable_source(UNINITIALIZED),
 			unsubscribe: noop
 		};
@@ -38,10 +37,7 @@ export function store_get(store, store_name, stores) {
 		entry.unsubscribe = connect_store_to_signal(store, entry.value);
 	}
 
-	const value = get(entry.value);
-	// This could happen if the store was cleaned up because the component was destroyed and there's a leak on the user side.
-	// In that case we don't want to fail with a cryptic Symbol error, but rather return the last value we got.
-	return value === UNINITIALIZED ? entry.last_value : value;
+	return get(entry.value);
 }
 
 /**
