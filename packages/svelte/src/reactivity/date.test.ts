@@ -112,15 +112,15 @@ test('date.setHours and date.setUTCHours', () => {
 	});
 
 	flushSync(() => {
-		date.setHours(b.getHours());
+		date.setHours(date.getHours() + 1);
 	});
 
 	flushSync(() => {
-		date.setHours(b.getHours()); // no change expected
+		date.setHours(date.getHours()); // no change expected
 	});
 
 	flushSync(() => {
-		date.setUTCHours(c.getUTCHours());
+		date.setUTCHours(date.getUTCHours() + 1);
 	});
 
 	assert.deepEqual(log, [
@@ -128,10 +128,10 @@ test('date.setHours and date.setUTCHours', () => {
 		initial_date.getUTCHours(),
 		a.getHours(),
 		a.getUTCHours(),
-		b.getHours(),
-		b.getUTCHours(),
-		c.getHours(),
-		c.getUTCHours()
+		a.getHours() + 1,
+		a.getUTCHours() + 1,
+		a.getHours() + 2,
+		a.getUTCHours() + 2
 	]);
 
 	cleanup();
