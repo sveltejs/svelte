@@ -21,6 +21,9 @@ export class SvelteURL extends URL {
 		super(url);
 		this.#searchParams[REPLACE](url.searchParams);
 		this.#searchParams[onChange] = (command, ...args) => {
+			if (this.search !== super.search) {
+				super.search = this.search;
+			}
 			if (this.#searchParams.toString() === super.searchParams.toString()) {
 				return;
 			}

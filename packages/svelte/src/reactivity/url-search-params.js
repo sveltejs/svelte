@@ -34,8 +34,8 @@ export class SvelteURLSearchParams extends URLSearchParams {
 	 */
 	append(name, value) {
 		var res = super.append(name, value);
-		increment(this.#version);
 		this[onChange]?.('append', name, value);
+		increment(this.#version);
 		return res;
 	}
 
@@ -48,8 +48,8 @@ export class SvelteURLSearchParams extends URLSearchParams {
 		var has_value = super.has(name, value);
 		var res = super.delete(name, value);
 		if (has_value) {
-			increment(this.#version);
 			this[onChange]?.('delete', name, value);
+			increment(this.#version);
 		}
 		return res;
 	}
@@ -98,15 +98,15 @@ export class SvelteURLSearchParams extends URLSearchParams {
 		// can't use has(name, value), because for something like https://svelte.dev?foo=1&bar=2&foo=3
 		// if you set `foo` to 1, then foo=3 gets deleted whilst `has("foo", "1")` returns true
 		if (value_before_change !== super.getAll(name).join('')) {
-			increment(this.#version);
 			this[onChange]?.('set', name, value);
+			increment(this.#version);
 		}
 	}
 
 	sort() {
 		var res = super.sort();
-		increment(this.#version);
 		this[onChange]?.('sort');
+		increment(this.#version);
 		return res;
 	}
 
