@@ -2,7 +2,6 @@
 /** @import { Store } from '#shared' */
 import { subscribe_to_store } from '../../../store/utils.js';
 import { noop } from '../../shared/utils.js';
-import { UNINITIALIZED } from '../../../constants.js';
 import { get } from '../runtime.js';
 import { teardown } from './effects.js';
 import { mutable_source, set } from './sources.js';
@@ -20,7 +19,7 @@ import { mutable_source, set } from './sources.js';
 export function store_get(store, store_name, stores) {
 	const entry = (stores[store_name] ??= {
 		store: null,
-		source: mutable_source(UNINITIALIZED),
+		source: mutable_source(undefined),
 		unsubscribe: noop
 	});
 
@@ -32,9 +31,12 @@ export function store_get(store, store_name, stores) {
 			set(entry.source, undefined);
 			entry.unsubscribe = noop;
 		} else {
+			var initial = true;
+
 			entry.unsubscribe = subscribe_to_store(store, (v) => {
-				if (entry.source.v === UNINITIALIZED) {
+				if (initial) {
 					entry.source.v = v;
+					initial = false;
 				} else {
 					set(entry.source, v);
 				}
