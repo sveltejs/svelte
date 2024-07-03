@@ -29,8 +29,7 @@ import {
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	STATE_FROZEN_SYMBOL,
-	INSPECT_EFFECT
+	STATE_FROZEN_SYMBOL
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -62,8 +61,6 @@ export function set_is_flushing_effect(value) {
 export function set_is_destroying_effect(value) {
 	is_destroying_effect = value;
 }
-
-export let inspect_effects = new Set();
 
 // Handle effect queues
 
@@ -164,77 +161,44 @@ export function is_runes() {
  */
 export function check_dirtiness(reaction) {
 	var flags = reaction.f;
-	var is_dirty = (flags & DIRTY) !== 0;
 
-	if (is_dirty) {
+	if ((flags & DIRTY) !== 0) {
 		return true;
 	}
-
-	var is_unowned = (flags & UNOWNED) !== 0;
-	var is_disconnected = (flags & DISCONNECTED) !== 0;
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
 
 		if (dependencies !== null) {
-			var length = dependencies.length;
-			var reactions;
+			var is_unowned = (flags & UNOWNED) !== 0;
 
-			for (var i = 0; i < length; i++) {
+			for (var i = 0; i < dependencies.length; i++) {
 				var dependency = dependencies[i];
 
-				if (!is_dirty && check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
-					update_derived(/** @type {import('#client').Derived} **/ (dependency));
+				if (check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
+					update_derived(/** @type {import('#client').Derived} */ (dependency));
 				}
 
-				if ((reaction.f & DIRTY) !== 0) {
-					// `reaction` might now be dirty, as a result of calling `update_derived`
+				if (dependency.version > reaction.version) {
 					return true;
 				}
 
 				if (is_unowned) {
-					// If we're working with an unowned derived signal, then we need to check
-					// if our dependency write version is higher. If it is then we can assume
-					// that state has changed to a newer version and thus this unowned signal
-					// is also dirty.
-					if (dependency.version > /** @type {import('#client').Derived} */ (reaction).version) {
-						return true;
-					}
-
+					// TODO is there a more logical place to do this work?
 					if (!current_skip_reaction && !dependency?.reactions?.includes(reaction)) {
 						// If we are working with an unowned signal as part of an effect (due to !current_skip_reaction)
 						// and the version hasn't changed, we still need to check that this reaction
 						// if linked to the dependency source – otherwise future updates will not be caught.
 						(dependency.reactions ??= []).push(reaction);
 					}
-				} else if (is_disconnected) {
-					// It might be that the derived was was dereferenced from its dependencies but has now come alive again.
-					// In thise case, we need to re-attach it to the graph and mark it dirty if any of its dependencies have
-					// changed since.
-					if (dependency.version > /** @type {import('#client').Derived} */ (reaction).version) {
-						is_dirty = true;
-					}
-
-					reactions = dependency.reactions;
-					if (reactions === null) {
-						dependency.reactions = [reaction];
-					} else if (!reactions.includes(reaction)) {
-						reactions.push(reaction);
-					}
 				}
 			}
 		}
 
-		// Unowned signals are always maybe dirty, as we instead check their dependency versions.
-		if (!is_unowned) {
-			set_signal_status(reaction, CLEAN);
-		}
-		if (is_disconnected) {
-			reaction.f ^= DISCONNECTED;
-		}
+		set_signal_status(reaction, CLEAN);
 	}
 
-	return is_dirty;
+	return false;
 }
 
 /**
@@ -490,6 +454,8 @@ export function update_effect(effect) {
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
+
+		effect.version = current_version;
 	} catch (error) {
 		handle_error(/** @type {Error} */ (error), effect, current_component_context);
 	} finally {
@@ -798,11 +764,31 @@ export function get(signal) {
 		}
 	}
 
-	if (
-		(flags & DERIVED) !== 0 &&
-		check_dirtiness(/** @type {import('#client').Derived} */ (signal))
-	) {
-		update_derived(/** @type {import('#client').Derived} **/ (signal));
+	if ((flags & DERIVED) !== 0) {
+		var derived = /** @type {import('#client').Derived} */ (signal);
+
+		if (check_dirtiness(derived)) {
+			update_derived(derived);
+		}
+
+		if ((flags & DISCONNECTED) !== 0) {
+			// reconnect to the graph
+			deps = derived.deps;
+
+			if (deps !== null) {
+				for (var i = 0; i < deps.length; i++) {
+					var dep = deps[i];
+					var reactions = dep.reactions;
+					if (reactions === null) {
+						dep.reactions = [derived];
+					} else if (!reactions.includes(derived)) {
+						reactions.push(derived);
+					}
+				}
+			}
+
+			derived.f ^= DISCONNECTED;
+		}
 	}
 
 	return signal.v;
@@ -841,52 +827,6 @@ export function invalidate_inner_signals(fn) {
 			}
 		} else {
 			mutate(signal, null /* doesnt matter */);
-		}
-	}
-}
-
-/**
- * @param {import('#client').Value} signal
- * @param {number} status should be DIRTY or MAYBE_DIRTY
- * @param {boolean} force_schedule
- * @returns {void}
- */
-export function mark_reactions(signal, status, force_schedule) {
-	var reactions = signal.reactions;
-	if (reactions === null) return;
-
-	var runes = is_runes();
-	var length = reactions.length;
-
-	for (var i = 0; i < length; i++) {
-		var reaction = reactions[i];
-		var flags = reaction.f;
-
-		if (DEV && (flags & INSPECT_EFFECT) !== 0) {
-			inspect_effects.add(reaction);
-			continue;
-		}
-
-		// We skip any effects that are already dirty. Additionally, we also
-		// skip if the reaction is the same as the current effect (except if we're not in runes or we
-		// are in force schedule mode).
-		if ((flags & DIRTY) !== 0 || ((!force_schedule || !runes) && reaction === current_effect)) {
-			continue;
-		}
-
-		set_signal_status(reaction, status);
-
-		// If the signal a) was previously clean or b) is an unowned derived, then mark it
-		if ((flags & (CLEAN | UNOWNED)) !== 0) {
-			if ((flags & DERIVED) !== 0) {
-				mark_reactions(
-					/** @type {import('#client').Derived} */ (reaction),
-					MAYBE_DIRTY,
-					force_schedule
-				);
-			} else {
-				schedule_effect(/** @type {import('#client').Effect} */ (reaction));
-			}
 		}
 	}
 }

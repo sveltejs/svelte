@@ -3,6 +3,8 @@ import type { ComponentContext, Dom, Equals, TemplateNode, TransitionManager } f
 export interface Signal {
 	/** Flags bitmask */
 	f: number;
+	/** Write version */
+	version: number;
 }
 
 export interface Value<V = unknown> extends Signal {
@@ -12,8 +14,6 @@ export interface Value<V = unknown> extends Signal {
 	equals: Equals;
 	/** The latest value for this signal */
 	v: V;
-	/** Write version */
-	version: number;
 }
 
 export interface Reaction extends Signal {

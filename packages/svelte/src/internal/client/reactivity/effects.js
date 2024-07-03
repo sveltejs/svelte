@@ -94,7 +94,8 @@ function create_effect(type, fn, sync, push = true) {
 		parent: is_root ? null : current_effect,
 		prev: null,
 		teardown: null,
-		transitions: null
+		transitions: null,
+		version: 0
 	};
 
 	if (DEV) {

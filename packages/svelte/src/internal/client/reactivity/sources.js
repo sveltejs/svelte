@@ -7,19 +7,27 @@ import {
 	current_untracked_writes,
 	get,
 	is_runes,
-	mark_reactions,
 	schedule_effect,
 	set_current_untracked_writes,
 	set_signal_status,
 	untrack,
 	increment_version,
-	update_effect,
-	inspect_effects
+	update_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
-import { CLEAN, DERIVED, DIRTY, BRANCH_EFFECT } from '../constants.js';
+import {
+	CLEAN,
+	DERIVED,
+	DIRTY,
+	BRANCH_EFFECT,
+	INSPECT_EFFECT,
+	UNOWNED,
+	MAYBE_DIRTY
+} from '../constants.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import * as e from '../errors.js';
+
+let inspect_effects = new Set();
 
 /**
  * @template V
@@ -91,7 +99,7 @@ export function set(source, value) {
 		source.v = value;
 		source.version = increment_version();
 
-		mark_reactions(source, DIRTY, true);
+		mark_reactions(source, DIRTY);
 
 		// If the current signal is running for the first time, it won't have any
 		// reactions as we only allocate and assign the reactions after the signal
@@ -131,4 +139,45 @@ export function set(source, value) {
 	}
 
 	return value;
+}
+
+/**
+ * @param {import('#client').Value} signal
+ * @param {number} status should be DIRTY or MAYBE_DIRTY
+ * @returns {void}
+ */
+function mark_reactions(signal, status) {
+	var reactions = signal.reactions;
+	if (reactions === null) return;
+
+	var runes = is_runes();
+	var length = reactions.length;
+
+	for (var i = 0; i < length; i++) {
+		var reaction = reactions[i];
+		var flags = reaction.f;
+
+		// Skip any effects that are already dirty
+		if ((flags & DIRTY) !== 0) continue;
+
+		// In legacy mode, skip the current effect to prevent infinite loops
+		if (!runes && reaction === current_effect) continue;
+
+		// Inspect effects need to run immediately, so that the stack trace makes sense
+		if (DEV && (flags & INSPECT_EFFECT) !== 0) {
+			inspect_effects.add(reaction);
+			continue;
+		}
+
+		set_signal_status(reaction, status);
+
+		// If the signal a) was previously clean or b) is an unowned derived, then mark it
+		if ((flags & (CLEAN | UNOWNED)) !== 0) {
+			if ((flags & DERIVED) !== 0) {
+				mark_reactions(/** @type {import('#client').Derived} */ (reaction), MAYBE_DIRTY);
+			} else {
+				schedule_effect(/** @type {import('#client').Effect} */ (reaction));
+			}
+		}
+	}
 }
