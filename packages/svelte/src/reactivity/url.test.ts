@@ -1,6 +1,6 @@
 import { render_effect, effect_root } from '../internal/client/reactivity/effects.js';
 import { flushSync } from '../index-client.js';
-import { SvelteURL, SvelteURLSearchParams } from './url.js';
+import { SvelteURL } from './url.js';
 import { assert, test } from 'vitest';
 
 test('url.hash', () => {
@@ -73,29 +73,6 @@ test('url.searchParams', () => {
 		'foo: null',
 		'q: true'
 	]);
-
-	cleanup();
-});
-
-test('URLSearchParams', () => {
-	const params = new SvelteURLSearchParams();
-	const log: any = [];
-
-	const cleanup = effect_root(() => {
-		render_effect(() => {
-			log.push(params.toString());
-		});
-	});
-
-	flushSync(() => {
-		params.set('a', 'b');
-	});
-
-	flushSync(() => {
-		params.append('a', 'c');
-	});
-
-	assert.deepEqual(log, ['', 'a=b', 'a=b&a=c']);
 
 	cleanup();
 });

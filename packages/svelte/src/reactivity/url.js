@@ -1,8 +1,6 @@
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
-import { increment } from './utils.js';
-
-const REPLACE = Symbol();
+import { REPLACE, SvelteURLSearchParams } from './url-search-params.js';
 
 export class SvelteURL extends URL {
 	#protocol = source(super.protocol);
@@ -150,116 +148,5 @@ export class SvelteURL extends URL {
 
 	toJSON() {
 		return this.href;
-	}
-}
-
-export class SvelteURLSearchParams extends URLSearchParams {
-	#version = source(0);
-
-	/**
-	 * @param {URLSearchParams} params
-	 */
-	[REPLACE](params) {
-		for (const key of [...super.keys()]) {
-			super.delete(key);
-		}
-
-		for (const [key, value] of params) {
-			super.append(key, value);
-		}
-
-		increment(this.#version);
-	}
-
-	/**
-	 * @param {string} name
-	 * @param {string} value
-	 * @returns {void}
-	 */
-	append(name, value) {
-		increment(this.#version);
-		return super.append(name, value);
-	}
-
-	/**
-	 * @param {string} name
-	 * @param {string=} value
-	 * @returns {void}
-	 */
-	delete(name, value) {
-		increment(this.#version);
-		return super.delete(name, value);
-	}
-
-	/**
-	 * @param {string} name
-	 * @returns {string|null}
-	 */
-	get(name) {
-		get(this.#version);
-		return super.get(name);
-	}
-
-	/**
-	 * @param {string} name
-	 * @returns {string[]}
-	 */
-	getAll(name) {
-		get(this.#version);
-		return super.getAll(name);
-	}
-
-	/**
-	 * @param {string} name
-	 * @param {string=} value
-	 * @returns {boolean}
-	 */
-	has(name, value) {
-		get(this.#version);
-		return super.has(name, value);
-	}
-
-	keys() {
-		get(this.#version);
-		return super.keys();
-	}
-
-	/**
-	 * @param {string} name
-	 * @param {string} value
-	 * @returns {void}
-	 */
-	set(name, value) {
-		increment(this.#version);
-		return super.set(name, value);
-	}
-
-	sort() {
-		increment(this.#version);
-		return super.sort();
-	}
-
-	toString() {
-		get(this.#version);
-		return super.toString();
-	}
-
-	values() {
-		get(this.#version);
-		return super.values();
-	}
-
-	entries() {
-		get(this.#version);
-		return super.entries();
-	}
-
-	[Symbol.iterator]() {
-		return this.entries();
-	}
-
-	get size() {
-		get(this.#version);
-		return super.size;
 	}
 }
