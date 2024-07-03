@@ -162,14 +162,12 @@ export function check_dirtiness(reaction) {
 
 	var is_effect = (flags & EFFECT) !== 0;
 	var is_unowned = (flags & UNOWNED) !== 0;
-	var is_disconnected = (flags & DISCONNECTED) !== 0;
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
 
 		if (dependencies !== null) {
 			var length = dependencies.length;
-			var reactions;
 
 			for (var i = 0; i < length; i++) {
 				var dependency = dependencies[i];
@@ -192,16 +190,6 @@ export function check_dirtiness(reaction) {
 						// if linked to the dependency source – otherwise future updates will not be caught.
 						(dependency.reactions ??= []).push(reaction);
 					}
-				} else if (is_disconnected) {
-					// It might be that the derived was was dereferenced from its dependencies but has now come alive again.
-					// In thise case, we need to re-attach it to the graph and mark it dirty if any of its dependencies have
-					// changed since.
-					reactions = dependency.reactions;
-					if (reactions === null) {
-						dependency.reactions = [reaction];
-					} else if (!reactions.includes(reaction)) {
-						reactions.push(reaction);
-					}
 				}
 			}
 		}
@@ -210,10 +198,6 @@ export function check_dirtiness(reaction) {
 		// TODO nothing happens if we remove the `if`, do we still need it?
 		if (!is_unowned) {
 			set_signal_status(reaction, CLEAN);
-		}
-
-		if (is_disconnected) {
-			reaction.f ^= DISCONNECTED;
 		}
 	}
 
@@ -790,11 +774,31 @@ export function get(signal) {
 		}
 	}
 
-	if (
-		(flags & DERIVED) !== 0 &&
-		check_dirtiness(/** @type {import('#client').Derived} */ (signal))
-	) {
-		update_derived(/** @type {import('#client').Derived} **/ (signal));
+	if ((flags & DERIVED) !== 0) {
+		var derived = /** @type {import('#client').Derived} */ (signal);
+
+		if (check_dirtiness(derived)) {
+			update_derived(derived);
+		}
+
+		if ((flags & DISCONNECTED) !== 0) {
+			// reconnect to the graph
+			var deps = derived.deps;
+
+			if (deps !== null) {
+				for (var i = 0; i < deps.length; i++) {
+					var dep = deps[i];
+					var reactions = dep.reactions;
+					if (reactions === null) {
+						dep.reactions = [derived];
+					} else if (!reactions.includes(derived)) {
+						reactions.push(derived);
+					}
+				}
+			}
+
+			derived.f ^= DISCONNECTED;
+		}
 	}
 
 	return signal.v;
