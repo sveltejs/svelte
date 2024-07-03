@@ -156,17 +156,14 @@ export function check_dirtiness(reaction) {
 	var flags = reaction.f;
 	var is_dirty = (flags & DIRTY) !== 0;
 
-	if (is_dirty) {
-		return true;
-	}
-
-	var is_effect = (flags & EFFECT) !== 0;
-	var is_unowned = (flags & UNOWNED) !== 0;
+	if (is_dirty) return true;
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
 
 		if (dependencies !== null) {
+			var is_effect = (flags & EFFECT) !== 0;
+			var is_unowned = (flags & UNOWNED) !== 0;
 			var length = dependencies.length;
 
 			for (var i = 0; i < length; i++) {
