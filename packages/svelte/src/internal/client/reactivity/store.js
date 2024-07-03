@@ -104,16 +104,20 @@ export function invalidate_store(stores, store_name) {
 
 /**
  * Unsubscribes from all auto-subscribed stores on destroy
- * @param {StoreReferencesContainer} stores
+ * @returns {StoreReferencesContainer}
  */
-export function unsubscribe_on_destroy(stores) {
+export function create_stores() {
+	/** @type {StoreReferencesContainer} */
+	const stores = {};
+
 	teardown(() => {
-		let store_name;
-		for (store_name in stores) {
+		for (var store_name in stores) {
 			const ref = stores[store_name];
 			ref.unsubscribe();
 		}
 	});
+
+	return stores;
 }
 
 /**

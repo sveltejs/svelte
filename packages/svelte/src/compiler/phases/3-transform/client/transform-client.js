@@ -154,11 +154,9 @@ export function client_component(source, analysis, options) {
 		}
 		if (binding.kind === 'store_sub') {
 			if (store_setup.length === 0) {
-				store_setup.push(
-					b.const('$$subscriptions', b.object([])),
-					b.stmt(b.call('$.unsubscribe_on_destroy', b.id('$$subscriptions')))
-				);
+				store_setup.push(b.const('$$subscriptions', b.call('$.create_stores')));
 			}
+
 			// We're creating an arrow function that gets the store value which minifies better for two or more references
 			const store_reference = serialize_get_binding(b.id(name.slice(1)), instance_state);
 			const store_get = b.call(
