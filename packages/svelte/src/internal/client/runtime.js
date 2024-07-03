@@ -179,18 +179,13 @@ export function check_dirtiness(reaction) {
 				}
 
 				if (dependency.version > reaction.version) {
+					// we don't need to update the status of these signals
+					if (is_effect || is_unowned) return true;
+
 					is_dirty = true;
 				}
 
-				if (is_effect && is_dirty) {
-					return true;
-				}
-
 				if (is_unowned) {
-					if (is_dirty) {
-						return true;
-					}
-
 					if (!current_skip_reaction && !dependency?.reactions?.includes(reaction)) {
 						// If we are working with an unowned signal as part of an effect (due to !current_skip_reaction)
 						// and the version hasn't changed, we still need to check that this reaction
@@ -211,10 +206,12 @@ export function check_dirtiness(reaction) {
 			}
 		}
 
-		// Unowned signals are always maybe dirty, as we instead check their dependency versions.
+		// Unowned signals are always maybe dirty
+		// TODO nothing happens if we remove the `if`, do we still need it?
 		if (!is_unowned) {
 			set_signal_status(reaction, CLEAN);
 		}
+
 		if (is_disconnected) {
 			reaction.f ^= DISCONNECTED;
 		}
