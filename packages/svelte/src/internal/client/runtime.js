@@ -170,7 +170,7 @@ export function check_dirtiness(reaction) {
 				var dependency = dependencies[i];
 
 				if (check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
-					update_derived(/** @type {import('#client').Derived} **/ (dependency));
+					update_derived(/** @type {import('#client').Derived} */ (dependency));
 				}
 
 				if (dependency.version > reaction.version) {
