@@ -773,7 +773,7 @@ export function get(signal) {
 
 		if ((flags & DISCONNECTED) !== 0) {
 			// reconnect to the graph
-			var deps = derived.deps;
+			deps = derived.deps;
 
 			if (deps !== null) {
 				for (var i = 0; i < deps.length; i++) {
