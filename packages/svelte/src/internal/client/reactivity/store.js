@@ -3,8 +3,8 @@
 import { subscribe_to_store } from '../../../store/utils.js';
 import { noop } from '../../shared/utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { get, untrack } from '../runtime.js';
-import { effect } from './effects.js';
+import { get } from '../runtime.js';
+import { teardown } from './effects.js';
 import { mutable_source, set } from './sources.js';
 
 /**
@@ -107,7 +107,7 @@ export function invalidate_store(stores, store_name) {
  * @param {StoreReferencesContainer} stores
  */
 export function unsubscribe_on_destroy(stores) {
-	on_destroy(() => {
+	teardown(() => {
 		let store_name;
 		for (store_name in stores) {
 			const ref = stores[store_name];
@@ -149,13 +149,4 @@ export function update_pre_store(store, store_value, d = 1) {
 	const value = store_value + d;
 	store.set(value);
 	return value;
-}
-
-/**
- * Schedules a callback to run immediately before the component is unmounted.
- * @param {() => any} fn
- * @returns {void}
- */
-function on_destroy(fn) {
-	effect(() => () => untrack(fn));
 }
