@@ -137,7 +137,7 @@ function sort_const_tags(nodes, state) {
  * @param {Compiler.SvelteNode[]} nodes
  * @param {Compiler.SvelteNode[]} path
  * @param {Compiler.Namespace} namespace
- * @param {TransformState} state
+ * @param {TransformState & { options: Compiler.ValidatedCompileOptions }} state
  * @param {boolean} preserve_whitespace
  * @param {boolean} preserve_comments
  */
@@ -279,6 +279,7 @@ export function clean_nodes(
 		trimmed.length === 1 &&
 		((first.type === 'RenderTag' && !first.metadata.dynamic) ||
 			(first.type === 'Component' &&
+				!state.options.hmr &&
 				!first.attributes.some(
 					(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
 				)));
