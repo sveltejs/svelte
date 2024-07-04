@@ -211,12 +211,20 @@ export interface ModuleCompileOptions {
 	 * Used for debugging hints and sourcemaps. Your bundler plugin will set it automatically.
 	 */
 	filename?: string;
-
 	/**
 	 * Used for ensuring filenames don't leak filesystem information. Your bundler plugin will set it automatically.
 	 * @default process.cwd() on node-like environments, undefined elsewhere
 	 */
 	rootDir?: string;
+	/**
+	 * Options related to Svelte's warnings
+	 */
+	warnings?: {
+		/**
+		 * A list of warning codes to suppress. If a warning is emitted with a code in this list, it will be ignored.
+		 */
+		ignore?: string[];
+	};
 }
 
 // The following two somewhat scary looking types ensure that certain types are required but can be undefined still

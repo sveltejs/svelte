@@ -100,6 +100,10 @@ export const validate_component_options =
 
 			hmr: boolean(false),
 
+			warnings: object({
+				ignore: string_array([])
+			}),
+
 			sourcemap: validator(undefined, (input) => {
 				// Source maps can take on a variety of values, including string, JSON, map objects from magic-string and source-map,
 				// so there's no good way to check type validity here
@@ -249,6 +253,20 @@ function string(fallback, allow_empty = true) {
 
 		if (!allow_empty && input === '') {
 			throw_error(`${keypath} cannot be empty`);
+		}
+
+		return input;
+	});
+}
+
+/**
+ * @param {string[]} fallback
+ * @returns {Validator}
+ */
+function string_array(fallback) {
+	return validator(fallback, (input, keypath) => {
+		if (input && !Array.isArray(input)) {
+			throw_error(`${keypath} should be a string array, if specified`);
 		}
 
 		return input;

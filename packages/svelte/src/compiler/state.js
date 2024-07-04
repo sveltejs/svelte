@@ -44,7 +44,7 @@ export function pop_ignore() {
 
 /**
  * @param {string} source
- * @param {{ filename?: string, rootDir?: string }} options
+ * @param {{ filename?: string, rootDir?: string, warnings?: { ignore?: string[] } }} options
  */
 export function reset(source, options) {
 	const root_dir = options.rootDir?.replace(/\\/g, '/');
@@ -63,4 +63,8 @@ export function reset(source, options) {
 	warnings = [];
 	ignore_stack = [];
 	ignore_map.clear();
+
+	if (options.warnings?.ignore) {
+		push_ignore(options.warnings.ignore);
+	}
 }
