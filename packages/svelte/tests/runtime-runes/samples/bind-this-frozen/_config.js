@@ -21,6 +21,6 @@ export default test({
 		});
 
 		assert.htmlEqual(target.innerHTML, `<button>a</button><button>b</button><div>a</div>`);
-		assert.deepEqual(logs, [{ a: {} }, undefined, { a: {} }]);
+		assert.deepEqual(logs, [{ a: {} }, {}, { a: {} }]);
 	}
 });
