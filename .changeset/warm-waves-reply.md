@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: correctly teardown `bind:this` with `$state.frozen`
+fix: ensure component always returns an object
