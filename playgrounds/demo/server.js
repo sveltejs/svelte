@@ -23,10 +23,16 @@ async function createServer() {
 
 	app.use('*', async (req, res) => {
 		if (req.originalUrl !== '/') {
-			res.writeHead(200, {
-				'Content-Type': 'application/javascript'
-			});
-			res.end(fs.createReadStream(path.resolve('./dist' + req.originalUrl)));
+			const file = path.resolve('./dist' + req.originalUrl);
+			if (fs.existsSync(file)) {
+				res.writeHead(200, {
+					'Content-Type': 'application/javascript'
+				});
+				res.end(fs.createReadStream(file));
+			} else {
+				res.writeHead(404);
+				res.end('not found');
+			}
 			return;
 		}
 

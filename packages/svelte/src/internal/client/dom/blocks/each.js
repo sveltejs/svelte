@@ -8,7 +8,15 @@ import {
 	HYDRATION_END_ELSE,
 	HYDRATION_START
 } from '../../../../constants.js';
-import { hydrate_nodes, hydrate_start, hydrating, set_hydrating } from '../hydration.js';
+import {
+	hydrate_node,
+	hydrate_nodes,
+	hydrate_start,
+	hydrating,
+	set_hydrate_node,
+	set_hydrate_open,
+	set_hydrating
+} from '../hydration.js';
 import { clear_text_content, empty } from '../operations.js';
 import { remove } from '../reconciler.js';
 import {
@@ -144,7 +152,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 		if (hydrating) {
 			var is_else = /** @type {Comment} */ (anchor).data === HYDRATION_END_ELSE;
 
-			if (is_else !== (length === 0) || hydrate_start === undefined) {
+			if (is_else !== (length === 0) || hydrate_node === undefined) {
 				// hydration mismatch — remove the server-rendered DOM and start over
 				remove(hydrate_nodes);
 				set_hydrating(false);
@@ -155,7 +163,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 		// this is separate to the previous block because `hydrating` might change
 		if (hydrating) {
 			/** @type {Node} */
-			var child_anchor = hydrate_start;
+			var child_anchor = hydrate_node;
 
 			/** @type {import('#client').EachItem | null} */
 			var prev = null;
@@ -175,22 +183,27 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 					break;
 				}
 
+				set_hydrate_open(child_anchor);
+
 				var value = array[i];
 				var key = get_key(value, i);
 				item = create_item(child_anchor, state, prev, null, value, key, i, render_fn, flags);
 				state.items.set(key, item);
-				child_anchor = /** @type {Comment} */ (child_anchor.nextSibling);
+				var close = hydrate_node.nextSibling; // TODO validate. or replace `<!--]--><!--[-->` with `<!---->`
+				set_hydrate_node(close);
+				child_anchor = /** @type {Comment} */ (close.nextSibling);
 
 				prev = item;
 			}
 
 			// remove excess nodes
 			if (length > 0) {
-				while (child_anchor !== anchor) {
-					var next = /** @type {import('#client').TemplateNode} */ (child_anchor.nextSibling);
-					/** @type {import('#client').TemplateNode} */ (child_anchor).remove();
-					child_anchor = next;
-				}
+				// TODO reinstate
+				// while (child_anchor !== anchor) {
+				// 	var next = /** @type {import('#client').TemplateNode} */ (child_anchor.nextSibling);
+				// 	/** @type {import('#client').TemplateNode} */ (child_anchor).remove();
+				// 	child_anchor = next;
+				// }
 			}
 		}
 
@@ -217,6 +230,11 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 			set_hydrating(true);
 		}
 	});
+
+	if (hydrating) {
+		anchor = hydrate_node.nextSibling;
+		set_hydrate_node(anchor);
+	}
 }
 
 /**

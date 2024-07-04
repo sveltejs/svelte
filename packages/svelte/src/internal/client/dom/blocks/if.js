@@ -1,9 +1,14 @@
 import { EFFECT_TRANSPARENT } from '../../constants.js';
-import { hydrate_node, hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
+import {
+	hydrate_node,
+	hydrate_nodes,
+	hydrating,
+	set_hydrate_node,
+	set_hydrating
+} from '../hydration.js';
 import { remove } from '../reconciler.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
-import { HYDRATION_END_ELSE } from '../../../../constants.js';
-import { current_effect } from '../../runtime.js';
+import { HYDRATION_START_ELSE } from '../../../../constants.js';
 
 /**
  * @param {Comment} anchor
@@ -38,7 +43,7 @@ export function if_block(
 		let mismatch = false;
 
 		if (hydrating) {
-			const is_else = anchor.data === HYDRATION_END_ELSE;
+			const is_else = anchor.data === HYDRATION_START_ELSE;
 
 			if (condition === is_else) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.
@@ -83,5 +88,6 @@ export function if_block(
 
 	if (hydrating) {
 		anchor = hydrate_node.nextSibling;
+		set_hydrate_node(anchor);
 	}
 }

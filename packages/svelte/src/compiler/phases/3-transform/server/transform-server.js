@@ -36,7 +36,8 @@ import {
 	BLOCK_ANCHOR,
 	BLOCK_CLOSE,
 	BLOCK_CLOSE_ELSE,
-	BLOCK_OPEN
+	BLOCK_OPEN,
+	BLOCK_OPEN_ELSE
 } from '../../../../internal/server/hydration.js';
 import { filename, locator } from '../../../state.js';
 
@@ -1006,7 +1007,8 @@ function serialize_inline_component(node, expression, context) {
 	} else if (context.state.skip_hydration_boundaries) {
 		context.state.template.push(statement);
 	} else {
-		context.state.template.push(block_open, statement, block_close);
+		context.state.template.push(statement);
+		// context.state.template.push(block_open, statement, block_close);
 	}
 }
 
@@ -1411,12 +1413,15 @@ const template_visitors = {
 			? /** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
 			: b.block([]);
 
-		consequent.body.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE))));
-		alternate.body.push(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE)))
+		consequent.body.unshift(
+			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN)))
 		);
 
-		context.state.template.push(block_open, b.if(test, consequent, alternate));
+		alternate.body.unshift(
+			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN_ELSE)))
+		);
+
+		context.state.template.push(b.if(test, consequent, alternate), block_close);
 	},
 	AwaitBlock(node, context) {
 		context.state.template.push(

@@ -59,12 +59,15 @@ export function empty() {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function child(node) {
-	const child = node.firstChild;
-	if (!hydrating) return child;
+	if (!hydrating) {
+		return node.firstChild;
+	}
+
+	var child = hydrate_node.firstChild;
 
 	// Child can be null if we have an element with a single child, like `<p>{text}</p>`, where `text` is empty
 	if (child === null) {
-		return node.appendChild(empty());
+		return hydrate_node.appendChild(empty());
 	}
 
 	return child;

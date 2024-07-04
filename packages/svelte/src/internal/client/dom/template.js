@@ -267,15 +267,15 @@ export function append(anchor, dom) {
 	if (hydrating) {
 		/** @type {Effect & { nodes: EffectNodes }} */ (current_effect).nodes.end = hydrate_node;
 
-		// console.log('append', hydrate_node);
+		// console.log('effect.nodes.end', hydrate_node);
 
-		// next node should be a <!--]-->
-		var next = hydrate_node.nextSibling;
-		if (next === null || next.nodeType !== 8) {
-			throw new Error('TODO');
-		}
+		// // next node should be a <!--]-->
+		// var next = hydrate_node.nextSibling;
+		// if (next === null || next.nodeType !== 8) {
+		// 	throw new Error('TODO');
+		// }
 
-		set_hydrate_node(/** @type {Comment} */ (next));
+		// set_hydrate_node(/** @type {Comment} */ (next));
 
 		return;
 	}
