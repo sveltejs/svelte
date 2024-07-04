@@ -547,6 +547,11 @@ function get_hoistable_params(node, context) {
 			} else {
 				// create a copy to remove start/end tags which would mess up source maps
 				push_unique(b.id(binding.node.name));
+				// rest props are often accessed through the $$props object for optimization reasons,
+				// but we can't know if the delegated event handler will use it, so we need to add both as params
+				if (binding.kind === 'rest_prop' && context.state.analysis.runes) {
+					push_unique(b.id('$$props'));
+				}
 			}
 		}
 	}
