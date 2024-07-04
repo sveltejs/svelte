@@ -1,5 +1,6 @@
 /** @import { TemplateNode, Dom, Effect } from '#client' */
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
+import { hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
 
 /**
  * @template P
@@ -28,4 +29,9 @@ export function component(anchor, get_component, render_fn) {
 			effect = branch(() => render_fn(anchor, component));
 		}
 	});
+
+	if (hydrating) {
+		anchor = hydrate_node.nextSibling;
+		set_hydrate_node(anchor);
+	}
 }

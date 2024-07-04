@@ -267,7 +267,7 @@ export function append(anchor, dom) {
 	if (hydrating) {
 		/** @type {Effect & { nodes: EffectNodes }} */ (current_effect).nodes.end = hydrate_node;
 
-		// console.log('effect.nodes.end', hydrate_node);
+		// console.log('effect.nodes', current_effect.nodes);
 
 		// // next node should be a <!--]-->
 		// var next = hydrate_node.nextSibling;
