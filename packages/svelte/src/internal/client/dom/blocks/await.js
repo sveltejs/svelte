@@ -11,7 +11,7 @@ import {
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { DEV } from 'esm-env';
 import { queue_micro_task } from '../task.js';
-import { hydrating } from '../hydration.js';
+import { hydrate_node, hydrating } from '../hydration.js';
 import { mutable_source, set, source } from '../../reactivity/sources.js';
 
 const PENDING = 0;
@@ -146,4 +146,8 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 		// teardown function is an easy way to ensure that this is not discarded
 		return noop;
 	});
+
+	if (hydrating) {
+		anchor = hydrate_node.nextSibling;
+	}
 }

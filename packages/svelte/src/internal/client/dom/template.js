@@ -228,10 +228,11 @@ export function text(anchor) {
 
 	var node = hydrate_node;
 
-	if (!node) {
+	if (node.nodeType !== 3) {
 		// if an {expression} is empty during SSR, `hydrate_nodes` will be empty.
 		// we need to insert an empty text node
-		anchor.before((node = empty()));
+		node.before((node = empty()));
+		set_hydrate_node(node);
 	}
 
 	assign_nodes(node, node);
