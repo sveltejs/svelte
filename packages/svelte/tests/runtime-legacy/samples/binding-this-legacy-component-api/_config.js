@@ -3,8 +3,8 @@ import { test } from '../../test';
 
 export default test({
 	compileOptions: {
-		legacy: {
-			componentApi: true
+		compatibility: {
+			legacyComponent: true
 		}
 	},
 	html: '<button>0</button>',
