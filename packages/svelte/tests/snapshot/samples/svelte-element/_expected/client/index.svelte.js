@@ -8,4 +8,5 @@ export default function Svelte_element($$anchor, $$props) {
 
 	$.element(node, tag, false);
 	$.append($$anchor, fragment);
+	return {};
 }

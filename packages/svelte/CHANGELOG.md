@@ -1,5 +1,21 @@
 # svelte
 
+## 5.0.0-next.174
+
+### Patch Changes
+
+- fix: bail out of event hoisting when referencing store subscriptions ([#12301](https://github.com/sveltejs/svelte/pull/12301))
+
+- chore: make store initialization logic simpler ([#12281](https://github.com/sveltejs/svelte/pull/12281))
+
+- fix: make props optional during SSR ([#12284](https://github.com/sveltejs/svelte/pull/12284))
+
+- fix: ensure each blocks properly handle $state.frozen objects in prod ([#12305](https://github.com/sveltejs/svelte/pull/12305))
+
+- fix: ensure rest props access on hoisted event handlers works ([#12298](https://github.com/sveltejs/svelte/pull/12298))
+
+- fix: lazily create a derived for each read method on `SvelteDate.prototype` ([#12110](https://github.com/sveltejs/svelte/pull/12110))
+
 ## 5.0.0-next.173
 
 ### Patch Changes
