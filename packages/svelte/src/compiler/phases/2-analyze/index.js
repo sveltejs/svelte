@@ -166,25 +166,20 @@ function get_delegated_event(event_name, handler, context) {
 	}
 
 	// If we can't find a function, bail-out
-	if (target_function == null) {
-		return non_hoistable;
-	}
+	if (target_function == null) return non_hoistable;
 	// If the function is marked as non-hoistable, bail-out
-	if (target_function.metadata.hoistable === 'impossible') {
-		return non_hoistable;
-	}
+	if (target_function.metadata.hoistable === 'impossible') return non_hoistable;
 	// If the function has more than one arg, then bail-out
-	if (target_function.params.length > 1) {
-		return non_hoistable;
-	}
+	if (target_function.params.length > 1) return non_hoistable;
 
 	const visited_references = new Set();
 	const scope = target_function.metadata.scope;
 	for (const [reference] of scope.references) {
 		// Bail-out if the arguments keyword is used
-		if (reference === 'arguments') {
-			return non_hoistable;
-		}
+		if (reference === 'arguments') return non_hoistable;
+		// Bail-out if references a store subscription
+		if (scope.get(`$${reference}`)?.kind === 'store_sub') return non_hoistable;
+
 		const binding = scope.get(reference);
 		const local_binding = context.state.scope.get(reference);
 
@@ -203,9 +198,7 @@ function get_delegated_event(event_name, handler, context) {
 		}
 
 		// If we reference the index within an each block, then bail-out.
-		if (binding !== null && binding.initial?.type === 'EachBlock') {
-			return non_hoistable;
-		}
+		if (binding !== null && binding.initial?.type === 'EachBlock') return non_hoistable;
 
 		if (
 			binding !== null &&
