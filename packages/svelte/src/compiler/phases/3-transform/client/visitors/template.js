@@ -1680,8 +1680,7 @@ export const template_visitors = {
 					process_children(trimmed, () => b.id('$$anchor'), false, { ...context, state });
 				} else {
 					/** @type {(is_text: boolean) => import('estree').Expression} */
-					const expression = (is_text) =>
-						is_text ? b.call('$.first_child', id, b.true) : b.call('$.first_child', id);
+					const expression = (is_text) => b.call('$.first_child', id, is_text && b.true);
 
 					process_children(trimmed, expression, false, { ...context, state });
 
@@ -2183,6 +2182,9 @@ export const template_visitors = {
 			true,
 			{ ...context, state: child_state }
 		);
+
+		// TODO only do this when necessary, and use a function with `if (hydrating)` so that it noops for non-hydraters
+		child_state.init.push(b.stmt(b.call('$.set_hydrate_node', context.state.node)));
 
 		if (has_declaration) {
 			context.state.init.push(

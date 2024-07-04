@@ -70,6 +70,7 @@ export function child(node) {
 		return hydrate_node.appendChild(empty());
 	}
 
+	set_hydrate_node(child);
 	return child;
 }
 
