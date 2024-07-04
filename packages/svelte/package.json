@@ -97,6 +97,7 @@
   },
   "homepage": "https://svelte.dev",
   "keywords": [
+    "svelte",
     "UI",
     "framework",
     "templates",
