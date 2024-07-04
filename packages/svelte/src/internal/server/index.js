@@ -39,7 +39,7 @@ export const VoidElements = new Set([
 
 /** @returns {import('#server').Payload} */
 function create_payload() {
-	return { out: '', head: { title: '', out: '', anchor: 0 }, anchor: 0 };
+	return { out: '', css: new Set(), head: { title: '', out: '', anchor: 0 }, anchor: 0 };
 }
 
 /**
@@ -125,6 +125,9 @@ export function render(component, options = {}) {
 
 	return {
 		head: payload.head.out || payload.head.title ? payload.head.out + payload.head.title : '',
+		css: Array.from(payload.css)
+			.map(({ code }) => code)
+			.join('\n'),
 		html: payload.out,
 		body: payload.out
 	};

@@ -5,6 +5,7 @@
 // TODO: happy-dom might be faster but currently replaces quotes which fails assertions
 
 import * as fs from 'node:fs';
+import { assert } from 'vitest';
 import { render } from 'svelte/server';
 import { compile_directory, should_update_expected, try_read_file } from '../helpers.js';
 import { assert_html_equal_with_options } from '../html_equal.js';
@@ -23,7 +24,7 @@ const { test, run } = suite<SSRTest>(async (config, test_dir) => {
 	const Component = (await import(`${test_dir}/_output/server/main.svelte.js`)).default;
 	const expected_html = try_read_file(`${test_dir}/_expected.html`);
 	const rendered = render(Component, { props: config.props || {} });
-	const { body, head } = rendered;
+	const { body, head, css } = rendered;
 
 	fs.writeFileSync(`${test_dir}/_actual.html`, body);
 
@@ -55,6 +56,25 @@ const { test, run } = suite<SSRTest>(async (config, test_dir) => {
 			if (should_update_expected()) {
 				fs.writeFileSync(`${test_dir}/_expected-head.html`, head);
 				console.log(`Updated ${test_dir}/_expected-head.html.`);
+				error.message += '\n' + `${test_dir}/main.svelte`;
+			} else {
+				throw error;
+			}
+		}
+	}
+
+	if (fs.existsSync(`${test_dir}/_expected.css`)) {
+		fs.writeFileSync(`${test_dir}/_actual.css`, css);
+
+		try {
+			assert.equal(
+				css.replaceAll('\r', ''),
+				fs.readFileSync(`${test_dir}/_expected.css`, 'utf-8').replaceAll('\r', '')
+			);
+		} catch (error: any) {
+			if (should_update_expected()) {
+				fs.writeFileSync(`${test_dir}/_expected.css`, css);
+				console.log(`Updated ${test_dir}/_expected.css.`);
 				error.message += '\n' + `${test_dir}/main.svelte`;
 			} else {
 				throw error;

@@ -779,6 +779,12 @@ declare module 'svelte/compiler' {
 		 */
 		cssHash?: CssHashGetter;
 		/**
+		 * Whether or not to include the CSS in the compiled server output, so that it's added to the `css` output of `render` from `svelte/server`.
+		 *
+		 * @default false
+		 */
+		cssRenderOnServer?: boolean;
+		/**
 		 * If `true`, your HTML comments will be preserved during server-side rendering. By default, they are stripped out.
 		 *
 		 * @default false
@@ -2194,6 +2200,8 @@ declare module 'svelte/server' {
 		html: string;
 		/** HTML that goes somewhere into the `<body>` */
 		body: string;
+		/** The CSS from components that were compiled with `cssRenderOnServer` */
+		css: string;
 	}
 
 	export {};
@@ -2601,6 +2609,12 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * @default undefined
 		 */
 		cssHash?: CssHashGetter;
+		/**
+		 * Whether or not to include the CSS in the compiled server output, so that it's added to the `css` output of `render` from `svelte/server`.
+		 *
+		 * @default false
+		 */
+		cssRenderOnServer?: boolean;
 		/**
 		 * If `true`, your HTML comments will be preserved during server-side rendering. By default, they are stripped out.
 		 *

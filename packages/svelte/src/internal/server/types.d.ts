@@ -14,6 +14,7 @@ export interface Component {
 export interface Payload {
 	out: string;
 	anchor: number;
+	css: Set<{ code: string }>;
 	head: {
 		title: string;
 		out: string;
@@ -28,4 +29,6 @@ export interface RenderOutput {
 	html: string;
 	/** HTML that goes somewhere into the `<body>` */
 	body: string;
+	/** The CSS from components that were compiled with `cssRenderOnServer` */
+	css: string;
 }

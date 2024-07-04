@@ -69,6 +69,8 @@ export const validate_component_options =
 				return `svelte-${hash(css)}`;
 			}),
 
+			cssRenderOnServer: boolean(false),
+
 			// TODO this is a sourcemap option, would be good to put under a sourcemap namespace
 			cssOutputFilename: string(undefined),
 

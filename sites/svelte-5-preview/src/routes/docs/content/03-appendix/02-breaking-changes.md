@@ -217,6 +217,10 @@ In the event that you need to support ancient browsers that don't implement `:wh
 css = css.replace(/:where\((.+?)\)/, '$1');
 ```
 
+### CSS no longer returned from server render by default
+
+In Svelte 4, rendering a component to a string also returned the CSS of all components. In Svelte 5, this is no longer the case by default because most of the time you're using a tooling chain that takes care of it in other ways (like SvelteKit). If you need the CSS string returned from `render`, you can enable it via the `cssRenderOnServer` option.
+
 ### Error/warning codes have been renamed
 
 Error and warning codes have been renamed. Previously they used dashes to separate the words, they now use underscores (e.g. foo-bar becomes foo_bar). Additionally, a handful of codes have been reworded slightly.

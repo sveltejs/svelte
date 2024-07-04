@@ -155,6 +155,8 @@ const result = render(App, {
 });
 ```
 
+`render` also returns a `css` string property, which is populated with the CSS from all components which were compiled with the `cssRenderOnServer` option.
+
 ## `svelte/elements`
 
 Svelte provides built-in [DOM types](https://github.com/sveltejs/svelte/blob/master/packages/svelte/elements.d.ts). A common use case for DOM types is forwarding props to an HTML element. To properly type your props and get full intellisense, your props interface should extend the attributes type for your HTML element:
