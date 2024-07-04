@@ -339,9 +339,6 @@ export function client_component(source, analysis, options) {
 				? b.return(b.call('$.pop', b.object(component_returned_object)))
 				: b.stmt(b.call('$.pop'))
 		);
-	} else {
-		// Always return an object, so that `bind:this` on this component will not be falsy
-		component_block.body.push(b.return(b.object(component_returned_object)));
 	}
 
 	if (analysis.uses_rest_props) {

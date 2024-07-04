@@ -7,5 +7,4 @@ export default function Hello_world($$anchor) {
 	var h1 = root();
 
 	$.append($$anchor, h1);
-	return {};
 }

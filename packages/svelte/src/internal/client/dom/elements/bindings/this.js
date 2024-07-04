@@ -15,14 +15,14 @@ function is_bound_this(bound_value, element_or_component) {
 }
 
 /**
- * @param {Element} element_or_component
+ * @param {any} element_or_component
  * @param {(value: unknown, ...parts: unknown[]) => void} update
  * @param {(...parts: unknown[]) => unknown} get_value
  * @param {() => unknown[]} [get_parts] Set if the this binding is used inside an each block,
  * 										returns all the parts of the each block context that are used in the expression
  * @returns {void}
  */
-export function bind_this(element_or_component, update, get_value, get_parts) {
+export function bind_this(element_or_component = {}, update, get_value, get_parts) {
 	effect(() => {
 		/** @type {unknown[]} */
 		var old_parts;
