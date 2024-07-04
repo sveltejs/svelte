@@ -234,7 +234,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		Required<CompileOptions>,
 		| keyof ModuleCompileOptions
 		| 'name'
-		| 'legacy'
+		| 'compatibility'
 		| 'outputFilename'
 		| 'cssOutputFilename'
 		| 'sourcemap'
@@ -244,7 +244,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		outputFilename: CompileOptions['outputFilename'];
 		cssOutputFilename: CompileOptions['cssOutputFilename'];
 		sourcemap: CompileOptions['sourcemap'];
-		legacy: Required<Required<CompileOptions>['legacy']>;
+		compatibility: Required<Required<CompileOptions>['compatibility']>;
 		runes: CompileOptions['runes'];
 		customElementOptions: SvelteOptions['customElement'];
 		hmr: CompileOptions['hmr'];
