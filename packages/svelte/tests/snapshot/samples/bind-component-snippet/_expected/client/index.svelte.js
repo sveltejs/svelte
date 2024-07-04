@@ -30,4 +30,5 @@ export default function Bind_component_snippet($$anchor) {
 
 	$.template_effect(() => $.set_text(text, ` value: ${$.get(value) ?? ""}`));
 	$.append($$anchor, fragment_1);
+	return {};
 }

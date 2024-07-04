@@ -13,4 +13,5 @@ export default function Each_string_template($$anchor) {
 	});
 
 	$.append($$anchor, fragment);
+	return {};
 }
