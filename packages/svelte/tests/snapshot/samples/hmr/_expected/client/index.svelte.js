@@ -7,6 +7,7 @@ function Hmr($$anchor) {
 	var h1 = root();
 
 	$.append($$anchor, h1);
+	return {};
 }
 
 if (import.meta.hot) {
