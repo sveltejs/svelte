@@ -1,5 +1,5 @@
 /** @import { Effect, EffectNodes, TemplateNode } from '#client' */
-import { get_start, hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
+import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { empty } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';

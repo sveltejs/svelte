@@ -2184,7 +2184,7 @@ export const template_visitors = {
 		);
 
 		// TODO only do this when necessary, and use a function with `if (hydrating)` so that it noops for non-hydraters
-		child_state.init.push(b.stmt(b.call('$.set_hydrate_node', context.state.node)));
+		child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));
 
 		if (has_declaration) {
 			context.state.init.push(

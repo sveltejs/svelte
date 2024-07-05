@@ -23,3 +23,10 @@ export function hydrate_next() {
 	hydrate_node = /** @type {TemplateNode} */ (hydrate_node.nextSibling);
 	return hydrate_node;
 }
+
+/** @param {TemplateNode} node */
+export function reset(node) {
+	if (hydrating) {
+		hydrate_node = node;
+	}
+}

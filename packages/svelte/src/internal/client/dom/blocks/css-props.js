@@ -1,4 +1,3 @@
-import { hydrating, set_hydrate_nodes } from '../hydration.js';
 import { render_effect } from '../../reactivity/effects.js';
 
 /**
@@ -7,12 +6,6 @@ import { render_effect } from '../../reactivity/effects.js';
  * @returns {void}
  */
 export function css_props(element, get_styles) {
-	if (hydrating) {
-		set_hydrate_nodes(
-			/** @type {import('#client').TemplateNode[]} */ ([...element.childNodes]).slice(0, -1)
-		);
-	}
-
 	render_effect(() => {
 		render_effect(() => {
 			var styles = get_styles();
