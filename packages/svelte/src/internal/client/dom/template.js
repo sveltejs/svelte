@@ -206,8 +206,12 @@ function run_scripts(node) {
 	}
 }
 
+/**
+ *
+ * @param {boolean} anchored
+ */
 /*#__NO_SIDE_EFFECTS__*/
-export function text() {
+export function text(anchored) {
 	if (!hydrating) {
 		var t = empty();
 		assign_nodes(t, t);
@@ -223,6 +227,10 @@ export function text() {
 		// we need to insert an empty text node
 		node.before((node = empty()));
 		set_hydrate_node(node);
+	}
+
+	if (anchored) {
+		hydrate_next();
 	}
 
 	assign_nodes(node, node);

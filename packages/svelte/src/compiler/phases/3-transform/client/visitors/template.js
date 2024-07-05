@@ -1560,7 +1560,7 @@ export const template_visitors = {
 
 		const namespace = infer_namespace(context.state.metadata.namespace, parent, node.nodes);
 
-		const { hoisted, trimmed, is_standalone } = clean_nodes(
+		const { hoisted, trimmed, is_standalone, is_anchored } = clean_nodes(
 			parent,
 			node.nodes,
 			context.path,
@@ -1668,7 +1668,11 @@ export const template_visitors = {
 					state
 				});
 
-				body.push(b.var(id, b.call('$.text')), ...state.before_init, ...state.init);
+				body.push(
+					b.var(id, b.call('$.text', is_anchored && b.true)),
+					...state.before_init,
+					...state.init
+				);
 				close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 			} else {
 				if (is_standalone) {
