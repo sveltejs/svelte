@@ -106,11 +106,6 @@ function pause_effects(state, items, controlled_anchor, items_map) {
  * @returns {void}
  */
 export function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn = null) {
-	// console.log('each', { anchor });
-	if (hydrating) {
-		hydrate_next();
-	}
-
 	/** @type {import('#client').EachState} */
 	var state = { flags, items: new Map(), first: null };
 
@@ -119,9 +114,15 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 	if (is_controlled) {
 		var parent_node = /** @type {Element} */ (anchor);
 
-		anchor = hydrating
-			? /** @type {Comment | Text} */ (parent_node.firstChild)
-			: parent_node.appendChild(empty());
+		if (hydrating) {
+			set_hydrate_node(/** @type {Comment | Text} */ (parent_node.firstChild));
+		} else {
+			anchor = parent_node.appendChild(empty());
+		}
+	}
+
+	if (hydrating) {
+		hydrate_next();
 	}
 
 	/** @type {import('#client').Effect | null} */
