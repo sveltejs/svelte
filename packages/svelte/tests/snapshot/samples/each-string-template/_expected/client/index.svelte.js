@@ -6,7 +6,7 @@ export default function Each_string_template($$anchor) {
 	var node = $.first_child(fragment);
 
 	$.each(node, 1, () => ['foo', 'bar', 'baz'], $.index, ($$anchor, thing, $$index) => {
-		var text = $.text($$anchor);
+		var text = $.text();
 
 		$.template_effect(() => $.set_text(text, `${$.unwrap(thing) ?? ""}, `));
 		$.append($$anchor, text);

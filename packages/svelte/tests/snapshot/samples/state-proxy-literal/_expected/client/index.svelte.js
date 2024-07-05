@@ -17,14 +17,17 @@ export default function State_proxy_literal($$anchor) {
 	var input = $.first_child(fragment);
 
 	$.remove_input_defaults(input);
+	$.reset(input);
 
 	var input_1 = $.sibling($.sibling(input, true));
 
 	$.remove_input_defaults(input_1);
+	$.reset(input_1);
 
 	var button = $.sibling($.sibling(input_1, true));
 
 	button.__click = [reset, str, tpl];
+	$.reset(button);
 	$.bind_value(input, () => $.get(str), ($$value) => $.set(str, $$value));
 	$.bind_value(input_1, () => $.get(tpl), ($$value) => $.set(tpl, $$value));
 	$.append($$anchor, fragment);

@@ -13,8 +13,6 @@ export default function Bind_component_snippet($$payload) {
 	let $$inner_payload;
 
 	function $$render_inner($$payload) {
-		$$payload.out += `<!--[-->`;
-
 		TextInput($$payload, {
 			get value() {
 				return value;
@@ -25,7 +23,7 @@ export default function Bind_component_snippet($$payload) {
 			}
 		});
 
-		$$payload.out += `<!--]--> value: ${$.escape(value)}`;
+		$$payload.out += ` value: ${$.escape(value)}`;
 	};
 
 	do {
