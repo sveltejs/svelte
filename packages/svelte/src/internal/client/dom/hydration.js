@@ -12,17 +12,8 @@ export function set_hydrating(value) {
 	hydrating = value;
 }
 
-/** @type {Comment} */
-export let hydrate_open;
-
 /** @type {TemplateNode} */
 export let hydrate_node;
-
-/** @param {Comment} node */
-export function set_hydrate_open(node) {
-	hydrate_open = node;
-	hydrate_node = node.nextSibling;
-}
 
 /** @param {TemplateNode} node */
 export function set_hydrate_node(node) {
@@ -42,8 +33,7 @@ export let hydrate_start;
 
 /** @param {import('#client').TemplateNode[]} nodes */
 export function set_hydrate_nodes(nodes) {
-	hydrate_nodes = nodes;
-	hydrate_start = nodes && nodes[0];
+	throw new Error('TODO');
 }
 
 /**
@@ -52,11 +42,7 @@ export function set_hydrate_nodes(nodes) {
  * TODO it might be worth storing this value separately rather than retrieving it with `previousSibling`
  */
 export function get_start() {
-	return hydrate_open;
-
-	return /** @type {import('#client').TemplateNode} */ (
-		hydrate_start.previousSibling ?? hydrate_start
-	);
+	return hydrate_node;
 }
 
 /**
@@ -64,9 +50,10 @@ export function get_start() {
  * @param {TemplateNode} node
  */
 export function hydrate_anchor(node) {
-	if (node.nodeType === 8 && /** @type {Comment} */ (node).data === HYDRATION_START) {
-		set_hydrate_open(/** @type {Comment} */ (node));
-	}
-
 	return node;
+}
+
+export function hydrate_next() {
+	hydrate_node = /** @type {TemplateNode} */ (hydrate_node.nextSibling);
+	return hydrate_node;
 }

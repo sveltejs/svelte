@@ -4,9 +4,11 @@ import { HYDRATION_ERROR, HYDRATION_START, PassiveDelegatedEvents } from '../../
 import { flush_sync, push, pop, current_component_context } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
 import {
+	hydrate_next,
 	hydrate_nodes,
+	hydrating,
+	set_hydrate_node,
 	set_hydrate_nodes,
-	set_hydrate_open,
 	set_hydrating
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
@@ -56,6 +58,10 @@ export function set_text(text, value) {
  * @param {null | ((anchor: Comment) => void)} fallback_fn
  */
 export function slot(anchor, slot_fn, slot_props, fallback_fn) {
+	if (hydrating) {
+		hydrate_next();
+	}
+
 	if (slot_fn === undefined) {
 		if (fallback_fn !== null) {
 			fallback_fn(anchor);
@@ -128,6 +134,7 @@ export function hydrate(component, options) {
 
 	const target = options.target;
 	const previous_hydrate_nodes = hydrate_nodes;
+	const was_hydrating = hydrating;
 
 	try {
 		// Don't flush previous effects to ensure order of outer effects stays consistent
@@ -146,7 +153,8 @@ export function hydrate(component, options) {
 				throw HYDRATION_ERROR;
 			}
 
-			set_hydrate_open(/** @type {Comment} */ (anchor));
+			set_hydrate_node(/** @type {Comment} */ (anchor));
+			hydrate_next();
 
 			const instance = _mount(component, { ...options, anchor });
 
@@ -172,8 +180,7 @@ export function hydrate(component, options) {
 
 		throw error;
 	} finally {
-		set_hydrating(!!previous_hydrate_nodes);
-		set_hydrate_nodes(previous_hydrate_nodes);
+		set_hydrating(was_hydrating);
 		reset_head_anchor();
 	}
 }

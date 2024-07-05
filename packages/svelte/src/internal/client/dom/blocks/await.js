@@ -11,7 +11,7 @@ import {
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { DEV } from 'esm-env';
 import { queue_micro_task } from '../task.js';
-import { hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
+import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
 import { mutable_source, set, source } from '../../reactivity/sources.js';
 
 const PENDING = 0;
@@ -28,6 +28,10 @@ const CATCH = 2;
  * @returns {void}
  */
 export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
+	if (hydrating) {
+		hydrate_next();
+	}
+
 	var runes = is_runes();
 	var component_context = current_component_context;
 
@@ -148,7 +152,6 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 	});
 
 	if (hydrating) {
-		anchor = hydrate_node.nextSibling;
-		set_hydrate_node(anchor);
+		anchor = hydrate_node;
 	}
 }

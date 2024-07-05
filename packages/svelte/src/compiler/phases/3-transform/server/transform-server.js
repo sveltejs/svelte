@@ -35,7 +35,6 @@ import { sanitize_template_string } from '../../../utils/sanitize_template_strin
 import {
 	BLOCK_ANCHOR,
 	BLOCK_CLOSE,
-	BLOCK_CLOSE_ELSE,
 	BLOCK_OPEN,
 	BLOCK_OPEN_ELSE
 } from '../../../../internal/server/hydration.js';
@@ -1343,7 +1342,6 @@ const template_visitors = {
 	},
 	EachBlock(node, context) {
 		const state = context.state;
-		state.template.push(block_open);
 
 		const each_node_meta = node.metadata;
 		const collection = /** @type {import('estree').Expression} */ (context.visit(node.expression));
@@ -1379,26 +1377,27 @@ const template_visitors = {
 			b.block(each)
 		);
 
-		const close = b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE)));
-
 		if (node.fallback) {
+			const open = b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN)));
+
 			const fallback = /** @type {import('estree').BlockStatement} */ (
 				context.visit(node.fallback)
 			);
 
-			fallback.body.push(
-				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE)))
+			fallback.body.unshift(
+				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN_ELSE)))
 			);
 
 			state.template.push(
 				b.if(
 					b.binary('!==', b.member(array_id, b.id('length')), b.literal(0)),
-					b.block([for_loop, close]),
+					b.block([open, for_loop]),
 					fallback
-				)
+				),
+				block_close
 			);
 		} else {
-			state.template.push(for_loop, close);
+			state.template.push(block_open, for_loop, block_open);
 		}
 	},
 	IfBlock(node, context) {

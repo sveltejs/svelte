@@ -1,16 +1,9 @@
 /** @import { Effect, EffectNodes, TemplateNode } from '#client' */
-import {
-	get_start,
-	hydrate_node,
-	hydrate_nodes,
-	hydrate_start,
-	hydrating,
-	set_hydrate_node
-} from './hydration.js';
+import { get_start, hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { empty } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
-import { HYDRATION_END, TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
+import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
 import { queue_micro_task } from './task.js';
 
 /**
@@ -42,8 +35,7 @@ export function template(content, flags) {
 
 	return () => {
 		if (hydrating) {
-			assign_nodes(get_start(), null);
-
+			assign_nodes(hydrate_node, null);
 			return hydrate_node;
 		}
 
@@ -117,7 +109,7 @@ export function ns_template(content, flags, ns = 'svg') {
 		if (hydrating) {
 			assign_nodes(get_start(), null);
 
-			return hydrate_start;
+			return hydrate_node;
 		}
 
 		if (!node) {
@@ -228,6 +220,8 @@ export function text(anchor) {
 
 	var node = hydrate_node;
 
+	// console.log('text', { hydrate_node });
+
 	if (node.nodeType !== 3) {
 		// if an {expression} is empty during SSR, `hydrate_nodes` will be empty.
 		// we need to insert an empty text node
@@ -244,7 +238,7 @@ export function comment() {
 	if (hydrating) {
 		assign_nodes(get_start(), null);
 
-		return hydrate_start;
+		return hydrate_node;
 	}
 
 	var frag = document.createDocumentFragment();
@@ -266,8 +260,10 @@ export function comment() {
 export function append(anchor, dom) {
 	if (hydrating) {
 		/** @type {Effect & { nodes: EffectNodes }} */ (current_effect).nodes.end = hydrate_node;
+		hydrate_next();
 
 		// console.log('effect.nodes', current_effect.nodes);
+		// console.log(dom);
 
 		// // next node should be a <!--]-->
 		// var next = hydrate_node.nextSibling;

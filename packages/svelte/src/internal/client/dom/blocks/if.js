@@ -1,9 +1,10 @@
+/** @import { TemplateNode } from '#client' */
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import {
+	hydrate_next,
 	hydrate_node,
 	hydrate_nodes,
 	hydrating,
-	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
 import { remove } from '../reconciler.js';
@@ -11,7 +12,7 @@ import { block, branch, pause_effect, resume_effect } from '../../reactivity/eff
 import { HYDRATION_START_ELSE } from '../../../../constants.js';
 
 /**
- * @param {Comment} anchor
+ * @param {TemplateNode} anchor
  * @param {() => boolean} get_condition
  * @param {(anchor: Node) => import('#client').Dom} consequent_fn
  * @param {null | ((anchor: Node) => import('#client').Dom)} [alternate_fn]
@@ -25,6 +26,10 @@ export function if_block(
 	alternate_fn = null,
 	elseif = false
 ) {
+	if (hydrating) {
+		hydrate_next();
+	}
+
 	/** @type {import('#client').Effect | null} */
 	var consequent_effect = null;
 
@@ -43,7 +48,7 @@ export function if_block(
 		let mismatch = false;
 
 		if (hydrating) {
-			const is_else = anchor.data === HYDRATION_START_ELSE;
+			const is_else = /** @type {Comment} */ (anchor).data === HYDRATION_START_ELSE;
 
 			if (condition === is_else) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.
@@ -87,7 +92,6 @@ export function if_block(
 	}, flags);
 
 	if (hydrating) {
-		anchor = hydrate_node.nextSibling;
-		set_hydrate_node(anchor);
+		anchor = hydrate_node;
 	}
 }

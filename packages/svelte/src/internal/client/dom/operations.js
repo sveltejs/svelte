@@ -1,5 +1,11 @@
 /** @import { Effect, TemplateNode } from '#client' */
-import { hydrate_anchor, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
+import {
+	hydrate_anchor,
+	hydrate_next,
+	hydrate_node,
+	hydrating,
+	set_hydrate_node
+} from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
 import { current_effect } from '../runtime.js';
@@ -67,7 +73,7 @@ export function child(node) {
 
 	// Child can be null if we have an element with a single child, like `<p>{text}</p>`, where `text` is empty
 	if (child === null) {
-		return hydrate_node.appendChild(empty());
+		child = hydrate_node.appendChild(empty());
 	}
 
 	set_hydrate_node(child);
@@ -91,6 +97,8 @@ export function first_child(fragment, is_text) {
 		return first;
 	}
 
+	// hydrate_next();
+
 	// if an {expression} is empty during SSR, there might be no
 	// text node to hydrate — we must therefore create one
 	if (is_text && hydrate_node?.nodeType !== 3) {
@@ -102,10 +110,16 @@ export function first_child(fragment, is_text) {
 		}
 
 		hydrate_node?.before(text);
+		set_hydrate_node(text);
 		return text;
 	}
 
-	return hydrate_anchor(hydrate_node);
+	// console.log('first_child', {
+	// 	hydrate_node,
+	// 	content: hydrate_node.data ?? hydrate_node.outerHTML
+	// });
+
+	return hydrate_node;
 }
 
 /**

@@ -5,16 +5,15 @@ import {
 	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED,
-	HYDRATION_END_ELSE,
+	HYDRATION_START_ELSE,
 	HYDRATION_START
 } from '../../../../constants.js';
 import {
+	hydrate_next,
 	hydrate_node,
 	hydrate_nodes,
-	hydrate_start,
 	hydrating,
 	set_hydrate_node,
-	set_hydrate_open,
 	set_hydrating
 } from '../hydration.js';
 import { clear_text_content, empty } from '../operations.js';
@@ -107,6 +106,11 @@ function pause_effects(state, items, controlled_anchor, items_map) {
  * @returns {void}
  */
 export function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn = null) {
+	// console.log('each', { anchor });
+	if (hydrating) {
+		hydrate_next();
+	}
+
 	/** @type {import('#client').EachState} */
 	var state = { flags, items: new Map(), first: null };
 
@@ -155,11 +159,11 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 		let mismatch = false;
 
 		if (hydrating) {
-			var is_else = /** @type {Comment} */ (anchor).data === HYDRATION_END_ELSE;
+			var is_else = /** @type {Comment} */ (anchor).data === HYDRATION_START_ELSE;
 
 			if (is_else !== (length === 0) || hydrate_node === undefined) {
 				// hydration mismatch — remove the server-rendered DOM and start over
-				remove(hydrate_nodes);
+				// remove(hydrate_nodes);
 				set_hydrating(false);
 				mismatch = true;
 			}
@@ -168,7 +172,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 		// this is separate to the previous block because `hydrating` might change
 		if (hydrating) {
 			/** @type {Node} */
-			var child_anchor = hydrate_node;
+			var child_anchor = hydrate_node; // TODO do we still need child_anchors, in a world without `effect.dom`?
 
 			/** @type {import('#client').EachItem | null} */
 			var prev = null;
@@ -188,15 +192,15 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 					break;
 				}
 
-				set_hydrate_open(child_anchor);
+				hydrate_next();
 
 				var value = array[i];
 				var key = get_key(value, i);
 				item = create_item(child_anchor, state, prev, null, value, key, i, render_fn, flags);
 				state.items.set(key, item);
 				var close = hydrate_node.nextSibling; // TODO validate. or replace `<!--]--><!--[-->` with `<!---->`
-				set_hydrate_node(close);
-				child_anchor = /** @type {Comment} */ (close.nextSibling);
+				// hydrate_next();
+				child_anchor = /** @type {Comment} */ (hydrate_next());
 
 				prev = item;
 			}
@@ -237,9 +241,10 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 	});
 
 	if (hydrating) {
-		anchor = hydrate_node.nextSibling;
-		set_hydrate_node(anchor);
+		anchor = hydrate_node;
 	}
+
+	// console.log('each', { anchor });
 }
 
 /**

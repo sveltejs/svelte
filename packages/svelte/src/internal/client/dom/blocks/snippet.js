@@ -5,6 +5,7 @@ import {
 	dev_current_component_function,
 	set_dev_current_component_function
 } from '../../runtime.js';
+import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 
 /**
  * @template {(node: import('#client').TemplateNode, ...args: any[]) => import('#client').Dom} SnippetFn
@@ -14,6 +15,10 @@ import {
  * @returns {void}
  */
 export function snippet(anchor, get_snippet, ...args) {
+	if (hydrating) {
+		hydrate_next();
+	}
+
 	/** @type {SnippetFn | null | undefined} */
 	var snippet;
 
@@ -32,6 +37,10 @@ export function snippet(anchor, get_snippet, ...args) {
 			snippet_effect = branch(() => /** @type {SnippetFn} */ (snippet)(anchor, ...args));
 		}
 	}, EFFECT_TRANSPARENT);
+
+	if (hydrating) {
+		anchor = hydrate_node;
+	}
 }
 
 /**
