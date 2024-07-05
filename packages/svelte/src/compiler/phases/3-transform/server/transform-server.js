@@ -1187,7 +1187,7 @@ const template_visitors = {
 			return /** @type {import('estree').Expression} */ (context.visit(arg));
 		});
 
-		if (!context.state.skip_hydration_boundaries) {
+		if (node.metadata.dynamic && !context.state.skip_hydration_boundaries) {
 			context.state.template.push(block_open);
 		}
 
