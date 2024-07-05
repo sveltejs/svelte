@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.175
+
+### Patch Changes
+
+- fix: correctly compile $effect.root in svelte modules ([#12315](https://github.com/sveltejs/svelte/pull/12315))
+
+- fix: ensure `bind:this` works with component with no return value ([#12290](https://github.com/sveltejs/svelte/pull/12290))
+
 ## 5.0.0-next.174
 
 ### Patch Changes
