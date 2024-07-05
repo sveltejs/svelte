@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ensure component always returns an object
+fix: ensure `bind:this` works with component with no return value

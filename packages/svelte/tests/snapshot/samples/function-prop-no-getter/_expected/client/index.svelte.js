@@ -22,6 +22,4 @@ export default function Function_prop_no_getter($$anchor) {
 		},
 		$$slots: { default: true }
 	});
-
-	return {};
 }
