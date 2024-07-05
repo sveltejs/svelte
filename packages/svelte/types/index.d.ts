@@ -2298,7 +2298,7 @@ declare module 'svelte/store' {
 	 * */
 	export function get<T>(store: Readable<T>): T;
 
-	export { Subscriber, Unsubscriber, Updater, StartStopNotifier, Readable, Writable };
+	export { Subscriber, Unsubscriber, Updater, StartStopNotifier, Readable, Writable, Invalidator };
 }
 
 declare module 'svelte/transition' {

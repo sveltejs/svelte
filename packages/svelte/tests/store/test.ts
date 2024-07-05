@@ -1,5 +1,13 @@
 import { describe, it, assert } from 'vitest';
-import { readable, writable, derived, get, readonly, type Readable } from 'svelte/store';
+import {
+	readable,
+	writable,
+	derived,
+	get,
+	readonly,
+	type Readable,
+	type Invalidator
+} from 'svelte/store';
 
 describe('writable', () => {
 	it('creates a writable store', () => {
@@ -572,5 +580,15 @@ describe('readonly', () => {
 
 		// @ts-ignore
 		assert.throws(() => readableStore.set(3));
+	});
+});
+
+describe('type Invalidator', () => {
+	it('check it is exported from the store', () => {
+		// dummy test importing Invalidator from store
+		// to check if it is exported
+		// it will fail with tsc if not exported
+		const invalidator: Invalidator<number> = () => {};
+		assert.equal(typeof invalidator, 'function');
 	});
 });

@@ -48,6 +48,6 @@ interface Writable<T> extends Readable<T> {
 	update(this: void, updater: Updater<T>): void;
 }
 
-export { Readable, StartStopNotifier, Subscriber, Unsubscriber, Updater, Writable };
+export { Invalidator, Readable, StartStopNotifier, Subscriber, Unsubscriber, Updater, Writable };
 
 export * from './index.js';
