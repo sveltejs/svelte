@@ -1668,11 +1668,7 @@ export const template_visitors = {
 					state
 				});
 
-				body.push(
-					b.var(id, b.call('$.text', b.id('$$anchor'))),
-					...state.before_init,
-					...state.init
-				);
+				body.push(b.var(id, b.call('$.text')), ...state.before_init, ...state.init);
 				close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 			} else {
 				if (is_standalone) {

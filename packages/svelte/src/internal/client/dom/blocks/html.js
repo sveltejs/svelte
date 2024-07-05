@@ -1,5 +1,6 @@
+/** @import { Effect, TemplateNode } from '#client' */
 import { block, branch, destroy_effect } from '../../reactivity/effects.js';
-import { get_start, hydrate_nodes, hydrating } from '../hydration.js';
+import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
 import { create_fragment_from_html } from '../reconciler.js';
 import { assign_nodes } from '../template.js';
 
@@ -11,9 +12,13 @@ import { assign_nodes } from '../template.js';
  * @returns {void}
  */
 export function html(anchor, get_value, svg, mathml) {
+	if (hydrating) {
+		hydrate_next();
+	}
+
 	var value = '';
 
-	/** @type {import('#client').Effect | null} */
+	/** @type {Effect | null} */
 	var effect;
 
 	block(() => {
@@ -28,7 +33,12 @@ export function html(anchor, get_value, svg, mathml) {
 
 		effect = branch(() => {
 			if (hydrating) {
-				assign_nodes(get_start(), hydrate_nodes[hydrate_nodes.length - 1]);
+				var next = hydrate_node;
+				while (next.nodeType !== 8 || /** @type {Comment} */ (next).data !== '/html') {
+					next = /** @type {TemplateNode} */ (next.nextSibling);
+				}
+
+				assign_nodes(hydrate_node, set_hydrate_node(next));
 				return;
 			}
 
@@ -46,8 +56,8 @@ export function html(anchor, get_value, svg, mathml) {
 			}
 
 			assign_nodes(
-				/** @type {import('#client').TemplateNode} */ (node.firstChild),
-				/** @type {import('#client').TemplateNode} */ (node.lastChild)
+				/** @type {TemplateNode} */ (node.firstChild),
+				/** @type {TemplateNode} */ (node.lastChild)
 			);
 
 			if (svg || mathml) {
@@ -59,4 +69,8 @@ export function html(anchor, get_value, svg, mathml) {
 			}
 		});
 	});
+
+	if (hydrating) {
+		anchor = hydrate_node;
+	}
 }

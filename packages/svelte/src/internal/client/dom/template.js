@@ -108,7 +108,6 @@ export function ns_template(content, flags, ns = 'svg') {
 	return () => {
 		if (hydrating) {
 			assign_nodes(get_start(), null);
-
 			return hydrate_node;
 		}
 
@@ -207,11 +206,8 @@ function run_scripts(node) {
 	}
 }
 
-/**
- * @param {Text | Comment | Element} anchor
- */
 /*#__NO_SIDE_EFFECTS__*/
-export function text(anchor) {
+export function text() {
 	if (!hydrating) {
 		var t = empty();
 		assign_nodes(t, t);

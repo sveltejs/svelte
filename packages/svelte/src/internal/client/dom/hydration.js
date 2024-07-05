@@ -17,7 +17,7 @@ export let hydrate_node;
 
 /** @param {TemplateNode} node */
 export function set_hydrate_node(node) {
-	hydrate_node = node;
+	return (hydrate_node = node);
 }
 
 /**
