@@ -36,11 +36,13 @@ export function html(anchor, get_value, svg, mathml) {
 		effect = branch(() => {
 			if (hydrating) {
 				var next = hydrate_node;
+				var last = next;
 
 				while (
 					next !== null &&
 					(next.nodeType !== 8 || /** @type {Comment} */ (next).data !== '/html')
 				) {
+					last = next;
 					next = /** @type {TemplateNode} */ (next.nextSibling);
 				}
 
@@ -49,7 +51,8 @@ export function html(anchor, get_value, svg, mathml) {
 					throw HYDRATION_ERROR;
 				}
 
-				assign_nodes(hydrate_node, set_hydrate_node(next));
+				assign_nodes(hydrate_node, last);
+				set_hydrate_node(next);
 				return;
 			}
 
