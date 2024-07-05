@@ -137,9 +137,9 @@ export function render(component, options = {}) {
  */
 export function head(payload, fn) {
 	const head_payload = payload.head;
-	payload.head.out += BLOCK_OPEN;
+	payload.head.out += '<!--#head-->';
 	fn(head_payload);
-	payload.head.out += BLOCK_CLOSE;
+	payload.head.out += '<!--/head-->';
 }
 
 /**
