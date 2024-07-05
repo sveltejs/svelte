@@ -1,12 +1,11 @@
+/** @import { TemplateNode } from '#client' */
 import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
 	EACH_IS_CONTROLLED,
 	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
-	EACH_KEYED,
-	HYDRATION_START_ELSE,
-	HYDRATION_START
+	EACH_KEYED
 } from '../../../../constants.js';
 import {
 	hydrate_next,
@@ -162,7 +161,30 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 
 			if (is_else !== (length === 0) || hydrate_node === undefined) {
 				// hydration mismatch — remove the server-rendered DOM and start over
-				// remove(hydrate_nodes);
+				var depth = 0;
+				var node = hydrate_node;
+
+				while (
+					node.nodeType !== 8 ||
+					(depth === 0 && /** @type {Comment} */ (node).data !== '/each')
+				) {
+					if (node.nodeType === 8) {
+						var data = /** @type {Comment} */ (node).data;
+						if (data === '#each' || data === '#each!') {
+							depth += 1;
+						} else if (data === '/each') {
+							depth -= 1;
+						}
+					}
+
+					var next = /** @type {TemplateNode} */ (node.nextSibling);
+					node.remove();
+					node = next;
+				}
+
+				anchor = node;
+
+				set_hydrate_node(node);
 				set_hydrating(false);
 				mismatch = true;
 			}
