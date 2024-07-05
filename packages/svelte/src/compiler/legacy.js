@@ -145,6 +145,16 @@ export function convert(source, ast) {
 					skip: true
 				};
 
+				let finallyblock = {
+					type: 'FinallyBlock',
+					/** @type {number | null} */
+					start: null,
+					/** @type {number | null} */
+					end: null,
+					children: node.finally?.nodes.map((child) => visit(child)) ?? [],
+					skip: true
+				};
+
 				if (node.pending) {
 					const first = node.pending.nodes.at(0);
 					const last = node.pending.nodes.at(-1);
@@ -180,6 +190,25 @@ export function convert(source, ast) {
 					catchblock.skip = false;
 				}
 
+				if (node.finally) {
+					const first = node.finally.nodes.at(0);
+					const last = node.finally.nodes.at(-1);
+
+					finallyblock.start =
+						catchblock.end ??
+						thenblock.end ??
+						pendingblock.end ??
+						first?.start ??
+						source.indexOf('}', node.expression.end) + 1;
+					finallyblock.end =
+						last?.end ??
+						source.lastIndexOf(
+							'}',
+							catchblock.end ?? thenblock.end ?? pendingblock.end ?? node.expression.end
+						) + 1;
+					finallyblock.skip = false;
+				}
+
 				return {
 					type: 'AwaitBlock',
 					start: node.start,
@@ -189,7 +218,8 @@ export function convert(source, ast) {
 					error: node.error,
 					pending: pendingblock,
 					then: thenblock,
-					catch: catchblock
+					catch: catchblock,
+					finally: finallyblock
 				};
 			},
 			BindDirective(node) {

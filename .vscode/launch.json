@@ -2,14 +2,6 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"type": "node",
-			"runtimeVersion": "20.15.0",
-			"request": "launch",
-			"name": "Test",
-			"program": "./node_modules/vitest/vitest.mjs",
-			"args": ["run", "runtime-runes", "-t", "await-resolve"]
-		},
-		{
 			"type": "chrome",
 			"request": "launch",
 			"name": "Playground: Browser",

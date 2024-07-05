@@ -134,6 +134,13 @@
 					"end": 98
 				},
 				"error": null,
+				"finally": {
+					"children": [],
+					"end": null,
+					"skip": true,
+					"start": null,
+					"type": "FinallyBlock"
+				},
 				"pending": {
 					"type": "PendingBlock",
 					"start": 80,
@@ -234,6 +241,13 @@
 					"end": 138
 				},
 				"error": null,
+				"finally": {
+					"children": [],
+					"end": null,
+					"skip": true,
+					"start": null,
+					"type": "FinallyBlock"
+				},
 				"pending": {
 					"type": "PendingBlock",
 					"start": 123,

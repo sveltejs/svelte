@@ -43,6 +43,13 @@
 					},
 					"end": 55
 				},
+				"finally": {
+					"type": "FinallyBlock",
+					"start": null,
+					"end": null,
+					"children": [],
+					"skip": true
+				},
 				"pending": {
 					"type": "PendingBlock",
 					"start": 19,

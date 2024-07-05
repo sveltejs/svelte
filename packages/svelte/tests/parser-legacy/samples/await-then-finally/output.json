@@ -2,12 +2,12 @@
 	"html": {
 		"type": "Fragment",
 		"start": 0,
-		"end": 148,
+		"end": 175,
 		"children": [
 			{
 				"type": "AwaitBlock",
 				"start": 0,
-				"end": 148,
+				"end": 175,
 				"expression": {
 					"type": "Identifier",
 					"start": 8,
@@ -251,10 +251,41 @@
 				},
 				"finally": {
 					"type": "FinallyBlock",
-					"start": null,
-					"end": null,
-					"children": [],
-					"skip": true
+					"start": 140,
+					"end": 167,
+					"children": [
+						{
+							"type": "Text",
+							"start": 150,
+							"end": 152,
+							"raw": "\n\t",
+							"data": "\n\t"
+						},
+						{
+							"type": "Element",
+							"start": 152,
+							"end": 166,
+							"name": "p",
+							"attributes": [],
+							"children": [
+								{
+									"type": "Text",
+									"start": 155,
+									"end": 162,
+									"raw": "Finally",
+									"data": "Finally"
+								}
+							]
+						},
+						{
+							"type": "Text",
+							"start": 166,
+							"end": 167,
+							"raw": "\n",
+							"data": "\n"
+						}
+					],
+					"skip": false
 				}
 			}
 		]
