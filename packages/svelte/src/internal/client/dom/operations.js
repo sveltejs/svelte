@@ -132,9 +132,9 @@ export function sibling(node, is_text = false) {
 
 	var type = next_sibling.nodeType;
 
-	if (type === 8 && /** @type {Comment} */ (next_sibling).data === HYDRATION_ANCHOR) {
-		return sibling(next_sibling, is_text);
-	}
+	// if (type === 8 && /** @type {Comment} */ (next_sibling).data === HYDRATION_ANCHOR) {
+	// 	return sibling(next_sibling, is_text);
+	// }
 
 	// if a sibling {expression} is empty during SSR, there might be no
 	// text node to hydrate — we must therefore create one

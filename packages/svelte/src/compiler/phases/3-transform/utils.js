@@ -292,8 +292,7 @@ export function clean_nodes(
 
 	const is_text = trimmed.length === 1 && first.type === 'Text';
 
-	const is_anchored =
-		(is_dynamic_text || is_text) && (parent.type === 'Fragment' || parent.type === 'SnippetBlock');
+	const is_anchored = (is_dynamic_text || is_text) && parent.type === 'Fragment';
 
 	return { hoisted, trimmed, is_standalone, is_anchored };
 }

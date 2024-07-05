@@ -182,7 +182,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 			for (var i = 0; i < length; i++) {
 				if (
 					child_anchor.nodeType !== 8 ||
-					/** @type {Comment} */ (child_anchor).data !== HYDRATION_START
+					/** @type {Comment} */ (child_anchor).data !== '#each-item'
 				) {
 					// If `nodes` is null, then that means that the server rendered fewer items than what
 					// expected, so break out and continue appending non-hydrated items

@@ -41,7 +41,7 @@ export function if_block(
 		let mismatch = false;
 
 		if (hydrating) {
-			const is_else = /** @type {Comment} */ (anchor).data === HYDRATION_START_ELSE;
+			const is_else = /** @type {Comment} */ (anchor).data === '#if!';
 
 			if (condition === is_else) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.

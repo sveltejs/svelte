@@ -1187,9 +1187,9 @@ const template_visitors = {
 			return /** @type {import('estree').Expression} */ (context.visit(arg));
 		});
 
-		if (node.metadata.dynamic && !context.state.skip_hydration_boundaries) {
-			context.state.template.push(block_open);
-		}
+		// if (!context.state.skip_hydration_boundaries) {
+		context.state.template.push(b.literal('<!--#-->'));
+		// }
 
 		context.state.template.push(
 			b.stmt(
@@ -1201,9 +1201,9 @@ const template_visitors = {
 			)
 		);
 
-		if (!context.state.skip_hydration_boundaries) {
-			context.state.template.push(block_close);
-		}
+		// if (!context.state.skip_hydration_boundaries) {
+		context.state.template.push(b.literal('<!--/-->'));
+		// }
 	},
 	ClassDirective() {
 		throw new Error('Node should have been handled elsewhere');
@@ -1368,11 +1368,12 @@ const template_visitors = {
 			each.push(b.let(node.index, index));
 		}
 
-		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN))));
+		// TODO we shouldn't need these
+		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--#each-item-->'))));
 
 		each.push(.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body);
 
-		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE))));
+		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--/each-item-->'))));
 
 		const for_loop = b.for(
 			b.let(index, b.literal(0)),
@@ -1382,14 +1383,14 @@ const template_visitors = {
 		);
 
 		if (node.fallback) {
-			const open = b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN)));
+			const open = b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--#each-->')));
 
 			const fallback = /** @type {import('estree').BlockStatement} */ (
 				context.visit(node.fallback)
 			);
 
 			fallback.body.unshift(
-				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN_ELSE)))
+				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--#each!-->')))
 			);
 
 			state.template.push(
@@ -1398,10 +1399,10 @@ const template_visitors = {
 					b.block([open, for_loop]),
 					fallback
 				),
-				block_close
+				b.literal('<!--/each-->')
 			);
 		} else {
-			state.template.push(block_open, for_loop, block_open);
+			state.template.push(b.literal('<!--#each-->'), for_loop, b.literal('<!--/each-->'));
 		}
 	},
 	IfBlock(node, context) {
@@ -1416,14 +1417,14 @@ const template_visitors = {
 			: b.block([]);
 
 		consequent.body.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN)))
+			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--#if-->')))
 		);
 
 		alternate.body.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN_ELSE)))
+			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--#if!-->')))
 		);
 
-		context.state.template.push(b.if(test, consequent, alternate), block_close);
+		context.state.template.push(b.if(test, consequent, alternate), b.literal('<!--/if-->'));
 	},
 	AwaitBlock(node, context) {
 		context.state.template.push(

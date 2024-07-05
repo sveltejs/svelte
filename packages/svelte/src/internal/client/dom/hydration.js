@@ -30,3 +30,9 @@ export function reset(node) {
 		hydrate_node = node;
 	}
 }
+
+export function next() {
+	if (hydrating) {
+		hydrate_next();
+	}
+}
