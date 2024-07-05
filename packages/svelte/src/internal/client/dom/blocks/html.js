@@ -1,8 +1,10 @@
 /** @import { Effect, TemplateNode } from '#client' */
+import { HYDRATION_ERROR } from '../../../../constants.js';
 import { block, branch, destroy_effect } from '../../reactivity/effects.js';
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
 import { create_fragment_from_html } from '../reconciler.js';
 import { assign_nodes } from '../template.js';
+import * as w from '../../warnings.js';
 
 /**
  * @param {Element | Text | Comment} anchor
@@ -34,8 +36,17 @@ export function html(anchor, get_value, svg, mathml) {
 		effect = branch(() => {
 			if (hydrating) {
 				var next = hydrate_node;
-				while (next.nodeType !== 8 || /** @type {Comment} */ (next).data !== '/html') {
+
+				while (
+					next !== null &&
+					(next.nodeType !== 8 || /** @type {Comment} */ (next).data !== '/html')
+				) {
 					next = /** @type {TemplateNode} */ (next.nextSibling);
+				}
+
+				if (next === null) {
+					w.hydration_mismatch();
+					throw HYDRATION_ERROR;
 				}
 
 				assign_nodes(hydrate_node, set_hydrate_node(next));
