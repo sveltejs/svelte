@@ -15,7 +15,7 @@ const no_compiler_imports = {
 		return {
 			Program: () => {
 				// Do a simple string search because ESLint doesn't provide a way to check JSDoc comments.
-				// The string search could in theory yielf false positives, but in practice it's unlikely.
+				// The string search could in theory yield false positives, but in practice it's unlikely.
 				const text = context.sourceCode.getText();
 				const idx = Math.max(text.indexOf('../compiler/'), text.indexOf('#compiler'));
 				if (idx !== -1) {
