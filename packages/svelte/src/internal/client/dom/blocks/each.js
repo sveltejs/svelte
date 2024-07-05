@@ -11,13 +11,11 @@ import {
 import {
 	hydrate_next,
 	hydrate_node,
-	hydrate_nodes,
 	hydrating,
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
 import { clear_text_content, empty } from '../operations.js';
-import { remove } from '../reconciler.js';
 import {
 	block,
 	branch,

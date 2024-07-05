@@ -107,7 +107,7 @@ export function ns_template(content, flags, ns = 'svg') {
 
 	return () => {
 		if (hydrating) {
-			assign_nodes(get_start(), null);
+			assign_nodes(hydrate_node, null);
 			return hydrate_node;
 		}
 
@@ -223,8 +223,7 @@ export function text(anchored) {
 	// console.log('text', { hydrate_node });
 
 	if (node.nodeType !== 3) {
-		// if an {expression} is empty during SSR, `hydrate_nodes` will be empty.
-		// we need to insert an empty text node
+		// if an {expression} is empty during SSR, we need to insert an empty text node
 		node.before((node = empty()));
 		set_hydrate_node(node);
 	}
@@ -240,8 +239,7 @@ export function text(anchored) {
 export function comment() {
 	// we're not delegating to `template` here for performance reasons
 	if (hydrating) {
-		assign_nodes(get_start(), null);
-
+		assign_nodes(hydrate_node, null);
 		return hydrate_node;
 	}
 

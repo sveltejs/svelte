@@ -1,13 +1,6 @@
 /** @import { TemplateNode } from '#client' */
 import { EFFECT_TRANSPARENT } from '../../constants.js';
-import {
-	hydrate_next,
-	hydrate_node,
-	hydrate_nodes,
-	hydrating,
-	set_hydrating
-} from '../hydration.js';
-import { remove } from '../reconciler.js';
+import { hydrate_next, hydrate_node, hydrating, set_hydrating } from '../hydration.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { HYDRATION_START_ELSE } from '../../../../constants.js';
 
@@ -53,7 +46,7 @@ export function if_block(
 			if (condition === is_else) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.
 				// This could happen with `{#if browser}...{/if}`, for example
-				remove(hydrate_nodes);
+				// remove(hydrate_nodes);
 				set_hydrating(false);
 				mismatch = true;
 			}

@@ -1,11 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
-import {
-	hydrate_anchor,
-	hydrate_next,
-	hydrate_node,
-	hydrating,
-	set_hydrate_node
-} from './hydration.js';
+import { hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
 import { current_effect } from '../runtime.js';
@@ -152,7 +146,7 @@ export function sibling(node, is_text = false) {
 	}
 
 	set_hydrate_node(next_sibling);
-	return hydrate_anchor(/** @type {TemplateNode} */ (next_sibling));
+	return /** @type {TemplateNode} */ (next_sibling);
 }
 
 /**
