@@ -224,10 +224,11 @@ function handle_error(error, effect, component_context) {
 	let current_context = component_context;
 
 	while (current_context !== null) {
+		/** @type {string} */
 		var filename = current_context.function?.filename;
 
 		if (filename) {
-			const file = filename.split('/').at(-1);
+			const file = filename.split('/').pop();
 			component_stack.push(file);
 		}
 

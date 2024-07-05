@@ -1,4 +1,4 @@
-/** @import { SourceLocation } from '../../../compiler/phases/3-transform/client/types.js' */
+/** @import { SourceLocation } from '#shared' */
 import { HYDRATION_END, HYDRATION_START } from '../../../constants.js';
 import { hydrating } from '../dom/hydration.js';
 
