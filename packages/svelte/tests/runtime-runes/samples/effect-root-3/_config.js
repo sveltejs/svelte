@@ -2,6 +2,8 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
+	html: '<button>0</button><button>0</button><button>cleanup</button>',
+
 	async test({ assert, target, logs }) {
 		const [b1, b2, b3] = target.querySelectorAll('button');
 
