@@ -411,6 +411,13 @@ const global_visitors = {
 			return b.literal(false);
 		}
 
+		if (rune === '$effect.root') {
+			const args = /** @type {import('estree').Expression[]} */ (
+				node.arguments.map((arg) => context.visit(arg))
+			);
+			return b.call('$.effect_root', ...args);
+		}
+
 		if (rune === '$state.snapshot') {
 			return /** @type {import('estree').Expression} */ (context.visit(node.arguments[0]));
 		}
