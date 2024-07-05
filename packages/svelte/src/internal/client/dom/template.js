@@ -218,6 +218,10 @@ export function text(anchored) {
 		return t;
 	}
 
+	if (anchored) {
+		hydrate_next();
+	}
+
 	var node = hydrate_node;
 
 	// console.log('text', { hydrate_node });

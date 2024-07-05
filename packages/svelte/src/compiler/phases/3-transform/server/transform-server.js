@@ -1137,6 +1137,10 @@ const template_visitors = {
 			context.visit(node, state);
 		}
 
+		if (is_anchored) {
+			state.template.push(b.literal('<!---->'));
+		}
+
 		process_children(trimmed, { ...context, state });
 
 		if (is_anchored) {
