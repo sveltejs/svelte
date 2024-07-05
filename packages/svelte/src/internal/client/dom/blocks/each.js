@@ -161,30 +161,9 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 
 			if (is_else !== (length === 0) || hydrate_node === undefined) {
 				// hydration mismatch — remove the server-rendered DOM and start over
-				var depth = 0;
-				var node = hydrate_node;
+				anchor = remove_nodes();
 
-				while (
-					node.nodeType !== 8 ||
-					(depth === 0 && /** @type {Comment} */ (node).data !== '/each')
-				) {
-					if (node.nodeType === 8) {
-						var data = /** @type {Comment} */ (node).data;
-						if (data === '#each' || data === '#each!') {
-							depth += 1;
-						} else if (data === '/each') {
-							depth -= 1;
-						}
-					}
-
-					var next = /** @type {TemplateNode} */ (node.nextSibling);
-					node.remove();
-					node = next;
-				}
-
-				anchor = node;
-
-				set_hydrate_node(node);
+				set_hydrate_node(anchor);
 				set_hydrating(false);
 				mismatch = true;
 			}
@@ -208,6 +187,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 				) {
 					// If `nodes` is null, then that means that the server rendered fewer items than what
 					// expected, so break out and continue appending non-hydrated items
+					anchor = /** @type {Comment} */ (child_anchor);
 					mismatch = true;
 					set_hydrating(false);
 					break;
@@ -228,12 +208,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 
 			// remove excess nodes
 			if (length > 0) {
-				// TODO reinstate
-				// while (child_anchor !== anchor) {
-				// 	var next = /** @type {import('#client').TemplateNode} */ (child_anchor.nextSibling);
-				// 	/** @type {import('#client').TemplateNode} */ (child_anchor).remove();
-				// 	child_anchor = next;
-				// }
+				set_hydrate_node(remove_nodes());
 			}
 		}
 
@@ -266,6 +241,28 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 	}
 
 	// console.log('each', { anchor });
+}
+
+function remove_nodes() {
+	var depth = 0;
+	var node = hydrate_node;
+
+	while (node.nodeType !== 8 || (depth === 0 && /** @type {Comment} */ (node).data !== '/each')) {
+		if (node.nodeType === 8) {
+			var data = /** @type {Comment} */ (node).data;
+			if (data === '#each' || data === '#each!') {
+				depth += 1;
+			} else if (data === '/each') {
+				depth -= 1;
+			}
+		}
+
+		var next = /** @type {TemplateNode} */ (node.nextSibling);
+		node.remove();
+		node = next;
+	}
+
+	return node;
 }
 
 /**
