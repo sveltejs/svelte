@@ -113,7 +113,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 		var parent_node = /** @type {Element} */ (anchor);
 
 		if (hydrating) {
-			set_hydrate_node(/** @type {Comment | Text} */ (parent_node.firstChild));
+			anchor = set_hydrate_node(/** @type {Comment | Text} */ (parent_node.firstChild));
 		} else {
 			anchor = parent_node.appendChild(empty());
 		}
@@ -158,7 +158,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 		let mismatch = false;
 
 		if (hydrating) {
-			var is_else = /** @type {Comment} */ (anchor).data === HYDRATION_START_ELSE;
+			var is_else = /** @type {Comment} */ (anchor).data === '#each!';
 
 			if (is_else !== (length === 0) || hydrate_node === undefined) {
 				// hydration mismatch — remove the server-rendered DOM and start over
