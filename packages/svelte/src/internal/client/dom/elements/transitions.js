@@ -190,6 +190,9 @@ export function transition(flags, element, get_fn, get_params) {
 		in() {
 			element.inert = inert;
 
+			// abort the outro to prevent overlap with the intro
+			outro?.abort();
+
 			if (is_intro) {
 				dispatch_event(element, 'introstart');
 				intro = animate(element, get_options(), outro, 1, () => {
@@ -197,7 +200,6 @@ export function transition(flags, element, get_fn, get_params) {
 					intro = current_options = undefined;
 				});
 			} else {
-				outro?.abort();
 				reset?.();
 			}
 		},
