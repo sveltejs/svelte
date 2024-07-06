@@ -715,12 +715,14 @@ declare module 'svelte/compiler' {
 	}
 
 	export interface Warning {
-		start?: Location;
-		end?: Location;
-		// TODO there was pos: number in Svelte 4 - do we want to add it back?
 		code: string;
 		message: string;
 		filename?: string;
+		start?: Location;
+		end?: Location;
+		position?: [number, number];
+		frame?: string;
+		toString(): string;
 	}
 
 	export interface CompileError extends InternalCompileError {}
@@ -2542,12 +2544,14 @@ declare module 'svelte/types/compiler/interfaces' {
 	/** @deprecated import this from 'svelte' instead */
 	export type Warning = Warning_1;
 	interface Warning_1 {
-		start?: Location;
-		end?: Location;
-		// TODO there was pos: number in Svelte 4 - do we want to add it back?
 		code: string;
 		message: string;
 		filename?: string;
+		start?: Location;
+		end?: Location;
+		position?: [number, number];
+		frame?: string;
+		toString(): string;
 	}
 
 	type CssHashGetter = (args: {

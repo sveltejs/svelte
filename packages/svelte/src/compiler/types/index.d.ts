@@ -59,6 +59,7 @@ export interface Warning {
 	end?: Location;
 	position?: [number, number];
 	frame?: string;
+	toString(): string;
 }
 
 export interface CompileError extends InternalCompileError {}
