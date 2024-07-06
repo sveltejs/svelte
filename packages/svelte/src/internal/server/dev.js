@@ -38,7 +38,7 @@ function stringify(element) {
  */
 function print_error(payload, parent, child) {
 	var message =
-		`${stringify(child)} cannot contain ${stringify(parent)}\n\n` +
+		`${stringify(parent)} cannot contain ${stringify(child)}\n\n` +
 		'This can cause content to shift around as the browser repairs the HTML, and will likely result in a `hydration_mismatch` warning.';
 
 	if ((seen ??= new Set()).has(message)) return;
