@@ -28,7 +28,7 @@ function e(node, code, message) {
 	throw new InternalCompileError(
 		code,
 		message,
-		start !== undefined && end !== undefined ? [start, end] : undefined
+		start !== undefined ? [start, end ?? start] : undefined
 	);
 }
 

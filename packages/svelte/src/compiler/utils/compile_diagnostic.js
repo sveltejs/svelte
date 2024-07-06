@@ -35,17 +35,20 @@ function get_code_frame(source, line, column) {
 		.join('\n');
 }
 
+/**
+ * @typedef {{
+ * 	code: string;
+ * 	message: string;
+ * 	filename?: string;
+ * 	start?: Location;
+ * 	end?: Location;
+ * 	position?: [number, number];
+ * 	frame?: string;
+ * }} ICompileDiagnostic */
+
+/** @implements {ICompileDiagnostic} */
 export class CompileDiagnostic extends Error {
 	name = 'CompileDiagnostic';
-	filename = state.filename;
-	/** @type {[number, number] | undefined} */
-	position = undefined;
-	/** @type {Location | undefined} */
-	start = undefined;
-	/** @type {Location | undefined} */
-	end = undefined;
-	/** @type {string | undefined} */
-	frame = undefined;
 
 	/**
 	 * @param {string} code
@@ -55,9 +58,13 @@ export class CompileDiagnostic extends Error {
 	constructor(code, message, position) {
 		super(message);
 		this.code = code;
-		this.position = position;
+
+		if (state.filename) {
+			this.filename = state.filename;
+		}
 
 		if (position) {
+			this.position = position;
 			this.start = state.locator(position[0]);
 			this.end = state.locator(position[1]);
 			if (this.start && this.end) {

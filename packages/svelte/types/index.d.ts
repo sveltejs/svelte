@@ -714,9 +714,9 @@ declare module 'svelte/compiler' {
 		ast: any;
 	}
 
-	export interface Warning extends InternalCompileWarning {}
+	export interface Warning extends ICompileDiagnostic {}
 
-	export interface CompileError extends InternalCompileError {}
+	export interface CompileError extends ICompileDiagnostic {}
 
 	type CssHashGetter = (args: {
 		name: string;
@@ -1875,33 +1875,15 @@ declare module 'svelte/compiler' {
 		content: Program;
 		attributes: Attribute[];
 	}
-	class InternalCompileError extends CompileDiagnostic {
-	}
-	class InternalCompileWarning extends CompileDiagnostic {
-	}
-	class CompileDiagnostic extends Error {
-		
-		constructor(code: string, message: string, position: [number, number] | undefined);
-		filename: string | undefined;
-		
-		position: [number, number] | undefined;
-		
-		start: Location | undefined;
-		
-		end: Location | undefined;
-		
-		frame: string | undefined;
+	type ICompileDiagnostic = {
 		code: string;
-		toJSON(): {
-			code: string;
-			message: string;
-			filename: string | undefined;
-			start: import("locate-character").Location_1 | undefined;
-			end: import("locate-character").Location_1 | undefined;
-			position: [number, number] | undefined;
-			frame: string | undefined;
-		};
-	}
+		message: string;
+		filename?: string;
+		start?: Location;
+		end?: Location;
+		position?: [number, number];
+		frame?: string;
+	};
 
 	export {};
 }
@@ -2547,7 +2529,7 @@ declare module 'svelte/types/compiler/interfaces' {
 	export type CompileOptions = CompileOptions_1;
 	/** @deprecated import this from 'svelte' instead */
 	export type Warning = Warning_1;
-	interface Warning_1 extends InternalCompileWarning {}
+	interface Warning_1 extends ICompileDiagnostic {}
 
 	type CssHashGetter = (args: {
 		name: string;
@@ -2710,31 +2692,15 @@ declare module 'svelte/types/compiler/interfaces' {
 	 *               (also see https://github.com/sveltejs/svelte/pull/5652)
 	 */
 	type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
-	class InternalCompileWarning extends CompileDiagnostic {
-	}
-	class CompileDiagnostic extends Error {
-		
-		constructor(code: string, message: string, position: [number, number] | undefined);
-		filename: string | undefined;
-		
-		position: [number, number] | undefined;
-		
-		start: Location | undefined;
-		
-		end: Location | undefined;
-		
-		frame: string | undefined;
+	type ICompileDiagnostic = {
 		code: string;
-		toJSON(): {
-			code: string;
-			message: string;
-			filename: string | undefined;
-			start: import("locate-character").Location_1 | undefined;
-			end: import("locate-character").Location_1 | undefined;
-			position: [number, number] | undefined;
-			frame: string | undefined;
-		};
-	}
+		message: string;
+		filename?: string;
+		start?: Location;
+		end?: Location;
+		position?: [number, number];
+		frame?: string;
+	};
 
 	export {};
 }declare module '*.svelte' {

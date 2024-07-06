@@ -11,8 +11,7 @@ import type { Context } from 'zimmerframe';
 import type { Scope } from '../phases/scope.js';
 import type { Css } from './css.js';
 import type { EachBlock, Namespace, SvelteNode, SvelteOptions } from './template.js';
-import type { InternalCompileError } from '../errors.js';
-import type { InternalCompileWarning } from '../warnings.js';
+import type { ICompileDiagnostic } from '../utils/compile_diagnostic.js';
 
 /** The return value of `compile` from `svelte/compiler` */
 export interface CompileResult {
@@ -51,9 +50,9 @@ export interface CompileResult {
 	ast: any;
 }
 
-export interface Warning extends InternalCompileWarning {}
+export interface Warning extends ICompileDiagnostic {}
 
-export interface CompileError extends InternalCompileError {}
+export interface CompileError extends ICompileDiagnostic {}
 
 export type CssHashGetter = (args: {
 	name: string;

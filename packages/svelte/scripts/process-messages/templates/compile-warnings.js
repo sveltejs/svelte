@@ -29,7 +29,11 @@ function w(node, code, message) {
 	if (stack && stack.at(-1)?.has(code)) return;
 
 	warnings.push(
-		new InternalCompileWarning(code, message, node ? [node.start, node.end] : undefined)
+		new InternalCompileWarning(
+			code,
+			message,
+			node && node.start !== undefined ? [node.start, node.end ?? node.start] : undefined
+		)
 	);
 }
 

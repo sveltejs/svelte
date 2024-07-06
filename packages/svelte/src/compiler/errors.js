@@ -26,7 +26,7 @@ function e(node, code, message) {
 	const start = typeof node === 'number' ? node : node?.start;
 	const end = typeof node === 'number' ? node : node?.end;
 
-	throw new InternalCompileError(code, message, start !== undefined && end !== undefined ? [start, end] : undefined);
+	throw new InternalCompileError(code, message, start !== undefined ? [start, end ?? start] : undefined);
 }
 
 /**
