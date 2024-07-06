@@ -1892,6 +1892,8 @@ declare module 'svelte/compiler' {
 		start: Location | undefined;
 		
 		end: Location | undefined;
+		
+		frame: string | undefined;
 		code: string;
 	}
 

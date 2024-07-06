@@ -52,12 +52,13 @@ export interface CompileResult {
 }
 
 export interface Warning {
-	start?: Location;
-	end?: Location;
-	// TODO there was pos: number in Svelte 4 - do we want to add it back?
 	code: string;
 	message: string;
 	filename?: string;
+	start?: Location;
+	end?: Location;
+	position?: [number, number];
+	frame?: string;
 }
 
 export interface CompileError extends InternalCompileError {}

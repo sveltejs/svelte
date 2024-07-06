@@ -14,6 +14,12 @@ export let warnings = [];
  */
 export let filename;
 
+/**
+ * The original source code
+ * @type {string}
+ */
+export let source;
+
 export let locator = getLocator('', { offsetLine: 1 });
 
 /**
@@ -43,10 +49,11 @@ export function pop_ignore() {
 }
 
 /**
- * @param {string} source
+ * @param {string} _source
  * @param {{ filename?: string, rootDir?: string }} options
  */
-export function reset(source, options) {
+export function reset(_source, options) {
+	source = _source;
 	const root_dir = options.rootDir?.replace(/\\/g, '/');
 	filename = options.filename?.replace(/\\/g, '/');
 
