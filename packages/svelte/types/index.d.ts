@@ -562,9 +562,9 @@ declare module 'svelte/animate' {
 
 declare module 'svelte/compiler' {
 	import type { AssignmentExpression, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, ArrayExpression, MemberExpression, ObjectExpression, Pattern, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, FunctionExpression, Node, Program, ChainExpression, SimpleCallExpression } from 'estree';
-	import type { Location } from 'locate-character';
 	import type { SourceMap } from 'magic-string';
 	import type { Context } from 'zimmerframe';
+	import type { Location } from 'locate-character';
 	/**
 	 * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
 	 *
@@ -714,14 +714,7 @@ declare module 'svelte/compiler' {
 		ast: any;
 	}
 
-	export interface Warning {
-		start?: Location;
-		end?: Location;
-		// TODO there was pos: number in Svelte 4 - do we want to add it back?
-		code: string;
-		message: string;
-		filename?: string;
-	}
+	export interface Warning extends InternalCompileWarning {}
 
 	export interface CompileError extends InternalCompileError {}
 
@@ -1882,7 +1875,11 @@ declare module 'svelte/compiler' {
 		content: Program;
 		attributes: Attribute[];
 	}
-	class InternalCompileError extends Error {
+	class InternalCompileError extends CompileDiagnostic {
+	}
+	class InternalCompileWarning extends CompileDiagnostic {
+	}
+	class CompileDiagnostic extends Error {
 		
 		constructor(code: string, message: string, position: [number, number] | undefined);
 		filename: string | undefined;
@@ -1895,6 +1892,15 @@ declare module 'svelte/compiler' {
 		
 		frame: string | undefined;
 		code: string;
+		toJSON(): {
+			code: string;
+			message: string;
+			filename: string | undefined;
+			start: import("locate-character").Location_1 | undefined;
+			end: import("locate-character").Location_1 | undefined;
+			position: [number, number] | undefined;
+			frame: string | undefined;
+		};
 	}
 
 	export {};
@@ -2541,14 +2547,7 @@ declare module 'svelte/types/compiler/interfaces' {
 	export type CompileOptions = CompileOptions_1;
 	/** @deprecated import this from 'svelte' instead */
 	export type Warning = Warning_1;
-	interface Warning_1 {
-		start?: Location;
-		end?: Location;
-		// TODO there was pos: number in Svelte 4 - do we want to add it back?
-		code: string;
-		message: string;
-		filename?: string;
-	}
+	interface Warning_1 extends InternalCompileWarning {}
 
 	type CssHashGetter = (args: {
 		name: string;
@@ -2711,6 +2710,31 @@ declare module 'svelte/types/compiler/interfaces' {
 	 *               (also see https://github.com/sveltejs/svelte/pull/5652)
 	 */
 	type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
+	class InternalCompileWarning extends CompileDiagnostic {
+	}
+	class CompileDiagnostic extends Error {
+		
+		constructor(code: string, message: string, position: [number, number] | undefined);
+		filename: string | undefined;
+		
+		position: [number, number] | undefined;
+		
+		start: Location | undefined;
+		
+		end: Location | undefined;
+		
+		frame: string | undefined;
+		code: string;
+		toJSON(): {
+			code: string;
+			message: string;
+			filename: string | undefined;
+			start: import("locate-character").Location_1 | undefined;
+			end: import("locate-character").Location_1 | undefined;
+			position: [number, number] | undefined;
+			frame: string | undefined;
+		};
+	}
 
 	export {};
 }declare module '*.svelte' {
