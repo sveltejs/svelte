@@ -5,7 +5,8 @@ const root = document.getElementById('root')!;
 const render = root.firstChild?.nextSibling ? hydrate : mount;
 
 const component = render(App, {
-	target: document.getElementById('root')!
+	target: document.getElementById('root')!,
+	recover: false
 });
 
 // @ts-ignore
