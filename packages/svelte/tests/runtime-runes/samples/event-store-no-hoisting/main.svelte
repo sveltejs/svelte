@@ -5,8 +5,7 @@
 
 	function setStore() {
 		store = writable(0, () => {
-			console.log('start');
-			return () => console.log('stop');
+			return () => {};
 		});
 	}
 </script>

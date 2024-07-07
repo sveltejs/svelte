@@ -61,7 +61,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 		warnings: any[];
 		hydrate: Function;
 	}) => void | Promise<void>;
-	test_ssr?: (args: { assert: Assert }) => void | Promise<void>;
+	test_ssr?: (args: { logs: any[]; assert: Assert }) => void | Promise<void>;
 	accessors?: boolean;
 	immutable?: boolean;
 	intro?: boolean;
@@ -285,6 +285,7 @@ async function run_test_variant(
 
 			if (config.test_ssr) {
 				await config.test_ssr({
+					logs,
 					// @ts-expect-error
 					assert: {
 						...assert,

@@ -415,8 +415,7 @@ const global_visitors = {
 			const args = /** @type {import('estree').Expression[]} */ (
 				node.arguments.map((arg) => context.visit(arg))
 			);
-			// Just call the function directly
-			return b.call(args[0]);
+			return b.call('$.effect_root', args[0]);
 		}
 
 		if (rune === '$state.snapshot') {
@@ -651,7 +650,8 @@ const javascript_visitors_runes = {
 			if (
 				callee.type === 'MemberExpression' &&
 				callee.object.type === 'Identifier' &&
-				callee.object.name === '$effect'
+				callee.object.name === '$effect' &&
+				(callee.property.type !== 'Identifier' || callee.property.name !== 'root')
 			) {
 				return b.empty;
 			}

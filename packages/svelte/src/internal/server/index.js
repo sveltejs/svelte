@@ -291,6 +291,23 @@ export function merge_styles(attribute, styles) {
 	return merged;
 }
 
+let is_nested_effect_root = false;
+
+/**
+ * @param {any} fn
+ */
+export function effect_root(fn) {
+	let is_nested = is_nested_effect_root;
+	is_nested_effect_root = true;
+
+	const cleanup = fn() ?? noop;
+
+	is_nested_effect_root = is_nested;
+	if (!is_nested) on_destroy.push(cleanup);
+
+	return cleanup;
+}
+
 /**
  * @template V
  * @param {Record<string, [any, any, any]>} store_values
