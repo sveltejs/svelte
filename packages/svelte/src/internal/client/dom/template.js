@@ -194,6 +194,7 @@ function run_scripts(node) {
 		}
 
 		clone.textContent = script.textContent;
+
 		// If node === script tag, replaceWith will do nothing because there's no parent yet,
 		// waiting until that's the case using an effect solves this.
 		// Don't do it in other circumstances or we could accidentally execute scripts
@@ -224,17 +225,11 @@ export function text(anchored) {
 
 	var node = hydrate_node;
 
-	// console.log('text', { hydrate_node });
-
 	if (node.nodeType !== 3) {
 		// if an {expression} is empty during SSR, we need to insert an empty text node
 		node.before((node = empty()));
 		set_hydrate_node(node);
 	}
-
-	// if (anchored) {
-	// 	hydrate_next();
-	// }
 
 	assign_nodes(node, node);
 	return node;
@@ -267,18 +262,6 @@ export function append(anchor, dom) {
 	if (hydrating) {
 		/** @type {Effect & { nodes: EffectNodes }} */ (current_effect).nodes.end = hydrate_node;
 		hydrate_next();
-
-		// console.log('effect.nodes', current_effect.nodes);
-		// console.log(dom);
-
-		// // next node should be a <!--]-->
-		// var next = hydrate_node.nextSibling;
-		// if (next === null || next.nodeType !== 8) {
-		// 	throw new Error('TODO');
-		// }
-
-		// set_hydrate_node(/** @type {Comment} */ (next));
-
 		return;
 	}
 

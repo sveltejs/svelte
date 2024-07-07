@@ -3,7 +3,6 @@ import { hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
 import { current_effect } from '../runtime.js';
-import { HYDRATION_ANCHOR } from '../../../constants.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */
@@ -96,8 +95,6 @@ export function first_child(fragment, is_text) {
 		return first;
 	}
 
-	// hydrate_next();
-
 	// if an {expression} is empty during SSR, there might be no
 	// text node to hydrate — we must therefore create one
 	if (is_text && hydrate_node?.nodeType !== 3) {
@@ -112,11 +109,6 @@ export function first_child(fragment, is_text) {
 		set_hydrate_node(text);
 		return text;
 	}
-
-	// console.log('first_child', {
-	// 	hydrate_node,
-	// 	content: hydrate_node.data ?? hydrate_node.outerHTML
-	// });
 
 	return hydrate_node;
 }
@@ -136,10 +128,6 @@ export function sibling(node, is_text = false) {
 	var next_sibling = /** @type {TemplateNode} */ (hydrate_node.nextSibling);
 
 	var type = next_sibling.nodeType;
-
-	// if (type === 8 && /** @type {Comment} */ (next_sibling).data === HYDRATION_ANCHOR) {
-	// 	return sibling(next_sibling, is_text);
-	// }
 
 	// if a sibling {expression} is empty during SSR, there might be no
 	// text node to hydrate — we must therefore create one

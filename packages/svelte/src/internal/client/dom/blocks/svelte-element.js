@@ -86,7 +86,6 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				pause_effect(effect, () => {
 					effect = null;
 					current_tag = null;
-					// element?.remove();
 				});
 			} else if (next_tag === current_tag) {
 				// same tag as is currently rendered — abort outro

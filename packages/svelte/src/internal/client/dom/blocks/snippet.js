@@ -15,7 +15,6 @@ import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
  * @returns {void}
  */
 export function snippet(anchor, get_snippet, ...args) {
-	// console.log('snippet start', { anchor });
 	if (hydrating) {
 		hydrate_next();
 	}
@@ -41,7 +40,6 @@ export function snippet(anchor, get_snippet, ...args) {
 
 	if (hydrating) {
 		anchor = hydrate_node;
-		// console.log('snippet end', { anchor });
 	}
 }
 
