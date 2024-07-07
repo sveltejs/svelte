@@ -294,7 +294,7 @@ export function clean_nodes(
 
 	const is_anchored = (is_dynamic_text || is_text) && parent.type === 'Fragment';
 
-	return { hoisted, trimmed, is_standalone, is_anchored };
+	return { hoisted, trimmed, is_standalone: false, is_anchored };
 }
 
 /**

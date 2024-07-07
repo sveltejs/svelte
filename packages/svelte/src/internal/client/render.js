@@ -1,9 +1,20 @@
 import { DEV } from 'esm-env';
 import { clear_text_content, empty, init_operations } from './dom/operations.js';
-import { HYDRATION_ERROR, HYDRATION_START, PassiveDelegatedEvents } from '../../constants.js';
+import {
+	HYDRATION_END,
+	HYDRATION_ERROR,
+	HYDRATION_START,
+	PassiveDelegatedEvents
+} from '../../constants.js';
 import { flush_sync, push, pop, current_component_context } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
-import { hydrate_next, hydrating, set_hydrate_node, set_hydrating } from './dom/hydration.js';
+import {
+	hydrate_next,
+	hydrate_node,
+	hydrating,
+	set_hydrate_node,
+	set_hydrating
+} from './dom/hydration.js';
 import { array_from } from './utils.js';
 import { handle_event_propagation } from './dom/elements/events.js';
 import { reset_head_anchor } from './dom/blocks/svelte-head.js';
@@ -149,6 +160,13 @@ export function hydrate(component, options) {
 			hydrate_next();
 
 			const instance = _mount(component, { ...options, anchor });
+
+			if (
+				hydrate_node.nodeType !== 8 ||
+				/** @type {Comment} */ (hydrate_node).data !== HYDRATION_END
+			) {
+				throw HYDRATION_ERROR;
+			}
 
 			// flush_sync will run this callback and then synchronously run any pending effects,
 			// which don't belong to the hydration phase anymore - therefore reset it here

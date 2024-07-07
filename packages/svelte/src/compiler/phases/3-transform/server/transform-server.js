@@ -1006,7 +1006,7 @@ function serialize_inline_component(node, expression, context) {
 	if (node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic)) {
 		context.state.template.push(block_open, statement, block_close);
 	} else {
-		context.state.template.push(statement);
+		context.state.template.push(statement, block_close);
 	}
 }
 
