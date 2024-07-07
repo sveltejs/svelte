@@ -991,6 +991,9 @@ function serialize_inline_component(node, expression, context) {
 		statement = b.block([...snippet_declarations, statement]);
 	}
 
+	const dynamic =
+		node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic);
+
 	if (custom_css_props.length > 0) {
 		statement = b.stmt(
 			b.call(
@@ -998,15 +1001,24 @@ function serialize_inline_component(node, expression, context) {
 				b.id('$$payload'),
 				b.literal(context.state.namespace === 'svg' ? false : true),
 				b.object(custom_css_props),
-				b.thunk(b.block([statement]))
+				b.thunk(b.block([statement])),
+				dynamic && b.true // TODO do we need the preceding anchor for dynamic components?
 			)
 		);
 	}
 
-	if (node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic)) {
-		context.state.template.push(block_open, statement, block_close);
+	if (dynamic) {
+		if (custom_css_props.length === 0) {
+			context.state.template.push(block_open);
+		}
+
+		context.state.template.push(statement);
 	} else {
-		context.state.template.push(statement, block_close);
+		context.state.template.push(statement);
+	}
+
+	if (custom_css_props.length === 0) {
+		context.state.template.push(block_close);
 	}
 }
 
