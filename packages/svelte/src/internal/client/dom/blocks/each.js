@@ -228,8 +228,6 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 	if (hydrating) {
 		anchor = hydrate_node;
 	}
-
-	// console.log('each', { anchor });
 }
 
 function remove_nodes() {
