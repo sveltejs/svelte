@@ -165,6 +165,7 @@ export function hydrate(component, options) {
 				hydrate_node.nodeType !== 8 ||
 				/** @type {Comment} */ (hydrate_node).data !== HYDRATION_END
 			) {
+				w.hydration_mismatch();
 				throw HYDRATION_ERROR;
 			}
 

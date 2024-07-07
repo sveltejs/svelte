@@ -287,7 +287,9 @@ export function clean_nodes(
 	// if a component or snippet starts with text, we need to add an anchor comment
 	// so that its text node doesn't get fused with its surroundings
 	const is_anchored =
-		parent.type === 'Fragment' && (first.type === 'Text' || first.type === 'ExpressionTag');
+		parent.type === 'Fragment' &&
+		first &&
+		(first?.type === 'Text' || first?.type === 'ExpressionTag');
 
 	return { hoisted, trimmed, is_standalone: false, is_anchored };
 }

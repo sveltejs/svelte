@@ -1,8 +1,13 @@
 /** @import { TemplateNode } from '#client' */
 import { EFFECT_TRANSPARENT } from '../../constants.js';
-import { hydrate_next, hydrate_node, hydrating, set_hydrating } from '../hydration.js';
+import {
+	hydrate_next,
+	hydrate_node,
+	hydrating,
+	set_hydrate_node,
+	set_hydrating
+} from '../hydration.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
-import { HYDRATION_START_ELSE } from '../../../../constants.js';
 
 /**
  * @param {TemplateNode} anchor
@@ -46,7 +51,9 @@ export function if_block(
 			if (condition === is_else) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.
 				// This could happen with `{#if browser}...{/if}`, for example
-				// remove(hydrate_nodes);
+				anchor = remove_nodes();
+
+				set_hydrate_node(anchor);
 				set_hydrating(false);
 				mismatch = true;
 			}
@@ -87,4 +94,27 @@ export function if_block(
 	if (hydrating) {
 		anchor = hydrate_node;
 	}
+}
+
+// TODO share this logic with each.js — revert to `[` and `]`
+function remove_nodes() {
+	var depth = 0;
+	var node = hydrate_node;
+
+	while (node.nodeType !== 8 || (depth === 0 && /** @type {Comment} */ (node).data !== '/if')) {
+		if (node.nodeType === 8) {
+			var data = /** @type {Comment} */ (node).data;
+			if (data === '#if' || data === '#if!') {
+				depth += 1;
+			} else if (data === '/if') {
+				depth -= 1;
+			}
+		}
+
+		var next = /** @type {TemplateNode} */ (node.nextSibling);
+		node.remove();
+		node = next;
+	}
+
+	return node;
 }
