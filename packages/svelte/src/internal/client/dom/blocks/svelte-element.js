@@ -1,6 +1,12 @@
 /** @import { Effect, TemplateNode } from '#client' */
 import { namespace_svg } from '../../../../constants.js';
-import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
+import {
+	hydrate_next,
+	hydrate_node,
+	hydrating,
+	set_hydrate_node,
+	set_hydrating
+} from '../hydration.js';
 import { empty } from '../operations.js';
 import {
 	block,
@@ -25,6 +31,8 @@ import { noop } from '../../../shared/utils.js';
  * @returns {void}
  */
 export function element(node, get_tag, is_svg, render_fn, get_namespace, location) {
+	let was_hydrating = hydrating;
+
 	if (hydrating) {
 		hydrate_next();
 	}
@@ -116,8 +124,12 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 						hydrating ? element.firstChild : element.appendChild(empty())
 					);
 
-					if (hydrating && child_anchor) {
-						set_hydrate_node(child_anchor);
+					if (hydrating) {
+						if (child_anchor === null) {
+							set_hydrating(false);
+						} else {
+							set_hydrate_node(child_anchor);
+						}
 					}
 
 					// `child_anchor` is undefined if this is a void element, but we still
@@ -149,7 +161,8 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 		return noop;
 	});
 
-	if (hydrating) {
+	if (was_hydrating) {
+		set_hydrating(true);
 		set_hydrate_node(anchor);
 	}
 }

@@ -282,5 +282,10 @@ export function append(anchor, dom) {
 		return;
 	}
 
+	if (anchor === null) {
+		// edge case — void `<svelte:element>` with content
+		return;
+	}
+
 	anchor.before(/** @type {Node} */ (dom));
 }
