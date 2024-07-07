@@ -171,9 +171,6 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 
 		// this is separate to the previous block because `hydrating` might change
 		if (hydrating) {
-			/** @type {Node} */
-			var child_anchor = hydrate_node; // TODO do we still need child_anchors, in a world without `effect.dom`?
-
 			/** @type {import('#client').EachItem | null} */
 			var prev = null;
 
@@ -181,10 +178,10 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 			var item;
 
 			for (var i = 0; i < length; i++) {
-				if (child_anchor.nodeType === 8 && /** @type {Comment} */ (child_anchor).data === '/each') {
+				if (hydrate_node.nodeType === 8 && /** @type {Comment} */ (hydrate_node).data === '/each') {
 					// If `nodes` is null, then that means that the server rendered fewer items than what
 					// expected, so break out and continue appending non-hydrated items
-					anchor = /** @type {Comment} */ (child_anchor);
+					anchor = /** @type {Comment} */ (hydrate_node);
 					mismatch = true;
 					set_hydrating(false);
 					break;
@@ -192,11 +189,8 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 
 				var value = array[i];
 				var key = get_key(value, i);
-				item = create_item(child_anchor, state, prev, null, value, key, i, render_fn, flags);
+				item = create_item(hydrate_node, state, prev, null, value, key, i, render_fn, flags);
 				state.items.set(key, item);
-				var close = hydrate_node.nextSibling; // TODO validate. or replace `<!--]--><!--[-->` with `<!---->`
-				// hydrate_next();
-				child_anchor = /** @type {Comment} */ (hydrate_node);
 
 				prev = item;
 			}
