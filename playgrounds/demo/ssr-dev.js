@@ -20,9 +20,9 @@ const vite = await createViteServer({
 polka()
 	.use(vite.middlewares)
 
-	.use('*', async (req, res) => {
+	.use(async (req, res) => {
 		const template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
-		const transformed_template = await vite.transformIndexHtml(req.originalUrl, template);
+		const transformed_template = await vite.transformIndexHtml(req.url, template);
 		const { default: App } = await vite.ssrLoadModule('./src/main.svelte');
 		const { head, body } = render(App);
 
