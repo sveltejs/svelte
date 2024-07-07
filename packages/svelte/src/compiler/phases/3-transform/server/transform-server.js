@@ -1350,9 +1350,9 @@ const template_visitors = {
 			context.visit(node.fragment, state)
 		);
 
-		const body = b.stmt(
-			b.call('$.element', b.id('$$payload'), tag, b.thunk(attributes), b.thunk(children))
-		);
+		const body = b.block([
+			b.stmt(b.call('$.element', b.id('$$payload'), tag, b.thunk(attributes), b.thunk(children)))
+		]);
 
 		context.state.template.push(block_open, b.if(tag, body), block_close);
 
