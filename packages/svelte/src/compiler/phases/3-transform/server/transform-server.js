@@ -1392,12 +1392,7 @@ const template_visitors = {
 			each.push(b.let(node.index, index));
 		}
 
-		// TODO we shouldn't need these
-		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--#each-item-->'))));
-
 		each.push(.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body);
-
-		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--/each-item-->'))));
 
 		const for_loop = b.for(
 			b.let(index, b.literal(0)),

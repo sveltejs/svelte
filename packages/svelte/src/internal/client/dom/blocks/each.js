@@ -181,10 +181,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 			var item;
 
 			for (var i = 0; i < length; i++) {
-				if (
-					child_anchor.nodeType !== 8 ||
-					/** @type {Comment} */ (child_anchor).data !== '#each-item'
-				) {
+				if (child_anchor.nodeType === 8 && /** @type {Comment} */ (child_anchor).data === '/each') {
 					// If `nodes` is null, then that means that the server rendered fewer items than what
 					// expected, so break out and continue appending non-hydrated items
 					anchor = /** @type {Comment} */ (child_anchor);
@@ -193,15 +190,13 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 					break;
 				}
 
-				hydrate_next();
-
 				var value = array[i];
 				var key = get_key(value, i);
 				item = create_item(child_anchor, state, prev, null, value, key, i, render_fn, flags);
 				state.items.set(key, item);
 				var close = hydrate_node.nextSibling; // TODO validate. or replace `<!--]--><!--[-->` with `<!---->`
 				// hydrate_next();
-				child_anchor = /** @type {Comment} */ (hydrate_next());
+				child_anchor = /** @type {Comment} */ (hydrate_node);
 
 				prev = item;
 			}
