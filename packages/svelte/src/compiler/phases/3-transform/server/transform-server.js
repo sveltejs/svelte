@@ -1342,7 +1342,7 @@ const template_visitors = {
 			b.call('$.element', b.id('$$payload'), tag, b.thunk(attributes), b.thunk(children))
 		);
 
-		context.state.template.push(b.if(tag, body), block_anchor);
+		context.state.template.push(block_open, b.if(tag, body), block_close);
 
 		if (context.state.options.dev) {
 			context.state.template.push(b.stmt(b.call('$.pop_element')));

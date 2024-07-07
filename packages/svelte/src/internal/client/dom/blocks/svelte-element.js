@@ -1,5 +1,6 @@
+/** @import { Effect, TemplateNode } from '#client' */
 import { namespace_svg } from '../../../../constants.js';
-import { hydrating, set_hydrate_node } from '../hydration.js';
+import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
 import { empty } from '../operations.js';
 import {
 	block,
@@ -10,9 +11,8 @@ import {
 } from '../../reactivity/effects.js';
 import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
-import { current_component_context } from '../../runtime.js';
+import { current_component_context, current_effect } from '../../runtime.js';
 import { DEV } from 'esm-env';
-import { assign_nodes } from '../template.js';
 import { noop } from '../../../shared/utils.js';
 
 /**
@@ -25,6 +25,10 @@ import { noop } from '../../../shared/utils.js';
  * @returns {void}
  */
 export function element(node, get_tag, is_svg, render_fn, get_namespace, location) {
+	if (hydrating) {
+		hydrate_next();
+	}
+
 	const filename = DEV && location && current_component_context?.function.filename;
 
 	/** @type {string | null} */
@@ -34,11 +38,16 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 	let current_tag;
 
 	/** @type {null | Element} */
-	let element = hydrating && node.nodeType === 1 ? /** @type {Element} */ (node) : null;
+	let element = null;
 
-	let anchor = /** @type {Comment} */ (hydrating && element ? element.nextSibling : node);
+	if (hydrating && hydrate_node.nodeType === 1) {
+		element = /** @type {Element} */ (hydrate_node);
+		hydrate_next();
+	}
 
-	/** @type {import('#client').Effect | null} */
+	let anchor = /** @type {TemplateNode} */ (hydrating ? hydrate_node : node);
+
+	/** @type {Effect | null} */
 	let effect;
 
 	/**
@@ -83,14 +92,11 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 		if (next_tag && next_tag !== current_tag) {
 			effect = branch(() => {
-				const prev_element = element;
 				element = hydrating
 					? /** @type {Element} */ (element)
 					: ns
 						? document.createElementNS(ns, next_tag)
 						: document.createElement(next_tag);
-
-				assign_nodes(element, element);
 
 				if (DEV && location) {
 					// @ts-expect-error
@@ -103,14 +109,10 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					};
 				}
 
-				// if (prev_element && !hydrating) {
-				// 	prev_element.remove();
-				// }
-
 				if (render_fn) {
 					// If hydrating, use the existing ssr comment as the anchor so that the
 					// inner open and close methods can pick up the existing nodes correctly
-					var child_anchor = /** @type {import('#client').TemplateNode} */ (
+					var child_anchor = /** @type {TemplateNode} */ (
 						hydrating ? element.firstChild : element.appendChild(empty())
 					);
 
@@ -124,6 +126,9 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					// and the DOM will be silently discarded
 					render_fn(element, child_anchor);
 				}
+
+				// we do this after calling `render_fn` so that child effects don't override `nodes`
+				/** @type {Effect} */ (current_effect).nodes = { start: element, end: element };
 
 				anchor.before(element);
 
@@ -140,6 +145,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 		// Inert effects are proactively detached from the effect tree. Returning a noop
 		// teardown function is an easy way to ensure that this is not discarded
+		// TODO should blocks/branches just be exempt from that logic, rather than checking `effect.nodes`?
 		return noop;
 	});
 
