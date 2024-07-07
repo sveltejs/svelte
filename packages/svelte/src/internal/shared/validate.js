@@ -1,4 +1,4 @@
-import { is_void } from '../../compiler/phases/1-parse/utils/names.js';
+import { is_void } from '../../constants.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 

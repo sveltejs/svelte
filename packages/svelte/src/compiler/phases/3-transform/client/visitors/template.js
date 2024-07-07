@@ -1052,7 +1052,7 @@ function serialize_bind_this(bind_this, context, node) {
 }
 
 /**
- * @param {import('../types.js').SourceLocation[]} locations
+ * @param {import('#shared').SourceLocation[]} locations
  */
 function serialize_locations(locations) {
 	return b.array(
@@ -1910,7 +1910,7 @@ export const template_visitors = {
 		state.init.push(b.stmt(b.call('$.transition', ...args)));
 	},
 	RegularElement(node, context) {
-		/** @type {import('../types.js').SourceLocation} */
+		/** @type {import('#shared').SourceLocation} */
 		let location = [-1, -1];
 
 		if (context.state.options.dev) {
@@ -2138,7 +2138,7 @@ export const template_visitors = {
 
 		context.state.template.push('>');
 
-		/** @type {import('../types.js').SourceLocation[]} */
+		/** @type {import('#shared').SourceLocation[]} */
 		const child_locations = [];
 
 		/** @type {import('../types').ComponentClientTransformState} */

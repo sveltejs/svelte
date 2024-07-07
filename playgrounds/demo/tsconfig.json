@@ -13,5 +13,5 @@
 		"allowJs": true,
 		"checkJs": true
 	},
-	"include": ["./src", "demo-client.ts", "demo-server.ts"]
+	"include": ["./src", "ssr-dev.js", "ssr-prod.js"]
 }

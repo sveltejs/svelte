@@ -8,5 +8,4 @@ export default function Hello_world($$anchor) {
 
 	$.reset(h1);
 	$.append($$anchor, h1);
-	return {};
 }

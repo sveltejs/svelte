@@ -7,5 +7,4 @@ export default function Bind_this($$anchor) {
 
 	$.bind_this(Foo(node, { $$legacy: true }), ($$value) => foo = $$value, () => foo);
 	$.append($$anchor, fragment);
-	return {};
 }

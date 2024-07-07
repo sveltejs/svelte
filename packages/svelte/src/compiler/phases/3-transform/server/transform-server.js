@@ -411,6 +411,14 @@ const global_visitors = {
 			return b.literal(false);
 		}
 
+		if (rune === '$effect.root') {
+			const args = /** @type {import('estree').Expression[]} */ (
+				node.arguments.map((arg) => context.visit(arg))
+			);
+			// Just call the function directly
+			return b.call(args[0]);
+		}
+
 		if (rune === '$state.snapshot') {
 			return /** @type {import('estree').Expression} */ (context.visit(node.arguments[0]));
 		}
@@ -571,7 +579,7 @@ const javascript_visitors_runes = {
 		for (const declarator of node.declarations) {
 			const init = declarator.init;
 			const rune = get_rune(init, state.scope);
-			if (!rune || rune === '$effect.tracking' || rune === '$inspect') {
+			if (!rune || rune === '$effect.tracking' || rune === '$inspect' || rune === '$effect.root') {
 				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
 				continue;
 			}

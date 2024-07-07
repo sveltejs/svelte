@@ -26,5 +26,4 @@ export default function Function_prop_no_getter($$anchor) {
 	});
 
 	$.append($$anchor, fragment);
-	return {};
 }

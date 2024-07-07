@@ -8,7 +8,7 @@ import type {
 import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
-import type { Location } from 'locate-character';
+import type { SourceLocation } from '#shared';
 
 export interface ClientTransformState extends TransformState {
 	readonly private_state: Map<string, StateField>;
@@ -23,10 +23,6 @@ export interface ClientTransformState extends TransformState {
 	/** The $: calls, which will be ordered in the end */
 	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
 }
-
-export type SourceLocation =
-	| [line: number, column: number]
-	| [line: number, column: number, SourceLocation[]];
 
 export interface ComponentClientTransformState extends ClientTransformState {
 	readonly analysis: ComponentAnalysis;

@@ -42,5 +42,4 @@ export default function Main($$anchor) {
 	});
 
 	$.append($$anchor, fragment);
-	return {};
 }
