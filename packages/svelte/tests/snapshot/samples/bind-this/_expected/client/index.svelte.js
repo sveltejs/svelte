@@ -2,6 +2,10 @@ import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 
 export default function Bind_this($$anchor) {
-	$.bind_this(Foo($$anchor, { $$legacy: true }), ($$value) => foo = $$value, () => foo);
+	var fragment = $.comment();
+	var node = $.first_child(fragment);
+
+	$.bind_this(Foo(node, { $$legacy: true }), ($$value) => foo = $$value, () => foo);
+	$.append($$anchor, fragment);
 	return {};
 }
