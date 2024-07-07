@@ -8,7 +8,7 @@ const { head, body } = render(App);
 
 const rendered = fs
 	.readFileSync(path.resolve('./dist/client/index.html'), 'utf-8')
-	.replace(`<!--ssr-html-->`, body)
+	.replace(`<!--ssr-body-->`, body)
 	.replace(`<!--ssr-head-->`, head);
 
 const types = {
