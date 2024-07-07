@@ -1143,9 +1143,9 @@ const template_visitors = {
 
 		process_children(trimmed, { ...context, state });
 
-		if (is_anchored) {
-			state.template.push(b.literal('<!---->'));
-		}
+		// if (is_anchored) {
+		// 	state.template.push(b.literal('<!---->'));
+		// }
 
 		return b.block([...state.init, ...serialize_template(state.template)]);
 	},

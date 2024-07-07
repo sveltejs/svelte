@@ -232,9 +232,9 @@ export function text(anchored) {
 		set_hydrate_node(node);
 	}
 
-	if (anchored) {
-		hydrate_next();
-	}
+	// if (anchored) {
+	// 	hydrate_next();
+	// }
 
 	assign_nodes(node, node);
 	return node;

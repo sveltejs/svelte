@@ -284,15 +284,10 @@ export function clean_nodes(
 					(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
 				)));
 
-	// if a component or snippet only contains text, we need to add an anchor comment
+	// if a component or snippet starts with text, we need to add an anchor comment
 	// so that its text node doesn't get fused with its surroundings
-	const is_dynamic_text =
-		trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
-		trimmed.some((node) => node.type === 'ExpressionTag');
-
-	const is_text = trimmed.length === 1 && first.type === 'Text';
-
-	const is_anchored = (is_dynamic_text || is_text) && parent.type === 'Fragment';
+	const is_anchored =
+		parent.type === 'Fragment' && (first.type === 'Text' || first.type === 'ExpressionTag');
 
 	return { hoisted, trimmed, is_standalone: false, is_anchored };
 }
