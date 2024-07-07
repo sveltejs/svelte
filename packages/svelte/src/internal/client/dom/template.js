@@ -8,7 +8,7 @@ import { queue_micro_task } from './task.js';
 
 /**
  * @param {TemplateNode} start
- * @param {TemplateNode} end
+ * @param {TemplateNode | null} end
  */
 export function assign_nodes(start, end) {
 	/** @type {Effect} */ (current_effect).nodes ??= { start, end };

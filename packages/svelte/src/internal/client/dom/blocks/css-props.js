@@ -1,3 +1,4 @@
+/** @import { TemplateNode } from '#client' */
 import { render_effect, teardown } from '../../reactivity/effects.js';
 import { hydrating, set_hydrate_node } from '../hydration.js';
 
@@ -8,7 +9,7 @@ import { hydrating, set_hydrate_node } from '../hydration.js';
  */
 export function css_props(element, get_styles) {
 	if (hydrating) {
-		set_hydrate_node(element.firstChild);
+		set_hydrate_node(/** @type {TemplateNode} */ (element.firstChild));
 	}
 
 	render_effect(() => {
@@ -28,8 +29,4 @@ export function css_props(element, get_styles) {
 	teardown(() => {
 		element.remove();
 	});
-
-	// if (hydrating) {
-	// 	set_hydrate_node(element);
-	// }
 }
