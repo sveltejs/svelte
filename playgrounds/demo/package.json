@@ -6,9 +6,9 @@
   "scripts": {
     "prepare": "node scripts/create-app-svelte.js",
     "dev": "vite --host",
-    "ssr": "node ./demo-server.js",
-    "build": "vite build --outDir dist/client && vite build --outDir dist/server --ssr demo-server.ts",
-    "prod": "npm run build && node dist",
+    "ssr": "node ./ssr-dev.js",
+    "build": "vite build --outDir dist/client && vite build --outDir dist/server --ssr ssr-prod.js",
+    "prod": "npm run build && node dist/server/ssr-prod",
     "preview": "vite preview"
   },
   "devDependencies": {

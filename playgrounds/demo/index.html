@@ -8,6 +8,20 @@
 	<body>
 		<noscript>You need to enable JavaScript to run this app.</noscript>
 		<div id="root"><!--ssr-body--></div>
-		<script type="module" src="/demo-client.ts"></script>
+
+		<script type="module">
+			import { mount, hydrate, unmount } from 'svelte';
+			import App from '/src/main.svelte';
+
+			const root = document.getElementById('root');
+			const render = root.firstChild?.nextSibling ? hydrate : mount;
+
+			const component = render(App, {
+				target: document.getElementById('root')
+			});
+
+			// @ts-ignore
+			window.unmount = () => unmount(component);
+		</script>
 	</body>
 </html>

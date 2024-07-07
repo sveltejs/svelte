@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import polka from 'polka';
 import { createServer as createViteServer } from 'vite';
+import { render } from 'svelte/server';
 
 const PORT = process.env.PORT || '5173';
 
@@ -11,28 +12,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 process.env.NODE_ENV = 'development';
 
-async function createServer() {
-	const app = polka();
+const vite = await createViteServer({
+	server: { middlewareMode: true },
+	appType: 'custom'
+});
 
-	const vite = await createViteServer({
-		server: { middlewareMode: true },
-		appType: 'custom'
-	});
+polka()
+	.use(vite.middlewares)
 
-	app.use(vite.middlewares);
-
-	app.use('*', async (req, res) => {
-		if (req.originalUrl !== '/') {
-			res.writeHead(200, {
-				'Content-Type': 'application/javascript'
-			});
-			res.end(fs.createReadStream(path.resolve('./dist' + req.originalUrl)));
-			return;
-		}
-
+	.use('*', async (req, res) => {
 		const template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
 		const transformed_template = await vite.transformIndexHtml(req.originalUrl, template);
-		const { render } = await vite.ssrLoadModule('svelte/server');
 		const { default: App } = await vite.ssrLoadModule('./src/main.svelte');
 		const { head, body } = render(App);
 
@@ -41,18 +31,8 @@ async function createServer() {
 			.replace(`<!--ssr-body-->`, body);
 
 		res.writeHead(200, { 'Content-Type': 'text/html' }).end(html);
-	});
+	})
 
-	return { app, vite };
-}
-
-createServer()
-	.then(({ app }) =>
-		app.listen(PORT, () => {
-			console.log(`http://localhost:${PORT}`);
-		})
-	)
-	.catch((err) => {
-		console.error('Error Starting Server:\n', err);
-		process.exit(1);
+	.listen(PORT, () => {
+		console.log(`http://localhost:${PORT}`);
 	});
