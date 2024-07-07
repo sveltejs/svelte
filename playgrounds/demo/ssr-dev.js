@@ -19,7 +19,6 @@ const vite = await createViteServer({
 
 polka()
 	.use(vite.middlewares)
-
 	.use(async (req, res) => {
 		const template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
 		const transformed_template = await vite.transformIndexHtml(req.url, template);
@@ -32,7 +31,6 @@ polka()
 
 		res.writeHead(200, { 'Content-Type': 'text/html' }).end(html);
 	})
-
 	.listen(PORT, () => {
 		console.log(`http://localhost:${PORT}`);
 	});
