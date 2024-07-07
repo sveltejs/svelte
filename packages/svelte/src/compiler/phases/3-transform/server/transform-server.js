@@ -1163,10 +1163,6 @@ const template_visitors = {
 
 		process_children(trimmed, { ...context, state });
 
-		// if (is_anchored) {
-		// 	state.template.push(b.literal('<!---->'));
-		// }
-
 		return b.block([...state.init, ...serialize_template(state.template)]);
 	},
 	HtmlTag(node, context) {
@@ -1211,9 +1207,7 @@ const template_visitors = {
 			return /** @type {import('estree').Expression} */ (context.visit(arg));
 		});
 
-		// if (!context.state.skip_hydration_boundaries) {
-		context.state.template.push(b.literal('<!--#-->'));
-		// }
+		context.state.template.push(block_open);
 
 		context.state.template.push(
 			b.stmt(
@@ -1225,9 +1219,7 @@ const template_visitors = {
 			)
 		);
 
-		// if (!context.state.skip_hydration_boundaries) {
-		context.state.template.push(b.literal('<!--/-->'));
-		// }
+		context.state.template.push(block_close);
 	},
 	ClassDirective() {
 		throw new Error('Node should have been handled elsewhere');
