@@ -10,6 +10,8 @@ import type { CompileOptions, Warning } from '#compiler';
 
 function normalize_warning(warning: Warning) {
 	delete warning.filename;
+	delete warning.position;
+	delete warning.frame;
 	return warning;
 }
 
