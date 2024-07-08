@@ -192,14 +192,12 @@ export function check_dirtiness(reaction) {
 						// if linked to the dependency source – otherwise future updates will not be caught.
 						(dependency.reactions ??= []).push(reaction);
 					}
-				} else if (is_disconnected) {
-					reconnect_derived(/** @type {import('#client').Derived} */ (reaction));
 				}
 			}
-		}
 
-		if (is_disconnected) {
-			reaction.f ^= DISCONNECTED;
+			if (is_disconnected) {
+				reconnect_derived(/** @type {import('#client').Derived} */ (reaction));
+			}
 		}
 
 		set_signal_status(reaction, CLEAN);
@@ -780,7 +778,6 @@ export function get(signal) {
 
 		if ((flags & DISCONNECTED) !== 0) {
 			reconnect_derived(derived);
-			derived.f ^= DISCONNECTED;
 		}
 	}
 

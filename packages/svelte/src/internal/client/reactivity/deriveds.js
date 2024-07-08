@@ -1,4 +1,4 @@
-import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../constants.js';
+import { CLEAN, DERIVED, DESTROYED, DIRTY, DISCONNECTED, MAYBE_DIRTY, UNOWNED } from '../constants.js';
 import {
 	current_reaction,
 	current_effect,
@@ -139,4 +139,6 @@ export function reconnect_derived(derived) {
 			}
 		}
 	}
+
+	derived.f ^= DISCONNECTED;
 }
