@@ -345,7 +345,7 @@ function next(parser) {
 
 			/** @type {ReturnType<typeof parser.append<import('#compiler').IfBlock>>} */
 			const child = parser.append({
-				start: parser.index,
+				start: start - 1,
 				end: -1,
 				type: 'IfBlock',
 				elseif: true,

@@ -353,11 +353,12 @@ export function convert(source, ast) {
 					};
 				}
 
+				const start = node.elseif ? node.consequent.nodes[0].start : node.start;
 				remove_surrounding_whitespace_nodes(node.consequent.nodes);
 
 				return {
 					type: 'IfBlock',
-					start: node.start,
+					start,
 					end: node.end,
 					expression: node.test,
 					children: node.consequent.nodes.map(
