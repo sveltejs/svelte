@@ -1402,14 +1402,14 @@ const template_visitors = {
 		);
 
 		if (node.fallback) {
-			const open = b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--#each-->')));
+			const open = b.stmt(b.assignment('+=', b.id('$$payload.out'), block_open));
 
 			const fallback = /** @type {import('estree').BlockStatement} */ (
 				context.visit(node.fallback)
 			);
 
 			fallback.body.unshift(
-				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--#each!-->')))
+				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN_ELSE)))
 			);
 
 			state.template.push(
@@ -1418,10 +1418,10 @@ const template_visitors = {
 					b.block([open, for_loop]),
 					fallback
 				),
-				b.literal('<!--/each-->')
+				block_close
 			);
 		} else {
-			state.template.push(b.literal('<!--#each-->'), for_loop, b.literal('<!--/each-->'));
+			state.template.push(block_open, for_loop, block_close);
 		}
 	},
 	IfBlock(node, context) {

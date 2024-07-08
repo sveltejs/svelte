@@ -5,12 +5,14 @@ import {
 	EACH_IS_CONTROLLED,
 	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
-	EACH_KEYED
+	EACH_KEYED,
+	HYDRATION_END
 } from '../../../../constants.js';
 import {
 	hydrate_next,
 	hydrate_node,
 	hydrating,
+	remove_nodes,
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
@@ -178,7 +180,10 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 			var item;
 
 			for (var i = 0; i < length; i++) {
-				if (hydrate_node.nodeType === 8 && /** @type {Comment} */ (hydrate_node).data === '/each') {
+				if (
+					hydrate_node.nodeType === 8 &&
+					/** @type {Comment} */ (hydrate_node).data === HYDRATION_END
+				) {
 					// If `nodes` is null, then that means that the server rendered fewer items than what
 					// expected, so break out and continue appending non-hydrated items
 					anchor = /** @type {Comment} */ (hydrate_node);
@@ -228,28 +233,6 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 	if (hydrating) {
 		anchor = hydrate_node;
 	}
-}
-
-function remove_nodes() {
-	var depth = 0;
-	var node = hydrate_node;
-
-	while (node.nodeType !== 8 || (depth === 0 && /** @type {Comment} */ (node).data !== '/each')) {
-		if (node.nodeType === 8) {
-			var data = /** @type {Comment} */ (node).data;
-			if (data === '#each' || data === '#each!') {
-				depth += 1;
-			} else if (data === '/each') {
-				depth -= 1;
-			}
-		}
-
-		var next = /** @type {TemplateNode} */ (node.nextSibling);
-		node.remove();
-		node = next;
-	}
-
-	return node;
 }
 
 /**

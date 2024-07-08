@@ -1,5 +1,7 @@
 /** @import { TemplateNode } from '#client' */
 
+import { HYDRATION_END, HYDRATION_START, HYDRATION_START_ELSE } from '../../../constants.js';
+
 /**
  * Use this variable to guard everything related to hydration code so it can be treeshaken out
  * if the user doesn't use the `hydrate` method and these code paths are therefore not needed.
@@ -35,4 +37,29 @@ export function next() {
 	if (hydrating) {
 		hydrate_next();
 	}
+}
+
+export function remove_nodes() {
+	var depth = 0;
+	var node = hydrate_node;
+
+	while (
+		node.nodeType !== 8 ||
+		(depth === 0 && /** @type {Comment} */ (node).data !== HYDRATION_END)
+	) {
+		if (node.nodeType === 8) {
+			var data = /** @type {Comment} */ (node).data;
+			if (data === HYDRATION_START || data === HYDRATION_START_ELSE) {
+				depth += 1;
+			} else if (data === HYDRATION_END) {
+				depth -= 1;
+			}
+		}
+
+		var next = /** @type {TemplateNode} */ (node.nextSibling);
+		node.remove();
+		node = next;
+	}
+
+	return node;
 }
