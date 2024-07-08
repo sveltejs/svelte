@@ -11,7 +11,7 @@ import {
 	object_prototype
 } from './utils.js';
 import { check_ownership, widen_ownership } from './dev/ownership.js';
-import { mutable_source, source, set } from './reactivity/sources.js';
+import { source, set } from './reactivity/sources.js';
 import { STATE_FROZEN_SYMBOL, STATE_SYMBOL } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
@@ -19,7 +19,7 @@ import * as e from './errors.js';
 /**
  * @template T
  * @param {T} value
- * @param {boolean} [immutable]
+ * @param {true} [immutable]
  * @param {import('#client').ProxyMetadata | null} [parent]
  * @param {import('#client').Source<T>} [prev] dev mode only
  * @returns {import('#client').ProxyStateObject<T> | T}
@@ -59,7 +59,6 @@ export function proxy(value, immutable = true, parent = null, prev) {
 					s: new Map(),
 					v: source(0),
 					a: is_array(value),
-					i: immutable,
 					p: proxy,
 					t: value
 				}),
@@ -169,7 +168,7 @@ const state_proxy_handler = {
 			const metadata = target[STATE_SYMBOL];
 
 			const s = metadata.s.get(prop);
-			if (s !== undefined) set(s, proxy(descriptor.value, metadata.i, metadata));
+			if (s !== undefined) set(s, proxy(descriptor.value, true, metadata));
 		}
 
 		return Reflect.defineProperty(target, prop, descriptor);
@@ -215,7 +214,7 @@ const state_proxy_handler = {
 
 		// create a source, but only if it's an own property and not a prototype property
 		if (s === undefined && (!(prop in target) || get_descriptor(target, prop)?.writable)) {
-			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i, metadata));
+			s = source(proxy(target[prop], true, metadata));
 			metadata.s.set(prop, s);
 		}
 
@@ -256,9 +255,7 @@ const state_proxy_handler = {
 			(current_effect !== null && (!has || get_descriptor(target, prop)?.writable))
 		) {
 			if (s === undefined) {
-				s = (metadata.i ? source : mutable_source)(
-					has ? proxy(target[prop], metadata.i, metadata) : UNINITIALIZED
-				);
+				s = source(has ? proxy(target[prop], true, metadata) : UNINITIALIZED);
 				metadata.s.set(prop, s);
 			}
 			const value = get(s);
@@ -283,7 +280,7 @@ const state_proxy_handler = {
 			s = metadata.s.get(prop);
 		}
 		if (s !== undefined) {
-			set(s, proxy(value, metadata.i, metadata));
+			set(s, proxy(value, true, metadata));
 		}
 		const is_array = metadata.a;
 		const not_has = !(prop in target);
