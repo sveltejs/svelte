@@ -171,8 +171,17 @@ export function check_dirtiness(reaction) {
 
 		if (dependencies !== null) {
 			var is_unowned = (flags & UNOWNED) !== 0;
+			var i;
 
-			for (var i = 0; i < dependencies.length; i++) {
+			if ((flags & DISCONNECTED) !== 0) {
+				for (i = 0; i < dependencies.length; i++) {
+					(dependencies[i].reactions ??= []).push(reaction);
+				}
+
+				reaction.f ^= DISCONNECTED;
+			}
+
+			for (i = 0; i < dependencies.length; i++) {
 				var dependency = dependencies[i];
 
 				if (check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
@@ -770,25 +779,6 @@ export function get(signal) {
 
 		if (check_dirtiness(derived)) {
 			update_derived(derived);
-		}
-
-		if ((flags & DISCONNECTED) !== 0) {
-			// reconnect to the graph
-			deps = derived.deps;
-
-			if (deps !== null) {
-				for (var i = 0; i < deps.length; i++) {
-					var dep = deps[i];
-					var reactions = dep.reactions;
-					if (reactions === null) {
-						dep.reactions = [derived];
-					} else if (!reactions.includes(derived)) {
-						reactions.push(derived);
-					}
-				}
-			}
-
-			derived.f ^= DISCONNECTED;
 		}
 	}
 
