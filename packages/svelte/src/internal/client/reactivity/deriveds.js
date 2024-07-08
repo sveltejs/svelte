@@ -1,4 +1,12 @@
-import { CLEAN, DERIVED, DESTROYED, DIRTY, DISCONNECTED, MAYBE_DIRTY, UNOWNED } from '../constants.js';
+import {
+	CLEAN,
+	DERIVED,
+	DESTROYED,
+	DIRTY,
+	DISCONNECTED,
+	MAYBE_DIRTY,
+	UNOWNED
+} from '../constants.js';
 import {
 	current_reaction,
 	current_effect,
