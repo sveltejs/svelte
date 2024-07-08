@@ -14,10 +14,6 @@ import * as w from '../../warnings.js';
  * @returns {void}
  */
 export function html(anchor, get_value, svg, mathml) {
-	if (hydrating) {
-		hydrate_next();
-	}
-
 	var value = '';
 
 	/** @type {Effect | null} */
@@ -35,7 +31,7 @@ export function html(anchor, get_value, svg, mathml) {
 
 		effect = branch(() => {
 			if (hydrating) {
-				var next = hydrate_node;
+				var next = hydrate_next();
 				var last = next;
 
 				while (
@@ -52,7 +48,7 @@ export function html(anchor, get_value, svg, mathml) {
 				}
 
 				assign_nodes(hydrate_node, last);
-				set_hydrate_node(next);
+				anchor = set_hydrate_node(next);
 				return;
 			}
 
@@ -83,8 +79,4 @@ export function html(anchor, get_value, svg, mathml) {
 			}
 		});
 	});
-
-	if (hydrating) {
-		anchor = hydrate_node;
-	}
 }
