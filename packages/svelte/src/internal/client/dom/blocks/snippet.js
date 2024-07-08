@@ -50,7 +50,6 @@ export function snippet(anchor, get_snippet, ...args) {
  * @param {(node: import('#client').TemplateNode, ...args: any[]) => import('#client').Dom} fn
  */
 export function wrap_snippet(component, fn) {
-	// TODO do we need to pass in `component`? surely it's just `dev_current_component_function`?
 	return add_snippet_symbol(
 		(/** @type {import('#client').TemplateNode} */ node, /** @type {any[]} */ ...args) => {
 			var previous_component_function = dev_current_component_function;
