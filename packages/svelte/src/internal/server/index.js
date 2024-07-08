@@ -72,18 +72,22 @@ export function assign_payload(p1, p2) {
  * @param {() => void} children_fn
  * @returns {void}
  */
-export function element(payload, tag, attributes_fn, children_fn) {
-	payload.out += `<${tag} `;
-	attributes_fn();
-	payload.out += `>`;
+export function element(payload, tag, attributes_fn = noop, children_fn = noop) {
+	if (tag) {
+		payload.out += `<${tag} `;
+		attributes_fn();
+		payload.out += `>`;
 
-	if (!VoidElements.has(tag)) {
-		children_fn();
-		if (!RawTextElements.includes(tag)) {
-			payload.out += BLOCK_ANCHOR;
+		if (!VoidElements.has(tag)) {
+			children_fn();
+			if (!RawTextElements.includes(tag)) {
+				payload.out += BLOCK_ANCHOR;
+			}
+			payload.out += `</${tag}>`;
 		}
-		payload.out += `</${tag}>`;
 	}
+
+	payload.out += '<!---->';
 }
 
 /**

@@ -1338,11 +1338,17 @@ const template_visitors = {
 			context.visit(node.fragment, state)
 		);
 
-		const body = b.stmt(
-			b.call('$.element', b.id('$$payload'), tag, b.thunk(attributes), b.thunk(children))
+		context.state.template.push(
+			b.stmt(
+				b.call(
+					'$.element',
+					b.id('$$payload'),
+					tag,
+					attributes.body.length > 0 && b.thunk(attributes),
+					children.body.length > 0 && b.thunk(children)
+				)
+			)
 		);
-
-		context.state.template.push(b.if(tag, body), block_anchor);
 
 		if (context.state.options.dev) {
 			context.state.template.push(b.stmt(b.call('$.pop_element')));
