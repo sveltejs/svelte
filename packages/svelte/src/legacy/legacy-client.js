@@ -71,50 +71,37 @@ class Svelte4Component {
 	 */
 	constructor(options) {
 		var sources = new Map();
-		var add_source = (/** @type {string | symbol} */ key) => {
-			var s = mutable_source(0);
+
+		/**
+		 * @param {string | symbol} key
+		 * @param {unknown} value
+		 */
+		var add_source = (key, value) => {
+			var s = mutable_source(value);
 			sources.set(key, s);
 			return s;
 		};
+
 		// Replicate coarse-grained props through a proxy that has a version source for
 		// each property, which is increment on updates to the property itself. Do not
 		// use our $state proxy because that one has fine-grained reactivity.
 		const props = new Proxy(
 			{ ...(options.props || {}), $$events: {} },
 			{
-				get(target, prop, receiver) {
-					var value = Reflect.get(target, prop, receiver);
-					var s = sources.get(prop);
-					if (s === undefined) {
-						s = add_source(prop);
-					}
-					get(s);
-					return value;
+				get(target, prop) {
+					return get(sources.get(prop) ?? add_source(prop, Reflect.get(target, prop)));
 				},
 				has(target, prop) {
-					var value = Reflect.has(target, prop);
-					var s = sources.get(prop);
-					if (s !== undefined) {
-						get(s);
-					}
-					return value;
+					get(sources.get(prop) ?? add_source(prop, Reflect.get(target, prop)));
+					return Reflect.has(target, prop);
 				},
 				set(target, prop, value) {
-					var s = sources.get(prop);
-					// @ts-ignore
-					var prev_value = target[prop];
-					if (s === undefined) {
-						s = add_source(prop);
-					} else if (safe_not_equal(prev_value, value)) {
-						// Increment version
-						set(s, s.v + 1);
-					}
-					// @ts-ignore
-					target[prop] = value;
-					return true;
+					set(sources.get(prop) ?? add_source(prop, value), value);
+					return Reflect.set(target, prop, value);
 				}
 			}
 		);
+
 		this.#instance = (options.hydrate ? hydrate : mount)(options.component, {
 			target: options.target,
 			props,
@@ -142,6 +129,7 @@ class Svelte4Component {
 		this.#instance.$set = /** @param {Record<string, any>} next */ (next) => {
 			Object.assign(props, next);
 		};
+
 		this.#instance.$destroy = () => {
 			unmount(this.#instance);
 		};
