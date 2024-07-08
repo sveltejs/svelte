@@ -76,9 +76,9 @@ class Svelte4Component {
 			sources.set(key, s);
 			return s;
 		};
-		// Using proxy state here isn't completely mirroring the Svelte 4 behavior, because mutations to a property
-		// cause fine-grained updates to only the places where that property is used, and not the entire property.
-		// Reactive statements and actions (the things where this matters) are handling this properly regardless, so it should be fine in practise.
+		// Replicate coarse-grained props through a proxy that has a version source for
+		// each property, which is increment on updates to the property itself. Do not
+		// use our $state proxy because that one has fine-grained reactivity.
 		const props = new Proxy(
 			{ ...(options.props || {}), $$events: {} },
 			{
