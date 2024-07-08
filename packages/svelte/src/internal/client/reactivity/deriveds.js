@@ -123,7 +123,7 @@ export function destroy_derived(signal) {
 }
 
 /**
- * @param {import("#client").Reaction} derived
+ * @param {import('#client').Derived} derived
  */
 export function reconnect_derived(derived) {
 	var deps = derived.deps;
