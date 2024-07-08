@@ -24,5 +24,3 @@
 <select>
 	<option {...reactive_spread}>Default</option>
 </select>
-
-<button onclick={() => (reactive_spread = {})}>update reactive spread</button>

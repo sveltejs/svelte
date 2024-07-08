@@ -159,16 +159,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 
 	for (var key in prev) {
 		if (!(key in next)) {
-			if (is_option_element && key === 'value') {
-				// Because of the "set falsy option values to the empty string" logic below, which can't
-				// differentiate between a missing value and an explicitly set value of null or undefined,
-				// we need to remove the attribute here and delete the key from the object.
-				element.removeAttribute(key);
-				delete current[key];
-				delete next[key];
-			} else {
-				next[key] = null;
-			}
+			next[key] = null;
 		}
 	}
 
@@ -196,6 +187,12 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 			// the value is set to the text content of the option element, and setting the value
 			// to null or undefined means the value is set to the string "null" or "undefined".
 			// To align with how we handle this case in non-spread-scenarios, this logic is needed.
+			// There's a super-edge-case bug here that is left in in favor of smaller code size:
+			// Because of the "set missing props to null" logic above, we can't differentiate
+			// between a missing value and an explicitly set value of null or undefined. That means
+			// that once set, the value attribute of an <option> element can't be removed. This is
+			// a very rare edge case, and removing the attribute altogether isn't possible either
+			// for the <option value={undefined}> case, so we're not losing any functionality here.
 			// @ts-ignore
 			element.value = element.__value = '';
 			current[key] = value;
