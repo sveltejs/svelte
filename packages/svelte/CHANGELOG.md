@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.178
+
+### Patch Changes
+
+- fix: reconnected deep derived signals to graph ([#12350](https://github.com/sveltejs/svelte/pull/12350))
+
 ## 5.0.0-next.177
 
 ### Patch Changes
