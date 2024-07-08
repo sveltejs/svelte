@@ -1,5 +1,5 @@
 /** @import { SourceLocation } from '#shared' */
-import { HYDRATION_END, HYDRATION_START } from '../../../constants.js';
+import { HYDRATION_END, HYDRATION_START, HYDRATION_START_ELSE } from '../../../constants.js';
 import { hydrating } from '../dom/hydration.js';
 
 /**
@@ -47,7 +47,7 @@ function assign_locations(node, filename, locations) {
 	while (node && i < locations.length) {
 		if (hydrating && node.nodeType === 8) {
 			var comment = /** @type {Comment} */ (node);
-			if (comment.data === HYDRATION_START) depth += 1;
+			if (comment.data === HYDRATION_START || comment.data === HYDRATION_START_ELSE) depth += 1;
 			else if (comment.data[0] === HYDRATION_END) depth -= 1;
 		}
 

@@ -1435,15 +1435,13 @@ const template_visitors = {
 			? /** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
 			: b.block([]);
 
-		consequent.body.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--#if-->')))
-		);
+		consequent.body.unshift(b.stmt(b.assignment('+=', b.id('$$payload.out'), block_open)));
 
 		alternate.body.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--#if!-->')))
+			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN_ELSE)))
 		);
 
-		context.state.template.push(b.if(test, consequent, alternate), b.literal('<!--/if-->'));
+		context.state.template.push(b.if(test, consequent, alternate), block_close);
 	},
 	AwaitBlock(node, context) {
 		context.state.template.push(
