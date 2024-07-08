@@ -14,10 +14,7 @@ export default test({
 	},
 
 	async test({ assert, component, target }) {
-		assert.htmlEqual(
-			target.innerHTML,
-			`<div>1</div><div>1</div>`
-		);
+		assert.htmlEqual(target.innerHTML, `<div>1</div><div>1</div>`);
 
 		data.items = [2, 2];
 
@@ -25,9 +22,6 @@ export default test({
 			data
 		});
 
-		assert.htmlEqual(
-			target.innerHTML,
-			`<div>2</div><div>2</div>`
-		);
+		assert.htmlEqual(target.innerHTML, `<div>2</div><div>2</div>`);
 	}
 });
