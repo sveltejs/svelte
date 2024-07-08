@@ -19,12 +19,11 @@ import * as e from './errors.js';
 /**
  * @template T
  * @param {T} value
- * @param {true} [immutable]
  * @param {import('#client').ProxyMetadata | null} [parent]
  * @param {import('#client').Source<T>} [prev] dev mode only
  * @returns {import('#client').ProxyStateObject<T> | T}
  */
-export function proxy(value, immutable = true, parent = null, prev) {
+export function proxy(value, parent = null, prev) {
 	if (
 		typeof value === 'object' &&
 		value != null &&
@@ -168,7 +167,7 @@ const state_proxy_handler = {
 			const metadata = target[STATE_SYMBOL];
 
 			const s = metadata.s.get(prop);
-			if (s !== undefined) set(s, proxy(descriptor.value, true, metadata));
+			if (s !== undefined) set(s, proxy(descriptor.value, metadata));
 		}
 
 		return Reflect.defineProperty(target, prop, descriptor);
@@ -214,7 +213,7 @@ const state_proxy_handler = {
 
 		// create a source, but only if it's an own property and not a prototype property
 		if (s === undefined && (!(prop in target) || get_descriptor(target, prop)?.writable)) {
-			s = source(proxy(target[prop], true, metadata));
+			s = source(proxy(target[prop], metadata));
 			metadata.s.set(prop, s);
 		}
 
@@ -255,7 +254,7 @@ const state_proxy_handler = {
 			(current_effect !== null && (!has || get_descriptor(target, prop)?.writable))
 		) {
 			if (s === undefined) {
-				s = source(has ? proxy(target[prop], true, metadata) : UNINITIALIZED);
+				s = source(has ? proxy(target[prop], metadata) : UNINITIALIZED);
 				metadata.s.set(prop, s);
 			}
 			const value = get(s);
@@ -280,7 +279,7 @@ const state_proxy_handler = {
 			s = metadata.s.get(prop);
 		}
 		if (s !== undefined) {
-			set(s, proxy(value, true, metadata));
+			set(s, proxy(value, metadata));
 		}
 		const is_array = metadata.a;
 		const not_has = !(prop in target);
