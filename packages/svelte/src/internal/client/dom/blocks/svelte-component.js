@@ -11,10 +11,6 @@ import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
  * @returns {void}
  */
 export function component(anchor, get_component, render_fn) {
-	if (hydrating) {
-		hydrate_next();
-	}
-
 	/** @type {C} */
 	let component;
 

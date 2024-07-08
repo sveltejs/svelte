@@ -166,18 +166,14 @@ export function attr(name, value, is_boolean = false) {
  * @param {boolean} is_html
  * @param {Record<string, string>} props
  * @param {() => void} component
- * @param {boolean} dynamic
  * @returns {void}
  */
-export function css_props(payload, is_html, props, component, dynamic) {
+export function css_props(payload, is_html, props, component) {
 	const styles = style_object_to_string(props);
 	if (is_html) {
 		payload.out += `<div style="display: contents; ${styles}">`;
 	} else {
 		payload.out += `<g style="${styles}">`;
-	}
-	if (dynamic) {
-		payload.out += `<!---->`;
 	}
 	component();
 	if (is_html) {
