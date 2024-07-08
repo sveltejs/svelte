@@ -37,10 +37,10 @@ export function snippet(anchor, get_snippet, ...args) {
 /**
  * In development, wrap the snippet function so that it passes validation, and so that the
  * correct component context is set for ownership checks
- * @param {(node: import('#client').TemplateNode, ...args: any[]) => import('#client').Dom} fn
  * @param {any} component
+ * @param {(node: import('#client').TemplateNode, ...args: any[]) => import('#client').Dom} fn
  */
-export function wrap_snippet(fn, component) {
+export function wrap_snippet(component, fn) {
 	return add_snippet_symbol(
 		(/** @type {import('#client').TemplateNode} */ node, /** @type {any[]} */ ...args) => {
 			var previous_component_function = dev_current_component_function;
