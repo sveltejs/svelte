@@ -24,8 +24,8 @@ export const root_event_handles = new Set();
 
 /**
  * This is normally true — block effects should run their intro transitions —
- * but is false during hydration and mounting (unless `options.intro` is `true`)
- * and when creating the children of a `<svelte:element>` that just changed tag
+ * but is false during hydration (unless `options.intro` is `true`) and
+ * when creating the children of a `<svelte:element>` that just changed tag
  */
 export let should_intro = true;
 
@@ -66,7 +66,8 @@ export function slot(anchor, slot_fn, slot_props, fallback_fn) {
 }
 
 /**
- * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
+ * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
+ * Transitions will play during the initial render unless the `intro` option is set to `false`.
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
@@ -126,6 +127,7 @@ export function hydrate(component, options) {
 		validate_component(component);
 	}
 
+	options.intro = options.intro ?? false;
 	const target = options.target;
 	const previous_hydrate_nodes = hydrate_nodes;
 
@@ -190,7 +192,7 @@ export function hydrate(component, options) {
  * 	}} options
  * @returns {Exports}
  */
-function _mount(Component, { target, anchor, props = {}, events, context, intro = false }) {
+function _mount(Component, { target, anchor, props = {}, events, context, intro = true }) {
 	init_operations();
 
 	const registered_events = new Set();

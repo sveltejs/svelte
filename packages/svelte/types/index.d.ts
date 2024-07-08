@@ -366,7 +366,8 @@ declare module 'svelte' {
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
 	/**
-	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
+	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
+	 * Transitions will play during the initial render unless the `intro` option is set to `false`.
 	 *
 	 * */
 	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
