@@ -6,6 +6,5 @@ var root = $.template(`<h1>hello world</h1>`);
 export default function Hello_world($$anchor) {
 	var h1 = root();
 
-	$.reset(h1);
 	$.append($$anchor, h1);
 }

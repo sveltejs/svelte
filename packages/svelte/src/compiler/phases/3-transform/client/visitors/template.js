@@ -2189,8 +2189,11 @@ export const template_visitors = {
 			{ ...context, state: child_state }
 		);
 
-		// TODO only do this when necessary
-		child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));
+		// If `hydrate_node` is set inside the element, we need to reset it
+		// after the element has been hydrated
+		if (trimmed.some((node) => node.type !== 'Text')) {
+			child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));
+		}
 
 		if (has_declaration) {
 			context.state.init.push(
