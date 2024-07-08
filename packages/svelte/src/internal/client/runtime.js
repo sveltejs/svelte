@@ -171,16 +171,17 @@ export function check_dirtiness(reaction) {
 
 		if (dependencies !== null) {
 			var is_unowned = (flags & UNOWNED) !== 0;
+			var i;
 
 			if ((flags & DISCONNECTED) !== 0) {
-				for (var i = 0; i < dependencies.length; i++) {
+				for (i = 0; i < dependencies.length; i++) {
 					(dependencies[i].reactions ??= []).push(reaction);
 				}
 
 				reaction.f ^= DISCONNECTED;
 			}
 
-			for (var i = 0; i < dependencies.length; i++) {
+			for (i = 0; i < dependencies.length; i++) {
 				var dependency = dependencies[i];
 
 				if (check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
