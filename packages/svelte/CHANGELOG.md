@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.177
+
+### Patch Changes
+
+- breaking: play transitions on `mount` by default ([#12351](https://github.com/sveltejs/svelte/pull/12351))
+
+- fix: make `<select>` `<option value>` behavior consistent ([#12316](https://github.com/sveltejs/svelte/pull/12316))
+
+- chore: stricter control flow syntax validation in runes mode ([#12342](https://github.com/sveltejs/svelte/pull/12342))
+
+- fix: resolve legacy component props equality for mutations ([#12348](https://github.com/sveltejs/svelte/pull/12348))
+
+- fix: make `$state` component exports settable ([#12345](https://github.com/sveltejs/svelte/pull/12345))
+
 ## 5.0.0-next.176
 
 ### Patch Changes
