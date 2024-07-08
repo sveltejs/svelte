@@ -18,6 +18,4 @@ export default function Function_prop_no_getter($$payload) {
 		},
 		$$slots: { default: true }
 	});
-
-	$$payload.out += `<!--]-->`;
 }

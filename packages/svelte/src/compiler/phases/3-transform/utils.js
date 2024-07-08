@@ -291,7 +291,7 @@ export function clean_nodes(
 		first &&
 		(first?.type === 'Text' || first?.type === 'ExpressionTag');
 
-	return { hoisted, trimmed, is_standalone: false, is_anchored };
+	return { hoisted, trimmed, is_standalone, is_anchored };
 }
 
 /**

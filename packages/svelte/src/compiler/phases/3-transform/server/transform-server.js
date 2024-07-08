@@ -1025,7 +1025,7 @@ function serialize_inline_component(node, expression, context) {
 		context.state.template.push(statement);
 	}
 
-	if (custom_css_props.length === 0) {
+	if (custom_css_props.length === 0 && !context.state.skip_hydration_boundaries) {
 		context.state.template.push(block_close);
 	}
 }
@@ -1219,7 +1219,9 @@ const template_visitors = {
 			)
 		);
 
-		context.state.template.push(block_close);
+		if (!context.state.skip_hydration_boundaries) {
+			context.state.template.push(block_close);
+		}
 	},
 	ClassDirective() {
 		throw new Error('Node should have been handled elsewhere');
