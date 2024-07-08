@@ -73,7 +73,7 @@ export function assign_payload(p1, p2) {
  * @returns {void}
  */
 export function element(payload, tag, attributes_fn = noop, children_fn = noop) {
-	payload.out += `<!---->`;
+	payload.out += '<!---->';
 
 	if (tag) {
 		payload.out += `<${tag} `;
@@ -89,7 +89,7 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
 		}
 	}
 
-	payload.out += `<!---->`;
+	payload.out += '<!---->';
 }
 
 /**
