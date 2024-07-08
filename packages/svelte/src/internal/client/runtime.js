@@ -34,7 +34,7 @@ import {
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { mutate, set, source } from './reactivity/sources.js';
-import { update_derived } from './reactivity/deriveds.js';
+import { reconnect_derived, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 
@@ -168,6 +168,7 @@ export function check_dirtiness(reaction) {
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
+		var is_disconnected = (flags ^= DISCONNECTED);
 
 		if (dependencies !== null) {
 			var is_unowned = (flags & UNOWNED) !== 0;
@@ -191,15 +192,14 @@ export function check_dirtiness(reaction) {
 						// if linked to the dependency source – otherwise future updates will not be caught.
 						(dependency.reactions ??= []).push(reaction);
 					}
-				} else if ((flags & DISCONNECTED) !== 0) {
-					var reactions = dependency.reactions;
-					if (reactions === null) {
-						dependency.reactions = [reaction];
-					} else if (!reactions.includes(reaction)) {
-						reactions.push(reaction);
-					}
+				} else if (is_disconnected) {
+					reconnect_derived(reaction);
 				}
 			}
+		}
+
+		if (is_disconnected) {
+			reaction.f ^= DISCONNECTED;
 		}
 
 		set_signal_status(reaction, CLEAN);
@@ -779,21 +779,7 @@ export function get(signal) {
 		}
 
 		if ((flags & DISCONNECTED) !== 0) {
-			// reconnect to the graph
-			deps = derived.deps;
-
-			if (deps !== null) {
-				for (var i = 0; i < deps.length; i++) {
-					var dep = deps[i];
-					var reactions = dep.reactions;
-					if (reactions === null) {
-						dep.reactions = [derived];
-					} else if (!reactions.includes(derived)) {
-						reactions.push(derived);
-					}
-				}
-			}
-
+			reconnect_derived(derived);
 			derived.f ^= DISCONNECTED;
 		}
 	}

@@ -121,3 +121,22 @@ export function destroy_derived(signal) {
 		signal.fn =
 			null;
 }
+
+/**
+ * @param {import("#client").Reaction} derived
+ */
+export function reconnect_derived(derived) {
+	var deps = derived.deps;
+
+	if (deps !== null) {
+		for (var i = 0; i < deps.length; i++) {
+			var dep = deps[i];
+			var reactions = dep.reactions;
+			if (reactions === null) {
+				dep.reactions = [derived];
+			} else if (!reactions.includes(derived)) {
+				reactions.push(derived);
+			}
+		}
+	}
+}
