@@ -77,7 +77,7 @@ class Svelte4Component {
 			target: options.target,
 			props,
 			context: options.context,
-			intro: options.intro,
+			intro: options.intro ?? false,
 			recover: options.recover
 		});
 
