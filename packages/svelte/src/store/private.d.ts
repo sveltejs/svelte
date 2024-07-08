@@ -1,10 +1,10 @@
 import { Readable, Subscriber } from './public.js';
 
 /** Cleanup logic callback. */
-type Invalidator<T> = (value?: T) => void;
+type Invalidator = () => void;
 
 /** Pair of subscriber and invalidator. */
-type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator<T>];
+type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator];
 
 /** One or more `Readable`s. */
 type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;

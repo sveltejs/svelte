@@ -74,7 +74,7 @@ export function writable(value, start = noop) {
 
 	/**
 	 * @param {Subscriber<T>} run
-	 * @param {Invalidator<T>} [invalidate]
+	 * @param {Invalidator} [invalidate]
 	 * @returns {Unsubscriber}
 	 */
 	function subscribe(run, invalidate = noop) {
