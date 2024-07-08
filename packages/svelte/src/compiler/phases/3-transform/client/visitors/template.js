@@ -1433,6 +1433,8 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 	}
 
 	if (sequence.length > 0) {
+		// if the final item in a fragment is static text,
+		// we need to force `hydrate_node` to advance
 		if (sequence.length === 1 && sequence[0].type === 'Text' && nodes.length > 1) {
 			state.init.push(b.stmt(b.call('$.next')));
 		}
