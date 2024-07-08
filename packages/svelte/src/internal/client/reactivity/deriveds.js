@@ -1,12 +1,4 @@
-import {
-	CLEAN,
-	DERIVED,
-	DESTROYED,
-	DIRTY,
-	DISCONNECTED,
-	MAYBE_DIRTY,
-	UNOWNED
-} from '../constants.js';
+import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../constants.js';
 import {
 	current_reaction,
 	current_effect,
@@ -128,25 +120,4 @@ export function destroy_derived(signal) {
 		// @ts-expect-error `signal.fn` cannot be `null` while the signal is alive
 		signal.fn =
 			null;
-}
-
-/**
- * @param {import('#client').Derived} derived
- */
-export function reconnect_derived(derived) {
-	var deps = derived.deps;
-
-	if (deps !== null) {
-		for (var i = 0; i < deps.length; i++) {
-			var dep = deps[i];
-			var reactions = dep.reactions;
-			if (reactions === null) {
-				dep.reactions = [derived];
-			} else if (!reactions.includes(derived)) {
-				reactions.push(derived);
-			}
-		}
-	}
-
-	derived.f ^= DISCONNECTED;
 }

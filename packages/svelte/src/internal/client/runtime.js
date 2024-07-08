@@ -34,7 +34,7 @@ import {
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { mutate, set, source } from './reactivity/sources.js';
-import { reconnect_derived, update_derived } from './reactivity/deriveds.js';
+import { update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 
@@ -172,6 +172,14 @@ export function check_dirtiness(reaction) {
 		if (dependencies !== null) {
 			var is_unowned = (flags & UNOWNED) !== 0;
 
+			if ((flags & DISCONNECTED) !== 0) {
+				for (var i = 0; i < dependencies.length; i++) {
+					(dependencies[i].reactions ??= []).push(reaction);
+				}
+
+				reaction.f ^= DISCONNECTED;
+			}
+
 			for (var i = 0; i < dependencies.length; i++) {
 				var dependency = dependencies[i];
 
@@ -192,10 +200,6 @@ export function check_dirtiness(reaction) {
 						(dependency.reactions ??= []).push(reaction);
 					}
 				}
-			}
-
-			if ((flags & DISCONNECTED) !== 0) {
-				reconnect_derived(/** @type {import('#client').Derived} */ (reaction));
 			}
 		}
 
@@ -773,10 +777,6 @@ export function get(signal) {
 
 		if (check_dirtiness(derived)) {
 			update_derived(derived);
-		}
-
-		if ((flags & DISCONNECTED) !== 0) {
-			reconnect_derived(derived);
 		}
 	}
 
