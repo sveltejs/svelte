@@ -191,6 +191,13 @@ export function check_dirtiness(reaction) {
 						// if linked to the dependency source – otherwise future updates will not be caught.
 						(dependency.reactions ??= []).push(reaction);
 					}
+				} else if ((flags & DISCONNECTED) !== 0) {
+					var reactions = dependency.reactions;
+					if (reactions === null) {
+						dependency.reactions = [reaction];
+					} else if (!reactions.includes(reaction)) {
+						reactions.push(reaction);
+					}
 				}
 			}
 		}
