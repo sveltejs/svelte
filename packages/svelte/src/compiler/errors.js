@@ -731,6 +731,16 @@ export function block_unclosed(node) {
 }
 
 /**
+ * Expected a `%character%` character immediately following the opening bracket
+ * @param {null | number | NodeLike} node
+ * @param {string} character
+ * @returns {never}
+ */
+export function block_unexpected_character(node, character) {
+	e(node, "block_unexpected_character", `Expected a \`${character}\` character immediately following the opening bracket`);
+}
+
+/**
  * Unexpected block closing tag
  * @param {null | number | NodeLike} node
  * @returns {never}
