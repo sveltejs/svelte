@@ -563,7 +563,7 @@ describe('signals', () => {
 			let destroy = effect_root(() => {
 				render_effect(() => {
 					$.get(e);
-					log.push('init')
+					log.push('init');
 				});
 			});
 			destroy();
@@ -571,7 +571,7 @@ describe('signals', () => {
 			destroy = effect_root(() => {
 				render_effect(() => {
 					$.get(e);
-					log.push('update')
+					log.push('update');
 				});
 			});
 
