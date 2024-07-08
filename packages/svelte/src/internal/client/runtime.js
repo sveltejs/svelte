@@ -168,7 +168,6 @@ export function check_dirtiness(reaction) {
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
-		var is_disconnected = (flags ^= DISCONNECTED);
 
 		if (dependencies !== null) {
 			var is_unowned = (flags & UNOWNED) !== 0;
@@ -195,7 +194,7 @@ export function check_dirtiness(reaction) {
 				}
 			}
 
-			if (is_disconnected) {
+			if ((flags & DISCONNECTED) !== 0) {
 				reconnect_derived(/** @type {import('#client').Derived} */ (reaction));
 			}
 		}
