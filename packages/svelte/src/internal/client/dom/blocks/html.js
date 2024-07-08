@@ -1,5 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
-import { HYDRATION_ERROR } from '../../../../constants.js';
+import { HYDRATION_ANCHOR, HYDRATION_ERROR } from '../../../../constants.js';
 import { block, branch, destroy_effect } from '../../reactivity/effects.js';
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
 import { create_fragment_from_html } from '../reconciler.js';
@@ -40,7 +40,7 @@ export function html(anchor, get_value, svg, mathml) {
 
 				while (
 					next !== null &&
-					(next.nodeType !== 8 || /** @type {Comment} */ (next).data !== '/html')
+					(next.nodeType !== 8 || /** @type {Comment} */ (next).data !== HYDRATION_ANCHOR)
 				) {
 					last = next;
 					next = /** @type {TemplateNode} */ (next.nextSibling);
