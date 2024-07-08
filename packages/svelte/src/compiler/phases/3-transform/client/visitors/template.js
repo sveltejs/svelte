@@ -1567,7 +1567,7 @@ export const template_visitors = {
 
 		const namespace = infer_namespace(context.state.metadata.namespace, parent, node.nodes);
 
-		const { hoisted, trimmed, is_standalone, is_anchored } = clean_nodes(
+		const { hoisted, trimmed, is_standalone, is_text_first } = clean_nodes(
 			parent,
 			node.nodes,
 			context.path,
@@ -1617,7 +1617,8 @@ export const template_visitors = {
 			context.visit(node, state);
 		}
 
-		if (is_anchored) {
+		if (is_text_first) {
+			// skip over inserted comment
 			body.push(b.stmt(b.call('$.next')));
 		}
 

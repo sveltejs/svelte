@@ -1134,7 +1134,7 @@ const template_visitors = {
 		const parent = context.path.at(-1) ?? node;
 		const namespace = infer_namespace(context.state.namespace, parent, node.nodes);
 
-		const { hoisted, trimmed, is_standalone, is_anchored } = clean_nodes(
+		const { hoisted, trimmed, is_standalone, is_text_first } = clean_nodes(
 			parent,
 			node.nodes,
 			context.path,
@@ -1157,8 +1157,9 @@ const template_visitors = {
 			context.visit(node, state);
 		}
 
-		if (is_anchored) {
-			state.template.push(b.literal('<!---->'));
+		if (is_text_first) {
+			// insert `<!---->` to prevent this from being glued to the previous fragment
+			state.template.push(block_anchor);
 		}
 
 		process_children(trimmed, { ...context, state });
