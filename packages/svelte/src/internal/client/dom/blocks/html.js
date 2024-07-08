@@ -1,3 +1,4 @@
+/** @import { Effect, TemplateNode } from '#client' */
 import { block, branch, destroy_effect } from '../../reactivity/effects.js';
 import { get_start, hydrate_nodes, hydrating } from '../hydration.js';
 import { create_fragment_from_html } from '../reconciler.js';
@@ -13,7 +14,7 @@ import { assign_nodes } from '../template.js';
 export function html(anchor, get_value, svg, mathml) {
 	var value = '';
 
-	/** @type {import('#client').Effect | null} */
+	/** @type {Effect | null} */
 	var effect;
 
 	block(() => {
@@ -46,8 +47,8 @@ export function html(anchor, get_value, svg, mathml) {
 			}
 
 			assign_nodes(
-				/** @type {import('#client').TemplateNode} */ (node.firstChild),
-				/** @type {import('#client').TemplateNode} */ (node.lastChild)
+				/** @type {TemplateNode} */ (node.firstChild),
+				/** @type {TemplateNode} */ (node.lastChild)
 			);
 
 			if (svg || mathml) {

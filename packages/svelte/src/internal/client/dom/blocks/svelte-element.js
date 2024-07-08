@@ -69,7 +69,6 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				pause_effect(effect, () => {
 					effect = null;
 					current_tag = null;
-					element?.remove();
 				});
 			} else if (next_tag === current_tag) {
 				// same tag as is currently rendered — abort outro
@@ -83,7 +82,6 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 		if (next_tag && next_tag !== current_tag) {
 			effect = branch(() => {
-				const prev_element = element;
 				element = hydrating
 					? /** @type {Element} */ (element)
 					: ns
@@ -101,10 +99,6 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 							column: location[1]
 						}
 					};
-				}
-
-				if (prev_element && !hydrating) {
-					prev_element.remove();
 				}
 
 				if (render_fn) {

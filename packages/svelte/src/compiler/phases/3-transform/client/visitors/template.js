@@ -883,7 +883,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 				b.init(
 					'children',
 					context.state.options.dev
-						? b.call('$.wrap_snippet', slot_fn, b.id(context.state.analysis.name))
+						? b.call('$.wrap_snippet', b.id(context.state.analysis.name), slot_fn)
 						: slot_fn
 				)
 			);
@@ -2752,7 +2752,7 @@ export const template_visitors = {
 		let snippet = b.arrow(args, body);
 
 		if (context.state.options.dev) {
-			snippet = b.call('$.wrap_snippet', snippet, b.id(context.state.analysis.name));
+			snippet = b.call('$.wrap_snippet', b.id(context.state.analysis.name), snippet);
 		}
 
 		const declaration = b.const(node.expression, snippet);

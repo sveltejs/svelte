@@ -1,3 +1,4 @@
+/** @import { Effect, TemplateNode } from '#client' */
 import { add_snippet_symbol } from '../../../shared/validate.js';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { branch, block, destroy_effect } from '../../reactivity/effects.js';
@@ -7,8 +8,8 @@ import {
 } from '../../runtime.js';
 
 /**
- * @template {(node: import('#client').TemplateNode, ...args: any[]) => import('#client').Dom} SnippetFn
- * @param {import('#client').TemplateNode} anchor
+ * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
+ * @param {TemplateNode} anchor
  * @param {() => SnippetFn | null | undefined} get_snippet
  * @param {(() => any)[]} args
  * @returns {void}
@@ -17,7 +18,7 @@ export function snippet(anchor, get_snippet, ...args) {
 	/** @type {SnippetFn | null | undefined} */
 	var snippet;
 
-	/** @type {import('#client').Effect | null} */
+	/** @type {Effect | null} */
 	var snippet_effect;
 
 	block(() => {
@@ -37,20 +38,18 @@ export function snippet(anchor, get_snippet, ...args) {
 /**
  * In development, wrap the snippet function so that it passes validation, and so that the
  * correct component context is set for ownership checks
- * @param {(node: import('#client').TemplateNode, ...args: any[]) => import('#client').Dom} fn
  * @param {any} component
+ * @param {(node: TemplateNode, ...args: any[]) => void} fn
  */
-export function wrap_snippet(fn, component) {
-	return add_snippet_symbol(
-		(/** @type {import('#client').TemplateNode} */ node, /** @type {any[]} */ ...args) => {
-			var previous_component_function = dev_current_component_function;
-			set_dev_current_component_function(component);
+export function wrap_snippet(component, fn) {
+	return add_snippet_symbol((/** @type {TemplateNode} */ node, /** @type {any[]} */ ...args) => {
+		var previous_component_function = dev_current_component_function;
+		set_dev_current_component_function(component);
 
-			try {
-				return fn(node, ...args);
-			} finally {
-				set_dev_current_component_function(previous_component_function);
-			}
+		try {
+			return fn(node, ...args);
+		} finally {
+			set_dev_current_component_function(previous_component_function);
 		}
-	);
+	});
 }
