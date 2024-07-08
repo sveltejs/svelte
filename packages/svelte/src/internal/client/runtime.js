@@ -193,7 +193,7 @@ export function check_dirtiness(reaction) {
 						(dependency.reactions ??= []).push(reaction);
 					}
 				} else if (is_disconnected) {
-					reconnect_derived(reaction);
+					reconnect_derived(/** @type {import('#client').Derived} */ (reaction));
 				}
 			}
 		}
