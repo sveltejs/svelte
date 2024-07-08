@@ -1,8 +1,9 @@
 /** @import { ComponentConstructorOptions, ComponentType, SvelteComponent, Component } from 'svelte' */
-import { proxy } from '../internal/client/proxy.js';
+import { mutable_source, get, set } from 'svelte/internal/client';
 import { user_pre_effect } from '../internal/client/reactivity/effects.js';
 import { hydrate, mount, unmount } from '../internal/client/render.js';
 import { define_property } from '../internal/client/utils.js';
+import { safe_not_equal } from '../internal/client/reactivity/equality.js';
 
 /**
  * Takes the same options as a Svelte 4 component and the component function and returns a Svelte 4 compatible component.
@@ -69,10 +70,51 @@ class Svelte4Component {
 	 * }} options
 	 */
 	constructor(options) {
-		// Using proxy state here isn't completely mirroring the Svelte 4 behavior, because mutations to a property
-		// cause fine-grained updates to only the places where that property is used, and not the entire property.
-		// Reactive statements and actions (the things where this matters) are handling this properly regardless, so it should be fine in practise.
-		const props = proxy({ ...(options.props || {}), $$events: {} }, false);
+		var sources = new Map();
+		var add_source = (/** @type {string | symbol} */ key) => {
+			var s = mutable_source(0);
+			sources.set(key, s);
+			return s;
+		};
+		// Replicate coarse-grained props through a proxy that has a version source for
+		// each property, which is increment on updates to the property itself. Do not
+		// use our $state proxy because that one has fine-grained reactivity.
+		const props = new Proxy(
+			{ ...(options.props || {}), $$events: {} },
+			{
+				get(target, prop, receiver) {
+					var value = Reflect.get(target, prop, receiver);
+					var s = sources.get(prop);
+					if (s === undefined) {
+						s = add_source(prop);
+					}
+					get(s);
+					return value;
+				},
+				has(target, prop) {
+					var value = Reflect.has(target, prop);
+					var s = sources.get(prop);
+					if (s !== undefined) {
+						get(s);
+					}
+					return value;
+				},
+				set(target, prop, value) {
+					var s = sources.get(prop);
+					// @ts-ignore
+					var prev_value = target[prop];
+					if (s === undefined) {
+						s = add_source(prop);
+					} else if (safe_not_equal(prev_value, value)) {
+						// Increment version
+						set(s, s.v + 1);
+					}
+					// @ts-ignore
+					target[prop] = value;
+					return true;
+				}
+			}
+		);
 		this.#instance = (options.hydrate ? hydrate : mount)(options.component, {
 			target: options.target,
 			props,
