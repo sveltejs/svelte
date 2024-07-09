@@ -332,7 +332,7 @@ export function client_component(source, analysis, options) {
 		}
 	}
 
-	if (analysis.css.ast !== null && options.css === 'injected') {
+	if (analysis.css.ast !== null && analysis.inject_styles) {
 		const hash = b.literal(analysis.css.hash);
 		const code = b.literal(render_stylesheet(analysis.source, analysis, options).code);
 
