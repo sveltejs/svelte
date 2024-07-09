@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.179
+
+### Patch Changes
+
+- fix: ensure `$slots` returns a record of booleans ([#12359](https://github.com/sveltejs/svelte/pull/12359))
+
+- feat: single-pass hydration ([#12335](https://github.com/sveltejs/svelte/pull/12335))
+
 ## 5.0.0-next.178
 
 ### Patch Changes
