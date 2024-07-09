@@ -1,3 +1,5 @@
+/** @import { Component, Payload, RenderOutput } from '#server' */
+/** @import { Store } from '#shared' */
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
@@ -37,36 +39,33 @@ export const VoidElements = new Set([
 	'wbr'
 ]);
 
-/** @returns {import('#server').Payload} */
-function create_payload() {
-	return { out: '', head: { title: '', out: '', anchor: 0 }, anchor: 0 };
-}
-
 /**
- * @param {import('#server').Payload} to_copy
- * @returns {import('#server').Payload}
+ * @param {Payload} to_copy
+ * @returns {Payload}
  */
-export function copy_payload(to_copy) {
+export function copy_payload({ out, head }) {
 	return {
-		...to_copy,
-		head: { ...to_copy.head }
+		out,
+		head: {
+			title: head.title,
+			out: head.out
+		}
 	};
 }
 
 /**
  * Assigns second payload to first
- * @param {import('#server').Payload} p1
- * @param {import('#server').Payload} p2
+ * @param {Payload} p1
+ * @param {Payload} p2
  * @returns {void}
  */
 export function assign_payload(p1, p2) {
 	p1.out = p2.out;
 	p1.head = p2.head;
-	p1.anchor = p2.anchor;
 }
 
 /**
- * @param {import('#server').Payload} payload
+ * @param {Payload} payload
  * @param {string} tag
  * @param {() => void} attributes_fn
  * @param {() => void} children_fn
@@ -104,10 +103,11 @@ export let on_destroy = [];
  * @template {Record<string, any>} Props
  * @param {import('svelte').Component<Props> | import('svelte').ComponentType<import('svelte').SvelteComponent<Props>>} component
  * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }} [options]
- * @returns {import('#server').RenderOutput}
+ * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
-	const payload = create_payload();
+	/** @type {Payload} */
+	const payload = { out: '', head: { title: '', out: '' } };
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
@@ -115,7 +115,7 @@ export function render(component, options = {}) {
 
 	if (options.context) {
 		push();
-		/** @type {import('#server').Component} */ (current_component).c = options.context;
+		/** @type {Component} */ (current_component).c = options.context;
 	}
 
 	// @ts-expect-error
@@ -137,8 +137,8 @@ export function render(component, options = {}) {
 }
 
 /**
- * @param {import('#server').Payload} payload
- * @param {(head_payload: import('#server').Payload['head']) => void} fn
+ * @param {Payload} payload
+ * @param {(head_payload: Payload['head']) => void} fn
  * @returns {void}
  */
 export function head(payload, fn) {
@@ -162,7 +162,7 @@ export function attr(name, value, is_boolean = false) {
 }
 
 /**
- * @param {import('#server').Payload} payload
+ * @param {Payload} payload
  * @param {boolean} is_html
  * @param {Record<string, string>} props
  * @param {() => void} component
@@ -309,7 +309,7 @@ export function merge_styles(attribute, styles) {
  * @template V
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('#shared').Store<V> | null | undefined} store
+ * @param {Store<V> | null | undefined} store
  * @returns {V}
  */
 export function store_get(store_values, store_name, store) {
@@ -336,7 +336,7 @@ export function store_get(store_values, store_name, store) {
 /**
  * Sets the new value of a store and returns that value.
  * @template V
- * @param {import('#shared').Store<V>} store
+ * @param {Store<V>} store
  * @param {V} value
  * @returns {V}
  */
@@ -350,7 +350,7 @@ export function store_set(store, value) {
  * @template V
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('#shared').Store<V>} store
+ * @param {Store<V>} store
  * @param {any} expression
  */
 export function mutate_store(store_values, store_name, store, expression) {
@@ -361,7 +361,7 @@ export function mutate_store(store_values, store_name, store, expression) {
 /**
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('#shared').Store<number>} store
+ * @param {Store<number>} store
  * @param {1 | -1} [d]
  * @returns {number}
  */
@@ -374,7 +374,7 @@ export function update_store(store_values, store_name, store, d = 1) {
 /**
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('#shared').Store<number>} store
+ * @param {Store<number>} store
  * @param {1 | -1} [d]
  * @returns {number}
  */
@@ -412,8 +412,8 @@ export async function value_or_fallback_async(value, fallback) {
 }
 
 /**
- * @param {import('#server').Payload} payload
- * @param {void | ((payload: import('#server').Payload, props: Record<string, unknown>) => void)} slot_fn
+ * @param {Payload} payload
+ * @param {void | ((payload: Payload, props: Record<string, unknown>) => void)} slot_fn
  * @param {Record<string, unknown>} slot_props
  * @param {null | (() => void)} fallback_fn
  * @returns {void}

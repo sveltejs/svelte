@@ -16,17 +16,18 @@ import {
 	set_hydrating
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
-import {
-	all_registered_events,
-	handle_event_propagation,
-	root_event_handles
-} from './dom/elements/events.js';
+import { handle_event_propagation } from './dom/elements/events.js';
 import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 import { validate_component } from '../shared/validate.js';
 import { assign_nodes } from './dom/template.js';
-import { run } from '../shared/utils.js';
+
+/** @type {Set<string>} */
+export const all_registered_events = new Set();
+
+/** @type {Set<(events: Array<string>) => void>} */
+export const root_event_handles = new Set();
 
 /**
  * This is normally true — block effects should run their intro transitions —
@@ -38,21 +39,6 @@ export let should_intro = true;
 /** @param {boolean} value */
 export function set_should_intro(value) {
 	should_intro = value;
-}
-
-/** @type {Array<() => void>} */
-let on_init_error_handlers = [];
-let mounting = false;
-
-/**
- * Push a handler to be called when an error occurs during initialization.
- * If no initialization is happening, this is a noop.
- * @param {() => void} handler
- */
-export function push_init_error_handler(handler) {
-	if (mounting || hydrating) {
-		on_init_error_handlers.push(handler);
-	}
 }
 
 /**
@@ -100,15 +86,8 @@ export function mount(component, options) {
 	}
 
 	const anchor = options.anchor ?? options.target.appendChild(empty());
-	let prev_mounting = mounting;
-	try {
-		mounting = true;
-		// Don't flush previous effects to ensure order of outer effects stays consistent
-		const result = flush_sync(() => _mount(component, { ...options, anchor }), false);
-		return result;
-	} finally {
-		mounting = prev_mounting;
-	}
+	// Don't flush previous effects to ensure order of outer effects stays consistent
+	return flush_sync(() => _mount(component, { ...options, anchor }), false);
 }
 
 /**
@@ -180,6 +159,9 @@ export function hydrate(component, options) {
 		}, false);
 	} catch (error) {
 		if (error === HYDRATION_ERROR) {
+			// TODO it's possible for event listeners to have been added and
+			// not removed, e.g. with `<svelte:window>` or `<svelte:document>`
+
 			if (options.recover === false) {
 				e.hydration_failed();
 			}
@@ -241,19 +223,9 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 	event_handle(array_from(all_registered_events));
 	root_event_handles.add(event_handle);
 
-	const remove_event_handles = () => {
-		for (const event_name of registered_events) {
-			target.removeEventListener(event_name, handle_event_propagation);
-			document.removeEventListener(event_name, handle_event_propagation);
-		}
-		root_event_handles.delete(event_handle);
-	};
-
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously
 	let component = undefined;
-	let prev_init_error_handlers = on_init_error_handlers;
-	on_init_error_handlers = [];
 
 	const unmount = effect_root(() => {
 		branch(() => {
@@ -273,19 +245,8 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			}
 
 			should_intro = intro;
-
-			try {
-				// @ts-expect-error the public typings are not what the actual function looks like
-				component = Component(anchor, props) || {};
-			} catch (e) {
-				remove_event_handles();
-				on_init_error_handlers.forEach(run);
-
-				throw e;
-			} finally {
-				on_init_error_handlers = prev_init_error_handlers;
-			}
-
+			// @ts-expect-error the public typings are not what the actual function looks like
+			component = Component(anchor, props) || {};
 			should_intro = true;
 
 			if (hydrating) {
@@ -300,7 +261,12 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 		});
 
 		return () => {
-			remove_event_handles();
+			for (const event_name of registered_events) {
+				target.removeEventListener(event_name, handle_event_propagation);
+				document.removeEventListener(event_name, handle_event_propagation);
+			}
+
+			root_event_handles.delete(event_handle);
 			mounted_components.delete(component);
 		};
 	});
