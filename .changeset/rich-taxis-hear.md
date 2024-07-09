@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-chore: reenable server CSS output through a compiler option
+feat: include CSS in `<head>` when `css: 'injected'`
