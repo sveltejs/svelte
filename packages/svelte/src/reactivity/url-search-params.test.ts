@@ -203,6 +203,6 @@ test('URLSearchParams.toString', () => {
 	cleanup();
 });
 
-test('URLSearchParams.instanceOf', () => {
-	assert.equal(new SvelteURLSearchParams() instanceof URLSearchParams, true);
+test('SvelteURLSearchParams instanceof URLSearchParams', () => {
+	assert.ok(new SvelteURLSearchParams() instanceof URLSearchParams);
 });

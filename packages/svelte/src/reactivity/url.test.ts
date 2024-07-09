@@ -115,6 +115,6 @@ test('url.searchParams', () => {
 	cleanup();
 });
 
-test('URL.instanceOf', () => {
-	assert.equal(new SvelteURL('https://svelte.dev') instanceof URL, true);
+test('SvelteURL instanceof URL', () => {
+	assert.ok(new SvelteURL('https://svelte.dev') instanceof URL);
 });
