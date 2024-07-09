@@ -56,4 +56,6 @@ export function bind_this(element_or_component = {}, update, get_value, get_part
 			});
 		};
 	});
+
+	return element_or_component;
 }
