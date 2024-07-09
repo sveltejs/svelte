@@ -332,22 +332,21 @@ export function client_component(source, analysis, options) {
 		}
 	}
 
-	const append_styles =
-		analysis.inject_styles && analysis.css.ast
-			? () =>
-					component_block.body.push(
-						b.stmt(
-							b.call(
-								'$.append_styles',
-								b.id('$$anchor'),
-								b.literal(analysis.css.hash),
-								b.literal(render_stylesheet(source, analysis, options).code)
-							)
-						)
-					)
-			: () => {};
+	if (analysis.css.ast !== null && options.css === 'injected') {
+		state.hoisted.push(
+			b.const(
+				'$$css',
+				b.object([
+					b.init('hash', b.literal(analysis.css.hash)),
+					b.init('code', b.literal(render_stylesheet(analysis.source, analysis, options).code))
+				])
+			)
+		);
 
-	append_styles();
+		component_block.body.unshift(
+			b.stmt(b.call('$.append_styles', b.id('$$anchor'), b.id('$$css')))
+		);
+	}
 
 	const should_inject_context =
 		analysis.needs_context ||

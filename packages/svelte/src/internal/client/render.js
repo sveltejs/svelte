@@ -22,6 +22,7 @@ import * as w from './warnings.js';
 import * as e from './errors.js';
 import { validate_component } from '../shared/validate.js';
 import { assign_nodes } from './dom/template.js';
+import { queue_micro_task } from './dom/task.js';
 
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
@@ -293,36 +294,4 @@ export function unmount(component) {
 		console.trace('stack trace');
 	}
 	fn?.();
-}
-
-/**
- * @param {Node} target
- * @param {string} style_sheet_id
- * @param {string} styles
- */
-export async function append_styles(target, style_sheet_id, styles) {
-	// Wait a tick so that the template is added to the dom, else getRootNode() will yield wrong results
-	// If it turns out that this results in noticeable flickering, we need to do something like doing the
-	// append outside and adding code in mount that appends all stylesheets (similar to how we do it with event delegation)
-	await Promise.resolve();
-	const append_styles_to = get_root_for_style(target);
-	if (!append_styles_to.getElementById(style_sheet_id)) {
-		const style = document.createElement('style');
-		style.id = style_sheet_id;
-		style.textContent = styles;
-		const target = /** @type {Document} */ (append_styles_to).head || append_styles_to;
-		target.appendChild(style);
-	}
-}
-
-/**
- * @param {Node} node
- */
-function get_root_for_style(node) {
-	if (!node) return document;
-	const root = node.getRootNode ? node.getRootNode() : node.ownerDocument;
-	if (root && /** @type {ShadowRoot} */ (root).host) {
-		return /** @type {ShadowRoot} */ (root);
-	}
-	return /** @type {Document} */ (node.ownerDocument);
 }

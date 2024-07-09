@@ -20,6 +20,7 @@ export { snippet, wrap_snippet } from './dom/blocks/snippet.js';
 export { component } from './dom/blocks/svelte-component.js';
 export { element } from './dom/blocks/svelte-element.js';
 export { head } from './dom/blocks/svelte-head.js';
+export { append_styles } from './dom/css.js';
 export { action } from './dom/elements/actions.js';
 export {
 	remove_input_defaults,
@@ -120,7 +121,7 @@ export {
 	update_pre_store,
 	update_store
 } from './reactivity/store.js';
-export { append_styles, set_text } from './render.js';
+export { set_text } from './render.js';
 export {
 	get,
 	invalidate_inner_signals,
