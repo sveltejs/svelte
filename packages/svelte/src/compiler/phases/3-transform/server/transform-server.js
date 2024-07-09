@@ -2160,15 +2160,10 @@ export function server_component(analysis, options) {
 	const body = [...state.hoisted, ...module.body];
 
 	if (analysis.css.ast !== null && options.css === 'injected' && !options.customElement) {
-		body.push(
-			b.const(
-				'$$css',
-				b.object([
-					b.init('hash', b.literal(analysis.css.hash)),
-					b.init('code', b.literal(render_stylesheet(analysis.source, analysis, options).code))
-				])
-			)
-		);
+		const hash = b.literal(analysis.css.hash);
+		const code = b.literal(render_stylesheet(analysis.source, analysis, options).code);
+
+		body.push(b.const('$$css', b.object([b.init('hash', hash), b.init('code', code)])));
 		component_block.body.unshift(b.stmt(b.call('$$payload.css.add', b.id('$$css'))));
 	}
 
