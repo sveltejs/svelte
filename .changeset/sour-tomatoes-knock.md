@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-breaking: rename `legacy.componentApi` to `compatibility.legacyComponent`
+breaking: rename `legacy.componentApi` to `compatibility.componentApi`
