@@ -7,6 +7,8 @@ var root = $.template(`<!> `, 1);
 
 export default function Bind_component_snippet($$anchor) {
 	const snippet = ($$anchor) => {
+		$.next();
+
 		var fragment = root_1();
 
 		$.append($$anchor, fragment);

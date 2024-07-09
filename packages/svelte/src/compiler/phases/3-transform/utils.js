@@ -287,7 +287,7 @@ export function clean_nodes(
 	// if a component or snippet starts with text, we need to add an anchor comment
 	// so that its text node doesn't get fused with its surroundings
 	const is_text_first =
-		parent.type === 'Fragment' &&
+		(parent.type === 'Fragment' || parent.type === 'SnippetBlock') &&
 		first &&
 		(first?.type === 'Text' || first?.type === 'ExpressionTag');
 

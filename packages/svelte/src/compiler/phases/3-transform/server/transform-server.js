@@ -1202,8 +1202,6 @@ const template_visitors = {
 			return /** @type {import('estree').Expression} */ (context.visit(arg));
 		});
 
-		context.state.template.push(block_open);
-
 		context.state.template.push(
 			b.stmt(
 				(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(

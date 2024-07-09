@@ -6,7 +6,7 @@ import {
 	dev_current_component_function,
 	set_dev_current_component_function
 } from '../../runtime.js';
-import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
+import { hydrate_node, hydrating } from '../hydration.js';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
@@ -16,10 +16,6 @@ import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
  * @returns {void}
  */
 export function snippet(anchor, get_snippet, ...args) {
-	if (hydrating) {
-		hydrate_next();
-	}
-
 	/** @type {SnippetFn | null | undefined} */
 	var snippet;
 

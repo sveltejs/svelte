@@ -1859,7 +1859,6 @@ export const template_visitors = {
 			);
 		} else {
 			context.state.init.push(
-				b.stmt(b.call('$.next')),
 				b.stmt(
 					(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
 						snippet_function,
