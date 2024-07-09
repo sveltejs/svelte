@@ -72,7 +72,7 @@ export class SvelteURL extends URL {
 		get(this.#port);
 		get(this.#pathname);
 		get(this.#hash);
-		this.#searchParams.toString();
+		get(this.#search);
 		return super.href;
 	}
 
@@ -85,6 +85,7 @@ export class SvelteURL extends URL {
 		set(this.#port, super.port);
 		set(this.#pathname, super.pathname);
 		set(this.#hash, super.hash);
+		set(this.#search, super.search);
 		this.#searchParams[REPLACE](super.searchParams);
 	}
 
