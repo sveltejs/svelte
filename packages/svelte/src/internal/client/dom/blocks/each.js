@@ -185,7 +185,7 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 					hydrate_node.nodeType === 8 &&
 					/** @type {Comment} */ (hydrate_node).data === HYDRATION_END
 				) {
-					// The server rendered fewer items than expected, 
+					// The server rendered fewer items than expected,
 					// so break out and continue appending non-hydrated items
 					anchor = /** @type {Comment} */ (hydrate_node);
 					mismatch = true;
