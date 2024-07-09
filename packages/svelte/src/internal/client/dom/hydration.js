@@ -22,8 +22,7 @@ export function set_hydrate_node(node) {
 }
 
 export function hydrate_next() {
-	hydrate_node = /** @type {TemplateNode} */ (hydrate_node.nextSibling);
-	return hydrate_node;
+	return (hydrate_node = /** @type {TemplateNode} */ (hydrate_node.nextSibling));
 }
 
 /** @param {TemplateNode} node */
@@ -43,16 +42,15 @@ export function remove_nodes() {
 	var depth = 0;
 	var node = hydrate_node;
 
-	while (
-		node.nodeType !== 8 ||
-		(depth === 0 && /** @type {Comment} */ (node).data !== HYDRATION_END)
-	) {
+	while (true) {
 		if (node.nodeType === 8) {
 			var data = /** @type {Comment} */ (node).data;
-			if (data === HYDRATION_START || data === HYDRATION_START_ELSE) {
-				depth += 1;
-			} else if (data === HYDRATION_END) {
+
+			if (data === HYDRATION_END) {
+				if (depth === 0) return node;
 				depth -= 1;
+			} else if (data === HYDRATION_START || data === HYDRATION_START_ELSE) {
+				depth += 1;
 			}
 		}
 
@@ -60,6 +58,4 @@ export function remove_nodes() {
 		node.remove();
 		node = next;
 	}
-
-	return node;
 }
