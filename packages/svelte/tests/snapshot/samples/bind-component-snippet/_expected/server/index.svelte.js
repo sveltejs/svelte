@@ -23,7 +23,7 @@ export default function Bind_component_snippet($$payload) {
 			}
 		});
 
-		$$payload.out += `<!--]--> value: ${$.escape(value)}`;
+		$$payload.out += `<!----> value: ${$.escape(value)}`;
 	};
 
 	do {
