@@ -1,5 +1,133 @@
 # svelte
 
+## 5.0.0-next.178
+
+### Patch Changes
+
+- fix: reconnected deep derived signals to graph ([#12350](https://github.com/sveltejs/svelte/pull/12350))
+
+## 5.0.0-next.177
+
+### Patch Changes
+
+- breaking: play transitions on `mount` by default ([#12351](https://github.com/sveltejs/svelte/pull/12351))
+
+- fix: make `<select>` `<option value>` behavior consistent ([#12316](https://github.com/sveltejs/svelte/pull/12316))
+
+- chore: stricter control flow syntax validation in runes mode ([#12342](https://github.com/sveltejs/svelte/pull/12342))
+
+- fix: resolve legacy component props equality for mutations ([#12348](https://github.com/sveltejs/svelte/pull/12348))
+
+- fix: make `$state` component exports settable ([#12345](https://github.com/sveltejs/svelte/pull/12345))
+
+## 5.0.0-next.176
+
+### Patch Changes
+
+- fix: correct start of `{:else if}` and `{:else}` ([#12043](https://github.com/sveltejs/svelte/pull/12043))
+
+- fix: reverse parent/child order in invalid HTML warning ([#12336](https://github.com/sveltejs/svelte/pull/12336))
+
+- fix: reorder reactive statements during migration ([#12329](https://github.com/sveltejs/svelte/pull/12329))
+
+- feat: better `<svelte:element>` SSR output ([#12339](https://github.com/sveltejs/svelte/pull/12339))
+
+- chore: align warning and error objects, add frame property ([#12326](https://github.com/sveltejs/svelte/pull/12326))
+
+- fix: ensure `$effect.root` is ignored on the server ([#12332](https://github.com/sveltejs/svelte/pull/12332))
+
+- fix: enable local transitions on `svelte:element` ([#12346](https://github.com/sveltejs/svelte/pull/12346))
+
+## 5.0.0-next.175
+
+### Patch Changes
+
+- fix: correctly compile $effect.root in svelte modules ([#12315](https://github.com/sveltejs/svelte/pull/12315))
+
+- fix: ensure `bind:this` works with component with no return value ([#12290](https://github.com/sveltejs/svelte/pull/12290))
+
+## 5.0.0-next.174
+
+### Patch Changes
+
+- fix: bail out of event hoisting when referencing store subscriptions ([#12301](https://github.com/sveltejs/svelte/pull/12301))
+
+- chore: make store initialization logic simpler ([#12281](https://github.com/sveltejs/svelte/pull/12281))
+
+- fix: make props optional during SSR ([#12284](https://github.com/sveltejs/svelte/pull/12284))
+
+- fix: ensure each blocks properly handle $state.frozen objects in prod ([#12305](https://github.com/sveltejs/svelte/pull/12305))
+
+- fix: ensure rest props access on hoisted event handlers works ([#12298](https://github.com/sveltejs/svelte/pull/12298))
+
+- fix: lazily create a derived for each read method on `SvelteDate.prototype` ([#12110](https://github.com/sveltejs/svelte/pull/12110))
+
+## 5.0.0-next.173
+
+### Patch Changes
+
+- chore: tidy up store logic ([#12277](https://github.com/sveltejs/svelte/pull/12277))
+
+## 5.0.0-next.172
+
+### Patch Changes
+
+- fix: handle duplicate signal dependencies gracefully ([#12261](https://github.com/sveltejs/svelte/pull/12261))
+
+## 5.0.0-next.171
+
+### Patch Changes
+
+- feat: simpler effect DOM boundaries ([#12258](https://github.com/sveltejs/svelte/pull/12258))
+
+## 5.0.0-next.170
+
+### Patch Changes
+
+- fix: bump dts-buddy for better type generation ([#12262](https://github.com/sveltejs/svelte/pull/12262))
+
+- breaking: expose `CompileError` interface, not class ([#12255](https://github.com/sveltejs/svelte/pull/12255))
+
+## 5.0.0-next.169
+
+### Patch Changes
+
+- breaking: rename `svelte/reactivity` helpers to include `Svelte` prefix ([#12248](https://github.com/sveltejs/svelte/pull/12248))
+
+- fix: avoid duplicate signal dependencies ([#12245](https://github.com/sveltejs/svelte/pull/12245))
+
+## 5.0.0-next.168
+
+### Patch Changes
+
+- fix: ensure HMR doesn't mess with anchor nodes ([#12242](https://github.com/sveltejs/svelte/pull/12242))
+
+- fix: deconflict multiple snippets of the same name ([#12221](https://github.com/sveltejs/svelte/pull/12221))
+
+## 5.0.0-next.167
+
+### Patch Changes
+
+- fix: make more types from `svelte/compiler` public ([#12189](https://github.com/sveltejs/svelte/pull/12189))
+
+- fix: support contenteditable binding undefined fallback ([#12210](https://github.com/sveltejs/svelte/pull/12210))
+
+- breaking: prevent usage of arguments keyword in certain places ([#12191](https://github.com/sveltejs/svelte/pull/12191))
+
+- fix(types): export CompileResult and Warning ([#12212](https://github.com/sveltejs/svelte/pull/12212))
+
+- fix: ensure element dir properties persist with text changes ([#12204](https://github.com/sveltejs/svelte/pull/12204))
+
+- fix: disallow accessing internal Svelte props ([#12207](https://github.com/sveltejs/svelte/pull/12207))
+
+- fix: make media bindings more robust ([#12206](https://github.com/sveltejs/svelte/pull/12206))
+
+- fix: allow slot attribute inside snippets ([#12188](https://github.com/sveltejs/svelte/pull/12188))
+
+- feat: allow `let props = $props()` and optimize prop read access ([#12201](https://github.com/sveltejs/svelte/pull/12201))
+
+- feat: improve type arguments for Snippet and $bindable ([#12197](https://github.com/sveltejs/svelte/pull/12197))
+
 ## 5.0.0-next.166
 
 ### Patch Changes

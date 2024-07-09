@@ -95,13 +95,13 @@ To prevent something from being treated as an `$effect`/`$derived` dependency, u
 
 ## `svelte/reactivity`
 
-Svelte provides reactive `Map`, `Set`, `Date` and `URL` classes. These can be imported from `svelte/reactivity` and used just like their native counterparts. [Demo:](https://svelte-5-preview.vercel.app/#H4sIAAAAAAAAE32QzWrDMBCEX2Wri1uo7bvrBHrvqdBTUogqryuBfhZp5SQYv3slSsmpOc7uN8zsrmI2FpMYDqvw0qEYxCuReBZ8pSrSgpax6BRyVHUyJhUN8f7oj2wchciwwsf7G2wwx-Cg-bX0EaVisxi-Ni-FLbQKPjHkaGEHHs_V9NhoZkpD3-NFOrLYqeB6kqybp-Ia-1uYHx_aFpSW_hsTcADWmLDrOmjbsh-Np8zwZfw0LNJm3K0lqaMYOKhgt_8RHRLX0-8gtdAfUiAdb4XOxlrINElGOOmI8wmkn2AxCmHBmOTdetWw7ct7XZjMbHASA8eM2-f2A-JarmyZAQAA)
+Svelte provides reactive `SvelteMap`, `SvelteSet`, `SvelteDate` and `SvelteURL` classes. These can be imported from `svelte/reactivity` and used just like their native counterparts. [Demo:](https://svelte-5-preview.vercel.app/#H4sIAAAAAAAAE32QwUrEMBBAf2XMpQrb9t7tFrx7UjxZYWM6NYFkEpJJ16X03yWK9OQeZ3iPecwqZmMxie5tFSQdik48hiAOgq-hDGlByygOIvkcVdn0SUUTeBhpZOOCjwwrvPxgr89PsMEcvYPqV2wjSsVmMXytjiMVR3lKDDlaOAHhZVfvK80cUte2-CVdsNgo79ogWVcPx5H6dj9M_V1dg9KSPjEBe2CNCZumgboeRuoNhczwYWjqFmkzntYcbROiZ6-83f5HtE9c3nADKUF_yEi9jnvQxVgLOUySEc464nwGSRMsRiEsGJO8mVeEbRAH4fxkZoOT6Dhm3N63b9_bGfOlAQAA)
 
 ```svelte
 <script>
-	import { URL } from 'svelte/reactivity';
+	import { SvelteURL } from 'svelte/reactivity';
 
-	const url = new URL('https://example.com/path');
+	const url = new SvelteURL('https://example.com/path');
 </script>
 
 <!-- changes to these... -->

@@ -1,11 +1,11 @@
+/** @import { Source, Effect } from '#client' */
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { set_should_intro } from '../render.js';
 import { get } from '../runtime.js';
-import { check_target } from './legacy.js';
 
 /**
  * @template {(anchor: Comment, props: any) => any} Component
- * @param {import("#client").Source<Component>} source
+ * @param {Source<Component>} source
  */
 export function hmr(source) {
 	/**
@@ -15,8 +15,10 @@ export function hmr(source) {
 	return function (anchor, props) {
 		let instance = {};
 
-		/** @type {import("#client").Effect} */
+		/** @type {Effect} */
 		let effect;
+
+		let ran = false;
 
 		block(() => {
 			const component = get(source);
@@ -28,7 +30,9 @@ export function hmr(source) {
 			}
 
 			effect = branch(() => {
-				set_should_intro(false);
+				// when the component is invalidated, replace it without transitions
+				if (ran) set_should_intro(false);
+
 				// preserve getters/setters
 				Object.defineProperties(
 					instance,
@@ -37,9 +41,12 @@ export function hmr(source) {
 						new.target ? new component(anchor, props) : component(anchor, props)
 					)
 				);
-				set_should_intro(true);
+
+				if (ran) set_should_intro(true);
 			});
 		});
+
+		ran = true;
 
 		return instance;
 	};

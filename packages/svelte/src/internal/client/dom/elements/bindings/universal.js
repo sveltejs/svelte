@@ -18,7 +18,7 @@ export function bind_content_editable(property, element, get_value, update) {
 		var value = get_value();
 
 		if (element[property] !== value) {
-			if (value === null) {
+			if (value == null) {
 				// @ts-ignore
 				var non_null_value = element[property];
 				update(non_null_value);

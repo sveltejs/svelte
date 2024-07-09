@@ -33,16 +33,21 @@ import {
 import { escape_html } from '../../../../escaping.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
 import {
-	BLOCK_ANCHOR,
+	EMPTY_COMMENT,
 	BLOCK_CLOSE,
-	BLOCK_CLOSE_ELSE,
-	BLOCK_OPEN
+	BLOCK_OPEN,
+	BLOCK_OPEN_ELSE
 } from '../../../../internal/server/hydration.js';
 import { filename, locator } from '../../../state.js';
 
-export const block_open = b.literal(BLOCK_OPEN);
-export const block_close = b.literal(BLOCK_CLOSE);
-export const block_anchor = b.literal(BLOCK_ANCHOR);
+/** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
+const block_open = b.literal(BLOCK_OPEN);
+
+/** Closes an if/each block, so that we can remove nodes in the case of a mismatch. Also serves as an anchor for these blocks */
+const block_close = b.literal(BLOCK_CLOSE);
+
+/** Empty comment to keep text nodes separate, or provide an anchor node for blocks */
+const empty_comment = b.literal(EMPTY_COMMENT);
 
 /**
  * @param {import('estree').Node} node
@@ -411,6 +416,11 @@ const global_visitors = {
 			return b.literal(false);
 		}
 
+		if (rune === '$effect.root') {
+			// ignore $effect.root() calls, just return a noop which mimics the cleanup function
+			return b.arrow([], b.block([]));
+		}
+
 		if (rune === '$state.snapshot') {
 			return /** @type {import('estree').Expression} */ (context.visit(node.arguments[0]));
 		}
@@ -571,7 +581,7 @@ const javascript_visitors_runes = {
 		for (const declarator of node.declarations) {
 			const init = declarator.init;
 			const rune = get_rune(init, state.scope);
-			if (!rune || rune === '$effect.tracking' || rune === '$inspect') {
+			if (!rune || rune === '$effect.tracking' || rune === '$inspect' || rune === '$effect.root') {
 				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
 				continue;
 			}
@@ -991,20 +1001,32 @@ function serialize_inline_component(node, expression, context) {
 		statement = b.block([...snippet_declarations, statement]);
 	}
 
+	const dynamic =
+		node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic);
+
 	if (custom_css_props.length > 0) {
-		statement = b.stmt(
-			b.call(
-				'$.css_props',
-				b.id('$$payload'),
-				b.literal(context.state.namespace === 'svg' ? false : true),
-				b.object(custom_css_props),
-				b.thunk(b.block([statement]))
+		context.state.template.push(
+			b.stmt(
+				b.call(
+					'$.css_props',
+					b.id('$$payload'),
+					b.literal(context.state.namespace === 'svg' ? false : true),
+					b.object(custom_css_props),
+					b.thunk(b.block([statement])),
+					dynamic && b.true
+				)
 			)
 		);
+	} else {
+		if (dynamic) {
+			context.state.template.push(empty_comment);
+		}
 
 		context.state.template.push(statement);
-	} else {
-		context.state.template.push(block_open, statement, block_close);
+
+		if (!context.state.skip_hydration_boundaries) {
+			context.state.template.push(empty_comment);
+		}
 	}
 }
 
@@ -1112,7 +1134,7 @@ const template_visitors = {
 		const parent = context.path.at(-1) ?? node;
 		const namespace = infer_namespace(context.state.namespace, parent, node.nodes);
 
-		const { hoisted, trimmed } = clean_nodes(
+		const { hoisted, trimmed, is_standalone, is_text_first } = clean_nodes(
 			parent,
 			node.nodes,
 			context.path,
@@ -1127,11 +1149,17 @@ const template_visitors = {
 			...context.state,
 			init: [],
 			template: [],
-			namespace
+			namespace,
+			skip_hydration_boundaries: is_standalone
 		};
 
 		for (const node of hoisted) {
 			context.visit(node, state);
+		}
+
+		if (is_text_first) {
+			// insert `<!---->` to prevent this from being glued to the previous fragment
+			state.template.push(empty_comment);
 		}
 
 		process_children(trimmed, { ...context, state });
@@ -1140,7 +1168,7 @@ const template_visitors = {
 	},
 	HtmlTag(node, context) {
 		const expression = /** @type {import('estree').Expression} */ (context.visit(node.expression));
-		context.state.template.push(block_open, expression, block_close);
+		context.state.template.push(empty_comment, expression, empty_comment);
 	},
 	ConstTag(node, { state, visit }) {
 		const declaration = node.declaration.declarations[0];
@@ -1181,16 +1209,18 @@ const template_visitors = {
 		});
 
 		context.state.template.push(
-			block_open,
 			b.stmt(
 				(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
 					snippet_function,
 					b.id('$$payload'),
 					...snippet_args
 				)
-			),
-			block_close
+			)
 		);
+
+		if (!context.state.skip_hydration_boundaries) {
+			context.state.template.push(empty_comment);
+		}
 	},
 	ClassDirective() {
 		throw new Error('Node should have been handled elsewhere');
@@ -1321,11 +1351,17 @@ const template_visitors = {
 			context.visit(node.fragment, state)
 		);
 
-		const body = b.stmt(
-			b.call('$.element', b.id('$$payload'), tag, b.thunk(attributes), b.thunk(children))
+		context.state.template.push(
+			b.stmt(
+				b.call(
+					'$.element',
+					b.id('$$payload'),
+					tag,
+					attributes.body.length > 0 && b.thunk(attributes),
+					children.body.length > 0 && b.thunk(children)
+				)
+			)
 		);
-
-		context.state.template.push(b.if(tag, body), block_anchor);
 
 		if (context.state.options.dev) {
 			context.state.template.push(b.stmt(b.call('$.pop_element')));
@@ -1333,7 +1369,6 @@ const template_visitors = {
 	},
 	EachBlock(node, context) {
 		const state = context.state;
-		state.template.push(block_open);
 
 		const each_node_meta = node.metadata;
 		const collection = /** @type {import('estree').Expression} */ (context.visit(node.expression));
@@ -1356,11 +1391,7 @@ const template_visitors = {
 			each.push(b.let(node.index, index));
 		}
 
-		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN))));
-
 		each.push(.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body);
-
-		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE))));
 
 		const for_loop = b.for(
 			b.let(index, b.literal(0)),
@@ -1369,26 +1400,27 @@ const template_visitors = {
 			b.block(each)
 		);
 
-		const close = b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE)));
-
 		if (node.fallback) {
+			const open = b.stmt(b.assignment('+=', b.id('$$payload.out'), block_open));
+
 			const fallback = /** @type {import('estree').BlockStatement} */ (
 				context.visit(node.fallback)
 			);
 
-			fallback.body.push(
-				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE)))
+			fallback.body.unshift(
+				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN_ELSE)))
 			);
 
 			state.template.push(
 				b.if(
 					b.binary('!==', b.member(array_id, b.id('length')), b.literal(0)),
-					b.block([for_loop, close]),
+					b.block([open, for_loop]),
 					fallback
-				)
+				),
+				block_close
 			);
 		} else {
-			state.template.push(for_loop, close);
+			state.template.push(block_open, for_loop, block_close);
 		}
 	},
 	IfBlock(node, context) {
@@ -1402,16 +1434,17 @@ const template_visitors = {
 			? /** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
 			: b.block([]);
 
-		consequent.body.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE))));
-		alternate.body.push(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE)))
+		consequent.body.unshift(b.stmt(b.assignment('+=', b.id('$$payload.out'), block_open)));
+
+		alternate.body.unshift(
+			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN_ELSE)))
 		);
 
-		context.state.template.push(block_open, b.if(test, consequent, alternate));
+		context.state.template.push(b.if(test, consequent, alternate), block_close);
 	},
 	AwaitBlock(node, context) {
 		context.state.template.push(
-			block_open,
+			empty_comment,
 			b.stmt(
 				b.call(
 					'$.await',
@@ -1435,12 +1468,12 @@ const template_visitors = {
 					)
 				)
 			),
-			block_close
+			empty_comment
 		);
 	},
 	KeyBlock(node, context) {
 		const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.fragment));
-		context.state.template.push(block_open, block, block_close);
+		context.state.template.push(empty_comment, block, empty_comment);
 	},
 	SnippetBlock(node, context) {
 		const fn = b.function_declaration(
@@ -1574,7 +1607,7 @@ const template_visitors = {
 
 		const slot = b.call('$.slot', b.id('$$payload'), expression, props_expression, fallback);
 
-		context.state.template.push(block_open, b.stmt(slot), block_close);
+		context.state.template.push(empty_comment, b.stmt(slot), empty_comment);
 	},
 	SvelteHead(node, context) {
 		const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.fragment));
@@ -1925,7 +1958,8 @@ export function server_component(analysis, options) {
 		template: /** @type {any} */ (null),
 		namespace: options.namespace,
 		preserve_whitespace: options.preserveWhitespace,
-		private_derived: new Map()
+		private_derived: new Map(),
+		skip_hydration_boundaries: false
 	};
 
 	const module = /** @type {import('estree').Program} */ (

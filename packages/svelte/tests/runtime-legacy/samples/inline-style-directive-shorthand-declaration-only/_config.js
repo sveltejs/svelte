@@ -15,7 +15,6 @@ export default test({
 		assert.equal(window.getComputedStyle(p2).color, 'red');
 
 		const btn = target.querySelector('button');
-		console.log(btn);
 		btn?.click();
 		flushSync();
 

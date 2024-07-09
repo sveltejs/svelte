@@ -12,7 +12,7 @@ var inited = false;
  * @template T
  * @extends {Set<T>}
  */
-export class ReactiveSet extends Set {
+export class SvelteSet extends Set {
 	/** @type {Map<T, import('#client').Source<boolean>>} */
 	#sources = new Map();
 	#version = source(0);
@@ -41,7 +41,7 @@ export class ReactiveSet extends Set {
 	#init() {
 		inited = true;
 
-		var proto = ReactiveSet.prototype;
+		var proto = SvelteSet.prototype;
 		var set_proto = Set.prototype;
 
 		for (const method of read_methods) {
@@ -59,7 +59,7 @@ export class ReactiveSet extends Set {
 				get(this.#version);
 				// @ts-ignore
 				var set = /** @type {Set<T>} */ (set_proto[method].apply(this, v));
-				return new ReactiveSet(set);
+				return new SvelteSet(set);
 			};
 		}
 	}

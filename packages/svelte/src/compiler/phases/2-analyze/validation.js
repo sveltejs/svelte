@@ -341,6 +341,14 @@ function validate_block_not_empty(node, context) {
  * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
  */
 const validation = {
+	MemberExpression(node, context) {
+		if (node.object.type === 'Identifier' && node.property.type === 'Identifier') {
+			const binding = context.state.scope.get(node.object.name);
+			if (binding?.kind === 'rest_prop' && node.property.name.startsWith('$$')) {
+				e.props_illegal_name(node.property);
+			}
+		}
+	},
 	AssignmentExpression(node, context) {
 		validate_assignment(node, node.left, context.state);
 	},
@@ -625,6 +633,11 @@ const validation = {
 		});
 	},
 	RenderTag(node, context) {
+		const callee = unwrap_optional(node.expression).callee;
+
+		node.metadata.dynamic =
+			callee.type !== 'Identifier' || context.state.scope.get(callee.name)?.kind !== 'normal';
+
 		context.state.analysis.uses_render_tags = true;
 
 		const raw_args = unwrap_optional(node.expression).arguments;
@@ -634,7 +647,6 @@ const validation = {
 			}
 		}
 
-		const callee = unwrap_optional(node.expression).callee;
 		if (
 			callee.type === 'MemberExpression' &&
 			callee.property.type === 'Identifier' &&
@@ -1079,6 +1091,20 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 }
 
 /**
+ * Validates that the opening of a control flow block is `{` immediately followed by the expected character.
+ * In legacy mode whitespace is allowed inbetween. TODO remove once legacy mode is gone and move this into parser instead.
+ * @param {{start: number; end: number}} node
+ * @param {import('./types.js').AnalysisState} state
+ * @param {string} expected
+ */
+function validate_opening_tag(node, state, expected) {
+	if (state.analysis.source[node.start + 1] !== expected) {
+		// avoid a sea of red and only mark the first few characters
+		e.block_unexpected_character({ start: node.start, end: node.start + 5 }, expected);
+	}
+}
+
+/**
  * @param {import('estree').AssignmentExpression | import('estree').UpdateExpression} node
  * @param {import('estree').Pattern | import('estree').Expression} argument
  * @param {import('./types.js').AnalysisState} state
@@ -1205,6 +1231,8 @@ export const validation_runes = merge(validation, a11y_validators, {
 		validate_call_expression(node, state.scope, path);
 	},
 	EachBlock(node, { next, state }) {
+		validate_opening_tag(node, state, '#');
+
 		const context = node.context;
 		if (
 			context.type === 'Identifier' &&
@@ -1213,6 +1241,51 @@ export const validation_runes = merge(validation, a11y_validators, {
 			e.state_invalid_placement(node, context.name);
 		}
 		next({ ...state });
+	},
+	IfBlock(node, { state, path }) {
+		const parent = path.at(-1);
+		const expected =
+			path.at(-2)?.type === 'IfBlock' && parent?.type === 'Fragment' && parent.nodes.length === 1
+				? ':'
+				: '#';
+		validate_opening_tag(node, state, expected);
+	},
+	AwaitBlock(node, { state }) {
+		validate_opening_tag(node, state, '#');
+
+		if (node.value) {
+			const start = /** @type {number} */ (node.value.start);
+			const match = state.analysis.source.substring(start - 10, start).match(/{(\s*):then\s+$/);
+			if (match && match[1] !== '') {
+				e.block_unexpected_character({ start: start - 10, end: start }, ':');
+			}
+		}
+
+		if (node.error) {
+			const start = /** @type {number} */ (node.error.start);
+			const match = state.analysis.source.substring(start - 10, start).match(/{(\s*):catch\s+$/);
+			if (match && match[1] !== '') {
+				e.block_unexpected_character({ start: start - 10, end: start }, ':');
+			}
+		}
+	},
+	KeyBlock(node, { state }) {
+		validate_opening_tag(node, state, '#');
+	},
+	SnippetBlock(node, { state }) {
+		validate_opening_tag(node, state, '#');
+	},
+	ConstTag(node, { state }) {
+		validate_opening_tag(node, state, '@');
+	},
+	HtmlTag(node, { state }) {
+		validate_opening_tag(node, state, '@');
+	},
+	DebugTag(node, { state }) {
+		validate_opening_tag(node, state, '@');
+	},
+	RenderTag(node, { state }) {
+		validate_opening_tag(node, state, '@');
 	},
 	VariableDeclarator(node, { state }) {
 		ensure_no_module_import_conflict(node, state);
@@ -1240,7 +1313,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 				e.rune_invalid_arguments(node, rune);
 			}
 
-			if (node.id.type !== 'ObjectPattern') {
+			if (node.id.type !== 'ObjectPattern' && node.id.type !== 'Identifier') {
 				e.props_invalid_identifier(node);
 			}
 
@@ -1248,17 +1321,23 @@ export const validation_runes = merge(validation, a11y_validators, {
 				e.props_invalid_placement(node);
 			}
 
-			for (const property of node.id.properties) {
-				if (property.type === 'Property') {
-					if (property.computed) {
-						e.props_invalid_pattern(property);
-					}
+			if (node.id.type === 'ObjectPattern') {
+				for (const property of node.id.properties) {
+					if (property.type === 'Property') {
+						if (property.computed) {
+							e.props_invalid_pattern(property);
+						}
 
-					const value =
-						property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
+						if (property.key.type === 'Identifier' && property.key.name.startsWith('$$')) {
+							e.props_illegal_name(property);
+						}
 
-					if (value.type !== 'Identifier') {
-						e.props_invalid_pattern(property);
+						const value =
+							property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
+
+						if (value.type !== 'Identifier') {
+							e.props_invalid_pattern(property);
+						}
 					}
 				}
 			}

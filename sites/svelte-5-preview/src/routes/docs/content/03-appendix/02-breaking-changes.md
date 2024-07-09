@@ -281,3 +281,7 @@ In Svelte 4, `<svelte:element this="div">` is valid code. This makes little sens
 ```
 
 Note that whereas Svelte 4 would treat `<svelte:element this="input">` (for example) identically to `<input>` for the purposes of determining which `bind:` directives could be applied, Svelte 5 does not.
+
+### `mount` plays transitions by default
+
+The `mount` function used to render a component tree plays transitions by default unless the `intro` option is set to `false`. This is different from legacy class components which, when manually instantiated, didn't play transitions by default.

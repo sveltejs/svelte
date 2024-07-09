@@ -1,3 +1,4 @@
+/** @import * as Compiler from '#compiler' */
 /**
  * All nodes that can appear elsewhere than the top level, have attributes and can contain children
  */
@@ -13,15 +14,15 @@ const element_nodes = [
 
 /**
  * Returns true for all nodes that can appear elsewhere than the top level, have attributes and can contain children
- * @param {import('#compiler').SvelteNode} node
- * @returns {node is import('#compiler').Component | import('#compiler').RegularElement | import('#compiler').SlotElement | import('#compiler').SvelteComponent | import('#compiler').SvelteElement | import('#compiler').SvelteFragment | import('#compiler').SvelteSelf}
+ * @param {Compiler.SvelteNode} node
+ * @returns {node is Compiler.Component | Compiler.RegularElement | Compiler.SlotElement | Compiler.SvelteComponent | Compiler.SvelteElement | Compiler.SvelteFragment | Compiler.SvelteSelf}
  */
 export function is_element_node(node) {
 	return element_nodes.includes(node.type);
 }
 
 /**
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
+ * @param {Compiler.RegularElement | Compiler.SvelteElement} node
  * @returns {boolean}
  */
 export function is_custom_element_node(node) {
@@ -32,8 +33,8 @@ export function is_custom_element_node(node) {
  * @param {string} name
  * @param {number} start
  * @param {number} end
- * @param {true | Array<import('#compiler').Text | import('#compiler').ExpressionTag>} value
- * @returns {import('#compiler').Attribute}
+ * @param {true | Array<Compiler.Text | Compiler.ExpressionTag>} value
+ * @returns {Compiler.Attribute}
  */
 export function create_attribute(name, start, end, value) {
 	return {

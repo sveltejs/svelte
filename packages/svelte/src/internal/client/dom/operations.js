@@ -1,8 +1,8 @@
-import { hydrate_anchor, hydrate_start, hydrating } from './hydration.js';
+/** @import { Effect, TemplateNode } from '#client' */
+import { hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
 import { current_effect } from '../runtime.js';
-import { HYDRATION_ANCHOR } from '../../../constants.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */
@@ -58,19 +58,23 @@ export function empty() {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function child(node) {
-	const child = node.firstChild;
-	if (!hydrating) return child;
+	if (!hydrating) {
+		return node.firstChild;
+	}
+
+	var child = /** @type {TemplateNode} */ (hydrate_node.firstChild);
 
 	// Child can be null if we have an element with a single child, like `<p>{text}</p>`, where `text` is empty
 	if (child === null) {
-		return node.appendChild(empty());
+		child = hydrate_node.appendChild(empty());
 	}
 
-	return hydrate_anchor(child);
+	set_hydrate_node(child);
+	return child;
 }
 
 /**
- * @param {DocumentFragment | import('#client').TemplateNode[]} fragment
+ * @param {DocumentFragment | TemplateNode[]} fragment
  * @param {boolean} is_text
  * @returns {Node | null}
  */
@@ -78,24 +82,25 @@ export function child(node) {
 export function first_child(fragment, is_text) {
 	if (!hydrating) {
 		// when not hydrating, `fragment` is a `DocumentFragment` (the result of calling `open_frag`)
-		return /** @type {DocumentFragment} */ (fragment).firstChild;
+		var first = /** @type {DocumentFragment} */ (fragment).firstChild;
+
+		// TODO prevent user comments with the empty string when preserveComments is true
+		if (first instanceof Comment && first.data === '') return first.nextSibling;
+
+		return first;
 	}
 
 	// if an {expression} is empty during SSR, there might be no
 	// text node to hydrate — we must therefore create one
-	if (is_text && hydrate_start?.nodeType !== 3) {
+	if (is_text && hydrate_node?.nodeType !== 3) {
 		var text = empty();
-		var dom = /** @type {import('#client').TemplateNode[]} */ (
-			/** @type {import('#client').Effect} */ (current_effect).dom
-		);
 
-		dom.unshift(text);
-		hydrate_start?.before(text);
-
+		hydrate_node?.before(text);
+		set_hydrate_node(text);
 		return text;
 	}
 
-	return hydrate_anchor(hydrate_start);
+	return hydrate_node;
 }
 
 /**
@@ -106,33 +111,25 @@ export function first_child(fragment, is_text) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function sibling(node, is_text = false) {
-	var next_sibling = /** @type {import('#client').TemplateNode} */ (node.nextSibling);
-
 	if (!hydrating) {
-		return next_sibling;
+		return /** @type {TemplateNode} */ (node.nextSibling);
 	}
+
+	var next_sibling = /** @type {TemplateNode} */ (hydrate_node.nextSibling);
 
 	var type = next_sibling.nodeType;
-
-	if (type === 8 && /** @type {Comment} */ (next_sibling).data === HYDRATION_ANCHOR) {
-		return sibling(next_sibling, is_text);
-	}
 
 	// if a sibling {expression} is empty during SSR, there might be no
 	// text node to hydrate — we must therefore create one
 	if (is_text && type !== 3) {
 		var text = empty();
-		var dom = /** @type {import('#client').TemplateNode[]} */ (
-			/** @type {import('#client').Effect} */ (current_effect).dom
-		);
-
-		dom.unshift(text);
 		next_sibling?.before(text);
-
+		set_hydrate_node(text);
 		return text;
 	}
 
-	return hydrate_anchor(/** @type {Node} */ (next_sibling));
+	set_hydrate_node(next_sibling);
+	return /** @type {TemplateNode} */ (next_sibling);
 }
 
 /**
@@ -142,10 +139,4 @@ export function sibling(node, is_text = false) {
  */
 export function clear_text_content(node) {
 	node.textContent = '';
-}
-
-/** @param {string} name */
-/*#__NO_SIDE_EFFECTS__*/
-export function create_element(name) {
-	return document.createElement(name);
 }

@@ -88,6 +88,10 @@
 
 > Block was left open
 
+## block_unexpected_character
+
+> Expected a `%character%` character immediately following the opening bracket
+
 ## block_unexpected_close
 
 > Unexpected block closing tag

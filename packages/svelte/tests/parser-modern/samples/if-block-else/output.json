@@ -1,0 +1,116 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 51,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "IfBlock",
+				"elseif": false,
+				"start": 0,
+				"end": 51,
+				"test": {
+					"type": "Identifier",
+					"start": 5,
+					"end": 8,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 5
+						},
+						"end": {
+							"line": 1,
+							"column": 8
+						}
+					},
+					"name": "foo"
+				},
+				"consequent": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 9,
+							"end": 11,
+							"raw": "\n\t",
+							"data": "\n\t"
+						},
+						{
+							"type": "RegularElement",
+							"start": 11,
+							"end": 21,
+							"name": "p",
+							"attributes": [],
+							"fragment": {
+								"type": "Fragment",
+								"nodes": [
+									{
+										"type": "Text",
+										"start": 14,
+										"end": 17,
+										"raw": "foo",
+										"data": "foo"
+									}
+								],
+								"transparent": true
+							}
+						},
+						{
+							"type": "Text",
+							"start": 21,
+							"end": 22,
+							"raw": "\n",
+							"data": "\n"
+						}
+					],
+					"transparent": false
+				},
+				"alternate": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 29,
+							"end": 31,
+							"raw": "\n\t",
+							"data": "\n\t"
+						},
+						{
+							"type": "RegularElement",
+							"start": 31,
+							"end": 45,
+							"name": "p",
+							"attributes": [],
+							"fragment": {
+								"type": "Fragment",
+								"nodes": [
+									{
+										"type": "Text",
+										"start": 34,
+										"end": 41,
+										"raw": "not foo",
+										"data": "not foo"
+									}
+								],
+								"transparent": true
+							}
+						},
+						{
+							"type": "Text",
+							"start": 45,
+							"end": 46,
+							"raw": "\n",
+							"data": "\n"
+						}
+					],
+					"transparent": false
+				}
+			}
+		],
+		"transparent": false
+	},
+	"options": null
+}

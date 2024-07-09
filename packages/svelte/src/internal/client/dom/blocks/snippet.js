@@ -1,24 +1,27 @@
+/** @import { Effect, TemplateNode } from '#client' */
 import { add_snippet_symbol } from '../../../shared/validate.js';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { branch, block, destroy_effect } from '../../reactivity/effects.js';
 import {
-	current_component_context,
 	dev_current_component_function,
 	set_dev_current_component_function
 } from '../../runtime.js';
+import { hydrate_node, hydrating } from '../hydration.js';
 
 /**
- * @template {(node: import('#client').TemplateNode, ...args: any[]) => import('#client').Dom} SnippetFn
+ * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
+ * @param {TemplateNode} node
  * @param {() => SnippetFn | null | undefined} get_snippet
- * @param {import('#client').TemplateNode} node
  * @param {(() => any)[]} args
  * @returns {void}
  */
-export function snippet(get_snippet, node, ...args) {
+export function snippet(node, get_snippet, ...args) {
+	var anchor = node;
+
 	/** @type {SnippetFn | null | undefined} */
 	var snippet;
 
-	/** @type {import('#client').Effect | null} */
+	/** @type {Effect | null} */
 	var snippet_effect;
 
 	block(() => {
@@ -30,28 +33,30 @@ export function snippet(get_snippet, node, ...args) {
 		}
 
 		if (snippet) {
-			snippet_effect = branch(() => /** @type {SnippetFn} */ (snippet)(node, ...args));
+			snippet_effect = branch(() => /** @type {SnippetFn} */ (snippet)(anchor, ...args));
 		}
 	}, EFFECT_TRANSPARENT);
+
+	if (hydrating) {
+		anchor = hydrate_node;
+	}
 }
 
 /**
  * In development, wrap the snippet function so that it passes validation, and so that the
  * correct component context is set for ownership checks
- * @param {(node: import('#client').TemplateNode, ...args: any[]) => import('#client').Dom} fn
  * @param {any} component
+ * @param {(node: TemplateNode, ...args: any[]) => void} fn
  */
-export function wrap_snippet(fn, component) {
-	return add_snippet_symbol(
-		(/** @type {import('#client').TemplateNode} */ node, /** @type {any[]} */ ...args) => {
-			var previous_component_function = dev_current_component_function;
-			set_dev_current_component_function(component);
+export function wrap_snippet(component, fn) {
+	return add_snippet_symbol((/** @type {TemplateNode} */ node, /** @type {any[]} */ ...args) => {
+		var previous_component_function = dev_current_component_function;
+		set_dev_current_component_function(component);
 
-			try {
-				return fn(node, ...args);
-			} finally {
-				set_dev_current_component_function(previous_component_function);
-			}
+		try {
+			return fn(node, ...args);
+		} finally {
+			set_dev_current_component_function(previous_component_function);
 		}
-	);
+	});
 }

@@ -1,3 +1,4 @@
+/** @import { Source } from './types.js' */
 import { DEV } from 'esm-env';
 import {
 	PROPS_IS_IMMUTABLE,
@@ -78,6 +79,7 @@ const rest_props_handler = {
  * @param {string} [name]
  * @returns {Record<string, unknown>}
  */
+/*#__NO_SIDE_EFFECTS__*/
 export function rest_props(props, exclude, name) {
 	return new Proxy(
 		DEV ? { props, exclude, name, other: {}, to_proxy: [] } : { props, exclude },
@@ -87,7 +89,7 @@ export function rest_props(props, exclude, name) {
 
 /**
  * The proxy handler for legacy $$restProps and $$props
- * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol>, special: Record<string | symbol, (v?: unknown) => unknown>, version: import('./types.js').Source<number> }>}}
+ * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol>, special: Record<string | symbol, (v?: unknown) => unknown>, version: Source<number> }>}}
  */
 const legacy_rest_props_handler = {
 	get(target, key) {

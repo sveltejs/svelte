@@ -1,3 +1,4 @@
+/** @import { TemplateNode } from '#client' */
 import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
@@ -5,18 +6,18 @@ import {
 	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED,
-	HYDRATION_END_ELSE,
-	HYDRATION_START
+	HYDRATION_END,
+	HYDRATION_START_ELSE
 } from '../../../../constants.js';
 import {
-	hydrate_anchor,
-	hydrate_nodes,
-	hydrate_start,
+	hydrate_next,
+	hydrate_node,
 	hydrating,
+	remove_nodes,
+	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
 import { clear_text_content, empty } from '../operations.js';
-import { remove } from '../reconciler.js';
 import {
 	block,
 	branch,
@@ -28,8 +29,9 @@ import {
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen } from '../../utils.js';
-import { INERT, STATE_SYMBOL } from '../../constants.js';
+import { INERT, STATE_FROZEN_SYMBOL, STATE_SYMBOL } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
+import { current_effect } from '../../runtime.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -54,11 +56,12 @@ export function index(_, i) {
 /**
  * Pause multiple effects simultaneously, and coordinate their
  * subsequent destruction. Used in each blocks
+ * @param {import('#client').EachState} state
  * @param {import('#client').EachItem[]} items
  * @param {null | Node} controlled_anchor
  * @param {Map<any, import("#client").EachItem>} items_map
  */
-function pause_effects(items, controlled_anchor, items_map) {
+function pause_effects(state, items, controlled_anchor, items_map) {
 	/** @type {import('#client').TransitionManager[]} */
 	var transitions = [];
 	var length = items.length;
@@ -77,7 +80,7 @@ function pause_effects(items, controlled_anchor, items_map) {
 		clear_text_content(parent_node);
 		parent_node.append(/** @type {Element} */ (controlled_anchor));
 		items_map.clear();
-		link(items[0].prev, items[length - 1].next);
+		link(state, items[0].prev, items[length - 1].next);
 	}
 
 	run_out_transitions(transitions, () => {
@@ -85,7 +88,7 @@ function pause_effects(items, controlled_anchor, items_map) {
 			var item = items[i];
 			if (!is_controlled) {
 				items_map.delete(item.k);
-				link(item.prev, item.next);
+				link(state, item.prev, item.next);
 			}
 			destroy_effect(item.e, !is_controlled);
 		}
@@ -94,7 +97,7 @@ function pause_effects(items, controlled_anchor, items_map) {
 
 /**
  * @template V
- * @param {Element | Comment} anchor The next sibling node, or the parent node if this is a 'controlled' block
+ * @param {Element | Comment} node The next sibling node, or the parent node if this is a 'controlled' block
  * @param {number} flags
  * @param {() => V[]} get_collection
  * @param {(value: V, index: number) => any} get_key
@@ -102,20 +105,24 @@ function pause_effects(items, controlled_anchor, items_map) {
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
-export function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn = null) {
+export function each(node, flags, get_collection, get_key, render_fn, fallback_fn = null) {
+	var anchor = node;
+
 	/** @type {import('#client').EachState} */
-	var state = { flags, items: new Map(), next: null };
+	var state = { flags, items: new Map(), first: null };
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
 	if (is_controlled) {
-		var parent_node = /** @type {Element} */ (anchor);
+		var parent_node = /** @type {Element} */ (node);
 
 		anchor = hydrating
-			? /** @type {Comment | Text} */ (
-					hydrate_anchor(/** @type {Comment | Text} */ (parent_node.firstChild))
-				)
+			? set_hydrate_node(/** @type {Comment | Text} */ (parent_node.firstChild))
 			: parent_node.appendChild(empty());
+	}
+
+	if (hydrating) {
+		hydrate_next();
 	}
 
 	/** @type {import('#client').Effect | null} */
@@ -135,7 +142,12 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 		// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
 		// are treated as reactive, so they get wrapped in a signal.
 		var flags = state.flags;
-		if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
+		if (
+			(flags & EACH_IS_STRICT_EQUALS) !== 0 &&
+			!is_frozen(array) &&
+			!(STATE_FROZEN_SYMBOL in array) &&
+			!(STATE_SYMBOL in array)
+		) {
 			flags ^= EACH_IS_STRICT_EQUALS;
 
 			// Additionally if we're in an keyed each block, we'll need ensure the items are all wrapped in signals.
@@ -148,11 +160,13 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 		let mismatch = false;
 
 		if (hydrating) {
-			var is_else = /** @type {Comment} */ (anchor).data === HYDRATION_END_ELSE;
+			var is_else = /** @type {Comment} */ (anchor).data === HYDRATION_START_ELSE;
 
-			if (is_else !== (length === 0) || hydrate_start === undefined) {
+			if (is_else !== (length === 0)) {
 				// hydration mismatch — remove the server-rendered DOM and start over
-				remove(hydrate_nodes);
+				anchor = remove_nodes();
+
+				set_hydrate_node(anchor);
 				set_hydrating(false);
 				mismatch = true;
 			}
@@ -160,44 +174,36 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 
 		// this is separate to the previous block because `hydrating` might change
 		if (hydrating) {
-			/** @type {Node} */
-			var child_anchor = hydrate_start;
-
-			/** @type {import('#client').EachItem | import('#client').EachState} */
-			var prev = state;
+			/** @type {import('#client').EachItem | null} */
+			var prev = null;
 
 			/** @type {import('#client').EachItem} */
 			var item;
 
 			for (var i = 0; i < length; i++) {
 				if (
-					child_anchor.nodeType !== 8 ||
-					/** @type {Comment} */ (child_anchor).data !== HYDRATION_START
+					hydrate_node.nodeType === 8 &&
+					/** @type {Comment} */ (hydrate_node).data === HYDRATION_END
 				) {
-					// If `nodes` is null, then that means that the server rendered fewer items than what
-					// expected, so break out and continue appending non-hydrated items
+					// The server rendered fewer items than expected,
+					// so break out and continue appending non-hydrated items
+					anchor = /** @type {Comment} */ (hydrate_node);
 					mismatch = true;
 					set_hydrating(false);
 					break;
 				}
 
-				child_anchor = hydrate_anchor(child_anchor);
 				var value = array[i];
 				var key = get_key(value, i);
-				item = create_item(child_anchor, prev, null, value, key, i, render_fn, flags);
+				item = create_item(hydrate_node, state, prev, null, value, key, i, render_fn, flags);
 				state.items.set(key, item);
-				child_anchor = /** @type {Comment} */ (child_anchor.nextSibling);
 
 				prev = item;
 			}
 
 			// remove excess nodes
 			if (length > 0) {
-				while (child_anchor !== anchor) {
-					var next = /** @type {import('#client').TemplateNode} */ (child_anchor.nextSibling);
-					/** @type {import('#client').TemplateNode} */ (child_anchor).remove();
-					child_anchor = next;
-				}
+				set_hydrate_node(remove_nodes());
 			}
 		}
 
@@ -224,6 +230,10 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 			set_hydrating(true);
 		}
 	});
+
+	if (hydrating) {
+		anchor = hydrate_node;
+	}
 }
 
 /**
@@ -242,14 +252,14 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 
 	var length = array.length;
 	var items = state.items;
-	var first = state.next;
+	var first = state.first;
 	var current = first;
 
 	/** @type {Set<import('#client').EachItem>} */
 	var seen = new Set();
 
-	/** @type {import('#client').EachState | import('#client').EachItem} */
-	var prev = state;
+	/** @type {import('#client').EachItem | null} */
+	var prev = null;
 
 	/** @type {Set<import('#client').EachItem>} */
 	var to_animate = new Set();
@@ -291,9 +301,21 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		item = items.get(key);
 
 		if (item === undefined) {
-			var child_anchor = current ? get_first_node(current.e) : anchor;
+			var child_anchor = current
+				? /** @type {import('#client').EffectNodes} */ (current.e.nodes).start
+				: anchor;
 
-			prev = create_item(child_anchor, prev, prev.next, value, key, i, render_fn, flags);
+			prev = create_item(
+				child_anchor,
+				state,
+				prev,
+				prev === null ? state.first : prev.next,
+				value,
+				key,
+				i,
+				render_fn,
+				flags
+			);
 
 			items.set(key, prev);
 
@@ -336,9 +358,9 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 						seen.delete(stashed[j]);
 					}
 
-					link(a.prev, b.next);
-					link(prev, a);
-					link(b, start);
+					link(state, a.prev, b.next);
+					link(state, prev, a);
+					link(state, b, start);
 
 					current = start;
 					prev = b;
@@ -351,9 +373,9 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 					seen.delete(item);
 					move(item, current, anchor);
 
-					link(item.prev, item.next);
-					link(item, prev.next);
-					link(prev, item);
+					link(state, item.prev, item.next);
+					link(state, item, prev === null ? state.first : prev.next);
+					link(state, prev, item);
 
 					prev = item;
 				}
@@ -403,7 +425,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			}
 		}
 
-		pause_effects(to_destroy, controlled_anchor, items);
+		pause_effects(state, to_destroy, controlled_anchor, items);
 	}
 
 	if (is_animated) {
@@ -413,6 +435,9 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			}
 		});
 	}
+
+	/** @type {import('#client').Effect} */ (current_effect).first = state.first && state.first.e;
+	/** @type {import('#client').Effect} */ (current_effect).last = prev && prev.e;
 }
 
 /**
@@ -437,7 +462,8 @@ function update_item(item, value, index, type) {
 /**
  * @template V
  * @param {Node} anchor
- * @param {import('#client').EachItem | import('#client').EachState} prev
+ * @param {import('#client').EachState} state
+ * @param {import('#client').EachItem | null} prev
  * @param {import('#client').EachItem | null} next
  * @param {V} value
  * @param {unknown} key
@@ -446,7 +472,7 @@ function update_item(item, value, index, type) {
  * @param {number} flags
  * @returns {import('#client').EachItem}
  */
-function create_item(anchor, prev, next, value, key, index, render_fn, flags) {
+function create_item(anchor, state, prev, next, value, key, index, render_fn, flags) {
 	var previous_each_item = current_each_item;
 
 	try {
@@ -468,11 +494,23 @@ function create_item(anchor, prev, next, value, key, index, render_fn, flags) {
 			next
 		};
 
-		prev.next = item;
-		if (next !== null) next.prev = item;
-
 		current_each_item = item;
-		item.e = branch(() => render_fn(anchor, v, i));
+		item.e = branch(() => render_fn(anchor, v, i), hydrating);
+
+		item.e.prev = prev && prev.e;
+		item.e.next = next && next.e;
+
+		if (prev === null) {
+			state.first = item;
+		} else {
+			prev.next = item;
+			prev.e.next = item.e;
+		}
+
+		if (next !== null) {
+			next.prev = item;
+			next.e.prev = item.e;
+		}
 
 		return item;
 	} finally {
@@ -481,51 +519,17 @@ function create_item(anchor, prev, next, value, key, index, render_fn, flags) {
 }
 
 /**
- * @param {import('#client').TemplateNode} dom
- * @param {import("#client").Effect} effect
- * @returns {import('#client').TemplateNode}
- */
-function get_adjusted_first_node(dom, effect) {
-	if ((dom.nodeType === 3 && /** @type {Text} */ (dom).data === '') || dom.nodeType === 8) {
-		var adjusted = effect.first;
-		var next;
-		while (adjusted !== null) {
-			next = adjusted.first;
-			if (adjusted.dom !== null) {
-				break;
-			} else if (next === null) {
-				return /** @type {import('#client').TemplateNode} */ (dom.previousSibling);
-			}
-			adjusted = next;
-		}
-		return get_first_node(/** @type {import("#client").Effect} */ (adjusted));
-	}
-	return dom;
-}
-
-/**
- *
- * @param {import('#client').Effect} effect
- * @returns {import('#client').TemplateNode}
- */
-function get_first_node(effect) {
-	var dom = effect.dom;
-	if (is_array(dom)) {
-		return get_adjusted_first_node(dom[0], effect);
-	}
-	return get_adjusted_first_node(/** @type {import('#client').TemplateNode} **/ (dom), effect);
-}
-
-/**
  * @param {import('#client').EachItem} item
  * @param {import('#client').EachItem | null} next
  * @param {Text | Element | Comment} anchor
  */
 function move(item, next, anchor) {
-	var end = item.next ? get_first_node(item.next.e) : anchor;
-	var dest = next ? get_first_node(next.e) : anchor;
+	var end = item.next
+		? /** @type {import('#client').EffectNodes} */ (item.next.e.nodes).start
+		: anchor;
 
-	var node = get_first_node(item.e);
+	var dest = next ? /** @type {import('#client').EffectNodes} */ (next.e.nodes).start : anchor;
+	var node = /** @type {import('#client').EffectNodes} */ (item.e.nodes).start;
 
 	while (node !== end) {
 		var next_node = /** @type {import('#client').TemplateNode} */ (node.nextSibling);
@@ -535,11 +539,20 @@ function move(item, next, anchor) {
 }
 
 /**
- *
- * @param {import('#client').EachItem | import('#client').EachState} prev
+ * @param {import('#client').EachState} state
+ * @param {import('#client').EachItem | null} prev
  * @param {import('#client').EachItem | null} next
  */
-function link(prev, next) {
-	prev.next = next;
-	if (next !== null) next.prev = prev;
+function link(state, prev, next) {
+	if (prev === null) {
+		state.first = next;
+	} else {
+		prev.next = next;
+		prev.e.next = next && next.e;
+	}
+
+	if (next !== null) {
+		next.prev = prev;
+		next.e.prev = prev && prev.e;
+	}
 }

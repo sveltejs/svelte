@@ -1,3 +1,4 @@
+/** @import { FlipParams, AnimationConfig } from './public.js' */
 import { cubicOut } from '../easing/index.js';
 
 /**
@@ -7,8 +8,8 @@ import { cubicOut } from '../easing/index.js';
  * https://svelte.dev/docs/svelte-animate#flip
  * @param {Element} node
  * @param {{ from: DOMRect; to: DOMRect }} fromTo
- * @param {import('./public.js').FlipParams} params
- * @returns {import('./public.js').AnimationConfig}
+ * @param {FlipParams} params
+ * @returns {AnimationConfig}
  */
 export function flip(node, { from, to }, params = {}) {
 	const style = getComputedStyle(node);

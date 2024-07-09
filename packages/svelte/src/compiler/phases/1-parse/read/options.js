@@ -1,14 +1,16 @@
+/** @import { ObjectExpression } from 'estree' */
+/** @import { SvelteOptionsRaw, Root, SvelteOptions } from '#compiler' */
 import { namespace_mathml, namespace_svg } from '../../../../constants.js';
 import * as e from '../../../errors.js';
 
 const regex_valid_tag_name = /^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/;
 
 /**
- * @param {import('#compiler').SvelteOptionsRaw} node
- * @returns {import('#compiler').Root['options']}
+ * @param {SvelteOptionsRaw} node
+ * @returns {Root['options']}
  */
 export default function read_options(node) {
-	/** @type {import('#compiler').SvelteOptions} */
+	/** @type {SvelteOptions} */
 	const component_options = {
 		start: node.start,
 		end: node.end,
@@ -37,7 +39,7 @@ export default function read_options(node) {
 				break; // eslint doesn't know this is unnecessary
 			}
 			case 'customElement': {
-				/** @type {import('#compiler').SvelteOptions['customElement']} */
+				/** @type {SvelteOptions['customElement']} */
 				const ce = { tag: '' };
 
 				const { value } = attribute;
@@ -86,8 +88,7 @@ export default function read_options(node) {
 						e.svelte_options_invalid_customelement_props(attribute);
 					}
 					ce.props = {};
-					for (const property of /** @type {import('estree').ObjectExpression} */ (props)
-						.properties) {
+					for (const property of /** @type {ObjectExpression} */ (props).properties) {
 						if (
 							property.type !== 'Property' ||
 							property.computed ||

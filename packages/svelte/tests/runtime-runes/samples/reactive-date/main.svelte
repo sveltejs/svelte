@@ -1,7 +1,7 @@
 <script>
-	import { Date } from 'svelte/reactivity';
+	import { SvelteDate } from 'svelte/reactivity';
 
-	let date = new Date('2024-02-23T15:00:00Z');
+	let date = new SvelteDate('2024-02-23T15:00:00Z');
 </script>
 
 <div>getSeconds: {date.getUTCSeconds()}</div>

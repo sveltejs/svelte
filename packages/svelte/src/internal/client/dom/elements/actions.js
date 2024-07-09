@@ -1,10 +1,11 @@
+/** @import { ActionPayload } from '#client' */
 import { effect, render_effect } from '../../reactivity/effects.js';
 import { deep_read_state, untrack } from '../../runtime.js';
 
 /**
  * @template P
  * @param {Element} dom
- * @param {(dom: Element, value?: P) => import('#client').ActionPayload<P>} action
+ * @param {(dom: Element, value?: P) => ActionPayload<P>} action
  * @param {() => P} [get_value]
  * @returns {void}
  */

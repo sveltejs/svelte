@@ -1,3 +1,5 @@
+/** @import { LegacyRoot } from './types/legacy-nodes.js' */
+/** @import { CompileOptions, CompileResult, ValidatedCompileOptions, ModuleCompileOptions, Root } from '#compiler' */
 import { walk as zimmerframe_walk } from 'zimmerframe';
 import { convert } from './legacy.js';
 import { parse as parse_acorn } from './phases/1-parse/acorn.js';
@@ -14,8 +16,8 @@ export { default as preprocess } from './preprocess/index.js';
  *
  * https://svelte.dev/docs/svelte-compiler#svelte-compile
  * @param {string} source The component source code
- * @param {import('#compiler').CompileOptions} options The compiler options
- * @returns {import('#compiler').CompileResult}
+ * @param {CompileOptions} options The compiler options
+ * @returns {CompileResult}
  */
 export function compile(source, options) {
 	const validated = validate_component_options(options, '');
@@ -25,7 +27,7 @@ export function compile(source, options) {
 
 	const { customElement: customElementOptions, ...parsed_options } = parsed.options || {};
 
-	/** @type {import('#compiler').ValidatedCompileOptions} */
+	/** @type {ValidatedCompileOptions} */
 	const combined_options = {
 		...validated,
 		...parsed_options,
@@ -52,8 +54,8 @@ export function compile(source, options) {
  *
  * https://svelte.dev/docs/svelte-compiler#svelte-compile
  * @param {string} source The component source code
- * @param {import('#compiler').ModuleCompileOptions} options
- * @returns {import('#compiler').CompileResult}
+ * @param {ModuleCompileOptions} options
+ * @returns {CompileResult}
  */
 export function compileModule(source, options) {
 	const validated = validate_module_options(options, '');
@@ -73,7 +75,7 @@ export function compileModule(source, options) {
  * @overload
  * @param {string} source
  * @param {{ filename?: string; modern: true }} options
- * @returns {import('#compiler').Root}
+ * @returns {Root}
  */
 
 /**
@@ -86,7 +88,7 @@ export function compileModule(source, options) {
  * @overload
  * @param {string} source
  * @param {{ filename?: string; modern?: false }} [options]
- * @returns {import('./types/legacy-nodes.js').LegacyRoot}
+ * @returns {LegacyRoot}
  */
 
 /**
@@ -98,7 +100,7 @@ export function compileModule(source, options) {
  * https://svelte.dev/docs/svelte-compiler#svelte-parse
  * @param {string} source
  * @param {{ filename?: string; rootDir?: string; modern?: boolean }} [options]
- * @returns {import('#compiler').Root | import('./types/legacy-nodes.js').LegacyRoot}
+ * @returns {Root | LegacyRoot}
  */
 export function parse(source, { filename, rootDir, modern } = {}) {
 	state.reset(source, { filename, rootDir }); // TODO it's weird to require filename/rootDir here. reconsider the API
@@ -109,7 +111,7 @@ export function parse(source, { filename, rootDir, modern } = {}) {
 
 /**
  * @param {string} source
- * @param {import('#compiler').Root} ast
+ * @param {Root} ast
  * @param {boolean | undefined} modern
  */
 function to_public_ast(source, ast, modern) {
@@ -139,6 +141,5 @@ export function walk() {
 	);
 }
 
-export { CompileError } from './errors.js';
 export { VERSION } from '../version.js';
 export { migrate } from './migrate/index.js';

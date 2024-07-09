@@ -617,7 +617,16 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
 
 	if (is_reactive) {
 		const id = state.scope.generate(`${node_id.name}_value`);
-		serialize_update_assignment(state, id, undefined, value, update);
+		serialize_update_assignment(
+			state,
+			id,
+			// `<option>` is a special case: The value property reflects to the DOM. If the value is set to undefined,
+			// that means the value should be set to the empty string. To be able to do that when the value is
+			// initially undefined, we need to set a value that is guaranteed to be different.
+			element === 'option' ? b.object([]) : undefined,
+			value,
+			update
+		);
 		return true;
 	} else {
 		state.init.push(update);
@@ -652,9 +661,10 @@ function collect_parent_each_blocks(context) {
  * @param {import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf} node
  * @param {string} component_name
  * @param {import('../types.js').ComponentContext} context
+ * @param {import('estree').Expression} anchor
  * @returns {import('estree').Statement}
  */
-function serialize_inline_component(node, component_name, context) {
+function serialize_inline_component(node, component_name, context, anchor = context.state.node) {
 	/** @type {Array<import('estree').Property[] | import('estree').Expression>} */
 	const props_and_spreads = [];
 
@@ -882,7 +892,7 @@ function serialize_inline_component(node, component_name, context) {
 				b.init(
 					'children',
 					context.state.options.dev
-						? b.call('$.wrap_snippet', slot_fn, b.id(context.state.analysis.name))
+						? b.call('$.wrap_snippet', b.id(context.state.analysis.name), slot_fn)
 						: slot_fn
 				)
 			);
@@ -942,15 +952,16 @@ function serialize_inline_component(node, component_name, context) {
 		fn = (node_id) => {
 			return b.call(
 				'$.component',
+				node_id,
 				b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.expression))),
 				b.arrow(
-					[b.id(component_name)],
+					[b.id('$$anchor'), b.id(component_name)],
 					b.block([
 						...binding_initializers,
 						b.stmt(
 							context.state.options.dev
-								? b.call('$.validate_dynamic_component', b.thunk(prev(node_id)))
-								: prev(node_id)
+								? b.call('$.validate_dynamic_component', b.thunk(prev(b.id('$$anchor'))))
+								: prev(b.id('$$anchor'))
 						)
 					])
 				)
@@ -968,12 +979,13 @@ function serialize_inline_component(node, component_name, context) {
 		);
 
 		statements.push(
-			b.stmt(b.call('$.css_props', context.state.node, b.thunk(b.object(custom_css_props)))),
-			b.stmt(fn(b.member(context.state.node, b.id('lastChild'))))
+			b.stmt(b.call('$.css_props', anchor, b.thunk(b.object(custom_css_props)))),
+			b.stmt(fn(b.member(anchor, b.id('lastChild')))),
+			b.stmt(b.call('$.reset', anchor))
 		);
 	} else {
 		context.state.template.push('<!>');
-		statements.push(b.stmt(fn(context.state.node)));
+		statements.push(b.stmt(fn(anchor)));
 	}
 
 	return statements.length > 1 ? b.block(statements) : statements[0];
@@ -1049,7 +1061,7 @@ function serialize_bind_this(bind_this, context, node) {
 }
 
 /**
- * @param {import('../types.js').SourceLocation[]} locations
+ * @param {import('#shared').SourceLocation[]} locations
  */
 function serialize_locations(locations) {
 	return b.array(
@@ -1096,13 +1108,12 @@ function serialize_update(statement) {
 }
 
 /**
- *
- * @param {import('../types.js').ComponentClientTransformState} state
+ * @param {import('estree').Statement[]} update
  */
-function serialize_render_stmt(state) {
-	return state.update.length === 1
-		? serialize_update(state.update[0])
-		: b.stmt(b.call('$.template_effect', b.thunk(b.block(state.update))));
+function serialize_render_stmt(update) {
+	return update.length === 1
+		? serialize_update(update[0])
+		: b.stmt(b.call('$.template_effect', b.thunk(b.block(update))));
 }
 
 /**
@@ -1431,6 +1442,12 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 	}
 
 	if (sequence.length > 0) {
+		// if the final item in a fragment is static text,
+		// we need to force `hydrate_node` to advance
+		if (sequence.length === 1 && sequence[0].type === 'Text' && nodes.length > 1) {
+			state.init.push(b.stmt(b.call('$.next')));
+		}
+
 		flush_sequence(sequence);
 	}
 }
@@ -1559,7 +1576,7 @@ export const template_visitors = {
 
 		const namespace = infer_namespace(context.state.metadata.namespace, parent, node.nodes);
 
-		const { hoisted, trimmed } = clean_nodes(
+		const { hoisted, trimmed, is_standalone, is_text_first } = clean_nodes(
 			parent,
 			node.nodes,
 			context.path,
@@ -1607,6 +1624,11 @@ export const template_visitors = {
 
 		for (const node of hoisted) {
 			context.visit(node, state);
+		}
+
+		if (is_text_first) {
+			// skip over inserted comment
+			body.push(b.stmt(b.call('$.next')));
 		}
 
 		/**
@@ -1667,49 +1689,47 @@ export const template_visitors = {
 					state
 				});
 
-				body.push(
-					b.var(id, b.call('$.text', b.id('$$anchor'))),
-					...state.before_init,
-					...state.init
-				);
+				body.push(b.var(id, b.call('$.text')), ...state.before_init, ...state.init);
 				close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 			} else {
-				/** @type {(is_text: boolean) => import('estree').Expression} */
-				const expression = (is_text) =>
-					is_text ? b.call('$.first_child', id, b.true) : b.call('$.first_child', id);
-
-				process_children(trimmed, expression, false, { ...context, state });
-
-				const use_comment_template = state.template.length === 1 && state.template[0] === '<!>';
-
-				if (use_comment_template) {
-					// special case — we can use `$.comment` instead of creating a unique template
-					body.push(b.var(id, b.call('$.comment')));
+				if (is_standalone) {
+					// no need to create a template, we can just use the existing block's anchor
+					process_children(trimmed, () => b.id('$$anchor'), false, { ...context, state });
 				} else {
+					/** @type {(is_text: boolean) => import('estree').Expression} */
+					const expression = (is_text) => b.call('$.first_child', id, is_text && b.true);
+
+					process_children(trimmed, expression, false, { ...context, state });
+
 					let flags = TEMPLATE_FRAGMENT;
 
 					if (state.metadata.context.template_needs_import_node) {
 						flags |= TEMPLATE_USE_IMPORT_NODE;
 					}
 
-					add_template(template_name, [
-						b.template([b.quasi(state.template.join(''), true)], []),
-						b.literal(flags)
-					]);
+					if (state.template.length === 1 && state.template[0] === '<!>') {
+						// special case — we can use `$.comment` instead of creating a unique template
+						body.push(b.var(id, b.call('$.comment')));
+					} else {
+						add_template(template_name, [
+							b.template([b.quasi(state.template.join(''), true)], []),
+							b.literal(flags)
+						]);
 
-					body.push(b.var(id, b.call(template_name)));
+						body.push(b.var(id, b.call(template_name)));
+					}
+
+					close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 				}
 
 				body.push(...state.before_init, ...state.init);
-
-				close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 			}
 		} else {
 			body.push(...state.before_init, ...state.init);
 		}
 
 		if (state.update.length > 0) {
-			body.push(serialize_render_stmt(state));
+			body.push(serialize_render_stmt(state.update));
 		}
 
 		body.push(...state.after_update);
@@ -1832,27 +1852,26 @@ export const template_visitors = {
 		context.state.template.push('<!>');
 		const callee = unwrap_optional(node.expression).callee;
 		const raw_args = unwrap_optional(node.expression).arguments;
-		const is_reactive =
-			callee.type !== 'Identifier' || context.state.scope.get(callee.name)?.kind !== 'normal';
 
-		/** @type {import('estree').Expression[]} */
-		const args = [context.state.node];
-		for (const arg of raw_args) {
-			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg))));
-		}
+		const args = raw_args.map((arg) =>
+			b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg)))
+		);
 
 		let snippet_function = /** @type {import('estree').Expression} */ (context.visit(callee));
 		if (context.state.options.dev) {
 			snippet_function = b.call('$.validate_snippet', snippet_function);
 		}
 
-		if (is_reactive) {
-			context.state.init.push(b.stmt(b.call('$.snippet', b.thunk(snippet_function), ...args)));
+		if (node.metadata.dynamic) {
+			context.state.init.push(
+				b.stmt(b.call('$.snippet', context.state.node, b.thunk(snippet_function), ...args))
+			);
 		} else {
 			context.state.init.push(
 				b.stmt(
 					(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
 						snippet_function,
+						context.state.node,
 						...args
 					)
 				)
@@ -1902,7 +1921,7 @@ export const template_visitors = {
 		state.init.push(b.stmt(b.call('$.transition', ...args)));
 	},
 	RegularElement(node, context) {
-		/** @type {import('../types.js').SourceLocation} */
+		/** @type {import('#shared').SourceLocation} */
 		let location = [-1, -1];
 
 		if (context.state.options.dev) {
@@ -1915,7 +1934,7 @@ export const template_visitors = {
 		}
 
 		if (node.name === 'noscript') {
-			context.state.template.push('<!>');
+			context.state.template.push('<noscript></noscript>');
 			return;
 		}
 		if (node.name === 'script') {
@@ -2130,7 +2149,7 @@ export const template_visitors = {
 
 		context.state.template.push('>');
 
-		/** @type {import('../types.js').SourceLocation[]} */
+		/** @type {import('#shared').SourceLocation[]} */
 		const child_locations = [];
 
 		/** @type {import('../types').ComponentClientTransformState} */
@@ -2157,22 +2176,51 @@ export const template_visitors = {
 			state.options.preserveComments
 		);
 
+		/** Whether or not we need to wrap the children in `{...}` to avoid declaration conflicts */
+		const has_declaration = node.fragment.nodes.some((node) => node.type === 'SnippetBlock');
+
+		const child_state = has_declaration
+			? { ...state, init: [], update: [], after_update: [] }
+			: state;
+
 		for (const node of hoisted) {
-			context.visit(node, state);
+			context.visit(node, child_state);
 		}
 
-		process_children(
-			trimmed,
-			() =>
-				b.call(
-					'$.child',
-					node.name === 'template'
-						? b.member(context.state.node, b.id('content'))
-						: context.state.node
-				),
-			true,
-			{ ...context, state }
-		);
+		/** @type {import('estree').Expression} */
+		let arg = context.state.node;
+
+		// If `hydrate_node` is set inside the element, we need to reset it
+		// after the element has been hydrated
+		let needs_reset = trimmed.some((node) => node.type !== 'Text');
+
+		// The same applies if it's a `<template>` element, since we need to
+		// set the value of `hydrate_node` to `node.content`
+		if (node.name === 'template') {
+			needs_reset = true;
+
+			arg = b.member(arg, b.id('content'));
+			child_state.init.push(b.stmt(b.call('$.reset', arg)));
+		}
+
+		process_children(trimmed, () => b.call('$.child', arg), true, {
+			...context,
+			state: child_state
+		});
+
+		if (needs_reset) {
+			child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));
+		}
+
+		if (has_declaration) {
+			context.state.init.push(
+				b.block([
+					...child_state.init,
+					child_state.update.length > 0 ? serialize_render_stmt(child_state.update) : b.empty,
+					...child_state.after_update
+				])
+			);
+		}
 
 		if (has_direction_attribute) {
 			// This fixes an issue with Chromium where updates to text content within an element
@@ -2270,7 +2318,7 @@ export const template_visitors = {
 		/** @type {import('estree').Statement[]} */
 		const inner = inner_context.state.init;
 		if (inner_context.state.update.length > 0) {
-			inner.push(serialize_render_stmt(inner_context.state));
+			inner.push(serialize_render_stmt(inner_context.state.update));
 		}
 		inner.push(...inner_context.state.after_update);
 		inner.push(
@@ -2418,7 +2466,7 @@ export const template_visitors = {
 					b.thunk(b.sequence(indirect_dependencies))
 				);
 				const invalidate_store = store_to_invalidate
-					? b.call('$.invalidate_store', b.id('$$subscriptions'), b.literal(store_to_invalidate))
+					? b.call('$.invalidate_store', b.id('$$stores'), b.literal(store_to_invalidate))
 					: undefined;
 
 				const sequence = [];
@@ -2738,10 +2786,10 @@ export const template_visitors = {
 		let snippet = b.arrow(args, body);
 
 		if (context.state.options.dev) {
-			snippet = b.call('$.wrap_snippet', snippet, b.id(context.state.analysis.name));
+			snippet = b.call('$.wrap_snippet', b.id(context.state.analysis.name), snippet);
 		}
 
-		const declaration = b.var(node.expression, snippet);
+		const declaration = b.const(node.expression, snippet);
 
 		// Top-level snippets are hoisted so they can be referenced in the `<script>`
 		if (context.path.length === 1 && context.path[0].type === 'Fragment') {
@@ -2991,27 +3039,26 @@ export const template_visitors = {
 		}
 	},
 	Component(node, context) {
-		const binding = context.state.scope.get(
-			node.name.includes('.') ? node.name.slice(0, node.name.indexOf('.')) : node.name
-		);
-		if (binding !== null && binding.kind !== 'normal') {
+		if (node.metadata.dynamic) {
 			// Handle dynamic references to what seems like static inline components
-			const component = serialize_inline_component(node, '$$component', context);
+			const component = serialize_inline_component(node, '$$component', context, b.id('$$anchor'));
 			context.state.init.push(
 				b.stmt(
 					b.call(
 						'$.component',
+						context.state.node,
 						// TODO use untrack here to not update when binding changes?
 						// Would align with Svelte 4 behavior, but it's arguably nicer/expected to update this
 						b.thunk(
 							/** @type {import('estree').Expression} */ (context.visit(b.member_id(node.name)))
 						),
-						b.arrow([b.id('$$component')], b.block([component]))
+						b.arrow([b.id('$$anchor'), b.id('$$component')], b.block([component]))
 					)
 				)
 			);
 			return;
 		}
+
 		const component = serialize_inline_component(node, node.name, context);
 		context.state.init.push(component);
 	},

@@ -1,20 +1,27 @@
+/** @import { TemplateNode, Dom, Effect } from '#client' */
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
-
-// TODO seems weird that `anchor` is unused here — possible bug?
+import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 
 /**
  * @template P
  * @template {(props: P) => void} C
+ * @param {TemplateNode} node
  * @param {() => C} get_component
- * @param {(component: C) => import('#client').Dom | void} render_fn
+ * @param {(anchor: TemplateNode, component: C) => Dom | void} render_fn
  * @returns {void}
  */
-export function component(get_component, render_fn) {
-	/** @type {C} */
-	let component;
+export function component(node, get_component, render_fn) {
+	if (hydrating) {
+		hydrate_next();
+	}
 
-	/** @type {import('#client').Effect | null} */
-	let effect;
+	var anchor = node;
+
+	/** @type {C} */
+	var component;
+
+	/** @type {Effect | null} */
+	var effect;
 
 	block(() => {
 		if (component === (component = get_component())) return;
@@ -25,7 +32,11 @@ export function component(get_component, render_fn) {
 		}
 
 		if (component) {
-			effect = branch(() => render_fn(component));
+			effect = branch(() => render_fn(anchor, component));
 		}
 	});
+
+	if (hydrating) {
+		anchor = hydrate_node;
+	}
 }

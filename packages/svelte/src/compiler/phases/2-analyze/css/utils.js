@@ -1,7 +1,9 @@
+/** @import { Text, ExpressionTag } from '#compiler' */
+/** @import { Node } from 'estree' */
 const UNKNOWN = {};
 
 /**
- * @param {import('estree').Node} node
+ * @param {Node} node
  * @param {Set<any>} set
  */
 function gather_possible_values(node, set) {
@@ -16,7 +18,7 @@ function gather_possible_values(node, set) {
 }
 
 /**
- * @param {import('#compiler').Text | import('#compiler').ExpressionTag} chunk
+ * @param {Text | ExpressionTag} chunk
  * @returns {Set<string> | null}
  */
 export function get_possible_values(chunk) {

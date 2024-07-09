@@ -1,35 +1,17 @@
-import { hydrate_nodes, hydrate_start, hydrating } from './hydration.js';
+/** @import { Effect, EffectNodes, TemplateNode } from '#client' */
+import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { empty } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
-import { is_array } from '../utils.js';
 import { queue_micro_task } from './task.js';
 
 /**
- * @template {import("#client").TemplateNode | import("#client").TemplateNode[]} T
- * @param {T} dom
- * @param {import("#client").Effect} effect
+ * @param {TemplateNode} start
+ * @param {TemplateNode | null} end
  */
-export function push_template_node(
-	dom,
-	effect = /** @type {import('#client').Effect} */ (current_effect)
-) {
-	var current_dom = effect.dom;
-	if (current_dom === null) {
-		effect.dom = dom;
-	} else {
-		if (!is_array(current_dom)) {
-			current_dom = effect.dom = [current_dom];
-		}
-
-		if (is_array(dom)) {
-			current_dom.push(...dom);
-		} else {
-			current_dom.push(dom);
-		}
-	}
-	return dom;
+export function assign_nodes(start, end) {
+	/** @type {Effect} */ (current_effect).nodes ??= { start, end };
 }
 
 /**
@@ -45,24 +27,35 @@ export function template(content, flags) {
 	/** @type {Node} */
 	var node;
 
+	/**
+	 * Whether or not the first item is a text/element node. If not, we need to
+	 * create an additional comment node to act as `effect.nodes.start`
+	 */
+	var has_start = !content.startsWith('<!>');
+
 	return () => {
 		if (hydrating) {
-			push_template_node(is_fragment ? hydrate_nodes : hydrate_start);
-			return hydrate_start;
+			assign_nodes(hydrate_node, null);
+			return hydrate_node;
 		}
 
 		if (!node) {
-			node = create_fragment_from_html(content);
+			node = create_fragment_from_html(has_start ? content : '<!>' + content);
 			if (!is_fragment) node = /** @type {Node} */ (node.firstChild);
 		}
 
-		var clone = use_import_node ? document.importNode(node, true) : node.cloneNode(true);
-
-		push_template_node(
-			is_fragment
-				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
-				: /** @type {import('#client').TemplateNode} */ (clone)
+		var clone = /** @type {TemplateNode} */ (
+			use_import_node ? document.importNode(node, true) : node.cloneNode(true)
 		);
+
+		if (is_fragment) {
+			var start = /** @type {TemplateNode} */ (clone.firstChild);
+			var end = /** @type {TemplateNode} */ (clone.lastChild);
+
+			assign_nodes(start, end);
+		} else {
+			assign_nodes(clone, clone);
+		}
 
 		return clone;
 	};
@@ -100,38 +93,48 @@ export function template_with_script(content, flags) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function ns_template(content, flags, ns = 'svg') {
+	/**
+	 * Whether or not the first item is a text/element node. If not, we need to
+	 * create an additional comment node to act as `effect.nodes.start`
+	 */
+	var has_start = !content.startsWith('<!>');
+
 	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
-	var fn = template(`<${ns}>${content}</${ns}>`, 0); // we don't need to worry about using importNode for namespaced elements
+	var wrapped = `<${ns}>${has_start ? content : '<!>' + content}</${ns}>`;
 
 	/** @type {Element | DocumentFragment} */
 	var node;
 
 	return () => {
 		if (hydrating) {
-			push_template_node(is_fragment ? hydrate_nodes : hydrate_start);
-			return hydrate_start;
+			assign_nodes(hydrate_node, null);
+			return hydrate_node;
 		}
 
 		if (!node) {
-			var wrapper = /** @type {Element} */ (fn());
+			var fragment = /** @type {DocumentFragment} */ (create_fragment_from_html(wrapped));
+			var root = /** @type {Element} */ (fragment.firstChild);
 
-			if ((flags & TEMPLATE_FRAGMENT) === 0) {
-				node = /** @type {Element} */ (wrapper.firstChild);
-			} else {
+			if (is_fragment) {
 				node = document.createDocumentFragment();
-				while (wrapper.firstChild) {
-					node.appendChild(wrapper.firstChild);
+				while (root.firstChild) {
+					node.appendChild(root.firstChild);
 				}
+			} else {
+				node = /** @type {Element} */ (root.firstChild);
 			}
 		}
 
-		var clone = node.cloneNode(true);
+		var clone = /** @type {TemplateNode} */ (node.cloneNode(true));
 
-		push_template_node(
-			is_fragment
-				? /** @type {import('#client').TemplateNode[]} */ ([...clone.childNodes])
-				: /** @type {import('#client').TemplateNode} */ (clone)
-		);
+		if (is_fragment) {
+			var start = /** @type {TemplateNode} */ (clone.firstChild);
+			var end = /** @type {TemplateNode} */ (clone.lastChild);
+
+			assign_nodes(start, end);
+		} else {
+			assign_nodes(clone, clone);
+		}
 
 		return clone;
 	};
@@ -191,6 +194,7 @@ function run_scripts(node) {
 		}
 
 		clone.textContent = script.textContent;
+
 		// If node === script tag, replaceWith will do nothing because there's no parent yet,
 		// waiting until that's the case using an effect solves this.
 		// Don't do it in other circumstances or we could accidentally execute scripts
@@ -203,36 +207,39 @@ function run_scripts(node) {
 	}
 }
 
-/**
- * @param {Text | Comment | Element} anchor
- */
 /*#__NO_SIDE_EFFECTS__*/
-export function text(anchor) {
-	if (!hydrating) return push_template_node(empty());
-
-	var node = hydrate_start;
-
-	if (!node) {
-		// if an {expression} is empty during SSR, `hydrate_nodes` will be empty.
-		// we need to insert an empty text node
-		anchor.before((node = empty()));
+export function text() {
+	if (!hydrating) {
+		var t = empty();
+		assign_nodes(t, t);
+		return t;
 	}
 
-	push_template_node(node);
+	var node = hydrate_node;
+
+	if (node.nodeType !== 3) {
+		// if an {expression} is empty during SSR, we need to insert an empty text node
+		node.before((node = empty()));
+		set_hydrate_node(node);
+	}
+
+	assign_nodes(node, node);
 	return node;
 }
 
 export function comment() {
 	// we're not delegating to `template` here for performance reasons
 	if (hydrating) {
-		push_template_node(hydrate_nodes);
-		return hydrate_start;
+		assign_nodes(hydrate_node, null);
+		return hydrate_node;
 	}
 
 	var frag = document.createDocumentFragment();
+	var start = document.createComment('');
 	var anchor = empty();
-	frag.append(anchor);
-	push_template_node([anchor]);
+	frag.append(start, anchor);
+
+	assign_nodes(start, anchor);
 
 	return frag;
 }
@@ -244,10 +251,16 @@ export function comment() {
  * @param {DocumentFragment | Element} dom
  */
 export function append(anchor, dom) {
-	if (hydrating) return;
-	// We intentionally do not assign the `dom` property of the effect here because it's far too
-	// late. If we try, we will capture additional DOM elements that we cannot control the lifecycle
-	// for and will inevitably cause memory leaks. See https://github.com/sveltejs/svelte/pull/11832
+	if (hydrating) {
+		/** @type {Effect & { nodes: EffectNodes }} */ (current_effect).nodes.end = hydrate_node;
+		hydrate_next();
+		return;
+	}
+
+	if (anchor === null) {
+		// edge case — void `<svelte:element>` with content
+		return;
+	}
 
 	anchor.before(/** @type {Node} */ (dom));
 }
