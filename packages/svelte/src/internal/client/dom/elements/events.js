@@ -1,4 +1,5 @@
 import { teardown } from '../../reactivity/effects.js';
+import { push_init_error_handler } from '../../render.js';
 import { define_property, is_array } from '../../utils.js';
 import { hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
@@ -8,9 +9,6 @@ export const all_registered_events = new Set();
 
 /** @type {Set<(events: Array<string>) => void>} */
 export const root_event_handles = new Set();
-
-/** @type {Array<() => void>} */
-export const event_handles_to_remove_on_error = [];
 
 /**
  * SSR adds onload and onerror attributes to catch those events before the hydration.
@@ -134,11 +132,7 @@ export function event(event_name, dom, handler, capture, passive) {
 			dom.removeEventListener(event_name, target_handler, options);
 		});
 
-		if (hydrating) {
-			event_handles_to_remove_on_error.push(() =>
-				dom.removeEventListener(event_name, target_handler, options)
-			);
-		}
+		push_init_error_handler(() => dom.removeEventListener(event_name, target_handler, options));
 	}
 }
 
