@@ -33,7 +33,7 @@ import {
 import { escape_html } from '../../../../escaping.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
 import {
-	BLOCK_ANCHOR,
+	EMPTY_COMMENT,
 	BLOCK_CLOSE,
 	BLOCK_OPEN,
 	BLOCK_OPEN_ELSE
@@ -47,7 +47,7 @@ const block_open = b.literal(BLOCK_OPEN);
 const block_close = b.literal(BLOCK_CLOSE);
 
 /** Empty comment to keep text nodes separate, or provide an anchor node for blocks */
-const empty_comment = b.literal(BLOCK_ANCHOR);
+const empty_comment = b.literal(EMPTY_COMMENT);
 
 /**
  * @param {import('estree').Node} node

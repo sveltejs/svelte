@@ -10,7 +10,7 @@ import {
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
-import { BLOCK_ANCHOR, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
@@ -83,7 +83,7 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
 		if (!VoidElements.has(tag)) {
 			children_fn();
 			if (!RawTextElements.includes(tag)) {
-				payload.out += BLOCK_ANCHOR;
+				payload.out += EMPTY_COMMENT;
 			}
 			payload.out += `</${tag}>`;
 		}
