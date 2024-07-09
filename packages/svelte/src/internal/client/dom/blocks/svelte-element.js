@@ -156,7 +156,6 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 		// Inert effects are proactively detached from the effect tree. Returning a noop
 		// teardown function is an easy way to ensure that this is not discarded
-		// TODO should blocks/branches just be exempt from that logic, rather than checking `effect.nodes`?
 		return noop;
 	});
 
