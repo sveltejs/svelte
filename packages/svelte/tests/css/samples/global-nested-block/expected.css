@@ -1,0 +1,32 @@
+
+	div.svelte-xyz {
+		/* :global {*/
+			.x {
+				color: green;
+			}
+		/*}*/
+
+		.x {
+			color: green;
+		}
+
+		p:where(.svelte-xyz) {
+			.y {
+				color: green;
+			}
+		}
+
+		p:where(.svelte-xyz) .y {
+			color: green;
+		}
+
+		/* (unused) .unused :global {
+			.z {
+				color: red;
+			}
+		}*/
+
+		/* (unused) .unused :global(.z) {
+			color: red;
+		}*/
+	}
