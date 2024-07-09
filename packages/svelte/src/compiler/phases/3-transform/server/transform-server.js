@@ -40,8 +40,13 @@ import {
 } from '../../../../internal/server/hydration.js';
 import { filename, locator } from '../../../state.js';
 
+/** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
 const block_open = b.literal(BLOCK_OPEN);
+
+/** Closes an if/each block, so that we can remove nodes in the case of a mismatch. Also serves as an anchor for these blocks */
 const block_close = b.literal(BLOCK_CLOSE);
+
+/** Empty comment to keep text nodes separate, or provide an anchor node for blocks */
 const empty_comment = b.literal(BLOCK_ANCHOR);
 
 /**
