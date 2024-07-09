@@ -62,12 +62,7 @@ export function child(node) {
 		return node.firstChild;
 	}
 
-	// TODO is there anything we can do in compiler land to optimize the `<template>` edge case?
-	var child = /** @type {TemplateNode} */ (
-		hydrate_node.nodeName === 'TEMPLATE'
-			? /** @type {HTMLTemplateElement} */ (hydrate_node).content.firstChild
-			: hydrate_node.firstChild
-	);
+	var child = /** @type {TemplateNode} */ (hydrate_node.firstChild);
 
 	// Child can be null if we have an element with a single child, like `<p>{text}</p>`, where `text` is empty
 	if (child === null) {

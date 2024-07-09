@@ -2178,22 +2178,30 @@ export const template_visitors = {
 			context.visit(node, child_state);
 		}
 
-		process_children(
-			trimmed,
-			() =>
-				b.call(
-					'$.child',
-					node.name === 'template'
-						? b.member(context.state.node, b.id('content'))
-						: context.state.node
-				),
-			true,
-			{ ...context, state: child_state }
-		);
+		/** @type {import('estree').Expression} */
+		let arg = context.state.node;
 
 		// If `hydrate_node` is set inside the element, we need to reset it
 		// after the element has been hydrated
-		if (trimmed.some((node) => node.type !== 'Text')) {
+		let needs_reset = trimmed.some((node) => node.type !== 'Text');
+
+		// The same applies if it's a `<template>` element, since we need to
+		// set the value of `hydrate_node` to `node.content`
+		if (node.name === 'template') {
+			needs_reset = true;
+
+			arg = b.member(arg, b.id('content'));
+			child_state.init.push(b.stmt(b.call('$.reset', arg)));
+		}
+
+		process_children(trimmed, () => b.call('$.child', arg), true, {
+			...context,
+			state: child_state
+		});
+
+		// If `hydrate_node` is set inside the element, we need to reset it
+		// after the element has been hydrated
+		if (needs_reset) {
 			child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));
 		}
 
