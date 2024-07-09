@@ -5,7 +5,7 @@ export default {
 	compilerOptions: {
 		compatibility: {
 			// site-kit manually instantiates components inside an action
-			legacyComponent: true
+			componentApi: 4
 		}
 	},
 	kit: {
