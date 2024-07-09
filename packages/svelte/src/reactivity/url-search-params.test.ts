@@ -3,6 +3,30 @@ import { flushSync } from '../index-client.js';
 import { assert, test } from 'vitest';
 import { SvelteURLSearchParams } from './url-search-params';
 
+test('new URLSearchParams', () => {
+	const params = new SvelteURLSearchParams('a=b');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(params.toString());
+		});
+	});
+
+	flushSync(() => {
+		params.set('a', 'c');
+	});
+
+	flushSync(() => {
+		// nothing should happen here
+		params.set('a', 'c');
+	});
+
+	assert.deepEqual(log, ['a=b', 'a=c']);
+
+	cleanup();
+});
+
 test('URLSearchParams.set', () => {
 	const params = new SvelteURLSearchParams();
 	const log: any = [];

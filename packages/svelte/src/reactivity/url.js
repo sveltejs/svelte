@@ -1,6 +1,14 @@
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
-import { onChange, REPLACE, SvelteURLSearchParams } from './url-search-params.js';
+import { REPLACE, SvelteURLSearchParams } from './url-search-params.js';
+
+/** @type {SvelteURL | null} */
+let current_url = null;
+
+export function get_current_url() {
+	// ideally we'd just export `current_url` directly, but it seems Vitest doesn't respect live bindings
+	return current_url;
+}
 
 export class SvelteURL extends URL {
 	#protocol = source(super.protocol);
@@ -10,7 +18,8 @@ export class SvelteURL extends URL {
 	#port = source(super.port);
 	#pathname = source(super.pathname);
 	#hash = source(super.hash);
-	#searchParams = new SvelteURLSearchParams();
+	#search = source(super.search);
+	#searchParams;
 
 	/**
 	 * @param {string | URL} url
@@ -19,18 +28,10 @@ export class SvelteURL extends URL {
 	constructor(url, base) {
 		url = new URL(url, base);
 		super(url);
-		this.#searchParams[REPLACE](url.searchParams);
-		this.#searchParams[onChange] = (command, ...args) => {
-			if (this.search !== super.search) {
-				super.search = this.search;
-			}
-			if (this.#searchParams.toString() === super.searchParams.toString()) {
-				return;
-			}
-			// by doing this, we sync SvelteSearchParams with internal implementation of URL.searchParams
-			// @ts-expect-error
-			super.searchParams[command](...args);
-		};
+
+		current_url = this;
+		this.#searchParams = new SvelteURLSearchParams(url.searchParams);
+		current_url = null;
 	}
 
 	get hash() {
@@ -124,13 +125,13 @@ export class SvelteURL extends URL {
 	}
 
 	get search() {
-		const search = this.#searchParams?.toString();
-		return search ? `?${search}` : '';
+		return get(this.#search);
 	}
 
 	set search(value) {
 		super.search = value;
-		this.#searchParams[REPLACE](new URLSearchParams(value.replace(/^\?/, '')));
+		set(this.#search, value);
+		this.#searchParams[REPLACE](super.searchParams);
 	}
 
 	get username() {
