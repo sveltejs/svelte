@@ -94,11 +94,6 @@ export function first_child(fragment, is_text) {
 	// text node to hydrate — we must therefore create one
 	if (is_text && hydrate_node?.nodeType !== 3) {
 		var text = empty();
-		var effect = /** @type {Effect} */ (current_effect);
-
-		if (effect.nodes?.start === hydrate_node) {
-			effect.nodes.start = text;
-		}
 
 		hydrate_node?.before(text);
 		set_hydrate_node(text);
