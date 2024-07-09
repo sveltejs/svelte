@@ -185,8 +185,8 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 					hydrate_node.nodeType === 8 &&
 					/** @type {Comment} */ (hydrate_node).data === HYDRATION_END
 				) {
-					// If `nodes` is null, then that means that the server rendered fewer items than what
-					// expected, so break out and continue appending non-hydrated items
+					// The server rendered fewer items than expected, 
+					// so break out and continue appending non-hydrated items
 					anchor = /** @type {Comment} */ (hydrate_node);
 					mismatch = true;
 					set_hydrating(false);
