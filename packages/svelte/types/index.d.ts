@@ -2075,7 +2075,7 @@ declare module 'svelte/motion' {
 		 * @param run subscription callback
 		 * @param invalidate cleanup callback
 		 */
-		subscribe(this: void, run: Subscriber<T>, invalidate?: Invalidator): Unsubscriber;
+		subscribe(this: void, run: Subscriber<T>, invalidate?: () => void): Unsubscriber;
 	}
 	interface SpringOpts {
 		stiffness?: number;
@@ -2096,8 +2096,6 @@ declare module 'svelte/motion' {
 		easing?: (t: number) => number;
 		interpolate?: (a: T, b: T) => (t: number) => T;
 	}
-	/** Cleanup logic callback. */
-	type Invalidator = () => void;
 	/**
 	 * The spring function in Svelte creates a store whose value is animated, with a motion that simulates the behavior of a spring. This means when the value changes, instead of transitioning at a steady rate, it "bounces" like a spring would, depending on the physics parameters provided. This adds a level of realism to the transitions and can enhance the user experience.
 	 *
@@ -2221,7 +2219,7 @@ declare module 'svelte/store' {
 		 * @param run subscription callback
 		 * @param invalidate cleanup callback
 		 */
-		subscribe(this: void, run: Subscriber<T>, invalidate?: Invalidator): Unsubscriber;
+		subscribe(this: void, run: Subscriber<T>, invalidate?: () => void): Unsubscriber;
 	}
 
 	/** Writable interface for both updating and subscribing. */
@@ -2238,15 +2236,6 @@ declare module 'svelte/store' {
 		 */
 		update(this: void, updater: Updater<T>): void;
 	}
-	/** Cleanup logic callback. */
-	type Invalidator = () => void;
-
-	/** One or more `Readable`s. */
-	type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;
-
-	/** One or more values from `Readable` stores. */
-	type StoresValues<T> =
-		T extends Readable<infer U> ? U : { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 	/**
 	 * Creates a `Readable` store that allows reading by subscription.
 	 *
@@ -2288,6 +2277,12 @@ declare module 'svelte/store' {
 	 * https://svelte.dev/docs/svelte-store#get
 	 * */
 	export function get<T>(store: Readable<T>): T;
+	/** One or more `Readable`s. */
+	type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;
+
+	/** One or more values from `Readable` stores. */
+	type StoresValues<T> =
+		T extends Readable<infer U> ? U : { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 
 	export { Subscriber, Unsubscriber, Updater, StartStopNotifier, Readable, Writable };
 }

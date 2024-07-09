@@ -1,5 +1,5 @@
 /** @import { Readable, StartStopNotifier, Subscriber, Unsubscriber, Updater, Writable } from './public' */
-/** @import { Stores, SubscribeInvalidateTuple } from './private' */
+/** @import { Stores, StoresValues, SubscribeInvalidateTuple } from './private' */
 import { noop, run_all } from '../internal/shared/utils.js';
 import { safe_not_equal } from '../internal/client/reactivity/equality.js';
 import { subscribe_to_store } from './utils.js';
