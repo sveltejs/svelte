@@ -7,13 +7,15 @@ import { assign_nodes } from '../template.js';
 import * as w from '../../warnings.js';
 
 /**
- * @param {Element | Text | Comment} anchor
+ * @param {Element | Text | Comment} node
  * @param {() => string} get_value
  * @param {boolean} svg
  * @param {boolean} mathml
  * @returns {void}
  */
-export function html(anchor, get_value, svg, mathml) {
+export function html(node, get_value, svg, mathml) {
+	var anchor = node;
+
 	var value = '';
 
 	/** @type {Effect | null} */

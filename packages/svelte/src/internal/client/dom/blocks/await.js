@@ -21,18 +21,19 @@ const CATCH = 2;
 
 /**
  * @template V
- * @param {TemplateNode} anchor
+ * @param {TemplateNode} node
  * @param {(() => Promise<V>)} get_input
  * @param {null | ((anchor: Node) => void)} pending_fn
  * @param {null | ((anchor: Node, value: Source<V>) => void)} then_fn
  * @param {null | ((anchor: Node, error: unknown) => void)} catch_fn
  * @returns {void}
  */
-export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
+export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	if (hydrating) {
 		hydrate_next();
 	}
 
+	var anchor = node;
 	var runes = is_runes();
 	var component_context = current_component_context;
 

@@ -97,7 +97,7 @@ function pause_effects(state, items, controlled_anchor, items_map) {
 
 /**
  * @template V
- * @param {Element | Comment} anchor The next sibling node, or the parent node if this is a 'controlled' block
+ * @param {Element | Comment} node The next sibling node, or the parent node if this is a 'controlled' block
  * @param {number} flags
  * @param {() => V[]} get_collection
  * @param {(value: V, index: number) => any} get_key
@@ -105,20 +105,20 @@ function pause_effects(state, items, controlled_anchor, items_map) {
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
-export function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn = null) {
+export function each(node, flags, get_collection, get_key, render_fn, fallback_fn = null) {
+	var anchor = node;
+
 	/** @type {import('#client').EachState} */
 	var state = { flags, items: new Map(), first: null };
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
 	if (is_controlled) {
-		var parent_node = /** @type {Element} */ (anchor);
+		var parent_node = /** @type {Element} */ (node);
 
-		if (hydrating) {
-			anchor = set_hydrate_node(/** @type {Comment | Text} */ (parent_node.firstChild));
-		} else {
-			anchor = parent_node.appendChild(empty());
-		}
+		anchor = hydrating
+			? set_hydrate_node(/** @type {Comment | Text} */ (parent_node.firstChild))
+			: parent_node.appendChild(empty());
 	}
 
 	if (hydrating) {

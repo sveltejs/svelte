@@ -6,21 +6,23 @@ import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 
 /**
  * @template V
- * @param {TemplateNode} anchor
+ * @param {TemplateNode} node
  * @param {() => V} get_key
  * @param {(anchor: Node) => TemplateNode | void} render_fn
  * @returns {void}
  */
-export function key_block(anchor, get_key, render_fn) {
+export function key_block(node, get_key, render_fn) {
 	if (hydrating) {
 		hydrate_next();
 	}
 
+	var anchor = node;
+
 	/** @type {V | typeof UNINITIALIZED} */
-	let key = UNINITIALIZED;
+	var key = UNINITIALIZED;
 
 	/** @type {Effect} */
-	let effect;
+	var effect;
 
 	block(() => {
 		if (safe_not_equal(key, (key = get_key()))) {

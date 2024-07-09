@@ -12,23 +12,19 @@ import { block, branch, pause_effect, resume_effect } from '../../reactivity/eff
 import { HYDRATION_START_ELSE } from '../../../../constants.js';
 
 /**
- * @param {TemplateNode} anchor
+ * @param {TemplateNode} node
  * @param {() => boolean} get_condition
  * @param {(anchor: Node) => import('#client').Dom} consequent_fn
  * @param {null | ((anchor: Node) => import('#client').Dom)} [alternate_fn]
  * @param {boolean} [elseif] True if this is an `{:else if ...}` block rather than an `{#if ...}`, as that affects which transitions are considered 'local'
  * @returns {void}
  */
-export function if_block(
-	anchor,
-	get_condition,
-	consequent_fn,
-	alternate_fn = null,
-	elseif = false
-) {
+export function if_block(node, get_condition, consequent_fn, alternate_fn = null, elseif = false) {
 	if (hydrating) {
 		hydrate_next();
 	}
+
+	var anchor = node;
 
 	/** @type {import('#client').Effect | null} */
 	var consequent_effect = null;

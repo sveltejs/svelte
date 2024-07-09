@@ -38,41 +38,37 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 		hydrate_next();
 	}
 
-	const filename = DEV && location && current_component_context?.function.filename;
+	var filename = DEV && location && current_component_context?.function.filename;
 
 	/** @type {string | null} */
-	let tag;
+	var tag;
 
 	/** @type {string | null} */
-	let current_tag;
+	var current_tag;
 
 	/** @type {null | Element} */
-	let element = null;
+	var element = null;
 
 	if (hydrating && hydrate_node.nodeType === 1) {
 		element = /** @type {Element} */ (hydrate_node);
 		hydrate_next();
 	}
 
-	let anchor = /** @type {TemplateNode} */ (hydrating ? hydrate_node : node);
+	var anchor = /** @type {TemplateNode} */ (hydrating ? hydrate_node : node);
 
 	/** @type {Effect | null} */
-	let effect;
+	var effect;
 
 	/**
 	 * The keyed `{#each ...}` item block, if any, that this element is inside.
 	 * We track this so we can set it when changing the element, allowing any
 	 * `animate:` directive to bind itself to the correct block
 	 */
-	let each_item_block = current_each_item;
+	var each_item_block = current_each_item;
 
 	block(() => {
 		const next_tag = get_tag() || null;
-		const ns = get_namespace
-			? get_namespace()
-			: is_svg || next_tag === 'svg'
-				? namespace_svg
-				: null;
+		var ns = get_namespace ? get_namespace() : is_svg || next_tag === 'svg' ? namespace_svg : null;
 
 		// Assumption: Noone changes the namespace but not the tag (what would that even mean?)
 		if (next_tag === tag) return;
