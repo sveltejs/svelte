@@ -143,9 +143,9 @@ export function render(component, options = {}) {
  */
 export function head(payload, fn) {
 	const head_payload = payload.head;
-	payload.head.out += '<!--#head-->';
+	head_payload.out += BLOCK_OPEN;
 	fn(head_payload);
-	payload.head.out += '<!--/head-->';
+	head_payload.out += BLOCK_CLOSE;
 }
 
 /**

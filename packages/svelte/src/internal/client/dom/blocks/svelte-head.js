@@ -3,6 +3,7 @@ import { hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
 import { empty } from '../operations.js';
 import { block } from '../../reactivity/effects.js';
 import { HEAD_EFFECT } from '../../constants.js';
+import { HYDRATION_START } from '../../../../constants.js';
 
 /**
  * @type {Node | undefined}
@@ -34,7 +35,10 @@ export function head(render_fn) {
 			head_anchor = /** @type {TemplateNode} */ (document.head.firstChild);
 		}
 
-		while (head_anchor.nodeType !== 8 || /** @type {Comment} */ (head_anchor).data !== '#head') {
+		while (
+			head_anchor.nodeType !== 8 ||
+			/** @type {Comment} */ (head_anchor).data !== HYDRATION_START
+		) {
 			head_anchor = /** @type {TemplateNode} */ (head_anchor.nextSibling);
 		}
 
