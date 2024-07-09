@@ -13,11 +13,9 @@ export interface Component {
 
 export interface Payload {
 	out: string;
-	anchor: number;
 	head: {
 		title: string;
 		out: string;
-		anchor: number;
 	};
 }
 
