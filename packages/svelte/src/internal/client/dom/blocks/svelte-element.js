@@ -10,10 +10,9 @@ import {
 } from '../../reactivity/effects.js';
 import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
-import { current_component_context, current_effect } from '../../runtime.js';
+import { current_component_context } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { assign_nodes } from '../template.js';
-import { noop } from '../../../shared/utils.js';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 
 /**
@@ -121,9 +120,6 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				}
 
 				anchor.before(element);
-
-				// See below
-				return noop;
 			});
 		}
 
@@ -132,9 +128,5 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 		set_should_intro(true);
 
 		set_current_each_item(previous_each_item);
-
-		// Inert effects are proactively detached from the effect tree. Returning a noop
-		// teardown function is an easy way to ensure that this is not discarded
-		return noop;
 	}, EFFECT_TRANSPARENT);
 }
