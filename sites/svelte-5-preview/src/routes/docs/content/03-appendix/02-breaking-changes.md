@@ -285,3 +285,37 @@ Note that whereas Svelte 4 would treat `<svelte:element this="input">` (for exam
 ### `mount` plays transitions by default
 
 The `mount` function used to render a component tree plays transitions by default unless the `intro` option is set to `false`. This is different from legacy class components which, when manually instantiated, didn't play transitions by default.
+
+### `<img src={...}>` and `{@html ...}` hydration mismatches are not repaired
+
+In Svelte 4, when the value of an `<img src={...}>` attribute or a `{@html ...}` tag were different between the server and the client (i.e. there was a hydration mismatch), that mismatch was repaired. This is very costly though, and therefore is no longer done in Svelte 5. Instead, you'll now get a warning at DEV time when a mismatch is detected. If you know the value can be different between server and client, you can do something like this:
+
+```svelte
+<script>
+	import { onMount, tick } from 'svelte';
+
+	let raw_html = $state(
+		typeof window === 'undefined'
+			? '<h1>Server</h1>'
+			: '<h1>Client</h1>'
+	);
+	let src = $state(
+		typeof window === 'undefined'
+			? '/server.jpg'
+			: '/client.jpg'
+	);
+
+	onMount(async () => {
+		// force update
+		raw_html = '';
+		src = '';
+		await tick();
+		// set client values
+		raw_html = '<h1>Client</h1>';
+		src = '/client.jpg';
+	});
+</script>
+
+{@html raw_html}
+<img {src} />
+```

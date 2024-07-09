@@ -33,6 +33,8 @@ export function html(node, get_value, svg, mathml) {
 
 		effect = branch(() => {
 			if (hydrating) {
+				// We're deliberately not trying to repair mismatches between server and client,
+				// as it's costly and error-prone (and it's an edge case to have a mismatch anyway)
 				var next = hydrate_next();
 				var last = next;
 
