@@ -283,7 +283,7 @@ export function client_component(source, analysis, options) {
 		}
 	}
 
-	if (options.legacy.componentApi) {
+	if (options.compatibility.componentApi === 4) {
 		component_returned_object.push(
 			b.init('$set', b.id('$.update_legacy_props')),
 			b.init(
@@ -474,7 +474,7 @@ export function client_component(source, analysis, options) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}
 
-	if (options.legacy.componentApi) {
+	if (options.compatibility.componentApi === 4) {
 		body.unshift(b.imports([['createClassComponent', '$$_createClassComponent']], 'svelte/legacy'));
 		component_block.body.unshift(
 			b.if(

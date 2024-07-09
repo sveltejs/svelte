@@ -141,14 +141,14 @@ export interface CompileOptions extends ModuleCompileOptions {
 	/**
 	 * @deprecated Use these only as a temporary solution before migrating your code
 	 */
-	legacy?: {
+	compatibility?: {
 		/**
 		 * Applies a transformation so that the default export of Svelte files can still be instantiated the same way as in Svelte 4 —
 		 * as a class when compiling for the browser (as though using `createClassComponent(MyComponent, {...})` from `svelte/legacy`)
 		 * or as an object with a `.render(...)` method when compiling for the server
-		 * @default false
+		 * @default 5
 		 */
-		componentApi?: boolean;
+		componentApi?: 4 | 5;
 	};
 	/**
 	 * An initial sourcemap that will be merged into the final output sourcemap.
@@ -226,7 +226,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		Required<CompileOptions>,
 		| keyof ModuleCompileOptions
 		| 'name'
-		| 'legacy'
+		| 'compatibility'
 		| 'outputFilename'
 		| 'cssOutputFilename'
 		| 'sourcemap'
@@ -236,7 +236,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		outputFilename: CompileOptions['outputFilename'];
 		cssOutputFilename: CompileOptions['cssOutputFilename'];
 		sourcemap: CompileOptions['sourcemap'];
-		legacy: Required<Required<CompileOptions>['legacy']>;
+		compatibility: Required<Required<CompileOptions>['compatibility']>;
 		runes: CompileOptions['runes'];
 		customElementOptions: SvelteOptions['customElement'];
 		hmr: CompileOptions['hmr'];

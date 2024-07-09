@@ -2172,7 +2172,7 @@ export function server_component(analysis, options) {
 		should_inject_props ? [b.id('$$payload'), b.id('$$props')] : [b.id('$$payload')],
 		component_block
 	);
-	if (options.legacy.componentApi) {
+	if (options.compatibility.componentApi === 4) {
 		body.unshift(b.imports([['render', '$$_render']], 'svelte/server'));
 		body.push(
 			component_function,

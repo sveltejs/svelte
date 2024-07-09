@@ -78,8 +78,12 @@ export const validate_component_options =
 
 			immutable: deprecate(w.options_deprecated_immutable, boolean(false)),
 
-			legacy: object({
-				componentApi: boolean(false)
+			legacy: removed(
+				'The legacy option has been removed. If you are using this because of legacy.componentApi, use compatibility.componentApi instead'
+			),
+
+			compatibility: object({
+				componentApi: list([4, 5], 5)
 			}),
 
 			loopGuardTimeout: warn_removed(w.options_removed_loop_guard_timeout),

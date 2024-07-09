@@ -383,7 +383,7 @@ export function analyze_component(root, source, options) {
 			? true
 			: (runes ? false : !!options.accessors) ||
 				// because $set method needs accessors
-				!!options.legacy?.componentApi,
+				options.compatibility?.componentApi === 4,
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
 		slot_names: new Map(),
