@@ -1018,7 +1018,6 @@ function serialize_inline_component(node, expression, context) {
 		context.state.template.push(statement);
 
 		if (!context.state.skip_hydration_boundaries) {
-			// TODO do we need this at all, for non-dynamic components?
 			context.state.template.push(block_close);
 		}
 	}
