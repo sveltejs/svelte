@@ -2159,11 +2159,12 @@ export function server_component(analysis, options) {
 
 	const body = [...state.hoisted, ...module.body];
 
-	if (options.css === 'injected') {
+	if (analysis.css.ast !== null && options.css === 'injected') {
 		body.push(
 			b.const(
 				'$$css',
 				b.object([
+					b.init('hash', b.literal(analysis.css.hash)),
 					b.init('code', b.literal(render_stylesheet(analysis.source, analysis, options).code))
 				])
 			)

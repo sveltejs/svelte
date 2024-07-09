@@ -133,7 +133,7 @@ export function render(component, options = {}) {
 	let head = payload.head.out + payload.head.title;
 
 	for (const { hash, code } of payload.css) {
-		head += `<style data-svelte="${hash}">${code}</style>`;
+		head += `<style id="${hash}">${code}</style>`;
 	}
 
 	return {
