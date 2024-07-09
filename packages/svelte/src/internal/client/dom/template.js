@@ -207,20 +207,12 @@ function run_scripts(node) {
 	}
 }
 
-/**
- *
- * @param {boolean} anchored
- */
 /*#__NO_SIDE_EFFECTS__*/
-export function text(anchored) {
+export function text() {
 	if (!hydrating) {
 		var t = empty();
 		assign_nodes(t, t);
 		return t;
-	}
-
-	if (anchored) {
-		hydrate_next();
 	}
 
 	var node = hydrate_node;
