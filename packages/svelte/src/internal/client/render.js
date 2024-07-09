@@ -31,8 +31,8 @@ export const root_event_handles = new Set();
 
 /**
  * This is normally true — block effects should run their intro transitions —
- * but is false during hydration and mounting (unless `options.intro` is `true`)
- * and when creating the children of a `<svelte:element>` that just changed tag
+ * but is false during hydration (unless `options.intro` is `true`) and
+ * when creating the children of a `<svelte:element>` that just changed tag
  */
 export let should_intro = true;
 
@@ -57,27 +57,8 @@ export function set_text(text, value) {
 }
 
 /**
- * @param {Comment} anchor
- * @param {void | ((anchor: Comment, slot_props: Record<string, unknown>) => void)} slot_fn
- * @param {Record<string, unknown>} slot_props
- * @param {null | ((anchor: Comment) => void)} fallback_fn
- */
-export function slot(anchor, slot_fn, slot_props, fallback_fn) {
-	if (hydrating) {
-		hydrate_next();
-	}
-
-	if (slot_fn === undefined) {
-		if (fallback_fn !== null) {
-			fallback_fn(anchor);
-		}
-	} else {
-		slot_fn(anchor, slot_props);
-	}
-}
-
-/**
- * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
+ * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
+ * Transitions will play during the initial render unless the `intro` option is set to `false`.
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
@@ -137,6 +118,7 @@ export function hydrate(component, options) {
 		validate_component(component);
 	}
 
+	options.intro = options.intro ?? false;
 	const target = options.target;
 	const was_hydrating = hydrating;
 
@@ -213,7 +195,7 @@ export function hydrate(component, options) {
  * 	}} options
  * @returns {Exports}
  */
-function _mount(Component, { target, anchor, props = {}, events, context, intro = false }) {
+function _mount(Component, { target, anchor, props = {}, events, context, intro = true }) {
 	init_operations();
 
 	const registered_events = new Set();

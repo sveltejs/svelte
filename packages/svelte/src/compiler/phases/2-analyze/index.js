@@ -1010,6 +1010,9 @@ const runes_scope_tweaker = {
 			name: node.local.name,
 			alias: node.exported.name
 		});
+
+		const binding = state.scope.get(node.local.name);
+		if (binding) binding.reassigned = true;
 	},
 	ExportNamedDeclaration(node, { next, state }) {
 		if (!node.declaration || state.ast_type !== 'instance') {

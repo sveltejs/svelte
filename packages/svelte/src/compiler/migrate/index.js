@@ -145,6 +145,47 @@ export function migrate(source) {
 			}
 		}
 
+		/**
+		 * If true, then we need to move all reactive statements to the end of the script block,
+		 * in their correct order. Svelte 4 reordered reactive statements, $derived/$effect.pre
+		 * don't have this behavior.
+		 */
+		let needs_reordering = false;
+
+		for (const [node, { dependencies }] of state.analysis.reactive_statements) {
+			/** @type {Compiler.Binding[]} */
+			let ids = [];
+			if (
+				node.body.type === 'ExpressionStatement' &&
+				node.body.expression.type === 'AssignmentExpression'
+			) {
+				ids = extract_identifiers(node.body.expression.left)
+					.map((id) => state.scope.get(id.name))
+					.filter((id) => !!id);
+			}
+
+			if (
+				dependencies.some(
+					(dep) =>
+						!ids.includes(dep) &&
+						/** @type {number} */ (dep.node.start) > /** @type {number} */ (node.start)
+				)
+			) {
+				needs_reordering = true;
+				break;
+			}
+		}
+
+		if (needs_reordering) {
+			const nodes = Array.from(state.analysis.reactive_statements.keys());
+			for (const node of nodes) {
+				const { start, end } = get_node_range(source, node);
+				str.appendLeft(end, '\n');
+				str.move(start, end, /** @type {number} */ (parsed.instance?.content.end));
+				str.remove(start - (source[start - 2] === '\r' ? 2 : 1), start);
+			}
+		}
+
 		if (state.needs_run && !added_legacy_import) {
 			if (parsed.instance) {
 				str.appendRight(
@@ -377,7 +418,7 @@ const instance_script = {
 					/** @type {number} */ (node.body.expression.start),
 					'let '
 				);
-				state.str.prependLeft(
+				state.str.prependRight(
 					/** @type {number} */ (node.body.expression.right.start),
 					'$derived('
 				);
@@ -388,14 +429,14 @@ const instance_script = {
 						');'
 					);
 				} else {
-					state.str.appendRight(/** @type {number} */ (node.end), ');');
+					state.str.appendLeft(/** @type {number} */ (node.end), ');');
 				}
 				return;
 			} else {
 				for (const binding of reassigned_bindings) {
 					if (binding && ids.includes(binding.node)) {
 						// implicitly-declared variable which we need to make explicit
-						state.str.prependLeft(
+						state.str.prependRight(
 							/** @type {number} */ (node.start),
 							`let ${binding.node.name}${binding.kind === 'state' ? ' = $state()' : ''};\n${state.indent}`
 						);
@@ -428,7 +469,7 @@ const instance_script = {
 					[/** @type {number} */ (node.body.end), state.end]
 				]
 			});
-			state.str.appendRight(/** @type {number} */ (node.end), `\n${state.indent}});`);
+			state.str.appendLeft(/** @type {number} */ (node.end), `\n${state.indent}});`);
 		}
 	}
 };
@@ -806,6 +847,30 @@ function get_indent(state, ...nodes) {
 	}
 
 	return indent;
+}
+
+/**
+ * Returns start and end of the node. If the start is preceeded with white-space-only before a line break,
+ * the start will be the start of the line.
+ * @param {string} source
+ * @param {Node} node
+ */
+function get_node_range(source, node) {
+	let start = /** @type {number} */ (node.start);
+	let end = /** @type {number} */ (node.end);
+
+	let idx = start;
+	while (source[idx - 1] !== '\n' && source[idx - 1] !== '\r') {
+		idx--;
+		if (source[idx] !== ' ' && source[idx] !== '\t') {
+			idx = start;
+			break;
+		}
+	}
+
+	start = idx;
+
+	return { start, end };
 }
 
 /**

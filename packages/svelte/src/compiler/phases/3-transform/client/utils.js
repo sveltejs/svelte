@@ -454,7 +454,6 @@ export function serialize_proxy_reassignment(value, proxy_reference, state) {
 		? b.call(
 				'$.proxy',
 				value,
-				b.true,
 				b.null,
 				typeof proxy_reference === 'string'
 					? b.id(proxy_reference)

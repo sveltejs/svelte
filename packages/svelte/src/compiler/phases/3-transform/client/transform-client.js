@@ -198,14 +198,38 @@ export function client_component(source, analysis, options) {
 	}
 
 	/** @type {Array<ESTree.Property | ESTree.SpreadElement>} */
-	const component_returned_object = analysis.exports.map(({ name, alias }) => {
+	const component_returned_object = analysis.exports.flatMap(({ name, alias }) => {
+		const binding = instance_state.scope.get(name);
 		const expression = serialize_get_binding(b.id(name), instance_state);
+		const getter = b.get(alias ?? name, [b.return(expression)]);
 
-		if (expression.type === 'Identifier' && !options.dev) {
-			return b.init(alias ?? name, expression);
+		if (expression.type === 'Identifier') {
+			if (binding?.declaration_kind === 'let' || binding?.declaration_kind === 'var') {
+				return [
+					getter,
+					b.set(alias ?? name, [b.stmt(b.assignment('=', expression, b.id('$$value')))])
+				];
+			} else if (!options.dev) {
+				return b.init(alias ?? name, expression);
+			}
 		}
 
-		return b.get(alias ?? name, [b.return(expression)]);
+		if (binding?.kind === 'state' || binding?.kind === 'frozen_state') {
+			return [
+				getter,
+				b.set(alias ?? name, [
+					b.stmt(
+						b.call(
+							'$.set',
+							b.id(name),
+							b.call(binding.kind === 'state' ? '$.proxy' : '$.freeze', b.id('$$value'))
+						)
+					)
+				])
+			];
+		}
+
+		return getter;
 	});
 
 	const properties = [...analysis.instance.scope.declarations].filter(

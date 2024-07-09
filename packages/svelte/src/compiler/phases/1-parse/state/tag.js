@@ -39,7 +39,8 @@ export default function tag(parser) {
 
 /** @param {import('../index.js').Parser} parser */
 function open(parser) {
-	const start = parser.index - 2;
+	let start = parser.index - 2;
+	while (parser.template[start] !== '{') start -= 1;
 
 	if (parser.eat('if')) {
 		parser.require_whitespace();
@@ -343,9 +344,12 @@ function next(parser) {
 			parser.allow_whitespace();
 			parser.eat('}', true);
 
+			let elseif_start = start - 1;
+			while (parser.template[elseif_start] !== '{') elseif_start -= 1;
+
 			/** @type {ReturnType<typeof parser.append<import('#compiler').IfBlock>>} */
 			const child = parser.append({
-				start: parser.index,
+				start: elseif_start,
 				end: -1,
 				type: 'IfBlock',
 				elseif: true,

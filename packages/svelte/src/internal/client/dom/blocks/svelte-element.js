@@ -20,6 +20,7 @@ import { current_each_item, set_current_each_item } from './each.js';
 import { current_component_context, current_effect } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { noop } from '../../../shared/utils.js';
+import { EFFECT_TRANSPARENT } from '../../constants.js';
 
 /**
  * @param {Comment | Element} node
@@ -157,7 +158,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 		// Inert effects are proactively detached from the effect tree. Returning a noop
 		// teardown function is an easy way to ensure that this is not discarded
 		return noop;
-	});
+	}, EFFECT_TRANSPARENT);
 
 	if (was_hydrating) {
 		set_hydrating(true);
