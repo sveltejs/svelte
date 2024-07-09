@@ -1,6 +1,6 @@
 /** @import { TemplateNode, Dom, Effect } from '#client' */
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
-import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
+import { hydrate_node, hydrating } from '../hydration.js';
 
 /**
  * @template P
